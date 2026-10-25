@@ -72,7 +72,8 @@
   let layer = "All";
   let activeRun = "";
   let compareTarget = null;
-  // How this browser's next run is billed, from the server's /standing: { billing: "run" | "scope", free, percent }; null while unknown.
+  // How this browser's next run is billed, from the server's /standing: { billing: "run" | "scope", free, percent, pass, lastPlan,
+  // plans }, where pass is the signed-in address's open pass (plan, runsLeft, paidUntil, its limits) or null; null while unknown.
   let standing = null;
   let standingKey = null;
   let pricing = false;
@@ -418,11 +419,12 @@
       params.set("pages", String(extra.pages || selectedPages()));
       params.set("depth", String(extra.depth || selectedDepth()));
       if (extra.billing) params.set("billing", extra.billing);
+      if (extra.pass) params.set("pass", extra.pass);
       if (extra.compareWith) params.set("compareWith", extra.compareWith);
       if (extra.compareWith && extra.competitors > 1) params.set("competitors", String(extra.competitors));
     }
     const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
-    if (coupon && (purpose === "report" || purpose === "new-run")) params.set("coupon", coupon);
+    if (coupon && (purpose === "report" || (purpose === "new-run" && !(extra && extra.pass)))) params.set("coupon", coupon);
     return payPage() + "?" + params.toString();
   }
 
@@ -2688,12 +2690,14 @@
     const list = (body && body.frameworks && body.frameworks.length) ? body.frameworks : selectedFrameworks();
     const pages = body && body.pages ? body.pages : selectedPages();
     const depth = body && body.depth ? body.depth : selectedDepth();
-    const billing = body && (body.billing === "scope" || body.billing === "compare") ? body.billing : "run";
+    const billing = body && (body.billing === "scope" || body.billing === "compare" || body.billing === "pass") ? body.billing : "run";
     const tools = billing === "scope" ? [] : ((body && body.tools) || selectedTools());
     const usd = (body && body.priceUsd) || (billing === "compare" ? COMPARE_USD : reviewUsd(list, tools));
     document.getElementById("run-pay-title").textContent = "This review is " + formatUsd(usd) + " USD";
     document.getElementById("run-pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
-    document.getElementById("run-pay-detail").textContent = billing === "compare"
+    document.getElementById("run-pay-detail").textContent = billing === "pass"
+      ? "This run uses one of your pass runs. The amount is only for the options over your plan: 5 USD for each framework or tool past it, and the wider or deeper steps past the plan's."
+      : billing === "compare"
       ? "A comparison is " + COMPARE_USD + " USD for each competitor, whatever the frameworks or the size of your review. The competitor gets the public, passive checks only."
       : billing === "scope"
         ? pages + " pages and " + depth + " links deep. The included first review is 20 pages and 2 links deep. This amount is for the wider review."
@@ -2711,7 +2715,14 @@
         body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { deviceId: deviceId() }))
       });
       const body = await res.json();
-      standing = res.ok && (body.billing === "run" || body.billing === "scope") ? { billing: body.billing, free: body.free === true, percent: Number(body.percent) || 0 } : null;
+      standing = res.ok && (body.billing === "run" || body.billing === "scope") ? {
+        billing: body.billing,
+        free: body.free === true,
+        percent: Number(body.percent) || 0,
+        pass: body.pass && body.pass.plan ? body.pass : null,
+        lastPlan: body.lastPlan || "",
+        plans: Array.isArray(body.plans) ? body.plans : []
+      } : null;
     } catch (error) {
       standing = null;
     }
@@ -2751,27 +2762,44 @@
     return tag;
   }
 
+  // The open pass with a run left, so the next run goes on it; null otherwise.
+  function passOn() {
+    return standing && !standing.free && standing.pass && standing.pass.runsLeft > 0 ? standing.pass : null;
+  }
+
+  // What a run asks for beyond a plan, as the server prices it: 5 USD for each framework or tool past the plan's
+  // allowance (a plan with tools counts frameworks only), and the page and depth steps past the plan's.
+  function passExtrasCents(plan, ask) {
+    const counted = plan.tools ? ask.frameworks.length : ask.frameworks.length + ask.tools.length;
+    return Math.max(0, counted - plan.frameworks) * EXTRA_PRICE * 100
+      + Math.max(0, (PAGE_CENTS[ask.pages] || 0) - (PAGE_CENTS[plan.pages] || 0))
+      + Math.max(0, (DEPTH_CENTS[ask.depth] || 0) - (DEPTH_CENTS[plan.depth] || 0));
+  }
+
   // A ticked option shows what it adds. On a paid run the first ticked framework or tool, in page order, is 19 USD
   // and each one after it 5 USD, so the tags add up to the framework part; a first run pays only for a wider or
-  // deeper read, so only those choices are tagged; a free account and an unknown standing show none.
+  // deeper read, so only those choices are tagged; on a pass only what is past the plan is tagged; a free account
+  // and an unknown standing show none.
   function paintTags() {
     const paid = !!standing && !standing.free;
+    const pass = passOn();
     const items = [...reviewForm.querySelectorAll('input[name="fw"]')].concat([...document.querySelectorAll('#tools input[name="tool"]')]);
     let n = 0;
     items.forEach((box) => {
-      const on = paid && standing.billing === "run" && box.checked;
+      const on = paid && box.checked && (pass ? !(pass.tools && box.name === "tool") : standing.billing === "run");
       if (on) n += 1;
-      setTag(box.closest("label"), on ? (n === 1 ? PRICE : EXTRA_PRICE) : 0);
+      setTag(box.closest("label"), !on ? 0 : pass ? (n > pass.frameworks ? EXTRA_PRICE : 0) : (n === 1 ? PRICE : EXTRA_PRICE));
     });
     reviewForm.querySelectorAll('input[name="pages"], input[name="depth"]').forEach((box) => {
-      const cents = (box.name === "pages" ? PAGE_CENTS : DEPTH_CENTS)[box.value] || 0;
-      setTag(box.closest("label"), paid && box.checked ? cents / 100 : 0);
+      const steps = box.name === "pages" ? PAGE_CENTS : DEPTH_CENTS;
+      const included = pass ? steps[box.name === "pages" ? pass.pages : pass.depth] || 0 : 0;
+      setTag(box.closest("label"), paid && box.checked ? Math.max(0, (steps[box.value] || 0) - included) / 100 : 0);
     });
     paintCompareTags();
   }
 
   function paintCompareTags() {
-    const paid = !!standing && !standing.free;
+    const paid = !!standing && !standing.free && !passOn();
     compareInputs().forEach((input) => {
       const field = input.closest(".compare-field");
       const tag = setTag(field, paid && !field.hidden && input.value.trim() ? COMPARE_USD : 0, "competitorSay");
@@ -2824,8 +2852,8 @@
     if (answer) answer(go);
   }
 
-  // Answers true for Pay and run, false for Cancel, Escape or a click outside.
-  function showTotal(title, lines) {
+  // Answers true for Pay and run, false for Cancel, Escape or a click outside. `offer` is { plan, up } from passOffer.
+  function showTotal(title, lines, offer) {
     const card = totalBox.querySelector(".pay-card");
     if (!rc.english) {
       card.setAttribute("lang", rc.lang);
@@ -2837,6 +2865,15 @@
     document.getElementById("run-total-saved").textContent = rc.t("totalSaved");
     document.getElementById("run-total-cancel").textContent = rc.t("totalCancel");
     document.getElementById("run-total-pay").textContent = rc.t("totalPay");
+    const offerBox = document.getElementById("run-total-offer");
+    offerBox.hidden = !offer;
+    if (offer) {
+      const plan = offer.plan;
+      document.getElementById("run-total-offer-text").textContent = rc.t(offer.up ? "passOfferUp" : "passOffer", { runs: plan.runs, usd: formatUsd(plan.usd), plan: plan.name });
+      const go = document.getElementById("run-total-offer-go");
+      go.textContent = rc.t("passOfferGo", { plan: plan.name });
+      go.dataset.plan = plan.id;
+    }
     totalReturn = document.activeElement;
     totalBehind = [...document.body.children].filter((el) => el !== totalBox && !el.inert && !el.matches("script, .cookie-note"));
     totalBehind.forEach((el) => { el.inert = true; });
@@ -2847,6 +2884,18 @@
   }
 
   document.getElementById("run-total-cancel").addEventListener("click", () => closeTotal(false));
+  // A pass belongs to the signed-in address, so the offer asks for the sign-in before the pay page.
+  document.getElementById("run-total-offer-go").addEventListener("click", (event) => {
+    const plan = event.currentTarget.dataset.plan || "";
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pass_offer", "URL Review", plan);
+    if (!signedIn()) {
+      closeTotal(false);
+      if (window.ReviewAuth) ReviewAuth.focus();
+      setTimeout(() => setStatus(rc.t("passSignIn"), true), 0);
+      return;
+    }
+    location.href = payPage() + "?purpose=pass&plan=" + encodeURIComponent(plan);
+  });
   document.getElementById("run-total-pay").addEventListener("click", () => closeTotal(true));
   totalBox.addEventListener("click", (event) => { if (event.target === totalBox) closeTotal(false); });
   totalBox.addEventListener("keydown", (event) => {
@@ -2857,7 +2906,8 @@
       return;
     }
     if (event.key !== "Tab") return;
-    const stops = [document.getElementById("run-total-cancel"), document.getElementById("run-total-pay")];
+    const offerGo = document.getElementById("run-total-offer");
+    const stops = (offerGo.hidden ? [] : [document.getElementById("run-total-offer-go")]).concat([document.getElementById("run-total-cancel"), document.getElementById("run-total-pay")]);
     event.preventDefault();
     stops[(stops.indexOf(document.activeElement) + (event.shiftKey ? -1 : 1) + stops.length) % stops.length].focus();
   });
@@ -2870,12 +2920,13 @@
     params.set("depth", String(ask.depth));
     params.set("deviceId", deviceId());
     if (ask.billing) params.set("billing", ask.billing);
+    if (ask.pass) params.set("pass", ask.pass);
     if (ask.compareWith) {
       params.set("compareWith", ask.compareWith);
       params.set("competitors", String(ask.competitors || 1));
     }
     const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
-    if (coupon) params.set("coupon", coupon);
+    if (coupon && !ask.pass) params.set("coupon", coupon);
     pricing = true;
     try {
       const res = await fetch(endpoint() + "/checkout/quote?" + params.toString());
@@ -2903,6 +2954,8 @@
     if (!standing || standing.free) return null;
     const pages = selectedPages();
     const depth = selectedDepth();
+    const pass = passOn();
+    if (pass) return confirmPassRun(pass, pages, depth);
     if (standing.billing === "scope" && !PAGE_CENTS[pages] && !DEPTH_CENTS[depth]) return null;
     const frameworks = selectedFrameworks();
     const tools = standing.billing === "scope" ? [] : selectedTools();
@@ -2913,11 +2966,37 @@
       ? [totalLine(rc.t("totalIncluded", { n: (quote.frameworks || frameworks).length }), 0)]
       : (quote.discount || []).map((row) => totalLine(row.name, row.usd));
     const scope = [totalLine(rc.t("totalPages", { n: quote.pages || pages }), quote.pageUsd || 0), totalLine(rc.t("totalDepth", { n: quote.depth || depth }), quote.depthUsd || 0)];
-    return showTotal(rc.t("totalTitle"), items.concat(scope, sumLines(quote)));
+    return showTotal(rc.t("totalTitle"), items.concat(scope, sumLines(quote)), passOffer({ frameworks, tools, pages, depth }, quote.usd));
   }
 
+  // A run on a pass shows a total only when it asks for more than the plan, and then charges only that.
+  async function confirmPassRun(pass, pages, depth) {
+    const ask = { frameworks: selectedFrameworks(), tools: selectedTools(), pages, depth };
+    if (!ask.frameworks.length || paidAhead(ask) || !passExtrasCents(pass, ask)) return null;
+    const quote = await quoteFor(Object.assign({ pass: pass.plan }, ask));
+    if (!quote) return null;
+    const items = (quote.discount || []).map((row) => totalLine(row.name, row.usd));
+    const scope = [totalLine(rc.t("totalPages", { n: quote.pages || pages }), quote.pageUsd || 0), totalLine(rc.t("totalDepth", { n: quote.depth || depth }), quote.depthUsd || 0)];
+    return showTotal(rc.t("totalTitle"), [totalLine(rc.t("totalPassRun", { n: pass.runsLeft - 1 }), 0, "total-pass")].concat(items, scope, sumLines(quote)));
+  }
+
+  // The pass offered beside a paid total: the next plan up once a pass is used up or ended; otherwise the cheapest
+  // plan that covers this run, when its runs cost less each than this one does.
+  function passOffer(ask, dueUsd) {
+    const plans = (standing && standing.plans) || [];
+    if (!plans.length || passOn()) return null;
+    const last = (standing.pass && standing.pass.plan) || standing.lastPlan;
+    if (last) {
+      const at = plans.findIndex((plan) => plan.id === last);
+      return { plan: plans[Math.min(plans.length - 1, at + 1)], up: true };
+    }
+    const plan = plans.find((row) => !passExtrasCents(row, ask) && row.usd / row.runs < dueUsd);
+    return plan ? { plan, up: false } : null;
+  }
+
+  // On a pass each competitor run takes one pass run and adds nothing, so the server decides with no total.
   async function confirmCompare(target, urls) {
-    if (!standing || standing.free || !signedIn()) return null;
+    if (!standing || standing.free || !signedIn() || passOn()) return null;
     const quote = await quoteFor({ frameworks: target.frameworks || [], tools: target.tools || [], pages: target.pages, depth: target.depth, compareWith: target.id, competitors: urls.length });
     if (!quote) return null;
     const each = Number(quote.eachUsd) || COMPARE_USD;

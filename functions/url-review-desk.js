@@ -55,7 +55,7 @@ function kindFor(row) {
   if (status === "payment-due") return "payment-due";
   if (status === "capture") return "capture";
   if (status === "run-credit-used") return "credit";
-  if (status === "monthly-pass") return "monthly";
+  if (status === "monthly-pass") return row.paid === true ? "pass-paid" : "monthly";
   if (status === "follow-stop") return "follow-stop";
   if (status === "running") return "started";
   if (status === "failed") return "failed";
@@ -76,6 +76,7 @@ const TITLES = {
   credit: "A paid run credit was used",
   failed: "A review failed",
   monthly: "A 30-day history pass was opened on this machine. No charge was made.",
+  "pass-paid": "A 30-day pass was bought",
   "follow-stop": "Follow-up notes were stopped",
   "payment-unmatched": "PayPal took a payment that matches no open checkout. Nothing was unlocked.",
   "payment-refunded": "A payment was refunded or reversed on PayPal",
@@ -101,6 +102,7 @@ function rowsFor(source) {
   add("Cases", counts.cases);
   add("Signals", Array.isArray(report.alerts) ? report.alerts.length : "");
   add("Price", source.priceUsd != null && source.priceUsd !== "" ? String(source.priceUsd) + " USD" : "");
+  add("Pass", source.status === "monthly-pass" ? [source.plan, source.paidUntil ? "until " + String(source.paidUntil).slice(0, 10) : "", source.runs ? source.runs + " runs" : ""].filter(Boolean).join(" · ") : source.passPlan);
   add("Paid", source.paid === true ? "Yes" : "");
   add("Mode", source.test === true ? "Test, PayPal sandbox. No real money moved." : "");
   add("Purpose", source.purpose);

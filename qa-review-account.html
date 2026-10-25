@@ -146,6 +146,12 @@
     .panel-head p { margin: 4px 0 0; font-size: 14px; }
     .panel-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--edge); }
     .small { font-size: 13.5px; line-height: 1.5; }
+    .pass-card { margin: 0 0 18px; padding: 14px 16px; border: 1px solid var(--line, rgba(127,127,127,.3)); border-radius: 14px; }
+    .pass-card h3 { margin: 0 0 6px; font-size: 16px; }
+    .pass-card p { margin: 0 0 8px; }
+    .pass-card ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+    .pass-card li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+    .pass-card .pass-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .sign-in { border-color: color-mix(in srgb, var(--cyan) 40%, var(--edge)); }
     .sign-in.done { border-color: var(--edge); }
@@ -477,6 +483,7 @@
       <h2>Saved reviews</h2>
     </div>
     <p id="file-status"></p>
+    <div class="pass-card" id="pass-card" hidden></div>
     <div class="saved-cmps" id="saved-cmps" hidden>
       <h3>Saved comparisons</h3>
       <ul id="saved-cmps-list"></ul>
@@ -777,10 +784,54 @@
       : data.pass ? "A 30-day pass is open on this account until " + new Date(data.paidUntil).toLocaleString() + ". Every report is open."
         : opened ? "Paid reports are open. For the others, the opening of each shows, and the rest opens when that report is paid."
           : "The opening of each review shows. The rest opens when that report is paid.";
+    paintPass(data);
     listEl.classList.remove("settled");
     render();
     listEl.classList.add("settled");
     fillCompare();
+  }
+  function passLink(plan, label) {
+    const link = node("a", label, "btn btn-ghost");
+    link.href = "qa-review-pay.html?purpose=pass&plan=" + encodeURIComponent(plan.id);
+    link.dataset.plan = plan.id;
+    return link;
+  }
+  function planLine(plan) {
+    return plan.name + " · " + plan.runs + " runs · " + plan.usd + " USD · up to " + plan.pages + " pages, " + plan.depth + " links deep, "
+      + (plan.tools ? "every framework and tool, and the signed-in run" : plan.frameworks + " frameworks or tools a run");
+  }
+  // The open pass with its runs left and end date, and renew or upgrade; with none open, the three passes to buy.
+  function paintPass(data) {
+    const box = document.getElementById("pass-card");
+    const plans = data.plans || [];
+    box.hidden = !!data.free || !plans.length;
+    if (box.hidden) return;
+    const pass = data.passDetail;
+    if (pass) {
+      const at = plans.findIndex((plan) => plan.id === pass.plan);
+      const next = plans[Math.min(plans.length - 1, at + 1)];
+      const actions = node("div", "", "pass-actions");
+      actions.append(passLink(plans[at] || pass, "Renew the " + pass.name + " pass"));
+      if (next && next.id !== pass.plan) actions.append(passLink(next, "Upgrade to " + next.name));
+      box.replaceChildren(
+        node("h3", "Your " + pass.name + " pass"),
+        node("p", pass.runsLeft + " of " + pass.runs + " runs left, until " + new Date(pass.paidUntil).toLocaleDateString() + ". It does not renew by itself."),
+        node("p", "A renewal or an upgrade adds 30 days from the end date and keeps the runs left.", "muted small"),
+        actions
+      );
+      return;
+    }
+    const list = node("ul", "");
+    plans.forEach((plan) => {
+      const row = node("li", "");
+      row.append(node("span", planLine(plan)), passLink(plan, "Buy " + plan.name));
+      list.append(row);
+    });
+    box.replaceChildren(
+      node("h3", "30-day passes"),
+      node("p", "One payment for a set of runs over 30 days, with no auto-renew. Each run includes the full report, the fix list, the case export and alerts. A run that asks for more than the plan pays only for the extras.", "small"),
+      list
+    );
   }
   function reportHref(run) {
     return "qa-review.html?report=" + encodeURIComponent(run.id);

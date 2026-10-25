@@ -4,6 +4,7 @@
  *   return: ran a review, saw the frosted report, has not come back for a week.
  *   paid:   paid once and holds the full report.
  *   offer:  ran a review this week.
+ *   renew:  a paid 30-day pass ends within three days; sent once per pass, and the only note that names dates and counts.
  */
 module.exports = {
   en: {
@@ -28,6 +29,9 @@ module.exports = {
       ["How does your competitor score?", "Run the same review on the site you compare yourself to. Then you will know whether {host} is ahead, behind, or just different.", "How does your competitor score?"],
       ["The test cases are already written.", "The review drafted test cases for {host} in the frameworks you picked. Open the report to read them in full and run them yourself.", "Test cases for {host} are waiting"],
       ["Ask the report a question.", "Can AI search read {host}? Does tracking start before the cookie choice? Is the site quick on a phone? The answers are in the full report.", "Three questions about {host}"]
+    ],
+    renew: [
+      ["Your {plan} pass ends on {date}.", "It has {left} runs left until then. A pass does not renew by itself: buy the next one on your account page, and the runs left carry over while 30 days are added to the end.", "Your {plan} pass ends on {date}"]
     ]
   },
   es: {
@@ -52,6 +56,9 @@ module.exports = {
       ["¿Cuánto saca tu competencia?", "Corre la misma revisión en el sitio con el que te comparas. Así sabrás si {host} va adelante, atrás o simplemente distinto.", "¿Cuánto saca tu competencia?"],
       ["Los casos de prueba ya están escritos.", "La revisión redactó casos de prueba para {host} en los frameworks que elegiste. Abre el informe para leerlos completos y correrlos tú mismo.", "Los casos de prueba de {host} te esperan"],
       ["Hazle una pregunta al informe.", "¿La búsqueda con IA puede leer {host}? ¿El rastreo empieza antes de elegir las cookies? ¿El sitio es rápido en un celular? Las respuestas están en el informe completo.", "Tres preguntas sobre {host}"]
+    ],
+    renew: [
+      ["Tu pase {plan} termina el {date}.", "Le quedan {left} revisiones hasta entonces. Un pase no se renueva solo: compra el siguiente en la página de tu cuenta; las revisiones que quedan pasan al nuevo y se suman 30 días al final.", "Tu pase {plan} termina el {date}"]
     ]
   },
   pt: {
@@ -76,6 +83,9 @@ module.exports = {
       ["Quanto tira o seu concorrente?", "Rode a mesma revisão no site com que você se compara. Assim você sabe se {host} está na frente, atrás ou só diferente.", "Quanto tira o seu concorrente?"],
       ["Os casos de teste já estão escritos.", "A revisão escreveu casos de teste para {host} nos frameworks que você escolheu. Abra o relatório para ler tudo e rodar você mesmo.", "Os casos de teste de {host} esperam por você"],
       ["Faça uma pergunta ao relatório.", "A busca com IA consegue ler {host}? O rastreamento começa antes da escolha de cookies? O site é rápido no celular? As respostas estão no relatório completo.", "Três perguntas sobre {host}"]
+    ],
+    renew: [
+      ["Seu passe {plan} termina em {date}.", "Restam {left} revisões até lá. Um passe não se renova sozinho: compre o próximo na página da sua conta; as revisões que sobram passam para o novo e 30 dias são somados ao fim.", "Seu passe {plan} termina em {date}"]
     ]
   },
   de: {
@@ -100,6 +110,9 @@ module.exports = {
       ["Wie schneidet Ihr Wettbewerber ab?", "Lassen Sie dieselbe Prüfung auf der Website laufen, mit der Sie sich vergleichen. Dann wissen Sie, ob {host} vorne liegt, hinten oder einfach anders ist.", "Wie schneidet Ihr Wettbewerber ab?"],
       ["Die Testfälle sind schon geschrieben.", "Die Prüfung hat Testfälle für {host} in den Frameworks entworfen, die Sie gewählt haben. Öffnen Sie den Bericht, um sie vollständig zu lesen und selbst auszuführen.", "Die Testfälle für {host} warten"],
       ["Stellen Sie dem Bericht eine Frage.", "Kann die KI-Suche {host} lesen? Startet das Tracking vor der Cookie-Wahl? Ist die Seite auf dem Handy schnell? Die Antworten stehen im vollständigen Bericht.", "Drei Fragen zu {host}"]
+    ],
+    renew: [
+      ["Ihr {plan}-Pass endet am {date}.", "Bis dahin bleiben {left} Prüfungen. Ein Pass verlängert sich nicht von selbst: Kaufen Sie den nächsten auf Ihrer Kontoseite; die übrigen Prüfungen werden übernommen und 30 Tage an das Ende angehängt.", "Ihr {plan}-Pass endet am {date}"]
     ]
   },
   fr: {
@@ -124,6 +137,9 @@ module.exports = {
       ["Quelle note pour votre concurrent ?", "Lancez la même revue sur le site auquel vous vous comparez. Vous saurez si {host} est devant, derrière ou simplement différent.", "Quelle note pour votre concurrent ?"],
       ["Les cas de test sont déjà écrits.", "La revue a rédigé des cas de test pour {host} dans les frameworks choisis. Ouvrez le rapport pour les lire en entier et les lancer vous-même.", "Les cas de test de {host} vous attendent"],
       ["Posez une question au rapport.", "La recherche par IA peut-elle lire {host} ? Le suivi démarre-t-il avant le choix des cookies ? Le site est-il rapide sur téléphone ? Les réponses sont dans le rapport complet.", "Trois questions sur {host}"]
+    ],
+    renew: [
+      ["Votre pass {plan} se termine le {date}.", "Il reste {left} analyses d’ici là. Un pass ne se renouvelle pas tout seul : achetez le suivant sur la page de votre compte ; les analyses restantes sont reportées et 30 jours s’ajoutent à la fin.", "Votre pass {plan} se termine le {date}"]
     ]
   },
   it: {
@@ -148,6 +164,9 @@ module.exports = {
       ["Quanto prende il tuo concorrente?", "Lancia la stessa revisione sul sito con cui ti confronti. Saprai se {host} è avanti, indietro o semplicemente diverso.", "Quanto prende il tuo concorrente?"],
       ["I casi di test sono già scritti.", "La revisione ha preparato casi di test per {host} nei framework che hai scelto. Apri il report per leggerli per intero ed eseguirli tu stesso.", "I casi di test di {host} ti aspettano"],
       ["Fai una domanda al report.", "La ricerca con IA riesce a leggere {host}? Il tracciamento parte prima della scelta sui cookie? Il sito è veloce sul telefono? Le risposte sono nel report completo.", "Tre domande su {host}"]
+    ],
+    renew: [
+      ["Il tuo pass {plan} finisce il {date}.", "Restano {left} revisioni fino ad allora. Un pass non si rinnova da solo: compra il prossimo nella pagina del tuo account; le revisioni rimaste passano al nuovo e si aggiungono 30 giorni alla fine.", "Il tuo pass {plan} finisce il {date}"]
     ]
   }
 };

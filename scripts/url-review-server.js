@@ -150,6 +150,26 @@ function writeRecord(record) {
   if (kind) noteReview(kind, record);
 }
 
+// Production changes a row inside a Firestore transaction; this mirror rewrites the line.
+function updateRecord(id, patch) {
+  const rows = readStore().map((row) => (row && row.id === id ? Object.assign({}, row, patch) : row));
+  fs.writeFileSync(FILE, rows.map((row) => JSON.stringify(row) + "\n").join(""));
+}
+
+async function sessionEmail(body) {
+  const signedIn = await auth.checkSession(signIns, Object.assign({}, body, { touch: false }));
+  return signedIn.ok ? signedIn.email : "";
+}
+
+function passRequest(source) {
+  return {
+    frameworks: core.normalizeFrameworks(source.frameworks),
+    tools: core.normalizeTools(source.tools),
+    pages: source.pages == null || source.pages === "" ? undefined : Number(source.pages),
+    depth: source.depth == null || source.depth === "" ? undefined : Number(source.depth)
+  };
+}
+
 function originOf(req) {
   return ALLOW.has(req.headers.origin) ? req.headers.origin : "http://127.0.0.1:8765";
 }
@@ -595,9 +615,19 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "POST" && url.pathname === "/standing") {
     let standingBody = {};
     try { standingBody = await readBody(req); } catch (error) { standingBody = {}; }
-    const standing = core.standingFor(readStore(), { deviceId: deviceFrom(req, standingBody), ip: clientIp(req) });
+    const records = readStore();
+    const standing = core.standingFor(records, { deviceId: deviceFrom(req, standingBody), ip: clientIp(req) });
+    const email = await sessionEmail(standingBody);
     // This server has no free accounts and charges no return step, so it reports neither.
-    sendJson(res, 200, { billing: standing.billing, free: false, percent: 0, compareUsd: core.COMPARE_CENTS / 100 }, origin, deviceHint);
+    sendJson(res, 200, {
+      billing: standing.billing,
+      free: false,
+      percent: 0,
+      compareUsd: core.COMPARE_CENTS / 100,
+      pass: email ? offers.passView(offers.passFor(records, email)) : null,
+      lastPlan: email ? offers.lastPassPlan(records, email) : "",
+      plans: offers.passPlans()
+    }, origin, deviceHint);
     return;
   }
   if (req.method === "GET" && url.pathname === "/checkout/quote") {
@@ -605,6 +635,19 @@ const server = http.createServer(async (req, res) => {
       const layerQuery = url.searchParams.get("layers");
       const pageQuery = url.searchParams.get("pages");
       const purposeQuery = url.searchParams.get("purpose");
+      const passQuery = offers.knownPlan(url.searchParams.get("pass") || "");
+      if (purposeQuery === "pass" || passQuery) {
+        const pricedPass = purposeQuery === "pass" ? core.priceForPass(url.searchParams.get("plan"))
+          : core.priceForPassExtras(passQuery, passRequest(Object.fromEntries(url.searchParams)));
+        const passQuote = pricedPass.usd ? await core.copQuote(pricedPass.usd) : { pesos: 0, rate: 0 };
+        sendJson(res, 200, Object.assign({}, pricedPass, {
+          cop: passQuote.pesos,
+          rate: passQuote.rate,
+          plan: (pricedPass.plan && pricedPass.plan.id) || pricedPass.plan,
+          pass: offers.passPlans().find((row) => row.id === (purposeQuery === "pass" ? pricedPass.plan : passQuery.id))
+        }), origin, deviceHint);
+        return;
+      }
       let priced = purposeQuery === "fixlist"
         ? core.priceForFixList()
         : purposeQuery === "credentials"
@@ -657,7 +700,17 @@ const server = http.createServer(async (req, res) => {
     let payBody = {};
     try { payBody = await readBody(req); } catch (error) { payBody = {}; }
     const choice = core.paymentChoice(payBody.provider || "paypal");
-    const purpose = ["report", "fixlist", "cases", "credentials", "alerts"].indexOf(payBody.purpose) === -1 ? "new-run" : payBody.purpose;
+    const purpose = ["report", "fixlist", "cases", "credentials", "alerts", "pass"].indexOf(payBody.purpose) === -1 ? "new-run" : payBody.purpose;
+    const passOwner = purpose === "pass" || (purpose === "new-run" && !!payBody.pass) ? await sessionEmail(payBody) : "";
+    if ((purpose === "pass" || (purpose === "new-run" && payBody.pass)) && !passOwner) {
+      sendJson(res, 401, { error: "Sign in first. A pass belongs to the address you sign in with. No charge was made.", signIn: true }, origin, deviceHint);
+      return;
+    }
+    const passOn = purpose === "new-run" && payBody.pass ? offers.passRun(readStore(), passOwner, passRequest(payBody)) : null;
+    if (purpose === "new-run" && payBody.pass && !(passOn && passOn.due)) {
+      sendJson(res, 400, { error: "This run has nothing to pay on your pass. No charge was made." }, origin, deviceHint);
+      return;
+    }
     const reportId = String(payBody.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     const deviceId = deviceFrom(req, payBody);
     const reference = crypto.randomBytes(8).toString("hex");
@@ -678,7 +731,11 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const creditCents = purpose === "report" ? core.creditFor({ addons: addonsOf(reportId) }) : 0;
-      const priced = purpose === "fixlist"
+      const priced = purpose === "pass"
+        ? core.priceForPass(payBody.plan)
+        : passOn
+        ? passOn.extras
+        : purpose === "fixlist"
         ? core.priceForFixList()
         : purpose === "cases"
         ? core.priceForLayers(payBody.layers)
@@ -713,6 +770,8 @@ const server = http.createServer(async (req, res) => {
         competitors: priced.competitors,
         alertCount: priced.alertCount,
         priceUsd: priced.usd,
+        plan: purpose === "pass" ? priced.plan : "",
+        passPlan: passOn ? passOn.plan.id : "",
         creditCents,
         successUrl: urls.successUrl,
         cancelUrl: urls.cancelUrl,
@@ -737,6 +796,7 @@ const server = http.createServer(async (req, res) => {
         compareWith: purpose === "new-run" ? compare.cleanId(payBody.compareWith) : "",
         competitors: priced.competitors || null,
         priceUsd: priced.usd,
+        ...(passOwner ? { email: passOwner, plan: purpose === "pass" ? priced.plan : passOn.plan.id, passExtra: !!passOn } : {}),
         amount: session.amount,
         currency: session.currency,
         paid: false,
@@ -782,8 +842,9 @@ const server = http.createServer(async (req, res) => {
       let priceUsd = result.amount || 0;
       let compareWith = "";
       let competitors = 1;
+      let open = null;
       if (choice !== "stripe") {
-        const open = readStore().find((row) => row && row.status === "checkout-open" && row.reference === result.reference);
+        open = readStore().find((row) => row && row.status === "checkout-open" && row.reference === result.reference);
         const sameLink = !result.linkId || (open && open.externalId === result.linkId);
         if (!open || open.provider !== result.provider || open.amount !== result.amount || !sameLink) {
           sendJson(res, 402, { paid: false, error: "This payment does not match an open checkout." }, origin, deviceId);
@@ -800,6 +861,25 @@ const server = http.createServer(async (req, res) => {
         result.depth = open.depth;
         result.billing = open.billing;
         if (compareWith && open.billing === "compare") competitors = Math.max(1, Math.min(core.MAX_COMPETITORS, Number(open.competitors) || 1));
+      }
+      if (purpose === "pass") {
+        const records = readStore();
+        const owner = String((open && open.email) || "");
+        const bought = offers.passPurchase(open && open.plan, records, owner, Date.now(), {
+          id: "pass-" + (result.reference || crypto.randomBytes(8).toString("hex")),
+          provider: result.provider,
+          method: choice,
+          deviceId: payer,
+          sessionId: result.sessionId,
+          reference: result.reference || "",
+          amount: result.amount,
+          currency: result.currency,
+          createdAt: new Date().toISOString()
+        });
+        if (bought.replaces) updateRecord(bought.replaces, { replacedBy: bought.row.id });
+        writeRecord(bought.row);
+        sendJson(res, 200, { paid: true, purpose }, origin, deviceId);
+        return;
       }
       const addon = offers.ADDONS.indexOf(purpose) !== -1;
       const paidRow = {
@@ -821,7 +901,8 @@ const server = http.createServer(async (req, res) => {
         createdAt: new Date().toISOString(),
         priceUsd,
         amount: result.amount,
-        currency: result.currency
+        currency: result.currency,
+        ...(open && open.passExtra ? { passExtra: true, plan: open.plan, email: open.email, usedAt: "" } : {})
       };
       // One comparison checkout leaves a credit for each competitor; the first carries the payment.
       writeRecord(competitors > 1 ? Object.assign({}, paidRow, { competitors }) : paidRow);
@@ -864,7 +945,19 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   const identity = { deviceId, ip: clientIp(req) };
-  const decision = core.judgeAttempts(readStore(), identity, intake.value);
+  let decision = core.judgeAttempts(readStore(), identity, intake.value);
+  // A signed-in run on an open pass with runs left takes one run; asking beyond the plan needs its extras paid first.
+  const passOn = !decision.consumeId && decision.code !== "stopped" && decision.code !== "invalid"
+    ? offers.passRun(readStore(), signedIn.email, intake.value) : null;
+  if (passOn && passOn.due) {
+    decision = Object.assign({ ok: false, code: "payment", pass: passOn.plan.id, runsLeft: offers.passLeft(passOn.row),
+      message: "This run asks for more than your " + passOn.plan.name + " pass. It uses one pass run and charges only the extras: " + passOn.extras.usd + " USD." },
+    passOn.extras, { priceUsd: passOn.extras.usd, billing: "pass" });
+  } else if (passOn) {
+    updateRecord(passOn.row.id, { runs: offers.passRuns(passOn.row), runsUsed: (Number(passOn.row.runsUsed) || 0) + 1, lastRunAt: new Date().toISOString() });
+    if (passOn.credit) updateRecord(passOn.credit.id, { usedAt: new Date().toISOString() });
+    decision = { ok: true, consumeId: "", pass: { id: passOn.row.id, plan: passOn.plan.id, name: passOn.plan.name, left: offers.passLeft(passOn.row) - 1, extrasUsd: passOn.extras ? passOn.extras.usd : 0 } };
+  }
   if (decision.ok && decision.consumeId) {
     writeRecord({
       id: crypto.randomBytes(9).toString("hex"),
@@ -893,9 +986,12 @@ const server = http.createServer(async (req, res) => {
       purpose: decision.code === "payment" ? "new-run" : "",
       priceUsd: decision.priceUsd || 0,
       frameworks: decision.frameworks || [],
+      tools: decision.tools || [],
       pages: decision.pages,
       depth: decision.depth,
       billing: decision.billing || "",
+      pass: decision.pass || "",
+      runsLeft: decision.runsLeft,
       frameworkUsd: decision.frameworkUsd,
       scopeUsd: decision.scopeUsd,
       pageUsd: decision.pageUsd,
@@ -958,6 +1054,7 @@ const server = http.createServer(async (req, res) => {
       region: "",
       city: ""
     });
+    if (decision.pass) Object.assign(record, { paid: true, priceUsd: decision.pass.extrasUsd, passId: decision.pass.id, passPlan: decision.pass.plan });
     const prior = readStore().filter((row) => row.email === intake.value.email && row.report && row.report.host === report.host && row.report.id !== report.id && row.report.insights && row.status !== "stopped")
       .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0];
     const history = prior ? core.compareRuns(prior.report, report) : null;

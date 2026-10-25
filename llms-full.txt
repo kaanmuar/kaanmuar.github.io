@@ -89,7 +89,7 @@ A comparison with a competitor is 9 USD for each competitor, with no return disc
 Before a paid run, the review form shows what each ticked option adds, and a total with any return discount before payment.
 A return within 30 days takes another 10 percent off the first time, 15 percent the second, and 20 percent after that. A return price or a code never takes a price below half its list price.
 Students and recent graduates use the code STUDENT for 50 percent off the full report, once per account.
-30-day passes of 29, 79, and 189 USD are coming soon.
+For a signed-in account, 30-day passes are one payment with no auto-renew: Freelancer is 29 USD for 10 runs (up to 20 pages, 2 links deep, 3 frameworks or tools), Team is 79 USD for 25 runs (up to 100 pages, 5 links deep, 8 frameworks or tools), and Pro is 189 USD for 60 runs with every framework and tool and the signed-in run. Each pass run includes the full report, the fix list, the case export, and the signals; a run that asks for more than the plan pays only for the extras. A reminder is sent 3 days before a pass ends.
 
 ## News
 
