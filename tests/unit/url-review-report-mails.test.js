@@ -27,6 +27,33 @@ test("an open report mail and PDF carry the fix of each finding, and a blurred o
   assert.match(customerMail.reportMail(Object.assign({}, open, { lang: "de" }), {}).html, /So beheben Sie es:<\/b>/);
 });
 
+test("the report mail and PDF write findings in the reader's language, and frost the translated line when unpaid (#1393)", () => {
+  const copy = JSON.parse(JSON.stringify(report));
+  const top = copy.insights.findings.find((item) => item.rank === 1);
+  top.msg = {
+    title: { id: "a11y-alt.title", vars: { n: 100 } },
+    evidence: { id: "a11y.on", vars: { pages: { items: ["/", "/showcase/", "/plugins/", "/themes/"], more: 6 } } },
+    fix: { id: "ax-fix.image-alt", vars: {} }
+  };
+  const es = require("../../functions/url-review-findings-copy.js").forLang("es");
+  const title = es.line(top.msg.title, "");
+  const fix = es.line(top.msg.fix, "");
+  assert.equal(title, "100 imágenes no tienen atributo alt");
+  const paid = Object.assign({}, record, { report: copy, paid: true, lang: "es" });
+  const mail = customerMail.reportMail(paid, {});
+  assert.ok(mail.html.includes(customerMail.esc(title)) && mail.html.includes(customerMail.esc(fix)));
+  assert.ok(mail.text.includes(title) && mail.text.includes(fix));
+  assert.ok(!mail.html.includes(customerMail.esc(top.title)) && !mail.html.includes(customerMail.esc(top.fix)));
+  const pdf = customerMail.reportPdf(paid).html;
+  assert.ok(pdf.includes(customerMail.esc(title)) && pdf.includes(customerMail.esc(es.line(top.msg.evidence, ""))) && pdf.includes(customerMail.esc(fix)));
+  const unpaid = Object.assign({}, record, { report: copy, lang: "es" });
+  const cut = customerMail.reportMail(unpaid, {});
+  assert.ok(cut.html.includes(customerMail.esc(customerMail.frost(title).shown)));
+  assert.ok(!cut.html.includes(customerMail.esc(title)) && !cut.html.includes(customerMail.esc(top.title)));
+  assert.ok(!customerMail.reportPdf(unpaid).html.includes(customerMail.esc(title)));
+  assert.equal(customerMail.reportMail(Object.assign({}, paid, { lang: "en" }), {}).html, customerMail.reportMail(Object.assign({}, record, { paid: true }), {}).html);
+});
+
 test("a review without a score does not promise six scores", () => {
   const plain = Object.assign({}, record, { report: Object.assign({}, report, { insights: { findings: report.insights.findings } }) });
   for (const lang of customerMail.LANGS) {
