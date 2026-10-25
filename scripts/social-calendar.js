@@ -24,6 +24,7 @@
 const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
+const { titleKey } = require("./build-social-hub");
 
 const ROOT = path.resolve(__dirname, "..");
 const POSTS = "media/social-posts";
@@ -86,12 +87,24 @@ function launchCalendar(csv) {
 // its hub date is its first calendar day, as build-social-hub.js reads it.
 function ownCaptions(dir, rows) {
   const slugs = Object.keys(rows).filter((slug) => fs.existsSync(path.join(dir, slug + "-captions.json")));
-  return slugs.length ? Object.fromEntries(slugs.map((slug) => [slug, { kind: "launch", date: rows[slug].map((r) => r.date).sort()[0] }])) : null;
+  return slugs.length ? Object.fromEntries(slugs.map((slug) => {
+    const c = JSON.parse(fs.readFileSync(path.join(dir, slug + "-captions.json"), "utf8"));
+    return [slug, { kind: "launch", date: rows[slug].map((r) => r.date).sort()[0], youtubeTitle: c.youtubeTitle }];
+  })) : null;
+}
+
+// Titles of the clips the hub's YouTube ledger lists: a post whose clip is on the channel went out, even when Buffer
+// sent it under a caption the Buffer seed cannot match (#1117).
+function onYoutube(root) {
+  const file = path.join(root, "assets/social/youtube.json");
+  if (!fs.existsSync(file)) return new Set();
+  return new Set(Object.values(JSON.parse(fs.readFileSync(file, "utf8")).videos || {}).map((video) => titleKey(video.title)).filter(Boolean));
 }
 
 // Batches with a calendar.csv of Date,Time,Channel,Post,Asset and captions.json or a captions file per post.
 function load(root = ROOT) {
   const books = { buffer: ledger.read(path.join(root, ledger.BUFFER)), facebook: ledger.read(path.join(root, ledger.FACEBOOK)) };
+  const clips = onYoutube(root);
   const batches = [];
   const posts = [];
   for (const batch of fs.readdirSync(path.join(root, POSTS)).sort()) {
@@ -114,7 +127,8 @@ function load(root = ROOT) {
       const id = batch + "/" + slug;
       const entries = (books.buffer.posts[id] || []).concat(books.facebook.posts[id] || []);
       posts.push({ id, batch, slug, kind, lane: LANES[kind], date: c.date, hold: !!c.hold, rows: rows[slug] || [],
-        sent: entries.some((e) => e.result === "sent"), queued: entries.some((e) => e.result === "queued") });
+        sent: entries.some((e) => e.result === "sent") || (!!c.youtubeTitle && clips.has(titleKey(c.youtubeTitle))),
+        queued: entries.some((e) => e.result === "queued") });
     });
   }
   return { batches, posts };
