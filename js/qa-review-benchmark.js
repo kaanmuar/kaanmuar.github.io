@@ -436,5 +436,5 @@
       '<p class="meta-line bench-note">' + esc(t("note")) + "</p></section>";
   }
 
-  window.QAReviewBenchmark = { html, analyse, t };
+  window.QAReviewBenchmark = { html, analyse, t, color };
 })();

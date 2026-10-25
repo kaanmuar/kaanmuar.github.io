@@ -137,6 +137,47 @@ test('a saved comparison sets the summary and every report section side by side,
   expect(seen.pdf[0]).not.toContain('<button');
 });
 
+test('one toggle per section folds it for every site together, the boxes of a row end level, and print and the PDF show every section open (#1459)', async ({ page }) => {
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
+  const box = page.locator('#multi-overlay');
+  const health = box.locator('.multi-sec[data-sec="health"]');
+  const toggle = health.getByRole('button', { name: 'Health score' });
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true', { timeout: 20000 });
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(health.locator('.multi-cell')).toHaveCount(3);
+  for (const index of [0, 1, 2]) await expect(health.locator('.multi-cell').nth(index)).toBeHidden();
+  await expect(box.locator('.multi-sec[data-sec="exec"] .multi-cell').first()).toBeVisible();
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  const edges = (sec, part) => box.locator('.multi-sec[data-sec="' + sec + '"] .multi-cell > ' + part).evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().bottom)));
+  expect(new Set(await edges('exec', '.card')).size).toBe(1);
+  expect(new Set(await edges('cases', '.card')).size).toBe(1);
+  const empty = box.locator('.multi-sec[data-sec="security"] .multi-cell').first();
+  await expect(empty.locator('.multi-empty')).toHaveText('Nothing here for this site.');
+  await expect(empty.locator('.card')).toBeHidden();
+
+  await box.getByRole('button', { name: 'Collapse all' }).click();
+  await expect(box.locator('.multi-sec .fold-toggle[aria-expanded="true"]')).toHaveCount(0);
+  await expect(box.getByRole('button', { name: 'Expand all' })).toHaveAttribute('aria-expanded', 'false');
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  expect(await health.locator('.multi-row').evaluate((row) => getComputedStyle(row).display)).toBe('grid');
+  await expect(health.locator('.multi-cell').first()).toBeVisible();
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+
+  const download = page.waitForEvent('download');
+  await box.getByRole('button', { name: 'Download PDF' }).click();
+  await download;
+  expect(seen.pdf[0]).toContain('<h2 translate="no"><span>Health score</span></h2>');
+  expect(seen.pdf[0]).not.toMatch(/<div class="multi-row fold-panel"[^>]*\shidden/);
+  await box.getByRole('button', { name: 'Expand all' }).click();
+  await expect(box.locator('.multi-sec .fold-toggle[aria-expanded="false"]')).toHaveCount(0);
+});
+
 test('the benchmark ranks every site by its health score and reads where the first site stands, on the page and in the PDF (#1438)', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
