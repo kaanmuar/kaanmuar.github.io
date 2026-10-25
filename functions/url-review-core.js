@@ -2763,6 +2763,7 @@ async function reviewTarget(rawUrl, hooks) {
   let speedPromise = null;
   let speedUntil = 0;
   let canSpeed = false;
+  let cruxPromise = Promise.resolve(null);
   const startSpeed = (url) => {
     if (speedPromise) return;
     speedUntil = Date.now() + SPEED_WAIT_MS;
@@ -2771,6 +2772,10 @@ async function reviewTarget(rawUrl, hooks) {
     speedPromise = canSpeed
       ? Promise.resolve().then(() => controls.pagespeed(url)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }))
       : Promise.resolve(null);
+    if (!halt() && typeof controls.crux === "function") {
+      note("Asking the Chrome UX Report for six months of real-user Core Web Vitals in the background.");
+      cruxPromise = Promise.resolve().then(() => controls.crux(url)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) }));
+    }
   };
   const browserLog = (text) => note("Browser: " + text);
   const refused = slowFirst || (first.status >= 400 && first.status < 500) || !!firstChallenge;
@@ -3089,6 +3094,15 @@ async function reviewTarget(rawUrl, hooks) {
   clearTimeout(speedTimer);
   if (speed && speed.ok) note("PageSpeed Insights answered: Lighthouse performance " + speed.score + "/100 on mobile" + (speed.field ? ", with real-user Chrome data for the " + (speed.field.scope === "page" ? "page" : "whole site") : ", without enough real-user Chrome data") + ".");
   else if (speed) note("PageSpeed Insights did not answer (" + (speed.error || "no answer") + "). The browser's lab values stand in.");
+  let trend = null;
+  try { trend = await withTimeout(cruxPromise, Math.max(3000, deadline - Date.now()), { ok: false, error: "no answer in time" }); } catch (error) { trend = null; }
+  if (trend && trend.ok) {
+    const forms = Object.keys(CRUX_FORMS).filter((form) => trend[form]);
+    note(forms.length
+      ? "The Chrome UX Report answered with " + Math.max(...forms.map((form) => trend[form].weeks)) + " weekly points for " + forms.map((form) => form + "s " + (trend[form].scope === "page" ? "on the page" : "across the whole site")).join(" and ") + "."
+      : "The Chrome UX Report has too few Chrome visits to this site for a six-month trend.");
+  } else if (trend) note("The Chrome UX Report history did not answer (" + (trend.error || "no answer") + ").");
+  const crux = trend && trend.ok && (trend.phone || trend.desktop) ? trend : null;
   if (browser && browser.ok) note("The browser pass finished in " + Math.round((browser.ms || 0) / 1000) + " s: " + ((browser.axe && browser.axe.pages.length) || 1) + " page" + ((browser.axe && browser.axe.pages.length) > 1 ? "s" : "") + " checked with axe-core" + (browser.consent && browser.consent.rejected ? ", and the cookie banner's reject button was pressed once" : "") + ".");
   else if (browser) note("The browser pass did not finish (" + (browser.error || "no answer") + "). The report uses the HTML alone.");
   let analysis = null;
@@ -3097,6 +3111,7 @@ async function reviewTarget(rawUrl, hooks) {
     analysis = insights.analyze({
       browser,
       pagespeed: speed && speed.ok ? speed : null,
+      crux,
       pages,
       robotsText,
       extras,
@@ -3168,6 +3183,7 @@ async function reviewTarget(rawUrl, hooks) {
     contacts: ownerContacts(pages, extras),
     browser: browser && browser.ok ? browser : (browser ? { ok: false, error: String(browser.error || "") } : null),
     pagespeed: speed && speed.ok ? speed : null,
+    crux,
     signature,
     counts: {
       pages: pages.length,
@@ -3870,6 +3886,47 @@ async function pageSpeed(url, key) {
   return summarizePageSpeed(await res.json());
 }
 
+const CRUX_METRICS = { lcp: "largest_contentful_paint", inp: "interaction_to_next_paint", cls: "cumulative_layout_shift" };
+const CRUX_FORMS = { phone: "PHONE", desktop: "DESKTOP" };
+
+function cruxDate(date) {
+  return date && date.year ? date.year + "-" + String(date.month).padStart(2, "0") + "-" + String(date.day).padStart(2, "0") : "";
+}
+
+// Each point is the 28-day window ending on its date; a week without enough traffic comes back as null or "NaN".
+function summarizeCruxHistory(data, scope) {
+  const record = data && data.record;
+  if (!record || !record.metrics) return null;
+  const periods = record.collectionPeriods || [];
+  const out = { scope, weeks: periods.length, from: cruxDate(periods.length && periods[0].lastDate), to: cruxDate(periods.length && periods[periods.length - 1].lastDate) };
+  Object.keys(CRUX_METRICS).forEach((key) => {
+    const metric = record.metrics[CRUX_METRICS[key]];
+    const p75s = metric && metric.percentilesTimeseries && metric.percentilesTimeseries.p75s;
+    if (!Array.isArray(p75s)) return;
+    const series = p75s.map((value) => (value == null || value === "" || !Number.isFinite(Number(value)) ? null : Number(value)));
+    if (series.some((value) => value !== null)) out[key] = series;
+  });
+  return out.lcp || out.inp || out.cls ? out : null;
+}
+
+async function cruxHistory(url, key) {
+  if (!key) return null;
+  const api = "https://chromeuxreport.googleapis.com/v1/records:queryHistoryRecord?key=" + encodeURIComponent(key);
+  const ask = async (target, scope) => {
+    const res = await fetch(api, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ metrics: Object.values(CRUX_METRICS) }, target)), signal: AbortSignal.timeout(10000) });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(res.status === 429 ? "the quota is used up" : "status " + res.status);
+    return summarizeCruxHistory(await res.json(), scope);
+  };
+  const page = new URL(url);
+  page.hash = "";
+  const out = { ok: true };
+  await Promise.all(Object.keys(CRUX_FORMS).map(async (form) => {
+    out[form] = (await ask({ url: page.toString(), formFactor: CRUX_FORMS[form] }, "page")) || (await ask({ origin: page.origin, formFactor: CRUX_FORMS[form] }, "origin"));
+  }));
+  return out;
+}
+
 const FILLER = "loremipsumdolorsitametconsectetur";
 const FROST_MARK = "\u2060";
 
@@ -3948,6 +4005,8 @@ module.exports = {
   testKeyMatches,
   pageSpeed,
   summarizePageSpeed,
+  cruxHistory,
+  summarizeCruxHistory,
   webRisk,
   domainFacts,
   readRdap,
