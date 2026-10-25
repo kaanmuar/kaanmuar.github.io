@@ -31,6 +31,9 @@ const JOB_PREFIX = "firebase-schedule-";
 const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const MODEL = "gemini-flash-latest";
+const core = require("./jarvis-core");
+const { AggregateField } = require("firebase-admin/firestore");
+const ADMIN_URL = ORIGIN + "/admin.html#stats/overview/1";
 
 function rangeDays(value) {
   const days = Number(value);
@@ -62,6 +65,13 @@ async function readJson(res, label) {
   return data;
 }
 
+// Failure causes are stored as { id, label, ... }; older rows may hold a plain string.
+function causeLabel(row) {
+  const cause = row && row.cause;
+  if (cause && typeof cause === "object") return String(cause.label || cause.id || "unknown");
+  return String(cause || (row && row.kind) || "unknown");
+}
+
 // --- health: server-only Firestore collections -------------------------------------------------------------
 
 async function health(db, { days, now }) {
@@ -85,7 +95,7 @@ async function health(db, { days, now }) {
     read("url_review_captures", "at")
   ]);
   const causes = {}, failedHosts = {}, rerunStatus = {}, alertKinds = {}, noticeStatus = {}, captureKinds = {};
-  failures.forEach((row) => { count(causes, row.cause || row.kind || "unknown"); count(failedHosts, row.host); });
+  failures.forEach((row) => { count(causes, causeLabel(row)); count(failedHosts, row.host); });
   reruns.forEach((row) => count(rerunStatus, row.status));
   alerts.forEach((row) => count(alertKinds, row.kind || row.title));
   notices.forEach((row) => count(noticeStatus, row.unlistedAt ? "unlisted" : row.status));
@@ -94,7 +104,7 @@ async function health(db, { days, now }) {
   return {
     jobs: runs.map((row) => ({ job: row.job || row.id, ok: row.ok !== false, startedAt: row.startedAt || "", endedAt: row.endedAt || "", note: String(row.note || "").slice(0, 160), error: String(row.error || "").slice(0, 200) }))
       .sort((a, b) => String(b.endedAt).localeCompare(String(a.endedAt))),
-    failures: { total: failures.length, causes: top(causes), hosts: top(failedHosts, 8), latest: failures.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8).map((row) => ({ at: row.at, host: row.host, cause: row.cause || row.kind, message: String((row.error && row.error.message) || "").slice(0, 140) })) },
+    failures: { total: failures.length, causes: top(causes), hosts: top(failedHosts, 8), latest: failures.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8).map((row) => ({ at: row.at, host: row.host, cause: causeLabel(row), message: String((row.error && row.error.message) || "").slice(0, 140) })) },
     reruns: { total: reruns.length, status: top(rerunStatus), held: reruns.filter((row) => row.status === "held").length },
     alerts: { total: alerts.length, kinds: top(alertKinds), latest: alerts.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8).map((row) => ({ at: row.at, kind: row.kind, title: String(row.title || "").slice(0, 120), url: row.url || "" })) },
     notices: { total: notices.length, status: top(noticeStatus) },
@@ -114,16 +124,22 @@ function jobName(full) {
 async function jobs(fetchImpl) {
   const bearer = await googleToken(fetchImpl, "https://www.googleapis.com/auth/cloud-platform");
   const data = await readJson(await fetchImpl(SCHEDULER + "?pageSize=200", { headers: { Authorization: "Bearer " + bearer }, signal: AbortSignal.timeout(15000) }), "Scheduler");
-  return (data.jobs || []).map((job) => ({
-    name: jobName(job.name),
-    schedule: job.schedule || "",
-    timeZone: job.timeZone || "",
-    state: job.state || "",
-    lastAttempt: job.lastAttemptTime || "",
-    nextRun: job.scheduleTime || "",
-    ok: !(job.status && job.status.code),
-    error: job.status && job.status.message ? String(job.status.message).slice(0, 160) : ""
-  })).sort((a, b) => a.name.localeCompare(b.name));
+  // A job that never ran (a monthly report before its first 1st) carries status code -1 and no attempt time.
+  return (data.jobs || []).map((job) => {
+    const code = Number(job.status && job.status.code) || 0;
+    const ran = !!job.lastAttemptTime;
+    return {
+      name: jobName(job.name),
+      schedule: job.schedule || "",
+      timeZone: job.timeZone || "",
+      state: job.state || "",
+      lastAttempt: job.lastAttemptTime || "",
+      nextRun: job.scheduleTime || "",
+      ok: !ran || code <= 0,
+      error: ran && code > 0 ? String((job.status && job.status.message) || "code " + code).slice(0, 160) : "",
+      note: ran ? "" : "not run yet"
+    };
+  }).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 async function runJob(fetchImpl, name) {
@@ -152,7 +168,7 @@ async function github(fetchImpl, token, { now }) {
   ]);
   const byWorkflow = {};
   (runs.workflow_runs || []).forEach((run) => {
-    if (byWorkflow[run.name] || run.status !== "completed") return;
+    if (byWorkflow[run.name] || run.status !== "completed" || run.conclusion === "cancelled") return;
     byWorkflow[run.name] = { name: run.name, conclusion: run.conclusion, at: run.updated_at, url: run.html_url, sha: String(run.head_sha || "").slice(0, 7) };
   });
   const areas = {};
@@ -219,12 +235,13 @@ async function ga4(fetchImpl, { days }) {
 // --- cloudflare -----------------------------------------------------------------------------------------------
 
 async function cloudflare(fetchImpl, env, { days, now }) {
-  if (!env.CLOUDFLARE_API_TOKEN || !env.CLOUDFLARE_ZONE_ID) return { ok: false, error: "Cloudflare token or zone is not set." };
+  const token = env.CLOUDFLARE_ANALYTICS_TOKEN || env.CLOUDFLARE_API_TOKEN;
+  if (!token || !env.CLOUDFLARE_ZONE_ID) return { ok: false, error: "Cloudflare token or zone is not set." };
   const from = isoDay(now - Math.min(rangeDays(days), 30) * DAY);
   const query = `{viewer{zones(filter:{zoneTag:"${env.CLOUDFLARE_ZONE_ID.replace(/[^a-f0-9]/gi, "")}"}){httpRequests1dGroups(limit:60,orderBy:[date_ASC],filter:{date_geq:"${from}"}){dimensions{date} sum{requests bytes cachedRequests threats pageViews} uniq{uniques}}}}}`;
   const data = await readJson(await fetchImpl("https://api.cloudflare.com/client/v4/graphql", {
     method: "POST",
-    headers: { Authorization: "Bearer " + env.CLOUDFLARE_API_TOKEN, "Content-Type": "application/json" },
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
     body: JSON.stringify({ query }),
     signal: AbortSignal.timeout(15000)
   }), "Cloudflare");
@@ -346,4 +363,134 @@ function briefingMail(snapshot, text) {
   return { subject: "Jarvis briefing: " + String((snapshot && snapshot.range) || "") , rows, body: String(text || "").slice(0, 8000) };
 }
 
-module.exports = { PAGES, TTL, rangeDays, health, jobs, jobName, runJob, github, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, briefingMail, top };
+
+// --- settings: goals, thresholds, mail switches (jarvis_settings/main) -----------------------------------------
+
+const MAIL_DEFAULTS = { daily: true, gemini: true, watch: true };
+
+function normalizeSettings(data) {
+  const d = data || {};
+  const mail = Object.assign({}, MAIL_DEFAULTS);
+  Object.keys(MAIL_DEFAULTS).forEach((key) => { if (d.mail && typeof d.mail[key] === "boolean") mail[key] = d.mail[key]; });
+  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, updatedAt: String(d.updatedAt || "") };
+}
+
+async function readSettings(db) {
+  const snap = await db.collection("jarvis_settings").doc("main").get().catch(() => null);
+  return normalizeSettings(snap && snap.exists ? snap.data() : {});
+}
+
+async function saveSettings(db, input, by) {
+  const clean = normalizeSettings(input);
+  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, updatedAt: new Date().toISOString(), by: String(by || "") };
+  await db.collection("jarvis_settings").doc("main").set(doc);
+  return normalizeSettings(doc);
+}
+
+// --- goals: count and sum aggregations, a few reads each --------------------------------------------------------
+
+const SITE_KINDS = { visits: "visit", exports: "export", runs: "run" };
+
+async function goalValue(db, goal, start, end) {
+  const total = async (q) => (await q.count().get()).data().count;
+  const between = (q, iso) => q.where("createdAt", ">=", iso ? start.toISOString() : start).where("createdAt", "<", iso ? end.toISOString() : end);
+  if (SITE_KINDS[goal.metric] && ["cv", "studio", "lab"].includes(goal.product)) {
+    return total(between(db.collection("site_events").where("site", "==", goal.product).where("kind", "==", SITE_KINDS[goal.metric])));
+  }
+  if (goal.product === "review") {
+    if (goal.metric === "opens") return total(between(db.collection("url_review_opens")));
+    if (goal.metric === "reviews") return total(between(db.collection("url_reviews"), true));
+    const paid = between(db.collection("url_reviews").where("paid", "==", true), true);
+    if (goal.metric === "paid") return total(paid);
+    const snap = await paid.aggregate({ usd: AggregateField.sum("priceUsd") }).get();
+    return Math.round((Number(snap.data().usd) || 0) * 100) / 100;
+  }
+  if (goal.product === "inbox") return total(between(db.collection(goal.metric === "ratings" ? "ratings" : "messages")));
+  throw new Error("No such goal.");
+}
+
+async function goals(db, settings, { now }) {
+  const at = new Date(now);
+  const list = (settings || {}).goals || [];
+  return Promise.all(list.map(async (goal) => {
+    const w = core.periodWindow(goal.period, at);
+    try {
+      return core.goalProgress(goal, await goalValue(db, goal, w.start, w.end), at);
+    } catch (error) {
+      return Object.assign(core.goalProgress(goal, 0, at), { error: String(error.message || error).slice(0, 160) });
+    }
+  }));
+}
+
+// --- daily briefing: the last 24 hours against the 24 before, with the same rules as the page --------------------
+
+async function dailyProducts(db, { now }) {
+  const end = new Date(now);
+  const start = new Date(now - DAY);
+  const priorStart = new Date(now - 2 * DAY);
+  const window = { start, end, days: 1, prior: { start: priorStart, end: start } };
+  const rows = async (q) => (await q.limit(20000).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+  const since = (name, iso) => db.collection(name).where("createdAt", ">=", iso ? priorStart.toISOString() : priorStart);
+  const [events, opens, reviews, messages, ratings, pending, hubSnap] = await Promise.all([
+    rows(since("site_events")), rows(since("url_review_opens")), rows(since("url_reviews", true)),
+    rows(since("messages")), rows(since("ratings")),
+    rows(db.collection("ratings").where("status", "==", "pending")),
+    db.collection("socialHubStats").doc("latest").get().catch(() => null)
+  ]);
+  const inside = (row) => { const when = core.toDate(row.createdAt); return !!when && when >= start; };
+  const now1 = events.filter(inside);
+  const was = events.filter((row) => !inside(row));
+  const seen = new Set(ratings.map((row) => row.id));
+  const allRatings = ratings.concat(pending.filter((row) => !seen.has(row.id)));
+  const products = {
+    inbox: core.summarizeInbox(messages, allRatings, window, window.prior, (email) => !core.isTestEmail(email)),
+    cv: core.summarizeSite("cv", now1, was, window),
+    studio: core.summarizeSite("studio", now1, was, window),
+    lab: core.summarizeSite("lab", now1, was, window),
+    review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window),
+    hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window)
+  };
+  return { window, products };
+}
+
+function compact(products) {
+  return Object.keys(products).reduce((out, key) => {
+    const p = products[key];
+    out[key] = { name: (core.PRODUCTS.find((row) => row.key === key) || {}).name || key, kpis: (p.kpis || []).map((k) => ({ label: k.label, value: k.value, prior: k.prior, delta: k.delta })) };
+    return out;
+  }, {});
+}
+
+const LEVEL_MARK = { alert: "ALERT", warn: "WARN", good: "GOOD", info: "INFO" };
+
+function dailyMail({ products, items, goalRows, aiText, dateLabel }) {
+  const counts = items.reduce((m, row) => { m[row.level] = (m[row.level] || 0) + 1; return m; }, {});
+  const rows = Object.keys(products).map((key) => {
+    const p = products[key];
+    const value = (p.kpis || []).slice(0, 4).map((k) => k.label + " " + k.value + (k.delta ? " (" + k.delta + ")" : "")).join(" · ");
+    return { label: (core.PRODUCTS.find((row) => row.key === key) || {}).name || key, value: value || "no data" };
+  });
+  goalRows.forEach((g) => rows.push({ label: "Goal", value: g.label + ": " + g.value + " of " + g.target + " (" + g.pct + "%, " + g.status.replace("-", " ") + ")" }));
+  const lines = items.map((row) => LEVEL_MARK[row.level] + "  " + row.text);
+  const body = (aiText ? aiText.trim() + "\n\n" : "") + (lines.length ? lines.join("\n") : "Nothing needs you today.");
+  const head = (counts.alert ? counts.alert + " alert" + (counts.alert > 1 ? "s" : "") : "") + (counts.alert && counts.warn ? ", " : "") + (counts.warn ? counts.warn + " warning" + (counts.warn > 1 ? "s" : "") : "");
+  return { subject: "Jarvis daily briefing, " + dateLabel + (head ? ": " + head : ": all clear"), intro: "Your last 24 hours across the CV, QA Studio, QA Lab, URL Review, the Social hub and the systems behind them.", rows, body: body.slice(0, 12000) };
+}
+
+// --- watch: alerts only, once a day per issue -------------------------------------------------------------------
+
+function watchItems(external, thresholds) {
+  return core.briefing({ products: {}, external, thresholds }).filter((row) => row.level === "alert");
+}
+
+async function unsentToday(db, items, { now }) {
+  const day = core.zoneParts(new Date(now)).day;
+  const ref = db.collection("jarvis_watch").doc(day);
+  const snap = await ref.get().catch(() => null);
+  const sent = (snap && snap.exists && snap.data().sent) || {};
+  const fresh = items.filter((row) => !sent[row.key]);
+  return { day, ref, sent, fresh };
+}
+
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, causeLabel, health, jobs, jobName, runJob, github, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, briefingMail, top,
+  normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday };

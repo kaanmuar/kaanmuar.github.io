@@ -108,7 +108,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
         rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, alerts: [], reports: [],
-        external: {}, pending: {}, summaries: {}, brief: [], ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, truncated: false,
+        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, truncated: false,
         panels: new Map(), voice: null, listening: false, timers: []
     };
     readHash();
@@ -131,6 +131,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
           <button type="button" class="jv-btn" data-act="speak" title="Read the briefing aloud">🔊</button>
           <button type="button" class="jv-btn" data-act="listen" title="Talk to Jarvis" aria-pressed="false">🎙</button>
           <button type="button" class="jv-btn jv-k" data-act="palette" title="Command bar (⌘K / Ctrl+K)">⌘K</button>
+          <button type="button" class="jv-btn" data-act="settings" title="Goals, thresholds and email (G)">⚙</button>
           <div class="jv-menu"><button type="button" class="jv-btn" data-menu="share">Share ▾</button><div class="jv-menu-list" data-list="share" hidden>
             <button type="button" data-act="copy-link">Copy a link to this view</button><button type="button" data-act="web-share">Share…</button>
             <button type="button" data-act="copy-brief">Copy the briefing</button><button type="button" data-act="email">Email me the briefing</button></div></div>
@@ -145,6 +146,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
       <div class="jv-print-head"><strong>Jarvis briefing</strong> · <span data-print-range></span> · generated <span data-print-at></span></div>
       <main id="jv-views">${C.PRODUCTS.map((p) => `<section class="jv-view" data-view="${p.key}" role="tabpanel" aria-label="${esc(p.name)}"${p.key === S.product ? '' : ' hidden'}></section>`).join('')}</main>
       <div class="jv-palette" hidden><div class="jv-palette-box" role="dialog" aria-label="Command bar"><input id="jv-cmd" type="text" placeholder="Type a command, a product, or ask Jarvis anything…" autocomplete="off"><ul id="jv-cmd-list" role="listbox"></ul><p class="jv-note">↑↓ to move · Enter to run · Esc to close · end with ? to ask Gemini</p></div></div>
+      <div class="jv-settings" hidden><form class="jv-settings-box" data-settings role="dialog" aria-label="Jarvis settings"></form></div>
       <div class="jv-toast" role="status" hidden></div>
     </div>`;
     const root = host.querySelector('.jv');
@@ -256,10 +258,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
-            try { S.external[op] = await call(op); } catch (error) { S.external[op] = { ok: false, error: error.message }; }
+            try {
+                const out = await call(op);
+                if (op === 'settings') { if (out.ok) S.settings = out; } else if (op === 'goals') { if (out.ok) S.goals = out.goals || []; } else S.external[op] = out;
+            } catch (error) { if (op !== 'settings' && op !== 'goals') S.external[op] = { ok: false, error: error.message }; }
             S.pending[op] = false;
             compute();
             render();
@@ -288,7 +293,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         }, w);
         sum.hub = C.summarizeHub(S.hub, S.rows.events, w);
         S.summaries = sum;
-        S.brief = C.briefing({ products: sum, external: S.external });
+        S.brief = C.briefing({ products: sum, external: S.external, thresholds: (S.settings || {}).thresholds, goals: S.goals });
     }
 
     function snapshot() {
@@ -340,6 +345,27 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             <form class="jv-ask" data-ask><input type="text" name="q" placeholder="Ask Jarvis: why did opens jump? which source pays? what should I fix first?" aria-label="Ask Jarvis"><button type="submit" class="jv-btn">Ask</button></form></section>`;
     }
 
+    function goalRow(g) {
+        const fill = Math.min(100, g.pct);
+        const tone = g.status === 'done' ? 'is-done' : g.status === 'on-track' ? 'is-on' : g.status === 'behind' ? 'is-behind' : 'is-far';
+        const word = { done: 'met', 'on-track': 'on track', behind: 'behind', 'far-behind': 'far behind' }[g.status];
+        return `<li class="jv-goal ${tone}"><div class="jv-goal-head"><span>${esc(g.label)}</span><b>${fmt(g.value)} / ${fmt(g.target)}</b></div>
+            <div class="jv-goal-bar" title="${g.elapsed}% of the period gone"><i style="width:${fill}%"></i><s style="left:${Math.min(100, g.elapsed)}%"></s></div>
+            <small>${g.pct}% · ${word}${g.status !== 'done' ? ` · pace ${fmt(g.projected)}` : ''}${g.error ? ` · <em>${esc(g.error)}</em>` : ''}</small></li>`;
+    }
+
+    function goalsPanel(product) {
+        const list = S.goals.filter((g) => product === 'overview' || g.product === product);
+        if (!list.length && product !== 'overview') return '';
+        const body = list.length ? `<ul class="jv-goals">${list.map(goalRow).join('')}</ul>` : `<p class="jv-empty">No goals yet.</p><div class="jv-actions"><button type="button" class="jv-btn" data-act="settings">Set goals</button></div>`;
+        return panel(product + '-goals', 'Goals', body, { data: list.map((g) => ({ goal: g.label, value: g.value, target: g.target, pct: g.pct, status: g.status, pace: g.projected })), note: list.length ? 'The marker shows how much of the period has gone.' : '' });
+    }
+
+    function tileGoal(product) {
+        const g = S.goals.find((x) => x.product === product);
+        return g ? `<span class="jv-tile-goal" title="${esc(g.label)}: ${g.pct}%"><i class="${g.status}" style="width:${Math.min(100, g.pct)}%"></i></span>` : '';
+    }
+
     function speedCard(product) {
         const sp = S.external.speed;
         const up = S.external.uptime;
@@ -368,7 +394,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         const s = S.summaries[key];
         const L = s.lists;
         const name = (C.PRODUCTS.find((p) => p.key === key) || {}).name;
-        return kpis(s.kpis) + `<div class="jv-grid">${briefPanel(key)}
+        return kpis(s.kpis) + `<div class="jv-grid">${briefPanel(key)}${goalsPanel(key)}
             ${panel(key + '-trend', name + ' visits per day', area(s.series.labels, [{ name: 'Visits', values: s.series.values, color: COLORS.cyan }]), { wide: true, data: s.series.labels.map((d, i) => ({ day: d, visits: s.series.values[i] })) })}
             ${panel(key + '-heat', 'When they come', heat(s.heatmap, s.peak), { wide: true })}
             ${speedCard(key)}${gaCard(key)}
@@ -392,21 +418,21 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             if (p.key === 'traffic' && e.ga4 && e.ga4.ok) { const n = e.ga4.groups.reduce((a, g) => a + g.sessions, 0); const b = e.ga4.groups.reduce((a, g) => a + g.priorSessions, 0); const d = C.delta(n, b); main = { label: 'GA4 sessions', value: n, delta: d.text, dir: d.dir }; series = e.ga4.daily.map((x) => x.sessions); }
             if (p.key === 'systems') { const r = C.readiness(e); main = { label: 'Readiness', value: r === null ? '—' : r + '%' }; }
             const alerts = S.brief.filter((b) => b.product === p.key && (b.level === 'alert' || b.level === 'warn')).length;
-            return `<button type="button" class="jv-tile${alerts ? ' has-alert' : ''}" data-go="${p.key}"><span class="jv-tile-name">${esc(p.name)}</span><strong>${main ? fmt(main.value) : '—'}</strong><small>${main ? esc(main.label) : ''} ${main && main.delta ? `<em class="${main.dir > 0 ? 'up' : main.dir < 0 ? 'down' : ''}">${esc(main.delta)}</em>` : ''}</small>${spark(series, alerts ? COLORS.amber : COLORS.cyan)}${alerts ? `<b class="jv-badge">${alerts}</b>` : ''}</button>`;
+            return `<button type="button" class="jv-tile${alerts ? ' has-alert' : ''}" data-go="${p.key}"><span class="jv-tile-name">${esc(p.name)}</span><strong>${main ? fmt(main.value) : '—'}</strong><small>${main ? esc(main.label) : ''} ${main && main.delta ? `<em class="${main.dir > 0 ? 'up' : main.dir < 0 ? 'down' : ''}">${esc(main.delta)}</em>` : ''}</small>${spark(series, alerts ? COLORS.amber : COLORS.cyan)}${tileGoal(p.key)}${alerts ? `<b class="jv-badge">${alerts}</b>` : ''}</button>`;
         }).join('');
         const feed = [].concat(
             S.rows.events.slice(0, 40).map((r) => ({ at: r.createdAt, text: `${(C.PRODUCTS.find((p) => p.key === r.site) || { name: r.site }).name}: ${r.kind === 'visit' ? 'visit from ' + C.openSource(r) : C.actionTitle(r)}` })),
             S.rows.opens.slice(0, 20).map((r) => ({ at: r.createdAt, text: `URL Review: open from ${C.openSource(r)}` })),
             S.rows.reviews.slice(0, 20).map((r) => ({ at: r.createdAt, text: `URL Review: ${r.paid ? 'paid ' : ''}review of ${esc(String(r.requestedUrl || r.url || '').replace(/^https?:\/\//, '').slice(0, 50))} (${r.status || '…'})` }))
         ).filter((x) => C.toDate(x.at)).sort((a, b) => C.toDate(b.at) - C.toDate(a.at)).slice(0, 18);
-        out.overview = `<div class="jv-tiles">${tiles}</div><div class="jv-grid">${briefPanel('overview')}
+        out.overview = `<div class="jv-tiles">${tiles}</div><div class="jv-grid">${briefPanel('overview')}${goalsPanel('overview')}
             ${panel('overview-feed', 'Live feed', feed.length ? `<ul class="jv-feed">${feed.map((f) => `<li><time>${when(f.at)}</time><span>${esc(f.text)}</span></li>`).join('')}</ul>` : '<p class="jv-empty">No events yet.</p>', { tall: true, data: feed.map((f) => ({ at: (C.toDate(f.at) || new Date()).toISOString(), event: f.text })) })}
             ${panel('overview-rings', 'Systems at a glance', `<div class="jv-rings">${ring(C.readiness(e), 'ready')}${(e.speed && e.speed.pages ? e.speed.pages : []).map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 84)).join('')}</div>`)}
             ${panel('overview-mix', 'Visits by product', bars(['cv', 'studio', 'lab'].map((k) => ({ label: (C.PRODUCTS.find((p) => p.key === k) || {}).name, value: s[k].totals.visits })).concat([{ label: 'URL Review (opens)', value: s.review.totals.opens }]), { color: COLORS.violet }), { data: ['cv', 'studio', 'lab'].map((k) => ({ product: k, visits: s[k].totals.visits, clicks: s[k].totals.clicks, exports: s[k].totals.exports, runs: s[k].totals.runs })) })}
         </div>${S.truncated ? `<p class="jv-note">This range holds more than ${fmt(EVENT_CAP)} site events; breakdowns cover the newest ${fmt(EVENT_CAP)}.</p>` : ''}`;
 
         const i = s.inbox;
-        out.inbox = kpis(i.kpis) + `<div class="jv-grid">${briefPanel('inbox')}
+        out.inbox = kpis(i.kpis) + `<div class="jv-grid">${briefPanel('inbox')}${goalsPanel('inbox')}
             ${panel('inbox-trend', 'Messages and ratings per day', area(i.series.labels, [{ name: 'Messages', values: i.series.values, color: COLORS.cyan }, { name: 'Ratings', values: i.ratingSeries.values, color: COLORS.amber }]), { wide: true, data: i.series.labels.map((d, k) => ({ day: d, messages: i.series.values[k], ratings: i.ratingSeries.values[k] })) })}
             ${listPanel('inbox', 'topics', 'Message topics', i.lists.topics)}${listPanel('inbox', 'stars', 'Rating mix', i.lists.stars, { color: COLORS.amber })}${listPanel('inbox', 'status', 'Rating status', i.lists.status, { color: COLORS.green })}
         </div><p class="jv-note">The Real / Tests / All switch applies to the inbox. Open the Messages and CV Ratings tabs to answer.</p>`;
@@ -415,7 +441,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
 
         const r = s.review;
         const h = e.health;
-        out.review = kpis(r.kpis) + `<div class="jv-grid">${briefPanel('review')}
+        out.review = kpis(r.kpis) + `<div class="jv-grid">${briefPanel('review')}${goalsPanel('review')}
             ${panel('review-funnel', 'Funnel', funnel(r.funnel), { data: r.funnel })}
             ${panel('review-trend', 'Opens and reviews per day', area(r.series.labels, [{ name: 'Opens', values: r.series.values, color: COLORS.cyan }, { name: 'Reviews', values: r.reviewSeries.values, color: COLORS.green }]), { wide: true, data: r.series.labels.map((d, k) => ({ day: d, opens: r.series.values[k], reviews: r.reviewSeries.values[k] })) })}
             ${panel('review-heat', 'When they open it', heat(r.heatmap, r.peak), { wide: true })}
@@ -459,10 +485,10 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         const up = e.uptime;
         const sp = e.speed;
         out.systems = `<div class="jv-grid">${briefPanel('systems')}
-            ${panel('systems-ready', 'Readiness', `<div class="jv-rings">${ring(C.readiness(e), 'ready', null, 120)}</div><p class="jv-note">Share of checks that pass: scheduled jobs, CI on main, uptime under 3 s, PageSpeed 50 or more.</p>`)}
+            ${panel('systems-ready', 'Readiness', `<div class="jv-rings">${ring(C.readiness(e), 'ready', null, 120)}</div><p class="jv-note">Share of checks that pass: scheduled jobs, CI on main, uptime and PageSpeed within your limits (⚙ Settings).</p>`)}
             ${panel('systems-uptime', 'Uptime', up && up.ok ? table([['Page', (p) => `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a>`], ['Status', (p) => `<span class="jv-chip ${p.ok ? 'c-fast' : 'c-slow'}">${esc(p.status || 'down')}</span>`], ['Time', (p) => fmt(p.ms) + ' ms'], ['Size', (p) => p.bytes ? Math.round(p.bytes / 1024) + ' KB' : '']], up.pages) + `<p class="jv-note">TLS certificate: ${up.tlsDaysLeft === null ? 'unknown' : esc(up.tlsDaysLeft) + ' days left'}.</p>` : `<p class="jv-empty">${S.pending.uptime ? 'Pinging…' : esc((up && up.error) || 'Not loaded.')}</p>`, { data: up && up.pages })}
             ${panel('systems-speed', 'PageSpeed (mobile) and CrUX', sp && sp.ok ? `<div class="jv-rings">${sp.pages.map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 90)).join('')}</div>${sp.crux && sp.crux.ok && sp.crux.phone ? `<p class="jv-note">CrUX phone LCP p75 over ${sp.crux.phone.weeks || ''} weeks: ${spark(sp.crux.phone.lcp || [], COLORS.amber)}</p>` : ''}` : `<p class="jv-empty">${S.pending.speed ? 'Running PageSpeed on five pages (up to 90 s)…' : esc((sp && sp.error) || 'Not loaded.')}</p>`, { wide: true, data: sp && sp.pages && sp.pages.map((p) => ({ page: p.name, score: p.score, lcp: p.lab && p.lab.lcp, tbt: p.lab && p.lab.tbt, cls: p.lab && p.lab.cls, error: p.error })) })}
-            ${panel('systems-jobs', 'Scheduled jobs', jobs.length ? table([['Job', (j) => esc(j.name)], ['Schedule', (j) => `<code>${esc(j.schedule)}</code>`], ['Last run', (j) => esc(when(j.lastAttempt))], ['State', (j) => `<span class="jv-chip ${j.ok ? 'c-fast' : 'c-slow'}">${j.ok ? 'ok' : esc(j.error || 'error')}</span>`], ['', (j) => `<button type="button" class="jv-btn small" data-run="${esc(j.name)}">Run now</button>`]], jobs) : `<p class="jv-empty">${S.pending.jobs ? 'Reading Cloud Scheduler…' : esc((e.jobs && e.jobs.error) || 'Not loaded.')}</p>`, { wide: true, data: jobs })}
+            ${panel('systems-jobs', 'Scheduled jobs', jobs.length ? table([['Job', (j) => esc(j.name)], ['Schedule', (j) => `<code>${esc(j.schedule)}</code>`], ['Last run', (j) => esc(when(j.lastAttempt))], ['State', (j) => `<span class="jv-chip ${j.ok ? (j.note ? '' : 'c-fast') : 'c-slow'}">${j.ok ? esc(j.note || 'ok') : esc(j.error || 'error')}</span>`], ['', (j) => `<button type="button" class="jv-btn small" data-run="${esc(j.name)}">Run now</button>`]], jobs) : `<p class="jv-empty">${S.pending.jobs ? 'Reading Cloud Scheduler…' : esc((e.jobs && e.jobs.error) || 'Not loaded.')}</p>`, { wide: true, data: jobs })}
             ${panel('systems-ops', 'Job runs (ops_runs)', h && h.jobs ? table([['Job', (j) => esc(j.job)], ['Ended', (j) => esc(when(j.endedAt))], ['Result', (j) => `<span class="jv-chip ${j.ok ? 'c-fast' : 'c-slow'}">${j.ok ? 'ok' : 'failed'}</span>`], ['Note', (j) => esc(j.error || j.note)]], h.jobs) : `<p class="jv-empty">${S.pending.health ? 'Asking the server…' : esc((h && h.error) || 'Not loaded.')}</p>`, { wide: true, data: h && h.jobs })}
             ${panel('systems-ci', 'CI on main', gh && gh.ok ? `<div class="jv-ci">${gh.ci.map((c) => `<a class="jv-chip ${c.conclusion === 'success' ? 'c-fast' : c.conclusion === 'skipped' ? '' : 'c-slow'}" href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.name)} · ${esc(c.conclusion)} · ${esc(c.sha)}</a>`).join('')}</div>` : `<p class="jv-empty">${S.pending.github ? 'Asking GitHub…' : esc((gh && gh.error) || 'Not loaded.')}</p>`, { data: gh && gh.ci })}
             ${gh && gh.ok ? listPanel('systems', 'bugs', `Open bugs by area (${gh.openBugs})`, gh.bugAreas, { color: COLORS.pink }) : ''}
@@ -507,10 +533,12 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         const ready = C.readiness(S.external);
         $('#jv-ready').textContent = ready === null ? '—' : ready + '%';
         root.style.setProperty('--ready', ready === null ? 0.5 : ready / 100);
-        root.classList.toggle('is-degraded', ready !== null && ready < 80);
+        root.classList.toggle('is-degraded', ready !== null && ready < C.thresholds((S.settings || {}).thresholds).readinessMin);
         const alerts = S.brief.filter((b) => b.level === 'alert').length;
         const warns = S.brief.filter((b) => b.level === 'warn').length;
-        setStatus(alerts ? `${alerts} alert${alerts > 1 ? 's' : ''} and ${warns} warning${warns === 1 ? '' : 's'} need you.` : warns ? `All systems up. ${warns} thing${warns > 1 ? 's' : ''} to look at.` : 'All systems nominal.');
+        const checked = ['health', 'jobs', 'uptime'].some((k) => S.external[k] && !S.pending[k]);
+        const things = `${warns} thing${warns > 1 ? 's' : ''} to look at`;
+        setStatus(alerts ? `${alerts} alert${alerts > 1 ? 's' : ''} and ${warns} warning${warns === 1 ? '' : 's'} need you.` : !checked ? (warns ? `${things}. Checking systems…` : 'Checking systems…') : warns ? `All systems up. ${things}.` : 'All systems nominal.');
         $$('[data-mail]').forEach((b) => b.classList.toggle('on', b.dataset.mail === S.mail));
         $('[data-print-range]').textContent = (RANGES.find(([v]) => v === S.range) || [])[1] || '';
         $('[data-print-at]').textContent = new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' });
@@ -723,6 +751,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             case 'speak': speakBriefing(); break;
             case 'stop': if (window.speechSynthesis) window.speechSynthesis.cancel(); break;
             case 'run-job': runJob(cmd.job); break;
+            case 'settings': openSettings(); break;
+            case 'daily': dailyNow(); break;
             case 'ask': { const text = await ask(cmd.question); if (text) say(text); break; }
             default: break;
         }
@@ -747,6 +777,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             { label: 'Export this product (PNG)', fn: () => run({ type: 'export', format: 'png' }) }, { label: 'Download the briefing (Markdown)', fn: () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()) },
             { label: 'Copy a link to this view', fn: () => copy(link(), 'Link copied.') }, { label: 'Copy the briefing', fn: () => copy(markdown(), 'Briefing copied.') },
             { label: 'Share…', fn: webShare }, { label: 'Email me the briefing', fn: emailBriefing },
+            { label: 'Settings: goals, thresholds, email', hint: 'G', fn: openSettings }, { label: 'Send the daily briefing email now', fn: dailyNow },
             { label: 'Send the daily URL Review report', fn: () => sendReport('review', 'daily') }, { label: 'Send the daily site report', fn: () => sendReport('site', 'daily') }
         );
         ((S.external.jobs && S.external.jobs.jobs) || []).forEach((j) => list.push({ label: `Run ${j.name}`, hint: j.schedule, fn: () => runJob(j.name) }));
@@ -792,6 +823,85 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         toast(out.ok ? out.note : 'Report failed: ' + out.error, 5000);
     }
 
+    // --- settings: goals, thresholds and email, saved through the jarvis function ------------------------------
+
+    function draftSettings() {
+        const s = S.settings || {};
+        return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true }, s.mail || {}) };
+    }
+
+    function goalEditor(g, i) {
+        const products = Object.keys(C.GOAL_METRICS);
+        const metrics = C.GOAL_METRICS[g.product] || C.GOAL_METRICS.cv;
+        const opt = (value, label, on) => `<option value="${esc(value)}"${on ? ' selected' : ''}>${esc(label)}</option>`;
+        return `<div class="jv-goal-edit" data-goal="${i}">
+            <select name="g-product" aria-label="Product" data-menu-ready="1">${products.map((k) => opt(k, (C.PRODUCTS.find((p) => p.key === k) || {}).name, k === g.product)).join('')}</select>
+            <select name="g-metric" aria-label="Metric" data-menu-ready="1">${Object.keys(metrics).map((k) => opt(k, metrics[k], k === g.metric)).join('')}</select>
+            <select name="g-period" aria-label="Period" data-menu-ready="1">${Object.keys(C.GOAL_PERIODS).map((k) => opt(k, C.GOAL_PERIODS[k], k === g.period)).join('')}</select>
+            <input name="g-target" type="number" min="0.01" step="any" value="${esc(g.target || '')}" aria-label="Target" placeholder="Target">
+            <button type="button" class="jv-btn small" data-goal-remove="${i}" aria-label="Remove goal">✕</button></div>`;
+    }
+
+    function paintSettings(d) {
+        const th = C.THRESHOLDS;
+        $('.jv-settings-box').innerHTML = `<header><h3>Jarvis settings</h3><button type="button" class="jv-btn small" data-settings-close aria-label="Close">✕</button></header>
+            <section><h4>Email</h4>
+              <label class="jv-check"><input type="checkbox" name="m-daily"${d.mail.daily ? ' checked' : ''}> Daily briefing at 07:40 (Bogotá): the last 24 hours, goals and alerts</label>
+              <label class="jv-check"><input type="checkbox" name="m-gemini"${d.mail.gemini ? ' checked' : ''}> Add the Gemini summary to the daily briefing</label>
+              <label class="jv-check"><input type="checkbox" name="m-watch"${d.mail.watch ? ' checked' : ''}> Watch every hour and mail an alert once a day per issue (pages down, TLS, failed jobs, failed runs)</label>
+              <div class="jv-actions"><button type="button" class="jv-btn" data-act="daily-now">Send today's briefing now</button></div></section>
+            <section><h4>Goals</h4><div class="jv-goal-list">${d.goals.map(goalEditor).join('') || '<p class="jv-note">No goals yet. Add one: a product, what to count, the period, and the target.</p>'}</div>
+              <div class="jv-actions"><button type="button" class="jv-btn" data-goal-add>Add a goal</button></div>
+              <p class="jv-note">Goals count every row on the server (tests included) over the current Bogotá day, week (from Monday) or month.</p></section>
+            <section><h4>Thresholds</h4><div class="jv-th-grid">${Object.keys(th).map((k) => `<label class="jv-field">${esc(th[k].label)}<input type="number" name="t-${k}" min="${th[k].min}" max="${th[k].max}" step="any" value="${esc(d.thresholds[k])}"></label>`).join('')}</div>
+              <div class="jv-actions"><button type="button" class="jv-btn small" data-th-reset>Back to the defaults</button></div></section>
+            <footer><span class="jv-note">${S.settings && S.settings.updatedAt ? 'Saved ' + esc(when(S.settings.updatedAt)) : 'Not saved yet'}</span><button type="button" class="jv-btn" data-settings-close>Cancel</button><button type="submit" class="jv-btn is-primary">Save</button></footer>`;
+    }
+
+    function readSettings() {
+        const form = $('.jv-settings-box');
+        const val = (name) => (form.querySelector(`[name="${name}"]`) || {});
+        const goals = Array.from(form.querySelectorAll('[data-goal]')).map((row) => ({
+            product: row.querySelector('[name="g-product"]').value, metric: row.querySelector('[name="g-metric"]').value,
+            period: row.querySelector('[name="g-period"]').value, target: Number(row.querySelector('[name="g-target"]').value)
+        }));
+        const thresholds = {};
+        Object.keys(C.THRESHOLDS).forEach((k) => { thresholds[k] = Number(val('t-' + k).value); });
+        return { goals, thresholds, mail: { daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked } };
+    }
+
+    function openSettings() {
+        palette(false);
+        paintSettings(draftSettings());
+        $('.jv-settings').hidden = false;
+        const first = $('.jv-settings-box input, .jv-settings-box select');
+        if (first) first.focus();
+    }
+
+    function closeSettings() { $('.jv-settings').hidden = true; }
+
+    async function saveSettings() {
+        const settings = readSettings();
+        const bad = settings.goals.filter((g) => !(g.target > 0));
+        if (bad.length) { toast('Every goal needs a target above 0.', 4000); return; }
+        toast('Saving…');
+        const out = await call('settings-save', { settings });
+        if (!out.ok) { toast('Not saved: ' + (out.error || 'no answer'), 5000); return; }
+        S.settings = out;
+        closeSettings();
+        toast('Saved. Jarvis is recounting the goals.');
+        compute();
+        render();
+        loadExternal(['goals']);
+    }
+
+    async function dailyNow() {
+        if (!confirmRun('email the daily briefing now (the last 24 hours)')) return;
+        toast('Building the daily briefing…', 30000);
+        const out = await call('daily-now');
+        toast(out.ok && out.sent ? `Daily briefing sent: ${out.items} lines${out.gemini ? ' with the Gemini summary' : ''}.` : 'Not sent: ' + (out.error || 'mail is not set up'), 6000);
+    }
+
     function toggleLive() {
         S.live = !S.live;
         $('.jv-live').setAttribute('aria-pressed', String(S.live));
@@ -805,6 +915,10 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         const t = event.target.closest('button, a, li[data-hit]');
         if (!t || !root.contains(t)) return;
         if (t.dataset.hit !== undefined) { choose(Number(t.dataset.hit)); return; }
+        if (t.dataset.settingsClose !== undefined) { closeSettings(); return; }
+        if (t.dataset.goalAdd !== undefined) { const d = readSettings(); d.goals.push({ product: 'cv', metric: 'visits', period: 'week', target: '' }); paintSettings(d); return; }
+        if (t.dataset.goalRemove !== undefined) { const d = readSettings(); d.goals.splice(Number(t.dataset.goalRemove), 1); paintSettings(d); return; }
+        if (t.dataset.thReset !== undefined) { const d = readSettings(); d.thresholds = C.thresholds({}); paintSettings(d); return; }
         if (t.dataset.menu) { const list = $(`[data-list="${t.dataset.menu}"]`); const open = list.hidden; $$('.jv-menu-list').forEach((l) => { l.hidden = true; }); list.hidden = !open; return; }
         $$('.jv-menu-list').forEach((l) => { l.hidden = true; });
         if (t.dataset.go) { go(t.dataset.go); return; }
@@ -825,14 +939,24 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             systems: () => go('systems'), live: toggleLive, refresh: () => refresh(), speak: speakBriefing, listen, palette: () => palette(true),
             'copy-link': () => copy(link(), 'Link copied.'), 'web-share': webShare, 'copy-brief': () => copy(markdown(), 'Briefing copied.'), email: emailBriefing,
             'export-json': exportAll, 'export-csv': () => run({ type: 'export', format: 'csv' }), 'export-png': () => run({ type: 'export', format: 'png' }),
-            'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief
+            'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief,
+            settings: openSettings, 'daily-now': dailyNow
         };
         if (acts[act]) acts[act]();
+    });
+
+    root.addEventListener('change', (event) => {
+        if (event.target.name !== 'g-product') return;
+        const d = readSettings();
+        const i = Number(event.target.closest('[data-goal]').dataset.goal);
+        d.goals[i].metric = Object.keys(C.GOAL_METRICS[d.goals[i].product])[0];
+        paintSettings(d);
     });
 
     root.addEventListener('submit', async (event) => {
         const form = event.target;
         event.preventDefault();
+        if (form.dataset.settings !== undefined) { saveSettings(); return; }
         if (form.dataset.ask !== undefined) {
             const q = form.q.value.trim();
             if (q) run(C.parseCommand(q).type === 'ask' ? { type: 'ask', question: q } : C.parseCommand(q));
@@ -862,12 +986,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         if (!visible()) return;
         const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((event.target || {}).tagName || '') || (event.target && event.target.isContentEditable);
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); palette($('.jv-palette').hidden); return; }
+        if (event.key === 'Escape') { palette(false); closeSettings(); return; }
         if (typing || event.metaKey || event.ctrlKey || event.altKey) return;
         if (/^[1-9]$/.test(event.key) && C.PRODUCTS[Number(event.key) - 1]) go(C.PRODUCTS[Number(event.key) - 1].key);
         else if (event.key === 'r') refresh();
         else if (event.key === 'p') printView(false);
+        else if (event.key === 'g') openSettings();
         else if (event.key === '/') { const ask = $(`[data-view="${S.product}"] .jv-ask input`); if (ask) { event.preventDefault(); ask.focus(); } }
-        else if (event.key === 'Escape') palette(false);
     }
     document.addEventListener('keydown', onKey);
     if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => { S.voice = null; voice(); };
@@ -879,7 +1004,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
     S.timers.push(setInterval(() => {
         if (!S.live || document.hidden || !visible() || !S.mounted) return;
         loadNewer();
-        if (Date.now() - S.externalAt > EXTERNAL_MS) loadExternal(['health', 'jobs', 'github', 'uptime']);
+        if (Date.now() - S.externalAt > EXTERNAL_MS) loadExternal(['goals', 'health', 'jobs', 'github', 'uptime']);
     }, LIVE_MS));
 
     return {

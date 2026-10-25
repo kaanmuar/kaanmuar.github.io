@@ -4492,6 +4492,7 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
 
 // Admin Statistics (js/admin-jarvis.js): server-only numbers, external sources, and owner actions. See functions/jarvis.js.
 const jarvis = require("./jarvis");
+const jarvisCore = require("./jarvis-core");
 const JARVIS_REPORTS = { site: (period) => sendPeriodReport(period), review: (period) => sendReviewPeriodReport(period) };
 
 async function jarvisCached(op, days, load) {
@@ -4504,6 +4505,73 @@ async function jarvisCached(op, days, load) {
   await ref.set({ at, json: JSON.stringify(fresh).slice(0, 900000) }).catch(() => null);
   return Object.assign(fresh, { cachedAt: at });
 }
+
+// The external numbers the daily briefing and the watch need, through the same cache as the page.
+async function jarvisExternal(ops, days) {
+  const env = process.env;
+  const now = Date.now();
+  const load = {
+    health: () => jarvisCached("health", days, () => jarvis.health(admin.firestore(), { days, now })),
+    jobs: () => jarvisCached("jobs", 0, async () => ({ ok: true, jobs: await jarvis.jobs(fetch) })),
+    github: () => jarvisCached("github", 0, () => jarvis.github(fetch, env.GITHUB_BUGS_TOKEN, { now })),
+    uptime: () => jarvisCached("uptime", 0, () => jarvis.uptime(fetch, { now })),
+    speed: () => jarvisCached("speed", 0, () => jarvis.speed(urlReview, env)),
+    ga4: () => jarvisCached("ga4", days, () => jarvis.ga4(fetch, { days }))
+  };
+  const out = {};
+  await Promise.all(ops.map(async (op) => {
+    try { out[op] = Object.assign({ ok: true }, await load[op]()); } catch (error) { out[op] = { ok: false, error: String(error.message || error).slice(0, 200) }; }
+  }));
+  return out;
+}
+
+async function jarvisDaily({ force }) {
+  const db = admin.firestore();
+  const settings = await jarvis.readSettings(db);
+  if (!settings.mail.daily && !force) return "off in settings";
+  const now = Date.now();
+  const [{ products }, external, goalRows] = await Promise.all([
+    jarvis.dailyProducts(db, { now }),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4"], 1),
+    jarvis.goals(db, settings, { now })
+  ]);
+  const items = jarvisCore.briefing({ products, external, thresholds: settings.thresholds, goals: goalRows });
+  let aiText = "";
+  if (settings.mail.gemini) {
+    try { aiText = (await jarvis.brief(fetch, process.env, { range: "last 24 hours", products: jarvis.compact(products), briefing: items.map((row) => row.level + ": " + row.text), goals: goalRows })).text; } catch (error) { aiText = ""; }
+  }
+  const dateLabel = new Date(now).toLocaleDateString("en-US", { timeZone: "America/Bogota", weekday: "short", month: "short", day: "numeric" });
+  const mail = jarvis.dailyMail({ products, items, goalRows, aiText, dateLabel });
+  const sent = await sendOwnerEmail({ subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL, buttonLabel: "Open Jarvis" });
+  return { sent: sent !== false, items: items.length, goals: goalRows.length, gemini: !!aiText };
+}
+
+async function jarvisWatchRun() {
+  const db = admin.firestore();
+  const settings = await jarvis.readSettings(db);
+  if (!settings.mail.watch) return "off in settings";
+  const now = Date.now();
+  const external = await jarvisExternal(["health", "jobs", "uptime"], 1);
+  const { day, ref, sent, fresh } = await jarvis.unsentToday(db, jarvis.watchItems(external, settings.thresholds), { now });
+  if (!fresh.length) return "nothing new";
+  await sendOwnerEmail({
+    subject: "Jarvis alert: " + fresh[0].text.slice(0, 90) + (fresh.length > 1 ? " (+" + (fresh.length - 1) + " more)" : ""),
+    intro: "Jarvis crossed an alert threshold you set. Each issue is mailed once a day.",
+    rows: fresh.map((row) => ({ label: row.product, value: row.text })),
+    body: "Change the limits or turn the watch off in Admin > Statistics > Settings.",
+    eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL.replace("/overview/", "/systems/"), buttonLabel: "Open Systems"
+  });
+  const at = new Date(now).toISOString();
+  fresh.forEach((row) => { sent[row.key] = at; });
+  await ref.set({ day, sent });
+  return fresh.length + " new alert" + (fresh.length > 1 ? "s" : "");
+}
+
+exports.jarvisDailyBriefing = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }), "jarvisDailyBriefing", async () => {
+  const out = await jarvisDaily({ force: false });
+  return typeof out === "string" ? out : (out.sent ? "sent" : "not sent") + ", " + out.items + " lines";
+});
+exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 120, secrets: ["SENDGRID_API_KEY"] }), "jarvisWatch", () => jarvisWatchRun());
 
 exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
   res.set("Access-Control-Allow-Origin", reviewOrigin(req));
@@ -4537,6 +4605,10 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     else if (op === "brief") out = await jarvis.brief(fetch, env, body.snapshot);
     else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot);
     else if (op === "run-job") out = await jarvis.runJob(fetch, body.job);
+    else if (op === "settings") out = await jarvis.readSettings(admin.firestore());
+    else if (op === "settings-save") out = await jarvis.saveSettings(admin.firestore(), body.settings, operator);
+    else if (op === "goals") out = { goals: await jarvis.goals(admin.firestore(), await jarvis.readSettings(admin.firestore()), { now }) };
+    else if (op === "daily-now") out = await jarvisDaily({ force: true });
     else if (op === "send-report") {
       const kind = body.kind === "site" ? "site" : "review";
       const period = ["daily", "weekly", "monthly", "quarter"].includes(body.period) ? body.period : "daily";
