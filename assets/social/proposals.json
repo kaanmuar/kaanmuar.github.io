@@ -1,30 +1,30 @@
 {
  "version": 1,
- "built": "2026-10-24T17:48:14.751Z",
+ "built": "2026-10-25T17:07:01.696Z",
  "sources": {
-  "deque": 10,
-  "debugbear": 20,
-  "w3c": 25,
-  "web-dev": 10,
-  "github": 26,
-  "chrome-developers": 10,
-  "cypress": 15,
-  "google-search-central": 10,
-  "w3c-wai": 10,
-  "ahrefs": 10,
   "moz": 10,
-  "devto": 98,
-  "simo-ahava": 30,
-  "whatwg": 10,
-  "martin-fowler": 30,
-  "tpgi": 12,
-  "playwright-releases": 10,
   "search-engine-journal": 20,
+  "google-search-central": 10,
+  "ahrefs": 10,
+  "w3c-wai": 10,
+  "w3c": 25,
+  "deque": 10,
   "ipullrank": 5,
+  "chrome-developers": 10,
+  "whatwg": 10,
+  "web-dev": 10,
+  "simo-ahava": 30,
+  "tpgi": 12,
   "a11y-project": 30,
-  "hn": 57,
+  "debugbear": 20,
+  "perfplanet": 10,
+  "martin-fowler": 30,
+  "cypress": 15,
+  "playwright-releases": 10,
   "webaim": 10,
-  "perfplanet": 10
+  "hn": 53,
+  "devto": 100,
+  "github": 26
  },
  "proposals": [
   {
@@ -43,7 +43,25 @@
    "relevance": 6,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 4.71
+   "score": 4.28
+  },
+  {
+   "id": "6514c2958df8",
+   "title": "Emoji and Accessibility: How Screen Readers Announce Emoji and How to Use Them Considerately",
+   "url": "https://dev.to/lingchen865dev/emoji-and-accessibility-how-screen-readers-announce-emoji-and-how-to-use-them-considerately-3mb0",
+   "source": "DEV",
+   "author": "Ling Chen",
+   "date": "2026-10-25",
+   "topic": "Accessibility",
+   "lang": "en",
+   "summary": "Emoji and Accessibility: How Screen Readers Announce Emoji and How to Use Them...",
+   "image": "https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fk840xdek9o2feis3n9z2.png",
+   "why": "1 reactions on DEV; Accessibility keywords in the title",
+   "weight": 0.8,
+   "relevance": 4,
+   "trend": 0.05,
+   "firstSeen": "2026-10-25",
+   "score": 3.8
   },
   {
    "id": "5bff4c7a1fc4",
@@ -61,7 +79,25 @@
    "relevance": 6,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 3.87
+   "score": 3.51
+  },
+  {
+   "id": "4db0ac4c21eb",
+   "title": "You know you can automate screen reader tests right?",
+   "url": "https://dev.to/craigmorten/you-know-you-can-automate-screen-reader-tests-right-2dnk",
+   "source": "DEV",
+   "author": "Craig Morten",
+   "date": "2026-10-24",
+   "topic": "Accessibility",
+   "lang": "en",
+   "summary": "There is a common misconception that accessibility testing can only fall into two groups: Some...",
+   "image": "https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F0fkqu3pa49b5f70cg70d.png",
+   "why": "2 reactions on DEV; Accessibility keywords in the title",
+   "weight": 0.8,
+   "relevance": 4,
+   "trend": 0.09,
+   "firstSeen": "2026-10-24",
+   "score": 3.5
   },
   {
    "id": "619405faf352",
@@ -79,43 +115,7 @@
    "relevance": 4,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 3.81
-  },
-  {
-   "id": "2e3f5f48b342",
-   "title": "Image Optimization for Core Web Vitals: Fix Your LCP",
-   "url": "https://dev.to/nawalshrestha/image-optimization-for-core-web-vitals-fix-your-lcp-4mlp",
-   "source": "DEV",
-   "author": "Nawal Shrestha",
-   "date": "2026-10-24",
-   "topic": "Performance",
-   "lang": "en",
-   "summary": "Your hero image is probably why your LCP fails. Here is how to find the LCP image, set a KB target, and re-encode it, with real numbers from practice.",
-   "image": "https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fstjzbsgpfqhicb10j31z.png",
-   "why": "Performance keywords in the title",
-   "weight": 0.8,
-   "relevance": 4,
-   "trend": 0,
-   "firstSeen": "2026-10-24",
-   "score": 3.72
-  },
-  {
-   "id": "4db0ac4c21eb",
-   "title": "You know you can automate screen reader tests right?",
-   "url": "https://dev.to/craigmorten/you-know-you-can-automate-screen-reader-tests-right-2dnk",
-   "source": "DEV",
-   "author": "Craig Morten",
-   "date": "2026-10-24",
-   "topic": "Accessibility",
-   "lang": "en",
-   "summary": "There is a common misconception that accessibility testing can only fall into two groups: Some...",
-   "image": "https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F0fkqu3pa49b5f70cg70d.png",
-   "why": "Accessibility keywords in the title",
-   "weight": 0.8,
-   "relevance": 4,
-   "trend": 0,
-   "firstSeen": "2026-10-24",
-   "score": 3.72
+   "score": 3.46
   },
   {
    "id": "93d374412652",
@@ -133,7 +133,7 @@
    "relevance": 4,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 3.11
+   "score": 2.82
   },
   {
    "id": "cf202ec3158b",
@@ -151,7 +151,7 @@
    "relevance": 4,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 3.11
+   "score": 2.82
   },
   {
    "id": "a25720acf765",
@@ -164,12 +164,12 @@
    "lang": "en",
    "summary": "Agent Skills that convert a WordPress site (or any live site) into a static Astro site with URL, SEO, content and pixel parity, then take it through launch. Works in Claude Code, Codex and any agent that reads SKILL.md.",
    "image": "https://opengraph.githubassets.com/1/ethanplusai/astro-conversion-kit",
-   "why": "55 stars on GitHub; SEO keywords in the title",
+   "why": "71 stars on GitHub; SEO keywords in the title",
    "weight": 0.9,
    "relevance": 2,
-   "trend": 0.45,
+   "trend": 0.56,
    "firstSeen": "2026-10-24",
-   "score": 2.68
+   "score": 2.57
   },
   {
    "id": "dff922dfd8a8",
@@ -182,12 +182,30 @@
    "lang": "en",
    "summary": "Daily radar for new AI terms: names of new models, products and repos, caught on X, Hugging Face, GitHub and sitemaps before keyword tools list them.",
    "image": "https://opengraph.githubassets.com/1/zhuyansen/new-term-radar",
-   "why": "1769 stars on GitHub; SEO keywords in the title",
+   "why": "1788 stars on GitHub; SEO keywords in the title",
    "weight": 0.9,
    "relevance": 2,
-   "trend": 3.68,
+   "trend": 3.69,
    "firstSeen": "2026-10-24",
-   "score": 2.64
+   "score": 2.4
+  },
+  {
+   "id": "db2c78ded939",
+   "title": "Show HN: I built a Markdown and raw HTML blog platform scoring 99 on PageSpeed",
+   "url": "https://bloffy.co/en",
+   "source": "Hacker News",
+   "author": "textlanes33",
+   "date": "2026-10-21",
+   "topic": "Performance",
+   "lang": "en",
+   "summary": "",
+   "image": "https://bloffy.co/landing/og.png",
+   "why": "30 points on Hacker News; Performance keywords in the title",
+   "weight": 1,
+   "relevance": 2,
+   "trend": 0.38,
+   "firstSeen": "2026-10-25",
+   "score": 2.36
   },
   {
    "id": "2ab3ab131754",
@@ -205,7 +223,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 2.51
+   "score": 2.28
   },
   {
    "id": "cbd067675377",
@@ -223,7 +241,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 2.49
+   "score": 2.26
   },
   {
    "id": "154cc2a17a3c",
@@ -241,7 +259,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 2.29
+   "score": 2.08
   },
   {
    "id": "f2bf9561fdca",
@@ -259,7 +277,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 2.29
+   "score": 2.08
   },
   {
    "id": "c953335464d3",
@@ -277,7 +295,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 2.27
+   "score": 2.06
   },
   {
    "id": "d6204e7c98ba",
@@ -295,7 +313,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 2.25
+   "score": 2.04
   },
   {
    "id": "d45ca2929d00",
@@ -313,7 +331,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 2.07
+   "score": 1.88
   },
   {
    "id": "1838b908fdba",
@@ -331,7 +349,7 @@
    "relevance": 4,
    "trend": 0.22,
    "firstSeen": "2026-10-24",
-   "score": 2.06
+   "score": 1.87
   },
   {
    "id": "f39e41d6f5b2",
@@ -349,7 +367,7 @@
    "relevance": 4,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 1.72
+   "score": 1.56
   },
   {
    "id": "681d797a4e4f",
@@ -362,12 +380,12 @@
    "lang": "en",
    "summary": "Paste a link, get the whole marketing machine behind it: paid ads, organic social, SEO, Reddit, founders, funnel — evidence-cited. CLI, MCP server and a local web app that uses your Claude Code or Codex plan.",
    "image": "https://opengraph.githubassets.com/1/dansugc/reverse-engineer-marketing",
-   "why": "31 stars on GitHub; SEO keywords in the title",
+   "why": "32 stars on GitHub; SEO keywords in the title",
    "weight": 0.9,
    "relevance": 2,
-   "trend": 0.27,
+   "trend": 0.28,
    "firstSeen": "2026-10-24",
-   "score": 1.63
+   "score": 1.49
   },
   {
    "id": "8ed7e287ee16",
@@ -385,7 +403,7 @@
    "relevance": 4,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 1.56
+   "score": 1.42
   },
   {
    "id": "440ccb823227",
@@ -403,7 +421,7 @@
    "relevance": 3,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 1.38
+   "score": 1.25
   },
   {
    "id": "ef1b00bc00ee",
@@ -421,7 +439,7 @@
    "relevance": 1,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 1.25
+   "score": 1.14
   },
   {
    "id": "144ff761be64",
@@ -439,7 +457,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 1.14
+   "score": 1.04
   },
   {
    "id": "cfdc749d35ab",
@@ -457,7 +475,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 1.14
+   "score": 1.04
   },
   {
    "id": "ef8ef71468f9",
@@ -475,7 +493,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 1.14
+   "score": 1.03
   },
   {
    "id": "ec104afbfaa7",
@@ -493,7 +511,7 @@
    "relevance": 4,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 1.09
+   "score": 0.99
   },
   {
    "id": "ab3e318fe39c",
@@ -511,7 +529,7 @@
    "relevance": 4,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 0.86
+   "score": 0.78
   },
   {
    "id": "9ea04653f7f8",
@@ -529,7 +547,7 @@
    "relevance": 3,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 0.83
+   "score": 0.75
   },
   {
    "id": "b5405b00d2ed",
@@ -547,7 +565,7 @@
    "relevance": 4,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 0.78
+   "score": 0.71
   },
   {
    "id": "2358911388ba",
@@ -565,7 +583,7 @@
    "relevance": 3,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 0.76
+   "score": 0.69
   },
   {
    "id": "9e41f21a0dab",
@@ -583,7 +601,7 @@
    "relevance": 1,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 0.76
+   "score": 0.69
   },
   {
    "id": "fc9e8a09b703",
@@ -601,7 +619,7 @@
    "relevance": 1,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 0.76
+   "score": 0.69
   },
   {
    "id": "cc1cc87238af",
@@ -619,7 +637,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 0.63
+   "score": 0.57
   },
   {
    "id": "3d34d7f1f226",
@@ -637,7 +655,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 0.57
+   "score": 0.52
   },
   {
    "id": "bfd3406928a4",
@@ -655,7 +673,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 0.56
+   "score": 0.51
   },
   {
    "id": "ffae8a5a19e5",
@@ -673,11 +691,11 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 0.47
+   "score": 0.43
   },
   {
    "id": "03e5e1dfcf4b",
-   "title": "Astro Tutorial: Make a Static Site with Interactive Components",
+   "title": "Astro Tutorial: Build a Static Site with Interactive Components",
    "url": "https://www.debugbear.com/blog/astro-tutorial",
    "source": "DebugBear",
    "author": "",
@@ -691,7 +709,7 @@
    "relevance": 1,
    "trend": 0,
    "firstSeen": "2026-10-24",
-   "score": 0.38
+   "score": 0.35
   }
  ]
 }
