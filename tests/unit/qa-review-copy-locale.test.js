@@ -5,7 +5,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 const Glossary = require("../../js/site-glossary.js");
 
-const FILES = ["qa-review-report-copy", "qa-review-compare-copy", "qa-review-multi", "qa-review-pay-copy", "qa-review-findings-copy"];
+const FILES = ["qa-review-report-copy", "qa-review-compare-copy", "qa-review-multi", "qa-review-pay-copy", "qa-review-findings-copy", "qa-review-account-copy"];
 const LANGS = ["es", "pt", "de", "fr", "it"];
 // The glossary fixes machine translation; these catch the regional forms a person writing by hand slips into.
 const REGIONAL = {
@@ -122,4 +122,53 @@ test("health warnings and Fix first read in the page language, also from a saved
   assert.equal(load("pt").fixFirst(finding("seo-title-missing.title", { n: 2 })), "Corrija primeiro: " + load("pt").line(say("seo-title-missing.title", { n: 2 }), "") + ".");
   assert.equal(es.fixFirst({ rank: 1, title: "English only" }), null);
   assert.equal(load("en").fixFirst(finding("geo-h1-rendered.title")), null);
+});
+
+// The sign-in copy lives inside qa-review-auth.js, which needs a page to run, so only its COPY object is read.
+function authCopy() {
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review-auth.js"), "utf8");
+  const block = source.match(/const COPY = (\{[\s\S]*?\n  \});/);
+  assert.ok(block, "qa-review-auth.js has no COPY");
+  return vm.runInNewContext("(" + block[1] + ")");
+}
+
+test("the account page and sign-in copy have every English key, with the same slots, in es-419, pt-BR and the glossary (#1305 #1365)", () => {
+  const slots = (text) => (text.match(/\{\w+\}/g) || []).sort().join(" ");
+  for (const [name, copy] of [["account", copyOf("qa-review-account-copy")], ["sign-in", authCopy()]]) {
+    const en = strings(copy.en, "", {});
+    for (const lang of LANGS) {
+      const book = strings(copy[lang], "", {});
+      for (const [key, text] of Object.entries(en)) {
+        assert.ok(book[key] != null, name + " " + lang + " is missing " + key);
+        assert.equal(slots(book[key]), slots(text), name + " " + lang + "." + key);
+      }
+      for (const key of Object.keys(book)) assert.ok(key in en, name + " " + lang + " has " + key + ", which English does not");
+      if (name !== "sign-in") continue;
+      for (const [key, text] of Object.entries(book)) {
+        assert.deepEqual(Glossary.check(text, lang), [], "sign-in " + lang + "." + key + ": " + text);
+        for (const pattern of REGIONAL[lang] || []) assert.ok(!pattern.test(text), "sign-in " + lang + "." + key + " matches " + pattern + ": " + text);
+      }
+    }
+  }
+});
+
+test("the account page paints the picked language and keeps machine translation off only for hand-written ones (#1305)", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review-account-copy.js"), "utf8");
+  const node = (key) => ({ attrs: {}, getAttribute: (name) => (name === "data-account-copy" ? key : null), setAttribute(name, value) { this.attrs[name] = value; }, removeAttribute(name) { delete this.attrs[name]; } });
+  const title = node("savedTitle");
+  const main = node(null);
+  const sandbox = { window: {}, document: { title: "", querySelectorAll: (selector) => (selector === "[data-account-copy]" ? [title] : selector === "main, .topbar, .foot" ? [main] : []) } };
+  vm.runInNewContext(source, sandbox);
+  const copy = sandbox.window.QAAccountCopy;
+  copy.use("de-CH");
+  assert.equal(title.textContent, "Gespeicherte Prüfungen");
+  assert.equal(sandbox.document.title, "Ihre Prüfungen · QA-lab URL Review");
+  assert.deepEqual(main.attrs, { lang: "de", translate: "no" });
+  assert.equal(copy.t("count", { n: 1 }), "1 Prüfung");
+  assert.equal(copy.t("count", { n: 3 }), "3 Prüfungen");
+  assert.equal(copy.area("Security"), "Sicherheit");
+  copy.use("ja");
+  assert.equal(copy.lang(), "en");
+  assert.equal(title.textContent, "Saved reviews");
+  assert.deepEqual(main.attrs, {}, "a language without hand-written copy is left to machine translation");
 });
