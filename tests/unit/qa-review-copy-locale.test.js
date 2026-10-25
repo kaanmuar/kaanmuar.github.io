@@ -5,7 +5,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 const Glossary = require("../../js/site-glossary.js");
 
-const FILES = ["qa-review-report-copy", "qa-review-compare-copy", "qa-review-multi", "qa-review-pay-copy"];
+const FILES = ["qa-review-report-copy", "qa-review-compare-copy", "qa-review-multi", "qa-review-pay-copy", "qa-review-findings-copy"];
 const LANGS = ["es", "pt", "de", "fr", "it"];
 // The glossary fixes machine translation; these catch the regional forms a person writing by hand slips into.
 const REGIONAL = {
@@ -55,4 +55,37 @@ test("the report copy has every English key, with the same slots, in each langua
       assert.equal(slots(book[key]), slots(text), lang + "." + key);
     }
   }
+});
+
+test("the findings copy has every English finding template, with the same slots, in each language (#1297)", () => {
+  const { EN } = require("../../functions/url-review-findings-en.js");
+  const copy = copyOf("qa-review-findings-copy");
+  const slots = (text) => [...new Set(text.match(/\{\w+\}/g) || [])].sort().join(" ");
+  for (const lang of LANGS) {
+    const book = copy[lang];
+    assert.ok(book, "no " + lang + " findings copy");
+    for (const [key, text] of Object.entries(EN)) {
+      assert.ok(book[key] != null, lang + " is missing " + key);
+      assert.equal(slots(book[key]), slots(text), lang + "." + key);
+    }
+    for (const key of Object.keys(book)) assert.ok(key in EN, lang + " has " + key + ", which English does not");
+  }
+});
+
+test("a finding message renders in the page language and falls back to the English line (#1297)", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review-findings-copy.js"), "utf8");
+  const load = (lang) => {
+    const sandbox = { window: {}, document: { documentElement: { lang } } };
+    vm.runInNewContext(source, sandbox);
+    return sandbox.window.QAReviewFindingsCopy;
+  };
+  const { say, some, english } = require("../../functions/url-review-findings-en.js");
+  const message = say("seo-broken-links.title", { n: 2 });
+  const evidence = say("listDot", { list: some([say("pathNote", { path: "/a", note: "404" }), say("pathNote", { path: "/b", note: "500" })], 1) });
+  assert.equal(load("es").line(message, "x"), "2 enlaces internos llevan a un error");
+  assert.equal(load("de").line(say("seo-broken-links.title", { n: 1 }), "x"), "1 interner Link führt zu einem Fehler");
+  assert.equal(load("pt").line(evidence, "x"), "/a (404) e mais 1.");
+  assert.equal(load("en").line(message, english(message)), english(message));
+  assert.equal(load("fr").line({ id: "no-such-line" }, "English"), "English");
+  assert.equal(load("it").line(undefined, "English"), "English");
 });

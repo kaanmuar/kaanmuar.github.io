@@ -805,7 +805,7 @@
     const groupBars = groupEntries.length ? groupEntries.map(([name, count]) =>
       '<div class="meter"><span>' + esc(name) + '</span><div class="track"><i style="width:' + Math.round(count / groupMax * 100) + '%"></i></div><span>' + count + "</span></div>"
     ).join("") : '<p class="muted">No technology group was named.</p>';
-    const ranked = ((report.insights && report.insights.findings) || []).filter((item) => item.rank && item.fix).slice(0, 3).map((item) => [item.title, item.fix, true]);
+    const ranked = ((report.insights && report.insights.findings) || []).filter((item) => item.rank && item.fix).slice(0, 3).map((item) => [said(item, "title"), said(item, "fix"), true]);
     const advice = ranked.slice();
     if (!ranked.length && !headers.hsts) advice.push(["Send HSTS", "Put Strict-Transport-Security on the host with a max-age of at least six months so the next visit stays on https."]);
     if (!ranked.length && !headers.csp) advice.push(["Add a content security policy", "Name the script sources and frame-ancestors, then tighten the policy from what a real browser reports."]);
@@ -831,6 +831,10 @@
 
   const cc = window.QAReviewCompareCopy;
   const rc = window.QAReviewReportCopy;
+  const fc = window.QAReviewFindingsCopy || { translated: false, line: (message, fallback) => fallback };
+  const said = (item, part) => fc.line(item.msg && item.msg[part], item[part]);
+  // A title still in the server's English is marked so the browser can translate it.
+  const titleLang = (item) => said(item, "title") === item.title ? ' translate="yes" lang="en"' : "";
   const VERDICT_LABEL = { fail: cc.verdict("fail"), risk: cc.verdict("risk"), pass: cc.verdict("pass"), person: cc.verdict("person") };
   const AREA_NOTE = {};
   ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"].forEach((name) => { AREA_NOTE[name] = cc.areaNote(name); });
@@ -1003,9 +1007,8 @@
     };
     const rows = [{ area: cc.t("overall"), own: cmp.overall.own, rival: cmp.overall.rival }].concat(areas.map((row) => Object.assign({}, row, { area: cc.area(row.area) }))).map((row) =>
       '<tr><th scope="row">' + esc(row.area) + "</th>" + cell(row.own) + cell(row.rival) + leadCell(row.own, row.rival) + "</tr>").join("");
-    // Problem titles come from the report in English; they are left to translation like the rest of the report.
     const list = (items, total) => items.length
-      ? "<ul>" + items.map((item) => '<li><strong translate="yes" lang="en">' + esc(item.title) + '</strong> <span class="meta-line">' + esc(cc.area(item.area)) + " · " + esc(cc.severity(item.severity)) + "</span></li>").join("") + "</ul>" + (total > items.length ? '<p class="meta-line">' + esc(cc.t("more", { n: total - items.length })) + "</p>" : "")
+      ? "<ul>" + items.map((item) => "<li><strong" + titleLang(item) + ">" + esc(said(item, "title")) + '</strong> <span class="meta-line">' + esc(cc.area(item.area)) + " · " + esc(cc.severity(item.severity)) + "</span></li>").join("") + "</ul>" + (total > items.length ? '<p class="meta-line">' + esc(cc.t("more", { n: total - items.length })) + "</p>" : "")
       : '<p class="muted">' + esc(cc.t("none")) + "</p>";
     const when = cmp.ownAt ? new Date(cmp.ownAt).toLocaleDateString(cc.lang) : "";
     const decided = dominance.own + dominance.rival + dominance.tie;
@@ -1142,7 +1145,7 @@
       .concat(kpis.filter((row) => row.key !== "overall" && row.winner === side).map((row) => line(row, (value) => cmpValue(row, value))));
     const level = areas.filter((row) => row.level).map((row) => line(row, areaValue))
       .concat(kpis.filter((row) => row.key !== "overall" && row.winner === "tie").map((row) => line(row, (value) => cmpValue(row, value))));
-    const shared = (cmp.sharedList || []).map((item) => '<li><span translate="yes" lang="en">' + esc(item.title) + '</span> <span class="meta-line">' + esc(cc.t("bothHave")) + " · " + esc(cc.area(item.area)) + " · " + esc(cc.severity(item.severity)) + "</span></li>");
+    const shared = (cmp.sharedList || []).map((item) => "<li><span" + titleLang(item) + ">" + esc(said(item, "title")) + '</span> <span class="meta-line">' + esc(cc.t("bothHave")) + " · " + esc(cc.area(item.area)) + " · " + esc(cc.severity(item.severity)) + "</span></li>");
     const box = (title, items, cls) => '<div class="cmp-edge ' + cls + '"><h3>' + esc(title) + "</h3>" + (items.length ? "<ul>" + items.slice(0, 8).join("") + "</ul>" + (items.length > 8 ? '<p class="meta-line">' + esc(cc.t("more", { n: items.length - 8 })) + "</p>" : "") : '<p class="muted">' + esc(cc.t("none")) + "</p>") + "</div>";
     return '<h3 class="cmp-h">' + esc(cc.t("edges")) + '</h3><div class="exec-cols cmp-edges">' +
       box(cc.t("advantages"), pick("own"), "cmp-own") +
@@ -1599,7 +1602,7 @@
     const sev = score.severities || {};
     const read = (report.limits && report.limits.pagesRead) || (report.pages || []).length;
     const found = foundCount(report.limits);
-    const list = (rows) => rows.length ? "<ul>" + rows.map((item) => "<li><strong>" + esc(item.title) + '</strong> <span class="meta-line">' + esc(cc.area(item.area)) + "</span></li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noneFound")) + "</p>";
+    const list = (rows) => rows.length ? "<ul>" + rows.map((item) => "<li><strong>" + esc(said(item, "title")) + '</strong> <span class="meta-line">' + esc(cc.area(item.area)) + "</span></li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noneFound")) + "</p>";
     const value = score.overall || 0;
     const letter = score.grade || gradeOf(value);
     host.innerHTML =
@@ -1631,9 +1634,9 @@
     slot("fix-first").innerHTML = top.length
       ? '<p class="muted">' + esc(rc.t("fixIntro")) + '</p><ol class="fix-list">' + top.map((item) =>
         '<li><span class="fix-rank">' + item.rank + "</span><div>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span>" +
-        "<strong>" + esc(item.title) + "</strong>" +
-        '<p class="meta-line">' + fadeText(item.evidence, paid) + "</p>" +
-        (item.fix ? '<p class="fix-line">' + fadeText(item.fix, paid) + "</p>" : "") +
+        "<strong>" + esc(said(item, "title")) + "</strong>" +
+        '<p class="meta-line">' + fadeText(said(item, "evidence"), paid) + "</p>" +
+        (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
         '<p class="meta-line">' + esc(rc.t("effort", { effort: rc.word("effortWord", item.effort) })) + (item.count > 1 ? " · " + esc(rc.t("places", { n: item.count })) : "") + "</p></div></li>").join("") + "</ol>"
       : '<p class="muted">' + esc(rc.t("fixNone")) + "</p>";
   }
@@ -1913,7 +1916,7 @@
       '<div class="stat"><b>' + (map.found ? (map.notListed || []).length : "—") + "</b><span>" + esc(rc.t("statNotListed")) + "</span></div>" +
       '<div class="stat"><b>' + dup.length + "</b><span>" + esc(rc.t("statShared")) + "</span></div></div>" +
       '<article class="card">' + (blocked.length
-        ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thNotIndexable")) + "</th><th>" + esc(rc.t("thWhy")) + "</th></tr></thead><tbody>" + blocked.slice(0, 30).map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + esc(row.reason) + "</td></tr>").join("") + "</tbody></table>"
+        ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thNotIndexable")) + "</th><th>" + esc(rc.t("thWhy")) + "</th></tr></thead><tbody>" + blocked.slice(0, 30).map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + esc(fc.line(row.reasonMsg, row.reason)) + "</td></tr>").join("") + "</tbody></table>"
         : '<p class="muted">' + esc(rc.t("allIndexable")) + "</p>") +
       ((map.listedNotIndexable || []).length ? '<p class="meta-line">' + esc(rc.t("listedNotIndexable", { list: map.listedNotIndexable.slice(0, 6).join(", ") })) + "</p>" : "") +
       ((map.notLinked || []).length ? '<p class="meta-line">' + esc(rc.t("notLinked", { list: map.notLinked.slice(0, 6).join(", ") + (map.notLinked.length > 6 ? " …" : "") })) + "</p>" : "") +
@@ -2042,8 +2045,8 @@
       (filter.verdict === "all" || (filter.verdict === "open" ? (item.verdict === "fail" || item.verdict === "risk") : item.verdict === filter.verdict)));
     slot("findings").innerHTML = shown.length ? shown.map((item) =>
       '<div class="finding"><div><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span></div>" +
-      "<strong>" + esc(item.title) + "</strong><p class=\"muted\">" + fadeText(item.evidence, paid) + "</p>" +
-      (item.fix ? '<p class="fix-line">' + fadeText(item.fix, paid) + "</p>" : "") +
+      "<strong>" + esc(said(item, "title")) + "</strong><p class=\"muted\">" + fadeText(said(item, "evidence"), paid) + "</p>" +
+      (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
       ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + esc(item.pages.slice(0, 6).join(" · ")) + (item.pages.length > 6 ? " …" : "") + "</p>" : "") +
       ((item.cases || []).length ? '<p class="meta-line">' + esc(rc.t("testCases", { list: item.cases.join(", ") })) + "</p>" : "") +
       (!slotRoot && window.QAReviewAsk && QAReviewAsk.cardLink ? QAReviewAsk.cardLink(item.id) : "") + "</div>").join("")

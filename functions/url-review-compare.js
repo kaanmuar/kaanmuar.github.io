@@ -50,7 +50,8 @@ function onlyIn(mine, theirs) {
   return [...mine.values()]
     .filter((item) => !theirs.has(item.key))
     .sort((a, b) => (SEVERITY_RANK[b.severity] || 0) - (SEVERITY_RANK[a.severity] || 0) || (a.rank || 999) - (b.rank || 999))
-    .map((item) => ({ key: item.key, title: item.title || "", area: item.area || "", verdict: item.verdict, severity: item.severity || "" }));
+    .map((item) => Object.assign({ key: item.key, title: item.title || "", area: item.area || "", verdict: item.verdict, severity: item.severity || "" },
+      item.msg && item.msg.title ? { msg: { title: item.msg.title } } : {}));
 }
 
 function areaScore(score, name) {
