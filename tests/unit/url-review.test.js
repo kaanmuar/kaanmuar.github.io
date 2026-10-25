@@ -1818,6 +1818,18 @@ test("a start page six redirects away is read as Chrome reads it, and a longer c
   assert.equal((await core.probeRead(past)).error, "The page redirected too many times.");
 });
 
+test("a start page whose host cuts Chrome off for the review tag is loaded again as plain Chrome; a slow one is not (#1180)", () => {
+  const { tagCut } = require("../../functions/url-review-browser");
+  const start = { url: "https://hpe.com/", paths: [], html: true };
+  assert.equal(tagCut(start, new Error("net::ERR_HTTP2_PROTOCOL_ERROR at https://www.hpe.com/")), "net::ERR_HTTP2_PROTOCOL_ERROR");
+  assert.equal(tagCut(start, new Error("net::ERR_CONNECTION_RESET at https://hpe.com/")), "net::ERR_CONNECTION_RESET");
+  assert.equal(tagCut(start, new Error("net::ERR_EMPTY_RESPONSE at https://hpe.com/")), "net::ERR_EMPTY_RESPONSE");
+  assert.equal(tagCut(start, new Error("Navigation timeout of 20000 ms exceeded")), "");
+  assert.equal(tagCut(start, new Error("net::ERR_NAME_NOT_RESOLVED at https://hpe.com/")), "");
+  assert.equal(tagCut({ url: "https://hpe.com/", paths: [] }, new Error("net::ERR_HTTP2_PROTOCOL_ERROR at https://hpe.com/")), "");
+  assert.equal(tagCut(start, null), "");
+});
+
 test("the connection check tells a port that opens from one that refuses", async () => {
   const net = require("node:net");
   const server = net.createServer((socket) => socket.end());
