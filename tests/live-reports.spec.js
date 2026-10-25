@@ -145,30 +145,22 @@ test.describe('Live reports', () => {
     await expect(page.locator('#review-app')).toBeHidden();
   });
 
-  test('the gate opens the ring before the disclaimers are accepted', async ({ page }) => {
+  test('the ring opens reports before the disclaimers are accepted', async ({ page }) => {
     await prime(page, { terms: false });
     await page.goto('/qa-review.html');
-    await expect(page.locator('#gate')).toBeVisible();
-    await expect(page.locator('#live-open-gate')).toContainText(/Explore \d+ live reports/);
-    await page.locator('#live-open-gate').click();
-    await expect(page.locator('#live-reports.is-docked')).toBeVisible();
+    await expect(page.locator('#gate')).toBeHidden();
     await page.locator('.live-card.is-active .lc-open').click();
     await expect(page.locator('#live-viewer')).toBeVisible();
     await page.keyboard.press('Escape');
-    await page.locator('#live-back').click();
-    await expect(page.locator('#live-reports.is-docked')).toHaveCount(0);
-    await expect(page.locator('#gate')).toBeVisible();
+    await expect(page.locator('#live-viewer')).toBeHidden();
+    await expect(page.locator('#gate')).toBeHidden();
   });
 
-  test('a #live-reports link opens the ring over the gate', async ({ page }) => {
+  test('a #live-reports link lands on the ring with no gate', async ({ page }) => {
     await prime(page, { terms: false });
     await page.goto('/qa-review.html#live-reports');
-    await expect(page.locator('#live-reports.is-docked')).toBeVisible();
-    await expect(page.locator('.live-card.is-active')).toBeVisible();
-    await page.locator('#live-back').click();
-    await expect(page.locator('#live-reports.is-docked')).toHaveCount(0);
-    await expect(page.locator('#gate')).toBeVisible();
-    expect(new URL(page.url()).hash).toBe('');
+    await expect(page.locator('.live-card.is-active')).toBeInViewport();
+    await expect(page.locator('#gate')).toBeHidden();
   });
 
   test('the Spanish page translates the controls', async ({ page }) => {
@@ -250,7 +242,6 @@ test.describe('Live reports in Spanish', () => {
     await expect(lede).toContainText('analizados con la misma revisión que cualquiera puede ejecutar');
     await expect(lede).toContainText('Recorre el carrusel');
     await expect(lede).not.toContainText(/leídos|Gira el anillo|correr/);
-    await expect(page.locator('#live-gate-copy')).toHaveText(/^Análisis reales de sitios públicos/);
     await expect(page.locator('#live-reports')).not.toContainText(/Lecturas|Leído|anillo|Cabeceras/);
     await expect(page.locator('.lc-foot span').first()).toContainText('Analizado el');
     await expect(page.locator('.lc-areas span').filter({ hasText: 'Velocidad' }).first()).toBeAttached();

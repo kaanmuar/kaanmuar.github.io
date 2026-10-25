@@ -1,4 +1,7 @@
 const { test, expect } = require('@playwright/test');
+const auth = require('../functions/url-review-auth');
+
+const ANA = 'a'.repeat(64);
 
 const items = Array.from({ length: 6 }, (_, i) => ({ href: 'https://example.com/' + i, title: 'Headline ' + (i + 1), meta: 'Desk · ' + (i + 1) + 'h ago' }));
 
@@ -64,6 +67,105 @@ test.describe('Review page top', () => {
     await expect(page.locator('.live-card.is-active')).toBeVisible();
     await page.locator('.live-jump').click();
     await expect(page).toHaveURL(/#live-reports$/);
-    await expect(page.locator('#live-reports.is-docked')).toHaveCount(0);
+    await expect(page.locator('#gate')).toBeHidden();
+  });
+});
+
+async function signedIn(page) {
+  const store = auth.memoryStore();
+  const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: ANA, ip: '1.1.1.1' });
+  const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA });
+  await page.addInitScript(({ session }) => {
+    localStorage.setItem('qa-review-session', JSON.stringify({ session, email: 'ana@example.com', provider: 'email' }));
+    localStorage.setItem('qa-review-device-key', JSON.stringify('a'.repeat(64)));
+  }, { session: signed.session });
+  return store;
+}
+
+// Records each call to the local review service; /auth/session answers from `store` when there is one.
+async function backend(page, store) {
+  const calls = [];
+  await page.route('http://127.0.0.1:8768/**', async (route) => {
+    const req = route.request();
+    const path = new URL(req.url()).pathname;
+    const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+    if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
+    calls.push(path);
+    const json = (status, data) => route.fulfill({ status, contentType: 'application/json', headers: cors, body: JSON.stringify(data) });
+    if (path === '/auth/session' && store) {
+      const checked = await auth.checkSession(store, Object.assign({}, JSON.parse(req.postData() || '{}'), { deviceKey: ANA }));
+      return json(checked.ok ? 200 : checked.status, checked);
+    }
+    if (path === '/auth/providers') return json(200, { providers: [] });
+    return json(503, { error: 'not in this test' });
+  });
+  return calls;
+}
+
+test.describe('Terms on submit (#1090)', () => {
+  test('a first visit shows the hero, the request and live reports, with no terms in the way', async ({ page }) => {
+    await prime(page, { terms: false });
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#gate')).toBeHidden();
+    await expect(page.locator('#studio-title')).toBeVisible();
+    await expect(page.locator('#review-app')).not.toHaveAttribute('inert', '');
+    await expect(page.locator('.live-card.is-active')).toBeVisible();
+    await page.locator('#url').fill('example.com');
+    await expect(page.locator('#url')).toHaveValue('example.com');
+    await expect(page.locator('#stage-sample-open')).toBeVisible();
+    await expect(page.locator('#stage-guide')).toHaveAttribute('href', 'qa-review-guide.html');
+  });
+
+  test('signing in asks for the terms first, and goes on once they are accepted', async ({ page }) => {
+    await prime(page, { terms: false });
+    const calls = await backend(page);
+    await page.goto('/qa-review.html');
+    await page.locator('#sign-in-email').fill('ana@example.com');
+    await page.locator('#sign-in-send').click();
+    await expect(page.locator('#gate')).toBeVisible();
+    await expect(page.locator('#gate .gate-card')).toBeFocused();
+    await expect(page.locator('#gate-waiting')).toBeHidden();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#gate')).toBeHidden();
+    await expect(page.locator('#sign-in-send')).toBeFocused();
+    expect(calls).not.toContain('/auth/email');
+
+    await page.locator('#sign-in-send').click();
+    await page.locator('#terms-all').check();
+    const sent = page.waitForRequest((req) => req.url().endsWith('/auth/email') && req.method() === 'POST');
+    await page.locator('#accept').click();
+    await sent;
+    await expect(page.locator('#gate')).toBeHidden();
+  });
+
+  test('a review asks for the terms with its address kept, and runs once they are accepted', async ({ page }) => {
+    await prime(page, { terms: false });
+    const store = await signedIn(page);
+    await backend(page, store);
+    await page.goto('/qa-review.html');
+    await page.locator('#name').fill('Ana');
+    await page.locator('#url').fill('example.com/docs');
+    await expect(page.locator('#review-btn')).toBeEnabled();
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#gate')).toBeVisible();
+    await expect(page.locator('#gate-waiting')).toHaveText('The review of example.com/docs starts as soon as you accept.');
+    await expect(page.locator('.stage')).toHaveAttribute('inert', '');
+    await expect(page.locator('#form-status')).toHaveText('');
+
+    await page.locator('#terms-all').check();
+    await page.locator('#accept').click();
+    await expect(page.locator('#gate')).toBeHidden();
+    await expect(page.locator('.stage')).not.toHaveAttribute('inert', '');
+    await expect(page.locator('#url')).toHaveValue('example.com/docs');
+    await expect(page.locator('#form-status')).not.toHaveText('');
+    expect(await page.evaluate(() => sessionStorage.getItem('qa-review-terms'))).toBe(TERMS);
+  });
+
+  test('a shared report opens without the terms', async ({ page }) => {
+    await prime(page, { terms: false });
+    const calls = await backend(page);
+    await page.goto('/qa-review.html?report=cd34ef56ab12');
+    await expect.poll(() => calls.includes('/review/open')).toBe(true);
+    await expect(page.locator('#gate')).toBeHidden();
   });
 });

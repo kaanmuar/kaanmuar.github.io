@@ -126,7 +126,7 @@ The five-minute tour
 ### From the first checkbox to the last export
 
 #### Read what the review will and will not do
-Every control on the review page stays off until you accept the disclaimers. They take a minute, and they explain the rules for Colombia, where the service is operated, and for the country of the site you submit. Why we ask: a review analyzes someone's public pages. You should know exactly what happens before a single address is opened.
+Nothing you type on the review page is sent for review until you accept the disclaimers. They take a minute, and they explain the rules for Colombia, where the service is operated, and for the country of the site you submit. Why we ask: a review analyzes someone's public pages. You should know exactly what happens before a single address is opened.
 
 #### Say who is asking
 Sign in with email or an account you already have (Google, Microsoft, GitHub, Yahoo, or X); your email comes from that sign-in. Then give your name and the reason for the review. If the reason is your own site, sign in with an email at its domain. If you review a client's site, add the client's name, email, and website. Why we ask: there is a record of who asked, a site owner can ask us to stop and delete the report, and you can ask for a copy or deletion at any time.
