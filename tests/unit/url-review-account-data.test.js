@@ -217,3 +217,20 @@ test("deleting a paid run whose payment has its own row removes the run outright
   assert.equal(await store.get("url_reviews", "run2"), null);
   assert.ok(await store.get("url_reviews", "paid-report-run2"));
 });
+
+test("coupon redemptions and used or refunded credits are in the export, and deleting keeps them as payments", async () => {
+  const store = await seeded();
+  await store.set("url_review_redemptions", "ref-r1", { email: EMAIL, code: "HALF", reference: "r1", priceUsd: 4.75 });
+  await store.set("url_reviews", "used1", { email: EMAIL, status: "run-credit-used", creditId: "credit1", runId: "run1", deviceId: "abc" });
+  await store.set("url_reviews", "credit2", { email: EMAIL, status: "run-credit-refunded", paid: true, refunded: true, captureId: "CAP1", payerName: "Ana", ip: "1.1.1.1" });
+  const data = await accountData.exportAccount(store, EMAIL, Date.parse("2026-10-22T00:00:00Z"));
+  assert.deepEqual(data.redemptions.map((row) => row.code), ["HALF"]);
+  assert.ok(data.reviews.some((row) => row.id === "used1"));
+  await accountData.deleteAccount(store, EMAIL, { now: Date.parse("2026-10-22T00:00:00Z") });
+  assert.equal((await store.get("url_review_redemptions", "ref-r1")).code, "HALF");
+  assert.equal((await store.get("url_reviews", "used1")).creditId, "credit1");
+  const refunded = await store.get("url_reviews", "credit2");
+  assert.equal(refunded.captureId, "CAP1");
+  assert.equal(refunded.refunded, true);
+  assert.equal(refunded.ip, undefined);
+});

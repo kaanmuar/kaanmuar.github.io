@@ -16,6 +16,7 @@ const BY_EMAIL = [
   ["failures", "url_review_failures"],
   ["reruns", "url_review_reruns"],
   ["coupons", "url_review_coupons"],
+  ["redemptions", "url_review_redemptions"],
   ["stopLinks", "url_review_stop_links"],
   ["signIns", "url_review_sign_ins"],
   ["sessions", "url_review_sessions"],
@@ -27,17 +28,20 @@ const SECRET_IDS = new Set(["url_review_sessions", "url_review_sign_ins", "url_r
 const SECRET_FIELDS = ["deviceHash", "codeHash", "tokenHash"];
 
 // Colombian tax support (Ley 962 de 2005, art. 46) keeps a payment for five years; the report itself goes.
-const PAYMENT_STATUSES = new Set(["paid-report", "paid-addon", "run-credit", "run-credit-used", "monthly-pass", "checkout-open"]);
-const PAYMENT_FIELDS = ["email", "status", "paid", "test", "provider", "method", "sessionId", "reference", "externalId", "purpose", "reportId",
-  "billing", "plan", "paidUntil", "priceUsd", "listUsd", "percent", "coupon", "amount", "currency", "createdAt", "expireAt"];
+const PAYMENT_STATUSES = new Set(["paid-report", "paid-addon", "run-credit", "run-credit-used", "run-credit-returned", "run-credit-refunded", "monthly-pass", "checkout-open"]);
+const PAYMENT_FIELDS = ["email", "status", "paid", "test", "provider", "method", "sessionId", "captureId", "reference", "externalId", "purpose", "reportId",
+  "creditId", "billing", "plan", "paidUntil", "priceUsd", "listUsd", "percent", "coupon", "amount", "currency", "payerEmail", "payerName",
+  "refunded", "refundedUsd", "createdAt", "expireAt"];
 
 function isPayment(row) {
   return !!row && (row.paid === true || PAYMENT_STATUSES.has(row.status));
 }
 
 // A stop on follow-up notes outlives the account, or the notes would start again.
+// A coupon redemption is part of a payment, and its address holds the coupon's per-address limit.
 function keeps(col, row) {
   if (col === "url_review_notes") return !!row && row.status === "follow-stop";
+  if (col === "url_review_redemptions") return true;
   if (col === "url_reviews") return isPayment(row) && !!row.accountDeletedAt;
   return false;
 }
