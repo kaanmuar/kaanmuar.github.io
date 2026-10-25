@@ -4521,13 +4521,39 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
 const jarvis = require("./jarvis");
 const jarvisCore = require("./jarvis-core");
 const jarvisSum = (field) => admin.firestore.AggregateField.sum(field);
+const jarvisSources = require("./jarvis-sources");
+
+async function jarvisUsers() {
+  const users = [];
+  let page;
+  do {
+    const batch = await admin.auth().listUsers(1000, page);
+    batch.users.forEach((u) => users.push({ created: u.metadata.creationTime, lastSignIn: u.metadata.lastSignInTime }));
+    page = batch.pageToken;
+  } while (page && users.length < 20000);
+  return users;
+}
+
+async function jarvisSource(name, days) {
+  const settings = await jarvis.readSettings(admin.firestore());
+  const keys = paypalKeys("live");
+  let paypal = null;
+  try {
+    const creds = urlReview.paypalCredentials(keys);
+    paypal = { host: creds.host, token: () => urlReview.paypalAccessToken(creds) };
+  } catch (error) { paypal = null; }
+  return jarvisCached(name, days, () => jarvisSources.run(name, {
+    fetch, env: process.env, db: admin.firestore(), now: Date.now(), days, settings, thresholds: jarvisCore.thresholds(settings.thresholds),
+    paypal, tls: jarvis.tlsDaysLeft, listUsers: jarvisUsers
+  }));
+}
 const JARVIS_REPORTS = { site: (period) => sendPeriodReport(period), review: (period) => sendReviewPeriodReport(period) };
 
 async function jarvisCached(op, days, load) {
   const ref = admin.firestore().collection("jarvis_cache").doc(op + "-" + days);
   const snap = await ref.get().catch(() => null);
   const saved = snap && snap.exists ? snap.data() : null;
-  if (saved && Date.now() - Date.parse(saved.at) < (jarvis.TTL[op] || 60000)) return Object.assign(JSON.parse(saved.json), { cachedAt: saved.at });
+  if (saved && Date.now() - Date.parse(saved.at) < (jarvis.TTL[op] || jarvisSources.TTL[op] || 60000)) return Object.assign(JSON.parse(saved.json), { cachedAt: saved.at });
   const fresh = await load();
   const at = new Date().toISOString();
   await ref.set({ at, json: JSON.stringify(fresh).slice(0, 900000) }).catch(() => null);
@@ -4544,7 +4570,8 @@ async function jarvisExternal(ops, days) {
     github: () => jarvisCached("github", 0, () => jarvis.github(fetch, env.GITHUB_BUGS_TOKEN, { now })),
     uptime: () => jarvisCached("uptime", 0, () => jarvis.uptime(fetch, { now })),
     speed: () => jarvisCached("speed", 0, () => jarvis.speed(urlReview, env)),
-    ga4: () => jarvisCached("ga4", days, () => jarvis.ga4(fetch, { days }))
+    ga4: () => jarvisCached("ga4", days, () => jarvis.ga4(fetch, { days })),
+    ...Object.keys(jarvisSources.SOURCES).reduce((m, name) => { m[name] = () => jarvisSource(name, days); return m; }, {})
   };
   const out = {};
   await Promise.all(ops.map(async (op) => {
@@ -4560,7 +4587,7 @@ async function jarvisDaily({ force }) {
   const now = Date.now();
   const [{ products }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4"], 1),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "money", "email", "social", "safety", "platform", "search"], 1),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const items = jarvisCore.briefing({ products, external, thresholds: settings.thresholds, goals: goalRows });
@@ -4579,7 +4606,7 @@ async function jarvisWatchRun() {
   const settings = await jarvis.readSettings(db);
   if (!settings.mail.watch) return "off in settings";
   const now = Date.now();
-  const external = await jarvisExternal(["health", "jobs", "uptime"], 1);
+  const external = await jarvisExternal(["health", "jobs", "uptime", "money", "safety", "platform"], 1);
   const { day, ref, sent, fresh } = await jarvis.unsentToday(db, jarvis.watchItems(external, settings.thresholds), { now });
   if (!fresh.length) return "nothing new";
   await sendOwnerEmail({
@@ -4634,9 +4661,14 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot);
     else if (op === "run-job") out = await jarvis.runJob(fetch, body.job);
     else if (op === "settings") out = await jarvis.readSettings(admin.firestore());
-    else if (op === "settings-save") out = await jarvis.saveSettings(admin.firestore(), body.settings, operator);
+    else if (op === "settings-save") {
+      out = await jarvis.saveSettings(admin.firestore(), body.settings, operator);
+      const cache = admin.firestore().collection("jarvis_cache");
+      await Promise.all([1, 7, 30, 90, 365].map((d) => cache.doc("search-" + d).delete().catch(() => null)));
+    }
     else if (op === "goals") out = { goals: await jarvis.goals(admin.firestore(), await jarvis.readSettings(admin.firestore()), { now, sum: jarvisSum }) };
     else if (op === "daily-now") out = await jarvisDaily({ force: true });
+    else if (jarvisSources.SOURCES[op]) out = await jarvisSource(op, days);
     else if (op === "send-report") {
       const kind = body.kind === "site" ? "site" : "review";
       const period = ["daily", "weekly", "monthly", "quarter"].includes(body.period) ? body.period : "daily";

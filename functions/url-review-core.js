@@ -4293,7 +4293,7 @@ module.exports = {
   paypalPaid,
   paypalEventIds,
   verifyPayPalWebhook,
-  paypalCapture,
+  paypalCapture, paypalCredentials, paypalAccessToken,
   previewReport,
   priceForCredentials,
   priceForAlerts,
