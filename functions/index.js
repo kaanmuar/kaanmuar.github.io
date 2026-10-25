@@ -2466,13 +2466,20 @@ async function reviewRowsFor(deviceId, ip) {
   }));
 }
 
-async function couponFor(code, purpose, reportId) {
+// A code with perEmail is counted against the redemptions of the payer's address; without an address it stays closed.
+async function couponFor(code, purpose, reportId, email) {
   const key = reviewOffers.cleanCode(code);
   if (!key) return null;
   try {
     const snap = await admin.firestore().collection("url_review_coupons").doc(key).get();
     const coupon = snap.exists ? Object.assign({ code: key }, snap.data()) : null;
-    return reviewOffers.couponOpen(coupon, purpose, reportId) ? coupon : null;
+    const address = String(email || "").trim().toLowerCase();
+    let used = null;
+    if (coupon && Number(coupon.perEmail) > 0 && address) {
+      const prior = await admin.firestore().collection("url_review_redemptions").where("code", "==", key).where("email", "==", address).limit(Number(coupon.perEmail)).get();
+      used = prior.size;
+    }
+    return reviewOffers.couponOpen(coupon, purpose, reportId, null, used) ? coupon : null;
   } catch (error) {
     console.error("Coupon lookup failed:", error);
     return null;
@@ -2488,7 +2495,7 @@ async function runsForEmail(email) {
 async function returnPrice(priced, opts) {
   const cents = Math.round(Number(priced.usd) * 100);
   if (priced.billing === "scope") return reviewOffers.discountFor(cents, priced.count, {});
-  const coupon = await couponFor(opts.coupon, opts.purpose, opts.reportId);
+  const coupon = await couponFor(opts.coupon, opts.purpose, opts.reportId, opts.email);
   const rows = opts.rows || (opts.purpose === "report" ? await runsForEmail(opts.email) : await reviewRowsFor(opts.deviceId, opts.ip));
   return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon, compare: !!opts.compare });
 }
@@ -2630,7 +2637,11 @@ async function fulfillPayment(result, ctx) {
   const paidPrice = open.priceUsd || result.amount;
   const paidCompare = reviewCompare.cleanId(open.compareWith);
   const captureId = result.captureId || "";
-  if (open.coupon) await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
+  if (open.coupon) {
+    const owner = paidReport ? await admin.firestore().collection("url_reviews").doc(paidReport).get() : null;
+    const email = String((owner && owner.exists && owner.get("email")) || "").trim().toLowerCase();
+    await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, email, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
+  }
   if (paidPurpose === "report" && paidReport) {
     const runRef = admin.firestore().collection("url_reviews").doc(paidReport);
     await runRef.set({
@@ -3450,7 +3461,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     if (deskName === "pass" && req.method === "POST") {
       const email = String((req.body && req.body.email) || "").trim().toLowerCase();
       const offers = require("./url-review-offers");
-      const chosen = offers.planById((req.body && req.body.plan) || "glance");
+      const chosen = offers.planById((req.body && req.body.plan) || "freelancer");
       if (!email || email.indexOf("@") === -1) {
         res.status(400).json({ error: "That address is missing." });
         return;
@@ -3724,7 +3735,9 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   }
   if (req.method === "GET" && pathName.indexOf("/checkout/quote") !== -1) {
     try {
-      const priced = req.query.purpose === "credentials"
+      let priced = req.query.purpose === "fixlist"
+        ? urlReview.priceForFixList()
+        : req.query.purpose === "credentials"
         ? urlReview.priceForCredentials()
         : req.query.purpose === "alerts"
           ? urlReview.priceForAlerts(req.query.count)
@@ -3747,6 +3760,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         if (quotePurpose === "report" && quoteReport) {
           const ownerSnap = await admin.firestore().collection("url_reviews").doc(quoteReport).get();
           owner = ownerSnap.exists ? ownerSnap.data() : {};
+          priced = urlReview.priceForReport(priced.frameworks, priced.tools, urlReview.creditFor(owner));
         }
         const quoteDevice = String(req.query.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
         deal = await returnPrice(priced, {
@@ -3776,7 +3790,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         scopeUsd: priced.scopeUsd,
         pageUsd: priced.pageUsd,
         depthUsd: priced.depthUsd,
-        perFramework: priced.each
+        perFramework: priced.each,
+        creditUsd: priced.creditUsd || 0
       }, dealFields(deal)));
     } catch (error) {
       res.status(error.status || 502).json({ error: error.message || "The peso price could not be loaded." });
@@ -3784,7 +3799,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/checkout") !== -1) {
-    const purpose = ["report", "cases", "credentials", "alerts"].indexOf(req.body && req.body.purpose) === -1 ? "new-run" : req.body.purpose;
+    const purpose = ["report", "fixlist", "cases", "credentials", "alerts"].indexOf(req.body && req.body.purpose) === -1 ? "new-run" : req.body.purpose;
     const reportId = String((req.body && req.body.reportId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     const deviceId = String((req.body && req.body.deviceId) || "").replace(/[^a-f0-9]/g, "").slice(0, 16);
     const choice = urlReview.paymentChoice((req.body && req.body.provider) || "paypal");
@@ -3814,13 +3829,12 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       const reference = crypto.randomBytes(8).toString("hex");
       let priced = null;
       let reportData = {};
-      if (purpose === "cases") {
-        priced = urlReview.priceForLayers((req.body && req.body.layers) || []);
-      } else if (purpose === "credentials") {
-        priced = urlReview.priceForCredentials();
-      } else if (purpose === "alerts") {
-        priced = urlReview.priceForAlerts(req.body && req.body.alertCount);
-      } else if (purpose === "report") {
+      let creditCents = 0;
+      if (purpose === "fixlist" && !reportId) {
+        res.status(400).json({ error: "A fix list belongs to one report. Open the report first. No charge was made." });
+        return;
+      }
+      if (purpose === "report" || purpose === "fixlist") {
         const reportSnap = await admin.firestore().collection("url_reviews").doc(reportId).get();
         reportData = reportSnap.exists ? reportSnap.data() : {};
         const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), req.body || {}, reportData, false);
@@ -3828,7 +3842,18 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           res.status(access.status).json({ error: access.locked ? "Only the account that ran this report can unlock it. Sign in with that account. No charge was made." : access.error, signIn: !!access.signIn });
           return;
         }
-        priced = urlReview.priceFor((reportData && reportData.frameworks) || [], urlReview.toolsForCharge((reportData && reportData.report && reportData.report.tools) || [], req.body && req.body.tools));
+      }
+      if (purpose === "fixlist") {
+        priced = urlReview.priceForFixList();
+      } else if (purpose === "cases") {
+        priced = urlReview.priceForLayers((req.body && req.body.layers) || []);
+      } else if (purpose === "credentials") {
+        priced = urlReview.priceForCredentials();
+      } else if (purpose === "alerts") {
+        priced = urlReview.priceForAlerts(req.body && req.body.alertCount);
+      } else if (purpose === "report") {
+        creditCents = urlReview.creditFor(reportData);
+        priced = urlReview.priceForReport((reportData && reportData.frameworks) || [], urlReview.toolsForCharge((reportData && reportData.report && reportData.report.tools) || [], req.body && req.body.tools), creditCents);
       } else {
         priced = urlReview.priceForRun({
           frameworks: (req.body && req.body.frameworks) || [],
@@ -3875,6 +3900,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         alertCount: priced.alertCount,
         priceUsd: priced.usd,
         listUsd,
+        creditCents,
         successUrl,
         cancelUrl,
         pendingUrl
@@ -3897,6 +3923,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         billing: priced.billing || "",
         compareWith,
         priceUsd: priced.usd,
+        creditUsd: creditCents / 100,
         amount: session.amount,
         currency: session.currency,
         paid: false,
@@ -4009,17 +4036,23 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     }
     if (!access.ok) {
       let priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [] };
-      try { priced = urlReview.priceFor(data.frameworks || []); } catch (error) { priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [], count: 1 }; }
+      try { priced = urlReview.priceForReport(data.frameworks || [], urlReview.toolsForCharge((data.report && data.report.tools) || []), urlReview.creditFor(data)); } catch (error) { priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [], count: 1 }; }
       const deal = await returnPrice(priced, { purpose: "report", reportId: id, email: data.email, before: data.createdAt, coupon: opening.coupon });
+      const addons = data.addons || [];
+      // A bought fix list opens the findings to the owner; the cases stay in the frosted preview.
+      const fixList = addons.indexOf("fixlist") !== -1 && data.report ? { insights: data.report.insights || null } : {};
       res.status(402).json(Object.assign({
         paymentRequired: true,
         priceUsd: deal.usd,
+        creditUsd: priced.creditUsd || 0,
         frameworks: priced.frameworks,
+        tools: priced.tools || [],
         id: id,
         host: data.report && data.report.host,
         status: data.status || "",
+        addons,
         preview: data.report ? urlReview.previewReport(data.report) : null
-      }, dealFields(deal)));
+      }, fixList, dealFields(deal)));
       return;
     }
     const comparisons = data.report && !data.report.compare ? await comparisonsFrom(id, data.email) : [];

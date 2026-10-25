@@ -7,6 +7,9 @@
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
   const PRICE = 19;
+  const EXTRA_PRICE = 5;
+  const FIXLIST_USD = 5;
+  const FIXLIST_KEY = "qa-review-fixlist";
   const openedAt = Date.now();
   const SITE_COUNTRY = { uk: "GB", gb: "GB", eu: "EU", de: "DE", fr: "FR", es: "ES", it: "IT", nl: "NL", pt: "PT", ie: "IE", be: "BE", at: "AT", se: "SE", pl: "PL", co: "CO", mx: "MX", br: "BR", ar: "AR", cl: "CL", pe: "PE", ca: "CA", au: "AU", nz: "NZ", in: "IN", jp: "JP", us: "US", za: "ZA" };
   const MARK = "QA-lab URL Review · Carlos Muñoz · https://carlosandmunoz.com · Preview copy · Not a certification";
@@ -370,16 +373,9 @@
     return [...reviewForm.querySelectorAll('input[name="fw"]:checked')].map((box) => box.value);
   }
 
-  function centsForIndex(index) {
-    const off = index <= 1 ? 0 : index <= 3 ? 10 : index <= 5 ? 15 : index <= 7 ? 20 : index <= 9 ? 25 : index <= 11 ? 30 : index <= 13 ? 35 : 40;
-    return Math.round(PRICE * 100 * (100 - off) / 100);
-  }
-
   function reviewCents(list, tools) {
     const count = (list || selectedFrameworks()).length + (tools || selectedTools()).length;
-    let total = 0;
-    for (let index = 1; index <= count; index += 1) total += centsForIndex(index);
-    return total;
+    return count ? PRICE * 100 + EXTRA_PRICE * 100 * (count - 1) : 0;
   }
 
   function reviewUsd(list, tools) {
@@ -580,7 +576,9 @@
   }
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note";
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer";
+  // A bought fix list opens the scores and findings; the cases, signals and fix kit stay blurred.
+  const FIX_OPEN = "#exec, #health, #fix-first, #browser-pass, #previews, #geo, #analytics, #seo, #site-graph, #security, #findings";
 
   function applyCopyMode(paid) {
     document.body.classList.toggle("preview-copy", !paid);
@@ -622,11 +620,13 @@
   function fadeSections(root, force) {
     if (!root || (!force && !document.body.classList.contains("preview-copy"))) return;
     const nodes = [];
+    const fixOpen = document.body.classList.contains("fix-open");
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) {
       const node = walker.currentNode;
       const hidden = node.nodeValue.indexOf("\u2060") !== -1;
       if (!node.parentElement || node.parentElement.closest(hidden ? ".fade-line, script, style, textarea" : FADE_CLEAR)) continue;
+      if (fixOpen && node.parentElement.closest(FIX_OPEN)) continue;
       if (fadeCut(node.nodeValue) < node.nodeValue.length) nodes.push(node);
     }
     nodes.forEach((node) => {
@@ -661,6 +661,20 @@
 
   function addonPaid(name, id) {
     return !!(current && current.report && current.report.id === id && Array.isArray(current.addons) && current.addons.indexOf(name) !== -1);
+  }
+
+  function savedPaid(key, id) {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(key) || "null");
+      return !!(saved && saved.paid && saved.reportId === id);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function fixListOpen(id) {
+    if (!current || !current.report || current.report.id !== id) return false;
+    return current.paid === true || current.free === true || addonPaid("fixlist", id) || savedPaid(FIXLIST_KEY, id);
   }
 
   function alertsOpen(id) {
@@ -714,7 +728,7 @@
     slot("alarm-note").textContent = alerts.length
       ? (open
         ? "The full wording is open because this section is paid. These lines are still not proof of a break-in."
-        : "The first words of each signal stay visible. The rest stays blurred until this section is paid. These lines are what the public response showed. They are not proof that someone broke in.")
+        : "The first words of each signal stay visible. The rest stays blurred until the full report is paid. These lines are what the public response showed. They are not proof that someone broke in.")
       : "";
     const opener = slot("alarm-open");
     if (opener) opener.hidden = open || alerts.length === 0;
@@ -916,7 +930,7 @@
           return;
         }
         findingFilter = { area: button.getAttribute("data-area"), verdict: "all" };
-        paintFindings(current.report.insights, !!current.paid);
+        paintFindings(current.report.insights, fixListOpen(current.report.id));
         const target = document.getElementById("findings");
         const panel = target.closest(".fold-panel");
         if (panel && panel.hidden) {
@@ -1574,10 +1588,17 @@
       (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(cc.area(name)) + '</strong> <span class="meta-line">' + esc(solidNote(name)) + "</span></li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noSolid")) + "</p>") + "</div></div>" +
       (slotRoot ? "" : '<p class="no-print"><button class="btn btn-ghost" id="print-exec" type="button">' + esc(rc.t("printSummary")) + "</button></p>");
     if (!slotRoot) document.getElementById("print-exec").addEventListener("click", () => {
-      spend("print", () => {
-        if (!current.paid) setStatus("The print sheet does not include the report. The attempt is recorded.", false);
+      const sheet = () => {
         document.body.classList.add("printing-exec");
         window.print();
+      };
+      if (current && current.report && fixListOpen(current.report.id)) {
+        sheet();
+        return;
+      }
+      spend("print", () => {
+        if (!current.paid) setStatus("The print sheet does not include the report. The attempt is recorded.", false);
+        sheet();
       });
     });
   }
@@ -2031,13 +2052,14 @@
       '<div class="code-peek notranslate" translate="no">' + fadeText(peek, paid) + "</div>";
   }
 
-  function paintInsights(report, paid) {
+  function paintInsights(report, paid, fixed) {
     const ins = report.insights;
+    const open = fixed === undefined ? paid : fixed;
     setInsightsVisible(!!ins);
     if (!ins) return;
     paintExec(report, ins);
     paintHealth(ins);
-    paintFixFirst(ins, paid);
+    paintFixFirst(ins, open);
     paintBrowser(report);
     paintPreviews(ins);
     paintGeo(ins);
@@ -2045,7 +2067,7 @@
     paintSeo(ins);
     paintGraph(ins);
     paintSecurity(ins);
-    paintFindings(ins, paid);
+    paintFindings(ins, open);
     paintFixKit(ins, paid);
   }
 
@@ -2231,13 +2253,15 @@
     if (!report) return;
     const sample = !!payload.sample;
     if (!sample && !payload.paid && !report.preview && seenBefore(report.id) && liveId !== report.id) {
-      openPay({ priceUsd: reviewUsd(payload.frameworks || []), frameworks: payload.frameworks || [] });
+      openPay({ id: report.id, priceUsd: reportUsd(payload), frameworks: payload.frameworks || [], addons: payload.addons || [] });
       return;
     }
     current = payload;
     liveId = report.id;
     if (!sample) remember(report.id);
     if (window.QAReviewAsk) QAReviewAsk.show(payload);
+    const fixed = !sample && fixListOpen(report.id);
+    document.body.classList.toggle("fix-open", fixed && !payload.paid);
     applyCopyMode(!!payload.paid);
     if (!sample) shareOpen.disabled = false;
     dash.classList.toggle("is-sample", sample);
@@ -2252,7 +2276,10 @@
     const state = report.status === "stopped" ? "Stopped" : "Complete";
     const paid = !!payload.paid;
     paintVisuals(report, paid);
-    paintInsights(report, paid);
+    paintInsights(report, paid, fixed);
+    const offer = document.getElementById("unlock-offer");
+    paintOffer(offer, !paid && !sample);
+    if (!paid && !sample) loadFullQuote().then((quote) => { if (quote && current === payload) paintOffer(offer, true); });
     paintCompare(report, sample);
     paintRivals(report, sample);
     document.getElementById("report-statement").textContent = "";
@@ -2501,21 +2528,105 @@
     }
   });
 
+  // Server quotes for the full report, by query; a failed quote is kept as null so a re-render does not ask again.
+  const fullQuotes = {};
+
+  function hasFixList(id) {
+    return addonPaid("fixlist", id) || savedPaid(FIXLIST_KEY, id);
+  }
+
+  function fullQuoteKey() {
+    return current && current.report ? payQuery("report").split("?")[1] : "";
+  }
+
+  // The full report's price: the server quote once it is in; before that, the list price less a bought fix list.
+  function reportUsd(payload) {
+    const src = payload || current || {};
+    const id = src.report ? src.report.id : src.id;
+    const quote = src === current ? fullQuotes[fullQuoteKey()] : null;
+    if (quote) return quote.usd;
+    const list = src.frameworks && src.frameworks.length ? src.frameworks : selectedFrameworks();
+    const credit = id && ((src.addons || []).indexOf("fixlist") !== -1 || hasFixList(id)) ? FIXLIST_USD : 0;
+    return reviewUsd(list, src === current ? selectedTools() : []) - credit;
+  }
+
+  async function loadFullQuote() {
+    const key = fullQuoteKey();
+    if (!key) return null;
+    if (key in fullQuotes) return fullQuotes[key];
+    fullQuotes[key] = null;
+    try {
+      const res = await fetch(endpoint() + "/checkout/quote?" + key + "&deviceId=" + encodeURIComponent(deviceId()));
+      const body = await res.json();
+      if (res.ok && body.usd > 0) fullQuotes[key] = body;
+    } catch (error) { /* the list price stays on the page */ }
+    return fullQuotes[key];
+  }
+
+  // The two ways to read the rest of an unpaid report, each with its price.
+  function paintOffer(host, show) {
+    if (!host) return;
+    const report = current && current.report;
+    host.hidden = !show || !report;
+    if (host.hidden) {
+      host.textContent = "";
+      return;
+    }
+    const fixed = hasFixList(report.id);
+    if (!rc.english) {
+      host.setAttribute("lang", rc.lang);
+      host.setAttribute("translate", "no");
+    }
+    host.innerHTML = (fixed ? '<p class="offer-note">' + esc(rc.t("offerFixOpen")) + "</p>" : "") +
+      '<div class="offer-row">' +
+      (fixed ? "" : '<a class="offer" data-offer="fixlist" href="' + esc(payPage() + "?purpose=fixlist&reportId=" + encodeURIComponent(report.id)) + '"><b>' + esc(rc.t("offerFix", { usd: FIXLIST_USD })) + "</b><span>" + esc(rc.t("offerFixBody")) + "</span></a>") +
+      '<a class="offer offer-full" data-offer="report" href="' + esc(payQuery("report")) + '"><b>' + esc(rc.t("offerFull", { usd: formatUsd(reportUsd(current)) })) + "</b><span>" + esc(rc.t("offerFullBody") + (fixed ? " " + rc.t("offerCredit") : "")) + "</span></a></div>";
+  }
+
   function openPay(body) {
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_open", "URL Review", "report");
     const list = (body && body.frameworks) || (current && current.frameworks) || selectedFrameworks();
     const tools = body && body.frameworks && body.frameworks.length ? (body.tools || []) : selectedTools();
     const usd = (body && body.priceUsd) || reviewUsd(list, tools);
     const selections = list.length + tools.length;
+    const credit = body && body.creditUsd > 0 ? " The 5 USD fix list bought on this report is already taken off." : "";
+    document.getElementById("pay-title").textContent = rc.t("offerTitle");
     document.getElementById("pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
-    document.getElementById("pay-detail").textContent = "Seeing it again, or downloading or printing it again, on the account that ran it, costs " + formatUsd(usd) + " USD for " + selections + (selections === 1 ? " selection." : " selections.") + " Frameworks come first. Checked tools follow on the same discount. The first selection is 19 USD. A paid copy keeps one line: this report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).";
+    document.getElementById("pay-detail").textContent = "The full report is " + formatUsd(usd) + " USD for " + selections + (selections === 1 ? " selection" : " selections") + ": 19 USD for the first framework or tool, and 5 USD for each one after it." + credit + " It opens every case and layer, the signals, the exports, and the scripts, on the account that ran it. A paid copy keeps one line: this report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).";
     document.getElementById("pay-btn").href = payQuery("report");
     showDeal("pay-deal", "pay-price", body);
+    paintOffer(document.getElementById("pay-options"), !!(current && current.report && !current.paid));
     payBox.hidden = false;
     const note = document.getElementById("pay-note");
-    note.textContent = (body && body.error) || ("Reopening this report costs " + formatUsd(usd) + " USD.");
+    note.textContent = (body && body.error) || ("The full report of this review is " + formatUsd(usd) + " USD.");
     note.classList.remove("bad");
+    if (body && (body.paymentRequired || body.quoted)) return;
+    loadFullQuote().then((quote) => {
+      if (quote && !payBox.hidden) openPay(Object.assign({}, quote, { priceUsd: quote.usd, quoted: true }));
+    });
   }
+
+  function openReportPay() {
+    if (!current || !current.report) return;
+    openPay({ id: current.report.id, priceUsd: reportUsd(current), frameworks: current.frameworks || [], addons: current.addons || [] });
+  }
+
+  document.addEventListener("click", (event) => {
+    const offer = event.target.closest && event.target.closest("a[data-offer]");
+    if (!offer || !current || !current.report) return;
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_offer", "URL Review", offer.getAttribute("data-offer"));
+    if (offer.getAttribute("data-offer") !== "fixlist") return;
+    try {
+      sessionStorage.setItem(FIXLIST_KEY, JSON.stringify({
+        reportId: current.report.id,
+        paid: false,
+        report: current.report,
+        frameworks: current.frameworks || [],
+        addons: current.addons || [],
+        reasonCode: current.reasonCode || ""
+      }));
+    } catch (error) { /* the review page reopens the report from the server after payment */ }
+  });
 
   function openRunPay(body) {
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_open", "URL Review", "new-run");
@@ -2529,7 +2640,7 @@
     document.getElementById("run-pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
     document.getElementById("run-pay-detail").textContent = billing === "scope"
       ? pages + " pages and " + depth + " links deep. The included first review is 20 pages and 2 links deep. This amount is for the wider review."
-      : pages + " pages, " + depth + " links deep, and " + (list.length + tools.length) + " selections. Frameworks come first. Checked tools follow on the same discount. The amount is the schedule plus the size of the review.";
+      : pages + " pages, " + depth + " links deep, and " + (list.length + tools.length) + " selections. The first framework or tool is 19 USD and each one after it is 5 USD. The size of the review is added to that.";
     document.getElementById("go-pay").href = payQuery("new-run", body || {});
     showDeal("run-pay-deal", "run-pay-price", body);
     runPay.hidden = false;
@@ -2585,7 +2696,7 @@
     const id = current.report.id;
     fileUses[id] = fileUses[id] || {};
     if (fileUses[id][kind]) {
-      openPay({ priceUsd: reviewUsd(current.frameworks || []), frameworks: current.frameworks || [] });
+      openReportPay();
       return;
     }
     fileUses[id][kind] = true;
@@ -2626,7 +2737,8 @@
       return;
     }
     registerCapture("print");
-    if (!current || !current.paid) document.body.classList.add("capture-hold");
+    const fixSheet = document.body.classList.contains("printing-exec") && current && current.report && fixListOpen(current.report.id);
+    if (!current || !(current.paid || fixSheet)) document.body.classList.add("capture-hold");
   });
   window.addEventListener("afterprint", () => {
     document.body.classList.remove("capture-hold");
@@ -2884,6 +2996,26 @@
     card.scrollIntoView({ block: "start" });
     if (!body.versus) document.getElementById("compare-go").focus({ preventScroll: true });
   }
+  // An unpaid report from the server: the frosted preview, with the findings in full when a fix list was bought.
+  function lockedPayload(body) {
+    const report = body.insights ? Object.assign({}, body.preview, { insights: body.insights }) : body.preview;
+    return { report, frameworks: body.frameworks || [], paid: false, addons: body.addons || [] };
+  }
+
+  async function reopenFixList(id) {
+    try {
+      const res = await fetch(endpoint() + "/review/open", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { id }))
+      });
+      const body = await res.json();
+      if (res.ok && body.report) render(body);
+      else if (body.preview && body.insights) render(lockedPayload(body));
+    } catch (error) { /* the saved copy stays on the page */ }
+  }
+
   if (shared) {
     let lockedShared = false;
     const openShared = async () => {
@@ -2905,7 +3037,11 @@
           return;
         }
         if (res.status === 402 || body.paymentRequired) {
-          if (body.preview) render({ report: body.preview, frameworks: body.frameworks || [], paid: false });
+          if (body.preview) render(lockedPayload(body));
+          if (body.insights) {
+            setStatus("The fix list of " + (body.host || "this site") + " is open below. The cases stay under the frost until the full report is paid.", false);
+            return;
+          }
           openPay(body);
           setStatus(body.preview
             ? "Your last report of " + (body.host || "this site") + " is below, under the frost. Unlock it to read it in full."
@@ -3118,21 +3254,8 @@
       paintAlarm(current.report, true);
       return;
     }
-    try {
-      sessionStorage.setItem("qa-review-alerts", JSON.stringify({
-        reportId: current.report.id,
-        alertCount: alerts.length,
-        paid: false,
-        report: current.report,
-        frameworks: current.frameworks || [],
-        reasonCode: current.reasonCode || ""
-      }));
-    } catch (error) {
-      setStatus("This browser could not keep the report for the payment page.", true);
-      return;
-    }
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_alerts", "URL Review", String(alerts.length));
-    location.href = payPage() + "?purpose=alerts&reportId=" + encodeURIComponent(current.report.id) + "&count=" + alerts.length;
+    openReportPay();
   });
   document.getElementById("credential-open").addEventListener("click", () => {
     if (!current || !current.report) return;
@@ -3165,25 +3288,14 @@
       return;
     }
     const bought = current && Array.isArray(current.addonLayers) ? current.addonLayers : [];
-    if (current && (current.free === true || layers.every((name) => bought.indexOf(name) !== -1))) {
+    if (current && (current.paid === true || current.free === true || layers.every((name) => bought.indexOf(name) !== -1))) {
       caseExport.hidden = true;
       openCaseFormats({ report: current.report, layers });
       return;
     }
-    try {
-      sessionStorage.setItem(EXPORT_KEY, JSON.stringify({
-        reportId: current.report.id,
-        layers,
-        paid: false,
-        report: current.report,
-        frameworks: current.frameworks || []
-      }));
-    } catch (storageError) {
-      error.textContent = "This browser could not keep the list for the payment page.";
-      return;
-    }
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_cases", "URL Review", String(layers.length));
-    location.href = payPage() + "?purpose=cases&reportId=" + encodeURIComponent(current.report.id) + "&layers=" + encodeURIComponent(layers.join(","));
+    caseExport.hidden = true;
+    openReportPay();
   });
 
   const FORMAT_CHOICES = [
@@ -3245,6 +3357,11 @@
   }
   restorePaid("alerts", "qa-review-alerts");
   restorePaid("credentialRun", "qa-review-credential");
+  restorePaid("fixlist", FIXLIST_KEY, () => {
+    setStatus("The fix list is paid. Scores and findings are open below; the cases stay blurred until the full report is paid.", false);
+    // A preview carries frosted findings, so the server sends them again now that the fix list is recorded.
+    if (current && current.report && current.report.preview) reopenFixList(current.report.id);
+  });
   restorePaid("compareRun", COMPARE_KEY, () => {
     const saved = savedCompare();
     const left = saved ? (saved.queue || []).length : 0;

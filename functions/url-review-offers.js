@@ -11,59 +11,33 @@ const RETURN_TABLE = [
   { n: 3, percent: 20, label: "Third return and each one after, within 30 days" }
 ];
 
+// What the same runs cost one by one: each run's full report plus its wider or deeper read.
+function anchorCents(runs, frameworks, pages, depth) {
+  return runs * (core.unitCents(frameworks) + core.priceForScope(pages, depth).cents);
+}
+
+function plan(id, usd, runs, pages, depth, frameworks, tools) {
+  const anchorUsd = anchorCents(runs, frameworks, pages, depth) / 100;
+  const scope = pages === core.INCLUDED_PAGES && depth === core.INCLUDED_DEPTH ? "" : ", " + pages + " pages and " + depth + " links deep,";
+  return {
+    id,
+    usd,
+    days: 30,
+    runs,
+    pages,
+    depth,
+    frameworks,
+    history: true,
+    tools,
+    anchorUsd,
+    anchor: runs + " runs with " + frameworks + " frameworks" + scope + " are " + anchorUsd.toLocaleString("en-US") + " USD one by one."
+  };
+}
+
 const MONTHLY_PLANS = [
-  {
-    id: "glance",
-    usd: 15,
-    days: 30,
-    runs: 0,
-    pages: 0,
-    depth: 0,
-    frameworks: 0,
-    history: true,
-    tools: false,
-    anchorUsd: 19,
-    anchor: "Reopening one saved report starts at 19 USD."
-  },
-  {
-    id: "return",
-    usd: 49,
-    days: 30,
-    runs: 2,
-    pages: 20,
-    depth: 2,
-    frameworks: 4,
-    history: true,
-    tools: false,
-    anchorUsd: 138.7,
-    anchor: "Two runs with 4 frameworks are 138.70 USD on the schedule."
-  },
-  {
-    id: "bench",
-    usd: 189,
-    days: 30,
-    runs: 4,
-    pages: 20,
-    depth: 2,
-    frameworks: 8,
-    history: true,
-    tools: false,
-    anchorUsd: 520.6,
-    anchor: "Four runs with 8 frameworks are 520.60 USD on the schedule."
-  },
-  {
-    id: "studio",
-    usd: 399,
-    days: 30,
-    runs: 8,
-    pages: 40,
-    depth: 3,
-    frameworks: 8,
-    history: true,
-    tools: false,
-    anchorUsd: 1113.2,
-    anchor: "Eight runs with 8 frameworks, 40 pages and 3 links deep, are 1,113.20 USD on the schedule."
-  }
+  plan("freelancer", 29, 10, 20, 2, 3, false),
+  plan("team", 79, 25, 100, 5, 8, false),
+  plan("pro", 189, 60, 100, 5, core.FRAMEWORKS.length, true)
 ];
 
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
@@ -83,22 +57,21 @@ function returnPercent(n) {
 function applyReturn(cents, count, n) {
   const percent = returnPercent(n);
   const schedule = Math.max(0, Math.round(Number(cents) || 0));
-  const items = Math.max(0, Math.round(Number(count) || 0));
-  const floor = items * Math.round(core.PRICE_PER_FRAMEWORK * 50);
+  const floor = core.floorCents(schedule);
   const cut = Math.round(schedule * (100 - percent) / 100);
   const next = percent ? Math.max(floor, cut) : schedule;
   return { percent, cents: next, usd: next / 100, floorUsd: floor / 100 };
 }
 
-// The better of the return ladder and a coupon; they never stack, and the per-selection floor holds.
+// The better of the return ladder and a coupon; they never stack, and the price never falls below half the list.
 // A comparison is a second review, so it stands at least on the first return step.
 function discountFor(cents, count, options) {
   const opts = options || {};
   const list = Math.max(0, Math.round(Number(cents) || 0));
   const ladder = returnPercent(opts.compare ? Math.max(1, Math.round(Number(opts.returns) || 0)) : opts.returns);
-  const offered = opts.coupon ? Math.max(0, Math.min(90, Math.round(Number(opts.coupon.percent) || 0))) : 0;
+  const offered = opts.coupon ? Math.max(0, Math.min(50, Math.round(Number(opts.coupon.percent) || 0))) : 0;
   const percent = Math.max(ladder, offered);
-  const floor = Math.min(list, Math.max(0, Math.round(Number(count) || 0)) * Math.round(core.PRICE_PER_FRAMEWORK * 50));
+  const floor = core.floorCents(list);
   const next = percent ? Math.max(floor, Math.round(list * (100 - percent) / 100)) : list;
   const shown = list && next < list ? Math.round((list - next) * 100 / list) : 0;
   return {
@@ -116,12 +89,14 @@ function cleanCode(value) {
   return /^[A-Z0-9-]{4,24}$/.test(code) ? code : "";
 }
 
-function couponOpen(coupon, purpose, reportId, now) {
+// `usedByEmail` is how many times the payer's address already redeemed this code; null when the address is unknown.
+function couponOpen(coupon, purpose, reportId, now, usedByEmail) {
   if (!coupon || !(Number(coupon.percent) > 0)) return false;
   const at = now ? new Date(now).getTime() : Date.now();
   if (coupon.validUntil && Date.parse(coupon.validUntil) <= at) return false;
   if (coupon.validFrom && Date.parse(coupon.validFrom) > at) return false;
   if (Number(coupon.maxUses) > 0 && Number(coupon.uses || 0) >= Number(coupon.maxUses)) return false;
+  if (Number(coupon.perEmail) > 0 && (usedByEmail == null || Number(usedByEmail) >= Number(coupon.perEmail))) return false;
   if (Array.isArray(coupon.purposes) && coupon.purposes.length && coupon.purposes.indexOf(purpose) === -1) return false;
   if (purpose === "report" && coupon.reportId && coupon.reportId !== reportId) return false;
   return true;
@@ -144,11 +119,11 @@ function languageOf(header, country) {
 }
 
 function catalog() {
-  const one = core.scheduleCents(1);
-  const four = core.scheduleCents(4);
-  const eight = core.scheduleCents(8);
+  const one = core.unitCents(1);
+  const four = core.unitCents(4);
+  const eight = core.unitCents(8);
   return {
-    floor: "A return price never falls below half the 19 USD sticker for that many selections.",
+    floor: "A return price or a code never takes a price below half its list price.",
     cadence: "At most three notes in seven days, and never twice inside 48 hours.",
     returnTable: RETURN_TABLE.map((row) => ({
       n: row.n,
@@ -311,14 +286,14 @@ function reportPayment(run, payment) {
 }
 
 // Bought on a report that already exists; none of them pays for a run.
-const ADDONS = ["cases", "alerts", "credentials"];
+const ADDONS = ["fixlist", "cases", "alerts", "credentials"];
 
 function paidPurpose(value) {
   const purpose = String(value || "");
   return purpose === "report" || ADDONS.indexOf(purpose) !== -1 ? purpose : "new-run";
 }
 
-// The payment row for a case export, signals, or a signed-in run bought on a report; never a run credit.
+// The payment row for a fix list, case export, signals, or a signed-in run bought on a report; never a run credit.
 function addonPayment(run, payment) {
   const row = Object.assign({
     status: "paid-addon",
