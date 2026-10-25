@@ -371,3 +371,116 @@ test("server: Jarvis rules in functions are a byte copy of the admin page's", ()
   assert.match(index, /exports\.jarvisWatch = scheduled\(/);
   ["settings", "settings-save", "goals", "daily-now"].forEach((op) => assert.match(index, new RegExp('op === "' + op + '"')));
 });
+
+const sources = require("../../functions/jarvis-sources.js");
+
+test("money: sales, credit runs, refunds and test rows each land in the right place", () => {
+  const start = daysAgo(7).getTime();
+  const priorStart = daysAgo(14).getTime();
+  const at = (n) => daysAgo(n).toISOString();
+  const out = sources.moneyRows([
+    { id: "a", createdAt: at(1), paid: true, priceUsd: 9, provider: "paypal" },
+    { id: "b", createdAt: at(2), paid: true, priceUsd: 19, provider: "paypal", status: "refunded" },
+    { id: "c", createdAt: at(2), paid: true },
+    { id: "d", createdAt: at(3), paid: true, priceUsd: 9, requestedEmail: "qa@example.com", test: true },
+    { id: "e", createdAt: at(10), paid: true, priceUsd: 9, provider: "paypal" }
+  ], { start, priorStart });
+  assert.deepEqual(out.revenue, { usd: 28, count: 2, avgUsd: 14, paidRuns: 1 });
+  assert.deepEqual(out.prior, { usd: 9, count: 1, paidRuns: 0 });
+  assert.equal(out.refundsUsd, 19);
+  assert.deepEqual(out.byProvider, [{ label: "paypal", value: 28 }]);
+});
+
+test("safety: DNS, DMARC, domain and TLS checks read their records and rank alerts first", async () => {
+  const answers = {
+    "carlosandmunoz.com/TXT": [{ type: 16, data: "\"v=spf1 include:sendgrid.net ~all\"" }],
+    "_dmarc.carlosandmunoz.com/TXT": [{ type: 16, data: "v=DMARC1; p=none; rua=mailto:x@y.z" }],
+    "s1._domainkey.carlosandmunoz.com/CNAME": [{ type: 5, data: "s1.sendgrid.net." }],
+    "carlosandmunoz.com/MX": []
+  };
+  const fetch = async (url) => {
+    if (/dns\.google/.test(url)) {
+      const u = new URL(url);
+      return json({ Answer: answers[u.searchParams.get("name") + "/" + u.searchParams.get("type")] || [] });
+    }
+    if (/rdap/.test(url)) return json({ events: [{ eventAction: "expiration", eventDate: daysAgo(-10).toISOString() }] });
+    throw new Error("unexpected " + url);
+  };
+  const out = await sources.safety({ fetch, env: {}, now: NOW.getTime(), thresholds: core.thresholds({}), tls: async () => 5 });
+  const level = (name) => out.checks.find((c) => c.name === name).level;
+  assert.equal(level("SPF"), "good");
+  assert.equal(level("DMARC"), "warn");
+  assert.equal(level("DKIM"), "warn");
+  assert.equal(level("MX"), "alert");
+  assert.equal(level("Domain"), "alert");
+  assert.equal(level("TLS"), "alert");
+  assert.equal(level("Web Risk"), "info");
+  assert.equal(out.checks[0].level, "alert");
+  assert.deepEqual(sources.dmarcPolicy("v=DMARC1; p=quarantine; pct=25"), { p: "quarantine", pct: 25, rua: false });
+});
+
+test("brave: our place counts only our own domain, and a failed search does not stop the rest", async () => {
+  const fetch = async (url) => {
+    if (/q=broken/.test(url)) return json({ message: "rate limited" }, 429);
+    return json({ web: { results: [{ url: "https://rival.example/a" }, { url: "https://notcarlosandmunoz.com.evil.io/" }, { url: "https://www.carlosandmunoz.com/qa" }] } });
+  };
+  const out = await sources.brave({ fetch, env: { BRAVE_SEARCH_KEY: "k" } }, ["qa review", "broken"]);
+  assert.deepEqual(out.queries[0], { query: "qa review", position: 3, url: "https://www.carlosandmunoz.com/qa", leader: "rival.example" });
+  assert.equal(out.queries[1].position, null);
+  assert.ok(out.queries[1].error);
+  assert.equal((await sources.brave({ fetch, env: {} }, ["x"])).ok, false);
+});
+
+test("platform: real failures come from the log lines, not from every non-2xx", async () => {
+  const fetch = async () => json({ entries: [
+    { timestamp: "2026-10-25T14:00:00Z", resource: { labels: { function_name: "reviewUrl" } }, textPayload: "Function execution took 540001 ms, finished with status: 'timeout'" },
+    { timestamp: "2026-10-25T13:00:00Z", resource: { labels: { function_name: "reviewUrl" } }, textPayload: "Function execution took 20 ms, finished with status code: 500" },
+    { timestamp: "2026-10-25T12:00:00Z", resource: { labels: { function_name: "jarvis" } }, textPayload: "finished with status: 'crash'" }
+  ], nextPageToken: "more" });
+  const out = await sources.realFailures({ fetch }, "t", NOW.getTime() - core.DAY);
+  assert.equal(out.total, 3);
+  assert.equal(out.capped, true);
+  assert.deepEqual(out.byFunction, [{ label: "reviewUrl", value: 2 }, { label: "jarvis", value: 1 }]);
+  assert.deepEqual(out.kinds.map((k) => k.label).sort(), ["500", "crash", "timeout"]);
+});
+
+test("connections and the new briefing rules read money, mail, search, social, safety and platform", () => {
+  const external = {
+    money: { ok: true, revenue: { usd: 0, count: 0 }, prior: { usd: 18 }, refundsUsd: 9, paypal: { disputesOpen: 1 }, needs: ["PayPal: turn on Transaction Search."] },
+    email: { ok: true, totals: { processed: 40, bounces: 1, blocks: 3, spam_reports: 1 }, rates: { bad: 12.5 }, needs: [] },
+    search: { ok: true, brave: { ok: true, queries: [{ query: "qa", position: null }, { query: "cv", position: 2 }] }, console: { ok: false, need: "x" }, needs: ["x"] },
+    social: { ok: true, sent: 4, failed: 2, needs: [] },
+    safety: { ok: true, checks: [{ name: "DMARC", key: "dmarc", level: "warn", ok: false, detail: "monitor-only" }, { name: "CAA", key: "caa", level: "info", ok: true, detail: "" }] },
+    platform: { ok: true, functions: { failures: 30, failureRate: 2, byFunction: [{ label: "reviewUrl", value: 30 }] }, gemini: { requests: 92, ok: 10, errorRate: 89.1, failedMethods: [{ label: "ListModels" }] }, firestore: { reads: 45000, readsFreePct: 90 }, needs: [] },
+    github: { ok: false, error: "rate limited" }
+  };
+  const states = Object.fromEntries(core.connections(external, { ga4: true }).map((c) => [c.key, c.state]));
+  assert.equal(states.money, "partial");
+  assert.equal(states.email, "live");
+  assert.equal(states.github, "down");
+  assert.equal(states.ga4, "loading");
+  assert.equal(states.cloudflare, "off");
+  const rows = core.briefing({ external });
+  const by = (key) => rows.find((r) => r.key === key) || {};
+  assert.equal(by("money:none").text, "No sales in range, after 18 USD the period before.");
+  assert.equal(by("money:refunds").level, "warn");
+  assert.equal(by("money:disputes").level, "alert");
+  assert.equal(by("email:spam").level, "alert");
+  assert.equal(by("email:bad").text, "12.5% of emails bounced or were blocked (4 of 40).");
+  assert.equal(by("search:brave").text, "Not in Brave's top 20 for 1 of 2 searches, such as \"qa\".");
+  assert.equal(by("social:failed").level, "warn");
+  assert.equal(by("safety:dmarc").text, "DMARC: monitor-only");
+  assert.ok(!rows.some((r) => r.key === "safety:caa"));
+  assert.equal(by("platform:failures").level, "warn");
+  assert.equal(by("platform:gemini").level, "warn");
+  assert.equal(by("platform:reads").level, "warn");
+  assert.equal(by("connections:needs").text, "2 connections wait for a one-time grant; see Systems > Connections.");
+  assert.equal(core.briefing({ external, thresholds: { fnFailures: 100, geminiErrorPct: 95, firestoreFreePct: 95, emailBadPct: 20 } }).filter((r) => /^platform:|^email:bad/.test(r.key)).length, 0);
+});
+
+test("server: settings keep up to 8 distinct trimmed searches", () => {
+  const many = Array.from({ length: 12 }, (_, i) => "q" + i);
+  assert.deepEqual(jarvis.normalizeSettings({ searchQueries: [" qa  review ", "qa review", "", 5, "x".repeat(90)] }).searchQueries, ["qa review", "5", "x".repeat(80)]);
+  assert.equal(jarvis.normalizeSettings({ searchQueries: many }).searchQueries.length, 8);
+  assert.deepEqual(jarvis.normalizeSettings({}).searchQueries, []);
+});

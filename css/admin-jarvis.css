@@ -184,6 +184,12 @@
 .jv-tile-goal i { display: block; height: 100%; background: var(--cyan); }
 .jv-tile-goal i.done { background: var(--green); } .jv-tile-goal i.behind { background: var(--amber); } .jv-tile-goal i.far-behind { background: var(--pink); }
 
+/* Connections and facts */
+.jv-needs { margin: 0.5rem 0 0; padding-left: 1.1rem; color: var(--amber); font-size: 0.8rem; display: grid; gap: 0.3rem; }
+.jv-facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; font-size: 0.86rem; color: var(--muted); }
+.jv-facts b { color: var(--text); font-family: ui-monospace, Menlo, monospace; }
+.jv-settings-box textarea { width: 100%; background: rgba(4, 18, 28, 0.85); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0.45rem 0.55rem; font: 0.85rem ui-monospace, Menlo, monospace; resize: vertical; }
+
 /* Settings */
 .jv-settings { position: fixed; inset: 0; z-index: 60; display: grid; place-items: start center; padding: 6vh 1rem; background: rgba(1, 6, 10, 0.72); backdrop-filter: blur(4px); overflow-y: auto; }
 .jv-settings[hidden] { display: none; }

@@ -252,7 +252,38 @@ async function cloudflare(fetchImpl, env, { days, now }) {
   const daily = (zone.httpRequests1dGroups || []).map((row) => ({ date: row.dimensions.date, requests: row.sum.requests, bytes: row.sum.bytes, cached: row.sum.cachedRequests, threats: row.sum.threats, pageViews: row.sum.pageViews, uniques: row.uniq.uniques }));
   const sum = (key) => daily.reduce((total, row) => total + (Number(row[key]) || 0), 0);
   const requests = sum("requests");
-  return { ok: true, from, requests, bytes: sum("bytes"), cacheRatio: requests ? Math.round((sum("cached") / requests) * 1000) / 10 : 0, threats: sum("threats"), pageViews: sum("pageViews"), uniques: sum("uniques"), daily };
+  const out = { ok: true, from, requests, bytes: sum("bytes"), cacheRatio: requests ? Math.round((sum("cached") / requests) * 1000) / 10 : 0, threats: sum("threats"), pageViews: sum("pageViews"), uniques: sum("uniques"), daily };
+  return Object.assign(out, await cloudflareBreakdown(fetchImpl, token, env.CLOUDFLARE_ZONE_ID, { from, now }));
+}
+
+// Countries, status codes and content types over the range; the top paths only for the last 24 hours (plan limit).
+async function cloudflareBreakdown(fetchImpl, token, zone, { from, now }) {
+  const tag = String(zone).replace(/[^a-f0-9]/gi, "");
+  const since = new Date(now - DAY).toISOString().replace(/\.\d+Z$/, "Z");
+  const until = new Date(now).toISOString().replace(/\.\d+Z$/, "Z");
+  const query = `{viewer{zones(filter:{zoneTag:"${tag}"}){maps:httpRequests1dGroups(limit:60,filter:{date_geq:"${from}"}){sum{countryMap{clientCountryName requests threats} responseStatusMap{edgeResponseStatus requests} contentTypeMap{edgeResponseContentTypeName requests}}} paths:httpRequestsAdaptiveGroups(limit:15,orderBy:[count_DESC],filter:{datetime_geq:"${since}",datetime_leq:"${until}",requestSource:"eyeball"}){count dimensions{clientRequestPath}}}}}`;
+  try {
+    const data = await readJson(await fetchImpl("https://api.cloudflare.com/client/v4/graphql", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+      signal: AbortSignal.timeout(15000)
+    }), "Cloudflare");
+    if (data.errors && data.errors.length) return { breakdownError: String(data.errors[0].message || "").slice(0, 160) };
+    const zoneData = (((data.data || {}).viewer || {}).zones || [])[0] || {};
+    const countries = {}, threatsBy = {}, statuses = {}, types = {};
+    (zoneData.maps || []).forEach((row) => {
+      (row.sum.countryMap || []).forEach((c) => { count(countries, c.clientCountryName, c.requests); if (c.threats) count(threatsBy, c.clientCountryName, c.threats); });
+      (row.sum.responseStatusMap || []).forEach((s) => count(statuses, String(s.edgeResponseStatus), s.requests));
+      (row.sum.contentTypeMap || []).forEach((s) => count(types, s.edgeResponseContentTypeName, s.requests));
+    });
+    return {
+      countries: top(countries, 15), threatCountries: top(threatsBy, 10), statuses: top(statuses, 12), contentTypes: top(types, 10),
+      paths: (zoneData.paths || []).map((row) => ({ label: row.dimensions.clientRequestPath, value: row.count }))
+    };
+  } catch (error) {
+    return { breakdownError: String(error.message || error).slice(0, 160) };
+  }
 }
 
 // --- speed: PageSpeed + CrUX ----------------------------------------------------------------------------------
@@ -371,7 +402,8 @@ function normalizeSettings(data) {
   const d = data || {};
   const mail = Object.assign({}, MAIL_DEFAULTS);
   Object.keys(MAIL_DEFAULTS).forEach((key) => { if (d.mail && typeof d.mail[key] === "boolean") mail[key] = d.mail[key]; });
-  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, updatedAt: String(d.updatedAt || "") };
+  const searchQueries = Array.from(new Set((Array.isArray(d.searchQueries) ? d.searchQueries : []).map((q) => String(q || "").replace(/\s+/g, " ").trim().slice(0, 80)).filter(Boolean))).slice(0, 8);
+  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, searchQueries, updatedAt: String(d.updatedAt || "") };
 }
 
 async function readSettings(db) {
@@ -381,7 +413,7 @@ async function readSettings(db) {
 
 async function saveSettings(db, input, by) {
   const clean = normalizeSettings(input);
-  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, updatedAt: new Date().toISOString(), by: String(by || "") };
+  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, searchQueries: clean.searchQueries, updatedAt: new Date().toISOString(), by: String(by || "") };
   await db.collection("jarvis_settings").doc("main").set(doc);
   return normalizeSettings(doc);
 }

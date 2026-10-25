@@ -45,7 +45,13 @@ const EXTERNAL = {
   cloudflare: { ok: false, error: 'The Cloudflare token needs Zone > Analytics > Read.' },
   settings: { ok: true, goals: [{ product: 'cv', metric: 'visits', period: 'week', target: 300 }], thresholds: {}, mail: { daily: true, gemini: true, watch: true }, updatedAt: '2026-10-24T12:00:00Z' },
   goals: { ok: true, goals: [{ key: 'cv.visits.week', product: 'cv', metric: 'visits', period: 'week', target: 300, label: 'CV visits this week', value: 120, pct: 40, expected: 107, projected: 336, elapsed: 36, status: 'on-track' }] },
-  speed: { ok: true, pages: [{ product: 'cv', name: 'CV', url: 'https://carlosandmunoz.com/', ok: true, score: 93, lab: {}, field: {} }], crux: null }
+  speed: { ok: true, pages: [{ product: 'cv', name: 'CV', url: 'https://carlosandmunoz.com/', ok: true, score: 93, lab: {}, field: {} }], crux: null },
+  money: { ok: true, days: 30, revenue: { usd: 27, count: 3, avgUsd: 9, paidRuns: 5 }, prior: { usd: 9, count: 1, paidRuns: 2 }, refundsUsd: 0, byProvider: [{ label: 'paypal', value: 27 }], byPurpose: [{ label: 'review', value: 27 }], daily: [{ date: '2026-10-24', usd: 9 }], paypal: { ok: true, disputesOpen: 0, transactions: null, needs: [] }, stripe: { mode: 'test' }, needs: ['PayPal: turn on Transaction Search for the live app.'] },
+  email: { ok: true, days: 30, totals: { processed: 38, delivered: 34, bounces: 0, blocks: 4, spam_reports: 0, unique_opens: 10, unique_clicks: 2 }, rates: { delivered: 89.5, bad: 10.5, opened: 29.4, clicked: 5.9 }, daily: [], suppressions: { bounces: [], blocks: [{ domain: 'example.org', reason: 'blocked', at: '2026-10-24T10:00:00Z' }], spam: [] }, needs: [] },
+  search: { ok: true, brave: { ok: true, queries: [{ query: 'carlosandmunoz', position: 3, url: 'https://carlosandmunoz.com/', leader: 'carlosandmunoz.com' }, { query: 'free website qa review', position: null, url: '', leader: 'rival.example' }] }, console: { ok: false, error: 'No access.', need: 'Search Console: add the service account.' }, needs: ['Search Console: add the service account.'] },
+  social: { ok: true, days: 30, sent: 30, failed: 0, channels: [{ label: 'tiktok', value: 12 }], results: [], daily: [], latest: [], youtube: { videos: [{ id: 'T1vH4T0yZRQ', title: 'The release is close', published: '2026-10-22T02:46:26Z', views: 28, likes: 0, comments: 0 }], views: 39 }, needs: [] },
+  safety: { ok: true, score: 88, needs: [], checks: [{ name: 'Web Risk', key: 'webrisk', level: 'good', ok: true, detail: 'Not listed.' }, { name: 'DMARC', key: 'dmarc', level: 'warn', ok: false, detail: 'p=quarantine at 25%.' }] },
+  platform: { ok: true, needs: ['Costs: turn on the billing export.'], functions: { executions: 3000, notOk: 2800, failures: 4, failureRate: 0.13, byFunction: [{ label: 'reviewUrl', value: 4 }], kinds: [{ label: 'timeout', value: 4 }], latest: [], capped: false }, gemini: { days: 7, requests: 92, ok: 10, errorRate: 89.1, byClass: [], failedMethods: [{ label: 'ListModels', value: 82 }] }, firestore: { reads: 20000, writes: 900, deletes: 10, readsFreePct: 40, writesFreePct: 4.5, deletesFreePct: 0.05 }, users: { total: 9, newInRange: 2, activeInRange: 4 } }
 };
 
 function seed() {
@@ -98,12 +104,12 @@ test.describe('admin statistics (Jarvis)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page);
     const tabs = page.locator('.jv-tabs [role="tab"]');
-    await expect(tabs).toHaveCount(9);
-    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Traffic', 'Systems']);
+    await expect(tabs).toHaveCount(10);
+    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Traffic', 'Systems']);
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
-    expect(new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals']));
+    expect(new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -117,8 +123,22 @@ test.describe('admin statistics (Jarvis)', () => {
     await tabs.filter({ hasText: 'URL Review' }).click();
     await expect(page.locator('[data-view="review"]')).toContainText('shop.example');
 
+    await tabs.filter({ hasText: 'Business' }).click();
+    const business = page.locator('[data-view="business"]');
+    await expect(business).toContainText('Revenue (USD)27');
+    await expect(business).toContainText('Transaction Search');
+    await expect(business).toContainText('rival.example');
+    await expect(business).toContainText('The release is close');
+
     await tabs.filter({ hasText: 'Traffic' }).click();
     await expect(page.locator('[data-view="traffic"]')).toContainText('Zone > Analytics > Read');
+
+    await tabs.filter({ hasText: 'Systems' }).click();
+    const systems = page.locator('[data-view="systems"]');
+    await expect(systems).toContainText('Connections');
+    await expect(systems).toContainText('DMARC');
+    await expect(systems).toContainText('reviewUrl');
+    await expect(systems).toContainText('billing export');
     expect(errors).toEqual([]);
   });
 
@@ -185,12 +205,14 @@ test.describe('admin statistics (Jarvis)', () => {
     await row.locator('[name="g-target"]').fill('12');
     await box.locator('[name="t-pendingRatings"]').fill('25');
     await box.locator('[name="m-gemini"]').uncheck();
+    await box.locator('[name="s-queries"]').fill('qa review\n\nqa review\n  carlos qa  ');
     await box.locator('button[type="submit"]').click();
     await expect(page.locator('.jv-settings')).toBeHidden();
     const save = calls.find((c) => c.op === 'settings-save');
     expect(save.body.settings.goals).toEqual([{ product: 'cv', metric: 'visits', period: 'week', target: 300 }, { product: 'review', metric: 'paid', period: 'month', target: 12 }]);
     expect(save.body.settings.thresholds.pendingRatings).toBe(25);
     expect(save.body.settings.mail).toEqual({ daily: true, gemini: false, watch: true });
+    expect(save.body.settings.searchQueries).toEqual(['qa review', 'qa review', 'carlos qa']);
     await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(1);
 
     await page.keyboard.press('g');
