@@ -2462,12 +2462,16 @@ async function hasFreeRuns(email) {
 
 async function reviewRowsFor(deviceId, ip) {
   const col = admin.firestore().collection("url_reviews");
-  const [byDevice, byIp] = await Promise.all([
-    deviceId ? col.where("deviceId", "==", deviceId).limit(20).get() : Promise.resolve({ docs: [] }),
-    ip ? col.where("ip", "==", ip).limit(20).get() : Promise.resolve({ docs: [] })
+  const none = Promise.resolve({ docs: [] });
+  // Credits and their use are read on their own, so a device with many runs cannot push a paid credit out of the 20 rows.
+  const [byDevice, byIp, credits, spent] = await Promise.all([
+    deviceId ? col.where("deviceId", "==", deviceId).limit(20).get() : none,
+    ip ? col.where("ip", "==", ip).limit(20).get() : none,
+    deviceId ? col.where("deviceId", "==", deviceId).where("status", "==", "run-credit").limit(100).get() : none,
+    deviceId ? col.where("deviceId", "==", deviceId).where("status", "==", "run-credit-used").limit(200).get() : none
   ]);
   const map = new Map();
-  byDevice.docs.concat(byIp.docs).forEach((doc) => map.set(doc.id, Object.assign({ id: doc.id }, doc.data())));
+  byDevice.docs.concat(byIp.docs, credits.docs, spent.docs).forEach((doc) => map.set(doc.id, Object.assign({ id: doc.id }, doc.data())));
   return Array.from(map.values()).map((row) => Object.assign({}, row, {
     createdAt: row.createdAt && row.createdAt.toDate ? row.createdAt.toDate().toISOString() : row.createdAt
   }));
@@ -2728,8 +2732,10 @@ async function fulfillPayment(result, ctx) {
     return { code: 402, body: { paid: false, error: UNMATCHED } };
   }
   const open = claim.open;
+  const reportOf = (purpose) => (purpose === "report" ? { reportId: String(open.reportId || "") } : {});
   if (claim.state !== "claimed") {
-    return { code: 200, body: { paid: true, purpose: open.paidPurpose || reviewOffers.paidPurpose(open.purpose) } };
+    const purpose = open.paidPurpose || reviewOffers.paidPurpose(open.purpose);
+    return { code: 200, body: Object.assign({ paid: true, purpose }, reportOf(purpose)) };
   }
   const checkoutRef = admin.firestore().collection("url_reviews").doc(result.reference);
   const closeCheckout = (paidPurpose) => checkoutRef.update({ status: "paid", paidAt: new Date().toISOString(), paidPurpose, expireAt: urlReview.paymentExpireAt() });
@@ -2740,7 +2746,7 @@ async function fulfillPayment(result, ctx) {
       const prior = existing.docs[0].data() || {};
       const purpose = prior.report ? "report" : reviewOffers.paidPurpose(prior.purpose);
       await closeCheckout(purpose);
-      return { code: 200, body: { paid: true, purpose } };
+      return { code: 200, body: Object.assign({ paid: true, purpose }, reportOf(purpose)) };
     }
   }
   const paidPurpose = reviewOffers.paidPurpose(open.purpose);
@@ -2753,6 +2759,9 @@ async function fulfillPayment(result, ctx) {
   const paidPrice = open.priceUsd || result.amount;
   const paidCompare = reviewCompare.cleanId(open.compareWith);
   const captureId = result.captureId || "";
+  const payerEmail = result.payerEmail || "";
+  const payerName = result.payerName || "";
+  const who = { name: payerName, email: String(open.email || "") || payerEmail };
   if (open.coupon) {
     const owner = paidReport ? await admin.firestore().collection("url_reviews").doc(paidReport).get() : null;
     const email = String((owner && owner.exists && owner.get("email")) || "").trim().toLowerCase();
@@ -2774,6 +2783,8 @@ async function fulfillPayment(result, ctx) {
       method: choice,
       sessionId: result.sessionId,
       captureId,
+      payerEmail,
+      payerName,
       reference: result.reference,
       test: testRun,
       priceUsd: paidPrice,
@@ -2784,6 +2795,8 @@ async function fulfillPayment(result, ctx) {
     }));
     await rememberReview("paid", {
       via,
+      name: payerName,
+      email: run.email || who.email,
       id: paidReport,
       status: "paid-report",
       paid: true,
@@ -2830,6 +2843,8 @@ async function fulfillPayment(result, ctx) {
       deviceId: payer,
       sessionId: result.sessionId,
       captureId,
+      payerEmail,
+      payerName,
       reference: result.reference,
       test: testRun,
       priceUsd: paidPrice,
@@ -2839,7 +2854,7 @@ async function fulfillPayment(result, ctx) {
       expireAt: urlReview.paymentExpireAt()
     });
     await admin.firestore().collection("url_reviews").doc("paid-" + paidPurpose + "-" + String(result.reference || result.sessionId).replace(/[^A-Za-z0-9-]/g, "").slice(0, 64)).set(addon);
-    await rememberReview("addon-paid", Object.assign({ id: paidReport, via }, addon));
+    await rememberReview("addon-paid", Object.assign({ id: paidReport, via }, addon, { name: payerName, email: addon.email || who.email }));
   } else {
     const credit = {
       status: "run-credit",
@@ -2848,6 +2863,9 @@ async function fulfillPayment(result, ctx) {
       provider: result.provider,
       method: choice,
       deviceId: payer,
+      email: String(open.email || ""),
+      payerEmail,
+      payerName,
       sessionId: result.sessionId,
       captureId,
       reference: result.reference,
@@ -2873,10 +2891,10 @@ async function fulfillPayment(result, ctx) {
     for (let n = 2; n <= competitors; n += 1) {
       await admin.firestore().collection("url_reviews").doc("credit-" + result.reference + "-" + n).set(Object.assign({}, credit, { priceUsd: 0, amount: 0, paidWith: "credit-" + result.reference, competitors }));
     }
-    await rememberReview("run-paid", Object.assign({ via }, credit, competitors > 1 ? { competitors } : {}));
+    await rememberReview("run-paid", Object.assign({ via }, credit, competitors > 1 ? { competitors } : {}, who));
   }
   await closeCheckout(paidPurpose);
-  return { code: 200, body: { paid: true, purpose: paidPurpose } };
+  return { code: 200, body: Object.assign({ paid: true, purpose: paidPurpose }, reportOf(paidPurpose)) };
 }
 
 function paypalKeys(mode) {
@@ -4114,8 +4132,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         cancelUrl,
         pendingUrl
       }, keys));
+      const buyer = await reviewAuth.checkSession(reviewAuth.firestoreStore(admin.firestore()), Object.assign({}, req.body || {}, { touch: false })).catch(() => null);
       await admin.firestore().collection("url_reviews").doc(reference).set(Object.assign({
         status: "checkout-open",
+        email: (buyer && buyer.ok && buyer.email) || String(reportData.email || ""),
         provider: urlReview.paymentProvider(choice),
         method: choice,
         externalId: session.id,
@@ -4139,7 +4159,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         currency: session.currency,
         paid: false,
         test: testRun,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        expireAt: new Date(Date.now() + urlReview.RETAIN_MS)
       }, dealFields(deal)));
       await rememberReview("checkout", {
         id: reference,
@@ -4357,9 +4378,10 @@ async function runReview(req, res, placeOf) {
   const deviceId = String(intake.value.deviceId || hintedDevice).replace(/[^a-f0-9]/g, "").slice(0, 32);
   const ip = req.ip || "";
   const priorRows = free ? [] : await reviewRowsFor(deviceId, ip);
+  const testRun = urlReview.testKeyMatches(req.body && req.body.testKey, process.env.QA_TEST_KEY);
   let decision = free
     ? { ok: true }
-    : urlReview.judgeAttempts(priorRows, { deviceId, ip }, intake.value);
+    : urlReview.judgeAttempts(priorRows, { deviceId, ip }, Object.assign({}, intake.value, { test: testRun }));
   // A credit bought for exactly this run is spent first; otherwise an open pass with a run left carries it.
   if (!free && !decision.consumeId && decision.code !== "stopped" && decision.code !== "invalid") {
     const onPass = await passDecision(signedIn.email, intake.value);
@@ -4372,17 +4394,6 @@ async function runReview(req, res, placeOf) {
       coupon: req.body && req.body.coupon
     });
     Object.assign(decision, { priceUsd: deal.usd }, dealFields(deal));
-  }
-  if (decision.ok && decision.consumeId) {
-    await admin.firestore().collection("url_reviews").add({
-      status: "run-credit-used",
-      creditId: decision.consumeId,
-      deviceId,
-      ...(decision.pass ? { email: signedIn.email, passId: decision.pass.id } : {}),
-      createdAt: new Date().toISOString(),
-      expireAt: urlReview.paymentExpireAt()
-    });
-    await rememberReview("credit", { status: "run-credit-used", deviceId, creditId: decision.consumeId });
   }
   if (!decision.ok) {
     const denied = {
@@ -4434,6 +4445,18 @@ async function runReview(req, res, placeOf) {
     if (decision.pass) await giveBackPassRun(decision.pass.id, decision.consumeId);
     res.status(claim.status).json({ error: claim.error });
     return;
+  }
+  let usedCredit = null;
+  if (decision.consumeId) {
+    usedCredit = await admin.firestore().collection("url_reviews").add({
+      status: "run-credit-used",
+      creditId: decision.consumeId,
+      deviceId,
+      ...(decision.pass ? { email: signedIn.email, passId: decision.pass.id } : {}),
+      createdAt: new Date().toISOString(),
+      expireAt: urlReview.paymentExpireAt()
+    });
+    await rememberReview("credit", { status: "run-credit-used", deviceId, creditId: decision.consumeId });
   }
   const runId = claim.runId;
   let stopped = false;
@@ -4502,7 +4525,7 @@ async function runReview(req, res, placeOf) {
       acceptLanguage: req.get("accept-language")
     }, await placeOf(runId)));
     record.signInProvider = signedIn.provider;
-    if (urlReview.testKeyMatches(req.body && req.body.testKey, process.env.QA_TEST_KEY)) record.test = true;
+    if (testRun) record.test = true;
     if (free) Object.assign(record, { paid: true, free: true, priceUsd: 0 });
     if (decision.pass) {
       Object.assign(record, { paid: true, priceUsd: decision.pass.extrasUsd, passId: decision.pass.id, passPlan: decision.pass.plan });
@@ -4561,10 +4584,20 @@ async function runReview(req, res, placeOf) {
       requestedUrl: intake.value.url,
       clientUrl: intake.value.clientUrl,
       status: "failed",
-      reason: error.message || "The review failed."
+      reason: error.message || "The review failed.",
+      creditId: decision.consumeId || ""
     };
     await rememberReview("failed", failed);
     if (decision.pass) await giveBackPassRun(decision.pass.id, decision.consumeId);
+    else if (usedCredit) {
+      try {
+        // A paid run that fails gives its credit back, so the same review can run again at no charge.
+        await usedCredit.update({ status: "run-credit-returned", returnedAt: new Date().toISOString(), runId: runId || "" });
+        await rememberReview("credit-returned", Object.assign({ deviceId, test: testRun }, failed));
+      } catch (returnError) {
+        console.error("Credit return failed:", returnError);
+      }
+    }
     await saveRunLog("failed", error);
     await mailReviewedSites(ip, failed);
     writeLine({ type: "error", error: error.message || "The review failed." });
