@@ -6,13 +6,15 @@
    same review a person would, without the web search (Brave and Tavily credits stay for people). The
    review goes public through Live Reports like any other, and its owner notice is queued.
 
-   State lives in Firestore url_review_sweep/state: { lap, pos, cursor: { cc: n }, days: { date: {done, failed} }, last }. */
+   State lives in Firestore url_review_sweep/state: { lap, pos, cursor: { cc: n }, days: { date: {done, failed, skipped, failures} }, last }.
+   A failed review is also saved to url_review_failures (source "sweep"), so the daily diagnosis and re-runs pick it up. */
 
 const { suffixRegistrable } = require("./url-review-suffix");
 
 const PER_DAY = 24;
 const REVISIT_DAYS = 182;
 const KEEP_DAYS = 14;
+const FAILS_KEPT = 30;
 const PER_COUNTRY = 150;
 const GLOBAL_RANK = 5000;
 
@@ -125,10 +127,15 @@ function doneOn(state, day) {
   return (today.done || 0) + (today.failed || 0);
 }
 
+// A failed tick also lands in today's `failures` (host, country, reason), the newest FAILS_KEPT.
 function tally(state, day, outcome, last) {
   const days = Object.assign({}, (state || {}).days);
   const today = Object.assign({ done: 0, failed: 0, skipped: 0 }, days[day]);
   today[outcome] = (today[outcome] || 0) + 1;
+  if (outcome === "failed") {
+    const row = last || {};
+    today.failures = (today.failures || []).concat({ host: row.host || "", cc: row.cc || "", at: row.at || "", reason: String(row.reason || "").slice(0, 160) }).slice(-FAILS_KEPT);
+  }
   days[day] = today;
   Object.keys(days).sort().slice(0, -KEEP_DAYS).forEach((old) => delete days[old]);
   return Object.assign({}, state, { days, last });

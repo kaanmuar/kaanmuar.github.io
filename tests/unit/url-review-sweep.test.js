@@ -109,6 +109,45 @@ test("the daily tally caps on done and failed, keeps two weeks, and sums for the
   assert.deepEqual(sweep.totals(state, "2026-11-15"), { done: 6, failed: 0, skipped: 0 });
 });
 
+test("a failed tick lists its host and reason under the day, the newest thirty (#1096)", () => {
+  let state = sweep.tally({}, "2026-10-24", "failed", { host: "www.hoka.com", cc: "us", at: "2026-10-24T05:15:00Z", reason: "Parse Error: Header overflow", note: "x" });
+  state = sweep.tally(state, "2026-10-24", "done", { host: "a.co" });
+  assert.deepEqual(state.days["2026-10-24"].failures, [{ host: "www.hoka.com", cc: "us", at: "2026-10-24T05:15:00Z", reason: "Parse Error: Header overflow" }]);
+  for (let i = 0; i < 40; i += 1) state = sweep.tally(state, "2026-10-25", "failed", { host: "h" + i + ".co", reason: "r".repeat(300) });
+  const kept = state.days["2026-10-25"].failures;
+  assert.deepEqual([kept.length, kept[0].host, kept[29].host, kept[0].reason.length], [30, "h10.co", "h39.co", 160]);
+  assert.equal(state.days["2026-10-25"].failed, 40);
+});
+
+test("a failed sweep review is saved as a failure the diagnosis and re-runs pick up, re-run through the sweep (#1096)", () => {
+  const failures = require("../../functions/url-review-failures");
+  const target = { host: "www.hoka.com", cc: "us", month: "202609", rank: 12 };
+  const record = failures.failureRecord(Object.assign({}, sweep.intake(target), {
+    kind: "failed", runId: "sweep-abc", error: new Error("Parse Error: Header overflow"), lines: [{ t: 5, text: "Opening the first page." }],
+    startedAt: 1000, endedAt: 2000, source: "sweep", sweep: target
+  }));
+  assert.deepEqual([record.source, record.cc, record.host, record.url, record.email, record.diagnosedAt, record.runId], ["sweep", "us", "www.hoka.com", "https://www.hoka.com/", "", null, "sweep-abc"]);
+  assert.deepEqual(record.sweep, target);
+  assert.deepEqual([record.cause.id, record.intake.reasonCode, record.options.frameworks], ["headers", "sweep", ["Playwright"]]);
+  assert.ok(failures.SUMMARY_FIELDS.includes("source"));
+  assert.equal(failures.failureRecord({ kind: "failed", url: "https://a.co/", error: "x" }).source, undefined);
+
+  const diagnosed = Object.assign({ id: "sweep-abc" }, record, {
+    at: "2026-10-24T05:15:00Z", diagnosedAt: "2026-10-24T11:00:00Z",
+    diagnosis: { cause: "headers", cleared: false, rerun: false }
+  });
+  const plan = failures.rerunPlan([diagnosed], [], 8);
+  assert.equal(plan.runs.length, 1, "the headers fix re-runs a sweep failure from before it");
+  const group = plan.runs[0];
+  assert.deepEqual([group.source, group.sweep, group.email, group.trigger.id], ["sweep", target, "", "fix"]);
+  const swept = failures.rerunDoc(group, { record: { id: "r9", status: "complete" }, lines: [] });
+  assert.equal(swept.status, "swept");
+  assert.equal(failures.rerunTrigger(Object.assign({}, diagnosed, { rerun: failures.rerunMark("x", swept) })), null);
+  const mail = failures.rerunMail([swept]);
+  assert.equal(mail.subject, "URL review re-runs: 0 held for you, 1 saved by the sweep, 0 failed again");
+  assert.match(mail.body, /^Saved by the sweep: www\.hoka\.com for Country sweep\n/);
+});
+
 test("a sweep intake builds a stored record with no undefined field", () => {
   const value = sweep.intake({ host: "www.rionegro.com.ar", cc: "ar", month: "202609", rank: 3 });
   const report = { id: "r1", host: "www.rionegro.com.ar", status: "complete", limits: { pagesRead: 4 } };
