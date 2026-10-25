@@ -244,26 +244,38 @@ function collect() {
   return { posts, ledger };
 }
 
+// The feed lists only the latest uploads: older ones stay in the ledger as they were, and a video the feed still
+// lists takes its current title, so a re-titled Short finds its post again.
+function mergeFeed(ledger, xml) {
+  const decode = (s) => s.replace(/&quot;/g, "\"").replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  let added = 0;
+  let retitled = 0;
+  for (const entry of xml.split("<entry>").slice(1)) {
+    const id = (entry.match(/<yt:videoId>([^<]+)</) || [])[1];
+    const title = decode((entry.match(/<media:title>([^<]*)</) || [])[1] || "");
+    const published = (entry.match(/<published>([^<]+)</) || [])[1];
+    if (!id) continue;
+    const known = ledger.videos[id];
+    if (known) {
+      if (title && known.title !== title) { known.title = title; retitled += 1; }
+      continue;
+    }
+    ledger.videos[id] = { title, published: published || "" };
+    added += 1;
+  }
+  ledger.videos = Object.fromEntries(Object.entries(ledger.videos).sort(([, a], [, b]) => (a.published || "").localeCompare(b.published || "")));
+  return { added, retitled };
+}
+
 async function growLedger() {
   const ledger = exists(LEDGER) ? readJson(LEDGER) : { channel: CHANNEL, videos: {} };
   ledger.channel = CHANNEL;
   const res = await fetch("https://www.youtube.com/feeds/videos.xml?channel_id=" + CHANNEL, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error("YouTube feed answered " + res.status);
-  const xml = await res.text();
-  const decode = (s) => s.replace(/&quot;/g, "\"").replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
-  let added = 0;
-  for (const entry of xml.split("<entry>").slice(1)) {
-    const id = (entry.match(/<yt:videoId>([^<]+)</) || [])[1];
-    const title = (entry.match(/<media:title>([^<]*)</) || [])[1];
-    const published = (entry.match(/<published>([^<]+)</) || [])[1];
-    if (!id || ledger.videos[id]) continue;
-    ledger.videos[id] = { title: decode(title || ""), published: published || "" };
-    added += 1;
-  }
-  ledger.videos = Object.fromEntries(Object.entries(ledger.videos).sort(([, a], [, b]) => (a.published || "").localeCompare(b.published || "")));
+  const counts = mergeFeed(ledger, await res.text());
   fs.mkdirSync(path.join(ROOT, OUT), { recursive: true });
   fs.writeFileSync(path.join(ROOT, LEDGER), JSON.stringify(ledger, null, 1) + "\n");
-  return added;
+  return counts;
 }
 
 // socialHub/live is public to read (firestore.rules), so the build needs no credentials.
@@ -806,7 +818,8 @@ async function main() {
   const check = args.includes("--check");
   if (!check && !args.includes("--offline")) {
     try {
-      console.log("YouTube: " + (await growLedger()) + " new uploads in the ledger");
+      const counts = await growLedger();
+      console.log("YouTube: " + counts.added + " new uploads in the ledger, " + counts.retitled + " re-titled");
     } catch (error) {
       console.warn("YouTube feed skipped: " + error.message);
     }
@@ -849,4 +862,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { KINDS, titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, expand, forLang, pairQuizzes, unspoiled, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };
+module.exports = { KINDS, mergeFeed, titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, expand, forLang, pairQuizzes, unspoiled, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };

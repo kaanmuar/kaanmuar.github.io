@@ -7,6 +7,8 @@
      BUFFER_API_KEY=... node scripts/buffer-queue.js --seed    read Buffer's scheduled and sent posts into the
        ledger, matched to their batch post by image address or caption, and list the ones no batch has; it
        queues nothing
+     BUFFER_API_KEY=... node scripts/buffer-queue.js --delete-unmatched [--dry-run]   delete the scheduled posts
+       dated after now that match no batch post and that the ledger does not know (not on the hub)
 
    Reads media/social-posts/<batch>/captions.json from scripts/tips-studio/build.js. Feed and story
    images are served by the site, so the script waits until the first one answers 200 (the Pages
@@ -89,7 +91,8 @@ const CALENDAR_SLOT = { linkedin: "linkedin", x: "x", facebook: "facebook", tikt
 
 // Every batch post by the addresses of its images and clips, by its captions and their opening words, and by its
 // calendar slots, for --seed. The launch set keeps a captions file per language and topic, and its six languages
-// share each slot. Opening words or a slot two posts share match neither.
+// share each slot. Opening words or a slot two posts share match neither. Opening words match only a sent post: a
+// scheduled one whose caption matches none exactly is stale and --delete-unmatched removes it (#1044).
 const lead = (text) => squash(text).slice(0, 60);
 function batchIndex(root = path.join(ROOT, "media/social-posts")) {
   const index = new Map();
@@ -136,20 +139,17 @@ function matchPost(index, post, net) {
   }
   const text = index.get("text " + squash(post.text));
   if (text) return text;
-  const opening = index.get("lead " + lead(post.text));
+  const opening = post.status === "sent" && index.get("lead " + lead(post.text));
   if (opening) return opening;
   const due = post.dueAt && new Date(post.dueAt);
   const slot = (net && due && !isNaN(due) && index.get("slot " + net + " " + due.toISOString())) || [];
   return slot.length === 1 ? slot[0] : null;
 }
 
-async function seed() {
-  const index = batchIndex();
+// Every post Buffer holds with one of these statuses, on a channel with a network slot.
+async function bufferPosts(statuses) {
   const list = await channels(true);
-  const book = ledger.read(ledger.BUFFER);
-  const statuses = String(process.env.BUFFER_SEED_STATUS || "scheduled,sent,error").split(",").filter((s) => /^[a-z_]+$/.test(s));
-  const unmatched = [];
-  let matched = 0;
+  const out = [];
   for (const org of [...new Set(list.map((c) => c.org))]) {
     const byId = new Map(list.filter((c) => c.org === org).map((c) => [c.id, c]));
     const filter = "{ channelIds: " + JSON.stringify([...byId.keys()]) + ", status: [" + statuses.join(", ") + "] }";
@@ -159,20 +159,63 @@ async function seed() {
       for (const { node } of data.posts.edges) {
         const channel = byId.get(node.channelId);
         const slot = channel && SLOT[channel.service];
-        if (!slot) continue;
-        const profile = channel.service + (channel.name ? " (" + channel.name + ")" : "");
-        const name = matchPost(index, node, slot);
-        if (!name) { unmatched.push(node.status + " " + (node.sentAt || node.dueAt || "") + " " + profile + ": " + squash(node.text).slice(0, 90)); continue; }
-        matched += 1;
-        const result = node.status === "sent" ? "sent" : node.status === "error" ? "failed" : "queued";
-        ledger.record(book, name, { channel: slot, profile, id: node.id, at: node.sentAt || node.dueAt, result, url: node.externalLink, checked: new Date().toISOString() });
+        if (slot) out.push({ node, slot, profile: channel.service + (channel.name ? " (" + channel.name + ")" : "") });
       }
       after = data.posts.pageInfo.hasNextPage ? data.posts.pageInfo.endCursor : null;
     } while (after);
   }
+  return out;
+}
+
+const describe = ({ node, profile }) => node.status + " " + (node.sentAt || node.dueAt || "") + " " + profile + ": " + squash(node.text).slice(0, 90);
+
+async function seed() {
+  const index = batchIndex();
+  const book = ledger.read(ledger.BUFFER);
+  const statuses = String(process.env.BUFFER_SEED_STATUS || "scheduled,sent,error").split(",").filter((s) => /^[a-z_]+$/.test(s));
+  const unmatched = [];
+  let matched = 0;
+  for (const item of await bufferPosts(statuses)) {
+    const { node, slot, profile } = item;
+    const name = matchPost(index, node, slot);
+    if (!name) { unmatched.push(describe(item)); continue; }
+    matched += 1;
+    const result = node.status === "sent" ? "sent" : node.status === "error" ? "failed" : "queued";
+    ledger.record(book, name, { channel: slot, profile, id: node.id, at: node.sentAt || node.dueAt, result, url: node.externalLink, checked: new Date().toISOString() });
+  }
   ledger.write(ledger.BUFFER, book);
   console.log(matched + " Buffer posts matched to a batch post, " + unmatched.length + " match no batch (not on the hub):");
   unmatched.sort().forEach((line) => console.log("  " + line));
+}
+
+// The scheduled posts --delete-unmatched may delete: still to go out, matching no batch post, and unknown to the
+// ledger. A sent post, or one dated before now, is never picked.
+function staleScheduled(index, items, book, now) {
+  const known = new Set(Object.values(book.posts || {}).flat().map((entry) => entry.id).filter(Boolean));
+  return items.filter(({ node, slot }) => {
+    const due = Date.parse(node.dueAt || "");
+    return node.status === "scheduled" && !isNaN(due) && due > now && !known.has(node.id) && !matchPost(index, node, slot);
+  });
+}
+
+async function deleteUnmatched(dry) {
+  const book = ledger.read(ledger.BUFFER);
+  const stale = staleScheduled(batchIndex(), await bufferPosts(["scheduled"]), book, Date.now());
+  console.log(stale.length + " scheduled Buffer posts match no batch post" + (dry ? " (dry run, nothing deleted):" : ":"));
+  let failed = 0;
+  for (const item of stale.sort((a, b) => describe(a).localeCompare(describe(b)))) {
+    if (dry) { console.log("  would delete " + item.node.id + " " + describe(item)); continue; }
+    try {
+      const data = await gql("mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }", { input: { id: item.node.id } });
+      const r = data.deletePost;
+      if (r.id) console.log("  deleted " + r.id + " " + describe(item));
+      else { failed += 1; console.log("  failed " + item.node.id + " " + describe(item) + " - " + (r.message || r.__typename)); }
+    } catch (error) {
+      failed += 1;
+      console.log("  failed " + item.node.id + " " + describe(item) + " - " + error.message);
+    }
+  }
+  if (failed) process.exit(1);
 }
 
 async function waitFor(url, minutes) {
@@ -234,6 +277,10 @@ async function main() {
   if (opts.seed) {
     if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
     return seed();
+  }
+  if (opts["delete-unmatched"]) {
+    if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
+    return deleteUnmatched(Boolean(opts["dry-run"]));
   }
   const batch = String(opts.batch || "");
   if (!/^[\w-]+$/.test(batch)) throw new Error("--batch is required");
@@ -301,4 +348,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { batchIndex, matchPost };
+module.exports = { batchIndex, matchPost, staleScheduled };
