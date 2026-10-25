@@ -70,6 +70,7 @@ test("a new daily batch puts its top review in the next free lane 1 slot and its
     "auto-2026-11-01/03-u-third-com 2026-11-03 3"
   ]);
   assert.deepEqual(result.held, []);
+  assert.deepEqual(result.moves.map((m) => m.hub), ["2026-11-01", "2026-11-01", "2026-11-01"], "on the hub from the batch day");
   const moved = cal.rowsFor(result.moves[0]);
   assert.equal(moved.find((r) => r.channel === "linkedin").time, cal.slotTime("2026-11-02", "linkedin", 1));
   assert.deepEqual(moved.find((r) => r.channel === "instagram"), { date: "2026-11-02", time: "09:00", channel: "instagram", asset: "feed/x.jpg" });
@@ -100,6 +101,30 @@ test("writing a plan moves a post's calendar rows and hub date together", () => 
     "2026-11-01," + cal.slotTime("2026-11-01", "linkedin", 4) + ",linkedin,02-b",
     "2026-11-01,12:00,instagram,01-a"
   ].sort());
+});
+
+test("a daily Live Report's hub date never moves past its batch day, and any other post's follows its slot", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "cal-"));
+  const dir = path.join(root, "media/social-posts/auto-2026-11-01");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.mkdirSync(path.join(root, "assets/social"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "captions.json"), JSON.stringify({ "01-a": { date: "2026-11-01" }, "02-b": { date: "2026-11-01" }, "03-c": { date: "2026-11-01" } }, null, 2));
+  fs.writeFileSync(path.join(dir, "calendar.csv"), "Date,Time,Channel,Post,Asset\n" + ["01-a", "02-b", "03-c"].map((slug) => "2026-11-01,09:15,linkedin," + slug + ",feed/" + slug + ".jpg").join("\n") + "\n");
+  fs.writeFileSync(path.join(root, "assets/social/buffer.json"), JSON.stringify({ version: 1, posts: {
+    "auto-2026-11-01/02-b": [{ channel: "linkedin", profile: "p", id: "b2", at: "2027-03-01T14:15:00.000Z", result: "queued" }],
+    "auto-2026-11-01/03-c": [{ channel: "linkedin", profile: "p", id: "b3", at: "2026-10-31T14:15:00.000Z", result: "queued" }]
+  } }));
+  cal.reconcile(root, Date.parse("2026-10-25T00:00:00Z"));
+  const caps = () => JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
+  assert.deepEqual(Object.values(caps()).map((c) => c.date), ["2026-11-01", "2026-11-01", "2026-10-31"], "a queue later than the hub keeps the batch day; an earlier one pulls the hub date in");
+  const { posts } = cal.load(root);
+  const a = posts.find((p) => p.slug === "01-a");
+  cal.write({ moves: [{ post: a, day: "2026-12-01", lane: 3, hub: "2026-11-01" }], held: [] }, root);
+  assert.equal(caps()["01-a"].date, "2026-11-01");
+  assert.match(fs.readFileSync(path.join(dir, "calendar.csv"), "utf8"), /^2026-12-01,\d\d:\d\d,linkedin,01-a,/m);
+
+  const tips = [post("tips/01-sent", { kind: "tip", lane: 2, sent: true }), post("tips/02-next", { kind: "tip", lane: 2 })];
+  assert.deepEqual(cal.plan(tips, { from: "2026-11-01" }).moves.map((m) => m.day + " " + m.hub), ["2026-11-02 2026-11-02"]);
 });
 
 test("sync moves only queued posts whose slot changed, never one due within half an hour", () => {
