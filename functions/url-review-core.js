@@ -366,6 +366,26 @@ function preformatUrl(input) {
   return normalizeUrl("https://" + raw);
 }
 
+const LANDING_TAGS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
+
+// Where the asker landed this visit, in the shape openSource() reads: only the utm_* tags and a bare host.
+function landingSource(landing) {
+  const src = landing && typeof landing === "object" ? landing : {};
+  let params;
+  try { params = new URLSearchParams(String(src.query || "").slice(0, 400)); } catch (error) { params = new URLSearchParams(); }
+  const kept = new URLSearchParams();
+  LANDING_TAGS.forEach((name) => {
+    const value = String(params.get(name) || "").replace(/[^A-Za-z0-9._~-]/g, "").slice(0, 40);
+    if (value) kept.set(name, value);
+  });
+  const tags = kept.toString();
+  const host = String(src.referrerHost || "").toLowerCase();
+  return {
+    query: tags && tags.length <= 200 ? "?" + tags : "",
+    referrerHost: /^[a-z0-9.-]+(:\d{1,5})?$/.test(host) ? host.slice(0, 80) : ""
+  };
+}
+
 function validateIntake(body) {
   const src = body || {};
   const errors = [];
@@ -409,6 +429,7 @@ function validateIntake(body) {
   const compareWith = known && known.id === "compare" ? String(src.compareWith || "").replace(/[^a-f0-9]/g, "").slice(0, 32) : "";
   if (known && known.id === "compare" && !compareWith) fieldError(errors, "reason", "Start a comparison from one of your reports.");
   const reason = known && known.id === "other" ? reasonText : (known ? known.label : "");
+  const landing = landingSource(src.landing);
   return {
     errors,
     value: !errors.length && target ? {
@@ -431,7 +452,9 @@ function validateIntake(body) {
       section: src.section === true,
       followUp: src.followUp === true,
       unlisted: src.unlisted === true,
-      compareWith
+      compareWith,
+      query: landing.query,
+      referrerHost: landing.referrerHost
     } : null
   };
 }
@@ -3333,6 +3356,8 @@ function intakeRecord(value, report, meta) {
     followUp: value.followUp === true,
     unlisted: value.unlisted === true,
     compareWith: value.compareWith || "",
+    query: value.query || "",
+    referrerHost: value.referrerHost || "",
     report
   };
 }
@@ -4100,6 +4125,7 @@ module.exports = {
   paymentExpireAt,
   preformatUrl,
   validateIntake,
+  landingSource,
   screenIntake,
   emailCanReceive,
   mailboxMatchesHost,

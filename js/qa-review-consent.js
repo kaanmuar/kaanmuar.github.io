@@ -88,8 +88,25 @@
     if (choice()) bar.hidden = true;
   }
 
+  // The first page of the visit keeps its tags and referrer, so a review started pages later still names its source.
+  const LANDING_KEY = "qa-review-landing";
+
+  function keepLanding() {
+    try {
+      if (sessionStorage.getItem(LANDING_KEY)) return;
+      let referrerHost = "";
+      try { referrerHost = document.referrer ? new URL(document.referrer).host : ""; } catch (error) { referrerHost = ""; }
+      sessionStorage.setItem(LANDING_KEY, JSON.stringify({ query: scrubbed(root.location.href).search.slice(0, 400), referrerHost: referrerHost.slice(0, 80) }));
+    } catch (error) { /* storage is off */ }
+  }
+
+  function landing() {
+    try { return JSON.parse(sessionStorage.getItem(LANDING_KEY) || "null"); } catch (error) { return null; }
+  }
+
   root.QaConsent = {
     allowed: allowed,
+    landing: landing,
     onAllow: function (fn) { if (allowed()) fn(); else listeners.push(fn); }
   };
 
@@ -128,5 +145,6 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
   else mount();
   if (allowed()) loadAnalytics();
+  keepLanding();
   noteOpen();
 })(window);
