@@ -5,7 +5,8 @@
      [--batch tips-2026-10] [--seed 7] [--every 1] [--per-day 2] [--after 0] [--schedule-only]
    --per-day N posts N a day per channel, each in its own part of the channel window; --after N
    counts posts already ahead of this batch in the stream; --schedule-only rewrites the calendar,
-   captions, and Buffer CSVs without rendering.
+   captions, and Buffer CSVs without rendering. --captions-only x[,linkedin] rewrites only those networks'
+   captions, for posts dated today or later, and their Buffer CSVs, keeping the calendar as it is.
    Buffer CSVs leave Tags blank: bulk upload rejects any tag the account doesn't have. Bulk upload takes
    no alt text outside Pinterest, so buffer/alt-text.csv lists it per post to paste in the composer.
    node scripts/tips-studio/build.js --source runs --start 2026-10-28 --every 4
@@ -284,6 +285,32 @@ async function renderClip(page, tip, index, total, file, cover, said) {
   if (!(peak > -30)) throw new Error("clip " + tip.id + " is silent (peak " + peak + " dB); never post a muted clip");
 }
 
+// Posts dated before today keep the caption they went out with; the calendar is left as the queues hold it.
+function rewriteCaptions(all, networks) {
+  const file = path.join(OUT, "captions.json");
+  const captions = JSON.parse(fs.readFileSync(file, "utf8"));
+  const today = new Date().toISOString().slice(0, 10);
+  const slugs = Object.keys(captions);
+  let changed = 0;
+  slugs.forEach((slug) => {
+    const cap = captions[slug];
+    const [, number, id] = slug.match(/^(\d+)-(.+)$/);
+    const tip = all.find((t) => t.id === id);
+    if (!tip) throw new Error(slug + " has no post in --source " + SOURCE);
+    if (cap.date < today) return;
+    const fresh = studio.captions(tip, Number(number) - 1, slugs.length);
+    networks.forEach((network) => { if (fresh[network] && fresh[network] !== cap[network]) { cap[network] = fresh[network]; changed += 1; } });
+  });
+  fs.writeFileSync(file, JSON.stringify(captions, null, 2));
+  const rows = fs.readFileSync(path.join(OUT, "calendar.csv"), "utf8").trim().split("\n").slice(1).map((line) => line.split(","));
+  for (const channel of networks.filter((n) => ["linkedin", "x", "facebook", "instagram"].includes(n))) {
+    const lines = ["Text,Image URL,Tags,Posting Time"].concat(rows.filter((r) => r[2] === channel).map(([date, time, , slug, asset]) =>
+      [csvCell(captions[slug][channel]), csvCell(IMAGE_BASE + "/" + asset), csvCell(""), csvCell(date + " " + time)].join(",")));
+    fs.writeFileSync(path.join(OUT, "buffer", "buffer-" + channel + ".csv"), lines.join("\n") + "\n");
+  }
+  console.log("rewrote", changed, networks.join("/"), "captions dated", today, "or later in", path.relative(ROOT, OUT));
+}
+
 (async () => {
   if (!opts["export-strings"]) spawnSync(process.execPath, [path.join(ROOT, "scripts/trending-tags.js"), "--if-stale"], { stdio: "inherit" });
   const rand = rng(SEED);
@@ -292,6 +319,7 @@ async function renderClip(page, tip, index, total, file, cover, said) {
   let tips = PICK ? all.filter((t) => PICK.includes(t.id)) : all;
   if (opts.shard) { const [k, n] = String(opts.shard).split("/").map(Number); tips = tips.filter((t, i) => i % n === k); }
   if (opts["export-strings"]) { fs.mkdirSync(OUT, { recursive: true }); exportStrings(all); return; }
+  if (opts["captions-only"]) { rewriteCaptions(all, String(opts["captions-only"]).split(",")); return; }
   if (opts.rotate || !(opts["skip-video"] || opts["schedule-only"])) BED = findBed();
   for (const dir of ["feed", "story", "clip", "cover"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
 

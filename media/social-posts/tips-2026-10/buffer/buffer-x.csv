@@ -3,104 +3,125 @@ Text,Image URL,Tags,Posting Time
 
 Search your templates for <img without width. Add the intrinsic size to each one.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=img-size","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg","","2026-10-26 12:15"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=img-size
+#WebPerformance #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg","","2026-10-26 19:30"
 "Release day: is the page still right?
 
 Add a five-minute public-page check to your release checklist, after deploy and before the announcement.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=release-day","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg","","2026-10-26 14:50"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=release-day
+#QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg","","2026-10-27 08:41"
 "We reviewed ourselves. Security: 54.
 
 Run the same headers check on your site. The first fixes are usually configuration, not code.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=self-review","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/03-self-review.jpg","","2026-10-27 12:30"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=self-review
+#QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/03-self-review.jpg","","2026-10-29 14:12"
 "The slowest page is rarely the home page.
 
 List your five most visited pages from analytics and time each one. Fix the slowest first.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=slowest-page","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/04-slowest-page.jpg","","2026-10-27 14:55"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=slowest-page
+#WebPerformance #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/04-slowest-page.jpg","","2026-10-30 17:15"
 "Contrast is math, not taste.
 
 Check your muted text colour against its background in DevTools. The colour picker shows the ratio.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=contrast","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg","","2026-10-28 11:20"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=contrast
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg","","2026-10-31 19:31"
 "Tag campaign links the same way, every time.
 
 Make a shared sheet with the allowed sources and mediums. Link it from every campaign brief.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=utm","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg","","2026-10-28 15:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=utm
+#Analytics #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg","","2026-11-01 09:11"
 "Stop browsers guessing file types.
 
 Add it next to HSTS in the same rule, so both ship together.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=nosniff","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/07-nosniff.jpg","","2026-10-29 12:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=nosniff
+#WebSecurity #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/07-nosniff.jpg","","2026-11-02 12:06"
 "Every input needs a name.
 
 Tab through your contact form with a screen reader on. Each field should say what it is.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=input-names","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg","","2026-10-29 19:10"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=input-names
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg","","2026-11-03 15:18"
 "llms.txt: a short brief for answer engines.
 
 Write five lines about your site the way you would brief a new colleague. Publish them as /llms.txt.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=llms-txt","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/09-llms-txt.jpg","","2026-10-30 08:00"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=llms-txt
+#GEO #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/09-llms-txt.jpg","","2026-11-04 16:35"
 "Put the mouse away. Can you reach everything?
 
 Do your main task on your own site with the keyboard only. Write down every place you got stuck.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=keyboard","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg","","2026-10-30 17:15"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=keyboard
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg","","2026-11-05 19:03"
 "One header. 180 days of HTTPS only.
 
 Run curl -sI on your domain and look for strict-transport-security. If it is missing, add it at your host or CDN.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=hsts","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg","","2026-10-31 09:10"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=hsts
+#WebSecurity #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg","","2026-11-06 08:29"
 "One h1 per page, saying what the page is.
 
 Read only the h1 of your top ten pages. Would a stranger know what each page is?
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=one-h1","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg","","2026-10-31 17:30"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=one-h1
+#SEO #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg","","2026-11-07 11:41"
 "Consent means before, too.
 
 Open your site in a private window with DevTools on the Network tab. Filter by collect or gtag before you click anything.
 
-carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=consent-before","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg","","2026-11-01 11:55"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=consent-before
+#QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg","","2026-11-08 13:59"
 "Your share card is a first impression.
 
 Paste your link into a private chat with yourself. What people see there is your real first impression.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=share-card","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg","","2026-11-01 15:15"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=share-card
+#SEO #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg","","2026-11-09 16:27"
 "Start your CSP in Report-Only.
 
 Ship the Report-Only header this week. Read the reports next week before you switch it on.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=csp-report-only","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg","","2026-11-02 12:50"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=csp-report-only
+#WebSecurity #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg","","2026-11-10 20:25"
 "Write the test list before the test code.
 
 Before your next automation sprint, write ten cases in plain language. Then choose the tool.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=list-first","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg","","2026-11-02 18:25"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=list-first
+#QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg","","2026-11-11 08:42"
 "robots.txt decides who may read you.
 
-Open yoursite.com/robots.txt today. Check that it says what you mean for search and AI crawlers.
+Open /robots.txt on your own site today. Check that it says what you mean for search and AI crawlers.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=robots-ai","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/17-robots-ai.jpg","","2026-11-03 09:15"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=robots-ai
+#GEO #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/17-robots-ai.jpg","","2026-11-12 11:54"
 "A broken link is a test you forgot to write.
 
 Collect the links from your footer and navigation. Assert each one answers below 400.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=broken-links","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/18-broken-links.jpg","","2026-11-03 15:00"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=broken-links
+#QA #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/18-broken-links.jpg","","2026-11-13 13:42"
 "Measure the action, not just the visit.
 
 Pick the one action each key page exists for. Make sure an event fires only when it succeeds.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=measure-action","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg","","2026-11-04 11:35"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=measure-action
+#Analytics #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg","","2026-11-14 16:42"
 "AI search reads your HTML, not your app.
 
 View source on your home page. Can you find what you sell and who it is for, without running scripts?
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=html-first","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg","","2026-11-04 18:25"
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=html-first
+#GEO #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg","","2026-11-15 19:38"
 "One page, one canonical.
 
 Open your top page with and without a trailing slash and ?utm_ tags. Both should point to one canonical.
 
-https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=canonical","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/21-canonical.jpg","","2026-11-05 09:15"
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=tips-2026-10&utm_content=canonical
+#SEO #QAlab","https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/21-canonical.jpg","","2026-11-16 08:30"
