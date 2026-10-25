@@ -6,6 +6,12 @@
 // ({ id, vars }), or a list ({ items, more } joined with ", ", { items, sep }, or { items, join: "and" | "or" }).
 const EN = {
   "list.more": " and {n} more",
+  "case.retest": "Retest on {where}: {title}",
+  "case.byHand": "Check by hand on {where}: {title}",
+  "case.retest.why": " The case fails while the finding is still true.",
+  "case.byHand.why": " A person confirms it, because a script cannot judge it alone.",
+  "case.expected": " Expected after the fix: {fix}",
+  "case.sentence": "{text}.",
   "list.and": " and ",
   "list.or": " or ",
   pathNote: "{path} ({note})",

@@ -3307,6 +3307,36 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.deepEqual(holes, []);
   });
 
+  test("a retest case built from a finding carries its title and why as messages, in English the same text (#1406)", () => {
+    const { english } = require("../../functions/url-review-findings-en");
+    const es = require("../../functions/url-review-findings-copy").forLang("es");
+    const cache = { title: { id: "pf-cache.title", vars: {} }, evidence: { id: "pf-cache.evidence", vars: {} }, fix: { id: "pf-cache.fix", vars: {} } };
+    const findings = [
+      { id: "F-01", key: "pf-cache", area: "Performance", verdict: "risk", severity: "medium", rank: 1, pages: ["/", "/a", "/b"],
+        title: english(cache.title), evidence: english(cache.evidence), fix: english(cache.fix), msg: cache },
+      { id: "F-02", key: "pf-cache", area: "Performance", verdict: "person", severity: "low", rank: 2,
+        title: english(cache.title), evidence: english(cache.title), msg: { title: cache.title, evidence: cache.title } },
+      { id: "F-03", key: "pf-cache", area: "Performance", verdict: "risk", severity: "low", rank: 3, title: "No message", evidence: "Plain." },
+      { id: "F-04", key: "pf-cache", area: "Performance", verdict: "risk", severity: "low", rank: 4, title: english(cache.title), evidence: "Edited by hand", fix: "x", msg: cache }
+    ];
+    const rt = caseRank.refine([], { findings, origin: "https://shop.example.com" }).filter((item) => /^RT-/.test(item.id));
+    assert.equal(rt.length, 4);
+    const [many, byHand, plain, edited] = ["F-01", "F-02", "F-03", "F-04"].map((id) => rt.find((item) => item.finding === id));
+    for (const item of [many, byHand]) {
+      assert.ok(item.msg, item.id + " has no msg");
+      assert.equal(english(item.msg.title), item.title);
+      assert.equal(english(item.msg.why), item.why);
+    }
+    assert.equal(many.title, "Retest on shop.example.com, shop.example.com/a and 1 more: The start page sends no cache-control");
+    assert.equal(es.line(many.msg.title, many.title), "Volver a probar en shop.example.com, shop.example.com/a y 1 más: La página de inicio no envía cache-control");
+    assert.match(es.line(many.msg.why, many.why), /\. Esperado tras la corrección: .+\. El caso falla mientras el problema siga presente\.$/);
+    assert.equal(byHand.why, "The start page sends no cache-control. A person confirms it, because a script cannot judge it alone.");
+    assert.match(es.line(byHand.msg.why, byHand.why), /^La página de inicio no envía cache-control\. Una persona lo confirma/);
+    assert.equal(plain.msg, undefined);
+    assert.equal(edited.msg, undefined);
+    assert.equal(core.previewReport({ cases: rt }).cases[0].msg, undefined);
+  });
+
   test("a case's own check and path drive its script", () => {
     const report = { finalUrl: "https://shop.example.com/", host: "shop.example.com", pages: [{ path: "/", status: 200 }], cases: [
       { id: "A11Y-07", layer: "Accessibility", title: "Pinch zoom is allowed", why: "Blocked. Expected none.", fw: ["Playwright"], path: "/login", check: { kind: "count", path: "/login", selector: "meta[name=\"viewport\"][content*=\"user-scalable=no\" i]", op: "eq", n: 0 } },
