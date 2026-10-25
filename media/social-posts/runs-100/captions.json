@@ -1,6 +1,6 @@
 {
   "01-wikipedia": {
-    "date": "2026-11-10",
+    "date": "2026-11-08",
     "cat": "Worldwide",
     "title": "Wikipedia leaves the snippet to search.",
     "alt": "Real run, worldwide card. Wikipedia leaves the snippet to search. Overall score 84 of 100. SEO 73, GEO 89, Analytics 97, Security 78, A11y 74, Speed 94. en.wikipedia.org, 20 pages analyzed, 19 Oct 2026.",
@@ -55,7 +55,7 @@
     }
   },
   "02-mozilla": {
-    "date": "2026-11-11",
+    "date": "2026-11-09",
     "cat": "Worldwide",
     "title": "Mozilla: 85 languages, no sitemap.",
     "alt": "Real run, worldwide card. Mozilla: 85 languages, no sitemap. Overall score 86 of 100. SEO 73, GEO 86, Analytics 85, Security 89, A11y 86, Speed 94. www.mozilla.org, 20 pages analyzed, 19 Oct 2026.",
@@ -110,7 +110,7 @@
     }
   },
   "03-mdn": {
-    "date": "2026-11-11",
+    "date": "2026-11-10",
     "cat": "Worldwide",
     "title": "MDN Web Docs: 95. No JSON-LD at all.",
     "alt": "Real run, worldwide card. MDN Web Docs: 95. No JSON-LD at all. Overall score 95 of 100. SEO 97, GEO 86, Analytics 97, Security 94, A11y 97, Speed 97. developer.mozilla.org, 20 pages analyzed, 19 Oct 2026.",
@@ -165,7 +165,7 @@
     }
   },
   "04-w3c": {
-    "date": "2026-11-12",
+    "date": "2026-11-10",
     "cat": "Worldwide",
     "title": "W3C's home pages share one title.",
     "alt": "Real run, worldwide card. W3C's home pages share one title. Overall score 86 of 100. SEO 64, GEO 86, Analytics 97, Security 88, A11y 86, Speed 94. www.w3.org, 20 pages analyzed, 19 Oct 2026.",
@@ -220,7 +220,7 @@
     }
   },
   "05-unesco": {
-    "date": "2026-11-12",
+    "date": "2026-11-11",
     "cat": "Worldwide",
     "title": "UNESCO has llms.txt, but no HSTS.",
     "alt": "Real run, worldwide card. UNESCO has llms.txt, but no HSTS. Overall score 70 of 100. SEO 67, GEO 56, Analytics 85, Security 62, A11y 89, Speed 68. www.unesco.org, 20 pages analyzed, 19 Oct 2026.",
@@ -275,7 +275,7 @@
     }
   },
   "06-unicef": {
-    "date": "2026-11-13",
+    "date": "2026-11-11",
     "cat": "Worldwide",
     "title": "UNICEF's date filter has no label.",
     "alt": "Real run, worldwide card. UNICEF's date filter has no label. Overall score 84 of 100. SEO 86, GEO 91, Analytics 85, Security 88, A11y 85, Speed 67. www.unicef.org, 20 pages analyzed, 19 Oct 2026.",
@@ -330,7 +330,7 @@
     }
   },
   "07-worldbank": {
-    "date": "2026-11-13",
+    "date": "2026-11-12",
     "cat": "Worldwide",
     "title": "The World Bank: GEO 97.",
     "alt": "Real run, worldwide card. The World Bank: GEO 97. Overall score 87 of 100. SEO 83, GEO 97, Analytics 85, Security 77, A11y 86, Speed 94. www.worldbank.org, 20 pages analyzed, 19 Oct 2026.",
@@ -385,7 +385,7 @@
     }
   },
   "08-icrc": {
-    "date": "2026-11-14",
+    "date": "2026-11-12",
     "cat": "Worldwide",
     "title": "The ICRC tests a CSP. Now it can enforce it.",
     "alt": "Real run, worldwide card. The ICRC tests a CSP. Now it can enforce it. Overall score 81 of 100. SEO 70, GEO 86, Analytics 92, Security 83, A11y 77, Speed 82. www.icrc.org, 20 pages analyzed, 19 Oct 2026.",
@@ -440,7 +440,7 @@
     }
   },
   "09-msf": {
-    "date": "2026-11-14",
+    "date": "2026-11-13",
     "cat": "Worldwide",
     "title": "MSF serves every page without HSTS.",
     "alt": "Real run, worldwide card. MSF serves every page without HSTS. Overall score 78 of 100. SEO 86, GEO 91, Analytics 85, Security 62, A11y 74, Speed 73. www.msf.org, 20 pages analyzed, 19 Oct 2026.",
@@ -495,7 +495,7 @@
     }
   },
   "10-amnesty": {
-    "date": "2026-11-15",
+    "date": "2026-11-13",
     "cat": "Worldwide",
     "title": "Amnesty's robots.txt turns Bingbot away.",
     "alt": "Real run, worldwide card. Amnesty's robots.txt turns Bingbot away. Overall score 81 of 100. SEO 67, GEO 61, Analytics 94, Security 83, A11y 97, Speed 88. www.amnesty.org, 20 pages analyzed, 19 Oct 2026.",
@@ -550,7 +550,7 @@
     }
   },
   "11-guardian": {
-    "date": "2026-11-15",
+    "date": "2026-11-14",
     "cat": "Worldwide",
     "title": "The Guardian front page has no h1.",
     "alt": "Real run, worldwide card. The Guardian front page has no h1. Overall score 78 of 100. SEO 78, GEO 59, Analytics 100, Security 78, A11y 89, Speed 71. www.theguardian.com, 20 pages analyzed, 19 Oct 2026.",
@@ -605,7 +605,7 @@
     }
   },
   "12-aljazeera": {
-    "date": "2026-11-16",
+    "date": "2026-11-14",
     "cat": "Worldwide",
     "title": "Al Jazeera marks text for voice, blocks AI.",
     "alt": "Real run, worldwide card. Al Jazeera marks text for voice, blocks AI. Overall score 84 of 100. SEO 89, GEO 64, Analytics 92, Security 77, A11y 89, Speed 97. www.aljazeera.com, 20 pages analyzed, 19 Oct 2026.",
@@ -660,7 +660,7 @@
     }
   },
   "13-dw": {
-    "date": "2026-11-16",
+    "date": "2026-11-15",
     "cat": "Worldwide",
     "title": "DW blocks framing. It skips nosniff.",
     "alt": "Real run, worldwide card. DW blocks framing. It skips nosniff. Overall score 82 of 100. SEO 78, GEO 56, Analytics 97, Security 77, A11y 97, Speed 91. www.dw.com, 20 pages analyzed, 19 Oct 2026.",
@@ -715,7 +715,7 @@
     }
   },
   "14-elpais": {
-    "date": "2026-11-17",
+    "date": "2026-11-15",
     "cat": "Worldwide",
     "title": "El País sends no security headers.",
     "alt": "Real run, worldwide card. El País sends no security headers. Overall score 74 of 100. SEO 73, GEO 59, Analytics 85, Security 46, A11y 94, Speed 92. elpais.com, 20 pages analyzed, 19 Oct 2026.",
@@ -770,7 +770,7 @@
     }
   },
   "15-lemonde": {
-    "date": "2026-11-17",
+    "date": "2026-11-16",
     "cat": "Worldwide",
     "title": "Le Monde has a CSP that allows any https.",
     "alt": "Real run, worldwide card. Le Monde has a CSP that allows any https. Overall score 72 of 100. SEO 54, GEO 61, Analytics 97, Security 62, A11y 79, Speed 83. www.lemonde.fr, 20 pages analyzed, 19 Oct 2026.",
@@ -825,7 +825,7 @@
     }
   },
   "16-mit": {
-    "date": "2026-11-18",
+    "date": "2026-11-16",
     "cat": "Worldwide",
     "title": "MIT's canonical tags point to its CMS.",
     "alt": "Real run, worldwide card. MIT's canonical tags point to its CMS. Overall score 83 of 100. SEO 59, GEO 83, Analytics 85, Security 77, A11y 97, Speed 97. www.mit.edu, 20 pages analyzed, 19 Oct 2026.",
@@ -880,7 +880,7 @@
     }
   },
   "17-stanford": {
-    "date": "2026-11-18",
+    "date": "2026-11-17",
     "cat": "Worldwide",
     "title": "Stanford's canonical leads to a 404.",
     "alt": "Real run, worldwide card. Stanford's canonical leads to a 404. Overall score 86 of 100. SEO 81, GEO 86, Analytics 85, Security 86, A11y 100, Speed 76. www.stanford.edu, 20 pages analyzed, 19 Oct 2026.",
@@ -935,7 +935,7 @@
     }
   },
   "18-harvard": {
-    "date": "2026-11-19",
+    "date": "2026-11-17",
     "cat": "Worldwide",
     "title": "Any site can frame Harvard's pages.",
     "alt": "Real run, worldwide card. Any site can frame Harvard's pages. Overall score 82 of 100. SEO 75, GEO 89, Analytics 85, Security 54, A11y 100, Speed 94. www.harvard.edu, 20 pages analyzed, 19 Oct 2026.",
@@ -990,7 +990,7 @@
     }
   },
   "19-nodejs": {
-    "date": "2026-11-19",
+    "date": "2026-11-18",
     "cat": "Worldwide",
     "title": "Node.js has llms.txt. Its pages share a pitch.",
     "alt": "Real run, worldwide card. Node.js has llms.txt. Its pages share a pitch. Overall score 89 of 100. SEO 85, GEO 89, Analytics 97, Security 75, A11y 100, Speed 94. nodejs.org, 20 pages analyzed, 19 Oct 2026.",
@@ -1045,7 +1045,7 @@
     }
   },
   "20-rust": {
-    "date": "2026-11-20",
+    "date": "2026-11-18",
     "cat": "Worldwide",
     "title": "Rust's pages name no canonical.",
     "alt": "Real run, worldwide card. Rust's pages name no canonical. Overall score 81 of 100. SEO 69, GEO 86, Analytics 97, Security 54, A11y 94, Speed 97. rust-lang.org, 20 pages analyzed, 19 Oct 2026.",
@@ -1100,7 +1100,7 @@
     }
   },
   "21-kubernetes": {
-    "date": "2026-11-20",
+    "date": "2026-11-19",
     "cat": "Worldwide",
     "title": "13 Kubernetes pages share one title.",
     "alt": "Real run, worldwide card. 13 Kubernetes pages share one title. Overall score 80 of 100. SEO 67, GEO 88, Analytics 85, Security 67, A11y 86, Speed 91. kubernetes.io, 20 pages analyzed, 19 Oct 2026.",
@@ -1155,7 +1155,7 @@
     }
   },
   "22-apache": {
-    "date": "2026-11-21",
+    "date": "2026-11-19",
     "cat": "Worldwide",
     "title": "Apache.org runs without descriptions.",
     "alt": "Real run, worldwide card. Apache.org runs without descriptions. Overall score 74 of 100. SEO 61, GEO 83, Analytics 47, Security 77, A11y 74, Speed 97. www.apache.org, 20 pages analyzed, 19 Oct 2026.",
@@ -1210,7 +1210,7 @@
     }
   },
   "23-linuxfoundation": {
-    "date": "2026-11-21",
+    "date": "2026-11-20",
     "cat": "Worldwide",
     "title": "The Linux Foundation never states a language.",
     "alt": "Real run, worldwide card. The Linux Foundation never states a language. Overall score 79 of 100. SEO 75, GEO 86, Analytics 97, Security 85, A11y 56, Speed 79. www.linuxfoundation.org, 20 pages analyzed, 19 Oct 2026.",
@@ -1265,7 +1265,7 @@
     }
   },
   "24-react": {
-    "date": "2026-11-22",
+    "date": "2026-11-20",
     "cat": "Worldwide",
     "title": "React's docs pages have no description.",
     "alt": "Real run, worldwide card. React's docs pages have no description. Overall score 83 of 100. SEO 78, GEO 89, Analytics 85, Security 69, A11y 89, Speed 94. react.dev, 20 pages analyzed, 19 Oct 2026.",
@@ -1320,7 +1320,7 @@
     }
   },
   "25-githubdocs": {
-    "date": "2026-11-22",
+    "date": "2026-11-21",
     "cat": "Worldwide",
     "title": "GitHub Docs sets no canonical link.",
     "alt": "Real run, worldwide card. GitHub Docs sets no canonical link. Overall score 91 of 100. SEO 75, GEO 89, Analytics 97, Security 94, A11y 100, Speed 91. docs.github.com, 20 pages analyzed, 19 Oct 2026.",
@@ -1375,7 +1375,7 @@
     }
   },
   "26-stripedocs": {
-    "date": "2026-11-23",
+    "date": "2026-11-21",
     "cat": "Worldwide",
     "title": "Stripe Docs skips the main landmark.",
     "alt": "Real run, worldwide card. Stripe Docs skips the main landmark. Overall score 86 of 100. SEO 91, GEO 86, Analytics 97, Security 85, A11y 71, Speed 91. docs.stripe.com, 20 pages analyzed, 19 Oct 2026.",
@@ -1430,7 +1430,7 @@
     }
   },
   "27-cloudflare": {
-    "date": "2026-11-23",
+    "date": "2026-11-22",
     "cat": "Worldwide",
     "title": "Cloudflare's CSP skips 5 of 20 pages.",
     "alt": "Real run, worldwide card. Cloudflare's CSP skips 5 of 20 pages. Overall score 88 of 100. SEO 92, GEO 97, Analytics 92, Security 73, A11y 83, Speed 94. www.cloudflare.com, 20 pages analyzed, 19 Oct 2026.",
@@ -1485,7 +1485,7 @@
     }
   },
   "28-webdev": {
-    "date": "2026-11-24",
+    "date": "2026-11-22",
     "cat": "Worldwide",
     "title": "web.dev's home page has an empty headline.",
     "alt": "Real run, worldwide card. web.dev's home page has an empty headline. Overall score 80 of 100. SEO 76, GEO 91, Analytics 85, Security 77, A11y 79, Speed 76. web.dev, 20 pages analyzed, 19 Oct 2026.",
@@ -1540,7 +1540,7 @@
     }
   },
   "29-louvre": {
-    "date": "2026-11-24",
+    "date": "2026-11-23",
     "cat": "Worldwide",
     "title": "Three Louvre pages, one title.",
     "alt": "Real run, worldwide card. Three Louvre pages, one title. Overall score 86 of 100. SEO 59, GEO 86, Analytics 97, Security 89, A11y 97, Speed 91. www.louvre.fr, 20 pages analyzed, 19 Oct 2026.",
@@ -1595,7 +1595,7 @@
     }
   },
   "30-rijksmuseum": {
-    "date": "2026-11-25",
+    "date": "2026-11-23",
     "cat": "Worldwide",
     "title": "The Rijksmuseum's HSTS lasts 30 days.",
     "alt": "Real run, worldwide card. The Rijksmuseum's HSTS lasts 30 days. Overall score 79 of 100. SEO 81, GEO 86, Analytics 85, Security 69, A11y 86, Speed 68. www.rijksmuseum.nl, 20 pages analyzed, 19 Oct 2026.",
@@ -1650,7 +1650,7 @@
     }
   },
   "31-lonelyplanet": {
-    "date": "2026-11-25",
+    "date": "2026-11-24",
     "cat": "Worldwide",
     "title": "Lonely Planet's home is 1.8 MB of HTML.",
     "alt": "Real run, worldwide card. Lonely Planet's home is 1.8 MB of HTML. Overall score 84 of 100. SEO 89, GEO 88, Analytics 92, Security 54, A11y 100, Speed 91. www.lonelyplanet.com, 20 pages analyzed, 19 Oct 2026.",
@@ -1705,7 +1705,7 @@
     }
   },
   "32-ikea": {
-    "date": "2026-11-26",
+    "date": "2026-11-24",
     "cat": "Worldwide",
     "title": "IKEA's home page is 1.9 MB of HTML.",
     "alt": "Real run, worldwide card. IKEA's home page is 1.9 MB of HTML. Overall score 82 of 100. SEO 78, GEO 78, Analytics 100, Security 75, A11y 86, Speed 79. www.ikea.com, 20 pages analyzed, 19 Oct 2026.",
@@ -1760,7 +1760,7 @@
     }
   },
   "33-gutenberg": {
-    "date": "2026-11-26",
+    "date": "2026-11-25",
     "cat": "Worldwide",
     "title": "75,000 free books, no Book markup.",
     "alt": "Real run, worldwide card. 75,000 free books, no Book markup. Overall score 78 of 100. SEO 69, GEO 83, Analytics 97, Security 53, A11y 79, Speed 94. www.gutenberg.org, 20 pages analyzed, 19 Oct 2026.",
@@ -1815,7 +1815,7 @@
     }
   },
   "34-creativecommons": {
-    "date": "2026-11-27",
+    "date": "2026-11-25",
     "cat": "Worldwide",
     "title": "Creative Commons moves to https with 302.",
     "alt": "Real run, worldwide card. Creative Commons moves to https with 302. Overall score 75 of 100. SEO 70, GEO 86, Analytics 77, Security 54, A11y 74, Speed 91. creativecommons.org, 20 pages analyzed, 19 Oct 2026.",
@@ -1870,7 +1870,7 @@
     }
   },
   "35-eff": {
-    "date": "2026-11-27",
+    "date": "2026-11-26",
     "cat": "Worldwide",
     "title": "The EFF's pages send no HSTS.",
     "alt": "Real run, worldwide card. The EFF's pages send no HSTS. Overall score 83 of 100. SEO 75, GEO 86, Analytics 97, Security 65, A11y 86, Speed 94. www.eff.org, 20 pages analyzed, 19 Oct 2026.",
@@ -1925,7 +1925,7 @@
     }
   },
   "36-wikimedia": {
-    "date": "2026-11-28",
+    "date": "2026-11-26",
     "cat": "Worldwide",
     "title": "Wikimedia's home page has no h1.",
     "alt": "Real run, worldwide card. Wikimedia's home page has no h1. Overall score 85 of 100. SEO 78, GEO 94, Analytics 85, Security 86, A11y 74, Speed 94. wikimediafoundation.org, 20 pages analyzed, 19 Oct 2026. Lesson: One h1 per page, naming what the page is. Screen-reader users often jump to it first.",
@@ -1980,7 +1980,7 @@
     }
   },
   "37-fao": {
-    "date": "2026-11-28",
+    "date": "2026-11-27",
     "cat": "Worldwide",
     "title": "FAO's HTML is fast. Visitors still wait.",
     "alt": "Real run, worldwide card. FAO's HTML is fast. Visitors still wait. Overall score 73 of 100. SEO 31, GEO 86, Analytics 82, Security 69, A11y 83, Speed 91. www.fao.org, 20 pages analyzed, 19 Oct 2026.",
@@ -2035,7 +2035,7 @@
     }
   },
   "38-wfp": {
-    "date": "2026-11-29",
+    "date": "2026-11-27",
     "cat": "Worldwide",
     "title": "WFP's viewport turns off zoom.",
     "alt": "Real run, worldwide card. WFP's viewport turns off zoom. Overall score 82 of 100. SEO 81, GEO 86, Analytics 85, Security 77, A11y 67, Speed 97. www.wfp.org, 20 pages analyzed, 19 Oct 2026. Lesson: Remove user-scalable=no and maximum-scale from the viewport tag. Let readers zoom.",
@@ -2090,7 +2090,7 @@
     }
   },
   "39-esa": {
-    "date": "2026-11-29",
+    "date": "2026-11-28",
     "cat": "Worldwide",
     "title": "ESA's search box has no name.",
     "alt": "Real run, worldwide card. ESA's search box has no name. Overall score 74 of 100. SEO 61, GEO 86, Analytics 85, Security 61, A11y 64, Speed 94. www.esa.int, 20 pages analyzed, 19 Oct 2026. Lesson: Add a visible label or aria-label to the search field. Screen readers announce the name, not the hint.",
@@ -2145,7 +2145,7 @@
     }
   },
   "40-cern": {
-    "date": "2026-11-30",
+    "date": "2026-11-28",
     "cat": "Worldwide",
     "title": "CERN's pages have no description.",
     "alt": "Real run, worldwide card. CERN's pages have no description. Overall score 66 of 100. SEO 67, GEO 86, Analytics 77, Security 39, A11y 94, Speed 41. home.cern, 12 pages analyzed, 19 Oct 2026. Lesson: Start with the home page and your ten most visited: one sentence each on what the reader will find.",
@@ -2200,7 +2200,7 @@
     }
   },
   "41-natgeo": {
-    "date": "2026-11-30",
+    "date": "2026-11-29",
     "cat": "Worldwide",
     "title": "NatGeo sets cookies without Secure.",
     "alt": "Real run, worldwide card. NatGeo sets cookies without Secure. Overall score 84 of 100. SEO 89, GEO 97, Analytics 97, Security 46, A11y 97, Speed 91. www.nationalgeographic.com, 20 pages analyzed, 19 Oct 2026.",
@@ -2255,7 +2255,7 @@
     }
   },
   "42-coursera": {
-    "date": "2026-12-01",
+    "date": "2026-11-29",
     "cat": "Worldwide",
     "title": "Coursera taps take 565 ms to answer.",
     "alt": "Real run, worldwide card. Coursera taps take 565 ms to answer. Overall score 82 of 100. SEO 89, GEO 94, Analytics 97, Security 62, A11y 86, Speed 68. www.coursera.org, 20 pages analyzed, 19 Oct 2026.",
@@ -2310,7 +2310,7 @@
     }
   },
   "43-php": {
-    "date": "2026-12-01",
+    "date": "2026-11-30",
     "cat": "Worldwide",
     "title": "PHP's sitemap lists http://php.net.",
     "alt": "Real run, worldwide card. PHP's sitemap lists http://php.net. Overall score 77 of 100. SEO 53, GEO 86, Analytics 85, Security 72, A11y 71, Speed 97. www.php.net, 20 pages analyzed, 19 Oct 2026.",
@@ -2365,7 +2365,7 @@
     }
   },
   "44-gnu": {
-    "date": "2026-12-02",
+    "date": "2026-11-30",
     "cat": "Worldwide",
     "title": "GNU.org answers plain http with a 200.",
     "alt": "Real run, worldwide card. GNU.org answers plain http with a 200. Overall score 74 of 100. SEO 48, GEO 86, Analytics 67, Security 50, A11y 97, Speed 97. www.gnu.org, 20 pages analyzed, 19 Oct 2026.",
@@ -2420,7 +2420,7 @@
     }
   },
   "45-debian": {
-    "date": "2026-12-02",
+    "date": "2026-12-01",
     "cat": "Worldwide",
     "title": "Debian's search field goes unnamed.",
     "alt": "Real run, worldwide card. Debian's search field goes unnamed. Overall score 83 of 100. SEO 64, GEO 83, Analytics 97, Security 86, A11y 79, Speed 94. www.debian.org, 20 pages analyzed, 19 Oct 2026. Lesson: Add <label for> or aria-label=\"Search\" to the field. One attribute makes it usable by voice.",
@@ -2475,7 +2475,7 @@
     }
   },
   "46-ubuntu": {
-    "date": "2026-12-03",
+    "date": "2026-12-01",
     "cat": "Worldwide",
     "title": "Ubuntu speaks Markdown and names its nginx.",
     "alt": "Real run, worldwide card. Ubuntu speaks Markdown and names its nginx. Overall score 86 of 100. SEO 83, GEO 89, Analytics 85, Security 85, A11y 82, Speed 91. ubuntu.com, 20 pages analyzed, 19 Oct 2026.",
@@ -2530,7 +2530,7 @@
     }
   },
   "47-paho": {
-    "date": "2026-12-03",
+    "date": "2026-12-02",
     "cat": "Worldwide",
     "title": "PAHO has no Organization JSON-LD.",
     "alt": "Real run, worldwide card. PAHO has no Organization JSON-LD. Overall score 82 of 100. SEO 75, GEO 86, Analytics 85, Security 85, A11y 71, Speed 91. www.paho.org, 20 pages analyzed, 19 Oct 2026.",
@@ -2585,7 +2585,7 @@
     }
   },
   "48-dian": {
-    "date": "2026-12-04",
+    "date": "2026-12-02",
     "cat": "National",
     "title": "DIAN's home page says it's in English.",
     "alt": "Real run, national card. DIAN's home page says it's in English. Overall score 71 of 100. SEO 59, GEO 83, Analytics 82, Security 54, A11y 63, Speed 88. www.dian.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -2640,7 +2640,7 @@
     }
   },
   "49-mineducacion": {
-    "date": "2026-12-04",
+    "date": "2026-12-03",
     "cat": "National",
     "title": "MinEducación's sitemap lists the old address.",
     "alt": "Real run, national card. MinEducación's sitemap lists the old address. Overall score 76 of 100. SEO 67, GEO 83, Analytics 82, Security 69, A11y 82, Speed 73. www.mineducacion.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -2695,7 +2695,7 @@
     }
   },
   "50-minsalud": {
-    "date": "2026-12-05",
+    "date": "2026-12-03",
     "cat": "National",
     "title": "MinSalud's home page links to 404s.",
     "alt": "Real run, national card. MinSalud's home page links to 404s. Overall score 60 of 100. SEO 0, GEO 89, Analytics 84, Security 62, A11y 68, Speed 64. www.minsalud.gov.co, 20 pages analyzed, 19 Oct 2026. Lesson: Run a link check on your home page every week. It's the page most people start from.",
@@ -2750,7 +2750,7 @@
     }
   },
   "51-mintic": {
-    "date": "2026-12-05",
+    "date": "2026-12-04",
     "cat": "National",
     "title": "MinTIC's analytics stopped years ago.",
     "alt": "Real run, national card. MinTIC's analytics stopped years ago. Overall score 72 of 100. SEO 37, GEO 86, Analytics 82, Security 77, A11y 76, Speed 76. www.mintic.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -2805,7 +2805,7 @@
     }
   },
   "52-cancilleria": {
-    "date": "2026-12-06",
+    "date": "2026-12-04",
     "cat": "National",
     "title": "Cancillería sends to two GA4 properties.",
     "alt": "Real run, national card. Cancillería sends to two GA4 properties. Overall score 66 of 100. SEO 29, GEO 86, Analytics 77, Security 54, A11y 71, Speed 82. www.cancilleria.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -2860,7 +2860,7 @@
     }
   },
   "53-dane": {
-    "date": "2026-12-06",
+    "date": "2026-12-05",
     "cat": "National",
     "title": "DANE's viewport caps zoom at 1x.",
     "alt": "Real run, national card. DANE's viewport caps zoom at 1x. Overall score 72 of 100. SEO 62, GEO 91, Analytics 85, Security 54, A11y 68, Speed 76. www.dane.gov.co, 20 pages analyzed, 19 Oct 2026. Lesson: Drop maximum-scale from the viewport. width=device-width, initial-scale=1 is all most sites need.",
@@ -2915,7 +2915,7 @@
     }
   },
   "54-procuraduria": {
-    "date": "2026-12-07",
+    "date": "2026-12-05",
     "cat": "National",
     "title": "Procuraduría's canonical host doesn't resolve.",
     "alt": "Real run, national card. Procuraduría's canonical host doesn't resolve. Overall score 63 of 100. SEO 65, GEO 83, Analytics 74, Security 24, A11y 77, Speed 64. www.procuraduria.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -2970,7 +2970,7 @@
     }
   },
   "55-icetex": {
-    "date": "2026-12-07",
+    "date": "2026-12-06",
     "cat": "National",
     "title": "ICETEX's inner pages all point to the home.",
     "alt": "Real run, national card. ICETEX's inner pages all point to the home. Overall score 78 of 100. SEO 83, GEO 86, Analytics 82, Security 54, A11y 94, Speed 73. web.icetex.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -3025,7 +3025,7 @@
     }
   },
   "56-icfes": {
-    "date": "2026-12-08",
+    "date": "2026-12-06",
     "cat": "National",
     "title": "ICFES's HTML takes 2 s to start.",
     "alt": "Real run, national card. ICFES's HTML takes 2 s to start. Overall score 81 of 100. SEO 89, GEO 94, Analytics 85, Security 62, A11y 94, Speed 68. www.icfes.gov.co, 12 pages analyzed, 19 Oct 2026.",
@@ -3080,7 +3080,7 @@
     }
   },
   "57-colpensiones": {
-    "date": "2026-12-08",
+    "date": "2026-12-07",
     "cat": "National",
     "title": "Colpensiones answers http with 503.",
     "alt": "Real run, national card. Colpensiones answers http with 503. Overall score 66 of 100. SEO 72, GEO 86, Analytics 74, Security 47, A11y 53, Speed 68. www.colpensiones.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -3135,7 +3135,7 @@
     }
   },
   "58-migracion": {
-    "date": "2026-12-09",
+    "date": "2026-12-07",
     "cat": "National",
     "title": "Migración Colombia has no sitemap.",
     "alt": "Real run, national card. Migración Colombia has no sitemap. Overall score 72 of 100. SEO 70, GEO 86, Analytics 92, Security 24, A11y 82, Speed 91. www.migracioncolombia.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -3190,7 +3190,7 @@
     }
   },
   "59-satena": {
-    "date": "2026-12-09",
+    "date": "2026-12-08",
     "cat": "National",
     "title": "SATENA's pages have no canonical.",
     "alt": "Real run, national card. SATENA's pages have no canonical. Overall score 78 of 100. SEO 61, GEO 86, Analytics 74, Security 83, A11y 97, Speed 67. www.satena.com, 20 pages analyzed, 19 Oct 2026. Lesson: Add a self-referencing canonical to every page, plus hreflang links between the language versions.",
@@ -3245,7 +3245,7 @@
     }
   },
   "60-davivienda": {
-    "date": "2026-12-10",
+    "date": "2026-12-08",
     "cat": "National",
     "title": "Davivienda's robots.txt is a model. LCP isn't.",
     "alt": "Real run, national card. Davivienda's robots.txt is a model. LCP isn't. Overall score 72 of 100. SEO 56, GEO 86, Analytics 85, Security 72, A11y 86, Speed 50. www.davivienda.com, 20 pages analyzed, 19 Oct 2026.",
@@ -3300,7 +3300,7 @@
     }
   },
   "61-movistar": {
-    "date": "2026-12-10",
+    "date": "2026-12-09",
     "cat": "National",
     "title": "Movistar's headers have a value mix-up.",
     "alt": "Real run, national card. Movistar's headers have a value mix-up. Overall score 71 of 100. SEO 25, GEO 91, Analytics 85, Security 77, A11y 76, Speed 73. www.movistar.com.co, 20 pages analyzed, 19 Oct 2026.",
@@ -3355,7 +3355,7 @@
     }
   },
   "62-claro": {
-    "date": "2026-12-11",
+    "date": "2026-12-09",
     "cat": "National",
     "title": "Claro's home redirect drops to plain http.",
     "alt": "Real run, national card. Claro's home redirect drops to plain http. Overall score 77 of 100. SEO 69, GEO 94, Analytics 85, Security 83, A11y 68, Speed 61. www.claro.com.co, 20 pages analyzed, 19 Oct 2026.",
@@ -3410,7 +3410,7 @@
     }
   },
   "63-exito": {
-    "date": "2026-12-11",
+    "date": "2026-12-10",
     "cat": "National",
     "title": "Éxito's title says exito.com twice.",
     "alt": "Real run, national card. Éxito's title says exito.com twice. Overall score 70 of 100. SEO 54, GEO 89, Analytics 85, Security 54, A11y 89, Speed 56. www.exito.com, 20 pages analyzed, 19 Oct 2026. Lesson: Write a home title that says who you are and what you offer, in under 60 characters.",
@@ -3465,7 +3465,7 @@
     }
   },
   "64-falabella": {
-    "date": "2026-12-12",
+    "date": "2026-12-10",
     "cat": "National",
     "title": "Falabella's home declares no language.",
     "alt": "Real run, national card. Falabella's home declares no language. Overall score 60 of 100. SEO 52, GEO 78, Analytics 77, Security 54, A11y 41, Speed 64. www.falabella.com.co, 20 pages analyzed, 19 Oct 2026.",
@@ -3520,7 +3520,7 @@
     }
   },
   "65-eltiempo": {
-    "date": "2026-12-12",
+    "date": "2026-12-11",
     "cat": "National",
     "title": "El Tiempo still loads a retired UA tag.",
     "alt": "Real run, national card. El Tiempo still loads a retired UA tag. Overall score 76 of 100. SEO 86, GEO 64, Analytics 82, Security 62, A11y 74, Speed 91. www.eltiempo.com, 20 pages analyzed, 19 Oct 2026. Lesson: Search your templates for UA- IDs and remove them. They add a request and collect nothing.",
@@ -3575,7 +3575,7 @@
     }
   },
   "66-semana": {
-    "date": "2026-12-13",
+    "date": "2026-12-11",
     "cat": "National",
     "title": "Semana's description repeats its title.",
     "alt": "Real run, national card. Semana's description repeats its title. Overall score 80 of 100. SEO 86, GEO 91, Analytics 85, Security 62, A11y 82, Speed 76. www.semana.com, 20 pages analyzed, 19 Oct 2026.",
@@ -3630,7 +3630,7 @@
     }
   },
   "67-elespectador": {
-    "date": "2026-12-13",
+    "date": "2026-12-12",
     "cat": "National",
     "title": "El Espectador has no main landmark.",
     "alt": "Real run, national card. El Espectador has no main landmark. Overall score 86 of 100. SEO 89, GEO 94, Analytics 85, Security 73, A11y 86, Speed 94. www.elespectador.com, 20 pages analyzed, 19 Oct 2026.",
@@ -3685,7 +3685,7 @@
     }
   },
   "68-uniandes": {
-    "date": "2026-12-14",
+    "date": "2026-12-12",
     "cat": "National",
     "title": "Uniandes skips a link in its TLS chain.",
     "alt": "Real run, national card. Uniandes skips a link in its TLS chain. Overall score 82 of 100. SEO 89, GEO 91, Analytics 92, Security 77, A11y 76, Speed 68. www.uniandes.edu.co, 20 pages analyzed, 19 Oct 2026.",
@@ -3740,7 +3740,7 @@
     }
   },
   "69-sura": {
-    "date": "2026-12-14",
+    "date": "2026-12-13",
     "cat": "National",
     "title": "SURA's home page has three h1s.",
     "alt": "Real run, national card. SURA's home page has three h1s. Overall score 73 of 100. SEO 65, GEO 91, Analytics 89, Security 57, A11y 89, Speed 53. www.sura.co, 20 pages analyzed, 19 Oct 2026. Lesson: Give each page one h1 that names its topic. Use h2 and h3 for the sections below it.",
@@ -3795,7 +3795,7 @@
     }
   },
   "70-compensar": {
-    "date": "2026-12-15",
+    "date": "2026-12-13",
     "cat": "National",
     "title": "Compensar lets any Azure site frame it.",
     "alt": "Real run, national card. Compensar lets any Azure site frame it. Overall score 76 of 100. SEO 70, GEO 91, Analytics 85, Security 72, A11y 89, Speed 53. corporativo.compensar.com, 13 pages analyzed, 19 Oct 2026.",
@@ -3850,7 +3850,7 @@
     }
   },
   "71-ecopetrol": {
-    "date": "2026-12-15",
+    "date": "2026-12-14",
     "cat": "National",
     "title": "Ecopetrol still configures a UA ID.",
     "alt": "Real run, national card. Ecopetrol still configures a UA ID. Overall score 78 of 100. SEO 67, GEO 88, Analytics 71, Security 80, A11y 71, Speed 88. www.ecopetrol.com.co, 20 pages analyzed, 19 Oct 2026.",
@@ -3905,7 +3905,7 @@
     }
   },
   "72-rappi": {
-    "date": "2026-12-16",
+    "date": "2026-12-14",
     "cat": "National",
     "title": "Rappi's viewport sets maximum-scale=1.",
     "alt": "Real run, national card. Rappi's viewport sets maximum-scale=1. Overall score 69 of 100. SEO 89, GEO 91, Analytics 85, Security 31, A11y 64, Speed 64. www.rappi.com.co, 20 pages analyzed, 19 Oct 2026.",
@@ -3960,7 +3960,7 @@
     }
   },
   "73-rtvc": {
-    "date": "2026-12-16",
+    "date": "2026-12-15",
     "cat": "National",
     "title": "RTVC's search box has no label.",
     "alt": "Real run, national card. RTVC's search box has no label. Overall score 82 of 100. SEO 73, GEO 88, Analytics 85, Security 77, A11y 79, Speed 91. www.rtvc.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4015,7 +4015,7 @@
     }
   },
   "74-bibliotecanacional": {
-    "date": "2026-12-17",
+    "date": "2026-12-15",
     "cat": "National",
     "title": "Biblioteca Nacional's canonical says http.",
     "alt": "Real run, national card. Biblioteca Nacional's canonical says http. Overall score 69 of 100. SEO 59, GEO 83, Analytics 82, Security 70, A11y 68, Speed 53. www.bibliotecanacional.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4070,7 +4070,7 @@
     }
   },
   "75-supersalud": {
-    "date": "2026-12-17",
+    "date": "2026-12-16",
     "cat": "National",
     "title": "Supersalud loads no analytics tag.",
     "alt": "Real run, national card. Supersalud loads no analytics tag. Overall score 70 of 100. SEO 53, GEO 86, Analytics 97, Security 62, A11y 68, Speed 58. www.supersalud.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4125,7 +4125,7 @@
     }
   },
   "76-contraloria": {
-    "date": "2026-12-18",
+    "date": "2026-12-16",
     "cat": "National",
     "title": "Contraloría's sitemap sits on port 8080.",
     "alt": "Real run, national card. Contraloría's sitemap sits on port 8080. Overall score 66 of 100. SEO 70, GEO 86, Analytics 82, Security 24, A11y 76, Speed 68. www.contraloria.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4180,7 +4180,7 @@
     }
   },
   "77-procolombia": {
-    "date": "2026-12-18",
+    "date": "2026-12-17",
     "cat": "National",
     "title": "ProColombia's canonical redirects back home.",
     "alt": "Real run, national card. ProColombia's canonical redirects back home. Overall score 77 of 100. SEO 70, GEO 86, Analytics 85, Security 85, A11y 71, Speed 64. procolombia.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4235,7 +4235,7 @@
     }
   },
   "78-nequi": {
-    "date": "2026-12-19",
+    "date": "2026-12-17",
     "cat": "National",
     "title": "Nequi's hreflang points to the home page.",
     "alt": "Real run, national card. Nequi's hreflang points to the home page. Overall score 81 of 100. SEO 80, GEO 94, Analytics 85, Security 80, A11y 79, Speed 70. www.nequi.com.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4290,7 +4290,7 @@
     }
   },
   "79-educacionbogota": {
-    "date": "2026-12-19",
+    "date": "2026-12-18",
     "cat": "Local",
     "title": "Educación Bogotá has no robots.txt.",
     "alt": "Real run, local card. Educación Bogotá has no robots.txt. Overall score 64 of 100. SEO 23, GEO 83, Analytics 79, Security 69, A11y 68, Speed 64. www.educacionbogota.edu.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4345,7 +4345,7 @@
     }
   },
   "80-movilidadbogota": {
-    "date": "2026-12-20",
+    "date": "2026-12-18",
     "cat": "Local",
     "title": "Movilidad Bogotá's sitemap says default.",
     "alt": "Real run, local card. Movilidad Bogotá's sitemap says default. Overall score 75 of 100. SEO 61, GEO 86, Analytics 77, Security 70, A11y 71, Speed 86. www.movilidadbogota.gov.co, 20 pages analyzed, 19 Oct 2026. Lesson: Set the CMS base URL to your public https address, then regenerate the sitemap.",
@@ -4400,7 +4400,7 @@
     }
   },
   "81-saludcapital": {
-    "date": "2026-12-20",
+    "date": "2026-12-19",
     "cat": "Local",
     "title": "Salud Capital's home has three canonicals.",
     "alt": "Real run, local card. Salud Capital's home has three canonicals. Overall score 72 of 100. SEO 45, GEO 86, Analytics 77, Security 77, A11y 83, Speed 61. www.saludcapital.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4455,7 +4455,7 @@
     }
   },
   "82-metrobogota": {
-    "date": "2026-12-21",
+    "date": "2026-12-19",
     "cat": "Local",
     "title": "Metro de Bogotá's HSTS lasts 17 minutes.",
     "alt": "Real run, local card. Metro de Bogotá's HSTS lasts 17 minutes. Overall score 79 of 100. SEO 65, GEO 86, Analytics 85, Security 61, A11y 86, Speed 97. www.metrodebogota.gov.co, 20 pages analyzed, 19 Oct 2026. Lesson: Set HSTS max-age to at least one year (31536000) once https works everywhere.",
@@ -4510,7 +4510,7 @@
     }
   },
   "83-idrd": {
-    "date": "2026-12-21",
+    "date": "2026-12-20",
     "cat": "Local",
     "title": "IDRD's Referrer-Policy is unsafe-url.",
     "alt": "Real run, local card. IDRD's Referrer-Policy is unsafe-url. Overall score 81 of 100. SEO 64, GEO 86, Analytics 82, Security 85, A11y 74, Speed 94. www.idrd.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4565,7 +4565,7 @@
     }
   },
   "84-idartes": {
-    "date": "2026-12-22",
+    "date": "2026-12-20",
     "cat": "Local",
     "title": "Idartes' https root redirects to http.",
     "alt": "Real run, local card. Idartes' https root redirects to http. Overall score 81 of 100. SEO 72, GEO 83, Analytics 82, Security 69, A11y 89, Speed 94. www.idartes.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4620,7 +4620,7 @@
     }
   },
   "85-visitbogota": {
-    "date": "2026-12-22",
+    "date": "2026-12-21",
     "cat": "Local",
     "title": "Visit Bogotá responds slowly to taps.",
     "alt": "Real run, local card. Visit Bogotá responds slowly to taps. Overall score 79 of 100. SEO 67, GEO 89, Analytics 85, Security 77, A11y 100, Speed 59. visitbogota.co, 18 pages analyzed, 19 Oct 2026. Lesson: Find long tasks in the Performance panel and split them. Keep INP under 200 ms.",
@@ -4675,7 +4675,7 @@
     }
   },
   "86-biblored": {
-    "date": "2026-12-23",
+    "date": "2026-12-21",
     "cat": "Local",
     "title": "BibloRed answers plain http with a 200.",
     "alt": "Real run, local card. BibloRed answers plain http with a 200. Overall score 73 of 100. SEO 73, GEO 86, Analytics 79, Security 47, A11y 71, Speed 91. www.biblored.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4730,7 +4730,7 @@
     }
   },
   "87-catastro": {
-    "date": "2026-12-23",
+    "date": "2026-12-22",
     "cat": "Local",
     "title": "Catastro Bogotá has no descriptions.",
     "alt": "Real run, local card. Catastro Bogotá has no descriptions. Overall score 74 of 100. SEO 59, GEO 86, Analytics 82, Security 69, A11y 71, Speed 79. www.catastrobogota.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4785,7 +4785,7 @@
     }
   },
   "88-jbb": {
-    "date": "2026-12-24",
+    "date": "2026-12-22",
     "cat": "Local",
     "title": "The Botanic Garden loads logos over http.",
     "alt": "Real run, local card. The Botanic Garden loads logos over http. Overall score 72 of 100. SEO 72, GEO 86, Analytics 85, Security 16, A11y 97, Speed 91. jbb.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4840,7 +4840,7 @@
     }
   },
   "89-planetario": {
-    "date": "2026-12-24",
+    "date": "2026-12-23",
     "cat": "Local",
     "title": "The Planetarium skips a link in its TLS chain.",
     "alt": "Real run, local card. The Planetarium skips a link in its TLS chain. Overall score 78 of 100. SEO 59, GEO 86, Analytics 82, Security 77, A11y 94, Speed 71. planetariodebogota.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4895,7 +4895,7 @@
     }
   },
   "90-antioquia": {
-    "date": "2026-12-25",
+    "date": "2026-12-23",
     "cat": "Local",
     "title": "Antioquia's home is titled \"Inicio\".",
     "alt": "Real run, local card. Antioquia's home is titled \"Inicio\". Overall score 74 of 100. SEO 65, GEO 86, Analytics 85, Security 69, A11y 71, Speed 73. www.antioquia.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -4950,7 +4950,7 @@
     }
   },
   "91-medellin": {
-    "date": "2026-12-25",
+    "date": "2026-12-24",
     "cat": "Local",
     "title": "Medellín's portal sends no HSTS.",
     "alt": "Real run, local card. Medellín's portal sends no HSTS. Overall score 74 of 100. SEO 89, GEO 91, Analytics 71, Security 54, A11y 65, Speed 80. www.medellin.gov.co, 19 pages analyzed, 19 Oct 2026. Lesson: Send HSTS with a one-year max-age once every subdomain serves https.",
@@ -5005,7 +5005,7 @@
     }
   },
   "92-metromedellin": {
-    "date": "2026-12-26",
+    "date": "2026-12-24",
     "cat": "Local",
     "title": "Metro de Medellín still runs a UA tag.",
     "alt": "Real run, local card. Metro de Medellín still runs a UA tag. Overall score 85 of 100. SEO 83, GEO 86, Analytics 94, Security 77, A11y 79, Speed 94. www.metrodemedellin.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -5060,7 +5060,7 @@
     }
   },
   "93-epm": {
-    "date": "2026-12-26",
+    "date": "2026-12-25",
     "cat": "Local",
     "title": "EPM's canonical ends at a 404.",
     "alt": "Real run, local card. EPM's canonical ends at a 404. Overall score 77 of 100. SEO 62, GEO 86, Analytics 85, Security 77, A11y 65, Speed 88. www.epm.com.co, 20 pages analyzed, 19 Oct 2026. Lesson: Map CMS paths to public URLs. Open your canonical in a browser: it must answer 200.",
@@ -5115,7 +5115,7 @@
     }
   },
   "94-udea": {
-    "date": "2026-12-27",
+    "date": "2026-12-25",
     "cat": "Local",
     "title": "UdeA's pages skip security headers.",
     "alt": "Real run, local card. UdeA's pages skip security headers. Overall score 53 of 100. SEO 34, GEO 56, Analytics 82, Security 16, A11y 78, Speed 68. www.udea.edu.co, 20 pages analyzed, 19 Oct 2026.",
@@ -5170,7 +5170,7 @@
     }
   },
   "95-eafit": {
-    "date": "2026-12-27",
+    "date": "2026-12-26",
     "cat": "Local",
     "title": "EAFIT's pages have no main landmark.",
     "alt": "Real run, local card. EAFIT's pages have no main landmark. Overall score 75 of 100. SEO 72, GEO 86, Analytics 85, Security 77, A11y 76, Speed 58. www.eafit.edu.co, 20 pages analyzed, 19 Oct 2026. Lesson: Wrap the primary content of every template in one <main> for skip links.",
@@ -5225,7 +5225,7 @@
     }
   },
   "96-cali": {
-    "date": "2026-12-28",
+    "date": "2026-12-26",
     "cat": "Local",
     "title": "Cali's robots.txt names a missing sitemap.",
     "alt": "Real run, local card. Cali's robots.txt names a missing sitemap. Overall score 70 of 100. SEO 53, GEO 89, Analytics 74, Security 77, A11y 64, Speed 64. www.cali.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -5280,7 +5280,7 @@
     }
   },
   "97-metrocali": {
-    "date": "2026-12-28",
+    "date": "2026-12-27",
     "cat": "Local",
     "title": "Metro Cali's home describes an old notice.",
     "alt": "Real run, local card. Metro Cali's home describes an old notice. Overall score 86 of 100. SEO 78, GEO 97, Analytics 85, Security 77, A11y 97, Speed 85. metrocali.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -5335,7 +5335,7 @@
     }
   },
   "98-univalle": {
-    "date": "2026-12-29",
+    "date": "2026-12-27",
     "cat": "Local",
     "title": "Univalle's English link returns a 404.",
     "alt": "Real run, local card. Univalle's English link returns a 404. Overall score 60 of 100. SEO 42, GEO 83, Analytics 74, Security 46, A11y 53, Speed 68. www.univalle.edu.co, 20 pages analyzed, 19 Oct 2026.",
@@ -5390,7 +5390,7 @@
     }
   },
   "99-transcaribe": {
-    "date": "2026-12-29",
+    "date": "2026-12-28",
     "cat": "Local",
     "title": "Transcaribe reorders the keyboard path.",
     "alt": "Real run, local card. Transcaribe reorders the keyboard path. Overall score 74 of 100. SEO 92, GEO 91, Analytics 85, Security 47, A11y 73, Speed 65. transcaribe.gov.co, 19 pages analyzed, 19 Oct 2026.",
@@ -5445,7 +5445,7 @@
     }
   },
   "100-bucaramanga": {
-    "date": "2026-12-30",
+    "date": "2026-12-28",
     "cat": "Local",
     "title": "Bucaramanga's home has no title tag.",
     "alt": "Real run, local card. Bucaramanga's home has no title tag. Overall score 64 of 100. SEO 15, GEO 86, Analytics 74, Security 70, A11y 68, Speed 71. www.bucaramanga.gov.co, 17 pages analyzed, 19 Oct 2026.",
@@ -5500,7 +5500,7 @@
     }
   },
   "101-metrolinea": {
-    "date": "2026-12-30",
+    "date": "2026-12-29",
     "cat": "Local",
     "title": "Metrolínea's viewport turns off zoom.",
     "alt": "Real run, local card. Metrolínea's viewport turns off zoom. Overall score 69 of 100. SEO 53, GEO 83, Analytics 82, Security 62, A11y 53, Speed 85. www.metrolinea.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -5555,7 +5555,7 @@
     }
   },
   "102-pereira": {
-    "date": "2026-12-31",
+    "date": "2026-12-29",
     "cat": "Local",
     "title": "Pereira's feature policy allows every origin.",
     "alt": "Real run, local card. Pereira's feature policy allows every origin. Overall score 63 of 100. SEO 67, GEO 86, Analytics 82, Security 39, A11y 61, Speed 53. www.pereira.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -5610,7 +5610,7 @@
     }
   },
   "103-manizales": {
-    "date": "2026-12-31",
+    "date": "2026-12-30",
     "cat": "Local",
     "title": "Manizales' visitors wait 5.7 s to see it.",
     "alt": "Real run, local card. Manizales' visitors wait 5.7 s to see it. Overall score 70 of 100. SEO 70, GEO 83, Analytics 92, Security 54, A11y 79, Speed 50. manizales.gov.co, 16 pages analyzed, 19 Oct 2026.",
@@ -5665,7 +5665,7 @@
     }
   },
   "104-santamarta": {
-    "date": "2027-01-01",
+    "date": "2026-12-30",
     "cat": "Local",
     "title": "Santa Marta still runs a UA tag.",
     "alt": "Real run, local card. Santa Marta still runs a UA tag. Overall score 77 of 100. SEO 67, GEO 86, Analytics 82, Security 69, A11y 86, Speed 76. www.santamarta.gov.co, 20 pages analyzed, 19 Oct 2026. Lesson: Delete the UA snippet and keep GA4. One live tag is easier to trust than two half-dead ones.",
