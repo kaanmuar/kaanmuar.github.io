@@ -1,6 +1,6 @@
 # One-time run of the #1037 handoff once Buffer's daily limit clears (#1198). Dry runs every batch and the Shorts
 # requeue (#1191) first and stops if one fails; then runs each live step through buffer-batch.yml about 15 minutes
-# apart, watching each run: the five batch queues, the requeue of the Shorts with the translated brand name (#1076),
+# apart, watching each run: the six batch queues (auto-2026-10-25 from #1188 first), the requeue of the Shorts with the translated brand name (#1076),
 # then the seed (#1044). A live step that fails does not stop the next; the summary lists them. The nightly sync is
 # paused for that night (repo variable BUFFER_SYNC_PAUSE_UNTIL). Delete this file once it has run.
 name: Buffer handoff (once)
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       start:
-        description: 'First live step to run (1 to 7), to resume after a stop'
+        description: 'First live step to run (1 to 8), to resume after a stop'
         required: false
         default: '1'
 
@@ -30,12 +30,12 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       START: ${{ inputs.start || '1' }}
-      BATCHES: digest-2026-10-30 series-dia-de-muertos-2026-11 compare-2026-11 evergreen-2026-11 skits-friday-release
+      BATCHES: auto-2026-10-25 digest-2026-10-30 series-dia-de-muertos-2026-11 compare-2026-11 evergreen-2026-11 skits-friday-release
       POSTS: auto-2026-10-22/03-u-whatsapp-com,auto-2026-10-24/01-u-grupoexito-com-co,auto-2026-10-23/02-u-postobon-com,auto-2026-10-23/03-u-monsterenergy-com,auto-2026-10-24/02-u-colombia-com,auto-2026-10-22/04-u-telegram-com,auto-2026-10-24/03-u-nibo-com-br,auto-2026-10-22/05-u-lamega-com-co,auto-2026-10-22/06-u-cognizant-com,auto-2026-10-24/04-u-kreuzwort-raetsel-net,auto-2026-10-22/08-u-avvillas-com-co,auto-2026-10-22/09-u-lenovo-com,auto-2026-10-22/10-u-uniminuto-edu,auto-2026-10-22/11-u-davibank-com,auto-2026-10-22/12-u-confluence-com,auto-2026-10-22/14-u-co-computrabajo-com,auto-2026-10-22/15-u-nice-com,auto-2026-10-22/16-u-honda-com
     steps:
       - name: Run the handoff steps
         run: |
-          if ! [[ "$START" =~ ^[1-7]$ ]]; then echo "::error::start is 1 to 7"; exit 1; fi
+          if ! [[ "$START" =~ ^[1-8]$ ]]; then echo "::error::start is 1 to 8"; exit 1; fi
           # Dispatches one buffer-batch run and waits for it; buffer-batch runs one at a time (its concurrency group).
           dispatch() {
             local since id=""
