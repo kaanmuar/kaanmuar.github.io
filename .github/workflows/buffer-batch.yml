@@ -103,7 +103,9 @@ jobs:
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
           BUFFER_SEED_EXPORT: ${{ runner.temp }}/unmatched-sent.json
-        run: node scripts/buffer-queue.js "--$MODE" | tee -a "$GITHUB_STEP_SUMMARY"
+        run: |
+          set -o pipefail
+          node scripts/buffer-queue.js "--$MODE" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Keep the sent posts that match no hub post
         if: ${{ env.MODE == 'seed' && !cancelled() }}
         uses: actions/upload-artifact@v4
