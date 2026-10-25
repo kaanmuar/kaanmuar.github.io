@@ -54,7 +54,7 @@ function area(labels, series) {
         const line = s.values.map((n, i) => `${x(i).toFixed(1)},${y(n).toFixed(1)}`).join(' ');
         return `<defs><linearGradient id="jvg${k}${s.color.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.color}" stop-opacity="0.35"></stop><stop offset="1" stop-color="${s.color}" stop-opacity="0"></stop></linearGradient></defs>
             <polygon points="${x(0)},${h - pad} ${line} ${x(s.values.length - 1)},${h - pad}" fill="url(#jvg${k}${s.color.slice(1)})"></polygon>
-            <polyline points="${line}" fill="none" stroke="${s.color}" stroke-width="2.2" class="jv-glow"></polyline>`;
+            <polyline points="${line}" fill="none" stroke="${s.color}" stroke-width="2.2" class="jv-glow"></polyline>${labels.length < 3 ? s.values.map((n, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(n).toFixed(1)}" r="4" fill="${s.color}"></circle>`).join('') : ''}`;
     }).join('');
     const legend = series.map((s) => `<span><i style="background:${s.color}"></i>${esc(s.name)} ${fmt(s.values.reduce((a, b) => a + b, 0))}</span>`).join('');
     return `<svg class="jv-area" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(series.map((s) => s.name).join(' and '))} per day">${grid}${paths}${ticks}</svg><div class="jv-legend">${legend}</div>`;
@@ -92,7 +92,7 @@ function heat(grid, peakText) {
 }
 
 function kpis(list) {
-    return `<div class="jv-kpis">${list.map((k) => `<div class="jv-kpi${k.alert ? ' is-alert' : ''}"><span>${esc(k.label)}</span><strong>${fmt(k.value)}</strong>${k.delta ? `<em class="${k.dir > 0 ? 'up' : k.dir < 0 ? 'down' : ''}">${esc(k.delta)} <small>vs ${fmt(k.prior)}</small></em>` : '<em class="flat">&nbsp;</em>'}</div>`).join('')}</div>`;
+    return `<div class="jv-kpis">${list.map((k) => `<div class="jv-kpi${k.alert ? ' is-alert' : ''}"><span>${esc(k.label)}</span><strong>${fmt(k.value)}</strong>${k.delta ? `<em class="${k.dir > 0 ? 'up' : k.dir < 0 ? 'down' : ''}">${esc(k.delta)}${k.prior === undefined ? '' : ` <small>vs ${fmt(k.prior)}</small>`}</em>` : '<em class="flat">&nbsp;</em>'}</div>`).join('')}</div>`;
 }
 
 function table(cols, rows, empty) {
@@ -434,7 +434,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             ['Source', (r) => esc(r.name)],
             ['State', (r) => `<span class="jv-chip ${STATE_CHIP[r.state]}">${esc(r.state)}</span>`],
             ['What to do', (r) => r.needs.length ? r.needs.map((n) => esc(n)).join('<br>') : esc(r.detail)],
-            ['Updated', (r) => esc(r.at ? when(r.at) : '')]
+            ['Updated', (r) => `<span class="jv-nowrap">${esc(r.at ? when(r.at) : '')}</span>`]
         ], rows), { wide: true, data: rows.map((r) => ({ source: r.name, state: r.state, needs: r.needs.join(' | '), error: r.detail })), note: 'Partial: the source works but part of it waits for a one-time grant.' });
     }
 
@@ -443,6 +443,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         return panel('systems-safety', 'Safety and mail setup', s && s.ok ? table([
             ['Check', (c) => esc(c.name)], ['', (c) => `<span class="jv-chip ${LEVEL_CHIP[c.level]}">${esc(c.level)}</span>`], ['Detail', (c) => esc(c.detail)]
         ], s.checks) : waiting('safety', 'Checking Web Risk, DNS and the domain…'), { data: s && s.checks });
+    }
+
+    function costsBlock(c) {
+        if (!c || c.error) return c && c.error ? `<p class="jv-note">Costs: ${esc(c.error)}</p>` : '';
+        if (c.pending) return `<p class="jv-note">${esc(c.note)}</p>`;
+        if (!c.byService) return '';
+        return `<h4 class="jv-sub">Cloud spend, last ${fmt(c.days)} days: ${fmt(c.net)} ${esc(c.currency)} after credits (${fmt(c.gross)} before)</h4>` + bars(c.byService.filter((s) => s.value > 0), { color: COLORS.amber, empty: 'Nothing billed after credits.' });
     }
 
     function platformPanel() {
@@ -457,7 +464,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             { label: 'Firestore reads', value: fs.reads === undefined ? '—' : fs.reads, delta: fs.readsFreePct === undefined ? '' : fs.readsFreePct + '% of free', alert: fs.readsFreePct >= th.firestoreFreePct },
             { label: 'Firestore writes', value: fs.writes === undefined ? '—' : fs.writes },
             { label: 'New sign-in accounts', value: u && u.newInRange !== undefined ? u.newInRange : '—' }
-        ]) + bars(f.byFunction, { color: COLORS.pink, empty: 'No crashes, timeouts or 5xx answers in 24 hours.' }) + (g.failedMethods && g.failedMethods.length ? `<p class="jv-note">Failed Gemini calls by method: ${g.failedMethods.map((m) => esc(m.label) + ' ' + fmt(m.value)).join(', ')}.</p>` : ''),
+        ]) + bars(f.byFunction, { color: COLORS.pink, empty: 'No crashes, timeouts or 5xx answers in 24 hours.' }) + (g.failedMethods && g.failedMethods.length ? `<p class="jv-note">Failed Gemini calls by method: ${g.failedMethods.map((m) => esc(m.label) + ' ' + fmt(m.value)).join(', ')}.</p>` : '') + costsBlock(p.costs),
         { wide: true, data: [f, g, fs, u], note: `Real failures count crashes, timeouts and 5xx answers. Google also counts expected 4xx answers as errors (${fmt(f.notOk || 0)} in 24 hours).` + (f.error ? ' ' + esc(f.error) : '') });
     }
 
@@ -486,10 +493,10 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             ${panel('business-email', 'Email delivery (SendGrid)', okMail ? kpis([
                 { label: 'Sent', value: em.totals.processed }, { label: 'Delivered', value: em.totals.delivered }, { label: 'Bounced', value: em.totals.bounces, alert: em.totals.bounces > 0 },
                 { label: 'Blocked', value: em.totals.blocks, alert: em.totals.blocks > 0 }, { label: 'Spam reports', value: em.totals.spam_reports, alert: em.totals.spam_reports > 0 }, { label: 'Opened', value: em.rates.opened === null ? '—' : em.rates.opened + '%' }
-            ]) + area(em.daily.map((d) => d.date), [{ name: 'Delivered', values: em.daily.map((d) => d.delivered), color: COLORS.cyan }, { name: 'Bounced or blocked', values: em.daily.map((d) => d.bad), color: COLORS.pink }]) + table([['Kind', (r) => esc(r.kind)], ['Domain', (r) => esc(r.domain)], ['Reason', (r) => esc(r.reason)], ['When', (r) => esc(when(r.at))]], [].concat(...['bounces', 'blocks', 'spam'].map((k) => ((em.suppressions || {})[k] || []).map((r) => Object.assign({ kind: k }, r)))).slice(0, 12), 'No bounces, blocks or spam reports in range.') : waiting('email', 'Asking SendGrid…'), { wide: true, data: okMail ? em.daily : null })}
+            ]) + area(em.daily.map((d) => d.date), [{ name: 'Delivered', values: em.daily.map((d) => d.delivered), color: COLORS.cyan }, { name: 'Bounced or blocked', values: em.daily.map((d) => d.bad), color: COLORS.pink }]) + table([['Kind', (r) => esc(r.kind)], ['Domain', (r) => esc(r.domain)], ['Reason', (r) => esc(r.reason)], ['When', (r) => esc(when(r.at))]], [].concat(...['bounces', 'blocks', 'spam'].map((k) => ((em.suppressions || {})[k] || []).map((r) => Object.assign({ kind: k }, r)))).slice(0, 12), 'No bounces, blocks or spam reports in range.') : waiting('email', 'Asking SendGrid…'), { wide: true, data: okMail ? em.daily : null, note: okMail && em.blocklisted && em.blocklisted.length ? `Refused because the sending IP is on a blocklist: ${em.blocklisted.map((l) => esc(l.label) + ' (' + fmt(l.value) + ')').join(', ')}. SendGrid's shared IPs get listed now and then; ask SendGrid support, or move to a dedicated IP if it keeps happening.` : '' })}
             ${panel('business-brave', 'Search rankings (Brave, top 20)', se && se.brave && se.brave.ok ? table([['Search', (q) => esc(q.query)], ['Our place', (q) => q.position ? `<span class="jv-chip ${q.position <= 3 ? 'c-fast' : q.position <= 10 ? 'c-average' : ''}">#${q.position}</span>` : `<span class="jv-chip c-slow">not in top 20</span>`], ['First result', (q) => esc(q.leader || q.error || '')]], se.brave.queries) : waiting('search', 'Searching Brave…'), { data: se && se.brave && se.brave.queries, note: 'Checked once a day. Edit the searches in ⚙ Settings.' })}
             ${panel('business-gsc', 'Google Search Console', gsc && gsc.ok ? kpis([{ label: 'Clicks', value: gsc.clicks }, { label: 'Impressions', value: gsc.impressions }, { label: 'CTR', value: gsc.ctr + '%' }, { label: 'Avg position', value: gsc.position === null ? '—' : gsc.position }]) + table([['Query', (q) => esc(q.query)], ['Clicks', (q) => fmt(q.clicks)], ['Impr.', (q) => fmt(q.impressions)], ['Pos.', (q) => fmt(q.position)]], gsc.queries, 'No queries yet.') : se && se.ok ? `<p class="jv-empty">${esc((gsc && gsc.error) || 'Not connected.')}</p>${needList(se)}` : waiting('search', 'Asking Search Console…'), { data: gsc && gsc.ok ? gsc.queries : null })}
-            ${panel('business-social', 'Social posts', okSocial ? bars(so.channels, { color: COLORS.violet, empty: 'No posts went out in this range.' }) + table([['When', (r) => esc(when(r.at))], ['Network', (r) => esc(r.channel)], ['Result', (r) => `<span class="jv-chip ${r.result === 'sent' ? 'c-fast' : r.result === 'failed' ? 'c-slow' : ''}">${esc(r.result)}</span>`], ['Post', (r) => r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.post.slice(0, 40))}</a>` : esc(r.post.slice(0, 40))]], so.latest, 'No posts in range.') + needList(so) : waiting('social', 'Reading the social ledgers…'), { wide: true, data: okSocial ? so.latest : null })}
+            ${panel('business-social', 'Social posts', okSocial ? bars(so.channels, { color: COLORS.violet, empty: 'No posts went out in this range.' }) + table([['When', (r) => esc(when(r.at))], ['Network', (r) => esc(r.channel)], ['Result', (r) => `<span class="jv-chip ${r.result === 'sent' ? 'c-fast' : r.result === 'failed' ? 'c-slow' : ''}">${esc(r.result)}</span>`], ['Post', (r) => r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.post.slice(0, 40))}</a>` : esc(r.post.slice(0, 40))]], so.latest, 'No posts in range.') + needList(so) : waiting('social', 'Reading the social ledgers…'), { wide: true, data: okSocial ? so.latest : null, note: okSocial && so.scheduled && so.scheduled.count ? `${fmt(so.scheduled.count)} more posts are scheduled in Buffer; the next goes out ${esc(when(so.scheduled.next))}.` : '' })}
             ${listPanel('business', 'social-visits', 'Visits that came from social', social, { color: COLORS.violet, empty: 'No visits from social links in this range.' })}
             ${okSocial && so.youtube && so.youtube.videos.length ? panel('business-youtube', `YouTube${so.youtube.views !== null ? ' (' + fmt(so.youtube.views) + ' views)' : ''}`, table([['Video', (v) => `<a href="https://youtu.be/${esc(v.id)}" target="_blank" rel="noopener">${esc(String(v.title || v.id).slice(0, 70))}</a>`], ['Views', (v) => v.views === undefined ? '—' : fmt(v.views)], ['Likes', (v) => v.likes === undefined ? '—' : fmt(v.likes)], ['Published', (v) => esc(when(v.published))]], so.youtube.videos), { wide: true, data: so.youtube.videos }) : ''}
         </div>`;
@@ -820,6 +827,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
 
     // --- commands -------------------------------------------------------------------------------------------
 
+    window.addEventListener('hashchange', () => {
+        if (!/^#stats/.test(location.hash) || !document.contains(root)) return;
+        const range = S.range;
+        readHash();
+        $('#jv-range').value = S.range;
+        if (S.range !== range) refresh(); else render();
+    });
+
     function go(product) {
         S.product = product;
         writeHash();
@@ -954,7 +969,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
               <div class="jv-actions"><button type="button" class="jv-btn small" data-th-reset>Back to the defaults</button></div></section>
             <section><h4>Search rankings</h4><label class="jv-field">Searches to rank on Brave, one per line (up to 8)<textarea name="s-queries" rows="5" placeholder="${esc(C.SEARCH_QUERIES.join('\n'))}">${esc((d.searchQueries || []).join('\n'))}</textarea></label>
               <p class="jv-note">Left empty, Jarvis checks the default searches shown. Brave is asked once a day.</p></section>
-            <footer><span class="jv-note">${S.settings && S.settings.updatedAt ? 'Saved ' + esc(when(S.settings.updatedAt)) : 'Not saved yet'}</span><button type="button" class="jv-btn" data-settings-close>Cancel</button><button type="submit" class="jv-btn is-primary">Save</button></footer>`;
+            <footer><span class="jv-note">${S.settings && S.settings.updatedAt ? 'Saved ' + esc(when(S.settings.updatedAt)) : 'Using the defaults'}</span><button type="button" class="jv-btn" data-settings-close>Cancel</button><button type="submit" class="jv-btn is-primary">Save</button></footer>`;
     }
 
     function readSettings() {

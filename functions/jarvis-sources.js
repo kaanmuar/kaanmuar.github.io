@@ -14,6 +14,9 @@
 const ORIGIN = "https://carlosandmunoz.com";
 const DOMAIN = "carlosandmunoz.com";
 const PROJECT = "carlosm-interactive-cv";
+const BILLING_DATASET = "jarvis_billing";
+const BLOCKLISTS = /\b(spamcop|spamhaus|barracuda|sorbs|uceprotect|spamrats|mailspike)\b/i;
+const LISTED = /\b(?:black|block) ?list(?:ed)?\b|\bRBL\b|\bDNSBL\b/i;
 const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/";
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -84,7 +87,7 @@ function moneyRows(rows, { start, priorStart }) {
     bucket.usd += usd;
     bucket.count += 1;
     if (at < start) return;
-    tally(providers, row.provider || "unknown", usd);
+    tally(providers, row.provider || "not recorded", usd);
     tally(purposes, row.purpose || (String(row.id || "").startsWith("credit-") || /credit/.test(row.status || "") ? "credit" : "review"), usd);
     tally(daily, isoDay(at), usd);
     refunds += Number(row.refundedUsd) || (/refunded/.test(row.status || "") ? usd : 0);
@@ -169,6 +172,12 @@ async function email(ctx) {
     } catch (error) { return null; }
   };
   const [bounces, blocks, spam] = await Promise.all([suppressed("bounces"), suppressed("blocks"), suppressed("spam_reports")]);
+  const lists = {};
+  (blocks || []).concat(bounces || []).forEach((r) => {
+    const named = BLOCKLISTS.exec(r.reason);
+    if (named) tally(lists, named[1].toLowerCase());
+    else if (LISTED.test(r.reason)) tally(lists, "unnamed blocklist");
+  });
   return {
     ok: true,
     days: ctx.days,
@@ -176,6 +185,7 @@ async function email(ctx) {
     rates: { delivered: pct(totals.delivered, totals.processed), bad: pct(totals.bounces + totals.blocks + totals.spam_reports, totals.processed), opened: pct(totals.unique_opens, totals.delivered), clicked: pct(totals.unique_clicks, totals.delivered) },
     daily,
     suppressions: { bounces, blocks, spam },
+    blocklisted: listOf(lists),
     needs: []
   };
 }
@@ -253,11 +263,17 @@ async function social(ctx) {
   const results = {};
   const daily = {};
   const latest = [];
+  const scheduled = { count: 0, next: "" };
   [buffer, facebook].forEach((book) => {
     Object.keys((book && book.posts) || {}).forEach((post) => {
       (book.posts[post] || []).forEach((row) => {
         const at = Date.parse(row.at || "");
         if (!Number.isFinite(at) || at < since) return;
+        if (at > ctx.now) {
+          scheduled.count += 1;
+          if (!scheduled.next || at < Date.parse(scheduled.next)) scheduled.next = row.at;
+          return;
+        }
         const key = (row.channel || "other") + ":" + (row.result || "unknown");
         tally(results, key);
         if (row.result === "sent") { tally(channels, row.channel || "other"); tally(daily, isoDay(at)); }
@@ -291,6 +307,7 @@ async function social(ctx) {
     results: listOf(results, 24),
     daily: Object.keys(daily).sort().map((date) => ({ date, posts: daily[date] })),
     latest: latest.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 15),
+    scheduled,
     youtube: { videos: videos.sort((a, b) => (b.views || 0) - (a.views || 0) || Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 10), views },
     needs
   };
@@ -406,6 +423,33 @@ async function realFailures(ctx, token, start) {
   return { total: (data.entries || []).length, capped: !!data.nextPageToken, byFunction: listOf(byFunction), kinds: listOf(kinds), latest };
 }
 
+// Cloud Billing's standard usage cost export (Billing > Billing export) writes gcp_billing_export_v1_* into jarvis_billing.
+async function costs(ctx, token) {
+  const auth = { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } };
+  const bq = "https://bigquery.googleapis.com/bigquery/v2/projects/" + PROJECT;
+  let tables;
+  try {
+    tables = await getJson(ctx.fetch, bq + "/datasets/" + BILLING_DATASET + "/tables", auth, "BigQuery");
+  } catch (error) {
+    if (error.status === 404) return { need: "Costs: in the Cloud console open Billing > Billing export and turn on the standard usage cost export to BigQuery (dataset " + BILLING_DATASET + " in " + PROJECT + ")." };
+    throw error;
+  }
+  const table = ((tables.tables || []).map((t) => t.tableReference.tableId).filter((id) => /^gcp_billing_export_v1_/.test(id)).sort()[0]) || "";
+  if (!table) return { pending: true, note: "The billing export is on; Google writes the first rows within a day." };
+  const days = Math.min(Math.max(Number(ctx.days) || 30, 1), 90);
+  const query = "SELECT service.description AS service, currency, ROUND(SUM(cost) + SUM(IFNULL((SELECT SUM(c.amount) FROM UNNEST(credits) c), 0)), 2) AS net, ROUND(SUM(cost), 2) AS gross " +
+    "FROM `" + PROJECT + "." + BILLING_DATASET + "." + table + "` WHERE usage_start_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL " + days + " DAY) GROUP BY service, currency ORDER BY gross DESC LIMIT 15";
+  const data = await getJson(ctx.fetch, bq + "/queries", Object.assign({ method: "POST", body: JSON.stringify({ query, useLegacySql: false, timeoutMs: 20000 }) }, auth), "BigQuery");
+  const rows = (data.rows || []).map((r) => ({ label: r.f[0].v || "other", currency: r.f[1].v, net: Number(r.f[2].v) || 0, gross: Number(r.f[3].v) || 0 }));
+  return {
+    days,
+    currency: (rows[0] || {}).currency || "",
+    net: round(rows.reduce((s, r) => s + r.net, 0), 2),
+    gross: round(rows.reduce((s, r) => s + r.gross, 0), 2),
+    byService: rows.map((r) => ({ label: r.label, value: r.net }))
+  };
+}
+
 async function platform(ctx) {
   const needs = [];
   const out = { ok: true, needs };
@@ -447,6 +491,7 @@ async function platform(ctx) {
       Object.keys(FIRESTORE_FREE).forEach((k) => { usage[k + "FreePct"] = round((usage[k] / FIRESTORE_FREE[k]) * 100, 1); });
       return usage;
     }),
+    part("costs", async () => costs(ctx, token)),
     part("users", async () => {
       if (!ctx.listUsers) return null;
       const users = await ctx.listUsers();
@@ -454,7 +499,7 @@ async function platform(ctx) {
       return { total: users.length, newInRange: users.filter((u) => Date.parse(u.created || 0) >= since).length, activeInRange: users.filter((u) => Date.parse(u.lastSignIn || 0) >= since).length };
     })
   ]);
-  needs.push("Costs: in the Cloud console open Billing > Billing export and turn on the detailed usage cost export to BigQuery (dataset jarvis_billing in " + PROJECT + "), so Jarvis can show spend and cost per review.");
+  if (out.costs && out.costs.need) needs.push(out.costs.need);
   return out;
 }
 
@@ -470,4 +515,4 @@ async function run(name, ctx) {
   }
 }
 
-module.exports = { SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, monitoring, realFailures, hostOf };
+module.exports = { costs, SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, monitoring, realFailures, hostOf };

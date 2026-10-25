@@ -190,6 +190,9 @@
 .jv-facts b { color: var(--text); font-family: ui-monospace, Menlo, monospace; }
 .jv-settings-box textarea { width: 100%; background: rgba(4, 18, 28, 0.85); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0.45rem 0.55rem; font: 0.85rem ui-monospace, Menlo, monospace; resize: vertical; }
 
+.jv-sub { margin: 0.9rem 0 0.4rem; font: 600 0.72rem ui-monospace, Menlo, monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--amber); }
+.jv-nowrap { white-space: nowrap; }
+
 /* Settings */
 .jv-settings { position: fixed; inset: 0; z-index: 60; display: grid; place-items: start center; padding: 6vh 1rem; background: rgba(1, 6, 10, 0.72); backdrop-filter: blur(4px); overflow-y: auto; }
 .jv-settings[hidden] { display: none; }
