@@ -132,7 +132,9 @@ function batchIndex(root = path.join(ROOT, "media/social-posts")) {
   return index;
 }
 
-function matchPost(index, post, net) {
+// A slot match does not count when taken(name) says the ledger already ties that batch post to another Buffer post
+// on this profile: two posts can share a slot after the calendar moves, and only the asset or caption tells them apart.
+function matchPost(index, post, net, taken = () => false) {
   for (const asset of post.assets || []) {
     const source = String(asset.source || "").replace(/^https?:\/\/[^/]+/, "").replace(/\?.*$/, "").replace(/^.*(?=\/releases\/download\/)/, "");
     if (index.has(source)) return index.get(source);
@@ -143,7 +145,14 @@ function matchPost(index, post, net) {
   if (opening) return opening;
   const due = post.dueAt && new Date(post.dueAt);
   const slot = (net && due && !isNaN(due) && index.get("slot " + net + " " + due.toISOString())) || [];
-  return slot.length === 1 ? slot[0] : null;
+  return slot.length === 1 && !taken(slot[0]) ? slot[0] : null;
+}
+
+function takenBy(book, item) {
+  return (name) => {
+    const entry = ledger.find(book, name, item.slot, item.profile);
+    return Boolean(entry && entry.id && entry.id !== item.node.id);
+  };
 }
 
 // Every post Buffer holds with one of these statuses, on a channel with a network slot.
@@ -177,7 +186,7 @@ async function seed() {
   let matched = 0;
   for (const item of await bufferPosts(statuses)) {
     const { node, slot, profile } = item;
-    const name = matchPost(index, node, slot);
+    const name = matchPost(index, node, slot, takenBy(book, item));
     if (!name) { unmatched.push(describe(item)); continue; }
     matched += 1;
     const result = node.status === "sent" ? "sent" : node.status === "error" ? "failed" : "queued";
@@ -192,9 +201,10 @@ async function seed() {
 // ledger. A sent post, or one dated before now, is never picked.
 function staleScheduled(index, items, book, now) {
   const known = new Set(Object.values(book.posts || {}).flat().map((entry) => entry.id).filter(Boolean));
-  return items.filter(({ node, slot }) => {
+  return items.filter((item) => {
+    const { node, slot } = item;
     const due = Date.parse(node.dueAt || "");
-    return node.status === "scheduled" && !isNaN(due) && due > now && !known.has(node.id) && !matchPost(index, node, slot);
+    return node.status === "scheduled" && !isNaN(due) && due > now && !known.has(node.id) && !matchPost(index, node, slot, takenBy(book, item));
   });
 }
 
