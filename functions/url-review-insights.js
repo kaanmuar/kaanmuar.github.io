@@ -316,6 +316,11 @@ const AXE_FIX = {
 };
 const AXE_SEVERITY = { critical: ["fail", "medium"], serious: ["fail", "low"], moderate: ["risk", "low"], minor: ["risk", "low"] };
 
+function bannerLine(consent) {
+  if (!consent || !consent.banner) return say("an.banner.none");
+  return consent.banner === "A cookie banner" ? say("an.banner.generic") : say("an.banner.named", { name: consent.banner });
+}
+
 // Chat widgets and AI chatbots: consent, weight on the start page, and the launcher and open widget on a phone.
 function chatChecks(chat, consent, add) {
   const rows = chat.found;
@@ -325,35 +330,40 @@ function chatChecks(chat, consent, add) {
   const widget = rows.length === 1 ? rows[0].name + " " : "chat ";
   const requests = rows.reduce((sum, row) => sum + row.requests, 0);
   const cookies = chat.cookies || [];
-  const banner = consent && consent.banner ? (consent.banner === "A cookie banner" ? "A cookie banner" : consent.banner) + " was showing" : "";
+  const chats = some(rows.map((row) => row.ai ? say("an-chat.ai", { name: row.name }) : row.name), 3);
+  const one = rows.length === 1 ? rows[0].name : say("an-chat.it");
+  const box = rows.length === 1 ? say("an-chat.widgetNamed", { name: rows[0].name }) : say("an-chat.widget");
+  const sent = say("an.requests", { n: requests });
+  const banner = consent && consent.banner ? bannerLine(consent) : "";
 
-  if (cookies.length && banner) add("Analytics", "risk", "medium", "an-chat-consent", "The chat sets cookies before the visitor chooses",
-    banner + ". Before any choice, " + named + " sent " + plural(requests, "request") + " and set " + sample(cookies, 4) + ".",
-    "Put the chat in a consent category and load it only once that category is accepted, or show a plain chat button that loads the widget on the first click.", { effort: "hours", cases: ["CHAT-02", "PR-03"], count: cookies.length });
-  else if (cookies.length) add("Analytics", "risk", "low", "an-chat-consent", "The chat sets cookies on load and no banner asks first",
-    named + " sent " + plural(requests, "request") + " and set " + sample(cookies, 4) + " on the first visit.",
-    "Show a plain chat button that loads the widget on the first click, so nothing is stored until a visitor asks for help.", { effort: "hours", cases: ["CHAT-02", "PR-03"], count: cookies.length });
-  else if (banner) add("Analytics", "risk", "low", "an-chat-consent", "The chat loads before the visitor chooses",
-    banner + ". Before any choice, " + named + " sent " + plural(requests, "request") + ", but set no cookie the browser could see.",
-    "Load the chat after consent, or on the first click of a plain chat button.", { effort: "hours", cases: ["CHAT-02", "PR-03"] });
-  else add("Analytics", "pass", "info", "an-chat-consent", "The chat sets no cookie on load", named + " sent " + plural(requests, "request") + " and set no cookie the browser could see.", "", { cases: ["CHAT-02"] });
+  if (cookies.length && banner) add("Analytics", "risk", "medium", "an-chat-consent", say("an-chat-consent.before.title"),
+    say("an-chat-consent.before.evidence", { banner, chats, requests: sent, cookies: some(cookies, 4) }),
+    say("an-chat-consent.before.fix"), { effort: "hours", cases: ["CHAT-02", "PR-03"], count: cookies.length });
+  else if (cookies.length) add("Analytics", "risk", "low", "an-chat-consent", say("an-chat-consent.load.title"),
+    say("an-chat-consent.load.evidence", { chats, requests: sent, cookies: some(cookies, 4) }),
+    say("an-chat-consent.load.fix"), { effort: "hours", cases: ["CHAT-02", "PR-03"], count: cookies.length });
+  else if (banner) add("Analytics", "risk", "low", "an-chat-consent", say("an-chat-consent.early.title"),
+    say("an-chat-consent.early.evidence", { banner, chats, requests: sent }),
+    say("an-chat-consent.early.fix"), { effort: "hours", cases: ["CHAT-02", "PR-03"] });
+  else add("Analytics", "pass", "info", "an-chat-consent", say("an-chat-consent.pass.title"), say("an-chat-consent.pass.evidence", { chats, requests: sent }), "", { cases: ["CHAT-02"] });
 
   if (consent && consent.rejected && chat.after) {
     const after = chat.after;
-    if (after.cookies.length) add("Analytics", "risk", "medium", "an-chat-reject", "The chat keeps setting cookies after Reject",
-      "After pressing \"" + consent.rejectLabel + "\" and reloading, " + it + " set " + sample(after.cookies, 4) + ".",
-      "Map the chat to a consent category and block it when that category is refused.", { effort: "hours", cases: ["CHAT-02", "PR-03"] });
-    else if (after.requests) add("Analytics", "risk", "low", "an-chat-reject", "The chat still loads after Reject",
-      "After pressing \"" + consent.rejectLabel + "\" and reloading, " + it + " sent " + plural(after.requests, "request") + " but set no new cookie.",
-      "If the chat is not strictly needed, block it when its consent category is refused.", { effort: "hours", cases: ["CHAT-02"] });
-    else add("Analytics", "pass", "info", "an-chat-reject", "The chat stops after Reject", "After pressing \"" + consent.rejectLabel + "\" and reloading, " + it + " sent no request.", "", { cases: ["CHAT-02"] });
+    const label = consent.rejectLabel;
+    if (after.cookies.length) add("Analytics", "risk", "medium", "an-chat-reject", say("an-chat-reject.cookies.title"),
+      say("an-chat-reject.cookies.evidence", { label, it: one, cookies: some(after.cookies, 4) }),
+      say("an-chat-reject.cookies.fix"), { effort: "hours", cases: ["CHAT-02", "PR-03"] });
+    else if (after.requests) add("Analytics", "risk", "low", "an-chat-reject", say("an-chat-reject.requests.title"),
+      say("an-chat-reject.requests.evidence", { label, it: one, requests: say("an.requests", { n: after.requests }) }),
+      say("an-chat-reject.requests.fix"), { effort: "hours", cases: ["CHAT-02"] });
+    else add("Analytics", "pass", "info", "an-chat-reject", say("an-chat-reject.pass.title"), say("an-chat-reject.pass.evidence", { label, it: one }), "", { cases: ["CHAT-02"] });
   }
 
   const open = chat.open || {};
-  if (open.privacy === false) add("Analytics", "risk", "low", "an-chat-privacy", "The open chat shows no privacy link",
-    "The opened " + widget + "widget links no privacy notice, so a visitor typing personal data cannot see how it is used.",
-    "Link the privacy notice from the chat's welcome screen or pre-chat form.", { effort: "minutes", cases: ["CHAT-03", "PR-01"] });
-  else if (open.privacy === true) add("Analytics", "pass", "info", "an-chat-privacy", "The open chat links the privacy notice", "The opened " + widget + "widget links a privacy notice.", "", { cases: ["CHAT-03", "PR-01"] });
+  if (open.privacy === false) add("Analytics", "risk", "low", "an-chat-privacy", say("an-chat-privacy.title"),
+    say("an-chat-privacy.evidence", { widget: box }),
+    say("an-chat-privacy.fix"), { effort: "minutes", cases: ["CHAT-03", "PR-01"] });
+  else if (open.privacy === true) add("Analytics", "pass", "info", "an-chat-privacy", say("an-chat-privacy.pass.title"), say("an-chat-privacy.pass.evidence", { widget: box }), "", { cases: ["CHAT-03", "PR-01"] });
 
   const kb = Math.round(rows.reduce((sum, row) => sum + row.bytes, 0) / 1024);
   const ms = rows.reduce((sum, row) => sum + row.ms, 0);
@@ -392,54 +402,53 @@ const SHOP_PATH = /\/(cart|checkout|basket|warenkorb|kasse|carrito|cesta|panier|
 const LIB_SEVERITY = { critical: ["fail", "high"], high: ["risk", "high"], medium: ["risk", "medium"], low: ["risk", "low"] };
 
 // Links to the accessibility statement, the privacy notice and the imprint, on any page read or the rendered start page.
-const FINGERPRINT_KINDS = [["canvas", "drew hidden text on a canvas and read it back"], ["fonts", "measured which fonts are installed"], ["webgl", "read the graphics card name"], ["audio", "rendered a silent audio tone"]];
+const FINGERPRINT_KINDS = ["canvas", "fonts", "webgl", "audio"];
 
 // Browser fingerprinting, session recorders, and typed text sent before submit: before a choice and after Reject.
 function watchChecks(watch, consent, add) {
   const before = watch.before;
   const after = consent && consent.rejected && watch.after ? watch.after : null;
-  const rejected = after ? "After pressing \"" + consent.rejectLabel + "\" and reloading, " : "";
-  const banner = consent && consent.banner ? (consent.banner === "A cookie banner" ? "A cookie banner" : consent.banner) + " was showing. " : "No cookie banner appeared. ";
-  const hosts = (row) => [...new Set([].concat(...FINGERPRINT_KINDS.map(([key]) => row.fingerprint[key] || [])))];
-  const list = (row) => hosts(row).map((host) => {
-    const hows = FINGERPRINT_KINDS.filter(([key]) => (row.fingerprint[key] || []).indexOf(host) !== -1).map(([, how]) => how);
-    return host + " " + (hows.length > 1 ? hows.slice(0, -1).join(", ") + ", and " + hows[hows.length - 1] : hows[0]);
-  }).join("; ");
+  const label = after ? consent.rejectLabel : "";
+  const banner = bannerLine(consent);
+  const hosts = (row) => [...new Set([].concat(...FINGERPRINT_KINDS.map((key) => row.fingerprint[key] || [])))];
+  const list = (row) => ({ items: hosts(row).map((host) => say("an-fingerprint.host", {
+    host, hows: { items: FINGERPRINT_KINDS.filter((key) => (row.fingerprint[key] || []).indexOf(host) !== -1).map((key) => say("an-fingerprint.how." + key)), join: "andSerial" }
+  })), sep: "; " });
   const guarded = (row) => hosts(row).length > 0 && hosts(row).every((host) => (row.guards || []).indexOf(host) !== -1);
   const printed = hosts(before).length > 0;
 
   if (printed && guarded(before)) {
-    add("Analytics", "risk", "low", "an-fingerprint", "A bot check fingerprints the browser on load",
-      banner + "Before any choice, " + list(before) + ". These hosts run bot or fraud protection.",
-      "Name the bot protection and what it reads in the privacy notice. It can run without consent only while it is strictly needed for security.", { effort: "minutes", cases: ["PR-02"] });
+    add("Analytics", "risk", "low", "an-fingerprint", say("an-fingerprint.bot.title"),
+      say("an-fingerprint.bot.evidence", { banner, list: list(before) }),
+      say("an-fingerprint.bot.fix"), { effort: "minutes", cases: ["PR-02"] });
   } else if (printed) {
-    add("Analytics", consent && consent.banner ? "fail" : "risk", "high", "an-fingerprint", consent && consent.banner ? "Scripts fingerprint the browser before the visitor chooses" : "Scripts fingerprint the browser on load and no banner asks first",
-      banner + "Before any choice, " + list(before) + ". Read together, these give the browser an ID that survives clearing cookies.",
-      "Find the tag behind each host and hold it until consent, like a tracking cookie. If it is fraud or bot protection, name it in the privacy notice.", { effort: "hours", cases: ["PR-02", "PR-03"], count: hosts(before).length });
+    add("Analytics", consent && consent.banner ? "fail" : "risk", "high", "an-fingerprint", say(consent && consent.banner ? "an-fingerprint.before.title" : "an-fingerprint.load.title"),
+      say("an-fingerprint.evidence", { banner, list: list(before) }),
+      say("an-fingerprint.fix"), { effort: "hours", cases: ["PR-02", "PR-03"], count: hosts(before).length });
   } else {
-    add("Analytics", "pass", "info", "an-fingerprint", "No browser fingerprinting was seen",
-      "Before any choice, no script read back a canvas with text on it, measured 50 or more fonts, read the graphics card name, or rendered a silent audio tone.", "", { cases: ["PR-02"] });
+    add("Analytics", "pass", "info", "an-fingerprint", say("an-fingerprint.pass.title"),
+      say("an-fingerprint.pass.evidence"), "", { cases: ["PR-02"] });
   }
   if (after && hosts(after).length && !guarded(after)) {
-    add("Analytics", "fail", "high", "an-fingerprint-reject", "Fingerprinting continues after Reject", rejected + list(after) + ".",
-      "Block the fingerprinting tag when the visitor refuses, or remove it.", { effort: "hours", cases: ["PR-02", "PR-03"] });
+    add("Analytics", "fail", "high", "an-fingerprint-reject", say("an-fingerprint-reject.title"), say("an-fingerprint-reject.evidence", { label, list: list(after) }),
+      say("an-fingerprint-reject.fix"), { effort: "hours", cases: ["PR-02", "PR-03"] });
   } else if (after && printed && !guarded(before)) {
-    add("Analytics", "pass", "info", "an-fingerprint-reject", "Fingerprinting stops after Reject", rejected + "no script repeated the fingerprinting calls.", "", { cases: ["PR-03"] });
+    add("Analytics", "pass", "info", "an-fingerprint-reject", say("an-fingerprint-reject.pass.title"), say("an-fingerprint-reject.pass.evidence", { label }), "", { cases: ["PR-03"] });
   }
 
   const recording = (row) => (row.recorders || []).filter((rr) => rr.sent).map((rr) => rr.name);
   if (recording(before).length) {
-    add("Analytics", consent && consent.banner ? "fail" : "risk", "medium", "an-recording", consent && consent.banner ? "A session recorder runs before the visitor chooses" : "A session recorder runs on load and no banner asks first",
-      banner + "Before any choice, " + recording(before).join(", ") + " sent recording data. Session recorders replay clicks, scrolling, and anything typed into fields they do not mask.",
-      "Load the recorder only after consent, and mask every form field in its settings.", { effort: "hours", cases: ["PR-03"] });
+    add("Analytics", consent && consent.banner ? "fail" : "risk", "medium", "an-recording", say(consent && consent.banner ? "an-recording.before.title" : "an-recording.load.title"),
+      say("an-recording.evidence", { banner, names: { items: recording(before) } }),
+      say("an-recording.fix"), { effort: "hours", cases: ["PR-03"] });
   } else if ((before.recorders || []).length) {
-    add("Analytics", "pass", "info", "an-recording", "The session recorder waits for consent", before.recorders.map((rr) => rr.name).join(", ") + " loaded but sent no recording data before a choice.", "", { cases: ["PR-03"] });
+    add("Analytics", "pass", "info", "an-recording", say("an-recording.pass.title"), say("an-recording.pass.evidence", { names: { items: before.recorders.map((rr) => rr.name) } }), "", { cases: ["PR-03"] });
   }
   if (after && recording(after).length) {
-    add("Analytics", "fail", "medium", "an-recording-reject", "Session recording continues after Reject", rejected + recording(after).join(", ") + " still sent recording data.",
-      "Map the recorder to a consent category and block it when that category is refused.", { effort: "hours", cases: ["PR-03"] });
+    add("Analytics", "fail", "medium", "an-recording-reject", say("an-recording-reject.title"), say("an-recording-reject.evidence", { label, names: { items: recording(after) } }),
+      say("an-recording-reject.fix"), { effort: "hours", cases: ["PR-03"] });
   } else if (after && (before.recorders || []).length) {
-    add("Analytics", "pass", "info", "an-recording-reject", "Session recording stops after Reject", rejected + "no session recorder sent data.", "", { cases: ["PR-03"] });
+    add("Analytics", "pass", "info", "an-recording-reject", say("an-recording-reject.pass.title"), say("an-recording-reject.pass.evidence", { label }), "", { cases: ["PR-03"] });
   }
 
   const typed = before.typed || (after && after.typed);
@@ -471,6 +480,8 @@ function legalChecks(ctx, add) {
   };
   const linked = (hit) => (hit.text ? "\"" + hit.text + "\"" : "A link") + " on " + hit.path + " leads to " + shownAgainst(hit.href, origin) + ".";
   const none = "None of the " + plural(read.length, "page") + " analyzed" + (dom ? ", nor the rendered start page," : "") + " links ";
+  const linkedMsg = (hit) => say(hit.text ? "legal.linked.text" : "legal.linked", { text: hit.text, path: hit.path, href: shownAgainst(hit.href, origin) });
+  const noneMsg = (what) => say(dom ? "legal.none.rendered" : "legal.none", { pages: say("pagesN", { n: read.length }), what });
 
   const statement = at("accessibility");
   const techs = [].concat.apply([], read.map((page) => page.inspect.technologies || []));
@@ -486,22 +497,25 @@ function legalChecks(ctx, add) {
     none + "an accessibility statement, and the review saw no shop. The European Accessibility Act requires one from shops and from services such as banking, transport and e-books sold to consumers in the EU, and EU public-sector sites need one too.", "", { cases: ["A11Y-06"] });
 
   const privacy = at("privacy");
-  if (privacy) add("Analytics", "pass", "info", "an-privacy", "A privacy notice is linked", linked(privacy), "", { cases: ["PR-01"] });
+  if (privacy) add("Analytics", "pass", "info", "an-privacy", say("an-privacy.pass.title"), linkedMsg(privacy), "", { cases: ["PR-01"] });
   else {
     const cookies = read.some((page) => (page.inspect.cookies || []).length) || !!(browsed && browsed.consent && browsed.consent.before && browsed.consent.before.cookieCount);
     const forms = read.reduce((sum, page) => sum + (page.inspect.forms || 0), 0);
-    const why = [cookies ? "sets cookies" : "", (ctx.tags || []).length ? "loads " + sample(ctx.tags.map((tag) => tag.name), 3) : "", forms ? "has " + plural(forms, "form") : ""].filter(Boolean);
-    add("Analytics", "risk", why.length ? "medium" : "low", "an-privacy", "No privacy notice is linked",
-      none + "a privacy notice" + (why.length ? ", yet the site " + why.join(", ") : "") + ". Visitors cannot see who handles their data or why.",
-      "Publish a privacy notice that names who controls the data, what is collected, why, and the visitor's rights, and link it from the footer of every page.", { effort: "hours", cases: ["PR-01"] });
+    const why = [cookies ? say("an-privacy.why.cookies") : "", (ctx.tags || []).length ? say("an-privacy.why.tags", { list: some(ctx.tags.map((tag) => tag.name), 3) }) : "", forms ? say("an-privacy.why.forms", { n: forms }) : ""].filter(Boolean);
+    add("Analytics", "risk", why.length ? "medium" : "low", "an-privacy", say("an-privacy.title"),
+      say("an-privacy.evidence", { none: noneMsg(say("an-privacy.what")), yet: why.length ? say("an-privacy.yet", { list: { items: why } }) : "" }),
+      say("an-privacy.fix"), { effort: "hours", cases: ["PR-01"] });
   }
 
   const imprint = at("imprint");
   const german = germanSpeaking(face.lang, face.textLang, home.url);
-  if (imprint) add("Analytics", "pass", "info", "an-imprint", "An imprint is linked", linked(imprint), "", { cases: ["PR-04"] });
-  else if (german) add("Analytics", "risk", "medium", "an-imprint", "No imprint (Impressum) is linked",
-    "The site is " + (/^de\b/i.test(face.lang || "") ? "declared German (lang=\"" + face.lang + "\")" : face.textLang === "de" ? "written in German" : "on a German-speaking domain") + ". " + none + "an Impressum, which business sites in Germany (§ 5 DDG) and Austria (§ 5 ECG) must show.",
-    "Publish an Impressum with the provider's name, postal address, email, and register and VAT numbers, and link it from the footer of every page.", { effort: "hours", cases: ["PR-04"] });
+  if (imprint) add("Analytics", "pass", "info", "an-imprint", say("an-imprint.pass.title"), linkedMsg(imprint), "", { cases: ["PR-04"] });
+  else if (german) add("Analytics", "risk", "medium", "an-imprint", say("an-imprint.title"),
+    say("an-imprint.evidence", {
+      why: /^de\b/i.test(face.lang || "") ? say("an-imprint.why.declared", { lang: face.lang }) : face.textLang === "de" ? say("an-imprint.why.written") : say("an-imprint.why.domain"),
+      none: noneMsg(say("an-imprint.what"))
+    }),
+    say("an-imprint.fix"), { effort: "hours", cases: ["PR-04"] });
 }
 
 // Front-end libraries named by script addresses, banners or page globals, against the bundled retire.js list.
@@ -545,35 +559,37 @@ function browserChecks(b, add, ctx) {
   if (consent) {
     const live = (rows) => (rows || []).filter((row) => row.hits > 0);
     const quiet = (rows) => (rows || []).filter((row) => row.denied > 0 && !row.hits);
-    const listHits = (rows) => rows.map((row) => row.name + " (" + plural(row.hits, "request") + ")").join(", ");
-    const listCookies = (rows) => rows.slice(0, 6).map((row) => row.name + (row.third ? " on " + row.domain : "")).join(", ");
+    const listHits = (rows) => ({ items: rows.map((row) => say("pathNote", { path: row.name, note: say("an.requests", { n: row.hits }) })) });
+    const listCookies = (rows) => ({ items: rows.slice(0, 6).map((row) => row.third ? say("an.cookieOn", { name: row.name, domain: row.domain }) : row.name) });
     const beforeHits = live(consent.before.vendors);
     const beforeCookies = consent.before.cookies || [];
     const denied = quiet(consent.before.vendors);
-    const bannerText = consent.banner ? (consent.banner === "A cookie banner" ? "A cookie banner was showing" : consent.banner + " was showing") : "No cookie banner appeared";
+    const banner = bannerLine(consent);
     if (beforeHits.length || beforeCookies.length) {
-      const evidence = bannerText + ". Before any choice, " + where + " saw " +
-        [beforeHits.length ? listHits(beforeHits) : "", beforeCookies.length ? "cookies " + listCookies(beforeCookies) : ""].filter(Boolean).join(", and ") + ".";
-      add("Analytics", consent.banner ? "fail" : "risk", "high", "an-firing", consent.banner ? "Tracking starts before the visitor chooses" : "Tracking starts on load and no banner asks first", evidence,
-        "Hold every tag until consent, or set Google Consent Mode v2 defaults to denied before any tag loads. Block third-party embeds until the visitor agrees.", { effort: "hours", cases: ["AN-01", "PR-03"], count: beforeHits.length + beforeCookies.length });
+      const seen = [beforeHits.length ? listHits(beforeHits) : "", beforeCookies.length ? say("an-firing.cookies", { list: listCookies(beforeCookies) }) : ""].filter(Boolean);
+      add("Analytics", consent.banner ? "fail" : "risk", "high", "an-firing", say(consent.banner ? "an-firing.before.title" : "an-firing.load.title"),
+        say("an-firing.evidence", { banner, seen: { items: seen, join: "andSerial" } }),
+        say("an-firing.fix"), { effort: "hours", cases: ["AN-01", "PR-03"], count: beforeHits.length + beforeCookies.length });
     } else if (consent.before.vendors.length || ctx.tags.length || ctx.consentTools.length) {
-      add("Analytics", "pass", "info", "an-firing", denied.length ? "No tracking cookie before a choice, only cookieless pings" : "No tracking request or cookie before a choice",
-        bannerText + ". " + (denied.length ? denied.map((row) => row.name).join(", ") + " only sent pings with Consent Mode denied, which store no cookie." : "No request reached a known tracking host and no tracking cookie was set."), "", { cases: ["AN-01"] });
+      add("Analytics", "pass", "info", "an-firing", say(denied.length ? "an-firing.pings.title" : "an-firing.pass.title"),
+        denied.length ? say("an-firing.pings.evidence", { banner, names: { items: denied.map((row) => row.name) } }) : say("an-firing.pass.evidence", { banner }), "", { cases: ["AN-01"] });
     }
     if (consent.rejected && consent.after) {
       const afterHits = live(consent.after.vendors);
       const afterCookies = consent.after.cookies || [];
+      const label = consent.rejectLabel;
       if (afterHits.length || afterCookies.length) {
-        add("Analytics", "fail", "high", "an-reject", "Tracking continues after Reject",
-          "After pressing \"" + consent.rejectLabel + "\" and reloading, " + [afterHits.length ? listHits(afterHits) : "", afterCookies.length ? "new cookies " + listCookies(afterCookies) : ""].filter(Boolean).join(", and ") + " still appeared.",
-          "Map every tag in the consent tool to a category and block it until that category is accepted.", { effort: "hours", cases: ["AN-01", "PR-03"] });
+        const seen = [afterHits.length ? listHits(afterHits) : "", afterCookies.length ? say("an-reject.cookies", { list: listCookies(afterCookies) }) : ""].filter(Boolean);
+        add("Analytics", "fail", "high", "an-reject", say("an-reject.title"),
+          say("an-reject.evidence", { label, seen: { items: seen, join: "andSerial" } }),
+          say("an-reject.fix"), { effort: "hours", cases: ["AN-01", "PR-03"] });
       } else {
-        add("Analytics", "pass", "info", "an-reject", "Reject stops tracking", "After pressing \"" + consent.rejectLabel + "\" and reloading, no tracking request or new tracking cookie appeared.", "", { cases: ["AN-01", "PR-03"] });
+        add("Analytics", "pass", "info", "an-reject", say("an-reject.pass.title"), say("an-reject.pass.evidence", { label }), "", { cases: ["AN-01", "PR-03"] });
       }
     } else if (consent.banner && consent.banner !== "Sourcepoint" && !consent.rejectLabel) {
-      add("Analytics", "risk", "medium", "an-reject", "The banner shows no reject button on its first layer",
-        consent.banner + " was showing, but no button labelled reject, decline, deny, or only necessary was found on it.",
-        "Put Reject all next to Accept all, at the same size and weight.", { effort: "minutes", cases: ["PR-03"] });
+      add("Analytics", "risk", "medium", "an-reject", say("an-reject.nobutton.title"),
+        say("an-reject.nobutton.evidence", { name: consent.banner }),
+        say("an-reject.nobutton.fix"), { effort: "minutes", cases: ["PR-03"] });
     }
   }
 
@@ -1386,74 +1402,76 @@ function analyze(input) {
   const deniedPings = ((browsed && browsed.consent && browsed.consent.before && browsed.consent.before.vendors) || []).filter((row) => /^Google/.test(row.name) && row.denied > 0).map((row) => row.name);
   const homeTags = new Set(((face.analytics && face.analytics.tags) || []).map((tag) => tag.name));
   const untagged = homeTags.size ? read.filter((page) => !((page.inspect.analytics && page.inspect.analytics.tags) || []).length && !(page.inspect.analytics && page.inspect.analytics.loader)).map((page) => page.path) : [];
+  const tools = { items: consentTools };
   if (!tags.length && consentTools.length) {
-    if (!browsed) add("Analytics", "person", "info", "an-none", "Tags are probably loaded by a script", consentTools.join(", ") + " manages consent, but none of 27 known analytics tools is written in the HTML. The browser run lists what loads after the page starts.", "", { cases: ["AN-01"] });
+    if (!browsed) add("Analytics", "person", "info", "an-none", say("an-none.script.title"), say("an-none.script.evidence", { tools }), "", { cases: ["AN-01"] });
   } else if (!tags.length) {
-    add("Analytics", "risk", "low", "an-none", "No known analytics tag is in the HTML", "None of 27 known analytics tools appeared in the HTML of the pages analyzed. A tag injected later by a script would not show here.",
-      "If visits matter, add a measurement tool. A cookieless one such as Plausible or Cloudflare Web Analytics avoids a consent banner.", { effort: "hours", cases: ["AN-01"] });
+    add("Analytics", "risk", "low", "an-none", say("an-none.title"), say("an-none.evidence"),
+      say("an-none.fix"), { effort: "hours", cases: ["AN-01"] });
   } else {
-    add("Analytics", "pass", "info", "an-inventory", plural(tags.length, "measurement tool was", "measurement tools were") + " found", tags.map((tag) => tag.name + (tag.ids.length ? " (" + tag.ids.join(", ") + ")" : "")).join(", ") + ".", "");
+    add("Analytics", "pass", "info", "an-inventory", say("an-inventory.title", { n: tags.length }), say("listDot", { list: { items: tags.map((tag) => tag.ids.length ? say("pathNote", { path: tag.name, note: { items: tag.ids } }) : tag.name) } }), "");
   }
   if (untagged.length) {
-    add("Analytics", "risk", "medium", "an-gaps", plural(untagged.length, "page has", "pages have") + " no measurement tag while the start page does",
-      sample(untagged, 4) + ". Visits to those pages are invisible in the reports.", "Load the same tag from the shared layout on every page.", { pages: untagged, effort: "minutes" });
+    add("Analytics", "risk", "medium", "an-gaps", say("an-gaps.title", { n: untagged.length }),
+      say("an-gaps.evidence", { list: some(untagged, 4) }), say("an-gaps.fix"), { pages: untagged, effort: "minutes" });
   }
   const multiGa = read.filter((page) => ((page.inspect.analytics && page.inspect.analytics.ga4) || []).length > 1);
   const doubleLoad = read.filter((page) => (page.inspect.analytics && page.inspect.analytics.gtagLoads) > 1);
   if (multiGa.length || doubleLoad.length) {
-    add("Analytics", "risk", "medium", "an-duplicate", "Analytics may count some visits twice",
-      (multiGa.length ? plural(multiGa.length, "page sends", "pages send") + " to more than one GA4 property. " : "") + (doubleLoad.length ? plural(doubleLoad.length, "page loads", "pages load") + " gtag.js more than once." : ""),
-      "Keep one GA4 property per site and load gtag.js once, or manage it only inside Tag Manager.", { pages: multiGa.concat(doubleLoad).map((page) => page.path), effort: "minutes" });
+    add("Analytics", "risk", "medium", "an-duplicate", say("an-duplicate.title"),
+      say("an-duplicate.evidence", { multi: multiGa.length ? say("an-duplicate.multi", { n: multiGa.length }) : "", double: doubleLoad.length ? say("an-duplicate.double", { n: doubleLoad.length }) : "" }),
+      say("an-duplicate.fix"), { pages: multiGa.concat(doubleLoad).map((page) => page.path), effort: "minutes" });
   }
   if (tagPages["Google Tag Manager"] && tagPages["Google Analytics 4"]) {
-    add("Analytics", "risk", "low", "an-gtm-and-gtag", "GA4 is loaded directly and Tag Manager is also present",
-      "If the Tag Manager container also fires a GA4 tag, page views are sent twice.", "Check the container in Tag Manager preview and keep GA4 in one place.", { effort: "minutes" });
+    add("Analytics", "risk", "low", "an-gtm-and-gtag", say("an-gtm-and-gtag.title"),
+      say("an-gtm-and-gtag.evidence"), say("an-gtm-and-gtag.fix"), { effort: "minutes" });
   }
   if (tagPages["Universal Analytics"]) {
-    add("Analytics", "risk", "low", "an-ua", "Universal Analytics code is still on the page", "Google stopped processing Universal Analytics data in July 2024. The code adds weight and collects nothing.",
-      "Remove the UA- tag and keep GA4.", { pages: tagPages["Universal Analytics"], effort: "minutes" });
+    add("Analytics", "risk", "low", "an-ua", say("an-ua.title"), say("an-ua.evidence"),
+      say("an-ua.fix"), { pages: tagPages["Universal Analytics"], effort: "minutes" });
   }
   if (tracking.length && !consentTools.length && !consentMode) {
-    add("Analytics", "risk", "high", "an-consent", "Tracking tags load with no consent tool in the page",
-      tracking.map((tag) => tag.name).join(", ") + (tracking.length === 1 ? " appears" : " appear") + " in the HTML and no consent platform or Google Consent Mode default was found. In the EU, the UK, Brazil, and Colombia this is a legal exposure.",
-      "Add a consent platform and set Google Consent Mode v2 defaults to denied before any tag loads.", { effort: "hours", cases: ["PR-03", "AN-01"] });
+    add("Analytics", "risk", "high", "an-consent", say("an-consent.title"),
+      say("an-consent.evidence", { n: tracking.length, list: { items: tracking.map((tag) => tag.name) } }),
+      say("an-consent.fix"), { effort: "hours", cases: ["PR-03", "AN-01"] });
   } else if (googleTags.length && consentTools.length && !consentMode && deniedPings.length) {
-    add("Analytics", "pass", "info", "an-consent-mode", "Consent Mode defaults are set when the page runs, not in the HTML",
-      "No gtag consent default is written in the HTML, but before a choice " + deniedPings.join(", ") + " sent pings with Consent Mode denied, so " + consentTools.join(", ") + " or Tag Manager sets the defaults at runtime.", "", { cases: ["PR-03", "AN-01"] });
+    add("Analytics", "pass", "info", "an-consent-mode", say("an-consent-mode.runtime.title"),
+      say("an-consent-mode.runtime.evidence", { pings: { items: deniedPings }, tools }), "", { cases: ["PR-03", "AN-01"] });
   } else if (googleTags.length && consentTools.length && !consentMode) {
-    add("Analytics", "risk", "medium", "an-consent-mode", consentTools.join(", ") + " is present but Google Consent Mode defaults were not found",
-      "No gtag consent default is written in the HTML" + (browsed && browsed.consent ? ", and the browser run saw no Google ping with Consent Mode denied" : ". The consent tool or Tag Manager may still set one when the page runs") + ". Without Consent Mode v2 defaults, Google tags can fire before the visitor chooses, and Google Ads loses modelled conversions.",
-      "Call gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'}) before the tags.", { effort: "minutes", cases: ["PR-03", "AN-01"] });
+    add("Analytics", "risk", "medium", "an-consent-mode", say("an-consent-mode.missing.title", { tools }),
+      say("an-consent-mode.missing.evidence", { why: say(browsed && browsed.consent ? "an-consent-mode.missing.browsed" : "an-consent-mode.missing.raw") }),
+      say("an-consent-mode.missing.fix"), { effort: "minutes", cases: ["PR-03", "AN-01"] });
   } else if (consentMode) {
     const v2 = consentMode.v2;
     const regions = consentMode.regions || [];
     const denied = consentMode.analytics === "denied" || regions.length > 0;
-    const where = regions.length ? " in " + plural(regions.length, "listed region") : "";
+    const where = regions.length ? say("an-consent-mode.where", { n: regions.length }) : "";
+    const value = consentMode.analytics || say("an-consent-mode.unset");
     add("Analytics", denied && v2 ? "pass" : "risk", denied ? "low" : "medium", "an-consent-mode",
-      denied ? (v2 ? "Consent Mode v2 starts in denied" + where : "Consent Mode starts in denied" + where + ", without the v2 signals") : "Consent Mode default grants analytics before a choice",
+      denied ? say(v2 ? "an-consent-mode.v2.title" : "an-consent-mode.v1.title", { where }) : say("an-consent-mode.granted.title"),
       regions.length
-        ? "gtag consent default sets analytics_storage to denied for " + sample(regions, 8) + ", and to " + (consentMode.analytics || "unset") + " elsewhere." + (v2 ? " The denied default includes ad_user_data and ad_personalization." : "")
-        : "gtag consent default sets analytics_storage to " + (consentMode.analytics || "unset") + (v2 ? " and includes ad_user_data and ad_personalization." : "."),
-      denied && v2 ? "" : "Default every storage type to denied and add ad_user_data and ad_personalization.", { effort: "minutes", cases: ["PR-03", "AN-01"] });
+        ? say("an-consent-mode.regions", { regions: some(regions, 8), value, v2: v2 ? say("an-consent-mode.regions.v2") : "" })
+        : say(v2 ? "an-consent-mode.plain.v2" : "an-consent-mode.plain", { value }),
+      denied && v2 ? "" : say("an-consent-mode.fix"), { effort: "minutes", cases: ["PR-03", "AN-01"] });
   } else if (consentTools.length) {
-    add("Analytics", "pass", "info", "an-consent", "A consent tool is present", consentTools.join(", ") + " was found in the HTML.", "", { cases: ["PR-03"] });
+    add("Analytics", "pass", "info", "an-consent", say("an-consent.pass.title"), say("an-consent.pass.evidence", { tools }), "", { cases: ["PR-03"] });
   }
   if (tracking.length && !browsed) {
-    add("Analytics", "person", "info", "an-firing", "Whether tags fire before a choice needs a browser run",
-      "A raw HTML analysis can see the tags but not the requests they send. The browser run records every hit before and after consent.", "", { cases: ["AN-01"] });
+    add("Analytics", "person", "info", "an-firing", say("an-firing.person.title"),
+      say("an-firing.person.evidence"), "", { cases: ["AN-01"] });
   }
   const utm = extras.utm || null;
   if (utm && utm.status) {
-    if (utm.kept) add("Analytics", "pass", "info", "an-utm", "Campaign parameters survive the redirects", "A visit with utm_source, utm_medium, and utm_campaign kept them on " + pathOf(utm.finalUrl) + ".", "");
-    else add("Analytics", "fail", "medium", "an-utm", "Redirects strip campaign parameters",
-      "A visit with ?utm_source=… ended on " + pathOf(utm.finalUrl) + " without them. Paid and email campaigns will show up as direct traffic.",
-      "Keep the query string when redirecting (for example $request_uri in nginx, or :splat with query in Netlify).", { effort: "minutes" });
+    if (utm.kept) add("Analytics", "pass", "info", "an-utm", say("an-utm.pass.title"), say("an-utm.pass.evidence", { path: pathOf(utm.finalUrl) }), "");
+    else add("Analytics", "fail", "medium", "an-utm", say("an-utm.title"),
+      say("an-utm.evidence", { path: pathOf(utm.finalUrl) }),
+      say("an-utm.fix"), { effort: "minutes" });
   }
   const pii = read.filter((page) => (page.inspect.piiLinks || 0) > 0);
   if (pii.length) {
-    add("Analytics", "fail", "high", "an-pii", "Links carry email addresses in the URL",
-      plural(pii.reduce((sum, page) => sum + page.inspect.piiLinks, 0), "link") + " on " + sample(pii.map((page) => page.path), 3) + " put an email address in the query string. Analytics tools record full URLs, and Google's terms forbid sending personal data.",
-      "Move the email out of the URL (POST it, or use an opaque token).", { pages: pii.map((page) => page.path), effort: "hours" });
+    add("Analytics", "fail", "high", "an-pii", say("an-pii.title"),
+      say("an-pii.evidence", { links: say("an-pii.links", { n: pii.reduce((sum, page) => sum + page.inspect.piiLinks, 0) }), pages: some(pii.map((page) => page.path), 3) }),
+      say("an-pii.fix"), { pages: pii.map((page) => page.path), effort: "hours" });
   }
 
   legalChecks({ read, browsed, face, origin, home, tags }, add);
