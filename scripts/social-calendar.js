@@ -16,7 +16,8 @@
    seeded random minute. Lane 1 is kept for the day's top Live Report (post 01 of the daily auto batch); the other
    reviews wait in a backlog that takes the lane 3 and lane 4 slots while news and best practice have nothing.
    Only posts not yet sent anywhere and not before --from (default tomorrow, Bogotá) move; seasonal series keep
-   their day. A post's hub date (captions.json date) follows its slot day, so it is live on the hub first.
+   their day. A post's hub date (captions.json date) follows its slot day, so it is live on the hub first; a daily
+   Live Report's hub date never moves past its batch day, so the hub stays current while the networks catch up.
    --batch B plans that batch alone into the free slots, as the daily Live Reports job does for its new batch:
    its top post in lane 1, its other reviews at the back of the backlog. */
 
@@ -126,6 +127,7 @@ function laneOf(post, day) {
   return [1, 2, 3, 4, 5].find((lane) => slotTime(day, row.channel, lane) === row.time) || null;
 }
 
+const keepsHub = (batch, date, day) => batch.startsWith("auto-") && date < day;
 const isTop = (post) => post.batch.startsWith("auto-") && /^01-/.test(post.slug);
 // The launch set's languages of one topic go out in the clips' order: en, es, pt, de, fr, it.
 const rotation = (post) => Math.max(0, ROTATION.indexOf(post.slug.split("/")[0]));
@@ -160,7 +162,7 @@ function plan(posts, { from, batch, moveQueued = false } = {}) {
   go.filter((post) => !isTop(post)).forEach((post) => { (queue[post.lane] = queue[post.lane] || []).push(post); });
 
   const moves = [];
-  const put = (day, lane, post) => { take(day, lane, post); moves.push({ post, day, lane }); };
+  const put = (day, lane, post) => { take(day, lane, post); moves.push({ post, day, lane, hub: keepsHub(post.batch, post.date, day) ? post.date : day }); };
   // The day's top Live Report: the first free lane 1 slot on or after its own day.
   tops.forEach((post) => {
     let day = firstDay(post) > from ? firstDay(post) : from;
@@ -196,7 +198,7 @@ function write(result, root = ROOT) {
     if (fs.existsSync(capFile)) {
       const raw = fs.readFileSync(capFile, "utf8");
       const captions = JSON.parse(raw);
-      list.forEach((m) => { captions[m.post.slug].date = m.day; });
+      list.forEach((m) => { captions[m.post.slug].date = m.hub || m.day; });
       fs.writeFileSync(capFile, JSON.stringify(captions, null, 2) + (raw.endsWith("\n") ? "\n" : ""));
     }
 
@@ -248,7 +250,8 @@ function reconcile(root = ROOT, now = Date.now()) {
       const mine = out.map((line) => line.split(",")).filter((r) => r[3] === slug && NETWORKS.includes(r[2]));
       if (!mine.some((r) => held.has(batch + "/" + slug + "|" + r[2]))) return;
       const first = mine.map((r) => r[0]).sort()[0];
-      if (c.date !== first) { c.date = first; dated = true; }
+      const date = keepsHub(batch, c.date, first) ? c.date : first;
+      if (c.date !== date) { c.date = date; dated = true; }
     });
     if (dated) fs.writeFileSync(capFile, JSON.stringify(captions, null, 2) + (raw.endsWith("\n") ? "\n" : ""));
     if (touched || dated) changed.push(batch);
