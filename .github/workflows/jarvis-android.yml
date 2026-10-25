@@ -1,0 +1,65 @@
+name: Jarvis Android
+
+# Builds the Jarvis app on every change under android/. On main it signs the APK and attaches it to a GitHub Release.
+on:
+  push:
+    branches: [main]
+    paths: ["android/**", ".github/workflows/jarvis-android.yml"]
+  pull_request:
+    paths: ["android/**", ".github/workflows/jarvis-android.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jarvis-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    env:
+      JARVIS_VERSION_CODE: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests and debug build
+        run: ./gradlew --console=plain testDebugUnitTest assembleDebug
+
+      - name: Signed release
+        if: github.event_name != 'pull_request'
+        env:
+          KEYSTORE_B64: ${{ secrets.JARVIS_KEYSTORE_BASE64 }}
+          JARVIS_KEYSTORE_PASSWORD: ${{ secrets.JARVIS_KEYSTORE_PASSWORD }}
+          JARVIS_KEY_ALIAS: ${{ secrets.JARVIS_KEY_ALIAS }}
+          JARVIS_KEY_PASSWORD: ${{ secrets.JARVIS_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/jarvis.jks"
+          JARVIS_KEYSTORE="$RUNNER_TEMP/jarvis.jks" ./gradlew --console=plain assembleRelease
+          mv app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/jarvis-1.0.${JARVIS_VERSION_CODE}.apk"
+
+      - name: Publish the release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="1.0.${JARVIS_VERSION_CODE}"
+          gh release create "jarvis-android-v$v" "$RUNNER_TEMP/jarvis-$v.apk" --target "$GITHUB_SHA" --latest=false \
+            --title "Jarvis for Android $v" \
+            --notes "Install: open this page on the phone, download jarvis-$v.apk, allow installs from the browser if asked. It updates the app in place. Built from ${GITHUB_SHA::7}."
+
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'pull_request'
+        with:
+          name: jarvis-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
