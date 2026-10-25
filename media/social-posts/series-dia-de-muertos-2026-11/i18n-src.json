@@ -1,0 +1,50 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step."
+ },
+ "clips": {
+  "ofrenda": {
+   "lang": "en",
+   "strings": {
+    "counter": "Día de Muertos 1/2",
+    "actionLabel": "Check it today",
+    "footRight": "Live Reports · October 2026",
+    "title.0": "An ofrenda for",
+    "title.1": "*the links that died.*",
+    "body": "In October, our Live Reports followed the internal links of 263 public sites. Most answered. On 30 sites, at least one led to a page that is gone.",
+    "visual.items.0.0": "178 sites",
+    "visual.items.0.1": "Every link we opened answered",
+    "visual.items.1.0": "30 sites",
+    "visual.items.1.1": "Linked to a page that is gone",
+    "visual.items.2.0": "18 of those 30",
+    "visual.items.2.1": "The dead link was on the home page",
+    "visual.items.3.1": "The usual answer: Not Found",
+    "action": "Open every link on your home page. Fix or remove each one that answers 404, or redirect it with a 301 to the closest live page.",
+    "alt": "Día de Muertos card: An ofrenda for the links that died. October's Live Reports followed the internal links of 263 public sites: on 178 every link answered, on 30 at least one led to a page that is gone, and on 18 of those the dead link was on the home page. The usual answer was 404 Not Found.",
+    "cat.label": "Día de Muertos · SEO",
+    "cap.youtube": "In October, our Live Reports followed the internal links of 263 public sites. Most answered. On 30 sites, at least one led to a page that is gone.\n\nCheck it today: Open every link on your home page. Fix or remove each one that answers 404, or redirect it with a 301 to the closest live page.\n\nLive Reports: https://carlosandmunoz.com/qa-review.html?utm_source=youtube&utm_medium=social&utm_campaign=series-dia-de-muertos-2026-11&utm_content=ofrenda#live-reports\n\nDía de Muertos 1/2 · QA-lab URL Review\n\n#DiaDeMuertos #Playwright #AI #QA #BrokenLinks #SEO #Programming #LearnOnYouTube #GoogleSearch #SoftwareTesting #SearchConsole #QAlab"
+   }
+  },
+  "epitaphs": {
+   "lang": "es",
+   "strings": {
+    "counter": "Día de Muertos 2/2",
+    "actionLabel": "Check it today",
+    "footRight": "Live Reports · October 2026",
+    "title.0": "Epitaphs for",
+    "title.1": "*October's dead links.*",
+    "body": "Two sites linked to an error page that was itself missing. A template printed its placeholder where a link belonged. Three sites linked PDFs that were gone.",
+    "visual.note": "Real paths from October's Live Reports",
+    "action": "Open the PDFs and language links on your home page, request your error page, and search your templates for unfilled placeholders.",
+    "alt": "Día de Muertos card: Epitaphs for October's dead links. Real paths from October's Live Reports and their answers: an error page link, 404; an unfilled template placeholder, 404; a PDF, 404; a language switch, 404; a login page, 500.",
+    "cat.label": "Día de Muertos · SEO",
+    "cap.youtube": "Two sites linked to an error page that was itself missing. A template printed its placeholder where a link belonged. Three sites linked PDFs that were gone.\n\nCheck it today: Open the PDFs and language links on your home page, request your error page, and search your templates for unfilled placeholders.\n\nLive Reports: https://carlosandmunoz.com/qa-review.html?utm_source=youtube&utm_medium=social&utm_campaign=series-dia-de-muertos-2026-11&utm_content=epitaphs#live-reports\n\nDía de Muertos 2/2 · QA-lab URL Review\n\n#DiaDeMuertos #DevOps #Playwright #QA #BrokenLinks #SEO #Coding #Programming #ContentMarketing #QualityAssurance #TestAutomation #QAlab"
+   }
+  }
+ }
+}

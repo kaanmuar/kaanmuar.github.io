@@ -24,7 +24,8 @@
    tags (scripts/trending-tags.js) unless they were already fetched today.
    A source can also write a post in its own language (tip.lang, tip.voice "w" or "m"): it is drawn, voiced and
    captioned as written, with no translation, and its UI strings come from studio.UI[lang]. Such a source can set
-   tip.date, tip.alt, tip.hold (in the hub, never queued), studio.WINDOWS and studio.hostFor(tip).
+   tip.date, tip.times ({ network: "HH:MM" }, a calendar slot), tip.alt, tip.hold (in the hub, never queued),
+   studio.WINDOWS and studio.hostFor(tip).
    A source names its social hub kind with studio.KIND or tip.kind (trick, news, advice, compare, myth, quiz, term,
    skit, series); a quiz sets tip.answer to the id of the tip that reveals it, tip.steps and tip.term are optional.
    --rotate writes voiced/<slug>.mp4 and voiced/<slug>.json (language, speech, TikTok and YouTube copy)
@@ -311,7 +312,7 @@ async function renderClip(page, tip, index, total, file, cover, said) {
   for (const tip of opts["schedule-only"] ? [] : tips) {
     const index = all.indexOf(tip);
     const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
-    const ui = tip.lang ? uiFor(tip.lang, i18n) : {};
+    const ui = tip.lang ? uiFor(tip.lang, i18n) : studio.UI ? uiFor("en", i18n) : {};
     await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"), ui);
     await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"), ui);
     const said = localize(tip, index, total, i18n);
@@ -335,7 +336,7 @@ async function renderClip(page, tip, index, total, file, cover, said) {
     const windows = studio.WINDOWS || WINDOWS;
     for (const channel of tip.hold ? [] : Object.keys(windows)) {
       const video = ["tiktok", "youtube"].includes(channel);
-      rows.push({ date, time: randomTime(windows[channel], rand, slot), channel, slug,
+      rows.push({ date, time: (tip.times || {})[channel] || randomTime(windows[channel], rand, slot), channel, slug,
         asset: video ? "clip/" + slug + ".mp4" : channel === "instagram-story" ? "story/" + slug + ".jpg" : "feed/" + slug + ".jpg",
         text: channel === "youtube" ? cap.youtubeTitle : channel === "instagram-story" ? "" : cap[channel] });
     }
