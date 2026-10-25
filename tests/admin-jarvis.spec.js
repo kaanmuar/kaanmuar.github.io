@@ -43,6 +43,8 @@ const EXTERNAL = {
   uptime: { ok: true, pages: [{ product: 'cv', name: 'CV', url: 'https://carlosandmunoz.com/', status: 200, ms: 320, bytes: 1000, ok: true }], tlsDaysLeft: 60 },
   ga4: { ok: true, groups: [{ group: 'cv', sessions: 40, users: 30, views: 90, engagement: 55, duration: 70, priorSessions: 20, priorUsers: 15 }], countries: [{ label: 'Colombia', value: 25, prior: 10 }], sources: [], daily: [] },
   cloudflare: { ok: false, error: 'The Cloudflare token needs Zone > Analytics > Read.' },
+  settings: { ok: true, goals: [{ product: 'cv', metric: 'visits', period: 'week', target: 300 }], thresholds: {}, mail: { daily: true, gemini: true, watch: true }, updatedAt: '2026-10-24T12:00:00Z' },
+  goals: { ok: true, goals: [{ key: 'cv.visits.week', product: 'cv', metric: 'visits', period: 'week', target: 300, label: 'CV visits this week', value: 120, pct: 40, expected: 107, projected: 336, elapsed: 36, status: 'on-track' }] },
   speed: { ok: true, pages: [{ product: 'cv', name: 'CV', url: 'https://carlosandmunoz.com/', ok: true, score: 93, lab: {}, field: {} }], crux: null }
 };
 
@@ -79,6 +81,7 @@ async function openStats(page, hash) {
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type, Authorization' } });
     const body = JSON.parse(request.postData() || '{}');
     calls.push({ op: body.op, auth: request.headers().authorization, body });
+    if (body.op === 'settings-save') return route.fulfill({ json: Object.assign({ op: body.op, ok: true, updatedAt: new Date().toISOString() }, body.settings), headers: { 'Access-Control-Allow-Origin': '*' } });
     const answer = EXTERNAL[body.op] || (body.op === 'brief' || body.op === 'ask' ? { ok: true, text: 'Jarvis says the CV is up. Next: answer the inbox.' } : { ok: true, ran: body.job });
     return route.fulfill({ json: Object.assign({ op: body.op }, answer), headers: { 'Access-Control-Allow-Origin': '*' } });
   });
@@ -100,9 +103,10 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
-    expect(new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed']));
+    expect(new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
+    await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
     await tabs.filter({ hasText: 'CV' }).first().click();
     await expect(page).toHaveURL(/#stats\/cv\//);
     const cv = page.locator('[data-view="cv"]');
@@ -162,5 +166,40 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await run.click();
     await expect.poll(() => calls.filter((c) => c.op === 'run-job').map((c) => c.body.job)).toEqual(['sweepReviews']);
+  });
+
+  test('settings save goals, thresholds and mail switches through the function', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page);
+    await expect(page.locator('[data-view="overview"] .jv-goal')).toContainText('120 / 300');
+    await page.locator('[data-act="settings"]').first().click();
+    const box = page.locator('.jv-settings-box');
+    await expect(page.locator('.jv-settings')).toBeVisible();
+    await expect(box.locator('[data-goal]')).toHaveCount(1);
+    await box.locator('[data-goal-add]').click();
+    const row = box.locator('[data-goal]').nth(1);
+    await row.locator('[name="g-product"]').selectOption('review');
+    await row.locator('[name="g-metric"]').selectOption('paid');
+    await row.locator('[name="g-period"]').selectOption('month');
+    await row.locator('[name="g-target"]').fill('12');
+    await box.locator('[name="t-pendingRatings"]').fill('25');
+    await box.locator('[name="m-gemini"]').uncheck();
+    await box.locator('button[type="submit"]').click();
+    await expect(page.locator('.jv-settings')).toBeHidden();
+    const save = calls.find((c) => c.op === 'settings-save');
+    expect(save.body.settings.goals).toEqual([{ product: 'cv', metric: 'visits', period: 'week', target: 300 }, { product: 'review', metric: 'paid', period: 'month', target: 12 }]);
+    expect(save.body.settings.thresholds.pendingRatings).toBe(25);
+    expect(save.body.settings.mail).toEqual({ daily: true, gemini: false, watch: true });
+    await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(1);
+
+    await page.keyboard.press('g');
+    await expect(page.locator('.jv-settings')).toBeVisible();
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.locator('.jv-settings-box [data-act="daily-now"]').click();
+    await expect.poll(() => calls.some((c) => c.op === 'daily-now')).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.jv-settings')).toBeHidden();
+    expect(errors).toEqual([]);
   });
 });

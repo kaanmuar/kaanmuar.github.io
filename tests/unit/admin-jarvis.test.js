@@ -140,7 +140,7 @@ test("server: Scheduler jobs get short names and run-job refuses odd names", asy
     calls.push([url, (opts || {}).method]);
     if (/metadata/.test(url)) return json({ access_token: "t" });
     if (/:run$/.test(url)) return json({});
-    return json({ jobs: [{ name: "projects/p/locations/l/jobs/firebase-schedule-sweepReviews-us-central1", schedule: "*/5 * * * *", state: "ENABLED", status: { code: 2, message: "late" } }] });
+    return json({ jobs: [{ name: "projects/p/locations/l/jobs/firebase-schedule-sweepReviews-us-central1", schedule: "*/5 * * * *", state: "ENABLED", lastAttemptTime: "2026-10-25T05:00:00Z", status: { code: 2, message: "late" } }] });
   };
   const list = await jarvis.jobs(fetch);
   assert.deepEqual(list.map((job) => [job.name, job.ok, job.error]), [["sweepReviews", false, "late"]]);
@@ -213,4 +213,161 @@ test("admin mounts Jarvis in the stats pane and the endpoint stays owner-only", 
   const block = index.slice(index.indexOf("exports.jarvis ="));
   assert.match(block, /verifyOperator/);
   assert.match(block, /Access-Control-Allow-Headers", "Content-Type, Authorization"/);
+});
+
+// --- #1299: goals, thresholds, daily briefing, watch ------------------------------------------------------------
+
+function fakeDb(data) {
+  const writes = [];
+  const query = (name, filters) => ({
+    where: (field, op, value) => query(name, filters.concat([[field, op, value]])),
+    limit: () => query(name, filters),
+    count: () => ({ get: async () => ({ data: () => ({ count: (data.counts || {})[name + JSON.stringify(filters.map((f) => f[0] + f[1] + (f[2] instanceof Date ? "date" : typeof f[2] === "string" && /^\d{4}-/.test(f[2]) ? "iso" : f[2])))] ?? 0 }) }) }),
+    aggregate: () => ({ get: async () => ({ data: () => ({ usd: data.usd || 0 }) }) }),
+    get: async () => ({ docs: ((data.rows || {})[name] || []).map((row, i) => ({ id: row.id || name + i, data: () => row })) }),
+    doc: (id) => ({
+      get: async () => ({ exists: !!(data.docs || {})[name + "/" + id], data: () => (data.docs || {})[name + "/" + id] }),
+      set: async (value) => { writes.push({ path: name + "/" + id, value }); (data.docs = data.docs || {})[name + "/" + id] = value; }
+    })
+  });
+  return { collection: (name) => query(name, []), writes };
+}
+
+test("thresholds clamp to their range and drive the briefing", () => {
+  assert.equal(core.thresholds({ pendingRatings: 200, uptimeMs: 5, bogus: 1 }).pendingRatings, 200);
+  assert.equal(core.thresholds({ uptimeMs: 5 }).uptimeMs, 3000);
+  const inbox = { totals: { unanswered: 1, pending: 147 } };
+  const loud = core.briefing({ products: { inbox } });
+  assert.ok(loud.some((row) => row.text === "1 message in range still has no answer."));
+  assert.ok(loud.some((row) => row.text === "147 ratings wait for approval."));
+  const quiet = core.briefing({ products: { inbox }, thresholds: { pendingRatings: 200, unanswered: 2 } });
+  assert.equal(quiet.length, 0);
+});
+
+test("a cancelled CI run is not an alert and does not count against readiness", () => {
+  const external = { github: { ok: true, ci: [{ name: "E2E", conclusion: "cancelled" }, { name: "Lint", conclusion: "success" }], merged: { total: 0 } } };
+  assert.equal(core.briefing({ external }).filter((row) => row.level === "alert").length, 0);
+  assert.equal(core.readiness(external), 100);
+});
+
+test("the failure line names the cause label", () => {
+  const items = core.briefing({ external: { health: { jobs: [], failures: { total: 49, causes: [{ label: "The site's bot protection refused the review", value: 20 }] }, reruns: { held: 11 } } } });
+  assert.ok(items.some((row) => row.text === "49 URL review runs failed in range; top cause: The site's bot protection refused the review."));
+  assert.ok(items.some((row) => row.text === "11 re-runs are held on the desk."));
+  assert.equal(jarvis.causeLabel({ cause: { id: "tls", label: "TLS failed" } }), "TLS failed");
+  assert.equal(jarvis.causeLabel({ cause: "timeout" }), "timeout");
+  assert.equal(jarvis.causeLabel({ kind: "failed" }), "failed");
+});
+
+test("goals: only known metrics survive, and pace reads against the Bogota week", () => {
+  const goals = core.cleanGoals([{ product: "cv", metric: "visits", period: "week", target: "300" }, { product: "cv", metric: "nope", period: "week", target: 5 }, { product: "review", metric: "usd", period: "month", target: 0 }]);
+  assert.deepEqual(goals, [{ product: "cv", metric: "visits", period: "week", target: 300 }]);
+  const wednesdayNoon = new Date("2026-10-21T17:00:00Z");
+  const w = core.periodWindow("week", wednesdayNoon);
+  assert.equal(w.start.toISOString(), "2026-10-19T05:00:00.000Z");
+  const g = core.goalProgress(goals[0], 50, wednesdayNoon);
+  assert.equal(g.label, "CV visits this week");
+  assert.equal(g.elapsed, 36);
+  assert.equal(g.status, "far-behind");
+  assert.equal(core.goalProgress(goals[0], 120, wednesdayNoon).status, "on-track");
+  assert.equal(core.goalProgress(goals[0], 300, wednesdayNoon).status, "done");
+  const items = core.briefing({ goals: [g, core.goalProgress(goals[0], 300, wednesdayNoon)] });
+  assert.equal(items[0].level, "warn");
+  assert.match(items[0].text, /^Goal behind: CV visits this week is at 50 of 300/);
+  assert.ok(items.some((row) => row.level === "good" && /^Goal met/.test(row.text)));
+});
+
+test("server: Scheduler treats a job that never ran as fine", async () => {
+  const fetch = async (url) => (/metadata/.test(url) ? json({ access_token: "t" }) : json({ jobs: [
+    { name: "x/firebase-schedule-emailMonthlyReviewReport-us-central1", status: { code: -1 } },
+    { name: "x/firebase-schedule-sweepReviews-us-central1", lastAttemptTime: "2026-10-25T05:00:00Z", status: { code: 13, message: "" } }
+  ] }));
+  const list = await jarvis.jobs(fetch);
+  assert.deepEqual(list.map((job) => [job.name, job.ok, job.error, job.note]), [["emailMonthlyReviewReport", true, "", "not run yet"], ["sweepReviews", false, "code 13", ""]]);
+});
+
+test("server: GitHub skips cancelled runs, Cloudflare prefers the analytics token", async () => {
+  const gh = await jarvis.github(async (url) => (/actions\/runs/.test(url) ? json({ workflow_runs: [{ name: "E2E", status: "completed", conclusion: "cancelled" }, { name: "E2E", status: "completed", conclusion: "success" }] }) : /search/.test(url) ? json({ total_count: 0, items: [] }) : json([])), "t", { now: NOW.getTime() });
+  assert.deepEqual(gh.ci.map((run) => run.conclusion), ["success"]);
+  let auth = "";
+  await jarvis.cloudflare(async (url, opts) => { auth = opts.headers.Authorization; return json({ data: { viewer: { zones: [{ httpRequests1dGroups: [] }] } } }); }, { CLOUDFLARE_API_TOKEN: "dns", CLOUDFLARE_ANALYTICS_TOKEN: "analytics", CLOUDFLARE_ZONE_ID: "abc" }, { days: 7, now: NOW.getTime() });
+  assert.equal(auth, "Bearer analytics");
+});
+
+test("server: settings are cleaned on save and read back with defaults", async () => {
+  const db = fakeDb({});
+  const empty = await jarvis.readSettings(db);
+  assert.deepEqual(empty.mail, { daily: true, gemini: true, watch: true });
+  assert.equal(empty.thresholds.tlsDays, 21);
+  const saved = await jarvis.saveSettings(db, { goals: [{ product: "review", metric: "paid", period: "week", target: 10 }, { product: "x" }], thresholds: { tlsDays: 30, uptimeMs: "abc" }, mail: { daily: false, gemini: "yes" } }, "kaanmuar@gmail.com");
+  assert.equal(saved.goals.length, 1);
+  assert.equal(saved.thresholds.tlsDays, 30);
+  assert.equal(saved.thresholds.uptimeMs, 3000);
+  assert.deepEqual(saved.mail, { daily: false, gemini: true, watch: true });
+  assert.equal(db.writes[0].path, "jarvis_settings/main");
+  assert.equal(db.writes[0].value.by, "kaanmuar@gmail.com");
+});
+
+test("server: goal values come from count and sum aggregations with the right filters", async () => {
+  const db = fakeDb({ usd: 34.2, counts: {
+    'site_events["site==cv","kind==visit","createdAt>=date","createdAt<date"]': 120,
+    'url_reviews["paid==true","createdAt>=iso","createdAt<iso"]': 7,
+    'url_review_opens["createdAt>=date","createdAt<date"]': 561
+  } });
+  const start = new Date("2026-10-19T05:00:00Z");
+  const end = new Date("2026-10-26T05:00:00Z");
+  assert.equal(await jarvis.goalValue(db, { product: "cv", metric: "visits" }, start, end), 120);
+  assert.equal(await jarvis.goalValue(db, { product: "review", metric: "paid" }, start, end), 7);
+  assert.equal(await jarvis.goalValue(db, { product: "review", metric: "opens" }, start, end), 561);
+  assert.equal(await jarvis.goalValue(db, { product: "review", metric: "usd" }, start, end, (field) => ({ sum: field })), 34.2);
+  const rows = await jarvis.goals(db, { goals: [{ product: "cv", metric: "visits", period: "week", target: 300 }] }, { now: Date.parse("2026-10-21T17:00:00Z") });
+  assert.deepEqual([rows[0].value, rows[0].status], [120, "on-track"]);
+});
+
+test("server: the daily briefing reads the last 24 hours, drops test emails and builds the mail", async () => {
+  const now = Date.parse("2026-10-25T12:40:00Z");
+  const ts = (h) => ({ toDate: () => new Date(now - h * 3600000) });
+  const db = fakeDb({ rows: {
+    site_events: [{ site: "cv", kind: "visit", createdAt: ts(2) }, { site: "cv", kind: "visit", createdAt: ts(3) }, { site: "cv", kind: "visit", createdAt: ts(30) }],
+    url_review_opens: [{ createdAt: ts(1) }],
+    url_reviews: [{ createdAt: new Date(now - 3600000).toISOString(), paid: true, priceUsd: 9, status: "complete" }],
+    messages: [{ email: "a@real.co", createdAt: ts(2) }, { email: "pw-bot@example.com", createdAt: ts(2) }],
+    ratings: [{ id: "r1", email: "b@real.co", createdAt: ts(5), rating: 5, status: "pending" }]
+  } });
+  const { products } = await jarvis.dailyProducts(db, { now });
+  assert.equal(products.cv.totals.visits, 2);
+  assert.equal(products.cv.kpis[0].prior, 1);
+  assert.equal(products.inbox.totals.messages, 1);
+  assert.equal(products.review.totals.usd, 9);
+  const items = core.briefing({ products });
+  const mail = jarvis.dailyMail({ products, items, goalRows: [core.goalProgress({ product: "cv", metric: "visits", period: "day", target: 4 }, 2, new Date(now))], aiText: "Quiet day. Next: answer the inbox.", dateLabel: "Sun, Oct 25" });
+  assert.match(mail.subject, /^Jarvis daily briefing, Sun, Oct 25: 2 warnings$/);
+  assert.ok(mail.rows.some((row) => row.label === "CV" && /^Visits 2 \(\+100%\)/.test(row.value)));
+  assert.ok(mail.rows.some((row) => row.label === "Goal" && /CV visits today: 2 of 4/.test(row.value)));
+  assert.match(mail.body, /^Quiet day\. Next: answer the inbox\.\n\nWARN {2}1 message/);
+});
+
+test("server: the watch mails alerts only, once a day per issue", async () => {
+  const external = { uptime: { ok: true, pages: [{ product: "cv", name: "CV", ok: false, status: 503 }, { product: "lab", name: "QA Lab", ok: true, ms: 9000 }], tlsDaysLeft: 50 } };
+  const items = jarvis.watchItems(external, {});
+  assert.deepEqual(items.map((row) => row.key), ["uptime:cv"]);
+  const now = Date.parse("2026-10-25T15:00:00Z");
+  const db = fakeDb({ docs: { "jarvis_watch/2026-10-25": { sent: { "uptime:cv": "2026-10-25T13:00:00Z" } } } });
+  assert.equal((await jarvis.unsentToday(db, items, { now })).fresh.length, 0);
+  assert.equal((await jarvis.unsentToday(fakeDb({}), items, { now })).fresh.length, 1);
+});
+
+test("server: Jarvis rules in functions are a byte copy of the admin page's", () => {
+  const a = fs.readFileSync(path.join(__dirname, "../../js/admin-jarvis-core.js"), "utf8");
+  const b = fs.readFileSync(path.join(__dirname, "../../functions/jarvis-core.js"), "utf8");
+  assert.equal(a, b);
+  assert.equal(core.isTestEmail("pw-bot@example.com"), true);
+  assert.equal(core.isTestEmail("carlos@gmail.com"), false);
+  const ops = require("../../functions/ops-schedule.js");
+  assert.equal(ops.cron("jarvisDailyBriefing"), "40 7 * * *");
+  assert.equal(ops.cron("jarvisWatch"), "5 * * * *");
+  const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  assert.match(index, /exports\.jarvisDailyBriefing = scheduled\(/);
+  assert.match(index, /exports\.jarvisWatch = scheduled\(/);
+  ["settings", "settings-save", "goals", "daily-now"].forEach((op) => assert.match(index, new RegExp('op === "' + op + '"')));
 });

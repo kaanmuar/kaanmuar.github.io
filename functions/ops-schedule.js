@@ -21,6 +21,8 @@ const JOBS = [
   { job: "emailDailyReviewReport", cron: "20 7 * * *", gap: 26, what: "Daily URL review report" },
   { job: "emailWeeklySiteReport", cron: "30 7 * * 1", gap: 7 * 24 + 2, what: "Weekly site report" },
   { job: "emailWeeklyReviewReport", cron: "35 7 * * 1", gap: 7 * 24 + 2, what: "Weekly URL review report" },
+  { job: "jarvisDailyBriefing", cron: "40 7 * * *", gap: 26, what: "Jarvis daily briefing: the last 24 hours, goals and alerts, by email (Admin > Statistics > Settings)" },
+  { job: "jarvisWatch", cron: "5 * * * *", gap: 2, what: "Jarvis watch: mail an alert-level threshold crossing (uptime, TLS, jobs, failed runs), once a day per issue" },
   { job: "emailMonthlySiteReport", cron: "45 7 1 * *", gap: 31 * 24 + 2, what: "Monthly site report" },
   { job: "emailMonthlyReviewReport", cron: "50 7 1 * *", gap: 31 * 24 + 2, what: "Monthly URL review report" },
   { job: "emailQuarterSiteReport", cron: "*/15 * * * *", gap: 1, what: "Quarter-hour site report, only when something happened" },
