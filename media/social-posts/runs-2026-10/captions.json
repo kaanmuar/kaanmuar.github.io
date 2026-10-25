@@ -1,6 +1,6 @@
 {
   "01-govuk": {
-    "date": "2026-11-03",
+    "date": "2026-11-05",
     "cat": "Worldwide",
     "title": "We analyzed GOV.UK. It scores 92.",
     "alt": "Real run, worldwide card. We analyzed GOV.UK. It scores 92. Overall score 92 of 100. SEO 86, GEO 86, Analytics 97, Security 94, A11y 100, Speed 89. www.gov.uk, 20 pages analyzed, 19 Oct 2026.",
@@ -55,7 +55,7 @@
     }
   },
   "02-bogota": {
-    "date": "2026-11-04",
+    "date": "2026-11-06",
     "cat": "Local",
     "title": "Bogotá city hall: SEO 97.",
     "alt": "Real run, local card. Bogotá city hall: SEO 97. Overall score 80 of 100. SEO 97, GEO 89, Analytics 74, Security 77, A11y 71, Speed 73. bogota.gov.co, 20 pages analyzed, 19 Oct 2026. Lesson: One site, one GA4 property, one gtag.js. If two teams need the data, share access instead of adding a tag.",
@@ -110,7 +110,7 @@
     }
   },
   "03-who": {
-    "date": "2026-11-04",
+    "date": "2026-11-06",
     "cat": "Worldwide",
     "title": "WHO's fact sheets end in a stray semicolon.",
     "alt": "Real run, worldwide card. WHO's fact sheets end in a stray semicolon. Overall score 77 of 100. SEO 55, GEO 91, Analytics 85, Security 83, A11y 71, Speed 79. www.who.int, 20 pages analyzed, 19 Oct 2026.",
@@ -165,7 +165,7 @@
     }
   },
   "04-govco": {
-    "date": "2026-11-05",
+    "date": "2026-11-07",
     "cat": "National",
     "title": "GOV.CO is empty until JavaScript runs.",
     "alt": "Real run, national card. GOV.CO is empty until JavaScript runs. Overall score 78 of 100. SEO 81, GEO 53, Analytics 97, Security 77, A11y 94, Speed 70. www.gov.co, 1 page analyzed, 19 Oct 2026.",
@@ -220,7 +220,7 @@
     }
   },
   "05-bbc": {
-    "date": "2026-11-06",
+    "date": "2026-11-07",
     "cat": "Worldwide",
     "title": "The BBC decides who may read it.",
     "alt": "Real run, worldwide card. The BBC decides who may read it. Overall score 79 of 100. SEO 73, GEO 56, Analytics 97, Security 83, A11y 89, Speed 79. www.bbc.com, 20 pages analyzed, 19 Oct 2026.",
@@ -275,7 +275,7 @@
     }
   },
   "06-transmilenio": {
-    "date": "2026-11-06",
+    "date": "2026-11-08",
     "cat": "Local",
     "title": "TransMilenio lets search write its pitch.",
     "alt": "Real run, local card. TransMilenio lets search write its pitch. Overall score 72 of 100. SEO 61, GEO 86, Analytics 77, Security 70, A11y 76, Speed 65. www.transmilenio.gov.co, 20 pages analyzed, 19 Oct 2026.",
@@ -330,7 +330,7 @@
     }
   },
   "07-python": {
-    "date": "2026-11-07",
+    "date": "2026-11-08",
     "cat": "Worldwide",
     "title": "Python.org reads well. Its site name is missing.",
     "alt": "Real run, worldwide card. Python.org reads well. Its site name is missing. Overall score 86 of 100. SEO 72, GEO 86, Analytics 97, Security 77, A11y 94, Speed 91. www.python.org, 20 pages analyzed, 19 Oct 2026.",
@@ -385,7 +385,7 @@
     }
   },
   "08-bancolombia": {
-    "date": "2026-11-07",
+    "date": "2026-11-09",
     "cat": "National",
     "title": "Bancolombia's site won't let you zoom.",
     "alt": "Real run, national card. Bancolombia's site won't let you zoom. Overall score 65 of 100. SEO 41, GEO 83, Analytics 85, Security 67, A11y 45, Speed 73. www.bancolombia.com, 20 pages analyzed, 19 Oct 2026.",
@@ -440,7 +440,7 @@
     }
   },
   "09-un": {
-    "date": "2026-11-08",
+    "date": "2026-11-09",
     "cat": "Worldwide",
     "title": "The UN home page never says its language.",
     "alt": "Real run, worldwide card. The UN home page never says its language. Overall score 74 of 100. SEO 64, GEO 81, Analytics 82, Security 61, A11y 68, Speed 94. www.un.org, 20 pages analyzed, 19 Oct 2026.",
@@ -495,7 +495,7 @@
     }
   },
   "10-nasa": {
-    "date": "2026-11-09",
+    "date": "2026-11-10",
     "cat": "Worldwide",
     "title": "NASA is wide open to AI search.",
     "alt": "Real run, worldwide card. NASA is wide open to AI search. Overall score 82 of 100. SEO 81, GEO 91, Analytics 85, Security 77, A11y 79, Speed 79. www.nasa.gov, 20 pages analyzed, 19 Oct 2026.",
