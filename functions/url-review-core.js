@@ -1323,8 +1323,40 @@ function challengeOf(pageUrl, headers, body) {
   return found ? found[0] : "";
 }
 
-function technologies(html, headers) {
-  const haystack = html + "\n" + Object.entries(headers).map(([key, value]) => key + ": " + value).join("\n");
+// Markers count only in the site's own markup: tags, script code, styles and comments. Words people read, prose attributes, JSON-LD, script strings with spaces and links to other sites are dropped.
+function ownMarkup(html, pageUrl) {
+  let host = "";
+  try { host = new URL(pageUrl).hostname.replace(/^www\./, ""); } catch (error) { host = ""; }
+  // A link counts only when it points at a file on the same site: page slugs are words.
+  const ownFile = (href) => {
+    try {
+      const url = new URL(href, pageUrl);
+      const other = url.hostname.replace(/^www\./, "");
+      return (!host || other === host || other.endsWith("." + host)) && /\.[a-z0-9]{2,5}$/i.test(url.pathname);
+    } catch (error) {
+      return false;
+    }
+  };
+  const prose = /\s(alt|title|aria-label|placeholder|value|content)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi;
+  const quoted = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g;
+  const tag = (raw) => {
+    if (/^<script\b/i.test(raw)) {
+      const open = raw.match(/^<script\b[^>]*>/i)[0];
+      return open + raw.slice(open.length).replace(quoted, (text) => /\s/.test(text) ? "\"\"" : text);
+    }
+    if (/^<style\b/i.test(raw) || raw.startsWith("<!--")) return raw;
+    const generator = /^<meta\b/i.test(raw) && /\sname\s*=\s*["']?generator/i.test(raw);
+    let out = generator ? raw : raw.replace(prose, " ");
+    if (/^<(a|area)\b/i.test(out)) out = out.replace(/\shref\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i, (all, quoted, dq, sq, bare) => ownFile(dq || sq || bare || "") ? all : " ");
+    return out;
+  };
+  return String(html || "")
+    .replace(/<script\b[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/(<(script|style)\b[^>]*>[\s\S]*?<\/\2\s*>|<!--[\s\S]*?-->|<[a-z!/][^>]*>)|[^<]+/gi, (all, kept) => kept ? tag(kept) : " ");
+}
+
+function technologies(html, headers, pageUrl, generator) {
+  const haystack = ownMarkup(html, pageUrl) + "\n" + (generator || "") + "\n" + Object.entries(headers).map(([key, value]) => key + ": " + value).join("\n");
   const found = [];
   TECH.forEach(([name, group, pattern]) => {
     if (pattern.test(haystack)) found.push({ name, group, evidence: "Matched a public marker in the HTML or headers." });
@@ -1689,7 +1721,7 @@ function inspect(html, headers, pageUrl) {
     generator: clean(generator, 80),
     signals,
     bytes: Buffer.byteLength(html),
-    technologies: technologies(html + " " + generator, headers),
+    technologies: technologies(html, headers, pageUrl, generator),
     cookies: setCookies(headers),
     words: text ? text.split(/\s+/).length : 0,
     questionHeadings: outline(html).filter((item) => item.level > 1 && (/\?$/.test(item.text) || /^¿/.test(item.text))).length,
