@@ -78,7 +78,7 @@ function publicReport(report) {
     insights: {
       score: ins.score,
       summary: ins.summary || "",
-      findings: (ins.findings || []).filter((f) => !/^talk-/.test(String(f.key || ""))).map((f) => pick(f, ["key", "verdict", "area", "severity", "rank", "title", "evidence", "fix", "effort"])),
+      findings: (ins.findings || []).filter((f) => !/^talk-/.test(String(f.key || ""))).map((f) => pick(f, ["key", "verdict", "area", "severity", "rank", "title", "evidence", "fix", "effort", "msg"])),
       geo: {
         crawlers: (geo.crawlers || []).map((c) => pick(c, ["role", "allowed", "token"])),
         llms: { ok: !!(geo.llms && geo.llms.ok) },
