@@ -1,7 +1,9 @@
 Date,Time,Channel,Post,Asset
+2026-11-03,17:57,facebook,01-ilo,feed/01-ilo.jpg
+2026-11-04,13:02,facebook,02-policiaco,feed/02-policiaco.jpg
+2026-11-05,14:24,facebook,03-valle,feed/03-valle.jpg
 2026-12-31,08:32,linkedin,01-ilo,feed/01-ilo.jpg
 2026-12-31,11:30,x,01-ilo,feed/01-ilo.jpg
-2026-12-31,13:56,facebook,01-ilo,feed/01-ilo.jpg
 2026-12-31,17:16,youtube,01-ilo,clip/01-ilo.mp4
 2026-12-31,17:20,instagram-story,01-ilo,story/01-ilo.jpg
 2026-12-31,17:50,instagram,01-ilo,feed/01-ilo.jpg
@@ -10,13 +12,11 @@ Date,Time,Channel,Post,Asset
 2027-01-01,09:40,instagram-story,02-policiaco,story/02-policiaco.jpg
 2027-01-01,11:50,instagram,02-policiaco,feed/02-policiaco.jpg
 2027-01-01,13:47,x,02-policiaco,feed/02-policiaco.jpg
-2027-01-01,15:13,facebook,02-policiaco,feed/02-policiaco.jpg
 2027-01-01,18:48,youtube,02-policiaco,clip/02-policiaco.mp4
 2027-01-01,19:45,tiktok,02-policiaco,clip/02-policiaco.mp4
 2027-01-02,10:10,linkedin,03-valle,feed/03-valle.jpg
 2027-01-02,16:20,instagram-story,03-valle,story/03-valle.jpg
 2027-01-02,17:20,instagram,03-valle,feed/03-valle.jpg
-2027-01-02,17:22,facebook,03-valle,feed/03-valle.jpg
 2027-01-02,17:25,x,03-valle,feed/03-valle.jpg
 2027-01-02,19:23,youtube,03-valle,clip/03-valle.mp4
 2027-01-02,20:48,tiktok,03-valle,clip/03-valle.mp4
