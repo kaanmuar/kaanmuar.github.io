@@ -763,7 +763,7 @@
     const mentions = report.mentions || [];
     list.innerHTML = mentions.length
       ? mentions.map((item) => "<li><span class=\"mention-tone\">" + esc(item.tone || "Mention") + "</span> <a href=\"" + esc(item.href) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + esc(item.title) + "</a></li>").join("")
-      : "<li>No public write-up was retrieved on this pass.</li>";
+      : "<li class=\"muted\">No public write-up was retrieved on this pass.</li>";
   }
 
   function paintCredential(payload) {
