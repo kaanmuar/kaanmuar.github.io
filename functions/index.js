@@ -4914,13 +4914,13 @@ async function jarvisSnapshot(days) {
   const db = admin.firestore();
   const settings = await jarvis.readSettings(db);
   const now = Date.now();
-  const [{ window, products }, external, goalRows] = await Promise.all([
+  const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now, days }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "social", "safety", "platform", "search"], days),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "social", "safety", "platform", "search", "outreach"], days),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const briefing = jarvisCore.briefing({ products, external, thresholds: settings.thresholds, goals: goalRows });
-  return { window, products, external, goals: goalRows, briefing, readiness: jarvisCore.readiness(external), connections: jarvisCore.connections(external), settings };
+  return { window, products, external, outreachVisits, goals: goalRows, briefing, readiness: jarvisCore.readiness(external), connections: jarvisCore.connections(external), settings, thresholds: jarvisCore.thresholds(settings.thresholds) };
 }
 
 async function jarvisWatchRun() {

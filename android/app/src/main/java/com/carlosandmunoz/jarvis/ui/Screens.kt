@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,6 +54,11 @@ import kotlinx.serialization.json.JsonPrimitive
 
 val PRODUCTS = listOf("inbox" to "Inbox", "cv" to "CV", "studio" to "QA Studio", "lab" to "QA Lab", "review" to "URL Review", "hub" to "Social hub")
 
+/** Products-tab chips: the site products plus Outreach, which the snapshot keeps under external.outreach. */
+val CHIPS = PRODUCTS + ("outreach" to "Outreach")
+
+fun plural(n: Int, word: String) = "$n $word" + if (n == 1) "" else "s"
+
 private fun humanize(key: String) = key.replace(Regex("([a-z])([A-Z])"), "$1 $2").replaceFirstChar { it.uppercase() }
 
 private fun JsonObject?.ext(key: String): JsonObject? = this.obj("external").obj(key)
@@ -69,7 +75,7 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
             val brief = snap.objs("briefing")
             val alerts = brief.count { it.str("level") == "alert" }
             val warns = brief.count { it.str("level") == "warn" }
-            Text(if (alerts + warns == 0) "All clear" else "$alerts alerts · $warns warnings", fontSize = 20.sp, fontWeight = FontWeight.SemiBold,
+            Text(if (alerts + warns == 0) "All clear" else plural(alerts, "alert") + " · " + plural(warns, "warning"), fontSize = 20.sp, fontWeight = FontWeight.SemiBold,
                 color = if (alerts > 0) J.pink else if (warns > 0) J.amber else J.green)
             val down = snap.objs("connections").filter { it.str("state") != "live" }
             Muted(if (down.isEmpty()) "Every connection is live" else down.joinToString { (it.str("name") ?: "") + " " + (it.str("state") ?: "") })
@@ -83,23 +89,17 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
         }
         val items = snap.objs("briefing")
         if (items.isEmpty()) Muted("Nothing to flag.")
-        items.forEach { StatusRow(it.str("level"), it.str("text") ?: "", it.str("product")?.let { p -> PRODUCTS.toMap()[p] ?: humanize(p) }) }
+        items.forEach { StatusRow(it.str("level"), it.str("text") ?: "", it.str("product")?.let { p -> CHIPS.toMap()[p] ?: humanize(p) }) }
     }
 
     Panel("Products") {
         PRODUCTS.forEach { (key, name) ->
             val p = snap.obj("products").obj(key)
             val k = p.objs("kpis").firstOrNull()
-            Row(Modifier.fillMaxWidth().clickable { open(key) }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.width(110.dp)) {
-                    Text(name, fontSize = 14.sp)
-                    Text((k?.str("label") ?: "") + " " + k?.prim("value").text(), color = J.muted, fontSize = 12.sp)
-                }
-                Sparkline(p.obj("series").at("values").doubles(), modifier = Modifier.weight(1f))
-                Spacer(Modifier.width(8.dp))
-                Text(k?.str("delta") ?: "", color = when ((k?.num("dir") ?: 0.0).toInt()) { 1 -> J.green; -1 -> J.pink; else -> J.muted }, fontSize = 12.sp, modifier = Modifier.width(48.dp))
-            }
+            ProductRow(name, (k?.str("label") ?: "") + " " + k?.prim("value").text(), p.obj("series").at("values").doubles(), k?.str("delta"), (k?.num("dir") ?: 0.0).toInt()) { open(key) }
         }
+        val pipe = snap.ext("outreach").obj("pipeline")?.takeIf { it.isOk() }
+        ProductRow("Outreach", "Reviewed " + (pipe?.prim("reviews")).text(), pipe.objs("daily").map { it.num("reviews") ?: 0.0 }, null, 0) { open("outreach") }
     }
 
     Goals(snap.objs("goals"))
@@ -110,6 +110,19 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
             KpiData("Revenue", "$" + fmt(money.at("revenue").num("usd"), 2), delta(money.at("revenue").num("usd"), money.at("prior").num("usd"))),
             KpiData("Sales", fmt(money.at("revenue").num("count")), delta(money.at("revenue").num("count"), money.at("prior").num("count")))
         ).map { it.copy(dir = dirOf(it.delta)) })
+    }
+}
+
+@Composable
+private fun ProductRow(name: String, kpi: String, series: List<Double>, delta: String?, dir: Int, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.width(110.dp)) {
+            Text(name, fontSize = 14.sp)
+            Text(kpi, color = J.muted, fontSize = 12.sp)
+        }
+        Sparkline(series, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(8.dp))
+        Text(delta ?: "", color = when (dir) { 1 -> J.green; -1 -> J.pink; else -> J.muted }, fontSize = 12.sp, modifier = Modifier.width(48.dp))
     }
 }
 
@@ -144,9 +157,12 @@ fun Goals(goals: List<JsonObject>) {
 
 @Composable
 fun ProductsScreen(s: UiState, vm: JarvisViewModel, product: String, pick: (String) -> Unit) {
-    Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        PRODUCTS.forEach { (key, name) -> FilterChip(selected = key == product, onClick = { pick(key) }, label = { Text(name) }) }
+    val chips = rememberScrollState()
+    LaunchedEffect(product, chips.maxValue) { chips.animateScrollTo(chips.maxValue * CHIPS.indexOfFirst { it.first == product }.coerceAtLeast(0) / (CHIPS.size - 1)) }
+    Row(Modifier.horizontalScroll(chips).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        CHIPS.forEach { (key, name) -> FilterChip(selected = key == product, onClick = { pick(key) }, label = { Text(name) }) }
     }
+    if (product == "outreach") { OutreachScreen(s); return }
     val snap = s.snapshot
     val p = snap.obj("products").obj(product)
     if (p == null) { Panel("No data") { Muted("Pull down to load this product.") }; return }
@@ -237,6 +253,132 @@ private fun SendReport(s: UiState, vm: JarvisViewModel, kind: String, period: St
     ActionButton("Send $period", "report:$kind:$period" in s.running) {
         vm.act("report:$kind:$period", "send-report", mapOf("kind" to JsonPrimitive(kind), "period" to JsonPrimitive(period))) { it.str("note") ?: "Done." }
     }
+
+// ---------------------------------------------------------------- Outreach
+
+private fun daysText(n: Int) = when { n == 0 -> "today"; n > 0 -> "in $n " + (if (n == 1) "day" else "days"); else -> "${-n} days ago" }
+
+@Composable
+private fun OutreachScreen(s: UiState) {
+    val snap = s.snapshot
+    val ou = snap.ext("outreach")
+    val brief = snap.objs("briefing").filter { it.str("product") == "outreach" }
+    if (brief.isNotEmpty()) Panel("Briefing") { brief.forEach { StatusRow(it.str("level"), it.str("text") ?: "") } }
+    if (ou == null || !ou.isOk()) { Panel("Outreach") { Muted(ou?.str("error") ?: "Pull down to read the outreach pipeline, Instantly and the plan.") }; return }
+    val pipe = ou.obj("pipeline")?.takeIf { it.isOk() }
+    val mail = ou.obj("instantly")?.takeIf { it.isOk() }
+    val plan = ou.obj("plan")?.takeIf { it.isOk() }
+    val th = snap.obj("thresholds")
+    val warmNeed = th.num("outreachWarmup") ?: 80.0
+    val bounceAt = th.num("outreachBouncePct") ?: 3.0
+    val deadlineDays = th.num("outreachDeadlineDays") ?: 14.0
+    val weekly = plan.obj("weekly")
+    val accounts = mail.objs("accounts")
+    val warm = if (accounts.isEmpty()) null else accounts.minOf { it.num("score") ?: 0.0 }
+    val contacted = mail.num("contacted") ?: 0.0
+    val rates = mail.obj("rates")
+
+    Panel("Outreach") {
+        KpiPairs(listOf(
+            KpiData("Prospects queued", fmt(pipe.num("queued"))),
+            KpiData("Reviewed in range", fmt(pipe.num("reviews"))),
+            KpiData("With a Live Report", fmt(pipe.num("withLiveReport"))),
+            KpiData("Emails sent", fmt(mail.num("sent"))),
+            KpiData("Reply rate", if (contacted > 0) fmt(rates.num("reply")) + "%" else "—", alert = contacted >= 50 && (rates.num("reply") ?: 0.0) < (weekly.num("replyPct") ?: 0.0)),
+            KpiData("Interested", fmt(mail.num("interested"))),
+            KpiData("Lowest warm-up", fmt(warm), alert = warm != null && warm < warmNeed)
+        ))
+    }
+
+    Panel("90-day plan") {
+        if (plan == null) { Muted("The plan is not uploaded."); Needs(ou); return@Panel }
+        val day = plan.num("day")?.toInt() ?: 0
+        val length = plan.num("length")?.toInt() ?: 0
+        val phase = plan.obj("phase")
+        Text((if (day > 0) "Day ${minOf(day, length)} of $length" else "Starts ${plan.str("start") ?: ""}") + (phase?.let { " · ${it.str("name")} (ends ${it.str("end")})" } ?: ""), fontSize = 14.sp)
+        plan.obj("next")?.let { n -> Muted("Next milestone ${daysText(n.num("daysLeft")?.toInt() ?: 0)} (${n.str("date")}): ${n.str("label")}") }
+        plan.objs("deadlines").forEach { d ->
+            val left = d.num("daysLeft")?.toInt() ?: 0
+            KeyRow("${d.str("label")} · ${d.str("date")}", daysText(left), if (left <= 7) J.pink else if (left <= deadlineDays) J.amber else J.muted)
+        }
+        plan.objs("milestones").forEach { m -> KeyRow("${m.str("label")} · ${m.str("date")}", if (m.bool("past") == true) "past" else "", J.dim) }
+    }
+
+    Panel("Weekly funnel against the plan") {
+        fun ratio(a: Double?, b: Double?) = if (a == null || b == null || b == 0.0) null else Math.round(a / b * 100).toDouble()
+        listOf(
+            Triple("Prospects reviewed this week", pipe.num("thisWeek"), weekly.num("prospects") to ""),
+            Triple("Reviewed prospects with a Live Report", if (pipe != null) ratio(pipe.num("reviewedWithLiveReport"), maxOf(1.0, pipe.num("swept") ?: 0.0)) else null, weekly.num("liveReportPct") to "%"),
+            Triple("Open rate", if (contacted > 0) rates.num("open") else null, weekly.num("openPct") to "%"),
+            Triple("Reply rate", if (contacted > 0) rates.num("reply") else null, weekly.num("replyPct") to "%"),
+            Triple("Positive replies", if (contacted > 0) rates.num("positive") else null, weekly.num("positivePct") to "%")
+        ).forEach { (metric, now, target) ->
+            val (goal, unit) = target
+            KeyRow(metric, (now?.let { fmt(it) + unit } ?: "—") + " / " + (goal?.let { fmt(it) + unit } ?: "—"),
+                if (now == null) J.muted else if (goal == null || now >= goal) J.green else J.pink)
+        }
+    }
+
+    if (plan != null && plan.objs("targets").isNotEmpty()) Panel("90-day targets") {
+        plan.objs("targets").forEach { t ->
+            val actual = t.num("actual")
+            val target = t.num("target") ?: 0.0
+            Row { Text(t.str("label") ?: "", fontSize = 13.sp, modifier = Modifier.weight(1f)); Text("${fmt(actual)} / ${fmt(target)}", fontFamily = Mono, fontSize = 12.sp) }
+            if (actual != null) LinearProgressIndicator(progress = { (actual / maxOf(1.0, target)).toFloat().coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().height(4.dp), color = J.cyan, trackColor = Color(0x1438E1FF), drawStopIndicator = {})
+        }
+        Muted("Counts come from the weekly KPI tracker; upload it with scripts/jarvis-outreach-plan.js.")
+    }
+
+    Panel("Prospect pipeline (nightly sweep)") {
+        if (pipe == null) { Muted(ou.obj("pipeline").str("error") ?: "Not loaded."); return@Panel }
+        KpiPairs(listOf(
+            KpiData("Swept", fmt(pipe.num("swept"))),
+            KpiData("Left in queue", fmt(pipe.num("left")), alert = pipe.num("left") == 0.0 && (pipe.num("queued") ?: 0.0) > 0),
+            KpiData("Avg score", fmt(pipe.num("avgScore")))
+        ))
+        BarChart(pipe.objs("daily").map { it.num("reviews") ?: 0.0 }, pipe.objs("daily").map { it.str("date") ?: "" })
+        if (pipe.objs("bySegment").isEmpty()) Muted("No prospects queued. Add a list with scripts/sweep-outreach.js.")
+    }
+    if (pipe != null) {
+        TopList("Prospects by segment", pipe.pairs("bySegment"))
+        TopList("Review results", pipe.pairs("results"))
+    }
+
+    Panel("Campaigns (Instantly)") {
+        if (mail == null) { Muted(ou.obj("instantly").str("error") ?: "Not loaded."); return@Panel }
+        mail.objs("status").forEach { KeyRow(it.str("label") ?: "", fmt(it.num("value"))) }
+        KpiPairs(listOf(
+            KpiData("Contacted", fmt(mail.num("contacted"))), KpiData("Opened", fmt(mail.num("opened"))),
+            KpiData("Replies", fmt(mail.num("replies"))), KpiData("Meetings", fmt(mail.num("meetings"))),
+            KpiData("Bounced", fmt(mail.num("bounced")), alert = (mail.num("sent") ?: 0.0) >= 20 && (rates.num("bounce") ?: 0.0) >= bounceAt),
+            KpiData("Unsubscribed", fmt(mail.num("unsubscribed")))
+        ))
+        val camps = mail.objs("byCampaign")
+        if (camps.isEmpty()) Muted("No campaign has sent yet.")
+        camps.forEach { c -> StatusRow("info", c.str("name") ?: "", "${fmt(c.num("sent"))} sent · ${fmt(c.num("opened"))} opened · ${fmt(c.num("replies"))} replies · ${fmt(c.num("bounced"))} bounced") }
+    }
+
+    if (mail != null) Panel("Mailboxes and warm-up") {
+        if (accounts.isEmpty()) Muted("No mailboxes connected.")
+        accounts.forEach { a ->
+            val score = a.num("score")
+            val good = a.str("status") == "active" && a.str("warmup") == "on" && (score == null || score >= warmNeed)
+            StatusRow(if (good) "good" else "warn", a.str("email") ?: "", listOfNotNull(a.str("status"), "warm-up " + (a.str("warmup") ?: "—"), score?.let { "score " + fmt(it) }, a.num("dailyLimit")?.let { "limit " + fmt(it) + "/day" }).joinToString(" · "))
+        }
+    }
+
+    val dns = ou.obj("mail")
+    Panel("Sending domain" + (dns.str("domain")?.let { " ($it)" } ?: "")) {
+        val checks = dns.objs("checks")
+        if (checks.isEmpty()) Muted(dns.str("error") ?: "Not loaded.")
+        checks.forEach { StatusRow(if (it.bool("ok") == true) "good" else "alert", it.str("name") ?: "", it.str("detail")) }
+    }
+
+    val visits = snap.obj("outreachVisits")
+    if (visits.objs("campaigns").isEmpty()) Panel("Visits from outreach links") { Muted("No visits tagged utm_source=outreach in this range yet.") }
+    else TopList("Visits from outreach links", visits.pairs("campaigns"))
+    Needs(ou)
+}
 
 // ---------------------------------------------------------------- Business
 
