@@ -16,8 +16,8 @@ test("links that share a source read apart by campaign", () => {
   const carousel = openSource({ query: "?utm_source=linkedin&utm_campaign=Premium-Carousel" });
   assert.equal(cta, "linkedin / premium-cta (tagged link)");
   assert.equal(carousel, "linkedin / premium-carousel (tagged link)");
-  const admin = fs.readFileSync(path.join(__dirname, "../../admin.html"), "utf8");
-  assert.match(admin, /get\('utm_campaign'\)/, "admin Sources must split campaigns the same way");
+  const jarvis = require("../../js/admin-jarvis-core.js");
+  assert.equal(jarvis.openSource({ query: "?utm_source=linkedin&utm_campaign=Premium-Carousel" }), carousel, "admin Sources must split campaigns the same way");
 });
 
 test("the open notification names a tagged source", () => {
@@ -41,14 +41,12 @@ test("the period report tallies opens under Sources", () => {
 });
 
 test("admin buckets review opens with the same rule", () => {
-  const html = fs.readFileSync(path.join(__dirname, "../../admin.html"), "utf8");
-  const source = html.match(/function reviewOpenSource\(row\) \{[\s\S]*?\n {4}\}/);
-  assert.ok(source, "reviewOpenSource is missing from admin.html");
-  const reviewOpenSource = new Function(source[0] + "\nreturn reviewOpenSource;")();
+  const jarvis = require("../../js/admin-jarvis-core.js");
   [{ query: "?utm_source=LinkedIn" }, { query: "?lang=es", referrerHost: "www.google.com" }, {}].forEach((row) => {
-    assert.equal(reviewOpenSource(row), openSource(row));
+    assert.equal(jarvis.openSource(row), openSource(row));
   });
-  assert.match(html, /<h3>Sources<\/h3><div id="review-referrers"/);
+  const summary = jarvis.summarizeReview({ opens: [{ query: "?utm_source=LinkedIn", createdAt: new Date() }], reviews: [], alerts: [], reports: [], events: [] }, jarvis.windowFor(7, new Date()));
+  assert.ok(summary.lists.sources.some((row) => row.label === "linkedin (tagged link)"));
 });
 
 test("a landing keeps only the utm tags and a bare referrer host", () => {
