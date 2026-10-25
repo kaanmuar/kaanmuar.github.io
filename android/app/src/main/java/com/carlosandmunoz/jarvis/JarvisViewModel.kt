@@ -7,6 +7,7 @@ import com.carlosandmunoz.jarvis.data.Auth
 import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.str
+import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.push.Push
 import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,6 +54,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     init {
         if (fixture != null) _state.update { it.copy(signedIn = true, email = "fixture", snapshot = JSON.parseToJsonElement(fixture.readText()) as JsonObject, savedAt = fixture.lastModified()) }
         else if (auth.signedIn) { showSaved(); refresh(); syncPush() }
+        viewModelScope.launch { Home.redraw(jarvis) }
     }
 
     fun signIn(email: String, password: String) = authStep {
@@ -76,6 +78,8 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
             runCatching { Push.forget(jarvis) }
             auth.signOut()
             api.forget()
+            Home.stop(jarvis)
+            Home.redraw(jarvis)
         }
     }
 
@@ -117,7 +121,10 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             runCatching { api.fetch("snapshot", days) }
-                .onSuccess { saved -> if (_state.value.days == days) _state.update { it.copy(snapshot = saved.json, savedAt = saved.at, loading = false) } }
+                .onSuccess { saved ->
+                    if (_state.value.days == days) _state.update { it.copy(snapshot = saved.json, savedAt = saved.at, loading = false) }
+                    Home.redraw(jarvis)
+                }
                 .onFailure { e -> fail(e) { it.copy(loading = false, error = e.message ?: "Could not reach Jarvis.") } }
         }
     }
@@ -168,6 +175,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         showSaved()
         refresh()
         syncPush()
+        Home.schedule(jarvis)
     }
 
     private fun fail(e: Throwable, change: (UiState) -> UiState) {

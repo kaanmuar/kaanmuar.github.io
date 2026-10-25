@@ -4830,6 +4830,41 @@ const jarvisCore = require("./jarvis-core");
 const jarvisSum = (field) => admin.firestore.AggregateField.sum(field);
 const jarvisSources = require("./jarvis-sources");
 const jarvisPush = require("./jarvis-push");
+const jarvisReview = require("./jarvis-review");
+
+// A URL shared to the Jarvis app: the owner's own review, run like a sweep review and pushed to the phone that asked.
+exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB" }).firestore.document("jarvis_reviews/{id}").onCreate(async (snap) => {
+  const row = snap.data() || {};
+  const db = admin.firestore();
+  const tokens = row.token ? [row.token] : await jarvisPush.targets(db, "alerts");
+  const startedAt = Date.now();
+  await snap.ref.update({ status: "running", startedAt: new Date(startedAt).toISOString() });
+  try {
+    const value = jarvisReview.intake(row);
+    const report = await urlReview.reviewTarget(value.url, {
+      mentions: false,
+      log: () => {},
+      stopped: () => Date.now() - startedAt > jarvisReview.LIMIT_MS,
+      asker: { reasonCode: value.reasonCode, email: value.email, proofs: await ownerProofRows(value.email), siteToken: siteTokenFor(value.email) },
+      browse: browseForReview,
+      pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
+      crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
+      webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined
+    });
+    const record = Object.assign(urlReview.intakeRecord(value, report, {}), { source: "jarvis", paid: true, free: true, priceUsd: 0 });
+    await db.collection("url_reviews").doc(record.id).set(record);
+    await countReviewed(record.report);
+    const link = customerMail.pageUrl(value.lang, { report: record.id });
+    const push = await jarvisPush.send(admin.messaging(), db, tokens, jarvisReview.doneMessage(report, link));
+    const score = report.insights && report.insights.score ? report.insights.score.overall : null;
+    await snap.ref.update({ status: "done", reportId: record.id, score: score == null ? null : score, link, push, doneAt: new Date().toISOString() });
+  } catch (error) {
+    const reason = String((error && error.message) || error).slice(0, 200);
+    console.error("Jarvis review of " + row.url + " failed:", error);
+    const push = await jarvisPush.send(admin.messaging(), db, tokens, jarvisReview.failedMessage(row.url, reason)).catch(() => null);
+    await snap.ref.update({ status: "failed", error: reason, push, doneAt: new Date().toISOString() });
+  }
+});
 
 async function jarvisUsers() {
   const users = [];
@@ -5003,6 +5038,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
       const tokens = body.token ? [String(body.token)] : await jarvisPush.targets(admin.firestore(), "test");
       out = await jarvisPush.send(admin.messaging(), admin.firestore(), tokens, { kind: "test", title: "Jarvis test", body: "Push notifications reach this phone.", tab: "overview", tag: "jarvis-test" });
     }
+    else if (op === "review") out = await jarvisReview.enqueue(admin.firestore(), body, operator, now);
     else if (op === "snapshot") out = await jarvisCached(op, days, () => jarvisSnapshot(days));
     else if (jarvisSources.SOURCES[op]) out = await jarvisSource(op, days);
     else if (op === "send-report") {
