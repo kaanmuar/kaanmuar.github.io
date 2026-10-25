@@ -147,7 +147,7 @@
     ["layers", '<article class="card"><div data-slot="layers"></div></article>'],
     ["tech", '<article class="card"><div class="pills" data-slot="tech"></div></article>'],
     ["alarm", '<section class="alarm" data-slot="alarm"><p class="alarm-note" data-slot="alarm-note"></p><ol class="alarm-list" data-slot="alarm-list"></ol></section>'],
-    ["mentions", '<section class="mentions"><ol data-slot="mentions"></ol></section>'],
+    ["mentions", '<article class="card"><section class="mentions"><ol data-slot="mentions"></ol></section></article>'],
     ["observed", '<article class="card" data-slot="observed"></article>'],
     ["pages", '<article class="card"><p class="muted" data-slot="pages-found" hidden></p><table class="page-table"><thead><tr><th>Path</th><th>Status</th><th>ms</th><th>Title</th></tr></thead><tbody data-slot="pages"></tbody></table></article>'],
     ["log", '<article class="card"><ol class="log" data-slot="report-log"></ol></article>'],
@@ -199,11 +199,12 @@
     overlay.setAttribute("aria-labelledby", "multi-title");
     overlay.innerHTML = '<div class="dash-modal multi-modal">' +
       '<div class="dash-modal-head multi-head"><div><p class="report-kicker" translate="no">' + esc(t("kicker")) + '</p><h2 id="multi-title" translate="no"></h2><p class="muted" id="multi-when" translate="no"></p></div>' +
-      '<div class="multi-actions no-print" translate="no"><button class="btn" type="button" id="multi-print"></button><button class="btn btn-ghost" type="button" id="multi-pdf"></button><button class="btn btn-ghost" type="button" id="multi-close">' + esc(t("close")) + "</button></div></div>" +
+      '<div class="multi-actions no-print" translate="no"><button class="btn btn-primary" type="button" id="multi-print"></button><button class="btn btn-ghost" type="button" id="multi-pdf"></button><button class="btn btn-ghost" type="button" id="multi-close">' + esc(t("close")) + "</button></div></div>" +
       '<p id="multi-status" role="status" class="no-print" translate="no"></p><div id="multi-locked" class="multi-locked no-print" translate="no" hidden></div>' +
       '<div id="multi-body"></div></div>';
     document.body.appendChild(overlay);
     overlay.querySelector("#multi-close").addEventListener("click", close);
+    overlay.querySelector("#multi-body").addEventListener("click", fold);
     overlay.querySelector("#multi-print").addEventListener("click", () => (made && made.paid ? print() : pay()));
     overlay.querySelector("#multi-pdf").addEventListener("click", () => (made && made.paid ? download() : pay()));
     overlay.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); });
@@ -277,29 +278,73 @@
     };
   }
 
+  const siteColor = (index) => (window.QAReviewBenchmark && QAReviewBenchmark.color ? QAReviewBenchmark.color(index) : "var(--own)");
+
   function bodyHtml(data) {
     const n = data.columns.length;
-    const hosts = '<div class="multi-row multi-hosts" style="--cols:' + n + '">' + data.columns.map((col) =>
-      '<div class="multi-cell"><p class="multi-host" translate="no">' + esc(col.host) + "</p>" +
-      (col.missing ? "" : '<p class="meta-line" translate="no">' + esc(col.at ? new Date(col.at).toLocaleDateString(code) : "") + (col.paid ? "" : ' · <a class="no-print" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>") + "</p>") + "</div>").join("") + "</div>";
+    const rc = window.QAReviewReportCopy;
+    const hosts = '<div class="multi-hosts-bar"><div class="multi-row multi-hosts">' + data.columns.map((col, index) =>
+      '<div class="multi-cell" style="--site:' + siteColor(index) + '"><p class="multi-host" translate="no">' + esc(col.host).replace(/\./g, ".<wbr>") + "</p>" +
+      (col.missing ? "" : '<p class="meta-line" translate="no">' + esc(col.at ? new Date(col.at).toLocaleDateString(code) : "") + (col.paid ? "" : ' · <a class="no-print" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>") + "</p>") + "</div>").join("") + "</div></div>";
+    const foldAll = rc ? '<div class="fold-bar no-print"><button class="btn btn-ghost" type="button" id="multi-fold-all" aria-expanded="true" translate="no">' + esc(rc.t("collapseAll")) + "</button></div>" : "";
     const bench = window.QAReviewBenchmark ? QAReviewBenchmark.html(data) : "";
-    return bench + summaryHtml(data) + '<div class="multi-scroll multi-grid">' + hosts + SECTIONS.map(([key, cell]) =>
-      '<section class="multi-sec" data-sec="' + key + '"><h2 translate="no">' + esc(book.sections[key] || COPY.en.sections[key]) + '</h2><div class="multi-row" style="--cols:' + n + '">' +
-      data.columns.map((col, index) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '">' + (col.missing ? '<p class="muted">' + esc(t("missing")) + "</p>" : cell) + "</div>").join("") +
-      "</div></section>").join("") + "</div>";
+    return bench + summaryHtml(data) + '<div class="multi-sheet" style="--cols:' + n + '">' + foldAll + hosts + '<div class="multi-scroll multi-grid">' + SECTIONS.map(([key, cell]) => {
+      const title = esc(book.sections[key] || COPY.en.sections[key]);
+      return '<section class="multi-sec" data-sec="' + key + '"><h2 translate="no"><button class="fold-toggle" type="button" id="multi-toggle-' + key + '" aria-expanded="true" aria-controls="multi-row-' + key + '"><span>' + title +
+        '</span><span class="fold-icon" aria-hidden="true"></span></button></h2><div class="multi-row fold-panel" id="multi-row-' + key + '" role="region" aria-labelledby="multi-toggle-' + key + '">' +
+        data.columns.map((col, index) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '" data-host="' + esc(col.host) + '" style="--site:' + siteColor(index) + '">' +
+          (col.missing ? '<p class="muted">' + esc(t("missing")) + "</p>" : cell) + "</div>").join("") +
+        "</div></section>";
+    }).join("") + "</div></div>";
   }
 
   // A cell the painters left empty or hidden says so, and a section empty for every site is left out.
+  // A cell holding only sentences, with no box of its own, is drawn as a note box like its neighbours.
   function settle(grid) {
     grid.querySelectorAll(".multi-sec").forEach((sec) => {
       let filled = 0;
       sec.querySelectorAll(".multi-cell").forEach((cell) => {
-        const shown = [...cell.children].some((child) => !child.hidden && child.textContent.trim());
-        if (shown) filled += 1;
-        else cell.insertAdjacentHTML("beforeend", '<p class="muted" translate="no">' + esc(t("nothing")) + "</p>");
+        const shown = [...cell.children].filter((child) => !child.hidden && child.textContent.trim());
+        if (shown.length) {
+          filled += 1;
+          if (shown.every((child) => !child.matches(".card") && [...child.children].every((kid) => kid.tagName === "P"))) cell.classList.add("is-note");
+          return;
+        }
+        [...cell.children].forEach((child) => { child.hidden = true; });
+        cell.classList.add("is-empty");
+        cell.insertAdjacentHTML("beforeend", '<p class="multi-empty" translate="no">' + esc(t("nothing")) + "</p>");
       });
       sec.hidden = !filled;
     });
+  }
+
+  function setFold(sec, open) {
+    sec.querySelector(".multi-row").hidden = !open;
+    sec.querySelector(".fold-toggle").setAttribute("aria-expanded", String(open));
+    sec.classList.toggle("is-folded", !open);
+  }
+
+  function paintFoldAll(body) {
+    const all = body.querySelector("#multi-fold-all");
+    if (!all) return;
+    const anyOpen = [...body.querySelectorAll(".multi-sec:not([hidden]) .multi-row")].some((row) => !row.hidden);
+    all.textContent = QAReviewReportCopy.t(anyOpen ? "collapseAll" : "expandAll");
+    all.setAttribute("aria-expanded", String(anyOpen));
+  }
+
+  // One toggle per section opens or closes it for every site at once, so the columns stay level.
+  function fold(event) {
+    const body = event.currentTarget;
+    const toggle = event.target.closest(".multi-sec > h2 .fold-toggle");
+    const all = event.target.closest("#multi-fold-all");
+    if (toggle) {
+      const sec = toggle.closest(".multi-sec");
+      setFold(sec, sec.querySelector(".multi-row").hidden);
+    } else if (all) {
+      const open = all.getAttribute("aria-expanded") !== "true";
+      body.querySelectorAll(".multi-sec").forEach((sec) => setFold(sec, open));
+    } else return;
+    paintFoldAll(body);
   }
 
   function paint(data) {
@@ -329,6 +374,8 @@
       }
     });
     settle(grid);
+    const bar = body.querySelector(".multi-hosts-bar");
+    grid.addEventListener("scroll", () => { bar.scrollLeft = grid.scrollLeft; }, { passive: true });
     say("");
   }
 
@@ -380,6 +427,8 @@
       try { return [...sheet.cssRules].map((rule) => rule.cssText).join("\n"); } catch (error) { return ""; }
     }).join("\n");
     const copy = overlay.querySelector(".multi-modal").cloneNode(true);
+    copy.querySelectorAll(".multi-sec > h2 .fold-toggle").forEach((toggle) => toggle.replaceWith(toggle.firstChild));
+    copy.querySelectorAll(".multi-row[hidden]").forEach((row) => { row.hidden = false; });
     copy.querySelectorAll(".no-print, script, button").forEach((node) => node.remove());
     copy.querySelectorAll("img").forEach((img) => img.remove());
     const theme = [...document.documentElement.attributes].filter((attr) => attr.name !== "style").map((attr) => " " + attr.name + '="' + esc(attr.value) + '"').join("");
