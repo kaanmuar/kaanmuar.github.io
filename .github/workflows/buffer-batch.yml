@@ -11,6 +11,8 @@
 # posts dated after now that match no batch post (not on the hub), then re-seeds; a dry run only lists them.
 # Mode requeue deletes the queued posts listed in posts (batch/slug, comma-separated) on one channel and creates
 # them again from the batch's captions.json at the same time, for a caption fixed after queueing (#1191).
+# A queue that finds Buffer's daily limit spent lists its batch under retry in the ledger and passes (#1188). The
+# nightly run, before the sync and whatever pauses the sync, queues those batches again; mode retry does it by hand.
 # Every mode but a dry run commits the ledger (scripts/commit-social-ledgers.sh).
 name: Buffer batch queue
 
@@ -20,9 +22,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, or delete scheduled posts not on the hub'
+        description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, re-queue the batches a spent limit stopped, delete scheduled posts not on the hub, or delete and requeue listed posts'
         type: choice
-        options: [queue, seed, check, sync, delete-unmatched, requeue]
+        options: [queue, seed, check, sync, retry, delete-unmatched, requeue]
         default: queue
       batch:
         description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10 (queue only)'
@@ -68,8 +70,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Queue the batches a spent Buffer limit stopped
+        if: ${{ github.event_name == 'schedule' || env.MODE == 'retry' }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          set -o pipefail
+          batches=$(node scripts/buffer-queue.js --pending)
+          [ -n "$batches" ] || { echo "No batch waits for a retry."; exit 0; }
+          failed=""
+          for b in $batches; do
+            if gh release view "$b" > /dev/null 2>&1; then clip="https://github.com/${{ github.repository }}/releases/download/$b"; else clip=""; fi
+            if [ "$DRY_RUN" = "true" ]; then set -- --dry-run; else set --; fi
+            CLIP_BASE="$clip" node scripts/buffer-queue.js --batch "$b" "$@" | tee -a "$GITHUB_STEP_SUMMARY" || failed="$failed $b"
+          done
+          if [ -n "$failed" ]; then echo "::error::Not fully queued:$failed"; exit 1; fi
       - name: Move queued posts to their calendar slots
-        if: ${{ env.MODE == 'sync' }}
+        if: ${{ !cancelled() && env.MODE == 'sync' }}
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
           PAUSE_UNTIL: ${{ vars.BUFFER_SYNC_PAUSE_UNTIL }}
