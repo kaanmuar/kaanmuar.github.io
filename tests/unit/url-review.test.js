@@ -1478,6 +1478,7 @@ test.describe("return price", () => {
     assert.deepEqual([captured.orderId, captured.captureId], ["5O190127TN364715T", "3C679366HH908993F"]);
     const refund = core.paypalEventIds({ event_type: "PAYMENT.CAPTURE.REFUNDED", resource: { id: "1JU08902781691411", amount: { value: "9.50" }, links: [{ rel: "self", href: "https://api.paypal.com/v2/payments/refunds/1JU08902781691411" }, { rel: "up", href: "https://api.paypal.com/v2/payments/captures/3C679366HH908993F" }] } });
     assert.deepEqual([refund.captureId, refund.refundAmount], ["3C679366HH908993F", 9.5]);
+    assert.equal(core.paypalEventIds({ event_type: "PAYMENT.CAPTURE.REFUNDED", resource: { status: "COMPLETED" } }).disputeStatus, "");
     const dispute = core.paypalEventIds({ event_type: "CUSTOMER.DISPUTE.CREATED", resource: { dispute_id: "PP-D-27803", status: "OPEN", disputed_transactions: [{ seller_transaction_id: "3C679366HH908993F" }] } });
     assert.deepEqual([dispute.captureId, dispute.disputeId, dispute.disputeStatus], ["3C679366HH908993F", "PP-D-27803", "OPEN"]);
     assert.equal(core.paypalEventIds({ event_type: "CHECKOUT.ORDER.APPROVED", resource: { id: "../x" } }).orderId, "");

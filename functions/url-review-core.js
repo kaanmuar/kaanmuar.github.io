@@ -3874,13 +3874,14 @@ function paypalEventIds(event) {
     const tx = (resource.disputed_transactions || [])[0] || {};
     captureId = clean(tx.seller_transaction_id);
   }
+  const dispute = type.indexOf("CUSTOMER.DISPUTE.") === 0;
   return {
     type,
     orderId: /^[A-Z0-9]{10,22}$/.test(orderId) ? orderId : "",
     captureId: /^[A-Z0-9]{10,22}$/.test(captureId) ? captureId : "",
-    disputeId: type.indexOf("CUSTOMER.DISPUTE.") === 0 ? String(resource.dispute_id || "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 40) : "",
-    disputeStatus: String(resource.status || "").slice(0, 40),
-    disputeOutcome: String((resource.dispute_outcome && resource.dispute_outcome.outcome_code) || "").slice(0, 60),
+    disputeId: dispute ? String(resource.dispute_id || "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 40) : "",
+    disputeStatus: dispute ? String(resource.status || "").slice(0, 40) : "",
+    disputeOutcome: dispute ? String((resource.dispute_outcome && resource.dispute_outcome.outcome_code) || "").slice(0, 60) : "",
     refundAmount: type === "PAYMENT.CAPTURE.REFUNDED" ? Number((resource.amount && resource.amount.value) || 0) || 0 : 0
   };
 }
