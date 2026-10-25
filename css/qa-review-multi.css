@@ -65,6 +65,8 @@
 .multi-cell .page-table thead th { position: sticky; top: -18px; z-index: 1; background: var(--look-card, var(--card)); }
 .multi-empty { flex-grow: 1; display: grid; place-items: start center; min-height: 72px; padding: 26px 16px; border: 1px dashed var(--line); border-radius: 18px; color: var(--muted); font-size: 13px; text-align: center; background: color-mix(in srgb, var(--panel) 40%, transparent); }
 .multi-cell.is-note > :not([hidden]) { padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; color: var(--muted); background: color-mix(in srgb, var(--panel) 55%, transparent); }
+.multi-cell > .multi-empty, .multi-cell.is-note > :last-child { flex-grow: 0; }
+.multi-cell .table-scroll { max-width: 100%; overflow-x: auto; }
 
 /* Six sites fit the side-by-side table without scrolling sideways; the line names stay in view. */
 .multi-modal { --own: var(--cyan); }
