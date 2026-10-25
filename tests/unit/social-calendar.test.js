@@ -198,6 +198,11 @@ test("the launch set's calendar becomes one post per language in the common layo
   const csv = fs.readFileSync(path.join(dir, "calendar.csv"), "utf8");
   assert.match(csv, new RegExp("^2026-10-31," + cal.slotTime("2026-10-31", "linkedin", 5) + ",linkedin,it/a11y,a\\.jpg$", "m"));
   assert.match(csv, /^2026-10-26,08:30,linkedin,en\/a11y,/m);
+
+  fs.writeFileSync(path.join(dir, "es", "a11y-captions.json"), JSON.stringify({ youtubeTitle: "Tu sitio, revisado. #Shorts" }));
+  fs.writeFileSync(path.join(root, "assets/social/youtube.json"), JSON.stringify({ videos: { v1: { title: "Tu sitio, revisado.", publishedAt: "2026-10-19T04:00:00Z" } } }));
+  assert.ok(cal.load(root).posts.find((p) => p.slug === "es/a11y").sent, "a clip the hub's YouTube ledger lists went out, though Buffer's ledger lacks it");
+  assert.ok(!cal.load(root).posts.find((p) => p.slug === "pt/a11y").sent);
 });
 
 test("a daily Live Reports batch sends every review to the networks", () => {
