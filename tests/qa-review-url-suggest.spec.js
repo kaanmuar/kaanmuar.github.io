@@ -1,7 +1,10 @@
 const { test, expect } = require('@playwright/test');
 
 const ONLINE = ['www.google.com', 'carlosandmunoz.com', 'gooogle.com', 'www.nibo.com.br'];
-const SITEMAPS = { 'carlosandmunoz.com': ['/qa-lab', '/pricing', '/checkout', '/qa-review', '/blog/checkout-tips'] };
+const SITEMAPS = {
+  'carlosandmunoz.com': ['/qa-lab', '/pricing', '/checkout', '/qa-review', '/blog/checkout-tips'],
+  'www.nibo.com.br': ['/mercado', '/ofertas', '/1a', '/3m', '/a1/zapatos']
+};
 const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 
 async function open(page, lang = '') {
@@ -100,6 +103,15 @@ test.describe('URL Review page box predictions', () => {
     await box.press('Enter');
     await expect(box).toHaveValue('carlosandmunoz.com/checkout');
     await expect(page.locator('#url-suggest')).toBeHidden();
+  });
+
+  test('after a bare slash, code paths like /1a are left out until a character after the slash asks for them', async ({ page }) => {
+    const box = await open(page);
+    const items = page.locator('#url-suggest li');
+    await box.fill('www.nibo.com.br/');
+    await expect(items).toHaveText(['/mercado', '/ofertas']);
+    await box.pressSequentially('1');
+    await expect(items).toHaveText(['/1a']);
   });
 
   test('a site without a sitemap lists no paths and shows no error', async ({ page }) => {

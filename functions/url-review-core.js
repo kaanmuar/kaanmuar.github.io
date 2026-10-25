@@ -2491,7 +2491,12 @@ function pathsHost(raw) {
   return host;
 }
 
-// Same-site page paths from sitemap URLs, the shallowest and shortest first.
+// A path with a part that is not a word of three letters, like /1a or /3m/x9, a code no reader would pick.
+function codePath(path) {
+  return String(path || "").split("/").filter(Boolean).some((part) => !/\p{L}{3}/u.test(part));
+}
+
+// Same-site page paths from sitemap URLs: readable ones before codes, then the shallowest and shortest first.
 function sitemapPaths(urls, host, limit) {
   const bare = (name) => String(name || "").toLowerCase().replace(/^www\./, "");
   const seen = new Set();
@@ -2506,7 +2511,7 @@ function sitemapPaths(urls, host, limit) {
   });
   const depth = (path) => path.replace(/\/$/, "").split("/").length;
   return Array.from(seen)
-    .sort((a, b) => depth(a) - depth(b) || a.length - b.length || (a < b ? -1 : a > b ? 1 : 0))
+    .sort((a, b) => codePath(a) - codePath(b) || depth(a) - depth(b) || a.length - b.length || (a < b ? -1 : a > b ? 1 : 0))
     .slice(0, limit || PATHS_SHOWN);
 }
 
