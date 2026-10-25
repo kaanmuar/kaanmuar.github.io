@@ -351,7 +351,7 @@
         return;
       }
       if (!response.ok || data.error) {
-        say(data.error || t("failed"), true);
+        say(QAReviewReportCopy.error(data, t("failed")), true);
         return;
       }
       paint(data);
@@ -394,7 +394,7 @@
       const response = await post("/account/comparison/pdf", { id: made.id, html: snapshot() });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.pdf) {
-        say(data.error || t("pdfFailed"), true);
+        say(QAReviewReportCopy.error(data, t("pdfFailed")), true);
         return;
       }
       const bytes = Uint8Array.from(atob(data.pdf), (ch) => ch.charCodeAt(0));
@@ -426,7 +426,7 @@
       const response = await post("/account/comparison/save", { ids, from });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.id) {
-        note(data.error || t("saveFailed"), true);
+        note(QAReviewReportCopy.error(data, t("saveFailed")), true);
         return "";
       }
       note("");

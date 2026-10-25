@@ -67,7 +67,7 @@ async function signIn(page, records, file, seen) {
       return json(200, { ok: true });
     }
     const made = saved[body.id] ? multi.payloadOf(body.id, saved[body.id], records, (row) => open.has(row.id)) : null;
-    if (path === '/account/comparison/open') return made ? json(200, made) : json(404, { error: 'That comparison is not saved under this account.' });
+    if (path === '/account/comparison/open') return made ? json(200, made) : json(404, { error: 'That comparison is not saved under this account.', code: 'comparisonNotSaved' });
     if (path === '/account/comparison/pdf') {
       seen.pdf.push(body.html);
       const problem = multi.pdfProblem(made, body.html);
@@ -161,6 +161,22 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(chip).toContainText('Seguridad');
   await expect(chip.locator('small')).toContainText(/^Fallan: \d+ · En riesgo: \d+ · Pasan: \d+ — Cabeceras, TLS/);
   await expect(box.locator('.multi-sec[data-sec="health"] .vchip.v-fail').first()).toContainText('Falla ahora');
+  const health = box.locator('.multi-sec[data-sec="health"] .multi-cell').first();
+  await expect(health.locator('.ring')).toHaveAttribute('aria-label', /^Puntuación de salud \d+ de 100, nota [A-F]$/);
+  await expect(health.locator('.ring small')).toHaveText(/^Nota [A-F]$/);
+  await expect(health.locator('.health-summary')).toContainText(/obtiene \d+ de 100 \([A-F]\)\. \d+ controles fallan ahora/);
+  await expect(health.locator('.health-summary')).not.toContainText('scores');
+  await expect(health.locator('.vchip.s-critical, .vchip.s-low').first()).toContainText(/crítico|bajo/);
+  await expect(health.locator('.meta-line')).toContainText('Los controles marcados con «Necesita una persona»');
+  const exec = box.locator('.multi-sec[data-sec="exec"] .multi-cell').first();
+  await expect(exec.locator('h3')).toHaveText(['Mayores riesgos', 'Mejoras rápidas', 'Ya sólido']);
+  await expect(exec.locator('.meta-line').first()).toContainText(/\d+ críticos · \d+ altos · \d+ medios · \d+ bajos · \d+ páginas? analizadas?/);
+});
+
+test('a comparison the account no longer has is refused in the page language', async ({ page }) => {
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, recordsWith(true), '/qa-review-es.html?comparison=gone', seen);
+  await expect(page.locator('#multi-overlay')).toContainText('Esa comparación no está guardada en esta cuenta.', { timeout: 20000 });
 });
 
 test('the account page saves the reviews it compares as a full comparison and lists, opens and deletes saved ones', async ({ page }) => {

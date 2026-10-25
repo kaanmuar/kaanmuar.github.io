@@ -96,6 +96,18 @@ test.describe('Review page language', () => {
     await expect(page.locator('#charge')).toHaveText('Continue to PayPal');
   });
 
+  test('the report dashboard is written in the page language without machine translation', async ({ page }) => {
+    await page.goto('/qa-review-de.html');
+    await expect(page.locator('#dash-title')).toHaveText('Bericht', { useInnerText: false });
+    await expect(page.locator('#dash-title')).toHaveAttribute('translate', 'no');
+    await expect(page.locator('[data-report-copy="healthTitle"]')).toHaveText('Gesundheitswert', { useInnerText: false });
+    await expect(page.locator('#compare-go')).toHaveText('Vergleichen', { useInnerText: false });
+    await expect(page.locator('[data-report-copy="compareAdd"]')).toHaveText('+ Weiteren Mitbewerber hinzufügen', { useInnerText: false });
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#dash-title')).toHaveText('Report', { useInnerText: false });
+    await expect(page.locator('#dash-title')).not.toHaveAttribute('translate', 'no');
+  });
+
   test('the hero stats are written in the page language', async ({ page }) => {
     await prime(page, 'fr');
     await page.goto('/qa-review-fr.html');

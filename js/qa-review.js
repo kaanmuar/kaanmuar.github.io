@@ -800,6 +800,7 @@
   }
 
   const cc = window.QAReviewCompareCopy;
+  const rc = window.QAReviewReportCopy;
   const VERDICT_LABEL = { fail: cc.verdict("fail"), risk: cc.verdict("risk"), pass: cc.verdict("pass"), person: cc.verdict("person") };
   const AREA_NOTE = {};
   ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"].forEach((name) => { AREA_NOTE[name] = cc.areaNote(name); });
@@ -862,6 +863,16 @@
     document.querySelectorAll("[data-insight]").forEach((node) => { node.hidden = !on; });
   }
 
+  // The server writes the summary in English; a translated page rebuilds its score sentence and keeps any warning ahead of it.
+  function healthSummary(ins) {
+    const raw = String(ins.summary || "");
+    const score = ins.score;
+    const said = raw.match(/^(.*?)(\S+) scores \d+ out of 100 /);
+    if (rc.english || !score || !said) return raw;
+    const totals = score.totals || {};
+    return said[1] + rc.t("summary", { host: said[2], overall: score.overall || 0, grade: score.grade || gradeOf(score.overall || 0), fail: totals.fail || 0, risk: totals.risk || 0, pass: totals.pass || 0 });
+  }
+
   function paintHealth(ins) {
     const score = ins.score || {};
     const value = score.overall || 0;
@@ -871,20 +882,20 @@
     const column = slotRoot;
     slot("health").innerHTML =
       '<article class="card"><div class="health">' +
-      '<div class="ring" role="img" aria-label="Health score ' + value + ' out of 100, grade ' + esc(score.grade || gradeOf(value)) + '">' +
+      '<div class="ring" role="img" aria-label="' + esc(rc.t("ring", { n: value, g: score.grade || gradeOf(value) })) + '">' +
       '<svg viewBox="0 0 196 196"><circle class="ring-track" cx="98" cy="98" r="80"></circle><circle class="ring-value" cx="98" cy="98" r="80" stroke="' + scoreColor(value) + '" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + (circumference * (1 - value / 100)).toFixed(1) + '"></circle></svg>' +
-      "<b>" + value + "<small>Grade " + esc(score.grade || gradeOf(value)) + "</small></b></div>" +
-      '<div><p class="health-summary">' + esc(ins.summary || "") + "</p>" +
+      "<b>" + value + "<small>" + esc(rc.t("grade", { g: score.grade || gradeOf(value) })) + "</small></b></div>" +
+      '<div><p class="health-summary">' + esc(healthSummary(ins)) + "</p>" +
       '<div class="verdict-chips">' + ["fail", "risk", "pass", "person"].map((key) =>
         '<span class="vchip v-' + key + '"><b>' + (totals[key] || 0) + "</b>" + esc(VERDICT_LABEL[key]) + "</span>").join("") + "</div>" +
-      '<div class="verdict-chips" aria-label="Open problems by severity">' + ["critical", "high", "medium", "low"].map((key) =>
-        '<span class="vchip s-' + ((score.severities || {})[key] ? key : "low") + '"><b>' + ((score.severities || {})[key] || 0) + "</b>" + esc(key) + "</span>").join("") + "</div>" +
-      '<p class="meta-line">Every check below was measured from the public response, not guessed. Checks marked “Needs a person” are judgments a machine should not make for you.</p></div></div>' +
+      '<div class="verdict-chips" aria-label="' + esc(rc.t("sevAria")) + '">' + ["critical", "high", "medium", "low"].map((key) =>
+        '<span class="vchip s-' + ((score.severities || {})[key] ? key : "low") + '"><b>' + ((score.severities || {})[key] || 0) + "</b>" + esc(cc.severity(key)) + "</span>").join("") + "</div>" +
+      '<p class="meta-line">' + esc(rc.t("measured", { person: VERDICT_LABEL.person })) + "</p></div></div>" +
       '<div class="areas">' + Object.keys(AREA_NOTE).map((name) => {
         const area = areas[name] || { score: 0, grade: "F", fail: 0, risk: 0, pass: 0 };
         const past = current && current.report && current.report.history && current.report.history.areas && current.report.history.areas[name];
         const moved = past ? area.score - past.before : 0;
-        return '<button type="button" class="area" data-area="' + esc(name) + '"><div class="area-score"><span><b>' + area.score + "</b> " + esc(cc.area(name)) + (moved ? ' <span class="delta ' + (moved > 0 ? "up" : "down") + '" title="Change since your last review">' + (moved > 0 ? "+" : "") + moved + "</span>" : "") + '</span><span class="grade grade-' + esc(area.grade) + '">' + esc(area.grade) + "</span></div>" +
+        return '<button type="button" class="area" data-area="' + esc(name) + '"><div class="area-score"><span><b>' + area.score + "</b> " + esc(cc.area(name)) + (moved ? ' <span class="delta ' + (moved > 0 ? "up" : "down") + '" title="' + esc(rc.t("delta")) + '">' + (moved > 0 ? "+" : "") + moved + "</span>" : "") + '</span><span class="grade grade-' + esc(area.grade) + '">' + esc(area.grade) + "</span></div>" +
           '<div class="bar"><i style="width:' + area.score + "%;background:" + scoreColor(area.score) + '"></i></div>' +
           "<small>" + esc(cc.t("areaCounts", { fail: area.fail, risk: area.risk, pass: area.pass })) + " — " + esc(AREA_NOTE[name]) + "</small></button>";
       }).join("") + "</div></article>";
@@ -1205,7 +1216,7 @@
   function syncCompareAdd() {
     const left = compareMore().filter((row) => row.hidden).length;
     document.getElementById("compare-add").hidden = !left;
-    document.getElementById("compare-add-left").textContent = "(" + left + " left)";
+    document.getElementById("compare-add-left").textContent = rc.t("left", { n: left });
   }
 
   function compareUrls() {
@@ -1541,17 +1552,17 @@
     const sev = score.severities || {};
     const read = (report.limits && report.limits.pagesRead) || (report.pages || []).length;
     const found = foundCount(report.limits);
-    const list = (rows) => rows.length ? "<ul>" + rows.map((item) => "<li><strong>" + esc(item.title) + '</strong> <span class="meta-line">' + esc(item.area) + "</span></li>").join("") + "</ul>" : '<p class="muted">None found.</p>';
+    const list = (rows) => rows.length ? "<ul>" + rows.map((item) => "<li><strong>" + esc(item.title) + '</strong> <span class="meta-line">' + esc(cc.area(item.area)) + "</span></li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noneFound")) + "</p>";
     const value = score.overall || 0;
     const letter = score.grade || gradeOf(value);
     host.innerHTML =
       historyBlock(report.history) +
-      '<div class="exec-head"><span class="grade grade-' + esc(letter) + '">' + esc(letter) + "</span><p>" + esc(ins.summary || value + " out of 100.") + "</p></div>" +
-      '<p class="meta-line">' + (sev.critical || 0) + " critical · " + (sev.high || 0) + " high · " + (sev.medium || 0) + " medium · " + (sev.low || 0) + " low · " +
-      read + " page" + (read === 1 ? "" : "s") + " analyzed" + (found ? " of " + found + " found" : "") + (report.browser && report.browser.ok ? " · checked in a headless browser" : "") + "</p>" +
-      '<div class="exec-cols"><div><h3>Biggest risks</h3>' + list(risks) + "</div><div><h3>Quick wins</h3>" + list(quick) + "</div><div><h3>Already solid</h3>" +
-      (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(cc.area(name)) + '</strong> <span class="meta-line">' + esc(AREA_NOTE[name]) + "</span></li>").join("") + "</ul>" : '<p class="muted">No area scores B or better yet.</p>') + "</div></div>" +
-      (slotRoot ? "" : '<p class="no-print"><button class="btn btn-ghost" id="print-exec" type="button">Print this summary</button></p>');
+      '<div class="exec-head"><span class="grade grade-' + esc(letter) + '">' + esc(letter) + "</span><p>" + esc(healthSummary(ins) || rc.t("outOf", { n: value })) + "</p></div>" +
+      '<p class="meta-line">' + esc(rc.t("sevLine", { critical: sev.critical || 0, high: sev.high || 0, medium: sev.medium || 0, low: sev.low || 0 })) + " · " +
+      esc(rc.t(found ? "readOf" : "read", { n: read, found: found })) + (report.browser && report.browser.ok ? " · " + esc(rc.t("headless")) : "") + "</p>" +
+      '<div class="exec-cols"><div><h3>' + esc(rc.t("risks")) + "</h3>" + list(risks) + "</div><div><h3>" + esc(rc.t("quick")) + "</h3>" + list(quick) + "</div><div><h3>" + esc(rc.t("solid")) + "</h3>" +
+      (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(cc.area(name)) + '</strong> <span class="meta-line">' + esc(AREA_NOTE[name]) + "</span></li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noSolid")) + "</p>") + "</div></div>" +
+      (slotRoot ? "" : '<p class="no-print"><button class="btn btn-ghost" id="print-exec" type="button">' + esc(rc.t("printSummary")) + "</button></p>");
     if (!slotRoot) document.getElementById("print-exec").addEventListener("click", () => {
       spend("print", () => {
         if (!current.paid) setStatus("The print sheet does not include the report. The attempt is recorded.", false);
@@ -2068,7 +2079,7 @@
     const all = document.getElementById("fold-all");
     if (!all) return;
     const anyOpen = folds.some((item) => !item.panel.hidden);
-    all.textContent = anyOpen ? "Collapse all" : "Expand all";
+    all.textContent = rc.t(anyOpen ? "collapseAll" : "expandAll");
     all.setAttribute("aria-expanded", String(anyOpen));
   }
 
@@ -2128,16 +2139,16 @@
     const counts = report.counts || { pages: 0, technologies: 0, cases: 0, byLayer: {} };
     const score = report.insights && report.insights.score;
     slot("kpis").innerHTML = (score ? [
-      [score.overall + "/100", "Health score"],
-      [score.totals.fail, "Fail now"],
-      [score.totals.risk, "At risk"],
-      [counts.pages, "Pages analyzed"]
+      [score.overall + "/100", rc.t("kpiHealth")],
+      [score.totals.fail, rc.t("kpiFail")],
+      [score.totals.risk, rc.t("kpiRisk")],
+      [counts.pages, rc.t("kpiPages")]
     ] : [
-      [counts.pages, "Pages analyzed"],
-      [counts.technologies, "Technologies"],
-      [counts.cases, "Proposed cases"],
-      [(report.observed && report.observed.ms) + " ms", "First response"]
-    ]).map(([value, label]) => "<div class=\"kpi\"><b>" + esc(value) + "</b><span>" + label + "</span></div>").join("");
+      [counts.pages, rc.t("kpiPages")],
+      [counts.technologies, rc.t("kpiTech")],
+      [counts.cases, rc.t("kpiCases")],
+      [(report.observed && report.observed.ms) + " ms", rc.t("kpiFirst")]
+    ]).map(([value, label]) => "<div class=\"kpi\"><b>" + esc(value) + "</b><span>" + esc(label) + "</span></div>").join("");
     const layers = Object.entries(counts.byLayer || {});
     const max = Math.max.apply(null, layers.map((pair) => pair[1]).concat([1]));
     slot("layers").innerHTML = layers.length ? layers.map(([name, count]) =>

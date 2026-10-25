@@ -1569,66 +1569,66 @@
 <div id="dash-overlay" class="dash-overlay">
     <div class="dash-modal" role="dialog" aria-modal="true" aria-labelledby="dash-title">
         <div class="sheet-mark" aria-hidden="true"></div>
-        <p id="capture-note" class="capture-note">This sheet does not include the report. The attempt is recorded with the review.</p>
+        <p id="capture-note" class="capture-note" data-report-copy="captureNote">This sheet does not include the report. The attempt is recorded with the review.</p>
         <div class="report-toolbar no-print">
             <div class="report-brand">
                 <img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36">
                 <div>
-                    <p class="eyebrow">Run dashboard</p>
-                    <h2 id="dash-title">Report</h2>
+                    <p class="eyebrow" data-report-copy="dashEyebrow">Run dashboard</p>
+                    <h2 id="dash-title" data-report-copy="dashTitle">Report</h2>
                 </div>
             </div>
             <div class="actions">
-                <button class="btn btn-ghost" id="copy-link" type="button">Copy link (opens for you)</button>
+                <button class="btn btn-ghost" id="copy-link" type="button" data-report-copy="copyLink">Copy link (opens for you)</button>
                 <button class="btn btn-ghost" id="ask-open" type="button" aria-expanded="false" aria-controls="ask-panel" lang="es" translate="no" hidden>Preguntar al informe</button>
-                <button class="btn btn-ghost" id="case-export-open" type="button">Export and print test cases</button>
+                <button class="btn btn-ghost" id="case-export-open" type="button" data-report-copy="caseExport">Export and print test cases</button>
                 <div class="menu-wrap">
-                    <button class="btn btn-ghost" id="export-toggle" type="button" aria-expanded="false" aria-controls="export-menu">Export</button>
+                    <button class="btn btn-ghost" id="export-toggle" type="button" aria-expanded="false" aria-controls="export-menu" data-report-copy="export">Export</button>
                     <div class="menu" id="export-menu" hidden>
                         <button id="download-json" type="button">JSON</button>
-                        <button id="download-text" type="button">Text</button>
-                        <button id="print-report" type="button">Print or save as PDF</button>
+                        <button id="download-text" type="button" data-report-copy="text">Text</button>
+                        <button id="print-report" type="button" data-report-copy="printPdf">Print or save as PDF</button>
                     </div>
                 </div>
                 <div class="menu-wrap" id="share-row">
-                    <button class="btn btn-ghost" id="share-toggle" type="button" aria-expanded="false" aria-controls="share-menu">Share</button>
+                    <button class="btn btn-ghost" id="share-toggle" type="button" aria-expanded="false" aria-controls="share-menu" data-report-copy="share">Share</button>
                     <div class="menu" id="share-menu" hidden>
-                        <button type="button" data-net="email">Email</button>
+                        <button type="button" data-net="email" data-report-copy="email">Email</button>
                         <button type="button" data-net="linkedin">LinkedIn</button>
                         <button type="button" data-net="x">X</button>
                         <button type="button" data-net="whatsapp">WhatsApp</button>
                         <button type="button" data-net="telegram">Telegram</button>
                         <button type="button" data-net="facebook">Facebook</button>
-                        <button type="button" data-net="system">Share sheet</button>
+                        <button type="button" data-net="system" data-report-copy="shareSheet">Share sheet</button>
                     </div>
                 </div>
-                <button class="btn btn-primary" id="dash-close" type="button">Close</button>
+                <button class="btn btn-primary" id="dash-close" type="button" data-report-copy="close">Close</button>
             </div>
         </div>
         <p id="share-link" class="muted"></p>
-        <p id="share-note" class="muted">This link opens in full only for you, signed in. Anyone else sees a blurred preview.</p>
+        <p id="share-note" class="muted" data-report-copy="shareNote">This link opens in full only for you, signed in. Anyone else sees a blurred preview.</p>
         <p id="sample-note" class="sample-note" hidden></p>
         <section id="report">
         <header class="report-cover" id="report-cover"></header>
         <p class="lede" id="report-statement"></p>
         <p class="notranslate" id="paid-line">This report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).</p>
         <div class="kpis" id="kpis"></div>
-        <h2 data-insight>One-page summary</h2>
+        <h2 data-insight data-report-copy="execTitle">One-page summary</h2>
         <article class="card" data-insight id="exec"></article>
-        <h2 data-insight>Next to a competitor</h2>
+        <h2 data-insight data-report-copy="compareTitle">Next to a competitor</h2>
         <article class="card" data-insight id="compare">
             <div id="rivals" hidden></div>
             <div class="no-print" id="compare-ask">
-                <p>Run the same review on a competitor's site and see who wins each indicator: the six areas as a radar and 3D columns, speed and page weight head to head, your advantages and theirs, the common ground, the open problems only one site has, and how present each site is in the market, from its Tranco rank and 30-day trend.</p>
+                <p data-report-copy="compareIntro">Run the same review on a competitor's site and see who wins each indicator: the six areas as a radar and 3D columns, speed and page weight head to head, your advantages and theirs, the common ground, the open problems only one site has, and how present each site is in the market, from its Tranco rank and 30-day trend.</p>
                 <div class="compare-form">
-                    <label for="compare-url">Competitor's address</label>
+                    <label for="compare-url" data-report-copy="compareLabel">Competitor's address</label>
                     <div class="compare-field">
                         <div class="url-row notranslate" id="compare-url-field">
                             <span>https://</span>
                             <input id="compare-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="competitor.com">
                         </div>
                     </div>
-                    <button class="btn btn-primary" id="compare-go" type="button">Compare</button>
+                    <button class="btn btn-primary" id="compare-go" type="button" data-report-copy="compareGo">Compare</button>
                     <div class="compare-field compare-more" data-compare-more hidden>
                         <div class="url-row notranslate" id="compare-url-2-field">
                             <span>https://</span>
@@ -1657,38 +1657,38 @@
                             <button class="compare-remove" type="button" aria-label="Remove the fifth competitor">×</button>
                         </div>
                     </div>
-                    <button class="btn btn-ghost compare-add" id="compare-add" type="button">+ Add another competitor <span id="compare-add-left">(4 left)</span></button>
+                    <button class="btn btn-ghost compare-add" id="compare-add" type="button"><span data-report-copy="compareAdd">+ Add another competitor</span> <span id="compare-add-left">(4 left)</span></button>
                 </div>
                 <p class="meta-line" id="compare-note" lang="es" translate="no">Cada competidor tiene el precio de una segunda revisión, y se revisan uno tras otro. El descuento por volver se aplica cuando comparas desde el dispositivo que hizo esta revisión. El sitio del competidor recibe solo las comprobaciones públicas y pasivas: sin conversación con el chat y sin enviar formularios. Como en cualquier revisión, su dueño puede recibir un correo sobre ella, y sus puntuaciones pueden aparecer en Live Reports.</p>
                 <p class="meta-line" id="compare-error" role="alert"></p>
-                <p class="compare-running" id="compare-running" role="status" hidden><span id="compare-running-text"></span><button class="btn btn-stop" id="compare-stop" type="button">Stop the comparison</button></p>
+                <p class="compare-running" id="compare-running" role="status" hidden><span id="compare-running-text"></span><button class="btn btn-stop" id="compare-stop" type="button" data-report-copy="compareStop">Stop the comparison</button></p>
             </div>
             <div id="compare-result" hidden></div>
         </article>
-        <h2 data-insight>Health score</h2>
+        <h2 data-insight data-report-copy="healthTitle">Health score</h2>
         <div data-insight id="health"></div>
-        <h2 data-insight>Fix first</h2>
+        <h2 data-insight data-report-copy="fixTitle">Fix first</h2>
         <article class="card" data-insight id="fix-first"></article>
-        <h2 data-insight>In a real browser</h2>
+        <h2 data-insight data-report-copy="browserTitle">In a real browser</h2>
         <div data-insight id="browser-pass"></div>
-        <h2 data-insight>How it looks in Google and when shared</h2>
+        <h2 data-insight data-report-copy="snippetTitle">How it looks in Google and when shared</h2>
         <div class="previews" data-insight id="previews"></div>
-        <h2 data-insight>What AI sees</h2>
+        <h2 data-insight data-report-copy="aiTitle">What AI sees</h2>
         <div data-insight id="geo"></div>
-        <h2 data-insight>Analytics and consent</h2>
+        <h2 data-insight data-report-copy="analyticsTitle">Analytics and consent</h2>
         <div data-insight id="analytics"></div>
-        <h2 data-insight>Search visibility</h2>
+        <h2 data-insight data-report-copy="searchTitle">Search visibility</h2>
         <div data-insight id="seo"></div>
-        <h2 data-insight>Map of the pages analyzed</h2>
+        <h2 data-insight data-report-copy="mapTitle">Map of the pages analyzed</h2>
         <article class="card" data-insight id="site-graph"></article>
-        <h2 data-insight>Security and email</h2>
+        <h2 data-insight data-report-copy="securityTitle">Security and email</h2>
         <article class="card" data-insight id="security"></article>
-        <h2 data-insight>Every check, with its verdict</h2>
+        <h2 data-insight data-report-copy="checksTitle">Every check, with its verdict</h2>
         <div data-insight>
             <div class="filters" id="finding-filters"></div>
             <article class="card" id="findings"></article>
         </div>
-        <h2 data-insight>Fix kit</h2>
+        <h2 data-insight data-report-copy="fixKitTitle">Fix kit</h2>
         <article class="card" data-insight id="fixkit"></article>
         <div class="visuals" id="report-visuals"></div>
         <div class="split">
@@ -1828,8 +1828,9 @@
 <script src="js/qa-review-ask.js?v=20261024c" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261103b" defer></script>
-<script src="js/qa-review.js?v=20261104d" defer></script>
-<script src="js/qa-review-multi.js?v=20261024a" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261105a" defer></script>
+<script src="js/qa-review.js?v=20261105a" defer></script>
+<script src="js/qa-review-multi.js?v=20261105a" defer></script>
 <script src="js/url-suggest.js?v=20261024b" defer></script>
 <script src="js/qa-review-live.js?v=20261029e" defer></script>
 </body>

@@ -29,6 +29,9 @@ test("two to six of the account's own finished reviews can be saved together, in
   assert.match(multi.pickProblem(records, EMAIL, ["aa11", "aa11"]).error, /at least two/);
   assert.match(multi.pickProblem(records, EMAIL, ["aa11", "ee55"]).error, /not saved under this account/);
   assert.match(multi.pickProblem(records, EMAIL, ["aa11", "dd44"]).error, /stopped early/);
+  assert.equal(multi.pickProblem(records, EMAIL, ["aa11", "ee55"]).code, "reviewsNotSaved");
+  assert.equal(multi.pickProblem(records, EMAIL, ["aa11", "dd44"]).code, "stoppedOne");
+  assert.ok(multi.pickProblem(records, EMAIL, ["aa11", "dd44"]).host);
   assert.match(multi.pickProblem(records, EMAIL, ["a1", "b2", "c3", "d4", "e5", "f6", "a7"]).error, /up to 6/);
   const picked = multi.pickProblem(records, EMAIL, ["bb22", "aa11!", "cc33"]);
   assert.deepEqual(picked, { ids: ["bb22", "aa11", "cc33"], hosts: ["excalidraw.com", "wordpress.org", "excalidraw.com"] });
