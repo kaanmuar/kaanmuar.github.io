@@ -297,23 +297,7 @@ const AXE_CASES = {
   "meta-viewport": ["MB-01"], "target-size": ["MB-01"]
 };
 const AXE_RAW = { "image-alt": "a11y-alt", "frame-title": "a11y-frames", "html-has-lang": "a11y-lang", "landmark-one-main": "a11y-main", "label": "a11y-labels", "meta-viewport": "a11y-zoom" };
-const AXE_FIX = {
-  "color-contrast": "Darken the text or lighten the background until normal text reaches 4.5:1 and large text 3:1.",
-  "button-name": "Give each icon button visible text or an aria-label.",
-  "link-name": "Give each link text, or an aria-label when it only holds an icon.",
-  "image-alt": "Describe informative images. Give decorative ones alt=\"\".",
-  "role-img-alt": "Add aria-label or aria-labelledby to elements with role=\"img\".",
-  "label": "Pair each control with <label for>, wrap it in a label, or add aria-label.",
-  "label-content-name-mismatch": "Start the aria-label with the words that are visible on the control.",
-  "target-size": "Make tap targets at least 24 by 24 px, or leave that much space around them.",
-  "heading-order": "Step headings down one level at a time.",
-  "list": "Keep only li, script, or template directly inside ul and ol.",
-  "listitem": "Put each li inside a ul or ol.",
-  "scrollable-region-focusable": "Add tabindex=\"0\" to scrollable areas so keyboard users can scroll them.",
-  "aria-hidden-focus": "Remove focusable elements from aria-hidden containers, or drop aria-hidden.",
-  "duplicate-id-aria": "Give every element that ARIA points to a unique id.",
-  "nested-interactive": "Do not put links or buttons inside other links or buttons."
-};
+const AXE_FIX = new Set(["color-contrast", "button-name", "link-name", "image-alt", "role-img-alt", "label", "label-content-name-mismatch", "target-size", "heading-order", "list", "listitem", "scrollable-region-focusable", "aria-hidden-focus", "duplicate-id-aria", "nested-interactive"]);
 const AXE_SEVERITY = { critical: ["fail", "medium"], serious: ["fail", "low"], moderate: ["risk", "low"], minor: ["risk", "low"] };
 
 function bannerLine(consent) {
@@ -326,8 +310,6 @@ function chatChecks(chat, consent, add) {
   const rows = chat.found;
   const names = rows.map((row) => row.name + (row.ai ? " (AI chatbot)" : ""));
   const named = sample(names, 3);
-  const it = rows.length === 1 ? rows[0].name : "the chat";
-  const widget = rows.length === 1 ? rows[0].name + " " : "chat ";
   const requests = rows.reduce((sum, row) => sum + row.requests, 0);
   const cookies = chat.cookies || [];
   const chats = some(rows.map((row) => row.ai ? say("an-chat.ai", { name: row.name }) : row.name), 3);
@@ -374,28 +356,30 @@ function chatChecks(chat, consent, add) {
   else add("Performance", "pass", "info", "pf-chat", "The chat is light on the start page", cost, "", { cases: ["PF-02"] });
 
   const launcher = chat.launcher || {};
+  const pad = say(rows.length === 1 ? "a11y-chat.launcherNamed" : "a11y-chat.launcher", { name: rows[0].name });
+  const enter = open.keyboard ? say("a11y-chat.withEnter") : "";
   if (launcher.found) {
     const covers = launcher.covers || [];
     const onBanner = covers.filter((row) => row.banner);
-    if (covers.length) add("Accessibility", "fail", onBanner.length ? "high" : "medium", "a11y-chat-cover", onBanner.length ? "The chat button covers the cookie banner on a phone" : "The chat button covers a button on a phone",
-      "At 390 px the " + widget + "launcher sits over " + sample(covers.map((row) => "\"" + row.label + "\"" + (row.banner ? " in the cookie banner" : "")), 3) + ".",
-      onBanner.length ? "Hide the launcher until the visitor answers the banner, or raise the banner above it." : "Keep the launcher clear of sticky and call-to-action buttons: offset it, or reserve space for it at the bottom of the page.", { effort: "hours", cases: ["CHAT-01", "MB-01"] });
-    else add("Accessibility", "pass", "info", "a11y-chat-cover", "The chat button covers no button on a phone", "At 390 px the " + widget + "launcher overlaps no " + (launcher.banner ? "cookie banner or " : "") + "call-to-action button.", "", { cases: ["CHAT-01"] });
-    if (launcher.known && !launcher.name) add("Accessibility", "fail", "medium", "a11y-chat-name", "The chat button has no accessible name",
-      "A screen reader announces the " + widget + "launcher only as a button, with no words.",
-      "Give the launcher an aria-label such as \"Open chat\".", { effort: "minutes", cases: ["CHAT-01", "FN-05"] });
-    else if (launcher.known) add("Accessibility", "pass", "info", "a11y-chat-name", "The chat button has a name", "The " + widget + "launcher is announced as \"" + launcher.name + "\".", "", { cases: ["CHAT-01", "FN-05"] });
+    if (covers.length) add("Accessibility", "fail", onBanner.length ? "high" : "medium", "a11y-chat-cover", say(onBanner.length ? "a11y-chat-cover.banner.title" : "a11y-chat-cover.title"),
+      say("a11y-chat-cover.evidence", { launcher: pad, list: some(covers.map((row) => say(row.banner ? "a11y-chat-cover.inBanner" : "a11y-chat-cover.label", { label: row.label })), 3) }),
+      say(onBanner.length ? "a11y-chat-cover.banner.fix" : "a11y-chat-cover.fix"), { effort: "hours", cases: ["CHAT-01", "MB-01"] });
+    else add("Accessibility", "pass", "info", "a11y-chat-cover", say("a11y-chat-cover.pass.title"), say(launcher.banner ? "a11y-chat-cover.pass.evidenceBanner" : "a11y-chat-cover.pass.evidence", { launcher: pad }), "", { cases: ["CHAT-01"] });
+    if (launcher.known && !launcher.name) add("Accessibility", "fail", "medium", "a11y-chat-name", say("a11y-chat-name.title"),
+      say("a11y-chat-name.evidence", { launcher: pad }),
+      say("a11y-chat-name.fix"), { effort: "minutes", cases: ["CHAT-01", "FN-05"] });
+    else if (launcher.known) add("Accessibility", "pass", "info", "a11y-chat-name", say("a11y-chat-name.pass.title"), say("a11y-chat-name.pass.evidence", { launcher: pad, name: launcher.name }), "", { cases: ["CHAT-01", "FN-05"] });
   }
-  if (open.opened && open.moved === false) add("Accessibility", "risk", open.tabbed ? "low" : "medium", "a11y-chat-focus", "Opening the chat leaves keyboard focus on the page",
-    "After " + (open.keyboard ? "pressing Enter on" : "clicking") + " the " + widget + "launcher, the chat opened but focus stayed outside it" + (open.tabbed ? " until Tab was pressed" : ", and the next Tab went to the page instead of the chat") + ". A screen reader user hears nothing about the open chat.",
-    "Move focus to the chat's first control or heading when it opens, and back to the launcher when it closes.", { effort: "hours", cases: ["CHAT-03", "A11Y-04"] });
-  if (open.opened && open.trapped) add("Accessibility", "fail", "high", "a11y-chat-trap", "Keyboard focus is trapped in the open chat",
-    "After opening " + it + (open.keyboard ? " with Enter" : "") + ", " + plural(open.tabs, "press", "presses") + " of Tab kept focus inside it, no close button was reached, and Escape did not close it.",
-    "Let Escape close the chat and return focus to the launcher, and keep the close button in the Tab order.", { effort: "hours", cases: ["CHAT-03", "A11Y-04"] });
-  else if (open.opened && open.exit) add("Accessibility", "pass", "info", "a11y-chat-trap", "Keyboard focus can leave the open chat",
-    "After opening " + it + (open.keyboard ? " with Enter" : "") + ", focus left it by " + { tab: "Tab", close: "reaching its close button", escape: "Escape" }[open.exit] + ".", "", { cases: ["CHAT-03", "A11Y-04"] });
-  else if (open.opened) add("Accessibility", "person", "info", "a11y-chat-trap", "Keyboard focus in the open chat needs a person",
-    (open.entered ? "Focus went into a frame of " + it + " that this review cannot read" : "Focus could not be moved into " + it) + (open.keyboard ? "" : ", and Enter on the launcher did not open it") + ", so the trap check could not finish.", "", { cases: ["CHAT-03"] });
+  if (open.opened && open.moved === false) add("Accessibility", "risk", open.tabbed ? "low" : "medium", "a11y-chat-focus", say("a11y-chat-focus.title"),
+    say(open.keyboard ? "a11y-chat-focus.evidence.keyboard" : "a11y-chat-focus.evidence.click", { launcher: pad, rest: say(open.tabbed ? "a11y-chat-focus.tabbed" : "a11y-chat-focus.lost") }),
+    say("a11y-chat-focus.fix"), { effort: "hours", cases: ["CHAT-03", "A11Y-04"] });
+  if (open.opened && open.trapped) add("Accessibility", "fail", "high", "a11y-chat-trap", say("a11y-chat-trap.title"),
+    say("a11y-chat-trap.evidence", { it: one, enter, presses: say("a11y-chat-trap.presses", { n: open.tabs }) }),
+    say("a11y-chat-trap.fix"), { effort: "hours", cases: ["CHAT-03", "A11Y-04"] });
+  else if (open.opened && open.exit) add("Accessibility", "pass", "info", "a11y-chat-trap", say("a11y-chat-trap.pass.title"),
+    say("a11y-chat-trap.pass.evidence", { it: one, enter, exit: say("a11y-chat-trap.exit." + open.exit) }), "", { cases: ["CHAT-03", "A11Y-04"] });
+  else if (open.opened) add("Accessibility", "person", "info", "a11y-chat-trap", say("a11y-chat-trap.person.title"),
+    say("a11y-chat-trap.person.evidence", { why: say(open.entered ? "a11y-chat-trap.person.frame" : "a11y-chat-trap.person.blocked", { it: one }), enter: open.keyboard ? "" : say("a11y-chat-trap.person.noEnter") }), "", { cases: ["CHAT-03"] });
 }
 
 const SHOP_PATH = /\/(cart|checkout|basket|warenkorb|kasse|carrito|cesta|panier|carrello|carrinho)(\/|$|\?)/i;
@@ -478,8 +462,6 @@ function legalChecks(ctx, add) {
     }
     return dom && dom.legal && dom.legal[kind] ? Object.assign({ path: browsed.start.finalPath || "/" }, dom.legal[kind]) : null;
   };
-  const linked = (hit) => (hit.text ? "\"" + hit.text + "\"" : "A link") + " on " + hit.path + " leads to " + shownAgainst(hit.href, origin) + ".";
-  const none = "None of the " + plural(read.length, "page") + " analyzed" + (dom ? ", nor the rendered start page," : "") + " links ";
   const linkedMsg = (hit) => say(hit.text ? "legal.linked.text" : "legal.linked", { text: hit.text, path: hit.path, href: shownAgainst(hit.href, origin) });
   const noneMsg = (what) => say(dom ? "legal.none.rendered" : "legal.none", { pages: say("pagesN", { n: read.length }), what });
 
@@ -488,13 +470,13 @@ function legalChecks(ctx, add) {
   const seller = techs.find((item) => /^(Commerce|Payments)$/.test(item.group));
   const products = read.some((page) => ((page.inspect.schema || {}).items || []).some((item) => item.types.some((type) => /^(Product|Offer|AggregateOffer|Store|OnlineStore)$/.test(type))));
   const cart = read.concat(dom ? [{ inspect: { links: dom.links } }] : []).some((page) => (page.inspect.links || []).some((url) => SHOP_PATH.test(url)));
-  const shop = seller ? seller.name : products ? "product markup" : cart ? "a cart or checkout link" : "";
-  if (statement) add("Accessibility", "pass", "info", "a11y-statement", "An accessibility statement is linked", linked(statement), "", { cases: ["A11Y-06"] });
-  else if (shop) add("Accessibility", "risk", "medium", "a11y-statement", "No accessibility statement is linked",
-    "The site sells online (" + shop + "). " + none + "an accessibility statement. Since 28 June 2025 the European Accessibility Act requires one from shops that sell to consumers in the EU, unless the business is a micro-enterprise.",
-    "Publish an accessibility statement that says how the shop meets EN 301 549 (WCAG 2.1 AA), lists known gaps, and gives a contact for access problems. Link it from the footer of every page.", { effort: "hours", cases: ["A11Y-06"] });
-  else add("Accessibility", "person", "info", "a11y-statement", "Whether an accessibility statement is required needs a person",
-    none + "an accessibility statement, and the review saw no shop. The European Accessibility Act requires one from shops and from services such as banking, transport and e-books sold to consumers in the EU, and EU public-sector sites need one too.", "", { cases: ["A11Y-06"] });
+  const shop = seller ? seller.name : products ? say("a11y-statement.shop.products") : cart ? say("a11y-statement.shop.cart") : "";
+  if (statement) add("Accessibility", "pass", "info", "a11y-statement", say("a11y-statement.pass.title"), linkedMsg(statement), "", { cases: ["A11Y-06"] });
+  else if (shop) add("Accessibility", "risk", "medium", "a11y-statement", say("a11y-statement.title"),
+    say("a11y-statement.evidence", { shop, none: noneMsg(say("a11y-statement.what")) }),
+    say("a11y-statement.fix"), { effort: "hours", cases: ["A11Y-06"] });
+  else add("Accessibility", "person", "info", "a11y-statement", say("a11y-statement.person.title"),
+    say("a11y-statement.person.evidence", { none: noneMsg(say("a11y-statement.what")) }), "", { cases: ["A11Y-06"] });
 
   const privacy = at("privacy");
   if (privacy) add("Analytics", "pass", "info", "an-privacy", say("an-privacy.pass.title"), linkedMsg(privacy), "", { cases: ["PR-01"] });
@@ -615,28 +597,29 @@ function browserChecks(b, add, ctx) {
       if (raw && ctx.findings.some((item) => item.key === raw && item.verdict !== "pass")) return;
       const [verdict, severity] = AXE_SEVERITY[rule.impact] || AXE_SEVERITY.minor;
       add("Accessibility", verdict, severity, "ax-" + rule.id, rule.help,
-        "axe-core " + (axe.version || "") + " found " + plural(rule.nodes, "element") + " on " + sample(rule.pages, 3) + (rule.targets.length ? ", for example " + rule.targets.slice(0, 2).join(" and ") : "") + ". Impact: " + rule.impact + ".",
-        AXE_FIX[rule.id] || "Follow the rule guide at " + rule.helpUrl + ".", { pages: rule.pages, count: rule.nodes, effort: rule.nodes > 20 ? "hours" : "minutes", cases: AXE_CASES[rule.id] || [] });
+        say("ax.evidence", { version: axe.version, elements: say("a11y.elements", { n: rule.nodes }), pages: some(rule.pages, 3), example: rule.targets.length ? say("a11y.example", { list: { items: rule.targets.slice(0, 2), join: "and" } }) : "", impact: say("ax.impact." + rule.impact) }),
+        AXE_FIX.has(rule.id) ? say("ax-fix." + rule.id) : say("ax.guide", { url: rule.helpUrl }), { pages: rule.pages, count: rule.nodes, effort: rule.nodes > 20 ? "hours" : "minutes", cases: AXE_CASES[rule.id] || [] });
     });
     const checked = axe.pages.length;
-    if (!rules.has("color-contrast")) add("Accessibility", "pass", "info", "a11y-contrast", "Text contrast passes axe-core", "No contrast failure on " + plural(checked, "page") + ". Keyboard focus order still needs a person.", "", { cases: ["A11Y-04"] });
-    if (!rules.size) add("Accessibility", "pass", "info", "ax-clean", "axe-core found no WCAG 2.2 AA violation", plural(checked, "rendered page") + " passed every automated rule. Automated rules catch about a third of real issues.", "");
+    if (!rules.has("color-contrast")) add("Accessibility", "pass", "info", "a11y-contrast", say("a11y-contrast.pass.title"), say("a11y-contrast.pass.evidence", { pages: say("pagesN", { n: checked }) }), "", { cases: ["A11Y-04"] });
+    if (!rules.size) add("Accessibility", "pass", "info", "ax-clean", say("ax-clean.title"), say("ax-clean.evidence", { pages: say("a11y.renderedPages", { n: checked }) }), "");
   }
   const mobile = b.mobile && !b.mobile.error ? b.mobile : null;
   if (mobile) {
-    if (mobile.overflow > 2) add("Accessibility", "fail", "medium", "a11y-reflow", "The page scrolls sideways on a phone",
-      "At " + mobile.width + " px the page is " + mobile.overflow + " px wider than the screen" + (mobile.offenders.length ? ". Widest elements: " + mobile.offenders.join(", ") : "") + ".",
-      "Give wide elements max-width: 100%, let tables scroll inside their own box, and avoid fixed widths.", { effort: "hours", cases: ["MB-01", "VIS-02"] });
-    else add("Accessibility", "pass", "info", "a11y-reflow", "The page fits a " + mobile.width + " px phone screen", "No sideways scroll in a phone-sized Chromium window.", "", { cases: ["MB-01", "VIS-02"] });
+    const widest = (list) => (list || []).length ? say("a11y-reflow.widest", { list: { items: list } }) : "";
+    if (mobile.overflow > 2) add("Accessibility", "fail", "medium", "a11y-reflow", say("a11y-reflow.title"),
+      say("a11y-reflow.evidence", { width: mobile.width, overflow: mobile.overflow, widest: widest(mobile.offenders) }),
+      say("a11y-reflow.fix"), { effort: "hours", cases: ["MB-01", "VIS-02"] });
+    else add("Accessibility", "pass", "info", "a11y-reflow", say("a11y-reflow.pass.title", { width: mobile.width }), say("a11y-reflow.pass.evidence"), "", { cases: ["MB-01", "VIS-02"] });
     const tablet = b.tablet || {};
-    if (tablet.width && tablet.overflow > 2) add("Accessibility", "fail", "low", "a11y-reflow-tablet", "The page scrolls sideways on a tablet",
-      "At " + tablet.width + " px the page is " + tablet.overflow + " px wider than the screen" + ((tablet.offenders || []).length ? ". Widest elements: " + tablet.offenders.join(", ") : "") + ". Layouts often break between the phone and desktop breakpoints.",
-      "Check the breakpoints between 600 and 1024 px, and give wide elements max-width: 100%.", { effort: "hours", cases: ["MB-02", "VIS-02"] });
-    else if (tablet.width) add("Accessibility", "pass", "info", "a11y-reflow-tablet", "The page fits a " + tablet.width + " px tablet screen", "No sideways scroll at tablet width.", "", { cases: ["MB-02"] });
+    if (tablet.width && tablet.overflow > 2) add("Accessibility", "fail", "low", "a11y-reflow-tablet", say("a11y-reflow-tablet.title"),
+      say("a11y-reflow-tablet.evidence", { width: tablet.width, overflow: tablet.overflow, widest: widest(tablet.offenders) }),
+      say("a11y-reflow-tablet.fix"), { effort: "hours", cases: ["MB-02", "VIS-02"] });
+    else if (tablet.width) add("Accessibility", "pass", "info", "a11y-reflow-tablet", say("a11y-reflow-tablet.pass.title", { width: tablet.width }), say("a11y-reflow-tablet.pass.evidence"), "", { cases: ["MB-02"] });
     if (mobile.smallTargets && !(axe && axe.pages.some((page) => (page.violations || []).some((rule) => rule.id === "target-size")))) {
-      add("Accessibility", "risk", "low", "a11y-targets", plural(mobile.smallTargets, "tap target is", "tap targets are") + " too small on a phone",
-        "axe-core target-size at " + mobile.width + " px" + (mobile.targetSamples.length ? ", for example " + mobile.targetSamples.slice(0, 2).join(" and ") : "") + ".",
-        AXE_FIX["target-size"], { count: mobile.smallTargets, effort: "hours", cases: ["MB-01"] });
+      add("Accessibility", "risk", "low", "a11y-targets", say("a11y-targets.title", { n: mobile.smallTargets }),
+        say("a11y-targets.evidence", { width: mobile.width, example: mobile.targetSamples.length ? say("a11y.example", { list: { items: mobile.targetSamples.slice(0, 2), join: "and" } }) : "" }),
+        say("ax-fix.target-size"), { count: mobile.smallTargets, effort: "hours", cases: ["MB-01"] });
     }
   }
 
@@ -1649,27 +1632,28 @@ function analyze(input) {
   // Accessibility
   const altPages = read.filter((page) => (page.inspect.missingAlt || 0) > 0);
   const altCount = altPages.reduce((sum, page) => sum + page.inspect.missingAlt, 0);
-  if (altCount) add("Accessibility", "risk", "medium", "a11y-alt", plural(altCount, "image has", "images have") + " no alt attribute", "On " + sample(altPages.map((page) => page.path), 4) + ".", "Describe informative images. Give decorative ones alt=\"\".", { pages: altPages.map((page) => page.path), count: altCount, effort: "hours", cases: ["A11Y-01"] });
-  else if (read.some((page) => page.inspect.images)) add("Accessibility", "pass", "info", "a11y-alt", "Every image has an alt attribute", "No image without alt was found.", "", { cases: ["A11Y-01"] });
+  const on = (list, max) => say("a11y.on", { pages: some(list.map((page) => page.path), max) });
+  if (altCount) add("Accessibility", "risk", "medium", "a11y-alt", say("a11y-alt.title", { n: altCount }), on(altPages, 4), say("ax-fix.image-alt"), { pages: altPages.map((page) => page.path), count: altCount, effort: "hours", cases: ["A11Y-01"] });
+  else if (read.some((page) => page.inspect.images)) add("Accessibility", "pass", "info", "a11y-alt", say("a11y-alt.pass.title"), say("a11y-alt.pass.evidence"), "", { cases: ["A11Y-01"] });
   const unlabeledPages = read.filter((page) => (page.inspect.unlabeled || 0) > 0);
-  if (unlabeledPages.length) add("Accessibility", "fail", "medium", "a11y-labels", plural(unlabeledPages.reduce((sum, page) => sum + page.inspect.unlabeled, 0), "form control has", "form controls have") + " no label", "On " + sample(unlabeledPages.map((page) => page.path), 4) + ". Screen readers announce them as an unnamed field.", "Pair each control with <label for>, wrap it in a label, or add aria-label.", { pages: unlabeledPages.map((page) => page.path), effort: "minutes", cases: ["FM-01"] });
-  const LANG_NAMES = { en: "English", es: "Spanish", pt: "Portuguese", fr: "French", de: "German", it: "Italian" };
+  if (unlabeledPages.length) add("Accessibility", "fail", "medium", "a11y-labels", say("a11y-labels.title", { n: unlabeledPages.reduce((sum, page) => sum + page.inspect.unlabeled, 0) }), say("a11y-labels.evidence", { pages: some(unlabeledPages.map((page) => page.path), 4) }), say("ax-fix.label"), { pages: unlabeledPages.map((page) => page.path), effort: "minutes", cases: ["FM-01"] });
+  const LANG_NAMES = ["en", "es", "pt", "fr", "de", "it"];
   const declared = String(face.lang || "").toLowerCase().split("-")[0];
-  if (!face.lang) add("Accessibility", "fail", "medium", "a11y-lang", "The start page does not declare its language", "Screen readers pick the wrong voice and browsers offer the wrong translation.", "Set <html lang=\"…\">.", { effort: "minutes", cases: ["FN-04", "I18N-01"] });
-  else if (LANG_NAMES[declared] && LANG_NAMES[face.textLang] && face.textLang !== declared) add("Accessibility", "risk", "medium", "a11y-lang", "The declared language does not match the text",
-    "The start page declares lang=\"" + face.lang + "\" (" + LANG_NAMES[declared] + "), but its text reads as " + LANG_NAMES[face.textLang] + ". Screen readers would read it with the wrong voice.",
-    "Set <html lang=\"" + face.textLang + "\">, or the variant with the region, on pages written in " + LANG_NAMES[face.textLang] + ".", { effort: "minutes", cases: ["FN-04", "I18N-01"] });
-  else add("Accessibility", "pass", "info", "a11y-lang", "The start page declares its language", "lang=\"" + face.lang + "\".", "", { cases: ["FN-04", "I18N-01"] });
-  if (face.signals && face.signals.zoomBlocked) add("Accessibility", "fail", "medium", "a11y-zoom", "The viewport stops people from zooming", "The viewport tag sets user-scalable=no or maximum-scale=1.", "Remove user-scalable=no and maximum-scale from the viewport tag.", { effort: "minutes" });
+  if (!face.lang) add("Accessibility", "fail", "medium", "a11y-lang", say("a11y-lang.title"), say("a11y-lang.evidence"), say("a11y-lang.fix"), { effort: "minutes", cases: ["FN-04", "I18N-01"] });
+  else if (LANG_NAMES.includes(declared) && LANG_NAMES.includes(face.textLang) && face.textLang !== declared) add("Accessibility", "risk", "medium", "a11y-lang", say("a11y-lang.mismatch.title"),
+    say("a11y-lang.mismatch.evidence", { lang: face.lang, declared: say("lang." + declared), actual: say("lang." + face.textLang) }),
+    say("a11y-lang.mismatch.fix", { code: face.textLang, actual: say("lang." + face.textLang) }), { effort: "minutes", cases: ["FN-04", "I18N-01"] });
+  else add("Accessibility", "pass", "info", "a11y-lang", say("a11y-lang.pass.title"), say("a11y-lang.pass.evidence", { lang: face.lang }), "", { cases: ["FN-04", "I18N-01"] });
+  if (face.signals && face.signals.zoomBlocked) add("Accessibility", "fail", "medium", "a11y-zoom", say("a11y-zoom.title"), say("a11y-zoom.evidence"), say("a11y-zoom.fix"), { effort: "minutes" });
   const noMain = read.filter((page) => !(page.inspect.signals && page.inspect.signals.main));
-  if (noMain.length) add("Accessibility", "risk", "low", "a11y-main", plural(noMain.length, "page has", "pages have") + " no main landmark", sample(noMain.map((page) => page.path), 4) + ".", "Wrap the primary content in <main>.", { pages: noMain.map((page) => page.path), effort: "minutes", cases: ["A11Y-02"] });
+  if (noMain.length) add("Accessibility", "risk", "low", "a11y-main", say("a11y-main.title", { n: noMain.length }), say("listDot", { list: some(noMain.map((page) => page.path), 4) }), say("a11y-main.fix"), { pages: noMain.map((page) => page.path), effort: "minutes", cases: ["A11Y-02"] });
   const h1Off = read.filter((page) => (page.inspect.h1 || []).length !== 1);
-  if (h1Off.length) add("Accessibility", "risk", "low", "a11y-h1", plural(h1Off.length, "page does", "pages do") + " not have exactly one h1", sample(h1Off.map((page) => page.path + " (" + (page.inspect.h1 || []).length + ")"), 4) + ".", "Give each page one h1 that names it.", { pages: h1Off.map((page) => page.path), effort: "minutes", cases: ["FN-03"] });
+  if (h1Off.length) add("Accessibility", "risk", "low", "a11y-h1", say("a11y-h1.title", { n: h1Off.length }), say("listDot", { list: some(h1Off.map((page) => say("pathNote", { path: page.path, note: (page.inspect.h1 || []).length })), 4) }), say("a11y-h1.fix"), { pages: h1Off.map((page) => page.path), effort: "minutes", cases: ["FN-03"] });
   const frames = read.filter((page) => (page.inspect.signals && page.inspect.signals.untitledFrames) > 0);
-  if (frames.length) add("Accessibility", "risk", "low", "a11y-frames", "Embedded frames have no title", "On " + sample(frames.map((page) => page.path), 3) + ".", "Add title=\"…\" to each iframe.", { pages: frames.map((page) => page.path), effort: "minutes", cases: ["A11Y-05"] });
+  if (frames.length) add("Accessibility", "risk", "low", "a11y-frames", say("a11y-frames.title"), on(frames, 3), say("a11y-frames.fix"), { pages: frames.map((page) => page.path), effort: "minutes", cases: ["A11Y-05"] });
   const tabs = read.filter((page) => (page.inspect.signals && page.inspect.signals.positiveTabindex) > 0);
-  if (tabs.length) add("Accessibility", "risk", "low", "a11y-tabindex", "Positive tabindex reorders the keyboard path", "On " + sample(tabs.map((page) => page.path), 3) + ".", "Use tabindex=\"0\" or the natural order.", { pages: tabs.map((page) => page.path), effort: "minutes" });
-  if (!(browsed && browsed.axe && browsed.axe.ran)) add("Accessibility", "person", "info", "a11y-render", "Contrast, focus order, and screen-reader output need a rendered page", "These are measured in the browser run with axe-core and a keyboard pass.", "", { cases: ["A11Y-04"] });
+  if (tabs.length) add("Accessibility", "risk", "low", "a11y-tabindex", say("a11y-tabindex.title"), on(tabs, 3), say("a11y-tabindex.fix"), { pages: tabs.map((page) => page.path), effort: "minutes" });
+  if (!(browsed && browsed.axe && browsed.axe.ran)) add("Accessibility", "person", "info", "a11y-render", say("a11y-render.title"), say("a11y-render.evidence"), "", { cases: ["A11Y-04"] });
 
   // Performance
   const homeMs = home.ms || 0;
