@@ -15,8 +15,7 @@
     en: {
       eyebrow: "Live reports", title: "Real sites. Real reviews.", titleEm: "Open any of them.",
       lede: "<b>{n} public sites</b>, analyzed by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Turn the ring, filter by sector or country, and open a report. Reviews people request are added in a daily batch. View and share only.",
-      explore: "Explore {n} live reports", gateLine: "Real reviews of public sites, from GOV.UK to Bogotá city hall. View and share only.",
-      back: "Back", hub: "Back to Social", prev: "Previous report", next: "Next report", pause: "Pause rotation", play: "Play rotation", open: "Open report",
+      hub: "Back to Social", prev: "Previous report", next: "Next report", pause: "Pause rotation", play: "Play rotation", open: "Open report",
       carousel: "Live reports carousel", all: "All", sector: "Sector", scope: "Scope", country: "Country", focus: "Test focus",
       worldwide: "Worldwide", national: "National", regional: "Regional", local: "Local", requested: "Requested", global: "Global",
       status: "{i} of {n}: {name}, {score} out of 100, grade {grade}.", slide: "{i} of {n}: {name}",
@@ -43,8 +42,7 @@
     es: {
       eyebrow: "Informes en vivo", title: "Sitios reales. Análisis reales.", titleEm: "Abre el informe que quieras.",
       lede: "<b>{n} sitios públicos</b>, analizados con la misma revisión que cualquiera puede ejecutar: portales de gobierno, medios de noticias, bancos, universidades, proyectos de código abierto y sistemas de transporte. Recorre el carrusel, filtra por sector o país y abre un informe. Las revisiones que la gente solicita se suman en un lote diario. Solo para ver y compartir.",
-      explore: "Explorar {n} informes en vivo", gateLine: "Análisis reales de sitios públicos, desde GOV.UK hasta la Alcaldía de Bogotá. Solo para ver y compartir.",
-      back: "Volver", hub: "Volver a Social", prev: "Informe anterior", next: "Informe siguiente", pause: "Pausar el carrusel", play: "Reanudar el carrusel", open: "Abrir informe",
+      hub: "Volver a Social", prev: "Informe anterior", next: "Informe siguiente", pause: "Pausar el carrusel", play: "Reanudar el carrusel", open: "Abrir informe",
       carousel: "Carrusel de informes en vivo", all: "Todos", sector: "Sector", scope: "Alcance", country: "País", focus: "Tipo de prueba",
       worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", requested: "Solicitado", global: "Global",
       status: "{i} de {n}: {name}, {score} de 100, nota {grade}.", slide: "{i} de {n}: {name}",
@@ -71,8 +69,7 @@
     pt: {
       eyebrow: "Relatórios ao vivo", title: "Sites reais. Análises reais.", titleEm: "Abra o relatório que quiser.",
       lede: "<b>{n} sites públicos</b>, analisados pela mesma revisão que qualquer pessoa pode executar: portais de governo, veículos de imprensa, bancos, universidades, projetos de código aberto e sistemas de transporte. Percorra o carrossel, filtre por setor ou país e abra um relatório. As revisões que as pessoas solicitam entram em um lote diário. Só para ver e compartilhar.",
-      explore: "Explorar {n} relatórios ao vivo", gateLine: "Análises reais de sites públicos, do GOV.UK à Prefeitura de Bogotá. Só para ver e compartilhar.",
-      back: "Voltar", hub: "Voltar ao Social", prev: "Relatório anterior", next: "Próximo relatório", pause: "Pausar o carrossel", play: "Retomar o carrossel", open: "Abrir relatório",
+      hub: "Voltar ao Social", prev: "Relatório anterior", next: "Próximo relatório", pause: "Pausar o carrossel", play: "Retomar o carrossel", open: "Abrir relatório",
       carousel: "Carrossel de relatórios ao vivo", all: "Todos", sector: "Setor", scope: "Alcance", country: "País", focus: "Tipo de teste",
       worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", requested: "Solicitado", global: "Global",
       status: "{i} de {n}: {name}, {score} de 100, nota {grade}.", slide: "{i} de {n}: {name}",
@@ -99,8 +96,7 @@
     de: {
       eyebrow: "Live-Berichte", title: "Echte Websites. Echte Prüfungen.", titleEm: "Öffnen Sie jeden Bericht.",
       lede: "<b>{n} öffentliche Websites</b>, analysiert mit derselben Prüfung, die jeder starten kann: Regierungsportale, Redaktionen, Banken, Universitäten, Open-Source-Projekte und Verkehrsbetriebe. Blättern Sie durch das Karussell, filtern Sie nach Branche oder Land und öffnen Sie einen Bericht. Von Nutzern angefragte Prüfungen kommen täglich gesammelt hinzu. Nur ansehen und teilen.",
-      explore: "{n} Live-Berichte ansehen", gateLine: "Echte Prüfungen öffentlicher Websites, von GOV.UK bis zum Rathaus von Bogotá. Nur ansehen und teilen.",
-      back: "Zurück", hub: "Zurück zu Social", prev: "Vorheriger Bericht", next: "Nächster Bericht", pause: "Karussell anhalten", play: "Karussell fortsetzen", open: "Bericht öffnen",
+      hub: "Zurück zu Social", prev: "Vorheriger Bericht", next: "Nächster Bericht", pause: "Karussell anhalten", play: "Karussell fortsetzen", open: "Bericht öffnen",
       carousel: "Karussell der Live-Berichte", all: "Alle", sector: "Branche", scope: "Reichweite", country: "Land", focus: "Testart",
       worldwide: "Weltweit", national: "National", regional: "Regional", local: "Lokal", requested: "Angefragt", global: "Global",
       status: "{i} von {n}: {name}, {score} von 100, Note {grade}.", slide: "{i} von {n}: {name}",
@@ -127,8 +123,7 @@
     fr: {
       eyebrow: "Rapports en direct", title: "De vrais sites. De vraies analyses.", titleEm: "Ouvrez le rapport de votre choix.",
       lede: "<b>{n} sites publics</b>, analysés par le même outil que chacun peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Parcourez le carrousel, filtrez par secteur ou pays, puis ouvrez un rapport. Les analyses demandées par les visiteurs s’ajoutent chaque jour, par lot. Consultation et partage uniquement.",
-      explore: "Explorer {n} rapports en direct", gateLine: "De vraies analyses de sites publics, de GOV.UK à la mairie de Bogotá. Consultation et partage uniquement.",
-      back: "Retour", hub: "Retour à Social", prev: "Rapport précédent", next: "Rapport suivant", pause: "Mettre le carrousel en pause", play: "Relancer le carrousel", open: "Ouvrir le rapport",
+      hub: "Retour à Social", prev: "Rapport précédent", next: "Rapport suivant", pause: "Mettre le carrousel en pause", play: "Relancer le carrousel", open: "Ouvrir le rapport",
       carousel: "Carrousel des rapports en direct", all: "Tous", sector: "Secteur", scope: "Portée", country: "Pays", focus: "Type de test",
       worldwide: "Mondial", national: "National", regional: "Régional", local: "Local", requested: "Demandé", global: "Mondial",
       status: "{i} sur {n} : {name}, {score} sur 100, note {grade}.", slide: "{i} sur {n} : {name}",
@@ -155,8 +150,7 @@
     it: {
       eyebrow: "Report dal vivo", title: "Siti veri. Analisi vere.", titleEm: "Apri il report che vuoi.",
       lede: "<b>{n} siti pubblici</b>, analizzati con la stessa revisione che chiunque può avviare: portali pubblici, redazioni, banche, università, progetti open source e trasporti. Scorri il carosello, filtra per settore o paese e apri un report. Le revisioni richieste dagli utenti si aggiungono ogni giorno, in un unico lotto. Solo visualizzazione e condivisione.",
-      explore: "Esplora {n} report dal vivo", gateLine: "Analisi reali di siti pubblici, da GOV.UK al comune di Bogotá. Solo visualizzazione e condivisione.",
-      back: "Indietro", hub: "Torna a Social", prev: "Report precedente", next: "Report successivo", pause: "Metti in pausa il carosello", play: "Riprendi il carosello", open: "Apri il report",
+      hub: "Torna a Social", prev: "Report precedente", next: "Report successivo", pause: "Metti in pausa il carosello", play: "Riprendi il carosello", open: "Apri il report",
       carousel: "Carosello dei report dal vivo", all: "Tutti", sector: "Settore", scope: "Portata", country: "Paese", focus: "Tipo di test",
       worldwide: "Mondiale", national: "Nazionale", regional: "Regionale", local: "Locale", requested: "Richiesto", global: "Globale",
       status: "{i} di {n}: {name}, {score} su 100, voto {grade}.", slide: "{i} di {n}: {name}",
@@ -452,15 +446,6 @@
     section.querySelectorAll("[data-live-title], [data-live-eyebrow], [data-live-lede]").forEach((el) => {
       if (state.lang === "en") el.removeAttribute("translate"); else el.setAttribute("translate", "no");
     });
-    const back = document.getElementById("live-back");
-    if (back) { back.textContent = t("back"); if (state.lang !== "en") back.setAttribute("translate", "no"); }
-    const gateBtn = document.getElementById("live-open-gate");
-    if (gateBtn) {
-      gateBtn.textContent = t("explore", { n: state.all.length || "" }).replace(/\s+/g, " ");
-      if (state.lang !== "en") gateBtn.setAttribute("translate", "no");
-    }
-    const gateLine = document.getElementById("live-gate-copy");
-    if (gateLine) { gateLine.textContent = t("gateLine"); if (state.lang !== "en") gateLine.setAttribute("translate", "no"); }
     stage.setAttribute("aria-label", t("carousel"));
     section.querySelector(".live-prev").setAttribute("aria-label", t("prev"));
     section.querySelector(".live-next").setAttribute("aria-label", t("next"));
@@ -786,27 +771,6 @@
     motion();
   }
 
-  /* ---------- dock over the disclaimers ---------- */
-
-  function dock() {
-    section.classList.add("is-docked");
-    document.body.style.overflow = "hidden";
-    geometry();
-    lastD.clear();
-    layout();
-    section.scrollTop = 0;
-    const first = [...filtersEl.querySelectorAll("button, select")].find((el) => el.offsetParent !== null);
-    if (first) first.focus({ preventScroll: true });
-  }
-  function undock() {
-    if (!section.classList.contains("is-docked")) return;
-    section.classList.remove("is-docked");
-    document.body.style.overflow = "";
-    if (location.hash === "#live-reports") history.replaceState(history.state, "", location.pathname + location.search);
-    const gateBtn = document.getElementById("live-open-gate");
-    if (gateBtn) gateBtn.focus({ preventScroll: true });
-  }
-
   /* ---------- viewer ---------- */
 
   function buildViewer() {
@@ -851,10 +815,7 @@
       });
     });
     document.addEventListener("keydown", (event) => {
-      if (viewer.hidden) {
-        if (event.key === "Escape" && section.classList.contains("is-docked")) undock();
-        return;
-      }
+      if (viewer.hidden) return;
       const key = String(event.key || "").toLowerCase();
       if ((event.ctrlKey || event.metaKey) && ["p", "s", "c", "a", "x"].includes(key) && !(event.target.closest && event.target.closest(".lv-copybox"))) {
         event.preventDefault();
@@ -941,15 +902,6 @@
   }
   function reviewOwn() {
     closeReport();
-    undock();
-    const gate = document.getElementById("gate");
-    if (gate && !gate.hidden) {
-      const form = document.getElementById("terms-form");
-      if (form) form.scrollIntoView({ block: "start" });
-      const all = document.getElementById("terms-all");
-      if (all) all.focus({ preventScroll: true });
-      return;
-    }
     const intake = document.getElementById("intake");
     if (intake) intake.scrollIntoView({ block: "start" });
     const name = document.getElementById("name");
@@ -1206,10 +1158,6 @@
     buildViewer();
     buildShell();
     paintEmpty();
-    const gateBtn = document.getElementById("live-open-gate");
-    if (gateBtn) gateBtn.addEventListener("click", dock);
-    const back = document.getElementById("live-back");
-    if (back) back.addEventListener("click", undock);
     try {
       const res = await fetch(BASE + "index.json", { cache: "no-cache" });
       if (!res.ok) throw new Error("status " + res.status);
@@ -1226,10 +1174,7 @@
     bindCarousel();
     applyFilters();
     deepLink();
-    const gated = () => { const gate = document.getElementById("gate"); return !!gate && !gate.hidden; };
-    if (location.hash === "#live-reports" && gated()) dock();
     window.addEventListener("hashchange", () => {
-      if (location.hash === "#live-reports") { if (gated()) dock(); return; }
       const match = location.hash.match(/^#live=([\w-]+)/);
       if (match && state.all.some((r) => r.id === match[1])) openReport(match[1], null, "link");
     });

@@ -41,7 +41,7 @@ test.describe('Review page language', () => {
     await expect(page.locator('#langFlag')).toHaveAttribute('alt', /Spanish|Español/);
     await expect(page).toHaveURL(/\/qa-review-es\.html\?lang=en$/);
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
-    await expect(page.locator('#live-open-gate')).toContainText('Explorar');
+    await expect(page.locator('#stage-sample-open')).toHaveText('Ver un informe de ejemplo');
   });
 
   test.describe('with a Spanish browser and no saved choice', () => {
@@ -53,7 +53,8 @@ test.describe('Review page language', () => {
       await expect(page).toHaveURL(/\/qa-review-es\.html$/);
       await expect(page.locator('#gate-title')).toHaveText('Antes de analizar una sola dirección.');
       await expect(page.locator('#langFlagGate')).toHaveAttribute('alt', 'Español');
-      await expect(page.locator('#live-open-gate')).toContainText('Explorar');
+      await expect(page.locator('#stage-sample-open')).toHaveText('Ver un informe de ejemplo');
+      await expect(page.locator('#gate-close')).toHaveAttribute('aria-label', 'Cerrar');
     });
   });
 
