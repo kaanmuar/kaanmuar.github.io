@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.carlosandmunoz.jarvis.ui.Backdrop
 import com.carlosandmunoz.jarvis.ui.JarvisTheme
 import com.carlosandmunoz.jarvis.ui.LockScreen
 import com.carlosandmunoz.jarvis.ui.MainScreen
@@ -35,7 +36,7 @@ class MainActivity : FragmentActivity() {
         lockOn = vault.flag("lock", true) && canLock()
         setContent {
             JarvisTheme {
-                Surface(color = MaterialTheme.colorScheme.background) {
+                Backdrop {
                     val s by vm.state.collectAsStateWithLifecycle()
                     when {
                         !s.signedIn -> SignInScreen(s, vm)

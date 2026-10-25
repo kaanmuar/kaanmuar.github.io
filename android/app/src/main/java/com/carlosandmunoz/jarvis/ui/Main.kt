@@ -1,6 +1,34 @@
 package com.carlosandmunoz.jarvis.ui
 
 import android.text.format.DateUtils
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -34,14 +62,10 @@ import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -83,8 +107,9 @@ fun SignInScreen(s: UiState, vm: JarvisViewModel) {
     var email by rememberSaveable { mutableStateOf(s.email ?: "") }
     var password by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().background(J.bg).imePadding().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Ring(100.0, "JARVIS", 110)
+    Box(Modifier.fillMaxSize().imePadding().padding(20.dp), contentAlignment = Alignment.Center) {
+    Column(Modifier.fillMaxWidth().reveal().glass().padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Reactor(100.0, "JARVIS", 120.dp)
         Spacer(Modifier.height(24.dp))
         if (s.pendingCode == null) {
             Text("Sign in with the owner account", color = J.muted)
@@ -105,11 +130,14 @@ fun SignInScreen(s: UiState, vm: JarvisViewModel) {
         }
         s.authError?.let { Spacer(Modifier.height(8.dp)); Text(it, color = J.pink) }
     }
+    }
 }
 
 @Composable
 fun LockScreen(unlock: () -> Unit) {
-    Column(Modifier.fillMaxSize().background(J.bg), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        Reactor(100.0, "LOCKED", 120.dp)
+        Spacer(Modifier.height(12.dp))
         Icon(Icons.Filled.Lock, null, tint = J.cyan)
         Spacer(Modifier.height(12.dp))
         Text("Jarvis is locked")
@@ -128,57 +156,94 @@ fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (Boole
     var page by rememberSaveable { mutableStateOf("") }
     val snack = remember { SnackbarHostState() }
     LaunchedEffect(s.toast) { s.toast?.let { snack.showSnackbar(it); vm.toastShown() } }
+    if (page.isNotEmpty()) BackHandler { page = "" }
 
-    when (page) {
-        "ask" -> { BackHandler { page = "" }; AskScreen(s, vm) { page = "" }; return }
-        "settings" -> { BackHandler { page = "" }; SettingsScreen(s, vm, lockOn, setLock) { page = "" }; return }
-    }
-
-    Scaffold(
-        containerColor = J.bg,
-        snackbarHost = { SnackbarHost(snack) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("JARVIS", fontFamily = Mono, letterSpacing = 3.sp, color = J.cyan)
-                        Text(when {
-                            s.loading -> "Updating…"
-                            s.savedAt > 0 -> (if (s.error != null) "Offline · " else "") + "updated " + DateUtils.getRelativeTimeSpanString(s.savedAt)
-                            else -> "No data yet"
-                        }, fontSize = 11.sp, color = if (s.error != null) J.amber else J.muted)
+    AnimatedContent(page, transitionSpec = {
+        val forward = targetState.isNotEmpty()
+        (fadeIn(tween(320)) + slideInHorizontally(tween(420, easing = FastOutSlowInEasing)) { if (forward) it / 3 else -it / 3 } + scaleIn(tween(420), 0.94f)) togetherWith
+            (fadeOut(tween(220)) + slideOutHorizontally(tween(420, easing = FastOutSlowInEasing)) { if (forward) -it / 4 else it / 4 } + scaleOut(tween(420), 0.96f))
+    }, label = "page") { shown ->
+        when (shown) {
+            "ask" -> AskScreen(s, vm) { page = "" }
+            "settings" -> SettingsScreen(s, vm, lockOn, setLock) { page = "" }
+            else -> Scaffold(
+                containerColor = Color.Transparent,
+                snackbarHost = { SnackbarHost(snack) },
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Column {
+                                Text("JARVIS", fontFamily = Mono, letterSpacing = 5.sp, color = J.cyan, fontWeight = FontWeight.Bold,
+                                    style = LocalTextStyle.current.copy(shadow = Shadow(J.cyan, blurRadius = 18f)))
+                                Text(when {
+                                    s.loading -> "Updating…"
+                                    s.savedAt > 0 -> (if (s.error != null) "Offline · " else "") + "updated " + DateUtils.getRelativeTimeSpanString(s.savedAt)
+                                    else -> "No data yet"
+                                }, fontSize = 11.sp, fontFamily = Mono, color = if (s.error != null) J.amber else J.muted)
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = { page = "ask" }, modifier = Modifier.tilt()) { Icon(Icons.Filled.Forum, "Ask Jarvis", tint = J.cyan) }
+                            IconButton(onClick = { page = "settings" }, modifier = Modifier.tilt()) { Icon(Icons.Filled.Settings, "Settings", tint = J.muted) }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                        modifier = Modifier.topFade()
+                    )
+                },
+                bottomBar = { Dock(tab) { tab = it } }
+            ) { pad ->
+                PullToRefreshBox(isRefreshing = s.loading, onRefresh = vm::refresh, modifier = Modifier.padding(pad).fillMaxSize()) {
+                    AnimatedContent(tab, transitionSpec = {
+                        val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
+                        (fadeIn(tween(300)) + slideInHorizontally(tween(450, easing = FastOutSlowInEasing)) { dir * it / 5 } + scaleIn(tween(450), 0.96f)) togetherWith
+                            (fadeOut(tween(200)) + slideOutHorizontally(tween(450, easing = FastOutSlowInEasing)) { -dir * it / 6 } + scaleOut(tween(450), 0.97f))
+                    }, label = "tab") { shownTab ->
+                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                            Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                RANGES.forEach { (d, label) -> GlassChip(label, s.days == d) { vm.setDays(d) } }
+                            }
+                            s.error?.let { e -> Panel("Could not refresh") { Text(e, color = J.amber, fontSize = 13.sp); if (s.snapshot != null) Muted("Showing the last saved numbers.") } }
+                            if (s.snapshot == null && s.loading) Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) { Reactor(null, "LOADING"); Spacer(Modifier.height(12.dp)); Muted("Jarvis is gathering every number. The first load takes up to a minute.") }
+                            }
+                            if (s.snapshot != null) when (shownTab) {
+                                Tab.Overview -> OverviewScreen(s, vm) { product = it; tab = Tab.Products }
+                                Tab.Products -> ProductsScreen(s, vm, product) { product = it }
+                                Tab.Business -> BusinessScreen(s)
+                                Tab.Traffic -> TrafficScreen(s)
+                                Tab.Systems -> SystemsScreen(s, vm)
+                            }
+                            Spacer(Modifier.height(24.dp))
+                        }
                     }
-                },
-                actions = {
-                    IconButton(onClick = { page = "ask" }) { Icon(Icons.Filled.Forum, "Ask Jarvis") }
-                    IconButton(onClick = { page = "settings" }) { Icon(Icons.Filled.Settings, "Settings") }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = J.bg)
-            )
-        },
-        bottomBar = {
-            NavigationBar(containerColor = J.bg) {
-                Tab.entries.forEach { t -> NavigationBarItem(selected = tab == t, onClick = { tab = t }, icon = { Icon(ICONS.getValue(t), null) }, label = { Text(t.label, fontSize = 10.sp) }) }
+                }
             }
         }
-    ) { pad ->
-        PullToRefreshBox(isRefreshing = s.loading, onRefresh = vm::refresh, modifier = Modifier.padding(pad).fillMaxSize()) {
-            Column(Modifier.fillMaxSize().verticalScroll(key(tab) { rememberScrollState() })) {
-                Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    RANGES.forEach { (d, label) -> FilterChip(selected = s.days == d, onClick = { vm.setDays(d) }, label = { Text(label) }) }
+    }
+}
+
+/** Floating glass dock; a lit plate slides under the picked tab. */
+@Composable
+private fun Dock(tab: Tab, pick: (Tab) -> Unit) {
+    val n = Tab.entries.size
+    val at by animateFloatAsState(tab.ordinal.toFloat(), spring(0.7f, Spring.StiffnessMediumLow), label = "dock")
+    Box(Modifier.navigationBarsPadding().padding(horizontal = 14.dp, vertical = 10.dp).fillMaxWidth().height(64.dp).glass(radius = 20.dp, brackets = false, glow = 1.4f)) {
+        Box(Modifier.fillMaxSize().drawBehind {
+            val w = size.width / n; val pad = 6.dp.toPx()
+            val x = at * w + pad
+            drawRoundRect(Brush.verticalGradient(listOf(J.cyan.copy(alpha = 0.28f), J.cyan.copy(alpha = 0.06f))), Offset(x, pad), Size(w - 2 * pad, size.height - 2 * pad), CornerRadius(14.dp.toPx()))
+            drawRoundRect(J.cyan.copy(alpha = 0.7f), Offset(x, pad), Size(w - 2 * pad, size.height - 2 * pad), CornerRadius(14.dp.toPx()), style = Stroke(1.dp.toPx()))
+            drawRoundRect(J.cyan, Offset(x + (w - 2 * pad) / 2 - 12.dp.toPx(), pad), Size(24.dp.toPx(), 2.dp.toPx()), CornerRadius(2f))
+        })
+        Row(Modifier.fillMaxSize()) {
+            Tab.entries.forEach { t ->
+                val on = t == tab
+                val lift by animateFloatAsState(if (on) 1f else 0f, spring(0.5f, Spring.StiffnessLow), label = "lift")
+                Column(Modifier.weight(1f).fillMaxSize().clickable(remember { MutableInteractionSource() }, null) { pick(t) }.graphicsLayer { translationY = -3.dp.toPx() * lift; scaleX = 1f + 0.12f * lift; scaleY = 1f + 0.12f * lift },
+                    verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(ICONS.getValue(t), null, tint = if (on) J.cyan else J.muted, modifier = Modifier.size(22.dp))
+                    Text(t.label, fontSize = 10.sp, fontFamily = Mono, color = if (on) J.text else J.dim)
                 }
-                s.error?.let { e -> Panel("Could not refresh") { Text(e, color = J.amber, fontSize = 13.sp); if (s.snapshot != null) Muted("Showing the last saved numbers.") } }
-                if (s.snapshot == null && s.loading) Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) { CircularProgressIndicator(); Spacer(Modifier.height(8.dp)); Muted("Jarvis is gathering every number. The first load takes up to a minute.") }
-                }
-                if (s.snapshot != null) when (tab) {
-                    Tab.Overview -> OverviewScreen(s, vm) { product = it; tab = Tab.Products }
-                    Tab.Products -> ProductsScreen(s, vm, product) { product = it }
-                    Tab.Business -> BusinessScreen(s)
-                    Tab.Traffic -> TrafficScreen(s)
-                    Tab.Systems -> SystemsScreen(s, vm)
-                }
-                Spacer(Modifier.height(24.dp))
             }
         }
     }
@@ -190,9 +255,9 @@ fun AskScreen(s: UiState, vm: JarvisViewModel, back: () -> Unit) {
     var q by rememberSaveable { mutableStateOf("") }
     val list = rememberLazyListState()
     LaunchedEffect(s.chat.size, s.chat.lastOrNull()?.answer) { if (s.chat.isNotEmpty()) list.animateScrollToItem(s.chat.size - 1) }
-    Scaffold(containerColor = J.bg, topBar = {
-        TopAppBar(title = { Text("Ask Jarvis") }, navigationIcon = { IconButton(onClick = back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = J.bg))
+    Scaffold(containerColor = Color.Transparent, topBar = {
+        TopAppBar(modifier = Modifier.topFade(), title = { Text("Ask Jarvis") }, navigationIcon = { IconButton(onClick = back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent))
     }) { pad ->
         Column(Modifier.padding(pad).fillMaxSize().imePadding()) {
             LazyColumn(Modifier.weight(1f), state = list) {
@@ -204,7 +269,7 @@ fun AskScreen(s: UiState, vm: JarvisViewModel, back: () -> Unit) {
                 }
                 items(s.chat) { c ->
                     Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                        Text(c.question, color = J.cyan, modifier = Modifier.background(J.panel, RoundedCornerShape(10.dp)).padding(10.dp))
+                        Text(c.question, color = J.cyan, modifier = Modifier.reveal().glass(brackets = false, radius = 10.dp).padding(12.dp))
                         Spacer(Modifier.height(6.dp))
                         if (c.answer == null) Muted("Thinking…") else Text(c.answer, color = if (c.error) J.pink else J.text, fontSize = 14.sp)
                     }
@@ -224,9 +289,9 @@ fun AskScreen(s: UiState, vm: JarvisViewModel, back: () -> Unit) {
 fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (Boolean) -> Unit, back: () -> Unit) {
     val settings = s.snapshot.obj("settings")
     var mail by remember(settings) { mutableStateOf(listOf("daily", "gemini", "watch").associateWith { settings.obj("mail").bool(it) ?: false }) }
-    Scaffold(containerColor = J.bg, topBar = {
-        TopAppBar(title = { Text("Settings") }, navigationIcon = { IconButton(onClick = back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = J.bg))
+    Scaffold(containerColor = Color.Transparent, topBar = {
+        TopAppBar(modifier = Modifier.topFade(), title = { Text("Settings") }, navigationIcon = { IconButton(onClick = back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent))
     }) { pad ->
         Column(Modifier.padding(pad).verticalScroll(rememberScrollState())) {
             Panel("Account") {
