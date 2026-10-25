@@ -142,6 +142,46 @@ test.describe("scoring", () => {
     assert.equal(rows[2].lcp, true);
   });
 
+  test("external links are collected from the HTML and classified by their answer", () => {
+    const html = "<a href=\"https://other.org/a#x\">a</a><a href=\"http://plain.net/\">b</a><a href=\"/about\">c</a><a href=\"https://shop.example.com/x\">d</a><a href=\"mailto:a@b.c\">e</a><a href=\"https://localhost/\">f</a>";
+    assert.deepEqual(core.analyzeHtml(html, { "content-type": "text/html" }, URL_).outbound, ["https://other.org/a", "http://plain.net/"]);
+    assert.equal(core.siteKey("consent.youtube.com"), core.siteKey("www.youtube.com"));
+    assert.equal(core.siteKey("www.shop.example.co.uk"), "example.co.uk");
+    const kind = (url, row) => core.outboundKind(url, row);
+    assert.equal(kind("https://a.org/x", { status: 200, final: "https://www.a.org/x/" }), "ok");
+    assert.equal(kind("https://youtube.com/watch?v=1", { status: 200, final: "https://consent.youtube.com/m?continue=1" }), "ok");
+    assert.equal(kind("https://bit.ly/abc", { status: 200, final: "https://elsewhere.com/page" }), "ok");
+    assert.equal(kind("https://a.org/old", { status: 200, final: "https://a.org/" }), "moved");
+    assert.equal(kind("https://a.org/x", { status: 200, final: "https://parked.example/" }), "moved");
+    assert.equal(kind("https://a.org/x", { status: 404, final: "https://a.org/x" }), "broken");
+    assert.equal(kind("https://a.org/x", { error: "a host name that does not resolve" }), "broken");
+    assert.equal(kind("https://linkedin.com/in/x", { status: 999, final: "https://linkedin.com/in/x" }), "blocked");
+  });
+
+  test("external link findings: broken is a medium risk, blocked is not scored, http links are listed", () => {
+    const page = { url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect: core.analyzeHtml(HTML, STRONG_HEADERS, URL_) };
+    const run = (outbound) => {
+      const findings = insights.analyze({ pages: [page], robotsText: "", extras: { outbound } }).findings;
+      return (key) => findings.find((item) => item.key === key);
+    };
+    assert.equal(run(null)("seo-external-links"), undefined);
+    const clean = run({ found: 3, checked: 3, ok: 3, rows: [], http: [], httpCount: 0 });
+    assert.equal(clean("seo-external-links").verdict, "pass");
+    assert.equal(clean("seo-external-http"), undefined);
+    const bad = run({ found: 50, checked: 40, ok: 36, httpCount: 1, http: [{ url: "http://plain.net/", from: ["/"] }], rows: [
+      { url: "https://gone.org/x", status: 404, kind: "broken", from: ["/", "/about"] },
+      { url: "https://dead.example/", error: "a host name that does not resolve", kind: "broken", from: ["/"] },
+      { url: "https://a.org/old", status: 200, final: "https://a.org/", kind: "moved", from: ["/"] },
+      { url: "https://linkedin.com/in/x", status: 999, kind: "blocked", from: ["/"] }
+    ] });
+    assert.deepEqual([bad("seo-external-links").verdict, bad("seo-external-links").severity], ["risk", "medium"]);
+    assert.match(bad("seo-external-links").evidence, /^https:\/\/gone\.org\/x answered 404, linked from \/, \/about\. https:\/\/dead\.example\/ gave a host name that does not resolve, linked from \/\. 40 external addresses were checked of 50 found\.$/);
+    assert.deepEqual(bad("seo-external-links").pages, ["/", "/about"]);
+    assert.deepEqual([bad("seo-external-moved").verdict, bad("seo-external-moved").severity], ["risk", "low"]);
+    assert.equal(bad("seo-external-blocked").verdict, "person");
+    assert.deepEqual([bad("seo-external-http").verdict, bad("seo-external-http").title], ["risk", "1 external link uses plain http"]);
+  });
+
   test("X-Frame-Options ALLOW-FROM without frame-ancestors leaves the page open to framing", () => {
     const result = analyzeOne({ "content-type": "text/html", "x-frame-options": "ALLOW-FROM https://www.gather.town" });
     const found = result.findings.find((item) => item.key === "sec-frame");
