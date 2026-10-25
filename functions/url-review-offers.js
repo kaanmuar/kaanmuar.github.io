@@ -310,6 +310,22 @@ function reportPayment(run, payment) {
   return row;
 }
 
+function returnCoupon(note, now) {
+  const at = now || Date.now();
+  return {
+    percent: Math.max(10, Number(note && note.percent) || 10),
+    purposes: ["report", "new-run"],
+    reportId: (note && note.reportId) || "",
+    email: note && note.email,
+    maxUses: 1,
+    uses: 0,
+    source: "return-note",
+    validUntil: new Date(at + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date(at).toISOString(),
+    expireAt: new Date(at + core.RETAIN_MS)
+  };
+}
+
 // `freeAccount` is true for a free-run address (FREE_RUN_EMAILS or url_review_free_runs); every run it owns opens.
 function accountFile(records, email, now, options) {
   const address = String(email || "").trim().toLowerCase();
@@ -337,6 +353,7 @@ function accountFile(records, email, now, options) {
 
 module.exports = {
   reportPayment,
+  returnCoupon,
   RETURN_TABLE,
   MONTHLY_PLANS,
   returnPercent,
