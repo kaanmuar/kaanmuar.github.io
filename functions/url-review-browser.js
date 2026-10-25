@@ -346,7 +346,7 @@ function recorder(pageHttps, readLibraries) {
 const VITALS = `(() => {
   const v = window.__qaVitals = { lcp: 0, cls: 0, tbt: 0, fcp: 0, scripts: {} };
   const watch = (type, fn) => { try { new PerformanceObserver((list) => list.getEntries().forEach(fn)).observe({ type, buffered: true }); } catch (e) {} };
-  watch("largest-contentful-paint", (e) => { v.lcp = Math.round(e.renderTime || e.loadTime || e.startTime); });
+  watch("largest-contentful-paint", (e) => { v.lcp = Math.round(e.renderTime || e.loadTime || e.startTime); v.lcpUrl = e.url || ""; });
   watch("layout-shift", (e) => { if (!e.hadRecentInput) v.cls += e.value; });
   watch("longtask", (e) => { v.tbt += Math.max(0, Math.round(e.duration - 50)); });
   watch("paint", (e) => { if (e.name === "first-contentful-paint") v.fcp = Math.round(e.startTime); });
@@ -628,6 +628,36 @@ async function rendered(page) {
     text: document.body ? document.body.innerText || "" : "",
     h1: Array.from(document.querySelectorAll("h1")).map((node) => (node.innerText || "").trim()).filter(Boolean).slice(0, 3)
   }));
+}
+
+function imageLog(cdp) {
+  const ids = new Map();
+  const byUrl = new Map();
+  cdp.on("Network.responseReceived", (event) => {
+    if (event.type === "Image" && byUrl.size < 300) ids.set(event.requestId, { url: event.response.url, mime: String(event.response.mimeType || "") });
+  });
+  cdp.on("Network.loadingFinished", (event) => {
+    const row = ids.get(event.requestId);
+    if (!row) return;
+    byUrl.set(row.url, { mime: row.mime, bytes: Math.round(event.encodedDataLength || 0) });
+    ids.delete(event.requestId);
+  });
+  return byUrl;
+}
+
+function imageProbe() {
+  return Array.from(document.images).slice(0, 200).map((img) => {
+    const r = img.getBoundingClientRect();
+    return { src: img.currentSrc || img.src, nw: img.naturalWidth, nh: img.naturalHeight, w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top + window.scrollY), lazy: img.loading === "lazy", fold: window.innerHeight };
+  }).filter((row) => /^https?:/.test(row.src) && row.w > 0 && row.h > 0);
+}
+
+// Keeps only the rows an image check can use, so the stored browser result stays small.
+function imageRows(probe, log, lcpUrl) {
+  return (probe || []).map((row) => {
+    const seen = (log && log.get(row.src)) || {};
+    return { src: trim(row.src, 200), nw: row.nw, nh: row.nh, w: row.w, h: row.h, top: row.top, fold: row.fold, lazy: row.lazy, bytes: seen.bytes || 0, mime: seen.mime || "", lcp: !!lcpUrl && row.src === lcpUrl };
+  }).filter((row) => row.lcp || row.bytes >= 30720 || (row.top > row.fold && !row.lazy)).slice(0, 40);
 }
 
 // The headless shell never restores a page (BackForwardCacheDisabledForDelegate), but Chromium still names the
@@ -1415,7 +1445,7 @@ async function browse(job, log, onStart) {
     say(result.engine + " is up. Loading " + pathOf(start) + " at 1280×800 with no stored cookies." + (passive ? " This is a competitor run: nothing is typed into the site and its chat is not opened." : ""));
 
     // Cold visit on a desktop width: no stored choice, nothing clicked.
-    let coldContext, rec, page, first;
+    let coldContext, rec, page, first, images;
     const visit = async () => {
       coldContext = await browser.createBrowserContext();
       rec = recorder(true, true);
@@ -1424,6 +1454,7 @@ async function browse(job, log, onStart) {
         const cdp = await page.createCDPSession();
         cdp.on("Network.requestWillBeSent", (event) => rec.wire(event.requestId, event.request.url));
         cdp.on("Network.loadingFinished", (event) => rec.done(event.requestId, event.encodedDataLength));
+        images = imageLog(cdp);
         await cdp.send("Network.enable");
       } catch (error) { /* chat and page bytes stay at zero */ }
       await page.evaluateOnNewDocument(VITALS);
@@ -1471,6 +1502,7 @@ async function browse(job, log, onStart) {
       bytes: rec.state.bytes,
       dom
     };
+    try { result.start.images = imageRows(await page.evaluate(imageProbe), images, vitals.lcpUrl); } catch (error) { /* the image checks stay unscored */ }
     // The crawl of a start page that is an empty shell waits for these links, not for axe-core and the phone.
     if (typeof onStart === "function") {
       try { onStart({ finalPath: result.start.finalPath, status: first.status, dom: { links: (dom && dom.links) || [] } }); } catch (error) { /* a closed stream must not stop the pass */ }
@@ -1681,14 +1713,22 @@ async function browse(job, log, onStart) {
       const pageRec = recorder(true);
       const other = await prepare(context, ua, pageRec, { width: 1280, height: 800 }, acceptLanguage);
       try {
-        const { got, seen, axe } = await withinBudget((async () => {
+        const { got, seen, axe, imgs } = await withinBudget((async () => {
+          let log = null;
+          try {
+            const cdp = await other.createCDPSession();
+            log = imageLog(cdp);
+            await cdp.send("Network.enable");
+          } catch (error) { log = null; }
           const got = await open(other, url);
           const seen = await rendered(other);
-          return { got, seen, axe: left() > 15000 ? await runAxe(other) : { ran: false, violations: [] } };
+          let imgs = [];
+          try { imgs = imageRows(await other.evaluate(imageProbe), log, ""); } catch (error) { imgs = []; }
+          return { got, seen, imgs, axe: left() > 15000 ? await runAxe(other) : { ran: false, violations: [] } };
         })(), left(), "Opening " + pathOf(url));
         const rw = words(seen.text);
         const hw = words(htmlText(got.raw));
-        result.pages.push({ path: pathOf(got.finalUrl), status: got.status, renderedWords: rw, rawWords: hw, share: rw ? Math.min(100, Math.round((hw / rw) * 100)) : 100, errors: pageRec.state.errorCount });
+        result.pages.push({ path: pathOf(got.finalUrl), status: got.status, renderedWords: rw, rawWords: hw, share: rw ? Math.min(100, Math.round((hw / rw) * 100)) : 100, errors: pageRec.state.errorCount, images: imgs });
         if (result.axe && axe.ran) result.axe.pages.push({ path: pathOf(got.finalUrl), violations: axe.violations });
         say(pathOf(got.finalUrl) + " answered " + got.status + ": " + rw + " rendered words, " + pageRec.state.errorCount + " console errors, " + (axe.ran ? axe.violations.length + " axe-core rules broken." : "axe-core not run."));
       } catch (error) {
@@ -1707,4 +1747,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, backForward, open, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, backForward, imageRows, open, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };

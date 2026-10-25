@@ -204,6 +204,30 @@ function framesGuarded(xfo) {
   return !!xfo && !/allow-from/i.test(xfo);
 }
 
+const IMAGE_MIN = 30720;
+const OLD_IMAGE = /^image\/(jpeg|png|gif)$/i;
+
+function imageName(src) {
+  let name = String(src || "");
+  try { name = decodeURIComponent(new URL(name).pathname.split("/").filter(Boolean).pop() || name); } catch (error) { /* keep the raw address */ }
+  return name.length > 40 ? name.slice(0, 39) + "…" : name;
+}
+
+function kbOf(bytes) {
+  return Math.round((bytes || 0) / 1024) + " KB";
+}
+
+// One row per image address across the browsed pages, with every page it was seen on.
+function browsedImages(browsed) {
+  const seen = new Map();
+  const lists = [[(browsed.start && browsed.start.finalPath) || "/", browsed.start && browsed.start.images]].concat((browsed.pages || []).map((page) => [page.path, page.images]));
+  lists.forEach(([path, rows]) => (rows || []).forEach((row) => {
+    if (seen.has(row.src)) seen.get(row.src).pages.push(path);
+    else seen.set(row.src, Object.assign({ pages: [path] }, row));
+  }));
+  return [...seen.values()];
+}
+
 const COOP_GUARDED = ["same-origin", "same-origin-allow-popups", "noopener-allow-popups"];
 const ISOLATING_COEP = ["require-corp", "credentialless"];
 
@@ -1472,6 +1496,38 @@ function analyze(input) {
   if (blocking > 2) add("Performance", "risk", "low", "pf-blocking", plural(blocking, "script blocks", "scripts block") + " the first paint", "They sit in <head> without async or defer.", "Add defer to scripts that do not need to run before the page shows.", { count: blocking, effort: "minutes", cases: ["PF-02"] });
   const noSize = face.signals ? face.signals.imgNoSize || 0 : 0;
   if (noSize > 3) add("Performance", "risk", "low", "pf-cls", plural(noSize, "image has", "images have") + " no width or height", "The layout jumps when they load, which hurts Cumulative Layout Shift.", "Set width and height (or aspect-ratio) on images.", { count: noSize, effort: "hours", cases: ["VIS-01"] });
+  if (browsed && browsed.start && Array.isArray(browsed.start.images)) {
+    const imgs = browsedImages(browsed);
+    const imgPages = (list) => [...new Set([].concat.apply([], list.map((row) => row.pages)))];
+    const where = (row) => imageName(row.src) + " on " + row.pages[0];
+    const checked = "Images of 30 KB or more on " + plural(imgPages(imgs).length || 1, "page") + " browsed";
+    const oversized = imgs.filter((row) => row.bytes >= IMAGE_MIN && row.nw > 2 * row.w)
+      .map((row) => Object.assign({ save: Math.round(row.bytes * Math.max(0, 1 - (4 * row.w * row.h) / ((row.nw * row.nh) || 1))) }, row))
+      .sort((a, b) => b.save - a.save);
+    const sizeSave = oversized.reduce((sum, row) => sum + row.save, 0);
+    if (oversized.length) add("Performance", "risk", sizeSave > 512000 ? "medium" : "low", "pf-img-size", plural(oversized.length, "image is", "images are") + " more than twice the size shown",
+      sample(oversized.map((row) => where(row) + " (" + row.nw + "×" + row.nh + " shown at " + row.w + "×" + row.h + ", " + kbOf(row.bytes) + ", about " + kbOf(row.save) + " to save)"), 4) + ". About " + kbOf(sizeSave) + " could be saved, keeping a 2× copy for sharp screens.",
+      "Resize images to at most twice the width they are shown at, and give phones smaller files with srcset and sizes.", { pages: imgPages(oversized), count: oversized.length, effort: "hours" });
+    else add("Performance", "pass", "info", "pf-img-size", "Images are no more than twice the size shown", checked + " are within twice their displayed size.", "");
+    const oldFormat = imgs.filter((row) => row.bytes >= IMAGE_MIN && OLD_IMAGE.test(row.mime))
+      .map((row) => Object.assign({ save: Math.round(row.bytes * 0.3) }, row))
+      .sort((a, b) => b.save - a.save);
+    const formatSave = oldFormat.reduce((sum, row) => sum + row.save, 0);
+    if (oldFormat.length) add("Performance", "risk", formatSave > 512000 ? "medium" : "low", "pf-img-format", plural(oldFormat.length, "image is", "images are") + " not served as WebP or AVIF",
+      sample(oldFormat.map((row) => where(row) + " (" + row.mime.replace(/^image\//i, "").toUpperCase() + ", " + kbOf(row.bytes) + ")"), 4) + ". WebP is about 30% smaller at the same quality, so about " + kbOf(formatSave) + " could be saved.",
+      "Serve WebP or AVIF through the CDN or image service, or with <picture> and a JPEG or PNG fallback.", { pages: imgPages(oldFormat), count: oldFormat.length, effort: "hours" });
+    else add("Performance", "pass", "info", "pf-img-format", "Large images are served as WebP, AVIF or SVG", checked + " use a modern format.", "");
+    const lcpLazy = imgs.find((row) => row.lcp && row.lazy);
+    const eager = imgs.filter((row) => row.top > row.fold && !row.lazy);
+    const eagerText = plural(eager.length, "image below the first screen loads", "images below the first screen load") + " straight away";
+    if (lcpLazy) add("Performance", "risk", "medium", "pf-img-lazy", "The main image waits for lazy loading",
+      where(lcpLazy) + " is the largest paint of the page and has loading=lazy, so the browser fetches it late." + (eager.length > 3 ? " " + eagerText + "." : ""),
+      "Remove loading=lazy from the main image and add fetchpriority=\"high\"." + (eager.length > 3 ? " Add loading=\"lazy\" to images below the first screen." : ""), { pages: lcpLazy.pages, effort: "minutes" });
+    else if (eager.length > 3) add("Performance", "risk", "low", "pf-img-lazy", eagerText,
+      sample(eager.map(where), 4) + ". They compete with the first screen for bandwidth.",
+      "Add loading=\"lazy\" to images below the first screen, and keep it off the main image.", { pages: imgPages(eager), count: eager.length, effort: "minutes" });
+    else add("Performance", "pass", "info", "pf-img-lazy", "Images below the first screen wait until they are needed", (eager.length ? eagerText + ", within the limit of 3." : "No image below the first screen loads straight away.") + " The main image is not lazy-loaded.", "");
+  }
   const back = browsed && browsed.backForward;
   if (back && back.ran) {
     const blockers = (back.reasons || []).filter((row) => row.type === "PageSupportNeeded").map((row) => bfcacheBlocker(row.reason));
