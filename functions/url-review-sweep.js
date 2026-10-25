@@ -23,6 +23,9 @@ const KEEP_DAYS = 14;
 const FAILS_KEPT = 30;
 const PER_COUNTRY = 150;
 const GLOBAL_RANK = 5000;
+// Outreach prospects (Firestore url_review_sweep/outreach, filled by scripts/sweep-outreach.js) go before the
+// country lap, at most this many a night, so the lap still gets the rest of the cap.
+const OUTREACH_PER_DAY = 48;
 
 // Markets of the six site languages come round twice per lap.
 const TIER1 = [
@@ -115,13 +118,29 @@ function nextSlot(state, countries) {
   return { cc, at, state: Object.assign({}, prev, { lap, pos: pos + 1, cursor }) };
 }
 
+// The next outreach prospect and the moved-on state, or null once the list is done or tonight's share is used.
+// The list only grows (the script appends), so a cursor is enough to never review a prospect twice.
+function nextOutreach(state, list, day) {
+  const prev = state || {};
+  const rows = Array.isArray(list) ? list : [];
+  const at = Number(prev.outreachAt) || 0;
+  const today = (prev.days || {})[day] || {};
+  if (at >= rows.length || (today.outreach || 0) >= OUTREACH_PER_DAY) return null;
+  const row = rows[at] || {};
+  const target = { host: String(row.host || ""), cc: String(row.cc || "").toLowerCase(), month: "", rank: 0, outreach: true, sector: String(row.sector || "") };
+  return { target, state: Object.assign({}, prev, { outreachAt: at + 1 }) };
+}
+
 // The intake intakeRecord prices and stores; a run is priced per framework, so it names the default one.
 function intake(target) {
+  const where = String(target.cc || "").toUpperCase();
   return {
     url: "https://" + target.host + "/",
-    name: "Country sweep",
+    name: target.outreach ? "Outreach sweep" : "Country sweep",
     email: "",
-    reason: "Country sweep: one of the most visited sites in " + target.cc.toUpperCase() + " (CrUX " + target.month + ")",
+    reason: target.outreach
+      ? "Outreach sweep: a " + (target.sector || "prospect") + " site in " + where
+      : "Country sweep: one of the most visited sites in " + where + " (CrUX " + target.month + ")",
     reasonCode: "sweep",
     frameworks: ["Playwright"],
     lang: langOf(target.cc)
@@ -138,6 +157,7 @@ function tally(state, day, outcome, last) {
   const days = Object.assign({}, (state || {}).days);
   const today = Object.assign({ done: 0, failed: 0, skipped: 0 }, days[day]);
   today[outcome] = (today[outcome] || 0) + 1;
+  if (last && last.outreach && outcome !== "skipped") today.outreach = (today.outreach || 0) + 1;
   if (outcome === "failed") {
     const row = last || {};
     today.failures = (today.failures || []).concat({ host: row.host || "", cc: row.cc || "", at: row.at || "", reason: String(row.reason || "").slice(0, 160) }).slice(-FAILS_KEPT);
@@ -168,4 +188,4 @@ function totals(state, sinceDay) {
   return out;
 }
 
-module.exports = { PER_DAY, PER_TICK, REVIEW_MS, TICK_MS, TICK_SECONDS, roomForReview, night, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, TIER1, BLOCKED, langOf, suffixRegistrable, seedHosts, lapOrder, nextSlot, intake, doneOn, tally, totals };
+module.exports = { PER_DAY, PER_TICK, REVIEW_MS, TICK_MS, TICK_SECONDS, roomForReview, night, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, OUTREACH_PER_DAY, TIER1, BLOCKED, RESERVED, langOf, hostOf, suffixRegistrable, seedHosts, lapOrder, nextSlot, nextOutreach, intake, doneOn, tally, totals };

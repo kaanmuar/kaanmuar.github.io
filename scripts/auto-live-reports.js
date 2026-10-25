@@ -235,7 +235,7 @@ async function main() {
   for (const { report, source } of payload.reports || []) {
     const host = bare(report.host);
     if (curated.has(host) || gone(host)) continue;
-    const swept = source === "sweep" || source === "rivals";
+    const swept = source === "sweep" || source === "rivals" || source === "outreach";
     const scope = swept ? "National" : "Requested";
     const copy = copyFor(report, state.recent || []);
     const country = countryOf(host);
@@ -248,7 +248,7 @@ async function main() {
     added += 1;
     const last = (state.posted || {})[host];
     if (last && (Date.parse(today) - Date.parse(last)) / 864e5 < POST_EVERY_DAYS) continue;
-    if (source === "rivals") continue;
+    if (source === "rivals" || source === "outreach") continue;
     if (swept && sweepPosts >= SWEEP_POSTS_PER_BATCH) continue;
     if (swept) sweepPosts += 1;
     const score = report.insights.score;
@@ -266,7 +266,7 @@ async function main() {
     const key = "vs:" + host;
     const id = "u-" + host.replace(/[^a-z0-9]+/g, "-").slice(0, 60);
     const sites = [cmp].concat(cmp.rivals || []).filter((site) => !gone(site.host));
-    if (gone(host) || sites.length < 2 || !items.some((x) => x.card.id === id)) continue;
+    if (cmp.outreach || gone(host) || sites.length < 2 || !items.some((x) => x.card.id === id)) continue;
     const last = (state.posted || {})[key];
     if (last && (Date.parse(today) - Date.parse(last)) / 864e5 < POST_EVERY_DAYS) continue;
     const copy = versusCopy(sites.map((site) => Object.assign({}, site, { host: bare(site.host) })));

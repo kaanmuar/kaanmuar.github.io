@@ -1894,9 +1894,10 @@ async function sweepReviews() {
   const cap = ops.budget("sweepPerDay", process.env);
   let state = (await ref.get()).data() || {};
   if (sweep.doneOn(state, day) >= cap) return "daily cap reached";
-  const [index, unlisted] = await Promise.all([sweepJson("index.json"), unlistedHosts()]);
+  const [index, unlisted, outreachDoc] = await Promise.all([sweepJson("index.json"), unlistedHosts(), db.collection("url_review_sweep").doc("outreach").get()]);
   const countries = Object.keys(index.countries || {}).filter((cc) => index.countries[cc] > 0);
   if (!countries.length) return "no seeds";
+  const outreach = (outreachDoc.data() || {}).hosts || [];
   const seeds = new Map();
   const notes = [];
   for (let n = 0; n < sweep.PER_TICK; n += 1) {
@@ -1905,7 +1906,7 @@ async function sweepReviews() {
       break;
     }
     if (!sweep.roomForReview(Date.now() - tickStarted)) break;
-    const tick = await sweepOne(state, day, countries, index, unlisted, seeds);
+    const tick = await sweepOne(state, day, countries, index, unlisted, seeds, outreach);
     state = tick.state;
     await ref.set(state);
     notes.push(tick.note);
@@ -1914,22 +1915,30 @@ async function sweepReviews() {
   return notes.join("; ");
 }
 
-// The next site of the lap, reviewed and tallied. Returns the moved-on state, a note, and whether a review ran.
-async function sweepOne(state, day, countries, index, unlisted, seeds) {
+// The next outreach prospect, else the next site of the lap, reviewed and tallied.
+// Returns the moved-on state, a note, and whether a review ran.
+async function sweepOne(state, day, countries, index, unlisted, seeds, outreach) {
   let target = null;
   for (let tries = 0; tries < 8 && !target; tries += 1) {
-    const slot = sweep.nextSlot(state, countries);
-    state = slot.state;
-    if (!seeds.has(slot.cc)) seeds.set(slot.cc, (await sweepJson(slot.cc + ".json")).hosts || []);
-    const hosts = seeds.get(slot.cc);
-    if (!hosts.length) continue;
-    const host = hosts[slot.at % hosts.length];
-    const bare = reviewPublish.bare(host);
-    if (unlisted.some((u) => bare === u || bare.endsWith("." + u)) || await reviewedLately(host)) {
-      state = sweep.tally(state, day, "skipped", { host, cc: slot.cc, at: new Date().toISOString(), outcome: "skipped" });
+    let candidate;
+    const pick = sweep.nextOutreach(state, outreach, day);
+    if (pick) {
+      state = pick.state;
+      candidate = pick.target;
+    } else {
+      const slot = sweep.nextSlot(state, countries);
+      state = slot.state;
+      if (!seeds.has(slot.cc)) seeds.set(slot.cc, (await sweepJson(slot.cc + ".json")).hosts || []);
+      const hosts = seeds.get(slot.cc);
+      if (!hosts.length) continue;
+      candidate = { host: hosts[slot.at % hosts.length], cc: slot.cc, month: index.month || "", rank: (slot.at % hosts.length) + 1 };
+    }
+    const bare = reviewPublish.bare(candidate.host);
+    if (!candidate.host || unlisted.some((u) => bare === u || bare.endsWith("." + u)) || await reviewedLately(candidate.host)) {
+      state = sweep.tally(state, day, "skipped", Object.assign({}, candidate, { at: new Date().toISOString(), outcome: "skipped" }));
       continue;
     }
-    target = { host, cc: slot.cc, month: index.month || "", rank: (slot.at % hosts.length) + 1 };
+    target = candidate;
   }
   if (!target) return { state, note: "nothing to review", reviewed: false };
   const startedAt = Date.now();

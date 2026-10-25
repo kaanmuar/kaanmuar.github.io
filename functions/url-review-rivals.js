@@ -307,7 +307,8 @@ function socialSummary(base, records, rivals) {
     if (!cmp) return null;
     return Object.assign({ host: bare(record.report.host), id: record.report.id || record.id, rank: rankOf(row.rank), dominance: cmp.dominance }, scoresOf(record.report));
   }).filter(Boolean);
-  return Object.assign({ baseId: base.id, host: bare(base.report.host), cc: (base.sweep && base.sweep.cc) || "", rank: rankOf(rivals && rivals.ownRank), rivals: rows }, scoresOf(base.report));
+  const outreach = base.sweep && base.sweep.outreach ? { outreach: true } : {};
+  return Object.assign({ baseId: base.id, host: bare(base.report.host), cc: (base.sweep && base.sweep.cc) || "", rank: rankOf(rivals && rivals.ownRank), rivals: rows }, outreach, scoresOf(base.report));
 }
 
 // The newest country-sweep review that could go public and has no competitors looked up yet.

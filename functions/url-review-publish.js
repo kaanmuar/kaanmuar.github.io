@@ -93,6 +93,12 @@ function publicReport(report) {
   };
 }
 
+// Outreach prospects get a Live Report card but no social post while a conversation may be open.
+function sourceOf(record) {
+  if (record.source === "sweep" && record.sweep && record.sweep.outreach) return "outreach";
+  return record.source === "sweep" || record.source === "rivals" ? record.source : "request";
+}
+
 // Newest publishable review per host, oldest first, plus a count of what was held and why.
 function selectPublishable(records, unlisted) {
   const held = {};
@@ -106,7 +112,7 @@ function selectPublishable(records, unlisted) {
   }
   const reports = [...byHost.values()]
     .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))
-    .map((r) => ({ createdAt: r.createdAt, source: r.source === "sweep" || r.source === "rivals" ? r.source : "request", report: publicReport(r.report) }));
+    .map((r) => ({ createdAt: r.createdAt, source: sourceOf(r), report: publicReport(r.report) }));
   return { reports, held };
 }
 
@@ -118,7 +124,7 @@ function scores(row) {
 function publicComparisons(rows, unlisted) {
   return (Array.isArray(rows) ? rows : [])
     .filter((row) => row && row.host && typeof row.overall === "number" && !under(row.host, unlisted || []))
-    .map((row) => Object.assign(scores(row), {
+    .map((row) => Object.assign(scores(row), row.outreach === true ? { outreach: true } : {}, {
       createdAt: row.createdAt,
       cc: row.cc || "",
       rivals: (row.rivals || []).filter((rival) => rival && rival.host && typeof rival.overall === "number" && !under(rival.host, unlisted || []))
