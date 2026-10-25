@@ -190,17 +190,17 @@ test("sync moves Buffer posts in windows of calls, records each move, skips what
 
     edits.length = 0;
     const waits = [];
-    const first = await cal.sync({ root, gql, now: () => now, sleep: async (ms) => { if (ms > 1000) waits.push(ms); }, pace: 0, windows: 1, perWindow: 3 });
-    assert.equal(edits.length, 1, "two reads and one edit fill the window");
+    const first = await cal.sync({ root, gql, now: () => now, sleep: async (ms) => { if (ms > 1000) waits.push(ms); }, pace: 0, windows: 1, perWindow: 5 });
+    assert.deepEqual(edits.map((e) => e.id + " " + e.dueAt), ["l1 2027-01-05T14:00:00.000Z", "i1 2027-01-05T17:00:00.000Z", "l1 2027-01-01T14:15:00.000Z"], "two reads, a check per channel and one move fill the window");
     assert.deepEqual([first.left, waits.length], [2, 0]);
     const book = () => JSON.parse(fs.readFileSync(path.join(root, "assets/social/buffer.json"), "utf8")).posts;
     assert.equal(book()["runs-100/01-a"].find((e) => e.id === "l1").at, "2027-01-01T14:15:00.000Z", "the ledger records the move");
     held.l1.dueAt = "2027-01-01T14:15:00.000Z";
 
     edits.length = 0;
-    const rest = await cal.sync({ root, gql, now: () => now, sleep: async (ms) => { if (ms > 1000) waits.push(ms); }, pace: 0, windows: 2, perWindow: 3 });
-    assert.deepEqual(edits.map((e) => e.id), ["l2", "i1"], "the soonest time first");
-    assert.equal(edits[1].metadata.instagram.type, "post");
+    const rest = await cal.sync({ root, gql, now: () => now, sleep: async (ms) => { if (ms > 1000) waits.push(ms); }, pace: 0, windows: 2, perWindow: 5 });
+    assert.deepEqual(edits.map((e) => e.id), ["l2", "i1", "l2", "i1"], "the checks, then the soonest time first");
+    assert.equal(edits[3].metadata.instagram.type, "post");
     assert.deepEqual([rest.left, waits.length], [0, 1], "the second window waited for the first to end");
     assert.deepEqual(cal.targets(root, now), []);
     assert.deepEqual((await cal.sync({ root, gql, now: () => Date.parse("2027-01-01T14:00:00Z"), pace: 0 })).list, [], "nothing within half an hour of its time");
@@ -251,6 +251,10 @@ test("a post waiting for the sync keeps its calendar slot, and the sync stops wh
     const spent = await cal.sync(Object.assign({ gql: gql(() => { throw Object.assign(new Error("Buffer 429"), { window: "24h", retryAfter: 3600 }); }) }, opts));
     assert.match(spent.stopped, /24h limit is spent/);
     assert.deepEqual([edits, spent.left, book().slot], [["l1"], 1, "2027-01-01T14:15:00.000Z"], "nothing moved, and it still waits");
+
+    edits.length = 0;
+    const rejected = await cal.sync(Object.assign({ gql: gql(() => ({ editPost: { message: "YouTube posts require a title" } })) }, opts));
+    assert.deepEqual([edits, rejected.failed, rejected.left, book().slot], [["l1"], 1, 1, "2027-01-01T14:15:00.000Z"], "a channel whose check Buffer rejects does not move");
     const done = await cal.sync(Object.assign({ gql: ok }, opts));
     assert.deepEqual([done.left, done.stopped, book().at, book().slot], [0, null, "2027-01-01T14:15:00.000Z", undefined]);
   } finally {

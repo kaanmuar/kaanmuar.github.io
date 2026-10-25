@@ -14,7 +14,7 @@
        and it stops while DAILY_RESERVE of the day's calls is left; whatever is left is moved by running it again
        (the buffer-batch workflow does every night). --write --move-queued marks each post it moves with its new
        slot in the Buffer ledger until then. --dry-run lists the moves and re-saves one post per channel at its
-       current time, so a payload Buffer rejects shows up before anything moves.
+       current time, as every run does first, so a payload Buffer rejects shows up before anything moves.
 
    Lanes: 1 site review, 2 tip or trick, 3 news or pick, 4 best practice, 5 promo. Each day the lanes take the five
    parts of each network's window (the tips studio's windows), in an order that moves on one part a day, at a
@@ -472,21 +472,25 @@ async function sync({ dryRun, windows = 1, perWindow, limits, root = ROOT, gql =
   const held = await scheduledPosts(call);
   if (!held) { result.stopped = call.stopped || "ran out of calls reading Buffer's posts"; console.log(result.stopped + "; run --sync again"); return result; }
 
-  if (dryRun) {
-    // One real edit per channel, each post re-saved at the time it already has.
-    for (const channel of Object.keys(counts)) {
-      const t = list.find((x) => x.channel === channel && held.has(x.postId) && Date.parse(held.get(x.postId).dueAt) > now() + EDIT_AHEAD);
-      if (!t) { result.checked[channel] = "no post to check"; continue; }
-      const post = held.get(t.postId);
-      try {
-        const r = (await call(EDIT, { input: editInput(post, post.dueAt) })).editPost;
-        result.checked[channel] = r.post ? "ok (" + t.id + ")" : "rejected: " + r.message;
-      } catch (error) {
-        result.checked[channel] = "rejected: " + error.message;
-      }
-      if (!/^ok/.test(result.checked[channel])) result.failed += 1;
-      console.log("check " + channel.padEnd(8) + " " + result.checked[channel]);
+  // Every run first re-saves one post per channel at the time it already has, and moves only the channels Buffer
+  // took it for, so a payload Buffer rejects never moves a post.
+  for (const channel of Object.keys(counts)) {
+    const t = list.find((x) => x.channel === channel && held.has(x.postId) && Date.parse(held.get(x.postId).dueAt) > now() + EDIT_AHEAD);
+    if (!t) { result.checked[channel] = "no post to check"; continue; }
+    const post = held.get(t.postId);
+    let r;
+    try {
+      r = await call(EDIT, { input: editInput(post, post.dueAt) });
+      if (!r) break;
+      result.checked[channel] = r.editPost.post ? "ok (" + t.id + ")" : "rejected: " + r.editPost.message;
+    } catch (error) {
+      result.checked[channel] = "rejected: " + error.message;
     }
+    if (!/^ok/.test(result.checked[channel])) result.failed += 1;
+    console.log("check " + channel.padEnd(8) + " " + result.checked[channel]);
+  }
+  if (dryRun || call.stopped) {
+    result.stopped = call.stopped;
     return result;
   }
 
@@ -506,6 +510,7 @@ async function sync({ dryRun, windows = 1, perWindow, limits, root = ROOT, gql =
   };
   let done = 0;
   for (const t of list) {
+    if (/^rejected/.test(result.checked[t.channel] || "")) continue;
     const post = held.get(t.postId);
     if (!post) { skip(t, "not scheduled in Buffer any more"); continue; }
     if (new Date(post.dueAt).toISOString() === t.to) { record(t, t.to); continue; }
