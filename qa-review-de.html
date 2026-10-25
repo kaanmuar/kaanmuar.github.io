@@ -975,11 +975,22 @@
         #report, #share-link, #share-note { position: relative; z-index: 5; min-width: 0; max-width: 100%; }
         .dash-modal-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
         .dash-modal-head h2 { margin: 0; }
-        #pay.gate, #run-pay.gate, #case-export.gate, #case-formats.gate { z-index: 120; align-items: center; background: rgba(12, 17, 24, .55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        #pay.gate, #run-pay.gate, #run-total.gate, #case-export.gate, #case-formats.gate { z-index: 120; align-items: center; background: rgba(12, 17, 24, .55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .pay-card { width: min(460px, 100%); margin: 0; padding: 32px 28px 24px; border-radius: 28px; background: radial-gradient(420px 180px at 100% 0%, rgba(13, 110, 118, .28), transparent 62%), var(--card); box-shadow: 0 28px 70px rgba(8, 14, 18, .38); }
         .pay-card .actions { width: 100%; justify-content: flex-end; margin-top: 8px; }
         .pay-price { margin: 8px 0 0; font-family: "Source Serif 4", Georgia, serif; font-size: 4.2rem; letter-spacing: -0.04em; line-height: .9; }
         .pay-price span { font-size: 1.1rem; letter-spacing: .08em; color: var(--muted); margin-left: 6px; }
+        .price-tag { flex: none; margin-left: 2px; padding: 1px 7px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.5; font-variant-numeric: tabular-nums; color: var(--cyan); background: color-mix(in srgb, var(--cyan) 12%, transparent); }
+        .price-tag[hidden] { display: none; }
+        .compare-field .price-tag { display: inline-block; margin: 6px 0 0; }
+        .price-say { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+        .total-lines { list-style: none; margin: 16px 0 8px; padding: 0; display: grid; gap: 6px; font-variant-numeric: tabular-nums; }
+        .total-lines li { display: flex; justify-content: space-between; gap: 16px; }
+        .total-lines li span { color: var(--muted); }
+        .total-lines .total-list { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
+        .total-lines .total-off b { color: var(--green); }
+        .total-lines .total-due { font-size: 1.15rem; }
+        .total-lines .total-due span { color: var(--text); font-weight: 700; }
         .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 18px 0; }
         .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
         .kpi b { display: block; font-size: 1.8rem; font-family: "Source Serif 4", Georgia, serif; }
@@ -1415,25 +1426,6 @@
             <dd>Films and notes on <a href="https://www.youtube.com/@qalaburlreview" rel="me noopener" target="_blank">YouTube</a>, <a href="https://www.tiktok.com/@qalaburlreview" rel="me noopener" target="_blank">TikTok</a>, <a href="https://www.facebook.com/qalaburlreview" rel="me noopener" target="_blank">Facebook</a>, <a href="https://x.com/qalaburlreview" rel="me noopener" target="_blank">X</a>, <a href="https://www.linkedin.com/company/qalab-url-review" rel="me noopener" target="_blank">LinkedIn</a>, <a href="https://dev.to/qalaburlreview" rel="me noopener" target="_blank">DEV</a>, and <a href="https://www.reddit.com/user/qalaburlreview/" rel="me noopener" target="_blank">Reddit</a>.</dd>
         </dl>
     </details>
-    <details class="card service-facts" id="prices" lang="de" translate="no">
-        <summary><h2>Preise</h2></summary>
-        <dl>
-            <dt>Erste Prüfung</dt>
-            <dd>Kostenlos: bis zu 20 Seiten, 2 Linkebenen tief.</dd>
-            <dt>Fix-Liste · 5 USD</dt>
-            <dd>Bewertungen, alle Befunde und die 10 wichtigsten Korrekturen in klaren Worten, mit einem PDF der Zusammenfassung.</dd>
-            <dt>Vollständiger Bericht · 19 USD</dt>
-            <dd>Plus 5 USD für jedes weitere Framework oder Werkzeug. Alle Testfälle und Ebenen, die Signale, die Exporte und die Skripte. Eine bereits gekaufte Fix-Liste wird abgezogen.</dd>
-            <dt>Breitere oder tiefere Prüfung</dt>
-            <dd>4 bis 25 USD mehr, angezeigt, bevor die Prüfung startet.</dd>
-            <dt>Studierende und frische Absolventen</dt>
-            <dd>Code STUDENT: 50 % Rabatt auf den vollständigen Bericht, einmal pro Konto.</dd>
-            <dt>30-Tage-Pässe</dt>
-            <dd>29, 79 oder 189 USD. Demnächst; noch nicht käuflich.</dd>
-            <dt>Prüfung mit Anmeldung</dt>
-            <dd>39 USD.</dd>
-        </dl>
-    </details>
     <section id="intake" class="card">
         <h2 class="request-title">The request</h2>
         <p class="lede">Who is asking, and which address should we open?</p>
@@ -1688,7 +1680,7 @@
                     </div>
                     <button class="btn btn-ghost compare-add" id="compare-add" type="button"><span data-report-copy="compareAdd">+ Add another competitor</span> <span id="compare-add-left">(4 left)</span></button>
                 </div>
-                <p class="meta-line" id="compare-note" lang="de" translate="no">Jeder Wettbewerber kostet wie eine zweite Prüfung, und sie laufen nacheinander. Der Rückkehrrabatt gilt, wenn Sie vom Gerät aus vergleichen, auf dem diese Prüfung lief. Die Website des Wettbewerbers erhält nur die öffentlichen, passiven Prüfungen: kein Chat-Gespräch und kein gesendetes Formular. Wie bei jeder Prüfung kann ihr Inhaber eine E-Mail dazu erhalten, und ihre Werte können in den Live Reports erscheinen.</p>
+                <p class="meta-line" id="compare-note" lang="de" translate="no">Jeder Wettbewerber kostet 9 USD, und sie laufen nacheinander. Sie sehen die Summe, bevor Sie bezahlen. Die Website des Wettbewerbers erhält nur die öffentlichen, passiven Prüfungen: kein Chat-Gespräch und kein gesendetes Formular. Wie bei jeder Prüfung kann ihr Inhaber eine E-Mail dazu erhalten, und ihre Werte können in den Live Reports erscheinen.</p>
                 <p class="meta-line" id="compare-error" role="alert"></p>
                 <p class="compare-running" id="compare-running" role="status" hidden><span id="compare-running-text"></span><button class="btn btn-stop" id="compare-stop" type="button" data-report-copy="compareStop">Stop the comparison</button></p>
             </div>
@@ -1834,6 +1826,18 @@
         </div>
     </div>
 </div>
+<div id="run-total" class="gate no-print" hidden>
+    <div class="pay-card" role="dialog" aria-modal="true" aria-labelledby="run-total-title" aria-describedby="run-total-saved" tabindex="-1">
+        <p class="eyebrow" id="run-total-eyebrow">Before it starts</p>
+        <h2 id="run-total-title">The total for this review</h2>
+        <ul class="total-lines" id="run-total-lines"></ul>
+        <p class="muted" id="run-total-saved">Saved in Your reviews for 12 months.</p>
+        <div class="actions">
+            <button class="btn btn-ghost" id="run-total-cancel" type="button">Cancel</button>
+            <button class="btn btn-primary" id="run-total-pay" type="button">Pay and run</button>
+        </div>
+    </div>
+</div>
 <div id="run-pay" class="gate no-print" hidden>
     <div class="pay-card" role="dialog" aria-modal="true" aria-labelledby="run-pay-title">
         <p class="eyebrow">Another review</p>
@@ -1858,8 +1862,8 @@
 <script src="js/qa-review-ask.js?v=20261024c" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261106b" defer></script>
-<script src="js/qa-review.js?v=20261106b" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261107a" defer></script>
+<script src="js/qa-review.js?v=20261107a" defer></script>
 <script src="js/qa-review-multi.js?v=20261106a" defer></script>
 <script src="js/url-suggest.js?v=20261105a" defer></script>
 <script src="js/qa-review-live.js?v=20261029e" defer></script>

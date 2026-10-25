@@ -126,7 +126,7 @@
     <script>try{localStorage.setItem("cv-preferred-lang","fr")}catch(e){}</script>
     <script src="js/site-i18n.js?v=20261104a"></script>
     <script src="js/site-glossary.js?v=20261102a" defer></script>
-    <script src="js/qa-review-pay-copy.js?v=20261105a"></script>
+    <script src="js/qa-review-pay-copy.js?v=20261107a"></script>
     <script>
         if (window.SiteI18n) SiteI18n.resolve().then((lang) => {
             const own = ["en", "es", "pt", "de", "fr", "it"];
@@ -153,9 +153,12 @@
         const DEPTH_CENTS = { 2: 0, 3: 400, 4: 700, 5: 1000 };
         let pageCount = PAGE_CENTS[Number(params.get("pages"))] == null ? 20 : Number(params.get("pages"));
         let depthCount = DEPTH_CENTS[Number(params.get("depth"))] == null ? 2 : Number(params.get("depth"));
-        let billing = params.get("billing") === "scope" ? "scope" : "run";
         // PayPal returns without compareWith, so the review page's saved comparison remembers that this checkout was for it.
         const compareWith = purpose === "new-run" ? (params.get("compareWith") || "").replace(/[^a-f0-9]/g, "").slice(0, 32) : "";
+        // A comparison is 9 USD for each competitor; one checkout pays for every competitor the review page showed.
+        const competitors = compareWith ? Math.max(1, Math.min(5, Math.round(Number(params.get("competitors")) || 1))) : 1;
+        let billing = compareWith ? "compare" : params.get("billing") === "scope" ? "scope" : "run";
+        const RUN_PAID_KEY = "qa-review-run-paid";
         function savedCompare() {
             try { return JSON.parse(sessionStorage.getItem("qa-review-compare") || "null"); } catch (error) { return null; }
         }
@@ -206,7 +209,7 @@
                 : purpose === "alerts"
                     ? ladderFor(alertCount)
                     : purpose === "new-run"
-                        ? (billing === "scope" ? scopeDollars() : chargeFor(frameworkList.length + toolList.length) + scopeDollars())
+                        ? (billing === "compare" ? 9 * competitors : billing === "scope" ? scopeDollars() : chargeFor(frameworkList.length + toolList.length) + scopeDollars())
                         : chargeFor(frameworkList.length + toolList.length);
         if (purpose === "report") {
             document.getElementById("pay-heading").textContent = pc.t("headingReport");
@@ -262,6 +265,13 @@
             }
             const count = purpose === "cases" ? layerList.length : frameworkList.length + (billing === "scope" ? 0 : toolList.length);
             const schedule = pc.t("schedule");
+            if (purpose === "new-run" && billing === "compare") {
+                document.getElementById("pay-heading").textContent = pc.t("headingCompare");
+                document.getElementById("pay-item").textContent = pc.t("itemCompare", { n: competitors });
+                document.getElementById("pay-copy").textContent = pc.t("copyCompare", { n: competitors, usd: money(usd) });
+                paintLines();
+                return;
+            }
             if (purpose === "new-run" && count) {
                 const pagesLine = PAGE_CENTS[pageCount] ? pc.t("pagesAdd", { n: pageCount, usd: money(PAGE_CENTS[pageCount] / 100) }) : pc.t("pagesIncluded", { n: pageCount });
                 const depthLine = DEPTH_CENTS[depthCount] ? pc.t("depthAdd", { n: depthCount, usd: money(DEPTH_CENTS[depthCount] / 100) }) : pc.t("depthIncluded", { n: depthCount });
@@ -289,7 +299,7 @@
         }
         function paintLines() {
             const box = document.getElementById("pay-lines");
-            const names = (purpose === "report" || (purpose === "new-run" && billing !== "scope")) ? frameworkList.concat(toolList) : [];
+            const names = (purpose === "report" || (purpose === "new-run" && billing === "run")) ? frameworkList.concat(toolList) : [];
             box.hidden = names.length === 0;
             box.replaceChildren();
             names.forEach((name, index) => {
@@ -419,7 +429,7 @@
                         : purpose === "alerts"
                             ? "purpose=alerts&count=" + alertCount
                             : purpose === "new-run"
-                                ? "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(",")) + "&pages=" + pageCount + "&depth=" + depthCount + "&billing=" + billing + (compareWith ? "&compareWith=" + compareWith : "")
+                                ? "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(",")) + "&pages=" + pageCount + "&depth=" + depthCount + "&billing=" + billing + (compareWith ? "&compareWith=" + compareWith + "&competitors=" + competitors : "")
                                 : "frameworks=" + encodeURIComponent(frameworkList.join(",")) + "&tools=" + encodeURIComponent(toolList.join(",")) + "&purpose=report&reportId=" + encodeURIComponent(params.get("reportId") || "");
                 const deal = purpose === "report" || purpose === "new-run"
                     ? "&deviceId=" + encodeURIComponent(deviceId()) + (coupon ? "&coupon=" + encodeURIComponent(coupon) : "")
@@ -437,7 +447,7 @@
                 if (Array.isArray(body.tools)) toolList = body.tools.filter((name) => TOOLS.indexOf(name) !== -1);
                 if (body.pages) pageCount = body.pages;
                 if (body.depth) depthCount = body.depth;
-                if (body.billing === "scope" || body.billing === "run") billing = body.billing;
+                if (body.billing === "scope" || body.billing === "run" || body.billing === "compare") billing = body.billing;
             } catch (error) {
                 quote = null;
                 note.textContent = pc.t("pesoFailed");
@@ -471,6 +481,12 @@
                 location.href = next;
             }
             const compared = purpose === "new-run" ? savedCompare() : null;
+            if (body.paid && purpose === "new-run" && !(compared && compared.checkout)) {
+                try {
+                    const run = JSON.parse(sessionStorage.getItem(RUN_PAID_KEY) || "null");
+                    if (run) sessionStorage.setItem(RUN_PAID_KEY, JSON.stringify(Object.assign(run, { paid: true })));
+                } catch (error) { /* the review page shows the total again; the server still uses the credit */ }
+            }
             if (body.paid && compared && compared.checkout) {
                 compared.paid = true;
                 compared.checkout = false;
@@ -494,12 +510,15 @@
             note.textContent = pc.t("opening", { name: names[choice] || names.paypal });
             if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_checkout", "URL Review", purpose);
             charge.disabled = true;
+            if (purpose === "new-run" && !compareWith) {
+                try { sessionStorage.setItem(RUN_PAID_KEY, JSON.stringify({ frameworks: frameworkList, tools: billing === "scope" ? [] : toolList, pages: pageCount, depth: depthCount, paid: false })); } catch (error) { /* only the review page's total reads it */ }
+            }
             try {
                 const res = await fetch(endpoint() + "/checkout", {
                     method: "POST",
                     credentials: "include",
                     headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ session: signInProof().session, deviceKey: signInProof().deviceKey, purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount, coupon: coupon, compareWith: compareWith, testKey: testKey(), lang: pc.lang })
+                    body: JSON.stringify({ session: signInProof().session, deviceKey: signInProof().deviceKey, purpose: purpose, provider: choice, deviceId: deviceId(), reportId: params.get("reportId") || "", frameworks: frameworkList, tools: toolList, layers: layerList, pages: pageCount, depth: depthCount, billing: billing, alertCount: alertCount, coupon: coupon, compareWith: compareWith, competitors: competitors, testKey: testKey(), lang: pc.lang })
                 });
                 const body = await res.json();
                 if (res.ok && body.url) {
