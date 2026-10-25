@@ -109,6 +109,25 @@ test("sync moves only queued posts whose slot changed, never one due within half
   assert.deepEqual(cal.targets(root, Date.parse("2027-01-01T14:00:00Z")), []);
 });
 
+test("the calendar takes the queued times from the ledgers, the hub date follows, and queued posts stay unless asked", () => {
+  const root = fixture();
+  const now = Date.parse("2026-10-25T00:00:00Z");
+  fs.writeFileSync(path.join(root, "assets/social/buffer.json"), JSON.stringify({ version: 1, posts: {
+    "runs-100/02-b": [{ channel: "linkedin", profile: "p", id: "b3", at: "2026-11-10T14:15:00.000Z", result: "queued" }]
+  } }));
+  assert.deepEqual(cal.reconcile(root, now), ["runs-100"]);
+  const csv = fs.readFileSync(path.join(root, "media/social-posts/runs-100/calendar.csv"), "utf8");
+  assert.match(csv, /^2026-11-10,09:15,linkedin,02-b,feed\/02-b\.jpg$/m);
+  assert.match(csv, /^2027-01-01,09:15,linkedin,01-a,/m);
+  const caps = JSON.parse(fs.readFileSync(path.join(root, "media/social-posts/runs-100/captions.json"), "utf8"));
+  assert.deepEqual([caps["01-a"].date, caps["02-b"].date], ["2027-01-01", "2026-11-10"]);
+  assert.deepEqual(cal.reconcile(root, now), [], "a second pass changes nothing");
+
+  const { posts } = cal.load(root);
+  assert.deepEqual(cal.plan(posts, { from: "2026-11-01" }).moves.map((m) => m.post.id), ["runs-100/01-a"]);
+  assert.deepEqual(cal.plan(posts, { from: "2026-11-01", moveQueued: true }).moves.map((m) => m.post.id).sort(), ["runs-100/01-a", "runs-100/02-b"]);
+});
+
 test("a daily Live Reports batch sends its first review to the networks and keeps the others on the hub", () => {
   const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "auto-")), "batch.json");
   const run = (host) => ({ host, title: [host + ": {overall}."], body: "b", action: "a", areas: { SEO: 70 }, overall: 70, scope: "Requested", fetchedAt: "2026-10-24T10:00:00Z", pages: 1 });
