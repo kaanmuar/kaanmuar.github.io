@@ -310,6 +310,26 @@ function reportPayment(run, payment) {
   return row;
 }
 
+// Bought on a report that already exists; none of them pays for a run.
+const ADDONS = ["cases", "alerts", "credentials"];
+
+function paidPurpose(value) {
+  const purpose = String(value || "");
+  return purpose === "report" || ADDONS.indexOf(purpose) !== -1 ? purpose : "new-run";
+}
+
+// The payment row for a case export, signals, or a signed-in run bought on a report; never a run credit.
+function addonPayment(run, payment) {
+  const row = Object.assign({
+    status: "paid-addon",
+    paid: true,
+    email: String((run && run.email) || "").trim().toLowerCase(),
+    frameworks: (run && run.frameworks) || []
+  }, payment || {});
+  Object.keys(row).forEach((key) => { if (row[key] === undefined) delete row[key]; });
+  return row;
+}
+
 function returnCoupon(note, now) {
   const at = now || Date.now();
   return {
@@ -353,6 +373,9 @@ function accountFile(records, email, now, options) {
 
 module.exports = {
   reportPayment,
+  ADDONS,
+  paidPurpose,
+  addonPayment,
   returnCoupon,
   RETURN_TABLE,
   MONTHLY_PLANS,

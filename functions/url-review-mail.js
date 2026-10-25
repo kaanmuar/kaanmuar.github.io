@@ -164,9 +164,9 @@ function hostOf(row) {
 }
 
 // url_reviews also holds payments, owner claims and runs turned away; only runs are reviews.
-const PAYMENTS = new Set(["paid-report", "run-credit", "run-credit-used", "monthly-pass", "checkout-open"]);
+const PAYMENTS = new Set(["paid-report", "paid-addon", "run-credit", "run-credit-used", "monthly-pass", "checkout-open"]);
 const TURNED_AWAY = new Set(["payment-due", "blocked"]);
-const REVENUE = { "paid-report": "report unlocks", "run-credit": "run credits", "monthly-pass": "passes" };
+const REVENUE = { "paid-report": "report unlocks", "paid-addon": "report add-ons", "run-credit": "run credits", "monthly-pass": "passes" };
 
 // Money is read from the payment rows: an unlocked run is also marked paid, and a free run is paid at 0 USD.
 function money(payments) {
