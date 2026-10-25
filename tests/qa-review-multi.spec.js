@@ -99,7 +99,7 @@ test('a saved comparison sets the summary and every report section side by side,
   }
   const health = box.locator('.multi-sec[data-sec="health"] .multi-cell');
   await expect(health.nth(1).locator('.ring')).toHaveAttribute('aria-label', new RegExp('Health score ' + rival.insights.score.overall + ' '));
-  const pages = box.locator('.multi-sec[data-sec="pages"] .multi-cell').nth(0).locator('tbody tr');
+  const pages = box.locator('.multi-sec[data-sec="pages"] .multi-cell').nth(0).locator('tbody tr:visible');
   await expect(pages).toHaveCount(own.pages.length);
   expect(own.counts).toBeUndefined();
   await expect(box.locator('.multi-sec[data-sec="cover"] .multi-cell').nth(0).locator('.kpi b').nth(3)).toHaveText(String(own.pages.length));
@@ -196,6 +196,38 @@ test('one toggle per section folds it for every site together, the boxes of a ro
   expect(seen.pdf[0]).not.toMatch(/<div class="multi-row fold-panel"[^>]*\shidden/);
   await box.getByRole('button', { name: 'Expand all' }).click();
   await expect(box.locator('.multi-sec .fold-toggle[aria-expanded="false"]')).toHaveCount(0);
+});
+
+test('a cell holding only a placeholder line keeps its own height beside a tall cell (#1477)', async ({ page }) => {
+  await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const box = page.locator('#multi-overlay');
+  await expect(box.locator('.multi-sec[data-sec="graph"] .multi-cell')).toHaveCount(3, { timeout: 20000 });
+  for (const key of ['graph', 'layers', 'mentions']) {
+    const cells = box.locator('.multi-sec[data-sec="' + key + '"] .multi-cell');
+    await expect(cells.first(), key).toHaveClass(/is-note/);
+    const [note, tallest] = await cells.evaluateAll((els) => [els[0].lastElementChild.offsetHeight, Math.max(...els.map((el) => el.offsetHeight))]);
+    expect(note, key).toBeLessThan(140);
+    expect(tallest, key).toBeGreaterThan(note);
+  }
+  await expect(box.locator('.multi-sec[data-sec="observed"] .multi-cell').first()).not.toHaveClass(/is-note/);
+});
+
+test('in print a long list stops after twelve rows with a line counting the rest (#1476)', async ({ page }) => {
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
+  const box = page.locator('#multi-overlay');
+  const rows = box.locator('.multi-sec[data-sec="pages"] .multi-cell').nth(0).locator('tbody tr:visible');
+  await expect(rows).toHaveCount(own.pages.length, { timeout: 20000 });
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  await expect(rows).toHaveCount(13);
+  await expect(rows.last()).toHaveText('…and ' + (own.pages.length - 12) + ' more, in the report on the page.');
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+  const download = page.waitForEvent('download');
+  await box.getByRole('button', { name: 'Download PDF' }).click();
+  await download;
+  expect(seen.pdf[0]).toContain('<tr class="print-more">');
 });
 
 test('the benchmark ranks every site by its health score and reads where the first site stands, on the page and in the PDF (#1438)', async ({ page }) => {
