@@ -186,7 +186,7 @@ async function bufferPosts(statuses) {
     const filter = "{ channelIds: " + JSON.stringify([...byId.keys()]) + ", status: [" + statuses.join(", ") + "] }";
     let after = null;
     do {
-      const data = await gql("query($o: OrganizationId!, $a: String) { posts(first: 100, after: $a, input: { organizationId: $o, filter: " + filter + " }) { pageInfo { hasNextPage endCursor } edges { node { id status dueAt sentAt text channelId externalLink assets { source } } } } }", { o: org, a: after });
+      const data = await gql("query($o: OrganizationId!, $a: String) { posts(first: 100, after: $a, input: { organizationId: $o, filter: " + filter + " }) { pageInfo { hasNextPage endCursor } edges { node { id status dueAt sentAt text channelId externalLink assets { type source thumbnail } metadata { __typename ... on YoutubePostMetadata { title } ... on TiktokPostMetadata { title } } } } } }", { o: org, a: after });
       for (const { node } of data.posts.edges) {
         const channel = byId.get(node.channelId);
         const slot = channel && SLOT[channel.service];
@@ -205,11 +205,12 @@ async function seed() {
   const book = ledger.read(ledger.BUFFER);
   const statuses = String(process.env.BUFFER_SEED_STATUS || "scheduled,sent,error").split(",").filter((s) => /^[a-z_]+$/.test(s));
   const unmatched = [];
+  const unsent = [];
   let matched = 0;
   for (const item of await bufferPosts(statuses)) {
     const { node, slot, profile } = item;
     const name = matchPost(index, node, slot, takenBy(book, item));
-    if (!name) { unmatched.push(describe(item)); continue; }
+    if (!name) { unmatched.push(describe(item)); if (node.status === "sent") unsent.push(Object.assign({ slot, profile }, node)); continue; }
     matched += 1;
     const result = node.status === "sent" ? "sent" : node.status === "error" ? "failed" : "queued";
     ledger.record(book, name, { channel: slot, profile, id: node.id, at: node.sentAt || node.dueAt, result, url: node.externalLink, checked: new Date().toISOString() });
@@ -217,6 +218,8 @@ async function seed() {
   ledger.write(ledger.BUFFER, book);
   console.log(matched + " Buffer posts matched to a batch post, " + unmatched.length + " match no batch (not on the hub):");
   unmatched.sort().forEach((line) => console.log("  " + line));
+  // The sent ones, whole, for scripts/hub-backfill.js to put on the hub (#1038).
+  if (process.env.BUFFER_SEED_EXPORT) fs.writeFileSync(process.env.BUFFER_SEED_EXPORT, JSON.stringify(unsent, null, 1));
 }
 
 // The scheduled posts --delete-unmatched may delete: still to go out, matching no batch post, and unknown to the
