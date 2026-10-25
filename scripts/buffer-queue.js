@@ -89,12 +89,20 @@ const squash = (text) => String(text || "").replace(/\s+/g, " ").trim();
 
 const CALENDAR_SLOT = { linkedin: "linkedin", x: "x", facebook: "facebook", tiktok: "tiktok", youtube: "youtube", "youtube shorts": "youtube" };
 
-// Every batch post by the addresses of its images and clips, by its captions, and by its calendar slots, for
-// --seed. The launch set keeps a captions file per language and topic. A slot two posts share matches neither.
+// Every batch post by the addresses of its images and clips, by its captions and their opening words, and by its
+// calendar slots, for --seed. The launch set keeps a captions file per language and topic, and its six languages
+// share each slot. Opening words or a slot two posts share match neither. Opening words match only a sent post: a
+// scheduled one whose caption matches none exactly is stale and --delete-unmatched removes it (#1044).
+const lead = (text) => squash(text).slice(0, 60);
 function batchIndex(root = path.join(ROOT, "media/social-posts")) {
   const index = new Map();
-  const slot = (key, name) => index.set(key, index.has(key) && index.get(key) !== name ? null : name);
-  const texts = (cap, name) => NETS.forEach((net) => { if (cap[net]) index.set("text " + squash(cap[net]), name); });
+  const share = (key, name) => index.set(key, index.has(key) && index.get(key) !== name ? null : name);
+  const slot = (key, name) => index.set(key, [...new Set((index.get(key) || []).concat(name))]);
+  const texts = (cap, name) => NETS.forEach((net) => {
+    if (!cap[net]) return;
+    index.set("text " + squash(cap[net]), name);
+    share("lead " + lead(cap[net]), name);
+  });
   for (const batch of fs.readdirSync(root).filter((name) => /^[\w-]+$/.test(name)).sort()) {
     const dir = path.join(root, batch);
     if (fs.existsSync(path.join(dir, "captions.json"))) {
@@ -117,9 +125,8 @@ function batchIndex(root = path.join(ROOT, "media/social-posts")) {
     rows.forEach((cells) => {
       const net = CALENDAR_SLOT[(cells[col("Channel")] || "").toLowerCase()];
       if (!net) return;
-      const lang = col("Language") >= 0 ? cells[col("Language")] + "/" : "";
       const at = new Date(cells[col("Date")] + "T" + cells[col("Time")] + ":00-05:00");
-      if (!isNaN(at)) slot("slot " + net + " " + at.toISOString(), batch + "/" + lang + cells[col("Post")]);
+      if (!isNaN(at)) slot("slot " + net + " " + at.toISOString(), batch + "/" + cells[col("Post")]);
     });
   }
   return index;
@@ -134,9 +141,11 @@ function matchPost(index, post, net, taken = () => false) {
   }
   const text = index.get("text " + squash(post.text));
   if (text) return text;
+  const opening = post.status === "sent" && index.get("lead " + lead(post.text));
+  if (opening) return opening;
   const due = post.dueAt && new Date(post.dueAt);
-  const name = (net && due && !isNaN(due) && index.get("slot " + net + " " + due.toISOString())) || null;
-  return name && !taken(name) ? name : null;
+  const slot = (net && due && !isNaN(due) && index.get("slot " + net + " " + due.toISOString())) || [];
+  return slot.length === 1 && !taken(slot[0]) ? slot[0] : null;
 }
 
 function takenBy(book, item) {
