@@ -178,6 +178,16 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(browser).toContainText('Seguimiento antes y después de elegir');
   await expect(browser).toContainText(/desde una dirección de la UE \(Bélgica\)/);
   await expect(browser).not.toContainText(/Before a choice|Tracking before and after|from an EU address/);
+  const filters = box.locator('.multi-sec[data-sec="findings"] .multi-cell').first().locator('.filters button');
+  await expect(filters.first()).toHaveText('Todas');
+  await expect(filters.filter({ hasText: 'Fallas y riesgos' })).toHaveCount(1);
+  await expect(filters.filter({ hasText: 'Seguridad' })).toHaveCount(1);
+  const geo = box.locator('.multi-sec[data-sec="geo"] .multi-cell').first();
+  await expect(geo).toContainText('El texto que recibe un rastreador de IA');
+  await expect(geo).not.toContainText(/The text an AI crawler|Who may read/);
+  await expect(box.locator('.multi-sec[data-sec="seo"] .multi-cell').first().locator('.stat span').first()).toHaveText('Páginas indexables');
+  await expect(box.locator('.multi-sec[data-sec="fixkit"] .multi-cell').first()).toContainText('El ZIP de scripts ahora trae una carpeta fix-kit/');
+  await expect(box.locator('.multi-sec[data-sec="fixkit"] .multi-cell').first()).not.toContainText(/Security headers|The scripts ZIP/);
 });
 
 test('a comparison the account no longer has is refused in the page language', async ({ page }) => {
