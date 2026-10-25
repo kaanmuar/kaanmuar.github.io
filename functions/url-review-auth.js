@@ -427,6 +427,7 @@ module.exports = {
   CODE_MS,
   SESSION_MS,
   ACCOUNT_MS,
+  RUN_MS,
   MAX_TRIES,
   OTHER_DEVICE,
   sameHash,
