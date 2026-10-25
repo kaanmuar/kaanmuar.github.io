@@ -484,3 +484,13 @@ test("server: settings keep up to 8 distinct trimmed searches", () => {
   assert.equal(jarvis.normalizeSettings({ searchQueries: many }).searchQueries.length, 8);
   assert.deepEqual(jarvis.normalizeSettings({}).searchQueries, []);
 });
+
+test("admin.html loads the Jarvis files with a version that changes with their content", () => {
+  const root = path.join(__dirname, "../..");
+  const files = ["css/admin-jarvis.css", "js/admin-jarvis-core.js", "js/admin-jarvis.js"];
+  const want = require("crypto").createHash("sha1").update(Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))))).digest("hex").slice(0, 10);
+  const html = fs.readFileSync(path.join(root, "admin.html"), "utf8");
+  const seen = Array.from(html.matchAll(/admin-jarvis(?:-core)?\.(?:css|js)\?v=([^"]+)"/g)).map((m) => m[1]);
+  assert.equal(seen.length, 4);
+  assert.deepEqual(Array.from(new Set(seen)), [want], "set ?v=" + want + " on the Jarvis links in admin.html");
+});
