@@ -44,6 +44,23 @@ for (const file of FILES) {
   });
 }
 
+test("the scripts ZIP README copy has every English key and slot, follows the glossary and the regional forms (#1401)", () => {
+  const book = require("../../js/qa-review-scripts.js").README_COPY;
+  const slots = (text) => (text.match(/\{\w+\}/g) || []).sort().join(",");
+  const en = strings(book.en, "", {});
+  for (const lang of LANGS) {
+    const all = strings(book[lang], "", {});
+    for (const [key, text] of Object.entries(en)) {
+      assert.ok(key in all, "README_COPY " + lang + " is missing " + key);
+      assert.equal(slots(all[key]), slots(text), "README_COPY " + lang + "." + key + " slots");
+    }
+    for (const [key, text] of Object.entries(all)) {
+      assert.deepEqual(Glossary.check(text, lang), [], "README_COPY " + lang + "." + key + ": " + text);
+      for (const pattern of REGIONAL[lang] || []) assert.ok(!pattern.test(text), "README_COPY " + lang + "." + key + " matches " + pattern + ": " + text);
+    }
+  }
+});
+
 test("the report copy has every English key, with the same slots, in each language (#1209)", () => {
   const copy = copyOf("qa-review-report-copy");
   const en = strings(copy.en, "", {});

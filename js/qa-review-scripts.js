@@ -2025,20 +2025,166 @@ namespace QaLab
     k6: "k6/qa-lab.js"
   };
 
-  function readme(ctx, sign, used, counts) {
+  // The two READMEs in the reader's language. Commands, file names, code and the generated files stay English.
+  const README_COPY = {
+    en: {
+      intro: "Automation scripts proposed from a public analysis of {base}.",
+      signature: "Signature: {mark}",
+      disclaimer: "These scripts were written from what the public page showed. They were not run by QA-lab. Review each selector, budget, and path before you trust a result. Skipped tests are cases that need a person, or an account the owner issues.",
+      inside: "What is inside",
+      cases: "{fw}: {n} case(s)",
+      howToRun: "How to run",
+      kitTitle: "Fix kit for {base}",
+      health: "Health {score}.",
+      notScored: "not scored",
+      kitNote: "These files were written from a public analysis. Review each value before you deploy it. Nothing here was applied to the site.",
+      fixFirst: "Fix first",
+      fix: "Fix: {fix}",
+      files: "Files",
+      ghProxied: "GitHub Pages cannot send custom headers, but this review also saw Cloudflare in front of the site. Add each header there with a Response Header Transform Rule (or a Worker). A `_headers` file only works on Cloudflare Pages or Netlify.",
+      ghPages: "GitHub Pages cannot send custom headers. Put a CDN such as Cloudflare in front and set the headers there, or move to a host that sends headers. The `_headers` file works on Cloudflare Pages and Netlify.",
+      hosted: "The site looks hosted on {host}, so that header file is listed first.",
+      areas: {},
+      severity: {},
+      effort: {}
+    },
+    es: {
+      intro: "Scripts de automatización propuestos a partir de un análisis público de {base}.",
+      signature: "Firma: {mark}",
+      disclaimer: "Estos scripts se escribieron a partir de lo que mostró la página pública. QA-lab no los ejecutó. Revisa cada selector, presupuesto y ruta antes de confiar en un resultado. Las pruebas omitidas son casos que necesitan a una persona o una cuenta que emite el propietario.",
+      inside: "Qué incluye",
+      cases: "{fw}: {n} caso(s)",
+      howToRun: "Cómo ejecutarlos",
+      kitTitle: "Kit de arreglos para {base}",
+      health: "Puntuación de salud {score}.",
+      notScored: "sin puntuación",
+      kitNote: "Estos archivos se escribieron a partir de un análisis público. Revisa cada valor antes de desplegarlo. No se aplicó nada al sitio.",
+      fixFirst: "Arreglar primero",
+      fix: "Corrección: {fix}",
+      files: "Archivos",
+      ghProxied: "GitHub Pages no puede enviar encabezados propios, pero esta revisión también vio Cloudflare delante del sitio. Agrega cada encabezado allí con una Response Header Transform Rule (o un Worker). Un archivo `_headers` solo funciona en Cloudflare Pages o Netlify.",
+      ghPages: "GitHub Pages no puede enviar encabezados propios. Pon una CDN como Cloudflare delante y configura allí los encabezados, o cámbiate a un hosting que envíe encabezados. El archivo `_headers` funciona en Cloudflare Pages y Netlify.",
+      hosted: "El sitio parece alojado en {host}, así que ese archivo de encabezados aparece primero.",
+      areas: { Analytics: "Analítica", Security: "Seguridad", Accessibility: "Accesibilidad", Performance: "Rendimiento" },
+      severity: { critical: "crítica", high: "alta", medium: "media", low: "baja", info: "informativa" },
+      effort: { minutes: "minutos", hours: "horas", days: "días" }
+    },
+    pt: {
+      intro: "Scripts de automação propostos a partir de uma análise pública de {base}.",
+      signature: "Assinatura: {mark}",
+      disclaimer: "Estes scripts foram escritos a partir do que a página pública mostrou. O QA-lab não os executou. Revise cada seletor, orçamento e caminho antes de confiar em um resultado. Testes pulados são casos que precisam de uma pessoa ou de uma conta que o proprietário emite.",
+      inside: "O que tem dentro",
+      cases: "{fw}: {n} caso(s)",
+      howToRun: "Como executar",
+      kitTitle: "Kit de correções para {base}",
+      health: "Pontuação de saúde {score}.",
+      notScored: "sem pontuação",
+      kitNote: "Estes arquivos foram escritos a partir de uma análise pública. Revise cada valor antes de publicar. Nada aqui foi aplicado ao site.",
+      fixFirst: "Corrigir primeiro",
+      fix: "Correção: {fix}",
+      files: "Arquivos",
+      ghProxied: "O GitHub Pages não consegue enviar cabeçalhos próprios, mas esta revisão também viu o Cloudflare na frente do site. Adicione cada cabeçalho lá com uma Response Header Transform Rule (ou um Worker). Um arquivo `_headers` só funciona no Cloudflare Pages ou no Netlify.",
+      ghPages: "O GitHub Pages não consegue enviar cabeçalhos próprios. Coloque uma CDN como o Cloudflare na frente e defina os cabeçalhos lá, ou mude para uma hospedagem que envie cabeçalhos. O arquivo `_headers` funciona no Cloudflare Pages e no Netlify.",
+      hosted: "O site parece hospedado em {host}, então esse arquivo de cabeçalhos aparece primeiro.",
+      areas: { Security: "Segurança", Accessibility: "Acessibilidade", Performance: "Desempenho" },
+      severity: { critical: "crítica", high: "alta", medium: "média", low: "baixa", info: "informativa" },
+      effort: { minutes: "minutos", hours: "horas", days: "dias" }
+    },
+    de: {
+      intro: "Automatisierungsskripte, vorgeschlagen aus einer öffentlichen Analyse von {base}.",
+      signature: "Signatur: {mark}",
+      disclaimer: "Diese Skripte wurden aus dem geschrieben, was die öffentliche Seite zeigte. QA-lab hat sie nicht ausgeführt. Prüfen Sie jeden Selektor, jedes Budget und jeden Pfad, bevor Sie einem Ergebnis vertrauen. Übersprungene Tests sind Fälle, die eine Person brauchen oder ein Konto, das der Inhaber vergibt.",
+      inside: "Was enthalten ist",
+      cases: "{fw}: {n} Fall/Fälle",
+      howToRun: "So führen Sie sie aus",
+      kitTitle: "Behebungs-Kit für {base}",
+      health: "Gesundheitswert {score}.",
+      notScored: "nicht bewertet",
+      kitNote: "Diese Dateien wurden aus einer öffentlichen Analyse geschrieben. Prüfen Sie jeden Wert, bevor Sie ihn ausrollen. Nichts davon wurde auf die Website angewendet.",
+      fixFirst: "Zuerst beheben",
+      fix: "Korrektur: {fix}",
+      files: "Dateien",
+      ghProxied: "GitHub Pages kann keine eigenen Header senden, aber diese Prüfung hat auch Cloudflare vor der Website gesehen. Setzen Sie jeden Header dort mit einer Response Header Transform Rule (oder einem Worker). Eine `_headers`-Datei funktioniert nur auf Cloudflare Pages oder Netlify.",
+      ghPages: "GitHub Pages kann keine eigenen Header senden. Schalten Sie ein CDN wie Cloudflare davor und setzen Sie die Header dort, oder wechseln Sie zu einem Hoster, der Header sendet. Die `_headers`-Datei funktioniert auf Cloudflare Pages und Netlify.",
+      hosted: "Die Website scheint bei {host} gehostet zu sein, daher steht diese Header-Datei zuerst.",
+      areas: { Security: "Sicherheit", Accessibility: "Barrierefreiheit" },
+      severity: { critical: "kritisch", high: "hoch", medium: "mittel", low: "niedrig", info: "informativ" },
+      effort: { minutes: "Minuten", hours: "Stunden", days: "Tage" }
+    },
+    fr: {
+      intro: "Scripts d’automatisation proposés à partir d’une analyse publique de {base}.",
+      signature: "Signature : {mark}",
+      disclaimer: "Ces scripts ont été écrits à partir de ce que montrait la page publique. QA-lab ne les a pas exécutés. Vérifiez chaque sélecteur, budget et chemin avant de vous fier à un résultat. Les tests ignorés sont des cas qui demandent une personne, ou un compte que le propriétaire délivre.",
+      inside: "Contenu",
+      cases: "{fw} : {n} cas",
+      howToRun: "Comment les lancer",
+      kitTitle: "Kit de correction pour {base}",
+      health: "Score de santé {score}.",
+      notScored: "sans score",
+      kitNote: "Ces fichiers ont été écrits à partir d’une analyse publique. Vérifiez chaque valeur avant de la déployer. Rien n’a été appliqué au site.",
+      fixFirst: "À corriger d’abord",
+      fix: "Correction : {fix}",
+      files: "Fichiers",
+      ghProxied: "GitHub Pages ne peut pas envoyer d’en-têtes personnalisés, mais cette analyse a aussi vu Cloudflare devant le site. Ajoutez-y chaque en-tête avec une Response Header Transform Rule (ou un Worker). Un fichier `_headers` ne fonctionne que sur Cloudflare Pages ou Netlify.",
+      ghPages: "GitHub Pages ne peut pas envoyer d’en-têtes personnalisés. Placez un CDN comme Cloudflare devant et définissez-y les en-têtes, ou passez à un hébergeur qui envoie des en-têtes. Le fichier `_headers` fonctionne sur Cloudflare Pages et Netlify.",
+      hosted: "Le site semble hébergé sur {host}, donc ce fichier d’en-têtes est listé en premier.",
+      areas: { Security: "Sécurité", Accessibility: "Accessibilité" },
+      severity: { critical: "critique", high: "élevée", medium: "moyenne", low: "faible", info: "informative" },
+      effort: { minutes: "minutes", hours: "heures", days: "jours" }
+    },
+    it: {
+      intro: "Script di automazione proposti a partire da un’analisi pubblica di {base}.",
+      signature: "Firma: {mark}",
+      disclaimer: "Questi script sono stati scritti a partire da ciò che mostrava la pagina pubblica. QA-lab non li ha eseguiti. Controlla ogni selettore, budget e percorso prima di fidarti di un risultato. I test saltati sono casi che richiedono una persona, o un account rilasciato dal proprietario.",
+      inside: "Cosa contiene",
+      cases: "{fw}: {n} caso/i",
+      howToRun: "Come eseguirli",
+      kitTitle: "Kit di correzione per {base}",
+      health: "Punteggio di salute {score}.",
+      notScored: "senza punteggio",
+      kitNote: "Questi file sono stati scritti a partire da un’analisi pubblica. Controlla ogni valore prima di pubblicarlo. Niente è stato applicato al sito.",
+      fixFirst: "Da sistemare prima",
+      fix: "Correzione: {fix}",
+      files: "File",
+      ghProxied: "GitHub Pages non può inviare header personalizzati, ma questa revisione ha visto anche Cloudflare davanti al sito. Aggiungi lì ogni header con una Response Header Transform Rule (o un Worker). Un file `_headers` funziona solo su Cloudflare Pages o Netlify.",
+      ghPages: "GitHub Pages non può inviare header personalizzati. Metti davanti una CDN come Cloudflare e imposta lì gli header, oppure passa a un hosting che invia header. Il file `_headers` funziona su Cloudflare Pages e Netlify.",
+      hosted: "Il sito sembra ospitato su {host}, quindi quel file di header è elencato per primo.",
+      areas: { Security: "Sicurezza", Accessibility: "Accessibilità", Performance: "Prestazioni" },
+      severity: { critical: "critica", high: "alta", medium: "media", low: "bassa", info: "informativa" },
+      effort: { minutes: "minuti", hours: "ore", days: "giorni" }
+    }
+  };
+
+  function said(book, key, vars) {
+    return String(book[key]).replace(/\{(\w+)\}/g, (match, name) => (vars && vars[name] != null ? String(vars[name]) : match));
+  }
+
+  // words: { lang, summary, line(item, part) } from the review page; English and the report's own text by default.
+  function wordsFor(report, words) {
+    const given = words || {};
+    const lang = String(given.lang || "en").slice(0, 2).toLowerCase();
+    return {
+      book: README_COPY[lang] || README_COPY.en,
+      summary: given.summary != null ? given.summary : ((report.insights && report.insights.summary) || ""),
+      line: typeof given.line === "function" ? given.line : (item, part) => item[part]
+    };
+  }
+
+  function readme(ctx, sign, used, counts, words) {
+    const book = words.book;
     const lines = [
       "# " + ctx.label,
       "",
-      "Automation scripts proposed from a public analysis of " + ctx.base + ".",
-      sign && sign.mark ? "Signature: " + sign.mark + (sign.sha256 ? " · SHA-256 " + sign.sha256 : "") : "",
+      said(book, "intro", { base: ctx.base }),
+      sign && sign.mark ? said(book, "signature", { mark: sign.mark }) + (sign.sha256 ? " · SHA-256 " + sign.sha256 : "") : "",
       "",
-      "These scripts were written from what the public page showed. They were not run by QA-lab. Review each selector, budget, and path before you trust a result. Skipped tests are cases that need a person, or an account the owner issues.",
+      book.disclaimer,
       "",
-      "## What is inside",
+      "## " + book.inside,
       ""
     ];
-    used.forEach((fw) => lines.push("- " + fw + ": " + counts[fw] + " case(s)"));
-    lines.push("", "## How to run", "");
+    used.forEach((fw) => lines.push("- " + said(book, "cases", { fw, n: counts[fw] })));
+    lines.push("", "## " + book.howToRun, "");
     const how = {
       Playwright: ["npm init -y && npm i -D @playwright/test", "npx playwright install chromium", "npx playwright test playwright/qa-lab.spec.ts"],
       Cypress: ["npm init -y && npm i -D cypress", "npx cypress run --spec cypress/e2e/qa-lab.cy.js"],
@@ -2069,8 +2215,9 @@ namespace QaLab
     return lines.filter((line, index, all) => !(line === "" && all[index - 1] === "")).join("\n");
   }
 
-  function bundle(report, cases, chosen) {
+  function bundle(report, cases, chosen, options) {
     const ctx = context(report);
+    const words = wordsFor(report, options);
     const sign = report.signature || {};
     const blocks = {};
     const counts = {};
@@ -2113,10 +2260,10 @@ namespace QaLab
     gatlingFiles.forEach((file) => files.push(file));
     if (k6Entries.length) files.push({ path: FILES.k6, content: k6Script(k6Entries, ctx, sign) });
     const used = ORDER.filter((fw) => counts[fw]);
-    files.unshift({ path: "README.md", content: readme(ctx, sign, used, counts) });
+    files.unshift({ path: "README.md", content: readme(ctx, sign, used, counts, words) });
     const flow = workflow(used, ctx);
     if (flow) files.push({ path: ".github/workflows/qa-lab.yml", content: flow });
-    fixKitFiles(report, ctx).forEach((file) => files.push(file));
+    fixKitFiles(report, ctx, words).forEach((file) => files.push(file));
     return { files, frameworks: used };
   }
 
@@ -2187,7 +2334,8 @@ namespace QaLab
     return files.map((file) => ({ path: file.path, content: file.content }));
   }
 
-  function fixKitFiles(report, ctx) {
+  function fixKitFiles(report, ctx, words) {
+    const book = words.book;
     const ins = report && report.insights;
     const kit = ins && ins.fixkit;
     if (!kit) return [];
@@ -2206,27 +2354,28 @@ namespace QaLab
     const top = (ins.findings || []).filter((item) => item.rank).slice(0, 15);
     const score = ins.score || {};
     const lines = [
-      "# Fix kit for " + ctx.base,
+      "# " + said(book, "kitTitle", { base: ctx.base }),
       "",
-      "Health " + (score.overall != null ? score.overall + "/100 (" + score.grade + ")" : "not scored") + ". " + (ins.summary || ""),
+      said(book, "health", { score: score.overall != null ? score.overall + "/100 (" + score.grade + ")" : book.notScored }) + " " + words.summary,
       "",
-      "These files were written from a public analysis. Review each value before you deploy it. Nothing here was applied to the site.",
+      book.kitNote,
       "",
-      "## Fix first",
+      "## " + book.fixFirst,
       ""
     ];
     top.forEach((item) => {
-      lines.push(item.rank + ". **" + item.title + "** (" + item.area + ", " + item.severity + ", " + item.effort + ")");
-      lines.push("   " + item.evidence);
-      if (item.fix) lines.push("   Fix: " + item.fix);
+      const facts = [book.areas[item.area] || item.area, book.severity[item.severity] || item.severity, book.effort[item.effort] || item.effort];
+      lines.push(item.rank + ". **" + words.line(item, "title") + "** (" + facts.join(", ") + ")");
+      lines.push("   " + words.line(item, "evidence"));
+      if (item.fix) lines.push("   " + said(book, "fix", { fix: words.line(item, "fix") }));
       lines.push("");
     });
-    lines.push("## Files", "");
+    lines.push("## " + book.files, "");
     files.forEach((file) => lines.push("- `" + file.path.replace(/^fix-kit\//, "") + "`"));
     const proxied = (report.technologies || []).some((row) => /cloudflare/i.test(row.name || ""));
-    if (kit.hosting === "GitHub Pages" && proxied) lines.push("", "GitHub Pages cannot send custom headers, but this review also saw Cloudflare in front of the site. Add each header there with a Response Header Transform Rule (or a Worker). A `_headers` file only works on Cloudflare Pages or Netlify.");
-    else if (kit.hosting === "GitHub Pages") lines.push("", "GitHub Pages cannot send custom headers. Put a CDN such as Cloudflare in front and set the headers there, or move to a host that sends headers. The `_headers` file works on Cloudflare Pages and Netlify.");
-    else if (kit.hosting) lines.push("", "The site looks hosted on " + kit.hosting + ", so that header file is listed first.");
+    if (kit.hosting === "GitHub Pages" && proxied) lines.push("", book.ghProxied);
+    else if (kit.hosting === "GitHub Pages") lines.push("", book.ghPages);
+    else if (kit.hosting) lines.push("", said(book, "hosted", { host: kit.hosting }));
     files.unshift({ path: "fix-kit/README.md", content: lines.join("\n") + "\n" });
     return files;
   }
@@ -2307,7 +2456,7 @@ namespace QaLab
     return new Blob(locals.concat(centrals, [end.buffer]), { type: "application/zip" });
   }
 
-  const api = { snippets, bundle, zip, checkFor, context, headerFiles };
+  const api = { snippets, bundle, zip, checkFor, context, headerFiles, README_COPY };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.QAReviewScripts = api;
 })(typeof window !== "undefined" ? window : globalThis);

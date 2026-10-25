@@ -3331,6 +3331,36 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.match(readme([]), /Put a CDN such as Cloudflare in front/);
   });
 
+  test("the scripts ZIP READMEs read in the page language, and stay the same in English (#1401)", () => {
+    const report = { url: "https://example.com/", finalUrl: "https://example.com/", host: "example.com", cases: [{ id: "A11Y-01", layer: "Accessibility", title: "Images", why: "Missing.", fw: ["Playwright"] }], insights: {
+      summary: "example.com scores 61 out of 100 (C).",
+      score: { overall: 61, grade: "C" },
+      findings: [{ rank: 1, area: "Accessibility", severity: "high", effort: "minutes", title: "100 images have no alt attribute", evidence: "Seen on /.", fix: "Add alt text.", msg: { title: { id: "x" }, evidence: { id: "y" }, fix: { id: "z" } } }],
+      fixkit: { hosting: "Netlify", headers: [{ name: "X-Frame-Options", value: "DENY" }] }
+    } };
+    const read = (words) => {
+      const files = scripts.bundle(report, report.cases, ["Playwright"], words).files;
+      return [files.find((file) => file.path === "README.md").content, files.find((file) => file.path === "fix-kit/README.md").content];
+    };
+    const [main, kit] = read();
+    assert.deepEqual(read({ lang: "en" }), [main, kit]);
+    assert.match(main, /\nAutomation scripts proposed from a public analysis of https:\/\/example\.com\.\n/);
+    assert.match(main, /\n## What is inside\n\n- Playwright: 1 case\(s\)\n/);
+    assert.ok(kit.startsWith("# Fix kit for https://example.com\n\nHealth 61/100 (C). example.com scores 61 out of 100 (C).\n\nThese files were written from a public analysis."), kit);
+    assert.match(kit, /\n## Fix first\n\n1\. \*\*100 images have no alt attribute\*\* \(Accessibility, high, minutes\)\n   Seen on \/\.\n   Fix: Add alt text\.\n/);
+    assert.match(kit, /\nThe site looks hosted on Netlify, so that header file is listed first\.\n$/);
+
+    const es = { title: "100 imágenes no tienen atributo alt", evidence: "Visto en /.", fix: "Agrega texto alternativo." };
+    const [mainEs, kitEs] = read({ lang: "es-419", summary: "example.com obtiene 61 de 100 (C).", line: (item, part) => es[part] });
+    assert.match(mainEs, /\nScripts de automatización propuestos a partir de un análisis público de https:\/\/example\.com\.\n/);
+    assert.match(mainEs, /\n## Qué incluye\n\n- Playwright: 1 caso\(s\)\n/);
+    assert.match(mainEs, /npx playwright/);
+    assert.ok(kitEs.startsWith("# Kit de arreglos para https://example.com\n\nPuntuación de salud 61/100 (C). example.com obtiene 61 de 100 (C).\n"), kitEs);
+    assert.match(kitEs, /\n## Arreglar primero\n\n1\. \*\*100 imágenes no tienen atributo alt\*\* \(Accesibilidad, alta, minutos\)\n   Visto en \/\.\n   Corrección: Agrega texto alternativo\.\n/);
+    assert.match(kitEs, /\n## Archivos\n\n- `/);
+    assert.match(kitEs, /El sitio parece alojado en Netlify/);
+  });
+
   test("the preview frosts every section, and leaves ids, addresses, dates and short labels as they are", () => {
     const secret = "the admin panel answers on port 8443 without a password";
     const report = {
