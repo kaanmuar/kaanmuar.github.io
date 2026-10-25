@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const auth = require('../functions/url-review-auth');
 const compare = require('../functions/url-review-compare');
+const multi = require('../functions/url-review-multi');
 const sample = require('../assets/qa-review-sample.json');
 const own = require('./unit/fixtures/review-wordpress.json');
 
@@ -241,6 +242,39 @@ test.describe('The competitor comparison is drawn as charts', () => {
     expect(sent.map((body) => body.url)).toEqual(['one.example', 'two.example', 'three.example']);
     expect(sent.every((body) => body.compareWith === ID && body.reasonCode === 'compare')).toBe(true);
     await expect(page.locator('#compare-go')).toBeEnabled();
+  });
+
+  test('two or more finished competitors open with the report as one comparison, not only the last pair', async ({ page }) => {
+    const rivals = { 'one.example': 'c1c1c1', 'two.example': 'c2c2c2' };
+    const records = [{ id: ID, email: 'ana@example.com', report: Object.assign({}, sample.report, { id: ID }) }]
+      .concat(Object.entries(rivals).map(([host, id]) => ({ id, email: 'ana@example.com', report: Object.assign({}, own, { id, host }) })));
+    const ask = await open(page, null, (body) => {
+      const report = records.find((row) => row.id === rivals[body.url]).report;
+      const cmp = compare.compareSites(Object.assign({}, sample.report, { id: ID }), report);
+      return JSON.stringify({ type: 'done', report: Object.assign({}, report, { compare: cmp }), frameworks: sample.frameworks, paid: true }) + '\n';
+    });
+    const saved = [];
+    await page.route('http://127.0.0.1:8768/account/comparison/**', async (route) => {
+      const req = route.request();
+      const headers = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, headers) });
+      const body = JSON.parse(req.postData() || '{}');
+      const picked = multi.pickProblem(records, 'ana@example.com', body.ids || saved[0]);
+      if (req.url().endsWith('/save')) saved.push(body.ids);
+      const made = req.url().endsWith('/save') ? { ok: true, id: 'cmp9' } : multi.payloadOf('cmp9', multi.savedRecord('ana@example.com', picked, 'review'), records, () => true);
+      return route.fulfill({ status: 200, contentType: 'application/json', headers, body: JSON.stringify(made) });
+    });
+    await page.evaluate(() => { document.getElementById('name').value = 'Ana Pérez'; });
+    await ask.locator('#compare-url').fill('one.example');
+    await ask.locator('#compare-add').click();
+    await ask.locator('#compare-url-2').fill('two.example');
+    await ask.locator('#compare-go').click();
+    const overlay = page.locator('#multi-overlay');
+    await expect(overlay).toHaveClass(/open/, { timeout: 20000 });
+    expect(saved).toEqual([[ID, 'c1c1c1', 'c2c2c2']]);
+    await expect(page).toHaveURL(/[?&]comparison=cmp9/);
+    await expect(overlay).toContainText('one.example');
+    await expect(overlay).toContainText('two.example');
   });
 
   test('the report\'s own site is refused as a competitor', async ({ page }) => {
