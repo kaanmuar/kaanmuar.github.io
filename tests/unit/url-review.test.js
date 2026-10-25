@@ -1744,6 +1744,40 @@ test("response headers up to 64 KB are read, and past that the read names the li
   }
 });
 
+// Made-up public hosts served by a local server: DNS answers a public address, and each https request goes to the server instead.
+async function fakeSites(t, answer) {
+  const http = require("node:http");
+  const https = require("node:https");
+  const server = http.createServer((req, res) => {
+    const [status, headers, body] = answer(req.headers.host, req.url);
+    res.writeHead(status, Object.assign({ connection: "close" }, headers));
+    res.end(body || "");
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  t.after(() => new Promise((resolve) => server.close(resolve)));
+  const port = server.address().port;
+  t.mock.method(require("node:dns").promises, "lookup", async () => [{ address: "93.184.215.14", family: 4 }]);
+  t.mock.method(https, "request", (options, callback) => http.request(Object.assign({}, options, {
+    protocol: "http:", hostname: "127.0.0.1", port, lookup: undefined, ca: undefined, headers: Object.assign({}, options.headers, { host: options.hostname })
+  }), callback));
+}
+
+test("a start page six redirects away is read as Chrome reads it, and a longer chain is still a redirect loop (#1177)", async (t) => {
+  await fakeSites(t, (host, path) => {
+    const left = Number(path.slice(1));
+    return left > 0 ? [302, { location: "https://portal.example.com/" + (left - 1) }] : [200, { "content-type": "text/html" }, HTML];
+  });
+  const read = await core.fetchPublic("https://portal.example.com/6");
+  assert.deepEqual([read.status, read.hops, read.url], [200, 6, "https://portal.example.com/0"]);
+  const probe = await core.probeRead("https://portal.example.com/6");
+  assert.deepEqual([probe.status, probe.hops.length, probe.html], [200, 7, true]);
+  const past = "https://portal.example.com/" + (core.MAX_REDIRECTS + 1);
+  const error = await core.fetchPublic(past).then(() => null, (caught) => caught);
+  assert.equal(error.message, "The page redirected too many times.");
+  assert.equal(failures.causeOf(error.message).id, "redirect-loop");
+  assert.equal((await core.probeRead(past)).error, "The page redirected too many times.");
+});
+
 test("the connection check tells a port that opens from one that refuses", async () => {
   const net = require("node:net");
   const server = net.createServer((socket) => socket.end());
