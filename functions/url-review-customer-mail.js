@@ -1068,6 +1068,132 @@ function sharedOpenMail(record, at) {
   };
 }
 
+const RECEIPT = {
+  en: {
+    subject: "Your QA-lab URL Review receipt: {item}, US${amount}",
+    title: "Payment received",
+    lead: "PayPal confirmed your payment on {date}. This is your receipt.",
+    item: "Item", site: "Site", amount: "Amount paid", list: "List price", coupon: "Coupon",
+    date: "Date", number: "Receipt number", order: "PayPal order", capture: "PayPal transaction", seller: "Seller",
+    test: "Test payment in the PayPal sandbox. No money moved.",
+    notInvoice: "This is a payment receipt, not a tax invoice (factura electrónica). Write to {mail} if you need one.",
+    button: "Open QA-lab URL Review",
+    why: "You get this receipt because you paid on QA-lab URL Review.",
+    items: { report: "Full report", "new-run": "Review run", pass: "Monthly pass", fixlist: "Fix list", cases: "Test case export", alerts: "Change alerts", credentials: "Signed-in run" }
+  },
+  es: {
+    subject: "Tu recibo de QA-lab URL Review: {item}, US${amount}",
+    title: "Pago recibido",
+    lead: "PayPal confirmó tu pago el {date}. Este es tu recibo.",
+    item: "Concepto", site: "Sitio", amount: "Importe pagado", list: "Precio de lista", coupon: "Cupón",
+    date: "Fecha", number: "Número de recibo", order: "Orden de PayPal", capture: "Transacción de PayPal", seller: "Vendedor",
+    test: "Pago de prueba en el sandbox de PayPal. No se movió dinero.",
+    notInvoice: "Este es un recibo de pago, no una factura electrónica. Escribe a {mail} si necesitas una.",
+    button: "Abrir QA-lab URL Review",
+    why: "Recibes este recibo porque pagaste en QA-lab URL Review.",
+    items: { report: "Informe completo", "new-run": "Revisión", pass: "Pase mensual", fixlist: "Lista de arreglos", cases: "Exportación de casos de prueba", alerts: "Alertas de cambios", credentials: "Revisión con sesión iniciada" }
+  },
+  pt: {
+    subject: "Seu recibo do QA-lab URL Review: {item}, US${amount}",
+    title: "Pagamento recebido",
+    lead: "O PayPal confirmou seu pagamento em {date}. Este é o seu recibo.",
+    item: "Item", site: "Site", amount: "Valor pago", list: "Preço de tabela", coupon: "Cupom",
+    date: "Data", number: "Número do recibo", order: "Pedido do PayPal", capture: "Transação do PayPal", seller: "Vendedor",
+    test: "Pagamento de teste no sandbox do PayPal. Nenhum dinheiro foi movimentado.",
+    notInvoice: "Este é um recibo de pagamento, não uma nota fiscal (factura electrónica). Escreva para {mail} se precisar de uma.",
+    button: "Abrir o QA-lab URL Review",
+    why: "Você recebe este recibo porque pagou no QA-lab URL Review.",
+    items: { report: "Relatório completo", "new-run": "Revisão", pass: "Passe mensal", fixlist: "Lista de correções", cases: "Exportação de casos de teste", alerts: "Alertas de mudanças", credentials: "Revisão com login" }
+  },
+  de: {
+    subject: "Ihre Quittung von QA-lab URL Review: {item}, US${amount}",
+    title: "Zahlung erhalten",
+    lead: "PayPal hat Ihre Zahlung am {date} bestätigt. Dies ist Ihre Quittung.",
+    item: "Leistung", site: "Website", amount: "Bezahlter Betrag", list: "Listenpreis", coupon: "Gutschein",
+    date: "Datum", number: "Quittungsnummer", order: "PayPal-Bestellung", capture: "PayPal-Transaktion", seller: "Verkäufer",
+    test: "Testzahlung in der PayPal-Sandbox. Es wurde kein Geld bewegt.",
+    notInvoice: "Dies ist eine Zahlungsquittung, keine Steuerrechnung (factura electrónica). Schreiben Sie an {mail}, wenn Sie eine benötigen.",
+    button: "QA-lab URL Review öffnen",
+    why: "Sie erhalten diese Quittung, weil Sie bei QA-lab URL Review bezahlt haben.",
+    items: { report: "Vollständiger Bericht", "new-run": "Prüfung", pass: "Monatspass", fixlist: "Korrekturliste", cases: "Export der Testfälle", alerts: "Änderungsalarme", credentials: "Prüfung mit Anmeldung" }
+  },
+  fr: {
+    subject: "Votre reçu QA-lab URL Review : {item}, US${amount}",
+    title: "Paiement reçu",
+    lead: "PayPal a confirmé votre paiement le {date}. Voici votre reçu.",
+    item: "Article", site: "Site", amount: "Montant payé", list: "Prix catalogue", coupon: "Coupon",
+    date: "Date", number: "Numéro de reçu", order: "Commande PayPal", capture: "Transaction PayPal", seller: "Vendeur",
+    test: "Paiement de test dans la sandbox PayPal. Aucun argent n'a circulé.",
+    notInvoice: "Ceci est un reçu de paiement, pas une facture fiscale (factura electrónica). Écrivez à {mail} si vous en avez besoin.",
+    button: "Ouvrir QA-lab URL Review",
+    why: "Vous recevez ce reçu parce que vous avez payé sur QA-lab URL Review.",
+    items: { report: "Rapport complet", "new-run": "Revue", pass: "Pass mensuel", fixlist: "Liste de corrections", cases: "Export des cas de test", alerts: "Alertes de changement", credentials: "Revue connectée" }
+  },
+  it: {
+    subject: "La tua ricevuta di QA-lab URL Review: {item}, US${amount}",
+    title: "Pagamento ricevuto",
+    lead: "PayPal ha confermato il tuo pagamento il {date}. Questa è la tua ricevuta.",
+    item: "Voce", site: "Sito", amount: "Importo pagato", list: "Prezzo di listino", coupon: "Coupon",
+    date: "Data", number: "Numero di ricevuta", order: "Ordine PayPal", capture: "Transazione PayPal", seller: "Venditore",
+    test: "Pagamento di prova nella sandbox di PayPal. Nessun denaro è stato spostato.",
+    notInvoice: "Questa è una ricevuta di pagamento, non una fattura fiscale (factura electrónica). Scrivi a {mail} se ne hai bisogno.",
+    button: "Apri QA-lab URL Review",
+    why: "Ricevi questa ricevuta perché hai pagato su QA-lab URL Review.",
+    items: { report: "Report completo", "new-run": "Revisione", pass: "Pass mensile", fixlist: "Lista delle correzioni", cases: "Esportazione dei casi di test", alerts: "Avvisi di modifica", credentials: "Revisione con accesso" }
+  }
+};
+
+const SELLER = "Carlos A. Muñoz, " + POSTAL + ", " + DEEPER;
+
+function usd(value) {
+  return (Math.round((Number(value) || 0) * 100) / 100).toFixed(2);
+}
+
+// The receipt for one confirmed payment; `p` is the checkout as closed, with the PayPal ids.
+function receiptMail(p) {
+  const code = langOf(p && p.lang);
+  const t = RECEIPT[code];
+  const item = t.items[p.purpose] || t.items["new-run"];
+  const date = dateOf(p.paidAt);
+  const discounted = Number(p.listUsd) > Number(p.priceUsd);
+  const rows = [
+    [t.item, item],
+    p.host ? [t.site, p.host] : null,
+    discounted ? [t.list, "US$" + usd(p.listUsd)] : null,
+    discounted && p.coupon ? [t.coupon, String(p.coupon) + (p.percent ? " (" + p.percent + "%)" : "")] : null,
+    [t.amount, "US$" + usd(p.priceUsd)],
+    [t.date, date],
+    [t.number, p.reference],
+    p.orderId ? [t.order, p.orderId] : null,
+    p.captureId ? [t.capture, p.captureId] : null,
+    [t.seller, SELLER]
+  ].filter((row) => row && row[1]);
+  const vars = { item, amount: usd(p.priceUsd), date, mail: DEEPER };
+  const link = pageUrl(code, { utm_campaign: "receipt" });
+  const why = t.why;
+  const table = "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:0 0 18px;border-collapse:collapse;\">" +
+    rows.map((row) => "<tr><td style=\"padding:8px 12px 8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;line-height:20px;color:#64748b;vertical-align:top;\">" + esc(row[0]) +
+      "</td><td style=\"padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;line-height:20px;color:#0f172a;font-weight:bold;\">" + esc(row[1]) + "</td></tr>").join("") +
+    "</table>";
+  const inner = "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 24px;font-family:Arial,Helvetica,sans-serif;\">" +
+    "<p style=\"margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
+    "<p style=\"margin:0;font-size:26px;line-height:32px;color:#ffffff;font-weight:bold;\">" + esc(t.title) + "</p>" +
+    "</td></tr>" +
+    "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:22px 28px 22px;font-family:Arial,Helvetica,sans-serif;\">" +
+    "<p style=\"margin:0 0 16px;font-size:16px;line-height:25px;color:#334155;\">" + esc(fill(t.lead, vars)) + "</p>" +
+    (p.test ? "<p style=\"margin:0 0 16px;font-size:14px;line-height:21px;color:#b45309;font-weight:bold;\">" + esc(t.test) + "</p>" : "") +
+    table +
+    "<p style=\"margin:0 0 20px;font-size:13px;line-height:19px;color:#64748b;\">" + esc(fill(t.notInvoice, vars)) + "</p>" +
+    button(link, t.button, true) +
+    "</td></tr>";
+  return {
+    lang: code,
+    subject: fill(t.subject, vars),
+    text: [t.title, "", fill(t.lead, vars), p.test ? "\n" + t.test : "", "", rows.map((row) => row[0] + ": " + row[1]).join("\n"), "", fill(t.notInvoice, vars), "", t.button + ": " + link, "", footerText(COPY[code], why)].join("\n"),
+    html: shell(code, fill(t.lead, vars), inner, footerHtml(COPY[code], why))
+  };
+}
+
 function stopPage(lang, state, email) {
   const code = langOf(lang);
   const t = COPY[code].page;
@@ -1079,4 +1205,4 @@ function stopPage(lang, state, email) {
     "<body><main>" + body + "</main></body></html>";
 }
 
-module.exports = { SITE, POSTAL, LANGS, AREAS, langOf, esc, fill, button, shell, scoreColor, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, sharedOpenMail, stopPage, pageUrl };
+module.exports = { SITE, POSTAL, LANGS, AREAS, langOf, esc, fill, button, shell, scoreColor, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, sharedOpenMail, receiptMail, stopPage, pageUrl };

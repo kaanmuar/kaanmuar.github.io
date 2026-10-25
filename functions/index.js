@@ -2732,10 +2732,11 @@ async function fulfillPayment(result, ctx) {
     return { code: 402, body: { paid: false, error: UNMATCHED } };
   }
   const open = claim.open;
-  const reportOf = (purpose) => (purpose === "report" ? { reportId: String(open.reportId || "") } : {});
+  const paidBody = (purpose) => Object.assign({ paid: true, purpose, priceUsd: Number(open.priceUsd || result.amount) || 0, reference: result.reference, test: testRun },
+    purpose === "report" ? { reportId: String(open.reportId || "") } : {});
   if (claim.state !== "claimed") {
     const purpose = open.paidPurpose || reviewOffers.paidPurpose(open.purpose);
-    return { code: 200, body: Object.assign({ paid: true, purpose }, reportOf(purpose)) };
+    return { code: 200, body: paidBody(purpose) };
   }
   const checkoutRef = admin.firestore().collection("url_reviews").doc(result.reference);
   const closeCheckout = (paidPurpose) => checkoutRef.update({ status: "paid", paidAt: new Date().toISOString(), paidPurpose, expireAt: urlReview.paymentExpireAt() });
@@ -2746,7 +2747,7 @@ async function fulfillPayment(result, ctx) {
       const prior = existing.docs[0].data() || {};
       const purpose = prior.report ? "report" : reviewOffers.paidPurpose(prior.purpose);
       await closeCheckout(purpose);
-      return { code: 200, body: Object.assign({ paid: true, purpose }, reportOf(purpose)) };
+      return { code: 200, body: paidBody(purpose) };
     }
   }
   const paidPurpose = reviewOffers.paidPurpose(open.purpose);
@@ -2764,7 +2765,7 @@ async function fulfillPayment(result, ctx) {
   const who = { name: payerName, email: String(open.email || "") || payerEmail };
   if (open.coupon) {
     const owner = paidReport ? await admin.firestore().collection("url_reviews").doc(paidReport).get() : null;
-    const email = String((owner && owner.exists && owner.get("email")) || "").trim().toLowerCase();
+    const email = String((owner && owner.exists && owner.get("email")) || open.email || "").trim().toLowerCase();
     await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, email, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
   }
   if (paidPurpose === "report" && paidReport) {
@@ -2894,7 +2895,44 @@ async function fulfillPayment(result, ctx) {
     await rememberReview("run-paid", Object.assign({ via }, credit, competitors > 1 ? { competitors } : {}, who));
   }
   await closeCheckout(paidPurpose);
-  return { code: 200, body: Object.assign({ paid: true, purpose: paidPurpose }, reportOf(paidPurpose)) };
+  await mailAfterPayment(open, result, { purpose: paidPurpose, reportId: paidReport, priceUsd: paidPrice, captureId, test: testRun });
+  return { code: 200, body: paidBody(paidPurpose) };
+}
+
+// The receipt, and the full report when a report is bought after its run; a mail that fails never undoes the payment.
+async function mailAfterPayment(open, result, paid) {
+  const db = admin.firestore();
+  const runSnap = paid.reportId ? await db.collection("url_reviews").doc(paid.reportId).get().catch(() => null) : null;
+  const run = runSnap && runSnap.exists ? Object.assign({ id: runSnap.id }, runSnap.data()) : null;
+  const to = String(open.email || (run && run.email) || result.payerEmail || "").trim().toLowerCase();
+  const receipt = async () => {
+    const mark = { at: new Date().toISOString(), sent: false };
+    try {
+      mark.sent = (await sendAskerMail(to, customerMail.receiptMail({
+        lang: open.lang || (run && run.lang),
+        purpose: paid.purpose,
+        host: (run && run.report && run.report.host) || "",
+        priceUsd: paid.priceUsd,
+        listUsd: open.listUsd,
+        coupon: open.coupon,
+        percent: open.percent,
+        reference: result.reference,
+        orderId: result.sessionId,
+        captureId: paid.captureId,
+        paidAt: mark.at,
+        test: paid.test
+      }), "", "url-review-receipt")) === true;
+      if (!mark.sent) mark.error = "mail is not configured";
+    } catch (error) {
+      mark.error = String((error && error.message) || "mail failed").slice(0, 200);
+      console.error("Receipt mail failed:", error);
+    }
+    await db.collection("url_reviews").doc(result.reference).set({ receipt: mark }, { merge: true }).catch((error) => console.error("Receipt mark failed:", error));
+  };
+  await Promise.all([
+    to ? receipt() : null,
+    paid.purpose === "report" && run ? mailReportToAsker(run).catch((error) => console.error("Paid report mail failed:", error)) : null
+  ]);
 }
 
 function paypalKeys(mode) {
@@ -4152,7 +4190,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         billing: priced.billing || "",
         compareWith,
         competitors: priced.competitors || null,
-        ...(passOwner ? { email: passOwner, plan: priced.plan || "", passExtra: !!passPlan, lang: String((req.body && req.body.lang) || "").slice(0, 2) } : {}),
+        lang: String((req.body && req.body.lang) || "").slice(0, 2),
+        ...(passOwner ? { email: passOwner, plan: priced.plan || "", passExtra: !!passPlan } : {}),
         priceUsd: priced.usd,
         creditUsd: creditCents / 100,
         amount: session.amount,
@@ -4452,7 +4491,9 @@ async function runReview(req, res, placeOf) {
       status: "run-credit-used",
       creditId: decision.consumeId,
       deviceId,
-      ...(decision.pass ? { email: signedIn.email, passId: decision.pass.id } : {}),
+      email: String(signedIn.email || "").trim().toLowerCase(),
+      runId: claim.runId || "",
+      ...(decision.pass ? { passId: decision.pass.id } : {}),
       createdAt: new Date().toISOString(),
       expireAt: urlReview.paymentExpireAt()
     });
