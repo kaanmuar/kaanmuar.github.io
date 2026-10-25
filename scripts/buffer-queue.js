@@ -85,28 +85,53 @@ const SLOT = { linkedin: "linkedin", facebook: "facebook", instagram: "instagram
 const NETS = ["linkedin", "x", "facebook", "instagram", "tiktok", "youtube"];
 const squash = (text) => String(text || "").replace(/\s+/g, " ").trim();
 
-// Every batch post by the addresses of its images and clips and by its captions, for --seed.
-function batchIndex() {
+const CALENDAR_SLOT = { linkedin: "linkedin", x: "x", facebook: "facebook", tiktok: "tiktok", youtube: "youtube", "youtube shorts": "youtube" };
+
+// Every batch post by the addresses of its images and clips, by its captions, and by its calendar slots, for
+// --seed. The launch set keeps a captions file per language and topic. A slot two posts share matches neither.
+function batchIndex(root = path.join(ROOT, "media/social-posts")) {
   const index = new Map();
-  const root = path.join(ROOT, "media/social-posts");
-  for (const batch of fs.readdirSync(root).filter((name) => fs.existsSync(path.join(root, name, "captions.json"))).sort()) {
-    const captions = JSON.parse(fs.readFileSync(path.join(root, batch, "captions.json"), "utf8"));
-    for (const [slug, cap] of Object.entries(captions)) {
-      const name = batch + "/" + slug;
-      ["feed", "story"].forEach((dir) => index.set("/media/social-posts/" + batch + "/" + dir + "/" + slug + ".jpg", name));
-      index.set("/releases/download/" + batch + "/" + slug + ".mp4", name);
-      NETS.forEach((net) => { if (cap[net]) index.set("text " + squash(cap[net]), name); });
+  const slot = (key, name) => index.set(key, index.has(key) && index.get(key) !== name ? null : name);
+  const texts = (cap, name) => NETS.forEach((net) => { if (cap[net]) index.set("text " + squash(cap[net]), name); });
+  for (const batch of fs.readdirSync(root).filter((name) => /^[\w-]+$/.test(name)).sort()) {
+    const dir = path.join(root, batch);
+    if (fs.existsSync(path.join(dir, "captions.json"))) {
+      const captions = JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
+      for (const [slug, cap] of Object.entries(captions)) {
+        const name = batch + "/" + slug;
+        ["feed", "story"].forEach((sub) => index.set("/media/social-posts/" + batch + "/" + sub + "/" + slug + ".jpg", name));
+        index.set("/releases/download/" + batch + "/" + slug + ".mp4", name);
+        texts(cap, name);
+      }
     }
+    fs.readdirSync(dir).filter((lang) => /^[a-z]{2}$/.test(lang) && fs.statSync(path.join(dir, lang)).isDirectory()).forEach((lang) => {
+      fs.readdirSync(path.join(dir, lang)).filter((file) => file.endsWith("-captions.json")).forEach((file) => {
+        texts(JSON.parse(fs.readFileSync(path.join(dir, lang, file), "utf8")), batch + "/" + lang + "/" + file.replace(/-captions\.json$/, ""));
+      });
+    });
+    if (!fs.existsSync(path.join(dir, "calendar.csv"))) continue;
+    const [head, ...rows] = fs.readFileSync(path.join(dir, "calendar.csv"), "utf8").trim().split("\n").map((line) => line.split(","));
+    const col = (key) => head.indexOf(key);
+    rows.forEach((cells) => {
+      const net = CALENDAR_SLOT[(cells[col("Channel")] || "").toLowerCase()];
+      if (!net) return;
+      const lang = col("Language") >= 0 ? cells[col("Language")] + "/" : "";
+      const at = new Date(cells[col("Date")] + "T" + cells[col("Time")] + ":00-05:00");
+      if (!isNaN(at)) slot("slot " + net + " " + at.toISOString(), batch + "/" + lang + cells[col("Post")]);
+    });
   }
   return index;
 }
 
-function matchPost(index, post) {
+function matchPost(index, post, net) {
   for (const asset of post.assets || []) {
-    const source = String(asset.source || "").replace(/^https?:\/\/[^/]+/, "").replace(/\?.*$/, "");
+    const source = String(asset.source || "").replace(/^https?:\/\/[^/]+/, "").replace(/\?.*$/, "").replace(/^.*(?=\/releases\/download\/)/, "");
     if (index.has(source)) return index.get(source);
   }
-  return index.get("text " + squash(post.text)) || null;
+  const text = index.get("text " + squash(post.text));
+  if (text) return text;
+  const due = post.dueAt && new Date(post.dueAt);
+  return (net && due && !isNaN(due) && index.get("slot " + net + " " + due.toISOString())) || null;
 }
 
 async function seed() {
@@ -127,7 +152,7 @@ async function seed() {
         const slot = channel && SLOT[channel.service];
         if (!slot) continue;
         const profile = channel.service + (channel.name ? " (" + channel.name + ")" : "");
-        const name = matchPost(index, node);
+        const name = matchPost(index, node, slot);
         if (!name) { unmatched.push(node.status + " " + (node.sentAt || node.dueAt || "") + " " + profile + ": " + squash(node.text).slice(0, 90)); continue; }
         matched += 1;
         const result = node.status === "sent" ? "sent" : node.status === "error" ? "failed" : "queued";
@@ -265,4 +290,6 @@ async function main() {
   if (failed) process.exit(1);
 }
 
-main().catch((error) => { console.error(error); process.exit(1); });
+if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
+
+module.exports = { batchIndex, matchPost };
