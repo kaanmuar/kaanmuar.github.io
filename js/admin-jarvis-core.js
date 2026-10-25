@@ -241,7 +241,7 @@
         const reviews = data.reviews || [];
         const clicks = (data.events || []).filter((row) => row.site === 'review' && !isHubEvent(row) && row.kind !== 'visit' && row.kind !== 'view');
         const prior = data.prior || null;
-        const paid = reviews.filter((row) => row.paid === true);
+        const paid = reviews.filter((row) => row.paid === true && row.test !== true);
         const usd = Math.round(paid.reduce((sum, row) => sum + (Number(row.priceUsd) || 0), 0) * 100) / 100;
         const complete = reviews.filter((row) => row.status === 'complete').length;
         const scores = reviews.map((row) => Number(row.score)).filter((n) => Number.isFinite(n) && n > 0);
@@ -569,6 +569,8 @@
             if (money.paypal && money.paypal.disputesOpen > 0) add('alert', 'business', `${plural(money.paypal.disputesOpen, 'PayPal dispute is', 'PayPal disputes are')} open.`, 'money:disputes');
         }
         const mail = ext.email;
+        const listed = (mail && mail.ok && mail.blocklisted) || [];
+        if (listed.length) add('alert', 'business', `${plural(listed.reduce((n, l) => n + l.value, 0), 'email was', 'emails were')} refused because the sending IP is on ${listed.map((l) => l.label).join(', ')}.`, 'email:blocklist');
         if (mail && mail.ok && mail.totals && mail.totals.processed >= 10) {
             const m = mail.totals;
             if (m.spam_reports > 0) add('alert', 'business', `${plural(m.spam_reports, 'email was', 'emails were')} reported as spam in range.`, 'email:spam');
@@ -597,6 +599,10 @@
             const fs = pf.firestore || {};
             if (fs.readsFreePct >= th.firestoreFreePct) add('warn', 'systems', `Firestore used ${fs.readsFreePct}% of the free daily reads (${fs.reads}).`, 'platform:reads');
         }
+        CONNECTIONS.forEach((c) => {
+            const x = ext[c.key];
+            if (x && x.ok === false) add('warn', 'systems', `${c.name} did not answer: ${String(x.error || 'failed').slice(0, 140)}`, 'connections:down:' + c.key);
+        });
         const ou = ext.outreach;
         if (ou && ou.ok) {
             const plan = ou.plan && ou.plan.ok !== false ? ou.plan : null;

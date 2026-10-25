@@ -495,6 +495,57 @@ test("admin.html loads the Jarvis files with a version that changes with their c
   assert.deepEqual(Array.from(new Set(seen)), [want], "set ?v=" + want + " on the Jarvis links in admin.html");
 });
 
+test("costs: asks for the export, waits for its first rows, then sums net spend by service", async () => {
+  const missing = await sources.costs({ fetch: async () => json({ error: { message: "Not found: Dataset" } }, 404), days: 30 }, "t");
+  assert.match(missing.need, /standard usage cost export/);
+  const empty = await sources.costs({ fetch: async () => json({ tables: [] }), days: 30 }, "t");
+  assert.equal(empty.pending, true);
+  let sent = "";
+  const fetch = async (url, init) => {
+    if (/\/tables$/.test(url)) return json({ tables: [{ tableReference: { tableId: "gcp_billing_export_v1_01CFD3" } }] });
+    sent = JSON.parse(init.body).query;
+    return json({ rows: [{ f: [{ v: "Cloud Functions" }, { v: "USD" }, { v: "1.25" }, { v: "3.5" }] }, { f: [{ v: "Gemini API" }, { v: "USD" }, { v: "0" }, { v: "0.4" }] }] });
+  };
+  const out = await sources.costs({ fetch, days: 400 }, "t");
+  assert.match(sent, /jarvis_billing\.gcp_billing_export_v1_01CFD3/);
+  assert.match(sent, /INTERVAL 90 DAY/);
+  assert.deepEqual(out, { days: 90, currency: "USD", net: 1.25, gross: 3.9, byService: [{ label: "Cloud Functions", value: 1.25 }, { label: "Gemini API", value: 0 }] });
+});
+
+test("email: refusals that name a blocklist are counted by list", async () => {
+  const fetch = async (url) => {
+    if (/suppression\/blocks/.test(url)) return json([
+      { email: "a@x.org", reason: "551 5.7.1 Your IP is black listed by SpamCop.org", created: 1761400000 },
+      { email: "b@y.org", reason: "554 rejected: listed on a DNSBL", created: 1761400000 },
+      { email: "c@z.org", reason: "550 mailbox full", created: 1761400000 }
+    ]);
+    if (/suppression/.test(url)) return json([]);
+    return json([]);
+  };
+  const out = await sources.email({ fetch, env: { SENDGRID_API_KEY: "k" }, now: NOW.getTime(), days: 7 });
+  assert.deepEqual(out.blocklisted, [{ label: "spamcop", value: 1 }, { label: "unnamed blocklist", value: 1 }]);
+  const rows = core.briefing({ external: { email: Object.assign(out, { totals: { processed: 0, bounces: 0, blocks: 3, spam_reports: 0 }, rates: { bad: 0 } }) } });
+  assert.equal(rows.find((r) => r.key === "email:blocklist").text, "2 emails were refused because the sending IP is on spamcop, unnamed blocklist.");
+});
+
+test("social: posts scheduled for later are counted apart, not listed as recent", async () => {
+  const at = (n) => daysAgo(n).toISOString();
+  const buffer = { posts: { p1: [{ channel: "x", result: "sent", at: at(1) }, { channel: "x", result: "queued", at: at(-3) }, { channel: "tiktok", result: "queued", at: at(-1) }] } };
+  const fetch = async (url) => (/buffer\.json/.test(url) ? json(buffer) : json({}, 404));
+  const out = await sources.social({ fetch, env: {}, now: NOW.getTime(), days: 30 });
+  assert.equal(out.sent, 1);
+  assert.equal(out.latest.length, 1);
+  assert.deepEqual(out.scheduled, { count: 2, next: at(-1) });
+});
+
+test("a source that does not answer gets a briefing line, and test payments stay out of revenue", () => {
+  const rows = core.briefing({ external: { cloudflare: { ok: false, error: "Cloudflare 401: no answer" } } });
+  assert.equal(rows.find((r) => r.key === "connections:down:cloudflare").text, "Cloudflare did not answer: Cloudflare 401: no answer");
+  const sum = core.summarizeReview({ reviews: [{ paid: true, priceUsd: 19, createdAt: daysAgo(1) }, { paid: true, priceUsd: 15.2, test: true, createdAt: daysAgo(1) }] }, core.windowFor(30, NOW));
+  assert.equal(sum.totals.usd, 19);
+  assert.equal(sum.totals.paid, 1);
+});
+
 const outreachSrc = require("../../functions/jarvis-outreach.js");
 const outreachPlan = require("../../scripts/jarvis-outreach-plan.js");
 
