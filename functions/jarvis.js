@@ -481,7 +481,7 @@ async function dailyProducts(db, { now, days = 1 }) {
     review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window),
     hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window)
   };
-  return { window, products };
+  return { window, products, outreachVisits: core.outreachVisits(now1) };
 }
 
 // The page's snapshot() for Gemini and the briefing mail, built from the server snapshot the Android app reads.
@@ -513,8 +513,23 @@ function askSnapshot(snap, days) {
       social: ok(e.social) ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views } : null,
       safety: ok(e.safety) && e.safety.checks ? e.safety.checks.map((c) => c.level + ": " + c.name + " " + c.detail) : null,
       platform: ok(e.platform) ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
+      outreach: outreachAsk(e.outreach, s.outreachVisits),
       waiting: core.connections(e).filter((c) => c.needs.length).map((c) => c.name + ": " + c.needs.join(" "))
     }
+  };
+}
+
+// Same shape as the page's snapshot().external.outreach.
+function outreachAsk(ou, visits) {
+  if (!ou || !ou.ok) return null;
+  const pipe = ou.pipeline && ou.pipeline.ok ? ou.pipeline : null;
+  const mail = ou.instantly && ou.instantly.ok ? ou.instantly : null;
+  const plan = ou.plan && ou.plan.ok !== false ? ou.plan : null;
+  return {
+    pipeline: pipe ? { queued: pipe.queued, swept: pipe.swept, reviews: pipe.reviews, thisWeek: pipe.thisWeek, withLiveReport: pipe.withLiveReport, bySegment: pipe.bySegment } : null,
+    instantly: mail ? { campaigns: mail.status, sent: mail.sent, rates: mail.rates, replies: mail.replies, interested: mail.interested, meetings: mail.meetings, warmup: (mail.accounts || []).map((a) => a.score) } : null,
+    plan: plan ? { day: plan.day, length: plan.length, phase: plan.phase, next: plan.next, weekly: plan.weekly, targets: plan.targets } : null,
+    visits: visits ? visits.total : 0
   };
 }
 
