@@ -1569,6 +1569,10 @@
       const area = (score.areas || {})[name];
       return area && (area.grade === "A" || area.grade === "B");
     });
+    const launcher = ins.chat && ins.chat.launcher;
+    const solidNote = (name) => name === "Accessibility" && !(launcher && !launcher.hidden)
+      ? AREA_NOTE[name].split(", ").filter((part) => part !== cc.areaNote("chatItem")).join(", ")
+      : AREA_NOTE[name];
     const sev = score.severities || {};
     const read = (report.limits && report.limits.pagesRead) || (report.pages || []).length;
     const found = foundCount(report.limits);
@@ -1581,7 +1585,7 @@
       '<p class="meta-line">' + esc(rc.t("sevLine", { critical: sev.critical || 0, high: sev.high || 0, medium: sev.medium || 0, low: sev.low || 0 })) + " · " +
       esc(rc.t(found ? "readOf" : "read", { n: read, found: found })) + (report.browser && report.browser.ok ? " · " + esc(rc.t("headless")) : "") + "</p>" +
       '<div class="exec-cols"><div><h3>' + esc(rc.t("risks")) + "</h3>" + list(risks) + "</div><div><h3>" + esc(rc.t("quick")) + "</h3>" + list(quick) + "</div><div><h3>" + esc(rc.t("solid")) + "</h3>" +
-      (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(cc.area(name)) + '</strong> <span class="meta-line">' + esc(AREA_NOTE[name]) + "</span></li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noSolid")) + "</p>") + "</div></div>" +
+      (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(cc.area(name)) + '</strong> <span class="meta-line">' + esc(solidNote(name)) + "</span></li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noSolid")) + "</p>") + "</div></div>" +
       (slotRoot ? "" : '<p class="no-print"><button class="btn btn-ghost" id="print-exec" type="button">' + esc(rc.t("printSummary")) + "</button></p>");
     if (!slotRoot) document.getElementById("print-exec").addEventListener("click", () => {
       const sheet = () => {
@@ -1780,12 +1784,13 @@
     if (!chat) return "";
     const st = chat.states || {};
     const badge = (state) => VERDICT_LABEL[state] ? verdictBadge(state) : '<span class="badge">Not checked</span>';
-    const names = (rows) => rows.length ? rows.join(", ") : "None";
+    const names = (rows) => rows.length ? '<span class="notranslate" translate="no">' + esc(rows.join(", ")) + "</span>" : "No cookie";
+    const requests = (n) => n + " request" + (n === 1 ? "" : "s");
     const hidden = !!(chat.launcher && chat.launcher.hidden);
     const launcher = hidden ? null : chat.launcher;
     const rows = [
-      ["Before a choice", st.consent, '<span class="notranslate" translate="no">' + esc(names(chat.cookies)) + "</span>" + (chat.banner ? "" : " · no banner asked first")],
-      ["After Reject", chat.rejected ? st.reject : "", chat.rejected ? '<span class="notranslate" translate="no">' + esc(names(chat.rejected.cookies)) + "</span> · " + chat.rejected.requests + " request" + (chat.rejected.requests === 1 ? "" : "s") : (chat.banner ? "Reject was not pressed" : "No banner showed")],
+      ["Before a choice", st.consent, names(chat.cookies) + (!chat.cookies.length && st.consent === "risk" ? " · " + requests(chat.requests) + " before a choice" : "") + (chat.banner ? "" : " · no banner asked first")],
+      ["After Reject", chat.rejected ? st.reject : "", chat.rejected ? names(chat.rejected.cookies) + " · " + requests(chat.rejected.requests) : (chat.banner ? "Reject was not pressed" : "No banner showed")],
       ["Weight on the start page", st.weight, chat.kb + " KB · " + chat.ms + " ms of script time · " + chat.requests + " request" + (chat.requests === 1 ? "" : "s")],
       ["Launcher on a phone", launcher ? st.cover : "", launcher ? (launcher.covers ? "Covers " + launcher.covers + " button" + (launcher.covers === 1 ? "" : "s") : "Covers no button") : hidden ? "Hidden on the phone" : "Not found"],
       ["Launcher name", launcher && launcher.known ? st.name : "", launcher && launcher.known ? (launcher.name ? "Announced as “" + esc(launcher.name) + "”" : "No accessible name") : "Not checked"],

@@ -2520,14 +2520,310 @@ async function redeemCoupon(code, record) {
   try {
     await db.runTransaction(async (tx) => {
       const ref = db.collection("url_review_coupons").doc(key);
-      const snap = await tx.get(ref);
-      if (!snap.exists) return;
+      const redemption = record && record.reference ? db.collection("url_review_redemptions").doc("ref-" + record.reference) : db.collection("url_review_redemptions").doc();
+      const [snap, done] = await Promise.all([tx.get(ref), tx.get(redemption)]);
+      if (!snap.exists || done.exists) return;
       tx.update(ref, { uses: Number((snap.data() || {}).uses || 0) + 1, lastUsedAt: new Date().toISOString() });
-      tx.set(db.collection("url_review_redemptions").doc(), Object.assign({ code: key, at: new Date().toISOString(), expireAt: urlReview.paymentExpireAt() }, record));
+      tx.set(redemption, Object.assign({ code: key, at: new Date().toISOString(), expireAt: urlReview.paymentExpireAt() }, record));
     });
   } catch (error) {
     console.error("Coupon redemption failed:", error);
   }
+}
+
+const UNMATCHED = "This payment does not match an open checkout.";
+
+// The confirm page and the PayPal webhook can arrive together. Only the one that claims the checkout fulfils it;
+// a claim older than two minutes was left by a call that failed part way, so the next one finishes it.
+async function claimCheckout(result, testRun) {
+  const db = admin.firestore();
+  const ref = db.collection("url_reviews").doc(result.reference);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const open = snap.exists ? snap.data() || {} : null;
+    const sameLink = !result.linkId || (open && open.externalId === result.linkId);
+    if (!open || open.provider !== result.provider || open.amount !== result.amount || !sameLink || (open.test === true) !== testRun) return { state: "unmatched", open };
+    if (open.status === "paid") return { state: "done", open };
+    const claimedAt = Date.parse(open.claimedAt || "") || 0;
+    if (open.status === "claimed" && Date.now() - claimedAt < 120000) return { state: "busy", open };
+    if (open.status !== "checkout-open" && open.status !== "claimed") return { state: "unmatched", open };
+    tx.update(ref, { status: "claimed", claimedAt: new Date().toISOString(), paidOrderId: result.sessionId });
+    return { state: "claimed", open };
+  });
+}
+
+async function noteUnmatchedPayment(result, testRun, reason) {
+  const order = String(result.sessionId || "").replace(/[^A-Z0-9]/g, "").slice(0, 22);
+  const row = {
+    status: "payment-unmatched",
+    provider: result.provider,
+    sessionId: order,
+    captureId: result.captureId || "",
+    reference: result.reference || "",
+    amount: result.capturedAmount || result.amount || 0,
+    currency: result.capturedCurrency || result.currency || "",
+    reason,
+    test: testRun,
+    createdAt: new Date().toISOString(),
+    expireAt: urlReview.paymentExpireAt()
+  };
+  try {
+    const ref = admin.firestore().collection("url_reviews").doc("unmatched-" + order);
+    if ((await ref.get()).exists) return;
+    await ref.set(row);
+  } catch (error) {
+    console.error("Unmatched payment record failed:", error);
+  }
+  await rememberReview("payment-unmatched", Object.assign({ priceUsd: row.amount }, row));
+}
+
+async function fulfillPayment(result, ctx) {
+  const { choice, testRun, deviceId, via } = ctx;
+  if (!result.paid) {
+    if (result.captured) {
+      await noteUnmatchedPayment(result, testRun, "PayPal captured " + result.capturedAmount + " " + result.capturedCurrency + ", which is not a QA-lab price.");
+      return { code: 402, body: { paid: false, error: UNMATCHED } };
+    }
+    return {
+      code: 402,
+      body: {
+        paid: false,
+        pending: !!result.pending,
+        error: result.pending ? "The payment is still pending. Nothing was unlocked." : "The payment is not confirmed. No charge was recorded here."
+      }
+    };
+  }
+  if (!result.reference) {
+    await noteUnmatchedPayment(result, testRun, "The PayPal order carries no checkout reference.");
+    return { code: 402, body: { paid: false, error: UNMATCHED } };
+  }
+  const claim = await claimCheckout(result, testRun);
+  if (claim.state === "unmatched") {
+    await noteUnmatchedPayment(result, testRun, claim.open ? "The open checkout differs in amount, provider, mode or status." : "No open checkout has this reference.");
+    return { code: 402, body: { paid: false, error: UNMATCHED } };
+  }
+  const open = claim.open;
+  if (claim.state !== "claimed") {
+    return { code: 200, body: { paid: true, purpose: open.paidPurpose || reviewOffers.paidPurpose(open.purpose) } };
+  }
+  const checkoutRef = admin.firestore().collection("url_reviews").doc(result.reference);
+  const closeCheckout = (paidPurpose) => checkoutRef.update({ status: "paid", paidAt: new Date().toISOString(), paidPurpose, expireAt: urlReview.paymentExpireAt() });
+  if (open.status === "checkout-open") {
+    // Checkouts confirmed before claims existed stayed open; their payment rows carry the order id.
+    const existing = await admin.firestore().collection("url_reviews").where("sessionId", "==", result.sessionId).limit(1).get();
+    if (!existing.empty) {
+      const prior = existing.docs[0].data() || {};
+      const purpose = prior.report ? "report" : reviewOffers.paidPurpose(prior.purpose);
+      await closeCheckout(purpose);
+      return { code: 200, body: { paid: true, purpose } };
+    }
+  }
+  const paidPurpose = reviewOffers.paidPurpose(open.purpose);
+  const paidReport = String(open.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+  const payer = String(open.deviceId || deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+  const paidFrameworks = open.frameworks || [];
+  const paidTools = open.tools || [];
+  const paidLayers = open.layers || [];
+  const paidAlerts = Number(open.alertCount) || 0;
+  const paidPrice = open.priceUsd || result.amount;
+  const paidCompare = reviewCompare.cleanId(open.compareWith);
+  const captureId = result.captureId || "";
+  if (open.coupon) {
+    const owner = paidReport ? await admin.firestore().collection("url_reviews").doc(paidReport).get() : null;
+    const email = String((owner && owner.exists && owner.get("email")) || "").trim().toLowerCase();
+    await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, email, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
+  }
+  if (paidPurpose === "report" && paidReport) {
+    const runRef = admin.firestore().collection("url_reviews").doc(paidReport);
+    await runRef.set({
+      paid: true,
+      sessionId: result.sessionId,
+      provider: result.provider,
+      test: testRun
+    }, { merge: true });
+    // The run and its report go after 12 months; the payment is tax support for five years.
+    const run = (await runRef.get()).data() || {};
+    await admin.firestore().collection("url_reviews").doc("paid-report-" + paidReport).set(reviewOffers.reportPayment(run, {
+      reportId: paidReport,
+      provider: result.provider,
+      method: choice,
+      sessionId: result.sessionId,
+      captureId,
+      reference: result.reference,
+      test: testRun,
+      priceUsd: paidPrice,
+      amount: result.amount,
+      currency: result.currency,
+      createdAt: new Date().toISOString(),
+      expireAt: urlReview.paymentExpireAt()
+    }));
+    await rememberReview("paid", {
+      via,
+      id: paidReport,
+      status: "paid-report",
+      paid: true,
+      test: testRun,
+      priceUsd: paidPrice,
+      provider: result.provider,
+      purpose: paidPurpose,
+      frameworks: paidFrameworks,
+      sessionId: result.sessionId
+    });
+  } else if (reviewOffers.ADDONS.indexOf(paidPurpose) !== -1) {
+    const runRef = paidReport ? admin.firestore().collection("url_reviews").doc(paidReport) : null;
+    const runSnap = runRef ? await runRef.get() : null;
+    const run = runSnap && runSnap.exists ? runSnap.data() || {} : {};
+    if (runSnap && runSnap.exists) {
+      const opened = { addons: admin.firestore.FieldValue.arrayUnion(paidPurpose) };
+      if (paidPurpose === "cases" && paidLayers.length) opened.addonLayers = admin.firestore.FieldValue.arrayUnion(...paidLayers);
+      await runRef.update(opened);
+    }
+    const addon = reviewOffers.addonPayment(run, {
+      purpose: paidPurpose,
+      reportId: paidReport,
+      layers: paidPurpose === "cases" ? paidLayers : undefined,
+      alertCount: paidPurpose === "alerts" ? paidAlerts : undefined,
+      provider: result.provider,
+      method: choice,
+      deviceId: payer,
+      sessionId: result.sessionId,
+      captureId,
+      reference: result.reference,
+      test: testRun,
+      priceUsd: paidPrice,
+      amount: result.amount,
+      currency: result.currency,
+      createdAt: new Date().toISOString(),
+      expireAt: urlReview.paymentExpireAt()
+    });
+    await admin.firestore().collection("url_reviews").doc("paid-" + paidPurpose + "-" + String(result.reference || result.sessionId).replace(/[^A-Za-z0-9-]/g, "").slice(0, 64)).set(addon);
+    await rememberReview("addon-paid", Object.assign({ id: paidReport, via }, addon));
+  } else {
+    const credit = {
+      status: "run-credit",
+      paid: true,
+      test: testRun,
+      provider: result.provider,
+      method: choice,
+      deviceId: payer,
+      sessionId: result.sessionId,
+      captureId,
+      reference: result.reference,
+      purpose: paidPurpose,
+      frameworks: paidFrameworks,
+      tools: paidTools,
+      pages: open.pages || urlReview.INCLUDED_PAGES,
+      depth: open.depth || urlReview.INCLUDED_DEPTH,
+      billing: open.billing || "run",
+      compareWith: paidCompare,
+      createdAt: new Date().toISOString(),
+      priceUsd: paidPrice,
+      amount: result.amount,
+      currency: result.currency,
+      expireAt: urlReview.paymentExpireAt()
+    };
+    await admin.firestore().collection("url_reviews").doc("credit-" + result.reference).set(credit);
+    await rememberReview("run-paid", Object.assign({ via }, credit));
+  }
+  await closeCheckout(paidPurpose);
+  return { code: 200, body: { paid: true, purpose: paidPurpose } };
+}
+
+function paypalKeys(mode) {
+  const sandbox = mode === "sandbox";
+  return {
+    provider: "paypal",
+    paypalClientId: (sandbox ? process.env.PAYPAL_SANDBOX_CLIENT_ID : process.env.PAYPAL_CLIENT_ID) || "",
+    paypalSecret: (sandbox ? process.env.PAYPAL_SANDBOX_CLIENT_SECRET : process.env.PAYPAL_CLIENT_SECRET) || "",
+    paypalMode: sandbox ? "sandbox" : (process.env.PAYPAL_MODE || ""),
+    webhookId: (sandbox ? process.env.PAYPAL_SANDBOX_WEBHOOK_ID : process.env.PAYPAL_WEBHOOK_ID) || ""
+  };
+}
+
+async function reversePayment(ids, keys, testRun) {
+  let orderId = ids.orderId;
+  let captureStatus = "";
+  if (ids.captureId) {
+    const capture = await urlReview.paypalCapture(keys, ids.captureId);
+    if (capture) {
+      orderId = orderId || capture.orderId;
+      captureStatus = capture.status;
+    }
+  }
+  if (!orderId) return false;
+  const db = admin.firestore();
+  const snap = await db.collection("url_reviews").where("sessionId", "==", orderId).limit(20).get();
+  const rows = snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+  let kind = "dispute";
+  if (ids.type === "PAYMENT.CAPTURE.REVERSED") kind = "refund";
+  if (ids.type === "PAYMENT.CAPTURE.REFUNDED") kind = captureStatus === "PARTIALLY_REFUNDED" ? "partial-refund" : "refund";
+  const updates = reviewOffers.reversalUpdates(rows, {
+    kind,
+    status: ids.disputeStatus,
+    disputeId: ids.disputeId,
+    outcome: ids.disputeOutcome,
+    refundedUsd: ids.refundAmount
+  });
+  for (const update of updates) {
+    const ref = db.collection("url_reviews").doc(update.id);
+    if (update.removeAddon) {
+      await ref.update({ addons: admin.firestore.FieldValue.arrayRemove(update.removeAddon) }).catch(() => {});
+    } else {
+      await ref.set(update.set, { merge: true });
+    }
+  }
+  const payment = rows.find((row) => ["paid-report", "paid-addon", "run-credit", "run-credit-refunded"].indexOf(row.status) !== -1) || rows[0] || {};
+  await rememberReview(kind === "dispute" ? "payment-disputed" : "payment-refunded", {
+    id: payment.reportId || payment.id || "",
+    email: payment.email || "",
+    status: kind === "dispute" ? "disputed" : kind,
+    purpose: payment.purpose || "",
+    priceUsd: payment.priceUsd,
+    test: testRun,
+    sessionId: orderId,
+    refundedUsd: kind === "partial-refund" ? ids.refundAmount : (kind === "refund" ? payment.priceUsd : 0),
+    disputeStatus: ids.disputeStatus,
+    disputeOutcome: ids.disputeOutcome,
+    reason: rows.length ? "" : "No payment row carries this PayPal order."
+  });
+  return true;
+}
+
+// PayPal posts each event to /paypal-webhook/live or /paypal-webhook/sandbox. A non-2xx answer makes PayPal retry for three days.
+async function handlePayPalWebhook(req, res, mode) {
+  const keys = paypalKeys(mode);
+  const testRun = mode === "sandbox";
+  const event = req.body || {};
+  let verified = false;
+  try {
+    verified = await urlReview.verifyPayPalWebhook(keys, req.headers || {}, event);
+  } catch (error) {
+    console.error("PayPal webhook verification failed:", error);
+    res.status(503).json({ error: "Verification is unavailable." });
+    return;
+  }
+  if (!verified) {
+    res.status(400).json({ error: "The event signature did not verify." });
+    return;
+  }
+  const ids = urlReview.paypalEventIds(event);
+  try {
+    if (ids.type === "CHECKOUT.ORDER.APPROVED" || ids.type === "PAYMENT.CAPTURE.COMPLETED") {
+      let orderId = ids.orderId;
+      if (!orderId && ids.captureId) orderId = ((await urlReview.paypalCapture(keys, ids.captureId)) || {}).orderId || "";
+      if (orderId) {
+        const result = await urlReview.inspectPayment(Object.assign({}, keys, { sessionId: orderId }));
+        if (result.paid || result.captured) await fulfillPayment(result, { choice: "paypal", testRun, deviceId: "", via: "PayPal webhook" });
+      }
+    } else if (ids.type === "PAYMENT.CAPTURE.REFUNDED" || ids.type === "PAYMENT.CAPTURE.REVERSED" || ids.type.indexOf("CUSTOMER.DISPUTE.") === 0) {
+      await reversePayment(ids, keys, testRun);
+    }
+  } catch (error) {
+    console.error("PayPal webhook " + ids.type + " failed:", error);
+    res.status(500).json({ error: "The event could not be applied." });
+    return;
+  }
+  res.status(200).json({ ok: true });
 }
 
 const BROWSER_URL = process.env.BROWSER_URL || "https://europe-west1-carlosm-interactive-cv.cloudfunctions.net/reviewBrowser";
@@ -2876,6 +3172,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     return;
   }
   const pathName = String(req.path || "/");
+  if (req.method === "POST" && (pathName.endsWith("/paypal-webhook/live") || pathName.endsWith("/paypal-webhook/sandbox"))) {
+    await handlePayPalWebhook(req, res, pathName.endsWith("/sandbox") ? "sandbox" : "live");
+    return;
+  }
   if (pathName.indexOf("/auth/") !== -1) {
     try {
       await reviewSignIn(req, res, pathName);
@@ -3513,146 +3813,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           provider: choice,
           sessionId: String((req.body && req.body.sessionId) || "")
         }, keys));
-        if (!result.paid) {
-          res.status(402).json({
-            paid: false,
-            pending: !!result.pending,
-            error: result.pending ? "The payment is still pending. Nothing was unlocked." : "The payment is not confirmed. No charge was recorded here."
-          });
-          return;
-        }
-        const existing = await admin.firestore().collection("url_reviews").where("sessionId", "==", result.sessionId).limit(1).get();
-        if (!existing.empty) {
-          const prior = existing.docs[0].data() || {};
-          res.status(200).json({ paid: true, purpose: prior.report ? "report" : reviewOffers.paidPurpose(prior.purpose) });
-          return;
-        }
-        let paidPurpose = reviewOffers.paidPurpose(result.purpose);
-        let paidReport = String(result.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-        let payer = String(result.deviceId || deviceId).replace(/[^a-f0-9]/g, "").slice(0, 32);
-        let paidFrameworks = result.frameworks || [];
-        let paidTools = result.tools || [];
-        let paidPrice = result.amount || 0;
-        let paidCompare = "";
-        let paidLayers = result.layers || [];
-        let paidAlerts = 0;
-        if (choice !== "stripe") {
-          if (!result.reference) {
-            res.status(402).json({ paid: false, error: "This payment does not match an open checkout." });
-            return;
-          }
-          const openSnap = await admin.firestore().collection("url_reviews").doc(result.reference).get();
-          const open = openSnap.exists ? openSnap.data() : null;
-          const sameLink = !result.linkId || (open && open.externalId === result.linkId);
-          if (!open || open.status !== "checkout-open" || open.provider !== result.provider || open.amount !== result.amount || !sameLink || (open.test === true) !== testRun) {
-            res.status(402).json({ paid: false, error: "This payment does not match an open checkout." });
-            return;
-          }
-          paidPurpose = reviewOffers.paidPurpose(open.purpose);
-          paidReport = String(open.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-          payer = String(open.deviceId || deviceId).replace(/[^a-f0-9]/g, "").slice(0, 32);
-          paidFrameworks = open.frameworks || [];
-          paidTools = open.tools || [];
-          paidLayers = open.layers || [];
-          paidAlerts = Number(open.alertCount) || 0;
-          paidPrice = open.priceUsd || result.amount;
-          paidCompare = reviewCompare.cleanId(open.compareWith);
-          if (open.coupon) {
-            const owner = paidReport ? await admin.firestore().collection("url_reviews").doc(paidReport).get() : null;
-            const email = String((owner && owner.exists && owner.get("email")) || "").trim().toLowerCase();
-            await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, email, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
-          }
-          result.pages = open.pages;
-          result.depth = open.depth;
-          result.billing = open.billing;
-        }
-        if (paidPurpose === "report" && paidReport) {
-          const runRef = admin.firestore().collection("url_reviews").doc(paidReport);
-          await runRef.set({
-            paid: true,
-            sessionId: result.sessionId,
-            provider: result.provider,
-            test: testRun
-          }, { merge: true });
-          // The run and its report go after 12 months; the payment is tax support for five years.
-          const run = (await runRef.get()).data() || {};
-          await admin.firestore().collection("url_reviews").doc("paid-report-" + paidReport).set(reviewOffers.reportPayment(run, {
-            reportId: paidReport,
-            provider: result.provider,
-            method: choice,
-            sessionId: result.sessionId,
-            reference: result.reference,
-            test: testRun,
-            priceUsd: paidPrice,
-            amount: result.amount,
-            currency: result.currency,
-            createdAt: new Date().toISOString(),
-            expireAt: urlReview.paymentExpireAt()
-          }));
-          await rememberReview("paid", {
-            id: paidReport,
-            status: "paid-report",
-            paid: true,
-            test: testRun,
-            priceUsd: paidPrice,
-            provider: result.provider,
-            purpose: paidPurpose,
-            frameworks: paidFrameworks
-          });
-        } else if (reviewOffers.ADDONS.indexOf(paidPurpose) !== -1) {
-          const runRef = paidReport ? admin.firestore().collection("url_reviews").doc(paidReport) : null;
-          const runSnap = runRef ? await runRef.get() : null;
-          const run = runSnap && runSnap.exists ? runSnap.data() || {} : {};
-          if (runSnap && runSnap.exists) {
-            const opened = { addons: admin.firestore.FieldValue.arrayUnion(paidPurpose) };
-            if (paidPurpose === "cases" && paidLayers.length) opened.addonLayers = admin.firestore.FieldValue.arrayUnion(...paidLayers);
-            await runRef.update(opened);
-          }
-          const addon = reviewOffers.addonPayment(run, {
-            purpose: paidPurpose,
-            reportId: paidReport,
-            layers: paidPurpose === "cases" ? paidLayers : undefined,
-            alertCount: paidPurpose === "alerts" ? paidAlerts : undefined,
-            provider: result.provider,
-            method: choice,
-            deviceId: payer,
-            sessionId: result.sessionId,
-            reference: result.reference,
-            test: testRun,
-            priceUsd: paidPrice,
-            amount: result.amount,
-            currency: result.currency,
-            createdAt: new Date().toISOString(),
-            expireAt: urlReview.paymentExpireAt()
-          });
-          await admin.firestore().collection("url_reviews").doc("paid-" + paidPurpose + "-" + String(result.reference || result.sessionId).replace(/[^A-Za-z0-9-]/g, "").slice(0, 64)).set(addon);
-          await rememberReview("addon-paid", Object.assign({ id: paidReport }, addon));
-        } else {
-          const credit = {
-            status: "run-credit",
-            paid: true,
-            test: testRun,
-            provider: result.provider,
-            method: choice,
-            deviceId: payer,
-            sessionId: result.sessionId,
-            purpose: paidPurpose,
-            frameworks: paidFrameworks,
-            tools: paidTools,
-            pages: result.pages || urlReview.INCLUDED_PAGES,
-            depth: result.depth || urlReview.INCLUDED_DEPTH,
-            billing: result.billing || "run",
-            compareWith: paidCompare,
-            createdAt: new Date().toISOString(),
-            priceUsd: paidPrice,
-            amount: result.amount,
-            currency: result.currency,
-            expireAt: urlReview.paymentExpireAt()
-          };
-          await admin.firestore().collection("url_reviews").add(credit);
-          await rememberReview("run-paid", credit);
-        }
-        res.status(200).json({ paid: true, purpose: paidPurpose });
+        const done = await fulfillPayment(result, { choice, testRun, deviceId });
+        res.status(done.code).json(done.body);
         return;
       }
       const reference = crypto.randomBytes(8).toString("hex");

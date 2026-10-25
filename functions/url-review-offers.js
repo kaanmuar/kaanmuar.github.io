@@ -305,6 +305,42 @@ function addonPayment(run, payment) {
   return row;
 }
 
+const PAYMENT_ROWS = ["paid-report", "paid-addon", "run-credit", "run-credit-refunded"];
+
+// What a PayPal refund, reversal or dispute changes on the rows that carry its order id.
+// A full refund or reversal takes back what was bought; a partial refund and a dispute only mark the payment.
+function reversalUpdates(rows, event) {
+  const at = (event && event.at) || new Date().toISOString();
+  const kind = event && event.kind;
+  const updates = [];
+  (rows || []).forEach((row) => {
+    if (!row || !row.id) return;
+    const payment = PAYMENT_ROWS.indexOf(row.status) !== -1;
+    if (kind === "dispute") {
+      if (!payment) return;
+      updates.push({ id: row.id, set: { disputed: event.status !== "RESOLVED", disputeId: event.disputeId || "", disputeStatus: event.status || "", disputeOutcome: event.outcome || "", disputeAt: at } });
+      return;
+    }
+    if (kind === "partial-refund") {
+      if (!payment) return;
+      updates.push({ id: row.id, set: { refundedUsd: Number(event.refundedUsd) || 0, refundedAt: at } });
+      return;
+    }
+    if (kind !== "refund") return;
+    if (row.status === "run-credit" || row.status === "run-credit-refunded") {
+      updates.push({ id: row.id, set: { status: "run-credit-refunded", refunded: true, refundedAt: at } });
+    } else if (row.status === "paid-addon") {
+      updates.push({ id: row.id, set: { refunded: true, refundedAt: at } });
+      if (row.reportId && ADDONS.indexOf(row.purpose) !== -1) updates.push({ id: row.reportId, removeAddon: row.purpose });
+    } else if (row.status === "paid-report") {
+      updates.push({ id: row.id, set: { refunded: true, refundedAt: at } });
+    } else if (row.paid === true) {
+      updates.push({ id: row.id, set: { paid: false, refunded: true, refundedAt: at } });
+    }
+  });
+  return updates;
+}
+
 function returnCoupon(note, now) {
   const at = now || Date.now();
   return {
@@ -351,6 +387,7 @@ module.exports = {
   ADDONS,
   paidPurpose,
   addonPayment,
+  reversalUpdates,
   returnCoupon,
   RETURN_TABLE,
   MONTHLY_PLANS,
