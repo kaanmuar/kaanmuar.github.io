@@ -2813,7 +2813,7 @@ async function reviewComparison(req, res, pathName, db, email) {
   if (pathName.endsWith("/account/comparison/save")) {
     const picked = reviewMulti.pickProblem(records, email, body.ids);
     if (picked.error) {
-      res.status(400).json({ error: picked.error });
+      res.status(400).json(picked);
       return;
     }
     const ref = await db.collection("url_review_comparisons").add(reviewMulti.savedRecord(email, picked, body.from));
@@ -2824,7 +2824,7 @@ async function reviewComparison(req, res, pathName, db, email) {
   const snap = id ? await db.collection("url_review_comparisons").doc(id).get() : null;
   const doc = snap && snap.exists ? snap.data() || {} : null;
   if (!doc || String(doc.email || "").toLowerCase() !== String(email).toLowerCase()) {
-    res.status(404).json({ error: "That comparison is not saved under this account." });
+    res.status(404).json({ error: "That comparison is not saved under this account.", code: "comparisonNotSaved" });
     return;
   }
   if (pathName.endsWith("/account/comparison/delete")) {

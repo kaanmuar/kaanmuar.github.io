@@ -293,6 +293,8 @@ test("saved reviews of one account are compared with the first one, and only whe
   assert.match(compare.savedComparison(records, "ana@example.com", ["aa01"], () => true).error, /at least two/);
   assert.match(compare.savedComparison(records, "ana@example.com", ["ff06", "aa01"], () => true).error, /not saved under this account/);
   assert.match(compare.savedComparison(records, "ana@example.com", ["cc03", "aa01"], () => true).error, /stopped early/);
+  assert.equal(compare.savedComparison(records, "ana@example.com", ["ff06", "aa01"], () => true).code, "reviewNotSaved");
+  assert.equal(compare.savedComparison(records, "ana@example.com", ["cc03", "aa01"], () => true).code, "stoppedBase");
   const locked = compare.savedComparison(records, "ana@example.com", ["dd04", "aa01"], (item) => !shut.has(item.id));
   assert.equal(locked.locked, "dd04");
   assert.match(locked.error, /Unlock it/);

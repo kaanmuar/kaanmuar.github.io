@@ -215,15 +215,15 @@ const SAVED_MAX = 5;
 function savedComparison(records, email, ids, isOpen) {
   const address = String(email || "").trim().toLowerCase();
   const wanted = [...new Set((Array.isArray(ids) ? ids : []).map(cleanId).filter(Boolean))].slice(0, SAVED_MAX);
-  if (wanted.length < 2) return { error: "Pick at least two of your reviews to compare." };
+  if (wanted.length < 2) return { error: "Pick at least two of your reviews to compare.", code: "pickTwo" };
   const mine = new Map((records || [])
     .filter((row) => row && row.report && row.report.insights && String(row.email || "").trim().toLowerCase() === address)
     .map((row) => [cleanId(row.id), row]));
   const base = mine.get(wanted[0]);
-  if (!base) return { error: "That review is not saved under this account." };
+  if (!base) return { error: "That review is not saved under this account.", code: "reviewNotSaved" };
   const host = base.report.host || "";
-  if (base.status === "stopped" || base.report.status === "stopped") return { error: "The review of " + host + " stopped early. Compare from a finished review." };
-  if (!isOpen(base)) return { error: "The report of " + host + " is not open in full yet. Unlock it to compare from it.", locked: wanted[0] };
+  if (base.status === "stopped" || base.report.status === "stopped") return { error: "The review of " + host + " stopped early. Compare from a finished review.", code: "stoppedBase", host };
+  if (!isOpen(base)) return { error: "The report of " + host + " is not open in full yet. Unlock it to compare from it.", code: "notOpen", host, locked: wanted[0] };
   const own = Object.assign({}, base.report, { id: wanted[0] });
   const list = wanted.slice(1).map((id) => {
     const row = mine.get(id);
