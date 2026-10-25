@@ -9,8 +9,8 @@
    Reads the same captions.json and calendar.csv as buffer-queue.js and posts each feed image with its
    facebook caption and alt text at its calendar time, skipping captions already scheduled or published on
    the Page. Meta Business Suite's Planificador does not list posts scheduled through the API; --check reads
-   them. The token is a Page access token with pages_manage_posts. Exits 1 when any post failed, after
-   trying all of them.
+   them. The token is a Page access token with pages_manage_posts. A post whose image the site does not serve
+   yet is left for the next run. Exits 1 when any post failed, after trying all of them.
 
    Every post it schedules or finds on the Page goes into the ledger assets/social/facebook.json
    (scripts/social-ledger.js), and each run first asks the Page whether the queued ones whose time has passed went out.
@@ -61,11 +61,15 @@ function facebookSlots(dir) {
   return when;
 }
 
+async function served(url) {
+  const res = await fetch(url, { method: "HEAD" }).catch(() => null);
+  return Boolean(res && res.ok);
+}
+
 async function waitFor(url, minutes) {
   const until = Date.now() + minutes * 60e3;
   while (Date.now() < until) {
-    const res = await fetch(url, { method: "HEAD" }).catch(() => null);
-    if (res && res.ok) return true;
+    if (await served(url)) return true;
     await new Promise((r) => setTimeout(r, 20e3));
   }
   return false;
@@ -209,6 +213,7 @@ async function main() {
   let queued = 0;
   let already = 0;
   let later = 0;
+  let unserved = 0;
   let late = 0;
   for (const post of list) {
     const name = post.batch + "/" + post.slug;
@@ -220,10 +225,17 @@ async function main() {
       continue;
     }
     if (post.at > horizon) { later += 1; continue; }
+    // The Graph API fetches the image from the site, so a batch merged minutes ago waits for its Pages deploy.
+    const image = SITE + "/media/social-posts/" + post.batch + "/feed/" + post.slug + ".jpg";
+    if (!(await served(image))) {
+      unserved += 1;
+      console.log("not on the site yet", name, image);
+      continue;
+    }
     // A missed slot goes out 20 minutes from now, the next one 30 minutes after that, and so on.
     const due = post.at < Date.now() + MIN_LEAD_MS ? Date.now() + MIN_LEAD_MS + 30 * 60e3 * late++ : post.at;
     const params = {
-      url: SITE + "/media/social-posts/" + post.batch + "/feed/" + post.slug + ".jpg",
+      url: image,
       caption: post.cap.facebook,
       alt_text_custom: post.cap.alt || "",
       published: "false",
@@ -250,7 +262,7 @@ async function main() {
     }
   }
   if (live) ledger.write(ledger.FACEBOOK, book);
-  console.log(queued + " scheduled, " + already + " already on the Page, " + later + " more than 29 days out, " + failed + " failed");
+  console.log(queued + " scheduled, " + already + " already on the Page, " + later + " more than 29 days out, " + unserved + " not on the site yet, " + failed + " failed");
   if (failed) process.exit(1);
 }
 
