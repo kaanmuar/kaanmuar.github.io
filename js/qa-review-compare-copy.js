@@ -1,4 +1,4 @@
-/* Hand-written copy for the competitor comparison card, so it is not left to machine translation.
+/* Hand-written copy for the competitor comparison card and the report's verdict and area chips, so it is not left to machine translation.
    Templates hold {name} slots; they never contain <, > or &, so a caller can fill them with escaped HTML. */
 (function () {
   "use strict";
@@ -45,6 +45,15 @@
       rivalsAdd: "Add the checked sites to your competitors", rivalsAdded_one: "{n} site added to your competitors below.", rivalsAdded_other: "{n} sites added to your competitors below.", rivalsBoxesFull: "Your five competitor boxes are full.",
       kinds: { religion: "Religious: churches and ministries", shop: "Online shops", news: "News and media", education: "Universities and schools", health: "Health: hospitals and clinics", finance: "Banking and finance", travel: "Travel and hotels", software: "Software and SaaS", government: "Government", nonprofit: "Nonprofits and foundations", food: "Restaurants and food delivery", realestate: "Real estate", sports: "Sports", entertainment: "Streaming and entertainment" },
       areas: {},
+      areaCounts: "{fail} fail · {risk} at risk · {pass} pass",
+      areaNotes: {
+        SEO: "Indexing, sitemap, titles, structured data",
+        GEO: "How AI answers can read and cite the site",
+        Analytics: "Tags, consent, chat widgets, privacy notice, imprint",
+        Security: "Headers, TLS, DNS, mail transport, domain, Safe Browsing, libraries",
+        Accessibility: "Markup, axe-core, phone layout, chat launcher, accessibility statement",
+        Performance: "Speed, weight, paint, layout shift, chat weight"
+      },
       kpis: {},
       signals: {}
     },
@@ -89,6 +98,15 @@
       rivalsAdd: "Agregar los sitios marcados a tus competidores", rivalsAdded_one: "{n} sitio agregado a tus competidores, abajo.", rivalsAdded_other: "{n} sitios agregados a tus competidores, abajo.", rivalsBoxesFull: "Tus cinco casillas de competidores están llenas.",
       kinds: { religion: "Religión: iglesias y ministerios", shop: "Tiendas en línea", news: "Noticias y medios", education: "Universidades y colegios", health: "Salud: hospitales y clínicas", finance: "Bancos y finanzas", travel: "Viajes y hoteles", software: "Software y SaaS", government: "Gobierno", nonprofit: "Fundaciones y ONG", food: "Restaurantes y domicilios", realestate: "Inmobiliarias", sports: "Deportes", entertainment: "Streaming y entretenimiento" },
       areas: { Analytics: "Analítica", Security: "Seguridad", Accessibility: "Accesibilidad", Performance: "Rendimiento" },
+      areaCounts: "Fallan: {fail} · En riesgo: {risk} · Pasan: {pass}",
+      areaNotes: {
+        SEO: "Indexación, sitemap, títulos, datos estructurados",
+        GEO: "Cómo pueden leer y citar el sitio las respuestas de IA",
+        Analytics: "Etiquetas, consentimiento, widgets de chat, aviso de privacidad, aviso legal",
+        Security: "Cabeceras, TLS, DNS, transporte de correo, dominio, Safe Browsing, librerías",
+        Accessibility: "Marcado, axe-core, diseño en móvil, lanzador del chat, declaración de accesibilidad",
+        Performance: "Velocidad, peso, pintado, desplazamiento del diseño, peso del chat"
+      },
       kpis: { overall: "Puntuación de salud", passRate: "Comprobaciones que pasan", open: "Problemas abiertos", urgent: "Problemas críticos y altos", lighthouse: "Rendimiento Lighthouse (móvil)", lcp: "Mayor renderizado con contenido", tbt: "Tiempo total de bloqueo", cls: "Cambio de diseño", response: "Respuesta de la página de inicio", weight: "Peso de la página de inicio", thirdParty: "Hosts de terceros", pagesFound: "Páginas encontradas", languages: "Versiones de idioma" },
       signals: { rank: "Puesto en Tranco", chrome: "Datos de Chrome de usuarios reales", pages: "Páginas encontradas", languages: "Versiones de idioma", writeups: "Artículos públicos", social: "Perfiles sociales enlazados", age: "Antigüedad del dominio" }
     },
@@ -133,6 +151,15 @@
       rivalsAdd: "Adicionar os sites marcados aos seus concorrentes", rivalsAdded_one: "{n} site adicionado aos seus concorrentes, abaixo.", rivalsAdded_other: "{n} sites adicionados aos seus concorrentes, abaixo.", rivalsBoxesFull: "Os seus cinco campos de concorrentes estão preenchidos.",
       kinds: { religion: "Religião: igrejas e ministérios", shop: "Lojas online", news: "Notícias e mídia", education: "Universidades e escolas", health: "Saúde: hospitais e clínicas", finance: "Bancos e finanças", travel: "Viagens e hotéis", software: "Software e SaaS", government: "Governo", nonprofit: "ONGs e fundações", food: "Restaurantes e delivery", realestate: "Imobiliárias", sports: "Esportes", entertainment: "Streaming e entretenimento" },
       areas: { Analytics: "Analytics", Security: "Segurança", Accessibility: "Acessibilidade", Performance: "Desempenho" },
+      areaCounts: "Falham: {fail} · Em risco: {risk} · Passam: {pass}",
+      areaNotes: {
+        SEO: "Indexação, sitemap, títulos, dados estruturados",
+        GEO: "Como as respostas de IA conseguem ler e citar o site",
+        Analytics: "Tags, consentimento, widgets de chat, aviso de privacidade, aviso legal",
+        Security: "Cabeçalhos, TLS, DNS, transporte de e-mail, domínio, Safe Browsing, bibliotecas",
+        Accessibility: "Marcação, axe-core, layout no celular, botão do chat, declaração de acessibilidade",
+        Performance: "Velocidade, peso, renderização, mudança de layout, peso do chat"
+      },
       kpis: { overall: "Pontuação de saúde", passRate: "Verificações aprovadas", open: "Problemas abertos", urgent: "Problemas críticos e altos", lighthouse: "Desempenho Lighthouse (celular)", lcp: "Maior exibição de conteúdo", tbt: "Tempo total de bloqueio", cls: "Mudança de layout", response: "Resposta da página inicial", weight: "Peso da página inicial", thirdParty: "Hosts de terceiros", pagesFound: "Páginas encontradas", languages: "Versões de idioma" },
       signals: { rank: "Posição no Tranco", chrome: "Dados do Chrome de usuários reais", pages: "Páginas encontradas", languages: "Versões de idioma", writeups: "Matérias públicas", social: "Perfis sociais vinculados", age: "Idade do domínio" }
     },
@@ -177,6 +204,15 @@
       rivalsAdd: "Die markierten Websites zu Ihren Wettbewerbern hinzufügen", rivalsAdded_one: "{n} Website unten zu Ihren Wettbewerbern hinzugefügt.", rivalsAdded_other: "{n} Websites unten zu Ihren Wettbewerbern hinzugefügt.", rivalsBoxesFull: "Ihre fünf Felder für Wettbewerber sind voll.",
       kinds: { religion: "Religion: Kirchen und Gemeinden", shop: "Onlineshops", news: "Nachrichten und Medien", education: "Hochschulen und Schulen", health: "Gesundheit: Kliniken und Praxen", finance: "Banken und Finanzen", travel: "Reisen und Hotels", software: "Software und SaaS", government: "Behörden", nonprofit: "Stiftungen und Vereine", food: "Restaurants und Lieferdienste", realestate: "Immobilien", sports: "Sport", entertainment: "Streaming und Unterhaltung" },
       areas: { Analytics: "Analytics", Security: "Sicherheit", Accessibility: "Barrierefreiheit", Performance: "Performance" },
+      areaCounts: "Fehlschläge: {fail} · Gefährdet: {risk} · Bestanden: {pass}",
+      areaNotes: {
+        SEO: "Indexierung, Sitemap, Titel, strukturierte Daten",
+        GEO: "Wie KI-Antworten die Website lesen und zitieren können",
+        Analytics: "Tags, Einwilligung, Chat-Widgets, Datenschutzhinweis, Impressum",
+        Security: "Header, TLS, DNS, Mailtransport, Domain, Safe Browsing, Bibliotheken",
+        Accessibility: "Markup, axe-core, Handy-Layout, Chat-Button, Erklärung zur Barrierefreiheit",
+        Performance: "Geschwindigkeit, Gewicht, Rendering, Layoutverschiebung, Chat-Gewicht"
+      },
       kpis: { overall: "Gesundheitswert", passRate: "Bestandene Prüfungen", open: "Offene Probleme", urgent: "Kritische und hohe Probleme", lighthouse: "Lighthouse-Performance (mobil)", lcp: "Largest Contentful Paint", tbt: "Total Blocking Time", cls: "Layoutverschiebung", response: "Antwortzeit der Startseite", weight: "Gewicht der Startseite", thirdParty: "Drittanbieter-Hosts", pagesFound: "Gefundene Seiten", languages: "Sprachversionen" },
       signals: { rank: "Tranco-Rang", chrome: "Chrome-Daten echter Nutzer", pages: "Gefundene Seiten", languages: "Sprachversionen", writeups: "Öffentliche Beiträge", social: "Verlinkte Social-Media-Profile", age: "Alter der Domain" }
     },
@@ -221,6 +257,15 @@
       rivalsAdd: "Ajouter les sites cochés à vos concurrents", rivalsAdded_one: "{n} site ajouté à vos concurrents, plus bas.", rivalsAdded_other: "{n} sites ajoutés à vos concurrents, plus bas.", rivalsBoxesFull: "Vos cinq champs de concurrents sont remplis.",
       kinds: { religion: "Religion : églises et ministères", shop: "Boutiques en ligne", news: "Actualité et médias", education: "Universités et écoles", health: "Santé : hôpitaux et cliniques", finance: "Banque et finance", travel: "Voyages et hôtels", software: "Logiciels et SaaS", government: "Administration publique", nonprofit: "Associations et fondations", food: "Restaurants et livraison de repas", realestate: "Immobilier", sports: "Sport", entertainment: "Streaming et divertissement" },
       areas: { Analytics: "Analytics", Security: "Sécurité", Accessibility: "Accessibilité", Performance: "Performance" },
+      areaCounts: "Échecs\u00a0: {fail} · À risque\u00a0: {risk} · Réussis\u00a0: {pass}",
+      areaNotes: {
+        SEO: "Indexation, sitemap, titres, données structurées",
+        GEO: "Comment les réponses d'IA peuvent lire et citer le site",
+        Analytics: "Balises, consentement, widgets de chat, avis de confidentialité, mentions légales",
+        Security: "En-têtes, TLS, DNS, transport du courrier, domaine, Safe Browsing, bibliothèques",
+        Accessibility: "Balisage, axe-core, affichage mobile, lanceur de chat, déclaration d'accessibilité",
+        Performance: "Vitesse, poids, rendu, décalage de mise en page, poids du chat"
+      },
       kpis: { overall: "Score de santé", passRate: "Vérifications réussies", open: "Problèmes ouverts", urgent: "Problèmes critiques et élevés", lighthouse: "Performance Lighthouse (mobile)", lcp: "Plus grand élément visible", tbt: "Temps de blocage total", cls: "Décalage de mise en page", response: "Réponse de la page d’accueil", weight: "Poids de la page d’accueil", thirdParty: "Hôtes tiers", pagesFound: "Pages trouvées", languages: "Versions linguistiques" },
       signals: { rank: "Rang Tranco", chrome: "Données Chrome d’utilisateurs réels", pages: "Pages trouvées", languages: "Versions linguistiques", writeups: "Articles publics", social: "Profils sociaux liés", age: "Âge du domaine" }
     },
@@ -265,6 +310,15 @@
       rivalsAdd: "Aggiungi i siti selezionati ai tuoi concorrenti", rivalsAdded_one: "{n} sito aggiunto ai tuoi concorrenti, qui sotto.", rivalsAdded_other: "{n} siti aggiunti ai tuoi concorrenti, qui sotto.", rivalsBoxesFull: "Le tue cinque caselle dei concorrenti sono piene.",
       kinds: { religion: "Religione: chiese e ministeri", shop: "Negozi online", news: "Notizie e media", education: "Università e scuole", health: "Salute: ospedali e cliniche", finance: "Banche e finanza", travel: "Viaggi e hotel", software: "Software e SaaS", government: "Pubblica amministrazione", nonprofit: "Associazioni e fondazioni", food: "Ristoranti e consegna a domicilio", realestate: "Immobiliare", sports: "Sport", entertainment: "Streaming e intrattenimento" },
       areas: { Analytics: "Analytics", Security: "Sicurezza", Accessibility: "Accessibilità", Performance: "Prestazioni" },
+      areaCounts: "Falliti: {fail} · A rischio: {risk} · Superati: {pass}",
+      areaNotes: {
+        SEO: "Indicizzazione, sitemap, titoli, dati strutturati",
+        GEO: "Come le risposte dell'IA possono leggere e citare il sito",
+        Analytics: "Tag, consenso, widget di chat, informativa privacy, note legali",
+        Security: "Header, TLS, DNS, trasporto della posta, dominio, Safe Browsing, librerie",
+        Accessibility: "Markup, axe-core, layout su telefono, pulsante della chat, dichiarazione di accessibilità",
+        Performance: "Velocità, peso, rendering, spostamento del layout, peso della chat"
+      },
       kpis: { overall: "Punteggio di salute", passRate: "Controlli superati", open: "Problemi aperti", urgent: "Problemi critici e alti", lighthouse: "Prestazioni Lighthouse (mobile)", lcp: "Largest Contentful Paint", tbt: "Tempo totale di blocco", cls: "Spostamento del layout", response: "Risposta della pagina iniziale", weight: "Peso della pagina iniziale", thirdParty: "Host di terze parti", pagesFound: "Pagine trovate", languages: "Versioni linguistiche" },
       signals: { rank: "Posizione Tranco", chrome: "Dati Chrome di utenti reali", pages: "Pagine trovate", languages: "Versioni linguistiche", writeups: "Articoli pubblici", social: "Profili social collegati", age: "Età del dominio" }
     }
@@ -294,6 +348,7 @@
     kinds: () => Object.keys(COPY.en.kinds),
     kind: (id) => pick("kinds", id, id),
     area: (name) => pick("areas", name, name),
+    areaNote: (name) => pick("areaNotes", name, ""),
     kpi: (kpi) => pick("kpis", kpi.key, kpi.label),
     signal: (signal) => pick("signals", signal.key, signal.label),
     verdict: (name) => pick("verdicts", name, name),
