@@ -5,14 +5,73 @@
     <link>https://carlosandmunoz.com/qa-review-social-pt.html</link>
     <description>Cada publicação do QA-lab URL Review: dicas, análises reais de sites e clipes curtos.</description>
     <language>pt</language>
-    <lastBuildDate>Sat, 24 Oct 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 25 Oct 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-pt.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-pt.html</link></image>
+    <item>
+      <title>whatsapp.com: 67. A lacuna: hreflang.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-22/03-u-whatsapp-com-pt.html</link>
+      <guid isPermaLink="false">auto-2026-10-22/03-u-whatsapp-com-pt</guid>
+      <pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Todo link interno aberto respondeu, e os crawlers de treinamento de modelos estão bloqueados por escolha. Mas há 1002 problemas de alternates de idioma.
+
+A lição para toda equipe: Faça cada versão de idioma listar todas as outras, incluindo ela mesma, com links hreflang correspondentes.
+
+Uma análise automatizada de páginas públicas em 21 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-whatsapp-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-whatsapp-com
+
+#SEO #Hreflang #i18n #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/03-u-whatsapp-com.jpg" length="208352" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/03-u-whatsapp-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>postobon.com: 49. A lacuna: rótulos de formulário.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-23/02-u-postobon-com-pt.html</link>
+      <guid isPermaLink="false">auto-2026-10-23/02-u-postobon-com-pt</guid>
+      <pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 25 controles de formulário não têm rótulo.
+
+A lição para toda equipe: Dê a cada campo um rótulo visível ligado a ele com for e id. Leitores de tela o anunciam, e a área de toque cresce.
+
+Uma análise automatizada de páginas públicas em 22 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-postobon-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-postobon-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Forms #A11y #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/02-u-postobon-com.jpg" length="205551" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/02-u-postobon-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>grupoexito.com.co: 68. A lacuna: nomes de botões.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-24/01-u-grupoexito-com-co-pt.html</link>
+      <guid isPermaLink="false">auto-2026-10-24/01-u-grupoexito-com-co-pt</guid>
+      <pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os botões precisam ter texto discernível.
+
+A lição para toda equipe: Dê a todo botão um texto ou aria-label, para que o leitor de tela possa anunciá-lo.
+
+Uma análise automatizada de páginas públicas em 23 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-grupoexito-com-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-grupoexito-com-co
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #DevOps #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/01-u-grupoexito-com-co.jpg" length="211154" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/01-u-grupoexito-com-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>mercadolibre.com.co: 50. A lacuna: Acesso de crawlers de IA.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/02-u-mercadolibre-com-co-pt.html</link>
       <guid isPermaLink="false">auto-2026-10-22/02-u-mercadolibre-com-co-pt</guid>
       <pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
       <category>Requested</category>
       <description>Todo link interno aberto respondeu, e os crawlers de treinamento de modelos estão bloqueados por escolha. Mas 5 crawlers de busca ou de respostas de IA estão bloqueados.
 
@@ -32,6 +91,7 @@ https://www.youtube.com/shorts/2NeXSzjFh6U</description>
       <link>https://carlosandmunoz.com/social/auto-2026-10-23/01-u-pirouline-com-pt.html</link>
       <guid isPermaLink="false">auto-2026-10-23/01-u-pirouline-com-pt</guid>
       <pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
       <category>Requested</category>
       <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas outros sites podem colocar a página em frame.
 
@@ -53,6 +113,7 @@ https://www.youtube.com/shorts/kYs-ffmNoDk</description>
       <link>https://carlosandmunoz.com/social/auto-2026-10-21/02-u-epssura-com-pt.html</link>
       <guid isPermaLink="false">auto-2026-10-21/02-u-epssura-com-pt</guid>
       <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
       <category>Requested</category>
       <description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 161 controles de formulário não têm rótulo.
 
@@ -72,6 +133,7 @@ https://www.youtube.com/shorts/0FypyDn0reM</description>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/01-u-uber-com-pt.html</link>
       <guid isPermaLink="false">auto-2026-10-22/01-u-uber-com-pt</guid>
       <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
       <category>Requested</category>
       <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 56 páginas não têm título.
 
@@ -91,6 +153,7 @@ https://www.youtube.com/shorts/5b4Hr6r-cBk</description>
       <link>https://carlosandmunoz.com/social/launch-2026-10/pt/inherited.html</link>
       <guid isPermaLink="false">launch-2026-10/pt/inherited</guid>
       <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Produto</category>
       <description>Uma análise da página pública nomeia as tecnologias visíveis, segue os links reais e propõe os primeiros casos, para você começar pelos fatos e não por palpites.
 
 → Tecnologias visíveis em público
@@ -111,6 +174,7 @@ Teste com uma URL pública: https://carlosandmunoz.com/qa-review-pt.html?utm_sou
       <link>https://carlosandmunoz.com/social/auto-2026-10-21/01-u-teaminternational-com-pt.html</link>
       <guid isPermaLink="false">auto-2026-10-21/01-u-teaminternational-com-pt</guid>
       <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
       <category>Requested</category>
       <description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 16 links internos levam a um erro.
 
@@ -130,6 +194,7 @@ https://www.youtube.com/shorts/BZTtWQCzPCM</description>
       <link>https://carlosandmunoz.com/social/launch-2026-10/pt/release.html</link>
       <guid isPermaLink="false">launch-2026-10/pt/release</guid>
       <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Produto</category>
       <description>Aponte o QA-lab URL Review para a página pública. Ele propõe os casos que você queria no papel antes de publicar, para a equipe começar com uma lista e não com um documento em branco.
 
 → Funcional, links, conteúdo, mobile
@@ -150,6 +215,7 @@ Teste com uma URL pública: https://carlosandmunoz.com/qa-review-pt.html?utm_sou
       <link>https://carlosandmunoz.com/social/launch-2026-10/pt/frameworks.html</link>
       <guid isPermaLink="false">launch-2026-10/pt/frameworks</guid>
       <pubDate>Wed, 21 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Produto</category>
       <description>Escolha Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling ou outros doze, de Cucumber a k6, e os casos propostos saem nesse formato.
 
 → Escolha um, ou os vinte
@@ -170,6 +236,7 @@ Teste com uma URL pública: https://carlosandmunoz.com/qa-review-pt.html?utm_sou
       <link>https://carlosandmunoz.com/social/launch-2026-10/pt/first-read.html</link>
       <guid isPermaLink="false">launch-2026-10/pt/first-read</guid>
       <pubDate>Tue, 20 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Produto</category>
       <description>Cole uma URL pública, aceite o que a revisão faz e não faz, e veja o relatório ser escrito. Guarde só se valer a pena.
 
 → O relatório aparece uma vez sem custo
@@ -190,6 +257,7 @@ Teste com uma URL pública: https://carlosandmunoz.com/qa-review-pt.html?utm_sou
       <link>https://carlosandmunoz.com/social/launch-2026-10/pt/talking.html</link>
       <guid isPermaLink="false">launch-2026-10/pt/talking</guid>
       <pubDate>Mon, 19 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Produto</category>
       <description>O QA-lab URL Review lê uma página https pública, descreve a resposta e propõe os casos de teste, com o nome do framework que sua equipe já usa.
 
 → 21 tipos de casos

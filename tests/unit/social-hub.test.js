@@ -81,7 +81,67 @@ test("every language has the full interface copy", () => {
   for (const lang of Object.keys(LANGS)) {
     assert.equal(keys(COPY[lang]), keys(COPY.en), lang);
     assert.equal(keys(COPY[lang].kinds), keys(COPY.en.kinds), lang);
+    assert.equal(keys(COPY[lang].kind), keys(COPY.en.kind), lang);
   }
+});
+
+test("the filter offers a chip for each kind that has posts, in lane order, labelled in the page language", () => {
+  assert.deepEqual(hub.KINDS, ["tip", "trick", "review", "news", "pick", "advice", "compare", "myth", "quiz", "term", "skit", "series", "launch"]);
+  for (const lang of Object.keys(LANGS)) for (const kind of hub.KINDS) assert.ok(COPY[lang].kinds[kind] && COPY[lang].kind[kind], lang + " " + kind);
+  const html = hub.page("pt", [post({ id: "a/1", kind: "myth" }), post({ id: "a/2", kind: "trick" }), post({ id: "a/3" })], "2026-10-24");
+  const chips = [...html.matchAll(/class="hub-chip" data-kind="([a-z]+)"[^>]*>([^<]+)</g)].map((m) => m[1] + ":" + m[2]);
+  assert.deepEqual(chips, ["all:Tudo", "trick:Truques", "review:Análises de sites", "myth:Mito ou verdade", "video:Vídeos"]);
+  assert.match(card.cardHtml(post({ kind: "term" }), COPY.it, "it"), /<span class="post-tag post-kind-term">Glossario<\/span>/);
+});
+
+test("a batch names its kind in captions.json, and a batch without one keeps the kind of its name", () => {
+  const batch = "media/social-posts/tips-horror-headers-2026-10/";
+  const files = new Set([batch + "captions.json", batch + "feed/01-missing-csp.jpg"]);
+  const [horror] = hub.batchPosts(files, new Set());
+  assert.equal(horror.kind, "series");
+  const tips = "media/social-posts/tips-2026-10/";
+  const slug = Object.keys(require("../../" + tips + "captions.json"))[0];
+  assert.equal(hub.batchPosts(new Set([tips + "captions.json", tips + "feed/" + slug + ".jpg"]), new Set())[0].kind, "tip");
+});
+
+test("each post page types its kind in JSON-LD: news, tricks with steps, glossary terms and skits with their clip", () => {
+  const ld = (p) => JSON.parse(hub.postPage(p, [p], [], "2026-10-24").match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])["@graph"][0];
+  assert.deepEqual(ld(post({ kind: "news" }))["@type"], ["SocialMediaPosting", "NewsArticle"]);
+  const trick = ld(post({ kind: "trick", steps: ["Run curl -sI on the page.", "Look for strict-transport-security."] }));
+  assert.deepEqual(trick["@type"], ["SocialMediaPosting", "HowTo"]);
+  assert.deepEqual(trick.step.map((s) => s.position + " " + s.text), ["1 Run curl -sI on the page.", "2 Look for strict-transport-security."]);
+  assert.equal(ld(post({ kind: "term", term: "HSTS" })).about.name, "HSTS");
+  const skit = ld(post({ kind: "skit" }));
+  assert.deepEqual(skit["@type"], ["SocialMediaPosting", "VideoObject"]);
+  assert.equal(skit.embedUrl, "https://www.youtube.com/embed/5b4Hr6r-cBk");
+  assert.equal(skit.video, undefined);
+  assert.equal(ld(post({ kind: "skit", youtube: null }))["@type"], "SocialMediaPosting");
+  assert.equal(ld(post({ kind: "myth" }))["@type"], "SocialMediaPosting");
+});
+
+test("a quiz links its answer in the same language once the answer is out, and the answer stays off the hub until then", () => {
+  const quiz = post({ id: "c/01-which", kind: "quiz", title: "Which bank scored higher?", answer: "c/02-reveal", date: "2026-11-02" });
+  const quizEs = post({ id: "c/01-which-es", kind: "quiz", lang: "es", title: "¿Qué banco sacó más?", answer: "c/02-reveal", date: "2026-11-02" });
+  const reveal = post({ id: "c/02-reveal", kind: "compare", title: "Bank A: 81, Bank B: 64.", date: "2026-11-03" });
+  const revealEs = post({ id: "c/02-reveal-es", kind: "compare", lang: "es", title: "Banco A: 81, banco B: 64.", date: "2026-11-03" });
+  const posts = [quiz, quizEs, reveal, revealEs];
+  hub.pairQuizzes(posts);
+  assert.deepEqual(posts.map((p) => p.answer || p.question), ["c/02-reveal", "c/02-reveal-es", "c/01-which", "c/01-which-es"]);
+  assert.deepEqual(hub.unspoiled(posts, "2026-11-02").map((p) => p.id), ["c/01-which", "c/01-which-es"]);
+  assert.equal(hub.unspoiled(posts, "2026-11-03").length, 4);
+
+  const before = hub.postPage(quizEs, [quizEs], [], "2026-11-02", revealEs);
+  assert.match(before, /class="post-answer-on">Respuesta el 3 nov 2026</);
+  assert.doesNotMatch(before, /"hasPart"|Banco A/);
+  const after = hub.postPage(quizEs, [quizEs], [], "2026-11-03", revealEs);
+  assert.match(after, /href="\/social\/c\/02-reveal-es\.html">Ver la respuesta →</);
+  assert.match(after, /"acceptedAnswer": \{\n[^}]*"text": "Banco A: 81, banco B: 64\."/);
+  assert.match(hub.postPage(revealEs, [revealEs], [], "2026-11-03", null, quizEs), /href="\/social\/c\/01-which-es\.html">← La pregunta</);
+});
+
+test("each RSS item names its kind in the feed's language", () => {
+  assert.match(hub.rss("fr", [post({ kind: "quiz" })], "2026-10-24"), /<category>Quiz<\/category>/);
+  assert.match(hub.rss("de", [post({ kind: "compare" })], "2026-10-24"), /<category>Vergleich<\/category>/);
 });
 
 test("each RSS feed lists posted items only, linked to its own language page", () => {

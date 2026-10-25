@@ -25,6 +25,8 @@
    A source can also write a post in its own language (tip.lang, tip.voice "w" or "m"): it is drawn, voiced and
    captioned as written, with no translation, and its UI strings come from studio.UI[lang]. Such a source can set
    tip.date, tip.alt, tip.hold (in the hub, never queued), studio.WINDOWS and studio.hostFor(tip).
+   A source names its social hub kind with studio.KIND or tip.kind (trick, news, advice, compare, myth, quiz, term,
+   skit, series); a quiz sets tip.answer to the id of the tip that reveals it, tip.steps and tip.term are optional.
    --rotate writes voiced/<slug>.mp4 and voiced/<slug>.json (language, speech, TikTok and YouTube copy)
    for clips already queued, and leaves the stills, calendar, and Buffer CSVs alone. */
 
@@ -134,6 +136,22 @@ function altText(tip) {
   const full = sentences([head, (tip.actionLabel || "Try this") + ": " + tip.action]);
   if (full.length <= 300) return full;
   return head.length <= 300 ? head : head.slice(0, 299).replace(/\s+\S*$/, "") + "…";
+}
+
+// The social hub's post kind (scripts/social-hub/copy.js) and what that kind's page needs: a quiz names the
+// tip that answers it, a trick or best practice lists its steps, a glossary post names its term.
+function hubFields(tip, slugOf) {
+  const out = {};
+  const kind = tip.kind || studio.KIND;
+  if (kind) out.kind = kind;
+  if (tip.answer) {
+    if (!slugOf[tip.answer]) throw new Error(tip.id + ": its answer " + tip.answer + " is not in this batch");
+    out.answer = slugOf[tip.answer];
+  }
+  const steps = tip.steps || (["trick", "advice"].includes(kind) && tip.action ? [tip.action] : null);
+  if (steps) out.steps = steps;
+  if (tip.term) out.term = tip.term;
+  return out;
 }
 
 // Card text worth translating: code lines, ids, tags and check marks stay as they are.
@@ -304,6 +322,7 @@ async function renderClip(page, tip, index, total, file, cover, said) {
 
   const rows = [];
   const captions = {};
+  const slugOf = Object.fromEntries(all.map((tip, index) => [tip.id, String(index + 1).padStart(2, "0") + "-" + tip.id]));
   all.forEach((tip, index) => {
     const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
     const date = tip.date || day(START, Math.floor((AFTER + index) / PER_DAY) * EVERY);
@@ -312,7 +331,7 @@ async function renderClip(page, tip, index, total, file, cover, said) {
     if (said.lang !== "en" && studio.OWN_LINE && said.tiktok.includes(studio.OWN_LINE.en)) throw new Error(slug + ": the " + said.lang + " TikTok caption carries the English call to action");
     const cap = Object.assign(studio.captions(tip, index, total), { tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube });
     captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip), alt: tip.alt || altText(tip), lang: said.lang, voice: said.voice.file },
-      tip.lang ? { textLang: tip.lang } : {}, tip.hold ? { hold: true } : {}, cap);
+      tip.lang ? { textLang: tip.lang } : {}, tip.hold ? { hold: true } : {}, hubFields(tip, slugOf), cap);
     const windows = studio.WINDOWS || WINDOWS;
     for (const channel of tip.hold ? [] : Object.keys(windows)) {
       const video = ["tiktok", "youtube"].includes(channel);
