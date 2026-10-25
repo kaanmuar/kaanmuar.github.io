@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
+import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.data.ago
 import com.carlosandmunoz.jarvis.data.arr
 import com.carlosandmunoz.jarvis.data.at
@@ -57,8 +58,6 @@ val PRODUCTS = listOf("inbox" to "Inbox", "cv" to "CV", "studio" to "QA Studio",
 /** Products-tab chips: the site products plus Outreach, which the snapshot keeps under external.outreach. */
 val CHIPS = PRODUCTS + ("outreach" to "Outreach")
 
-fun plural(n: Int, word: String) = "$n $word" + if (n == 1) "" else "s"
-
 private fun humanize(key: String) = key.replace(Regex("([a-z])([A-Z])"), "$1 $2").replaceFirstChar { it.uppercase() }
 
 private fun JsonObject?.ext(key: String): JsonObject? = this.obj("external").obj(key)
@@ -72,11 +71,9 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
         Ring(snap.num("readiness"), "READY")
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
-            val brief = snap.objs("briefing")
-            val alerts = brief.count { it.str("level") == "alert" }
-            val warns = brief.count { it.str("level") == "warn" }
-            Text(if (alerts + warns == 0) "All clear" else plural(alerts, "alert") + " · " + plural(warns, "warning"), fontSize = 20.sp, fontWeight = FontWeight.SemiBold,
-                color = if (alerts > 0) J.pink else if (warns > 0) J.amber else J.green)
+            val st = snap?.let { Home.status(it) } ?: Home.Status(null, 0, 0)
+            Text(st.headline, fontSize = 20.sp, fontWeight = FontWeight.SemiBold,
+                color = if (st.alerts > 0) J.pink else if (st.warns > 0) J.amber else J.green)
             val down = snap.objs("connections").filter { it.str("state") != "live" }
             Muted(if (down.isEmpty()) "Every connection is live" else down.joinToString { (it.str("name") ?: "") + " " + (it.str("state") ?: "") })
         }

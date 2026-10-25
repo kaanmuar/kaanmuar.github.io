@@ -7,8 +7,10 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.carlosandmunoz.jarvis.home.Home
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.carlosandmunoz.jarvis.JarvisApp
@@ -30,6 +32,7 @@ object Push {
     private val CHANNELS = mapOf(
         ALERTS to Triple("Alerts", "Threshold crossings from the hourly watch: a page down, TLS, failed jobs and runs.", NotificationManager.IMPORTANCE_HIGH),
         BRIEFING to Triple("Daily briefing", "The 07:40 briefing: the last 24 hours, goals and alerts.", NotificationManager.IMPORTANCE_DEFAULT),
+        "review" to Triple("Reviews", "URL reviews you started by sharing a link to Jarvis.", NotificationManager.IMPORTANCE_DEFAULT),
         "test" to Triple("Tests", "Test notifications sent from Settings.", NotificationManager.IMPORTANCE_LOW)
     )
 
@@ -60,13 +63,16 @@ object Push {
     }
 
     fun show(context: Context, data: Map<String, String>) {
+        if (data["kind"] == ALERTS || data["kind"] == BRIEFING) Home.refreshSoon(context)
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         val kind = data["kind"]?.takeIf { it in CHANNELS } ?: ALERTS
         val title = data["title"] ?: "Jarvis"
         val body = data["body"] ?: ""
         val lines = runCatching { (JSON.parseToJsonElement(data["lines"] ?: "[]") as JsonArray).map { (it as JsonPrimitive).content } }.getOrDefault(emptyList())
         val tag = data["tag"] ?: kind
-        val open = Intent(context, MainActivity::class.java).putExtra(EXTRA_TAB, data["tab"] ?: "overview").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val link = data["url"]?.takeIf { it.startsWith("https://") }
+        val open = if (link != null) Intent(Intent.ACTION_VIEW, Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            else Intent(context, MainActivity::class.java).putExtra(EXTRA_TAB, data["tab"] ?: "overview").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val style = if (lines.size > 1) NotificationCompat.InboxStyle().also { s -> lines.forEach(s::addLine) }.setSummaryText(body.take(60)) else NotificationCompat.BigTextStyle().bigText(body)
         val n = NotificationCompat.Builder(context, kind)
             .setSmallIcon(R.drawable.ic_stat_jarvis)

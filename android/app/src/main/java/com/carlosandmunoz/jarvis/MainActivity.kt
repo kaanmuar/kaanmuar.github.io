@@ -29,7 +29,9 @@ import com.carlosandmunoz.jarvis.ui.JarvisTheme
 import com.carlosandmunoz.jarvis.ui.LockScreen
 import com.carlosandmunoz.jarvis.ui.MainScreen
 import com.carlosandmunoz.jarvis.ui.SignInScreen
+import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.push.Push
+import kotlinx.serialization.json.JsonPrimitive
 
 class MainActivity : FragmentActivity() {
     private val vm: JarvisViewModel by viewModels()
@@ -37,6 +39,7 @@ class MainActivity : FragmentActivity() {
     private var locked by mutableStateOf(false)
     private var lockOn by mutableStateOf(true)
     private var openTab by mutableStateOf<String?>(null)
+    private var pendingAction by mutableStateOf<String?>(null)
     private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,11 +47,13 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge(SystemBarStyle.dark(Color.TRANSPARENT), SystemBarStyle.dark(Color.TRANSPARENT))
         lockOn = vault.flag("lock", true) && canLock()
         openTab = intent.getStringExtra(Push.EXTRA_TAB)
+        pendingAction = intent.getStringExtra(Home.EXTRA_ACTION)
         setContent {
             JarvisTheme {
                 Backdrop {
                     val s by vm.state.collectAsStateWithLifecycle()
                     LaunchedEffect(s.signedIn) { if (s.signedIn) askForNotifications() }
+                    LaunchedEffect(s.signedIn, locked, pendingAction) { if (s.signedIn && !locked) pendingAction?.let { pendingAction = null; run(it) } }
                     when {
                         !s.signedIn -> SignInScreen(s, vm)
                         locked -> LockScreen(::prompt)
@@ -62,6 +67,15 @@ class MainActivity : FragmentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         intent.getStringExtra(Push.EXTRA_TAB)?.let { openTab = it }
+        intent.getStringExtra(Home.EXTRA_ACTION)?.let { pendingAction = it }
+    }
+
+    /** Shortcut actions: "brief" asks Gemini for today's briefing, "sweep" starts the sweepReviews job. */
+    private fun run(action: String) {
+        when (action) {
+            "brief" -> vm.brief()
+            "sweep" -> vm.act("job:sweepReviews", "run-job", mapOf("job" to JsonPrimitive("sweepReviews"))) { "Started Sweep reviews." }
+        }
     }
 
     /** Android 13+ asks once; afterwards the switch lives in Android's app settings, linked from Settings. */
