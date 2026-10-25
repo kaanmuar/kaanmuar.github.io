@@ -15,10 +15,10 @@ async function signIn(store, email, deviceKey) {
 }
 
 // The page talks to a stub that answers with the real access rule, so the browser sees what the server decides.
-async function open(page, who) {
+async function open(page, who, report) {
   const store = auth.memoryStore();
   const people = { ana: await signIn(store, 'ana@example.com', ANA), ben: await signIn(store, 'ben@example.com', BEN) };
-  const row = { email: 'ana@example.com', paid: true, frameworks: sample.frameworks, report: Object.assign({}, sample.report, { id: ID }) };
+  const row = { email: 'ana@example.com', paid: true, frameworks: sample.frameworks, report: Object.assign({}, report || sample.report, { id: ID }) };
   const asked = [];
   const me = people[who];
   await page.addInitScript(({ version, me }) => {
@@ -71,6 +71,27 @@ test.describe('A paid report opens only for the account that ran it', () => {
     await expect(page.locator('body')).not.toHaveClass(/paid-copy/);
     await expect(page.locator('#pay')).toBeHidden();
     expect(asked[0]).toEqual({ id: ID, session: true });
+  });
+
+  test('Already solid leaves out the chat launcher when none was checked', async ({ page }) => {
+    await open(page, 'ana');
+    const cols = page.locator('.exec-cols');
+    await expect(cols).toContainText('Markup, axe-core, phone layout, accessibility statement');
+    await expect(cols).not.toContainText('chat launcher');
+  });
+
+  test('the chat card says what was seen when the chat set no cookie but still loaded', async ({ page }) => {
+    const chat = {
+      vendors: [{ name: 'HubSpot Chat', ai: false }], requests: 1, kb: 30, ms: 0, banner: true, cookies: [],
+      rejected: { cookies: [], requests: 1 }, launcher: { hidden: true }, opened: false,
+      states: { consent: 'risk', reject: 'risk', weight: 'pass', cover: 'unknown', name: 'unknown', focus: 'unknown', trap: 'unknown', privacy: 'unknown' }
+    };
+    await open(page, 'ana', Object.assign({}, sample.report, { insights: Object.assign({}, sample.report.insights, { chat }) }));
+    const card = page.locator('article', { hasText: 'Chat widget' });
+    await expect(card.locator('tr', { hasText: 'Before a choice' })).toContainText('No cookie · 1 request before a choice');
+    await expect(card.locator('tr', { hasText: 'After Reject' })).toContainText('No cookie · 1 request');
+    await expect(card.locator('tr', { hasText: 'Launcher on a phone' })).toContainText('Hidden on the phone');
+    await expect(page.locator('.exec-cols')).not.toContainText('chat launcher');
   });
 
   test('an emailed link opened signed out shows the blurred preview and asks to sign in', async ({ page }) => {
