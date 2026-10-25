@@ -1012,9 +1012,22 @@ function headerOverflow(error) {
   return blocked;
 }
 
+// Chrome reads an http:// address over https first (HTTPS-Upgrades) and falls back to http only when https fails. The review
+// has no http fallback: it reads each http:// redirect over https once, and fails as an http:// redirect when that gets no page.
+function httpsUpgrade(next, upgrades) {
+  if (next.port || upgrades.includes(next.href)) return "";
+  upgrades.push(next.href);
+  next.protocol = "https:";
+  return upgrades[upgrades.length - 1];
+}
+
+const httpOnly = (href, tried) => new Error("The site redirected to " + clean(href, 160) + ", an http:// address" + (tried ? ", and the same address over https gave no page" : "") + ". The review only follows https.");
+
 async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage) {
   let current = normalizeUrl(raw);
   const started = Date.now();
+  const upgrades = [];
+  let upgraded = "";
   let pulses = 0;
   const timer = setInterval(() => {
     if (!onPulse || pulses >= 4) return;
@@ -1035,14 +1048,21 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage)
       try {
         res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage);
       } catch (error) {
+        if (upgraded && !(error && error.code === "STOPPED")) throw httpOnly(upgraded, true);
         if (error && typeof error === "object" && !error.url) error.url = current.toString();
         throw error;
       }
+      if (upgraded && res.status >= 400) throw httpOnly(upgraded, true);
       const location = res.headers.location;
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
         if (onPulse) onPulse("The page redirected. Following the next public https address.");
         const next = new URL(location, current);
-        if (next.protocol === "http:") throw new Error("The site redirected to " + clean(next.href, 160) + ", an http:// address. The review only follows https.");
+        upgraded = "";
+        if (next.protocol === "http:") {
+          upgraded = httpsUpgrade(next, upgrades);
+          if (!upgraded) throw httpOnly(next.href, upgrades.includes(next.href));
+          if (onPulse) onPulse("The site redirected to " + clean(upgraded, 160) + ", an http:// address. Requesting the same address over https, as Chrome does.");
+        }
         current = normalizeUrl(next.toString());
         continue;
       }
@@ -2538,17 +2558,27 @@ async function probeRead(raw) {
   const started = Date.now();
   const hops = [];
   const took = () => Date.now() - started;
+  const upgrades = [];
+  let upgraded = "";
   let current;
   try {
     current = normalizeUrl(raw);
     for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
       const pinned = await assertPublic(current.hostname);
-      const res = await requestOnce(current, pinned, null, true);
+      let res;
+      try {
+        res = await requestOnce(current, pinned, null, true);
+      } catch (error) {
+        if (upgraded) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
+        throw error;
+      }
       const location = header(res.headers, "location");
       hops.push({ url: clean(current.toString(), 300), status: res.status, location: clean(location, 300) });
+      if (upgraded && res.status >= 400) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
         const next = new URL(location, current);
-        if (next.protocol === "http:") return { hops, httpRedirect: clean(next.href, 300), ms: took() };
+        upgraded = next.protocol === "http:" ? httpsUpgrade(next, upgrades) : "";
+        if (next.protocol === "http:" && !upgraded) return { hops, httpRedirect: clean(next.href, 300), ms: took() };
         current = normalizeUrl(next.toString());
         continue;
       }

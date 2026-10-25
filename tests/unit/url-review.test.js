@@ -877,7 +877,7 @@ test.describe("start page reads", () => {
 
   test("a redirect to http is named as such, not as a wrong address", async () => {
     await assert.rejects(review({ [BANK]: { status: 301, headers: { location: "http://www.bank.example.com/co" } } }),
-      /^Error: The site redirected to http:\/\/www\.bank\.example\.com\/co, an http:\/\/ address\. The review only follows https\.$/);
+      /^Error: The site redirected to http:\/\/www\.bank\.example\.com\/co, an http:\/\/ address, and the same address over https gave no page\. The review only follows https\.$/);
   });
 
   test("a start page over 2 MB keeps its first 2 MB and says it was cut", async () => {
@@ -1784,29 +1784,12 @@ test("response headers up to 64 KB are read, and past that the read names the li
   }
 });
 
-// Made-up public hosts served by a local server: DNS answers a public address, and each https request goes to the server instead.
-async function fakeSites(t, answer) {
-  const http = require("node:http");
-  const https = require("node:https");
-  const server = http.createServer((req, res) => {
-    const [status, headers, body] = answer(req.headers.host, req.url);
-    res.writeHead(status, Object.assign({ connection: "close" }, headers));
-    res.end(body || "");
-  });
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  t.after(() => new Promise((resolve) => server.close(resolve)));
-  const port = server.address().port;
-  t.mock.method(require("node:dns").promises, "lookup", async () => [{ address: "93.184.215.14", family: 4 }]);
-  t.mock.method(https, "request", (options, callback) => http.request(Object.assign({}, options, {
-    protocol: "http:", hostname: "127.0.0.1", port, lookup: undefined, ca: undefined, headers: Object.assign({}, options.headers, { host: options.hostname })
-  }), callback));
-}
-
 test("a start page six redirects away is read as Chrome reads it, and a longer chain is still a redirect loop (#1177)", async (t) => {
-  await fakeSites(t, (host, path) => {
-    const left = Number(path.slice(1));
-    return left > 0 ? [302, { location: "https://portal.example.com/" + (left - 1) }] : [200, { "content-type": "text/html" }, HTML];
-  });
+  const routes = {};
+  for (let left = 0; left <= core.MAX_REDIRECTS + 1; left += 1) {
+    routes["https://portal.example.com/" + left] = left ? { status: 302, headers: { location: "https://portal.example.com/" + (left - 1) } } : { status: 200, headers: { "content-type": "text/html" }, body: HTML };
+  }
+  t.after(fakeNetwork(routes));
   const read = await core.fetchPublic("https://portal.example.com/6");
   assert.deepEqual([read.status, read.hops, read.url], [200, 6, "https://portal.example.com/0"]);
   const probe = await core.probeRead("https://portal.example.com/6");
@@ -1828,6 +1811,33 @@ test("a start page whose host cuts Chrome off for the review tag is loaded again
   assert.equal(tagCut(start, new Error("net::ERR_NAME_NOT_RESOLVED at https://hpe.com/")), "");
   assert.equal(tagCut({ url: "https://hpe.com/", paths: [] }, new Error("net::ERR_HTTP2_PROTOCOL_ERROR at https://hpe.com/")), "");
   assert.equal(tagCut(start, null), "");
+});
+
+test("an http:// redirect is read over https first, as Chrome does, and fails as an http:// redirect only when https gives no page (#1179)", async (t) => {
+  t.after(fakeNetwork({
+    "https://garena.example.com/": { status: 302, headers: { location: "http://intl.garena.example.com/" } },
+    "https://intl.garena.example.com/": { status: 200, headers: { "content-type": "text/html" }, body: HTML },
+    "https://shop.example.com/": { status: 301, headers: { location: "http://old.example.com/" } },
+    "https://loop.example.com/": { status: 301, headers: { location: "http://loop.example.com/" } },
+    "https://port.example.com/": { status: 301, headers: { location: "http://port.example.com:8080/" } }
+  }));
+  const lines = [];
+  const read = await core.fetchPublic("https://garena.example.com/", null, (line) => lines.push(line));
+  assert.deepEqual([read.status, read.url, read.hops], [200, "https://intl.garena.example.com/", 1]);
+  assert.ok(lines.includes("The site redirected to http://intl.garena.example.com/, an http:// address. Requesting the same address over https, as Chrome does."));
+  const probe = await core.probeRead("https://garena.example.com/");
+  assert.deepEqual([probe.status, probe.httpRedirect, probe.html], [200, undefined, true]);
+  assert.equal(failures.diagnose({ cause: { id: "http-redirect" } }, { dns: {}, plain: probe }).cleared, true);
+
+  const refused = await core.fetchPublic("https://shop.example.com/").then(() => null, (caught) => caught);
+  assert.equal(refused.message, "The site redirected to http://old.example.com/, an http:// address, and the same address over https gave no page. The review only follows https.");
+  assert.equal(failures.causeOf(refused.message).id, "http-redirect");
+  assert.equal((await core.probeRead("https://shop.example.com/")).httpRedirect, "http://old.example.com/");
+  const loop = await core.fetchPublic("https://loop.example.com/").then(() => null, (caught) => caught);
+  assert.equal(failures.causeOf(loop.message).id, "http-redirect");
+  assert.equal((await core.probeRead("https://loop.example.com/")).httpRedirect, "http://loop.example.com/");
+  const port = await core.fetchPublic("https://port.example.com/").then(() => null, (caught) => caught);
+  assert.equal(port.message, "The site redirected to http://port.example.com:8080/, an http:// address. The review only follows https.");
 });
 
 test("the connection check tells a port that opens from one that refuses", async () => {
