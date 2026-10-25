@@ -489,6 +489,11 @@ function returnCoupon(note, now) {
 }
 
 // `freeAccount` is true for a free-run address (FREE_RUN_EMAILS or url_review_free_runs); every run it owns opens.
+// A pass, paid or desk-granted, opens only the runs made on it (they carry passId); older reports keep their unlock price.
+function passRunOpen(row) {
+  return !!row && (row.paid === true || row.free === true || !!row.passId);
+}
+
 function accountFile(records, email, now, options) {
   const address = String(email || "").trim().toLowerCase();
   const at = now == null ? Date.now() : Number(now);
@@ -497,7 +502,7 @@ function accountFile(records, email, now, options) {
   const live = passFor(rows, address, at);
   const pass = live || rows.filter((row) => row.status === "monthly-pass").sort((a, b) => String(b.paidUntil || "").localeCompare(String(a.paidUntil || "")))[0] || null;
   const passOpen = !!live;
-  const open = freeAccount || passOpen;
+  const open = freeAccount;
   return {
     email: address,
     open,
@@ -511,7 +516,7 @@ function accountFile(records, email, now, options) {
     plans: catalog().plans,
     runs: rows.filter((row) => row.report)
       .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
-      .map((row) => customerRun(row, open || row.paid === true || row.free === true))
+      .map((row) => customerRun(row, open || passRunOpen(row)))
   };
 }
 

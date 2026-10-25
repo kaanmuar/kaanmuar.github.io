@@ -75,7 +75,7 @@ const TITLES = {
   capture: "A report was copied or printed",
   credit: "A paid run credit was used",
   failed: "A review failed",
-  monthly: "A 30-day history pass was opened on this machine. No charge was made.",
+  monthly: "A 30-day pass was granted on this machine. It opens the reports run on it. No charge was made.",
   "pass-paid": "A 30-day pass was bought",
   "follow-stop": "Follow-up notes were stopped",
   "payment-unmatched": "PayPal took a payment that matches no open checkout. Nothing was unlocked.",
@@ -839,7 +839,7 @@ const PAGE = `<!DOCTYPE html>
       if (picked.email && (picked.status === "complete" || picked.status === "stopped")) {
         const pass = document.createElement("button");
         pass.type = "button";
-        pass.textContent = "Open a 30-day history pass for this address. No charge.";
+        pass.textContent = "Grant a 30-day pass to this address. It opens only the reports run on it. No charge.";
         pass.addEventListener("click", () => openPass(picked.email));
         detailEl.appendChild(pass);
       }

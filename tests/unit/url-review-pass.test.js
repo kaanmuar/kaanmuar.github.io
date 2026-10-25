@@ -123,7 +123,7 @@ test.describe("pass purchase", () => {
     const rows = [pass({ runsUsed: 4 }), pass({ id: "p0", paidUntil: iso(now - 40 * day), plan: "pro" })];
     const file = offers.accountFile(rows, "ana@example.com", now);
     assert.equal(file.pass, true);
-    assert.equal(file.open, true);
+    assert.equal(file.open, false);
     assert.deepEqual([file.passDetail.plan, file.passDetail.runs, file.passDetail.runsLeft, file.passDetail.paidUntil], ["freelancer", 10, 6, iso(now + 20 * day)]);
     assert.equal(file.lastPlan, "freelancer");
     const lapsed = offers.accountFile([pass({ paidUntil: iso(now - day), plan: "team" })], "ana@example.com", now);

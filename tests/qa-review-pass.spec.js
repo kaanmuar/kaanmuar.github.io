@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const auth = require('../functions/url-review-auth');
 const offers = require('../functions/url-review-offers');
+const sample = require('../assets/qa-review-sample.json');
 
 const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 const ANA = 'a'.repeat(64);
@@ -150,6 +151,19 @@ test.describe('The pass offered beside a paid total', () => {
     await page.waitForURL(/qa-review-pay\.html\?purpose=pass&plan=freelancer$/);
   });
 
+  test('when the sign-in has lapsed, the offer asks to sign in first and opens no checkout', async ({ page }) => {
+    await openReview(page, { billing: 'run', free: false, percent: 10, pass: null, lastPlan: '', plans: PLANS }, (where) => (where === '/checkout/quote' ? [200, quote] : null));
+    await keepFrameworks(page, ['Playwright', 'Cypress', 'Jest']);
+    await fillRequest(page);
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#run-total-offer-go')).toBeVisible();
+    await page.evaluate(() => window.ReviewAuth.expire());
+    await page.locator('#run-total-offer-go').click();
+    await expect(page.locator('#run-total')).toBeHidden();
+    await expect(page.locator('#form-status')).toHaveText('Sign in first. A pass belongs to the address you sign in with.');
+    await expect(page).toHaveURL(/\/qa-review\.html$/);
+  });
+
   test('a used-up pass offers the next plan up', async ({ page }) => {
     await openReview(page, { billing: 'run', free: false, percent: 10, pass: Object.assign({}, FREELANCER, { runsLeft: 0 }), lastPlan: 'freelancer', plans: PLANS },
       (where) => (where === '/checkout/quote' ? [200, quote] : null));
@@ -214,9 +228,17 @@ test.describe('The pass card on the account page', () => {
     return page.locator('#pass-card');
   }
 
-  test('an open pass shows its plan, runs left, end date, and renew and upgrade', async ({ page }) => {
-    const card = await openAccount(page, [{ id: 'pass-abc', email: 'ana@example.com', status: 'monthly-pass', plan: 'freelancer', paid: true, runs: 10, runsUsed: 3, paidUntil: '2026-11-20T00:00:00Z' }]);
+  test('an open pass shows its plan, runs left, end date, and renew and upgrade, and opens only the reports run on it', async ({ page }) => {
+    const card = await openAccount(page, [
+      { id: 'pass-abc', email: 'ana@example.com', status: 'monthly-pass', plan: 'freelancer', paid: true, runs: 10, runsUsed: 3, paidUntil: '2026-11-20T00:00:00Z' },
+      { id: 'ab12', email: 'ana@example.com', status: 'complete', passId: 'pass-abc', passPlan: 'freelancer', createdAt: '2026-10-23T10:00:00Z', report: Object.assign({}, sample.report, { id: 'ab12', host: 'onpass.example.org' }) },
+      { id: 'cd34', email: 'ana@example.com', status: 'complete', createdAt: '2026-10-01T10:00:00Z', report: Object.assign({}, sample.report, { id: 'cd34', host: 'older.example.org' }) }
+    ]);
     await expect(card).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('#file-status')).toHaveText(/^A 30-day pass is open on this account until .+\. Reports run on this pass are open\. An older report opens when that report is paid\.$/);
+    await expect(page.locator('#file-status')).not.toContainText('Every report');
+    await expect(page.locator('#list > *').filter({ hasText: 'onpass.example.org' }).locator('.pill')).toHaveText('Open');
+    await expect(page.locator('#list > *').filter({ hasText: 'older.example.org' }).locator('.pill')).toHaveText('Opening shown');
     await expect(card.locator('h3')).toHaveText('Your Freelancer pass');
     await expect(card).toContainText('7 of 10 runs left, until');
     await expect(card.getByRole('link', { name: 'Renew the Freelancer pass' })).toHaveAttribute('href', 'qa-review-pay.html?purpose=pass&plan=freelancer');

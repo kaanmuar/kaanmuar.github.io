@@ -1055,6 +1055,7 @@ const server = http.createServer(async (req, res) => {
       city: ""
     });
     if (decision.pass) Object.assign(record, { paid: true, priceUsd: decision.pass.extrasUsd, passId: decision.pass.id, passPlan: decision.pass.plan });
+    if (decision.pass && offers.passAddons(decision.pass.plan).length) record.addons = offers.passAddons(decision.pass.plan);
     const prior = readStore().filter((row) => row.email === intake.value.email && row.report && row.report.host === report.host && row.report.id !== report.id && row.report.insights && row.status !== "stopped")
       .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0];
     const history = prior ? core.compareRuns(prior.report, report) : null;

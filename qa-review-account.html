@@ -781,7 +781,7 @@
     unfolded.clear();
     const opened = runs.filter((run) => run.open).length;
     document.getElementById("file-status").textContent = data.free ? "Your account opens every report."
-      : data.pass ? "A 30-day pass is open on this account until " + new Date(data.paidUntil).toLocaleString() + ". Every report is open."
+      : data.pass ? "A 30-day pass is open on this account until " + new Date(data.paidUntil).toLocaleString() + ". Reports run on this pass are open. An older report opens when that report is paid."
         : opened ? "Paid reports are open. For the others, the opening of each shows, and the rest opens when that report is paid."
           : "The opening of each review shows. The rest opens when that report is paid.";
     paintPass(data);
