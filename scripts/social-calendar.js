@@ -181,7 +181,9 @@ function plan(posts, { from, batch, moveQueued = false } = {}) {
   });
 
   const queue = {};
-  const order = (a, b) => firstDay(a).localeCompare(firstDay(b)) || rotation(a) - rotation(b) || a.id.localeCompare(b.id);
+  // Posts that share a first day keep the order of the lanes they hold that day, so a second --write changes nothing.
+  const slotNow = (post) => laneOf(post, firstDay(post)) || 6;
+  const order = (a, b) => firstDay(a).localeCompare(firstDay(b)) || rotation(a) - rotation(b) || slotNow(a) - slotNow(b) || a.id.localeCompare(b.id);
   const go = posts.filter(movable).sort(order);
   const tops = go.filter(isTop);
   go.filter((post) => !isTop(post)).forEach((post) => { (queue[post.lane] = queue[post.lane] || []).push(post); });
