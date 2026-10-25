@@ -4305,6 +4305,7 @@ function previewReport(report) {
   (copy.cases || []).forEach((item) => {
     item.title = frostText(item.title);
     item.why = frostText(item.why);
+    delete item.msg;
     ["steps", "expected", "script", "scripts", "data", "selectors", "check"].forEach((key) => { delete item[key]; });
   });
   (copy.alerts || []).forEach((item) => {

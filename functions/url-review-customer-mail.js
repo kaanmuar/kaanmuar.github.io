@@ -848,7 +848,7 @@ function reportPdf(record, options) {
     "</div>"
   ).join("");
   const caseRows = (Array.isArray(report.cases) ? report.cases : []).slice(0, PDF_CASES).map((item, index) =>
-    "<div class=\"case\"><code>" + esc(item.id || "") + "</code><small>" + esc(item.layer || "") + "</small><br>" + lineOf(item.title, index + 7) + "</div>"
+    "<div class=\"case\"><code>" + esc(item.id || "") + "</code><small>" + esc(item.layer || "") + "</small><br>" + lineOf(findingLine(lang, item, "title"), index + 7) + "</div>"
   ).join("");
   const moreCases = Math.max(0, facts.cases - PDF_CASES);
   const finalUrl = /^https?:\/\//i.test(String(report.finalUrl || "")) ? String(report.finalUrl).slice(0, 200) : "";

@@ -2,6 +2,8 @@
 
 // Ties every scored finding and browser observation to a proposed case, then ranks the cases by risk.
 
+const { say, english } = require("./url-review-findings-en");
+
 const IMPACT = { critical: 10, high: 7, medium: 4, low: 2 };
 const VERDICT_WEIGHT = { fail: 1, risk: 0.7, person: 0.5, proposed: 0.35, pass: 0.25 };
 const VERDICT_ORDER = { proposed: 0, pass: 0, person: 1, risk: 2, fail: 3 };
@@ -134,22 +136,47 @@ function layoutEvidence(byId, browser) {
   });
 }
 
+function sentenceMsg(message) {
+  return /[.!?]$/.test(english(message).trim()) ? message : say("case.sentence", { text: message });
+}
+
+// The title and why as messages, for the review pages to translate. Kept only when the English reads the same.
+function retestMsg(finding, person, host, title, why) {
+  const msg = finding.msg || {};
+  if (!msg.title || !msg.evidence || (finding.fix && !msg.fix)) return null;
+  try {
+    const pages = finding.pages || [];
+    const shown = pages.slice(0, 2).map((path) => siteLabel(host, path));
+    const kind = person ? "case.byHand" : "case.retest";
+    const out = {
+      title: say(kind, { where: pages.length ? { items: shown, more: pages.length - shown.length } : host, title: msg.title }),
+      why: { items: [sentenceMsg(msg.evidence)].concat(finding.fix ? [say("case.expected", { fix: sentenceMsg(msg.fix) })] : [], [say(kind + ".why")]), sep: "" }
+    };
+    return english(out.title) === title && english(out.why) === why ? out : null;
+  } catch (error) {
+    return null;
+  }
+}
+
 function retestCase(finding, index, host, fw) {
   const person = finding.verdict === "person";
   const where = (finding.pages || []).length ? " on " + listPaths(host, finding.pages, 2) : " on " + host;
-  return {
+  const title = (person ? "Check by hand" : "Retest") + where + ": " + finding.title;
+  const why = sentence(finding.evidence) + (finding.fix ? " Expected after the fix: " + sentence(finding.fix) : "") + (person ? " A person confirms it, because a script cannot judge it alone." : " The case fails while the finding is still true.");
+  const msg = retestMsg(finding, person, host, title, why);
+  return Object.assign({
     id: "RT-" + String(index + 1).padStart(2, "0"),
     status: "proposed",
     layer: finding.area,
-    title: (person ? "Check by hand" : "Retest") + where + ": " + finding.title,
-    why: sentence(finding.evidence) + (finding.fix ? " Expected after the fix: " + sentence(finding.fix) : "") + (person ? " A person confirms it, because a script cannot judge it alone." : " The case fails while the finding is still true."),
+    title,
+    why,
     fw,
     verdict: finding.verdict,
     severity: finding.severity,
     finding: finding.id,
     path: (finding.pages || [])[0],
     pages: (finding.pages || []).slice(0, 12)
-  };
+  }, msg ? { msg } : {});
 }
 
 function score(item) {
