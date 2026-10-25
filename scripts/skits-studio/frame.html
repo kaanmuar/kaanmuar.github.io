@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=block" rel="stylesheet">
+<style>
+  /* Skit overlays (scripts/skits-studio/build.js): each paint() fills #c with one transparent full-canvas layer. */
+  :root { --ink: #050c0f; --cyan: #4db3bb; --cyan-hi: #7ef6fb; --gold: #e2c48a; --text: #eef6f7; --muted: #a9bcc1; --fail: #ff8a80; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: transparent; }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+  #c { position: relative; overflow: hidden; width: 1080px; height: 1920px; }
+  .bg { position: absolute; inset: 0; background: radial-gradient(70% 45% at 85% 5%, rgba(77,179,187,.30), transparent 70%), radial-gradient(60% 40% at 0% 100%, rgba(185,166,255,.20), transparent 70%), linear-gradient(180deg, #071318, #050c0f 60%); }
+  .brand { position: absolute; left: 60px; top: 64px; display: flex; align-items: center; gap: 18px; }
+  .brand svg { width: 64px; height: 64px; }
+  .brand b { display: block; font-weight: 700; font-size: 26px; letter-spacing: .14em; text-transform: uppercase; }
+  .brand small { display: block; margin-top: 4px; color: var(--muted); font-size: 22px; }
+  .tag { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; display: inline-flex; align-items: center; gap: 14px; border: 2px solid rgba(126,246,251,.45); background: rgba(10,30,36,.72); border-radius: 999px; padding: 12px 30px; font-size: 34px; font-weight: 700; letter-spacing: .04em; color: var(--cyan-hi); }
+  .tag i { width: 14px; height: 14px; border-radius: 50%; background: var(--fail); box-shadow: 0 0 0 6px rgba(255,138,128,.2); }
+  .win { position: absolute; border-radius: 30px; border: 2px solid rgba(255,255,255,.38); box-shadow: 0 30px 80px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.08); overflow: hidden; }
+  .win .bar { height: 60px; display: flex; align-items: center; gap: 14px; padding: 0 22px; background: rgba(214,236,239,.22); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255,255,255,.25); }
+  .win .dot { width: 16px; height: 16px; border-radius: 50%; }
+  .win .bar svg { width: 30px; height: 30px; margin-left: 10px; }
+  .win .bar b { font-size: 24px; font-weight: 700; color: #f4fbfc; }
+  .win .bar span { font-family: "Fira Code", monospace; font-size: 22px; color: rgba(244,251,252,.75); margin-left: auto; }
+  .cap { position: absolute; left: 70px; right: 70px; display: flex; justify-content: center; }
+  .cap p { margin: 0; text-align: center; font-size: 50px; line-height: 1.22; font-weight: 800; letter-spacing: -0.01em; color: #fff; background: rgba(5,12,15,.78); border-radius: 22px; padding: 16px 28px; text-wrap: balance; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+  .cap.found p { color: var(--ink); background: linear-gradient(92deg, var(--cyan-hi), #b8f3ea 55%, var(--gold)); font-size: 44px; }
+  .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; text-align: center; padding: 120px; background: radial-gradient(60% 40% at 50% 45%, rgba(77,179,187,.35), transparent 70%), #050c0f; }
+  .end svg { width: 200px; height: 200px; }
+  .end .name { font-size: 34px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .end h2 { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 112px; line-height: 1.02; text-wrap: balance; }
+  .end h2 em { font-style: italic; background: linear-gradient(92deg, var(--cyan-hi), #b8f3ea 45%, var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .end p { margin: 0; font-size: 38px; line-height: 1.35; color: #cfe0e3; text-wrap: balance; }
+  .end .url { white-space: nowrap; font-family: "Fira Code", monospace; font-size: 34px; color: var(--cyan-hi); border: 2px solid rgba(126,246,251,.35); border-radius: 999px; padding: 14px 30px; }
+  .still { position: absolute; inset: 0; background: radial-gradient(70% 45% at 85% 100%, rgba(77,179,187,.28), transparent 70%), #050c0f; }
+  .still img { position: absolute; left: 0; top: 0; width: 100%; height: auto; }
+  .still .shade { position: absolute; left: 0; right: 0; height: 160px; background: linear-gradient(180deg, rgba(5,12,15,0), #050c0f); }
+  .still .brand { top: auto; bottom: 70px; left: auto; right: 70px; }
+  .still h1 { position: absolute; left: 70px; right: 70px; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 92px; line-height: 1.02; text-wrap: balance; }
+  .still .play { position: absolute; left: 70px; bottom: 82px; display: flex; align-items: center; gap: 16px; font-size: 30px; font-weight: 700; color: var(--cyan-hi); letter-spacing: .06em; text-transform: uppercase; }
+  .still .play svg { width: 48px; height: 48px; }
+</style>
+</head>
+<body>
+<div id="c"></div>
+<script>
+const MARK = '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#12a3ad"/><stop offset="1" stop-color="#0d6e76"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#g)"/><path d="M19 33l9 9 18-20" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const px = (n) => n + "px";
+
+// d.size [w, h]; d.win { x, y, w, h } is the product window, d.at the caption's top.
+window.paint = (kind, d) => {
+  const c = document.getElementById("c");
+  c.style.width = px(d.size[0]);
+  c.style.height = px(d.size[1]);
+  let html = "";
+  if (kind === "bg") html = '<div class="bg"></div>';
+  if (kind === "chrome") {
+    html = '<div class="brand">' + MARK + "<div><b>QA-lab</b><small>" + esc(d.ui.window) + "</small></div></div>" +
+      (d.tag ? '<div class="tag" style="top:' + px(d.tagAt) + '"><i></i>' + esc(d.tag) + "</div>" : "");
+  }
+  if (kind === "window") {
+    const w = d.win;
+    html = '<div class="win" style="left:' + px(w.x) + ";top:" + px(w.y) + ";width:" + px(w.w) + ";height:" + px(w.h) + '"><div class="bar">' +
+      '<i class="dot" style="background:#ff5f57"></i><i class="dot" style="background:#febc2e"></i><i class="dot" style="background:#28c840"></i>' +
+      MARK + "<b>" + esc(d.ui.window) + "</b><span>" + esc(d.host) + "</span></div></div>";
+  }
+  if (kind === "cap") html = '<div class="cap' + (d.found ? " found" : "") + '" style="top:' + px(d.at) + '"><p>' + esc(d.text) + "</p></div>";
+  if (kind === "end") {
+    const [first, ...rest] = d.ui.end.split(". ");
+    html = '<div class="end">' + MARK + '<div class="name">QA-lab · ' + esc(d.ui.window) + "</div><h2>" + esc(first) + (rest.length ? ".<br><em>" + esc(rest.join(". ")) + "</em>" : "") +
+      "</h2><p>" + esc(d.ui.endNote) + '</p><span class="url">' + esc(d.url) + "</span></div>";
+  }
+  if (kind === "still") {
+    // d.ratio is the frame's height over its width: the frame keeps its whole width, the title sits under it.
+    const imgH = Math.round(d.size[0] * d.ratio);
+    html = '<div class="still"><img src="' + d.image + '"><div class="shade" style="top:' + px(imgH - 160) + '"></div><h1 style="top:' + px(imgH + 50) + '">' + esc(d.title) + '</h1><div class="play">' +
+      '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="none" stroke="#7ef6fb" stroke-width="3"/><path d="M19 15l14 9-14 9z" fill="#7ef6fb"/></svg>' + esc(d.play) + '</div><div class="brand">' + MARK + "<div><b>QA-lab</b><small>" + esc(d.ui.window) + "</small></div></div></div>";
+  }
+  c.innerHTML = html;
+};
+</script>
+</body>
+</html>
