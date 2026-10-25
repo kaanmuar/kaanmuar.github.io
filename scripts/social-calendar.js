@@ -17,8 +17,8 @@
    reviews wait in a backlog that takes the lane 3 and lane 4 slots while news and best practice have nothing.
    Only posts not yet sent anywhere and not before --from (default tomorrow, Bogotá) move; seasonal series keep
    their day. A post's hub date (captions.json date) follows its slot day, so it is live on the hub first.
-   --batch B plans that batch alone into the free slots, as the daily Live Reports job does for its new batch;
-   the batch's other reviews stay on the hub only, on the top post's day. */
+   --batch B plans that batch alone into the free slots, as the daily Live Reports job does for its new batch:
+   its top post in lane 1, its other reviews at the back of the backlog. */
 
 const fs = require("fs");
 const path = require("path");
