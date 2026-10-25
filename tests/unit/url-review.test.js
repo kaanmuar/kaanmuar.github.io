@@ -102,6 +102,46 @@ test.describe("scoring", () => {
     assert.equal(run({ ran: false, error: "timed out" }), undefined);
   });
 
+  test("images: oversized, old formats and lazy loading are scored from the browsed pages", () => {
+    const run = (start, pages) => {
+      const page = { url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect: core.analyzeHtml(HTML, STRONG_HEADERS, URL_) };
+      const findings = insights.analyze({ pages: [page], robotsText: "", browser: { ok: true, start: Object.assign({ finalPath: "/" }, start), pages: pages || [] } }).findings;
+      return (key) => findings.find((item) => item.key === key);
+    };
+    const img = (over) => Object.assign({ src: "https://cdn.example.com/a/hero.jpg", nw: 400, nh: 300, w: 400, h: 300, top: 0, fold: 800, lazy: false, bytes: 40960, mime: "image/webp", lcp: false }, over);
+    assert.equal(run({})("pf-img-size"), undefined);
+    const clean = run({ images: [img()] });
+    ["pf-img-size", "pf-img-format", "pf-img-lazy"].forEach((key) => assert.equal(clean(key).verdict, "pass", key));
+    const big = run({ images: [img({ nw: 2400, nh: 1800, bytes: 409600, mime: "image/jpeg" })] }, [{ path: "/about", images: [img({ nw: 2400, nh: 1800, bytes: 409600, mime: "image/jpeg" })] }]);
+    assert.deepEqual([big("pf-img-size").verdict, big("pf-img-size").severity], ["risk", "low"]);
+    assert.match(big("pf-img-size").evidence, /^hero\.jpg on \/ \(2400×1800 shown at 400×300, 400 KB, about 356 KB to save\)\./);
+    assert.deepEqual(big("pf-img-size").pages, ["/", "/about"]);
+    assert.match(big("pf-img-format").evidence, /^hero\.jpg on \/ \(JPEG, 400 KB\)\. WebP is about 30% smaller at the same quality, so about 120 KB could be saved\./);
+    const heavy = run({ images: [1, 2, 3].map((n) => img({ src: "https://cdn.example.com/" + n + ".png", nw: 4000, nh: 3000, bytes: 1048576, mime: "image/png" })) });
+    assert.equal(heavy("pf-img-size").severity, "medium");
+    assert.equal(heavy("pf-img-format").severity, "medium");
+    const lazyHero = run({ images: [img({ lcp: true, lazy: true })] });
+    assert.deepEqual([lazyHero("pf-img-lazy").verdict, lazyHero("pf-img-lazy").severity, lazyHero("pf-img-lazy").title], ["risk", "medium", "The main image waits for lazy loading"]);
+    const eager = run({ images: [1, 2, 3, 4].map((n) => img({ src: "https://cdn.example.com/" + n + ".webp", top: 900 + n * 300 })) });
+    assert.deepEqual([eager("pf-img-lazy").severity, eager("pf-img-lazy").title], ["low", "4 images below the first screen load straight away"]);
+    assert.match(run({ images: [img({ top: 1200 })] })("pf-img-lazy").evidence, /^1 image below the first screen loads straight away, within the limit of 3\./);
+    assert.match(run({ images: [img({ src: "https://cdn.example.com/Ben%20Smith.jpg", bytes: 40960, mime: "image/jpeg" })] })("pf-img-format").evidence, /^Ben Smith\.jpg on \//);
+  });
+
+  test("imageRows keeps only the images a check can use", () => {
+    const { imageRows } = require("../../functions/url-review-browser");
+    const log = new Map([["https://x.test/big.jpg", { bytes: 50000, mime: "image/jpeg" }], ["https://x.test/small.png", { bytes: 2000, mime: "image/png" }]]);
+    const rows = imageRows([
+      { src: "https://x.test/big.jpg", nw: 10, nh: 10, w: 10, h: 10, top: 0, fold: 800, lazy: false },
+      { src: "https://x.test/small.png", nw: 10, nh: 10, w: 10, h: 10, top: 0, fold: 800, lazy: false },
+      { src: "https://x.test/below.png", nw: 10, nh: 10, w: 10, h: 10, top: 1200, fold: 800, lazy: false },
+      { src: "https://x.test/hero.avif", nw: 10, nh: 10, w: 10, h: 10, top: 0, fold: 800, lazy: true }
+    ], log, "https://x.test/hero.avif");
+    assert.deepEqual(rows.map((row) => row.src.split("/").pop()), ["big.jpg", "below.png", "hero.avif"]);
+    assert.equal(rows[0].mime, "image/jpeg");
+    assert.equal(rows[2].lcp, true);
+  });
+
   test("X-Frame-Options ALLOW-FROM without frame-ancestors leaves the page open to framing", () => {
     const result = analyzeOne({ "content-type": "text/html", "x-frame-options": "ALLOW-FROM https://www.gather.town" });
     const found = result.findings.find((item) => item.key === "sec-frame");
