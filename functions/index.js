@@ -1304,11 +1304,10 @@ const BUG_TICKET = 320;
 const BOARD = { project: "PVT_kwHOALfwis4BmsxO", status: "PVTSSF_lAHOALfwis4BmsxOzhlUt04", backlog: "3f4ac4fe" };
 
 async function github(path, body, token) {
-  const res = await fetch("https://api.github.com" + path, {
-    method: "POST",
-    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "Content-Type": "application/json", "User-Agent": "qa-lab-url-review", "X-GitHub-Api-Version": "2022-11-28" },
-    body: JSON.stringify(body)
-  });
+  const res = await fetch("https://api.github.com" + path, Object.assign({
+    method: body === undefined ? "GET" : "POST",
+    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "Content-Type": "application/json", "User-Agent": "qa-lab-url-review", "X-GitHub-Api-Version": "2022-11-28" }
+  }, body === undefined ? {} : { body: JSON.stringify(body) }));
   const data = await res.json().catch(() => ({}));
   if (!res.ok || (data.errors && data.errors.length)) throw new Error("GitHub " + path + " answered " + res.status + ": " + JSON.stringify(data.errors || data.message || "").slice(0, 300));
   return data;
@@ -1337,13 +1336,14 @@ async function fileReviewFailureBugs() {
   const since = new Date(Date.now() - reviewFailures.RERUN_DAYS * 86400000).toISOString();
   const read = (name) => db.collection(name).where("at", ">=", since).get().then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
   const filed = db.collection("url_review_failure_bugs");
-  const [failed, reruns, known] = await Promise.all([read("url_review_failures"), read("url_review_reruns"), filed.select().get()]);
-  const bugs = reviewFailures.bugPlan(failed, reruns, known.docs.map((doc) => doc.id));
+  const [failed, reruns, known] = await Promise.all([read("url_review_failures"), read("url_review_reruns"), filed.get()]);
+  const rows = known.docs.map((doc) => Object.assign({ key: doc.id }, doc.data()));
+  const bugs = reviewFailures.bugPlan(failed, reruns, rows.map((row) => row.key));
   const opened = [];
   for (const bug of bugs) {
     const ref = filed.doc(bug.key);
     try {
-      await ref.create({ cause: bug.cause, fix: bug.fix, title: bug.title, runs: bug.runs, hosts: bug.hosts.slice(0, 40), firstAt: bug.firstAt, lastAt: bug.lastAt, openedAt: new Date().toISOString(), issue: null });
+      await ref.create({ cause: bug.cause, fix: bug.fix, title: bug.title, runs: bug.runs, hosts: bug.hosts.slice(0, 40), ids: bug.ids, firstAt: bug.firstAt, lastAt: bug.lastAt, openedAt: new Date().toISOString(), issue: null });
     } catch (error) {
       if (error.code !== 6) console.error("Failure bug for " + bug.key + " could not be claimed:", error);
       continue;
@@ -1357,7 +1357,30 @@ async function fileReviewFailureBugs() {
       await ref.delete();
     }
   }
-  console.log("URL review failure bugs: " + opened.length + " of " + bugs.length + " new cause classes opened" + (opened.length ? " (" + opened.join(", ") + ")" : "") + ".");
+  const commented = [];
+  for (const note of reviewFailures.bugFollowUps(failed, reruns, rows)) {
+    const ref = filed.doc(note.key);
+    const bug = rows.find((row) => row.key === note.key) || {};
+    try {
+      const issue = await github("/repos/" + BUG_REPO + "/issues/" + note.issue, undefined, token);
+      if (issue.state === "closed") {
+        await ref.update({ closedAt: issue.closed_at || new Date().toISOString() });
+        continue;
+      }
+      await github("/repos/" + BUG_REPO + "/issues/" + note.issue + "/comments", { body: note.body }, token);
+      await ref.update({
+        runs: admin.firestore.FieldValue.increment(note.runs),
+        hosts: Array.from(new Set((bug.hosts || []).concat(note.hosts))).slice(0, 40),
+        ids: admin.firestore.FieldValue.arrayUnion(...note.ids),
+        lastAt: note.lastAt,
+        commentedAt: new Date().toISOString()
+      });
+      commented.push("#" + note.issue + " +" + note.runs);
+    } catch (error) {
+      console.error("Failure bug #" + note.issue + " was not updated with " + note.runs + " new runs:", error);
+    }
+  }
+  console.log("URL review failure bugs: " + opened.length + " of " + bugs.length + " new cause classes opened" + (opened.length ? " (" + opened.join(", ") + ")" : "") + ", " + commented.length + " open bugs updated" + (commented.length ? " (" + commented.join(", ") + ")" : "") + ".");
   return null;
 }
 
