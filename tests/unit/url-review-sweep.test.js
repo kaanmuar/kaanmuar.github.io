@@ -176,6 +176,56 @@ test("publishable reviews say whether a person asked for them or the sweep found
   assert.deepEqual(picked.reports.map((r) => r.source), ["sweep", "request"]);
 });
 
+test("outreach prospects go before the lap, in list order, up to the nightly share (#1280)", () => {
+  const list = [{ host: "www.eafit.edu.co", cc: "CO", sector: "university" }, { host: "agencia.com.mx", cc: "mx", sector: "agency" }];
+  const day = "2026-10-26";
+  const first = sweep.nextOutreach({ lap: ["co"], pos: 0 }, list, day);
+  assert.deepEqual(first.target, { host: "www.eafit.edu.co", cc: "co", month: "", rank: 0, outreach: true, sector: "university" });
+  assert.deepEqual([first.state.outreachAt, first.state.pos], [1, 0], "the lap does not move");
+  const second = sweep.nextOutreach(first.state, list, day);
+  assert.equal(second.target.host, "agencia.com.mx");
+  assert.equal(sweep.nextOutreach(second.state, list, day), null, "the list is done");
+  assert.equal(sweep.nextOutreach(second.state, list.concat({ host: "startup.io", cc: "us" }), day).target.host, "startup.io", "appended hosts are picked up");
+
+  let state = sweep.tally({}, day, "skipped", first.target);
+  state = sweep.tally(state, day, "done", first.target);
+  state = sweep.tally(state, day, "failed", second.target);
+  state = sweep.tally(state, day, "done", { host: "a.co", cc: "co" });
+  assert.deepEqual([state.days[day].outreach, sweep.doneOn(state, day)], [2, 3], "skips do not use the share; outreach counts in the cap");
+  state.days[day].outreach = sweep.OUTREACH_PER_DAY;
+  assert.equal(sweep.nextOutreach(Object.assign(state, { outreachAt: 0 }), list, day), null, "tonight's share is used");
+  assert.ok(sweep.OUTREACH_PER_DAY < sweep.PER_DAY, "the lap keeps part of the cap");
+});
+
+test("an outreach review is named as such, survives a failed run, and never becomes a social post (#1280)", () => {
+  const target = { host: "www.eafit.edu.co", cc: "co", month: "", rank: 0, outreach: true, sector: "university" };
+  const value = sweep.intake(target);
+  assert.deepEqual([value.name, value.reason, value.reasonCode, value.lang], ["Outreach sweep", "Outreach sweep: a university site in CO", "sweep", "es"]);
+  assert.match(sweep.intake({ host: "a.co", cc: "co", month: "202609", rank: 3 }).reason, /^Country sweep: /);
+
+  const failures = require("../../functions/url-review-failures");
+  const record = failures.failureRecord(Object.assign({}, value, { kind: "failed", runId: "sweep-x", error: new Error("x"), lines: [], startedAt: 1, endedAt: 2, source: "sweep", sweep: target }));
+  assert.deepEqual(record.sweep, target);
+
+  const report = { host: "eafit.edu.co", status: "complete", limits: { pagesRead: 5 }, pages: [{ status: 200 }], insights: { score: { overall: 75, areas: {} }, findings: [] } };
+  const picked = publish.selectPublishable([{ createdAt: "2026-10-26T01:00:00Z", source: "sweep", sweep: target, report }], []);
+  assert.deepEqual(picked.reports.map((r) => r.source), ["outreach"]);
+
+  const row = { host: "eafit.edu.co", overall: 75, areas: {}, outreach: true, rivals: [{ host: "udea.edu.co", overall: 53, areas: {} }] };
+  assert.equal(publish.publicComparisons([row], [])[0].outreach, true);
+  assert.equal(publish.publicComparisons([Object.assign({}, row, { outreach: undefined })], [])[0].outreach, undefined);
+});
+
+test("the outreach script keeps hosts, countries and sectors only, and leaves out what it cannot sweep (#1280)", () => {
+  const { parseCsv, prospectOf } = require("../../scripts/sweep-outreach");
+  assert.deepEqual(parseCsv('host,cc,segment\n"www.eafit.edu.co",CO,university\r\nx,,\n'), [["host", "cc", "segment"], ["www.eafit.edu.co", "CO", "university"], ["x", "", ""]]);
+  assert.deepEqual(prospectOf({ url: "http://WWW.Agencia.com.mx/servicios", cc: "MX", segment: "Agency" }), { host: "www.agencia.com.mx", cc: "mx", sector: "agency" });
+  assert.deepEqual(prospectOf({ host: "betway.com", cc: "gb" }), { skip: "blocked" });
+  assert.deepEqual(prospectOf({ host: "uni.edu", cc: "United States" }), { skip: "no two-letter cc" });
+  assert.deepEqual(prospectOf({ host: "", cc: "co" }), { skip: "no host" });
+  assert.equal(prospectOf({ host: "a.co", cc: "co", email: "jane@a.co", contact_name: "Jane" }).email, undefined);
+});
+
 test("the ops table names every job once and flags failed, quiet and never-run jobs", () => {
   const names = ops.JOBS.map((row) => row.job);
   assert.equal(new Set(names).size, names.length);

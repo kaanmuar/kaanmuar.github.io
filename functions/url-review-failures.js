@@ -147,6 +147,7 @@ function failureRecord(input) {
     record.source = "sweep";
     record.cc = clip(target.cc, 2).toLowerCase();
     record.sweep = { host: clip(target.host, 120), cc: record.cc, month: clip(target.month, 10), rank: Number(target.rank) || 0 };
+    if (target.outreach) Object.assign(record.sweep, { outreach: true, sector: clip(target.sector, 40) });
   }
   return record;
 }
