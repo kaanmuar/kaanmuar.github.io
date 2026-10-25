@@ -249,7 +249,7 @@
   function summaryHtml(data) {
     const S = window.QAReviewSections;
     const cols = data.columns;
-    const head = "<tr><th scope=\"col\">" + esc(t("indicator")) + "</th>" + cols.map((col) => '<th scope="col" translate="no">' + esc(col.host) + "</th>").join("") + "</tr>";
+    const head = "<tr><th scope=\"col\">" + esc(t("indicator")) + "</th>" + cols.map((col) => '<th scope="col" translate="no">' + esc(col.host).replace(/\./g, ".<wbr>") + "</th>").join("") + "</tr>";
     const rows = data.summary.rows.map((row) => "<tr><th scope=\"row\">" + esc(label(row)) + (row.better === "low" && cc ? ' <small class="muted">' + esc(cc.t("lower")) + "</small>" : "") + "</th>" +
       row.values.map((raw, index) => {
         const lead = row.leads.length === 1 && row.leads[0] === index;
