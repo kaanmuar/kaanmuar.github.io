@@ -25,7 +25,31 @@ const TERMS_VERSION = "2026-10-24";
 const PREVIOUS_TERMS_VERSION = "2026-10-23";
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
+const EXTRA_FRAMEWORK_USD = 5;
+const FIXLIST_CENTS = 500;
+const CREDENTIALS_CENTS = 3900;
 
+// The full report: 19 USD for the first framework or tool, 5 USD for each one after it.
+function itemCents(index) {
+  return index <= 1 ? PRICE_PER_FRAMEWORK * 100 : EXTRA_FRAMEWORK_USD * 100;
+}
+
+function unitCents(count) {
+  const n = Math.max(0, Math.round(Number(count) || 0));
+  return n ? PRICE_PER_FRAMEWORK * 100 + EXTRA_FRAMEWORK_USD * 100 * (n - 1) : 0;
+}
+
+// No discount takes a price below half its list price.
+function floorCents(list) {
+  return Math.ceil(Math.max(0, Math.round(Number(list) || 0)) / 2);
+}
+
+// A fix list bought on a report counts toward that report's full unlock.
+function creditFor(run) {
+  return run && Array.isArray(run.addons) && run.addons.indexOf("fixlist") !== -1 ? FIXLIST_CENTS : 0;
+}
+
+// Case exports and signals bought one by one, before the flat report, keep their ladder.
 function discountForIndex(index) {
   if (index <= 1) return 0;
   if (index <= 3) return 10;
@@ -88,14 +112,15 @@ function priceMatches(usd) {
   PAGE_CHOICES.forEach((pages) => {
     DEPTH_CHOICES.forEach((depth) => scopes.push(PAGE_CENTS[pages] + DEPTH_CENTS[depth]));
   });
-  if (scopes.indexOf(cents) !== -1) return true;
+  if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS) return true;
+  const lists = [CREDENTIALS_CENTS];
   for (let count = 1; count <= FRAMEWORKS.length + SPECIALIST_TOOLS.length; count += 1) {
-    const base = scheduleCents(count);
-    const lists = [base].concat(count <= FRAMEWORKS.length ? scopes.map((extra) => base + extra) : []);
-    const floor = count * Math.round(PRICE_PER_FRAMEWORK * 50);
-    if (lists.some((list) => cents >= floor && cents <= list)) return true;
+    const base = unitCents(count);
+    lists.push(base, base - FIXLIST_CENTS);
+    if (count <= FRAMEWORKS.length) scopes.forEach((extra) => lists.push(base + extra));
   }
-  return false;
+  for (let count = 1; count <= Math.max(LAYERS.length, 8); count += 1) lists.push(scheduleCents(count));
+  return lists.some((list) => cents >= floorCents(list) && cents <= list);
 }
 const REASONS = [
   { id: "own", label: "I own this site and want a test plan" },
@@ -518,7 +543,7 @@ function priceFor(list, tools) {
   }
   const items = frameworks.concat(named);
   const count = items.length;
-  const cents = scheduleCents(count);
+  const cents = unitCents(count);
   return {
     frameworks,
     tools: named,
@@ -526,8 +551,26 @@ function priceFor(list, tools) {
     cents,
     usd: cents / 100,
     each: Math.round(cents / count) / 100,
-    discount: items.map((name, index) => ({ name, framework: name, n: index + 1, percent: discountForIndex(index + 1), usd: centsForIndex(index + 1) / 100 }))
+    discount: items.map((name, index) => ({ name, framework: name, n: index + 1, percent: 0, usd: itemCents(index + 1) / 100 }))
   };
+}
+
+// The full unlock of one report, less a fix list already bought on it (creditCents comes from the run, never the asker).
+function priceForReport(list, tools, creditCents) {
+  const priced = priceFor(list, tools);
+  const credit = Math.round(Number(creditCents) || 0);
+  if (!credit) return priced;
+  if (credit !== FIXLIST_CENTS) {
+    const error = new Error("The credit on this charge is not a QA-lab credit. No charge was made.");
+    error.status = 400;
+    throw error;
+  }
+  const cents = priced.cents - credit;
+  return Object.assign({}, priced, { cents, usd: cents / 100, creditUsd: credit / 100 });
+}
+
+function priceForFixList() {
+  return { usd: FIXLIST_CENTS / 100, cents: FIXLIST_CENTS, count: 1, frameworks: [], layers: [] };
 }
 
 function normalizeLayers(list) {
@@ -607,7 +650,7 @@ function priceForRun(options) {
     throw error;
   }
   const items = frameworks.concat(billing === "scope" ? [] : tools);
-  const frameworkCents = billing === "scope" ? 0 : scheduleCents(items.length);
+  const frameworkCents = billing === "scope" ? 0 : unitCents(items.length);
   const cents = frameworkCents + scope.cents;
   if (!cents) {
     const error = new Error("This review is included. No charge was made.");
@@ -622,7 +665,7 @@ function priceForRun(options) {
     depth: scope.depth,
     count: items.length,
     frameworkUsd: frameworkCents / 100,
-    discount: items.map((name, index) => ({ name, n: index + 1, percent: discountForIndex(index + 1), usd: centsForIndex(index + 1) / 100 })),
+    discount: items.map((name, index) => ({ name, n: index + 1, percent: 0, usd: itemCents(index + 1) / 100 })),
     scopeUsd: scope.usd,
     pageUsd: scope.pageUsd,
     depthUsd: scope.depthUsd,
@@ -657,8 +700,7 @@ function toolsForCharge(applicable, asked) {
 }
 
 function priceForCredentials() {
-  const cents = scheduleCents(2);
-  return { usd: cents / 100, cents, count: 2, frameworks: [], layers: [] };
+  return { usd: CREDENTIALS_CENTS / 100, cents: CREDENTIALS_CENTS, count: 1, frameworks: [], layers: [] };
 }
 
 function priceForAlerts(count) {
@@ -674,15 +716,17 @@ function priceForAlerts(count) {
 
 function chargedUsd(options) {
   const purpose = options && options.purpose;
-  const priced = purpose === "cases"
-    ? priceForLayers(options.layers)
-    : purpose === "credentials"
-      ? priceForCredentials()
-      : purpose === "alerts"
-        ? priceForAlerts(options.alertCount)
-        : purpose === "new-run"
-          ? priceForRun(options)
-          : priceFor(options && options.frameworks, options && options.tools);
+  const priced = purpose === "fixlist"
+    ? priceForFixList()
+    : purpose === "cases"
+      ? priceForLayers(options.layers)
+      : purpose === "credentials"
+        ? priceForCredentials()
+        : purpose === "alerts"
+          ? priceForAlerts(options.alertCount)
+          : purpose === "new-run"
+            ? priceForRun(options)
+            : priceForReport(options && options.frameworks, options && options.tools, options && options.creditCents);
   const usd = Number(options && options.priceUsd);
   const list = options && options.listUsd != null ? Number(options.listUsd) : usd;
   if (Math.round(list * 100) !== priced.cents) {
@@ -696,7 +740,7 @@ function chargedUsd(options) {
   }
   const cents = Math.round(usd * 100);
   if (cents === priced.cents) return priced;
-  const floor = Math.min(priced.cents, (Number(priced.count) || 0) * Math.round(PRICE_PER_FRAMEWORK * 50));
+  const floor = purpose === "fixlist" ? priced.cents : floorCents(priced.cents);
   if (!(cents < priced.cents && cents >= floor)) {
     const error = new Error("The discount on this charge is out of range. No charge was made.");
     error.status = 400;
@@ -3464,6 +3508,7 @@ function paymentProvider(value) {
 
 function productName(purpose, frameworks, scope) {
   if (purpose === "credentials") return "QA-lab signed-in run";
+  if (purpose === "fixlist") return "QA-lab URL Review fix list";
   if (purpose === "alerts") return "QA-lab public signals · " + ((scope && scope.count) || "");
   const fw = purpose === "cases" ? normalizeLayers(frameworks) : normalizeFrameworks(frameworks);
   const toolNames = purpose === "cases" ? [] : normalizeTools(scope && scope.tools);
@@ -3473,7 +3518,7 @@ function productName(purpose, frameworks, scope) {
     names = withTools.length <= 90 ? withTools : fw.length + " frameworks, " + toolNames.length + " tools";
   }
   const head = purpose === "report"
-    ? "Open a QA-lab URL Review report again"
+    ? "QA-lab URL Review full report"
     : purpose === "cases"
       ? "QA-lab test case export"
       : "QA-lab URL Review run";
@@ -3638,7 +3683,7 @@ async function startMercadoPago(options, purpose) {
 
 async function startCheckout(options) {
   const provider = paymentProvider(options && options.provider);
-  const purpose = ["report", "cases", "credentials", "alerts", "new-run"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
+  const purpose = ["report", "fixlist", "cases", "credentials", "alerts", "new-run"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
   if (provider !== "paypal") {
     const error = new Error("PayPal is the payment method for this review. No charge was made.");
     error.status = 400;
@@ -4089,9 +4134,17 @@ module.exports = {
   TERMS_VERSION,
   PRICE_USD,
   PRICE_PER_FRAMEWORK,
+  EXTRA_FRAMEWORK_USD,
+  FIXLIST_CENTS,
   centsForIndex,
   scheduleCents,
+  itemCents,
+  unitCents,
+  floorCents,
+  creditFor,
   priceFor,
+  priceForReport,
+  priceForFixList,
   priceForLayers,
   priceForScope,
   priceForRun,

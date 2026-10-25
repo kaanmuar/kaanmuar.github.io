@@ -23,6 +23,7 @@
       read_one: "{n} page analyzed", read_other: "{n} pages analyzed", readOf_one: "{n} page analyzed of {found} found", readOf_other: "{n} pages analyzed of {found} found",
       headless: "checked in a headless browser", risks: "Biggest risks", quick: "Quick wins", solid: "Already solid", noneFound: "None found.",
       noSolid: "No area scores B or better yet.", printSummary: "Print this summary", expandAll: "Expand all", collapseAll: "Collapse all",
+      offerTitle: "Read the rest", offerFix: "Fix list · {usd} USD", offerFixBody: "Scores, every finding, the top 10 fixes in plain language, and a PDF of the summary.", offerFull: "Full report · {usd} USD", offerFullBody: "19 USD, plus 5 USD for each extra framework or tool. Every case and layer, the signals, the exports, and the scripts.", offerCredit: "The 5 USD fix list is already taken off.", offerFixOpen: "Your fix list is open: scores and findings read in full. The cases stay blurred until the full report is paid.",
       errors: {
         pickTwo: "Pick at least two of your reviews to compare.", tooMany: "Compare up to {max} reviews at a time.",
         reviewsNotSaved: "One of those reviews is not saved under this account.", reviewNotSaved: "That review is not saved under this account.",
@@ -51,6 +52,7 @@
       read_one: "{n} página analizada", read_other: "{n} páginas analizadas", readOf_one: "{n} página analizada de {found} encontradas", readOf_other: "{n} páginas analizadas de {found} encontradas",
       headless: "revisado en un navegador sin interfaz", risks: "Mayores riesgos", quick: "Mejoras rápidas", solid: "Ya sólido", noneFound: "No se encontró ninguno.",
       noSolid: "Ninguna área tiene todavía B o más.", printSummary: "Imprimir este resumen", expandAll: "Desplegar todo", collapseAll: "Plegar todo",
+      offerTitle: "Leer el resto", offerFix: "Lista de arreglos · {usd} USD", offerFixBody: "Puntuaciones, todos los hallazgos, los 10 primeros arreglos en palabras claras y un PDF del resumen.", offerFull: "Informe completo · {usd} USD", offerFullBody: "19 USD y 5 USD por cada framework o herramienta extra. Todos los casos y capas, las señales, las exportaciones y los scripts.", offerCredit: "Los 5 USD de la lista de arreglos ya están descontados.", offerFixOpen: "Tu lista de arreglos está abierta: puntuaciones y hallazgos se leen completos. Los casos siguen borrosos hasta pagar el informe completo.",
       errors: {
         pickTwo: "Elige al menos dos de tus revisiones para compararlas.", tooMany: "Compara hasta {max} revisiones a la vez.",
         reviewsNotSaved: "Una de esas revisiones no está guardada en esta cuenta.", reviewNotSaved: "Esa revisión no está guardada en esta cuenta.",
@@ -79,6 +81,7 @@
       read_one: "{n} página analisada", read_other: "{n} páginas analisadas", readOf_one: "{n} página analisada de {found} encontradas", readOf_other: "{n} páginas analisadas de {found} encontradas",
       headless: "verificado num navegador sem interface", risks: "Maiores riscos", quick: "Ganhos rápidos", solid: "Já sólido", noneFound: "Nenhum encontrado.",
       noSolid: "Nenhuma área tem ainda B ou melhor.", printSummary: "Imprimir este resumo", expandAll: "Expandir tudo", collapseAll: "Recolher tudo",
+      offerTitle: "Ler o resto", offerFix: "Lista de correções · {usd} USD", offerFixBody: "Pontuações, todas as constatações, as 10 primeiras correções em palavras simples e um PDF do resumo.", offerFull: "Relatório completo · {usd} USD", offerFullBody: "19 USD e mais 5 USD por framework ou ferramenta extra. Todos os casos e camadas, os sinais, as exportações e os scripts.", offerCredit: "Os 5 USD da lista de correções já estão descontados.", offerFixOpen: "Sua lista de correções está aberta: pontuações e constatações aparecem completas. Os casos seguem borrados até o relatório completo ser pago.",
       errors: {
         pickTwo: "Escolha pelo menos duas das suas revisões para comparar.", tooMany: "Compare até {max} revisões de cada vez.",
         reviewsNotSaved: "Uma dessas revisões não está guardada nesta conta.", reviewNotSaved: "Essa revisão não está guardada nesta conta.",
@@ -107,6 +110,7 @@
       read_one: "{n} Seite analysiert", read_other: "{n} Seiten analysiert", readOf_one: "{n} Seite von {found} gefundenen analysiert", readOf_other: "{n} Seiten von {found} gefundenen analysiert",
       headless: "in einem Headless-Browser geprüft", risks: "Größte Risiken", quick: "Schnelle Erfolge", solid: "Bereits solide", noneFound: "Keine gefunden.",
       noSolid: "Noch kein Bereich erreicht B oder besser.", printSummary: "Diese Zusammenfassung drucken", expandAll: "Alle aufklappen", collapseAll: "Alle zuklappen",
+      offerTitle: "Den Rest lesen", offerFix: "Fix-Liste · {usd} USD", offerFixBody: "Bewertungen, alle Befunde, die 10 wichtigsten Korrekturen in klaren Worten und ein PDF der Zusammenfassung.", offerFull: "Vollständiger Bericht · {usd} USD", offerFullBody: "19 USD und 5 USD für jedes weitere Framework oder Werkzeug. Alle Testfälle und Ebenen, die Signale, die Exporte und die Skripte.", offerCredit: "Die 5 USD der Fix-Liste sind bereits abgezogen.", offerFixOpen: "Ihre Fix-Liste ist offen: Bewertungen und Befunde sind vollständig lesbar. Die Testfälle bleiben unscharf, bis der vollständige Bericht bezahlt ist.",
       errors: {
         pickTwo: "Wählen Sie mindestens zwei Ihrer Prüfungen zum Vergleichen.", tooMany: "Vergleichen Sie bis zu {max} Prüfungen auf einmal.",
         reviewsNotSaved: "Eine dieser Prüfungen ist nicht unter diesem Konto gespeichert.", reviewNotSaved: "Diese Prüfung ist nicht unter diesem Konto gespeichert.",
@@ -135,6 +139,7 @@
       read_one: "{n} page analysée", read_other: "{n} pages analysées", readOf_one: "{n} page analysée sur {found} trouvées", readOf_other: "{n} pages analysées sur {found} trouvées",
       headless: "contrôlé dans un navigateur sans interface", risks: "Plus grands risques", quick: "Gains rapides", solid: "Déjà solide", noneFound: "Aucun trouvé.",
       noSolid: "Aucun domaine n’obtient encore B ou mieux.", printSummary: "Imprimer ce résumé", expandAll: "Tout déplier", collapseAll: "Tout replier",
+      offerTitle: "Lire la suite", offerFix: "Liste de corrections · {usd} USD", offerFixBody: "Les scores, tous les constats, les 10 premières corrections en mots simples et un PDF du résumé.", offerFull: "Rapport complet · {usd} USD", offerFullBody: "19 USD, puis 5 USD par framework ou outil en plus. Tous les cas et toutes les couches, les signaux, les exports et les scripts.", offerCredit: "Les 5 USD de la liste de corrections sont déjà déduits.", offerFixOpen: "Votre liste de corrections est ouverte : les scores et les constats se lisent en entier. Les cas restent flous jusqu’au paiement du rapport complet.",
       errors: {
         pickTwo: "Choisissez au moins deux de vos analyses à comparer.", tooMany: "Comparez jusqu’à {max} analyses à la fois.",
         reviewsNotSaved: "L’une de ces analyses n’est pas enregistrée sous ce compte.", reviewNotSaved: "Cette analyse n’est pas enregistrée sous ce compte.",
@@ -163,6 +168,7 @@
       read_one: "{n} pagina analizzata", read_other: "{n} pagine analizzate", readOf_one: "{n} pagina analizzata su {found} trovate", readOf_other: "{n} pagine analizzate su {found} trovate",
       headless: "controllato in un browser headless", risks: "Rischi maggiori", quick: "Interventi rapidi", solid: "Già solido", noneFound: "Nessuno trovato.",
       noSolid: "Nessuna area ha ancora B o più.", printSummary: "Stampa questo riepilogo", expandAll: "Espandi tutto", collapseAll: "Comprimi tutto",
+      offerTitle: "Leggi il resto", offerFix: "Lista delle correzioni · {usd} USD", offerFixBody: "Punteggi, tutti i rilievi, le prime 10 correzioni in parole semplici e un PDF del riepilogo.", offerFull: "Report completo · {usd} USD", offerFullBody: "19 USD più 5 USD per ogni framework o strumento in più. Tutti i casi e i livelli, i segnali, gli export e gli script.", offerCredit: "I 5 USD della lista delle correzioni sono già scalati.", offerFixOpen: "La tua lista delle correzioni è aperta: punteggi e rilievi si leggono per intero. I casi restano sfocati finché il report completo non è pagato.",
       errors: {
         pickTwo: "Scegli almeno due delle tue revisioni da confrontare.", tooMany: "Confronta fino a {max} revisioni alla volta.",
         reviewsNotSaved: "Una di quelle revisioni non è salvata in questo account.", reviewNotSaved: "Quella revisione non è salvata in questo account.",

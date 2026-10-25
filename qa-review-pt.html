@@ -897,6 +897,15 @@
         .service-facts dl { display: grid; gap: 14px; margin: 0; padding: 4px 18px 18px; }
         .service-facts dt { font-weight: 700; }
         .service-facts dd { margin: 4px 0 0; color: var(--muted); }
+        .unlock-offer { margin: 14px 0; }
+        .unlock-offer[hidden] { display: none; }
+        .offer-note { margin: 0 0 10px; color: var(--muted); }
+        .offer-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+        .offer { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; color: var(--text); text-decoration: none; background: var(--card); }
+        .offer b { font-size: 1.05rem; }
+        .offer span { color: var(--muted); font-size: 14px; line-height: 1.45; }
+        .offer:hover, .offer:focus-visible { border-color: var(--cyan); box-shadow: inset 0 0 0 1px var(--cyan); }
+        .offer-full { border-color: var(--cyan); }
         label, legend { display: block; font-size: 12px; font-weight: 600; margin: 12px 0 6px; }
         input[type="text"], input[type="email"], textarea { width: 100%; border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 8px; padding: 10px 12px; font: inherit; }
         textarea { min-height: 72px; resize: vertical; }
@@ -1397,13 +1406,32 @@
             <dt>How far it goes</dt>
             <dd>Your first review is included: up to twenty pages, two links deep. Want a wider or deeper look? You see the price before anything starts.</dd>
             <dt>Where cases go</dt>
-            <dd>Automation scripts as a ZIP, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. Every format carries the scripts for your frameworks. Case export is priced on the page.</dd>
+            <dd>Automation scripts as a ZIP, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. Every format carries the scripts for your frameworks. The full report opens the case export.</dd>
             <dt>Language</dt>
             <dd>The page is written in English and can be read in Spanish, Portuguese, German, French, and Italian. The news strip follows the country of the connection and the language of the page.</dd>
             <dt>Rules</dt>
             <dd>A review analyzes a public page, tells you what it found, and suggests test cases your team can use. The disclaimers explain how that works, including what applies in the country of the site you are reviewing.</dd>
             <dt>Elsewhere</dt>
             <dd>Films and notes on <a href="https://www.youtube.com/@qalaburlreview" rel="me noopener" target="_blank">YouTube</a>, <a href="https://www.tiktok.com/@qalaburlreview" rel="me noopener" target="_blank">TikTok</a>, <a href="https://www.facebook.com/qalaburlreview" rel="me noopener" target="_blank">Facebook</a>, <a href="https://x.com/qalaburlreview" rel="me noopener" target="_blank">X</a>, <a href="https://www.linkedin.com/company/qalab-url-review" rel="me noopener" target="_blank">LinkedIn</a>, <a href="https://dev.to/qalaburlreview" rel="me noopener" target="_blank">DEV</a>, and <a href="https://www.reddit.com/user/qalaburlreview/" rel="me noopener" target="_blank">Reddit</a>.</dd>
+        </dl>
+    </details>
+    <details class="card service-facts" id="prices" lang="pt" translate="no">
+        <summary><h2>Preços</h2></summary>
+        <dl>
+            <dt>Primeira revisão</dt>
+            <dd>Grátis: até 20 páginas, 2 níveis de links.</dd>
+            <dt>Lista de correções · 5 USD</dt>
+            <dd>Pontuações, todas as constatações e as 10 primeiras correções em palavras simples, com um PDF do resumo.</dd>
+            <dt>Relatório completo · 19 USD</dt>
+            <dd>Mais 5 USD por framework ou ferramenta extra. Todos os casos e camadas, os sinais, as exportações e os scripts. Se você já comprou a lista de correções, ela é descontada.</dd>
+            <dt>Revisão mais ampla ou mais profunda</dt>
+            <dd>De 4 a 25 USD a mais, mostrados antes de a revisão começar.</dd>
+            <dt>Estudantes e recém-formados</dt>
+            <dd>Código STUDENT: 50% de desconto no relatório completo, uma vez por conta.</dd>
+            <dt>Passes de 30 dias</dt>
+            <dd>29, 79 ou 189 USD. Em breve; ainda não estão à venda.</dd>
+            <dt>Revisão com login</dt>
+            <dd>39 USD.</dd>
         </dl>
     </details>
     <section id="intake" class="card">
@@ -1613,6 +1641,7 @@
         <p class="lede" id="report-statement"></p>
         <p class="notranslate" id="paid-line">This report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).</p>
         <div class="kpis" id="kpis"></div>
+        <div class="unlock-offer no-print" id="unlock-offer" hidden></div>
         <h2 data-insight data-report-copy="execTitle">One-page summary</h2>
         <article class="card" data-insight id="exec"></article>
         <h2 data-insight data-report-copy="compareTitle">Next to a competitor</h2>
@@ -1703,7 +1732,7 @@
         </div>
         <section id="tool-block" hidden>
             <h2>Tools that apply</h2>
-            <p class="muted" id="tool-note">Checked tools join the frameworks on the payment schedule. The amount is shown when you pay. axe-core already ran in the review's headless browser. Checking it adds its checks to your scripts. The other tools are not launched.</p>
+            <p class="muted" id="tool-note">Each checked tool adds 5 USD to the full report, like an extra framework. axe-core already ran in the review's headless browser. Checking it adds its checks to your scripts. The other tools are not launched.</p>
             <ol class="tool-list" id="tools"></ol>
         </section>
         <section class="alarm" id="alarm" hidden>
@@ -1765,7 +1794,7 @@
         <img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36">
         <p class="eyebrow">Test cases</p>
         <h2 id="case-export-title">Take this list with you</h2>
-        <p id="case-export-copy">These cases can travel as a file for Jira, Xray, Zephyr, TestRail, Azure Test Plans, Mantis, Excel, JSON, or text, and they can be printed. Each case carries a starting script for the frameworks you chose, and a ZIP holds one suite per framework. Choose the kinds you want in the file. The amount is shown when you pay, and only then.</p>
+        <p id="case-export-copy">These cases can travel as a file for Jira, Xray, Zephyr, TestRail, Azure Test Plans, Mantis, Excel, JSON, or text, and they can be printed. Each case carries a starting script for the frameworks you chose, and a ZIP holds one suite per framework. Choose the kinds you want in the file. The full report opens every kind.</p>
         <label class="select-all"><input type="checkbox" id="case-select-all" checked> Select all</label>
         <p id="case-export-count"></p>
         <div id="case-layers" class="layer-pick"></div>
@@ -1796,7 +1825,8 @@
         <h2 id="pay-title">This report was already shown</h2>
         <div id="pay-deal" hidden></div>
         <p class="pay-price" id="pay-price">—</p>
-        <p class="muted" id="pay-detail">The amount for seeing, downloading, or printing this report again, on the account that ran it, is shown here.</p>
+        <p class="muted" id="pay-detail">The price of the full report of this review is shown here.</p>
+        <div class="unlock-offer" id="pay-options" hidden></div>
         <p class="status" id="pay-note" role="status"></p>
         <div class="actions">
             <button class="btn btn-ghost" id="pay-close" type="button">Close</button>
@@ -1828,8 +1858,8 @@
 <script src="js/qa-review-ask.js?v=20261024c" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261103b" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261105a" defer></script>
-<script src="js/qa-review.js?v=20261105c" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261105b" defer></script>
+<script src="js/qa-review.js?v=20261105d" defer></script>
 <script src="js/qa-review-multi.js?v=20261105a" defer></script>
 <script src="js/url-suggest.js?v=20261024b" defer></script>
 <script src="js/qa-review-live.js?v=20261029e" defer></script>

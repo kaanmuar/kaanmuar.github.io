@@ -2,7 +2,7 @@
 """Build qa-review-{es,pt,de,fr,it}.html from qa-review.html, and qa-review-pay-{es,pt,de,fr,it}.html
 from qa-review-pay.html with the copy in js/qa-review-pay-copy.js.
 
-The head, the structured data, the consent screen, the stage headline, the hero stats, the noscript
+The head, the structured data, the consent screen, the stage headline, the hero stats, the price list, the noscript
 Live Reports text, and the stored language are translated by hand (review_langs_copy.py),
 and the Ask the report panel copy comes from js/qa-review-ask.js;
 the rest of the body stays English and is translated in the browser. The noscript text on
@@ -16,7 +16,7 @@ import pathlib
 import re
 import sys
 
-from review_langs_copy import AND, COMPARE_NOTE, COPY, DATE, FACTS, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE, SKIP
+from review_langs_copy import AND, COMPARE_NOTE, COPY, DATE, FACTS, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, PRICES, SAMPLE, SKIP
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BASE = "https://carlosandmunoz.com/"
@@ -225,6 +225,15 @@ def facts(s, code):
     return retag(s, '<a class="live-jump" href="#live-reports">', "</a>", FACTS[code][-1], code)
 
 
+def prices(s, code):
+    title, rows = PRICES[code]
+    pad = " " * 12
+    body = (f"\n        <summary><h2>{title}</h2></summary>\n        <dl>\n"
+            + "".join(f"{pad}<dt>{term}</dt>\n{pad}<dd>{line}</dd>\n" for term, line in rows)
+            + "        </dl>\n    ")
+    return retag(s, '<details class="card service-facts" id="prices">', "</details>", body, code)
+
+
 def build(source, code, data):
     t = LANGS[code]
     page = f"qa-review-{code}.html"
@@ -277,6 +286,7 @@ def build(source, code, data):
     s = facts(s, code)
     s = ask_panel(s, code)
     s = retag(s, '<p class="meta-line" id="compare-note">', "</p>", COMPARE_NOTE[code], code)
+    s = prices(s, code)
     s = with_live(s, code, data)
     s = swap(s, '<script src="js/site-i18n.js', f'<script>try{{localStorage.setItem("cv-preferred-lang","{code}")}}catch(e){{}}</script>\n<script src="js/site-i18n.js')
     return page, s

@@ -80,6 +80,12 @@ function readStore() {
   }
 }
 
+// The production run doc keeps `addons`; here they are the paid-addon rows written on confirm.
+function addonsOf(reportId) {
+  const found = readStore().filter((row) => row && row.status === "paid-addon" && row.reportId === reportId && row.paid === true).map((row) => row.purpose);
+  return found.filter((purpose, index) => found.indexOf(purpose) === index);
+}
+
 function readAlerts() {
   try {
     return fs.readFileSync(ALERT_FILE, "utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line));
@@ -379,7 +385,7 @@ const server = http.createServer(async (req, res) => {
     let passBody = {};
     try { passBody = await readBody(req); } catch (error) { passBody = {}; }
     const email = String(passBody.email || "").trim().toLowerCase();
-    const plan = offers.planById(passBody.plan || "glance");
+    const plan = offers.planById(passBody.plan || "freelancer");
     if (!email || email.indexOf("@") === -1) {
       sendJson(res, 400, { error: "That address is missing." }, origin, deviceHint);
       return;
@@ -516,24 +522,28 @@ const server = http.createServer(async (req, res) => {
       }, origin, deviceHint);
       return;
     }
+    const addons = addonsOf(found.id);
     if (!access.ok) {
       let priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] };
-      try { priced = core.priceFor(found.frameworks || []); } catch (error) { priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] }; }
-      sendJson(res, 402, {
+      try { priced = core.priceForReport(found.frameworks || [], [], core.creditFor({ addons })); } catch (error) { priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] }; }
+      sendJson(res, 402, Object.assign({
         paymentRequired: true,
         priceUsd: priced.usd,
+        creditUsd: priced.creditUsd || 0,
         frameworks: priced.frameworks,
         id: found.id,
         host: found.report.host,
-        status: found.status
-      }, origin, found.deviceId || deviceHint);
+        status: found.status,
+        addons,
+        preview: core.previewReport(found.report)
+      }, addons.indexOf("fixlist") !== -1 ? { insights: found.report.insights || null } : {}), origin, found.deviceId || deviceHint);
       return;
     }
     const other = openBody.vs ? readStore().reverse().find((row) => row.id === openBody.vs && row.id !== found.id) : null;
     const otherOpen = other && (await auth.reportAccess(signIns, proof, other, other.free === true)).ok;
     const pair = other ? compare.savedComparison([found, other], found.email, [found.id, other.id], (row) => row === found || otherOpen) : null;
     const versus = pair && pair.list && pair.list[0] && pair.list[0].compare;
-    sendJson(res, 200, Object.assign({ report: found.report, frameworks: found.frameworks, paid: true }, versus ? { versus } : {}), origin, found.deviceId || deviceHint);
+    sendJson(res, 200, Object.assign({ report: found.report, frameworks: found.frameworks, paid: true, addons }, versus ? { versus } : {}), origin, found.deviceId || deviceHint);
     return;
   }
   if (req.method === "POST" && (url.pathname === "/review/ask" || url.pathname === "/review/ask/phrase")) {
@@ -586,7 +596,9 @@ const server = http.createServer(async (req, res) => {
       const layerQuery = url.searchParams.get("layers");
       const pageQuery = url.searchParams.get("pages");
       const purposeQuery = url.searchParams.get("purpose");
-      const priced = purposeQuery === "credentials"
+      let priced = purposeQuery === "fixlist"
+        ? core.priceForFixList()
+        : purposeQuery === "credentials"
         ? core.priceForCredentials()
         : purposeQuery === "alerts"
           ? core.priceForAlerts(url.searchParams.get("count"))
@@ -601,6 +613,9 @@ const server = http.createServer(async (req, res) => {
             billing: url.searchParams.get("billing") || ""
           })
           : core.priceFor(url.searchParams.get("frameworks") || "", url.searchParams.get("tools") || "");
+      if (purposeQuery === "report" && url.searchParams.get("reportId")) {
+        priced = core.priceForReport(priced.frameworks, priced.tools, core.creditFor({ addons: addonsOf(url.searchParams.get("reportId")) }));
+      }
       const quote = await core.copQuote(priced.usd);
       sendJson(res, 200, {
         usd: priced.usd,
@@ -617,7 +632,8 @@ const server = http.createServer(async (req, res) => {
         scopeUsd: priced.scopeUsd,
         pageUsd: priced.pageUsd,
         depthUsd: priced.depthUsd,
-        perFramework: priced.each
+        perFramework: priced.each,
+        creditUsd: priced.creditUsd || 0
       }, origin, deviceHint);
     } catch (error) {
       sendJson(res, error.status || 502, { error: error.message || "The peso price could not be loaded." }, origin, deviceHint);
@@ -628,7 +644,7 @@ const server = http.createServer(async (req, res) => {
     let payBody = {};
     try { payBody = await readBody(req); } catch (error) { payBody = {}; }
     const choice = core.paymentChoice(payBody.provider || "paypal");
-    const purpose = ["report", "cases", "credentials", "alerts"].indexOf(payBody.purpose) === -1 ? "new-run" : payBody.purpose;
+    const purpose = ["report", "fixlist", "cases", "credentials", "alerts"].indexOf(payBody.purpose) === -1 ? "new-run" : payBody.purpose;
     const reportId = String(payBody.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     const deviceId = deviceFrom(req, payBody);
     const reference = crypto.randomBytes(8).toString("hex");
@@ -638,20 +654,27 @@ const server = http.createServer(async (req, res) => {
     }
     const urls = payReturn(purpose, choice, reference, payBody.lang);
     try {
-      const stored = purpose === "report" ? (readStore().find((item) => item && item.id === reportId && item.report) || {}) : {};
-      const access = purpose === "report" ? await auth.reportAccess(signIns, payBody, stored, false) : { ok: true };
+      const stored = purpose === "report" || purpose === "fixlist" ? (readStore().find((item) => item && item.id === reportId && item.report) || {}) : {};
+      const access = purpose === "report" || purpose === "fixlist" ? await auth.reportAccess(signIns, payBody, stored, false) : { ok: true };
       if (!access.ok && access.status !== 402) {
         sendJson(res, access.status, { error: access.locked ? "Only the account that ran this report can unlock it. Sign in with that account. No charge was made." : access.error, signIn: !!access.signIn }, origin, deviceId);
         return;
       }
-      const priced = purpose === "cases"
+      if (purpose === "fixlist" && !reportId) {
+        sendJson(res, 400, { error: "A fix list belongs to one report. Open the report first. No charge was made." }, origin, deviceId);
+        return;
+      }
+      const creditCents = purpose === "report" ? core.creditFor({ addons: addonsOf(reportId) }) : 0;
+      const priced = purpose === "fixlist"
+        ? core.priceForFixList()
+        : purpose === "cases"
         ? core.priceForLayers(payBody.layers)
         : purpose === "credentials"
           ? core.priceForCredentials()
           : purpose === "alerts"
             ? core.priceForAlerts(payBody.alertCount)
             : purpose === "report"
-              ? core.priceFor(stored.frameworks || [], core.toolsForCharge((stored.report && stored.report.tools) || [], payBody.tools))
+              ? core.priceForReport(stored.frameworks || [], core.toolsForCharge((stored.report && stored.report.tools) || [], payBody.tools), creditCents)
             : core.priceForRun({
             frameworks: payBody.frameworks,
             tools: payBody.tools,
@@ -673,6 +696,7 @@ const server = http.createServer(async (req, res) => {
         billing: priced.billing,
         alertCount: priced.alertCount,
         priceUsd: priced.usd,
+        creditCents,
         successUrl: urls.successUrl,
         cancelUrl: urls.cancelUrl,
         pendingUrl: urls.pendingUrl
@@ -730,10 +754,10 @@ const server = http.createServer(async (req, res) => {
       }
       const prior = readStore().find((row) => row && row.sessionId === result.sessionId && row.paid === true);
       if (prior) {
-        sendJson(res, 200, { paid: true, purpose: prior.purpose === "report" ? "report" : "new-run" }, origin, deviceId);
+        sendJson(res, 200, { paid: true, purpose: offers.paidPurpose(prior.purpose) }, origin, deviceId);
         return;
       }
-      let purpose = result.purpose === "report" ? "report" : "new-run";
+      let purpose = offers.paidPurpose(result.purpose);
       let reportId = String(result.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
       let payer = result.deviceId || deviceId;
       let frameworks = result.frameworks || [];
@@ -746,7 +770,7 @@ const server = http.createServer(async (req, res) => {
           sendJson(res, 402, { paid: false, error: "This payment does not match an open checkout." }, origin, deviceId);
           return;
         }
-        purpose = open.purpose === "report" ? "report" : "new-run";
+        purpose = offers.paidPurpose(open.purpose);
         reportId = String(open.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
         payer = open.deviceId || deviceId;
         frameworks = open.frameworks || [];
@@ -757,10 +781,12 @@ const server = http.createServer(async (req, res) => {
         result.depth = open.depth;
         result.billing = open.billing;
       }
+      const addon = offers.ADDONS.indexOf(purpose) !== -1;
       writeRecord({
-        id: purpose === "report" && reportId ? "paid-report-" + reportId : crypto.randomBytes(9).toString("hex"),
-        status: purpose === "report" && reportId ? "paid-report" : "run-credit",
-        reportId: purpose === "report" ? reportId : "",
+        id: purpose === "report" && reportId ? "paid-report-" + reportId : addon ? "paid-" + purpose + "-" + (result.reference || crypto.randomBytes(9).toString("hex")) : crypto.randomBytes(9).toString("hex"),
+        status: purpose === "report" && reportId ? "paid-report" : addon ? "paid-addon" : "run-credit",
+        purpose,
+        reportId: purpose === "report" || addon ? reportId : "",
         paid: true,
         provider: result.provider,
         method: choice,

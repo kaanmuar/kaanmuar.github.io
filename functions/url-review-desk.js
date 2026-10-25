@@ -863,7 +863,7 @@ const PAGE = `<!DOCTYPE html>
       const book = data.offers || { returnTable: [], plans: [] };
       offersEl.replaceChildren();
       const table = document.createElement("table");
-      table.innerHTML = "<thead><tr><th>Return</th><th>Off the schedule</th><th>1 selection</th><th>4 selections</th><th>8 selections</th></tr></thead>";
+      table.innerHTML = "<thead><tr><th>Return</th><th>Off the list price</th><th>1 selection</th><th>4 selections</th><th>8 selections</th></tr></thead>";
       const body = document.createElement("tbody");
       (book.returnTable || []).forEach((row) => {
         const tr = document.createElement("tr");
@@ -873,7 +873,7 @@ const PAGE = `<!DOCTYPE html>
       table.appendChild(body);
       offersEl.appendChild(table);
       const plans = document.createElement("table");
-      plans.innerHTML = "<thead><tr><th>30-day pass</th><th>Fee</th><th>Runs</th><th>Cap</th><th>Against the schedule</th></tr></thead>";
+      plans.innerHTML = "<thead><tr><th>30-day pass</th><th>Fee</th><th>Runs</th><th>Cap</th><th>Against the list price</th></tr></thead>";
       const planBody = document.createElement("tbody");
       (book.plans || []).forEach((plan) => {
         const tr = document.createElement("tr");
