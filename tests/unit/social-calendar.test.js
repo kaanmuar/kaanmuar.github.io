@@ -4,6 +4,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const cal = require("../../scripts/social-calendar");
+const ledger = require("../../scripts/social-ledger");
 
 const minutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const rows = (date, time = "09:00") => cal.NETWORKS.concat("instagram").map((channel) => ({ date, time, channel, asset: "feed/x.jpg" }));
@@ -178,6 +179,55 @@ test("sync moves Buffer posts in windows of calls, records each move, skips what
     assert.deepEqual([rest.left, waits.length], [0, 1], "the second window waited for the first to end");
     assert.deepEqual(cal.targets(root, now), []);
     assert.deepEqual((await cal.sync({ root, gql, now: () => Date.parse("2027-01-01T14:00:00Z"), pace: 0 })).list, [], "nothing within half an hour of its time");
+  } finally {
+    console.log = quiet;
+  }
+});
+
+test("a post waiting for the sync keeps its calendar slot, and the sync stops while the day's reserve of Buffer calls is left", async () => {
+  const root = fixture();
+  const now = Date.parse("2026-12-31T12:00:00Z");
+  const file = path.join(root, "assets/social/buffer.json");
+  const book = () => JSON.parse(fs.readFileSync(file, "utf8")).posts["runs-100/01-a"][0];
+  fs.writeFileSync(file, JSON.stringify({ version: 1, posts: { "runs-100/01-a": [{ channel: "linkedin", profile: "p", id: "l1", at: "2027-01-05T14:00:00.000Z", result: "queued" }] } }));
+  assert.equal(cal.mark(root, now), 1);
+  assert.equal(book().slot, "2027-01-01T14:15:00.000Z");
+  cal.reconcile(root, now);
+  assert.match(fs.readFileSync(path.join(root, "media/social-posts/runs-100/calendar.csv"), "utf8"), /^2027-01-01,09:15,linkedin,01-a,/m, "the daily --write does not set it back");
+
+  const seeded = ledger.read(file);
+  ledger.record(seeded, "runs-100/01-a", { channel: "linkedin", profile: "p", id: "l1", at: "2027-01-05T14:00:00.000Z", result: "queued", checked: "2027-01-01T00:00:00.000Z" });
+  assert.equal(seeded.posts["runs-100/01-a"][0].slot, "2027-01-01T14:15:00.000Z", "a seed keeps the slot");
+  ledger.record(seeded, "runs-100/01-a", { channel: "linkedin", profile: "p", id: "l1", at: "2027-01-01T14:15:00.000Z", result: "queued", checked: "2027-01-02T00:00:00.000Z" });
+  assert.equal(seeded.posts["runs-100/01-a"][0].slot, undefined, "and drops it once Buffer has the new time");
+
+  cal.readLimits(new Headers([
+    ["ratelimit", '"100-in-15min"; r=98; t=897'], ["ratelimit", '"500-in-1day"; r=212; t=40000'], ["ratelimit", '"15000-in-30days"; r=14000; t=696980'],
+    ["ratelimit-policy", '"100-in-15min"; q=100; w=900'], ["ratelimit-policy", '"500-in-1day"; q=500; w=86400'], ["ratelimit-policy", '"15000-in-30days"; q=15000; w=2592000']
+  ]));
+  assert.deepEqual(cal.daily, { left: 212, quota: 500, reset: 40000 }, "the daily window, matched by its length");
+  Object.assign(cal.daily, { left: null, quota: null, reset: null });
+
+  const post = { id: "l1", status: "scheduled", dueAt: "2027-01-05T14:00:00.000Z", text: "A", channelService: "linkedin", assets: [], metadata: null };
+  const edits = [];
+  const gql = (edit) => async (query, vars) => {
+    if (/organizations/.test(query)) return { account: { organizations: [{ id: "o" }] } };
+    if (/posts\(/.test(query)) return { posts: { pageInfo: { hasNextPage: false }, edges: [{ node: post }] } };
+    edits.push(vars.input.id);
+    return edit(vars);
+  };
+  const ok = gql((vars) => ({ editPost: { post: { id: vars.input.id, dueAt: vars.input.dueAt } } }));
+  const opts = { root, now: () => now, sleep: async () => {}, pace: 0 };
+  const quiet = console.log;
+  console.log = () => {};
+  try {
+    const reserve = await cal.sync(Object.assign({ gql: ok, limits: { left: 100, quota: 250, reset: 7200 } }, opts));
+    assert.match(reserve.stopped, /100 of Buffer's 250 daily calls left/);
+    const spent = await cal.sync(Object.assign({ gql: gql(() => { throw Object.assign(new Error("Buffer 429"), { window: "24h", retryAfter: 3600 }); }) }, opts));
+    assert.match(spent.stopped, /24h limit is spent/);
+    assert.deepEqual([edits, spent.left, book().slot], [["l1"], 1, "2027-01-01T14:15:00.000Z"], "nothing moved, and it still waits");
+    const done = await cal.sync(Object.assign({ gql: ok }, opts));
+    assert.deepEqual([done.left, done.stopped, book().at, book().slot], [0, null, "2027-01-01T14:15:00.000Z", undefined]);
   } finally {
     console.log = quiet;
   }

@@ -9,9 +9,11 @@
        the Page app may not edit scheduled posts (Graph error #10), and Carlos keeps those (#1109).
      BUFFER_API_KEY=... node scripts/social-calendar.js --sync [--dry-run] [--windows N]
        move the posts Buffer holds to their calendar slots (editPost with the whole post, as Buffer validates it),
-       never queueing or deleting any, and record each new time in the ledger. Buffer allows about 125 calls in
-       15 minutes, so each window makes at most WINDOW_CALLS and the next one waits; whatever is left after N
-       windows is moved by running it again. --dry-run lists the moves and re-saves one post per channel at its
+       never queueing or deleting any, and record each new time in the ledger. Buffer allows 100 calls in 15
+       minutes and 250 or 500 a day per account, so each window makes at most WINDOW_CALLS and the next one waits,
+       and it stops while DAILY_RESERVE of the day's calls is left; whatever is left is moved by running it again
+       (the buffer-batch workflow does every night). --write --move-queued marks each post it moves with its new
+       slot in the Buffer ledger until then. --dry-run lists the moves and re-saves one post per channel at its
        current time, so a payload Buffer rejects shows up before anything moves.
 
    Lanes: 1 site review, 2 tip or trick, 3 news or pick, 4 best practice, 5 promo. Each day the lanes take the five
@@ -39,7 +41,8 @@ const BUFFER_API = "https://api.buffer.com";
 const EDIT_AHEAD = 30 * 60e3;
 const PACE = 400;
 const WINDOW = 15 * 60e3;
-const WINDOW_CALLS = 115;
+const WINDOW_CALLS = 95;
+const DAILY_RESERVE = 0.4;
 
 const minutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const hhmm = (min) => String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0");
@@ -233,8 +236,11 @@ function write(result, root = ROOT) {
 function reconcile(root = ROOT, now = Date.now()) {
   const books = [ledger.read(path.join(root, ledger.BUFFER)), ledger.read(path.join(root, ledger.FACEBOOK))];
   const held = new Map();
+  const earliest = new Map();
   books.forEach((book) => Object.entries(book.posts).forEach(([id, entries]) => entries.forEach((e) => {
-    if (e.result === "queued" && e.at && Date.parse(e.at) > now) held.set(id + "|" + e.channel, Date.parse(e.at));
+    if (e.result !== "queued" || !e.at || Date.parse(e.at) <= now) return;
+    held.set(id + "|" + e.channel, Date.parse(e.slot || e.at));
+    earliest.set(id, Math.min(earliest.get(id) || Infinity, Date.parse(e.at)));
   })));
   const changed = [];
   load(root).batches.forEach((batch) => {
@@ -264,7 +270,7 @@ function reconcile(root = ROOT, now = Date.now()) {
     Object.entries(captions).forEach(([slug, c]) => {
       const mine = out.map((line) => line.split(",")).filter((r) => r[3] === slug && NETWORKS.includes(r[2]));
       if (!mine.some((r) => held.has(batch + "/" + slug + "|" + r[2]))) return;
-      const first = mine.map((r) => r[0]).sort()[0];
+      const first = mine.map((r) => r[0]).concat(bogotaDay(earliest.get(batch + "/" + slug))).sort()[0];
       if (c.date !== first) { c.date = first; dated = true; }
     });
     if (dated) fs.writeFileSync(capFile, JSON.stringify(captions, null, 2) + (raw.endsWith("\n") ? "\n" : ""));
@@ -343,25 +349,49 @@ function editInput(post, dueAt) {
   return input;
 }
 
+// What is left of Buffer's daily calls, from the RateLimit headers of the last response (one policy per window).
+const daily = { left: null, quota: null, reset: null };
+
+function readLimits(headers) {
+  const split = (name) => (headers.get(name) || "").split(/,\s*(?=")/).filter(Boolean);
+  const policy = split("ratelimit-policy").find((p) => /;\s*w=86400\b/.test(p));
+  if (!policy) return;
+  const name = policy.match(/"([^"]+)"/)[1];
+  const status = split("ratelimit").find((s) => s.includes('"' + name + '"'));
+  if (!status) return;
+  daily.quota = Number(policy.match(/q=(\d+)/)[1]);
+  daily.left = Number(status.match(/r=(\d+)/)[1]);
+  daily.reset = Number(status.match(/t=(\d+)/)[1]);
+}
+
 async function bufferGql(query, variables) {
   const res = await fetch(BUFFER_API, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + process.env.BUFFER_API_KEY },
     body: JSON.stringify({ query, variables })
   });
+  readLimits(res.headers);
   const json = await res.json().catch(() => ({}));
-  if (!res.ok || json.errors) throw new Error("Buffer " + res.status + ": " + JSON.stringify(json.errors || json).slice(0, 300));
+  if (!res.ok || json.errors) {
+    const error = new Error("Buffer " + res.status + ": " + JSON.stringify(json.errors || json).slice(0, 300));
+    const limit = res.status === 429 && (json.errors || []).map((e) => e.extensions && e.extensions.window).find(Boolean);
+    if (limit) Object.assign(error, { window: limit, retryAfter: Number(res.headers.get("retry-after")) || null });
+    throw error;
+  }
   return json.data;
 }
 
-const rateLimited = (error) => /\b429\b|RATE_LIMIT|rate limit/i.test(error.message);
+const rateLimited = (error) => !!error.window || /\b429\b|RATE_LIMIT|rate limit/i.test(error.message);
 
 /* Calls go through one budget: at most WINDOW_CALLS a window, then it waits for the next window, or stops after the
-   last one. A 429 ends the window early. */
-function budget({ windows, perWindow = WINDOW_CALLS, gql, sleep, now }) {
+   last one. A 429 on the 15-minute window ends the window early. The daily and 30-day windows are shared with the
+   Live Reports queue and every other job on the key, so it stops once the day's calls left fall to DAILY_RESERVE
+   of the quota, or on a 429 for either; the next run picks up the rest. */
+function budget({ windows, perWindow = WINDOW_CALLS, gql, sleep, now, limits = daily }) {
   let calls = 0;
   let left = windows;
   let start = now();
+  const stop = (why) => { call.stopped = why; console.log("stopping: " + why); return null; };
   const next = async () => {
     left -= 1;
     if (left <= 0) return false;
@@ -372,19 +402,26 @@ function budget({ windows, perWindow = WINDOW_CALLS, gql, sleep, now }) {
     start = now();
     return true;
   };
-  return async function call(query, variables) {
+  async function call(query, variables) {
     for (;;) {
+      if (call.stopped) return null;
+      if (limits.left != null && limits.left <= Math.ceil(limits.quota * DAILY_RESERVE)) {
+        return stop(limits.left + " of Buffer's " + limits.quota + " daily calls left, kept for the other jobs; the oldest frees up in " + Math.ceil(limits.reset / 3600) + " h");
+      }
       if (calls >= perWindow && !(await next())) return null;
       calls += 1;
       try {
         return await gql(query, variables);
       } catch (error) {
         if (!rateLimited(error)) throw error;
+        if (error.window && error.window !== "15m") return stop("Buffer's " + error.window + " limit is spent; retry in " + Math.ceil((error.retryAfter || 0) / 3600) + " h");
         console.log("rate limited after " + calls + " calls this window");
         calls = perWindow;
       }
     }
-  };
+  }
+  call.stopped = null;
+  return call;
 }
 
 // The scheduled posts Buffer holds, whole, by id: one call per 100.
@@ -406,7 +443,7 @@ async function scheduledPosts(call) {
 
 const EDIT = "mutation($input: EditPostInput!) { editPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }";
 
-async function sync({ dryRun, windows = 1, perWindow, root = ROOT, gql = bufferGql, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = Date.now, pace = PACE } = {}) {
+async function sync({ dryRun, windows = 1, perWindow, limits, root = ROOT, gql = bufferGql, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = Date.now, pace = PACE } = {}) {
   const list = targets(root, now());
   const counts = {};
   list.forEach((t) => { counts[t.channel] = (counts[t.channel] || 0) + 1; });
@@ -414,9 +451,9 @@ async function sync({ dryRun, windows = 1, perWindow, root = ROOT, gql = bufferG
   list.forEach((t) => console.log("  " + t.channel.padEnd(8) + " " + t.id + "  " + t.from + " -> " + t.to));
   const result = { list, moved: {}, failed: 0, left: list.length, checked: {} };
   if (!list.length) return result;
-  const call = budget({ windows: dryRun ? 1 : windows, perWindow, gql, sleep, now });
+  const call = budget({ windows: dryRun ? 1 : windows, perWindow, gql, sleep, now, limits });
   const held = await scheduledPosts(call);
-  if (!held) { console.log("ran out of calls reading Buffer's posts; run --sync again"); return result; }
+  if (!held) { result.stopped = call.stopped || "ran out of calls reading Buffer's posts"; console.log(result.stopped + "; run --sync again"); return result; }
 
   if (dryRun) {
     // One real edit per channel, each post re-saved at the time it already has.
@@ -437,18 +474,25 @@ async function sync({ dryRun, windows = 1, perWindow, root = ROOT, gql = bufferG
   }
 
   const book = ledger.read(path.join(root, ledger.BUFFER));
+  const entryOf = (t) => book.posts[t.id].find((e) => e.id === t.postId);
   const record = (t, at) => {
-    const entry = book.posts[t.id].find((e) => e.id === t.postId);
+    const entry = entryOf(t);
     Object.assign(entry, { at: new Date(at).toISOString(), checked: new Date(now()).toISOString() });
+    delete entry.slot;
     result.moved[t.channel] = (result.moved[t.channel] || 0) + 1;
+    result.left -= 1;
+  };
+  const skip = (t, why) => {
+    delete entryOf(t).slot;
+    console.log("skipped " + t.channel + " " + t.id + ": " + why);
     result.left -= 1;
   };
   let done = 0;
   for (const t of list) {
     const post = held.get(t.postId);
-    if (!post) { console.log("skipped " + t.channel + " " + t.id + ": not scheduled in Buffer any more"); result.left -= 1; continue; }
+    if (!post) { skip(t, "not scheduled in Buffer any more"); continue; }
     if (new Date(post.dueAt).toISOString() === t.to) { record(t, t.to); continue; }
-    if (Date.parse(post.dueAt) < now() + EDIT_AHEAD || Date.parse(t.to) < now() + EDIT_AHEAD) { console.log("skipped " + t.channel + " " + t.id + ": due within 30 minutes"); result.left -= 1; continue; }
+    if (Date.parse(post.dueAt) < now() + EDIT_AHEAD || Date.parse(t.to) < now() + EDIT_AHEAD) { skip(t, "due within 30 minutes"); continue; }
     let r;
     try {
       r = await call(EDIT, { input: editInput(post, t.to) });
@@ -464,8 +508,20 @@ async function sync({ dryRun, windows = 1, perWindow, root = ROOT, gql = bufferG
     await sleep(pace);
   }
   ledger.write(path.join(root, ledger.BUFFER), book);
+  result.stopped = call.stopped;
   console.log("moved " + JSON.stringify(result.moved) + ", failed " + result.failed + ", left " + result.left + (result.left ? " (run --sync again for the rest)" : ""));
   return result;
+}
+
+// After a --move-queued plan: each Buffer post whose slot moved waits in the ledger for --sync, so the daily
+// --write keeps its calendar row instead of setting it back to the time Buffer still has.
+function mark(root = ROOT, now = Date.now()) {
+  const file = path.join(root, ledger.BUFFER);
+  const book = ledger.read(file);
+  const list = targets(root, now);
+  list.forEach((t) => { book.posts[t.id].find((e) => e.id === t.postId).slot = t.to; });
+  if (list.length) ledger.write(file, book);
+  return list.length;
 }
 
 // Posts a network holds before their day on the hub (#1038).
@@ -513,6 +569,7 @@ async function main() {
   console.log("Plan from " + from + (batch ? " for " + batch : "") + ": " + JSON.stringify(summary(result)));
   if (opts.write) {
     console.log("rewrote " + write(result).join(", "));
+    if (opts["move-queued"]) console.log(mark() + " Buffer posts wait for --sync to move them");
     const late = hubLate();
     if (late.length) console.log("on a network before the hub:\n  " + late.join("\n  "));
   }
@@ -520,4 +577,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { NETWORKS, WINDOWS, LANES, WINDOW_CALLS, slotTime, kindOf, launchCalendar, load, plan, rowsFor, hubDay, write, reconcile, summary, targets, editInput, sync, hubLate };
+module.exports = { NETWORKS, WINDOWS, LANES, WINDOW_CALLS, slotTime, kindOf, launchCalendar, load, plan, rowsFor, hubDay, write, reconcile, summary, targets, mark, editInput, daily, readLimits, sync, hubLate };

@@ -5,7 +5,8 @@
 
    { version: 1,
      posts: { "<batch>/<slug>": [{ channel: "linkedin", profile: "linkedin (QA-lab)", id: "<Buffer post or Graph post id>",
-       at: "<due time, or sent time once sent>", result: "queued" | "sent" | "failed", error, url, checked: "<ISO>" }] } }
+       at: "<due time, or sent time once sent>", result: "queued" | "sent" | "failed", error, url, checked: "<ISO>",
+       slot: "<the calendar time a queued post waits to be moved to (social-calendar.js --sync)>" }] } }
 
    One entry per calendar channel and profile. Every later run looks up the queued entries whose time has passed
    and moves them to sent or failed.
@@ -19,7 +20,7 @@ const ROOT = path.resolve(__dirname, "..");
 const BUFFER = "assets/social/buffer.json";
 const FACEBOOK = "assets/social/facebook.json";
 const FINAL = new Set(["sent", "failed"]);
-const FIELDS = ["channel", "profile", "id", "at", "result", "error", "url", "checked"];
+const FIELDS = ["channel", "profile", "id", "at", "result", "error", "url", "checked", "slot"];
 
 function empty() {
   return { version: 1, posts: {} };
@@ -55,8 +56,14 @@ function record(ledger, post, entry) {
   const clean = Object.fromEntries(FIELDS.filter((field) => entry[field] !== "" && entry[field] != null).map((field) => [field, entry[field]]));
   const list = ledger.posts[post] || (ledger.posts[post] = []);
   const i = list.findIndex((other) => other.channel === clean.channel && other.profile === clean.profile);
-  if (i < 0) list.push(clean);
-  else list[i] = newer(list[i], clean);
+  if (i < 0) {
+    list.push(clean);
+    return ledger;
+  }
+  const old = list[i];
+  list[i] = newer(old, clean);
+  // A seed or check that re-reads a queued post knows nothing of the slot it waits for.
+  if (old.slot && !list[i].slot && list[i].result === "queued" && list[i].id === old.id && Date.parse(list[i].at) !== Date.parse(old.slot)) list[i] = Object.assign({}, list[i], { slot: old.slot });
   return ledger;
 }
 
