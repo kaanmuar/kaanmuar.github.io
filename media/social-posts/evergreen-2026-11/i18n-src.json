@@ -1,0 +1,331 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step."
+ },
+ "clips": {
+  "ttfb-curl": {
+   "lang": "en",
+   "strings": {
+    "title.0": "Time your server",
+    "title.1": "*in one line.*",
+    "body": "curl can report when the first byte of the page arrived. web.dev suggests a Time to First Byte of 0.8 seconds or less for most sites.",
+    "visual.note": "Example output · seconds until the first byte arrived",
+    "action": "Run it a few times on your home page and your slowest template. Over 0.8 seconds? Look at the server before the front end.",
+    "counter": "30-second trick",
+    "actionLabel": "Try it now",
+    "cat.label": "Performance",
+    "cap.youtube": "curl can report when the first byte of the page arrived. web.dev suggests a Time to First Byte of 0.8 seconds or less for most sites.\n\nTry it now: Run it a few times on your home page and your slowest template. Over 0.8 seconds? Look at the server before the front end.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=ttfb-curl\n\n30-second trick · QA-lab URL Review\n\n#WebPerformance #DevOps #Playwright #QA #TTFB #DevTools #Programming #LearnOnYouTube #PageSpeed #TestAutomation #WebPerf #QAlab"
+   }
+  },
+  "myth-lighthouse": {
+   "lang": "es",
+   "strings": {
+    "title.0": "Myth: a Lighthouse 100",
+    "title.1": "*means accessible.*",
+    "body": "Lighthouse checks what software can detect, such as names, contrast and ARIA. It cannot tell whether alt text makes sense or whether a screen reader user can finish the task.",
+    "visual.labels.0": "Myth",
+    "visual.labels.1": "Fact",
+    "visual.myth": "A Lighthouse 100 means the site is accessible.",
+    "visual.fact": "Lighthouse says so itself: automatic detection can only detect a subset of issues, so manual testing is also encouraged.",
+    "action": "After the score, try one real task with a screen reader: VoiceOver on a Mac, NVDA on Windows.",
+    "counter": "Myth vs fact",
+    "actionLabel": "Check it",
+    "cat.label": "Accessibility",
+    "cap.youtube": "Lighthouse checks what software can detect, such as names, contrast and ARIA. It cannot tell whether alt text makes sense or whether a screen reader user can finish the task.\n\nCheck it: After the score, try one real task with a screen reader: VoiceOver on a Mac, NVDA on Windows.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-lighthouse\n\nMyth vs fact · QA-lab URL Review\n\n#Accessibility #Playwright #QA #Lighthouse #a11y #Programming #LearnOnYouTube #DigitalAccessibility #QAEngineer #UXDesign #SDET #QAlab"
+   }
+  },
+  "hreflang": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "hreflang: the right page",
+    "title.1": "*for each language.*",
+    "body": "An attribute that tells search engines which language or region each version of a page is for, so a Spanish speaker lands on the Spanish page.",
+    "visual.group": "HTML attribute · SEO",
+    "visual.note": "Every version lists all the others, and itself",
+    "action": "Open one translated page and check that it links to every language version, itself included. Google ignores links that are not returned.",
+    "counter": "Word of the day",
+    "actionLabel": "Spot it",
+    "cat.label": "SEO",
+    "cap.youtube": "An attribute that tells search engines which language or region each version of a page is for, so a Spanish speaker lands on the Spanish page.\n\nSpot it: Open one translated page and check that it links to every language version, itself included. Google ignores links that are not returned.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=hreflang\n\nWord of the day · QA-lab URL Review\n\n#SEO #SoftwareTesting #DevOps #QA #hreflang #i18n #LearnOnYouTube #TechTips #SEOTips #QAEngineer #DigitalMarketing #QAlab"
+   }
+  },
+  "coverage": {
+   "lang": "de",
+   "strings": {
+    "title.0": "Find the code",
+    "title.1": "*your page never runs.*",
+    "body": "The Coverage panel in Chrome DevTools marks every byte of script and stylesheet as used or unused while you load and use the page.",
+    "visual.items.0.0": "Cmd or Ctrl + Shift + P",
+    "visual.items.0.1": "Type Coverage, choose Show Coverage",
+    "visual.items.1.0": "Reload button in the panel",
+    "visual.items.1.1": "Records while the page loads",
+    "visual.items.2.0": "Sort by unused bytes",
+    "visual.items.2.1": "Red means it never ran",
+    "action": "Click through the page's main task, then sort by unused bytes. Split or defer the biggest file that stays mostly red.",
+    "counter": "30-second trick",
+    "actionLabel": "Try it now",
+    "cat.label": "Performance",
+    "cap.youtube": "The Coverage panel in Chrome DevTools marks every byte of script and stylesheet as used or unused while you load and use the page.\n\nTry it now: Click through the page's main task, then sort by unused bytes. Split or defer the biggest file that stays mostly red.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=coverage\n\n30-second trick · QA-lab URL Review\n\n#WebPerformance #SoftwareTesting #Programming #QA #DevTools #JavaScript #LearnOnYouTube #TechTips #WebPerf #Testing #Lighthouse #QAlab"
+   }
+  },
+  "myth-https": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "Myth: the padlock",
+    "title.1": "*means the site is secure.*",
+    "body": "HTTPS encrypts the trip between the browser and the server. It says nothing about the page's scripts, headers and cookies, or about who is behind the site.",
+    "visual.labels.0": "Myth",
+    "visual.labels.1": "Fact",
+    "visual.myth": "HTTPS means the site is secure.",
+    "visual.fact": "All 227 sites in our October 2026 real runs load over HTTPS. Their security scores still range from 16 to 94 out of 100.",
+    "action": "Check what the padlock does not cover: response headers, cookie flags, outdated scripts and a DMARC record.",
+    "counter": "Myth vs fact",
+    "actionLabel": "Check it",
+    "cat.label": "Security",
+    "cap.youtube": "HTTPS encrypts the trip between the browser and the server. It says nothing about the page's scripts, headers and cookies, or about who is behind the site.\n\nCheck it: Check what the padlock does not cover: response headers, cookie flags, outdated scripts and a DMARC record.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-https\n\nMyth vs fact · QA-lab URL Review\n\n#WebSecurity #Vulnerability #Phishing #QA #HTTPS #AppSec #Programming #LearnOnYouTube #Testing #OWASP #QAEngineer #QAlab"
+   }
+  },
+  "sri": {
+   "lang": "it",
+   "strings": {
+    "title.0": "SRI:",
+    "title.1": "*a fingerprint for borrowed scripts.*",
+    "body": "Subresource Integrity puts a hash of the file in the tag. If the CDN ever serves anything else, the browser refuses to run it.",
+    "visual.group": "Subresource Integrity · security",
+    "visual.note": "Pin an exact version: a file that changes breaks the hash",
+    "action": "List the scripts you load from other domains. Add an integrity hash to every one that has a fixed version.",
+    "counter": "Word of the day",
+    "actionLabel": "Spot it",
+    "cat.label": "Security",
+    "cap.youtube": "Subresource Integrity puts a hash of the file in the tag. If the CDN ever serves anything else, the browser refuses to run it.\n\nSpot it: List the scripts you load from other domains. Add an integrity hash to every one that has a fixed version.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=sri\n\nWord of the day · QA-lab URL Review\n\n#WebSecurity #CyberSecurity #Programming #QA #SRI #JavaScript #LearnOnYouTube #WebDev #QualityAssurance #InfoSec #Frontend #QAlab"
+   }
+  },
+  "pre-release": {
+   "lang": "en",
+   "strings": {
+    "title.0": "The 10-minute",
+    "title.1": "*pre-release check.*",
+    "body": "Ten things that break at deploy time and that no unit test sees. About a minute each, on the live site, before you announce anything.",
+    "visual.items.0.0": "Meta robots",
+    "visual.items.0.1": "No noindex left from staging",
+    "visual.items.1.0": "robots.txt",
+    "visual.items.1.1": "No Disallow: / left over",
+    "visual.items.2.0": "Canonical",
+    "visual.items.2.1": "Points to production",
+    "visual.items.3.0": "Status codes",
+    "visual.items.3.1": "Pages 200, missing pages 404",
+    "visual.items.4.0": "Mixed content",
+    "visual.items.4.1": "No http:// files on https",
+    "visual.items.5.0": "Console",
+    "visual.items.5.1": "No new errors",
+    "visual.items.6.0": "A real form",
+    "visual.items.6.1": "Sends and shows success",
+    "visual.items.7.0": "Analytics",
+    "visual.items.7.1": "Production property",
+    "visual.items.8.0": "Cache",
+    "visual.items.8.1": "New CSS and JS served",
+    "visual.items.9.0": "Sitemap",
+    "visual.items.9.1": "Lists the new pages",
+    "action": "Copy the list into your release ticket and tick it on the live site, not on staging.",
+    "counter": "Checklist",
+    "actionLabel": "Use it",
+    "cat.label": "QA",
+    "cap.youtube": "Ten things that break at deploy time and that no unit test sees. About a minute each, on the live site, before you announce anything.\n\nUse it: Copy the list into your release ticket and tick it on the live site, not on staging.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=pre-release\n\nChecklist · QA-lab URL Review\n\n#QA #Playwright #AI #ReleaseManagement #SoftwareTesting #Programming #LearnOnYouTube #QualityAssurance #TestAutomation #Testing #QAEngineer #QAlab"
+   }
+  },
+  "googlebot": {
+   "lang": "es",
+   "strings": {
+    "title.0": "See your page",
+    "title.1": "*the way Googlebot does.*",
+    "body": "Search Console's URL Inspection tool can fetch a live page as Google and show the rendered HTML, a screenshot, and the resources it could not load.",
+    "visual.items.0.0": "URL Inspection",
+    "visual.items.0.1": "Paste the page address",
+    "visual.items.1.0": "Test live URL",
+    "visual.items.1.1": "Google fetches it now",
+    "visual.items.2.0": "View tested page",
+    "visual.items.2.1": "HTML, screenshot, more info",
+    "action": "Search the rendered HTML for your main heading and your key facts. If they are missing there, Google may not see them either.",
+    "counter": "30-second trick",
+    "actionLabel": "Try it now",
+    "cat.label": "SEO",
+    "cap.youtube": "Search Console's URL Inspection tool can fetch a live page as Google and show the rendered HTML, a screenshot, and the resources it could not load.\n\nTry it now: Search the rendered HTML for your main heading and your key facts. If they are missing there, Google may not see them either.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=googlebot\n\n30-second trick · QA-lab URL Review\n\n#SEO #AI #SoftwareTesting #QA #TechnicalSEO #SearchConsole #WebDevelopment #Coding #SDET #SEOTips #QualityAssurance #QAlab"
+   }
+  },
+  "inp": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "INP:",
+    "title.1": "*how fast the page answers a tap.*",
+    "body": "Interaction to Next Paint measures the delay from a click, tap or key press to the next frame on screen. It replaced First Input Delay as a Core Web Vital in March 2024.",
+    "visual.group": "Core Web Vital · responsiveness",
+    "visual.note": "At the 75th percentile of page loads, mobile and desktop apart",
+    "alt": "Performance card. INP: how fast the page answers a tap. Interaction to Next Paint is good at 200 ms or less, needs improvement up to 500 ms, and is poor over 500 ms, at the 75th percentile of page loads. Spot it: find the slowest tap on your page and break up the long task behind it.",
+    "action": "Find the slowest tap on your page, often a menu or a filter, and break up the long task behind it.",
+    "counter": "Word of the day",
+    "actionLabel": "Spot it",
+    "cat.label": "Performance",
+    "cap.youtube": "Interaction to Next Paint measures the delay from a click, tap or key press to the next frame on screen. It replaced First Input Delay as a Core Web Vital in March 2024.\n\nSpot it: Find the slowest tap on your page, often a menu or a filter, and break up the long task behind it.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=inp\n\nWord of the day · QA-lab URL Review\n\n#WebPerformance #DevOps #Playwright #QA #CoreWebVitals #INP #TechTips #WebDevelopment #Lighthouse #QAEngineer #SiteSpeed #QAlab"
+   }
+  },
+  "myth-overlay": {
+   "lang": "de",
+   "strings": {
+    "title.0": "Myth: one line of code",
+    "title.1": "*makes a site accessible.*",
+    "body": "Overlay widgets promise WCAG compliance from a single script. In April 2025 the US Federal Trade Commission ordered one vendor to pay $1 million and stop claiming its tool makes any site compliant without evidence.",
+    "visual.labels.0": "Myth",
+    "visual.labels.1": "Fact",
+    "visual.myth": "An overlay widget makes the site WCAG compliant.",
+    "visual.fact": "The barriers live in the page's own code: missing labels, keyboard traps, unclear headings. They are fixed there.",
+    "action": "Spend the overlay budget on your shared templates first: header, navigation, forms and footer.",
+    "counter": "Myth vs fact",
+    "actionLabel": "Check it",
+    "cat.label": "Accessibility",
+    "cap.youtube": "Overlay widgets promise WCAG compliance from a single script. In April 2025 the US Federal Trade Commission ordered one vendor to pay $1 million and stop claiming its tool makes any site compliant without evidence.\n\nCheck it: Spend the overlay budget on your shared templates first: header, navigation, forms and footer.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-overlay\n\nMyth vs fact · QA-lab URL Review\n\n#Accessibility #Playwright #QA #WCAG #a11y #TechTips #WebDevelopment #SoftwareTesting #QualityAssurance #TestAutomation #InclusiveDesign #QAlab"
+   }
+  },
+  "vision": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "Preview colour blindness",
+    "title.1": "*in two clicks.*",
+    "body": "Chrome DevTools can simulate blurred vision, reduced contrast and four kinds of colour vision deficiency, right on your own page.",
+    "visual.items.0.0": "Cmd or Ctrl + Shift + P",
+    "visual.items.0.1": "Type Rendering, choose Show Rendering",
+    "visual.items.1.0": "Emulate vision deficiencies",
+    "visual.items.1.1": "Pick Deuteranopia",
+    "visual.items.2.0": "Look at charts and errors",
+    "visual.items.2.1": "Colour alone must not carry meaning",
+    "action": "Check every error message, chart and link. If colour is the only signal, add text, an icon or an underline.",
+    "counter": "30-second trick",
+    "actionLabel": "Try it now",
+    "cat.label": "Accessibility",
+    "cap.youtube": "Chrome DevTools can simulate blurred vision, reduced contrast and four kinds of colour vision deficiency, right on your own page.\n\nTry it now: Check every error message, chart and link. If colour is the only signal, add text, an icon or an underline.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=vision\n\n30-second trick · QA-lab URL Review\n\n#Accessibility #OpenSource #SoftwareTesting #QA #DevTools #Design #WebDevelopment #Coding #UXDesign #WebDesign #SDET #QAlab"
+   }
+  },
+  "myth-sitemap": {
+   "lang": "it",
+   "strings": {
+    "title.0": "Myth: a sitemap",
+    "title.1": "*gets every page indexed.*",
+    "body": "A sitemap helps search engines discover your pages. Google says plainly that it does not guarantee every listed page will be crawled and indexed.",
+    "visual.labels.0": "Myth",
+    "visual.labels.1": "Fact",
+    "visual.myth": "Every page in the sitemap gets indexed.",
+    "visual.fact": "The sitemap is a hint. Google still decides, and internal links, canonical tags and page quality all weigh in.",
+    "action": "Open the Pages report in Search Console and filter it by your sitemap. Each page left out is listed with its reason.",
+    "counter": "Myth vs fact",
+    "actionLabel": "Check it",
+    "cat.label": "SEO",
+    "cap.youtube": "A sitemap helps search engines discover your pages. Google says plainly that it does not guarantee every listed page will be crawled and indexed.\n\nCheck it: Open the Pages report in Search Console and filter it by your sitemap. Each page left out is listed with its reason.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-sitemap\n\nMyth vs fact · QA-lab URL Review\n\n#SEO #DevOps #Playwright #QA #Sitemap #SearchConsole #WebDevelopment #Coding #SDET #ContentMarketing #SoftwareTesting #QAlab"
+   }
+  },
+  "lcp": {
+   "lang": "en",
+   "strings": {
+    "title.0": "LCP:",
+    "title.1": "*when the main thing shows up.*",
+    "body": "Largest Contentful Paint marks when the biggest image or text block in the viewport finishes rendering. Good is 2.5 seconds or less for at least 75% of page loads.",
+    "visual.group": "Core Web Vital · loading",
+    "visual.note": "Never lazy-load the LCP image",
+    "action": "Open the Performance panel in Chrome DevTools: its live metrics name your LCP element. Make sure it is never lazy-loaded.",
+    "counter": "Word of the day",
+    "actionLabel": "Spot it",
+    "cat.label": "Performance",
+    "cap.youtube": "Largest Contentful Paint marks when the biggest image or text block in the viewport finishes rendering. Good is 2.5 seconds or less for at least 75% of page loads.\n\nSpot it: Open the Performance panel in Chrome DevTools: its live metrics name your LCP element. Make sure it is never lazy-loaded.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=lcp\n\nWord of the day · QA-lab URL Review\n\n#WebPerformance #SoftwareTesting #QA #CoreWebVitals #LCP #Coding #Programming #PageSpeed #TestAutomation #WebPerf #Testing #QAlab"
+   }
+  },
+  "a11y-check": {
+   "lang": "es",
+   "strings": {
+    "title.0": "The 5-minute",
+    "title.1": "*accessibility check.*",
+    "body": "Five checks anyone can run with no special tools. Each one maps to a WCAG 2.2 success criterion, so a failure is easy to file.",
+    "visual.items.0.0": "Zoom to 200%",
+    "visual.items.0.1": "Nothing cut off · 1.4.4",
+    "visual.items.1.0": "Narrow to 320 px",
+    "visual.items.1.1": "No sideways scrolling · 1.4.10",
+    "visual.items.2.0": "Page title",
+    "visual.items.2.1": "Says what the page is · 2.4.2",
+    "visual.items.3.0": "Link text",
+    "visual.items.3.1": "Says where it goes · 2.4.4",
+    "visual.items.4.0": "Language",
+    "visual.items.4.1": "<html lang> is set · 3.1.1",
+    "action": "Run all five on your home page and your busiest form. File each failure with its criterion number.",
+    "counter": "Checklist",
+    "actionLabel": "Use it",
+    "cat.label": "Accessibility",
+    "cap.youtube": "Five checks anyone can run with no special tools. Each one maps to a WCAG 2.2 success criterion, so a failure is easy to file.\n\nUse it: Run all five on your home page and your busiest form. File each failure with its criterion number.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=a11y-check\n\nChecklist · QA-lab URL Review\n\n#Accessibility #SoftwareTesting #DevOps #QA #WCAG #TechTips #WebDevelopment #a11y #QualityAssurance #TestAutomation #InclusiveDesign #QAlab"
+   }
+  },
+  "dmarc": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "Can anyone send mail",
+    "title.1": "*as your domain?*",
+    "body": "A DMARC record tells receiving servers what to do with mail that claims your domain but fails authentication. Without one, spoofed mail has an easier way in.",
+    "visual.note": "No answer means no DMARC policy",
+    "action": "Run the lookup on your domain. No answer? Publish p=none with a report address, read the reports, then move to quarantine.",
+    "counter": "30-second trick",
+    "actionLabel": "Try it now",
+    "cat.label": "Security",
+    "cap.youtube": "A DMARC record tells receiving servers what to do with mail that claims your domain but fails authentication. Without one, spoofed mail has an easier way in.\n\nTry it now: Run the lookup on your domain. No answer? Publish p=none with a report address, read the reports, then move to quarantine.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=dmarc\n\n30-second trick · QA-lab URL Review\n\n#EmailSecurity #SoftwareTesting #Vulnerability #QA #DMARC #DNS #WebDevelopment #Coding #OWASP #QAEngineer #DevSecOps #QAlab"
+   }
+  },
+  "skip-link": {
+   "lang": "de",
+   "strings": {
+    "title.0": "Skip link:",
+    "title.1": "*jump straight past the menu.*",
+    "body": "A link at the very top of the page that takes keyboard and screen reader users straight to the main content. It is one way to meet WCAG 2.4.1, Bypass Blocks, at Level A.",
+    "visual.group": "Accessibility · WCAG 2.4.1",
+    "visual.note": "It can stay hidden until it gets keyboard focus",
+    "action": "Load your page and press Tab once. The first thing that appears should be a way to skip to the content.",
+    "counter": "Word of the day",
+    "actionLabel": "Spot it",
+    "cat.label": "Accessibility",
+    "cap.youtube": "A link at the very top of the page that takes keyboard and screen reader users straight to the main content. It is one way to meet WCAG 2.4.1, Bypass Blocks, at Level A.\n\nSpot it: Load your page and press Tab once. The first thing that appears should be a way to skip to the content.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=skip-link\n\nWord of the day · QA-lab URL Review\n\n#Accessibility #DevOps #QA #WCAG #a11y #TechTips #WebDevelopment #QualityAssurance #TestAutomation #InclusiveDesign #Testing #QAlab"
+   }
+  },
+  "field-vs-lab": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "Your Lighthouse score",
+    "title.1": "*is not your visitors.*",
+    "body": "PageSpeed Insights shows two things. The top half is real-user data from the Chrome UX Report over the last 28 days. The score below it is one lab run on a simulated phone.",
+    "visual.items.0.0": "Lab",
+    "visual.items.0.1": "One run, simulated phone, throttled network",
+    "visual.items.1.0": "Field",
+    "visual.items.1.1": "Real visitors, last 28 days, 75th percentile",
+    "action": "Read the top half first. If your page has no real-user data there, collect your own with Google's web-vitals library.",
+    "counter": "30-second trick",
+    "actionLabel": "Try it now",
+    "cat.label": "Performance",
+    "cap.youtube": "PageSpeed Insights shows two things. The top half is real-user data from the Chrome UX Report over the last 28 days. The score below it is one lab run on a simulated phone.\n\nTry it now: Read the top half first. If your page has no real-user data there, collect your own with Google's web-vitals library.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=field-vs-lab\n\n30-second trick · QA-lab URL Review\n\n#WebPerformance #Playwright #QA #CoreWebVitals #Lighthouse #Coding #Programming #SiteSpeed #SDET #SoftwareTesting #QualityAssurance #QAlab"
+   }
+  },
+  "myth-keywords": {
+   "lang": "it",
+   "strings": {
+    "title.0": "Myth: meta keywords",
+    "title.1": "*still help you rank.*",
+    "body": "Google said in 2009 that it does not use the keywords meta tag in web ranking. The tag does show your competitors the words you are targeting.",
+    "visual.labels.0": "Myth",
+    "visual.labels.1": "Fact",
+    "visual.myth": "<meta name=\"keywords\"> helps your ranking.",
+    "visual.fact": "Google ignores it for ranking. A clear title and meta description do the work, and the description may become your snippet.",
+    "action": "Search your templates for name=\"keywords\". Remove it, and write a real description for each key page instead.",
+    "counter": "Myth vs fact",
+    "actionLabel": "Check it",
+    "cat.label": "SEO",
+    "cap.youtube": "Google said in 2009 that it does not use the keywords meta tag in web ranking. The tag does show your competitors the words you are targeting.\n\nCheck it: Search your templates for name=\"keywords\". Remove it, and write a real description for each key page instead.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-keywords\n\nMyth vs fact · QA-lab URL Review\n\n#SEO #Playwright #AI #QA #MetaTags #Content #Coding #Programming #SearchConsole #SoftwareTesting #ContentMarketing #QAlab"
+   }
+  }
+ }
+}

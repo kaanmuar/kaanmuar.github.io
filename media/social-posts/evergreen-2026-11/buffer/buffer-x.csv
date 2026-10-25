@@ -1,0 +1,103 @@
+Text,Image URL,Tags,Posting Time
+"Time your server in one line.
+
+Run it a few times on your home page and your slowest template. Over 0.8 seconds? Look at the server before the front end.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=ttfb-curl
+#QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/01-ttfb-curl.jpg","","2026-11-14 08:35"
+"Myth: a Lighthouse 100 means accessible.
+
+After the score, try one real task with a screen reader: VoiceOver on a Mac, NVDA on Windows.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-lighthouse
+#QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/02-myth-lighthouse.jpg","","2026-11-15 13:25"
+"hreflang: the right page for each language.
+
+Open one translated page and check that it links to every language version, itself included. Google ignores links…
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=hreflang","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/03-hreflang.jpg","","2026-11-16 11:35"
+"Find the code your page never runs.
+
+Click through the page's main task, then sort by unused bytes. Split or defer the biggest file that stays mostly red.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=coverage
+#QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/04-coverage.jpg","","2026-11-17 09:50"
+"Myth: the padlock means the site is secure.
+
+Check what the padlock does not cover: response headers, cookie flags, outdated scripts and a DMARC record.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-https
+#QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/05-myth-https.jpg","","2026-11-18 16:55"
+"SRI: a fingerprint for borrowed scripts.
+
+List the scripts you load from other domains. Add an integrity hash to every one that has a fixed version.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=sri
+#QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/06-sri.jpg","","2026-11-19 16:05"
+"The 10-minute pre-release check.
+
+Copy the list into your release ticket and tick it on the live site, not on staging.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=pre-release
+#QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/07-pre-release.jpg","","2026-11-20 15:30"
+"See your page the way Googlebot does.
+
+Search the rendered HTML for your main heading and your key facts. If they are missing there, Google may not see them…
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=googlebot","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/08-googlebot.jpg","","2026-11-21 11:15"
+"INP: how fast the page answers a tap.
+
+Find the slowest tap on your page, often a menu or a filter, and break up the long task behind it.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=inp
+#WebPerformance #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg","","2026-11-22 14:10"
+"Myth: one line of code makes a site accessible.
+
+Spend the overlay budget on your shared templates first: header, navigation, forms and footer.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-overlay
+#QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/10-myth-overlay.jpg","","2026-11-23 14:25"
+"Preview colour blindness in two clicks.
+
+Check every error message, chart and link. If colour is the only signal, add text, an icon or an underline.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=vision
+#QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg","","2026-11-24 16:10"
+"Myth: a sitemap gets every page indexed.
+
+Open the Pages report in Search Console and filter it by your sitemap. Each page left out is listed with its…
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-sitemap","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/12-myth-sitemap.jpg","","2026-11-25 13:00"
+"LCP: when the main thing shows up.
+
+Open the Performance panel in Chrome DevTools: its live metrics name your LCP element. Make sure it is never lazy-loaded.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=lcp
+#QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/13-lcp.jpg","","2026-11-26 16:00"
+"The 5-minute accessibility check.
+
+Run all five on your home page and your busiest form. File each failure with its criterion number.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=a11y-check
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/14-a11y-check.jpg","","2026-11-27 08:05"
+"Can anyone send mail as your domain?
+
+Run the lookup on your domain. No answer? Publish p=none with a report address, read the reports, then move to quarantine.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=dmarc","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/15-dmarc.jpg","","2026-11-28 13:50"
+"Skip link: jump straight past the menu.
+
+Load your page and press Tab once. The first thing that appears should be a way to skip to the content.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=skip-link
+#QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/16-skip-link.jpg","","2026-11-29 14:05"
+"Your Lighthouse score is not your visitors.
+
+Read the top half first. If your page has no real-user data there, collect your own with Google's web-vitals…
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=field-vs-lab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/17-field-vs-lab.jpg","","2026-11-30 11:50"
+"Myth: meta keywords still help you rank.
+
+Search your templates for name=""keywords"". Remove it, and write a real description for each key page instead.
+
+carlosandmunoz.com/qa-review-guide?utm_source=x&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-keywords","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg","","2026-12-01 13:55"
