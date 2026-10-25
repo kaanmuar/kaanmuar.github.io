@@ -4390,6 +4390,26 @@ async function storedPlace(runId) {
   }
 }
 
+// spentBy on a run-credit row marks it taken by a run; a failed run clears it with the credit's return.
+async function lockCredit(creditId, runId) {
+  const db = admin.firestore();
+  const ref = db.collection("url_reviews").doc(creditId);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists || snap.get("spentBy")) return false;
+    tx.update(ref, { spentBy: String(runId || "run"), spentAt: new Date().toISOString() });
+    return true;
+  });
+}
+
+async function unlockCredit(creditId) {
+  try {
+    await admin.firestore().collection("url_reviews").doc(creditId).update({ spentBy: admin.firestore.FieldValue.delete(), spentAt: admin.firestore.FieldValue.delete() });
+  } catch (error) {
+    console.error("Credit unlock failed:", error);
+  }
+}
+
 async function runReview(req, res, placeOf) {
   const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(admin.firestore()), req.body || {});
   if (!signedIn.ok) {
@@ -4421,6 +4441,18 @@ async function runReview(req, res, placeOf) {
   let decision = free
     ? { ok: true }
     : urlReview.judgeAttempts(priorRows, { deviceId, ip }, Object.assign({}, intake.value, { test: testRun }));
+  // Competitors run side by side, so two runs can pick the same credit from the same rows: the first to
+  // lock it spends it, and the other judges again without it.
+  const takenCredits = [];
+  let lockedCredit = "";
+  while (!free && decision.ok && decision.consumeId && !decision.pass) {
+    if (await lockCredit(decision.consumeId, req.body && req.body.runId)) {
+      lockedCredit = decision.consumeId;
+      break;
+    }
+    takenCredits.push({ status: "run-credit-used", creditId: decision.consumeId, deviceId, ip });
+    decision = urlReview.judgeAttempts(priorRows.concat(takenCredits), { deviceId, ip }, Object.assign({}, intake.value, { test: testRun }));
+  }
   // A credit bought for exactly this run is spent first; otherwise an open pass with a run left carries it.
   if (!free && !decision.consumeId && decision.code !== "stopped" && decision.code !== "invalid") {
     const onPass = await passDecision(signedIn.email, intake.value);
@@ -4482,6 +4514,7 @@ async function runReview(req, res, placeOf) {
   });
   if (!claim.ok) {
     if (decision.pass) await giveBackPassRun(decision.pass.id, decision.consumeId);
+    if (lockedCredit) await unlockCredit(lockedCredit);
     res.status(claim.status).json({ error: claim.error });
     return;
   }
@@ -4634,6 +4667,7 @@ async function runReview(req, res, placeOf) {
       try {
         // A paid run that fails gives its credit back, so the same review can run again at no charge.
         await usedCredit.update({ status: "run-credit-returned", returnedAt: new Date().toISOString(), runId: runId || "" });
+        if (lockedCredit) await unlockCredit(lockedCredit);
         await rememberReview("credit-returned", Object.assign({ deviceId, test: testRun }, failed));
       } catch (returnError) {
         console.error("Credit return failed:", returnError);
@@ -4754,7 +4788,7 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
   memory: "4GiB",
   cpu: 4,
   concurrency: 1,
-  maxInstances: 3,
+  maxInstances: 6,
   timeoutSeconds: 120
 }, async (req, res) => {
   const key = process.env.BROWSER_KEY || "";
