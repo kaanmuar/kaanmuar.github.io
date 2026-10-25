@@ -32,7 +32,6 @@ const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/se
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const MODEL = "gemini-flash-latest";
 const core = require("./jarvis-core");
-const { AggregateField } = require("firebase-admin/firestore");
 const ADMIN_URL = ORIGIN + "/admin.html#stats/overview/1";
 
 function rangeDays(value) {
@@ -391,7 +390,7 @@ async function saveSettings(db, input, by) {
 
 const SITE_KINDS = { visits: "visit", exports: "export", runs: "run" };
 
-async function goalValue(db, goal, start, end) {
+async function goalValue(db, goal, start, end, sum) {
   const total = async (q) => (await q.count().get()).data().count;
   const between = (q, iso) => q.where("createdAt", ">=", iso ? start.toISOString() : start).where("createdAt", "<", iso ? end.toISOString() : end);
   if (SITE_KINDS[goal.metric] && ["cv", "studio", "lab"].includes(goal.product)) {
@@ -402,20 +401,20 @@ async function goalValue(db, goal, start, end) {
     if (goal.metric === "reviews") return total(between(db.collection("url_reviews"), true));
     const paid = between(db.collection("url_reviews").where("paid", "==", true), true);
     if (goal.metric === "paid") return total(paid);
-    const snap = await paid.aggregate({ usd: AggregateField.sum("priceUsd") }).get();
+    const snap = await paid.aggregate({ usd: sum("priceUsd") }).get();
     return Math.round((Number(snap.data().usd) || 0) * 100) / 100;
   }
   if (goal.product === "inbox") return total(between(db.collection(goal.metric === "ratings" ? "ratings" : "messages")));
   throw new Error("No such goal.");
 }
 
-async function goals(db, settings, { now }) {
+async function goals(db, settings, { now, sum }) {
   const at = new Date(now);
   const list = (settings || {}).goals || [];
   return Promise.all(list.map(async (goal) => {
     const w = core.periodWindow(goal.period, at);
     try {
-      return core.goalProgress(goal, await goalValue(db, goal, w.start, w.end), at);
+      return core.goalProgress(goal, await goalValue(db, goal, w.start, w.end, sum), at);
     } catch (error) {
       return Object.assign(core.goalProgress(goal, 0, at), { error: String(error.message || error).slice(0, 160) });
     }

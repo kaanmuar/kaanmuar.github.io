@@ -4493,6 +4493,7 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
 // Admin Statistics (js/admin-jarvis.js): server-only numbers, external sources, and owner actions. See functions/jarvis.js.
 const jarvis = require("./jarvis");
 const jarvisCore = require("./jarvis-core");
+const jarvisSum = (field) => admin.firestore.AggregateField.sum(field);
 const JARVIS_REPORTS = { site: (period) => sendPeriodReport(period), review: (period) => sendReviewPeriodReport(period) };
 
 async function jarvisCached(op, days, load) {
@@ -4533,7 +4534,7 @@ async function jarvisDaily({ force }) {
   const [{ products }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now }),
     jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4"], 1),
-    jarvis.goals(db, settings, { now })
+    jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const items = jarvisCore.briefing({ products, external, thresholds: settings.thresholds, goals: goalRows });
   let aiText = "";
@@ -4607,7 +4608,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     else if (op === "run-job") out = await jarvis.runJob(fetch, body.job);
     else if (op === "settings") out = await jarvis.readSettings(admin.firestore());
     else if (op === "settings-save") out = await jarvis.saveSettings(admin.firestore(), body.settings, operator);
-    else if (op === "goals") out = { goals: await jarvis.goals(admin.firestore(), await jarvis.readSettings(admin.firestore()), { now }) };
+    else if (op === "goals") out = { goals: await jarvis.goals(admin.firestore(), await jarvis.readSettings(admin.firestore()), { now, sum: jarvisSum }) };
     else if (op === "daily-now") out = await jarvisDaily({ force: true });
     else if (op === "send-report") {
       const kind = body.kind === "site" ? "site" : "review";

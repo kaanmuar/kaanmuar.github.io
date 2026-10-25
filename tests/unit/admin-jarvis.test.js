@@ -319,7 +319,7 @@ test("server: goal values come from count and sum aggregations with the right fi
   assert.equal(await jarvis.goalValue(db, { product: "cv", metric: "visits" }, start, end), 120);
   assert.equal(await jarvis.goalValue(db, { product: "review", metric: "paid" }, start, end), 7);
   assert.equal(await jarvis.goalValue(db, { product: "review", metric: "opens" }, start, end), 561);
-  assert.equal(await jarvis.goalValue(db, { product: "review", metric: "usd" }, start, end), 34.2);
+  assert.equal(await jarvis.goalValue(db, { product: "review", metric: "usd" }, start, end, (field) => ({ sum: field })), 34.2);
   const rows = await jarvis.goals(db, { goals: [{ product: "cv", metric: "visits", period: "week", target: 300 }] }, { now: Date.parse("2026-10-21T17:00:00Z") });
   assert.deepEqual([rows[0].value, rows[0].status], [120, "on-track"]);
 });
