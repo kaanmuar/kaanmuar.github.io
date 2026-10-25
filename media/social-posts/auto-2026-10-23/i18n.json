@@ -10,7 +10,7 @@
   },
   "es": {
    "tryThis": "Prueba esto",
-   "tip": "consejo",
+   "tip": "Consejo",
    "guided": "Visita guiada",
    "never": "Nunca ejecuta tus pruebas",
    "end": "Deja que tu página hable por ti.",
@@ -41,7 +41,7 @@
    "visual.areas.5.0": "Velocidad",
    "visual.note": "pirouline.com · 50 páginas analizadas · 22 oct 2026",
    "cat.label": "Carrera real · solicitada",
-   "cap.youtube": "Todos los enlaces internos que se abrieron respondieron, y los rastreadores de búsqueda y respuestas de IA pueden leer la página de inicio. Pero otros sitios pueden enmarcar la página.\n\nLección: Envíe los ancestros del marco 'self' en el CSP, o X-Frame-Options: SAMEORIGIN, para que otros sitios no puedan enmarcar sus páginas.\n\nUn análisis automatizado de páginas públicas el 22 de octubre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.\n\nInforme completo: https://carlosandmunoz.com/qa-review.html?live=u-pirouline-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-pirouline-com\n\nRevise su propio sitio: https://carlosandmunoz.com/qa-review.html\n\nRevisiones solicitadas · Revisión de URL de QA-lab\n\n#WebSecurity #Clickjacking #HTTPHeaders #QA #QAlab"
+   "cap.youtube": "Todos los enlaces internos que se abrieron respondieron, y los rastreadores de búsqueda y respuestas de IA pueden leer la página de inicio. Pero otros sitios pueden enmarcar la página.\n\nLección: Envíe los ancestros del marco 'self' en el CSP, o X-Frame-Options: SAMEORIGIN, para que otros sitios no puedan enmarcar sus páginas.\n\nUn análisis automatizado de páginas públicas el 22 de octubre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.\n\nInforme completo: https://carlosandmunoz.com/qa-review.html?live=u-pirouline-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-pirouline-com\n\nRevise su propio sitio: https://carlosandmunoz.com/qa-review.html\n\nRevisiones solicitadas · QA-lab URL Review\n\n#WebSecurity #Clickjacking #HTTPHeaders #QA #QAlab"
   },
   "u-postobon-com": {
    "title.0": "postobon.com: 49.",
@@ -58,7 +58,7 @@
    "visual.areas.5.0": "Velocidade",
    "visual.note": "postobon.com · 100 páginas analisadas · 22 out 2026",
    "cat.label": "Corrida real · solicitada",
-   "cap.youtube": "Cada página tem um título, e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas 25 controles de formulário não possuem rótulo.\n\nLição: Dê a cada entrada um rótulo visível vinculado a ela com for e id. Os leitores de tela anunciam isso e o alvo do toque aumenta.\n\nUma análise automatizada de páginas públicas em 22 de outubro de 2026, solicitada por meio da revisão de URL do laboratório de controle de qualidade. Um ponto de partida, não um veredicto.\n\nRelatório completo: https://carlosandmunoz.com/qa-review.html?live=u-postobon-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-postobon-com\n\nRevise seu próprio site: https://carlosandmunoz.com/qa-review.html\n\nAvaliações solicitadas · Revisão de URL do laboratório de controle de qualidade\n\n#Accessibility #Forms #A11y #QA #QAlab"
+   "cap.youtube": "Cada página tem um título, e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas 25 controles de formulário não possuem rótulo.\n\nLição: Dê a cada entrada um rótulo visível vinculado a ela com for e id. Os leitores de tela anunciam isso e o alvo do toque aumenta.\n\nUma análise automatizada de páginas públicas em 22 de outubro de 2026, solicitada por meio do QA-lab URL Review. Um ponto de partida, não um veredicto.\n\nRelatório completo: https://carlosandmunoz.com/qa-review.html?live=u-postobon-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-postobon-com\n\nRevise seu próprio site: https://carlosandmunoz.com/qa-review.html\n\nAvaliações solicitadas · QA-lab URL Review\n\n#Accessibility #Forms #A11y #QA #QAlab"
   },
   "u-monsterenergy-com": {
    "title.0": "monsterenergy.com: 71.",
@@ -75,7 +75,7 @@
    "visual.areas.5.0": "Geschwindigkeit",
    "visual.note": "monsterenergy.com · 77 Seiten analysiert · 22. Okt. 2026",
    "cat.label": "Echter Lauf · erbeten",
-   "cap.youtube": "Jede Seite hat einen Titel und KI-Antwort- und Suchcrawler können die Startseite lesen. Aber Links müssen erkennbaren Text haben.\n\nLektion: Geben Sie jedem Link einen Text, der angibt, wohin er führt. Allein ein Symbol benötigt eine Arienbeschriftung.\n\nEine automatisierte Analyse öffentlicher Seiten am 22. Oktober 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.\n\nVollständiger Bericht: https://carlosandmunoz.com/qa-review.html?live=u-monsterenergy-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-monsterenergy-com\n\nÜberprüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html\n\nAngeforderte Bewertungen · QA-Lab-URL-Überprüfung\n\n#Accessibility #A11y #WebDev #QA #QAlab"
+   "cap.youtube": "Jede Seite hat einen Titel und KI-Antwort- und Suchcrawler können die Startseite lesen. Aber Links müssen erkennbaren Text haben.\n\nLektion: Geben Sie jedem Link einen Text, der angibt, wohin er führt. Allein ein Symbol benötigt eine Arienbeschriftung.\n\nEine automatisierte Analyse öffentlicher Seiten am 22. Oktober 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.\n\nVollständiger Bericht: https://carlosandmunoz.com/qa-review.html?live=u-monsterenergy-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-monsterenergy-com\n\nÜberprüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html\n\nAngeforderte Bewertungen · QA-lab URL Review\n\n#Accessibility #A11y #WebDev #QA #QAlab"
   }
  },
  "cache": {
@@ -86,7 +86,7 @@
   "de\u0000Let your page do the talking.": "Lassen Sie Ihre Seite sprechen.",
   "de\u0000How a public-page review works, step by step.": "Wie eine Überprüfung einer öffentlichen Seite funktioniert, Schritt für Schritt.",
   "es\u0000Try this": "Prueba esto",
-  "es\u0000Tip": "consejo",
+  "es\u0000Tip": "Consejo",
   "es\u0000Guided tour": "Visita guiada",
   "es\u0000Never runs your tests": "Nunca ejecuta tus pruebas",
   "es\u0000Let your page do the talking.": "Deja que tu página hable por ti.",
@@ -115,7 +115,7 @@
   "es\u0000One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.": "Un análisis automatizado de páginas públicas el 22 de octubre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.",
   "es\u0000Full report:": "Informe completo:",
   "es\u0000Review your own site:": "Revise su propio sitio:",
-  "es\u0000Requested reviews · QA-lab URL Review": "Revisiones solicitadas · Revisión de URL de QA-lab",
+  "es\u0000Requested reviews · QA-lab URL Review": "Revisiones solicitadas · QA-lab URL Review",
   "pt\u0000postobon.com: 49.": "postobon.com: 49.",
   "pt\u0000The gap: form labels.": "A lacuna: rótulos de formulário.",
   "pt\u0000Every page has a title, and AI answer and search crawlers may read the start page. But 25 form controls have no label.": "Cada página tem um título, e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas 25 controles de formulário não possuem rótulo.",
@@ -131,10 +131,10 @@
   "pt\u0000postobon.com · 100 pages analyzed · 22 Oct 2026": "postobon.com · 100 páginas analisadas · 22 out 2026",
   "pt\u0000Real run · requested": "Corrida real · solicitada",
   "pt\u0000Lesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.": "Lição: Dê a cada entrada um rótulo visível vinculado a ela com for e id. Os leitores de tela anunciam isso e o alvo do toque aumenta.",
-  "pt\u0000One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.": "Uma análise automatizada de páginas públicas em 22 de outubro de 2026, solicitada por meio da revisão de URL do laboratório de controle de qualidade. Um ponto de partida, não um veredicto.",
+  "pt\u0000One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.": "Uma análise automatizada de páginas públicas em 22 de outubro de 2026, solicitada por meio do QA-lab URL Review. Um ponto de partida, não um veredicto.",
   "pt\u0000Full report:": "Relatório completo:",
   "pt\u0000Review your own site:": "Revise seu próprio site:",
-  "pt\u0000Requested reviews · QA-lab URL Review": "Avaliações solicitadas · Revisão de URL do laboratório de controle de qualidade",
+  "pt\u0000Requested reviews · QA-lab URL Review": "Avaliações solicitadas · QA-lab URL Review",
   "de\u0000monsterenergy.com: 71.": "monsterenergy.com: 71.",
   "de\u0000The gap: link names.": "Die Lücke: Linknamen.",
   "de\u0000Every page has a title, and AI answer and search crawlers may read the start page. But links must have discernible text.": "Jede Seite hat einen Titel und KI-Antwort- und Suchcrawler können die Startseite lesen. Aber Links müssen erkennbaren Text haben.",
@@ -153,6 +153,6 @@
   "de\u0000One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.": "Eine automatisierte Analyse öffentlicher Seiten am 22. Oktober 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.",
   "de\u0000Full report:": "Vollständiger Bericht:",
   "de\u0000Review your own site:": "Überprüfen Sie Ihre eigene Website:",
-  "de\u0000Requested reviews · QA-lab URL Review": "Angeforderte Bewertungen · QA-Lab-URL-Überprüfung"
+  "de\u0000Requested reviews · QA-lab URL Review": "Angeforderte Bewertungen · QA-lab URL Review"
  }
 }
