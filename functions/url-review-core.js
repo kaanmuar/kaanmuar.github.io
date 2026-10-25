@@ -1147,6 +1147,81 @@ function actionLink(tag) {
   return /(^|\s)nofollow(\s|$)/i.test(attr(tag, "rel")) && AUTH_ROUTE.test(attr(tag, "href"));
 }
 
+function outboundLink(from, href) {
+  try {
+    const next = new URL(href, from);
+    if (!/^https?:$/.test(next.protocol) || next.hostname === new URL(from).hostname || hostBlocked(next.hostname)) return "";
+    next.hash = "";
+    return next.toString();
+  } catch (error) {
+    return "";
+  }
+}
+
+const OUTBOUND_MAX = 40;
+const OUTBOUND_AT_ONCE = 6;
+const OUTBOUND_MS = 8000;
+const OUTBOUND_BLOCKED = [401, 403, 429, 999];
+const SHORTENERS = /^(bit\.ly|t\.co|goo\.gl|ow\.ly|tinyurl\.com|lnkd\.in|buff\.ly|rebrand\.ly|cutt\.ly|is\.gd|youtu\.be|amzn\.to|fb\.me|wa\.me)$/i;
+
+// example.co.uk and www.shop.example.co.uk are one site; consent.youtube.com and youtube.com too.
+function siteKey(host) {
+  const labels = String(host || "").toLowerCase().split(".");
+  const keep = labels.length > 2 && labels[labels.length - 1].length === 2 && /^(co|com|org|net|gov|gob|edu|ac|or|ne)$/.test(labels[labels.length - 2]) ? 3 : 2;
+  return labels.slice(-keep).join(".");
+}
+
+function outboundKind(url, row) {
+  if (row.error) return "broken";
+  if (row.plainHttp) return "moved";
+  if (OUTBOUND_BLOCKED.indexOf(row.status) !== -1) return "blocked";
+  if (row.status >= 400) return "broken";
+  const was = new URL(url);
+  let now = was;
+  try { now = new URL(row.final || url); } catch (error) { now = was; }
+  if (SHORTENERS.test(was.hostname)) return "ok";
+  if (siteKey(was.hostname) !== siteKey(now.hostname)) return "moved";
+  if (was.pathname !== "/" && now.pathname === "/") return "moved";
+  return "ok";
+}
+
+async function checkOutbound(pages, halt, until) {
+  const from = new Map();
+  pages.forEach((page) => ((page.inspect && page.inspect.outbound) || []).forEach((url) => {
+    if (!from.has(url)) from.set(url, []);
+    if (from.get(url).length < 3 && from.get(url).indexOf(page.path) === -1) from.get(url).push(page.path);
+  }));
+  const all = [...from.keys()];
+  const http = all.filter((url) => /^http:/.test(url));
+  const queue = all.filter((url) => /^https:/.test(url)).slice(0, OUTBOUND_MAX);
+  const rows = [];
+  const one = async (url) => {
+    let row;
+    try {
+      const res = await withTimeout(fetchPublic(url, halt, null, false), OUTBOUND_MS, null);
+      row = res ? { status: res.status, final: clean(res.url, 300) } : { error: "no answer in " + OUTBOUND_MS / 1000 + " s" };
+    } catch (error) {
+      const message = String((error && error.message) || error);
+      if (/not a public website|private address|^stopped$/i.test(message)) return;
+      const plain = message.match(/redirected to (http:\/\/\S+?), an http/);
+      row = plain ? { status: 0, final: plain[1], plainHttp: true } : { error: /did not resolve/.test(message) ? "a host name that does not resolve" : clean(message, 120) };
+    }
+    rows.push(Object.assign({ url: clean(url, 300), from: from.get(url) }, row, { kind: outboundKind(url, row) }));
+  };
+  for (let i = 0; i < queue.length; i += OUTBOUND_AT_ONCE) {
+    if (Date.now() > until || (halt && halt())) break;
+    await Promise.all(queue.slice(i, i + OUTBOUND_AT_ONCE).map(one));
+  }
+  return {
+    found: all.length,
+    checked: rows.length,
+    ok: rows.filter((row) => row.kind === "ok").length,
+    rows: rows.filter((row) => row.kind !== "ok"),
+    http: http.slice(0, 20).map((url) => ({ url: clean(url, 300), from: from.get(url) })),
+    httpCount: http.length
+  };
+}
+
 function sameHost(from, href) {
   try {
     const next = new URL(href, from);
@@ -1440,6 +1515,13 @@ function inspect(html, headers, pageUrl) {
     const href = sameHost(pageUrl, raw);
     if (href && links.length < 100) links.push(href);
   });
+  const outbound = [];
+  collect(markup, "a").forEach((tag) => {
+    const raw = attr(tag, "href");
+    if (outbound.length >= 50 || /\$\{|\{\{|%7B/i.test(raw)) return;
+    const href = outboundLink(pageUrl, raw);
+    if (href && outbound.indexOf(href) === -1) outbound.push(href);
+  });
   const mailtos = [];
   const addMail = (email) => { if (email && mailtos.indexOf(email) === -1 && mailtos.length < 5) mailtos.push(email); };
   collect(markup, "a").forEach((tag) => {
@@ -1581,6 +1663,7 @@ function inspect(html, headers, pageUrl) {
     buttons,
     unlabeled,
     links: [...new Set(links)],
+    outbound,
     scripts: scripts.length,
     styles,
     generator: clean(generator, 80),
@@ -2952,9 +3035,16 @@ async function reviewTarget(rawUrl, hooks) {
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
   note("Proposed " + cases.length + " test cases across " + Object.keys(caseRank.countLayers(cases)).length + " layers" + (robotsBlocked ? ". " + robotsBlocked + " linked page" + (robotsBlocked === 1 ? " was" : "s were") + " skipped for robots.txt" : "") + ".");
   const alerts = buildAlerts(first.body, homeInspect, pagePath(first.url));
+  const outboundPromise = stopped ? Promise.resolve(null) : checkOutbound(pages, halt, deadline - 15000).catch(() => null);
   let extras = {};
   if (!extrasSettled) note("Waiting for the background checks to finish.");
   try { extras = await extrasPromise; } catch (error) { extras = {}; }
+  extras.outbound = await outboundPromise;
+  if (extras.outbound && (extras.outbound.found || extras.outbound.httpCount)) {
+    const out = extras.outbound;
+    const count = (kind) => out.rows.filter((row) => row.kind === kind).length;
+    note("Checked " + out.checked + " of " + out.found + " external links: " + count("broken") + " broken, " + count("moved") + " moved, " + count("blocked") + " blocked for this reader" + (out.httpCount ? ", " + out.httpCount + " on plain http, not requested" : "") + ".");
+  }
   cases = domainCases(cases, extras);
   const found = pagesFound(pages, startQueue, await sitemapPromise, first.url, prefix);
   found.count = Math.max(found.count, pages.length);
@@ -3815,6 +3905,10 @@ function previewReport(report) {
 }
 
 module.exports = {
+  outboundLink,
+  outboundKind,
+  checkOutbound,
+  siteKey,
   requestDirect,
   MAX_HEADER_BYTES,
   decodeBody,

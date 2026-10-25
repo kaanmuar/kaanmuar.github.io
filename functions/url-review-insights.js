@@ -876,6 +876,29 @@ function analyze(input) {
   } else if (pages.length > 1 && !unanswered.length && !blocked.length) {
     add("SEO", "pass", "info", "seo-broken-links", "Every internal link that was opened answered", plural(pages.length - 1, "linked page") + " answered without an error.", "", { cases: ["FN-06", "LK-01"] });
   }
+  const outbound = extras.outbound;
+  if (outbound && (outbound.checked || outbound.httpCount)) {
+    const ofKind = (kind) => (outbound.rows || []).filter((row) => row.kind === kind);
+    const linkedFrom = (row) => row.from && row.from.length ? ", linked from " + sample(row.from, 2) : "";
+    const fromPages = (list) => [...new Set([].concat.apply([], list.map((row) => row.from || [])))];
+    const checkedText = " " + plural(outbound.checked, "external address was", "external addresses were") + " checked" + (outbound.found > outbound.checked ? " of " + outbound.found + " found" : "") + ".";
+    const dead = ofKind("broken");
+    if (dead.length) add("SEO", "risk", "medium", "seo-external-links", plural(dead.length, "external link leads", "external links lead") + " to an error",
+      dead.slice(0, 5).map((row) => row.url + (row.error ? " gave " + row.error : " answered " + row.status) + linkedFrom(row)).join(". ") + "." + checkedText,
+      "Update each link to the page's new address, link to an archived copy on web.archive.org, or remove it.", { pages: fromPages(dead), count: dead.length, effort: "hours" });
+    else if (outbound.checked) add("SEO", "pass", "info", "seo-external-links", "Every external link that was checked answered", plural(outbound.ok, "external address") + " answered without an error." + checkedText, "");
+    const moved = ofKind("moved");
+    if (moved.length) add("SEO", "risk", "low", "seo-external-moved", plural(moved.length, "external link redirects", "external links redirect") + " to another site or a home page",
+      sample(moved.map((row) => row.url + " lands on " + (row.final || "an http:// address") + linkedFrom(row)), 4) + ". The page it pointed to has probably moved or gone.",
+      "Point each link at the address it now lands on, or replace it if the page is gone.", { pages: fromPages(moved), count: moved.length, effort: "hours" });
+    const refused = ofKind("blocked");
+    if (refused.length) add("SEO", "person", "info", "seo-external-blocked", plural(refused.length, "external link was", "external links were") + " blocked for this reader",
+      sample(refused.map((row) => row.url + " answered " + row.status), 4) + ". A block aimed at automated readers is not proof the link is broken, and those links were not scored.",
+      "Open each link in a browser to confirm it still works.", { pages: fromPages(refused), count: refused.length });
+    if (outbound.httpCount) add("SEO", "risk", "low", "seo-external-http", plural(outbound.httpCount, "external link uses", "external links use") + " plain http",
+      sample((outbound.http || []).map((row) => row.url + linkedFrom(row)), 4) + ". Visitors leave the encrypted connection, and browsers may warn. These links were not requested.",
+      "Change each link to https when the other site supports it.", { pages: fromPages(outbound.http || []), count: outbound.httpCount, effort: "minutes" });
+  }
 
   const redirected = pages.filter((page) => page.depth > 0 && page.hops > 0 && !blockedAnswer(page));
   if (redirected.length) {
