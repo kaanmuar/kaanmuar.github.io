@@ -1,5 +1,5 @@
 /* The many-URL comparison report: qa-review.html?comparison=<id> opens a comparison saved by the account,
-   with a summary table on top and then every section of the review report, one column per URL. Each column
+   with the benchmark (js/qa-review-benchmark.js) and a summary table on top and then every section of the review report, one column per URL. Each column
    is drawn by the report's own painters (QAReviewSections in js/qa-review.js). A report the account has not
    paid comes under the frost, and Print and Download PDF open once every report in it is paid. */
 (function () {
@@ -282,7 +282,8 @@
     const hosts = '<div class="multi-row multi-hosts" style="--cols:' + n + '">' + data.columns.map((col) =>
       '<div class="multi-cell"><p class="multi-host" translate="no">' + esc(col.host) + "</p>" +
       (col.missing ? "" : '<p class="meta-line" translate="no">' + esc(col.at ? new Date(col.at).toLocaleDateString(code) : "") + (col.paid ? "" : ' · <a class="no-print" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>") + "</p>") + "</div>").join("") + "</div>";
-    return summaryHtml(data) + '<div class="multi-scroll multi-grid">' + hosts + SECTIONS.map(([key, cell]) =>
+    const bench = window.QAReviewBenchmark ? QAReviewBenchmark.html(data) : "";
+    return bench + summaryHtml(data) + '<div class="multi-scroll multi-grid">' + hosts + SECTIONS.map(([key, cell]) =>
       '<section class="multi-sec" data-sec="' + key + '"><h2 translate="no">' + esc(book.sections[key] || COPY.en.sections[key]) + '</h2><div class="multi-row" style="--cols:' + n + '">' +
       data.columns.map((col, index) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '">' + (col.missing ? '<p class="muted">' + esc(t("missing")) + "</p>" : cell) + "</div>").join("") +
       "</div></section>").join("") + "</div>";

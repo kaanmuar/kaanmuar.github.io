@@ -5,7 +5,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 const Glossary = require("../../js/site-glossary.js");
 
-const FILES = ["qa-review-report-copy", "qa-review-compare-copy", "qa-review-multi", "qa-review-pay-copy", "qa-review-findings-copy"];
+const FILES = ["qa-review-report-copy", "qa-review-compare-copy", "qa-review-multi", "qa-review-benchmark", "qa-review-pay-copy", "qa-review-findings-copy"];
 const LANGS = ["es", "pt", "de", "fr", "it"];
 // The glossary fixes machine translation; these catch the regional forms a person writing by hand slips into.
 const REGIONAL = {
