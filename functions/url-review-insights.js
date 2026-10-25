@@ -444,17 +444,17 @@ function watchChecks(watch, consent, add) {
 
   const typed = before.typed || (after && after.typed);
   if (!typed) return;
-  const sentTo = (row) => (row && row.typed ? row.typed.sent : []).map((s) => s.host + " (" + s.how + ")").join(", ");
-  const listening = before.listeners && before.listeners.length ? " Scripts from " + before.listeners.slice(0, 4).join(", ") + " listen to typing on the page." : "";
-  if (sentTo(before) || sentTo(after)) {
-    add("Security", "fail", "high", "sec-typed", "Typed text is sent before the form is submitted",
-      "The review typed a test address into the \"" + typed.field + "\" field and did not submit. " +
-      [sentTo(before) ? "Before any choice it was sent to " + sentTo(before) + "." : "", sentTo(after) ? rejected + "it was sent to " + sentTo(after) + "." : ""].filter(Boolean).join(" ") +
-      " The review blocked those requests, so the test address did not leave the browser." + listening,
-      "Turn off form-field capture in the tags that send it, such as automatic advanced matching, form analytics, or an unmasked session recorder, or send the data only on submit and after consent.", { effort: "hours", cases: ["PR-02"] });
+  const sentTo = (row) => (row && row.typed ? row.typed.sent : []).map((s) => say("pathNote", { path: s.host, note: s.how }));
+  const listening = before.listeners && before.listeners.length ? say("sec-typed.listening", { list: { items: before.listeners.slice(0, 4) } }) : "";
+  if (sentTo(before).length || sentTo(after).length) {
+    const sent = [sentTo(before).length ? say("sec-typed.before", { list: { items: sentTo(before) } }) : "",
+      sentTo(after).length ? say("sec-typed.after", { label: consent.rejectLabel, list: { items: sentTo(after) } }) : ""].filter(Boolean);
+    add("Security", "fail", "high", "sec-typed", say("sec-typed.title"),
+      say("sec-typed.evidence", { field: typed.field, sent: { items: sent, sep: " " }, listening }),
+      say("sec-typed.fix"), { effort: "hours", cases: ["PR-02"] });
   } else {
-    add("Security", "pass", "info", "sec-typed", "Typing in a form sends nothing before submit",
-      "The review typed a test address into the \"" + typed.field + "\" field without submitting, and no other site received it." + listening, "", { cases: ["PR-02"] });
+    add("Security", "pass", "info", "sec-typed", say("sec-typed.pass.title"),
+      say("sec-typed.pass.evidence", { field: typed.field, listening }), "", { cases: ["PR-02"] });
   }
 }
 
@@ -514,18 +514,25 @@ function libraryChecks(ctx, add) {
   const rows = libraryRows(read, browsed);
   if (!rows.length) return;
   const flawed = rows.filter((row) => row.flaws);
-  const list = "the retire.js list of " + libraries.LIST_DATE;
+  const source = say("sec-libraries.source", { date: libraries.LIST_DATE });
   if (!flawed.length) {
-    add("Security", "pass", "info", "sec-libraries", "Front-end libraries have no known flaw", sample(rows.map((row) => row.name + " " + row.version), 5) + ", checked against " + list + ".", "", { cases: ["SEC-10"] });
+    add("Security", "pass", "info", "sec-libraries", say("sec-libraries.pass.title"), say("sec-libraries.pass.evidence", { list: some(rows.map((row) => row.name + " " + row.version), 5), source }), "", { cases: ["SEC-10"] });
     return;
   }
-  const where = (row) => row.via === "global" ? "read from the page" : (row.via === "banner" ? "banner of " : "") + shownAgainst(row.url, origin);
+  const where = (row) => row.via === "global" ? say("sec-libraries.page") : row.via === "banner" ? say("sec-libraries.banner", { url: shownAgainst(row.url, origin) }) : shownAgainst(row.url, origin);
+  const worst = (row) => LIB_SEVERITY[row.worst] ? say("sec-libraries.worst." + row.worst) : row.worst;
   const [verdict, severity] = LIB_SEVERITY[flawed[0].worst] || LIB_SEVERITY.medium;
-  const evidence = flawed.slice(0, 4).map((row, index) => row.name + " " + row.version + " (" + where(row) + "): " + plural(row.flaws, "known flaw") + ", the worst rated " + row.worst +
-    (row.ids.length ? ", such as " + row.ids.join(", ") : "") + (index === 0 && row.summary ? ". " + row.summary.replace(/\.?$/, ".") : ".")).join(" ") + (flawed.length > 4 ? " " + plural(flawed.length - 4, "more library", "more libraries") + " also have flaws." : "") + " Checked against " + list + ".";
-  const steps = flawed.slice(0, 4).map((row) => row.ended ? "move " + row.name + " off " + row.version.split(".")[0] + ".x, which gets no more fixes" : "upgrade " + row.name + " to " + row.fixed + " or later");
-  const fix = steps.join("; ").replace(/^./, (c) => c.toUpperCase()) + "." + (flawed.some((row) => row.majorJump) ? " A major upgrade changes behavior, so retest the pages that use it." : "");
-  add("Security", verdict, severity, "sec-libraries", flawed.length === 1 ? flawed[0].name + " " + flawed[0].version + (flawed[0].flaws === 1 ? " has a known flaw" : " has known flaws") : plural(flawed.length, "front-end library has", "front-end libraries have") + " known flaws",
+  const evidence = say("sec-libraries.evidence", {
+    rows: { items: flawed.slice(0, 4).map((row, index) => say("sec-libraries.row", { name: row.name, version: row.version, where: where(row), flaws: say("sec-libraries.flaws", { n: row.flaws }), worst: worst(row),
+      ids: row.ids.length ? say("sec-libraries.ids", { list: { items: row.ids } }) : "", summary: index === 0 && row.summary ? " " + row.summary.replace(/\.?$/, ".") : "" })), sep: " " },
+    more: flawed.length > 4 ? say("sec-libraries.more", { n: flawed.length - 4 }) : "",
+    source
+  });
+  const steps = flawed.slice(0, 4).map((row, index) => row.ended
+    ? say("sec-libraries.ended" + (index ? "" : ".first"), { name: row.name, major: row.version.split(".")[0] })
+    : say("sec-libraries.upgrade" + (index ? "" : ".first"), { name: row.name, fixed: row.fixed }));
+  const fix = say("sec-libraries.fix", { steps: { items: steps, sep: "; " }, jump: flawed.some((row) => row.majorJump) ? say("sec-libraries.jump") : "" });
+  add("Security", verdict, severity, "sec-libraries", flawed.length === 1 ? say("sec-libraries.one.title", { name: flawed[0].name, version: flawed[0].version, n: flawed[0].flaws }) : say("sec-libraries.title", { n: flawed.length }),
     evidence, fix, { effort: flawed.some((row) => row.majorJump) ? "days" : "hours", count: flawed.length, cases: ["SEC-10"] });
 }
 
@@ -659,8 +666,8 @@ function browserChecks(b, add, ctx) {
 
   // Security: what the browser actually requested over plain http.
   const mixed = b.mixed || {};
-  if (mixed.count) add("Security", "fail", "medium", "sec-mixed-live", "The browser requested plain http resources", sample(mixed.samples, 3) + ".", "Load every resource over https.", { count: mixed.count, effort: "minutes", cases: ["SEC-09"] });
-  else if (start.status) add("Security", "pass", "info", "sec-mixed-live", "Every request in the browser used https", plural(start.requests || 0, "request") + " on the start page.", "", { cases: ["SEC-09"] });
+  if (mixed.count) add("Security", "fail", "medium", "sec-mixed-live", say("sec-mixed-live.title"), say("listDot", { list: some(mixed.samples, 3) }), say("sec-mixed-live.fix"), { count: mixed.count, effort: "minutes", cases: ["SEC-09"] });
+  else if (start.status) add("Security", "pass", "info", "sec-mixed-live", say("sec-mixed-live.pass.title"), say("sec-mixed-live.pass.evidence", { n: start.requests || 0 }), "", { cases: ["SEC-09"] });
 }
 
 const FIELD_NAMES = { lcp: "Largest Contentful Paint", inp: "Interaction to Next Paint", cls: "Cumulative Layout Shift" };
@@ -687,41 +694,44 @@ function domainChecks(extras, dnsInfo, dnsRead, add) {
   const end = (text) => String(text).replace(/\.*$/, ".");
   const sb = extras.safeBrowsing;
   if (sb && sb.ok) {
-    const words = sb.threats.map((item) => THREAT_WORDS[item] || item.toLowerCase().replace(/_/g, " "));
-    if (words.length) add("Security", "fail", "critical", "sec-safebrowsing", "Google lists the site as " + words.join(" and "),
-      "Google's Safe Browsing lists, read through the Web Risk API, match " + sb.url + " as " + words.join(" and ") + ". Chrome, Firefox and Safari show a red warning page instead of the site, and Google Search can label it.",
-      "Find and remove the cause using the Security issues report in Google Search Console, then request a review there.", { effort: "days", cases: ["SEC-11"] });
-    else add("Security", "pass", "info", "sec-safebrowsing", "Google's Safe Browsing lists do not flag the site", "The Web Risk API found " + sb.url + " on no malware, phishing or unwanted-software list.", "", { cases: ["SEC-11"] });
+    const words = sb.threats.map((item) => THREAT_WORDS[item] ? say("threat." + item) : item.toLowerCase().replace(/_/g, " "));
+    const threats = { items: words, join: "and" };
+    if (words.length) add("Security", "fail", "critical", "sec-safebrowsing", say("sec-safebrowsing.title", { threats }),
+      say("sec-safebrowsing.evidence", { url: sb.url, threats }),
+      say("sec-safebrowsing.fix"), { effort: "days", cases: ["SEC-11"] });
+    else add("Security", "pass", "info", "sec-safebrowsing", say("sec-safebrowsing.pass.title"), say("sec-safebrowsing.pass.evidence", { url: sb.url }), "", { cases: ["SEC-11"] });
   }
   const dom = extras.domain;
   if (dom && dom.read) {
-    const at = dom.registrar ? " at " + dom.registrar : "";
-    const held = dom.domain + (dom.registrar ? ", held with " + dom.registrar + "," : "");
-    if (dom.expires && dom.daysLeft < 0) add("Security", "fail", "high", "sec-domain-expiry", "The domain registration has expired",
-      held + " expired on " + dom.expires + ", according to the registry's RDAP record. The site and its mail stop working when the grace period ends, and anyone can then register the name.", "Renew the domain now and turn on automatic renewal.", { effort: "minutes", cases: ["SEC-12"] });
-    else if (dom.expires && dom.daysLeft < 30) add("Security", "risk", dom.daysLeft < 7 ? "high" : "medium", "sec-domain-expiry", "The domain expires in " + plural(dom.daysLeft, "day"),
-      held + " is registered until " + dom.expires + ", according to the registry's RDAP record.", "Confirm that automatic renewal is on and the payment method on file is valid.", { effort: "minutes", cases: ["SEC-12"] });
-    else if (dom.expires) add("Security", "pass", "info", "sec-domain-expiry", "The domain is registered for " + plural(dom.daysLeft, "more day"), held + " is registered until " + dom.expires + ".", "", { cases: ["SEC-12"] });
-    if (dom.locked === false) add("Security", "risk", "low", "sec-domain-lock", "The domain has no transfer lock",
-      "The RDAP status of " + dom.domain + " is " + (dom.status.join(", ") || "empty") + ", with no clientTransferProhibited. A hijacked registrar account or a forged request can move the domain away.", end("Turn on the transfer lock" + at), { effort: "minutes", cases: ["SEC-12"] });
-    else if (dom.locked) add("Security", "pass", "info", "sec-domain-lock", "The domain is locked against transfer", "The RDAP status of " + dom.domain + " includes " + dom.status.filter((item) => /transfer/i.test(item)).join(", ") + ".", "", { cases: ["SEC-12"] });
+    const registrar = dom.registrar ? String(dom.registrar).replace(/\.*$/, "") : "";
+    const held = dom.registrar ? say("sec-domain.held", { domain: dom.domain, registrar: dom.registrar }) : dom.domain;
+    if (dom.expires && dom.daysLeft < 0) add("Security", "fail", "high", "sec-domain-expiry", say("sec-domain-expiry.expired.title"),
+      say("sec-domain-expiry.expired.evidence", { held, date: dom.expires }), say("sec-domain-expiry.expired.fix"), { effort: "minutes", cases: ["SEC-12"] });
+    else if (dom.expires && dom.daysLeft < 30) add("Security", "risk", dom.daysLeft < 7 ? "high" : "medium", "sec-domain-expiry", say("sec-domain-expiry.soon.title", { n: dom.daysLeft }),
+      say("sec-domain-expiry.soon.evidence", { held, date: dom.expires }), say("sec-domain-expiry.soon.fix"), { effort: "minutes", cases: ["SEC-12"] });
+    else if (dom.expires) add("Security", "pass", "info", "sec-domain-expiry", say("sec-domain-expiry.pass.title", { n: dom.daysLeft }), say("sec-domain-expiry.pass.evidence", { held, date: dom.expires }), "", { cases: ["SEC-12"] });
+    if (dom.locked === false) add("Security", "risk", "low", "sec-domain-lock", say("sec-domain-lock.title"),
+      say("sec-domain-lock.evidence", { domain: dom.domain, status: dom.status.length ? { items: dom.status } : say("sec-domain-lock.empty") }),
+      registrar ? say("sec-domain-lock.fixAt", { registrar }) : say("sec-domain-lock.fix"), { effort: "minutes", cases: ["SEC-12"] });
+    else if (dom.locked) add("Security", "pass", "info", "sec-domain-lock", say("sec-domain-lock.pass.title"), say("sec-domain-lock.pass.evidence", { domain: dom.domain, status: { items: dom.status.filter((item) => /transfer/i.test(item)) } }), "", { cases: ["SEC-12"] });
   }
   if (!dnsInfo || !dnsInfo.domain || !dnsRead("mx") || !(dnsInfo.mx || []).length) return;
   const domain = dnsInfo.domain;
   if (dnsRead("mta-sts")) {
     const policy = dnsInfo.mtaStsPolicy || {};
-    if (!dnsInfo.mtaSts) add("Security", "risk", "low", "sec-mta-sts", "No MTA-STS policy protects mail sent to the domain",
-      domain + " receives mail but publishes no _mta-sts TXT record. Sending servers fall back to unencrypted delivery if an attacker on the path strips STARTTLS.", "Publish an MTA-STS policy in mode: testing with a TLS-RPT address, then move to enforce once reports are clean.", { effort: "hours", cases: ["SEC-13"] });
-    else if (!policy.mode) add("Security", "risk", "low", "sec-mta-sts", "MTA-STS is announced but its policy could not be read",
-      "_mta-sts." + domain + " publishes " + dnsInfo.mtaSts + ", but " + (policy.url || "the policy file") + " could not be used: " + end(policy.error || "no answer") + " Senders ignore a policy they cannot fetch.", "Serve the policy as text over https at mta-sts." + domain + "/.well-known/mta-sts.txt, without a redirect.", { effort: "hours", cases: ["SEC-13"] });
-    else if (policy.mode === "enforce") add("Security", "pass", "info", "sec-mta-sts", "MTA-STS makes senders use TLS for mail to the domain", "The policy at " + policy.url + " is in enforce mode.", "", { cases: ["SEC-13"] });
-    else add("Security", "risk", "low", "sec-mta-sts", policy.mode === "testing" ? "MTA-STS only reports and does not enforce" : "MTA-STS is switched off",
-      "The policy at " + policy.url + " is in " + policy.mode + " mode, so senders still deliver without TLS when STARTTLS is stripped.", "Move the policy to mode: enforce once TLS-RPT reports show no failures.", { effort: "minutes", cases: ["SEC-13"] });
+    if (!dnsInfo.mtaSts) add("Security", "risk", "low", "sec-mta-sts", say("sec-mta-sts.none.title"),
+      say("sec-mta-sts.none.evidence", { domain }), say("sec-mta-sts.none.fix"), { effort: "hours", cases: ["SEC-13"] });
+    else if (!policy.mode) add("Security", "risk", "low", "sec-mta-sts", say("sec-mta-sts.unread.title"),
+      say("sec-mta-sts.unread.evidence", { domain, record: dnsInfo.mtaSts, url: policy.url || say("sec-mta-sts.policyFile"), error: policy.error ? end(policy.error) : say("listDot", { list: say("noAnswer") }) }),
+      say("sec-mta-sts.unread.fix", { domain }), { effort: "hours", cases: ["SEC-13"] });
+    else if (policy.mode === "enforce") add("Security", "pass", "info", "sec-mta-sts", say("sec-mta-sts.pass.title"), say("sec-mta-sts.pass.evidence", { url: policy.url }), "", { cases: ["SEC-13"] });
+    else add("Security", "risk", "low", "sec-mta-sts", say(policy.mode === "testing" ? "sec-mta-sts.testing.title" : "sec-mta-sts.off.title"),
+      say("sec-mta-sts.weak.evidence", { url: policy.url, mode: policy.mode }), say("sec-mta-sts.weak.fix"), { effort: "minutes", cases: ["SEC-13"] });
   }
   if (dnsRead("tlsrpt")) {
-    if (dnsInfo.tlsRpt) add("Security", "pass", "info", "sec-tlsrpt", "TLS-RPT sends reports of failed secure deliveries", dnsInfo.tlsRpt.slice(0, 120) + ".", "", { cases: ["SEC-13"] });
-    else add("Security", "risk", "low", "sec-tlsrpt", "No TLS-RPT address receives reports of failed secure deliveries",
-      "_smtp._tls." + domain + " has no v=TLSRPTv1 record, so nobody hears when senders cannot deliver mail over TLS.", "Publish TXT \"v=TLSRPTv1; rua=mailto:tlsrpt@" + domain + "\" at _smtp._tls." + domain + ".", { effort: "minutes", cases: ["SEC-13"] });
+    if (dnsInfo.tlsRpt) add("Security", "pass", "info", "sec-tlsrpt", say("sec-tlsrpt.pass.title"), say("listDot", { list: dnsInfo.tlsRpt.slice(0, 120) }), "", { cases: ["SEC-13"] });
+    else add("Security", "risk", "low", "sec-tlsrpt", say("sec-tlsrpt.title"),
+      say("sec-tlsrpt.evidence", { domain }), say("sec-tlsrpt.fix", { domain }), { effort: "minutes", cases: ["SEC-13"] });
   }
 }
 
@@ -1471,7 +1481,7 @@ function analyze(input) {
   });
   const spread = (key) => {
     const missing = headerRows.filter((row) => !row[key]);
-    const text = headerRows.length < 2 ? "" : missing.length === headerRows.length ? " Missing on all " + headerRows.length + " pages analyzed." : " Missing on " + missing.length + " of " + headerRows.length + " pages analyzed.";
+    const text = headerRows.length < 2 ? "" : missing.length === headerRows.length ? say("sec-spread.all", { n: headerRows.length }) : say("sec-spread.some", { missing: missing.length, n: headerRows.length });
     return { text, pages: missing.map((row) => row.path) };
   };
   const HEADER_LABEL = { hsts: "HSTS", csp: "Content-Security-Policy", frame: "frame protection", nosniff: "X-Content-Type-Options", referrer: "Referrer-Policy", permissions: "Permissions-Policy", coop: "Cross-Origin-Opener-Policy" };
@@ -1481,104 +1491,115 @@ function analyze(input) {
   }).filter((item) => item.homeHas && item.missing.length);
   if (uneven.length) {
     const lacking = [...new Set([].concat.apply([], uneven.map((item) => item.missing.map((row) => row.path))))];
-    add("Security", "risk", "medium", "sec-headers-uneven", "Security headers on the start page are missing on other pages",
-      uneven.map((item) => HEADER_LABEL[item.key] + " on " + plural(item.missing.length, "page")).join(", ") + ", out of " + plural(headerRows.length, "page") + " analyzed. Attackers pick the weakest page.",
-      "Set the headers once at the server, CDN, or host config so every response carries them.", { pages: lacking, count: lacking.length, effort: "minutes", cases: ["SEC-02", "SEC-03", "SEC-04"] });
+    add("Security", "risk", "medium", "sec-headers-uneven", say("sec-headers-uneven.title"),
+      say("sec-headers-uneven.evidence", { list: { items: uneven.map((item) => say("sec-headers-uneven.row", { label: item.key === "frame" ? say("sec-headers.frame") : HEADER_LABEL[item.key], n: item.missing.length })) }, n: headerRows.length }),
+      say("sec-headers-uneven.fix"), { pages: lacking, count: lacking.length, effort: "minutes", cases: ["SEC-02", "SEC-03", "SEC-04"] });
   }
   const httpCheck = extras.httpRedirect || null;
   if (httpCheck) {
     const hops = httpCheck.statuses && httpCheck.statuses.length ? httpCheck.statuses : [httpCheck.status];
-    const answered = "http:// answered " + hops.join(" → ") + " to " + httpCheck.location + ".";
-    if (httpCheck.error) add("Security", "pass", "info", "sec-http", "Plain http does not serve the site", "Port 80 did not answer, so nothing is served without encryption.", "", { cases: ["SEC-01"] });
-    else if (hops.every((code) => [301, 308].indexOf(code) !== -1) && /^https:/i.test(httpCheck.location || "")) add("Security", "pass", "info", "sec-http", "Plain http redirects permanently to https", answered, "", { cases: ["SEC-01"] });
-    else if (hops.every((code) => [301, 302, 303, 307, 308].indexOf(code) !== -1) && /^https:/i.test(httpCheck.location || "")) add("Security", "risk", "low", "sec-http", "Plain http redirects to https with a temporary code", answered + " A 301 or 308 tells browsers and search engines the move is permanent.", "Use a 301 redirect from http to https.", { effort: "minutes", cases: ["SEC-01"] });
-    else add("Security", "fail", "high", "sec-http", "Plain http serves the site without redirecting", "http:// answered " + httpCheck.status + (httpCheck.location ? " to " + httpCheck.location : "") + ". Visitors who type the address stay unencrypted.", "Redirect every http request to https with a 301, then add HSTS.", { effort: "minutes", cases: ["SEC-01"] });
+    const answered = say("sec-http.answered", { hops: { items: hops, sep: " → " }, location: httpCheck.location });
+    if (httpCheck.error) add("Security", "pass", "info", "sec-http", say("sec-http.closed.title"), say("sec-http.closed.evidence"), "", { cases: ["SEC-01"] });
+    else if (hops.every((code) => [301, 308].indexOf(code) !== -1) && /^https:/i.test(httpCheck.location || "")) add("Security", "pass", "info", "sec-http", say("sec-http.pass.title"), answered, "", { cases: ["SEC-01"] });
+    else if (hops.every((code) => [301, 302, 303, 307, 308].indexOf(code) !== -1) && /^https:/i.test(httpCheck.location || "")) add("Security", "risk", "low", "sec-http", say("sec-http.temporary.title"), say("sec-http.temporary.evidence", { answered }), say("sec-http.temporary.fix"), { effort: "minutes", cases: ["SEC-01"] });
+    else add("Security", "fail", "high", "sec-http", say("sec-http.title"), say("sec-http.evidence", { status: httpCheck.status, to: httpCheck.location ? say("sec-http.to", { location: httpCheck.location }) : "" }), say("sec-http.fix"), { effort: "minutes", cases: ["SEC-01"] });
   }
-  if (!hdr.hsts) add("Security", "fail", "medium", "sec-hsts", "HSTS is not sent", "strict-transport-security was absent on the start page." + spread("hsts").text + " A first visit over http can be intercepted.", "Send Strict-Transport-Security: max-age=31536000; includeSubDomains.", { pages: spread("hsts").pages, effort: "minutes", cases: ["SEC-02"] });
+  if (!hdr.hsts) add("Security", "fail", "medium", "sec-hsts", say("sec-hsts.title"), say("sec-hsts.evidence", { spread: spread("hsts").text }), say("sec-hsts.fix"), { pages: spread("hsts").pages, effort: "minutes", cases: ["SEC-02"] });
   else {
     const age = Number((String(hdr.hsts).match(/max-age\s*=\s*(\d+)/i) || [])[1] || 0);
-    if (age < 15552000) add("Security", "risk", "low", "sec-hsts", "HSTS max-age is shorter than six months", "max-age=" + age + ".", "Raise max-age to at least 15552000 (one year is 31536000).", { effort: "minutes", cases: ["SEC-02"] });
-    else add("Security", "pass", "info", "sec-hsts", "HSTS is sent with a long max-age", hdr.hsts + ".", "", { cases: ["SEC-02"] });
+    if (age < 15552000) add("Security", "risk", "low", "sec-hsts", say("sec-hsts.short.title"), say("sec-hsts.short.evidence", { age }), say("sec-hsts.short.fix"), { effort: "minutes", cases: ["SEC-02"] });
+    else add("Security", "pass", "info", "sec-hsts", say("sec-hsts.pass.title"), say("listDot", { list: hdr.hsts }), "", { cases: ["SEC-02"] });
   }
   const csp = cspDirectives(hdr.csp);
   if (!hdr.csp) {
-    add("Security", "risk", "medium", "sec-csp", "No content security policy", "content-security-policy was absent on the start page." + spread("csp").text + " Injected scripts are not limited by the browser.",
-      "Start with the Report-Only policy in the fix kit, watch the reports for a week, then enforce it.", { pages: spread("csp").pages, effort: "hours", cases: ["SEC-03"] });
+    add("Security", "risk", "medium", "sec-csp", say("sec-csp.title"), say("sec-csp.evidence", { spread: spread("csp").text }),
+      say("sec-csp.fix"), { pages: spread("csp").pages, effort: "hours", cases: ["SEC-03"] });
   } else {
     const scriptSrc = csp["script-src"] || csp["default-src"] || [];
     const issues = [];
-    if (!csp["default-src"] && !csp["script-src"]) issues.push("no default-src or script-src");
-    if (scriptSrc.indexOf("'unsafe-inline'") !== -1 && !scriptSrc.some((token) => /^'(nonce|sha256|sha384|sha512)-/.test(token) || token === "'strict-dynamic'")) issues.push("script-src allows 'unsafe-inline'");
-    if (scriptSrc.indexOf("'unsafe-eval'") !== -1) issues.push("script-src allows 'unsafe-eval'");
-    if (scriptSrc.indexOf("*") !== -1 || scriptSrc.indexOf("https:") !== -1) issues.push("script-src allows any host");
-    if (!csp["object-src"] && !(csp["default-src"] || []).some((token) => token === "'none'")) issues.push("object-src is not 'none'");
-    if (!csp["base-uri"]) issues.push("base-uri is not set");
-    if (issues.length) add("Security", "risk", issues.some((issue) => /any host|unsafe-inline/.test(issue)) ? "medium" : "low", "sec-csp", "The content security policy has gaps", sample(issues, 5) + ".",
-      "Replace 'unsafe-inline' with nonces or hashes, limit hosts, and add object-src 'none' and base-uri 'self'.", { count: issues.length, effort: "hours", cases: ["SEC-03"] });
-    else add("Security", "pass", "info", "sec-csp", "The content security policy is strict", "No unsafe-inline, unsafe-eval, or wildcard was found in script-src.", "", { cases: ["SEC-03"] });
+    if (!csp["default-src"] && !csp["script-src"]) issues.push("noDefault");
+    if (scriptSrc.indexOf("'unsafe-inline'") !== -1 && !scriptSrc.some((token) => /^'(nonce|sha256|sha384|sha512)-/.test(token) || token === "'strict-dynamic'")) issues.push("unsafeInline");
+    if (scriptSrc.indexOf("'unsafe-eval'") !== -1) issues.push("unsafeEval");
+    if (scriptSrc.indexOf("*") !== -1 || scriptSrc.indexOf("https:") !== -1) issues.push("anyHost");
+    if (!csp["object-src"] && !(csp["default-src"] || []).some((token) => token === "'none'")) issues.push("object");
+    if (!csp["base-uri"]) issues.push("base");
+    if (issues.length) add("Security", "risk", issues.some((issue) => issue === "anyHost" || issue === "unsafeInline") ? "medium" : "low", "sec-csp", say("sec-csp.gaps.title"), say("listDot", { list: some(issues.map((issue) => say("sec-csp.issue." + issue)), 5) }),
+      say("sec-csp.gaps.fix"), { count: issues.length, effort: "hours", cases: ["SEC-03"] });
+    else add("Security", "pass", "info", "sec-csp", say("sec-csp.pass.title"), say("sec-csp.pass.evidence"), "", { cases: ["SEC-03"] });
   }
-  const allowFrom = hdr.frame && !framesGuarded(hdr.frame) ? "X-Frame-Options: " + hdr.frame + " was sent, but current browsers ignore ALLOW-FROM" : "";
-  if (!framesGuarded(hdr.frame) && !csp["frame-ancestors"]) add("Security", "risk", "medium", "sec-frame", "Other sites can frame the page", (allowFrom ? allowFrom + " and no CSP frame-ancestors was sent" : "Neither X-Frame-Options nor CSP frame-ancestors was sent") + ", so the page can be framed for clickjacking." + spread("frame").text, allowFrom ? "Send Content-Security-Policy: frame-ancestors 'self' plus each origin allowed to frame the page, in place of ALLOW-FROM." : "Send Content-Security-Policy: frame-ancestors 'self' (and X-Frame-Options: SAMEORIGIN for old browsers).", { pages: spread("frame").pages, effort: "minutes", cases: ["SEC-04"] });
-  else add("Security", "pass", "info", "sec-frame", "Framing is limited", (framesGuarded(hdr.frame) ? "X-Frame-Options: " + hdr.frame : "frame-ancestors " + csp["frame-ancestors"].join(" ")) + "." + (allowFrom ? " " + allowFrom + "." : ""), "", { cases: ["SEC-04"] });
-  if (!hdr.nosniff) add("Security", "risk", "low", "sec-nosniff", "X-Content-Type-Options is not sent", "Browsers may guess a file's type and run it as script." + spread("nosniff").text, "Send X-Content-Type-Options: nosniff.", { pages: spread("nosniff").pages, effort: "minutes", cases: ["SEC-04"] });
-  if (!hdr.referrer) add("Security", "risk", "low", "sec-referrer", "Referrer-Policy is not sent", "Browsers fall back to their default. An explicit policy keeps full URLs from leaking to other sites." + spread("referrer").text, "Send Referrer-Policy: strict-origin-when-cross-origin.", { pages: spread("referrer").pages, effort: "minutes", cases: ["SEC-05"] });
-  if (!rawHeaders.permissions) add("Security", "risk", "low", "sec-permissions", "Permissions-Policy is not sent", "Embedded content can ask for the camera, microphone, or location." + spread("permissions").text, "Send Permissions-Policy: camera=(), microphone=(), geolocation=().", { pages: spread("permissions").pages, effort: "minutes", cases: ["SEC-08"] });
+  const allowFrom = hdr.frame && !framesGuarded(hdr.frame) ? say("sec-frame.allowFrom", { value: hdr.frame }) : "";
+  if (!framesGuarded(hdr.frame) && !csp["frame-ancestors"]) add("Security", "risk", "medium", "sec-frame", say("sec-frame.title"), allowFrom ? say("sec-frame.evidenceAllow", { allowFrom, spread: spread("frame").text }) : say("sec-frame.evidence", { spread: spread("frame").text }), say(allowFrom ? "sec-frame.fixAllow" : "sec-frame.fix"), { pages: spread("frame").pages, effort: "minutes", cases: ["SEC-04"] });
+  else add("Security", "pass", "info", "sec-frame", say("sec-frame.pass.title"), say("sec-frame.pass.evidence", { value: framesGuarded(hdr.frame) ? "X-Frame-Options: " + hdr.frame : "frame-ancestors " + csp["frame-ancestors"].join(" "), allow: allowFrom ? say("sec-frame.allowAfter", { allowFrom }) : "" }), "", { cases: ["SEC-04"] });
+  if (!hdr.nosniff) add("Security", "risk", "low", "sec-nosniff", say("sec-nosniff.title"), say("sec-nosniff.evidence", { spread: spread("nosniff").text }), say("sec-nosniff.fix"), { pages: spread("nosniff").pages, effort: "minutes", cases: ["SEC-04"] });
+  if (!hdr.referrer) add("Security", "risk", "low", "sec-referrer", say("sec-referrer.title"), say("sec-referrer.evidence", { spread: spread("referrer").text }), say("sec-referrer.fix"), { pages: spread("referrer").pages, effort: "minutes", cases: ["SEC-05"] });
+  if (!rawHeaders.permissions) add("Security", "risk", "low", "sec-permissions", say("sec-permissions.title"), say("sec-permissions.evidence", { spread: spread("permissions").text }), say("sec-permissions.fix"), { pages: spread("permissions").pages, effort: "minutes", cases: ["SEC-08"] });
   const coop = policyOf(hdr.coop);
   const coep = policyOf(hdr.coep);
-  if (COOP_GUARDED.indexOf(coop) !== -1) add("Security", "pass", "info", "sec-coop", "Cross-Origin-Opener-Policy keeps other windows out", "cross-origin-opener-policy: " + hdr.coop + ".", "", { cases: ["SEC-16"] });
-  else add("Security", "risk", "low", "sec-coop", coop ? "Cross-Origin-Opener-Policy is " + coop : "Cross-Origin-Opener-Policy is not sent",
-    "A window the page opens, or that opens it, keeps a handle to it, which tabnabbing and cross-site leaks use." + spread("coop").text,
-    "Send Cross-Origin-Opener-Policy: same-origin-allow-popups, or same-origin when the site opens no sign-in or payment popup.", { pages: spread("coop").pages, effort: "minutes", cases: ["SEC-16"] });
+  if (COOP_GUARDED.indexOf(coop) !== -1) add("Security", "pass", "info", "sec-coop", say("sec-coop.pass.title"), say("sec-coop.pass.evidence", { value: hdr.coop }), "", { cases: ["SEC-16"] });
+  else add("Security", "risk", "low", "sec-coop", coop ? say("sec-coop.is.title", { value: coop }) : say("sec-coop.title"),
+    say("sec-coop.evidence", { spread: spread("coop").text }),
+    say("sec-coop.fix"), { pages: spread("coop").pages, effort: "minutes", cases: ["SEC-16"] });
   const isolatedNow = browsed && browsed.backForward && browsed.backForward.ran ? browsed.backForward.isolated : null;
-  const isolationFacts = "COOP: " + (hdr.coop || "absent") + ". COEP: " + (hdr.coep || "absent") + ". CORP: " + (hdr.corp || "absent") + "." + (isolatedNow == null ? "" : " The browser reported crossOriginIsolated " + isolatedNow + ".");
+  const absent = say("sec-isolation.absent");
+  const isolationFacts = say("sec-isolation.facts", { coop: hdr.coop || absent, coep: hdr.coep || absent, corp: hdr.corp || absent, browser: isolatedNow == null ? "" : say("sec-isolation.browser", { value: String(isolatedNow) }) });
   if (ISOLATING_COEP.indexOf(coep) !== -1 && coop !== "same-origin") {
-    add("Security", "fail", "medium", "sec-isolation", "The page asks for cross-origin isolation but does not get it",
-      isolationFacts + " Isolation needs COOP same-origin as well as COEP, so SharedArrayBuffer and precise timers stay off.",
-      "Send Cross-Origin-Opener-Policy: same-origin next to the COEP header, or drop COEP if the page does not need isolation.", { effort: "minutes", cases: ["SEC-16"] });
-  } else if (ISOLATING_COEP.indexOf(coep) !== -1) add("Security", "pass", "info", "sec-isolation", "The page is cross-origin isolated", isolationFacts, "", { cases: ["SEC-16"] });
-  else add("Security", "pass", "info", "sec-isolation", "Cross-origin isolation is not requested", isolationFacts + " COEP is only needed by pages that use SharedArrayBuffer or precise timers.", "", { cases: ["SEC-16"] });
+    add("Security", "fail", "medium", "sec-isolation", say("sec-isolation.title"),
+      say("sec-isolation.evidence", { facts: isolationFacts }),
+      say("sec-isolation.fix"), { effort: "minutes", cases: ["SEC-16"] });
+  } else if (ISOLATING_COEP.indexOf(coep) !== -1) add("Security", "pass", "info", "sec-isolation", say("sec-isolation.pass.title"), isolationFacts, "", { cases: ["SEC-16"] });
+  else add("Security", "pass", "info", "sec-isolation", say("sec-isolation.none.title"), say("sec-isolation.none.evidence", { facts: isolationFacts }), "", { cases: ["SEC-16"] });
   const cookieNames = (list) => [...new Set(list.map((cookie) => cookie.name))];
   const jar = [].concat.apply([], read.map((page) => (page.inspect.cookies || []).map((cookie) => Object.assign({ path: page.path }, cookie))));
   const insecure = cookieNames(jar.filter((cookie) => !cookie.secure));
   const exposedSession = cookieNames(jar.filter((cookie) => !cookie.httpOnly && /sess|sid$|^sid|auth|token|login|jwt|csrf/i.test(cookie.name)));
   const cookiePages = [...new Set(jar.filter((cookie) => !cookie.secure || (!cookie.httpOnly && /sess|sid$|^sid|auth|token|login|jwt|csrf/i.test(cookie.name))).map((cookie) => cookie.path))];
   if (insecure.length || exposedSession.length) {
+    const titleBits = {
+      insecure: insecure.length ? say("sec-cookies.insecure", { n: insecure.length }) : "",
+      exposed: exposedSession.length ? say("sec-cookies.exposed", { n: exposedSession.length }) : ""
+    };
     add("Security", "risk", exposedSession.length ? "high" : "medium", "sec-cookies",
-      [insecure.length ? plural(insecure.length, "cookie is", "cookies are") + " sent without Secure" : "", exposedSession.length ? plural(exposedSession.length, "session cookie is", "session cookies are") + " readable by scripts" : ""].filter(Boolean).join(", and "),
-      (insecure.length ? "Without Secure: " + sample(insecure, 4) + ". " : "") + (exposedSession.length ? "Without HttpOnly: " + sample(exposedSession, 4) + ". A script injected into the page could steal the session. " : "") + "Set on " + sample(cookiePages, 3) + ".",
-      "Set Secure on every cookie, and HttpOnly plus SameSite=Lax on session cookies.", { pages: cookiePages, count: insecure.length + exposedSession.length, effort: "minutes", cases: ["SEC-06"] });
+      titleBits.insecure && titleBits.exposed ? say("sec-cookies.both", titleBits) : titleBits.insecure || titleBits.exposed,
+      say("sec-cookies.evidence", {
+        secure: insecure.length ? say("sec-cookies.withoutSecure", { list: some(insecure, 4) }) : "",
+        httpOnly: exposedSession.length ? say("sec-cookies.withoutHttpOnly", { list: some(exposedSession, 4) }) : "",
+        pages: some(cookiePages, 3)
+      }),
+      say("sec-cookies.fix"), { pages: cookiePages, count: insecure.length + exposedSession.length, effort: "minutes", cases: ["SEC-06"] });
   } else if (jar.length) {
-    add("Security", "pass", "info", "sec-cookies", "Cookies are Secure, and session cookies are HttpOnly", plural(cookieNames(jar).length, "cookie") + " checked across " + plural(new Set(jar.map((cookie) => cookie.path)).size, "page") + ".", "", { cases: ["SEC-06"] });
+    add("Security", "pass", "info", "sec-cookies", say("sec-cookies.pass.title"), say("sec-cookies.pass.evidence", { cookies: say("sec-cookies.count", { n: cookieNames(jar).length }), pages: say("pagesN", { n: new Set(jar.map((cookie) => cookie.path)).size }) }), "", { cases: ["SEC-06"] });
   }
   const version = [hdr.server, rawHeaders.poweredBy].filter((value) => /\d+\.\d+/.test(value || ""));
-  if (version.length) add("Security", "risk", "low", "sec-version", "Headers reveal a software version", version.join(", ") + ". Version numbers make it easier to match known flaws.", "Hide version numbers (server_tokens off, expose_php = Off).", { effort: "minutes", cases: ["SEC-07"] });
+  if (version.length) add("Security", "risk", "low", "sec-version", say("sec-version.title"), say("sec-version.evidence", { list: { items: version } }), say("sec-version.fix"), { effort: "minutes", cases: ["SEC-07"] });
   const noSri = [];
   read.forEach((page) => ((page.inspect.sri && page.inspect.sri.missing) || []).forEach((h) => { if (!NO_SRI_HOSTS.test(h) && noSri.indexOf(h) === -1) noSri.push(h); }));
-  if (noSri.length) add("Security", "risk", "low", "sec-sri", plural(noSri.length, "script host is", "script hosts are") + " loaded without integrity checks", sample(noSri, 4) + ". If that CDN is compromised, its code runs on the site.", "Add integrity=\"sha384-…\" and crossorigin=\"anonymous\" to fixed-version CDN scripts.", { count: noSri.length, effort: "minutes" });
+  if (noSri.length) add("Security", "risk", "low", "sec-sri", say("sec-sri.title", { n: noSri.length }), say("sec-sri.evidence", { list: some(noSri, 4) }), say("sec-sri.fix"), { count: noSri.length, effort: "minutes" });
   const mixed = read.filter((page) => (page.inspect.signals && page.inspect.signals.mixed) > 0);
-  if (mixed.length) add("Security", "risk", "medium", "sec-mixed", plural(mixed.length, "page references", "pages reference") + " plain http resources", sample(mixed.map((page) => page.path + " (" + page.inspect.signals.mixed + ")"), 3) + ".", "Change the references to https or protocol-relative paths.", { pages: mixed.map((page) => page.path), effort: "minutes", cases: ["SEC-09"] });
+  if (mixed.length) add("Security", "risk", "medium", "sec-mixed", say("sec-mixed.title", { n: mixed.length }), say("listDot", { list: some(mixed.map((page) => say("pathNote", { path: page.path, note: page.inspect.signals.mixed })), 3) }), say("sec-mixed.fix"), { pages: mixed.map((page) => page.path), effort: "minutes", cases: ["SEC-09"] });
   const tls = extras.tls || null;
   if (tls && tls.validTo) {
     const days = tls.daysLeft;
-    if (days < 0) add("Security", "fail", "critical", "sec-tls", "The TLS certificate has expired", "It expired on " + tls.validTo + ".", "Renew the certificate now and turn on automatic renewal.", { effort: "minutes" });
-    else if (days < 14) add("Security", "fail", "high", "sec-tls", "The TLS certificate expires in " + plural(days, "day"), "Valid until " + tls.validTo + (tls.issuer ? ", issued by " + tls.issuer : "") + ".", "Renew now and check that automatic renewal works.", { effort: "minutes" });
-    else if (days < 30) add("Security", "risk", "medium", "sec-tls", "The TLS certificate expires in " + plural(days, "day"), "Valid until " + tls.validTo + (tls.issuer ? ", issued by " + tls.issuer : "") + ".", "Confirm that automatic renewal is scheduled.", { effort: "minutes" });
-    else add("Security", "pass", "info", "sec-tls", "The TLS certificate is valid for " + plural(days, "more day"), "Valid until " + tls.validTo + (tls.issuer ? ", issued by " + tls.issuer : "") + ".", "");
+    const valid = say("sec-tls.valid", { date: tls.validTo, issuer: tls.issuer ? say("sec-tls.issuer", { issuer: tls.issuer }) : "" });
+    if (days < 0) add("Security", "fail", "critical", "sec-tls", say("sec-tls.expired.title"), say("sec-tls.expired.evidence", { date: tls.validTo }), say("sec-tls.expired.fix"), { effort: "minutes" });
+    else if (days < 14) add("Security", "fail", "high", "sec-tls", say("sec-tls.expires.title", { n: days }), valid, say("sec-tls.urgent.fix"), { effort: "minutes" });
+    else if (days < 30) add("Security", "risk", "medium", "sec-tls", say("sec-tls.expires.title", { n: days }), valid, say("sec-tls.soon.fix"), { effort: "minutes" });
+    else add("Security", "pass", "info", "sec-tls", say("sec-tls.pass.title", { n: days }), valid, "");
   }
   if (tls && tls.missingIntermediate) {
-    add("Security", "risk", "medium", "sec-tls-chain", "The server leaves out its intermediate certificate",
-      "It sends its certificate without " + tls.missingIntermediate + ". Browsers fetch the missing certificate themselves, but apps, API clients, payment and webhook callers, curl and many crawlers refuse the connection with \"unable to verify the first certificate\".",
-      "Install the full chain on the server: the site certificate followed by the intermediate bundle from the certificate authority.", { effort: "minutes" });
+    add("Security", "risk", "medium", "sec-tls-chain", say("sec-tls-chain.title"),
+      say("sec-tls-chain.evidence", { name: tls.missingIntermediate }),
+      say("sec-tls-chain.fix"), { effort: "minutes" });
   }
   const sec = extras.securityTxt || null;
   if (sec) {
     if (sec.status === 200 && !sec.html && /contact\s*:/i.test(sec.body || "")) {
       const expires = ((sec.body || "").match(/^\s*expires\s*:\s*(.+)$/im) || [])[1];
       const past = expires && !isNaN(Date.parse(expires)) && Date.parse(expires) < Date.now();
-      if (past) add("Security", "risk", "medium", "sec-securitytxt", "security.txt has expired", "Expires: " + expires.trim() + ". Researchers may ignore an expired file.", "Update the Expires field.", { effort: "minutes" });
-      else add("Security", "pass", "info", "sec-securitytxt", "security.txt tells researchers how to report a flaw", "/.well-known/security.txt has a Contact line.", "");
+      if (past) add("Security", "risk", "medium", "sec-securitytxt", say("sec-securitytxt.expired.title"), say("sec-securitytxt.expired.evidence", { date: expires.trim() }), say("sec-securitytxt.expired.fix"), { effort: "minutes" });
+      else add("Security", "pass", "info", "sec-securitytxt", say("sec-securitytxt.pass.title"), say("sec-securitytxt.pass.evidence"), "");
     } else {
-      add("Security", "risk", "low", "sec-securitytxt", "No security.txt", "/.well-known/security.txt " + (sec.status === 200 && sec.html ? "answered with a web page instead of a text file" : "returned " + (sec.status || "nothing")) + ". Researchers who find a flaw have no published way to report it.", "Publish /.well-known/security.txt with Contact and Expires. The fix kit has a draft.", { effort: "minutes" });
+      const answer = sec.status === 200 && sec.html ? say("sec-securitytxt.html") : say("sec-securitytxt.returned", { status: sec.status || say("nothing") });
+      add("Security", "risk", "low", "sec-securitytxt", say("sec-securitytxt.title"), say("sec-securitytxt.evidence", { answer }), say("sec-securitytxt.fix"), { effort: "minutes" });
     }
   }
   const dnsInfo = extras.dns || null;
@@ -1588,22 +1609,23 @@ function analyze(input) {
     const unread = dnsInfo.unread || [];
     // A lookup that timed out says nothing about the record, so it gets no finding either way.
     const mailRead = dnsRead("spf") && dnsRead("mx");
-    if (mailRead && sendsMail && !dnsInfo.spf) add("Security", "risk", "medium", "sec-spf", "The domain receives mail but publishes no SPF record", dnsInfo.domain + " has MX records and no v=spf1 TXT record. Anyone can send mail that claims to be from it.", "Publish an SPF record that lists the services that send your mail.", { effort: "minutes" });
+    const domain = dnsInfo.domain;
+    if (mailRead && sendsMail && !dnsInfo.spf) add("Security", "risk", "medium", "sec-spf", say("sec-spf.missing.title"), say("sec-spf.missing.evidence", { domain }), say("sec-spf.missing.fix"), { effort: "minutes" });
     if (mailRead && !sendsMail && !dnsInfo.spf) {
-      if (dnsInfo.nullMx && /p\s*=\s*(reject|quarantine)/i.test(dnsInfo.dmarc || "")) add("Security", "pass", "info", "sec-spf", "The domain says it handles no mail", dnsInfo.domain + " publishes a null MX (MX 0 .), so it accepts no mail, and its DMARC policy turns away mail sent in its name.", "");
-      else if (dnsInfo.nullMx) add("Security", "risk", "low", "sec-spf", "The domain refuses mail but does not say it sends none", dnsInfo.domain + " publishes a null MX (MX 0 .), so it accepts no mail, but it has no SPF record that rejects mail sent in its name.", "Publish TXT \"v=spf1 -all\" next to the null MX.", { effort: "minutes" });
-      else add("Security", "risk", "low", "sec-spf", "The domain does not say it sends no mail", dnsInfo.domain + " has no MX and no SPF record.", "Publish TXT \"v=spf1 -all\" so mail claiming to come from it is rejected.", { effort: "minutes" });
+      if (dnsInfo.nullMx && /p\s*=\s*(reject|quarantine)/i.test(dnsInfo.dmarc || "")) add("Security", "pass", "info", "sec-spf", say("sec-spf.nullOk.title"), say("sec-spf.nullOk.evidence", { domain }), "");
+      else if (dnsInfo.nullMx) add("Security", "risk", "low", "sec-spf", say("sec-spf.nullNoSpf.title"), say("sec-spf.nullNoSpf.evidence", { domain }), say("sec-spf.nullNoSpf.fix"), { effort: "minutes" });
+      else add("Security", "risk", "low", "sec-spf", say("sec-spf.none.title"), say("sec-spf.none.evidence", { domain }), say("sec-spf.none.fix"), { effort: "minutes" });
     }
-    if (!dnsInfo.dmarc && !unread.includes("dmarc")) add("Security", "risk", sendsMail ? "medium" : "low", "sec-dmarc", "No DMARC policy", "_dmarc." + dnsInfo.domain + " has no v=DMARC1 record. Spoofed mail from this domain is not rejected, and Gmail and Yahoo now expect DMARC from bulk senders.", "Start with p=none and a rua address, then move to quarantine or reject.", { effort: "minutes" });
-    else if (/p\s*=\s*none/i.test(dnsInfo.dmarc)) add("Security", "risk", "low", "sec-dmarc", "DMARC only monitors", "The policy is p=none, so spoofed mail is still delivered.", "Move to p=quarantine, then p=reject, once reports look clean.", { effort: "hours" });
-    else if (dnsInfo.dmarc) add("Security", "pass", "info", "sec-dmarc", "DMARC rejects or quarantines spoofed mail", dnsInfo.dmarc.slice(0, 120) + ".", "");
-    if (dnsInfo.spf && sendsMail) add("Security", "pass", "info", "sec-spf", "SPF is published", dnsInfo.spf.slice(0, 120) + ".", "");
-    if (!(dnsInfo.caa || []).length && !unread.includes("caa")) add("Security", "risk", "low", "sec-caa", "No CAA record limits who may issue certificates", dnsInfo.domain + " has no CAA record, so any certificate authority may issue for it.", "Add a CAA record for the authority you use, for example 0 issue \"letsencrypt.org\".", { effort: "minutes" });
-    if (dnsInfo.bimi) add("Security", "pass", "info", "sec-bimi", "BIMI publishes the brand logo for inboxes", dnsInfo.bimi.slice(0, 160) + ".", "");
+    if (!dnsInfo.dmarc && !unread.includes("dmarc")) add("Security", "risk", sendsMail ? "medium" : "low", "sec-dmarc", say("sec-dmarc.title"), say("sec-dmarc.evidence", { domain }), say("sec-dmarc.fix"), { effort: "minutes" });
+    else if (/p\s*=\s*none/i.test(dnsInfo.dmarc)) add("Security", "risk", "low", "sec-dmarc", say("sec-dmarc.monitor.title"), say("sec-dmarc.monitor.evidence"), say("sec-dmarc.monitor.fix"), { effort: "hours" });
+    else if (dnsInfo.dmarc) add("Security", "pass", "info", "sec-dmarc", say("sec-dmarc.pass.title"), say("listDot", { list: dnsInfo.dmarc.slice(0, 120) }), "");
+    if (dnsInfo.spf && sendsMail) add("Security", "pass", "info", "sec-spf", say("sec-spf.pass.title"), say("listDot", { list: dnsInfo.spf.slice(0, 120) }), "");
+    if (!(dnsInfo.caa || []).length && !unread.includes("caa")) add("Security", "risk", "low", "sec-caa", say("sec-caa.title"), say("sec-caa.evidence", { domain }), say("sec-caa.fix"), { effort: "minutes" });
+    if (dnsInfo.bimi) add("Security", "pass", "info", "sec-bimi", say("sec-bimi.pass.title"), say("listDot", { list: dnsInfo.bimi.slice(0, 160) }), "");
   }
   domainChecks(extras, dnsInfo, dnsRead, add);
   (input.alerts || []).filter((alert) => alert.level === "Leak").forEach((alert, index) => {
-    add("Security", "fail", "critical", "sec-leak-" + index, alert.title, alert.detail, "Remove it from the page and rotate the secret.", { effort: "hours" });
+    add("Security", "fail", "critical", "sec-leak-" + index, alert.title, alert.detail, say("sec-leak.fix"), { effort: "hours" });
   });
 
   // Accessibility
