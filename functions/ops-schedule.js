@@ -2,7 +2,7 @@
    means it was missed. functions/index.js reads the Firebase crons from here, every Firebase job writes
    ops_runs/<job> when it ends, and opsWatchdog compares the two each morning.
 
-   Firebase crons are Bogotá time. The night (00:00-05:45) belongs to the country sweep, so it never competes with people
+   Firebase crons are Bogotá time. The night (00:00-06:00, the 05:45 tick ends by 05:59) belongs to the country sweep, so it never competes with people
    for the review browser (3 instances); failures are handled at dawn, reports go out before 08:00, and
    anything that emails a person waits for Monday-Saturday daytime (Ley 2300 de 2023). */
 
@@ -10,7 +10,7 @@ const TIME_ZONE = "America/Bogota";
 const H = 3600000;
 
 const JOBS = [
-  { job: "sweepReviews", cron: "*/15 0-5 * * *", gap: 20, what: "Review the next country-sweep site (one per tick, capped per day)" },
+  { job: "sweepReviews", cron: "*/15 0-5 * * *", gap: 20, what: "Review the next country-sweep sites (up to 4 a tick, each tick done in 15 minutes, capped per day)" },
   { job: "rivalSweep", cron: "7-52/15 1-5 * * *", gap: 20, what: "Find a country-sweep site's 2-3 natural competitors, review them passively and store the comparison (one step per tick)" },
   { job: "refreshSocialHubStats", cron: "40 5 * * *", gap: 26, what: "GA4 and site_events numbers for the Social hub pane, and the hub's Trending order (pulled by the 06:00 Live Reports run)" },
   { job: "ensureLiveReportsBatch", cron: "0 6 * * *", gap: 26, what: "Start the Live Reports workflow once the night's sweep is done (GitHub fires its own slots hours late)" },
@@ -42,7 +42,7 @@ const JOBS = [
 
 // The quotas the schedule is sized to. Change a number here and in the env, not in the job.
 const BUDGETS = {
-  sweepPerDay: { env: "SWEEP_PER_DAY", value: 24, why: "Review browser: 4 vCPU x ~100 s a review; the free tier covers ~450 a month" },
+  sweepPerDay: { env: "SWEEP_PER_DAY", value: 96, why: "24 night ticks x 4 reviews (#1099). Review browser: 4 vCPU x ~100 s a review, ~2,900 a month, well past the ~450 the free tier covers" },
   ownerNoticesPerDay: { env: "OWNER_NOTICES_PER_DAY", value: 15, why: "Cold mail to strangers: keep sender reputation while bounces are unknown" },
   rivalsPerDay: { env: "RIVALS_PER_DAY", value: 4, why: "Up to 2 web searches and 3 passive reviews a site; 20 night ticks fit 4 sites" },
   webSearchPerMonth: { value: 2000, why: "Brave ~1,000 + Tavily 1,000 a month; the country sweep spends none, the rival sweep up to 8 a night" },

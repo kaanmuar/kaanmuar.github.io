@@ -1,8 +1,8 @@
-/* Country sweep: reviews the most visited sites of every country, a few a night, with no person.
+/* Country sweep: reviews the most visited sites of every country, up to 96 a night, with no person.
 
    Seeds: scripts/build-sweep-seeds.js turns the monthly CrUX top lists (github.com/zakird/crux-top-lists)
    into assets/sweep/index.json and assets/sweep/<cc>.json on the site. Each tick of sweepReviews
-   (functions/index.js) takes the next country of the lap, the next host of that country, and runs the
+   (functions/index.js) takes, up to PER_TICK times, the next country of the lap, the next host of that country, and runs the
    same review a person would, without the web search (Brave and Tavily credits stay for people). The
    review goes public through Live Reports like any other, and its owner notice is queued.
 
@@ -11,7 +11,13 @@
 
 const { suffixRegistrable } = require("./url-review-suffix");
 
-const PER_DAY = 24;
+const PER_DAY = 96;
+// A tick (every 15 minutes, 24 a night) reviews up to PER_TICK sites one after another, and starts the next
+// only while a review stopped at REVIEW_MS still ends by TICK_MS, before the next tick and the TICK_SECONDS timeout.
+const PER_TICK = 4;
+const REVIEW_MS = 240000;
+const TICK_MS = 840000;
+const TICK_SECONDS = 900;
 const REVISIT_DAYS = 182;
 const KEEP_DAYS = 14;
 const FAILS_KEPT = 30;
@@ -141,6 +147,17 @@ function tally(state, day, outcome, last) {
   return Object.assign({}, state, { days, last });
 }
 
+function roomForReview(elapsedMs) {
+  return elapsedMs + REVIEW_MS <= TICK_MS;
+}
+
+// One night's tally against the cap, for the watchdog: a night that reviewed under half the cap is short.
+function night(state, day, cap) {
+  const row = ((state || {}).days || {})[day] || {};
+  const out = { done: row.done || 0, failed: row.failed || 0, skipped: row.skipped || 0 };
+  return Object.assign(out, { short: out.done + out.failed < cap / 2 });
+}
+
 // Totals over the days kept in state, for the ops digest.
 function totals(state, sinceDay) {
   const out = { done: 0, failed: 0, skipped: 0 };
@@ -151,4 +168,4 @@ function totals(state, sinceDay) {
   return out;
 }
 
-module.exports = { PER_DAY, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, TIER1, BLOCKED, langOf, suffixRegistrable, seedHosts, lapOrder, nextSlot, intake, doneOn, tally, totals };
+module.exports = { PER_DAY, PER_TICK, REVIEW_MS, TICK_MS, TICK_SECONDS, roomForReview, night, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, TIER1, BLOCKED, langOf, suffixRegistrable, seedHosts, lapOrder, nextSlot, intake, doneOn, tally, totals };
