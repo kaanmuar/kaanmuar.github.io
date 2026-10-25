@@ -260,8 +260,10 @@
       if (!key) return;
       const name = document.createElement("b");
       name.className = "notranslate";
-      name.textContent = host;
-      hint.append(...words(book[key], "host", name));
+      // A browser translating the page trims the text after the host, so the space stays with the host.
+      const spaced = book[key].indexOf("{host} ") !== -1;
+      name.textContent = host + (spaced ? " " : "");
+      hint.append(...words(spaced ? book[key].replace("{host} ", "{host}") : book[key], "host", name));
       if (fix) {
         const button = document.createElement("button");
         button.type = "button";
