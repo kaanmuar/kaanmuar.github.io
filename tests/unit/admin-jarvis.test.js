@@ -414,6 +414,32 @@ test("money: sales, credit runs, refunds and test rows each land in the right pl
   assert.deepEqual(out.byProvider, [{ label: "paypal", value: 28 }]);
 });
 
+test("money: rows saved before test and provider were recorded are read from the session and capture", () => {
+  const start = daysAgo(7).getTime();
+  const at = (n) => daysAgo(n).toISOString();
+  const out = sources.moneyRows([
+    { id: "stripe-test", createdAt: at(1), paid: true, priceUsd: 19, status: "run-credit", sessionId: "cs_test_a1iwBdIduHvq" },
+    { id: "paypal-sandbox", createdAt: at(1), paid: true, priceUsd: 9, paypalMode: "sandbox", captureId: "7AB12345CD678901E" },
+    { id: "stripe-live", createdAt: at(2), paid: true, priceUsd: 15, sessionId: "cs_live_b2jxCe" },
+    { id: "paypal-live", createdAt: at(2), paid: true, priceUsd: 9, captureId: "8BC23456DE789012F" }
+  ], { start, priorStart: daysAgo(14).getTime() });
+  assert.deepEqual(out.revenue, { usd: 24, count: 2, avgUsd: 12, paidRuns: 0 });
+  assert.deepEqual(out.byProvider, [{ label: "stripe", value: 15 }, { label: "paypal", value: 9 }]);
+});
+
+test("search console: a disabled API asks to enable it, a 403 without it asks to add the service account", async () => {
+  const ctx = (answer) => ({ now: NOW.getTime(), days: 28, fetch: async (url) => {
+    if (/token\?scopes=/.test(url)) return json({ access_token: "t" });
+    if (/service-accounts\/default\/email$/.test(url)) return json("fn@carlosm-interactive-cv.iam.gserviceaccount.com");
+    return answer;
+  } });
+  const disabled = await sources.searchConsole(ctx(json({ error: { code: 403, status: "PERMISSION_DENIED", message: "Google Search Console API has not been used in project 976558418058 before or it is disabled." } }, 403)));
+  assert.match(disabled.error, /API is turned off/);
+  assert.match(disabled.need, /searchconsole\.googleapis\.com/);
+  const denied = await sources.searchConsole(ctx(json({ error: { code: 403, status: "PERMISSION_DENIED", message: "User does not have sufficient permission for site 'sc-domain:carlosandmunoz.com'." } }, 403)));
+  assert.match(denied.need, /Add user .* with Restricted permission/);
+});
+
 test("safety: DNS, DMARC, domain and TLS checks read their records and rank alerts first", async () => {
   const answers = {
     "carlosandmunoz.com/TXT": [{ type: 16, data: "\"v=spf1 include:sendgrid.net ~all\"" }],
