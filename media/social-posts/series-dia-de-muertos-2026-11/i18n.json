@@ -1,0 +1,25 @@
+{
+ "ui": {
+  "en": { "tryThis": "Try this", "tip": "Tip", "guided": "Live Reports", "never": "Never runs your tests", "end": "Keep your links alive.", "endNote": "Every Live Report from October is public." },
+  "es": { "tryThis": "Prueba esto", "tip": "Consejo", "guided": "Live Reports", "never": "Nunca ejecuta tus pruebas", "end": "Mantén vivos tus enlaces.", "endNote": "Todos los Live Reports de octubre son públicos." },
+  "pt": { "tryThis": "Experimente isto", "tip": "Dica", "guided": "Live Reports", "never": "Nunca executa seus testes", "end": "Mantenha seus links vivos.", "endNote": "Todos os Live Reports de outubro são públicos." },
+  "de": { "tryThis": "Probieren Sie es aus", "tip": "Tipp", "guided": "Live Reports", "never": "Führt nie Ihre Tests aus", "end": "Halten Sie Ihre Links lebendig.", "endNote": "Alle Live Reports aus dem Oktober sind öffentlich." },
+  "fr": { "tryThis": "Essayez ceci", "tip": "Astuce", "guided": "Live Reports", "never": "N'exécute jamais vos tests", "end": "Gardez vos liens en vie.", "endNote": "Tous les Live Reports d'octobre sont publics." },
+  "it": { "tryThis": "Prova questo", "tip": "Consiglio", "guided": "Live Reports", "never": "Non esegue mai i tuoi test", "end": "Mantieni vivi i tuoi link.", "endNote": "Tutti i Live Reports di ottobre sono pubblici." }
+ },
+ "clips": {
+  "epitaphs": {
+   "counter": "Día de Muertos 2/2",
+   "actionLabel": "Revísalo hoy",
+   "footRight": "Live Reports · octubre de 2026",
+   "title.0": "Epitafios para",
+   "title.1": "*los enlaces muertos de octubre.*",
+   "body": "Dos sitios enlazaban a una página de error que tampoco existía. Una plantilla imprimió su marcador de posición donde iba un enlace. Tres sitios enlazaban PDF que ya no estaban.",
+   "visual.note": "Rutas reales de los Live Reports de octubre",
+   "action": "Abre los PDF y los enlaces de idioma de tu página de inicio, pide tu página de error y busca en tus plantillas marcadores sin rellenar.",
+   "alt": "Tarjeta de Día de Muertos: Epitafios para los enlaces muertos de octubre. Rutas reales de los Live Reports de octubre y sus respuestas: un enlace a una página de error, 404; un marcador de plantilla sin rellenar, 404; un PDF, 404; un cambio de idioma, 404; una página de acceso, 500.",
+   "cat.label": "Día de Muertos · SEO",
+   "cap.youtube": "Dos sitios enlazaban a una página de error que tampoco existía. Una plantilla imprimió su marcador de posición donde iba un enlace. Tres sitios enlazaban PDF que ya no estaban.\n\nRevísalo hoy: Abre los PDF y los enlaces de idioma de tu página de inicio, pide tu página de error y busca en tus plantillas marcadores sin rellenar.\n\nLive Reports: https://carlosandmunoz.com/qa-review-es.html?utm_source=youtube&utm_medium=social&utm_campaign=series-dia-de-muertos-2026-11&utm_content=epitaphs#live-reports\n\nDía de Muertos 2/2 · QA-lab URL Review"
+  }
+ }
+}
