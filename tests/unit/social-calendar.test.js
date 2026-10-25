@@ -79,6 +79,18 @@ test("a new daily batch puts its top review in the next free lane 1 slot and its
   assert.deepEqual(moved.find((r) => r.channel === "instagram"), { date: "2026-11-02", time: "09:00", channel: "instagram", asset: "feed/x.jpg" });
 });
 
+test("planning again after a write changes nothing, even when the ids sort the other way as text", () => {
+  const posts = [
+    post("runs-3/98-caracoltv", { rows: rows("2026-11-01") }),
+    post("runs-3/100-paris", { rows: rows("2026-11-02") })
+  ];
+  const slots = (result) => result.moves.map((m) => m.post.id + " " + m.day + " " + m.lane);
+  const first = cal.plan(posts, { from: "2026-11-01" });
+  assert.deepEqual(slots(first), ["runs-3/98-caracoltv 2026-11-01 3", "runs-3/100-paris 2026-11-01 4"]);
+  const written = first.moves.map((m) => Object.assign({}, m.post, { rows: cal.rowsFor(m) }));
+  assert.deepEqual(slots(cal.plan(written, { from: "2026-11-01" })), slots(first));
+});
+
 function fixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "cal-"));
   const dir = path.join(root, "media/social-posts/runs-100");
