@@ -14,8 +14,10 @@
    Writes assets/social/feed.json (cards), assets/social/captions.json (per-network captions, loaded on copy),
    assets/social/rss*.xml (an RSS feed per language), sitemap-social.xml (the hub pages and every posted post page,
    with its image and clip), social/<post id>.html (a page per post, in its own language; noindex until its day),
-   assets/social/thumbs/*.webp and the six pages. Share cards come from scripts/build-share-images.js social. Posts still queued on the networks follow the posted ones,
-   marked Scheduled, and stay out of the JSON-LD until their day. */
+   assets/social/thumbs/*.webp and the six pages. Share cards come from scripts/build-share-images.js social. Posts still to come follow the posted ones
+   and stay out of the JSON-LD until their day. They are marked Scheduled when the Buffer or Facebook ledger
+   (assets/social/buffer.json, facebook.json) has them queued or sent, Planned when nothing has queued them yet,
+   and carry no tag when captions.json holds them for the hub alone. */
 
 const fs = require("fs");
 const path = require("path");
@@ -23,6 +25,7 @@ const { execFileSync } = require("child_process");
 const card = require("../js/social-hub-card");
 const admin = require("../js/social-hub-admin");
 const critical = require("./build-critical-css");
+const queues = require("./social-ledger");
 const { PROFILES, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -112,7 +115,8 @@ function batchPosts(files, reports) {
         i18n: c.textLang ? null : c.i18n || null,
         answer: c.answer ? batch + "/" + c.answer : null,
         steps: Array.isArray(c.steps) && c.steps.length ? c.steps.map(String) : null,
-        term: c.term || null
+        term: c.term || null,
+        held: !!c.hold
       });
     }
   }
@@ -209,8 +213,18 @@ function pairQuizzes(posts) {
   });
 }
 
+// Post ids a network has taken: queued or sent in either ledger. A translated variant counts through its base post.
+function queuedIds(books = [queues.read(queues.BUFFER), queues.read(queues.FACEBOOK)]) {
+  const ids = new Set();
+  books.forEach((book) => Object.entries(book.posts).forEach(([id, list]) => {
+    if (list.some((entry) => entry.result === "queued" || entry.result === "sent")) ids.add(id);
+  }));
+  return ids;
+}
+
 function collect() {
   const files = tracked();
+  const queued = queuedIds();
   const edits = admin.clean(exists(EDITS) ? readJson(EDITS) : null);
   const posts = expand(admin.apply(batchPosts(files, liveIds()).concat(launchPosts(files)), edits, isTracked));
   const ledger = exists(LEDGER) ? readJson(LEDGER) : { videos: {} };
@@ -227,6 +241,7 @@ function collect() {
     post.thumb = admin.remote(post.image) ? post.image : thumbFor(post.base || post.id);
     post.text = body(post);
     post.group = groupOf(post) || post.base || (post.i18n && Object.keys(post.i18n).length ? post.id : null);
+    post.queued = queued.has(post.base || post.id);
     delete post.i18n;
   });
   // A view of any language's page ranks the whole post.
@@ -328,11 +343,13 @@ function body(post) {
   return head && (head === titleKey(post.title) || titleKey(post.title).startsWith(head)) ? lines.slice(1).join("\n").trim() : post.text;
 }
 
+// queued and held only matter to a post still to come; the reader's day may be behind asOf, so asOf itself counts.
 function feedJson(posts, asOf) {
   const cards = posts.map((post) => ({
     id: post.id, kind: post.kind, date: post.date, lang: post.lang, clipLang: post.clipLang, cat: post.cat, title: post.title,
     text: post.text.length > TEXT_MAX ? post.text.slice(0, TEXT_MAX).replace(/\s+\S*$/, "") + "…" : post.text,
-    image: post.image, thumb: post.thumb, alt: post.alt, youtube: post.youtube, report: post.report, trend: post.trend
+    image: post.image, thumb: post.thumb, alt: post.alt, youtube: post.youtube, report: post.report, trend: post.trend,
+    queued: post.date >= asOf && post.queued ? true : undefined, held: post.date >= asOf && post.held ? true : undefined
   }));
   return JSON.stringify({ version: 1, asOf, count: cards.length, posts: cards }) + "\n";
 }
@@ -741,7 +758,7 @@ ${json(graph)}
     <article class="post post-full" data-id="${esc(post.id)}" data-kind="${esc(post.kind)}" data-lang="${esc(post.lang)}">
         <div class="post-media"><img src="${esc(src(post.image))}" width="1080" height="1350" decoding="async" alt="${esc(post.alt || post.title)}">${play}</div>
         <div class="post-body">
-            <p class="post-meta"><span class="post-tag post-kind-${esc(post.kind)}">${esc(kind)}</span>${post.cat ? "<span class=\"post-tag\">" + esc(card.topic(post, copy)) + "</span>" : ""}<span class="post-tag post-lang" translate="no">${esc(post.lang.toUpperCase())}</span>${upcoming ? "<span class=\"post-tag post-scheduled\">" + esc(copy.scheduled) + "</span>" : ""}</p>
+            <p class="post-meta"><span class="post-tag post-kind-${esc(post.kind)}">${esc(kind)}</span>${post.cat ? "<span class=\"post-tag\">" + esc(card.topic(post, copy)) + "</span>" : ""}<span class="post-tag post-lang" translate="no">${esc(post.lang.toUpperCase())}</span>${card.planTag(Object.assign({}, post, { upcoming }), copy)}</p>
             <h1 class="post-title" lang="${esc(post.lang)}">${esc(post.title)}</h1>
             <div class="post-text" lang="${esc(post.lang)}">${card.parasHtml(post.text)}</div>
             <p class="post-foot"><time datetime="${esc(post.date)}">${esc(card.day(post.date, lang))}</time>${report}${pair}</p>
@@ -862,4 +879,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { KINDS, mergeFeed, titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, expand, forLang, pairQuizzes, unspoiled, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };
+module.exports = { KINDS, mergeFeed, titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, expand, forLang, pairQuizzes, unspoiled, queuedIds, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };
