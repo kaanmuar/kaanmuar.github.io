@@ -6,10 +6,12 @@
    { version: 1,
      posts: { "<batch>/<slug>": [{ channel: "linkedin", profile: "linkedin (QA-lab)", id: "<Buffer post or Graph post id>",
        at: "<due time, or sent time once sent>", result: "queued" | "sent" | "failed", error, url, checked: "<ISO>",
-       slot: "<the calendar time a queued post waits to be moved to (social-calendar.js --sync)>" }] } }
+       slot: "<the calendar time a queued post waits to be moved to (social-calendar.js --sync)>" }] },
+     retry: { "<batch>": { since: "<ISO>", error } } }
 
    One entry per calendar channel and profile. Every later run looks up the queued entries whose time has passed
-   and moves them to sent or failed.
+   and moves them to sent or failed. retry lists the batches a spent Buffer limit stopped (#1188); the nightly
+   buffer-batch.yml run queues them again, and a run that queues a whole batch takes it off.
 
      node scripts/social-ledger.js --merge <from.json> <into.json>   adds the entries of <from> to <into>, newer wins */
 
@@ -43,7 +45,24 @@ function write(file, ledger) {
   Object.keys(ledger.posts).sort().forEach((id) => {
     posts[id] = ledger.posts[id].slice().sort((a, b) => (a.channel + "|" + a.profile).localeCompare(b.channel + "|" + b.profile));
   });
-  fs.writeFileSync(path.resolve(ROOT, file), JSON.stringify({ version: 1, posts }, null, 1) + "\n");
+  const out = { version: 1, posts };
+  const retry = Object.keys(ledger.retry || {}).sort();
+  if (retry.length) out.retry = Object.fromEntries(retry.map((batch) => [batch, ledger.retry[batch]]));
+  fs.writeFileSync(path.resolve(ROOT, file), JSON.stringify(out, null, 1) + "\n");
+}
+
+function markRetry(ledger, batch, error, now) {
+  ledger.retry = Object.assign({}, ledger.retry, { [batch]: { since: (ledger.retry && ledger.retry[batch] && ledger.retry[batch].since) || now, error } });
+  return ledger;
+}
+
+function clearRetry(ledger, batch) {
+  if (ledger.retry) delete ledger.retry[batch];
+  return ledger;
+}
+
+function retries(ledger) {
+  return Object.keys(ledger.retry || {}).sort();
 }
 
 // A sent or failed result outlives a later "queued" for the same post id: a stale run must not undo a lookup.
@@ -67,8 +86,10 @@ function record(ledger, post, entry) {
   return ledger;
 }
 
+// A batch one side took off retry comes back if the other still lists it; re-queueing it again only skips posts.
 function merge(into, from) {
   Object.entries(from.posts || {}).forEach(([post, list]) => list.forEach((entry) => record(into, post, entry)));
+  if (from.retry) into.retry = Object.assign({}, into.retry, from.retry);
   return into;
 }
 
@@ -120,4 +141,4 @@ if (require.main === module) {
   write(into, merge(read(into), read(from)));
 }
 
-module.exports = { BUFFER, FACEBOOK, empty, read, write, record, merge, find, due, upgrade, fromBuffer, fromGraph };
+module.exports = { BUFFER, FACEBOOK, empty, read, write, record, merge, find, due, upgrade, fromBuffer, fromGraph, markRetry, clearRetry, retries };

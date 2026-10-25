@@ -107,3 +107,21 @@ test("fromBuffer and fromGraph map the network's answer to a ledger result", () 
   assert.equal(ledger.fromGraph({ is_published: false }), null);
   assert.deepEqual(ledger.fromGraph(null), { result: "failed", error: "No longer on the Page" });
 });
+
+test("a batch a spent limit stopped stays listed for retry through write, read and a merge, until it is cleared", () => {
+  const file = path.join(tmp(), "buffer.json");
+  const book = ledger.empty();
+  ledger.write(file, book);
+  assert.equal("retry" in JSON.parse(fs.readFileSync(file, "utf8")), false);
+  ledger.markRetry(book, "auto-2026-10-25", "Buffer's 1d limit is spent", "2026-10-25T06:00:00.000Z");
+  ledger.markRetry(book, "auto-2026-10-25", "spent again", "2026-10-26T03:37:00.000Z");
+  ledger.write(file, book);
+  const back = ledger.read(file);
+  assert.deepEqual(back.retry, { "auto-2026-10-25": { since: "2026-10-25T06:00:00.000Z", error: "spent again" } });
+  const main = ledger.markRetry(ledger.empty(), "digest-2026-10-30", "spent", "2026-10-25T08:05:00.000Z");
+  assert.deepEqual(ledger.retries(ledger.merge(main, back)), ["auto-2026-10-25", "digest-2026-10-30"]);
+  ledger.clearRetry(back, "auto-2026-10-25");
+  assert.deepEqual(ledger.retries(back), []);
+  ledger.write(file, back);
+  assert.equal("retry" in JSON.parse(fs.readFileSync(file, "utf8")), false);
+});

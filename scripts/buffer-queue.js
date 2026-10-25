@@ -385,6 +385,10 @@ async function main() {
     if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
     return deleteUnmatched(Boolean(opts["dry-run"]));
   }
+  if (opts.pending) {
+    ledger.retries(ledger.read(ledger.BUFFER)).forEach((batch) => console.log(batch));
+    return;
+  }
   const batch = String(opts.batch || "");
   if (!/^[\w-]+$/.test(batch)) throw new Error("--batch is required");
   const dir = path.join(ROOT, "media/social-posts", batch);
@@ -396,13 +400,24 @@ async function main() {
   const clipBase = process.env.CLIP_BASE || "";
   if (!opts["dry-run"] && !process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
 
-  const list = opts["dry-run"] ? [{ id: "dry", service: "linkedin" }, { id: "dry", service: "instagram" }, { id: "dry", service: "youtube" }] : await channels();
+  const book = ledger.read(ledger.BUFFER);
+  let list = [{ id: "dry", service: "linkedin" }, { id: "dry", service: "instagram" }, { id: "dry", service: "youtube" }];
   if (!opts["dry-run"]) {
+    try {
+      list = await channels();
+    } catch (error) {
+      if (!error.spent) throw error;
+      return leaveForTonight(book, batch, error.message);
+    }
     const first = base + "/feed/" + slugs[0] + ".jpg";
     if (!(await waitFor(first, 20))) throw new Error("The site never served " + first);
+    try {
+      await settle(book);
+    } catch (error) {
+      if (!error.spent) throw error;
+      return leaveForTonight(book, batch, error.message);
+    }
   }
-  const book = ledger.read(ledger.BUFFER);
-  if (!opts["dry-run"]) await settle(book);
   const gate = createGate();
   let failed = 0;
   let queued = 0;
@@ -437,20 +452,30 @@ async function main() {
             Object.assign(entry, { result: "failed", error: r.message });
           }
         } catch (error) {
+          if (error.spent) {
+            spent = error.message;
+            break posts;
+          }
           failed += 1;
           console.log("failed", label, "-", error.message);
           Object.assign(entry, { result: "failed", error: error.message });
-          if (error.spent) spent = error.message;
         }
         ledger.record(book, batch + "/" + slug, entry);
-        if (spent) break posts;
       }
     }
   }
-  if (!opts["dry-run"]) ledger.write(ledger.BUFFER, book);
-  if (spent) console.log("stopped early, the rest is not queued: " + spent);
+  if (opts["dry-run"]) return console.log(queued + " queued, " + already + " already in Buffer, " + failed + " failed");
+  if (spent) leaveForTonight(book, batch, spent);
+  else ledger.write(ledger.BUFFER, ledger.clearRetry(book, batch));
   console.log(queued + " queued, " + already + " already in Buffer, " + failed + " failed");
   if (failed) process.exit(1);
+}
+
+/* A spent daily limit frees up hours later, so the batch is listed in the ledger's retry and the run passes: the
+   nightly buffer-batch.yml run queues it again, skipping what the ledger already has (#1188). */
+function leaveForTonight(book, batch, why) {
+  ledger.write(ledger.BUFFER, ledger.markRetry(book, batch, why, new Date().toISOString()));
+  console.log("::warning::" + batch + " is not fully queued: " + why + " The nightly Buffer batch run (03:37 UTC) queues the rest.");
 }
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
