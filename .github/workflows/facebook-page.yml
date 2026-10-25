@@ -16,6 +16,14 @@ on:
         description: 'Only report what the Page has scheduled'
         type: boolean
         default: false
+      reslot:
+        description: 'Move queued posts to the later calendar.csv slots scripts/facebook-reslot.js wrote (delete and re-create, #1140)'
+        type: boolean
+        default: false
+      dry_run:
+        description: 'reslot only: list the moves, change nothing'
+        type: boolean
+        default: true
 
 concurrency:
   group: facebook-page
@@ -37,10 +45,16 @@ jobs:
           node-version: '22'
       - name: Schedule the slots now within reach
         id: queue
-        if: ${{ !inputs.check_only }}
+        if: ${{ !inputs.check_only && !inputs.reslot }}
         run: node scripts/facebook-queue.js --all
+      - name: Move posts to their later slots
+        id: reslot
+        if: ${{ inputs.reslot && !inputs.check_only }}
+        run: |
+          set -o pipefail
+          node scripts/facebook-queue.js --reslot ${{ inputs.dry_run && '--dry-run' || '' }} | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Commit the Facebook ledger
-        if: ${{ !cancelled() && !inputs.check_only && steps.queue.outcome != 'skipped' }}
+        if: ${{ !cancelled() && !inputs.check_only && (steps.queue.outcome != 'skipped' || (steps.reslot.outcome != 'skipped' && !inputs.dry_run)) }}
         run: scripts/commit-social-ledgers.sh "Facebook Page queue"
       - name: Report the Page's queue
         if: always()
