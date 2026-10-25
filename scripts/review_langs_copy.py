@@ -431,6 +431,55 @@ COMPARE_NOTE = {
     "it": "Ogni concorrente ha il prezzo di una seconda revisione, e vengono eseguiti uno dopo l’altro. Lo sconto di ritorno vale quando confronti dal dispositivo che ha eseguito questa revisione. Il sito del concorrente riceve solo i controlli pubblici e passivi: nessuna conversazione con la chat e nessun modulo inviato. Come per ogni revisione, il suo titolare può ricevere un’email al riguardo, e i suoi punteggi possono comparire nei Live Reports.",
 }
 
+# The price list next to "What a review is": a title, then (term, line) pairs in the order of the English page.
+PRICES = {
+    "es": ("Precios", [
+        ("Primera revisión", "Gratis: hasta 20 páginas, 2 niveles de enlaces."),
+        ("Lista de arreglos · 5 USD", "Puntuaciones, todos los hallazgos y los 10 primeros arreglos en palabras claras, con un PDF del resumen."),
+        ("Informe completo · 19 USD", "Más 5 USD por cada framework o herramienta extra. Todos los casos y capas, las señales, las exportaciones y los scripts. Si ya compraste la lista de arreglos, se descuenta."),
+        ("Revisión más amplia o más profunda", "De 4 a 25 USD más, y lo ves antes de que empiece la revisión."),
+        ("Estudiantes y recién graduados", "Código STUDENT: 50 % menos en el informe completo, una vez por cuenta."),
+        ("Pases de 30 días", "29, 79 o 189 USD. Muy pronto; todavía no se pueden comprar."),
+        ("Revisión con sesión iniciada", "39 USD."),
+    ]),
+    "pt": ("Preços", [
+        ("Primeira revisão", "Grátis: até 20 páginas, 2 níveis de links."),
+        ("Lista de correções · 5 USD", "Pontuações, todas as constatações e as 10 primeiras correções em palavras simples, com um PDF do resumo."),
+        ("Relatório completo · 19 USD", "Mais 5 USD por framework ou ferramenta extra. Todos os casos e camadas, os sinais, as exportações e os scripts. Se você já comprou a lista de correções, ela é descontada."),
+        ("Revisão mais ampla ou mais profunda", "De 4 a 25 USD a mais, mostrados antes de a revisão começar."),
+        ("Estudantes e recém-formados", "Código STUDENT: 50% de desconto no relatório completo, uma vez por conta."),
+        ("Passes de 30 dias", "29, 79 ou 189 USD. Em breve; ainda não estão à venda."),
+        ("Revisão com login", "39 USD."),
+    ]),
+    "de": ("Preise", [
+        ("Erste Prüfung", "Kostenlos: bis zu 20 Seiten, 2 Linkebenen tief."),
+        ("Fix-Liste · 5 USD", "Bewertungen, alle Befunde und die 10 wichtigsten Korrekturen in klaren Worten, mit einem PDF der Zusammenfassung."),
+        ("Vollständiger Bericht · 19 USD", "Plus 5 USD für jedes weitere Framework oder Werkzeug. Alle Testfälle und Ebenen, die Signale, die Exporte und die Skripte. Eine bereits gekaufte Fix-Liste wird abgezogen."),
+        ("Breitere oder tiefere Prüfung", "4 bis 25 USD mehr, angezeigt, bevor die Prüfung startet."),
+        ("Studierende und frische Absolventen", "Code STUDENT: 50 % Rabatt auf den vollständigen Bericht, einmal pro Konto."),
+        ("30-Tage-Pässe", "29, 79 oder 189 USD. Demnächst; noch nicht käuflich."),
+        ("Prüfung mit Anmeldung", "39 USD."),
+    ]),
+    "fr": ("Tarifs", [
+        ("Première analyse", "Gratuite : jusqu’à 20 pages, 2 niveaux de liens."),
+        ("Liste de corrections · 5 USD", "Les scores, tous les constats et les 10 premières corrections en mots simples, avec un PDF du résumé."),
+        ("Rapport complet · 19 USD", "Plus 5 USD par framework ou outil en plus. Tous les cas et toutes les couches, les signaux, les exports et les scripts. Une liste de corrections déjà achetée est déduite."),
+        ("Analyse plus large ou plus profonde", "De 4 à 25 USD de plus, affichés avant le début de l’analyse."),
+        ("Étudiants et jeunes diplômés", "Code STUDENT : 50 % de remise sur le rapport complet, une fois par compte."),
+        ("Pass de 30 jours", "29, 79 ou 189 USD. Bientôt ; pas encore en vente."),
+        ("Analyse connectée", "39 USD."),
+    ]),
+    "it": ("Prezzi", [
+        ("Prima revisione", "Gratis: fino a 20 pagine, 2 livelli di link."),
+        ("Lista delle correzioni · 5 USD", "Punteggi, tutti i rilievi e le prime 10 correzioni in parole semplici, con un PDF del riepilogo."),
+        ("Report completo · 19 USD", "Più 5 USD per ogni framework o strumento in più. Tutti i casi e i livelli, i segnali, gli export e gli script. Una lista delle correzioni già acquistata viene scalata."),
+        ("Revisione più ampia o più profonda", "Da 4 a 25 USD in più, mostrati prima che la revisione inizi."),
+        ("Studenti e neolaureati", "Codice STUDENT: 50% di sconto sul report completo, una volta per account."),
+        ("Pass di 30 giorni", "29, 79 o 189 USD. In arrivo; non si possono ancora acquistare."),
+        ("Revisione con accesso", "39 USD."),
+    ]),
+}
+
 # The skip link, the first thing the keyboard reaches on each page.
 SKIP = {
     "es": "Saltar al contenido principal",

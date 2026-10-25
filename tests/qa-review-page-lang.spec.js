@@ -67,7 +67,7 @@ test.describe('Review page language', () => {
     await expect(page).toHaveURL(/\/qa-review-pay-es\.html\?purpose=new-run&frameworks=Playwright$/);
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
     await expect(page.locator('#pay-heading')).toHaveText('Una revisión nueva');
-    await expect(page.locator('#pay-copy')).toContainText('Esta revisión cuesta 19 USD. La tarifa de 19 USD se aplica a 1 framework.');
+    await expect(page.locator('#pay-copy')).toContainText('Esta revisión cuesta 19 USD. 1 framework: 19 USD el primero y 5 USD cada uno de los siguientes.');
     await expect(page.locator('#pay-lines li')).toHaveText(['1 · Playwright · precio completo19 USD']);
     await expect(page.locator('#pay-note')).toHaveText(/^No se pudo cargar el precio en pesos/);
     await expect(page.locator('#charge')).toHaveText('Continuar a PayPal');
@@ -91,9 +91,19 @@ test.describe('Review page language', () => {
     await prime(page, 'en');
     await page.route('http://127.0.0.1:8768/**', (route) => route.fulfill({ status: 503, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"error":"down"}' }));
     await page.goto('/qa-review-pay.html?purpose=report');
-    await expect(page.locator('#pay-heading')).toHaveText('Open this report again');
+    await expect(page.locator('#pay-heading')).toHaveText('The full report');
     await expect(page).toHaveURL(/\/qa-review-pay\.html\?purpose=report$/);
     await expect(page.locator('#charge')).toHaveText('Continue to PayPal');
+  });
+
+  test('a fix list is priced at 5 USD on the Spanish payment page', async ({ page }) => {
+    await prime(page, 'es');
+    await page.route('http://127.0.0.1:8768/**', (route) => route.fulfill({ status: 503, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"error":"down"}' }));
+    await page.goto('/qa-review-pay-es.html?purpose=fixlist&reportId=abc123');
+    await expect(page.locator('#pay-heading')).toHaveText('La lista de arreglos');
+    await expect(page.locator('#pay-copy')).toContainText('La lista de arreglos cuesta 5 USD.');
+    await expect(page.locator('#pay-amount')).toHaveText('5 USD');
+    await expect(page.locator('#pay-lines')).toBeHidden();
   });
 
   test('the report dashboard is written in the page language without machine translation', async ({ page }) => {

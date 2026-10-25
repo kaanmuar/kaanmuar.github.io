@@ -1270,14 +1270,63 @@ test.describe("mail to the asker", () => {
 });
 
 test.describe("pricing", () => {
-  test("the first framework is 19 USD and later ones step down in pairs", () => {
-    assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(core.centsForIndex), [1900, 1710, 1710, 1615, 1615, 1520, 1520]);
-    assert.equal(core.scheduleCents(3), 1900 + 1710 + 1710);
+  const offers = require("../../functions/url-review-offers");
+  const fw = (n) => core.FRAMEWORKS.slice(0, n);
+
+  test("the full report is 19 USD for the first framework and 5 USD for each one after it", () => {
+    assert.deepEqual([1, 2, 8].map((n) => core.priceFor(fw(n)).usd), [19, 24, 54]);
+    assert.deepEqual(core.priceFor(fw(2), ["axe-core"]).discount.map((row) => row.usd), [19, 5, 5]);
+    assert.equal(core.priceFor(fw(1), ["axe-core"]).usd, 24);
   });
 
-  test("the discount stops at 40 percent", () => {
-    assert.equal(core.centsForIndex(14), 1140);
+  test("a later run prices its frameworks the same way and keeps the scope add-ons; the first run's scope leaves frameworks free", () => {
+    assert.equal(core.priceForRun({ frameworks: fw(2), pages: 40, depth: 3, billing: "run" }).usd, 24 + 5 + 4);
+    assert.equal(core.priceForRun({ frameworks: fw(8), pages: 40, depth: 3, billing: "scope" }).usd, 9);
+  });
+
+  test("case exports and signals bought before the flat report keep their ladder", () => {
+    assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(core.centsForIndex), [1900, 1710, 1710, 1615, 1615, 1520, 1520]);
+    assert.equal(core.priceForLayers(["Functional", "Content", "Links"]).cents, 1900 + 1710 + 1710);
     assert.equal(core.centsForIndex(40), 1140);
+  });
+
+  test("a fix list is 5 USD flat and never discounted", () => {
+    assert.deepEqual(core.priceForFixList(), { usd: 5, cents: 500, count: 1, frameworks: [], layers: [] });
+    assert.equal(core.chargedUsd({ purpose: "fixlist", priceUsd: 5 }).usd, 5);
+    assert.throws(() => core.chargedUsd({ purpose: "fixlist", priceUsd: 4, listUsd: 5 }), /out of range/);
+    assert.equal(core.priceMatches(5), true);
+    assert.equal(offers.paidPurpose("fixlist"), "fixlist");
+    assert.ok(offers.ADDONS.includes("fixlist"));
+  });
+
+  test("a fix list bought on a report takes 5 USD off that report's full unlock", () => {
+    assert.equal(core.creditFor({ addons: ["fixlist"] }), 500);
+    assert.equal(core.creditFor({ addons: ["alerts"] }), 0);
+    assert.equal(core.priceForReport(fw(1), [], 500).usd, 14);
+    assert.equal(core.priceForReport(fw(3), [], 500).usd, 24);
+    assert.equal(core.chargedUsd({ purpose: "report", frameworks: fw(1), priceUsd: 14, creditCents: 500 }).usd, 14);
+    assert.throws(() => core.chargedUsd({ purpose: "report", frameworks: fw(1), priceUsd: 14 }), /does not match/);
+    assert.throws(() => core.chargedUsd({ purpose: "report", frameworks: fw(1), priceUsd: 9, creditCents: 1000 }), /not a QA-lab credit/);
+    assert.equal(core.chargedUsd({ purpose: "report", frameworks: fw(1), priceUsd: 7, listUsd: 14, creditCents: 500 }).usd, 7);
+    assert.throws(() => core.chargedUsd({ purpose: "report", frameworks: fw(1), priceUsd: 6.99, listUsd: 14, creditCents: 500 }), /out of range/);
+    assert.equal(offers.discountFor(1400, 1, { coupon: { code: "STUDENT", percent: 50 } }).usd, 7);
+  });
+
+  test("a signed-in run is 39 USD flat", () => {
+    assert.deepEqual(core.priceForCredentials(), { usd: 39, cents: 3900, count: 1, frameworks: [], layers: [] });
+    assert.equal(core.chargedUsd({ purpose: "credentials", priceUsd: 39 }).usd, 39);
+  });
+
+  test("the 30-day passes are freelancer, team and pro, anchored on the same runs bought one by one", () => {
+    assert.deepEqual(offers.MONTHLY_PLANS.map((plan) => [plan.id, plan.usd, plan.days, plan.runs, plan.pages, plan.depth, plan.frameworks, plan.tools]), [
+      ["freelancer", 29, 30, 10, 20, 2, 3, false],
+      ["team", 79, 30, 25, 100, 5, 8, false],
+      ["pro", 189, 30, 60, 100, 5, core.FRAMEWORKS.length, true]
+    ]);
+    assert.deepEqual(offers.MONTHLY_PLANS.map((plan) => plan.anchorUsd), [290, 25 * (54 + 25), 60 * (19 + 5 * (core.FRAMEWORKS.length - 1) + 25)]);
+    assert.ok(offers.MONTHLY_PLANS.every((plan) => plan.history === true));
+    assert.equal(offers.planById("nope").id, "freelancer");
+    assert.equal(offers.planById("team").id, "team");
   });
 });
 
@@ -1384,10 +1433,23 @@ test.describe("return price", () => {
     assert.equal(offers.discountFor(1900, 1, {}).percent, 0);
   });
 
-  test("no discount goes under 9.50 USD a selection", () => {
+  test("no discount goes under half the list price, and a coupon stops at 50 percent", () => {
     const deal = offers.discountFor(1900, 1, { coupon: { code: "BIG", percent: 90 } });
     assert.equal(deal.usd, 9.5);
     assert.equal(deal.percent, 50);
+    assert.equal(offers.discountFor(2400, 2, { coupon: { code: "BIG", percent: 90 } }).usd, 12);
+    assert.equal(offers.discountFor(1900, 1, { coupon: { code: "STUDENT", percent: 50 } }).usd, 9.5);
+    assert.equal(offers.applyReturn(5400, 8, 3).cents, 4320);
+    assert.equal(offers.applyReturn(5400, 8, 3).floorUsd, 27);
+  });
+
+  test("a code with perEmail opens once per address, and stays closed when the address is unknown", () => {
+    const student = { code: "STUDENT", percent: 50, purposes: ["report"], perEmail: 1 };
+    assert.equal(offers.couponOpen(student, "report", "abc", now, 0), true);
+    assert.equal(offers.couponOpen(student, "report", "abc", now, 1), false);
+    assert.equal(offers.couponOpen(student, "report", "abc", now), false);
+    assert.equal(offers.couponOpen(student, "new-run", "", now, 0), false);
+    assert.equal(offers.couponOpen({ percent: 15 }, "report", "abc", now), true);
   });
 
   test("a coupon is open only inside its dates, uses, purposes, and report", () => {
@@ -1454,7 +1516,10 @@ test.describe("return price", () => {
     assert.equal(core.priceMatches(19), true);
     assert.equal(core.priceMatches(16.15), true);
     assert.equal(core.priceMatches(9.5), true);
-    assert.equal(core.priceMatches(9.49), false);
+    assert.equal(core.priceMatches(14), true);
+    assert.equal(core.priceMatches(7), true);
+    assert.equal(core.priceMatches(6.99), false);
+    assert.equal(core.priceMatches(39), true);
     assert.equal(core.priceMatches(500), false);
     const order = (value) => ({ status: "COMPLETED", purchase_units: [{ custom_id: "ab12", payments: { captures: [{ status: "COMPLETED", amount: { value, currency_code: "USD" } }] } }] });
     assert.equal(core.paypalPaid(order("16.15")).paid, true);
