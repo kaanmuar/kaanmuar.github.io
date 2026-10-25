@@ -4829,6 +4829,7 @@ const jarvis = require("./jarvis");
 const jarvisCore = require("./jarvis-core");
 const jarvisSum = (field) => admin.firestore.AggregateField.sum(field);
 const jarvisSources = require("./jarvis-sources");
+const jarvisPush = require("./jarvis-push");
 
 async function jarvisUsers() {
   const users = [];
@@ -4891,7 +4892,8 @@ async function jarvisExternal(ops, days) {
 async function jarvisDaily({ force }) {
   const db = admin.firestore();
   const settings = await jarvis.readSettings(db);
-  if (!settings.mail.daily && !force) return "off in settings";
+  const phones = await jarvisPush.targets(db, "briefing");
+  if (!settings.mail.daily && !phones.length && !force) return "off in settings";
   const now = Date.now();
   const [{ products }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now }),
@@ -4905,8 +4907,9 @@ async function jarvisDaily({ force }) {
   }
   const dateLabel = new Date(now).toLocaleDateString("en-US", { timeZone: "America/Bogota", weekday: "short", month: "short", day: "numeric" });
   const mail = jarvis.dailyMail({ products, items, goalRows, aiText, dateLabel });
-  const sent = await sendOwnerEmail({ subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL, buttonLabel: "Open Jarvis" });
-  return { sent: sent !== false, items: items.length, goals: goalRows.length, gemini: !!aiText };
+  const sent = settings.mail.daily || force ? await sendOwnerEmail({ subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL, buttonLabel: "Open Jarvis" }) : false;
+  const push = await jarvisPush.send(admin.messaging(), db, phones, jarvisPush.briefingMessage({ items, aiText, dateLabel })).catch((error) => ({ error: String(error.message || error).slice(0, 200) }));
+  return { sent: sent !== false, push, items: items.length, goals: goalRows.length, gemini: !!aiText };
 }
 
 // Everything the stats page computes, in one answer for the Android app, which reads no Firestore itself.
@@ -4926,12 +4929,14 @@ async function jarvisSnapshot(days) {
 async function jarvisWatchRun() {
   const db = admin.firestore();
   const settings = await jarvis.readSettings(db);
-  if (!settings.mail.watch) return "off in settings";
+  const phones = await jarvisPush.targets(db, "alerts");
+  if (!settings.mail.watch && !phones.length) return "off in settings";
   const now = Date.now();
   const external = await jarvisExternal(["health", "jobs", "uptime", "money", "safety", "platform"], 1);
   const { day, ref, sent, fresh } = await jarvis.unsentToday(db, jarvis.watchItems(external, settings.thresholds), { now });
   if (!fresh.length) return "nothing new";
-  await sendOwnerEmail({
+  const push = await jarvisPush.send(admin.messaging(), db, phones, jarvisPush.alertMessage(fresh)).catch((error) => ({ sent: 0, error: String(error.message || error).slice(0, 200) }));
+  if (settings.mail.watch) await sendOwnerEmail({
     subject: "Jarvis alert: " + fresh[0].text.slice(0, 90) + (fresh.length > 1 ? " (+" + (fresh.length - 1) + " more)" : ""),
     intro: "Jarvis crossed an alert threshold you set. Each issue is mailed once a day.",
     rows: fresh.map((row) => ({ label: row.product, value: row.text })),
@@ -4941,7 +4946,7 @@ async function jarvisWatchRun() {
   const at = new Date(now).toISOString();
   fresh.forEach((row) => { sent[row.key] = at; });
   await ref.set({ day, sent });
-  return fresh.length + " new alert" + (fresh.length > 1 ? "s" : "");
+  return fresh.length + " new alert" + (fresh.length > 1 ? "s" : "") + ", pushed to " + push.sent + " phone" + (push.sent === 1 ? "" : "s");
 }
 
 exports.jarvisDailyBriefing = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }), "jarvisDailyBriefing", async () => {
@@ -4991,6 +4996,13 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     }
     else if (op === "goals") out = { goals: await jarvis.goals(admin.firestore(), await jarvis.readSettings(admin.firestore()), { now, sum: jarvisSum }) };
     else if (op === "daily-now") out = await jarvisDaily({ force: true });
+    else if (op === "register-device") out = await jarvisPush.register(admin.firestore(), body, operator, now);
+    else if (op === "unregister-device") out = await jarvisPush.unregister(admin.firestore(), body.token);
+    else if (op === "devices") out = { devices: (await jarvisPush.list(admin.firestore())).map((d) => ({ id: d.id, name: d.name, kinds: d.kinds, updatedAt: d.updatedAt })) };
+    else if (op === "test-push") {
+      const tokens = body.token ? [String(body.token)] : await jarvisPush.targets(admin.firestore(), "test");
+      out = await jarvisPush.send(admin.messaging(), admin.firestore(), tokens, { kind: "test", title: "Jarvis test", body: "Push notifications reach this phone.", tab: "overview", tag: "jarvis-test" });
+    }
     else if (op === "snapshot") out = await jarvisCached(op, days, () => jarvisSnapshot(days));
     else if (jarvisSources.SOURCES[op]) out = await jarvisSource(op, days);
     else if (op === "send-report") {
