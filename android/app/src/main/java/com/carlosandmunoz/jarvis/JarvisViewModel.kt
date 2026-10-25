@@ -5,7 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosandmunoz.jarvis.data.Auth
 import com.carlosandmunoz.jarvis.data.JSON
+import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.str
+import com.carlosandmunoz.jarvis.push.Push
 import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,14 +36,15 @@ data class UiState(
     val briefBusy: Boolean = false,
     val chat: List<Chat> = emptyList(),
     val toast: String? = null,
-    val running: Set<String> = emptySet()
+    val running: Set<String> = emptySet(),
+    val push: Map<String, Boolean> = emptyMap()
 )
 
 class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     private val jarvis = app as JarvisApp
     private val auth = jarvis.auth
     private val api = jarvis.api
-    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7))
+    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp)))
     val state: StateFlow<UiState> = _state
 
     /** Debug builds only: files/jarvis/fixture.json stands in for the server, for emulator screenshots without the owner login. */
@@ -49,7 +52,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         if (fixture != null) _state.update { it.copy(signedIn = true, email = "fixture", snapshot = JSON.parseToJsonElement(fixture.readText()) as JsonObject, savedAt = fixture.lastModified()) }
-        else if (auth.signedIn) { showSaved(); refresh() }
+        else if (auth.signedIn) { showSaved(); refresh(); syncPush() }
     }
 
     fun signIn(email: String, password: String) = authStep {
@@ -68,10 +71,37 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     fun cancelCode() = _state.update { it.copy(pendingCode = null, authError = null) }
 
     fun signOut() {
-        auth.signOut()
-        api.forget()
-        _state.value = UiState(email = auth.email)
+        _state.value = UiState(email = auth.email, push = _state.value.push)
+        viewModelScope.launch {
+            runCatching { Push.forget(jarvis) }
+            auth.signOut()
+            api.forget()
+        }
     }
+
+    /** Turns one push kind on or off for this phone; the jarvis function only pushes the kinds a phone keeps. */
+    fun setPush(kind: String, on: Boolean) {
+        jarvis.vault.setFlag("push.$kind", on)
+        _state.update { it.copy(push = Push.kinds(jarvis)) }
+        viewModelScope.launch {
+            runCatching { Push.sync(jarvis) }
+                .onSuccess { ok -> _state.update { it.copy(toast = if (ok) "Saved." else "Push is not ready on this phone.") } }
+                .onFailure { e -> fail(e) { it.copy(toast = e.message ?: "Could not save.") } }
+        }
+    }
+
+    fun testPush() {
+        _state.update { it.copy(running = it.running + "test-push") }
+        viewModelScope.launch {
+            val token = Push.token()
+            if (token == null) { _state.update { it.copy(running = it.running - "test-push", toast = "Push is not ready on this phone.") }; return@launch }
+            runCatching { Push.sync(jarvis, token); api.call("test-push", 1, mapOf("token" to JsonPrimitive(token))) }
+                .onSuccess { out -> _state.update { it.copy(running = it.running - "test-push", toast = if ((out.num("sent") ?: 0.0) > 0) "Test sent. It should arrive in a few seconds." else "Firebase did not accept the push.") } }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - "test-push", toast = e.message ?: "Failed.") } }
+        }
+    }
+
+    private fun syncPush() { if (fixture == null) viewModelScope.launch { runCatching { Push.sync(jarvis) } } }
 
     fun setDays(days: Int) {
         if (fixture != null) return
@@ -137,6 +167,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         _state.update { it.copy(signedIn = true, email = auth.email, pendingCode = null, authError = null) }
         showSaved()
         refresh()
+        syncPush()
     }
 
     private fun fail(e: Throwable, change: (UiState) -> UiState) {

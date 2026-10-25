@@ -1,7 +1,13 @@
 package com.carlosandmunoz.jarvis
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
@@ -23,29 +29,47 @@ import com.carlosandmunoz.jarvis.ui.JarvisTheme
 import com.carlosandmunoz.jarvis.ui.LockScreen
 import com.carlosandmunoz.jarvis.ui.MainScreen
 import com.carlosandmunoz.jarvis.ui.SignInScreen
+import com.carlosandmunoz.jarvis.push.Push
 
 class MainActivity : FragmentActivity() {
     private val vm: JarvisViewModel by viewModels()
     private val vault get() = (application as JarvisApp).vault
     private var locked by mutableStateOf(false)
     private var lockOn by mutableStateOf(true)
+    private var openTab by mutableStateOf<String?>(null)
+    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(SystemBarStyle.dark(Color.TRANSPARENT), SystemBarStyle.dark(Color.TRANSPARENT))
         lockOn = vault.flag("lock", true) && canLock()
+        openTab = intent.getStringExtra(Push.EXTRA_TAB)
         setContent {
             JarvisTheme {
                 Backdrop {
                     val s by vm.state.collectAsStateWithLifecycle()
+                    LaunchedEffect(s.signedIn) { if (s.signedIn) askForNotifications() }
                     when {
                         !s.signedIn -> SignInScreen(s, vm)
                         locked -> LockScreen(::prompt)
-                        else -> MainScreen(s, vm, lockOn) { on -> lockOn = on && canLock(); vault.setFlag("lock", lockOn) }
+                        else -> MainScreen(s, vm, lockOn, openTab, { openTab = null }) { on -> lockOn = on && canLock(); vault.setFlag("lock", lockOn) }
                     }
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        intent.getStringExtra(Push.EXTRA_TAB)?.let { openTab = it }
+    }
+
+    /** Android 13+ asks once; afterwards the switch lives in Android's app settings, linked from Settings. */
+    private fun askForNotifications() {
+        if (Build.VERSION.SDK_INT < 33 || vault.flag("push.asked", false)) return
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        vault.setFlag("push.asked", true)
+        askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     override fun onStart() {

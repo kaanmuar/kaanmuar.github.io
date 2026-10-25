@@ -724,3 +724,51 @@ test("parity: a web Jarvis change needs an android/ change or 'no app change' in
   assert.deepEqual(parity.check(["functions/jarvis.js"], "No app change: the app reads it through snapshot."), { ok: true, web: ["functions/jarvis.js"], optOut: true });
   assert.equal(parity.check(["functions/jarvis.js"], "no app change:").ok, false);
 });
+
+const push = require("../../functions/jarvis-push.js");
+
+function pushDb() {
+  const docs = {};
+  const col = { doc: (id) => ({ set: async (row, o) => { docs[id] = Object.assign(o && o.merge ? docs[id] || {} : {}, row); }, delete: async () => { delete docs[id]; } }),
+    get: async () => ({ docs: Object.keys(docs).map((id) => ({ id, data: () => docs[id] })) }) };
+  return { docs, collection: () => col };
+}
+
+test("push: phones register with their kinds, and each kind reaches only the phones that keep it on", async () => {
+  const db = pushDb();
+  const a = "a".repeat(40), b = "b".repeat(40);
+  await push.register(db, { token: a, name: "Pixel" }, "owner", Date.parse("2026-10-25T12:00:00Z"));
+  await push.register(db, { token: b, kinds: { briefing: false } }, "owner", Date.parse("2026-10-25T12:00:00Z"));
+  assert.deepEqual((await push.list(db)).find((d) => d.token === b).kinds, { alerts: true, briefing: false });
+  assert.deepEqual(await push.targets(db, "briefing"), [a]);
+  assert.deepEqual((await push.targets(db, "alerts")).sort(), [a, b]);
+  await assert.rejects(push.register(db, { token: "short" }, "owner", 0), /not a device token/);
+  await push.unregister(db, b);
+  assert.deepEqual(await push.targets(db, "test"), [a]);
+});
+
+test("push: alert and briefing messages, and dead tokens are dropped after a send", async () => {
+  const m = push.alertMessage([{ text: "CV is down (503)." }, { text: "TLS expires in 5 days." }]);
+  assert.equal(m.title, "Jarvis alerts: 2");
+  assert.equal(m.body, "CV is down (503). (+1 more)");
+  assert.equal(m.tab, "systems");
+  const b = push.briefingMessage({ items: [{ level: "alert", text: "x" }, { level: "warn", text: "y" }, { level: "info", text: "z" }], aiText: "\nQuiet day overall.\nMore.", dateLabel: "Sun, Oct 25" });
+  assert.equal(b.title, "Jarvis briefing, Sun, Oct 25: 1 alert, 1 warning");
+  assert.equal(b.body, "Quiet day overall.");
+  assert.deepEqual(b.lines, ["x", "y"]);
+  assert.match(push.briefingMessage({ items: [], aiText: "", dateLabel: "Mon" }).title, /All clear$/);
+
+  const db = pushDb();
+  const ok = "o".repeat(40), dead = "d".repeat(40);
+  await push.register(db, { token: ok }, "owner", 0);
+  await push.register(db, { token: dead }, "owner", 0);
+  let seen;
+  const messaging = { sendEachForMulticast: async (msg) => { seen = msg; return { successCount: 1, failureCount: 1, responses: [{ success: true }, { success: false, error: { code: "messaging/registration-token-not-registered" } }] }; } };
+  const out = await push.send(messaging, db, [ok, dead], m);
+  assert.deepEqual(out, { sent: 1, failed: 1, removed: 1 });
+  assert.equal(seen.android.priority, "high");
+  assert.equal(seen.data.kind, "alerts");
+  assert.deepEqual(JSON.parse(seen.data.lines), ["CV is down (503).", "TLS expires in 5 days."]);
+  assert.deepEqual(await push.targets(db, "alerts"), [ok]);
+  assert.deepEqual(await push.send(messaging, db, [], m), { sent: 0, failed: 0, removed: 0 });
+});
