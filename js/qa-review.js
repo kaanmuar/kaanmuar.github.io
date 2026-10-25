@@ -1317,6 +1317,7 @@
       tools: kept ? kept.tools : selectedTools(),
       pages: kept ? kept.pages : (limits.maxPages || selectedPages()),
       depth: kept ? kept.depth : (limits.maxDepth || selectedDepth()),
+      done: kept && kept.paid ? kept.done || [] : [],
       paid: false
     };
     // Competitors already paid for go straight on; otherwise the server's total is shown before anything starts.
@@ -1353,6 +1354,20 @@
     const host = (compare.report && compare.report.host) || "your site";
     return "The comparisons are done. Your report of " + host + " lists each one under Next to a competitor." +
       (failed.length ? " These did not finish: " + failed.join(", ") + "." : "") + tail;
+  }
+
+  // compare.done: the competitor reviews that finished. Two or more open with the report as one
+  // comparison, so every competitor is side by side and not only the last one.
+  async function openCompared(compare) {
+    const ids = [compare.id].concat(compare.done || []);
+    if (ids.length < 3 || !window.QAReviewMulti) return;
+    const id = await QAReviewMulti.save(ids, "review", null);
+    if (!id) {
+      setStatus(compareDone(compare, " Open your report of " + ((compare.report && compare.report.host) || "your site") + " and press Open the full comparison report to see them side by side."), true);
+      return;
+    }
+    history.pushState(null, "", location.pathname + "?comparison=" + encodeURIComponent(id));
+    QAReviewMulti.load(id);
   }
 
   function compareStep(compare) {
@@ -2513,8 +2528,12 @@
       dash.scrollTop = 0;
       if (compare && (compare.total || 1) > 1) {
         const left = (compare.queue || []).length;
-        if (!stopped && nextCompare(compare)) setStatus("The comparison with " + compare.url + " is ready. Next: " + compare.queue[0] + ".", false);
-        else setStatus(compareDone(compare, stopped && left ? " Stopped: the other " + (left === 1 ? "competitor was" : left + " competitors were") + " not started." : ""), false);
+        const ran = Object.assign({}, compare, { done: (compare.done || []).concat(stopped ? [] : [payload.report.id]) });
+        if (!stopped && nextCompare(ran)) setStatus("The comparison with " + compare.url + " is ready. Next: " + compare.queue[0] + ".", false);
+        else {
+          setStatus(compareDone(ran, stopped && left ? " Stopped: the other " + (left === 1 ? "competitor was" : left + " competitors were") + " not started." : ""), false);
+          openCompared(ran);
+        }
       }
     } catch (error) {
       const rivalField = compare && (error.fields || []).find((item) => item.field === "url");
@@ -2545,7 +2564,9 @@
           setStatus("The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Next: " + compare.queue[0] + ".", true);
           nextCompare(Object.assign({}, compare, { failed }));
         } else if (compare && (compare.total || 1) > 1) {
-          setStatus(compareDone(Object.assign({}, compare, { failed: (compare.failed || []).concat(compare.url) }), ""), true);
+          const ran = Object.assign({}, compare, { failed: (compare.failed || []).concat(compare.url) });
+          setStatus(compareDone(ran, ""), true);
+          openCompared(ran);
         } else if (compare && reopenCompare(compare, "The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Check the address or enter another competitor.")) {
           setStatus("The comparison with " + compare.url + " did not finish. Your report is open again.", true);
         } else {

@@ -632,7 +632,7 @@ test.describe("false positives from the real-run series", () => {
     assert.deepEqual(result.warnings, []);
   });
 
-  test("SEO and Security findings and indexability reasons carry a message that renders to their English text (#1297)", () => {
+  test("SEO, Security and Analytics findings and indexability reasons carry a message that renders to their English text (#1297)", () => {
     const { english } = require("../../functions/url-review-findings-en");
     const result = analyzeHtmlPages([
       { url: URL_, html: HTML },
@@ -644,7 +644,9 @@ test.describe("false positives from the real-run series", () => {
     assert.ok(seo.length > 3);
     const security = result.findings.filter((item) => item.area === "Security" && !/^sec-leak-/.test(item.key));
     assert.ok(security.length > 3);
-    for (const item of seo.concat(security)) {
+    const analytics = result.findings.filter((item) => item.area === "Analytics");
+    assert.ok(analytics.length > 1);
+    for (const item of seo.concat(security, analytics)) {
       assert.ok(item.msg && item.msg.title, item.key + " has no title message");
       for (const part of ["title", "evidence", "fix"]) {
         if (item.msg[part]) assert.equal(english(item.msg[part]), item[part], item.key + "." + part);
