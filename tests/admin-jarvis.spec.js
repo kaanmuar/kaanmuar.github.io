@@ -170,6 +170,11 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page).toHaveURL(/#stats\/review\/7$/);
     await page.locator('#jv-range').selectOption('30');
     await expect(page).toHaveURL(/#stats\/review\/30$/);
+    await page.evaluate(() => { location.hash = '#stats/systems/30'; });
+    await expect(page.locator('[data-view="systems"]')).toBeVisible();
+    await page.evaluate(() => { location.hash = '#stats/overview/30'; });
+    await expect(page.locator('[data-view="overview"]')).toBeVisible();
+    await expect(page.locator('[data-view="systems"]')).toBeHidden();
   });
 
   test('exports JSON and CSV, and the Gemini briefing comes back from the function', async ({ page }) => {
