@@ -68,6 +68,7 @@
 .multi-cell.is-note > :not([hidden]) { padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; color: var(--muted); background: color-mix(in srgb, var(--panel) 55%, transparent); }
 .multi-cell > .multi-empty, .multi-cell.is-note > :last-child { flex-grow: 0; }
 .multi-cell .table-scroll { max-width: 100%; overflow-x: auto; }
+.multi-cell .print-more { display: none; }
 
 /* Six sites fit the side-by-side table without scrolling sideways; the line names stay in view. */
 .multi-modal { --own: var(--cyan); }
@@ -183,6 +184,8 @@
   body.printing-multi .multi-cell .card { break-inside: auto; }
   body.printing-multi .multi-cell .card::after { display: none; }
   body.printing-multi .multi-cell .page-table thead th { position: static; }
+  body.printing-multi .multi-cell .print-cut { display: none !important; }
+  body.printing-multi .multi-cell .print-more { display: revert; list-style: none; color: #6b7785; font-style: italic; }
   body.printing-multi .multi-cell .sec-matrix { font-size: 7pt; }
   body.printing-multi .multi-cell .sec-matrix th { font-size: 6pt; letter-spacing: 0; overflow-wrap: anywhere; }
   body.printing-multi .multi-cell .sec-matrix td:first-child { min-width: 0; }

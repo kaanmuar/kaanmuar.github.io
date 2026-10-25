@@ -16,7 +16,7 @@
       missing: "This review was deleted after the comparison was saved.", opening: "Opening the comparison…",
       signIn: "Sign in with the account that saved this comparison to open it.", failed: "The comparison did not open. Try again in a moment.",
       saving: "Saving the comparison…", saveFailed: "The comparison was not saved. Try again in a moment.",
-      nothing: "Nothing here for this site.",
+      nothing: "Nothing here for this site.", more: "…and {n} more, in the report on the page.",
       sections: {
         cover: "Cover and key figures", exec: "One-page summary", health: "Health score", fix: "Fix first", browser: "In a real browser",
         previews: "How it looks in Google and when shared", geo: "What AI sees", analytics: "Analytics and consent", seo: "Search visibility",
@@ -36,7 +36,7 @@
       missing: "Esta revisión se eliminó después de guardar la comparación.", opening: "Abriendo la comparación…",
       signIn: "Inicia sesión con la cuenta que guardó esta comparación para abrirla.", failed: "La comparación no se abrió. Inténtalo de nuevo en un momento.",
       saving: "Guardando la comparación…", saveFailed: "La comparación no se guardó. Inténtalo de nuevo en un momento.",
-      nothing: "Nada aquí para este sitio.",
+      nothing: "Nada aquí para este sitio.", more: "…y {n} más, en el informe de la página.",
       sections: {
         cover: "Portada y cifras clave", exec: "Resumen en una página", health: "Puntuación de salud", fix: "Corregir primero", browser: "En un navegador real",
         previews: "Cómo se ve en Google y al compartirse", geo: "Lo que ve la IA", analytics: "Analítica y consentimiento", seo: "Visibilidad en buscadores",
@@ -56,7 +56,7 @@
       missing: "Esta revisão foi apagada depois que a comparação foi salva.", opening: "Abrindo a comparação…",
       signIn: "Entre com a conta que salvou esta comparação para abri-la.", failed: "A comparação não abriu. Tente de novo em instantes.",
       saving: "Salvando a comparação…", saveFailed: "A comparação não foi salva. Tente de novo em instantes.",
-      nothing: "Nada aqui para este site.",
+      nothing: "Nada aqui para este site.", more: "…e mais {n}, no relatório da página.",
       sections: {
         cover: "Capa e números principais", exec: "Resumo em uma página", health: "Pontuação de saúde", fix: "Corrigir primeiro", browser: "Em um navegador real",
         previews: "Como aparece no Google e ao compartilhar", geo: "O que a IA vê", analytics: "Analytics e consentimento", seo: "Visibilidade nas pesquisas",
@@ -76,7 +76,7 @@
       missing: "Diese Prüfung wurde gelöscht, nachdem der Vergleich gespeichert wurde.", opening: "Der Vergleich wird geöffnet…",
       signIn: "Melden Sie sich mit dem Konto an, das diesen Vergleich gespeichert hat, um ihn zu öffnen.", failed: "Der Vergleich wurde nicht geöffnet. Versuchen Sie es gleich noch einmal.",
       saving: "Der Vergleich wird gespeichert…", saveFailed: "Der Vergleich wurde nicht gespeichert. Versuchen Sie es gleich noch einmal.",
-      nothing: "Für diese Website nichts.",
+      nothing: "Für diese Website nichts.", more: "…und {n} weitere, im Bericht auf der Seite.",
       sections: {
         cover: "Deckblatt und Kennzahlen", exec: "Zusammenfassung auf einer Seite", health: "Gesundheitswert", fix: "Zuerst beheben", browser: "In einem echten Browser",
         previews: "So sieht es bei Google und beim Teilen aus", geo: "Was KI sieht", analytics: "Analytics und Einwilligung", seo: "Sichtbarkeit in der Suche",
@@ -96,7 +96,7 @@
       missing: "Cette revue a été supprimée après l'enregistrement de la comparaison.", opening: "Ouverture de la comparaison…",
       signIn: "Connectez-vous avec le compte qui a enregistré cette comparaison pour l'ouvrir.", failed: "La comparaison ne s'est pas ouverte. Réessayez dans un instant.",
       saving: "Enregistrement de la comparaison…", saveFailed: "La comparaison n'a pas été enregistrée. Réessayez dans un instant.",
-      nothing: "Rien ici pour ce site.",
+      nothing: "Rien ici pour ce site.", more: "…et {n} de plus, dans le rapport en ligne.",
       sections: {
         cover: "Couverture et chiffres clés", exec: "Résumé en une page", health: "Score de santé", fix: "À corriger d'abord", browser: "Dans un vrai navigateur",
         previews: "L'aperçu dans Google et en partage", geo: "Ce que voit l'IA", analytics: "Analytics et consentement", seo: "Visibilité dans la recherche",
@@ -116,7 +116,7 @@
       missing: "Questa revisione è stata eliminata dopo aver salvato il confronto.", opening: "Apertura del confronto…",
       signIn: "Accedi con l'account che ha salvato questo confronto per aprirlo.", failed: "Il confronto non si è aperto. Riprova tra un momento.",
       saving: "Salvataggio del confronto…", saveFailed: "Il confronto non è stato salvato. Riprova tra un momento.",
-      nothing: "Niente qui per questo sito.",
+      nothing: "Niente qui per questo sito.", more: "…e altri {n}, nel report sulla pagina.",
       sections: {
         cover: "Copertina e cifre chiave", exec: "Riepilogo in una pagina", health: "Punteggio di salute", fix: "Da correggere prima", browser: "In un browser reale",
         previews: "Come appare su Google e quando è condiviso", geo: "Cosa vede l'IA", analytics: "Analytics e consenso", seo: "Visibilità nella ricerca",
@@ -298,8 +298,17 @@
     }).join("") + "</div></div>";
   }
 
+  // Only sentences, maybe in plain wrappers. Inside a card they must be the muted line a painter leaves when it
+  // has nothing to show, so a card of real text keeps its box.
+  function sentencesOnly(el, card) {
+    return [...el.children].filter((kid) => !kid.hidden && kid.textContent.trim()).every((kid) =>
+      card && kid.classList.contains("muted") ? true
+        : kid.tagName === "P" ? !card
+          : /^(DIV|SECTION|OL|UL)$/.test(kid.tagName) && sentencesOnly(kid, card));
+  }
+
   // A cell the painters left empty or hidden says so, and a section empty for every site is left out.
-  // A cell holding only sentences, with no box of its own, is drawn as a note box like its neighbours.
+  // A cell holding only sentences is drawn as a note box at its own height, not stretched to its neighbours'.
   function settle(grid) {
     grid.querySelectorAll(".multi-sec").forEach((sec) => {
       let filled = 0;
@@ -307,7 +316,7 @@
         const shown = [...cell.children].filter((child) => !child.hidden && child.textContent.trim());
         if (shown.length) {
           filled += 1;
-          if (shown.every((child) => !child.matches(".card") && [...child.children].every((kid) => kid.tagName === "P"))) cell.classList.add("is-note");
+          if (shown.every((child) => child.matches(".card") ? child.querySelector(".muted") && sentencesOnly(child, true) : sentencesOnly(child, false))) cell.classList.add("is-note");
           return;
         }
         [...cell.children].forEach((child) => { child.hidden = true; });
@@ -315,6 +324,19 @@
         cell.insertAdjacentHTML("beforeend", '<p class="multi-empty" translate="no">' + esc(t("nothing")) + "</p>");
       });
       sec.hidden = !filled;
+    });
+  }
+
+  // In print a long list stops after PRINT_ROWS with a line counting the rest, as the screen stops it in a
+  // scroll box, so one long column does not leave the others blank for pages.
+  const PRINT_ROWS = 12;
+  function capForPrint(grid) {
+    grid.querySelectorAll('[data-slot="pages"], [data-slot="report-log"]').forEach((list) => {
+      const rows = [...list.children].filter((row) => !row.hidden);
+      if (rows.length <= PRINT_ROWS) return;
+      rows.slice(PRINT_ROWS).forEach((row) => row.classList.add("print-cut"));
+      const text = esc(t("more", { n: rows.length - PRINT_ROWS }));
+      list.insertAdjacentHTML("beforeend", list.tagName === "TBODY" ? '<tr class="print-more"><td colspan="4">' + text + "</td></tr>" : '<li class="print-more">' + text + "</li>");
     });
   }
 
@@ -374,6 +396,7 @@
       }
     });
     settle(grid);
+    capForPrint(grid);
     const bar = body.querySelector(".multi-hosts-bar");
     grid.addEventListener("scroll", () => { bar.scrollLeft = grid.scrollLeft; }, { passive: true });
     say("");
