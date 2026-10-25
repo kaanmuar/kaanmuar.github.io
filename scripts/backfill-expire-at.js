@@ -7,8 +7,8 @@ const auth = require("../functions/url-review-auth");
 
 const PROJECT = process.env.GCLOUD_PROJECT || "carlosm-interactive-cv";
 const BASE = "https://firestore.googleapis.com/v1/projects/" + PROJECT + "/databases/(default)/documents";
-// url_review_free_runs and url_review_coupons are never given one: they must not expire.
-const FIELDS = ["retainUntil", "status", "createdAt", "lastSignInAt", "expiresAt", "expireAt", "at", "sentAt"];
+// url_review_free_runs and coupons the operator made by hand (no `validUntil`) are never given one: they must not expire.
+const FIELDS = ["retainUntil", "status", "createdAt", "lastSignInAt", "expiresAt", "expireAt", "at", "sentAt", "validUntil"];
 const HOUR = 60 * 60 * 1000;
 const at = (iso, plus) => (Date.parse(iso || "") ? new Date(Date.parse(iso) + (plus || 0)) : null);
 // A row with no date of its own is kept 12 months from this run.
@@ -27,7 +27,8 @@ const RULES = {
   url_review_redemptions: (row) => paid(row.at),
   url_review_alerts: (row) => year(row.at),
   url_review_captures: (row) => year(row.at),
-  url_review_stops: (row) => year(row.at),
+  url_review_stops: (row) => at(row.at, auth.RUN_MS) || new Date(Date.now() + auth.RUN_MS),
+  url_review_coupons: (row) => row.validUntil ? year(row.createdAt) : null,
   mail: (row) => year(row.sentAt || row.createdAt)
 };
 

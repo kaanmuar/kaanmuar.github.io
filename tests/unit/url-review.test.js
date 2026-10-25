@@ -1245,6 +1245,15 @@ test.describe("return price", () => {
     assert.equal(offers.cleanCode("<script>"), "");
   });
 
+  test("a coupon sent with a follow-up note is open 14 days and kept 12 months", () => {
+    const coupon = offers.returnCoupon({ percent: 5, reportId: "abc", email: "ana@example.com" }, now);
+    assert.equal(coupon.percent, 10);
+    assert.equal(coupon.email, "ana@example.com");
+    assert.equal(Date.parse(coupon.validUntil) - now, 14 * 86400000);
+    assert.equal(coupon.expireAt.getTime() - now, 365 * 86400000);
+    assert.equal(offers.couponOpen(coupon, "report", "abc", now), true);
+  });
+
   test("returns count finished runs in the 30 days before", () => {
     const rows = [{ status: "complete", createdAt: ago(2) }, { status: "complete", createdAt: ago(40) }, { status: "blocked", createdAt: ago(1) }];
     assert.equal(offers.returnsBefore(rows, new Date(now).toISOString()), 1);

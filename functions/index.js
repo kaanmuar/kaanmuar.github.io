@@ -2425,17 +2425,7 @@ function dealFields(deal) {
 async function mintReturnCoupon(note) {
   const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   const code = "BACK-" + Array.from({ length: 8 }, () => alphabet[crypto.randomInt(alphabet.length)]).join("");
-  await admin.firestore().collection("url_review_coupons").doc(code).set({
-    percent: Math.max(10, Number(note.percent) || 10),
-    purposes: ["report", "new-run"],
-    reportId: note.reportId || "",
-    email: note.email,
-    maxUses: 1,
-    uses: 0,
-    source: "return-note",
-    validUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date().toISOString()
-  });
+  await admin.firestore().collection("url_review_coupons").doc(code).set(reviewOffers.returnCoupon(note));
   return code;
 }
 

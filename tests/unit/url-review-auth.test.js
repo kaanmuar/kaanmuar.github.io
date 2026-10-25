@@ -70,10 +70,12 @@ test("only the email and device that started a run can stop it", async () => {
   const anaPhone = await emailSession(store, PHONE);
   const started = await auth.startEmail(store, { email: "bob@example.com", deviceKey: PHONE });
   const bob = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: PHONE });
-  assert.equal((await auth.claimRun(store, { runId: RUN, email: ana.email, deviceKey: DESKTOP })).ok, true);
+  const claimedAt = Date.now();
+  assert.equal((await auth.claimRun(store, { runId: RUN, email: ana.email, deviceKey: DESKTOP, now: claimedAt })).ok, true);
   const row = await store.get("url_review_stops", RUN);
   assert.equal(row.stopped, false);
-  assert.ok(row.expireAt instanceof Date);
+  assert.equal(row.expireAt.getTime(), claimedAt + auth.RUN_MS);
+  assert.equal(auth.RUN_MS, 24 * 60 * 60 * 1000);
 
   assert.equal((await auth.stopRun(store, { runId: RUN })).status, 401);
   assert.equal((await auth.stopRun(store, { runId: RUN, session: bob.session, deviceKey: PHONE })).status, 404);
@@ -83,7 +85,9 @@ test("only the email and device that started a run can stop it", async () => {
   assert.equal((await store.get("url_review_stops", RUN)).stopped, false);
 
   assert.equal((await auth.stopRun(store, { runId: RUN, session: ana.session, deviceKey: DESKTOP })).ok, true);
-  assert.equal((await store.get("url_review_stops", RUN)).stopped, true);
+  const stopped = await store.get("url_review_stops", RUN);
+  assert.equal(stopped.stopped, true);
+  assert.equal(stopped.expireAt.getTime(), claimedAt + auth.RUN_MS);
 });
 
 test("wrong codes run out, and an expired session is refused", async () => {
