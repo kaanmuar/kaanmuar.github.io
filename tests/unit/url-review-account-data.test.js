@@ -87,6 +87,22 @@ test("a report paid after its run gets its own payment row, without the report",
   assert.deepEqual(row, { status: "paid-report", paid: true, purpose: "report", email: EMAIL, frameworks: ["iso"], reportId: "run9", provider: "wompi", amount: 950 });
 });
 
+test("a paid case export, signals, or signed-in run keeps its purpose and never becomes a run credit", () => {
+  assert.equal(offers.paidPurpose("report"), "report");
+  ["cases", "alerts", "credentials"].forEach((purpose) => assert.equal(offers.paidPurpose(purpose), purpose));
+  assert.equal(offers.paidPurpose("new-run"), "new-run");
+  assert.equal(offers.paidPurpose(""), "new-run");
+  const row = offers.addonPayment({ email: " Ana@Example.com", frameworks: ["iso"], report: { cases: [1] } }, { purpose: "cases", reportId: "run9", layers: ["Security"], alertCount: undefined, amount: 19 });
+  assert.deepEqual(row, { status: "paid-addon", paid: true, email: EMAIL, frameworks: ["iso"], purpose: "cases", reportId: "run9", layers: ["Security"], amount: 19 });
+  assert.equal(accountData.isPayment({ status: "paid-addon" }), true);
+});
+
+test("report add-ons count as revenue in the period summary", () => {
+  const summary = require("../../functions/url-review-mail").summarizePeriod([], [{ createdAt: new Date().toISOString(), status: "paid-addon", paid: true, purpose: "alerts", priceUsd: 19 }], [], []);
+  assert.equal(summary.paidUsd, 19);
+  assert.equal(summary.paidCount, 1);
+});
+
 test("the desk counts a paid report once, through its payment row", () => {
   const rows = [
     { id: "run9", email: EMAIL, status: "complete", paid: true, report: { cases: [] } },
