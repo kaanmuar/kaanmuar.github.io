@@ -4456,3 +4456,71 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
     } else res.status(200).json(failed);
   }
 });
+
+// Admin Statistics (js/admin-jarvis.js): server-only numbers, external sources, and owner actions. See functions/jarvis.js.
+const jarvis = require("./jarvis");
+const JARVIS_REPORTS = { site: (period) => sendPeriodReport(period), review: (period) => sendReviewPeriodReport(period) };
+
+async function jarvisCached(op, days, load) {
+  const ref = admin.firestore().collection("jarvis_cache").doc(op + "-" + days);
+  const snap = await ref.get().catch(() => null);
+  const saved = snap && snap.exists ? snap.data() : null;
+  if (saved && Date.now() - Date.parse(saved.at) < (jarvis.TTL[op] || 60000)) return Object.assign(JSON.parse(saved.json), { cachedAt: saved.at });
+  const fresh = await load();
+  const at = new Date().toISOString();
+  await ref.set({ at, json: JSON.stringify(fresh).slice(0, 900000) }).catch(() => null);
+  return Object.assign(fresh, { cachedAt: at });
+}
+
+exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
+  res.set("Access-Control-Allow-Origin", reviewOrigin(req));
+  res.set("Vary", "Origin");
+  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.set("Cache-Control", "no-store");
+  if (req.method === "OPTIONS") { res.status(204).send(""); return; }
+  if (req.method !== "POST") { res.status(405).json({ error: "POST only." }); return; }
+  const presented = String(req.get("authorization") || "");
+  const bearer = presented.toLowerCase().startsWith("bearer ") ? presented.slice(7).trim() : "";
+  let operator = null;
+  if (bearer) {
+    try { operator = await reviewDesk.verifyOperator(bearer); } catch (error) { operator = null; }
+  }
+  if (!operator) { res.status(bearer ? 403 : 401).json({ error: "Sign in with the owner account." }); return; }
+  const body = req.body || {};
+  const op = String(body.op || "");
+  const days = jarvis.rangeDays(body.days);
+  const now = Date.now();
+  const env = process.env;
+  try {
+    let out;
+    if (op === "health") out = await jarvisCached(op, days, () => jarvis.health(admin.firestore(), { days, now }));
+    else if (op === "jobs") out = await jarvisCached(op, 0, async () => ({ ok: true, jobs: await jarvis.jobs(fetch) }));
+    else if (op === "github") out = await jarvisCached(op, 0, () => jarvis.github(fetch, env.GITHUB_BUGS_TOKEN, { now }));
+    else if (op === "ga4") out = await jarvisCached(op, days, () => jarvis.ga4(fetch, { days }));
+    else if (op === "cloudflare") out = await jarvisCached(op, days, () => jarvis.cloudflare(fetch, env, { days, now }));
+    else if (op === "speed") out = await jarvisCached(op, 0, () => jarvis.speed(urlReview, env));
+    else if (op === "uptime") out = await jarvisCached(op, 0, () => jarvis.uptime(fetch, { now }));
+    else if (op === "brief") out = await jarvis.brief(fetch, env, body.snapshot);
+    else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot);
+    else if (op === "run-job") out = await jarvis.runJob(fetch, body.job);
+    else if (op === "send-report") {
+      const kind = body.kind === "site" ? "site" : "review";
+      const period = ["daily", "weekly", "monthly", "quarter"].includes(body.period) ? body.period : "daily";
+      const sent = await JARVIS_REPORTS[kind](period);
+      out = { kind, period, sent: !!sent, note: sent ? "Sent." : "Already sent for this window, or nothing to send." };
+    } else if (op === "unlist") {
+      const host = reviewPublish.bare(String(body.host || "").toLowerCase().trim());
+      if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host)) throw new Error("That is not a host.");
+      await admin.firestore().collection("url_review_unlisted").doc(host).set({ at: new Date().toISOString(), by: operator, from: "jarvis" });
+      out = { unlisted: host };
+    } else if (op === "email-briefing") {
+      const mail = jarvis.briefingMail(body.snapshot, body.text);
+      const sent = await sendOwnerEmail({ subject: mail.subject, intro: "Your Jarvis briefing from Admin > Statistics.", rows: mail.rows, body: mail.body, eyebrow: "Jarvis" });
+      out = { sent: sent !== false };
+    } else { res.status(400).json({ error: "Unknown op." }); return; }
+    res.status(200).json(Object.assign({ ok: true, op }, out));
+  } catch (error) {
+    res.status(200).json({ ok: false, op, error: String((error && error.message) || error).slice(0, 300) });
+  }
+});

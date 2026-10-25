@@ -47,12 +47,9 @@ test("a visit stores the page query without sign-in tokens", () => {
 });
 
 test("admin site visits use the same source rule", () => {
-  const html = fs.readFileSync(path.join(__dirname, "../../admin.html"), "utf8");
-  assert.match(html, /siteBump\(referrers, reviewOpenSource\(row\)\)/);
-  const source = html.match(/function reviewOpenSource\(row\) \{[\s\S]*?\n {4}\}/);
-  const reviewOpenSource = new Function(source[0] + "\nreturn reviewOpenSource;")();
+  const jarvis = require("../../js/admin-jarvis-core.js");
   const row = { query: "?utm_source=linkedin", referrerHost: "" };
-  assert.equal(reviewOpenSource(row), visitSource(row));
+  assert.equal(jarvis.openSource(row), visitSource(row));
 });
 
 test("a tagged visit reaches site_events with its query and a server time", async () => {
