@@ -129,6 +129,20 @@
         return title;
     }
 
+    // Same rule as the admin's Real / Tests switch: test domains and automation-looking local parts.
+    function isTestEmail(email) {
+        const value = String(email || '').trim().toLowerCase();
+        const at = value.lastIndexOf('@');
+        if (at < 1) return true;
+        const local = value.slice(0, at);
+        const domain = value.slice(at + 1);
+        if (/^(example\.(com|org|net)|test\.com|mailinator\.com|localhost|invalid)$/.test(domain)) return true;
+        if (/\.(test|example|invalid)$/.test(domain)) return true;
+        if (/(^|[.+_-])(playwright|cypress|selenium|appium|webdriver|robotframework|qa-?lab)([.+_-]|$)/.test(local)) return true;
+        if (/^(pw|cy|e2e|test)[_-]/.test(local)) return true;
+        return false;
+    }
+
     function isHubEvent(row) {
         return /^(hub|post)_/.test(String((row && row.name) || ''));
     }
@@ -342,73 +356,165 @@
         };
     }
 
+    // The owner's limits for the briefing, the daily email and the hourly watch. Saved in jarvis_settings/main.
+    const THRESHOLDS = {
+        swingPct: { value: 25, label: 'Visit or open swing worth a line (%)', min: 5, max: 500 },
+        swingMin: { value: 10, label: 'Least volume for a swing line', min: 1, max: 100000 },
+        failuresWarn: { value: 1, label: 'Failed review runs in range: warn at', min: 1, max: 100000 },
+        failuresAlert: { value: 10, label: 'Failed review runs in range: alert at', min: 1, max: 100000 },
+        heldReruns: { value: 1, label: 'Held re-runs: warn at', min: 1, max: 100000 },
+        unanswered: { value: 1, label: 'Unanswered messages: warn at', min: 1, max: 100000 },
+        pendingRatings: { value: 1, label: 'Pending ratings: warn at', min: 1, max: 100000 },
+        conversionMin: { value: 5, label: 'Open → review rate below (%)', min: 0, max: 100 },
+        conversionOpens: { value: 50, label: 'Least opens before judging the rate', min: 1, max: 100000 },
+        uptimeMs: { value: 3000, label: 'Slow page above (ms)', min: 200, max: 60000 },
+        speedWarn: { value: 50, label: 'PageSpeed warn below', min: 1, max: 100 },
+        speedGood: { value: 90, label: 'PageSpeed praise at', min: 1, max: 100 },
+        tlsDays: { value: 21, label: 'TLS certificate days left: alert below', min: 1, max: 365 },
+        hubStaleDays: { value: 2, label: 'Social hub stats older than (days)', min: 1, max: 60 },
+        sessionsSwingPct: { value: 20, label: 'GA4 sessions swing worth a line (%)', min: 5, max: 500 },
+        readinessMin: { value: 80, label: 'Readiness turns amber below (%)', min: 1, max: 100 }
+    };
+
+    function thresholds(saved) {
+        const out = {};
+        Object.keys(THRESHOLDS).forEach((key) => {
+            const n = Number(saved && saved[key]);
+            const spec = THRESHOLDS[key];
+            out[key] = Number.isFinite(n) && n >= spec.min && n <= spec.max ? n : spec.value;
+        });
+        return out;
+    }
+
+    // Goals: a target for one product metric over the current Bogota day, week (from Monday) or month.
+    const GOAL_METRICS = {
+        cv: { visits: 'Visits', exports: 'Exports', runs: 'Runs' },
+        studio: { visits: 'Visits', exports: 'Reports', runs: 'Runs' },
+        lab: { visits: 'Visits', exports: 'Reports', runs: 'Runs' },
+        review: { opens: 'Opens', reviews: 'Reviews', paid: 'Paid reviews', usd: 'Revenue (USD)' },
+        inbox: { messages: 'Messages', ratings: 'Ratings' }
+    };
+    const GOAL_PERIODS = { day: 'today', week: 'this week', month: 'this month' };
+
+    function cleanGoals(list) {
+        return (Array.isArray(list) ? list : []).map((goal) => ({
+            product: String((goal && goal.product) || ''),
+            metric: String((goal && goal.metric) || ''),
+            period: String((goal && goal.period) || ''),
+            target: Math.round(Number(goal && goal.target) * 100) / 100
+        })).filter((goal) => GOAL_METRICS[goal.product] && GOAL_METRICS[goal.product][goal.metric] && GOAL_PERIODS[goal.period] && goal.target > 0 && goal.target <= 1e7).slice(0, 24);
+    }
+
+    function goalKey(goal) { return goal.product + '.' + goal.metric + '.' + goal.period; }
+
+    function goalLabel(goal) {
+        const name = (PRODUCTS.find((p) => p.key === goal.product) || {}).name || goal.product;
+        return `${name} ${GOAL_METRICS[goal.product][goal.metric].toLowerCase()} ${GOAL_PERIODS[goal.period]}`;
+    }
+
+    // Bogota is UTC-5 all year, so its midnight is 05:00 UTC.
+    function periodWindow(period, now) {
+        const at = now || new Date();
+        const local = new Date(at.getTime() - 5 * 3600 * 1000);
+        let start = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate());
+        let end = start + DAY;
+        if (period === 'week') { start -= ((local.getUTCDay() + 6) % 7) * DAY; end = start + 7 * DAY; }
+        if (period === 'month') { start = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), 1); end = Date.UTC(local.getUTCFullYear(), local.getUTCMonth() + 1, 1); }
+        return { start: new Date(start + 5 * 3600 * 1000), end: new Date(end + 5 * 3600 * 1000) };
+    }
+
+    function goalProgress(goal, value, now) {
+        const at = now || new Date();
+        const w = periodWindow(goal.period, at);
+        const elapsed = Math.min(1, Math.max(0.0001, (at - w.start) / (w.end - w.start)));
+        const v = Number(value) || 0;
+        const pct = Math.round((v / goal.target) * 100);
+        const expected = goal.target * elapsed;
+        const projected = Math.round((v / elapsed) * 10) / 10;
+        const status = v >= goal.target ? 'done' : v >= expected * 0.9 ? 'on-track' : v >= expected * 0.6 ? 'behind' : 'far-behind';
+        return { key: goalKey(goal), product: goal.product, metric: goal.metric, period: goal.period, target: goal.target, label: goalLabel(goal), value: v, pct, expected: Math.round(expected * 10) / 10, projected, elapsed: Math.round(elapsed * 100), status };
+    }
+
     // The instant briefing: rules over the summaries, most urgent first. Levels: alert, warn, good, info.
     function briefing(state) {
         const out = [];
-        const add = (level, product, text) => out.push({ level, product, text });
+        const add = (level, product, text, key) => out.push({ level, product, text, key: key || product + ':' + text.slice(0, 40) });
         const p = state.products || {};
         const ext = state.external || {};
+        const th = thresholds(state.thresholds);
         const names = PRODUCTS.reduce((m, row) => { m[row.key] = row.name; return m; }, {});
+        const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+        const swing = (k) => k.pct !== null && Math.abs(k.pct) >= th.swingPct && Math.max(k.value, k.prior || 0) >= th.swingMin;
         ['cv', 'studio', 'lab'].forEach((key) => {
             const s = p[key];
             if (!s) return;
             const visits = s.kpis[0];
-            if (visits.pct !== null && Math.abs(visits.pct) >= 25 && Math.max(visits.value, visits.prior || 0) >= 10) {
-                add(visits.pct > 0 ? 'good' : 'warn', key, `${names[key]} visits ${visits.pct > 0 ? 'rose' : 'fell'} ${Math.abs(visits.pct)}% (${visits.value} vs ${visits.prior}).`);
-            }
-            if (s.anomaly) add(s.anomaly.z > 0 ? 'info' : 'warn', key, `${names[key]}: today has ${s.anomaly.last} visits against a ${s.anomaly.mean}/day average (z ${s.anomaly.z}).`);
+            if (swing(visits)) add(visits.pct > 0 ? 'good' : 'warn', key, `${names[key]} visits ${visits.pct > 0 ? 'rose' : 'fell'} ${Math.abs(visits.pct)}% (${visits.value} vs ${visits.prior}).`, key + ':swing');
+            if (s.anomaly) add(s.anomaly.z > 0 ? 'info' : 'warn', key, `${names[key]}: today has ${s.anomaly.last} visits against a ${s.anomaly.mean}/day average (z ${s.anomaly.z}).`, key + ':anomaly');
             const top = (s.lists.sources || [])[0];
-            if (top && s.totals.visits >= 10) add('info', key, `${names[key]}'s top source is ${top.label} with ${top.value} of ${s.totals.visits} visits.`);
+            if (top && s.totals.visits >= th.swingMin) add('info', key, `${names[key]}'s top source is ${top.label} with ${top.value} of ${s.totals.visits} visits.`, key + ':source');
         });
         const r = p.review;
         if (r) {
             const opens = r.kpis[0];
-            if (opens.pct !== null && Math.abs(opens.pct) >= 25 && Math.max(opens.value, opens.prior || 0) >= 10) add(opens.pct > 0 ? 'good' : 'warn', 'review', `URL Review opens ${opens.pct > 0 ? 'rose' : 'fell'} ${Math.abs(opens.pct)}% (${opens.value} vs ${opens.prior}).`);
-            if (r.totals.usd > 0) add('good', 'review', `URL Review earned ${r.totals.usd} USD from ${r.totals.paid} paid reviews.`);
-            if (r.totals.opens >= 50 && r.totals.conversion < 5) add('warn', 'review', `Only ${r.totals.conversion}% of URL Review opens start a review.`);
-            if (r.anomaly) add(r.anomaly.z > 0 ? 'info' : 'warn', 'review', `URL Review: today has ${r.anomaly.last} opens against ${r.anomaly.mean}/day (z ${r.anomaly.z}).`);
+            if (swing(opens)) add(opens.pct > 0 ? 'good' : 'warn', 'review', `URL Review opens ${opens.pct > 0 ? 'rose' : 'fell'} ${Math.abs(opens.pct)}% (${opens.value} vs ${opens.prior}).`, 'review:swing');
+            if (r.totals.usd > 0) add('good', 'review', `URL Review earned ${r.totals.usd} USD from ${plural(r.totals.paid, 'paid review', 'paid reviews')}.`, 'review:usd');
+            if (r.totals.opens >= th.conversionOpens && r.totals.conversion < th.conversionMin) add('warn', 'review', `Only ${r.totals.conversion}% of URL Review opens start a review.`, 'review:conversion');
+            if (r.anomaly) add(r.anomaly.z > 0 ? 'info' : 'warn', 'review', `URL Review: today has ${r.anomaly.last} opens against ${r.anomaly.mean}/day (z ${r.anomaly.z}).`, 'review:anomaly');
         }
         const inbox = p.inbox;
         if (inbox) {
-            if (inbox.totals.unanswered > 0) add('warn', 'inbox', `${inbox.totals.unanswered} message${inbox.totals.unanswered > 1 ? 's' : ''} in range still have no answer.`);
-            if (inbox.totals.pending > 0) add('warn', 'inbox', `${inbox.totals.pending} rating${inbox.totals.pending > 1 ? 's wait' : ' waits'} for approval.`);
+            const u = inbox.totals.unanswered;
+            const n = inbox.totals.pending;
+            if (u >= th.unanswered) add('warn', 'inbox', `${plural(u, 'message', 'messages')} in range ${u === 1 ? 'still has' : 'still have'} no answer.`, 'inbox:unanswered');
+            if (n >= th.pendingRatings) add('warn', 'inbox', `${plural(n, 'rating', 'ratings')} ${n === 1 ? 'waits' : 'wait'} for approval.`, 'inbox:pending');
         }
         const hub = p.hub;
-        if (hub && hub.ga && hub.ga.ok === false) add('warn', 'hub', 'Social hub stats could not read GA4 on the last refresh.');
-        if (hub && hub.updatedAt && Date.now() - Date.parse(hub.updatedAt) > 2 * DAY) add('warn', 'hub', 'Social hub stats are more than two days old.');
+        if (hub && hub.ga && hub.ga.ok === false) add('warn', 'hub', 'Social hub stats could not read GA4 on the last refresh.', 'hub:ga');
+        if (hub && hub.updatedAt && Date.now() - Date.parse(hub.updatedAt) > th.hubStaleDays * DAY) add('warn', 'hub', `Social hub stats are more than ${plural(th.hubStaleDays, 'day', 'days')} old.`, 'hub:stale');
         const health = ext.health;
         if (health && health.ok !== false) {
-            (health.jobs || []).filter((job) => !job.ok).forEach((job) => add('alert', 'systems', `Job ${job.job} failed: ${job.error || job.note || 'no detail'}.`));
-            if (health.failures && health.failures.total) add(health.failures.total >= 10 ? 'alert' : 'warn', 'systems', `${health.failures.total} URL review runs failed in range; top cause ${((health.failures.causes || [])[0] || {}).label || 'unknown'}.`);
-            if (health.reruns && health.reruns.held) add('warn', 'systems', `${health.reruns.held} re-run${health.reruns.held > 1 ? 's are' : ' is'} held on the desk.`);
+            (health.jobs || []).filter((job) => !job.ok).forEach((job) => add('alert', 'systems', `Job ${job.job} failed: ${job.error || job.note || 'no detail'}.`, 'job:' + job.job));
+            const failed = (health.failures || {}).total || 0;
+            if (failed >= th.failuresWarn) {
+                const cause = ((health.failures.causes || [])[0] || {}).label;
+                add(failed >= th.failuresAlert ? 'alert' : 'warn', 'systems', `${plural(failed, 'URL review run', 'URL review runs')} failed in range${cause ? '; top cause: ' + cause : ''}.`, 'review:failures');
+            }
+            const held = (health.reruns || {}).held || 0;
+            if (held >= th.heldReruns) add('warn', 'systems', `${plural(held, 're-run is', 're-runs are')} held on the desk.`, 'review:held');
         }
         const jobs = ext.jobs;
-        if (jobs && jobs.ok !== false) (jobs.jobs || []).filter((job) => !job.ok).forEach((job) => add('alert', 'systems', `Scheduler: ${job.name} last ended with ${job.error || 'an error'}.`));
+        if (jobs && jobs.ok !== false) (jobs.jobs || []).filter((job) => !job.ok).forEach((job) => add('alert', 'systems', `Scheduler: ${job.name} last ended with ${job.error || 'an error'}.`, 'scheduler:' + job.name));
         const gh = ext.github;
         if (gh && gh.ok) {
-            (gh.ci || []).filter((run) => run.conclusion && run.conclusion !== 'success' && run.conclusion !== 'skipped').forEach((run) => add('alert', 'systems', `CI "${run.name}" on main is ${run.conclusion}.`));
-            if (gh.openBugs) add('info', 'systems', `${gh.openBugs} open bugs; most in ${((gh.bugAreas || [])[0] || {}).label || 'none'}. ${gh.merged.total} PRs merged this week.`);
+            (gh.ci || []).filter((run) => run.conclusion && !['success', 'skipped', 'cancelled', 'neutral'].includes(run.conclusion)).forEach((run) => add('alert', 'systems', `CI "${run.name}" on main is ${run.conclusion}.`, 'ci:' + run.name));
+            if (gh.openBugs) add('info', 'systems', `${plural(gh.openBugs, 'open bug', 'open bugs')}; most in ${((gh.bugAreas || [])[0] || {}).label || 'none'}. ${plural((gh.merged || {}).total || 0, 'PR', 'PRs')} merged this week.`, 'github:bugs');
         }
         const speed = ext.speed;
         if (speed && speed.ok) (speed.pages || []).forEach((page) => {
-            if (page.ok && page.score < 50) add('warn', page.product, `${page.name} scores ${page.score} on mobile PageSpeed.`);
-            else if (page.ok && page.score >= 90) add('good', page.product, `${page.name} scores ${page.score} on mobile PageSpeed.`);
+            if (page.ok && page.score < th.speedWarn) add('warn', page.product, `${page.name} scores ${page.score} on mobile PageSpeed.`, 'speed:' + page.product);
+            else if (page.ok && page.score >= th.speedGood) add('good', page.product, `${page.name} scores ${page.score} on mobile PageSpeed.`, 'speed:' + page.product);
         });
         const up = ext.uptime;
         if (up && up.ok) {
             (up.pages || []).forEach((page) => {
-                if (!page.ok) add('alert', page.product, `${page.name} answered ${page.status || 'nothing'}${page.error ? ' (' + page.error + ')' : ''}.`);
-                else if (page.ms > 3000) add('warn', page.product, `${page.name} took ${page.ms} ms to answer.`);
+                if (!page.ok) add('alert', page.product, `${page.name} answered ${page.status || 'nothing'}${page.error ? ' (' + page.error + ')' : ''}.`, 'uptime:' + page.product);
+                else if (page.ms > th.uptimeMs) add('warn', page.product, `${page.name} took ${page.ms} ms to answer.`, 'slow:' + page.product);
             });
-            if (up.tlsDaysLeft !== null && up.tlsDaysLeft !== undefined && up.tlsDaysLeft < 21) add('alert', 'systems', `The TLS certificate expires in ${up.tlsDaysLeft} days.`);
+            if (up.tlsDaysLeft !== null && up.tlsDaysLeft !== undefined && up.tlsDaysLeft < th.tlsDays) add('alert', 'systems', `The TLS certificate expires in ${plural(up.tlsDaysLeft, 'day', 'days')}.`, 'tls');
         }
         const ga = ext.ga4;
         if (ga && ga.ok) {
             const sessions = (ga.groups || []).reduce((s, g) => s + g.sessions, 0);
             const prior = (ga.groups || []).reduce((s, g) => s + g.priorSessions, 0);
             const d = delta(sessions, prior);
-            if (d.pct !== null && Math.abs(d.pct) >= 20 && Math.max(sessions, prior) >= 20) add(d.pct > 0 ? 'good' : 'warn', 'traffic', `GA4 sessions ${d.pct > 0 ? 'rose' : 'fell'} ${Math.abs(d.pct)}% (${sessions} vs ${prior}).`);
+            if (d.pct !== null && Math.abs(d.pct) >= th.sessionsSwingPct && Math.max(sessions, prior) >= 20) add(d.pct > 0 ? 'good' : 'warn', 'traffic', `GA4 sessions ${d.pct > 0 ? 'rose' : 'fell'} ${Math.abs(d.pct)}% (${sessions} vs ${prior}).`, 'ga4:swing');
         }
+        (state.goals || []).forEach((g) => {
+            if (g.status === 'done') add('good', g.product, `Goal met: ${g.label}, ${g.value} of ${g.target}.`, 'goal:' + g.key);
+            else if (g.status === 'far-behind' && g.elapsed >= 25) add('warn', g.product, `Goal behind: ${g.label} is at ${g.value} of ${g.target} with ${g.elapsed}% of the time gone (pace ${g.projected}).`, 'goal:' + g.key);
+            else if (g.status === 'behind' && g.elapsed >= 25) add('info', g.product, `Goal slipping: ${g.label} is at ${g.value} of ${g.target} (pace ${g.projected}).`, 'goal:' + g.key);
+        });
         const rank = { alert: 0, warn: 1, good: 2, info: 3 };
         return out.sort((a, b) => rank[a.level] - rank[b.level]);
     }
@@ -419,7 +525,7 @@
         const e = external || {};
         if (e.health && e.health.jobs) e.health.jobs.forEach((job) => checks.push(job.ok));
         if (e.jobs && e.jobs.jobs) e.jobs.jobs.forEach((job) => checks.push(job.ok));
-        if (e.github && e.github.ci) e.github.ci.forEach((run) => checks.push(run.conclusion === 'success' || run.conclusion === 'skipped'));
+        if (e.github && e.github.ci) e.github.ci.forEach((run) => { if (run.conclusion !== 'cancelled') checks.push(['success', 'skipped', 'neutral'].includes(run.conclusion)); });
         if (e.uptime && e.uptime.pages) e.uptime.pages.forEach((page) => checks.push(!!page.ok && page.ms <= 3000));
         if (e.speed && e.speed.pages) e.speed.pages.forEach((page) => { if (page.ok) checks.push(page.score >= 50); });
         if (!checks.length) return null;
@@ -447,6 +553,8 @@
         if (/\b(print|pdf)\b/.test(t)) return { type: 'print', all: /\b(all|everything)\b/.test(t) };
         if (/\b(export|download)\b/.test(t)) return { type: 'export', format: /\bcsv\b/.test(t) ? 'csv' : /\b(png|image|picture)\b/.test(t) ? 'png' : 'json' };
         if (/\b(share|link)\b/.test(t)) return { type: 'share' };
+        if (/\b(settings|goals?|targets?|thresholds?|limits?)\b/.test(t) && !/\?$/.test(t)) return { type: 'settings' };
+        if (/\b(daily|morning) (briefing|email|mail)\b/.test(t)) return { type: 'daily' };
         if (/\b(email|mail)\b/.test(t)) return { type: 'email' };
         if (/\b(refresh|reload|update)\b/.test(t)) return { type: 'refresh' };
         if (/\b(read|speak|say|brief|briefing|status|report)\b/.test(t) && !/\?$/.test(t)) return { type: 'speak' };
@@ -474,7 +582,7 @@
         return { start, end, days, prior: { start: new Date(start.getTime() - days * DAY), end: start } };
     }
 
-    const api = { ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, readiness, csv, parseCommand, windowFor };
+    const api = { THRESHOLDS, thresholds, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, readiness, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);
