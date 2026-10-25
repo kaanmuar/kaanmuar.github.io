@@ -97,3 +97,11 @@ test.describe('An unpaid report is blurred in every section, and its files cut w
     expect(text).not.toContain(full.title);
   });
 });
+
+test('a report saved without counts still downloads as text, with its pages counted (#1482)', async ({ page }) => {
+  const report = Object.assign({}, sample.report, { id: ID, counts: undefined });
+  await openUnpaid(page, { report });
+  const read = (report.limits && report.limits.pagesRead) || report.pages.length;
+  expect(read).toBeGreaterThan(0);
+  expect(await exported(page, 'download-text')).toContain('Pages: ' + read + '\n');
+});
