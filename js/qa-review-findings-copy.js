@@ -4995,9 +4995,6 @@
     }
   };
 
-  const code = String(document.documentElement.lang || "en").slice(0, 2).toLowerCase();
-  const book = COPY[code] || null;
-
   function pick(lines, id, vars) {
     if (vars && typeof vars.n === "number") {
       const form = lines[id + (vars.n === 1 ? "_one" : "_other")];
@@ -5034,13 +5031,6 @@
     return missing ? null : out;
   }
 
-  // line(item.msg && item.msg.title, item.title): the page-language line, or the server's English.
-  function line(message, fallback) {
-    if (!book || !message) return fallback;
-    const text = render(book, message);
-    return text === null ? fallback : text;
-  }
-
   // Reports saved before the server sent warningMsgs carry only the English warnings; these read them back.
   const SAID = [
     [/^The site's bot protection refused the plain request; the page was analyzed in headless Chrome\./, () => ({ id: "warn.browserRead" })],
@@ -5070,30 +5060,46 @@
     return list;
   }
 
-  // The health warnings in the page language, from the server's messages or the English text; null when a line is missing.
-  function warnings(messages, english) {
-    if (!book) return null;
-    const list = Array.isArray(messages) && messages.length ? messages : readWarnings(english);
-    if (!list) return null;
-    const lines = list.map((message) => render(book, message));
-    return lines.some((text) => text === null) ? null : lines.join(" ");
-  }
-
   const KEEP_CASE = /^(Google|Consent|Lighthouse|Analytics)(?![\p{L}\p{N}])/u;
 
-  // "Fix first: <title>." for the top-ranked finding; the title starts lowercase like the English, except in German,
-  // after a slot such as {name}, and on product terms.
-  function fixFirst(item) {
-    const said = item && item.msg && item.msg.title;
-    if (!book || !said || typeof said !== "object") return null;
-    let title = render(book, said);
-    if (title === null) return null;
-    const template = String(pick(book, said.id, said.vars) || "");
-    if (code !== "de" && !/^\{/.test(template) && /^\p{Lu}[\p{Ll}’']*(?![\p{L}\p{N}-])/u.test(title) && !KEEP_CASE.test(title)) {
-      title = title.charAt(0).toLowerCase() + title.slice(1);
+  function forLang(lang) {
+    const code = String(lang || "en").slice(0, 2).toLowerCase();
+    const book = COPY[code] || null;
+
+    // line(item.msg && item.msg.title, item.title): the line in this language, or the server's English.
+    function line(message, fallback) {
+      if (!book || !message) return fallback;
+      const text = render(book, message);
+      return text === null ? fallback : text;
     }
-    return render(book, { id: "fixFirst", vars: { title } });
+
+    // The health warnings in this language, from the server's messages or the English text; null when a line is missing.
+    function warnings(messages, english) {
+      if (!book) return null;
+      const list = Array.isArray(messages) && messages.length ? messages : readWarnings(english);
+      if (!list) return null;
+      const lines = list.map((message) => render(book, message));
+      return lines.some((text) => text === null) ? null : lines.join(" ");
+    }
+
+    // "Fix first: <title>." for the top-ranked finding; the title starts lowercase like the English, except in German,
+    // after a slot such as {name}, and on product terms.
+    function fixFirst(item) {
+      const said = item && item.msg && item.msg.title;
+      if (!book || !said || typeof said !== "object") return null;
+      let title = render(book, said);
+      if (title === null) return null;
+      const template = String(pick(book, said.id, said.vars) || "");
+      if (code !== "de" && !/^\{/.test(template) && /^\p{Lu}[\p{Ll}’']*(?![\p{L}\p{N}-])/u.test(title) && !KEEP_CASE.test(title)) {
+        title = title.charAt(0).toLowerCase() + title.slice(1);
+      }
+      return render(book, { id: "fixFirst", vars: { title } });
+    }
+
+    return { lang: code, translated: !!book, line: line, render: render, warnings: warnings, fixFirst: fixFirst };
   }
 
-  window.QAReviewFindingsCopy = { lang: code, translated: !!book, line: line, render: render, warnings: warnings, fixFirst: fixFirst };
+  // functions/url-review-findings-copy.js is this file, copied by scripts/build-findings-copy.js.
+  if (typeof module === "object" && module.exports) module.exports = { COPY, forLang };
+  else window.QAReviewFindingsCopy = forLang(document.documentElement.lang);
 })();
