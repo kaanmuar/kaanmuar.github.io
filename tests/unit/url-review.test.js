@@ -632,6 +632,32 @@ test.describe("false positives from the real-run series", () => {
     assert.deepEqual(result.warnings, []);
   });
 
+  test("SEO findings and indexability reasons carry a message that renders to their English text (#1297)", () => {
+    const { english } = require("../../functions/url-review-findings-en");
+    const result = analyzeHtmlPages([
+      { url: URL_, html: HTML },
+      { url: URL_ + "gone/", status: 404, html: "" },
+      { url: URL_ + "busy/", status: 503, retryAfter: true, html: "" },
+      { url: URL_ + "about/", html: HTML }
+    ]);
+    const seo = result.findings.filter((item) => item.area === "SEO");
+    assert.ok(seo.length > 3);
+    for (const item of seo) {
+      assert.ok(item.msg && item.msg.title, item.key + " has no title message");
+      for (const part of ["title", "evidence", "fix"]) {
+        if (item.msg[part]) assert.equal(english(item.msg[part]), item[part], item.key + "." + part);
+      }
+    }
+    const broken = seo.find((item) => item.key === "seo-broken-links");
+    assert.deepEqual(broken.msg.title, { id: "seo-broken-links.title", vars: { n: 1 } });
+    const rows = result.seo.indexability;
+    assert.ok(rows.length);
+    for (const row of rows.filter((one) => one.reasonMsg)) {
+      assert.equal(typeof row.reasonMsg === "string" ? row.reasonMsg : english(row.reasonMsg), row.reason, row.path);
+    }
+    assert.ok(rows.some((row) => row.reasonMsg && row.reasonMsg.id === "reason.indexable"));
+  });
+
   test("a review where most linked pages were blocked is reported as partial", () => {
     const rows = [{ url: URL_, html: HTML }].concat([1, 2, 3, 4].map((n) => ({ url: URL_ + "p" + n, status: 403, html: "" })), [{ url: URL_ + "ok", html: HTML }]);
     const result = analyzeHtmlPages(rows);
