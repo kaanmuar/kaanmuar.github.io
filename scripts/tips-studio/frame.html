@@ -69,6 +69,11 @@
   .tight .row { grid-template-columns: 44px auto 1fr; padding: calc(var(--u) * .4) calc(var(--u) * .6); }
   .tight .row .m { grid-row: auto; width: 44px; height: 44px; font-size: 24px; }
   .tight .row small { text-align: right; }
+  .rows.two { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * .45) calc(var(--u) * .5); }
+  .rows.two .row { grid-template-columns: 46px 1fr; gap: 2px 14px; padding: calc(var(--u) * .45) calc(var(--u) * .55); }
+  .rows.two .row .m { grid-row: span 2; width: 46px; height: 46px; font-size: 24px; }
+  .rows.two .row b { font-size: calc(var(--body) * .78); }
+  .rows.two .row small { font-size: calc(var(--body) * .6); text-align: left; }
   .bars { display: flex; flex-direction: column; gap: calc(var(--u) * .6); }
   .bar { display: grid; grid-template-columns: 180px 1fr 170px; gap: 16px; align-items: center; font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .85); }
   .bar .t { height: 30px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
@@ -100,7 +105,7 @@
   .feed .glass:has(.scores) { padding: calc(var(--u) * .9) calc(var(--u) * 1.1); }
   .matrix { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0 12px; font-family: "Fira Code", monospace; font-size: var(--mono); }
   .matrix col.host { width: 27%; } .matrix col.total { width: 12%; }
-  .matrix th { font-family: Inter, system-ui, sans-serif; font-size: 15px; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); font-weight: 600; text-align: center; padding: 0 2px; }
+  .matrix th { font-family: Inter, system-ui, sans-serif; font-size: 12px; letter-spacing: 0; text-transform: uppercase; color: var(--muted); font-weight: 600; text-align: center; padding: 0 2px; }
   .matrix th:first-child, .matrix td:first-child { text-align: left; }
   .matrix td { text-align: center; padding: 12px 4px; background: rgba(5,12,15,.45); white-space: nowrap; }
   .matrix td:first-child { border-radius: 18px 0 0 18px; padding-left: 20px; overflow: hidden; text-overflow: ellipsis; font-family: Inter, system-ui, sans-serif; font-size: calc(var(--body) * .7); font-weight: 700; color: var(--accent); }
@@ -112,6 +117,29 @@
   .matrix td.lead { font-weight: 700; text-shadow: 0 0 14px currentColor; }
   .matrix td.lead::after { content: "✓"; font-family: Inter, system-ui, sans-serif; font-size: .5em; vertical-align: super; margin-left: 3px; }
   .scores-note { margin-top: calc(var(--u) * .9); font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .7); color: var(--muted); text-align: center; }
+  .vs .side.risk { border-color: color-mix(in srgb, var(--risk) 55%, transparent); } .vs .risk h4 { color: var(--risk); }
+  .quiz { display: grid; grid-template-columns: 1fr auto 1fr; gap: calc(var(--u) * .6); align-items: stretch; }
+  .quiz .side { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: calc(var(--u) * 1.1) calc(var(--u) * .6); border-radius: 22px; background: rgba(5,12,15,.45); border: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+  .quiz .side b { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: calc(var(--title) * .56); line-height: 1; }
+  .quiz .side small { font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .62); color: var(--muted); word-break: break-all; }
+  .quiz .side i { font-style: normal; font-family: "Instrument Serif", Georgia, serif; font-size: calc(var(--title) * 1.3); line-height: 1; background: linear-gradient(92deg, var(--cyan-hi), var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .quiz .or { align-self: center; font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .9); color: var(--gold); letter-spacing: .1em; text-transform: uppercase; }
+  .clip .quiz .side i.a { animation-name: pulse; animation-duration: .9s; animation-iteration-count: 8; animation-direction: alternate; animation-fill-mode: none; }
+  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.14); } }
+  .myth { display: flex; flex-direction: column; gap: calc(var(--u) * .8); }
+  .myth .m, .myth .f { border-radius: 22px; padding: calc(var(--u) * .9) calc(var(--u) * 1); background: rgba(5,12,15,.45); border: 2px solid; }
+  .myth .m { border-color: color-mix(in srgb, var(--fail) 55%, transparent); }
+  .myth .f { border-color: color-mix(in srgb, var(--pass) 55%, transparent); transform: translateZ(40px); }
+  .myth h4 { margin: 0 0 12px; font-size: calc(var(--body) * .7); letter-spacing: .08em; text-transform: uppercase; }
+  .myth .m h4 { color: var(--fail); } .myth .f h4 { color: var(--pass); }
+  .myth .m p { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: calc(var(--title) * .5); line-height: 1.1; color: #cfe0e3; }
+  .myth .m p span { background: linear-gradient(var(--fail), var(--fail)) no-repeat 0 58% / 100% 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .clip .myth .m p span.a { animation-name: strike; animation-duration: .9s; }
+  @keyframes strike { from { background-size: 0 4px; } to { background-size: 100% 4px; } }
+  .myth .f p { margin: 0; font-size: calc(var(--body) * .9); line-height: 1.38; }
+  .term .w { font-family: "Fira Code", monospace; font-weight: 600; font-size: calc(var(--title) * .6); line-height: 1.05; color: var(--cyan-hi); word-break: break-word; }
+  .term .k { margin: 12px 0 calc(var(--u) * .8); font-size: calc(var(--body) * .7); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+  .term .code { font-size: calc(var(--mono) * .82); white-space: pre-wrap; word-break: break-word; padding: 18px 22px; border-radius: 16px; background: rgba(5,12,15,.5); }
   .clip .fg.a { animation-name: ring; animation-duration: 1.4s; }
   @keyframes ring { from { stroke-dashoffset: var(--c); } to { stroke-dashoffset: var(--o); } }
 
@@ -204,7 +232,7 @@ function visual(v, t0) {
     return '<div class="glass"><div class="vs">' + side(v.left) + side(v.right) + "</div></div>";
   }
   if (v.type === "check") {
-    return '<div class="glass"><div class="rows">' + v.items.map((r) => '<div class="row a" style="animation-delay:' + step(.4).toFixed(2) + 's"><span class="m ' + r[2] + '">' + MARKS[r[2]] + "</span><b>" + esc(r[0]) + "</b><small>" + esc(r[1]) + "</small></div>").join("") + "</div></div>";
+    return '<div class="glass"><div class="rows' + (v.items.length > 6 ? " two" : "") + '">' + v.items.map((r) => '<div class="row a" style="animation-delay:' + step(.4).toFixed(2) + 's"><span class="m ' + r[2] + '">' + MARKS[r[2]] + "</span><b>" + esc(r[0]) + "</b><small>" + esc(r[1]) + "</small></div>").join("") + "</div></div>";
   }
   if (v.type === "bars") {
     const max = Math.max(...v.items.map((i) => i[1]));
@@ -231,6 +259,20 @@ function visual(v, t0) {
       v.rows.map((r, k) => '<tr class="a' + (k === 0 ? " own" : "") + '" style="animation-delay:' + step(.45).toFixed(2) + 's"><td>' + esc(r[0]) + "</td>" + r.slice(1).map(cell).join("") + "</tr>").join("") +
       "</tbody></table>" + (v.note ? '<div class="scores-note">' + esc(v.note) + "</div>" : "") + "</div>";
   }
+  if (v.type === "quiz") {
+    const side = (s) => '<div class="side a in-up" style="animation-delay:' + step(.5).toFixed(2) + 's"><i class="a" style="animation-delay:' + (at + .6).toFixed(2) + 's">?</i><b>' + esc(s.label) + "</b><small>" + esc(s.host) + "</small></div>";
+    return '<div class="glass"><div class="quiz">' + side(v.sides[0]) + '<span class="or">' + esc(v.or || "or") + "</span>" + side(v.sides[1]) + "</div>" + (v.note ? '<div class="scores-note">' + esc(v.note) + "</div>" : "") + "</div>";
+  }
+  if (v.type === "myth") {
+    const labels = v.labels || ["Myth", "Fact"];
+    return '<div class="glass"><div class="myth"><div class="m a in-up" style="animation-delay:' + step(.4).toFixed(2) + 's"><h4>✕ ' + esc(labels[0]) + '</h4><p><span class="a" style="animation-delay:' + step(.9).toFixed(2) + 's">' + esc(v.myth) + "</span></p></div>" +
+      '<div class="f a in-up" style="animation-delay:' + step(.5).toFixed(2) + 's"><h4>✓ ' + esc(labels[1]) + "</h4><p>" + esc(v.fact) + "</p></div></div></div>";
+  }
+  if (v.type === "term") {
+    return '<div class="glass term"><div class="w a in-up" style="animation-delay:' + step(.4).toFixed(2) + 's">' + esc(v.value) + '</div><div class="k">' + esc(v.group) + "</div>" +
+      (v.lines ? '<div class="code">' + v.lines.map((l) => '<span class="ln a" style="animation-delay:' + step(.28).toFixed(2) + 's">' + (hl(l) || "&nbsp;") + "</span>").join("") + "</div>" : "") +
+      (v.note ? '<div class="note">' + esc(v.note) + "</div>" : "") + "</div>";
+  }
   if (v.type === "stat") {
     return '<div class="glass stat"><b class="a in-up" style="animation-delay:' + step(.5).toFixed(2) + 's">' + esc(v.value) + "</b><small>" + esc(v.caption) + "</small></div>";
   }
@@ -248,8 +290,10 @@ window.paint = function (tip, cat, fmt, index, total, guideHost, lang) {
   c.style.setProperty("--accent", cat.color);
   c.dataset.theme = cat.theme || "";
   const tall = fmt !== "feed";
+  // The lower cube would sit on a matrix's scores.
+  const lower = tip.visual && tip.visual.type === "matrix" ? "" : '<div class="cube a" style="--s:70px;left:900px;top:1330px;animation-direction:reverse"><i></i><i></i><i></i><i></i><i></i><i></i></div>';
   const cubes = tall
-    ? '<div class="cube a" style="--s:120px;left:820px;top:260px"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="cube a" style="--s:70px;left:900px;top:1330px;animation-direction:reverse"><i></i><i></i><i></i><i></i><i></i><i></i></div>'
+    ? '<div class="cube a" style="--s:120px;left:820px;top:260px"><i></i><i></i><i></i><i></i><i></i><i></i></div>' + lower
     : '<div class="cube a" style="--s:90px;left:900px;top:190px"><i></i><i></i><i></i><i></i><i></i><i></i></div>';
   c.innerHTML =
     '<div class="floor a"></div>' + cubes + '<div class="grain"></div>' +
