@@ -34,6 +34,94 @@
 .multi-cell .page-table td { overflow-wrap: anywhere; }
 .multi-cell svg { max-width: 100%; height: auto; }
 
+/* Six sites fit the side-by-side table without scrolling sideways; the line names stay in view. */
+.multi-modal { --own: var(--cyan); }
+.multi-table { min-width: 0; table-layout: auto; font-size: 13.5px; }
+.multi-table thead th { overflow-wrap: anywhere; font-size: 12.5px; }
+.multi-table th[scope="row"] { position: sticky; left: 0; z-index: 1; background: var(--bg); min-width: 170px; }
+.multi-table td:nth-child(2), .multi-table thead th:nth-child(2) { background: color-mix(in srgb, var(--own) 7%, transparent); }
+
+/* The benchmark (js/qa-review-benchmark.js). --site is the colour of one site in every chart. */
+.bench { --own: var(--cyan); margin: 18px 0 8px; display: grid; gap: 22px; }
+.bench th { text-transform: none; letter-spacing: normal; overflow-wrap: normal; word-break: normal; }
+.bench-sec > h2 { margin: 0 0 2px; font-size: 1.5rem; }
+.bench-sec > h3, .bench-fig > h4 { margin: 0 0 12px; font-size: 1.05rem; color: var(--muted); font-weight: 700; letter-spacing: .02em; }
+.bench-site { color: var(--site); }
+.bench-podium { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); gap: 12px; }
+.bench-card { position: relative; padding: 16px 10px 12px; border: 1px solid var(--line); border-top: 4px solid var(--site); border-radius: 16px; text-align: center; background: color-mix(in srgb, var(--site) 4%, transparent); }
+.bench-card.is-you { border-color: var(--site); box-shadow: 0 0 0 1px var(--site) inset; background: color-mix(in srgb, var(--site) 9%, transparent); }
+.bench-rank { position: absolute; top: 8px; left: 10px; font-weight: 800; font-size: 13px; color: var(--muted); }
+.bench-card:first-child .bench-rank { color: var(--site); }
+.bench-dial { position: relative; width: 112px; height: 112px; margin: 0 auto; }
+.bench-ring { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
+.bench-ring circle { fill: none; stroke-width: 9; }
+.bench-ring .ring-track { stroke: var(--panel-2); }
+.bench-ring .ring-value { stroke-linecap: round; }
+.bench-score { position: absolute; inset: 0; display: grid; place-content: center; font-family: "Source Serif 4", Georgia, serif; font-size: 2rem; line-height: 1; }
+.bench-score small { display: block; font-family: inherit; font-size: 9.5px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-top: 5px; }
+.bench-host { margin: 8px 0 2px; font-weight: 800; color: var(--site); overflow-wrap: break-word; font-size: 13.5px; }
+.bench-tag { margin: 0; font-size: 12.5px; color: var(--muted); }
+.bench-tag.is-above { color: var(--red); }
+.bench-tag.is-below { color: var(--green); }
+.bench-card.is-you .bench-tag { color: var(--site); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
+.bench-wins { margin: 6px 0 0; font-size: 12px; font-weight: 600; }
+.bench-headline { margin: 14px 0 4px; font-size: 1.1rem; line-height: 1.5; max-width: 90ch; }
+.bench-reading { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.bench-box { padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; border-left: 4px solid var(--c, var(--line)); }
+.bench-box.is-lead { --c: var(--green); }
+.bench-box.is-trail { --c: var(--red); }
+.bench-box.is-moves { --c: var(--own); background: color-mix(in srgb, var(--own) 6%, transparent); }
+.bench-box h4 { margin: 0 0 10px; font-size: 1rem; }
+.bench-box ul, .bench-box ol { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 9px; }
+.bench-box ol { counter-reset: move; }
+.bench-box ol li { counter-increment: move; position: relative; padding-left: 30px; line-height: 1.45; }
+.bench-box ol li::before { content: counter(move); position: absolute; left: 0; top: 0; width: 21px; height: 21px; border-radius: 50%; display: grid; place-content: center; font-size: 12px; font-weight: 800; color: #fff; background: var(--own); }
+.bench-box ul li { display: grid; gap: 2px; font-size: 13.5px; }
+.bench-box ul li span { color: var(--muted); font-size: 12.5px; }
+.bench-gap { display: block; height: 4px; border-radius: 4px; background: var(--panel-2); position: relative; overflow: hidden; margin-top: 3px; }
+.bench-gap::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--gap); background: var(--red); border-radius: 4px; }
+.bench-areas { display: grid; grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.bench-fig { margin: 0; }
+.bench-radar { width: 100%; display: block; }
+.bench-radar text { font-size: 12px; fill: var(--muted); }
+.bench-grid { fill: none; stroke: var(--line); stroke-width: 1; }
+.bench-shape polygon { fill: color-mix(in srgb, var(--site) 10%, transparent); stroke: var(--site); stroke-width: 1.6; stroke-linejoin: round; }
+.bench-shape circle { fill: var(--site); }
+.bench-shape.is-you polygon { fill: color-mix(in srgb, var(--site) 22%, transparent); stroke-width: 3; }
+.bench-fig figcaption { font-size: 12.5px; color: var(--muted); }
+.bench-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 4px; }
+.bench-legend span, .bench-heat thead th { color: var(--text); font-weight: 600; }
+.bench-legend i, .bench-heat thead th i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--site); margin-right: 5px; vertical-align: -1px; }
+.bench-heat { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 13.5px; }
+.bench-heat thead th { font-size: 12px; text-align: center; vertical-align: bottom; padding: 4px; }
+.bench-heat th[scope="row"] { text-align: left; font-weight: 600; font-size: 13px; color: var(--text); padding-right: 8px; white-space: nowrap; }
+.bench-heat td { text-align: center; padding: 8px 4px; border-radius: 8px; background: color-mix(in srgb, var(--heat, transparent) 15%, transparent); }
+.bench-heat td b { color: var(--heat, inherit); font-size: 1.05em; }
+.bench-heat td.lead { box-shadow: 0 0 0 2px var(--heat) inset; }
+.bench-heat td.is-you { font-weight: 800; }
+.bench-heat tr.is-overall td, .bench-heat tr.is-overall th { padding-top: 11px; padding-bottom: 11px; font-size: 1.05em; }
+.bench-heat .bench-extra { background: transparent; color: var(--muted); font-size: 12.5px; }
+.bench-heat td.bench-extra.is-best { color: var(--green); font-weight: 700; }
+.bench-kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.bench-kpi { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; break-inside: avoid; }
+.bench-kpi figcaption { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin-bottom: 8px; font-size: 13.5px; }
+.bench-kpi figcaption small { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.bench-bars { position: relative; display: grid; gap: 5px; }
+.bench-bar { display: grid; grid-template-columns: minmax(0, 9.5em) minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; }
+.bench-bar > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.bench-bar.is-you > span:first-child, .bench-bar.is-you b { color: var(--text); font-weight: 800; }
+.bench-track { position: relative; height: 9px; border-radius: 5px; background: var(--panel-2); }
+.bench-track i { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--site); opacity: .85; }
+.bench-bar.is-you .bench-track i { opacity: 1; }
+.bench-track::after { content: ""; position: absolute; top: -3px; bottom: -3px; left: var(--avg); width: 2px; background: var(--text); opacity: .35; }
+.bench-bar b { font-variant-numeric: tabular-nums; min-width: 5em; text-align: right; }
+.bench-bar b small { color: var(--green); font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+.bench-note { margin: 0; }
+@media (max-width: 900px) {
+  .bench-podium { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .bench-reading, .bench-areas { grid-template-columns: minmax(0, 1fr); }
+}
+
 @media print {
   body:not(.printing-multi) #multi-overlay { display: none !important; }
   body.printing-multi > :not(#multi-overlay) { display: none !important; }
@@ -48,5 +136,38 @@
   body.printing-multi .multi-cell [data-slot] { max-height: none !important; overflow: visible !important; }
   body.printing-multi .multi-cell .areas, body.printing-multi .multi-cell .checks-grid, body.printing-multi .multi-cell .kpis { grid-template-columns: minmax(0, 1fr); }
   body.printing-multi .multi-modal, body.printing-multi .multi-table td.lead { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* Page 1: the ranking and what it means; then the areas, the indicators, the table, and the sections. */
+  body.printing-multi .multi-head { border-bottom: 3px solid var(--own); padding-bottom: 8px; margin-bottom: 4px; }
+  body.printing-multi #multi-title { font-size: 20pt; }
+  body.printing-multi .bench { gap: 12px; margin-top: 8px; }
+  body.printing-multi .bench * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body.printing-multi .bench-sec > h2 { font-size: 15pt; }
+  body.printing-multi .bench-podium { grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); gap: 8px; }
+  body.printing-multi .bench-reading { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  body.printing-multi .bench-box ul, body.printing-multi .bench-box ol { gap: 4px; }
+  body.printing-multi .bench-box ul li { display: block; font-size: 8.5pt; line-height: 1.35; }
+  body.printing-multi .bench-box ul li > b::after { content: " · "; font-weight: 400; }
+  body.printing-multi .bench-box ul li span { font-size: inherit; }
+  body.printing-multi .bench-box ol li { font-size: 8.5pt; padding-left: 24px; }
+  body.printing-multi .bench-box ol li::before { width: 17px; height: 17px; font-size: 9px; }
+  body.printing-multi .bench-gap { display: none; }
+  body.printing-multi .bench-sec > h3 { margin-bottom: 6px; break-after: avoid; }
+  body.printing-multi .bench-why { break-inside: avoid; }
+  body.printing-multi .bench-card { padding: 10px 6px 8px; break-inside: avoid; }
+  body.printing-multi .bench-dial { width: 92px; height: 92px; }
+  body.printing-multi .bench-score { font-size: 20pt; }
+  body.printing-multi .bench-headline { font-size: 11.5pt; margin-top: 8px; }
+  body.printing-multi .bench-box { padding: 10px 12px; break-inside: avoid; }
+  body.printing-multi .bench-areas, body.printing-multi .multi-summary, body.printing-multi .multi-grid { break-before: page; }
+  body.printing-multi .bench-areas { grid-template-columns: 300px minmax(0, 1fr); }
+  body.printing-multi .bench-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  body.printing-multi .bench-kpi { padding: 8px 10px; }
+  body.printing-multi .multi-table th[scope="row"] { position: static; }
+  body.printing-multi .multi-summary h2 { break-after: avoid; }
 }
-@page multi { size: A4 landscape; margin: 10mm; }
+@page multi {
+  size: A4 landscape;
+  margin: 10mm 10mm 12mm;
+  @bottom-left { content: "QA-lab URL Review · carlosandmunoz.com"; font: 8pt system-ui, sans-serif; color: #6b7785; }
+  @bottom-right { content: counter(page) " / " counter(pages); font: 8pt system-ui, sans-serif; color: #6b7785; }
+}

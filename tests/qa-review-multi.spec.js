@@ -112,6 +112,10 @@ test('a saved comparison sets the summary and every report section side by side,
   if (process.env.MULTI_SHOT) {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.screenshot({ path: process.env.MULTI_SHOT + '/multi-top.png' });
+    for (const part of ['bench-top', 'bench-why', 'bench-areas', 'bench-kpis']) {
+      await box.locator('.' + part).scrollIntoViewIfNeeded();
+      await page.screenshot({ path: process.env.MULTI_SHOT + '/multi-' + part + '.png' });
+    }
     await box.locator('.multi-sec[data-sec="health"]').scrollIntoViewIfNeeded();
     await page.screenshot({ path: process.env.MULTI_SHOT + '/multi-health.png' });
     await page.evaluate(() => document.body.classList.add('printing-multi'));
@@ -131,6 +135,47 @@ test('a saved comparison sets the summary and every report section side by side,
   expect(seen.pdf[0]).toContain('multi-modal');
   expect(seen.pdf[0]).not.toContain('<script');
   expect(seen.pdf[0]).not.toContain('<button');
+});
+
+test('the benchmark ranks every site by its health score and reads where the first site stands, on the page and in the PDF (#1438)', async ({ page }) => {
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
+  const bench = page.locator('#multi-overlay .bench');
+  await expect(bench).toBeVisible({ timeout: 20000 });
+  const scores = [own, rival, sample.report].map((report) => report.insights.score.overall);
+  const order = scores.map((score, index) => ({ score, index })).sort((a, b) => b.score - a.score);
+  const cards = bench.locator('.bench-card');
+  await expect(cards).toHaveCount(3);
+  for (const [place, item] of order.entries()) {
+    await expect(cards.nth(place).locator('.bench-host')).toHaveText(hosts[item.index].replace(/^www\./, ''));
+    await expect(cards.nth(place).locator('.bench-ring')).toHaveAttribute('aria-label', new RegExp(String(item.score)));
+  }
+  await expect(bench.locator('.bench-card.is-you .bench-tag')).toHaveText('Your site');
+  await expect(bench.locator('.bench-headline')).toContainText('on the health score');
+  await expect(bench.locator('.bench-box')).toHaveCount(3);
+  await expect(bench.locator('.bench-radar .bench-shape')).toHaveCount(3);
+  await expect(bench.locator('.bench-radar .bench-shape.is-you')).toHaveCount(1);
+  await expect(bench.locator('.bench-heat thead th')).toHaveCount(6);
+  expect(await bench.locator('.bench-kpi').count()).toBeGreaterThan(2);
+  await expect(bench.locator('.bench-kpi').first().locator('.bench-bar')).toHaveCount(3);
+
+  const download = page.waitForEvent('download');
+  await page.locator('#multi-overlay').getByRole('button', { name: 'Download PDF' }).click();
+  await download;
+  expect(seen.pdf[0]).toContain('bench-podium');
+  expect(seen.pdf[0]).toContain('bench-radar');
+});
+
+test('the benchmark speaks the language of the review page (#1438)', async ({ page }) => {
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, recordsWith(true), '/qa-review-es.html?comparison=cmp1', seen);
+  const bench = page.locator('#multi-overlay .bench');
+  await expect(bench).toBeVisible({ timeout: 20000 });
+  await expect(bench.locator('.bench-top > h3')).toHaveText('Clasificación por puntuación de salud');
+  await expect(bench.locator('.bench-card.is-you .bench-tag')).toHaveText('Tu sitio');
+  await expect(bench.locator('.bench-why > h3')).toHaveText('Qué significa para ti');
+  await expect(bench.locator('.bench-headline')).toContainText('en puntuación de salud');
+  await expect(bench.locator('.bench-kpis > h3')).toHaveText('Velocidad, peso y otros indicadores');
 });
 
 test('an unpaid report in the comparison comes blurred and locks Print and Download PDF behind its payment', async ({ page }) => {
