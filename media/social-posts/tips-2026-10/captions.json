@@ -55,7 +55,7 @@
     }
   },
   "02-release-day": {
-    "date": "2026-10-26",
+    "date": "2026-10-27",
     "cat": "QA",
     "title": "Release day: is the page still right?",
     "alt": "QA card. Release day: is the page still right? Checklist: Build, Green (pass); Smoke tests, Passed (pass); Title and description, Still there (pass); Share card, Image changed? (warning); Consent banner, Nothing fires before a choice? (warning).",
@@ -110,7 +110,7 @@
     }
   },
   "03-self-review": {
-    "date": "2026-10-27",
+    "date": "2026-10-28",
     "cat": "Field",
     "title": "We reviewed ourselves. Security: 54.",
     "alt": "Field note card. We reviewed ourselves. Security: 54. Before (fail): HSTS: missing, nosniff: missing, Referrer-Policy: missing. The fix (pass): Strict-Transport-Security, X-Content-Type-Options, Referrer-Policy.",
@@ -165,7 +165,7 @@
     }
   },
   "04-slowest-page": {
-    "date": "2026-10-27",
+    "date": "2026-10-29",
     "cat": "Perf",
     "title": "The slowest page is rarely the home page.",
     "alt": "Performance card. The slowest page is rarely the home page. Bar chart: / 320 ms, /pricing 410 ms, /blog 1,240 ms, /contact 380 ms. Example analysis, response time per page. Try this: List your five most visited pages from analytics and time each one. Fix the slowest first.",
@@ -220,7 +220,7 @@
     }
   },
   "05-contrast": {
-    "date": "2026-10-28",
+    "date": "2026-10-30",
     "cat": "A11y",
     "title": "Contrast is math, not taste.",
     "alt": "Accessibility card. Contrast is math, not taste. 4.5 : 1, Minimum contrast for body text, WCAG 2.2 AA. Try this: Check your muted text colour against its background in DevTools. The colour picker shows the ratio.",
@@ -275,7 +275,7 @@
     }
   },
   "06-utm": {
-    "date": "2026-10-28",
+    "date": "2026-10-31",
     "cat": "Analytics",
     "title": "Tag campaign links the same way, every time.",
     "alt": "Analytics card. Tag campaign links the same way, every time. Code: ?utm_source=linkedin &utm_medium=social &utm_campaign=launch-2026-10. Lowercase, no spaces, one naming sheet. Try this: Make a shared sheet with the allowed sources and mediums. Link it from every campaign brief.",
@@ -330,7 +330,7 @@
     }
   },
   "07-nosniff": {
-    "date": "2026-10-29",
+    "date": "2026-11-01",
     "cat": "Security",
     "title": "Stop browsers guessing file types.",
     "alt": "Security card. Stop browsers guessing file types. Code: X-Content-Type-Options: nosniff. Pairs well with correct Content-Type headers. Try this: Add it next to HSTS in the same rule, so both ship together.",
@@ -385,7 +385,7 @@
     }
   },
   "08-input-names": {
-    "date": "2026-10-29",
+    "date": "2026-11-02",
     "cat": "A11y",
     "title": "Every input needs a name.",
     "alt": "Accessibility card. Every input needs a name. Placeholder only (fail): <input placeholder=\"Email\">. Labelled (pass): <label for=\"email\">Email</label>, <input id=\"email\">. Try this: Tab through your contact form with a screen reader on. Each field should say what it is.",
@@ -440,7 +440,7 @@
     }
   },
   "09-llms-txt": {
-    "date": "2026-10-30",
+    "date": "2026-11-03",
     "cat": "GEO",
     "title": "llms.txt: a short brief for answer engines.",
     "alt": "GEO, AI search card. llms.txt: a short brief for answer engines. Code: # Example Co > What we do, in one sentence. ## Pages - [Pricing](https://example.com/pricing) - [Docs](https://example.com/docs). Served as /llms.txt.",
@@ -495,7 +495,7 @@
     }
   },
   "10-keyboard": {
-    "date": "2026-10-30",
+    "date": "2026-11-04",
     "cat": "A11y",
     "title": "Put the mouse away. Can you reach everything?",
     "alt": "Accessibility card. Put the mouse away. Can you reach everything? Checklist: Tab reaches the menu, Visible focus ring (pass); Dialog opens, Focus moves inside (pass); Escape, Closes the dialog (warning); Cookie banner, Reachable before the page (warning).",
@@ -550,7 +550,7 @@
     }
   },
   "11-hsts": {
-    "date": "2026-10-31",
+    "date": "2026-11-05",
     "cat": "Security",
     "title": "One header. 180 days of HTTPS only.",
     "alt": "Security card. One header. 180 days of HTTPS only. Code: Strict-Transport-Security: max-age=15552000. 15,552,000 seconds = 180 days. Try this: Run curl -sI on your domain and look for strict-transport-security. If it is missing, add it at your host or CDN.",
@@ -605,7 +605,7 @@
     }
   },
   "12-one-h1": {
-    "date": "2026-10-31",
+    "date": "2026-11-06",
     "cat": "SEO",
     "title": "One h1 per page, saying what the page is.",
     "alt": "SEO card. One h1 per page, saying what the page is. Checklist: <h1>Logo</h1>, Says nothing about the page (fail); <h1>Welcome!</h1>, Vague (warning); <h1>Invoice software for clinics</h1>, Says what the page is (pass).",
@@ -660,7 +660,7 @@
     }
   },
   "13-consent-before": {
-    "date": "2026-11-01",
+    "date": "2026-11-07",
     "cat": "Analytics",
     "title": "Consent means before, too.",
     "alt": "Analytics card. Consent means before, too. Checklist: Page loads, no choice yet, Analytics tag fired (fail); Visitor presses Reject, Tags stay quiet (pass); Visitor presses Accept, Analytics starts (pass).",
@@ -715,7 +715,7 @@
     }
   },
   "14-share-card": {
-    "date": "2026-11-01",
+    "date": "2026-11-08",
     "cat": "SEO",
     "title": "Your share card is a first impression.",
     "alt": "SEO card. Your share card is a first impression. Code: <meta property=\"og:title\" content=\"…\"> <meta property=\"og:image\" content=\"https://…/card.png\"> <meta name=\"twitter:card\" content=\"summary_large_image\">. 1200 × 630 works across networks.",
@@ -770,7 +770,7 @@
     }
   },
   "15-csp-report-only": {
-    "date": "2026-11-02",
+    "date": "2026-11-09",
     "cat": "Security",
     "title": "Start your CSP in Report-Only.",
     "alt": "Security card. Start your CSP in Report-Only. Code: Content-Security-Policy-Report-Only: default-src 'self'; img-src 'self' data: https:; report-to csp. Watch the reports, then enforce. Try this: Ship the Report-Only header this week. Read the reports next week before you switch it on.",
@@ -825,7 +825,7 @@
     }
   },
   "16-list-first": {
-    "date": "2026-11-02",
+    "date": "2026-11-10",
     "cat": "QA",
     "title": "Write the test list before the test code.",
     "alt": "QA card. Write the test list before the test code. Checklist: Forms, Required fields, errors, success (pass); Links, Every link answers 200 or 3xx (pass); Accessibility, Labels, contrast, keyboard (pass); Headers, HSTS, CSP, nosniff (warning); Consent, Nothing fires before a choice (warning).",
@@ -880,7 +880,7 @@
     }
   },
   "17-robots-ai": {
-    "date": "2026-11-03",
+    "date": "2026-11-11",
     "cat": "GEO",
     "title": "robots.txt decides who may read you.",
     "alt": "GEO, AI search card. robots.txt decides who may read you. Code: User-agent: GPTBot Allow: / User-agent: PerplexityBot Allow: / Sitemap: https://example.com/sitemap.xml. Decide on purpose, then write it down.",
@@ -935,7 +935,7 @@
     }
   },
   "18-broken-links": {
-    "date": "2026-11-03",
+    "date": "2026-11-12",
     "cat": "QA",
     "title": "A broken link is a test you forgot to write.",
     "alt": "QA card. A broken link is a test you forgot to write. Code: for (const href of links) { const res = await request.get(href); expect(res.status()).toBeLessThan(400); }. Playwright request fixture. Try this: Collect the links from your footer and navigation. Assert each one answers below 400.",
@@ -990,7 +990,7 @@
     }
   },
   "19-measure-action": {
-    "date": "2026-11-04",
+    "date": "2026-11-13",
     "cat": "Analytics",
     "title": "Measure the action, not just the visit.",
     "alt": "Analytics card. Measure the action, not just the visit. Code: gtag('event', 'generate_lead', { method: 'contact_form' });. Fire it on success, not on click. Try this: Pick the one action each key page exists for. Make sure an event fires only when it succeeds.",
@@ -1045,7 +1045,7 @@
     }
   },
   "20-html-first": {
-    "date": "2026-11-04",
+    "date": "2026-11-14",
     "cat": "GEO",
     "title": "AI search reads your HTML, not your app.",
     "alt": "GEO, AI search card. AI search reads your HTML, not your app. Seen without JS (fail): <div id=\"root\"></div>. Facts in the HTML (pass): <h1>What we do</h1>, <p>Who it is for…</p>. Try this: View source on your home page. Can you find what you sell and who it is for, without running scripts?",
@@ -1100,7 +1100,7 @@
     }
   },
   "21-canonical": {
-    "date": "2026-11-05",
+    "date": "2026-11-15",
     "cat": "SEO",
     "title": "One page, one canonical.",
     "alt": "SEO card. One page, one canonical. Code: <link rel=\"canonical\" href=\"https://example.com/pricing\">. In the <head> of every variant. Try this: Open your top page with and without a trailing slash and ?utm_ tags. Both should point to one canonical.",

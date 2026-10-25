@@ -32,10 +32,13 @@ function shortDate(iso) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 }
 
-const TIPS = RUNS.map((run) => {
+// The first run is the day's top Live Report and takes the site-review slot (scripts/social-calendar.js); the
+// others go on the social hub only.
+const TIPS = RUNS.map((run, index) => {
   const analyzed = shortDate(run.fetchedAt);
   const fill = (text) => text.replace(/\{(\w+)\}/g, (all, key) => key === "overall" ? run.overall : run.areas[key] !== undefined ? run.areas[key] : all);
   return Object.assign({}, run, {
+    hold: index > 0,
     title: run.title.map(fill),
     body: fill(run.body),
     action: fill(run.action),

@@ -4,16 +4,18 @@
 # skipped. Posts marked hold in captions.json stay in the hub only. Needs the BUFFER_API_KEY secret.
 # Hub first: a post whose page on the social hub is not live yet is held (scripts/hub-gate.js). Mode seed reads
 # what Buffer already holds into assets/social/buffer.json without queueing anything; mode check asks Buffer which
-# queued posts went out. Every mode but a dry run commits the ledger (scripts/commit-social-ledgers.sh).
+# queued posts went out. Mode sync moves the posts Buffer and the Facebook Page already hold to their calendar.csv
+# slots (scripts/social-calendar.js --sync), editing them in place. Every mode but a dry run commits the ledger
+# (scripts/commit-social-ledgers.sh).
 name: Buffer batch queue
 
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'queue a batch, seed the ledger from Buffer, or check queued posts'
+        description: 'queue a batch, seed the ledger from Buffer, check queued posts, or sync queued posts to the calendar'
         type: choice
-        options: [queue, seed, check]
+        options: [queue, seed, check, sync]
         default: queue
       batch:
         description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10 (queue only)'
@@ -47,8 +49,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Move queued posts to their calendar slots
+        if: ${{ inputs.mode == 'sync' }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then node scripts/social-calendar.js --sync --dry-run; else node scripts/social-calendar.js --sync; fi | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Seed or check the ledger
-        if: ${{ inputs.mode != 'queue' }}
+        if: ${{ inputs.mode == 'seed' || inputs.mode == 'check' }}
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
         run: node scripts/buffer-queue.js "--$MODE" | tee -a "$GITHUB_STEP_SUMMARY"
