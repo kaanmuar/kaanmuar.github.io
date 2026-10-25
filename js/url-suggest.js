@@ -63,6 +63,11 @@
     return host.replace(/^(www|m)\./, "");
   }
 
+  // Same rule as codePath in functions/url-review-core.js: /1a or /3m/x9 is a code no reader would pick.
+  function codePath(path) {
+    return path.split("/").filter(Boolean).some((part) => !/\p{L}{3}/u.test(part));
+  }
+
   function hostPart(value) {
     return String(value || "").trim().toLowerCase().replace(/^https?:\/\//, "").split(/[/?#]/)[0].split(":")[0];
   }
@@ -275,7 +280,7 @@
       const pool = await pathsFor(host);
       if (mine !== seq) return;
       const want = typed.toLowerCase();
-      const starts = pool.filter((path) => path !== typed && path.toLowerCase().startsWith(want));
+      const starts = pool.filter((path) => path !== typed && path.toLowerCase().startsWith(want) && (want !== "/" || !codePath(path)));
       const within = want.length > 1 ? pool.filter((path) => !path.toLowerCase().startsWith(want) && path.toLowerCase().includes(want)) : [];
       options = starts.concat(within).slice(0, SHOWN);
       mode = "path";

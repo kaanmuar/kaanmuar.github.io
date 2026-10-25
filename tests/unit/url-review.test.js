@@ -498,6 +498,14 @@ test.describe("page paths for the URL Review box (#632)", () => {
     assert.equal(paths[0], "/p0");
     assert.ok(paths.slice(0, 200).every((path) => !path.startsWith("/deep/")));
   });
+
+  test("code paths like /1a come after readable ones, so a brand sitemap of codes does not crowd them out", () => {
+    const codes = Array.from({ length: 400 }, (_, i) => "https://www.shop.example/" + i.toString(36));
+    const words = ["/mercado/frutas", "/ofertas", "/niños", "/1800", "/a-1-"].map((path) => "https://www.shop.example" + path);
+    const paths = core.sitemapPaths(codes.concat(words), "shop.example");
+    assert.deepEqual(paths.slice(0, 3), ["/niños", "/ofertas", "/mercado/frutas"]);
+    assert.equal(paths[3], "/0");
+  });
 });
 
 test.describe("false positives from the real-run series", () => {
