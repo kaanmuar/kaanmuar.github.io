@@ -639,6 +639,86 @@
         return out.sort((a, b) => rank[a.level] - rank[b.level]);
     }
 
+    // Proposals: what to do next, from the briefing lines. Impact 5 means money, customers or the site at risk today, 1 a nice-to-have.
+    // A rule matches a briefing key by prefix; grouped rules fold every match into one proposal. action names the safe action #1337 may run.
+    const PROPOSAL_RULES = [
+        { prefix: 'uptime:', impact: 5, title: (i) => `Bring ${(PRODUCTS.find((p) => p.key === i.product) || {}).name || i.product} back up`, tab: 'systems' },
+        { prefix: 'tls', impact: 5, title: 'Renew the TLS certificate', tab: 'systems' },
+        { prefix: 'money:disputes', impact: 5, title: 'Answer the open PayPal disputes before PayPal decides them', link: 'https://www.paypal.com/resolutioncenter' },
+        { prefix: 'email:blocklist', impact: 5, title: 'Get the sending IP off the blocklist', link: 'https://app.sendgrid.com/' },
+        { prefix: 'outreach:bounce', impact: 5, title: 'Pause outreach and clean the prospect list', tab: 'outreach' },
+        { prefix: 'email:spam', impact: 4, title: 'Find which emails were reported as spam and fix the list or the copy', link: 'https://app.sendgrid.com/' },
+        { prefix: 'safety:', impact: 4, group: true, title: (n) => `Fix ${n === 1 ? 'the failing safety check' : n + ' failing safety checks'}`, tab: 'systems' },
+        { prefix: 'job:', impact: 4, group: true, title: (n) => `Fix ${n === 1 ? 'the failing job' : n + ' failing jobs'}`, tab: 'systems' },
+        { prefix: 'scheduler:', impact: 4, group: true, title: (n) => `Fix ${n === 1 ? 'the scheduler job that failed' : n + ' scheduler jobs that failed'}`, tab: 'systems' },
+        { prefix: 'ci:', impact: 4, group: true, title: 'Get CI on main green again', link: 'https://github.com/kaanmuar/kaanmuar.github.io/actions' },
+        { prefix: 'review:failures', impact: 4, title: 'Fix the top cause of failed URL review runs', tab: 'systems' },
+        { prefix: 'inbox:unanswered', impact: 4, title: 'Answer the messages that are waiting', tab: 'inbox' },
+        { prefix: 'review:conversion', impact: 4, title: 'Make the URL Review page turn more opens into reviews', tab: 'review' },
+        { prefix: 'money:none', impact: 4, title: 'Find out why sales stopped', tab: 'business' },
+        { prefix: 'outreach:warmup', impact: 4, title: 'Hold the campaigns until the mailboxes are warm', tab: 'outreach' },
+        { prefix: 'outreach:dns:', impact: 4, group: true, title: 'Fix the sending domain records', tab: 'outreach' },
+        { prefix: 'review:held', impact: 3, title: 'Re-run the held reviews', action: 'rerun-held', tab: 'systems' },
+        { prefix: 'notices:failed', impact: 3, title: 'Re-send the owner notices that failed', action: 'resend-notices', tab: 'review' },
+        { prefix: 'hub:stale', impact: 3, title: 'Publish the Social hub', action: 'publish-hub', tab: 'hub' },
+        { prefix: 'money:refunds', impact: 3, title: 'Read why customers asked for refunds', tab: 'business' },
+        { prefix: 'email:bad', impact: 3, title: 'Clean the addresses that bounce or block', link: 'https://app.sendgrid.com/' },
+        { prefix: 'speed:', impact: 3, levels: ['warn'], title: (i) => `Speed up ${(PRODUCTS.find((p) => p.key === i.product) || {}).name || i.product} on mobile`, tab: 'systems' },
+        { prefix: 'slow:', impact: 3, group: true, title: 'Find why the pages answer slowly', tab: 'systems' },
+        { prefix: 'platform:failures', impact: 3, title: 'Fix the function that fails most', tab: 'systems' },
+        { prefix: 'platform:gemini', impact: 3, title: 'Fix the failing Gemini calls', tab: 'systems' },
+        { prefix: 'platform:reads', impact: 3, title: 'Cut Firestore reads before the free quota runs out', tab: 'systems' },
+        { prefix: 'social:failed', impact: 3, title: 'Re-post the social posts that failed', tab: 'hub' },
+        { prefix: 'outreach:queue', impact: 3, title: 'Add the next outreach prospect list', tab: 'outreach' },
+        { prefix: 'outreach:mailbox:', impact: 3, group: true, title: 'Turn the outreach mailboxes and warm-up back on', tab: 'outreach' },
+        { prefix: 'outreach:deadline:', impact: 3, levels: ['warn'], group: true, title: 'Get ready for the outreach deadline', tab: 'outreach' },
+        { prefix: 'goal:', impact: 3, levels: ['warn'], title: (i) => 'Catch up on the goal: ' + i.text.replace(/^Goal behind: /, '').split(' is at ')[0], tab: 'overview' },
+        { prefix: 'inbox:pending', impact: 2, title: 'Approve or reject the waiting ratings', tab: 'inbox' },
+        { prefix: 'hub:ga', impact: 2, title: 'Reconnect GA4 for the Social hub stats', tab: 'hub' },
+        { prefix: 'connections:down:', impact: 2, group: true, title: (n) => `Reconnect ${n === 1 ? 'the source that did not answer' : n + ' sources that did not answer'}`, tab: 'systems' },
+        { prefix: 'connections:needs', impact: 2, title: 'Grant the connections that wait for a one-time step', tab: 'systems' },
+        { prefix: 'search:brave', impact: 2, title: 'Write for the searches where we are not in the top 20', tab: 'business' },
+        { prefix: 'social:none', impact: 2, title: 'Schedule social posts', tab: 'hub' },
+        { prefix: 'outreach:pace', impact: 2, title: 'Review more outreach prospects this week', tab: 'outreach' },
+        { prefix: 'ga4:swing', impact: 2, levels: ['warn'], title: 'Find why GA4 sessions fell', tab: 'traffic' },
+        { prefix: 'cv:swing', impact: 2, levels: ['warn'], title: 'Find why CV visits fell', tab: 'cv' },
+        { prefix: 'studio:swing', impact: 2, levels: ['warn'], title: 'Find why QA Studio visits fell', tab: 'studio' },
+        { prefix: 'lab:swing', impact: 2, levels: ['warn'], title: 'Find why QA Lab visits fell', tab: 'lab' },
+        { prefix: 'review:swing', impact: 2, levels: ['warn'], title: 'Find why URL Review opens fell', tab: 'review' }
+    ];
+    const SAFE_ACTIONS = ['rerun-held', 'resend-notices', 'publish-hub'];
+
+    function proposalRules(state, briefed) {
+        const items = (briefed || briefing(state)).slice();
+        const notices = ((state.external || {}).health || {}).notices;
+        if (notices && notices.failed > 0) items.push({ level: 'warn', product: 'review', text: `${notices.failed} owner ${notices.failed === 1 ? 'notice' : 'notices'} failed to send and wait on the desk.`, key: 'notices:failed' });
+        const out = new Map();
+        items.forEach((item) => {
+            const rule = PROPOSAL_RULES.find((r) => item.key === r.prefix || item.key.startsWith(r.prefix));
+            if (!rule || (rule.levels ? !rule.levels.includes(item.level) : !['alert', 'warn'].includes(item.level) && !['search:brave', 'connections:needs', 'social:none', 'outreach:pace'].includes(rule.prefix))) return;
+            const key = rule.group ? rule.prefix.replace(/:$/, '') : item.key;
+            const row = out.get(key) || { key, product: item.product, impact: rule.impact, level: item.level, evidence: [], source: 'rules', action: rule.action || null, tab: rule.tab || null, link: rule.link || null, rule };
+            row.evidence.push(item.text);
+            if (item.level === 'alert') row.level = 'alert';
+            row.item = row.item || item;
+            out.set(key, row);
+        });
+        const rank = { alert: 0, warn: 1, good: 2, info: 3 };
+        return Array.from(out.values()).map((row) => {
+            const t = row.rule.title;
+            const title = typeof t === 'function' ? t(row.rule.group ? row.evidence.length : row.item) : t;
+            const impact = Math.min(5, row.impact + (row.level === 'alert' && row.impact < 5 ? 1 : 0));
+            return { key: row.key, product: row.product, impact, level: row.level, title, evidence: row.evidence.slice(0, 4), source: 'rules', action: row.action, tab: row.tab, link: row.link };
+        }).sort((a, b) => b.impact - a.impact || rank[a.level] - rank[b.level]);
+    }
+
+    // Done hides a proposal for a week, Dismiss for a month; a saved state is { key, status, until }.
+    function openProposals(list, saved, now) {
+        const at = (now || new Date()).getTime();
+        const hidden = new Set((saved || []).filter((s) => (s.status === 'done' || s.status === 'dismissed') && Date.parse(s.until) > at).map((s) => s.key));
+        return (list || []).filter((p) => !hidden.has(p.key));
+    }
+
     // Share of checks that pass, for the reactor ring: jobs, CI, uptime, speed, failures.
     function readiness(external) {
         const checks = [];
@@ -703,7 +783,7 @@
         return { start, end, days, prior: { start: new Date(start.getTime() - days * DAY), end: start } };
     }
 
-    const api = { THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, readiness, csv, parseCommand, windowFor };
+    const api = { THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, readiness, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

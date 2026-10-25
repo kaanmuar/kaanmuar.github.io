@@ -4831,6 +4831,7 @@ const jarvisSum = (field) => admin.firestore.AggregateField.sum(field);
 const jarvisSources = require("./jarvis-sources");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
+const jarvisProposals = require("./jarvis-proposals");
 
 // A URL shared to the Jarvis app: the owner's own review, run like a sweep review and pushed to the phone that asked.
 exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB" }).firestore.document("jarvis_reviews/{id}").onCreate(async (snap) => {
@@ -4940,14 +4941,63 @@ async function jarvisDaily({ force }) {
   ]);
   const items = jarvisCore.briefing({ products, external, thresholds: settings.thresholds, goals: goalRows });
   let aiText = "";
-  if (settings.mail.gemini) {
-    try { aiText = (await jarvis.brief(fetch, process.env, { range: "last 24 hours", products: jarvis.compact(products), briefing: items.map((row) => row.level + ": " + row.text), goals: goalRows })).text; } catch (error) { aiText = ""; }
-  }
+  const [ranked] = await Promise.all([
+    jarvisRanked({ state: { products, external, thresholds: settings.thresholds, goals: goalRows }, items, days: 1, useGemini: settings.mail.gemini }).catch(() => null),
+    settings.mail.gemini ? jarvis.brief(fetch, process.env, { range: "last 24 hours", products: jarvis.compact(products), briefing: items.map((row) => row.level + ": " + row.text), goals: goalRows }).then((out) => { aiText = out.text; }).catch(() => null) : null
+  ]);
   const dateLabel = new Date(now).toLocaleDateString("en-US", { timeZone: "America/Bogota", weekday: "short", month: "short", day: "numeric" });
   const mail = jarvis.dailyMail({ products, items, goalRows, aiText, dateLabel });
+  const proposalLines = jarvisProposals.mailLines(ranked && ranked.proposals);
+  if (proposalLines.length) mail.body = ("Proposals, by impact:\n" + proposalLines.join("\n") + "\n\n" + mail.body).slice(0, 12000);
   const sent = settings.mail.daily || force ? await sendOwnerEmail({ subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL, buttonLabel: "Open Jarvis" }) : false;
   const push = await jarvisPush.send(admin.messaging(), db, phones, jarvisPush.briefingMessage({ items, aiText, dateLabel })).catch((error) => ({ error: String(error.message || error).slice(0, 200) }));
-  return { sent: sent !== false, push, items: items.length, goals: goalRows.length, gemini: !!aiText };
+  return { sent: sent !== false, push, items: items.length, goals: goalRows.length, gemini: !!aiText, proposals: proposalLines.length };
+}
+
+// Rule proposals (or the page's own, as candidates) ranked by Gemini unless useGemini is off; Done and Dismissed ones stay out.
+async function jarvisRanked({ state, items, days, candidates, snapshot, useGemini }) {
+  const list = candidates || jarvisCore.proposalRules(state, items);
+  const snap = snapshot || jarvis.askSnapshot(Object.assign({}, state, { briefing: items || [] }), days);
+  return jarvisProposals.rank({
+    candidates: list, snapshot: snap, savedRows: await jarvisProposals.saved(admin.firestore()), now: Date.now(),
+    gemini: useGemini ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null
+  });
+}
+
+const JARVIS_OPS = ["health", "jobs", "github", "uptime", "speed", "ga4", "money", "email", "social", "safety", "platform", "search", "outreach"];
+
+// Sunday 19:00 Bogotá: four weeks side by side, this week's proposals and Gemini's strategy for the next one.
+async function jarvisWeekly({ force }) {
+  const db = admin.firestore();
+  const settings = await jarvis.readSettings(db);
+  if (!settings.mail.weekly && !force) return "off in settings";
+  const now = Date.now();
+  const weeks = jarvisProposals.weekWindows(now);
+  const [{ products }, external, goalRows, money, email, social, search] = await Promise.all([
+    jarvis.dailyProducts(db, { now, days: 7 }),
+    jarvisExternal(JARVIS_OPS, 7),
+    jarvis.goals(db, settings, { now, sum: jarvisSum }),
+    jarvisSource("money", 28).catch(() => null),
+    jarvisSource("email", 28).catch(() => null),
+    jarvisSource("social", 28).catch(() => null),
+    jarvisSources.searchConsole({ fetch, env: process.env, now, days: 28 }).catch(() => null)
+  ]);
+  const hist = await jarvisProposals.history({
+    db, weeks, now, point: jarvisProposals.pointValues(external), sources: { money, email, social, search },
+    count: (goal, start, end) => jarvis.goalValue(db, goal, start, end, jarvisSum),
+    ga4: async () => jarvisProposals.ga4Weeks(fetch, await jarvis.googleToken(fetch, "https://www.googleapis.com/auth/analytics.readonly"), weeks)
+  });
+  const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
+  const items = jarvisCore.briefing(state);
+  const ranked = await jarvisRanked({ state, items, days: 7, useGemini: settings.mail.gemini }).catch(() => null);
+  const proposals = (ranked && ranked.proposals) || [];
+  let aiText = "";
+  if (settings.mail.gemini) {
+    try { aiText = await jarvis.gemini(fetch, process.env, jarvisProposals.strategyPrompt(hist, proposals), 1400); } catch (error) { aiText = ""; }
+  }
+  const mail = jarvisProposals.weeklyMail({ hist, proposals, aiText });
+  const sent = await sendOwnerEmail({ subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL, buttonLabel: "Open Jarvis" });
+  return { sent: sent !== false, weeks: hist.weeks, proposals: proposals.length, gemini: !!aiText };
 }
 
 // Everything the stats page computes, in one answer for the Android app, which reads no Firestore itself.
@@ -4961,7 +5011,8 @@ async function jarvisSnapshot(days) {
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const briefing = jarvisCore.briefing({ products, external, thresholds: settings.thresholds, goals: goalRows });
-  return { window, products, external, outreachVisits, goals: goalRows, briefing, readiness: jarvisCore.readiness(external), connections: jarvisCore.connections(external), settings, thresholds: jarvisCore.thresholds(settings.thresholds) };
+  const proposals = jarvisCore.openProposals(jarvisCore.proposalRules({ products, external, thresholds: settings.thresholds, goals: goalRows }, briefing), await jarvisProposals.saved(db)).slice(0, 5);
+  return { window, products, external, outreachVisits, goals: goalRows, briefing, proposals, readiness: jarvisCore.readiness(external), connections: jarvisCore.connections(external), settings, thresholds: jarvisCore.thresholds(settings.thresholds) };
 }
 
 async function jarvisWatchRun() {
@@ -4990,6 +5041,10 @@ async function jarvisWatchRun() {
 exports.jarvisDailyBriefing = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }), "jarvisDailyBriefing", async () => {
   const out = await jarvisDaily({ force: false });
   return typeof out === "string" ? out : (out.sent ? "sent" : "not sent") + ", " + out.items + " lines";
+});
+exports.jarvisWeeklyStrategy = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }), "jarvisWeeklyStrategy", async () => {
+  const out = await jarvisWeekly({ force: false });
+  return typeof out === "string" ? out : (out.sent ? "sent" : "not sent") + ", " + out.proposals + " proposals";
 });
 exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 120, secrets: ["SENDGRID_API_KEY"] }), "jarvisWatch", () => jarvisWatchRun());
 
@@ -5035,6 +5090,15 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     }
     else if (op === "goals") out = { goals: await jarvis.goals(admin.firestore(), await jarvis.readSettings(admin.firestore()), { now, sum: jarvisSum }) };
     else if (op === "daily-now") out = await jarvisDaily({ force: true });
+    else if (op === "weekly-now") out = await jarvisWeekly({ force: true });
+    else if (op === "proposals") {
+      if (Array.isArray(body.candidates)) out = await jarvisRanked({ candidates: jarvisProposals.cleanCandidates(body.candidates), snapshot: body.snapshot || {}, useGemini: body.gemini !== false });
+      else {
+        const snap = await jarvisCached("snapshot", days, () => jarvisSnapshot(days));
+        out = await jarvisRanked({ candidates: jarvisCore.proposalRules({ products: snap.products, external: snap.external, thresholds: snap.thresholds, goals: snap.goals }, snap.briefing), snapshot: jarvis.askSnapshot(snap, days), useGemini: body.gemini !== false });
+      }
+    }
+    else if (op === "proposal-mark") out = await jarvisProposals.mark(admin.firestore(), body, operator, now);
     else if (op === "register-device") out = await jarvisPush.register(admin.firestore(), body, operator, now);
     else if (op === "unregister-device") out = await jarvisPush.unregister(admin.firestore(), body.token);
     else if (op === "devices") out = { devices: (await jarvisPush.list(admin.firestore())).map((d) => ({ id: d.id, name: d.name, kinds: d.kinds, updatedAt: d.updatedAt })) };

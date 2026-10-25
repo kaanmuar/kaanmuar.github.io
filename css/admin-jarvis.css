@@ -143,6 +143,17 @@
 .jv-brief .lv-warn { border-left-color: var(--amber); } .jv-brief .lv-warn b { color: var(--amber); }
 .jv-brief .lv-good { border-left-color: var(--green); } .jv-brief .lv-good b { color: var(--green); }
 .jv-brief .lv-info { border-left-color: var(--cyan); } .jv-brief .lv-info b { color: var(--cyan); }
+.jv-props { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; }
+.jv-prop { display: grid; grid-template-columns: 2rem 1fr; gap: 0.6rem; padding: 0.55rem 0.7rem; border-radius: 10px; background: rgba(4, 18, 28, 0.55); border-left: 3px solid var(--dim); font-size: 0.88rem; }
+.jv-prop.lv-alert { border-left-color: var(--pink); } .jv-prop.lv-warn { border-left-color: var(--amber); } .jv-prop.lv-good { border-left-color: var(--green); } .jv-prop.lv-info { border-left-color: var(--cyan); }
+.jv-prop-rank { font: 600 1.1rem ui-monospace, Menlo, monospace; color: var(--cyan); text-align: center; }
+.jv-prop-body p { margin: 0 0 0.25rem; }
+.jv-prop-why { color: var(--dim); }
+.jv-prop-ev { list-style: disc; margin: 0.2rem 0 0.35rem; padding-left: 1.1rem; font-size: 0.8rem; color: var(--dim); }
+.jv-prop-acts { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.jv-prop-acts button, .jv-prop-acts a, .jv-link { background: none; border: 0; padding: 0; color: var(--cyan); cursor: pointer; font-size: 0.78rem; text-decoration: none; }
+.jv-prop-acts [data-proposal="dismissed"] { color: var(--dim); }
+.jv-prop-safe { font: 0.7rem ui-monospace, Menlo, monospace; color: var(--green); border: 1px solid rgba(61, 255, 168, 0.45); border-radius: 999px; padding: 0.1rem 0.45rem; }
 .jv-ai { margin-top: 0.7rem; padding: 0.7rem 0.8rem; border: 1px solid rgba(169, 139, 255, 0.45); border-radius: 12px; background: rgba(169, 139, 255, 0.08); }
 .jv-ai .jv-eyebrow { color: var(--violet); }
 .jv-ai-text { margin-top: 0.3rem; line-height: 1.5; font-size: 0.92rem; }

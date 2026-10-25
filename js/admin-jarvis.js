@@ -108,7 +108,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
         rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, alerts: [], reports: [],
-        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, truncated: false,
+        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, truncated: false,
         panels: new Map(), voice: null, listening: false, timers: []
     };
     readHash();
@@ -346,6 +346,22 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}" data-panel-id="${id}"><header><h3>${esc(title)}</h3>${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
     }
 
+    const ACTION_LABELS = { 'rerun-held': 're-run held reviews', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub' };
+
+    function proposalsPanel() {
+        const P = S.proposals || {};
+        const list = P.proposals || (P.rules || []).slice(0, 5);
+        const state = P.loading ? 'Gemini is ranking…' : P.gemini ? `Ranked by Gemini · ${when(P.at)}` : P.error ? 'Rules only. Gemini: ' + P.error : P.at ? 'Rules only' : '';
+        const items = list.length ? list.map((p, i) => `<li class="jv-prop lv-${esc(p.level)}"><span class="jv-prop-rank">${i + 1}</span><div class="jv-prop-body">
+            <p class="jv-prop-title"><strong>${esc(p.title)}</strong> <span class="jv-chip">impact ${esc(p.impact)}/5</span>${p.effort ? ` <span class="jv-chip">${esc(p.effort)}</span>` : ''}${p.source === 'gemini' ? ' <span class="jv-chip c-average">from Gemini</span>' : ''}</p>
+            ${p.why ? `<p class="jv-prop-why">${esc(p.why)}</p>` : ''}<ul class="jv-prop-ev">${(p.evidence || []).map((e) => `<li>${esc(e)}</li>`).join('')}</ul>
+            <div class="jv-prop-acts">${p.tab && p.tab !== 'overview' ? `<button type="button" data-go="${esc(p.tab)}">Open ${esc((C.PRODUCTS.find((x) => x.key === p.tab) || {}).name || p.tab)} →</button>` : ''}${p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener">Open ↗</a>` : ''}${p.action ? `<span class="jv-prop-safe" data-action="${esc(p.action)}">Safe action: ${esc(ACTION_LABELS[p.action] || p.action)}</span>` : ''}
+            <button type="button" data-proposal="done" data-key="${esc(p.key)}">Done</button><button type="button" data-proposal="dismissed" data-key="${esc(p.key)}">Dismiss</button></div></div></li>`).join('')
+            : `<li class="jv-prop lv-good"><span class="jv-prop-rank">✓</span><div class="jv-prop-body"><p>${P.loading || !S.externalAt ? 'Jarvis is reading the sources…' : 'Nothing to propose right now.'}</p></div></li>`;
+        return panel('overview-proposals', 'Proposals', `<p class="jv-note">${esc(state)}${P.hidden ? ` · ${P.hidden} hidden as done or dismissed` : ''}${P.loading ? '' : ' <button type="button" class="jv-link" data-act="proposals">Rank again</button>'}</p><ol class="jv-props">${items}</ol>`,
+            { wide: true, data: list.map((p, i) => ({ rank: i + 1, title: p.title, impact: p.impact, effort: p.effort || '', evidence: (p.evidence || []).join(' | '), source: p.source, action: p.action || '' })) });
+    }
+
     function listPanel(key, id, title, list, opts) {
         return panel(key + '-' + id, title, bars(list, opts), Object.assign({ data: (list || []).map((r) => ({ label: r.label, value: r.value })) }, opts || {}));
     }
@@ -581,7 +597,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             S.rows.opens.slice(0, 20).map((r) => ({ at: r.createdAt, text: `URL Review: open from ${C.openSource(r)}` })),
             S.rows.reviews.slice(0, 20).map((r) => ({ at: r.createdAt, text: `URL Review: ${r.paid ? 'paid ' : ''}review of ${esc(String(r.requestedUrl || r.url || '').replace(/^https?:\/\//, '').slice(0, 50))} (${r.status || '…'})` }))
         ).filter((x) => C.toDate(x.at)).sort((a, b) => C.toDate(b.at) - C.toDate(a.at)).slice(0, 18);
-        out.overview = `<div class="jv-tiles">${tiles}</div><div class="jv-grid">${briefPanel('overview')}${goalsPanel('overview')}
+        out.overview = `<div class="jv-tiles">${tiles}</div><div class="jv-grid">${briefPanel('overview')}${proposalsPanel()}${goalsPanel('overview')}
             ${panel('overview-feed', 'Live feed', feed.length ? `<ul class="jv-feed">${feed.map((f) => `<li><time>${when(f.at)}</time><span>${esc(f.text)}</span></li>`).join('')}</ul>` : '<p class="jv-empty">No events yet.</p>', { tall: true, data: feed.map((f) => ({ at: (C.toDate(f.at) || new Date()).toISOString(), event: f.text })) })}
             ${panel('overview-rings', 'Systems at a glance', `<div class="jv-rings">${ring(C.readiness(e), 'ready')}${(e.speed && e.speed.pages ? e.speed.pages : []).map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 84)).join('')}</div>`)}
             ${panel('overview-mix', 'Visits by product', bars(['cv', 'studio', 'lab'].map((k) => ({ label: (C.PRODUCTS.find((p) => p.key === k) || {}).name, value: s[k].totals.visits })).concat([{ label: 'URL Review (opens)', value: s.review.totals.opens }]), { color: COLORS.violet }), { data: ['cv', 'studio', 'lab'].map((k) => ({ product: k, visits: s[k].totals.visits, clicks: s[k].totals.clicks, exports: s[k].totals.exports, runs: s[k].totals.runs })) })}
@@ -729,7 +745,28 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             setStatus('Firestore did not answer: ' + error.message);
         }
         S.loading = false;
-        if (all !== false) loadExternal();
+        if (all !== false) loadExternal().then(() => loadProposals());
+    }
+
+    // The rules answer at once; Gemini then ranks them on the server, which also drops the Done and Dismissed ones.
+    async function loadProposals() {
+        const rules = C.proposalRules({ products: S.summaries, external: S.external, thresholds: (S.settings || {}).thresholds, goals: S.goals }, S.brief);
+        S.proposals = Object.assign({}, S.proposals, { loading: true, rules });
+        render();
+        const out = await call('proposals', { candidates: rules, snapshot: snapshot() }).catch((error) => ({ ok: false, error: error.message }));
+        S.proposals = out.ok ? Object.assign(out, { loading: false, rules }) : { loading: false, rules, error: out.error };
+        render();
+    }
+
+    async function markProposal(key, status) {
+        const P = S.proposals || {};
+        const row = (P.proposals || P.rules || []).find((p) => p.key === key);
+        const out = await call('proposal-mark', { key, status, title: row && row.title });
+        if (!out.ok) { toast('Not saved: ' + out.error, 5000); return; }
+        ['proposals', 'rules'].forEach((k) => { if (P[k]) P[k] = P[k].filter((p) => p.key !== key); });
+        P.hidden = (P.hidden || 0) + 1;
+        render();
+        toast(status === 'done' ? 'Done. Hidden for 7 days.' : 'Dismissed for 30 days.', 3000);
     }
 
     // --- actions -------------------------------------------------------------------------------------------
@@ -1022,7 +1059,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
               <label class="jv-check"><input type="checkbox" name="m-daily"${d.mail.daily ? ' checked' : ''}> Daily briefing at 07:40 (Bogotá): the last 24 hours, goals and alerts</label>
               <label class="jv-check"><input type="checkbox" name="m-gemini"${d.mail.gemini ? ' checked' : ''}> Add the Gemini summary to the daily briefing</label>
               <label class="jv-check"><input type="checkbox" name="m-watch"${d.mail.watch ? ' checked' : ''}> Watch every hour and mail an alert once a day per issue (pages down, TLS, failed jobs, failed runs)</label>
-              <div class="jv-actions"><button type="button" class="jv-btn" data-act="daily-now">Send today's briefing now</button></div></section>
+              <label class="jv-check"><input type="checkbox" name="m-weekly"${d.mail.weekly ? ' checked' : ''}> Weekly strategy on Sunday at 19:00 (Bogotá): four weeks side by side, the proposals and the plan for next week</label>
+              <div class="jv-actions"><button type="button" class="jv-btn" data-act="daily-now">Send today's briefing now</button><button type="button" class="jv-btn" data-act="weekly-now">Send the weekly strategy now</button></div></section>
             <section><h4>Goals</h4><div class="jv-goal-list">${d.goals.map(goalEditor).join('') || '<p class="jv-note">No goals yet. Add one: a product, what to count, the period, and the target.</p>'}</div>
               <div class="jv-actions"><button type="button" class="jv-btn" data-goal-add>Add a goal</button></div>
               <p class="jv-note">Goals count every row on the server (tests included) over the current Bogotá day, week (from Monday) or month.</p></section>
@@ -1043,7 +1081,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         const thresholds = {};
         Object.keys(C.THRESHOLDS).forEach((k) => { thresholds[k] = Number(val('t-' + k).value); });
         const searchQueries = String(val('s-queries').value || '').split('\n').map((q) => q.trim()).filter(Boolean).slice(0, 8);
-        return { goals, thresholds, mail: { daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked }, searchQueries };
+        return { goals, thresholds, mail: { daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked, weekly: !!val('m-weekly').checked }, searchQueries };
     }
 
     function openSettings() {
@@ -1078,6 +1116,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         toast(out.ok && out.sent ? `Daily briefing sent: ${out.items} lines${out.gemini ? ' with the Gemini summary' : ''}.` : 'Not sent: ' + (out.error || 'mail is not set up'), 6000);
     }
 
+    async function weeklyNow() {
+        if (!confirmRun('email the weekly strategy now (the last four weeks)')) return;
+        toast('Building the weekly strategy…', 60000);
+        const out = await call('weekly-now');
+        toast(out.ok && out.sent ? `Weekly strategy sent: ${out.proposals} proposals${out.gemini ? ' with the Gemini plan' : ''}.` : 'Not sent: ' + (out.error || 'mail is not set up'), 6000);
+    }
+
     function toggleLive() {
         S.live = !S.live;
         $('.jv-live').setAttribute('aria-pressed', String(S.live));
@@ -1097,6 +1142,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         if (t.dataset.thReset !== undefined) { const d = readSettings(); d.thresholds = C.thresholds({}); paintSettings(d); return; }
         if (t.dataset.menu) { const list = $(`[data-list="${t.dataset.menu}"]`); const open = list.hidden; $$('.jv-menu-list').forEach((l) => { l.hidden = true; }); list.hidden = !open; return; }
         $$('.jv-menu-list').forEach((l) => { l.hidden = true; });
+        if (t.dataset.proposal) { markProposal(t.dataset.key, t.dataset.proposal); return; }
         if (t.dataset.go) { go(t.dataset.go); return; }
         if (t.dataset.mail) { S.mail = t.dataset.mail; compute(); render(); return; }
         if (t.dataset.run) { runJob(t.dataset.run); return; }
@@ -1116,7 +1162,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             'copy-link': () => copy(link(), 'Link copied.'), 'web-share': webShare, 'copy-brief': () => copy(markdown(), 'Briefing copied.'), email: emailBriefing,
             'export-json': exportAll, 'export-csv': () => run({ type: 'export', format: 'csv' }), 'export-png': () => run({ type: 'export', format: 'png' }),
             'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief,
-            settings: openSettings, 'daily-now': dailyNow
+            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, proposals: loadProposals
         };
         if (acts[act]) acts[act]();
     });

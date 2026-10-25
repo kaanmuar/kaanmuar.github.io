@@ -89,6 +89,8 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
         items.forEach { StatusRow(it.str("level"), it.str("text") ?: "", it.str("product")?.let { p -> CHIPS.toMap()[p] ?: humanize(p) }) }
     }
 
+    Proposals(s, open)
+
     Panel("Products") {
         PRODUCTS.forEach { (key, name) ->
             val p = snap.obj("products").obj(key)
