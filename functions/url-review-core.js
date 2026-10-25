@@ -31,6 +31,8 @@ const CREDENTIALS_CENTS = 3900;
 // A comparison is a flat 9 USD for each competitor run, with no return discount; the report holds five competitors.
 const COMPARE_CENTS = 900;
 const MAX_COMPETITORS = 5;
+// One payment for 30 days, never renewed by itself; url-review-offers.js holds each plan's runs and limits.
+const PASS_CENTS = { freelancer: 2900, team: 7900, pro: 18900 };
 
 // The full report: 19 USD for the first framework or tool, 5 USD for each one after it.
 function itemCents(index) {
@@ -117,6 +119,11 @@ function priceMatches(usd) {
   });
   if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS) return true;
   if (cents % COMPARE_CENTS === 0 && cents / COMPARE_CENTS <= MAX_COMPETITORS) return true;
+  if (Object.keys(PASS_CENTS).some((id) => PASS_CENTS[id] === cents)) return true;
+  const extraCents = EXTRA_FRAMEWORK_USD * 100;
+  for (let count = 0; count <= FRAMEWORKS.length + SPECIALIST_TOOLS.length; count += 1) {
+    if (scopes.indexOf(cents - count * extraCents) !== -1) return true;
+  }
   const lists = [CREDENTIALS_CENTS];
   for (let count = 1; count <= FRAMEWORKS.length + SPECIALIST_TOOLS.length; count += 1) {
     const base = unitCents(count);
@@ -467,6 +474,7 @@ function validateIntake(body) {
       reason,
       reasonCode,
       frameworks: picked,
+      tools: normalizeTools(src.tools),
       pages: scope ? scope.pages : INCLUDED_PAGES,
       depth: scope ? scope.depth : INCLUDED_DEPTH,
       url: target.toString(),
@@ -746,6 +754,56 @@ function priceForCredentials() {
   return { usd: CREDENTIALS_CENTS / 100, cents: CREDENTIALS_CENTS, count: 1, frameworks: [], layers: [] };
 }
 
+// A pass is its plan's price, flat: no return step and no code.
+function priceForPass(id) {
+  const cents = PASS_CENTS[String(id || "")];
+  if (!cents) {
+    const error = new Error("Choose the Freelancer, Team, or Pro pass. No charge was made.");
+    error.status = 400;
+    throw error;
+  }
+  return { usd: cents / 100, cents, count: 1, plan: String(id), frameworks: [], layers: [] };
+}
+
+// What a run on a pass asks for beyond the plan: 5 USD for each framework or tool past the plan's allowance, in
+// page order, and the difference between the page and depth steps chosen and the plan's. A plan with tools counts
+// frameworks only. `plan` carries { id, frameworks, tools, pages, depth }; nothing here is discounted.
+function priceForPassExtras(plan, request) {
+  const src = request || {};
+  const frameworks = normalizeFrameworks(src.frameworks);
+  const tools = normalizeTools(src.tools);
+  if (!frameworks.length) {
+    const error = new Error("Choose at least one framework.");
+    error.status = 400;
+    throw error;
+  }
+  const scope = priceForScope(src.pages == null ? INCLUDED_PAGES : src.pages, src.depth == null ? INCLUDED_DEPTH : src.depth);
+  const items = frameworks.concat(tools);
+  const counted = plan.tools ? frameworks : items;
+  const over = new Set(counted.slice(Math.max(0, Number(plan.frameworks) || 0)));
+  const frameworkCents = over.size * EXTRA_FRAMEWORK_USD * 100;
+  const pageCents = Math.max(0, PAGE_CENTS[scope.pages] - (PAGE_CENTS[plan.pages] || 0));
+  const depthCents = Math.max(0, DEPTH_CENTS[scope.depth] - (DEPTH_CENTS[plan.depth] || 0));
+  const cents = frameworkCents + pageCents + depthCents;
+  return {
+    billing: "pass",
+    plan: plan.id,
+    frameworks,
+    tools,
+    pages: scope.pages,
+    depth: scope.depth,
+    count: items.length,
+    extra: Array.from(over),
+    frameworkUsd: frameworkCents / 100,
+    discount: items.map((name, index) => ({ name, n: index + 1, percent: 0, usd: over.has(name) ? EXTRA_FRAMEWORK_USD : 0 })),
+    scopeUsd: (pageCents + depthCents) / 100,
+    pageUsd: pageCents / 100,
+    depthUsd: depthCents / 100,
+    cents,
+    usd: cents / 100
+  };
+}
+
 function priceForAlerts(count) {
   const n = Math.round(Number(count));
   if (!Number.isInteger(n) || n < 1 || n > 8) {
@@ -759,7 +817,11 @@ function priceForAlerts(count) {
 
 function chargedUsd(options) {
   const purpose = options && options.purpose;
-  const priced = purpose === "fixlist"
+  const priced = purpose === "pass"
+    ? priceForPass(options.plan)
+    : purpose === "new-run" && options.passPlan
+      ? priceForPassExtras(options.passPlan, options)
+    : purpose === "fixlist"
     ? priceForFixList()
     : purpose === "cases"
       ? priceForLayers(options.layers)
@@ -783,7 +845,7 @@ function chargedUsd(options) {
   }
   const cents = Math.round(usd * 100);
   if (cents === priced.cents) return priced;
-  const floor = purpose === "fixlist" || priced.billing === "compare" ? priced.cents : floorCents(priced.cents);
+  const floor = purpose === "fixlist" || purpose === "pass" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
   if (!(cents < priced.cents && cents >= floor)) {
     const error = new Error("The discount on this charge is out of range. No charge was made.");
     error.status = 400;
@@ -833,11 +895,12 @@ function judgeAttempts(rows, identity, request) {
   }
   const used = new Set(mine.filter((row) => row.status === "run-credit-used").map((row) => row.creditId));
   const compareWith = !Array.isArray(request) && request ? String(request.compareWith || "") : "";
+  const billing = standingFor(mine, identity).billing;
   // A credit bought for a comparison pays for that comparison only, and a plain credit never pays for one.
-  const credit = mine.find((row) => row.status === "run-credit" && !used.has(row.id) && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, frameworksPriced.tools) && sameScope(row, scope) && String(row.compareWith || "") === compareWith);
+  // A first run's credit pays for its scope only, so it carries no tools; the extras over a pass are spent by the pass.
+  const credit = mine.find((row) => row.status === "run-credit" && row.passExtra !== true && !used.has(row.id) && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, billing === "scope" && !compareWith ? [] : frameworksPriced.tools) && sameScope(row, scope) && String(row.compareWith || "") === compareWith);
   // A comparison is 9 USD for each competitor, whichever device ran the first review.
   const compare = !!compareWith;
-  const billing = standingFor(mine, identity).billing;
   if (!compare && billing === "scope" && scope.cents === 0) return { ok: true };
   if (credit) return { ok: true, consumeId: credit.id };
   const priced = compare
@@ -863,6 +926,18 @@ function judgeAttempts(rows, identity, request) {
     pageUsd: priced.pageUsd,
     depthUsd: priced.depthUsd
   };
+}
+
+// The paid extras over a pass that this run asks for: the same frameworks, tools and scope, by the same address,
+// and not spent yet. A run on a pass spends it together with the pass run.
+function passExtraCredit(rows, email, request) {
+  const address = String(email || "").trim().toLowerCase();
+  const src = request || {};
+  const scope = normalizeScope(src.pages == null ? INCLUDED_PAGES : src.pages, src.depth == null ? INCLUDED_DEPTH : src.depth);
+  if (!address || !scope) return null;
+  return (rows || []).find((row) => row && row.status === "run-credit" && row.passExtra === true && !row.usedAt
+    && String(row.email || "").trim().toLowerCase() === address
+    && sameFrameworks(row.frameworks, src.frameworks) && sameTools(row.tools, src.tools) && sameScope(row, scope)) || null;
 }
 
 function normalizeUrl(input) {
@@ -3568,6 +3643,8 @@ function paymentProvider(value) {
 }
 
 function productName(purpose, frameworks, scope) {
+  if (purpose === "pass") return "QA-lab URL Review 30-day pass · " + String((scope && scope.plan) || "").replace(/^./, (c) => c.toUpperCase());
+  if (purpose === "new-run" && scope && scope.billing === "pass") return "QA-lab URL Review run · options over the pass · " + scope.pages + " pages, " + scope.depth + " links deep";
   if (purpose === "credentials") return "QA-lab signed-in run";
   if (purpose === "fixlist") return "QA-lab URL Review fix list";
   if (purpose === "alerts") return "QA-lab public signals · " + ((scope && scope.count) || "");
@@ -3744,7 +3821,7 @@ async function startMercadoPago(options, purpose) {
 
 async function startCheckout(options) {
   const provider = paymentProvider(options && options.provider);
-  const purpose = ["report", "fixlist", "cases", "credentials", "alerts", "new-run"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
+  const purpose = ["report", "fixlist", "cases", "credentials", "alerts", "new-run", "pass"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
   if (provider !== "paypal") {
     const error = new Error("PayPal is the payment method for this review. No charge was made.");
     error.status = 400;
@@ -4279,6 +4356,7 @@ module.exports = {
   EXTRA_FRAMEWORK_USD,
   FIXLIST_CENTS,
   COMPARE_CENTS,
+  PASS_CENTS,
   MAX_COMPETITORS,
   centsForIndex,
   scheduleCents,
@@ -4301,6 +4379,9 @@ module.exports = {
   paypalCapture, paypalCredentials, paypalAccessToken,
   previewReport,
   priceForCredentials,
+  priceForPass,
+  priceForPassExtras,
+  passExtraCredit,
   priceForAlerts,
   normalizeFrameworks,
   normalizeLayers,

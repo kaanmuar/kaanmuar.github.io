@@ -16,12 +16,13 @@ function anchorCents(runs, frameworks, pages, depth) {
   return runs * (core.unitCents(frameworks) + core.priceForScope(pages, depth).cents);
 }
 
-function plan(id, usd, runs, pages, depth, frameworks, tools) {
+function plan(id, name, runs, pages, depth, frameworks, tools) {
   const anchorUsd = anchorCents(runs, frameworks, pages, depth) / 100;
   const scope = pages === core.INCLUDED_PAGES && depth === core.INCLUDED_DEPTH ? "" : ", " + pages + " pages and " + depth + " links deep,";
   return {
     id,
-    usd,
+    name,
+    usd: core.PASS_CENTS[id] / 100,
     days: 30,
     runs,
     pages,
@@ -35,10 +36,13 @@ function plan(id, usd, runs, pages, depth, frameworks, tools) {
 }
 
 const MONTHLY_PLANS = [
-  plan("freelancer", 29, 10, 20, 2, 3, false),
-  plan("team", 79, 25, 100, 5, 8, false),
-  plan("pro", 189, 60, 100, 5, core.FRAMEWORKS.length, true)
+  plan("freelancer", "Freelancer", 10, 20, 2, 3, false),
+  plan("team", "Team", 25, 100, 5, 8, false),
+  plan("pro", "Pro", 60, 100, 5, core.FRAMEWORKS.length, true)
 ];
+const DAY_MS = 24 * 60 * 60 * 1000;
+const RENEW_MS = 3 * DAY_MS;
+const ACCOUNT_URL = "https://carlosandmunoz.com/qa-review-account.html";
 
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const COUNTRY_LANG = {
@@ -140,6 +144,134 @@ function catalog() {
 
 function planById(id) {
   return MONTHLY_PLANS.find((plan) => plan.id === id) || MONTHLY_PLANS[0];
+}
+
+function knownPlan(id) {
+  return MONTHLY_PLANS.find((plan) => plan.id === id) || null;
+}
+
+// The plan one step up; Pro stays Pro, and no plan at all starts at Freelancer.
+function nextPlan(id) {
+  const at = MONTHLY_PLANS.findIndex((plan) => plan.id === id);
+  return MONTHLY_PLANS[Math.min(MONTHLY_PLANS.length - 1, at + 1)];
+}
+
+// What the review page and the account page need to offer the passes.
+function passPlans() {
+  return MONTHLY_PLANS.map((plan) => ({ id: plan.id, name: plan.name, usd: plan.usd, days: plan.days, runs: plan.runs, pages: plan.pages, depth: plan.depth, frameworks: plan.frameworks, tools: plan.tools }));
+}
+
+function sameAddress(row, email) {
+  return !!row && String(row.email || "").trim().toLowerCase() === String(email || "").trim().toLowerCase();
+}
+
+// A paid pass, or one the desk granted, that is not refunded, not replaced by a newer one, and not past its end.
+function passLive(row, now) {
+  const at = now == null ? Date.now() : Number(now);
+  return !!row && row.status === "monthly-pass" && row.refunded !== true && !row.replacedBy
+    && (row.paid === true || row.localPass === true) && Date.parse(row.paidUntil || "") > at;
+}
+
+// Rows written before runs were counted carry no `runs`; they hold their plan's runs.
+function passRuns(row) {
+  const runs = Math.round(Number(row && row.runs) || 0);
+  return runs > 0 ? runs : planById(row && row.plan).runs;
+}
+
+function passLeft(row) {
+  return Math.max(0, passRuns(row) - Math.max(0, Math.round(Number(row && row.runsUsed) || 0)));
+}
+
+// The open pass of this address, the one ending last; null when none is open.
+function passFor(records, email, now) {
+  return (records || []).filter((row) => sameAddress(row, email) && passLive(row, now))
+    .sort((a, b) => String(b.paidUntil || "").localeCompare(String(a.paidUntil || "")))[0] || null;
+}
+
+// The plan of the address's latest pass, open or not, so a used-up or ended pass offers the next plan up.
+function lastPassPlan(records, email) {
+  const last = (records || []).filter((row) => sameAddress(row, email) && row.status === "monthly-pass")
+    .sort((a, b) => String(b.paidUntil || "").localeCompare(String(a.paidUntil || "")))[0];
+  return last ? planById(last.plan).id : "";
+}
+
+function passView(row) {
+  if (!row) return null;
+  const chosen = planById(row.plan);
+  return {
+    id: row.id || "",
+    plan: chosen.id,
+    name: chosen.name,
+    usd: chosen.usd,
+    runs: passRuns(row),
+    runsLeft: passLeft(row),
+    paidUntil: row.paidUntil || "",
+    frameworks: chosen.frameworks,
+    tools: chosen.tools,
+    pages: chosen.pages,
+    depth: chosen.depth,
+    credentials: chosen.id === "pro",
+    charged: row.paid === true
+  };
+}
+
+// How a run goes on a pass. null: no open pass has a run left, so the run is priced as usual. Otherwise the pass,
+// its plan, what the run asks for beyond the plan (none for a comparison competitor), and the paid extras credit
+// that covers it; `due` is true when extras are asked for and not paid yet.
+function passRun(records, email, request, now) {
+  const row = passFor(records, email, now);
+  if (!row || passLeft(row) <= 0) return null;
+  const chosen = planById(row.plan);
+  const extras = request && request.compareWith ? null : core.priceForPassExtras(chosen, request);
+  const asked = !!extras && extras.cents > 0;
+  const credit = asked ? core.passExtraCredit(records, email, request) : null;
+  return { row, plan: chosen, extras, credit, due: asked && !credit };
+}
+
+// A pass run opens its report in full, which opens the fix list, the case export and the signals; Pro adds the signed-in run.
+function passAddons(planId) {
+  return planId === "pro" ? ["credentials"] : [];
+}
+
+// The row a paid pass checkout writes. Bought while another pass is open, it starts now with the new plan, keeps the
+// runs left on the open one, and ends 30 days after the later of now and the open pass's end; the open one is replaced.
+function passPurchase(planId, records, email, now, payment) {
+  const at = now == null ? Date.now() : Number(now);
+  const chosen = planById(planId);
+  const address = String(email || "").trim().toLowerCase();
+  const current = passFor(records, address, at);
+  const carried = current ? passLeft(current) : 0;
+  const from = current ? Math.max(at, Date.parse(current.paidUntil)) : at;
+  const row = Object.assign({
+    status: "monthly-pass",
+    email: address,
+    plan: chosen.id,
+    priceUsd: chosen.usd,
+    paid: true,
+    runs: chosen.runs + carried,
+    carriedRuns: carried,
+    runsUsed: 0,
+    startedAt: new Date(at).toISOString(),
+    paidUntil: new Date(from + chosen.days * DAY_MS).toISOString(),
+    replaces: current ? current.id || "" : ""
+  }, payment || {});
+  return { row, replaces: current ? current.id || "" : "" };
+}
+
+// Paid passes ending within three days that were not reminded yet and that no newer pass of the address outlasts.
+function renewalsDue(records, now) {
+  const at = now == null ? Date.now() : Number(now);
+  const live = (records || []).filter((row) => passLive(row, at));
+  return live.filter((row) => row.paid === true && !row.renewalSentAt && Date.parse(row.paidUntil) - at <= RENEW_MS
+    && !live.some((other) => other !== row && sameAddress(other, row.email) && Date.parse(other.paidUntil) > Date.parse(row.paidUntil)));
+}
+
+// Plain text, in the language the pass was bought in.
+function renewalMail(row) {
+  const lang = LANGS.indexOf(row && row.lang) === -1 ? "en" : row.lang;
+  const chosen = planById(row && row.plan);
+  const note = messageFor("renew", lang, { plan: chosen.name, date: String((row && row.paidUntil) || "").slice(0, 10), left: passLeft(row) }, 0);
+  return { lang, subject: note.subject, text: note.title + "\n\n" + note.body + "\n\n" + ACCOUNT_URL + "\n\nQA-lab URL Review" };
 }
 
 const COPY = require("./url-review-note-copy");
@@ -289,7 +421,7 @@ const ADDONS = ["fixlist", "cases", "alerts", "credentials"];
 
 function paidPurpose(value) {
   const purpose = String(value || "");
-  return purpose === "report" || ADDONS.indexOf(purpose) !== -1 ? purpose : "new-run";
+  return purpose === "report" || purpose === "pass" || ADDONS.indexOf(purpose) !== -1 ? purpose : "new-run";
 }
 
 // The payment row for a fix list, case export, signals, or a signed-in run bought on a report; never a run credit.
@@ -304,7 +436,7 @@ function addonPayment(run, payment) {
   return row;
 }
 
-const PAYMENT_ROWS = ["paid-report", "paid-addon", "run-credit", "run-credit-refunded"];
+const PAYMENT_ROWS = ["paid-report", "paid-addon", "run-credit", "run-credit-refunded", "monthly-pass"];
 
 // What a PayPal refund, reversal or dispute changes on the rows that carry its order id.
 // A full refund or reversal takes back what was bought; a partial refund and a dispute only mark the payment.
@@ -357,15 +489,20 @@ function returnCoupon(note, now) {
 }
 
 // `freeAccount` is true for a free-run address (FREE_RUN_EMAILS or url_review_free_runs); every run it owns opens.
+// A pass, paid or desk-granted, opens only the runs made on it (they carry passId); older reports keep their unlock price.
+function passRunOpen(row) {
+  return !!row && (row.paid === true || row.free === true || !!row.passId);
+}
+
 function accountFile(records, email, now, options) {
   const address = String(email || "").trim().toLowerCase();
   const at = now == null ? Date.now() : Number(now);
   const freeAccount = !!(options && options.freeAccount);
   const rows = (records || []).filter((row) => row && String(row.email || "").trim().toLowerCase() === address);
-  const passes = rows.filter((row) => row.status === "monthly-pass").sort((a, b) => String(b.paidUntil || "").localeCompare(String(a.paidUntil || "")));
-  const pass = passes[0] || null;
-  const passOpen = !!pass && Date.parse(pass.paidUntil || "") > at;
-  const open = freeAccount || passOpen;
+  const live = passFor(rows, address, at);
+  const pass = live || rows.filter((row) => row.status === "monthly-pass").sort((a, b) => String(b.paidUntil || "").localeCompare(String(a.paidUntil || "")))[0] || null;
+  const passOpen = !!live;
+  const open = freeAccount;
   return {
     email: address,
     open,
@@ -374,10 +511,12 @@ function accountFile(records, email, now, options) {
     charged: pass ? pass.paid === true : false,
     localPass: pass ? pass.localPass === true : false,
     paidUntil: pass ? pass.paidUntil || "" : "",
+    passDetail: passView(live),
+    lastPlan: lastPassPlan(rows, address),
     plans: catalog().plans,
     runs: rows.filter((row) => row.report)
       .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
-      .map((row) => customerRun(row, open || row.paid === true || row.free === true))
+      .map((row) => customerRun(row, open || passRunOpen(row)))
   };
 }
 
@@ -399,6 +538,20 @@ module.exports = {
   languageOf,
   catalog,
   planById,
+  knownPlan,
+  nextPlan,
+  passPlans,
+  passLive,
+  passRuns,
+  passLeft,
+  passFor,
+  lastPassPlan,
+  passView,
+  passRun,
+  passAddons,
+  passPurchase,
+  renewalsDue,
+  renewalMail,
   messageFor,
   queue,
   customerRun,

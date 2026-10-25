@@ -1539,6 +1539,7 @@ const reviewPublish = require("./url-review-publish");
 const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
 const reviewOffers = require("./url-review-offers");
+const reviewPass = require("./url-review-pass");
 const reviewCompare = require("./url-review-compare");
 const reviewMulti = require("./url-review-multi");
 const reviewMarket = require("./url-review-market");
@@ -1764,7 +1765,13 @@ async function sendOwnerNotice(queued, email) {
   return sent ? { card, notice } : { error: "SendGrid is not configured, so nothing was sent." };
 }
 
+// A pass reminder is about a purchase, not a follow-up note, so it goes out whether or not notes are live.
 async function sendReviewNotes() {
+  try {
+    await sendPassRenewals();
+  } catch (error) {
+    console.error("Pass renewals failed:", error);
+  }
   if (process.env.REVIEW_NOTES_LIVE !== "1") return null;
   const db = admin.firestore();
   const now = Date.now();
@@ -2501,6 +2508,49 @@ async function returnPrice(priced, opts) {
   return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon });
 }
 
+// purpose=pass&plan= prices a pass; pass=<plan> with a run's choices prices only what the run asks beyond that plan.
+// Neither takes a return step or a code. null for every other quote.
+async function quotePass(query) {
+  const q = query || {};
+  if (q.purpose === "pass") {
+    const chosen = reviewOffers.knownPlan(String(q.plan || ""));
+    if (!chosen) {
+      const error = new Error("Choose the Freelancer, Team, or Pro pass.");
+      error.status = 400;
+      throw error;
+    }
+    const quote = await urlReview.copQuote(chosen.usd);
+    return { usd: chosen.usd, cop: quote.pesos, rate: quote.rate, count: 1, frameworks: [], tools: [], plan: chosen.id, pass: reviewOffers.passPlans().find((row) => row.id === chosen.id) };
+  }
+  if (!q.pass) return null;
+  const chosen = reviewOffers.knownPlan(String(q.pass));
+  if (!chosen) {
+    const error = new Error("That pass is not a QA-lab pass.");
+    error.status = 400;
+    throw error;
+  }
+  const priced = urlReview.priceForPassExtras(chosen, { frameworks: String(q.frameworks || ""), tools: String(q.tools || ""), pages: q.pages, depth: q.depth });
+  const quote = priced.cents ? await urlReview.copQuote(priced.usd) : { pesos: 0, rate: 0 };
+  return {
+    usd: priced.usd,
+    cop: quote.pesos,
+    rate: quote.rate,
+    count: priced.count,
+    frameworks: priced.frameworks,
+    tools: priced.tools,
+    discount: priced.discount,
+    extra: priced.extra,
+    pages: priced.pages,
+    depth: priced.depth,
+    billing: "pass",
+    plan: chosen.id,
+    frameworkUsd: priced.frameworkUsd,
+    scopeUsd: priced.scopeUsd,
+    pageUsd: priced.pageUsd,
+    depthUsd: priced.depthUsd
+  };
+}
+
 function dealFields(deal) {
   return deal && deal.percent
     ? { listUsd: deal.listUsd, percent: deal.percent, discountSource: deal.source, coupon: deal.code }
@@ -2576,6 +2626,80 @@ async function noteUnmatchedPayment(result, testRun, reason) {
     console.error("Unmatched payment record failed:", error);
   }
   await rememberReview("payment-unmatched", Object.assign({ priceUsd: row.amount }, row));
+}
+
+// The address's passes and its unspent extras credits: all a run on a pass and the standing read.
+async function passRowsFor(email) {
+  if (!email) return [];
+  const col = admin.firestore().collection("url_reviews");
+  const [passes, credits] = await Promise.all([
+    col.where("email", "==", email).where("status", "==", "monthly-pass").limit(40).get(),
+    col.where("email", "==", email).where("passExtra", "==", true).where("usedAt", "==", "").limit(40).get()
+  ]);
+  return passes.docs.concat(credits.docs).map((doc) => Object.assign({ id: doc.id }, doc.data()));
+}
+
+async function giveBackPassRun(passId, creditId) {
+  try {
+    await reviewPass.giveBackPassRun(admin.firestore(), passId, creditId);
+  } catch (error) {
+    console.error("Pass run give-back failed:", error);
+  }
+}
+
+// A run on an open pass with a run left: no charge within the plan, and the options over it once they are paid.
+// null when the run is not a pass run, or when a parallel run took the pass's last run first.
+async function passDecision(email, value) {
+  const rows = await passRowsFor(email);
+  const run = reviewOffers.passRun(rows, email, value, Date.now());
+  if (!run) return null;
+  const extras = run.extras || { usd: 0 };
+  const left = reviewOffers.passLeft(run.row);
+  if (run.due) {
+    return {
+      ok: false,
+      code: "payment",
+      pass: run.plan.id,
+      message: "This run uses one of your " + run.plan.name + " pass runs. The options over the plan ask for payment before it starts.",
+      priceUsd: extras.usd,
+      count: extras.count,
+      frameworks: extras.frameworks,
+      tools: extras.tools,
+      pages: extras.pages,
+      depth: extras.depth,
+      billing: "pass",
+      frameworkUsd: extras.frameworkUsd,
+      scopeUsd: extras.scopeUsd,
+      pageUsd: extras.pageUsd,
+      depthUsd: extras.depthUsd,
+      runsLeft: left
+    };
+  }
+  if (!(await reviewPass.takePassRun(admin.firestore(), run.row.id, run.credit && run.credit.id))) return null;
+  return { ok: true, consumeId: run.credit ? run.credit.id : "", pass: { id: run.row.id, plan: run.plan.id, name: run.plan.name, left: left - 1, extrasUsd: extras.usd } };
+}
+
+async function sendPassRenewals() {
+  const db = admin.firestore();
+  const now = Date.now();
+  const snap = await db.collection("url_reviews").where("status", "==", "monthly-pass").limit(500).get();
+  const due = reviewOffers.renewalsDue(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), now);
+  for (const row of due) {
+    const ref = db.collection("url_reviews").doc(row.id);
+    try {
+      const claimed = await db.runTransaction(async (tx) => {
+        const fresh = await tx.get(ref);
+        if (!fresh.exists || fresh.get("renewalSentAt")) return false;
+        tx.update(ref, { renewalSentAt: new Date(now).toISOString() });
+        return true;
+      });
+      if (!claimed) continue;
+      const sent = await sendAskerMail(row.email, reviewOffers.renewalMail(row), "", "url-review-pass-renewal");
+      if (!sent) await ref.update({ renewalSentAt: admin.firestore.FieldValue.delete() });
+    } catch (error) {
+      console.error("Pass renewal note failed:", error);
+    }
+  }
 }
 
 async function fulfillPayment(result, ctx) {
@@ -2670,6 +2794,23 @@ async function fulfillPayment(result, ctx) {
       frameworks: paidFrameworks,
       sessionId: result.sessionId
     });
+  } else if (paidPurpose === "pass") {
+    const passEmail = String(open.email || "").trim().toLowerCase();
+    const made = await reviewPass.writePass(admin.firestore(), open, {
+      provider: result.provider,
+      method: choice,
+      deviceId: payer,
+      sessionId: result.sessionId,
+      captureId,
+      reference: result.reference,
+      test: testRun,
+      amount: result.amount,
+      currency: result.currency,
+      lang: open.lang || "",
+      createdAt: new Date().toISOString(),
+      expireAt: urlReview.paymentExpireAt()
+    }, await passRowsFor(passEmail));
+    if (made) await rememberReview("pass-paid", Object.assign({ via }, made));
   } else if (reviewOffers.ADDONS.indexOf(paidPurpose) !== -1) {
     const runRef = paidReport ? admin.firestore().collection("url_reviews").doc(paidReport) : null;
     const runSnap = runRef ? await runRef.get() : null;
@@ -2723,6 +2864,8 @@ async function fulfillPayment(result, ctx) {
       currency: result.currency,
       expireAt: urlReview.paymentExpireAt()
     };
+    // The options over a pass belong to the signed-in address that runs on it, on any device.
+    if (open.passExtra === true) Object.assign(credit, { passExtra: true, plan: open.plan || "", email: open.email || "", usedAt: "" });
     // One comparison checkout pays for each competitor run: one credit per competitor, each tied to the base review.
     // The first credit carries the payment; the others name it, so the amount is counted once.
     const competitors = paidCompare && open.billing === "compare" ? Math.max(1, Math.min(urlReview.MAX_COMPETITORS, Number(open.competitors) || 1)) : 1;
@@ -2779,7 +2922,7 @@ async function reversePayment(ids, keys, testRun) {
       await ref.set(update.set, { merge: true });
     }
   }
-  const payment = rows.find((row) => ["paid-report", "paid-addon", "run-credit", "run-credit-refunded"].indexOf(row.status) !== -1) || rows[0] || {};
+  const payment = rows.find((row) => ["paid-report", "paid-addon", "run-credit", "run-credit-refunded", "monthly-pass"].indexOf(row.status) !== -1) || rows[0] || {};
   await rememberReview(kind === "dispute" ? "payment-disputed" : "payment-refunded", {
     id: payment.reportId || payment.id || "",
     email: payment.email || "",
@@ -3741,11 +3884,15 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       const ip = req.ip || "";
       const rows = free ? [] : await reviewRowsFor(deviceId, ip);
       const standing = urlReview.standingFor(rows, { deviceId, ip });
+      const passes = signedIn.ok && !free ? await passRowsFor(signedIn.email) : [];
       res.status(200).json({
         billing: standing.billing,
         free,
         percent: !free && standing.billing === "run" ? reviewOffers.returnPercent(reviewOffers.returnsBefore(rows)) : 0,
-        compareUsd: urlReview.COMPARE_CENTS / 100
+        compareUsd: urlReview.COMPARE_CENTS / 100,
+        pass: reviewOffers.passView(reviewOffers.passFor(passes, signedIn.email, Date.now())),
+        lastPlan: signedIn.ok ? reviewOffers.lastPassPlan(passes, signedIn.email) : "",
+        plans: reviewOffers.passPlans()
       });
     } catch (error) {
       console.error("Standing lookup failed:", error);
@@ -3755,6 +3902,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
   }
   if (req.method === "GET" && pathName.indexOf("/checkout/quote") !== -1) {
     try {
+      const passQuote = await quotePass(req.query);
+      if (passQuote) {
+        res.status(200).json(passQuote);
+        return;
+      }
       let priced = req.query.purpose === "fixlist"
         ? urlReview.priceForFixList()
         : req.query.purpose === "credentials"
@@ -3822,7 +3974,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/checkout") !== -1) {
-    const purpose = ["report", "fixlist", "cases", "credentials", "alerts"].indexOf(req.body && req.body.purpose) === -1 ? "new-run" : req.body.purpose;
+    const purpose = ["report", "fixlist", "cases", "credentials", "alerts", "pass"].indexOf(req.body && req.body.purpose) === -1 ? "new-run" : req.body.purpose;
     const reportId = String((req.body && req.body.reportId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     const deviceId = String((req.body && req.body.deviceId) || "").replace(/[^a-f0-9]/g, "").slice(0, 16);
     const choice = urlReview.paymentChoice((req.body && req.body.provider) || "paypal");
@@ -3866,6 +4018,33 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
           return;
         }
       }
+      // A pass, and the options over one, belong to the signed-in address, so they are bought signed in.
+      let passOwner = "";
+      let passPlan = null;
+      if (purpose === "pass" || (purpose === "new-run" && req.body && req.body.pass)) {
+        const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(admin.firestore()), Object.assign({}, req.body || {}, { touch: false }));
+        if (!signedIn.ok) {
+          res.status(signedIn.status || 401).json({ error: "Sign in first. A pass belongs to the address you sign in with. No charge was made.", signIn: true });
+          return;
+        }
+        passOwner = signedIn.email;
+      }
+      if (purpose === "pass") {
+        priced = urlReview.priceForPass(reviewOffers.knownPlan(String(req.body.plan || "")) ? String(req.body.plan) : "");
+      } else if (passOwner) {
+        const run = reviewOffers.passRun(await passRowsFor(passOwner), passOwner, {
+          frameworks: req.body.frameworks || [],
+          tools: req.body.tools || [],
+          pages: req.body.pages,
+          depth: req.body.depth
+        }, Date.now());
+        if (!run || !run.due) {
+          res.status(400).json({ error: !run ? "No open pass with a run left is on this account. No charge was made." : "This run asks for nothing over your pass. Start it from the review page. No charge was made." });
+          return;
+        }
+        passPlan = run.plan;
+        priced = run.extras;
+      }
       if (purpose === "fixlist") {
         priced = urlReview.priceForFixList();
       } else if (purpose === "cases") {
@@ -3878,7 +4057,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         creditCents = urlReview.creditFor(reportData);
         priced = urlReview.priceForReport((reportData && reportData.frameworks) || [], urlReview.toolsForCharge((reportData && reportData.report && reportData.report.tools) || [], req.body && req.body.tools), creditCents);
       }
-      const compareWith = purpose === "new-run" && req.body ? reviewCompare.cleanId(req.body.compareWith) : "";
+      const compareWith = purpose === "new-run" && !passPlan && req.body ? reviewCompare.cleanId(req.body.compareWith) : "";
       if (!priced) {
         priced = urlReview.priceForRun({
           frameworks: (req.body && req.body.frameworks) || [],
@@ -3891,7 +4070,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         });
       }
       let deal = null;
-      if (purpose === "report" || purpose === "new-run") {
+      if (purpose === "report" || (purpose === "new-run" && !passPlan)) {
         deal = await returnPrice(priced, {
           purpose,
           reportId,
@@ -3904,7 +4083,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       }
       const listUsd = priced.usd;
       if (deal && deal.percent) priced = Object.assign({}, priced, { usd: deal.usd });
-      const base = reviewOrigin(req) + "/" + urlReview.payPage(req.body && req.body.lang) + "?purpose=" + purpose + "&provider=" + choice;
+      const base = reviewOrigin(req) + "/" + urlReview.payPage(req.body && req.body.lang) + "?purpose=" + purpose + "&provider=" + choice
+        + (purpose === "pass" ? "&plan=" + priced.plan : passPlan ? "&pass=" + passPlan.id : "");
       const successUrl = choice === "stripe"
         ? base + "&result=success&session_id={CHECKOUT_SESSION_ID}"
         : base + "&result=success&reference=" + reference;
@@ -3925,6 +4105,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         compareWith,
         competitors: priced.competitors,
         alertCount: priced.alertCount,
+        plan: priced.plan,
+        passPlan,
         priceUsd: priced.usd,
         listUsd,
         creditCents,
@@ -3950,6 +4132,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         billing: priced.billing || "",
         compareWith,
         competitors: priced.competitors || null,
+        ...(passOwner ? { email: passOwner, plan: priced.plan || "", passExtra: !!passPlan, lang: String((req.body && req.body.lang) || "").slice(0, 2) } : {}),
         priceUsd: priced.usd,
         creditUsd: creditCents / 100,
         amount: session.amount,
@@ -4174,10 +4357,15 @@ async function runReview(req, res, placeOf) {
   const deviceId = String(intake.value.deviceId || hintedDevice).replace(/[^a-f0-9]/g, "").slice(0, 32);
   const ip = req.ip || "";
   const priorRows = free ? [] : await reviewRowsFor(deviceId, ip);
-  const decision = free
+  let decision = free
     ? { ok: true }
     : urlReview.judgeAttempts(priorRows, { deviceId, ip }, intake.value);
-  if (!decision.ok && decision.code === "payment") {
+  // A credit bought for exactly this run is spent first; otherwise an open pass with a run left carries it.
+  if (!free && !decision.consumeId && decision.code !== "stopped" && decision.code !== "invalid") {
+    const onPass = await passDecision(signedIn.email, intake.value);
+    if (onPass) decision = onPass;
+  }
+  if (!decision.ok && decision.code === "payment" && !decision.pass) {
     const deal = await returnPrice({ usd: decision.priceUsd, count: decision.count, billing: decision.billing }, {
       purpose: "new-run",
       rows: priorRows,
@@ -4190,6 +4378,7 @@ async function runReview(req, res, placeOf) {
       status: "run-credit-used",
       creditId: decision.consumeId,
       deviceId,
+      ...(decision.pass ? { email: signedIn.email, passId: decision.pass.id } : {}),
       createdAt: new Date().toISOString(),
       expireAt: urlReview.paymentExpireAt()
     });
@@ -4219,6 +4408,9 @@ async function runReview(req, res, placeOf) {
       purpose: decision.code === "payment" ? "new-run" : "",
       priceUsd: decision.priceUsd || 0,
       frameworks: decision.frameworks || [],
+      tools: decision.tools || [],
+      pass: decision.pass || "",
+      runsLeft: decision.runsLeft,
       pages: decision.pages,
       depth: decision.depth,
       billing: decision.billing || "",
@@ -4239,6 +4431,7 @@ async function runReview(req, res, placeOf) {
     deviceKey: req.body && req.body.deviceKey
   });
   if (!claim.ok) {
+    if (decision.pass) await giveBackPassRun(decision.pass.id, decision.consumeId);
     res.status(claim.status).json({ error: claim.error });
     return;
   }
@@ -4284,6 +4477,7 @@ async function runReview(req, res, placeOf) {
       depth: intake.value.depth,
       reason: intake.value.reason
     });
+    if (decision.pass) writeLine({ type: "log", text: "This run uses your " + decision.pass.name + " pass: " + decision.pass.left + (decision.pass.left === 1 ? " run" : " runs") + " left after it." });
     const asked = (() => { try { return urlReview.registryDomain(new URL(intake.value.url).hostname); } catch (error) { return ""; } })();
     const ranksPromise = base ? reviewMarket.trancoRanks([urlReview.registryDomain(base.report.host), asked]).catch(() => []) : null;
     const report = await urlReview.reviewTarget(intake.value.url, {
@@ -4310,6 +4504,10 @@ async function runReview(req, res, placeOf) {
     record.signInProvider = signedIn.provider;
     if (urlReview.testKeyMatches(req.body && req.body.testKey, process.env.QA_TEST_KEY)) record.test = true;
     if (free) Object.assign(record, { paid: true, free: true, priceUsd: 0 });
+    if (decision.pass) {
+      Object.assign(record, { paid: true, priceUsd: decision.pass.extrasUsd, passId: decision.pass.id, passPlan: decision.pass.plan });
+      if (reviewOffers.passAddons(decision.pass.plan).length) record.addons = reviewOffers.passAddons(decision.pass.plan);
+    }
     if (report.ownerProof && report.ownerProof.checked) {
       try {
         await rememberSiteProof(intake.value.email, report.ownerProof.host, report.ownerProof.how);
@@ -4366,6 +4564,7 @@ async function runReview(req, res, placeOf) {
       reason: error.message || "The review failed."
     };
     await rememberReview("failed", failed);
+    if (decision.pass) await giveBackPassRun(decision.pass.id, decision.consumeId);
     await saveRunLog("failed", error);
     await mailReviewedSites(ip, failed);
     writeLine({ type: "error", error: error.message || "The review failed." });
