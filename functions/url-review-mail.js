@@ -250,6 +250,21 @@ function summarizePeriod(opens, rows, captures, alerts) {
     bump(reasons, row.reasonCode || "");
   });
   (captures || []).forEach((row) => bump(captureKinds, row.kind || "capture"));
+  const reviewSources = {};
+  const sourceById = {};
+  const sourceByEmail = {};
+  reviews.forEach((row) => {
+    const source = openSource(row);
+    bump(reviewSources, source);
+    if (row.id) sourceById[row.id] = source;
+    const email = String(row.email || "").toLowerCase();
+    if (email && !sourceByEmail[email]) sourceByEmail[email] = source;
+  });
+  // A payment takes the source of the review it unlocked, else of the asker's review in this period.
+  const paidSources = {};
+  payments.filter((row) => row.paid === true && REVENUE[row.status] && !row.test).forEach((row) => {
+    bump(paidSources, sourceById[row.reportId] || sourceByEmail[String(row.email || "").toLowerCase()] || "no review in this period");
+  });
   const paid = money(payments);
   const openLines = (opens || []).slice(0, 120).map((row) => line([
     bogotaLabel(whenOf(row)),
@@ -283,6 +298,7 @@ function summarizePeriod(opens, rows, captures, alerts) {
       signals ? signals + " signals" : "",
       row.mail ? (row.mail.sent ? "mailed" + (row.mail.pdf ? " with PDF" : " without PDF") : "mail failed: " + clip(row.mail.error, 60)) : "",
       [row.city, row.country].filter(Boolean).join(", "),
+      row.query || row.referrerHost ? "from " + openSource(row) : "",
       row.reasonCode || clip(row.reason, 80)
     ]);
   });
@@ -335,6 +351,8 @@ function summarizePeriod(opens, rows, captures, alerts) {
     cities: cities,
     langs: langs,
     referrers: referrers,
+    reviewSources: reviewSources,
+    paidSources: paidSources,
     screens: screens,
     zones: zones,
     hours: hours,
@@ -379,6 +397,8 @@ function reportRows(summary, previous, phrase, extra) {
   ].concat(more.failures || [], [
     { heading: "Where people came from" },
     { label: "Sources", value: tally(summary.referrers) },
+    { label: "Reviews by source", value: tally(summary.reviewSources || {}) },
+    { label: "Payments by source", value: tally(summary.paidSources || {}) },
     { label: "Countries", value: tally(summary.countries) },
     { label: "Cities", value: tally(summary.cities) },
     { label: "Languages", value: tally(summary.langs) },

@@ -2401,6 +2401,7 @@
           coupon: window.ReviewDeal ? ReviewDeal.code() : "",
           followUp: document.getElementById("follow-up").checked === true,
           unlisted: document.getElementById("no-publish").checked === true,
+          landing: window.QaConsent && QaConsent.landing ? QaConsent.landing() : null,
           testKey: testKey()
         }))
       });
