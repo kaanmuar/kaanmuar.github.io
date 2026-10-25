@@ -20,7 +20,8 @@ const FIXES = [
   { cause: "browser", at: "2026-10-24T19:07:34Z", ref: "#883", label: "A phone visit still running when the browser's budget ends is cut, so the page Chrome read is kept" },
   { cause: "timeout", at: "2026-10-24T20:45:00Z", ref: "#894", label: "A host that accepts no connection is named as down and kept on the desk without a bug" },
   { cause: "status", at: "2026-10-24T20:45:00Z", ref: "#894", label: "A 4xx other than 401, 403 and 429 that headless Chrome gets too is the site's own answer, kept on the desk without a bug" },
-  { cause: "headers", at: "2026-10-25T00:40:00Z", ref: "#1102", label: "Response headers up to 64 KB are read, and a start page past that is opened in headless Chrome" }
+  { cause: "headers", at: "2026-10-25T00:40:00Z", ref: "#1102", label: "Response headers up to 64 KB are read, and a start page past that is opened in headless Chrome" },
+  { cause: "redirect-loop", at: "2026-10-25T12:37:39Z", ref: "#1181", label: "A start page up to 10 redirects away is read, as Chrome reads it" }
 ];
 // The review form's default when a failure kept no frameworks (one taken from an alert).
 const RERUN_FRAMEWORKS = ["Playwright"];
