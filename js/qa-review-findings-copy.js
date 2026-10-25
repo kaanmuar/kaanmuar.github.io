@@ -29,6 +29,18 @@
       "blocked.refused": "{status}, rechazado",
       "fix.serverRender": "Renderiza el contenido principal en el servidor o prerrenderízalo al compilar.",
 
+      "warn.browserRead": "La protección antibots del sitio rechazó la solicitud normal; la página se analizó en Chrome sin interfaz.",
+      "warn.untaggedRead": "La protección antibots del sitio rechazó la solicitud normal y también Chrome sin interfaz mientras llevaba la etiqueta de la revisión; la página se analizó en Chrome sin interfaz y sin la etiqueta.",
+      "warn.slowRead": "La solicitud normal de la página de inicio tardó más de 8 s; la página se analizó en Chrome sin interfaz.",
+      "warn.cut": "La página de inicio pesa más de 2 MB, así que la revisión analizó sus primeros 2 MB.",
+      "warn.slowCut": "La página de inicio seguía llegando después de 8 s, así que la revisión analizó la parte que había llegado.",
+      "warn.shell": "El HTML de la página de inicio casi no tiene enlaces al mismo host, así que la revisión siguió los enlaces de la página renderizada en Chrome sin interfaz.",
+      "warn.challenge": "La página de inicio respondió con {check} en lugar del sitio, así que estas puntuaciones describen esa página de verificación.",
+      "warn.partial": "Análisis parcial: {blocked} de {linked} respondieron con una verificación antibots o un bloqueo, así que las puntuaciones se basan sobre todo en la página de inicio.",
+      linkedPagesN_one: "{n} página enlazada",
+      linkedPagesN_other: "{n} páginas enlazadas",
+      fixFirst: "Arregla primero: {title}.",
+
       "reason.indexable": "Indexable",
       "reason.status": "Estado {status}",
       "reason.botCheck": "Verificación antibots de {vendor}",
@@ -1014,6 +1026,18 @@
       "blocked.503": "503 com Retry-After",
       "blocked.refused": "{status}, recusado",
       "fix.serverRender": "Renderize o conteúdo principal no servidor ou faça o pré-render no build.",
+
+      "warn.browserRead": "A proteção antibot do site recusou a requisição comum; a página foi analisada no Chrome sem interface.",
+      "warn.untaggedRead": "A proteção antibot do site recusou a requisição comum e também o Chrome sem interface enquanto ele levava a tag da revisão; a página foi analisada no Chrome sem interface, sem a tag.",
+      "warn.slowRead": "A requisição comum da página inicial levou mais de 8 s; a página foi analisada no Chrome sem interface.",
+      "warn.cut": "A página inicial tem mais de 2 MB, então a revisão analisou os primeiros 2 MB.",
+      "warn.slowCut": "A página inicial ainda estava chegando depois de 8 s, então a revisão analisou a parte que já tinha chegado.",
+      "warn.shell": "O HTML da página inicial quase não lista links para o mesmo host, então a revisão seguiu os links da página renderizada no Chrome sem interface.",
+      "warn.challenge": "A página inicial respondeu com {check} em vez do site, então estas pontuações descrevem essa página de verificação.",
+      "warn.partial": "Análise parcial: {blocked} de {linked} responderam com uma verificação antibot ou um bloqueio, então as pontuações se baseiam principalmente na página inicial.",
+      linkedPagesN_one: "{n} página vinculada",
+      linkedPagesN_other: "{n} páginas vinculadas",
+      fixFirst: "Corrija primeiro: {title}.",
 
       "reason.indexable": "Indexável",
       "reason.status": "Status {status}",
@@ -2001,6 +2025,18 @@
       "blocked.refused": "{status}, abgelehnt",
       "fix.serverRender": "Rendern Sie den Hauptinhalt auf dem Server oder rendern Sie ihn beim Build vor.",
 
+      "warn.browserRead": "Der Bot-Schutz der Website hat die einfache Anfrage abgewiesen; die Seite wurde in Headless-Chrome analysiert.",
+      "warn.untaggedRead": "Der Bot-Schutz der Website hat die einfache Anfrage und auch Headless-Chrome mit der Prüfungskennung abgewiesen; die Seite wurde in Headless-Chrome ohne die Kennung analysiert.",
+      "warn.slowRead": "Die einfache Anfrage für die Startseite dauerte länger als 8 s; die Seite wurde in Headless-Chrome analysiert.",
+      "warn.cut": "Die Startseite ist größer als 2 MB, daher hat die Prüfung ihre ersten 2 MB analysiert.",
+      "warn.slowCut": "Die Startseite kam nach 8 s noch immer an, daher hat die Prüfung den bis dahin angekommenen Teil analysiert.",
+      "warn.shell": "Das HTML der Startseite enthält kaum Links auf denselben Host, daher ist die Prüfung den Links der in Headless-Chrome gerenderten Seite gefolgt.",
+      "warn.challenge": "Die Startseite antwortete mit {check} statt mit der Website, daher beschreiben die Werte nur diese Prüfseite.",
+      "warn.partial": "Teilanalyse: {blocked} von {linked} antworteten mit einer Bot-Prüfung oder einer Sperre, daher beruhen die Werte vor allem auf der Startseite.",
+      linkedPagesN_one: "{n} verlinkten Seite",
+      linkedPagesN_other: "{n} verlinkten Seiten",
+      fixFirst: "Zuerst beheben: {title}.",
+
       "reason.indexable": "Indexierbar",
       "reason.status": "Status {status}",
       "reason.botCheck": "Bot-Prüfung von {vendor}",
@@ -2987,6 +3023,18 @@
       "blocked.refused": "{status}, refusé",
       "fix.serverRender": "Rendez le contenu principal côté serveur ou pré-rendez-le au build.",
 
+      "warn.browserRead": "La protection anti-bot du site a refusé la requête simple ; la page a été analysée dans Chrome sans interface.",
+      "warn.untaggedRead": "La protection anti-bot du site a refusé la requête simple, puis Chrome sans interface tant qu’il portait le marqueur de l’analyse ; la page a été analysée dans Chrome sans interface, sans le marqueur.",
+      "warn.slowRead": "La requête simple pour la page d’accueil a pris plus de 8 s ; la page a été analysée dans Chrome sans interface.",
+      "warn.cut": "La page d’accueil dépasse 2 MB, donc l’analyse a porté sur ses 2 premiers MB.",
+      "warn.slowCut": "La page d’accueil arrivait encore après 8 s, donc l’analyse a porté sur la partie déjà reçue.",
+      "warn.shell": "Le HTML de la page d’accueil ne contient presque aucun lien vers le même hôte, donc l’analyse a suivi les liens de la page rendue dans Chrome sans interface.",
+      "warn.challenge": "La page d’accueil a répondu par {check} au lieu du site, donc ces scores décrivent cette page de vérification.",
+      "warn.partial": "Analyse partielle : {blocked} sur {linked} ont répondu par une vérification anti-bot ou un blocage, donc les scores reposent surtout sur la page d’accueil.",
+      linkedPagesN_one: "{n} page liée",
+      linkedPagesN_other: "{n} pages liées",
+      fixFirst: "À corriger d’abord : {title}.",
+
       "reason.indexable": "Indexable",
       "reason.status": "Statut {status}",
       "reason.botCheck": "Vérification anti-bot {vendor}",
@@ -3972,6 +4020,18 @@
       "blocked.503": "503 con Retry-After",
       "blocked.refused": "{status}, rifiutato",
       "fix.serverRender": "Esegui il rendering del contenuto principale sul server o pre-renderizzalo in fase di build.",
+
+      "warn.browserRead": "La protezione anti-bot del sito ha rifiutato la richiesta semplice; la pagina è stata analizzata in Chrome headless.",
+      "warn.untaggedRead": "La protezione anti-bot del sito ha rifiutato la richiesta semplice e anche Chrome headless finché portava il tag della revisione; la pagina è stata analizzata in Chrome headless senza il tag.",
+      "warn.slowRead": "La richiesta semplice della pagina iniziale ha impiegato più di 8 s; la pagina è stata analizzata in Chrome headless.",
+      "warn.cut": "La pagina iniziale supera i 2 MB, quindi la revisione ne ha analizzato i primi 2 MB.",
+      "warn.slowCut": "La pagina iniziale stava ancora arrivando dopo 8 s, quindi la revisione ha analizzato la parte arrivata.",
+      "warn.shell": "L’HTML della pagina iniziale non elenca quasi nessun link allo stesso host, quindi la revisione ha seguito i link della pagina renderizzata in Chrome headless.",
+      "warn.challenge": "La pagina iniziale ha risposto con {check} invece del sito, quindi questi punteggi descrivono quella pagina di controllo.",
+      "warn.partial": "Analisi parziale: {blocked} su {linked} hanno risposto con un controllo anti-bot o un blocco, quindi i punteggi si basano soprattutto sulla pagina iniziale.",
+      linkedPagesN_one: "{n} pagina collegata",
+      linkedPagesN_other: "{n} pagine collegate",
+      fixFirst: "Da sistemare prima: {title}.",
 
       "reason.indexable": "Indicizzabile",
       "reason.status": "Stato {status}",
@@ -4981,5 +5041,59 @@
     return text === null ? fallback : text;
   }
 
-  window.QAReviewFindingsCopy = { lang: code, translated: !!book, line: line, render: render };
+  // Reports saved before the server sent warningMsgs carry only the English warnings; these read them back.
+  const SAID = [
+    [/^The site's bot protection refused the plain request; the page was analyzed in headless Chrome\./, () => ({ id: "warn.browserRead" })],
+    [/^The site's bot protection refused the plain request and headless Chrome while it carried the review tag; the page was analyzed in headless Chrome without the tag\./, () => ({ id: "warn.untaggedRead" })],
+    [/^The plain request for the start page took longer than 8 s; the page was analyzed in headless Chrome\./, () => ({ id: "warn.slowRead" })],
+    [/^The start page is larger than 2 MB, so the review analyzed its first 2 MB\./, () => ({ id: "warn.cut" })],
+    [/^The start page was still arriving after 8 s, so the review analyzed the part that had arrived\./, () => ({ id: "warn.slowCut" })],
+    [/^The start page's HTML lists almost no same-host links, so the review followed the links on the page rendered in headless Chrome\./, () => ({ id: "warn.shell" })],
+    [/^The start page answered with an? (.+?) bot check instead of the site, so these scores describe that check page\./,
+      (m) => ({ id: "warn.challenge", vars: { check: { id: /^[aeiou]/i.test(m[1]) ? "botCheck.an" : "botCheck.a", vars: { vendor: m[1] } } } })],
+    [/^Partial analysis: (\d+) of (\d+) linked pages? answered with a bot check or a block, so the scores rest mostly on the start page\./,
+      (m) => ({ id: "warn.partial", vars: { blocked: Number(m[1]), linked: { id: "linkedPagesN", vars: { n: Number(m[2]) } } } })]
+  ];
+
+  function readWarnings(english) {
+    const list = [];
+    let rest = String(english || "").trim();
+    while (rest) {
+      let hit = null;
+      for (const [pattern, make] of SAID) {
+        const match = rest.match(pattern);
+        if (match) { hit = match; list.push(make(match)); break; }
+      }
+      if (!hit) return null;
+      rest = rest.slice(hit[0].length).trim();
+    }
+    return list;
+  }
+
+  // The health warnings in the page language, from the server's messages or the English text; null when a line is missing.
+  function warnings(messages, english) {
+    if (!book) return null;
+    const list = Array.isArray(messages) && messages.length ? messages : readWarnings(english);
+    if (!list) return null;
+    const lines = list.map((message) => render(book, message));
+    return lines.some((text) => text === null) ? null : lines.join(" ");
+  }
+
+  const KEEP_CASE = /^(Google|Consent|Lighthouse|Analytics)(?![\p{L}\p{N}])/u;
+
+  // "Fix first: <title>." for the top-ranked finding; the title starts lowercase like the English, except in German,
+  // after a slot such as {name}, and on product terms.
+  function fixFirst(item) {
+    const said = item && item.msg && item.msg.title;
+    if (!book || !said || typeof said !== "object") return null;
+    let title = render(book, said);
+    if (title === null) return null;
+    const template = String(pick(book, said.id, said.vars) || "");
+    if (code !== "de" && !/^\{/.test(template) && /^\p{Lu}[\p{Ll}’']*(?![\p{L}\p{N}-])/u.test(title) && !KEEP_CASE.test(title)) {
+      title = title.charAt(0).toLowerCase() + title.slice(1);
+    }
+    return render(book, { id: "fixFirst", vars: { title } });
+  }
+
+  window.QAReviewFindingsCopy = { lang: code, translated: !!book, line: line, render: render, warnings: warnings, fixFirst: fixFirst };
 })();

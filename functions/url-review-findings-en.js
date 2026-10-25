@@ -30,6 +30,18 @@ const EN = {
   "blocked.refused": "{status}, refused",
   "fix.serverRender": "Render the main content on the server or pre-render it at build time.",
 
+  "warn.browserRead": "The site's bot protection refused the plain request; the page was analyzed in headless Chrome.",
+  "warn.untaggedRead": "The site's bot protection refused the plain request and headless Chrome while it carried the review tag; the page was analyzed in headless Chrome without the tag.",
+  "warn.slowRead": "The plain request for the start page took longer than 8 s; the page was analyzed in headless Chrome.",
+  "warn.cut": "The start page is larger than 2 MB, so the review analyzed its first 2 MB.",
+  "warn.slowCut": "The start page was still arriving after 8 s, so the review analyzed the part that had arrived.",
+  "warn.shell": "The start page's HTML lists almost no same-host links, so the review followed the links on the page rendered in headless Chrome.",
+  "warn.challenge": "The start page answered with {check} instead of the site, so these scores describe that check page.",
+  "warn.partial": "Partial analysis: {blocked} of {linked} answered with a bot check or a block, so the scores rest mostly on the start page.",
+  linkedPagesN_one: "{n} linked page",
+  linkedPagesN_other: "{n} linked pages",
+  fixFirst: "Fix first: {title}.",
+
   "reason.indexable": "Indexable",
   "reason.status": "Status {status}",
   "reason.botCheck": "{vendor} bot check",

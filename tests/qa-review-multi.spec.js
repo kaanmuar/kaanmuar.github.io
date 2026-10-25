@@ -158,9 +158,11 @@ test('the comparison speaks the page language', async ({ page }) => {
     'sec-cookies': { title: { id: 'sec-cookies.insecure', vars: { n: 1 } }, fix: { id: 'sec-cookies.fix', vars: {} } },
     'an-consent': { title: { id: 'an-consent.title', vars: {} }, fix: { id: 'an-consent.fix', vars: {} } },
     'a11y-h1': { title: { id: 'a11y-h1.title', vars: { n: 3 } }, fix: { id: 'a11y-h1.fix', vars: {} } },
-    'pf-cache': { title: { id: 'pf-cache.title', vars: {} }, fix: { id: 'pf-cache.fix', vars: {} } }
+    'pf-cache': { title: { id: 'pf-cache.title', vars: {} }, fix: { id: 'pf-cache.fix', vars: {} } },
+    'a11y-alt': { title: { id: 'a11y-alt.title', vars: { n: 100 } } }
   };
   records[0].report = Object.assign({}, report, { insights: Object.assign({}, report.insights, {
+    summary: 'The start page is larger than 2 MB, so the review analyzed its first 2 MB. ' + report.insights.summary,
     findings: report.insights.findings.map((item) => msgs[item.key] ? Object.assign({}, item, { msg: msgs[item.key] }) : item)
   }) });
   await signIn(page, records, '/qa-review-es.html?comparison=cmp1', seen);
@@ -178,6 +180,8 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(health.locator('.ring small')).toHaveText(/^Nota [A-F]$/);
   await expect(health.locator('.health-summary')).toContainText(/obtiene \d+ de 100 \([A-F]\)\. \d+ controles fallan ahora/);
   await expect(health.locator('.health-summary')).not.toContainText('scores');
+  await expect(health.locator('.health-summary')).toContainText(/^La página de inicio pesa más de 2 MB, así que la revisión analizó sus primeros 2 MB\. wordpress\.org obtiene/);
+  await expect(health.locator('.health-summary')).toContainText(/pasan\. Arregla primero: 100 imágenes no tienen atributo alt\.$/);
   await expect(health.locator('.vchip.s-critical, .vchip.s-low').first()).toContainText(/crítico|bajo/);
   await expect(health.locator('.meta-line')).toContainText('Los controles marcados con «Necesita una persona»');
   const exec = box.locator('.multi-sec[data-sec="exec"] .multi-cell').first();

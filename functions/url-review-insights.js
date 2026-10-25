@@ -5,12 +5,12 @@ const libraries = require("./url-review-libraries");
 const { germanSpeaking } = require("./url-review-legal");
 const { say, some, english } = require("./url-review-findings-en");
 
-const BROWSER_READ_NOTE = "The site's bot protection refused the plain request; the page was analyzed in headless Chrome.";
-const UNTAGGED_READ_NOTE = "The site's bot protection refused the plain request and headless Chrome while it carried the review tag; the page was analyzed in headless Chrome without the tag.";
-const CUT_NOTE = "The start page is larger than 2 MB, so the review analyzed its first 2 MB.";
-const SLOW_READ_NOTE = "The plain request for the start page took longer than 8 s; the page was analyzed in headless Chrome.";
-const SLOW_CUT_NOTE = "The start page was still arriving after 8 s, so the review analyzed the part that had arrived.";
-const SHELL_NOTE = "The start page's HTML lists almost no same-host links, so the review followed the links on the page rendered in headless Chrome.";
+const BROWSER_READ_NOTE = english(say("warn.browserRead"));
+const UNTAGGED_READ_NOTE = english(say("warn.untaggedRead"));
+const CUT_NOTE = english(say("warn.cut"));
+const SLOW_READ_NOTE = english(say("warn.slowRead"));
+const SLOW_CUT_NOTE = english(say("warn.slowCut"));
+const SHELL_NOTE = english(say("warn.shell"));
 
 function botCheck(vendor) {
   return (/^[aeiou]/i.test(vendor) ? "an " : "a ") + vendor + " bot check";
@@ -969,13 +969,14 @@ function analyze(input) {
       { pages: blocked.map((page) => page.path || page.url), cases: ["FN-06", "LK-01"] });
   }
   const partialRead = linked.length >= 2 && blocked.length * 2 > linked.length;
-  const warnings = [];
-  if (home.readInBrowser) warnings.push(home.readInBrowser === "untagged" ? UNTAGGED_READ_NOTE : home.readInBrowser === "slow" ? SLOW_READ_NOTE : BROWSER_READ_NOTE);
-  if (home.slow) warnings.push(SLOW_CUT_NOTE);
-  else if (home.cut) warnings.push(CUT_NOTE);
-  if (home.renderedLinks) warnings.push(SHELL_NOTE);
-  if (home.challenge) warnings.push("The start page answered with " + botCheck(home.challenge) + " instead of the site, so these scores describe that check page.");
-  if (partialRead) warnings.push("Partial analysis: " + blocked.length + " of " + plural(linked.length, "linked page") + " answered with a bot check or a block, so the scores rest mostly on the start page.");
+  const warningMsgs = [];
+  if (home.readInBrowser) warningMsgs.push(say(home.readInBrowser === "untagged" ? "warn.untaggedRead" : home.readInBrowser === "slow" ? "warn.slowRead" : "warn.browserRead"));
+  if (home.slow) warningMsgs.push(say("warn.slowCut"));
+  else if (home.cut) warningMsgs.push(say("warn.cut"));
+  if (home.renderedLinks) warningMsgs.push(say("warn.shell"));
+  if (home.challenge) warningMsgs.push(say("warn.challenge", { check: botCheckSaid(home.challenge) }));
+  if (partialRead) warningMsgs.push(say("warn.partial", { blocked: blocked.length, linked: say("linkedPagesN", { n: linked.length }) }));
+  const warnings = warningMsgs.map(english);
   if (broken.length) {
     add("SEO", "fail", "high", "seo-broken-links", say("seo-broken-links.title", { n: broken.length }),
       say("listDot", { list: { items: broken.slice(0, 5).map(({ page, index }) => say("seo-broken-links.row", {
@@ -1757,7 +1758,7 @@ function analyze(input) {
   const top = actionable[0];
   const summary = warnings.join(" ") + (warnings.length ? " " : "") + host + " scores " + overall + " out of 100 (" + grade(overall) + "). " +
     plural(totals.fail, "check fails", "checks fail") + " now, " + plural(totals.risk, "is", "are") + " at risk, and " + totals.pass + " pass." +
-    (top ? " Fix first: " + (/^[A-Z][a-z]/.test(top.title) ? top.title.charAt(0).toLowerCase() + top.title.slice(1) : top.title) + "." : "");
+    (top ? " " + english(say("fixFirst", { title: /^[A-Z][a-z]/.test(top.title) ? top.title.charAt(0).toLowerCase() + top.title.slice(1) : top.title })) : "");
 
   const caseVerdicts = {};
   findings.forEach((item) => {
@@ -1865,6 +1866,7 @@ function analyze(input) {
     score: { overall, grade: grade(overall), areas, totals, severities },
     summary,
     warnings,
+    warningMsgs,
     findings: ordered,
     caseVerdicts,
     previews,

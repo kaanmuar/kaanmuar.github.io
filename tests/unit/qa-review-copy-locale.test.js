@@ -89,3 +89,37 @@ test("a finding message renders in the page language and falls back to the Engli
   assert.equal(load("fr").line({ id: "no-such-line" }, "English"), "English");
   assert.equal(load("it").line(undefined, "English"), "English");
 });
+
+test("health warnings and Fix first read in the page language, also from a saved report's English (#1355)", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review-findings-copy.js"), "utf8");
+  const load = (lang) => {
+    const sandbox = { window: {}, document: { documentElement: { lang } } };
+    vm.runInNewContext(source, sandbox);
+    return sandbox.window.QAReviewFindingsCopy;
+  };
+  const { EN, say, english } = require("../../functions/url-review-findings-en.js");
+  const vars = {
+    "warn.challenge": { check: say("botCheck.an", { vendor: "Akamai" }) },
+    "warn.partial": { blocked: 4, linked: say("linkedPagesN", { n: 5 }) }
+  };
+  const sent = Object.keys(EN).filter((id) => id.startsWith("warn.")).map((id) => say(id, vars[id]));
+  const englishText = sent.map(english).join(" ");
+  const es = load("es");
+  const fromMessages = es.warnings(sent, englishText);
+  assert.equal(es.warnings([], englishText), fromMessages, "a saved report's English warnings read back to the same messages");
+  assert.match(fromMessages, /^La protección antibots del sitio rechazó la solicitud normal;/);
+  assert.match(fromMessages, /una verificación antibots de Akamai en lugar del sitio/);
+  assert.match(fromMessages, /Análisis parcial: 4 de 5 páginas enlazadas respondieron/);
+  assert.equal(es.warnings([], "A warning written by an older server."), null);
+  assert.equal(load("en").warnings(sent, englishText), null);
+
+  const finding = (id, vars) => ({ rank: 1, msg: { title: say(id, vars) } });
+  assert.equal(es.fixFirst(finding("geo-h1-rendered.title")), "Arregla primero: el encabezado principal aparece solo después de JavaScript.");
+  assert.equal(load("fr").fixFirst(finding("geo-h1-rendered.title")), "À corriger d’abord : le titre principal n’apparaît qu’après JavaScript.");
+  assert.equal(load("de").fixFirst(finding("geo-h1-rendered.title")), "Zuerst beheben: Die Hauptüberschrift erscheint erst nach JavaScript.");
+  assert.equal(es.fixFirst(finding("sec-safebrowsing.title", { threats: "phishing" })), "Arregla primero: Google marca el sitio como phishing.");
+  assert.match(es.fixFirst(finding("an-consent-mode.missing.title", { tools: "Cookiebot" })), /^Arregla primero: Cookiebot está presente/);
+  assert.equal(load("pt").fixFirst(finding("seo-title-missing.title", { n: 2 })), "Corrija primeiro: " + load("pt").line(say("seo-title-missing.title", { n: 2 }), "") + ".");
+  assert.equal(es.fixFirst({ rank: 1, title: "English only" }), null);
+  assert.equal(load("en").fixFirst(finding("geo-h1-rendered.title")), null);
+});
