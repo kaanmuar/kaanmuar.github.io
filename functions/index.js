@@ -1860,22 +1860,44 @@ async function reviewedLately(host) {
   return snaps.some((snap) => snap.docs.some((doc) => String(doc.get("createdAt") || "") > since));
 }
 
-// One site per tick, at night, without web search. SWEEP_LIVE=1 turns it on.
+// Up to sweep.PER_TICK sites a tick, one after another, at night, without web search. SWEEP_LIVE=1 turns it on.
 async function sweepReviews() {
   if (process.env.SWEEP_LIVE !== "1") return "off: SWEEP_LIVE is not 1";
+  const tickStarted = Date.now();
   const db = admin.firestore();
   const ref = db.collection("url_review_sweep").doc("state");
   const day = new Date().toISOString().slice(0, 10);
+  const cap = ops.budget("sweepPerDay", process.env);
   let state = (await ref.get()).data() || {};
-  if (sweep.doneOn(state, day) >= ops.budget("sweepPerDay", process.env)) return "daily cap reached";
+  if (sweep.doneOn(state, day) >= cap) return "daily cap reached";
   const [index, unlisted] = await Promise.all([sweepJson("index.json"), unlistedHosts()]);
   const countries = Object.keys(index.countries || {}).filter((cc) => index.countries[cc] > 0);
   if (!countries.length) return "no seeds";
+  const seeds = new Map();
+  const notes = [];
+  for (let n = 0; n < sweep.PER_TICK; n += 1) {
+    if (sweep.doneOn(state, day) >= cap) {
+      notes.push("daily cap reached");
+      break;
+    }
+    if (!sweep.roomForReview(Date.now() - tickStarted)) break;
+    const tick = await sweepOne(state, day, countries, index, unlisted, seeds);
+    state = tick.state;
+    await ref.set(state);
+    notes.push(tick.note);
+    if (!tick.reviewed) break;
+  }
+  return notes.join("; ");
+}
+
+// The next site of the lap, reviewed and tallied. Returns the moved-on state, a note, and whether a review ran.
+async function sweepOne(state, day, countries, index, unlisted, seeds) {
   let target = null;
   for (let tries = 0; tries < 8 && !target; tries += 1) {
     const slot = sweep.nextSlot(state, countries);
     state = slot.state;
-    const hosts = (await sweepJson(slot.cc + ".json")).hosts || [];
+    if (!seeds.has(slot.cc)) seeds.set(slot.cc, (await sweepJson(slot.cc + ".json")).hosts || []);
+    const hosts = seeds.get(slot.cc);
     if (!hosts.length) continue;
     const host = hosts[slot.at % hosts.length];
     const bare = reviewPublish.bare(host);
@@ -1885,10 +1907,7 @@ async function sweepReviews() {
     }
     target = { host, cc: slot.cc, month: index.month || "", rank: (slot.at % hosts.length) + 1 };
   }
-  if (!target) {
-    await ref.set(state);
-    return "nothing to review this tick";
-  }
+  if (!target) return { state, note: "nothing to review", reviewed: false };
   const startedAt = Date.now();
   const lines = [];
   const log = (text) => { if (lines.length < 5000) lines.push({ t: Date.now() - startedAt, text }); };
@@ -1896,7 +1915,7 @@ async function sweepReviews() {
   let note = "";
   let reason = "";
   try {
-    const { record, report } = await sweepReview(target, { log, stopped: () => Date.now() - startedAt > 240000 });
+    const { record, report } = await sweepReview(target, { log, stopped: () => Date.now() - startedAt > sweep.REVIEW_MS });
     note = target.host + " (" + target.cc + ") " + record.status + ", " + ((report.limits && report.limits.pagesRead) || 0) + " pages";
   } catch (error) {
     outcome = "failed";
@@ -1906,8 +1925,7 @@ async function sweepReviews() {
     await saveSweepFailure(target, error, lines, startedAt);
   }
   state = sweep.tally(state, day, outcome, Object.assign({}, target, { at: new Date().toISOString(), outcome, note }, reason ? { reason } : {}));
-  await ref.set(state);
-  return note;
+  return { state, note, reviewed: true };
 }
 
 // One sweep review, saved like any other: its url_reviews row, the counts, and its queued owner notice.
@@ -1945,7 +1963,7 @@ async function saveSweepFailure(target, error, lines, startedAt) {
 exports.sweepReviews = require("firebase-functions/v2/scheduler").onSchedule({
   schedule: ops.cron("sweepReviews"),
   timeZone: ops.TIME_ZONE,
-  timeoutSeconds: 540,
+  timeoutSeconds: sweep.TICK_SECONDS,
   memory: "1GiB",
   maxInstances: 1
 }, () => track("sweepReviews", () => sweepReviews()));
@@ -2078,6 +2096,10 @@ async function opsWatchdog() {
   const runs = {};
   (await db.collection("ops_runs").get()).forEach((doc) => { runs[doc.id] = doc.data(); });
   const problems = ops.overdue(runs, now, since);
+  const sweepState = (await db.collection("url_review_sweep").doc("state").get()).data() || {};
+  const sweepCap = ops.budget("sweepPerDay", process.env);
+  const lastNight = sweep.night(sweepState, new Date(now).toISOString().slice(0, 10), sweepCap);
+  if (process.env.SWEEP_LIVE === "1" && lastNight.short) problems.push({ job: "sweepReviews", why: "last night reviewed " + (lastNight.done + lastNight.failed) + " of " + sweepCap });
   const token = process.env.GITHUB_BUGS_TOKEN || "";
   for (const row of ops.JOBS.filter((item) => item.host === "github")) {
     if (!token) break;
@@ -2093,16 +2115,16 @@ async function opsWatchdog() {
   const monday = new Date(now).getUTCDay() === 1;
   if (!problems.length && !monday) return "all " + ops.JOBS.length + " jobs on time";
   const weekAgo = new Date(now - 7 * 864e5).toISOString();
-  const [sweepSnap, notices, reruns, replies, waiting] = await Promise.all([
-    db.collection("url_review_sweep").doc("state").get(),
+  const [notices, reruns, replies, waiting] = await Promise.all([
     db.collection("url_review_owner_notice_log").where("sentAt", ">=", weekAgo).count().get(),
     db.collection("url_review_reruns").where("at", ">=", weekAgo).count().get(),
     db.collection("url_review_owner_replies").where("at", ">=", weekAgo).count().get(),
     db.collection("url_review_owner_replies").where("status", "==", "waiting").count().get()
   ]);
-  const swept = sweep.totals(sweepSnap.data() || {}, weekAgo.slice(0, 10));
+  const swept = sweep.totals(sweepState, weekAgo.slice(0, 10));
   const rows = problems.map((p) => ({ label: p.job, value: p.why })).concat([
-    { label: "Country sweep, 7 days", value: swept.done + " reviewed, " + swept.failed + " failed, " + swept.skipped + " skipped (cap " + ops.budget("sweepPerDay", process.env) + "/day" + (process.env.SWEEP_LIVE === "1" ? "" : ", off") + ")" },
+    { label: "Country sweep, last night", value: lastNight.done + " reviewed, " + lastNight.failed + " failed, " + lastNight.skipped + " skipped (cap " + sweepCap + ")" },
+    { label: "Country sweep, 7 days", value: swept.done + " reviewed, " + swept.failed + " failed, " + swept.skipped + " skipped (cap " + sweepCap + "/day" + (process.env.SWEEP_LIVE === "1" ? "" : ", off") + ")" },
     { label: "Owner notices, 7 days", value: notices.data().count + " sent (cap " + ops.budget("ownerNoticesPerDay", process.env) + "/day" + (process.env.OWNER_NOTICES_LIVE === "1" ? "" : ", off") + ")" },
     { label: "Failure re-runs, 7 days", value: String(reruns.data().count) },
     { label: "Owner replies, 7 days", value: replies.data().count + " in, " + waiting.data().count + " waiting for a decision" }
