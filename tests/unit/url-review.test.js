@@ -1390,14 +1390,22 @@ test.describe("account page file", () => {
     assert.notEqual(file.runs[0].cases[0].title, "Coupon total does not refresh");
   });
 
-  test("a 30-day pass opens the runs until it lapses", () => {
-    const paid = rows.concat([{ id: "p", email: "ana@example.com", status: "monthly-pass", paid: true, paidUntil: "2026-11-01T00:00:00Z" }]);
-    const file = offers.accountFile(paid, "ana@example.com", now);
-    assert.equal(file.open, true);
-    assert.equal(file.charged, true);
-    assert.equal(file.paidUntil, "2026-11-01T00:00:00Z");
-    assert.equal(file.runs[0].cases[0].title, "Coupon total does not refresh");
-    assert.equal(offers.accountFile(paid, "ana@example.com", Date.parse("2026-11-02T00:00:00Z")).open, false);
+  test("a 30-day pass opens only the runs made on it, and they stay open after it lapses", () => {
+    const onPass = { id: "f", email: "ana@example.com", status: "complete", passId: "p", passPlan: "freelancer", createdAt: "2026-10-21T18:00:00Z", requestedUrl: "https://pass.example.com/", report: report("pass.example.com") };
+    for (const grant of [{ paid: true }, { paid: false, localPass: true }]) {
+      const withPass = rows.concat([onPass, Object.assign({ id: "p", email: "ana@example.com", status: "monthly-pass", paidUntil: "2026-11-01T00:00:00Z" }, grant)]);
+      const file = offers.accountFile(withPass, "ana@example.com", now);
+      assert.equal(file.pass, true);
+      assert.equal(file.open, false);
+      assert.equal(file.charged, grant.paid);
+      assert.equal(file.paidUntil, "2026-11-01T00:00:00Z");
+      assert.deepEqual(file.runs.map((run) => [run.id, run.open]), [["f", true], ["b", false], ["a", false]]);
+      assert.notEqual(file.runs[1].cases[0].title, "Coupon total does not refresh");
+      const lapsed = offers.accountFile(withPass, "ana@example.com", Date.parse("2026-11-02T00:00:00Z"));
+      assert.equal(lapsed.pass, false);
+      assert.deepEqual(lapsed.runs.map((run) => [run.id, run.open]), [["f", true], ["b", false], ["a", false]]);
+    }
+    assert.equal(offers.accountFile(rows.concat([onPass]), "ana@example.com", now, { freeAccount: true }).runs.every((run) => run.open), true);
   });
 
   test("a paid or free report opens on its own, and a free-run account opens every report", () => {
