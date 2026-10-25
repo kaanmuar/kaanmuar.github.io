@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -20,6 +19,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -115,7 +115,7 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
 
 @Composable
 private fun ProductRow(name: String, kpi: String, series: List<Double>, delta: String?, dir: Int, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().tilt(4f).clickable(onClick = onClick).padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.width(110.dp)) {
             Text(name, fontSize = 14.sp)
             Text(kpi, color = J.muted, fontSize = 12.sp)
@@ -145,8 +145,7 @@ fun Goals(goals: List<JsonObject>) {
                     Text(g.str("label") ?: "", fontSize = 13.sp, modifier = Modifier.weight(1f))
                     Text(fmt(g.num("value")) + " / " + fmt(g.num("target")), fontFamily = Mono, fontSize = 12.sp, color = J.level(g.str("status")))
                 }
-                LinearProgressIndicator(progress = { ((g.num("pct") ?: 0.0) / 100).toFloat().coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().height(4.dp),
-                    color = J.level(g.str("status")), trackColor = Color(0x1438E1FF), drawStopIndicator = {})
+                GlowBar(((g.num("pct") ?: 0.0) / 100).toFloat(), J.level(g.str("status")))
                 Text((g.str("status") ?: "").replace('-', ' ') + (g.num("projected")?.let { " · on pace for " + fmt(it) } ?: ""), color = J.dim, fontSize = 11.sp)
             }
         }
@@ -159,9 +158,14 @@ fun Goals(goals: List<JsonObject>) {
 fun ProductsScreen(s: UiState, vm: JarvisViewModel, product: String, pick: (String) -> Unit) {
     val chips = rememberScrollState()
     LaunchedEffect(product, chips.maxValue) { chips.animateScrollTo(chips.maxValue * CHIPS.indexOfFirst { it.first == product }.coerceAtLeast(0) / (CHIPS.size - 1)) }
-    Row(Modifier.horizontalScroll(chips).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        CHIPS.forEach { (key, name) -> FilterChip(selected = key == product, onClick = { pick(key) }, label = { Text(name) }) }
+    Row(Modifier.horizontalScroll(chips).padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        CHIPS.forEach { (key, name) -> GlassChip(name, key == product) { pick(key) } }
     }
+    key(product) { ProductBody(s, vm, product) }
+}
+
+@Composable
+private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
     if (product == "outreach") { OutreachScreen(s); return }
     val snap = s.snapshot
     val p = snap.obj("products").obj(product)
@@ -324,7 +328,7 @@ private fun OutreachScreen(s: UiState) {
             val actual = t.num("actual")
             val target = t.num("target") ?: 0.0
             Row { Text(t.str("label") ?: "", fontSize = 13.sp, modifier = Modifier.weight(1f)); Text("${fmt(actual)} / ${fmt(target)}", fontFamily = Mono, fontSize = 12.sp) }
-            if (actual != null) LinearProgressIndicator(progress = { (actual / maxOf(1.0, target)).toFloat().coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().height(4.dp), color = J.cyan, trackColor = Color(0x1438E1FF), drawStopIndicator = {})
+            if (actual != null) GlowBar((actual / maxOf(1.0, target)).toFloat())
         }
         Muted("Counts come from the weekly KPI tracker; upload it with scripts/jarvis-outreach-plan.js.")
     }
