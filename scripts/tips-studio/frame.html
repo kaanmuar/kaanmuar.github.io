@@ -140,6 +140,37 @@
   [data-theme="horror"] .end { background: radial-gradient(circle at 50% 22%, #f3ead6 0 90px, rgba(243,234,214,.25) 96px, transparent 300px), radial-gradient(60% 40% at 50% 55%, rgba(232,113,26,.30), transparent 70%), #07040a; }
   [data-theme="horror"] .end .url { border-color: rgba(255,154,61,.4); }
 
+  /* Día de Muertos: papel picado along the top, a path of marigold petals for a floor, a row of candles along the bottom. */
+  #c[data-theme="muertos"] { --ink: #0c0610; --cyan: #f29a0c; --cyan-hi: #ffc23d; --gold: #ff6fae; --text: #fbf3e8; --muted: #cbb5a6;
+    background: radial-gradient(70% 40% at 88% 8%, rgba(242,154,12,.24), transparent 70%), radial-gradient(60% 40% at 0% 100%, rgba(214,40,120,.24), transparent 70%), radial-gradient(50% 30% at 100% 100%, rgba(120,60,200,.20), transparent 70%), linear-gradient(180deg, #1c0c22, #0c0610 62%); }
+  #c[data-theme="muertos"]::before { content: ""; position: absolute; z-index: 1; left: 0; right: 0; top: 0; height: 58px; opacity: .9;
+    background: linear-gradient(rgba(251,243,232,.55), rgba(251,243,232,.55)) 0 0/100% 3px no-repeat,
+      repeating-linear-gradient(90deg, #ff4f9a 0 112px, transparent 112px 124px, #f29a0c 124px 236px, transparent 236px 248px, #9a6bff 248px 360px, transparent 360px 372px, #2fc7b4 372px 484px, transparent 484px 496px, #ffd23f 496px 608px, transparent 608px 620px);
+    -webkit-mask: radial-gradient(circle, transparent 0 4px, #000 5px) 6px 10px/20px 20px, conic-gradient(from -45deg at bottom, transparent, #000 1deg 89deg, transparent 90deg) 50%/24px 100%;
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+  #c[data-theme="muertos"]::after { content: ""; position: absolute; z-index: 1; left: 0; right: 0; bottom: 0; height: 58px; pointer-events: none;
+    background: radial-gradient(ellipse 7px 12px at 50% 14px, #fff7cf 0, #ffc23d 55%, rgba(255,140,20,0) 100%) 0 0/135px 58px repeat-x,
+      radial-gradient(circle at 50% 16px, rgba(255,176,46,.38), transparent 34px) 0 0/135px 58px repeat-x,
+      linear-gradient(90deg, transparent 58px, #f6ead2 58px 77px, transparent 77px) 0 28px/135px 30px repeat-x; }
+  .story[data-theme="muertos"]::before, .clip[data-theme="muertos"]::before { height: 66px; }
+  .story[data-theme="muertos"]::after, .clip[data-theme="muertos"]::after { height: 70px; background-size: 135px 70px, 135px 70px, 135px 42px; background-position: 0 0, 0 0, 0 28px; }
+  [data-theme="muertos"] .floor { background-image: radial-gradient(circle, rgba(255,176,46,.30) 0 7px, transparent 8px), radial-gradient(circle, rgba(255,111,174,.20) 0 5px, transparent 6px); background-size: 90px 90px, 90px 90px; background-position: 0 0, 45px 45px; }
+  [data-theme="muertos"] .cube { display: none; }
+  [data-theme="muertos"] .title em { background-image: linear-gradient(92deg, var(--cyan-hi), #ff9a3d 50%, var(--gold)); }
+  [data-theme="muertos"] .brand svg { filter: drop-shadow(0 6px 18px rgba(242,154,12,.45)); }
+  [data-theme="muertos"] .chip { background: rgba(44,18,10,.6); }
+  [data-theme="muertos"] .body { color: #eadccd; }
+  [data-theme="muertos"] .glass { border-color: rgba(255,176,46,.28); }
+  [data-theme="muertos"] .glass::after { background: rgba(242,154,12,.10); }
+  [data-theme="muertos"] .code .ln b { color: var(--cyan-hi); }
+  [data-theme="muertos"] .action { background: linear-gradient(135deg, rgba(242,154,12,.16), rgba(255,111,174,.10)); border-color: rgba(255,176,46,.30); }
+  [data-theme="muertos"] .end { background: radial-gradient(40% 26% at 50% 78%, rgba(255,176,46,.30), transparent 70%), radial-gradient(60% 40% at 50% 40%, rgba(214,40,120,.22), transparent 70%), #0c0610; }
+  [data-theme="muertos"] .end .url { border-color: rgba(255,176,46,.45); }
+  [data-theme="muertos"] .end::after { content: ""; width: 420px; height: 150px;
+    background: radial-gradient(ellipse 11px 20px at 50% 26px, #fff7cf 0, #ffc23d 55%, rgba(255,140,20,0) 100%) 0 0/140px 150px repeat-x,
+      radial-gradient(circle at 50% 30px, rgba(255,176,46,.45), transparent 60px) 0 0/140px 150px repeat-x,
+      linear-gradient(90deg, transparent 54px, #f6ead2 54px 86px, transparent 86px) 0 52px/140px 98px repeat-x; }
+
   /* Clip choreography. Times are seconds in a 12 s clip; stills jump to the end of the main scene. */
   .clip .a { animation-fill-mode: both; animation-timing-function: cubic-bezier(.2,.8,.2,1); }
   .clip .in-up { animation-name: inUp; animation-duration: .8s; }
