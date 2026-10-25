@@ -1,0 +1,163 @@
+Text,Image URL,Tags,Posting Time
+"30-second trick: Time your server in one line.
+
+curl can report when the first byte of the page arrived. web.dev suggests a Time to First Byte of 0.8 seconds or less for most sites.
+
+Try it now: Run it a few times on your home page and your slowest template. Over 0.8 seconds? Look at the server before the front end.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=ttfb-curl
+
+#WebPerformance #SoftwareTesting #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/01-ttfb-curl.jpg","","2026-11-14 17:10"
+"Myth vs fact: Myth: a Lighthouse 100 means accessible.
+
+Lighthouse checks what software can detect, such as names, contrast and ARIA. It cannot tell whether alt text makes sense or whether a screen reader user can finish the task.
+
+Check it: After the score, try one real task with a screen reader: VoiceOver on a Mac, NVDA on Windows.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-lighthouse
+
+#Accessibility #SoftwareTesting #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/02-myth-lighthouse.jpg","","2026-11-15 15:50"
+"Word of the day: hreflang: the right page for each language.
+
+An attribute that tells search engines which language or region each version of a page is for, so a Spanish speaker lands on the Spanish page.
+
+Spot it: Open one translated page and check that it links to every language version, itself included. Google ignores links that are not returned.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=hreflang
+
+#SEO #DevOps #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/03-hreflang.jpg","","2026-11-16 13:30"
+"30-second trick: Find the code your page never runs.
+
+The Coverage panel in Chrome DevTools marks every byte of script and stylesheet as used or unused while you load and use the page.
+
+Try it now: Click through the page's main task, then sort by unused bytes. Split or defer the biggest file that stays mostly red.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=coverage
+
+#WebPerformance #OpenSource #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/04-coverage.jpg","","2026-11-17 12:45"
+"Myth vs fact: Myth: the padlock means the site is secure.
+
+HTTPS encrypts the trip between the browser and the server. It says nothing about the page's scripts, headers and cookies, or about who is behind the site.
+
+Check it: Check what the padlock does not cover: response headers, cookie flags, outdated scripts and a DMARC record.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-https
+
+#WebSecurity #CyberSecurity #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/05-myth-https.jpg","","2026-11-18 14:55"
+"Word of the day: SRI: a fingerprint for borrowed scripts.
+
+Subresource Integrity puts a hash of the file in the tag. If the CDN ever serves anything else, the browser refuses to run it.
+
+Spot it: List the scripts you load from other domains. Add an integrity hash to every one that has a fixed version.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=sri
+
+#WebSecurity #Programming #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/06-sri.jpg","","2026-11-19 12:15"
+"Checklist: The 10-minute pre-release check.
+
+Ten things that break at deploy time and that no unit test sees. About a minute each, on the live site, before you announce anything.
+
+Use it: Copy the list into your release ticket and tick it on the live site, not on staging.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=pre-release
+
+#QA #SoftwareTesting #ReleaseManagement #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/07-pre-release.jpg","","2026-11-20 13:55"
+"30-second trick: See your page the way Googlebot does.
+
+Search Console's URL Inspection tool can fetch a live page as Google and show the rendered HTML, a screenshot, and the resources it could not load.
+
+Try it now: Search the rendered HTML for your main heading and your key facts. If they are missing there, Google may not see them either.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=googlebot
+
+#SEO #SoftwareTesting #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/08-googlebot.jpg","","2026-11-21 13:50"
+"Word of the day: INP: how fast the page answers a tap.
+
+Interaction to Next Paint measures the delay from a click, tap or key press to the next frame on screen. It replaced First Input Delay as a Core Web Vital in March 2024.
+
+Spot it: Find the slowest tap on your page, often a menu or a filter, and break up the long task behind it.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=inp
+
+#WebPerformance #DevOps #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg","","2026-11-22 13:45"
+"Myth vs fact: Myth: one line of code makes a site accessible.
+
+Overlay widgets promise WCAG compliance from a single script. In April 2025 the US Federal Trade Commission ordered one vendor to pay $1 million and stop claiming its tool makes any site compliant without evidence.
+
+Check it: Spend the overlay budget on your shared templates first: header, navigation, forms and footer.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-overlay
+
+#Accessibility #QA #WCAG #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/10-myth-overlay.jpg","","2026-11-23 16:50"
+"30-second trick: Preview colour blindness in two clicks.
+
+Chrome DevTools can simulate blurred vision, reduced contrast and four kinds of colour vision deficiency, right on your own page.
+
+Try it now: Check every error message, chart and link. If colour is the only signal, add text, an icon or an underline.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=vision
+
+#Accessibility #OpenSource #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg","","2026-11-24 15:05"
+"Myth vs fact: Myth: a sitemap gets every page indexed.
+
+A sitemap helps search engines discover your pages. Google says plainly that it does not guarantee every listed page will be crawled and indexed.
+
+Check it: Open the Pages report in Search Console and filter it by your sitemap. Each page left out is listed with its reason.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-sitemap
+
+#SEO #DevOps #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/12-myth-sitemap.jpg","","2026-11-25 13:45"
+"Word of the day: LCP: when the main thing shows up.
+
+Largest Contentful Paint marks when the biggest image or text block in the viewport finishes rendering. Good is 2.5 seconds or less for at least 75% of page loads.
+
+Spot it: Open the Performance panel in Chrome DevTools: its live metrics name your LCP element. Make sure it is never lazy-loaded.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=lcp
+
+#WebPerformance #SoftwareTesting #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/13-lcp.jpg","","2026-11-26 14:15"
+"Checklist: The 5-minute accessibility check.
+
+Five checks anyone can run with no special tools. Each one maps to a WCAG 2.2 success criterion, so a failure is easy to file.
+
+Use it: Run all five on your home page and your busiest form. File each failure with its criterion number.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=a11y-check
+
+#Accessibility #SoftwareTesting #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/14-a11y-check.jpg","","2026-11-27 12:10"
+"30-second trick: Can anyone send mail as your domain?
+
+A DMARC record tells receiving servers what to do with mail that claims your domain but fails authentication. Without one, spoofed mail has an easier way in.
+
+Try it now: Run the lookup on your domain. No answer? Publish p=none with a report address, read the reports, then move to quarantine.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=dmarc
+
+#EmailSecurity #SoftwareTesting #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/15-dmarc.jpg","","2026-11-28 15:45"
+"Word of the day: Skip link: jump straight past the menu.
+
+A link at the very top of the page that takes keyboard and screen reader users straight to the main content. It is one way to meet WCAG 2.4.1, Bypass Blocks, at Level A.
+
+Spot it: Load your page and press Tab once. The first thing that appears should be a way to skip to the content.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=skip-link
+
+#Accessibility #QA #WCAG #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/16-skip-link.jpg","","2026-11-29 16:20"
+"30-second trick: Your Lighthouse score is not your visitors.
+
+PageSpeed Insights shows two things. The top half is real-user data from the Chrome UX Report over the last 28 days. The score below it is one lab run on a simulated phone.
+
+Try it now: Read the top half first. If your page has no real-user data there, collect your own with Google's web-vitals library.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=field-vs-lab
+
+#WebPerformance #SoftwareTesting #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/17-field-vs-lab.jpg","","2026-11-30 13:05"
+"Myth vs fact: Myth: meta keywords still help you rank.
+
+Google said in 2009 that it does not use the keywords meta tag in web ranking. The tag does show your competitors the words you are targeting.
+
+Check it: Search your templates for name=""keywords"". Remove it, and write a real description for each key page instead.
+
+https://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-keywords
+
+#SEO #SoftwareTesting #QA #QAlab","https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg","","2026-12-01 15:50"
