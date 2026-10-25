@@ -69,10 +69,10 @@ test("apply hides posts, moves dates, swaps captions and the card text, and adds
   assert.match(out[1].captions.linkedin, /^Web Almanac\n\nWorth a read\./);
 });
 
-test("calendars give each post its first slot per channel, in Bogotá time, for both calendar layouts", () => {
+test("calendars give each post its first slot per channel, in Bogotá time, a launch post by language and topic", () => {
   const auto = admin.parseCalendar("Date,Time,Channel,Post,Asset\n2026-10-25,07:30,linkedin,01-a,feed/01-a.jpg\n2026-10-25,17:45,youtube,01-a,clip/01-a.mp4\n2026-10-26,07:30,linkedin,01-a,feed/01-a.jpg\n", "auto-2026-10-24");
   assert.deepEqual(auto, { "auto-2026-10-24/01-a": { linkedin: "2026-10-25T07:30:00-05:00", youtube: "2026-10-25T17:45:00-05:00" } });
-  const launch = admin.parseCalendar("Date,Time,Channel,Language,Post,Format,Asset,How,Caption key\n2026-10-19,08:30,LinkedIn,de,talking,Image,x,Buffer CSV,linkedin\n2026-10-20,09:00,Instagram story,de,talking,Image,x,Buffer CSV,instagram\n2026-10-20,09:00,Pinterest,de,talking,Image,x,Buffer CSV,x\n", "launch-2026-10");
+  const launch = admin.parseCalendar("Date,Time,Channel,Post,Asset\n2026-10-19,08:30,linkedin,de/talking,de/talking-portrait.jpg\n2026-10-20,09:00,instagram-story,de/talking,de/talking-story.jpg\n", "launch-2026-10");
   assert.deepEqual(launch, { "launch-2026-10/de/talking": { linkedin: "2026-10-19T08:30:00-05:00", "instagram-story": "2026-10-20T09:00:00-05:00" } });
   assert.equal(admin.batchOf("launch-2026-10/de/talking"), "launch-2026-10");
 });

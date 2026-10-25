@@ -3,6 +3,7 @@
 
      node scripts/social-calendar.js [--from 2026-10-26]                 print the plan, change nothing
      node scripts/social-calendar.js --write [--from ...] [--batch B]    rewrite calendar.csv and the captions' dates
+     node scripts/social-calendar.js --convert-launch launch-2026-10     rewrite the launch set's calendar in the common layout
        --write first sets every row Buffer or the Facebook Page already holds to its queued time, and posts that are
        queued anywhere stay where they are unless --move-queued: Buffer's editPost wants the whole post back and
        allows about 125 calls in 15 minutes, and the Page app may not edit scheduled posts (Graph error #10).
@@ -30,6 +31,7 @@ const WINDOWS = { linkedin: ["07:30", "11:00"], x: ["08:00", "21:00"], facebook:
 const LANES = { review: 1, tip: 2, trick: 2, term: 2, news: 3, pick: 3, advice: 4, compare: 4, myth: 4, quiz: 4, skit: 5, series: 5, launch: 5 };
 const BORROWED = [3, 4];
 const PINNED = new Set(["series"]);
+const ROTATION = ["en", "es", "pt", "de", "fr", "it"];
 const BUFFER_API = "https://api.buffer.com";
 const GRAPH = "https://graph.facebook.com/v21.0";
 const EDIT_AHEAD = 30 * 60e3;
@@ -63,8 +65,30 @@ function kindOf(batch, c) {
   return batch.startsWith("tips") ? "tip" : batch.startsWith("promo") ? "launch" : "review";
 }
 
-// Batches with captions.json and a calendar.csv of Date,Time,Channel,Post,Asset. The launch set has its own
-// six-language calendar and is left out.
+// The launch set's own calendar (Date,Time,Channel,Language,Post,Format,Asset,How,Caption key) in the common
+// layout: one post per language (<lang>/<topic>, its ledger and hub id), channels named as the other batches name them.
+const LAUNCH_CHANNELS = { linkedin: "linkedin", x: "x", facebook: "facebook", tiktok: "tiktok", "youtube shorts": "youtube", "instagram feed": "instagram", "instagram story": "instagram-story", "instagram reels": "instagram-reels" };
+function launchCalendar(csv) {
+  const [head, ...lines] = csv.trim().split("\n");
+  const col = Object.fromEntries(head.split(",").map((key, i) => [key, i]));
+  const rows = lines.map((line) => {
+    const cells = line.split(",");
+    let channel = LAUNCH_CHANNELS[cells[col.Channel].toLowerCase()];
+    if (!channel) throw new Error("unknown launch channel " + cells[col.Channel]);
+    if (/carousel/i.test(cells[col.Format])) channel += "-carousel";
+    return [cells[col.Date], cells[col.Time], channel, cells[col.Language] + "/" + cells[col.Post], cells[col.Asset]].join(",");
+  }).sort((a, b) => a.slice(0, 16).localeCompare(b.slice(0, 16)));
+  return ["Date,Time,Channel,Post,Asset"].concat(rows).join("\n") + "\n";
+}
+
+// A batch without captions.json keeps a captions file per post (the launch set: <lang>/<topic>-captions.json);
+// its hub date is its first calendar day, as build-social-hub.js reads it.
+function ownCaptions(dir, rows) {
+  const slugs = Object.keys(rows).filter((slug) => fs.existsSync(path.join(dir, slug + "-captions.json")));
+  return slugs.length ? Object.fromEntries(slugs.map((slug) => [slug, { kind: "launch", date: rows[slug].map((r) => r.date).sort()[0] }])) : null;
+}
+
+// Batches with a calendar.csv of Date,Time,Channel,Post,Asset and captions.json or a captions file per post.
 function load(root = ROOT) {
   const books = { buffer: ledger.read(path.join(root, ledger.BUFFER)), facebook: ledger.read(path.join(root, ledger.FACEBOOK)) };
   const batches = [];
@@ -73,16 +97,17 @@ function load(root = ROOT) {
     const dir = path.join(root, POSTS, batch);
     const capFile = path.join(dir, "captions.json");
     const calFile = path.join(dir, "calendar.csv");
-    if (!fs.existsSync(capFile) || !fs.existsSync(calFile)) continue;
+    if (!fs.existsSync(calFile)) continue;
     const [head, ...lines] = fs.readFileSync(calFile, "utf8").trim().split("\n");
     if (head.trim() !== "Date,Time,Channel,Post,Asset") continue;
-    const captions = JSON.parse(fs.readFileSync(capFile, "utf8"));
-    batches.push(batch);
     const rows = {};
     lines.forEach((line) => {
       const [date, time, channel, slug, asset] = line.split(",");
       (rows[slug] = rows[slug] || []).push({ date, time, channel, asset });
     });
+    const captions = fs.existsSync(capFile) ? JSON.parse(fs.readFileSync(capFile, "utf8")) : ownCaptions(dir, rows);
+    if (!captions) continue;
+    batches.push(batch);
     Object.entries(captions).forEach(([slug, c]) => {
       const kind = kindOf(batch, c);
       const id = batch + "/" + slug;
@@ -102,6 +127,8 @@ function laneOf(post, day) {
 }
 
 const isTop = (post) => post.batch.startsWith("auto-") && /^01-/.test(post.slug);
+// The launch set's languages of one topic go out in the clips' order: en, es, pt, de, fr, it.
+const rotation = (post) => Math.max(0, ROTATION.indexOf(post.slug.split("/")[0]));
 const firstDay = (post) => post.rows.filter((r) => NETWORKS.includes(r.channel)).map((r) => r.date).sort()[0] || post.date;
 
 // Days from --from on, each with five lanes. Returns { moves, held, days }: moves carry the post, its new day and
@@ -127,7 +154,7 @@ function plan(posts, { from, batch, moveQueued = false } = {}) {
   });
 
   const queue = {};
-  const order = (a, b) => firstDay(a).localeCompare(firstDay(b)) || a.id.localeCompare(b.id);
+  const order = (a, b) => firstDay(a).localeCompare(firstDay(b)) || rotation(a) - rotation(b) || a.id.localeCompare(b.id);
   const go = posts.filter(movable).sort(order);
   const tops = go.filter(isTop);
   go.filter((post) => !isTop(post)).forEach((post) => { (queue[post.lane] = queue[post.lane] || []).push(post); });
@@ -166,10 +193,12 @@ function write(result, root = ROOT) {
   Object.entries(byBatch).forEach(([batch, list]) => {
     const dir = path.join(root, POSTS, batch);
     const capFile = path.join(dir, "captions.json");
-    const raw = fs.readFileSync(capFile, "utf8");
-    const captions = JSON.parse(raw);
-    list.forEach((m) => { captions[m.post.slug].date = m.day; });
-    fs.writeFileSync(capFile, JSON.stringify(captions, null, 2) + (raw.endsWith("\n") ? "\n" : ""));
+    if (fs.existsSync(capFile)) {
+      const raw = fs.readFileSync(capFile, "utf8");
+      const captions = JSON.parse(raw);
+      list.forEach((m) => { captions[m.post.slug].date = m.day; });
+      fs.writeFileSync(capFile, JSON.stringify(captions, null, 2) + (raw.endsWith("\n") ? "\n" : ""));
+    }
 
     const calFile = path.join(dir, "calendar.csv");
     const [head, ...lines] = fs.readFileSync(calFile, "utf8").trim().split("\n");
@@ -208,6 +237,10 @@ function reconcile(root = ROOT, now = Date.now()) {
     if (touched) fs.writeFileSync(calFile, [head].concat(out).join("\n") + "\n");
 
     const capFile = path.join(dir, "captions.json");
+    if (!fs.existsSync(capFile)) {
+      if (touched) changed.push(batch);
+      return;
+    }
     const raw = fs.readFileSync(capFile, "utf8");
     const captions = JSON.parse(raw);
     let dated = false;
@@ -325,6 +358,12 @@ function args() {
 
 async function main() {
   const opts = args();
+  if (typeof opts["convert-launch"] === "string") {
+    const file = path.join(ROOT, POSTS, opts["convert-launch"], "calendar.csv");
+    fs.writeFileSync(file, launchCalendar(fs.readFileSync(file, "utf8")));
+    console.log("converted " + path.relative(ROOT, file));
+    return;
+  }
   if (opts.sync) {
     const { failed } = await sync({ dryRun: !!opts["dry-run"] });
     process.exit(failed ? 1 : 0);
@@ -340,4 +379,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { NETWORKS, WINDOWS, LANES, slotTime, kindOf, load, plan, rowsFor, write, reconcile, summary, targets, sync };
+module.exports = { NETWORKS, WINDOWS, LANES, slotTime, kindOf, launchCalendar, load, plan, rowsFor, write, reconcile, summary, targets, sync };
