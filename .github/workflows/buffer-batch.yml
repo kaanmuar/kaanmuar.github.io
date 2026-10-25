@@ -4,8 +4,9 @@
 # skipped. Posts marked hold in captions.json stay in the hub only. Needs the BUFFER_API_KEY secret.
 # Hub first: a post whose page on the social hub is not live yet is held (scripts/hub-gate.js). Mode seed reads
 # what Buffer already holds into assets/social/buffer.json without queueing anything; mode check asks Buffer which
-# queued posts went out. Mode sync moves the posts Buffer and the Facebook Page already hold to their calendar.csv
-# slots (scripts/social-calendar.js --sync), editing them in place. Mode delete-unmatched deletes the scheduled
+# queued posts went out. Mode sync moves the posts Buffer already holds to their calendar.csv slots
+# (scripts/social-calendar.js --sync), editing them in place in 15-minute windows of Buffer calls; the Facebook
+# Page keeps its times. Mode delete-unmatched deletes the scheduled
 # posts dated after now that match no batch post (not on the hub), then re-seeds; a dry run only lists them.
 # Every mode but a dry run commits the ledger (scripts/commit-social-ledgers.sh).
 name: Buffer batch queue
@@ -25,6 +26,10 @@ on:
         description: 'List what would be queued or deleted, change nothing'
         type: boolean
         default: false
+      windows:
+        description: 'sync only: 15-minute windows of Buffer calls before it stops (about 115 calls each)'
+        required: false
+        default: '1'
 
 concurrency:
   group: buffer-batch
@@ -33,7 +38,7 @@ concurrency:
 jobs:
   queue:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: ${{ inputs.mode == 'sync' && 110 || 30 }}
     permissions:
       contents: read
     env:
@@ -41,6 +46,7 @@ jobs:
       MODE: ${{ inputs.mode }}
       BATCH: ${{ inputs.batch }}
       DRY_RUN: ${{ inputs.dry_run }}
+      WINDOWS: ${{ inputs.windows }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -54,9 +60,10 @@ jobs:
         if: ${{ inputs.mode == 'sync' }}
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
-          FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
         run: |
-          if [ "$DRY_RUN" = "true" ]; then node scripts/social-calendar.js --sync --dry-run; else node scripts/social-calendar.js --sync; fi | tee -a "$GITHUB_STEP_SUMMARY"
+          set -o pipefail
+          if ! [[ "$WINDOWS" =~ ^[1-6]$ ]]; then echo "::error::windows is 1 to 6"; exit 1; fi
+          if [ "$DRY_RUN" = "true" ]; then node scripts/social-calendar.js --sync --dry-run; else node scripts/social-calendar.js --sync --windows "$WINDOWS"; fi | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Seed or check the ledger
         if: ${{ inputs.mode == 'seed' || inputs.mode == 'check' }}
         env:

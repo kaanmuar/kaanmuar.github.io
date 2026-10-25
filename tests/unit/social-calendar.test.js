@@ -110,9 +110,93 @@ test("sync moves only queued posts whose slot changed, never one due within half
     "runs-100/01-a": [entry({ at: "2027-01-02T14:15:00.000Z" }), entry({ channel: "x", id: "b2" })],
     "runs-100/02-b": [entry({ id: "b3", at: "2027-01-01T15:15:00.000Z" })]
   } }));
-  fs.writeFileSync(path.join(root, "assets/social/facebook.json"), JSON.stringify({ version: 1, posts: { "runs-100/02-b": [entry({ channel: "linkedin", id: "f1", result: "sent", at: "2027-01-03T00:00:00.000Z" })] } }));
-  assert.deepEqual(cal.targets(root, now).map((t) => t.service + " " + t.postId + " -> " + t.to), ["buffer b1 -> 2027-01-01T14:15:00.000Z"]);
+  fs.writeFileSync(path.join(root, "assets/social/facebook.json"), JSON.stringify({ version: 1, posts: { "runs-100/02-b": [entry({ channel: "facebook", id: "f1", at: "2027-01-03T00:00:00.000Z" })] } }));
+  assert.deepEqual(cal.targets(root, now).map((t) => t.postId + " -> " + t.to), ["b1 -> 2027-01-01T14:15:00.000Z"], "the Facebook Page keeps its times");
   assert.deepEqual(cal.targets(root, Date.parse("2027-01-01T14:00:00Z")), []);
+});
+
+const youtubePost = {
+  id: "y1", status: "scheduled", dueAt: "2027-01-02T22:00:00.000Z", text: "Description", channelService: "youtube", schedulingType: "automatic", tags: [],
+  assets: [{ type: "video", source: "https://github.com/o/r/releases/download/b/01-a.mp4", thumbnail: "https://t/1.jpg", video: { thumbnailOffset: 0, title: null } }],
+  metadata: { __typename: "YoutubePostMetadata", title: "a.com: 72. #Shorts", category: { categoryId: "28", title: "Science & Technology" }, privacy: "public", license: "youtube", madeForKids: false, notifySubscribers: true, embeddable: true, isAiGenerated: false }
+};
+
+test("a Buffer edit sends the whole post back as Buffer holds it, with the new time", () => {
+  assert.deepEqual(cal.editInput(youtubePost, "2027-01-01T22:10:00.000Z"), {
+    id: "y1", mode: "customScheduled", dueAt: "2027-01-01T22:10:00.000Z", text: "Description", schedulingType: "automatic",
+    assets: [{ video: { url: "https://github.com/o/r/releases/download/b/01-a.mp4", metadata: { thumbnailOffset: 0 } } }],
+    metadata: { youtube: { title: "a.com: 72. #Shorts", categoryId: "28", privacy: "public", license: "youtube", madeForKids: false, notifySubscribers: true, embeddable: true, isAiGenerated: false } }
+  });
+  const linkedin = { id: "l1", text: "Post", channelService: "linkedin", tags: [{ id: "t1" }], assets: [{ type: "image", source: "https://s/feed/01-a.jpg", thumbnail: "https://s/t.jpg", image: { altText: "Score card" } }], metadata: { __typename: "LinkedInPostMetadata", firstComment: null } };
+  assert.deepEqual(cal.editInput(linkedin, "2027-01-01T13:00:00.000Z"), { id: "l1", mode: "customScheduled", dueAt: "2027-01-01T13:00:00.000Z", text: "Post", tagIds: ["t1"], assets: [{ image: { url: "https://s/feed/01-a.jpg", metadata: { altText: "Score card" } } }] });
+  const tiktok = { id: "t1", text: "Clip", channelService: "tiktok", assets: [], metadata: { title: null, isAiGenerated: false } };
+  assert.deepEqual(cal.editInput(tiktok, "2027-01-01T23:00:00.000Z").metadata, { tiktok: { isAiGenerated: false } });
+  assert.throws(() => cal.editInput({ id: "x1", text: "1/", channelService: "twitter", assets: [], metadata: { threadCount: 2 } }, "2027-01-01T13:00:00.000Z"), /thread/);
+});
+
+test("sync moves Buffer posts in windows of calls, records each move, skips what is due within half an hour, and a dry run re-saves one post per channel", async () => {
+  const root = fixture();
+  const now = Date.parse("2026-12-31T12:00:00Z");
+  const queued = (channel, id, at) => ({ channel, profile: channel, id, at, result: "queued" });
+  fs.writeFileSync(path.join(root, "assets/social/buffer.json"), JSON.stringify({ version: 1, posts: {
+    "runs-100/01-a": [queued("linkedin", "l1", "2027-01-05T14:00:00.000Z"), queued("instagram", "i1", "2027-01-05T17:00:00.000Z")],
+    "runs-100/02-b": [queued("linkedin", "l2", "2027-01-06T14:00:00.000Z")]
+  } }));
+  const held = {
+    l1: { id: "l1", status: "scheduled", dueAt: "2027-01-05T14:00:00.000Z", text: "A", channelService: "linkedin", assets: [], metadata: null },
+    i1: { id: "i1", status: "scheduled", dueAt: "2027-01-05T17:00:00.000Z", text: "A", channelService: "instagram", assets: [], metadata: { type: "post", shouldShareToFeed: true } },
+    l2: { id: "l2", status: "scheduled", dueAt: "2027-01-06T14:00:00.000Z", text: "B", channelService: "linkedin", assets: [], metadata: null }
+  };
+  const edits = [];
+  const gql = async (query, vars) => {
+    if (/organizations/.test(query)) return { account: { organizations: [{ id: "o" }] } };
+    if (/posts\(/.test(query)) return { posts: { pageInfo: { hasNextPage: false }, edges: Object.values(held).map((node) => ({ node })) } };
+    edits.push(vars.input);
+    return { editPost: { post: { id: vars.input.id, dueAt: vars.input.dueAt } } };
+  };
+  const quiet = console.log;
+  console.log = () => {};
+  try {
+    const dry = await cal.sync({ dryRun: true, root, gql, now: () => now, sleep: async () => {}, pace: 0 });
+    assert.deepEqual(edits.map((e) => e.id + " " + e.dueAt), ["l1 2027-01-05T14:00:00.000Z", "i1 2027-01-05T17:00:00.000Z"], "one post per channel, at its own time");
+    assert.deepEqual(Object.keys(dry.checked), ["linkedin", "instagram"]);
+    assert.equal(dry.failed, 0);
+
+    edits.length = 0;
+    const waits = [];
+    const first = await cal.sync({ root, gql, now: () => now, sleep: async (ms) => { if (ms > 1000) waits.push(ms); }, pace: 0, windows: 1, perWindow: 3 });
+    assert.equal(edits.length, 1, "two reads and one edit fill the window");
+    assert.deepEqual([first.left, waits.length], [2, 0]);
+    const book = () => JSON.parse(fs.readFileSync(path.join(root, "assets/social/buffer.json"), "utf8")).posts;
+    assert.equal(book()["runs-100/01-a"].find((e) => e.id === "l1").at, "2027-01-01T14:15:00.000Z", "the ledger records the move");
+    held.l1.dueAt = "2027-01-01T14:15:00.000Z";
+
+    edits.length = 0;
+    const rest = await cal.sync({ root, gql, now: () => now, sleep: async (ms) => { if (ms > 1000) waits.push(ms); }, pace: 0, windows: 2, perWindow: 3 });
+    assert.deepEqual(edits.map((e) => e.id), ["l2", "i1"], "the soonest time first");
+    assert.equal(edits[1].metadata.instagram.type, "post");
+    assert.deepEqual([rest.left, waits.length], [0, 1], "the second window waited for the first to end");
+    assert.deepEqual(cal.targets(root, now), []);
+    assert.deepEqual((await cal.sync({ root, gql, now: () => Date.parse("2027-01-01T14:00:00Z"), pace: 0 })).list, [], "nothing within half an hour of its time");
+  } finally {
+    console.log = quiet;
+  }
+});
+
+test("a moved post's Facebook Page row keeps its time, and its hub date is no later than any network holds it", () => {
+  const post = { id: "runs-100/01-a", lane: 1, rows: rows("2026-11-10"), kept: new Set(["facebook"]), queuedDay: "2026-11-08" };
+  const move = { post, day: "2026-11-12", lane: 3 };
+  const moved = cal.rowsFor(move);
+  assert.deepEqual(moved.find((r) => r.channel === "facebook"), { date: "2026-11-10", time: "09:00", channel: "facebook", asset: "feed/x.jpg" });
+  assert.equal(moved.find((r) => r.channel === "linkedin").date, "2026-11-12");
+  assert.equal(cal.hubDay(move), "2026-11-08");
+  assert.equal(cal.hubDay(Object.assign({}, move, { post: Object.assign({}, post, { queuedDay: null, kept: new Set() }) })), "2026-11-12");
+
+  const root = fixture();
+  fs.writeFileSync(path.join(root, "assets/social/buffer.json"), JSON.stringify({ version: 1, posts: {
+    "runs-100/01-a": [{ channel: "linkedin", profile: "p", id: "b1", at: "2026-12-30T14:00:00.000Z", result: "queued" }]
+  } }));
+  assert.deepEqual(cal.hubLate(root, Date.parse("2026-12-01T00:00:00Z")), ["runs-100/01-a hub 2027-01-01, on a network 2026-12-30"]);
 });
 
 test("the calendar takes the queued times from the ledgers, the hub date follows, and queued posts stay unless asked", () => {
