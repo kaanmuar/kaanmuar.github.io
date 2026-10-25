@@ -1,0 +1,36 @@
+Text,Image URL,Tags,Posting Time
+"kemik.gt: 77. The gap: AI crawler access.
+
+Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training…
+
+carlosandmunoz.com/qa-review?live=u-kemik-gt&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-kemik-gt","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg","","2026-10-26 08:35"
+"corporacionjaar.com: 59. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try…
+
+carlosandmunoz.com/qa-review?live=u-corporacionjaar-com&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-corporacionjaar-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/02-u-corporacionjaar-com.jpg","","2026-10-27 13:25"
+"bible.com: 68. The gap: framing.
+
+Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+carlosandmunoz.com/qa-review?live=u-bible-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-bible-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/03-u-bible-com.jpg","","2026-10-28 11:35"
+"supresencia.com: 57. The gap: broken links.
+
+Check your own links after each release, and fix or redirect every one that answers 404.
+
+carlosandmunoz.com/qa-review?live=u-supresencia-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-supresencia-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/04-u-supresencia-com.jpg","","2026-10-29 09:50"
+"idmji.org: 62. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target…
+
+carlosandmunoz.com/qa-review?live=u-idmji-org&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-idmji-org","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/05-u-idmji-org.jpg","","2026-10-30 16:55"
+"3 natural competitors. subastasventura.com leads: 76.
+
+Benchmark against the sites your visitors compare you with, not…
+
+carlosandmunoz.com/qa-review?live=u-subastasventura-com&utm_source=x&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-subastasventura-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/06-vs-subastasventura-com.jpg","","2026-10-31 16:05"
+"3 natural competitors. kemik.gt leads: 77.
+
+Benchmark against the sites your visitors compare you with, not against a perfect score: the gap…
+
+carlosandmunoz.com/qa-review?live=u-kemik-gt&utm_source=x&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-kemik-gt","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/07-vs-kemik-gt.jpg","","2026-11-01 15:30"

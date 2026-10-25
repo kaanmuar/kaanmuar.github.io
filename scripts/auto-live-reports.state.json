@@ -1,5 +1,5 @@
 {
- "since": "2026-10-24T08:15:25.005Z",
+ "since": "2026-10-25T10:47:54.550Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -26,13 +26,20 @@
   "colombia.com": "2026-10-24",
   "nibo.com.br": "2026-10-24",
   "kreuzwort-raetsel.net": "2026-10-24",
-  "roottcostore.com": "2026-10-24"
+  "roottcostore.com": "2026-10-24",
+  "kemik.gt": "2026-10-25",
+  "corporacionjaar.com": "2026-10-25",
+  "bible.com": "2026-10-25",
+  "supresencia.com": "2026-10-25",
+  "idmji.org": "2026-10-25",
+  "vs:subastasventura.com": "2026-10-25",
+  "vs:kemik.gt": "2026-10-25"
  },
  "recent": [
-  "sec-libraries",
   "a11y-labels",
-  "ax-color-contrast",
-  "seo-schema-parse",
-  "ax-button-name"
+  "seo-broken-links",
+  "sec-frame",
+  "sec-hsts",
+  "geo-crawlers"
  ]
 }
