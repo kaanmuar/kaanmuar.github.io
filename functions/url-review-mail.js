@@ -185,10 +185,16 @@ function money(payments) {
 }
 
 // The LinkedIn app and many mail clients send no referrer, so a tagged link names the source better.
+// The campaign stays in the label so links that share a source (a page button, a highlight, a post) read apart.
 function openSource(row) {
   let tagged = "";
-  try { tagged = new URLSearchParams(String((row && row.query) || "")).get("utm_source") || ""; } catch (error) { tagged = ""; }
-  if (tagged) return tagged.toLowerCase().slice(0, 40) + " (tagged link)";
+  let campaign = "";
+  try {
+    const params = new URLSearchParams(String((row && row.query) || ""));
+    tagged = params.get("utm_source") || "";
+    campaign = params.get("utm_campaign") || "";
+  } catch (error) { tagged = ""; }
+  if (tagged) return tagged.toLowerCase().slice(0, 40) + (campaign ? " / " + campaign.toLowerCase().slice(0, 40) : "") + " (tagged link)";
   return (row && row.referrerHost) || "Direct";
 }
 

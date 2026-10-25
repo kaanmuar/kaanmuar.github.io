@@ -11,6 +11,15 @@ test("a tagged link names the source even without a referrer", () => {
   assert.equal(openSource({ query: "?utm_source=newsletter", referrerHost: "mail.google.com" }), "newsletter (tagged link)");
 });
 
+test("links that share a source read apart by campaign", () => {
+  const cta = openSource({ query: "?utm_source=linkedin&utm_medium=social&utm_campaign=premium-cta" });
+  const carousel = openSource({ query: "?utm_source=linkedin&utm_campaign=Premium-Carousel" });
+  assert.equal(cta, "linkedin / premium-cta (tagged link)");
+  assert.equal(carousel, "linkedin / premium-carousel (tagged link)");
+  const admin = fs.readFileSync(path.join(__dirname, "../../admin.html"), "utf8");
+  assert.match(admin, /get\('utm_campaign'\)/, "admin Sources must split campaigns the same way");
+});
+
 test("the open notification names a tagged source", () => {
   const tagged = openRows({ page: "qa-review.html", query: "?utm_source=linkedin", referrerHost: "" });
   assert.equal(tagged.find((row) => row.label === "Source").value, "linkedin (tagged link)");
