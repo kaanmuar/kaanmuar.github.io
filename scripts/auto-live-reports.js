@@ -70,6 +70,7 @@ const LESSONS = {
   "an-utm": ["campaign tags", "Keep the query string on every redirect, so campaign tags reach the landing page.", ["Analytics", "Measurement", "Redirects"]],
   "an-gaps": ["measurement gaps", "Put the same measurement tag on every page, so no part of the site goes uncounted.", ["Analytics", "Measurement", "GA4"]],
   "pf-cls": ["layout shift", "Give images, ads, and embeds a width and height, so the page does not jump while it loads.", ["WebPerformance", "CoreWebVitals", "CLS"]],
+  "pf-trend": ["slipping Core Web Vitals", "Watch the six-month Chrome UX Report trend, and check each release against the week the line starts to rise.", ["WebPerformance", "CoreWebVitals", "CrUX"]],
   "seo-external-links": ["broken outbound links", "Check outbound links every month, and point dead ones at the new page or an archived copy.", ["SEO", "BrokenLinks", "LinkRot"]],
   "seo-external-moved": ["moved outbound links", "Update outbound links that now land on another site or a home page.", ["SEO", "BrokenLinks", "LinkRot"]],
   "seo-external-http": ["plain http links", "Link to https addresses, so visitors stay on an encrypted connection.", ["SEO", "HTTPS", "WebSecurity"]],

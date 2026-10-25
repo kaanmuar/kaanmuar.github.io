@@ -659,6 +659,14 @@ const FIELD_FIX = {
 };
 const FIELD_CASES = { lcp: "PF-01", inp: "PF-02", cls: "VIS-01" };
 const FIELD_WORD = { FAST: "good", AVERAGE: "needs improvement", SLOW: "poor" };
+const FIELD_BANDS = { lcp: [2500, 4000], inp: [200, 500], cls: [0.1, 0.25] };
+const BAND_WORDS = ["good", "needs improvement", "poor"];
+const FORM_WORDS = { phone: "phones", desktop: "desktops" };
+const TREND_EDGE = 4;
+const TREND_MIN_POINTS = 8;
+const TREND_CHANGE = 0.25;
+const SPARK = "▁▂▃▄▅▆▇█";
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const THREAT_WORDS = { MALWARE: "malware", SOCIAL_ENGINEERING: "phishing", UNWANTED_SOFTWARE: "unwanted software" };
 
@@ -746,6 +754,75 @@ function speedChecks(psi, add) {
   if (psi.score < 50) add("Performance", "fail", "medium", "pf-lighthouse", title, evidence, fix, { effort: "days", cases: ["PF-01", "PF-02"] });
   else if (psi.score < 90) add("Performance", "risk", "low", "pf-lighthouse", title, evidence, fix, { effort: "hours", cases: ["PF-01", "PF-02"] });
   else add("Performance", "pass", "info", "pf-lighthouse", title, evidence, "", { cases: ["PF-01", "PF-02"] });
+}
+
+function fieldBand(key, value) {
+  return value <= FIELD_BANDS[key][0] ? 0 : value <= FIELD_BANDS[key][1] ? 1 : 2;
+}
+
+function fieldValue(key, value) {
+  return key === "cls" ? value.toFixed(2) : key === "inp" ? Math.round(value) + " ms" : (value / 1000).toFixed(1) + " s";
+}
+
+// Bars are drawn against the poor line, so a small wobble well inside good stays flat.
+function sparkline(key, points) {
+  const top = Math.max(FIELD_BANDS[key][1], ...points);
+  return points.map((value) => SPARK[Math.min(SPARK.length - 1, Math.round((value / top) * (SPARK.length - 1)))]).join("");
+}
+
+// Compares the mean of the first and last four weekly points of one p75 series.
+function fieldTrend(key, series) {
+  const points = (series || []).filter((value) => typeof value === "number");
+  if (points.length < TREND_MIN_POINTS) return null;
+  const mean = (list) => list.reduce((sum, value) => sum + value, 0) / list.length;
+  const before = mean(points.slice(0, TREND_EDGE));
+  const now = mean(points.slice(-TREND_EDGE));
+  const was = fieldBand(key, before);
+  const is = fieldBand(key, now);
+  const change = before > 0 ? (now - before) / before : now > 0 ? Infinity : 0;
+  const direction = is > was || (is > 0 && change >= TREND_CHANGE) ? "worse" : is < was || (was > 0 && change <= -TREND_CHANGE) ? "better" : "steady";
+  return { key, before, now, was, is, direction, spark: sparkline(key, points) };
+}
+
+function trendChecks(crux, add) {
+  const rows = [];
+  let from = "";
+  let to = "";
+  Object.keys(FORM_WORDS).forEach((form) => {
+    const history = crux[form];
+    if (!history) return;
+    ["lcp", "inp", "cls"].forEach((key) => {
+      const trend = fieldTrend(key, history[key]);
+      if (!trend) return;
+      rows.push(Object.assign(trend, { form, scope: history.scope }));
+      if (history.from && (!from || history.from < from)) from = history.from;
+      if (history.to > to) to = history.to;
+    });
+  });
+  if (!rows.length) return;
+  const day = (iso) => MONTHS[Number(iso.slice(5, 7)) - 1] + " " + Number(iso.slice(8, 10)) + ", " + iso.slice(0, 4);
+  const lead = "Real Chrome users at the 75th percentile, one point per week" + (from && to ? " from " + day(from) + " to " + day(to) : "") + ". ";
+  const line = (row) => FIELD_NAMES[row.key] + " on " + FORM_WORDS[row.form] + (row.scope === "page" ? " on this page" : " across the whole site") + ": " +
+    fieldValue(row.key, row.before) + " to " + fieldValue(row.key, row.now) + (row.was === row.is ? " (" + BAND_WORDS[row.is] + ")" : " (" + BAND_WORDS[row.was] + " to " + BAND_WORDS[row.is] + ")") + " " + row.spark;
+  const source = " Each value is the mean of the first or last four weeks. Source: Chrome UX Report History API.";
+  const named = (list, verb) => {
+    const metrics = [...new Set(list.map((row) => row.key))];
+    const forms = [...new Set(list.map((row) => row.form))];
+    const who = forms.length === 1 ? "real " + FORM_WORDS[forms[0]].replace(/s$/, "") + " visitors" : "real visitors";
+    return (metrics.length === 1 ? FIELD_NAMES[metrics[0]] + " " + verb : plural(metrics.length, "Core Web Vital") + " " + verb) + " for " + who + " over six months";
+  };
+  const worse = rows.filter((row) => row.direction === "worse");
+  const better = rows.filter((row) => row.direction === "better");
+  const cases = (list) => [...new Set(list.map((row) => FIELD_CASES[row.key]))];
+  if (worse.length) {
+    const poor = worse.some((row) => row.is === 2);
+    add("Performance", "risk", poor ? "high" : "medium", "pf-trend", named(worse, "got worse"), lead + worse.map(line).join(". ") + "." + source,
+      [...new Set(worse.map((row) => FIELD_FIX[row.key]))].join(" ") + " Look at what shipped in the weeks the line starts to rise.", { count: worse.length, effort: "days", cases: cases(worse) });
+  } else {
+    const steady = rows.filter((row) => row.direction === "steady");
+    if (steady.length) add("Performance", "pass", "info", "pf-trend", "Real-user Core Web Vitals held steady over six months", lead + steady.map(line).join(". ") + "." + source, "", { cases: cases(steady) });
+  }
+  if (better.length) add("Performance", "pass", "info", "pf-trend-better", named(better, "got better"), lead + better.map(line).join(". ") + "." + source, "", { cases: cases(better) });
 }
 
 function analyze(input) {
@@ -1565,6 +1642,7 @@ function analyze(input) {
   const thirdHosts = face.signals ? (face.signals.thirdParty || []).length : 0;
   if (thirdHosts > 8) add("Performance", "risk", "low", "pf-third", plural(thirdHosts, "other host serves", "other hosts serve") + " scripts on the start page", "Each host adds a DNS lookup and a connection.", "Remove tags nobody reads and self-host the rest.", { count: thirdHosts, effort: "hours" });
   if (input.pagespeed) speedChecks(input.pagespeed, add);
+  if (input.crux) trendChecks(input.crux, add);
   else if (!(browsed && browsed.start && browsed.start.vitals && browsed.start.vitals.lcp)) add("Performance", "person", "info", "pf-cwv", "Core Web Vitals need a rendered page", "Largest Contentful Paint, Interaction to Next Paint, and layout shift are measured by PageSpeed Insights or the browser run.", "");
   if (limits.timedOut) add("Performance", "person", "info", "coverage", "The time budget ended before every page was analyzed", plural(limits.pagesRead || pages.length, "page") + " of " + (limits.maxPages || "?") + " were analyzed. Slow responses use up the budget.", "");
 
