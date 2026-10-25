@@ -35,15 +35,15 @@ function wantedIds(ids) {
 // The reviews to save as one comparison, in the order picked: the first is the asker's own site.
 function pickProblem(records, email, ids) {
   const wanted = wantedIds(ids);
-  if (wanted.length < 2) return { error: "Pick at least two of your reviews to compare." };
-  if (wanted.length > MULTI_MAX) return { error: "Compare up to " + MULTI_MAX + " reviews at a time." };
+  if (wanted.length < 2) return { error: "Pick at least two of your reviews to compare.", code: "pickTwo" };
+  if (wanted.length > MULTI_MAX) return { error: "Compare up to " + MULTI_MAX + " reviews at a time.", code: "tooMany", max: MULTI_MAX };
   const mine = new Map((records || []).filter((row) => ownedBy(row, email)).map((row) => [compare.cleanId(row.id), row]));
   for (const id of wanted) {
     const row = mine.get(id);
-    if (!row || !row.report) return { error: "One of those reviews is not saved under this account." };
+    if (!row || !row.report) return { error: "One of those reviews is not saved under this account.", code: "reviewsNotSaved" };
     const host = row.report.host || "a site";
-    if (stopped(row)) return { error: "The review of " + host + " stopped early. Compare finished reviews." };
-    if (!row.report.insights || !row.report.insights.score) return { error: "The review of " + host + " is not saved with scores, so there is nothing to compare." };
+    if (stopped(row)) return { error: "The review of " + host + " stopped early. Compare finished reviews.", code: "stoppedOne", host };
+    if (!row.report.insights || !row.report.insights.score) return { error: "The review of " + host + " is not saved with scores, so there is nothing to compare.", code: "noScores", host };
   }
   return { ids: wanted, hosts: wanted.map((id) => mine.get(id).report.host || "") };
 }
