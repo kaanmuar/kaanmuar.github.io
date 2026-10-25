@@ -4,7 +4,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosandmunoz.jarvis.data.Auth
+import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.data.str
+import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -42,7 +44,13 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7))
     val state: StateFlow<UiState> = _state
 
-    init { if (auth.signedIn) { showSaved(); refresh() } }
+    /** Debug builds only: files/jarvis/fixture.json stands in for the server, for emulator screenshots without the owner login. */
+    private val fixture = File(app.filesDir, "jarvis/fixture.json").takeIf { BuildConfig.DEBUG && it.exists() }
+
+    init {
+        if (fixture != null) _state.update { it.copy(signedIn = true, email = "fixture", snapshot = JSON.parseToJsonElement(fixture.readText()) as JsonObject, savedAt = fixture.lastModified()) }
+        else if (auth.signedIn) { showSaved(); refresh() }
+    }
 
     fun signIn(email: String, password: String) = authStep {
         when (val step = auth.signIn(email.trim(), password)) {
@@ -66,6 +74,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setDays(days: Int) {
+        if (fixture != null) return
         jarvis.vault.put("days", days.toString())
         _state.update { it.copy(days = days, brief = null) }
         showSaved()
@@ -73,6 +82,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun refresh() {
+        if (fixture != null) return
         val days = _state.value.days
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {

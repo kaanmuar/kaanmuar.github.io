@@ -55,6 +55,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -162,7 +163,7 @@ fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (Boole
         }
     ) { pad ->
         PullToRefreshBox(isRefreshing = s.loading, onRefresh = vm::refresh, modifier = Modifier.padding(pad).fillMaxSize()) {
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            Column(Modifier.fillMaxSize().verticalScroll(key(tab) { rememberScrollState() })) {
                 Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     RANGES.forEach { (d, label) -> FilterChip(selected = s.days == d, onClick = { vm.setDays(d) }, label = { Text(label) }) }
                 }

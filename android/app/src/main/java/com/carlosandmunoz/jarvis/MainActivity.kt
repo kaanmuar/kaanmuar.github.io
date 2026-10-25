@@ -1,7 +1,11 @@
 package com.carlosandmunoz.jarvis
 
+import android.graphics.Color
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.biometric.BiometricManager
@@ -27,15 +31,17 @@ class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(SystemBarStyle.dark(Color.TRANSPARENT), SystemBarStyle.dark(Color.TRANSPARENT))
         lockOn = vault.flag("lock", true) && canLock()
         setContent {
             JarvisTheme {
-                val s by vm.state.collectAsStateWithLifecycle()
-                when {
-                    !s.signedIn -> SignInScreen(s, vm)
-                    locked -> LockScreen(::prompt)
-                    else -> MainScreen(s, vm, lockOn) { on -> lockOn = on && canLock(); vault.setFlag("lock", lockOn) }
+                Surface(color = MaterialTheme.colorScheme.background) {
+                    val s by vm.state.collectAsStateWithLifecycle()
+                    when {
+                        !s.signedIn -> SignInScreen(s, vm)
+                        locked -> LockScreen(::prompt)
+                        else -> MainScreen(s, vm, lockOn) { on -> lockOn = on && canLock(); vault.setFlag("lock", lockOn) }
+                    }
                 }
             }
         }

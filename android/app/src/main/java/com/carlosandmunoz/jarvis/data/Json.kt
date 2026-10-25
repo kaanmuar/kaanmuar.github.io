@@ -8,6 +8,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.doubleOrNull
+import android.text.format.DateUtils
+import java.time.Instant
 import kotlin.math.abs
 import kotlin.math.roundToLong
 
@@ -58,3 +60,6 @@ fun pct(value: Double?): String = if (value == null) "—" else (if (value <= 1.
 /** A list of {label, value} rows as pairs. */
 fun JsonElement?.pairs(key: String): List<Pair<String, Double>> =
     objs(key).map { (it.str("label") ?: it.str("name") ?: "?") to (it.num("value") ?: 0.0) }
+
+/** "3 hours ago" for an ISO time from the server. */
+fun ago(iso: String?): String? = iso?.let { runCatching { DateUtils.getRelativeTimeSpanString(Instant.parse(it).toEpochMilli()).toString() }.getOrDefault(it) }

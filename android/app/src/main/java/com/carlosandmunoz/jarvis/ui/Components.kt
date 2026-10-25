@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
@@ -181,7 +182,7 @@ fun KeyRow(label: String, value: String, color: Color = J.text, url: String? = n
     Row(Modifier.fillMaxWidth().let { if (url != null) it.clickable { runCatching { uri.openUri(url) } } else it }, verticalAlignment = Alignment.CenterVertically) {
         Text(label, fontSize = 13.sp, color = if (url != null) J.cyan else J.text, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.width(8.dp))
-        Text(value, fontSize = 13.sp, fontFamily = Mono, color = color, maxLines = 1)
+        Text(value, fontSize = 13.sp, fontFamily = Mono, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 190.dp))
     }
 }
 

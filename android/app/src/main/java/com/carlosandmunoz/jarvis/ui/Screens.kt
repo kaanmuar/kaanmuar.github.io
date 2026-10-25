@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
+import com.carlosandmunoz.jarvis.data.ago
 import com.carlosandmunoz.jarvis.data.arr
 import com.carlosandmunoz.jarvis.data.at
 import com.carlosandmunoz.jarvis.data.bool
@@ -82,7 +83,7 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
         }
         val items = snap.objs("briefing")
         if (items.isEmpty()) Muted("Nothing to flag.")
-        items.forEach { StatusRow(it.str("level"), it.str("text") ?: "", it.str("product")?.let { p -> PRODUCTS.toMap()[p] ?: p }) }
+        items.forEach { StatusRow(it.str("level"), it.str("text") ?: "", it.str("product")?.let { p -> PRODUCTS.toMap()[p] ?: humanize(p) }) }
     }
 
     Panel("Products") {
@@ -211,7 +212,7 @@ private fun ReviewOps(s: UiState, vm: JarvisViewModel) {
         health.obj("failures").objs("latest").take(8).forEach { StatusRow("alert", it.str("host") ?: "", (it.str("cause") ?: "") + " · " + (it.str("message") ?: "")) }
     }
     val alerts = health.obj("alerts").objs("latest")
-    if (alerts.isNotEmpty()) Panel("Review alerts") { alerts.take(10).forEach { StatusRow("warn", it.str("title") ?: it.str("kind") ?: "", it.str("at"), it.str("url")) } }
+    if (alerts.isNotEmpty()) Panel("Review alerts") { alerts.take(10).forEach { StatusRow("warn", it.str("title") ?: it.str("kind") ?: "", ago(it.str("at")), it.str("url")) } }
     Panel("Actions") {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             RunJob(s, vm, "sweepReviews", "Sweep reviews")
@@ -277,7 +278,12 @@ fun BusinessScreen(s: UiState) {
                 KpiData("Spam reports", fmt(t.num("spam_reports")), alert = (t.num("spam_reports") ?: 0.0) > 0)
             ))
             BarChart(email.objs("daily").map { it.num("delivered") ?: 0.0 }, email.objs("daily").map { it.str("date") ?: "" })
-            email.obj("suppressions")?.let { sup -> listOf("bounces", "blocks", "spam").forEach { k -> sup.objs(k).take(5).forEach { StatusRow("warn", "$k: ${it.str("domain")}", it.str("reason")) } } }
+            email.obj("suppressions")?.let { sup ->
+                listOf("bounces", "blocks", "spam").forEach { k ->
+                    sup.objs(k).groupBy { (it.str("domain") ?: "") to (it.str("reason") ?: "").take(90) }.entries.take(4)
+                        .forEach { (key, rows) -> StatusRow("warn", "$k: ${key.first}" + if (rows.size > 1) " ×${rows.size}" else "", key.second) }
+                }
+            }
         }
     }
 
@@ -298,7 +304,7 @@ fun BusinessScreen(s: UiState) {
         if (social.isOk()) {
             KpiPairs(listOf(KpiData("Posts sent", fmt(social.num("sent"))), KpiData("Failed", fmt(social.num("failed")), alert = (social.num("failed") ?: 0.0) > 0), KpiData("YouTube views", fmt(social.at("youtube").num("views")))))
             BarChart(social.objs("daily").map { it.num("posts") ?: 0.0 }, social.objs("daily").map { it.str("date") ?: "" }, J.violet)
-            social.objs("latest").take(8).forEach { StatusRow(if (it.str("result") == "ok" || it.str("result") == "sent") "good" else "warn", "${it.str("channel")}: ${it.str("post") ?: ""}", it.str("at"), it.str("url")) }
+            social.objs("latest").take(8).forEach { StatusRow(if (it.str("result") == "ok" || it.str("result") == "sent") "good" else "warn", "${it.str("channel")}: ${it.str("post") ?: ""}", ago(it.str("at")), it.str("url")) }
         }
     }
     if (social.isOk()) {
@@ -348,7 +354,7 @@ fun TrafficScreen(s: UiState) {
 fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
     val snap = s.snapshot
     Panel("Connections") {
-        snap.objs("connections").forEach { c -> StatusRow(c.str("state"), c.str("name") ?: "", listOfNotNull(c.str("state"), c.str("detail")?.takeIf { it.isNotBlank() }, c.arr("needs").takeIf { it.isNotEmpty() }?.joinToString(" ") { it.text() }).joinToString(" · ")) }
+        snap.objs("connections").forEach { c -> StatusRow(c.str("state"), c.str("name") ?: "", listOfNotNull(c.str("state"), c.str("detail")?.takeIf { it.isNotBlank() }, c.arr("needs").takeIf { it.isNotEmpty() }?.joinToString(" ") { it.text() }).filter { it.isNotBlank() }.joinToString(" · ")) }
     }
     val safety = snap.ext("safety")
     Panel("Safety", trailing = { Text(safety.num("score")?.let { "${it.toInt()}/100" } ?: "", fontFamily = Mono, color = J.muted) }) {
@@ -368,7 +374,7 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
             val name = j.str("name") ?: return@forEach
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    StatusRow(if (j.bool("ok") == false) "alert" else if (j.str("state") == "PAUSED") "warn" else "good", name, listOfNotNull(j.str("schedule"), j.str("lastAttempt")?.let { "last $it" }, j.str("error")).joinToString(" · "))
+                    StatusRow(if (j.bool("ok") == false) "alert" else if (j.str("state") == "PAUSED") "warn" else "good", name, listOfNotNull(j.str("schedule"), ago(j.str("lastAttempt"))?.let { "last $it" }, j.str("error")).filter { it.isNotBlank() }.joinToString(" · "))
                 }
                 TextButton(onClick = { vm.act("job:$name", "run-job", mapOf("job" to JsonPrimitive(name))) { "Started $name." } }, enabled = "job:$name" !in s.running) { Text("Run") }
             }
@@ -376,7 +382,7 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
     }
     val health = snap.ext("health")
     Panel("Pipeline") {
-        health.objs("jobs").forEach { StatusRow(if (it.bool("ok") == false) "alert" else "good", it.str("job") ?: "", listOfNotNull(it.str("endedAt"), it.str("note"), it.str("error")).joinToString(" · ")) }
+        health.objs("jobs").forEach { StatusRow(if (it.bool("ok") == false) "alert" else "good", it.str("job") ?: "", listOfNotNull(ago(it.str("endedAt")), it.str("note"), it.str("error")).filter { it.isNotBlank() }.joinToString(" · ")) }
         KeyRow("Review failures", fmt(health.at("failures").num("total")))
         KeyRow("Re-runs (held)", "${fmt(health.at("reruns").num("total"))} (${fmt(health.at("reruns").num("held"))})")
         KeyRow("Owner notices", fmt(health.at("notices").num("total")))
@@ -387,13 +393,13 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
     val gh = snap.ext("github")
     Panel("GitHub") {
         Needs(gh)
-        gh.objs("ci").forEach { StatusRow(if (it.str("conclusion") == "success") "good" else if (it.str("conclusion") == null) "info" else "alert", it.str("name") ?: "", (it.str("conclusion") ?: "running") + " · " + (it.str("at") ?: ""), it.str("url")) }
+        gh.objs("ci").forEach { StatusRow(if (it.str("conclusion") == "success") "good" else if (it.str("conclusion") == null) "info" else "alert", it.str("name") ?: "", (it.str("conclusion") ?: "running") + " · " + (ago(it.str("at")) ?: ""), it.str("url")) }
         KeyRow("Open bugs", fmt(gh.num("openBugs")), if ((gh.num("openBugs") ?: 0.0) > 0) J.amber else J.green, "https://github.com/kaanmuar/kaanmuar.github.io/issues?q=is%3Aopen+label%3Abug")
         KeyRow("PRs merged in range", fmt(gh.at("merged").num("total")))
     }
     TopList("Bugs by area", gh.pairs("bugAreas"))
-    if (gh.obj("merged").objs("items").isNotEmpty()) Panel("Merged") { gh.obj("merged").objs("items").take(10).forEach { KeyRow("#${it.num("number")?.toInt()} ${it.str("title")}", it.str("at")?.take(10) ?: "", url = it.str("url")) } }
-    if (gh.objs("recent").isNotEmpty()) Panel("Newest issues") { gh.objs("recent").take(10).forEach { StatusRow(if (it.str("state") == "open") "warn" else "good", "#${it.num("number")?.toInt()} ${it.str("title")}", it.str("at"), it.str("url")) } }
+    if (gh.obj("merged").objs("items").isNotEmpty()) Panel("Merged") { gh.obj("merged").objs("items").take(10).forEach { KeyRow("#${it.num("number")?.toInt()} ${it.str("title")}", ago(it.str("at"))?.take(10) ?: "", url = it.str("url")) } }
+    if (gh.objs("recent").isNotEmpty()) Panel("Newest issues") { gh.objs("recent").take(10).forEach { StatusRow(if (it.str("state") == "open") "warn" else "good", "#${it.num("number")?.toInt()} ${it.str("title")}", ago(it.str("at")), it.str("url")) } }
 
     val pl = snap.ext("platform")
     Panel("Google Cloud") {
@@ -406,7 +412,7 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
                 KpiData("Firestore reads", fmt(fs.num("reads"))), KpiData("Free reads left", pct(fs.num("readsFreePct"))),
                 KpiData("Users", fmt(u.num("total"))), KpiData("New users", fmt(u.num("newInRange")))
             ))
-            f.objs("latest").take(6).forEach { StatusRow("alert", it.str("fn") ?: "", (it.str("kind") ?: "") + " · " + (it.str("at") ?: "")) }
+            f.objs("latest").take(6).forEach { StatusRow("alert", it.str("fn") ?: "", (it.str("kind") ?: "") + " · " + (ago(it.str("at")) ?: "")) }
         }
     }
     TopList("Function failures", pl.obj("functions").pairs("byFunction"))
