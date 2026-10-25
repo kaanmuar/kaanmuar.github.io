@@ -61,7 +61,7 @@
     }
   },
   "02-myth-lighthouse": {
-    "date": "2027-01-08",
+    "date": "2026-11-06",
     "cat": "A11y",
     "title": "Myth: a Lighthouse 100 means accessible.",
     "alt": "Myth vs fact card. Myth: a Lighthouse 100 means accessible. Fact: Lighthouse says so itself: automatic detection can only detect a subset of issues, so manual testing is also encouraged.",
@@ -239,7 +239,7 @@
     }
   },
   "05-myth-https": {
-    "date": "2027-01-09",
+    "date": "2026-11-07",
     "cat": "Security",
     "title": "Myth: the padlock means the site is secure.",
     "alt": "Myth vs fact card. Myth: the padlock means the site is secure. Fact: All 227 sites in our October 2026 real runs load over HTTPS. Their security scores still range from 16 to 94 out of 100.",
@@ -356,7 +356,7 @@
     }
   },
   "07-pre-release": {
-    "date": "2027-01-10",
+    "date": "2026-11-08",
     "cat": "QA",
     "title": "The 10-minute pre-release check.",
     "alt": "Checklist card. The 10-minute pre-release check. Checks: Meta robots, robots.txt, Canonical, Status codes, Mixed content, Console, A real form, Analytics, Cache, Sitemap.",
@@ -546,7 +546,7 @@
     }
   },
   "10-myth-overlay": {
-    "date": "2027-01-11",
+    "date": "2026-11-09",
     "cat": "A11y",
     "title": "Myth: one line of code makes a site accessible.",
     "alt": "Myth vs fact card. Myth: one line of code makes a site accessible. Fact: The barriers live in the page's own code: missing labels, keyboard traps, unclear headings. They are fixed there.",
@@ -665,7 +665,7 @@
     }
   },
   "12-myth-sitemap": {
-    "date": "2027-01-12",
+    "date": "2026-11-10",
     "cat": "SEO",
     "title": "Myth: a sitemap gets every page indexed.",
     "alt": "Myth vs fact card. Myth: a sitemap gets every page indexed. Fact: The sitemap is a hint. Google still decides, and internal links, canonical tags and page quality all weigh in.",
@@ -782,7 +782,7 @@
     }
   },
   "14-a11y-check": {
-    "date": "2027-01-13",
+    "date": "2026-11-11",
     "cat": "A11y",
     "title": "The 5-minute accessibility check.",
     "alt": "Checklist card. The 5-minute accessibility check. Checks: Zoom to 200%, Narrow to 320 px, Page title, Link text, Language.",
@@ -1028,7 +1028,7 @@
     }
   },
   "18-myth-keywords": {
-    "date": "2027-01-14",
+    "date": "2026-11-12",
     "cat": "SEO",
     "title": "Myth: meta keywords still help you rank.",
     "alt": "Myth vs fact card. Myth: meta keywords still help you rank. Fact: Google ignores it for ranking. A clear title and meta description do the work, and the description may become your snippet.",
