@@ -288,6 +288,56 @@ test("answers keep code, ids and report data as they are, and write the fixed se
   assert.equal(ask.answer(report(), "why F-01", { lang: "ja" }).parts[0].text, ask.answer(report(), "why F-01").parts[0].text);
 });
 
+test("on a translated page, answers quote findings and areas in the page language; the issue stays English (#1366)", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const vm = require("vm");
+  const load = (file, lang) => {
+    const sandbox = { window: {}, document: { documentElement: { lang } } };
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../js/" + file + ".js"), "utf8"), sandbox);
+    return sandbox.window;
+  };
+  const translated = () => {
+    const copy = report();
+    const hsts = copy.insights.findings.find((item) => item.key === "sec-hsts");
+    hsts.msg = {
+      title: { id: "sec-hsts.title", vars: {} },
+      evidence: { id: "sec-hsts.evidence", vars: { spread: { id: "sec-spread.all", vars: { n: 10 } } } },
+      fix: { id: "sec-hsts.fix", vars: {} }
+    };
+    return copy;
+  };
+  const english = ask.answer(translated(), "Export F-01 as a GitHub issue");
+  try {
+    for (const lang of ["es", "de"]) {
+      globalThis.QAReviewFindingsCopy = load("qa-review-findings-copy", lang).QAReviewFindingsCopy;
+      globalThis.QAReviewCompareCopy = load("qa-review-compare-copy", lang).QAReviewCompareCopy;
+      const fc = globalThis.QAReviewFindingsCopy;
+      const hsts = translated().insights.findings.find((item) => item.key === "sec-hsts");
+      const title = fc.line(hsts.msg.title, "");
+      const why = ask.answer(translated(), lang === "es" ? "¿Por qué F-01?" : "Warum F-01?", { lang });
+      assert.equal(why.title, "F-01 · " + title);
+      assert.ok(words(why).includes(fc.line(hsts.msg.evidence, "")), lang + " evidence");
+      assert.ok(words(why).includes(fc.line(hsts.msg.fix, "")), lang + " fix");
+      assert.ok(!/HSTS is not sent|was absent on the start page/.test(words(why)), words(why));
+      assert.match(words(why), lang === "es" ? /en Seguridad\./ : /im Bereich Sicherheit\./);
+      const fix = ask.answer(translated(), lang === "es" ? "Muéstrame la corrección de F-01" : "Zeig die Korrektur für F-01", { lang });
+      assert.ok(fix.title.endsWith(title));
+      const issue = ask.answer(translated(), lang === "es" ? "Exporta F-01 como issue de GitHub" : "Exportiere F-01 als GitHub-Issue", { lang });
+      assert.equal(issue.issue.body, english.issue.body);
+      assert.equal(issue.issue.title, english.issue.title);
+    }
+    const byWords = ask.answer(translated(), "¿Por qué no se envía HSTS?", { lang: "es" });
+    assert.equal(byWords.ref, "F-01");
+    globalThis.QAReviewFindingsCopy = load("qa-review-findings-copy", "de").QAReviewFindingsCopy;
+    globalThis.QAReviewCompareCopy = load("qa-review-compare-copy", "de").QAReviewCompareCopy;
+    assert.equal(ask.answer(translated(), "why F-01", { lang: "es" }).title, "F-01 · HSTS is not sent");
+  } finally {
+    delete globalThis.QAReviewFindingsCopy;
+    delete globalThis.QAReviewCompareCopy;
+  }
+});
+
 test("ask access needs the signed-in account that ran the report, on its device, and a paid or free report", async () => {
   const store = auth.memoryStore();
   const ana = await signedIn(store, "ana@example.com", DESKTOP);
