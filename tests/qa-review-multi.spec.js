@@ -155,7 +155,8 @@ test('the comparison speaks the page language', async ({ page }) => {
   const report = records[0].report;
   const msgs = {
     'seo-description-missing': { title: { id: 'seo-description-missing.title', vars: { n: 6 } }, fix: { id: 'seo-description-missing.fix', vars: {} } },
-    'sec-cookies': { title: { id: 'sec-cookies.insecure', vars: { n: 1 } }, fix: { id: 'sec-cookies.fix', vars: {} } }
+    'sec-cookies': { title: { id: 'sec-cookies.insecure', vars: { n: 1 } }, fix: { id: 'sec-cookies.fix', vars: {} } },
+    'an-consent': { title: { id: 'an-consent.title', vars: {} }, fix: { id: 'an-consent.fix', vars: {} } }
   };
   records[0].report = Object.assign({}, report, { insights: Object.assign({}, report.insights, {
     findings: report.insights.findings.map((item) => msgs[item.key] ? Object.assign({}, item, { msg: msgs[item.key] }) : item)
@@ -199,6 +200,9 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(findings).toContainText('1 cookie se envía sin Secure');
   await expect(findings).toContainText('Pon Secure en todas las cookies');
   await expect(findings).not.toContainText('1 cookie is sent without Secure');
+  await expect(findings).toContainText('Las etiquetas de seguimiento cargan sin una herramienta de consentimiento en la página');
+  await expect(findings).toContainText('Agrega una plataforma de consentimiento');
+  await expect(findings).not.toContainText('Tracking tags load with no consent tool in the page');
   const geo = box.locator('.multi-sec[data-sec="geo"] .multi-cell').first();
   await expect(geo).toContainText('El texto que recibe un rastreador de IA');
   await expect(geo).not.toContainText(/The text an AI crawler|Who may read/);
