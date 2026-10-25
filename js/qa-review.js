@@ -3715,7 +3715,12 @@
     const id = report.id || "report";
     if (kind === "scripts") {
       if (!window.QAReviewScripts) return;
-      const pack = QAReviewScripts.bundle(report, pickedCases(report, layers), chosenFrameworks());
+      const words = rc.english ? null : {
+        lang: document.documentElement.lang,
+        summary: report.insights ? healthSummary(report.insights) : "",
+        line: (item, part) => fc.line(item.msg && item.msg[part], item[part])
+      };
+      const pack = QAReviewScripts.bundle(report, pickedCases(report, layers), chosenFrameworks(), words);
       download("qa-lab-scripts-" + id + ".zip", QAReviewScripts.zip(pack.files, "qa-lab-" + id), "application/zip");
       return;
     }
