@@ -2,14 +2,22 @@
 # job does not queue itself, such as the social hub promo. Clips come from the GitHub release named after the
 # batch (gh release create <batch> media/social-posts/<batch>/clip/*.mp4); without one, TikTok and YouTube are
 # skipped. Posts marked hold in captions.json stay in the hub only. Needs the BUFFER_API_KEY secret.
+# Hub first: a post whose page on the social hub is not live yet is held (scripts/hub-gate.js). Mode seed reads
+# what Buffer already holds into assets/social/buffer.json without queueing anything; mode check asks Buffer which
+# queued posts went out. Every mode but a dry run commits the ledger (scripts/commit-social-ledgers.sh).
 name: Buffer batch queue
 
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: 'queue a batch, seed the ledger from Buffer, or check queued posts'
+        type: choice
+        options: [queue, seed, check]
+        default: queue
       batch:
-        description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10'
-        required: true
+        description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10 (queue only)'
+        required: false
       dry_run:
         description: 'List what would be queued, post nothing'
         type: boolean
@@ -27,16 +35,25 @@ jobs:
       contents: read
     env:
       GH_TOKEN: ${{ github.token }}
+      MODE: ${{ inputs.mode }}
       BATCH: ${{ inputs.batch }}
       DRY_RUN: ${{ inputs.dry_run }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Seed or check the ledger
+        if: ${{ inputs.mode != 'queue' }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: node scripts/buffer-queue.js "--$MODE" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Queue the batch
+        if: ${{ inputs.mode == 'queue' }}
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
         run: |
@@ -49,3 +66,6 @@ jobs:
             echo "::warning::No $BATCH release, so TikTok and YouTube are skipped."
           fi
           if [ "$DRY_RUN" = "true" ]; then node scripts/buffer-queue.js --batch "$BATCH" --dry-run; else node scripts/buffer-queue.js --batch "$BATCH"; fi
+      - name: Commit the Buffer ledger
+        if: ${{ !cancelled() && !inputs.dry_run }}
+        run: scripts/commit-social-ledgers.sh "Buffer $MODE ${BATCH:-all}"

@@ -14,6 +14,8 @@
 
    Every post it schedules or finds on the Page goes into the ledger assets/social/facebook.json
    (scripts/social-ledger.js), and each run first asks the Page whether the queued ones whose time has passed went out.
+   Hub first (scripts/hub-gate.js): a post whose hub page does not answer 200, or whose slot is before its day on
+   the hub, is not scheduled and goes into the ledger as failed with the reason.
 
    The Page token never expires, but changing the Facebook password or removing the "QA-lab Page Publisher"
    app (1097031042944706) revokes it. To renew it, generate a user token in Graph API Explorer on that app
@@ -27,6 +29,7 @@
 const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
+const { createGate } = require("./hub-gate");
 
 const ROOT = path.resolve(__dirname, "..");
 const SITE = process.env.SITE || "https://carlosandmunoz.com";
@@ -200,6 +203,7 @@ async function main() {
     console.log("ledger: " + counts.sent + " sent, " + counts.failed + " failed, " + counts.queued + " still queued");
   }
   const horizon = Date.now() + MAX_LEAD_MS;
+  const gate = createGate();
   const record = (name, entry) => ledger.record(book, name, Object.assign({ channel: "facebook", profile: "Facebook Page", checked: new Date().toISOString() }, entry));
   let failed = 0;
   let queued = 0;
@@ -226,7 +230,14 @@ async function main() {
       scheduled_publish_time: String(Math.floor(due / 1000)),
     };
     const at = new Date(due).toISOString();
-    if (!live) { console.log("dry-run", name, at, params.url); continue; }
+    const hub = await gate(post.batch, post.slug, post.cap, at);
+    if (!live) { console.log("dry-run", name, at, hub.why ? "HELD: " + hub.why : "hub ok", params.url); continue; }
+    if (hub.why) {
+      failed += 1;
+      console.log("held", name, "-", hub.why, hub.url);
+      record(name, { at, result: "failed", error: "Hub first: " + hub.why });
+      continue;
+    }
     try {
       const r = await graph(page + "/photos", params);
       queued += 1;
