@@ -3513,16 +3513,18 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         const existing = await admin.firestore().collection("url_reviews").where("sessionId", "==", result.sessionId).limit(1).get();
         if (!existing.empty) {
           const prior = existing.docs[0].data() || {};
-          res.status(200).json({ paid: true, purpose: prior.purpose === "report" ? "report" : "new-run" });
+          res.status(200).json({ paid: true, purpose: prior.report ? "report" : reviewOffers.paidPurpose(prior.purpose) });
           return;
         }
-        let paidPurpose = result.purpose === "report" ? "report" : "new-run";
+        let paidPurpose = reviewOffers.paidPurpose(result.purpose);
         let paidReport = String(result.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
         let payer = String(result.deviceId || deviceId).replace(/[^a-f0-9]/g, "").slice(0, 32);
         let paidFrameworks = result.frameworks || [];
         let paidTools = result.tools || [];
         let paidPrice = result.amount || 0;
         let paidCompare = "";
+        let paidLayers = result.layers || [];
+        let paidAlerts = 0;
         if (choice !== "stripe") {
           if (!result.reference) {
             res.status(402).json({ paid: false, error: "This payment does not match an open checkout." });
@@ -3535,11 +3537,13 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
             res.status(402).json({ paid: false, error: "This payment does not match an open checkout." });
             return;
           }
-          paidPurpose = open.purpose === "report" ? "report" : "new-run";
+          paidPurpose = reviewOffers.paidPurpose(open.purpose);
           paidReport = String(open.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
           payer = String(open.deviceId || deviceId).replace(/[^a-f0-9]/g, "").slice(0, 32);
           paidFrameworks = open.frameworks || [];
           paidTools = open.tools || [];
+          paidLayers = open.layers || [];
+          paidAlerts = Number(open.alertCount) || 0;
           paidPrice = open.priceUsd || result.amount;
           paidCompare = reviewCompare.cleanId(open.compareWith);
           if (open.coupon) await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
@@ -3580,6 +3584,34 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
             purpose: paidPurpose,
             frameworks: paidFrameworks
           });
+        } else if (reviewOffers.ADDONS.indexOf(paidPurpose) !== -1) {
+          const runRef = paidReport ? admin.firestore().collection("url_reviews").doc(paidReport) : null;
+          const runSnap = runRef ? await runRef.get() : null;
+          const run = runSnap && runSnap.exists ? runSnap.data() || {} : {};
+          if (runSnap && runSnap.exists) {
+            const opened = { addons: admin.firestore.FieldValue.arrayUnion(paidPurpose) };
+            if (paidPurpose === "cases" && paidLayers.length) opened.addonLayers = admin.firestore.FieldValue.arrayUnion(...paidLayers);
+            await runRef.update(opened);
+          }
+          const addon = reviewOffers.addonPayment(run, {
+            purpose: paidPurpose,
+            reportId: paidReport,
+            layers: paidPurpose === "cases" ? paidLayers : undefined,
+            alertCount: paidPurpose === "alerts" ? paidAlerts : undefined,
+            provider: result.provider,
+            method: choice,
+            deviceId: payer,
+            sessionId: result.sessionId,
+            reference: result.reference,
+            test: testRun,
+            priceUsd: paidPrice,
+            amount: result.amount,
+            currency: result.currency,
+            createdAt: new Date().toISOString(),
+            expireAt: urlReview.paymentExpireAt()
+          });
+          await admin.firestore().collection("url_reviews").doc("paid-" + paidPurpose + "-" + String(result.reference || result.sessionId).replace(/[^A-Za-z0-9-]/g, "").slice(0, 64)).set(addon);
+          await rememberReview("addon-paid", Object.assign({ id: paidReport }, addon));
         } else {
           const credit = {
             status: "run-credit",
@@ -3688,6 +3720,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         frameworks: priced.frameworks || [],
         tools: priced.tools || [],
         layers: priced.layers || [],
+        alertCount: priced.alertCount || null,
         pages: priced.pages || null,
         depth: priced.depth || null,
         billing: priced.billing || "",
@@ -3820,7 +3853,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     }
     const comparisons = data.report && !data.report.compare ? await comparisonsFrom(id, data.email) : [];
     const versus = req.method === "POST" ? await versusFrom(Object.assign({ id }, data), opening, proof) : null;
-    res.status(200).json(Object.assign({ report: comparisons.length ? Object.assign({}, data.report, { comparisons }) : data.report, frameworks: data.frameworks || [], paid: true, free }, versus ? { versus } : {}));
+    res.status(200).json(Object.assign({ report: comparisons.length ? Object.assign({}, data.report, { comparisons }) : data.report, frameworks: data.frameworks || [], paid: true, free, addons: data.addons || [], addonLayers: data.addonLayers || [] }, versus ? { versus } : {}));
     return;
   }
   if (req.method !== "POST") {

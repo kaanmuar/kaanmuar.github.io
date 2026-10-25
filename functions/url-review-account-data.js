@@ -27,7 +27,7 @@ const SECRET_IDS = new Set(["url_review_sessions", "url_review_sign_ins", "url_r
 const SECRET_FIELDS = ["deviceHash", "codeHash", "tokenHash"];
 
 // Colombian tax support (Ley 962 de 2005, art. 46) keeps a payment for five years; the report itself goes.
-const PAYMENT_STATUSES = new Set(["paid-report", "run-credit", "run-credit-used", "monthly-pass", "checkout-open"]);
+const PAYMENT_STATUSES = new Set(["paid-report", "paid-addon", "run-credit", "run-credit-used", "monthly-pass", "checkout-open"]);
 const PAYMENT_FIELDS = ["email", "status", "paid", "test", "provider", "method", "sessionId", "reference", "externalId", "purpose", "reportId",
   "billing", "plan", "paidUntil", "priceUsd", "listUsd", "percent", "coupon", "amount", "currency", "createdAt", "expireAt"];
 

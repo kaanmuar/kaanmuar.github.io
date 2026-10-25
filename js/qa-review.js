@@ -659,7 +659,12 @@
     return '<span class="fade-line">' + esc(raw.slice(0, cut)) + faded + "</span>";
   }
 
+  function addonPaid(name, id) {
+    return !!(current && current.report && current.report.id === id && Array.isArray(current.addons) && current.addons.indexOf(name) !== -1);
+  }
+
   function alertsOpen(id) {
+    if (addonPaid("alerts", id)) return true;
     try {
       const saved = JSON.parse(sessionStorage.getItem("qa-review-alerts") || "null");
       return !!(saved && saved.paid && saved.reportId === id);
@@ -669,6 +674,7 @@
   }
 
   function credentialOpen(id) {
+    if (addonPaid("credentials", id)) return true;
     try {
       const saved = JSON.parse(sessionStorage.getItem("qa-review-credential") || "null");
       return !!(saved && saved.paid && saved.reportId === id);
@@ -3155,7 +3161,8 @@
       error.textContent = "Choose at least one kind.";
       return;
     }
-    if (current && current.free === true) {
+    const bought = current && Array.isArray(current.addonLayers) ? current.addonLayers : [];
+    if (current && (current.free === true || layers.every((name) => bought.indexOf(name) !== -1))) {
       caseExport.hidden = true;
       openCaseFormats({ report: current.report, layers });
       return;

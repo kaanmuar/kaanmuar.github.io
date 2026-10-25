@@ -49,6 +49,7 @@ function kindFor(row) {
   if (status === "stopped") return "stopped";
   if (status === "paid-report") return "paid";
   if (status === "run-credit") return "run-paid";
+  if (status === "paid-addon") return "addon-paid";
   if (status === "checkout-open") return "checkout";
   if (status === "blocked") return "blocked";
   if (status === "payment-due") return "payment-due";
@@ -67,6 +68,7 @@ const TITLES = {
   stopped: "A review stopped and a partial report was kept",
   paid: "A report was paid",
   "run-paid": "A later run was paid",
+  "addon-paid": "A case export, signals, or a signed-in run was paid",
   checkout: "A checkout was opened",
   blocked: "A review was refused",
   "payment-due": "A review is waiting on payment",
@@ -643,6 +645,7 @@ const PAGE = `<!DOCTYPE html>
           <option value="complete">Report generated</option>
           <option value="stopped">Stopped</option>
           <option value="paid-report">Report paid</option>
+          <option value="paid-addon">Add-on paid</option>
           <option value="run-credit">Run paid</option>
           <option value="checkout-open">Checkout opened</option>
           <option value="payment-due">Waiting on payment</option>
