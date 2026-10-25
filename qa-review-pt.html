@@ -553,6 +553,15 @@
         .compare-form .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); }
         .compare-run, .compare-running { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 8px 0; }
         .compare-run[hidden], .compare-running[hidden] { display: none; }
+        .compare-rows { list-style: none; margin: 4px 0 10px; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+        .compare-rows[hidden] { display: none; }
+        .compare-rows li { display: flex; flex-wrap: wrap; gap: 4px 10px; padding: 6px 10px; border-radius: 8px; background: rgba(255, 255, 255, .06); border-left: 3px solid rgba(255, 255, 255, .3); }
+        .compare-rows li[data-state="running"] { border-left-color: var(--cyan); }
+        .compare-rows li[data-state="done"] { border-left-color: var(--green); }
+        .compare-rows li[data-state="failed"], .compare-rows li[data-state="payment"] { border-left-color: var(--red); }
+        .compare-rows li[data-state="stopped"] { border-left-color: var(--amber); }
+        .compare-rows li span { opacity: .85; }
+        .log .log-host { font-weight: 600; }
         .compare-run span, .compare-running span { flex: 1 1 220px; font-weight: 600; }
         .log-card .compare-run .btn-ghost { color: #f4f7f8; background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .35); }
         .log-card .compare-run .btn-ghost:hover { background: rgba(255, 255, 255, .16); }
@@ -1870,7 +1879,7 @@
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
 <script src="js/qa-review-report-copy.js?v=20261108a" defer></script>
 <script src="js/qa-review-findings-copy.js?v=20261109b" defer></script>
-<script src="js/qa-review.js?v=20261109b" defer></script>
+<script src="js/qa-review.js?v=20261110a" defer></script>
 <script src="js/qa-review-multi.js?v=20261106a" defer></script>
 <script src="js/url-suggest.js?v=20261109a" defer></script>
 <script src="js/qa-review-live.js?v=20261109a" defer></script>

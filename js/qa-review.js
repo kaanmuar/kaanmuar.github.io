@@ -557,7 +557,8 @@
     }[ch]));
   }
 
-  function appendLog(text) {
+  // host: the competitor a line belongs to when several run at once; their lines skip the single progress bar.
+  function appendLog(text, host) {
     const list = document.getElementById("run-log");
     // Like a terminal: keep following new lines unless the reader has scrolled up.
     const following = list.scrollHeight - list.scrollTop - list.clientHeight < 32;
@@ -570,10 +571,17 @@
       item.setAttribute("translate", "no");
     }
     item.appendChild(time);
+    if (host) {
+      const site = document.createElement("b");
+      site.className = "log-host";
+      site.setAttribute("translate", "no");
+      site.textContent = host + " ";
+      item.appendChild(site);
+    }
     item.appendChild(document.createTextNode(shown));
     list.appendChild(item);
     if (following) list.scrollTop = list.scrollHeight;
-    if (window.ReviewProgress) ReviewProgress.line(text);
+    if (window.ReviewProgress && !host) ReviewProgress.line(text);
   }
 
   function seenBefore(id) {
@@ -1343,17 +1351,6 @@
     reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
   }
 
-  // Each competitor is its own review against the same base report; the next one starts once the
-  // last has ended, so the submit handler has let go of the run.
-  function nextCompare(compare) {
-    const queue = compare.queue || [];
-    if (!queue.length) return false;
-    compareTarget = Object.assign({}, compare, { url: queue[0], queue: queue.slice(1), paid: false });
-    try { sessionStorage.setItem(COMPARE_KEY, JSON.stringify(compareTarget)); } catch (storageError) { /* only a payment round trip needs it */ }
-    setTimeout(() => reviewForm.dispatchEvent(new Event("submit", { cancelable: true })), 0);
-    return true;
-  }
-
   function compareDone(compare, tail) {
     const failed = compare.failed || [];
     const host = (compare.report && compare.report.host) || "your site";
@@ -1564,10 +1561,13 @@
 
   function showComparing(compare) {
     const own = (compare.report && compare.report.host) || "your site";
-    const left = (compare.queue || []).length;
-    document.getElementById("compare-run-text").textContent = "Comparing " + own + " with " + compare.url + compareStep(compare) + ".";
-    document.getElementById("compare-running-text").textContent = "The comparison with " + compare.url + compareStep(compare) + " is running. Stop keeps the pages already checked" +
-      (left ? " and does not start the other " + (left === 1 ? "competitor" : left + " competitors") : "") + ".";
+    const many = (compare.queue || []).length + 1;
+    document.getElementById("compare-run-text").textContent = many > 1
+      ? "Comparing " + own + " with " + many + " competitors, up to " + COMPARE_AT_ONCE + " at a time."
+      : "Comparing " + own + " with " + compare.url + compareStep(compare) + ".";
+    document.getElementById("compare-running-text").textContent = many > 1
+      ? "The comparison with " + many + " competitors is running. Stop keeps the pages already checked and does not start the ones still waiting."
+      : "The comparison with " + compare.url + compareStep(compare) + " is running. Stop keeps the pages already checked.";
     document.getElementById("compare-run").hidden = false;
     document.getElementById("compare-running").hidden = false;
     document.getElementById("compare-stop").disabled = true;
@@ -1577,7 +1577,148 @@
   function hideComparing() {
     document.getElementById("compare-run").hidden = true;
     document.getElementById("compare-running").hidden = true;
+    paintCompareRows(null);
     lockCompare(false);
+  }
+
+  const COMPARE_AT_ONCE = 3;
+  const ROW_STATE = { waiting: "Waiting", running: "Running", done: "Ready", stopped: "Stopped", failed: "Did not finish", payment: "Waits on payment" };
+  let comparePool = null;
+
+  function paintCompareRows(pool) {
+    let list = document.getElementById("compare-rows");
+    if (!list && !pool) return;
+    if (!list) {
+      list = document.createElement("ol");
+      list.id = "compare-rows";
+      list.className = "compare-rows";
+      list.setAttribute("aria-live", "polite");
+      document.getElementById("compare-run").after(list);
+    }
+    list.hidden = !pool;
+    if (!pool) return;
+    list.innerHTML = pool.rows.map((row) => '<li data-state="' + row.state + '"><b translate="no">' + esc(row.url) + "</b> <span>" + esc(ROW_STATE[row.state]) + (row.note ? " · " + esc(row.note) : "") + "</span></li>").join("");
+    const ready = pool.rows.filter((row) => row.state === "done").length;
+    document.getElementById("compare-running-text").textContent = "The comparison is running: " + ready + " of " + pool.rows.length + " competitors ready. Stop keeps the pages already checked and does not start the ones still waiting.";
+  }
+
+  // The competitors of one comparison run side by side, up to three at a time, each its own review of the
+  // same base report. When all have ended, the finished ones open with the report as one comparison.
+  async function runComparePool(compare, confirmed) {
+    const rows = [compare.url].concat(compare.queue || []).map((url) => ({ url, state: "waiting", runId: "", note: "", payload: null }));
+    const pool = { rows, stopping: false, payment: null, signIn: null };
+    comparePool = pool;
+    activeRun = "compare";
+    showComparing(compare);
+    paintCompareRows(pool);
+    reviewBtn.disabled = true;
+    stopBtn.disabled = false;
+    document.getElementById("compare-stop").disabled = false;
+    const runLog = document.getElementById("run-log");
+    runLog.innerHTML = "";
+    runLog.classList.add("is-live");
+    if (window.ReviewProgress) ReviewProgress.reset();
+    setStatus("Reviewing " + rows.length + " competitors, up to " + COMPARE_AT_ONCE + " at a time.", false);
+    let next = 0;
+    const worker = async () => {
+      while (next < rows.length && !pool.stopping && !pool.payment && !pool.signIn) await runCompareRow(compare, pool, rows[next++]);
+    };
+    try {
+      await Promise.all(Array.from({ length: Math.min(COMPARE_AT_ONCE, rows.length) }, worker));
+    } finally {
+      runLog.classList.remove("is-live");
+      activeRun = "";
+      comparePool = null;
+      hideComparing();
+      reviewBtn.disabled = !signedIn();
+      stopBtn.disabled = true;
+    }
+    endComparePool(compare, pool, confirmed);
+  }
+
+  async function runCompareRow(compare, pool, row) {
+    row.runId = hexId();
+    row.state = "running";
+    paintCompareRows(pool);
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_start", "URL Review", "compare");
+    fetch(endpoint() + "/place", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ runId: row.runId })
+    }).catch(() => {});
+    try {
+      const res = await fetch(runEndpoint() + "/review", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: reviewBody(compare, row.url, row.runId)
+      });
+      const payload = await readStream(res, row.url);
+      if (!payload || !payload.report) throw new Error("The review ended without a report.");
+      payload.reasonCode = "compare";
+      row.payload = payload;
+      row.state = payload.report.status === "stopped" ? "stopped" : "done";
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_done", "URL Review", payload.report.host);
+    } catch (error) {
+      if (error.body && error.body.signIn) {
+        pool.signIn = pool.signIn || error;
+        row.state = "waiting";
+      } else if (error.paymentRequired && error.body && error.body.purpose === "new-run") {
+        pool.payment = pool.payment || error.body;
+        row.state = "payment";
+      } else {
+        const field = (error.fields || []).find((item) => item.field === "url");
+        row.state = "failed";
+        row.note = ((field && field.message) || error.message || "The review failed.").replace(/([^.!?])\s*$/, "$1.");
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", row.note);
+      }
+    }
+    paintCompareRows(pool);
+  }
+
+  function endComparePool(compare, pool, confirmed) {
+    const rows = pool.rows;
+    const ran = Object.assign({}, compare, {
+      done: (compare.done || []).concat(rows.filter((row) => row.state === "done").map((row) => row.payload.report.id)),
+      failed: (compare.failed || []).concat(rows.filter((row) => row.state === "failed").map((row) => row.url))
+    });
+    const pending = rows.filter((row) => row.state === "waiting" || row.state === "payment").map((row) => row.url);
+    const last = rows.filter((row) => row.payload).pop();
+    if (last) {
+      layer = "All";
+      render(last.payload);
+      loadStanding();
+      dash.scrollTop = 0;
+    }
+    if (pool.signIn) {
+      ReviewAuth.expire(pool.signIn.message);
+      ReviewAuth.focus();
+      setStatus(pool.signIn.message, true);
+      return;
+    }
+    if (pool.payment && pending.length) {
+      // The ones already finished are kept in done and open with the rest once those are paid and run.
+      const rest = Object.assign({}, ran, { url: pending[0], queue: pending.slice(1), total: pending.length, paid: false });
+      try { sessionStorage.setItem(COMPARE_KEY, JSON.stringify(rest)); } catch (storageError) { /* only a payment round trip needs it */ }
+      const due = Object.assign({}, pool.payment, { compareWith: compare.id, competitors: confirmed ? pending.length : 1 });
+      if (confirmed) location.href = payQuery("new-run", due);
+      else openRunPay(due);
+      setStatus("The comparison waits on payment: 9 USD for each competitor still to run.", true);
+      return;
+    }
+    try { sessionStorage.removeItem(COMPARE_KEY); } catch (storageError) { /* nothing was kept */ }
+    const notStarted = pool.stopping && pending.length ? " Stopped: " + pending.join(", ") + (pending.length === 1 ? " was" : " were") + " not started." : "";
+    if (ran.done.length) {
+      setStatus(compareDone(ran, notStarted), !!ran.failed.length);
+      openCompared(ran);
+      return;
+    }
+    const why = rows.filter((row) => row.note).map((row) => row.url + ": " + row.note).join(" ");
+    if (!last && reopenCompare(Object.assign({}, compare, { url: rows[0].url, queue: rows.slice(1).map((row) => row.url) }), "None of the competitor reviews finished. " + why)) {
+      setStatus("The comparison did not finish. Your report is open again.", true);
+      return;
+    }
+    setStatus(compareDone(ran, notStarted), true);
   }
 
   function lockCompare(locked) {
@@ -2393,7 +2534,39 @@
     protectNames(dash);
   }
 
-  async function readStream(res) {
+  function reviewBody(compare, url, runId) {
+    return JSON.stringify(Object.assign(ReviewAuth.proof(), {
+      termsAccepted: true,
+      termsVersion: TERMS_VERSION,
+      name: document.getElementById("name").value,
+      email: document.getElementById("email").value,
+      reasonCode: compare ? "compare" : reasonCode(),
+      reason: reasonBox.value,
+      clientName: document.getElementById("client-name").value,
+      clientEmail: document.getElementById("client-email").value,
+      clientUrl: document.getElementById("client-url").value,
+      url,
+      compareWith: compare ? compare.id : "",
+      frameworks: compare ? compare.frameworks : selectedFrameworks(),
+      tools: compare ? compare.tools : selectedTools(),
+      pages: compare ? compare.pages : selectedPages(),
+      depth: compare ? compare.depth : selectedDepth(),
+      pageLang: selectedPageLang(),
+      section: document.getElementById("stay-section").checked === true,
+      deviceId: deviceId(),
+      runId: runId,
+      openedAt: openedAt,
+      company: (document.getElementById("hp-note") || { value: "" }).value,
+      lang: document.documentElement.lang || "en",
+      coupon: window.ReviewDeal ? ReviewDeal.code() : "",
+      followUp: document.getElementById("follow-up").checked === true,
+      unlisted: document.getElementById("no-publish").checked === true,
+      landing: window.QaConsent && QaConsent.landing ? QaConsent.landing() : null,
+      testKey: testKey()
+    }));
+  }
+
+  async function readStream(res, host) {
     const type = res.headers.get("content-type") || "";
     if (type.indexOf("application/json") !== -1 || !res.ok) {
       const body = await res.json();
@@ -2416,7 +2589,7 @@
       parts.forEach((part) => {
         if (!part.trim()) return;
         const msg = JSON.parse(part);
-        if (msg.type === "log") appendLog(msg.text);
+        if (msg.type === "log") appendLog(msg.text, host);
         if (msg.type === "error") throw new Error(msg.error || "The review failed.");
         if (msg.type === "done") donePayload = msg;
       });
@@ -2459,6 +2632,10 @@
       confirmed = answer === true;
       if (activeRun) return;
     }
+    if (compare && (compare.queue || []).length) {
+      await runComparePool(compare, confirmed);
+      return;
+    }
     const runId = hexId();
     activeRun = runId;
     if (compare) showComparing(compare);
@@ -2482,35 +2659,7 @@
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(Object.assign(ReviewAuth.proof(), {
-          termsAccepted: true,
-          termsVersion: TERMS_VERSION,
-          name: document.getElementById("name").value,
-          email: document.getElementById("email").value,
-          reasonCode: compare ? "compare" : reasonCode(),
-          reason: reasonBox.value,
-          clientName: document.getElementById("client-name").value,
-          clientEmail: document.getElementById("client-email").value,
-          clientUrl: document.getElementById("client-url").value,
-          url: compare ? compare.url : urlInput.value,
-          compareWith: compare ? compare.id : "",
-          frameworks: compare ? compare.frameworks : selectedFrameworks(),
-          tools: compare ? compare.tools : selectedTools(),
-          pages: compare ? compare.pages : selectedPages(),
-          depth: compare ? compare.depth : selectedDepth(),
-          pageLang: selectedPageLang(),
-          section: document.getElementById("stay-section").checked === true,
-          deviceId: deviceId(),
-          runId: runId,
-          openedAt: openedAt,
-          company: (document.getElementById("hp-note") || { value: "" }).value,
-          lang: document.documentElement.lang || "en",
-          coupon: window.ReviewDeal ? ReviewDeal.code() : "",
-          followUp: document.getElementById("follow-up").checked === true,
-          unlisted: document.getElementById("no-publish").checked === true,
-          landing: window.QaConsent && QaConsent.landing ? QaConsent.landing() : null,
-          testKey: testKey()
-        }))
+        body: reviewBody(compare, compare ? compare.url : urlInput.value, runId)
       });
       stopBtn.disabled = false;
       document.getElementById("compare-stop").disabled = false;
@@ -2531,14 +2680,11 @@
       if (window.ReviewProgress) ReviewProgress.finish(stopped ? "stopped" : "ready");
       setStatus(stopped ? "Stopped. The report uses the pages analyzed before the stop." : "Report ready. Cases are proposed, not run.", false);
       dash.scrollTop = 0;
-      if (compare && (compare.total || 1) > 1) {
-        const left = (compare.queue || []).length;
-        const ran = Object.assign({}, compare, { done: (compare.done || []).concat(stopped ? [] : [payload.report.id]) });
-        if (!stopped && nextCompare(ran)) setStatus("The comparison with " + compare.url + " is ready. Next: " + compare.queue[0] + ".", false);
-        else {
-          setStatus(compareDone(ran, stopped && left ? " Stopped: the other " + (left === 1 ? "competitor was" : left + " competitors were") + " not started." : ""), false);
-          openCompared(ran);
-        }
+      // The last competitor of a comparison paid for partway: it opens with the ones that finished before.
+      if (compare && (compare.done || []).length) {
+        const ran = Object.assign({}, compare, { done: compare.done.concat(stopped ? [] : [payload.report.id]) });
+        setStatus(compareDone(ran, ""), false);
+        openCompared(ran);
       }
     } catch (error) {
       const rivalField = compare && (error.fields || []).find((item) => item.field === "url");
@@ -2564,11 +2710,7 @@
       } else {
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", error.message || "");
         const reason = (rivalField && rivalField.message) || error.message || "The review failed.";
-        if (compare && (compare.queue || []).length) {
-          const failed = (compare.failed || []).concat(compare.url);
-          setStatus("The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Next: " + compare.queue[0] + ".", true);
-          nextCompare(Object.assign({}, compare, { failed }));
-        } else if (compare && (compare.total || 1) > 1) {
+        if (compare && (compare.done || []).length) {
           const ran = Object.assign({}, compare, { failed: (compare.failed || []).concat(compare.url) });
           setStatus(compareDone(ran, ""), true);
           openCompared(ran);
@@ -2593,14 +2735,17 @@
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_stop", "URL Review", "stop");
     appendLog("Stop requested.");
     setStatus("Stopping the review…", false);
+    if (comparePool) comparePool.stopping = true;
+    const runIds = comparePool ? comparePool.rows.filter((row) => row.state === "running").map((row) => row.runId) : [activeRun];
     try {
-      const res = await fetch(endpoint() + "/stop", {
+      const answers = await Promise.all(runIds.map((runId) => fetch(endpoint() + "/stop", {
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(Object.assign(ReviewAuth.proof(), { runId: activeRun }))
-      });
-      if (!res.ok) {
+        body: JSON.stringify(Object.assign(ReviewAuth.proof(), { runId }))
+      })));
+      const res = answers.find((answer) => !answer.ok);
+      if (res) {
         const body = await res.json().catch(() => ({}));
         setStatus(body.error || "The stop was refused.", true);
         stopBtn.disabled = false;

@@ -223,7 +223,7 @@ test.describe('The competitor comparison is drawn as charts', () => {
     await expect(add).toContainText('(1 left)');
   });
 
-  test('several competitors run one after another against the same report, and a failed one does not stop the rest', async ({ page }) => {
+  test('several competitors run against the same report, and when none finish the report reopens with the reasons', async ({ page }) => {
     const sent = [];
     const ask = await open(page, null, (body) => {
       sent.push(body);
@@ -238,8 +238,9 @@ test.describe('The competitor comparison is drawn as charts', () => {
     await ask.locator('#compare-add').click();
     await ask.locator('#compare-url-4').fill('three.example');
     await ask.locator('#compare-go').click();
-    await expect(page.locator('#form-status')).toContainText('These did not finish: one.example, two.example, three.example.', { timeout: 20000 });
-    expect(sent.map((body) => body.url)).toEqual(['one.example', 'two.example', 'three.example']);
+    await expect(page.locator('#form-status')).toContainText('The comparison did not finish. Your report is open again.', { timeout: 20000 });
+    await expect(page.locator('#compare-error')).toContainText('None of the competitor reviews finished. one.example: The site did not answer. two.example: The site did not answer. three.example: The site did not answer.');
+    expect(sent.map((body) => body.url).sort()).toEqual(['one.example', 'three.example', 'two.example']);
     expect(sent.every((body) => body.compareWith === ID && body.reasonCode === 'compare')).toBe(true);
     await expect(page.locator('#compare-go')).toBeEnabled();
   });
@@ -275,6 +276,55 @@ test.describe('The competitor comparison is drawn as charts', () => {
     await expect(page).toHaveURL(/[?&]comparison=cmp9/);
     await expect(overlay).toContainText('one.example');
     await expect(overlay).toContainText('two.example');
+  });
+
+  test('five competitors run three at a time with a row each, and all that finish open side by side', async ({ page }) => {
+    const hosts = ['one.example', 'two.example', 'three.example', 'four.example', 'five.example'];
+    const ids = { 'one.example': 'd1d1d1', 'two.example': 'd2d2d2', 'three.example': 'd3d3d3', 'four.example': 'd4d4d4', 'five.example': 'd5d5d5' };
+    const records = [{ id: ID, email: 'ana@example.com', report: Object.assign({}, sample.report, { id: ID }) }]
+      .concat(hosts.filter((host) => host !== 'four.example').map((host) => ({ id: ids[host], email: 'ana@example.com', report: Object.assign({}, own, { id: ids[host], host }) })));
+    let running = 0;
+    let most = 0;
+    const ask = await open(page, null, async (body) => {
+      running += 1;
+      most = Math.max(most, running);
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      running -= 1;
+      if (body.url === 'four.example') return JSON.stringify({ type: 'error', error: 'The site did not answer' }) + '\n';
+      const report = records.find((row) => row.id === ids[body.url]).report;
+      const cmp = compare.compareSites(Object.assign({}, sample.report, { id: ID }), report);
+      return JSON.stringify({ type: 'log', text: 'Reading ' + body.url }) + '\n' + JSON.stringify({ type: 'done', report: Object.assign({}, report, { compare: cmp }), frameworks: sample.frameworks, paid: true }) + '\n';
+    });
+    const saved = [];
+    await page.route('http://127.0.0.1:8768/account/comparison/**', async (route) => {
+      const req = route.request();
+      const headers = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, headers) });
+      const body = JSON.parse(req.postData() || '{}');
+      if (req.url().endsWith('/save')) saved.push(body.ids);
+      const picked = multi.pickProblem(records, 'ana@example.com', body.ids || saved[0]);
+      const made = req.url().endsWith('/save') ? { ok: true, id: 'cmp5' } : multi.payloadOf('cmp5', multi.savedRecord('ana@example.com', picked, 'review'), records, () => true);
+      return route.fulfill({ status: 200, contentType: 'application/json', headers, body: JSON.stringify(made) });
+    });
+    await page.evaluate(() => { document.getElementById('name').value = 'Ana Pérez'; });
+    await ask.locator('#compare-url').fill(hosts[0]);
+    for (const [index, host] of hosts.slice(1).entries()) {
+      await ask.locator('#compare-add').click();
+      await ask.locator('#compare-url-' + (index + 2)).fill(host);
+    }
+    await ask.locator('#compare-go').click();
+    const rows = page.locator('#compare-rows li');
+    await expect(rows).toHaveCount(5);
+    await expect(rows.filter({ hasText: 'Running' })).toHaveCount(3);
+    await expect(page.locator('#run-log .log-host').first()).toBeVisible();
+    const overlay = page.locator('#multi-overlay');
+    await expect(overlay).toHaveClass(/open/, { timeout: 20000 });
+    expect(most).toBe(3);
+    expect(saved).toHaveLength(1);
+    expect(saved[0][0]).toBe(ID);
+    expect(saved[0].slice(1).sort()).toEqual(['d1d1d1', 'd2d2d2', 'd3d3d3', 'd5d5d5']);
+    await expect(page.locator('#form-status')).toContainText('These did not finish: four.example.');
+    await expect(page.locator('#compare-rows')).toBeHidden();
   });
 
   test('the report\'s own site is refused as a competitor', async ({ page }) => {
