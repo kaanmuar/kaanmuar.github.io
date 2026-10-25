@@ -117,9 +117,13 @@
 .bench-bar b { font-variant-numeric: tabular-nums; min-width: 5em; text-align: right; }
 .bench-bar b small { color: var(--green); font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
 .bench-note { margin: 0; }
+@media (max-width: 1240px) {
+  .bench-areas { grid-template-columns: minmax(0, 1fr); }
+  .bench-radar-fig { max-width: 420px; justify-self: center; }
+}
 @media (max-width: 900px) {
   .bench-podium { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-  .bench-reading, .bench-areas { grid-template-columns: minmax(0, 1fr); }
+  .bench-reading { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media print {
