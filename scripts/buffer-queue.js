@@ -18,13 +18,14 @@
    and each run first asks Buffer whether the queued ones whose time has passed were sent. A post the ledger
    already has queued or sent on a profile is not queued there again.
    Hub first (scripts/hub-gate.js): a post whose hub page does not answer 200, or whose slot is before its day
-   on the hub, is not queued and goes into the ledger as failed with the reason.
+   on the hub, is not queued and goes into the ledger as failed with the reason. Every caption ends with its hub
+   post's address, tagged utm_source=<network>&utm_medium=social&utm_campaign=<batch>.
    Exits 1 when any post failed, after trying all of them; the log names each one. */
 
 const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
-const { createGate } = require("./hub-gate");
+const { createGate, withHubLink } = require("./hub-gate");
 
 const ROOT = path.resolve(__dirname, "..");
 const API = "https://api.buffer.com";
@@ -252,25 +253,26 @@ function readCalendar(dir) {
 // One channel, one slug: the post inputs, each with its calendar slot (none when this network takes nothing
 // from the batch). Each post keeps its calendar slot; the queues already hold months of imported posts, so
 // addToQueue would land it behind them. A slot already past goes out in 20 minutes.
-function inputsFor(channel, slug, cap, base, clipBase, when) {
+function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
   const image = (dir) => ({ image: { url: base + "/" + dir + "/" + slug + ".jpg", metadata: { altText: cap.alt } } });
   const video = () => ({ video: { url: clipBase + "/" + slug + ".mp4", metadata: { thumbnailOffset: 0 } } });
   const soon = new Date(Date.now() + 20 * 60e3).toISOString();
+  const linked = (text) => withHubLink(text, { batch, slug, network: channel.service === "twitter" ? "x" : channel.service });
   const post = (slot, text, assets, metadata) => {
     const at = when[slug + "|" + slot];
     return { slot, input: Object.assign({ channelId: channel.id, schedulingType: "automatic", text, assets },
       at ? { mode: "customScheduled", dueAt: at > soon ? at : soon } : { mode: "addToQueue" }, metadata ? { metadata } : {}) };
   };
   switch (channel.service) {
-    case "linkedin": return [post("linkedin", cap.linkedin, [image("feed")])];
-    case "facebook": return [post("facebook", cap.facebook, [image("feed")], { facebook: { type: "post" } })];
+    case "linkedin": return [post("linkedin", linked(cap.linkedin), [image("feed")])];
+    case "facebook": return [post("facebook", linked(cap.facebook), [image("feed")], { facebook: { type: "post" } })];
     case "instagram": return [
-      post("instagram", cap.instagram, [image("feed")], { instagram: { type: "post", shouldShareToFeed: true } }),
+      post("instagram", linked(cap.instagram), [image("feed")], { instagram: { type: "post", shouldShareToFeed: true } }),
       post("instagram-story", cap.title, [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
     ];
-    case "twitter": case "threads": case "bluesky": case "mastodon": return [post("x", cap.x, [image("feed")])];
-    case "tiktok": return clipBase ? [post("tiktok", cap.tiktok, [video()])] : [];
-    case "youtube": return clipBase ? [post("youtube", cap.youtube, [video()], { youtube: { title: cap.youtubeTitle, categoryId: "28" } })] : [];
+    case "twitter": case "threads": case "bluesky": case "mastodon": return [post("x", linked(cap.x), [image("feed")])];
+    case "tiktok": return clipBase ? [post("tiktok", linked(cap.tiktok), [video()])] : [];
+    case "youtube": return clipBase ? [post("youtube", linked(cap.youtube), [video()], { youtube: { title: cap.youtubeTitle, categoryId: "28" } })] : [];
     default: return [];
   }
 }
@@ -316,13 +318,13 @@ async function main() {
   let already = 0;
   for (const slug of slugs) {
     for (const channel of list) {
-      for (const { slot, input } of inputsFor(channel, slug, captions[slug], base, clipBase, when)) {
+      for (const { slot, input } of inputsFor(channel, slug, captions[slug], base, clipBase, when, batch)) {
         const profile = channel.service + (channel.name ? " (" + channel.name + ")" : "");
         const label = slug + " → " + profile;
         const known = ledger.find(book, batch + "/" + slug, slot, profile);
         if (known && (known.result === "queued" || known.result === "sent")) { already += 1; continue; }
         const hub = await gate(batch, slug, captions[slug], input.dueAt || new Date().toISOString());
-        if (opts["dry-run"]) { console.log("dry-run", label, hub.why ? "HELD: " + hub.why : "hub ok", JSON.stringify(input).slice(0, 160)); continue; }
+        if (opts["dry-run"]) { console.log("dry-run", label, hub.why ? "HELD: " + hub.why : "hub ok", JSON.stringify(input).slice(0, 160), "…", String(input.text || "").split("\n").pop()); continue; }
         const entry = { channel: slot, profile, at: input.dueAt, checked: new Date().toISOString() };
         if (hub.why) {
           failed += 1;
@@ -358,4 +360,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { batchIndex, matchPost, staleScheduled };
+module.exports = { batchIndex, matchPost, staleScheduled, inputsFor };

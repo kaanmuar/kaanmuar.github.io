@@ -68,11 +68,19 @@
     share: "<svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" aria-hidden=\"true\"><path fill=\"currentColor\" d=\"M18 16a3 3 0 0 0-2.4 1.2l-6.7-3.4a3 3 0 0 0 0-1.6l6.7-3.4A3 3 0 1 0 15 7l-6.7 3.4a3 3 0 1 0 0 3.2L15 17a3 3 0 1 0 3-1z\"/></svg>"
   };
 
-  // Posted ones first, newest first; then the ones still queued on the networks, soonest first.
+  // Posted ones first, newest first; then the ones still to come, soonest first.
   function arrange(posts, today) {
     const due = posts.filter((post) => post.date <= today).sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
     const later = posts.filter((post) => post.date > today).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
     return due.map((post) => Object.assign({}, post, { upcoming: false })).concat(later.map((post) => Object.assign({}, post, { upcoming: true })));
+  }
+
+  // A post still to come is Scheduled only when a network has it queued; one held for the hub alone gets no tag.
+  function planTag(post, copy) {
+    if (!post.upcoming || post.held) return "";
+    return post.queued
+      ? "<span class=\"post-tag post-scheduled\">" + esc(copy.scheduled) + "</span>"
+      : "<span class=\"post-tag post-planned\">" + esc(copy.planned) + "</span>";
   }
 
   function cardHtml(post, copy, lang) {
@@ -93,7 +101,7 @@
       + (post.cat ? "<span class=\"post-tag\">" + esc(topic(post, copy)) + "</span>" : "")
       + "<span class=\"post-tag post-lang\" translate=\"no\">" + esc(post.lang.toUpperCase()) + "</span>"
       + (post.youtube && post.clipLang && post.clipLang !== post.lang ? "<span class=\"post-tag post-lang\" translate=\"no\" title=\"" + esc(copy.watch) + "\">▶ " + esc(post.clipLang.toUpperCase()) + "</span>" : "")
-      + (post.upcoming ? "<span class=\"post-tag post-scheduled\">" + esc(copy.scheduled) + "</span>" : "")
+      + planTag(post, copy)
       + "</p>"
       + "<h2 class=\"post-title\" lang=\"" + esc(post.lang) + "\"><a href=\"" + esc(permalink(post, lang)) + "\" data-act=\"open\">" + esc(post.title) + "</a></h2>"
       + "<p class=\"post-text\" lang=\"" + esc(post.lang) + "\">" + parasHtml(post.text) + "</p>"
@@ -105,5 +113,5 @@
       + "</div></div></article>";
   }
 
-  return { SITE, ICON, esc, pageFor, postPath, permalink, anchor, day, textHtml, parasHtml, topic, arrange, cardHtml };
+  return { SITE, ICON, esc, pageFor, postPath, permalink, anchor, day, textHtml, parasHtml, topic, arrange, planTag, cardHtml };
 });

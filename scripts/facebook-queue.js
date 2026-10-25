@@ -15,7 +15,9 @@
    Every post it schedules or finds on the Page goes into the ledger assets/social/facebook.json
    (scripts/social-ledger.js), and each run first asks the Page whether the queued ones whose time has passed went out.
    Hub first (scripts/hub-gate.js): a post whose hub page does not answer 200, or whose slot is before its day on
-   the hub, is not scheduled and goes into the ledger as failed with the reason.
+   the hub, is not scheduled and goes into the ledger as failed with the reason. Each caption ends with its hub post's
+   address, tagged utm_source=facebook&utm_medium=social&utm_campaign=<batch>; a post the Page took before that is
+   still recognised by its caption without the address.
 
    The Page token never expires, but changing the Facebook password or removing the "QA-lab Page Publisher"
    app (1097031042944706) revokes it. To renew it, generate a user token in Graph API Explorer on that app
@@ -29,7 +31,7 @@
 const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
-const { createGate } = require("./hub-gate");
+const { createGate, withHubLink } = require("./hub-gate");
 
 const ROOT = path.resolve(__dirname, "..");
 const SITE = process.env.SITE || "https://carlosandmunoz.com";
@@ -217,7 +219,8 @@ async function main() {
   let late = 0;
   for (const post of list) {
     const name = post.batch + "/" + post.slug;
-    const there = done.get(key(post.cap.facebook));
+    const caption = withHubLink(post.cap.facebook, { batch: post.batch, slug: post.slug, network: "facebook" });
+    const there = done.get(key(caption)) || done.get(key(post.cap.facebook));
     if (there) {
       already += 1;
       const known = ledger.find(book, name, "facebook", "Facebook Page");
@@ -236,14 +239,14 @@ async function main() {
     const due = post.at < Date.now() + MIN_LEAD_MS ? Date.now() + MIN_LEAD_MS + 30 * 60e3 * late++ : post.at;
     const params = {
       url: image,
-      caption: post.cap.facebook,
+      caption,
       alt_text_custom: post.cap.alt || "",
       published: "false",
       scheduled_publish_time: String(Math.floor(due / 1000)),
     };
     const at = new Date(due).toISOString();
     const hub = await gate(post.batch, post.slug, post.cap, at);
-    if (!live) { console.log("dry-run", name, at, hub.why ? "HELD: " + hub.why : "hub ok", params.url); continue; }
+    if (!live) { console.log("dry-run", name, at, hub.why ? "HELD: " + hub.why : "hub ok", params.url, caption.split("\n").pop()); continue; }
     if (hub.why) {
       failed += 1;
       console.log("held", name, "-", hub.why, hub.url);
