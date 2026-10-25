@@ -3865,7 +3865,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
     }
     if (!access.ok) {
       let priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [] };
-      try { priced = urlReview.priceForReport(data.frameworks || [], [], urlReview.creditFor(data)); } catch (error) { priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [], count: 1 }; }
+      try { priced = urlReview.priceForReport(data.frameworks || [], urlReview.toolsForCharge((data.report && data.report.tools) || []), urlReview.creditFor(data)); } catch (error) { priced = { usd: urlReview.PRICE_PER_FRAMEWORK, frameworks: [], count: 1 }; }
       const deal = await returnPrice(priced, { purpose: "report", reportId: id, email: data.email, before: data.createdAt, coupon: opening.coupon });
       const addons = data.addons || [];
       // A bought fix list opens the findings to the owner; the cases stay in the frosted preview.
@@ -3875,6 +3875,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
         priceUsd: deal.usd,
         creditUsd: priced.creditUsd || 0,
         frameworks: priced.frameworks,
+        tools: priced.tools || [],
         id: id,
         host: data.report && data.report.host,
         status: data.status || "",

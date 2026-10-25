@@ -525,12 +525,13 @@ const server = http.createServer(async (req, res) => {
     const addons = addonsOf(found.id);
     if (!access.ok) {
       let priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] };
-      try { priced = core.priceForReport(found.frameworks || [], [], core.creditFor({ addons })); } catch (error) { priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] }; }
+      try { priced = core.priceForReport(found.frameworks || [], core.toolsForCharge((found.report && found.report.tools) || []), core.creditFor({ addons })); } catch (error) { priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] }; }
       sendJson(res, 402, Object.assign({
         paymentRequired: true,
         priceUsd: priced.usd,
         creditUsd: priced.creditUsd || 0,
         frameworks: priced.frameworks,
+        tools: priced.tools || [],
         id: found.id,
         host: found.report.host,
         status: found.status,
