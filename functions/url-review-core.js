@@ -129,6 +129,8 @@ const UNREACHABLE = "The page took too long: the site accepted no connection in 
 // Node's own limit is 16 KB, which large storefronts pass with their cookies and security headers.
 const MAX_HEADER_BYTES = 65536;
 const HEADERS_TOO_LARGE = "The site's response headers are past the " + MAX_HEADER_BYTES / 1024 + " KB the plain request reads";
+// Chrome follows up to 20 redirects. Sign-in portals chain six (sharepoint.com → office.com → … → microsoft.com).
+const MAX_REDIRECTS = 10;
 // A server that sends its certificate without the intermediate opens in browsers, which fetch the intermediate
 // from the certificate's AIA address. Node does not, so the review fetches it once per host and verifies again.
 const INTERMEDIATES = new Map();
@@ -1021,7 +1023,7 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage)
     onPulse("Waiting for " + current.hostname + " (" + seconds + "s).");
   }, 2000);
   try {
-    for (let hop = 0; hop < 5; hop += 1) {
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
       if (isStopped && isStopped()) {
         const error = new Error("stopped");
         error.code = "STOPPED";
@@ -2456,7 +2458,7 @@ async function probeRead(raw) {
   let current;
   try {
     current = normalizeUrl(raw);
-    for (let hop = 0; hop < 5; hop += 1) {
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
       const pinned = await assertPublic(current.hostname);
       const res = await requestOnce(current, pinned, null, true);
       const location = header(res.headers, "location");
@@ -3898,6 +3900,8 @@ module.exports = {
   challengeOf,
   dnsFacts,
   plainHttp,
+  fetchPublic,
+  MAX_REDIRECTS,
   probeRead,
   tcpOpen,
   tcpCheck,
