@@ -19,7 +19,8 @@ const FIXES = [
   { cause: "timeout", at: "2026-10-24T12:18:01Z", ref: "#737", label: "A page whose load event stalls after its document arrived is read in headless Chrome as it stands" },
   { cause: "browser", at: "2026-10-24T19:07:34Z", ref: "#883", label: "A phone visit still running when the browser's budget ends is cut, so the page Chrome read is kept" },
   { cause: "timeout", at: "2026-10-24T20:45:00Z", ref: "#894", label: "A host that accepts no connection is named as down and kept on the desk without a bug" },
-  { cause: "status", at: "2026-10-24T20:45:00Z", ref: "#894", label: "A 4xx other than 401, 403 and 429 that headless Chrome gets too is the site's own answer, kept on the desk without a bug" }
+  { cause: "status", at: "2026-10-24T20:45:00Z", ref: "#894", label: "A 4xx other than 401, 403 and 429 that headless Chrome gets too is the site's own answer, kept on the desk without a bug" },
+  { cause: "headers", at: "2026-10-25T01:00:00Z", ref: "#PR", label: "Response headers up to 64 KB are read, and a start page past that is opened in headless Chrome" }
 ];
 // The review form's default when a failure kept no frameworks (one taken from an alert).
 const RERUN_FRAMEWORKS = ["Playwright"];
@@ -30,6 +31,7 @@ const clip = (value, max) => String(value == null ? "" : value).replace(/\s+/g, 
 const CAUSES = [
   ["save", "The finished report could not be saved", /not a valid Firestore document|as a Firestore value/i],
   ["input", "The address could not be reviewed", /^Enter a|Only https URLs|Remove the username|standard https port|not a public website|private address/i],
+  ["headers", "The site's response headers are past the review's limit", /Header overflow|HPE_HEADER_OVERFLOW|response headers are past/i],
   ["dns", "The host name did not resolve", /did not resolve|ENOTFOUND|EAI_AGAIN/i],
   ["http-redirect", "The site redirected to http://", /an http:\/\/ address/i],
   ["redirect-loop", "The site redirected too many times", /redirected too many times/i],
@@ -133,6 +135,12 @@ function failureRecord(input) {
     expireAt: new Date(ended + KEEP_DAYS * 86400000)
   };
   if (record.kind === "failed") record.diagnosedAt = null;
+  if (run.source === "sweep") {
+    const target = run.sweep || {};
+    record.source = "sweep";
+    record.cc = clip(target.cc, 2).toLowerCase();
+    record.sweep = { host: clip(target.host, 120), cc: record.cc, month: clip(target.month, 10), rank: Number(target.rank) || 0 };
+  }
   return record;
 }
 
@@ -285,6 +293,7 @@ function rerunPlan(failures, reviewed, limit) {
       options: Object.assign({}, latest.options, { frameworks: ((latest.options || {}).frameworks || []).length ? latest.options.frameworks : RERUN_FRAMEWORKS }),
       intake: latest.intake || {}
     };
+    if (latest.source === "sweep" && latest.sweep) Object.assign(item, { source: "sweep", sweep: latest.sweep });
     if (own) skipped.push(Object.assign(item, { skip: "The asker reviewed " + host + " again on " + String(own.createdAt).slice(0, 10) + "." }));
     else runs.push(item);
   });
@@ -300,7 +309,7 @@ function rerunDoc(group, outcome) {
   const error = run.error || {};
   const message = record ? "" : clip(typeof error === "string" ? error : error.message || "The re-run failed.", 600);
   return {
-    status: record ? "held" : "failed",
+    status: record ? (group.source === "sweep" ? "swept" : "held") : "failed",
     at: new Date(ended).toISOString(),
     failedAt: clip(group.at, 40),
     url: clip(group.url, 300),
@@ -338,20 +347,24 @@ function sentRecord(doc, now) {
   });
 }
 
+const RERUN_LEAD = { held: "Held for you: ", swept: "Saved by the sweep: ", failed: "Failed again: " };
+
+// A sweep re-run has no asker: its report is saved like any sweep review and goes public through Live Reports.
 function rerunMail(done) {
   const held = done.filter((row) => row.status === "held");
+  const swept = done.filter((row) => row.status === "swept");
   const failed = done.filter((row) => row.status === "failed");
   const blocks = done.map((row) => [
-    (row.status === "held" ? "Held for you: " : "Failed again: ") + row.host + " for " + (row.name || "an asker") + (row.email ? " <" + row.email + ">" : ""),
+    (RERUN_LEAD[row.status] || RERUN_LEAD.failed) + row.host + " for " + (row.name || "an asker") + (row.email ? " <" + row.email + ">" : ""),
     "Why it ran: " + (row.trigger ? row.trigger.label : "—"),
-    row.status === "held"
-      ? "Report " + row.reportId + (row.reportStatus === "stopped" ? ", stopped before the last page" : "")
-      : "Error: " + row.error.message
+    row.status === "failed"
+      ? "Error: " + row.error.message
+      : "Report " + row.reportId + (row.reportStatus === "stopped" ? ", stopped before the last page" : "")
   ].join("\n"));
   return {
-    subject: "URL review re-runs: " + held.length + " held for you, " + failed.length + " failed again",
+    subject: "URL review re-runs: " + held.length + " held for you, " + (swept.length ? swept.length + " saved by the sweep, " : "") + failed.length + " failed again",
     intro: "Failed URL reviews were run again",
-    rows: [{ label: "Held for you", value: String(held.length) }, { label: "Failed again", value: String(failed.length) }],
+    rows: [{ label: "Held for you", value: String(held.length) }].concat(swept.length ? [{ label: "Saved by the sweep", value: String(swept.length) }] : [], [{ label: "Failed again", value: String(failed.length) }]),
     body: blocks.join("\n\n") + "\n\nNo asker was emailed. Send or drop each held report from the review desk."
   };
 }
@@ -493,9 +506,9 @@ function bugPlan(failures, reruns, filed) {
 }
 
 // The fields of a failure the reports and the desk list read; the log stays behind.
-const SUMMARY_FIELDS = ["kind", "at", "url", "host", "name", "email", "cause", "error.message", "diagnosis", "diagnosedAt", "checks", "rerun", "lineCount", "timings.ms", "fromAlert"];
+const SUMMARY_FIELDS = ["kind", "at", "url", "host", "name", "email", "cause", "error.message", "diagnosis", "diagnosedAt", "checks", "rerun", "lineCount", "timings.ms", "fromAlert", "source"];
 const RERUN_FIELDS = ["status", "at", "host", "name", "trigger", "cause", "error.message", "decidedAt"];
-const RERUN_STATES = [["held", "held for you"], ["sent", "sent"], ["dropped", "dropped"], ["failed", "failed again"]];
+const RERUN_STATES = [["held", "held for you"], ["swept", "saved by the sweep"], ["sent", "sent"], ["dropped", "dropped"], ["failed", "failed again"]];
 const REPORT_ROWS = 60;
 
 function countBy(rows, keyOf) {
@@ -574,7 +587,7 @@ function periodFailures(input) {
       { label: "Failure causes", value: causeList.join(", ") || "None" },
       { label: "Diagnosis", value: cleared + " cleared since, " + (failed.length - cleared - waiting) + " still failing, " + waiting + " not probed yet" },
       { label: "Failed sites", value: ranked(hosts).slice(0, 20).map((host) => host + " " + hosts[host]).join(", ") || "None" },
-      { label: "Re-runs", value: RERUN_STATES.map(([id, label]) => (rerunCounts[id] || 0) + " " + label).join(", ") },
+      { label: "Re-runs", value: RERUN_STATES.filter(([id]) => id !== "swept" || rerunCounts[id]).map(([id, label]) => (rerunCounts[id] || 0) + " " + label).join(", ") },
       { label: "Failure bugs", value: open.length ? open.map((bug) => "#" + bug.issue + " " + bug.cause).join(", ") + " open" + (bugs.length > open.length ? ", " + (bugs.length - open.length) + " closed" : "") : bugs.length ? "None open, " + bugs.length + " closed" : "None filed" }
     ],
     body: body.slice(0, 8000)
