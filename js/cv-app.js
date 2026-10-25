@@ -32,6 +32,10 @@
         return firebaseReady;
     }
 
+    // Test browsers load the CV all day; their Firestore reads alone ran past the free quota, so they get the CV from the file.
+    // Cypress's default Electron browser leaves navigator.webdriver false.
+    const AUTOMATED = navigator.webdriver === true || /HeadlessChrome|Cypress|Electron\//.test(navigator.userAgent);
+
     const PRINT_COPY = {
         en: {
             print_confidential: 'Confidential',
@@ -924,7 +928,7 @@
 
             _noteCvAccess() {
                 try {
-                    if (window.top !== window.self || navigator.webdriver) return;
+                    if (window.top !== window.self || AUTOMATED) return;
                     if (sessionStorage.getItem('cv-access-noted') === '1') return;
                     sessionStorage.setItem('cv-access-noted', '1');
                 } catch (e) {
@@ -2462,6 +2466,7 @@
                 const container = this.DOMElements.testimonialsContainer;
                 const avgRatingEl = document.getElementById('average-rating-display');
                 if (!container || !avgRatingEl) return;
+                if (AUTOMATED) { container.parentElement.style.display = 'none'; return; }
 
                 // Query the new 'testimonials' collection, ordered by creation date
                 firebase().then((fb) => fb.onSnapshot(fb.query(fb.collection(fb.db, "testimonials"), fb.orderBy("createdAt", "desc")), (snapshot) => {
@@ -2678,6 +2683,7 @@
             },
 
             _watchFormCaptcha() {
+                if (AUTOMATED) return;
                 firebase().then((fb) => fb.onSnapshot(fb.doc(fb.db, 'abuse', 'forms'), (snap) => {
                     const data = snap.exists() ? snap.data() : null;
                     const until = data && data.until && typeof data.until.toMillis === 'function' ? data.until.toMillis() : 0;
@@ -4165,6 +4171,7 @@
                     }
                     return;
                 }
+                if (AUTOMATED) return;
                 try {
                     const fb = await firebase();
                     const snap = await fb.getDoc(fb.doc(fb.db, 'cvContent', 'live'));
