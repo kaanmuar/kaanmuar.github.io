@@ -1,0 +1,134 @@
+# One-time check of the Oct 26 Buffer handoff (buffer-handoff.yml, #1199) for #1188 (#1207). Waits for the handoff run,
+# finds the buffer-batch run that queued auto-2026-10-25, and comments on #1188 with both links. If that run hit a Buffer
+# 429: with #1206 merged, the nightly 03:37 UTC buffer-batch run queues the batch, so it only says so; otherwise it
+# dispatches itself to re-run buffer-batch in queue mode once the limit frees up (the ledger skips posts already
+# queued), at most MAX_RETRIES times. A wait past the 6-hour job cap is handed to a new run. Delete this file once it
+# has run.
+name: Buffer handoff check (once)
+
+on:
+  schedule:
+    - cron: '0 11 26 10 *' # Oct 26, 06:00 Bogotá, two hours after the handoff starts
+  workflow_dispatch:
+    inputs:
+      not_before:
+        description: 'Retry only: queue the batch at or after this UTC time (2026-10-26T20:00:00Z); empty checks the handoff'
+        required: false
+        default: ''
+      attempt:
+        description: 'Retry only: number of this retry'
+        required: false
+        default: '0'
+
+concurrency:
+  group: buffer-handoff-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    permissions:
+      actions: write
+      contents: read
+      issues: write
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BATCH: auto-2026-10-25
+      TICKET: '1188'
+      NIGHTLY_PR: '1206'
+      SINCE: '2026-10-26T08:00:00Z'
+      MAX_RETRIES: '2'
+      NOT_BEFORE: ${{ inputs.not_before }}
+      ATTEMPT: ${{ inputs.attempt || '0' }}
+    steps:
+      - name: Check the batch and retry after a 429
+        run: |
+          link() { echo "[run $1]($GITHUB_SERVER_URL/$GH_REPO/actions/runs/$1)"; }
+          comment() {
+            echo "$1" >> "$GITHUB_STEP_SUMMARY"
+            gh api "repos/$GH_REPO/issues/$TICKET/comments" -f body="$1" > /dev/null
+          }
+          if ! [[ "$ATTEMPT" =~ ^[0-9]+$ ]]; then echo "::error::attempt is a number"; exit 1; fi
+
+          if [ -z "$NOT_BEFORE" ]; then
+            handoff=$(gh run list --workflow buffer-handoff.yml -L 20 --json databaseId,createdAt \
+              -q "[.[] | select(.createdAt >= \"$SINCE\")] | last | .databaseId // empty")
+            if [ -z "$handoff" ]; then
+              comment "Handoff check ($(link "$GITHUB_RUN_ID")): no buffer-handoff run started after $SINCE, so $BATCH was not checked or retried."
+              exit 1
+            fi
+            gh run watch "$handoff" -i 60 > /dev/null
+            step=$(gh run view "$handoff" --log | grep -E "\[run [0-9]+\]\([^)]*\): -f mode=queue -f batch=$BATCH -f dry_run=false" | tail -1 || true)
+            batch_run=$(grep -oE '\[run [0-9]+\]' <<< "$step" | grep -oE '[0-9]+' || true)
+            if [ -z "$batch_run" ]; then
+              comment "Handoff check ($(link "$GITHUB_RUN_ID")): the buffer-handoff $(link "$handoff") has no live queue step for $BATCH (its dry runs failed, or it started past step 1). Nothing retried."
+              exit 1
+            fi
+            who="The buffer-handoff $(link "$handoff") step for $BATCH"
+          else
+            wait=$(( $(date -u -d "$NOT_BEFORE" +%s) - $(date -u +%s) ))
+            if [ "$wait" -gt 19800 ]; then
+              sleep 19800
+              gh workflow run buffer-handoff-check.yml -f not_before="$NOT_BEFORE" -f attempt="$ATTEMPT"
+              echo "Still before $NOT_BEFORE; handed the wait to a new run." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            [ "$wait" -gt 0 ] && sleep "$wait"
+            if [ "$(gh api "repos/$GH_REPO/pulls/$NIGHTLY_PR" -q .merged)" = true ]; then
+              comment "Handoff check retry $ATTEMPT ($(link "$GITHUB_RUN_ID")): #$NIGHTLY_PR has merged, so the nightly 03:37 UTC buffer-batch run queues $BATCH instead of this retry."
+              exit 0
+            fi
+            since=$(date -u +%FT%TZ)
+            gh workflow run buffer-batch.yml -f mode=queue -f batch="$BATCH" -f dry_run=false
+            batch_run=""
+            for _ in $(seq 1 30); do
+              sleep 10
+              batch_run=$(gh run list --workflow buffer-batch.yml --event workflow_dispatch -L 10 --json databaseId,createdAt \
+                -q "[.[] | select(.createdAt >= \"$since\")] | last | .databaseId // empty")
+              [ -n "$batch_run" ] && break
+            done
+            if [ -z "$batch_run" ]; then
+              comment "Handoff check retry $ATTEMPT ($(link "$GITHUB_RUN_ID")): no buffer-batch run started for $BATCH. Re-run it by hand."
+              exit 1
+            fi
+            gh run watch "$batch_run" -i 30 > /dev/null
+            who="Retry $ATTEMPT of $BATCH"
+          fi
+
+          conclusion=$(gh run view "$batch_run" --json conclusion -q .conclusion)
+          log=$(gh run view "$batch_run" --log || true)
+          counts=$(grep -oE '[0-9]+ queued, [0-9]+ already in Buffer, [0-9]+ failed' <<< "$log" | tail -1 || true)
+          limit=$(grep -oE "Buffer's [0-9a-z]+ limit is spent; it frees up in [0-9]+ h|Buffer 429|RATE_LIMIT_EXCEEDED" <<< "$log" | head -1 || true)
+          window=$(grep -oE '"window":"[0-9a-z]+"' <<< "$log" | head -1 | cut -d'"' -f4 || true)
+          waits=$(grep -c 'Buffer rate limit' <<< "$log" || true)
+          ran="$who ($(link "$batch_run"), $conclusion: ${counts:-no count line})"
+
+          if [ "$conclusion" = success ] && [ -z "$limit" ]; then
+            comment "$ran queued every post of $BATCH in Buffer with no 429 that stopped it. 15-minute rate-limit waits retried in the run: $waits."
+            exit 0
+          fi
+          if [ -z "$limit" ]; then
+            comment "$ran failed without a Buffer 429. Nothing retried; check the run."
+            exit 1
+          fi
+          if [ "$(gh api "repos/$GH_REPO/pulls/$NIGHTLY_PR" -q .merged)" = true ]; then
+            comment "$ran hit a Buffer 429 ($limit). #$NIGHTLY_PR has merged, so the nightly 03:37 UTC buffer-batch run queues the rest of $BATCH."
+            exit 0
+          fi
+          if [ "$ATTEMPT" -ge "$MAX_RETRIES" ]; then
+            comment "$ran still hit a Buffer 429 ($limit) after $ATTEMPT retries, and #$NIGHTLY_PR hasn't merged. Re-run buffer-batch in queue mode for $BATCH by hand once the limit frees up."
+            exit 1
+          fi
+          hours=$(grep -oE 'frees up in [0-9]+ h' <<< "$limit" | grep -oE '[0-9]+' || true)
+          if [ -n "$hours" ] && [ "$hours" -gt 0 ]; then
+            next=$(date -u -d "+$((hours * 60 + 10)) minutes" +%FT%TZ)
+          elif [[ "$limit" == *"limit is spent"* ]] || { [ -n "$window" ] && [ "$window" != 15m ]; }; then
+            next=$(date -u -d 'tomorrow 09:05' +%FT%TZ)
+          else
+            next=$(date -u -d '+30 minutes' +%FT%TZ)
+          fi
+          gh workflow run buffer-handoff-check.yml -f not_before="$next" -f attempt="$((ATTEMPT + 1))"
+          comment "$ran hit a Buffer 429 ($limit${window:+, $window window}), and #$NIGHTLY_PR hasn't merged. Retry $((ATTEMPT + 1)) re-runs buffer-batch in queue mode for $BATCH at $next (the ledger skips posts already queued) and comments here."
