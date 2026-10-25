@@ -134,7 +134,8 @@ test("a failed sweep review is saved as a failure the diagnosis and re-runs pick
 
   const diagnosed = Object.assign({ id: "sweep-abc" }, record, {
     at: "2026-10-24T05:15:00Z", diagnosedAt: "2026-10-24T11:00:00Z",
-    diagnosis: { cause: "headers", cleared: false, rerun: false }
+    diagnosis: { cause: "headers", cleared: false, rerun: false },
+    fixes: record.fixes.filter((key) => key !== "headers #1102")
   });
   const plan = failures.rerunPlan([diagnosed], [], 8);
   assert.equal(plan.runs.length, 1, "the headers fix re-runs a sweep failure from before it");
