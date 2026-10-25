@@ -366,7 +366,7 @@
   };
   const SEVERITY_RANK = { critical: 5, high: 4, medium: 3, low: 2, info: 1 };
   const JIRA_PRIORITY = { critical: "Highest", high: "High", medium: "Medium", low: "Low", info: "Lowest" };
-  const HEADER_OF = { "sec-hsts": "Strict-Transport-Security", "sec-csp": "Content-Security-Policy-Report-Only", "sec-nosniff": "X-Content-Type-Options", "sec-referrer": "Referrer-Policy", "sec-permissions": "Permissions-Policy" };
+  const HEADER_OF = { "sec-hsts": "Strict-Transport-Security", "sec-csp": "Content-Security-Policy-Report-Only", "sec-nosniff": "X-Content-Type-Options", "sec-referrer": "Referrer-Policy", "sec-permissions": "Permissions-Policy", "sec-coop": "Cross-Origin-Opener-Policy" };
   const HOST_FILE = { Netlify: "netlify", Cloudflare: "netlify", "GitHub Pages": "netlify", Vercel: "vercel", "Firebase Hosting": "firebase", nginx: "nginx", Apache: "apache" };
   const DNS_OF = {
     "sec-spf": (row) => /^v=spf1/.test(row.value),
