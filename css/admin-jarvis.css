@@ -52,7 +52,7 @@
 .jv-menu-list[hidden] { display: none; }
 .jv-menu-list button { justify-content: flex-start; border-color: transparent; background: transparent; }
 
-.jv-tabs { position: relative; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 0.4rem; margin-bottom: 1rem; }
+.jv-tabs { position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 0.4rem; margin-bottom: 1rem; }
 .jv-tabs button { position: relative; text-align: left; background: rgba(9, 30, 44, 0.55); border: 1px solid var(--line); border-radius: 12px; padding: 0.5rem 0.6rem; color: var(--muted); cursor: pointer; display: grid; gap: 0.1rem; }
 .jv-tabs button:hover { border-color: var(--line-hi); color: var(--text); }
 .jv-tabs button[aria-selected="true"] { color: var(--text); border-color: var(--cyan); background: linear-gradient(180deg, rgba(56, 225, 255, 0.22), rgba(56, 225, 255, 0.04)); box-shadow: 0 0 22px rgba(56, 225, 255, 0.28); }
@@ -185,6 +185,8 @@
 .jv-tile-goal i.done { background: var(--green); } .jv-tile-goal i.behind { background: var(--amber); } .jv-tile-goal i.far-behind { background: var(--pink); }
 
 /* Connections and facts */
+.jv-meter { display: inline-block; width: 90px; height: 6px; border-radius: 3px; background: rgba(120, 220, 255, 0.12); overflow: hidden; vertical-align: middle; }
+.jv-meter i { display: block; height: 100%; background: var(--green); }
 .jv-needs { margin: 0.5rem 0 0; padding-left: 1.1rem; color: var(--amber); font-size: 0.8rem; display: grid; gap: 0.3rem; }
 .jv-facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; font-size: 0.86rem; color: var(--muted); }
 .jv-facts b { color: var(--text); font-family: ui-monospace, Menlo, monospace; }
