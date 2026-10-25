@@ -630,6 +630,28 @@ async function rendered(page) {
   }));
 }
 
+// The headless shell never restores a page (BackForwardCacheDisabledForDelegate), but Chromium still names the
+// page's own blockers in the same event, typed PageSupportNeeded.
+async function backForward(page) {
+  const client = await page.createCDPSession();
+  const reasons = [];
+  client.on("Page.backForwardCacheNotUsed", (event) => (event.notRestoredExplanations || []).forEach((row) => {
+    if (reasons.length < 12 && !reasons.some((seen) => seen.reason === row.reason)) reasons.push({ reason: String(row.reason), type: String(row.type) });
+  }));
+  try {
+    await client.send("Page.enable");
+    const isolated = await page.evaluate(() => { window.__qaStay = 1; return self.crossOriginIsolated === true; });
+    await page.goto("about:blank", { waitUntil: "load", timeout: NAV_MS });
+    await page.goBack({ waitUntil: "load", timeout: NAV_MS });
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    let restored = false;
+    try { restored = await page.evaluate(() => window.__qaStay === 1); } catch (error) { restored = false; }
+    return { ran: true, restored, isolated, reasons };
+  } finally {
+    await client.detach().catch(() => {});
+  }
+}
+
 async function domFacts(page) {
   return page.evaluate(() => {
     const here = location.hostname;
@@ -1554,9 +1576,21 @@ async function browse(job, log, onStart) {
       result.chat = { found: chats, cookies: beforeCookies.filter((cookie) => cookie.chat).map((cookie) => cookie.name).slice(0, 8), after: chatAfter };
       say("Chat on the start page: " + chats.map((row) => row.name + " (" + plural(row.requests, "request") + ", " + Math.round(row.bytes / 1024) + " KB)").join(", ") + ", with " + plural(result.chat.cookies.length, "chat cookie") + " before any choice.");
     }
-    result.console = { errors: rec.state.errorCount, samples: rec.state.errors };
-    result.failed = { count: rec.state.failedCount, samples: rec.state.failed };
-    result.mixed = { count: rec.state.mixed.length, samples: rec.state.mixed };
+    result.console = { errors: rec.state.errorCount, samples: rec.state.errors.slice() };
+    result.failed = { count: rec.state.failedCount, samples: rec.state.failed.slice() };
+    result.mixed = { count: rec.state.mixed.length, samples: rec.state.mixed.slice() };
+    if (left() > 12000) {
+      say("Leaving " + pathOf(first.finalUrl) + " for a blank page and pressing Back, to see whether the back/forward cache keeps it.");
+      try {
+        result.backForward = await withinBudget(backForward(page), Math.min(left(), 15000), "The back/forward cache check");
+        const blockers = result.backForward.reasons.filter((row) => row.type === "PageSupportNeeded").map((row) => row.reason);
+        say(result.backForward.restored ? "Back restored the page from the cache." : blockers.length ? "Back loaded the page again. Chromium named " + blockers.join(", ") + "." : "Back loaded the page again. Chromium named nothing on the page's side that blocks the cache.");
+      } catch (error) {
+        result.backForward = { ran: false, error: trim(error.message, 120) };
+        say("The back/forward cache check did not finish (" + result.backForward.error + ").");
+      }
+      lap("backForward");
+    } else skip("The back/forward cache check", 12000);
     await coldContext.close();
 
     // Phone width.
@@ -1673,4 +1707,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, open, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, backForward, open, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
