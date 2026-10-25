@@ -391,24 +391,24 @@
   </style>
 </head>
 <body>
-<a class="skip-link" href="#main">Skip to main content</a>
+<a class="skip-link" href="#main" data-account-copy="skip">Skip to main content</a>
 <header class="topbar">
   <a class="brand" href="qa-review.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a>
   <nav class="top-nav" aria-label="QA-lab URL Review">
     <a href="qa-review.html">URL Review</a>
-    <a href="qa-review.html#live-reports">Live Reports</a>
-    <a href="qa-review-social.html">Social</a>
-    <a href="qa-review-guide.html">Guide</a>
+    <a href="qa-review.html#live-reports" data-account-copy="navLive">Live Reports</a>
+    <a href="qa-review-social.html" data-account-copy="navSocial">Social</a>
+    <a href="qa-review-guide.html" data-account-copy="navGuide">Guide</a>
   </nav>
   <div class="top-actions">
-    <a class="btn btn-ghost" href="qa-review.html">New review</a>
+    <a class="btn btn-ghost" href="qa-review.html" data-account-copy="newReview">New review</a>
     <div class="lang-wrap notranslate" id="langWrap">
-      <button class="lang-toggle" id="langToggle" type="button" aria-label="Language" aria-haspopup="true" aria-expanded="false">
+      <button class="lang-toggle" id="langToggle" type="button" aria-label="Language" data-account-aria="language" aria-haspopup="true" aria-expanded="false">
         <img id="langFlag" src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English" width="20" height="20">
       </button>
       <div class="lang-menu" id="langMenu"></div>
     </div>
-    <button id="theme-toggle" type="button" aria-label="Toggle dark mode">
+    <button id="theme-toggle" type="button" aria-label="Toggle dark mode" data-account-aria="theme">
       <svg class="sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
       <svg class="moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
     </button>
@@ -417,10 +417,10 @@
 <main id="main" tabindex="-1">
   <div class="hero">
     <div class="hero-copy">
-      <p class="eyebrow">Your account</p>
-      <h1>Your <em>reviews</em></h1>
-      <p class="lede">Sign in to see the reviews saved under your email. A paid report or a free account opens in full; otherwise the opening of each one shows, and the rest opens when that report is paid.</p>
-      <p class="returns">A return takes <b>10%</b> off the first time in 30 days, <b>15%</b> the second, and <b>20%</b> after that. A return price never takes a price below half its list price.</p>
+      <p class="eyebrow" data-account-copy="eyebrow">Your account</p>
+      <h1 data-account-html="title">Your <em>reviews</em></h1>
+      <p class="lede" data-account-copy="lede">Sign in to see the reviews saved under your email. A paid report or a free account opens in full; otherwise the opening of each one shows, and the rest opens when that report is paid.</p>
+      <p class="returns" data-account-html="returns">A return takes <b>10%</b> off the first time in 30 days, <b>15%</b> the second, and <b>20%</b> after that. A return price never takes a price below half its list price.</p>
     </div>
     <div class="stage" id="stage" aria-hidden="true">
       <div class="stage-tilt">
@@ -446,33 +446,33 @@
     <div class="panel-head">
       <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
       <div>
-        <h2>Sign in</h2>
-        <p class="muted">Use the same sign-in as the review page. A code or link opened on another device or browser signs in nowhere.</p>
+        <h2 data-account-copy="signInTitle">Sign in</h2>
+        <p class="muted" data-account-copy="signInIntro">Use the same sign-in as the review page. A code or link opened on another device or browser signs in nowhere.</p>
       </div>
     </div>
     <div id="sign-in-start">
       <div class="sign-in-providers" id="sign-in-providers"></div>
-      <p class="muted small" id="sign-in-google-note" hidden>Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them. To share only your address, use email.</p>
-      <p class="or" id="sign-in-or" hidden>or with your email</p>
-      <label for="sign-in-email">Email</label>
+      <p class="muted small" id="sign-in-google-note" data-account-copy="googleNote" hidden>Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them. To share only your address, use email.</p>
+      <p class="or" id="sign-in-or" data-account-copy="orEmail" hidden>or with your email</p>
+      <label for="sign-in-email" data-account-copy="emailLabel">Email</label>
       <div class="sign-in-row">
         <input id="sign-in-email" type="email" autocomplete="email" placeholder="you@company.com">
-        <button class="btn" id="sign-in-send" type="button">Email me a code</button>
+        <button class="btn" id="sign-in-send" type="button" data-account-copy="sendCode">Email me a code</button>
       </div>
-      <p class="muted small" style="margin-top: 12px">Signing in stores your email and what the provider you pick shares with it. See <a href="qa-review-legal.html">Disclaimers</a>.</p>
+      <p class="muted small" style="margin-top: 12px" data-account-html="legal">Signing in stores your email and what the provider you pick shares with it. See <a href="qa-review-legal.html">Disclaimers</a>.</p>
     </div>
     <div id="sign-in-code-step" hidden>
       <label for="sign-in-code" id="sign-in-code-label">Code</label>
       <div class="sign-in-row">
         <input id="sign-in-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false">
-        <button class="btn" id="sign-in-check" type="button">Sign in</button>
+        <button class="btn" id="sign-in-check" type="button" data-account-copy="checkCode">Sign in</button>
       </div>
-      <p class="muted small" style="margin-top: 12px"><span id="sign-in-code-note">Type it here, or open the link in the email in this browser. </span><button class="text-link" id="sign-in-restart" type="button">Start over</button></p>
+      <p class="muted small" style="margin-top: 12px"><span id="sign-in-code-note" data-account-copy="codeNote">Type it here, or open the link in the email in this browser. </span><button class="text-link" id="sign-in-restart" type="button" data-account-copy="restart">Start over</button></p>
     </div>
     <div class="sign-in-done" id="sign-in-done" hidden>
       <span class="sign-in-avatar" aria-hidden="true"><span id="sign-in-initial" translate="no"></span><img class="sign-in-photo" id="sign-in-photo" alt="" width="46" height="46" referrerpolicy="no-referrer" hidden></span>
-      <p class="sign-in-id"><span class="sign-in-label">Signed in on this device</span><strong id="sign-in-who" translate="no"></strong><span id="sign-in-mail" translate="no" hidden></span></p>
-      <button class="btn btn-ghost" id="sign-out" type="button">Sign out</button>
+      <p class="sign-in-id"><span class="sign-in-label" data-account-copy="signedIn">Signed in on this device</span><strong id="sign-in-who" translate="no"></strong><span id="sign-in-mail" translate="no" hidden></span></p>
+      <button class="btn btn-ghost" id="sign-out" type="button" data-account-copy="signOut">Sign out</button>
     </div>
     <p id="sign-in-status" role="status"></p>
   </section>
@@ -480,64 +480,64 @@
   <section class="panel" id="file" style="--i: 1" hidden>
     <div class="panel-head">
       <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
-      <h2>Saved reviews</h2>
+      <h2 data-account-copy="savedTitle">Saved reviews</h2>
     </div>
     <p id="file-status"></p>
     <div class="pass-card" id="pass-card" hidden></div>
     <div class="saved-cmps" id="saved-cmps" hidden>
-      <h3>Saved comparisons</h3>
+      <h3 data-account-copy="savedCmps">Saved comparisons</h3>
       <ul id="saved-cmps-list"></ul>
       <p id="saved-cmps-status" role="status"></p>
     </div>
     <div class="toolbar">
-      <label class="check-all"><input type="checkbox" id="select-all"><span>Select all</span></label>
+      <label class="check-all"><input type="checkbox" id="select-all"><span data-account-copy="selectAll">Select all</span></label>
       <button class="check-all fold-all" id="fold-all" type="button" aria-controls="list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg><span>Expand all</span></button>
       <div class="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-        <input id="search" type="search" placeholder="Search by site, URL, status or case" aria-label="Search saved reviews" autocomplete="off" spellcheck="false">
+        <input id="search" type="search" placeholder="Search by site, URL, status or case" aria-label="Search saved reviews" data-account-placeholder="searchHint" data-account-aria="searchAria" autocomplete="off" spellcheck="false">
       </div>
       <span class="result-count" id="result-count" aria-live="polite"></span>
     </div>
     <div id="list"></div>
-    <div class="bulk" id="bulk" role="region" aria-label="Actions on the selected reviews" hidden>
+    <div class="bulk" id="bulk" role="region" aria-label="Actions on the selected reviews" data-account-aria="bulkAria" hidden>
       <span class="bulk-count" id="bulk-count"></span>
       <div class="bulk-actions">
-        <button class="btn btn-ghost" id="bulk-compare" type="button">Compare</button>
-        <button class="btn btn-ghost" id="bulk-open" type="button">Open in new tabs</button>
-        <button class="btn btn-ghost" id="bulk-download" type="button">Download JSON</button>
-        <button class="btn" id="bulk-unlock" type="button">Unlock</button>
+        <button class="btn btn-ghost" id="bulk-compare" type="button" data-account-copy="compare">Compare</button>
+        <button class="btn btn-ghost" id="bulk-open" type="button" data-account-copy="openTabs">Open in new tabs</button>
+        <button class="btn btn-ghost" id="bulk-download" type="button" data-account-copy="downloadJson">Download JSON</button>
+        <button class="btn" id="bulk-unlock" type="button" data-account-copy="unlock">Unlock</button>
         <button class="btn btn-danger" id="bulk-delete" type="button">Delete</button>
-        <button class="text-link" id="bulk-clear" type="button">Clear</button>
+        <button class="text-link" id="bulk-clear" type="button" data-account-copy="clear">Clear</button>
       </div>
     </div>
     <p id="bulk-status" role="status"></p>
     <div class="panel-foot">
-      <button class="btn btn-ghost" id="stop" type="button">Stop follow-up notes</button>
+      <button class="btn btn-ghost" id="stop" type="button" data-account-copy="stopNotes">Stop follow-up notes</button>
     </div>
   </section>
 
   <section class="panel" id="compare" style="--i: 2" hidden>
     <div class="panel-head">
       <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
-      <h2>Compare</h2>
+      <h2 data-account-copy="compare">Compare</h2>
     </div>
-    <p class="muted">Set one of your reviews next to up to four others: the health score, the six areas, the open problems and the indicators each site wins. Saved reviews are compared from their reports, with no new run and no charge.</p>
+    <p class="muted" data-account-copy="compareIntro">Set one of your reviews next to up to four others: the health score, the six areas, the open problems and the indicators each site wins. Saved reviews are compared from their reports, with no new run and no charge.</p>
     <div class="cmp-grid">
       <div>
-        <label for="cmp-base">Your site</label>
+        <label for="cmp-base" data-account-copy="yourSite">Your site</label>
         <select id="cmp-base"></select>
       </div>
       <fieldset class="cmp-with">
-        <legend>Compare with <span id="cmp-count"></span></legend>
+        <legend><span data-account-copy="compareWith">Compare with</span> <span id="cmp-count"></span></legend>
         <div class="cmp-picks" id="cmp-picks"></div>
       </fieldset>
     </div>
     <div class="cmp-actions">
-      <button class="btn" id="cmp-go" type="button" disabled>Compare</button>
+      <button class="btn" id="cmp-go" type="button" data-account-copy="compare" disabled>Compare</button>
       <span class="muted small" id="cmp-hint">Pick at least one other review.</span>
     </div>
     <div class="cmp-new">
-      <label for="compare-url">Or a site without a review yet</label>
+      <label for="compare-url" data-account-copy="newSite">Or a site without a review yet</label>
       <div class="cmp-new-row">
         <div class="compare-field">
           <div class="url-row notranslate" id="compare-url-field">
@@ -545,9 +545,9 @@
             <input id="compare-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="competitor.com">
           </div>
         </div>
-        <button class="btn btn-ghost" id="cmp-new-go" type="button">Review and compare</button>
+        <button class="btn btn-ghost" id="cmp-new-go" type="button" data-account-copy="reviewCompare">Review and compare</button>
       </div>
-      <p class="muted small">Opens the report of your site with this competitor ready to compare. It is reviewed first, for 9 USD, with the public, passive checks only.</p>
+      <p class="muted small" data-account-copy="newSiteNote">Opens the report of your site with this competitor ready to compare. It is reviewed first, for 9 USD, with the public, passive checks only.</p>
     </div>
     <p id="cmp-status" role="status"></p>
     <div id="cmp-result"></div>
@@ -556,21 +556,21 @@
   <section class="panel" id="privacy" style="--i: 3" hidden>
     <div class="panel-head">
       <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
-      <h2>Your data</h2>
+      <h2 data-account-copy="dataTitle">Your data</h2>
     </div>
     <div class="data-grid">
       <div class="data-block">
-        <h3>Download</h3>
-        <p>Download everything kept under this address as a JSON file: the account, its sign-ins, saved reviews, notes and alerts.</p>
-        <button class="btn btn-ghost" id="export" type="button">Download my data</button>
+        <h3 data-account-copy="download">Download</h3>
+        <p data-account-copy="downloadBody">Download everything kept under this address as a JSON file: the account, its sign-ins, saved reviews, notes and alerts.</p>
+        <button class="btn btn-ghost" id="export" type="button" data-account-copy="downloadBtn">Download my data</button>
       </div>
       <div class="data-block danger-zone">
-        <h3>Delete</h3>
-        <p>Deleting removes the account, its sign-ins on every device, saved reviews, notes, alerts, and the sign-in with Google or any other provider. A payment record stays for five years, as Colombian tax law requires, without the report. A stop on follow-up notes stays, so they do not start again. This cannot be undone.</p>
-        <label for="delete-confirm">Type your email to confirm</label>
+        <h3 data-account-copy="delete">Delete</h3>
+        <p data-account-copy="deleteBody">Deleting removes the account, its sign-ins on every device, saved reviews, notes, alerts, and the sign-in with Google or any other provider. A payment record stays for five years, as Colombian tax law requires, without the report. A stop on follow-up notes stays, so they do not start again. This cannot be undone.</p>
+        <label for="delete-confirm" data-account-copy="deleteConfirm">Type your email to confirm</label>
         <div class="sign-in-row">
           <input id="delete-confirm" type="email" autocomplete="off" spellcheck="false">
-          <button class="btn btn-danger" id="delete" type="button">Delete my account and runs</button>
+          <button class="btn btn-danger" id="delete" type="button" data-account-copy="deleteBtn">Delete my account and runs</button>
         </div>
       </div>
     </div>
@@ -616,15 +616,17 @@
 </main>
 <footer class="foot">
   <span translate="no">QA-lab URL Review · Carlos Muñoz</span>
-  <nav><a href="qa-review.html">Review a URL</a><a href="qa-review-guide.html">Guide</a><a href="qa-review-legal.html">Disclaimers</a><a href="accessibility.html">Accessibility</a></nav>
+  <nav><a href="qa-review.html" data-account-copy="footReview">Review a URL</a><a href="qa-review-guide.html" data-account-copy="navGuide">Guide</a><a href="qa-review-legal.html" data-account-copy="footLegal">Disclaimers</a><a href="accessibility.html" data-account-copy="footA11y">Accessibility</a></nav>
 </footer>
 <script>window.SiteAnalytics=window.SiteAnalytics||{q:[]};["track","event","trackEvent","once","page","bind","noteVisit"].forEach(function(n){SiteAnalytics[n]=SiteAnalytics[n]||function(){SiteAnalytics.q.push([n,arguments])}});</script>
 <script src="js/site-analytics.js?v=20261030a" defer></script>
 <script src="js/qa-review-consent.js?v=20261028p" defer></script>
 <script src="js/site-i18n.js?v=20261104a"></script>
 <script src="js/site-glossary.js?v=20261102a" defer></script>
-<script src="js/qa-review-auth.js?v=20261022i"></script>
+<script src="js/qa-review-auth.js?v=20261111a"></script>
+<script src="js/qa-review-account-copy.js?v=20261111a"></script>
 <script>
+  const ac = window.QAAccountCopy;
   function endpoint() {
     const host = location.hostname;
     if (host === "127.0.0.1" || host === "localhost") return location.port === "8768" ? "" : "http://127.0.0.1:8768";
@@ -687,15 +689,15 @@
     fileEl.hidden = true;
     privacyEl.hidden = true;
     document.getElementById("compare").hidden = true;
-    window.ReviewAuth.expire("Your sign-in has ended. Sign in again to see your reviews.");
+    window.ReviewAuth.expire(ac.t("expired"));
     return true;
   }
   document.getElementById("stop").addEventListener("click", async () => {
     const response = await account("/account/stop");
     if (signedOut(response)) return;
     document.getElementById("file-status").textContent = response.ok
-      ? "Follow-up notes for this address are stopped."
-      : "Follow-up notes did not stop. Try again in a moment.";
+      ? ac.t("stopped")
+      : ac.t("stopFailed");
     if (response.ok && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_stop", "URL Review", "stop");
   });
   const privacyStatus = document.getElementById("privacy-status");
@@ -719,19 +721,19 @@
   document.getElementById("export").addEventListener("click", async (event) => {
     const button = event.currentTarget;
     button.disabled = true;
-    sayPrivacy("Gathering your data…");
+    sayPrivacy(ac.t("gathering"));
     try {
       const response = await account("/account/export");
       if (signedOut(response)) return;
       if (!response.ok) {
-        sayPrivacy(await failure(response, "Your data did not download. Try again in a moment."), true);
+        sayPrivacy(await failure(response, ac.t("exportFailed")), true);
         return;
       }
       save(await response.json(), "qa-review-data-");
-      sayPrivacy("Your data is downloaded.");
+      sayPrivacy(ac.t("exported"));
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_export", "URL Review", "export");
     } catch (error) {
-      sayPrivacy("Your data did not download. Try again in a moment.", true);
+      sayPrivacy(ac.t("exportFailed"), true);
     } finally {
       button.disabled = false;
     }
@@ -740,18 +742,18 @@
     const confirmEl = document.getElementById("delete-confirm");
     const typed = confirmEl.value.trim();
     if (!typed) {
-      sayPrivacy("Type the address you are signed in with to confirm.", true);
+      sayPrivacy(ac.t("typeEmail"), true);
       confirmEl.focus();
       return;
     }
     const button = event.currentTarget;
     button.disabled = true;
-    sayPrivacy("Deleting…");
+    sayPrivacy(ac.t("deleting"));
     try {
       const response = await account("/account/delete", { confirm: typed });
       if (signedOut(response)) return;
       if (!response.ok) {
-        sayPrivacy(await failure(response, "The account was not fully deleted. Try again in a moment."), true);
+        sayPrivacy(await failure(response, ac.t("deleteFailed")), true);
         return;
       }
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_delete", "URL Review", "delete");
@@ -760,9 +762,9 @@
       fileEl.hidden = true;
       privacyEl.hidden = true;
       compareEl.hidden = true;
-      window.ReviewAuth.expire("Your account and runs are deleted, and this device is signed out.");
+      window.ReviewAuth.expire(ac.t("deleted"));
     } catch (error) {
-      sayPrivacy("The account was not fully deleted. Try again in a moment.", true);
+      sayPrivacy(ac.t("deleteFailed"), true);
     } finally {
       button.disabled = false;
     }
@@ -776,19 +778,27 @@
     privacyEl.hidden = false;
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_enter", "URL Review", "open");
     runs = data.runs || [];
-    paintSavedComparisons(data.comparisons || []);
+    loaded = data;
     picked.clear();
     unfolded.clear();
-    const opened = runs.filter((run) => run.open).length;
-    document.getElementById("file-status").textContent = data.free ? "Your account opens every report."
-      : data.pass ? "A 30-day pass is open on this account until " + new Date(data.paidUntil).toLocaleString() + ". Reports run on this pass are open. An older report opens when that report is paid."
-        : opened ? "Paid reports are open. For the others, the opening of each shows, and the rest opens when that report is paid."
-          : "The opening of each review shows. The rest opens when that report is paid.";
-    paintPass(data);
     listEl.classList.remove("settled");
-    render();
+    paintFile();
     listEl.classList.add("settled");
+  }
+  let loaded = null;
+  let compared = null;
+  // Everything drawn from the last /account/runs answer, so a language change redraws it without asking the server again.
+  function paintFile() {
+    const data = loaded;
+    paintSavedComparisons(data.comparisons || []);
+    const opened = runs.filter((run) => run.open).length;
+    document.getElementById("file-status").textContent = data.free ? ac.t("fileFree")
+      : data.pass ? ac.t("filePass", { until: new Date(data.paidUntil).toLocaleString(ac.lang()) })
+        : opened ? ac.t("filePaid") : ac.t("fileOpening");
+    paintPass(data);
+    render();
     fillCompare();
+    if (compared) paintComparison(compared);
   }
   function passLink(plan, label) {
     const link = node("a", label, "btn btn-ghost");
@@ -797,8 +807,7 @@
     return link;
   }
   function planLine(plan) {
-    return plan.name + " · " + plan.runs + " runs · " + plan.usd + " USD · up to " + plan.pages + " pages, " + plan.depth + " links deep, "
-      + (plan.tools ? "every framework and tool, and the signed-in run" : plan.frameworks + " frameworks or tools a run");
+    return ac.t("planLine", { name: plan.name, runs: plan.runs, usd: plan.usd, pages: plan.pages, depth: plan.depth, scope: plan.tools ? ac.t("planAll") : ac.t("planSome", { n: plan.frameworks }) });
   }
   // The open pass with its runs left and end date, and renew or upgrade; with none open, the three passes to buy.
   function paintPass(data) {
@@ -811,12 +820,12 @@
       const at = plans.findIndex((plan) => plan.id === pass.plan);
       const next = plans[Math.min(plans.length - 1, at + 1)];
       const actions = node("div", "", "pass-actions");
-      actions.append(passLink(plans[at] || pass, "Renew the " + pass.name + " pass"));
-      if (next && next.id !== pass.plan) actions.append(passLink(next, "Upgrade to " + next.name));
+      actions.append(passLink(plans[at] || pass, ac.t("renew", { name: pass.name })));
+      if (next && next.id !== pass.plan) actions.append(passLink(next, ac.t("upgrade", { name: next.name })));
       box.replaceChildren(
-        node("h3", "Your " + pass.name + " pass"),
-        node("p", pass.runsLeft + " of " + pass.runs + " runs left, until " + new Date(pass.paidUntil).toLocaleDateString() + ". It does not renew by itself."),
-        node("p", "A renewal or an upgrade adds 30 days from the end date and keeps the runs left.", "muted small"),
+        node("h3", ac.t("passTitle", { name: pass.name })),
+        node("p", ac.t("passLeft", { left: pass.runsLeft, runs: pass.runs, date: new Date(pass.paidUntil).toLocaleDateString(ac.lang()) })),
+        node("p", ac.t("passNote"), "muted small"),
         actions
       );
       return;
@@ -824,12 +833,12 @@
     const list = node("ul", "");
     plans.forEach((plan) => {
       const row = node("li", "");
-      row.append(node("span", planLine(plan)), passLink(plan, "Buy " + plan.name));
+      row.append(node("span", planLine(plan)), passLink(plan, ac.t("buy", { name: plan.name })));
       list.append(row);
     });
     box.replaceChildren(
-      node("h3", "30-day passes"),
-      node("p", "One payment for a set of runs over 30 days, with no auto-renew. Each run includes the full report, the fix list, the case export and alerts. A run that asks for more than the plan pays only for the extras.", "small"),
+      node("h3", ac.t("passesTitle")),
+      node("p", ac.t("passesBody"), "small"),
       list
     );
   }
@@ -837,7 +846,7 @@
     return "qa-review.html?report=" + encodeURIComponent(run.id);
   }
   function haystack(run) {
-    return [run.host, run.url, run.status, run.statement, run.at ? new Date(run.at).toLocaleString() : "", run.compare ? run.compare.ownHost : ""]
+    return [run.host, run.url, run.status, run.statement, run.at ? new Date(run.at).toLocaleString(ac.lang()) : "", run.compare ? run.compare.ownHost : ""]
       .concat((run.cases || []).map((item) => (item.layer || "") + " " + (item.title || ""))).join(" ").toLowerCase();
   }
   function shownRuns() {
@@ -850,11 +859,11 @@
   function render() {
     const list = shownRuns();
     listEl.replaceChildren(...list.map(card));
-    if (!runs.length) listEl.appendChild(node("p", "No finished review is saved for this address.", "empty"));
-    else if (!list.length) listEl.appendChild(node("p", "No saved review matches “" + searchEl.value.trim() + "”.", "empty"));
+    if (!runs.length) listEl.appendChild(node("p", ac.t("noRuns"), "empty"));
+    else if (!list.length) listEl.appendChild(node("p", ac.t("noMatch", { q: searchEl.value.trim() }), "empty"));
     document.querySelector(".toolbar").hidden = !runs.length;
-    document.getElementById("result-count").textContent = list.length !== runs.length ? list.length + " of " + runs.length
-      : runs.length + (runs.length === 1 ? " review" : " reviews");
+    document.getElementById("result-count").textContent = list.length !== runs.length ? ac.t("countOf", { n: list.length, total: runs.length })
+      : ac.t("count", { n: runs.length });
     paintBulk();
     paintFold();
   }
@@ -862,7 +871,7 @@
     const folds = listEl.querySelectorAll(".fold");
     const allOpen = !!folds.length && [...folds].every((fold) => fold.open);
     foldAllEl.hidden = !folds.length;
-    foldAllEl.querySelector("span").textContent = allOpen ? "Collapse all" : "Expand all";
+    foldAllEl.querySelector("span").textContent = allOpen ? ac.t("collapseAll") : ac.t("expandAll");
     foldAllEl.setAttribute("aria-expanded", String(allOpen));
   }
   function syncPicks() {
@@ -881,12 +890,12 @@
     const chosen = runs.filter((run) => picked.has(run.id));
     bulkEl.hidden = !chosen.length;
     document.getElementById("bulk-compare").hidden = chosen.length < 2;
-    document.getElementById("bulk-count").textContent = chosen.length + " selected";
+    document.getElementById("bulk-count").textContent = ac.t("picked", { n: chosen.length });
     const locked = chosen.filter((run) => !run.open).length;
     const unlock = document.getElementById("bulk-unlock");
     unlock.hidden = !locked;
     unlock.disabled = locked > 1;
-    unlock.title = locked > 1 ? "Unlock one report at a time for now." : "";
+    unlock.title = locked > 1 ? ac.t("unlockOne") : "";
     disarmDelete();
   }
   function sayBulk(message, bad) {
@@ -894,9 +903,9 @@
     bulkStatus.classList.toggle("bad", !!bad);
   }
   function compareLines(run) {
-    const lines = run.compare ? [["Compared with your review of ", run.compare.baseId, run.compare.ownHost, run.compare]] : [];
+    const lines = run.compare ? [[ac.t("comparedYours"), run.compare.baseId, run.compare.ownHost, run.compare]] : [];
     runs.filter((other) => other.compare && other.compare.baseId === run.id)
-      .forEach((other) => lines.push(["Compared with ", other.id, other.compare.rivalHost, other.compare]));
+      .forEach((other) => lines.push([ac.t("comparedWith"), other.id, other.compare.rivalHost, other.compare]));
     return lines.map(([lead, id, host, line]) => {
       const row = node("p", lead, "run-compare");
       const link = node("a", host);
@@ -919,7 +928,7 @@
     const box = document.createElement("input");
     box.type = "checkbox";
     box.checked = picked.has(run.id);
-    box.setAttribute("aria-label", "Select " + (run.host || "review"));
+    box.setAttribute("aria-label", ac.t("pick", { host: run.host || ac.t("review") }));
     box.addEventListener("change", () => {
       if (box.checked) picked.add(run.id);
       else picked.delete(run.id);
@@ -928,15 +937,15 @@
     });
     pick.appendChild(box);
     title.appendChild(pick);
-    title.appendChild(node("h3", run.host || "Review"));
+    title.appendChild(node("h3", run.host || ac.t("review")));
     head.appendChild(title);
-    head.appendChild(node("span", run.open ? "Open" : "Opening shown", "pill " + (run.open ? "open" : "shut")));
+    head.appendChild(node("span", run.open ? ac.t("open") : ac.t("openingShown"), "pill " + (run.open ? "open" : "shut")));
     block.appendChild(head);
     const meta = document.createElement("p");
     meta.className = "run-meta";
-    meta.appendChild(node("span", run.at ? new Date(run.at).toLocaleString() : "—"));
+    meta.appendChild(node("span", run.at ? new Date(run.at).toLocaleString(ac.lang()) : "—"));
     meta.appendChild(node("span", text(run.status)));
-    meta.appendChild(node("span", text(run.caseCount) + " cases"));
+    meta.appendChild(node("span", typeof run.caseCount === "number" ? ac.t("cases", { n: run.caseCount }) : "—"));
     block.appendChild(meta);
     compareLines(run).forEach((row) => block.appendChild(row));
     const url = document.createElement("p");
@@ -950,8 +959,8 @@
       fold.open = unfolded.has(run.id);
       const summary = document.createElement("summary");
       summary.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>');
-      summary.appendChild(node("span", run.statement ? "Summary and cases" : "Cases"));
-      if (shown.length) summary.appendChild(node("span", shown.length + (run.caseCount > shown.length ? " of " + run.caseCount : ""), "fold-count"));
+      summary.appendChild(node("span", run.statement ? ac.t("summaryCases") : ac.t("casesOnly")));
+      if (shown.length) summary.appendChild(node("span", run.caseCount > shown.length ? ac.t("foldCount", { shown: shown.length, total: run.caseCount }) : String(shown.length), "fold-count"));
       fold.appendChild(summary);
       if (run.statement) {
         const line = document.createElement("p");
@@ -979,7 +988,7 @@
     const report = document.createElement("a");
     report.className = run.open ? "btn" : "btn btn-ghost";
     report.href = reportHref(run);
-    report.textContent = run.open ? "Open the full report" : "Open this report on the review page";
+    report.textContent = run.open ? ac.t("openFull") : ac.t("openHere");
     block.appendChild(report);
     tilt(block, 7);
     return block;
@@ -1012,9 +1021,6 @@
   function chosenRuns() {
     return runs.filter((run) => picked.has(run.id));
   }
-  function tally(count, done) {
-    return count + (count === 1 ? " review " : " reviews ") + done + ".";
-  }
   document.getElementById("bulk-open").addEventListener("click", () => {
     let blocked = 0;
     chosenRuns().forEach((run) => {
@@ -1022,19 +1028,19 @@
       if (tab) tab.opener = null;
       else blocked += 1;
     });
-    sayBulk(blocked ? "The browser blocked " + blocked + " of the tabs. Allow pop-ups for this site and try again." : "", !!blocked);
+    sayBulk(blocked ? ac.t("blocked", { n: blocked }) : "", !!blocked);
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "open");
   });
   document.getElementById("bulk-download").addEventListener("click", async (event) => {
     const button = event.currentTarget;
     const ids = new Set(picked);
     button.disabled = true;
-    sayBulk("Gathering the selected reviews…");
+    sayBulk(ac.t("gatheringPicked"));
     try {
       const response = await account("/account/export");
       if (signedOut(response)) return;
       if (!response.ok) {
-        sayBulk(await failure(response, "The reviews did not download. Try again in a moment."), true);
+        sayBulk(await failure(response, ac.t("pickedFailed")), true);
         return;
       }
       const data = await response.json();
@@ -1045,10 +1051,10 @@
         captures: (data.captures || []).filter((row) => ids.has(row.reportId)),
         stops: (data.stops || []).filter((row) => ids.has(row.id))
       }, "qa-review-selected-");
-      sayBulk(tally(ids.size, "downloaded"));
+      sayBulk(ac.t("downloaded", { n: ids.size }));
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "download");
     } catch (error) {
-      sayBulk("The reviews did not download. Try again in a moment.", true);
+      sayBulk(ac.t("pickedFailed"), true);
     } finally {
       button.disabled = false;
     }
@@ -1064,31 +1070,31 @@
   function disarmDelete() {
     clearTimeout(armed);
     armed = 0;
-    deleteEl.textContent = "Delete";
+    deleteEl.textContent = ac.t("delete");
   }
   deleteEl.addEventListener("click", async () => {
     const ids = [...picked];
     if (!armed) {
-      deleteEl.textContent = "Delete " + ids.length + "? Click again";
+      deleteEl.textContent = ac.t("confirmDelete", { n: ids.length });
       armed = setTimeout(disarmDelete, 5000);
       return;
     }
     disarmDelete();
     deleteEl.disabled = true;
-    sayBulk("Deleting…");
+    sayBulk(ac.t("deleting"));
     try {
       const response = await account("/account/delete-runs", { ids });
       if (signedOut(response)) return;
       if (!response.ok) {
-        sayBulk(await failure(response, "The reviews were not all deleted. Try again in a moment."), true);
+        sayBulk(await failure(response, ac.t("runsDeleteFailed")), true);
         return;
       }
       const counts = await response.json();
       await loadRuns();
-      sayBulk(tally(counts.deleted, "deleted") + (counts.paymentsKept ? " A payment record stays for five years, as Colombian tax law requires, without the report." : ""));
+      sayBulk(ac.t("deletedRuns", { n: counts.deleted }) + (counts.paymentsKept ? " " + ac.t("paymentsKept") : ""));
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "delete");
     } catch (error) {
-      sayBulk("The reviews were not all deleted. Try again in a moment.", true);
+      sayBulk(ac.t("runsDeleteFailed"), true);
     } finally {
       deleteEl.disabled = false;
     }
@@ -1103,7 +1109,7 @@
   const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
   const cmpWith = new Set();
   function bare(host) { return String(host || "").toLowerCase().replace(/^www\./, ""); }
-  function shortDate(at) { return at ? new Date(at).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : ""; }
+  function shortDate(at) { return at ? new Date(at).toLocaleDateString(ac.lang(), { day: "numeric", month: "short", year: "numeric" }) : ""; }
   function sayCompare(message, bad) {
     cmpStatus.textContent = message;
     cmpStatus.classList.toggle("bad", !!bad);
@@ -1113,7 +1119,7 @@
     compareEl.hidden = !finished.length;
     const kept = cmpBase.value;
     cmpBase.replaceChildren(...finished.map((run) => {
-      const option = node("option", (run.host || "Review") + " · " + shortDate(run.at) + (run.open ? "" : " · opening shown"));
+      const option = node("option", (run.host || ac.t("review")) + " · " + shortDate(run.at) + (run.open ? "" : " · " + ac.t("tagOpeningShown")));
       option.value = run.id;
       return option;
     }));
@@ -1141,16 +1147,17 @@
         else cmpWith.delete(run.id);
         paintPicks();
       });
-      row.append(box, node("span", run.host || "Review", "host"), node("small", same ? "same site" : shortDate(run.at) + (run.open ? "" : " · shut")));
+      row.append(box, node("span", run.host || ac.t("review"), "host"), node("small", same ? ac.t("sameSite") : shortDate(run.at) + (run.open ? "" : " · " + ac.t("tagShut"))));
       row.querySelector(".host").setAttribute("translate", "no");
       return row;
-    }) : [node("p", "Your other reviews show here. Add a site below to compare with one that has no review yet.", "muted small")]));
-    document.getElementById("cmp-count").textContent = "(" + cmpWith.size + " of " + CMP_OTHERS + ")";
+    }) : [node("p", ac.t("othersHere"), "muted small")]));
+    document.getElementById("cmp-count").textContent = ac.t("pickCount", { n: cmpWith.size, max: CMP_OTHERS });
     cmpGo.disabled = !cmpWith.size;
-    document.getElementById("cmp-hint").textContent = cmpWith.size ? "" : "Pick at least one other review.";
+    document.getElementById("cmp-hint").textContent = cmpWith.size ? "" : ac.t("pickOne");
   }
   cmpBase.addEventListener("change", () => {
     paintPicks();
+    compared = null;
     cmpResult.replaceChildren();
     sayCompare("");
   });
@@ -1180,7 +1187,7 @@
     const table = document.createElement("table");
     table.className = "cmp-table";
     const headRow = document.createElement("tr");
-    headRow.appendChild(node("th", "Indicator"));
+    headRow.appendChild(node("th", ac.t("indicator")));
     const baseHead = node("th", base.host, "base");
     baseHead.setAttribute("translate", "no");
     headRow.appendChild(baseHead);
@@ -1195,18 +1202,18 @@
     const area = (cmp, name) => (cmp.areas || []).find((item) => item.area === name) || {};
     const kpi = (cmp, key) => (cmp.kpis || []).find((item) => item.key === key) || {};
     // Each line: the label, the base value, a reader for the competitor, the cell kind, and which way wins.
-    const lines = [["Health score", first && first.overall.own, (cmp) => cmp.overall.rival, scoreCell, "high"]]
-      .concat(AREAS.map((name) => [name, first && area(first, name).own, (cmp) => area(cmp, name).rival, scoreCell, "high"]))
+    const lines = [[ac.t("health"), first && first.overall.own, (cmp) => cmp.overall.rival, scoreCell, "high"]]
+      .concat(AREAS.map((name) => [ac.area(name), first && area(first, name).own, (cmp) => area(cmp, name).rival, scoreCell, "high"]))
       .concat([
-        ["Checks passing (%)", first && kpi(first, "passRate").own, (cmp) => kpi(cmp, "passRate").rival, plainCell, "high"],
-        ["Open problems", first && kpi(first, "open").own, (cmp) => kpi(cmp, "open").rival, plainCell, "low"],
-        ["Critical and high", first && kpi(first, "urgent").own, (cmp) => kpi(cmp, "urgent").rival, plainCell, "low"]
+        [ac.t("passing"), first && kpi(first, "passRate").own, (cmp) => kpi(cmp, "passRate").rival, plainCell, "high"],
+        [ac.t("openProblems"), first && kpi(first, "open").own, (cmp) => kpi(cmp, "open").rival, plainCell, "low"],
+        [ac.t("urgent"), first && kpi(first, "urgent").own, (cmp) => kpi(cmp, "urgent").rival, plainCell, "low"]
       ]);
-    const why = (row) => row.same ? "Same site. Its report shows the history between the two reviews."
-      : row.stopped ? "This review stopped early."
-        : row.locked ? "Opens in full once this report is paid." : "No scores saved.";
+    const why = (row) => row.same ? ac.t("whySame")
+      : row.stopped ? ac.t("whyStopped")
+        : row.locked ? ac.t("whyLocked") : ac.t("whyNone");
     const tbody = document.createElement("tbody");
-    lines.forEach(([label, own, read, cell, better]) => {
+    lines.forEach(([label, own, read, cell, better], line) => {
       const values = [own].concat(columns.map((row) => (row.compare ? read(row.compare) : null)));
       const known = values.filter((value) => value != null);
       const top = known.length > 1 ? (better === "high" ? Math.max(...known) : Math.min(...known)) : null;
@@ -1218,7 +1225,7 @@
       values.forEach((value, index) => {
         const row = index ? columns[index - 1] : null;
         if (row && !row.compare) {
-          tr.appendChild(node("td", label === "Health score" ? why(row) : "", "note"));
+          tr.appendChild(node("td", line === 0 ? why(row) : "", "note"));
           return;
         }
         tr.appendChild(cell(value, leads === 1 && value === top));
@@ -1226,27 +1233,27 @@
       tbody.appendChild(tr);
     });
     const wins = document.createElement("tr");
-    const winsHead = node("th", "Indicators won (yours–theirs)");
+    const winsHead = node("th", ac.t("won"));
     winsHead.setAttribute("scope", "row");
     wins.append(winsHead, node("td", "–", "note"));
     const actions = document.createElement("tr");
     actions.append(node("th", ""), node("td", ""));
     columns.forEach((row) => {
       const cmp = row.compare;
-      wins.appendChild(cmp && cmp.dominance ? plainCell(cmp.dominance.own + "–" + cmp.dominance.rival + (cmp.dominance.tie ? " (" + cmp.dominance.tie + " level)" : "")) : node("td", "", "note"));
+      wins.appendChild(cmp && cmp.dominance ? plainCell(cmp.dominance.own + "–" + cmp.dominance.rival + (cmp.dominance.tie ? " (" + ac.t("level", { n: cmp.dominance.tie }) + ")" : "")) : node("td", "", "note"));
       const td = document.createElement("td");
       const link = document.createElement("a");
       link.className = "btn btn-ghost";
       if (row.compare) {
         link.href = "qa-review.html?report=" + encodeURIComponent(base.id) + "&vs=" + encodeURIComponent(row.id);
-        link.textContent = "Full comparison";
+        link.textContent = ac.t("fullCompare");
       } else if (row.locked) {
         const run = runs.find((item) => item.id === row.id) || {};
         link.href = "qa-review-pay.html?purpose=report&reportId=" + encodeURIComponent(row.id) + "&frameworks=" + encodeURIComponent((run.frameworks || []).join(","));
-        link.textContent = "Unlock";
+        link.textContent = ac.t("unlock");
       } else {
         link.href = reportHref(row);
-        link.textContent = "Open report";
+        link.textContent = ac.t("openReport");
       }
       td.appendChild(link);
       actions.appendChild(td);
@@ -1259,30 +1266,30 @@
     const ids = [base.id].concat(made.list.filter((row) => !row.missing && !row.stopped).map((row) => row.id));
     const full = document.createElement("p");
     full.className = "cmp-full";
-    const fullGo = node("button", "Open the full comparison report", "btn");
+    const fullGo = node("button", ac.t("openAll"), "btn");
     fullGo.type = "button";
     const fullStatus = node("span", "", "muted small");
     fullStatus.setAttribute("role", "status");
     fullGo.addEventListener("click", () => openFull(ids, fullGo, fullStatus));
     full.append(fullGo, fullStatus);
-    cmpResult.replaceChildren(full, scroll, node("p", "Shaded cells lead their line. Full comparison opens the head-to-head on the review page: radar, speed and weight, the problems only one site has, and market presence. The full comparison report sets every section of each report side by side, is kept under Saved comparisons, and prints or downloads as a PDF once every report in it is paid.", "cmp-foot"));
+    cmpResult.replaceChildren(full, scroll, node("p", ac.t("cmpFoot"), "cmp-foot"));
   }
   // Saves the reviews as one comparison and opens it on the review page.
   async function openFull(ids, button, status) {
     button.disabled = true;
-    status.textContent = "Saving the comparison…";
+    status.textContent = ac.t("saving");
     try {
       const response = await account("/account/comparison/save", { ids, from: "account" });
       if (signedOut(response)) return;
       const data = await response.json();
       if (!response.ok || !data.id) {
-        status.textContent = data.error || "The comparison was not saved. Try again in a moment.";
+        status.textContent = data.error || ac.t("saveFailed");
         return;
       }
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_multi", "URL Review", String(ids.length));
       location.href = "qa-review.html?comparison=" + encodeURIComponent(data.id);
     } catch (error) {
-      status.textContent = "The comparison was not saved. Try again in a moment.";
+      status.textContent = ac.t("saveFailed");
     } finally {
       button.disabled = false;
     }
@@ -1295,8 +1302,8 @@
       const link = node("a", line.hosts.join(" vs "));
       link.href = "qa-review.html?comparison=" + encodeURIComponent(line.id);
       link.setAttribute("translate", "no");
-      const when = node("span", (line.at ? new Date(line.at).toLocaleDateString() : "") + " · " + line.ids.length + " reviews", "muted");
-      const drop = node("button", "Delete", "btn btn-ghost");
+      const when = node("span", (line.at ? new Date(line.at).toLocaleDateString(ac.lang()) : "") + " · " + ac.t("count", { n: line.ids.length }), "muted");
+      const drop = node("button", ac.t("delete"), "btn btn-ghost");
       drop.type = "button";
       drop.addEventListener("click", async () => {
         drop.disabled = true;
@@ -1305,15 +1312,15 @@
           const response = await account("/account/comparison/delete", { id: line.id });
           if (signedOut(response)) return;
           if (!response.ok) {
-            say.textContent = await failure(response, "The comparison was not deleted. Try again in a moment.");
+            say.textContent = await failure(response, ac.t("cmpDeleteFailed"));
             drop.disabled = false;
             return;
           }
-          say.textContent = "The comparison of " + line.hosts.join(", ") + " is deleted. The reviews in it stay saved.";
+          say.textContent = ac.t("cmpDeleted", { hosts: line.hosts.join(", ") });
           item.remove();
           savedCmpsEl.hidden = !document.querySelector("#saved-cmps-list li");
         } catch (error) {
-          say.textContent = "The comparison was not deleted. Try again in a moment.";
+          say.textContent = ac.t("cmpDeleteFailed");
           drop.disabled = false;
         }
       });
@@ -1325,22 +1332,24 @@
     const ids = [cmpBase.value].concat([...cmpWith]);
     if (ids.length < 2) return;
     cmpGo.disabled = true;
-    sayCompare("Setting the reviews side by side…");
+    sayCompare(ac.t("sideBySide"));
+    compared = null;
     cmpResult.replaceChildren();
     try {
       const response = await account("/account/compare", { ids });
       if (signedOut(response)) return;
       const made = await response.json();
       if (!response.ok || made.error) {
-        sayCompare(made.error || "The comparison did not load. Try again in a moment.", true);
+        sayCompare(made.error || ac.t("cmpFailed"), true);
         return;
       }
       const shown = made.list.filter((row) => row.compare).length;
-      sayCompare(shown === made.list.length ? "" : shown + " of " + made.list.length + " reviews are compared. The others say why below.");
+      sayCompare(shown === made.list.length ? "" : ac.t("cmpPartial", { shown, total: made.list.length }));
+      compared = made;
       paintComparison(made);
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_compare", "URL Review", String(ids.length));
     } catch (error) {
-      sayCompare("The comparison did not load. Try again in a moment.", true);
+      sayCompare(ac.t("cmpFailed"), true);
     } finally {
       cmpGo.disabled = !cmpWith.size;
     }
@@ -1350,7 +1359,7 @@
     const input = document.getElementById("compare-url");
     const url = input.value.trim().replace(/^\s*https?:\/\//i, "");
     if (!url || /\s/.test(url)) {
-      sayCompare("Enter the competitor's address.", true);
+      sayCompare(ac.t("enterRival"), true);
       input.focus();
       return;
     }
@@ -1359,12 +1368,12 @@
     let host = "";
     try { host = new URL("https://" + url).hostname; } catch (error) { host = ""; }
     if (!host) {
-      sayCompare("Enter the competitor's address.", true);
+      sayCompare(ac.t("enterRival"), true);
       input.focus();
       return;
     }
     if (bare(host) === bare(base.host)) {
-      sayCompare("That is the same site. Enter a competitor's address.", true);
+      sayCompare(ac.t("sameRival"), true);
       return;
     }
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_compare", "URL Review", "new");
@@ -1381,12 +1390,13 @@
     compareEl.scrollIntoView({ behavior: still.matches ? "auto" : "smooth", block: "start" });
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_account_bulk", "URL Review", "compare");
     if (cmpWith.size) runCompare();
-    else sayCompare("Pick reviews of different sites to compare.", true);
+    else sayCompare(ac.t("pickDifferent"), true);
   });
   window.ReviewAuth.onChange((signed) => {
     if (signed) loadRuns();
     else {
       fileEl.hidden = privacyEl.hidden = compareEl.hidden = true;
+      loaded = compared = null;
       cmpResult.replaceChildren();
       cmpWith.clear();
       runs = [];
@@ -1401,6 +1411,8 @@
     const flag = document.getElementById("langFlag");
     const PAGE_LANGS = ["es", "pt", "de", "fr", "it"];
     const show = (code) => {
+      ac.use(code);
+      if (loaded && !fileEl.hidden) paintFile();
       flag.src = SiteI18n.flagUrl(code);
       flag.alt = SiteI18n.displayName(code);
       document.documentElement.lang = code;
@@ -1412,7 +1424,7 @@
       wrap.classList.remove("open");
       toggle.setAttribute("aria-expanded", "false");
     };
-    menu.innerHTML = '<input class="lang-search" type="search" placeholder="Search language" aria-label="Search language" autocomplete="off"><div class="lang-options-list"></div>';
+    menu.innerHTML = '<input class="lang-search" type="search" placeholder="Search language" aria-label="Search language" data-account-placeholder="searchLanguage" data-account-aria="searchLanguage" autocomplete="off"><div class="lang-options-list"></div>';
     const search = menu.querySelector(".lang-search");
     const list = menu.querySelector(".lang-options-list");
     const renderMenu = () => {
@@ -1447,6 +1459,7 @@
       close();
       toggle.focus();
     });
+    show(SiteI18n.current());
     SiteI18n.resolve().then((lang) => {
       show(lang || "en");
       SiteI18n.applyMachineTranslate(lang || "en");
@@ -1455,7 +1468,7 @@
   }
   mountLanguage();
 </script>
-<script src="js/qa-review-verify.js?v=20261023b"></script>
+<script src="js/qa-review-verify.js?v=20261111a"></script>
 <script src="js/url-suggest.js?v=20261109a"></script>
 </body>
 </html>

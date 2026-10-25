@@ -486,17 +486,17 @@
     const code = reasonCode();
     const reason = reasonBox.value.trim();
     const host = urlInput.value.trim();
-    if (name.length < 2 || !/\p{L}/u.test(name)) errors.push({ field: "name", message: "Enter your name." });
-    if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(email) || email.includes("..")) errors.push({ field: "email", message: "Enter a valid email." });
-    if (!REASONS.some((item) => item.id === code)) errors.push({ field: "reason", message: "Choose a reason." });
-    if (code === "other" && reason.length < 8) errors.push({ field: "reason", message: "Write the reason in a sentence." });
+    if (name.length < 2 || !/\p{L}/u.test(name)) errors.push({ field: "name", message: rc.t("errName") });
+    if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(email) || email.includes("..")) errors.push({ field: "email", message: rc.t("errEmail") });
+    if (!REASONS.some((item) => item.id === code)) errors.push({ field: "reason", message: rc.t("errReason") });
+    if (code === "other" && reason.length < 8) errors.push({ field: "reason", message: rc.t("errReasonText") });
     if (code === "client") {
       const clientName = document.getElementById("client-name").value.trim();
       const clientEmail = document.getElementById("client-email").value.trim();
       const clientHost = document.getElementById("client-url").value.trim();
-      if (clientName.length < 2 || !/\p{L}/u.test(clientName)) errors.push({ field: "clientName", message: "Enter the client's name." });
-      if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(clientEmail) || clientEmail.includes("..")) errors.push({ field: "clientEmail", message: "Enter the client's email." });
-      if (!clientHost || /\s/.test(clientHost)) errors.push({ field: "clientUrl", message: "Enter the client's website." });
+      if (clientName.length < 2 || !/\p{L}/u.test(clientName)) errors.push({ field: "clientName", message: rc.t("errClientName") });
+      if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(clientEmail) || clientEmail.includes("..")) errors.push({ field: "clientEmail", message: rc.t("errClientEmail") });
+      if (!clientHost || /\s/.test(clientHost)) errors.push({ field: "clientUrl", message: rc.t("errClientUrl") });
     }
     if (code === "own" && email.indexOf("@") !== -1 && host) {
       const mailHost = email.split("@")[1].replace(/^www\./, "");
@@ -504,11 +504,11 @@
       const mailRoot = mailHost.split(".").slice(-2).join(".");
       const siteRoot = siteHost.split(".").slice(-2).join(".");
       if (mailRoot && siteRoot && mailRoot.toLowerCase() !== siteRoot.toLowerCase()) {
-        errors.push({ field: "email", message: "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership." });
+        errors.push({ field: "email", message: rc.t("errSameDomain") });
       }
     }
-    if (!host || /\s/.test(host)) errors.push({ field: "url", message: "Enter a public page after https://." });
-    if (!selectedFrameworks().length) errors.push({ field: "frameworks", message: "Choose at least one framework for the proposed cases." });
+    if (!host || /\s/.test(host)) errors.push({ field: "url", message: rc.t("errUrl") });
+    if (!selectedFrameworks().length) errors.push({ field: "frameworks", message: rc.t("errFrameworks") });
     return errors;
   }
 
@@ -1356,9 +1356,8 @@
 
   function compareDone(compare, tail) {
     const failed = compare.failed || [];
-    const host = (compare.report && compare.report.host) || "your site";
-    return "The comparisons are done. Your report of " + host + " lists each one under Next to a competitor." +
-      (failed.length ? " These did not finish: " + failed.join(", ") + "." : "") + tail;
+    const host = (compare.report && compare.report.host) || rc.t("yourSite");
+    return [rc.t("stCompareDone", { host }), failed.length ? rc.t("stCompareFailed", { list: failed.join(", ") }) : "", tail].filter(Boolean).join(" ");
   }
 
   // compare.done: the competitor reviews that finished. Two or more open with the report as one
@@ -1368,7 +1367,7 @@
     if (ids.length < 3 || !window.QAReviewMulti) return;
     const id = await QAReviewMulti.save(ids, "review", null);
     if (!id) {
-      setStatus(compareDone(compare, " Open your report of " + ((compare.report && compare.report.host) || "your site") + " and press Open the full comparison report to see them side by side."), true);
+      setStatus(compareDone(compare, rc.t("stCompareOpen", { host: (compare.report && compare.report.host) || rc.t("yourSite") })), true);
       return;
     }
     history.pushState(null, "", location.pathname + "?comparison=" + encodeURIComponent(id));
@@ -1645,7 +1644,7 @@
         return;
       }
       spend("print", () => {
-        if (!current.paid) setStatus("The print sheet does not include the report. The attempt is recorded.", false);
+        if (!current.paid) setStatus(rc.t("stPrint"), false);
         sheet();
       });
     });
@@ -2397,7 +2396,7 @@
     const type = res.headers.get("content-type") || "";
     if (type.indexOf("application/json") !== -1 || !res.ok) {
       const body = await res.json();
-      const error = new Error(body.error || "The review failed.");
+      const error = new Error(body.error || rc.t("stFailed"));
       error.fields = body.fields;
       error.paymentRequired = !!body.paymentRequired;
       error.body = body;
@@ -2417,7 +2416,7 @@
         if (!part.trim()) return;
         const msg = JSON.parse(part);
         if (msg.type === "log") appendLog(msg.text);
-        if (msg.type === "error") throw new Error(msg.error || "The review failed.");
+        if (msg.type === "error") throw new Error(msg.error || rc.t("stFailed"));
         if (msg.type === "done") donePayload = msg;
       });
     }
@@ -2433,7 +2432,7 @@
     }
     if (!signedIn()) {
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "client");
-      setStatus("Sign in above to run a review. The review runs on the device where you sign in.", true);
+      setStatus(rc.t("stSignIn"), true);
       if (window.ReviewAuth) ReviewAuth.focus();
       return;
     }
@@ -2453,7 +2452,7 @@
       if (pricing) return;
       const answer = await confirmRun();
       if (answer === false) {
-        setStatus("Nothing was started or charged.", false);
+        setStatus(rc.t("stNothing"), false);
         return;
       }
       confirmed = answer === true;
@@ -2468,7 +2467,7 @@
     runLog.innerHTML = "";
     runLog.classList.add("is-live");
     if (window.ReviewProgress) ReviewProgress.start({ host: compare ? compare.url : urlInput.value, pages: compare ? compare.pages : selectedPages() });
-    setStatus("Checking the email domain, then analyzing the public page…", false);
+    setStatus(rc.t("stChecking"), false);
     appendLog("Checking the fields, the email domain, and that this is a browser.");
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_start", "URL Review", reasonCode());
     // The run record reads country, region, and city from here; only reviewUrl gets those headers.
@@ -2529,14 +2528,14 @@
       loadStanding();
       const stopped = payload.report.status === "stopped";
       if (window.ReviewProgress) ReviewProgress.finish(stopped ? "stopped" : "ready");
-      setStatus(stopped ? "Stopped. The report uses the pages analyzed before the stop." : "Report ready. Cases are proposed, not run.", false);
+      setStatus(stopped ? rc.t("stStopped") : rc.t("stReady"), false);
       dash.scrollTop = 0;
       if (compare && (compare.total || 1) > 1) {
         const left = (compare.queue || []).length;
         const ran = Object.assign({}, compare, { done: (compare.done || []).concat(stopped ? [] : [payload.report.id]) });
-        if (!stopped && nextCompare(ran)) setStatus("The comparison with " + compare.url + " is ready. Next: " + compare.queue[0] + ".", false);
+        if (!stopped && nextCompare(ran)) setStatus(rc.t("stCompareNext", { url: compare.url, next: compare.queue[0] }), false);
         else {
-          setStatus(compareDone(ran, stopped && left ? " Stopped: the other " + (left === 1 ? "competitor was" : left + " competitors were") + " not started." : ""), false);
+          setStatus(compareDone(ran, stopped && left ? rc.t("stCompareLeft", { n: left }) : ""), false);
           openCompared(ran);
         }
       }
@@ -2557,23 +2556,23 @@
         const due = compare ? Object.assign({}, error.body, { compareWith: compare.id, competitors: confirmed ? compare.total || 1 : 1 }) : error.body;
         if (confirmed) location.href = payQuery("new-run", due);
         else openRunPay(due);
-        setStatus(compare ? "The comparison waits on payment: 9 USD for each competitor." : "Another review waits on payment.", true);
+        setStatus(compare ? rc.t("stWaitCompare", { usd: COMPARE_USD }) : rc.t("stWaitRun"), true);
       } else if (error.paymentRequired) {
         openPay(error.body || {});
-        setStatus("Opening this report again waits on payment.", true);
+        setStatus(rc.t("stWaitReopen"), true);
       } else {
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", error.message || "");
-        const reason = (rivalField && rivalField.message) || error.message || "The review failed.";
+        const reason = (rivalField && rivalField.message) || error.message || rc.t("stFailed");
         if (compare && (compare.queue || []).length) {
           const failed = (compare.failed || []).concat(compare.url);
-          setStatus("The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Next: " + compare.queue[0] + ".", true);
+          setStatus(rc.t("stFailedNext", { url: compare.url, reason: reason.replace(/([^.!?])\s*$/, "$1."), next: compare.queue[0] }), true);
           nextCompare(Object.assign({}, compare, { failed }));
         } else if (compare && (compare.total || 1) > 1) {
           const ran = Object.assign({}, compare, { failed: (compare.failed || []).concat(compare.url) });
           setStatus(compareDone(ran, ""), true);
           openCompared(ran);
-        } else if (compare && reopenCompare(compare, "The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Check the address or enter another competitor.")) {
-          setStatus("The comparison with " + compare.url + " did not finish. Your report is open again.", true);
+        } else if (compare && reopenCompare(compare, rc.t("stFailedRetry", { url: compare.url, reason: reason.replace(/([^.!?])\s*$/, "$1.") }))) {
+          setStatus(rc.t("stCompareBack", { url: compare.url }), true);
         } else {
           setStatus(reason, true);
         }
@@ -2592,7 +2591,7 @@
     stopBtn.disabled = true;
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_stop", "URL Review", "stop");
     appendLog("Stop requested.");
-    setStatus("Stopping the review…", false);
+    setStatus(rc.t("stStopping"), false);
     try {
       const res = await fetch(endpoint() + "/stop", {
         method: "POST",
@@ -2602,12 +2601,12 @@
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setStatus(body.error || "The stop was refused.", true);
+        setStatus(body.error || rc.t("stStopRefused"), true);
         stopBtn.disabled = false;
         document.getElementById("compare-stop").disabled = false;
       }
     } catch (error) {
-      setStatus("Stop was requested. Waiting for the pages already open.", true);
+      setStatus(rc.t("stStopAsked"), true);
     }
   });
 
@@ -2666,22 +2665,32 @@
       '<a class="offer offer-full" data-offer="report" href="' + esc(payQuery("report")) + '"><b>' + esc(rc.t("offerFull", { usd: formatUsd(reportUsd(current)) })) + "</b><span>" + esc(rc.t("offerFullBody") + (fixed ? " " + rc.t("offerCredit") : "")) + "</span></a></div>";
   }
 
+  // A node filled from the page language's copy is kept away from machine translation.
+  function handCopy(id) {
+    const el = document.getElementById(id);
+    if (!rc.english) {
+      el.setAttribute("lang", rc.lang);
+      el.setAttribute("translate", "no");
+    }
+    return el;
+  }
+
   function openPay(body) {
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_open", "URL Review", "report");
     const list = (body && body.frameworks) || (current && current.frameworks) || selectedFrameworks();
     const tools = body && body.frameworks && body.frameworks.length ? (body.tools || []) : selectedTools();
     const usd = (body && body.priceUsd) || reviewUsd(list, tools);
     const selections = list.length + tools.length;
-    const credit = body && body.creditUsd > 0 ? " The 5 USD fix list bought on this report is already taken off." : "";
+    const credit = body && body.creditUsd > 0 ? rc.t("payCredit") : "";
     document.getElementById("pay-title").textContent = rc.t("offerTitle");
     document.getElementById("pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
-    document.getElementById("pay-detail").textContent = "The full report is " + formatUsd(usd) + " USD for " + selections + (selections === 1 ? " selection" : " selections") + ": 19 USD for the first framework or tool, and 5 USD for each one after it." + credit + " It opens every case and layer, the signals, the exports, and the scripts, on the account that ran it. A paid copy keeps one line: this report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).";
+    handCopy("pay-detail").textContent = [rc.t("payFull", { usd: formatUsd(usd), n: selections }), credit, rc.t("payOpens")].filter(Boolean).join(" ");
     document.getElementById("pay-btn").href = payQuery("report");
     showDeal("pay-deal", "pay-price", body);
     paintOffer(document.getElementById("pay-options"), !!(current && current.report && !current.paid));
     payBox.hidden = false;
     const note = document.getElementById("pay-note");
-    note.textContent = (body && body.error) || ("The full report of this review is " + formatUsd(usd) + " USD.");
+    note.textContent = (body && body.error) || rc.t("payNote", { usd: formatUsd(usd) });
     note.classList.remove("bad");
     if (body && (body.paymentRequired || body.quoted)) return;
     loadFullQuote().then((quote) => {
@@ -2719,15 +2728,12 @@
     const billing = body && (body.billing === "scope" || body.billing === "compare" || body.billing === "pass") ? body.billing : "run";
     const tools = billing === "scope" ? [] : ((body && body.tools) || selectedTools());
     const usd = (body && body.priceUsd) || (billing === "compare" ? COMPARE_USD : reviewUsd(list, tools));
-    document.getElementById("run-pay-title").textContent = "This review is " + formatUsd(usd) + " USD";
+    handCopy("run-pay-title").textContent = rc.t("runPayTitle", { usd: formatUsd(usd) });
     document.getElementById("run-pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
-    document.getElementById("run-pay-detail").textContent = billing === "pass"
-      ? "This run uses one of your pass runs. The amount is only for the options over your plan: 5 USD for each framework or tool past it, and the wider or deeper steps past the plan's."
-      : billing === "compare"
-      ? "A comparison is " + COMPARE_USD + " USD for each competitor, whatever the frameworks or the size of your review. The competitor gets the public, passive checks only."
-      : billing === "scope"
-        ? pages + " pages and " + depth + " links deep. The included first review is 20 pages and 2 links deep. This amount is for the wider review."
-        : pages + " pages, " + depth + " links deep, and " + (list.length + tools.length) + " selections. The first framework or tool is 19 USD and each one after it is 5 USD. The size of the review is added to that.";
+    handCopy("run-pay-detail").textContent = billing === "pass" ? rc.t("runPayPass")
+      : billing === "compare" ? rc.t("runPayCompare", { usd: COMPARE_USD })
+        : billing === "scope" ? rc.t("runPayScope", { pages, depth })
+          : rc.t("runPayRun", { pages, depth, n: list.length + tools.length });
     document.getElementById("go-pay").href = payQuery("new-run", body || {});
     showDeal("run-pay-deal", "run-pay-price", body);
     runPay.hidden = false;
@@ -3090,8 +3096,8 @@
   document.getElementById("copy-link").addEventListener("click", () => {
     spend("link", async () => {
       const link = document.getElementById("share-link").textContent;
-      try { await navigator.clipboard.writeText(link); setStatus("Link copied. It opens in full only for the account that ran this report, once signed in. Anyone else sees the blurred preview.", false); }
-      catch (error) { setStatus("Copy the link from the report window.", true); }
+      try { await navigator.clipboard.writeText(link); setStatus(rc.t("stLinkCopied"), false); }
+      catch (error) { setStatus(rc.t("stCopyFallback"), true); }
     });
   });
   const captureSeen = {};
@@ -3110,7 +3116,7 @@
   document.getElementById("print-report").addEventListener("click", () => {
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_print", "URL Review", current && current.paid ? "paid" : "preview");
     spend("print", () => {
-      if (!current.paid) setStatus("The print sheet does not include the report. The attempt is recorded.", false);
+      if (!current.paid) setStatus(rc.t("stPrint"), false);
       window.print();
     });
   });
@@ -3133,7 +3139,7 @@
     if (!dash.classList.contains("open")) return;
     if (event.key === "PrintScreen") {
       registerCapture("printscreen");
-      setStatus("A screenshot key was recorded with this review. The page cannot stop the picture.", false);
+      setStatus(rc.t("stScreenshot"), false);
     }
   });
   document.addEventListener("keydown", (event) => {
@@ -3141,14 +3147,14 @@
     const shot = event.metaKey && event.shiftKey && (event.key === "3" || event.key === "4" || event.key === "5");
     if (shot) {
       registerCapture("printscreen");
-      setStatus("A screenshot key was recorded with this review. The page cannot stop the picture.", false);
+      setStatus(rc.t("stScreenshot"), false);
     }
     if ((event.ctrlKey || event.metaKey) && String(event.key).toLowerCase() === "p" && !document.body.classList.contains("printing-cases")) {
       registerCapture("print");
       if (!current || !current.paid) {
         event.preventDefault();
         document.body.classList.add("capture-hold");
-        setStatus("The print sheet does not include the report. The attempt is recorded.", false);
+        setStatus(rc.t("stPrint"), false);
       }
     }
   });
@@ -3456,7 +3462,7 @@
   if (shared) {
     let lockedShared = false;
     const openShared = async () => {
-      setStatus("Opening the saved report…", false);
+      setStatus(rc.t("stOpening"), false);
       try {
         const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
         const res = await fetch(endpoint() + "/review/open", {
@@ -3469,23 +3475,21 @@
         lockedShared = !!body.locked;
         if (body.locked) {
           if (body.preview) render({ report: body.preview, frameworks: body.frameworks || [], paid: false });
-          setStatus((body.preview ? "This report of " + (body.host || "this site") + " is below, under the frost. " : "") + (body.error || "Sign in with the account that ran this report to read it in full."), true);
+          setStatus((body.preview ? rc.t("stFrost", { host: body.host || rc.t("thisSite") }) + " " : "") + (body.error || rc.t("stOwner")), true);
           if (window.ReviewAuth) ReviewAuth.focus();
           return;
         }
         if (res.status === 402 || body.paymentRequired) {
           if (body.preview) render(lockedPayload(body));
           if (body.insights) {
-            setStatus("The fix list of " + (body.host || "this site") + " is open below. The cases stay under the frost until the full report is paid.", false);
+            setStatus(rc.t("stFixOpen", { host: body.host || rc.t("thisSite") }), false);
             return;
           }
           openPay(body);
-          setStatus(body.preview
-            ? "Your last report of " + (body.host || "this site") + " is below, under the frost. Unlock it to read it in full."
-            : "This report was already shown. Opening it again asks for payment.", true);
+          setStatus(body.preview ? rc.t("stLastFrost", { host: body.host || rc.t("thisSite") }) : rc.t("stShownOnce"), true);
           return;
         }
-        if (!res.ok) throw new Error(body.error || "That report was not found.");
+        if (!res.ok) throw new Error(body.error || rc.t("stNotFound"));
         render(body);
         showSharedCompare(body);
       } catch (error) {
@@ -3709,7 +3713,7 @@
         reasonCode: "credentials"
       }));
     } catch (error) {
-      setStatus("This browser could not keep the report for the payment page.", true);
+      setStatus(rc.t("stNoKeep"), true);
       return;
     }
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_credentials", "URL Review", "open");
@@ -3795,14 +3799,14 @@
   restorePaid("alerts", "qa-review-alerts");
   restorePaid("credentialRun", "qa-review-credential");
   restorePaid("fixlist", FIXLIST_KEY, () => {
-    setStatus("The fix list is paid. Scores and findings are open below; the cases stay blurred until the full report is paid.", false);
+    setStatus(rc.t("stFixPaid"), false);
     // A preview carries frosted findings, so the server sends them again now that the fix list is recorded.
     if (current && current.report && current.report.preview) reopenFixList(current.report.id);
   });
   restorePaid("compareRun", COMPARE_KEY, () => {
     const saved = savedCompare();
     const left = saved ? (saved.queue || []).length : 0;
-    if (saved) setStatus("The comparison with " + saved.url + " is paid. Press Compare in the report to run it" + (left ? " and the other " + (left === 1 ? "competitor" : left + " competitors") + " after it" : "") + ".", false);
+    if (saved) setStatus(left ? rc.t("stComparePaidMore", { url: saved.url, n: left }) : rc.t("stComparePaid", { url: saved.url }), false);
   });
   document.getElementById("compare-go").addEventListener("click", startCompare);
   document.getElementById("compare-add").addEventListener("click", () => {
