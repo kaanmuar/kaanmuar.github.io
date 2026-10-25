@@ -4,6 +4,8 @@ import android.app.Application
 import com.carlosandmunoz.jarvis.data.Api
 import com.carlosandmunoz.jarvis.data.Auth
 import com.carlosandmunoz.jarvis.data.Vault
+import com.carlosandmunoz.jarvis.home.Home
+import com.carlosandmunoz.jarvis.home.Shortcuts
 import com.carlosandmunoz.jarvis.push.Push
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -20,5 +22,7 @@ class JarvisApp : Application() {
         auth = Auth(http, vault)
         api = Api(this, http, auth)
         Push.channels(this)
+        Shortcuts.publish(this)
+        if (auth.signedIn) Home.schedule(this)
     }
 }

@@ -5,6 +5,11 @@ import android.provider.Settings
 import android.text.format.DateUtils
 import androidx.core.app.NotificationManagerCompat
 import androidx.compose.ui.platform.LocalContext
+import android.os.Build
+import com.carlosandmunoz.jarvis.home.GoalsWidgetReceiver
+import com.carlosandmunoz.jarvis.home.Home
+import com.carlosandmunoz.jarvis.home.NumbersWidgetReceiver
+import com.carlosandmunoz.jarvis.home.StatusWidgetReceiver
 import com.carlosandmunoz.jarvis.push.Push
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -162,7 +167,12 @@ fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, openTab: String
     val snack = remember { SnackbarHostState() }
     LaunchedEffect(s.toast) { s.toast?.let { snack.showSnackbar(it); vm.toastShown() } }
     LaunchedEffect(openTab) {
-        openTab?.let { name -> Tab.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }?.let { tab = it; page = "" }; tabOpened() }
+        openTab?.let { target ->
+            val (name, chip) = target.split(':', limit = 2).let { it[0] to it.getOrNull(1) }
+            Tab.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }?.let { tab = it; page = "" }
+            chip?.takeIf { c -> CHIPS.any { it.first == c } }?.let { product = it }
+            tabOpened()
+        }
     }
     if (page.isNotEmpty()) BackHandler { page = "" }
 
@@ -341,6 +351,18 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     }
                 }
                 Muted("Email and push are separate: the mail switches above do not silence the phone.")
+            }
+            Panel("Home screen") {
+                val context = LocalContext.current
+                val pinnable = Home.canPin(context)
+                if (pinnable) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ActionButton("Status", false) { Home.pin(context, StatusWidgetReceiver::class.java) }
+                    ActionButton("Numbers", false) { Home.pin(context, NumbersWidgetReceiver::class.java) }
+                    ActionButton("Goals", false) { Home.pin(context, GoalsWidgetReceiver::class.java) }
+                }
+                if (Build.VERSION.SDK_INT >= 33) Row { ActionButton("Add the quick-settings tile", false) { Home.addTile(context) } }
+                Muted(if (pinnable) "Widgets refresh every half hour and whenever the app or a push brings new numbers. Long-press the app icon for shortcuts; share a link to Jarvis to review it."
+                    else "Add Jarvis widgets from your launcher's widget list. Long-press the app icon for shortcuts; share a link to Jarvis to review it.")
             }
             Panel("About") {
                 KeyRow("Version", BuildConfig.VERSION_NAME)

@@ -13,6 +13,8 @@ coroutines = "1.9.0"
 junit = "4.13.2"
 googleServices = "4.4.2"
 firebaseBom = "33.7.0"
+glance = "1.1.1"
+work = "2.10.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -34,6 +36,8 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 junit = { module = "junit:junit", version.ref = "junit" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
+glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
+work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

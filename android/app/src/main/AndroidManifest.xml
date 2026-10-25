@@ -25,6 +25,43 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ShareActivity"
+            android:exported="true"
+            android:label="@string/share_label"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Jarvis.Sheet"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <receiver android:name=".home.StatusWidgetReceiver" android:exported="true" android:label="Jarvis status">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_status" />
+        </receiver>
+        <receiver android:name=".home.NumbersWidgetReceiver" android:exported="true" android:label="Jarvis numbers">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_numbers" />
+        </receiver>
+        <receiver android:name=".home.GoalsWidgetReceiver" android:exported="true" android:label="Jarvis goals">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_goals" />
+        </receiver>
+
+        <service
+            android:name=".home.StatusTile"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_jarvis"
+            android:label="@string/tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
+        </service>
+
         <service
             android:name=".push.JarvisMessaging"
             android:exported="false">

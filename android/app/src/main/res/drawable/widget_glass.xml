@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The app's glass panel for widgets: deep teal gradient, a cyan glow pool, hairline border, accent bar and corner brackets. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" />
+            <gradient android:angle="300" android:startColor="#F00E2B3D" android:centerColor="#F0081F2D" android:endColor="#F2051520" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" />
+            <gradient android:type="radial" android:centerX="0.15" android:centerY="0.0" android:gradientRadius="220dp" android:startColor="#3338E1FF" android:endColor="#0038E1FF" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" />
+            <gradient android:type="radial" android:centerX="1.0" android:centerY="1.0" android:gradientRadius="180dp" android:startColor="#22A98BFF" android:endColor="#00A98BFF" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" />
+            <stroke android:width="1dp" android:color="#5538E1FF" />
+        </shape>
+    </item>
+    <item android:top="0dp" android:left="28dp" android:right="28dp" android:gravity="top" android:height="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="1dp" />
+            <gradient android:startColor="#0038E1FF" android:centerColor="#CC38E1FF" android:endColor="#0038E1FF" />
+        </shape>
+    </item>
+    <item android:gravity="top|start" android:top="6dp" android:start="6dp" android:width="14dp" android:height="14dp" android:drawable="@drawable/widget_bracket" />
+    <item android:gravity="top|end" android:top="6dp" android:end="6dp" android:width="14dp" android:height="14dp">
+        <rotate android:fromDegrees="90" android:toDegrees="90" android:drawable="@drawable/widget_bracket" />
+    </item>
+    <item android:gravity="bottom|end" android:bottom="6dp" android:end="6dp" android:width="14dp" android:height="14dp">
+        <rotate android:fromDegrees="180" android:toDegrees="180" android:drawable="@drawable/widget_bracket" />
+    </item>
+    <item android:gravity="bottom|start" android:bottom="6dp" android:start="6dp" android:width="14dp" android:height="14dp">
+        <rotate android:fromDegrees="270" android:toDegrees="270" android:drawable="@drawable/widget_bracket" />
+    </item>
+</layer-list>

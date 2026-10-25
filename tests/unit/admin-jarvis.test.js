@@ -772,3 +772,31 @@ test("push: alert and briefing messages, and dead tokens are dropped after a sen
   assert.deepEqual(await push.targets(db, "alerts"), [ok]);
   assert.deepEqual(await push.send(messaging, db, [], m), { sent: 0, failed: 0, removed: 0 });
 });
+
+const review = require("../../functions/jarvis-review.js");
+
+test("share-to-review: the shared text becomes a clean URL and a queued owner review", async () => {
+  assert.equal(review.cleanUrl("Look at this https://example.com/pricing?x=1). Nice"), "https://example.com/pricing?x=1");
+  assert.equal(review.cleanUrl("example.org"), "https://example.org/");
+  assert.throws(() => review.cleanUrl("just words"), /web address/);
+  assert.equal(review.cleanLang("pt-BR"), "pt");
+  assert.equal(review.cleanLang("nl"), "en");
+  const added = [];
+  const db = { collection: (name) => ({ add: async (row) => { added.push([name, row]); return { id: "r1" }; } }) };
+  const out = await review.enqueue(db, { url: "https://shop.example.com", lang: "es", token: "tok" }, "owner@example.com", NOW.getTime());
+  assert.deepEqual(out, { id: "r1", url: "https://shop.example.com/", lang: "es", host: "shop.example.com" });
+  assert.equal(added[0][0], "jarvis_reviews");
+  assert.equal(added[0][1].status, "queued");
+  assert.equal(review.intake(added[0][1]).email, "owner@example.com");
+});
+
+test("share-to-review: the done push names the score and the failing checks, and opens the report", () => {
+  const report = { host: "shop.example.com", limits: { pagesRead: 12 }, insights: { score: { overall: 71, grade: "C", totals: { fail: 2, risk: 1, pass: 30 } },
+    findings: [{ verdict: "fail", title: "No HTTPS redirect" }, { verdict: "pass", title: "Has a title" }, { verdict: "risk", title: "Slow LCP" }] } };
+  const m = review.doneMessage(report, "https://carlosandmunoz.com/qa-review.html?report=abc");
+  assert.equal(m.title, "Review done: shop.example.com scored 71 (C)");
+  assert.match(m.body, /^12 pages read: 2 failing, 1 at risk, 30 passing/);
+  assert.deepEqual(m.lines, ["No HTTPS redirect", "Slow LCP"]);
+  assert.equal(m.url, "https://carlosandmunoz.com/qa-review.html?report=abc");
+  assert.equal(review.failedMessage("https://x.example.com/", "Timed out").title, "Review failed: x.example.com");
+});

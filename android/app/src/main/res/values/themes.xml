@@ -5,6 +5,13 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
+    <style name="Theme.Jarvis.Sheet" parent="Theme.Jarvis">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.6</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.InputMethod</item>
+    </style>
     <color name="jarvis_bg">#030B12</color>
     <color name="jarvis_accent">#38E1FF</color>
 </resources>

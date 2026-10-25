@@ -68,6 +68,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+    implementation(libs.glance.appwidget)
+    implementation(libs.work.runtime)
     debugImplementation(libs.compose.ui.tooling)
     testImplementation(libs.junit)
 }
