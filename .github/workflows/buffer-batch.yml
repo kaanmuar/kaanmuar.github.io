@@ -5,23 +5,24 @@
 # Hub first: a post whose page on the social hub is not live yet is held (scripts/hub-gate.js). Mode seed reads
 # what Buffer already holds into assets/social/buffer.json without queueing anything; mode check asks Buffer which
 # queued posts went out. Mode sync moves the posts Buffer and the Facebook Page already hold to their calendar.csv
-# slots (scripts/social-calendar.js --sync), editing them in place. Every mode but a dry run commits the ledger
-# (scripts/commit-social-ledgers.sh).
+# slots (scripts/social-calendar.js --sync), editing them in place. Mode delete-unmatched deletes the scheduled
+# posts dated after now that match no batch post (not on the hub), then re-seeds; a dry run only lists them.
+# Every mode but a dry run commits the ledger (scripts/commit-social-ledgers.sh).
 name: Buffer batch queue
 
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'queue a batch, seed the ledger from Buffer, check queued posts, or sync queued posts to the calendar'
+        description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, or delete scheduled posts not on the hub'
         type: choice
-        options: [queue, seed, check, sync]
+        options: [queue, seed, check, sync, delete-unmatched]
         default: queue
       batch:
         description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10 (queue only)'
         required: false
       dry_run:
-        description: 'List what would be queued, post nothing'
+        description: 'List what would be queued or deleted, change nothing'
         type: boolean
         default: false
 
@@ -61,6 +62,13 @@ jobs:
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
         run: node scripts/buffer-queue.js "--$MODE" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Delete scheduled posts that match no hub post
+        if: ${{ inputs.mode == 'delete-unmatched' }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          set -o pipefail
+          if [ "$DRY_RUN" = "true" ]; then node scripts/buffer-queue.js --delete-unmatched --dry-run; else node scripts/buffer-queue.js --delete-unmatched && node scripts/buffer-queue.js --seed; fi | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Queue the batch
         if: ${{ inputs.mode == 'queue' }}
         env:

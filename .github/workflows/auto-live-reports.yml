@@ -122,7 +122,7 @@ jobs:
           node scripts/social-hub/translate-captions.js --machine "$BATCH" \
             || { echo "::warning::Google's translator refused; $BATCH keeps the languages the phrasebooks cover."; node scripts/social-hub/translate-captions.js "$BATCH"; }
 
-      - name: Slot the top review in the social calendar
+      - name: Slot the day's reviews in the social calendar
         if: steps.reports.outputs.social != '0'
         # Five posts a day per network, one per lane (#1039): the top review takes the next free site-review slot.
         run: node scripts/social-calendar.js --write --batch "${{ steps.reports.outputs.batch }}"
