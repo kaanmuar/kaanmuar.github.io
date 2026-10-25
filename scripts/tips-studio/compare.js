@@ -44,7 +44,7 @@ function quiz(id, answer, scope, title, body, sides, note, footRight) {
     id, kind: "quiz", answer, cat: scope, title, body, counter: "Quiz · which scored higher?",
     visual: { type: "quiz", or: "or", sides: sides.map(([label, report]) => ({ label, host: SCORES[report][0] })), note },
     actionLabel: "Your guess",
-    action: "Make your guess. The answer, with all six area scores, comes out in our next post.",
+    action: "Make your guess. The answer, with all six area scores, comes out tomorrow.",
     footRight: footRight || "Same review, same day",
     tags: ["WebQuality", "Quiz", "QA"]
   };
@@ -136,7 +136,7 @@ const TIPS = [
 // Alt text from the post's own sentences, whole sentences only, within LinkedIn's 300 characters.
 function altFor(tip) {
   const parts = [tip.kind === "quiz" ? "Quiz card." : "Comparison card.", plainTitle(tip)].concat(tip.body.split(/(?<=\.)\s+/));
-  if (tip.kind === "quiz") parts.push("Scores hidden until the next post.");
+  if (tip.kind === "quiz") parts.push("Scores hidden until tomorrow.");
   return parts.reduce((out, part) => (out.length + part.length + 1 <= 300 ? (out ? out + " " : "") + part : out), "");
 }
 TIPS.forEach((tip) => { tip.alt = tip.alt || altFor(tip); });
