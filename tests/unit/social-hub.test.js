@@ -53,17 +53,51 @@ test("a Trending chip appears only when posts carry a trending rank, and the fee
   assert.equal(JSON.parse(hub.feedJson([post({ trend: 3 })], "2026-10-24")).posts[0].trend, 3);
 });
 
-test("posted cards come first, newest first, then scheduled ones, soonest first", () => {
-  const order = card.arrange([post({ id: "a", date: "2026-11-30" }), post({ id: "b", date: "2026-10-01" }), post({ id: "c", date: "2026-11-02" }), post({ id: "d", date: "2026-10-20" })], "2026-10-24");
+test("posted cards come first, newest first, then the ones to come, soonest first", () => {
+  const order = card.arrange([post({ id: "a", date: "2026-11-30" }), post({ id: "b", date: "2026-10-01" }), post({ id: "c", date: "2026-11-02", queued: true }), post({ id: "d", date: "2026-10-20" })], "2026-10-24");
   assert.deepEqual(order.map((p) => p.id + (p.upcoming ? "+" : "")), ["d", "b", "c+", "a+"]);
   assert.match(card.cardHtml(order[2], COPY.fr, "fr"), /post-scheduled">Programmée</);
 });
 
-test("each page shows scheduled posts after posted ones, keeps them out of JSON-LD, links six languages", () => {
+test("a post to come is Scheduled only when a network has it queued, Planned otherwise, and untagged when held", () => {
+  const tags = (over, lang) => card.cardHtml(card.arrange([post(Object.assign({ date: "2026-11-02" }, over))], "2026-10-24")[0], COPY[lang], lang).match(/post-(scheduled|planned)">([^<]+)</);
+  assert.deepEqual(tags({ queued: true }, "en").slice(1), ["scheduled", "Scheduled"]);
+  assert.deepEqual(tags({ queued: true }, "es").slice(1), ["scheduled", "Programada"]);
+  assert.deepEqual(tags({}, "en").slice(1), ["planned", "Planned"]);
+  assert.deepEqual(tags({}, "es").slice(1), ["planned", "Planeada"]);
+  assert.equal(tags({ held: true }, "en"), null);
+  assert.equal(tags({ queued: true, date: "2026-10-20" }, "en"), null);
+  for (const lang of Object.keys(LANGS)) assert.notEqual(COPY[lang].planned, COPY[lang].scheduled, lang);
+});
+
+test("queued means queued or sent in the Buffer or Facebook ledger, never failed", () => {
+  const ids = hub.queuedIds([
+    { posts: { "b/01-a": [{ channel: "x", result: "failed" }, { channel: "linkedin", result: "queued" }], "b/02-b": [{ channel: "x", result: "failed", error: "Hub first: not on the hub" }] } },
+    { posts: { "b/03-c": [{ channel: "facebook", result: "sent" }] } }
+  ]);
+  assert.deepEqual([...ids].sort(), ["b/01-a", "b/03-c"]);
+});
+
+test("the feed marks queued and held posts only while they are still to come", () => {
+  const feed = JSON.parse(hub.feedJson([
+    post({ id: "b/q", date: "2026-11-02", queued: true }), post({ id: "b/h", date: "2026-11-02", held: true }),
+    post({ id: "b/p", date: "2026-11-02" }), post({ id: "b/old", date: "2026-10-01", queued: true })
+  ], "2026-10-24")).posts.map((p) => [p.id, p.queued || false, p.held || false]);
+  assert.deepEqual(feed, [["b/q", true, false], ["b/h", false, true], ["b/p", false, false], ["b/old", false, false]]);
+});
+
+test("a post page to come says Scheduled or Planned in its language", () => {
+  const es = (over) => hub.postPage(post(Object.assign({ lang: "es", date: "2026-11-02" }, over)), [], [], "2026-10-24");
+  assert.match(es({ queued: true }), /post-scheduled">Programada</);
+  assert.match(es({}), /post-planned">Planeada</);
+  assert.doesNotMatch(es({ held: true }), /post-(scheduled|planned)/);
+});
+
+test("each page shows posts to come after posted ones, keeps them out of JSON-LD, links six languages", () => {
   const posts = [post({ id: "b/late", date: "2026-11-30", title: "Not yet" }), post()];
   const html = hub.page("de", posts, "2026-10-24");
   assert.ok(html.indexOf("Not yet") > html.indexOf("uber.com: 66."));
-  assert.match(html, /post-scheduled">Geplant</);
+  assert.match(html, /post-planned">Geplant</);
   assert.match(html, /<html lang="de">/);
   assert.match(html, /<link rel="canonical" href="https:\/\/carlosandmunoz.com\/qa-review-social-de.html">/);
   for (const code of Object.keys(LANGS).concat("x-default")) assert.match(html, new RegExp("hreflang=\"" + code + "\""));
