@@ -1646,6 +1646,29 @@ test("the daily probe checks the connection after a plain read that timed out, a
   assert.equal(failures.failureDetail(failedAt("2026-10-24T10:00:00Z", { probe: { dns: {}, plain: slow, tcp: { open: true, ms: 41 }, browser: { ok: false, error: "x" } } })).probeLines[2], "TCP connection to port 443: opens in 41 ms");
 });
 
+test("response headers up to 64 KB are read, and past that the read names the limit instead of a parse error (#1097)", async () => {
+  const net = require("node:net");
+  let size = 0;
+  const server = net.createServer((socket) => {
+    socket.once("data", () => socket.end("HTTP/1.1 200 OK\r\ncontent-type: text/html\r\nx-pad: " + "a".repeat(size) + "\r\ncontent-length: 15\r\nconnection: close\r\n\r\n<body>hi</body>"));
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const target = new URL("http://127.0.0.1:" + server.address().port + "/");
+  try {
+    size = 30000;
+    const read = await core.requestDirect(target, "127.0.0.1");
+    assert.equal(read.status, 200);
+    size = core.MAX_HEADER_BYTES + 1000;
+    const error = await core.requestDirect(target, "127.0.0.1").then(() => null, (caught) => caught);
+    assert.equal(error.code, "HEADERS_TOO_LARGE");
+    assert.equal(error.message, "The site's response headers are past the 64 KB the plain request reads.");
+    assert.equal(failures.causeOf(error.message).id, "headers");
+    assert.equal(failures.causeOf("Parse Error: Header overflow").id, "headers");
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
 test("the connection check tells a port that opens from one that refuses", async () => {
   const net = require("node:net");
   const server = net.createServer((socket) => socket.end());

@@ -126,6 +126,9 @@ const MAX_BYTES = 2000000;
 const PAGE_TIMEOUT_MS = 8000;
 // Still "took too long", so the start page is tried in headless Chrome before the review gives up.
 const UNREACHABLE = "The page took too long: the site accepted no connection in " + PAGE_TIMEOUT_MS / 1000 + " s.";
+// Node's own limit is 16 KB, which large storefronts pass with their cookies and security headers.
+const MAX_HEADER_BYTES = 65536;
+const HEADERS_TOO_LARGE = "The site's response headers are past the " + MAX_HEADER_BYTES / 1024 + " KB the plain request reads";
 // A server that sends its certificate without the intermediate opens in browsers, which fetch the intermediate
 // from the certificate's AIA address. Node does not, so the review fetches it once per host and verifies again.
 const INTERMEDIATES = new Map();
@@ -929,6 +932,7 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
       path: target.pathname + target.search,
       method: "GET",
       timeout: PAGE_TIMEOUT_MS,
+      maxHeaderSize: MAX_HEADER_BYTES,
       headers: Object.assign({
         "user-agent": USER_AGENT,
         accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
@@ -994,9 +998,16 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
     }, 150);
     deadline = setTimeout(slow, PAGE_TIMEOUT_MS);
     req.on("timeout", slow);
-    req.on("error", (error) => finish(reject, haltError || error));
+    req.on("error", (error) => finish(reject, haltError || headerOverflow(error)));
     req.end();
   });
+}
+
+function headerOverflow(error) {
+  if (!error || error.code !== "HPE_HEADER_OVERFLOW") return error;
+  const blocked = new Error(HEADERS_TOO_LARGE + ".");
+  blocked.code = "HEADERS_TOO_LARGE";
+  return blocked;
 }
 
 async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage) {
@@ -2619,8 +2630,9 @@ async function reviewTarget(rawUrl, hooks) {
       note("Stopped before the first page finished.");
       return stoppedReport(rawUrl, lines, null, chosen);
     }
-    if (!/took too long/.test((error && error.message) || "") || typeof controls.browse !== "function") throw error;
-    slowFirst = error.message === UNREACHABLE ? "unreachable" : true;
+    const oversized = !!error && error.code === "HEADERS_TOO_LARGE";
+    if (!(oversized || /took too long/.test((error && error.message) || "")) || typeof controls.browse !== "function") throw error;
+    slowFirst = oversized ? "headers" : error.message === UNREACHABLE ? "unreachable" : true;
     first = { url: error.url || String(rawUrl), requested: String(rawUrl), hops: 0, status: 0, headers: {}, body: "", cert: null, ms: PAGE_TIMEOUT_MS };
   }
   if (first.cert && first.cert.missingIntermediate) {
@@ -2645,6 +2657,8 @@ async function reviewTarget(rawUrl, hooks) {
   if (refused && typeof controls.browse === "function") {
     note(slowFirst === "unreachable"
       ? "The site accepted no connection to the plain request in " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
+      : slowFirst === "headers"
+      ? HEADERS_TOO_LARGE + ". Waiting for headless Chrome to open the page."
       : slowFirst
       ? "The plain request took longer than " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : "The plain request was refused (status " + first.status + (firstChallenge ? ", " + insights.botCheck(firstChallenge) : "") + "). Waiting for headless Chrome to open the page.");
@@ -2661,9 +2675,10 @@ async function reviewTarget(rawUrl, hooks) {
     if (!view || !view.html || !finalUrl || view.docStatus >= 400 || viewChallenge) {
       const status = (view && view.docStatus) || first.status;
       const guarded = (code) => [401, 403, 429].includes(code);
-      const where = slowFirst ? "in headless Chrome, after the plain request took too long" : "in the plain request and in headless Chrome";
+      const where = slowFirst === "headers" ? "in headless Chrome, after " + HEADERS_TOO_LARGE.replace(/^The/, "the")
+        : slowFirst ? "in headless Chrome, after the plain request took too long" : "in the plain request and in headless Chrome";
       const error = new Error(slowFirst && !viewChallenge && (!browsed || !browsed.ok || !(status >= 400))
-        ? (slowFirst === "unreachable" ? "The site accepted no connection to the plain request" : "The page took too long in the plain request") + ", and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
+        ? (slowFirst === "headers" ? HEADERS_TOO_LARGE : slowFirst === "unreachable" ? "The site accepted no connection to the plain request" : "The page took too long in the plain request") + ", and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
         : !browsed || !browsed.ok
         ? (firstChallenge || guarded(first.status) ? "The site's bot protection refused the plain request" : "The URL returned status " + first.status + " to the plain request") +
           (firstChallenge || guarded(first.status) ? " (status " + first.status + ")" : "") + ", and headless Chrome did not finish (" + ((browsed && browsed.error) || "no answer") + ")."
@@ -2686,7 +2701,7 @@ async function reviewTarget(rawUrl, hooks) {
     };
     firstChallenge = "";
     readInBrowser = browsed;
-    note(slowFirst ? insights.SLOW_READ_NOTE : browsed.untagged ? insights.UNTAGGED_READ_NOTE : insights.BROWSER_READ_NOTE);
+    note(slowFirst && slowFirst !== "headers" ? insights.SLOW_READ_NOTE : browsed.untagged ? insights.UNTAGGED_READ_NOTE : insights.BROWSER_READ_NOTE);
   } else if (first.status >= 400) {
     const error = new Error(firstChallenge
       ? "The site answered with " + insights.botCheck(firstChallenge) + " (status " + first.status + ") instead of the page."
@@ -2776,7 +2791,7 @@ async function reviewTarget(rawUrl, hooks) {
     depth: 0,
     from: "",
     challenge: firstChallenge,
-    readInBrowser: readInBrowser ? (slowFirst ? "slow" : readInBrowser.untagged ? "untagged" : "tagged") : "",
+    readInBrowser: readInBrowser ? (slowFirst && slowFirst !== "headers" ? "slow" : readInBrowser.untagged ? "untagged" : "tagged") : "",
     cut: !!first.truncated,
     slow: !!first.slow,
     renderedLinks: 0,
@@ -3793,6 +3808,8 @@ function previewReport(report) {
 }
 
 module.exports = {
+  requestDirect,
+  MAX_HEADER_BYTES,
   decodeBody,
   actionLink,
   domainCases,

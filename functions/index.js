@@ -1223,28 +1223,32 @@ async function rerunFailure(group) {
   let error = null;
   try {
     log("Re-run of a failed review of " + group.url + ". " + group.trigger.label);
-    const report = await urlReview.reviewTarget(group.url, {
-      log,
-      stopped: () => Date.now() - startedAt > 240000,
-      maxPages: options.pages || undefined,
-      maxDepth: options.depth || undefined,
-      pageLang: options.pageLang || "",
-      section: options.section === true,
-      passive: !!(group.intake && group.intake.reasonCode === "compare"),
-      browse: browseForReview,
-      pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
-      webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
-    });
-    record = urlReview.intakeRecord(Object.assign({}, group.intake, {
-      url: group.url,
-      name: group.name,
-      email: group.email,
-      frameworks: options.frameworks || [],
-      pages: options.pages,
-      depth: options.depth,
-      pageLang: options.pageLang || "",
-      section: options.section === true
-    }), report, { deviceId: (group.intake || {}).deviceId });
+    if (group.source === "sweep") {
+      record = (await sweepReview(group.sweep, { log, stopped: () => Date.now() - startedAt > 240000 })).record;
+    } else {
+      const report = await urlReview.reviewTarget(group.url, {
+        log,
+        stopped: () => Date.now() - startedAt > 240000,
+        maxPages: options.pages || undefined,
+        maxDepth: options.depth || undefined,
+        pageLang: options.pageLang || "",
+        section: options.section === true,
+        passive: !!(group.intake && group.intake.reasonCode === "compare"),
+        browse: browseForReview,
+        pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+        webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
+      });
+      record = urlReview.intakeRecord(Object.assign({}, group.intake, {
+        url: group.url,
+        name: group.name,
+        email: group.email,
+        frameworks: options.frameworks || [],
+        pages: options.pages,
+        depth: options.depth,
+        pageLang: options.pageLang || "",
+        section: options.section === true
+      }), report, { deviceId: (group.intake || {}).deviceId });
+    }
   } catch (caught) {
     error = caught;
   }
@@ -1885,34 +1889,57 @@ async function sweepReviews() {
     await ref.set(state);
     return "nothing to review this tick";
   }
-  const value = sweep.intake(target);
   const startedAt = Date.now();
+  const lines = [];
+  const log = (text) => { if (lines.length < 5000) lines.push({ t: Date.now() - startedAt, text }); };
   let outcome = "done";
   let note = "";
+  let reason = "";
   try {
-    const report = await urlReview.reviewTarget(value.url, {
-      stopped: () => Date.now() - startedAt > 240000,
-      mentions: false,
-      browse: browseForReview,
-      pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
-      webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined
-    });
-    const record = Object.assign(urlReview.intakeRecord(value, report, { country: target.cc.toUpperCase() }), { source: "sweep", sweep: target });
-    await db.collection("url_reviews").doc(record.id).set(record);
-    await countReviewed(record.report);
-    try {
-      await queueOwnerNotice(record, { search: false });
-    } catch (error) {
-      console.error("Owner notice queue failed for " + target.host + ":", error);
-    }
+    const { record, report } = await sweepReview(target, { log, stopped: () => Date.now() - startedAt > 240000 });
     note = target.host + " (" + target.cc + ") " + record.status + ", " + ((report.limits && report.limits.pagesRead) || 0) + " pages";
   } catch (error) {
     outcome = "failed";
-    note = target.host + " (" + target.cc + ") failed: " + String((error && error.message) || error).slice(0, 160);
+    reason = String((error && error.message) || error).slice(0, 160);
+    note = target.host + " (" + target.cc + ") failed: " + reason;
+    console.error("Sweep review of " + note);
+    await saveSweepFailure(target, error, lines, startedAt);
   }
-  state = sweep.tally(state, day, outcome, Object.assign({}, target, { at: new Date().toISOString(), outcome, note }));
+  state = sweep.tally(state, day, outcome, Object.assign({}, target, { at: new Date().toISOString(), outcome, note }, reason ? { reason } : {}));
   await ref.set(state);
   return note;
+}
+
+// One sweep review, saved like any other: its url_reviews row, the counts, and its queued owner notice.
+// Also the path a re-run of a failed sweep review takes, so it has no asker to email.
+async function sweepReview(target, controls) {
+  const value = sweep.intake(target);
+  const report = await urlReview.reviewTarget(value.url, Object.assign({
+    mentions: false,
+    browse: browseForReview,
+    pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
+    webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined
+  }, controls));
+  const record = Object.assign(urlReview.intakeRecord(value, report, { country: target.cc.toUpperCase() }), { source: "sweep", sweep: target });
+  await admin.firestore().collection("url_reviews").doc(record.id).set(record);
+  await countReviewed(record.report);
+  try {
+    await queueOwnerNotice(record, { search: false });
+  } catch (error) {
+    console.error("Owner notice queue failed for " + target.host + ":", error);
+  }
+  return { record, report };
+}
+
+async function saveSweepFailure(target, error, lines, startedAt) {
+  try {
+    const col = admin.firestore().collection("url_review_failures");
+    const runId = "sweep-" + col.doc().id;
+    const run = Object.assign({}, sweep.intake(target), { kind: "failed", runId, error, lines, startedAt, endedAt: Date.now(), source: "sweep", sweep: target });
+    await col.doc(runId).set(reviewFailures.failureRecord(run));
+  } catch (saveError) {
+    console.error("Sweep failure log save failed for " + target.host + ":", saveError);
+  }
 }
 
 exports.sweepReviews = require("firebase-functions/v2/scheduler").onSchedule({
