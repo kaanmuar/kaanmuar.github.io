@@ -44,6 +44,47 @@ test.describe('Review page language', () => {
     await expect(page.locator('#stage-sample-open')).toHaveText('Ver un informe de ejemplo');
   });
 
+  test('an English choice translated by the browser into Spanish is offered the Spanish page, until closed', async ({ page }) => {
+    await prime(page, 'en');
+    await page.goto('/qa-review.html?live=abc#top');
+    await page.waitForFunction(() => window.langApplied);
+    await expect(page.locator('#lang-offer')).toHaveCount(0);
+    await page.evaluate(() => { document.documentElement.lang = 'es'; document.documentElement.classList.add('translated-ltr'); });
+    const offer = page.locator('#lang-offer');
+    await expect(offer).toHaveAttribute('translate', 'no');
+    await expect(offer).toContainText('Esta página también existe en español, sin traducción automática.');
+    await expect(offer.locator('a')).toHaveAttribute('href', 'qa-review-es.html?live=abc&lang=es#top');
+    await offer.getByRole('button', { name: 'Cerrar' }).click();
+    await expect(offer).toHaveCount(0);
+    await page.reload();
+    await page.evaluate(() => { document.documentElement.lang = 'es'; document.documentElement.classList.add('translated-ltr'); });
+    await expect(page.locator('#lang-offer')).toHaveCount(0);
+  });
+
+  test('the address hint keeps the space after the host even when the text after it is trimmed', async ({ page }) => {
+    await prime(page, 'en');
+    await page.route(/dns\.google\/resolve/, (route) => route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"Status":0,"Answer":[{"data":"203.0.113.7"}]}' }));
+    await page.goto('/qa-review.html');
+    await page.locator('#url').fill('carlosandmunoz.com');
+    const host = page.locator('#url-hint b.notranslate');
+    await expect(host).toHaveText('carlosandmunoz.com ', { useInnerText: false });
+    await expect(page.locator('#url-hint')).toHaveText('carlosandmunoz.com is online.');
+  });
+
+  test.describe('with a Spanish browser and English saved', () => {
+    test.use({ locale: 'es-ES' });
+
+    test('the English page offers the Spanish page instead of leaving it to machine translation', async ({ page }) => {
+      await prime(page, 'en');
+      await page.goto('/qa-review.html');
+      const offer = page.locator('#lang-offer');
+      await expect(offer.locator('a')).toHaveText('Abrir en español');
+      await offer.locator('a').click();
+      await expect(page).toHaveURL(/\/qa-review-es\.html\?lang=es$/);
+      await expect.poll(() => page.evaluate(() => localStorage.getItem('cv-preferred-lang'))).toBe('es');
+    });
+  });
+
   test.describe('with a Spanish browser and no saved choice', () => {
     test.use({ locale: 'es-ES' });
 
