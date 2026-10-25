@@ -443,7 +443,7 @@
     let best = null;
     let most = 0;
     pool.forEach((entry) => {
-      const title = plain(entry.item.title);
+      const title = plain(entry.item.title + " " + (entry.item.titleEn || ""));
       const hits = words.filter((word) => title.indexOf(word) !== -1).length;
       if (hits > most) {
         best = entry;
@@ -795,9 +795,30 @@
     };
   }
 
-  function answer(report, question, options) {
+  // Answers quote findings in the reader's language when the page's copy speaks it; the issue and the
+  // Playwright file are file contents and read the English report.
+  function localized(report, lang) {
+    const want = String(lang || "en").slice(0, 2).toLowerCase();
+    const fc = root.QAReviewFindingsCopy;
+    const cc = root.QAReviewCompareCopy;
+    const lines = fc && fc.translated && fc.lang === want ? fc : null;
+    const areas = cc && !cc.english && cc.lang === want ? cc : null;
+    if (!report || !report.insights || (!lines && !areas)) return report;
+    const say = (item, part) => (lines && item[part] ? lines.line(item.msg && item.msg[part], item[part]) : item[part]);
+    const items = findings(report).map((item) => Object.assign({}, item, {
+      title: say(item, "title"),
+      evidence: say(item, "evidence"),
+      fix: say(item, "fix"),
+      area: areas ? areas.area(item.area) : item.area,
+      titleEn: item.title
+    }));
+    return Object.assign({}, report, { insights: Object.assign({}, report.insights, { findings: items }) });
+  }
+
+  function answer(source, question, options) {
     const opts = options || {};
     const L = book(opts.lang);
+    const report = localized(source, opts.lang);
     const asked = String(question || "").trim().slice(0, 300);
     if (!report || !report.id || report.preview) return { intent: "closed", title: L.closedTitle, parts: [text(L.closed)] };
     const intent = intentOf(asked);
@@ -813,9 +834,9 @@
     const kind = intent || "why";
     if (!hit) return choose(L, report, kind);
     if (kind === "fix") return { intent: kind, title: fill(L.fixTitle, { ref: heading(hit) }), parts: fixFor(L, report, hit), ref: hit.item.id };
-    if (kind === "playwright") return { intent: kind, title: fill(L.pwTitle, { id: hit.item.id }), parts: playwrightFor(L, report, hit), ref: hit.item.id };
+    if (kind === "playwright") return { intent: kind, title: fill(L.pwTitle, { id: hit.item.id }), parts: playwrightFor(L, source, lookup(source, hit.item.id) || hit), ref: hit.item.id };
     if (kind === "export") {
-      const issue = issueFor(report, hit, opts);
+      const issue = issueFor(source, lookup(source, hit.item.id) || hit, opts);
       const link = githubIssueUrl(opts.repo, issue);
       return {
         intent: kind,
