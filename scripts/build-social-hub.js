@@ -39,6 +39,9 @@ const LAUNCH = "launch-2026-10";
 const ORG = SITE + "qa-review.html#organization";
 const SHARE_VERSION = "20261024";
 const RSS_MAX = 50;
+// Post kinds in the order the filter chips list them; a batch's captions.json names its kind (scripts/tips-studio/build.js).
+const KINDS = Object.keys(COPY.en.kind);
+const TYPES = { news: "NewsArticle", trick: "HowTo", advice: "HowTo", quiz: "Quiz", skit: "VideoObject" };
 
 const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
 const readJson = (file) => JSON.parse(read(file));
@@ -93,7 +96,7 @@ function batchPosts(files, reports) {
       // c.lang is the language the clip was voiced in (TikTok and YouTube copy).
       posts.push({
         id: batch + "/" + slug,
-        kind: batch.startsWith("tips") ? "tip" : batch.startsWith("promo") ? "launch" : "review",
+        kind: KINDS.includes(c.kind) ? c.kind : batch.startsWith("tips") ? "tip" : batch.startsWith("promo") ? "launch" : "review",
         batch,
         date: c.date,
         lang: LANGS[c.textLang] ? c.textLang : "en",
@@ -106,7 +109,10 @@ function batchPosts(files, reports) {
         report: reports.has(report) ? report : null,
         ytTitle: c.youtubeTitle || "",
         captions: Object.fromEntries(CAPTIONS.map(([net]) => [net, c[net] || ""]).filter(([, text]) => text)),
-        i18n: c.textLang ? null : c.i18n || null
+        i18n: c.textLang ? null : c.i18n || null,
+        answer: c.answer ? batch + "/" + c.answer : null,
+        steps: Array.isArray(c.steps) && c.steps.length ? c.steps.map(String) : null,
+        term: c.term || null
       });
     }
   }
@@ -177,6 +183,7 @@ function expand(posts) {
       title: cleanTitle(t.title || post.title),
       text: t.linkedin || t.facebook || post.text,
       alt: t.alt || post.alt,
+      steps: Array.isArray(t.steps) && t.steps.length ? t.steps.map(String) : null,
       captions: Object.assign({}, post.captions, Object.fromEntries(TEXT_NETS.filter((net) => t[net]).map((net) => [net, t[net]])))
     }))));
 }
@@ -191,6 +198,16 @@ function forLang(posts, lang) {
     if (!held || fit(post) > fit(held)) best.set(key, post);
   });
   return posts.filter((post) => best.get(post.group || post.id) === post);
+}
+
+// A quiz names its answer post; each language's quiz points at the answer in the same language when there is one.
+function pairQuizzes(posts) {
+  const byId = new Map(posts.map((post) => [post.id, post]));
+  posts.forEach((post) => {
+    const answer = post.kind === "quiz" && post.answer && (byId.get(post.answer + "-" + post.lang) || byId.get(post.answer));
+    post.answer = answer && answer !== post ? answer.id : null;
+    if (post.answer) answer.question = post.id;
+  });
 }
 
 function collect() {
@@ -223,6 +240,7 @@ function collect() {
     const at = groupRank.get(post.group || post.id);
     if (at) post.trend = at;
   });
+  pairQuizzes(posts);
   posts.sort((a, b) => (b.date || "").localeCompare(a.date || "") || a.id.localeCompare(b.id));
   return { posts, ledger };
 }
@@ -312,9 +330,24 @@ function captionsJson(posts) {
   return JSON.stringify(Object.fromEntries(posts.map((post) => [post.id, post.captions]))) + "\n";
 }
 
-function posting(post, full) {
+function clip(post) {
+  return {
+    name: post.title,
+    description: post.text.slice(0, 300) || post.title,
+    inLanguage: post.clipLang || post.lang,
+    uploadDate: post.date,
+    thumbnailUrl: "https://i.ytimg.com/vi/" + post.youtube + "/hqdefault.jpg",
+    embedUrl: "https://www.youtube.com/embed/" + post.youtube,
+    contentUrl: "https://www.youtube.com/shorts/" + post.youtube
+  };
+}
+
+// Every post is a SocialMediaPosting; news, tricks, best practices, quizzes and skits with a clip also take their own type.
+// A quiz carries its answer only once the answer post is out.
+function posting(post, full, answer) {
+  const type = TYPES[post.kind] && (post.kind !== "skit" || post.youtube) ? TYPES[post.kind] : null;
   const item = {
-    "@type": "SocialMediaPosting",
+    "@type": type ? ["SocialMediaPosting", type] : "SocialMediaPosting",
     "@id": card.permalink(post, post.lang, true),
     url: card.permalink(post, post.lang, true),
     headline: post.title.slice(0, 110),
@@ -326,18 +359,17 @@ function posting(post, full) {
     publisher: { "@id": ORG }
   };
   if (post.cat) item.keywords = post.cat;
-  if (post.youtube) {
-    item.video = {
-      "@type": "VideoObject",
-      name: post.title,
-      description: post.text.slice(0, 300) || post.title,
-      inLanguage: post.clipLang || post.lang,
-      uploadDate: post.date,
-      thumbnailUrl: "https://i.ytimg.com/vi/" + post.youtube + "/hqdefault.jpg",
-      embedUrl: "https://www.youtube.com/embed/" + post.youtube,
-      contentUrl: "https://www.youtube.com/shorts/" + post.youtube
-    };
+  if (type === "VideoObject") Object.assign(item, clip(post), { inLanguage: post.lang });
+  else if (post.youtube) item.video = Object.assign({ "@type": "VideoObject" }, clip(post));
+  if (type === "HowTo") {
+    item.name = post.title;
+    if (post.steps) item.step = post.steps.map((text, i) => ({ "@type": "HowToStep", position: i + 1, text }));
   }
+  if (type === "Quiz") {
+    item.name = post.title;
+    if (answer) item.hasPart = { "@type": "Question", name: post.title, acceptedAnswer: { "@type": "Answer", text: answer.title, url: card.permalink(answer, answer.lang, true) } };
+  }
+  if (post.kind === "term") item.about = { "@type": "DefinedTerm", name: post.term || post.title, description: plain(post.text || post.title, 300) };
   return item;
 }
 
@@ -417,7 +449,7 @@ function page(lang, posts, asOf) {
     "<a href=\"" + card.pageFor(code) + "\" hreflang=\"" + code + "\" lang=\"" + code + "\"" + (code === lang ? " aria-current=\"page\"" : "") + ">"
     + "<img src=\"https://hatscripts.github.io/circle-flags/flags/" + info.flag + ".svg\" alt=\"\" width=\"18\" height=\"18\">" + esc(info.native) + "</a>").join("");
   const follow = PROFILES.map((profile) => "<a class=\"hub-follow-" + profile.net + "\" href=\"" + profile.url + "\" rel=\"me noopener\" data-net=\"" + profile.net + "\">" + esc(profile.name) + "</a>").join("");
-  const kinds = ["all"].concat(visible.some((post) => post.trend) ? ["trending"] : [], ["tip", "review", "launch", "video"]).map((kind) =>
+  const kinds = ["all"].concat(visible.some((post) => post.trend) ? ["trending"] : [], KINDS.filter((kind) => visible.some((post) => post.kind === kind)), ["video"]).map((kind) =>
     "<button type=\"button\" class=\"hub-chip\" data-kind=\"" + kind + "\" aria-pressed=\"" + (kind === "all") + "\">" + esc(copy.kinds[kind]) + "</button>").join("");
   const langOptions = "<option value=\"all\">" + esc(copy.allLangs) + "</option>" + Object.entries(LANGS).map(([code, info]) => "<option value=\"" + code + "\">" + esc(info.native) + "</option>").join("");
   const topicOptions = "<option value=\"all\">" + esc(copy.allTopics) + "</option>" + topics(visible).map((cat) => "<option value=\"" + esc(cat) + "\">" + esc(card.topic({ cat }, copy)) + "</option>").join("");
@@ -525,7 +557,8 @@ function rss(lang, posts, asOf) {
       <title>${xml(post.title)}</title>
       <link>${xml(card.permalink(post, lang, true))}</link>
       <guid isPermaLink="false">${xml(post.id)}</guid>
-      <pubDate>${rfc822(post.date)}</pubDate>${post.cat ? "\n      <category>" + xml(post.cat) + "</category>" : ""}
+      <pubDate>${rfc822(post.date)}</pubDate>
+      <category>${xml(COPY[lang].kind[post.kind] || post.kind)}</category>${post.cat ? "\n      <category>" + xml(post.cat) + "</category>" : ""}
       <description>${xml(text)}</description>
 ${admin.remote(post.image)
     ? `      <media:content url="${xml(post.image)}" medium="image"/>`
@@ -589,7 +622,7 @@ const plain = (text, max) => {
   return flat.length <= max ? flat : flat.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
 };
 
-function postPage(post, siblings, related, asOf) {
+function postPage(post, siblings, related, asOf, answer, question) {
   const lang = LANGS[post.lang] ? post.lang : "en";
   const copy = COPY[lang];
   const sfx = lang === "en" ? "" : "-" + lang;
@@ -618,6 +651,12 @@ function postPage(post, siblings, related, asOf) {
   const report = post.report
     ? " <a class=\"post-report\" data-act=\"report\" href=\"/qa-review" + sfx + ".html?live=" + encodeURIComponent(post.report) + "&amp;from=social\">" + esc(copy.report) + " →</a>"
     : "";
+  const answerOut = answer && answer.date <= asOf;
+  const pair = answer
+    ? (answerOut
+      ? " <a class=\"post-report\" data-act=\"related\" data-id=\"" + esc(answer.id) + "\" href=\"/" + card.postPath(answer) + "\">" + esc(copy.answer) + " →</a>"
+      : " <span class=\"post-answer-on\">" + esc(copy.answerOn.replace("{date}", card.day(answer.date, lang))) + "</span>")
+    : question ? " <a class=\"post-report\" data-act=\"related\" data-id=\"" + esc(question.id) + "\" href=\"/" + card.postPath(question) + "\">← " + esc(copy.question) + "</a>" : "";
   const captions = CAPTIONS.filter(([net]) => post.captions && post.captions[net]).map(([net, name], i) =>
     "<details><summary>" + esc(name) + "</summary><pre id=\"cap-" + net + "\" lang=\"" + esc(post.lang) + "\">" + esc(post.captions[net]) + "</pre>"
     + "<button class=\"post-btn\" type=\"button\" data-act=\"copy\" data-net=\"" + net + "\" data-target=\"cap-" + net + "\">" + esc(copy.copy) + "</button></details>").join("\n        ");
@@ -625,7 +664,7 @@ function postPage(post, siblings, related, asOf) {
   const graph = {
     "@context": "https://schema.org",
     "@graph": [
-      Object.assign(posting(post, true), { mainEntityOfPage: url, isPartOf: { "@type": "CollectionPage", "@id": hub + "#page", url: hub } }),
+      Object.assign(posting(post, true, answerOut ? answer : null), { mainEntityOfPage: url, isPartOf: { "@type": "CollectionPage", "@id": hub + "#page", url: hub } }),
       { "@type": "Organization", "@id": ORG, name: "QA-lab URL Review", url: SITE + "qa-review.html", logo: SITE + "assets/qa-review-mark.svg", sameAs: PROFILES.map((profile) => profile.url) },
       { "@type": "BreadcrumbList", itemListElement: [
         { "@type": "ListItem", position: 1, name: "QA-lab URL Review", item: SITE + "qa-review" + sfx + ".html" },
@@ -694,7 +733,7 @@ ${json(graph)}
             <p class="post-meta"><span class="post-tag post-kind-${esc(post.kind)}">${esc(kind)}</span>${post.cat ? "<span class=\"post-tag\">" + esc(card.topic(post, copy)) + "</span>" : ""}<span class="post-tag post-lang" translate="no">${esc(post.lang.toUpperCase())}</span>${upcoming ? "<span class=\"post-tag post-scheduled\">" + esc(copy.scheduled) + "</span>" : ""}</p>
             <h1 class="post-title" lang="${esc(post.lang)}">${esc(post.title)}</h1>
             <div class="post-text" lang="${esc(post.lang)}">${card.parasHtml(post.text)}</div>
-            <p class="post-foot"><time datetime="${esc(post.date)}">${esc(card.day(post.date, lang))}</time>${report}</p>
+            <p class="post-foot"><time datetime="${esc(post.date)}">${esc(card.day(post.date, lang))}</time>${report}${pair}</p>
             <div class="post-actions post-share">${share}<button class="post-btn" type="button" data-act="copylink">${esc(copy.copyLink)}</button><a class="post-btn" data-act="download" href="${esc(src(post.image))}" download>${esc(copy.download)}</a></div>
         </div>
     </article>
@@ -722,20 +761,27 @@ function postPages(posts, asOf) {
   posts.forEach((post) => { if (post.group) (groups[post.group] = groups[post.group] || []).push(post); });
   const files = {};
   const shownIn = {};
+  const byId = new Map(posts.map((post) => [post.id, post]));
   posts.forEach((post) => {
     const siblings = post.group ? groups[post.group].slice().sort((a, b) => Object.keys(LANGS).indexOf(a.lang) - Object.keys(LANGS).indexOf(b.lang)) : [post];
     const related = (shownIn[post.lang] = shownIn[post.lang] || forLang(shown, post.lang)).filter((other) => other.id !== post.id && other.kind === post.kind && (!post.group || other.group !== post.group))
       .sort((a, b) => (a.lang === post.lang ? 0 : 1) - (b.lang === post.lang ? 0 : 1)).slice(0, 6);
-    files[card.postPath(post)] = postPage(post, siblings, related, asOf);
+    files[card.postPath(post)] = postPage(post, siblings, related, asOf, byId.get(post.answer), byId.get(post.question));
   });
   return files;
 }
 
+// A quiz's answer stays off the hub until its day, so the scheduled card doesn't give it away.
+function unspoiled(posts, asOf) {
+  return posts.filter((post) => !(post.question && post.date > asOf));
+}
+
 function outputs(posts, asOf) {
   const files = { "sitemap-social.xml": sitemap(posts, asOf) };
+  const listed = unspoiled(posts, asOf);
   Object.keys(LANGS).forEach((lang) => {
     const sfx = lang === "en" ? "" : "-" + lang;
-    const shown = forLang(posts, lang);
+    const shown = forLang(listed, lang);
     files[OUT + "/feed" + sfx + ".json"] = feedJson(shown, asOf);
     files[OUT + "/captions" + sfx + ".json"] = captionsJson(shown);
     files[card.pageFor(lang)] = page(lang, shown, asOf);
@@ -804,4 +850,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, expand, forLang, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };
+module.exports = { KINDS, titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, expand, forLang, pairQuizzes, unspoiled, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };

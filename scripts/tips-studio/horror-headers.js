@@ -7,6 +7,7 @@ const { SITE, GUIDE, CATS, plainTitle, xPost } = require("./tips");
 const { BRAND, tagLine } = require("../social-tags");
 
 const CAMPAIGN = "tips-horror-2026-10";
+const KIND = "series";
 
 const WINDOWS = {
   linkedin: ["07:30", "11:00"], x: ["08:00", "21:00"], facebook: ["12:00", "19:00"],
@@ -75,4 +76,4 @@ function captions(tip, index, total) {
   };
 }
 
-module.exports = { SITE, GUIDE, BRAND, CATS, TIPS, WINDOWS, captions, link, plainTitle, xPost };
+module.exports = { SITE, GUIDE, BRAND, CATS, KIND, TIPS, WINDOWS, captions, link, plainTitle, xPost };

@@ -5,14 +5,73 @@
     <link>https://carlosandmunoz.com/qa-review-social-de.html</link>
     <description>Jeder Beitrag von QA-lab URL Review: Tipps, echte Website-Prüfungen und kurze Clips.</description>
     <language>de</language>
-    <lastBuildDate>Sat, 24 Oct 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 25 Oct 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-de.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-de.html</link></image>
+    <item>
+      <title>whatsapp.com: 67. Die Lücke: hreflang.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-22/03-u-whatsapp-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-22/03-u-whatsapp-com-de</guid>
+      <pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und Crawler für Modelltraining sind bewusst blockiert. Doch 1002 Probleme bei Sprachalternativen.
+
+Die Lektion für jedes Team: Jede Sprachversion sollte alle anderen, sich selbst eingeschlossen, mit passenden hreflang-Links listen.
+
+Eine automatisierte Analyse öffentlicher Seiten am 21. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-whatsapp-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-whatsapp-com
+
+#SEO #Hreflang #i18n #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/03-u-whatsapp-com.jpg" length="208352" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/03-u-whatsapp-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>postobon.com: 49. Die Lücke: Formular-Labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-23/02-u-postobon-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-23/02-u-postobon-com-de</guid>
+      <pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 25 Formularfelder haben kein Label.
+
+Die Lektion für jedes Team: Geben Sie jedem Eingabefeld ein sichtbares Label, verknüpft über for und id. Screenreader sagen es an, und die Tippfläche wächst.
+
+Eine automatisierte Analyse öffentlicher Seiten am 22. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-postobon-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-postobon-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Forms #A11y #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/02-u-postobon-com.jpg" length="205551" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/02-u-postobon-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>grupoexito.com.co: 68. Die Lücke: Button-Namen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-24/01-u-grupoexito-com-co-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-24/01-u-grupoexito-com-co-de</guid>
+      <pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Buttons brauchen erkennbaren Text.
+
+Die Lektion für jedes Team: Geben Sie jedem Button Text oder ein aria-label, damit ein Screenreader ihn ansagen kann.
+
+Eine automatisierte Analyse öffentlicher Seiten am 23. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-grupoexito-com-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-grupoexito-com-co
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #DevOps #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/01-u-grupoexito-com-co.jpg" length="211154" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/01-u-grupoexito-com-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>mercadolibre.com.co: 50. Die Lücke: Zugriff für KI-Crawler.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/02-u-mercadolibre-com-co-de.html</link>
       <guid isPermaLink="false">auto-2026-10-22/02-u-mercadolibre-com-co-de</guid>
       <pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
       <category>Requested</category>
       <description>Jeder geöffnete interne Link hat geantwortet, und Crawler für Modelltraining sind bewusst blockiert. Doch 5 KI-Antwort- oder Such-Crawler sind blockiert.
 
@@ -32,6 +91,7 @@ https://www.youtube.com/shorts/2NeXSzjFh6U</description>
       <link>https://carlosandmunoz.com/social/auto-2026-10-23/01-u-pirouline-com-de.html</link>
       <guid isPermaLink="false">auto-2026-10-23/01-u-pirouline-com-de</guid>
       <pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
       <category>Requested</category>
       <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch andere Websites können die Seite einbetten.
 
@@ -53,6 +113,7 @@ https://www.youtube.com/shorts/kYs-ffmNoDk</description>
       <link>https://carlosandmunoz.com/social/auto-2026-10-21/02-u-epssura-com-de.html</link>
       <guid isPermaLink="false">auto-2026-10-21/02-u-epssura-com-de</guid>
       <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
       <category>Requested</category>
       <description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 161 Formularfelder haben kein Label.
 
@@ -72,6 +133,7 @@ https://www.youtube.com/shorts/0FypyDn0reM</description>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/01-u-uber-com-de.html</link>
       <guid isPermaLink="false">auto-2026-10-22/01-u-uber-com-de</guid>
       <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
       <category>Requested</category>
       <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 56 Seiten haben keinen Titel.
 
@@ -91,6 +153,7 @@ https://www.youtube.com/shorts/5b4Hr6r-cBk</description>
       <link>https://carlosandmunoz.com/social/launch-2026-10/de/inherited.html</link>
       <guid isPermaLink="false">launch-2026-10/de/inherited</guid>
       <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Produkt</category>
       <description>Eine Analyse der öffentlichen Seite nennt die sichtbaren Technologien, folgt den echten Links und schlägt die ersten Fälle vor. Sie beginnen bei Fakten statt bei Vermutungen.
 
 → Öffentlich sichtbare Technologien
@@ -111,6 +174,7 @@ Mit einer öffentlichen URL testen: https://carlosandmunoz.com/qa-review-de.html
       <link>https://carlosandmunoz.com/social/auto-2026-10-21/01-u-teaminternational-com-de.html</link>
       <guid isPermaLink="false">auto-2026-10-21/01-u-teaminternational-com-de</guid>
       <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
       <category>Requested</category>
       <description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 16 interne Links führen zu einem Fehler.
 
@@ -130,6 +194,7 @@ https://www.youtube.com/shorts/BZTtWQCzPCM</description>
       <link>https://carlosandmunoz.com/social/launch-2026-10/de/release.html</link>
       <guid isPermaLink="false">launch-2026-10/de/release</guid>
       <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Produkt</category>
       <description>Richten Sie QA-lab URL Review auf die öffentliche Seite. Es schlägt die Fälle vor, die Sie vor dem Release auf Papier wollen, und das Team startet mit einer Liste statt mit einem leeren Dokument.
 
 → Funktion, Links, Inhalt, Mobil
@@ -150,6 +215,7 @@ Mit einer öffentlichen URL testen: https://carlosandmunoz.com/qa-review-de.html
       <link>https://carlosandmunoz.com/social/launch-2026-10/de/frameworks.html</link>
       <guid isPermaLink="false">launch-2026-10/de/frameworks</guid>
       <pubDate>Wed, 21 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Produkt</category>
       <description>Wählen Sie Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling oder zwölf weitere, von Cucumber bis k6, und die vorgeschlagenen Fälle kommen in dieser Form.
 
 → Eines wählen, oder alle zwanzig
@@ -170,6 +236,7 @@ Mit einer öffentlichen URL testen: https://carlosandmunoz.com/qa-review-de.html
       <link>https://carlosandmunoz.com/social/launch-2026-10/de/first-read.html</link>
       <guid isPermaLink="false">launch-2026-10/de/first-read</guid>
       <pubDate>Tue, 20 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Produkt</category>
       <description>Öffentliche URL einfügen, annehmen, was die Prüfung tut und was nicht, und zusehen, wie der Bericht entsteht. Behalten Sie ihn nur, wenn er sich lohnt.
 
 → Bericht einmal kostenlos sichtbar
@@ -190,6 +257,7 @@ Mit einer öffentlichen URL testen: https://carlosandmunoz.com/qa-review-de.html
       <link>https://carlosandmunoz.com/social/launch-2026-10/de/talking.html</link>
       <guid isPermaLink="false">launch-2026-10/de/talking</guid>
       <pubDate>Mon, 19 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Produkt</category>
       <description>Jede öffentliche Seite sagt schon, was zu testen ist. Die meisten Teams schreiben es nie auf.
 
 QA-lab URL Review liest eine öffentliche https-Seite, beschreibt die Antwort und schlägt die Testfälle vor, benannt nach dem Framework, das Ihr Team schon nutzt.
