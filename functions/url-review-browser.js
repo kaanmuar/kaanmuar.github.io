@@ -68,9 +68,9 @@ const CHATS = [
   ["Tawk.to", /(^|\.)(tawk\.to|tawk\.link|tawk\.help)$/, "iframe[title='chat widget' i], .tawk-min-container, .tawk-button", "iframe[title='chat widget' i], .tawk-min-container, .tawk-chat-panel"],
   ["Crisp", /(^|\.)(crisp\.chat|crisp\.im)$/, ".crisp-client [role=button], #crisp-chatbox [role=button]", ".crisp-client, #crisp-chatbox"],
   ["LiveChat", /(^|\.)(livechatinc\.com|livechat\.com|livechat-static\.com|lc\.chat)$/, "#chat-widget-minimized, #chat-widget-container iframe", "#chat-widget-container, #chat-widget"],
-  ["Tidio", /(^|\.)(tidio\.co|tidiochat\.com)$/, "#tidio-chat iframe, #tidio-chat-iframe", "#tidio-chat, #tidio-chat-iframe"],
+  ["Tidio", /(^|\.)(tidio\.co|tidiochat\.com)$/, "#tidio-chat-root #button-body, #tidio-chat-root button, #tidio-chat iframe, #tidio-chat-iframe", "#tidio-chat-root, #tidio-chat-iframe"],
   ["Freshchat", /(^|\.)freshchat\.com$/, "#fc_frame, #fc_widget", "#fc_frame, #fc_push_frame"],
-  ["Olark", /(^|\.)olark\.com$/, ".olark-launch-button, #olark-wrapper [role=button]", "#olark-wrapper, #olark-container, #olark-box-container"],
+  ["Olark", /(^|\.)olark\.com$/, "#olark-show-button, .olark-launch-button, #olark-wrapper [role=button]", "#olark-wrapper, #olark-container, #olark-box-container, .olark-chatbox, #olark-chatkit, .ck-iframe"],
   ["Ada", /(^|\.)ada\.support$/, "#ada-button-frame, #ada-chat-button", "#ada-button-frame, #ada-chat-frame, #ada-entry"],
   ["Gorgias", /(^|\.)(gorgias\.chat|gorgias\.io|gorgias\.help)$/, "#gorgias-chat-container #chat-button, #chat-button", "#gorgias-chat-container"],
   ["Chatbase", /(^|\.)chatbase\.co$/, "#chatbase-bubble-button", "#chatbase-bubble-button, #chatbase-bubble-window", true],
@@ -88,6 +88,8 @@ const CHATS = [
 const CHAT_LAUNCHER = "[class*=launcher i], [id*=launcher i], [aria-label*=chat i], [title*=chat i], [id*=chat-widget i], [class*=chat-widget i], [id*=chatbot i], [class*=chatbot i]";
 const CHAT_FRAME = "intercom|drift|launcher|webwidget|messaging|hubspot-messages|tawk|chat|tidio|fc_|olark|ada-|gorgias|botpress|landbot|kommunicate|voiceflow";
 const CHAT_COOKIE = /^(intercom-|driftt?_|drift_|__zlcmid|ZD-|__zd|TawkConnectionTime|__tawkuuid|twk_|crisp-client|__lc_|__lc2_|lc_window_state|tidio_|messagesUtk|hblid|olfsk|wcsid|_okbk|_okdetect|_oklv|_okac|_okck|_ok$|gorgias|fc_|freshchat|chatbase|voiceflow|bp-|landbot|kommunicate)/i;
+// CDN, load-balancer and bot-check cookies a chat host's edge sets; strictly necessary, so not the chat's own.
+const INFRA_COOKIE = /^(__cf_bm|__cflb|_cfuvid|cf_clearance|cf_chl_|__cfruid|__cfwaitingroom|AWSALB|AWSELB|incap_ses_|visid_incap_|nlbi_|ak_bmsc|bm_sv|bm_sz|bm_mi|_abck|datadome)/i;
 const TRACKING_COOKIE = /^(_ga|_gid|_gat|_gcl_|_fbp|_fbc|_uet|_clck|_clsk|_hj|_tt_|_ttp|_pin_|_scid|_rdt_|_ym|li_|bcookie|lidc|IDE$|test_cookie$|NID$|MUID$|ANONCHK$|_mkto_trk|hubspotutk|__hs|ajs_|mp_|amp_|_derived_epik|_parsely|s_cc$|s_sq$|AMCV_|demdex|nmstat$|siteimproveses$)/i;
 const CONSENT_COOKIE = /^(OptanonConsent|OptanonAlertBoxClosed|CookieConsent|euconsent|didomi|cmplz_|cookieyes|uc_|_iub|osano|notice_|cookielawinfo|cookie_consent|cookieconsent|axeptio|borlabs|klaro|cookie-agreed|consent)/i;
 
@@ -182,8 +184,9 @@ function coveredBy(box, targets) {
     const w = Math.min(box.x + box.w, r.x + r.w) - Math.max(box.x, r.x);
     const h = Math.min(box.y + box.h, r.y + r.h) - Math.max(box.y, r.y);
     if (w <= 0 || h <= 0) return false;
-    if (target.under === true || target.under === false) return target.under;
-    return (w * h) / (r.w * r.h) >= 0.2;
+    const share = (w * h) / (r.w * r.h);
+    if (target.under === true || target.under === false) return target.under && share >= 0.1;
+    return share >= 0.2;
   });
 }
 
@@ -859,7 +862,8 @@ async function cookiesOf(context, page, host) {
     const domain = String(cookie.domain || "").replace(/^\./, "");
     const third = !(domain === site || domain.endsWith("." + site));
     const consent = CONSENT_COOKIE.test(cookie.name);
-    return { name: trim(cookie.name, 40), domain: trim(domain, 60), third, tracking: !consent && (TRACKING_COOKIE.test(cookie.name) || third), chat: CHAT_COOKIE.test(cookie.name) || !!chatOf(domain) };
+    const infra = INFRA_COOKIE.test(cookie.name);
+    return { name: trim(cookie.name, 40), domain: trim(domain, 60), third, tracking: !consent && !infra && (TRACKING_COOKIE.test(cookie.name) || third), chat: CHAT_COOKIE.test(cookie.name) || (!infra && !!chatOf(domain)) };
   });
 }
 
@@ -901,6 +905,7 @@ async function legalAnchors(page) {
 }
 
 // The chat launcher on the phone: its name, its box, and the banner or call-to-action buttons it overlaps.
+// Tidio and Olark draw theirs inside open shadow roots, so the launcher search reads those too.
 async function launcherFacts(page, launchers, generic) {
   return page.evaluate((launchers, generic, boxes) => {
     const visible = (node) => {
@@ -909,24 +914,31 @@ async function launcherFacts(page, launchers, generic) {
       const style = getComputedStyle(node);
       return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none" && Number(style.opacity) > 0.05;
     };
+    const up = (node) => node.parentElement || (node.parentNode && node.parentNode.host) || null;
     const pinned = (node) => {
-      for (let n = node; n && n !== document.documentElement; n = n.parentElement) if (getComputedStyle(n).position === "fixed") return n;
+      for (let n = node; n && n !== document.documentElement; n = up(n)) if (getComputedStyle(n).position === "fixed") return n;
       return null;
     };
+    const shadows = [];
+    const collect = (scope, depth) => scope.querySelectorAll("*").forEach((node) => { if (node.shadowRoot && depth < 3) { shadows.push(node.shadowRoot); collect(node.shadowRoot, depth + 1); } });
+    collect(document, 0);
     const pick = (selector) => { try { return Array.from(document.querySelectorAll(selector)); } catch (error) { return []; } };
+    const deep = (selector) => [document].concat(shadows).flatMap((scope) => { try { return Array.from(scope.querySelectorAll(selector)); } catch (error) { return []; } });
     const small = (node) => { const rect = node.getBoundingClientRect(); return rect.top > innerHeight / 2 && rect.width < innerWidth * 0.6; };
     let launcher = null;
     for (const selector of launchers) {
-      launcher = pick(selector).find((node) => visible(node) && pinned(node));
+      launcher = deep(selector).find((node) => visible(node) && pinned(node));
       if (launcher) break;
     }
     if (!launcher) launcher = pick(generic).find((node) => visible(node) && pinned(node) && small(node)) || null;
-    if (!launcher) return { found: false };
+    if (!launcher) return { found: false, hidden: launchers.some((selector) => deep(selector).length > 0) };
     if (!/^(BUTTON|A|IFRAME)$/.test(launcher.tagName) && launcher.getAttribute("role") !== "button") {
       const inner = Array.from(launcher.querySelectorAll("button, [role=button], a[href], iframe")).find(visible);
       if (inner) launcher = inner;
     }
-    const root = pinned(launcher) || launcher;
+    const area = (node) => { const rect = node.getBoundingClientRect(); return rect.width * rect.height; };
+    const holder = pinned(launcher);
+    const root = holder && area(holder) < innerWidth * innerHeight / 2 ? holder : launcher;
     const text = (node) => (node.innerText || node.value || "").replace(/\s+/g, " ").trim();
     const nameOf = (node, doc) => {
       const by = (node.getAttribute("aria-labelledby") || "").split(/\s+/).filter(Boolean).map((id) => { const hit = doc.getElementById(id); return hit ? text(hit) : ""; }).join(" ").trim();
@@ -963,18 +975,31 @@ async function launcherFacts(page, launchers, generic) {
       if (t.right <= r.left || t.left >= r.right || t.bottom <= r.top || t.top >= r.bottom) continue;
       const label = nameOf(node, document).slice(0, 60);
       if (!label) continue;
-      const hit = document.elementFromPoint((Math.max(t.left, r.left) + Math.min(t.right, r.right)) / 2, (Math.max(t.top, r.top) + Math.min(t.bottom, r.bottom)) / 2);
+      const x = (Math.max(t.left, r.left) + Math.min(t.right, r.right)) / 2;
+      const y = (Math.max(t.top, r.top) + Math.min(t.bottom, r.bottom)) / 2;
+      let hit = document.elementFromPoint(x, y);
+      for (let depth = 0; hit && hit.shadowRoot && depth < 3; depth += 1) {
+        const inner = hit.shadowRoot.elementFromPoint(x, y);
+        if (!inner || inner === hit) break;
+        hit = inner;
+      }
       targets.push({ label, banner: inBanner, under: hit ? root.contains(hit) : null, rect: { x: Math.round(t.left), y: Math.round(t.top), w: Math.round(t.width), h: Math.round(t.height) } });
     }
     return { found: true, name: name.slice(0, 80), known, tag: launcher.tagName.toLowerCase(), banner: !!banner, box: { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }, targets };
   }, launchers, generic, CMPS.map((row) => row[1]));
 }
 
+// The largest chat part on screen. An iframe pinned to the screen that was not there before the launcher was pressed
+// counts as the chat too, since some windows (Zendesk's) carry only a translated title.
 function chatArea(roots, frameRe) {
   const re = new RegExp(frameRe, "i");
-  let parts = [];
-  try { parts = Array.from(document.querySelectorAll(roots || "[data-qa-chat-root]")); } catch (error) { parts = []; }
-  parts = parts.concat(Array.from(document.querySelectorAll("[data-qa-chat-root], iframe")).filter((node) => node.tagName !== "IFRAME" || re.test([node.name, node.id, node.title, node.getAttribute("src") || ""].join(" "))));
+  const scopes = [document];
+  const collect = (scope, depth) => scope.querySelectorAll("*").forEach((node) => { if (node.shadowRoot && depth < 3) { scopes.push(node.shadowRoot); collect(node.shadowRoot, depth + 1); } });
+  collect(document, 0);
+  const all = (selector) => scopes.flatMap((scope) => { try { return Array.from(scope.querySelectorAll(selector)); } catch (error) { return []; } });
+  const pinned = (node) => { for (let n = node; n && n !== document.documentElement; n = n.parentElement || (n.parentNode && n.parentNode.host) || null) if (getComputedStyle(n).position === "fixed") return true; return false; };
+  if (document.documentElement.hasAttribute("data-qa-chat-before")) all("iframe").filter((node) => !node.hasAttribute("data-qa-before") && pinned(node)).forEach((node) => node.setAttribute("data-qa-chat-root", "1"));
+  const parts = all(roots || "[data-qa-chat-root]").concat(all("[data-qa-chat-root], iframe").filter((node) => node.tagName !== "IFRAME" || node.hasAttribute("data-qa-chat-root") || re.test([node.name, node.id, node.title, node.getAttribute("src") || ""].join(" "))));
   return parts.reduce((best, node) => {
     const rect = node.getBoundingClientRect();
     const style = getComputedStyle(node);
@@ -986,9 +1011,13 @@ function chatFocus(roots, frameRe) {
   const re = new RegExp(frameRe, "i");
   let node = document.activeElement;
   if (!node || node === document.body || node === document.documentElement) return { where: "none", name: "", blind: false };
+  while (node.shadowRoot && node.shadowRoot.activeElement) node = node.shadowRoot.activeElement;
   let inside = false;
-  try { inside = !!(roots && node.closest(roots)); } catch (error) { inside = false; }
-  inside = inside || !!node.closest("[data-qa-chat-root]") || (node.tagName === "IFRAME" && re.test([node.name, node.id, node.title, node.getAttribute("src") || ""].join(" ")));
+  for (let n = node; n && !inside; n = n.parentElement || (n.parentNode && n.parentNode.host) || null) {
+    try { inside = !!(roots && n.matches(roots)); } catch (error) { inside = false; }
+    inside = inside || n.hasAttribute("data-qa-chat-root");
+  }
+  inside = inside || (node.tagName === "IFRAME" && re.test([node.name, node.id, node.title, node.getAttribute("src") || ""].join(" ")));
   let blind = false;
   for (let depth = 0; node && node.tagName === "IFRAME" && depth < 3; depth += 1) {
     let doc = null;
@@ -1003,11 +1032,13 @@ function chatFocus(roots, frameRe) {
 function privacyLinks(roots, frameRe) {
   const re = new RegExp(frameRe, "i");
   const words = /privacy|privacidad|privacidade|datenschutz|confidentialit|riservatezza|gdpr|data protection|personal data/i;
-  let scopes = [];
-  try { scopes = Array.from(document.querySelectorAll(roots || "[data-qa-chat-root]")); } catch (error) { scopes = []; }
-  scopes = scopes.concat(Array.from(document.querySelectorAll("[data-qa-chat-root]")));
+  const shadows = [document];
+  const collect = (scope, depth) => scope.querySelectorAll("*").forEach((node) => { if (node.shadowRoot && depth < 3) { shadows.push(node.shadowRoot); collect(node.shadowRoot, depth + 1); } });
+  collect(document, 0);
+  const all = (selector) => shadows.flatMap((scope) => { try { return Array.from(scope.querySelectorAll(selector)); } catch (error) { return []; } });
+  const scopes = all(roots || "[data-qa-chat-root]").concat(all("[data-qa-chat-root]"));
   let blind = 0;
-  Array.from(document.querySelectorAll("iframe")).filter((node) => re.test([node.name, node.id, node.title, node.getAttribute("src") || ""].join(" ")) || scopes.some((scope) => scope.contains(node))).forEach((node) => {
+  all("iframe").filter((node) => re.test([node.name, node.id, node.title, node.getAttribute("src") || ""].join(" ")) || scopes.some((scope) => scope.contains(node))).forEach((node) => {
     let doc = null;
     try { doc = node.contentDocument; } catch (error) { doc = null; }
     if (doc && doc.body) scopes.push(doc.body);
@@ -1019,9 +1050,11 @@ function privacyLinks(roots, frameRe) {
 
 function placeFocus(roots, frameRe) {
   const re = new RegExp(frameRe, "i");
-  let parts = [];
-  try { parts = Array.from(document.querySelectorAll(roots || "[data-qa-chat-root]")); } catch (error) { parts = []; }
-  parts = parts.concat(Array.from(document.querySelectorAll("iframe")).filter((node) => re.test([node.name, node.id, node.title, node.getAttribute("src") || ""].join(" "))));
+  const scopes = [document];
+  const collect = (scope, depth) => scope.querySelectorAll("*").forEach((node) => { if (node.shadowRoot && depth < 3) { scopes.push(node.shadowRoot); collect(node.shadowRoot, depth + 1); } });
+  collect(document, 0);
+  const all = (selector) => scopes.flatMap((scope) => { try { return Array.from(scope.querySelectorAll(selector)); } catch (error) { return []; } });
+  const parts = all(roots || "[data-qa-chat-root]").concat(all("iframe").filter((node) => node.hasAttribute("data-qa-chat-root") || re.test([node.name, node.id, node.title, node.getAttribute("src") || ""].join(" "))));
   const size = (node) => { const rect = node.getBoundingClientRect(); return rect.width * rect.height; };
   const open = parts.filter((node) => size(node) > 40000).sort((a, b) => size(b) - size(a));
   for (const node of open) {
@@ -1045,8 +1078,12 @@ async function openChat(page, roots, job) {
   refusePassive(job, "Opening the chat");
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const out = { opened: false, keyboard: false, moved: false, entered: false, trapped: false, exit: "", tabs: 0, privacy: null };
-  const handle = await page.$("[data-qa-chat]");
+  const handle = await page.$("pierce/[data-qa-chat]");
   if (!handle) return out;
+  await page.evaluate(() => {
+    document.documentElement.setAttribute("data-qa-chat-before", "1");
+    document.querySelectorAll("iframe").forEach((node) => node.setAttribute("data-qa-before", "1"));
+  }).catch(() => {});
   let target = handle;
   if (await handle.evaluate((node) => node.tagName === "IFRAME")) {
     const frame = await handle.contentFrame();
@@ -1669,11 +1706,17 @@ async function browse(job, log, onStart) {
         lap("phoneShot");
         say("Took the phone screenshot.");
         if (result.chat) {
-          const launcher = await launcherFacts(phone, chatRows.map((row) => row[2]).filter(Boolean), CHAT_LAUNCHER).catch((error) => ({ found: false, error: trim(error.message, 120) }));
-          result.chat.launcher = { found: launcher.found, name: launcher.name || "", known: !!launcher.known, banner: !!launcher.banner, box: launcher.box || null, covers: coveredBy(launcher.box, launcher.targets).map((row) => ({ label: row.label, banner: row.banner })) };
+          const launchers = chatRows.map((row) => row[2]).filter(Boolean);
+          let launcher = await launcherFacts(phone, launchers, CHAT_LAUNCHER).catch((error) => ({ found: false, error: trim(error.message, 120) }));
+          for (let tries = 0; !launcher.found && launchers.length && tries < 3 && left() > 20000; tries += 1) {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            launcher = await launcherFacts(phone, launchers, CHAT_LAUNCHER).catch((error) => ({ found: false, error: trim(error.message, 120) }));
+          }
+          result.chat.launcher = { found: launcher.found, hidden: !launcher.found && !!launcher.hidden, name: launcher.name || "", known: !!launcher.known, banner: !!launcher.banner, box: launcher.box || null, covers: coveredBy(launcher.box, launcher.targets).map((row) => ({ label: row.label, banner: row.banner })) };
           lap("chatLauncher");
           say(launcher.found
             ? "The chat launcher is " + (launcher.known ? (launcher.name ? "named \"" + launcher.name + "\"" : "unnamed") : "inside a frame this review cannot read") + (result.chat.launcher.covers.length ? " and covers " + result.chat.launcher.covers.map((row) => "\"" + row.label + "\"").join(", ") : " and covers no button") + " on the phone."
+            : launcher.hidden ? "The chat loaded, but its launcher stays hidden on the phone, so it was not checked."
             : "No chat launcher was found on the phone.");
         }
       };
@@ -1767,4 +1810,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, backForward, imageRows, open, tagCut, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, backForward, imageRows, open, tagCut, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, launcherFacts, cookiesOf, CHATS, CHAT_LAUNCHER, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };

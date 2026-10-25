@@ -1754,12 +1754,13 @@
     const st = chat.states || {};
     const badge = (state) => VERDICT_LABEL[state] ? verdictBadge(state) : '<span class="badge">Not checked</span>';
     const names = (rows) => rows.length ? rows.join(", ") : "None";
-    const launcher = chat.launcher;
+    const hidden = !!(chat.launcher && chat.launcher.hidden);
+    const launcher = hidden ? null : chat.launcher;
     const rows = [
       ["Before a choice", st.consent, '<span class="notranslate" translate="no">' + esc(names(chat.cookies)) + "</span>" + (chat.banner ? "" : " · no banner asked first")],
       ["After Reject", chat.rejected ? st.reject : "", chat.rejected ? '<span class="notranslate" translate="no">' + esc(names(chat.rejected.cookies)) + "</span> · " + chat.rejected.requests + " request" + (chat.rejected.requests === 1 ? "" : "s") : (chat.banner ? "Reject was not pressed" : "No banner showed")],
       ["Weight on the start page", st.weight, chat.kb + " KB · " + chat.ms + " ms of script time · " + chat.requests + " request" + (chat.requests === 1 ? "" : "s")],
-      ["Launcher on a phone", launcher ? st.cover : "", launcher ? (launcher.covers ? "Covers " + launcher.covers + " button" + (launcher.covers === 1 ? "" : "s") : "Covers no button") : "Not found"],
+      ["Launcher on a phone", launcher ? st.cover : "", launcher ? (launcher.covers ? "Covers " + launcher.covers + " button" + (launcher.covers === 1 ? "" : "s") : "Covers no button") : hidden ? "Hidden on the phone" : "Not found"],
       ["Launcher name", launcher && launcher.known ? st.name : "", launcher && launcher.known ? (launcher.name ? "Announced as “" + esc(launcher.name) + "”" : "No accessible name") : "Not checked"],
       ["Keyboard in the open chat", chat.opened ? (st.trap === "fail" || st.focus === "risk" ? (st.trap === "fail" ? "fail" : "risk") : st.trap) : "", chat.opened ? (st.trap === "fail" ? "Focus is trapped" : st.focus === "risk" ? "Focus stays on the page" : st.trap === "pass" ? "Focus moves in and out" : "Needs a person") : "The chat did not open"]
     ];
