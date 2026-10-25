@@ -63,8 +63,12 @@ jobs:
         if: ${{ env.MODE == 'sync' }}
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          PAUSE_UNTIL: ${{ vars.BUFFER_SYNC_PAUSE_UNTIL }}
         run: |
           set -o pipefail
+          if [ -n "$PAUSE_UNTIL" ] && [ "$(date -u +%s)" -lt "$(date -u -d "$PAUSE_UNTIL" +%s)" ]; then
+            echo "Sync paused until $PAUSE_UNTIL (repo variable BUFFER_SYNC_PAUSE_UNTIL), so other Buffer jobs have the day's calls." | tee -a "$GITHUB_STEP_SUMMARY"; exit 0
+          fi
           if ! [[ "$WINDOWS" =~ ^[1-6]$ ]]; then echo "::error::windows is 1 to 6"; exit 1; fi
           if [ "$DRY_RUN" = "true" ]; then node scripts/social-calendar.js --sync --dry-run; else node scripts/social-calendar.js --sync --windows "$WINDOWS"; fi | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Seed or check the ledger
