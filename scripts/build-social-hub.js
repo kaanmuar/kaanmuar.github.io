@@ -106,7 +106,7 @@ function batchPosts(files, reports) {
         clipLang: LANGS[c.lang] ? c.lang : null,
         cat: c.cat || "",
         title: cleanTitle(c.title),
-        text: c.linkedin || c.facebook || "",
+        text: c.linkedin || c.facebook || c.x || c.tiktok || c.youtube || "",
         image,
         alt: c.alt || cleanTitle(c.title),
         report: reports.has(report) ? report : null,
