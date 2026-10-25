@@ -182,6 +182,48 @@ test.describe("scoring", () => {
     assert.deepEqual([bad("seo-external-http").verdict, bad("seo-external-http").title], ["risk", "1 external link uses plain http"]);
   });
 
+  test("CrUX history keeps weekly p75 series and turns missing weeks into null", () => {
+    const at = (day) => ({ year: 2026, month: day < 100 ? 5 : 10, day: day % 100 });
+    const data = { record: { collectionPeriods: [{ firstDate: at(1), lastDate: at(2) }, { firstDate: at(1), lastDate: at(117) }], metrics: {
+      largest_contentful_paint: { percentilesTimeseries: { p75s: [1198, null] } },
+      cumulative_layout_shift: { percentilesTimeseries: { p75s: ["0.05", "NaN"] } },
+      interaction_to_next_paint: { percentilesTimeseries: { p75s: [null, null] } }
+    } } };
+    assert.deepEqual(core.summarizeCruxHistory(data, "origin"), { scope: "origin", weeks: 2, from: "2026-05-02", to: "2026-10-17", lcp: [1198, null], cls: [0.05, null] });
+    assert.equal(core.summarizeCruxHistory({ record: { metrics: {} } }, "page"), null);
+  });
+
+  test("CrUX trend: a band drop or a 25% slip outside good is a risk, ending in poor is high, gains are a pass note", () => {
+    const page = { url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect: core.analyzeHtml(HTML, STRONG_HEADERS, URL_) };
+    const run = (crux) => {
+      const findings = insights.analyze({ pages: [page], robotsText: "", extras: {}, crux }).findings;
+      return (key) => findings.find((item) => item.key === key);
+    };
+    const series = (start, end) => Array.from({ length: 25 }, (_, i) => start + ((end - start) * i) / 24);
+    const history = (scope, metrics) => Object.assign({ scope, weeks: 25, from: "2026-05-02", to: "2026-10-17" }, metrics);
+    assert.equal(run(null)("pf-trend"), undefined);
+    assert.equal(run({ ok: true, phone: history("page", { lcp: [1200, 1300, null] }) })("pf-trend"), undefined);
+
+    const steady = run({ ok: true, phone: history("page", { lcp: series(1200, 1300), inp: series(90, 100), cls: series(0, 0) }) });
+    assert.equal(steady("pf-trend").verdict, "pass");
+    assert.match(steady("pf-trend").evidence, /from May 2, 2026 to Oct 17, 2026\. Largest Contentful Paint on phones on this page: 1\.2 s to 1\.3 s \(good\) [▁▂▃]+\./);
+    assert.equal(steady("pf-trend-better"), undefined);
+
+    const slipped = run({ ok: true, phone: history("origin", { lcp: series(2000, 3200) }), desktop: history("page", { inp: series(220, 300) }) });
+    assert.deepEqual([slipped("pf-trend").verdict, slipped("pf-trend").severity, slipped("pf-trend").count], ["risk", "medium", 2]);
+    assert.equal(slipped("pf-trend").title, "2 Core Web Vitals got worse for real visitors over six months");
+    assert.match(slipped("pf-trend").evidence, /Largest Contentful Paint on phones across the whole site: 2\.1 s to 3\.1 s \(good to needs improvement\)/);
+    assert.match(slipped("pf-trend").evidence, /Interaction to Next Paint on desktops on this page: 225 ms to 295 ms \(needs improvement\)/);
+    assert.deepEqual(slipped("pf-trend").cases, ["PF-01", "PF-02"]);
+
+    const poor = run({ ok: true, phone: history("page", { cls: series(0.2, 0.4), lcp: series(4000, 2000) }) });
+    assert.deepEqual([poor("pf-trend").severity, poor("pf-trend").title], ["high", "Cumulative Layout Shift got worse for real phone visitors over six months"]);
+    assert.deepEqual([poor("pf-trend-better").verdict, poor("pf-trend-better").title], ["pass", "Largest Contentful Paint got better for real phone visitors over six months"]);
+
+    const small = run({ ok: true, desktop: history("page", { inp: series(300, 340) }) });
+    assert.equal(small("pf-trend").verdict, "pass");
+  });
+
   test("X-Frame-Options ALLOW-FROM without frame-ancestors leaves the page open to framing", () => {
     const result = analyzeOne({ "content-type": "text/html", "x-frame-options": "ALLOW-FROM https://www.gather.town" });
     const found = result.findings.find((item) => item.key === "sec-frame");
