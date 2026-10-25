@@ -157,7 +157,8 @@ test('the comparison speaks the page language', async ({ page }) => {
     'seo-description-missing': { title: { id: 'seo-description-missing.title', vars: { n: 6 } }, fix: { id: 'seo-description-missing.fix', vars: {} } },
     'sec-cookies': { title: { id: 'sec-cookies.insecure', vars: { n: 1 } }, fix: { id: 'sec-cookies.fix', vars: {} } },
     'an-consent': { title: { id: 'an-consent.title', vars: {} }, fix: { id: 'an-consent.fix', vars: {} } },
-    'a11y-h1': { title: { id: 'a11y-h1.title', vars: { n: 3 } }, fix: { id: 'a11y-h1.fix', vars: {} } }
+    'a11y-h1': { title: { id: 'a11y-h1.title', vars: { n: 3 } }, fix: { id: 'a11y-h1.fix', vars: {} } },
+    'pf-cache': { title: { id: 'pf-cache.title', vars: {} }, fix: { id: 'pf-cache.fix', vars: {} } }
   };
   records[0].report = Object.assign({}, report, { insights: Object.assign({}, report.insights, {
     findings: report.insights.findings.map((item) => msgs[item.key] ? Object.assign({}, item, { msg: msgs[item.key] }) : item)
@@ -207,6 +208,9 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(findings).toContainText('3 páginas no tienen exactamente un h1');
   await expect(findings).toContainText('Dale a cada página un h1 que la nombre.');
   await expect(findings).not.toContainText('3 pages do not have exactly one h1');
+  await expect(findings).toContainText('La página de inicio no envía cache-control');
+  await expect(findings).toContainText('Envía cache-control en el HTML (por ejemplo max-age=0, must-revalidate)');
+  await expect(findings).not.toContainText('The start page sends no cache-control');
   const geo = box.locator('.multi-sec[data-sec="geo"] .multi-cell').first();
   await expect(geo).toContainText('El texto que recibe un rastreador de IA');
   await expect(geo).not.toContainText(/The text an AI crawler|Who may read/);

@@ -249,22 +249,22 @@ function policyOf(value) {
 }
 
 const BFCACHE_BLOCKERS = {
-  UnloadHandlerExistsInMainFrame: ["an unload listener on the page", "Listen for pagehide instead of unload."],
-  UnloadHandlerExistsInSubFrame: ["an unload listener in an embedded frame", "Ask the frame's vendor for a version without unload, or load it after a click."],
-  MainResourceHasCacheControlNoStore: ["Cache-Control: no-store on the HTML", "Drop no-store from HTML that holds no private data; use no-cache or a short max-age."],
-  JsNetworkRequestReceivedCacheControlNoStoreResource: ["a script request answered with no-store", "Send private data with no-cache instead of no-store, or fetch it again on pageshow."],
-  WebSocket: ["an open WebSocket", "Close the WebSocket on pagehide and open it again on pageshow."],
-  WebRTC: ["an open WebRTC connection", "Close the connection on pagehide and open it again on pageshow."],
-  WebTransport: ["an open WebTransport session", "Close the session on pagehide and open it again on pageshow."],
-  BroadcastChannel: ["an open BroadcastChannel", "Close the channel on pagehide."],
-  WebLocks: ["a held Web Lock", "Release locks on pagehide."],
-  OutstandingNetworkRequestFetch: ["a fetch still running when the page was left", "Abort pending requests on pagehide."],
-  OutstandingNetworkRequestXHR: ["an XHR still running when the page was left", "Abort pending requests on pagehide."],
-  IndexedDBEvent: ["an IndexedDB transaction left open", "Close IndexedDB connections on pagehide."]
+  UnloadHandlerExistsInMainFrame: "unload",
+  UnloadHandlerExistsInSubFrame: "unloadFrame",
+  MainResourceHasCacheControlNoStore: "noStore",
+  JsNetworkRequestReceivedCacheControlNoStoreResource: "noStoreFetch",
+  WebSocket: "socket",
+  WebRTC: "rtc",
+  WebTransport: "transport",
+  BroadcastChannel: "channel",
+  WebLocks: "locks",
+  OutstandingNetworkRequestFetch: "pending",
+  OutstandingNetworkRequestXHR: "pending",
+  IndexedDBEvent: "idb"
 };
 
 function bfcacheBlocker(reason) {
-  return BFCACHE_BLOCKERS[reason] || [String(reason).replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase(), ""];
+  return BFCACHE_BLOCKERS[reason] ? [say("bfcache.name." + reason), BFCACHE_BLOCKERS[reason]] : [String(reason).replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase(), ""];
 }
 
 function grade(score) {
@@ -308,8 +308,6 @@ function bannerLine(consent) {
 // Chat widgets and AI chatbots: consent, weight on the start page, and the launcher and open widget on a phone.
 function chatChecks(chat, consent, add) {
   const rows = chat.found;
-  const names = rows.map((row) => row.name + (row.ai ? " (AI chatbot)" : ""));
-  const named = sample(names, 3);
   const requests = rows.reduce((sum, row) => sum + row.requests, 0);
   const cookies = chat.cookies || [];
   const chats = some(rows.map((row) => row.ai ? say("an-chat.ai", { name: row.name }) : row.name), 3);
@@ -349,11 +347,11 @@ function chatChecks(chat, consent, add) {
 
   const kb = Math.round(rows.reduce((sum, row) => sum + row.bytes, 0) / 1024);
   const ms = rows.reduce((sum, row) => sum + row.ms, 0);
-  const cost = named + " added " + plural(requests, "request") + ", " + kb + " KB over the network" + (ms ? " and " + ms + " ms of script time in long frames" : "") + " to the start page before anyone opened it. Measured once in Chromium with no network throttling.";
-  const lighter = "Show a plain chat button and load the widget on its first click, or after the page is idle.";
-  if (kb > 500 || ms > 250) add("Performance", "risk", "medium", "pf-chat", "The chat adds " + kb + " KB to the start page", cost, lighter, { effort: "hours", cases: ["PF-02"] });
-  else if (kb > 200 || ms > 100) add("Performance", "risk", "low", "pf-chat", "The chat adds " + kb + " KB to the start page", cost, lighter, { effort: "hours", cases: ["PF-02"] });
-  else add("Performance", "pass", "info", "pf-chat", "The chat is light on the start page", cost, "", { cases: ["PF-02"] });
+  const cost = say("pf-chat.evidence", { chats, requests: sent, kb, ms: ms ? say("pf-chat.ms", { ms }) : "" });
+  const lighter = say("pf-chat.fix");
+  if (kb > 500 || ms > 250) add("Performance", "risk", "medium", "pf-chat", say("pf-chat.title", { kb }), cost, lighter, { effort: "hours", cases: ["PF-02"] });
+  else if (kb > 200 || ms > 100) add("Performance", "risk", "low", "pf-chat", say("pf-chat.title", { kb }), cost, lighter, { effort: "hours", cases: ["PF-02"] });
+  else add("Performance", "pass", "info", "pf-chat", say("pf-chat.pass.title"), cost, "", { cases: ["PF-02"] });
 
   const launcher = chat.launcher || {};
   const pad = say(rows.length === 1 ? "a11y-chat.launcherNamed" : "a11y-chat.launcher", { name: rows[0].name });
@@ -533,7 +531,6 @@ function libraryChecks(ctx, add) {
 }
 
 function browserChecks(b, add, ctx) {
-  const where = "Chromium from an EU address (Belgium)";
   const start = b.start || {};
   const consent = b.consent || null;
 
@@ -640,28 +637,29 @@ function browserChecks(b, add, ctx) {
 
   // Performance: lab vitals and what broke while loading.
   const vitals = start.vitals || {};
-  const lab = "Measured once in " + where + " with no network throttling. A phone on mobile data will be slower.";
+  const lab = say("pf.lab");
+  const good = (value) => say("pf.withGood", { lab, good: value });
   if (vitals.lcp) {
-    const secs = (vitals.lcp / 1000).toFixed(1) + " s";
-    if (vitals.lcp > 4000) add("Performance", "fail", "medium", "pf-lcp", "The largest element paints after " + secs, lab, "Serve the hero image in a modern format at the shown size, preload it, and cut render-blocking scripts.", { effort: "days" });
-    else if (vitals.lcp > 2500) add("Performance", "risk", "low", "pf-lcp", "The largest element paints after " + secs, lab + " Good is under 2.5 s.", "Preload the hero image and defer scripts that do not affect the first view.", { effort: "hours" });
-    else add("Performance", "pass", "info", "pf-lcp", "The largest element paints in " + secs, lab, "");
+    const secs = (vitals.lcp / 1000).toFixed(1);
+    if (vitals.lcp > 4000) add("Performance", "fail", "medium", "pf-lcp", say("pf-lcp.title", { secs }), lab, say("pf-lcp.fix"), { effort: "days" });
+    else if (vitals.lcp > 2500) add("Performance", "risk", "low", "pf-lcp", say("pf-lcp.title", { secs }), good("2.5 s"), say("pf-lcp.risk.fix"), { effort: "hours" });
+    else add("Performance", "pass", "info", "pf-lcp", say("pf-lcp.pass.title", { secs }), lab, "");
   }
   if (vitals.cls != null && start.status) {
-    if (vitals.cls > 0.25) add("Performance", "fail", "medium", "pf-cls-lab", "The layout shifts by " + vitals.cls + " while loading", lab + " Good is under 0.1.", "Reserve space for images, ads, embeds, and late banners.", { effort: "hours", cases: ["VIS-01"] });
-    else if (vitals.cls > 0.1) add("Performance", "risk", "low", "pf-cls-lab", "The layout shifts by " + vitals.cls + " while loading", lab + " Good is under 0.1.", "Reserve space for images, ads, embeds, and late banners.", { effort: "hours", cases: ["VIS-01"] });
-    else add("Performance", "pass", "info", "pf-cls-lab", "The layout holds still while loading", "Cumulative Layout Shift " + vitals.cls + ". " + lab, "", { cases: ["VIS-01"] });
+    if (vitals.cls > 0.25) add("Performance", "fail", "medium", "pf-cls-lab", say("pf-cls-lab.title", { cls: vitals.cls }), good("0.1"), say("pf-cls-lab.fix"), { effort: "hours", cases: ["VIS-01"] });
+    else if (vitals.cls > 0.1) add("Performance", "risk", "low", "pf-cls-lab", say("pf-cls-lab.title", { cls: vitals.cls }), good("0.1"), say("pf-cls-lab.fix"), { effort: "hours", cases: ["VIS-01"] });
+    else add("Performance", "pass", "info", "pf-cls-lab", say("pf-cls-lab.pass.title"), say("pf-cls-lab.pass.evidence", { cls: vitals.cls, lab }), "", { cases: ["VIS-01"] });
   }
-  if (vitals.tbt > 600) add("Performance", "risk", "low", "pf-tbt", "Scripts block the page for " + vitals.tbt + " ms", "Long tasks while loading add up to " + vitals.tbt + " ms of blocking time. " + lab, "Split large bundles and defer third-party scripts.", { effort: "days", cases: ["PF-02"] });
+  if (vitals.tbt > 600) add("Performance", "risk", "low", "pf-tbt", say("pf-tbt.title", { ms: vitals.tbt }), say("pf-tbt.evidence", { ms: vitals.tbt, lab }), say("pf-tbt.fix"), { effort: "days", cases: ["PF-02"] });
   const failed = b.failed || {};
   if (failed.count) {
     const broken = (failed.samples || []).some((row) => row.type === "script" || row.type === "stylesheet" || row.status >= 500);
-    add("Performance", "risk", broken ? "medium" : "low", "pf-failed", plural(failed.count, "resource fails", "resources fail") + " to load",
-      (failed.samples || []).slice(0, 3).map((row) => row.url + " (" + (row.status || row.error) + ")").join(", ") + ".", "Fix or remove the broken references.", { count: failed.count, effort: "minutes" });
+    add("Performance", "risk", broken ? "medium" : "low", "pf-failed", say("pf-failed.title", { n: failed.count }),
+      say("listDot", { list: { items: (failed.samples || []).slice(0, 3).map((row) => say("pathNote", { path: row.url, note: row.status || row.error })) } }), say("pf-failed.fix"), { count: failed.count, effort: "minutes" });
   }
   const errors = b.console || {};
-  if (errors.errors) add("Performance", "risk", "low", "pf-console", plural(errors.errors, "JavaScript error", "JavaScript errors") + " while loading",
-    (errors.samples || []).slice(0, 2).join(" | ") + ".", "Open the browser console on the start page and fix the errors in order.", { count: errors.errors, effort: "hours" });
+  if (errors.errors) add("Performance", "risk", "low", "pf-console", say("pf-console.title", { n: errors.errors }),
+    say("listDot", { list: { items: (errors.samples || []).slice(0, 2), sep: " | " } }), say("pf-console.fix"), { count: errors.errors, effort: "hours" });
 
   // Security: what the browser actually requested over plain http.
   const mixed = b.mixed || {};
@@ -669,22 +667,14 @@ function browserChecks(b, add, ctx) {
   else if (start.status) add("Security", "pass", "info", "sec-mixed-live", say("sec-mixed-live.pass.title"), say("sec-mixed-live.pass.evidence", { n: start.requests || 0 }), "", { cases: ["SEC-09"] });
 }
 
-const FIELD_NAMES = { lcp: "Largest Contentful Paint", inp: "Interaction to Next Paint", cls: "Cumulative Layout Shift" };
-const FIELD_FIX = {
-  lcp: "Make the largest element arrive sooner: preload the hero image, serve it at the shown size in a modern format, and cut render-blocking scripts.",
-  inp: "Break up long JavaScript tasks behind clicks and taps, and defer third-party scripts.",
-  cls: "Reserve space for images, embeds, ads, and late banners."
-};
 const FIELD_CASES = { lcp: "PF-01", inp: "PF-02", cls: "VIS-01" };
-const FIELD_WORD = { FAST: "good", AVERAGE: "needs improvement", SLOW: "poor" };
 const FIELD_BANDS = { lcp: [2500, 4000], inp: [200, 500], cls: [0.1, 0.25] };
-const BAND_WORDS = ["good", "needs improvement", "poor"];
-const FORM_WORDS = { phone: "phones", desktop: "desktops" };
+const BAND_WORDS = ["FAST", "AVERAGE", "SLOW"];
+const FORMS = ["phone", "desktop"];
 const TREND_EDGE = 4;
 const TREND_MIN_POINTS = 8;
 const TREND_CHANGE = 0.25;
 const SPARK = "▁▂▃▄▅▆▇█";
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const THREAT_WORDS = { MALWARE: "malware", SOCIAL_ENGINEERING: "phishing", UNWANTED_SOFTWARE: "unwanted software" };
 
@@ -752,26 +742,28 @@ function speedChecks(psi, add) {
     const keys = ["lcp", "inp", "cls"].filter((key) => field[key]);
     const slow = keys.filter((key) => field[key].category === "SLOW");
     const average = keys.filter((key) => field[key].category === "AVERAGE");
-    const evidence = "Real Chrome users over the last 28 days" + (field.scope === "page" ? " on this page" : " across the whole site, because this page has too little traffic on its own") + ", at the 75th percentile: " +
-      keys.map((key) => FIELD_NAMES[key] + " " + show(key, field[key]) + " (" + (FIELD_WORD[field[key].category] || "unrated") + ")").join(", ") + ". Source: Chrome UX Report through PageSpeed Insights.";
+    const evidence = say("pf-field.evidence", {
+      scope: say(field.scope === "page" ? "pf-field.scope.page" : "pf-field.scope.site"),
+      list: { items: keys.map((key) => say("pf-field.metric", { name: say("cwv." + key), value: show(key, field[key]), band: say("cwv." + (["FAST", "AVERAGE", "SLOW"].includes(field[key].category) ? field[key].category : "unrated")) })) }
+    });
     const worst = slow.concat(average);
-    const fix = worst.map((key) => FIELD_FIX[key]).join(" ");
+    const fix = worst.length ? { items: worst.map((key) => say("cwv.fix." + key)), sep: " " } : "";
     const cases = (worst.length ? worst : keys).map((key) => FIELD_CASES[key]);
-    if (slow.length) add("Performance", "fail", "medium", "pf-field", "Core Web Vitals fail for real visitors", evidence, fix, { effort: "days", cases });
-    else if (average.length) add("Performance", "risk", "low", "pf-field", "Core Web Vitals need improvement for real visitors", evidence, fix, { effort: "hours", cases });
-    else add("Performance", "pass", "info", "pf-field", "Core Web Vitals pass for real visitors", evidence, "", { cases });
+    if (slow.length) add("Performance", "fail", "medium", "pf-field", say("pf-field.fail.title"), evidence, fix, { effort: "days", cases });
+    else if (average.length) add("Performance", "risk", "low", "pf-field", say("pf-field.risk.title"), evidence, fix, { effort: "hours", cases });
+    else add("Performance", "pass", "info", "pf-field", say("pf-field.pass.title"), evidence, "", { cases });
   } else {
-    add("Performance", "person", "info", "pf-field", "Too few Chrome visits for real-user Core Web Vitals", "The Chrome UX Report publishes numbers only after a page or site has enough traffic over 28 days. The Lighthouse lab run below stands in.", "");
+    add("Performance", "person", "info", "pf-field", say("pf-field.person.title"), say("pf-field.person.evidence"), "");
   }
   const lab = psi.lab || {};
   const parts = [];
-  if (lab.lcp != null) parts.push("Largest Contentful Paint " + (lab.lcp / 1000).toFixed(1) + " s");
-  if (lab.tbt != null) parts.push("Total Blocking Time " + Math.round(lab.tbt) + " ms");
-  if (lab.cls != null) parts.push("Cumulative Layout Shift " + lab.cls);
-  if (lab.si != null) parts.push("Speed Index " + (lab.si / 1000).toFixed(1) + " s");
-  const evidence = "Lighthouse " + (psi.version || "") + " on a simulated mid-range phone over slow 4G" + (parts.length ? ": " + parts.join(", ") : "") + ".";
-  const title = "Lighthouse scores performance " + psi.score + "/100 on mobile";
-  const fix = "Open PageSpeed Insights for this URL and work through its opportunities, largest savings first.";
+  if (lab.lcp != null) parts.push(say("pf-lighthouse.part", { name: say("cwv.lcp"), value: (lab.lcp / 1000).toFixed(1) + " s" }));
+  if (lab.tbt != null) parts.push(say("pf-lighthouse.part", { name: say("cwv.tbt"), value: Math.round(lab.tbt) + " ms" }));
+  if (lab.cls != null) parts.push(say("pf-lighthouse.part", { name: say("cwv.cls"), value: lab.cls }));
+  if (lab.si != null) parts.push(say("pf-lighthouse.part", { name: say("cwv.si"), value: (lab.si / 1000).toFixed(1) + " s" }));
+  const evidence = say("pf-lighthouse.evidence", { version: psi.version, parts: parts.length ? say("pf-lighthouse.parts", { list: { items: parts } }) : "" });
+  const title = say("pf-lighthouse.title", { score: psi.score });
+  const fix = say("pf-lighthouse.fix");
   if (psi.score < 50) add("Performance", "fail", "medium", "pf-lighthouse", title, evidence, fix, { effort: "days", cases: ["PF-01", "PF-02"] });
   else if (psi.score < 90) add("Performance", "risk", "low", "pf-lighthouse", title, evidence, fix, { effort: "hours", cases: ["PF-01", "PF-02"] });
   else add("Performance", "pass", "info", "pf-lighthouse", title, evidence, "", { cases: ["PF-01", "PF-02"] });
@@ -809,7 +801,7 @@ function trendChecks(crux, add) {
   const rows = [];
   let from = "";
   let to = "";
-  Object.keys(FORM_WORDS).forEach((form) => {
+  FORMS.forEach((form) => {
     const history = crux[form];
     if (!history) return;
     ["lcp", "inp", "cls"].forEach((key) => {
@@ -821,29 +813,33 @@ function trendChecks(crux, add) {
     });
   });
   if (!rows.length) return;
-  const day = (iso) => MONTHS[Number(iso.slice(5, 7)) - 1] + " " + Number(iso.slice(8, 10)) + ", " + iso.slice(0, 4);
-  const lead = "Real Chrome users at the 75th percentile, one point per week" + (from && to ? " from " + day(from) + " to " + day(to) : "") + ". ";
-  const line = (row) => FIELD_NAMES[row.key] + " on " + FORM_WORDS[row.form] + (row.scope === "page" ? " on this page" : " across the whole site") + ": " +
-    fieldValue(row.key, row.before) + " to " + fieldValue(row.key, row.now) + (row.was === row.is ? " (" + BAND_WORDS[row.is] + ")" : " (" + BAND_WORDS[row.was] + " to " + BAND_WORDS[row.is] + ")") + " " + row.spark;
-  const source = " Each value is the mean of the first or last four weeks. Source: Chrome UX Report History API.";
+  const day = (iso) => say("date", { month: say("month." + Number(iso.slice(5, 7))), day: Number(iso.slice(8, 10)), year: iso.slice(0, 4) });
+  const range = from && to ? say("pf-trend.range", { from: day(from), to: day(to) }) : "";
+  const line = (row) => say("pf-trend.line", {
+    name: say("cwv." + row.key), form: say("pf-trend.form." + row.form), scope: say(row.scope === "page" ? "pf-trend.scope.page" : "pf-trend.scope.site"),
+    before: fieldValue(row.key, row.before), now: fieldValue(row.key, row.now),
+    bands: row.was === row.is ? say("cwv." + BAND_WORDS[row.is]) : say("pf-trend.bands", { from: say("cwv." + BAND_WORDS[row.was]), to: say("cwv." + BAND_WORDS[row.is]) }),
+    spark: row.spark
+  });
+  const evidence = (list) => say("pf-trend.evidence", { range, lines: { items: list.map(line), sep: ". " } });
   const named = (list, verb) => {
     const metrics = [...new Set(list.map((row) => row.key))];
     const forms = [...new Set(list.map((row) => row.form))];
-    const who = forms.length === 1 ? "real " + FORM_WORDS[forms[0]].replace(/s$/, "") + " visitors" : "real visitors";
-    return (metrics.length === 1 ? FIELD_NAMES[metrics[0]] + " " + verb : plural(metrics.length, "Core Web Vital") + " " + verb) + " for " + who + " over six months";
+    const who = say("pf-trend.who." + (forms.length === 1 ? forms[0] : "all"));
+    return metrics.length === 1 ? say("pf-trend." + verb + ".one", { metric: say("cwv." + metrics[0]), who }) : say("pf-trend." + verb + ".many", { n: metrics.length, who });
   };
   const worse = rows.filter((row) => row.direction === "worse");
   const better = rows.filter((row) => row.direction === "better");
   const cases = (list) => [...new Set(list.map((row) => FIELD_CASES[row.key]))];
   if (worse.length) {
     const poor = worse.some((row) => row.is === 2);
-    add("Performance", "risk", poor ? "high" : "medium", "pf-trend", named(worse, "got worse"), lead + worse.map(line).join(". ") + "." + source,
-      [...new Set(worse.map((row) => FIELD_FIX[row.key]))].join(" ") + " Look at what shipped in the weeks the line starts to rise.", { count: worse.length, effort: "days", cases: cases(worse) });
+    add("Performance", "risk", poor ? "high" : "medium", "pf-trend", named(worse, "worse"), evidence(worse),
+      say("pf-trend.fix", { fixes: { items: [...new Set(worse.map((row) => row.key))].map((key) => say("cwv.fix." + key)), sep: " " } }), { count: worse.length, effort: "days", cases: cases(worse) });
   } else {
     const steady = rows.filter((row) => row.direction === "steady");
-    if (steady.length) add("Performance", "pass", "info", "pf-trend", "Real-user Core Web Vitals held steady over six months", lead + steady.map(line).join(". ") + "." + source, "", { cases: cases(steady) });
+    if (steady.length) add("Performance", "pass", "info", "pf-trend", say("pf-trend.steady.title"), evidence(steady), "", { cases: cases(steady) });
   }
-  if (better.length) add("Performance", "pass", "info", "pf-trend-better", named(better, "got better"), lead + better.map(line).join(". ") + "." + source, "", { cases: cases(better) });
+  if (better.length) add("Performance", "pass", "info", "pf-trend-better", named(better, "better"), evidence(better), "", { cases: cases(better) });
 }
 
 function analyze(input) {
@@ -1657,66 +1653,66 @@ function analyze(input) {
 
   // Performance
   const homeMs = home.ms || 0;
-  if (homeMs > 1800) add("Performance", "fail", "medium", "pf-home", "The start page took " + homeMs + " ms to arrive", "That is the HTML alone, before images and scripts.", "Cache the HTML at the edge, or speed up the server render.", { effort: "days", cases: ["PF-01"] });
-  else if (homeMs > 800) add("Performance", "risk", "low", "pf-home", "The start page took " + homeMs + " ms to arrive", "Good sites deliver the HTML in under 800 ms.", "Cache the HTML at the edge.", { effort: "hours", cases: ["PF-01"] });
-  else add("Performance", "pass", "info", "pf-home", "The start page arrived in " + homeMs + " ms", "Under the 800 ms budget for the HTML.", "", { cases: ["PF-01"] });
+  if (homeMs > 1800) add("Performance", "fail", "medium", "pf-home", say("pf-home.title", { ms: homeMs }), say("pf-home.evidence"), say("pf-home.fix"), { effort: "days", cases: ["PF-01"] });
+  else if (homeMs > 800) add("Performance", "risk", "low", "pf-home", say("pf-home.title", { ms: homeMs }), say("pf-home.risk.evidence"), say("pf-home.risk.fix"), { effort: "hours", cases: ["PF-01"] });
+  else add("Performance", "pass", "info", "pf-home", say("pf-home.pass.title", { ms: homeMs }), say("pf-home.pass.evidence"), "", { cases: ["PF-01"] });
   const slow = read.filter((page) => page.depth > 0 && page.ms > 1800);
-  if (slow.length) add("Performance", "risk", "medium", "pf-slow", plural(slow.length, "page took", "pages took") + " longer than 1.8 s", sample(slow.map((page) => page.path + " (" + page.ms + " ms)"), 4) + ".", "Profile those templates; they are slower than the rest of the site.", { pages: slow.map((page) => page.path), effort: "days", cases: ["PF-03"] });
+  if (slow.length) add("Performance", "risk", "medium", "pf-slow", say("pf-slow.title", { n: slow.length }), say("listDot", { list: some(slow.map((page) => say("pathNote", { path: page.path, note: page.ms + " ms" })), 4) }), say("pf-slow.fix"), { pages: slow.map((page) => page.path), effort: "days", cases: ["PF-03"] });
   const heavy = read.filter((page) => (page.inspect.bytes || 0) > 500000);
-  if (heavy.length) add("Performance", "risk", "low", "pf-weight", plural(heavy.length, "HTML document is", "HTML documents are") + " heavier than 500 KB", sample(heavy.map((page) => page.path + " (" + Math.round(page.inspect.bytes / 1024) + " KB)"), 3) + ".", "Move inline data and SVG out of the HTML.", { pages: heavy.map((page) => page.path), effort: "hours" });
+  if (heavy.length) add("Performance", "risk", "low", "pf-weight", say("pf-weight.title", { n: heavy.length }), say("listDot", { list: some(heavy.map((page) => say("pathNote", { path: page.path, note: Math.round(page.inspect.bytes / 1024) + " KB" })), 3) }), say("pf-weight.fix"), { pages: heavy.map((page) => page.path), effort: "hours" });
   const blocking = face.signals ? face.signals.blockingScripts || 0 : 0;
-  if (blocking > 2) add("Performance", "risk", "low", "pf-blocking", plural(blocking, "script blocks", "scripts block") + " the first paint", "They sit in <head> without async or defer.", "Add defer to scripts that do not need to run before the page shows.", { count: blocking, effort: "minutes", cases: ["PF-02"] });
+  if (blocking > 2) add("Performance", "risk", "low", "pf-blocking", say("pf-blocking.title", { n: blocking }), say("pf-blocking.evidence"), say("pf-blocking.fix"), { count: blocking, effort: "minutes", cases: ["PF-02"] });
   const noSize = face.signals ? face.signals.imgNoSize || 0 : 0;
-  if (noSize > 3) add("Performance", "risk", "low", "pf-cls", plural(noSize, "image has", "images have") + " no width or height", "The layout jumps when they load, which hurts Cumulative Layout Shift.", "Set width and height (or aspect-ratio) on images.", { count: noSize, effort: "hours", cases: ["VIS-01"] });
+  if (noSize > 3) add("Performance", "risk", "low", "pf-cls", say("pf-cls.title", { n: noSize }), say("pf-cls.evidence"), say("pf-cls.fix"), { count: noSize, effort: "hours", cases: ["VIS-01"] });
   if (browsed && browsed.start && Array.isArray(browsed.start.images)) {
     const imgs = browsedImages(browsed);
     const imgPages = (list) => [...new Set([].concat.apply([], list.map((row) => row.pages)))];
-    const where = (row) => imageName(row.src) + " on " + row.pages[0];
-    const checked = "Images of 30 KB or more on " + plural(imgPages(imgs).length || 1, "page") + " browsed";
+    const where = (row) => say("pf-img.where", { name: imageName(row.src), page: row.pages[0] });
+    const checked = say("pagesN", { n: imgPages(imgs).length || 1 });
     const oversized = imgs.filter((row) => row.bytes >= IMAGE_MIN && row.nw > 2 * row.w)
       .map((row) => Object.assign({ save: Math.round(row.bytes * Math.max(0, 1 - (4 * row.w * row.h) / ((row.nw * row.nh) || 1))) }, row))
       .sort((a, b) => b.save - a.save);
     const sizeSave = oversized.reduce((sum, row) => sum + row.save, 0);
-    if (oversized.length) add("Performance", "risk", sizeSave > 512000 ? "medium" : "low", "pf-img-size", plural(oversized.length, "image is", "images are") + " more than twice the size shown",
-      sample(oversized.map((row) => where(row) + " (" + row.nw + "×" + row.nh + " shown at " + row.w + "×" + row.h + ", " + kbOf(row.bytes) + ", about " + kbOf(row.save) + " to save)"), 4) + ". About " + kbOf(sizeSave) + " could be saved, keeping a 2× copy for sharp screens.",
-      "Resize images to at most twice the width they are shown at, and give phones smaller files with srcset and sizes.", { pages: imgPages(oversized), count: oversized.length, effort: "hours" });
-    else add("Performance", "pass", "info", "pf-img-size", "Images are no more than twice the size shown", checked + " are within twice their displayed size.", "");
+    if (oversized.length) add("Performance", "risk", sizeSave > 512000 ? "medium" : "low", "pf-img-size", say("pf-img-size.title", { n: oversized.length }),
+      say("pf-img-size.evidence", { list: some(oversized.map((row) => say("pf-img-size.row", { where: where(row), nw: row.nw, nh: row.nh, w: row.w, h: row.h, kb: kbOf(row.bytes), save: kbOf(row.save) })), 4), save: kbOf(sizeSave) }),
+      say("pf-img-size.fix"), { pages: imgPages(oversized), count: oversized.length, effort: "hours" });
+    else add("Performance", "pass", "info", "pf-img-size", say("pf-img-size.pass.title"), say("pf-img-size.pass.evidence", { pages: checked }), "");
     const oldFormat = imgs.filter((row) => row.bytes >= IMAGE_MIN && OLD_IMAGE.test(row.mime))
       .map((row) => Object.assign({ save: Math.round(row.bytes * 0.3) }, row))
       .sort((a, b) => b.save - a.save);
     const formatSave = oldFormat.reduce((sum, row) => sum + row.save, 0);
-    if (oldFormat.length) add("Performance", "risk", formatSave > 512000 ? "medium" : "low", "pf-img-format", plural(oldFormat.length, "image is", "images are") + " not served as WebP or AVIF",
-      sample(oldFormat.map((row) => where(row) + " (" + row.mime.replace(/^image\//i, "").toUpperCase() + ", " + kbOf(row.bytes) + ")"), 4) + ". WebP is about 30% smaller at the same quality, so about " + kbOf(formatSave) + " could be saved.",
-      "Serve WebP or AVIF through the CDN or image service, or with <picture> and a JPEG or PNG fallback.", { pages: imgPages(oldFormat), count: oldFormat.length, effort: "hours" });
-    else add("Performance", "pass", "info", "pf-img-format", "Large images are served as WebP, AVIF or SVG", checked + " use a modern format.", "");
+    if (oldFormat.length) add("Performance", "risk", formatSave > 512000 ? "medium" : "low", "pf-img-format", say("pf-img-format.title", { n: oldFormat.length }),
+      say("pf-img-format.evidence", { list: some(oldFormat.map((row) => say("pf-img-format.row", { where: where(row), type: row.mime.replace(/^image\//i, "").toUpperCase(), kb: kbOf(row.bytes) })), 4), save: kbOf(formatSave) }),
+      say("pf-img-format.fix"), { pages: imgPages(oldFormat), count: oldFormat.length, effort: "hours" });
+    else add("Performance", "pass", "info", "pf-img-format", say("pf-img-format.pass.title"), say("pf-img-format.pass.evidence", { pages: checked }), "");
     const lcpLazy = imgs.find((row) => row.lcp && row.lazy);
     const eager = imgs.filter((row) => row.top > row.fold && !row.lazy);
-    const eagerText = plural(eager.length, "image below the first screen loads", "images below the first screen load") + " straight away";
-    if (lcpLazy) add("Performance", "risk", "medium", "pf-img-lazy", "The main image waits for lazy loading",
-      where(lcpLazy) + " is the largest paint of the page and has loading=lazy, so the browser fetches it late." + (eager.length > 3 ? " " + eagerText + "." : ""),
-      "Remove loading=lazy from the main image and add fetchpriority=\"high\"." + (eager.length > 3 ? " Add loading=\"lazy\" to images below the first screen." : ""), { pages: lcpLazy.pages, effort: "minutes" });
+    const eagerText = say("pf-img-lazy.eager", { n: eager.length });
+    if (lcpLazy) add("Performance", "risk", "medium", "pf-img-lazy", say("pf-img-lazy.title"),
+      say("pf-img-lazy.evidence", { where: where(lcpLazy), also: eager.length > 3 ? say("pf-img-lazy.also", { eager: eagerText }) : "" }),
+      say("pf-img-lazy.fix", { also: eager.length > 3 ? say("pf-img-lazy.alsoFix") : "" }), { pages: lcpLazy.pages, effort: "minutes" });
     else if (eager.length > 3) add("Performance", "risk", "low", "pf-img-lazy", eagerText,
-      sample(eager.map(where), 4) + ". They compete with the first screen for bandwidth.",
-      "Add loading=\"lazy\" to images below the first screen, and keep it off the main image.", { pages: imgPages(eager), count: eager.length, effort: "minutes" });
-    else add("Performance", "pass", "info", "pf-img-lazy", "Images below the first screen wait until they are needed", (eager.length ? eagerText + ", within the limit of 3." : "No image below the first screen loads straight away.") + " The main image is not lazy-loaded.", "");
+      say("pf-img-lazy.eager.evidence", { list: some(eager.map(where), 4) }),
+      say("pf-img-lazy.eager.fix"), { pages: imgPages(eager), count: eager.length, effort: "minutes" });
+    else add("Performance", "pass", "info", "pf-img-lazy", say("pf-img-lazy.pass.title"), say("pf-img-lazy.pass.evidence", { eager: eager.length ? say("pf-img-lazy.within", { eager: eagerText }) : say("pf-img-lazy.none") }), "");
   }
   const back = browsed && browsed.backForward;
   if (back && back.ran) {
     const blockers = (back.reasons || []).filter((row) => row.type === "PageSupportNeeded").map((row) => bfcacheBlocker(row.reason));
     const fixes = [...new Set(blockers.map((row) => row[1]).filter(Boolean))];
-    if (blockers.length) add("Performance", "risk", "low", "pf-bfcache", "The back/forward cache cannot keep the page",
-      "After Back, Chromium named " + sample(blockers.map((row) => row[0]), 4) + ". Back and Forward load the page again instead of showing it at once.",
-      (fixes.length ? fixes.join(" ") + " " : "") + "Chrome's guide lists every reason: https://web.dev/articles/bfcache", { count: blockers.length, effort: "hours", cases: ["PF-04"] });
-    else add("Performance", "pass", "info", "pf-bfcache", "Nothing on the page blocks the back/forward cache",
-      back.restored ? "Back restored the start page from the cache." : "After Back, Chromium named nothing on the page's side that blocks the cache.", "", { cases: ["PF-04"] });
+    if (blockers.length) add("Performance", "risk", "low", "pf-bfcache", say("pf-bfcache.title"),
+      say("pf-bfcache.evidence", { list: some(blockers.map((row) => row[0]), 4) }),
+      say("pf-bfcache.fix", { fixes: fixes.length ? say("pf-bfcache.fixes", { list: { items: fixes.map((id) => say("bfcache.fix." + id)), sep: " " } }) : "" }), { count: blockers.length, effort: "hours", cases: ["PF-04"] });
+    else add("Performance", "pass", "info", "pf-bfcache", say("pf-bfcache.pass.title"),
+      say(back.restored ? "pf-bfcache.pass.restored" : "pf-bfcache.pass.evidence"), "", { cases: ["PF-04"] });
   }
-  if (face.signals && !face.signals.cacheControl) add("Performance", "risk", "low", "pf-cache", "The start page sends no cache-control", "Browsers and CDNs guess how long to keep it.", "Send cache-control on HTML (for example max-age=0, must-revalidate) and long max-age on hashed assets.", { effort: "minutes", cases: ["RS-03"] });
+  if (face.signals && !face.signals.cacheControl) add("Performance", "risk", "low", "pf-cache", say("pf-cache.title"), say("pf-cache.evidence"), say("pf-cache.fix"), { effort: "minutes", cases: ["RS-03"] });
   const thirdHosts = face.signals ? (face.signals.thirdParty || []).length : 0;
-  if (thirdHosts > 8) add("Performance", "risk", "low", "pf-third", plural(thirdHosts, "other host serves", "other hosts serve") + " scripts on the start page", "Each host adds a DNS lookup and a connection.", "Remove tags nobody reads and self-host the rest.", { count: thirdHosts, effort: "hours" });
+  if (thirdHosts > 8) add("Performance", "risk", "low", "pf-third", say("pf-third.title", { n: thirdHosts }), say("pf-third.evidence"), say("pf-third.fix"), { count: thirdHosts, effort: "hours" });
   if (input.pagespeed) speedChecks(input.pagespeed, add);
   if (input.crux) trendChecks(input.crux, add);
-  else if (!(browsed && browsed.start && browsed.start.vitals && browsed.start.vitals.lcp)) add("Performance", "person", "info", "pf-cwv", "Core Web Vitals need a rendered page", "Largest Contentful Paint, Interaction to Next Paint, and layout shift are measured by PageSpeed Insights or the browser run.", "");
-  if (limits.timedOut) add("Performance", "person", "info", "coverage", "The time budget ended before every page was analyzed", plural(limits.pagesRead || pages.length, "page") + " of " + (limits.maxPages || "?") + " were analyzed. Slow responses use up the budget.", "");
+  else if (!(browsed && browsed.start && browsed.start.vitals && browsed.start.vitals.lcp)) add("Performance", "person", "info", "pf-cwv", say("pf-cwv.title"), say("pf-cwv.evidence"), "");
+  if (limits.timedOut) add("Performance", "person", "info", "coverage", say("coverage.title"), say("coverage.evidence", { pages: say("pagesN", { n: limits.pagesRead || pages.length }), max: limits.maxPages || "?" }), "");
 
   if (browsed) browserChecks(browsed, add, { findings, tags, consentTools, face, renderedCrawl: !!home.renderedLinks });
 
