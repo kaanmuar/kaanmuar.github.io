@@ -1,6 +1,6 @@
 {
   "01-ttfb-curl": {
-    "date": "2026-11-14",
+    "date": "2026-11-06",
     "cat": "Perf",
     "title": "Time your server in one line.",
     "alt": "30-second trick card. Time your server in one line. curl can report when the first byte of the page arrived. web.dev suggests a Time to First Byte of 0.8 seconds or less for most sites.",
@@ -61,7 +61,7 @@
     }
   },
   "02-myth-lighthouse": {
-    "date": "2026-11-15",
+    "date": "2027-01-08",
     "cat": "A11y",
     "title": "Myth: a Lighthouse 100 means accessible.",
     "alt": "Myth vs fact card. Myth: a Lighthouse 100 means accessible. Fact: Lighthouse says so itself: automatic detection can only detect a subset of issues, so manual testing is also encouraged.",
@@ -119,7 +119,7 @@
     }
   },
   "03-hreflang": {
-    "date": "2026-11-16",
+    "date": "2026-11-07",
     "cat": "SEO",
     "title": "hreflang: the right page for each language.",
     "alt": "Word of the day card. hreflang: the right page for each language. An attribute that tells search engines which language or region each version of a page is for, so a Spanish speaker lands on the Spanish page.",
@@ -178,7 +178,7 @@
     }
   },
   "04-coverage": {
-    "date": "2026-11-17",
+    "date": "2026-11-08",
     "cat": "Perf",
     "title": "Find the code your page never runs.",
     "alt": "30-second trick card. Find the code your page never runs. The Coverage panel in Chrome DevTools marks every byte of script and stylesheet as used or unused while you load and use the page.",
@@ -239,7 +239,7 @@
     }
   },
   "05-myth-https": {
-    "date": "2026-11-18",
+    "date": "2027-01-09",
     "cat": "Security",
     "title": "Myth: the padlock means the site is secure.",
     "alt": "Myth vs fact card. Myth: the padlock means the site is secure. Fact: All 227 sites in our October 2026 real runs load over HTTPS. Their security scores still range from 16 to 94 out of 100.",
@@ -297,7 +297,7 @@
     }
   },
   "06-sri": {
-    "date": "2026-11-19",
+    "date": "2026-11-09",
     "cat": "Security",
     "title": "SRI: a fingerprint for borrowed scripts.",
     "alt": "Word of the day card. SRI: a fingerprint for borrowed scripts. Subresource Integrity puts a hash of the file in the tag. If the CDN ever serves anything else, the browser refuses to run it.",
@@ -356,7 +356,7 @@
     }
   },
   "07-pre-release": {
-    "date": "2026-11-20",
+    "date": "2027-01-10",
     "cat": "QA",
     "title": "The 10-minute pre-release check.",
     "alt": "Checklist card. The 10-minute pre-release check. Checks: Meta robots, robots.txt, Canonical, Status codes, Mixed content, Console, A real form, Analytics, Cache, Sitemap.",
@@ -426,7 +426,7 @@
     }
   },
   "08-googlebot": {
-    "date": "2026-11-21",
+    "date": "2026-11-10",
     "cat": "SEO",
     "title": "See your page the way Googlebot does.",
     "alt": "30-second trick card. See your page the way Googlebot does. Search Console's URL Inspection tool can fetch a live page as Google and show the rendered HTML, a screenshot, and the resources it could not load.",
@@ -487,7 +487,7 @@
     }
   },
   "09-inp": {
-    "date": "2026-11-22",
+    "date": "2026-11-11",
     "cat": "Perf",
     "title": "INP: how fast the page answers a tap.",
     "alt": "Word of the day card. INP: how fast the page answers a tap. Interaction to Next Paint is good at 200 ms or less, needs improvement up to 500 ms, and poor over 500 ms, at the 75th percentile of page loads.",
@@ -546,7 +546,7 @@
     }
   },
   "10-myth-overlay": {
-    "date": "2026-11-23",
+    "date": "2027-01-11",
     "cat": "A11y",
     "title": "Myth: one line of code makes a site accessible.",
     "alt": "Myth vs fact card. Myth: one line of code makes a site accessible. Fact: The barriers live in the page's own code: missing labels, keyboard traps, unclear headings. They are fixed there.",
@@ -604,7 +604,7 @@
     }
   },
   "11-vision": {
-    "date": "2026-11-24",
+    "date": "2026-11-12",
     "cat": "A11y",
     "title": "Preview colour blindness in two clicks.",
     "alt": "30-second trick card. Preview colour blindness in two clicks. Chrome DevTools can simulate blurred vision, reduced contrast and four kinds of colour vision deficiency, right on your own page.",
@@ -665,7 +665,7 @@
     }
   },
   "12-myth-sitemap": {
-    "date": "2026-11-25",
+    "date": "2027-01-12",
     "cat": "SEO",
     "title": "Myth: a sitemap gets every page indexed.",
     "alt": "Myth vs fact card. Myth: a sitemap gets every page indexed. Fact: The sitemap is a hint. Google still decides, and internal links, canonical tags and page quality all weigh in.",
@@ -723,7 +723,7 @@
     }
   },
   "13-lcp": {
-    "date": "2026-11-26",
+    "date": "2026-11-13",
     "cat": "Perf",
     "title": "LCP: when the main thing shows up.",
     "alt": "Word of the day card. LCP: when the main thing shows up. Largest Contentful Paint marks when the biggest image or text block in the viewport finishes rendering. Good is 2.5 seconds or less for at least 75% of page loads.",
@@ -782,7 +782,7 @@
     }
   },
   "14-a11y-check": {
-    "date": "2026-11-27",
+    "date": "2027-01-13",
     "cat": "A11y",
     "title": "The 5-minute accessibility check.",
     "alt": "Checklist card. The 5-minute accessibility check. Checks: Zoom to 200%, Narrow to 320 px, Page title, Link text, Language.",
@@ -847,7 +847,7 @@
     }
   },
   "15-dmarc": {
-    "date": "2026-11-28",
+    "date": "2026-11-14",
     "cat": "Security",
     "title": "Can anyone send mail as your domain?",
     "alt": "30-second trick card. Can anyone send mail as your domain? A DMARC record tells receiving servers what to do with mail that claims your domain but fails authentication. Without one, spoofed mail has an easier way in.",
@@ -908,7 +908,7 @@
     }
   },
   "16-skip-link": {
-    "date": "2026-11-29",
+    "date": "2026-11-15",
     "cat": "A11y",
     "title": "Skip link: jump straight past the menu.",
     "alt": "Word of the day card. Skip link: jump straight past the menu. A link at the very top of the page that takes keyboard and screen reader users straight to the main content. It is one way to meet WCAG 2.4.1, Bypass Blocks, at Level A.",
@@ -967,7 +967,7 @@
     }
   },
   "17-field-vs-lab": {
-    "date": "2026-11-30",
+    "date": "2026-11-16",
     "cat": "Perf",
     "title": "Your Lighthouse score is not your visitors.",
     "alt": "30-second trick card. Your Lighthouse score is not your visitors. PageSpeed Insights shows two things. The top half is real-user data from the Chrome UX Report over the last 28 days. The score below it is one lab run on a simulated phone.",
@@ -1028,7 +1028,7 @@
     }
   },
   "18-myth-keywords": {
-    "date": "2026-12-01",
+    "date": "2027-01-14",
     "cat": "SEO",
     "title": "Myth: meta keywords still help you rank.",
     "alt": "Myth vs fact card. Myth: meta keywords still help you rank. Fact: Google ignores it for ranking. A clear title and meta description do the work, and the description may become your snippet.",
