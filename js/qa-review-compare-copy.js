@@ -104,7 +104,7 @@
         SEO: "Indexación, sitemap, títulos, datos estructurados",
         GEO: "Cómo pueden leer y citar el sitio las respuestas de IA",
         Analytics: "Etiquetas, consentimiento, widgets de chat, aviso de privacidad, aviso legal",
-        Security: "Cabeceras, TLS, DNS, transporte de correo, dominio, Safe Browsing, librerías",
+        Security: "Encabezados, TLS, DNS, transporte de correo, dominio, Safe Browsing, librerías",
         Accessibility: "Marcado, axe-core, diseño en móvil, lanzador del chat, declaración de accesibilidad",
         chatItem: "lanzador del chat",
         Performance: "Velocidad, peso, pintado, desplazamiento del diseño, peso del chat"

@@ -159,7 +159,7 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(box.getByRole('button', { name: 'Descargar PDF' })).toBeVisible();
   const chip = box.locator('.multi-sec[data-sec="health"] .area[data-area="Security"]').first();
   await expect(chip).toContainText('Seguridad');
-  await expect(chip.locator('small')).toContainText(/^Fallan: \d+ · En riesgo: \d+ · Pasan: \d+ — Cabeceras, TLS/);
+  await expect(chip.locator('small')).toContainText(/^Fallan: \d+ · En riesgo: \d+ · Pasan: \d+ — Encabezados, TLS/);
   await expect(box.locator('.multi-sec[data-sec="health"] .vchip.v-fail').first()).toContainText('Falla ahora');
   const health = box.locator('.multi-sec[data-sec="health"] .multi-cell').first();
   await expect(health.locator('.ring')).toHaveAttribute('aria-label', /^Puntuación de salud \d+ de 100, nota [A-F]$/);
@@ -171,6 +171,13 @@ test('the comparison speaks the page language', async ({ page }) => {
   const exec = box.locator('.multi-sec[data-sec="exec"] .multi-cell').first();
   await expect(exec.locator('h3')).toHaveText(['Mayores riesgos', 'Mejoras rápidas', 'Ya sólido']);
   await expect(exec.locator('.meta-line').first()).toContainText(/\d+ críticos · \d+ altos · \d+ medios · \d+ bajos · \d+ páginas? analizadas?/);
+  const cells = box.locator('.multi-sec[data-sec="browser"] .multi-cell');
+  await expect(cells.first()).toContainText('Esta revisión se hizo sin el navegador sin interfaz');
+  const browser = cells.nth(2);
+  await expect(browser.locator('.check-tile b').first()).toHaveText('Antes de elegir');
+  await expect(browser).toContainText('Seguimiento antes y después de elegir');
+  await expect(browser).toContainText(/desde una dirección de la UE \(Bélgica\)/);
+  await expect(browser).not.toContainText(/Before a choice|Tracking before and after|from an EU address/);
 });
 
 test('a comparison the account no longer has is refused in the page language', async ({ page }) => {
