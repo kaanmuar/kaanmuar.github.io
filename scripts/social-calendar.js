@@ -21,13 +21,15 @@
    seeded random minute. Lane 1 is kept for the day's top Live Report (post 01 of the daily auto batch); the other
    reviews wait in a backlog that takes the lane 3 and lane 4 slots while news and best practice have nothing.
    Only posts not yet sent anywhere and not before --from (default tomorrow, Bogotá) move; seasonal series keep
-   their day. A post's hub date (captions.json date) follows its slot day, so it is live on the hub first.
+   their day. A post's hub date (captions.json date) follows its slot day, so it is live on the hub first; a daily
+   Live Report's hub date never moves past its batch day, so the hub stays current while the networks catch up.
    --batch B plans that batch alone into the free slots, as the daily Live Reports job does for its new batch:
    its top post in lane 1, its other reviews at the back of the backlog. */
 
 const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
+const { titleKey } = require("./build-social-hub");
 
 const ROOT = path.resolve(__dirname, "..");
 const POSTS = "media/social-posts";
@@ -92,12 +94,24 @@ function launchCalendar(csv) {
 // its hub date is its first calendar day, as build-social-hub.js reads it.
 function ownCaptions(dir, rows) {
   const slugs = Object.keys(rows).filter((slug) => fs.existsSync(path.join(dir, slug + "-captions.json")));
-  return slugs.length ? Object.fromEntries(slugs.map((slug) => [slug, { kind: "launch", date: rows[slug].map((r) => r.date).sort()[0] }])) : null;
+  return slugs.length ? Object.fromEntries(slugs.map((slug) => {
+    const c = JSON.parse(fs.readFileSync(path.join(dir, slug + "-captions.json"), "utf8"));
+    return [slug, { kind: "launch", date: rows[slug].map((r) => r.date).sort()[0], youtubeTitle: c.youtubeTitle }];
+  })) : null;
+}
+
+// Titles of the clips the hub's YouTube ledger lists: a post whose clip is on the channel went out, even when Buffer
+// sent it under a caption the Buffer seed cannot match (#1117).
+function onYoutube(root) {
+  const file = path.join(root, "assets/social/youtube.json");
+  if (!fs.existsSync(file)) return new Set();
+  return new Set(Object.values(JSON.parse(fs.readFileSync(file, "utf8")).videos || {}).map((video) => titleKey(video.title)).filter(Boolean));
 }
 
 // Batches with a calendar.csv of Date,Time,Channel,Post,Asset and captions.json or a captions file per post.
 function load(root = ROOT) {
   const books = { buffer: ledger.read(path.join(root, ledger.BUFFER)), facebook: ledger.read(path.join(root, ledger.FACEBOOK)) };
+  const clips = onYoutube(root);
   const batches = [];
   const posts = [];
   for (const batch of fs.readdirSync(path.join(root, POSTS)).sort()) {
@@ -121,7 +135,8 @@ function load(root = ROOT) {
       const entries = (books.buffer.posts[id] || []).concat(books.facebook.posts[id] || []);
       const queued = entries.filter((e) => e.result === "queued");
       posts.push({ id, batch, slug, kind, lane: LANES[kind], date: c.date, hold: !!c.hold, rows: rows[slug] || [],
-        sent: entries.some((e) => e.result === "sent"), queued: queued.length > 0,
+        sent: entries.some((e) => e.result === "sent") || (!!c.youtubeTitle && clips.has(titleKey(c.youtubeTitle))),
+        queued: queued.length > 0,
         queuedDay: queued.map((e) => Date.parse(e.at)).filter((at) => !isNaN(at)).map(bogotaDay).sort()[0] || null,
         kept: new Set((books.facebook.posts[id] || []).filter((e) => e.result === "queued").map((e) => e.channel)) });
     });
@@ -136,6 +151,7 @@ function laneOf(post, day) {
   return [1, 2, 3, 4, 5].find((lane) => slotTime(day, row.channel, lane) === row.time) || null;
 }
 
+const keepsHub = (batch, date, day) => batch.startsWith("auto-") && date < day;
 const isTop = (post) => post.batch.startsWith("auto-") && /^01-/.test(post.slug);
 // The launch set's languages of one topic go out in the clips' order: en, es, pt, de, fr, it.
 const rotation = (post) => Math.max(0, ROTATION.indexOf(post.slug.split("/")[0]));
@@ -170,7 +186,7 @@ function plan(posts, { from, batch, moveQueued = false } = {}) {
   go.filter((post) => !isTop(post)).forEach((post) => { (queue[post.lane] = queue[post.lane] || []).push(post); });
 
   const moves = [];
-  const put = (day, lane, post) => { take(day, lane, post); moves.push({ post, day, lane }); };
+  const put = (day, lane, post) => { take(day, lane, post); moves.push({ post, day, lane, hub: keepsHub(post.batch, post.date, day) ? post.date : day }); };
   // The day's top Live Report: the first free lane 1 slot on or after its own day.
   tops.forEach((post) => {
     let day = firstDay(post) > from ? firstDay(post) : from;
@@ -203,7 +219,7 @@ function rowsFor(move) {
 // the hub first both before and after --sync moves its queued posts.
 function hubDay(move) {
   if (!move.lane) return move.day;
-  const days = rowsFor(move).filter((r) => NETWORKS.includes(r.channel)).map((r) => r.date).concat(move.post.queuedDay || []);
+  const days = rowsFor(move).filter((r) => NETWORKS.includes(r.channel)).map((r) => r.date).concat(move.post.queuedDay || [], move.hub || []);
   return days.sort()[0] || move.day;
 }
 
@@ -271,7 +287,8 @@ function reconcile(root = ROOT, now = Date.now()) {
       const mine = out.map((line) => line.split(",")).filter((r) => r[3] === slug && NETWORKS.includes(r[2]));
       if (!mine.some((r) => held.has(batch + "/" + slug + "|" + r[2]))) return;
       const first = mine.map((r) => r[0]).concat(bogotaDay(earliest.get(batch + "/" + slug))).sort()[0];
-      if (c.date !== first) { c.date = first; dated = true; }
+      const date = keepsHub(batch, c.date, first) ? c.date : first;
+      if (c.date !== date) { c.date = date; dated = true; }
     });
     if (dated) fs.writeFileSync(capFile, JSON.stringify(captions, null, 2) + (raw.endsWith("\n") ? "\n" : ""));
     if (touched || dated) changed.push(batch);

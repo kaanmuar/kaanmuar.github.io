@@ -24,7 +24,8 @@
    tags (scripts/trending-tags.js) unless they were already fetched today.
    A source can also write a post in its own language (tip.lang, tip.voice "w" or "m"): it is drawn, voiced and
    captioned as written, with no translation, and its UI strings come from studio.UI[lang]. Such a source can set
-   tip.date, tip.alt, tip.hold (in the hub, never queued), studio.WINDOWS and studio.hostFor(tip).
+   tip.date, tip.times ({ network: "HH:MM" }, a calendar slot), tip.alt, tip.hold (in the hub, never queued),
+   studio.WINDOWS and studio.hostFor(tip).
    A source names its social hub kind with studio.KIND or tip.kind (trick, news, advice, compare, myth, quiz, term,
    skit, series); a quiz sets tip.answer to the id of the tip that reveals it, tip.steps and tip.term are optional.
    --rotate writes voiced/<slug>.mp4 and voiced/<slug>.json (language, speech, TikTok and YouTube copy)
@@ -137,6 +138,9 @@ function describe(v) {
   if (v.type === "check") return "Checklist: " + v.items.map((r) => r[0] + ", " + r[1] + " (" + MARK_WORDS[r[2]] + ")").join("; ");
   if (v.type === "bars") return "Bar chart: " + v.items.map((i) => i[0] + " " + i[1].toLocaleString("en-US") + " " + v.unit).join(", ") + note;
   if (v.type === "stat") return v.value + ", " + v.caption;
+  if (v.type === "quiz") return "Quiz: " + v.sides.map((s) => s.label + " (" + s.host + ")").join(" or ") + ", scores hidden" + note;
+  if (v.type === "myth") return "Myth: " + v.myth + " Fact: " + v.fact;
+  if (v.type === "term") return "Term: " + v.value + ", " + v.group + (v.lines ? ". Example: " + code(v.lines) : "") + note;
   if (v.type === "matrix") return "Scores side by side: " + v.rows.map((r) => r[0] + " " + r.slice(1).map((n, i) => v.cols[i] + " " + (n == null ? "none" : n)).join(", ")).join("; ") + note;
   return "";
 }
@@ -166,7 +170,7 @@ function hubFields(tip, slugOf) {
 }
 
 // Card text worth translating: code lines, ids, tags and check marks stay as they are.
-const KEEP_KEYS = new Set(["id", "host", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value"]);
+const KEEP_KEYS = new Set(["id", "kind", "answer", "term", "steps", "alt", "host", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value"]);
 function strings(node, at, out) {
   if (typeof node === "string") { if (/[a-z]{2}/i.test(node) && !MARK_WORDS[node]) out[at] = node; }
   else if (node && typeof node === "object") Object.keys(node).forEach((key) => { if (!KEEP_KEYS.has(key)) strings(node[key], at ? at + "." + key : key, out); });
@@ -323,7 +327,7 @@ async function renderClip(page, tip, index, total, file, cover, said) {
   for (const tip of opts["schedule-only"] ? [] : tips) {
     const index = all.indexOf(tip);
     const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
-    const ui = tip.lang ? uiFor(tip.lang, i18n) : {};
+    const ui = tip.lang ? uiFor(tip.lang, i18n) : studio.UI ? uiFor("en", i18n) : {};
     await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"), ui);
     await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"), ui);
     const said = localize(tip, index, total, i18n);
@@ -347,7 +351,7 @@ async function renderClip(page, tip, index, total, file, cover, said) {
     const windows = studio.WINDOWS || WINDOWS;
     for (const channel of tip.hold ? [] : Object.keys(windows)) {
       const video = ["tiktok", "youtube"].includes(channel);
-      rows.push({ date, time: randomTime(windows[channel], rand, slot), channel, slug,
+      rows.push({ date, time: (tip.times || {})[channel] || randomTime(windows[channel], rand, slot), channel, slug,
         asset: video ? "clip/" + slug + ".mp4" : channel === "instagram-story" ? "story/" + slug + ".jpg" : "feed/" + slug + ".jpg",
         text: channel === "youtube" ? cap.youtubeTitle : channel === "instagram-story" ? "" : cap[channel] });
     }
