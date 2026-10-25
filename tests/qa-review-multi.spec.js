@@ -157,6 +157,10 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(box.locator('.report-kicker').first()).toHaveText('Informe comparativo');
   await expect(box.locator('.multi-sec[data-sec="exec"] h2')).toHaveText('Resumen en una página');
   await expect(box.getByRole('button', { name: 'Descargar PDF' })).toBeVisible();
+  const chip = box.locator('.multi-sec[data-sec="health"] .area[data-area="Security"]').first();
+  await expect(chip).toContainText('Seguridad');
+  await expect(chip.locator('small')).toContainText(/^Fallan: \d+ · En riesgo: \d+ · Pasan: \d+ — Cabeceras, TLS/);
+  await expect(box.locator('.multi-sec[data-sec="health"] .vchip.v-fail').first()).toContainText('Falla ahora');
 });
 
 test('the account page saves the reviews it compares as a full comparison and lists, opens and deletes saved ones', async ({ page }) => {
