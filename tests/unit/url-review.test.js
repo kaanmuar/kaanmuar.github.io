@@ -1605,6 +1605,18 @@ test.describe("return price", () => {
     assert.ok(report.cases[0].steps, "the stored report is not changed");
   });
 
+  test("an unpaid preview keeps each finding's title message, so translated pages show the title, but no evidence or fix message (#1367)", () => {
+    const secret = "/admin-hidden-path";
+    const title = { id: "seo-broken-links.title", vars: { n: 2 } };
+    const preview = core.previewReport({ insights: { findings: [
+      { title: "2 internal links lead to an error", evidence: "Broken: " + secret, fix: "Fix " + secret, msg: { title, evidence: { id: "listDot", vars: { list: secret } }, fix: { id: "x", vars: { path: secret } } } },
+      { title: "No message", evidence: "e", fix: "f" }
+    ] } });
+    assert.deepEqual(preview.insights.findings[0].msg, { title });
+    assert.equal(preview.insights.findings[1].msg, undefined);
+    assert.ok(!JSON.stringify(preview).includes(secret));
+  });
+
   test("the peso quote and the PayPal capture accept a discounted price, and nothing under the floor", () => {
     assert.equal(core.priceMatches(19), true);
     assert.equal(core.priceMatches(16.15), true);
