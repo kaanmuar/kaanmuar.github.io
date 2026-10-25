@@ -39,7 +39,7 @@ jobs:
       BATCH: auto-2026-10-25
       TICKET: '1188'
       NIGHTLY_PR: '1206'
-      SINCE: '2026-10-26T08:00:00Z'
+      HANDOFF_SINCE: '2026-10-26T08:00:00Z'
       MAX_RETRIES: '2'
       NOT_BEFORE: ${{ inputs.not_before }}
       ATTEMPT: ${{ inputs.attempt || '0' }}
@@ -55,9 +55,9 @@ jobs:
 
           if [ -z "$NOT_BEFORE" ]; then
             handoff=$(gh run list --workflow buffer-handoff.yml -L 20 --json databaseId,createdAt \
-              -q "[.[] | select(.createdAt >= \"$SINCE\")] | last | .databaseId // empty")
+              -q "[.[] | select(.createdAt >= \"$HANDOFF_SINCE\")] | last | .databaseId // empty")
             if [ -z "$handoff" ]; then
-              comment "Handoff check ($(link "$GITHUB_RUN_ID")): no buffer-handoff run started after $SINCE, so $BATCH was not checked or retried."
+              comment "Handoff check ($(link "$GITHUB_RUN_ID")): no buffer-handoff run started after $HANDOFF_SINCE, so $BATCH was not checked or retried."
               exit 1
             fi
             gh run watch "$handoff" -i 60 > /dev/null
