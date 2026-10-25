@@ -2030,7 +2030,7 @@ test("a re-run is held for the owner, and the report opens without payment once 
   assert.deepEqual([held.status, held.reportId, held.error, held.cause, held.lines.length, held.lines[0].text], ["held", "r1", null, null, 400, "line 50"]);
   assert.deepEqual(held.failureIds, ["f-2026-10-22T10:00:00Z"]);
   assert.equal(held.expireAt.getTime() - 61000, 90 * 86400000);
-  assert.deepEqual(failures.rerunMark("x1", held), { at: held.at, id: "x1", status: "held", trigger: "cleared", cause: "" });
+  assert.deepEqual(failures.rerunMark("x1", held), { at: held.at, id: "x1", status: "held", trigger: "cleared", cause: "", fixes: held.fixes });
 
   const failed = failures.rerunDoc(group, { error: new Error("The site's bot protection refused the review (status 403), in the plain read and in headless Chrome."), lines: [] });
   assert.deepEqual([failed.status, failed.record, failed.cause.id], ["failed", null, "bot-protection"]);
@@ -2095,6 +2095,76 @@ test("a new cause class opens one bug, from failures the probe still sees and fr
   assert.deepEqual([again.key, again.runs, again.firstAt], ["bot-protection-319", 1, rerun.at]);
   assert.doesNotMatch(again.body, /2026-10-21/);
   assert.match(again.body, /### Probe of the latest failure \(bbva\.com\.co\)\n- DNS: 0 addresses/);
+});
+
+test("a fix covers an attempt only when the code that ran it had the fix's row, not from its merge time", () => {
+  const all = failures.FIXES.map((fix) => fix.cause + " " + fix.ref);
+  const before319 = all.filter((key) => key !== "bot-protection #319");
+  const record = failures.failureRecord({ kind: "failed", url: "https://bbva.com.co/", error: "x" });
+  assert.deepEqual(record.fixes, all);
+  assert.equal("fixes" in failures.failureFromAlert({ id: "a1", at: "2026-10-22T10:00:00Z", url: "https://bbva.com.co/", detail: "Reason: x" }), false);
+
+  const bot = (at, extra) => failedAt(at, Object.assign({ cause: { id: "bot-protection" }, diagnosis: { cause: "bot-protection", cleared: false, rerun: false } }, extra || {}));
+  assert.deepEqual(failures.rerunTrigger(bot("2026-10-22T10:00:00Z", { fixes: before319 })), { id: "fix", ref: "#319", label: "Sites behind bot protection are read in headless Chrome (#319, shipped after the failure)" });
+  assert.equal(failures.rerunTrigger(bot("2026-10-22T10:00:00Z", { fixes: all })), null);
+  assert.equal(failures.rerunTrigger(bot("2026-10-21T10:00:00Z", { fixes: all })), null);
+  assert.equal(failures.rerunTrigger(bot("2026-10-22T10:00:00Z")), null);
+  assert.equal(failures.rerunTrigger(bot("2026-10-21T10:00:00Z")).id, "fix");
+  const oldCode = { status: "failed", at: "2026-10-22T11:30:00Z", cause: "bot-protection", fixes: before319 };
+  assert.equal(failures.rerunTrigger(bot("2026-10-21T10:00:00Z", { rerun: oldCode })).id, "fix");
+  assert.equal(failures.rerunTrigger(bot("2026-10-21T10:00:00Z", { rerun: Object.assign({}, oldCode, { fixes: all }) })), null);
+
+  const group = failures.rerunPlan([failedAt("2026-10-22T10:00:00Z")], [], 8).runs[0];
+  const failed = failures.rerunDoc(group, { error: "The site's bot protection refused the review (status 403).", lines: [] });
+  assert.deepEqual(failed.fixes, all);
+  assert.deepEqual(failures.rerunMark("x1", failed).fixes, all);
+  assert.equal("fixes" in failures.rerunMark("x0", { at: "2026-10-22T11:30:00Z", status: "failed" }), false);
+
+  const probe = { dns: { addresses: ["1.2.3.4"] }, plain: { hops: [], status: 403, contentType: "text/html", challenge: "Cloudflare" } };
+  const refused = (id, fixes) => ({ id, status: "failed", at: "2026-10-22T11:30:00Z", host: "bbva.com.co", failureIds: [], error: { message: "The site's bot protection refused the review (status 403)." }, cause: { id: "bot-protection" }, lines: [], fixes });
+  assert.deepEqual(failures.bugPlan([], [refused("x2", before319)], []), []);
+  assert.deepEqual(failures.bugPlan([], [refused("x3", all)], []).map((bug) => bug.key), ["bot-protection-319"]);
+  assert.deepEqual(failures.bugPlan([bot("2026-10-22T10:00:00Z", { fixes: all, probe })], [], []).map((bug) => bug.key), ["bot-protection-319"]);
+});
+
+test("later runs of a class with an open bug are commented on that bug once (#1184)", () => {
+  const stuck = (at, extra) => failedAt(at, Object.assign({
+    id: "f-" + at,
+    cause: { id: "bot-protection" },
+    error: { message: "The site's bot protection refused the review (status 403). ana@example.com" },
+    diagnosis: { cause: "bot-protection", cleared: false, rerun: false, nowLabel: "The plain read is refused (status 403)" },
+    probe: { dns: { addresses: ["1.2.3.4"] }, plain: { hops: [], status: 403, contentType: "text/html", challenge: "Cloudflare" } },
+    lines: [{ t: 0, text: "Reading https://casio.com/?ref=mail" }]
+  }, extra || {}));
+  const listed = stuck("2026-10-21T21:00:00Z");
+  const later = stuck("2026-10-23T10:00:00Z", { url: "https://casio.com/", host: "casio.com" });
+  const latest = stuck("2026-10-24T10:00:00Z", { url: "https://ag.org/", host: "ag.org", lines: [] });
+  const rerun = { id: "x9", status: "failed", at: "2026-10-25T11:30:00Z", host: "hoka.com", failureIds: [later.id], error: { message: "The site's bot protection refused the review (status 403)." }, cause: { id: "bot-protection" }, lines: [] };
+  const timeout = stuck("2026-10-24T09:00:00Z", { cause: { id: "timeout" }, diagnosis: { cause: "timeout", cleared: false, rerun: false } });
+  const bug = { key: "bot-protection-319", issue: 330, lastAt: "2026-10-21T21:00:00Z", hosts: ["bbva.com.co"], ids: [listed.id] };
+
+  const [note] = failures.bugFollowUps([listed, later, latest, timeout], [rerun], [bug]);
+  assert.deepEqual([note.key, note.issue, note.runs, note.lastAt], ["bot-protection-319", 330, 3, "2026-10-25T11:30:00Z"]);
+  assert.deepEqual(note.ids, ["x9", latest.id, later.id]);
+  assert.deepEqual(note.hosts, ["hoka.com", "ag.org", "casio.com"]);
+  assert.match(note.body, /^3 more URL review runs failed with the cause class `bot-protection` since this bug was last updated \(2026-10-21\), on 3 sites: hoka\.com, ag\.org, casio\.com\.\n\n- 2026-10-25 11:30 UTC, failed re-run `x9` of 1 failure on hoka\.com: /);
+  assert.match(note.body, /- 2026-10-23 10:00 UTC, failed run `f-2026-10-23T10:00:00Z` on casio\.com: .* Now: The plain read is refused/);
+  assert.match(note.body, /### Probe of the latest failure \(hoka\.com\)\n- DNS: 1 addresses/);
+  assert.match(note.body, /### Last log lines of `f-2026-10-23T10:00:00Z`\n```\nReading https:\/\/casio\.com\/\?…\n```/);
+  assert.doesNotMatch(note.body, /ana@|2026-10-21 21:00/);
+
+  assert.deepEqual(failures.bugFollowUps([listed, later, latest], [rerun], [Object.assign({}, bug, { ids: [listed.id, later.id, latest.id, "x9"] })]), []);
+  assert.deepEqual(failures.bugFollowUps([later], [], [Object.assign({}, bug, { closedAt: "2026-10-24T00:00:00Z" })]), []);
+  assert.deepEqual(failures.bugFollowUps([later], [], [Object.assign({}, bug, { issue: null })]), []);
+  assert.deepEqual(failures.bugFollowUps([later], [], [Object.assign({}, bug, { key: "bot-protection" })]), []);
+
+  const legacy = Object.assign({}, bug, { ids: undefined, lastAt: "2026-10-23T10:00:00Z" });
+  const [seeded] = failures.bugFollowUps([listed, later, latest], [], [legacy]);
+  assert.equal(seeded.runs, 1);
+  assert.match(seeded.body, /^1 more URL review run failed with the cause class `bot-protection` since this bug was last updated \(2026-10-23\), on 1 site: ag\.org\./);
+  assert.deepEqual(seeded.ids.slice().sort(), [listed.id, later.id, latest.id].sort());
+  assert.deepEqual(failures.bugPlan([listed, later], [], ["bot-protection-319"]), []);
+  assert.deepEqual(failures.bugPlan([listed], [], [])[0].ids, [listed.id]);
 });
 
 test("a re-run of a failure that kept no frameworks reviews with the form's default", () => {
