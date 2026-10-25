@@ -1,0 +1,73 @@
+package com.carlosandmunoz.jarvis
+
+import android.os.Bundle
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
+import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
+import androidx.biometric.BiometricPrompt
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.carlosandmunoz.jarvis.ui.JarvisTheme
+import com.carlosandmunoz.jarvis.ui.LockScreen
+import com.carlosandmunoz.jarvis.ui.MainScreen
+import com.carlosandmunoz.jarvis.ui.SignInScreen
+
+class MainActivity : FragmentActivity() {
+    private val vm: JarvisViewModel by viewModels()
+    private val vault get() = (application as JarvisApp).vault
+    private var locked by mutableStateOf(false)
+    private var lockOn by mutableStateOf(true)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        lockOn = vault.flag("lock", true) && canLock()
+        setContent {
+            JarvisTheme {
+                val s by vm.state.collectAsStateWithLifecycle()
+                when {
+                    !s.signedIn -> SignInScreen(s, vm)
+                    locked -> LockScreen(::prompt)
+                    else -> MainScreen(s, vm, lockOn) { on -> lockOn = on && canLock(); vault.setFlag("lock", lockOn) }
+                }
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (lockOn && vm.state.value.signedIn && System.currentTimeMillis() - leftAt > LOCK_AFTER_MS) {
+            locked = true
+            prompt()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations && !locked) leftAt = System.currentTimeMillis()
+    }
+
+    private fun canLock() = BiometricManager.from(this).canAuthenticate(BIOMETRIC_WEAK or DEVICE_CREDENTIAL) == BiometricManager.BIOMETRIC_SUCCESS
+
+    private fun prompt() {
+        val info = BiometricPrompt.PromptInfo.Builder().setTitle("Unlock Jarvis").setAllowedAuthenticators(BIOMETRIC_WEAK or DEVICE_CREDENTIAL).build()
+        BiometricPrompt(this, ContextCompat.getMainExecutor(this), object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                locked = false
+                leftAt = System.currentTimeMillis()
+            }
+        }).authenticate(info)
+    }
+
+    companion object {
+        private const val LOCK_AFTER_MS = 60_000L
+        private var leftAt = 0L
+    }
+}

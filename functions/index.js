@@ -4863,7 +4863,8 @@ async function jarvisCached(op, days, load) {
   if (saved && Date.now() - Date.parse(saved.at) < (jarvis.TTL[op] || jarvisSources.TTL[op] || 60000)) return Object.assign(JSON.parse(saved.json), { cachedAt: saved.at });
   const fresh = await load();
   const at = new Date().toISOString();
-  await ref.set({ at, json: JSON.stringify(fresh).slice(0, 900000) }).catch(() => null);
+  const json = JSON.stringify(fresh);
+  if (json.length < 900000) await ref.set({ at, json }).catch(() => null);
   return Object.assign(fresh, { cachedAt: at });
 }
 
@@ -4906,6 +4907,20 @@ async function jarvisDaily({ force }) {
   const mail = jarvis.dailyMail({ products, items, goalRows, aiText, dateLabel });
   const sent = await sendOwnerEmail({ subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL, buttonLabel: "Open Jarvis" });
   return { sent: sent !== false, items: items.length, goals: goalRows.length, gemini: !!aiText };
+}
+
+// Everything the stats page computes, in one answer for the Android app, which reads no Firestore itself.
+async function jarvisSnapshot(days) {
+  const db = admin.firestore();
+  const settings = await jarvis.readSettings(db);
+  const now = Date.now();
+  const [{ window, products }, external, goalRows] = await Promise.all([
+    jarvis.dailyProducts(db, { now, days }),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "social", "safety", "platform", "search"], days),
+    jarvis.goals(db, settings, { now, sum: jarvisSum })
+  ]);
+  const briefing = jarvisCore.briefing({ products, external, thresholds: settings.thresholds, goals: goalRows });
+  return { window, products, external, goals: goalRows, briefing, readiness: jarvisCore.readiness(external), connections: jarvisCore.connections(external), settings };
 }
 
 async function jarvisWatchRun() {
@@ -4955,6 +4970,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
   const days = jarvis.rangeDays(body.days);
   const now = Date.now();
   const env = process.env;
+  const appAskSnapshot = async () => jarvis.askSnapshot(await jarvisCached("snapshot", days, () => jarvisSnapshot(days)), days);
   try {
     let out;
     if (op === "health") out = await jarvisCached(op, days, () => jarvis.health(admin.firestore(), { days, now }));
@@ -4964,8 +4980,8 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     else if (op === "cloudflare") out = await jarvisCached(op, days, () => jarvis.cloudflare(fetch, env, { days, now }));
     else if (op === "speed") out = await jarvisCached(op, 0, () => jarvis.speed(urlReview, env));
     else if (op === "uptime") out = await jarvisCached(op, 0, () => jarvis.uptime(fetch, { now }));
-    else if (op === "brief") out = await jarvis.brief(fetch, env, body.snapshot);
-    else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot);
+    else if (op === "brief") out = await jarvis.brief(fetch, env, body.snapshot || await appAskSnapshot());
+    else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot || await appAskSnapshot());
     else if (op === "run-job") out = await jarvis.runJob(fetch, body.job);
     else if (op === "settings") out = await jarvis.readSettings(admin.firestore());
     else if (op === "settings-save") {
@@ -4975,6 +4991,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     }
     else if (op === "goals") out = { goals: await jarvis.goals(admin.firestore(), await jarvis.readSettings(admin.firestore()), { now, sum: jarvisSum }) };
     else if (op === "daily-now") out = await jarvisDaily({ force: true });
+    else if (op === "snapshot") out = await jarvisCached(op, days, () => jarvisSnapshot(days));
     else if (jarvisSources.SOURCES[op]) out = await jarvisSource(op, days);
     else if (op === "send-report") {
       const kind = body.kind === "site" ? "site" : "review";
@@ -4987,7 +5004,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
       await admin.firestore().collection("url_review_unlisted").doc(host).set({ at: new Date().toISOString(), by: operator, from: "jarvis" });
       out = { unlisted: host };
     } else if (op === "email-briefing") {
-      const mail = jarvis.briefingMail(body.snapshot, body.text);
+      const mail = jarvis.briefingMail(body.snapshot || await appAskSnapshot(), body.text);
       const sent = await sendOwnerEmail({ subject: mail.subject, intro: "Your Jarvis briefing from Admin > Statistics.", rows: mail.rows, body: mail.body, eyebrow: "Jarvis" });
       out = { sent: sent !== false };
     } else { res.status(400).json({ error: "Unknown op." }); return; }

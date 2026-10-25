@@ -347,6 +347,29 @@ test("server: the daily briefing reads the last 24 hours, drops test emails and 
   assert.match(mail.body, /^Quiet day\. Next: answer the inbox\.\n\nWARN {2}1 message/);
 });
 
+test("server: the app snapshot widens the window to the range it asks for", async () => {
+  const now = Date.parse("2026-10-25T12:40:00Z");
+  const ts = (h) => ({ toDate: () => new Date(now - h * 3600000) });
+  const db = fakeDb({ rows: { site_events: [{ site: "cv", kind: "visit", createdAt: ts(2) }, { site: "cv", kind: "visit", createdAt: ts(30) }, { site: "cv", kind: "visit", createdAt: ts(200) }] } });
+  const { window, products } = await jarvis.dailyProducts(db, { now, days: 7 });
+  assert.equal(window.days, 7);
+  assert.equal(products.cv.totals.visits, 2);
+  assert.equal(products.cv.kpis[0].prior, 1);
+});
+
+test("server: Ask from the app gets the page's compact snapshot", () => {
+  const snap = { products: { cv: { kpis: [{ label: "Visits", value: 4, prior: 2, delta: "+100%" }], lists: { sources: [1, 2, 3, 4, 5, 6, 7].map((n) => ({ label: "s" + n, value: n })) } } },
+    briefing: [{ level: "warn", text: "1 message waits." }], external: { money: { ok: true, revenue: { usd: 9 } }, safety: { ok: false, error: "x" } } };
+  const out = jarvis.askSnapshot(snap, 7);
+  assert.equal(out.range, "last 7 days");
+  assert.deepEqual(out.products.cv.kpis, [{ label: "Visits", value: 4, delta: "+100%" }]);
+  assert.equal(out.products.cv.name, "CV");
+  assert.equal(out.products.cv.top.sources.length, 5);
+  assert.deepEqual(out.briefing, ["[warn] 1 message waits."]);
+  assert.equal(out.external.money.revenue.usd, 9);
+  assert.equal(out.external.safety, null);
+});
+
 test("server: the watch mails alerts only, once a day per issue", async () => {
   const external = { uptime: { ok: true, pages: [{ product: "cv", name: "CV", ok: false, status: 503 }, { product: "lab", name: "QA Lab", ok: true, ms: 9000 }], tlsDaysLeft: 50 } };
   const items = jarvis.watchItems(external, {});

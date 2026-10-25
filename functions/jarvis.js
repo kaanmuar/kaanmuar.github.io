@@ -25,7 +25,7 @@ const PAGES = [
 ];
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
-const TTL = { health: MINUTE, jobs: MINUTE, github: 5 * MINUTE, ga4: 15 * MINUTE, cloudflare: 15 * MINUTE, speed: 6 * 60 * MINUTE, uptime: 5 * MINUTE };
+const TTL = { health: MINUTE, jobs: MINUTE, github: 5 * MINUTE, ga4: 15 * MINUTE, cloudflare: 15 * MINUTE, speed: 6 * 60 * MINUTE, uptime: 5 * MINUTE, snapshot: 5 * MINUTE };
 const SCHEDULER = "https://cloudscheduler.googleapis.com/v1/projects/" + PROJECT + "/locations/us-central1/jobs";
 const JOB_PREFIX = "firebase-schedule-";
 const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
@@ -455,11 +455,11 @@ async function goals(db, settings, { now, sum }) {
 
 // --- daily briefing: the last 24 hours against the 24 before, with the same rules as the page --------------------
 
-async function dailyProducts(db, { now }) {
+async function dailyProducts(db, { now, days = 1 }) {
   const end = new Date(now);
-  const start = new Date(now - DAY);
-  const priorStart = new Date(now - 2 * DAY);
-  const window = { start, end, days: 1, prior: { start: priorStart, end: start } };
+  const start = new Date(now - days * DAY);
+  const priorStart = new Date(now - 2 * days * DAY);
+  const window = { start, end, days, prior: { start: priorStart, end: start } };
   const rows = async (q) => (await q.limit(20000).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
   const since = (name, iso) => db.collection(name).where("createdAt", ">=", iso ? priorStart.toISOString() : priorStart);
   const [events, opens, reviews, messages, ratings, pending, hubSnap] = await Promise.all([
@@ -482,6 +482,40 @@ async function dailyProducts(db, { now }) {
     hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window)
   };
   return { window, products };
+}
+
+// The page's snapshot() for Gemini and the briefing mail, built from the server snapshot the Android app reads.
+function askSnapshot(snap, days) {
+  const s = snap || {};
+  const e = s.external || {};
+  const products = Object.keys(s.products || {}).reduce((out, key) => {
+    const p = s.products[key] || {};
+    out[key] = { name: (core.PRODUCTS.find((row) => row.key === key) || {}).name || key, kpis: (p.kpis || []).map((k) => ({ label: k.label, value: k.value, delta: k.delta })),
+      top: Object.keys(p.lists || {}).reduce((m, list) => { m[list] = (p.lists[list] || []).slice(0, 5); return m; }, {}) };
+    return out;
+  }, {});
+  const ok = (x) => x && x.ok !== false;
+  return {
+    range: days === 1 ? "last 24 hours" : "last " + days + " days", generatedAt: new Date().toISOString(), products,
+    briefing: (s.briefing || []).map((b) => "[" + b.level + "] " + b.text),
+    external: {
+      readiness: core.readiness(e),
+      jobs: e.jobs && e.jobs.jobs ? e.jobs.jobs.map((j) => ({ name: j.name, ok: j.ok, last: j.lastAttempt })) : null,
+      ci: e.github && e.github.ci, openBugs: e.github && e.github.openBugs, merged: e.github && e.github.merged && e.github.merged.total,
+      failures: e.health && e.health.failures && { total: e.health.failures.total, causes: e.health.failures.causes },
+      speed: e.speed && e.speed.pages && e.speed.pages.map((x) => ({ page: x.name, score: x.score })),
+      uptime: e.uptime && e.uptime.pages && e.uptime.pages.map((x) => ({ page: x.name, status: x.status, ms: x.ms })),
+      ga4: e.ga4 && e.ga4.groups,
+      cloudflare: ok(e.cloudflare) ? { requests: e.cloudflare.requests, threats: e.cloudflare.threats, cacheRatio: e.cloudflare.cacheRatio, statuses: e.cloudflare.statuses, paths: (e.cloudflare.paths || []).slice(0, 8) } : null,
+      money: ok(e.money) ? { revenue: e.money.revenue, prior: e.money.prior, refundsUsd: e.money.refundsUsd, disputesOpen: e.money.paypal && e.money.paypal.disputesOpen } : null,
+      email: ok(e.email) ? { totals: e.email.totals, rates: e.email.rates } : null,
+      search: ok(e.search) ? { brave: e.search.brave && e.search.brave.queries, console: e.search.console && e.search.console.ok ? { clicks: e.search.console.clicks, impressions: e.search.console.impressions, position: e.search.console.position, queries: (e.search.console.queries || []).slice(0, 8) } : null } : null,
+      social: ok(e.social) ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views } : null,
+      safety: ok(e.safety) && e.safety.checks ? e.safety.checks.map((c) => c.level + ": " + c.name + " " + c.detail) : null,
+      platform: ok(e.platform) ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
+      waiting: core.connections(e).filter((c) => c.needs.length).map((c) => c.name + ": " + c.needs.join(" "))
+    }
+  };
 }
 
 function compact(products) {
@@ -523,5 +557,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, causeLabel, health, jobs, jobName, runJob, github, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, briefingMail, top,
   normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday };
