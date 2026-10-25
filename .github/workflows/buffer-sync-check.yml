@@ -1,0 +1,70 @@
+# One-time check of the first nightly Buffer sync after the #1199 pause (BUFFER_SYNC_PAUSE_UNTIL 2026-10-26T12:00Z),
+# for #1109 (#1222). Waits for the scheduled buffer-batch run of Oct 27 03:37 UTC, watches it to the end, and comments
+# on #1109 with what it did: the batches a spent limit stopped that it queued again, and the queued posts it moved to
+# their calendar slots (moved, failed, left, skipped, rate-limit waits). Delete this file once it has run.
+name: Buffer sync check (once)
+
+on:
+  schedule:
+    - cron: '0 4 27 10 *' # Oct 27, 23:00 Bogotá, 23 minutes after the nightly sync starts
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TICKET: '1109'
+      SYNC_SINCE: '2026-10-27T03:00:00Z'
+    steps:
+      - name: Report the nightly sync on the ticket
+        run: |
+          link() { echo "[run $1]($GITHUB_SERVER_URL/$GH_REPO/actions/runs/$1)"; }
+          comment() {
+            echo "$1" >> "$GITHUB_STEP_SUMMARY"
+            gh api "repos/$GH_REPO/issues/$TICKET/comments" -f body="$1" > /dev/null
+          }
+
+          sync_run=""
+          for _ in $(seq 1 18); do
+            sync_run=$(gh run list --workflow buffer-batch.yml --event schedule -L 10 --json databaseId,createdAt \
+              -q "[.[] | select(.createdAt >= \"$SYNC_SINCE\")] | last | .databaseId // empty")
+            [ -n "$sync_run" ] && break
+            sleep 300
+          done
+          if [ -z "$sync_run" ]; then
+            comment "Sync check ($(link "$GITHUB_RUN_ID")): no scheduled buffer-batch run started between $SYNC_SINCE and $(date -u +%FT%TZ), so the first sync after the pause did not run."
+            exit 1
+          fi
+          gh run watch "$sync_run" -i 60 > /dev/null || true
+
+          conclusion=$(gh run view "$sync_run" --json conclusion -q .conclusion)
+          log=$(gh run view "$sync_run" --log | cut -f3- | sed -E 's/^[0-9-]+T[0-9:.]+Z //' || true)
+          paused=$(grep -m1 -oE '^Sync paused until .*' <<< "$log" || true)
+          retried=$(grep -E '^No batch waits for a retry\.|[0-9]+ queued, [0-9]+ already in Buffer, [0-9]+ failed' <<< "$log" | paste -sd ';' - | sed 's/;/; /g' || true)
+          moving=$(grep -m1 -E '^(Would move|Moving) [0-9]+ queued Buffer posts' <<< "$log" || true)
+          result=$(grep -E '^moved \{' <<< "$log" | tail -1 || true)
+          stopped=$(grep -E '; run --sync again$' <<< "$log" | tail -1 || true)
+          skipped=$(grep -c '^skipped ' <<< "$log" || true)
+          limited=$(grep -c '^rate limited after ' <<< "$log" || true)
+          windows=$(grep -c '^window full: ' <<< "$log" || true)
+          failures=$(grep -E '^failed ' <<< "$log" | head -10 || true)
+
+          body="Sync check ($(link "$GITHUB_RUN_ID")): the first nightly sync after the pause, buffer-batch $(link "$sync_run"), ended **${conclusion:-unknown}**."
+          if [ -n "$paused" ]; then
+            body="$body"$'\n\n'"It did not sync: $paused"
+          else
+            body="$body"$'\n\n'"- **Batches a spent limit stopped:** ${retried:-no line in the log}"
+            body="$body"$'\n'"- **Start:** ${moving:-no line in the log}"
+            if [ -n "$result" ] || [ -z "$stopped" ]; then body="$body"$'\n'"- **Result:** ${result:-no result line in the log}"; fi
+            if [ -n "$stopped" ]; then body="$body"$'\n'"- **Stopped early:** $stopped"; fi
+            body="$body"$'\n'"- **Skipped posts:** $skipped. **Windows that filled up:** $windows. **Windows cut short by a 429:** $limited."
+            if [ -n "$failures" ]; then body="$body"$'\n\n'"First failures:"$'\n```\n'"$failures"$'\n```'; fi
+          fi
+          comment "$body"
