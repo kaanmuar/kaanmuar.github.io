@@ -27,6 +27,7 @@ const STUBS = {
     export function limit() { return {}; }
     export function onSnapshot(ref, callback) { setTimeout(() => callback(empty), 0); return () => {}; }
     export async function getDocs() { return empty; }
+    export async function getCountFromServer() { return { data: () => ({ count: 0 }) }; }
     export async function getDoc(ref) { const data = store[ref.path]; return { id: ref.id, exists: () => !!data, data: () => data }; }
     export async function setDoc(ref, data) { store[ref.path] = data; window.__writes.push({ path: ref.path, data }); }
     export async function updateDoc() {}
