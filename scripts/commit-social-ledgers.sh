@@ -9,6 +9,13 @@
 set -euo pipefail
 
 stage() {
+	# build-social-hub.js inlines critical CSS with packages a bare runner does not have (#1089).
+	if [ -n "${GITHUB_ACTIONS:-}" ] && [ -f scripts/build-critical-css.js ] && ! node -e 'require("postcss")' 2>/dev/null; then
+		local deps
+		read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
+		npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}" >/dev/null
+		export NODE_PATH="$RUNNER_TEMP/critical-css/node_modules${NODE_PATH:+:$NODE_PATH}"
+	fi
 	node scripts/build-social-hub.js --offline
 	git add "${files[@]}" assets/social qa-review-social*.html sitemap-social.xml
 }
