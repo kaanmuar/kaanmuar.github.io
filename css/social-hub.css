@@ -3,12 +3,16 @@
   --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
   --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76; --on-cyan: #fff;
   --green: #0f766e; --amber: #b45309; --red: #b42318; --rival: #7c3aed;
+  --k-trick: #0369a1; --k-news: #1d4ed8; --k-pick: #475569; --k-advice: #4d7c0f; --k-compare: #c2410c; --k-myth: #b91c1c;
+  --k-quiz: #a21caf; --k-term: #475569; --k-skit: #854d0e; --k-series: #be185d;
   --ring: color-mix(in srgb, var(--cyan) 22%, transparent);
 }
 html.dark-mode {
   --bg: #10161d; --panel: #161d26; --panel-2: #0c1118; --card: #1a2430;
   --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb; --on-cyan: #10161d;
   --green: #5fb89a; --amber: #c4a574; --red: #e07a73; --rival: #b39ddb;
+  --k-trick: #6cc4ee; --k-news: #93b4f5; --k-pick: #b0bccb; --k-advice: #a3c76b; --k-compare: #f0a070; --k-myth: #f08a8a;
+  --k-quiz: #e59ae8; --k-term: #b0bccb; --k-skit: #e0b85c; --k-series: #f59ac2;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -72,6 +76,17 @@ a:focus-visible, button:focus-visible, select:focus-visible, iframe:focus-visibl
 .post-kind-tip { color: var(--green); border-color: currentColor; }
 .post-kind-review { color: var(--cyan); border-color: currentColor; }
 .post-kind-launch { color: var(--rival); border-color: currentColor; }
+.post-kind-trick { color: var(--k-trick); border-color: currentColor; }
+.post-kind-news { color: var(--k-news); border-color: currentColor; }
+.post-kind-pick { color: var(--k-pick); border-color: currentColor; }
+.post-kind-advice { color: var(--k-advice); border-color: currentColor; }
+.post-kind-compare { color: var(--k-compare); border-color: currentColor; }
+.post-kind-myth { color: var(--k-myth); border-color: currentColor; }
+.post-kind-quiz { color: var(--k-quiz); border-color: currentColor; }
+.post-kind-term { color: var(--k-term); border-color: currentColor; border-style: dashed; }
+.post-kind-skit { color: var(--k-skit); border-color: currentColor; }
+.post-kind-series { color: var(--k-series); border-color: currentColor; }
+.post-answer-on { font-weight: 600; color: var(--k-quiz); }
 .post-scheduled { color: var(--amber); border-color: currentColor; }
 .post-title { margin: 0; font: 400 1.4rem/1.15 "Instrument Serif", Georgia, serif; letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .post-title a { color: inherit; text-decoration: none; }
