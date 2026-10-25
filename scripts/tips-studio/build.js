@@ -49,7 +49,18 @@ const VOICES = [
   ["fr-w", "fr-FR-VivienneMultilingualNeural"], ["fr-m", "fr-FR-RemyMultilingualNeural"],
   ["it-w", "it-IT-IsabellaNeural"], ["it-m", "it-IT-GiuseppeMultilingualNeural"]
 ].map(([file, voice]) => ({ file, voice, lang: file.slice(0, 2) }));
-const BED = path.join(ROOT, "media/url-review-demos/bed.wav");
+// The bed is git-ignored: a worktree from scripts/ticket-worktree.sh borrows the main checkout's, and a fresh
+// clone downloads it from the studio-assets release the way auto-live-reports.yml does.
+const BED_REL = "media/url-review-demos/bed.wav";
+function findBed() {
+  const common = spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], { cwd: ROOT, encoding: "utf8" }).stdout.trim();
+  const found = [path.join(ROOT, BED_REL), common && path.join(path.dirname(common), BED_REL)].find((file) => file && fs.existsSync(file));
+  if (found) return found;
+  spawnSync("gh", ["release", "download", "studio-assets", "-p", "bed.wav", "-D", path.dirname(path.join(ROOT, BED_REL))], { cwd: ROOT, stdio: "inherit" });
+  if (fs.existsSync(path.join(ROOT, BED_REL))) return path.join(ROOT, BED_REL);
+  throw new Error(BED_REL + " is missing here and in the main checkout, and `gh release download studio-assets -p bed.wav` failed; it is git-ignored, so copy it in (or pass --skip-video)");
+}
+let BED;
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const LOCALES = { en: "en-US", es: "es-ES", pt: "pt-BR", de: "de-DE", fr: "fr-FR", it: "it-IT" };
 const UI_EN = { tryThis: "Try this", tip: "Tip", guided: "Guided tour", never: "Never runs your tests",
@@ -277,6 +288,7 @@ async function renderClip(page, tip, index, total, file, cover, said) {
   let tips = PICK ? all.filter((t) => PICK.includes(t.id)) : all;
   if (opts.shard) { const [k, n] = String(opts.shard).split("/").map(Number); tips = tips.filter((t, i) => i % n === k); }
   if (opts["export-strings"]) { fs.mkdirSync(OUT, { recursive: true }); exportStrings(all); return; }
+  if (opts.rotate || !(opts["skip-video"] || opts["schedule-only"])) BED = findBed();
   for (const dir of ["feed", "story", "clip", "cover"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
 
   const browser = await chromium.launch();
