@@ -5,6 +5,8 @@
      FACEBOOK_PAGE_ID=... FACEBOOK_PAGE_TOKEN=... node scripts/facebook-queue.js --batch auto-2026-10-22 [--dry-run]
      ... node scripts/facebook-queue.js --all     every batch; slots more than 29 days out wait for a later run
      ... node scripts/facebook-queue.js --check   how many posts the Page has scheduled
+     ... node scripts/facebook-queue.js --reslot [--dry-run]   move queued posts to the later calendar.csv slots
+       scripts/facebook-reslot.js --write gave them (delete and re-create)
 
    Reads the same captions.json and calendar.csv as buffer-queue.js and posts each feed image with its
    facebook caption and alt text at its calendar time, skipping captions already scheduled or published on
@@ -102,6 +104,12 @@ async function graphGet(edge, params, token = process.env.FACEBOOK_PAGE_TOKEN) {
   return json;
 }
 
+async function graphDelete(id) {
+  const res = await fetch(GRAPH + "/" + id + "?" + new URLSearchParams({ access_token: process.env.FACEBOOK_PAGE_TOKEN }), { method: "DELETE" });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json.error || json.success === false) throw graphError(res.status, json);
+}
+
 // Every page of a Graph edge, following paging.next.
 async function graphAll(edge, params) {
   const out = [];
@@ -183,6 +191,63 @@ function posts(batch) {
     .map((slug) => ({ batch, slug, cap: captions[slug], at: when[slug] || 0 }));
 }
 
+const photo = (post, caption, due) => ({
+  url: SITE + "/media/social-posts/" + post.batch + "/feed/" + post.slug + ".jpg",
+  caption,
+  alt_text_custom: post.cap.alt || "",
+  published: "false",
+  scheduled_publish_time: String(Math.floor(due / 1000)),
+});
+
+/* --reslot (#1140): the Page app cannot edit a scheduled post, so each queued Page post whose calendar.csv facebook
+   row is now later than its Page time (scripts/facebook-reslot.js --write) is deleted and scheduled again at the row.
+   The run stops at the first delete the Page refuses. A post whose re-create fails is no longer on the Page, so the
+   next --all run schedules it at its row. */
+async function reslot(page, live) {
+  const book = ledger.read(ledger.FACEBOOK);
+  const gate = createGate();
+  const moves = [];
+  for (const post of allBatches().flatMap(posts)) {
+    const name = post.batch + "/" + post.slug;
+    const entry = ledger.find(book, name, "facebook", "Facebook Page");
+    if (!entry || entry.result !== "queued" || !entry.id || !post.at) continue;
+    const was = Date.parse(entry.at);
+    if (post.at - was >= 60e3 && was > Date.now() + 60 * 60e3) moves.push({ post, name, entry });
+  }
+  console.log((live ? "Moving " : "Would move ") + moves.length + " Page posts to their later calendar.csv slots");
+  let moved = 0;
+  let failed = 0;
+  for (const { post, name, entry } of moves) {
+    const at = new Date(post.at).toISOString();
+    const params = photo(post, withHubLink(post.cap.facebook, { batch: post.batch, slug: post.slug, network: "facebook" }), post.at);
+    const hub = await gate(post.batch, post.slug, post.cap, at);
+    const why = hub.why ? "Hub first: " + hub.why : !(await served(params.url)) ? "image not served: " + params.url : null;
+    if (!live) { console.log("  " + name + " " + entry.at + " -> " + at + (why ? " HELD: " + why : "")); continue; }
+    if (why) { failed += 1; console.log("  held " + name + " - " + why); continue; }
+    try {
+      await graphDelete(entry.id);
+    } catch (error) {
+      failed += 1;
+      console.log("  the Page refused to delete " + entry.id + " (" + name + "), stopping: " + error.message.split("\n")[0]);
+      break;
+    }
+    const record = (fields) => ledger.record(book, name, Object.assign({ channel: "facebook", profile: "Facebook Page", checked: new Date().toISOString(), at }, fields));
+    try {
+      const r = await graph(page + "/photos", params);
+      moved += 1;
+      console.log("  moved " + name + " " + entry.at + " -> " + at + " " + (r.post_id || r.id));
+      record({ id: r.post_id || r.id, result: "queued" });
+    } catch (error) {
+      failed += 1;
+      console.log("  deleted " + entry.id + " but could not schedule " + name + " again, the next --all run does: " + error.message.split("\n")[0]);
+      record({ result: "failed", error: "Deleted " + entry.id + " to move it; " + error.message.split("\n")[0] });
+    }
+  }
+  if (live) ledger.write(ledger.FACEBOOK, book);
+  console.log(moved + " moved, " + failed + " failed");
+  if (failed) process.exit(1);
+}
+
 async function main() {
   const opts = args();
   const page = process.env.FACEBOOK_PAGE_ID;
@@ -190,6 +255,7 @@ async function main() {
   const live = !opts["dry-run"];
   if ((live || opts.check) && !(page && process.env.FACEBOOK_PAGE_TOKEN)) throw new Error("FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN must be set.");
   if (opts.check) return check(page);
+  if (opts.reslot) return reslot(page, live);
   const batch = String(opts.batch || "");
   if (!opts.all && !/^[\w-]+$/.test(batch)) throw new Error("--batch <name> or --all is required");
   const list = (opts.all ? allBatches() : [batch]).flatMap(posts);
@@ -237,13 +303,7 @@ async function main() {
     }
     // A missed slot goes out 20 minutes from now, the next one 30 minutes after that, and so on.
     const due = post.at < Date.now() + MIN_LEAD_MS ? Date.now() + MIN_LEAD_MS + 30 * 60e3 * late++ : post.at;
-    const params = {
-      url: image,
-      caption,
-      alt_text_custom: post.cap.alt || "",
-      published: "false",
-      scheduled_publish_time: String(Math.floor(due / 1000)),
-    };
+    const params = photo(post, caption, due);
     const at = new Date(due).toISOString();
     const hub = await gate(post.batch, post.slug, post.cap, at);
     if (!live) { console.log("dry-run", name, at, hub.why ? "HELD: " + hub.why : "hub ok", params.url, caption.split("\n").pop()); continue; }
