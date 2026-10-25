@@ -513,7 +513,7 @@
     }
   },
   "10-u-uniminuto-edu": {
-    "date": "2026-11-01",
+    "date": "2026-10-31",
     "cat": "Requested",
     "title": "uniminuto.edu: 63. The gap: form labels.",
     "alt": "Real run, requested card. uniminuto.edu: 63. The gap: form labels. Overall score 63 of 100. SEO 75, GEO 86, Analytics 41, Security 77, A11y 14, Speed 80. uniminuto.edu, 100 pages analyzed, 21 Oct 2026.",
@@ -570,7 +570,7 @@
     }
   },
   "11-u-davibank-com": {
-    "date": "2026-11-02",
+    "date": "2026-11-01",
     "cat": "Requested",
     "title": "davibank.com: 58. The gap: TLS.",
     "alt": "Real run, requested card. davibank.com: 58. The gap: TLS. Overall score 58 of 100. SEO 22, GEO 91, Analytics 64, Security 50, A11y 44, Speed 80. davibank.com, 100 pages analyzed, 21 Oct 2026. Lesson: Renew the TLS certificate automatically, and alert well before it expires.",
@@ -627,7 +627,7 @@
     }
   },
   "12-u-confluence-com": {
-    "date": "2026-11-03",
+    "date": "2026-11-01",
     "cat": "Requested",
     "title": "confluence.com: 61. The gap: accessibility.",
     "alt": "Real run, requested card. confluence.com: 61. The gap: accessibility. Overall score 61 of 100. SEO 53, GEO 94, Analytics 59, Security 64, A11y 5, Speed 89. confluence.com, 100 pages analyzed, 21 Oct 2026.",
@@ -684,7 +684,7 @@
     }
   },
   "13-u-atlassian-com": {
-    "date": "2026-11-04",
+    "date": "2026-11-02",
     "cat": "Requested",
     "title": "atlassian.com: 68. The gap: schema fields.",
     "alt": "Real run, requested card. atlassian.com: 68. The gap: schema fields. Overall score 68 of 100. SEO 40, GEO 100, Analytics 70, Security 72, A11y 56, Speed 70. atlassian.com, 100 pages analyzed, 21 Oct 2026.",
@@ -741,7 +741,7 @@
     }
   },
   "14-u-co-computrabajo-com": {
-    "date": "2026-11-05",
+    "date": "2026-11-02",
     "cat": "Requested",
     "title": "co.computrabajo.com: 68. The gap: HSTS.",
     "alt": "Real run, requested card. co.computrabajo.com: 68. The gap: HSTS. Overall score 68 of 100. SEO 89, GEO 91, Analytics 74, Security 24, A11y 61, Speed 76. co.computrabajo.com, 91 pages analyzed, 22 Oct 2026.",
@@ -798,7 +798,7 @@
     }
   },
   "15-u-nice-com": {
-    "date": "2026-11-06",
+    "date": "2026-11-03",
     "cat": "Requested",
     "title": "nice.com: 56. The gap: HSTS.",
     "alt": "Real run, requested card. nice.com: 56. The gap: HSTS. Overall score 56 of 100. SEO 15, GEO 94, Analytics 54, Security 54, A11y 47, Speed 71. nice.com, 100 pages analyzed, 22 Oct 2026. Lesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
@@ -855,7 +855,7 @@
     }
   },
   "16-u-honda-com": {
-    "date": "2026-11-07",
+    "date": "2026-11-05",
     "cat": "Requested",
     "title": "honda.com: 63. The gap: the https redirect.",
     "alt": "Real run, requested card. honda.com: 63. The gap: the https redirect. Overall score 63 of 100. SEO 81, GEO 83, Analytics 43, Security 39, A11y 62, Speed 73. honda.com, 25 pages analyzed, 22 Oct 2026. Lesson: Redirect every http request to https with one permanent 301, then add HSTS.",
