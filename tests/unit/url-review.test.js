@@ -67,6 +67,41 @@ test.describe("scoring", () => {
     assert.ok(bare.score.areas.Security.score < strong.score.areas.Security.score);
   });
 
+  test("Cross-Origin-Opener-Policy passes when it keeps other windows out", () => {
+    const find = (headers) => analyzeOne(Object.assign({}, STRONG_HEADERS, headers)).findings.find((item) => item.key === "sec-coop");
+    assert.equal(find({}).verdict, "risk");
+    assert.equal(find({}).title, "Cross-Origin-Opener-Policy is not sent");
+    assert.equal(find({ "cross-origin-opener-policy": "unsafe-none" }).title, "Cross-Origin-Opener-Policy is unsafe-none");
+    assert.equal(find({ "cross-origin-opener-policy": "same-origin-allow-popups" }).verdict, "pass");
+    assert.equal(find({ "cross-origin-opener-policy": "same-origin; report-to=\"coop\"" }).verdict, "pass");
+    const kit = analyzeOne(STRONG_HEADERS).fixkit.headers.find((row) => row.name === "Cross-Origin-Opener-Policy");
+    assert.equal(kit.missing, true);
+  });
+
+  test("COEP without COOP same-origin fails isolation, and no COEP is only informational", () => {
+    const find = (headers) => analyzeOne(Object.assign({}, STRONG_HEADERS, headers)).findings.find((item) => item.key === "sec-isolation");
+    const none = find({});
+    assert.deepEqual([none.verdict, none.severity, none.title], ["pass", "info", "Cross-origin isolation is not requested"]);
+    const half = find({ "cross-origin-embedder-policy": "require-corp", "cross-origin-opener-policy": "same-origin-allow-popups" });
+    assert.deepEqual([half.verdict, half.severity], ["fail", "medium"]);
+    assert.match(half.evidence, /^COOP: same-origin-allow-popups\. COEP: require-corp\. CORP: absent\./);
+    assert.equal(find({ "cross-origin-embedder-policy": "credentialless", "cross-origin-opener-policy": "same-origin" }).title, "The page is cross-origin isolated");
+  });
+
+  test("the back/forward cache check counts only blockers on the page's side", () => {
+    const run = (backForward) => {
+      const page = { url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect: core.analyzeHtml(HTML, STRONG_HEADERS, URL_) };
+      return insights.analyze({ pages: [page], robotsText: "", browser: { ok: true, backForward } }).findings.find((item) => item.key === "pf-bfcache");
+    };
+    const shell = [{ reason: "BrowsingInstanceNotSwapped", type: "Circumstantial" }, { reason: "BackForwardCacheDisabledForDelegate", type: "Circumstantial" }];
+    assert.equal(run({ ran: true, restored: false, isolated: false, reasons: shell }).verdict, "pass");
+    const blocked = run({ ran: true, restored: false, isolated: false, reasons: shell.concat([{ reason: "UnloadHandlerExistsInMainFrame", type: "PageSupportNeeded" }, { reason: "SharedWorkerMessage", type: "PageSupportNeeded" }]) });
+    assert.deepEqual([blocked.verdict, blocked.severity], ["risk", "low"]);
+    assert.match(blocked.evidence, /an unload listener on the page, shared worker message\./);
+    assert.match(blocked.fix, /^Listen for pagehide instead of unload\. /);
+    assert.equal(run({ ran: false, error: "timed out" }), undefined);
+  });
+
   test("X-Frame-Options ALLOW-FROM without frame-ancestors leaves the page open to framing", () => {
     const result = analyzeOne({ "content-type": "text/html", "x-frame-options": "ALLOW-FROM https://www.gather.town" });
     const found = result.findings.find((item) => item.key === "sec-frame");
