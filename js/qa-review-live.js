@@ -35,7 +35,7 @@
       brand: "QA-lab · Live report", gradeWord: "Grade", average: "Series average {n}", areaLine: "{fail} fail · {risk} at risk · {pass} pass",
       botsAllowed: "Answer bots allowed", botsBlocked: "Answer bots blocked", trainingOut: "Training bots opted out", none0: "none",
       published: "published", notFound: "not found", noJs: "HTML without JavaScript", almostEmpty: "almost empty", words: "{n} words", schema: "Structured data",
-      notAvailable: "not available", lhMobile: "Lighthouse, mobile", p75: "75th pct.", good: "good", needsWork: "needs work", poor: "poor",
+      notAvailable: "not available", lhMobile: "Lighthouse, mobile", p75: "75th pct.", good: "good", needsWork: "needs work", poor: "poor", effort_minutes: "minutes", effort_hours: "hours", effort_days: "days",
       realVisitors: "Real visitors", noField: "not enough Chrome data", labTiming: "Lab LCP · TBT", pass: "pass", risk: "at risk", fail: "fail",
       filterBy: "Filter by {group}", shareLine: "{name} scored {score}/100 ({grade}) in a QA-lab URL Review live report"
     },
@@ -62,7 +62,7 @@
       brand: "QA-lab · Informe en vivo", gradeWord: "Nota", average: "Promedio de la serie: {n}", areaLine: "{fail} fallan · {risk} en riesgo · {pass} pasan",
       botsAllowed: "Bots de respuesta permitidos", botsBlocked: "Bots de respuesta bloqueados", trainingOut: "Bots de entrenamiento excluidos", none0: "ninguno",
       published: "publicado", notFound: "no encontrado", noJs: "HTML sin JavaScript", almostEmpty: "casi vacío", words: "{n} palabras", schema: "Datos estructurados",
-      notAvailable: "no disponible", lhMobile: "Lighthouse, móvil", p75: "percentil 75", good: "bueno", needsWork: "mejorable", poor: "deficiente",
+      notAvailable: "no disponible", lhMobile: "Lighthouse, móvil", p75: "percentil 75", good: "bueno", needsWork: "mejorable", poor: "deficiente", effort_minutes: "minutos", effort_hours: "horas", effort_days: "días",
       realVisitors: "Visitantes reales", noField: "no hay suficientes datos de Chrome", labTiming: "LCP · TBT de laboratorio", pass: "pasa", risk: "en riesgo", fail: "falla",
       filterBy: "Filtrar por {group}", shareLine: "{name} obtuvo {score}/100 ({grade}) en un informe en vivo de QA-lab URL Review"
     },
@@ -89,7 +89,7 @@
       brand: "QA-lab · Relatório ao vivo", gradeWord: "Nota", average: "Média da série: {n}", areaLine: "{fail} falham · {risk} em risco · {pass} passam",
       botsAllowed: "Bots de resposta permitidos", botsBlocked: "Bots de resposta bloqueados", trainingOut: "Bots de treinamento excluídos", none0: "nenhum",
       published: "publicado", notFound: "não encontrado", noJs: "HTML sem JavaScript", almostEmpty: "quase vazio", words: "{n} palavras", schema: "Dados estruturados",
-      notAvailable: "indisponível", lhMobile: "Lighthouse, celular", p75: "percentil 75", good: "bom", needsWork: "precisa melhorar", poor: "ruim",
+      notAvailable: "indisponível", lhMobile: "Lighthouse, celular", p75: "percentil 75", good: "bom", needsWork: "precisa melhorar", poor: "ruim", effort_minutes: "minutos", effort_hours: "horas", effort_days: "dias",
       realVisitors: "Visitantes reais", noField: "dados do Chrome insuficientes", labTiming: "LCP · TBT de laboratório", pass: "passa", risk: "em risco", fail: "falha",
       filterBy: "Filtrar por {group}", shareLine: "{name} fez {score}/100 ({grade}) em um relatório ao vivo do QA-lab URL Review"
     },
@@ -116,7 +116,7 @@
       brand: "QA-lab · Live-Bericht", gradeWord: "Note", average: "Serienschnitt {n}", areaLine: "{fail} durchgefallen · {risk} gefährdet · {pass} bestanden",
       botsAllowed: "Antwort-Bots erlaubt", botsBlocked: "Antwort-Bots gesperrt", trainingOut: "Trainings-Bots ausgeschlossen", none0: "keine",
       published: "veröffentlicht", notFound: "nicht gefunden", noJs: "HTML ohne JavaScript", almostEmpty: "fast leer", words: "{n} Wörter", schema: "Strukturierte Daten",
-      notAvailable: "nicht verfügbar", lhMobile: "Lighthouse, mobil", p75: "75. Perzentil", good: "gut", needsWork: "verbesserungswürdig", poor: "schlecht",
+      notAvailable: "nicht verfügbar", lhMobile: "Lighthouse, mobil", p75: "75. Perzentil", good: "gut", needsWork: "verbesserungswürdig", poor: "schlecht", effort_minutes: "Minuten", effort_hours: "Stunden", effort_days: "Tage",
       realVisitors: "Echte Besucher", noField: "zu wenige Chrome-Daten", labTiming: "Labor-LCP · TBT", pass: "bestanden", risk: "gefährdet", fail: "durchgefallen",
       filterBy: "Nach {group} filtern", shareLine: "{name} erreicht {score}/100 ({grade}) in einem Live-Bericht von QA-lab URL Review"
     },
@@ -143,7 +143,7 @@
       brand: "QA-lab · Rapport en direct", gradeWord: "Note", average: "Moyenne de la série : {n}", areaLine: "{fail} en échec · {risk} à risque · {pass} réussis",
       botsAllowed: "Robots de réponse autorisés", botsBlocked: "Robots de réponse bloqués", trainingOut: "Robots d’entraînement exclus", none0: "aucun",
       published: "publié", notFound: "introuvable", noJs: "HTML sans JavaScript", almostEmpty: "presque vide", words: "{n} mots", schema: "Données structurées",
-      notAvailable: "indisponible", lhMobile: "Lighthouse, mobile", p75: "75e centile", good: "bon", needsWork: "à améliorer", poor: "mauvais",
+      notAvailable: "indisponible", lhMobile: "Lighthouse, mobile", p75: "75e centile", good: "bon", needsWork: "à améliorer", poor: "mauvais", effort_minutes: "minutes", effort_hours: "heures", effort_days: "jours",
       realVisitors: "Visiteurs réels", noField: "pas assez de données Chrome", labTiming: "LCP · TBT en labo", pass: "réussi", risk: "à risque", fail: "en échec",
       filterBy: "Filtrer par {group}", shareLine: "{name} obtient {score}/100 ({grade}) dans un rapport en direct de QA-lab URL Review"
     },
@@ -170,7 +170,7 @@
       brand: "QA-lab · Report dal vivo", gradeWord: "Voto", average: "Media della serie: {n}", areaLine: "{fail} falliti · {risk} a rischio · {pass} superati",
       botsAllowed: "Bot di risposta ammessi", botsBlocked: "Bot di risposta bloccati", trainingOut: "Bot di addestramento esclusi", none0: "nessuno",
       published: "pubblicato", notFound: "non trovato", noJs: "HTML senza JavaScript", almostEmpty: "quasi vuoto", words: "{n} parole", schema: "Dati strutturati",
-      notAvailable: "non disponibile", lhMobile: "Lighthouse, mobile", p75: "75° percentile", good: "buono", needsWork: "da migliorare", poor: "scarso",
+      notAvailable: "non disponibile", lhMobile: "Lighthouse, mobile", p75: "75° percentile", good: "buono", needsWork: "da migliorare", poor: "scarso", effort_minutes: "minuti", effort_hours: "ore", effort_days: "giorni",
       realVisitors: "Visitatori reali", noField: "dati Chrome insufficienti", labTiming: "LCP · TBT di laboratorio", pass: "superato", risk: "a rischio", fail: "fallito",
       filterBy: "Filtra per {group}", shareLine: "{name} ottiene {score}/100 ({grade}) in un report dal vivo di QA-lab URL Review"
     }
@@ -333,6 +333,18 @@
     return text;
   }
   function nt() { return state.lang === "en" ? "" : ' translate="no"'; }
+  // Finding text in the page language when the card carries its message, clipped to the length the builder gives the English.
+  function said(f, part, max) {
+    const fc = window.QAReviewFindingsCopy;
+    const english = f[part] || "";
+    if (!fc || !fc.translated || fc.lang !== state.lang || !f.msg || !f.msg[part]) return english;
+    const text = fc.line(f.msg[part], "").replace(/\s+/g, " ").trim();
+    if (!text) return english;
+    return text.length > max ? text.slice(0, max - 1).replace(/\s+\S*$/, "") + "…" : text;
+  }
+  function effortName(effort) {
+    return T.en["effort_" + effort] ? t("effort_" + effort) : effort;
+  }
   function areaName(area, short) {
     const book = AREA_T[state.lang];
     if (!book) return short ? SHORT[area] : area;
@@ -1026,9 +1038,9 @@
         (mean ? '<s style="left:' + mean + '%" title="' + esc(t("average", { n: mean })) + '"></s>' : "") + "</i><small>" + esc(t("areaLine", { fail: s.fail, risk: s.risk, pass: s.pass })) + "</small></div>";
     }).join("");
 
-    const fix = (d.fix || []).map((f) => '<li><strong><span class="lv-sev sev-' + esc(f.severity) + '"' + nt() + ">" + esc(sevName(f.severity)) + '</span><span class="lv-area-tag"' + nt() + ">" + esc(areaName(f.area)) + "</span>" + esc(f.title) + "</strong>" +
-      (f.evidence ? "<p>" + esc(f.evidence) + "</p>" : "") + (f.fix ? '<p class="fix">' + esc(f.fix) + (f.effort ? " <small>· " + esc(f.effort) + "</small>" : "") + "</p>" : "") + "</li>").join("");
-    const works = (d.works || []).map((w) => "<li><span>" + esc(w.title) + "<small" + nt() + ">" + esc(areaName(w.area)) + "</small></span></li>").join("");
+    const fix = (d.fix || []).map((f) => '<li><strong><span class="lv-sev sev-' + esc(f.severity) + '"' + nt() + ">" + esc(sevName(f.severity)) + '</span><span class="lv-area-tag"' + nt() + ">" + esc(areaName(f.area)) + "</span>" + esc(said(f, "title", 140)) + "</strong>" +
+      (f.evidence ? "<p>" + esc(said(f, "evidence", 260)) + "</p>" : "") + (f.fix ? '<p class="fix">' + esc(said(f, "fix", 220)) + (f.effort ? " <small" + nt() + ">· " + esc(effortName(f.effort)) + "</small>" : "") + "</p>" : "") + "</li>").join("");
+    const works = (d.works || []).map((w) => "<li><span>" + esc(said(w, "title", 120)) + "<small" + nt() + ">" + esc(areaName(w.area)) + "</small></span></li>").join("");
 
     const g = d.geo || {};
     const blocked = g.answersBlocked || [];

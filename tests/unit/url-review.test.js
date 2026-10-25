@@ -1839,6 +1839,22 @@ test.describe("publishing user reviews to Live Reports", () => {
     assert.equal(reports[0].report.limits.pagesRead, 6);
   });
 
+  test("findings keep their messages, so the Live Report reads in the page language, with addresses hidden (#1386)", () => {
+    const live = require("../../scripts/build-live-reports");
+    const msg = { title: { id: "sec-hsts.title", vars: {} }, evidence: { id: "listDot", vars: { list: { items: ["mailto:owner@site.com"], more: 0 } } } };
+    const rep = report("acme.de");
+    rep.insights.findings[0].msg = msg;
+    const { reports } = publish.selectPublishable([record("acme.de", { report: rep })], []);
+    const finding = reports[0].report.insights.findings[0];
+    assert.deepEqual(finding.msg, msg);
+    assert.deepEqual(live.msgOf(finding, ["title", "evidence", "fix"]), {
+      title: { id: "sec-hsts.title", vars: {} },
+      evidence: { id: "listDot", vars: { list: { items: ["[address hidden]"], more: 0 } } }
+    });
+    assert.equal(live.msgOf(Object.assign({}, finding, { evidence: "" }), ["evidence"]), undefined);
+    assert.equal(live.msgOf({ title: "x" }, ["title"]), undefined);
+  });
+
   test("one review per host, the newest, oldest host first", () => {
     const { reports, held } = publish.selectPublishable([
       record("b.de", { createdAt: "2026-10-21T09:00:00Z" }),
