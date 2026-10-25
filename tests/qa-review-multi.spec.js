@@ -380,7 +380,9 @@ test('the account page saves the reviews it compares as a full comparison and li
 
   const panel = page.locator('#compare');
   await panel.scrollIntoViewIfNeeded();
+  await expect(panel).toContainText('next to up to five others');
   await panel.locator('#cmp-picks input').first().check();
+  await expect(panel.locator('#cmp-count')).toHaveText('(1 of 5)');
   await panel.locator('#cmp-go').click();
   const full = panel.getByRole('button', { name: 'Open the full comparison report' });
   await expect(full).toBeVisible();

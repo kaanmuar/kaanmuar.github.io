@@ -521,7 +521,7 @@
       <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
       <h2>Compare</h2>
     </div>
-    <p class="muted">Set one of your reviews next to up to four others: the health score, the six areas, the open problems and the indicators each site wins. Saved reviews are compared from their reports, with no new run and no charge.</p>
+    <p class="muted">Set one of your reviews next to up to five others: the health score, the six areas, the open problems and the indicators each site wins. Saved reviews are compared from their reports, with no new run and no charge.</p>
     <div class="cmp-grid">
       <div>
         <label for="cmp-base">Your site</label>
@@ -1099,7 +1099,7 @@
   const cmpGo = document.getElementById("cmp-go");
   const cmpStatus = document.getElementById("cmp-status");
   const cmpResult = document.getElementById("cmp-result");
-  const CMP_OTHERS = 4;
+  const CMP_OTHERS = 5;
   const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
   const cmpWith = new Set();
   function bare(host) { return String(host || "").toLowerCase().replace(/^www\./, ""); }

@@ -424,11 +424,20 @@ FACTS = {
 }
 
 COMPARE_NOTE = {
-    "es": "Cada competidor cuesta 9 USD, y se revisan uno tras otro. Ves el total antes de pagar. El sitio del competidor recibe solo las comprobaciones públicas y pasivas: sin conversación con el chat y sin enviar formularios. Como en cualquier revisión, su dueño puede recibir un correo sobre ella, y sus puntuaciones pueden aparecer en Live Reports.",
-    "pt": "Cada concorrente custa 9 USD, e eles rodam um depois do outro. Você vê o total antes de pagar. O site do concorrente recebe só as verificações públicas e passivas: sem conversa com o chat e sem envio de formulários. Como em qualquer revisão, o dono pode receber um e-mail sobre ela, e as pontuações podem aparecer nos Live Reports.",
-    "de": "Jeder Wettbewerber kostet 9 USD, und sie laufen nacheinander. Sie sehen die Summe, bevor Sie bezahlen. Die Website des Wettbewerbers erhält nur die öffentlichen, passiven Prüfungen: kein Chat-Gespräch und kein gesendetes Formular. Wie bei jeder Prüfung kann ihr Inhaber eine E-Mail dazu erhalten, und ihre Werte können in den Live Reports erscheinen.",
-    "fr": "Chaque concurrent coûte 9 USD, et ils passent l’un après l’autre. Vous voyez le total avant de payer. Le site du concurrent ne reçoit que les vérifications publiques et passives : aucune conversation avec le chat et aucun formulaire envoyé. Comme pour toute analyse, son propriétaire peut recevoir un e-mail à ce sujet, et ses scores peuvent apparaître dans les Live Reports.",
-    "it": "Ogni concorrente costa 9 USD, e vengono eseguiti uno dopo l’altro. Vedi il totale prima di pagare. Il sito del concorrente riceve solo i controlli pubblici e passivi: nessuna conversazione con la chat e nessun modulo inviato. Come per ogni revisione, il suo titolare può ricevere un’email al riguardo, e i suoi punteggi possono comparire nei Live Reports.",
+    "es": "Cada competidor cuesta 9 USD, y se revisan hasta tres a la vez, cada uno con su propia fila de progreso. Ves el total antes de pagar. El sitio del competidor recibe solo las comprobaciones públicas y pasivas: sin conversación con el chat y sin enviar formularios. Como en cualquier revisión, su dueño puede recibir un correo sobre ella, y sus puntuaciones pueden aparecer en Live Reports.",
+    "pt": "Cada concorrente custa 9 USD, e até três rodam ao mesmo tempo, cada um com sua própria linha de progresso. Você vê o total antes de pagar. O site do concorrente recebe só as verificações públicas e passivas: sem conversa com o chat e sem envio de formulários. Como em qualquer revisão, o dono pode receber um e-mail sobre ela, e as pontuações podem aparecer nos Live Reports.",
+    "de": "Jeder Wettbewerber kostet 9 USD, und bis zu drei laufen gleichzeitig, jeder mit eigener Fortschrittszeile. Sie sehen die Summe, bevor Sie bezahlen. Die Website des Wettbewerbers erhält nur die öffentlichen, passiven Prüfungen: kein Chat-Gespräch und kein gesendetes Formular. Wie bei jeder Prüfung kann ihr Inhaber eine E-Mail dazu erhalten, und ihre Werte können in den Live Reports erscheinen.",
+    "fr": "Chaque concurrent coûte 9 USD, et jusqu’à trois passent en même temps, chacun avec sa propre ligne de progression. Vous voyez le total avant de payer. Le site du concurrent ne reçoit que les vérifications publiques et passives : aucune conversation avec le chat et aucun formulaire envoyé. Comme pour toute analyse, son propriétaire peut recevoir un e-mail à ce sujet, et ses scores peuvent apparaître dans les Live Reports.",
+    "it": "Ogni concorrente costa 9 USD, e fino a tre vengono eseguiti contemporaneamente, ognuno con la propria riga di avanzamento. Vedi il totale prima di pagare. Il sito del concorrente riceve solo i controlli pubblici e passivi: nessuna conversazione con la chat e nessun modulo inviato. Come per ogni revisione, il suo titolare può ricevere un’email al riguardo, e i suoi punteggi possono comparire nei Live Reports.",
+}
+
+# The header buttons and the names screen readers give the language and theme toggles (#1410).
+HEADER = {
+    "es": {"lab": "Laboratorio de regresión", "reviews": "Tus revisiones", "tour": "Cómo funciona esta revisión", "report": "Informe", "language": "Idioma", "theme": "Cambiar el modo oscuro"},
+    "pt": {"lab": "Laboratório de regressão", "reviews": "Suas revisões", "tour": "Como funciona esta revisão", "report": "Relatório", "language": "Idioma", "theme": "Alternar o modo escuro"},
+    "de": {"lab": "Regressionslabor", "reviews": "Ihre Prüfungen", "tour": "So funktioniert diese Prüfung", "report": "Bericht", "language": "Sprache", "theme": "Dunkelmodus umschalten"},
+    "fr": {"lab": "Laboratoire de régression", "reviews": "Vos analyses", "tour": "Comment fonctionne cette analyse", "report": "Rapport", "language": "Langue", "theme": "Basculer le mode sombre"},
+    "it": {"lab": "Laboratorio di regressione", "reviews": "Le tue revisioni", "tour": "Come funziona questa revisione", "report": "Report", "language": "Lingua", "theme": "Attiva o disattiva la modalità scura"},
 }
 
 # The skip link, the first thing the keyboard reaches on each page.
