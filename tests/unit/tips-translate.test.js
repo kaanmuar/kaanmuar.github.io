@@ -21,6 +21,11 @@ test('a domain the translator spaced is put back together from the English', () 
   assert.equal(keepHosts('co.computrabajo.com scores 68', 'co. computrabajo. com obtiene 68'), 'co.computrabajo.com obtiene 68');
 });
 
+test('an English clip never asks the translator', () => {
+  const code = 'import json, translate; translate.gtx = lambda *a: (_ for _ in ()).throw(SystemExit("asked")); cache = {}; translate.fill(["Hello there."], "en", cache); print(json.dumps(cache))';
+  assert.equal(execFileSync(process.env.PYTHON || 'python3', ['-c', code], { cwd: dir, encoding: 'utf8' }).trim(), '{}');
+});
+
 test('a sentence that ends before a host is left alone', () => {
   assert.equal(keepHosts('Speed 76. co.computrabajo.com, 91 pages', 'Velocidad 76. co.computrabajo.com, 91 páginas'), 'Velocidad 76. co.computrabajo.com, 91 páginas');
   assert.equal(keepHosts('No host here. Done.', 'Aquí no hay host. Listo.'), 'Aquí no hay host. Listo.');
