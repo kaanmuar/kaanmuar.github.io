@@ -1,0 +1,22 @@
+name: Jarvis app parity
+
+# A PR that changes the web Jarvis also changes the Android app, or says "no app change: <why>" in its body.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    paths: ["js/admin-jarvis*.js", "css/admin-jarvis.css", "functions/jarvis*.js"]
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Web Jarvis and android/ change together
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/check-jarvis-parity.js "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"

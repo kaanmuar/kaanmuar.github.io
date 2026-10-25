@@ -1,0 +1,11 @@
+---
+description: Every Jarvis change also lands in the Android app
+alwaysApply: true
+---
+# Jarvis and the Android app change together
+The Jarvis Android app (`android/`, #1414) shows everything the web Jarvis (`admin.html#stats`) shows. Carlos, 2026-10-25: every change or update to Jarvis is also done in the app.
+
+- When a PR changes the web Jarvis (`js/admin-jarvis*.js`, `css/admin-jarvis.css`, the Jarvis panels in `admin.html`) or its server (`functions/jarvis*.js`), make the same change in `android/` in the same PR: new tabs, panels, KPIs, actions, settings, alerts and copy.
+- The app reads no Firestore. It gets everything from the `jarvis` function's `snapshot` op (`jarvisSnapshot` in `functions/index.js`), so a new source or number also goes into `snapshot`, and Ask from the app goes through `askSnapshot` in `functions/jarvis.js`.
+- Build and test the app before the PR: `cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@17 ANDROID_HOME=~/Library/Android/sdk ./gradlew testDebugUnitTest assembleDebug`. Check new screens on the `jarvis` emulator, using a debug fixture in `files/jarvis/fixture.json`.
+- CI (`scripts/check-jarvis-parity.js`) fails a PR that touches the web Jarvis without touching `android/`. When the change truly has no app side (a test, a CSS-only tweak the app does not share), put `no app change: <why>` in the PR body.

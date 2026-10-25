@@ -368,6 +368,29 @@ test("server: Ask from the app gets the page's compact snapshot", () => {
   assert.deepEqual(out.briefing, ["[warn] 1 message waits."]);
   assert.equal(out.external.money.revenue.usd, 9);
   assert.equal(out.external.safety, null);
+  assert.equal(out.external.outreach, null);
+});
+
+test("server: the app snapshot carries outreach visits and Ask gets the page's outreach block", async () => {
+  const now = Date.parse("2026-10-25T12:40:00Z");
+  const ts = (h) => ({ toDate: () => new Date(now - h * 3600000) });
+  const db = fakeDb({ rows: { site_events: [
+    { site: "review", kind: "visit", query: "?utm_source=outreach&utm_campaign=unis", createdAt: ts(2) },
+    { site: "review", kind: "visit", query: "?utm_source=Outreach&utm_campaign=unis", createdAt: ts(3) },
+    { site: "review", kind: "visit", query: "?utm_source=outreach", createdAt: ts(4) },
+    { site: "review", kind: "visit", query: "?utm_source=outreach&utm_campaign=old", createdAt: ts(200) },
+    { site: "cv", kind: "visit", query: "?utm_source=linkedin", createdAt: ts(2) }
+  ] } });
+  const { outreachVisits } = await jarvis.dailyProducts(db, { now, days: 7 });
+  assert.deepEqual(outreachVisits, { total: 3, campaigns: [{ label: "unis", value: 2 }, { label: "no campaign", value: 1 }] });
+  const outreach = { ok: true, pipeline: { ok: true, queued: 40, swept: 12, reviews: 9, thisWeek: 5, withLiveReport: 3, bySegment: [{ label: "university", value: 30 }], daily: [] },
+    instantly: { ok: true, status: [{ label: "active", value: 1 }], sent: 80, rates: { open: 40, reply: 5, positive: 2, bounce: 1 }, replies: 4, interested: 2, meetings: 1, accounts: [{ email: "a@x.co", score: 92 }, { email: "b@x.co", score: null }] },
+    plan: { ok: false } };
+  const out = jarvis.askSnapshot({ external: { outreach }, outreachVisits }, 7).external.outreach;
+  assert.deepEqual(out.pipeline, { queued: 40, swept: 12, reviews: 9, thisWeek: 5, withLiveReport: 3, bySegment: [{ label: "university", value: 30 }] });
+  assert.deepEqual(out.instantly.warmup, [92, null]);
+  assert.equal(out.plan, null);
+  assert.equal(out.visits, 3);
 });
 
 test("server: the watch mails alerts only, once a day per issue", async () => {
@@ -689,4 +712,15 @@ test("outreach briefing: close deadlines, bounces, replies, cold mailboxes and D
   assert.equal(byKey["outreach:warmup"], "warn");
   assert.equal(byKey["outreach:dns:DMARC"], "warn");
   assert.equal(byKey["outreach:dns:SPF"], undefined);
+});
+
+const parity = require("../../scripts/check-jarvis-parity.js");
+
+test("parity: a web Jarvis change needs an android/ change or 'no app change' in the PR body", () => {
+  assert.equal(parity.check(["functions/url-review.js", "admin.html"], "").ok, true);
+  assert.equal(parity.check(["js/admin-jarvis.js"], "").ok, false);
+  assert.equal(parity.check(["functions/jarvis-sources.js", "css/admin-jarvis.css"], "Fixes #1").ok, false);
+  assert.equal(parity.check(["js/admin-jarvis-core.js", "android/app/src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"], "").ok, true);
+  assert.deepEqual(parity.check(["functions/jarvis.js"], "No app change: the app reads it through snapshot."), { ok: true, web: ["functions/jarvis.js"], optOut: true });
+  assert.equal(parity.check(["functions/jarvis.js"], "no app change:").ok, false);
 });
