@@ -3839,12 +3839,85 @@ function paypalPaid(order) {
   const value = String((capture.amount && capture.amount.value) || "");
   const currency = String((capture.amount && capture.amount.currency_code) || "");
   const amount = Number(value);
-  const paid = order.status === "COMPLETED" && capture.status === "COMPLETED" && currency === "USD" && priceMatches(amount);
+  const captured = capture.status === "COMPLETED";
+  const paid = order.status === "COMPLETED" && captured && currency === "USD" && priceMatches(amount);
   return {
     paid,
-    pending: !paid && (order.status === "APPROVED" || order.status === "PAYER_ACTION_REQUIRED"),
+    captured,
+    captureId: String(capture.id || "").replace(/[^A-Z0-9]/g, "").slice(0, 22),
+    capturedAmount: captured && Number.isFinite(amount) ? amount : 0,
+    capturedCurrency: currency,
+    pending: !paid && !captured && (order.status === "APPROVED" || order.status === "PAYER_ACTION_REQUIRED"),
     reference: String(unit.custom_id || capture.custom_id || "").replace(/[^a-f0-9]/g, "").slice(0, 16),
     amount: paid ? amount : 0
+  };
+}
+
+// The order and capture an event is about. Refund events carry the refund; its "up" link names the capture.
+function paypalEventIds(event) {
+  const type = String((event && event.event_type) || "");
+  const resource = (event && event.resource) || {};
+  const clean = (value) => String(value || "").replace(/[^A-Z0-9]/g, "").slice(0, 22);
+  const related = (resource.supplementary_data && resource.supplementary_data.related_ids) || {};
+  let orderId = "";
+  let captureId = "";
+  if (type.indexOf("CHECKOUT.ORDER.") === 0) {
+    orderId = clean(resource.id);
+  } else if (type === "PAYMENT.CAPTURE.REFUNDED") {
+    const up = (resource.links || []).find((link) => link.rel === "up" && /\/captures\//.test(String(link.href || "")));
+    captureId = up ? clean(String(up.href).split("/captures/")[1]) : "";
+    orderId = clean(related.order_id);
+  } else if (type.indexOf("PAYMENT.CAPTURE.") === 0) {
+    captureId = clean(resource.id);
+    orderId = clean(related.order_id);
+  } else if (type.indexOf("CUSTOMER.DISPUTE.") === 0) {
+    const tx = (resource.disputed_transactions || [])[0] || {};
+    captureId = clean(tx.seller_transaction_id);
+  }
+  return {
+    type,
+    orderId: /^[A-Z0-9]{10,22}$/.test(orderId) ? orderId : "",
+    captureId: /^[A-Z0-9]{10,22}$/.test(captureId) ? captureId : "",
+    disputeId: type.indexOf("CUSTOMER.DISPUTE.") === 0 ? String(resource.dispute_id || "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 40) : "",
+    disputeStatus: String(resource.status || "").slice(0, 40),
+    disputeOutcome: String((resource.dispute_outcome && resource.dispute_outcome.outcome_code) || "").slice(0, 60),
+    refundAmount: type === "PAYMENT.CAPTURE.REFUNDED" ? Number((resource.amount && resource.amount.value) || 0) || 0 : 0
+  };
+}
+
+async function verifyPayPalWebhook(options, headers, event) {
+  const webhookId = String((options && options.webhookId) || "");
+  const h = headers || {};
+  if (!/^[A-Z0-9]{10,40}$/.test(webhookId) || !h["paypal-transmission-id"] || !h["paypal-transmission-sig"] || !event || typeof event !== "object") return false;
+  const creds = paypalCredentials(options);
+  const token = await paypalAccessToken(creds);
+  const response = await paypalRequest("POST", creds.host, "/v1/notifications/verify-webhook-signature", {
+    authorization: "Bearer " + token,
+    "content-type": "application/json"
+  }, {
+    auth_algo: String(h["paypal-auth-algo"] || ""),
+    cert_url: String(h["paypal-cert-url"] || ""),
+    transmission_id: String(h["paypal-transmission-id"] || ""),
+    transmission_sig: String(h["paypal-transmission-sig"] || ""),
+    transmission_time: String(h["paypal-transmission-time"] || ""),
+    webhook_id: webhookId,
+    webhook_event: event
+  });
+  return response.status < 400 && response.body && response.body.verification_status === "SUCCESS";
+}
+
+async function paypalCapture(options, captureId) {
+  const id = String(captureId || "");
+  if (!/^[A-Z0-9]{10,22}$/.test(id)) return null;
+  const creds = paypalCredentials(options);
+  const token = await paypalAccessToken(creds);
+  const response = await paypalRequest("GET", creds.host, "/v2/payments/captures/" + id, { authorization: "Bearer " + token }, "");
+  if (response.status >= 400 || !response.body) return null;
+  const related = (response.body.supplementary_data && response.body.supplementary_data.related_ids) || {};
+  return {
+    captureId: id,
+    orderId: String(related.order_id || "").replace(/[^A-Z0-9]/g, "").slice(0, 22),
+    status: String(response.body.status || "")
   };
 }
 
@@ -3876,6 +3949,10 @@ async function inspectPayPal(options) {
   return {
     paid: result.paid,
     pending: result.pending,
+    captured: result.captured,
+    captureId: result.captureId,
+    capturedAmount: result.capturedAmount,
+    capturedCurrency: result.capturedCurrency,
     provider: "paypal",
     sessionId: id,
     linkId: "",
@@ -4098,6 +4175,9 @@ module.exports = {
   chargedUsd,
   priceMatches,
   paypalPaid,
+  paypalEventIds,
+  verifyPayPalWebhook,
+  paypalCapture,
   previewReport,
   priceForCredentials,
   priceForAlerts,
