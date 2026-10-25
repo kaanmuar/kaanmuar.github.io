@@ -9,6 +9,8 @@
 # Page keeps its times. Buffer's daily call budget moves a few hundred a day, so a nightly run resumes the sync
 # until nothing is left. Mode delete-unmatched deletes the scheduled
 # posts dated after now that match no batch post (not on the hub), then re-seeds; a dry run only lists them.
+# Mode requeue deletes the queued posts listed in posts (batch/slug, comma-separated) on one channel and creates
+# them again from the batch's captions.json at the same time, for a caption fixed after queueing (#1191).
 # Every mode but a dry run commits the ledger (scripts/commit-social-ledgers.sh).
 name: Buffer batch queue
 
@@ -20,7 +22,7 @@ on:
       mode:
         description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, or delete scheduled posts not on the hub'
         type: choice
-        options: [queue, seed, check, sync, delete-unmatched]
+        options: [queue, seed, check, sync, delete-unmatched, requeue]
         default: queue
       batch:
         description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10 (queue only)'
@@ -29,6 +31,13 @@ on:
         description: 'List what would be queued or deleted, change nothing'
         type: boolean
         default: false
+      posts:
+        description: 'requeue only: batch/slug,batch/slug'
+        required: false
+      channel:
+        description: 'requeue only: the calendar channel, e.g. youtube'
+        required: false
+        default: 'youtube'
       windows:
         description: 'sync only: 15-minute windows of Buffer calls before it stops (about 115 calls each)'
         required: false
@@ -63,8 +72,12 @@ jobs:
         if: ${{ env.MODE == 'sync' }}
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          PAUSE_UNTIL: ${{ vars.BUFFER_SYNC_PAUSE_UNTIL }}
         run: |
           set -o pipefail
+          if [ -n "$PAUSE_UNTIL" ] && [ "$(date -u +%s)" -lt "$(date -u -d "$PAUSE_UNTIL" +%s)" ]; then
+            echo "Sync paused until $PAUSE_UNTIL (repo variable BUFFER_SYNC_PAUSE_UNTIL), so other Buffer jobs have the day's calls." | tee -a "$GITHUB_STEP_SUMMARY"; exit 0
+          fi
           if ! [[ "$WINDOWS" =~ ^[1-6]$ ]]; then echo "::error::windows is 1 to 6"; exit 1; fi
           if [ "$DRY_RUN" = "true" ]; then node scripts/social-calendar.js --sync --dry-run; else node scripts/social-calendar.js --sync --windows "$WINDOWS"; fi | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Seed or check the ledger
@@ -79,6 +92,15 @@ jobs:
         run: |
           set -o pipefail
           if [ "$DRY_RUN" = "true" ]; then node scripts/buffer-queue.js --delete-unmatched --dry-run; else node scripts/buffer-queue.js --delete-unmatched && node scripts/buffer-queue.js --seed; fi | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Requeue posts with fixed captions
+        if: ${{ env.MODE == 'requeue' }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          POSTS: ${{ inputs.posts }}
+          CHANNEL: ${{ inputs.channel }}
+        run: |
+          set -o pipefail
+          if [ "$DRY_RUN" = "true" ]; then node scripts/buffer-queue.js --requeue "$POSTS" --channel "$CHANNEL" --dry-run; else node scripts/buffer-queue.js --requeue "$POSTS" --channel "$CHANNEL"; fi | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Queue the batch
         if: ${{ env.MODE == 'queue' }}
         env:

@@ -586,6 +586,13 @@ async function prepare(context, ua, rec, viewport, acceptLanguage) {
   return page;
 }
 
+// The network errors of a host that took the connection and then cut it; a navigation timeout is not one, so a slow site is not waited on twice.
+const CUT = /net::ERR_(?:HTTP2_PROTOCOL_ERROR|CONNECTION_RESET|CONNECTION_CLOSED|EMPTY_RESPONSE)\b/;
+function tagCut(job, error) {
+  const found = String((error && error.message) || "").match(CUT);
+  return job && job.html && found ? found[0] : "";
+}
+
 // A JS bot check answers 403 and then reloads into the site, so the last main-frame document says whether the page got through.
 async function open(page, url) {
   let last = null;
@@ -1461,10 +1468,17 @@ async function browse(job, log, onStart) {
       await page.evaluateOnNewDocument(watchCalls);
       first = await open(page, start);
     };
-    await visit();
-    // Some bot managers refuse a browser that names the review; only the start-page read for a refused plain read retries without the tag.
-    if (job.html && first.docStatus >= 400) {
-      say("The site refused Chrome with the review tag in its user agent (status " + first.docStatus + "). Loading " + pathOf(start) + " again as plain Chrome.");
+    // Some bot managers refuse a browser that names the review, with a status or by cutting the connection (Akamai resets the
+    // HTTP/2 stream); only the start-page read for a refused plain read retries without the tag.
+    let cut = "";
+    try {
+      await visit();
+    } catch (error) {
+      cut = tagCut(job, error);
+      if (!cut) throw error;
+    }
+    if (job.html && (cut || first.docStatus >= 400)) {
+      say("The site " + (cut ? "cut the connection to" : "refused") + " Chrome with the review tag in its user agent (" + (cut || "status " + first.docStatus) + "). Loading " + pathOf(start) + " again as plain Chrome.");
       await coldContext.close();
       ua = plainUa;
       result.untagged = true;
@@ -1747,4 +1761,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, backForward, imageRows, open, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, backForward, imageRows, open, tagCut, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, ownLauncher, ownPane, notAChat, OWN_CHAT, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };

@@ -9,6 +9,8 @@
        queues nothing
      BUFFER_API_KEY=... node scripts/buffer-queue.js --delete-unmatched [--dry-run]   delete the scheduled posts
        dated after now that match no batch post and that the ledger does not know (not on the hub)
+     BUFFER_API_KEY=... node scripts/buffer-queue.js --requeue <batch/slug,...> [--channel youtube] [--dry-run]
+       delete those queued posts and create them again from captions.json at the same time
 
    Reads media/social-posts/<batch>/captions.json from scripts/tips-studio/build.js. Feed and story
    images are served by the site, so the script waits until the first one answers 200 (the Pages
@@ -248,6 +250,69 @@ async function deleteUnmatched(dry) {
   if (failed) process.exit(1);
 }
 
+// The ledger entries --requeue replaces: queued on the channel with a Buffer id, and not due within 30 minutes.
+function requeueTargets(book, posts, channel, now) {
+  return posts.map((post) => {
+    const [batch, slug] = post.split("/");
+    const entry = (book.posts[post] || []).find((e) => e.channel === channel) || null;
+    let skip = null;
+    if (!entry) skip = "not in the ledger on " + channel;
+    else if (entry.result !== "queued" || !entry.id) skip = entry.result + ", not queued";
+    else if (Date.parse(entry.at) <= now + 30 * 60e3) skip = "due " + entry.at + ", too soon to replace";
+    return { post, batch, slug, entry, skip };
+  });
+}
+
+// Deletes each queued post and creates it again from its batch's captions.json at the same time (#1191). The clip
+// must answer before the old post is deleted.
+async function requeue(posts, channel, dry) {
+  const book = ledger.read(ledger.BUFFER);
+  if (!dry) await settle(book);
+  const profiles = dry ? [] : await channels();
+  const repo = process.env.GITHUB_REPOSITORY || "kaanmuar/kaanmuar.github.io";
+  const gate = createGate();
+  let done = 0;
+  let failed = 0;
+  for (const t of requeueTargets(book, posts, channel, Date.now())) {
+    if (t.skip) { console.log("skip", t.post, "-", t.skip); continue; }
+    const fail = (why) => { failed += 1; console.log("failed", t.post, "-", why); };
+    const cap = JSON.parse(fs.readFileSync(path.join(ROOT, "media/social-posts", t.batch, "captions.json"), "utf8"))[t.slug];
+    if (!cap) { fail("not in captions.json"); continue; }
+    const service = t.entry.profile.split(" ")[0];
+    const target = dry ? { id: "dry", service } : profiles.find((c) => c.service + (c.name ? " (" + c.name + ")" : "") === t.entry.profile);
+    if (!target) { fail("no Buffer channel " + t.entry.profile); continue; }
+    const clipBase = "https://github.com/" + repo + "/releases/download/" + t.batch;
+    const made = inputsFor(target, t.slug, cap, SITE + "/media/social-posts/" + t.batch, clipBase, {}, t.batch).find((p) => p.slot === channel);
+    if (!made) { fail(service + " takes nothing from this post"); continue; }
+    const input = Object.assign(made.input, { mode: "customScheduled", dueAt: t.entry.at });
+    const hub = await gate(t.batch, t.slug, cap, input.dueAt);
+    if (hub.why) { fail("Hub first: " + hub.why); continue; }
+    const asset = input.assets[0] && (input.assets[0].video || input.assets[0].image);
+    const live = asset && (await fetch(asset.url, { method: "HEAD" }).catch(() => null));
+    if (!live || !live.ok) { fail("asset not served: " + (asset ? asset.url : "none")); continue; }
+    if (dry) { console.log("would requeue", t.post, t.entry.id, "at", input.dueAt, "…", String(input.text || "").split("\n")[0].slice(0, 100)); continue; }
+    const entry = { channel, profile: t.entry.profile, at: input.dueAt, checked: new Date().toISOString() };
+    let deleted = false;
+    try {
+      const del = (await gql("mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }", { input: { id: t.entry.id } })).deletePost;
+      if (!del.id) { fail("delete " + t.entry.id + ": " + (del.message || del.__typename)); continue; }
+      deleted = true;
+      const r = (await gql("mutation($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }", { input })).createPost;
+      if (!r.post) throw new Error(r.message);
+      done += 1;
+      console.log("requeued", t.post, t.entry.id, "->", r.post.id, r.post.dueAt);
+      ledger.record(book, t.post, Object.assign(entry, { id: r.post.id, at: r.post.dueAt || input.dueAt, result: "queued" }));
+    } catch (error) {
+      fail(error.message);
+      if (deleted) ledger.record(book, t.post, Object.assign(entry, { result: "failed", error: "Deleted " + t.entry.id + " to requeue; " + error.message }));
+      if (error.spent) break;
+    }
+  }
+  if (!dry) ledger.write(ledger.BUFFER, book);
+  console.log(done + " requeued, " + failed + " failed");
+  if (failed) process.exit(1);
+}
+
 async function waitFor(url, minutes) {
   const until = Date.now() + minutes * 60e3;
   while (Date.now() < until) {
@@ -308,6 +373,13 @@ async function main() {
   if (opts.seed) {
     if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
     return seed();
+  }
+  if (opts.requeue) {
+    const posts = String(opts.requeue).split(",").map((p) => p.trim()).filter(Boolean);
+    const bad = posts.find((p) => !/^[\w-]+\/[\w-]+$/.test(p));
+    if (!posts.length || bad) throw new Error("--requeue takes batch/slug,batch/slug" + (bad ? "; not " + bad : ""));
+    if (!opts["dry-run"] && !process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
+    return requeue(posts, String(opts.channel || "youtube"), Boolean(opts["dry-run"]));
   }
   if (opts["delete-unmatched"]) {
     if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
@@ -383,4 +455,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { batchIndex, matchPost, staleScheduled, inputsFor, gql };
+module.exports = { batchIndex, matchPost, staleScheduled, inputsFor, gql, requeueTargets };
