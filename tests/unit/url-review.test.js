@@ -1446,6 +1446,27 @@ test.describe("a run paid through a credit", () => {
     assert.notEqual(file.runs[1].cases[0].title, "Coupon total does not refresh");
   });
 
+  test("a sandbox credit pays only for a test run, and a live credit only for a live one", () => {
+    const sandbox = Object.assign({}, credit, { id: "k2", test: true });
+    assert.equal(core.judgeAttempts([sandbox, earlier], { deviceId: "d1", ip: "" }, value).consumeId, undefined);
+    assert.equal(core.judgeAttempts([sandbox, earlier], { deviceId: "d1", ip: "" }, Object.assign({}, value, { test: true })).consumeId, "k2");
+    assert.equal(core.judgeAttempts([credit, earlier], { deviceId: "d1", ip: "" }, Object.assign({}, value, { test: true })).consumeId, undefined);
+  });
+
+  test("a credit whose paid run failed and was given back pays for the next run", () => {
+    const spent = { id: "u1", status: "run-credit-used", creditId: "k1", deviceId: "d1" };
+    assert.equal(core.judgeAttempts([credit, spent, earlier], { deviceId: "d1", ip: "" }, value).consumeId, undefined);
+    const returned = Object.assign({}, spent, { status: "run-credit-returned" });
+    assert.equal(core.judgeAttempts([credit, returned, earlier], { deviceId: "d1", ip: "" }, value).consumeId, "k1");
+  });
+
+  test("the owner alert for a paid credit names the payer, and a returned credit has its own title", () => {
+    const note = desk.alertFrom("run-paid", { status: "run-credit", name: "Ana Ruiz", email: "ana@example.com", payerEmail: "ana.pay@example.com", sessionId: "5O190127TN364715T" });
+    assert.match(note.detail, /Who: Ana Ruiz/);
+    assert.match(note.detail, /PayPal payer: ana\.pay@example\.com/);
+    assert.equal(desk.alertFrom("credit-returned", { status: "failed" }).title, "A paid run failed and its credit was given back");
+  });
+
   test("a credit bought but not yet used unlocks nothing", () => {
     const file = offers.accountFile([credit, earlier], "ana@example.com", now);
     assert.deepEqual(file.runs.map((row) => [row.id, row.open]), [["r0", false]]);
@@ -1583,6 +1604,8 @@ test.describe("return price", () => {
     assert.equal(read.captureId, "3C679366HH908993F");
     assert.equal(read.capturedAmount, 3);
     assert.equal(read.pending, false);
+    const payer = core.paypalPaid(Object.assign({}, order, { payer: { email_address: " Ana@Example.com ", name: { given_name: "Ana", surname: "Ruiz" } } }));
+    assert.deepEqual([payer.payerEmail, payer.payerName], ["ana@example.com", "Ana Ruiz"]);
   });
 
   test("each PayPal event names the order or capture it is about", () => {
