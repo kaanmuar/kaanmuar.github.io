@@ -1,0 +1,53 @@
+{
+  "01-friday-release-en": {
+    "date": "2026-11-02",
+    "cat": "QA",
+    "title": "Friday, 5 pm: we release in an hour. Did anyone check the site?",
+    "alt": "Two coworkers at a desk on a Friday afternoon. She says they release in an hour, he asks if anyone checked the site, she runs a URL Review, finds two broken links, fixes them and smiles.",
+    "lang": "en",
+    "voice": "gemini",
+    "textLang": "en",
+    "kind": "skit",
+    "linkedin": "Friday, 5 pm: we release in an hour. Did anyone check the site?\n\nTwo broken links, found and fixed before the release. Paste a URL and get a review of the site's public pages: QA, SEO, accessibility, security, performance and privacy.\n\nReview your site before you ship: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=social&utm_campaign=skits&utm_content=01-friday-release-en\n\n#QA #Release #BrokenLinks #WebDevelopment #Testing #QAlab",
+    "x": "Friday, 5 pm: we release in an hour. Did anyone check the site?\n\nhttps://carlosandmunoz.com/qa-review.html?utm_source=x&utm_medium=social&utm_campaign=skits&utm_content=01-friday-release-en\n#QA #QAlab",
+    "instagram": "Friday, 5 pm: we release in an hour. Did anyone check the site?\n\nTwo broken links, found and fixed before the release. Paste a URL and get a review of the site's public pages: QA, SEO, accessibility, security, performance and privacy.\n\nLink in bio.\n\n#QA #Release #BrokenLinks #Coding #QAlab",
+    "facebook": "Friday, 5 pm: we release in an hour. Did anyone check the site?\n\nTwo broken links, found and fixed before the release. Paste a URL and get a review of the site's public pages: QA, SEO, accessibility, security, performance and privacy.\n\nhttps://carlosandmunoz.com/qa-review.html?utm_source=facebook&utm_medium=social&utm_campaign=skits&utm_content=01-friday-release-en\n\n#QA #Release #BrokenLinks #QAlab",
+    "tiktok": "Friday, 5 pm: we release in an hour. Did anyone check the site? Review your site before you ship. #QA #Release #BrokenLinks #Coding #TechTok #SDET #SearchConsole #QAlab",
+    "youtubeTitle": "Friday, 5 pm: we release in an hour. Did anyone check the site? #Shorts",
+    "youtube": "Two broken links, found and fixed before the release. Paste a URL and get a review of the site's public pages: QA, SEO, accessibility, security, performance and privacy.\n\nReview your site before you ship: https://carlosandmunoz.com/qa-review.html?utm_source=youtube&utm_medium=social&utm_campaign=skits&utm_content=01-friday-release-en\n\n#QA #Release #BrokenLinks #Coding #Programming #QAEngineer #DigitalMarketing #SDET #GoogleSearch #SoftwareTesting #SearchConsole #QAlab"
+  },
+  "02-friday-release-es": {
+    "date": "2026-11-04",
+    "cat": "QA",
+    "title": "Viernes, 5 p. m.: salimos en una hora. ¿Alguien revisó el sitio?",
+    "alt": "Dos compañeros en un escritorio un viernes por la tarde. Él dice que salen a producción en una hora, ella pregunta si alguien revisó el sitio, él corre una revisión de URL, encuentra dos enlaces rotos, los arregla y sonríe.",
+    "lang": "es",
+    "voice": "gemini",
+    "textLang": "es",
+    "kind": "skit",
+    "linkedin": "Viernes, 5 p. m.: salimos en una hora. ¿Alguien revisó el sitio?\n\nDos enlaces rotos, encontrados y arreglados antes del lanzamiento. Pega una URL y recibe una revisión de las páginas públicas del sitio: QA, SEO, accesibilidad, seguridad, rendimiento y privacidad.\n\nRevisa tu sitio antes de publicar: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&utm_medium=social&utm_campaign=skits&utm_content=02-friday-release-es\n\n#QA #Release #BrokenLinks #PruebasDeSoftware #DesarrolloWeb #QAlab",
+    "x": "Viernes, 5 p. m.: salimos en una hora. ¿Alguien revisó el sitio?\n\nhttps://carlosandmunoz.com/qa-review-es.html?utm_source=x&utm_medium=social&utm_campaign=skits&utm_content=02-friday-release-es\n#QA #QAlab",
+    "instagram": "Viernes, 5 p. m.: salimos en una hora. ¿Alguien revisó el sitio?\n\nDos enlaces rotos, encontrados y arreglados antes del lanzamiento. Pega una URL y recibe una revisión de las páginas públicas del sitio: QA, SEO, accesibilidad, seguridad, rendimiento y privacidad.\n\nEnlace en la bio.\n\n#QA #Release #BrokenLinks #PruebasDeSoftware #QAlab",
+    "facebook": "Viernes, 5 p. m.: salimos en una hora. ¿Alguien revisó el sitio?\n\nDos enlaces rotos, encontrados y arreglados antes del lanzamiento. Pega una URL y recibe una revisión de las páginas públicas del sitio: QA, SEO, accesibilidad, seguridad, rendimiento y privacidad.\n\nhttps://carlosandmunoz.com/qa-review-es.html?utm_source=facebook&utm_medium=social&utm_campaign=skits&utm_content=02-friday-release-es\n\n#QA #Release #BrokenLinks #QAlab",
+    "tiktok": "Viernes, 5 p. m.: salimos en una hora. ¿Alguien revisó el sitio? Revisa tu sitio antes de publicar. #QA #Release #BrokenLinks #PruebasDeSoftware #DesarrolloWeb #Coding #TechTok #QAlab",
+    "youtubeTitle": "Viernes, 5 p. m.: salimos en una hora. ¿Alguien revisó el sitio? #Shorts",
+    "youtube": "Dos enlaces rotos, encontrados y arreglados antes del lanzamiento. Pega una URL y recibe una revisión de las páginas públicas del sitio: QA, SEO, accesibilidad, seguridad, rendimiento y privacidad.\n\nRevisa tu sitio antes de publicar: https://carlosandmunoz.com/qa-review-es.html?utm_source=youtube&utm_medium=social&utm_campaign=skits&utm_content=02-friday-release-es\n\n#QA #Release #BrokenLinks #PruebasDeSoftware #DesarrolloWeb #TechTips #WebDevelopment #TestAutomation #GoogleSearch #Testing #SearchConsole #QAlab"
+  },
+  "03-friday-release-pt": {
+    "date": "2026-11-06",
+    "cat": "QA",
+    "title": "Sexta, 17h: a gente sobe em uma hora. Alguém conferiu o site?",
+    "alt": "Dois colegas numa mesa numa sexta à tarde. Ela diz que sobem em uma hora, ele pergunta se alguém conferiu o site, ela roda uma revisão de URL, acha dois links quebrados, corrige e sorri.",
+    "lang": "pt",
+    "voice": "gemini",
+    "textLang": "pt",
+    "kind": "skit",
+    "linkedin": "Sexta, 17h: a gente sobe em uma hora. Alguém conferiu o site?\n\nDois links quebrados, achados e corrigidos antes do lançamento. Cole uma URL e receba uma revisão das páginas públicas do site: QA, SEO, acessibilidade, segurança, desempenho e privacidade.\n\nRevise seu site antes de publicar: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&utm_medium=social&utm_campaign=skits&utm_content=03-friday-release-pt\n\n#QA #Release #BrokenLinks #TesteDeSoftware #DesenvolvimentoWeb #QAlab",
+    "x": "Sexta, 17h: a gente sobe em uma hora. Alguém conferiu o site?\n\nhttps://carlosandmunoz.com/qa-review-pt.html?utm_source=x&utm_medium=social&utm_campaign=skits&utm_content=03-friday-release-pt\n#QA #QAlab",
+    "instagram": "Sexta, 17h: a gente sobe em uma hora. Alguém conferiu o site?\n\nDois links quebrados, achados e corrigidos antes do lançamento. Cole uma URL e receba uma revisão das páginas públicas do site: QA, SEO, acessibilidade, segurança, desempenho e privacidade.\n\nLink na bio.\n\n#QA #Release #BrokenLinks #TesteDeSoftware #QAlab",
+    "facebook": "Sexta, 17h: a gente sobe em uma hora. Alguém conferiu o site?\n\nDois links quebrados, achados e corrigidos antes do lançamento. Cole uma URL e receba uma revisão das páginas públicas do site: QA, SEO, acessibilidade, segurança, desempenho e privacidade.\n\nhttps://carlosandmunoz.com/qa-review-pt.html?utm_source=facebook&utm_medium=social&utm_campaign=skits&utm_content=03-friday-release-pt\n\n#QA #Release #BrokenLinks #QAlab",
+    "tiktok": "Sexta, 17h: a gente sobe em uma hora. Alguém conferiu o site? Revise seu site antes de publicar. #QA #Release #BrokenLinks #TesteDeSoftware #DesenvolvimentoWeb #TechTips #CodeTok #QAlab",
+    "youtubeTitle": "Sexta, 17h: a gente sobe em uma hora. Alguém conferiu o site? #Shorts",
+    "youtube": "Dois links quebrados, achados e corrigidos antes do lançamento. Cole uma URL e receba uma revisão das páginas públicas do site: QA, SEO, acessibilidade, segurança, desempenho e privacidade.\n\nRevise seu site antes de publicar: https://carlosandmunoz.com/qa-review-pt.html?utm_source=youtube&utm_medium=social&utm_campaign=skits&utm_content=03-friday-release-pt\n\n#QA #Release #BrokenLinks #TesteDeSoftware #DesenvolvimentoWeb #WebDevelopment #Coding #Testing #GoogleSearch #QAEngineer #SearchConsole #QAlab"
+  }
+}
