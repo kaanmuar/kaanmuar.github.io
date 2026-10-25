@@ -20,9 +20,10 @@
    parts of each network's window (the tips studio's windows), in an order that moves on one part a day, at a
    seeded random minute. Lane 1 is kept for the day's top Live Report (post 01 of the daily auto batch); the other
    reviews wait in a backlog that takes the lane 3 and lane 4 slots while news and best practice have nothing.
-   Only posts not yet sent anywhere and not before --from (default tomorrow, Bogotá) move; seasonal series keep
-   their day. A post's hub date (captions.json date) follows its slot day, so it is live on the hub first; a daily
-   Live Report's hub date never moves past its batch day, so the hub stays current while the networks catch up.
+   Only posts not yet sent anywhere and not before --from (default tomorrow, Bogotá) move; seasonal series and
+   posts pinned to their date (captions.json pin, such as the Friday digest) keep their day. A post's hub date
+   (captions.json date) follows its slot day, so it is live on the hub first; a daily Live Report's hub date never
+   moves past its batch day, so the hub stays current while the networks catch up.
    --batch B plans that batch alone into the free slots, as the daily Live Reports job does for its new batch:
    its top post in lane 1, its other reviews at the back of the backlog. */
 
@@ -134,7 +135,7 @@ function load(root = ROOT) {
       const id = batch + "/" + slug;
       const entries = (books.buffer.posts[id] || []).concat(books.facebook.posts[id] || []);
       const queued = entries.filter((e) => e.result === "queued");
-      posts.push({ id, batch, slug, kind, lane: LANES[kind], date: c.date, hold: !!c.hold, rows: rows[slug] || [],
+      posts.push({ id, batch, slug, kind, lane: LANES[kind], date: c.date, hold: !!c.hold, pin: !!c.pin, rows: rows[slug] || [],
         sent: entries.some((e) => e.result === "sent") || (!!c.youtubeTitle && clips.has(titleKey(c.youtubeTitle))),
         queued: queued.length > 0,
         queuedDay: queued.map((e) => Date.parse(e.at)).filter((at) => !isNaN(at)).map(bogotaDay).sort()[0] || null,
@@ -167,7 +168,7 @@ function plan(posts, { from, batch, moveQueued = false } = {}) {
   };
   const free = (day, lane) => !(days.get(day) || {})[lane];
   const onNetworks = (post) => !post.hold && post.rows.some((r) => NETWORKS.includes(r.channel));
-  const movable = (post) => onNetworks(post) && !post.sent && (moveQueued || !post.queued) && firstDay(post) >= from && !PINNED.has(post.kind) && (!batch || post.batch === batch);
+  const movable = (post) => onNetworks(post) && !post.sent && (moveQueued || !post.queued) && firstDay(post) >= from && !PINNED.has(post.kind) && !post.pin && (!batch || post.batch === batch);
 
   const stay = posts.filter((post) => onNetworks(post) && !movable(post) && firstDay(post) >= from);
   // Staying posts keep their day and the lane their slot times were planned in; others sit in their own lane, a

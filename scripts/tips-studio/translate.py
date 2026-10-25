@@ -80,6 +80,8 @@ def tidy(src, out, lang):
 
 def fill(texts, lang, cache):
     """Translate every uncached fragment of these strings, one request per ~4,000 characters."""
+    if lang == "en":
+        return
     todo = list(dict.fromkeys(p for t in texts for p in pieces(t) if lang + "\x00" + p not in cache))
     while todo:
         batch, size = [], 0

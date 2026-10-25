@@ -1,0 +1,31 @@
+{
+ "ui": {
+  "en": {
+   "tryThis": "Try this",
+   "tip": "Tip",
+   "guided": "Guided tour",
+   "never": "Never runs your tests",
+   "end": "Let your page do the talking.",
+   "endNote": "How a public-page review works, step by step."
+  }
+ },
+ "clips": {
+  "this-week": {
+   "kind": "news",
+   "counter": "Oct 30, 2026",
+   "title.0": "This week in",
+   "title.1": "*web quality.*",
+   "body": "Five picks from our daily sweep of the field, each summed up in our own words and credited to its source.",
+   "visual.items.0.title": "W3C maps the web for AI agents",
+   "visual.items.1.title": "axe-core 4.14 turns on Label in Name",
+   "visual.items.2.title": "Screen reader tests in Playwright",
+   "visual.items.3.title": "Encoded brackets make a new URL",
+   "visual.items.4.title": "CSS Animation Triggers: a first draft",
+   "action": "W3C on AI agents, axe-core 4.14, screen reader tests in Playwright, bracket URLs and CSS animation triggers. Sources on our social hub.",
+   "alt": "This week in web quality card, Oct 30, 2026, five picks: W3C maps the web for AI agents; axe-core 4.14 turns on Label in Name; Screen reader tests in Playwright; Encoded brackets make a new URL; CSS Animation Triggers: a first draft.",
+   "cat.label": "Field sweep",
+   "cap.youtube": "Five picks from our daily sweep of the field, each summed up in our own words and credited to its source.\n\n1. W3C maps the web for AI agents: https://www.w3.org/news/2026/w3c-and-the-state-of-the-web-in-the-ai-era/\n2. axe-core 4.14 turns on Label in Name: https://www.deque.com/blog/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0/\n3. Screen reader tests in Playwright: https://dev.to/craigmorten/you-know-you-can-automate-screen-reader-tests-right-2dnk\n4. Encoded brackets make a new URL: https://www.searchenginejournal.com/google-crawls-raw-and-encoded-bracket-urls-separately/593765/\n5. CSS Animation Triggers: a first draft: https://www.w3.org/news/2026/first-public-working-draft-animation-triggers/\n\nSummaries and sources: https://carlosandmunoz.com/social/digest-2026-10-30/01-this-week.html?utm_source=youtube&utm_medium=social&utm_campaign=weekly-digest&utm_content=digest-2026-10-30\n\nThis week in web quality, Oct 30, 2026 · QA-lab URL Review\n\n#WebDev #Programming #OpenSource #QA #Accessibility #SEO #WebDevelopment #Coding #Frontend #WCAG #SearchConsole #QAlab"
+  }
+ },
+ "cache": {}
+}

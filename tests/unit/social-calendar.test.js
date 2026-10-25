@@ -33,6 +33,7 @@ test("the top Live Report keeps lane 1, the review backlog borrows lanes 3 and 4
     post("tips-2026-10/02-csp", { kind: "tip", lane: 2, rows: rows("2026-11-03") }),
     post("horror/01-csp", { kind: "series", lane: 5, rows: rows("2026-11-02") }),
     post("checks/01-pre-release", { kind: "advice", lane: 4, rows: rows("2026-11-05") }),
+    post("digest-2026-11-06/01-this-week", { kind: "news", lane: 3, pin: true, rows: rows("2026-11-06") }),
     post("runs-3/01-ilo", { sent: true, rows: rows("2026-11-01") }),
     post("auto-2026-10-20/02-u-old-com", { rows: rows("2026-10-31") }),
     post("promo/01-held", { kind: "launch", lane: 5, hold: true })
@@ -49,6 +50,7 @@ test("the top Live Report keeps lane 1, the review backlog borrows lanes 3 and 4
     "runs-100/02-bbc": "2026-11-03 lane 3"
   });
   assert.equal(days.get("2026-11-02")[5], "horror/01-csp", "a seasonal series keeps its day");
+  assert.equal(days.get("2026-11-06")[3], "digest-2026-11-06/01-this-week", "a pinned post keeps its day while lane 3 is free sooner");
   assert.equal(days.get("2026-11-01")[3], "runs-3/01-ilo", "a sent review stays, in a borrowed lane, not the top's");
   assert.ok(!moves.some((m) => m.post.lane === 1 && m.lane === 1 && !/\/01-/.test(m.post.id)), "only a top review takes lane 1");
 });
@@ -352,4 +354,30 @@ test("a daily Live Reports batch sends every review to the networks", () => {
   const { TIPS } = require("../../scripts/tips-studio/runs-auto");
   delete process.env.AUTO_BATCH;
   assert.deepEqual(TIPS.map((tip) => tip.host + ":" + !!tip.hold), ["a.com:false", "b.com:false", "c.com:false"]);
+});
+
+test("the Friday digest credits five linked picks and is pinned to its Friday inside each network's window", () => {
+  const digest = require("../../scripts/tips-studio/weekly-digest");
+  digest.editions().forEach((day) => {
+    const edition = digest.load(day);
+    assert.equal(new Date(day + "T12:00:00Z").getUTCDay(), 5, day + " is a Friday");
+    assert.ok(!edition.draft, day + " is still a draft");
+    const tip = digest.postFor(edition);
+    assert.equal(tip.kind, "news");
+    assert.ok(tip.pin);
+    edition.picks.forEach((pick) => {
+      assert.match(pick.url, /^https:\/\//, day + " " + pick.id);
+      assert.ok(pick.source && pick.title && pick.short && pick.summary, day + " " + pick.id);
+    });
+  });
+  const tip = digest.TIPS[0];
+  const text = digest.captions(tip).linkedin;
+  digest.load(tip.date).picks.forEach((pick) => {
+    assert.ok(text.includes(pick.url) && text.includes(digest.credit(pick)), pick.id + " is credited and linked");
+  });
+  cal.NETWORKS.forEach((network) => {
+    const at = digest.timeFor(tip, network);
+    const [from, to] = cal.WINDOWS[network].map(minutes);
+    assert.ok(minutes(at) >= from && minutes(at) <= to, network + " " + at + " is in its window");
+  });
 });
