@@ -1605,6 +1605,18 @@ test.describe("return price", () => {
     assert.ok(report.cases[0].steps, "the stored report is not changed");
   });
 
+  test("an unpaid preview keeps each finding's title message, so translated pages show the title, but no evidence or fix message (#1367)", () => {
+    const secret = "/admin-hidden-path";
+    const title = { id: "seo-broken-links.title", vars: { n: 2 } };
+    const preview = core.previewReport({ insights: { findings: [
+      { title: "2 internal links lead to an error", evidence: "Broken: " + secret, fix: "Fix " + secret, msg: { title, evidence: { id: "listDot", vars: { list: secret } }, fix: { id: "x", vars: { path: secret } } } },
+      { title: "No message", evidence: "e", fix: "f" }
+    ] } });
+    assert.deepEqual(preview.insights.findings[0].msg, { title });
+    assert.equal(preview.insights.findings[1].msg, undefined);
+    assert.ok(!JSON.stringify(preview).includes(secret));
+  });
+
   test("the peso quote and the PayPal capture accept a discounted price, and nothing under the floor", () => {
     assert.equal(core.priceMatches(19), true);
     assert.equal(core.priceMatches(16.15), true);
@@ -1837,6 +1849,22 @@ test.describe("publishing user reviews to Live Reports", () => {
     }
     assert.equal(reports[0].report.finalUrl, "https://acme.de/");
     assert.equal(reports[0].report.limits.pagesRead, 6);
+  });
+
+  test("findings keep their messages, so the Live Report reads in the page language, with addresses hidden (#1386)", () => {
+    const live = require("../../scripts/build-live-reports");
+    const msg = { title: { id: "sec-hsts.title", vars: {} }, evidence: { id: "listDot", vars: { list: { items: ["mailto:owner@site.com"], more: 0 } } } };
+    const rep = report("acme.de");
+    rep.insights.findings[0].msg = msg;
+    const { reports } = publish.selectPublishable([record("acme.de", { report: rep })], []);
+    const finding = reports[0].report.insights.findings[0];
+    assert.deepEqual(finding.msg, msg);
+    assert.deepEqual(live.msgOf(finding, ["title", "evidence", "fix"]), {
+      title: { id: "sec-hsts.title", vars: {} },
+      evidence: { id: "listDot", vars: { list: { items: ["[address hidden]"], more: 0 } } }
+    });
+    assert.equal(live.msgOf(Object.assign({}, finding, { evidence: "" }), ["evidence"]), undefined);
+    assert.equal(live.msgOf({ title: "x" }, ["title"]), undefined);
   });
 
   test("one review per host, the newest, oldest host first", () => {
@@ -3301,6 +3329,36 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.match(proxied, /Transform Rule/);
     assert.doesNotMatch(proxied, /Put a CDN|in front and use/);
     assert.match(readme([]), /Put a CDN such as Cloudflare in front/);
+  });
+
+  test("the scripts ZIP READMEs read in the page language, and stay the same in English (#1401)", () => {
+    const report = { url: "https://example.com/", finalUrl: "https://example.com/", host: "example.com", cases: [{ id: "A11Y-01", layer: "Accessibility", title: "Images", why: "Missing.", fw: ["Playwright"] }], insights: {
+      summary: "example.com scores 61 out of 100 (C).",
+      score: { overall: 61, grade: "C" },
+      findings: [{ rank: 1, area: "Accessibility", severity: "high", effort: "minutes", title: "100 images have no alt attribute", evidence: "Seen on /.", fix: "Add alt text.", msg: { title: { id: "x" }, evidence: { id: "y" }, fix: { id: "z" } } }],
+      fixkit: { hosting: "Netlify", headers: [{ name: "X-Frame-Options", value: "DENY" }] }
+    } };
+    const read = (words) => {
+      const files = scripts.bundle(report, report.cases, ["Playwright"], words).files;
+      return [files.find((file) => file.path === "README.md").content, files.find((file) => file.path === "fix-kit/README.md").content];
+    };
+    const [main, kit] = read();
+    assert.deepEqual(read({ lang: "en" }), [main, kit]);
+    assert.match(main, /\nAutomation scripts proposed from a public analysis of https:\/\/example\.com\.\n/);
+    assert.match(main, /\n## What is inside\n\n- Playwright: 1 case\(s\)\n/);
+    assert.ok(kit.startsWith("# Fix kit for https://example.com\n\nHealth 61/100 (C). example.com scores 61 out of 100 (C).\n\nThese files were written from a public analysis."), kit);
+    assert.match(kit, /\n## Fix first\n\n1\. \*\*100 images have no alt attribute\*\* \(Accessibility, high, minutes\)\n   Seen on \/\.\n   Fix: Add alt text\.\n/);
+    assert.match(kit, /\nThe site looks hosted on Netlify, so that header file is listed first\.\n$/);
+
+    const es = { title: "100 imágenes no tienen atributo alt", evidence: "Visto en /.", fix: "Agrega texto alternativo." };
+    const [mainEs, kitEs] = read({ lang: "es-419", summary: "example.com obtiene 61 de 100 (C).", line: (item, part) => es[part] });
+    assert.match(mainEs, /\nScripts de automatización propuestos a partir de un análisis público de https:\/\/example\.com\.\n/);
+    assert.match(mainEs, /\n## Qué incluye\n\n- Playwright: 1 caso\(s\)\n/);
+    assert.match(mainEs, /npx playwright/);
+    assert.ok(kitEs.startsWith("# Kit de arreglos para https://example.com\n\nPuntuación de salud 61/100 (C). example.com obtiene 61 de 100 (C).\n"), kitEs);
+    assert.match(kitEs, /\n## Arreglar primero\n\n1\. \*\*100 imágenes no tienen atributo alt\*\* \(Accesibilidad, alta, minutos\)\n   Visto en \/\.\n   Corrección: Agrega texto alternativo\.\n/);
+    assert.match(kitEs, /\n## Archivos\n\n- `/);
+    assert.match(kitEs, /El sitio parece alojado en Netlify/);
   });
 
   test("the preview frosts every section, and leaves ids, addresses, dates and short labels as they are", () => {

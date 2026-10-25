@@ -261,6 +261,25 @@ test.describe('Live reports in Spanish', () => {
     await expect(viewer).not.toContainText(/Answer bots|75th pct|GRADE |proposed cases ·|Live report|Training bots/);
   });
 
+  test('findings that carry messages read in the page language, with the effort word (#1386)', async ({ page }) => {
+    await primeEs(page);
+    const card = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '../assets/live-reports/govuk.json'), 'utf8'));
+    card.fix[0].msg = {
+      title: { id: 'seo-canonical-missing.title', vars: { n: 19 } },
+      evidence: { id: 'seo-canonical-missing.evidence', vars: { list: { items: ['/help/cookies', '/browse'], more: 17 } } },
+      fix: { id: 'seo-canonical-missing.fix', vars: {} }
+    };
+    card.works[0].msg = { title: { id: 'no-such-line', vars: {} } };
+    await page.route('**/assets/live-reports/govuk.json*', (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify(card) }));
+    await page.goto('/qa-review-es.html?live=govuk');
+    const first = page.locator('#live-viewer .lv-fix li').first();
+    await expect(first.locator('strong')).toContainText('19 páginas no tienen enlace canonical');
+    await expect(first).toContainText('/help/cookies, /browse y 17 más.');
+    await expect(first.locator('.fix small')).toHaveText('· minutos');
+    await expect(first).not.toContainText(/have no canonical|Without it|· minutes/);
+    await expect(page.locator('#live-viewer .lv-works li').first()).toContainText(card.works[0].title);
+  });
+
   test('curated headings replace machine-translation guesses', async ({ page }) => {
     await primeEs(page);
     await page.goto('/qa-review-es.html');

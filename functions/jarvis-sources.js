@@ -7,6 +7,7 @@
    social     posts per network from the published ledgers, YouTube views
    safety     Web Risk, SPF, DKIM, DMARC, MX, CAA, domain expiry (RDAP), TLS
    platform   real function failures (5xx, crash, timeout), executions, Gemini calls, Firestore reads and writes
+   outreach   the outreach plan's pipeline, Instantly campaigns, plan progress and sending domain (jarvis-outreach.js)
 
    index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers} and caches each source in
    jarvis_cache through TTL. */
@@ -21,8 +22,9 @@ const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/se
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE };
+const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE };
 const { SEARCH_QUERIES } = require("./jarvis-core");
+const jarvisOutreach = require("./jarvis-outreach");
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
 
 const isoDay = (ms) => new Date(ms).toISOString().slice(0, 10);
@@ -503,7 +505,7 @@ async function platform(ctx) {
   return out;
 }
 
-const SOURCES = { money, email, search, social, safety, platform };
+const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach };
 
 async function run(name, ctx) {
   const source = SOURCES[name];

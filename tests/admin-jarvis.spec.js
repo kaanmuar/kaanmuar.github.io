@@ -51,7 +51,12 @@ const EXTERNAL = {
   search: { ok: true, brave: { ok: true, queries: [{ query: 'carlosandmunoz', position: 3, url: 'https://carlosandmunoz.com/', leader: 'carlosandmunoz.com' }, { query: 'free website qa review', position: null, url: '', leader: 'rival.example' }] }, console: { ok: false, error: 'No access.', need: 'Search Console: add the service account.' }, needs: ['Search Console: add the service account.'] },
   social: { ok: true, days: 30, sent: 30, failed: 0, channels: [{ label: 'tiktok', value: 12 }], results: [], daily: [], latest: [], youtube: { videos: [{ id: 'T1vH4T0yZRQ', title: 'The release is close', published: '2026-10-22T02:46:26Z', views: 28, likes: 0, comments: 0 }], views: 39 }, needs: [] },
   safety: { ok: true, score: 88, needs: [], checks: [{ name: 'Web Risk', key: 'webrisk', level: 'good', ok: true, detail: 'Not listed.' }, { name: 'DMARC', key: 'dmarc', level: 'warn', ok: false, detail: 'p=quarantine at 25%.' }] },
-  platform: { ok: true, needs: ['Costs: turn on the billing export.'], functions: { executions: 3000, notOk: 2800, failures: 4, failureRate: 0.13, byFunction: [{ label: 'reviewUrl', value: 4 }], kinds: [{ label: 'timeout', value: 4 }], latest: [], capped: false }, gemini: { days: 7, requests: 92, ok: 10, errorRate: 89.1, byClass: [], failedMethods: [{ label: 'ListModels', value: 82 }] }, firestore: { reads: 20000, writes: 900, deletes: 10, readsFreePct: 40, writesFreePct: 4.5, deletesFreePct: 0.05 }, users: { total: 9, newInRange: 2, activeInRange: 4 } }
+  platform: { ok: true, needs: ['Costs: turn on the billing export.'], functions: { executions: 3000, notOk: 2800, failures: 4, failureRate: 0.13, byFunction: [{ label: 'reviewUrl', value: 4 }], kinds: [{ label: 'timeout', value: 4 }], latest: [], capped: false }, gemini: { days: 7, requests: 92, ok: 10, errorRate: 89.1, byClass: [], failedMethods: [{ label: 'ListModels', value: 82 }] }, firestore: { reads: 20000, writes: 900, deletes: 10, readsFreePct: 40, writesFreePct: 4.5, deletesFreePct: 0.05 }, users: { total: 9, newInRange: 2, activeInRange: 4 } },
+  outreach: { ok: true, needs: ['Instantly: put the API key in functions/.env as INSTANTLY_API_KEY.'],
+    pipeline: { ok: true, queued: 40, swept: 12, left: 28, bySegment: [{ label: 'tvet', value: 10 }, { label: 'university', value: 10 }], reviews: 12, thisWeek: 12, results: [{ label: 'reviewed', value: 11 }], segments: [], avgScore: 64, withLiveReport: 6, reviewedWithLiveReport: 5, daily: [{ date: '2026-10-24', reviews: 12 }] },
+    instantly: { ok: false, error: 'INSTANTLY_API_KEY is not set.' },
+    plan: { start: '2026-10-20', end: '2027-01-17', day: 6, length: 90, phase: { name: 'Set up', end: '2026-11-02', daysLeft: 8 }, next: { date: '2026-10-30', label: 'First wave out', daysLeft: 5 }, milestones: [{ date: '2026-10-30', label: 'First wave out', past: false }], deadlines: [{ date: '2026-10-31', label: 'Instantly trial ends', daysLeft: 6 }], weekly: { prospects: 40, liveReportPct: 100 }, targets: [{ key: 'unlocks', label: 'Paid unlocks', target: 30, actual: 3 }] },
+    mail: { domain: 'qalabreview.com', ok: false, checks: [{ name: 'SPF', ok: true, detail: 'v=spf1 include:spf.protection.outlook.com -all' }, { name: 'DMARC', ok: false, detail: 'p=none (monitor only)' }] } }
 };
 
 function seed() {
@@ -104,12 +109,12 @@ test.describe('admin statistics (Jarvis)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page);
     const tabs = page.locator('.jv-tabs [role="tab"]');
-    await expect(tabs).toHaveCount(10);
-    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Traffic', 'Systems']);
+    await expect(tabs).toHaveCount(11);
+    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Traffic', 'Systems']);
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
-    expect(new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform']));
+    expect(new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -129,6 +134,16 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(business).toContainText('Transaction Search');
     await expect(business).toContainText('rival.example');
     await expect(business).toContainText('The release is close');
+
+    await tabs.filter({ hasText: 'Outreach' }).click();
+    const outreach = page.locator('[data-view="outreach"]');
+    await expect(outreach).toContainText('Day 6 of 90');
+    await expect(outreach).toContainText('First wave out');
+    await expect(outreach).toContainText('Instantly trial ends');
+    await expect(outreach).toContainText('Paid unlocks');
+    await expect(outreach).toContainText('INSTANTLY_API_KEY');
+    await expect(outreach).toContainText('p=none');
+    await expect(outreach.locator('.jv-briefing')).toContainText('Instantly trial ends in 6 days');
 
     await tabs.filter({ hasText: 'Traffic' }).click();
     await expect(page.locator('[data-view="traffic"]')).toContainText('Zone > Analytics > Read');

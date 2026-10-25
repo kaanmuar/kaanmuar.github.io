@@ -2,6 +2,8 @@
  * Mail to the asker: the report after a run, the return notes, and sign-in.
  * An unpaid report is cut here, so the hidden part of a line never leaves in mail.
  */
+const findingsCopy = require("./url-review-findings-copy");
+
 const SITE = "https://carlosandmunoz.com";
 const DEEPER = "qa@carlosandmunoz.com";
 const ACCOUNT_PAGE = "qa-review-account.html";
@@ -316,6 +318,14 @@ function langOf(value) {
   return LANGS.indexOf(code) === -1 ? "en" : code;
 }
 
+const FINDING_COPY = {};
+
+// A finding's title, evidence or fix in the mail's language; its English when the copy has no line for it.
+function findingLine(lang, item, part) {
+  if (!FINDING_COPY[lang]) FINDING_COPY[lang] = findingsCopy.forLang(lang);
+  return FINDING_COPY[lang].line(item && item.msg && item.msg[part], String((item && item[part]) || ""));
+}
+
 function esc(value) {
   return String(value == null ? "" : value)
     .replace(/&/g, "&amp;")
@@ -375,7 +385,7 @@ function scoreColor(score) {
 
 const SEVERITY_COLOR = { critical: "#7f1d1d", high: "#b91c1c", medium: "#b45309", low: "#64748b" };
 
-function reportFacts(record, open) {
+function reportFacts(record, open, lang) {
   const report = (record && record.report) || {};
   const insights = report.insights || {};
   const score = insights.score || null;
@@ -393,7 +403,7 @@ function reportFacts(record, open) {
     found: Number(report.limits && report.limits.pagesFound) ? report.limits.pagesFound + (report.limits.pagesFoundPartial ? "+" : "") : "",
     cases: Number(counts.cases) || (Array.isArray(report.cases) ? report.cases.length : 0),
     findings: actionable.slice(0, SHOWN_FINDINGS).map((item) => Object.assign({ area: item.area || "", severity: item.severity || "low" },
-      open ? { shown: String(item.title || "").replace(/\s+/g, " ").trim(), hidden: 0, fix: String(item.fix || "").replace(/\s+/g, " ").trim() } : frost(item.title))),
+      open ? { shown: findingLine(lang, item, "title").replace(/\s+/g, " ").trim(), hidden: 0, fix: findingLine(lang, item, "fix").replace(/\s+/g, " ").trim() } : frost(findingLine(lang, item, "title")))),
     moreCount: Math.max(0, actionable.length - SHOWN_FINDINGS),
     total: actionable.length,
     fails,
@@ -542,7 +552,7 @@ function compareFacts(record, lang) {
   const ahead = wins.own === wins.rival ? "" : wins.own > wins.rival ? "own" : "rival";
   const shared = Number(cmp.shared) || 0;
   const date = dateOf(cmp.ownAt);
-  const side = (items, count) => ({ items: Array.isArray(items) ? items : [], count: Number(count) || 0 });
+  const side = (items, count) => ({ items: (Array.isArray(items) ? items : []).map((item) => Object.assign({}, item, { title: findingLine(lang, item, "title") })), count: Number(count) || 0 });
   return {
     own,
     rival,
@@ -644,7 +654,7 @@ function reportMail(record, options) {
   const lang = langOf(opts.lang || (record && record.lang));
   const t = COPY[lang];
   const p = PDF_COPY[lang];
-  const facts = reportFacts(record, isOpen(record));
+  const facts = reportFacts(record, isOpen(record), lang);
   const story = reportStory(record, t, facts, lang);
   const attached = story.open ? p.attachedOpen : p.attached;
   const openUrl = pageUrl(lang, { report: facts.id, utm_campaign: "report" });
@@ -812,7 +822,7 @@ function reportPdf(record, options) {
   const ins = report.insights || {};
   const open = isOpen(record);
   const lineOf = (text, seed) => open ? esc(text) : frostedLine(text, seed);
-  const facts = reportFacts(record, open);
+  const facts = reportFacts(record, open, lang);
   const cf = compareFacts(record, lang);
   const all = (Array.isArray(ins.findings) ? ins.findings : [])
     .filter((item) => item && (item.verdict === "fail" || item.verdict === "risk"))
@@ -832,9 +842,9 @@ function reportPdf(record, options) {
   const findings = all.map((item, index) =>
     "<div class=\"finding\" style=\"border-left-color:" + (SEVERITY_COLOR[item.severity] || SEVERITY_COLOR.low) + "\">" +
     "<p class=\"k\">" + esc(t.areas[item.area] || item.area || "") + " · " + esc(p.sev[item.severity] || item.severity || p.sev.low) + "</p>" +
-    "<p class=\"t\">" + lineOf(item.title, index) + "</p>" +
-    (item.evidence ? "<p class=\"e\">" + lineOf(item.evidence, index + 3) + "</p>" : "") +
-    (open && item.fix ? "<p class=\"f\"><b>" + esc(FIX_LABEL[lang]) + ":</b> " + esc(item.fix) + "</p>" : "") +
+    "<p class=\"t\">" + lineOf(findingLine(lang, item, "title"), index) + "</p>" +
+    (item.evidence ? "<p class=\"e\">" + lineOf(findingLine(lang, item, "evidence"), index + 3) + "</p>" : "") +
+    (open && item.fix ? "<p class=\"f\"><b>" + esc(FIX_LABEL[lang]) + ":</b> " + esc(findingLine(lang, item, "fix")) + "</p>" : "") +
     "</div>"
   ).join("");
   const caseRows = (Array.isArray(report.cases) ? report.cases : []).slice(0, PDF_CASES).map((item, index) =>

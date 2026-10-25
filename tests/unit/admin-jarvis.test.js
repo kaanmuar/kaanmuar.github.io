@@ -545,3 +545,99 @@ test("a source that does not answer gets a briefing line, and test payments stay
   assert.equal(sum.totals.usd, 19);
   assert.equal(sum.totals.paid, 1);
 });
+
+const outreachSrc = require("../../functions/jarvis-outreach.js");
+const outreachPlan = require("../../scripts/jarvis-outreach-plan.js");
+
+test("outreach: the week starts Monday in Bogota and the pipeline counts only outreach sweep reviews", () => {
+  assert.equal(new Date(outreachSrc.weekStart(NOW.getTime())).toISOString(), "2026-10-19T05:00:00.000Z");
+  const queue = { hosts: [{ host: "uni.edu.co", sector: "university" }, { host: "tvet.example", sector: "tvet" }, { host: "agency.example", sector: "agency" }] };
+  const reviews = [
+    { createdAt: daysAgo(1).toISOString(), status: "complete", score: 70, sweep: { host: "uni.edu.co", outreach: true, sector: "university" } },
+    { createdAt: daysAgo(2).toISOString(), status: "failed", sweep: { host: "tvet.example", outreach: true, sector: "tvet" } },
+    { createdAt: daysAgo(10).toISOString(), status: "complete", score: 90, sweep: { host: "agency.example", outreach: true, sector: "agency" } },
+    { createdAt: daysAgo(1).toISOString(), status: "complete", score: 50, sweep: { host: "other.example" } }
+  ];
+  const p = outreachSrc.pipelineRows(queue, { outreachAt: 2, days: { "2026-10-24": { outreach: 1 }, "2026-10-01": { outreach: 9 } } }, reviews, ["www.uni.edu.co"], { now: NOW.getTime(), days: 7 });
+  assert.equal(p.queued, 3);
+  assert.equal(p.swept, 2);
+  assert.equal(p.left, 1);
+  assert.equal(p.reviews, 2);
+  assert.equal(p.thisWeek, 2);
+  assert.deepEqual(p.results, [{ label: "failed", value: 1 }, { label: "reviewed", value: 1 }]);
+  assert.equal(p.avgScore, 70);
+  assert.equal(p.withLiveReport, 1);
+  assert.equal(p.reviewedWithLiveReport, 1);
+  assert.deepEqual(p.daily, [{ date: "2026-10-24", reviews: 1 }]);
+});
+
+test("outreach: Instantly numbers become rates, campaign states and mailbox warm-up", () => {
+  const x = outreachSrc.instantlyRows(
+    [{ status: 0 }, { status: 0 }, { status: 1 }],
+    { emails_sent_count: 200, contacted_count: 100, open_count_unique: 50, reply_count_unique: 8, reply_count_automatic_unique: 2, total_interested: 3, bounced_count: 10 },
+    [{ campaign_name: "TVET wave 1", emails_sent_count: 200, open_count_unique: 50, reply_count_unique: 8, bounced_count: 10 }, { campaign_name: "Draft", emails_sent_count: 0 }],
+    [{ email: "carlos@qalabreview.com", status: 1, warmup_status: 1, stat_warmup_score: 62, daily_limit: 30 }]
+  );
+  assert.deepEqual(x.status, [{ label: "draft", value: 2 }, { label: "active", value: 1 }]);
+  assert.deepEqual(x.rates, { open: 50, reply: 8, positive: 3, bounce: 5 });
+  assert.equal(x.byCampaign.length, 1);
+  assert.deepEqual(x.accounts[0], { email: "carlos@qalabreview.com", status: "active", warmup: "on", score: 62, dailyLimit: 30 });
+});
+
+test("outreach: the plan knows the day, phase, next milestone and sorted deadlines", () => {
+  const plan = {
+    start: "2026-10-20", end: "2027-01-17",
+    phases: [{ name: "Set up", start: "2026-10-20", end: "2026-11-02" }, { name: "Test", start: "2026-11-03", end: "2026-11-30" }],
+    milestones: [{ date: "2026-10-22", label: "Domain ready" }, { date: "2026-10-30", label: "First wave" }],
+    deadlines: [{ date: "2027-10-25", label: "Domain renewal" }, { date: "2026-10-31", label: "Instantly trial ends" }]
+  };
+  const now = outreachSrc.planNow(plan, NOW.getTime());
+  assert.equal(now.day, 6);
+  assert.equal(now.length, 90);
+  assert.equal(now.phase.name, "Set up");
+  assert.deepEqual(now.next, { date: "2026-10-30", label: "First wave", daysLeft: 5 });
+  assert.equal(now.milestones[0].past, true);
+  assert.equal(now.deadlines[0].label, "Instantly trial ends");
+  assert.equal(outreachSrc.planNow(null, NOW.getTime()), null);
+});
+
+test("outreach: the plan script folds the weekly KPI tracker into target actuals", () => {
+  const rows = outreachPlan.parseCsv("week,paid_reviews,backlinks,emails_sent\n2026-10-26,2,1,40\n2026-11-02,3,\"2\",60\n");
+  const track = outreachPlan.tracker(rows);
+  const doc = outreachPlan.build({ start: "2026-10-26", end: "2027-01-24", targets: [{ key: "unlocks", label: "Paid unlocks", target: 30 }, { key: "links", label: "Backlinks", target: 15 }, { key: "talks", label: "Talks", target: 6 }] }, track);
+  assert.deepEqual(doc.targets.map((t) => t.actual), [5, 3, null]);
+  assert.equal(doc.tracker.emailsSent, 100);
+});
+
+test("outreach: visits from outreach links are counted by campaign", () => {
+  const v = core.outreachVisits([
+    { kind: "visit", query: "?utm_source=outreach&utm_campaign=tvet-1" },
+    { kind: "visit", query: "?utm_source=Outreach&utm_campaign=tvet-1" },
+    { query: "?utm_source=outreach" },
+    { kind: "click", query: "?utm_source=outreach" },
+    { kind: "visit", query: "?utm_source=linkedin" }
+  ]);
+  assert.equal(v.total, 3);
+  assert.deepEqual(v.campaigns, [{ label: "tvet-1", value: 2 }, { label: "no campaign", value: 1 }]);
+});
+
+test("outreach briefing: close deadlines, bounces, replies, cold mailboxes and DNS gaps", () => {
+  const th = core.thresholds();
+  const ext = { outreach: { ok: true, needs: [],
+    plan: { day: 10, deadlines: [{ date: "2026-10-30", label: "Instantly trial ends", daysLeft: 5 }, { date: "2026-11-05", label: "M365 trial ends", daysLeft: 11 }, { date: "2027-10-25", label: "Renewal", daysLeft: 365 }], next: { date: "2026-10-28", label: "First wave", daysLeft: 3 }, weekly: { prospects: 40 } },
+    pipeline: { ok: true, left: 0, thisWeek: 4 },
+    instantly: { ok: true, sent: 100, bounced: 6, replies: 5, autoReplies: 1, interested: 2, rates: { bounce: 6 }, status: [{ label: "active", value: 1 }], accounts: [{ email: "a@q.com", status: "active", warmup: "on", score: 40 }] },
+    mail: { domain: "qalabreview.com", checks: [{ name: "DMARC", ok: false, detail: "p=none (monitor only)" }, { name: "SPF", ok: true, detail: "" }] } } };
+  const items = core.briefing({ external: ext, thresholds: th, now: NOW, products: {} }).filter((i) => i.product === "outreach");
+  const byKey = Object.fromEntries(items.map((i) => [i.key, i.level]));
+  assert.equal(byKey["outreach:deadline:2026-10-30"], "warn");
+  assert.equal(byKey["outreach:deadline:2026-11-05"], "info");
+  assert.equal(byKey["outreach:deadline:2027-10-25"], undefined);
+  assert.equal(byKey["outreach:milestone"], "info");
+  assert.equal(byKey["outreach:queue"], "warn");
+  assert.equal(byKey["outreach:bounce"], "alert");
+  assert.equal(byKey["outreach:replies"], "info");
+  assert.equal(byKey["outreach:warmup"], "warn");
+  assert.equal(byKey["outreach:dns:DMARC"], "warn");
+  assert.equal(byKey["outreach:dns:SPF"], undefined);
+});

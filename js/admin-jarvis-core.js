@@ -15,6 +15,7 @@
         { key: 'review', name: 'URL Review', short: 'URL' },
         { key: 'hub', name: 'Social hub', short: 'HUB' },
         { key: 'business', name: 'Business', short: 'BIZ' },
+        { key: 'outreach', name: 'Outreach', short: 'OUT' },
         { key: 'traffic', name: 'Traffic', short: 'WEB' },
         { key: 'systems', name: 'Systems', short: 'SYS' }
     ];
@@ -379,7 +380,10 @@
         fnFailures: { value: 10, label: 'Real function failures in 24 hours: warn at', min: 1, max: 100000 },
         geminiErrorPct: { value: 50, label: 'Failed Gemini calls in 7 days: warn at (%)', min: 1, max: 100 },
         domainDays: { value: 30, label: 'Domain days left: alert below', min: 1, max: 365 },
-        firestoreFreePct: { value: 80, label: 'Firestore free daily reads used: warn at (%)', min: 1, max: 1000 }
+        firestoreFreePct: { value: 80, label: 'Firestore free daily reads used: warn at (%)', min: 1, max: 1000 },
+        outreachBouncePct: { value: 3, label: 'Outreach emails bounced: alert at (%)', min: 0.5, max: 50 },
+        outreachWarmup: { value: 80, label: 'Mailbox warm-up score needed before campaigns send', min: 0, max: 100 },
+        outreachDeadlineDays: { value: 14, label: 'Outreach deadlines: remind this many days ahead', min: 1, max: 90 }
     };
 
     // What Jarvis ranks on Brave when the owner has not set searches in Settings.
@@ -391,7 +395,8 @@
         { key: 'ga4', name: 'Google Analytics 4' }, { key: 'cloudflare', name: 'Cloudflare' }, { key: 'speed', name: 'PageSpeed and CrUX' },
         { key: 'uptime', name: 'Uptime and TLS' }, { key: 'money', name: 'Payments (paid reviews, PayPal, Stripe)' }, { key: 'email', name: 'SendGrid' },
         { key: 'search', name: 'Search (Brave, Search Console)' }, { key: 'social', name: 'Social (ledgers, YouTube, Facebook)' },
-        { key: 'safety', name: 'Safety (Web Risk, DNS, domain, TLS)' }, { key: 'platform', name: 'Google Cloud (Monitoring, Logging, Auth)' }
+        { key: 'safety', name: 'Safety (Web Risk, DNS, domain, TLS)' }, { key: 'platform', name: 'Google Cloud (Monitoring, Logging, Auth)' },
+        { key: 'outreach', name: 'Outreach (sweep prospects, Instantly, 90-day plan)' }
     ];
 
     function connections(external, pending) {
@@ -402,6 +407,22 @@
             const state = pending && pending[c.key] && !x ? 'loading' : !x ? 'off' : x.ok === false ? 'down' : needs.length ? 'partial' : 'live';
             return { key: c.key, name: c.name, state, detail: x && x.ok === false ? String(x.error || 'failed') : '', needs, at: x && x.cachedAt };
         });
+    }
+
+    // Visits and review opens that came from outreach links (utm_source=outreach), by utm_campaign.
+    function outreachVisits(rows) {
+        const by = {};
+        let total = 0;
+        (rows || []).forEach((row) => {
+            let params;
+            try { params = new URLSearchParams(String((row && row.query) || '')); } catch (error) { return; }
+            if ((params.get('utm_source') || '').toLowerCase() !== 'outreach') return;
+            if (row.kind && row.kind !== 'visit') return;
+            total += 1;
+            const c = params.get('utm_campaign') || 'no campaign';
+            by[c] = (by[c] || 0) + 1;
+        });
+        return { total, campaigns: Object.keys(by).map((label) => ({ label, value: by[label] })).sort((a, b) => b.value - a.value) };
     }
 
     function thresholds(saved) {
@@ -582,6 +603,31 @@
             const x = ext[c.key];
             if (x && x.ok === false) add('warn', 'systems', `${c.name} did not answer: ${String(x.error || 'failed').slice(0, 140)}`, 'connections:down:' + c.key);
         });
+        const ou = ext.outreach;
+        if (ou && ou.ok) {
+            const plan = ou.plan && ou.plan.ok !== false ? ou.plan : null;
+            const pipe = ou.pipeline && ou.pipeline.ok ? ou.pipeline : null;
+            const mail = ou.instantly && ou.instantly.ok ? ou.instantly : null;
+            if (plan) {
+                (plan.deadlines || []).filter((d) => d.daysLeft >= 0 && d.daysLeft <= th.outreachDeadlineDays).forEach((d) => add(d.daysLeft <= 7 ? 'warn' : 'info', 'outreach', `${d.label} in ${plural(d.daysLeft, 'day', 'days')} (${d.date}).`, 'outreach:deadline:' + d.date));
+                if (plan.next && plan.next.daysLeft >= 0 && plan.next.daysLeft <= 7) add('info', 'outreach', `Outreach milestone in ${plural(plan.next.daysLeft, 'day', 'days')} (${plan.next.date}): ${plan.next.label}.`, 'outreach:milestone');
+            }
+            if (pipe) {
+                const weekly = plan && plan.weekly && plan.weekly.prospects;
+                if (plan && plan.day > 0 && pipe.left === 0) add('warn', 'outreach', 'The outreach prospect queue is empty; add the next list with scripts/sweep-outreach.js.', 'outreach:queue');
+                else if (plan && plan.day > 7 && weekly && pipe.thisWeek < weekly / 2) add('info', 'outreach', `${pipe.thisWeek} of ${weekly} outreach prospects reviewed this week.`, 'outreach:pace');
+            }
+            if (mail) {
+                if (mail.sent >= 20 && mail.rates.bounce >= th.outreachBouncePct) add('alert', 'outreach', `${mail.rates.bounce}% of outreach emails bounced (${mail.bounced} of ${mail.sent}); pause and clean the list.`, 'outreach:bounce');
+                const replies = mail.replies - (mail.autoReplies || 0);
+                if (replies > 0) add('info', 'outreach', `${plural(replies, 'outreach reply', 'outreach replies')} in range, ${mail.interested} interested.`, 'outreach:replies');
+                (mail.accounts || []).filter((a) => a.status !== 'active' || a.warmup !== 'on').forEach((a) => add('warn', 'outreach', `Mailbox ${a.email} is ${a.status}, warm-up ${a.warmup}.`, 'outreach:mailbox:' + a.email));
+                const active = (mail.status || []).some((s) => s.label === 'active' && s.value > 0);
+                const cold = (mail.accounts || []).filter((a) => a.score !== null && a.score < th.outreachWarmup);
+                if (active && cold.length) add('warn', 'outreach', `Campaigns are sending while ${plural(cold.length, 'mailbox has', 'mailboxes have')} a warm-up score under ${th.outreachWarmup}.`, 'outreach:warmup');
+            }
+            if (ou.mail && ou.mail.checks) ou.mail.checks.filter((c) => !c.ok).forEach((c) => add('warn', 'outreach', `${ou.mail.domain} ${c.name}: ${c.detail}`, 'outreach:dns:' + c.name));
+        }
         const waiting = CONNECTIONS.reduce((n, c) => n + (((ext[c.key] || {}).needs) || []).length, 0);
         if (waiting) add('info', 'systems', `${plural(waiting, 'connection waits', 'connections wait')} for a one-time grant; see Systems > Connections.`, 'connections:needs');
         (state.goals || []).forEach((g) => {
@@ -657,7 +703,7 @@
         return { start, end, days, prior: { start: new Date(start.getTime() - days * DAY), end: start } };
     }
 
-    const api = { THRESHOLDS, thresholds, CONNECTIONS, connections, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, readiness, csv, parseCommand, windowFor };
+    const api = { THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, readiness, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);
