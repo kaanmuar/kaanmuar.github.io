@@ -151,7 +151,13 @@ test('an unpaid report in the comparison comes blurred and locks Print and Downl
 
 test('the comparison speaks the page language', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
-  await signIn(page, recordsWith(true), '/qa-review-es.html?comparison=cmp1', seen);
+  const records = recordsWith(true);
+  const report = records[0].report;
+  const msg = { title: { id: 'seo-description-missing.title', vars: { n: 6 } }, fix: { id: 'seo-description-missing.fix', vars: {} } };
+  records[0].report = Object.assign({}, report, { insights: Object.assign({}, report.insights, {
+    findings: report.insights.findings.map((item) => item.key === 'seo-description-missing' ? Object.assign({}, item, { msg }) : item)
+  }) });
+  await signIn(page, records, '/qa-review-es.html?comparison=cmp1', seen);
   const box = page.locator('#multi-overlay');
   await expect(box).toBeVisible({ timeout: 20000 });
   await expect(box.locator('.report-kicker').first()).toHaveText('Informe comparativo');
@@ -182,6 +188,11 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(filters.first()).toHaveText('Todas');
   await expect(filters.filter({ hasText: 'Fallas y riesgos' })).toHaveCount(1);
   await expect(filters.filter({ hasText: 'Seguridad' })).toHaveCount(1);
+  const findings = box.locator('.multi-sec[data-sec="findings"] .multi-cell').first();
+  await expect(findings).toContainText('6 páginas no tienen meta description');
+  await expect(findings).toContainText('Escribe para cada página una descripción de 50 a 160 caracteres');
+  await expect(findings).not.toContainText('6 pages have no meta description');
+  await expect(findings).toContainText('12 indexable pages are missing from the sitemap');
   const geo = box.locator('.multi-sec[data-sec="geo"] .multi-cell').first();
   await expect(geo).toContainText('El texto que recibe un rastreador de IA');
   await expect(geo).not.toContainText(/The text an AI crawler|Who may read/);

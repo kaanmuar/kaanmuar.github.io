@@ -3,6 +3,7 @@
 const { URL } = require("url");
 const libraries = require("./url-review-libraries");
 const { germanSpeaking } = require("./url-review-legal");
+const { say, some, english } = require("./url-review-findings-en");
 
 const BROWSER_READ_NOTE = "The site's bot protection refused the plain request; the page was analyzed in headless Chrome.";
 const UNTAGGED_READ_NOTE = "The site's bot protection refused the plain request and headless Chrome while it carried the review tag; the page was analyzed in headless Chrome without the tag.";
@@ -125,6 +126,17 @@ function blockedReason(page) {
   if (page.status === 429) return "429, rate limited";
   if (page.status === 503) return "503 with Retry-After";
   return page.status + ", refused";
+}
+
+function botCheckSaid(vendor) {
+  return say(/^[aeiou]/i.test(vendor) ? "botCheck.an" : "botCheck.a", { vendor });
+}
+
+function blockedReasonSaid(page) {
+  if (page.challenge) return botCheckSaid(page.challenge);
+  if (page.status === 429) return say("blocked.429");
+  if (page.status === 503) return say("blocked.503");
+  return say("blocked.refused", { status: page.status });
 }
 
 function plural(count, one, many) {
@@ -608,16 +620,16 @@ function browserChecks(b, add, ctx) {
   // GEO: the HTML compared with the rendered page.
   if (start.renderedWords > 150) {
     const thin = [{ path: start.finalPath || "/", share: start.share }].concat((b.pages || []).filter((page) => page.renderedWords > 150).map((page) => ({ path: page.path, share: page.share }))).filter((page) => page.share < 40);
-    if (thin.length) add("GEO", "risk", "medium", "geo-rendered", "AI crawlers see only part of the text people see",
-      thin.map((page) => page.path + " (" + page.share + "%)").slice(0, 3).join(", ") + ". The share is words in the HTML compared with words on the rendered page. Most AI crawlers do not run JavaScript.",
-      "Render the main content on the server or pre-render it at build time.", { pages: thin.map((page) => page.path), effort: "days", cases: ["GEO-03"] });
-    else add("GEO", "pass", "info", "geo-rendered", "The HTML carries the text people see", "The start page HTML holds " + start.share + "% of the words on the rendered page.", "", { cases: ["GEO-03"] });
+    if (thin.length) add("GEO", "risk", "medium", "geo-rendered", say("geo-rendered.title"),
+      say("geo-rendered.evidence", { list: { items: thin.slice(0, 3).map((page) => say("pathPercent", { path: page.path, share: page.share })) } }),
+      say("fix.serverRender"), { pages: thin.map((page) => page.path), effort: "days", cases: ["GEO-03"] });
+    else add("GEO", "pass", "info", "geo-rendered", say("geo-rendered.pass.title"), say("geo-rendered.pass.evidence", { share: start.share }), "", { cases: ["GEO-03"] });
     const dom = start.dom;
     const rawLinks = ((ctx.face && ctx.face.links) || []).length;
-    if (dom && dom.links.length >= 5 && rawLinks < Math.max(3, dom.links.length / 4)) add("SEO", "risk", "medium", "seo-links-js", "Most links appear only after JavaScript runs",
-      "The HTML lists " + plural(rawLinks, "same-host link") + "; the rendered page lists " + dom.links.length + ". Crawlers that skip JavaScript cannot find the other pages" + (ctx.renderedCrawl ? "; this review followed the rendered links instead." : ", and this review's crawl could not follow them either."),
-      "Render navigation as plain <a href> links in the server HTML, and keep the sitemap complete.", { effort: "days", cases: ["LK-01", "SEO-03"] });
-    if (start.h1 && start.h1InHtml === false) add("GEO", "risk", "low", "geo-h1-rendered", "The main heading appears only after JavaScript", "\"" + start.h1 + "\" is on the rendered page but not in the HTML.", "Put the h1 in the server HTML.", { effort: "hours", cases: ["GEO-03"] });
+    if (dom && dom.links.length >= 5 && rawLinks < Math.max(3, dom.links.length / 4)) add("SEO", "risk", "medium", "seo-links-js", say("seo-links-js.title"),
+      say("seo-links-js.evidence", { links: say("seo-links-js.links", { n: rawLinks }), rendered: dom.links.length, tail: say(ctx.renderedCrawl ? "seo-links-js.followed" : "seo-links-js.notFollowed") }),
+      say("seo-links-js.fix"), { effort: "days", cases: ["LK-01", "SEO-03"] });
+    if (start.h1 && start.h1InHtml === false) add("GEO", "risk", "low", "geo-h1-rendered", say("geo-h1-rendered.title"), say("geo-h1-rendered.evidence", { h1: start.h1 }), say("geo-h1-rendered.fix"), { effort: "hours", cases: ["GEO-03"] });
   }
 
   // Performance: lab vitals and what broke while loading.
@@ -835,21 +847,30 @@ function analyze(input) {
   const origin = (() => { try { return new URL(home.url).origin; } catch (error) { return ""; } })();
   const host = hostOf(home.url);
   const findings = [];
+  // title, evidence and fix are English strings or say() messages; messages are kept so the page can translate them.
   const add = (area, verdict, severity, key, title, evidence, fix, opts) => {
     const extra = opts || {};
-    findings.push({
+    const msg = {};
+    const text = (value, field) => {
+      if (!value || typeof value !== "object") return value || "";
+      msg[field] = value;
+      return english(value);
+    };
+    const finding = {
       key,
       area,
       verdict,
       severity: verdict === "pass" ? "info" : severity,
-      title,
-      evidence,
-      fix: fix || "",
+      title: text(title, "title"),
+      evidence: text(evidence, "evidence"),
+      fix: text(fix, "fix"),
       effort: extra.effort || "hours",
       pages: (extra.pages || []).slice(0, 12),
       count: extra.count == null ? (extra.pages || []).length : extra.count,
       cases: extra.cases || []
-    });
+    };
+    if (Object.keys(msg).length) finding.msg = msg;
+    findings.push(finding);
   };
 
   const read = pages.filter((page) => page.inspect && page.status >= 200 && page.status < 300 && (!page.challenge || page === home));
@@ -864,7 +885,10 @@ function analyze(input) {
   const indexability = pages.map((page) => {
     const f = page.inspect;
     const path = page.path || pathOf(page.url);
-    if (!f) return { path, status: page.status || 0, indexable: false, reason: page.challenge ? page.challenge + " bot check" : page.error || "Not read" };
+    if (!f) {
+      const reasonMsg = page.challenge ? say("reason.botCheck", { vendor: page.challenge }) : page.error ? null : say("reason.notRead");
+      return Object.assign({ path, status: page.status || 0, indexable: false, reason: page.challenge ? page.challenge + " bot check" : page.error || "Not read" }, reasonMsg ? { reasonMsg } : {});
+    }
     const directives = [f.seo && f.seo.robots, f.seo && f.seo.googlebot, f.seo && f.seo.xRobots].filter(Boolean).join(", ").toLowerCase();
     const noindex = /\bnoindex\b|(^|[\s,])none([\s,]|$)/.test(directives);
     const canonical = f.seo && f.seo.canonicalAbs ? normal(f.seo.canonicalAbs) : "";
@@ -872,16 +896,18 @@ function analyze(input) {
     const canonicalShown = canonical ? shownAgainst(f.seo.canonicalAbs, page.url) : "";
     const googleBlocked = robots.groups.length ? !robotsVerdict("googlebot", pathOf(page.url), robots.groups).allowed : false;
     let reason = "Indexable";
-    if (page.status < 200 || page.status >= 300) reason = "Status " + page.status;
-    else if (page.challenge) reason = page.challenge + " bot check";
-    else if (noindex) reason = "noindex";
-    else if (googleBlocked) reason = "Blocked for Googlebot in robots.txt";
-    else if (canonicalElsewhere) reason = "Canonical points to " + canonicalShown;
+    let reasonMsg = say("reason.indexable");
+    if (page.status < 200 || page.status >= 300) { reason = "Status " + page.status; reasonMsg = say("reason.status", { status: page.status }); }
+    else if (page.challenge) { reason = page.challenge + " bot check"; reasonMsg = say("reason.botCheck", { vendor: page.challenge }); }
+    else if (noindex) { reason = "noindex"; reasonMsg = "noindex"; }
+    else if (googleBlocked) { reason = "Blocked for Googlebot in robots.txt"; reasonMsg = say("reason.googlebot"); }
+    else if (canonicalElsewhere) { reason = "Canonical points to " + canonicalShown; reasonMsg = say("reason.canonical", { url: canonicalShown }); }
     return {
       path,
       status: page.status,
       indexable: reason === "Indexable",
       reason,
+      reasonMsg,
       canonical: canonicalShown,
       robots: directives,
       redirected: !!page.hops,
@@ -926,15 +952,15 @@ function analyze(input) {
   const broken = pages.map((page, index) => ({ page, index })).filter(({ page }) => page.depth > 0 && page.status >= 400 && !blockedAnswer(page));
   const unanswered = pages.filter((page) => page.depth > 0 && !page.status && !page.challenge);
   if (unanswered.length) {
-    add("SEO", "person", "info", "seo-unanswered-links", plural(unanswered.length, "internal link", "internal links") + " did not answer in time",
-      unanswered.slice(0, 5).map((page) => (page.path || page.url) + ": " + (page.error || "no answer")).join(". ") + ". A slow answer in one analysis is not proof the page is broken.",
-      "Open each address again. If it stays slow, look at the server or cache for that path.",
+    add("SEO", "person", "info", "seo-unanswered-links", say("seo-unanswered-links.title", { n: unanswered.length }),
+      say("seo-unanswered-links.evidence", { list: { items: unanswered.slice(0, 5).map((page) => say("pathError", { path: page.path || page.url, error: page.error || say("noAnswer") })), sep: ". " } }),
+      say("seo-unanswered-links.fix"),
       { pages: unanswered.map((page) => page.path || page.url), cases: ["FN-06", "LK-01"] });
   }
   if (blocked.length) {
-    add("SEO", "person", "info", "seo-blocked-links", plural(blocked.length, "internal link was", "internal links were") + " blocked for this reader",
-      sample(blocked.map((page) => (page.path || page.url) + " (" + blockedReason(page) + ")"), 4) + ". A block aimed at automated readers is not proof the page is broken, and those pages were not scored.",
-      "Open each address in a browser. If people get through, only automated readers are stopped; allow verified crawlers if search and AI answers should reach those pages.",
+    add("SEO", "person", "info", "seo-blocked-links", say("seo-blocked-links.title", { n: blocked.length }),
+      say("seo-blocked-links.evidence", { list: some(blocked.map((page) => say("pathNote", { path: page.path || page.url, note: blockedReasonSaid(page) })), 4) }),
+      say("seo-blocked-links.fix"),
       { pages: blocked.map((page) => page.path || page.url), cases: ["FN-06", "LK-01"] });
   }
   const partialRead = linked.length >= 2 && blocked.length * 2 > linked.length;
@@ -946,48 +972,54 @@ function analyze(input) {
   if (home.challenge) warnings.push("The start page answered with " + botCheck(home.challenge) + " instead of the site, so these scores describe that check page.");
   if (partialRead) warnings.push("Partial analysis: " + blocked.length + " of " + plural(linked.length, "linked page") + " answered with a bot check or a block, so the scores rest mostly on the start page.");
   if (broken.length) {
-    add("SEO", "fail", "high", "seo-broken-links", plural(broken.length, "internal link leads", "internal links lead") + " to an error",
-      broken.slice(0, 5).map(({ page, index }) => (page.path || page.url) + " answered " + (page.status || page.error || "nothing") + (sources.get(index) ? ", linked from " + sample(sources.get(index), 2) : "")).join(". ") + ".",
-      "Fix or remove each link, or redirect the old address with a 301 to the closest live page.",
+    add("SEO", "fail", "high", "seo-broken-links", say("seo-broken-links.title", { n: broken.length }),
+      say("listDot", { list: { items: broken.slice(0, 5).map(({ page, index }) => say("seo-broken-links.row", {
+        path: page.path || page.url,
+        status: page.status || page.error || say("nothing"),
+        from: sources.get(index) ? say("linkedFrom", { list: some(sources.get(index), 2) }) : ""
+      })), sep: ". " } }),
+      say("seo-broken-links.fix"),
       { pages: broken.map(({ page }) => page.path || page.url), effort: "hours", cases: ["FN-06", "LK-01"] });
   } else if (pages.length > 1 && !unanswered.length && !blocked.length) {
-    add("SEO", "pass", "info", "seo-broken-links", "Every internal link that was opened answered", plural(pages.length - 1, "linked page") + " answered without an error.", "", { cases: ["FN-06", "LK-01"] });
+    add("SEO", "pass", "info", "seo-broken-links", say("seo-broken-links.pass.title"), say("seo-broken-links.pass.evidence", { n: pages.length - 1 }), "", { cases: ["FN-06", "LK-01"] });
   }
   const outbound = extras.outbound;
   if (outbound && (outbound.checked || outbound.httpCount)) {
     const ofKind = (kind) => (outbound.rows || []).filter((row) => row.kind === kind);
-    const linkedFrom = (row) => row.from && row.from.length ? ", linked from " + sample(row.from, 2) : "";
+    const linkedFrom = (row) => row.from && row.from.length ? say("linkedFrom", { list: some(row.from, 2) }) : "";
     const fromPages = (list) => [...new Set([].concat.apply([], list.map((row) => row.from || [])))];
-    const checkedText = " " + plural(outbound.checked, "external address was", "external addresses were") + " checked" + (outbound.found > outbound.checked ? " of " + outbound.found + " found" : "") + ".";
+    const checked = say("seo-external.checked", { n: outbound.checked, of: outbound.found > outbound.checked ? say("seo-external.of", { found: outbound.found }) : "" });
     const dead = ofKind("broken");
-    if (dead.length) add("SEO", "risk", "medium", "seo-external-links", plural(dead.length, "external link leads", "external links lead") + " to an error",
-      dead.slice(0, 5).map((row) => row.url + (row.error ? " gave " + row.error : " answered " + row.status) + linkedFrom(row)).join(". ") + "." + checkedText,
-      "Update each link to the page's new address, link to an archived copy on web.archive.org, or remove it.", { pages: fromPages(dead), count: dead.length, effort: "hours" });
-    else if (outbound.checked) add("SEO", "pass", "info", "seo-external-links", "Every external link that was checked answered", plural(outbound.ok, "external address") + " answered without an error." + checkedText, "");
+    if (dead.length) add("SEO", "risk", "medium", "seo-external-links", say("seo-external-links.title", { n: dead.length }),
+      say("seo-external-links.evidence", { list: { items: dead.slice(0, 5).map((row) => row.error
+        ? say("seo-external.gave", { url: row.url, error: row.error, from: linkedFrom(row) })
+        : say("seo-external.answered", { url: row.url, status: row.status, from: linkedFrom(row) })), sep: ". " }, checked }),
+      say("seo-external-links.fix"), { pages: fromPages(dead), count: dead.length, effort: "hours" });
+    else if (outbound.checked) add("SEO", "pass", "info", "seo-external-links", say("seo-external-links.pass.title"), say("seo-external-links.pass.evidence", { n: outbound.ok || 0, checked }), "");
     const moved = ofKind("moved");
-    if (moved.length) add("SEO", "risk", "low", "seo-external-moved", plural(moved.length, "external link redirects", "external links redirect") + " to another site or a home page",
-      sample(moved.map((row) => row.url + " lands on " + (row.final || "an http:// address") + linkedFrom(row)), 4) + ". The page it pointed to has probably moved or gone.",
-      "Point each link at the address it now lands on, or replace it if the page is gone.", { pages: fromPages(moved), count: moved.length, effort: "hours" });
+    if (moved.length) add("SEO", "risk", "low", "seo-external-moved", say("seo-external-moved.title", { n: moved.length }),
+      say("seo-external-moved.evidence", { list: some(moved.map((row) => say("seo-external-moved.row", { url: row.url, final: row.final || say("seo-external-moved.http"), from: linkedFrom(row) })), 4) }),
+      say("seo-external-moved.fix"), { pages: fromPages(moved), count: moved.length, effort: "hours" });
     const refused = ofKind("blocked");
-    if (refused.length) add("SEO", "person", "info", "seo-external-blocked", plural(refused.length, "external link was", "external links were") + " blocked for this reader",
-      sample(refused.map((row) => row.url + " answered " + row.status), 4) + ". A block aimed at automated readers is not proof the link is broken, and those links were not scored.",
-      "Open each link in a browser to confirm it still works.", { pages: fromPages(refused), count: refused.length });
-    if (outbound.httpCount) add("SEO", "risk", "low", "seo-external-http", plural(outbound.httpCount, "external link uses", "external links use") + " plain http",
-      sample((outbound.http || []).map((row) => row.url + linkedFrom(row)), 4) + ". Visitors leave the encrypted connection, and browsers may warn. These links were not requested.",
-      "Change each link to https when the other site supports it.", { pages: fromPages(outbound.http || []), count: outbound.httpCount, effort: "minutes" });
+    if (refused.length) add("SEO", "person", "info", "seo-external-blocked", say("seo-external-blocked.title", { n: refused.length }),
+      say("seo-external-blocked.evidence", { list: some(refused.map((row) => say("seo-external.answered", { url: row.url, status: row.status, from: "" })), 4) }),
+      say("seo-external-blocked.fix"), { pages: fromPages(refused), count: refused.length });
+    if (outbound.httpCount) add("SEO", "risk", "low", "seo-external-http", say("seo-external-http.title", { n: outbound.httpCount }),
+      say("seo-external-http.evidence", { list: some((outbound.http || []).map((row) => say("urlFrom", { url: row.url, from: linkedFrom(row) })), 4) }),
+      say("seo-external-http.fix"), { pages: fromPages(outbound.http || []), count: outbound.httpCount, effort: "minutes" });
   }
 
   const redirected = pages.filter((page) => page.depth > 0 && page.hops > 0 && !blockedAnswer(page));
   if (redirected.length) {
-    add("SEO", "risk", "low", "seo-internal-redirects", plural(redirected.length, "internal link goes", "internal links go") + " through a redirect",
-      redirected.slice(0, 4).map((page) => pathOf(page.requested || "") + " → " + page.path).join(", ") + ". Each hop costs crawl budget and a little speed.",
-      "Point the links straight at the final address.", { pages: redirected.map((page) => page.path), effort: "minutes" });
+    add("SEO", "risk", "low", "seo-internal-redirects", say("seo-internal-redirects.title", { n: redirected.length }),
+      say("seo-internal-redirects.evidence", { list: { items: redirected.slice(0, 4).map((page) => say("pathArrow", { from: pathOf(page.requested || ""), to: page.path })) } }),
+      say("seo-internal-redirects.fix"), { pages: redirected.map((page) => page.path), effort: "minutes" });
   }
 
   if ((home.hops || 0) >= 2) {
-    add("SEO", "risk", "low", "seo-redirect-chain", "The start address takes " + home.hops + " redirects to answer",
-      "The address you entered redirected " + home.hops + " times before " + home.path + " answered.",
-      "Redirect the old address in one hop to the final https URL.", { effort: "minutes" });
+    add("SEO", "risk", "low", "seo-redirect-chain", say("seo-redirect-chain.title", { hops: home.hops }),
+      say("seo-redirect-chain.evidence", { hops: home.hops, path: home.path }),
+      say("seo-redirect-chain.fix"), { effort: "minutes" });
   }
 
   const allNoindex = indexability.filter((row) => row.reason === "noindex");
@@ -998,34 +1030,35 @@ function analyze(input) {
   const privateRows = allNoindex.filter(keptOut);
   if (noindexRows.length) {
     const homeBlocked = noindexRows.some((row) => row.path === home.path);
-    add("SEO", homeBlocked ? "fail" : "risk", homeBlocked ? "critical" : "medium", "seo-noindex", homeBlocked ? "The start page tells search engines not to index it" : plural(noindexRows.length, "page asks search engines not to index it", "pages ask search engines not to index them"),
-      sample(noindexRows.map((row) => row.path + " (" + row.robots + ")"), 4) + ".",
-      "Remove noindex from pages that should be found, and keep it only on private or duplicate pages.", { pages: noindexRows.map((row) => row.path), effort: "minutes", cases: ["SEO-04"] });
+    const robotsNotes = (rows) => some(rows.map((row) => say("pathNote", { path: row.path, note: row.robots })), 4);
+    add("SEO", homeBlocked ? "fail" : "risk", homeBlocked ? "critical" : "medium", "seo-noindex", homeBlocked ? say("seo-noindex.home.title") : say("seo-noindex.title", { n: noindexRows.length }),
+      say("listDot", { list: robotsNotes(noindexRows) }),
+      say("seo-noindex.fix"), { pages: noindexRows.map((row) => row.path), effort: "minutes", cases: ["SEO-04"] });
   } else if (privateRows.length) {
-    add("SEO", "pass", "info", "seo-noindex", plural(privateRows.length, "page is", "pages are") + " kept out of search on purpose",
-      sample(privateRows.map((row) => row.path + " (" + row.robots + ")"), 4) + ". Each says noindex, names no canonical, and is left out of the sitemap, so the three signals agree.", "", { pages: privateRows.map((row) => row.path), cases: ["SEO-04"] });
+    add("SEO", "pass", "info", "seo-noindex", say("seo-noindex.pass.title", { n: privateRows.length }),
+      say("seo-noindex.pass.evidence", { list: some(privateRows.map((row) => say("pathNote", { path: row.path, note: row.robots })), 4) }), "", { pages: privateRows.map((row) => row.path), cases: ["SEO-04"] });
   }
 
   const canonicalAway = indexability.filter((row) => /^Canonical points/.test(row.reason) && row.path.indexOf("?") === -1);
   if (canonicalAway.length) {
-    add("SEO", "risk", "medium", "seo-canonical-away", plural(canonicalAway.length, "page names", "pages name") + " another URL as canonical",
-      sample(canonicalAway.map((row) => row.path + " → " + row.canonical), 4) + ". Search engines will usually index the other URL instead.",
-      "Make each page's canonical point at itself unless it is a real duplicate.", { pages: canonicalAway.map((row) => row.path), effort: "minutes", cases: ["CT-02"] });
+    add("SEO", "risk", "medium", "seo-canonical-away", say("seo-canonical-away.title", { n: canonicalAway.length }),
+      say("seo-canonical-away.evidence", { list: some(canonicalAway.map((row) => say("pathArrow", { from: row.path, to: row.canonical })), 4) }),
+      say("seo-canonical-away.fix"), { pages: canonicalAway.map((row) => row.path), effort: "minutes", cases: ["CT-02"] });
   }
   const noindexPaths = new Set(allNoindex.map((row) => row.path));
   const noCanonical = read.filter((page) => !(page.inspect.seo && page.inspect.seo.canonicalAbs) && !noindexPaths.has(page.path || pathOf(page.url)));
   if (noCanonical.length && read.length) {
-    add("SEO", "risk", "low", "seo-canonical-missing", plural(noCanonical.length, "page has", "pages have") + " no canonical link",
-      sample(noCanonical.map((page) => page.path), 4) + ". Without it, tracking parameters and trailing slashes can split ranking signals.",
-      "Add <link rel=\"canonical\" href=\"…\"> with the page's own https URL.", { pages: noCanonical.map((page) => page.path), effort: "minutes", cases: ["CT-02"] });
+    add("SEO", "risk", "low", "seo-canonical-missing", say("seo-canonical-missing.title", { n: noCanonical.length }),
+      say("seo-canonical-missing.evidence", { list: some(noCanonical.map((page) => page.path), 4) }),
+      say("seo-canonical-missing.fix"), { pages: noCanonical.map((page) => page.path), effort: "minutes", cases: ["CT-02"] });
   }
 
   const untitled = read.filter((page) => !page.inspect.title);
   if (untitled.length) {
-    add("SEO", "fail", "high", "seo-title-missing", plural(untitled.length, "page has", "pages have") + " no title", sample(untitled.map((page) => page.path), 4) + ".",
-      "Give every page a unique title of about 30 to 60 characters.", { pages: untitled.map((page) => page.path), effort: "minutes", cases: ["FN-02", "FN-07"] });
+    add("SEO", "fail", "high", "seo-title-missing", say("seo-title-missing.title", { n: untitled.length }), say("listDot", { list: some(untitled.map((page) => page.path), 4) }),
+      say("seo-title-missing.fix"), { pages: untitled.map((page) => page.path), effort: "minutes", cases: ["FN-02", "FN-07"] });
   }
-  else if (read.length) add("SEO", "pass", "info", "seo-title-missing", "Every page has a title", plural(read.length, "page") + " checked.", "", { cases: ["FN-02", "FN-07"] });
+  else if (read.length) add("SEO", "pass", "info", "seo-title-missing", say("seo-title-missing.pass.title"), say("pagesChecked", { n: read.length }), "", { cases: ["FN-02", "FN-07"] });
   const groupBy = (getter) => {
     const map = new Map();
     read.forEach((page) => {
@@ -1042,33 +1075,33 @@ function analyze(input) {
   const dupTitles = groupBy((page) => page.inspect.title);
   const dupDescriptions = groupBy((page) => page.inspect.description);
   if (dupTitles.length) {
-    add("SEO", "risk", "medium", "seo-duplicate-titles", plural(dupTitles.length, "title is", "titles are") + " shared by more than one page",
-      dupTitles.slice(0, 3).map((item) => "\"" + item.value.slice(0, 70) + "\" on " + sample(item.paths, 3)).join(". ") + ".",
-      "Write a title that names what is different about each page.", { pages: [].concat.apply([], dupTitles.map((item) => item.paths)), effort: "hours", cases: ["FN-08"] });
+    add("SEO", "risk", "medium", "seo-duplicate-titles", say("seo-duplicate-titles.title", { n: dupTitles.length }),
+      say("listDot", { list: { items: dupTitles.slice(0, 3).map((item) => say("seo-duplicate.row", { value: item.value.slice(0, 70), pages: some(item.paths, 3) })), sep: ". " } }),
+      say("seo-duplicate-titles.fix"), { pages: [].concat.apply([], dupTitles.map((item) => item.paths)), effort: "hours", cases: ["FN-08"] });
   }
   const noDescription = read.filter((page) => !page.inspect.description);
   if (noDescription.length) {
-    add("SEO", "risk", "medium", "seo-description-missing", plural(noDescription.length, "page has", "pages have") + " no meta description",
-      sample(noDescription.map((page) => page.path), 4) + ". Google and AI answers then write their own snippet from whatever text they find.",
-      "Write a 50 to 160 character description for each page that says what a reader gets.", { pages: noDescription.map((page) => page.path), effort: "hours", cases: ["CT-01"] });
+    add("SEO", "risk", "medium", "seo-description-missing", say("seo-description-missing.title", { n: noDescription.length }),
+      say("seo-description-missing.evidence", { list: some(noDescription.map((page) => page.path), 4) }),
+      say("seo-description-missing.fix"), { pages: noDescription.map((page) => page.path), effort: "hours", cases: ["CT-01"] });
   }
-  else if (read.length) add("SEO", "pass", "info", "seo-description-missing", "Every page has a meta description", plural(read.length, "page") + " checked.", "", { cases: ["CT-01"] });
+  else if (read.length) add("SEO", "pass", "info", "seo-description-missing", say("seo-description-missing.pass.title"), say("pagesChecked", { n: read.length }), "", { cases: ["CT-01"] });
   if (dupDescriptions.length) {
-    add("SEO", "risk", "low", "seo-duplicate-descriptions", plural(dupDescriptions.length, "description is", "descriptions are") + " shared by more than one page",
-      dupDescriptions.slice(0, 2).map((item) => "\"" + item.value.slice(0, 70) + "…\" on " + sample(item.paths, 3)).join(". ") + ".",
-      "Describe each page on its own.", { pages: [].concat.apply([], dupDescriptions.map((item) => item.paths)), effort: "hours", cases: ["CT-01"] });
+    add("SEO", "risk", "low", "seo-duplicate-descriptions", say("seo-duplicate-descriptions.title", { n: dupDescriptions.length }),
+      say("listDot", { list: { items: dupDescriptions.slice(0, 2).map((item) => say("seo-duplicate.rowCut", { value: item.value.slice(0, 70), pages: some(item.paths, 3) })), sep: ". " } }),
+      say("seo-duplicate-descriptions.fix"), { pages: [].concat.apply([], dupDescriptions.map((item) => item.paths)), effort: "hours", cases: ["CT-01"] });
   }
   const longTitles = read.filter((page) => (page.inspect.title || "").length > 65);
   if (longTitles.length) {
-    add("SEO", "risk", "low", "seo-title-length", plural(longTitles.length, "title runs", "titles run") + " past about 60 characters",
-      sample(longTitles.map((page) => page.path + " (" + page.inspect.title.length + ")"), 4) + ". Google cuts them with an ellipsis.",
-      "Lead with the words that matter and keep titles near 60 characters.", { pages: longTitles.map((page) => page.path), effort: "minutes" });
+    add("SEO", "risk", "low", "seo-title-length", say("seo-title-length.title", { n: longTitles.length }),
+      say("seo-title-length.evidence", { list: some(longTitles.map((page) => say("pathNote", { path: page.path, note: page.inspect.title.length })), 4) }),
+      say("seo-title-length.fix"), { pages: longTitles.map((page) => page.path), effort: "minutes" });
   }
   const thin = read.filter((page) => page.depth > 0 && indexablePaths.has(page.path) && (page.inspect.words || 0) < 150);
   if (thin.length) {
-    add("SEO", "risk", "low", "seo-thin", plural(thin.length, "indexable page carries", "indexable pages carry") + " fewer than 150 words in the HTML",
-      sample(thin.map((page) => page.path + " (" + (page.inspect.words || 0) + " words)"), 4) + ".",
-      "Add useful copy, merge thin pages, or mark them noindex.", { pages: thin.map((page) => page.path), effort: "days" });
+    add("SEO", "risk", "low", "seo-thin", say("seo-thin.title", { n: thin.length }),
+      say("listDot", { list: some(thin.map((page) => say("pathNote", { path: page.path, note: say("wordsN", { n: page.inspect.words || 0 }) })), 4) }),
+      say("seo-thin.fix"), { pages: thin.map((page) => page.path), effort: "days" });
   }
 
   // Sitemap compared with the crawl.
@@ -1079,33 +1112,36 @@ function analyze(input) {
     sitemapReport.offHost = (sitemap.urls || []).filter((url) => hostOf(url) !== host).length;
     // A partial read cannot prove a page is absent from the rest of the sitemap.
     if (!sitemapReport.partial) sitemapReport.notListed = indexable.filter((row) => !sitemapSet.has(normal(origin + row.path))).map((row) => row.path).slice(0, 40);
-    sitemapReport.listedNotIndexable = indexability.filter((row) => !row.indexable && sitemapSet.has(normal(origin + row.path))).map((row) => row.path + " (" + row.reason + ")").slice(0, 40);
+    const listedRows = indexability.filter((row) => !row.indexable && sitemapSet.has(normal(origin + row.path))).slice(0, 40);
+    sitemapReport.listedNotIndexable = listedRows.map((row) => row.path + " (" + row.reason + ")");
     const linked = new Set();
     pages.forEach((page) => ((page.inspect && page.inspect.links) || []).forEach((link) => linked.add(normal(link))));
     linked.add(normal(home.url));
     sitemapReport.notLinked = (sitemap.urls || []).filter((url) => hostOf(url) === host && !linked.has(normal(url))).map(pathOf).slice(0, 40);
     if (sitemapReport.listedNotIndexable.length) {
-      add("SEO", "risk", "medium", "seo-sitemap-dirty", "The sitemap lists " + plural(sitemapReport.listedNotIndexable.length, "page") + " search engines should not index",
-        sample(sitemapReport.listedNotIndexable, 4) + ".", "List only live, canonical, indexable URLs in the sitemap.", { pages: sitemapReport.listedNotIndexable, effort: "minutes", cases: ["SEO-03"] });
+      add("SEO", "risk", "medium", "seo-sitemap-dirty", say("seo-sitemap-dirty.title", { n: listedRows.length }),
+        say("listDot", { list: some(listedRows.map((row) => say("pathNote", { path: row.path, note: row.reasonMsg || row.reason })), 4) }),
+        say("seo-sitemap-dirty.fix"), { pages: sitemapReport.listedNotIndexable, effort: "minutes", cases: ["SEO-03"] });
     }
     if (sitemapReport.notListed.length) {
-      add("SEO", "risk", "low", "seo-sitemap-missing-pages", plural(sitemapReport.notListed.length, "indexable page is", "indexable pages are") + " missing from the sitemap",
-        sample(sitemapReport.notListed, 4) + ".", "Add them to the sitemap or regenerate it on each deploy.", { pages: sitemapReport.notListed, effort: "minutes", cases: ["SEO-03"] });
+      add("SEO", "risk", "low", "seo-sitemap-missing-pages", say("seo-sitemap-missing-pages.title", { n: sitemapReport.notListed.length }),
+        say("listDot", { list: some(sitemapReport.notListed, 4) }), say("seo-sitemap-missing-pages.fix"), { pages: sitemapReport.notListed, effort: "minutes", cases: ["SEO-03"] });
     }
     if (sitemapReport.offHost) {
       const offHosts = {};
-      (sitemap.urls || []).map(hostOf).filter((name) => name !== host).forEach((name) => { offHosts[name || "an unreadable URL"] = (offHosts[name || "an unreadable URL"] || 0) + 1; });
-      add("SEO", "risk", "medium", "seo-sitemap-offhost", plural(sitemapReport.offHost, "sitemap URL points", "sitemap URLs point") + " at another host or scheme",
-        "In " + pathOf(sitemapReport.source) + ": " + sample(Object.keys(offHosts).sort((a, b) => offHosts[b] - offHosts[a]).map((name) => name + " (" + offHosts[name] + ")"), 3) + ". The sitemap should list only URLs on https://" + host + ".", "Regenerate the sitemap with the production https host.", { count: sitemapReport.offHost, effort: "minutes", cases: ["SEO-03"] });
+      (sitemap.urls || []).map(hostOf).filter((name) => name !== host).forEach((name) => { offHosts[name] = (offHosts[name] || 0) + 1; });
+      const offRows = Object.keys(offHosts).sort((a, b) => offHosts[b] - offHosts[a]).map((name) => say("pathNote", { path: name || say("seo-sitemap-offhost.unreadable"), note: offHosts[name] }));
+      add("SEO", "risk", "medium", "seo-sitemap-offhost", say("seo-sitemap-offhost.title", { n: sitemapReport.offHost }),
+        say("seo-sitemap-offhost.evidence", { source: pathOf(sitemapReport.source), list: some(offRows, 3), host }), say("seo-sitemap-offhost.fix"), { count: sitemapReport.offHost, effort: "minutes", cases: ["SEO-03"] });
     }
     if (!sitemapReport.listedNotIndexable.length && !sitemapReport.notListed.length && !sitemapReport.offHost) {
-      if (sitemapReport.partial) add("SEO", "pass", "info", "seo-sitemap", "A sitemap answers with valid URLs", "The first " + plural(sitemapReport.count, "URL") + " from " + pathOf(sitemapReport.source) + " were analyzed; the sitemap is larger than one review analyzes.", "", { cases: ["SEO-03"] });
-      else add("SEO", "pass", "info", "seo-sitemap", "The sitemap matches the pages that were analyzed", plural(sitemapReport.count, "URL") + " in " + pathOf(sitemapReport.source) + ".", "", { cases: ["SEO-03"] });
+      if (sitemapReport.partial) add("SEO", "pass", "info", "seo-sitemap", say("seo-sitemap.partial.title"), say("seo-sitemap.partial.evidence", { n: sitemapReport.count, source: pathOf(sitemapReport.source) }), "", { cases: ["SEO-03"] });
+      else add("SEO", "pass", "info", "seo-sitemap", say("seo-sitemap.pass.title"), say("seo-sitemap.pass.evidence", { n: sitemapReport.count, source: pathOf(sitemapReport.source) }), "", { cases: ["SEO-03"] });
     }
   } else {
-    add("SEO", "risk", "medium", "seo-sitemap", "No sitemap was found",
-      (robots.sitemaps.length ? "robots.txt names " + robots.sitemaps[0] + " but it did not return URLs." : "robots.txt names no sitemap, and /sitemap.xml, /sitemap_index.xml and /sitemap-index.xml returned no URLs."),
-      "Publish /sitemap.xml and add a Sitemap: line to robots.txt.", { effort: "hours", cases: ["SEO-03"] });
+    add("SEO", "risk", "medium", "seo-sitemap", say("seo-sitemap.title"),
+      robots.sitemaps.length ? say("seo-sitemap.named", { url: robots.sitemaps[0] }) : say("seo-sitemap.none"),
+      say("seo-sitemap.fix"), { effort: "hours", cases: ["SEO-03"] });
   }
 
   // Language alternates.
@@ -1114,20 +1150,20 @@ function analyze(input) {
     const alts = (page.inspect.seo && page.inspect.seo.hreflang) || [];
     if (!alts.length || !indexablePaths.has(page.path)) return;
     const selfRef = alts.some((alt) => normal(alt.href) === normal(page.url));
-    if (!selfRef) hreflangIssues.push(page.path + " has no self reference");
+    if (!selfRef) hreflangIssues.push(say("seo-hreflang.noSelf", { path: page.path }));
     alts.forEach((alt) => {
-      if (!/^(x-default|[a-z]{2,3}(-[a-z]{4})?(-[a-z0-9]{2,4})?)$/i.test(alt.lang)) hreflangIssues.push(page.path + " uses an invalid code \"" + alt.lang + "\"");
+      if (!/^(x-default|[a-z]{2,3}(-[a-z]{4})?(-[a-z0-9]{2,4})?)$/i.test(alt.lang)) hreflangIssues.push(say("seo-hreflang.badCode", { path: page.path, code: alt.lang }));
       const target = byUrl.get(normal(alt.href));
       if (!target || !target.inspect || target === page || !indexablePaths.has(target.path)) return;
       const back = ((target.inspect.seo && target.inspect.seo.hreflang) || []).some((other) => normal(other.href) === normal(page.url));
-      if (!back) hreflangIssues.push(target.path + " does not link back to " + page.path);
+      if (!back) hreflangIssues.push(say("seo-hreflang.noBack", { target: target.path, path: page.path }));
     });
   });
   if (hreflangIssues.length) {
-    add("SEO", "risk", "medium", "seo-hreflang", plural(hreflangIssues.length, "language alternate problem"), sample(hreflangIssues, 3) + ".",
-      "Each language version must list every version, itself included, and each must link back.", { count: hreflangIssues.length, effort: "hours", cases: ["SEO-02"] });
+    add("SEO", "risk", "medium", "seo-hreflang", say("seo-hreflang.title", { n: hreflangIssues.length }), say("listDot", { list: some(hreflangIssues, 3) }),
+      say("seo-hreflang.fix"), { count: hreflangIssues.length, effort: "hours", cases: ["SEO-02"] });
   } else if (read.some((page) => ((page.inspect.seo && page.inspect.seo.hreflang) || []).length)) {
-    add("SEO", "pass", "info", "seo-hreflang", "Language alternates point at each other", "Every alternate that was analyzed links back.", "", { cases: ["SEO-02"] });
+    add("SEO", "pass", "info", "seo-hreflang", say("seo-hreflang.pass.title"), say("seo-hreflang.pass.evidence"), "", { cases: ["SEO-02"] });
   }
 
   // Structured data.
@@ -1141,25 +1177,25 @@ function analyze(input) {
         const need = REQUIRED_PROPS[type];
         if (!need) return;
         const missing = need.filter((prop) => Array.isArray(prop) ? !prop.some((one) => item.props.indexOf(one) !== -1) : item.props.indexOf(prop) === -1)
-          .map((prop) => Array.isArray(prop) ? prop.join(" or ") : prop);
-        if (missing.length) schemaGaps.push(page.path + " " + type + " lacks " + missing.join(", "));
+          .map((prop) => Array.isArray(prop) ? { items: prop, join: "or" } : prop);
+        if (missing.length) schemaGaps.push(say("seo-schema.gap", { path: page.path, type, props: { items: missing } }));
       });
     });
   });
   if (schemaErrors) {
     const brokenOn = read.filter((page) => page.inspect.schema && page.inspect.schema.errors).map((page) => page.path);
-    add("SEO", "fail", "medium", "seo-schema-parse", plural(schemaErrors, "JSON-LD block does", "JSON-LD blocks do") + " not parse",
-      "On " + sample(brokenOn, 4) + ". A block that is not valid JSON is ignored by Google and by AI crawlers.", "Validate each block with the Schema Markup Validator and fix the JSON.", { pages: brokenOn, count: schemaErrors, effort: "minutes", cases: ["CT-04"] });
+    add("SEO", "fail", "medium", "seo-schema-parse", say("seo-schema-parse.title", { n: schemaErrors }),
+      say("seo-schema-parse.evidence", { list: some(brokenOn, 4) }), say("seo-schema-parse.fix"), { pages: brokenOn, count: schemaErrors, effort: "minutes", cases: ["CT-04"] });
   }
   if (schemaGaps.length) {
-    add("SEO", "risk", "medium", "seo-schema-props", plural(schemaGaps.length, "structured data item misses", "structured data items miss") + " a property Google expects",
-      sample(schemaGaps, 3) + ".", "Fill the missing properties so the item qualifies for rich results.", { count: schemaGaps.length, effort: "hours", cases: ["CT-04"] });
+    add("SEO", "risk", "medium", "seo-schema-props", say("seo-schema-props.title", { n: schemaGaps.length }),
+      say("listDot", { list: some(schemaGaps, 3) }), say("seo-schema-props.fix"), { count: schemaGaps.length, effort: "hours", cases: ["CT-04"] });
   }
   if (!schemaTypes.size) {
-    add("SEO", "risk", "low", "seo-schema", "No structured data was found", "No JSON-LD block was found on the pages that were analyzed.",
-      "Add Organization or Person, WebSite, and BreadcrumbList JSON-LD. The fix kit has a draft.", { effort: "hours", cases: ["CT-04"] });
+    add("SEO", "risk", "low", "seo-schema", say("seo-schema.title"), say("seo-schema.evidence"),
+      say("seo-schema.fix"), { effort: "hours", cases: ["CT-04"] });
   } else if (!schemaErrors && !schemaGaps.length) {
-    add("SEO", "pass", "info", "seo-schema", "Structured data parses and carries the expected properties", "Types: " + sample([...schemaTypes], 6) + ".", "", { cases: ["CT-04"] });
+    add("SEO", "pass", "info", "seo-schema", say("seo-schema.pass.title"), say("seo-schema.pass.evidence", { list: some([...schemaTypes], 6) }), "", { cases: ["CT-04"] });
   }
 
   // Social previews.
@@ -1170,30 +1206,30 @@ function analyze(input) {
   if (!social.ogImage) socialMissing.push("og:image");
   if (!social.ogUrl) socialMissing.push("og:url");
   if (!social.twitterCard) socialMissing.push("twitter:card");
-  if (social.ogImage && !/^https:\/\//i.test(social.ogImage)) socialMissing.push("an https og:image");
+  if (social.ogImage && !/^https:\/\//i.test(social.ogImage)) socialMissing.push(say("seo-social.httpsImage"));
   if (socialMissing.length) {
-    add("SEO", "risk", socialMissing.indexOf("og:image") !== -1 ? "medium" : "low", "seo-social", "Share cards are missing " + sample(socialMissing, 5),
-      "LinkedIn, WhatsApp, Slack, and X build the preview from these tags. The preview in this report shows what they would show today.",
-      "Add the missing Open Graph and Twitter tags to every page template.", { effort: "minutes", cases: ["CT-03"] });
+    add("SEO", "risk", socialMissing.indexOf("og:image") !== -1 ? "medium" : "low", "seo-social", say("seo-social.title", { list: some(socialMissing, 5) }),
+      say("seo-social.evidence"),
+      say("seo-social.fix"), { effort: "minutes", cases: ["CT-03"] });
   } else {
-    add("SEO", "pass", "info", "seo-social", "Share cards have a title, description, image, and URL", "og:title, og:description, og:image, og:url, and twitter:card are present.", "", { cases: ["CT-03"] });
+    add("SEO", "pass", "info", "seo-social", say("seo-social.pass.title"), say("seo-social.pass.evidence"), "", { cases: ["CT-03"] });
   }
-  if (!face.icon) add("SEO", "risk", "low", "seo-favicon", "No favicon is declared", "Google shows a favicon next to each mobile result.", "Add <link rel=\"icon\" href=\"/favicon.svg\"> with a square icon.", { effort: "minutes" });
+  if (!face.icon) add("SEO", "risk", "low", "seo-favicon", say("seo-favicon.title"), say("seo-favicon.evidence"), say("seo-favicon.fix"), { effort: "minutes" });
 
   const soft = extras.soft404 || {};
   if (soft.status === 200) {
-    add("SEO", "risk", "medium", "seo-soft-404", "A missing page answers 200 instead of 404",
-      "A made-up path answered 200" + (soft.title ? " with the title \"" + soft.title + "\"" : "") + ". Search engines call this a soft 404 and may index empty pages.",
-      "Return status 404 (or 410) for unknown paths, with a helpful page.", { effort: "hours", cases: ["RS-01"] });
+    add("SEO", "risk", "medium", "seo-soft-404", say("seo-soft-404.title"),
+      say("seo-soft-404.evidence", { titled: soft.title ? say("seo-soft-404.titled", { title: soft.title }) : "" }),
+      say("seo-soft-404.fix"), { effort: "hours", cases: ["RS-01"] });
   } else if (soft.status === 404 || soft.status === 410) {
-    add("SEO", "pass", "info", "seo-soft-404", "Unknown paths answer " + soft.status, "A made-up path answered " + soft.status + ".", "", { cases: ["RS-01"] });
+    add("SEO", "pass", "info", "seo-soft-404", say("seo-soft-404.pass.title", { status: soft.status }), say("seo-soft-404.pass.evidence", { status: soft.status }), "", { cases: ["RS-01"] });
   }
 
   if (!(face.signals && face.signals.viewport)) {
-    add("SEO", "fail", "high", "seo-viewport", "The start page has no viewport tag", "Without it, phones render the desktop layout zoomed out. Google indexes the mobile version first.",
-      "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">.", { effort: "minutes", cases: ["MB-01", "VIS-02"] });
+    add("SEO", "fail", "high", "seo-viewport", say("seo-viewport.title"), say("seo-viewport.evidence"),
+      say("seo-viewport.fix"), { effort: "minutes", cases: ["MB-01", "VIS-02"] });
   } else {
-    add("SEO", "pass", "info", "seo-viewport", "The start page sets a mobile viewport", "A viewport meta tag is present.", "", { cases: ["MB-01", "VIS-02"] });
+    add("SEO", "pass", "info", "seo-viewport", say("seo-viewport.pass.title"), say("seo-viewport.pass.evidence"), "", { cases: ["MB-01", "VIS-02"] });
   }
 
   // GEO
@@ -1206,34 +1242,34 @@ function analyze(input) {
   const trainingBlocked = crawlers.filter((bot) => bot.role === "training" && !bot.allowed);
   const partly = crawlers.filter((bot) => bot.role !== "training" && bot.allowed && bot.blockedPages > 0);
   if (answerBlocked.length) {
-    add("GEO", "fail", "high", "geo-crawlers", plural(answerBlocked.length, "AI answer or search crawler is", "AI answer or search crawlers are") + " blocked",
-      answerBlocked.map((bot) => bot.token + " (" + bot.product + ")" + (bot.rule ? " by " + bot.rule : "")).slice(0, 5).join(", ") + ". These bots fetch pages to cite them in answers. Blocked means the site is not quoted there.",
-      "Allow the answer bots in robots.txt. Training bots can stay blocked if that is the policy.", { cases: ["GEO-01"], count: answerBlocked.length, effort: "minutes" });
+    add("GEO", "fail", "high", "geo-crawlers", say("geo-crawlers.title", { n: answerBlocked.length }),
+      say("geo-crawlers.evidence", { list: { items: answerBlocked.slice(0, 5).map((bot) => say("geo-crawlers.row", { token: bot.token, product: bot.product, rule: bot.rule ? say("geo-crawlers.by", { rule: bot.rule }) : "" })) } }),
+      say("geo-crawlers.fix"), { cases: ["GEO-01"], count: answerBlocked.length, effort: "minutes" });
   } else {
-    add("GEO", "pass", "info", "geo-crawlers", "AI answer and search crawlers may read the start page",
-      robots.groups.length ? "robots.txt does not block ChatGPT search, Claude, Perplexity, Google, or Bing at the root." : "No robots.txt rules were found, so every crawler is allowed by default.", "", { cases: ["GEO-01"] });
+    add("GEO", "pass", "info", "geo-crawlers", say("geo-crawlers.pass.title"),
+      say(robots.groups.length ? "geo-crawlers.pass.rules" : "geo-crawlers.pass.noRules"), "", { cases: ["GEO-01"] });
   }
   if (partly.length) {
-    add("GEO", "risk", "medium", "geo-crawlers-partial", "Some pages are closed to AI answer crawlers",
-      partly.slice(0, 4).map((bot) => bot.token + " cannot read " + plural(bot.blockedPages, "page")).join(", ") + ".",
-      "Check that the closed paths are meant to stay out of AI answers.", { cases: ["GEO-01"], count: partly.length, effort: "minutes" });
+    add("GEO", "risk", "medium", "geo-crawlers-partial", say("geo-crawlers-partial.title"),
+      say("listDot", { list: { items: partly.slice(0, 4).map((bot) => say("geo-crawlers-partial.row", { token: bot.token, pages: say("pagesN", { n: bot.blockedPages }) })) } }),
+      say("geo-crawlers-partial.fix"), { cases: ["GEO-01"], count: partly.length, effort: "minutes" });
   }
   if (trainingBlocked.length) {
-    add("GEO", "pass", "info", "geo-training", "Model-training crawlers are blocked by choice",
-      trainingBlocked.map((bot) => bot.token).join(", ") + " are disallowed. That does not stop answer bots from citing the site.", "");
+    add("GEO", "pass", "info", "geo-training", say("geo-training.title"),
+      say("geo-training.evidence", { list: trainingBlocked.map((bot) => bot.token).join(", ") }), "");
   }
   const homeText = input.homeText || { text: "", chars: 0, outline: [] };
   const appShell = !!(face.signals && face.signals.appShell);
   if ((homeText.chars || 0) < 300) {
-    add("GEO", "fail", "high", "geo-js-only", "AI crawlers see an almost empty start page",
-      "The HTML carries " + (homeText.chars || 0) + " characters of readable text" + (appShell ? " and an empty app root, so the content is drawn by JavaScript" : "") + ". Most AI crawlers do not run JavaScript.",
-      "Render the main content on the server or pre-render it at build time.", { cases: ["GEO-03", "CMP-01"], effort: "days" });
+    add("GEO", "fail", "high", "geo-js-only", say("geo-js-only.title"),
+      say("geo-js-only.evidence", { chars: homeText.chars || 0, shell: appShell ? say("geo-js-only.shell") : "" }),
+      say("fix.serverRender"), { cases: ["GEO-03", "CMP-01"], effort: "days" });
   } else if ((homeText.chars || 0) < 900) {
-    add("GEO", "risk", "medium", "geo-js-only", "AI crawlers see little text on the start page",
-      "The HTML carries " + homeText.chars + " characters of readable text. AI answers quote what they can read without scripts.",
-      "Put the key facts (what, who, where, price, contact) in plain HTML text.", { cases: ["GEO-03", "CMP-01"], effort: "hours" });
+    add("GEO", "risk", "medium", "geo-js-only", say("geo-js-only.risk.title"),
+      say("geo-js-only.risk.evidence", { chars: homeText.chars }),
+      say("geo-js-only.risk.fix"), { cases: ["GEO-03", "CMP-01"], effort: "hours" });
   } else {
-    add("GEO", "pass", "info", "geo-js-only", "The start page reads well without JavaScript", homeText.chars + " characters of text are in the HTML.", "", { cases: ["GEO-03", "CMP-01"] });
+    add("GEO", "pass", "info", "geo-js-only", say("geo-js-only.pass.title"), say("geo-js-only.pass.evidence", { chars: homeText.chars }), "", { cases: ["GEO-03", "CMP-01"] });
   }
   const llms = extras.llms || {};
   const llmsReport = { status: llms.status || 0, ok: false, title: "", summary: "", sections: 0, links: 0, full: !!(extras.llmsFull && extras.llmsFull.status === 200 && !extras.llmsFull.html) };
@@ -1246,19 +1282,19 @@ function analyze(input) {
     llmsReport.links = (body.match(/\[[^\]]+\]\([^)]+\)/g) || []).length;
     llmsReport.bareLinks = (body.match(/(^|\s)https?:\/\/\S+/gm) || []).length;
     const gaps = [];
-    if (!llmsReport.summary) gaps.push("a > summary line");
-    if (!llmsReport.links && !llmsReport.bareLinks) gaps.push("links to key pages");
-    else if (!llmsReport.links) gaps.push("Markdown [title](url) links");
+    if (!llmsReport.summary) gaps.push(say("geo-llms.gapSummary"));
+    if (!llmsReport.links && !llmsReport.bareLinks) gaps.push(say("geo-llms.gapLinks"));
+    else if (!llmsReport.links) gaps.push(say("geo-llms.gapMarkdown"));
     llmsReport.complete = !gaps.length;
-    add("GEO", gaps.length ? "risk" : "pass", "low", "geo-llms", gaps.length ? "llms.txt exists but lacks " + gaps.join(" and ") : "llms.txt is published",
-      "/llms.txt has " + plural(llmsReport.sections, "section") + " and " + plural(llmsReport.links || llmsReport.bareLinks || 0, "link") + (llmsReport.full ? ", and /llms-full.txt is present." : "."),
-      gaps.length ? "Follow the llmstxt.org layout: # name, > summary, then ## sections of [title](url): note." : "", { cases: ["GEO-02"], effort: "minutes" });
+    add("GEO", gaps.length ? "risk" : "pass", "low", "geo-llms", gaps.length ? say("geo-llms.lacks.title", { gaps: { items: gaps, join: "and" } }) : say("geo-llms.pass.title"),
+      say("geo-llms.evidence", { sections: say("geo-llms.sections", { n: llmsReport.sections }), links: say("geo-llms.links", { n: llmsReport.links || llmsReport.bareLinks || 0 }), full: llmsReport.full ? say("geo-llms.full") : "." }),
+      gaps.length ? say("geo-llms.lacks.fix") : "", { cases: ["GEO-02"], effort: "minutes" });
   } else if (llms.status === 200 && llms.html) {
-    add("GEO", "risk", "low", "geo-llms", "/llms.txt answers with an HTML page", "The address returns a web page, which usually means a catch-all route.",
-      "Serve a plain-text /llms.txt. The fix kit has a draft built from this review.", { cases: ["GEO-02"], effort: "minutes" });
+    add("GEO", "risk", "low", "geo-llms", say("geo-llms.html.title"), say("geo-llms.html.evidence"),
+      say("geo-llms.html.fix"), { cases: ["GEO-02"], effort: "minutes" });
   } else {
-    add("GEO", "risk", "low", "geo-llms", "No llms.txt was found", "/llms.txt returned " + (llms.status || "nothing") + ". It is a proposed convention that some AI tools read to find the pages that matter.",
-      "Publish /llms.txt. The fix kit has a draft built from this review.", { cases: ["GEO-02"], effort: "minutes" });
+    add("GEO", "risk", "low", "geo-llms", say("geo-llms.title"), say("geo-llms.none.evidence", { status: llms.status || say("nothing") }),
+      say("geo-llms.fix"), { cases: ["GEO-02"], effort: "minutes" });
   }
   const homeSchema = (face.schema && face.schema.items) || [];
   const allItems = [].concat.apply([], read.map((page) => (page.inspect.schema && page.inspect.schema.items) || []));
@@ -1269,47 +1305,51 @@ function analyze(input) {
   const socialLinks = face.socialLinks || [];
   if (entity) {
     const missing = ["name", "url", ["logo", "image"], "sameAs"].filter((prop) => Array.isArray(prop) ? !prop.some((one) => entity.props.indexOf(one) !== -1) : entity.props.indexOf(prop) === -1)
-      .map((prop) => Array.isArray(prop) ? prop.join(" or ") : prop);
+      .map((prop) => Array.isArray(prop) ? { items: prop, join: "or" } : prop);
     const unlisted = socialLinks.filter((link) => (entity.sameAs || []).map(normal).indexOf(normal(link)) === -1);
+    const type = entity.types[0];
     if (missing.length || unlisted.length) {
-      add("GEO", "pass", "info", "geo-entity-present", "A " + entity.types[0] + " entity names who is behind the site", "It is published on " + pathOf(entityPage.url) + ".", "", { cases: ["GEO-04"] });
-      add("GEO", "risk", "low", "geo-entity", "The " + entity.types[0] + " entity is incomplete",
-        (missing.length ? "It lacks " + missing.join(", ") + ". " : "") + (unlisted.length ? plural(unlisted.length, "profile linked on the page is", "profiles linked on the page are") + " not in sameAs (" + sample(unlisted.map(hostOf), 3) + ")." : ""),
-        "Complete the entity so AI answers connect the brand to its profiles. The fix kit has a draft.", { effort: "minutes" });
+      add("GEO", "pass", "info", "geo-entity-present", say("geo-entity-present.title", { type }), say("geo-entity-present.evidence", { path: pathOf(entityPage.url) }), "", { cases: ["GEO-04"] });
+      add("GEO", "risk", "low", "geo-entity", say("geo-entity.title", { type }),
+        say("geo-entity.evidence", {
+          lacks: missing.length ? say("geo-entity.lacks", { props: { items: missing } }) : "",
+          unlisted: unlisted.length ? say("geo-entity.unlisted", { n: unlisted.length, hosts: some(unlisted.map(hostOf), 3) }) : ""
+        }),
+        say("geo-entity.fix"), { effort: "minutes" });
     } else {
-      add("GEO", "pass", "info", "geo-entity", "The " + entity.types[0] + " entity is complete", "name, url, image, and sameAs are present.", "", { cases: ["GEO-04"] });
+      add("GEO", "pass", "info", "geo-entity", say("geo-entity.pass.title", { type }), say("geo-entity.pass.evidence"), "", { cases: ["GEO-04"] });
     }
   } else {
-    add("GEO", "risk", "medium", "geo-entity", "No Organization or Person entity describes who is behind the site",
-      "AI answers lean on this to name the brand, its logo, and its profiles." + (socialLinks.length ? " The page links " + plural(socialLinks.length, "profile") + " that could go in sameAs." : ""),
-      "Add Organization (or Person) JSON-LD with name, url, logo, and sameAs. The fix kit has a draft.", { cases: ["GEO-04"], effort: "minutes" });
+    add("GEO", "risk", "medium", "geo-entity", say("geo-entity.none.title"),
+      say("geo-entity.none.evidence", { profiles: socialLinks.length ? say("geo-entity.profiles", { n: socialLinks.length }) : "" }),
+      say("geo-entity.none.fix"), { cases: ["GEO-04"], effort: "minutes" });
   }
   const questionHeads = read.reduce((sum, page) => sum + (page.inspect.questionHeadings || 0), 0);
   const answerPage = read.find((page) => (page.inspect.questionHeadings || 0) > 0 || ((page.inspect.schema && page.inspect.schema.items) || []).some((item) => (item.types || []).some((type) => /^(FAQPage|QAPage)$/.test(type))));
   const faq = schemaTypes.has("FAQPage") || schemaTypes.has("QAPage") || schemaTypes.has("HowTo");
   if (questionHeads || faq) {
-    add("GEO", "pass", "info", "geo-answers", "Some content is shaped as questions and answers",
-      (faq ? "FAQ or HowTo structured data is present. " : "") + (questionHeads ? plural(questionHeads, "heading is", "headings are") + " phrased as a question." : ""), "", { cases: ["GEO-05"] });
+    add("GEO", "pass", "info", "geo-answers", say("geo-answers.pass.title"),
+      say("geo-answers.pass.evidence", { faq: faq ? say("geo-answers.faq") : "", heads: questionHeads ? say("geo-answers.heads", { n: questionHeads }) : "" }), "", { cases: ["GEO-05"] });
   } else {
-    add("GEO", "risk", "low", "geo-answers", "No content is shaped as questions and answers",
-      "No heading on the pages analyzed is a question and no FAQ data was found. AI answers favour short, direct answers under a question.",
-      "Add an FAQ block with the questions customers ask, answered in two or three sentences each.", { cases: ["GEO-05"], effort: "hours" });
+    add("GEO", "risk", "low", "geo-answers", say("geo-answers.title"),
+      say("geo-answers.evidence"),
+      say("geo-answers.fix"), { cases: ["GEO-05"], effort: "hours" });
   }
   const itemsOf = (page) => (page.inspect.schema && page.inspect.schema.items) || [];
   const datedPage = read.find((page) => page.inspect.dated || itemsOf(page).some((item) => item.props.indexOf("dateModified") !== -1 || item.props.indexOf("datePublished") !== -1));
   const dated = !!datedPage;
   const authored = read.some((page) => page.inspect.author) || allItems.some((item) => item.props.indexOf("author") !== -1);
   if (!dated || !authored) {
-    if (dated) add("GEO", "pass", "info", "geo-dated", "Pages show when they were published or changed", "A date was found on " + pathOf(datedPage.url) + ".", "", { cases: ["GEO-06"] });
-    add("GEO", "risk", "low", "geo-trust", "Pages do not say " + [!authored ? "who wrote them" : "", !dated ? "when they were updated" : ""].filter(Boolean).join(" or "),
-      "Author and date signals help search engines and AI answers judge whether a page is current and credible.",
-      "Show an author and a last-updated date on content pages, and add them to the JSON-LD.", { cases: dated ? [] : ["GEO-06"], effort: "hours" });
+    if (dated) add("GEO", "pass", "info", "geo-dated", say("geo-dated.title"), say("geo-dated.evidence", { path: pathOf(datedPage.url) }), "", { cases: ["GEO-06"] });
+    add("GEO", "risk", "low", "geo-trust", say("geo-trust.title", { what: { items: [!authored ? say("geo-trust.who") : "", !dated ? say("geo-trust.when") : ""].filter(Boolean), join: "or" } }),
+      say("geo-trust.evidence"),
+      say("geo-trust.fix"), { cases: dated ? [] : ["GEO-06"], effort: "hours" });
   } else {
-    add("GEO", "pass", "info", "geo-trust", "Pages carry author and date signals", "An author and a published or modified date were found.", "", { cases: ["GEO-06"] });
+    add("GEO", "pass", "info", "geo-trust", say("geo-trust.pass.title"), say("geo-trust.pass.evidence"), "", { cases: ["GEO-06"] });
   }
   const noai = read.filter((page) => /noai|noimageai/i.test([page.inspect.seo && page.inspect.seo.robots, page.inspect.seo && page.inspect.seo.xRobots].join(",")));
   if (noai.length) {
-    add("GEO", "pass", "info", "geo-noai", plural(noai.length, "page opts", "pages opt") + " out of AI use with noai", sample(noai.map((page) => page.path), 3) + ". Few crawlers honour this tag; robots.txt is the rule they follow.", "");
+    add("GEO", "pass", "info", "geo-noai", say("geo-noai.title", { n: noai.length }), say("geo-noai.evidence", { list: some(noai.map((page) => page.path), 3) }), "");
   }
 
   // Analytics

@@ -4222,10 +4222,13 @@ function previewReport(report) {
     item.detail = frostText(item.detail);
   });
   const ins = copy.insights || {};
+  // The template values would carry what the frost hides, so the preview reads the frosted English.
   (ins.findings || []).forEach((item) => {
     item.evidence = frostText(item.evidence);
     item.fix = frostText(item.fix);
+    delete item.msg;
   });
+  ((ins.seo && ins.seo.indexability) || []).forEach((row) => { delete row.reasonMsg; });
   if (ins.fixkit) {
     const kit = ins.fixkit;
     ins.fixkit = {
