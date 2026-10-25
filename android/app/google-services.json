@@ -1,0 +1,76 @@
+{
+  "project_info": {
+    "project_number": "976558418058",
+    "project_id": "carlosm-interactive-cv",
+    "storage_bucket": "carlosm-interactive-cv.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:976558418058:android:0a885f743e841b2733e573",
+        "android_client_info": {
+          "package_name": "com.carlosandmunoz.jarvis"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "976558418058-34leo05hfad9lic5eqbansagd30s6ev8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.carlosandmunoz.jarvis",
+            "certificate_hash": "dc14ae12b82e6aa872ed5634d4ded648d2cc92b8"
+          }
+        },
+        {
+          "client_id": "976558418058-lp0tv5huujsq44mqbril8k5dfqc004b3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-c2DLmK3lTgEofXHMD-OyOn0d6W7XFqw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "976558418058-lp0tv5huujsq44mqbril8k5dfqc004b3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:976558418058:android:63c1266e732e8a8633e573",
+        "android_client_info": {
+          "package_name": "com.carlosandmunoz.jarvis.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "976558418058-lp0tv5huujsq44mqbril8k5dfqc004b3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-c2DLmK3lTgEofXHMD-OyOn0d6W7XFqw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "976558418058-lp0tv5huujsq44mqbril8k5dfqc004b3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,6 +1,11 @@
 package com.carlosandmunoz.jarvis.ui
 
+import android.content.Intent
+import android.provider.Settings
 import android.text.format.DateUtils
+import androidx.core.app.NotificationManagerCompat
+import androidx.compose.ui.platform.LocalContext
+import com.carlosandmunoz.jarvis.push.Push
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -150,12 +155,15 @@ private val ICONS: Map<Tab, ImageVector> = mapOf(Tab.Overview to Icons.Filled.Da
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (Boolean) -> Unit) {
+fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, openTab: String?, tabOpened: () -> Unit, setLock: (Boolean) -> Unit) {
     var tab by rememberSaveable { mutableStateOf(Tab.Overview) }
     var product by rememberSaveable { mutableStateOf("review") }
     var page by rememberSaveable { mutableStateOf("") }
     val snack = remember { SnackbarHostState() }
     LaunchedEffect(s.toast) { s.toast?.let { snack.showSnackbar(it); vm.toastShown() } }
+    LaunchedEffect(openTab) {
+        openTab?.let { name -> Tab.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }?.let { tab = it; page = "" }; tabOpened() }
+    }
     if (page.isNotEmpty()) BackHandler { page = "" }
 
     AnimatedContent(page, transitionSpec = {
@@ -314,6 +322,25 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     }
                 }
                 Muted("Goals, thresholds and search queries are edited in Admin › Statistics on the web.")
+            }
+            Panel("Push notifications") {
+                val context = LocalContext.current
+                val allowed = NotificationManagerCompat.from(context).areNotificationsEnabled()
+                if (!allowed) Text("Notifications are off for Jarvis on this phone.", color = J.amber, fontSize = 13.sp)
+                mapOf(Push.ALERTS to ("Alerts" to "A threshold crossing from the hourly watch, at any hour."), Push.BRIEFING to ("Daily briefing" to "The 07:40 briefing, next to the email."))
+                    .forEach { (kind, text) ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) { Text(text.first); Muted(text.second) }
+                            Switch(s.push[kind] != false, { vm.setPush(kind, it) })
+                        }
+                    }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ActionButton("Send a test", "test-push" in s.running) { vm.testPush() }
+                    ActionButton("Sound and style", false) {
+                        context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
+                    }
+                }
+                Muted("Email and push are separate: the mail switches above do not silence the phone.")
             }
             Panel("About") {
                 KeyRow("Version", BuildConfig.VERSION_NAME)

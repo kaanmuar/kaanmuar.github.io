@@ -4,6 +4,7 @@ import android.app.Application
 import com.carlosandmunoz.jarvis.data.Api
 import com.carlosandmunoz.jarvis.data.Auth
 import com.carlosandmunoz.jarvis.data.Vault
+import com.carlosandmunoz.jarvis.push.Push
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
@@ -18,5 +19,6 @@ class JarvisApp : Application() {
         vault = Vault(this)
         auth = Auth(http, vault)
         api = Api(this, http, auth)
+        Push.channels(this)
     }
 }
