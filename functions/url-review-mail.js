@@ -175,10 +175,10 @@ function money(payments) {
   let tests = 0;
   const kinds = {};
   payments.forEach((row) => {
-    if (row.paid !== true || !REVENUE[row.status]) return;
+    if (row.paid !== true || row.refunded === true || !REVENUE[row.status]) return;
     if (row.test) { tests += 1; return; }
     paidCount += 1;
-    usd += Number(row.priceUsd) || 0;
+    usd += (Number(row.priceUsd) || 0) - (Number(row.refundedUsd) || 0);
     bump(kinds, REVENUE[row.status]);
   });
   return { usd: Math.round(usd * 100) / 100, paidCount, tests, kinds };
@@ -268,7 +268,7 @@ function summarizePeriod(opens, rows, captures, alerts) {
   });
   // A payment takes the source of the review it unlocked, else of the asker's review in this period.
   const paidSources = {};
-  payments.filter((row) => row.paid === true && REVENUE[row.status] && !row.test).forEach((row) => {
+  payments.filter((row) => row.paid === true && row.refunded !== true && REVENUE[row.status] && !row.test).forEach((row) => {
     bump(paidSources, sourceById[row.reportId] || sourceByEmail[String(row.email || "").toLowerCase()] || "no review in this period");
   });
   const paid = money(payments);
@@ -426,6 +426,7 @@ function reportSubject(title, label, summary, failed) {
 }
 
 module.exports = {
+  money,
   openRecord,
   openRows,
   openSource,
