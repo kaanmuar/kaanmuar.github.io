@@ -128,6 +128,47 @@ test("the calendar takes the queued times from the ledgers, the hub date follows
   assert.deepEqual(cal.plan(posts, { from: "2026-11-01", moveQueued: true }).moves.map((m) => m.post.id).sort(), ["runs-100/01-a", "runs-100/02-b"]);
 });
 
+test("the launch set's calendar becomes one post per language in the common layout, and its posts take lane 5 in the clips' language order", () => {
+  const old = "Date,Time,Channel,Language,Post,Format,Asset,How,Caption key\n" + [
+    "2026-10-29,17:00,LinkedIn,es,exports,PDF carousel,es/exports-carousel.pdf,\"Buffer composer, attach PDF\",linkedin",
+    "2026-10-29,08:30,LinkedIn,es,exports,Image 1080x1350,es/exports-portrait.jpg,Buffer CSV,linkedin",
+    "2026-10-29,12:00,Instagram story,en,exports,Image 1080x1920,en/exports-story.jpg,\"Buffer composer, add link sticker\",story",
+    "2026-10-29,18:30,YouTube Shorts,en,exports,Video 1080x1920,en/exports-reel.mp4,\"Buffer composer, title from youtubeTitle\",youtube"
+  ].join("\n") + "\n";
+  assert.equal(cal.launchCalendar(old), "Date,Time,Channel,Post,Asset\n" + [
+    "2026-10-29,08:30,linkedin,es/exports,es/exports-portrait.jpg",
+    "2026-10-29,12:00,instagram-story,en/exports,en/exports-story.jpg",
+    "2026-10-29,17:00,linkedin-carousel,es/exports,es/exports-carousel.pdf",
+    "2026-10-29,18:30,youtube,en/exports,en/exports-reel.mp4"
+  ].join("\n") + "\n");
+  assert.throws(() => cal.launchCalendar("Date,Time,Channel,Language,Post,Format,Asset\n2026-10-29,08:30,Pinterest,en,x,Image,a.jpg\n"), /Pinterest/);
+
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "launch-"));
+  const dir = path.join(root, "media/social-posts/launch-2026-10");
+  fs.mkdirSync(path.join(root, "assets/social"), { recursive: true });
+  const langs = ["de", "en", "es", "fr", "it", "pt"];
+  langs.forEach((lang) => {
+    fs.mkdirSync(path.join(dir, lang), { recursive: true });
+    fs.writeFileSync(path.join(dir, lang, "a11y-captions.json"), "{}");
+  });
+  const lines = langs.flatMap((lang) => cal.NETWORKS.map((net) => "2026-10-26,08:30," + (net === "youtube" ? "YouTube Shorts" : net) + "," + lang + ",a11y,Image,a.jpg,Buffer CSV," + net));
+  fs.writeFileSync(path.join(dir, "calendar.csv"), cal.launchCalendar("Date,Time,Channel,Language,Post,Format,Asset,How,Caption key\n" + lines.join("\n")));
+  fs.writeFileSync(path.join(root, "assets/social/buffer.json"), JSON.stringify({ version: 1, posts: {
+    "launch-2026-10/en/a11y": [{ channel: "youtube", profile: "youtube (QA-lab)", id: "y1", at: "2026-10-19T03:40:52.000Z", result: "sent" }]
+  } }));
+  const { posts } = cal.load(root);
+  assert.deepEqual(posts.map((p) => p.id + " " + p.lane + " " + p.date).sort(), langs.map((lang) => "launch-2026-10/" + lang + "/a11y 5 2026-10-26"));
+  const { moves } = cal.plan(posts, { from: "2026-10-26" });
+  assert.deepEqual(moves.map((m) => m.day + " " + m.lane + " " + m.post.slug), [
+    "2026-10-27 5 es/a11y", "2026-10-28 5 pt/a11y", "2026-10-29 5 de/a11y", "2026-10-30 5 fr/a11y", "2026-10-31 5 it/a11y"
+  ], "the English post went out on YouTube and keeps its day's lane 5");
+  assert.deepEqual(cal.write({ moves, held: [] }, root), ["launch-2026-10"]);
+  assert.ok(!fs.existsSync(path.join(dir, "captions.json")), "the launch set keeps its captions per post");
+  const csv = fs.readFileSync(path.join(dir, "calendar.csv"), "utf8");
+  assert.match(csv, new RegExp("^2026-10-31," + cal.slotTime("2026-10-31", "linkedin", 5) + ",linkedin,it/a11y,a\\.jpg$", "m"));
+  assert.match(csv, /^2026-10-26,08:30,linkedin,en\/a11y,/m);
+});
+
 test("a daily Live Reports batch sends its first review to the networks and keeps the others on the hub", () => {
   const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "auto-")), "batch.json");
   const run = (host) => ({ host, title: [host + ": {overall}."], body: "b", action: "a", areas: { SEO: 70 }, overall: 70, scope: "Requested", fetchedAt: "2026-10-24T10:00:00Z", pages: 1 });

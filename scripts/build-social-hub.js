@@ -125,8 +125,7 @@ function launchPosts(files) {
   if (!files.has(dir + "/calendar.csv")) return [];
   const first = {};
   csvRows(read(dir + "/calendar.csv")).forEach((row) => {
-    const key = row.Language + "/" + row.Post;
-    if (!first[key] || row.Date < first[key]) first[key] = row.Date;
+    if (!first[row.Post] || row.Date < first[row.Post]) first[row.Post] = row.Date;
   });
   const posts = [];
   [...files].filter((file) => file.startsWith(dir + "/") && file.endsWith("-captions.json")).sort().forEach((file) => {

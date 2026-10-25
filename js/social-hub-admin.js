@@ -14,7 +14,6 @@
   const LANGS = ["en", "es", "pt", "de", "fr", "it"];
   // Calendar channels in the order a post goes out. Facebook goes through the Graph API, the rest through Buffer.
   const CHANNELS = [["linkedin", "LinkedIn"], ["x", "X"], ["instagram", "Instagram"], ["instagram-story", "Story"], ["facebook", "Facebook"], ["youtube", "YouTube"], ["tiktok", "TikTok"]];
-  const LAUNCH_CHANNELS = { linkedin: "linkedin", x: "x", facebook: "facebook", tiktok: "tiktok", "youtube shorts": "youtube", "instagram feed": "instagram", "instagram reels": "instagram", "instagram story": "instagram-story" };
   const DAY = /^\d{4}-\d{2}-\d{2}$/;
   const HTTPS = /^https:\/\/[^\s<>"'`]+$/;
   const REPO_IMAGE = /^(assets|media)\/[\w/.-]+\.(jpe?g|png|webp)$/i;
@@ -140,17 +139,16 @@
     return String(id || "").split("/")[0];
   }
 
-  // calendar.csv times are Bogotá wall-clock (UTC-5, no daylight saving). The launch calendar names its
-  // channels in words and adds a Language column, which is part of the post id.
+  // calendar.csv times are Bogotá wall-clock (UTC-5, no daylight saving). A launch set post is <lang>/<topic>.
   function parseCalendar(csv, batch) {
     const [head, ...rows] = String(csv || "").trim().split("\n").map((line) => line.split(",").map((cell) => cell.trim()));
     const slots = {};
     if (!head) return slots;
     rows.forEach((cells) => {
       const row = Object.fromEntries(head.map((key, i) => [key, cells[i] || ""]));
-      const channel = row.Language ? LAUNCH_CHANNELS[row.Channel.toLowerCase()] : row.Channel;
+      const channel = row.Channel;
       if (!channel || !row.Post || !DAY.test(row.Date)) return;
-      const id = batch + "/" + (row.Language ? row.Language + "/" : "") + row.Post;
+      const id = batch + "/" + row.Post;
       const at = row.Date + "T" + (/^\d{2}:\d{2}$/.test(row.Time) ? row.Time : "00:00") + ":00-05:00";
       const post = slots[id] || (slots[id] = {});
       if (!post[channel] || at < post[channel]) post[channel] = at;

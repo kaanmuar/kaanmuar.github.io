@@ -15,8 +15,11 @@ function posts() {
   write("tips/calendar.csv", "Date,Time,Channel,Post,Asset\n2026-10-26,17:55,youtube,01-hsts,clip/01-hsts.mp4\n2026-10-27,17:55,youtube,02-alt,clip/02-alt.mp4\n2026-10-27,08:00,x,02-alt,feed/02-alt.jpg\n");
   write("runs/captions.json", JSON.stringify({ "01-ilo": { linkedin: "ilo.org" } }));
   write("runs/calendar.csv", "Date,Time,Channel,Post,Asset\n2026-10-27,08:00,x,01-ilo,feed/01-ilo.jpg\n");
-  write("launch/calendar.csv", "Date,Time,Channel,Language,Post,Format,Asset,How,Caption key\n2026-10-19,13:30,YouTube Shorts,es,talking,Video,es/talking.mp4,Buffer composer,youtube\n");
+  write("launch/calendar.csv", "Date,Time,Channel,Post,Asset\n2026-10-19,13:30,youtube,es/talking,es/talking-reel.mp4\n2026-10-26,18:00,tiktok,en/a11y,en/a11y-reel.mp4\n2026-10-26,18:00,tiktok,es/a11y,es/a11y-reel.mp4\n");
   write("launch/es/talking-captions.json", JSON.stringify({ linkedin: "Alguien preguntó", youtube: "Alguien preguntó si el sitio funciona" }));
+  write("launch/en/a11y-captions.json", JSON.stringify({ tiktok: "Someone asked whether the site works with a keyboard and a screen reader. Where would you even start?" }));
+  write("launch/es/a11y-captions.json", JSON.stringify({ tiktok: "Alguien preguntó si el sitio funciona con teclado y lector de pantalla. ¿Por dónde empezarías?" }));
+  write("promo/captions.json", JSON.stringify({ "01-en": { x: "QA-lab URL Review reads a public page and describes it back to you, one" }, "02-en": { x: "QA-lab URL Review reads a public page and describes it back to you, two" } }));
   return batchIndex(root);
 }
 
@@ -40,4 +43,12 @@ test("then by its calendar slot, which is Bogotá time, unless two posts share i
   assert.strictEqual(matchPost(index, { text: "?", dueAt: "2026-10-27T13:00:00.000Z" }, "x"), null);
   assert.strictEqual(matchPost(index, { text: "?", dueAt: "2026-10-19T18:30:00.000Z" }, "youtube"), "launch/es/talking");
   assert.strictEqual(matchPost(index, { text: "nothing like it" }, "linkedin"), null);
+});
+
+test("a caption edited after it was written matches by its opening words, unless two posts open the same way", () => {
+  const index = posts();
+  const tiktok = { text: "Someone asked whether the site works with a keyboard and a screen reader. Where would you even start? First review included", dueAt: "2026-10-26T23:00:00.000Z" };
+  assert.strictEqual(matchPost(index, tiktok, "tiktok"), "launch/en/a11y");
+  assert.strictEqual(matchPost(index, { text: "Other words", dueAt: "2026-10-26T23:00:00.000Z" }, "tiktok"), null, "the six languages share the slot");
+  assert.strictEqual(matchPost(index, { text: "QA-lab URL Review reads a public page and describes it back to you. This film" }, "x"), null);
 });

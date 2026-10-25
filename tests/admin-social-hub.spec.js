@@ -51,7 +51,7 @@ const CAPTIONS = {
 const CALENDARS = {
   'auto-2099-01-01': 'Date,Time,Channel,Post,Asset\n2099-01-02,07:30,linkedin,01-u-example-com,feed/a.jpg\n2099-01-02,17:10,facebook,01-u-example-com,feed/a.jpg\n2099-01-02,17:45,youtube,01-u-example-com,clip/a.mp4\n',
   'tips-2026-10': 'Date,Time,Channel,Post,Asset\n2026-10-20,07:50,linkedin,01-img-size,feed/a.jpg\n2026-10-20,17:45,youtube,01-img-size,clip/a.mp4\n2026-10-20,18:30,tiktok,01-img-size,clip/a.mp4\n',
-  'launch-2026-10': 'Date,Time,Channel,Language,Post,Format,Asset,How,Caption key\n2026-10-19,08:30,LinkedIn,de,talking,Image,de/a.jpg,Buffer CSV,linkedin\n'
+  'launch-2026-10': 'Date,Time,Channel,Post,Asset\n2026-10-19,08:30,linkedin,de/talking,de/a.jpg\n'
 };
 const LEDGERS = {
   buffer: { version: 1, posts: {
