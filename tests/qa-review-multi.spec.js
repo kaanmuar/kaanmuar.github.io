@@ -153,9 +153,12 @@ test('the comparison speaks the page language', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   const records = recordsWith(true);
   const report = records[0].report;
-  const msg = { title: { id: 'seo-description-missing.title', vars: { n: 6 } }, fix: { id: 'seo-description-missing.fix', vars: {} } };
+  const msgs = {
+    'seo-description-missing': { title: { id: 'seo-description-missing.title', vars: { n: 6 } }, fix: { id: 'seo-description-missing.fix', vars: {} } },
+    'sec-cookies': { title: { id: 'sec-cookies.insecure', vars: { n: 1 } }, fix: { id: 'sec-cookies.fix', vars: {} } }
+  };
   records[0].report = Object.assign({}, report, { insights: Object.assign({}, report.insights, {
-    findings: report.insights.findings.map((item) => item.key === 'seo-description-missing' ? Object.assign({}, item, { msg }) : item)
+    findings: report.insights.findings.map((item) => msgs[item.key] ? Object.assign({}, item, { msg: msgs[item.key] }) : item)
   }) });
   await signIn(page, records, '/qa-review-es.html?comparison=cmp1', seen);
   const box = page.locator('#multi-overlay');
@@ -193,6 +196,9 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(findings).toContainText('Escribe para cada página una descripción de 50 a 160 caracteres');
   await expect(findings).not.toContainText('6 pages have no meta description');
   await expect(findings).toContainText('12 indexable pages are missing from the sitemap');
+  await expect(findings).toContainText('1 cookie se envía sin Secure');
+  await expect(findings).toContainText('Pon Secure en todas las cookies');
+  await expect(findings).not.toContainText('1 cookie is sent without Secure');
   const geo = box.locator('.multi-sec[data-sec="geo"] .multi-cell').first();
   await expect(geo).toContainText('El texto que recibe un rastreador de IA');
   await expect(geo).not.toContainText(/The text an AI crawler|Who may read/);
