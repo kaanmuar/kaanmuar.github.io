@@ -80,7 +80,8 @@ const TITLES = {
   "follow-stop": "Follow-up notes were stopped",
   "payment-unmatched": "PayPal took a payment that matches no open checkout. Nothing was unlocked.",
   "payment-refunded": "A payment was refunded or reversed on PayPal",
-  "payment-disputed": "A buyer opened or updated a PayPal dispute"
+  "payment-disputed": "A buyer opened or updated a PayPal dispute",
+  "credit-returned": "A paid run failed and its credit was given back"
 };
 
 function rowsFor(source) {
@@ -108,6 +109,7 @@ function rowsFor(source) {
   add("Purpose", source.purpose);
   add("Capture", source.kind);
   add("PayPal order", source.sessionId);
+  add("PayPal payer", source.payerEmail && source.payerEmail !== source.email ? source.payerEmail : "");
   add("Recorded by", source.via);
   add("Refunded", source.refundedUsd ? String(source.refundedUsd) + " USD" : "");
   add("Dispute", source.disputeStatus ? [source.disputeStatus, source.disputeOutcome].filter(Boolean).join(", ") : "");

@@ -896,9 +896,11 @@ function judgeAttempts(rows, identity, request) {
   const used = new Set(mine.filter((row) => row.status === "run-credit-used").map((row) => row.creditId));
   const compareWith = !Array.isArray(request) && request ? String(request.compareWith || "") : "";
   const billing = standingFor(mine, identity).billing;
+  const testRun = !Array.isArray(request) && !!(request && request.test);
+  // A sandbox credit pays only for a test run, and a live credit only for a live one.
   // A credit bought for a comparison pays for that comparison only, and a plain credit never pays for one.
   // A first run's credit pays for its scope only, so it carries no tools; the extras over a pass are spent by the pass.
-  const credit = mine.find((row) => row.status === "run-credit" && row.passExtra !== true && !used.has(row.id) && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, billing === "scope" && !compareWith ? [] : frameworksPriced.tools) && sameScope(row, scope) && String(row.compareWith || "") === compareWith);
+  const credit = mine.find((row) => row.status === "run-credit" && row.passExtra !== true && !used.has(row.id) && (row.test === true) === testRun && sameFrameworks(row.frameworks, frameworksPriced.frameworks) && sameTools(row.tools, billing === "scope" && !compareWith ? [] : frameworksPriced.tools) && sameScope(row, scope) && String(row.compareWith || "") === compareWith);
   // A comparison is 9 USD for each competitor, whichever device ran the first review.
   const compare = !!compareWith;
   if (!compare && billing === "scope" && scope.cents === 0) return { ok: true };
@@ -4024,9 +4026,13 @@ function paypalPaid(order) {
   const amount = Number(value);
   const captured = capture.status === "COMPLETED";
   const paid = order.status === "COMPLETED" && captured && currency === "USD" && priceMatches(amount);
+  const payer = order.payer || {};
+  const payerName = [payer.name && payer.name.given_name, payer.name && payer.name.surname].filter(Boolean).join(" ");
   return {
     paid,
     captured,
+    payerEmail: String(payer.email_address || "").trim().toLowerCase().slice(0, 120),
+    payerName: payerName.slice(0, 120),
     captureId: String(capture.id || "").replace(/[^A-Z0-9]/g, "").slice(0, 22),
     capturedAmount: captured && Number.isFinite(amount) ? amount : 0,
     capturedCurrency: currency,
@@ -4134,6 +4140,8 @@ async function inspectPayPal(options) {
     paid: result.paid,
     pending: result.pending,
     captured: result.captured,
+    payerEmail: result.payerEmail,
+    payerName: result.payerName,
     captureId: result.captureId,
     capturedAmount: result.capturedAmount,
     capturedCurrency: result.capturedCurrency,

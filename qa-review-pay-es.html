@@ -511,14 +511,18 @@
         }));
         async function confirm(sessionId, provider) {
             note.textContent = pc.t("asking", { name: names[provider] || names.paypal });
-            const res = await fetch(endpoint() + "/checkout/confirm", {
-                method: "POST",
-                credentials: "include",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({ sessionId: sessionId, purpose: purpose, provider: provider, deviceId: deviceId(), testKey: testKey() })
-            });
-            const body = await res.json();
+            let body = {};
+            try {
+                const res = await fetch(endpoint() + "/checkout/confirm", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ sessionId: sessionId, purpose: purpose, provider: provider, deviceId: deviceId(), testKey: testKey() })
+                });
+                body = await res.json();
+            } catch (error) { body = {}; }
             note.textContent = body.paid ? pc.t("confirmed", { name: names[provider] || names.paypal }) : (body.error || pc.t("notConfirmed"));
+            if (body.paid) charge.disabled = true;
             if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_result", "URL Review", body.paid ? "paid" : "unpaid");
             if (body.paid && purpose === "pass") {
                 location.href = "qa-review-account.html";
@@ -540,7 +544,9 @@
                     const run = JSON.parse(sessionStorage.getItem(RUN_PAID_KEY) || "null");
                     if (run) sessionStorage.setItem(RUN_PAID_KEY, JSON.stringify(Object.assign(run, { paid: true })));
                 } catch (error) { /* the review page shows the total again; the server still uses the credit */ }
+                location.href = pc.review;
             }
+            if (body.paid && purpose === "report" && body.reportId) location.href = pc.review + "?report=" + encodeURIComponent(body.reportId);
             if (body.paid && compared && compared.checkout) {
                 compared.paid = true;
                 compared.checkout = false;
