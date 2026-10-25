@@ -68,6 +68,10 @@ async function serviceAccount(fetchImpl) {
 
 // --- money -----------------------------------------------------------------------------------------------------
 
+// Rows saved before payments recorded `test` and `provider` still carry the Stripe session or PayPal capture.
+const isTestPayment = (row) => row.test === true || row.paypalMode === "sandbox" || /^cs_test_/.test(String(row.sessionId || ""));
+const providerOf = (row) => row.provider || (/^cs_/.test(String(row.sessionId || "")) ? "stripe" : row.captureId ? "paypal" : "not recorded");
+
 function moneyRows(rows, { start, priorStart }) {
   // A paid review run carries no price; the money sits on the purchase or credit row it used.
   const now = { usd: 0, count: 0, runs: 0 };
@@ -77,7 +81,7 @@ function moneyRows(rows, { start, priorStart }) {
   const daily = {};
   let refunds = 0;
   rows.forEach((row) => {
-    if (row.test === true || !row.paid) return;
+    if (isTestPayment(row) || !row.paid) return;
     const at = Date.parse(row.createdAt || "");
     if (!Number.isFinite(at) || at < priorStart) return;
     const usd = Number(row.priceUsd) || 0;
@@ -89,7 +93,7 @@ function moneyRows(rows, { start, priorStart }) {
     bucket.usd += usd;
     bucket.count += 1;
     if (at < start) return;
-    tally(providers, row.provider || "not recorded", usd);
+    tally(providers, providerOf(row), usd);
     tally(purposes, row.purpose || (String(row.id || "").startsWith("credit-") || /credit/.test(row.status || "") ? "credit" : "review"), usd);
     tally(daily, isoDay(at), usd);
     refunds += Number(row.refundedUsd) || (/refunded/.test(row.status || "") ? usd : 0);
@@ -239,6 +243,9 @@ async function searchConsole(ctx) {
       pages: (byPage.rows || []).map((r) => ({ page: r.keys[0].replace(ORIGIN, "") || "/", clicks: r.clicks, impressions: r.impressions }))
     };
   } catch (error) {
+    if (error.status === 403 && /SERVICE_DISABLED|has not been used|is disabled/i.test(error.name + " " + error.message)) {
+      return { ok: false, error: "The Search Console API is turned off for this project.", need: "Search Console: in the Cloud console open APIs & Services > Library > Google Search Console API and click Enable (or run: gcloud services enable searchconsole.googleapis.com)." };
+    }
     if (error.status === 403 || error.status === 401) {
       const sa = await serviceAccount(ctx.fetch);
       return { ok: false, error: "No access to " + site + ".", need: "Search Console: Settings > Users and permissions > Add user " + (sa || "the functions service account") + " with Restricted permission for " + site + "." };
