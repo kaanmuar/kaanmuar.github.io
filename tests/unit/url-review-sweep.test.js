@@ -180,7 +180,7 @@ test("the ops table names every job once and flags failed, quiet and never-run j
   assert.equal(new Set(names).size, names.length);
   assert.equal(ops.cron("sweepReviews"), "*/15 0-5 * * *");
   assert.throws(() => ops.cron("nope"));
-  assert.equal(ops.budget("sweepPerDay", {}), 24);
+  assert.equal(ops.budget("sweepPerDay", {}), 96);
   assert.equal(ops.budget("sweepPerDay", { SWEEP_PER_DAY: "40" }), 40);
   const now = Date.parse("2026-10-23T13:00:00Z");
   const fresh = new Date(now - 3600000).toISOString();
@@ -199,6 +199,37 @@ test("the Live Reports batch starts after the night's last sweep tick", () => {
   assert.ok(hour(ops.cron("ensureLiveReportsBatch")) > lastSweepHour);
   const firstBackupBogota = hour(ops.job("auto-live-reports.yml").cron) - 5;
   assert.ok(firstBackupBogota > lastSweepHour);
+});
+
+test("96 a night: 24 ticks of up to 4 reviews, each tick done before the next, the batch and the diagnosis (#1099)", () => {
+  const [minutes, hours] = ops.cron("sweepReviews").split(" ");
+  const every = Number(minutes.split("/")[1]);
+  const [first, last] = hours.split("-").map(Number);
+  const ticks = (last - first + 1) * (60 / every);
+  assert.equal(ticks * sweep.PER_TICK, sweep.PER_DAY);
+  assert.equal(ops.budget("sweepPerDay", {}), sweep.PER_DAY);
+  assert.ok(sweep.TICK_MS <= every * 60000 && sweep.TICK_MS < sweep.TICK_SECONDS * 1000);
+  assert.ok(sweep.TICK_SECONDS * 1000 <= every * 60000, "a tick never runs into the next one (maxInstances 1)");
+  const lastTickEnds = last * 60 + (60 - every) + sweep.TICK_SECONDS / 60;
+  const at = (job) => { const [m, h] = ops.cron(job).split(" ").map(Number); return h * 60 + m; };
+  ["ensureLiveReportsBatch", "diagnoseReviewFailures"].forEach((job) => assert.ok(at(job) >= lastTickEnds, job));
+
+  assert.equal(sweep.roomForReview(0), true);
+  assert.equal(sweep.roomForReview(sweep.TICK_MS - sweep.REVIEW_MS), true);
+  assert.equal(sweep.roomForReview(sweep.TICK_MS - sweep.REVIEW_MS + 1), false);
+  // At the usual ~100 s a review all four start; at the 240 s stop, three do.
+  const started = (ms) => { let n = 0; for (let t = 0; n < sweep.PER_TICK && sweep.roomForReview(t); t += ms) n += 1; return n; };
+  assert.deepEqual([started(100000), started(150000), started(sweep.REVIEW_MS)], [4, 4, 3]);
+});
+
+test("the watchdog flags a night that reviewed under half the cap (#1099)", () => {
+  let state = {};
+  for (let i = 0; i < 40; i += 1) state = sweep.tally(state, "2026-10-25", i % 10 ? "done" : "failed", { host: "h" + i + ".co" });
+  state = sweep.tally(state, "2026-10-25", "skipped", { host: "s.co" });
+  assert.deepEqual(sweep.night(state, "2026-10-25", 96), { done: 36, failed: 4, skipped: 1, short: true });
+  for (let i = 0; i < 10; i += 1) state = sweep.tally(state, "2026-10-25", "done", { host: "m" + i + ".co" });
+  assert.equal(sweep.night(state, "2026-10-25", 96).short, false);
+  assert.deepEqual(sweep.night({}, "2026-10-26", 96), { done: 0, failed: 0, skipped: 0, short: true });
 });
 
 test("the GitHub rows match the crons in the workflow files", () => {
