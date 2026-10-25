@@ -523,7 +523,8 @@
             } catch (error) { body = {}; }
             note.textContent = body.paid ? pc.t("confirmed", { name: names[provider] || names.paypal }) : (body.error || pc.t("notConfirmed"));
             if (body.paid) charge.disabled = true;
-            if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_result", "URL Review", body.paid ? "paid" : "unpaid");
+            if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_pay_result", "URL Review", body.paid ? "paid" : "unpaid", body.paid ? { value: Number(body.priceUsd) || 0, currency: "USD" } : {});
+            if (window.SiteAnalytics && body.paid && body.reference && !body.test) SiteAnalytics.track("purchase", { transaction_id: body.reference, value: Number(body.priceUsd) || 0, currency: "USD", items: [{ item_id: purpose, item_name: purpose, price: Number(body.priceUsd) || 0, quantity: 1 }] });
             if (body.paid && purpose === "pass") {
                 location.href = "qa-review-account.html";
                 return;

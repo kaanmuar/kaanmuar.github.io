@@ -123,3 +123,23 @@ test("the emailed report PDF is watermarked with the address it is sent to", () 
   assert.doesNotMatch(customerMail.reportPdf(run({ email: "" })).html, /class="wm"/);
   assert.match(customerMail.reportPdf(run({ email: "<b>@x.co" })).html, /<span>&lt;b&gt;@x\.co<\/span>/);
 });
+
+test("the receipt names the item, amount, PayPal ids and seller in the buyer's language, and says it is not a tax invoice", () => {
+  for (const lang of ["en", "es", "pt", "de", "fr", "it"]) {
+    const mail = customerMail.receiptMail({ lang, purpose: "report", host: "example.com", priceUsd: 4.75, listUsd: 9.5, coupon: "HALF", percent: 50, reference: "9bab0d9c9f112599", orderId: "5O190127TN364715T", captureId: "0YX61976ET982492D", paidAt: "2026-10-25T19:00:00.000Z" });
+    assert.equal(mail.lang, lang);
+    assert.match(mail.subject, /US\$4\.75/, lang);
+    for (const shown of ["example.com", "US$9.50", "HALF (50%)", "2026-10-25", "9bab0d9c9f112599", "5O190127TN364715T", "0YX61976ET982492D", "Carlos A. Muñoz", "qa@carlosandmunoz.com", "factura electrónica"]) {
+      assert.ok(mail.text.includes(shown), lang + " " + shown);
+    }
+    assert.doesNotMatch(mail.text + mail.html, /\{\w+\}|undefined/, lang);
+  }
+});
+
+test("a receipt at list price shows no coupon, and a sandbox receipt says no money moved", () => {
+  const mail = customerMail.receiptMail({ purpose: "new-run", priceUsd: 9.5, reference: "abc", test: true, paidAt: "2026-10-25T19:00:00.000Z" });
+  assert.equal(mail.lang, "en");
+  assert.match(mail.text, /Item: Review run/);
+  assert.doesNotMatch(mail.text, /List price|Coupon|PayPal order/);
+  assert.match(mail.text, /No money moved/);
+});
