@@ -207,3 +207,13 @@ test("a post with translated captions gets a page per language, and each hub pag
   assert.deepEqual(hub.forLang(posts, "es").map((p) => p.id), ["b/01-x-es"]);
   assert.deepEqual(hub.forLang(posts, "fr").map((p) => p.id), ["b/01-x"]);
 });
+
+test("the YouTube feed adds new uploads and re-titles the ones it still lists, and leaves older ones as they were", () => {
+  const ledger = { videos: { a: { title: "Old title #Shorts", published: "2026-10-19T06:02:40+00:00" }, b: { title: "Gone from the feed", published: "2026-10-01T00:00:00+00:00" } } };
+  const entry = (id, title, published) => "<entry><yt:videoId>" + id + "</yt:videoId><published>" + published + "</published><media:title>" + title + "</media:title></entry>";
+  const counts = hub.mergeFeed(ledger, "<feed>" + entry("a", "New &amp; right title #Shorts", "2026-10-19T06:02:40+00:00") + entry("c", "Fresh", "2026-10-24T00:00:00+00:00") + "</feed>");
+  assert.deepEqual(counts, { added: 1, retitled: 1 });
+  assert.equal(ledger.videos.a.title, "New & right title #Shorts");
+  assert.equal(ledger.videos.b.title, "Gone from the feed");
+  assert.deepEqual(Object.keys(ledger.videos), ["b", "a", "c"]);
+});

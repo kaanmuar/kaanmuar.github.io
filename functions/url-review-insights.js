@@ -204,6 +204,33 @@ function framesGuarded(xfo) {
   return !!xfo && !/allow-from/i.test(xfo);
 }
 
+const COOP_GUARDED = ["same-origin", "same-origin-allow-popups", "noopener-allow-popups"];
+const ISOLATING_COEP = ["require-corp", "credentialless"];
+
+// "same-origin; report-to=\"coop\"" reads as same-origin.
+function policyOf(value) {
+  return String(value || "").split(";")[0].trim().toLowerCase();
+}
+
+const BFCACHE_BLOCKERS = {
+  UnloadHandlerExistsInMainFrame: ["an unload listener on the page", "Listen for pagehide instead of unload."],
+  UnloadHandlerExistsInSubFrame: ["an unload listener in an embedded frame", "Ask the frame's vendor for a version without unload, or load it after a click."],
+  MainResourceHasCacheControlNoStore: ["Cache-Control: no-store on the HTML", "Drop no-store from HTML that holds no private data; use no-cache or a short max-age."],
+  JsNetworkRequestReceivedCacheControlNoStoreResource: ["a script request answered with no-store", "Send private data with no-cache instead of no-store, or fetch it again on pageshow."],
+  WebSocket: ["an open WebSocket", "Close the WebSocket on pagehide and open it again on pageshow."],
+  WebRTC: ["an open WebRTC connection", "Close the connection on pagehide and open it again on pageshow."],
+  WebTransport: ["an open WebTransport session", "Close the session on pagehide and open it again on pageshow."],
+  BroadcastChannel: ["an open BroadcastChannel", "Close the channel on pagehide."],
+  WebLocks: ["a held Web Lock", "Release locks on pagehide."],
+  OutstandingNetworkRequestFetch: ["a fetch still running when the page was left", "Abort pending requests on pagehide."],
+  OutstandingNetworkRequestXHR: ["an XHR still running when the page was left", "Abort pending requests on pagehide."],
+  IndexedDBEvent: ["an IndexedDB transaction left open", "Close IndexedDB connections on pagehide."]
+};
+
+function bfcacheBlocker(reason) {
+  return BFCACHE_BLOCKERS[reason] || [String(reason).replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase(), ""];
+}
+
 function grade(score) {
   if (score >= 90) return "A";
   if (score >= 80) return "B";
@@ -1265,6 +1292,7 @@ function analyze(input) {
       nosniff: !!h.nosniff,
       referrer: !!h.referrer,
       permissions: !!r.permissions,
+      coop: !!h.coop,
       cookies: jar.length,
       looseCookies: jar.filter((cookie) => !cookie.secure).length
     };
@@ -1274,7 +1302,7 @@ function analyze(input) {
     const text = headerRows.length < 2 ? "" : missing.length === headerRows.length ? " Missing on all " + headerRows.length + " pages analyzed." : " Missing on " + missing.length + " of " + headerRows.length + " pages analyzed.";
     return { text, pages: missing.map((row) => row.path) };
   };
-  const HEADER_LABEL = { hsts: "HSTS", csp: "Content-Security-Policy", frame: "frame protection", nosniff: "X-Content-Type-Options", referrer: "Referrer-Policy", permissions: "Permissions-Policy" };
+  const HEADER_LABEL = { hsts: "HSTS", csp: "Content-Security-Policy", frame: "frame protection", nosniff: "X-Content-Type-Options", referrer: "Referrer-Policy", permissions: "Permissions-Policy", coop: "Cross-Origin-Opener-Policy" };
   const uneven = Object.keys(HEADER_LABEL).map((key) => {
     const missing = headerRows.filter((row) => !row[key]);
     return { key, missing, homeHas: headerRows.length ? headerRows[0][key] : false };
@@ -1323,6 +1351,20 @@ function analyze(input) {
   if (!hdr.nosniff) add("Security", "risk", "low", "sec-nosniff", "X-Content-Type-Options is not sent", "Browsers may guess a file's type and run it as script." + spread("nosniff").text, "Send X-Content-Type-Options: nosniff.", { pages: spread("nosniff").pages, effort: "minutes", cases: ["SEC-04"] });
   if (!hdr.referrer) add("Security", "risk", "low", "sec-referrer", "Referrer-Policy is not sent", "Browsers fall back to their default. An explicit policy keeps full URLs from leaking to other sites." + spread("referrer").text, "Send Referrer-Policy: strict-origin-when-cross-origin.", { pages: spread("referrer").pages, effort: "minutes", cases: ["SEC-05"] });
   if (!rawHeaders.permissions) add("Security", "risk", "low", "sec-permissions", "Permissions-Policy is not sent", "Embedded content can ask for the camera, microphone, or location." + spread("permissions").text, "Send Permissions-Policy: camera=(), microphone=(), geolocation=().", { pages: spread("permissions").pages, effort: "minutes", cases: ["SEC-08"] });
+  const coop = policyOf(hdr.coop);
+  const coep = policyOf(hdr.coep);
+  if (COOP_GUARDED.indexOf(coop) !== -1) add("Security", "pass", "info", "sec-coop", "Cross-Origin-Opener-Policy keeps other windows out", "cross-origin-opener-policy: " + hdr.coop + ".", "", { cases: ["SEC-16"] });
+  else add("Security", "risk", "low", "sec-coop", coop ? "Cross-Origin-Opener-Policy is " + coop : "Cross-Origin-Opener-Policy is not sent",
+    "A window the page opens, or that opens it, keeps a handle to it, which tabnabbing and cross-site leaks use." + spread("coop").text,
+    "Send Cross-Origin-Opener-Policy: same-origin-allow-popups, or same-origin when the site opens no sign-in or payment popup.", { pages: spread("coop").pages, effort: "minutes", cases: ["SEC-16"] });
+  const isolatedNow = browsed && browsed.backForward && browsed.backForward.ran ? browsed.backForward.isolated : null;
+  const isolationFacts = "COOP: " + (hdr.coop || "absent") + ". COEP: " + (hdr.coep || "absent") + ". CORP: " + (hdr.corp || "absent") + "." + (isolatedNow == null ? "" : " The browser reported crossOriginIsolated " + isolatedNow + ".");
+  if (ISOLATING_COEP.indexOf(coep) !== -1 && coop !== "same-origin") {
+    add("Security", "fail", "medium", "sec-isolation", "The page asks for cross-origin isolation but does not get it",
+      isolationFacts + " Isolation needs COOP same-origin as well as COEP, so SharedArrayBuffer and precise timers stay off.",
+      "Send Cross-Origin-Opener-Policy: same-origin next to the COEP header, or drop COEP if the page does not need isolation.", { effort: "minutes", cases: ["SEC-16"] });
+  } else if (ISOLATING_COEP.indexOf(coep) !== -1) add("Security", "pass", "info", "sec-isolation", "The page is cross-origin isolated", isolationFacts, "", { cases: ["SEC-16"] });
+  else add("Security", "pass", "info", "sec-isolation", "Cross-origin isolation is not requested", isolationFacts + " COEP is only needed by pages that use SharedArrayBuffer or precise timers.", "", { cases: ["SEC-16"] });
   const cookieNames = (list) => [...new Set(list.map((cookie) => cookie.name))];
   const jar = [].concat.apply([], read.map((page) => (page.inspect.cookies || []).map((cookie) => Object.assign({ path: page.path }, cookie))));
   const insecure = cookieNames(jar.filter((cookie) => !cookie.secure));
@@ -1430,6 +1472,16 @@ function analyze(input) {
   if (blocking > 2) add("Performance", "risk", "low", "pf-blocking", plural(blocking, "script blocks", "scripts block") + " the first paint", "They sit in <head> without async or defer.", "Add defer to scripts that do not need to run before the page shows.", { count: blocking, effort: "minutes", cases: ["PF-02"] });
   const noSize = face.signals ? face.signals.imgNoSize || 0 : 0;
   if (noSize > 3) add("Performance", "risk", "low", "pf-cls", plural(noSize, "image has", "images have") + " no width or height", "The layout jumps when they load, which hurts Cumulative Layout Shift.", "Set width and height (or aspect-ratio) on images.", { count: noSize, effort: "hours", cases: ["VIS-01"] });
+  const back = browsed && browsed.backForward;
+  if (back && back.ran) {
+    const blockers = (back.reasons || []).filter((row) => row.type === "PageSupportNeeded").map((row) => bfcacheBlocker(row.reason));
+    const fixes = [...new Set(blockers.map((row) => row[1]).filter(Boolean))];
+    if (blockers.length) add("Performance", "risk", "low", "pf-bfcache", "The back/forward cache cannot keep the page",
+      "After Back, Chromium named " + sample(blockers.map((row) => row[0]), 4) + ". Back and Forward load the page again instead of showing it at once.",
+      (fixes.length ? fixes.join(" ") + " " : "") + "Chrome's guide lists every reason: https://web.dev/articles/bfcache", { count: blockers.length, effort: "hours", cases: ["PF-04"] });
+    else add("Performance", "pass", "info", "pf-bfcache", "Nothing on the page blocks the back/forward cache",
+      back.restored ? "Back restored the start page from the cache." : "After Back, Chromium named nothing on the page's side that blocks the cache.", "", { cases: ["PF-04"] });
+  }
   if (face.signals && !face.signals.cacheControl) add("Performance", "risk", "low", "pf-cache", "The start page sends no cache-control", "Browsers and CDNs guess how long to keep it.", "Send cache-control on HTML (for example max-age=0, must-revalidate) and long max-age on hashed assets.", { effort: "minutes", cases: ["RS-03"] });
   const thirdHosts = face.signals ? (face.signals.thirdParty || []).length : 0;
   if (thirdHosts > 8) add("Performance", "risk", "low", "pf-third", plural(thirdHosts, "other host serves", "other hosts serve") + " scripts on the start page", "Each host adds a DNS lookup and a connection.", "Remove tags nobody reads and self-host the rest.", { count: thirdHosts, effort: "hours" });
@@ -1547,6 +1599,7 @@ function analyze(input) {
       { label: "X-Content-Type-Options", state: hdr.nosniff ? "pass" : "risk" },
       { label: "Referrer-Policy", state: hdr.referrer ? "pass" : "risk" },
       { label: "Permissions-Policy", state: rawHeaders.permissions ? "pass" : "risk" },
+      { label: "Cross-Origin-Opener-Policy", state: findingState("sec-coop") },
       { label: "TLS certificate", state: tls && tls.validTo ? (tls.daysLeft < 14 ? "fail" : tls.daysLeft < 30 ? "risk" : "pass") : "unknown" },
       { label: "security.txt", state: sec ? (findings.some((item) => item.key === "sec-securitytxt" && item.verdict === "pass") ? "pass" : "risk") : "unknown" },
       { label: "SPF", state: dnsRead("spf") ? (dnsInfo.spf || (findings.find((item) => item.key === "sec-spf") || {}).verdict === "pass" ? "pass" : "risk") : "unknown" },
@@ -1644,7 +1697,8 @@ function fixKit(ctx) {
     { name: "X-Content-Type-Options", value: "nosniff", missing: !hdr.nosniff },
     { name: "X-Frame-Options", value: "SAMEORIGIN", missing: !framesGuarded(hdr.frame) },
     { name: "Referrer-Policy", value: "strict-origin-when-cross-origin", missing: !hdr.referrer },
-    { name: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()", missing: !raw.permissions }
+    { name: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()", missing: !raw.permissions },
+    { name: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups", missing: COOP_GUARDED.indexOf(policyOf(hdr.coop)) === -1 }
   ];
   const social = face.social || {};
   const name = social.ogSiteName || String(face.title || ctx.host).split(/\s+[|–—·-]\s+/)[0].trim() || ctx.host;
