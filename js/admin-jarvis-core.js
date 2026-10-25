@@ -14,6 +14,7 @@
         { key: 'lab', name: 'QA Lab', short: 'LAB' },
         { key: 'review', name: 'URL Review', short: 'URL' },
         { key: 'hub', name: 'Social hub', short: 'HUB' },
+        { key: 'business', name: 'Business', short: 'BIZ' },
         { key: 'traffic', name: 'Traffic', short: 'WEB' },
         { key: 'systems', name: 'Systems', short: 'SYS' }
     ];
@@ -373,8 +374,35 @@
         tlsDays: { value: 21, label: 'TLS certificate days left: alert below', min: 1, max: 365 },
         hubStaleDays: { value: 2, label: 'Social hub stats older than (days)', min: 1, max: 60 },
         sessionsSwingPct: { value: 20, label: 'GA4 sessions swing worth a line (%)', min: 5, max: 500 },
-        readinessMin: { value: 80, label: 'Readiness turns amber below (%)', min: 1, max: 100 }
+        readinessMin: { value: 80, label: 'Readiness turns amber below (%)', min: 1, max: 100 },
+        emailBadPct: { value: 5, label: 'Emails bounced or blocked: warn at (%)', min: 1, max: 100 },
+        fnFailures: { value: 10, label: 'Real function failures in 24 hours: warn at', min: 1, max: 100000 },
+        geminiErrorPct: { value: 50, label: 'Failed Gemini calls in 7 days: warn at (%)', min: 1, max: 100 },
+        domainDays: { value: 30, label: 'Domain days left: alert below', min: 1, max: 365 },
+        firestoreFreePct: { value: 80, label: 'Firestore free daily reads used: warn at (%)', min: 1, max: 1000 }
     };
+
+    // What Jarvis ranks on Brave when the owner has not set searches in Settings.
+    const SEARCH_QUERIES = ['carlos andres munoz qa', 'carlosandmunoz', 'qa-lab url review', 'free website qa review', 'website qa audit online'];
+
+    // Every source Jarvis reads, for Systems > Connections. needs[] lists the one-time grants a source still waits for.
+    const CONNECTIONS = [
+        { key: 'health', name: 'Firestore (server collections)' }, { key: 'jobs', name: 'Cloud Scheduler' }, { key: 'github', name: 'GitHub' },
+        { key: 'ga4', name: 'Google Analytics 4' }, { key: 'cloudflare', name: 'Cloudflare' }, { key: 'speed', name: 'PageSpeed and CrUX' },
+        { key: 'uptime', name: 'Uptime and TLS' }, { key: 'money', name: 'Payments (paid reviews, PayPal, Stripe)' }, { key: 'email', name: 'SendGrid' },
+        { key: 'search', name: 'Search (Brave, Search Console)' }, { key: 'social', name: 'Social (ledgers, YouTube, Facebook)' },
+        { key: 'safety', name: 'Safety (Web Risk, DNS, domain, TLS)' }, { key: 'platform', name: 'Google Cloud (Monitoring, Logging, Auth)' }
+    ];
+
+    function connections(external, pending) {
+        const e = external || {};
+        return CONNECTIONS.map((c) => {
+            const x = e[c.key];
+            const needs = (x && x.needs) || [];
+            const state = pending && pending[c.key] && !x ? 'loading' : !x ? 'off' : x.ok === false ? 'down' : needs.length ? 'partial' : 'live';
+            return { key: c.key, name: c.name, state, detail: x && x.ok === false ? String(x.error || 'failed') : '', needs, at: x && x.cachedAt };
+        });
+    }
 
     function thresholds(saved) {
         const out = {};
@@ -510,6 +538,46 @@
             const d = delta(sessions, prior);
             if (d.pct !== null && Math.abs(d.pct) >= th.sessionsSwingPct && Math.max(sessions, prior) >= 20) add(d.pct > 0 ? 'good' : 'warn', 'traffic', `GA4 sessions ${d.pct > 0 ? 'rose' : 'fell'} ${Math.abs(d.pct)}% (${sessions} vs ${prior}).`, 'ga4:swing');
         }
+        const money = ext.money;
+        if (money && money.ok) {
+            const r = money.revenue || {};
+            const before = (money.prior || {}).usd || 0;
+            if (r.usd > 0) add('good', 'business', `${plural(r.count, 'sale', 'sales')} brought ${r.usd} USD in range${before ? ' (' + before + ' USD the period before)' : ''}.`, 'money:revenue');
+            else if (before > 0) add('warn', 'business', `No sales in range, after ${before} USD the period before.`, 'money:none');
+            if (money.refundsUsd > 0) add('warn', 'business', `${money.refundsUsd} USD refunded in range.`, 'money:refunds');
+            if (money.paypal && money.paypal.disputesOpen > 0) add('alert', 'business', `${plural(money.paypal.disputesOpen, 'PayPal dispute is', 'PayPal disputes are')} open.`, 'money:disputes');
+        }
+        const mail = ext.email;
+        if (mail && mail.ok && mail.totals && mail.totals.processed >= 10) {
+            const m = mail.totals;
+            if (m.spam_reports > 0) add('alert', 'business', `${plural(m.spam_reports, 'email was', 'emails were')} reported as spam in range.`, 'email:spam');
+            if (mail.rates.bad >= th.emailBadPct) add('warn', 'business', `${mail.rates.bad}% of emails bounced or were blocked (${m.bounces + m.blocks} of ${m.processed}).`, 'email:bad');
+        }
+        const search = ext.search;
+        if (search && search.ok && search.brave && search.brave.ok) {
+            const asked = search.brave.queries.filter((q) => !q.error);
+            const missing = asked.filter((q) => q.position === null);
+            if (missing.length) add('info', 'business', `Not in Brave's top 20 for ${missing.length} of ${asked.length} searches, such as "${missing[0].query}".`, 'search:brave');
+        }
+        if (search && search.console && search.console.ok && search.console.impressions) add('info', 'business', `Google search: ${plural(search.console.clicks, 'click', 'clicks')} from ${search.console.impressions} impressions, average position ${search.console.position}.`, 'search:console');
+        const social = ext.social;
+        if (social && social.ok) {
+            if (social.failed > 0) add('warn', 'business', `${plural(social.failed, 'social post', 'social posts')} failed to publish in range.`, 'social:failed');
+            else if (!social.sent) add('info', 'business', 'No social posts went out in range.', 'social:none');
+        }
+        const safety = ext.safety;
+        if (safety && safety.ok) (safety.checks || []).filter((c) => c.level === 'alert' || c.level === 'warn').forEach((c) => add(c.level, 'systems', `${c.name}: ${c.detail}`, 'safety:' + c.key));
+        const pf = ext.platform;
+        if (pf && pf.ok) {
+            const f = pf.functions || {};
+            if (f.failures >= th.fnFailures) add(f.failures >= th.fnFailures * 5 ? 'alert' : 'warn', 'systems', `${plural(f.failures, 'function run', 'function runs')} really failed in 24 hours (${f.failureRate}%), most in ${((f.byFunction || [])[0] || {}).label || 'unknown'}.`, 'platform:failures');
+            const g = pf.gemini || {};
+            if (g.requests >= 10 && g.errorRate >= th.geminiErrorPct) add('warn', 'systems', `${g.errorRate}% of Gemini calls failed this week (${g.requests - g.ok} of ${g.requests}), most in ${((g.failedMethods || [])[0] || {}).label || 'unknown'}.`, 'platform:gemini');
+            const fs = pf.firestore || {};
+            if (fs.readsFreePct >= th.firestoreFreePct) add('warn', 'systems', `Firestore used ${fs.readsFreePct}% of the free daily reads (${fs.reads}).`, 'platform:reads');
+        }
+        const waiting = CONNECTIONS.reduce((n, c) => n + (((ext[c.key] || {}).needs) || []).length, 0);
+        if (waiting) add('info', 'systems', `${plural(waiting, 'connection waits', 'connections wait')} for a one-time grant; see Systems > Connections.`, 'connections:needs');
         (state.goals || []).forEach((g) => {
             if (g.status === 'done') add('good', g.product, `Goal met: ${g.label}, ${g.value} of ${g.target}.`, 'goal:' + g.key);
             else if (g.status === 'far-behind' && g.elapsed >= 25) add('warn', g.product, `Goal behind: ${g.label} is at ${g.value} of ${g.target} with ${g.elapsed}% of the time gone (pace ${g.projected}).`, 'goal:' + g.key);
@@ -528,6 +596,7 @@
         if (e.github && e.github.ci) e.github.ci.forEach((run) => { if (run.conclusion !== 'cancelled') checks.push(['success', 'skipped', 'neutral'].includes(run.conclusion)); });
         if (e.uptime && e.uptime.pages) e.uptime.pages.forEach((page) => checks.push(!!page.ok && page.ms <= 3000));
         if (e.speed && e.speed.pages) e.speed.pages.forEach((page) => { if (page.ok) checks.push(page.score >= 50); });
+        if (e.safety && e.safety.checks) e.safety.checks.forEach((c) => { if (c.level !== 'info') checks.push(c.ok); });
         if (!checks.length) return null;
         return Math.round((checks.filter(Boolean).length / checks.length) * 100);
     }
@@ -582,7 +651,7 @@
         return { start, end, days, prior: { start: new Date(start.getTime() - days * DAY), end: start } };
     }
 
-    const api = { THRESHOLDS, thresholds, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, readiness, csv, parseCommand, windowFor };
+    const api = { THRESHOLDS, thresholds, CONNECTIONS, connections, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, readiness, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

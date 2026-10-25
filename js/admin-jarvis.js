@@ -258,7 +258,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -314,7 +314,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
                 failures: e.health && e.health.failures && { total: e.health.failures.total, causes: e.health.failures.causes },
                 speed: e.speed && e.speed.pages && e.speed.pages.map((x) => ({ page: x.name, score: x.score })),
                 uptime: e.uptime && e.uptime.pages && e.uptime.pages.map((x) => ({ page: x.name, status: x.status, ms: x.ms })),
-                ga4: e.ga4 && e.ga4.groups, cloudflare: e.cloudflare && e.cloudflare.ok ? { requests: e.cloudflare.requests, threats: e.cloudflare.threats, cacheRatio: e.cloudflare.cacheRatio } : null
+                ga4: e.ga4 && e.ga4.groups, cloudflare: e.cloudflare && e.cloudflare.ok ? { requests: e.cloudflare.requests, threats: e.cloudflare.threats, cacheRatio: e.cloudflare.cacheRatio, statuses: e.cloudflare.statuses, paths: (e.cloudflare.paths || []).slice(0, 8) } : null,
+                money: e.money && e.money.ok ? { revenue: e.money.revenue, prior: e.money.prior, refundsUsd: e.money.refundsUsd, disputesOpen: e.money.paypal && e.money.paypal.disputesOpen } : null,
+                email: e.email && e.email.ok ? { totals: e.email.totals, rates: e.email.rates } : null,
+                search: e.search && e.search.ok ? { brave: e.search.brave && e.search.brave.queries, console: e.search.console && e.search.console.ok ? { clicks: e.search.console.clicks, impressions: e.search.console.impressions, position: e.search.console.position, queries: (e.search.console.queries || []).slice(0, 8) } : null } : null,
+                social: e.social && e.social.ok ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views } : null,
+                safety: e.safety && e.safety.ok ? e.safety.checks.map((c) => `${c.level}: ${c.name} ${c.detail}`) : null,
+                platform: e.platform && e.platform.ok ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
+                waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
             }
         };
     }
@@ -407,6 +414,87 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         </div>`;
     }
 
+    const STATE_CHIP = { live: 'c-fast', partial: 'c-average', down: 'c-slow', loading: '', off: '' };
+    const LEVEL_CHIP = { good: 'c-fast', info: '', warn: 'c-average', alert: 'c-slow' };
+    const SOCIAL = /linkedin|facebook|youtube|tiktok|instagram|threads|twitter|\bx\b|t\.co|buffer|reddit/i;
+
+    function waiting(key, text) {
+        const x = S.external[key];
+        return `<p class="jv-empty">${S.pending[key] && !x ? esc(text) : esc((x && x.error) || 'Not loaded.')}</p>`;
+    }
+
+    function needList(x) {
+        return x && x.needs && x.needs.length ? `<ul class="jv-needs">${x.needs.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '';
+    }
+
+    function connectionsPanel() {
+        const rows = C.connections(S.external, S.pending);
+        const live = rows.filter((r) => r.state === 'live').length;
+        return panel('systems-connections', `Connections (${live} of ${rows.length} live)`, table([
+            ['Source', (r) => esc(r.name)],
+            ['State', (r) => `<span class="jv-chip ${STATE_CHIP[r.state]}">${esc(r.state)}</span>`],
+            ['What to do', (r) => r.needs.length ? r.needs.map((n) => esc(n)).join('<br>') : esc(r.detail)],
+            ['Updated', (r) => esc(r.at ? when(r.at) : '')]
+        ], rows), { wide: true, data: rows.map((r) => ({ source: r.name, state: r.state, needs: r.needs.join(' | '), error: r.detail })), note: 'Partial: the source works but part of it waits for a one-time grant.' });
+    }
+
+    function safetyPanel() {
+        const s = S.external.safety;
+        return panel('systems-safety', 'Safety and mail setup', s && s.ok ? table([
+            ['Check', (c) => esc(c.name)], ['', (c) => `<span class="jv-chip ${LEVEL_CHIP[c.level]}">${esc(c.level)}</span>`], ['Detail', (c) => esc(c.detail)]
+        ], s.checks) : waiting('safety', 'Checking Web Risk, DNS and the domain…'), { data: s && s.checks });
+    }
+
+    function platformPanel() {
+        const p = S.external.platform;
+        if (!p || !p.ok) return panel('systems-platform', 'Google Cloud', waiting('platform', 'Reading Monitoring and Logging…'));
+        const f = p.functions || {}, g = p.gemini || {}, fs = p.firestore || {}, u = p.users || {};
+        const th = C.thresholds((S.settings || {}).thresholds);
+        return panel('systems-platform', 'Google Cloud, last 24 hours', kpis([
+            { label: 'Function runs', value: f.executions === undefined ? '—' : f.executions },
+            { label: 'Real failures', value: f.failures === undefined ? '—' : f.failures, alert: f.failures >= th.fnFailures },
+            { label: 'Gemini ok (7 days)', value: g.requests ? g.ok + ' / ' + g.requests : '—', alert: g.requests >= 10 && g.errorRate >= th.geminiErrorPct },
+            { label: 'Firestore reads', value: fs.reads === undefined ? '—' : fs.reads, delta: fs.readsFreePct === undefined ? '' : fs.readsFreePct + '% of free', alert: fs.readsFreePct >= th.firestoreFreePct },
+            { label: 'Firestore writes', value: fs.writes === undefined ? '—' : fs.writes },
+            { label: 'New sign-in accounts', value: u && u.newInRange !== undefined ? u.newInRange : '—' }
+        ]) + bars(f.byFunction, { color: COLORS.pink, empty: 'No crashes, timeouts or 5xx answers in 24 hours.' }) + (g.failedMethods && g.failedMethods.length ? `<p class="jv-note">Failed Gemini calls by method: ${g.failedMethods.map((m) => esc(m.label) + ' ' + fmt(m.value)).join(', ')}.</p>` : ''),
+        { wide: true, data: [f, g, fs, u], note: `Real failures count crashes, timeouts and 5xx answers. Google also counts expected 4xx answers as errors (${fmt(f.notOk || 0)} in 24 hours).` + (f.error ? ' ' + esc(f.error) : '') });
+    }
+
+    function businessView() {
+        const e = S.external;
+        const mo = e.money, em = e.email, se = e.search, so = e.social;
+        const th = C.thresholds((S.settings || {}).thresholds);
+        const okMoney = mo && mo.ok, okMail = em && em.ok, okSocial = so && so.ok, gsc = se && se.console;
+        const md = okMoney ? C.delta(mo.revenue.usd, mo.prior.usd) : null;
+        const head = kpis([
+            { label: 'Revenue (USD)', value: okMoney ? mo.revenue.usd : '—', delta: md ? md.text : '', dir: md && md.dir, prior: okMoney ? mo.prior.usd : 0 },
+            { label: 'Sales', value: okMoney ? mo.revenue.count : '—' },
+            { label: 'Paid runs', value: okMoney ? mo.revenue.paidRuns : '—' },
+            { label: 'Emails delivered', value: okMail && em.rates.delivered !== null ? em.rates.delivered + '%' : '—', alert: okMail && em.rates.bad >= th.emailBadPct },
+            { label: 'Social posts', value: okSocial ? so.sent : '—', alert: okSocial && so.failed > 0 },
+            { label: 'Google clicks', value: gsc && gsc.ok ? gsc.clicks : '—' }
+        ]);
+        const sources = [].concat(((S.summaries.cv || {}).lists || {}).sources || [], ((S.summaries.review || {}).lists || {}).sources || []).filter((r) => SOCIAL.test(r.label));
+        const visits = {};
+        sources.forEach((r) => { const k = r.label.replace(/\s*\(.*\)$/, ''); visits[k] = (visits[k] || 0) + r.value; });
+        const social = Object.keys(visits).map((label) => ({ label, value: visits[label] })).sort((a, b) => b.value - a.value);
+        const pp = okMoney ? mo.paypal || {} : {};
+        return head + `<div class="jv-grid">${briefPanel('business')}
+            ${panel('business-revenue', 'Revenue per day (USD)', okMoney ? (mo.daily.length ? area(mo.daily.map((d) => d.date), [{ name: 'USD', values: mo.daily.map((d) => d.usd), color: COLORS.green }]) : '<p class="jv-empty">No sales in this range.</p>') + bars(mo.byProvider, { color: COLORS.green, empty: 'No sales by provider yet.' }) : waiting('money', 'Reading payments…'), { wide: true, data: okMoney ? mo.daily : null, note: okMoney ? `Test payments are left out. ${fmt(mo.revenue.paidRuns)} paid review runs used credits bought earlier.` : '' })}
+            ${panel('business-paypal', 'PayPal and Stripe', okMoney ? `<ul class="jv-facts"><li>Open PayPal disputes: <b>${pp.disputesOpen === null || pp.disputesOpen === undefined ? '—' : fmt(pp.disputesOpen)}</b></li>${pp.transactions ? `<li>PayPal in range: ${fmt(pp.transactions.count)} payments, ${fmt(pp.transactions.grossUsd)} USD gross, ${fmt(pp.transactions.feesUsd)} USD fees, <b>${fmt(pp.transactions.netUsd)} USD net</b></li>` : ''}<li>Refunded in range: <b>${fmt(mo.refundsUsd)} USD</b></li><li>Stripe: ${esc(mo.stripe.mode === 'live' ? 'live' : mo.stripe.mode === 'test' ? 'test key only, checkout uses PayPal' : 'not set up')}</li></ul>${needList(mo)}` : waiting('money', 'Asking PayPal…'))}
+            ${panel('business-email', 'Email delivery (SendGrid)', okMail ? kpis([
+                { label: 'Sent', value: em.totals.processed }, { label: 'Delivered', value: em.totals.delivered }, { label: 'Bounced', value: em.totals.bounces, alert: em.totals.bounces > 0 },
+                { label: 'Blocked', value: em.totals.blocks, alert: em.totals.blocks > 0 }, { label: 'Spam reports', value: em.totals.spam_reports, alert: em.totals.spam_reports > 0 }, { label: 'Opened', value: em.rates.opened === null ? '—' : em.rates.opened + '%' }
+            ]) + area(em.daily.map((d) => d.date), [{ name: 'Delivered', values: em.daily.map((d) => d.delivered), color: COLORS.cyan }, { name: 'Bounced or blocked', values: em.daily.map((d) => d.bad), color: COLORS.pink }]) + table([['Kind', (r) => esc(r.kind)], ['Domain', (r) => esc(r.domain)], ['Reason', (r) => esc(r.reason)], ['When', (r) => esc(when(r.at))]], [].concat(...['bounces', 'blocks', 'spam'].map((k) => ((em.suppressions || {})[k] || []).map((r) => Object.assign({ kind: k }, r)))).slice(0, 12), 'No bounces, blocks or spam reports in range.') : waiting('email', 'Asking SendGrid…'), { wide: true, data: okMail ? em.daily : null })}
+            ${panel('business-brave', 'Search rankings (Brave, top 20)', se && se.brave && se.brave.ok ? table([['Search', (q) => esc(q.query)], ['Our place', (q) => q.position ? `<span class="jv-chip ${q.position <= 3 ? 'c-fast' : q.position <= 10 ? 'c-average' : ''}">#${q.position}</span>` : `<span class="jv-chip c-slow">not in top 20</span>`], ['First result', (q) => esc(q.leader || q.error || '')]], se.brave.queries) : waiting('search', 'Searching Brave…'), { data: se && se.brave && se.brave.queries, note: 'Checked once a day. Edit the searches in ⚙ Settings.' })}
+            ${panel('business-gsc', 'Google Search Console', gsc && gsc.ok ? kpis([{ label: 'Clicks', value: gsc.clicks }, { label: 'Impressions', value: gsc.impressions }, { label: 'CTR', value: gsc.ctr + '%' }, { label: 'Avg position', value: gsc.position === null ? '—' : gsc.position }]) + table([['Query', (q) => esc(q.query)], ['Clicks', (q) => fmt(q.clicks)], ['Impr.', (q) => fmt(q.impressions)], ['Pos.', (q) => fmt(q.position)]], gsc.queries, 'No queries yet.') : se && se.ok ? `<p class="jv-empty">${esc((gsc && gsc.error) || 'Not connected.')}</p>${needList(se)}` : waiting('search', 'Asking Search Console…'), { data: gsc && gsc.ok ? gsc.queries : null })}
+            ${panel('business-social', 'Social posts', okSocial ? bars(so.channels, { color: COLORS.violet, empty: 'No posts went out in this range.' }) + table([['When', (r) => esc(when(r.at))], ['Network', (r) => esc(r.channel)], ['Result', (r) => `<span class="jv-chip ${r.result === 'sent' ? 'c-fast' : r.result === 'failed' ? 'c-slow' : ''}">${esc(r.result)}</span>`], ['Post', (r) => r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.post.slice(0, 40))}</a>` : esc(r.post.slice(0, 40))]], so.latest, 'No posts in range.') + needList(so) : waiting('social', 'Reading the social ledgers…'), { wide: true, data: okSocial ? so.latest : null })}
+            ${listPanel('business', 'social-visits', 'Visits that came from social', social, { color: COLORS.violet, empty: 'No visits from social links in this range.' })}
+            ${okSocial && so.youtube && so.youtube.videos.length ? panel('business-youtube', `YouTube${so.youtube.views !== null ? ' (' + fmt(so.youtube.views) + ' views)' : ''}`, table([['Video', (v) => `<a href="https://youtu.be/${esc(v.id)}" target="_blank" rel="noopener">${esc(String(v.title || v.id).slice(0, 70))}</a>`], ['Views', (v) => v.views === undefined ? '—' : fmt(v.views)], ['Likes', (v) => v.likes === undefined ? '—' : fmt(v.likes)], ['Published', (v) => esc(when(v.published))]], so.youtube.videos), { wide: true, data: so.youtube.videos }) : ''}
+        </div>`;
+    }
+
     function views() {
         const s = S.summaries;
         const e = S.external;
@@ -417,6 +505,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             if (sum && sum.kpis) { main = sum.kpis[0]; series = sum.series ? sum.series.values : []; }
             if (p.key === 'traffic' && e.ga4 && e.ga4.ok) { const n = e.ga4.groups.reduce((a, g) => a + g.sessions, 0); const b = e.ga4.groups.reduce((a, g) => a + g.priorSessions, 0); const d = C.delta(n, b); main = { label: 'GA4 sessions', value: n, delta: d.text, dir: d.dir }; series = e.ga4.daily.map((x) => x.sessions); }
             if (p.key === 'systems') { const r = C.readiness(e); main = { label: 'Readiness', value: r === null ? '—' : r + '%' }; }
+            if (p.key === 'business' && e.money && e.money.ok) { const d = C.delta(e.money.revenue.usd, e.money.prior.usd); main = { label: 'Revenue (USD)', value: e.money.revenue.usd, delta: d.text, dir: d.dir }; series = e.money.daily.map((x) => x.usd); }
             const alerts = S.brief.filter((b) => b.product === p.key && (b.level === 'alert' || b.level === 'warn')).length;
             return `<button type="button" class="jv-tile${alerts ? ' has-alert' : ''}" data-go="${p.key}"><span class="jv-tile-name">${esc(p.name)}</span><strong>${main ? fmt(main.value) : '—'}</strong><small>${main ? esc(main.label) : ''} ${main && main.delta ? `<em class="${main.dir > 0 ? 'up' : main.dir < 0 ? 'down' : ''}">${esc(main.delta)}</em>` : ''}</small>${spark(series, alerts ? COLORS.amber : COLORS.cyan)}${tileGoal(p.key)}${alerts ? `<b class="jv-badge">${alerts}</b>` : ''}</button>`;
         }).join('');
@@ -470,6 +559,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             ${panel('hub-actions', 'Actions', `<p class="jv-note">Stats updated ${hub.updatedAt ? esc(when(hub.updatedAt)) : 'never'}${hub.ga && hub.ga.ok === false ? ' · GA4: ' + esc(hub.ga.error || 'failed') : ''}.</p><div class="jv-actions"><button type="button" class="jv-btn" data-run="refreshSocialHubStats">Refresh hub stats now</button><button type="button" class="jv-btn" data-run="dispatchFacebookQueue">Dispatch the Facebook queue</button><a class="jv-btn" href="qa-review-social.html" target="_blank" rel="noopener">Open the hub</a></div>`)}
         </div>`;
 
+        out.business = businessView();
+
         const ga = e.ga4;
         const cf = e.cloudflare;
         const gaBody = ga && ga.ok ? table([['Content group', (g) => esc(g.group)], ['Sessions', (g) => `${fmt(g.sessions)} <em class="${C.delta(g.sessions, g.priorSessions).dir > 0 ? 'up' : 'down'}">${esc(C.delta(g.sessions, g.priorSessions).text)}</em>`], ['Users', (g) => fmt(g.users)], ['Views', (g) => fmt(g.views)], ['Engaged', (g) => g.engagement + '%'], ['Avg session', (g) => g.duration + 's']], ga.groups) : `<p class="jv-empty">${S.pending.ga4 ? 'Reading GA4…' : esc((ga && ga.error) || 'Not loaded.')}</p>`;
@@ -477,6 +568,11 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             ${panel('traffic-groups', 'GA4 by content group', gaBody, { wide: true, data: ga && ga.groups, note: 'Property 495572902. GA4 only counts visitors who allowed analytics; the product tabs count every visit.' })}
             ${ga && ga.ok ? panel('traffic-daily', 'GA4 sessions and users per day', area(ga.daily.map((d) => d.date), [{ name: 'Sessions', values: ga.daily.map((d) => d.sessions), color: COLORS.cyan }, { name: 'Users', values: ga.daily.map((d) => d.users), color: COLORS.amber }]), { wide: true, data: ga.daily }) : ''}
             ${ga && ga.ok ? listPanel('traffic', 'countries', 'GA4 countries', ga.countries) + listPanel('traffic', 'sources', 'GA4 source / medium', ga.sources, { color: COLORS.amber }) : ''}
+            ${cf && cf.ok && cf.paths ? listPanel('traffic', 'cf-paths', 'Cloudflare: top paths, last 24 hours', cf.paths, { color: COLORS.violet }) : ''}
+            ${cf && cf.ok && cf.countries ? listPanel('traffic', 'cf-countries', 'Cloudflare: countries', cf.countries) : ''}
+            ${cf && cf.ok && cf.statuses ? listPanel('traffic', 'cf-statuses', 'Cloudflare: status codes', cf.statuses, { color: COLORS.amber }) : ''}
+            ${cf && cf.ok && cf.contentTypes ? listPanel('traffic', 'cf-types', 'Cloudflare: content types', cf.contentTypes, { color: COLORS.green }) : ''}
+            ${cf && cf.ok && cf.threatCountries && cf.threatCountries.length ? listPanel('traffic', 'cf-threats', 'Cloudflare: threats by country', cf.threatCountries, { color: COLORS.pink }) : ''}
             ${panel('traffic-cloudflare', 'Cloudflare edge', cf && cf.ok ? kpis([{ label: 'Requests', value: cf.requests }, { label: 'Page views', value: cf.pageViews }, { label: 'Uniques', value: cf.uniques }, { label: 'Cached', value: cf.cacheRatio + '%' }, { label: 'Threats', value: cf.threats, alert: cf.threats > 0 }, { label: 'Data', value: (cf.bytes / 1048576).toFixed(1) + ' MB' }]) + area(cf.daily.map((d) => d.date), [{ name: 'Requests', values: cf.daily.map((d) => d.requests), color: COLORS.violet }]) : `<p class="jv-empty">${S.pending.cloudflare ? 'Asking Cloudflare…' : esc((cf && cf.error) || 'Not loaded.')}</p>`, { wide: true, data: cf && cf.daily })}
         </div>`;
 
@@ -485,6 +581,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         const up = e.uptime;
         const sp = e.speed;
         out.systems = `<div class="jv-grid">${briefPanel('systems')}
+            ${connectionsPanel()}${safetyPanel()}${platformPanel()}
             ${panel('systems-ready', 'Readiness', `<div class="jv-rings">${ring(C.readiness(e), 'ready', null, 120)}</div><p class="jv-note">Share of checks that pass: scheduled jobs, CI on main, uptime and PageSpeed within your limits (⚙ Settings).</p>`)}
             ${panel('systems-uptime', 'Uptime', up && up.ok ? table([['Page', (p) => `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a>`], ['Status', (p) => `<span class="jv-chip ${p.ok ? 'c-fast' : 'c-slow'}">${esc(p.status || 'down')}</span>`], ['Time', (p) => fmt(p.ms) + ' ms'], ['Size', (p) => p.bytes ? Math.round(p.bytes / 1024) + ' KB' : '']], up.pages) + `<p class="jv-note">TLS certificate: ${up.tlsDaysLeft === null ? 'unknown' : esc(up.tlsDaysLeft) + ' days left'}.</p>` : `<p class="jv-empty">${S.pending.uptime ? 'Pinging…' : esc((up && up.error) || 'Not loaded.')}</p>`, { data: up && up.pages })}
             ${panel('systems-speed', 'PageSpeed (mobile) and CrUX', sp && sp.ok ? `<div class="jv-rings">${sp.pages.map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 90)).join('')}</div>${sp.crux && sp.crux.ok && sp.crux.phone ? `<p class="jv-note">CrUX phone LCP p75 over ${sp.crux.phone.weeks || ''} weeks: ${spark(sp.crux.phone.lcp || [], COLORS.amber)}</p>` : ''}` : `<p class="jv-empty">${S.pending.speed ? 'Running PageSpeed on five pages (up to 90 s)…' : esc((sp && sp.error) || 'Not loaded.')}</p>`, { wide: true, data: sp && sp.pages && sp.pages.map((p) => ({ page: p.name, score: p.score, lcp: p.lab && p.lab.lcp, tbt: p.lab && p.lab.tbt, cls: p.lab && p.lab.cls, error: p.error })) })}
@@ -827,7 +924,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
 
     function draftSettings() {
         const s = S.settings || {};
-        return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true }, s.mail || {}) };
+        return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true }, s.mail || {}), searchQueries: (s.searchQueries || []).slice() };
     }
 
     function goalEditor(g, i) {
@@ -855,6 +952,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
               <p class="jv-note">Goals count every row on the server (tests included) over the current Bogotá day, week (from Monday) or month.</p></section>
             <section><h4>Thresholds</h4><div class="jv-th-grid">${Object.keys(th).map((k) => `<label class="jv-field">${esc(th[k].label)}<input type="number" name="t-${k}" min="${th[k].min}" max="${th[k].max}" step="any" value="${esc(d.thresholds[k])}"></label>`).join('')}</div>
               <div class="jv-actions"><button type="button" class="jv-btn small" data-th-reset>Back to the defaults</button></div></section>
+            <section><h4>Search rankings</h4><label class="jv-field">Searches to rank on Brave, one per line (up to 8)<textarea name="s-queries" rows="5" placeholder="${esc(C.SEARCH_QUERIES.join('\n'))}">${esc((d.searchQueries || []).join('\n'))}</textarea></label>
+              <p class="jv-note">Left empty, Jarvis checks the default searches shown. Brave is asked once a day.</p></section>
             <footer><span class="jv-note">${S.settings && S.settings.updatedAt ? 'Saved ' + esc(when(S.settings.updatedAt)) : 'Not saved yet'}</span><button type="button" class="jv-btn" data-settings-close>Cancel</button><button type="submit" class="jv-btn is-primary">Save</button></footer>`;
     }
 
@@ -867,7 +966,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         }));
         const thresholds = {};
         Object.keys(C.THRESHOLDS).forEach((k) => { thresholds[k] = Number(val('t-' + k).value); });
-        return { goals, thresholds, mail: { daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked } };
+        const searchQueries = String(val('s-queries').value || '').split('\n').map((q) => q.trim()).filter(Boolean).slice(0, 8);
+        return { goals, thresholds, mail: { daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked }, searchQueries };
     }
 
     function openSettings() {
