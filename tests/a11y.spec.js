@@ -135,14 +135,14 @@ test.describe('Skip link', () => {
     await expect(page.locator('.skip-link')).toHaveText('Aller au contenu principal');
   });
 
-  test('the review skip link goes to the disclaimers while they are shown', async ({ page }) => {
+  test('the review skip link goes to the request before the disclaimers are asked for', async ({ page }) => {
     await primeReview(page, { terms: false });
     await page.goto('/qa-review-es.html');
-    await expect(page.locator('#gate')).toBeVisible();
+    await expect(page.locator('#gate')).toBeHidden();
     await page.keyboard.press('Tab');
     await expect(page.locator('.skip-link')).toHaveText('Saltar al contenido principal');
     await page.keyboard.press('Enter');
-    await expect(page.locator('#gate .gate-card')).toBeFocused();
+    await expect(page.locator('#review-app')).toBeFocused();
   });
 
   test('the skip link has enough contrast in light and dark themes', async ({ page }) => {

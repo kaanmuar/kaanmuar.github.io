@@ -45,19 +45,37 @@ function args() {
   return out;
 }
 
-async function gql(query, variables) {
-  const res = await fetch(API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: "Bearer " + process.env.BUFFER_API_KEY },
-    body: JSON.stringify({ query, variables })
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok || json.errors) {
+/* Every job on the key shares Buffer's limits (#1170). A 429 on the 15-minute window waits (Retry-After, at least
+   RETRY_WAITS) and retries; one on the daily or 30-day window throws at once with error.spent, since it frees up
+   hours later. */
+const RETRY_WAITS = [30, 60, 120];
+const MAX_WAIT = 16 * 60;
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function gql(query, variables, { request = fetch, sleep = pause } = {}) {
+  for (let attempt = 0; ; attempt += 1) {
+    const res = await request(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + process.env.BUFFER_API_KEY },
+      body: JSON.stringify({ query, variables })
+    });
+    const json = await res.json().catch(() => ({}));
+    if (res.ok && !json.errors) return json.data;
     const error = new Error("Buffer " + res.status + ": " + JSON.stringify(json.errors || json).slice(0, 300));
     error.code = json.errors && json.errors[0] && json.errors[0].extensions && json.errors[0].extensions.code;
-    throw error;
+    if (res.status !== 429 && error.code !== "RATE_LIMIT_EXCEEDED") throw error;
+    const window = (json.errors || []).map((e) => e.extensions && e.extensions.window).find(Boolean);
+    const after = Number(res.headers && res.headers.get("retry-after")) || 0;
+    if (window && window !== "15m") {
+      error.spent = true;
+      error.message = "Buffer's " + window + " limit is spent; it frees up in " + Math.ceil(after / 3600) + " h. " + error.message;
+      throw error;
+    }
+    if (attempt >= RETRY_WAITS.length) throw error;
+    const wait = Math.min(Math.max(after, RETRY_WAITS[attempt]), MAX_WAIT);
+    console.log("Buffer rate limit" + (window ? " (" + window + ")" : "") + ": retry " + (attempt + 1) + " of " + RETRY_WAITS.length + " in " + wait + " s");
+    await sleep(wait * 1000);
   }
-  return json.data;
 }
 
 async function lookup(entry) {
@@ -66,6 +84,7 @@ async function lookup(entry) {
     return ledger.fromBuffer(data.post);
   } catch (error) {
     if (error.code === "NOT_FOUND") return ledger.fromBuffer(null);
+    if (error.spent) throw error;
     console.log("could not look up", entry.id, "-", error.message);
     return null;
   }
@@ -388,7 +407,8 @@ async function main() {
   let failed = 0;
   let queued = 0;
   let already = 0;
-  for (const slug of slugs) {
+  let spent = null;
+  posts: for (const slug of slugs) {
     for (const channel of list) {
       for (const { slot, input } of inputsFor(channel, slug, captions[slug], base, clipBase, when, batch)) {
         const profile = channel.service + (channel.name ? " (" + channel.name + ")" : "");
@@ -420,16 +440,19 @@ async function main() {
           failed += 1;
           console.log("failed", label, "-", error.message);
           Object.assign(entry, { result: "failed", error: error.message });
+          if (error.spent) spent = error.message;
         }
         ledger.record(book, batch + "/" + slug, entry);
+        if (spent) break posts;
       }
     }
   }
   if (!opts["dry-run"]) ledger.write(ledger.BUFFER, book);
+  if (spent) console.log("stopped early, the rest is not queued: " + spent);
   console.log(queued + " queued, " + already + " already in Buffer, " + failed + " failed");
   if (failed) process.exit(1);
 }
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { batchIndex, matchPost, staleScheduled, inputsFor, requeueTargets };
+module.exports = { batchIndex, matchPost, staleScheduled, inputsFor, gql, requeueTargets };

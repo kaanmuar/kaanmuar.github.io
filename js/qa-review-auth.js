@@ -316,15 +316,20 @@
     if (message) say(message, true);
   }
 
+  // The review page asks for its terms before the first sign-in; the account and payment pages have none.
+  const afterTerms = (then) => (window.ReviewTerms ? ReviewTerms.ensure(then) : then());
+
   box.setAttribute("data-opened", String(Date.now()));
-  el("sign-in-send").addEventListener("click", sendCode);
+  el("sign-in-send").addEventListener("click", () => afterTerms(sendCode));
   el("sign-in-check").addEventListener("click", checkCode);
-  el("sign-in-email").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); sendCode(); } });
+  el("sign-in-email").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); afterTerms(sendCode); } });
   el("sign-in-code").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); checkCode(); } });
   el("sign-in-restart").addEventListener("click", () => { factor = null; write(PENDING_KEY, null); say(""); paint(); });
   el("sign-in-providers").addEventListener("click", (event) => {
     const button = event.target.closest("[data-provider]");
-    if (button) (button.hasAttribute("data-oauth") ? withOAuth : withProvider)(button.getAttribute("data-provider"));
+    if (!button) return;
+    const id = button.getAttribute("data-provider");
+    afterTerms(() => (button.hasAttribute("data-oauth") ? withOAuth : withProvider)(id));
   });
   el("sign-out").addEventListener("click", () => {
     const saved = current();

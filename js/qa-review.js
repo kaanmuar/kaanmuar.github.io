@@ -112,30 +112,72 @@
 
   if (window.ReviewAuth) {
     ReviewAuth.onChange((on) => {
-      if (!app.inert && !activeRun) reviewBtn.disabled = !on;
+      if (!activeRun) reviewBtn.disabled = !on;
     });
   }
 
-  function unlock() {
-    gate.hidden = true;
-    gate.classList.remove("is-leaving");
-    app.inert = false;
-    document.querySelectorAll("[data-gated]").forEach((el) => { el.inert = false; });
+  let termsOk = false;
+  let gateReturn = null;
+  let behindGate = [];
+  let afterTerms = null;
+  try { termsOk = sessionStorage.getItem(TERMS_KEY) === TERMS_VERSION; } catch (error) { termsOk = false; }
+
+  function enableApp() {
     fields().forEach((el) => { el.disabled = false; });
     reasonBox.disabled = true;
     syncSection();
     stopBtn.disabled = true;
     reviewBtn.disabled = !signedIn();
-    sessionStorage.setItem(TERMS_KEY, TERMS_VERSION);
-    if (window.SiteTour && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
   }
 
-  const skipLink = document.querySelector(".skip-link");
-  if (skipLink) skipLink.addEventListener("click", (event) => {
-    if (!app.inert || gate.hidden) return;
-    event.preventDefault();
+  // The terms are asked for when an address is sent or someone signs in; what asked goes on once they are accepted.
+  function askTerms(then, host) {
+    afterTerms = then;
+    const waiting = document.getElementById("gate-waiting");
+    waiting.hidden = !host;
+    waiting.textContent = host ? waiting.dataset.text.replace("{host}", host.replace(/^https?:\/\//i, "")) : "";
+    gateReturn = document.activeElement;
+    behindGate = [...document.body.children].filter((el) => el !== gate && !el.inert && !el.matches("script, .cookie-note"));
+    behindGate.forEach((el) => { el.inert = true; });
+    gate.hidden = false;
+    gate.classList.remove("is-leaving");
+    document.body.classList.add("gate-open");
     gate.querySelector(".gate-card").focus();
-  });
+  }
+
+  function closeGate() {
+    gate.hidden = true;
+    gate.classList.remove("is-leaving");
+    document.body.classList.remove("gate-open");
+    behindGate.forEach((el) => { el.inert = false; });
+    behindGate = [];
+    if (gateReturn && gateReturn.isConnected) gateReturn.focus({ preventScroll: true });
+    gateReturn = null;
+  }
+
+  function dismissGate() {
+    if (gate.hidden) return;
+    compareTarget = null;
+    afterTerms = null;
+    closeGate();
+  }
+
+  function acceptTerms() {
+    termsOk = true;
+    try { sessionStorage.setItem(TERMS_KEY, TERMS_VERSION); } catch (error) { /* this page still knows they were accepted */ }
+    const then = afterTerms;
+    afterTerms = null;
+    closeGate();
+    if (then) then();
+  }
+
+  window.ReviewTerms = {
+    ensure: (then) => { if (termsOk) then(); else askTerms(then, ""); }
+  };
+
+  document.getElementById("gate-close").addEventListener("click", dismissGate);
+  gate.addEventListener("click", (event) => { if (event.target === gate) dismissGate(); });
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape") dismissGate(); });
 
   function paintFrameworks() {
     const box = document.getElementById("fw-picker");
@@ -188,7 +230,7 @@
     const path = urlPath();
     if (!path) sectionTouched = false;
     else if (!sectionTouched) box.checked = true;
-    box.disabled = app.inert || !path;
+    box.disabled = !path;
     if (!path) box.checked = false;
     if (note) note.textContent = !path
       ? "Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site."
@@ -244,16 +286,16 @@
     event.preventDefault();
     if (accept.disabled) return;
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_terms", "URL Review", "accepted");
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { unlock(); return; }
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { acceptTerms(); return; }
     gate.classList.add("is-leaving");
-    setTimeout(unlock, 340);
+    setTimeout(acceptTerms, 340);
   });
-  if (sessionStorage.getItem(TERMS_KEY) === TERMS_VERSION) unlock();
+  enableApp();
 
   function syncReasonExtras() {
     const code = reasonCode();
     const other = code === "other";
-    reasonBox.disabled = !other || app.inert;
+    reasonBox.disabled = !other;
     reasonBox.required = other;
     if (!other) clearField("reason");
     document.getElementById("client-box").hidden = code !== "client";
@@ -2280,7 +2322,11 @@
 
   reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (app.inert || activeRun) return;
+    if (activeRun) return;
+    if (!termsOk) {
+      askTerms(() => reviewForm.dispatchEvent(new Event("submit", { cancelable: true })), compareTarget ? compareTarget.url : urlInput.value.trim());
+      return;
+    }
     if (!signedIn()) {
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "client");
       setStatus("Sign in above to run a review. The review runs on the device where you sign in.", true);
@@ -2481,8 +2527,7 @@
     }
   }
 
-  async function openSample() {
-    const button = document.getElementById("sample-open");
+  async function openSample(button) {
     if (button) button.disabled = true;
     try {
       const res = await fetch(SAMPLE_URL, { cache: "no-cache" });
@@ -2496,7 +2541,8 @@
     }
   }
 
-  document.getElementById("sample-open").addEventListener("click", openSample);
+  document.getElementById("sample-open").addEventListener("click", (event) => { dismissGate(); openSample(event.currentTarget); });
+  document.getElementById("stage-sample-open").addEventListener("click", (event) => openSample(event.currentTarget));
   if (new URLSearchParams(location.search).get("sample") === "1") openSample();
 
   shareOpen.addEventListener("click", () => {
@@ -2801,7 +2847,7 @@
     if (tourButton) tourButton.addEventListener("click", () => {
       if (window.SiteTour) SiteTour.start(reviewTour());
     });
-    if (window.SiteTour && gate.hidden && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
+    if (window.SiteTour && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
   }
 
   bootLanguageAndTour();
@@ -2822,7 +2868,6 @@
   if (shared) {
     let lockedShared = false;
     const openShared = async () => {
-      if (app.inert) return;
       setStatus("Opening the saved report…", false);
       try {
         const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
@@ -2856,19 +2901,7 @@
       }
     };
     if (window.ReviewAuth) ReviewAuth.onChange((on) => { if (on && lockedShared) openShared(); });
-    if (!app.inert) openShared();
-    else {
-      const waiting = document.createElement("p");
-      waiting.className = "gate-waiting";
-      waiting.setAttribute("role", "status");
-      waiting.textContent = "Your report is waiting. Accept below and it opens right here.";
-      const title = document.getElementById("gate-title");
-      if (title) title.parentNode.insertBefore(waiting, title);
-      termsForm.addEventListener("submit", () => {
-        waiting.remove();
-        setTimeout(openShared, 0);
-      }, { once: true });
-    }
+    openShared();
   }
 
   const CASE_LAYERS = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "GEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
@@ -3174,8 +3207,7 @@
       render(current);
       openCaseFormats(saved);
     };
-    if (!app.inert) restore();
-    else termsForm.addEventListener("submit", () => setTimeout(restore, 0), { once: true });
+    restore();
   }
 
   function restorePaid(flag, key, mark) {
@@ -3189,8 +3221,7 @@
       render(current);
       if (mark) mark();
     };
-    if (!app.inert) apply();
-    else termsForm.addEventListener("submit", () => setTimeout(apply, 0), { once: true });
+    apply();
   }
   restorePaid("alerts", "qa-review-alerts");
   restorePaid("credentialRun", "qa-review-credential");

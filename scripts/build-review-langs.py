@@ -133,9 +133,12 @@ def retag(s, start, end, body, code):
 
 def gate(s, code):
     g = COPY[code]["gate"]
-    a = s.index('<div id="gate" class="gate">')
+    a = s.index('<div id="gate" class="gate" hidden>')
     b = s.index("</form>", a)
     part = s[a:b]
+    part = swap(part, 'id="gate-close" type="button" aria-label="Close"', f'id="gate-close" type="button" aria-label="{g["close"]}"')
+    part = swap(part, 'role="status" data-text="The review of {host} starts as soon as you accept." hidden>',
+                f'role="status" data-text="{g["waiting"]}" lang="{code}" translate="no" hidden>')
     part = retag(part, '<p class="gate-tagline">', "</p>", g["tagline"], code)
     for key, (title, gist) in g["cards"].items():
         part = retag(part, f'<b class="tg-title" data-tg="{key}">', "</b>", title, code)
@@ -216,6 +219,9 @@ def facts(s, code):
     for english, local in zip(FACT_LABELS, FACTS[code]):
         part = swap(part, f"<span>{english}</span>", f'<span lang="{code}" translate="no">{local}</span>')
     s = s[:a] + part + s[b:]
+    sample = COPY[code]["gate"]["sample"]
+    s = retag(s, '<button class="stage-link" id="stage-sample-open" type="button">', "</button>", sample["button"], code)
+    s = retag(s, '<a class="stage-link" id="stage-guide" href="qa-review-guide.html">', "</a>", sample["tour"], code)
     return retag(s, '<a class="live-jump" href="#live-reports">', "</a>", FACTS[code][-1], code)
 
 
