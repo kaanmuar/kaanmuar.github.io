@@ -1606,13 +1606,13 @@
   function paintFixFirst(ins, paid) {
     const top = (ins.findings || []).filter((item) => item.rank).slice(0, 10);
     slot("fix-first").innerHTML = top.length
-      ? '<p class="muted">Ranked by severity, how many pages it touches, and how long the fix takes.</p><ol class="fix-list">' + top.map((item) =>
-        '<li><span class="fix-rank">' + item.rank + "</span><div>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(item.area) + "</span>" +
+      ? '<p class="muted">' + esc(rc.t("fixIntro")) + '</p><ol class="fix-list">' + top.map((item) =>
+        '<li><span class="fix-rank">' + item.rank + "</span><div>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span>" +
         "<strong>" + esc(item.title) + "</strong>" +
         '<p class="meta-line">' + fadeText(item.evidence, paid) + "</p>" +
         (item.fix ? '<p class="fix-line">' + fadeText(item.fix, paid) + "</p>" : "") +
-        '<p class="meta-line">Effort: ' + esc(item.effort) + (item.count > 1 ? " · " + item.count + " places" : "") + "</p></div></li>").join("") + "</ol>"
-      : '<p class="muted">Nothing fails or is at risk in the checks this review can measure.</p>';
+        '<p class="meta-line">' + esc(rc.t("effort", { effort: rc.word("effortWord", item.effort) })) + (item.count > 1 ? " · " + esc(rc.t("places", { n: item.count })) : "") + "</p></div></li>").join("") + "</ol>"
+      : '<p class="muted">' + esc(rc.t("fixNone")) + "</p>";
   }
 
   function cut(text, max) {
@@ -1625,26 +1625,26 @@
     const s = (ins.previews && ins.previews.social) || {};
     const icon = g.icon ? '<img src="' + esc(g.icon) + '" alt="" referrerpolicy="no-referrer" loading="lazy" data-fallback="dot">' : '<span class="serp-dot"></span>';
     const notes = [];
-    if (g.titleCut) notes.push("The title is longer than about 60 characters, so Google cuts it.");
-    if (!g.description) notes.push("There is no meta description, so Google writes its own snippet from the page.");
-    else if (g.descriptionCut) notes.push("The description runs past about 158 characters and is cut.");
-    if (!g.icon) notes.push("No favicon is declared, so a blank globe shows instead.");
+    if (g.titleCut) notes.push(rc.t("titleCut"));
+    if (!g.description) notes.push(rc.t("noDescription"));
+    else if (g.descriptionCut) notes.push(rc.t("descriptionCut"));
+    if (!g.icon) notes.push(rc.t("noFavicon"));
     const shareNotes = [];
-    if (!s.image) shareNotes.push("No https og:image: most apps show a grey box or no card at all.");
-    if (s.fallback) shareNotes.push("Some Open Graph tags are missing, so apps fall back to the title and description.");
-    if (!s.card) shareNotes.push("No twitter:card tag: X shows a small link instead of a large card.");
+    if (!s.image) shareNotes.push(rc.t("noOgImage"));
+    if (s.fallback) shareNotes.push(rc.t("ogFallback"));
+    if (!s.card) shareNotes.push(rc.t("noTwitterCard"));
     slot("previews").innerHTML =
       '<div><div class="serp notranslate" translate="no"><div class="serp-site">' + icon + "<div>" + esc(g.site || "") + "<small>https://" + esc(g.url || "") + "</small></div></div>" +
-      "<h3>" + esc(cut(g.title || "(no title)", 62)) + "</h3><p>" + esc(cut(g.description || "Google would pick a line of text from the page here.", 160)) + "</p></div>" +
-      '<p class="preview-note">' + esc(notes.join(" ") || "Title and description fit the space Google gives them.") + "</p></div>" +
-      '<div><div class="share notranslate" translate="no"><div class="share-img">' + (s.image ? '<img src="' + esc(s.image) + '" alt="" referrerpolicy="no-referrer" loading="lazy" data-fallback="image">' : "<span>No og:image</span>") + "</div>" +
-      '<div class="share-body"><small>' + esc(s.host || "") + "</small><strong>" + esc(cut(s.title || "(no title)", 90)) + "</strong><p>" + esc(s.description || "") + "</p></div></div>" +
-      '<p class="preview-note">' + esc(shareNotes.join(" ") || "LinkedIn, WhatsApp, Slack, and X have what they need for a full card.") + "</p></div>";
+      "<h3>" + esc(cut(g.title || rc.t("noTitle"), 62)) + "</h3><p>" + esc(cut(g.description || rc.t("googlePicks"), 160)) + "</p></div>" +
+      '<p class="preview-note">' + esc(notes.join(" ") || rc.t("serpFits")) + "</p></div>" +
+      '<div><div class="share notranslate" translate="no"><div class="share-img">' + (s.image ? '<img src="' + esc(s.image) + '" alt="" referrerpolicy="no-referrer" loading="lazy" data-fallback="image">' : "<span>" + esc(rc.t("noOgImageBox")) + "</span>") + "</div>" +
+      '<div class="share-body"><small>' + esc(s.host || "") + "</small><strong>" + esc(cut(s.title || rc.t("noTitle"), 90)) + "</strong><p>" + esc(s.description || "") + "</p></div></div>" +
+      '<p class="preview-note">' + esc(shareNotes.join(" ") || rc.t("shareFits")) + "</p></div>";
     slot("previews").querySelectorAll("img[data-fallback]").forEach((img) => {
       img.addEventListener("error", () => {
         const stand = document.createElement("span");
         if (img.getAttribute("data-fallback") === "dot") stand.className = "serp-dot";
-        else stand.textContent = "The og:image did not load in this browser.";
+        else stand.textContent = rc.t("ogNotLoaded");
         img.replaceWith(stand);
       }, { once: true });
     });
@@ -1833,48 +1833,49 @@
   function paintGeo(ins) {
     const geo = ins.geo || {};
     const view = geo.aiView || {};
-    const roles = [["answers", "Answer engines (cite pages in replies)"], ["search", "Search engines (also feed AI Overviews and Copilot)"], ["training", "Model training (blocking is a policy choice)"]];
+    const roles = [["answers", rc.t("roleAnswers")], ["search", rc.t("roleSearch")], ["training", rc.t("roleTraining")]];
     const bots = roles.map(([role, label]) => {
       const list = (geo.crawlers || []).filter((bot) => bot.role === role);
       if (!list.length) return "";
       return '<p class="bot-group">' + esc(label) + "</p>" + list.map((bot) =>
         '<div class="bot' + (bot.allowed ? "" : " no") + '"><i aria-hidden="true">' + (bot.allowed ? "✓" : "✕") + '</i><div><span class="notranslate" translate="no">' + esc(bot.token) + "</span> — " + esc(bot.product) +
-        "<small>" + (bot.allowed ? (bot.blockedPages ? bot.blockedPages + " of the pages analyzed are closed to it." : "Allowed.") : "Blocked" + (bot.rule ? " by " + esc(bot.rule) : "") + ".") + "</small></div></div>").join("");
+        "<small>" + esc(bot.allowed ? (bot.blockedPages ? rc.t("botClosed", { n: bot.blockedPages }) : rc.t("botAllowed")) : bot.rule ? rc.t("botBlockedBy", { rule: bot.rule }) : rc.t("botBlocked")) + "</small></div></div>").join("");
     }).join("");
     const llms = geo.llms || {};
     const entity = geo.entity;
     const facts = [
-      ["llms.txt", llms.ok && llms.complete ? "pass" : "risk", llms.ok ? (llms.sections || 0) + " sections" + (llms.complete ? "" : ", incomplete") : "Not published"],
-      ["Entity", entity ? "pass" : "risk", entity ? entity.type + (entity.sameAs && entity.sameAs.length ? " · " + entity.sameAs.length + " profiles" : "") : "None"],
-      ["Text without JS", view.chars >= 900 ? "pass" : view.chars >= 300 ? "risk" : "fail", (view.chars || 0) + " characters"],
-      ["Q&A shape", geo.questionHeadings || (geo.schemaTypes || []).indexOf("FAQPage") !== -1 ? "pass" : "risk", (geo.questionHeadings || 0) + " question headings"]
+      ["llms.txt", llms.ok && llms.complete ? "pass" : "risk", llms.ok ? rc.t(llms.complete ? "llmsSections" : "llmsIncomplete", { n: llms.sections || 0 }) : rc.t("notPublished")],
+      [rc.t("factEntity"), entity ? "pass" : "risk", entity ? (entity.sameAs && entity.sameAs.length ? rc.t("profiles", { type: entity.type, n: entity.sameAs.length }) : entity.type) : rc.t("none")],
+      [rc.t("factNoJs"), view.chars >= 900 ? "pass" : view.chars >= 300 ? "risk" : "fail", rc.t("chars", { n: view.chars || 0 })],
+      [rc.t("factQa"), geo.questionHeadings || (geo.schemaTypes || []).indexOf("FAQPage") !== -1 ? "pass" : "risk", rc.t("questionHeadings", { n: geo.questionHeadings || 0 })]
     ];
-    const outlineHtml = (view.outline || []).length ? '<ul class="ai-outline">' + view.outline.map((item) => '<li class="l' + item.level + '">H' + item.level + " · " + esc(item.text) + "</li>").join("") + "</ul>" : '<p class="muted">No h1 to h3 headings in the HTML.</p>';
+    const outlineHtml = (view.outline || []).length ? '<ul class="ai-outline">' + view.outline.map((item) => '<li class="l' + item.level + '">H' + item.level + " · " + esc(item.text) + "</li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noHeadings")) + "</p>";
     slot("geo").innerHTML =
       '<div class="checks-grid" style="margin-bottom:12px">' + facts.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" +
-      '<div class="split"><article class="card"><h3>The text an AI crawler receives</h3><p class="muted">Most AI crawlers do not run JavaScript. This is what the raw HTML of the start page hands them' + (view.appShell ? ", and the page is an empty app shell" : "") + ".</p>" +
-      '<div class="ai-view notranslate" translate="no">' + esc(view.text || "(no readable text)") + (view.chars > (view.text || "").length ? " …" : "") + "</div>" +
-      '<p class="meta-line">' + (view.words || 0) + " words · " + (view.chars || 0) + " characters</p><h3>Headings it can follow</h3>" + outlineHtml + "</article>" +
-      '<article class="card"><h3>Who may read the site</h3><p class="muted">' + (geo.robotsFound ? "From the rules in robots.txt, checked for each crawler." : "There is no robots.txt, so every crawler is allowed.") + "</p>" + bots + "</article></div>";
+      '<div class="split"><article class="card"><h3>' + esc(rc.t("aiTextTitle")) + '</h3><p class="muted">' + esc(rc.t(view.appShell ? "aiTextShell" : "aiTextNote")) + "</p>" +
+      '<div class="ai-view notranslate" translate="no">' + esc(view.text || rc.t("noReadable")) + (view.chars > (view.text || "").length ? " …" : "") + "</div>" +
+      '<p class="meta-line">' + esc(rc.t("wordsChars", { words: view.words || 0, chars: view.chars || 0 })) + "</p><h3>" + esc(rc.t("headingsTitle")) + "</h3>" + outlineHtml + "</article>" +
+      '<article class="card"><h3>' + esc(rc.t("whoTitle")) + '</h3><p class="muted">' + esc(rc.t(geo.robotsFound ? "robotsFound" : "robotsNone")) + "</p>" + bots + "</article></div>";
   }
 
   function paintAnalytics(ins) {
     const a = ins.analytics || {};
     const total = ((ins.seo && ins.seo.indexability) || []).filter((row) => row.status >= 200 && row.status < 300).length || 1;
     const rows = (a.tags || []).map((tag) =>
-      "<tr><td><strong>" + esc(tag.name) + "</strong>" + (tag.cookieless ? ' <span class="badge v-pass">cookieless</span>' : "") + '</td><td class="notranslate" translate="no">' + esc((tag.ids || []).join(", ") || "—") + "</td><td>" + tag.pages + " of " + total + "</td></tr>").join("");
-    const consent = a.consentTools && a.consentTools.length ? a.consentTools.join(", ") : "None found";
+      "<tr><td><strong>" + esc(tag.name) + "</strong>" + (tag.cookieless ? ' <span class="badge v-pass">' + esc(rc.t("cookieless")) + "</span>" : "") + '</td><td class="notranslate" translate="no">' + esc((tag.ids || []).join(", ") || "—") + "</td><td>" + esc(rc.t("pagesOf", { n: tag.pages, total: total })) + "</td></tr>").join("");
+    const consent = a.consentTools && a.consentTools.length ? a.consentTools.join(", ") : rc.t("consentNone");
     const regions = (a.consentMode && a.consentMode.regions) || [];
-    const mode = a.consentMode ? "analytics_storage " + (regions.length ? "denied in " + regions.length + " region" + (regions.length === 1 ? "" : "s") + ", " + (a.consentMode.analytics || "unset") + " elsewhere" : a.consentMode.analytics || "unset") + (a.consentMode.v2 ? " · v2 signals present" : " · v2 signals missing") : "No default in the HTML";
-    const utm = a.utm ? (a.utm.kept ? "Kept through redirects" : "Stripped on " + a.utm.finalPath) : "Not tested";
+    const storage = a.consentMode && (a.consentMode.analytics || "unset");
+    const mode = a.consentMode ? (regions.length ? rc.t("modeRegions", { n: regions.length, value: storage }) : rc.t("modeValue", { value: storage })) + " · " + rc.t(a.consentMode.v2 ? "v2Present" : "v2Missing") : rc.t("noDefault");
+    const utm = a.utm ? (a.utm.kept ? rc.t("utmKept") : rc.t("utmStripped", { path: a.utm.finalPath })) : rc.t("notTested");
     slot("analytics").innerHTML =
       '<div class="checks-grid" style="margin-bottom:12px">' +
-      '<div class="check-tile ' + ((a.tags || []).length ? "pass" : "risk") + '"><b>Tools</b>' + (a.tags || []).length + " found</div>" +
-      '<div class="check-tile ' + (a.consentTools && a.consentTools.length ? "pass" : ((a.tags || []).some((tag) => !tag.cookieless) ? "risk" : "unknown")) + '"><b>Consent tool</b>' + esc(consent) + "</div>" +
+      '<div class="check-tile ' + ((a.tags || []).length ? "pass" : "risk") + '"><b>' + esc(rc.t("tileTools")) + "</b>" + esc(rc.t("toolsFound", { n: (a.tags || []).length })) + "</div>" +
+      '<div class="check-tile ' + (a.consentTools && a.consentTools.length ? "pass" : ((a.tags || []).some((tag) => !tag.cookieless) ? "risk" : "unknown")) + '"><b>' + esc(rc.t("tileConsentTool")) + "</b>" + esc(consent) + "</div>" +
       '<div class="check-tile ' + (a.consentMode ? ((a.consentMode.analytics === "denied" || regions.length) && a.consentMode.v2 ? "pass" : "risk") : "unknown") + '"><b>Consent Mode</b>' + esc(mode) + "</div>" +
-      '<div class="check-tile ' + (a.utm ? (a.utm.kept ? "pass" : "fail") : "unknown") + '"><b>UTM parameters</b>' + esc(utm) + "</div></div>" +
-      '<article class="card">' + (rows ? '<table class="mini-table"><thead><tr><th>Tool</th><th>IDs</th><th>Pages with it</th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="muted">No known analytics or advertising tag was in the HTML of the pages analyzed.</p>') +
-      ((a.untagged || []).length ? '<p class="meta-line">Pages without a tag: ' + esc(a.untagged.slice(0, 8).join(", ")) + "</p>" : "") + "</article>";
+      '<div class="check-tile ' + (a.utm ? (a.utm.kept ? "pass" : "fail") : "unknown") + '"><b>' + esc(rc.t("tileUtm")) + "</b>" + esc(utm) + "</div></div>" +
+      '<article class="card">' + (rows ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thTool")) + "</th><th>" + esc(rc.t("thIds")) + "</th><th>" + esc(rc.t("thPagesWith")) + "</th></tr></thead><tbody>" + rows + "</tbody></table>" : '<p class="muted">' + esc(rc.t("noTags")) + "</p>") +
+      ((a.untagged || []).length ? '<p class="meta-line">' + esc(rc.t("untagged", { list: a.untagged.slice(0, 8).join(", ") })) + "</p>" : "") + "</article>";
   }
 
   function paintSeo(ins) {
@@ -1884,16 +1885,16 @@
     const blocked = rows.filter((row) => !row.indexable);
     const dup = (seo.duplicates && seo.duplicates.titles) || [];
     slot("seo").innerHTML =
-      '<div class="stat-row"><div class="stat"><b>' + (seo.indexable || 0) + " / " + rows.length + '</b><span>Pages indexable</span></div>' +
-      '<div class="stat"><b>' + (map.found ? map.count : "—") + '</b><span>URLs in the sitemap</span></div>' +
-      '<div class="stat"><b>' + (map.found ? (map.notListed || []).length : "—") + '</b><span>Indexable, not in sitemap</span></div>' +
-      '<div class="stat"><b>' + dup.length + '</b><span>Shared titles</span></div></div>' +
+      '<div class="stat-row"><div class="stat"><b>' + (seo.indexable || 0) + " / " + rows.length + "</b><span>" + esc(rc.t("statIndexable")) + "</span></div>" +
+      '<div class="stat"><b>' + (map.found ? map.count : "—") + "</b><span>" + esc(rc.t("statSitemap")) + "</span></div>" +
+      '<div class="stat"><b>' + (map.found ? (map.notListed || []).length : "—") + "</b><span>" + esc(rc.t("statNotListed")) + "</span></div>" +
+      '<div class="stat"><b>' + dup.length + "</b><span>" + esc(rc.t("statShared")) + "</span></div></div>" +
       '<article class="card">' + (blocked.length
-        ? '<table class="mini-table"><thead><tr><th>Page not indexable</th><th>Why</th></tr></thead><tbody>' + blocked.slice(0, 30).map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + esc(row.reason) + "</td></tr>").join("") + "</tbody></table>"
-        : '<p class="muted">Every page that was analyzed can be indexed: status 200, no noindex, canonical to itself, open to Googlebot.</p>') +
-      ((map.listedNotIndexable || []).length ? '<p class="meta-line">In the sitemap but not indexable: ' + esc(map.listedNotIndexable.slice(0, 6).join(", ")) + "</p>" : "") +
-      ((map.notLinked || []).length ? '<p class="meta-line">In the sitemap but not linked from the pages analyzed: ' + esc(map.notLinked.slice(0, 6).join(", ")) + (map.notLinked.length > 6 ? " …" : "") + "</p>" : "") +
-      ((seo.schemaTypes || []).length ? '<p class="meta-line">Structured data types: ' + esc(seo.schemaTypes.join(", ")) + "</p>" : "") + "</article>";
+        ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thNotIndexable")) + "</th><th>" + esc(rc.t("thWhy")) + "</th></tr></thead><tbody>" + blocked.slice(0, 30).map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + esc(row.reason) + "</td></tr>").join("") + "</tbody></table>"
+        : '<p class="muted">' + esc(rc.t("allIndexable")) + "</p>") +
+      ((map.listedNotIndexable || []).length ? '<p class="meta-line">' + esc(rc.t("listedNotIndexable", { list: map.listedNotIndexable.slice(0, 6).join(", ") })) + "</p>" : "") +
+      ((map.notLinked || []).length ? '<p class="meta-line">' + esc(rc.t("notLinked", { list: map.notLinked.slice(0, 6).join(", ") + (map.notLinked.length > 6 ? " …" : "") })) + "</p>" : "") +
+      ((seo.schemaTypes || []).length ? '<p class="meta-line">' + esc(rc.t("schemaTypes", { list: seo.schemaTypes.join(", ") })) + "</p>" : "") + "</article>";
   }
 
   function paintGraph(ins) {
@@ -1901,7 +1902,7 @@
     const graph = ins.graph || { nodes: [], edges: [] };
     const nodes = graph.nodes || [];
     if (nodes.length < 2) {
-      host.innerHTML = '<p class="muted">Only one page was analyzed, so there is no link map to draw.</p>';
+      host.innerHTML = '<p class="muted">' + esc(rc.t("graphOne")) + "</p>";
       return;
     }
     const parent = nodes.map((node, index) => {
@@ -1941,12 +1942,12 @@
     const tree = new Set(parent.map((p, index) => p + ">" + index));
     const extra = (graph.edges || []).filter((edge) => !tree.has(edge.s + ">" + edge.t) && !tree.has(edge.t + ">" + edge.s)).slice(0, 400);
     const line = (a, b, cls) => '<line x1="' + pos[a].x.toFixed(1) + '" y1="' + pos[a].y.toFixed(1) + '" x2="' + pos[b].x.toFixed(1) + '" y2="' + pos[b].y.toFixed(1) + '" ' + cls + "></line>";
-    const svg = '<svg viewBox="0 0 640 640" role="img" aria-label="Link map of ' + nodes.length + ' pages">' +
+    const svg = '<svg viewBox="0 0 640 640" role="img" aria-label="' + esc(rc.t("graphAria", { n: nodes.length })) + '">' +
       extra.map((edge) => line(edge.s, edge.t, 'stroke="var(--line)" stroke-width="0.6" opacity="0.7"')).join("") +
       parent.map((p, index) => p >= 0 ? line(p, index, 'stroke="var(--muted)" stroke-width="1.1" opacity="0.55"') : "").join("") +
       nodes.map((node, index) => {
         const r = index === 0 ? 11 : 4.5 + Math.min(6, (node.inbound || 0) / 2);
-        return '<circle tabindex="0" data-i="' + index + '" cx="' + pos[index].x.toFixed(1) + '" cy="' + pos[index].y.toFixed(1) + '" r="' + r.toFixed(1) + '" fill="' + color(node, index) + '"><title>' + esc(node.path) + " · " + esc(node.status || "no answer") + " · " + esc(node.ms) + " ms · " + (node.inbound || 0) + " links in</title></circle>";
+        return '<circle tabindex="0" data-i="' + index + '" cx="' + pos[index].x.toFixed(1) + '" cy="' + pos[index].y.toFixed(1) + '" r="' + r.toFixed(1) + '" fill="' + color(node, index) + '"><title>' + esc(node.path) + " · " + esc(node.status || rc.t("noAnswer")) + " · " + esc(node.ms) + " ms · " + esc(rc.t("linksIn", { n: node.inbound || 0 })) + "</title></circle>";
       }).join("") +
       (nodes.length <= 40 ? nodes.map((node, index) => {
         if (index === 0) return "";
@@ -1955,14 +1956,16 @@
         const dx = anchor === "start" ? 9 : -9;
         return '<text x="' + (pos[index].x + dx).toFixed(1) + '" y="' + (pos[index].y + 3).toFixed(1) + '" text-anchor="' + anchor + '">' + esc(cut(label, 22)) + "</text>";
       }).join("") : "") + "</svg>";
-    host.innerHTML = '<div class="graph-legend"><span style="--c:var(--text)">Start page</span><span style="--c:var(--green)">Answered</span><span style="--c:var(--amber)">Slower than 1.8 s</span><span style="--c:var(--red)">Error or no answer</span><span>Bigger dot = more links point to it</span></div>' +
-      '<div class="graph-wrap notranslate" translate="no">' + svg + '</div><p class="graph-detail"' + (slotRoot ? "" : ' id="graph-detail"') + '>Select a dot to see the page.</p>';
+    host.innerHTML = '<div class="graph-legend"><span style="--c:var(--text)">' + esc(rc.t("legendStart")) + '</span><span style="--c:var(--green)">' + esc(rc.t("legendAnswered")) + '</span><span style="--c:var(--amber)">' + esc(rc.t("legendSlow")) +
+      '</span><span style="--c:var(--red)">' + esc(rc.t("legendError")) + "</span><span>" + esc(rc.t("legendSize")) + "</span></div>" +
+      '<div class="graph-wrap notranslate" translate="no">' + svg + '</div><p class="graph-detail"' + (slotRoot ? "" : ' id="graph-detail"') + ">" + esc(rc.t("selectDot")) + "</p>";
     const detail = host.querySelector(".graph-detail");
     const show = (event) => {
       const circle = event.target.closest("circle");
       if (!circle) return;
       const node = nodes[Number(circle.getAttribute("data-i"))];
-      detail.textContent = node.path + " — status " + (node.status || "none") + ", " + node.ms + " ms, " + (node.inbound || 0) + " links in" + (node.from ? ", first found on " + node.from : "") + (node.title ? ". Title: " + node.title : "");
+      detail.textContent = rc.t("graphDetail", { path: node.path, status: node.status || rc.t("statusNone"), ms: node.ms, links: rc.t("linksIn", { n: node.inbound || 0 }) }) +
+        (node.from ? rc.t("graphFrom", { from: node.from }) : "") + (node.title ? rc.t("graphTitle", { title: node.title }) : "");
     };
     host.querySelector("svg").addEventListener("click", show);
     host.querySelector("svg").addEventListener("focusin", show);
@@ -1970,35 +1973,39 @@
 
   function paintSecurity(ins) {
     const sec = ins.security || {};
-    const word = { pass: "In place", risk: "Missing or weak", fail: "Failing", unknown: "Not checked" };
+    const domain = sec.domain;
+    const domainMark = "\u0000";
     slot("security").innerHTML = '<div class="checks-grid">' + (sec.headers || []).map((item) =>
-      '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(item.person ? "Needs a person" : word[item.state] || item.state) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
-      (sec.tls ? '<p class="meta-line">TLS certificate valid until ' + esc(sec.tls.validTo) + " (" + sec.tls.daysLeft + " days)" + (sec.tls.issuer ? ", issued by " + esc(sec.tls.issuer) : "") + ".</p>" : "") +
-      (sec.domain ? '<p class="meta-line"><span class="notranslate" translate="no">' + esc(sec.domain.domain) + "</span> is registered" + (sec.domain.registrar ? " with " + esc(sec.domain.registrar) : "") + (sec.domain.expires ? " until " + esc(sec.domain.expires) + " (" + sec.domain.daysLeft + " days)" : "") +
-        (sec.domain.locked == null ? "" : sec.domain.locked ? ", locked against transfer" : ", with no transfer lock") + ", according to the registry's RDAP record.</p>" : "") +
-      (sec.bimi ? '<p class="meta-line">' + (sec.bimi.record ? "BIMI is published, so Gmail, Yahoo and Apple Mail can show the brand logo next to its mail."
-        : "No BIMI record. " + (sec.bimi.eligible ? "DMARC already rejects or quarantines spoofed mail, so a BIMI record with a logo would let Gmail, Yahoo and Apple Mail show it next to the brand's mail." : "BIMI shows a brand logo in inboxes once DMARC is at quarantine or reject.")) + " This note is not scored.</p>" : "") +
+      '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(item.person ? VERDICT_LABEL.person : rc.word("secState", item.state)) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
+      (sec.tls ? '<p class="meta-line">' + esc(rc.t("tls", { date: sec.tls.validTo, days: rc.t("days", { n: sec.tls.daysLeft }) }) + (sec.tls.issuer ? rc.t("tlsIssuer", { issuer: sec.tls.issuer }) : "")) + ".</p>" : "") +
+      (domain ? '<p class="meta-line">' + esc(rc.t("domainLine", {
+        domain: domainMark,
+        registrar: domain.registrar ? rc.t("domainWith", { registrar: domain.registrar }) : "",
+        until: domain.expires ? rc.t("domainUntil", { date: domain.expires, days: rc.t("days", { n: domain.daysLeft }) }) : "",
+        lock: domain.locked == null ? "" : rc.t(domain.locked ? "domainLocked" : "domainUnlocked")
+      })).replace(domainMark, () => '<span class="notranslate" translate="no">' + esc(domain.domain) + "</span>") + "</p>" : "") +
+      (sec.bimi ? '<p class="meta-line">' + esc(rc.t(sec.bimi.record ? "bimiOn" : sec.bimi.eligible ? "bimiOffEligible" : "bimiOff") + " " + rc.t("notScored")) + "</p>" : "") +
       securityMatrix(sec.pages || []);
   }
 
   function securityMatrix(rows) {
     if (rows.length < 2) return "";
-    const cols = [["hsts", "HSTS"], ["csp", "CSP"], ["frame", "Framing"], ["nosniff", "nosniff"], ["referrer", "Referrer"], ["permissions", "Permissions"]];
-    const mark = (on) => on ? '<td class="ok" aria-label="sent">✓</td>' : '<td class="no" aria-label="missing">✗</td>';
-    return '<h3>Headers on every page analyzed</h3><p class="muted">A header set on the start page but missing elsewhere leaves those pages unprotected.</p>' +
-      '<div class="table-scroll"><table class="mini-table sec-matrix"><thead><tr><th>Page</th>' + cols.map(([, label]) => "<th>" + esc(label) + "</th>").join("") + "<th>Cookies</th></tr></thead><tbody>" +
+    const cols = [["hsts", "HSTS"], ["csp", "CSP"], ["frame", rc.t("colFraming")], ["nosniff", "nosniff"], ["referrer", rc.t("colReferrer")], ["permissions", rc.t("colPermissions")]];
+    const mark = (on) => on ? '<td class="ok" aria-label="' + esc(rc.t("sent")) + '">✓</td>' : '<td class="no" aria-label="' + esc(rc.t("missing")) + '">✗</td>';
+    return "<h3>" + esc(rc.t("matrixTitle")) + '</h3><p class="muted">' + esc(rc.t("matrixNote")) + "</p>" +
+      '<div class="table-scroll"><table class="mini-table sec-matrix"><thead><tr><th>' + esc(rc.t("thPage")) + "</th>" + cols.map(([, label]) => "<th>" + esc(label) + "</th>").join("") + "<th>" + esc(rc.t("thCookies")) + "</th></tr></thead><tbody>" +
       rows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td>" + cols.map(([key]) => mark(row[key])).join("") +
-        "<td>" + (row.cookies ? row.cookies + (row.looseCookies ? ", " + row.looseCookies + " without Secure" : "") : "—") + "</td></tr>").join("") + "</tbody></table></div>";
+        "<td>" + (row.cookies ? row.cookies + (row.looseCookies ? ", " + esc(rc.t("withoutSecure", { n: row.looseCookies })) : "") : "—") + "</td></tr>").join("") + "</tbody></table></div>";
   }
 
   function paintFindings(ins, paid) {
     const all = ins.findings || [];
     const areas = ["All"].concat(Object.keys(AREA_NOTE));
-    const verdicts = [["open", "Fails and risks"], ["all", "Everything"], ["fail", "Fails now"], ["risk", "At risk"], ["pass", "Passes"], ["person", "Needs a person"]];
+    const verdicts = [["open", rc.t("fOpen")], ["all", rc.t("fAll")], ["fail", VERDICT_LABEL.fail], ["risk", VERDICT_LABEL.risk], ["pass", VERDICT_LABEL.pass], ["person", VERDICT_LABEL.person]];
     const bar = slot("finding-filters");
     const filter = filterOf();
     const column = slotRoot;
-    bar.innerHTML = areas.map((name) => '<button type="button" data-area="' + esc(name) + '"' + (filter.area === name ? ' class="on"' : "") + ">" + esc(name) + "</button>").join("") +
+    bar.innerHTML = areas.map((name) => '<button type="button" data-area="' + esc(name) + '"' + (filter.area === name ? ' class="on"' : "") + ">" + esc(name === "All" ? rc.t("allAreas") : cc.area(name)) + "</button>").join("") +
       '<span style="width:12px;display:inline-block"></span>' +
       verdicts.map(([key, label]) => '<button type="button" data-verdict="' + key + '"' + (filter.verdict === key ? ' class="on"' : "") + ">" + esc(label) + "</button>").join("");
     bar.onclick = (event) => {
@@ -2011,13 +2018,13 @@
     const shown = all.filter((item) => (filter.area === "All" || item.area === filter.area) &&
       (filter.verdict === "all" || (filter.verdict === "open" ? (item.verdict === "fail" || item.verdict === "risk") : item.verdict === filter.verdict)));
     slot("findings").innerHTML = shown.length ? shown.map((item) =>
-      '<div class="finding"><div><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(item.area) + "</span></div>" +
+      '<div class="finding"><div><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span></div>" +
       "<strong>" + esc(item.title) + "</strong><p class=\"muted\">" + fadeText(item.evidence, paid) + "</p>" +
       (item.fix ? '<p class="fix-line">' + fadeText(item.fix, paid) + "</p>" : "") +
       ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + esc(item.pages.slice(0, 6).join(" · ")) + (item.pages.length > 6 ? " …" : "") + "</p>" : "") +
-      ((item.cases || []).length ? '<p class="meta-line">Test cases: ' + esc(item.cases.join(", ")) + "</p>" : "") +
+      ((item.cases || []).length ? '<p class="meta-line">' + esc(rc.t("testCases", { list: item.cases.join(", ") })) + "</p>" : "") +
       (!slotRoot && window.QAReviewAsk && QAReviewAsk.cardLink ? QAReviewAsk.cardLink(item.id) : "") + "</div>").join("")
-      : '<p class="muted">No check matches this filter.</p>';
+      : '<p class="muted">' + esc(rc.t("noMatch")) + "</p>";
   }
 
   function dnsLabel(row) {
@@ -2032,22 +2039,26 @@
     const kit = ins.fixkit || {};
     const missing = (kit.headers || []).filter((item) => item.missing);
     const items = [
-      ["Security headers", missing.length ? missing.length + " missing headers, written for " + (kit.hosting || "Netlify, Vercel, nginx, Apache, and Firebase") + "." : "All headers are already sent. The files still carry the current set."],
-      ["Content-Security-Policy", "A Report-Only policy built from the " + ((kit.csp || "").match(/https:\/\//g) || []).length + " hosts this review saw. Deploy it, watch reports, then enforce."],
-      ["Structured data", kit.jsonLd ? "An Organization and WebSite JSON-LD draft with the profiles the page links." : "The site already publishes an entity. No draft needed."],
-      ["llms.txt", kit.llmsTxt ? "A draft listing the indexable pages with their descriptions." : "The site already publishes llms.txt."],
-      ["security.txt", kit.securityTxt ? "A draft with Contact, Expires, and Canonical. Replace the address with a real inbox." : "The site already publishes security.txt."],
-      ["DNS records", (kit.dns || []).length ? (kit.dns || []).length + " records to add (" + kit.dns.map(dnsLabel).join(", ") + ")." : "No SPF, DMARC, CAA, MTA-STS, or TLS-RPT record is missing."],
-      ["GitHub Actions", "A workflow that runs the chosen framework scripts on every push and once a day."]
+      [rc.t("kitHeaders"), missing.length ? rc.t("kitHeadersMissing", { n: missing.length, hosting: kit.hosting || rc.t("hostingDefault") }) : rc.t("kitHeadersAll")],
+      ["Content-Security-Policy", rc.t("kitCsp", { n: ((kit.csp || "").match(/https:\/\//g) || []).length })],
+      [rc.t("kitSchema"), rc.t(kit.jsonLd ? "kitSchemaDraft" : "kitSchemaHas")],
+      ["llms.txt", rc.t(kit.llmsTxt ? "kitLlmsDraft" : "kitLlmsHas")],
+      ["security.txt", rc.t(kit.securityTxt ? "kitSecDraft" : "kitSecHas")],
+      [rc.t("kitDns"), (kit.dns || []).length ? rc.t("kitDnsAdd", { n: kit.dns.length, list: kit.dns.map(dnsLabel).join(", ") }) : rc.t("kitDnsNone")],
+      ["GitHub Actions", rc.t("kitActionsBody")]
     ];
-    if (kit.mtaSts) items.splice(-1, 0, ["MTA-STS policy", "An mta-sts.txt in testing mode listing the mail servers this review saw, with the _mta-sts record to announce it."]);
-    if ((kit.libraries || []).length) items.splice(-1, 0, ["Library upgrades", kit.libraries.map((row) => row.name + " " + row.version + (row.ended ? " (no more fixes)" : " → " + row.fixed)).join(", ") + "."]);
-    const outlines = [kit.privacyNotice ? "privacy notice" : "", kit.imprint ? "Impressum" : "", kit.accessibilityStatement ? "accessibility statement" : ""].filter(Boolean);
-    if (outlines.length) items.splice(-1, 0, ["Legal pages", "Outlines for the " + outlines.join(", ").replace(/, ([^,]*)$/, " and $1") + " the review found no link to. Fill the placeholders and have them checked."]);
-    if (kit.chatSnippet) items.splice(-1, 0, ["Click-to-load chat", "A plain chat button that loads the widget on the first click, so nothing is stored before a visitor asks for help."]);
+    if (kit.mtaSts) items.splice(-1, 0, [rc.t("kitMta"), rc.t("kitMtaBody")]);
+    if ((kit.libraries || []).length) items.splice(-1, 0, [rc.t("kitLibs"), kit.libraries.map((row) => row.ended ? rc.t("libEnded", { lib: row.name + " " + row.version }) : row.name + " " + row.version + " → " + row.fixed).join(", ") + "."]);
+    const outlines = [kit.privacyNotice ? "privacy" : "", kit.imprint ? "imprint" : "", kit.accessibilityStatement ? "accessibility" : ""].filter(Boolean).map((key) => rc.word("legal", key));
+    const listed = outlines.join(", ").replace(/, ([^,]*)$/, (match, last) => " " + rc.t("and") + " " + last);
+    if (outlines.length) items.splice(-1, 0, [rc.t("kitLegal"), rc.t("kitLegalBody", { list: listed })]);
+    if (kit.chatSnippet) items.splice(-1, 0, [rc.t("kitChat"), rc.t("kitChatBody")]);
     const peek = "Content-Security-Policy-Report-Only: " + (kit.csp || "");
+    const folderMark = "\u0000";
+    const hostingMark = "\u0001";
     slot("fixkit").innerHTML =
-      '<p>The scripts ZIP now carries a <span class="notranslate" translate="no">fix-kit/</span> folder: copy-ready files made from this review.' + (kit.hosting ? " The site looks hosted on <strong>" + esc(kit.hosting) + "</strong>, so that file is listed first." : "") + "</p>" +
+      "<p>" + esc(rc.t("kitIntro", { folder: folderMark }) + (kit.hosting ? " " + rc.t("kitHosting", { hosting: hostingMark }) : ""))
+        .replace(folderMark, () => '<span class="notranslate" translate="no">fix-kit/</span>').replace(hostingMark, () => "<strong>" + esc(kit.hosting) + "</strong>") + "</p>" +
       '<div class="fixkit-list">' + items.map(([title, body]) => "<article><strong>" + esc(title) + "</strong><span class=\"muted\">" + esc(body) + "</span></article>").join("") + "</div>" +
       '<div class="code-peek notranslate" translate="no">' + fadeText(peek, paid) + "</div>";
   }
