@@ -877,7 +877,7 @@ test.describe("start page reads", () => {
 
   test("a redirect to http is named as such, not as a wrong address", async () => {
     await assert.rejects(review({ [BANK]: { status: 301, headers: { location: "http://www.bank.example.com/co" } } }),
-      /^Error: The site redirected to http:\/\/www\.bank\.example\.com\/co, an http:\/\/ address\. The review only follows https\.$/);
+      /^Error: The site redirected to http:\/\/www\.bank\.example\.com\/co, an http:\/\/ address, and the same address over https gave no page\. The review only follows https\.$/);
   });
 
   test("a start page over 2 MB keeps its first 2 MB and says it was cut", async () => {
