@@ -22,6 +22,10 @@ stage() {
 
 main() {
 	local files=() file attempt saved
+	if [ -z "${GITHUB_ACTIONS:-}" ]; then
+		echo "Runs only in GitHub Actions: it commits to main as the bot, fetches main with --depth=1, which makes a local clone shallow, and resets this checkout to it." >&2
+		return 1
+	fi
 	for file in assets/social/buffer.json assets/social/facebook.json; do
 		[ -f "$file" ] && files+=("$file")
 	done

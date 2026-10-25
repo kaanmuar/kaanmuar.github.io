@@ -86,6 +86,11 @@ main() {
 		return 0
 	fi
 
+	if [ -z "${GITHUB_ACTIONS:-}" ]; then
+		echo "--push runs only in GitHub Actions: it fetches main with --depth=1, which makes a local clone shallow, and resets this checkout to it. Run without --push to rebuild here." >&2
+		return 1
+	fi
+
 	git config user.name "github-actions[bot]"
 	git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
 	local attempt
