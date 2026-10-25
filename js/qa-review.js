@@ -3251,6 +3251,58 @@
     });
   });
 
+  // Machine translation of this English page leaves the charts in English and joins words, so a reader
+  // whose browser asks for, or translates into, a language with its own page is offered that page.
+  const LANG_OFFER = {
+    es: ["Esta página también existe en español, sin traducción automática.", "Abrir en español", "Cerrar"],
+    pt: ["Esta página também existe em português, sem tradução automática.", "Abrir em português", "Fechar"],
+    de: ["Diese Seite gibt es auch auf Deutsch, ohne maschinelle Übersetzung.", "Auf Deutsch öffnen", "Schließen"],
+    fr: ["Cette page existe aussi en français, sans traduction automatique.", "Ouvrir en français", "Fermer"],
+    it: ["Questa pagina esiste anche in italiano, senza traduzione automatica.", "Apri in italiano", "Chiudi"]
+  };
+  const LANG_OFFER_KEY = "qa-review-lang-offer";
+
+  function offerLanguagePage(pageLangs) {
+    const root = document.documentElement;
+    const wanted = () => {
+      const translated = /\btranslated-(ltr|rtl)\b/.test(root.className) ? String(root.lang || "").slice(0, 2).toLowerCase() : "";
+      if (pageLangs.includes(translated)) return translated;
+      return (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language])
+        .map((code) => String(code || "").slice(0, 2).toLowerCase()).find((code) => pageLangs.includes(code)) || "";
+    };
+    const closed = () => { try { return localStorage.getItem(LANG_OFFER_KEY) === "closed"; } catch (error) { return false; } };
+    const show = () => {
+      const code = wanted();
+      const bar = document.getElementById("lang-offer");
+      if (!code || closed() || (bar && bar.lang === code)) return;
+      if (bar) bar.remove();
+      const copy = LANG_OFFER[code];
+      const params = new URLSearchParams(location.search);
+      params.set("lang", code);
+      const offer = document.createElement("div");
+      offer.id = "lang-offer";
+      offer.className = "lang-offer notranslate no-print";
+      offer.lang = code;
+      offer.setAttribute("translate", "no");
+      offer.setAttribute("role", "region");
+      offer.setAttribute("aria-label", copy[1]);
+      offer.innerHTML = "<span>" + esc(copy[0]) + '</span> <a class="btn btn-primary" href="qa-review-' + code + ".html?" + esc(params.toString()) + esc(location.hash) + '">' + esc(copy[1]) + '</a> <button class="btn btn-ghost" type="button" aria-label="' + esc(copy[2]) + '">×</button>';
+      offer.querySelector("a").addEventListener("click", () => {
+        SiteI18n.persist(code);
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_lang_offer", "URL Review", code);
+      });
+      offer.querySelector("button").addEventListener("click", () => {
+        try { localStorage.setItem(LANG_OFFER_KEY, "closed"); } catch (error) { /* shown again next visit */ }
+        offer.remove();
+      });
+      const head = document.querySelector(".topbar");
+      if (head) head.after(offer);
+      else document.body.prepend(offer);
+    };
+    show();
+    new MutationObserver(show).observe(root, { attributes: true, attributeFilter: ["class", "lang"] });
+  }
+
   function mountLanguage() {
     if (!window.SiteI18n) return;
     const PAGE_LANGS = ["es", "pt", "de", "fr", "it"];
@@ -3307,6 +3359,7 @@
         location.replace("qa-review-" + lang + ".html" + location.search + location.hash);
         return;
       }
+      if (pageLang === "en") offerLanguagePage(PAGE_LANGS);
       const code = shown(lang || "en");
       syncFlag(code);
       document.documentElement.lang = code;
