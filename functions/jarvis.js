@@ -376,11 +376,63 @@ async function brief(fetchImpl, env, snapshot) {
   return { text };
 }
 
-async function ask(fetchImpl, env, question, snapshot) {
+// --- voice (#1418): answers in the phone's language, spoken with a Cloud Text-to-Speech voice ----------------------
+
+const TTS = "https://texttospeech.googleapis.com/v1/text:synthesize";
+const VOICE_LOCALE = { en: "en-US", es: "es-ES", pt: "pt-BR", de: "de-DE", fr: "fr-FR", it: "it-IT" };
+const VOICE_NAME = "Chirp3-HD-Charon";
+
+function langCode(lang) {
+  const code = String(lang || "").toLowerCase().split(/[-_]/)[0];
+  return /^[a-z]{2,3}$/.test(code) ? code : "en";
+}
+
+function languageName(code) {
+  try { return new Intl.DisplayNames(["en"], { type: "language" }).of(code) || "English"; } catch (error) { return "English"; }
+}
+
+async function ask(fetchImpl, env, question, snapshot, opts) {
   const q = String(question || "").trim().slice(0, 500);
   if (!q) throw new Error("Ask a question.");
-  const text = await gemini(fetchImpl, env, "Question: " + q + "\n\nAnswer in at most six sentences from these numbers. If they cannot answer it, say which number is missing.\n\n" + snapshotText(snapshot), 800);
-  return { text };
+  const o = opts || {};
+  const code = langCode(o.lang);
+  const how = o.spoken
+    ? "Answer in at most four short spoken sentences: plain text, no markdown, no lists, numbers said the way a person would say them."
+    : "Answer in at most six sentences from these numbers.";
+  const language = code === "en" ? "" : " Answer in " + languageName(code) + ".";
+  const text = await gemini(fetchImpl, env, "Question: " + q + "\n\n" + how + language + " If the numbers cannot answer it, say which number is missing.\n\n" + snapshotText(snapshot), 800);
+  return { text, lang: code };
+}
+
+/** Markdown and list marks read badly aloud. */
+function speakable(text) {
+  return String(text || "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^[\s>*#-]+/gm, "")
+    .replace(/[*_`#]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 2400);
+}
+
+async function speak(fetchImpl, text, lang) {
+  const input = speakable(text);
+  if (!input) throw new Error("Nothing to say.");
+  const code = langCode(lang);
+  const locale = VOICE_LOCALE[code] || code;
+  const bearer = await googleToken(fetchImpl, "https://www.googleapis.com/auth/cloud-platform");
+  const call = (voice) => fetchImpl(TTS, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + bearer, "Content-Type": "application/json" },
+    body: JSON.stringify({ input: { text: input }, voice, audioConfig: { audioEncoding: "MP3" } }),
+    signal: AbortSignal.timeout(30000)
+  });
+  let res = await call({ languageCode: locale, name: locale + "-" + VOICE_NAME });
+  if (!res.ok) res = await call({ languageCode: locale, ssmlGender: "MALE" });
+  const data = await readJson(res, "Text-to-Speech");
+  if (!data.audioContent) throw new Error("Text-to-Speech sent no audio.");
+  return { audio: data.audioContent, format: "mp3", lang: code };
 }
 
 function briefingMail(snapshot, text) {
@@ -572,5 +624,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, speak, speakable, langCode, briefingMail, top,
   normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday };

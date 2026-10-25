@@ -800,3 +800,31 @@ test("share-to-review: the done push names the score and the failing checks, and
   assert.equal(m.url, "https://carlosandmunoz.com/qa-review.html?report=abc");
   assert.equal(review.failedMessage("https://x.example.com/", "Timed out").title, "Review failed: x.example.com");
 });
+
+test("voice: spoken asks answer in the phone's language, plain text for speech", async () => {
+  let prompt = "";
+  const fetchImpl = async (url, init) => { prompt = JSON.parse(init.body).contents[0].parts[0].text; return json({ candidates: [{ content: { parts: [{ text: "Vas bien." }] } }] }); };
+  const out = await jarvis.ask(fetchImpl, { GEMINI_API_KEY: "k" }, "¿Cómo va?", { a: 1 }, { lang: "es-ES", spoken: true });
+  assert.deepEqual(out, { text: "Vas bien.", lang: "es" });
+  assert.match(prompt, /Answer in Spanish\./);
+  assert.match(prompt, /spoken sentences/);
+  await jarvis.ask(fetchImpl, { GEMINI_API_KEY: "k" }, "How is it going?", {});
+  assert.doesNotMatch(prompt, /Answer in [A-Z]/);
+  assert.equal(jarvis.langCode("pt_BR"), "pt");
+  assert.equal(jarvis.langCode("??"), "en");
+});
+
+test("voice: speak strips markdown, asks for Charon, and falls back to any male voice", async () => {
+  assert.equal(jarvis.speakable("**Revenue** is up.\n- 3 sales\n# Next: [post](https://x.y)"), "Revenue is up. 3 sales Next: post");
+  const voices = [];
+  const fetchImpl = async (url, init) => {
+    if (/metadata/.test(url)) return json({ access_token: "t" });
+    const body = JSON.parse(init.body);
+    voices.push(body.voice);
+    return body.voice.name ? json({ error: { message: "no such voice" } }, 400) : json({ audioContent: "QUJD" });
+  };
+  const out = await jarvis.speak(fetchImpl, "*Hola*", "es");
+  assert.deepEqual(out, { audio: "QUJD", format: "mp3", lang: "es" });
+  assert.deepEqual(voices, [{ languageCode: "es-ES", name: "es-ES-Chirp3-HD-Charon" }, { languageCode: "es-ES", ssmlGender: "MALE" }]);
+  await assert.rejects(jarvis.speak(fetchImpl, "  ", "en"), /Nothing to say/);
+});

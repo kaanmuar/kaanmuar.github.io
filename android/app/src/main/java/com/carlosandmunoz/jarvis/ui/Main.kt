@@ -1,7 +1,16 @@
 package com.carlosandmunoz.jarvis.ui
 
+import android.Manifest
+import android.app.role.RoleManager
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.StopCircle
+import androidx.core.content.ContextCompat
 import android.text.format.DateUtils
 import androidx.core.app.NotificationManagerCompat
 import androidx.compose.ui.platform.LocalContext
@@ -289,17 +298,44 @@ fun AskScreen(s: UiState, vm: JarvisViewModel, back: () -> Unit) {
                     Column(Modifier.fillMaxWidth().padding(12.dp)) {
                         Text(c.question, color = J.cyan, modifier = Modifier.reveal().glass(brackets = false, radius = 10.dp).padding(12.dp))
                         Spacer(Modifier.height(6.dp))
-                        if (c.answer == null) Muted("Thinking…") else Text(c.answer, color = if (c.error) J.pink else J.text, fontSize = 14.sp)
+                        if (c.answer == null) Muted("Thinking…") else Row(verticalAlignment = Alignment.Top) {
+                            Text(c.answer, color = if (c.error) J.pink else J.text, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                            if (!c.error) IconButton(onClick = { vm.speak(c.answer) }) {
+                                Icon(if (s.speaking == c.answer) Icons.Filled.StopCircle else Icons.AutoMirrored.Filled.VolumeUp, if (s.speaking == c.answer) "Stop" else "Read aloud",
+                                    tint = if (s.speaking == c.answer) J.cyan else J.muted)
+                            }
+                        }
                     }
                 }
             }
             HorizontalDivider(color = J.line)
-            Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(q, { q = it }, placeholder = { Text("Ask about the ${RANGES.toMap()[s.days]} numbers") }, modifier = Modifier.weight(1f), maxLines = 4)
-                IconButton(onClick = { vm.ask(q); q = "" }, enabled = q.isNotBlank()) { Icon(Icons.AutoMirrored.Filled.Send, "Ask") }
+            val context = LocalContext.current
+            val mic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted) vm.listen() }
+            val listen = {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) vm.listen()
+                else mic.launch(Manifest.permission.RECORD_AUDIO)
+            }
+            s.heard.error?.let { Text(it, color = J.amber, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
+            AnimatedContent(s.heard.listening, label = "input") { listening ->
+                if (listening) Row(Modifier.padding(8.dp).fillMaxWidth().glass(radius = 14.dp, brackets = false).padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    VoiceOrb(s.heard.level, true, 52.dp)
+                    Spacer(Modifier.width(10.dp))
+                    Text(s.heard.partial.ifEmpty { "Listening…" }, color = if (s.heard.partial.isEmpty()) J.muted else J.text, fontSize = 15.sp, modifier = Modifier.weight(1f), maxLines = 3)
+                    TextButton(onClick = vm::stopListening) { Text("Stop", color = J.cyan) }
+                } else Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(q, { q = it }, placeholder = { Text("Ask about the ${RANGES.toMap()[s.days]} numbers") }, modifier = Modifier.weight(1f), maxLines = 4)
+                    if (q.isBlank()) IconButton(onClick = { vm.heardShown(); listen() }) { Icon(Icons.Filled.Mic, "Ask by voice", tint = J.cyan) }
+                    else IconButton(onClick = { vm.ask(q); q = "" }) { Icon(Icons.AutoMirrored.Filled.Send, "Ask") }
+                }
             }
         }
     }
+}
+
+private fun openAssistantSettings(context: android.content.Context) {
+    val tries = listOf(Intent(Settings.ACTION_VOICE_INPUT_SETTINGS), Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS), Intent(Settings.ACTION_SETTINGS))
+    tries.firstOrNull { runCatching { context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -351,6 +387,17 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     }
                 }
                 Muted("Email and push are separate: the mail switches above do not silence the phone.")
+            }
+            Panel("Voice") {
+                val context = LocalContext.current
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) { Text("Speak answers"); Muted("Questions you ask by voice are answered aloud, in the phone's language.") }
+                    Switch(s.speak, vm::setSpeak)
+                }
+                val held = Build.VERSION.SDK_INT >= 29 && context.getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_ASSISTANT)
+                Row { ActionButton(if (held) "Assistant settings" else "Use Jarvis as the phone's assistant", false) { openAssistantSettings(context) } }
+                Muted(if (held) "Jarvis is the phone's assistant: long-press the power or home button and ask."
+                    else "Pick Jarvis under Digital assistant app; then long-press the power or home button and ask. \"Hey Google, open Jarvis\" works either way.")
             }
             Panel("Home screen") {
                 val context = LocalContext.current
