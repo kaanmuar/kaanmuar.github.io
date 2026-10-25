@@ -74,6 +74,14 @@ const CARDS = {
     sub: "Jira story, Gherkin and Xray cases, Playwright, Cypress, and Robot scripts.",
     art: '<div style="display:flex;flex-direction:column;gap:16px;width:200px">' + [["Ticket Steward", "#e2c48a"], ["Test Designer", "#7ef6fb"], ["Automation Engineer", "#6fd3a0"], ["Release Verifier", "#f4efe4"]].map(([name, tone], i) => `<div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:14px 12px;color:#e9fdff;font:600 15px Inter"><span style="width:30px;height:30px;border-radius:50%;background:${tone};color:#10363a;display:grid;place-items:center;font-weight:700">${i + 1}</span>${name}</div>`).join("") + "</div>"
   }),
+  "assets/share/qa-review.jpg": card({
+    eyebrow: "QA-lab URL Review",
+    title: "Find the leaks,",
+    em: "breaks and blocks.",
+    sub: "Privacy, accessibility and security from one URL, with the fix and the test.",
+    art: rings([["Security", 66], ["A11y", 77], ["Analytics", 83], ["GEO", 84], ["SEO", 67], ["Speed", 78]]),
+    size: 72
+  }),
   "assets/share/qa-review-guide.jpg": card({
     eyebrow: "QA-lab URL Review · Guided tour",
     title: "Here is how",
