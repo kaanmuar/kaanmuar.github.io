@@ -4312,11 +4312,12 @@ function previewReport(report) {
     item.detail = frostText(item.detail);
   });
   const ins = copy.insights || {};
-  // The template values would carry what the frost hides, so the preview reads the frosted English.
+  // Evidence and fix values would carry what the frost hides, so those read the frosted English; titles stay whole.
   (ins.findings || []).forEach((item) => {
     item.evidence = frostText(item.evidence);
     item.fix = frostText(item.fix);
-    delete item.msg;
+    if (item.msg && item.msg.title) item.msg = { title: item.msg.title };
+    else delete item.msg;
   });
   ((ins.seo && ins.seo.indexability) || []).forEach((row) => { delete row.reasonMsg; });
   if (ins.fixkit) {
