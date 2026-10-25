@@ -53,6 +53,9 @@
 .multi-cell .page-table th:nth-child(3), .multi-cell .page-table td:nth-child(3) { width: 52px; }
 .multi-cell .page-table td { overflow-wrap: anywhere; }
 .multi-cell svg { max-width: 100%; height: auto; }
+.multi-cell .shots { grid-template-columns: minmax(0, 1fr) minmax(0, 110px); }
+.multi-cell .shots-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.multi-cell .shots-3 figure:first-child { grid-column: 1 / -1; }
 @container (max-width: 300px) {
   .multi-cell .areas, .multi-cell .stat-row, .multi-cell .checks-grid, .multi-cell .kpis { grid-template-columns: minmax(0, 1fr); }
 }
