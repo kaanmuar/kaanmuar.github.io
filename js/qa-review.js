@@ -2367,18 +2367,23 @@
   const reportRoot = document.getElementById("report");
   if (reportRoot) new MutationObserver(() => fadeSections(reportRoot)).observe(reportRoot, { childList: true, subtree: true });
 
+  // Older reports were saved without counts, so the figures fall back to the lists themselves.
+  function pagesCount(report) {
+    return (report.counts && report.counts.pages) || (report.limits && report.limits.pagesRead) || (report.pages || []).length;
+  }
+
   function paintFacts(report) {
-    const counts = report.counts || { pages: 0, technologies: 0, cases: 0, byLayer: {} };
+    const counts = report.counts || { byLayer: {} };
     const score = report.insights && report.insights.score;
     slot("kpis").innerHTML = (score ? [
       [score.overall + "/100", rc.t("kpiHealth")],
       [score.totals.fail, rc.t("kpiFail")],
       [score.totals.risk, rc.t("kpiRisk")],
-      [counts.pages, rc.t("kpiPages")]
+      [pagesCount(report), rc.t("kpiPages")]
     ] : [
-      [counts.pages, rc.t("kpiPages")],
-      [counts.technologies, rc.t("kpiTech")],
-      [counts.cases, rc.t("kpiCases")],
+      [pagesCount(report), rc.t("kpiPages")],
+      [counts.technologies || (report.technologies || []).length, rc.t("kpiTech")],
+      [counts.cases || (report.cases || []).length, rc.t("kpiCases")],
       [(report.observed && report.observed.ms) + " ms", rc.t("kpiFirst")]
     ]).map(([value, label]) => "<div class=\"kpi\"><b>" + esc(value) + "</b><span>" + esc(label) + "</span></div>").join("");
     const layers = Object.entries(counts.byLayer || {});
@@ -3340,7 +3345,7 @@
         "Log"
       ];
       (report.log || []).forEach((line) => lines.push((line.at || "") + " " + clip(line.text)));
-      lines.push("", "Pages: " + report.counts.pages, "Technologies: " + (report.technologies || []).map((item) => item.name).join(", "), "", "Proposed cases");
+      lines.push("", "Pages: " + pagesCount(report), "Technologies: " + (report.technologies || []).map((item) => item.name).join(", "), "", "Proposed cases");
       (report.cases || []).forEach((item) => {
         lines.push(item.id + " [" + item.layer + "] " + clip(item.title) + " — " + clip(item.why));
       });

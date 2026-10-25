@@ -23,7 +23,7 @@ async function signIn(page, records, file, seen) {
   const store = auth.memoryStore();
   const started = await auth.startEmail(store, { email: EMAIL, deviceKey: ANA, ip: '1.1.1.1' });
   const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA });
-  const saved = { cmp1: { email: EMAIL, ids: ['ab12', 'cd34', 'ef56'], hosts: records.map((row) => row.report.host), from: 'account', createdAt: '2026-10-24T12:00:00Z' } };
+  const saved = { cmp1: { email: EMAIL, ids: records.map((row) => row.id), hosts: records.map((row) => row.report.host), from: 'account', createdAt: '2026-10-24T12:00:00Z' } };
   await page.addInitScript(({ version, session }) => {
     sessionStorage.setItem('qa-review-terms', version);
     localStorage.setItem('hasSeenReviewTour', 'true');
@@ -101,6 +101,8 @@ test('a saved comparison sets the summary and every report section side by side,
   await expect(health.nth(1).locator('.ring')).toHaveAttribute('aria-label', new RegExp('Health score ' + rival.insights.score.overall + ' '));
   const pages = box.locator('.multi-sec[data-sec="pages"] .multi-cell').nth(0).locator('tbody tr');
   await expect(pages).toHaveCount(own.pages.length);
+  expect(own.counts).toBeUndefined();
+  await expect(box.locator('.multi-sec[data-sec="cover"] .multi-cell').nth(0).locator('.kpi b').nth(3)).toHaveText(String(own.pages.length));
   await expect(box.locator('.multi-cell .fade-line')).toHaveCount(0);
   await expect(box.locator('#multi-locked')).toBeHidden();
 
@@ -135,6 +137,24 @@ test('a saved comparison sets the summary and every report section side by side,
   expect(seen.pdf[0]).toContain('multi-modal');
   expect(seen.pdf[0]).not.toContain('<script');
   expect(seen.pdf[0]).not.toContain('<button');
+});
+
+test('six sites fit a 1920px window side by side without scrolling sideways (#1475)', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  const more = ['gh78', 'ij90', 'kl12'].map((id, index) => {
+    const base = [own, rival, sample.report][index];
+    return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id, host: 'site' + (index + 4) + '.example' }) };
+  });
+  await signIn(page, recordsWith(true).concat(more), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const box = page.locator('#multi-overlay');
+  await expect(box.locator('.multi-sec[data-sec="cover"] .multi-cell')).toHaveCount(6, { timeout: 20000 });
+  const sizes = await box.locator('.multi-scroll.multi-grid').evaluate((grid) => ({
+    scroll: grid.scrollWidth,
+    client: grid.clientWidth,
+    column: grid.querySelector('.multi-sec .multi-row > .multi-cell').getBoundingClientRect().width
+  }));
+  expect(sizes.scroll).toBeLessThanOrEqual(sizes.client);
+  expect(sizes.column).toBeGreaterThanOrEqual(250);
 });
 
 test('one toggle per section folds it for every site together, the boxes of a row end level, and print and the PDF show every section open (#1459)', async ({ page }) => {

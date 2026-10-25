@@ -16,8 +16,9 @@
 .multi-table td.lead { background: color-mix(in srgb, var(--green) 16%, transparent); }
 .multi-wins th, .multi-wins td { border-top: 2px solid var(--line); font-weight: 700; }
 /* The sections: one band per section, one column per site. The host bar sits outside the sideways scroll so it
-   can stick to the top of the overlay; the script keeps it scrolled with the grid. */
-.multi-sheet { --col-min: 340px; --col-gap: 14px; margin-top: 26px; }
+   can stick to the top of the overlay; the script keeps it scrolled with the grid.
+   The columns share the sheet's width down to 250px, so six sites fit a 1920px window without scrolling sideways. */
+.multi-sheet { --col-gap: 14px; --col-min: clamp(250px, calc((100cqi - (var(--cols, 2) - 1) * var(--col-gap)) / var(--cols, 2)), 340px); container-type: inline-size; margin-top: 26px; }
 .multi-sheet > .fold-bar { margin: 0 0 8px; }
 .multi-row { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(var(--col-min), 1fr)); gap: var(--col-gap); }
 .multi-hosts-bar { position: sticky; top: -18px; z-index: 3; overflow: hidden; padding: 12px 0 10px; background: var(--bg); border-bottom: 1px solid var(--line); box-shadow: -22px 0 0 var(--bg), 22px 0 0 var(--bg), 0 10px 18px -14px rgba(18, 24, 31, .35); }
