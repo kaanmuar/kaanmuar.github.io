@@ -258,7 +258,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -321,6 +321,12 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
                 social: e.social && e.social.ok ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views } : null,
                 safety: e.safety && e.safety.ok ? e.safety.checks.map((c) => `${c.level}: ${c.name} ${c.detail}`) : null,
                 platform: e.platform && e.platform.ok ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
+                outreach: e.outreach && e.outreach.ok ? {
+                    pipeline: e.outreach.pipeline && e.outreach.pipeline.ok ? { queued: e.outreach.pipeline.queued, swept: e.outreach.pipeline.swept, reviews: e.outreach.pipeline.reviews, thisWeek: e.outreach.pipeline.thisWeek, withLiveReport: e.outreach.pipeline.withLiveReport, bySegment: e.outreach.pipeline.bySegment } : null,
+                    instantly: e.outreach.instantly && e.outreach.instantly.ok ? { campaigns: e.outreach.instantly.status, sent: e.outreach.instantly.sent, rates: e.outreach.instantly.rates, replies: e.outreach.instantly.replies, interested: e.outreach.instantly.interested, meetings: e.outreach.instantly.meetings, warmup: (e.outreach.instantly.accounts || []).map((a) => a.score) } : null,
+                    plan: e.outreach.plan && e.outreach.plan.ok !== false ? { day: e.outreach.plan.day, length: e.outreach.plan.length, phase: e.outreach.plan.phase, next: e.outreach.plan.next, weekly: e.outreach.plan.weekly, targets: e.outreach.plan.targets } : null,
+                    visits: C.outreachVisits(S.rows.events).total
+                } : null,
                 waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
             }
         };
@@ -495,6 +501,59 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         </div>`;
     }
 
+    function outreachView() {
+        const ou = S.external.outreach;
+        if (!ou || !ou.ok) return `<div class="jv-grid">${briefPanel('outreach')}${panel('outreach-wait', 'Outreach', waiting('outreach', 'Reading the outreach pipeline, Instantly and the plan…'))}</div>`;
+        const pipe = ou.pipeline && ou.pipeline.ok ? ou.pipeline : null;
+        const mail = ou.instantly && ou.instantly.ok ? ou.instantly : null;
+        const plan = ou.plan && ou.plan.ok !== false ? ou.plan : null;
+        const th = C.thresholds((S.settings || {}).thresholds);
+        const visits = C.outreachVisits(S.rows.events);
+        const weekly = (plan && plan.weekly) || {};
+        const warm = mail && mail.accounts.length ? Math.min(...mail.accounts.map((a) => (a.score === null ? 0 : a.score))) : null;
+        const head = kpis([
+            { label: 'Prospects queued', value: pipe ? pipe.queued : '—' },
+            { label: 'Reviewed in range', value: pipe ? pipe.reviews : '—' },
+            { label: 'With a Live Report', value: pipe ? pipe.withLiveReport : '—' },
+            { label: 'Emails sent', value: mail ? mail.sent : '—' },
+            { label: 'Reply rate', value: mail && mail.contacted ? mail.rates.reply + '%' : '—', alert: mail && mail.contacted >= 50 && mail.rates.reply < (weekly.replyPct || 0) },
+            { label: 'Interested', value: mail ? mail.interested : '—' },
+            { label: 'Lowest warm-up', value: warm === null ? '—' : warm, alert: warm !== null && warm < th.outreachWarmup }
+        ]);
+        const chip = (ok, text) => `<span class="jv-chip ${ok ? 'c-fast' : 'c-slow'}">${esc(text)}</span>`;
+        const days = (n) => (n === 0 ? 'today' : n > 0 ? 'in ' + n + (n === 1 ? ' day' : ' days') : Math.abs(n) + ' days ago');
+        const planBody = plan ? `<ul class="jv-facts">
+                <li>${plan.day > 0 ? `Day <b>${fmt(Math.min(plan.day, plan.length))}</b> of ${fmt(plan.length)}` : `Starts <b>${esc(plan.start)}</b>`}${plan.phase ? ` · <b>${esc(plan.phase.name)}</b> (ends ${esc(plan.phase.end)})` : ''}</li>
+                ${plan.next ? `<li>Next milestone ${esc(days(plan.next.daysLeft))} (${esc(plan.next.date)}): <b>${esc(plan.next.label)}</b></li>` : ''}
+            </ul>${table([['Deadline', (d) => esc(d.label)], ['Date', (d) => esc(d.date)], ['When', (d) => `<span class="jv-chip ${d.daysLeft <= 7 ? 'c-slow' : d.daysLeft <= th.outreachDeadlineDays ? 'c-average' : ''}">${esc(days(d.daysLeft))}</span>`]], plan.deadlines)}
+            ${table([['Milestone', (m) => esc(m.label)], ['Date', (m) => esc(m.date)], ['', (m) => (m.past ? 'past' : '')]], plan.milestones)}` : waiting('outreach', '') + needList(ou);
+        const ratio = (a, b) => (b ? Math.round((a / b) * 100) : null);
+        const funnel = [
+            { metric: 'Prospects reviewed this week', actual: pipe ? pipe.thisWeek : null, target: weekly.prospects, unit: '' },
+            { metric: 'Reviewed prospects with a Live Report', actual: pipe ? ratio(pipe.reviewedWithLiveReport, Math.max(1, pipe.swept)) : null, target: weekly.liveReportPct, unit: '%' },
+            { metric: 'Open rate', actual: mail && mail.contacted ? mail.rates.open : null, target: weekly.openPct, unit: '%' },
+            { metric: 'Reply rate', actual: mail && mail.contacted ? mail.rates.reply : null, target: weekly.replyPct, unit: '%' },
+            { metric: 'Positive replies', actual: mail && mail.contacted ? mail.rates.positive : null, target: weekly.positivePct, unit: '%' }
+        ];
+        const funnelBody = table([['Metric', (r) => esc(r.metric)], ['Now', (r) => (r.actual === null ? '—' : chip(r.target === undefined || r.actual >= r.target, fmt(r.actual) + r.unit))], ['Target', (r) => (r.target === undefined ? '—' : fmt(r.target) + r.unit)]], funnel);
+        const targets = plan ? table([['90-day target', (r) => esc(r.label)], ['So far', (r) => (r.actual === null || r.actual === undefined ? '—' : fmt(r.actual))], ['Target', (r) => fmt(r.target)], ['', (r) => (r.actual === null || r.actual === undefined ? '' : `<span class="jv-meter"><i style="width:${Math.min(100, Math.round((r.actual / Math.max(1, r.target)) * 100))}%"></i></span>`)]], plan.targets) + '<p class="jv-note">Counts come from the weekly KPI tracker; upload it with scripts/jarvis-outreach-plan.js.</p>' : '';
+        const pipeBody = pipe ? kpis([{ label: 'Swept', value: pipe.swept }, { label: 'Left in queue', value: pipe.left, alert: pipe.left === 0 && pipe.queued > 0 }, { label: 'Avg score', value: pipe.avgScore === null ? '—' : pipe.avgScore }]) + bars(pipe.bySegment, { color: COLORS.cyan, empty: 'No prospects queued. Add a list with scripts/sweep-outreach.js.' }) + (pipe.results.length ? bars(pipe.results, { color: COLORS.green }) : '') : waiting('outreach', '');
+        const campBody = mail ? bars(mail.status, { color: COLORS.violet, empty: 'No campaigns yet.' }) + kpis([{ label: 'Contacted', value: mail.contacted }, { label: 'Opened', value: mail.opened }, { label: 'Replies', value: mail.replies }, { label: 'Meetings', value: mail.meetings }, { label: 'Bounced', value: mail.bounced, alert: mail.sent >= 20 && mail.rates.bounce >= th.outreachBouncePct }, { label: 'Unsubscribed', value: mail.unsubscribed }])
+            + table([['Campaign', (c) => esc(c.name)], ['Sent', (c) => fmt(c.sent)], ['Opened', (c) => fmt(c.opened)], ['Replies', (c) => fmt(c.replies)], ['Bounced', (c) => fmt(c.bounced)]], mail.byCampaign, 'No campaign has sent yet.') : `<p class="jv-empty">${esc((ou.instantly && ou.instantly.error) || 'Not loaded.')}</p>`;
+        const boxBody = mail ? table([['Mailbox', (a) => esc(a.email)], ['Status', (a) => chip(a.status === 'active', a.status)], ['Warm-up', (a) => chip(a.warmup === 'on', a.warmup)], ['Score', (a) => (a.score === null ? '—' : chip(a.score >= th.outreachWarmup, String(a.score)))], ['Daily limit', (a) => (a.dailyLimit ? fmt(a.dailyLimit) : '—')]], mail.accounts, 'No mailboxes connected.') : '';
+        const dnsBody = ou.mail && ou.mail.checks ? `<ul class="jv-facts">${ou.mail.checks.map((c) => `<li>${chip(c.ok, c.name)} ${esc(c.detail)}</li>`).join('')}</ul>` : `<p class="jv-empty">${esc((ou.mail && ou.mail.error) || 'Not loaded.')}</p>`;
+        return head + `<div class="jv-grid">${briefPanel('outreach')}
+            ${panel('outreach-plan', '90-day plan', planBody)}
+            ${panel('outreach-funnel', 'Weekly funnel against the plan', funnelBody, { data: funnel })}
+            ${plan ? panel('outreach-targets', '90-day targets', targets, { data: plan.targets }) : ''}
+            ${panel('outreach-pipeline', 'Prospect pipeline (nightly sweep)', pipeBody, { data: pipe ? pipe.bySegment : [] })}
+            ${panel('outreach-campaigns', 'Campaigns (Instantly)', campBody, { data: mail ? mail.byCampaign : [] })}
+            ${mail ? panel('outreach-mailboxes', 'Mailboxes and warm-up', boxBody, { data: mail.accounts }) : ''}
+            ${panel('outreach-dns', `Sending domain${ou.mail && ou.mail.domain ? ' (' + esc(ou.mail.domain) + ')' : ''}`, dnsBody)}
+            ${listPanel('outreach', 'visits', 'Visits from outreach links', visits.campaigns, { color: COLORS.green, empty: 'No visits tagged utm_source=outreach in this range yet.' })}
+        </div>${needList(ou)}`;
+    }
+
     function views() {
         const s = S.summaries;
         const e = S.external;
@@ -505,6 +564,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             if (sum && sum.kpis) { main = sum.kpis[0]; series = sum.series ? sum.series.values : []; }
             if (p.key === 'traffic' && e.ga4 && e.ga4.ok) { const n = e.ga4.groups.reduce((a, g) => a + g.sessions, 0); const b = e.ga4.groups.reduce((a, g) => a + g.priorSessions, 0); const d = C.delta(n, b); main = { label: 'GA4 sessions', value: n, delta: d.text, dir: d.dir }; series = e.ga4.daily.map((x) => x.sessions); }
             if (p.key === 'systems') { const r = C.readiness(e); main = { label: 'Readiness', value: r === null ? '—' : r + '%' }; }
+            if (p.key === 'outreach' && e.outreach && e.outreach.pipeline && e.outreach.pipeline.ok) { main = { label: 'Prospects reviewed', value: e.outreach.pipeline.reviews }; series = e.outreach.pipeline.daily.map((x) => x.reviews); }
             if (p.key === 'business' && e.money && e.money.ok) { const d = C.delta(e.money.revenue.usd, e.money.prior.usd); main = { label: 'Revenue (USD)', value: e.money.revenue.usd, delta: d.text, dir: d.dir }; series = e.money.daily.map((x) => x.usd); }
             const alerts = S.brief.filter((b) => b.product === p.key && (b.level === 'alert' || b.level === 'warn')).length;
             return `<button type="button" class="jv-tile${alerts ? ' has-alert' : ''}" data-go="${p.key}"><span class="jv-tile-name">${esc(p.name)}</span><strong>${main ? fmt(main.value) : '—'}</strong><small>${main ? esc(main.label) : ''} ${main && main.delta ? `<em class="${main.dir > 0 ? 'up' : main.dir < 0 ? 'down' : ''}">${esc(main.delta)}</em>` : ''}</small>${spark(series, alerts ? COLORS.amber : COLORS.cyan)}${tileGoal(p.key)}${alerts ? `<b class="jv-badge">${alerts}</b>` : ''}</button>`;
@@ -560,6 +620,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         </div>`;
 
         out.business = businessView();
+        out.outreach = outreachView();
 
         const ga = e.ga4;
         const cf = e.cloudflare;
