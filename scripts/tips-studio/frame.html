@@ -74,6 +74,13 @@
   .rows.two .row .m { grid-row: span 2; width: 46px; height: 46px; font-size: 24px; }
   .rows.two .row b { font-size: calc(var(--body) * .78); }
   .rows.two .row small { font-size: calc(var(--body) * .6); text-align: left; }
+  .tight .picks { gap: calc(var(--u) * .25); }
+  .tight .pick { padding: calc(var(--u) * .3) calc(var(--u) * .5); }
+  .picks { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: calc(var(--u) * .5); }
+  .pick { display: grid; grid-template-columns: 58px 1fr; gap: 4px 20px; align-items: center; padding: calc(var(--u) * .5) calc(var(--u) * .7); border-radius: 18px; background: rgba(5,12,15,.4); }
+  .pick .n { grid-row: span 2; width: 58px; height: 58px; border-radius: 16px; display: grid; place-items: center; font-family: "Instrument Serif", Georgia, serif; font-size: 40px; line-height: 1; color: var(--ink); background: linear-gradient(135deg, var(--cyan-hi), var(--gold)); }
+  .pick b { font-size: calc(var(--body) * .86); line-height: 1.2; }
+  .pick small { font-size: calc(var(--body) * .62); color: var(--muted); }
   .bars { display: flex; flex-direction: column; gap: calc(var(--u) * .6); }
   .bar { display: grid; grid-template-columns: 180px 1fr 170px; gap: 16px; align-items: center; font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .85); }
   .bar .t { height: 30px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
@@ -205,7 +212,7 @@
   @keyframes inUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: none; } }
   .clip .card3d.a { animation-name: swing; animation-duration: 2.2s; }
   @keyframes swing { from { opacity: 0; transform: rotateX(30deg) rotateY(-50deg) translateZ(-500px); } to { opacity: 1; transform: rotateX(8deg) rotateY(-12deg); } }
-  .clip .ln.a, .clip .row.a, .clip .side.a { animation-name: inUp; animation-duration: .6s; }
+  .clip .ln.a, .clip .row.a, .clip .side.a, .clip .pick.a { animation-name: inUp; animation-duration: .6s; }
   .clip .bar .t span.a { animation-name: grow; animation-duration: 1s; }
   @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   .clip .end.a { animation-name: fadeEnd; animation-duration: .7s; }
@@ -233,6 +240,9 @@ function visual(v, t0) {
   }
   if (v.type === "check") {
     return '<div class="glass"><div class="rows' + (v.items.length > 6 ? " two" : "") + '">' + v.items.map((r) => '<div class="row a" style="animation-delay:' + step(.4).toFixed(2) + 's"><span class="m ' + r[2] + '">' + MARKS[r[2]] + "</span><b>" + esc(r[0]) + "</b><small>" + esc(r[1]) + "</small></div>").join("") + "</div></div>";
+  }
+  if (v.type === "list") {
+    return '<div class="glass"><ol class="picks">' + v.items.map((item, i) => '<li class="pick a" style="animation-delay:' + step(.4).toFixed(2) + 's"><span class="n">' + (i + 1) + "</span><b>" + esc(item.title) + "</b><small>" + esc(item.by) + "</small></li>").join("") + "</ol></div>";
   }
   if (v.type === "bars") {
     const max = Math.max(...v.items.map((i) => i[1]));

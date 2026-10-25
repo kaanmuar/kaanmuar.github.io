@@ -1,0 +1,28 @@
+Text,Image URL,Tags,Posting Time
+"This week in web quality, Oct 30, 2026
+
+Five picks from our daily sweep of the field, each summed up in our own words and credited to its source.
+
+1. W3C maps the web for AI agents
+W3C's Strategy Team set out how the web's technical agenda should change now that AI agents act on people's behalf, while keeping people at the center of the web. The paper goes to the Web and AI Interest Group at TPAC on Oct 29, and W3C is asking for feedback.
+By Philippe Le Hegaret, W3C: https://www.w3.org/news/2026/w3c-and-the-state-of-the-web-in-the-ai-era/
+
+2. axe-core 4.14 turns on Label in Name
+Axe-core 4.14.0 now runs the WCAG 2.5.3 Label in Name rule by default. It flags any control whose accessible name does not contain its visible label, like a Home button named Start page, which voice control users may not be able to click by saying Home. Deque tested the built-in voice control on macOS, iOS, Android and Windows before turning the rule on.
+By Wilco Fiers, Deque: https://www.deque.com/blog/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0/
+
+3. Screen reader tests in Playwright
+Craig Morten shows how Guidepup lets a Playwright test drive a real screen reader and assert on what VoiceOver, NVDA or Orca actually announces, instead of reading the accessibility tree. Setup takes two extra commands, and his example walks the BBC home page to BBC Sounds.
+By Craig Morten, DEV: https://dev.to/craigmorten/you-know-you-can-automate-screen-reader-tests-right-2dnk
+
+4. Encoded brackets make a new URL
+Google's John Mueller said raw square brackets and their encoded form, %5B and %5D, make two different URLs. Google crawls both and, when the content matches, keeps one. His advice is to encode brackets and use the same form in every link, canonical tag, sitemap and piece of structured data.
+By Matt G. Southern, Search Engine Journal: https://www.searchenginejournal.com/google-crawls-raw-and-encoded-bracket-urls-separately/593765/
+
+5. CSS Animation Triggers: a first draft
+The CSS Working Group published the First Public Working Draft of Animation Triggers. It defines CSS properties and an API that start an animation from a user action, such as a click or a key press, or when an element enters a range of a timeline, such as scrolling into view.
+From W3C CSS Working Group: https://www.w3.org/news/2026/first-public-working-draft-animation-triggers/
+
+Every digest, tip and site review on our social hub: https://carlosandmunoz.com/qa-review-social.html?utm_source=linkedin&utm_medium=social&utm_campaign=weekly-digest&utm_content=digest-2026-10-30
+
+#WebDev #OpenSource #SoftwareTesting #QA #Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/digest-2026-10-30/feed/01-this-week.jpg","","2026-10-30 10:49"

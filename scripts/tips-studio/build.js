@@ -25,7 +25,7 @@
    A source can also write a post in its own language (tip.lang, tip.voice "w" or "m"): it is drawn, voiced and
    captioned as written, with no translation, and its UI strings come from studio.UI[lang]. Such a source can set
    tip.date, tip.times ({ network: "HH:MM" }, a calendar slot), tip.alt, tip.hold (in the hub, never queued),
-   studio.WINDOWS and studio.hostFor(tip).
+   tip.pin (the calendar keeps it on its date), studio.WINDOWS, studio.hostFor(tip), studio.BATCH and studio.LANG_OFFSET.
    A source names its social hub kind with studio.KIND or tip.kind (trick, news, advice, compare, myth, quiz, term,
    skit, series); a quiz sets tip.answer to the id of the tip that reveals it, tip.steps and tip.term are optional.
    --rotate writes voiced/<slug>.mp4 and voiced/<slug>.json (language, speech, TikTok and YouTube copy)
@@ -83,7 +83,7 @@ const opts = args();
 const SOURCE = typeof opts.source === "string" && /^[\w-]+$/.test(opts.source) ? opts.source : "tips";
 const RUNS = SOURCE !== "tips";
 const studio = require("./" + SOURCE);
-const BATCH = opts.batch || (SOURCE === "runs" ? "runs-2026-10" : RUNS ? SOURCE : "tips-2026-10");
+const BATCH = opts.batch || studio.BATCH || (SOURCE === "runs" ? "runs-2026-10" : RUNS ? SOURCE : "tips-2026-10");
 const EVERY = Number(opts.every || 1);
 const PER_DAY = Number(opts["per-day"] || 1);
 const AFTER = Number(opts.after || 0);
@@ -141,6 +141,7 @@ function describe(v) {
   if (v.type === "quiz") return "Quiz: " + v.sides.map((s) => s.label + " (" + s.host + ")").join(" or ") + ", scores hidden" + note;
   if (v.type === "myth") return "Myth: " + v.myth + " Fact: " + v.fact;
   if (v.type === "term") return "Term: " + v.value + ", " + v.group + (v.lines ? ". Example: " + code(v.lines) : "") + note;
+  if (v.type === "list") return v.items.map((item, i) => (i + 1) + ". " + item.title + " (" + item.by + ")").join("; ");
   if (v.type === "matrix") return "Scores side by side: " + v.rows.map((r) => r[0] + " " + r.slice(1).map((n, i) => v.cols[i] + " " + (n == null ? "none" : n)).join(", ")).join("; ") + note;
   return "";
 }
@@ -170,7 +171,7 @@ function hubFields(tip, slugOf) {
 }
 
 // Card text worth translating: code lines, ids, tags and check marks stay as they are.
-const KEEP_KEYS = new Set(["id", "kind", "answer", "term", "steps", "alt", "host", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value"]);
+const KEEP_KEYS = new Set(["id", "kind", "answer", "term", "steps", "alt", "host", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value", "by", "url", "date", "edition"]);
 function strings(node, at, out) {
   if (typeof node === "string") { if (/[a-z]{2}/i.test(node) && !MARK_WORDS[node]) out[at] = node; }
   else if (node && typeof node === "object") Object.keys(node).forEach((key) => { if (!KEEP_KEYS.has(key)) strings(node[key], at ? at + "." + key : key, out); });
@@ -178,7 +179,7 @@ function strings(node, at, out) {
 }
 function setPath(obj, at, value) { const keys = at.split("."); const last = keys.pop(); keys.reduce((o, k) => o[k], obj)[last] = value; }
 
-const LANG_OFFSET = Number(opts["lang-offset"] || 0);
+const LANG_OFFSET = Number(opts["lang-offset"] || studio.LANG_OFFSET || 0);
 function voiceFor(index, tip) {
   if (tip && tip.lang) return VOICES.find((v) => v.file === tip.lang + "-" + (tip.voice || "w"));
   const turn = index + LANG_OFFSET;
@@ -347,7 +348,7 @@ async function renderClip(page, tip, index, total, file, cover, said) {
     if (said.lang !== "en" && studio.OWN_LINE && said.tiktok.includes(studio.OWN_LINE.en)) throw new Error(slug + ": the " + said.lang + " TikTok caption carries the English call to action");
     const cap = Object.assign(studio.captions(tip, index, total), { tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube });
     captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip), alt: tip.alt || altText(tip), lang: said.lang, voice: said.voice.file },
-      tip.lang ? { textLang: tip.lang } : {}, tip.hold ? { hold: true } : {}, hubFields(tip, slugOf), cap);
+      tip.lang ? { textLang: tip.lang } : {}, tip.hold ? { hold: true } : {}, tip.pin ? { pin: true } : {}, hubFields(tip, slugOf), cap);
     const windows = studio.WINDOWS || WINDOWS;
     for (const channel of tip.hold ? [] : Object.keys(windows)) {
       const video = ["tiktok", "youtube"].includes(channel);
