@@ -17,13 +17,13 @@ async function open(page, cmp, review, file = '/qa-review.html', extra = {}, fro
   const row = { email: 'ana@example.com', paid: true, frameworks: sample.frameworks, report: Object.assign({}, sample.report, { id: ID, compare: cmp }, extra) };
   await page.addInitScript(({ version, session }) => {
     try {
-      sessionStorage.setItem('qa-review-terms', version);
+      if (version) sessionStorage.setItem('qa-review-terms', version);
       localStorage.setItem('hasSeenReviewTour', 'true');
       localStorage.setItem('qa-review-analytics', 'necessary');
       localStorage.setItem('qa-review-session', JSON.stringify({ session, email: 'ana@example.com', provider: 'email' }));
       localStorage.setItem('qa-review-device-key', JSON.stringify('a'.repeat(64)));
     } catch (e) { /* storage is optional */ }
-  }, { version: TERMS, session: signed.session });
+  }, { version: from.terms === false ? '' : TERMS, session: signed.session });
   await page.route(/ipwho\.is/, (route) => route.fulfill({ contentType: 'application/json', body: '{"success":false}' }));
   await page.route('http://127.0.0.1:8768/**', async (route) => {
     const req = route.request();
@@ -325,6 +325,85 @@ test.describe('The competitor comparison is drawn as charts', () => {
     expect(saved[0].slice(1).sort()).toEqual(['d1d1d1', 'd2d2d2', 'd3d3d3', 'd5d5d5']);
     await expect(page.locator('#form-status')).toContainText('These did not finish: four.example.');
     await expect(page.locator('#compare-rows')).toBeHidden();
+  });
+
+  test('Compare with an empty Name takes the account email or says so on the comparison, and the terms name every competitor (#1425, #1426)', async ({ page }) => {
+    const sent = [];
+    const ask = await open(page, null, (body) => {
+      sent.push(body);
+      return JSON.stringify({ type: 'error', error: 'The site did not answer' }) + '\n';
+    }, '/qa-review.html', {}, { terms: false });
+    await expect(page.locator('#name')).toHaveValue('');
+    await ask.locator('#compare-url').fill('one.example');
+    await ask.locator('#compare-add').click();
+    await ask.locator('#compare-url-2').fill('two.example');
+    await page.evaluate(() => { window.whoWas = ReviewAuth.who; ReviewAuth.who = () => ({ name: '', email: '' }); });
+    await ask.locator('#compare-go').click();
+    await expect(page.locator('#compare-error')).toHaveText('Enter your name in the review form above, then press Compare again.');
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await expect(page.locator('#gate')).toBeHidden();
+
+    await page.evaluate(() => { ReviewAuth.who = window.whoWas; });
+    await ask.locator('#compare-go').click();
+    await expect(page.locator('#gate')).toBeVisible();
+    await expect(page.locator('#gate-waiting')).toHaveText('The reviews of one.example, two.example start as soon as you accept.');
+    await expect(page.locator('#name')).toHaveValue('ana@example.com');
+    await page.locator('#terms-all').check();
+    await page.locator('#accept').click();
+    await expect(page.locator('#compare-error')).toContainText('None of the competitor reviews finished.', { timeout: 20000 });
+    expect(sent.map((body) => body.name)).toEqual(['ana@example.com', 'ana@example.com']);
+  });
+
+  test('a comparison brings its progress into view, names the competitor that failed, and closes onto your own report (#1427, #1429, #1430, #1432)', async ({ page }) => {
+    const ids = { 'one.example': 'e1e1e1', 'two.example': 'e2e2e2' };
+    const records = [{ id: ID, email: 'ana@example.com', report: Object.assign({}, sample.report, { id: ID }) }]
+      .concat(Object.entries(ids).map(([host, id]) => ({ id, email: 'ana@example.com', report: Object.assign({}, own, { id, host }) })));
+    let release;
+    const held = new Promise((resolve) => { release = resolve; });
+    const ask = await open(page, null, async (body) => {
+      await held;
+      if (!ids[body.url]) return JSON.stringify({ type: 'error', error: "The site's bot protection refused the review (status 403)" }) + '\n';
+      const report = records.find((row) => row.id === ids[body.url]).report;
+      const cmp = compare.compareSites(Object.assign({}, sample.report, { id: ID }), report);
+      return JSON.stringify({ type: 'done', report: Object.assign({}, report, { compare: cmp }), frameworks: sample.frameworks, paid: true }) + '\n';
+    });
+    const saved = [];
+    await page.route('http://127.0.0.1:8768/account/comparison/**', async (route) => {
+      const req = route.request();
+      const headers = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, headers) });
+      const body = JSON.parse(req.postData() || '{}');
+      if (req.url().endsWith('/save')) saved.push(body.ids);
+      const picked = multi.pickProblem(records, 'ana@example.com', body.ids || saved[0]);
+      const made = req.url().endsWith('/save') ? { ok: true, id: 'cmp7' } : multi.payloadOf('cmp7', multi.savedRecord('ana@example.com', picked, 'review'), records, () => true);
+      return route.fulfill({ status: 200, contentType: 'application/json', headers, body: JSON.stringify(made) });
+    });
+    await page.evaluate(() => { document.getElementById('name').value = 'Ana Pérez'; });
+    await ask.locator('#compare-url').fill('one.example');
+    for (const [index, host] of ['two.example', 'three.example'].entries()) {
+      await ask.locator('#compare-add').click();
+      await ask.locator('#compare-url-' + (index + 2)).fill(host);
+    }
+    await ask.locator('#compare-go').click();
+    await expect(page.locator('#compare-rows li')).toHaveCount(3);
+    await expect(page.locator('#compare-rows')).toBeInViewport();
+    await expect(page.locator('#compare-run')).toBeFocused();
+    release();
+
+    const overlay = page.locator('#multi-overlay');
+    await expect(overlay).toHaveClass(/open/, { timeout: 20000 });
+    expect(saved).toEqual([[ID, 'e1e1e1', 'e2e2e2']]);
+    await expect(page).toHaveURL(new RegExp('\\?report=' + ID + '&comparison=cmp7$'));
+    await expect(overlay.locator('#multi-failed')).toContainText("three.example · The site's bot protection refused the review (status 403).");
+    await expect(page.locator('#compare-running')).toBeHidden();
+    await expect(page.locator('#compare-running-text')).toHaveText('');
+    await expect(page.locator('#form-status')).toContainText('The comparisons are done.');
+
+    await overlay.locator('#multi-close').click();
+    await expect(page).toHaveURL(new RegExp('\\?report=' + ID + '$'));
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await expect(page.locator('#report-cover h2')).toHaveText(sample.report.host);
+    await expect(page.locator('#compare-running')).toBeHidden();
   });
 
   test('the report\'s own site is refused as a competitor', async ({ page }) => {

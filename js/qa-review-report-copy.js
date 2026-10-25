@@ -104,6 +104,7 @@
       kitLegal: "Legal pages", kitLegalBody: "Outlines for the {list} the review found no link to. Fill the placeholders and have them checked.", and: "and",
       legal: { privacy: "privacy notice", imprint: "Impressum", accessibility: "accessibility statement" },
       kitChat: "Click-to-load chat", kitChatBody: "A plain chat button that loads the widget on the first click, so nothing is stored before a visitor asks for help.",
+      compareName: "Enter your name in the review form above, then press Compare again.", gateMany: "The reviews of {hosts} start as soon as you accept.",
       errors: {
         pickTwo: "Pick at least two of your reviews to compare.", tooMany: "Compare up to {max} reviews at a time.",
         reviewsNotSaved: "One of those reviews is not saved under this account.", reviewNotSaved: "That review is not saved under this account.",
@@ -215,6 +216,7 @@
       kitLegal: "Páginas legales", kitLegalBody: "Borradores para las páginas que la revisión no encontró enlazadas: {list}. Completa los marcadores y haz que alguien los revise.", and: "y",
       legal: { privacy: "aviso de privacidad", imprint: "Impressum", accessibility: "declaración de accesibilidad" },
       kitChat: "Chat que carga al hacer clic", kitChatBody: "Un botón de chat simple que carga el widget en el primer clic, así que no se guarda nada antes de que un visitante pida ayuda.",
+      compareName: "Escribe tu nombre en el formulario de revisión de arriba y vuelve a presionar Comparar.", gateMany: "Las revisiones de {hosts} empiezan en cuanto aceptes.",
       errors: {
         pickTwo: "Elige al menos dos de tus revisiones para compararlas.", tooMany: "Compara hasta {max} revisiones a la vez.",
         reviewsNotSaved: "Una de esas revisiones no está guardada en esta cuenta.", reviewNotSaved: "Esa revisión no está guardada en esta cuenta.",
@@ -327,6 +329,7 @@
       kitLegal: "Páginas legais", kitLegalBody: "Rascunhos para as páginas que a revisão não encontrou com link: {list}. Preencha os campos marcados e peça para alguém revisar.", and: "e",
       legal: { privacy: "aviso de privacidade", imprint: "Impressum", accessibility: "declaração de acessibilidade" },
       kitChat: "Chat que carrega no clique", kitChatBody: "Um botão de chat simples que carrega o widget no primeiro clique, então nada é armazenado antes de um visitante pedir ajuda.",
+      compareName: "Escreva seu nome no formulário de revisão acima e pressione Comparar de novo.", gateMany: "As revisões de {hosts} começam assim que você aceitar.",
       errors: {
         pickTwo: "Escolha pelo menos duas das suas revisões para comparar.", tooMany: "Compare até {max} revisões de cada vez.",
         reviewsNotSaved: "Uma dessas revisões não está salva nesta conta.", reviewNotSaved: "Essa revisão não está salva nesta conta.",
@@ -438,6 +441,7 @@
       kitLegal: "Rechtliche Seiten", kitLegalBody: "Gerüste für die Seiten, zu denen die Prüfung keinen Link fand: {list}. Füllen Sie die Platzhalter aus und lassen Sie sie prüfen.", and: "und",
       legal: { privacy: "Datenschutzerklärung", imprint: "Impressum", accessibility: "Erklärung zur Barrierefreiheit" },
       kitChat: "Chat, der beim Klick lädt", kitChatBody: "Ein schlichter Chat-Button, der das Widget erst beim ersten Klick lädt, sodass nichts gespeichert wird, bevor ein Besucher um Hilfe bittet.",
+      compareName: "Tragen Sie Ihren Namen oben im Prüfformular ein und drücken Sie erneut auf Vergleichen.", gateMany: "Die Prüfungen von {hosts} starten, sobald Sie zustimmen.",
       errors: {
         pickTwo: "Wählen Sie mindestens zwei Ihrer Prüfungen zum Vergleichen.", tooMany: "Vergleichen Sie bis zu {max} Prüfungen auf einmal.",
         reviewsNotSaved: "Eine dieser Prüfungen ist nicht unter diesem Konto gespeichert.", reviewNotSaved: "Diese Prüfung ist nicht unter diesem Konto gespeichert.",
@@ -548,6 +552,7 @@
       kitLegal: "Pages légales", kitLegalBody: "Des trames pour les pages vers lesquelles l’analyse n’a trouvé aucun lien : {list}. Remplissez les champs et faites-les vérifier.", and: "et",
       legal: { privacy: "politique de confidentialité", imprint: "Impressum", accessibility: "déclaration d’accessibilité" },
       kitChat: "Chat chargé au clic", kitChatBody: "Un simple bouton de chat qui charge le widget au premier clic, pour que rien ne soit stocké avant qu’un visiteur demande de l’aide.",
+      compareName: "Saisissez votre nom dans le formulaire d’analyse ci-dessus, puis appuyez de nouveau sur Comparer.", gateMany: "Les analyses de {hosts} démarrent dès que vous acceptez.",
       errors: {
         pickTwo: "Choisissez au moins deux de vos analyses à comparer.", tooMany: "Comparez jusqu’à {max} analyses à la fois.",
         reviewsNotSaved: "L’une de ces analyses n’est pas enregistrée sous ce compte.", reviewNotSaved: "Cette analyse n’est pas enregistrée sous ce compte.",
@@ -660,6 +665,7 @@
       kitLegal: "Pagine legali", kitLegalBody: "Schemi per le pagine a cui la revisione non ha trovato link: {list}. Compila i segnaposto e falli verificare.", and: "e",
       legal: { privacy: "informativa sulla privacy", imprint: "Impressum", accessibility: "dichiarazione di accessibilità" },
       kitChat: "Chat caricata al clic", kitChatBody: "Un semplice pulsante di chat che carica il widget al primo clic, così nulla viene salvato prima che un visitatore chieda aiuto.",
+      compareName: "Scrivi il tuo nome nel modulo di revisione qui sopra, poi premi di nuovo Confronta.", gateMany: "Le revisioni di {hosts} partono non appena accetti.",
       errors: {
         pickTwo: "Scegli almeno due delle tue revisioni da confrontare.", tooMany: "Confronta fino a {max} revisioni alla volta.",
         reviewsNotSaved: "Una di quelle revisioni non è salvata in questo account.", reviewNotSaved: "Quella revisione non è salvata in questo account.",

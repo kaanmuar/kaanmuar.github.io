@@ -8,6 +8,7 @@
 .multi-locked { margin: 12px 0; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--amber) 55%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--amber) 10%, transparent); }
 .multi-locked p { margin: 0 0 8px; }
 .multi-locked p:last-child { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.multi-failed ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .multi-scroll { overflow-x: auto; }
 .multi-summary { margin: 18px 0 8px; }
 .multi-table { width: 100%; min-width: max-content; }

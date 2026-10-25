@@ -143,11 +143,13 @@
   }
 
   // The terms are asked for when an address is sent or someone signs in; what asked goes on once they are accepted.
-  function askTerms(then, host) {
+  // hosts: the address about to be reviewed, or every competitor of a comparison.
+  function askTerms(then, hosts) {
     afterTerms = then;
     const waiting = document.getElementById("gate-waiting");
-    waiting.hidden = !host;
-    waiting.textContent = host ? waiting.dataset.text.replace("{host}", host.replace(/^https?:\/\//i, "")) : "";
+    const list = [].concat(hosts || []).filter(Boolean).map((host) => host.replace(/^https?:\/\//i, ""));
+    waiting.hidden = !list.length;
+    waiting.textContent = list.length > 1 ? rc.t("gateMany", { hosts: list.join(", ") }) : list.length ? waiting.dataset.text.replace("{host}", list[0]) : "";
     gateReturn = document.activeElement;
     behindGate = [...document.body.children].filter((el) => el !== gate && !el.inert && !el.matches("script, .cookie-note"));
     behindGate.forEach((el) => { el.inert = true; });
@@ -1317,6 +1319,14 @@
       return;
     }
     if (pricing) return;
+    // The request form sits behind the report, so an empty Name takes the account's name, or its email, and a
+    // name still missing is said here before the report closes.
+    const name = document.getElementById("name");
+    if (!name.value.trim() && window.ReviewAuth && ReviewAuth.signedIn()) name.value = ReviewAuth.who().name || ReviewAuth.who().email;
+    if (clientErrors().some((item) => item.field === "name")) {
+      error.textContent = rc.t("compareName");
+      return;
+    }
     const stored = savedCompare();
     const kept = stored && stored.id === report.id ? stored : null;
     const limits = report.limits || {};
@@ -1360,7 +1370,9 @@
 
   // compare.done: the competitor reviews that finished. Two or more open with the report as one
   // comparison, so every competitor is side by side and not only the last one.
-  async function openCompared(compare) {
+  // The base report is drawn again behind the comparison and stays in the address, so closing the comparison
+  // goes back to it and not to the competitor that finished last. reasons: why each failed competitor stopped.
+  async function openCompared(compare, reasons) {
     const ids = [compare.id].concat(compare.done || []);
     if (ids.length < 3 || !window.QAReviewMulti) return;
     const id = await QAReviewMulti.save(ids, "review", null);
@@ -1368,8 +1380,9 @@
       setStatus(compareDone(compare, " Open your report of " + ((compare.report && compare.report.host) || "your site") + " and press Open the full comparison report to see them side by side."), true);
       return;
     }
-    history.pushState(null, "", location.pathname + "?comparison=" + encodeURIComponent(id));
-    QAReviewMulti.load(id);
+    history.pushState(null, "", location.pathname + "?report=" + encodeURIComponent(compare.id) + "&comparison=" + encodeURIComponent(id));
+    await reopenFixList(compare.id);
+    QAReviewMulti.load(id, { failed: (compare.failed || []).map((host) => ({ host, note: (reasons || {})[host] || "" })) });
   }
 
   function compareStep(compare) {
@@ -1568,15 +1581,22 @@
     document.getElementById("compare-running-text").textContent = many > 1
       ? "The comparison with " + many + " competitors is running. Stop keeps the pages already checked and does not start the ones still waiting."
       : "The comparison with " + compare.url + compareStep(compare) + " is running. Stop keeps the pages already checked.";
-    document.getElementById("compare-run").hidden = false;
+    const run = document.getElementById("compare-run");
+    run.hidden = false;
     document.getElementById("compare-running").hidden = false;
     document.getElementById("compare-stop").disabled = true;
     lockCompare(true);
+    // The report closes onto the top of the page, so the progress is brought into view and read out.
+    run.tabIndex = -1;
+    run.scrollIntoView({ block: "center" });
+    run.focus({ preventScroll: true });
   }
 
   function hideComparing() {
     document.getElementById("compare-run").hidden = true;
     document.getElementById("compare-running").hidden = true;
+    document.getElementById("compare-run-text").textContent = "";
+    document.getElementById("compare-running-text").textContent = "";
     paintCompareRows(null);
     lockCompare(false);
   }
@@ -1684,7 +1704,8 @@
     });
     const pending = rows.filter((row) => row.state === "waiting" || row.state === "payment").map((row) => row.url);
     const last = rows.filter((row) => row.payload).pop();
-    if (last) {
+    // Two or more finished open as one comparison over the base report; one alone is drawn as its pair.
+    if (last && ran.done.length < 2) {
       layer = "All";
       render(last.payload);
       loadStanding();
@@ -1710,7 +1731,7 @@
     const notStarted = pool.stopping && pending.length ? " Stopped: " + pending.join(", ") + (pending.length === 1 ? " was" : " were") + " not started." : "";
     if (ran.done.length) {
       setStatus(compareDone(ran, notStarted), !!ran.failed.length);
-      openCompared(ran);
+      openCompared(ran, Object.fromEntries(rows.filter((row) => row.state === "failed").map((row) => [row.url, row.note])));
       return;
     }
     const why = rows.filter((row) => row.note).map((row) => row.url + ": " + row.note).join(" ");
@@ -2606,7 +2627,7 @@
     event.preventDefault();
     if (activeRun) return;
     if (!termsOk) {
-      askTerms(() => reviewForm.dispatchEvent(new Event("submit", { cancelable: true })), compareTarget ? compareTarget.url : urlInput.value.trim());
+      askTerms(() => reviewForm.dispatchEvent(new Event("submit", { cancelable: true })), compareTarget ? [compareTarget.url].concat(compareTarget.queue || []) : urlInput.value.trim());
       return;
     }
     if (!signedIn()) {
@@ -2623,7 +2644,8 @@
     const errors = compare ? clientErrors().filter((item) => item.field === "name") : clientErrors();
     markFields(errors);
     if (errors.length) {
-      setStatus(errors[0].message, true);
+      if (compare) compareTarget = compare;
+      if (!compare || !reopenCompare(compare, rc.t("compareName"))) setStatus(errors[0].message, true);
       return;
     }
     let confirmed = !!(compare && compare.confirmed);
@@ -2718,7 +2740,7 @@
         if (compare && (compare.done || []).length) {
           const ran = Object.assign({}, compare, { failed: (compare.failed || []).concat(compare.url) });
           setStatus(compareDone(ran, ""), true);
-          openCompared(ran);
+          openCompared(ran, { [compare.url]: reason.replace(/([^.!?])\s*$/, "$1.") });
         } else if (compare && reopenCompare(compare, "The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Check the address or enter another competitor.")) {
           setStatus("The comparison with " + compare.url + " did not finish. Your report is open again.", true);
         } else {
