@@ -1795,7 +1795,7 @@ function analyze(input) {
     banner: !!(chatConsent && chatConsent.banner),
     cookies: (chatSeen.cookies || []).slice(0, 10),
     rejected: chatConsent && chatConsent.rejected && chatSeen.after ? { cookies: (chatSeen.after.cookies || []).slice(0, 10), requests: chatSeen.after.requests || 0 } : null,
-    launcher: chatLauncher.found ? { name: chatLauncher.name || "", known: !!chatLauncher.known, covers: (chatLauncher.covers || []).length } : null,
+    launcher: chatLauncher.found ? { name: chatLauncher.name || "", known: !!chatLauncher.known, covers: (chatLauncher.covers || []).length } : chatLauncher.hidden ? { hidden: true } : null,
     opened: !!chatOpen.opened,
     states: { consent: findingState("an-chat-consent"), reject: findingState("an-chat-reject"), weight: findingState("pf-chat"), cover: findingState("a11y-chat-cover"), name: findingState("a11y-chat-name"), focus: findingState("a11y-chat-focus"), trap: findingState("a11y-chat-trap"), privacy: findingState("an-chat-privacy") }
   } : null;

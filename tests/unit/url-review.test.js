@@ -2320,6 +2320,36 @@ test.describe("chat widgets", () => {
     assert.deepEqual(browser.coveredBy(null, [{ label: "x", under: true, rect: rect(0, 0, 10, 10) }]), []);
   });
 
+  test("a launcher frame that touches only a sliver of a button or carousel card does not cover it", () => {
+    const box = { x: 290, y: 748, w: 100, h: 96 };
+    const covered = browser.coveredBy(box, [
+      { label: "Get started free", banner: false, under: true, rect: { x: 48, y: 685, w: 294, h: 68 } },
+      { label: "All your customer data", banner: false, under: true, rect: { x: 56, y: 825, w: 278, h: 300 } },
+      { label: "Book a demo", banner: false, under: true, rect: { x: 280, y: 760, w: 90, h: 44 } }
+    ]);
+    assert.deepEqual(covered.map((row) => row.label), ["Book a demo"]);
+  });
+
+  test("CDN and bot-check cookies on a chat host are neither chat nor tracking cookies", async () => {
+    const context = { cookies: async () => [
+      { name: "__cf_bm", domain: ".hubspot.com" },
+      { name: "_cfuvid", domain: ".usemessages.com" },
+      { name: "messagesUtk", domain: ".example.com" },
+      { name: "intercom-session-abc", domain: ".example.com" },
+      { name: "twk_uuid_1", domain: "embed.tawk.to" },
+      { name: "AWSALBCORS", domain: "widget.intercom.io" }
+    ] };
+    const rows = await browser.cookiesOf(context, null, "www.example.com");
+    assert.deepEqual(rows.map((row) => [row.name, row.chat, row.tracking]), [
+      ["__cf_bm", false, false],
+      ["_cfuvid", false, false],
+      ["messagesUtk", true, false],
+      ["intercom-session-abc", true, false],
+      ["twk_uuid_1", true, true],
+      ["AWSALBCORS", false, false]
+    ]);
+  });
+
   test("a chat that loads before consent, is heavy, covers the banner, has no name and traps focus is reported in each area", () => {
     const result = analyzeWith(INTERCOM);
     assert.deepEqual(["an-chat-consent", "an-chat-reject", "an-chat-privacy", "pf-chat", "a11y-chat-cover", "a11y-chat-name", "a11y-chat-focus", "a11y-chat-trap"].map((key) => [key, finding(result, key).area, finding(result, key).verdict, finding(result, key).severity]), [
