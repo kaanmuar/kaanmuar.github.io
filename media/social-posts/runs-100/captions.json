@@ -1,6 +1,6 @@
 {
   "01-wikipedia": {
-    "date": "2026-11-08",
+    "date": "2026-11-10",
     "cat": "Worldwide",
     "title": "Wikipedia leaves the snippet to search.",
     "alt": "Real run, worldwide card. Wikipedia leaves the snippet to search. Overall score 84 of 100. SEO 73, GEO 89, Analytics 97, Security 78, A11y 74, Speed 94. en.wikipedia.org, 20 pages analyzed, 19 Oct 2026.",
@@ -55,7 +55,7 @@
     }
   },
   "02-mozilla": {
-    "date": "2026-11-09",
+    "date": "2026-11-11",
     "cat": "Worldwide",
     "title": "Mozilla: 85 languages, no sitemap.",
     "alt": "Real run, worldwide card. Mozilla: 85 languages, no sitemap. Overall score 86 of 100. SEO 73, GEO 86, Analytics 85, Security 89, A11y 86, Speed 94. www.mozilla.org, 20 pages analyzed, 19 Oct 2026.",
@@ -110,7 +110,7 @@
     }
   },
   "03-mdn": {
-    "date": "2026-11-10",
+    "date": "2026-11-11",
     "cat": "Worldwide",
     "title": "MDN Web Docs: 95. No JSON-LD at all.",
     "alt": "Real run, worldwide card. MDN Web Docs: 95. No JSON-LD at all. Overall score 95 of 100. SEO 97, GEO 86, Analytics 97, Security 94, A11y 97, Speed 97. developer.mozilla.org, 20 pages analyzed, 19 Oct 2026.",
@@ -165,7 +165,7 @@
     }
   },
   "04-w3c": {
-    "date": "2026-11-10",
+    "date": "2026-11-12",
     "cat": "Worldwide",
     "title": "W3C's home pages share one title.",
     "alt": "Real run, worldwide card. W3C's home pages share one title. Overall score 86 of 100. SEO 64, GEO 86, Analytics 97, Security 88, A11y 86, Speed 94. www.w3.org, 20 pages analyzed, 19 Oct 2026.",
@@ -220,7 +220,7 @@
     }
   },
   "05-unesco": {
-    "date": "2026-11-11",
+    "date": "2026-11-12",
     "cat": "Worldwide",
     "title": "UNESCO has llms.txt, but no HSTS.",
     "alt": "Real run, worldwide card. UNESCO has llms.txt, but no HSTS. Overall score 70 of 100. SEO 67, GEO 56, Analytics 85, Security 62, A11y 89, Speed 68. www.unesco.org, 20 pages analyzed, 19 Oct 2026.",
@@ -275,7 +275,7 @@
     }
   },
   "06-unicef": {
-    "date": "2026-11-11",
+    "date": "2026-11-13",
     "cat": "Worldwide",
     "title": "UNICEF's date filter has no label.",
     "alt": "Real run, worldwide card. UNICEF's date filter has no label. Overall score 84 of 100. SEO 86, GEO 91, Analytics 85, Security 88, A11y 85, Speed 67. www.unicef.org, 20 pages analyzed, 19 Oct 2026.",
@@ -330,7 +330,7 @@
     }
   },
   "07-worldbank": {
-    "date": "2026-11-12",
+    "date": "2026-11-13",
     "cat": "Worldwide",
     "title": "The World Bank: GEO 97.",
     "alt": "Real run, worldwide card. The World Bank: GEO 97. Overall score 87 of 100. SEO 83, GEO 97, Analytics 85, Security 77, A11y 86, Speed 94. www.worldbank.org, 20 pages analyzed, 19 Oct 2026.",
@@ -385,7 +385,7 @@
     }
   },
   "08-icrc": {
-    "date": "2026-11-12",
+    "date": "2026-11-14",
     "cat": "Worldwide",
     "title": "The ICRC tests a CSP. Now it can enforce it.",
     "alt": "Real run, worldwide card. The ICRC tests a CSP. Now it can enforce it. Overall score 81 of 100. SEO 70, GEO 86, Analytics 92, Security 83, A11y 77, Speed 82. www.icrc.org, 20 pages analyzed, 19 Oct 2026.",
@@ -440,7 +440,7 @@
     }
   },
   "09-msf": {
-    "date": "2026-11-13",
+    "date": "2026-11-14",
     "cat": "Worldwide",
     "title": "MSF serves every page without HSTS.",
     "alt": "Real run, worldwide card. MSF serves every page without HSTS. Overall score 78 of 100. SEO 86, GEO 91, Analytics 85, Security 62, A11y 74, Speed 73. www.msf.org, 20 pages analyzed, 19 Oct 2026.",
@@ -495,7 +495,7 @@
     }
   },
   "10-amnesty": {
-    "date": "2026-11-13",
+    "date": "2026-11-15",
     "cat": "Worldwide",
     "title": "Amnesty's robots.txt turns Bingbot away.",
     "alt": "Real run, worldwide card. Amnesty's robots.txt turns Bingbot away. Overall score 81 of 100. SEO 67, GEO 61, Analytics 94, Security 83, A11y 97, Speed 88. www.amnesty.org, 20 pages analyzed, 19 Oct 2026.",
@@ -550,7 +550,7 @@
     }
   },
   "11-guardian": {
-    "date": "2026-11-14",
+    "date": "2026-11-15",
     "cat": "Worldwide",
     "title": "The Guardian front page has no h1.",
     "alt": "Real run, worldwide card. The Guardian front page has no h1. Overall score 78 of 100. SEO 78, GEO 59, Analytics 100, Security 78, A11y 89, Speed 71. www.theguardian.com, 20 pages analyzed, 19 Oct 2026.",
@@ -605,7 +605,7 @@
     }
   },
   "12-aljazeera": {
-    "date": "2026-11-14",
+    "date": "2026-11-16",
     "cat": "Worldwide",
     "title": "Al Jazeera marks text for voice, blocks AI.",
     "alt": "Real run, worldwide card. Al Jazeera marks text for voice, blocks AI. Overall score 84 of 100. SEO 89, GEO 64, Analytics 92, Security 77, A11y 89, Speed 97. www.aljazeera.com, 20 pages analyzed, 19 Oct 2026.",
@@ -660,7 +660,7 @@
     }
   },
   "13-dw": {
-    "date": "2026-11-15",
+    "date": "2026-11-16",
     "cat": "Worldwide",
     "title": "DW blocks framing. It skips nosniff.",
     "alt": "Real run, worldwide card. DW blocks framing. It skips nosniff. Overall score 82 of 100. SEO 78, GEO 56, Analytics 97, Security 77, A11y 97, Speed 91. www.dw.com, 20 pages analyzed, 19 Oct 2026.",
@@ -715,7 +715,7 @@
     }
   },
   "14-elpais": {
-    "date": "2026-11-15",
+    "date": "2026-11-17",
     "cat": "Worldwide",
     "title": "El País sends no security headers.",
     "alt": "Real run, worldwide card. El País sends no security headers. Overall score 74 of 100. SEO 73, GEO 59, Analytics 85, Security 46, A11y 94, Speed 92. elpais.com, 20 pages analyzed, 19 Oct 2026.",
@@ -770,7 +770,7 @@
     }
   },
   "15-lemonde": {
-    "date": "2026-11-16",
+    "date": "2026-11-17",
     "cat": "Worldwide",
     "title": "Le Monde has a CSP that allows any https.",
     "alt": "Real run, worldwide card. Le Monde has a CSP that allows any https. Overall score 72 of 100. SEO 54, GEO 61, Analytics 97, Security 62, A11y 79, Speed 83. www.lemonde.fr, 20 pages analyzed, 19 Oct 2026.",
@@ -825,7 +825,7 @@
     }
   },
   "16-mit": {
-    "date": "2026-11-16",
+    "date": "2026-11-18",
     "cat": "Worldwide",
     "title": "MIT's canonical tags point to its CMS.",
     "alt": "Real run, worldwide card. MIT's canonical tags point to its CMS. Overall score 83 of 100. SEO 59, GEO 83, Analytics 85, Security 77, A11y 97, Speed 97. www.mit.edu, 20 pages analyzed, 19 Oct 2026.",
@@ -880,7 +880,7 @@
     }
   },
   "17-stanford": {
-    "date": "2026-11-17",
+    "date": "2026-11-18",
     "cat": "Worldwide",
     "title": "Stanford's canonical leads to a 404.",
     "alt": "Real run, worldwide card. Stanford's canonical leads to a 404. Overall score 86 of 100. SEO 81, GEO 86, Analytics 85, Security 86, A11y 100, Speed 76. www.stanford.edu, 20 pages analyzed, 19 Oct 2026.",
@@ -935,7 +935,7 @@
     }
   },
   "18-harvard": {
-    "date": "2026-11-17",
+    "date": "2026-11-19",
     "cat": "Worldwide",
     "title": "Any site can frame Harvard's pages.",
     "alt": "Real run, worldwide card. Any site can frame Harvard's pages. Overall score 82 of 100. SEO 75, GEO 89, Analytics 85, Security 54, A11y 100, Speed 94. www.harvard.edu, 20 pages analyzed, 19 Oct 2026.",
@@ -990,7 +990,7 @@
     }
   },
   "19-nodejs": {
-    "date": "2026-11-18",
+    "date": "2026-11-19",
     "cat": "Worldwide",
     "title": "Node.js has llms.txt. Its pages share a pitch.",
     "alt": "Real run, worldwide card. Node.js has llms.txt. Its pages share a pitch. Overall score 89 of 100. SEO 85, GEO 89, Analytics 97, Security 75, A11y 100, Speed 94. nodejs.org, 20 pages analyzed, 19 Oct 2026.",
@@ -1045,7 +1045,7 @@
     }
   },
   "20-rust": {
-    "date": "2026-11-18",
+    "date": "2026-11-20",
     "cat": "Worldwide",
     "title": "Rust's pages name no canonical.",
     "alt": "Real run, worldwide card. Rust's pages name no canonical. Overall score 81 of 100. SEO 69, GEO 86, Analytics 97, Security 54, A11y 94, Speed 97. rust-lang.org, 20 pages analyzed, 19 Oct 2026.",
@@ -1100,7 +1100,7 @@
     }
   },
   "21-kubernetes": {
-    "date": "2026-11-19",
+    "date": "2026-11-20",
     "cat": "Worldwide",
     "title": "13 Kubernetes pages share one title.",
     "alt": "Real run, worldwide card. 13 Kubernetes pages share one title. Overall score 80 of 100. SEO 67, GEO 88, Analytics 85, Security 67, A11y 86, Speed 91. kubernetes.io, 20 pages analyzed, 19 Oct 2026.",
@@ -1155,7 +1155,7 @@
     }
   },
   "22-apache": {
-    "date": "2026-11-19",
+    "date": "2026-11-21",
     "cat": "Worldwide",
     "title": "Apache.org runs without descriptions.",
     "alt": "Real run, worldwide card. Apache.org runs without descriptions. Overall score 74 of 100. SEO 61, GEO 83, Analytics 47, Security 77, A11y 74, Speed 97. www.apache.org, 20 pages analyzed, 19 Oct 2026.",
@@ -1210,7 +1210,7 @@
     }
   },
   "23-linuxfoundation": {
-    "date": "2026-11-20",
+    "date": "2026-11-21",
     "cat": "Worldwide",
     "title": "The Linux Foundation never states a language.",
     "alt": "Real run, worldwide card. The Linux Foundation never states a language. Overall score 79 of 100. SEO 75, GEO 86, Analytics 97, Security 85, A11y 56, Speed 79. www.linuxfoundation.org, 20 pages analyzed, 19 Oct 2026.",
@@ -1265,7 +1265,7 @@
     }
   },
   "24-react": {
-    "date": "2026-11-20",
+    "date": "2026-11-22",
     "cat": "Worldwide",
     "title": "React's docs pages have no description.",
     "alt": "Real run, worldwide card. React's docs pages have no description. Overall score 83 of 100. SEO 78, GEO 89, Analytics 85, Security 69, A11y 89, Speed 94. react.dev, 20 pages analyzed, 19 Oct 2026.",

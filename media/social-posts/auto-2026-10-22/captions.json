@@ -798,7 +798,7 @@
     }
   },
   "15-u-nice-com": {
-    "date": "2026-11-03",
+    "date": "2026-11-06",
     "cat": "Requested",
     "title": "nice.com: 56. The gap: HSTS.",
     "alt": "Real run, requested card. nice.com: 56. The gap: HSTS. Overall score 56 of 100. SEO 15, GEO 94, Analytics 54, Security 54, A11y 47, Speed 71. nice.com, 100 pages analyzed, 22 Oct 2026. Lesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
@@ -855,7 +855,7 @@
     }
   },
   "16-u-honda-com": {
-    "date": "2026-11-05",
+    "date": "2026-11-07",
     "cat": "Requested",
     "title": "honda.com: 63. The gap: the https redirect.",
     "alt": "Real run, requested card. honda.com: 63. The gap: the https redirect. Overall score 63 of 100. SEO 81, GEO 83, Analytics 43, Security 39, A11y 62, Speed 73. honda.com, 25 pages analyzed, 22 Oct 2026. Lesson: Redirect every http request to https with one permanent 301, then add HSTS.",

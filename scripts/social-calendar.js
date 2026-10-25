@@ -3,6 +3,9 @@
 
      node scripts/social-calendar.js [--from 2026-10-26]                 print the plan, change nothing
      node scripts/social-calendar.js --write [--from ...] [--batch B]    rewrite calendar.csv and the captions' dates
+       --write first sets every row Buffer or the Facebook Page already holds to its queued time, and posts that are
+       queued anywhere stay where they are unless --move-queued: Buffer's editPost wants the whole post back and
+       allows about 125 calls in 15 minutes, and the Page app may not edit scheduled posts (Graph error #10).
      BUFFER_API_KEY=... FACEBOOK_PAGE_TOKEN=... node scripts/social-calendar.js --sync [--dry-run]
        move the posts Buffer and the Facebook Page already hold to their calendar slots (editPost and
        scheduled_publish_time), never queueing or deleting any, and record the new times in the ledgers
@@ -84,7 +87,8 @@ function load(root = ROOT) {
       const kind = kindOf(batch, c);
       const id = batch + "/" + slug;
       const entries = (books.buffer.posts[id] || []).concat(books.facebook.posts[id] || []);
-      posts.push({ id, batch, slug, kind, lane: LANES[kind], date: c.date, hold: !!c.hold, rows: rows[slug] || [], sent: entries.some((e) => e.result === "sent") });
+      posts.push({ id, batch, slug, kind, lane: LANES[kind], date: c.date, hold: !!c.hold, rows: rows[slug] || [],
+        sent: entries.some((e) => e.result === "sent"), queued: entries.some((e) => e.result === "queued") });
     });
   }
   return { batches, posts };
@@ -102,7 +106,7 @@ const firstDay = (post) => post.rows.filter((r) => NETWORKS.includes(r.channel))
 
 // Days from --from on, each with five lanes. Returns { moves, held, days }: moves carry the post, its new day and
 // the lane it was slotted in; held are hub-only posts of --batch that move to the top post's day.
-function plan(posts, { from, batch } = {}) {
+function plan(posts, { from, batch, moveQueued = false } = {}) {
   const days = new Map();
   const take = (day, lane, post) => {
     if (!days.has(day)) days.set(day, {});
@@ -110,7 +114,7 @@ function plan(posts, { from, batch } = {}) {
   };
   const free = (day, lane) => !(days.get(day) || {})[lane];
   const onNetworks = (post) => !post.hold && post.rows.some((r) => NETWORKS.includes(r.channel));
-  const movable = (post) => onNetworks(post) && !post.sent && firstDay(post) >= from && !PINNED.has(post.kind) && (!batch || post.batch === batch);
+  const movable = (post) => onNetworks(post) && !post.sent && (moveQueued || !post.queued) && firstDay(post) >= from && !PINNED.has(post.kind) && (!batch || post.batch === batch);
 
   const stay = posts.filter((post) => onNetworks(post) && !movable(post) && firstDay(post) >= from);
   // Staying posts keep their day and the lane their slot times were planned in; others sit in their own lane, a
@@ -176,6 +180,47 @@ function write(result, root = ROOT) {
     fs.writeFileSync(calFile, [head].concat(all).join("\n") + "\n");
   });
   return Object.keys(byBatch);
+}
+
+// The calendar follows what the networks hold: each future queued ledger entry sets its channel's row, and a post's
+// hub date is its earliest network day, so it is on the hub before any network has it.
+function reconcile(root = ROOT, now = Date.now()) {
+  const books = [ledger.read(path.join(root, ledger.BUFFER)), ledger.read(path.join(root, ledger.FACEBOOK))];
+  const held = new Map();
+  books.forEach((book) => Object.entries(book.posts).forEach(([id, entries]) => entries.forEach((e) => {
+    if (e.result === "queued" && e.at && Date.parse(e.at) > now) held.set(id + "|" + e.channel, Date.parse(e.at));
+  })));
+  const changed = [];
+  load(root).batches.forEach((batch) => {
+    const dir = path.join(root, POSTS, batch);
+    const calFile = path.join(dir, "calendar.csv");
+    const [head, ...lines] = fs.readFileSync(calFile, "utf8").trim().split("\n");
+    let touched = false;
+    const out = lines.map((line) => {
+      const [date, time, channel, slug, asset] = line.split(",");
+      const at = held.get(batch + "/" + slug + "|" + channel);
+      if (!at) return line;
+      const local = new Date(at - 5 * 3600e3).toISOString();
+      const row = [local.slice(0, 10), local.slice(11, 16), channel, slug, asset].join(",");
+      if (row !== line) touched = true;
+      return row;
+    }).sort((a, b) => a.slice(0, 16).localeCompare(b.slice(0, 16)));
+    if (touched) fs.writeFileSync(calFile, [head].concat(out).join("\n") + "\n");
+
+    const capFile = path.join(dir, "captions.json");
+    const raw = fs.readFileSync(capFile, "utf8");
+    const captions = JSON.parse(raw);
+    let dated = false;
+    Object.entries(captions).forEach(([slug, c]) => {
+      const mine = out.map((line) => line.split(",")).filter((r) => r[3] === slug && NETWORKS.includes(r[2]));
+      if (!mine.some((r) => held.has(batch + "/" + slug + "|" + r[2]))) return;
+      const first = mine.map((r) => r[0]).sort()[0];
+      if (c.date !== first) { c.date = first; dated = true; }
+    });
+    if (dated) fs.writeFileSync(capFile, JSON.stringify(captions, null, 2) + (raw.endsWith("\n") ? "\n" : ""));
+    if (touched || dated) changed.push(batch);
+  });
+  return changed;
 }
 
 // Network slots per day and lane, for the printed plan.
@@ -286,12 +331,13 @@ async function main() {
   }
   const from = typeof opts.from === "string" ? opts.from : addDays(bogotaDay(Date.now()), 1);
   const batch = typeof opts.batch === "string" ? opts.batch : null;
+  if (opts.write) console.log("matched the networks' queues in " + (reconcile().join(", ") || "no batch"));
   const { posts } = load();
-  const result = plan(posts, { from, batch });
+  const result = plan(posts, { from, batch, moveQueued: !!opts["move-queued"] });
   console.log("Plan from " + from + (batch ? " for " + batch : "") + ": " + JSON.stringify(summary(result)));
   if (opts.write) console.log("rewrote " + write(result).join(", "));
 }
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { NETWORKS, WINDOWS, LANES, slotTime, kindOf, load, plan, rowsFor, write, summary, targets, sync };
+module.exports = { NETWORKS, WINDOWS, LANES, slotTime, kindOf, load, plan, rowsFor, write, reconcile, summary, targets, sync };
