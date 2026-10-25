@@ -27,62 +27,62 @@ LANGS = {
     "es": {
         "language": "Spanish",
         "native": "Español",
-        "title": "La página ya está hablando.",
+        "title": "Encuentra fugas, fallas y bloqueos primero.",
         "seo_title": "QA-lab URL Review: SEO, GEO y casos de prueba desde una URL",
         "description": "Una página https pública, analizada y calificada en SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, con casos de prueba para 20 frameworks.",
         "og_description": "Un análisis público por https, calificado en SEO, GEO, analítica, seguridad, accesibilidad y rendimiento, con una lista de qué corregir primero y casos de QA propuestos con scripts iniciales para veinte frameworks. Un navegador sin interfaz ejecuta axe-core, registra el rastreo antes y después de una elección de cookies y toma capturas de pantalla. También revisa widgets de chat, páginas legales, librerías desactualizadas, Safe Browsing, el vencimiento del dominio y la seguridad del correo. Inicia sesión con tu correo o con una cuenta que ya tienes. Las demás herramientas especializadas se nombran cuando corresponden y no se ejecutan. Seis idiomas.",
-        "twitter_title": "Analiza la página pública. Propón los casos.",
+        "twitter_title": "Privacidad, accesibilidad y seguridad desde una URL.",
         "twitter_description": "Un análisis público de un sitio https, una lista de tecnologías y casos de QA propuestos. Inicia sesión; una revisión incluida por navegador y red. Las ejecuciones con sesión iniciada aparecen en la página de tu cuenta.",
         "gate": "Antes de analizar una sola dirección.",
-        "display": ["La página", "ya está hablando.", "Escribimos la", "lista de pruebas."],
+        "display": ["Encuentra fugas,", "fallas y bloqueos", "antes que tus clientes", "o un regulador."],
     },
     "pt": {
         "language": "Portuguese",
         "native": "Português",
-        "title": "A página já está falando.",
+        "title": "Encontre vazamentos, falhas e bloqueios primeiro.",
         "seo_title": "QA-lab URL Review: SEO, GEO e casos de teste de uma URL",
         "description": "Uma página https pública, analisada e avaliada em SEO, busca com IA (GEO), analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks.",
         "og_description": "Uma análise pública via https, avaliada em SEO, GEO, analytics, segurança, acessibilidade e desempenho, com uma lista do que corrigir primeiro e casos de QA propostos com scripts iniciais para vinte frameworks. Um navegador headless executa o axe-core, registra o rastreamento antes e depois de uma escolha de cookies e faz capturas de tela. Também verifica widgets de chat, páginas legais, bibliotecas desatualizadas, Safe Browsing, o vencimento do domínio e a segurança do e-mail. Entre com seu e-mail ou com uma conta que você já tem. As outras ferramentas especializadas são citadas quando se aplicam e não são executadas. Seis idiomas.",
-        "twitter_title": "Analise a página pública. Proponha os casos.",
+        "twitter_title": "Privacidade, acessibilidade e segurança a partir de uma URL.",
         "twitter_description": "Uma análise pública de um site https, uma lista de tecnologias e casos de QA propostos. Entre; uma revisão incluída por navegador e rede. As execuções com login aparecem na página da sua conta.",
         "gate": "Antes de analisar um único endereço.",
-        "display": ["A página", "já está falando.", "Escrevemos a", "lista de testes."],
+        "display": ["Encontre vazamentos,", "falhas e bloqueios", "antes dos seus clientes", "ou de um regulador."],
     },
     "de": {
         "language": "German",
         "native": "Deutsch",
-        "title": "Die Seite spricht bereits.",
+        "title": "Lecks, Fehler und Sperren zuerst finden.",
         "seo_title": "QA-lab URL Review: SEO, GEO und Testfälle aus einer URL",
         "description": "Eine öffentliche https-Seite, geprüft und bewertet nach SEO, KI-Suche (GEO), Analytics, Sicherheit, Barrierefreiheit und Tempo, mit Testfällen für 20 Frameworks.",
         "og_description": "Eine öffentliche https-Prüfung, bewertet nach SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Performance, mit einer Liste der dringendsten Korrekturen und vorgeschlagenen QA-Fällen mit Startskripten für zwanzig Frameworks. Ein Headless-Browser führt axe-core aus, zeichnet Tracking vor und nach einer Cookie-Wahl auf und macht Screenshots. Außerdem prüft sie Chat-Widgets, Rechtsseiten, veraltete Bibliotheken, Safe Browsing, den Domain-Ablauf und die E-Mail-Sicherheit. Anmeldung per E-Mail oder mit einem bestehenden Konto. Andere Spezialwerkzeuge werden genannt, wenn sie zutreffen, und nicht gestartet. Sechs Sprachen.",
-        "twitter_title": "Die öffentliche Seite prüfen. Die Fälle vorschlagen.",
+        "twitter_title": "Datenschutz, Barrierefreiheit und Sicherheit aus einer URL.",
         "twitter_description": "Eine öffentliche Prüfung einer https-Website, eine Technologieliste und vorgeschlagene QA-Fälle. Anmelden, dann eine enthaltene Prüfung pro Browser und Netzwerk. Läufe mit Anmeldung stehen auf Ihrer Kontoseite.",
         "gate": "Bevor eine einzige Adresse geprüft wird.",
-        "display": ["Die Seite", "spricht bereits.", "Wir schreiben die", "Testliste."],
+        "display": ["Finden Sie Lecks,", "Fehler und Sperren,", "bevor Kunden", "oder Behörden es tun."],
     },
     "fr": {
         "language": "French",
         "native": "Français",
-        "title": "La page parle déjà.",
+        "title": "Trouvez d’abord les fuites, pannes et blocages.",
         "seo_title": "QA-lab URL Review : SEO, GEO et cas de test depuis une URL",
         "description": "Une page https publique, analysée et notée en SEO, recherche IA (GEO), analytics, sécurité, accessibilité et vitesse, avec des cas de test pour 20 frameworks.",
         "og_description": "Une analyse publique en https, notée en SEO, GEO, analytics, sécurité, accessibilité et performance, avec une liste des corrections prioritaires et des cas de QA proposés avec des scripts de départ pour vingt frameworks. Un navigateur headless lance axe-core, relève le suivi avant et après un choix de cookies et prend des captures d’écran. Elle contrôle aussi les widgets de chat, les pages légales, les bibliothèques obsolètes, Safe Browsing, l’expiration du domaine et la sécurité des e-mails. Connexion par e-mail ou avec un compte que vous avez déjà. Les autres outils spécialisés sont nommés lorsqu’ils s’appliquent et ne sont pas lancés. Six langues.",
-        "twitter_title": "Analyser la page publique. Proposer les cas.",
+        "twitter_title": "Confidentialité, accessibilité et sécurité depuis une URL.",
         "twitter_description": "Une analyse publique d’un site https, une liste de technologies et des cas de QA proposés. Connectez-vous ; une analyse incluse par navigateur et réseau. Les exécutions connectées figurent sur la page de votre compte.",
         "gate": "Avant d’analyser une seule adresse.",
-        "display": ["La page", "parle déjà.", "Nous écrivons la", "liste de tests."],
+        "display": ["Trouvez les fuites,", "pannes et blocages", "avant vos clients", "ou un régulateur."],
     },
     "it": {
         "language": "Italian",
         "native": "Italiano",
-        "title": "La pagina sta già parlando.",
+        "title": "Trova prima perdite, guasti e blocchi.",
         "seo_title": "QA-lab URL Review: SEO, GEO e casi di test da un URL",
         "description": "Una pagina https pubblica, analizzata e valutata per SEO, ricerca IA (GEO), analytics, sicurezza, accessibilità e velocità, con casi di test per 20 framework.",
         "og_description": "Un’analisi pubblica via https, valutata per SEO, GEO, analytics, sicurezza, accessibilità e prestazioni, con un elenco di cosa sistemare prima e casi di QA proposti con script iniziali per venti framework. Un browser headless esegue axe-core, registra il tracciamento prima e dopo una scelta sui cookie e fa screenshot. Controlla anche widget di chat, pagine legali, librerie obsolete, Safe Browsing, scadenza del dominio e sicurezza dell’email. Accedi con la tua email o con un account che hai già. Gli altri strumenti specialistici vengono nominati quando si applicano e non vengono avviati. Sei lingue.",
-        "twitter_title": "Analizza la pagina pubblica. Proponi i casi.",
+        "twitter_title": "Privacy, accessibilità e sicurezza da un URL.",
         "twitter_description": "Un’analisi pubblica di un sito https, un elenco di tecnologie e casi di QA proposti. Accedi; una revisione inclusa per browser e rete. Le esecuzioni con accesso sono elencate nella pagina del tuo account.",
         "gate": "Prima di analizzare un solo indirizzo.",
-        "display": ["La pagina", "sta già parlando.", "Scriviamo la", "lista dei test."],
+        "display": ["Trova perdite,", "guasti e blocchi", "prima dei clienti", "o di un’autorità."],
     },
 }
 
@@ -233,11 +233,11 @@ def build(source, code, data):
     s = swap(s, '<link rel="canonical" href="https://carlosandmunoz.com/qa-review.html">', f'<link rel="canonical" href="{url}">')
     s = swap(s, locale_block("en"), locale_block(code))
     s = swap(s, '<meta property="og:url" content="https://carlosandmunoz.com/qa-review.html">', f'<meta property="og:url" content="{url}">')
-    s = swap(s, '<meta property="og:title" content="The page is already talking. · QA-lab URL Review">', f'<meta property="og:title" content="{t["title"]} · QA-lab URL Review">')
+    s = swap(s, '<meta property="og:title" content="Find the leaks, breaks and blocks first. · QA-lab URL Review">', f'<meta property="og:title" content="{t["title"]} · QA-lab URL Review">')
     og_desc = s[s.index('<meta property="og:description" content="'):]
     og_desc = og_desc[: og_desc.index(">") + 1]
     s = swap(s, og_desc, f'<meta property="og:description" content="{t["og_description"]}">')
-    s = swap(s, '<meta name="twitter:title" content="Analyze the public page. Propose the cases. · QA-lab URL Review">', f'<meta name="twitter:title" content="{t["twitter_title"]} · QA-lab URL Review">')
+    s = swap(s, '<meta name="twitter:title" content="Privacy, accessibility and security from one URL. · QA-lab URL Review">', f'<meta name="twitter:title" content="{t["twitter_title"]} · QA-lab URL Review">')
     tw_desc = s[s.index('<meta name="twitter:description" content="'):]
     tw_desc = tw_desc[: tw_desc.index(">") + 1]
     s = swap(s, tw_desc, f'<meta name="twitter:description" content="{t["twitter_description"]}">')
@@ -256,10 +256,10 @@ def build(source, code, data):
     s = swap(
         s,
         '<h1 id="studio-title" class="display">\n'
-        "                <span>The page is</span>\n"
-        '                <span class="display-em">already talking.</span>\n'
-        "                <span>We write the</span>\n"
-        "                <span>test list.</span>",
+        "                <span>Find the leaks,</span>\n"
+        '                <span class="display-em">breaks and blocks</span>\n'
+        "                <span>before customers</span>\n"
+        "                <span>or regulators do.</span>",
         f'<h1 id="studio-title" class="display" lang="{code}" translate="no">\n'
         f"                <span>{d[0]}</span>\n"
         f'                <span class="display-em">{d[1]}</span>\n'
