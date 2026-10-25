@@ -21,10 +21,22 @@
  "⟦1⟧ keeps HSTS for only a week.": "⟦1⟧ mantém o HSTS por apenas uma semana.",
  "⟦1⟧ Kubernetes pages share one title.": "⟦1⟧ páginas do Kubernetes compartilham um só título.",
  "⟦1⟧ languages, no sitemap.": "⟦1⟧ idiomas, nenhum sitemap.",
+ "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security, Accessibility, Performance.": {
+  "text": "⟦1⟧ lidera em SEO, GEO; ⟦2⟧ lidera em Análise, Segurança, Acessibilidade, Desempenho.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Accessibility, Performance.": {
+  "text": "⟦1⟧ lidera em SEO; ⟦2⟧ líderes em GEO, Segurança; ⟦3⟧ lidera em Análise, Acessibilidade, Desempenho.",
+  "machine": true
+ },
  "⟦1⟧ leads security, ⟦2⟧ to ⟦3⟧, and analytics, ⟦4⟧ to ⟦5⟧.": "⟦1⟧ lidera em segurança, ⟦2⟧ a ⟦3⟧, e em analytics, ⟦4⟧ a ⟦5⟧.",
  "⟦1⟧ lets AI answer bots like OAI-SearchBot and PerplexityBot in while blocking the training bots GPTBot, CCBot, and Google-Extended.": "⟦1⟧ deixa entrar bots de resposta de IA como OAI-SearchBot e PerplexityBot e bloqueia os bots de treinamento GPTBot, CCBot e Google-Extended.",
  "⟦1⟧ lists ⟦2⟧ links but names no entity.": "⟦1⟧ lista ⟦2⟧ links, mas não nomeia nenhuma entidade.",
  "⟦1⟧ names news sitemaps, http goes to https with a ⟦2⟧, and section pages have their own descriptions.": "⟦1⟧ indica sitemaps de notícias, o http vai para https com um ⟦2⟧ e as páginas de seção têm descrições próprias.",
+ "⟦1⟧ natural competitors. ⟦2⟧ leads:": {
+  "text": "⟦1⟧ concorrentes naturais. ⟦2⟧ leads:",
+  "machine": true
+ },
  "⟦1⟧ of the ⟦2⟧ pages analyzed have no canonical link.": "⟦1⟧ das ⟦2⟧ páginas analisadas não têm link canonical.",
  "⟦1⟧ or ⟦2⟧: which national portal scored higher?": "⟦1⟧ ou ⟦2⟧: qual portal nacional teve a nota mais alta?",
  "⟦1⟧ points AI crawlers to Markdown versions of pages, port ⟦2⟧ is closed, and the CSP starts at default-src 'self'.": "⟦1⟧ aponta os crawlers de IA para versões em Markdown das páginas, a porta ⟦2⟧ está fechada e a CSP parte de default-src 'self'.",
@@ -243,6 +255,10 @@
  "Attackers look for the weakest page.": "Atacantes procuram a página mais fraca.",
  "Audit ⟦1⟧ line by line.": "Audite o ⟦1⟧ linha por linha.",
  "Audit which pages carry noindex.": "Audite quais páginas levam noindex.",
+ "Automated analyses of public pages on ⟦1⟧ Oct ⟦2⟧ of ⟦3⟧, ⟦4⟧, ⟦5⟧, natural competitors found on the open web by QA-lab URL Review's rival sweep.": {
+  "text": "Análises automatizadas de páginas públicas em ⟦1⟧ outubro ⟦2⟧ de ⟦3⟧, ⟦4⟧, ⟦5⟧, concorrentes naturais encontrados na web aberta pela varredura rival do QA-lab URL Review.",
+  "machine": true
+ },
  "Axe-core ⟦1⟧ now runs the WCAG ⟦2⟧ Label in Name rule by default.": "O Axe-core ⟦1⟧ agora executa por padrão a regra do WCAG ⟦2⟧, Rótulo no nome.",
  "Bancolombia has the faster pages, ⟦1⟧ to ⟦2⟧, and analytics is tied at ⟦3⟧.": "O Bancolombia tem as páginas mais rápidas, ⟦1⟧ a ⟦2⟧, e em analytics há empate em ⟦3⟧.",
  "Bancolombia's site won't let you zoom.": "O site do Bancolombia não deixa você dar zoom.",
@@ -252,6 +268,18 @@
  "Before (fail):": "Antes (falha):",
  "Before your next automation sprint, write ten cases in plain language.": "Antes da sua próxima sprint de automação, escreva dez casos em linguagem simples.",
  "Bello's JSON-LD names the page, not the city.": "O JSON-LD de Bello nomeia a página, não a cidade.",
+ "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.": {
+  "text": "Faça comparações com os sites com os quais seus visitantes o comparam, e não com uma pontuação perfeita: a lacuna que lhe custa é aquela que um concorrente já fechou.",
+  "machine": true
+ },
+ "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap…": {
+  "text": "Compare os sites com os quais seus visitantes o comparam, não com uma pontuação perfeita: a diferença…",
+  "machine": true
+ },
+ "Benchmark against the sites your visitors compare you with, not…": {
+  "text": "Compare os sites com os quais seus visitantes o comparam, não…",
+  "machine": true
+ },
  "Berlin ⟦1⟧, Vienna ⟦2⟧.": "Berlim ⟦1⟧, Viena ⟦2⟧.",
  "Berlin answers in security, ⟦1⟧ to ⟦2⟧, and accessibility, ⟦3⟧ to ⟦4⟧.": "Berlim responde em segurança, ⟦1⟧ a ⟦2⟧, e em acessibilidade, ⟦3⟧ a ⟦4⟧.",
  "Berlin or Vienna: which city portal scored higher?": "Berlim ou Viena: qual portal de cidade teve a nota mais alta?",
@@ -633,6 +661,10 @@
  "Decide crawler by crawler.": "Decida crawler por crawler.",
  "Decide on purpose, then write it down.": "Decida de propósito e depois deixe por escrito.",
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by, and block only training crawlers.": "Decida bot a bot no ⟦1⟧: libere os motores de resposta pelos quais você quer ser citado e bloqueie só os crawlers de treinamento.",
+ "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by, and block only training…": {
+  "text": "Decida por bot em ⟦1⟧: permita os mecanismos de resposta pelos quais você deseja ser citado e bloqueie apenas o treinamento…",
+  "machine": true
+ },
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by, and block…": "Decida por bot no ⟦1⟧: libere os motores de resposta pelos quais você quer ser citado e bloqueie…",
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be…": "Decida por bot no ⟦1⟧: libere os motores de resposta pelos quais você quer ser…",
  "Default both to denied where consent is required, and grant them on acceptance.": "Deixe os dois como denied por padrão onde o consentimento é exigido, e conceda-os no aceite.",
@@ -1333,6 +1365,10 @@
  "Real run, national card. ⟦1⟧:": "Execução real, card nacional. ⟦1⟧:",
  "Real run, national card. Éxito's title says ⟦1⟧ twice.": "Execução real, card nacional. O título do Éxito diz ⟦1⟧ duas vezes.",
  "Real run, national card. myGov links through its CMS paths.": "Execução real, card nacional. O myGov linka pelos caminhos do CMS.",
+ "Real run, natural competitors card.": {
+  "text": "Corrida real, cartão de concorrentes naturais.",
+  "machine": true
+ },
  "Real run, regional card.": "Execução real, card regional.",
  "Real run, requested card. ⟦1⟧:": "Execução real, card solicitado. ⟦1⟧:",
  "Real run, worldwide card.": "Execução real, card mundial.",
@@ -1393,9 +1429,21 @@
  "Santiago's search field is a nameless box.": "O campo de busca de Santiago é uma caixa sem nome.",
  "SATENA's pages have no canonical.": "As páginas da SATENA não têm canonical.",
  "Scores hidden until tomorrow.": "Notas ocultas até amanhã.",
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO…": {
+  "text": "Pontuações lado a lado: ⟦1⟧ Pontuação ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Segurança ⟦6⟧, A11y ⟦7⟧, Velocidade ⟦8⟧; ⟦9⟧ Pontuação ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Segurança ⟦14⟧, A11y ⟦15⟧, Velocidade ⟦16⟧; ⟦17⟧ Pontuação ⟦18⟧, SEO…",
+  "machine": true
+ },
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧;…": {
+  "text": "Pontuações lado a lado: ⟦1⟧ Pontuação ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Segurança ⟦6⟧, A11y ⟦7⟧, Velocidade ⟦8⟧; ⟦9⟧ Pontuação ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Segurança ⟦14⟧, A11y ⟦15⟧, Velocidade ⟦16⟧;…",
+  "machine": true
+ },
  "Scouts: a consent tool, no Consent Mode.": "Scouts: ferramenta de consentimento, sem Consent Mode.",
  "Screen reader tests in Playwright": "Testes com leitor de tela no Playwright",
  "Screen readers announce it, and the tap target grows.": "Leitores de tela o anunciam, e a área de toque cresce.",
+ "Screen readers announce it, and the tap target…": {
+  "text": "Os leitores de tela anunciam isso, e o alvo do toque…",
+  "machine": true
+ },
  "Screen readers announce it, and the tap…": "Os leitores de tela anunciam isso, e o toque…",
  "Screen readers announce it, and the…": "Os leitores de tela anunciam isso, e o…",
  "Screen readers announce it, and…": "Os leitores de tela anunciam isso, e…",
@@ -1453,6 +1501,10 @@
  "Send Strict-Transport-Security with a max-age of a year or more: one header.": "Envie Strict-Transport-Security com max-age de um ano ou mais: um header.",
  "Send Strict-Transport-Security with a max-age of at least a year, and point / straight at the final page.": "Envie Strict-Transport-Security com max-age de pelo menos um ano e aponte / direto para a página final.",
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.": "Envie Strict-Transport-Security com max-age de pelo menos um ano, para que os navegadores nunca mais tentem http simples.",
+ "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try…": {
+  "text": "Envie Strict-Transport-Security com idade máxima de pelo menos um ano, para que os navegadores nunca tentem…",
+  "machine": true
+ },
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never…": "Envie Strict-Transport-Security com max-age de pelo menos um ano, para que os navegadores nunca…",
  "Send Strict-Transport-Security with max-age=⟦1⟧ on every https response once all subdomains serve https.": "Envie Strict-Transport-Security com max-age=⟦1⟧ em toda resposta https quando todos os subdomínios servirem https.",
  "Send X-Content-Type-Options: nosniff on every response.": "Envie X-Content-Type-Options: nosniff em toda resposta.",

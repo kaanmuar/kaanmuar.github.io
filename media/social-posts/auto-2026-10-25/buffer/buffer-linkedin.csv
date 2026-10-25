@@ -1,0 +1,85 @@
+Text,Image URL,Tags,Posting Time
+"kemik.gt: 77. The gap: AI crawler access.
+
+Every page has a title, and model-training crawlers are blocked by choice. But 4 AI answer or search crawlers are blocked.
+
+The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
+
+One automated analysis of public pages on 24 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&utm_source=linkedin&utm_medium=social&utm_campaign=country-sweep&utm_content=u-kemik-gt
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#GEO #AI #SoftwareTesting #QA #AISearch #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg","","2026-10-26 07:30"
+"corporacionjaar.com: 59. The gap: HSTS.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 24 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-corporacionjaar-com&utm_source=linkedin&utm_medium=social&utm_campaign=country-sweep&utm_content=u-corporacionjaar-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #CyberSecurity #QA #HSTS #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/02-u-corporacionjaar-com.jpg","","2026-10-27 08:10"
+"bible.com: 68. The gap: framing.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+The lesson for every team: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 24 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-bible-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-bible-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #SoftwareTesting #QA #Clickjacking #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/03-u-bible-com.jpg","","2026-10-28 08:00"
+"supresencia.com: 57. The gap: broken links.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But 1 internal link leads to an error.
+
+The lesson for every team: Check your own links after each release, and fix or redirect every one that answers 404.
+
+One automated analysis of public pages on 24 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-supresencia-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-supresencia-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Playwright #AI #QA #BrokenLinks #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/04-u-supresencia-com.jpg","","2026-10-29 09:50"
+"idmji.org: 62. The gap: form labels.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But 20 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 24 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-idmji-org&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-idmji-org
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #DevOps #QA #Forms #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/05-u-idmji-org.jpg","","2026-10-30 07:40"
+"3 natural competitors. subastasventura.com leads: 76.
+
+mapfre.com.mx leads in SEO, GEO; subastasventura.com leads in Analytics, Security, Accessibility, Performance.
+
+The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 24 Oct 2026 of subastasventura.com, sothebys.com, mapfre.com.mx, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-subastasventura-com&utm_source=linkedin&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-subastasventura-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Playwright #WebPerformance #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/06-vs-subastasventura-com.jpg","","2026-10-31 09:55"
+"3 natural competitors. kemik.gt leads: 77.
+
+xiaomistore.com.gt leads in SEO; max.com.gt leads in GEO, Security; kemik.gt leads in Analytics, Accessibility, Performance.
+
+The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 24 Oct 2026 of kemik.gt, max.com.gt, xiaomistore.com.gt, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&utm_source=linkedin&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-kemik-gt
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #SoftwareTesting #DevOps #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/07-vs-kemik-gt.jpg","","2026-11-01 07:45"

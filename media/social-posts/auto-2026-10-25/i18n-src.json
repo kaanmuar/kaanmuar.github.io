@@ -1,0 +1,162 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step."
+ },
+ "clips": {
+  "u-kemik-gt": {
+   "lang": "de",
+   "strings": {
+    "title.0": "kemik.gt: 77.",
+    "title.1": "*The gap: AI crawler access.*",
+    "body": "Every page has a title, and model-training crawlers are blocked by choice. But 4 AI answer or search crawlers are blocked.",
+    "action": "Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 24 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "kemik.gt · 20 pages analyzed · 24 Oct 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every page has a title, and model-training crawlers are blocked by choice. But 4 AI answer or search crawlers are blocked.\n\nLesson: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.\n\nOne automated analysis of public pages on 24 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-kemik-gt\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#GEO #Playwright #AI #QA #AISearch #RobotsTxt #TechTips #WebDevelopment #AIOverviews #DigitalMarketing #SoftwareTesting #QAlab"
+   }
+  },
+  "u-corporacionjaar-com": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "corporacionjaar.com: 59.",
+    "title.1": "*The gap: HSTS.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.",
+    "action": "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 24 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "corporacionjaar.com · 20 pages analyzed · 24 Oct 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.\n\nLesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.\n\nOne automated analysis of public pages on 24 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-corporacionjaar-com&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-corporacionjaar-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#WebSecurity #Vulnerability #DevOps #QA #HSTS #HTTPS #LearnOnYouTube #TechTips #OWASP #QAEngineer #DevSecOps #QAlab"
+   }
+  },
+  "u-bible-com": {
+   "lang": "it",
+   "strings": {
+    "title.0": "bible.com: 68.",
+    "title.1": "*The gap: framing.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.",
+    "action": "Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 24 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "bible.com · 100 pages analyzed · 24 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.\n\nLesson: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.\n\nOne automated analysis of public pages on 24 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-bible-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-bible-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#WebSecurity #DevOps #CyberSecurity #QA #Clickjacking #HTTPHeaders #TechTips #WebDevelopment #QualityAssurance #InfoSec #TestAutomation #QAlab"
+   }
+  },
+  "u-supresencia-com": {
+   "lang": "en",
+   "strings": {
+    "title.0": "supresencia.com: 57.",
+    "title.1": "*The gap: broken links.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But 1 internal link leads to an error.",
+    "action": "Check your own links after each release, and fix or redirect every one that answers 404.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 24 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "supresencia.com · 70 pages analyzed · 24 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But 1 internal link leads to an error.\n\nLesson: Check your own links after each release, and fix or redirect every one that answers 404.\n\nOne automated analysis of public pages on 24 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-supresencia-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-supresencia-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#SEO #DevOps #Playwright #QA #BrokenLinks #LearnOnYouTube #TechTips #Testing #TechnicalSEO #QAEngineer #SEOTips #QAlab"
+   }
+  },
+  "u-idmji-org": {
+   "lang": "es",
+   "strings": {
+    "title.0": "idmji.org: 62.",
+    "title.1": "*The gap: form labels.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But 20 form controls have no label.",
+    "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 24 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "idmji.org · 20 pages analyzed · 24 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But 20 form controls have no label.\n\nLesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.\n\nOne automated analysis of public pages on 24 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-idmji-org&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-idmji-org\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#Accessibility #Playwright #SoftwareTesting #QA #Forms #A11y #WebDevelopment #Coding #UXDesign #SDET #QualityAssurance #QAlab"
+   }
+  },
+  "vs-subastasventura-com": {
+   "lang": "pt",
+   "strings": {
+    "live": "u-subastasventura-com",
+    "title.0": "3 natural competitors.",
+    "title.1": "*subastasventura.com leads: 76.*",
+    "body": "mapfre.com.mx leads in SEO, GEO; subastasventura.com leads in Analytics, Security, Accessibility, Performance.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 24 Oct 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "subastasventura.com",
+    "visual.rows.1.0": "sothebys.com",
+    "visual.rows.2.0": "mapfre.com.mx",
+    "visual.note": "Natural competitors found on the open web · 24 Oct 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "mapfre.com.mx leads in SEO, GEO; subastasventura.com leads in Analytics, Security, Accessibility, Performance.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 24 Oct 2026 of subastasventura.com, sothebys.com, mapfre.com.mx, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-subastasventura-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-subastasventura-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #DevOps #Playwright #QA #WebPerf #LearnOnYouTube #TechTips #DigitalMarketing #Lighthouse #QAEngineer #GoogleSearch #QAlab"
+   }
+  },
+  "vs-kemik-gt": {
+   "lang": "de",
+   "strings": {
+    "live": "u-kemik-gt",
+    "title.0": "3 natural competitors.",
+    "title.1": "*kemik.gt leads: 77.*",
+    "body": "xiaomistore.com.gt leads in SEO; max.com.gt leads in GEO, Security; kemik.gt leads in Analytics, Accessibility, Performance.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 24 Oct 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "kemik.gt",
+    "visual.rows.1.0": "max.com.gt",
+    "visual.rows.2.0": "xiaomistore.com.gt",
+    "visual.note": "Natural competitors found on the open web · 24 Oct 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "xiaomistore.com.gt leads in SEO; max.com.gt leads in GEO, Security; kemik.gt leads in Analytics, Accessibility, Performance.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 24 Oct 2026 of kemik.gt, max.com.gt, xiaomistore.com.gt, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-kemik-gt\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #WebPerformance #SoftwareTesting #QA #WebPerf #TechTips #WebDevelopment #TechnicalSEO #SEOTips #CoreWebVitals #QualityAssurance #QAlab"
+   }
+  }
+ }
+}
