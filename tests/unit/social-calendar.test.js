@@ -52,18 +52,24 @@ test("the top Live Report keeps lane 1, the review backlog borrows lanes 3 and 4
   assert.ok(!moves.some((m) => m.post.lane === 1 && m.lane === 1 && !/\/01-/.test(m.post.id)), "only a top review takes lane 1");
 });
 
-test("a new daily batch puts its top review in the next free lane 1 slot and its hub-only reviews on the same day", () => {
+test("a new daily batch puts its top review in the next free lane 1 slot and its other reviews in the next free lane 3 and 4 slots", () => {
+  const at = (day, lane) => rows(day, cal.slotTime(day, "linkedin", lane));
   const posts = [
     post("auto-2026-10-31/01-u-taken-com", { sent: true, rows: rows("2026-11-01") }),
+    post("runs-100/01-wikipedia", { rows: at("2026-11-01", 3) }),
+    post("runs-100/02-bbc", { rows: at("2026-11-01", 4) }),
+    post("runs-100/03-mit", { rows: at("2026-11-02", 3) }),
     post("auto-2026-11-01/01-u-top-com", { rows: rows("2026-11-01") }),
-    post("auto-2026-11-01/02-u-second-com", { hold: true, rows: [], date: "2026-11-03" }),
-    post("runs-100/01-wikipedia", { rows: rows("2026-11-02", cal.slotTime("2026-11-02", "linkedin", 3)) }),
-    post("runs-100/02-bbc", { rows: rows("2026-11-02", "06:00") })
+    post("auto-2026-11-01/02-u-second-com", { rows: rows("2026-11-01") }),
+    post("auto-2026-11-01/03-u-third-com", { rows: rows("2026-11-01") })
   ];
   const result = cal.plan(posts, { from: "2026-11-01", batch: "auto-2026-11-01" });
-  assert.deepEqual(result.moves.map((m) => m.post.id + " " + m.day), ["auto-2026-11-01/01-u-top-com 2026-11-02"]);
-  assert.deepEqual(result.held.map((m) => m.post.id + " " + m.day), ["auto-2026-11-01/02-u-second-com 2026-11-02"]);
-  assert.deepEqual(result.days.get("2026-11-02"), { 1: "auto-2026-11-01/01-u-top-com", 3: "runs-100/01-wikipedia", 4: "runs-100/02-bbc" }, "the planned backlog keeps lanes 3 and 4");
+  assert.deepEqual(result.moves.map((m) => m.post.id + " " + m.day + " " + m.lane), [
+    "auto-2026-11-01/01-u-top-com 2026-11-02 1",
+    "auto-2026-11-01/02-u-second-com 2026-11-02 4",
+    "auto-2026-11-01/03-u-third-com 2026-11-03 3"
+  ]);
+  assert.deepEqual(result.held, []);
   const moved = cal.rowsFor(result.moves[0]);
   assert.equal(moved.find((r) => r.channel === "linkedin").time, cal.slotTime("2026-11-02", "linkedin", 1));
   assert.deepEqual(moved.find((r) => r.channel === "instagram"), { date: "2026-11-02", time: "09:00", channel: "instagram", asset: "feed/x.jpg" });
@@ -128,7 +134,7 @@ test("the calendar takes the queued times from the ledgers, the hub date follows
   assert.deepEqual(cal.plan(posts, { from: "2026-11-01", moveQueued: true }).moves.map((m) => m.post.id).sort(), ["runs-100/01-a", "runs-100/02-b"]);
 });
 
-test("a daily Live Reports batch sends its first review to the networks and keeps the others on the hub", () => {
+test("a daily Live Reports batch sends every review to the networks", () => {
   const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "auto-")), "batch.json");
   const run = (host) => ({ host, title: [host + ": {overall}."], body: "b", action: "a", areas: { SEO: 70 }, overall: 70, scope: "Requested", fetchedAt: "2026-10-24T10:00:00Z", pages: 1 });
   fs.writeFileSync(file, JSON.stringify([run("a.com"), run("b.com"), run("c.com")]));
@@ -136,5 +142,5 @@ test("a daily Live Reports batch sends its first review to the networks and keep
   delete require.cache[require.resolve("../../scripts/tips-studio/runs-auto")];
   const { TIPS } = require("../../scripts/tips-studio/runs-auto");
   delete process.env.AUTO_BATCH;
-  assert.deepEqual(TIPS.map((tip) => tip.host + ":" + tip.hold), ["a.com:false", "b.com:true", "c.com:true"]);
+  assert.deepEqual(TIPS.map((tip) => tip.host + ":" + !!tip.hold), ["a.com:false", "b.com:false", "c.com:false"]);
 });
