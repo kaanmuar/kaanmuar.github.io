@@ -87,17 +87,57 @@ test("the comparison reason needs a base report, and only that reason carries on
   assert.equal(core.intakeRecord(other.value, { id: "r2" }, {}).compareWith, "");
 });
 
-test("a comparison is priced as a second review even on a device with no finished run", () => {
-  const request = { frameworks: ["Playwright"], tools: [], pages: 20, depth: 2 };
-  assert.deepEqual(core.judgeAttempts([], { deviceId: "d1", ip: "1.1.1.1" }, request), { ok: true });
+test("a comparison is 9 USD for each competitor, even on a device with no finished run", () => {
+  const request = { frameworks: ["Playwright", "Cypress"], tools: ["axe-core"], pages: 60, depth: 4 };
+  assert.deepEqual(core.judgeAttempts([], { deviceId: "d1", ip: "1.1.1.1" }, Object.assign({}, request, { pages: 20, depth: 2 })), { ok: true });
   const due = core.judgeAttempts([], { deviceId: "d1", ip: "1.1.1.1" }, Object.assign({ compareWith: "abc" }, request));
   assert.equal(due.ok, false);
   assert.equal(due.code, "payment");
-  assert.equal(due.billing, "run");
-  assert.equal(due.priceUsd, 19);
-  assert.match(due.message, /second review/);
-  const credit = { id: "c1", status: "run-credit", deviceId: "d1", frameworks: ["Playwright"], tools: [], pages: 20, depth: 2, compareWith: "abc" };
+  assert.equal(due.billing, "compare");
+  assert.equal(due.priceUsd, 9);
+  assert.equal(due.frameworkUsd, 0);
+  assert.equal(due.scopeUsd, 0);
+  assert.match(due.message, /9 USD for each competitor/);
+  const done = { id: "r0", status: "complete", deviceId: "d1" };
+  assert.equal(core.judgeAttempts([done], { deviceId: "d1", ip: "" }, Object.assign({ compareWith: "abc" }, request)).priceUsd, 9);
+  const credit = { id: "c1", status: "run-credit", deviceId: "d1", frameworks: ["Playwright", "Cypress"], tools: ["axe-core"], pages: 60, depth: 4, compareWith: "abc", billing: "compare" };
   assert.deepEqual(core.judgeAttempts([credit], { deviceId: "d1", ip: "" }, Object.assign({ compareWith: "abc" }, request)), { ok: true, consumeId: "c1" });
+});
+
+test("a comparison quote and charge are 9 USD per competitor, flat, with no discount", () => {
+  const ask = { frameworks: ["Playwright", "Cypress", "Jest"], tools: ["axe-core", "Lighthouse"], pages: 100, depth: 5, compareWith: "abc" };
+  const one = core.priceForRun(ask);
+  assert.equal(one.billing, "compare");
+  assert.equal(one.usd, 9);
+  assert.equal(one.count, 1);
+  assert.deepEqual([one.frameworkUsd, one.scopeUsd, one.pageUsd, one.depthUsd], [0, 0, 0, 0]);
+  assert.deepEqual(one.frameworks, ["Playwright", "Cypress", "Jest"]);
+  assert.equal(one.pages, 100);
+  assert.equal(core.priceForRun(Object.assign({}, ask, { billing: "scope" })).usd, 9, "compareWith decides, not the billing sent");
+  const three = core.priceForCompare(Object.assign({}, ask, { competitors: 3 }));
+  assert.equal(three.usd, 27);
+  assert.equal(three.competitors, 3);
+  assert.equal(three.eachUsd, 9);
+  assert.throws(() => core.priceForCompare(Object.assign({}, ask, { competitors: 6 })), /one to 5 competitors/);
+  assert.throws(() => core.priceForCompare(Object.assign({}, ask, { competitors: 0 })), /one to 5 competitors/);
+  assert.equal(core.chargedUsd(Object.assign({ purpose: "new-run", priceUsd: 9 }, ask)).usd, 9);
+  assert.equal(core.chargedUsd(Object.assign({ purpose: "new-run", priceUsd: 27, competitors: 3 }, ask)).usd, 27);
+  assert.throws(() => core.chargedUsd(Object.assign({ purpose: "new-run", priceUsd: 8.1, listUsd: 9 }, ask)), /out of range/);
+  assert.throws(() => core.chargedUsd(Object.assign({ purpose: "new-run", priceUsd: 19 }, ask)), /does not match/);
+  assert.equal(core.chargedUsd({ purpose: "new-run", frameworks: ["Playwright"], pages: 20, depth: 2, billing: "compare", priceUsd: 19 }).usd, 19, "billing alone never makes a 9 USD comparison");
+  [9, 18, 27, 36, 45].forEach((usd) => assert.equal(core.priceMatches(usd), true, usd + " USD"));
+  assert.equal(offers.discountFor(900, 1, {}).usd, 9);
+});
+
+test("the standing of a browser reads first-time or returning the way judgeAttempts bills it", () => {
+  assert.deepEqual(core.standingFor([], { deviceId: "d1", ip: "1.1.1.1" }), { billing: "scope" });
+  assert.deepEqual(core.standingFor([{ status: "stopped", deviceId: "d1" }, { status: "payment-due", deviceId: "d1" }], { deviceId: "d1", ip: "" }), { billing: "scope" });
+  assert.deepEqual(core.standingFor([{ status: "complete", deviceId: "d1" }], { deviceId: "d1", ip: "" }), { billing: "run" });
+  assert.deepEqual(core.standingFor([{ status: "complete", deviceId: "d2", ip: "1.1.1.1" }], { deviceId: "d1", ip: "1.1.1.1" }), { billing: "run" }, "the same network counts");
+  assert.deepEqual(core.standingFor([{ status: "complete", deviceId: "d2", ip: "2.2.2.2" }], { deviceId: "d1", ip: "1.1.1.1" }), { billing: "scope" });
+  const request = { frameworks: ["Playwright"], tools: [], pages: 40, depth: 2 };
+  assert.equal(core.judgeAttempts([], { deviceId: "d1", ip: "" }, request).billing, "scope");
+  assert.equal(core.judgeAttempts([{ status: "complete", deviceId: "d1" }], { deviceId: "d1", ip: "" }, request).billing, "run");
 });
 
 test("a credit bought for a comparison pays for that comparison only", () => {
@@ -237,11 +277,10 @@ test("the domain's registration date is read from RDAP", () => {
   assert.equal(core.readRdap({ events: [] }, "example.com").registered, "");
 });
 
-test("a comparison stands at least on the first return step and climbs the ladder from there", () => {
+test("the return ladder no longer lifts a comparison: a plain discount reads only the returns", () => {
   assert.equal(offers.discountFor(1900, 1, { returns: 0 }).percent, 0);
-  assert.deepEqual(offers.discountFor(1900, 1, { returns: 0, compare: true }), { listUsd: 19, usd: 17.1, cents: 1710, percent: 10, source: "return", code: "" });
-  assert.equal(offers.discountFor(1900, 1, { returns: 2, compare: true }).percent, 15);
-  assert.equal(offers.discountFor(1900, 1, { returns: 0, compare: true, coupon: { code: "BIG", percent: 30 } }).source, "coupon");
+  assert.equal(offers.discountFor(1900, 1, { returns: 0, compare: true }).percent, 0);
+  assert.equal(offers.discountFor(1900, 1, { returns: 2 }).percent, 15);
 });
 
 test("a base review lists only the comparisons its owner ran from it, newest first", () => {

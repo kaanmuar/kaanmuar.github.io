@@ -6,8 +6,12 @@
   const TERMS_VERSION = "2026-10-24";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
+  const PAGE_CENTS = { 20: 0, 40: 500, 60: 900, 80: 1200, 100: 1500 };
+  const DEPTH_CENTS = { 2: 0, 3: 400, 4: 700, 5: 1000 };
   const PRICE = 19;
   const EXTRA_PRICE = 5;
+  const COMPARE_USD = 9;
+  const RUN_PAID_KEY = "qa-review-run-paid";
   const FIXLIST_USD = 5;
   const FIXLIST_KEY = "qa-review-fixlist";
   const openedAt = Date.now();
@@ -68,6 +72,10 @@
   let layer = "All";
   let activeRun = "";
   let compareTarget = null;
+  // How this browser's next run is billed, from the server's /standing: { billing: "run" | "scope", free, percent }; null while unknown.
+  let standing = null;
+  let standingKey = null;
+  let pricing = false;
   const COMPARE_KEY = "qa-review-compare";
   const fileUses = {};
 
@@ -411,6 +419,7 @@
       params.set("depth", String(extra.depth || selectedDepth()));
       if (extra.billing) params.set("billing", extra.billing);
       if (extra.compareWith) params.set("compareWith", extra.compareWith);
+      if (extra.compareWith && extra.competitors > 1) params.set("competitors", String(extra.competitors));
     }
     const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
     if (coupon && (purpose === "report" || purpose === "new-run")) params.set("coupon", coupon);
@@ -716,7 +725,8 @@
       const on = !toolChoice || toolChoice.has(item.name);
       return "<li><label><input type=\"checkbox\" name=\"tool\" value=\"" + esc(item.name) + "\"" + (on ? " checked" : "") + "> <strong>" + esc(item.name) + "</strong></label><p class=\"muted\">" + esc(item.why) + "</p></li>";
     }).join("");
-    list.onchange = () => { toolChoice = new Set(selectedTools()); };
+    list.onchange = () => { toolChoice = new Set(selectedTools()); paintTags(); };
+    paintTags();
   }
 
   function paintAlarm(report, open) {
@@ -1237,6 +1247,7 @@
     const left = compareMore().filter((row) => row.hidden).length;
     document.getElementById("compare-add").hidden = !left;
     document.getElementById("compare-add-left").textContent = rc.t("left", { n: left });
+    paintCompareTags();
   }
 
   function compareUrls() {
@@ -1261,7 +1272,7 @@
   }
 
   // only: the sites to compare instead of the boxes, as when a natural competitor's Compare is pressed.
-  function startCompare(only) {
+  async function startCompare(only) {
     const report = current && current.report;
     const error = document.getElementById("compare-error");
     error.textContent = "";
@@ -1287,6 +1298,7 @@
       error.textContent = "Wait until the review that is running ends.";
       return;
     }
+    if (pricing) return;
     const stored = savedCompare();
     const kept = stored && stored.id === report.id ? stored : null;
     const limits = report.limits || {};
@@ -1302,6 +1314,17 @@
       depth: kept ? kept.depth : (limits.maxDepth || selectedDepth()),
       paid: false
     };
+    // Competitors already paid for go straight on; otherwise the server's total is shown before anything starts.
+    if (!(kept && kept.paid)) {
+      const target = compareTarget;
+      const answer = await confirmCompare(target, urls);
+      if (answer === false) {
+        compareTarget = null;
+        return;
+      }
+      if (answer) target.confirmed = true;
+      compareTarget = target;
+    }
     try { sessionStorage.setItem(COMPARE_KEY, JSON.stringify(compareTarget)); } catch (storageError) { /* only a payment round trip needs it */ }
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_compare", "URL Review", report.host || "");
     closeDashboard();
@@ -2400,6 +2423,17 @@
       setStatus(errors[0].message, true);
       return;
     }
+    let confirmed = !!(compare && compare.confirmed);
+    if (!compare) {
+      if (pricing) return;
+      const answer = await confirmRun();
+      if (answer === false) {
+        setStatus("Nothing was started or charged.", false);
+        return;
+      }
+      confirmed = answer === true;
+      if (activeRun) return;
+    }
     const runId = hexId();
     activeRun = runId;
     if (compare) showComparing(compare);
@@ -2463,7 +2497,11 @@
         try { sessionStorage.removeItem(COMPARE_KEY); } catch (storageError) { /* nothing was kept */ }
       }
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_done", "URL Review", payload.report && payload.report.host);
+      if (!compare) {
+        try { sessionStorage.removeItem(RUN_PAID_KEY); } catch (storageError) { /* nothing was kept */ }
+      }
       render(payload);
+      loadStanding();
       const stopped = payload.report.status === "stopped";
       if (window.ReviewProgress) ReviewProgress.finish(stopped ? "stopped" : "ready");
       setStatus(stopped ? "Stopped. The report uses the pages analyzed before the stop." : "Report ready. Cases are proposed, not run.", false);
@@ -2486,8 +2524,11 @@
         ReviewAuth.focus();
         setStatus(error.message, true);
       } else if (error.paymentRequired && error.body && error.body.purpose === "new-run") {
-        openRunPay(compare ? Object.assign({}, error.body, { compareWith: compare.id }) : error.body);
-        setStatus(compare ? "The comparison waits on payment. It is priced as a second review." : "Another review waits on payment.", true);
+        // A total already confirmed in the popup goes on to payment; one paid checkout covers every competitor it showed.
+        const due = compare ? Object.assign({}, error.body, { compareWith: compare.id, competitors: confirmed ? compare.total || 1 : 1 }) : error.body;
+        if (confirmed) location.href = payQuery("new-run", due);
+        else openRunPay(due);
+        setStatus(compare ? "The comparison waits on payment: 9 USD for each competitor." : "Another review waits on payment.", true);
       } else if (error.paymentRequired) {
         openPay(error.body || {});
         setStatus("Opening this report again waits on payment.", true);
@@ -2644,17 +2685,241 @@
     const list = (body && body.frameworks && body.frameworks.length) ? body.frameworks : selectedFrameworks();
     const pages = body && body.pages ? body.pages : selectedPages();
     const depth = body && body.depth ? body.depth : selectedDepth();
-    const billing = body && body.billing === "scope" ? "scope" : "run";
+    const billing = body && (body.billing === "scope" || body.billing === "compare") ? body.billing : "run";
     const tools = billing === "scope" ? [] : ((body && body.tools) || selectedTools());
-    const usd = (body && body.priceUsd) || reviewUsd(list, tools);
+    const usd = (body && body.priceUsd) || (billing === "compare" ? COMPARE_USD : reviewUsd(list, tools));
     document.getElementById("run-pay-title").textContent = "This review is " + formatUsd(usd) + " USD";
     document.getElementById("run-pay-price").innerHTML = formatUsd(usd) + "<span>USD</span>";
-    document.getElementById("run-pay-detail").textContent = billing === "scope"
-      ? pages + " pages and " + depth + " links deep. The included first review is 20 pages and 2 links deep. This amount is for the wider review."
-      : pages + " pages, " + depth + " links deep, and " + (list.length + tools.length) + " selections. The first framework or tool is 19 USD and each one after it is 5 USD. The size of the review is added to that.";
+    document.getElementById("run-pay-detail").textContent = billing === "compare"
+      ? "A comparison is " + COMPARE_USD + " USD for each competitor, whatever the frameworks or the size of your review. The competitor gets the public, passive checks only."
+      : billing === "scope"
+        ? pages + " pages and " + depth + " links deep. The included first review is 20 pages and 2 links deep. This amount is for the wider review."
+        : pages + " pages, " + depth + " links deep, and " + (list.length + tools.length) + " selections. The first framework or tool is 19 USD and each one after it is 5 USD. The size of the review is added to that.";
     document.getElementById("go-pay").href = payQuery("new-run", body || {});
     showDeal("run-pay-deal", "run-pay-price", body);
     runPay.hidden = false;
+  }
+
+  async function loadStanding() {
+    try {
+      const res = await fetch(endpoint() + "/standing", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { deviceId: deviceId() }))
+      });
+      const body = await res.json();
+      standing = res.ok && (body.billing === "run" || body.billing === "scope") ? { billing: body.billing, free: body.free === true, percent: Number(body.percent) || 0 } : null;
+    } catch (error) {
+      standing = null;
+    }
+    paintTags();
+  }
+
+  // Asked once on load and again when the sign-in changes, never on a click.
+  function refreshStanding() {
+    const key = window.ReviewAuth ? ReviewAuth.proof().session || "" : "";
+    if (key === standingKey) return;
+    standingKey = key;
+    loadStanding();
+  }
+
+  function money(usd) {
+    return "$" + formatUsd(Math.round(Number(usd) * 100) / 100);
+  }
+
+  // say: the copy key read out with the tag, as the visible "+$5" means nothing to a screen reader.
+  function setTag(host, usd, say) {
+    let tag = host ? host.querySelector(":scope > .price-tag") : null;
+    if (!host) return null;
+    if (!usd) {
+      if (tag) tag.remove();
+      return null;
+    }
+    if (!tag) {
+      tag = document.createElement("span");
+      tag.className = "price-tag";
+      if (!rc.english) {
+        tag.setAttribute("lang", rc.lang);
+        tag.setAttribute("translate", "no");
+      }
+      host.appendChild(tag);
+    }
+    tag.innerHTML = '<span aria-hidden="true">+' + money(usd) + '</span><span class="price-say"> ' + esc(rc.t(say || "priceSay", { usd: formatUsd(usd) })) + "</span>";
+    return tag;
+  }
+
+  // A ticked option shows what it adds. On a paid run the first ticked framework or tool, in page order, is 19 USD
+  // and each one after it 5 USD, so the tags add up to the framework part; a first run pays only for a wider or
+  // deeper read, so only those choices are tagged; a free account and an unknown standing show none.
+  function paintTags() {
+    const paid = !!standing && !standing.free;
+    const items = [...reviewForm.querySelectorAll('input[name="fw"]')].concat([...document.querySelectorAll('#tools input[name="tool"]')]);
+    let n = 0;
+    items.forEach((box) => {
+      const on = paid && standing.billing === "run" && box.checked;
+      if (on) n += 1;
+      setTag(box.closest("label"), on ? (n === 1 ? PRICE : EXTRA_PRICE) : 0);
+    });
+    reviewForm.querySelectorAll('input[name="pages"], input[name="depth"]').forEach((box) => {
+      const cents = (box.name === "pages" ? PAGE_CENTS : DEPTH_CENTS)[box.value] || 0;
+      setTag(box.closest("label"), paid && box.checked ? cents / 100 : 0);
+    });
+    paintCompareTags();
+  }
+
+  function paintCompareTags() {
+    const paid = !!standing && !standing.free;
+    compareInputs().forEach((input) => {
+      const field = input.closest(".compare-field");
+      const tag = setTag(field, paid && !field.hidden && input.value.trim() ? COMPARE_USD : 0, "competitorSay");
+      if (tag) {
+        tag.id = input.id + "-price";
+        input.setAttribute("aria-describedby", tag.id);
+      } else {
+        input.removeAttribute("aria-describedby");
+      }
+    });
+  }
+
+  reviewForm.addEventListener("change", (event) => {
+    if (event.target && ["fw", "pages", "depth"].indexOf(event.target.name) !== -1) paintTags();
+  });
+  compareInputs().forEach((input) => input.addEventListener("input", paintCompareTags));
+  if (window.ReviewAuth) ReviewAuth.onChange(refreshStanding);
+  else refreshStanding();
+
+  const totalBox = document.getElementById("run-total");
+  let totalReturn = null;
+  let totalBehind = [];
+  let totalAnswer = null;
+
+  function totalLine(label, usd, cls, off) {
+    return "<li" + (cls ? ' class="' + cls + '"' : "") + "><span>" + esc(label) + "</span><b>" + (off ? "−" : "") + money(usd) + "</b></li>";
+  }
+
+  // The list total, the return or code discount when there is one, and what is paid, all from the server's quote.
+  function sumLines(quote) {
+    const list = Number(quote.listUsd) || quote.usd;
+    const out = [totalLine(rc.t("totalList"), list, "total-list")];
+    if (quote.percent && list > quote.usd) {
+      out.push(totalLine(rc.t(quote.discountSource === "coupon" ? "totalCoupon" : "totalReturn", { percent: quote.percent, code: quote.coupon || "" }), Math.round((list - quote.usd) * 100) / 100, "total-off", true));
+    }
+    out.push(totalLine(rc.t("totalDue"), quote.usd, "total-due"));
+    return out;
+  }
+
+  function closeTotal(go) {
+    if (totalBox.hidden) return;
+    totalBox.hidden = true;
+    totalBehind.forEach((el) => { el.inert = false; });
+    totalBehind = [];
+    document.body.classList.remove("gate-open");
+    if (totalReturn && totalReturn.isConnected) totalReturn.focus({ preventScroll: true });
+    totalReturn = null;
+    const answer = totalAnswer;
+    totalAnswer = null;
+    if (answer) answer(go);
+  }
+
+  // Answers true for Pay and run, false for Cancel, Escape or a click outside.
+  function showTotal(title, lines) {
+    const card = totalBox.querySelector(".pay-card");
+    if (!rc.english) {
+      card.setAttribute("lang", rc.lang);
+      card.setAttribute("translate", "no");
+    }
+    document.getElementById("run-total-eyebrow").textContent = rc.t("totalEyebrow");
+    document.getElementById("run-total-title").textContent = title;
+    document.getElementById("run-total-lines").innerHTML = lines.join("");
+    document.getElementById("run-total-saved").textContent = rc.t("totalSaved");
+    document.getElementById("run-total-cancel").textContent = rc.t("totalCancel");
+    document.getElementById("run-total-pay").textContent = rc.t("totalPay");
+    totalReturn = document.activeElement;
+    totalBehind = [...document.body.children].filter((el) => el !== totalBox && !el.inert && !el.matches("script, .cookie-note"));
+    totalBehind.forEach((el) => { el.inert = true; });
+    totalBox.hidden = false;
+    document.body.classList.add("gate-open");
+    document.getElementById("run-total-pay").focus();
+    return new Promise((resolve) => { totalAnswer = resolve; });
+  }
+
+  document.getElementById("run-total-cancel").addEventListener("click", () => closeTotal(false));
+  document.getElementById("run-total-pay").addEventListener("click", () => closeTotal(true));
+  totalBox.addEventListener("click", (event) => { if (event.target === totalBox) closeTotal(false); });
+  totalBox.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      closeTotal(false);
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const stops = [document.getElementById("run-total-cancel"), document.getElementById("run-total-pay")];
+    event.preventDefault();
+    stops[(stops.indexOf(document.activeElement) + (event.shiftKey ? -1 : 1) + stops.length) % stops.length].focus();
+  });
+
+  async function quoteFor(ask) {
+    const params = new URLSearchParams();
+    params.set("frameworks", ask.frameworks.join(","));
+    params.set("tools", ask.tools.join(","));
+    params.set("pages", String(ask.pages));
+    params.set("depth", String(ask.depth));
+    params.set("deviceId", deviceId());
+    if (ask.billing) params.set("billing", ask.billing);
+    if (ask.compareWith) {
+      params.set("compareWith", ask.compareWith);
+      params.set("competitors", String(ask.competitors || 1));
+    }
+    const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
+    if (coupon) params.set("coupon", coupon);
+    pricing = true;
+    try {
+      const res = await fetch(endpoint() + "/checkout/quote?" + params.toString());
+      const body = await res.json();
+      return res.ok && body.usd > 0 ? body : null;
+    } catch (error) {
+      return null;
+    } finally {
+      pricing = false;
+    }
+  }
+
+  const sameList = (a, b) => (a || []).slice().sort().join("|") === (b || []).slice().sort().join("|");
+
+  // The pay page leaves this after a run is paid, so the run it bought starts without asking again.
+  function paidAhead(ask) {
+    let paid = null;
+    try { paid = JSON.parse(sessionStorage.getItem(RUN_PAID_KEY) || "null"); } catch (error) { paid = null; }
+    return !!paid && paid.paid === true && sameList(paid.frameworks, ask.frameworks) && sameList(paid.tools, ask.tools) && Number(paid.pages) === ask.pages && Number(paid.depth) === ask.depth;
+  }
+
+  // true: the total was shown and Pay and run pressed; false: cancelled; null: nothing to show (a free run, an
+  // unknown standing, a paid-ahead run, or no quote), so the run goes on and the server decides.
+  async function confirmRun() {
+    if (!standing || standing.free) return null;
+    const pages = selectedPages();
+    const depth = selectedDepth();
+    if (standing.billing === "scope" && !PAGE_CENTS[pages] && !DEPTH_CENTS[depth]) return null;
+    const frameworks = selectedFrameworks();
+    const tools = standing.billing === "scope" ? [] : selectedTools();
+    if (!frameworks.length || paidAhead({ frameworks, tools, pages, depth })) return null;
+    const quote = await quoteFor({ frameworks, tools, pages, depth, billing: standing.billing });
+    if (!quote) return null;
+    const items = quote.billing === "scope"
+      ? [totalLine(rc.t("totalIncluded", { n: (quote.frameworks || frameworks).length }), 0)]
+      : (quote.discount || []).map((row) => totalLine(row.name, row.usd));
+    const scope = [totalLine(rc.t("totalPages", { n: quote.pages || pages }), quote.pageUsd || 0), totalLine(rc.t("totalDepth", { n: quote.depth || depth }), quote.depthUsd || 0)];
+    return showTotal(rc.t("totalTitle"), items.concat(scope, sumLines(quote)));
+  }
+
+  async function confirmCompare(target, urls) {
+    if (!standing || standing.free || !signedIn()) return null;
+    const quote = await quoteFor({ frameworks: target.frameworks || [], tools: target.tools || [], pages: target.pages, depth: target.depth, compareWith: target.id, competitors: urls.length });
+    if (!quote) return null;
+    const each = Number(quote.eachUsd) || COMPARE_USD;
+    const lines = urls.map((url) => totalLine(rc.t("totalCompetitor", { host: typedHost(url) }), each));
+    return showTotal(rc.t("totalCompareTitle"), lines.concat(sumLines(quote)));
   }
 
   function closeDashboard() {
@@ -2974,7 +3239,7 @@
       { selector: "#stop-btn", title: "Stop", body: "Changed your mind? Stop ends the analysis, the pages already saved stay in the report, and the record says it was stopped. Only your sign-in on this device can stop your run.", demoMs: 1600 },
       { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the analysis. When the analysis finishes, the report dashboard opens with the download, print, and share actions. Its cases come first by risk, and each one names the real page it saw.", demoMs: 1800 },
       { selector: "#report-once", title: "Ask the report", body: "In a paid report, ask \"Why is F-01 rated this way?\" and the answer comes only from this review, with the fix, a Playwright case, or a GitHub or Jira issue ready to paste. It never guesses past what the review saw.", demoMs: 1800 },
-      { selector: "#report-once", title: "Next to a competitor", body: "Curious how the shop next door does? Compare in the report runs the same public checks on their site and puts the six scores side by side, with what only one of you has. It is priced as a second review.", demoMs: 1800 },
+      { selector: "#report-once", title: "Next to a competitor", body: "Curious how the shop next door does? Compare in the report runs the same public checks on their site and puts the six scores side by side, with what only one of you has. Each competitor is 9 USD.", demoMs: 1800 },
       { selector: "#report-once", title: "A word with your chatbot", body: "On a site you have shown is yours, the review chats with its chat widget: pricing, asking for a human, a refund, and two tricks a bot should refuse. At most six messages in one minute, with a made-up email and phone.", demoMs: 1800 },
       { selector: ".topbar a[href='qa-review-account.html']", title: "Your reviews", body: "Every run you start waits here. Search them, open several at once, download them, delete them, or verify a site you own with a DNS record or a homepage tag.", demoMs: 1600 },
       { selector: "#langWrap", title: "Language", body: "A language chosen here is the language on the CV, the studio, the lab, and this review. The same choice sticks when you move between them.", demoMs: 1500 },
