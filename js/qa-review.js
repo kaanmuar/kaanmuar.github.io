@@ -1555,6 +1555,10 @@
       const area = (score.areas || {})[name];
       return area && (area.grade === "A" || area.grade === "B");
     });
+    const launcher = ins.chat && ins.chat.launcher;
+    const solidNote = (name) => name === "Accessibility" && !(launcher && !launcher.hidden)
+      ? AREA_NOTE[name].split(", ").filter((part) => part !== cc.areaNote("chatItem")).join(", ")
+      : AREA_NOTE[name];
     const sev = score.severities || {};
     const read = (report.limits && report.limits.pagesRead) || (report.pages || []).length;
     const found = foundCount(report.limits);
@@ -1567,7 +1571,7 @@
       '<p class="meta-line">' + esc(rc.t("sevLine", { critical: sev.critical || 0, high: sev.high || 0, medium: sev.medium || 0, low: sev.low || 0 })) + " · " +
       esc(rc.t(found ? "readOf" : "read", { n: read, found: found })) + (report.browser && report.browser.ok ? " · " + esc(rc.t("headless")) : "") + "</p>" +
       '<div class="exec-cols"><div><h3>' + esc(rc.t("risks")) + "</h3>" + list(risks) + "</div><div><h3>" + esc(rc.t("quick")) + "</h3>" + list(quick) + "</div><div><h3>" + esc(rc.t("solid")) + "</h3>" +
-      (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(cc.area(name)) + '</strong> <span class="meta-line">' + esc(AREA_NOTE[name]) + "</span></li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noSolid")) + "</p>") + "</div></div>" +
+      (solid.length ? "<ul>" + solid.map((name) => "<li><strong>" + esc(cc.area(name)) + '</strong> <span class="meta-line">' + esc(solidNote(name)) + "</span></li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noSolid")) + "</p>") + "</div></div>" +
       (slotRoot ? "" : '<p class="no-print"><button class="btn btn-ghost" id="print-exec" type="button">' + esc(rc.t("printSummary")) + "</button></p>");
     if (!slotRoot) document.getElementById("print-exec").addEventListener("click", () => {
       spend("print", () => {
@@ -1629,21 +1633,21 @@
     const state = value <= good ? "pass" : value <= poor ? "risk" : "fail";
     const at = Math.min(100, (value / max) * 100);
     return '<div class="gauge ' + state + '"><div class="gauge-top"><b>' + esc(label) + "</b><span>" + esc(text) + "</span></div>" +
-      '<div class="gauge-bar" role="img" aria-label="' + esc(label + " " + text + ", " + (state === "pass" ? "good" : state === "risk" ? "needs improvement" : "poor")) + '">' +
+      '<div class="gauge-bar" role="img" aria-label="' + esc(label + " " + text + ", " + rc.word("gaugeState", state)) + '">' +
       '<i style="width:' + (good / max * 100).toFixed(1) + '%"></i><i style="width:' + ((poor - good) / max * 100).toFixed(1) + '%"></i><i></i><u style="left:' + at.toFixed(1) + '%"></u></div></div>';
   }
 
   function speedBlock(psi) {
     if (!psi || !psi.ok) return "";
     const field = psi.field;
-    const lighthouse = "Lighthouse scored performance " + psi.score + "/100 on a simulated mid-range phone over slow 4G.";
-    if (!field) return '<p class="meta-line">PageSpeed Insights: Chrome has too few visits to publish real-user numbers for this site. ' + esc(lighthouse) + "</p>";
+    const lighthouse = rc.t("lighthouse", { score: psi.score });
+    if (!field) return '<p class="meta-line">' + esc(rc.t("psiNoField")) + " " + esc(lighthouse) + "</p>";
     const rows = [];
     if (field.lcp) rows.push(gaugeHtml("Largest Contentful Paint", field.lcp.p75, 2500, 4000, 6000, (field.lcp.p75 / 1000).toFixed(1) + " s"));
     if (field.inp) rows.push(gaugeHtml("Interaction to Next Paint", field.inp.p75, 200, 500, 800, field.inp.p75 + " ms"));
     if (field.cls) rows.push(gaugeHtml("Cumulative Layout Shift", field.cls.p75, 0.1, 0.25, 0.5, String(field.cls.p75)));
-    return '<h3 class="speed-title">Real visitors</h3><div class="gauges">' + rows.join("") + "</div>" +
-      '<p class="meta-line">75th percentile of real Chrome visits over the last 28 days ' + (field.scope === "page" ? "on this page" : "across the whole site, because this page has too little traffic on its own") + ", from the Chrome UX Report through PageSpeed Insights. " + esc(lighthouse) + "</p>";
+    return '<h3 class="speed-title">' + esc(rc.t("realVisitors")) + '</h3><div class="gauges">' + rows.join("") + "</div>" +
+      '<p class="meta-line">' + esc(rc.t(field.scope === "page" ? "fieldPage" : "fieldSite")) + " " + esc(lighthouse) + "</p>";
   }
 
   function paintBrowser(report) {
@@ -1654,9 +1658,7 @@
     const carbon = carbonLine(report.insights && report.insights.carbon);
     const talk = report.chatTalk;
     if (!b || !b.ok) {
-      host.innerHTML = speed + carbon + '<p class="muted">' + (b && b.error
-        ? "The headless browser did not finish on this review (" + esc(b.error) + "), so the checks come from the HTML alone."
-        : "This review ran without the headless browser, so the checks come from the HTML alone.") + "</p>" + talkHtml(talk);
+      host.innerHTML = speed + carbon + '<p class="muted">' + esc(b && b.error ? rc.t("noBrowserError", { error: b.error }) : rc.t("noBrowser")) + "</p>" + talkHtml(talk);
       return;
     }
     const start = b.start || {};
@@ -1668,7 +1670,7 @@
     const beforeBad = hits(before.vendors) + (before.cookies || []).length;
     const afterBad = after ? hits(after.vendors) + (after.cookies || []).length : 0;
     const pings = (rows) => (rows || []).reduce((sum, row) => sum + (row.denied || 0), 0);
-    const quiet = (rows, none) => pings(rows) ? "No tracking cookies · " + pings(rows) + " cookieless ping" + (pings(rows) === 1 ? "" : "s") : none;
+    const quiet = (rows, none) => pings(rows) ? rc.t("quiet", { n: pings(rows) }) : none;
     const axePages = (b.axe && b.axe.ran && b.axe.pages) || [];
     const rules = new Map();
     axePages.forEach((page) => (page.violations || []).forEach((rule) => {
@@ -1688,122 +1690,123 @@
     const typedTo = (row) => row && row.typed ? row.typed.sent.map((s) => s.host) : [];
     const spied = watch.before ? printers(watch.before).filter((h) => (watch.before.guards || []).indexOf(h) === -1).length + recording(watch.before).length + typedTo(watch.before).length + typedTo(watchAfter).length : 0;
     const watchText = watch.before ? [
-      printers(watch.before).length ? printers(watch.before).length + " fingerprinting script" + (printers(watch.before).length === 1 ? "" : "s") : "",
-      recording(watch.before).length ? recording(watch.before).length + " session recorder" + (recording(watch.before).length === 1 ? "" : "s") : "",
-      typedTo(watch.before).length || typedTo(watchAfter).length ? "typing sent" : ""
-    ].filter(Boolean).join(" · ") || "None seen" : "Not checked";
+      printers(watch.before).length ? rc.t("fpScripts", { n: printers(watch.before).length }) : "",
+      recording(watch.before).length ? rc.t("recorders", { n: recording(watch.before).length }) : "",
+      typedTo(watch.before).length || typedTo(watchAfter).length ? rc.t("typingSent") : ""
+    ].filter(Boolean).join(" · ") || rc.t("noneSeen") : rc.t("notChecked");
     const tiles = [
-      ["Before a choice", beforeBad ? (consent.banner ? "fail" : "risk") : "pass", beforeBad ? beforeBad + " tracking signal" + (beforeBad === 1 ? "" : "s") : quiet(before.vendors, "Nothing tracked")],
-      ["After Reject", after ? (afterBad ? "fail" : "pass") : "unknown", after ? (afterBad ? afterBad + " still tracked" : quiet(after.vendors, "Tracking stopped")) : (consent.banner ? "Reject not found" : "No banner showed")],
-      ["Fingerprinting and recording", !watch.before ? "unknown" : spied ? (consent.banner ? "fail" : "risk") : printers(watch.before).length ? "risk" : "pass", watchText],
-      ["axe-core", axePages.length ? (rules.size ? "fail" : "pass") : "unknown", axePages.length ? rules.size + " rules fail on " + axePages.length + " page" + (axePages.length === 1 ? "" : "s") : "Did not run"],
-      ["Phone width", mobile.width ? (mobile.overflow > 2 ? "fail" : "pass") : "unknown", mobile.width ? (mobile.overflow > 2 ? mobile.overflow + " px too wide" : "Fits " + mobile.width + " px") : "Not checked"],
-      ["First paint", vit.fcp ? (vit.fcp > 3000 ? "fail" : vit.fcp > 1800 ? "risk" : "pass") : "unknown", vit.fcp ? (vit.fcp / 1000).toFixed(1) + " s, lab" : "Not measured"],
-      ["Tablet width", tablet.width ? (tablet.overflow > 2 ? "fail" : "pass") : "unknown", tablet.width ? (tablet.overflow > 2 ? tablet.overflow + " px too wide" : "Fits " + tablet.width + " px") : "Not checked"],
-      ["Text in the HTML", start.renderedWords > 150 ? (start.share < 40 ? "risk" : "pass") : "unknown", (start.share == null ? 100 : start.share) + "% of what people see"],
-      ["Load errors", errors || failed ? "risk" : "pass", errors + " script · " + failed + " file"]
+      [rc.t("tileBefore"), beforeBad ? (consent.banner ? "fail" : "risk") : "pass", beforeBad ? rc.t("signals", { n: beforeBad }) : quiet(before.vendors, rc.t("nothingTracked"))],
+      [rc.t("tileAfter"), after ? (afterBad ? "fail" : "pass") : "unknown", after ? (afterBad ? rc.t("stillTracked", { n: afterBad }) : quiet(after.vendors, rc.t("trackingStopped"))) : rc.t(consent.banner ? "rejectNotFound" : "noBanner")],
+      [rc.t("tileWatch"), !watch.before ? "unknown" : spied ? (consent.banner ? "fail" : "risk") : printers(watch.before).length ? "risk" : "pass", watchText],
+      ["axe-core", axePages.length ? (rules.size ? "fail" : "pass") : "unknown", axePages.length ? rc.t("axeFail", { rules: rules.size, n: axePages.length }) : rc.t("didNotRun")],
+      [rc.t("tilePhone"), mobile.width ? (mobile.overflow > 2 ? "fail" : "pass") : "unknown", mobile.width ? (mobile.overflow > 2 ? rc.t("tooWide", { n: mobile.overflow }) : rc.t("fits", { n: mobile.width })) : rc.t("notChecked")],
+      [rc.t("tileFirstPaint"), vit.fcp ? (vit.fcp > 3000 ? "fail" : vit.fcp > 1800 ? "risk" : "pass") : "unknown", vit.fcp ? rc.t("labSeconds", { s: (vit.fcp / 1000).toFixed(1) }) : rc.t("notMeasured")],
+      [rc.t("tileTablet"), tablet.width ? (tablet.overflow > 2 ? "fail" : "pass") : "unknown", tablet.width ? (tablet.overflow > 2 ? rc.t("tooWide", { n: tablet.overflow }) : rc.t("fits", { n: tablet.width })) : rc.t("notChecked")],
+      [rc.t("tileText"), start.renderedWords > 150 ? (start.share < 40 ? "risk" : "pass") : "unknown", rc.t("htmlShare", { n: start.share == null ? 100 : start.share })],
+      [rc.t("tileErrors"), errors || failed ? "risk" : "pass", rc.t("loadErrors", { scripts: errors, files: failed })]
     ];
     const cell = (row) => {
       if (!row) return "—";
       const parts = [];
-      if (row.hits) parts.push(row.hits + " tracking request" + (row.hits === 1 ? "" : "s"));
-      if (row.denied) parts.push(row.denied + " cookieless ping" + (row.denied === 1 ? "" : "s"));
-      if (row.loads && !parts.length) parts.push("script loaded, nothing sent");
+      if (row.hits) parts.push(rc.t("requests", { n: row.hits }));
+      if (row.denied) parts.push(rc.t("pings", { n: row.denied }));
+      if (row.loads && !parts.length) parts.push(rc.t("loadedNothing"));
       return parts.join(" · ") || "—";
     };
     const names = [];
     (before.vendors || []).concat(after ? after.vendors || [] : []).forEach((row) => { if (names.indexOf(row.name) === -1) names.push(row.name); });
     const find = (rows, name) => (rows || []).find((row) => row.name === name);
-    const cookieList = (rows) => (rows || []).length ? rows.slice(0, 6).map((row) => row.name + (row.third ? " (" + row.domain + ")" : "")).join(", ") + (rows.length > 6 ? " …" : "") : "None";
+    const cookieList = (rows) => (rows || []).length ? rows.slice(0, 6).map((row) => row.name + (row.third ? " (" + row.domain + ")" : "")).join(", ") + (rows.length > 6 ? " …" : "") : rc.t("none");
     const consentRows = names.map((name) => "<tr><td><strong>" + esc(name) + "</strong></td><td>" + esc(cell(find(before.vendors, name))) + "</td><td>" + (after ? esc(cell(find(after.vendors, name))) : "—") + "</td></tr>").join("") +
-      '<tr><td><strong>Tracking cookies</strong></td><td class="notranslate" translate="no">' + esc(cookieList(before.cookies)) + '</td><td class="notranslate" translate="no">' + (after ? esc(cookieList(after.cookies)) + (after.kept ? " · " + after.kept + " kept from before" : "") : "—") + "</td></tr>" +
+      "<tr><td><strong>" + esc(rc.t("trackingCookies")) + '</strong></td><td class="notranslate" translate="no">' + esc(cookieList(before.cookies)) + '</td><td class="notranslate" translate="no">' + (after ? esc(cookieList(after.cookies)) + (after.kept ? " · " + esc(rc.t("keptBefore", { n: after.kept })) : "") : "—") + "</td></tr>" +
       (watch.before ? [
-        ["Fingerprinting", (row) => printers(row).join(", ") || "None"],
-        ["Session recording", (row) => (row.recorders || []).map((rr) => rr.name + (rr.sent ? "" : ", loaded only")).join(" · ") || "None"],
-        ["Typed text before submit", (row) => !row.typed ? "No contact field" : row.typed.sent.length ? row.typed.sent.map((s) => s.host).join(", ") : "Sent nowhere"]
-      ].map(([label, text]) => "<tr><td><strong>" + label + '</strong></td><td class="notranslate" translate="no">' + esc(text(watch.before)) + '</td><td class="notranslate" translate="no">' + (watchAfter ? esc(text(watchAfter)) : "—") + "</td></tr>").join("") : "");
+        [rc.t("fingerprinting"), (row) => printers(row).join(", ") || rc.t("none")],
+        [rc.t("sessionRecording"), (row) => (row.recorders || []).map((rr) => rr.sent ? rr.name : rc.t("loadedOnly", { name: rr.name })).join(" · ") || rc.t("none")],
+        [rc.t("typedBefore"), (row) => !row.typed ? rc.t("noContactField") : row.typed.sent.length ? row.typed.sent.map((s) => s.host).join(", ") : rc.t("sentNowhere")]
+      ].map(([label, text]) => "<tr><td><strong>" + esc(label) + '</strong></td><td class="notranslate" translate="no">' + esc(text(watch.before)) + '</td><td class="notranslate" translate="no">' + (watchAfter ? esc(text(watchAfter)) : "—") + "</td></tr>").join("") : "");
     const bannerLine = consent.banner
-      ? (consent.banner === "A cookie banner" ? "A cookie banner" : esc(consent.banner)) + " was showing." + (after ? " The review pressed “" + esc(consent.rejectLabel) + "” and reloaded the page." : consent.banner === "Sourcepoint" ? " It sits in a frame, so Reject was not pressed." : " No reject button was found on its first layer.")
-      : "No cookie banner appeared on the first visit.";
+      ? esc(consent.banner === "A cookie banner" ? rc.t("bannerGenericShowing") : rc.t("bannerShowing", { banner: consent.banner })) + " " +
+        esc(after ? rc.t("bannerRejected", { label: consent.rejectLabel }) : consent.banner === "Sourcepoint" ? rc.t("bannerFrame") : rc.t("bannerNoReject"))
+      : esc(rc.t("noBannerFirst"));
     const order = { critical: 4, serious: 3, moderate: 2, minor: 1 };
     const axeRows = [...rules.values()].sort((x, y) => (order[y.impact] - order[x.impact]) || (y.nodes - x.nodes)).slice(0, 10).map((rule) =>
-      "<tr><td>" + esc(rule.help) + ' <a class="notranslate" translate="no" href="' + esc(rule.helpUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(rule.id) + "</a></td><td>" + esc(rule.impact) + "</td><td>" + rule.nodes + "</td><td>" + rule.pages + "</td></tr>").join("");
+      "<tr><td>" + esc(rule.help) + ' <a class="notranslate" translate="no" href="' + esc(rule.helpUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(rule.id) + "</a></td><td>" + esc(rc.word("impact", rule.impact)) + "</td><td>" + rule.nodes + "</td><td>" + rule.pages + "</td></tr>").join("");
     const gauge = gaugeHtml;
     const gauges = start.status ? '<div class="gauges">' +
       gauge("Largest Contentful Paint", vit.lcp || 0, 2500, 4000, 6000, ((vit.lcp || 0) / 1000).toFixed(1) + " s") +
       gauge("Cumulative Layout Shift", vit.cls || 0, 0.1, 0.25, 0.5, String(vit.cls || 0)) +
       gauge("Total Blocking Time", vit.tbt || 0, 200, 600, 1200, (vit.tbt || 0) + " ms") +
-      '</div><p class="meta-line">Lab numbers from one cold load on the review server, not field data from real visitors. Green, amber, and red follow the Core Web Vitals thresholds.</p>' : "";
+      '</div><p class="meta-line">' + esc(rc.t("labNote")) + "</p>" : "";
     const shots = b.shots || {};
     const shotCount = ["desktop", "tablet", "mobile"].filter((key) => shots[key]).length;
     const chatCard = chatHtml(report.insights && report.insights.chat) + talkHtml(talk);
     const textRows = [{ path: start.finalPath || "/", share: start.share, words: start.renderedWords, raw: start.rawWords }].concat((b.pages || []).filter((page) => !page.error).map((page) => ({ path: page.path, share: page.share, words: page.renderedWords, raw: page.rawWords })));
     host.innerHTML =
-      '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" + speed + (gauges && report.pagespeed && report.pagespeed.field ? '<h3 class="speed-title">One lab load</h3>' : "") + gauges +
+      '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" + speed + (gauges && report.pagespeed && report.pagespeed.field ? '<h3 class="speed-title">' + esc(rc.t("oneLab")) + "</h3>" : "") + gauges +
       (shots.desktop || shots.mobile ? '<div class="shots' + (shotCount === 3 ? " shots-3" : "") + '">' +
-        (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="The start page on a first visit at 1280 px wide" loading="lazy"><figcaption>First visit, 1280 px wide, before any choice.</figcaption></figure>' : "<div></div>") +
-        (shots.tablet ? '<figure><img src="' + esc(shots.tablet) + '" alt="The start page at a 768 px tablet width" loading="lazy"><figcaption>Tablet, 768 px.</figcaption></figure>' : "") +
-        (shots.mobile ? '<figure><img src="' + esc(shots.mobile) + '" alt="The start page at a 390 px phone width" loading="lazy"><figcaption>Phone, 390 px.</figcaption></figure>' : "") + "</div>" : "") +
-      '<div class="split"><article class="card"><h3>Tracking before and after a choice</h3><p class="muted">' + bannerLine + " Cookieless pings are Google tags with Consent Mode denied.</p>" +
-      '<table class="mini-table"><thead><tr><th>Tool</th><th>Before a choice</th><th>After Reject</th></tr></thead><tbody>' + consentRows + "</tbody></table></article>" +
-      '<article class="card"><h3>Text in the HTML compared with the page people see</h3><p class="muted">Most AI crawlers do not run JavaScript, so they only get the words in the HTML.</p>' +
-      '<table class="mini-table"><thead><tr><th>Page</th><th>In the HTML</th><th>Words seen</th></tr></thead><tbody>' + textRows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + (row.share == null ? "—" : row.share + "%") + "</td><td>" + (row.words || 0) + "</td></tr>").join("") + "</tbody></table></article></div>" + chatCard +
-      '<article class="card" style="margin-top:12px"><h3>axe-core on the rendered pages</h3>' + (axePages.length
-        ? (axeRows ? '<table class="mini-table"><thead><tr><th>Rule</th><th>Impact</th><th>Elements</th><th>Pages</th></tr></thead><tbody>' + axeRows + "</tbody></table>" : '<p class="muted">No WCAG 2.2 AA rule failed on ' + axePages.length + " page" + (axePages.length === 1 ? "" : "s") + ". Automated rules catch about a third of real issues.</p>") +
+        (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="' + esc(rc.t("altDesktop")) + '" loading="lazy"><figcaption>' + esc(rc.t("capDesktop")) + "</figcaption></figure>" : "<div></div>") +
+        (shots.tablet ? '<figure><img src="' + esc(shots.tablet) + '" alt="' + esc(rc.t("altTablet")) + '" loading="lazy"><figcaption>' + esc(rc.t("capTablet")) + "</figcaption></figure>" : "") +
+        (shots.mobile ? '<figure><img src="' + esc(shots.mobile) + '" alt="' + esc(rc.t("altPhone")) + '" loading="lazy"><figcaption>' + esc(rc.t("capPhone")) + "</figcaption></figure>" : "") + "</div>" : "") +
+      '<div class="split"><article class="card"><h3>' + esc(rc.t("trackingTitle")) + '</h3><p class="muted">' + bannerLine + " " + esc(rc.t("pingsNote")) + "</p>" +
+      '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thTool")) + "</th><th>" + esc(rc.t("tileBefore")) + "</th><th>" + esc(rc.t("tileAfter")) + "</th></tr></thead><tbody>" + consentRows + "</tbody></table></article>" +
+      '<article class="card"><h3>' + esc(rc.t("textTitle")) + '</h3><p class="muted">' + esc(rc.t("textNote")) + "</p>" +
+      '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thPage")) + "</th><th>" + esc(rc.t("thInHtml")) + "</th><th>" + esc(rc.t("thWords")) + "</th></tr></thead><tbody>" + textRows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + (row.share == null ? "—" : row.share + "%") + "</td><td>" + (row.words || 0) + "</td></tr>").join("") + "</tbody></table></article></div>" + chatCard +
+      '<article class="card" style="margin-top:12px"><h3>' + esc(rc.t("axeTitle")) + "</h3>" + (axePages.length
+        ? (axeRows ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thRule")) + "</th><th>" + esc(rc.t("thImpact")) + "</th><th>" + esc(rc.t("thElements")) + "</th><th>" + esc(rc.t("thPages")) + "</th></tr></thead><tbody>" + axeRows + "</tbody></table>" : '<p class="muted">' + esc(rc.t("axeClean", { n: axePages.length })) + "</p>") +
           '<p class="meta-line notranslate" translate="no">' + esc(axePages.map((page) => page.path).join(" · ")) + "</p>"
-        : '<p class="muted">axe-core did not finish in the time the browser had.</p>') + "</article>" +
-      '<p class="meta-line">' + esc(b.engine || "Chromium") + " from an EU address (Belgium) · " + Math.round((b.ms || 0) / 1000) + " s · " + (start.requests || 0) + " requests to " + (start.hosts || 0) + " hosts. " + (after ? "The only click was the banner's reject button." : "Nothing was clicked.") + (talk && talk.turns && talk.turns.length ? " A separate browser opened the chat and sent the scripted messages shown above." : "") + (watch.before && watch.before.typed ? " A test address was typed into one form field, never submitted, and blocked wherever a script tried to send it." : "") + " Lab numbers come from one unthrottled load.</p>" + carbon;
+        : '<p class="muted">' + esc(rc.t("axeTimeout")) + "</p>") + "</article>" +
+      '<p class="meta-line">' + esc([
+        rc.t("browserFoot", { engine: b.engine || "Chromium", s: Math.round((b.ms || 0) / 1000), requests: start.requests || 0, hosts: start.hosts || 0 }),
+        rc.t(after ? "footClick" : "footNoClick"),
+        talk && talk.turns && talk.turns.length ? rc.t("footChat") : "",
+        watch.before && watch.before.typed ? rc.t("footTyped") : "",
+        rc.t("footLab")
+      ].filter(Boolean).join(" ")) + "</p>" + carbon;
   }
 
   function chatHtml(chat) {
     if (!chat) return "";
     const st = chat.states || {};
-    const badge = (state) => VERDICT_LABEL[state] ? verdictBadge(state) : '<span class="badge">Not checked</span>';
-    const names = (rows) => rows.length ? rows.join(", ") : "None";
+    const badge = (state) => VERDICT_LABEL[state] ? verdictBadge(state) : '<span class="badge">' + esc(rc.t("notChecked")) + "</span>";
+    const names = (rows) => rows.length ? '<span class="notranslate" translate="no">' + esc(rows.join(", ")) + "</span>" : esc(rc.t("noCookie"));
     const hidden = !!(chat.launcher && chat.launcher.hidden);
     const launcher = hidden ? null : chat.launcher;
     const rows = [
-      ["Before a choice", st.consent, '<span class="notranslate" translate="no">' + esc(names(chat.cookies)) + "</span>" + (chat.banner ? "" : " · no banner asked first")],
-      ["After Reject", chat.rejected ? st.reject : "", chat.rejected ? '<span class="notranslate" translate="no">' + esc(names(chat.rejected.cookies)) + "</span> · " + chat.rejected.requests + " request" + (chat.rejected.requests === 1 ? "" : "s") : (chat.banner ? "Reject was not pressed" : "No banner showed")],
-      ["Weight on the start page", st.weight, chat.kb + " KB · " + chat.ms + " ms of script time · " + chat.requests + " request" + (chat.requests === 1 ? "" : "s")],
-      ["Launcher on a phone", launcher ? st.cover : "", launcher ? (launcher.covers ? "Covers " + launcher.covers + " button" + (launcher.covers === 1 ? "" : "s") : "Covers no button") : hidden ? "Hidden on the phone" : "Not found"],
-      ["Launcher name", launcher && launcher.known ? st.name : "", launcher && launcher.known ? (launcher.name ? "Announced as “" + esc(launcher.name) + "”" : "No accessible name") : "Not checked"],
-      ["Keyboard in the open chat", chat.opened ? (st.trap === "fail" || st.focus === "risk" ? (st.trap === "fail" ? "fail" : "risk") : st.trap) : "", chat.opened ? (st.trap === "fail" ? "Focus is trapped" : st.focus === "risk" ? "Focus stays on the page" : st.trap === "pass" ? "Focus moves in and out" : "Needs a person") : "The chat did not open"]
+      [rc.t("tileBefore"), st.consent, names(chat.cookies) + (!chat.cookies.length && st.consent === "risk" ? " · " + esc(rc.t("requestsBefore", { n: chat.requests })) : "") + (chat.banner ? "" : " · " + esc(rc.t("noBannerAsked")))],
+      [rc.t("tileAfter"), chat.rejected ? st.reject : "", chat.rejected ? names(chat.rejected.cookies) + " · " + esc(rc.t("chatRequests", { n: chat.rejected.requests })) : esc(rc.t(chat.banner ? "rejectNotPressed" : "noBanner"))],
+      [rc.t("rowWeight"), st.weight, esc(rc.t("weightLine", { kb: chat.kb, ms: chat.ms, requests: rc.t("chatRequests", { n: chat.requests }) }))],
+      [rc.t("rowLauncher"), launcher ? st.cover : "", esc(launcher ? (launcher.covers ? rc.t("covers", { n: launcher.covers }) : rc.t("coversNone")) : rc.t(hidden ? "hiddenPhone" : "notFound"))],
+      [rc.t("rowName"), launcher && launcher.known ? st.name : "", esc(launcher && launcher.known ? (launcher.name ? rc.t("announced", { name: launcher.name }) : rc.t("noName")) : rc.t("notChecked"))],
+      [rc.t("rowKeyboard"), chat.opened ? (st.trap === "fail" || st.focus === "risk" ? (st.trap === "fail" ? "fail" : "risk") : st.trap) : "", esc(chat.opened ? (st.trap === "fail" ? rc.t("trapped") : st.focus === "risk" ? rc.t("focusStays") : st.trap === "pass" ? rc.t("focusMoves") : VERDICT_LABEL.person) : rc.t("notOpened"))]
     ];
-    return '<article class="card" style="margin-top:12px"><h3>Chat widget</h3><p class="muted"><span class="notranslate" translate="no">' + esc(chat.vendors.map((row) => row.name).join(", ")) + "</span>" +
-      (chat.vendors.some((row) => row.ai) ? " · AI chatbot" : "") + ". Weight and cookies were measured before anyone opened it. The launcher was checked at 390 px, then opened once.</p>" +
-      '<table class="mini-table"><thead><tr><th>Check</th><th>Result</th><th>What the browser saw</th></tr></thead><tbody>' +
+    return '<article class="card" style="margin-top:12px"><h3>' + esc(rc.t("chatTitle")) + '</h3><p class="muted"><span class="notranslate" translate="no">' + esc(chat.vendors.map((row) => row.name).join(", ")) + "</span>" +
+      (chat.vendors.some((row) => row.ai) ? " · " + esc(rc.t("aiBot")) : "") + ". " + esc(rc.t("chatNote")) + "</p>" +
+      '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thCheck")) + "</th><th>" + esc(rc.t("thResult")) + "</th><th>" + esc(rc.t("thSaw")) + "</th></tr></thead><tbody>" +
       rows.map(([label, state, text]) => "<tr><td><strong>" + esc(label) + "</strong></td><td>" + badge(state) + "</td><td>" + text + "</td></tr>").join("") + "</tbody></table></article>";
   }
-
-  const TALK_PROOF = {
-    own: "It ran because the review was asked from a mailbox at this site's domain.",
-    credentials: "It ran because QA-lab recorded a verified signed-in run of this site for your account.",
-    site: "It ran because this site carries your account's verification token."
-  };
 
   function talkHtml(talk) {
     if (!talk) return "";
     const turns = talk.turns || [];
-    const head = '<article class="card talk-card" style="margin-top:12px"><h3>Chat conversation</h3><p class="muted">' +
-      (talk.vendor ? '<span class="notranslate" translate="no">' + esc(talk.vendor) + "</span>" + (talk.ai ? " · AI chatbot" : "") + ". " : "") + esc(talk.note || "") +
-      (TALK_PROOF[talk.proof] ? " " + TALK_PROOF[talk.proof] : "") +
-      (turns.length ? " This conversation stays on your private report and is never published in Live Reports." : "") +
-      (talk.status === "needs-proof" ? ' <a href="qa-review-account.html#verify">Verify a site you own</a>.' : "") + "</p>";
+    const proof = rc.word("talkProof", talk.proof, "");
+    const head = '<article class="card talk-card" style="margin-top:12px"><h3>' + esc(rc.t("talkTitle")) + '</h3><p class="muted">' +
+      (talk.vendor ? '<span class="notranslate" translate="no">' + esc(talk.vendor) + "</span>" + (talk.ai ? " · " + esc(rc.t("aiBot")) : "") + ". " : "") + esc(talk.note || "") +
+      (proof ? " " + esc(proof) : "") +
+      (turns.length ? " " + esc(rc.t("talkPrivate")) : "") +
+      (talk.status === "needs-proof" ? ' <a href="qa-review-account.html#verify">' + esc(rc.t("verifySite")) + "</a>." : "") + "</p>";
     if (!turns.length) return head + "</article>";
     const rows = (talk.checks || []).map((check) => "<tr><td><strong>" + esc(check.label) + "</strong></td><td>" + verdictBadge(check.verdict) + "</td><td>" + esc(check.evidence) + "</td></tr>").join("");
-    const log = turns.map((turn) => '<li><p><strong>Review:</strong> <span class="notranslate" translate="no">' + esc(turn.sent) + "</span></p><p><strong>Chat" + (turn.reply ? " after " + (turn.ms / 1000).toFixed(1) + " s" : "") + ":</strong> " +
-      (turn.reply ? '<span class="notranslate" translate="no">' + esc(turn.reply) + "</span>" : "No reply in time.") + "</p></li>").join("");
-    return head + (rows ? '<table class="mini-table"><thead><tr><th>Check</th><th>Result</th><th>What the chat said</th></tr></thead><tbody>' + rows + "</tbody></table>" : "") +
-      '<details class="talk-log"><summary>Transcript (' + turns.length + " message" + (turns.length === 1 ? "" : "s") + ")</summary><ol>" + log + "</ol></details>" +
-      '<p class="meta-line">The script uses a made-up email and phone, asks no one to change an order or an account, sends at most six messages, and stops after one minute.</p></article>';
+    const log = turns.map((turn) => "<li><p><strong>" + esc(rc.t("talkReview")) + '</strong> <span class="notranslate" translate="no">' + esc(turn.sent) + "</span></p><p><strong>" + esc(turn.reply ? rc.t("talkChatAfter", { s: (turn.ms / 1000).toFixed(1) }) : rc.t("talkChat")) + "</strong> " +
+      (turn.reply ? '<span class="notranslate" translate="no">' + esc(turn.reply) + "</span>" : esc(rc.t("noReply"))) + "</p></li>").join("");
+    return head + (rows ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thCheck")) + "</th><th>" + esc(rc.t("thResult")) + "</th><th>" + esc(rc.t("thSaid")) + "</th></tr></thead><tbody>" + rows + "</tbody></table>" : "") +
+      '<details class="talk-log"><summary>' + esc(rc.t("transcript", { n: turns.length })) + "</summary><ol>" + log + "</ol></details>" +
+      '<p class="meta-line">' + esc(rc.t("talkScript")) + "</p></article>";
   }
 
   function carbonLine(c) {
     if (!c || !c.grams) return "";
     const size = c.bytes >= 1e6 ? (c.bytes / 1e6).toFixed(1) + " MB" : Math.round(c.bytes / 1e3) + " KB";
-    return '<p class="meta-line">Carbon: about ' + c.grams.toFixed(2) + " g CO₂e for a first visit to the start page (rating " + esc(c.rating) + "), from the " + size + " transferred " +
-      (c.source === "lighthouse" ? "in the Lighthouse run" : "on the browser's cold load") + ". Sustainable Web Design model v4 at the global average grid. An estimate for information, not scored.</p>";
+    return '<p class="meta-line">' + esc(rc.t("carbon", { grams: c.grams.toFixed(2), rating: c.rating, size: size, where: rc.t(c.source === "lighthouse" ? "carbonLighthouse" : "carbonCold") })) + "</p>";
   }
 
   function paintGeo(ins) {

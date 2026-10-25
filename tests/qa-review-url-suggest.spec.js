@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const ONLINE = ['www.google.com', 'carlosandmunoz.com', 'gooogle.com'];
+const ONLINE = ['www.google.com', 'carlosandmunoz.com', 'gooogle.com', 'www.nibo.com.br'];
 const SITEMAPS = { 'carlosandmunoz.com': ['/qa-lab', '/pricing', '/checkout', '/qa-review', '/blog/checkout-tips'] };
 const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 
@@ -69,6 +69,12 @@ test.describe('URL Review page box predictions', () => {
     await expect(page.locator('#url-hint .url-fix')).toHaveText('www.google.com');
     await box.fill('carlosandmunoz.com/qa-lab');
     await expect(page.locator('#url-hint')).toHaveText('carlosandmunoz.com is online.');
+  });
+
+  test('a short name under a long country suffix is not offered a popular site two letters away', async ({ page }) => {
+    const box = await open(page);
+    await box.fill('www.nibo.com.br');
+    await expect(page.locator('#url-hint')).toHaveText('www.nibo.com.br is online.');
   });
 
   test('the address check speaks the page language and keeps the host out of translation', async ({ page }) => {

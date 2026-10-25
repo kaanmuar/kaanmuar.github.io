@@ -143,7 +143,7 @@
 
   async function nearest(host) {
     const key = keyOf(host);
-    const max = key.length >= 10 ? 2 : 1;
+    const max = key.split(".")[0].length >= 10 ? 2 : 1;
     const pools = await Promise.all([load("top"), shardFor(key)]);
     let found = "";
     let score = max + 1;

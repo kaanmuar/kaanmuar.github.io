@@ -52,6 +52,7 @@
         Analytics: "Tags, consent, chat widgets, privacy notice, imprint",
         Security: "Headers, TLS, DNS, mail transport, domain, Safe Browsing, libraries",
         Accessibility: "Markup, axe-core, phone layout, chat launcher, accessibility statement",
+        chatItem: "chat launcher",
         Performance: "Speed, weight, paint, layout shift, chat weight"
       },
       kpis: {},
@@ -103,8 +104,9 @@
         SEO: "Indexación, sitemap, títulos, datos estructurados",
         GEO: "Cómo pueden leer y citar el sitio las respuestas de IA",
         Analytics: "Etiquetas, consentimiento, widgets de chat, aviso de privacidad, aviso legal",
-        Security: "Cabeceras, TLS, DNS, transporte de correo, dominio, Safe Browsing, librerías",
+        Security: "Encabezados, TLS, DNS, transporte de correo, dominio, Safe Browsing, librerías",
         Accessibility: "Marcado, axe-core, diseño en móvil, lanzador del chat, declaración de accesibilidad",
+        chatItem: "lanzador del chat",
         Performance: "Velocidad, peso, pintado, desplazamiento del diseño, peso del chat"
       },
       kpis: { overall: "Puntuación de salud", passRate: "Comprobaciones que pasan", open: "Problemas abiertos", urgent: "Problemas críticos y altos", lighthouse: "Rendimiento Lighthouse (móvil)", lcp: "Mayor renderizado con contenido", tbt: "Tiempo total de bloqueo", cls: "Cambio de diseño", response: "Respuesta de la página de inicio", weight: "Peso de la página de inicio", thirdParty: "Hosts de terceros", pagesFound: "Páginas encontradas", languages: "Versiones de idioma" },
@@ -158,6 +160,7 @@
         Analytics: "Tags, consentimento, widgets de chat, aviso de privacidade, aviso legal",
         Security: "Cabeçalhos, TLS, DNS, transporte de e-mail, domínio, Safe Browsing, bibliotecas",
         Accessibility: "Marcação, axe-core, layout no celular, botão do chat, declaração de acessibilidade",
+        chatItem: "botão do chat",
         Performance: "Velocidade, peso, renderização, mudança de layout, peso do chat"
       },
       kpis: { overall: "Pontuação de saúde", passRate: "Verificações aprovadas", open: "Problemas abertos", urgent: "Problemas críticos e altos", lighthouse: "Desempenho Lighthouse (celular)", lcp: "Maior exibição de conteúdo", tbt: "Tempo total de bloqueio", cls: "Mudança de layout", response: "Resposta da página inicial", weight: "Peso da página inicial", thirdParty: "Hosts de terceiros", pagesFound: "Páginas encontradas", languages: "Versões de idioma" },
@@ -211,6 +214,7 @@
         Analytics: "Tags, Einwilligung, Chat-Widgets, Datenschutzhinweis, Impressum",
         Security: "Header, TLS, DNS, Mailtransport, Domain, Safe Browsing, Bibliotheken",
         Accessibility: "Markup, axe-core, Handy-Layout, Chat-Button, Erklärung zur Barrierefreiheit",
+        chatItem: "Chat-Button",
         Performance: "Geschwindigkeit, Gewicht, Rendering, Layoutverschiebung, Chat-Gewicht"
       },
       kpis: { overall: "Gesundheitswert", passRate: "Bestandene Prüfungen", open: "Offene Probleme", urgent: "Kritische und hohe Probleme", lighthouse: "Lighthouse-Performance (mobil)", lcp: "Largest Contentful Paint", tbt: "Total Blocking Time", cls: "Layoutverschiebung", response: "Antwortzeit der Startseite", weight: "Gewicht der Startseite", thirdParty: "Drittanbieter-Hosts", pagesFound: "Gefundene Seiten", languages: "Sprachversionen" },
@@ -264,6 +268,7 @@
         Analytics: "Balises, consentement, widgets de chat, avis de confidentialité, mentions légales",
         Security: "En-têtes, TLS, DNS, transport du courrier, domaine, Safe Browsing, bibliothèques",
         Accessibility: "Balisage, axe-core, affichage mobile, lanceur de chat, déclaration d'accessibilité",
+        chatItem: "lanceur de chat",
         Performance: "Vitesse, poids, rendu, décalage de mise en page, poids du chat"
       },
       kpis: { overall: "Score de santé", passRate: "Vérifications réussies", open: "Problèmes ouverts", urgent: "Problèmes critiques et élevés", lighthouse: "Performance Lighthouse (mobile)", lcp: "Plus grand élément visible", tbt: "Temps de blocage total", cls: "Décalage de mise en page", response: "Réponse de la page d’accueil", weight: "Poids de la page d’accueil", thirdParty: "Hôtes tiers", pagesFound: "Pages trouvées", languages: "Versions linguistiques" },
@@ -317,6 +322,7 @@
         Analytics: "Tag, consenso, widget di chat, informativa privacy, note legali",
         Security: "Header, TLS, DNS, trasporto della posta, dominio, Safe Browsing, librerie",
         Accessibility: "Markup, axe-core, layout su telefono, pulsante della chat, dichiarazione di accessibilità",
+        chatItem: "pulsante della chat",
         Performance: "Velocità, peso, rendering, spostamento del layout, peso della chat"
       },
       kpis: { overall: "Punteggio di salute", passRate: "Controlli superati", open: "Problemi aperti", urgent: "Problemi critici e alti", lighthouse: "Prestazioni Lighthouse (mobile)", lcp: "Largest Contentful Paint", tbt: "Tempo totale di blocco", cls: "Spostamento del layout", response: "Risposta della pagina iniziale", weight: "Peso della pagina iniziale", thirdParty: "Host di terze parti", pagesFound: "Pagine trovate", languages: "Versioni linguistiche" },

@@ -1461,6 +1461,70 @@ test.describe("return price", () => {
     assert.equal(core.paypalPaid(order("16.15")).amount, 16.15);
     assert.equal(core.paypalPaid(order("3.00")).paid, false);
   });
+
+  test("a capture PayPal completed at a price that is not ours still reads as captured, so it is recorded", () => {
+    const order = { status: "COMPLETED", purchase_units: [{ custom_id: "ab12", payments: { captures: [{ id: "3C679366HH908993F", status: "COMPLETED", amount: { value: "3.00", currency_code: "USD" } }] } }] };
+    const read = core.paypalPaid(order);
+    assert.equal(read.paid, false);
+    assert.equal(read.captured, true);
+    assert.equal(read.captureId, "3C679366HH908993F");
+    assert.equal(read.capturedAmount, 3);
+    assert.equal(read.pending, false);
+  });
+
+  test("each PayPal event names the order or capture it is about", () => {
+    assert.equal(core.paypalEventIds({ event_type: "CHECKOUT.ORDER.APPROVED", resource: { id: "5O190127TN364715T" } }).orderId, "5O190127TN364715T");
+    const captured = core.paypalEventIds({ event_type: "PAYMENT.CAPTURE.COMPLETED", resource: { id: "3C679366HH908993F", supplementary_data: { related_ids: { order_id: "5O190127TN364715T" } } } });
+    assert.deepEqual([captured.orderId, captured.captureId], ["5O190127TN364715T", "3C679366HH908993F"]);
+    const refund = core.paypalEventIds({ event_type: "PAYMENT.CAPTURE.REFUNDED", resource: { id: "1JU08902781691411", amount: { value: "9.50" }, links: [{ rel: "self", href: "https://api.paypal.com/v2/payments/refunds/1JU08902781691411" }, { rel: "up", href: "https://api.paypal.com/v2/payments/captures/3C679366HH908993F" }] } });
+    assert.deepEqual([refund.captureId, refund.refundAmount], ["3C679366HH908993F", 9.5]);
+    const dispute = core.paypalEventIds({ event_type: "CUSTOMER.DISPUTE.CREATED", resource: { dispute_id: "PP-D-27803", status: "OPEN", disputed_transactions: [{ seller_transaction_id: "3C679366HH908993F" }] } });
+    assert.deepEqual([dispute.captureId, dispute.disputeId, dispute.disputeStatus], ["3C679366HH908993F", "PP-D-27803", "OPEN"]);
+    assert.equal(core.paypalEventIds({ event_type: "CHECKOUT.ORDER.APPROVED", resource: { id: "../x" } }).orderId, "");
+  });
+
+  test("a webhook event without a webhook id or signature headers is refused before PayPal is asked", async () => {
+    assert.equal(await core.verifyPayPalWebhook({ webhookId: "" }, { "paypal-transmission-id": "a", "paypal-transmission-sig": "b" }, {}), false);
+    assert.equal(await core.verifyPayPalWebhook({ webhookId: "8PT597110X687430LKGECATA" }, {}, {}), false);
+  });
+});
+
+test.describe("PayPal refunds and disputes", () => {
+  const offers = require("../../functions/url-review-offers");
+  const mail = require("../../functions/url-review-mail");
+  const rows = [
+    { id: "credit-ab12", status: "run-credit", paid: true, sessionId: "5O190127TN364715T" },
+    { id: "paid-report-r1", status: "paid-report", paid: true, reportId: "r1" },
+    { id: "paid-cases-ab12", status: "paid-addon", paid: true, purpose: "cases", reportId: "r1" },
+    { id: "r1", status: "complete", paid: true }
+  ];
+
+  test("a full refund takes back the credit, the report unlock and the add-on", () => {
+    const updates = offers.reversalUpdates(rows, { kind: "refund", at: "2026-10-25T00:00:00Z" });
+    assert.deepEqual(updates.find((u) => u.id === "credit-ab12").set.status, "run-credit-refunded");
+    assert.equal(updates.find((u) => u.id === "paid-report-r1").set.refunded, true);
+    assert.deepEqual(updates.find((u) => u.removeAddon), { id: "r1", removeAddon: "cases" });
+    assert.equal(updates.find((u) => u.id === "r1" && u.set).set.paid, false);
+  });
+
+  test("a partial refund and a dispute only mark the payment rows and keep access", () => {
+    const partial = offers.reversalUpdates(rows, { kind: "partial-refund", refundedUsd: 5 });
+    assert.equal(partial.length, 3);
+    assert.ok(partial.every((u) => u.set.refundedUsd === 5 && u.set.paid === undefined && u.set.status === undefined));
+    const open = offers.reversalUpdates(rows, { kind: "dispute", status: "OPEN", disputeId: "PP-D-1" });
+    assert.ok(open.every((u) => u.set.disputed === true));
+    assert.ok(offers.reversalUpdates(rows, { kind: "dispute", status: "RESOLVED" }).every((u) => u.set.disputed === false));
+  });
+
+  test("refunded money leaves the period revenue", () => {
+    const sum = mail.money([
+      { status: "paid-report", paid: true, priceUsd: 19 },
+      { status: "paid-report", paid: true, priceUsd: 19, refunded: true },
+      { status: "paid-addon", paid: true, priceUsd: 19, refundedUsd: 4 },
+      { status: "run-credit-refunded", paid: true, priceUsd: 19 }
+    ]);
+    assert.deepEqual([sum.usd, sum.paidCount], [34, 2]);
+  });
 });
 
 test.describe("address guards", () => {
