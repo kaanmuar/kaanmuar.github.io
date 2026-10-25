@@ -899,14 +899,19 @@
     document.querySelectorAll("[data-insight]").forEach((node) => { node.hidden = !on; });
   }
 
-  // The server writes the summary in English; a translated page rebuilds its score sentence and keeps any warning ahead of it.
+  // The server writes the summary in English; a translated page rebuilds the warnings, the score sentence and "Fix first".
+  // A warning without a line here stays English, and "Fix first" is left out when the top finding's title has none.
   function healthSummary(ins) {
     const raw = String(ins.summary || "");
     const score = ins.score;
     const said = raw.match(/^(.*?)(\S+) scores \d+ out of 100 /);
     if (rc.english || !score || !said) return raw;
     const totals = score.totals || {};
-    return said[1] + rc.t("summary", { host: said[2], overall: score.overall || 0, grade: score.grade || gradeOf(score.overall || 0), fail: totals.fail || 0, risk: totals.risk || 0, pass: totals.pass || 0 });
+    const warned = said[1] && fc.warnings ? fc.warnings(ins.warningMsgs, said[1]) : null;
+    const top = / Fix first: /.test(raw) && fc.fixFirst ? fc.fixFirst((ins.findings || []).find((item) => item.rank === 1)) : null;
+    return (warned ? warned + " " : said[1]) +
+      rc.t("summary", { host: said[2], overall: score.overall || 0, grade: score.grade || gradeOf(score.overall || 0), fail: totals.fail || 0, risk: totals.risk || 0, pass: totals.pass || 0 }) +
+      (top ? " " + top : "");
   }
 
   function paintHealth(ins) {

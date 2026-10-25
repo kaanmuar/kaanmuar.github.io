@@ -682,6 +682,28 @@ test.describe("false positives from the real-run series", () => {
     assert.ok(result.summary.startsWith(result.warnings[0]));
   });
 
+  test("health warnings and Fix first come as messages whose English is the text the summary had before (#1355)", () => {
+    const { english } = require("../../functions/url-review-findings-en");
+    assert.equal(insights.BROWSER_READ_NOTE, "The site's bot protection refused the plain request; the page was analyzed in headless Chrome.");
+    assert.equal(insights.UNTAGGED_READ_NOTE, "The site's bot protection refused the plain request and headless Chrome while it carried the review tag; the page was analyzed in headless Chrome without the tag.");
+    assert.equal(insights.CUT_NOTE, "The start page is larger than 2 MB, so the review analyzed its first 2 MB.");
+    assert.equal(insights.SLOW_READ_NOTE, "The plain request for the start page took longer than 8 s; the page was analyzed in headless Chrome.");
+    assert.equal(insights.SLOW_CUT_NOTE, "The start page was still arriving after 8 s, so the review analyzed the part that had arrived.");
+    assert.equal(insights.SHELL_NOTE, "The start page's HTML lists almost no same-host links, so the review followed the links on the page rendered in headless Chrome.");
+    const rows = [{ url: URL_, html: HTML }].concat([1, 2, 3, 4].map((n) => ({ url: URL_ + "p" + n, status: 403, html: "" })), [{ url: URL_ + "ok", html: HTML }]);
+    const partial = analyzeHtmlPages(rows);
+    assert.equal(partial.warnings[0], "Partial analysis: 4 of 5 linked pages answered with a bot check or a block, so the scores rest mostly on the start page.");
+    assert.deepEqual(partial.warningMsgs.map(english), partial.warnings);
+    const bot = analyzeHtmlPages([{ url: URL_, html: "<title>Akamai Page</title>", challenge: "Akamai" }]);
+    assert.equal(bot.warnings[0], "The start page answered with an Akamai bot check instead of the site, so these scores describe that check page.");
+    assert.deepEqual(bot.warningMsgs, [{ id: "warn.challenge", vars: { check: { id: "botCheck.an", vars: { vendor: "Akamai" } } } }]);
+    for (const result of [partial, bot]) {
+      const top = result.findings.find((item) => item.rank === 1);
+      const title = /^[A-Z][a-z]/.test(top.title) ? top.title.charAt(0).toLowerCase() + top.title.slice(1) : top.title;
+      assert.ok(result.summary.endsWith(" pass. Fix first: " + title + "."), result.summary);
+    }
+  });
+
   test("emails only count when they ride in links into the site's own domain", () => {
     const page = "https://kubernetes.example.com/";
     const links = (hrefs) => core.analyzeHtml("<main>" + hrefs.map((href) => "<a href=\"" + href + "\">x</a>").join("") + "</main>", STRONG_HEADERS, page).piiLinks;
