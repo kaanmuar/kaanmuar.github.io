@@ -2232,7 +2232,9 @@ function replyPage(id, row, message) {
   const esc = ownerLayout.escapeHtml;
   const action = OWNER_REPLIES_URL + "/decide?t=" + id;
   const button = (value, label, extra) => "<form method=\"post\" action=\"" + esc(action) + "\" style=\"margin:10px 0\"><input type=\"hidden\" name=\"do\" value=\"" + value + "\">" + (extra || "") + "<button style=\"padding:10px 16px;border-radius:8px;border:0;background:#0e7490;color:#fff;font-size:14px\">" + esc(label) + "</button></form>";
-  const proposed = String(row.propose || "").startsWith("resend:") ? row.propose.slice(7) : (row.mentioned || [])[0] || "";
+  const choices = ownerReplies.resendChoices(row);
+  const proposed = String(row.propose || "").startsWith("resend:") && choices.includes(row.propose.slice(7)) ? row.propose.slice(7) : choices[0];
+  const radios = choices.map((email) => "<label style=\"display:block;margin:6px 0\"><input type=\"radio\" name=\"email\" value=\"" + esc(email) + "\" required" + (email === proposed ? " checked" : "") + "> " + esc(email) + "</label>").join("");
   const open = row.status === "waiting";
   return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Owner reply</title></head>" +
     "<body style=\"font-family:Arial,sans-serif;max-width:640px;margin:24px auto;padding:0 16px;color:#1c2833\">" +
@@ -2241,7 +2243,7 @@ function replyPage(id, row, message) {
     "<p><b>" + esc(row.from) + "</b> about " + esc(row.host || "no matched notice") + " · " + esc(row.at) + "</p>" +
     "<pre style=\"white-space:pre-wrap;background:#f4f7f8;padding:12px;border-radius:8px\">" + esc(row.words) + "</pre>" +
     (open
-      ? button("resend", "Send the notice to this address", "<input name=\"email\" type=\"email\" value=\"" + esc(proposed) + "\" required style=\"padding:9px;margin-right:8px;width:260px\">") +
+      ? (choices.length ? button("resend", "Send the notice to the chosen address", radios) : "") +
         button("stop", "Stop notices to " + (row.noticeDomain || row.domain)) +
         (row.host ? button("unlist", "Take " + row.host + " off Live Reports") : "") +
         button("done", "Handled, nothing to do")
@@ -2296,7 +2298,7 @@ exports.ownerReplies = functions.runWith({ timeoutSeconds: 60, memory: "256MB", 
       }
       const email = String((req.body && req.body.email) || "").trim().toLowerCase().slice(0, 200);
       let problem = "";
-      if (action === "resend") problem = await resendNotice(row, email);
+      if (action === "resend") problem = ownerReplies.resendChoices(row).includes(email) ? await resendNotice(row, email) : "Pick one of the addresses in the reply.";
       else if (action !== "done") await applyReplyAction(action === "stop" ? "stop-domain" : "unlist", row);
       const decided = { status: "decided", decision: action, decidedAt: new Date().toISOString(), decidedEmail: action === "resend" ? email : "" };
       if (!problem || problem.startsWith("Saved")) await ref.update(decided);
