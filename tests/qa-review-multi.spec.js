@@ -170,7 +170,7 @@ test('the comparison title shows each site as its logo with its name below, a le
   await expect(second.locator('.multi-mark > span')).toBeVisible();
   await expect(third.locator('.multi-site-name')).toHaveText('Carlos A. Muñoz');
   await expect(third.locator('small')).toHaveText('carlosandmunoz.com');
-  expect(await third.locator('small').innerHTML()).toBe('carlosandmunoz.<wbr>com');
+  expect(await third.locator('small').innerHTML()).toBe('carlos<span class="multi-host-end">andmunoz.com</span>');
   await expect(third.locator('img.multi-logo')).toBeVisible();
   const boxes = await Promise.all([first, second, third].map((site) => site.locator('.multi-mark').boundingBox()));
   expect(new Set(boxes.map((box) => Math.round(box.y))).size).toBe(1);
@@ -258,6 +258,89 @@ test('a long host wraps inside its cover card when six sites sit side by side (#
     expect(row.over, row.host).toBeLessThanOrEqual(0);
     expect(row.right, row.host).toBeLessThanOrEqual(0);
   }
+});
+
+function sixSites() {
+  const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
+    const base = [own, rival, sample.report][index];
+    return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id }) };
+  }));
+  ['www.hotelestequendama.com.co', 'www.movichhotels.com', 'www.ghlhoteles.com', 'www.universidadcatolicadecolombia.edu.co', 'ciedi.edu.co', 'montessori.edu.co']
+    .forEach((host, index) => { records[index].report = Object.assign({}, records[index].report, { host }); });
+  return records;
+}
+
+test('Fix first stays inside its boxes in narrow columns, one bounded box per finding with its chips above the title, five in print (#1602)', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await signIn(page, sixSites(), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const cells = page.locator('#multi-overlay .multi-sec[data-sec="fix"] .multi-cell');
+  await expect(cells).toHaveCount(6, { timeout: 20000 });
+  await expect(cells.first().locator('.fix-list > li').first()).toBeVisible();
+  await expect(cells.first().locator('.fix-list > li.print-more')).toBeHidden();
+  const level = async (media) => {
+    const report = await cells.evaluateAll((list) => list.map((cell) => {
+      const card = cell.querySelector('[data-slot="fix-first"]');
+      const box = card.getBoundingClientRect();
+      const spill = [...card.querySelectorAll('*')].filter((el) => {
+        const r = el.getBoundingClientRect();
+        if (!r.width) return false;
+        return r.left < box.left - 0.5 || r.right > box.right + 0.5 || (el.clientWidth && el.scrollWidth > el.clientWidth + 1);
+      }).map((el) => el.tagName + '.' + el.className + ': ' + el.textContent.slice(0, 40));
+      const items = [...card.querySelectorAll('.fix-list > li:not(.print-more)')].filter((li) => li.offsetHeight).map((li) => {
+        const r = li.getBoundingClientRect();
+        return { top: r.top, bottom: r.bottom, border: parseFloat(getComputedStyle(li).borderTopWidth), rank: li.querySelector('.fix-rank').getBoundingClientRect().bottom, title: li.querySelector('strong').getBoundingClientRect().top };
+      });
+      return { host: cell.dataset.host, over: card.scrollWidth - card.clientWidth, spill, items };
+    }));
+    for (const col of report) {
+      expect(col.over, media + ' ' + col.host).toBeLessThanOrEqual(0);
+      expect(col.spill, media + ' ' + col.host).toEqual([]);
+      col.items.forEach((item, index) => {
+        expect(item.border, col.host).toBeGreaterThanOrEqual(1);
+        expect(item.title, col.host).toBeGreaterThanOrEqual(item.rank - 1);
+        if (index) expect(item.top, col.host).toBeGreaterThan(col.items[index - 1].bottom);
+      });
+    }
+  };
+  await level('screen');
+  const first = cells.first().locator('.fix-list > li:visible');
+  const total = await first.count();
+  expect(total).toBeGreaterThan(5);
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  await expect(first).toHaveCount(6);
+  await expect(first.last()).toHaveText('…and ' + (total - 5) + ' more, in the report on the page.');
+  await level('print');
+  await page.emulateMedia({ media: 'screen' });
+});
+
+test('the host bar keeps a domain suffix on the line of the name it ends (#1611)', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await signIn(page, sixSites(), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const heads = page.locator('#multi-overlay .multi-hosts .multi-host');
+  await expect(heads).toHaveCount(6, { timeout: 20000 });
+  const lines = await heads.evaluateAll((list) => list.map((el) => {
+    const out = [];
+    const range = document.createRange();
+    const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let top = null;
+    for (let node = walk.nextNode(); node; node = walk.nextNode()) {
+      for (let i = 0; i < node.length; i += 1) {
+        range.setStart(node, i);
+        range.setEnd(node, i + 1);
+        const at = range.getBoundingClientRect().top;
+        if (top === null || at > top + 4) { out.push(''); top = at; }
+        out[out.length - 1] += node.data[i];
+      }
+    }
+    return out;
+  }));
+  for (const shown of lines) {
+    expect(shown[shown.length - 1], shown.join(' / ')).not.toMatch(/^\.?((com|org|net|edu|gov|gob|ac|co|or|ne)\.)?[a-z]{2,}$/i);
+    expect(shown[0], shown.join(' / ')).not.toBe('www.');
+  }
+  await expect(heads.first()).toHaveText('hotelestequendama.com.co');
+  await expect(heads.first()).toHaveAttribute('title', 'www.hotelestequendama.com.co');
 });
 
 test('one toggle per section folds it for every site together, the boxes of a row end level, and print and the PDF show every section open (#1459)', async ({ page }) => {
