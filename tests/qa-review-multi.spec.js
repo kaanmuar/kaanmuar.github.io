@@ -102,6 +102,8 @@ test('a saved comparison sets the summary and every report section side by side,
   const health = box.locator('.multi-sec[data-sec="health"] .multi-cell');
   await expect(health.nth(1).locator('.ring')).toHaveAttribute('aria-label', new RegExp('Health score ' + rival.insights.score.overall + ' '));
   const pages = box.locator('.multi-sec[data-sec="pages"] .multi-cell[data-col="0"]').locator('tbody tr:visible');
+  await expect(pages).toHaveCount(12);
+  await box.locator('.multi-sec[data-sec="pages"] .multi-cell[data-col="0"]').getByRole('button', { name: 'Show all ' + own.pages.length }).click();
   await expect(pages).toHaveCount(own.pages.length);
   expect(own.counts).toBeUndefined();
   await expect(box.locator('.multi-sec[data-sec="cover"] .multi-cell[data-col="0"]').locator('.kpi b').nth(3)).toHaveText(String(own.pages.length));
@@ -372,11 +374,11 @@ test('Search visibility sums the pages that cannot be indexed by reason and show
   await expect(big.locator('[data-part]')).toHaveCount(3);
   expect(await big.locator('[data-part]').evaluateAll((els) => els.map((el) => el.dataset.part))).toEqual(['stats', 'unindexable', 'notes']);
   await expect(big.locator('.multi-seo-reasons li')).toHaveText(['Canonical to another page 30', 'Status 404 6', 'noindex 2', 'Status 500 2']);
-  await expect(big.locator('.multi-seo-pages li')).toHaveCount(5);
+  await expect(big.locator('.multi-seo-pages li:visible')).toHaveCount(5);
   await expect(big.locator('.multi-seo-pages li [title]').first()).toHaveAttribute('title', /^\/category\/a-long-section-name\/subsection\/article-with-a-long-slug-0\?utm_source=newsletter$/);
-  await expect(big.locator('.multi-seo-more')).toHaveText('…and 35 more, in the report on the page.');
+  await expect(big.locator('.multi-show')).toHaveText('Show all 40');
   await expect(cells.and(page.locator('[data-col="5"]')).locator('.multi-seo-reasons li')).toHaveText(['Canonical to another page 1']);
-  await expect(cells.and(page.locator('[data-col="5"]')).locator('.multi-seo-more')).toHaveCount(0);
+  await expect(cells.and(page.locator('[data-col="5"]')).locator('.multi-show')).toHaveCount(0);
   await expect(cells.and(page.locator('[data-col="1"]')).locator('[data-part="unindexable"] .multi-seo-reasons')).toHaveCount(0);
 
   const measure = () => cells.evaluateAll((list) => list.map((cell) => {
@@ -390,8 +392,8 @@ test('Search visibility sums the pages that cannot be indexed by reason and show
 
   await page.evaluate(() => document.body.classList.add('printing-multi'));
   await page.emulateMedia({ media: 'print' });
-  await expect(big.locator('.multi-seo-pages li')).toHaveCount(5);
-  await expect(big.locator('.multi-seo-more')).toBeVisible();
+  await expect(big.locator('.multi-seo-pages li:not(.print-more):visible')).toHaveCount(5);
+  await expect(big.locator('.multi-seo-pages .print-more')).toHaveText('…and 35 more, in the report on the page.');
   (await measure()).forEach((cell) => expect(cell.spill).toEqual([]));
   await page.emulateMedia({ media: 'screen' });
   await page.evaluate(() => document.body.classList.remove('printing-multi'));
@@ -405,8 +407,8 @@ test('Search visibility sums the pages that cannot be indexed by reason and show
   await printed.setContent(seen.pdf[0], { waitUntil: 'load' });
   const copy = printed.locator('.multi-sec[data-sec="seo"] .multi-cell[data-col="0"]');
   await expect(copy.locator('.multi-seo-reasons li')).toHaveCount(4);
-  await expect(copy.locator('.multi-seo-pages li')).toHaveCount(5);
-  await expect(copy.locator('.multi-seo-more')).toBeVisible();
+  await expect(copy.locator('.multi-seo-pages li:not(.print-more):visible')).toHaveCount(5);
+  await expect(copy.locator('.multi-seo-pages .print-more')).toBeVisible();
   await off.close();
 });
 
@@ -538,8 +540,9 @@ test('Fix first stays inside its boxes in narrow columns, one bounded box per fi
   };
   await level('screen');
   const first = cells.first().locator('.fix-list > li:visible');
-  const total = await first.count();
+  const total = await cells.first().locator('.fix-list > li:not(.print-more)').count();
   expect(total).toBeGreaterThan(5);
+  await expect(first).toHaveCount(5);
   await page.evaluate(() => document.body.classList.add('printing-multi'));
   await page.emulateMedia({ media: 'print' });
   await expect(first).toHaveCount(6);
@@ -601,7 +604,7 @@ test('the public marks of At a glance fit their tiles and line up across six sit
     }
   };
   const meters = async (where) => {
-    const rows = await glance.locator('.meter').evaluateAll((list) => list.map((row) => ({ text: row.textContent, over: row.lastElementChild.scrollWidth - row.lastElementChild.clientWidth, track: row.querySelector('.track').clientWidth })));
+    const rows = await glance.locator('.meter').evaluateAll((list) => list.filter((row) => row.getClientRects().length).map((row) => ({ text: row.textContent, over: row.lastElementChild.scrollWidth - row.lastElementChild.clientWidth, track: row.querySelector('.track').clientWidth })));
     for (const row of rows) {
       expect(row.over, where + ' ' + row.text).toBeLessThanOrEqual(0);
       expect(row.track, where + ' ' + row.text).toBeGreaterThan(20);
@@ -626,7 +629,7 @@ test('in a six-column print the response-time bars keep at least half of their r
   await expect(speed).toHaveCount(6, { timeout: 20000 });
   await page.evaluate(() => document.body.classList.add('printing-multi'));
   await page.emulateMedia({ media: 'print' });
-  const rows = await speed.locator('.meter').evaluateAll((list) => list.map((row) => ({ text: row.textContent, row: row.clientWidth, track: row.querySelector('.track').clientWidth })));
+  const rows = await speed.locator('.meter').evaluateAll((list) => list.filter((row) => row.getClientRects().length).map((row) => ({ text: row.textContent, row: row.clientWidth, track: row.querySelector('.track').clientWidth })));
   expect(rows.length).toBeGreaterThan(6);
   for (const row of rows) expect(row.track, row.text).toBeGreaterThanOrEqual(row.row / 2);
 });
@@ -828,7 +831,7 @@ test('"What AI sees" keeps its boxes in one order and lined up in every column, 
     expect(cell.chip, cell.host).toBeLessThan(30);
   }
   for (const index of [0, 1, 2, 3]) expect(new Set(cells.map((cell) => cell.tops[index])).size, cells[0].parts[index]).toBe(1);
-  expect(await sec.evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(1700);
+  expect(await sec.evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(1900);
   await expect(sec.locator('.multi-cell[data-col="2"]').locator('[data-part="crawlers"] .bot-group').first()).toHaveText(/✓ \d+ ✕ \d+$/);
 
   await page.evaluate(() => document.body.classList.add('printing-multi'));
@@ -1115,7 +1118,7 @@ test('the fix-kit files sit level across the columns however each kit differs, o
   await expect(sec.locator('.multi-cell[data-col="3"]').locator('[data-kit="legal"]')).toHaveClass('is-none');
   const rows = () => sec.locator('.multi-cell').evaluateAll((cells) => cells.map((cell) => Object.fromEntries([...cell.querySelectorAll('[data-slot="fixkit"] > p, [data-kit], .code-peek')].map((el) => {
     const box = el.getBoundingClientRect();
-    return [el.dataset.kit || el.className || 'intro', { top: box.top, height: box.height }];
+    return [el.dataset.kit || (el.classList.contains('code-peek') ? 'peek' : 'intro'), { top: box.top, height: box.height }];
   }))));
   const level = (columns, label) => {
     expect(Object.keys(columns[0]).length, label).toBe(12);
@@ -1260,18 +1263,65 @@ test('in print a long list stops after twelve rows with a line counting the rest
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
   const box = page.locator('#multi-overlay');
   const rows = box.locator('.multi-sec[data-sec="pages"] .multi-cell[data-col="0"]').locator('tbody tr:visible');
-  await expect(rows).toHaveCount(own.pages.length, { timeout: 20000 });
+  await expect(rows).toHaveCount(12, { timeout: 20000 });
   await page.evaluate(() => document.body.classList.add('printing-multi'));
   await page.emulateMedia({ media: 'print' });
   await expect(rows).toHaveCount(13);
   await expect(rows.last()).toHaveText('…and ' + (own.pages.length - 12) + ' more, in the report on the page.');
-  expect(await box.locator('.multi-sec[data-sec="pages"] .multi-cell > .card').first().evaluate((card) => getComputedStyle(card, '::after').display)).toBe('none');
   await page.emulateMedia({ media: 'screen' });
   await page.evaluate(() => document.body.classList.remove('printing-multi'));
   const download = page.waitForEvent('download');
   await box.getByRole('button', { name: 'Download PDF' }).click();
   await download;
   expect(seen.pdf[0]).toContain('<tr class="print-more">');
+});
+
+test('a long list opens in place with Show all and folds back with Show fewer, no box scrolls inside a cell, and print keeps its caps (#1657)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
+  const box = page.locator('#multi-overlay');
+  await expect(box.locator('.multi-sec[data-sec="pages"] .multi-cell')).toHaveCount(3, { timeout: 20000 });
+  await expect(box.locator('.ai-view.is-clamped').first()).toBeAttached();
+  const scrollers = await box.locator('.multi-cell').evaluateAll((cells) => cells.flatMap((cell) => [cell, ...cell.querySelectorAll('*')]
+    .filter((el) => el.getClientRects().length && /(auto|scroll)/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight + 2).map((el) => el.className || el.tagName)));
+  expect(scrollers).toEqual([]);
+
+  for (const [key, list, rows, cap] of [['pages', ':is(.page-table, .table-scroll)', 'tbody tr', 12], ['fix', '.fix-list', '.fix-list > li', 5], ['geo', '.ai-outline', '.ai-outline > li', 12]]) {
+    const cell = box.locator('.multi-sec[data-sec="' + key + '"] .multi-cell').filter({ has: page.locator(list + ' + .multi-show') }).first();
+    const show = cell.locator(list + ' + .multi-show');
+    const total = Number((await show.textContent()).match(/^Show all (\d+)$/)[1]);
+    expect(total, key).toBeGreaterThan(cap);
+    await expect(cell.locator(rows + ':visible')).toHaveCount(cap);
+    await show.click();
+    await expect(cell.locator(rows + ':visible')).toHaveCount(total);
+    await expect(show).toHaveText('Show fewer');
+    await expect(show).toHaveAttribute('aria-expanded', 'true');
+    await show.click();
+    await expect(cell.locator(rows + ':visible')).toHaveCount(cap);
+    await expect(show).toHaveText('Show all ' + total);
+  }
+
+  const text = box.locator('.multi-sec[data-sec="geo"] .ai-view.is-clamped').first();
+  expect(await text.evaluate((el) => el.offsetHeight)).toBe(196);
+  await text.locator('+ .multi-show').click();
+  expect(await text.evaluate((el) => el.offsetHeight > 196 && el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+  await expect(text.locator('+ .multi-show')).toHaveText('Less');
+
+  const pageShow = box.locator('.multi-sec[data-sec="pages"] :is(.page-table, .table-scroll) + .multi-show').first();
+  await pageShow.click();
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  const printed = box.locator('.multi-sec[data-sec="pages"] .multi-cell[data-col="0"] tbody tr:visible');
+  await expect(printed).toHaveCount(13);
+  await expect(printed.last()).toHaveText('…and ' + (own.pages.length - 12) + ' more, in the report on the page.');
+  await expect(box.locator('.multi-show:visible')).toHaveCount(0);
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+  await box.getByRole('button', { name: 'Download PDF' }).click();
+  await expect(box.locator('#multi-status')).toHaveText('The PDF is downloaded.');
+  expect(seen.pdf[0]).not.toMatch(/class="[^"]*\b(multi-show|screen-cut|is-clamped|multi-peek)\b/);
+  expect(seen.pdf[0]).toMatch(/class="print-cut"/);
 });
 
 // One site sends most headers on its start page and drops some on 39 more pages, one sends every header on all
@@ -1347,14 +1397,15 @@ test('a site with many pages lists only the first pages that differ, with a line
   const cells = page.locator('#multi-overlay .multi-sec[data-sec="security"] .multi-cell');
   const diff = cells.and(page.locator('[data-col="0"]')).locator('.sec-diff');
   await expect(diff.locator('li:visible')).toHaveCount(6, { timeout: 20000 });
-  await expect(diff.locator('summary')).toHaveText('+17 more');
-  expect(await diff.evaluate((el) => el.querySelector('summary').getBoundingClientRect().bottom <= el.getBoundingClientRect().bottom)).toBe(true);
+  await expect(diff.locator('.multi-show')).toHaveText('Show all 23');
+  expect(await diff.evaluate((el) => el.querySelector('.multi-show').getBoundingClientRect().bottom <= el.getBoundingClientRect().bottom)).toBe(true);
   await expect(diff.locator('li').first()).toHaveAttribute('title', /^\/blog\/2026\/10\/\d+\/a-rather-long/);
   const tallest = await cells.evaluateAll((list) => Math.max(...list.map((cell) => cell.getBoundingClientRect().height)));
   expect(tallest).toBeLessThan(1600);
-  await diff.locator('summary').click();
+  await diff.locator('.multi-show').click();
   await expect(diff.locator('li:visible')).toHaveCount(23);
-  expect(await diff.locator('.sec-more ol').evaluate((el) => el.scrollHeight > el.clientHeight && el.clientHeight < 300)).toBe(true);
+  await expect(diff.locator('.multi-show')).toHaveText('Show fewer');
+  expect(await diff.locator('ol').evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
   const spill = await cells.evaluateAll((list) => list.flatMap((cell) => {
     const edge = cell.getBoundingClientRect().right + 1;
     return [...cell.querySelectorAll('*')].filter((el) => el.getClientRects().length && el.getBoundingClientRect().right > edge).map((el) => el.className || el.tagName);
@@ -1363,8 +1414,8 @@ test('a site with many pages lists only the first pages that differ, with a line
 
   await page.evaluate(() => document.body.classList.add('printing-multi'));
   await page.emulateMedia({ media: 'print' });
-  await expect(diff.locator('li:visible')).toHaveCount(6);
-  await expect(diff.locator('summary')).toBeVisible();
+  await expect(diff.locator('li:not(.print-more):visible')).toHaveCount(6);
+  await expect(diff.locator('.print-more')).toHaveText('…and 17 more, in the report on the page.');
   await page.emulateMedia({ media: 'screen' });
   await page.evaluate(() => document.body.classList.remove('printing-multi'));
   const download = page.waitForEvent('download');

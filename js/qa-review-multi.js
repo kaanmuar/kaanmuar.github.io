@@ -17,7 +17,7 @@
       failedRuns: "Not in this comparison, because their review did not finish:",
       signIn: "Sign in with the account that saved this comparison to open it.", failed: "The comparison did not open. Try again in a moment.",
       saving: "Saving the comparison…", saveFailed: "The comparison was not saved. Try again in a moment.",
-      nothing: "Nothing here for this site.", more: "…and {n} more, in the report on the page.",
+      nothing: "Nothing here for this site.", more: "…and {n} more, in the report on the page.", showAll: "Show all {n}", showFewer: "Show fewer",
       seoBlocked: "Pages not indexable, by reason", seoCanonical: "Canonical to another page",
       sections: {
         cover: "Cover and key figures", exec: "One-page summary", health: "Health score", fix: "Fix first", browser: "In a real browser",
@@ -39,7 +39,7 @@
       failedRuns: "No están en esta comparación porque su revisión no terminó:",
       signIn: "Inicia sesión con la cuenta que guardó esta comparación para abrirla.", failed: "La comparación no se abrió. Inténtalo de nuevo en un momento.",
       saving: "Guardando la comparación…", saveFailed: "La comparación no se guardó. Inténtalo de nuevo en un momento.",
-      nothing: "Nada aquí para este sitio.", more: "…y {n} más, en el informe de la página.",
+      nothing: "Nada aquí para este sitio.", more: "…y {n} más, en el informe de la página.", showAll: "Mostrar los {n}", showFewer: "Mostrar menos",
       seoBlocked: "Páginas no indexables, por motivo", seoCanonical: "Canonical hacia otra página",
       sections: {
         cover: "Portada y cifras clave", exec: "Resumen en una página", health: "Puntuación de salud", fix: "Corregir primero", browser: "En un navegador real",
@@ -61,7 +61,7 @@
       failedRuns: "Não estão nesta comparação porque a revisão não terminou:",
       signIn: "Entre com a conta que salvou esta comparação para abri-la.", failed: "A comparação não abriu. Tente de novo em instantes.",
       saving: "Salvando a comparação…", saveFailed: "A comparação não foi salva. Tente de novo em instantes.",
-      nothing: "Nada aqui para este site.", more: "…e mais {n}, no relatório da página.",
+      nothing: "Nada aqui para este site.", more: "…e mais {n}, no relatório da página.", showAll: "Mostrar todos os {n}", showFewer: "Mostrar menos",
       seoBlocked: "Páginas não indexáveis, por motivo", seoCanonical: "Canonical para outra página",
       sections: {
         cover: "Capa e números principais", exec: "Resumo em uma página", health: "Pontuação de saúde", fix: "Corrigir primeiro", browser: "Em um navegador real",
@@ -83,7 +83,7 @@
       failedRuns: "Nicht in diesem Vergleich, weil ihre Prüfung nicht fertig wurde:",
       signIn: "Melden Sie sich mit dem Konto an, das diesen Vergleich gespeichert hat, um ihn zu öffnen.", failed: "Der Vergleich wurde nicht geöffnet. Versuchen Sie es gleich noch einmal.",
       saving: "Der Vergleich wird gespeichert…", saveFailed: "Der Vergleich wurde nicht gespeichert. Versuchen Sie es gleich noch einmal.",
-      nothing: "Für diese Website nichts.", more: "…und {n} weitere, im Bericht auf der Seite.",
+      nothing: "Für diese Website nichts.", more: "…und {n} weitere, im Bericht auf der Seite.", showAll: "Alle {n} zeigen", showFewer: "Weniger zeigen",
       seoBlocked: "Nicht indexierbare Seiten, nach Grund", seoCanonical: "Canonical auf eine andere Seite",
       sections: {
         cover: "Deckblatt und Kennzahlen", exec: "Zusammenfassung auf einer Seite", health: "Gesundheitswert", fix: "Zuerst beheben", browser: "In einem echten Browser",
@@ -105,7 +105,7 @@
       failedRuns: "Absents de cette comparaison, car leur analyse n’a pas abouti :",
       signIn: "Connectez-vous avec le compte qui a enregistré cette comparaison pour l'ouvrir.", failed: "La comparaison ne s'est pas ouverte. Réessayez dans un instant.",
       saving: "Enregistrement de la comparaison…", saveFailed: "La comparaison n'a pas été enregistrée. Réessayez dans un instant.",
-      nothing: "Rien ici pour ce site.", more: "…et {n} de plus, dans le rapport en ligne.",
+      nothing: "Rien ici pour ce site.", more: "…et {n} de plus, dans le rapport en ligne.", showAll: "Afficher les {n}", showFewer: "Afficher moins",
       seoBlocked: "Pages non indexables, par motif", seoCanonical: "Canonical vers une autre page",
       sections: {
         cover: "Couverture et chiffres clés", exec: "Résumé en une page", health: "Score de santé", fix: "À corriger d'abord", browser: "Dans un vrai navigateur",
@@ -127,7 +127,7 @@
       failedRuns: "Non sono in questo confronto perché la revisione non è terminata:",
       signIn: "Accedi con l'account che ha salvato questo confronto per aprirlo.", failed: "Il confronto non si è aperto. Riprova tra un momento.",
       saving: "Salvataggio del confronto…", saveFailed: "Il confronto non è stato salvato. Riprova tra un momento.",
-      nothing: "Niente qui per questo sito.", more: "…e altri {n}, nel report sulla pagina.",
+      nothing: "Niente qui per questo sito.", more: "…e altri {n}, nel report sulla pagina.", showAll: "Mostra tutti i {n}", showFewer: "Mostra meno",
       seoBlocked: "Pagine non indicizzabili, per motivo", seoCanonical: "Canonical verso un'altra pagina",
       sections: {
         cover: "Copertina e cifre chiave", exec: "Riepilogo in una pagina", health: "Punteggio di salute", fix: "Da correggere prima", browser: "In un browser reale",
@@ -219,6 +219,7 @@
     overlay.querySelector("#multi-close").addEventListener("click", close);
     overlay.querySelector("#multi-body").addEventListener("click", fold);
     overlay.querySelector("#multi-body").addEventListener("click", pickFindings);
+    overlay.querySelector("#multi-body").addEventListener("click", showAll);
     overlay.querySelector("#multi-body").addEventListener("findingfilter", pickArea);
     overlay.querySelector("#multi-print").addEventListener("click", () => (made && made.paid ? print() : pay()));
     overlay.querySelector("#multi-pdf").addEventListener("click", () => (made && made.paid ? download() : pay()));
@@ -420,31 +421,86 @@
     grid.querySelectorAll('[data-slot="pages-found"]').forEach((note) => { note.innerHTML = esc(note.textContent).replace(/\.(?=\S)/g, ".<wbr>"); });
   }
 
-  // In print a long list stops after PRINT_ROWS with a line counting the rest, as the screen stops it in a
-  // scroll box, so one long column does not leave the others blank for pages.
-  // Fix first stops sooner: each finding is a box of its own.
-  const PRINT_ROWS = 12;
-  const PRINT_FIXES = 5;
+  // A long list shows its first rows on screen with a button that shows the rest in place, and in print stops
+  // with a line counting the rest, so one long column does not leave the others blank for pages: [lists, rows on
+  // screen, rows in print]. Fix first stops sooner, each finding being a box of its own, and a browser-pass row
+  // stacks its cells, so a few of them already fill a narrow column.
+  const LIST_CAPS = [
+    ['[data-slot="pages"], [data-slot="report-log"], .ai-outline', 12, 12],
+    ['[data-slot="fix-first"] > .fix-list', 5, 5],
+    ['.multi-sec[data-sec="browser"] [data-part] tbody', 3, 6],
+    [".multi-seo-pages", 5, 5],
+    [".sec-diff ol", 6, 6],
+    ['[data-card="practices"] .advice', 4, 4],
+    ['[data-card="speed"]', 10, 10]
+  ];
   const PRINT_CASES = 3;
-  const PRINT_ROWS_BROWSER = 6;
-  function capForPrint(grid) {
-    const lists = [...grid.querySelectorAll('[data-slot="pages"], [data-slot="report-log"], .ai-outline')].map((list) => [list, PRINT_ROWS])
-      .concat([...grid.querySelectorAll('[data-slot="fix-first"] > .fix-list')].map((list) => [list, PRINT_FIXES]))
-      .concat([...grid.querySelectorAll('.multi-sec[data-sec="browser"] [data-part] tbody')].map((list) => [list, PRINT_ROWS_BROWSER]));
-    lists.forEach(([list, max]) => {
-      const rows = [...list.children].filter((row) => !row.hidden);
+  function capLists(grid) {
+    LIST_CAPS.forEach(([selector, max, printMax]) => grid.querySelectorAll(selector).forEach((list) => {
+      const rows = [...list.children].filter((row) => !row.hidden && (/^(LI|TR|ARTICLE)$/.test(row.tagName) || row.classList.contains("meter")));
+      const table = list.tagName === "TBODY" ? list.closest("table") : null;
+      if (rows.length > printMax) {
+        rows.slice(printMax).forEach((row) => row.classList.add("print-cut"));
+        const text = esc(t("more", { n: rows.length - printMax }));
+        list.insertAdjacentHTML("beforeend", table ? '<tr class="print-more"><td colspan="' + (table.querySelectorAll("thead th").length || 4) + '">' + text + "</td></tr>"
+          : /^(UL|OL)$/.test(list.tagName) ? '<li class="print-more">' + text + "</li>" : '<p class="print-more">' + text + "</p>");
+      }
       if (rows.length <= max) return;
-      rows.slice(max).forEach((row) => row.classList.add("print-cut"));
-      const text = esc(t("more", { n: rows.length - max }));
-      const span = list.tagName === "TBODY" ? list.closest("table").querySelectorAll("thead th").length || 4 : 0;
-      list.insertAdjacentHTML("beforeend", span ? '<tr class="print-more"><td colspan="' + span + '">' + text + "</td></tr>" : '<li class="print-more">' + text + "</li>");
-    });
+      const rest = rows.slice(max);
+      rest.forEach((row) => row.classList.add("screen-cut"));
+      const button = showButton(t("showAll", { n: rows.length }));
+      button.rows = rest;
+      button.dataset.n = rows.length;
+      if (table) (table.parentElement.classList.contains("table-scroll") ? table.parentElement : table).after(button);
+      else if (list.hasAttribute("data-card")) list.appendChild(button);
+      else list.after(button);
+    }));
     grid.querySelectorAll(".cases-list").forEach((list) => {
       const rows = [...list.children];
       if (rows.length <= PRINT_CASES) return;
       rows.slice(PRINT_CASES).forEach((row) => row.classList.add("print-cut"));
       list.insertAdjacentHTML("beforeend", '<li class="print-more">' + esc(t("more", { n: rows.length - PRINT_CASES })) + "</li>");
     });
+  }
+
+  function showButton(text) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "multi-show no-print";
+    button.setAttribute("aria-expanded", "false");
+    button.textContent = text;
+    return button;
+  }
+
+  // A text box (what AI reads, a fix-kit file) keeps one height in every column; one that holds more gets a
+  // button that opens it in place. It is measured once its section is drawn and open.
+  function clampBoxes(grid) {
+    grid.querySelectorAll('.multi-sec:not(.is-folded) :is(.ai-view, .code-peek):not(.is-clamped)').forEach((box) => {
+      if (!box.clientHeight || box.scrollHeight <= box.clientHeight + 4) return;
+      box.classList.add("is-clamped");
+      const button = showButton(QAReviewReportCopy.t("caseMore"));
+      button.box = box;
+      if (box.classList.contains("code-peek")) {
+        const wrap = document.createElement("div");
+        wrap.className = "multi-peek";
+        box.replaceWith(wrap);
+        wrap.append(box, button);
+      } else box.after(button);
+    });
+  }
+
+  function showAll(event) {
+    const button = event.target.closest(".multi-show");
+    if (!button) return;
+    const open = button.getAttribute("aria-expanded") !== "true";
+    button.setAttribute("aria-expanded", String(open));
+    if (button.box) {
+      button.box.classList.toggle("is-all", open);
+      button.textContent = QAReviewReportCopy.t(open ? "caseLess" : "caseMore");
+      return;
+    }
+    (button.rows || []).forEach((row) => row.classList.toggle("screen-cut", !open));
+    button.textContent = open ? t("showFewer") : t("showAll", { n: button.dataset.n });
   }
 
   // A browser-pass table in a column stacks each row: its first cell on a line of its own, the rest side by side
@@ -498,10 +554,9 @@
     return { key: "unread", msg: { id: "reason.notRead" }, en: "Not read" };
   }
 
-  // Search visibility in a column: its figures, then the pages that cannot be indexed summed by reason with the
-  // first SEO_ROWS of them, one of each reason first, then the notes, each in its own box. data-part names the
-  // boxes in the same order in every column.
-  const SEO_ROWS = 5;
+  // Search visibility in a column: its figures, then the pages that cannot be indexed summed by reason and listed
+  // one of each reason first, then the notes, each in its own box. data-part names the boxes in the same order in
+  // every column.
   function tidySeo(grid, data) {
     const fc = window.QAReviewFindingsCopy || { line: (message, fallback) => fallback };
     grid.querySelectorAll('.multi-sec[data-sec="seo"] .multi-cell').forEach((cell) => {
@@ -532,15 +587,14 @@
       });
       const ranked = [...groups.values()].sort((a, b) => b.rows.length - a.rows.length);
       const firsts = ranked.map((group) => group.rows[0]);
-      const shown = firsts.concat(blocked.filter((row) => !firsts.includes(row))).slice(0, SEO_ROWS);
+      const shown = firsts.concat(blocked.filter((row) => !firsts.includes(row)));
       const label = (why) => why.label || fc.line(why.msg, why.en);
       card.innerHTML = '<h3 class="multi-seo-head" translate="no">' + esc(t("seoBlocked")) + "</h3>" +
         '<ul class="multi-seo-reasons" translate="no">' + ranked.map((group) => "<li><span>" + esc(label(group.why)) + "</span> <b>" + group.rows.length + "</b></li>").join("") + "</ul>" +
         '<ul class="multi-seo-pages">' + shown.map((row) => {
           const why = fc.line(row.reasonMsg, row.reason);
           return '<li><span class="notranslate" translate="no" title="' + esc(row.path) + '">' + esc(row.path) + '</span><small title="' + esc(why) + '">' + esc(why) + "</small></li>";
-        }).join("") + "</ul>" +
-        (blocked.length > shown.length ? '<p class="multi-seo-more" translate="no">' + esc(t("more", { n: blocked.length - shown.length })) + "</p>" : "");
+        }).join("") + "</ul>";
     });
   }
 
@@ -563,6 +617,7 @@
     sec.querySelector(".multi-row").hidden = !open;
     sec.querySelector(".fold-toggle").setAttribute("aria-expanded", String(open));
     sec.classList.toggle("is-folded", !open);
+    if (open) clampBoxes(sec);
   }
 
   function paintFoldAll(body) {
@@ -742,8 +797,9 @@
     settle(grid);
     levelKit(grid);
     stackTables(grid);
-    capForPrint(grid);
+    capLists(grid);
     applyFilter(grid.querySelector('.multi-sec[data-sec="findings"]'));
+    requestAnimationFrame(() => clampBoxes(grid));
     const bar = body.querySelector(".multi-hosts-bar");
     grid.addEventListener("scroll", () => { bar.scrollLeft = grid.scrollLeft; }, { passive: true });
     say("");
@@ -839,6 +895,9 @@
     copy.querySelectorAll("details.finding").forEach((item) => { item.open = true; });
     copy.querySelectorAll(".multi-row[hidden], .cases-list[hidden]").forEach((row) => { row.hidden = false; });
     copy.querySelectorAll(".cases-toggle").forEach((toggle) => toggle.replaceWith(...toggle.childNodes));
+    copy.querySelectorAll(".screen-cut").forEach((row) => row.classList.remove("screen-cut"));
+    copy.querySelectorAll(".is-clamped, .is-all").forEach((box) => box.classList.remove("is-clamped", "is-all"));
+    copy.querySelectorAll(".multi-peek").forEach((wrap) => wrap.replaceWith(...wrap.childNodes));
     // An area score tile is a button on the page, and buttons do not print.
     copy.querySelectorAll("button.area").forEach((tile) => {
       const box = document.createElement("div");

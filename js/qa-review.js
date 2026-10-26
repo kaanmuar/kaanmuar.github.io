@@ -791,7 +791,7 @@
     const headers = obs.headers || {};
     const sig = obs.signals || {};
     const maxMs = Math.max.apply(null, pages.map((page) => page.ms || 0).concat([1]));
-    const times = pages.slice(0, 10).map((page) => {
+    const times = pages.slice(0, slotRoot ? pages.length : 10).map((page) => {
       const width = Math.max(4, Math.round(((page.ms || 0) / maxMs) * 100));
       const label = String(page.path || "/").slice(0, 28);
       return '<div class="meter"><span>' + esc(label) + '</span><div class="track"><i style="width:' + width + '%"></i></div><span>' + esc(page.ms || 0) + " ms</span></div>";
@@ -828,7 +828,7 @@
     if (!ranked.length && (obs.ms || 0) > 800) advice.push(tip("adFirst", { ms: obs.ms }));
     if (!advice.length) advice.push(tip("adPlan"));
     advice.push(tip("adSnap"));
-    const adviceHtml = advice.slice(0, 4).map(([title, body, finding, key]) => "<article" + (key === "adSnap" ? ' data-advice="snapshot"' : "") + "><strong>" + esc(title) + "</strong><span>" + (finding ? fadeText(body, paid) : esc(body)) + "</span></article>").join("");
+    const adviceHtml = advice.slice(0, slotRoot ? advice.length : 4).map(([title, body, finding, key]) => "<article" + (key === "adSnap" ? ' data-advice="snapshot"' : "") + "><strong>" + esc(title) + "</strong><span>" + (finding ? fadeText(body, paid) : esc(body)) + "</span></article>").join("");
     slot("report-visuals").innerHTML =
       '<article class="card" data-card="speed"><h2>' + esc(rc.t("visTimes")) + '</h2><p class="muted">' + esc(rc.t("visTimesNote")) + "</p>" + times + "</article>" +
       '<article class="card" data-card="marks"><h2>' + esc(rc.t("visMarks")) + '</h2><div class="ticks">' + ticks + "</div></article>" +
@@ -1808,7 +1808,7 @@
   }
 
   function paintFixFirst(ins, paid) {
-    const top = (ins.findings || []).filter((item) => item.rank).slice(0, 10);
+    const top = (ins.findings || []).filter((item) => item.rank).slice(0, slotRoot ? undefined : 10);
     slot("fix-first").innerHTML = top.length
       ? '<p class="muted">' + esc(rc.t("fixIntro")) + '</p><ol class="fix-list">' + top.map((item) =>
         '<li><span class="fix-rank">' + item.rank + "</span><div>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span>" +
@@ -1954,7 +1954,7 @@
         esc(after ? rc.t("bannerRejected", { label: consent.rejectLabel }) : consent.banner === "Sourcepoint" ? rc.t("bannerFrame") : rc.t("bannerNoReject"))
       : esc(rc.t("noBannerFirst"));
     const order = { critical: 4, serious: 3, moderate: 2, minor: 1 };
-    const axeRows = [...rules.values()].sort((x, y) => (order[y.impact] - order[x.impact]) || (y.nodes - x.nodes)).slice(0, 10).map((rule) =>
+    const axeRows = [...rules.values()].sort((x, y) => (order[y.impact] - order[x.impact]) || (y.nodes - x.nodes)).slice(0, slotRoot ? undefined : 10).map((rule) =>
       '<tr data-impact="' + esc(rule.impact) + '"><td>' + esc(rule.help) + ' <a class="notranslate" translate="no" href="' + esc(rule.helpUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(rule.id) + "</a></td><td>" + esc(rc.word("impact", rule.impact)) + "</td><td>" + rule.nodes + "</td><td>" + rule.pages + "</td></tr>").join("");
     const gauge = gaugeHtml;
     const gauges = start.status ? '<div class="gauges">' +
@@ -2206,7 +2206,6 @@
   // The header checks the coverage rows at the top of a comparison column already show, page by page.
   const COVERED_CHECKS = ["HSTS", "Content-Security-Policy", "Frame protection", "X-Content-Type-Options", "Referrer-Policy", "Permissions-Policy"];
   const CHECK_MARK = { pass: "✓", risk: "!", fail: "✗", unknown: "–" };
-  const DIFF_SHOWN = 6;
 
   // A comparison column: how many pages send each header, the pages that drop one the start page sends, then every
   // check, each in the same rows and order for every site so they read across the columns.
@@ -2232,8 +2231,7 @@
       .filter((page) => page.miss.length).sort((a, b) => b.miss.length - a.miss.length);
     const item = ({ row, miss }) => '<li title="' + esc(row.path) + '"><span class="notranslate" translate="no">' + esc(String(row.path).replace(/[?#].*$/, "")) + "</span><small>" + esc(miss.join(" · ")) + "</small></li>";
     const diff = n < 2 ? "<div></div>" : !differ.length ? '<p class="sec-diff">' + esc(rc.t(cols.some(([key]) => start[key]) ? "diffNone" : "diffNoStart")) + "</p>"
-      : '<div class="sec-diff"><h4>' + esc(rc.t("diffTitle")) + "</h4><ol>" + differ.slice(0, DIFF_SHOWN).map(item).join("") + "</ol>" +
-        (differ.length > DIFF_SHOWN ? '<details class="sec-more"><summary>' + esc(rc.t("covMore", { n: differ.length - DIFF_SHOWN })) + "</summary><ol>" + differ.slice(DIFF_SHOWN).map(item).join("") + "</ol></details>" : "") + "</div>";
+      : '<div class="sec-diff"><h4>' + esc(rc.t("diffTitle")) + "</h4><ol>" + differ.map(item).join("") + "</ol></div>";
     const tiles = new Map((sec.headers || []).map((tile) => [tile.label, tile]));
     const checks = CHECK_ORDER.concat([...tiles.keys()].filter((label) => !CHECK_ORDER.includes(label))).filter((label) => !COVERED_CHECKS.includes(label)).map((label) => {
       const tile = tiles.get(label) || { state: "unknown" };

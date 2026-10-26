@@ -157,14 +157,15 @@
   .multi-modal .multi-cell .page-table td:nth-child(3) { grid-area: 3 / 2; line-height: 15px; }
   .multi-modal .multi-cell .page-table td:nth-child(4) { grid-area: 2 / 1 / 4 / 2; }
 }
-/* Long lists scroll inside their box; the fade at the foot says there is more. */
-.multi-sec:is([data-sec="fix"], [data-sec="pages"], [data-sec="log"]) .multi-cell > .card { max-height: 640px; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
-.multi-sec:is([data-sec="fix"], [data-sec="pages"], [data-sec="log"]) .multi-cell > .card::after { content: ""; position: sticky; bottom: -18px; display: block; height: 36px; margin: -18px -18px -18px; background: linear-gradient(transparent, var(--look-card, var(--card)) 85%); pointer-events: none; }
+/* A long list shows its first rows and a button that shows the rest in place (js capLists). */
+body:not(.printing-multi) .multi-cell .screen-cut { display: none !important; }
+.multi-modal .multi-show { display: block; margin: 8px 0 0; padding: 0; border: 0; background: none; color: var(--own); font: 600 12px/1.4 Inter, system-ui, sans-serif; text-align: left; cursor: pointer; }
+.multi-modal .multi-show:hover { text-decoration: underline; }
 .multi-empty { flex-grow: 1; display: grid; place-items: start center; min-height: 72px; padding: 26px 16px; border: 1px dashed var(--line); border-radius: 18px; color: var(--muted); font-size: 13px; text-align: center; background: color-mix(in srgb, var(--panel) 40%, transparent); }
 .multi-cell.is-note > :not([hidden]) { padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; color: var(--muted); background: color-mix(in srgb, var(--panel) 55%, transparent); }
 .multi-cell > .multi-empty, .multi-cell.is-note > :last-child { flex-grow: 0; }
 .multi-cell .table-scroll { max-width: 100%; overflow-x: auto; }
-.multi-cell .print-more { display: none; }
+body:not(.printing-multi) .multi-cell .print-more { display: none !important; }
 /* What AI sees: four boxes (facts, text, headings, crawlers), each on a row the columns share through a subgrid,
    so a box starts level with its neighbours whatever the box above it holds. */
 /* A size container is laid out on its own and so cannot be a subgrid; the facts go to one column below 300px
@@ -178,14 +179,13 @@
 .multi-modal .multi-sec[data-sec="geo"] .card[data-part] > p.muted { margin: 0 0 8px; font-size: 12.5px; line-height: 1.45; }
 .multi-modal .multi-sec[data-sec="geo"] [data-part="excerpt"] { display: flex; flex-direction: column; }
 .multi-modal .multi-sec[data-sec="geo"] [data-part="excerpt"] .meta-line { margin: 0; }
-/* The text and the headings scroll in a box of one height; the fade shows only while there is more below. */
-.multi-modal .multi-sec[data-sec="geo"] :is(.ai-view, .ai-outline) { overflow: auto; overflow-wrap: anywhere; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
-.multi-modal .multi-sec[data-sec="geo"] .ai-view { flex: 1 0 196px; height: 196px; max-height: none; margin: 0 0 6px; }
-.multi-modal .multi-sec[data-sec="geo"] .ai-outline { max-height: 190px; margin: 0; }
-.multi-modal .multi-sec[data-sec="geo"] :is(.ai-view, .ai-outline)::after { content: ""; position: sticky; bottom: 0; display: block; height: 24px; margin-top: -24px; background: linear-gradient(transparent, var(--fade-to)); pointer-events: none; opacity: 0; animation: multi-more linear both; animation-timeline: scroll(self); }
-.multi-modal .multi-sec[data-sec="geo"] .ai-view::after { --fade-to: var(--panel-2); bottom: -12px; margin: -24px -14px -12px; }
-.multi-modal .multi-sec[data-sec="geo"] .ai-outline::after { --fade-to: var(--look-card, var(--card)); }
-@keyframes multi-more { from { opacity: 1; } 90% { opacity: 1; } to { opacity: 0; } }
+/* The text keeps one height in every column, with a fade and a button when it holds more (js clampBoxes). */
+.multi-modal .multi-sec[data-sec="geo"] :is(.ai-view, .ai-outline) { overflow-wrap: anywhere; }
+.multi-modal .multi-sec[data-sec="geo"] .ai-view { position: relative; flex: 1 0 196px; height: 196px; max-height: none; margin: 0 0 6px; overflow: hidden; }
+.multi-modal .multi-sec[data-sec="geo"] .ai-outline { margin: 0; }
+.multi-modal .multi-sec[data-sec="geo"] .ai-view.is-all, .multi-modal .multi-sec[data-sec="fixkit"] .code-peek.is-all { flex-basis: auto; height: auto; }
+.multi-modal .multi-sec[data-sec="geo"] .ai-view.is-clamped:not(.is-all)::after { content: ""; position: absolute; inset: auto 0 0; height: 32px; background: linear-gradient(transparent, var(--panel-2)); pointer-events: none; }
+.multi-modal .multi-sec[data-sec="geo"] [data-part="excerpt"] > .multi-show { margin: 0 0 6px; }
 /* Crawlers: one chip each, green when it may read the site and red when it may not, grouped by role. */
 .multi-modal .multi-sec[data-sec="geo"] .bot-role { display: flex; flex-wrap: wrap; gap: 4px; }
 .multi-modal .multi-sec[data-sec="geo"] .bot-group { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-basis: 100%; margin: 10px 0 2px; }
@@ -204,7 +204,8 @@
 .multi-sec[data-sec="fixkit"] .fixkit-list .muted { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; }
 .multi-sec[data-sec="fixkit"] .fixkit-list .is-none { border-style: dashed; background: transparent; }
 .multi-sec[data-sec="fixkit"] .fixkit-list .is-none strong { color: var(--muted); font-weight: 600; }
-.multi-modal .multi-sec[data-sec="fixkit"] .code-peek { height: 200px; max-height: none; margin: 0; overflow: auto; overflow-wrap: anywhere; }
+.multi-modal .multi-sec[data-sec="fixkit"] .multi-peek { display: grid; min-width: 0; }
+.multi-modal .multi-sec[data-sec="fixkit"] .code-peek { height: 200px; max-height: none; margin: 0; overflow: hidden; overflow-wrap: anywhere; }
 /* Cases: a line of counts, then one folded group per layer. Every column holds the same groups, and the
    cells and cards are subgrids of one row track per group, so a group starts level in every column.
    A size container cannot be a subgrid, so these cells are not containers. */
@@ -258,15 +259,13 @@
 .multi-modal .multi-sec[data-sec="browser"] [data-part] > p { font-size: 12.5px; line-height: 1.45; }
 .multi-modal .multi-stack, .multi-modal .multi-stack tbody { display: block; width: 100%; }
 .multi-modal .multi-stack thead { display: none; }
-.multi-modal .multi-stack tbody { max-height: 260px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
-.multi-modal .multi-stack tbody:has(> tr:nth-child(7))::after { content: ""; position: sticky; bottom: 0; display: block; height: 28px; margin-top: -28px; background: linear-gradient(transparent, var(--look-card, var(--card)) 90%); pointer-events: none; }
 .multi-modal .multi-stack tr:not(.print-more) { display: flex; flex-wrap: wrap; gap: 3px 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
 .multi-modal .multi-stack td { flex: 1 1 5em; min-width: 0; padding: 0; border: 0; font-size: inherit; line-height: 1.4; }
 .multi-modal .multi-stack td:first-child { flex-basis: 100%; overflow-wrap: break-word; }
 .multi-modal .multi-stack td[data-th]::before { content: attr(data-th); display: block; font-size: .8em; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); hyphens: auto; overflow-wrap: anywhere; }
 .multi-modal .multi-stack tr[data-impact="critical"] td:nth-child(2) { color: var(--red); font-weight: 700; }
 .multi-modal .multi-stack tr[data-impact="serious"] td:nth-child(2) { color: var(--amber); font-weight: 700; }
-.multi-modal .multi-sec[data-sec="browser"] [data-part] .meta-line { max-height: 4.5em; overflow-y: auto; overflow-wrap: anywhere; scrollbar-width: thin; }
+.multi-modal .multi-sec[data-sec="browser"] [data-part] .meta-line { overflow-wrap: anywhere; }
 /* Search visibility: the reasons as counted chips, the first pages one per line, the notes at most three lines. */
 .multi-modal .multi-sec[data-sec="seo"] .multi-cell .stat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .multi-modal .multi-sec[data-sec="seo"] .multi-cell .stat { min-width: 0; padding: 8px 10px; }
@@ -283,7 +282,6 @@
 .multi-modal .multi-seo-pages span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; font-weight: 600; }
 .multi-modal .multi-seo-pages small, .multi-modal .multi-sec[data-sec="seo"] .multi-cell :is([data-part="notes"] > .meta-line, [data-part="unindexable"] > .muted) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; overflow-wrap: anywhere; margin: 0; }
 .multi-modal .multi-seo-pages small { -webkit-line-clamp: 2; color: var(--muted); font-size: 12px; }
-.multi-modal .multi-seo-more { margin: 0; color: var(--muted); font-size: 12px; font-style: italic; }
 @container (max-width: 200px) {
   .multi-modal .multi-sec[data-sec="seo"] .multi-cell .stat-row { grid-template-columns: minmax(0, 1fr); }
 }
@@ -340,8 +338,6 @@
 .multi-cell .sec-diff li { display: grid; gap: 1px; }
 .multi-cell .sec-diff li > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
 .multi-cell .sec-diff li small { color: var(--red); font-weight: 700; font-size: 11.5px; }
-.multi-cell .sec-more summary { margin-top: 8px; cursor: pointer; font-weight: 700; color: var(--muted); }
-.multi-cell .sec-more ol { max-height: 220px; overflow: auto; margin-top: 7px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .multi-cell .sec-meta:empty { display: none; }
 .multi-cell .sec-meta > p { margin: 0 0 6px; }
 
@@ -467,8 +463,6 @@
   body.printing-multi .multi-cell .card, body.printing-multi .multi-cell [data-slot] { max-height: none !important; overflow: visible !important; }
   /* A whole card pushed to the next page in one column would set that column a page behind the others. */
   body.printing-multi .multi-cell .card { break-inside: auto; }
-  body.printing-multi .multi-modal .multi-stack tbody, body.printing-multi .multi-modal .multi-sec[data-sec="browser"] [data-part] .meta-line { max-height: none; overflow: visible; }
-  body.printing-multi .multi-modal .multi-stack tbody::after { display: none; }
   body.printing-multi .multi-modal .multi-stack tr:not(.print-more) { font-size: 7.5pt; padding: 5px 0; }
   body.printing-multi .multi-modal .multi-sec[data-sec="browser"] [data-part] > h3 { font-size: 9.5pt; }
   body.printing-multi .multi-modal .multi-sec[data-sec="browser"] [data-part] > p { font-size: 7.5pt; }
@@ -497,7 +491,7 @@
   body.printing-multi .multi-sec[data-sec="geo"] .multi-cell { grid-row: span 5; }
   body.printing-multi .multi-sec[data-sec="geo"] .ai-view { height: auto; max-height: 15em; overflow: hidden; }
   body.printing-multi .multi-sec[data-sec="geo"] .ai-outline { max-height: none; overflow: visible; }
-  body.printing-multi .multi-sec[data-sec="geo"] .ai-outline::after { display: none; }
+  body.printing-multi .multi-sec[data-sec="geo"] .ai-view::after { display: none; }
   body.printing-multi .multi-sec[data-sec="geo"] .bot > div { white-space: normal; overflow-wrap: anywhere; }
   /* The site name above each column takes the first row. */
   body.printing-multi .multi-sec[data-sec="fixkit"] .multi-row { grid-template-rows: auto repeat(var(--kit-rows, 13), auto); }
@@ -513,8 +507,6 @@
   body.printing-multi .multi-cell :is(.sec-cov, .sec-checks), body.printing-multi .multi-cell .sec-diff ol { gap: 2px; }
   body.printing-multi .multi-cell .sec-diff { padding: 5px 6px; font-size: 7pt; }
   body.printing-multi .multi-cell .sec-diff li small { font-size: 6.5pt; }
-  body.printing-multi .multi-cell .sec-more > :not(summary) { display: none; }
-  body.printing-multi .multi-cell .sec-more summary { list-style: none; font-weight: 400; font-style: italic; color: #6b7785; }
   body.printing-multi .multi-sec[data-sec="security"] .multi-cell > .card > :not(:first-child) { margin-top: 8px; }
   body.printing-multi .multi-table th, body.printing-multi .multi-table td { padding-top: 4px; padding-bottom: 4px; }
   body.printing-multi .multi-modal, body.printing-multi .multi-table td.lead { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
