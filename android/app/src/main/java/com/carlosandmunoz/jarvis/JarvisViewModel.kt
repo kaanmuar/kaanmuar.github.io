@@ -9,6 +9,10 @@ import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.push.Push
+import com.carlosandmunoz.jarvis.voice.Heard
+import com.carlosandmunoz.jarvis.voice.Listener
+import com.carlosandmunoz.jarvis.voice.Speaker
+import com.carlosandmunoz.jarvis.voice.Voice
 import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +24,7 @@ import kotlinx.serialization.json.JsonPrimitive
 
 enum class Tab(val label: String) { Overview("Overview"), Products("Products"), Business("Business"), Traffic("Traffic"), Systems("Systems") }
 
-data class Chat(val question: String, val answer: String?, val error: Boolean = false)
+data class Chat(val question: String, val answer: String?, val error: Boolean = false, val spoken: Boolean = false)
 
 data class UiState(
     val signedIn: Boolean = false,
@@ -38,15 +42,20 @@ data class UiState(
     val chat: List<Chat> = emptyList(),
     val toast: String? = null,
     val running: Set<String> = emptySet(),
-    val push: Map<String, Boolean> = emptyMap()
+    val push: Map<String, Boolean> = emptyMap(),
+    val heard: Heard = Heard(),
+    val speaking: String? = null,
+    val speak: Boolean = true
 )
 
 class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     private val jarvis = app as JarvisApp
     private val auth = jarvis.auth
     private val api = jarvis.api
-    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp)))
+    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp), speak = Voice.speakOn(app)))
     val state: StateFlow<UiState> = _state
+    private val listener = Listener(app) { ask(it, spoken = true) }
+    private val speaker = Speaker(jarvis)
 
     /** Debug builds only: files/jarvis/fixture.json stands in for the server, for emulator screenshots without the owner login. */
     private val fixture = File(app.filesDir, "jarvis/fixture.json").takeIf { BuildConfig.DEBUG && it.exists() }
@@ -55,6 +64,8 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         if (fixture != null) _state.update { it.copy(signedIn = true, email = "fixture", snapshot = JSON.parseToJsonElement(fixture.readText()) as JsonObject, savedAt = fixture.lastModified()) }
         else if (auth.signedIn) { showSaved(); refresh(); syncPush() }
         viewModelScope.launch { Home.redraw(jarvis) }
+        viewModelScope.launch { listener.state.collect { h -> _state.update { it.copy(heard = h) } } }
+        viewModelScope.launch { speaker.speaking.collect { t -> _state.update { it.copy(speaking = t) } } }
     }
 
     fun signIn(email: String, password: String) = authStep {
@@ -138,20 +149,41 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun ask(question: String) {
+    /** Asks in the phone's language; a spoken question gets a speech-shaped answer, read aloud when "Speak answers" is on. */
+    fun ask(question: String, spoken: Boolean = false) {
         val q = question.trim()
         if (q.isEmpty()) return
-        _state.update { it.copy(chat = it.chat + Chat(q, null)) }
+        _state.update { it.copy(chat = it.chat + Chat(q, null, spoken = spoken)) }
         viewModelScope.launch {
-            val answer = runCatching { api.call("ask", _state.value.days, mapOf("question" to JsonPrimitive(q))).str("text") ?: "No answer." }
+            val extra = mapOf("question" to JsonPrimitive(q), "lang" to JsonPrimitive(Voice.lang()), "spoken" to JsonPrimitive(spoken))
+            val answer = runCatching { api.call("ask", _state.value.days, extra).str("text") ?: "No answer." }
             _state.update { s ->
                 val i = s.chat.indexOfLast { it.question == q && it.answer == null }
                 if (i < 0) s else s.copy(chat = s.chat.toMutableList().also { list ->
-                    list[i] = answer.fold({ Chat(q, it) }, { Chat(q, it.message ?: "Jarvis could not answer.", error = true) })
+                    list[i] = answer.fold({ Chat(q, it, spoken = spoken) }, { Chat(q, it.message ?: "Jarvis could not answer.", error = true, spoken = spoken) })
                 })
             }
+            answer.onSuccess { if (spoken && _state.value.speak) speak(it) }
         }
     }
+
+    fun listen() { speaker.stop(); listener.start() }
+    fun stopListening() = listener.stop()
+    fun heardShown() = listener.clearError()
+
+    /** Plays an answer, or stops it if it is the one playing. */
+    fun speak(text: String) {
+        if (_state.value.speaking == text) { speaker.stop(); return }
+        viewModelScope.launch { runCatching { speaker.say(text) }.onFailure { e -> fail(e) { it.copy(toast = e.message ?: "Could not speak.") } } }
+    }
+
+    fun setSpeak(on: Boolean) {
+        Voice.setSpeak(jarvis, on)
+        if (!on) speaker.stop()
+        _state.update { it.copy(speak = on) }
+    }
+
+    override fun onCleared() { listener.stop(); speaker.stop() }
 
     /** An action op (run-job, unlist, email-briefing, daily-now, send-report); the reply becomes a toast. */
     fun act(key: String, op: String, extra: Map<String, JsonElement> = emptyMap(), done: (JsonObject) -> String) {

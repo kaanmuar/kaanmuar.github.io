@@ -4854,7 +4854,10 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
     const record = Object.assign(urlReview.intakeRecord(value, report, {}), { source: "jarvis", paid: true, free: true, priceUsd: 0 });
     await db.collection("url_reviews").doc(record.id).set(record);
     await countReviewed(record.report);
-    const link = customerMail.pageUrl(value.lang, { report: record.id });
+    const linkUrl = new URL(customerMail.pageUrl(value.lang, { report: record.id }));
+    linkUrl.searchParams.set("utm_source", "jarvis");
+    linkUrl.searchParams.set("utm_medium", "push");
+    const link = linkUrl.toString();
     const push = await jarvisPush.send(admin.messaging(), db, tokens, jarvisReview.doneMessage(report, link));
     const score = report.insights && report.insights.score ? report.insights.score.overall : null;
     await snap.ref.update({ status: "done", reportId: record.id, score: score == null ? null : score, link, push, doneAt: new Date().toISOString() });
@@ -5021,7 +5024,8 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     else if (op === "speed") out = await jarvisCached(op, 0, () => jarvis.speed(urlReview, env));
     else if (op === "uptime") out = await jarvisCached(op, 0, () => jarvis.uptime(fetch, { now }));
     else if (op === "brief") out = await jarvis.brief(fetch, env, body.snapshot || await appAskSnapshot());
-    else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot || await appAskSnapshot());
+    else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot || await appAskSnapshot(), { lang: body.lang, spoken: body.spoken === true });
+    else if (op === "speak") out = await jarvis.speak(fetch, body.text, body.lang);
     else if (op === "run-job") out = await jarvis.runJob(fetch, body.job);
     else if (op === "settings") out = await jarvis.readSettings(admin.firestore());
     else if (op === "settings-save") {
