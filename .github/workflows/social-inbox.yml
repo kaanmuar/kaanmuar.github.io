@@ -97,7 +97,7 @@ jobs:
         env:
           BATCH: ${{ steps.batch.outputs.batch }}
         run: |
-          gh release create "$BATCH" media/social-posts/$BATCH/clip/*.mp4 --target main --latest=false \
+          gh release create "$BATCH" "media/social-posts/$BATCH"/clip/*.mp4 --target main --latest=false \
             --title "Social inbox $BATCH" --notes "TikTok and YouTube clip shared from Jarvis. Posted through Buffer."
 
       - name: Wait for the hub page
@@ -106,7 +106,7 @@ jobs:
           SLUG: ${{ steps.batch.outputs.slug }}
         run: |
           url="https://carlosandmunoz.com/social/$BATCH/$SLUG.html"
-          for i in $(seq 1 40); do
+          for _ in $(seq 1 40); do
             [ "$(curl -s -o /dev/null -w '%{http_code}' -I "$url")" = "200" ] && { echo "Live: $url"; exit 0; }
             sleep 30
           done
