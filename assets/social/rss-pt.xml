@@ -5,9 +5,155 @@
     <link>https://carlosandmunoz.com/qa-review-social-pt.html</link>
     <description>Cada publicação do QA-lab URL Review: dicas, análises reais de sites e clipes curtos.</description>
     <language>pt</language>
-    <lastBuildDate>Sun, 25 Oct 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 26 Oct 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-pt.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-pt.html</link></image>
+    <item>
+      <title>telegram.com: 61. A lacuna: Acesso de crawlers de IA.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-22/04-u-telegram-com-pt.html</link>
+      <guid isPermaLink="false">auto-2026-10-22/04-u-telegram-com-pt</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Toda página tem título, e os crawlers de treinamento de modelos são bloqueados por escolha. Mas 10 crawlers de busca ou de respostas de IA estão bloqueados.
+
+A lição para toda equipe: Decida bot a bot no robots.txt: libere os motores de resposta pelos quais você quer ser citado e bloqueie só os crawlers de treinamento.
+
+Uma análise automatizada de páginas públicas em 21 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-telegram-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-telegram-com
+
+#GEO #AISearch #RobotsTxt #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/04-u-telegram-com.jpg" length="209242" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/04-u-telegram-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>monsterenergy.com: 71. A lacuna: nomes de links.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-23/03-u-monsterenergy-com-pt.html</link>
+      <guid isPermaLink="false">auto-2026-10-23/03-u-monsterenergy-com-pt</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os links precisam ter texto discernível.
+
+A lição para toda equipe: Dê a todo link um texto que diga para onde ele leva. Um ícone sozinho precisa de um aria-label.
+
+Uma análise automatizada de páginas públicas em 22 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-monsterenergy-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-monsterenergy-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #A11y #WebDev #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg" length="208322" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>colombia.com: 64. A lacuna: JSON-LD.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-24/02-u-colombia-com-pt.html</link>
+      <guid isPermaLink="false">auto-2026-10-24/02-u-colombia-com-pt</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 2 blocos JSON-LD não fazem parse.
+
+A lição para toda equipe: Valide cada bloco JSON-LD após cada release. Uma vírgula perdida esconde tudo isso.
+
+Uma análise automatizada de páginas públicas em 23 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-colombia-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-colombia-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#StructuredData #Automation #SoftwareTesting #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg" length="197965" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>kemik.gt: 77. A lacuna: Acesso de crawlers de IA.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-25/01-u-kemik-gt-pt.html</link>
+      <guid isPermaLink="false">auto-2026-10-25/01-u-kemik-gt-pt</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>National</category>
+      <description>Toda página tem título, e os crawlers de treinamento de modelos são bloqueados por escolha. Mas 4 crawlers de busca ou de respostas de IA estão bloqueados.
+
+A lição para toda equipe: Decida bot a bot no robots.txt: libere os motores de resposta pelos quais você quer ser citado e bloqueie só os crawlers de treinamento.
+
+Uma análise automatizada de páginas públicas em 24 out. 2026, um dos sites mais visitados do seu país, da varredura por país do QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-kemik-gt
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#GEO #AI #SoftwareTesting #QA #AISearch #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg" length="203850" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Berlim ou Viena: qual portal de cidade teve a nota mais alta?</title>
+      <link>https://carlosandmunoz.com/social/compare-2026-11/01-quiz-berlin-vienna-pt.html</link>
+      <guid isPermaLink="false">compare-2026-11/01-quiz-berlin-vienna-pt</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Quiz</category>
+      <category>Local</category>
+      <description>Dois portais de capitais, 20 páginas cada, analisados pela mesma revisão de páginas públicas em outubro de 2026. Um deles lidera por um único ponto.
+
+Seu palpite: Dê seu palpite. A resposta, com as notas das seis áreas, sai amanhã.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=quiz-berlin-vienna
+
+#WebQuality #Playwright #AI #QA #Quiz #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg" length="209057" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Todas as publicações, uma só página.</title>
+      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/03-one-page-pt.html</link>
+      <guid isPermaLink="false">promo-social-hub-2026-10/03-one-page-pt</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Produto</category>
+      <category>Social</category>
+      <description>Dicas, análises reais de sites e clipes curtos do YouTube, TikTok, LinkedIn, X e Facebook, juntos em um feed pesquisável.
+
+Experimente: Abra o hub e filtre por dicas, análises de sites ou vídeos.
+
+Todas as publicações, em um só lugar: https://carlosandmunoz.com/qa-review-social-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=one-page-pt
+
+#SocialMedia #OpenSource #Programming #QA #WebDev #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/03-one-page-pt.jpg" length="185447" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/03-one-page-pt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Dê tamanho às imagens. Acabe com o salto.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/01-img-size-pt.html</link>
+      <guid isPermaLink="false">tips-2026-10/01-img-size-pt</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Dica</category>
+      <category>Perf</category>
+      <description>Quando uma imagem não tem width e height, a página pula enquanto carrega. Esse deslocamento é medido, e os visitantes sentem.
+
+Experimente hoje: Procure nos seus templates &lt;img sem width. Adicione o tamanho intrínseco a cada uma.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=img-size
+
+#WebPerformance #CLS #CoreWebVitals #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg" length="179623" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Dia de release: a página continua certa?</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-pt.html</link>
+      <guid isPermaLink="false">tips-2026-10/02-release-day-pt</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Dica</category>
+      <category>QA</category>
+      <description>Builds verdes e smoke tests passando não dizem se a página pública ainda tem título, card de compartilhamento e banner de consentimento.
+
+Experimente hoje: Inclua uma checagem de cinco minutos das páginas públicas no checklist de release, após o deploy e antes do anúncio.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=release-day
+
+#QA #ReleaseManagement #DevOps #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" length="196736" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>whatsapp.com: 67. A lacuna: hreflang.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/03-u-whatsapp-com-pt.html</link>
