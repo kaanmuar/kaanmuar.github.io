@@ -333,6 +333,90 @@ test('in print a long list stops after twelve rows with a line counting the rest
   expect(seen.pdf[0]).toContain('<tr class="print-more">');
 });
 
+// A browser pass with many trackers, long cookie domains, and axe rules on five long paths.
+function busyBrowser() {
+  const b = JSON.parse(JSON.stringify(sample.report.browser));
+  const tools = ['Google Tag Manager', 'Google Analytics 4', 'Meta Pixel', 'Hotjar', 'LinkedIn Insight Tag', 'TikTok Pixel', 'Microsoft Clarity', 'Google Ads Conversion Tracking', 'Bing Universal Event Tracking'];
+  const cookies = (n) => Array.from({ length: n }, (_, i) => ({ name: '_ga_LONGCOOKIENAME' + i, domain: '.analytics-collector-' + i + '.very-long-third-party-domain.example.com', third: true }));
+  b.consent = {
+    banner: 'OneTrust', rejectLabel: 'Rechazar todas las cookies opcionales', rejected: true,
+    before: { vendors: tools.map((name, i) => ({ name, loads: 1, hits: 3 + i, denied: i % 2, signals: [] })), cookies: cookies(9), cookieCount: 9 },
+    after: { vendors: tools.slice(0, 5).map((name, i) => ({ name, loads: 1, hits: i, denied: 2, signals: [] })), cookies: cookies(4), kept: 4 }
+  };
+  const watch = { fingerprint: { canvas: ['fp.cdn-fingerprinting-service-hostname.example.net'], fonts: ['fonts.tracking-provider.example.org'] }, recorders: [{ name: 'Hotjar', sent: true }, { name: 'FullStory', sent: false }], typed: { sent: [{ host: 'collect.marketing-automation-platform.example.com' }] }, guards: [] };
+  b.watch = { before: watch, after: watch };
+  const paths = ['/', '/servicios/consultoria-de-aseguramiento-de-calidad-para-equipos-distribuidos.html', '/blog/2026/10/como-escribir-pruebas-de-extremo-a-extremo-que-no-fallan.html', '/contacto-y-solicitud-de-cotizacion-para-empresas.html', '/sobre-nosotros/equipo-y-certificaciones-profesionales.html'];
+  const rules = ['color-contrast', 'landmark-complementary-is-top-level', 'scrollable-region-focusable', 'aria-allowed-attr', 'nested-interactive', 'link-in-text-block', 'image-alt', 'button-name', 'label-content-name-mismatch', 'heading-order', 'region', 'list'];
+  const impacts = ['critical', 'serious', 'moderate', 'minor'];
+  b.axe = { ran: true, version: '4.14.0', tags: ['wcag2a'], pages: paths.map((path, p) => ({ path, violations: rules.slice(p, p + 8).map((id, i) => ({ id, impact: impacts[(i + p) % 4], help: 'Elements must meet the rule ' + id + ' so assistive technology users can use them', helpUrl: 'https://dequeuniversity.com/rules/axe/4.14/' + id + '?application=axeAPI', nodes: 2 + i * 3 })) })) };
+  b.pages = paths.slice(1).map((path, i) => ({ path, status: 200, renderedWords: 1200 + i * 300, rawWords: 100 + i * 40, share: 8 + i * 5, errors: 0 }));
+  return b;
+}
+
+test('the "In a real browser" cells fit their column, read in the same order, and stay short when six sites sit side by side (#1604)', async ({ page, browser }) => {
+  if (process.env.MULTI_SHOT) test.setTimeout(240000);
+  await page.setViewportSize({ width: 1024, height: 900 });
+  const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) =>
+    ({ id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, sample.report, { id, host: 'site' + (index + 4) + '.example', browser: busyBrowser() }) })));
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', seen);
+  const sec = page.locator('#multi-overlay .multi-sec[data-sec="browser"]');
+  await expect(sec.locator('.multi-cell')).toHaveCount(6, { timeout: 20000 });
+  if (process.env.MULTI_SHOT) {
+    for (const [width, dark] of [[1024, false], [1024, true], [1440, false], [1440, true]]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.evaluate((on) => { if (document.documentElement.classList.contains('dark-mode') !== on) document.querySelector('#theme-toggle').click(); }, dark);
+      await sec.locator('.multi-cell').nth(3).locator('.split').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+      await page.screenshot({ path: process.env.MULTI_SHOT + '/browser-' + width + (dark ? '-dark' : '') + '.png' });
+      await sec.locator('.multi-cell').nth(3).locator('[data-part="axe"]').evaluate((el) => el.scrollIntoView({ block: 'start' })).catch(() => {});
+      await page.screenshot({ path: process.env.MULTI_SHOT + '/browser-axe-' + width + (dark ? '-dark' : '') + '.png' });
+    }
+    await page.evaluate(() => { if (document.documentElement.classList.contains('dark-mode')) document.querySelector('#theme-toggle').click(); });
+    await page.evaluate(() => document.body.classList.add('printing-multi'));
+    await page.emulateMedia({ media: 'print' });
+    await page.pdf({ path: process.env.MULTI_SHOT + '/browser-print.pdf', preferCSSPageSize: true, printBackground: true });
+    await page.emulateMedia({ media: 'screen' });
+    await page.evaluate(() => document.body.classList.remove('printing-multi'));
+    await page.setViewportSize({ width: 1024, height: 900 });
+  }
+
+  const spill = await sec.locator('.multi-cell').evaluateAll((cells) => cells.flatMap((cell) => {
+    const box = cell.getBoundingClientRect();
+    return [...cell.querySelectorAll('*')].filter((el) => el.getClientRects().length).map((el) => {
+      const r = el.getBoundingClientRect();
+      return { what: cell.dataset.host + ' ' + el.tagName + '.' + el.className + ' ' + el.textContent.slice(0, 40), over: Math.max(r.right - box.right, box.left - r.left, el.scrollWidth - el.clientWidth - (getComputedStyle(el).overflowX === 'visible' ? Infinity : 0)) };
+    }).filter((row) => row.over > 1);
+  }));
+  expect(spill).toEqual([]);
+  for (const index of [2, 3, 4, 5]) {
+    await expect(sec.locator('.multi-cell').nth(index).locator('[data-part]')).toHaveCount(3);
+    expect(await sec.locator('.multi-cell').nth(index).locator('[data-part]').evaluateAll((els) => els.map((el) => el.dataset.part))).toEqual(['tracking', 'text', 'axe']);
+  }
+  const tallest = await sec.locator('.multi-cell').evaluateAll((cells) => Math.max(...cells.map((cell) => [...cell.querySelectorAll('[data-part]')].reduce((sum, el) => sum + el.offsetHeight, 0))));
+  expect(tallest).toBeLessThan(1800);
+
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  const printed = sec.locator('.multi-cell').nth(3).locator('[data-part="axe"] tbody tr:visible');
+  expect(await printed.count()).toBeLessThanOrEqual(7);
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+  const download = page.waitForEvent('download');
+  await page.locator('#multi-overlay').getByRole('button', { name: 'Download PDF' }).click();
+  await download;
+  expect(seen.pdf[0]).toContain('data-part="axe"');
+  const off = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1047, height: 1400 } });
+  const pdf = await off.newPage();
+  await pdf.setContent(seen.pdf[0]);
+  await pdf.emulateMedia({ media: 'print' });
+  const axe = pdf.locator('.multi-sec[data-sec="browser"] .multi-cell').nth(3).locator('[data-part="axe"]');
+  expect(await axe.locator('tbody tr:visible').count()).toBeLessThanOrEqual(7);
+  await expect(axe.locator('tbody tr:visible').last()).toHaveText(/^…and \d+ more/);
+  expect(await axe.locator('tbody tr').first().evaluate((row) => getComputedStyle(row).display)).toBe('flex');
+  if (process.env.MULTI_SHOT) await pdf.locator('.multi-sec[data-sec="browser"]').screenshot({ path: process.env.MULTI_SHOT + '/browser-pdf.png' });
+  await off.close();
+});
+
 test('the benchmark ranks every site by its health score and reads where the first site stands, on the page and in the PDF (#1438)', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);

@@ -337,13 +337,29 @@
   // In print a long list stops after PRINT_ROWS with a line counting the rest, as the screen stops it in a
   // scroll box, so one long column does not leave the others blank for pages.
   const PRINT_ROWS = 12;
+  const PRINT_ROWS_BROWSER = 6;
   function capForPrint(grid) {
-    grid.querySelectorAll('[data-slot="pages"], [data-slot="report-log"]').forEach((list) => {
+    const lists = [...grid.querySelectorAll('[data-slot="pages"], [data-slot="report-log"]')].map((list) => [list, PRINT_ROWS])
+      .concat([...grid.querySelectorAll('.multi-sec[data-sec="browser"] [data-part] tbody')].map((list) => [list, PRINT_ROWS_BROWSER]));
+    lists.forEach(([list, max]) => {
       const rows = [...list.children].filter((row) => !row.hidden);
-      if (rows.length <= PRINT_ROWS) return;
-      rows.slice(PRINT_ROWS).forEach((row) => row.classList.add("print-cut"));
-      const text = esc(t("more", { n: rows.length - PRINT_ROWS }));
-      list.insertAdjacentHTML("beforeend", list.tagName === "TBODY" ? '<tr class="print-more"><td colspan="4">' + text + "</td></tr>" : '<li class="print-more">' + text + "</li>");
+      if (rows.length <= max) return;
+      rows.slice(max).forEach((row) => row.classList.add("print-cut"));
+      const text = esc(t("more", { n: rows.length - max }));
+      const span = list.tagName === "TBODY" ? list.closest("table").querySelectorAll("thead th").length || 4 : 0;
+      list.insertAdjacentHTML("beforeend", span ? '<tr class="print-more"><td colspan="' + span + '">' + text + "</td></tr>" : '<li class="print-more">' + text + "</li>");
+    });
+  }
+
+  // A browser-pass table in a column stacks each row: its first cell on a line of its own, the rest side by side
+  // under their column's heading, so no word is split to fit a column a few letters wide.
+  function stackTables(grid) {
+    grid.querySelectorAll('.multi-sec[data-sec="browser"] [data-part] table').forEach((table) => {
+      const heads = [...table.querySelectorAll("thead th")].map((th) => th.textContent.trim());
+      table.classList.add("multi-stack");
+      table.querySelectorAll("tbody tr").forEach((row) => [...row.children].forEach((cell, index) => {
+        if (index && heads[index]) cell.setAttribute("data-th", heads[index]);
+      }));
     });
   }
 
@@ -427,6 +443,7 @@
     });
     grid.querySelectorAll(".report-cover h2").forEach((heading) => { heading.innerHTML = esc(heading.textContent).replace(/\./g, ".<wbr>"); });
     settle(grid);
+    stackTables(grid);
     capForPrint(grid);
     const bar = body.querySelector(".multi-hosts-bar");
     grid.addEventListener("scroll", () => { bar.scrollLeft = grid.scrollLeft; }, { passive: true });
