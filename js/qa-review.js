@@ -896,7 +896,7 @@
   }
 
   function verdictBadge(verdict, severity) {
-    if (!verdict) return '<span class="badge">Proposed</span>';
+    if (!verdict) return '<span class="badge">' + esc(rc.t("caseProposed")) + "</span>";
     return '<span class="badge v-' + esc(verdict) + '">' + esc(VERDICT_LABEL[verdict] || verdict) + "</span>" +
       (severity && severity !== "info" ? '<span class="badge">' + esc(severity) + "</span>" : "");
   }
@@ -2480,7 +2480,7 @@
     const layers = Object.entries(counts.byLayer || {});
     const max = Math.max.apply(null, layers.map((pair) => pair[1]).concat([1]));
     slot("layers").innerHTML = layers.length ? layers.map(([name, count]) =>
-      '<div class="bar-row"><span>' + esc(name) + '</span><div class="bar"><i style="width:' + Math.round(count / max * 100) + '%"></i></div><span>' + count + "</span></div>"
+      '<div class="bar-row"><span>' + esc(layerName(name)) + '</span><div class="bar"><i style="width:' + Math.round(count / max * 100) + '%"></i></div><span>' + count + "</span></div>"
     ).join("") : '<p class="muted">No layer counts were saved.</p>';
     const tech = slot("tech");
     const technologies = report.technologies || [];
@@ -2515,6 +2515,10 @@
     return layers;
   }
 
+  function layerName(name) {
+    return rc.word("caseLayer", name, name);
+  }
+
   // The layers of the cases of every report, in CASE_LAYERS order and then by name, so every column of a
   // comparison lists the same groups in the same order.
   function caseGroups(reports) {
@@ -2545,7 +2549,7 @@
   function columnCase(item, paid) {
     const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '">' + esc(item.priority) + "</span>" : "";
     const why = String(fc.line(item.msg && item.msg.why, item.why) || "");
-    return '<li class="case" data-id="' + esc(item.id) + '"><div class="cases-chips">' + prio + '<span class="id">' + esc(item.id) + '</span><span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div>" +
+    return '<li class="case" data-id="' + esc(item.id) + '"><div class="cases-chips">' + prio + '<span class="id">' + esc(item.id) + '</span><span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : esc(rc.t("caseProposed"))) + "</span></div>" +
       "<strong>" + fadeText(fc.line(item.msg && item.msg.title, item.title), paid) + "</strong>" +
       (why ? '<p class="muted cases-why">' + (paid ? codeText(why) : fadeText(why, false)) + "</p>" +
         (why.length > 110 ? '<button class="cases-more no-print" type="button" aria-expanded="false">' + esc(rc.t("caseMore")) + "</button>" : "") : "") + "</li>";
@@ -2569,7 +2573,7 @@
       (groups || caseGroups([report])).map((name) => {
         const items = cases.filter((item) => item.layer === name).sort(byCaseRank);
         return '<section class="cases-group' + (items.length ? "" : " is-none") + '" data-group="' + esc(name) + '"><h3><button class="cases-toggle" type="button" aria-expanded="false"' + (items.length ? "" : " disabled") + '>' +
-          '<span class="cases-name">' + esc(name) + '</span><span class="cases-n">' + items.length + "</span></button></h3>" +
+          '<span class="cases-name">' + esc(layerName(name)) + '</span><span class="cases-n">' + items.length + "</span></button></h3>" +
           (items.length ? '<ol class="cases-list" hidden>' + items.map((item) => columnCase(item, paid)).join("") + "</ol>" : "") + "</section>";
       }).join("");
   }
@@ -2636,7 +2640,7 @@
     paintCredential(payload);
     const names = ["All"].concat(layers.map((pair) => pair[0]));
     document.getElementById("layer-filters").innerHTML = names.map((name) =>
-      '<button type="button" data-layer="' + esc(name) + '"' + (name === layer ? ' class="on"' : "") + ">" + esc(name) + "</button>"
+      '<button type="button" data-layer="' + esc(name) + '"' + (name === layer ? ' class="on"' : "") + ">" + esc(name === "All" ? name : layerName(name)) + "</button>"
     ).join("");
     document.getElementById("layer-filters").onclick = (event) => {
       const button = event.target.closest("button");
@@ -2674,7 +2678,7 @@
       const tools = item.fw.filter((fw) => picked.has(fw)).map(fwName).concat(extra.map(fwName)).join("");
       const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '" title="Risk ' + esc(item.risk) + ' of 100">' + esc(item.priority) + "</span>" : "";
       const where = (item.pages || []).length > 1 ? '<p class="muted case-pages">Pages: ' + esc(item.pages.slice(0, 6).join(", ") + (item.pages.length > 6 ? " and " + (item.pages.length - 6) + " more" : "")) + "</p>" : "";
-      return '<article class="case"><div>' + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div><strong>" + fadeText(fc.line(item.msg && item.msg.title, item.title), paid) + '</strong><p class="muted">' + fadeText(fc.line(item.msg && item.msg.why, item.why), paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
+      return '<article class="case"><div>' + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(layerName(item.layer)) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : esc(rc.t("caseProposed"))) + "</span></div><strong>" + fadeText(fc.line(item.msg && item.msg.title, item.title), paid) + '</strong><p class="muted">' + fadeText(fc.line(item.msg && item.msg.why, item.why), paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
     }).join("") || '<p class="muted">No proposed case matches this filter.</p>';
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
@@ -3945,7 +3949,7 @@
     const counts = layerCounts(current && current.report);
     const host = document.getElementById("case-layers");
     const names = CASE_LAYERS.filter((name) => counts[name]);
-    host.innerHTML = names.map((name) => '<label><span><input type="checkbox" name="case-layer" value="' + esc(name) + '" checked> ' + esc(name) + '</span><small>' + counts[name] + "</small></label>").join("");
+    host.innerHTML = names.map((name) => '<label><span><input type="checkbox" name="case-layer" value="' + esc(name) + '" checked> ' + esc(layerName(name)) + '</span><small>' + counts[name] + "</small></label>").join("");
     const all = document.getElementById("case-select-all");
     all.checked = names.length > 0;
     all.disabled = !names.length;

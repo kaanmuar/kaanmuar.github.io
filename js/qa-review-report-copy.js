@@ -120,6 +120,8 @@
       adSnap: "This is a snapshot", adSnapBody: "The review does not certify that the site is safe, fast, or compliant.", coverCases_one: "{n} proposed case",
       coverCases_other: "{n} proposed cases",
       techGroup: { CMS: "CMS", Commerce: "Commerce", Platform: "Platform", "Site builder": "Site builder", Framework: "Framework", Library: "Library", CSS: "CSS", Analytics: "Analytics", Fonts: "Fonts", Payments: "Payments", "Bot check": "Bot check", Marketing: "Marketing", Support: "Support", Monitoring: "Monitoring", Edge: "Edge", CDN: "CDN", Server: "Server", Runtime: "Runtime", Host: "Host", "AI chatbot": "AI chatbot", Chat: "Chat", Other: "Other" },
+      caseLayer: { Functional: "Functional", Content: "Content", Links: "Links", Accessibility: "Accessibility", Security: "Security", Privacy: "Privacy", SEO: "SEO", GEO: "GEO", Performance: "Performance", Load: "Load", Mobile: "Mobile", Internationalization: "Internationalization", Resilience: "Resilience", Compatibility: "Compatibility", Media: "Media", Analytics: "Analytics", Commerce: "Commerce", Forms: "Forms", Visual: "Visual", Platform: "Platform", API: "API" },
+      caseProposed: "Proposed",
       errors: {
         pickTwo: "Pick at least two of your reviews to compare.", tooMany: "Compare up to {max} reviews at a time.",
         reviewsNotSaved: "One of those reviews is not saved under this account.", reviewNotSaved: "That review is not saved under this account.",
@@ -247,6 +249,8 @@
       adSnap: "Es una instantánea", adSnapBody: "La revisión no certifica que el sitio sea seguro, rápido ni que cumpla la normativa.", coverCases_one: "{n} caso propuesto",
       coverCases_other: "{n} casos propuestos",
       techGroup: { CMS: "CMS", Commerce: "Comercio", Platform: "Plataforma", "Site builder": "Creador de sitios", Framework: "Framework", Library: "Biblioteca", CSS: "CSS", Analytics: "Analítica", Fonts: "Fuentes", Payments: "Pagos", "Bot check": "Verificación de bots", Marketing: "Marketing", Support: "Soporte", Monitoring: "Monitoreo", Edge: "Edge", CDN: "CDN", Server: "Servidor", Runtime: "Entorno de ejecución", Host: "Hosting", "AI chatbot": "Chatbot de IA", Chat: "Chat", Other: "Otros" },
+      caseLayer: { Functional: "Funcional", Content: "Contenido", Links: "Enlaces", Accessibility: "Accesibilidad", Security: "Seguridad", Privacy: "Privacidad", SEO: "SEO", GEO: "GEO", Performance: "Rendimiento", Load: "Carga", Mobile: "Móvil", Internationalization: "Internacionalización", Resilience: "Resiliencia", Compatibility: "Compatibilidad", Media: "Multimedia", Analytics: "Analítica", Commerce: "Comercio", Forms: "Formularios", Visual: "Visual", Platform: "Plataforma", API: "API" },
+      caseProposed: "Propuesto",
       errors: {
         pickTwo: "Elige al menos dos de tus revisiones para compararlas.", tooMany: "Compara hasta {max} revisiones a la vez.",
         reviewsNotSaved: "Una de esas revisiones no está guardada en esta cuenta.", reviewNotSaved: "Esa revisión no está guardada en esta cuenta.",
@@ -375,6 +379,8 @@
       adSnap: "Isto é um retrato do momento", adSnapBody: "A revisão não certifica que o site é seguro, rápido ou que está em conformidade.", coverCases_one: "{n} caso proposto",
       coverCases_other: "{n} casos propostos",
       techGroup: { CMS: "CMS", Commerce: "Comércio", Platform: "Plataforma", "Site builder": "Criador de sites", Framework: "Framework", Library: "Biblioteca", CSS: "CSS", Analytics: "Análise", Fonts: "Fontes", Payments: "Pagamentos", "Bot check": "Verificação de bots", Marketing: "Marketing", Support: "Suporte", Monitoring: "Monitoramento", Edge: "Edge", CDN: "CDN", Server: "Servidor", Runtime: "Ambiente de execução", Host: "Hospedagem", "AI chatbot": "Chatbot de IA", Chat: "Chat", Other: "Outros" },
+      caseLayer: { Functional: "Funcional", Content: "Conteúdo", Links: "Links", Accessibility: "Acessibilidade", Security: "Segurança", Privacy: "Privacidade", SEO: "SEO", GEO: "GEO", Performance: "Desempenho", Load: "Carga", Mobile: "Celular", Internationalization: "Internacionalização", Resilience: "Resiliência", Compatibility: "Compatibilidade", Media: "Mídia", Analytics: "Análise", Commerce: "Comércio", Forms: "Formulários", Visual: "Visual", Platform: "Plataforma", API: "API" },
+      caseProposed: "Proposto",
       errors: {
         pickTwo: "Escolha pelo menos duas das suas revisões para comparar.", tooMany: "Compare até {max} revisões de cada vez.",
         reviewsNotSaved: "Uma dessas revisões não está salva nesta conta.", reviewNotSaved: "Essa revisão não está salva nesta conta.",
@@ -502,6 +508,8 @@
       adSnap: "Dies ist eine Momentaufnahme", adSnapBody: "Die Prüfung bescheinigt nicht, dass die Website sicher, schnell oder konform ist.", coverCases_one: "{n} vorgeschlagener Fall",
       coverCases_other: "{n} vorgeschlagene Fälle",
       techGroup: { CMS: "CMS", Commerce: "Shop", Platform: "Plattform", "Site builder": "Baukasten", Framework: "Framework", Library: "Bibliothek", CSS: "CSS", Analytics: "Analyse", Fonts: "Schriften", Payments: "Zahlungen", "Bot check": "Bot-Prüfung", Marketing: "Marketing", Support: "Support", Monitoring: "Monitoring", Edge: "Edge", CDN: "CDN", Server: "Server", Runtime: "Laufzeit", Host: "Hosting", "AI chatbot": "KI-Chatbot", Chat: "Chat", Other: "Sonstiges" },
+      caseLayer: { Functional: "Funktion", Content: "Inhalt", Links: "Links", Accessibility: "Barrierefreiheit", Security: "Sicherheit", Privacy: "Datenschutz", SEO: "SEO", GEO: "GEO", Performance: "Leistung", Load: "Last", Mobile: "Mobil", Internationalization: "Internationalisierung", Resilience: "Ausfallsicherheit", Compatibility: "Kompatibilität", Media: "Medien", Analytics: "Analyse", Commerce: "Shop", Forms: "Formulare", Visual: "Darstellung", Platform: "Plattform", API: "API" },
+      caseProposed: "Vorgeschlagen",
       errors: {
         pickTwo: "Wählen Sie mindestens zwei Ihrer Prüfungen zum Vergleichen.", tooMany: "Vergleichen Sie bis zu {max} Prüfungen auf einmal.",
         reviewsNotSaved: "Eine dieser Prüfungen ist nicht unter diesem Konto gespeichert.", reviewNotSaved: "Diese Prüfung ist nicht unter diesem Konto gespeichert.",
@@ -628,6 +636,8 @@
       adSnap: "Ceci est un instantané", adSnapBody: "L’analyse ne certifie pas que le site est sûr, rapide ou conforme.", coverCases_one: "{n} cas proposé",
       coverCases_other: "{n} cas proposés",
       techGroup: { CMS: "CMS", Commerce: "Commerce", Platform: "Plateforme", "Site builder": "Créateur de sites", Framework: "Framework", Library: "Bibliothèque", CSS: "CSS", Analytics: "Mesure d’audience", Fonts: "Polices", Payments: "Paiements", "Bot check": "Contrôle anti-bot", Marketing: "Marketing", Support: "Support", Monitoring: "Supervision", Edge: "Edge", CDN: "CDN", Server: "Serveur", Runtime: "Environnement d’exécution", Host: "Hébergement", "AI chatbot": "Chatbot IA", Chat: "Chat", Other: "Autres" },
+      caseLayer: { Functional: "Fonctionnel", Content: "Contenu", Links: "Liens", Accessibility: "Accessibilité", Security: "Sécurité", Privacy: "Confidentialité", SEO: "SEO", GEO: "GEO", Performance: "Performance", Load: "Charge", Mobile: "Mobile", Internationalization: "Internationalisation", Resilience: "Résilience", Compatibility: "Compatibilité", Media: "Médias", Analytics: "Mesure d’audience", Commerce: "Commerce", Forms: "Formulaires", Visual: "Visuel", Platform: "Plateforme", API: "API" },
+      caseProposed: "Proposé",
       errors: {
         pickTwo: "Choisissez au moins deux de vos analyses à comparer.", tooMany: "Comparez jusqu’à {max} analyses à la fois.",
         reviewsNotSaved: "L’une de ces analyses n’est pas enregistrée sous ce compte.", reviewNotSaved: "Cette analyse n’est pas enregistrée sous ce compte.",
@@ -756,6 +766,8 @@
       adSnap: "È un’istantanea", adSnapBody: "La revisione non certifica che il sito sia sicuro, veloce o conforme.", coverCases_one: "{n} caso proposto",
       coverCases_other: "{n} casi proposti",
       techGroup: { CMS: "CMS", Commerce: "E-commerce", Platform: "Piattaforma", "Site builder": "Costruttore di siti", Framework: "Framework", Library: "Libreria", CSS: "CSS", Analytics: "Analisi", Fonts: "Font", Payments: "Pagamenti", "Bot check": "Controllo anti-bot", Marketing: "Marketing", Support: "Assistenza", Monitoring: "Monitoraggio", Edge: "Edge", CDN: "CDN", Server: "Server", Runtime: "Runtime", Host: "Hosting", "AI chatbot": "Chatbot IA", Chat: "Chat", Other: "Altro" },
+      caseLayer: { Functional: "Funzionale", Content: "Contenuti", Links: "Link", Accessibility: "Accessibilità", Security: "Sicurezza", Privacy: "Privacy", SEO: "SEO", GEO: "GEO", Performance: "Prestazioni", Load: "Carico", Mobile: "Mobile", Internationalization: "Internazionalizzazione", Resilience: "Resilienza", Compatibility: "Compatibilità", Media: "Media", Analytics: "Analisi", Commerce: "E-commerce", Forms: "Moduli", Visual: "Visivo", Platform: "Piattaforma", API: "API" },
+      caseProposed: "Proposto",
       errors: {
         pickTwo: "Scegli almeno due delle tue revisioni da confrontare.", tooMany: "Confronta fino a {max} revisioni alla volta.",
         reviewsNotSaved: "Una di quelle revisioni non è salvata in questo account.", reviewNotSaved: "Quella revisione non è salvata in questo account.",

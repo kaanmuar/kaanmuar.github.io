@@ -1411,6 +1411,19 @@ test('the benchmark speaks the language of the review page (#1438)', async ({ pa
   await expect(bench.locator('.bench-kpis > h3')).toHaveText('Velocidad, peso y otros indicadores');
 });
 
+test('the case layers and the Proposed tag of the comparison read in the page language (#1647)', async ({ page }) => {
+  await signIn(page, recordsWith(true), '/qa-review-fr.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const cases = page.locator('#multi-overlay .multi-sec[data-sec="cases"]');
+  await expect(cases.locator('.cases-group').first()).toBeAttached({ timeout: 20000 });
+  const names = await cases.locator('.multi-cell[data-col="2"] .cases-name').allTextContents();
+  expect(names).toEqual(expect.arrayContaining(['Accessibilité', 'Sécurité', 'Confidentialité', 'Fonctionnel']));
+  expect(names).not.toContain('Accessibility');
+  await expect(cases.locator('.multi-cell[data-col="2"] .cases-group[data-group="Security"] .cases-name')).toHaveText('Sécurité');
+  const tags = await cases.locator('.case .tag').allTextContents();
+  expect(tags).toContain('Proposé');
+  expect(tags).not.toContain('Proposed');
+});
+
 test('an unpaid report in the comparison comes blurred and locks Print and Download PDF behind its payment', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(false), '/qa-review.html?comparison=cmp1', seen);
