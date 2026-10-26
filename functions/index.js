@@ -3352,7 +3352,8 @@ async function reviewComparison(req, res, pathName, db, email) {
       res.status(made.paid ? 400 : 402).json({ error: problem, paymentRequired: !made.paid });
       return;
     }
-    const pdf = await printHtml(String(body.html));
+    const logos = await Promise.all(made.columns.map((col) => (col.icon ? urlReview.iconData(col.icon) : "")));
+    const pdf = await printHtml(reviewMulti.withLogos(body.html, logos));
     if (!pdf) {
       res.status(503).json({ error: "The PDF did not print. Try again in a moment, or use Print." });
       return;
