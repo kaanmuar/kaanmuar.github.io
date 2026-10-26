@@ -102,12 +102,12 @@ function table(cols, rows, empty) {
 
 // --- the tool ------------------------------------------------------------------------------------------------
 
-export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint }) {
+export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, upload = () => Promise.reject(new Error("Uploads need the admin page.")) }) {
     const C = window.JarvisCore;
     const api = endpoint || ENDPOINT;
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
-        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, alerts: [], reports: [],
+        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), alerts: [], reports: [],
         external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, truncated: false,
         panels: new Map(), voice: null, listening: false, timers: []
     };
@@ -296,7 +296,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices', 'social-proposals', 'social-runs'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -631,6 +631,69 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         loadExternal(['social-runs']);
     }
 
+    // Share to post (#1420): a photo or video and one caption; Gemini drafts each network's post, the owner edits, and social-inbox.yml posts it.
+    const SHARE_FIELDS = [['title', 'Title'], ['linkedin', 'LinkedIn'], ['x', 'X'], ['facebook', 'Facebook'], ['instagram', 'Instagram'], ['tiktok', 'TikTok'], ['youtubeTitle', 'YouTube title'], ['youtube', 'YouTube']];
+    function blankShare() { return { file: null, caption: '', busy: false, id: null, kind: null, draft: null, note: '' }; }
+
+    function sharePanel() {
+        const H = S.share;
+        const L = S.external['share-list'];
+        const items = ((L && L.items) || []).filter((i) => i.id !== H.id && i.status !== 'draft');
+        const chip = (s) => `<span class="jv-chip ${s === 'posted' ? 'c-fast' : s === 'failed' ? 'c-slow' : 'c-average'}">${esc(s)}</span>`;
+        const recent = items.length ? table([['Post', (i) => esc(i.title || i.caption || '')], ['Media', (i) => esc(i.kind || '')], ['Status', (i) => (i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${chip(i.status)}</a>` : chip(i.status))], ['Shared', (i) => esc(when(i.at))]], items.slice(0, 6)) : '';
+        let body;
+        if (H.draft) {
+            const fields = SHARE_FIELDS.filter(([k]) => H.draft[k] !== undefined).map(([k, label]) => `<label class="jv-share-field"><span>${label}</span><textarea data-share-field="${k}" data-keep="share-${k}" rows="${k === 'title' || k === 'youtubeTitle' ? 1 : 3}">${esc(H.draft[k])}</textarea></label>`).join('');
+            body = `<p class="jv-note">${esc(H.note || 'Gemini drafted one post per network from your caption. Edit any of them, then queue.')}</p><div class="jv-share-fields">${fields}</div>
+                <div class="jv-actions"><button type="button" class="jv-btn" data-act="share-queue"${H.busy ? ' disabled' : ''}>${H.busy ? 'Queueing…' : 'Queue the post'}</button><button type="button" class="jv-btn" data-act="share-drop"${H.busy ? ' disabled' : ''}>Drop</button></div>`;
+        } else {
+            body = `<div class="jv-share-form"><label class="jv-btn jv-share-pick">${H.file ? esc(H.file.name) + ' · change' : 'Choose a photo or video'}<input type="file" hidden data-share-file accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"></label>
+                <textarea data-share-caption data-keep="share-caption" rows="3" placeholder="What should the post say? Write it in the language it should go out in.">${esc(H.caption)}</textarea>
+                <div class="jv-actions"><button type="button" class="jv-btn" data-act="share-draft"${H.busy || !H.file ? ' disabled' : ''}>${H.busy ? esc(H.busy) : 'Draft with Gemini'}</button></div></div>`;
+        }
+        return panel('hub-share', 'Share a post', body + recent,
+            { wide: true, note: 'Videos post as they are, in the language you speak in them, and must have sound. LinkedIn, X and the Facebook Page (plus TikTok and YouTube for a video) get it about 30 minutes after you queue it.' });
+    }
+
+    async function shareDraft() {
+        const H = S.share;
+        if (!H.file || H.busy) return;
+        if (!H.caption.trim()) { toast('Write a caption first; Gemini drafts the posts from it.', 4000); return; }
+        if (H.file.size > 300 * 1024 * 1024) { toast('That file is over 300 MB.', 5000); return; }
+        try {
+            H.busy = 'Uploading…';
+            render();
+            const ext = (H.file.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5);
+            const path = `social-inbox/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+            await upload(path, H.file);
+            H.busy = 'Drafting…';
+            render();
+            const out = await call('share-draft', { path, caption: H.caption });
+            if (!out.ok) throw new Error(out.error);
+            Object.assign(H, { id: out.id, kind: out.kind, draft: out.draft, note: out.note || '' });
+        } catch (error) { toast('Not drafted: ' + error.message, 7000); }
+        H.busy = false;
+        render();
+    }
+
+    async function shareQueue() {
+        const H = S.share;
+        if (!H.id || H.busy) return;
+        H.busy = true;
+        render();
+        const out = await call('share-queue', { id: H.id, draft: H.draft }).catch((error) => ({ ok: false, error: error.message }));
+        if (out.ok) { S.share = blankShare(); toast(out.note, 7000); loadExternal(['share-list']); return; }
+        H.busy = false;
+        render();
+        toast('Not queued: ' + out.error, 7000);
+    }
+
+    async function shareDrop() {
+        if (S.share.id) await call('share-drop', { id: S.share.id }).catch(() => ({}));
+        S.share = blankShare();
+        render();
+    }
+
     // Owner notices waiting for Send or Drop (#1420); the same list and decision as the review desk.
     function approvalsPanel() {
         const N = S.external.notices;
@@ -777,7 +840,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         </div>${r.truncated ? `<p class="jv-note">Breakdowns cover the newest ${fmt(ROW_CAP)} opens and reviews; the totals are exact server counts.</p>` : ''}`;
 
         const hub = s.hub;
-        out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${socialQueuePanel()}${socialRunsPanel()}${socialProposalsPanel()}
+        out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${sharePanel()}${socialQueuePanel()}${socialRunsPanel()}${socialProposalsPanel()}
             ${panel('hub-trend', 'Hub and post events per day', area(hub.series.labels, [{ name: 'Events', values: hub.series.values, color: COLORS.violet }]), { wide: true, data: hub.series.labels.map((d, k) => ({ day: d, events: hub.series.values[k] })) })}
             ${listPanel('hub', 'posts', 'Top posts (score)', hub.lists.posts)}${listPanel('hub', 'sources', 'GA4 sources', hub.lists.sources, { color: COLORS.amber })}
             ${listPanel('hub', 'networks', 'Shares by network', hub.lists.networks, { color: COLORS.green })}${listPanel('hub', 'events', 'Events in range', hub.lists.events, { color: COLORS.violet })}${listPanel('hub', 'langs', 'Hub pages by language', hub.lists.langs)}
@@ -837,12 +900,15 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
                 const keep = view.querySelector('.jv-ask input');
                 const typed = keep ? keep.value : '';
                 const focused = keep && document.activeElement === keep;
+                const held = view.contains(document.activeElement) && document.activeElement.dataset.keep ? document.activeElement : null;
                 const prev = S.product;
                 S.product = p.key;
                 view.innerHTML = (root.classList.contains('jv-print-all') ? `<h2 class="jv-print-title">${esc(p.name)}</h2>` : '') + html[p.key];
                 S.product = prev;
                 const ask = view.querySelector('.jv-ask input');
                 if (ask && typed) { ask.value = typed; if (focused) ask.focus(); }
+                const again = held && view.querySelector(`[data-keep="${held.dataset.keep}"]`);
+                if (again) { again.focus(); again.setSelectionRange(held.selectionStart, held.selectionEnd); }
             }
         });
         $$('[data-go]').forEach((b) => { if (b.getAttribute('role') === 'tab') b.setAttribute('aria-selected', String(b.dataset.go === S.product)); });
@@ -1331,12 +1397,18 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             'copy-link': () => copy(link(), 'Link copied.'), 'web-share': webShare, 'copy-brief': () => copy(markdown(), 'Briefing copied.'), email: emailBriefing,
             'export-json': exportAll, 'export-csv': () => run({ type: 'export', format: 'csv' }), 'export-png': () => run({ type: 'export', format: 'png' }),
             'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief,
-            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, proposals: loadProposals, 'social-post-now': postNow
+            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, proposals: loadProposals, 'social-post-now': postNow, 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop
         };
         if (acts[act]) acts[act]();
     });
 
+    root.addEventListener('input', (event) => {
+        const t = event.target;
+        if (t.dataset.shareField && S.share.draft) S.share.draft[t.dataset.shareField] = t.value;
+        else if (t.dataset.shareCaption !== undefined) S.share.caption = t.value;
+    });
     root.addEventListener('change', (event) => {
+        if (event.target.dataset.shareFile !== undefined) { S.share.file = event.target.files[0] || null; render(); return; }
         if (event.target.name !== 'g-product') return;
         const d = readSettings();
         const i = Number(event.target.closest('[data-goal]').dataset.goal);

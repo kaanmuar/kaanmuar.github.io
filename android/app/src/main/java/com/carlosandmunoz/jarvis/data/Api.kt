@@ -10,7 +10,9 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
+import okio.source
 import java.io.File
 
 /** The jarvis Cloud Function: one POST per op, the same API admin.html uses. Answers are kept on disk for offline use. */
@@ -45,6 +47,20 @@ class Api(context: Context, private val http: OkHttpClient, private val auth: Au
         return runCatching { Saved(JSON.parseToJsonElement(f.readText()) as JsonObject, f.lastModified()) }.getOrNull()
     }
 
+    /** Share to post (#1420): streams a photo or video into Firebase Storage as the owner; storage.rules allow only social-inbox/. */
+    suspend fun upload(path: String, type: String, length: Long, open: () -> java.io.InputStream) = withContext(Dispatchers.IO) {
+        val body = object : okhttp3.RequestBody() {
+            override fun contentType() = type.toMediaType()
+            override fun contentLength() = length
+            override fun writeTo(sink: okio.BufferedSink) { open().use { sink.writeAll(it.source()) } }
+        }
+        val url = "https://firebasestorage.googleapis.com/v0/b/$BUCKET/o?name=" + java.net.URLEncoder.encode(path, "UTF-8")
+        val req = Request.Builder().url(url).header("Authorization", "Firebase " + auth.token()).post(body).build()
+        http.newBuilder().writeTimeout(10, java.util.concurrent.TimeUnit.MINUTES).build().newCall(req).execute().use { res ->
+            if (!res.isSuccessful) throw IllegalStateException("The upload failed (${res.code}).")
+        }
+    }
+
     fun forget() { dir.listFiles()?.forEach { it.delete() } }
 
     private fun file(op: String, days: Int) = File(dir, "$op-$days.json")
@@ -63,5 +79,6 @@ class Api(context: Context, private val http: OkHttpClient, private val auth: Au
 
     companion object {
         const val ENDPOINT = "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis"
+        const val BUCKET = "carlosm-interactive-cv.firebasestorage.app"
     }
 }

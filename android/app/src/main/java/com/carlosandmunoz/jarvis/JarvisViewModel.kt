@@ -54,6 +54,7 @@ data class UiState(
     val noticeErrors: Map<String, String> = emptyMap(),
     val proposals: List<JsonObject>? = null,
     val runs: List<JsonObject>? = null,
+    val shares: List<JsonObject>? = null,
 )
 
 class JarvisViewModel(app: Application) : AndroidViewModel(app) {
@@ -229,7 +230,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     fun loadSocial() {
         if (fixture != null) {
             val f = _state.value.snapshot?.get("socialHub") as? JsonObject
-            _state.update { it.copy(proposals = f.objs("proposals"), runs = f.objs("runs")) }
+            _state.update { it.copy(proposals = f.objs("proposals"), runs = f.objs("runs"), shares = f.objs("shares")) }
             return
         }
         if (!auth.signedIn || "social" in _state.value.running) return
@@ -238,7 +239,8 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
             val days = _state.value.days
             val proposals = runCatching { api.call("social-proposals", days).objs("proposals") }
             val runs = runCatching { api.call("social-runs", days).objs("runs") }
-            _state.update { it.copy(running = it.running - "social", proposals = proposals.getOrNull() ?: it.proposals, runs = runs.getOrNull() ?: it.runs,
+            val shares = runCatching { api.call("share-list", days).objs("items") }
+            _state.update { it.copy(running = it.running - "social", proposals = proposals.getOrNull() ?: it.proposals, runs = runs.getOrNull() ?: it.runs, shares = shares.getOrNull() ?: it.shares,
                 toast = proposals.exceptionOrNull()?.message?.let { m -> "Proposals: $m" } ?: it.toast) }
         }
     }

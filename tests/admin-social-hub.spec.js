@@ -34,7 +34,7 @@ const STUBS = {
     export async function deleteDoc() {}
     export async function addDoc() { return { id: 'new' }; }
     export function serverTimestamp() { return { serverTimestamp: true }; }`,
-  'firebase-storage.js': 'export function getStorage() { return {}; } export function ref() { return {}; } export async function uploadString() {} export async function getDownloadURL() { return ""; }'
+  'firebase-storage.js': 'export function getStorage() { return {}; } export function ref() { return {}; } export async function uploadString() {} export async function uploadBytes() {} export async function getDownloadURL() { return ""; }'
 };
 
 const FEED = {
