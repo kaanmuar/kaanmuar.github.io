@@ -46,7 +46,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(SystemBarStyle.dark(Color.TRANSPARENT), SystemBarStyle.dark(Color.TRANSPARENT))
         lockOn = vault.flag("lock", true) && canLock()
-        openTab = intent.getStringExtra(Push.EXTRA_TAB)
+        openTab = tabOf(intent)
         pendingAction = intent.getStringExtra(Home.EXTRA_ACTION)
         setContent {
             JarvisTheme {
@@ -66,9 +66,13 @@ class MainActivity : FragmentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        intent.getStringExtra(Push.EXTRA_TAB)?.let { openTab = it }
+        tabOf(intent)?.let { openTab = it }
         intent.getStringExtra(Home.EXTRA_ACTION)?.let { pendingAction = it }
     }
+
+    /** Pushes and widgets pass the tab as an extra; the watch opens jarvis://open/<tab>. */
+    private fun tabOf(intent: Intent): String? =
+        intent.getStringExtra(Push.EXTRA_TAB) ?: intent.data?.takeIf { it.scheme == "jarvis" }?.lastPathSegment ?: intent.data?.let { "overview" }
 
     /** Shortcut actions: "brief" asks Gemini for today's briefing, "sweep" starts the sweepReviews job. */
     private fun run(action: String) {

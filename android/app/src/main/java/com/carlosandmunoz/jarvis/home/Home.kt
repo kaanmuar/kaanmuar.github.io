@@ -102,6 +102,7 @@ object Home {
         runCatching { NumbersWidget().updateAll(context) }
         runCatching { GoalsWidget().updateAll(context) }
         runCatching { TileService.requestListeningState(context, ComponentName(context, StatusTile::class.java)) }
+        Watch.sync(context)
     }
 
     fun schedule(context: Context) {
