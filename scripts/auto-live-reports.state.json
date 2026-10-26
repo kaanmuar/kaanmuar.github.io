@@ -1,5 +1,5 @@
 {
- "since": "2026-10-25T10:47:54.550Z",
+ "since": "2026-10-26T11:32:15.993Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -33,13 +33,25 @@
   "supresencia.com": "2026-10-25",
   "idmji.org": "2026-10-25",
   "vs:subastasventura.com": "2026-10-25",
-  "vs:kemik.gt": "2026-10-25"
+  "vs:kemik.gt": "2026-10-25",
+  "hubspot.com": "2026-10-26",
+  "thekeyinmobiliaria.com": "2026-10-26",
+  "millanenlinea.com": "2026-10-26",
+  "cng.edu": "2026-10-26",
+  "montesofia.com": "2026-10-26",
+  "montessori.edu.co": "2026-10-26",
+  "cgb.edu.co": "2026-10-26",
+  "movichhotels.com": "2026-10-26",
+  "hotelestequendama.com.co": "2026-10-26",
+  "zizonline.com": "2026-10-26",
+  "tamiltvserial.com": "2026-10-26",
+  "vs:taknai.com": "2026-10-26"
  },
  "recent": [
-  "a11y-labels",
-  "seo-broken-links",
-  "sec-frame",
+  "ax-button-name",
   "sec-hsts",
-  "geo-crawlers"
+  "a11y-labels",
+  "an-firing",
+  "sec-frame"
  ]
 }

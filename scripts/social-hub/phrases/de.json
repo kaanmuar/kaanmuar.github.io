@@ -21,6 +21,10 @@
  "⟦1⟧ keeps HSTS for only a week.": "⟦1⟧ hält HSTS nur eine Woche.",
  "⟦1⟧ Kubernetes pages share one title.": "⟦1⟧ Kubernetes-Seiten teilen sich einen Titel.",
  "⟦1⟧ languages, no sitemap.": "⟦1⟧ Sprachen, keine Sitemap.",
+ "⟦1⟧ leads in SEO, GEO, Analytics, Security; ⟦2⟧ leads in Accessibility, Performance.": {
+  "text": "⟦1⟧ führt in SEO, GEO, Analytics, Sicherheit; ⟦2⟧ führt in den Bereichen Zugänglichkeit und Leistung.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security, Accessibility, Performance.": "⟦1⟧ führt bei SEO und GEO; ⟦2⟧ führt bei Analytics, Sicherheit, Barrierefreiheit und Performance.",
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Accessibility, Performance.": "⟦1⟧ führt bei SEO; ⟦2⟧ führt bei GEO und Sicherheit; ⟦3⟧ führt bei Analytics, Barrierefreiheit und Performance.",
  "⟦1⟧ leads security, ⟦2⟧ to ⟦3⟧, and analytics, ⟦4⟧ to ⟦5⟧.": "⟦1⟧ führt bei Sicherheit, ⟦2⟧ zu ⟦3⟧, und bei Analytics, ⟦4⟧ zu ⟦5⟧.",
@@ -40,6 +44,10 @@
  "⟦1⟧ sends no content security policy.": "⟦1⟧ sendet keine Content Security Policy.",
  "⟦1⟧ still answers on plain http.": "⟦1⟧ antwortet noch über einfaches http.",
  "⟦1⟧ unnamed boxes.": "⟦1⟧ namenlose Felder.",
+ "⟦1⟧ vs ⟦2⟧.": {
+  "text": "⟦1⟧ vs. ⟦2⟧.",
+  "machine": true
+ },
  "⟦1⟧ waits on ⟦2⟧ scripts.": "⟦1⟧ wartet auf ⟦2⟧ Skripte.",
  "⟦1⟧-second trick card.": "Karte: ⟦1⟧-Sekunden-Trick.",
  "⟦1⟧-second trick:": "⟦1⟧-Sekunden-Trick:",
@@ -138,6 +146,10 @@
  "A strict Referrer-Policy, framing limited to its origin, and ⟦1⟧ that lists its sitemaps.": "Eine strikte Referrer-Policy, Framing nur vom eigenen Origin und ⟦1⟧ mit den eigenen Sitemaps.",
  "A template printed its placeholder where a link belonged.": "Ein Template gab seinen Platzhalter dort aus, wo ein Link hingehörte.",
  "A template that defaults to the home URL hides every inner page.": "Eine Vorlage, die standardmäßig die Start-URL nutzt, versteckt jede Unterseite.",
+ "A tie at the top:": {
+  "text": "Gleichstand an der Spitze:",
+  "machine": true
+ },
  "A valid sitemap, structured data that parses, real ⟦1⟧s, and every internal link opened answered.": "Eine gültige Sitemap, parsbare strukturierte Daten, echte ⟦1⟧-Antworten, und jeder geöffnete interne Link antwortete.",
  "A visitor ID should never travel over plain http.": "Eine Besucher-ID sollte nie über einfaches http reisen.",
  "A year of HSTS, framing limited to its own origin, and NewsMediaOrganization JSON-LD.": "Ein Jahr HSTS, Framing nur vom eigenen Origin und NewsMediaOrganization-JSON-LD.",
@@ -228,6 +240,10 @@
  "Any site can frame Harvard's pages.": "Jede Website kann Harvards Seiten einbetten.",
  "Any site can frame it.": "Jede Website kann sie einbetten.",
  "Anyone can frame Metroplús pages.": "Jeder kann Metroplús-Seiten einbetten.",
+ "ARIA roles.": {
+  "text": "ARIA-Rollen.",
+  "machine": true
+ },
  "Armenia's city hall: no main landmark.": "Rathaus von Armenia: keine main-Landmark.",
  "Assert each one answers below ⟦1⟧.": "Prüfen Sie per Assertion, dass jede unter ⟦1⟧ antwortet.",
  "Atlántico: alt text everywhere, no HSTS.": "Atlántico: überall alt-Text, kein HSTS.",
@@ -235,6 +251,10 @@
  "Audit ⟦1⟧ line by line.": "Prüfen Sie ⟦1⟧ Zeile für Zeile.",
  "Audit which pages carry noindex.": "Prüfen Sie, welche Seiten noindex tragen.",
  "Automated analyses of public pages on ⟦1⟧ Oct ⟦2⟧ of ⟦3⟧, ⟦4⟧, ⟦5⟧, natural competitors found on the open web by QA-lab URL Review's rival sweep.": "Automatisierte Analysen öffentlicher Seiten am ⟦1⟧. Okt. ⟦2⟧ von ⟦3⟧, ⟦4⟧ und ⟦5⟧, natürlichen Konkurrenten, die der Konkurrenz-Scan von QA-lab URL Review im offenen Web gefunden hat.",
+ "Automated analyses of public pages on ⟦1⟧ Oct ⟦2⟧ of ⟦3⟧, ⟦4⟧, natural competitors found on the open web by QA-lab URL Review's rival sweep.": {
+  "text": "Automatisierte Analysen öffentlicher Seiten am ⟦1⟧ Okt. ⟦2⟧ von ⟦3⟧, ⟦4⟧, natürlichen Konkurrenten, die im offenen Web durch die Konkurrenzsuche von QA-lab URL Review gefunden wurden.",
+  "machine": true
+ },
  "Axe-core ⟦1⟧ now runs the WCAG ⟦2⟧ Label in Name rule by default.": "Axe-core ⟦1⟧ prüft jetzt standardmäßig die WCAG-Regel ⟦2⟧, Beschriftung im Namen.",
  "Bancolombia has the faster pages, ⟦1⟧ to ⟦2⟧, and analytics is tied at ⟦3⟧.": "Bancolombia hat die schnelleren Seiten, ⟦1⟧ zu ⟦2⟧, und bei Analytics steht es gleich, ⟦3⟧.",
  "Bancolombia's site won't let you zoom.": "Die Website von Bancolombia lässt kein Zoomen zu.",
@@ -246,6 +266,10 @@
  "Bello's JSON-LD names the page, not the city.": "Bellos JSON-LD nennt die Seite, nicht die Stadt.",
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.": "Messen Sie sich an den Websites, mit denen Ihre Besucher Sie vergleichen, nicht an einer perfekten Punktzahl: Teuer wird die Lücke, die ein Mitbewerber schon geschlossen hat.",
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap…": "Messen Sie sich an den Websites, mit denen Ihre Besucher Sie vergleichen, nicht an einer perfekten Punktzahl: Teuer wird…",
+ "Benchmark against the sites your visitors compare you with, not against a perfect score…": {
+  "text": "Vergleichen Sie Ihre Leistung mit den Websites, mit denen Ihre Besucher Sie vergleichen, nicht mit einem perfekten Ergebnis …",
+  "machine": true
+ },
  "Benchmark against the sites your visitors compare you with, not…": "Messen Sie sich an den Websites, mit denen Ihre Besucher Sie vergleichen, nicht…",
  "Berlin ⟦1⟧, Vienna ⟦2⟧.": "Berlin ⟦1⟧, Wien ⟦2⟧.",
  "Berlin answers in security, ⟦1⟧ to ⟦2⟧, and accessibility, ⟦3⟧ to ⟦4⟧.": "Berlin kontert bei Sicherheit, ⟦1⟧ zu ⟦2⟧, und Barrierefreiheit, ⟦3⟧ zu ⟦4⟧.",
@@ -253,6 +277,10 @@
  "Biblioteca Nacional's canonical says http.": "Das Canonical der Biblioteca Nacional sagt http.",
  "BibloRed answers plain http with a ⟦1⟧.": "BibloRed beantwortet einfaches http mit einem ⟦1⟧.",
  "Blender: ⟦1⟧, no main landmark.": "Blender: ⟦1⟧, keine main-Landmark.",
+ "Block third-party embeds until the visitor agrees.": {
+  "text": "Blockieren Sie Einbettungen von Drittanbietern, bis der Besucher zustimmt.",
+  "machine": true
+ },
  "Block training crawlers if you choose, but allow search agents like OAI-SearchBot so AI answers can cite you.": "Blockieren Sie Trainings-Crawler, wenn Sie wollen, aber lassen Sie Such-Agenten wie OAI-SearchBot zu, damit KI-Antworten Sie zitieren können.",
  "Block training crawlers if you choose, but allow user-triggered agents.": "Blockieren Sie Trainings-Crawler, wenn Sie wollen, aber lassen Sie nutzerausgelöste Agenten zu.",
  "Blocking a search crawler removes you from every product built on its index.": "Wer einen Such-Crawler blockiert, verschwindet aus jedem Produkt, das auf dessen Index aufbaut.",
@@ -515,6 +543,10 @@
  "But the viewport tag sets user-scalable=no, so people on phones can't pinch to zoom.": "Doch das Viewport-Tag setzt user-scalable=no, also kann am Smartphone niemand per Pinch zoomen.",
  "But the WebSite JSON-LD on /en has a name and a date and no url, so it can't be tied to the domain.": "Doch das WebSite-JSON-LD auf /en hat name und Datum, aber keine url, also lässt es sich nicht mit der Domain verknüpfen.",
  "But three scripts sit in the ⟦1⟧ of /en without async or defer, so nothing paints until they load.": "Doch drei Skripte stehen im ⟦1⟧ von /en ohne async oder defer, also wird nichts gezeichnet, bis sie geladen sind.",
+ "But tracking starts before the visitor chooses.": {
+  "text": "Aber das Tracking beginnt, bevor der Besucher sich entscheidet.",
+  "machine": true
+ },
  "But X-Content-Type-Options is missing on all ⟦1⟧ pages analyzed, so browsers may guess file types.": "Doch X-Content-Type-Options fehlt auf allen ⟦1⟧ analysierten Seiten, also raten Browser womöglich Dateitypen.",
  "But X-Frame-Options is set to nosniff, a value meant for X-Content-Type-Options, which is missing.": "Doch X-Frame-Options steht auf nosniff, einem Wert für X-Content-Type-Options, das fehlt.",
  "By Craig Morten, DEV: ⟦1⟧": "Von Craig Morten, DEV: ⟦1⟧",
@@ -628,6 +660,10 @@
  "Describe the ones that inform, and give decorative ones an empty alt.": "Beschreiben Sie die informativen und geben Sie dekorativen ein leeres alt.",
  "Describe the ones that inform, and give decorative ones an…": "Beschreiben Sie die informativen und geben Sie dekorativen ein…",
  "Describe what each image shows in its alt attribute, and use ⟦1⟧ on purely decorative ones.": "Beschreiben Sie im alt-Attribut, was jedes Bild zeigt, und nutzen Sie ⟦1⟧ bei rein dekorativen.",
+ "Describe what each image shows in its alt attribute, and use ⟦1⟧ on purely…": {
+  "text": "Beschreiben Sie, was jedes Bild in seinem Alt-Attribut zeigt, und verwenden Sie ⟦1⟧ nur für ...",
+  "machine": true
+ },
  "Descriptions and share cards on every page analyzed, a NewsMediaOrganization entity, and alt text on every image.": "Beschreibungen und Share-Cards auf jeder analysierten Seite, eine NewsMediaOrganization-Entität und Alt-Text an jedem Bild.",
  "Descriptions and share cards on every page analyzed, Consent Mode that starts in denied, and every link opened answered.": "Beschreibungen und Share-Cards auf jeder analysierten Seite, Consent Mode mit Start auf denied, und jeder geöffnete Link antwortete.",
  "Día de Muertos card:": "Día-de-Muertos-Karte:",
@@ -671,6 +707,10 @@
  "ESA's search box has no name.": "Das Suchfeld der ESA hat keinen Namen.",
  "Every digest, tip and site review on our social hub: ⟦1⟧": "Alle Rückblicke, Tipps und Website-Prüfungen im Social Hub: ⟦1⟧",
  "Every ebook page has its own title, description, and share card, and pages pass Core Web Vitals for real visitors.": "Jede E-Book-Seite hat eigenen Titel, eigene Beschreibung und Share-Card, und die Seiten bestehen die Core Web Vitals bei echten Besuchern.",
+ "Every external link that was checked answered, and AI answer and search crawlers may read the start page.": {
+  "text": "Jeder überprüfte externe Link wurde beantwortet, und KI-Antwort- und Suchcrawler können die Startseite lesen.",
+  "machine": true
+ },
  "Every hop costs a round trip, and crawlers can stop following a long chain before they reach the page.": "Jeder Sprung kostet einen Roundtrip, und Crawler können einer langen Kette folgen aufhören, bevor sie die Seite erreichen.",
  "Every image analyzed has alt text, ⟦1⟧ is published, HSTS is preloaded, and ⟦2⟧ blocks GPTBot, CCBot and Google-Extended while answer bots may read.": "Jedes analysierte Bild hat Alt-Text, ⟦1⟧ ist veröffentlicht, HSTS ist preloaded und ⟦2⟧ sperrt GPTBot, CCBot und Google-Extended, während Antwort-Bots lesen dürfen.",
  "Every image analyzed has alt text, every page a meta description, cookies are Secure, and an ⟦1⟧ is published.": "Jedes analysierte Bild hat Alt-Text, jede Seite eine Meta-Description, Cookies sind Secure und eine ⟦1⟧ ist veröffentlicht.",
@@ -806,6 +846,14 @@
  "Here they moved the total more than any other area.": "Hier haben sie die Summe stärker bewegt als jeder andere Bereich.",
  "Here they moved the total more than any…": "Hier haben sie die Summe stärker bewegt als…",
  "His advice is to encode brackets and use the same form in every link, canonical tag, sitemap and piece of structured data.": "Sein Rat: eckige Klammern kodieren und in jedem Link, Canonical-Tag, Sitemap und in den strukturierten Daten dieselbe Form verwenden.",
+ "Hold every tag until consent, or set Google Consent Mode v2 defaults to denied before any tag loads.": {
+  "text": "Halten Sie jedes Tag bis zur Zustimmung zurück oder setzen Sie den Google Consent Mode v2 standardmäßig auf „Verweigert“, bevor ein Tag geladen wird.",
+  "machine": true
+ },
+ "Hold every tag until consent, or set Google Consent Mode v2 defaults to denied before…": {
+  "text": "Halten Sie jedes Tag bis zur Einwilligung zurück oder stellen Sie die Standardeinstellungen für den Google Consent Mode v2 auf „Verweigert“ ein, bevor …",
+  "machine": true
+ },
  "Horror headers, Accessibility card.": "Horror-Header, Karte Barrierefreiheit.",
  "Horror headers, Performance card.": "Horror-Header, Karte Performance.",
  "Horror headers, QA card.": "Horror-Header, Karte QA.",
@@ -1071,6 +1119,10 @@
  "Nariño's home page is ⟦1⟧ KB of HTML.": "Nariños Startseite hat ⟦1⟧ KB HTML.",
  "NASA is wide open to AI search.": "Die NASA ist weit offen für KI-Suche.",
  "NatGeo sets cookies without Secure.": "NatGeo setzt Cookies ohne Secure.",
+ "Natural competitors…": {
+  "text": "Natürliche Konkurrenten…",
+  "machine": true
+ },
  "Neiva's sitemap lists a host that won't load.": "Neivas Sitemap listet einen Host, der nicht lädt.",
  "Nequi's hreflang points to the home page.": "Nequis hreflang zeigt auf die Startseite.",
  "Never point it at an address that redirects.": "Richten Sie es nie auf eine Adresse, die weiterleitet.",
@@ -1249,7 +1301,15 @@
  "Real run, national card. Éxito's title says ⟦1⟧ twice.": "Echter Lauf, nationale Karte. Der Titel von Éxito sagt zweimal ⟦1⟧.",
  "Real run, national card. myGov links through its CMS paths.": "Echter Lauf, nationale Karte. myGov verlinkt über seine CMS-Pfade.",
  "Real run, natural competitors card.": "Echter Lauf, Karte der natürlichen Konkurrenten.",
+ "Real run, natural competitors card. ⟦1⟧ vs ⟦2⟧.": {
+  "text": "Echter Lauf, natürliche Wettkampfkarte. ⟦1⟧ vs. ⟦2⟧.",
+  "machine": true
+ },
  "Real run, regional card.": "Echter Lauf, regionale Karte.",
+ "Real run, requested card.": {
+  "text": "Echter Lauf, angeforderte Karte.",
+  "machine": true
+ },
  "Real run, requested card. ⟦1⟧:": "Echter Lauf, angefragte Karte. ⟦1⟧:",
  "Real run, worldwide card.": "Echter Lauf, weltweite Karte.",
  "Real run, worldwide card. ⟦1⟧ receives mail, but has no SPF.": "Echter Lauf, weltweite Karte. ⟦1⟧ empfängt Mails, hat aber kein SPF.",
@@ -1301,16 +1361,32 @@
  "Salud Capital's home has three canonicals.": "Die Startseite von Salud Capital hat drei Canonicals.",
  "SAMEORIGIN, on every page.": "SAMEORIGIN, auf jeder Seite.",
  "SAMEORIGIN, so other sites cannot frame your pages.": "SAMEORIGIN, damit andere Websites Ihre Seiten nicht einbetten können.",
+ "SAMEORIGIN, so other sites cannot frame your…": {
+  "text": "SAMEORIGIN, daher können andere Websites Ihr… nicht einrahmen.",
+  "machine": true
+ },
  "SAMEORIGIN, so other sites cannot frame…": "SAMEORIGIN, damit andere Websites nicht…",
+ "SAMEORIGIN, so other sites cannot…": {
+  "text": "SAMEORIGIN, daher können andere Websites nicht…",
+  "machine": true
+ },
  "SAMEORIGIN.": "SAMEORIGIN.",
  "SAMEORIGIN) on every page.": "SAMEORIGIN) auf jeder Seite.",
  "Santa Marta still runs a UA tag.": "Santa Marta nutzt noch ein UA-Tag.",
  "Santander answers on plain http too.": "Santander antwortet auch über einfaches http.",
  "Santiago's search field is a nameless box.": "Santiagos Suchfeld ist ein namenloses Kästchen.",
  "SATENA's pages have no canonical.": "SATENAs Seiten haben kein Canonical.",
+ "Scored ⟦1⟧ of ⟦2⟧.": {
+  "text": "Erzielte ⟦1⟧ von ⟦2⟧.",
+  "machine": true
+ },
  "Scores hidden until tomorrow.": "Punkte bis morgen verborgen.",
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO…": "Die Werte im direkten Vergleich: ⟦1⟧ Gesamtwert ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Sicherheit ⟦6⟧, A11y ⟦7⟧, Tempo ⟦8⟧; ⟦9⟧ Gesamtwert ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Sicherheit ⟦14⟧, A11y ⟦15⟧, Tempo ⟦16⟧; ⟦17⟧ Gesamtwert ⟦18⟧, SEO…",
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧;…": "Die Werte im direkten Vergleich: ⟦1⟧ Gesamtwert ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Sicherheit ⟦6⟧, A11y ⟦7⟧, Tempo ⟦8⟧; ⟦9⟧ Gesamtwert ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Sicherheit ⟦14⟧, A11y ⟦15⟧, Tempo ⟦16⟧;…",
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧.": {
+  "text": "Bewertungen nebeneinander: ⟦1⟧ Bewertung ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analyse ⟦5⟧, Sicherheit ⟦6⟧, A11y ⟦7⟧, Geschwindigkeit ⟦8⟧; ⟦9⟧ Punktzahl ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analyse ⟦13⟧, Sicherheit ⟦14⟧, A11y ⟦15⟧, Geschwindigkeit ⟦16⟧.",
+  "machine": true
+ },
  "Scouts: a consent tool, no Consent Mode.": "Scouts: ein Consent-Tool, kein Consent Mode.",
  "Screen reader tests in Playwright": "Screenreader-Tests in Playwright",
  "Screen readers announce it, and the tap target grows.": "Screenreader sagen es an, und die Tippfläche wächst.",
@@ -1325,6 +1401,10 @@
  "Screen readers, translators, and search engines all read it.": "Screenreader, Übersetzer und Suchmaschinen lesen es alle.",
  "Screen readers…": "Screenreader…",
  "Screen-reader users often jump to it first.": "Screenreader-Nutzer springen oft zuerst dorthin.",
+ "Screen…": {
+  "text": "Bildschirm…",
+  "machine": true
+ },
  "Search and AI answers quote it when they introduce you.": "Suche und KI-Antworten zitieren sie, wenn sie Sie vorstellen.",
  "Search Console's URL Inspection tool can fetch a live page as Google and show the rendered HTML, a screenshot, and the resources it could not load.": "Das URL-Prüftool der Search Console kann eine Live-Seite wie Google abrufen und das gerenderte HTML, einen Screenshot und die Ressourcen zeigen, die es nicht laden konnte.",
  "Search engines and screen readers both use it to understand the page.": "Suchmaschinen und Screenreader nutzen es, um die Seite zu verstehen.",
@@ -1362,6 +1442,10 @@
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.": "Senden Sie Strict-Transport-Security mit einem max-age von mindestens einem Jahr, damit Browser nie wieder einfaches http versuchen.",
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try…": "Senden Sie Strict-Transport-Security mit einem max-age von mindestens einem Jahr, damit Browser nie versuchen…",
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never…": "Senden Sie Strict-Transport-Security mit einem max-age von mindestens einem Jahr, damit Browser nie…",
+ "Send Strict-Transport-Security with a max-age of at least a year, so…": {
+  "text": "Senden Sie Strict-Transport-Security mit einem Höchstalter von mindestens einem Jahr, also…",
+  "machine": true
+ },
  "Send Strict-Transport-Security with max-age=⟦1⟧ on every https response once all subdomains serve https.": "Senden Sie Strict-Transport-Security mit max-age=⟦1⟧ bei jeder https-Antwort, sobald alle Subdomains https ausliefern.",
  "Send X-Content-Type-Options: nosniff on every response.": "Senden Sie X-Content-Type-Options: nosniff bei jeder Antwort.",
  "Send X-Content-Type-Options: nosniff, and X-Frame-Options:": "Senden Sie X-Content-Type-Options: nosniff und X-Frame-Options:",
@@ -1480,6 +1564,10 @@
  "The gap: hreflang.": "Die Lücke: hreflang.",
  "The gap: its WebSite JSON-LD has no name, the property search uses for the site name in results.": "Die Lücke: Das WebSite-JSON-LD hat kein name, die Property, die die Suche für den Websitenamen in Ergebnissen nutzt.",
  "The gap: link names.": "Die Lücke: Linknamen.",
+ "The gap: measurement.": {
+  "text": "Die Lücke: Messung.",
+  "machine": true
+ },
  "The gap: no page analyzed carries JSON-LD naming who runs the site.": "Die Lücke: Keine analysierte Seite enthält JSON-LD, das den Betreiber der Website nennt.",
  "The gap: outdated libraries.": "Die Lücke: veraltete Bibliotheken.",
  "The gap: page titles.": "Die Lücke: Seitentitel.",
@@ -1576,6 +1664,10 @@
  "Use a ⟦1⟧ from http to https, then add Strict-Transport-Security so browsers skip http next time.": "Leiten Sie per ⟦1⟧ von http auf https um und ergänzen Sie Strict-Transport-Security, damit Browser http künftig überspringen.",
  "Use h2 and h3 for the sections below it.": "Nutzen Sie h2 und h3 für die Abschnitte darunter.",
  "Use it:": "Nutzen Sie sie:",
+ "Use native HTML elements first.": {
+  "text": "Verwenden Sie zunächst native HTML-Elemente.",
+  "machine": true
+ },
  "Use strict-origin-when-cross-origin.": "Verwenden Sie strict-origin-when-cross-origin.",
  "Use width=device-width, initial-scale=⟦1⟧ and nothing more.": "Verwenden Sie width=device-width, initial-scale=⟦1⟧ und nichts weiter.",
  "User-agent:": "User-agent:",
@@ -1606,6 +1698,10 @@
  "What people see there is your real first impression.": "Was Menschen dort sehen, ist Ihr eigentlicher erster Eindruck.",
  "When an image has no width and height, the page jumps as it loads.": "Hat ein Bild weder width noch height, springt die Seite beim Laden.",
  "When the same content answers at several addresses, ranking signals split between them.": "Antwortet derselbe Inhalt unter mehreren Adressen, verteilen sich die Ranking-Signale auf sie.",
+ "When you use ARIA roles, nest them the way the role requires.": {
+  "text": "Wenn Sie ARIA-Rollen verwenden, verschachteln Sie diese so, wie es die Rolle erfordert.",
+  "machine": true
+ },
  "WHO welcomes AI answer crawlers and its pages read well without JavaScript:": "Die WHO heißt KI-Antwort-Crawler willkommen, und ihre Seiten lesen sich ohne JavaScript gut:",
  "WHO's fact sheets end in a stray semicolon.": "Die Faktenblätter der WHO enden mit einem verirrten Semikolon.",
  "Width and height let the browser reserve the space.": "Breite und Höhe lassen den Browser den Platz reservieren.",
