@@ -70,6 +70,8 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.glance.appwidget)
     implementation(libs.work.runtime)
+    implementation(libs.play.services.wearable)
+    implementation(libs.kotlinx.coroutines.play.services)
     debugImplementation(libs.compose.ui.tooling)
     testImplementation(libs.junit)
 }
