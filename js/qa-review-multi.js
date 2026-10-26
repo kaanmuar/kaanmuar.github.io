@@ -14,6 +14,7 @@
       locked_other: "{n} reports in this comparison are not paid. Their wording stays blurred, and Print and Download PDF open once they are paid.",
       summary: "Side by side", indicator: "Indicator", wins: "Indicators won", leadNote: "Shaded cells lead their line. Scores come from automated reviews, a starting point and not a verdict.",
       missing: "This review was deleted after the comparison was saved.", opening: "Opening the comparison…",
+      failedRuns: "Not in this comparison, because their review did not finish:",
       signIn: "Sign in with the account that saved this comparison to open it.", failed: "The comparison did not open. Try again in a moment.",
       saving: "Saving the comparison…", saveFailed: "The comparison was not saved. Try again in a moment.",
       nothing: "Nothing here for this site.", more: "…and {n} more, in the report on the page.",
@@ -34,6 +35,7 @@
       locked_other: "{n} informes de esta comparación no están pagados. Su texto sigue difuminado, e Imprimir y Descargar PDF se abren cuando se paguen.",
       summary: "Lado a lado", indicator: "Indicador", wins: "Indicadores ganados", leadNote: "Las celdas sombreadas encabezan su línea. Las puntuaciones salen de revisiones automáticas: un punto de partida, no un veredicto.",
       missing: "Esta revisión se eliminó después de guardar la comparación.", opening: "Abriendo la comparación…",
+      failedRuns: "No están en esta comparación porque su revisión no terminó:",
       signIn: "Inicia sesión con la cuenta que guardó esta comparación para abrirla.", failed: "La comparación no se abrió. Inténtalo de nuevo en un momento.",
       saving: "Guardando la comparación…", saveFailed: "La comparación no se guardó. Inténtalo de nuevo en un momento.",
       nothing: "Nada aquí para este sitio.", more: "…y {n} más, en el informe de la página.",
@@ -54,6 +56,7 @@
       locked_other: "{n} relatórios desta comparação não estão pagos. O texto continua desfocado, e Imprimir e Baixar PDF abrem quando forem pagos.",
       summary: "Lado a lado", indicator: "Indicador", wins: "Indicadores ganhos", leadNote: "As células sombreadas lideram a sua linha. As pontuações vêm de revisões automáticas: um ponto de partida, não um veredicto.",
       missing: "Esta revisão foi apagada depois que a comparação foi salva.", opening: "Abrindo a comparação…",
+      failedRuns: "Não estão nesta comparação porque a revisão não terminou:",
       signIn: "Entre com a conta que salvou esta comparação para abri-la.", failed: "A comparação não abriu. Tente de novo em instantes.",
       saving: "Salvando a comparação…", saveFailed: "A comparação não foi salva. Tente de novo em instantes.",
       nothing: "Nada aqui para este site.", more: "…e mais {n}, no relatório da página.",
@@ -74,6 +77,7 @@
       locked_other: "{n} Berichte in diesem Vergleich sind nicht bezahlt. Ihr Text bleibt unscharf, und Drucken und PDF herunterladen öffnen sich, sobald sie bezahlt sind.",
       summary: "Nebeneinander", indicator: "Kennzahl", wins: "Gewonnene Kennzahlen", leadNote: "Schattierte Zellen führen ihre Zeile an. Die Werte stammen aus automatischen Prüfungen: ein Ausgangspunkt, kein Urteil.",
       missing: "Diese Prüfung wurde gelöscht, nachdem der Vergleich gespeichert wurde.", opening: "Der Vergleich wird geöffnet…",
+      failedRuns: "Nicht in diesem Vergleich, weil ihre Prüfung nicht fertig wurde:",
       signIn: "Melden Sie sich mit dem Konto an, das diesen Vergleich gespeichert hat, um ihn zu öffnen.", failed: "Der Vergleich wurde nicht geöffnet. Versuchen Sie es gleich noch einmal.",
       saving: "Der Vergleich wird gespeichert…", saveFailed: "Der Vergleich wurde nicht gespeichert. Versuchen Sie es gleich noch einmal.",
       nothing: "Für diese Website nichts.", more: "…und {n} weitere, im Bericht auf der Seite.",
@@ -94,6 +98,7 @@
       locked_other: "{n} rapports de cette comparaison ne sont pas payés. Leur texte reste flouté, et Imprimer et Télécharger le PDF s'ouvrent une fois qu'ils sont payés.",
       summary: "Côte à côte", indicator: "Indicateur", wins: "Indicateurs gagnés", leadNote: "Les cellules ombrées mènent leur ligne. Les scores viennent de revues automatiques : un point de départ, pas un verdict.",
       missing: "Cette revue a été supprimée après l'enregistrement de la comparaison.", opening: "Ouverture de la comparaison…",
+      failedRuns: "Absents de cette comparaison, car leur analyse n’a pas abouti :",
       signIn: "Connectez-vous avec le compte qui a enregistré cette comparaison pour l'ouvrir.", failed: "La comparaison ne s'est pas ouverte. Réessayez dans un instant.",
       saving: "Enregistrement de la comparaison…", saveFailed: "La comparaison n'a pas été enregistrée. Réessayez dans un instant.",
       nothing: "Rien ici pour ce site.", more: "…et {n} de plus, dans le rapport en ligne.",
@@ -114,6 +119,7 @@
       locked_other: "{n} report di questo confronto non sono pagati. Il testo resta sfocato, e Stampa e Scarica PDF si aprono quando sono pagati.",
       summary: "Fianco a fianco", indicator: "Indicatore", wins: "Indicatori vinti", leadNote: "Le celle ombreggiate guidano la loro riga. I punteggi vengono da revisioni automatiche: un punto di partenza, non un verdetto.",
       missing: "Questa revisione è stata eliminata dopo aver salvato il confronto.", opening: "Apertura del confronto…",
+      failedRuns: "Non sono in questo confronto perché la revisione non è terminata:",
       signIn: "Accedi con l'account che ha salvato questo confronto per aprirlo.", failed: "Il confronto non si è aperto. Riprova tra un momento.",
       saving: "Salvataggio del confronto…", saveFailed: "Il confronto non è stato salvato. Riprova tra un momento.",
       nothing: "Niente qui per questo sito.", more: "…e altri {n}, nel report sulla pagina.",
@@ -201,6 +207,7 @@
       '<div class="dash-modal-head multi-head"><div><p class="report-kicker" translate="no">' + esc(t("kicker")) + '</p><h2 id="multi-title" translate="no"></h2><p class="muted" id="multi-when" translate="no"></p></div>' +
       '<div class="multi-actions no-print" translate="no"><button class="btn btn-primary" type="button" id="multi-print"></button><button class="btn btn-ghost" type="button" id="multi-pdf"></button><button class="btn btn-ghost" type="button" id="multi-close">' + esc(t("close")) + "</button></div></div>" +
       '<p id="multi-status" role="status" class="no-print" translate="no"></p><div id="multi-locked" class="multi-locked no-print" translate="no" hidden></div>' +
+      '<div id="multi-failed" class="multi-locked multi-failed no-print" role="note" translate="no" hidden></div>' +
       '<div id="multi-body"></div></div>';
     document.body.appendChild(overlay);
     overlay.querySelector("#multi-close").addEventListener("click", close);
@@ -407,8 +414,18 @@
     document.body.style.overflow = "hidden";
   }
 
-  async function load(id) {
+  // extra.failed: the competitors of the run that just ended that did not finish, with why, so the comparison
+  // says who was asked for and is missing.
+  function paintFailed(failed) {
+    const box = shell().querySelector("#multi-failed");
+    box.hidden = !failed.length;
+    box.innerHTML = failed.length ? "<p>" + esc(t("failedRuns")) + "</p><ul>" + failed.map((row) =>
+      '<li><b translate="no">' + esc(row.host) + "</b>" + (row.note ? " · " + esc(row.note) : "") + "</li>").join("") + "</ul>" : "";
+  }
+
+  async function load(id, extra) {
     open();
+    paintFailed((extra && extra.failed) || []);
     say(t("opening"));
     if (!window.ReviewAuth || !ReviewAuth.signedIn()) {
       say(t("signIn"), true);
