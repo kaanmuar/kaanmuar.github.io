@@ -2135,6 +2135,37 @@ test("an http:// redirect is read over https first, as Chrome does, and fails as
   assert.equal(port.message, "The site redirected to http://port.example.com:8080/, an http:// address. The review only follows https.");
 });
 
+test("an https copy of an http:// redirect that refuses the review or is slow is read like any first page, so headless Chrome gets its turn (#1552)", async (t) => {
+  t.after(fakeNetwork({
+    "https://uni.example.com/": { status: 301, headers: { location: "http://uni.example.com/inicio" } },
+    "https://uni.example.com/inicio": { status: 403, headers: { "content-type": "text/html" }, body: "<html><body>Captcha Page</body></html>" },
+    "https://cf.example.com/": { status: 302, headers: { location: "http://cf.example.com/home" } },
+    "https://cf.example.com/home": { status: 503, headers: { "content-type": "text/html", "cf-mitigated": "challenge" }, body: "<html><body>Just a moment</body></html>" },
+    "https://slow.example.com/": { status: 301, headers: { location: "http://slow.example.com/start" } },
+    "https://slow.example.com/start": { timeout: true },
+    "https://gone.example.com/": { status: 301, headers: { location: "http://gone.example.com/old" } },
+    "https://gone.example.com/old": { status: 500 }
+  }));
+  const refused = await core.fetchPublic("https://uni.example.com/");
+  assert.deepEqual([refused.status, refused.url], [403, "https://uni.example.com/inicio"]);
+  const probe = await core.probeRead("https://uni.example.com/");
+  assert.deepEqual([probe.status, probe.httpRedirect], [403, undefined]);
+  assert.notEqual(failures.diagnose({ cause: { id: "http-redirect" } }, { dns: {}, plain: probe }).now, "http-redirect");
+  assert.equal(failures.probeNeedsBrowser(probe), true);
+
+  assert.equal((await core.fetchPublic("https://cf.example.com/")).status, 503);
+  assert.equal((await core.probeRead("https://cf.example.com/")).httpRedirect, undefined);
+
+  const slow = await core.fetchPublic("https://slow.example.com/").then(() => null, (caught) => caught);
+  assert.match(slow.message, /took too long/);
+  assert.equal(slow.url, "https://slow.example.com/start");
+  assert.equal((await core.probeRead("https://slow.example.com/")).httpRedirect, undefined);
+
+  const gone = await core.fetchPublic("https://gone.example.com/").then(() => null, (caught) => caught);
+  assert.equal(failures.causeOf(gone.message).id, "http-redirect");
+  assert.equal((await core.probeRead("https://gone.example.com/")).httpRedirect, "http://gone.example.com/old");
+});
+
 test("the connection check tells a port that opens from one that refuses", async () => {
   const net = require("node:net");
   const server = net.createServer((socket) => socket.end());
