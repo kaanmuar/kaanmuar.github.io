@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlosandmunoz.jarvis.JarvisApp
+import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
 import com.carlosandmunoz.jarvis.data.arr
 import com.carlosandmunoz.jarvis.data.bool
@@ -34,7 +35,7 @@ import kotlinx.serialization.json.JsonPrimitive
 
 /** What to do next, by impact: the snapshot's rule proposals at once, then Gemini's ranking from the proposals op. Done and Dismiss are saved on the server, like on the web. */
 @Composable
-fun Proposals(s: UiState, open: (String) -> Unit) {
+fun Proposals(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
     val app = LocalContext.current.applicationContext as JarvisApp
     val scope = rememberCoroutineScope()
     var ranked by remember { mutableStateOf<JsonObject?>(null) }
@@ -42,6 +43,7 @@ fun Proposals(s: UiState, open: (String) -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     var gone by remember { mutableStateOf(setOf<String>()) }
     var round by remember { mutableStateOf(0) }
+    var confirm by remember { mutableStateOf<PendingAction?>(null) }
 
     LaunchedEffect(s.days, s.savedAt, round) {
         if (!s.signedIn || s.email == "fixture") return@LaunchedEffect
@@ -71,15 +73,16 @@ fun Proposals(s: UiState, open: (String) -> Unit) {
         r != null -> "Rules only" + (r.str("error")?.takeIf { it.isNotBlank() }?.let { ". Gemini: $it" } ?: "")
         else -> "From the rules"
     }
+    ConfirmAction(confirm) { confirm = null }
     Panel("Proposals", trailing = { TextButton(onClick = { round++ }, enabled = !busy) { Text(if (busy) "Ranking…" else "Rank again") } }) {
         Muted(note)
         if (list.isEmpty()) Muted(if (busy) "Reading the sources…" else "Nothing to propose right now.")
-        list.forEachIndexed { i, p -> ProposalRow(i + 1, p, open) { status -> mark(p, status) } }
+        list.forEachIndexed { i, p -> ProposalRow(i + 1, p, vm, open, { confirm = it }) { status -> mark(p, status) } }
     }
 }
 
 @Composable
-private fun ProposalRow(rank: Int, p: JsonObject, open: (String) -> Unit, mark: (String) -> Unit) {
+private fun ProposalRow(rank: Int, p: JsonObject, vm: JarvisViewModel, open: (String) -> Unit, ask: (PendingAction) -> Unit, mark: (String) -> Unit) {
     val uri = LocalUriHandler.current
     Row(verticalAlignment = Alignment.Top) {
         Text("$rank", fontFamily = Mono, fontSize = 18.sp, color = J.level(p.str("level")), modifier = Modifier.width(26.dp))
@@ -89,6 +92,7 @@ private fun ProposalRow(rank: Int, p: JsonObject, open: (String) -> Unit, mark: 
             Text(tags.joinToString(" · "), fontFamily = Mono, fontSize = 11.sp, color = J.dim)
             p.str("why")?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 13.sp, color = J.muted) }
             p.arr("evidence").forEach { Text("• " + it.text(), fontSize = 12.sp, color = J.muted) }
+            ProposalActions(p, vm, ask)
             Row {
                 val tab = p.str("tab")
                 if (tab != null && tab in CHIPS.toMap()) TextButton(onClick = { open(tab) }) { Text("Open") }

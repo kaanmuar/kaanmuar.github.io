@@ -89,7 +89,7 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
         items.forEach { StatusRow(it.str("level"), it.str("text") ?: "", it.str("product")?.let { p -> CHIPS.toMap()[p] ?: humanize(p) }) }
     }
 
-    Proposals(s, open)
+    Proposals(s, vm, open)
 
     Panel("Products") {
         PRODUCTS.forEach { (key, name) ->
@@ -498,6 +498,7 @@ fun TrafficScreen(s: UiState) {
 @Composable
 fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
     val snap = s.snapshot
+    JarvisActions(s, vm)
     Panel("Connections") {
         snap.objs("connections").forEach { c -> StatusRow(c.str("state"), c.str("name") ?: "", listOfNotNull(c.str("state"), c.str("detail")?.takeIf { it.isNotBlank() }, c.arr("needs").takeIf { it.isNotEmpty() }?.joinToString(" ") { it.text() }).filter { it.isNotBlank() }.joinToString(" · ")) }
     }

@@ -127,8 +127,8 @@ test("rank falls back to the rules when Gemini fails or is off, and never shows 
 });
 
 test("cleanCandidates keeps only the panel's fields and the known safe actions", () => {
-  const [row] = proposals.cleanCandidates([{ key: "k", title: "T", impact: 12, level: "x", evidence: ["a", 2], action: "delete-everything", link: "javascript:alert(1)", extra: "drop" }]);
-  assert.deepEqual(row, { key: "k", product: "", impact: 5, level: "info", title: "T", evidence: ["a", "2"], source: "rules", action: null, tab: null, link: null });
+  const [row] = proposals.cleanCandidates([{ key: "k", title: "T", impact: 12, level: "x", evidence: ["a", 2], action: "delete-everything", jobs: ["sweepReviews", "bad name;"], link: "javascript:alert(1)", extra: "drop" }]);
+  assert.deepEqual(row, { key: "k", product: "", impact: 5, level: "info", title: "T", evidence: ["a", "2"], source: "rules", action: null, jobs: ["sweepReviews"], tab: null, link: null });
 });
 
 test("the daily email lists proposals with impact, effort and evidence", () => {

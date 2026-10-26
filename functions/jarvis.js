@@ -32,6 +32,7 @@ const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/se
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const MODEL = "gemini-flash-latest";
 const core = require("./jarvis-core");
+const actions = require("./jarvis-actions");
 const ADMIN_URL = ORIGIN + "/admin.html#stats/overview/1";
 
 function rangeDays(value) {
@@ -455,7 +456,7 @@ function normalizeSettings(data) {
   const mail = Object.assign({}, MAIL_DEFAULTS);
   Object.keys(MAIL_DEFAULTS).forEach((key) => { if (d.mail && typeof d.mail[key] === "boolean") mail[key] = d.mail[key]; });
   const searchQueries = Array.from(new Set((Array.isArray(d.searchQueries) ? d.searchQueries : []).map((q) => String(q || "").replace(/\s+/g, " ").trim().slice(0, 80)).filter(Boolean))).slice(0, 8);
-  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, searchQueries, updatedAt: String(d.updatedAt || "") };
+  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, searchQueries, actions: actions.cleanSettings(d.actions), updatedAt: String(d.updatedAt || "") };
 }
 
 async function readSettings(db) {
@@ -465,7 +466,7 @@ async function readSettings(db) {
 
 async function saveSettings(db, input, by) {
   const clean = normalizeSettings(input);
-  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, searchQueries: clean.searchQueries, updatedAt: new Date().toISOString(), by: String(by || "") };
+  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, searchQueries: clean.searchQueries, actions: clean.actions, updatedAt: new Date().toISOString(), by: String(by || "") };
   await db.collection("jarvis_settings").doc("main").set(doc);
   return normalizeSettings(doc);
 }
