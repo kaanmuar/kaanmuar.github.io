@@ -254,17 +254,23 @@
     return String(row.key === "cls" ? Math.round(raw * 1000) / 1000 : raw);
   }
 
-  function summaryHtml(data) {
+  // Every list of sites after the benchmark's ranking keeps its order, by health score.
+  function orderOf(data) {
+    return window.QAReviewBenchmark && QAReviewBenchmark.order ? QAReviewBenchmark.order(data) : data.columns.map((col, index) => index);
+  }
+
+  function summaryHtml(data, order) {
     const S = window.QAReviewSections;
     const cols = data.columns;
-    const head = "<tr><th scope=\"col\">" + esc(t("indicator")) + "</th>" + cols.map(columnHead).join("") + "</tr>";
+    const head = "<tr><th scope=\"col\">" + esc(t("indicator")) + "</th>" + order.map((index) => columnHead(cols[index], index)).join("") + "</tr>";
     const rows = data.summary.rows.map((row) => "<tr><th scope=\"row\">" + esc(label(row)) + (row.better === "low" && cc ? ' <small class="muted">' + esc(cc.t("lower")) + "</small>" : "") + "</th>" +
-      row.values.map((raw, index) => {
+      order.map((index) => {
+        const raw = row.values[index];
         const lead = row.leads.length === 1 && row.leads[0] === index;
         const shown = row.kind === "score" && raw != null ? '<b style="color:' + S.scoreColor(raw) + '">' + esc(raw) + "</b>" : esc(value(row, raw));
         return "<td" + (lead ? ' class="lead"' : "") + ">" + shown + "</td>";
       }).join("") + "</tr>").join("");
-    const wins = "<tr class=\"multi-wins\"><th scope=\"row\">" + esc(t("wins")) + "</th>" + data.summary.wins.map((n) => "<td>" + n + "</td>").join("") + "</tr>";
+    const wins = "<tr class=\"multi-wins\"><th scope=\"row\">" + esc(t("wins")) + "</th>" + order.map((index) => "<td>" + data.summary.wins[index] + "</td>").join("") + "</tr>";
     return '<section class="multi-summary"><h2 translate="no">' + esc(t("summary")) + '</h2><div class="multi-scroll"><table class="compare-table multi-table">' +
       "<thead>" + head + "</thead><tbody>" + rows + wins + "</tbody></table></div><p class=\"meta-line\" translate=\"no\">" + esc(t("leadNote")) + "</p></section>";
   }
@@ -290,16 +296,18 @@
   function bodyHtml(data) {
     const n = data.columns.length;
     const rc = window.QAReviewReportCopy;
-    const hosts = '<div class="multi-hosts-bar"><div class="multi-row multi-hosts">' + data.columns.map((col, index) =>
+    const order = orderOf(data);
+    const columns = order.map((index) => [data.columns[index], index]);
+    const hosts = '<div class="multi-hosts-bar"><div class="multi-row multi-hosts">' + columns.map(([col, index]) =>
       '<div class="multi-cell" style="--site:' + siteColor(index) + '"><p class="multi-host" translate="no">' + esc(col.host).replace(/\./g, ".<wbr>") + "</p>" +
       (col.missing ? "" : '<p class="meta-line" translate="no">' + esc(col.at ? new Date(col.at).toLocaleDateString(code) : "") + (col.paid ? "" : ' · <a class="no-print" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>") + "</p>") + "</div>").join("") + "</div></div>";
     const foldAll = rc ? '<div class="fold-bar no-print"><button class="btn btn-ghost" type="button" id="multi-fold-all" aria-expanded="true" translate="no">' + esc(rc.t("collapseAll")) + "</button></div>" : "";
     const bench = window.QAReviewBenchmark ? QAReviewBenchmark.html(data) : "";
-    return bench + summaryHtml(data) + '<div class="multi-sheet" style="--cols:' + n + '">' + foldAll + hosts + '<div class="multi-scroll multi-grid">' + SECTIONS.map(([key, cell]) => {
+    return bench + summaryHtml(data, order) + '<div class="multi-sheet" style="--cols:' + n + '">' + foldAll + hosts + '<div class="multi-scroll multi-grid">' + SECTIONS.map(([key, cell]) => {
       const title = esc(book.sections[key] || COPY.en.sections[key]);
       return '<section class="multi-sec" data-sec="' + key + '"><h2 translate="no"><button class="fold-toggle" type="button" id="multi-toggle-' + key + '" aria-expanded="true" aria-controls="multi-row-' + key + '"><span>' + title +
         '</span><span class="fold-icon" aria-hidden="true"></span></button></h2><div class="multi-row fold-panel" id="multi-row-' + key + '" role="region" aria-labelledby="multi-toggle-' + key + '">' +
-        data.columns.map((col, index) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '" data-host="' + esc(col.host) + '" style="--site:' + siteColor(index) + '">' +
+        columns.map(([col, index]) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '" data-host="' + esc(col.host) + '" style="--site:' + siteColor(index) + '">' +
           (col.missing ? '<p class="muted">' + esc(t("missing")) + "</p>" : cell) + "</div>").join("") +
         "</div></section>";
     }).join("") + "</div></div>";

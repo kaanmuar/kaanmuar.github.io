@@ -511,7 +511,7 @@
         .ring b small { display: block; font-family: inherit; font-size: 11px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-top: 8px; }
         .grade { display: inline-grid; place-content: center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 9px; font-weight: 700; color: #fff; font-size: 15px; }
         .grade-A { background: var(--green); } .grade-B { background: color-mix(in srgb, var(--green) 60%, var(--amber)); } .grade-C { background: var(--amber); } .grade-D { background: color-mix(in srgb, var(--amber) 45%, var(--red)); } .grade-F { background: var(--red); }
-        .health-summary { font-size: 1.05rem; margin: 0 0 8px; }
+        .health-summary { min-width: 0; font-size: 1.05rem; margin: 0 0 8px; overflow-wrap: anywhere; }
         .verdict-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
         .vchip { border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 12px; background: var(--card); }
         .vchip b { font-size: 14px; margin-right: 4px; }

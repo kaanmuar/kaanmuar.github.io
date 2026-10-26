@@ -91,7 +91,7 @@ test('a saved comparison sets the summary and every report section side by side,
   const table = box.locator('.multi-table');
   await expect(table.locator('thead th')).toHaveCount(4);
   await expect(table.locator('tbody tr').first().locator('th')).toHaveText('Overall');
-  await expect(table.locator('tbody tr').first().locator('td').nth(0)).toHaveText(String(own.insights.score.overall));
+  await expect(table.locator('tbody tr').first().locator('td').last()).toHaveText(String(own.insights.score.overall));
   await expect(table.locator('.multi-wins td')).toHaveCount(3);
   await expect(box.locator('.multi-sec > h2')).toHaveCount(22);
   for (const [key, title] of [['exec', 'One-page summary'], ['health', 'Health score'], ['fix', 'Fix first'], ['geo', 'What AI sees'], ['security', 'Security and email'], ['findings', 'Every check, with its verdict'], ['pages', 'Pages analyzed'], ['cases', 'Cases that could be run']]) {
@@ -101,17 +101,17 @@ test('a saved comparison sets the summary and every report section side by side,
   }
   const health = box.locator('.multi-sec[data-sec="health"] .multi-cell');
   await expect(health.nth(1).locator('.ring')).toHaveAttribute('aria-label', new RegExp('Health score ' + rival.insights.score.overall + ' '));
-  const pages = box.locator('.multi-sec[data-sec="pages"] .multi-cell').nth(0).locator('tbody tr:visible');
+  const pages = box.locator('.multi-sec[data-sec="pages"] .multi-cell[data-col="0"]').locator('tbody tr:visible');
   await expect(pages).toHaveCount(own.pages.length);
   expect(own.counts).toBeUndefined();
-  await expect(box.locator('.multi-sec[data-sec="cover"] .multi-cell').nth(0).locator('.kpi b').nth(3)).toHaveText(String(own.pages.length));
+  await expect(box.locator('.multi-sec[data-sec="cover"] .multi-cell[data-col="0"]').locator('.kpi b').nth(3)).toHaveText(String(own.pages.length));
   await expect(box.locator('.multi-cell .fade-line')).toHaveCount(0);
   await expect(box.locator('#multi-locked')).toBeHidden();
 
-  const filters = box.locator('.multi-sec[data-sec="findings"] .multi-cell').nth(0);
+  const filters = box.locator('.multi-sec[data-sec="findings"] .multi-cell[data-col="0"]');
   await filters.locator('[data-verdict="pass"]').click();
   await expect(filters.locator('[data-verdict="pass"]')).toHaveClass('on');
-  await expect(box.locator('.multi-sec[data-sec="findings"] .multi-cell').nth(1).locator('[data-verdict="open"]')).toHaveClass('on');
+  await expect(box.locator('.multi-sec[data-sec="findings"] .multi-cell[data-col="1"]').locator('[data-verdict="open"]')).toHaveClass('on');
 
   if (process.env.MULTI_SHOT) {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -206,7 +206,7 @@ test('the comparison title shows each site as its logo with its name below, a le
   await printed.emulateMedia({ media: 'print' });
   await printed.setContent(filled, { waitUntil: 'load' });
   await expect(printed.locator('#multi-title')).toBeVisible();
-  await expect(printed.locator('.multi-sec[data-sec="exec"] .multi-cell').first()).toBeVisible();
+  await expect(printed.locator('.multi-sec[data-sec="exec"] .multi-cell[data-col="0"]')).toBeVisible();
   expect(await printed.evaluate(() => document.documentElement.classList.contains('dark-mode'))).toBe(false);
   await printed.close();
 });
@@ -281,14 +281,14 @@ test('one toggle per section folds it for every site together, the boxes of a ro
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await expect(health.locator('.multi-cell')).toHaveCount(3);
   for (const index of [0, 1, 2]) await expect(health.locator('.multi-cell').nth(index)).toBeHidden();
-  await expect(box.locator('.multi-sec[data-sec="exec"] .multi-cell').first()).toBeVisible();
+  await expect(box.locator('.multi-sec[data-sec="exec"] .multi-cell[data-col="0"]')).toBeVisible();
   await toggle.focus();
   await page.keyboard.press('Enter');
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   const edges = (sec, part) => box.locator('.multi-sec[data-sec="' + sec + '"] .multi-cell > ' + part).evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().bottom)));
   expect(new Set(await edges('exec', '.card')).size).toBe(1);
   expect(new Set(await edges('cases', '.card')).size).toBe(1);
-  const empty = box.locator('.multi-sec[data-sec="security"] .multi-cell').first();
+  const empty = box.locator('.multi-sec[data-sec="security"] .multi-cell[data-col="0"]');
   await expect(empty.locator('.multi-empty')).toHaveText('Nothing here for this site.');
   await expect(empty.locator('.card')).toBeHidden();
 
@@ -298,7 +298,7 @@ test('one toggle per section folds it for every site together, the boxes of a ro
   await page.evaluate(() => document.body.classList.add('printing-multi'));
   await page.emulateMedia({ media: 'print' });
   expect(await health.locator('.multi-row').evaluate((row) => getComputedStyle(row).display)).toBe('grid');
-  await expect(health.locator('.multi-cell').first()).toBeVisible();
+  await expect(health.locator('.multi-cell[data-col="0"]')).toBeVisible();
   await page.emulateMedia({ media: 'screen' });
   await page.evaluate(() => document.body.classList.remove('printing-multi'));
 
@@ -317,19 +317,19 @@ test('a cell holding only a placeholder line keeps its own height beside a tall 
   await expect(box.locator('.multi-sec[data-sec="graph"] .multi-cell')).toHaveCount(3, { timeout: 20000 });
   for (const key of ['graph', 'layers', 'mentions']) {
     const cells = box.locator('.multi-sec[data-sec="' + key + '"] .multi-cell');
-    await expect(cells.first(), key).toHaveClass(/is-note/);
-    const [note, tallest] = await cells.evaluateAll((els) => [els[0].lastElementChild.offsetHeight, Math.max(...els.map((el) => el.offsetHeight))]);
+    await expect(cells.and(page.locator('[data-col="0"]')), key).toHaveClass(/is-note/);
+    const [note, tallest] = await cells.evaluateAll((els) => [els.find((el) => el.dataset.col === '0').lastElementChild.offsetHeight, Math.max(...els.map((el) => el.offsetHeight))]);
     expect(note, key).toBeLessThan(140);
     expect(tallest, key).toBeGreaterThan(note);
   }
-  await expect(box.locator('.multi-sec[data-sec="observed"] .multi-cell').first()).not.toHaveClass(/is-note/);
+  await expect(box.locator('.multi-sec[data-sec="observed"] .multi-cell[data-col="0"]')).not.toHaveClass(/is-note/);
 });
 
 test('in print a long list stops after twelve rows with a line counting the rest (#1476)', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
   const box = page.locator('#multi-overlay');
-  const rows = box.locator('.multi-sec[data-sec="pages"] .multi-cell').nth(0).locator('tbody tr:visible');
+  const rows = box.locator('.multi-sec[data-sec="pages"] .multi-cell[data-col="0"]').locator('tbody tr:visible');
   await expect(rows).toHaveCount(own.pages.length, { timeout: 20000 });
   await page.evaluate(() => document.body.classList.add('printing-multi'));
   await page.emulateMedia({ media: 'print' });
@@ -370,6 +370,54 @@ test('the benchmark ranks every site by its health score and reads where the fir
   await download;
   expect(seen.pdf[0]).toContain('bench-podium');
   expect(seen.pdf[0]).toContain('bench-radar');
+});
+
+test('every list of sites after the ranking keeps its order, and every column lists the areas as the table does (#1603)', async ({ page }) => {
+  await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const box = page.locator('#multi-overlay');
+  await expect(box.locator('.multi-sec[data-sec="health"] .ring')).toHaveCount(3, { timeout: 20000 });
+  const scores = [own, rival, sample.report].map((report) => report.insights.score.overall);
+  const ranked = scores.map((score, index) => ({ score, index })).sort((a, b) => b.score - a.score);
+  expect(ranked.map((item) => item.index)).not.toEqual([0, 1, 2]);
+  const bare = ranked.map((item) => hosts[item.index].replace(/^www\./, ''));
+  const full = ranked.map((item) => hosts[item.index]);
+  const texts = (selector) => box.locator(selector).evaluateAll((els) => els.map((el) => el.textContent.trim()));
+
+  expect(await texts('.bench-card .bench-host')).toEqual(bare);
+  expect(await texts('.bench-legend > span')).toEqual(bare);
+  expect(await texts('.bench-heat thead th[style]')).toEqual(bare);
+  expect(await texts('.bench-kpi:first-of-type .bench-bar > span:first-child')).toEqual(bare);
+  expect(await texts('.multi-table thead th[translate="no"]')).toEqual(full);
+  expect(await texts('.multi-table tbody tr:first-child td')).toEqual(ranked.map((item) => String(item.score)));
+  expect(await texts('.multi-hosts .multi-host')).toEqual(full);
+  for (const sec of await box.locator('.multi-sec').all()) {
+    expect(await sec.locator('.multi-cell').evaluateAll((els) => els.map((el) => el.dataset.host))).toEqual(full);
+  }
+  const rings = await box.locator('.multi-sec[data-sec="health"] .ring').evaluateAll((els) => els.map((el) => Number(el.getAttribute('aria-label').match(/\d+/)[0])));
+  expect(rings).toEqual(ranked.map((item) => item.score));
+  await expect(box.locator('.multi-hosts .multi-cell').last()).toHaveAttribute('style', /--site:var\(--own\)/);
+  await expect(box.locator('.bench-heat tbody td.is-you').first()).toHaveText(String(own.insights.score.overall));
+
+  const areaRows = await texts('.multi-table tbody th[scope="row"]');
+  const areaOrder = ['SEO', 'GEO', 'Analytics', 'Security', 'Accessibility', 'Performance'];
+  expect(areaRows.filter((row) => areaOrder.includes(row))).toEqual(areaOrder);
+  for (const cell of await box.locator('.multi-sec[data-sec="health"] .multi-cell').all()) {
+    expect(await cell.locator('.area').evaluateAll((els) => els.map((el) => el.dataset.area))).toEqual(areaOrder);
+  }
+});
+
+test('a long host in the health score summary wraps inside its card instead of running past it (#1608)', async ({ page }) => {
+  const records = recordsWith(true);
+  const long = 'www.hotelestequendamabogotacolombia.com.co';
+  records[0].report.insights = Object.assign({}, records[0].report.insights, { summary: long + ' scores 34 out of 100 (F). 17 checks fail now, 42 are at risk, and 26 pass. Fix first: 2021 form controls have no label.' });
+  await page.setViewportSize({ width: 1024, height: 800 });
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const card = page.locator('#multi-overlay .multi-sec[data-sec="health"] .multi-cell[data-col="0"] .card');
+  const line = card.locator('.health-summary');
+  await expect(line).toContainText(long, { timeout: 20000 });
+  const [lineBox, cardBox] = await Promise.all([line.boundingBox(), card.boundingBox()]);
+  expect(lineBox.x + lineBox.width).toBeLessThanOrEqual(cardBox.x + cardBox.width);
+  expect(await line.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
 });
 
 test('the benchmark speaks the language of the review page (#1438)', async ({ page }) => {
@@ -426,7 +474,7 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(chip).toContainText('Seguridad');
   await expect(chip.locator('small')).toContainText(/^Fallan: \d+ · En riesgo: \d+ · Pasan: \d+ — Encabezados, TLS/);
   await expect(box.locator('.multi-sec[data-sec="health"] .vchip.v-fail').first()).toContainText('Falla ahora');
-  const health = box.locator('.multi-sec[data-sec="health"] .multi-cell').first();
+  const health = box.locator('.multi-sec[data-sec="health"] .multi-cell[data-col="0"]');
   await expect(health.locator('.ring')).toHaveAttribute('aria-label', /^Puntuación de salud \d+ de 100, nota [A-F]$/);
   await expect(health.locator('.ring small')).toHaveText(/^Nota [A-F]$/);
   await expect(health.locator('.health-summary')).toContainText(/obtiene \d+ de 100 \([A-F]\)\. \d+ controles fallan ahora/);
@@ -435,21 +483,21 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(health.locator('.health-summary')).toContainText(/pasan\. Arregla primero: 100 imágenes no tienen atributo alt\.$/);
   await expect(health.locator('.vchip.s-critical, .vchip.s-low').first()).toContainText(/crítico|bajo/);
   await expect(health.locator('.meta-line')).toContainText('Los controles marcados con «Necesita una persona»');
-  const exec = box.locator('.multi-sec[data-sec="exec"] .multi-cell').first();
+  const exec = box.locator('.multi-sec[data-sec="exec"] .multi-cell[data-col="0"]');
   await expect(exec.locator('h3')).toHaveText(['Mayores riesgos', 'Mejoras rápidas', 'Ya sólido']);
   await expect(exec.locator('.meta-line').first()).toContainText(/\d+ críticos · \d+ altos · \d+ medios · \d+ bajos · \d+ páginas? analizadas?/);
   const cells = box.locator('.multi-sec[data-sec="browser"] .multi-cell');
-  await expect(cells.first()).toContainText('Esta revisión se hizo sin el navegador sin interfaz');
-  const browser = cells.nth(2);
+  await expect(cells.and(page.locator('[data-col="0"]'))).toContainText('Esta revisión se hizo sin el navegador sin interfaz');
+  const browser = cells.and(page.locator('[data-col="2"]'));
   await expect(browser.locator('.check-tile b').first()).toHaveText('Antes de elegir');
   await expect(browser).toContainText('Seguimiento antes y después de elegir');
   await expect(browser).toContainText(/desde una dirección de la UE \(Bélgica\)/);
   await expect(browser).not.toContainText(/Before a choice|Tracking before and after|from an EU address/);
-  const filters = box.locator('.multi-sec[data-sec="findings"] .multi-cell').first().locator('.filters button');
+  const filters = box.locator('.multi-sec[data-sec="findings"] .multi-cell[data-col="0"]').locator('.filters button');
   await expect(filters.first()).toHaveText('Todas');
   await expect(filters.filter({ hasText: 'Fallas y riesgos' })).toHaveCount(1);
   await expect(filters.filter({ hasText: 'Seguridad' })).toHaveCount(1);
-  const findings = box.locator('.multi-sec[data-sec="findings"] .multi-cell').first();
+  const findings = box.locator('.multi-sec[data-sec="findings"] .multi-cell[data-col="0"]');
   await expect(findings).toContainText('6 páginas no tienen meta description');
   await expect(findings).toContainText('Escribe para cada página una descripción de 50 a 160 caracteres');
   await expect(findings).not.toContainText('6 pages have no meta description');
@@ -466,12 +514,12 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(findings).toContainText('La página de inicio no envía cache-control');
   await expect(findings).toContainText('Envía cache-control en el HTML (por ejemplo max-age=0, must-revalidate)');
   await expect(findings).not.toContainText('The start page sends no cache-control');
-  const geo = box.locator('.multi-sec[data-sec="geo"] .multi-cell').first();
+  const geo = box.locator('.multi-sec[data-sec="geo"] .multi-cell[data-col="0"]');
   await expect(geo).toContainText('El texto que recibe un rastreador de IA');
   await expect(geo).not.toContainText(/The text an AI crawler|Who may read/);
-  await expect(box.locator('.multi-sec[data-sec="seo"] .multi-cell').first().locator('.stat span').first()).toHaveText('Páginas indexables');
-  await expect(box.locator('.multi-sec[data-sec="fixkit"] .multi-cell').first()).toContainText('El ZIP de scripts ahora trae una carpeta fix-kit/');
-  await expect(box.locator('.multi-sec[data-sec="fixkit"] .multi-cell').first()).not.toContainText(/Security headers|The scripts ZIP/);
+  await expect(box.locator('.multi-sec[data-sec="seo"] .multi-cell[data-col="0"]').locator('.stat span').first()).toHaveText('Páginas indexables');
+  await expect(box.locator('.multi-sec[data-sec="fixkit"] .multi-cell[data-col="0"]')).toContainText('El ZIP de scripts ahora trae una carpeta fix-kit/');
+  await expect(box.locator('.multi-sec[data-sec="fixkit"] .multi-cell[data-col="0"]')).not.toContainText(/Security headers|The scripts ZIP/);
 });
 
 test('a long host in the one-page summary wraps inside its card instead of running past it', async ({ page }) => {
