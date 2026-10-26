@@ -15,6 +15,13 @@ googleServices = "4.4.2"
 firebaseBom = "33.7.0"
 glance = "1.1.1"
 work = "2.10.0"
+wearable = "19.0.0"
+wearTiles = "1.4.1"
+protolayout = "1.2.1"
+wearCompose = "1.4.0"
+wearRemote = "1.1.0"
+complications = "1.2.1"
+concurrentFutures = "1.2.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -38,6 +45,16 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "fir
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+play-services-wearable = { module = "com.google.android.gms:play-services-wearable", version.ref = "wearable" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "coroutines" }
+wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wearTiles" }
+wear-protolayout = { module = "androidx.wear.protolayout:protolayout", version.ref = "protolayout" }
+wear-protolayout-material = { module = "androidx.wear.protolayout:protolayout-material", version.ref = "protolayout" }
+wear-compose-material = { module = "androidx.wear.compose:compose-material", version.ref = "wearCompose" }
+wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wearCompose" }
+wear-remote-interactions = { module = "androidx.wear:wear-remote-interactions", version.ref = "wearRemote" }
+wear-complications = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "complications" }
+concurrent-futures = { module = "androidx.concurrent:concurrent-futures-ktx", version.ref = "concurrentFutures" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

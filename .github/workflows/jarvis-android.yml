@@ -46,6 +46,7 @@ jobs:
           echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/jarvis.jks"
           JARVIS_KEYSTORE="$RUNNER_TEMP/jarvis.jks" ./gradlew --console=plain assembleRelease
           mv app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/jarvis-1.0.${JARVIS_VERSION_CODE}.apk"
+          mv wear/build/outputs/apk/release/wear-release.apk "$RUNNER_TEMP/jarvis-watch-1.0.${JARVIS_VERSION_CODE}.apk"
 
       - name: Publish the release
         if: github.event_name != 'pull_request'
@@ -53,13 +54,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           v="1.0.${JARVIS_VERSION_CODE}"
-          gh release create "jarvis-android-v$v" "$RUNNER_TEMP/jarvis-$v.apk" --target "$GITHUB_SHA" --latest=false \
+          gh release create "jarvis-android-v$v" "$RUNNER_TEMP/jarvis-$v.apk" "$RUNNER_TEMP/jarvis-watch-$v.apk" --target "$GITHUB_SHA" --latest=false \
             --title "Jarvis for Android $v" \
-            --notes "Install: open this page on the phone, download jarvis-$v.apk, allow installs from the browser if asked. It updates the app in place. Built from ${GITHUB_SHA::7}."
+            --notes "Install: open this page on the phone, download jarvis-$v.apk, allow installs from the browser if asked. It updates the app in place. Wear OS watch: install jarvis-watch-$v.apk with \`adb install\` over Wi-Fi debugging. Built from ${GITHUB_SHA::7}."
 
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'pull_request'
         with:
           name: jarvis-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/wear/build/outputs/apk/debug/wear-debug.apk
           retention-days: 7
