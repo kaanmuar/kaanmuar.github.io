@@ -339,6 +339,7 @@
 
   window.ReviewAuth = {
     signedIn: () => !!current(),
+    who: () => ({ name: (current() || {}).name || "", email: (current() || {}).email || "" }),
     proof: () => ({ session: (current() || {}).session || "", deviceKey: deviceKey() }),
     onChange: (fn) => { listeners.push(fn); fn(!!current()); },
     expire,
