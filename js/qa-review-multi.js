@@ -515,6 +515,14 @@
     const copy = overlay.querySelector(".multi-modal").cloneNode(true);
     copy.querySelectorAll(".multi-sec > h2 .fold-toggle").forEach((toggle) => toggle.replaceWith(toggle.firstChild));
     copy.querySelectorAll(".multi-row[hidden]").forEach((row) => { row.hidden = false; });
+    // An area score tile is a button on the page, and buttons do not print.
+    copy.querySelectorAll("button.area").forEach((tile) => {
+      const box = document.createElement("div");
+      box.className = tile.className;
+      box.setAttribute("data-area", tile.getAttribute("data-area"));
+      box.innerHTML = tile.innerHTML;
+      tile.replaceWith(box);
+    });
     copy.querySelectorAll(".no-print, script, button").forEach((node) => node.remove());
     copy.querySelectorAll("img").forEach((img) => {
       if (!img.matches("img.multi-logo")) return img.remove();

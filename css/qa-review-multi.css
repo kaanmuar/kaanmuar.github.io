@@ -72,6 +72,47 @@
 @container (max-width: 300px) {
   .multi-cell .areas, .multi-cell .stat-row, .multi-cell .checks-grid, .multi-cell .kpis { grid-template-columns: minmax(0, 1fr); }
 }
+/* The boxes of the health and one-page summary sections line up across sites: the cell, its card and the card's
+   boxless wrappers share the section row's tracks, and an area tile takes the slot of its name, not its place.
+   A size container turns subgrid off, so the row, not the cell, is the container; --tc is the tiles a card row
+   holds, two once a cell is wider than 300px. Row 1 of a cell holds the host line of print. A grid item set to
+   display does not hide through [hidden], hence :not([hidden]). */
+@supports (grid-template-rows: subgrid) and (order: mod(3, 2)) {
+  .multi-modal .multi-sec[data-sec="health"] .multi-row { container-type: inline-size; }
+  .multi-modal .multi-sec:is([data-sec="health"], [data-sec="exec"]) .multi-row { row-gap: 0; }
+  .multi-modal .multi-sec:is([data-sec="health"], [data-sec="exec"]) .multi-cell { container-type: normal; display: grid; grid-template-rows: subgrid; row-gap: normal; }
+  .multi-modal .multi-sec[data-sec="health"] .multi-cell { grid-row: span 12; }
+  .multi-modal .multi-sec[data-sec="exec"] .multi-cell { grid-row: span 7; }
+  .multi-modal .multi-sec:is([data-sec="health"], [data-sec="exec"]) .multi-cell::before { grid-row: 1; }
+  .multi-modal .multi-sec:is([data-sec="health"], [data-sec="exec"]) .multi-cell > *, .multi-modal .multi-sec[data-sec="health"] .multi-cell > [data-slot] > .card { grid-row: 2 / -1; }
+  .multi-modal .multi-sec[data-sec="health"] .multi-cell > [data-slot]:not([hidden]), .multi-modal .multi-sec[data-sec="health"] .card :is(.health, .health > div:not(.ring), .areas), .multi-modal .multi-sec[data-sec="exec"] .card > .exec-cols { display: contents; }
+  .multi-modal .multi-sec:is([data-sec="health"], [data-sec="exec"]) .card:not([hidden]) { display: grid; grid-template-rows: subgrid; grid-template-columns: repeat(var(--tc, 1), minmax(0, 1fr)); column-gap: 10px; }
+  .multi-modal .multi-sec[data-sec="health"] :where(.ring, .health > div:not(.ring) > *) { grid-column: 1 / -1; margin: 0; }
+  .multi-modal .multi-sec[data-sec="health"] .ring { grid-row: 1; justify-self: center; }
+  .multi-modal .multi-sec[data-sec="health"] .health-summary { grid-row: 2; margin-top: 20px; }
+  .multi-modal .multi-sec[data-sec="health"] .verdict-chips { grid-row: 3; margin-top: 8px; }
+  .multi-modal .multi-sec[data-sec="health"] .verdict-chips[aria-label] { grid-row: 4; }
+  .multi-modal .multi-sec[data-sec="health"] .health .meta-line { grid-row: 5; margin: 4px 0; }
+  .multi-modal .multi-sec[data-sec="health"] .area { grid-row: calc(6 + round(down, var(--i) / var(--tc, 1))); grid-column: calc(1 + mod(var(--i), var(--tc, 1))); margin: 10px 0 0; }
+  .multi-modal .multi-sec[data-sec="health"] .area[data-area="SEO"] { --i: 0; }
+  .multi-modal .multi-sec[data-sec="health"] .area[data-area="GEO"] { --i: 1; }
+  .multi-modal .multi-sec[data-sec="health"] .area[data-area="Analytics"] { --i: 2; }
+  .multi-modal .multi-sec[data-sec="health"] .area[data-area="Security"] { --i: 3; }
+  .multi-modal .multi-sec[data-sec="health"] .area[data-area="Accessibility"] { --i: 4; }
+  .multi-modal .multi-sec[data-sec="health"] .area[data-area="Performance"] { --i: 5; }
+  @container (min-width: 616px) { .multi-sheet[style*="--cols:2"] .multi-sec[data-sec="health"] .card { --tc: 2; } }
+  @container (min-width: 931px) { .multi-sheet[style*="--cols:3"] .multi-sec[data-sec="health"] .card { --tc: 2; } }
+  @container (min-width: 1246px) { .multi-sheet[style*="--cols:4"] .multi-sec[data-sec="health"] .card { --tc: 2; } }
+  @container (min-width: 1561px) { .multi-sheet[style*="--cols:5"] .multi-sec[data-sec="health"] .card { --tc: 2; } }
+  @container (min-width: 1876px) { .multi-sheet[style*="--cols:6"] .multi-sec[data-sec="health"] .card { --tc: 2; } }
+  .multi-modal .multi-sec[data-sec="exec"] .card > .history { grid-row: 1; margin: 0 0 12px; }
+  .multi-modal .multi-sec[data-sec="exec"] .card > .exec-head { grid-row: 2; }
+  .multi-modal .multi-sec[data-sec="exec"] .card > .meta-line { grid-row: 3; }
+  .multi-modal .multi-sec[data-sec="exec"] .card > .exec-cols > * { margin-top: 14px; }
+  .multi-modal .multi-sec[data-sec="exec"] .card > .exec-cols > :nth-child(1) { grid-row: 4; margin-top: 12px; }
+  .multi-modal .multi-sec[data-sec="exec"] .card > .exec-cols > :nth-child(2) { grid-row: 5; }
+  .multi-modal .multi-sec[data-sec="exec"] .card > .exec-cols > :nth-child(3) { grid-row: 6; }
+}
 /* Long lists scroll inside their box; the fade at the foot says there is more. */
 .multi-sec:is([data-sec="findings"], [data-sec="pages"], [data-sec="log"], [data-sec="cases"]) .multi-cell > .card { max-height: 640px; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .multi-sec:is([data-sec="findings"], [data-sec="pages"], [data-sec="log"], [data-sec="cases"]) .multi-cell > .card::after { content: ""; position: sticky; bottom: -18px; display: block; height: 36px; margin: -18px -18px -18px; background: linear-gradient(transparent, var(--look-card, var(--card)) 85%); pointer-events: none; }
