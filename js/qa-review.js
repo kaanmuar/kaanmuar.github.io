@@ -2265,7 +2265,7 @@
     const all = (ins.findings || []).slice().sort((a, b) => rank(VERDICT_RANK, a.verdict) - rank(VERDICT_RANK, b.verdict) || rank(SEVERITY_RANK, a.severity) - rank(SEVERITY_RANK, b.severity));
     slot("findings").innerHTML = Object.keys(AREA_NOTE).map((name) => {
       const items = all.filter((item) => item.area === name);
-      return '<section class="finding-group" data-group="' + esc(name) + '"><h3 class="group-head"><button type="button" class="group-toggle" aria-expanded="true"><span>' + esc(cc.area(name)) + '</span> <span class="group-count">' + items.length + "</span></button></h3>" +
+      return '<section class="finding-group is-folded" data-group="' + esc(name) + '"><h3 class="group-head"><button type="button" class="group-toggle" aria-expanded="false"><span>' + esc(cc.area(name)) + '</span> <span class="group-count">' + items.length + "</span></button></h3>" +
         items.map((item) => '<details class="finding" data-verdict="' + esc(item.verdict || "") + '" data-severity="' + esc(item.severity || "") + '"><summary><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) +
           "<strong>" + esc(said(item, "title")) + "</strong></summary><p class=\"muted\">" + fadeText(said(item, "evidence"), paid) + "</p>" +
           (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +

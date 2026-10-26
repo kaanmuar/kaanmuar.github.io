@@ -639,19 +639,23 @@
       applyFilter(sec);
       return;
     }
-    const open = toggle.getAttribute("aria-expanded") !== "true";
-    sec.querySelectorAll('.finding-group[data-group="' + toggle.closest(".finding-group").getAttribute("data-group") + '"]').forEach((group) => {
+    setFindingGroup(sec, toggle.closest(".finding-group").getAttribute("data-group"), toggle.getAttribute("aria-expanded") !== "true");
+  }
+
+  function setFindingGroup(sec, name, open) {
+    sec.querySelectorAll('.finding-group[data-group="' + CSS.escape(name) + '"]').forEach((group) => {
       group.classList.toggle("is-folded", !open);
       group.querySelector(".group-toggle").setAttribute("aria-expanded", String(open));
     });
   }
 
-  // An area of a column's health card shows that area's findings, every verdict, in every column.
+  // An area of a column's health card shows that area's findings, every verdict, in every column, opened.
   function pickArea(event) {
     const sec = event.target.closest('.multi-sec[data-sec="findings"]');
     if (!sec) return;
     filter = Object.assign({}, filter, event.detail);
     applyFilter(sec);
+    if (filter.area !== "All") setFindingGroup(sec, filter.area, true);
     setFold(sec, true);
     paintFoldAll(event.currentTarget);
     sec.scrollIntoView({ behavior: "smooth", block: "start" });

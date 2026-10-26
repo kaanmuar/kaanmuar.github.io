@@ -112,6 +112,7 @@ test('a saved comparison sets the summary and every report section side by side,
   await filters.locator('[data-verdict="pass"]').click();
   await expect(filters.locator('[data-verdict="pass"]')).toHaveClass('on');
   await expect(filters.locator('[data-verdict="open"]')).not.toHaveClass('on');
+  for (const toggle of await box.locator('.multi-sec[data-sec="findings"] .multi-cell').first().locator('.group-toggle').all()) await toggle.click();
   for (const index of [0, 1, 2]) await expect(box.locator('.multi-sec[data-sec="findings"] .multi-cell').nth(index).locator('.finding[data-verdict="pass"]:visible').first()).toBeVisible();
 
   if (process.env.MULTI_SHOT) {
@@ -924,6 +925,7 @@ test('one filter bar above the findings filters every column, and each column gr
   const order = ['SEO', 'GEO', 'Analytics', 'Security', 'Accessibility', 'Performance'];
   const groups = await cells.evaluateAll((list) => list.map((cell) => [...cell.querySelectorAll('[data-group]')].map((group) => group.getAttribute('data-group'))));
   for (const list of groups) expect(list).toEqual(order);
+  for (const name of order) await cells.first().locator('[data-group="' + name + '"] .group-toggle').click();
   const counted = (verdict) => cells.evaluateAll((list, wanted) => list.map((cell) => [...cell.querySelectorAll('.finding')].filter((item) => item.offsetParent).every((item) => wanted.includes(item.getAttribute('data-verdict')))), verdict);
   expect(await counted(['fail', 'risk'])).toEqual([true, true, true, true, true, true]);
 
@@ -953,6 +955,38 @@ test('one filter bar above the findings filters every column, and each column gr
   for (const index of [0, 1, 2]) await expect(cells.nth(index).locator('[data-group]:visible')).toHaveAttribute('data-group', 'Performance');
 });
 
+test('Every check and Cases start folded, one line per area or layer with its count, level across the columns, and an area picked on the health card opens (#1657)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await signIn(page, sixWithLongEvidence(), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  for (const [key, group, toggle, count] of [['findings', '.finding-group', '.group-toggle', '.group-count'], ['cases', '.cases-group', '.cases-toggle', '.cases-n']]) {
+    const cells = page.locator('#multi-overlay .multi-sec[data-sec="' + key + '"] .multi-cell');
+    await expect(cells).toHaveCount(6, { timeout: 20000 });
+    await expect(cells.locator('.finding:visible, .case:visible')).toHaveCount(0);
+    const heads = await cells.evaluateAll((list, [g, b, n]) => list.map((cell) => [...cell.querySelectorAll(g)].map((item) => ({
+      name: item.dataset.group,
+      open: item.querySelector(b).getAttribute('aria-expanded'),
+      count: item.querySelector(n).textContent.trim(),
+      top: Math.round(item.getBoundingClientRect().top)
+    }))), [group, toggle, count]);
+    expect(heads[0].length, key).toBeGreaterThan(3);
+    for (const column of heads) {
+      expect(column.map((item) => item.name), key).toEqual(heads[0].map((item) => item.name));
+      column.forEach((item, i) => {
+        expect(item.open, key + ' ' + item.name).toBe('false');
+        expect(item.count, key + ' ' + item.name).toMatch(/^\d+$/);
+        expect(item.top, key + ' ' + item.name).toBe(heads[0][i].top);
+      });
+    }
+  }
+  const findings = page.locator('#multi-overlay .multi-sec[data-sec="findings"] .multi-cell');
+  await findings.nth(2).locator('[data-group="Security"] .group-toggle').click();
+  for (const index of [0, 1, 2, 3, 4, 5]) await expect(findings.nth(index).locator('[data-group="Security"] .group-toggle')).toHaveAttribute('aria-expanded', 'true');
+  await expect(findings.locator('[data-group="SEO"] .finding:visible')).toHaveCount(0);
+  await page.locator('#multi-overlay .multi-sec[data-sec="health"] .multi-cell').nth(1).locator('.area[data-area="Performance"]').click();
+  for (const index of [0, 1, 2]) await expect(findings.nth(index).locator('[data-group="Performance"] .group-toggle')).toHaveAttribute('aria-expanded', 'true');
+  expect(await findings.locator('[data-group="Performance"] .finding:visible').count()).toBeGreaterThan(0);
+});
+
 test('in print each area of the findings opens its first three under the filter, counts the rest, and the PDF prints them open without JavaScript (#1609)', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
@@ -962,7 +996,7 @@ test('in print each area of the findings opens its first three under the filter,
   const group = sec.locator('.multi-cell').first().locator('[data-group="Security"]');
   const total = await group.locator('.finding').count();
   expect(total).toBeGreaterThan(3);
-  await group.locator('.group-toggle').click();
+  await expect(group.locator('.group-toggle')).toHaveAttribute('aria-expanded', 'false');
   await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
   await page.emulateMedia({ media: 'print' });
   await expect(sec.locator('.multi-filters')).toBeHidden();
@@ -1002,6 +1036,7 @@ test('a column whose evidence holds long selectors and paths keeps its findings 
   const sec = page.locator('#multi-overlay .multi-sec[data-sec="findings"]');
   await expect(sec.locator('.multi-cell')).toHaveCount(6, { timeout: 20000 });
   await page.waitForLoadState('networkidle');
+  for (const toggle of await sec.locator('.multi-cell').first().locator('.group-toggle').all()) await toggle.click();
   await sec.locator('.multi-cell').first().locator('details.finding').evaluateAll((list) => list.forEach((item) => { item.open = true; }));
   if (process.env.MULTI_SHOT) {
     for (const width of [1440, 1024]) {
