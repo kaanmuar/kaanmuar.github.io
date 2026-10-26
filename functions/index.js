@@ -2426,6 +2426,15 @@ async function rememberReview(kind, source) {
   } catch (error) {
     console.error("Review alert mail failed:", error);
   }
+  const push = jarvisNotify.paymentMessage(kind, source || {}, note) || jarvisNotify.reviewMessage(kind, source || {});
+  if (push) {
+    try {
+      const db = admin.firestore();
+      await jarvisPush.send(admin.messaging(), db, await jarvisPush.targets(db, push.kind), push);
+    } catch (error) {
+      console.error("Jarvis push failed:", error && error.message);
+    }
+  }
 }
 const REVIEW_ORIGINS = new Set([
   "https://carlosandmunoz.com",
@@ -4832,6 +4841,7 @@ const jarvisSum = (field) => admin.firestore.AggregateField.sum(field);
 const jarvisSources = require("./jarvis-sources");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
+const jarvisNotify = require("./jarvis-notify");
 const jarvisProposals = require("./jarvis-proposals");
 
 // A URL shared to the Jarvis app: the owner's own review, run like a sweep review and pushed to the phone that asked.
@@ -5047,7 +5057,26 @@ exports.jarvisWeeklyStrategy = scheduled(functions.runWith({ timeoutSeconds: 300
   const out = await jarvisWeekly({ force: false });
   return typeof out === "string" ? out : (out.sent ? "sent" : "not sent") + ", " + out.proposals + " proposals";
 });
-exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 120, secrets: ["SENDGRID_API_KEY"] }), "jarvisWatch", () => jarvisWatchRun());
+// Outreach notices waiting for Send or Drop: one push for whatever arrived since the last, at most hourly.
+async function jarvisNoticesRun() {
+  const db = admin.firestore();
+  const phones = await jarvisPush.targets(db, "outreach");
+  if (!phones.length) return "no phones for outreach";
+  const ref = db.collection("jarvis_watch").doc("notices");
+  const [state, snap] = await Promise.all([ref.get(), db.collection("url_review_owner_notices").where("status", "==", "pending").get()]);
+  const pending = snap.docs.map((d) => d.data());
+  const now = Date.now();
+  const fresh = jarvisNotify.noticesDue(pending, state.exists ? state.data().lastAt : "", now);
+  if (!fresh.length) return pending.length + " pending, none new";
+  const push = await jarvisPush.send(admin.messaging(), db, phones, jarvisNotify.noticesMessage(fresh, pending.length));
+  await ref.set({ lastAt: new Date(now).toISOString(), pending: pending.length });
+  return fresh.length + " new notices, pushed to " + push.sent;
+}
+
+exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 120, secrets: ["SENDGRID_API_KEY"] }), "jarvisWatch", async () => {
+  const notices = await jarvisNoticesRun().catch((error) => "notices failed: " + String(error.message || error).slice(0, 120));
+  return (await jarvisWatchRun()) + "; " + notices;
+});
 
 exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
   res.set("Access-Control-Allow-Origin", reviewOrigin(req));

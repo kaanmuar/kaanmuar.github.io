@@ -739,7 +739,7 @@ test("push: phones register with their kinds, and each kind reaches only the pho
   const a = "a".repeat(40), b = "b".repeat(40);
   await push.register(db, { token: a, name: "Pixel" }, "owner", Date.parse("2026-10-25T12:00:00Z"));
   await push.register(db, { token: b, kinds: { briefing: false } }, "owner", Date.parse("2026-10-25T12:00:00Z"));
-  assert.deepEqual((await push.list(db)).find((d) => d.token === b).kinds, { alerts: true, briefing: false });
+  assert.deepEqual((await push.list(db)).find((d) => d.token === b).kinds, { alerts: true, briefing: false, money: true, reviews: true, outreach: true });
   assert.deepEqual(await push.targets(db, "briefing"), [a]);
   assert.deepEqual((await push.targets(db, "alerts")).sort(), [a, b]);
   await assert.rejects(push.register(db, { token: "short" }, "owner", 0), /not a device token/);
@@ -827,4 +827,50 @@ test("voice: speak strips markdown, asks for Charon, and falls back to any male 
   assert.deepEqual(out, { audio: "QUJD", format: "mp3", lang: "es" });
   assert.deepEqual(voices, [{ languageCode: "es-ES", name: "es-ES-Chirp3-HD-Charon" }, { languageCode: "es-ES", ssmlGender: "MALE" }]);
   await assert.rejects(jarvis.speak(fetchImpl, "  ", "en"), /Nothing to say/);
+});
+
+const notify = require("../../functions/jarvis-notify.js");
+
+test("a live payment pushes amount, what and who; test and free ones stay quiet", () => {
+  const note = { name: "Ana", email: "ana@shop.com", url: "https://www.shop.com/" };
+  const msg = notify.paymentMessage("paid", { id: "r1", priceUsd: 19, via: "webhook" }, note);
+  assert.equal(msg.kind, "money");
+  assert.equal(msg.title, "$19 · Report paid · shop.com");
+  assert.equal(msg.body, "Ana · ana@shop.com");
+  assert.equal(msg.tab, "business");
+  assert.equal(notify.paymentMessage("run-paid", { priceUsd: 4.5, competitors: 3 }, {}).lines[1], "3 competitor runs");
+  assert.equal(notify.paymentMessage("paid", { priceUsd: 19, test: true }, note), null);
+  assert.equal(notify.paymentMessage("paid", { priceUsd: 0 }, note), null);
+  assert.equal(notify.paymentMessage("report", { priceUsd: 19 }, note), null);
+});
+
+test("only customer reviews push, with who, plan and the score", () => {
+  const report = { host: "shop.com", limits: { pagesRead: 12 }, insights: { score: { overall: 81, grade: "B", totals: { fail: 2, risk: 3, pass: 30 } }, findings: [{ verdict: "fail", title: "No HTTPS redirect" }] } };
+  const msg = notify.reviewMessage("report", { id: "x", report, name: "Ana", free: true });
+  assert.equal(msg.kind, "reviews");
+  assert.equal(msg.title, "New review: shop.com scored 81 (B)");
+  assert.equal(msg.body, "Ana · free. 12 pages read: 2 failing, 3 at risk, 30 passing.");
+  assert.deepEqual(msg.lines, ["No HTTPS redirect"]);
+  assert.match(notify.reviewMessage("stopped", { report, passId: "p" }).title, /^Review stopped early/);
+  for (const row of [{ report, source: "sweep" }, { report, source: "jarvis" }, { report, test: true }]) assert.equal(notify.reviewMessage("report", row), null);
+  assert.equal(notify.reviewMessage("failed", { report }), null);
+});
+
+test("outreach notices push what is new, at most once an hour", () => {
+  const now = Date.parse("2026-10-25T15:00:00Z");
+  const pending = [
+    { status: "pending", host: "a.com", email: "x@a.com", createdAt: "2026-10-25T14:30:00Z", critical: true },
+    { status: "pending", host: "b.com", email: "y@b.com", createdAt: "2026-10-25T12:00:00Z" }
+  ];
+  assert.equal(notify.noticesDue(pending, "", now).length, 2);
+  assert.deepEqual(notify.noticesDue(pending, "2026-10-25T13:00:00Z", now).map((n) => n.host), ["a.com"]);
+  assert.deepEqual(notify.noticesDue(pending, "2026-10-25T14:10:00Z", now), []);
+  const msg = notify.noticesMessage([pending[0]], 2);
+  assert.equal(msg.title, "2 outreach notices waiting for you");
+  assert.equal(msg.body, "1 new: a.com. 1 critical security finding. Send or drop each one.");
+  assert.deepEqual(msg.lines, ["a.com → x@a.com · critical"]);
+});
+
+test("phones keep the new push kinds on unless turned off", () => {
+  assert.deepEqual(push.cleanKinds({ money: false }), { alerts: true, briefing: true, money: false, reviews: true, outreach: true });
 });
