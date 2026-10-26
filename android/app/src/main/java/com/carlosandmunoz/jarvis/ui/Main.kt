@@ -373,7 +373,13 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 val context = LocalContext.current
                 val allowed = NotificationManagerCompat.from(context).areNotificationsEnabled()
                 if (!allowed) Text("Notifications are off for Jarvis on this phone.", color = J.amber, fontSize = 13.sp)
-                mapOf(Push.ALERTS to ("Alerts" to "A threshold crossing from the hourly watch, at any hour."), Push.BRIEFING to ("Daily briefing" to "The 07:40 briefing, next to the email."))
+                mapOf(
+                    Push.ALERTS to ("Alerts" to "A threshold crossing from the hourly watch, at any hour."),
+                    Push.BRIEFING to ("Daily briefing" to "The 07:40 briefing, next to the email."),
+                    Push.MONEY to ("Payments" to "Each live PayPal payment, with the amount and who paid."),
+                    Push.REVIEWS to ("New reviews" to "A customer's review finished, with its score."),
+                    Push.OUTREACH to ("Outreach approvals" to "Owner notices waiting to be sent, at most hourly."),
+                )
                     .forEach { (kind, text) ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) { Text(text.first); Muted(text.second) }
