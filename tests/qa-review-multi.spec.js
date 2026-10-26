@@ -614,6 +614,22 @@ test('the public marks of At a glance fit their tiles and line up across six sit
   await meters('print');
 });
 
+test('in a six-column print the response-time bars keep at least half of their row, so they read as bars and not dots (#1650)', async ({ page }) => {
+  await page.setViewportSize({ width: 1060, height: 760 });
+  const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
+    const base = [own, rival, sample.report][index];
+    return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id, host: 'site' + (index + 4) + '.example' }) };
+  }));
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const speed = page.locator('#multi-overlay .multi-sec[data-sec="glance"] [data-card="speed"]');
+  await expect(speed).toHaveCount(6, { timeout: 20000 });
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  const rows = await speed.locator('.meter').evaluateAll((list) => list.map((row) => ({ text: row.textContent, row: row.clientWidth, track: row.querySelector('.track').clientWidth })));
+  expect(rows.length).toBeGreaterThan(6);
+  for (const row of rows) expect(row.track, row.text).toBeGreaterThanOrEqual(row.row / 2);
+});
+
 test('the At a glance cards line up across the columns, and a long address in a practice wraps inside its card (#1613)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
