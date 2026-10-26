@@ -72,7 +72,8 @@ async function signIn(page, records, file, seen) {
     if (path === '/account/comparison/pdf') {
       seen.pdf.push(body.html);
       const problem = multi.pdfProblem(made, body.html);
-      return problem ? json(made && made.paid ? 400 : 402, { error: problem }) : json(200, { ok: true, pdf: Buffer.from('%PDF-1.4 test').toString('base64'), filename: multi.pdfName(made) });
+      if (problem) return json(made && made.paid ? 400 : 402, { error: problem });
+      return json(200, seen.pdfUrl ? { ok: true, url: seen.pdfUrl, filename: multi.pdfName(made) } : { ok: true, pdf: Buffer.from('%PDF-1.4 test').toString('base64'), filename: multi.pdfName(made) });
     }
     return json(200, path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] });
   });
@@ -198,6 +199,26 @@ test('the comparison title shows each site as its logo with its name below, a le
   await expect(printed.locator('.multi-sec[data-sec="exec"] .multi-cell').first()).toBeVisible();
   expect(await printed.evaluate(() => document.documentElement.classList.contains('dark-mode'))).toBe(false);
   await printed.close();
+});
+
+test('a PDF too large to send back is downloaded from the link to the stored file, and only a Storage link is followed (#1549)', async ({ page }) => {
+  const stored = 'https://firebasestorage.googleapis.com/v0/b/carlosm-interactive-cv.firebasestorage.app/o/comparison-pdfs%2Fabc.pdf?alt=media&token=abc';
+  const seen = { saved: [], deleted: [], pdf: [], pdfUrl: stored };
+  const name = 'qa-review-comparison-' + hosts.join('-vs-') + '-2026-10-24.pdf';
+  await page.route(/^https:\/\/firebasestorage\.googleapis\.com\//, (route) => route.fulfill({ contentType: 'application/pdf', headers: { 'content-disposition': 'attachment; filename="' + name + '"' }, body: '%PDF-1.4 big' }));
+  await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
+  const box = page.locator('#multi-overlay');
+  await expect(box.locator('.multi-site')).toHaveCount(3, { timeout: 20000 });
+  const download = page.waitForEvent('download');
+  await box.getByRole('button', { name: 'Download PDF' }).click();
+  expect((await download).suggestedFilename()).toBe(name);
+  await expect(box.locator('#multi-status')).toHaveText('The PDF is downloaded.');
+  expect(page.url()).toContain('?comparison=cmp1');
+
+  seen.pdfUrl = 'https://evil.example/x.pdf';
+  await box.getByRole('button', { name: 'Download PDF' }).click();
+  await expect(box.locator('#multi-status')).not.toHaveText('The PDF is downloaded.');
+  await expect(box.locator('#multi-status')).toHaveClass(/bad/);
 });
 
 test('six sites fit a 1920px window side by side without scrolling sideways (#1475)', async ({ page }) => {
