@@ -69,6 +69,12 @@
 .multi-cell .shots { grid-template-columns: minmax(0, 1fr) minmax(0, 110px); }
 .multi-cell .shots-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .multi-cell .shots-3 figure:first-child { grid-column: 1 / -1; }
+/* Public marks: two tiles a row, so each mark ([data-mark]) sits level with the same one of every site. */
+.multi-cell .ticks { grid-template-columns: repeat(auto-fit, minmax(max(96px, 34%), 1fr)); }
+.multi-cell .tick { min-width: 0; padding: 8px 10px; overflow-wrap: break-word; }
+.multi-cell .tick b { font-size: 12px; }
+.multi-cell .tick.on b { color: var(--green); }
+.multi-cell .tick.off b { color: var(--red); }
 @container (max-width: 300px) {
   .multi-cell .areas, .multi-cell .stat-row, .multi-cell .checks-grid, .multi-cell .kpis { grid-template-columns: minmax(0, 1fr); }
 }
@@ -205,7 +211,7 @@
 .multi-modal .multi-sec[data-sec="glance"] .multi-cell { grid-row: span var(--glance-rows); display: grid; grid-template-rows: subgrid; container-type: normal; }
 .multi-modal .multi-sec[data-sec="glance"] [data-card] { container-type: inline-size; }
 .multi-modal .multi-sec[data-sec="glance"] .multi-cell > * { grid-row: span 4; }
-.multi-modal .multi-sec[data-sec="glance"] .multi-cell > .visuals { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: subgrid; }
+.multi-modal .multi-sec[data-sec="glance"] .multi-cell > .visuals:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: subgrid; }
 .multi-modal .multi-sec[data-sec="glance"] [data-card="practices"], .multi-modal .multi-sec[data-sec="glance"] [data-card="practices"] .advice { display: flex; flex-direction: column; }
 .multi-modal .multi-sec[data-sec="glance"] [data-card="practices"] .advice { flex-grow: 1; }
 .multi-modal .multi-sec[data-sec="glance"] [data-advice="snapshot"] { margin-top: auto; }
@@ -362,6 +368,8 @@
   /* A section can run over many pages, so each column names its site where the section starts. */
   body.printing-multi .multi-sec .multi-cell::before { content: attr(data-host); padding-bottom: 3px; border-bottom: 2px solid var(--site, var(--own)); font: 700 8pt/1.2 Inter, system-ui, sans-serif; color: #12181f; overflow-wrap: anywhere; break-after: avoid; }
   body.printing-multi .multi-modal .multi-sec[data-sec="glance"] .multi-row { --glance-rows: 5; }
+  body.printing-multi .multi-cell .meter { grid-template-columns: minmax(0, 1fr) auto; gap: 1px 6px; margin: 4px 0; font-size: 7.5pt; }
+  body.printing-multi .multi-cell .meter > span:first-child { grid-column: 1 / -1; }
   body.printing-multi .multi-cell .card, body.printing-multi .multi-cell [data-slot] { max-height: none !important; overflow: visible !important; }
   /* A whole card pushed to the next page in one column would set that column a page behind the others. */
   body.printing-multi .multi-cell .card { break-inside: auto; }
