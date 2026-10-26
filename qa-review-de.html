@@ -491,8 +491,8 @@
         .meter span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .meter i { display: block; height: 8px; border-radius: 99px; background: var(--cyan); }
         .meter .track { height: 8px; border-radius: 99px; background: var(--panel-2); overflow: hidden; }
-        .ticks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-        .tick { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--panel); }
+        .ticks { display: grid; grid-template-columns: repeat(auto-fit, minmax(max(96px, 22%), 1fr)); gap: 8px; }
+        .tick { min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--panel); overflow-wrap: break-word; }
         .tick b { display: block; font-size: 13px; margin-bottom: 4px; }
         .tick.on { border-color: color-mix(in srgb, var(--green) 55%, var(--line)); }
         .tick.off { border-color: color-mix(in srgb, var(--amber) 55%, var(--line)); }
