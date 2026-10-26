@@ -425,6 +425,7 @@
         console.error("A comparison column did not draw:", error);
       }
     });
+    grid.querySelectorAll(".report-cover h2").forEach((heading) => { heading.innerHTML = esc(heading.textContent).replace(/\./g, ".<wbr>"); });
     settle(grid);
     capForPrint(grid);
     const bar = body.querySelector(".multi-hosts-bar");
