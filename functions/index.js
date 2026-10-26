@@ -1625,7 +1625,13 @@ async function sendAskerMail(email, mail, stopUrl, category, attachments, replyT
 }
 
 // The browser function prints the HTML with no script and no network; the answer is the PDF in base64.
-async function printHtml(html) {
+const PDF_INLINE_MAX = 7000000;
+const PDF_STORED_MAX = 40000000;
+const PDF_BUCKET = "carlosm-interactive-cv.firebasestorage.app";
+
+// max: the longest base64 PDF accepted. A reply from this function is capped at 10 MB, so a larger PDF is
+// stored and fetched by its link.
+async function printHtml(html, max) {
   const key = process.env.BROWSER_KEY;
   if (!key) return null;
   try {
@@ -1636,12 +1642,29 @@ async function printHtml(html) {
       signal: AbortSignal.timeout(60000)
     });
     const body = res.ok ? await res.json() : null;
-    if (!body || !body.ok || !body.pdf || body.pdf.length > 7000000) return null;
+    if (!body || !body.ok || !body.pdf || body.pdf.length > (max || PDF_INLINE_MAX)) return null;
     return body.pdf;
   } catch (error) {
     console.error("PDF print failed:", error && error.message);
     return null;
   }
+}
+
+// A PDF too large to send back, kept under comparison-pdfs/ (deleted after a day by the bucket's lifecycle rule)
+// and fetched by its download-token link, which is unguessable and needs no signing.
+async function storePdf(base64, filename) {
+  const token = crypto.randomUUID();
+  const file = admin.storage().bucket(PDF_BUCKET).file("comparison-pdfs/" + token + ".pdf");
+  await file.save(Buffer.from(base64, "base64"), {
+    resumable: false,
+    contentType: "application/pdf",
+    metadata: {
+      contentDisposition: 'attachment; filename="' + String(filename).replace(/[^\w.-]/g, "") + '"',
+      cacheControl: "private, max-age=3600",
+      metadata: { firebaseStorageDownloadTokens: token }
+    }
+  });
+  return "https://firebasestorage.googleapis.com/v0/b/" + PDF_BUCKET + "/o/" + encodeURIComponent(file.name) + "?alt=media&token=" + token;
 }
 
 async function reportPdfFor(record) {
@@ -3464,12 +3487,17 @@ async function reviewComparison(req, res, pathName, db, email) {
       return;
     }
     const logos = await Promise.all(made.columns.map((col) => (col.icon ? urlReview.iconData(col.icon) : "")));
-    const pdf = await printHtml(reviewMulti.withLogos(body.html, logos));
-    if (!pdf) {
+    const pdf = await printHtml(reviewMulti.withLogos(body.html, logos), PDF_STORED_MAX);
+    const filename = reviewMulti.pdfName(made);
+    const url = pdf && pdf.length > PDF_INLINE_MAX ? await storePdf(pdf, filename).catch((error) => {
+      console.error("Comparison PDF was not stored:", error && error.message);
+      return "";
+    }) : "";
+    if (!pdf || (pdf.length > PDF_INLINE_MAX && !url)) {
       res.status(503).json({ error: "The PDF did not print. Try again in a moment, or use Print." });
       return;
     }
-    res.status(200).json({ ok: true, pdf, filename: reviewMulti.pdfName(made) });
+    res.status(200).json(url ? { ok: true, url, filename } : { ok: true, pdf, filename });
     return;
   }
   res.status(404).json({ error: "Not found." });
