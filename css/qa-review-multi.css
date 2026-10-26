@@ -81,6 +81,18 @@
 .multi-cell > .multi-empty, .multi-cell.is-note > :last-child { flex-grow: 0; }
 .multi-cell .table-scroll { max-width: 100%; overflow-x: auto; }
 .multi-cell .print-more { display: none; }
+/* Fix kit: the intro, each file and the policy share one row across the columns (subgrid), so a file sits level
+   in every site however its text wraps. --kit-rows is the intro, the files shown, and the policy. */
+.multi-sec[data-sec="fixkit"] .multi-row { grid-template-rows: repeat(var(--kit-rows, 13), auto); row-gap: 8px; }
+.multi-sec[data-sec="fixkit"] .multi-cell, .multi-sec[data-sec="fixkit"] .multi-cell > [data-slot="fixkit"] { display: grid; grid-template-rows: subgrid; grid-row: 1 / -1; gap: normal; }
+/* A size container is laid out on its own, which would undo the subgrid. */
+.multi-sec[data-sec="fixkit"] .multi-cell { container-type: normal; }
+.multi-sec[data-sec="fixkit"] [data-slot="fixkit"] > p { margin: 0; }
+.multi-modal .multi-sec[data-sec="fixkit"] .fixkit-list { display: contents; }
+.multi-sec[data-sec="fixkit"] .fixkit-list .muted { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; }
+.multi-sec[data-sec="fixkit"] .fixkit-list .is-none { border-style: dashed; background: transparent; }
+.multi-sec[data-sec="fixkit"] .fixkit-list .is-none strong { color: var(--muted); font-weight: 600; }
+.multi-modal .multi-sec[data-sec="fixkit"] .code-peek { height: 200px; max-height: none; margin: 0; overflow: auto; overflow-wrap: anywhere; }
 
 /* Six sites fit the side-by-side table without scrolling sideways; the line names stay in view. */
 .multi-modal { --own: var(--cyan); }
@@ -198,6 +210,12 @@
   body.printing-multi .multi-cell .page-table thead th { position: static; }
   body.printing-multi .multi-cell .print-cut { display: none !important; }
   body.printing-multi .multi-cell .print-more { display: revert; list-style: none; color: #6b7785; font-style: italic; }
+  /* The site name above each column takes the first row. */
+  body.printing-multi .multi-sec[data-sec="fixkit"] .multi-row { grid-template-rows: auto repeat(var(--kit-rows, 13), auto); }
+  body.printing-multi .multi-sec[data-sec="fixkit"] .multi-cell > [data-slot="fixkit"] { grid-row: 2 / -1; }
+  body.printing-multi .multi-sec[data-sec="fixkit"] .fixkit-list .muted { display: block; overflow: visible; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="fixkit"] .code-peek { height: auto; overflow: visible; }
+  body.printing-multi .multi-sec[data-sec="fixkit"] .fixkit-list article { break-inside: avoid; }
   body.printing-multi .multi-cell .sec-matrix { font-size: 7pt; }
   body.printing-multi .multi-cell .sec-matrix th { font-size: 6pt; letter-spacing: 0; overflow-wrap: anywhere; }
   body.printing-multi .multi-cell .sec-matrix td:first-child { min-width: 0; }

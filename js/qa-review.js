@@ -2251,28 +2251,32 @@
   function paintFixKit(ins, paid) {
     const kit = ins.fixkit || {};
     const missing = (kit.headers || []).filter((item) => item.missing);
-    const items = [
-      [rc.t("kitHeaders"), missing.length ? rc.t("kitHeadersMissing", { n: missing.length, hosting: kit.hosting || rc.t("hostingDefault") }) : rc.t("kitHeadersAll")],
-      ["Content-Security-Policy", rc.t("kitCsp", { n: ((kit.csp || "").match(/https:\/\//g) || []).length })],
-      [rc.t("kitSchema"), rc.t(kit.jsonLd ? "kitSchemaDraft" : "kitSchemaHas")],
-      ["llms.txt", rc.t(kit.llmsTxt ? "kitLlmsDraft" : "kitLlmsHas")],
-      ["security.txt", rc.t(kit.securityTxt ? "kitSecDraft" : "kitSecHas")],
-      [rc.t("kitDns"), (kit.dns || []).length ? rc.t("kitDnsAdd", { n: kit.dns.length, list: kit.dns.map(dnsLabel).join(", ") }) : rc.t("kitDnsNone")],
-      ["GitHub Actions", rc.t("kitActionsBody")]
-    ];
-    if (kit.mtaSts) items.splice(-1, 0, [rc.t("kitMta"), rc.t("kitMtaBody")]);
-    if ((kit.libraries || []).length) items.splice(-1, 0, [rc.t("kitLibs"), kit.libraries.map((row) => row.ended ? rc.t("libEnded", { lib: row.name + " " + row.version }) : row.name + " " + row.version + " → " + row.fixed).join(", ") + "."]);
     const outlines = [kit.privacyNotice ? "privacy" : "", kit.imprint ? "imprint" : "", kit.accessibilityStatement ? "accessibility" : ""].filter(Boolean).map((key) => rc.word("legal", key));
     const listed = outlines.join(", ").replace(/, ([^,]*)$/, (match, last) => " " + rc.t("and") + " " + last);
-    if (outlines.length) items.splice(-1, 0, [rc.t("kitLegal"), rc.t("kitLegalBody", { list: listed })]);
-    if (kit.chatSnippet) items.splice(-1, 0, [rc.t("kitChat"), rc.t("kitChatBody")]);
+    // A comparison column keeps a tile for every file, so the tiles of the columns line up. A locked column's
+    // kit leaves out the optional files, so it cannot say they are not needed.
+    const optional = (kind, title, body, none) => body ? [kind, title, body] : slotRoot ? [kind, title, rc.t(paid ? none : "kitLocked"), true] : null;
+    const items = [
+      ["headers", rc.t("kitHeaders"), missing.length ? rc.t("kitHeadersMissing", { n: missing.length, hosting: kit.hosting || rc.t("hostingDefault") }) : rc.t("kitHeadersAll")],
+      ["csp", "Content-Security-Policy", rc.t("kitCsp", { n: ((kit.csp || "").match(/https:\/\//g) || []).length })],
+      ["jsonld", rc.t("kitSchema"), rc.t(kit.jsonLd ? "kitSchemaDraft" : "kitSchemaHas")],
+      ["llms", "llms.txt", rc.t(kit.llmsTxt ? "kitLlmsDraft" : "kitLlmsHas")],
+      ["securitytxt", "security.txt", rc.t(kit.securityTxt ? "kitSecDraft" : "kitSecHas")],
+      ["dns", rc.t("kitDns"), (kit.dns || []).length ? rc.t("kitDnsAdd", { n: kit.dns.length, list: kit.dns.map(dnsLabel).join(", ") }) : rc.t("kitDnsNone")],
+      optional("mtasts", rc.t("kitMta"), kit.mtaSts ? rc.t("kitMtaBody") : "", "kitNotNeeded"),
+      optional("libs", rc.t("kitLibs"), (kit.libraries || []).length ? kit.libraries.map((row) => row.ended ? rc.t("libEnded", { lib: row.name + " " + row.version }) : row.name + " " + row.version + " → " + row.fixed).join(", ") + "." : "", "kitNoLibs"),
+      optional("legal", rc.t("kitLegal"), outlines.length ? rc.t("kitLegalBody", { list: listed }) : "", "kitNotNeeded"),
+      optional("chat", rc.t("kitChat"), kit.chatSnippet ? rc.t("kitChatBody") : "", "kitNotNeeded"),
+      ["actions", "GitHub Actions", rc.t("kitActionsBody")]
+    ].filter(Boolean);
     const peek = "Content-Security-Policy-Report-Only: " + (kit.csp || "");
     const folderMark = "\u0000";
     const hostingMark = "\u0001";
     slot("fixkit").innerHTML =
       "<p>" + esc(rc.t("kitIntro", { folder: folderMark }) + (kit.hosting ? " " + rc.t("kitHosting", { hosting: hostingMark }) : ""))
         .replace(folderMark, () => '<span class="notranslate" translate="no">fix-kit/</span>').replace(hostingMark, () => "<strong>" + esc(kit.hosting) + "</strong>") + "</p>" +
-      '<div class="fixkit-list">' + items.map(([title, body]) => "<article><strong>" + esc(title) + "</strong><span class=\"muted\">" + esc(body) + "</span></article>").join("") + "</div>" +
+      '<div class="fixkit-list">' + items.map(([kind, title, body, none]) => '<article data-kit="' + kind + '"' + (none ? ' class="is-none"' : "") + "><strong>" + esc(title) + "</strong><span class=\"muted\"" +
+        (slotRoot ? ' title="' + esc(body) + '"' : "") + ">" + esc(body) + "</span></article>").join("") + "</div>" +
       '<div class="code-peek notranslate" translate="no">' + fadeText(peek, paid) + "</div>";
   }
 
