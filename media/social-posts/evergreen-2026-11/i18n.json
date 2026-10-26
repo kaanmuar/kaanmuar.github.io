@@ -6,7 +6,11 @@
    "guided": "Visita guiada",
    "never": "Nunca ejecuta tus pruebas",
    "end": "Deja que tu página hable por ti.",
-   "endNote": "Cómo funciona la revisión de una página pública, paso a paso."
+   "endNote": "Cómo funciona la revisión de una página pública, paso a paso.",
+   "why": "Por qué importa",
+   "more": "¿Lo sabías?",
+   "strongest": "Área más fuerte",
+   "weakest": "Área más débil"
   },
   "pt": {
    "tryThis": "Experimente",
@@ -14,7 +18,11 @@
    "guided": "Visita guiada",
    "never": "Nunca executa seus testes",
    "end": "Deixe sua página falar por você.",
-   "endNote": "Como funciona a revisão de uma página pública, passo a passo."
+   "endNote": "Como funciona a revisão de uma página pública, passo a passo.",
+   "why": "Por que isso importa",
+   "more": "Você sabia?",
+   "strongest": "Área mais forte",
+   "weakest": "Área mais fraca"
   },
   "de": {
    "tryThis": "Probieren Sie es aus",
@@ -22,7 +30,11 @@
    "guided": "Geführte Tour",
    "never": "Führt nie Ihre Tests aus",
    "end": "Lassen Sie Ihre Seite für sich sprechen.",
-   "endNote": "So funktioniert die Prüfung einer öffentlichen Seite, Schritt für Schritt."
+   "endNote": "So funktioniert die Prüfung einer öffentlichen Seite, Schritt für Schritt.",
+   "why": "Warum das zählt",
+   "more": "Schon gewusst?",
+   "strongest": "Stärkster Bereich",
+   "weakest": "Schwächster Bereich"
   },
   "fr": {
    "tryThis": "Essayez",
@@ -30,7 +42,11 @@
    "guided": "Visite guidée",
    "never": "N'exécute jamais vos tests",
    "end": "Laissez votre page parler pour vous.",
-   "endNote": "Comment fonctionne l'analyse d'une page publique, étape par étape."
+   "endNote": "Comment fonctionne l'analyse d'une page publique, étape par étape.",
+   "why": "Pourquoi c'est important",
+   "more": "Le saviez-vous ?",
+   "strongest": "Point le plus fort",
+   "weakest": "Point le plus faible"
   },
   "it": {
    "tryThis": "Prova subito",
@@ -38,7 +54,11 @@
    "guided": "Visita guidata",
    "never": "Non esegue mai i tuoi test",
    "end": "Lascia che la tua pagina parli per te.",
-   "endNote": "Come funziona la revisione di una pagina pubblica, passo dopo passo."
+   "endNote": "Come funziona la revisione di una pagina pubblica, passo dopo passo.",
+   "why": "Perché conta",
+   "more": "Lo sapevi?",
+   "strongest": "Area più forte",
+   "weakest": "Area più debole"
   }
  },
  "clips": {
@@ -54,7 +74,8 @@
    "counter": "Mito vs. realidad",
    "actionLabel": "Compruébalo",
    "cat.label": "Accesibilidad",
-   "cap.youtube": "Lighthouse revisa lo que un programa puede detectar, como nombres, contraste y ARIA. No puede saber si el texto alternativo tiene sentido ni si alguien con lector de pantalla puede terminar la tarea.\n\nCompruébalo: Después de la puntuación, haz una tarea real con un lector de pantalla: VoiceOver en Mac, NVDA en Windows.\n\nGuía: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-lighthouse\n\nMito vs. realidad · QA-lab URL Review"
+   "cap.youtube": "Lighthouse revisa lo que un programa puede detectar, como nombres, contraste y ARIA. No puede saber si el texto alternativo tiene sentido ni si alguien con lector de pantalla puede terminar la tarea.\n\nCompruébalo: Después de la puntuación, haz una tarea real con un lector de pantalla: VoiceOver en Mac, NVDA en Windows.\n\nGuía: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-lighthouse\n\nMito vs. realidad · QA-lab URL Review",
+   "more": "Las herramientas automáticas detectan solo una parte de los problemas WCAG de una página. El resto necesita a una persona con teclado y lector de pantalla."
   },
   "hreflang": {
    "title.0": "hreflang: a página certa",
@@ -66,7 +87,8 @@
    "counter": "Palavra do dia",
    "actionLabel": "Confira",
    "cat.label": "SEO",
-   "cap.youtube": "Um atributo que diz aos buscadores para qual idioma ou região é cada versão de uma página, para que quem fala espanhol chegue à página em espanhol.\n\nConfira: Abra uma página traduzida e confira se ela aponta para todas as versões de idioma, inclusive ela mesma. O Google ignora links sem retorno.\n\nGuia: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=hreflang\n\nPalavra do dia · QA-lab URL Review"
+   "cap.youtube": "Um atributo que diz aos buscadores para qual idioma ou região é cada versão de uma página, para que quem fala espanhol chegue à página em espanhol.\n\nConfira: Abra uma página traduzida e confira se ela aponta para todas as versões de idioma, inclusive ela mesma. O Google ignora links sem retorno.\n\nGuia: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=hreflang\n\nPalavra do dia · QA-lab URL Review",
+   "more": "Cada versão de idioma precisa apontar de volta para as outras. O Google ignora tags hreflang sem o link de retorno."
   },
   "coverage": {
    "title.0": "Finden Sie den Code,",
@@ -82,7 +104,8 @@
    "counter": "30-Sekunden-Trick",
    "actionLabel": "Jetzt testen",
    "cat.label": "Performance",
-   "cap.youtube": "Das Coverage-Panel in den Chrome DevTools markiert jedes Byte von Skripten und Stylesheets als genutzt oder ungenutzt, während Sie die Seite laden und bedienen.\n\nJetzt testen: Klicken Sie sich durch die Hauptaufgabe der Seite und sortieren Sie dann nach ungenutzten Bytes. Teilen oder verzögern Sie die größte Datei, die überwiegend rot bleibt.\n\nLeitfaden: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=coverage\n\n30-Sekunden-Trick · QA-lab URL Review"
+   "cap.youtube": "Das Coverage-Panel in den Chrome DevTools markiert jedes Byte von Skripten und Stylesheets als genutzt oder ungenutzt, während Sie die Seite laden und bedienen.\n\nJetzt testen: Klicken Sie sich durch die Hauptaufgabe der Seite und sortieren Sie dann nach ungenutzten Bytes. Teilen oder verzögern Sie die größte Datei, die überwiegend rot bleibt.\n\nLeitfaden: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=coverage\n\n30-Sekunden-Trick · QA-lab URL Review",
+   "more": "Ungenutzt heißt nicht tot: Mancher Code läuft erst nach einem Klick. Nutzen Sie die Seite auf jede Art, bevor Sie etwas löschen."
   },
   "myth-https": {
    "title.0": "Mythe : le cadenas",
@@ -96,7 +119,8 @@
    "counter": "Mythe ou réalité",
    "actionLabel": "Vérifiez",
    "cat.label": "Sécurité",
-   "cap.youtube": "HTTPS chiffre le trajet entre le navigateur et le serveur. Il ne dit rien des scripts, des en-têtes et des cookies de la page, ni de qui se trouve derrière le site.\n\nVérifiez: Vérifiez ce que le cadenas ne couvre pas : en-têtes de réponse, attributs des cookies, scripts obsolètes et enregistrement DMARC.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-https\n\nMythe ou réalité · QA-lab URL Review"
+   "cap.youtube": "HTTPS chiffre le trajet entre le navigateur et le serveur. Il ne dit rien des scripts, des en-têtes et des cookies de la page, ni de qui se trouve derrière le site.\n\nVérifiez: Vérifiez ce que le cadenas ne couvre pas : en-têtes de réponse, attributs des cookies, scripts obsolètes et enregistrement DMARC.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-https\n\nMythe ou réalité · QA-lab URL Review",
+   "more": "Les sites d'hameçonnage utilisent aussi HTTPS. Avec les certificats gratuits, le cadenas s'affiche sur presque tous les sites, bons ou mauvais."
   },
   "sri": {
    "title.0": "SRI:",
@@ -108,7 +132,8 @@
    "counter": "Parola del giorno",
    "actionLabel": "Trovalo",
    "cat.label": "Sicurezza",
-   "cap.youtube": "Subresource Integrity mette nel tag un hash del file. Se la CDN serve qualcosa di diverso, il browser si rifiuta di eseguirlo.\n\nTrovalo: Elenca gli script che carichi da altri domini. Aggiungi un hash di integrità a ognuno che abbia una versione fissa.\n\nGuida: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=sri\n\nParola del giorno · QA-lab URL Review"
+   "cap.youtube": "Subresource Integrity mette nel tag un hash del file. Se la CDN serve qualcosa di diverso, il browser si rifiuta di eseguirlo.\n\nTrovalo: Elenca gli script che carichi da altri domini. Aggiungi un hash di integrità a ognuno che abbia una versione fissa.\n\nGuida: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=sri\n\nParola del giorno · QA-lab URL Review",
+   "more": "Per i file da un'altra origine, SRI richiede l'attributo crossorigin e il CDN deve inviare le intestazioni CORS."
   },
   "googlebot": {
    "title.0": "Mira tu página",
@@ -124,7 +149,8 @@
    "counter": "Truco de 30 segundos",
    "actionLabel": "Pruébalo ya",
    "cat.label": "SEO",
-   "cap.youtube": "La herramienta de inspección de URLs de Search Console puede rastrear una página en vivo como Google y mostrar el HTML renderizado, una captura y los recursos que no pudo cargar.\n\nPruébalo ya: Busca en el HTML renderizado tu encabezado principal y tus datos clave. Si no aparecen ahí, puede que Google tampoco los vea.\n\nGuía: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=googlebot\n\nTruco de 30 segundos · QA-lab URL Review"
+   "cap.youtube": "La herramienta de inspección de URLs de Search Console puede rastrear una página en vivo como Google y mostrar el HTML renderizado, una captura y los recursos que no pudo cargar.\n\nPruébalo ya: Busca en el HTML renderizado tu encabezado principal y tus datos clave. Si no aparecen ahí, puede que Google tampoco los vea.\n\nGuía: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=googlebot\n\nTruco de 30 segundos · QA-lab URL Review",
+   "more": "Google indexa la versión móvil de cada página y rastrea la mayoría de los sitios con un agente de usuario de smartphone."
   },
   "inp": {
    "title.0": "INP:",
@@ -136,7 +162,8 @@
    "counter": "Palavra do dia",
    "actionLabel": "Confira",
    "cat.label": "Desempenho",
-   "cap.youtube": "Interaction to Next Paint mede o atraso entre um clique, toque ou tecla e o próximo quadro na tela. Ele substituiu o First Input Delay como Core Web Vital em março de 2024.\n\nConfira: Encontre o toque mais lento da sua página, muitas vezes um menu ou um filtro, e divida a tarefa longa por trás dele.\n\nGuia: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=inp\n\nPalavra do dia · QA-lab URL Review"
+   "cap.youtube": "Interaction to Next Paint mede o atraso entre um clique, toque ou tecla e o próximo quadro na tela. Ele substituiu o First Input Delay como Core Web Vital em março de 2024.\n\nConfira: Encontre o toque mais lento da sua página, muitas vezes um menu ou um filtro, e divida a tarefa longa por trás dele.\n\nGuia: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=inp\n\nPalavra do dia · QA-lab URL Review",
+   "more": "Um bom INP é de 200 milissegundos ou menos no percentil 75 das visitas; acima de 500 milissegundos é ruim."
   },
   "myth-overlay": {
    "title.0": "Mythos: Eine Codezeile",
@@ -150,7 +177,8 @@
    "counter": "Mythos oder Fakt",
    "actionLabel": "Prüfen Sie es",
    "cat.label": "Barrierefreiheit",
-   "cap.youtube": "Overlay-Widgets versprechen WCAG-Konformität mit einem einzigen Skript. Im April 2025 verpflichtete die US-Handelsbehörde FTC einen Anbieter, 1 Million Dollar zu zahlen und nicht mehr ohne Belege zu behaupten, sein Tool mache jede Website konform.\n\nPrüfen Sie es: Investieren Sie das Overlay-Budget zuerst in Ihre gemeinsamen Vorlagen: Kopfbereich, Navigation, Formulare und Fußzeile.\n\nLeitfaden: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-overlay\n\nMythos oder Fakt · QA-lab URL Review"
+   "cap.youtube": "Overlay-Widgets versprechen WCAG-Konformität mit einem einzigen Skript. Im April 2025 verpflichtete die US-Handelsbehörde FTC einen Anbieter, 1 Million Dollar zu zahlen und nicht mehr ohne Belege zu behaupten, sein Tool mache jede Website konform.\n\nPrüfen Sie es: Investieren Sie das Overlay-Budget zuerst in Ihre gemeinsamen Vorlagen: Kopfbereich, Navigation, Formulare und Fußzeile.\n\nLeitfaden: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-overlay\n\nMythos oder Fakt · QA-lab URL Review",
+   "more": "Viele Menschen mit Behinderung nutzen schon eigene Hilfsmittel wie Screenreader und Bildschirmlupen, und ein Overlay kann ihnen im Weg stehen."
   },
   "vision": {
    "title.0": "Simulez le daltonisme",
@@ -166,7 +194,8 @@
    "counter": "Astuce de 30 secondes",
    "actionLabel": "Essayez",
    "cat.label": "Accessibilité",
-   "cap.youtube": "Les Chrome DevTools peuvent simuler une vision floue, un contraste réduit et quatre types de déficience de la vision des couleurs, directement sur votre page.\n\nEssayez: Vérifiez chaque message d'erreur, graphique et lien. Si la couleur est le seul signal, ajoutez un texte, une icône ou un soulignement.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=vision\n\nAstuce de 30 secondes · QA-lab URL Review"
+   "cap.youtube": "Les Chrome DevTools peuvent simuler une vision floue, un contraste réduit et quatre types de déficience de la vision des couleurs, directement sur votre page.\n\nEssayez: Vérifiez chaque message d'erreur, graphique et lien. Si la couleur est le seul signal, ajoutez un texte, une icône ou un soulignement.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=vision\n\nAstuce de 30 secondes · QA-lab URL Review",
+   "more": "Environ 1 homme sur 12 et 1 femme sur 200 ont une forme de déficience de la vision des couleurs."
   },
   "myth-sitemap": {
    "title.0": "Mito: una sitemap",
@@ -180,7 +209,8 @@
    "counter": "Mito o realtà",
    "actionLabel": "Verifica",
    "cat.label": "SEO",
-   "cap.youtube": "Una sitemap aiuta i motori di ricerca a scoprire le tue pagine. Google dice chiaramente che non garantisce che ogni pagina elencata venga scansionata e indicizzata.\n\nVerifica: Apri il rapporto Pagine in Search Console e filtralo per la tua sitemap. Ogni pagina esclusa compare con il suo motivo.\n\nGuida: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-sitemap\n\nMito o realtà · QA-lab URL Review"
+   "cap.youtube": "Una sitemap aiuta i motori di ricerca a scoprire le tue pagine. Google dice chiaramente che non garantisce che ogni pagina elencata venga scansionata e indicizzata.\n\nVerifica: Apri il rapporto Pagine in Search Console e filtralo per la tua sitemap. Ogni pagina esclusa compare con il suo motivo.\n\nGuida: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-sitemap\n\nMito o realtà · QA-lab URL Review",
+   "more": "Una sitemap contiene fino a 50.000 indirizzi o 50 MB non compressi. I siti più grandi la dividono e ne elencano le parti in un indice di sitemap."
   },
   "a11y-check": {
    "title.0": "La revisión de accesibilidad",
@@ -200,7 +230,8 @@
    "counter": "Lista de comprobación",
    "actionLabel": "Úsala",
    "cat.label": "Accesibilidad",
-   "cap.youtube": "Cinco comprobaciones que cualquiera puede hacer sin herramientas especiales. Cada una corresponde a un criterio de conformidad de WCAG 2.2, así que un fallo es fácil de reportar.\n\nÚsala: Haz las cinco en tu página de inicio y en tu formulario más usado. Reporta cada fallo con el número de su criterio.\n\nGuía: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=a11y-check\n\nLista de comprobación · QA-lab URL Review"
+   "cap.youtube": "Cinco comprobaciones que cualquiera puede hacer sin herramientas especiales. Cada una corresponde a un criterio de conformidad de WCAG 2.2, así que un fallo es fácil de reportar.\n\nÚsala: Haz las cinco en tu página de inicio y en tu formulario más usado. Reporta cada fallo con el número de su criterio.\n\nGuía: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=a11y-check\n\nLista de comprobación · QA-lab URL Review",
+   "more": "Estas cinco comprobaciones no necesitan ninguna herramienta. Como siguiente paso, intenta las mismas tareas con un lector de pantalla."
   },
   "dmarc": {
    "title.0": "Qualquer um pode enviar e-mail",
@@ -211,7 +242,8 @@
    "counter": "Truque de 30 segundos",
    "actionLabel": "Teste agora",
    "cat.label": "Segurança",
-   "cap.youtube": "Um registro DMARC diz aos servidores de destino o que fazer com e-mails que usam o seu domínio mas falham na autenticação. Sem ele, e-mails falsificados entram com mais facilidade.\n\nTeste agora: Faça a consulta no seu domínio. Sem resposta? Publique p=none com um endereço para relatórios, leia os relatórios e depois passe para quarantine.\n\nGuia: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=dmarc\n\nTruque de 30 segundos · QA-lab URL Review"
+   "cap.youtube": "Um registro DMARC diz aos servidores de destino o que fazer com e-mails que usam o seu domínio mas falham na autenticação. Sem ele, e-mails falsificados entram com mais facilidade.\n\nTeste agora: Faça a consulta no seu domínio. Sem resposta? Publique p=none com um endereço para relatórios, leia os relatórios e depois passe para quarantine.\n\nGuia: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=dmarc\n\nTruque de 30 segundos · QA-lab URL Review",
+   "more": "Comece o DMARC com p=none para coletar relatórios e passe para quarantine e reject quando todos os seus remetentes reais passarem."
   },
   "skip-link": {
    "title.0": "Skip-Link:",
@@ -223,7 +255,8 @@
    "counter": "Wort des Tages",
    "actionLabel": "Erkennen Sie es",
    "cat.label": "Barrierefreiheit",
-   "cap.youtube": "Ein Link ganz oben auf der Seite, der Tastatur- und Screenreader-Nutzer direkt zum Hauptinhalt bringt. Er ist ein Weg, WCAG 2.4.1, Blöcke umgehen, auf Stufe A zu erfüllen.\n\nErkennen Sie es: Laden Sie Ihre Seite und drücken Sie einmal die Tabulatortaste. Als Erstes sollte ein Link erscheinen, der zum Inhalt springt.\n\nLeitfaden: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=skip-link\n\nWort des Tages · QA-lab URL Review"
+   "cap.youtube": "Ein Link ganz oben auf der Seite, der Tastatur- und Screenreader-Nutzer direkt zum Hauptinhalt bringt. Er ist ein Weg, WCAG 2.4.1, Blöcke umgehen, auf Stufe A zu erfüllen.\n\nErkennen Sie es: Laden Sie Ihre Seite und drücken Sie einmal die Tabulatortaste. Als Erstes sollte ein Link erscheinen, der zum Inhalt springt.\n\nLeitfaden: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=skip-link\n\nWort des Tages · QA-lab URL Review",
+   "more": "Ein Skip-Link kann verborgen bleiben, bis er den Fokus erhält, und erscheint so, sobald jemand die Tab-Taste drückt."
   },
   "field-vs-lab": {
    "title.0": "Votre score Lighthouse",
@@ -237,7 +270,8 @@
    "counter": "Astuce de 30 secondes",
    "actionLabel": "Essayez",
    "cat.label": "Performance",
-   "cap.youtube": "PageSpeed Insights affiche deux choses. En haut, des données d'utilisateurs réels du Chrome UX Report sur les 28 derniers jours. Le score en dessous vient d'un seul test en labo sur un téléphone simulé.\n\nEssayez: Lisez d'abord la moitié du haut. Si votre page n'y a pas de données réelles, collectez les vôtres avec la bibliothèque web-vitals de Google.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=field-vs-lab\n\nAstuce de 30 secondes · QA-lab URL Review"
+   "cap.youtube": "PageSpeed Insights affiche deux choses. En haut, des données d'utilisateurs réels du Chrome UX Report sur les 28 derniers jours. Le score en dessous vient d'un seul test en labo sur un téléphone simulé.\n\nEssayez: Lisez d'abord la moitié du haut. Si votre page n'y a pas de données réelles, collectez les vôtres avec la bibliothèque web-vitals de Google.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=field-vs-lab\n\nAstuce de 30 secondes · QA-lab URL Review",
+   "more": "Le Chrome UX Report a besoin d'assez de visites réelles pour afficher des données ; les petits sites ne voient parfois que les données de laboratoire."
   },
   "myth-keywords": {
    "title.0": "Mito: le meta keywords",
@@ -251,7 +285,8 @@
    "counter": "Mito o realtà",
    "actionLabel": "Verifica",
    "cat.label": "SEO",
-   "cap.youtube": "Nel 2009 Google ha dichiarato di non usare il meta tag keywords per il posizionamento nella ricerca web. Il tag però mostra ai concorrenti le parole che stai puntando.\n\nVerifica: Cerca name=\"keywords\" nei tuoi template. Toglilo e scrivi invece una vera description per ogni pagina chiave.\n\nGuida: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-keywords\n\nMito o realtà · QA-lab URL Review"
+   "cap.youtube": "Nel 2009 Google ha dichiarato di non usare il meta tag keywords per il posizionamento nella ricerca web. Il tag però mostra ai concorrenti le parole che stai puntando.\n\nVerifica: Cerca name=\"keywords\" nei tuoi template. Toglilo e scrivi invece una vera description per ogni pagina chiave.\n\nGuida: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=evergreen-2026-11&utm_content=myth-keywords\n\nMito o realtà · QA-lab URL Review",
+   "more": "Nemmeno la meta description determina il posizionamento, ma Google può mostrarla come snippet sotto il tuo link."
   }
  },
  "cache": {}

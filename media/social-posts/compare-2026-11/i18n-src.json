@@ -5,7 +5,11 @@
   "guided": "Guided tour",
   "never": "Never runs your tests",
   "end": "Let your page do the talking.",
-  "endNote": "How a public-page review works, step by step."
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
  },
  "clips": {
   "quiz-berlin-vienna": {
@@ -20,10 +24,11 @@
     "visual.sides.1.label": "Vienna",
     "visual.note": "Overall score out of 100 · 20 pages each",
     "actionLabel": "Your guess",
-    "action": "Make your guess. The answer, with all six area scores, comes out in our next post.",
+    "action": "Make your guess. The answer, with all six area scores, comes out tomorrow.",
     "footRight": "Same review, same day",
+    "more": "Both portals score the same for GEO, analytics and speed, so the other three areas decide it.",
     "cat.label": "Real runs compared · local",
-    "cap.youtube": "Two capital city portals, 20 pages each, analyzed by the same public-page review in October 2026. One of them leads by a single point.\n\nYour guess: Make your guess. The answer, with all six area scores, comes out in our next post.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-berlin-vienna\n\nQuiz · which scored higher? · QA-lab URL Review\n\n#WebQuality #DevOps #Playwright #QA #Quiz #TechTips #WebDevelopment #QualityAssurance #TestAutomation #Testing #QAEngineer #QAlab"
+    "cap.youtube": "Two capital city portals, 20 pages each, analyzed by the same public-page review in October 2026. One of them leads by a single point.\n\nYour guess: Make your guess. The answer, with all six area scores, comes out tomorrow.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-berlin-vienna\n\nQuiz · which scored higher? · QA-lab URL Review\n\n#WebQuality #Automation #Playwright #QA #Quiz #WebDevelopment #Coding #TestAutomation #Testing #QAEngineer #SDET #QAlab"
    }
   },
   "berlin-vienna": {
@@ -41,12 +46,13 @@
     "visual.cols.6": "Speed",
     "visual.rows.0.0": "Berlin",
     "visual.rows.1.0": "Vienna",
-    "visual.note": "berlin.de and wien.gv.at · 20 pages each · analyzed 21 Oct 2026",
+    "visual.note": "berlin.de and wien.gv.at · 20 pages each",
     "actionLabel": "Lesson",
     "action": "A one-point lead can hide a 19-point gap. Read your own site's area scores, not just the total.",
     "footRight": "Analyzed on 21 Oct 2026",
+    "more": "Berlin's weakest area is SEO, at 75. Vienna's is security, at 72.",
     "cat.label": "Real runs compared · local",
-    "cap.youtube": "Vienna leads SEO by 19 points, 94 to 75. Berlin answers in security, 86 to 72, and accessibility, 97 to 85. GEO, analytics and speed are tied.\n\nLesson: A one-point lead can hide a 19-point gap. Read your own site's area scores, not just the total.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=berlin-vienna\n\nThe answer · QA-lab URL Review\n\n#WebQuality #AI #SoftwareTesting #QA #SEO #GovTech #TechTips #WebDevelopment #Testing #TechnicalSEO #QAEngineer #QAlab"
+    "cap.youtube": "Vienna leads SEO by 19 points, 94 to 75. Berlin answers in security, 86 to 72, and accessibility, 97 to 85. GEO, analytics and speed are tied.\n\nLesson: A one-point lead can hide a 19-point gap. Read your own site's area scores, not just the total.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=berlin-vienna\n\nThe answer · QA-lab URL Review\n\n#WebQuality #SEO #DevOps #QA #GovTech #WebDevelopment #Coding #TechnicalSEO #QAEngineer #SEOTips #SDET #QAlab"
    }
   },
   "three-universities": {
@@ -65,12 +71,13 @@
     "visual.rows.0.0": "Stanford",
     "visual.rows.1.0": "MIT",
     "visual.rows.2.0": "Harvard",
-    "visual.note": "stanford.edu, mit.edu, harvard.edu · 20 pages each · analyzed 19 Oct 2026",
+    "visual.note": "stanford.edu, mit.edu, harvard.edu · 20 pages each",
     "actionLabel": "Lesson",
     "action": "Pick your two closest peers and compare area by area. The total hides where each one is strong.",
     "footRight": "Analyzed on 19 Oct 2026",
+    "more": "The lowest single score of the three is Harvard's security, at 54. MIT's weakest area is SEO, at 59.",
     "cat.label": "Real runs compared · worldwide",
-    "cap.youtube": "Stanford leads overall with 86, and in security. MIT has the fastest pages, 97 for speed. Harvard leads GEO with 89, and shares a perfect 100 for accessibility with Stanford.\n\nLesson: Pick your two closest peers and compare area by area. The total hides where each one is strong.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=three-universities\n\nComparison · QA-lab URL Review\n\n#WebQuality #Accessibility #Playwright #QA #HigherEd #TechTips #WebDevelopment #SoftwareTesting #a11y #QualityAssurance #WCAG #QAlab"
+    "cap.youtube": "Stanford leads overall with 86, and in security. MIT has the fastest pages, 97 for speed. Harvard leads GEO with 89, and shares a perfect 100 for accessibility with Stanford.\n\nLesson: Pick your two closest peers and compare area by area. The total hides where each one is strong.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=three-universities\n\nComparison · QA-lab URL Review\n\n#WebQuality #Playwright #DevOps #QA #HigherEd #Accessibility #WebDevelopment #Coding #a11y #QualityAssurance #WCAG #QAlab"
    }
   },
   "quiz-banks": {
@@ -85,10 +92,11 @@
     "visual.sides.1.label": "Bancolombia",
     "visual.note": "Overall score out of 100 · public pages only",
     "actionLabel": "Your guess",
-    "action": "Make your guess. The answer, with all six area scores, comes out in our next post.",
+    "action": "Make your guess. The answer, with all six area scores, comes out tomorrow.",
     "footRight": "Same review, same day",
+    "more": "Both banks score exactly 85 for analytics, so that area will not decide it.",
     "cat.label": "Real runs compared · national",
-    "cap.youtube": "Two of Colombia's biggest banks, 20 public pages each, analyzed on the same day in October 2026.\n\nYour guess: Make your guess. The answer, with all six area scores, comes out in our next post.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-banks\n\nQuiz · which scored higher? · QA-lab URL Review\n\n#WebQuality #Playwright #AI #QA #Quiz #Programming #LearnOnYouTube #TestAutomation #Testing #QAEngineer #SDET #QAlab"
+    "cap.youtube": "Two of Colombia's biggest banks, 20 public pages each, analyzed on the same day in October 2026.\n\nYour guess: Make your guess. The answer, with all six area scores, comes out tomorrow.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-banks\n\nQuiz · which scored higher? · QA-lab URL Review\n\n#WebQuality #Playwright #DevOps #QA #Quiz #LearnOnYouTube #TechTips #Testing #QAEngineer #SDET #SoftwareTesting #QAlab"
    }
   },
   "banks": {
@@ -106,12 +114,13 @@
     "visual.cols.6": "Speed",
     "visual.rows.0.0": "Davivienda",
     "visual.rows.1.0": "Bancolombia",
-    "visual.note": "davivienda.com and bancolombia.com · 20 pages each · analyzed 19 Oct 2026",
+    "visual.note": "davivienda.com and bancolombia.com · 20 pages each",
     "actionLabel": "Lesson",
     "action": "Check labels, contrast and headings on your public pages first. Here they moved the total more than any other area.",
     "footRight": "Analyzed on 19 Oct 2026",
+    "more": "Bancolombia's weakest area is SEO, at 41. Davivienda's is speed, at 50.",
     "cat.label": "Real runs compared · national",
-    "cap.youtube": "Davivienda scores 86 for accessibility, Bancolombia 45. Bancolombia has the faster pages, 73 to 50, and analytics is tied at 85.\n\nLesson: Check labels, contrast and headings on your public pages first. Here they moved the total more than any other area.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=banks\n\nThe answer · QA-lab URL Review\n\n#WebQuality #SoftwareTesting #DevOps #QA #Accessibility #Fintech #Programming #LearnOnYouTube #DigitalAccessibility #QAEngineer #UXDesign #QAlab"
+    "cap.youtube": "Davivienda scores 86 for accessibility, Bancolombia 45. Bancolombia has the faster pages, 73 to 50, and analytics is tied at 85.\n\nLesson: Check labels, contrast and headings on your public pages first. Here they moved the total more than any other area.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=banks\n\nThe answer · QA-lab URL Review\n\n#WebQuality #SoftwareTesting #Automation #QA #Accessibility #Fintech #LearnOnYouTube #TechTips #UXDesign #SDET #a11y #QAlab"
    }
   },
   "quiz-govuk-usagov": {
@@ -126,10 +135,11 @@
     "visual.sides.1.label": "United States",
     "visual.note": "Overall score out of 100 · 20 pages each",
     "actionLabel": "Your guess",
-    "action": "Make your guess. The answer, with all six area scores, comes out in our next post.",
+    "action": "Make your guess. The answer, with all six area scores, comes out tomorrow.",
     "footRight": "Same review, Oct 2026",
+    "more": "Both portals score a perfect 100 for accessibility, so the gap is in the other five areas.",
     "cat.label": "Real runs compared · national",
-    "cap.youtube": "Two national government portals, each built on a public design system, 20 pages each, analyzed in October 2026.\n\nYour guess: Make your guess. The answer, with all six area scores, comes out in our next post.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-govuk-usagov\n\nQuiz · which scored higher? · QA-lab URL Review\n\n#WebQuality #DevOps #Playwright #QA #Quiz #LearnOnYouTube #TechTips #QualityAssurance #TestAutomation #Testing #QAEngineer #QAlab"
+    "cap.youtube": "Two national government portals, each built on a public design system, 20 pages each, analyzed in October 2026.\n\nYour guess: Make your guess. The answer, with all six area scores, comes out tomorrow.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-govuk-usagov\n\nQuiz · which scored higher? · QA-lab URL Review\n\n#WebQuality #Automation #Playwright #QA #Quiz #TechTips #WebDevelopment #TestAutomation #Testing #QAEngineer #SDET #QAlab"
    }
   },
   "govuk-usagov": {
@@ -147,12 +157,13 @@
     "visual.cols.6": "Speed",
     "visual.rows.0.0": "GOV.UK",
     "visual.rows.1.0": "USA.gov",
-    "visual.note": "gov.uk and usa.gov · 20 pages each · analyzed 19 and 21 Oct 2026",
+    "visual.note": "gov.uk and usa.gov · 20 pages each",
     "actionLabel": "Lesson",
     "action": "Both build their pages from a public design system. Reuse tested components instead of rebuilding them on every page.",
     "footRight": "Analyzed in Oct 2026",
+    "more": "GOV.UK's 92 is the highest overall score in this whole comparison series.",
     "cat.label": "Real runs compared · national",
-    "cap.youtube": "GOV.UK leads security, 94 to 77, and analytics, 97 to 85. USA.gov answers with speed, 94 to 89, and GEO, 91 to 86.\n\nLesson: Both build their pages from a public design system. Reuse tested components instead of rebuilding them on every page.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=govuk-usagov\n\nThe answer · QA-lab URL Review\n\n#WebQuality #AI #SoftwareTesting #QA #GovTech #DesignSystems #WebDevelopment #Coding #QualityAssurance #TestAutomation #Testing #QAlab"
+    "cap.youtube": "GOV.UK leads security, 94 to 77, and analytics, 97 to 85. USA.gov answers with speed, 94 to 89, and GEO, 91 to 86.\n\nLesson: Both build their pages from a public design system. Reuse tested components instead of rebuilding them on every page.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=govuk-usagov\n\nThe answer · QA-lab URL Review\n\n#WebQuality #DevOps #SoftwareTesting #QA #GovTech #DesignSystems #Coding #Programming #TestAutomation #Testing #QAEngineer #QAlab"
    }
   },
   "quiz-metros": {
@@ -167,10 +178,11 @@
     "visual.sides.1.label": "Metro de Bogotá",
     "visual.note": "Overall score out of 100 · 20 pages each",
     "actionLabel": "Your guess",
-    "action": "Make your guess. The answer, with all six area scores, comes out in our next post.",
+    "action": "Make your guess. The answer, with all six area scores, comes out tomorrow.",
     "footRight": "Same review, same day",
+    "more": "Both metro sites score 86 for GEO, so that area will not decide it.",
     "cat.label": "Real runs compared · local",
-    "cap.youtube": "Medellín's metro has carried riders since 1995, while Bogotá's first line is still being built. Their websites, 20 pages each, went through the same review.\n\nYour guess: Make your guess. The answer, with all six area scores, comes out in our next post.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-metros\n\nQuiz · which scored higher? · QA-lab URL Review\n\n#WebQuality #DevOps #Playwright #QA #Quiz #Programming #LearnOnYouTube #QualityAssurance #TestAutomation #Testing #QAEngineer #QAlab"
+    "cap.youtube": "Medellín's metro has carried riders since 1995, while Bogotá's first line is still being built. Their websites, 20 pages each, went through the same review.\n\nYour guess: Make your guess. The answer, with all six area scores, comes out tomorrow.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-metros\n\nQuiz · which scored higher? · QA-lab URL Review\n\n#WebQuality #Automation #Playwright #QA #Quiz #LearnOnYouTube #TechTips #TestAutomation #Testing #QAEngineer #SDET #QAlab"
    }
   },
   "metros": {
@@ -186,14 +198,15 @@
     "visual.cols.3": "Analytics",
     "visual.cols.4": "Security",
     "visual.cols.6": "Speed",
-    "visual.rows.0.0": "Metro de Medellín",
-    "visual.rows.1.0": "Metro de Bogotá",
-    "visual.note": "metrodemedellin.gov.co and metrodebogota.gov.co · 20 pages each · analyzed 19 Oct 2026",
+    "visual.rows.0.0": "Medellín",
+    "visual.rows.1.0": "Bogotá",
+    "visual.note": "metrodemedellin.gov.co and metrodebogota.gov.co · 20 pages each",
     "actionLabel": "Lesson",
     "action": "A faster site can still lose overall. Fix the weakest area first: for Metro de Bogotá that is security, at 61.",
     "footRight": "Analyzed on 19 Oct 2026",
+    "more": "Metro de Bogotá's 97 for speed ties MIT's for the fastest pages in this comparison series.",
     "cat.label": "Real runs compared · local",
-    "cap.youtube": "Metro de Medellín leads SEO, 83 to 65, and security, 77 to 61. Metro de Bogotá wins speed, 97 to 94, and accessibility, 86 to 79. GEO is tied at 86.\n\nLesson: A faster site can still lose overall. Fix the weakest area first: for Metro de Bogotá that is security, at 61.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=metros\n\nThe answer · QA-lab URL Review\n\n#WebQuality #Vulnerability #Phishing #QA #PublicTransport #WebSecurity #WebDevelopment #Coding #AppSec #Testing #OWASP #QAlab"
+    "cap.youtube": "Metro de Medellín leads SEO, 83 to 65, and security, 77 to 61. Metro de Bogotá wins speed, 97 to 94, and accessibility, 86 to 79. GEO is tied at 86.\n\nLesson: A faster site can still lose overall. Fix the weakest area first: for Metro de Bogotá that is security, at 61.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=metros\n\nThe answer · QA-lab URL Review\n\n#WebQuality #CyberSecurity #DevOps #QA #PublicTransport #WebSecurity #Coding #Programming #OWASP #QAEngineer #DevSecOps #QAlab"
    }
   },
   "quiz-cities": {
@@ -208,10 +221,11 @@
     "visual.sides.1.label": "Medellín",
     "visual.note": "Overall score out of 100 · city hall portals",
     "actionLabel": "Your guess",
-    "action": "Make your guess. The answer, with all six area scores, comes out in our next post.",
+    "action": "Make your guess. The answer, with all six area scores, comes out tomorrow.",
     "footRight": "Same review, same day",
+    "more": "Same review, same day: 20 pages of Bogotá's portal and 19 of Medellín's, on 19 October 2026.",
     "cat.label": "Real runs compared · local",
-    "cap.youtube": "Colombia's two largest cities and their official portals, analyzed by the same public-page review in October 2026.\n\nYour guess: Make your guess. The answer, with all six area scores, comes out in our next post.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-cities\n\nQuiz · which scored higher? · QA-lab URL Review\n\n#WebQuality #SoftwareTesting #DevOps #QA #Quiz #LearnOnYouTube #TechTips #QualityAssurance #TestAutomation #Testing #QAEngineer #QAlab"
+    "cap.youtube": "Colombia's two largest cities and their official portals, analyzed by the same public-page review in October 2026.\n\nYour guess: Make your guess. The answer, with all six area scores, comes out tomorrow.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-cities\n\nQuiz · which scored higher? · QA-lab URL Review\n\n#WebQuality #SoftwareTesting #Automation #QA #Quiz #TechTips #WebDevelopment #QualityAssurance #TestAutomation #Testing #QAEngineer #QAlab"
    }
   },
   "cities": {
@@ -229,12 +243,13 @@
     "visual.cols.6": "Speed",
     "visual.rows.0.0": "Bogotá",
     "visual.rows.1.0": "Medellín",
-    "visual.note": "bogota.gov.co, 20 pages · medellin.gov.co, 19 pages · analyzed 19 Oct 2026",
+    "visual.note": "bogota.gov.co, 20 pages · medellin.gov.co, 19 pages",
     "actionLabel": "Lesson",
     "action": "Medellín's portal sends no HSTS, CSP, Referrer-Policy or Permissions-Policy header. Most hosts and CDNs set headers as configuration, not code.",
     "footRight": "Analyzed on 19 Oct 2026",
+    "more": "Bogotá's 97 for SEO is the highest SEO score in this whole comparison series.",
     "cat.label": "Real runs compared · local",
-    "cap.youtube": "Bogotá leads security, 77 to 54, and SEO, 97 to 89. Medellín has the faster pages, 80 to 73, and edges GEO, 91 to 89.\n\nLesson: Medellín's portal sends no HSTS, CSP, Referrer-Policy or Permissions-Policy header. Most hosts and CDNs set headers as configuration, not code.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=cities\n\nThe answer · QA-lab URL Review\n\n#WebQuality #SoftwareTesting #Vulnerability #QA #GovTech #WebSecurity #TechTips #WebDevelopment #CyberSecurity #QualityAssurance #InfoSec #QAlab"
+    "cap.youtube": "Bogotá leads security, 77 to 54, and SEO, 97 to 89. Medellín has the faster pages, 80 to 73, and edges GEO, 91 to 89.\n\nLesson: Medellín's portal sends no HSTS, CSP, Referrer-Policy or Permissions-Policy header. Most hosts and CDNs set headers as configuration, not code.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=cities\n\nThe answer · QA-lab URL Review\n\n#WebQuality #Automation #CyberSecurity #QA #GovTech #WebSecurity #WebDevelopment #Coding #QualityAssurance #InfoSec #TestAutomation #QAlab"
    }
   }
  }
