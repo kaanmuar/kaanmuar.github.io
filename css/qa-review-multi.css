@@ -81,6 +81,17 @@
 .multi-cell > .multi-empty, .multi-cell.is-note > :last-child { flex-grow: 0; }
 .multi-cell .table-scroll { max-width: 100%; overflow-x: auto; }
 .multi-cell .print-more { display: none; }
+/* At a glance: every [data-card] takes a row shared by all the columns, as tall as its tallest, so each card
+   starts and ends level with the same card of the other sites. The snapshot note sits at the foot of its card.
+   A size container cannot be a subgrid, so the cards, not the column, are the containers here. */
+.multi-modal .multi-sec[data-sec="glance"] .multi-row { --glance-rows: 4; grid-template-rows: repeat(var(--glance-rows), auto); row-gap: 12px; }
+.multi-modal .multi-sec[data-sec="glance"] .multi-cell { grid-row: span var(--glance-rows); display: grid; grid-template-rows: subgrid; container-type: normal; }
+.multi-modal .multi-sec[data-sec="glance"] [data-card] { container-type: inline-size; }
+.multi-modal .multi-sec[data-sec="glance"] .multi-cell > * { grid-row: span 4; }
+.multi-modal .multi-sec[data-sec="glance"] .multi-cell > .visuals { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: subgrid; }
+.multi-modal .multi-sec[data-sec="glance"] [data-card="practices"], .multi-modal .multi-sec[data-sec="glance"] [data-card="practices"] .advice { display: flex; flex-direction: column; }
+.multi-modal .multi-sec[data-sec="glance"] [data-card="practices"] .advice { flex-grow: 1; }
+.multi-modal .multi-sec[data-sec="glance"] [data-advice="snapshot"] { margin-top: auto; }
 
 /* Six sites fit the side-by-side table without scrolling sideways; the line names stay in view. */
 .multi-modal { --own: var(--cyan); }
@@ -191,6 +202,7 @@
   body.printing-multi .multi-row.fold-panel[hidden] { display: grid !important; }
   /* A section can run over many pages, so each column names its site where the section starts. */
   body.printing-multi .multi-sec .multi-cell::before { content: attr(data-host); padding-bottom: 3px; border-bottom: 2px solid var(--site, var(--own)); font: 700 8pt/1.2 Inter, system-ui, sans-serif; color: #12181f; overflow-wrap: anywhere; break-after: avoid; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="glance"] .multi-row { --glance-rows: 5; }
   body.printing-multi .multi-cell .card, body.printing-multi .multi-cell [data-slot] { max-height: none !important; overflow: visible !important; }
   /* A whole card pushed to the next page in one column would set that column a page behind the others. */
   body.printing-multi .multi-cell .card { break-inside: auto; }
