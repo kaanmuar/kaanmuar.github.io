@@ -14,7 +14,7 @@ class WatchListener : WearableListenerService() {
 
     override fun onMessageReceived(event: MessageEvent) {
         if (event.path != SYNC) return
-        scope.launch { if (!Home.refresh(this@WatchListener)) Watch.sync(this@WatchListener) }
+        scope.launch { if (!Home.refresh(this@WatchListener)) Home.redraw(this@WatchListener) }
     }
 
     override fun onDestroy() {

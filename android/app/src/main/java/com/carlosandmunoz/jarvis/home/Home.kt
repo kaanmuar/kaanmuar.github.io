@@ -102,7 +102,24 @@ object Home {
         runCatching { NumbersWidget().updateAll(context) }
         runCatching { GoalsWidget().updateAll(context) }
         runCatching { TileService.requestListeningState(context, ComponentName(context, StatusTile::class.java)) }
-        Watch.sync(context)
+        val today = today(context.applicationContext as JarvisApp)
+        Ongoing.show(context, today)
+        Watch.sync(context, today)
+    }
+
+    /** The one-day snapshot behind "today" figures, fetched at most once per redraw and only when asked for. */
+    private fun today(app: JarvisApp): suspend () -> JsonObject? {
+        var loaded = false
+        var day: JsonObject? = null
+        return {
+            if (!loaded) {
+                loaded = true
+                val snap = snapshot(app)?.first
+                day = if (snap == null || Home.days(app) == 1 || !app.auth.signedIn) snap
+                    else runCatching { app.api.fetch("snapshot", 1).json }.getOrNull() ?: app.api.saved("snapshot", 1)?.json
+            }
+            day
+        }
     }
 
     fun schedule(context: Context) {

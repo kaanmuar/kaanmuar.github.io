@@ -163,6 +163,44 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
 
     function setStatus(text) { $('#jv-status').textContent = text; }
 
+    // Live tab icon (#1530), the web side of the app's status notification: the readiness ring, and a badge counting alerts and warnings.
+    const pageTitle = document.title;
+    function tabIcon(ready, alerts, warns) {
+        const key = `${ready}|${alerts}|${warns}`;
+        if (tabIcon.key === key) return;
+        tabIcon.key = key;
+        const c = document.createElement('canvas');
+        c.width = c.height = 64;
+        const g = c.getContext('2d');
+        if (!g) return;
+        const color = alerts ? '#ff4d8d' : warns ? '#ffb547' : '#38e1ff';
+        g.fillStyle = '#030b12';
+        g.beginPath(); g.arc(32, 32, 31, 0, Math.PI * 2); g.fill();
+        g.lineWidth = 7;
+        g.lineCap = 'round';
+        g.strokeStyle = 'rgba(255,255,255,.18)';
+        g.beginPath(); g.arc(32, 32, 25, 0, Math.PI * 2); g.stroke();
+        if (ready) { g.strokeStyle = color; g.beginPath(); g.arc(32, 32, 25, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(ready, 100) / 100); g.stroke(); }
+        const label = ready === null ? '–' : ready >= 100 ? '✓' : String(ready);
+        g.fillStyle = '#fff';
+        g.font = `bold ${label.length > 1 ? 24 : 28}px system-ui, sans-serif`;
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        g.fillText(label, 32, 34);
+        const n = alerts + warns;
+        if (n) {
+            g.fillStyle = color;
+            g.beginPath(); g.arc(50, 14, 13, 0, Math.PI * 2); g.fill();
+            g.fillStyle = '#030b12';
+            g.font = 'bold 17px system-ui, sans-serif';
+            g.fillText(n > 9 ? '9+' : String(n), 50, 15);
+        }
+        let link = document.querySelector('link[data-jv-icon]');
+        if (!link) { link = document.createElement('link'); link.rel = 'icon'; link.dataset.jvIcon = ''; document.head.append(link); }
+        link.href = c.toDataURL('image/png');
+        document.title = (n ? `(${n}) ` : '') + (ready === null ? '' : `${ready}% · `) + pageTitle;
+    }
+
     function greet() {
         const hour = C.zoneParts(new Date()).hour;
         $('#jv-hello').textContent = (hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening') + ', Carlos';
@@ -823,6 +861,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         root.classList.toggle('is-degraded', ready !== null && ready < C.thresholds((S.settings || {}).thresholds).readinessMin);
         const alerts = S.brief.filter((b) => b.level === 'alert').length;
         const warns = S.brief.filter((b) => b.level === 'warn').length;
+        tabIcon(ready, alerts, warns);
         const checked = ['health', 'jobs', 'uptime'].some((k) => S.external[k] && !S.pending[k]);
         const things = `${warns} thing${warns > 1 ? 's' : ''} to look at`;
         setStatus(alerts ? `${alerts} alert${alerts > 1 ? 's' : ''} and ${warns} warning${warns === 1 ? '' : 's'} need you.` : !checked ? (warns ? `${things}. Checking systems…` : 'Checking systems…') : warns ? `All systems up. ${things}.` : 'All systems nominal.');
@@ -1368,6 +1407,12 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         inboxChanged() { if (S.mounted) { compute(); render(); } },
         state: S,
         run,
-        destroy() { S.timers.forEach(clearInterval); document.removeEventListener('keydown', onKey); }
+        destroy() {
+            S.timers.forEach(clearInterval);
+            document.removeEventListener('keydown', onKey);
+            const icon = document.querySelector('link[data-jv-icon]');
+            if (icon) icon.remove();
+            document.title = pageTitle;
+        }
     };
 }
