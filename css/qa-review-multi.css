@@ -122,6 +122,36 @@
 .multi-cell > .multi-empty, .multi-cell.is-note > :last-child { flex-grow: 0; }
 .multi-cell .table-scroll { max-width: 100%; overflow-x: auto; }
 .multi-cell .print-more { display: none; }
+/* What AI sees: four boxes (facts, text, headings, crawlers), each on a row the columns share through a subgrid,
+   so a box starts level with its neighbours whatever the box above it holds. */
+/* A size container is laid out on its own and so cannot be a subgrid; the facts go to one column below 300px
+   by their own width instead of a container query. */
+.multi-modal .multi-sec[data-sec="geo"] .multi-cell { grid-row: span 4; container-type: normal; }
+.multi-modal .multi-sec[data-sec="geo"] .multi-cell:not(.is-empty, .is-note) { display: grid; grid-template-rows: subgrid; row-gap: 12px; }
+.multi-modal .multi-sec[data-sec="geo"] .multi-cell :is([data-slot="geo"], .split, .split > .card:not([data-part])):not([hidden]) { display: contents; }
+/* The painter gives the facts an inline margin for the single report. */
+.multi-modal .multi-sec[data-sec="geo"] [data-part="facts"] { grid-template-columns: repeat(auto-fill, minmax(146px, 1fr)); margin: 0 !important; }
+.multi-modal .multi-sec[data-sec="geo"] .card[data-part] > h3 { margin: 0 0 6px; font-size: 1rem; line-height: 1.25; }
+.multi-modal .multi-sec[data-sec="geo"] .card[data-part] > p.muted { margin: 0 0 8px; font-size: 12.5px; line-height: 1.45; }
+.multi-modal .multi-sec[data-sec="geo"] [data-part="excerpt"] { display: flex; flex-direction: column; }
+.multi-modal .multi-sec[data-sec="geo"] [data-part="excerpt"] .meta-line { margin: 0; }
+/* The text and the headings scroll in a box of one height; the fade shows only while there is more below. */
+.multi-modal .multi-sec[data-sec="geo"] :is(.ai-view, .ai-outline) { overflow: auto; overflow-wrap: anywhere; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.multi-modal .multi-sec[data-sec="geo"] .ai-view { flex: 1 0 196px; height: 196px; max-height: none; margin: 0 0 6px; }
+.multi-modal .multi-sec[data-sec="geo"] .ai-outline { max-height: 190px; margin: 0; }
+.multi-modal .multi-sec[data-sec="geo"] :is(.ai-view, .ai-outline)::after { content: ""; position: sticky; bottom: 0; display: block; height: 24px; margin-top: -24px; background: linear-gradient(transparent, var(--fade-to)); pointer-events: none; opacity: 0; animation: multi-more linear both; animation-timeline: scroll(self); }
+.multi-modal .multi-sec[data-sec="geo"] .ai-view::after { --fade-to: var(--panel-2); bottom: -12px; margin: -24px -14px -12px; }
+.multi-modal .multi-sec[data-sec="geo"] .ai-outline::after { --fade-to: var(--look-card, var(--card)); }
+@keyframes multi-more { from { opacity: 1; } 90% { opacity: 1; } to { opacity: 0; } }
+/* Crawlers: one chip each, green when it may read the site and red when it may not, grouped by role. */
+.multi-modal .multi-sec[data-sec="geo"] .bot-role { display: flex; flex-wrap: wrap; gap: 4px; }
+.multi-modal .multi-sec[data-sec="geo"] .bot-group { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-basis: 100%; margin: 10px 0 2px; }
+.multi-modal .multi-sec[data-sec="geo"] .bot-tally { flex: none; letter-spacing: 0; word-spacing: .2em; font-weight: 700; }
+.multi-modal .multi-sec[data-sec="geo"] .bot { position: relative; display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 8px 2px 3px; border: 1px solid color-mix(in srgb, var(--green) 45%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--green) 10%, transparent); font-size: 11.5px; line-height: 1.3; }
+.multi-modal .multi-sec[data-sec="geo"] .bot.no { border-color: color-mix(in srgb, var(--red) 45%, transparent); background: color-mix(in srgb, var(--red) 10%, transparent); }
+.multi-modal .multi-sec[data-sec="geo"] .bot i { flex: none; width: 14px; height: 14px; margin: 0; font-size: 9px; }
+.multi-modal .multi-sec[data-sec="geo"] .bot > div { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.multi-modal .multi-sec[data-sec="geo"] .bot :is(.bot-product, small) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Six sites fit the side-by-side table without scrolling sideways; the line names stay in view.
    Under .multi-modal, so these win over the .compare-table rules in the page's own style tag, which loads later. */
@@ -246,6 +276,12 @@
   body.printing-multi .multi-cell .page-table thead th { position: static; }
   body.printing-multi .multi-cell .print-cut { display: none !important; }
   body.printing-multi .multi-cell .print-more { display: revert; list-style: none; color: #6b7785; font-style: italic; }
+  /* The host line each column prints first takes a row of its own. */
+  body.printing-multi .multi-sec[data-sec="geo"] .multi-cell { grid-row: span 5; }
+  body.printing-multi .multi-sec[data-sec="geo"] .ai-view { height: auto; max-height: 15em; overflow: hidden; }
+  body.printing-multi .multi-sec[data-sec="geo"] .ai-outline { max-height: none; overflow: visible; }
+  body.printing-multi .multi-sec[data-sec="geo"] .ai-outline::after { display: none; }
+  body.printing-multi .multi-sec[data-sec="geo"] .bot > div { white-space: normal; overflow-wrap: anywhere; }
   body.printing-multi .multi-cell .sec-matrix { font-size: 7pt; }
   body.printing-multi .multi-cell .sec-matrix th { font-size: 6pt; letter-spacing: 0; overflow-wrap: anywhere; }
   body.printing-multi .multi-cell .sec-matrix td:first-child { min-width: 0; }

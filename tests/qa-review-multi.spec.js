@@ -354,6 +354,82 @@ test('six sites side by side keep one area tile per row level across columns (#1
   }
 });
 
+test('"What AI sees" keeps its boxes in one order and lined up in every column, its lists compact, and nothing spills out of a cell at 1024px (#1605)', async ({ page, browser }) => {
+  await page.setViewportSize({ width: 1024, height: 900 });
+  const seen = { saved: [], deleted: [], pdf: [] };
+  const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
+    const base = [own, rival, sample.report][index];
+    return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id, host: 'site' + (index + 4) + '.example' }) };
+  }));
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', seen);
+  const box = page.locator('#multi-overlay');
+  const sec = box.locator('.multi-sec[data-sec="geo"]');
+  await expect(sec.locator('.multi-cell')).toHaveCount(6, { timeout: 20000 });
+
+  if (process.env.MULTI_SHOT) {
+    test.setTimeout(180000);
+    for (const width of [1024, 1440]) {
+      for (const dark of [false, true]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.evaluate((on) => { if (document.documentElement.classList.contains('dark-mode') !== on) SiteTheme.toggle(); }, dark);
+        await sec.evaluate((el) => el.scrollIntoView());
+        await page.screenshot({ path: process.env.MULTI_SHOT + '/geo-' + width + (dark ? '-dark' : '-light') + '.png' });
+        await sec.locator('.multi-cell').first().locator('[data-part="crawlers"]').evaluate((el) => el.scrollIntoView({ block: 'end' }));
+        await page.screenshot({ path: process.env.MULTI_SHOT + '/geo-' + width + (dark ? '-dark' : '-light') + '-crawlers.png' });
+      }
+    }
+    await page.evaluate(() => { if (document.documentElement.classList.contains('dark-mode')) SiteTheme.toggle(); });
+    await page.setViewportSize({ width: 1024, height: 900 });
+  }
+
+  const cells = await sec.locator('.multi-cell').evaluateAll((list) => list.map((cell) => {
+    const edge = cell.getBoundingClientRect();
+    const parts = [...cell.querySelectorAll('[data-part]')];
+    return {
+      host: cell.dataset.host,
+      parts: parts.map((part) => part.dataset.part),
+      tops: parts.map((part) => Math.round(part.getBoundingClientRect().top)),
+      spill: [...cell.querySelectorAll('*')].filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width && (r.right > edge.right + 1 || r.left < edge.left - 1);
+      }).map((el) => el.className || el.tagName),
+      wide: parts.filter((part) => part.scrollWidth > part.clientWidth + 1).map((part) => part.dataset.part),
+      chip: Math.max(...[...cell.querySelectorAll('[data-part="crawlers"] .bot')].map((bot) => bot.getBoundingClientRect().height))
+    };
+  }));
+  for (const cell of cells) {
+    expect(cell.parts, cell.host).toEqual(['facts', 'excerpt', 'headings', 'crawlers']);
+    expect(cell.spill, cell.host).toEqual([]);
+    expect(cell.wide, cell.host).toEqual([]);
+    expect(cell.chip, cell.host).toBeLessThan(30);
+  }
+  for (const index of [0, 1, 2, 3]) expect(new Set(cells.map((cell) => cell.tops[index])).size, cells[0].parts[index]).toBe(1);
+  expect(await sec.evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(1700);
+  await expect(sec.locator('.multi-cell').nth(2).locator('[data-part="crawlers"] .bot-group').first()).toHaveText(/✓ \d+ ✕ \d+$/);
+
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  const outline = sec.locator('.multi-cell').nth(2).locator('.ai-outline li:visible');
+  await expect(outline).toHaveCount(13);
+  await expect(outline.last()).toHaveText('…and ' + (sample.report.insights.geo.aiView.outline.length - 12) + ' more, in the report on the page.');
+  if (process.env.MULTI_SHOT) {
+    await page.setViewportSize({ width: 1047, height: 900 });
+    await sec.screenshot({ path: process.env.MULTI_SHOT + '/geo-print.png' });
+  }
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+  const download = page.waitForEvent('download');
+  await box.getByRole('button', { name: 'Download PDF' }).click();
+  await download;
+  expect(seen.pdf[0]).toContain('data-part="crawlers"');
+  const still = await (await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1047, height: 900 } })).newPage();
+  await still.setContent(seen.pdf[0]);
+  await still.emulateMedia({ media: 'print' });
+  const printed = await still.locator('.multi-sec[data-sec="geo"] .multi-cell').evaluateAll((list) => list.map((cell) => [...cell.querySelectorAll('[data-part]')].map((part) => Math.round(part.getBoundingClientRect().top))));
+  expect(printed).toHaveLength(6);
+  for (const index of [0, 1, 2, 3]) expect(new Set(printed.map((tops) => tops[index])).size).toBe(1);
+});
+
 test('one toggle per section folds it for every site together, the boxes of a row end level, and print and the PDF show every section open (#1459)', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);

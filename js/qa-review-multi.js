@@ -346,12 +346,24 @@
   // scroll box, so one long column does not leave the others blank for pages.
   const PRINT_ROWS = 12;
   function capForPrint(grid) {
-    grid.querySelectorAll('[data-slot="pages"], [data-slot="report-log"]').forEach((list) => {
+    grid.querySelectorAll('[data-slot="pages"], [data-slot="report-log"], .ai-outline').forEach((list) => {
       const rows = [...list.children].filter((row) => !row.hidden);
       if (rows.length <= PRINT_ROWS) return;
       rows.slice(PRINT_ROWS).forEach((row) => row.classList.add("print-cut"));
       const text = esc(t("more", { n: rows.length - PRINT_ROWS }));
       list.insertAdjacentHTML("beforeend", list.tagName === "TBODY" ? '<tr class="print-more"><td colspan="4">' + text + "</td></tr>" : '<li class="print-more">' + text + "</li>");
+    });
+  }
+
+  // What AI sees: the text and its headings get a box each, like the crawlers. A crawler is a chip whose product and
+  // verdict are in its tooltip, and each role counts the crawlers it lets in and keeps out.
+  function boxGeo(grid) {
+    grid.querySelectorAll('.multi-sec[data-sec="geo"] .split > .card > [data-part]').forEach((part) => part.classList.add("card"));
+    grid.querySelectorAll('.multi-sec[data-sec="geo"] .bot-role').forEach((role) => {
+      const bots = [...role.querySelectorAll(".bot")];
+      bots.forEach((bot) => { bot.title = bot.querySelector("span").textContent + bot.querySelector(".bot-product").textContent + " · " + bot.querySelector("small").textContent; });
+      const out = bots.filter((bot) => bot.classList.contains("no")).length;
+      role.querySelector(".bot-group").insertAdjacentHTML("beforeend", '<span class="bot-tally" aria-hidden="true">✓ ' + (bots.length - out) + " ✕ " + out + "</span>");
     });
   }
 
@@ -448,6 +460,7 @@
       }
     });
     grid.querySelectorAll(".report-cover h2").forEach((heading) => { heading.innerHTML = esc(heading.textContent).replace(/\./g, ".<wbr>"); });
+    boxGeo(grid);
     settle(grid);
     capForPrint(grid);
     const bar = body.querySelector(".multi-hosts-bar");
