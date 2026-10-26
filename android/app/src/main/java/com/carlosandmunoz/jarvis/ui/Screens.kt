@@ -166,6 +166,7 @@ fun ProductsScreen(s: UiState, vm: JarvisViewModel, product: String, pick: (Stri
 @Composable
 private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
     if (product == "outreach") { OutreachScreen(s, vm); return }
+    if (product == "hub") SocialHub(s, vm)
     val snap = s.snapshot
     val p = snap.obj("products").obj(product)
     if (p == null) { Panel("No data") { Muted("Pull down to load this product.") }; return }

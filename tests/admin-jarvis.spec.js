@@ -56,9 +56,12 @@ const EXTERNAL = {
   money: { ok: true, days: 30, revenue: { usd: 27, count: 3, avgUsd: 9, paidRuns: 5 }, prior: { usd: 9, count: 1, paidRuns: 2 }, refundsUsd: 0, byProvider: [{ label: 'paypal', value: 27 }], byPurpose: [{ label: 'review', value: 27 }], daily: [{ date: '2026-10-24', usd: 9 }], paypal: { ok: true, disputesOpen: 0, transactions: null, needs: [] }, stripe: { mode: 'test' }, needs: ['PayPal: turn on Transaction Search for the live app.'] },
   email: { ok: true, days: 30, totals: { processed: 38, delivered: 34, bounces: 0, blocks: 4, spam_reports: 0, unique_opens: 10, unique_clicks: 2 }, rates: { delivered: 89.5, bad: 10.5, opened: 29.4, clicked: 5.9 }, daily: [], suppressions: { bounces: [], blocks: [{ domain: 'example.org', reason: 'blocked', at: '2026-10-24T10:00:00Z' }], spam: [] }, needs: [] },
   search: { ok: true, brave: { ok: true, queries: [{ query: 'carlosandmunoz', position: 3, url: 'https://carlosandmunoz.com/', leader: 'carlosandmunoz.com' }, { query: 'free website qa review', position: null, url: '', leader: 'rival.example' }] }, console: { ok: false, error: 'No access.', need: 'Search Console: add the service account.' }, needs: ['Search Console: add the service account.'] },
-  social: { ok: true, days: 30, sent: 30, failed: 0, channels: [{ label: 'tiktok', value: 12 }], results: [], daily: [], latest: [], youtube: { videos: [{ id: 'T1vH4T0yZRQ', title: 'The release is close', published: '2026-10-22T02:46:26Z', views: 28, likes: 0, comments: 0 }], views: 39 }, needs: [] },
+  social: { ok: true, queue: [{ channel: 'tiktok', name: 'TikTok', scheduled: 4, sent: 12, failed: 0, next: [{ at: '2026-10-27T15:00:00Z', post: '2026-10-tips/ssl-expiry' }], last: null }, { channel: 'instagram', name: 'Instagram', scheduled: 0, sent: 9, failed: 2, next: [], last: null }], days: 30, sent: 30, failed: 0, channels: [{ label: 'tiktok', value: 12 }], results: [], daily: [], latest: [], youtube: { videos: [{ id: 'T1vH4T0yZRQ', title: 'The release is close', published: '2026-10-22T02:46:26Z', views: 28, likes: 0, comments: 0 }], views: 39 }, needs: [] },
   safety: { ok: true, score: 88, needs: [], checks: [{ name: 'Web Risk', key: 'webrisk', level: 'good', ok: true, detail: 'Not listed.' }, { name: 'DMARC', key: 'dmarc', level: 'warn', ok: false, detail: 'p=quarantine at 25%.' }] },
   platform: { ok: true, needs: ['Costs: turn on the billing export.'], functions: { executions: 3000, notOk: 2800, failures: 4, failureRate: 0.13, byFunction: [{ label: 'reviewUrl', value: 4 }], kinds: [{ label: 'timeout', value: 4 }], latest: [], capped: false }, gemini: { days: 7, requests: 92, ok: 10, errorRate: 89.1, byClass: [], failedMethods: [{ label: 'ListModels', value: 82 }] }, firestore: { reads: 20000, writes: 900, deletes: 10, readsFreePct: 40, writesFreePct: 4.5, deletesFreePct: 0.05 }, users: { total: 9, newInRange: 2, activeInRange: 4 } },
+  'social-proposals': { ok: true, built: '2026-10-25T06:00:00Z', proposals: [{ id: 'fid-gone', title: 'Google drops FID from Core Web Vitals', source: 'web.dev', lang: 'en', score: 9, summary: 'INP replaced FID.', url: 'https://web.dev/' }] },
+  'social-runs': { ok: true, runs: [{ name: 'Buffer', status: 'completed', conclusion: 'success', at: '2026-10-25T06:00:00Z', event: 'schedule', url: 'https://github.com/' }, { name: 'Facebook Page', status: 'completed', conclusion: 'failure', at: '2026-10-25T07:00:00Z', event: 'schedule', url: 'https://github.com/' }] },
+  'social-post-now': { ok: true, started: ['Buffer', 'Facebook Page'], note: 'Started Buffer and Facebook Page.' },
   outreach: { ok: true, needs: ['Instantly: put the API key in functions/.env as INSTANTLY_API_KEY.'],
     pipeline: { ok: true, queued: 40, swept: 12, left: 28, bySegment: [{ label: 'tvet', value: 10 }, { label: 'university', value: 10 }], reviews: 12, thisWeek: 12, results: [{ label: 'reviewed', value: 11 }], segments: [], avgScore: 64, withLiveReport: 6, reviewedWithLiveReport: 5, daily: [{ date: '2026-10-24', reviews: 12 }] },
     instantly: { ok: false, error: 'INSTANTLY_API_KEY is not set.' },
@@ -121,7 +124,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices', 'proposals']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices', 'social-proposals', 'social-runs', 'proposals']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -201,6 +204,30 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('[data-view="overview"]')).toContainText('Jarvis says the CV is up');
     const brief = calls.find((c) => c.op === 'brief');
     expect(brief.body.snapshot.products.cv).toBeTruthy();
+  });
+
+  test('Social hub shows the queue per channel, the posting runs and the proposals, and Approve and Post now go through the function (#1420)', async ({ page }) => {
+    const calls = await openStats(page, '#stats/hub/30');
+    const hub = page.locator('[data-view="hub"]');
+    await expect(hub).toContainText('TikTok');
+    await expect(hub).toContainText('ssl-expiry');
+    await expect(hub.getByRole('row', { name: 'Instagram 0 nothing scheduled 9 2' })).toBeVisible();
+    await expect(hub).toContainText('Facebook Page');
+    await expect(hub).toContainText('failure');
+    await expect(hub).toContainText('Google drops FID from Core Web Vitals');
+
+    await hub.locator('[data-social-decide="approved"][data-key="fid-gone"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'social-decide').map((c) => [c.body.id, c.body.decision])).toEqual([['fid-gone', 'approved']]);
+    await expect(hub).not.toContainText('Google drops FID from Core Web Vitals');
+
+    const post = hub.locator('[data-act="social-post-now"]');
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await post.click();
+    expect(calls.some((c) => c.op === 'social-post-now')).toBe(false);
+    page.once('dialog', (dialog) => dialog.accept());
+    await post.click();
+    await expect.poll(() => calls.filter((c) => c.op === 'social-post-now').length).toBe(1);
+    await expect(page.locator('.jv-toast')).toContainText('Started Buffer and Facebook Page');
   });
 
   test('a job only runs after confirming', async ({ page }) => {
