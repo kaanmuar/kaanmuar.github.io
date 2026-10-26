@@ -4,6 +4,7 @@
     <string name="widget_status_desc">Readiness and today\'s alerts and warnings</string>
     <string name="widget_numbers_desc">Revenue, reviews, CV visits and outreach with sparklines</string>
     <string name="widget_goals_desc">Progress toward each goal</string>
+    <string name="widget_needs_desc">Owner notices and social picks waiting for your OK, and Jarvis\'s suggestions</string>
     <string name="tile_label">Jarvis</string>
     <string name="share_label">Review with Jarvis</string>
     <string name="share_post_label">Post with Jarvis</string>

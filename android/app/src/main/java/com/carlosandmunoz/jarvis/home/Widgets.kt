@@ -2,6 +2,7 @@ package com.carlosandmunoz.jarvis.home
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.text.format.DateUtils
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -38,6 +39,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import com.carlosandmunoz.jarvis.ConfirmActivity
 import com.carlosandmunoz.jarvis.R
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -163,6 +165,49 @@ private fun NumberCell(cell: Home.Cell, w: Dp, h: Dp) {
         val sparkH = (h - 38.dp).coerceAtLeast(10.dp)
         if (cell.note != null) Text(cell.note, style = Muted, maxLines = 1)
         if (cell.series.size > 1) Image(ImageProvider(Art.sparkline(context.px(w), context.px(sparkH), cell.series)), null, GlanceModifier.width(w).height(sparkH))
+    }
+}
+
+// ---------------------------------------------------------------- Needs you
+
+class NeedsWidget : GlanceAppWidget() {
+    override val sizeMode = SizeMode.Exact
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val saved = Home.snapshot(context)
+        val needs = saved?.let { val (notices, picks) = Home.waiting(context, it.first); Home.needs(it.first, notices, picks) }
+        provideContent { NeedsBody(saved, needs.orEmpty()) }
+    }
+}
+
+class NeedsWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget = NeedsWidget() }
+
+@Composable
+private fun NeedsBody(saved: Pair<JsonObject, Long>?, needs: List<Home.Need>) {
+    val context = LocalContext.current
+    val open = Home.open(context, "products:outreach")
+    if (saved == null) return SignedOut(open, "Needs you")
+    val decide = needs.count { it.kind != "proposal" }
+    val fits = ((LocalSize.current.height.value - 44) / 34).toInt().coerceAtLeast(1)
+    Glass(open, if (decide > 0) "Needs you · $decide" else "Needs you") {
+        if (needs.isEmpty()) {
+            Text("Nothing waiting on you", style = TextStyle(color = color(Art.GREEN), fontSize = 14.sp, fontWeight = FontWeight.Medium))
+            Text("Notices, social picks and Jarvis's suggestions show up here.", style = Muted, maxLines = 2)
+        }
+        needs.take(fits).forEach { n ->
+            val tap = if (n.kind == "proposal") Home.open(context, n.tab ?: "overview").setData(Uri.parse("jarvis://open/" + (n.tab ?: "overview") + "/" + n.id))
+                else ConfirmActivity.intent(context, n)
+            Row(GlanceModifier.fillMaxWidth().height(34.dp).clickable(actionStartActivity(tap)), verticalAlignment = Alignment.CenterVertically) {
+                Text("●", style = TextStyle(color = color(Art.level(n.level)), fontSize = 9.sp))
+                Spacer(GlanceModifier.width(8.dp))
+                Column(GlanceModifier.defaultWeight()) {
+                    Text(n.title, style = TextStyle(color = color(Art.TEXT), fontSize = 12.sp, fontWeight = FontWeight.Medium), maxLines = 1)
+                    if (n.detail != null) Text(n.detail, style = TextStyle(color = color(Art.MUTED), fontSize = 10.sp), maxLines = 1)
+                }
+                Spacer(GlanceModifier.width(8.dp))
+                Text(if (n.kind == "proposal") "Open ›" else "Review ›", style = TextStyle(color = color(Art.CYAN), fontSize = 10.sp, fontFamily = FontFamily.Monospace))
+            }
+        }
+        if (needs.size > fits) Text("+${needs.size - fits} more in Jarvis", style = Muted, maxLines = 1)
     }
 }
 
