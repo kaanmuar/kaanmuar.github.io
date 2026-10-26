@@ -13,6 +13,7 @@ import com.carlosandmunoz.jarvis.home.Ongoing
 import com.carlosandmunoz.jarvis.push.Push
 import com.carlosandmunoz.jarvis.voice.Heard
 import com.carlosandmunoz.jarvis.voice.Listener
+import com.carlosandmunoz.jarvis.update.Updater
 import com.carlosandmunoz.jarvis.voice.Speaker
 import com.carlosandmunoz.jarvis.voice.Voice
 import java.io.File
@@ -117,6 +118,14 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
             runCatching { Push.sync(jarvis) }
                 .onSuccess { ok -> _state.update { it.copy(toast = if (ok) "Saved." else "Push is not ready on this phone.") } }
                 .onFailure { e -> fail(e) { it.copy(toast = e.message ?: "Could not save.") } }
+        }
+    }
+
+    fun checkUpdate() {
+        _state.update { it.copy(running = it.running + "update") }
+        viewModelScope.launch {
+            val line = Updater.run(jarvis, force = true)
+            _state.update { it.copy(running = it.running - "update", toast = line) }
         }
     }
 

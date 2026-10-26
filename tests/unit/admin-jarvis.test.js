@@ -815,6 +815,41 @@ test("push: alert and briefing messages, and dead tokens are dropped after a sen
   assert.deepEqual(await push.send(messaging, db, [], m), { sent: 0, failed: 0, removed: 0 });
 });
 
+test("app release push: the newest Jarvis APK release from GitHub is pushed to every phone once", async () => {
+  const releases = [
+    { tag_name: "jarvis-android-v1.0.35", html_url: "https://gh/35" },
+    { tag_name: "jarvis-android-v1.0.120", html_url: "https://gh/120" },
+    { tag_name: "jarvis-android-v1.0.200", draft: true },
+    { tag_name: "live-reports-2026-10-26" }
+  ];
+  assert.deepEqual(push.newestRelease(releases), { code: 120, name: "1.0.120", url: "https://gh/120" });
+  assert.equal(push.newestRelease([]), null);
+
+  const devices = pushDb();
+  const tok = "p".repeat(40);
+  await push.register(devices, { token: tok, kinds: { alerts: false, briefing: false } }, "owner", 0);
+  let cache = {};
+  const db = {
+    collection: (name) => name === "jarvis_cache" ? { doc: () => "ref" } : devices.collection(name),
+    runTransaction: async (fn) => fn({ get: async () => ({ data: () => cache.row }), set: (ref, row) => { cache.row = row; } })
+  };
+  let calls = 0, auth;
+  const fetchFn = async (url, opts) => { calls++; auth = opts.headers.authorization; return { ok: true, json: async () => releases }; };
+  let seen;
+  const messaging = { sendEachForMulticast: async (msg) => { seen = msg; return { successCount: 1, failureCount: 0, responses: [{ success: true }] }; } };
+  const now = Date.parse("2026-10-26T15:00:00Z");
+
+  assert.deepEqual(await push.releasePush(fetchFn, db, messaging, { token: "t", now }), { pushed: true, version: "1.0.120", sent: 1, failed: 0, removed: 0 });
+  assert.equal(auth, "Bearer t");
+  assert.deepEqual(seen.tokens, [tok]);
+  assert.equal(seen.data.kind, "update");
+  assert.equal(seen.android.ttl, 24 * 3600 * 1000);
+  assert.deepEqual(cache.row, { code: 120, name: "1.0.120", at: "2026-10-26T15:00:00.000Z" });
+  assert.deepEqual(await push.releasePush(fetchFn, db, messaging, { now }), { pushed: false, version: "1.0.120", reason: "Already pushed." });
+  assert.equal(calls, 2);
+  await assert.rejects(push.releasePush(async () => ({ ok: false, status: 403 }), db, messaging, { now }), /answered 403/);
+});
+
 const review = require("../../functions/jarvis-review.js");
 
 test("share-to-review: the shared text becomes a clean URL and a queued owner review", async () => {
