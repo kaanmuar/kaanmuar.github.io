@@ -75,6 +75,72 @@
     return due.map((post) => Object.assign({}, post, { upcoming: false })).concat(later.map((post) => Object.assign({}, post, { upcoming: true })));
   }
 
+  const SORTS = ["date", "title", "impressions", "views", "likes", "comments"];
+  const METRICS = ["impressions", "views", "likes", "comments"];
+
+  function defaultDir(sort) {
+    return sort === "title" ? "asc" : "desc";
+  }
+
+  // A post's count of one metric on one network, or summed over its networks; null when no network reported it.
+  function metric(post, key, net) {
+    const stats = post.stats || {};
+    const nets = net && net !== "all" ? [net] : Object.keys(stats);
+    let total = null;
+    nets.forEach((name) => {
+      const n = stats[name] && stats[name][key];
+      if (typeof n === "number") total = (total || 0) + n;
+    });
+    return total;
+  }
+
+  // Posts come in arrange() order. Date keeps posted ones ahead of those still to come; title and the counts sort
+  // the whole feed, ties keep arrange() order, and posts without the count go last either way.
+  function sortPosts(list, sort, dir, net) {
+    const sign = dir === "asc" ? 1 : -1;
+    const order = new Map(list.map((post, i) => [post, i]));
+    if (sort === "title") {
+      return list.slice().sort((a, b) => sign * a.title.localeCompare(b.title, undefined, { sensitivity: "base", numeric: true }) || order.get(a) - order.get(b));
+    }
+    if (METRICS.includes(sort)) {
+      return list.slice().sort((a, b) => {
+        const x = metric(a, sort, net);
+        const y = metric(b, sort, net);
+        if (x === null || y === null) return (x === null) - (y === null) || order.get(a) - order.get(b);
+        return sign * (x - y) || order.get(a) - order.get(b);
+      });
+    }
+    if (dir !== "asc") return list.slice();
+    const due = list.filter((post) => !post.upcoming).reverse();
+    return due.concat(list.filter((post) => post.upcoming));
+  }
+
+  function compact(n, lang) {
+    try {
+      return new Intl.NumberFormat(lang, { notation: "compact", maximumFractionDigits: 1 }).format(n);
+    } catch (error) {
+      return String(n);
+    }
+  }
+
+  const STAT_ICON = {
+    impressions: "<svg viewBox=\"0 0 24 24\" width=\"13\" height=\"13\" aria-hidden=\"true\"><path fill=\"currentColor\" d=\"M12 5C6.5 5 2.7 9.4 1.5 12c1.2 2.6 5 7 10.5 7s9.3-4.4 10.5-7C21.3 9.4 17.5 5 12 5zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z\"/></svg>",
+    views: "<svg viewBox=\"0 0 24 24\" width=\"13\" height=\"13\" aria-hidden=\"true\"><path fill=\"currentColor\" d=\"M8 5v14l11-7z\"/></svg>",
+    likes: "<svg viewBox=\"0 0 24 24\" width=\"13\" height=\"13\" aria-hidden=\"true\"><path fill=\"currentColor\" d=\"M12 21l-1.5-1.3C5.4 15.1 2 12.1 2 8.4 2 5.4 4.4 3 7.4 3c1.7 0 3.4.8 4.6 2.1C13.2 3.8 14.9 3 16.6 3 19.6 3 22 5.4 22 8.4c0 3.7-3.4 6.7-8.5 11.3z\"/></svg>",
+    comments: "<svg viewBox=\"0 0 24 24\" width=\"13\" height=\"13\" aria-hidden=\"true\"><path fill=\"currentColor\" d=\"M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2z\"/></svg>"
+  };
+
+  // Totals over the post's networks, or the one network the reader filtered to; the tooltip splits them by network.
+  function statsHtml(post, copy, lang, net) {
+    const items = METRICS.map((key) => [key, metric(post, key, net)]).filter(([, n]) => n);
+    if (!items.length) return "";
+    const nets = Object.keys(post.stats || {}).filter((name) => !net || net === "all" || name === net);
+    const title = nets.map((name) => (copy.nets[name] || name) + ": " + METRICS.filter((key) => post.stats[name][key])
+      .map((key) => copy.sorts[key].toLowerCase() + " " + post.stats[name][key]).join(", ")).join(" · ");
+    return "<p class=\"post-stats\" title=\"" + esc(title) + "\">" + items.map(([key, n]) =>
+      "<span class=\"post-stat\"><span class=\"sr-only\">" + esc(copy.sorts[key]) + ": </span>" + STAT_ICON[key] + esc(compact(n, lang)) + "</span>").join("") + "</p>";
+  }
+
   // A post still to come is Scheduled only when a network has it queued; one held for the hub alone gets no tag.
   function planTag(post, copy) {
     if (!post.upcoming || post.held) return "";
@@ -83,7 +149,7 @@
       : "<span class=\"post-tag post-planned\">" + esc(copy.planned) + "</span>";
   }
 
-  function cardHtml(post, copy, lang) {
+  function cardHtml(post, copy, lang, net) {
     const kind = copy.kind[post.kind] || post.kind;
     const voice = (post.clipLang || post.lang).toUpperCase();
     const play = post.youtube
@@ -106,6 +172,7 @@
       + "<h2 class=\"post-title\" lang=\"" + esc(post.lang) + "\"><a href=\"" + esc(permalink(post, lang)) + "\" data-act=\"open\">" + esc(post.title) + "</a></h2>"
       + "<p class=\"post-text\" lang=\"" + esc(post.lang) + "\">" + parasHtml(post.text) + "</p>"
       + "<p class=\"post-foot\"><time datetime=\"" + esc(post.date) + "\">" + esc(day(post.date, lang)) + "</time>" + report + "</p>"
+      + statsHtml(post, copy, lang, net)
       + "<div class=\"post-actions\">"
       + "<button class=\"post-btn post-btn-primary\" type=\"button\" data-act=\"share\">" + ICON.share + esc(copy.share) + "</button>"
       + "<button class=\"post-btn\" type=\"button\" data-act=\"copy\">" + esc(copy.copy) + "</button>"
@@ -113,5 +180,5 @@
       + "</div></div></article>";
   }
 
-  return { SITE, ICON, esc, pageFor, postPath, permalink, anchor, day, textHtml, parasHtml, topic, arrange, planTag, cardHtml };
+  return { SITE, ICON, SORTS, METRICS, esc, pageFor, postPath, permalink, anchor, day, textHtml, parasHtml, topic, arrange, defaultDir, metric, sortPosts, statsHtml, planTag, cardHtml };
 });
