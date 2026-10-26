@@ -211,6 +211,45 @@ private fun NeedsBody(saved: Pair<JsonObject, Long>?, needs: List<Home.Need>) {
     }
 }
 
+// ---------------------------------------------------------------- Alerts list
+
+class AlertsWidget : GlanceAppWidget() {
+    override val sizeMode = SizeMode.Exact
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val saved = Home.snapshot(context)
+        provideContent { AlertsBody(saved) }
+    }
+}
+
+class AlertsWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget = AlertsWidget() }
+
+@Composable
+private fun AlertsBody(saved: Pair<JsonObject, Long>?) {
+    val context = LocalContext.current
+    val open = Home.open(context, "overview")
+    if (saved == null) return SignedOut(open, "Alerts")
+    val st = Home.status(saved.first)
+    val alerts = Home.alerts(saved.first)
+    val fits = ((LocalSize.current.height.value - 64) / 32).toInt().coerceAtLeast(1)
+    Glass(open, "Alerts") {
+        Text(st.headline, style = TextStyle(color = color(if (st.alerts > 0) Art.PINK else if (st.warns > 0) Art.AMBER else Art.GREEN), fontSize = 13.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+        Spacer(GlanceModifier.height(2.dp))
+        alerts.take(fits).forEachIndexed { i, a ->
+            val tap = Home.open(context, a.tab).setData(Uri.parse("jarvis://open/" + a.tab + "/alert/" + i))
+            Row(GlanceModifier.fillMaxWidth().height(32.dp).clickable(actionStartActivity(tap)), verticalAlignment = Alignment.CenterVertically) {
+                Text("●", style = TextStyle(color = color(Art.level(a.level)), fontSize = 9.sp))
+                Spacer(GlanceModifier.width(8.dp))
+                Column(GlanceModifier.defaultWeight()) {
+                    Text(a.text, style = TextStyle(color = color(Art.TEXT), fontSize = 12.sp), maxLines = 1)
+                    if (a.label != null) Text(a.label, style = TextStyle(color = color(Art.MUTED), fontSize = 10.sp), maxLines = 1)
+                }
+            }
+        }
+        if (alerts.size > fits) Text("+${alerts.size - fits} more in Jarvis", style = Muted, maxLines = 1)
+        else if (alerts.isEmpty()) Text("Nothing in today's briefing. Updated " + ago(saved.second) + ".", style = Muted, maxLines = 2)
+    }
+}
+
 // ---------------------------------------------------------------- Goals
 
 class GoalsWidget : GlanceAppWidget() {

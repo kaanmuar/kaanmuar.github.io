@@ -34,6 +34,7 @@ import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.prim
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.data.text
+import com.carlosandmunoz.jarvis.ui.CHIPS
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlinx.serialization.json.JsonObject
@@ -52,6 +53,8 @@ object Home {
     data class Goal(val label: String, val value: Double?, val target: Double?, val pct: Double, val status: String?)
 
     /** One row of the Needs you widget: an owner notice or social pick to decide, or a rule proposal to open. */
+    data class Alert(val level: String, val text: String, val label: String?, val tab: String)
+
     data class Need(val kind: String, val id: String, val title: String, val detail: String?, val level: String, val tab: String? = null, val email: String? = null)
 
     fun days(app: JarvisApp) = app.vault.get("days")?.toIntOrNull() ?: 7
@@ -104,11 +107,24 @@ object Home {
             Need("social", id, p.str("title") ?: "Social pick", listOfNotNull("Social pick", p.str("source")).joinToString(" · "), "info")
         }
         val rules = snap.objs("proposals").mapNotNull { p ->
-            val tab = p.str("tab")?.let { t -> if (com.carlosandmunoz.jarvis.ui.CHIPS.any { it.first == t }) "products:$t" else t }
-            Need("proposal", p.str("key") ?: return@mapNotNull null, p.str("title") ?: return@mapNotNull null, null, p.str("level") ?: "info", tab = tab)
+            Need("proposal", p.str("key") ?: return@mapNotNull null, p.str("title") ?: return@mapNotNull null, null, p.str("level") ?: "info", tab = p.str("tab")?.let(::route))
         }
         return sends + approve + rules
     }
+
+    /** Briefing lines, alerts first, then warnings, notes and good news, each opening its product or tab. */
+    fun alerts(snap: JsonObject): List<Alert> {
+        val rank = listOf("alert", "warn", "info", "good")
+        return snap.objs("briefing").mapNotNull { b ->
+            val text = b.str("text") ?: return@mapNotNull null
+            val product = b.str("product")
+            val label = product?.let { p -> CHIPS.firstOrNull { it.first == p }?.second ?: p.replaceFirstChar { it.uppercase() } }
+            Alert(b.str("level") ?: "info", text, label, product?.let(::route) ?: "overview")
+        }.sortedBy { a -> rank.indexOf(a.level).let { if (it < 0) rank.size else it } }
+    }
+
+    /** A product chip opens Products on that chip; anything else is a tab name. */
+    private fun route(target: String) = if (CHIPS.any { it.first == target }) "products:$target" else target
 
     /** The notices and social picks behind Needs you, as last fetched; a debug fixture carries them as "notices" and "socialHub". */
     fun waiting(context: Context, snap: JsonObject): Pair<JsonObject?, JsonObject?> {
@@ -130,6 +146,7 @@ object Home {
 
     suspend fun redraw(context: Context) {
         runCatching { NeedsWidget().updateAll(context) }
+        runCatching { AlertsWidget().updateAll(context) }
         runCatching { StatusWidget().updateAll(context) }
         runCatching { NumbersWidget().updateAll(context) }
         runCatching { GoalsWidget().updateAll(context) }

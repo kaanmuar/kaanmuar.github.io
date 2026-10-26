@@ -103,6 +103,10 @@
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_needs" />
         </receiver>
+        <receiver android:name=".home.AlertsWidgetReceiver" android:exported="true" android:label="Jarvis alerts">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_alerts" />
+        </receiver>
         <activity
             android:name=".ConfirmActivity"
             android:exported="false"

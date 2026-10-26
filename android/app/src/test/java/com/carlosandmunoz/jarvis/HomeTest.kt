@@ -35,6 +35,18 @@ class HomeTest {
         assertEquals("No address found", n.detail)
     }
 
+    @Test fun alertsComeFirstAndOpenWhereTheyHappened() {
+        val a = Home.alerts(json("""{"briefing":[{"level":"good","product":"cv","text":"CV visits up 40%"},{"level":"warn","product":"business","text":"PayPal dispute open"},
+            {"level":"alert","product":"outreach","text":"Mailbox score under 80"},{"level":"info","text":"No product"},{"level":"warn"}]}"""))
+        assertEquals(listOf("Mailbox score under 80", "PayPal dispute open", "No product", "CV visits up 40%"), a.map { it.text })
+        assertEquals("products:outreach", a[0].tab)
+        assertEquals("Outreach", a[0].label)
+        assertEquals("business", a[1].tab)
+        assertEquals("Business", a[1].label)
+        assertEquals("overview", a[2].tab)
+        assertNull(a[2].label)
+    }
+
     @Test fun nothingWaitingWhenTheListsAreMissing() {
         assertTrue(Home.needs(json("{}"), null, null).isEmpty())
     }
