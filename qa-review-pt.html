@@ -1032,7 +1032,7 @@
         .filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
         .filters button { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
         .filters button.on { background: var(--cyan); color: #fff; border-color: var(--cyan); }
-        .case { padding: 10px 0; border-bottom: 1px solid var(--line); }
+        .case { min-width: 0; padding: 10px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
         .case .id { font-family: "Fira Code", ui-monospace, monospace; font-size: 12px; color: var(--cyan); }
         .prio { display: inline-block; margin-right: 8px; padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; font-family: "Fira Code", ui-monospace, monospace; font-size: 11px; font-weight: 700; color: var(--muted); }
         .prio-P1 { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); }

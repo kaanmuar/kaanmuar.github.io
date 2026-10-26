@@ -305,8 +305,9 @@
     const bench = window.QAReviewBenchmark ? QAReviewBenchmark.html(data) : "";
     return bench + summaryHtml(data, order) + '<div class="multi-sheet" style="--cols:' + n + '">' + foldAll + hosts + '<div class="multi-scroll multi-grid">' + SECTIONS.map(([key, cell]) => {
       const title = esc(book.sections[key] || COPY.en.sections[key]);
+      const bar = key === "cases" && rc ? '<div class="cases-bar no-print"><button class="btn btn-ghost cases-all" type="button" aria-expanded="false" translate="no">' + esc(rc.t("expandAll")) + "</button></div>" : "";
       return '<section class="multi-sec" data-sec="' + key + '"><h2 translate="no"><button class="fold-toggle" type="button" id="multi-toggle-' + key + '" aria-expanded="true" aria-controls="multi-row-' + key + '"><span>' + title +
-        '</span><span class="fold-icon" aria-hidden="true"></span></button></h2><div class="multi-row fold-panel" id="multi-row-' + key + '" role="region" aria-labelledby="multi-toggle-' + key + '">' +
+        '</span><span class="fold-icon" aria-hidden="true"></span></button></h2>' + bar + '<div class="multi-row fold-panel" id="multi-row-' + key + '" role="region" aria-labelledby="multi-toggle-' + key + '">' +
         columns.map(([col, index]) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '" data-host="' + esc(col.host) + '" style="--site:' + siteColor(index) + '">' +
           (col.missing ? '<p class="muted">' + esc(t("missing")) + "</p>" : cell) + "</div>").join("") +
         "</div></section>";
@@ -352,6 +353,7 @@
   // In print a long list stops after PRINT_ROWS with a line counting the rest, as the screen stops it in a
   // scroll box, so one long column does not leave the others blank for pages.
   const PRINT_ROWS = 12;
+  const PRINT_CASES = 3;
   function capForPrint(grid) {
     grid.querySelectorAll('[data-slot="pages"], [data-slot="report-log"], .ai-outline').forEach((list) => {
       const rows = [...list.children].filter((row) => !row.hidden);
@@ -359,6 +361,12 @@
       rows.slice(PRINT_ROWS).forEach((row) => row.classList.add("print-cut"));
       const text = esc(t("more", { n: rows.length - PRINT_ROWS }));
       list.insertAdjacentHTML("beforeend", list.tagName === "TBODY" ? '<tr class="print-more"><td colspan="4">' + text + "</td></tr>" : '<li class="print-more">' + text + "</li>");
+    });
+    grid.querySelectorAll(".cases-list").forEach((list) => {
+      const rows = [...list.children];
+      if (rows.length <= PRINT_CASES) return;
+      rows.slice(PRINT_CASES).forEach((row) => row.classList.add("print-cut"));
+      list.insertAdjacentHTML("beforeend", '<li class="print-more">' + esc(t("more", { n: rows.length - PRINT_CASES })) + "</li>");
     });
   }
 
@@ -402,8 +410,47 @@
     all.setAttribute("aria-expanded", String(anyOpen));
   }
 
+  // A group of cases opens or closes in every column at once, so the groups under it stay level.
+  function setCaseGroup(sec, name, open) {
+    sec.querySelectorAll('.cases-group[data-group="' + CSS.escape(name) + '"]').forEach((group) => {
+      const list = group.querySelector(".cases-list");
+      if (!list) return;
+      list.hidden = !open;
+      group.classList.toggle("is-open", open);
+      group.querySelector(".cases-toggle").setAttribute("aria-expanded", String(open));
+    });
+  }
+
+  function foldCases(event) {
+    const sec = event.target.closest('.multi-sec[data-sec="cases"]');
+    const toggle = sec && event.target.closest(".cases-toggle");
+    const all = sec && event.target.closest(".cases-all");
+    const more = sec && event.target.closest(".cases-more");
+    if (toggle) {
+      const group = toggle.closest(".cases-group");
+      setCaseGroup(sec, group.dataset.group, !group.classList.contains("is-open"));
+    } else if (all) {
+      const open = all.getAttribute("aria-expanded") !== "true";
+      new Set([...sec.querySelectorAll(".cases-group")].map((group) => group.dataset.group)).forEach((name) => setCaseGroup(sec, name, open));
+    } else if (more) {
+      const open = more.getAttribute("aria-expanded") !== "true";
+      more.closest(".case").classList.toggle("is-open", open);
+      more.setAttribute("aria-expanded", String(open));
+      more.textContent = QAReviewReportCopy.t(open ? "caseLess" : "caseMore");
+      return true;
+    } else return false;
+    const button = sec.querySelector(".cases-all");
+    if (button) {
+      const anyOpen = !!sec.querySelector(".cases-group.is-open");
+      button.textContent = QAReviewReportCopy.t(anyOpen ? "collapseAll" : "expandAll");
+      button.setAttribute("aria-expanded", String(anyOpen));
+    }
+    return true;
+  }
+
   // One toggle per section opens or closes it for every site at once, so the columns stay level.
   function fold(event) {
+    if (foldCases(event)) return;
     const body = event.currentTarget;
     const toggle = event.target.closest(".multi-sec > h2 .fold-toggle");
     const all = event.target.closest("#multi-fold-all");
@@ -472,10 +519,14 @@
     body.innerHTML = bodyHtml(data);
     root.querySelectorAll("img.multi-logo").forEach((img) => img.addEventListener("error", () => img.remove(), { once: true }));
     const grid = body.querySelector(".multi-grid");
+    const caseGroups = S.caseGroups(data.columns.map((col) => col.report));
+    const caseRow = grid.querySelector('.multi-sec[data-sec="cases"] .multi-row');
+    caseRow.style.setProperty("--case-rows", caseGroups.length + 1);
+    caseRow.style.setProperty("--case-rows-print", caseGroups.length + 2);
     data.columns.forEach((col, index) => {
       if (col.missing) return;
       try {
-        S.paint({ report: col.report, paid: col.paid, frameworks: col.frameworks || [] }, columnRoot(grid, index, null));
+        S.paint({ report: col.report, paid: col.paid, frameworks: col.frameworks || [], caseGroups }, columnRoot(grid, index, null));
       } catch (error) {
         console.error("A comparison column did not draw:", error);
       }
@@ -550,7 +601,8 @@
     }).join("\n");
     const copy = overlay.querySelector(".multi-modal").cloneNode(true);
     copy.querySelectorAll(".multi-sec > h2 .fold-toggle").forEach((toggle) => toggle.replaceWith(toggle.firstChild));
-    copy.querySelectorAll(".multi-row[hidden]").forEach((row) => { row.hidden = false; });
+    copy.querySelectorAll(".multi-row[hidden], .cases-list[hidden]").forEach((row) => { row.hidden = false; });
+    copy.querySelectorAll(".cases-toggle").forEach((toggle) => toggle.replaceWith(...toggle.childNodes));
     // An area score tile is a button on the page, and buttons do not print.
     copy.querySelectorAll("button.area").forEach((tile) => {
       const box = document.createElement("div");

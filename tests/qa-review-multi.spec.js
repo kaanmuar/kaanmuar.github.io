@@ -550,6 +550,123 @@ test('the fix-kit files sit level across the columns however each kit differs, o
   await page.evaluate(() => document.body.classList.remove('printing-multi'));
 });
 
+const LONG_CASE = {
+  id: 'AXE-01', layer: 'Accessibility', priority: 'P1', verdict: 'fail', severity: 'critical', fw: ['Playwright'],
+  title: 'Buttons on www.universidadcatolicadecolombia.edu.co/estudiantes/servicios-academicos/ have an accessible name',
+  why: '49 button elements were counted on https://www.universidadcatolicadecolombia.edu.co/estudiantes/servicios-academicos/calendario-academico-2026/. axe-core 4.14.0 found 26 elements breaking button-name (critical), for example .main_slider_wrapper>.owl-nav>.owl-prev[role="presentation"][type="button"]>span.elementor-icon-list-item:nth-child(2)>a[href="tel:+57(601)4824466"]. Rule: https://dequeuniversity.com/rules/axe/4.14/button-name?application=axeAPI'
+};
+
+function sixWithLongCase() {
+  const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
+    const base = [own, rival, sample.report][index];
+    return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id }) };
+  }));
+  ['www.universidadcatolicadecolombia.edu.co', 'www.movichhotels.com', 'www.ghlhoteles.com', 'www.hotelestequendama.com', 'ciedi.edu.co', 'montessori.edu.co']
+    .forEach((host, index) => { records[index].report.host = host; });
+  records[0].report.cases = [LONG_CASE].concat(records[0].report.cases);
+  records[4].report.cases = records[4].report.cases.filter((item) => item.layer !== 'Privacy');
+  return records;
+}
+
+test('the cases sit in the same layer groups, in the same order and at the same height in every column, with their counts, and a long case wraps (#1615)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const records = sixWithLongCase();
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const box = page.locator('#multi-overlay');
+  const sec = box.locator('.multi-sec[data-sec="cases"]');
+  await expect(sec.locator('.multi-cell')).toHaveCount(6, { timeout: 20000 });
+  const order = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/CASE_LAYERS = (\[[^\]]+\])/)[1]);
+  const union = order.filter((name) => records.some((row) => row.report.cases.some((item) => item.layer === name)));
+  const cells = sec.locator('.multi-cell');
+  for (let index = 0; index < 6; index += 1) {
+    const groups = await cells.nth(index).locator('.cases-group').evaluateAll((els) => els.map((el) => [el.dataset.group, el.querySelector('.cases-n').textContent, el.querySelectorAll('.case').length]));
+    expect(groups.map((row) => row[0]), records[index].report.host).toEqual(union);
+    for (const [name, shown, items] of groups) {
+      const count = records[index].report.cases.filter((item) => item.layer === name).length;
+      expect([name, shown, items]).toEqual([name, String(count), count]);
+    }
+  }
+  await expect(cells.nth(4).locator('.cases-group[data-group="Privacy"]')).toHaveClass(/is-none/);
+  await expect(cells.nth(0).locator('.cases-sum')).toContainText('P1 1');
+  const tops = (selector) => cells.evaluateAll((els, sel) => els.map((el) => Math.round(el.querySelector(sel).getBoundingClientRect().top)), selector);
+  expect(new Set(await tops('.cases-sum')).size).toBe(1);
+  expect(new Set(await tops('.cases-group[data-group="Security"] h3')).size).toBe(1);
+  expect(await sec.locator('[data-slot="cases"]').first().evaluate((el) => [getComputedStyle(el).maxHeight, el.scrollHeight <= el.clientHeight])).toEqual(['none', true]);
+
+  const toggle = cells.nth(1).locator('.cases-group[data-group="Accessibility"] .cases-toggle');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(cells.nth(0).locator('.case').first()).toBeHidden();
+  await toggle.click();
+  for (let index = 0; index < 6; index += 1) await expect(cells.nth(index).locator('.cases-group[data-group="Accessibility"] .cases-toggle')).toHaveAttribute('aria-expanded', 'true');
+  expect(new Set(await tops('.cases-group[data-group="Security"] h3')).size).toBe(1);
+  const long = cells.nth(0).locator('.case[data-id="AXE-01"]');
+  await expect(long).toBeVisible();
+  await expect(cells.nth(0).locator('.cases-group[data-group="Accessibility"] .case').first()).toHaveAttribute('data-id', 'AXE-01');
+  await expect(long.locator('code').first()).toBeVisible();
+  const spill = () => cells.nth(0).evaluate((cell) => {
+    const edge = cell.getBoundingClientRect().right;
+    return [...cell.querySelectorAll('.case, .case *')].filter((el) => el.getBoundingClientRect().right > edge + 1 || el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== 'visible').map((el) => el.className || el.tagName);
+  });
+  expect(await spill()).toEqual([]);
+  const more = long.locator('.cases-more');
+  const clamped = await long.locator('.cases-why').evaluate((el) => el.offsetHeight);
+  await more.click();
+  await expect(more).toHaveAttribute('aria-expanded', 'true');
+  expect(await long.locator('.cases-why').evaluate((el) => el.offsetHeight)).toBeGreaterThan(clamped);
+  expect(await spill()).toEqual([]);
+  const all = box.locator('.cases-all');
+  await expect(all).toHaveText('Collapse all');
+  await all.click();
+  await expect(sec.locator('.cases-toggle[aria-expanded="true"]')).toHaveCount(0);
+  await expect(all).toHaveText('Expand all');
+  await all.click();
+  await expect(sec.locator('.cases-toggle[aria-expanded="false"]:not([disabled])')).toHaveCount(0);
+  expect(new Set(await tops('.cases-group[data-group="SEO"] h3')).size).toBe(1);
+  await all.click();
+
+  if (process.env.MULTI_SHOT) {
+    await cells.nth(1).locator('.cases-group[data-group="Accessibility"] .cases-toggle').click();
+    for (const [width, height] of [[1440, 900], [1024, 768]]) {
+      await page.setViewportSize({ width, height });
+      for (const dark of [false, true]) {
+        await page.evaluate((on) => { if (document.documentElement.classList.contains('dark-mode') !== on) document.getElementById('theme-toggle').click(); }, dark);
+        await sec.locator('> h2').evaluate((el) => { el.scrollIntoView(); el.closest('#multi-overlay').scrollTop -= 110; });
+        await page.screenshot({ path: process.env.MULTI_SHOT + '/cases-' + width + (dark ? '-dark' : '-light') + '.png' });
+      }
+    }
+    await page.evaluate(() => { if (document.documentElement.classList.contains('dark-mode')) document.getElementById('theme-toggle').click(); document.body.classList.add('printing-multi'); });
+    await page.emulateMedia({ media: 'print' });
+    await page.setViewportSize({ width: 1123, height: 794 });
+    const top = await sec.evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+    await page.screenshot({ path: process.env.MULTI_SHOT + '/cases-print.png', fullPage: true, clip: { x: 0, y: top, width: 1123, height: 1300 } });
+    await page.pdf({ path: process.env.MULTI_SHOT + '/cases-print.pdf', preferCSSPageSize: true, printBackground: true });
+  }
+});
+
+test('in print the case groups open, each stops after a few cases with a line counting the rest, and the PDF keeps the group names (#1615)', async ({ page }) => {
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
+  const box = page.locator('#multi-overlay');
+  const cell = box.locator('.multi-sec[data-sec="cases"] .multi-cell').nth(0);
+  const functional = cell.locator('.cases-group[data-group="Functional"]');
+  await expect(functional.locator('.cases-n')).toHaveText(String(own.cases.filter((item) => item.layer === 'Functional').length), { timeout: 20000 });
+  await expect(functional.locator('.case:visible')).toHaveCount(0);
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  await expect(functional.locator('.case:visible')).toHaveCount(3);
+  await expect(functional.locator('.print-more')).toHaveText('…and ' + (own.cases.filter((item) => item.layer === 'Functional').length - 3) + ' more, in the report on the page.');
+  await expect(cell.locator('.cases-group[data-group="Content"] .case:visible')).toHaveCount(3);
+  expect(await functional.locator('.cases-why').first().evaluate((el) => getComputedStyle(el).webkitLineClamp)).toBe('2');
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+  const download = page.waitForEvent('download');
+  await box.getByRole('button', { name: 'Download PDF' }).click();
+  await download;
+  expect(seen.pdf[0]).toMatch(/<h3><span class="cases-name">Functional<\/span><span class="cases-n">18<\/span><\/h3>/);
+  expect(seen.pdf[0]).not.toMatch(/<ol class="cases-list"[^>]*\shidden/);
+  expect(seen.pdf[0]).not.toMatch(/<button[^>]*cases-/);
+});
+
 test('in print a long list stops after twelve rows with a line counting the rest (#1476)', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
@@ -753,6 +870,9 @@ test('an unpaid report in the comparison comes blurred and locks Print and Downl
   await expect(box.locator('#multi-locked a')).toHaveAttribute('href', /qa-review-pay\.html\?purpose=report&reportId=ef56/);
   await expect(box.locator('.multi-cell[data-col="2"] .fade-line').first()).toBeVisible();
   await expect(box.locator('.multi-cell[data-col="0"] .fade-line')).toHaveCount(0);
+  const frostCases = box.locator('.multi-sec[data-sec="cases"] .multi-cell[data-col="2"]');
+  await expect(frostCases.locator('.case strong .fade-line').first()).toBeAttached();
+  await expect(frostCases.locator('.cases-sum .fade-line, .cases-group h3 .fade-line')).toHaveCount(0);
   await expect(box.locator('#multi-pdf')).toContainText('🔒');
   await page.route('**/qa-review-pay.html**', (route) => route.fulfill({ contentType: 'text/html', body: '<p>pay</p>' }));
   await box.locator('#multi-print').click();
