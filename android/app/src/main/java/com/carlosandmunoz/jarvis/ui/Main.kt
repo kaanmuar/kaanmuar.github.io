@@ -20,6 +20,7 @@ import android.os.Build
 import com.carlosandmunoz.jarvis.home.GoalsWidgetReceiver
 import com.carlosandmunoz.jarvis.home.AlertsWidgetReceiver
 import com.carlosandmunoz.jarvis.home.AskWidgetReceiver
+import com.carlosandmunoz.jarvis.home.MoneyWidgetReceiver
 import com.carlosandmunoz.jarvis.home.NeedsWidgetReceiver
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.NumbersWidgetReceiver
@@ -428,6 +429,7 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     ActionButton("Needs you", false) { Home.pin(context, NeedsWidgetReceiver::class.java) }
                     ActionButton("Alerts", false) { Home.pin(context, AlertsWidgetReceiver::class.java) }
                     ActionButton("Ask bar", false) { Home.pin(context, AskWidgetReceiver::class.java) }
+                    ActionButton("Money", false) { Home.pin(context, MoneyWidgetReceiver::class.java) }
                 }
                 if (Build.VERSION.SDK_INT >= 33) Row { ActionButton("Add the quick-settings tile", false) { Home.addTile(context) } }
                 Muted(if (pinnable) "Widgets refresh every half hour and whenever the app or a push brings new numbers. Long-press the app icon for shortcuts; share a link to Jarvis to review it."

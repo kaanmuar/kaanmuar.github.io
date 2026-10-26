@@ -123,6 +123,31 @@ object Home {
         }.sortedBy { a -> rank.indexOf(a.level).let { if (it < 0) rank.size else it } }
     }
 
+    data class Money(val title: String, val usd: String, val delta: String?, val dir: Int, val sales: String, val series: List<Double>, val flags: List<String>)
+
+    /** Revenue for [day] (the last 24 hours when there is one) against the window before it, with the longer snapshot's daily trend. */
+    fun money(day: JsonObject, week: JsonObject, days: Int, isDay: Boolean): Money {
+        val m = day.obj("external").obj("money")?.takeIf { it.isOk() }
+        val usd = m.at("revenue").num("usd")
+        val delta = change(usd, m.at("prior").num("usd"))
+        val count = m.at("revenue").num("count")?.toInt()
+        val avg = m.at("revenue").num("avgUsd")?.takeIf { (count ?: 0) > 0 }
+        val flags = listOfNotNull(
+            m.num("refundsUsd")?.takeIf { it > 0 }?.let { "$" + fmt(it, 0) + " refunded" },
+            m.obj("paypal").num("disputesOpen")?.toInt()?.takeIf { it > 0 }?.let { plural(it, "PayPal dispute") + " open" }
+        )
+        val series = week.obj("external").obj("money").objs("daily").map { it.num("usd") ?: 0.0 }
+        return Money(if (isDay || days == 1) "Money · last 24 hours" else "Money · last $days days", if (usd == null) "—" else "$" + fmt(usd, 0), delta, dirOf(delta),
+            listOfNotNull(count?.let { plural(it, "sale") }, avg?.let { "avg $" + fmt(it, 0) }).joinToString(" · ").ifEmpty { "No sales data" }, series, flags)
+    }
+
+    /** The 1-day snapshot for Money today, or the main one when it is already a day or the day is missing; the flag says which. */
+    fun day(context: Context, snap: JsonObject): Pair<JsonObject, Boolean> {
+        val app = context.applicationContext as JarvisApp
+        if (days(app) == 1 || BuildConfig.DEBUG && File(app.filesDir, "jarvis/fixture.json").exists()) return (snap.obj("day") ?: snap) to (days(app) == 1 || snap.obj("day") != null)
+        return app.api.saved("snapshot", 1)?.json?.let { it to true } ?: (snap to false)
+    }
+
     /** A product chip opens Products on that chip; anything else is a tab name. */
     private fun route(target: String) = if (CHIPS.any { it.first == target }) "products:$target" else target
 
@@ -138,6 +163,7 @@ object Home {
         val app = context.applicationContext as JarvisApp
         if (!app.auth.signedIn) return false
         val ok = runCatching { app.api.fetch("snapshot", days(app)) }.isSuccess
+        if (days(app) != 1) runCatching { app.api.fetch("snapshot", 1) }
         runCatching { app.api.fetch("notices", 1) }
         runCatching { app.api.fetch("social-proposals", 1) }
         redraw(context)
@@ -147,6 +173,7 @@ object Home {
     suspend fun redraw(context: Context) {
         runCatching { NeedsWidget().updateAll(context) }
         runCatching { AlertsWidget().updateAll(context) }
+        runCatching { MoneyWidget().updateAll(context) }
         runCatching { StatusWidget().updateAll(context) }
         runCatching { NumbersWidget().updateAll(context) }
         runCatching { GoalsWidget().updateAll(context) }
@@ -165,7 +192,8 @@ object Home {
                 loaded = true
                 val snap = snapshot(app)?.first
                 day = if (snap == null || Home.days(app) == 1 || !app.auth.signedIn) snap
-                    else runCatching { app.api.fetch("snapshot", 1).json }.getOrNull() ?: app.api.saved("snapshot", 1)?.json
+                    else app.api.saved("snapshot", 1)?.takeIf { System.currentTimeMillis() - it.at < 10 * 60_000 }?.json
+                        ?: runCatching { app.api.fetch("snapshot", 1).json }.getOrNull() ?: app.api.saved("snapshot", 1)?.json
             }
             day
         }
