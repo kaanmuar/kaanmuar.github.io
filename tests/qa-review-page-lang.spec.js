@@ -202,6 +202,59 @@ test.describe('Review page language', () => {
     await expect(card).not.toContainText('Retest on');
   });
 
+  test('the case layers and the Proposed tag read in the page language (#1647)', async ({ page }) => {
+    await prime(page, 'de');
+    const sample = require('../assets/qa-review-sample.json');
+    const report = Object.assign({}, sample.report, { id: 'lc12cd34ef56' });
+    await page.route('http://127.0.0.1:8768/**', (route) => {
+      const req = route.request();
+      const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
+      const path = new URL(req.url()).pathname;
+      const body = path === '/review/open' ? { report, frameworks: sample.frameworks, paid: true } : path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] };
+      return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(body) });
+    });
+    await page.goto('/qa-review-de.html?report=lc12cd34ef56');
+    const cases = page.locator('#cases');
+    await expect(cases.locator('.case').first()).toBeVisible({ timeout: 20000 });
+    await expect(cases).toContainText('Barrierefreiheit');
+    await expect(cases).toContainText('Datenschutz');
+    await expect(cases.locator('.tag', { hasText: 'Vorgeschlagen' }).first()).toBeVisible();
+    await expect(cases).not.toContainText('Proposed');
+    await expect(cases).not.toContainText('Accessibility');
+    const filters = page.locator('#layer-filters button');
+    await expect(filters.and(page.locator('[data-layer="Security"]'))).toHaveText('Sicherheit');
+    await expect(page.locator('#layer-filters')).not.toContainText('Privacy');
+  });
+
+  test('the public marks of At a glance keep every label inside its tile at 1024px, in German too (#1641)', async ({ page }) => {
+    const sample = require('../assets/qa-review-sample.json');
+    const report = Object.assign({}, sample.report, { id: 'tk12cd34ef56' });
+    await page.route('http://127.0.0.1:8768/**', (route) => {
+      const req = route.request();
+      const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
+      const path = new URL(req.url()).pathname;
+      const body = path === '/review/open' ? { report, frameworks: sample.frameworks, paid: true } : path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] };
+      return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(body) });
+    });
+    await page.setViewportSize({ width: 1024, height: 900 });
+    for (const [lang, file] of [['en', 'qa-review.html'], ['de', 'qa-review-de.html']]) {
+      await prime(page, lang);
+      await page.goto('/' + file + '?report=tk12cd34ef56');
+      const ticks = page.locator('#report-visuals .tick');
+      await expect(ticks.first()).toBeAttached({ timeout: 20000 });
+      const spill = await ticks.evaluateAll((list) => list.flatMap((tick) => {
+        const box = tick.getBoundingClientRect();
+        return [...tick.querySelectorAll('*')].filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.width && (r.right > box.right - 1 || el.scrollWidth > el.clientWidth + 1);
+        }).map((el) => el.textContent.trim());
+      }));
+      expect(spill, lang).toEqual([]);
+    }
+  });
+
   test('the charts and practices read in the page language, axe titles of saved reports included (#1588)', async ({ page }) => {
     await prime(page, 'es');
     const sample = require('../assets/qa-review-sample.json');
