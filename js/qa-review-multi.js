@@ -374,6 +374,20 @@
     });
   }
 
+  // A fix-kit file no site needs is left out of every column; the rest keep one row each (css/qa-review-multi.css).
+  function levelKit(grid) {
+    const row = grid.querySelector('.multi-sec[data-sec="fixkit"] .multi-row');
+    if (!row) return;
+    const tiles = [...row.querySelectorAll("[data-kit]")];
+    const kinds = [...new Set(tiles.map((tile) => tile.dataset.kit))].filter((kind) => {
+      const same = tiles.filter((tile) => tile.dataset.kit === kind);
+      if (!same.every((tile) => tile.classList.contains("is-none"))) return true;
+      same.forEach((tile) => tile.remove());
+      return false;
+    });
+    row.style.setProperty("--kit-rows", String(kinds.length + 2));
+  }
+
   function setFold(sec, open) {
     sec.querySelector(".multi-row").hidden = !open;
     sec.querySelector(".fold-toggle").setAttribute("aria-expanded", String(open));
@@ -470,6 +484,7 @@
     boxGeo(grid);
     pruneChecks(grid);
     settle(grid);
+    levelKit(grid);
     capForPrint(grid);
     const bar = body.querySelector(".multi-hosts-bar");
     grid.addEventListener("scroll", () => { bar.scrollLeft = grid.scrollLeft; }, { passive: true });

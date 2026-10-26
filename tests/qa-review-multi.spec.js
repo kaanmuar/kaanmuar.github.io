@@ -485,6 +485,71 @@ test('a cell holding only a placeholder line keeps its own height beside a tall 
   await expect(box.locator('.multi-sec[data-sec="observed"] .multi-cell[data-col="0"]')).not.toHaveClass(/is-note/);
 });
 
+test('the fix-kit files sit level across the columns however each kit differs, on screen and in print (#1610)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const kits = [
+    { hosting: 'Firebase Hosting', mtaSts: 'v=STSv1; id=1', libraries: [{ name: 'jQuery UI', version: '1.12.1', fixed: '1.13.2' }], accessibilityStatement: true },
+    { hosting: 'Apache', libraries: [{ name: 'Moment.js', version: '2.30.1', fixed: '2.31.0' }, { name: 'Select2', version: '4.0.6-rc.1', fixed: '4.0.6' }], privacyNotice: true, accessibilityStatement: true },
+    { hosting: '', libraries: [{ name: 'Bootstrap', version: '3.2.0', ended: true }] },
+    { hosting: 'nginx', mtaSts: 'v=STSv1; id=1' }
+  ];
+  const records = [own, rival, sample.report, own].map((base, index) => {
+    const report = JSON.parse(JSON.stringify(base));
+    report.id = ['ab12', 'cd34', 'ef56', 'gh78'][index];
+    if (index === 3) report.host = 'site4.example';
+    report.insights.fixkit = Object.assign(report.insights.fixkit, kits[index]);
+    return { id: report.id, email: EMAIL, status: 'complete', paid: index !== 2, createdAt: '2026-10-2' + (4 - index) + 'T10:00:00Z', report };
+  });
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const sec = page.locator('#multi-overlay .multi-sec[data-sec="fixkit"]');
+  await expect(sec.locator('.multi-cell')).toHaveCount(4, { timeout: 20000 });
+  if (process.env.MULTI_SHOT) {
+    for (const dark of [false, true]) {
+      if (dark) await page.evaluate(() => document.getElementById('theme-toggle').click());
+      for (const width of [1024, 1440]) {
+        await page.setViewportSize({ width, height: 2200 });
+        await sec.scrollIntoViewIfNeeded();
+        await sec.screenshot({ path: process.env.MULTI_SHOT + '/fixkit-' + width + (dark ? '-dark' : '') + '.png' });
+      }
+    }
+    await page.evaluate(() => { document.getElementById('theme-toggle').click(); document.body.classList.add('printing-multi'); });
+    await page.emulateMedia({ media: 'print' });
+    await page.setViewportSize({ width: 1047, height: 2200 });
+    await sec.screenshot({ path: process.env.MULTI_SHOT + '/fixkit-print.png' });
+    await page.emulateMedia({ media: 'screen' });
+    await page.evaluate(() => document.body.classList.remove('printing-multi'));
+    await page.setViewportSize({ width: 1440, height: 900 });
+  }
+  await expect(sec.locator('[data-kit="chat"]')).toHaveCount(0);
+  await expect(sec.locator('[data-kit="libs"]')).toHaveCount(4);
+  await expect(sec.locator('.multi-cell').nth(3).locator('[data-kit="libs"]')).toHaveText('Library upgradesNothing to upgrade.');
+  await expect(sec.locator('.multi-cell').nth(2).locator('[data-kit="libs"]')).toHaveText('Library upgradesIn the full report.');
+  await expect(sec.locator('.multi-cell').nth(3).locator('[data-kit="legal"]')).toHaveClass('is-none');
+  const rows = () => sec.locator('.multi-cell').evaluateAll((cells) => cells.map((cell) => Object.fromEntries([...cell.querySelectorAll('[data-slot="fixkit"] > p, [data-kit], .code-peek')].map((el) => {
+    const box = el.getBoundingClientRect();
+    return [el.dataset.kit || el.className || 'intro', { top: box.top, height: box.height }];
+  }))));
+  const level = (columns, label) => {
+    expect(Object.keys(columns[0]).length, label).toBe(12);
+    const stack = Object.values(columns[0]);
+    stack.slice(1).forEach((box, index) => expect(box.top, label + ' stacked').toBeGreaterThanOrEqual(stack[index].top + stack[index].height));
+    for (const key of Object.keys(columns[0])) {
+      for (const column of columns.slice(1)) {
+        expect(Math.abs(column[key].top - columns[0][key].top), label + ' ' + key + ' top').toBeLessThanOrEqual(1);
+        expect(Math.abs(column[key].height - columns[0][key].height), label + ' ' + key + ' height').toBeLessThanOrEqual(1);
+      }
+    }
+  };
+  level(await rows(), 'screen');
+  const peek = await sec.locator('.code-peek').evaluateAll((els) => els.map((el) => ({ height: el.offsetHeight, over: el.scrollWidth - el.clientWidth })));
+  for (const box of peek) expect(box).toEqual({ height: 200, over: 0 });
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  level(await rows(), 'print');
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+});
+
 test('in print a long list stops after twelve rows with a line counting the rest (#1476)', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);

@@ -152,6 +152,18 @@
 .multi-modal .multi-sec[data-sec="geo"] .bot i { flex: none; width: 14px; height: 14px; margin: 0; font-size: 9px; }
 .multi-modal .multi-sec[data-sec="geo"] .bot > div { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .multi-modal .multi-sec[data-sec="geo"] .bot :is(.bot-product, small) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Fix kit: the intro, each file and the policy share one row across the columns (subgrid), so a file sits level
+   in every site however its text wraps. --kit-rows is the intro, the files shown, and the policy. */
+.multi-sec[data-sec="fixkit"] .multi-row { grid-template-rows: repeat(var(--kit-rows, 13), auto); row-gap: 8px; }
+.multi-sec[data-sec="fixkit"] .multi-cell, .multi-sec[data-sec="fixkit"] .multi-cell > [data-slot="fixkit"] { display: grid; grid-template-rows: subgrid; grid-row: 1 / -1; gap: normal; }
+/* A size container is laid out on its own, which would undo the subgrid. */
+.multi-sec[data-sec="fixkit"] .multi-cell { container-type: normal; }
+.multi-sec[data-sec="fixkit"] [data-slot="fixkit"] > p { margin: 0; }
+.multi-modal .multi-sec[data-sec="fixkit"] .fixkit-list { display: contents; }
+.multi-sec[data-sec="fixkit"] .fixkit-list .muted { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; }
+.multi-sec[data-sec="fixkit"] .fixkit-list .is-none { border-style: dashed; background: transparent; }
+.multi-sec[data-sec="fixkit"] .fixkit-list .is-none strong { color: var(--muted); font-weight: 600; }
+.multi-modal .multi-sec[data-sec="fixkit"] .code-peek { height: 200px; max-height: none; margin: 0; overflow: auto; overflow-wrap: anywhere; }
 
 /* Security and email: each block of a column sits on a row shared by every column (subgrid), and the rows inside a
    block have one fixed height, so a header or check reads straight across the sites. The first track holds the
@@ -317,6 +329,12 @@
   body.printing-multi .multi-sec[data-sec="geo"] .ai-outline { max-height: none; overflow: visible; }
   body.printing-multi .multi-sec[data-sec="geo"] .ai-outline::after { display: none; }
   body.printing-multi .multi-sec[data-sec="geo"] .bot > div { white-space: normal; overflow-wrap: anywhere; }
+  /* The site name above each column takes the first row. */
+  body.printing-multi .multi-sec[data-sec="fixkit"] .multi-row { grid-template-rows: auto repeat(var(--kit-rows, 13), auto); }
+  body.printing-multi .multi-sec[data-sec="fixkit"] .multi-cell > [data-slot="fixkit"] { grid-row: 2 / -1; }
+  body.printing-multi .multi-sec[data-sec="fixkit"] .fixkit-list .muted { display: block; overflow: visible; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="fixkit"] .code-peek { height: auto; overflow: visible; }
+  body.printing-multi .multi-sec[data-sec="fixkit"] .fixkit-list article { break-inside: avoid; }
   body.printing-multi .multi-cell .sec-matrix { font-size: 7pt; }
   body.printing-multi .multi-cell .sec-matrix th { font-size: 6pt; letter-spacing: 0; overflow-wrap: anywhere; }
   body.printing-multi .multi-cell .sec-matrix td:first-child { min-width: 0; }
