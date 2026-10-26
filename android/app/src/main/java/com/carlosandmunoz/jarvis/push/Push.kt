@@ -31,6 +31,8 @@ object Push {
     const val MONEY = "money"
     const val REVIEWS = "reviews"
     const val OUTREACH = "outreach"
+    const val INBOX = "inbox"
+    const val DESK = "desk"
     const val EXTRA_TAB = "jarvis.tab"
     private val CHANNELS = mapOf(
         ALERTS to Triple("Alerts", "Threshold crossings from the hourly watch: a page down, TLS, failed jobs and runs.", NotificationManager.IMPORTANCE_HIGH),
@@ -38,6 +40,8 @@ object Push {
         MONEY to Triple("Payments", "Each live PayPal payment: what was bought, the amount and who paid.", NotificationManager.IMPORTANCE_HIGH),
         REVIEWS to Triple("New reviews", "A customer's URL review finished: the site, its score and the plan.", NotificationManager.IMPORTANCE_DEFAULT),
         OUTREACH to Triple("Outreach approvals", "Owner notices waiting for you to send or drop, at most once an hour.", NotificationManager.IMPORTANCE_DEFAULT),
+        INBOX to Triple("Inbox", "CV messages, CV feedback and site owners' replies to outreach.", NotificationManager.IMPORTANCE_HIGH),
+        DESK to Triple("Review desk", "URL review runs as they go, held re-runs, comparisons, and runs that need you.", NotificationManager.IMPORTANCE_DEFAULT),
         "review" to Triple("Reviews", "URL reviews you started by sharing a link to Jarvis.", NotificationManager.IMPORTANCE_DEFAULT),
         "test" to Triple("Tests", "Test notifications sent from Settings.", NotificationManager.IMPORTANCE_LOW)
     )
@@ -47,7 +51,7 @@ object Push {
         CHANNELS.forEach { (id, c) -> nm.createNotificationChannel(NotificationChannel(id, c.first, c.third).apply { description = c.second }) }
     }
 
-    fun kinds(app: JarvisApp) = listOf(ALERTS, BRIEFING, MONEY, REVIEWS, OUTREACH).associateWith { app.vault.flag("push.$it", true) }
+    fun kinds(app: JarvisApp) = listOf(ALERTS, BRIEFING, MONEY, REVIEWS, OUTREACH, INBOX, DESK).associateWith { app.vault.flag("push.$it", true) }
 
     suspend fun token(): String? = suspendCoroutine { done ->
         FirebaseMessaging.getInstance().token.addOnCompleteListener { done.resume(if (it.isSuccessful) it.result else null) }
@@ -87,6 +91,7 @@ object Push {
             .setContentText(body)
             .setStyle(style)
             .setAutoCancel(true)
+            .setSilent(data["quiet"] == "1")
             .setCategory(if (kind == ALERTS) NotificationCompat.CATEGORY_ERROR else NotificationCompat.CATEGORY_STATUS)
             .setContentIntent(PendingIntent.getActivity(context, tag.hashCode(), open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
             .build()

@@ -6,9 +6,9 @@
  */
 const crypto = require("crypto");
 
-const KINDS = ["alerts", "briefing", "money", "reviews", "outreach"];
+const KINDS = ["alerts", "briefing", "money", "reviews", "outreach", "inbox", "desk"];
 const DEAD = new Set(["messaging/registration-token-not-registered", "messaging/invalid-registration-token", "messaging/invalid-argument"]);
-const TTL = { alerts: 6 * 3600 * 1000, briefing: 12 * 3600 * 1000, review: 24 * 3600 * 1000, money: 24 * 3600 * 1000, reviews: 24 * 3600 * 1000, outreach: 12 * 3600 * 1000, update: 24 * 3600 * 1000, test: 3600 * 1000 };
+const TTL = { alerts: 6 * 3600 * 1000, briefing: 12 * 3600 * 1000, review: 24 * 3600 * 1000, money: 24 * 3600 * 1000, reviews: 24 * 3600 * 1000, outreach: 12 * 3600 * 1000, inbox: 24 * 3600 * 1000, desk: 12 * 3600 * 1000, update: 24 * 3600 * 1000, test: 3600 * 1000 };
 
 const devices = (db) => db.collection("jarvis_devices");
 const idOf = (token) => crypto.createHash("sha256").update(String(token)).digest("hex").slice(0, 40);
@@ -72,7 +72,9 @@ async function send(messaging, db, tokens, msg) {
   if (!tokens.length) return { sent: 0, failed: 0, removed: 0 };
   const data = { kind: msg.kind, title: msg.title, body: msg.body, lines: JSON.stringify(msg.lines || []), tab: msg.tab || "overview", tag: msg.tag || msg.kind };
   if (msg.url) data.url = msg.url;
-  const res = await messaging.sendEachForMulticast({ tokens, data, android: { priority: "high", ttl: TTL[msg.kind] || TTL.test } });
+  if (msg.ref) data.ref = msg.ref;
+  if (msg.quiet) data.quiet = "1";
+  const res = await messaging.sendEachForMulticast({ tokens, data, android: { priority: msg.quiet ? "normal" : "high", ttl: TTL[msg.kind] || TTL.test } });
   const dead = [];
   res.responses.forEach((r, i) => { if (!r.success && r.error && DEAD.has(r.error.code)) dead.push(tokens[i]); });
   await Promise.all(dead.map((t) => devices(db).doc(idOf(t)).delete().catch(() => null)));

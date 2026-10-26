@@ -383,6 +383,8 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     Push.MONEY to ("Payments" to "Each live PayPal payment, with the amount and who paid."),
                     Push.REVIEWS to ("New reviews" to "A customer's review finished, with its score."),
                     Push.OUTREACH to ("Outreach approvals" to "Owner notices waiting to be sent, at most hourly."),
+                    Push.INBOX to ("Inbox" to "CV messages, CV feedback and site owners' replies."),
+                    Push.DESK to ("Review desk" to "Runs as they go, held re-runs, comparisons and runs that need you."),
                 )
                     .forEach { (kind, text) ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
