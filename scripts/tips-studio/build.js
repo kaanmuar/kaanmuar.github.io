@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Renders the daily tips series: a feed card, a story, and a 12 s clip per tip, plus captions,
+/* Renders the daily tips series: a feed card, a story, and a 30 to 45 s clip per tip, plus captions,
    a seeded random daily schedule, and Buffer CSVs.
    node scripts/tips-studio/build.js [--tips hsts,contrast] [--skip-video] [--start 2026-10-26]
      [--batch tips-2026-10] [--seed 7] [--every 1] [--per-day 2] [--after 0] [--schedule-only]
@@ -12,8 +12,10 @@
    node scripts/tips-studio/build.js --source runs --start 2026-10-28 --every 4
      renders the real-run scorecards from runs.js, in their listed order, one every 4 days.
    --source runs-100 loads runs-100.js the same way; its batch defaults to the module name.
-   Every clip speaks its title and action in a neural voice (edge-tts) over the launch reels' bed
-   (media/url-review-demos/bed.wav).
+   A clip is a run of narrated scenes (#1619): the hook (title), why it matters (body), the visual (tip.say or the
+   visual's note), a related fact (tip.more, or one read off a scorecard), the fix (action) and the end card. Each
+   line is spoken on its own in a neural voice (edge-tts) over the launch reels' bed (media/url-review-demos/bed.wav),
+   and its scene lasts as long as the line.
    Clips take six languages in turn (en, es, pt, de, fr, it; woman, then man), starting --lang-offset N
    along that cycle: the card, voice, and TikTok/YouTube captions are all in the clip's language.
    A render exports the strings and runs translate.py first (--no-translate skips it); a clip still
@@ -65,8 +67,13 @@ let BED;
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const LOCALES = { en: "en-US", es: "es-ES", pt: "pt-BR", de: "de-DE", fr: "fr-FR", it: "it-IT" };
 const UI_EN = { tryThis: "Try this", tip: "Tip", guided: "Guided tour", never: "Never runs your tests",
-  end: "Let your page do the talking.", endNote: "How a public-page review works, step by step." };
+  end: "Let your page do the talking.", endNote: "How a public-page review works, step by step.",
+  why: "Why it matters", more: "Did you know?", strongest: "Strongest area", weakest: "Weakest area" };
 const VOICE_AT = 0.7;
+// Scene order and the shortest each may run, in seconds; a longer line stretches its scene.
+const SCENES = { hook: 3, why: 3.5, look: 5, more: 3.5, fix: 4, end: 3.4 };
+const LEAD = 0.45;
+const TAIL = 0.7;
 
 function args() {
   const out = {};
@@ -94,7 +101,6 @@ const START = opts.start || "2026-10-26";
 const SEED = Number(opts.seed || 7);
 const PICK = opts.tips ? String(opts.tips).split(",") : null;
 const FPS = 30;
-const SECONDS = 12;
 const GUIDE_HOST = "carlosandmunoz.com/qa-review-guide.html";
 
 const WINDOWS = {
@@ -205,9 +211,30 @@ function localize(tip, index, total, i18n) {
   Object.keys(tr).forEach((at) => { if (at === "cat.label") cat.label = tr[at]; else if (!at.startsWith("cap.")) setPath(local, at, tr[at]); });
   const cap = studio.captions(local, index, total);
   const ui = uiFor(voice.lang, i18n);
-  return { tip: local, cat, ui, voice, lang: voice.lang,
-    speech: studio.plainTitle(local) + " " + local.action,
+  const lines = narration(local, ui);
+  local.more = lines.fact;
+  delete lines.fact;
+  return { tip: local, cat, ui, voice, lang: voice.lang, lines,
+    speech: Object.values(lines).filter(Boolean).join(" "),
     tiktok: cap.tiktok, youtubeTitle: cap.youtubeTitle, youtube: withTags(tr["cap.youtube"], cap.youtube) };
+}
+
+// What each scene says. A UI word missing in the clip's language drops out rather than be spoken in English.
+function narration(tip, ui) {
+  const say = (key) => ui[key] || (tip.lang === "en" ? UI_EN[key] : "");
+  const v = tip.visual || {};
+  const fact = tip.more || related(v, say);
+  return { hook: studio.plainTitle(tip), why: tip.body || "", look: tip.say || (v.note || "").replace(/ · /g, ", "),
+    more: fact ? [say("more"), fact].filter(Boolean).join(" ") : "", fix: tip.action || "", end: say("end"), fact };
+}
+
+// A scorecard's own related fact: its strongest and weakest area. A comparison's title already names its leader.
+function related(v, say) {
+  if (v.type !== "scores" || !say("strongest") || !say("weakest")) return "";
+  const areas = v.areas.filter((a) => typeof a[1] === "number").sort((a, b) => b[1] - a[1]);
+  const hi = areas[0];
+  const lo = areas[areas.length - 1];
+  return hi && hi[1] !== lo[1] ? say("strongest") + ": " + hi[0] + ", " + hi[1] + ". " + say("weakest") + ": " + lo[0] + ", " + lo[1] + "." : "";
 }
 
 // The translated description ends with the English tag line; the clip's language gets its own tags.
@@ -246,39 +273,73 @@ function speak(voice, text, file) {
   throw new Error("voice failed for " + voice.file);
 }
 
-async function renderStill(page, tip, fmt, index, total, file, ui) {
+async function renderStill(page, tip, fmt, index, total, file, ui, cat) {
   const size = fmt === "feed" ? { width: 1080, height: 1350 } : { width: 1080, height: 1920 };
   await page.setViewportSize(size);
-  await page.evaluate(([t, c, f, i, n, h, u]) => window.paint(t, c, f, i, n, h, u), [tip, studio.CATS[tip.cat], fmt, index, total, hostFor(tip), ui || {}]);
+  await page.evaluate(([t, c, f, i, n, h, u]) => window.paint(t, c, f, i, n, h, u), [tip, cat || studio.CATS[tip.cat], fmt, index, total, hostFor(tip), ui || {}]);
   await page.waitForTimeout(150);
   await page.locator("#c").screenshot({ path: file, type: "jpeg", quality: 92 });
 }
 
-async function renderClip(page, tip, index, total, file, cover, said) {
-  said = said || { tip, cat: studio.CATS[tip.cat], ui: {}, voice: VOICES[index % 2], speech: studio.plainTitle(tip) + " " + tip.action };
-  await page.setViewportSize({ width: 1080, height: 1920 });
-  await page.evaluate(([t, c, i, n, h, u]) => window.paint(t, c, "clip", i, n, h, u), [said.tip, said.cat, index, total, hostFor(tip), said.ui]);
-  const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "tip-"));
-  const wav = path.join(tmp, "voice.mp3");
-  const length = Math.max(SECONDS, VOICE_AT + speak(said.voice, said.speech, wav) + 0.9);
-  const at = Math.round(VOICE_AT * 1000);
-  const frames = FPS * SECONDS;
-  for (let f = 0; f < frames; f += 1) {
-    await page.evaluate((s) => window.seek(s), f / FPS);
-    await page.locator("#c").screenshot({ path: path.join(tmp, String(f).padStart(4, "0") + ".jpg"), type: "jpeg", quality: 90 });
+// Each line is voiced first, so every scene knows how long it runs before a frame is drawn.
+function timeline(said, tmp) {
+  const scenes = [];
+  let at = 0;
+  for (const id of Object.keys(SCENES)) {
+    const text = said.lines[id];
+    if (id === "more" && !text) continue;
+    const audio = text ? path.join(tmp, id + ".mp3") : null;
+    const voiceDur = text ? speak(said.voice, text, audio) : 0;
+    const lead = id === "hook" ? VOICE_AT : LEAD;
+    const dur = Math.max(SCENES[id], text ? lead + voiceDur + TAIL : 0);
+    scenes.push({ id, start: at, dur, voiceAt: at + lead, voiceDur, audio });
+    at += dur;
   }
-  fs.copyFileSync(path.join(tmp, String(Math.round(FPS * 7.5)).padStart(4, "0") + ".jpg"), cover);
-  // Buffer previews and TikTok's default cover use the first frame, so it shows the finished card.
-  fs.copyFileSync(cover, path.join(tmp, "0000.jpg"));
-  // Same bed level, fades and loudness as the launch reels in post-studio; a long line holds the end card.
-  const run = spawnSync(FFMPEG, ["-y", "-loglevel", "error", "-framerate", String(FPS), "-i", path.join(tmp, "%04d.jpg"),
-    "-i", wav, "-stream_loop", "-1", "-i", BED, "-filter_complex",
-    "[0:v]tpad=stop_mode=clone:stop_duration=" + (length - SECONDS).toFixed(3) + "[v];" +
-    "[1:a]aformat=sample_rates=48000:channel_layouts=stereo,adelay=" + at + "|" + at + ",apad[va];" +
-    "[2:a]aformat=sample_rates=48000:channel_layouts=stereo,volume=0.16,afade=t=in:d=1.2,afade=t=out:st=" + (length - 1.6).toFixed(3) + ":d=1.6[ba];" +
-    "[va][ba]amix=inputs=2:duration=first:normalize=0,atrim=0:" + length.toFixed(3) + ",loudnorm=I=-15:TP=-1.5:LRA=11,aresample=48000[a]",
-    "-map", "[v]", "-map", "[a]", "-t", length.toFixed(3),
-    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "128k", file]);
+  return { scenes, length: at };
+}
+
+// A clip runs about 1,300 frames, so each worker page paints the clip and draws every WORKERS-th frame.
+const WORKERS = Math.max(1, Math.min(Number(process.env.CLIP_WORKERS) || require("os").cpus().length, 4));
+async function framePages(browser, page) {
+  const pages = [page];
+  while (pages.length < WORKERS) {
+    const extra = await browser.newPage({ deviceScaleFactor: 1 });
+    await extra.goto("file://" + path.join(__dirname, "frame.html"));
+    pages.push(extra);
+  }
+  return Promise.all(pages.map(async (p) => ({ page: p, cdp: await p.context().newCDPSession(p) })));
+}
+
+async function renderClip(workers, tip, index, total, file, cover, said) {
+  const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "tip-"));
+  const { scenes, length } = timeline(said, tmp);
+  const frames = Math.ceil(length * FPS);
+  const size = { width: 1080, height: 1920 };
+  await Promise.all(workers.map(async ({ page, cdp }, k) => {
+    await page.setViewportSize(size);
+    await page.evaluate(([t, c, i, n, h, u, s]) => window.paintClip(t, c, i, n, h, u, s),
+      [said.tip, said.cat, index, total, hostFor(tip), said.ui, scenes.map(({ audio, ...s }) => s)]);
+    for (let f = k; f < frames; f += workers.length) {
+      await page.evaluate((s) => window.seek(s), f / FPS);
+      const shot = await cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 90, clip: Object.assign({ x: 0, y: 0, scale: 1 }, size) });
+      fs.writeFileSync(path.join(tmp, String(f).padStart(5, "0") + ".jpg"), Buffer.from(shot.data, "base64"));
+    }
+  }));
+  const page = workers[0].page;
+  // Buffer previews and TikTok's default cover use the first frame, so it shows the finished story card.
+  await renderStill(page, said.tip, "story", index, total, cover, said.ui, said.cat);
+  fs.copyFileSync(cover, path.join(tmp, "00000.jpg"));
+  // Same bed level, fades and loudness as the launch reels in post-studio.
+  const voiced = scenes.filter((s) => s.audio);
+  const delay = (s) => Math.round(s.voiceAt * 1000);
+  const run = spawnSync(FFMPEG, ["-y", "-loglevel", "error", "-framerate", String(FPS), "-i", path.join(tmp, "%05d.jpg")]
+    .concat(...voiced.map((s) => ["-i", s.audio]), ["-stream_loop", "-1", "-i", BED, "-filter_complex",
+    voiced.map((s, i) => "[" + (i + 1) + ":a]aformat=sample_rates=48000:channel_layouts=stereo,adelay=" + delay(s) + "|" + delay(s) + ",apad[v" + i + "];").join("") +
+    "[" + (voiced.length + 1) + ":a]aformat=sample_rates=48000:channel_layouts=stereo,volume=0.16,afade=t=in:d=1.2,afade=t=out:st=" + (length - 1.6).toFixed(3) + ":d=1.6[ba];" +
+    voiced.map((s, i) => "[v" + i + "]").join("") + "[ba]amix=inputs=" + (voiced.length + 1) + ":duration=first:normalize=0,atrim=0:" + length.toFixed(3) +
+    ",loudnorm=I=-15:TP=-1.5:LRA=11,aresample=48000[a]",
+    "-map", "0:v", "-map", "[a]", "-t", length.toFixed(3),
+    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "128k", file]), { encoding: "utf8" });
   fs.rmSync(tmp, { recursive: true, force: true });
   if (run.status !== 0) throw new Error("ffmpeg failed for " + tip.id + ": " + run.stderr);
   const peak = parseFloat((spawnSync(FFMPEG, ["-hide_banner", "-i", file, "-af", "volumedetect", "-vn", "-f", "null", "-"], { encoding: "utf8" }).stderr.match(/max_volume: (-?[\d.]+) dB/) || [])[1]);
@@ -327,6 +388,7 @@ function rewriteCaptions(all, networks) {
   const page = await browser.newPage({ deviceScaleFactor: 1 });
   await page.goto("file://" + path.join(__dirname, "frame.html"));
   await page.evaluate(() => document.fonts.ready);
+  const workers = opts.rotate || !(opts["skip-video"] || opts["schedule-only"]) ? await framePages(browser, page) : null;
 
   if (opts.rotate) {
     const i18n = loadI18n();
@@ -338,7 +400,7 @@ function rewriteCaptions(all, networks) {
       if (opts.resume && fs.existsSync(file.replace(/\.mp4$/, ".json"))) continue;
       if (!translated(tip, voiceFor(index, tip).lang, i18n)) { console.log("untranslated", slug); continue; }
       const said = localize(tip, index, total, i18n);
-      await renderClip(page, tip, index, total, file, path.join(OUT, "voiced", "cover", slug + ".jpg"), said);
+      await renderClip(workers, tip, index, total, file, path.join(OUT, "voiced", "cover", slug + ".jpg"), said);
       fs.writeFileSync(file.replace(/\.mp4$/, ".json"), JSON.stringify({ slug, lang: said.lang, voice: said.voice.file,
         speech: said.speech, tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube }, null, 1));
       console.log("voiced", slug, said.voice.file);
@@ -360,7 +422,7 @@ function rewriteCaptions(all, networks) {
     await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"), ui);
     await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"), ui);
     const said = localize(tip, index, total, i18n);
-    if (!opts["skip-video"]) await renderClip(page, tip, index, total, path.join(OUT, "clip", slug + ".mp4"), path.join(OUT, "cover", slug + ".jpg"), said);
+    if (!opts["skip-video"]) await renderClip(workers, tip, index, total, path.join(OUT, "clip", slug + ".mp4"), path.join(OUT, "cover", slug + ".jpg"), said);
     console.log("rendered", slug, said.voice.file);
   }
   await browser.close();
