@@ -785,8 +785,22 @@
     }
   }
 
-  function print() {
+  // Print is on paper, so it drops dark mode as the PDF does, and gives it back after.
+  // The site look paints its colours from the theme, so the theme changes through SiteTheme, without saving it.
+  let darkBeforePrint = false;
+  function setDark(on) {
+    if (window.SiteTheme) SiteTheme.apply(on, false);
+    else document.documentElement.classList.toggle("dark-mode", on);
+  }
+  function startPrint() {
     document.body.classList.add("printing-multi");
+    if (!document.documentElement.classList.contains("dark-mode")) return;
+    darkBeforePrint = true;
+    setDark(false);
+  }
+
+  function print() {
+    startPrint();
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_multi_print", "URL Review", "print");
     window.print();
   }
@@ -796,7 +810,7 @@
   let openedForPrint = [];
   window.addEventListener("beforeprint", () => {
     if (!overlay || !overlay.classList.contains("open") || !made || !made.paid) return;
-    document.body.classList.add("printing-multi");
+    startPrint();
     overlay.querySelectorAll("details.finding:not([open])").forEach((item) => {
       item.open = true;
       openedForPrint.push(item);
@@ -804,6 +818,8 @@
   });
   window.addEventListener("afterprint", () => {
     document.body.classList.remove("printing-multi");
+    if (darkBeforePrint) setDark(true);
+    darkBeforePrint = false;
     openedForPrint.forEach((item) => { item.open = false; });
     openedForPrint = [];
   });

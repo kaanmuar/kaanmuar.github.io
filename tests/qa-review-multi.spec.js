@@ -1424,6 +1424,35 @@ test('the case layers and the Proposed tag of the comparison read in the page la
   expect(tags).not.toContain('Proposed');
 });
 
+test('printing the comparison from dark mode prints light cards and gives dark mode back after (#1637)', async ({ page }) => {
+  await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const box = page.locator('#multi-overlay');
+  await expect(box.locator('.multi-sec[data-sec="health"] .multi-cell').first()).toBeVisible({ timeout: 20000 });
+  await page.evaluate(() => window.SiteTheme.apply(true, false));
+  const light = () => page.evaluate(() => {
+    const card = document.querySelector('#multi-overlay .multi-sec[data-sec="security"] .multi-cell .card');
+    const [r, g, b] = getComputedStyle(card).color.match(/\d+/g).map(Number);
+    return { dark: document.documentElement.classList.contains('dark-mode'), ink: (r + g + b) / 3 };
+  });
+  expect((await light()).ink).toBeGreaterThan(150);
+
+  await page.evaluate(() => { window.print = () => { window.printedDark = document.documentElement.classList.contains('dark-mode'); }; });
+  await box.getByRole('button', { name: 'Print', exact: true }).click();
+  expect(await page.evaluate(() => window.printedDark)).toBe(false);
+  await page.emulateMedia({ media: 'print' });
+  const printed = await light();
+  expect(printed.dark).toBe(false);
+  expect(printed.ink).toBeLessThan(100);
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+  expect((await light()).dark).toBe(true);
+
+  await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+  expect((await light()).dark).toBe(false);
+  await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+  expect((await light()).dark).toBe(true);
+});
+
 test('an unpaid report in the comparison comes blurred and locks Print and Download PDF behind its payment', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(false), '/qa-review.html?comparison=cmp1', seen);
