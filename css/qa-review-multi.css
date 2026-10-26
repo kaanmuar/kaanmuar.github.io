@@ -94,6 +94,8 @@
 @container (max-width: 300px) {
   .multi-cell .areas, .multi-cell .stat-row, .multi-cell .checks-grid, .multi-cell .kpis { grid-template-columns: minmax(0, 1fr); }
 }
+/* The score ring keeps its size until a column is narrower than it, as six sites are on a printed page. */
+.multi-cell .ring { width: min(196px, 100%); height: auto; aspect-ratio: 1; }
 /* The boxes of the health and one-page summary sections line up across sites: the cell, its card and the card's
    boxless wrappers share the section row's tracks, and an area tile takes the slot of its name, not its place.
    A size container turns subgrid off, so the row, not the cell, is the container; --tc is the tiles a card row
@@ -320,7 +322,7 @@
 .multi-cell .sec-cover h3 { margin: 0 0 4px; }
 .multi-cell .sec-cover > .muted { margin: 0 0 10px; font-size: 13px; }
 .multi-cell :is(.sec-cov, .sec-checks) { display: grid; gap: 4px; }
-.multi-cell .sec-checks { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.multi-cell .sec-checks { grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); }
 .multi-cell :is(.sec-cov, .sec-checks) li { --c: var(--muted); position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 30px; padding: 0 10px; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); font-size: 12.5px; }
 .multi-cell :is(.sec-cov, .sec-checks) .pass { --c: var(--green); }
 .multi-cell :is(.sec-cov, .sec-checks) .risk { --c: var(--amber); }
