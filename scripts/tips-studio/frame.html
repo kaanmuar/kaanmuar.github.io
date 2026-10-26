@@ -206,7 +206,7 @@
       radial-gradient(circle at 50% 30px, rgba(255,176,46,.45), transparent 60px) 0 0/140px 150px repeat-x,
       linear-gradient(90deg, transparent 54px, #f6ead2 54px 86px, transparent 86px) 0 52px/140px 98px repeat-x; }
 
-  /* Clip choreography. Times are seconds in a 12 s clip; stills jump to the end of the main scene. */
+  /* Clip choreography. Times are seconds from the clip's start; stills jump to the end of the main scene. */
   .clip .a { animation-fill-mode: both; animation-timing-function: cubic-bezier(.2,.8,.2,1); }
   .clip .in-up { animation-name: inUp; animation-duration: .8s; }
   @keyframes inUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: none; } }
@@ -217,6 +217,61 @@
   @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   .clip .end.a { animation-name: fadeEnd; animation-duration: .7s; }
   @keyframes fadeEnd { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: none; } }
+
+  /* Scene clips: narrated scenes under a drifting 3D camera. paintClip sets every duration and delay from the voice timeline. */
+  .clip.scenes { perspective: 1400px; perspective-origin: 50% 42%; }
+  .world, .rig { position: absolute; inset: 0; transform-style: preserve-3d; }
+  .world { animation: cam linear both; }
+  .rig { animation: rig linear both; }
+  @keyframes cam { 0% { transform: rotateX(7deg) rotateY(-9deg) translateZ(-120px); } 30% { transform: rotateX(-3deg) rotateY(7deg) translateZ(40px); } 55% { transform: rotateX(5deg) rotateY(-6deg) translateZ(-60px); } 80% { transform: rotateX(-4deg) rotateY(8deg) translateZ(50px); } 100% { transform: rotateX(2deg) rotateY(-4deg) translateZ(0); } }
+  @keyframes rig { 0% { transform: rotateX(2deg) rotateY(-3deg); } 35% { transform: rotateX(-1.5deg) rotateY(2.5deg); } 70% { transform: rotateX(1.5deg) rotateY(-2deg); } 100% { transform: rotateX(-1deg) rotateY(2deg); } }
+  .scenes .floor { animation-name: drift, floorPulse; }
+  @keyframes floorPulse { 0%, 100% { opacity: .8; } 50% { opacity: 1; } }
+  .scenes .cube { animation-timing-function: linear; }
+  .dot { position: absolute; width: var(--d); height: var(--d); border-radius: 50%; background: var(--accent); opacity: .55; box-shadow: 0 0 14px var(--accent); animation: float linear both; }
+  @keyframes float { from { transform: translate3d(0, 0, var(--z)); } to { transform: translate3d(var(--dx), var(--dy), var(--z)); } }
+  .progress { position: absolute; z-index: 6; left: 84px; right: 84px; top: 44px; display: flex; gap: 10px; }
+  .progress i { flex: var(--w) 1 0; height: 8px; border-radius: 99px; background: rgba(255,255,255,.14); overflow: hidden; }
+  .progress b { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--cyan-hi), var(--gold)); transform-origin: left; animation: grow linear both; }
+  .masthead { position: absolute; z-index: 4; left: 84px; right: 84px; top: 84px; }
+  .sc { position: absolute; left: 84px; right: 84px; top: 250px; bottom: 380px; display: flex; flex-direction: column; justify-content: center; transform-style: preserve-3d; backface-visibility: hidden; }
+  .sc > .in { display: flex; flex-direction: column; gap: 40px; transform-style: preserve-3d; }
+  @keyframes inDeep { from { opacity: 0; transform: translateZ(-900px) rotateX(22deg); } to { opacity: 1; transform: none; } }
+  @keyframes inSwing { from { opacity: 0; transform: translateX(440px) rotateY(-65deg); } to { opacity: 1; transform: none; } }
+  @keyframes inRise { from { opacity: 0; transform: translateY(280px) rotateX(-38deg); } to { opacity: 1; transform: none; } }
+  @keyframes inFlip { from { opacity: 0; transform: rotateY(115deg) scale(.9); } to { opacity: 1; transform: none; } }
+  @keyframes outSwing { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(-440px) rotateY(65deg); } }
+  @keyframes outThrough { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateZ(520px); } }
+  @keyframes outFlip { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-260px) rotateX(72deg); } }
+  @keyframes outSink { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateZ(-720px) rotateY(-22deg); } }
+  .kicker { display: flex; align-items: center; gap: 18px; font-family: "Fira Code", monospace; font-size: 30px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+  .kicker::before { content: ""; width: 64px; height: 5px; border-radius: 5px; background: var(--accent); box-shadow: 0 0 18px var(--accent); }
+  .hook .title { font-size: 150px; line-height: .96; }
+  .hook .wd { display: inline-block; transform-origin: 50% 100%; animation: wordIn .7s cubic-bezier(.2,.8,.2,1) both; }
+  .hook em .wd { background: linear-gradient(92deg, var(--cyan-hi), #b8f3ea 45%, var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .04em; }
+  @keyframes wordIn { from { opacity: 0; transform: rotateX(-95deg) translateZ(-140px); } to { opacity: 1; transform: none; } }
+  .scenes .grain { mix-blend-mode: normal; opacity: .035; }
+  .scenes .glass { backdrop-filter: none; background: linear-gradient(160deg, rgba(22,44,52,.86), rgba(8,20,25,.8)); }
+  .look { --mono: 40px; --body: 46px; --u: 36px; }
+  .say { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 86px; line-height: 1.07; letter-spacing: -.015em; text-wrap: pretty; }
+  .say .w { color: rgba(238,246,247,.26); animation: lit .3s ease-out both; }
+  @keyframes lit { from { color: rgba(238,246,247,.26); text-shadow: none; } 40% { color: #fff; text-shadow: 0 0 26px var(--accent); } to { color: var(--text); text-shadow: none; } }
+  .stage { perspective: 1600px; }
+  .orbit { transform-style: preserve-3d; animation: orbit linear both; }
+  @keyframes orbit { from { transform: rotateY(-12deg) rotateX(5deg) translateZ(-60px); } to { transform: rotateY(12deg) rotateX(-3deg) translateZ(50px); } }
+  .scenes .glass { overflow: hidden; }
+  .scenes .glass::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; pointer-events: none; background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.16) 50%, transparent 62%) no-repeat; background-size: 260% 100%; animation: sweep 1.6s ease-in-out both; animation-delay: var(--sweep); }
+  @keyframes sweep { from { background-position: 130% 0; } to { background-position: -130% 0; } }
+  .fact { padding: 56px 60px 64px; border-color: color-mix(in srgb, var(--gold) 45%, transparent); display: flex; flex-direction: column; gap: 30px; }
+  .fact .kicker { color: var(--gold); } .fact .kicker::before { background: var(--gold); box-shadow: 0 0 18px var(--gold); }
+  .fact .glyph { position: absolute; right: 40px; top: -30px; font-family: "Instrument Serif", Georgia, serif; font-size: 260px; line-height: 1; color: color-mix(in srgb, var(--gold) 30%, transparent); }
+  .fact .say { font-size: 70px; }
+  .fix .say { font-size: 74px; }
+  .fix .picks .pick { animation: inUp .6s cubic-bezier(.2,.8,.2,1) both; }
+  .fix .url { align-self: flex-start; font-family: "Fira Code", monospace; font-size: 30px; color: var(--cyan-hi); border: 2px solid rgba(126,246,251,.35); border-radius: 999px; padding: 12px 28px; background: rgba(5,12,15,.5); }
+  .scenes .end { z-index: 5; }
+  .scenes .end svg { animation: logoIn 1.2s cubic-bezier(.2,.8,.2,1) both; animation-delay: inherit; }
+  @keyframes logoIn { from { transform: rotateY(-200deg) scale(.4); } to { transform: none; } }
 </style>
 </head>
 <body>
@@ -324,6 +379,86 @@ window.paint = function (tip, cat, fmt, index, total, guideHost, lang) {
     const room = scene.clientHeight * 0.94;
     if (card.offsetHeight > room) c.classList.add("tight");
     if (card.offsetHeight > room) card.style.zoom = (room / card.offsetHeight).toFixed(3);
+    return true;
+  });
+};
+
+// Scene clips: scenes = [{ id, start, dur, voiceAt, voiceDur }] from build.js, one per narrated line.
+const CLIP_EN = { why: "Why it matters", more: "Did you know?" };
+const SWAP = { hook: ["inDeep", "outSwing"], why: ["inSwing", "outThrough"], look: ["inRise", "outFlip"], more: ["inFlip", "outSink"], fix: ["inRise", "outThrough"] };
+const cubeHtml = (style) => '<div class="cube" style="' + style + '">' + "<i></i>".repeat(6) + "</div>";
+
+// Each word lights up as the voice reaches it, timed by its share of the line's characters.
+function karaoke(text, from, dur) {
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  const chars = words.join(" ").length || 1;
+  let seen = 0;
+  return words.map((w) => { const at = from + dur * seen / chars; seen += w.length + 1; return '<span class="w" style="animation-delay:' + at.toFixed(2) + 's">' + esc(w) + "</span>"; }).join(" ");
+}
+
+function hookTitle(lines, t0) {
+  let k = 0;
+  const word = (w) => '<span class="wd" style="animation-delay:' + (t0 + 0.09 * k++).toFixed(2) + 's">' + esc(w) + "</span>";
+  return lines.map((line) => "<span>" + line.split(/(\*[^*]+\*)/).filter((p) => p.trim()).map((part) => {
+    const html = part.replace(/\*/g, "").split(/\s+/).filter(Boolean).map(word).join(" ");
+    return /^\*.*\*$/.test(part) ? "<em>" + html + "</em>" : html;
+  }).join(" ") + "</span>").join("");
+}
+
+window.paintClip = function (tip, cat, index, total, guideHost, lang, scenes) {
+  ui = Object.assign({}, UI_EN, lang || {});
+  const label = (key) => (lang && lang[key]) || (ui.locale.startsWith("en") ? CLIP_EN[key] : "");
+  document.documentElement.lang = ui.locale.slice(0, 2);
+  const c = document.getElementById("c");
+  c.className = "clip scenes";
+  c.style.setProperty("--accent", cat.color);
+  c.dataset.theme = cat.theme || "";
+  const length = scenes.reduce((n, s) => Math.max(n, s.start + s.dur), 0);
+  const L = "animation-duration:" + length.toFixed(2) + "s";
+  let seed = index * 7919 + 17;
+  const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const dots = Array.from({ length: 26 }, () => '<i class="dot" style="left:' + (rand() * 100).toFixed(1) + "%;top:" + (30 + rand() * 80).toFixed(1) + "%;--d:" + (4 + rand() * 9).toFixed(1) +
+    "px;--z:" + (-420 + rand() * 620).toFixed(0) + "px;--dx:" + (-90 + rand() * 180).toFixed(0) + "px;--dy:" + (-320 - rand() * 380).toFixed(0) + "px;" + L + '"></i>').join("");
+  const sec = (n) => n.toFixed(2) + "s";
+  const scene = (s, inner) => {
+    const [enter, leave] = SWAP[s.id];
+    return '<section class="sc ' + s.id + '" style="animation:' + enter + " .9s cubic-bezier(.2,.8,.2,1) " + sec(s.start) + " both, " + leave + " .6s cubic-bezier(.6,0,.8,.3) " + sec(s.start + s.dur - .6) + ' forwards"><div class="in">' + inner + "</div></section>";
+  };
+  const body = { hook: (s) => '<span class="chip a in-up" style="animation-delay:' + sec(s.start + .3) + '"><i></i>' + esc(cat.label) + "</span>" +
+      '<h1 class="title fit">' + hookTitle(tip.title, s.start + .45) + "</h1>",
+    why: (s) => (label("why") ? '<div class="kicker">' + esc(label("why")) + "</div>" : "") + '<p class="say fit">' + karaoke(tip.body, s.voiceAt, s.voiceDur) + "</p>",
+    look: (s) => '<span class="chip"><i></i>' + esc(cat.label) + '</span><div class="stage"><div class="orbit" style="animation-duration:' + sec(s.dur) + ";animation-delay:" + sec(s.start) +
+      '"><div class="card3d a" style="animation-delay:' + sec(s.start + .15) + ";--sweep:" + sec(s.start + 2.6) + '">' + visual(tip.visual, s.start + 1.1) + "</div></div></div>",
+    more: (s) => {
+      const lead = label("more");
+      const spoken = (lead ? lead + " " : "") + tip.more;
+      const shift = s.voiceDur * (lead ? (lead.length + 1) / spoken.length : 0);
+      return '<div class="glass fact" style="--sweep:' + sec(s.start + 1) + '"><span class="glyph">?</span>' + (lead ? '<div class="kicker">' + esc(lead) + "</div>" : "") +
+        '<p class="say fit">' + karaoke(tip.more, s.voiceAt + shift, s.voiceDur - shift) + "</p></div>";
+    },
+    fix: (s) => {
+      const steps = (tip.steps || []).length > 1 ? '<ol class="picks">' + tip.steps.map((step, i) => '<li class="pick" style="animation-delay:' + sec(s.voiceAt + s.voiceDur * .3 + i * .25) + '"><span class="n">' + (i + 1) + "</span><b>" + esc(step) + "</b></li>").join("") + "</ol>" : "";
+      return '<div class="kicker">' + esc(tip.actionLabel || ui.tryThis) + '</div><p class="say fit">' + karaoke(tip.action, s.voiceAt, s.voiceDur) + "</p>" + steps +
+        '<span class="url a in-up" style="animation-delay:' + sec(s.start + 1.2) + '">' + esc(guideHost) + "</span>";
+    } };
+  const end = scenes.find((s) => s.id === "end");
+  c.innerHTML =
+    '<div class="world" style="' + L + '"><div class="floor" style="' + L + '"></div>' +
+      cubeHtml("--s:120px;left:820px;top:300px;" + L) + cubeHtml("--s:70px;left:120px;top:1500px;animation-direction:reverse;" + L) + cubeHtml("--s:46px;left:930px;top:1640px;" + L) + dots + "</div>" +
+    '<div class="grain"></div>' +
+    '<div class="progress">' + scenes.map((s) => '<i style="--w:' + s.dur.toFixed(2) + '"><b style="animation-duration:' + sec(s.dur) + ";animation-delay:" + sec(s.start) + '"></b></i>').join("") + "</div>" +
+    '<div class="masthead top a in-up" style="animation-delay:.1s"><div class="brand">' + MARK + '<div><b>QA-lab</b><small>URL Review</small></div></div><span class="count">' + esc(tip.counter || ui.tip + " " + String(index + 1).padStart(2, "0") + " / " + total) + "</span></div>" +
+    '<div class="rig" style="' + L + '">' + scenes.filter((s) => body[s.id]).map((s) => scene(s, body[s.id](s))).join("") + "</div>" +
+    '<div class="end a" style="animation-delay:' + sec(end.start) + '">' + MARK.replace('viewBox', 'width="180" height="180" viewBox') + "<h2>" + (ui.end ? esc(ui.end) : 'Let your page<br><em style="font-style:italic">do the talking.</em>') + "</h2><p>" + esc(ui.endNote) + '</p><span class="url">' + esc(guideHost) + "</span></div>";
+  return document.fonts.ready.then(() => {
+    c.querySelectorAll(".sc").forEach((sc) => {
+      const box = sc.firstElementChild;
+      for (let k = 0; k < 12 && box.offsetHeight > sc.clientHeight; k += 1) {
+        sc.querySelectorAll(".fit").forEach((el) => { el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize) * .92).toFixed(1) + "px"; });
+        if (!sc.querySelector(".fit")) break;
+      }
+      if (box.offsetHeight > sc.clientHeight) { c.classList.add("tight"); box.style.zoom = (sc.clientHeight / box.offsetHeight).toFixed(3); }
+    });
     return true;
   });
 };
