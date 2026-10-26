@@ -4886,6 +4886,80 @@ async function socialRuns() {
     return { name: w.name, file: w.file, status: run ? run.status : "", conclusion: run ? run.conclusion || "" : "", event: run ? run.event : "", at: run ? run.created_at : "", url: run ? run.html_url : "" };
   }));
 }
+const jarvisShare = require("./jarvis-share");
+const SHARE_BUCKET = "carlosm-interactive-cv.firebasestorage.app";
+const SHARE_WORKFLOW = "social-inbox.yml";
+
+// The uploaded file, checked against the inbox path and the media types the workflow can render.
+async function shareMedia(path) {
+  const clean = jarvisShare.inboxPath(path);
+  if (!clean) throw new Error("Upload the media to social-inbox/ first.");
+  const file = admin.storage().bucket(SHARE_BUCKET).file(clean);
+  const [exists] = await file.exists();
+  if (!exists) throw new Error("The upload is not in storage yet; try again.");
+  const [meta] = await file.getMetadata();
+  const kind = jarvisShare.mediaKind(meta.contentType);
+  if (!kind) throw new Error("Share a JPG, PNG or WebP photo, or an MP4, MOV or WebM video.");
+  return { file, meta, kind, path: clean };
+}
+
+async function shareDraft(body) {
+  const media = await shareMedia(body.path);
+  const caption = String(body.caption || "").trim().slice(0, 3000);
+  if (!caption) throw new Error("Write a caption first; Jarvis drafts the posts from it.");
+  let text = "";
+  try { text = await jarvis.gemini(fetch, process.env, jarvisShare.draftPrompt(caption, media.kind === "video"), 2400); } catch (error) { text = ""; }
+  const draft = jarvisShare.cleanDraft(text, caption, media.kind === "video");
+  const ref = admin.firestore().collection("social_inbox").doc();
+  await ref.set({ path: media.path, kind: media.kind, contentType: media.meta.contentType, size: Number(media.meta.size) || 0, caption, draft,
+    gemini: !!text, status: "draft", createdAt: admin.firestore.FieldValue.serverTimestamp() });
+  return { id: ref.id, kind: media.kind, draft, note: text ? "" : "Gemini did not answer, so every post starts from your caption." };
+}
+
+async function shareQueue(body) {
+  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  if (!token) throw new Error("GITHUB_BUGS_TOKEN is not set in functions/.env, so Jarvis cannot start the post workflow.");
+  const ref = admin.firestore().collection("social_inbox").doc(String(body.id || "x"));
+  const snap = await ref.get();
+  if (!snap.exists) throw new Error("That draft is gone.");
+  const doc = snap.data();
+  if (doc.status !== "draft") throw new Error("That post is already " + doc.status + ".");
+  const media = await shareMedia(doc.path);
+  const video = media.kind === "video";
+  const draft = jarvisShare.cleanDraft(Object.assign({}, doc.draft, body.draft && typeof body.draft === "object" ? body.draft : {}), doc.caption, video);
+  const tokenId = (media.meta.metadata || {}).firebaseStorageDownloadTokens || crypto.randomUUID();
+  await media.file.setMetadata({ metadata: { firebaseStorageDownloadTokens: tokenId } });
+  const url = "https://firebasestorage.googleapis.com/v0/b/" + SHARE_BUCKET + "/o/" + encodeURIComponent(media.path) + "?alt=media&token=" + tokenId;
+  await github("/repos/" + BUG_REPO + "/actions/workflows/" + SHARE_WORKFLOW + "/dispatches",
+    { ref: "main", inputs: { id: ref.id, media_url: url, media_type: media.kind, entry: JSON.stringify(draft) } }, token);
+  await ref.update({ draft, status: "queued", queuedAt: admin.firestore.FieldValue.serverTimestamp() });
+  return { id: ref.id, note: "Queued. The hub page goes live first, then Buffer and the Facebook Page post it in about 30 minutes." };
+}
+
+async function shareList() {
+  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  const docs = (await admin.firestore().collection("social_inbox").orderBy("createdAt", "desc").limit(10).get()).docs;
+  const runs = token ? ((await githubGet("/repos/" + BUG_REPO + "/actions/workflows/" + SHARE_WORKFLOW + "/runs?per_page=20", token).catch(() => ({}))).workflow_runs || []) : [];
+  return docs.map((d) => {
+    const x = d.data();
+    const run = runs.find((r) => String(r.display_title || "").includes(d.id));
+    const at = x.createdAt && x.createdAt.toDate ? x.createdAt.toDate().toISOString() : "";
+    const status = x.status === "queued" && run ? (run.status !== "completed" ? "posting" : run.conclusion === "success" ? "posted" : "failed") : x.status;
+    return { id: d.id, kind: x.kind, caption: x.caption, title: (x.draft || {}).title || "", status, at, url: run ? run.html_url : "", draft: x.status === "draft" ? x.draft : undefined };
+  });
+}
+
+async function shareDrop(body) {
+  const ref = admin.firestore().collection("social_inbox").doc(String(body.id || "x"));
+  const snap = await ref.get();
+  if (!snap.exists) return { dropped: false };
+  if (snap.data().status !== "draft") throw new Error("Only a draft can be dropped; this one is already queued.");
+  const path = jarvisShare.inboxPath(snap.data().path);
+  if (path) await admin.storage().bucket(SHARE_BUCKET).file(path).delete({ ignoreNotFound: true });
+  await ref.delete();
+  return { dropped: true };
+}
+
 const jarvisProposals = require("./jarvis-proposals");
 const jarvisActions = require("./jarvis-actions");
 
@@ -5340,7 +5414,11 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
         started.push({ name: w.name, state: "started", url: "https://github.com/" + BUG_REPO + "/actions/workflows/" + w.file });
       }
       out = { started, note: started.map((s) => s.name + " " + s.state).join(", ") + "." };
-    } else if (op === "notice-decide") {
+    } else if (op === "share-draft") out = await shareDraft(body);
+    else if (op === "share-queue") out = await shareQueue(body);
+    else if (op === "share-list") out = { items: await shareList() };
+    else if (op === "share-drop") out = await shareDrop(body);
+    else if (op === "notice-decide") {
       const decided = await decideOwnerNotice(body.domain, body.send === true, body.email, operator);
       if (decided.error) throw new Error(decided.error);
       out = decided;

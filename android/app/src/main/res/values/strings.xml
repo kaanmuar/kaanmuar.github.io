@@ -6,4 +6,5 @@
     <string name="widget_goals_desc">Progress toward each goal</string>
     <string name="tile_label">Jarvis</string>
     <string name="share_label">Review with Jarvis</string>
+    <string name="share_post_label">Post with Jarvis</string>
 </resources>

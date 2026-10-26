@@ -1,5 +1,12 @@
 package com.carlosandmunoz.jarvis.ui
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.carlosandmunoz.jarvis.SharePostActivity
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,6 +43,27 @@ import kotlinx.serialization.json.JsonObject
 fun SocialHub(s: UiState, vm: JarvisViewModel) {
     LaunchedEffect(Unit) { if (s.proposals == null) vm.loadSocial() }
     val uri = LocalUriHandler.current
+    val context = LocalContext.current
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { picked ->
+        if (picked != null) context.startActivity(Intent(context, SharePostActivity::class.java).setAction(Intent.ACTION_SEND)
+            .putExtra(Intent.EXTRA_STREAM, picked).setDataAndType(picked, context.contentResolver.getType(picked)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+    }
+    Panel("Share a post") {
+        Muted("A photo or a video with sound and one caption. Gemini drafts each network's post; you check them, then LinkedIn, X and the Facebook Page (plus TikTok and YouTube for video) get it about 30 minutes later. Sharing from the gallery works too: Post with Jarvis.")
+        ActionButton("Choose a photo or video", false) { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
+        s.shares.orEmpty().filter { it.str("status") != "draft" }.take(5).forEach { p ->
+            val status = p.str("status").orEmpty()
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(p.str("title")?.ifEmpty { null } ?: p.str("caption").orEmpty(), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Muted(listOfNotNull(p.str("kind"), ago(p.str("at"))).joinToString(" · "))
+                }
+                TextButton({ p.str("url")?.takeIf { it.startsWith("https://") }?.let(uri::openUri) }) {
+                    Text(status, color = when (status) { "posted" -> J.green; "failed" -> J.pink; else -> J.amber }, fontSize = 13.sp)
+                }
+            }
+        }
+    }
     val queue = s.snapshot.obj("external").obj("social").objs("queue")
     Panel("Queue by channel") {
         if (queue.isEmpty()) Muted("Pull down to read the Buffer and Facebook ledgers.")
