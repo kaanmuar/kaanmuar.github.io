@@ -177,6 +177,16 @@ test('the comparison title shows each site as its logo with its name below, a le
   const nameBox = await third.locator('.multi-site-name').boundingBox();
   expect(nameBox.y).toBeGreaterThan(boxes[2].y + boxes[2].height - 1);
 
+  // The side-by-side table heads each column with the logo and name, not the address, so the column stays narrow (#1596).
+  const heads = page.locator('#multi-overlay .multi-table thead th:not(:first-child)');
+  await expect(heads.locator('.multi-col-name')).toHaveText(['wordpress', 'excalidraw', 'Carlos A. Muñoz']);
+  await expect(heads.nth(1)).toHaveAttribute('title', 'excalidraw.com');
+  await expect(heads.nth(0).locator('img.multi-logo')).toBeVisible();
+  await expect(heads.nth(1).locator('img')).toHaveCount(0);
+  await expect(heads.nth(1).locator('.multi-col-mark > span')).toHaveText('E');
+  for (const width of await heads.evaluateAll((cells) => cells.map((cell) => cell.getBoundingClientRect().width))) expect(width).toBeLessThan(140);
+  if (process.env.MULTI_SHOT) await page.locator('#multi-overlay .multi-summary').screenshot({ path: process.env.MULTI_SHOT + '/multi-table.png' });
+
   await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
   await page.locator('#multi-overlay').getByRole('button', { name: 'Download PDF' }).click();
   await expect(page.locator('#multi-status')).toHaveText('The PDF is downloaded.');
