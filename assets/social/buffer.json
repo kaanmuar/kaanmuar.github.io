@@ -6105,6 +6105,74 @@
     "slot": "2026-11-21T22:46:00.000Z"
    }
   ],
+  "series-dia-de-muertos-2026-11/01-ofrenda": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6adf3608551b0b514a63c930",
+    "at": "2026-11-01T15:10:00.000Z",
+    "result": "queued",
+    "checked": "2026-10-26T11:14:16.374Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6adf36071e990e3b7f1bcbb7",
+    "at": "2026-11-02T01:16:00.000Z",
+    "result": "queued",
+    "checked": "2026-10-26T11:14:14.652Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6adf3608551b0b514a63c906",
+    "at": "2026-11-01T21:56:00.000Z",
+    "result": "queued",
+    "checked": "2026-10-26T11:14:15.954Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6adf36071e990e3b7f1bcbf7",
+    "at": "2026-11-02T00:38:00.000Z",
+    "result": "queued",
+    "checked": "2026-10-26T11:14:15.518Z"
+   }
+  ],
+  "series-dia-de-muertos-2026-11/02-epitaphs": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6adf360b4dcf9e76ce4d4ba4",
+    "at": "2026-11-02T15:26:00.000Z",
+    "result": "queued",
+    "checked": "2026-10-26T11:14:19.103Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6adf36091e990e3b7f1bcc77",
+    "at": "2026-11-03T02:23:00.000Z",
+    "result": "queued",
+    "checked": "2026-10-26T11:14:17.135Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6adf360a1e990e3b7f1bccfa",
+    "at": "2026-11-03T00:53:00.000Z",
+    "result": "queued",
+    "checked": "2026-10-26T11:14:18.457Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6adf360a4dcf9e76ce4d4b36",
+    "at": "2026-11-03T01:15:00.000Z",
+    "result": "queued",
+    "checked": "2026-10-26T11:14:17.820Z"
+   }
+  ],
   "tips-2026-10/01-img-size": [
    {
     "channel": "linkedin",
