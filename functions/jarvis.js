@@ -508,6 +508,9 @@ async function goals(db, settings, { now, sum }) {
 
 // --- daily briefing: the last 24 hours against the 24 before, with the same rules as the page --------------------
 
+// A whole review document holds the report (hundreds of KB); a week of them overran the function's 512 MB (#1579).
+const REVIEW_FIELDS = ["createdAt", "paid", "test", "priceUsd", "status", "score", "requestedUrl", "url", "frameworks", "query", "referrerHost"];
+
 async function dailyProducts(db, { now, days = 1 }) {
   const end = new Date(now);
   const start = new Date(now - days * DAY);
@@ -516,7 +519,7 @@ async function dailyProducts(db, { now, days = 1 }) {
   const rows = async (q) => (await q.limit(20000).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
   const since = (name, iso) => db.collection(name).where("createdAt", ">=", iso ? priorStart.toISOString() : priorStart);
   const [events, opens, reviews, messages, ratings, pending, hubSnap] = await Promise.all([
-    rows(since("site_events")), rows(since("url_review_opens")), rows(since("url_reviews", true)),
+    rows(since("site_events")), rows(since("url_review_opens")), rows(since("url_reviews", true).select(...REVIEW_FIELDS)),
     rows(since("messages")), rows(since("ratings")),
     rows(db.collection("ratings").where("status", "==", "pending")),
     db.collection("socialHubStats").doc("latest").get().catch(() => null)

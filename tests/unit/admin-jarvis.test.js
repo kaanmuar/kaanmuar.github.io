@@ -219,18 +219,21 @@ test("admin mounts Jarvis in the stats pane and the endpoint stays owner-only", 
 
 function fakeDb(data) {
   const writes = [];
-  const query = (name, filters) => ({
-    where: (field, op, value) => query(name, filters.concat([[field, op, value]])),
-    limit: () => query(name, filters),
+  const selects = {};
+  const pick = (row, fields) => (fields ? fields.reduce((out, f) => (f in row ? Object.assign(out, { [f]: row[f] }) : out), {}) : row);
+  const query = (name, filters, fields) => ({
+    where: (field, op, value) => query(name, filters.concat([[field, op, value]]), fields),
+    limit: () => query(name, filters, fields),
+    select: (...picked) => { selects[name] = picked; return query(name, filters, picked); },
     count: () => ({ get: async () => ({ data: () => ({ count: (data.counts || {})[name + JSON.stringify(filters.map((f) => f[0] + f[1] + (f[2] instanceof Date ? "date" : typeof f[2] === "string" && /^\d{4}-/.test(f[2]) ? "iso" : f[2])))] ?? 0 }) }) }),
     aggregate: () => ({ get: async () => ({ data: () => ({ usd: data.usd || 0 }) }) }),
-    get: async () => ({ docs: ((data.rows || {})[name] || []).map((row, i) => ({ id: row.id || name + i, data: () => row })) }),
+    get: async () => ({ docs: ((data.rows || {})[name] || []).map((row, i) => ({ id: row.id || name + i, data: () => pick(row, fields) })) }),
     doc: (id) => ({
       get: async () => ({ exists: !!(data.docs || {})[name + "/" + id], data: () => (data.docs || {})[name + "/" + id] }),
       set: async (value) => { writes.push({ path: name + "/" + id, value }); (data.docs = data.docs || {})[name + "/" + id] = value; }
     })
   });
-  return { collection: (name) => query(name, []), writes };
+  return { collection: (name) => query(name, []), writes, selects };
 }
 
 test("thresholds clamp to their range and drive the briefing", () => {
@@ -345,6 +348,19 @@ test("server: the daily briefing reads the last 24 hours, drops test emails and 
   assert.ok(mail.rows.some((row) => row.label === "CV" && /^Visits 2 \(\+100%\)/.test(row.value)));
   assert.ok(mail.rows.some((row) => row.label === "Goal" && /CV visits today: 2 of 4/.test(row.value)));
   assert.match(mail.body, /^Quiet day\. Next: answer the inbox\.\n\nWARN {2}1 message/);
+});
+
+test("server: the snapshot reads only the summary fields of a review, not its report (#1579)", async () => {
+  const now = Date.parse("2026-10-25T12:40:00Z");
+  const iso = new Date(now - 3600000).toISOString();
+  const db = fakeDb({ rows: { url_reviews: [
+    { createdAt: iso, paid: true, test: false, priceUsd: 19, status: "complete", score: 80, requestedUrl: "https://shop.example/", frameworks: ["WordPress"], query: "utm_source=tiktok", report: "x".repeat(300000) }
+  ] } });
+  const { products } = await jarvis.dailyProducts(db, { now, days: 7 });
+  assert.ok(db.selects.url_reviews && !db.selects.url_reviews.includes("report"));
+  assert.deepEqual([products.review.totals.usd, products.review.totals.complete, products.review.totals.avgScore], [19, 1, 80]);
+  assert.deepEqual(products.review.lists.hosts[0].label, "shop.example");
+  assert.match(products.review.lists.reviewSources[0].label, /^tiktok/);
 });
 
 test("server: the app snapshot widens the window to the range it asks for", async () => {
