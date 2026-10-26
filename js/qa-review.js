@@ -2050,9 +2050,9 @@
     const bots = roles.map(([role, label]) => {
       const list = (geo.crawlers || []).filter((bot) => bot.role === role);
       if (!list.length) return "";
-      return '<p class="bot-group">' + esc(label) + "</p>" + list.map((bot) =>
-        '<div class="bot' + (bot.allowed ? "" : " no") + '"><i aria-hidden="true">' + (bot.allowed ? "✓" : "✕") + '</i><div><span class="notranslate" translate="no">' + esc(bot.token) + "</span> — " + esc(bot.product) +
-        "<small>" + esc(bot.allowed ? (bot.blockedPages ? rc.t("botClosed", { n: bot.blockedPages }) : rc.t("botAllowed")) : bot.rule ? rc.t("botBlockedBy", { rule: bot.rule }) : rc.t("botBlocked")) + "</small></div></div>").join("");
+      return '<div class="bot-role" data-role="' + role + '"><p class="bot-group">' + esc(label) + "</p>" + list.map((bot) =>
+        '<div class="bot' + (bot.allowed ? "" : " no") + '"><i aria-hidden="true">' + (bot.allowed ? "✓" : "✕") + '</i><div><span class="notranslate" translate="no">' + esc(bot.token) + '</span><span class="bot-product"> — ' + esc(bot.product) + "</span>" +
+        "<small>" + esc(bot.allowed ? (bot.blockedPages ? rc.t("botClosed", { n: bot.blockedPages }) : rc.t("botAllowed")) : bot.rule ? rc.t("botBlockedBy", { rule: bot.rule }) : rc.t("botBlocked")) + "</small></div></div>").join("") + "</div>";
     }).join("");
     const llms = geo.llms || {};
     const entity = geo.entity;
@@ -2064,11 +2064,11 @@
     ];
     const outlineHtml = (view.outline || []).length ? '<ul class="ai-outline">' + view.outline.map((item) => '<li class="l' + item.level + '">H' + item.level + " · " + esc(item.text) + "</li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noHeadings")) + "</p>";
     slot("geo").innerHTML =
-      '<div class="checks-grid" style="margin-bottom:12px">' + facts.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" +
-      '<div class="split"><article class="card"><h3>' + esc(rc.t("aiTextTitle")) + '</h3><p class="muted">' + esc(rc.t(view.appShell ? "aiTextShell" : "aiTextNote")) + "</p>" +
+      '<div class="checks-grid" data-part="facts" style="margin-bottom:12px">' + facts.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" +
+      '<div class="split"><article class="card"><div data-part="excerpt"><h3>' + esc(rc.t("aiTextTitle")) + '</h3><p class="muted">' + esc(rc.t(view.appShell ? "aiTextShell" : "aiTextNote")) + "</p>" +
       '<div class="ai-view notranslate" translate="no">' + esc(view.text || rc.t("noReadable")) + (view.chars > (view.text || "").length ? " …" : "") + "</div>" +
-      '<p class="meta-line">' + esc(rc.t("wordsChars", { words: view.words || 0, chars: view.chars || 0 })) + "</p><h3>" + esc(rc.t("headingsTitle")) + "</h3>" + outlineHtml + "</article>" +
-      '<article class="card"><h3>' + esc(rc.t("whoTitle")) + '</h3><p class="muted">' + esc(rc.t(geo.robotsFound ? "robotsFound" : "robotsNone")) + "</p>" + bots + "</article></div>";
+      '<p class="meta-line">' + esc(rc.t("wordsChars", { words: view.words || 0, chars: view.chars || 0 })) + '</p></div><div data-part="headings"><h3>' + esc(rc.t("headingsTitle")) + "</h3>" + outlineHtml + "</div></article>" +
+      '<article class="card" data-part="crawlers"><h3>' + esc(rc.t("whoTitle")) + '</h3><p class="muted">' + esc(rc.t(geo.robotsFound ? "robotsFound" : "robotsNone")) + "</p>" + bots + "</article></div>";
   }
 
   function paintAnalytics(ins) {
