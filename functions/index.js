@@ -4869,6 +4869,23 @@ const jarvisSources = require("./jarvis-sources");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
 const jarvisNotify = require("./jarvis-notify");
+const jarvisSocial = require("./jarvis-social");
+
+async function socialProposals() {
+  const res = await fetch(customerMail.SITE + "/assets/social/proposals.json?t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error("The proposals list answered " + res.status + ".");
+  return res.json();
+}
+
+// The latest run of each posting workflow, for the Social hub panel.
+async function socialRuns() {
+  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  if (!token) return [];
+  return Promise.all(jarvisSocial.WORKFLOWS.map(async (w) => {
+    const run = ((await githubGet("/repos/" + BUG_REPO + "/actions/workflows/" + w.file + "/runs?per_page=1", token).catch(() => ({}))).workflow_runs || [])[0];
+    return { name: w.name, file: w.file, status: run ? run.status : "", conclusion: run ? run.conclusion || "" : "", event: run ? run.event : "", at: run ? run.created_at : "", url: run ? run.html_url : "" };
+  }));
+}
 const jarvisProposals = require("./jarvis-proposals");
 const jarvisActions = require("./jarvis-actions");
 
@@ -5297,6 +5314,32 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
       const snap = await admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get();
       const rows = snap.docs.map((d) => Object.assign({ domain: d.id }, d.data()));
       out = { notices: jarvisNotify.noticeRows(rows, (row) => customerMail.pageUrl(row.lang, { report: row.reviewId })), auto: process.env.OWNER_NOTICES_LIVE === "1" };
+    } else if (op === "social-proposals") {
+      const [book, doc] = await Promise.all([socialProposals(), admin.firestore().collection("socialHub").doc("live").get()]);
+      out = { proposals: jarvisSocial.pending(book.proposals, jarvisSocial.state(doc.data())), built: book.built || "" };
+    } else if (op === "social-decide") {
+      const proposal = ((await socialProposals()).proposals || []).find((p) => p && p.id === String(body.id || ""));
+      if (!proposal) throw new Error("That proposal is no longer in the list.");
+      const ref = admin.firestore().collection("socialHub").doc("live");
+      const today = new Date(now - 5 * 3600 * 1000).toISOString().slice(0, 10);
+      await admin.firestore().runTransaction(async (tx) => {
+        const next = jarvisSocial.decide(jarvisSocial.state((await tx.get(ref)).data()), proposal, body.decision, today);
+        tx.set(ref, { json: JSON.stringify(next), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+      });
+      out = { id: proposal.id, decision: body.decision };
+    } else if (op === "social-runs") out = { runs: await socialRuns() };
+    else if (op === "social-post-now") {
+      const token = process.env.GITHUB_BUGS_TOKEN || "";
+      if (!token) throw new Error("GITHUB_BUGS_TOKEN is not set in functions/.env, so Jarvis cannot start the workflows.");
+      const started = [];
+      for (const w of jarvisSocial.WORKFLOWS) {
+        const path = "/repos/" + BUG_REPO + "/actions/workflows/" + w.file;
+        const busy = ((await githubGet(path + "/runs?per_page=5", token)).workflow_runs || []).find((run) => run.status !== "completed");
+        if (busy) { started.push({ name: w.name, state: "already running", url: busy.html_url }); continue; }
+        await github(path + "/dispatches", Object.assign({ ref: "main" }, w.inputs ? { inputs: w.inputs } : {}), token);
+        started.push({ name: w.name, state: "started", url: "https://github.com/" + BUG_REPO + "/actions/workflows/" + w.file });
+      }
+      out = { started, note: started.map((s) => s.name + " " + s.state).join(", ") + "." };
     } else if (op === "notice-decide") {
       const decided = await decideOwnerNotice(body.domain, body.send === true, body.email, operator);
       if (decided.error) throw new Error(decided.error);
