@@ -85,9 +85,16 @@
 /* Six sites fit the side-by-side table without scrolling sideways; the line names stay in view. */
 .multi-modal { --own: var(--cyan); }
 .multi-table { min-width: 0; table-layout: auto; font-size: 13.5px; }
+.multi-modal .multi-table { width: auto; }
 .multi-table thead th { overflow-wrap: break-word; font-size: 12.5px; }
 .multi-table th[scope="row"], .multi-table thead th { white-space: normal; }
 .multi-table td { padding: 7px 6px; }
+.multi-table thead th:not(:first-child) { max-width: 116px; text-align: center; vertical-align: bottom; }
+.multi-col { display: grid; justify-items: center; gap: 4px; line-height: 1.2; }
+.multi-col-mark { display: grid; place-items: center; width: 28px; height: 28px; border: 1.5px solid var(--site, var(--line)); border-radius: 8px; background: #fff; overflow: hidden; }
+.multi-col-mark > span { font-size: .85rem; font-weight: 800; color: var(--site, var(--muted)); }
+.multi-col-mark .multi-logo { width: 20px; height: 20px; }
+.multi-col-name { overflow-wrap: anywhere; text-transform: none; letter-spacing: normal; color: var(--text); font-weight: 600; }
 .multi-table th[scope="row"] { position: sticky; left: 0; z-index: 1; background: var(--bg); min-width: 150px; }
 .multi-table td:nth-child(2), .multi-table thead th:nth-child(2) { background: color-mix(in srgb, var(--own) 7%, transparent); }
 

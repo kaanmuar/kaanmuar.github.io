@@ -257,7 +257,7 @@
   function summaryHtml(data) {
     const S = window.QAReviewSections;
     const cols = data.columns;
-    const head = "<tr><th scope=\"col\">" + esc(t("indicator")) + "</th>" + cols.map((col) => '<th scope="col" translate="no">' + esc(col.host).replace(/\./g, ".<wbr>") + "</th>").join("") + "</tr>";
+    const head = "<tr><th scope=\"col\">" + esc(t("indicator")) + "</th>" + cols.map(columnHead).join("") + "</tr>";
     const rows = data.summary.rows.map((row) => "<tr><th scope=\"row\">" + esc(label(row)) + (row.better === "low" && cc ? ' <small class="muted">' + esc(cc.t("lower")) + "</small>" : "") + "</th>" +
       row.values.map((raw, index) => {
         const lead = row.leads.length === 1 && row.leads[0] === index;
@@ -387,13 +387,27 @@
     return esc(bareHost(host)).replace(/\./g, ".<wbr>");
   }
 
+  // The host without www. and its public suffix, so a column is as wide as the site's name, not its address.
+  function shortHost(host) {
+    return bareHost(host).replace(/(\.(com|org|net|edu|gov|gob|ac|co|or|ne))?\.[a-z]{2,}$/i, "") || bareHost(host);
+  }
+
+  function siteMark(col, index) {
+    const letter = ((col.name || bareHost(col.host)).match(/[\p{L}\p{N}]/u) || ["?"])[0].toUpperCase();
+    const logo = col.icon ? '<img class="multi-logo" src="' + esc(col.icon) + '" alt="" referrerpolicy="no-referrer" decoding="async" data-logo="' + index + '">' : "";
+    return logo + "<span>" + esc(letter) + "</span>";
+  }
+
+  function columnHead(col, index) {
+    return '<th scope="col" translate="no" title="' + esc(bareHost(col.host)) + '" style="--site:' + siteColor(index) + '"><span class="multi-col"><span class="multi-col-mark" aria-hidden="true">' + siteMark(col, index) +
+      '</span><span class="multi-col-name">' + esc(col.name || shortHost(col.host)) + "</span></span></th>";
+  }
+
   // Each "vs" stays with the site after it, so a wrapped row never starts or ends on a lone "vs".
   function siteBadge(col, index) {
     const name = col.name || bareHost(col.host);
-    const letter = (name.match(/[\p{L}\p{N}]/u) || ["?"])[0].toUpperCase();
-    const logo = col.icon ? '<img class="multi-logo" src="' + esc(col.icon) + '" alt="" referrerpolicy="no-referrer" decoding="async" data-logo="' + index + '">' : "";
     return '<span class="multi-site" style="--site:' + siteColor(index) + '">' + (index ? '<span class="multi-vs">' + esc(t("vs")) + "</span>" : "") +
-      '<span class="multi-badge"><span class="multi-mark" aria-hidden="true">' + logo + "<span>" + esc(letter) + "</span></span>" +
+      '<span class="multi-badge"><span class="multi-mark" aria-hidden="true">' + siteMark(col, index) + "</span>" +
       '<span class="multi-site-name">' + (col.name ? esc(name) : hostHtml(col.host)) + "</span>" + (col.name ? "<small>" + hostHtml(col.host) + "</small>" : "") + "</span></span>";
   }
 
@@ -404,7 +418,6 @@
     const title = root.querySelector("#multi-title");
     title.innerHTML = data.columns.map(siteBadge).join("");
     title.setAttribute("aria-label", data.columns.map((col) => col.name || bareHost(col.host)).join(" " + t("vs") + " "));
-    title.querySelectorAll("img.multi-logo").forEach((img) => img.addEventListener("error", () => img.remove(), { once: true }));
     root.querySelector("#multi-when").textContent = data.at ? t("saved", { date: new Date(data.at).toLocaleDateString(code) }) : "";
     const printBtn = root.querySelector("#multi-print");
     const pdfBtn = root.querySelector("#multi-pdf");
@@ -416,6 +429,7 @@
       data.locked.map((col) => '<a class="btn btn-ghost" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>").join(" ") + "</p>";
     const body = root.querySelector("#multi-body");
     body.innerHTML = bodyHtml(data);
+    root.querySelectorAll("img.multi-logo").forEach((img) => img.addEventListener("error", () => img.remove(), { once: true }));
     const grid = body.querySelector(".multi-grid");
     data.columns.forEach((col, index) => {
       if (col.missing) return;
@@ -495,7 +509,7 @@
     copy.querySelectorAll(".multi-row[hidden]").forEach((row) => { row.hidden = false; });
     copy.querySelectorAll(".no-print, script, button").forEach((node) => node.remove());
     copy.querySelectorAll("img").forEach((img) => {
-      if (!img.matches("#multi-title img.multi-logo")) return img.remove();
+      if (!img.matches("img.multi-logo")) return img.remove();
       const mark = document.createElement("img");
       mark.className = "multi-logo";
       mark.setAttribute("data-logo", img.getAttribute("data-logo"));
