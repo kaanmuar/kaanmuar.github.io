@@ -258,7 +258,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices', 'social-proposals', 'social-runs'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -541,6 +541,58 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         </div>`;
     }
 
+    // Social hub (#1420): the Buffer and Facebook queue per channel, the posting runs, and field-sweep proposals.
+    function socialQueuePanel() {
+        const so = S.external.social;
+        if (!so || !so.queue) return panel('hub-queue', 'Queue by channel', so && so.ok === false ? `<p class="jv-empty">${esc(so.error || 'Not loaded.')}</p>` : waiting('social', 'Reading the Buffer and Facebook ledgers…'), { wide: true });
+        const next = (c) => (c.next.length ? c.next.map((n) => `<span class="jv-chip">${esc(when(n.at))}</span> ${esc(n.post.split('/').pop())}`).join('<br>') : '<span class="jv-note">nothing scheduled</span>');
+        return panel('hub-queue', 'Queue by channel', table([
+            ['Channel', (c) => `<strong>${esc(c.name)}</strong>`], ['Scheduled', (c) => fmt(c.scheduled)], ['Next', next],
+            ['Sent', (c) => fmt(c.sent)], ['Failed', (c) => (c.failed ? `<span class="jv-chip c-slow">${fmt(c.failed)}</span>` : '0')],
+            ['Last out', (c) => (c.last ? (c.last.url ? `<a href="${esc(c.last.url)}" target="_blank" rel="noopener">${esc(when(c.last.at))}</a>` : esc(when(c.last.at))) : '—')]
+        ], so.queue), { wide: true, data: so.queue.map((c) => ({ channel: c.name, scheduled: c.scheduled, next: c.next.map((n) => n.at + ' ' + n.post).join(' | '), sent: c.sent, failed: c.failed, last: c.last ? c.last.at : '' })), note: 'Sent and failed count the selected range. Instagram stays empty while that channel is paused in Buffer.' });
+    }
+
+    function socialRunsPanel() {
+        const R = S.external['social-runs'];
+        const runs = (R && R.runs) || [];
+        const state = (r) => (r.status && r.status !== 'completed' ? `<span class="jv-chip c-average">${esc(r.status)}</span>` : r.conclusion ? `<span class="jv-chip ${r.conclusion === 'success' ? 'c-fast' : 'c-slow'}">${esc(r.conclusion)}</span>` : '—');
+        const body = runs.length ? table([['Workflow', (r) => esc(r.name)], ['Last run', (r) => (r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(when(r.at))}</a>` : '—')], ['How', (r) => esc(r.event || '')], ['Result', state]], runs) : `<p class="jv-empty">${esc((R && R.error) || (R ? 'Set GITHUB_BUGS_TOKEN in functions/.env to see the runs.' : 'Reading the workflow runs…'))}</p>`;
+        return panel('hub-runs', 'Posting', body + `<div class="jv-actions"><button type="button" class="jv-btn" data-act="social-post-now"${S.pending['social-post-now'] ? ' disabled' : ''}>Post now</button></div>`,
+            { note: 'Post now runs the Buffer queue (the batches a spent daily limit held back) and the Facebook Page queue instead of waiting for their nightly slots.' });
+    }
+
+    function socialProposalsPanel() {
+        const P = S.external['social-proposals'];
+        if (!P) return panel('hub-proposals', 'Post proposals', waiting('social-proposals', 'Reading the field sweep proposals…'), { wide: true });
+        if (P.ok === false) return panel('hub-proposals', 'Post proposals', `<p class="jv-empty">${esc(P.error || 'Not loaded.')}</p>`, { wide: true });
+        const list = P.proposals || [];
+        const items = list.map((p) => `<li class="jv-prop lv-info"><span class="jv-prop-rank">${esc(String(Math.round(Number(p.score) || 0)))}</span><div class="jv-prop-body">
+            <p class="jv-prop-title"><strong>${esc(p.title)}</strong>${p.topic ? ` <span class="jv-chip">${esc(p.topic)}</span>` : ''} <span class="jv-chip">${esc(p.lang)}</span></p>
+            <p class="jv-prop-why">${esc([p.source, p.author && 'by ' + p.author, p.date].filter(Boolean).join(' · '))}</p>${p.summary ? `<p class="jv-prop-why">${esc(p.summary)}</p>` : ''}
+            <div class="jv-prop-acts"><button type="button" data-social-decide="approved" data-key="${esc(p.id)}">Approve</button><button type="button" data-social-decide="dismissed" data-key="${esc(p.id)}">Dismiss</button>${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">Read →</a>` : ''}</div></div></li>`).join('');
+        return panel('hub-proposals', 'Post proposals' + (list.length ? ' (' + list.length + ')' : ''), `<p class="jv-note">Approve adds it to the hub as a pick, as the hub editor does; the next daily build publishes it.${P.built ? ' Sweep ran ' + esc(when(P.built)) + '.' : ''}</p>` + (list.length ? `<ol class="jv-props">${items}</ol>` : '<p class="jv-empty">No proposals are waiting.</p>'), { wide: true });
+    }
+
+    async function decideSocial(id, decision) {
+        const out = await call('social-decide', { id, decision }).catch((error) => ({ ok: false, error: error.message }));
+        if (!out.ok) { toast('Not saved: ' + out.error, 6000); return; }
+        const P = S.external['social-proposals'];
+        if (P && P.proposals) P.proposals = P.proposals.filter((p) => p.id !== id);
+        render();
+        toast(decision === 'approved' ? 'Approved. The next daily hub build publishes it.' : 'Dismissed.', 3500);
+    }
+
+    async function postNow() {
+        if (!window.confirm('Run the Buffer and Facebook queues now?')) return;
+        S.pending['social-post-now'] = true;
+        render();
+        const out = await call('social-post-now').catch((error) => ({ ok: false, error: error.message }));
+        S.pending['social-post-now'] = false;
+        toast(out.ok ? out.note : 'Not started: ' + out.error, 6000);
+        loadExternal(['social-runs']);
+    }
+
     // Owner notices waiting for Send or Drop (#1420); the same list and decision as the review desk.
     function approvalsPanel() {
         const N = S.external.notices;
@@ -687,7 +739,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         </div>${r.truncated ? `<p class="jv-note">Breakdowns cover the newest ${fmt(ROW_CAP)} opens and reviews; the totals are exact server counts.</p>` : ''}`;
 
         const hub = s.hub;
-        out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}
+        out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${socialQueuePanel()}${socialRunsPanel()}${socialProposalsPanel()}
             ${panel('hub-trend', 'Hub and post events per day', area(hub.series.labels, [{ name: 'Events', values: hub.series.values, color: COLORS.violet }]), { wide: true, data: hub.series.labels.map((d, k) => ({ day: d, events: hub.series.values[k] })) })}
             ${listPanel('hub', 'posts', 'Top posts (score)', hub.lists.posts)}${listPanel('hub', 'sources', 'GA4 sources', hub.lists.sources, { color: COLORS.amber })}
             ${listPanel('hub', 'networks', 'Shares by network', hub.lists.networks, { color: COLORS.green })}${listPanel('hub', 'events', 'Events in range', hub.lists.events, { color: COLORS.violet })}${listPanel('hub', 'langs', 'Hub pages by language', hub.lists.langs)}
@@ -1219,6 +1271,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         $$('.jv-menu-list').forEach((l) => { l.hidden = true; });
         if (t.dataset.proposal) { markProposal(t.dataset.key, t.dataset.proposal); return; }
         if (t.dataset.runAction) { runAction(t.dataset.runAction, t.dataset.job, t.dataset.key); return; }
+        if (t.dataset.socialDecide) { decideSocial(t.dataset.key, t.dataset.socialDecide); return; }
         if (t.dataset.noticeSend || t.dataset.noticeDrop) { decideNotice(t.dataset.noticeSend || t.dataset.noticeDrop, !!t.dataset.noticeSend); return; }
         if (t.dataset.go) { go(t.dataset.go); return; }
         if (t.dataset.mail) { S.mail = t.dataset.mail; compute(); render(); return; }
@@ -1239,7 +1292,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             'copy-link': () => copy(link(), 'Link copied.'), 'web-share': webShare, 'copy-brief': () => copy(markdown(), 'Briefing copied.'), email: emailBriefing,
             'export-json': exportAll, 'export-csv': () => run({ type: 'export', format: 'csv' }), 'export-png': () => run({ type: 'export', format: 'png' }),
             'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief,
-            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, proposals: loadProposals
+            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, proposals: loadProposals, 'social-post-now': postNow
         };
         if (acts[act]) acts[act]();
     });

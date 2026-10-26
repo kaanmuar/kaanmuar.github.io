@@ -930,3 +930,41 @@ test("the approvals list shows pending notices newest first, with the review lin
   assert.equal(rows[0].host, "c.com");
   assert.equal(rows[0].lastError, "Not public yet.");
 });
+
+const social = require("../../functions/jarvis-social.js");
+
+test("server: the social hub rules in functions are a byte copy of the hub page's", () => {
+  assert.equal(fs.readFileSync(path.join(__dirname, "../../js/social-hub-admin.js"), "utf8"), fs.readFileSync(path.join(__dirname, "../../functions/social-hub-admin.js"), "utf8"));
+});
+
+test("social: each channel shows what is next, what went out last and what failed", () => {
+  const now = Date.parse("2026-10-25T15:00:00Z");
+  const buffer = { posts: {
+    "b/one": [{ channel: "linkedin", at: "2026-10-26T15:00:00Z", result: "queued" }, { channel: "x", at: "2026-10-24T15:00:00Z", result: "sent", url: "https://x.com/1" }],
+    "b/two": [{ channel: "linkedin", at: "2026-10-25T18:00:00Z", result: "queued" }, { channel: "x", at: "2026-10-23T15:00:00Z", result: "failed" }, { channel: "nope", at: "2026-10-26T15:00:00Z" }]
+  } };
+  const rows = social.byChannel([buffer, null], now, now - 7 * 86400000);
+  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "instagram", "instagram-story", "facebook", "youtube", "tiktok"]);
+  assert.deepEqual(rows[0].next.map((n) => n.post), ["b/two", "b/one"]);
+  assert.equal(rows[0].scheduled, 2);
+  assert.deepEqual([rows[1].sent, rows[1].failed, rows[1].last.url], [1, 1, "https://x.com/1"]);
+});
+
+test("social: approving a proposal adds the hub item and the decision; dismissing only records it", () => {
+  const p = { id: "abcdef123456", title: "Playwright 2.0 ships", url: "https://blog.example/pw2", source: "Example", author: "Ana", date: "2026-10-20", topic: "testing", lang: "en", summary: "Big release.", score: 9 };
+  const other = { id: "bbbbbb123456", title: "Older", url: "https://blog.example/old", score: 3 };
+  const live = social.state({ json: JSON.stringify({ version: 1, edits: {}, items: [] }) });
+  assert.deepEqual(social.pending([other, p], live).map((x) => x.id), [p.id, other.id]);
+  const next = social.decide(live, p, "approved", "2026-10-25");
+  assert.equal(next.decisions[p.id], "approved");
+  assert.equal(next.items.length, 1);
+  assert.equal(next.items[0].id, "pick/playwright-2-0-ships");
+  assert.equal(next.items[0].url, p.url);
+  assert.deepEqual(social.pending([other, p], next).map((x) => x.id), [other.id]);
+  const dropped = social.decide(next, other, "dismissed", "2026-10-25");
+  assert.equal(dropped.items.length, 1);
+  assert.equal(dropped.decisions[other.id], "dismissed");
+  assert.throws(() => social.decide(live, { id: "bad" }, "approved", "2026-10-25"), /no longer/);
+  assert.throws(() => social.decide(live, p, "maybe", "2026-10-25"), /approved or dismissed/);
+  assert.equal(social.state({ json: "{not json" }).items.length, 0);
+});

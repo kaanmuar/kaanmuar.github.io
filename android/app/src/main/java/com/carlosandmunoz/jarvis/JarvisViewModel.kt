@@ -50,6 +50,8 @@ data class UiState(
     val speak: Boolean = true,
     val notices: JsonObject? = null,
     val noticeErrors: Map<String, String> = emptyMap(),
+    val proposals: List<JsonObject>? = null,
+    val runs: List<JsonObject>? = null,
 )
 
 class JarvisViewModel(app: Application) : AndroidViewModel(app) {
@@ -143,6 +145,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
                 .onFailure { e -> fail(e) { it.copy(loading = false, error = e.message ?: "Could not reach Jarvis.") } }
         }
         loadNotices()
+        loadSocial()
     }
 
     fun brief() {
@@ -213,6 +216,37 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
                 .onFailure { e -> fail(e) { it.copy(running = it.running - "notices") } }
         }
     }
+
+    /** Social hub (#1420): field-sweep proposals still waiting and the latest run of each posting workflow. */
+    fun loadSocial() {
+        if (fixture != null) {
+            val f = _state.value.snapshot?.get("socialHub") as? JsonObject
+            _state.update { it.copy(proposals = f.objs("proposals"), runs = f.objs("runs")) }
+            return
+        }
+        if (!auth.signedIn || "social" in _state.value.running) return
+        _state.update { it.copy(running = it.running + "social") }
+        viewModelScope.launch {
+            val days = _state.value.days
+            val proposals = runCatching { api.call("social-proposals", days).objs("proposals") }
+            val runs = runCatching { api.call("social-runs", days).objs("runs") }
+            _state.update { it.copy(running = it.running - "social", proposals = proposals.getOrNull() ?: it.proposals, runs = runs.getOrNull() ?: it.runs,
+                toast = proposals.exceptionOrNull()?.message?.let { m -> "Proposals: $m" } ?: it.toast) }
+        }
+    }
+
+    fun decideSocial(id: String, decision: String) {
+        val key = "social:$id"
+        _state.update { it.copy(running = it.running + key) }
+        viewModelScope.launch {
+            runCatching { if (fixture == null) api.call("social-decide", _state.value.days, mapOf("id" to JsonPrimitive(id), "decision" to JsonPrimitive(decision))) }
+                .onSuccess { _ -> _state.update { s -> s.copy(running = s.running - key, proposals = s.proposals?.filter { it.str("id") != id },
+                    toast = if (decision == "approved") "Approved. The next daily hub build publishes it." else "Dismissed.") } }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
+        }
+    }
+
+    fun postNow() = act("post-now", "social-post-now") { out -> loadSocial(); out.str("note") ?: "Started." }
 
     fun decideNotice(domain: String, send: Boolean, email: String) {
         val key = "notice:$domain"
