@@ -104,6 +104,24 @@ function summaryOf(columns) {
   return { rows, wins };
 }
 
+// The name and icon the title shows for a site: its og:site_name when that is more than the host, and its
+// icon tag, or /favicon.ico when it has none.
+function faceOf(report, host) {
+  const google = ((report.insights || {}).previews || {}).google || {};
+  const name = String(google.site || "").replace(/\s+/g, " ").trim().slice(0, 80);
+  const icon = /^https:\/\/[^\s"'<>]+$/i.test(google.icon || "") && String(google.icon).length <= 500 ? google.icon : host ? "https://" + host + "/favicon.ico" : "";
+  return { name: name && name.toLowerCase() !== String(host).toLowerCase() ? name : "", icon };
+}
+
+// The PDF's site logos: the page sends each one empty, marked with its column, and the server fills in the
+// icon it read, or drops the tag so the letter under it shows.
+function withLogos(html, logos) {
+  return String(html).replace(/<img class="multi-logo" data-logo="(\d{1,2})">/g, (tag, index) => {
+    const data = (logos || [])[Number(index)] || "";
+    return /^data:image\/[a-z+.-]+;base64,[A-Za-z0-9+/]+=*$/.test(data) ? '<img class="multi-logo" src="' + data + '" alt="">' : "";
+  });
+}
+
 // What the comparison page draws. isOpen(row) says whether the account reads that report in full.
 function payloadOf(id, doc, records, isOpen) {
   const mine = new Map((records || []).filter((row) => ownedBy(row, doc.email)).map((row) => [compare.cleanId(row.id), row]));
@@ -113,14 +131,14 @@ function payloadOf(id, doc, records, isOpen) {
     const host = (doc.hosts || [])[index] || "";
     if (!row || !row.report) return { id: clean, host, missing: true, paid: true };
     const open = !!isOpen(row);
-    return {
+    return Object.assign({
       id: clean,
       host: row.report.host || host,
       at: String(row.createdAt || row.report.fetchedAt || ""),
       paid: open,
       frameworks: row.frameworks || [],
       report: open ? Object.assign({}, row.report, { id: clean }) : Object.assign(core.previewReport(row.report), { id: clean })
-    };
+    }, faceOf(row.report, row.report.host || host));
   });
   const present = columns.filter((col) => !col.missing);
   return {
@@ -148,4 +166,4 @@ function pdfName(made) {
   return "qa-review-comparison-" + (hosts.join("-vs-") || made.id) + "-" + String(made.at || "").slice(0, 10) + ".pdf";
 }
 
-module.exports = { MULTI_MAX, LISTED_MAX, PDF_HTML_MAX, docId, pickProblem, savedRecord, listOf, summaryOf, payloadOf, pdfProblem, pdfName };
+module.exports = { MULTI_MAX, LISTED_MAX, PDF_HTML_MAX, docId, pickProblem, savedRecord, listOf, summaryOf, faceOf, payloadOf, withLogos, pdfProblem, pdfName };

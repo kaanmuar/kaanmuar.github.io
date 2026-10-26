@@ -95,3 +95,26 @@ test("the account lists only its own comparisons, newest first", () => {
   ];
   assert.deepEqual(multi.listOf(docs, EMAIL).map((line) => [line.id, line.from]), [["x3", "review"], ["x1", "account"]]);
 });
+
+test("the title names a site by its og:site_name when that is more than its host, and finds its icon (#1507)", () => {
+  const named = { insights: { previews: { google: { site: "  Colegio   Montessori ", icon: "https://montessori.edu.co/img/icon.png" } } } };
+  assert.deepEqual(multi.faceOf(named, "montessori.edu.co"), { name: "Colegio Montessori", icon: "https://montessori.edu.co/img/icon.png" });
+  const plain = { insights: { previews: { google: { site: "ciedi.edu.co", icon: "" } } } };
+  assert.deepEqual(multi.faceOf(plain, "ciedi.edu.co"), { name: "", icon: "https://ciedi.edu.co/favicon.ico" });
+  assert.equal(multi.faceOf({ insights: { previews: { google: { icon: "http://a.example/i.png" } } } }, "a.example").icon, "https://a.example/favicon.ico");
+  assert.equal(multi.faceOf({ insights: { previews: { google: { icon: 'https://a.example/"><script>' } } } }, "a.example").icon, "https://a.example/favicon.ico");
+  assert.deepEqual(multi.faceOf({}, "b.example"), { name: "", icon: "https://b.example/favicon.ico" });
+});
+
+test("the PDF gets each logo the server read as a data URL, and loses the ones it could not read (#1507)", () => {
+  const html = '<h2><img class="multi-logo" data-logo="0"><span>A</span><img class="multi-logo" data-logo="1"><img class="multi-logo" data-logo="2"></h2>';
+  const filled = multi.withLogos(html, ["data:image/png;base64,iVBORw0KGgo=", "", 'data:image/png;base64,x" onerror="alert(1)']);
+  assert.equal(filled, '<h2><img class="multi-logo" src="data:image/png;base64,iVBORw0KGgo=" alt=""><span>A</span></h2>');
+});
+
+test("a logo is only read from a public https address (#1507)", async () => {
+  const core = require("../../functions/url-review-core");
+  for (const url of ["http://example.com/favicon.ico", "https://127.0.0.1/favicon.ico", "https://localhost/favicon.ico", "https://10.0.0.1/x.png", "not a url"]) {
+    assert.equal(await core.iconData(url), "", url);
+  }
+});
