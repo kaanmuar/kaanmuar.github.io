@@ -31,7 +31,8 @@ function cleanCandidates(list) {
     key: text(p && p.key, 140), product: text(p && p.product, 20), impact: Math.max(1, Math.min(5, Math.round(Number(p && p.impact) || 1))),
     level: ["alert", "warn", "good", "info"].includes(p && p.level) ? p.level : "info", title: text(p && p.title, 120),
     evidence: (Array.isArray(p && p.evidence) ? p.evidence : []).map((e) => text(e, 240)).filter(Boolean).slice(0, 4),
-    source: "rules", action: core.SAFE_ACTIONS.includes(p && p.action) ? p.action : null, tab: text(p && p.tab, 20) || null, link: /^https:\/\//.test((p && p.link) || "") ? text(p.link, 200) : null
+    source: "rules", action: core.SAFE_ACTIONS.includes(p && p.action) ? p.action : null,
+    jobs: Array.isArray(p && p.jobs) ? p.jobs.filter((j) => /^[A-Za-z][A-Za-z0-9]{2,60}$/.test(j)).slice(0, 6) : null, tab: text(p && p.tab, 20) || null, link: /^https:\/\//.test((p && p.link) || "") ? text(p.link, 200) : null
   })).filter((p) => p.key && p.title);
 }
 
