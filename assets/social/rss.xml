@@ -5,9 +5,180 @@
     <link>https://carlosandmunoz.com/qa-review-social.html</link>
     <description>Every QA-lab URL Review post: tips, real site reviews and short clips.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 25 Oct 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 26 Oct 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social.html</link></image>
+    <item>
+      <title>telegram.com: 61. The gap: AI crawler access.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-22/04-u-telegram-com.html</link>
+      <guid isPermaLink="false">auto-2026-10-22/04-u-telegram-com</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every page has a title, and model-training crawlers are blocked by choice. But 10 AI answer or search crawlers are blocked.
+
+The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-telegram-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-telegram-com
+
+#GEO #AISearch #RobotsTxt #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/04-u-telegram-com.jpg" length="209242" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/04-u-telegram-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>monsterenergy.com: 71. The gap: link names.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-23/03-u-monsterenergy-com.html</link>
+      <guid isPermaLink="false">auto-2026-10-23/03-u-monsterenergy-com</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every page has a title, and AI answer and search crawlers may read the start page. But links must have discernible text.
+
+The lesson for every team: Give every link text that says where it goes. An icon alone needs an aria-label.
+
+One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-monsterenergy-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-monsterenergy-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #A11y #WebDev #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg" length="208322" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>colombia.com: 64. The gap: JSON-LD.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-24/02-u-colombia-com.html</link>
+      <guid isPermaLink="false">auto-2026-10-24/02-u-colombia-com</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every page has a title, and AI answer and search crawlers may read the start page. But 2 JSON-LD blocks do not parse.
+
+The lesson for every team: Validate each JSON-LD block after every release. One stray comma hides all of it.
+
+One automated analysis of public pages on 23 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-colombia-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-colombia-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#StructuredData #Automation #SoftwareTesting #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg" length="197965" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>kemik.gt: 77. The gap: AI crawler access.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-25/01-u-kemik-gt.html</link>
+      <guid isPermaLink="false">auto-2026-10-25/01-u-kemik-gt</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>National</category>
+      <description>Every page has a title, and model-training crawlers are blocked by choice. But 4 AI answer or search crawlers are blocked.
+
+The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
+
+One automated analysis of public pages on 24 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-kemik-gt
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#GEO #AI #SoftwareTesting #QA #AISearch #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg" length="203850" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Berlin or Vienna: which city portal scored higher?</title>
+      <link>https://carlosandmunoz.com/social/compare-2026-11/01-quiz-berlin-vienna.html</link>
+      <guid isPermaLink="false">compare-2026-11/01-quiz-berlin-vienna</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Quiz</category>
+      <category>Local</category>
+      <description>Two capital city portals, 20 pages each, analyzed by the same public-page review in October 2026. One of them leads by a single point.
+
+Your guess: Make your guess. The answer, with all six area scores, comes out tomorrow.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=quiz-berlin-vienna
+
+#WebQuality #Playwright #AI #QA #Quiz #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg" length="209057" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Someone asked whether the site works with a keyboard and a screen reader. Where would you…</title>
+      <link>https://carlosandmunoz.com/social/launch-2026-10/en/a11y.html</link>
+      <guid isPermaLink="false">launch-2026-10/en/a11y</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Product</category>
+      <description>Someone asked whether the site works with a keyboard and a screen reader. Where would you even start?
+
+QA-lab URL Review proposes the accessibility cases for a public page and names axe-core where it applies. You leave with the list your team can run.
+
+→ Keyboard and focus cases
+→ Labels, alt text, language
+→ axe-core named, not launched
+
+First review included · 20 pages · 2 links deep
+It proposes test cases from a public read. It does not run them, sign in, submit forms, or generate load.
+
+Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-a11y&amp;utm_content=en
+
+#SoftwareTesting #QA #TestAutomation #Accessibility #a11y
+
+https://www.youtube.com/shorts/cAHVHDoRKn8</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/a11y-portrait.jpg" length="221106" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/en/a11y-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Every post, one page.</title>
+      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/01-one-page-en.html</link>
+      <guid isPermaLink="false">promo-social-hub-2026-10/01-one-page-en</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Product</category>
+      <category>Social</category>
+      <description>Tips, real site reviews and short clips from YouTube, TikTok, LinkedIn, X and Facebook, together in one feed you can search.
+
+Try this: Open the hub and filter by tips, site reviews or videos.
+
+Every post, in one place: https://carlosandmunoz.com/qa-review-social.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=one-page-en
+
+#SocialMedia #SoftwareTesting #OpenSource #QA #WebDev #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/01-one-page-en.jpg" length="164784" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/01-one-page-en.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Give images a size. Stop the jump.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/01-img-size.html</link>
+      <guid isPermaLink="false">tips-2026-10/01-img-size</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Tip</category>
+      <category>Perf</category>
+      <description>When an image has no width and height, the page jumps as it loads. That shift is measured, and visitors feel it.
+
+Try this today: Search your templates for &lt;img without width. Add the intrinsic size to each one.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=img-size
+
+#WebPerformance #CLS #CoreWebVitals #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg" length="179623" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Release day: is the page still right?</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/02-release-day.html</link>
+      <guid isPermaLink="false">tips-2026-10/02-release-day</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Tip</category>
+      <category>QA</category>
+      <description>Green builds and passing smoke tests do not tell you whether the public page still has its title, share card, and consent banner.
+
+Try this today: Add a five-minute public-page check to your release checklist, after deploy and before the announcement.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=release-day
+
+#QA #ReleaseManagement #DevOps #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" length="196736" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>whatsapp.com: 67. The gap: hreflang.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/03-u-whatsapp-com.html</link>
