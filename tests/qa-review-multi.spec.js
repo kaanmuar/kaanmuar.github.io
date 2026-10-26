@@ -271,6 +271,56 @@ test('a long host wraps inside its cover card when six sites sit side by side (#
   }
 });
 
+test('with six sites each analyzed page is one short row: the path on one line, the title on two at most, and the intro stays in its card (#1614)', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 900 });
+  const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
+    const base = [own, rival, sample.report][index];
+    return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id }) };
+  }));
+  const pages = own.pages.map((row, index) => Object.assign({}, row, index ? {} : {
+    path: '/convenios-empresariales-y-tarifas-corporativas.html',
+    title: 'Tequendama Hoteles | Hoteles en Colombia | Web Oficial | Convenios empresariales y tarifas corporativas',
+    status: 301,
+    ms: 2400
+  }));
+  ['www.hotelestequendama.com.co', 'www.movichhotels.com', 'www.ghlhoteles.com', 'www.cgb.edu.co', 'ciedi.edu.co', 'montessori.edu.co'].forEach((host, index) => {
+    Object.assign(records[index].report, { host, pages, limits: { maxPages: 100, maxDepth: 5, pagesRead: pages.length, pagesFound: 142 } });
+  });
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const cells = page.locator('#multi-overlay .multi-sec[data-sec="pages"] .multi-cell');
+  await expect(cells).toHaveCount(6, { timeout: 20000 });
+  const seen = await cells.evaluateAll((list) => list.map((cell) => {
+    const card = cell.querySelector('.card').getBoundingClientRect();
+    const intro = cell.querySelector('[data-slot="pages-found"]');
+    const row = cell.querySelector('tbody tr');
+    const [path, status, ms, title] = row.cells;
+    const line = (el) => parseFloat(getComputedStyle(el).lineHeight);
+    return {
+      host: cell.dataset.host,
+      introOver: intro.scrollWidth - intro.clientWidth,
+      introRight: intro.getBoundingClientRect().right - card.right,
+      row: row.getBoundingClientRect().height,
+      pathLines: Math.round(path.getBoundingClientRect().height / line(path)),
+      pathTip: path.title,
+      titleLines: Math.round(title.getBoundingClientRect().height / line(title)),
+      status: status.className,
+      ms: ms.className
+    };
+  }));
+  for (const col of seen) {
+    expect(col.introOver, col.host).toBeLessThanOrEqual(0);
+    expect(col.introRight, col.host).toBeLessThanOrEqual(0);
+    expect(col.pathLines, col.host).toBe(1);
+    expect(col.pathTip, col.host).toBe(pages[0].path);
+    expect(col.titleLines, col.host).toBeLessThanOrEqual(2);
+    expect(col.row, col.host).toBeLessThan(60);
+    expect(col.status, col.host).toContain('is-warn');
+    expect(col.ms, col.host).toContain('is-slow');
+  }
+  const heights = await cells.evaluateAll((list) => list.map((cell) => [...cell.querySelectorAll('tbody tr')].map((row) => Math.round(row.getBoundingClientRect().height)).join()));
+  expect(new Set(heights).size).toBe(1);
+});
+
 // A large site whose run found 40 pages that cannot be indexed, beside sites with none or one.
 function manyUnindexable() {
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
@@ -1160,6 +1210,7 @@ test('in print a long list stops after twelve rows with a line counting the rest
   await page.emulateMedia({ media: 'print' });
   await expect(rows).toHaveCount(13);
   await expect(rows.last()).toHaveText('…and ' + (own.pages.length - 12) + ' more, in the report on the page.');
+  expect(await box.locator('.multi-sec[data-sec="pages"] .multi-cell > .card').first().evaluate((card) => getComputedStyle(card, '::after').display)).toBe('none');
   await page.emulateMedia({ media: 'screen' });
   await page.evaluate(() => document.body.classList.remove('printing-multi'));
   const download = page.waitForEvent('download');

@@ -405,6 +405,21 @@
     rows.forEach((row) => { if (!read.has(row.dataset.check)) row.remove(); });
   }
 
+  // The path and title of a page are cut short in a column, so each keeps its full text as a tooltip. Status and
+  // time are tinted as on the site map: amber for a redirect or over 1.8 s, red for an error.
+  function pageRows(grid) {
+    grid.querySelectorAll('[data-slot="pages"] > tr').forEach((row) => {
+      const [path, status, ms, title] = row.cells;
+      if (!title) return;
+      row.dataset.path = path.title = path.textContent;
+      title.title = title.textContent;
+      const answer = Number(status.textContent);
+      if (answer !== 200) status.classList.add(answer >= 300 && answer < 400 ? "is-warn" : "is-bad");
+      if (Number(ms.textContent) > 1800) ms.classList.add("is-slow");
+    });
+    grid.querySelectorAll('[data-slot="pages-found"]').forEach((note) => { note.innerHTML = esc(note.textContent).replace(/\.(?=\S)/g, ".<wbr>"); });
+  }
+
   // In print a long list stops after PRINT_ROWS with a line counting the rest, as the screen stops it in a
   // scroll box, so one long column does not leave the others blank for pages.
   // Fix first stops sooner: each finding is a box of its own.
@@ -719,6 +734,7 @@
     boxGeo(grid);
     pruneChecks(grid);
     tidySeo(grid, data);
+    pageRows(grid);
     settle(grid);
     levelKit(grid);
     stackTables(grid);

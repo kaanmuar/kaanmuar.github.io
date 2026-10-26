@@ -61,11 +61,22 @@
 .multi-row > .multi-cell th { overflow-wrap: normal; word-break: normal; }
 .multi-cell .sec-matrix th { font-size: 10px; letter-spacing: .02em; }
 .multi-cell .sec-matrix td:first-child { min-width: 9em; }
-.multi-cell .page-table { width: 100%; table-layout: fixed; font-size: 12.5px; }
-.multi-cell .page-table th:nth-child(1), .multi-cell .page-table td:nth-child(1), .multi-cell .page-table th:nth-child(4), .multi-cell .page-table td:nth-child(4) { width: auto; }
-.multi-cell .page-table th:nth-child(2), .multi-cell .page-table td:nth-child(2) { width: 64px; }
-.multi-cell .page-table th:nth-child(3), .multi-cell .page-table td:nth-child(3) { width: 52px; }
-.multi-cell .page-table td { overflow-wrap: anywhere; }
+/* A column is too narrow for four table columns, so each page is a stacked row: the path with its status and
+   time, the title under it on two lines at most. Every row has the same height, so the sites' rows line up. */
+.multi-modal .multi-cell [data-slot="pages-found"] { font-size: 13px; line-height: 1.45; overflow-wrap: break-word; }
+.multi-modal .multi-cell .page-table, .multi-modal .multi-cell .page-table tbody { display: block; width: 100%; font-size: 12px; }
+.multi-modal .multi-cell .page-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.multi-modal .multi-cell .page-table tr:not(.print-more) { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-rows: 16px 30px; gap: 2px 4px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line); }
+.multi-modal .multi-cell .page-table tr:has(> td[colspan]) { grid-template-rows: auto; }
+.multi-modal .multi-cell .page-table td { width: auto; min-width: 0; padding: 0; border: 0; overflow-wrap: normal; word-break: normal; }
+.multi-modal .multi-cell .page-table td:nth-child(1) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 11.5px/16px "Fira Code", ui-monospace, monospace; }
+.multi-modal .multi-cell .page-table td:is(:nth-child(2), :nth-child(3)) { justify-self: end; max-width: 10em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 6px; border-radius: 999px; font-size: 10.5px; line-height: 16px; font-variant-numeric: tabular-nums; color: var(--muted); background: color-mix(in srgb, var(--muted) 14%, transparent); }
+.multi-modal .multi-cell .page-table td:nth-child(3):not(:empty)::after { content: " ms"; }
+.multi-modal .multi-cell .page-table td:is(:nth-child(2), :nth-child(3)):empty { display: none; }
+.multi-modal .multi-cell .page-table td.is-warn, .multi-modal .multi-cell .page-table td.is-slow { color: var(--amber); background: color-mix(in srgb, var(--amber) 16%, transparent); }
+.multi-modal .multi-cell .page-table td.is-bad { color: var(--red); background: color-mix(in srgb, var(--red) 14%, transparent); }
+.multi-modal .multi-cell .page-table td:nth-child(4) { grid-column: 1 / -1; align-self: start; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; line-height: 15px; color: var(--muted); }
+.multi-modal .multi-cell .page-table td[colspan] { grid-column: 1 / -1; white-space: normal; }
 .multi-cell svg { max-width: 100%; height: auto; }
 .multi-cell .shots { grid-template-columns: minmax(0, 1fr) minmax(0, 110px); }
 .multi-cell .shots-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -132,10 +143,17 @@
 .multi-modal .multi-cell .fix-list li strong { margin-top: 3px; font-size: 14px; line-height: 1.3; }
 .multi-modal .multi-cell .fix-list li .meta-line:not(:last-child) { display: none; }
 .multi-modal .multi-cell .fix-list .fix-line { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; font-size: 12.5px; line-height: 1.4; }
+/* Narrower still, as in print, the path takes the whole first line and the chips sit beside the title. */
+@container (max-width: 230px) {
+  .multi-modal .multi-cell .page-table tr:not(.print-more) { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 16px 15px 15px; }
+  .multi-modal .multi-cell .page-table td:nth-child(1) { grid-column: 1 / -1; }
+  .multi-modal .multi-cell .page-table td:nth-child(2) { grid-area: 2 / 2; line-height: 15px; }
+  .multi-modal .multi-cell .page-table td:nth-child(3) { grid-area: 3 / 2; line-height: 15px; }
+  .multi-modal .multi-cell .page-table td:nth-child(4) { grid-area: 2 / 1 / 4 / 2; }
+}
 /* Long lists scroll inside their box; the fade at the foot says there is more. */
 .multi-sec:is([data-sec="fix"], [data-sec="pages"], [data-sec="log"]) .multi-cell > .card { max-height: 640px; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .multi-sec:is([data-sec="fix"], [data-sec="pages"], [data-sec="log"]) .multi-cell > .card::after { content: ""; position: sticky; bottom: -18px; display: block; height: 36px; margin: -18px -18px -18px; background: linear-gradient(transparent, var(--look-card, var(--card)) 85%); pointer-events: none; }
-.multi-cell .page-table thead th { position: sticky; top: -18px; z-index: 1; background: var(--look-card, var(--card)); }
 .multi-empty { flex-grow: 1; display: grid; place-items: start center; min-height: 72px; padding: 26px 16px; border: 1px dashed var(--line); border-radius: 18px; color: var(--muted); font-size: 13px; text-align: center; background: color-mix(in srgb, var(--panel) 40%, transparent); }
 .multi-cell.is-note > :not([hidden]) { padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; color: var(--muted); background: color-mix(in srgb, var(--panel) 55%, transparent); }
 .multi-cell > .multi-empty, .multi-cell.is-note > :last-child { flex-grow: 0; }
@@ -445,13 +463,14 @@
   body.printing-multi .multi-cell .card, body.printing-multi .multi-cell [data-slot] { max-height: none !important; overflow: visible !important; }
   /* A whole card pushed to the next page in one column would set that column a page behind the others. */
   body.printing-multi .multi-cell .card { break-inside: auto; }
-  body.printing-multi .multi-cell .card::after { display: none; }
-  body.printing-multi .multi-cell .page-table thead th { position: static; }
   body.printing-multi .multi-modal .multi-stack tbody, body.printing-multi .multi-modal .multi-sec[data-sec="browser"] [data-part] .meta-line { max-height: none; overflow: visible; }
   body.printing-multi .multi-modal .multi-stack tbody::after { display: none; }
   body.printing-multi .multi-modal .multi-stack tr:not(.print-more) { font-size: 7.5pt; padding: 5px 0; }
   body.printing-multi .multi-modal .multi-sec[data-sec="browser"] [data-part] > h3 { font-size: 9.5pt; }
   body.printing-multi .multi-modal .multi-sec[data-sec="browser"] [data-part] > p { font-size: 7.5pt; }
+  body.printing-multi .multi-sec .multi-cell > .card::after { display: none; }
+  body.printing-multi .multi-modal .multi-cell .page-table .print-more { display: block; padding: 6px 0; }
+  body.printing-multi .multi-modal .multi-cell .page-table .print-more td { display: block; padding: 0; border: 0; }
   body.printing-multi .multi-cell .print-cut { display: none !important; }
   body.printing-multi .multi-sec[data-sec="cases"] .multi-row { grid-template-rows: repeat(var(--case-rows-print, 2), auto); }
   body.printing-multi .multi-sec[data-sec="cases"] .multi-cell { grid-row: span var(--case-rows-print, 2); }
