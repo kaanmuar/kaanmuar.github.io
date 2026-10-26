@@ -239,6 +239,27 @@ test('six sites fit a 1920px window side by side without scrolling sideways (#14
   expect(sizes.column).toBeGreaterThanOrEqual(250);
 });
 
+test('a long host wraps inside its cover card when six sites sit side by side (#1581)', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
+    const base = [own, rival, sample.report][index];
+    return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id }) };
+  }));
+  ['www.hotelestequendama.com', 'www.movichhotels.com', 'www.ghlhoteles.com', 'www.universidadcatolicadecolombia.edu.co', 'ciedi.edu.co', 'montessori.edu.co']
+    .forEach((host, index) => { records[index].report.host = host; });
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const covers = page.locator('#multi-overlay .multi-sec[data-sec="cover"] .report-cover');
+  await expect(covers).toHaveCount(6, { timeout: 20000 });
+  const spill = await covers.evaluateAll((list) => list.map((cover) => {
+    const heading = cover.querySelector('h2');
+    return { host: heading.textContent, over: heading.scrollWidth - heading.clientWidth, right: heading.getBoundingClientRect().right - cover.getBoundingClientRect().right };
+  }));
+  for (const row of spill) {
+    expect(row.over, row.host).toBeLessThanOrEqual(0);
+    expect(row.right, row.host).toBeLessThanOrEqual(0);
+  }
+});
+
 test('one toggle per section folds it for every site together, the boxes of a row end level, and print and the PDF show every section open (#1459)', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);

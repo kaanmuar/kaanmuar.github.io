@@ -56,6 +56,7 @@
 .multi-cell .health { grid-template-columns: minmax(0, 1fr); justify-items: center; }
 .multi-cell .areas, .multi-cell .stat-row, .multi-cell .checks-grid, .multi-cell .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .multi-cell .report-cover { display: block; }
+.multi-cell .report-cover h2 { font-size: clamp(1rem, 1.3vw, 1.3rem); line-height: 1.2; overflow-wrap: anywhere; }
 .multi-row > .multi-cell th { overflow-wrap: normal; word-break: normal; }
 .multi-cell .sec-matrix th { font-size: 10px; letter-spacing: .02em; }
 .multi-cell .sec-matrix td:first-child { min-width: 9em; }
