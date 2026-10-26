@@ -56,7 +56,14 @@ jobs:
           v="1.0.${JARVIS_VERSION_CODE}"
           gh release create "jarvis-android-v$v" "$RUNNER_TEMP/jarvis-$v.apk" "$RUNNER_TEMP/jarvis-watch-$v.apk" --target "$GITHUB_SHA" --latest=false \
             --title "Jarvis for Android $v" \
-            --notes "Install: open this page on the phone, download jarvis-$v.apk, allow installs from the browser if asked. It updates the app in place. Wear OS watch: install jarvis-watch-$v.apk with \`adb install\` over Wi-Fi debugging. Built from ${GITHUB_SHA::7}."
+            --notes "First install: open this page on the phone, download jarvis-$v.apk, allow installs from the browser if asked. After that the app updates itself. Wear OS watch: install jarvis-watch-$v.apk with \`adb install\` over Wi-Fi debugging. Built from ${GITHUB_SHA::7}."
+
+      # The function reads the release from GitHub itself and pushes each version once, so no secret is needed.
+      - name: Tell the phones to update
+        if: github.event_name != 'pull_request'
+        run: |
+          curl -fsS --retry 3 -X POST -H 'Content-Type: application/json' -d '{"op":"app-release"}' \
+            https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis || echo "::warning::The update push failed; phones will still update within six hours."
 
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'pull_request'

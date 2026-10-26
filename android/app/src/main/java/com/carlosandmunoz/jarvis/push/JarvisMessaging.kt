@@ -3,6 +3,7 @@ package com.carlosandmunoz.jarvis.push
 import android.util.Log
 import com.carlosandmunoz.jarvis.BuildConfig
 import com.carlosandmunoz.jarvis.JarvisApp
+import com.carlosandmunoz.jarvis.update.Updater
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
@@ -19,6 +20,7 @@ class JarvisMessaging : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
-        if (message.data.isNotEmpty()) Push.show(this, message.data)
+        if (message.data["kind"] == "update") Updater.soon(this)
+        else if (message.data.isNotEmpty()) Push.show(this, message.data)
     }
 }
