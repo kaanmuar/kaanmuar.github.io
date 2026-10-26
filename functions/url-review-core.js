@@ -2798,6 +2798,79 @@ function tcpOpen(address, port, ms) {
   });
 }
 
+const ICON_MAX_BYTES = 64 * 1024;
+const ICON_TYPES = /^image\/(png|x-icon|vnd\.microsoft\.icon|svg\+xml|jpeg|gif|webp)$/;
+
+function iconType(type, body) {
+  if (ICON_TYPES.test(type)) return type;
+  if (body.length > 4 && body[0] === 0 && body[1] === 0 && body[2] === 1 && body[3] === 0) return "image/x-icon";
+  if (body.length > 8 && body.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
+  return "";
+}
+
+function readIcon(target, pinned) {
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: target.hostname,
+      port: 443,
+      path: target.pathname + target.search,
+      method: "GET",
+      timeout: 5000,
+      headers: { "user-agent": USER_AGENT, accept: "image/*", connection: "close" },
+      lookup: (hostname, options, callback) => {
+        if (typeof options === "function") {
+          callback = options;
+          options = {};
+        }
+        const family = net.isIP(pinned);
+        if (options && options.all) callback(null, [{ address: pinned, family }]);
+        else callback(null, pinned, family);
+      }
+    }, (res) => {
+      const chunks = [];
+      let size = 0;
+      res.on("data", (chunk) => {
+        size += chunk.length;
+        if (size > ICON_MAX_BYTES) req.destroy(new Error("The icon is too large."));
+        else chunks.push(chunk);
+      });
+      res.on("end", () => resolve({
+        status: res.statusCode,
+        type: String(res.headers["content-type"] || "").split(";")[0].trim().toLowerCase(),
+        location: res.headers.location || "",
+        encoded: !!res.headers["content-encoding"] && res.headers["content-encoding"] !== "identity",
+        body: Buffer.concat(chunks)
+      }));
+      res.on("error", reject);
+    });
+    const deadline = setTimeout(() => req.destroy(new Error("The icon took too long.")), 6000);
+    req.on("close", () => clearTimeout(deadline));
+    req.on("timeout", () => req.destroy(new Error("The icon took too long.")));
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+// A site's icon as a data URL, for the comparison PDF, which is printed with every outside request blocked.
+// Read from a public https address only; "" when it cannot be read as a small image.
+async function iconData(raw) {
+  try {
+    let current = normalizeUrl(raw);
+    for (let hop = 0; hop <= 3; hop += 1) {
+      const res = await readIcon(current, await assertPublic(current.hostname));
+      if ([301, 302, 303, 307, 308].includes(res.status) && res.location) {
+        current = normalizeUrl(new URL(res.location, current).toString());
+        continue;
+      }
+      const type = res.status === 200 && !res.encoded && res.body.length ? iconType(res.type, res.body) : "";
+      return type ? "data:" + type + ";base64," + res.body.toString("base64") : "";
+    }
+  } catch (error) {
+    return "";
+  }
+  return "";
+}
+
 // The same address the plain read was pinned to; `open` is null when the host could not be checked at all.
 async function tcpCheck(raw, ms) {
   try {
@@ -4461,5 +4534,6 @@ module.exports = {
   sitemapPaths,
   sitePaths,
   ipBlocked,
-  hostBlocked
+  hostBlocked,
+  iconData
 };
