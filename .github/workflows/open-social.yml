@@ -11,10 +11,10 @@ on:
   workflow_dispatch:
     inputs:
       network:
-        description: 'Only this network'
+        description: 'Network'
         type: choice
-        options: ['', 'bluesky', 'mastodon']
-        default: ''
+        options: ['both', 'bluesky', 'mastodon']
+        default: 'both'
       dry_run:
         description: 'List what is due, post nothing'
         type: boolean
@@ -33,7 +33,7 @@ jobs:
       BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
       MASTODON_URL: ${{ secrets.MASTODON_URL }}
       MASTODON_TOKEN: ${{ secrets.MASTODON_TOKEN }}
-      NETWORK: ${{ inputs.network }}
+      NETWORK: ${{ inputs.network != 'both' && inputs.network || '' }}
     steps:
       - name: Check a network is connected
         id: ready
