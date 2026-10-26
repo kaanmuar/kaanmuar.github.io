@@ -258,7 +258,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -541,9 +541,45 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         </div>`;
     }
 
+    // Owner notices waiting for Send or Drop (#1420); the same list and decision as the review desk.
+    function approvalsPanel() {
+        const N = S.external.notices;
+        if (!N) return panel('outreach-approvals', 'Approvals', waiting('notices', 'Reading the owner notices waiting for you…'), { wide: true });
+        if (N.ok === false) return panel('outreach-approvals', 'Approvals', `<p class="jv-empty">${esc(N.error || 'Not loaded.')}</p>`, { wide: true });
+        const list = N.notices || [];
+        const items = list.map((n) => `<li class="jv-approval${n.critical ? ' is-critical' : ''}" data-notice="${esc(n.domain)}">
+            <p class="jv-prop-title"><strong>${esc(n.host)}</strong>${n.critical ? ' <span class="jv-chip c-slow">critical security</span>' : ''} <span class="jv-note">queued ${esc(when(n.createdAt))}</span></p>
+            <label class="jv-field">Send to<select data-notice-email="${esc(n.domain)}" data-menu-ready="1">${(n.candidates.length ? n.candidates : [{ email: n.email, sources: [] }]).map((c) => `<option value="${esc(c.email)}"${c.email === n.email ? ' selected' : ''}>${esc(c.email)}${c.sources.length ? ' · ' + esc(c.sources.join(', ')) : ''}${c.onDomain ? ' · on the site' : ''}</option>`).join('')}</select></label>
+            ${n.lastError ? `<p class="jv-approval-err">Last try: ${esc(n.lastError)}</p>` : ''}
+            <div class="jv-prop-acts"><button type="button" data-notice-send="${esc(n.domain)}">Send</button><button type="button" data-notice-drop="${esc(n.domain)}">Drop</button>${n.report ? `<a href="${esc(n.report)}" target="_blank" rel="noopener">Review →</a>` : ''}<a href="https://${esc(n.host)}" target="_blank" rel="noopener">Site →</a></div></li>`).join('');
+        const note = N.auto ? 'Auto-send is on: a notice goes out by itself once its Live Report is public. Send or drop one here to decide now.' : 'Auto-send is off: each notice waits for you.';
+        return panel('outreach-approvals', 'Approvals' + (list.length ? ' (' + list.length + ')' : ''), `<p class="jv-note">${esc(note)}</p>` + (list.length ? `<ul class="jv-approvals">${items}</ul>` : '<p class="jv-empty">No owner notices are waiting.</p>'),
+            { wide: true, data: list.map((n) => ({ host: n.host, email: n.email, critical: n.critical, queued: n.createdAt, lastError: n.lastError })) });
+    }
+
+    async function decideNotice(domain, send) {
+        const row = root.querySelector(`[data-notice="${CSS.escape(domain)}"]`);
+        const select = row && row.querySelector('select');
+        const email = select ? select.value : '';
+        if (send && !window.confirm(`Send the owner notice for ${domain} to ${email}?`)) return;
+        if (row) row.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+        const out = await call('notice-decide', { domain, send, email }).catch((error) => ({ ok: false, error: error.message }));
+        const N = S.external.notices;
+        if (!out.ok) {
+            const n = N && N.notices && N.notices.find((x) => x.domain === domain);
+            if (n) n.lastError = out.error;
+            render();
+            toast('Not done: ' + out.error, 6000);
+            return;
+        }
+        if (N && N.notices) N.notices = N.notices.filter((x) => x.domain !== domain);
+        render();
+        toast(send ? 'Sent to ' + (out.email || email) + '.' : 'Dropped ' + domain + '.', 3000);
+    }
+
     function outreachView() {
         const ou = S.external.outreach;
-        if (!ou || !ou.ok) return `<div class="jv-grid">${briefPanel('outreach')}${panel('outreach-wait', 'Outreach', waiting('outreach', 'Reading the outreach pipeline, Instantly and the plan…'))}</div>`;
+        if (!ou || !ou.ok) return `<div class="jv-grid">${approvalsPanel()}${briefPanel('outreach')}${panel('outreach-wait', 'Outreach', waiting('outreach', 'Reading the outreach pipeline, Instantly and the plan…'))}</div>`;
         const pipe = ou.pipeline && ou.pipeline.ok ? ou.pipeline : null;
         const mail = ou.instantly && ou.instantly.ok ? ou.instantly : null;
         const plan = ou.plan && ou.plan.ok !== false ? ou.plan : null;
@@ -582,7 +618,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
             + table([['Campaign', (c) => esc(c.name)], ['Sent', (c) => fmt(c.sent)], ['Opened', (c) => fmt(c.opened)], ['Replies', (c) => fmt(c.replies)], ['Bounced', (c) => fmt(c.bounced)]], mail.byCampaign, 'No campaign has sent yet.') : `<p class="jv-empty">${esc((ou.instantly && ou.instantly.error) || 'Not loaded.')}</p>`;
         const boxBody = mail ? table([['Mailbox', (a) => esc(a.email)], ['Status', (a) => chip(a.status === 'active', a.status)], ['Warm-up', (a) => chip(a.warmup === 'on', a.warmup)], ['Score', (a) => (a.score === null ? '—' : chip(a.score >= th.outreachWarmup, String(a.score)))], ['Daily limit', (a) => (a.dailyLimit ? fmt(a.dailyLimit) : '—')]], mail.accounts, 'No mailboxes connected.') : '';
         const dnsBody = ou.mail && ou.mail.checks ? `<ul class="jv-facts">${ou.mail.checks.map((c) => `<li>${chip(c.ok, c.name)} ${esc(c.detail)}</li>`).join('')}</ul>` : `<p class="jv-empty">${esc((ou.mail && ou.mail.error) || 'Not loaded.')}</p>`;
-        return head + `<div class="jv-grid">${briefPanel('outreach')}
+        return head + `<div class="jv-grid">${approvalsPanel()}${briefPanel('outreach')}
             ${panel('outreach-plan', '90-day plan', planBody)}
             ${panel('outreach-funnel', 'Weekly funnel against the plan', funnelBody, { data: funnel })}
             ${plan ? panel('outreach-targets', '90-day targets', targets, { data: plan.targets }) : ''}
@@ -723,7 +759,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         C.PRODUCTS.forEach((p) => {
             const sum = S.summaries[p.key];
             const badge = $(`[data-badge="${p.key}"]`);
-            const n = S.brief.filter((b) => b.product === p.key && (b.level === 'alert' || b.level === 'warn')).length;
+            const waitingNotices = p.key === 'outreach' && S.external.notices && S.external.notices.notices ? S.external.notices.notices.length : 0;
+            const n = S.brief.filter((b) => b.product === p.key && (b.level === 'alert' || b.level === 'warn')).length + waitingNotices;
             if (badge) { badge.hidden = !n; badge.textContent = n; }
             const k = $(`[data-tab-kpi="${p.key}"]`);
             if (k) k.textContent = sum && sum.kpis ? fmt(sum.kpis[0].value) : p.key === 'systems' ? (C.readiness(S.external) === null ? '' : C.readiness(S.external) + '%') : '';
@@ -1182,6 +1219,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         $$('.jv-menu-list').forEach((l) => { l.hidden = true; });
         if (t.dataset.proposal) { markProposal(t.dataset.key, t.dataset.proposal); return; }
         if (t.dataset.runAction) { runAction(t.dataset.runAction, t.dataset.job, t.dataset.key); return; }
+        if (t.dataset.noticeSend || t.dataset.noticeDrop) { decideNotice(t.dataset.noticeSend || t.dataset.noticeDrop, !!t.dataset.noticeSend); return; }
         if (t.dataset.go) { go(t.dataset.go); return; }
         if (t.dataset.mail) { S.mail = t.dataset.mail; compute(); render(); return; }
         if (t.dataset.run) { runJob(t.dataset.run); return; }

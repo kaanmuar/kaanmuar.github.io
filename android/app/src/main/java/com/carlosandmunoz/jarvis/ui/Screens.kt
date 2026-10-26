@@ -165,7 +165,7 @@ fun ProductsScreen(s: UiState, vm: JarvisViewModel, product: String, pick: (Stri
 
 @Composable
 private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
-    if (product == "outreach") { OutreachScreen(s); return }
+    if (product == "outreach") { OutreachScreen(s, vm); return }
     val snap = s.snapshot
     val p = snap.obj("products").obj(product)
     if (p == null) { Panel("No data") { Muted("Pull down to load this product.") }; return }
@@ -262,9 +262,10 @@ private fun SendReport(s: UiState, vm: JarvisViewModel, kind: String, period: St
 private fun daysText(n: Int) = when { n == 0 -> "today"; n > 0 -> "in $n " + (if (n == 1) "day" else "days"); else -> "${-n} days ago" }
 
 @Composable
-private fun OutreachScreen(s: UiState) {
+private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
     val snap = s.snapshot
     val ou = snap.ext("outreach")
+    Approvals(s, vm)
     val brief = snap.objs("briefing").filter { it.str("product") == "outreach" }
     if (brief.isNotEmpty()) Panel("Briefing") { brief.forEach { StatusRow(it.str("level"), it.str("text") ?: "") } }
     if (ou == null || !ou.isOk()) { Panel("Outreach") { Muted(ou?.str("error") ?: "Pull down to read the outreach pipeline, Instantly and the plan.") }; return }

@@ -1721,6 +1721,50 @@ async function queueOwnerNotice(record, options) {
   if (usable.length) await ref.set(Object.assign(ownerNotice.noticeRow(record, usable), { expireAt: keepUntil() }));
 }
 
+// Send or Drop on a pending owner notice, from the desk or Jarvis. Returns { status } or { error }.
+async function decideOwnerNotice(rawDomain, send, email, operator) {
+  const domain = String(rawDomain || "").toLowerCase().replace(/[^a-z0-9.-]/g, "").slice(0, 120);
+  const db = admin.firestore();
+  const ref = db.collection("url_review_owner_notices").doc(domain || "-");
+  const decidedAt = new Date().toISOString();
+  let notice = null;
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() : null;
+    if (!data || data.status !== "pending") return;
+    notice = data;
+    tx.update(ref, send ? { status: "sending" } : { status: "dropped", decidedAt, by: operator });
+  });
+  if (!notice) return { error: "That notice is not waiting for a decision." };
+  if (!send) return { status: "dropped" };
+  let result;
+  try {
+    result = await sendOwnerNotice(notice, String(email || ""));
+  } catch (error) {
+    console.error("Owner notice failed:", error);
+    result = { error: String((error && error.message) || "The notice failed.").slice(0, 200) };
+  }
+  if (result.error) {
+    await ref.update({ status: "pending", lastError: result.error });
+    return { error: result.error };
+  }
+  const sentTo = result.notice;
+  await ref.update({ status: "sent", sentAt: decidedAt, decidedAt, by: operator, cardId: result.card.id, email: sentTo.email, source: sentTo.source, sourceUrl: sentTo.sourceUrl || "", lastError: "", expireAt: keepUntil() });
+  await db.collection("url_review_owner_notice_log").add({
+    domain: notice.domain,
+    host: notice.host,
+    email: sentTo.email,
+    source: sentTo.source,
+    sourceUrl: sentTo.sourceUrl || "",
+    reviewId: notice.reviewId,
+    cardId: result.card.id,
+    sentAt: decidedAt,
+    by: operator,
+    expireAt: keepUntil()
+  });
+  return { status: "sent", email: sentTo.email };
+}
+
 async function liveReportIndex() {
   const res = await fetch(customerMail.SITE + "/assets/live-reports/index.json", { cache: "no-store", signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error("Live Reports index answered " + res.status);
@@ -3551,54 +3595,9 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", se
       return;
     }
     if (deskName === "notice" && req.method === "POST") {
-      const domain = String((req.body && req.body.domain) || "").toLowerCase().replace(/[^a-z0-9.-]/g, "").slice(0, 120);
-      const send = req.body && req.body.send === true;
-      const db = admin.firestore();
-      const ref = db.collection("url_review_owner_notices").doc(domain || "-");
-      const decidedAt = new Date().toISOString();
-      let notice = null;
-      await db.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        const data = snap.exists ? snap.data() : null;
-        if (!data || data.status !== "pending") return;
-        notice = data;
-        tx.update(ref, send ? { status: "sending" } : { status: "dropped", decidedAt, by: operator });
-      });
-      if (!notice) {
-        res.status(409).json({ error: "That notice is not waiting for a decision." });
-        return;
-      }
-      if (!send) {
-        res.status(200).json({ ok: true, status: "dropped" });
-        return;
-      }
-      let result;
-      try {
-        result = await sendOwnerNotice(notice, String((req.body && req.body.email) || ""));
-      } catch (error) {
-        console.error("Owner notice failed:", error);
-        result = { error: String((error && error.message) || "The notice failed.").slice(0, 200) };
-      }
-      if (result.error) {
-        await ref.update({ status: "pending", lastError: result.error });
-        res.status(409).json({ error: result.error });
-        return;
-      }
-      const sentTo = result.notice;
-      await ref.update({ status: "sent", sentAt: decidedAt, decidedAt, by: operator, cardId: result.card.id, email: sentTo.email, source: sentTo.source, sourceUrl: sentTo.sourceUrl || "", lastError: "", expireAt: keepUntil() });
-      await db.collection("url_review_owner_notice_log").add({
-        domain: notice.domain,
-        host: notice.host,
-        email: sentTo.email,
-        source: sentTo.source,
-        sourceUrl: sentTo.sourceUrl || "",
-        reviewId: notice.reviewId,
-        cardId: result.card.id,
-        sentAt: decidedAt,
-        by: operator,
-        expireAt: keepUntil()
-      });
-      res.status(200).json({ ok: true, status: "sent" });
+      const out = await decideOwnerNotice(req.body && req.body.domain, req.body && req.body.send === true, req.body && req.body.email, operator);
+      if (out.error) res.status(409).json({ error: out.error });
+      else res.status(200).json({ ok: true, status: out.status });
       return;
     }
     if (deskName === "failures-data" && req.method === "GET") {
@@ -5269,6 +5268,15 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     }
     else if (op === "review") out = await jarvisReview.enqueue(admin.firestore(), body, operator, now);
     else if (op === "snapshot") out = await jarvisCached(op, days, () => jarvisSnapshot(days));
+    else if (op === "notices") {
+      const snap = await admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get();
+      const rows = snap.docs.map((d) => Object.assign({ domain: d.id }, d.data()));
+      out = { notices: jarvisNotify.noticeRows(rows, (row) => customerMail.pageUrl(row.lang, { report: row.reviewId })), auto: process.env.OWNER_NOTICES_LIVE === "1" };
+    } else if (op === "notice-decide") {
+      const decided = await decideOwnerNotice(body.domain, body.send === true, body.email, operator);
+      if (decided.error) throw new Error(decided.error);
+      out = decided;
+    }
     else if (jarvisSources.SOURCES[op]) out = await jarvisSource(op, days);
     else if (op === "send-report") {
       const kind = body.kind === "site" ? "site" : "review";
