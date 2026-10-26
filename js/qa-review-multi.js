@@ -18,6 +18,7 @@
       signIn: "Sign in with the account that saved this comparison to open it.", failed: "The comparison did not open. Try again in a moment.",
       saving: "Saving the comparison…", saveFailed: "The comparison was not saved. Try again in a moment.",
       nothing: "Nothing here for this site.", more: "…and {n} more, in the report on the page.",
+      seoBlocked: "Pages not indexable, by reason", seoCanonical: "Canonical to another page",
       sections: {
         cover: "Cover and key figures", exec: "One-page summary", health: "Health score", fix: "Fix first", browser: "In a real browser",
         previews: "How it looks in Google and when shared", geo: "What AI sees", analytics: "Analytics and consent", seo: "Search visibility",
@@ -39,6 +40,7 @@
       signIn: "Inicia sesión con la cuenta que guardó esta comparación para abrirla.", failed: "La comparación no se abrió. Inténtalo de nuevo en un momento.",
       saving: "Guardando la comparación…", saveFailed: "La comparación no se guardó. Inténtalo de nuevo en un momento.",
       nothing: "Nada aquí para este sitio.", more: "…y {n} más, en el informe de la página.",
+      seoBlocked: "Páginas no indexables, por motivo", seoCanonical: "Canonical hacia otra página",
       sections: {
         cover: "Portada y cifras clave", exec: "Resumen en una página", health: "Puntuación de salud", fix: "Corregir primero", browser: "En un navegador real",
         previews: "Cómo se ve en Google y al compartirse", geo: "Lo que ve la IA", analytics: "Analítica y consentimiento", seo: "Visibilidad en buscadores",
@@ -60,6 +62,7 @@
       signIn: "Entre com a conta que salvou esta comparação para abri-la.", failed: "A comparação não abriu. Tente de novo em instantes.",
       saving: "Salvando a comparação…", saveFailed: "A comparação não foi salva. Tente de novo em instantes.",
       nothing: "Nada aqui para este site.", more: "…e mais {n}, no relatório da página.",
+      seoBlocked: "Páginas não indexáveis, por motivo", seoCanonical: "Canonical para outra página",
       sections: {
         cover: "Capa e números principais", exec: "Resumo em uma página", health: "Pontuação de saúde", fix: "Corrigir primeiro", browser: "Em um navegador real",
         previews: "Como aparece no Google e ao compartilhar", geo: "O que a IA vê", analytics: "Analytics e consentimento", seo: "Visibilidade nas pesquisas",
@@ -81,6 +84,7 @@
       signIn: "Melden Sie sich mit dem Konto an, das diesen Vergleich gespeichert hat, um ihn zu öffnen.", failed: "Der Vergleich wurde nicht geöffnet. Versuchen Sie es gleich noch einmal.",
       saving: "Der Vergleich wird gespeichert…", saveFailed: "Der Vergleich wurde nicht gespeichert. Versuchen Sie es gleich noch einmal.",
       nothing: "Für diese Website nichts.", more: "…und {n} weitere, im Bericht auf der Seite.",
+      seoBlocked: "Nicht indexierbare Seiten, nach Grund", seoCanonical: "Canonical auf eine andere Seite",
       sections: {
         cover: "Deckblatt und Kennzahlen", exec: "Zusammenfassung auf einer Seite", health: "Gesundheitswert", fix: "Zuerst beheben", browser: "In einem echten Browser",
         previews: "So sieht es bei Google und beim Teilen aus", geo: "Was KI sieht", analytics: "Analytics und Einwilligung", seo: "Sichtbarkeit in der Suche",
@@ -102,6 +106,7 @@
       signIn: "Connectez-vous avec le compte qui a enregistré cette comparaison pour l'ouvrir.", failed: "La comparaison ne s'est pas ouverte. Réessayez dans un instant.",
       saving: "Enregistrement de la comparaison…", saveFailed: "La comparaison n'a pas été enregistrée. Réessayez dans un instant.",
       nothing: "Rien ici pour ce site.", more: "…et {n} de plus, dans le rapport en ligne.",
+      seoBlocked: "Pages non indexables, par motif", seoCanonical: "Canonical vers une autre page",
       sections: {
         cover: "Couverture et chiffres clés", exec: "Résumé en une page", health: "Score de santé", fix: "À corriger d'abord", browser: "Dans un vrai navigateur",
         previews: "L'aperçu dans Google et en partage", geo: "Ce que voit l'IA", analytics: "Analytics et consentement", seo: "Visibilité dans la recherche",
@@ -123,6 +128,7 @@
       signIn: "Accedi con l'account che ha salvato questo confronto per aprirlo.", failed: "Il confronto non si è aperto. Riprova tra un momento.",
       saving: "Salvataggio del confronto…", saveFailed: "Il confronto non è stato salvato. Riprova tra un momento.",
       nothing: "Niente qui per questo sito.", more: "…e altri {n}, nel report sulla pagina.",
+      seoBlocked: "Pagine non indicizzabili, per motivo", seoCanonical: "Canonical verso un'altra pagina",
       sections: {
         cover: "Copertina e cifre chiave", exec: "Riepilogo in una pagina", health: "Punteggio di salute", fix: "Da correggere prima", browser: "In un browser reale",
         previews: "Come appare su Google e quando è condiviso", geo: "Cosa vede l'IA", analytics: "Analytics e consenso", seo: "Visibilità nella ricerca",
@@ -415,6 +421,65 @@
     row.style.setProperty("--kit-rows", String(kinds.length + 2));
   }
 
+  // The reason a page cannot be indexed, from the server's English line: unpaid reports come without reasonMsg.
+  function seoReason(row) {
+    const why = String(row.reason || "");
+    const status = why.match(/^Status (\d+)/);
+    if (status) return { key: "status-" + status[1], msg: { id: "reason.status", vars: { status: status[1] } }, en: "Status " + status[1] };
+    if (/^Canonical points to /.test(why)) return { key: "canonical", label: t("seoCanonical") };
+    if (why === "noindex") return { key: "noindex", label: "noindex" };
+    if (/^Blocked for Googlebot/.test(why)) return { key: "googlebot", msg: { id: "reason.googlebot" }, en: why };
+    const bot = why.match(/^(.+) bot check$/);
+    if (bot) return { key: "bot-" + bot[1], msg: { id: "reason.botCheck", vars: { vendor: bot[1] } }, en: why };
+    return { key: "unread", msg: { id: "reason.notRead" }, en: "Not read" };
+  }
+
+  // Search visibility in a column: its figures, then the pages that cannot be indexed summed by reason with the
+  // first SEO_ROWS of them, one of each reason first, then the notes, each in its own box. data-part names the
+  // boxes in the same order in every column.
+  const SEO_ROWS = 5;
+  function tidySeo(grid, data) {
+    const fc = window.QAReviewFindingsCopy || { line: (message, fallback) => fallback };
+    grid.querySelectorAll('.multi-sec[data-sec="seo"] .multi-cell').forEach((cell) => {
+      const col = data.columns[Number(cell.dataset.col)];
+      const slot = cell.querySelector('[data-slot="seo"]');
+      const stats = slot && slot.querySelector(":scope > .stat-row");
+      const card = slot && slot.querySelector(":scope > .card");
+      if (!col || col.missing || !stats || !card) return;
+      stats.dataset.part = "stats";
+      card.dataset.part = "unindexable";
+      const notes = [...card.querySelectorAll(":scope > .meta-line")];
+      if (notes.length) {
+        const box = document.createElement("article");
+        box.className = "card multi-seo-notes";
+        box.dataset.part = "notes";
+        notes.forEach((note) => { note.title = note.textContent; box.appendChild(note); });
+        card.after(box);
+      }
+      const all = (((col.report || {}).insights || {}).seo || {}).indexability || [];
+      const blocked = all.filter((row) => !row.indexable).map((row) => Object.assign({ why: seoReason(row) }, row));
+      const lone = card.querySelector(":scope > .muted");
+      if (lone) lone.title = lone.textContent;
+      if (!blocked.length) return;
+      const groups = new Map();
+      blocked.forEach((row) => {
+        if (!groups.has(row.why.key)) groups.set(row.why.key, { why: row.why, rows: [] });
+        groups.get(row.why.key).rows.push(row);
+      });
+      const ranked = [...groups.values()].sort((a, b) => b.rows.length - a.rows.length);
+      const firsts = ranked.map((group) => group.rows[0]);
+      const shown = firsts.concat(blocked.filter((row) => !firsts.includes(row))).slice(0, SEO_ROWS);
+      const label = (why) => why.label || fc.line(why.msg, why.en);
+      card.innerHTML = '<h3 class="multi-seo-head" translate="no">' + esc(t("seoBlocked")) + "</h3>" +
+        '<ul class="multi-seo-reasons" translate="no">' + ranked.map((group) => "<li><span>" + esc(label(group.why)) + "</span> <b>" + group.rows.length + "</b></li>").join("") + "</ul>" +
+        '<ul class="multi-seo-pages">' + shown.map((row) => {
+          const why = fc.line(row.reasonMsg, row.reason);
+          return '<li><span class="notranslate" translate="no" title="' + esc(row.path) + '">' + esc(row.path) + '</span><small title="' + esc(why) + '">' + esc(why) + "</small></li>";
+        }).join("") + "</ul>" +
+        (blocked.length > shown.length ? '<p class="multi-seo-more" translate="no">' + esc(t("more", { n: blocked.length - shown.length })) + "</p>" : "");
+    });
+  }
+
   function setFold(sec, open) {
     sec.querySelector(".multi-row").hidden = !open;
     sec.querySelector(".fold-toggle").setAttribute("aria-expanded", String(open));
@@ -558,6 +623,7 @@
     grid.querySelectorAll(".report-cover h2").forEach((heading) => { heading.innerHTML = esc(heading.textContent).replace(/\./g, ".<wbr>"); });
     boxGeo(grid);
     pruneChecks(grid);
+    tidySeo(grid, data);
     settle(grid);
     levelKit(grid);
     stackTables(grid);
