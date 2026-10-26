@@ -5358,6 +5358,11 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
   res.set("Cache-Control", "no-store");
   if (req.method === "OPTIONS") { res.status(204).send(""); return; }
   if (req.method !== "POST") { res.status(405).json({ error: "POST only." }); return; }
+  if ((req.body || {}).op === "app-release") {
+    try { res.json(await jarvisPush.releasePush(fetch, admin.firestore(), admin.messaging(), { token: process.env.GITHUB_BUGS_TOKEN, now: Date.now() })); }
+    catch (error) { res.status(502).json({ error: error.message }); }
+    return;
+  }
   const presented = String(req.get("authorization") || "");
   const bearer = presented.toLowerCase().startsWith("bearer ") ? presented.slice(7).trim() : "";
   let operator = null;

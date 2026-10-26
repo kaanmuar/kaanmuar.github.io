@@ -8,6 +8,7 @@ import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.Ongoing
 import com.carlosandmunoz.jarvis.home.Shortcuts
 import com.carlosandmunoz.jarvis.push.Push
+import com.carlosandmunoz.jarvis.update.Updater
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
@@ -25,6 +26,8 @@ class JarvisApp : Application() {
         Push.channels(this)
         Ongoing.channel(this)
         Shortcuts.publish(this)
+        Updater.channel(this)
+        Updater.schedule(this)
         if (auth.signedIn) Home.schedule(this)
     }
 }

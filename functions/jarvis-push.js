@@ -8,7 +8,7 @@ const crypto = require("crypto");
 
 const KINDS = ["alerts", "briefing", "money", "reviews", "outreach"];
 const DEAD = new Set(["messaging/registration-token-not-registered", "messaging/invalid-registration-token", "messaging/invalid-argument"]);
-const TTL = { alerts: 6 * 3600 * 1000, briefing: 12 * 3600 * 1000, review: 24 * 3600 * 1000, money: 24 * 3600 * 1000, reviews: 24 * 3600 * 1000, outreach: 12 * 3600 * 1000, test: 3600 * 1000 };
+const TTL = { alerts: 6 * 3600 * 1000, briefing: 12 * 3600 * 1000, review: 24 * 3600 * 1000, money: 24 * 3600 * 1000, reviews: 24 * 3600 * 1000, outreach: 12 * 3600 * 1000, update: 24 * 3600 * 1000, test: 3600 * 1000 };
 
 const devices = (db) => db.collection("jarvis_devices");
 const idOf = (token) => crypto.createHash("sha256").update(String(token)).digest("hex").slice(0, 40);
@@ -79,4 +79,39 @@ async function send(messaging, db, tokens, msg) {
   return { sent: res.successCount, failed: res.failureCount, removed: dead.length };
 }
 
-module.exports = { KINDS, idOf, cleanKinds, register, unregister, list, targets, alertMessage, briefingMessage, send };
+/*
+ * App release push (#1562): CI calls the jarvis function with op "app-release" after it publishes an APK.
+ * The release is read from GitHub here rather than taken from the caller, so the op needs no secret,
+ * and each version is pushed once. The app installs the update itself when the push arrives.
+ */
+const RELEASES = "https://api.github.com/repos/kaanmuar/kaanmuar.github.io/releases?per_page=30";
+const TAG = "jarvis-android-v";
+
+function newestRelease(list) {
+  return (Array.isArray(list) ? list : [])
+    .filter((r) => r && !r.draft && String(r.tag_name || "").startsWith(TAG))
+    .map((r) => { const name = r.tag_name.slice(TAG.length); return { code: Number(name.split(".").pop()), name, url: r.html_url || "" }; })
+    .filter((r) => Number.isInteger(r.code) && r.code > 0)
+    .sort((a, b) => b.code - a.code)[0] || null;
+}
+
+async function releasePush(fetchFn, db, messaging, { token, now }) {
+  const headers = { accept: "application/vnd.github+json", "user-agent": "jarvis-function" };
+  if (token) headers.authorization = "Bearer " + token;
+  const res = await fetchFn(RELEASES, { headers });
+  if (!res.ok) throw new Error("GitHub releases answered " + res.status + ".");
+  const rel = newestRelease(await res.json());
+  if (!rel) return { pushed: false, reason: "No Jarvis release yet." };
+  const ref = db.collection("jarvis_cache").doc("app-release");
+  const fresh = await db.runTransaction(async (tx) => {
+    const seen = (await tx.get(ref)).data() || {};
+    if ((seen.code || 0) >= rel.code) return false;
+    tx.set(ref, { code: rel.code, name: rel.name, at: new Date(now).toISOString() });
+    return true;
+  });
+  if (!fresh) return { pushed: false, version: rel.name, reason: "Already pushed." };
+  const out = await send(messaging, db, await targets(db, "update"), { kind: "update", title: "Jarvis " + rel.name, body: "Installing the new version.", tab: "overview", tag: "jarvis-update", url: rel.url });
+  return Object.assign({ pushed: true, version: rel.name }, out);
+}
+
+module.exports = { KINDS, idOf, cleanKinds, register, unregister, list, targets, alertMessage, briefingMessage, send, newestRelease, releasePush };

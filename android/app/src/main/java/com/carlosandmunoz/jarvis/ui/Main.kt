@@ -423,6 +423,8 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
             }
             Panel("About") {
                 KeyRow("Version", BuildConfig.VERSION_NAME)
+                Row { ActionButton("Check for updates", "update" in s.running) { vm.checkUpdate() } }
+                Muted("Jarvis updates itself: it checks every six hours and as soon as a new release is published.")
                 KeyRow("Web dashboard", "open", url = "https://carlosandmunoz.com/admin.html#stats/overview/${s.days}")
                 KeyRow("Releases", "open", url = "https://github.com/kaanmuar/kaanmuar.github.io/releases")
             }
