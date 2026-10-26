@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-/* What Buffer and the Facebook Page took for each post, so the Social hub pane in admin.html shows confirmations
-   instead of calendar slots. scripts/buffer-queue.js writes assets/social/buffer.json, scripts/facebook-queue.js
-   writes assets/social/facebook.json, and the workflows that run them commit both (scripts/commit-social-ledgers.sh).
+/* What Buffer, the Facebook Page, Bluesky and Mastodon took for each post, so the Social hub pane in admin.html shows
+   confirmations instead of calendar slots. scripts/buffer-queue.js writes assets/social/buffer.json,
+   scripts/facebook-queue.js writes assets/social/facebook.json, scripts/open-social-queue.js writes
+   assets/social/open-social.json, and the workflows that run them commit them (scripts/commit-social-ledgers.sh).
 
    { version: 1,
      posts: { "<batch>/<slug>": [{ channel: "linkedin", profile: "linkedin (QA-lab)", id: "<Buffer post or Graph post id>",
@@ -21,6 +22,7 @@ const path = require("path");
 const ROOT = path.resolve(__dirname, "..");
 const BUFFER = "assets/social/buffer.json";
 const FACEBOOK = "assets/social/facebook.json";
+const OPEN_SOCIAL = "assets/social/open-social.json";
 const FINAL = new Set(["sent", "failed"]);
 const FIELDS = ["channel", "profile", "id", "at", "result", "error", "url", "checked", "slot"];
 
@@ -141,4 +143,4 @@ if (require.main === module) {
   write(into, merge(read(into), read(from)));
 }
 
-module.exports = { BUFFER, FACEBOOK, empty, read, write, record, merge, find, due, upgrade, fromBuffer, fromGraph, markRetry, clearRetry, retries };
+module.exports = { BUFFER, FACEBOOK, OPEN_SOCIAL, empty, read, write, record, merge, find, due, upgrade, fromBuffer, fromGraph, markRetry, clearRetry, retries };

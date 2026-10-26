@@ -329,13 +329,13 @@ async function social(ctx) {
   const ledger = async (name) => {
     try { return await getJson(ctx.fetch, ORIGIN + "/assets/social/" + name + ".json?t=" + Math.floor(ctx.now / HOUR), {}, name + " ledger"); } catch (error) { return null; }
   };
-  const [buffer, facebook, youtube] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("youtube")]);
+  const [buffer, facebook, open, youtube] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("youtube")]);
   const channels = {};
   const results = {};
   const daily = {};
   const latest = [];
   const scheduled = { count: 0, next: "" };
-  [buffer, facebook].forEach((book) => {
+  [buffer, facebook, open].forEach((book) => {
     Object.keys((book && book.posts) || {}).forEach((post) => {
       (book.posts[post] || []).forEach((row) => {
         const at = Date.parse(row.at || "");
