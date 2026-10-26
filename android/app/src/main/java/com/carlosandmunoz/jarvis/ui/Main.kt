@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.carlosandmunoz.jarvis.ui
 
 import android.Manifest
@@ -16,6 +18,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.compose.ui.platform.LocalContext
 import android.os.Build
 import com.carlosandmunoz.jarvis.home.GoalsWidgetReceiver
+import com.carlosandmunoz.jarvis.home.NeedsWidgetReceiver
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.NumbersWidgetReceiver
 import com.carlosandmunoz.jarvis.home.StatusWidgetReceiver
@@ -54,6 +57,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -414,10 +418,11 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
             Panel("Home screen") {
                 val context = LocalContext.current
                 val pinnable = Home.canPin(context)
-                if (pinnable) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (pinnable) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ActionButton("Status", false) { Home.pin(context, StatusWidgetReceiver::class.java) }
                     ActionButton("Numbers", false) { Home.pin(context, NumbersWidgetReceiver::class.java) }
                     ActionButton("Goals", false) { Home.pin(context, GoalsWidgetReceiver::class.java) }
+                    ActionButton("Needs you", false) { Home.pin(context, NeedsWidgetReceiver::class.java) }
                 }
                 if (Build.VERSION.SDK_INT >= 33) Row { ActionButton("Add the quick-settings tile", false) { Home.addTile(context) } }
                 Muted(if (pinnable) "Widgets refresh every half hour and whenever the app or a push brings new numbers. Long-press the app icon for shortcuts; share a link to Jarvis to review it."
