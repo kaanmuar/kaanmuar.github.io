@@ -333,6 +333,90 @@ test('in print a long list stops after twelve rows with a line counting the rest
   expect(seen.pdf[0]).toContain('<tr class="print-more">');
 });
 
+// A large site whose run found 40 pages that cannot be indexed, beside sites with none or one.
+function manyUnindexable() {
+  const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
+    const base = [own, rival, sample.report][index];
+    return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id, host: 'site' + (index + 4) + '.example' }) };
+  }));
+  const reasons = (i) => (i < 30 ? 'Canonical points to /landing/a-very-long-canonical-target-for-campaign-' + i : i < 36 ? 'Status 404' : i < 38 ? 'noindex' : 'Status 500');
+  const blocked = Array.from({ length: 40 }, (_, i) => ({ path: '/category/a-long-section-name/subsection/article-with-a-long-slug-' + i + '?utm_source=newsletter', status: reasons(i).startsWith('Status') ? Number(reasons(i).slice(7)) : 200, indexable: false, reason: reasons(i) }));
+  const open = Array.from({ length: 10 }, (_, i) => ({ path: '/ok-' + i, status: 200, indexable: true, reason: 'Indexable' }));
+  const list = Array.from({ length: 14 }, (_, i) => '/sitemap-only/a-long-path-name-' + i);
+  records[0].report = Object.assign({}, records[0].report, { insights: Object.assign({}, records[0].report.insights, { seo: {
+    indexable: 10, indexability: blocked.concat(open), duplicates: { titles: [] }, schemaTypes: ['Organization', 'WebSite', 'BreadcrumbList', 'Article', 'Person', 'ImageObject'],
+    sitemap: { found: true, count: 120, notListed: list, listedNotIndexable: list, notLinked: list }
+  } }) });
+  return records;
+}
+
+test('Search visibility sums the pages that cannot be indexed by reason and shows the first five, so a large site stays short beside the others (#1606)', async ({ page, browser }) => {
+  if (process.env.SEO_SHOT) test.setTimeout(180000);
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await signIn(page, manyUnindexable(), '/qa-review.html?comparison=cmp1', seen);
+  const box = page.locator('#multi-overlay');
+  const cells = box.locator('.multi-sec[data-sec="seo"] .multi-cell');
+  await expect(cells).toHaveCount(6, { timeout: 20000 });
+  if (process.env.SEO_SHOT) {
+    for (const [width, dark] of [[1024, false], [1024, true], [1440, false], [1440, true]]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate((on) => { if (document.documentElement.classList.contains('dark-mode') !== on) document.getElementById('theme-toggle').click(); }, dark);
+      await page.waitForTimeout(400);
+      await box.locator('.multi-sec[data-sec="seo"]').evaluate((sec) => sec.scrollIntoView());
+      await page.screenshot({ path: process.env.SEO_SHOT + '/seo-' + width + (dark ? '-dark' : '') + '.png' });
+    }
+    await page.evaluate(() => document.getElementById('theme-toggle').click());
+    await page.setViewportSize({ width: 1047, height: 900 });
+    await page.evaluate(() => document.body.classList.add('printing-multi'));
+    await page.emulateMedia({ media: 'print' });
+    await box.locator('.multi-sec[data-sec="seo"]').screenshot({ path: process.env.SEO_SHOT + '/seo-print.png' });
+    await page.emulateMedia({ media: 'screen' });
+    await page.evaluate(() => document.body.classList.remove('printing-multi'));
+    await page.setViewportSize({ width: 1024, height: 900 });
+  }
+  const big = cells.nth(0);
+  await expect(big.locator('[data-part]')).toHaveCount(3);
+  expect(await big.locator('[data-part]').evaluateAll((els) => els.map((el) => el.dataset.part))).toEqual(['stats', 'unindexable', 'notes']);
+  await expect(big.locator('.multi-seo-reasons li')).toHaveText(['Canonical to another page 30', 'Status 404 6', 'noindex 2', 'Status 500 2']);
+  await expect(big.locator('.multi-seo-pages li')).toHaveCount(5);
+  await expect(big.locator('.multi-seo-pages li [title]').first()).toHaveAttribute('title', /^\/category\/a-long-section-name\/subsection\/article-with-a-long-slug-0\?utm_source=newsletter$/);
+  await expect(big.locator('.multi-seo-more')).toHaveText('…and 35 more, in the report on the page.');
+  await expect(cells.nth(5).locator('.multi-seo-reasons li')).toHaveText(['Canonical to another page 1']);
+  await expect(cells.nth(5).locator('.multi-seo-more')).toHaveCount(0);
+  await expect(cells.nth(1).locator('[data-part="unindexable"] .multi-seo-reasons')).toHaveCount(0);
+
+  const measure = () => cells.evaluateAll((list) => list.map((cell) => {
+    const edge = cell.getBoundingClientRect();
+    const spill = [...cell.querySelectorAll('*')].filter((el) => el.getClientRects().length && (el.getBoundingClientRect().right > edge.right + 0.5 || el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX === 'visible'));
+    return { height: Math.round(edge.height), spill: spill.map((el) => el.tagName + '.' + el.className).slice(0, 3) };
+  }));
+  const shown = await measure();
+  expect(shown[0].height).toBeLessThan(900);
+  shown.forEach((cell) => expect(cell.spill).toEqual([]));
+
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  await expect(big.locator('.multi-seo-pages li')).toHaveCount(5);
+  await expect(big.locator('.multi-seo-more')).toBeVisible();
+  (await measure()).forEach((cell) => expect(cell.spill).toEqual([]));
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+
+  await box.getByRole('button', { name: 'Download PDF' }).click();
+  await expect(box.locator('#multi-status')).toHaveText('The PDF is downloaded.');
+  const off = await browser.newContext({ javaScriptEnabled: false });
+  const printed = await off.newPage();
+  await printed.route(/^https?:/, (route) => route.abort());
+  await printed.emulateMedia({ media: 'print' });
+  await printed.setContent(seen.pdf[0], { waitUntil: 'load' });
+  const copy = printed.locator('.multi-sec[data-sec="seo"] .multi-cell').first();
+  await expect(copy.locator('.multi-seo-reasons li')).toHaveCount(4);
+  await expect(copy.locator('.multi-seo-pages li')).toHaveCount(5);
+  await expect(copy.locator('.multi-seo-more')).toBeVisible();
+  await off.close();
+});
+
 test('the benchmark ranks every site by its health score and reads where the first site stands, on the page and in the PDF (#1438)', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);

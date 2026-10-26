@@ -81,6 +81,26 @@
 .multi-cell > .multi-empty, .multi-cell.is-note > :last-child { flex-grow: 0; }
 .multi-cell .table-scroll { max-width: 100%; overflow-x: auto; }
 .multi-cell .print-more { display: none; }
+/* Search visibility: the reasons as counted chips, the first pages one per line, the notes at most three lines. */
+.multi-modal .multi-sec[data-sec="seo"] .multi-cell .stat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.multi-modal .multi-sec[data-sec="seo"] .multi-cell .stat { min-width: 0; padding: 8px 10px; }
+.multi-modal .multi-sec[data-sec="seo"] .multi-cell .stat b { font-size: 1.3rem; }
+.multi-modal .multi-sec[data-sec="seo"] .multi-cell .stat span { display: block; font-size: 10.5px; overflow-wrap: break-word; hyphens: auto; }
+.multi-modal .multi-cell :is([data-part="unindexable"], [data-part="notes"]) { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.multi-modal .multi-seo-head { margin: 0; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.multi-modal .multi-seo-reasons { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.multi-modal .multi-seo-reasons li { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 3px 3px 3px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); font-size: 12.5px; line-height: 1.3; }
+.multi-modal .multi-seo-reasons span { min-width: 0; overflow-wrap: anywhere; }
+.multi-modal .multi-seo-reasons b { min-width: 1.6em; padding: 1px 7px; border-radius: 999px; text-align: center; font-variant-numeric: tabular-nums; background: color-mix(in srgb, var(--amber) 22%, transparent); }
+.multi-modal .multi-seo-pages { list-style: none; margin: 0; padding: 0; }
+.multi-modal .multi-seo-pages li { display: grid; gap: 1px; min-width: 0; padding: 6px 0; border-top: 1px solid var(--line); }
+.multi-modal .multi-seo-pages span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; font-weight: 600; }
+.multi-modal .multi-seo-pages small, .multi-modal .multi-sec[data-sec="seo"] .multi-cell :is([data-part="notes"] > .meta-line, [data-part="unindexable"] > .muted) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; overflow-wrap: anywhere; margin: 0; }
+.multi-modal .multi-seo-pages small { -webkit-line-clamp: 2; color: var(--muted); font-size: 12px; }
+.multi-modal .multi-seo-more { margin: 0; color: var(--muted); font-size: 12px; font-style: italic; }
+@container (max-width: 200px) {
+  .multi-modal .multi-sec[data-sec="seo"] .multi-cell .stat-row { grid-template-columns: minmax(0, 1fr); }
+}
 
 /* Six sites fit the side-by-side table without scrolling sideways; the line names stay in view. */
 .multi-modal { --own: var(--cyan); }
@@ -201,7 +221,7 @@
   body.printing-multi .multi-cell .sec-matrix { font-size: 7pt; }
   body.printing-multi .multi-cell .sec-matrix th { font-size: 6pt; letter-spacing: 0; overflow-wrap: anywhere; }
   body.printing-multi .multi-cell .sec-matrix td:first-child { min-width: 0; }
-  body.printing-multi .multi-cell :is(.finding, .case, .area, .check-tile, .stat, .kpi, .fix-list > li, tr, .alarm-list > li) { break-inside: avoid; }
+  body.printing-multi .multi-cell :is(.finding, .case, .area, .check-tile, .stat, .kpi, .fix-list > li, tr, .alarm-list > li, .multi-seo-reasons li, .multi-seo-pages li) { break-inside: avoid; }
   body.printing-multi .multi-table th, body.printing-multi .multi-table td { padding-top: 4px; padding-bottom: 4px; }
   body.printing-multi .multi-modal, body.printing-multi .multi-table td.lead { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   /* Page 1: the ranking and what it means; then the areas, the indicators, the table, and the sections. */
