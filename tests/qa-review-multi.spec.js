@@ -1045,7 +1045,8 @@ test('a column whose evidence holds long selectors and paths keeps its findings 
   const sec = page.locator('#multi-overlay .multi-sec[data-sec="findings"]');
   await expect(sec.locator('.multi-cell')).toHaveCount(6, { timeout: 20000 });
   await page.waitForLoadState('networkidle');
-  for (const toggle of await sec.locator('.multi-cell').first().locator('.group-toggle').all()) await toggle.click();
+  await sec.locator('.multi-cell').first().locator('.group-toggle').evaluateAll((list) => list.forEach((toggle) => toggle.click()));
+  await expect(sec.locator('.finding-group.is-folded')).toHaveCount(0);
   await sec.locator('.multi-cell').first().locator('details.finding').evaluateAll((list) => list.forEach((item) => { item.open = true; }));
   if (process.env.MULTI_SHOT) {
     for (const width of [1440, 1024]) {
