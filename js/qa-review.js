@@ -2448,12 +2448,63 @@
     return layers;
   }
 
-  function paintColumnCases(report, paid) {
+  // The layers of the cases of every report, in CASE_LAYERS order and then by name, so every column of a
+  // comparison lists the same groups in the same order.
+  function caseGroups(reports) {
+    const seen = new Set();
+    reports.forEach((report) => ((report && report.cases) || []).forEach((item) => { if (item && item.layer) seen.add(item.layer); }));
+    return CASE_LAYERS.filter((name) => seen.has(name)).concat([...seen].filter((name) => CASE_LAYERS.indexOf(name) === -1).sort());
+  }
+
+  const CASE_RANK = {
+    priority: { P1: 0, P2: 1, P3: 2 },
+    verdict: { fail: 0, risk: 1, person: 2, pass: 3 },
+    severity: { critical: 0, high: 1, medium: 2, low: 3, info: 4 }
+  };
+  function byCaseRank(a, b) {
+    for (const key of ["priority", "verdict", "severity"]) {
+      const diff = (CASE_RANK[key][a[key]] ?? 9) - (CASE_RANK[key][b[key]] ?? 9);
+      if (diff) return diff;
+    }
+    return (a.n || 0) - (b.n || 0);
+  }
+
+  // Selectors and addresses in the evidence: a URL, a token opening with . or #, or one holding > [ or :nth-.
+  const CODE_TOKEN = /^(>|https?:\/\/\S+|[.#][A-Za-z_]\S*|\S*[\w)\]](>|\[)\S*|\S*:nth-\S*)$/;
+  function codeText(text) {
+    return String(text).split(/(\s+)/).map((part) => (CODE_TOKEN.test(part) ? "<code>" + esc(part) + "</code>" : esc(part))).join("");
+  }
+
+  function columnCase(item, paid) {
+    const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '">' + esc(item.priority) + "</span>" : "";
+    const why = String(fc.line(item.msg && item.msg.why, item.why) || "");
+    return '<li class="case" data-id="' + esc(item.id) + '"><div class="cases-chips">' + prio + '<span class="id">' + esc(item.id) + '</span><span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div>" +
+      "<strong>" + fadeText(fc.line(item.msg && item.msg.title, item.title), paid) + "</strong>" +
+      (why ? '<p class="muted cases-why">' + (paid ? codeText(why) : fadeText(why, false)) + "</p>" +
+        (why.length > 110 ? '<button class="cases-more no-print" type="button" aria-expanded="false">' + esc(rc.t("caseMore")) + "</button>" : "") : "") + "</li>";
+  }
+
+  // A comparison column: a line of counts, then the cases folded into one group per layer, in the order that
+  // every column shares, so a layer a site has no case in still holds its place.
+  function paintColumnCases(report, paid, groups) {
     const cases = report.cases || [];
-    slot("cases").innerHTML = cases.map((item) => {
-      const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '">' + esc(item.priority) + "</span>" : "";
-      return '<article class="case"><div>' + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div><strong>" + fadeText(fc.line(item.msg && item.msg.title, item.title), paid) + '</strong><p class="muted">' + fadeText(fc.line(item.msg && item.msg.why, item.why), paid) + "</p></article>";
-    }).join("") || '<p class="muted">No proposed case was saved.</p>';
+    const box = slot("cases");
+    if (!cases.length) {
+      box.innerHTML = '<p class="muted">No proposed case was saved.</p>';
+      return;
+    }
+    const count = (key, value) => cases.filter((item) => item[key] === value).length;
+    const prios = ["P1", "P2", "P3"].filter((level) => count("priority", level)).map((level) =>
+      '<span class="cases-tally"><span class="prio prio-' + level + '">' + level + "</span> " + count("priority", level) + "</span>");
+    const verdicts = ["fail", "risk"].filter((verdict) => count("verdict", verdict)).map((verdict) =>
+      '<span class="cases-tally"><span class="badge v-' + verdict + '">' + esc(VERDICT_LABEL[verdict]) + "</span>" + count("verdict", verdict) + "</span>");
+    box.innerHTML = '<p class="cases-sum"><span class="cases-total"><b>' + cases.length + "</b> " + esc(rc.t("kpiCases")) + "</span>" + prios.concat(verdicts).join("") + "</p>" +
+      (groups || caseGroups([report])).map((name) => {
+        const items = cases.filter((item) => item.layer === name).sort(byCaseRank);
+        return '<section class="cases-group' + (items.length ? "" : " is-none") + '" data-group="' + esc(name) + '"><h3><button class="cases-toggle" type="button" aria-expanded="false"' + (items.length ? "" : " disabled") + '>' +
+          '<span class="cases-name">' + esc(name) + '</span><span class="cases-n">' + items.length + "</span></button></h3>" +
+          (items.length ? '<ol class="cases-list" hidden>' + items.map((item) => columnCase(item, paid)).join("") + "</ol>" : "") + "</section>";
+      }).join("");
   }
 
   // One column of the many-URL comparison: every section of one report, drawn by the painters above.
@@ -2467,7 +2518,7 @@
       paintFacts(report);
       paintAlarm(report, paid);
       paintMentions(report);
-      paintColumnCases(report, paid);
+      paintColumnCases(report, paid, payload.caseGroups);
     });
     (root.cells ? root.cells() : [root]).forEach((cell) => {
       if (!paid) fadeSections(cell, true);
@@ -2475,7 +2526,7 @@
     });
   }
 
-  window.QAReviewSections = { paint: paintColumn, esc, scoreColor, gradeOf };
+  window.QAReviewSections = { paint: paintColumn, caseGroups, esc, scoreColor, gradeOf };
 
   function render(payload) {
     const report = payload.report;

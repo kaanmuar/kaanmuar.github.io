@@ -73,14 +73,48 @@
   .multi-cell .areas, .multi-cell .stat-row, .multi-cell .checks-grid, .multi-cell .kpis { grid-template-columns: minmax(0, 1fr); }
 }
 /* Long lists scroll inside their box; the fade at the foot says there is more. */
-.multi-sec:is([data-sec="findings"], [data-sec="pages"], [data-sec="log"], [data-sec="cases"]) .multi-cell > .card { max-height: 640px; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
-.multi-sec:is([data-sec="findings"], [data-sec="pages"], [data-sec="log"], [data-sec="cases"]) .multi-cell > .card::after { content: ""; position: sticky; bottom: -18px; display: block; height: 36px; margin: -18px -18px -18px; background: linear-gradient(transparent, var(--look-card, var(--card)) 85%); pointer-events: none; }
+.multi-sec:is([data-sec="findings"], [data-sec="pages"], [data-sec="log"]) .multi-cell > .card { max-height: 640px; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.multi-sec:is([data-sec="findings"], [data-sec="pages"], [data-sec="log"]) .multi-cell > .card::after { content: ""; position: sticky; bottom: -18px; display: block; height: 36px; margin: -18px -18px -18px; background: linear-gradient(transparent, var(--look-card, var(--card)) 85%); pointer-events: none; }
 .multi-cell .page-table thead th { position: sticky; top: -18px; z-index: 1; background: var(--look-card, var(--card)); }
 .multi-empty { flex-grow: 1; display: grid; place-items: start center; min-height: 72px; padding: 26px 16px; border: 1px dashed var(--line); border-radius: 18px; color: var(--muted); font-size: 13px; text-align: center; background: color-mix(in srgb, var(--panel) 40%, transparent); }
 .multi-cell.is-note > :not([hidden]) { padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; color: var(--muted); background: color-mix(in srgb, var(--panel) 55%, transparent); }
 .multi-cell > .multi-empty, .multi-cell.is-note > :last-child { flex-grow: 0; }
 .multi-cell .table-scroll { max-width: 100%; overflow-x: auto; }
 .multi-cell .print-more { display: none; }
+/* Cases: a line of counts, then one folded group per layer. Every column holds the same groups, and the
+   cells and cards are subgrids of one row track per group, so a group starts level in every column.
+   A size container cannot be a subgrid, so these cells are not containers. */
+.multi-sec > .cases-bar { position: sticky; left: 0; width: fit-content; margin: -4px 0 12px; }
+.multi-sec.is-folded > .cases-bar { display: none; }
+.multi-modal .multi-sec[data-sec="cases"] .multi-row { grid-template-rows: repeat(var(--case-rows, 1), auto); row-gap: 0; }
+.multi-modal .multi-sec[data-sec="cases"] .multi-cell { display: grid; grid-row: span var(--case-rows, 1); grid-template-rows: subgrid; row-gap: 0; container-type: normal; }
+.multi-modal .multi-cell > [data-slot="cases"] { display: grid; grid-row: 1 / -1; grid-template-rows: subgrid; row-gap: 0; min-width: 0; }
+.multi-modal .multi-cell > [data-slot="cases"] > .muted { grid-row: 1 / -1; margin: 0; }
+.multi-modal .cases-sum { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; gap: 6px 10px; margin: 0; padding-bottom: 12px; font-size: 12.5px; color: var(--muted); }
+.multi-modal .cases-total { flex-basis: 100%; }
+.multi-modal .cases-total b { font-family: "Source Serif 4", Georgia, serif; font-size: 1.35rem; color: var(--text); }
+.multi-modal .cases-tally { display: inline-flex; align-items: center; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--text); }
+.multi-modal .cases-tally .prio, .multi-modal .cases-tally .badge { margin-right: 5px; }
+.multi-modal .cases-group { min-width: 0; border-top: 1px solid var(--line); }
+.multi-modal .cases-group h3 { margin: 0; font: inherit; }
+.multi-modal .cases-toggle { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 2px; border: 0; background: none; color: var(--text); font: 600 13px/1.3 Inter, system-ui, sans-serif; text-align: left; cursor: pointer; }
+.multi-modal .cases-toggle::after { content: ""; flex: none; width: 7px; height: 7px; margin: 0 2px 3px 0; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s; }
+.multi-modal .cases-group.is-open .cases-toggle::after { margin-bottom: -3px; transform: rotate(-135deg); }
+.multi-modal .cases-toggle:disabled { color: var(--muted); cursor: default; opacity: .6; }
+.multi-modal .cases-toggle:disabled::after { visibility: hidden; }
+.multi-modal .cases-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.multi-modal .cases-n { min-width: 2.2em; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--panel) 80%, transparent); font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; }
+.multi-modal .cases-list { display: grid; gap: 8px; margin: 0; padding: 2px 0 12px; list-style: none; }
+.multi-modal .cases-list[hidden] { display: none; }
+.multi-modal .cases-list > .case { min-width: 0; padding: 9px 11px; border: 1px solid var(--line); border-radius: 12px; overflow-wrap: anywhere; background: color-mix(in srgb, var(--panel) 35%, transparent); }
+.multi-modal .cases-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-bottom: 5px; }
+.multi-modal .cases-chips .prio, .multi-modal .cases-chips .tag { margin: 0; }
+.multi-modal .cases-list > .case > strong { display: block; font-size: 13px; line-height: 1.35; }
+.multi-modal .cases-why { display: -webkit-box; margin: 4px 0 0; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: 12.5px; line-height: 1.45; }
+.multi-modal .case.is-open .cases-why { display: block; -webkit-line-clamp: unset; overflow: visible; }
+.multi-modal .cases-why code { padding: 0 3px; border-radius: 4px; background: color-mix(in srgb, var(--panel) 85%, transparent); font: 11px/1.45 "Fira Code", ui-monospace, monospace; overflow-wrap: anywhere; }
+.multi-modal .cases-more { margin-top: 3px; padding: 0; border: 0; background: none; color: var(--own); font: 600 12px/1.4 Inter, system-ui, sans-serif; cursor: pointer; }
+.multi-modal .cases-more:hover { text-decoration: underline; }
 
 /* Six sites fit the side-by-side table without scrolling sideways; the line names stay in view. */
 .multi-modal { --own: var(--cyan); }
@@ -197,6 +231,18 @@
   body.printing-multi .multi-cell .card::after { display: none; }
   body.printing-multi .multi-cell .page-table thead th { position: static; }
   body.printing-multi .multi-cell .print-cut { display: none !important; }
+  body.printing-multi .multi-sec[data-sec="cases"] .multi-row { grid-template-rows: repeat(var(--case-rows-print, 2), auto); }
+  body.printing-multi .multi-sec[data-sec="cases"] .multi-cell { grid-row: span var(--case-rows-print, 2); }
+  body.printing-multi .multi-sec[data-sec="cases"] .multi-cell::before { grid-row: 1; }
+  body.printing-multi .multi-cell > [data-slot="cases"] { grid-row: 2 / -1; }
+  body.printing-multi .multi-cell .cases-group h3 { display: flex; align-items: center; gap: 6px; font: 600 9pt/1.3 Inter, system-ui, sans-serif; }
+  body.printing-multi .multi-cell .cases-group h3 > .cases-name:first-child { padding: 4px 0; }
+  body.printing-multi .multi-cell .cases-list[hidden] { display: grid !important; }
+  body.printing-multi .multi-cell .cases-list { gap: 4px; padding-bottom: 6px; }
+  body.printing-multi .multi-cell .cases-list > .case { padding: 5px 7px; break-inside: avoid; }
+  body.printing-multi .multi-cell .cases-toggle { padding: 4px 0; font-size: 9pt; }
+  body.printing-multi .multi-cell .cases-toggle::after { display: none; }
+  body.printing-multi .multi-cell .cases-why { display: -webkit-box !important; -webkit-line-clamp: 2 !important; overflow: hidden !important; font-size: 8pt; }
   body.printing-multi .multi-cell .print-more { display: revert; list-style: none; color: #6b7785; font-style: italic; }
   body.printing-multi .multi-cell .sec-matrix { font-size: 7pt; }
   body.printing-multi .multi-cell .sec-matrix th { font-size: 6pt; letter-spacing: 0; overflow-wrap: anywhere; }
