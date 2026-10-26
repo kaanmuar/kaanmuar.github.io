@@ -333,6 +333,93 @@ test('in print a long list stops after twelve rows with a line counting the rest
   expect(seen.pdf[0]).toContain('<tr class="print-more">');
 });
 
+// One site sends most headers on its start page and drops some on 39 more pages, one sends every header on all
+// its pages, and the sample sends none.
+function recordsWithHeaders() {
+  const tiles = (extra) => ['HTTPS redirect', 'HSTS', 'Content-Security-Policy', 'Frame protection', 'X-Content-Type-Options', 'Referrer-Policy', 'Permissions-Policy',
+    'Cross-Origin-Opener-Policy', 'TLS certificate', 'security.txt', 'SPF', 'DMARC', 'CAA', 'Safe Browsing', 'Domain expiry'].concat(extra).map((label, i) => ({ label, state: ['pass', 'risk', 'fail'][i % 3] }));
+  const page = (path, on, cookies) => Object.assign({ path, hsts: false, csp: false, frame: false, nosniff: false, referrer: false, permissions: false, cookies: cookies || 0, looseCookies: 0 }, on);
+  const all = { hsts: true, csp: true, frame: true, nosniff: true, referrer: true, permissions: true };
+  const ownPages = [page('/', { hsts: true, csp: true, frame: true, nosniff: true, referrer: true }, 2)].concat(Array.from({ length: 39 }, (x, i) => page(
+    '/blog/2026/10/' + (i + 1) + '/a-rather-long-article-slug-that-wraps-in-a-narrow-column?utm_source=newsletter',
+    { hsts: i % 3 !== 0, csp: i % 5 !== 0, frame: true, nosniff: i % 7 !== 0, referrer: i > 2, permissions: i === 4 }, i % 4 === 0 ? 1 : 0)));
+  ownPages[6].looseCookies = 1;
+  const records = recordsWith(true);
+  const security = [
+    { headers: tiles(['MTA-STS', 'TLS-RPT', 'Accessibility statement']), tls: { validTo: '2027-01-01', daysLeft: 67, issuer: "Let's Encrypt" }, pages: ownPages },
+    { headers: tiles(['Privacy notice']), pages: ['/', '/about', '/pricing'].map((path) => page(path, all)) },
+    sample.report.insights.security
+  ];
+  records.forEach((row, index) => { row.report.insights = Object.assign({}, row.report.insights, { security: security[index] }); });
+  return records;
+}
+
+test('the security headers line up across sites: one coverage row per header in the same order and at the same height, then only the pages that differ (#1607)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, recordsWithHeaders(), '/qa-review.html?comparison=cmp1', seen);
+  const sec = page.locator('#multi-overlay .multi-sec[data-sec="security"]');
+  const cells = sec.locator('.multi-cell');
+  await expect(cells.locator('[data-header]')).toHaveCount(21, { timeout: 20000 });
+  const keys = ['hsts', 'csp', 'frame', 'nosniff', 'referrer', 'permissions', 'cookies'];
+  const rows = await cells.evaluateAll((list) => list.map((cell) => [...cell.querySelectorAll('[data-header]')].map((row) => [row.dataset.header, Math.round(row.getBoundingClientRect().top), Math.round(row.getBoundingClientRect().height)])));
+  for (const column of rows) expect(column.map(([key]) => key)).toEqual(keys);
+  keys.forEach((key, i) => {
+    const tops = rows.map((column) => column[i][1]);
+    expect(Math.max(...tops) - Math.min(...tops), key).toBeLessThanOrEqual(1);
+    expect(new Set(rows.map((column) => column[i][2])).size, key).toBe(1);
+  });
+  const checks = await cells.evaluateAll((list) => list.map((cell) => [...cell.querySelectorAll('[data-check]')].map((row) => [row.dataset.check, Math.round(row.getBoundingClientRect().top)])));
+  expect(checks[0].length).toBeGreaterThan(15);
+  for (const column of checks) expect(column.map(([key]) => key)).toEqual(checks[0].map(([key]) => key));
+  checks[0].forEach(([key], i) => expect(Math.max(...checks.map((column) => column[i][1])) - Math.min(...checks.map((column) => column[i][1])), key).toBeLessThanOrEqual(1));
+
+  const [ownCell, rivalCell, sampleCell] = [0, 1, 2].map((i) => cells.nth(i));
+  await expect(ownCell.locator('[data-header="hsts"]')).toHaveText(/HSTS\s*✗ 27 of 40 pages/);
+  await expect(ownCell.locator('[data-header="hsts"]')).toHaveClass(/risk/);
+  await expect(ownCell.locator('[data-header="frame"]')).toHaveText(/✓ All 40 pages/);
+  await expect(ownCell.locator('[data-header="permissions"]')).toHaveText(/✗ 1 of 40 pages/);
+  await expect(ownCell.locator('[data-header="cookies"]')).toHaveText(/1 without Secure/);
+  await expect(rivalCell.locator('[data-header="hsts"]')).toHaveClass(/pass/);
+  await expect(rivalCell.locator('.sec-diff')).toHaveText('Every page analyzed sends the headers the start page sends.');
+  await expect(sampleCell.locator('[data-header="hsts"]')).toHaveText(/✗ Not sent/);
+  await expect(sampleCell.locator('[data-header="hsts"]')).toHaveClass(/fail/);
+  await expect(sampleCell.locator('.sec-diff')).toHaveText('The start page sends none of these headers, so there is nothing to compare page by page.');
+});
+
+test('a site with many pages lists only the first pages that differ, with a line counting the rest, on the page, in print and in the PDF (#1607)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, recordsWithHeaders(), '/qa-review.html?comparison=cmp1', seen);
+  const cells = page.locator('#multi-overlay .multi-sec[data-sec="security"] .multi-cell');
+  const diff = cells.first().locator('.sec-diff');
+  await expect(diff.locator('li:visible')).toHaveCount(6, { timeout: 20000 });
+  await expect(diff.locator('summary')).toHaveText('+17 more');
+  expect(await diff.evaluate((el) => el.querySelector('summary').getBoundingClientRect().bottom <= el.getBoundingClientRect().bottom)).toBe(true);
+  await expect(diff.locator('li').first()).toHaveAttribute('title', /^\/blog\/2026\/10\/\d+\/a-rather-long/);
+  const tallest = await cells.evaluateAll((list) => Math.max(...list.map((cell) => cell.getBoundingClientRect().height)));
+  expect(tallest).toBeLessThan(1600);
+  await diff.locator('summary').click();
+  await expect(diff.locator('li:visible')).toHaveCount(23);
+  expect(await diff.locator('.sec-more ol').evaluate((el) => el.scrollHeight > el.clientHeight && el.clientHeight < 300)).toBe(true);
+  const spill = await cells.evaluateAll((list) => list.flatMap((cell) => {
+    const edge = cell.getBoundingClientRect().right + 1;
+    return [...cell.querySelectorAll('*')].filter((el) => el.getClientRects().length && el.getBoundingClientRect().right > edge).map((el) => el.className || el.tagName);
+  }));
+  expect(spill).toEqual([]);
+
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  await expect(diff.locator('li:visible')).toHaveCount(6);
+  await expect(diff.locator('summary')).toBeVisible();
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+  const download = page.waitForEvent('download');
+  await page.locator('#multi-overlay').getByRole('button', { name: 'Download PDF' }).click();
+  await download;
+  expect(seen.pdf[0]).toContain('data-header="hsts"');
+});
+
 test('the benchmark ranks every site by its health score and reads where the first site stands, on the page and in the PDF (#1438)', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);

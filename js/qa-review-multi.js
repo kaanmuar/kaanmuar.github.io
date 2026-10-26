@@ -334,6 +334,13 @@
     });
   }
 
+  // A security check no site was read for leaves every column, so the rows stay the same in all of them.
+  function pruneChecks(grid) {
+    const rows = [...grid.querySelectorAll('.multi-sec[data-sec="security"] [data-check]')];
+    const read = new Set(rows.filter((row) => !row.classList.contains("unknown")).map((row) => row.dataset.check));
+    rows.forEach((row) => { if (!read.has(row.dataset.check)) row.remove(); });
+  }
+
   // In print a long list stops after PRINT_ROWS with a line counting the rest, as the screen stops it in a
   // scroll box, so one long column does not leave the others blank for pages.
   const PRINT_ROWS = 12;
@@ -426,6 +433,7 @@
       }
     });
     grid.querySelectorAll(".report-cover h2").forEach((heading) => { heading.innerHTML = esc(heading.textContent).replace(/\./g, ".<wbr>"); });
+    pruneChecks(grid);
     settle(grid);
     capForPrint(grid);
     const bar = body.querySelector(".multi-hosts-bar");
