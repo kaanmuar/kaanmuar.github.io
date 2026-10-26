@@ -180,11 +180,15 @@ test('the comparison title shows each site as its logo with its name below, a le
 
   // The side-by-side table heads each column with the logo and name, not the address, so the column stays narrow (#1596).
   const heads = page.locator('#multi-overlay .multi-table thead th:not(:first-child)');
-  await expect(heads.locator('.multi-col-name')).toHaveText(['wordpress', 'excalidraw', 'Carlos A. Muñoz']);
-  await expect(heads.nth(1)).toHaveAttribute('title', 'excalidraw.com');
-  await expect(heads.nth(0).locator('img.multi-logo')).toBeVisible();
-  await expect(heads.nth(1).locator('img')).toHaveCount(0);
-  await expect(heads.nth(1).locator('.multi-col-mark > span')).toHaveText('E');
+  // The columns follow the podium (#1603), so each head is found by its site.
+  const headOf = (host) => page.locator('#multi-overlay .multi-table thead th[title="' + host + '"]');
+  await expect(heads).toHaveCount(3);
+  await expect(headOf('wordpress.org').locator('.multi-col-name')).toHaveText('wordpress');
+  await expect(headOf('excalidraw.com').locator('.multi-col-name')).toHaveText('excalidraw');
+  await expect(headOf('carlosandmunoz.com').locator('.multi-col-name')).toHaveText('Carlos A. Muñoz');
+  await expect(headOf('wordpress.org').locator('img.multi-logo')).toBeVisible();
+  await expect(headOf('excalidraw.com').locator('img')).toHaveCount(0);
+  await expect(headOf('excalidraw.com').locator('.multi-col-mark > span')).toHaveText('E');
   for (const width of await heads.evaluateAll((cells) => cells.map((cell) => cell.getBoundingClientRect().width))) expect(width).toBeLessThan(140);
   if (process.env.MULTI_SHOT) await page.locator('#multi-overlay .multi-summary').screenshot({ path: process.env.MULTI_SHOT + '/multi-table.png' });
 
@@ -363,16 +367,16 @@ test('Search visibility sums the pages that cannot be indexed by reason and show
     await page.evaluate(() => document.body.classList.remove('printing-multi'));
     await page.setViewportSize({ width: 1024, height: 900 });
   }
-  const big = cells.nth(0);
+  const big = cells.and(page.locator('[data-col="0"]'));
   await expect(big.locator('[data-part]')).toHaveCount(3);
   expect(await big.locator('[data-part]').evaluateAll((els) => els.map((el) => el.dataset.part))).toEqual(['stats', 'unindexable', 'notes']);
   await expect(big.locator('.multi-seo-reasons li')).toHaveText(['Canonical to another page 30', 'Status 404 6', 'noindex 2', 'Status 500 2']);
   await expect(big.locator('.multi-seo-pages li')).toHaveCount(5);
   await expect(big.locator('.multi-seo-pages li [title]').first()).toHaveAttribute('title', /^\/category\/a-long-section-name\/subsection\/article-with-a-long-slug-0\?utm_source=newsletter$/);
   await expect(big.locator('.multi-seo-more')).toHaveText('…and 35 more, in the report on the page.');
-  await expect(cells.nth(5).locator('.multi-seo-reasons li')).toHaveText(['Canonical to another page 1']);
-  await expect(cells.nth(5).locator('.multi-seo-more')).toHaveCount(0);
-  await expect(cells.nth(1).locator('[data-part="unindexable"] .multi-seo-reasons')).toHaveCount(0);
+  await expect(cells.and(page.locator('[data-col="5"]')).locator('.multi-seo-reasons li')).toHaveText(['Canonical to another page 1']);
+  await expect(cells.and(page.locator('[data-col="5"]')).locator('.multi-seo-more')).toHaveCount(0);
+  await expect(cells.and(page.locator('[data-col="1"]')).locator('[data-part="unindexable"] .multi-seo-reasons')).toHaveCount(0);
 
   const measure = () => cells.evaluateAll((list) => list.map((cell) => {
     const edge = cell.getBoundingClientRect();
@@ -398,7 +402,7 @@ test('Search visibility sums the pages that cannot be indexed by reason and show
   await printed.route(/^https?:/, (route) => route.abort());
   await printed.emulateMedia({ media: 'print' });
   await printed.setContent(seen.pdf[0], { waitUntil: 'load' });
-  const copy = printed.locator('.multi-sec[data-sec="seo"] .multi-cell').first();
+  const copy = printed.locator('.multi-sec[data-sec="seo"] .multi-cell[data-col="0"]');
   await expect(copy.locator('.multi-seo-reasons li')).toHaveCount(4);
   await expect(copy.locator('.multi-seo-pages li')).toHaveCount(5);
   await expect(copy.locator('.multi-seo-more')).toBeVisible();
@@ -438,9 +442,9 @@ test('the "In a real browser" cells fit their column, read in the same order, an
     for (const [width, dark] of [[1024, false], [1024, true], [1440, false], [1440, true]]) {
       await page.setViewportSize({ width, height: 1000 });
       await page.evaluate((on) => { if (document.documentElement.classList.contains('dark-mode') !== on) document.querySelector('#theme-toggle').click(); }, dark);
-      await sec.locator('.multi-cell').nth(3).locator('.split').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+      await sec.locator('.multi-cell[data-col="3"]').locator('.split').evaluate((el) => el.scrollIntoView({ block: 'start' }));
       await page.screenshot({ path: process.env.MULTI_SHOT + '/browser-' + width + (dark ? '-dark' : '') + '.png' });
-      await sec.locator('.multi-cell').nth(3).locator('[data-part="axe"]').evaluate((el) => el.scrollIntoView({ block: 'start' })).catch(() => {});
+      await sec.locator('.multi-cell[data-col="3"]').locator('[data-part="axe"]').evaluate((el) => el.scrollIntoView({ block: 'start' })).catch(() => {});
       await page.screenshot({ path: process.env.MULTI_SHOT + '/browser-axe-' + width + (dark ? '-dark' : '') + '.png' });
     }
     await page.evaluate(() => { if (document.documentElement.classList.contains('dark-mode')) document.querySelector('#theme-toggle').click(); });
@@ -461,15 +465,15 @@ test('the "In a real browser" cells fit their column, read in the same order, an
   }));
   expect(spill).toEqual([]);
   for (const index of [2, 3, 4, 5]) {
-    await expect(sec.locator('.multi-cell').nth(index).locator('[data-part]')).toHaveCount(3);
-    expect(await sec.locator('.multi-cell').nth(index).locator('[data-part]').evaluateAll((els) => els.map((el) => el.dataset.part))).toEqual(['tracking', 'text', 'axe']);
+    await expect(sec.locator('.multi-cell[data-col="' + index + '"]').locator('[data-part]')).toHaveCount(3);
+    expect(await sec.locator('.multi-cell[data-col="' + index + '"]').locator('[data-part]').evaluateAll((els) => els.map((el) => el.dataset.part))).toEqual(['tracking', 'text', 'axe']);
   }
   const tallest = await sec.locator('.multi-cell').evaluateAll((cells) => Math.max(...cells.map((cell) => [...cell.querySelectorAll('[data-part]')].reduce((sum, el) => sum + el.offsetHeight, 0))));
   expect(tallest).toBeLessThan(1800);
 
   await page.evaluate(() => document.body.classList.add('printing-multi'));
   await page.emulateMedia({ media: 'print' });
-  const printed = sec.locator('.multi-cell').nth(3).locator('[data-part="axe"] tbody tr:visible');
+  const printed = sec.locator('.multi-cell[data-col="3"]').locator('[data-part="axe"] tbody tr:visible');
   expect(await printed.count()).toBeLessThanOrEqual(7);
   await page.emulateMedia({ media: 'screen' });
   await page.evaluate(() => document.body.classList.remove('printing-multi'));
@@ -481,7 +485,7 @@ test('the "In a real browser" cells fit their column, read in the same order, an
   const pdf = await off.newPage();
   await pdf.setContent(seen.pdf[0]);
   await pdf.emulateMedia({ media: 'print' });
-  const axe = pdf.locator('.multi-sec[data-sec="browser"] .multi-cell').nth(3).locator('[data-part="axe"]');
+  const axe = pdf.locator('.multi-sec[data-sec="browser"] .multi-cell[data-col="3"]').locator('[data-part="axe"]');
   expect(await axe.locator('tbody tr:visible').count()).toBeLessThanOrEqual(7);
   await expect(axe.locator('tbody tr:visible').last()).toHaveText(/^…and \d+ more/);
   expect(await axe.locator('tbody tr').first().evaluate((row) => getComputedStyle(row).display)).toBe('flex');
@@ -568,8 +572,8 @@ test('the host bar keeps a domain suffix on the line of the name it ends (#1611)
     expect(shown[shown.length - 1], shown.join(' / ')).not.toMatch(/^\.?((com|org|net|edu|gov|gob|ac|co|or|ne)\.)?[a-z]{2,}$/i);
     expect(shown[0], shown.join(' / ')).not.toBe('www.');
   }
-  await expect(heads.first()).toHaveText('hotelestequendama.com.co');
-  await expect(heads.first()).toHaveAttribute('title', 'www.hotelestequendama.com.co');
+  const hotel = page.locator('#multi-overlay .multi-hosts .multi-host[title="www.hotelestequendama.com.co"]');
+  await expect(hotel).toHaveText('hotelestequendama.com.co');
 });
 
 test('the public marks of At a glance fit their tiles and line up across six sites, and the response times keep their bars and numbers, on screen and in print (#1612)', async ({ page }) => {
@@ -777,7 +781,7 @@ test('"What AI sees" keeps its boxes in one order and lined up in every column, 
         await page.evaluate((on) => { if (document.documentElement.classList.contains('dark-mode') !== on) SiteTheme.toggle(); }, dark);
         await sec.evaluate((el) => el.scrollIntoView());
         await page.screenshot({ path: process.env.MULTI_SHOT + '/geo-' + width + (dark ? '-dark' : '-light') + '.png' });
-        await sec.locator('.multi-cell').first().locator('[data-part="crawlers"]').evaluate((el) => el.scrollIntoView({ block: 'end' }));
+        await sec.locator('.multi-cell[data-col="0"]').locator('[data-part="crawlers"]').evaluate((el) => el.scrollIntoView({ block: 'end' }));
         await page.screenshot({ path: process.env.MULTI_SHOT + '/geo-' + width + (dark ? '-dark' : '-light') + '-crawlers.png' });
       }
     }
@@ -808,11 +812,11 @@ test('"What AI sees" keeps its boxes in one order and lined up in every column, 
   }
   for (const index of [0, 1, 2, 3]) expect(new Set(cells.map((cell) => cell.tops[index])).size, cells[0].parts[index]).toBe(1);
   expect(await sec.evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(1700);
-  await expect(sec.locator('.multi-cell').nth(2).locator('[data-part="crawlers"] .bot-group').first()).toHaveText(/✓ \d+ ✕ \d+$/);
+  await expect(sec.locator('.multi-cell[data-col="2"]').locator('[data-part="crawlers"] .bot-group').first()).toHaveText(/✓ \d+ ✕ \d+$/);
 
   await page.evaluate(() => document.body.classList.add('printing-multi'));
   await page.emulateMedia({ media: 'print' });
-  const outline = sec.locator('.multi-cell').nth(2).locator('.ai-outline li:visible');
+  const outline = sec.locator('.multi-cell[data-col="2"]').locator('.ai-outline li:visible');
   await expect(outline).toHaveCount(13);
   await expect(outline.last()).toHaveText('…and ' + (sample.report.insights.geo.aiView.outline.length - 12) + ' more, in the report on the page.');
   if (process.env.MULTI_SHOT) {
@@ -1055,9 +1059,9 @@ test('the fix-kit files sit level across the columns however each kit differs, o
   }
   await expect(sec.locator('[data-kit="chat"]')).toHaveCount(0);
   await expect(sec.locator('[data-kit="libs"]')).toHaveCount(4);
-  await expect(sec.locator('.multi-cell').nth(3).locator('[data-kit="libs"]')).toHaveText('Library upgradesNothing to upgrade.');
-  await expect(sec.locator('.multi-cell').nth(2).locator('[data-kit="libs"]')).toHaveText('Library upgradesIn the full report.');
-  await expect(sec.locator('.multi-cell').nth(3).locator('[data-kit="legal"]')).toHaveClass('is-none');
+  await expect(sec.locator('.multi-cell[data-col="3"]').locator('[data-kit="libs"]')).toHaveText('Library upgradesNothing to upgrade.');
+  await expect(sec.locator('.multi-cell[data-col="2"]').locator('[data-kit="libs"]')).toHaveText('Library upgradesIn the full report.');
+  await expect(sec.locator('.multi-cell[data-col="3"]').locator('[data-kit="legal"]')).toHaveClass('is-none');
   const rows = () => sec.locator('.multi-cell').evaluateAll((cells) => cells.map((cell) => Object.fromEntries([...cell.querySelectorAll('[data-slot="fixkit"] > p, [data-kit], .code-peek')].map((el) => {
     const box = el.getBoundingClientRect();
     return [el.dataset.kit || el.className || 'intro', { top: box.top, height: box.height }];
@@ -1112,31 +1116,31 @@ test('the cases sit in the same layer groups, in the same order and at the same 
   const union = order.filter((name) => records.some((row) => row.report.cases.some((item) => item.layer === name)));
   const cells = sec.locator('.multi-cell');
   for (let index = 0; index < 6; index += 1) {
-    const groups = await cells.nth(index).locator('.cases-group').evaluateAll((els) => els.map((el) => [el.dataset.group, el.querySelector('.cases-n').textContent, el.querySelectorAll('.case').length]));
+    const groups = await sec.locator('.multi-cell[data-col="' + index + '"]').locator('.cases-group').evaluateAll((els) => els.map((el) => [el.dataset.group, el.querySelector('.cases-n').textContent, el.querySelectorAll('.case').length]));
     expect(groups.map((row) => row[0]), records[index].report.host).toEqual(union);
     for (const [name, shown, items] of groups) {
       const count = records[index].report.cases.filter((item) => item.layer === name).length;
       expect([name, shown, items]).toEqual([name, String(count), count]);
     }
   }
-  await expect(cells.nth(4).locator('.cases-group[data-group="Privacy"]')).toHaveClass(/is-none/);
-  await expect(cells.nth(0).locator('.cases-sum')).toContainText('P1 1');
+  await expect(cells.and(page.locator('[data-col="4"]')).locator('.cases-group[data-group="Privacy"]')).toHaveClass(/is-none/);
+  await expect(cells.and(page.locator('[data-col="0"]')).locator('.cases-sum')).toContainText('P1 1');
   const tops = (selector) => cells.evaluateAll((els, sel) => els.map((el) => Math.round(el.querySelector(sel).getBoundingClientRect().top)), selector);
   expect(new Set(await tops('.cases-sum')).size).toBe(1);
   expect(new Set(await tops('.cases-group[data-group="Security"] h3')).size).toBe(1);
   expect(await sec.locator('[data-slot="cases"]').first().evaluate((el) => [getComputedStyle(el).maxHeight, el.scrollHeight <= el.clientHeight])).toEqual(['none', true]);
 
-  const toggle = cells.nth(1).locator('.cases-group[data-group="Accessibility"] .cases-toggle');
+  const toggle = cells.and(page.locator('[data-col="1"]')).locator('.cases-group[data-group="Accessibility"] .cases-toggle');
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-  await expect(cells.nth(0).locator('.case').first()).toBeHidden();
+  await expect(cells.and(page.locator('[data-col="0"]')).locator('.case').first()).toBeHidden();
   await toggle.click();
   for (let index = 0; index < 6; index += 1) await expect(cells.nth(index).locator('.cases-group[data-group="Accessibility"] .cases-toggle')).toHaveAttribute('aria-expanded', 'true');
   expect(new Set(await tops('.cases-group[data-group="Security"] h3')).size).toBe(1);
-  const long = cells.nth(0).locator('.case[data-id="AXE-01"]');
+  const long = cells.and(page.locator('[data-col="0"]')).locator('.case[data-id="AXE-01"]');
   await expect(long).toBeVisible();
-  await expect(cells.nth(0).locator('.cases-group[data-group="Accessibility"] .case').first()).toHaveAttribute('data-id', 'AXE-01');
+  await expect(cells.and(page.locator('[data-col="0"]')).locator('.cases-group[data-group="Accessibility"] .case').first()).toHaveAttribute('data-id', 'AXE-01');
   await expect(long.locator('code').first()).toBeVisible();
-  const spill = () => cells.nth(0).evaluate((cell) => {
+  const spill = () => cells.and(page.locator('[data-col="0"]')).evaluate((cell) => {
     const edge = cell.getBoundingClientRect().right;
     return [...cell.querySelectorAll('.case, .case *')].filter((el) => el.getBoundingClientRect().right > edge + 1 || el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== 'visible').map((el) => el.className || el.tagName);
   });
@@ -1158,7 +1162,7 @@ test('the cases sit in the same layer groups, in the same order and at the same 
   await all.click();
 
   if (process.env.MULTI_SHOT) {
-    await cells.nth(1).locator('.cases-group[data-group="Accessibility"] .cases-toggle').click();
+    await cells.and(page.locator('[data-col="1"]')).locator('.cases-group[data-group="Accessibility"] .cases-toggle').click();
     for (const [width, height] of [[1440, 900], [1024, 768]]) {
       await page.setViewportSize({ width, height });
       for (const dark of [false, true]) {
@@ -1180,7 +1184,7 @@ test('in print the case groups open, each stops after a few cases with a line co
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
   const box = page.locator('#multi-overlay');
-  const cell = box.locator('.multi-sec[data-sec="cases"] .multi-cell').nth(0);
+  const cell = box.locator('.multi-sec[data-sec="cases"] .multi-cell[data-col="0"]');
   const functional = cell.locator('.cases-group[data-group="Functional"]');
   await expect(functional.locator('.cases-n')).toHaveText(String(own.cases.filter((item) => item.layer === 'Functional').length), { timeout: 20000 });
   await expect(functional.locator('.case:visible')).toHaveCount(0);
@@ -1260,7 +1264,7 @@ test('the security headers line up across sites: one coverage row per header in 
   for (const column of checks) expect(column.map(([key]) => key)).toEqual(checks[0].map(([key]) => key));
   checks[0].forEach(([key], i) => expect(Math.max(...checks.map((column) => column[i][1])) - Math.min(...checks.map((column) => column[i][1])), key).toBeLessThanOrEqual(1));
 
-  const [ownCell, rivalCell, sampleCell] = [0, 1, 2].map((i) => cells.nth(i));
+  const [ownCell, rivalCell, sampleCell] = [0, 1, 2].map((i) => sec.locator('.multi-cell[data-col="' + i + '"]'));
   await expect(ownCell.locator('[data-header="hsts"]')).toHaveText(/HSTS\s*✗ 27 of 40 pages/);
   await expect(ownCell.locator('[data-header="hsts"]')).toHaveClass(/risk/);
   await expect(ownCell.locator('[data-header="frame"]')).toHaveText(/✓ All 40 pages/);
@@ -1278,7 +1282,7 @@ test('a site with many pages lists only the first pages that differ, with a line
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWithHeaders(), '/qa-review.html?comparison=cmp1', seen);
   const cells = page.locator('#multi-overlay .multi-sec[data-sec="security"] .multi-cell');
-  const diff = cells.first().locator('.sec-diff');
+  const diff = cells.and(page.locator('[data-col="0"]')).locator('.sec-diff');
   await expect(diff.locator('li:visible')).toHaveCount(6, { timeout: 20000 });
   await expect(diff.locator('summary')).toHaveText('+17 more');
   expect(await diff.evaluate((el) => el.querySelector('summary').getBoundingClientRect().bottom <= el.getBoundingClientRect().bottom)).toBe(true);
@@ -1350,11 +1354,11 @@ test('every list of sites after the ranking keeps its order, and every column li
   expect(await texts('.bench-legend > span')).toEqual(bare);
   expect(await texts('.bench-heat thead th[style]')).toEqual(bare);
   expect(await texts('.bench-kpi:first-of-type .bench-bar > span:first-child')).toEqual(bare);
-  expect(await texts('.multi-table thead th[translate="no"]')).toEqual(full);
+  expect(await box.locator('.multi-table thead th[translate="no"]').evaluateAll((els) => els.map((el) => el.title))).toEqual(bare);
   expect(await texts('.multi-table tbody tr:first-child td')).toEqual(ranked.map((item) => String(item.score)));
-  expect(await texts('.multi-hosts .multi-host')).toEqual(full);
+  expect(await texts('.multi-hosts .multi-host')).toEqual(bare);
   for (const sec of await box.locator('.multi-sec').all()) {
-    expect(await sec.locator('.multi-cell').evaluateAll((els) => els.map((el) => el.dataset.host))).toEqual(full);
+    expect(await sec.locator('.multi-cell').evaluateAll((els) => els.map((el) => el.dataset.host))).toEqual(bare);
   }
   const rings = await box.locator('.multi-sec[data-sec="health"] .ring').evaluateAll((els) => els.map((el) => Number(el.getAttribute('aria-label').match(/\d+/)[0])));
   expect(rings).toEqual(ranked.map((item) => item.score));
@@ -1495,7 +1499,7 @@ test('a long host in the one-page summary wraps inside its card instead of runni
   records[0].report.insights = Object.assign({}, records[0].report.insights, { summary: long + ' scores 34 out of 100 (F). 6 checks fail now, 42 are at risk, and 26 pass.' });
   await page.setViewportSize({ width: 1024, height: 800 });
   await signIn(page, records, '/qa-review.html?comparison=cmp1', seen);
-  const card = page.locator('#multi-overlay .multi-sec[data-sec="exec"] .multi-cell').first().locator('[data-slot="exec"]');
+  const card = page.locator('#multi-overlay .multi-sec[data-sec="exec"] .multi-cell[data-col="0"]').locator('[data-slot="exec"]');
   const line = card.locator('.exec-head p');
   await expect(line).toContainText(long, { timeout: 20000 });
   const [lineBox, cardBox] = await Promise.all([line.boundingBox(), card.boundingBox()]);
