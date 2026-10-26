@@ -107,6 +107,23 @@ test("a finding message renders in the page language and falls back to the Engli
   assert.equal(load("it").line(undefined, "English"), "English");
 });
 
+test("axe-core titles keep axe's English and read in the page language (#1589)", () => {
+  const { EN } = require("../../functions/url-review-findings-en.js");
+  assert.equal(EN["ax-title.button-name"], "Buttons must have discernible text");
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review-findings-copy.js"), "utf8");
+  const sandbox = { window: {}, document: { documentElement: { lang: "es" } } };
+  vm.runInNewContext(source, sandbox);
+  assert.equal(sandbox.window.QAReviewFindingsCopy.line({ id: "ax-title.button-name" }, "x"), "Los botones deben tener un texto reconocible");
+});
+
+test("the comparison visuals have no English left in the report renderer (#1588)", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review.js"), "utf8");
+  const body = source.slice(source.indexOf("function paintVisuals"), source.indexOf("const cc = window.QAReviewCompareCopy"));
+  for (const english of ["Practices worth implementing", "Response time across", "Public marks", "Technology groups", "proposed cases", '"Present"', '"Missing"', "Send HSTS"]) {
+    assert.ok(!body.includes(english), "paintVisuals still writes " + english);
+  }
+});
+
 test("health warnings and Fix first read in the page language, also from a saved report's English (#1355)", () => {
   const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review-findings-copy.js"), "utf8");
   const load = (lang) => {
