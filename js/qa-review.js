@@ -819,7 +819,7 @@
     ).join("") : '<p class="muted">' + esc(rc.t("visNoTech")) + "</p>";
     const ranked = ((report.insights && report.insights.findings) || []).filter((item) => item.rank && item.fix).slice(0, 3).map((item) => [said(item, "title"), said(item, "fix"), true]);
     const advice = ranked.slice();
-    const tip = (key, vars) => [rc.t(key), rc.t(key + "Body", vars)];
+    const tip = (key, vars) => [rc.t(key), rc.t(key + "Body", vars), false, key];
     if (!ranked.length && !headers.hsts) advice.push(tip("adHsts"));
     if (!ranked.length && !headers.csp) advice.push(tip("adCsp"));
     if (!ranked.length && (obs.missingAlt || 0) > 0) advice.push(tip("adAlt", { n: obs.missingAlt }));
@@ -828,12 +828,12 @@
     if (!ranked.length && (obs.ms || 0) > 800) advice.push(tip("adFirst", { ms: obs.ms }));
     if (!advice.length) advice.push(tip("adPlan"));
     advice.push(tip("adSnap"));
-    const adviceHtml = advice.slice(0, 4).map(([title, body, finding]) => "<article><strong>" + esc(title) + "</strong><span>" + (finding ? fadeText(body, paid) : esc(body)) + "</span></article>").join("");
+    const adviceHtml = advice.slice(0, 4).map(([title, body, finding, key]) => "<article" + (key === "adSnap" ? ' data-advice="snapshot"' : "") + "><strong>" + esc(title) + "</strong><span>" + (finding ? fadeText(body, paid) : esc(body)) + "</span></article>").join("");
     slot("report-visuals").innerHTML =
-      '<article class="card"><h2>' + esc(rc.t("visTimes")) + '</h2><p class="muted">' + esc(rc.t("visTimesNote")) + "</p>" + times + "</article>" +
-      '<article class="card"><h2>' + esc(rc.t("visMarks")) + '</h2><div class="ticks">' + ticks + "</div></article>" +
-      '<article class="card"><h2>' + esc(rc.t("visTech")) + "</h2>" + groupBars + "</article>" +
-      '<article class="card"><h2>' + esc(rc.t("visAdvice")) + '</h2><div class="advice">' + adviceHtml + "</div></article>";
+      '<article class="card" data-card="speed"><h2>' + esc(rc.t("visTimes")) + '</h2><p class="muted">' + esc(rc.t("visTimesNote")) + "</p>" + times + "</article>" +
+      '<article class="card" data-card="marks"><h2>' + esc(rc.t("visMarks")) + '</h2><div class="ticks">' + ticks + "</div></article>" +
+      '<article class="card" data-card="tech"><h2>' + esc(rc.t("visTech")) + "</h2>" + groupBars + "</article>" +
+      '<article class="card" data-card="practices"><h2>' + esc(rc.t("visAdvice")) + '</h2><div class="advice">' + adviceHtml + "</div></article>";
     const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString(rc.lang) : "";
     slot("report-cover").innerHTML =
       '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261013c" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || rc.t("dashTitle")) + '</h2><p class="muted">' + esc(when) + "</p>" +

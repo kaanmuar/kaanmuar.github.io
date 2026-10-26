@@ -198,6 +198,17 @@
 .multi-modal .cases-why code { padding: 0 3px; border-radius: 4px; background: color-mix(in srgb, var(--panel) 85%, transparent); font: 11px/1.45 "Fira Code", ui-monospace, monospace; overflow-wrap: anywhere; }
 .multi-modal .cases-more { margin-top: 3px; padding: 0; border: 0; background: none; color: var(--own); font: 600 12px/1.4 Inter, system-ui, sans-serif; cursor: pointer; }
 .multi-modal .cases-more:hover { text-decoration: underline; }
+/* At a glance: every [data-card] takes a row shared by all the columns, as tall as its tallest, so each card
+   starts and ends level with the same card of the other sites. The snapshot note sits at the foot of its card.
+   A size container cannot be a subgrid, so the cards, not the column, are the containers here. */
+.multi-modal .multi-sec[data-sec="glance"] .multi-row { --glance-rows: 4; grid-template-rows: repeat(var(--glance-rows), auto); row-gap: 12px; }
+.multi-modal .multi-sec[data-sec="glance"] .multi-cell { grid-row: span var(--glance-rows); display: grid; grid-template-rows: subgrid; container-type: normal; }
+.multi-modal .multi-sec[data-sec="glance"] [data-card] { container-type: inline-size; }
+.multi-modal .multi-sec[data-sec="glance"] .multi-cell > * { grid-row: span 4; }
+.multi-modal .multi-sec[data-sec="glance"] .multi-cell > .visuals { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: subgrid; }
+.multi-modal .multi-sec[data-sec="glance"] [data-card="practices"], .multi-modal .multi-sec[data-sec="glance"] [data-card="practices"] .advice { display: flex; flex-direction: column; }
+.multi-modal .multi-sec[data-sec="glance"] [data-card="practices"] .advice { flex-grow: 1; }
+.multi-modal .multi-sec[data-sec="glance"] [data-advice="snapshot"] { margin-top: auto; }
 
 /* Security and email: each block of a column sits on a row shared by every column (subgrid), and the rows inside a
    block have one fixed height, so a header or check reads straight across the sites. The first track holds the
@@ -350,6 +361,7 @@
   body.printing-multi .multi-row.fold-panel[hidden] { display: grid !important; }
   /* A section can run over many pages, so each column names its site where the section starts. */
   body.printing-multi .multi-sec .multi-cell::before { content: attr(data-host); padding-bottom: 3px; border-bottom: 2px solid var(--site, var(--own)); font: 700 8pt/1.2 Inter, system-ui, sans-serif; color: #12181f; overflow-wrap: anywhere; break-after: avoid; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="glance"] .multi-row { --glance-rows: 5; }
   body.printing-multi .multi-cell .card, body.printing-multi .multi-cell [data-slot] { max-height: none !important; overflow: visible !important; }
   /* A whole card pushed to the next page in one column would set that column a page behind the others. */
   body.printing-multi .multi-cell .card { break-inside: auto; }

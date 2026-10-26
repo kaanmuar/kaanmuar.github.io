@@ -497,7 +497,7 @@
         .tick.on { border-color: color-mix(in srgb, var(--green) 55%, var(--line)); }
         .tick.off { border-color: color-mix(in srgb, var(--amber) 55%, var(--line)); }
         .advice { display: grid; gap: 8px; }
-        .advice article { padding: 10px 12px; border-left: 3px solid var(--cyan); background: var(--panel); border-radius: 0 12px 12px 0; }
+        .advice article { min-width: 0; padding: 10px 12px; border-left: 3px solid var(--cyan); background: var(--panel); border-radius: 0 12px 12px 0; overflow-wrap: anywhere; }
         .advice strong { display: block; margin-bottom: 4px; }
         .case-note { font-size: 13px; }
         .case-fade { filter: blur(var(--fade, 3px)); opacity: .72; user-select: none; }

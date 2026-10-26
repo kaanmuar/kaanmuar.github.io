@@ -270,6 +270,69 @@ test('a long host wraps inside its cover card when six sites sit side by side (#
   }
 });
 
+test('the At a glance cards line up across the columns, and a long address in a practice wraps inside its card (#1613)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
+    const base = [own, rival, sample.report][index];
+    return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id }) };
+  }));
+  const groups = ['CMS', 'Analytics', 'CDN', 'Server', 'Fonts', 'Library', 'Marketing'];
+  const url = 'https://dequeuniversity.com/rules/axe/4.10/aria-allowed-attr?application=axeAPI&lang=en';
+  [7, 2, 5, 3, 6, 1].forEach((n, index) => {
+    const report = records[index].report;
+    report.technologies = groups.slice(0, n).map((group) => ({ name: group + ' tool', group }));
+    const extra = { key: 'long-url', rank: 1, area: 'Accessibility', verdict: 'fail', title: 'Elements must only use supported attributes', fix: 'Follow the rule guide at ' + url };
+    if (index === 3) report.insights = Object.assign({}, report.insights, { findings: [extra].concat((report.insights && report.insights.findings) || []) });
+  });
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const glance = page.locator('#multi-overlay .multi-sec[data-sec="glance"]');
+  await expect(glance.locator('.multi-cell')).toHaveCount(6, { timeout: 20000 });
+  if (process.env.MULTI_SHOT) {
+    test.setTimeout(240000);
+    const theme = (on) => { if (document.documentElement.classList.contains('dark-mode') !== on) SiteTheme.toggle(); };
+    for (const width of [1024, 1440]) {
+      for (const dark of [false, true]) {
+        await page.setViewportSize({ width, height: 1500 });
+        await page.evaluate(theme, dark);
+        await glance.locator('> h2').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+        await page.waitForTimeout(600);
+        await page.screenshot({ path: process.env.MULTI_SHOT + '/glance-' + width + (dark ? '-dark' : '-light') + '.png' });
+      }
+    }
+    await page.evaluate(theme, false);
+  }
+  const rows = () => glance.evaluate((sec) => ['speed', 'marks', 'tech', 'practices'].map((key) => {
+    const boxes = [...sec.querySelectorAll('[data-card="' + key + '"]')].map((card) => card.getBoundingClientRect());
+    return { key, count: boxes.length, tops: boxes.map((box) => box.top), heights: boxes.map((box) => box.height) };
+  }));
+  const level = (list) => {
+    for (const row of list) {
+      expect(row.count, row.key).toBe(6);
+      expect(Math.max(...row.tops) - Math.min(...row.tops), row.key + ' tops').toBeLessThanOrEqual(1);
+      expect(Math.max(...row.heights) - Math.min(...row.heights), row.key + ' heights').toBeLessThanOrEqual(1);
+    }
+  };
+  level(await rows());
+  const spill = await glance.locator('[data-card="practices"] .advice article').evaluateAll((list) => list.map((item) => {
+    const card = item.closest('.card').getBoundingClientRect();
+    return { text: item.textContent.slice(0, 40), over: item.scrollWidth - item.clientWidth, right: item.getBoundingClientRect().right - card.right };
+  }));
+  expect(spill.some((row) => row.text.startsWith('Elements must only'))).toBe(true);
+  for (const row of spill) {
+    expect(row.over, row.text).toBeLessThanOrEqual(0);
+    expect(row.right, row.text).toBeLessThanOrEqual(0);
+  }
+  const snaps = await glance.locator('[data-advice="snapshot"]').evaluateAll((list) => list.map((item) => item.getBoundingClientRect().bottom));
+  expect(Math.max(...snaps) - Math.min(...snaps)).toBeLessThanOrEqual(1);
+
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  level(await rows());
+  if (process.env.MULTI_SHOT) await page.pdf({ path: process.env.MULTI_SHOT + '/glance-print.pdf', preferCSSPageSize: true, printBackground: true });
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+});
+
 // The spread across columns of the top, and for a tile the height, of each matching box of a section.
 function drift(root = document) {
   const boxes = [['health', '.health-summary'], ['health', '.verdict-chips:not([aria-label])'], ['health', '.verdict-chips[aria-label]'], ['health', '.health .meta-line'],
