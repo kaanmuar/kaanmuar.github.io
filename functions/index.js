@@ -1531,6 +1531,23 @@ async function mailReviewedSites(ip, source) {
   });
 }
 
+// A comparison notice carries the scores, problems, and market presence. A mail failure still leaves the comparison saved.
+async function mailComparison(notice) {
+  if (!notice) return;
+  try {
+    await sendOwnerEmail({
+      eyebrow: "QA-lab URL Review",
+      subject: notice.subject,
+      intro: notice.intro,
+      rows: notice.rows,
+      respondUrl: notice.respondUrl,
+      buttonLabel: notice.buttonLabel || "Open the comparison"
+    });
+  } catch (error) {
+    console.error("Comparison notice failed:", error);
+  }
+}
+
 const urlReview = require("./url-review-core");
 const newsWire = require("./news-wire");
 const reviewDesk = require("./url-review-desk");
@@ -1541,6 +1558,7 @@ const customerMail = require("./url-review-customer-mail");
 const reviewOffers = require("./url-review-offers");
 const reviewPass = require("./url-review-pass");
 const reviewCompare = require("./url-review-compare");
+const compareMail = require("./url-review-compare-mail");
 const reviewMulti = require("./url-review-multi");
 const reviewMarket = require("./url-review-market");
 const ownerNotice = require("./url-review-owner-notice");
@@ -3270,6 +3288,10 @@ async function reviewAccount(req, res, pathName) {
     const file = reviewOffers.accountFile(records, signedIn.email, Date.now(), { freeAccount: await hasFreeRuns(signedIn.email) });
     const open = new Set(file.runs.filter((run) => run.open).map((run) => run.id));
     const made = reviewCompare.savedComparison(records, signedIn.email, req.body && req.body.ids, (row) => open.has(row.id));
+    if (!made.error) {
+      const base = records.find((row) => reviewCompare.cleanId(row.id) === made.base.id);
+      await mailComparison(compareMail.accountNotice(made, { email: signedIn.email, name: base && base.name }));
+    }
     res.status(made.error ? 400 : 200).json(made);
     return;
   }
@@ -3368,7 +3390,9 @@ async function reviewComparison(req, res, pathName, db, email) {
       res.status(400).json(picked);
       return;
     }
-    const ref = await db.collection("url_review_comparisons").add(reviewMulti.savedRecord(email, picked, body.from));
+    const saved = reviewMulti.savedRecord(email, picked, body.from);
+    const ref = await db.collection("url_review_comparisons").add(saved);
+    await mailComparison(compareMail.savedNotice(ref.id, saved, records, { email, open }));
     res.status(200).json({ ok: true, id: ref.id });
     return;
   }
@@ -4649,6 +4673,7 @@ async function runReview(req, res, placeOf) {
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
     if (record.status === "stopped") await saveRunLog("stopped");
     await mailReviewedSites(ip, record);
+    if (record.report && record.report.compare) await mailComparison(compareMail.runNotice(record));
     writeLine({ type: "log", text: "Report saved. Emailing a copy to " + intake.value.email + "." });
     writeLine({ type: "done", report, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
     try {
