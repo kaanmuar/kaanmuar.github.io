@@ -1223,6 +1223,11 @@ function httpsUpgrade(next, upgrades) {
 
 const httpOnly = (href, tried) => new Error("The site redirected to " + clean(href, 160) + ", an http:// address" + (tried ? ", and the same address over https gave no page" : "") + ". The review only follows https.");
 
+// An https copy that refuses the review, shows a bot check, or is slow did serve https: it is read like any other first page,
+// so headless Chrome still gets its turn. Only a failed connection or another error status counts as no page over https.
+const upgradeRefused = (res, url) => [401, 403, 429].includes(res.status) || !!challengeOf(url, res.headers, res.body);
+const upgradeSlow = (error) => !!error && (error.code === "HEADERS_TOO_LARGE" || /took too long/.test(error.message || ""));
+
 async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage) {
   let current = normalizeUrl(raw);
   const started = Date.now();
@@ -1248,11 +1253,11 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage)
       try {
         res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage);
       } catch (error) {
-        if (upgraded && !(error && error.code === "STOPPED")) throw httpOnly(upgraded, true);
+        if (upgraded && !(error && error.code === "STOPPED") && !upgradeSlow(error)) throw httpOnly(upgraded, true);
         if (error && typeof error === "object" && !error.url) error.url = current.toString();
         throw error;
       }
-      if (upgraded && res.status >= 400) throw httpOnly(upgraded, true);
+      if (upgraded && res.status >= 400 && !upgradeRefused(res, current.toString())) throw httpOnly(upgraded, true);
       const location = res.headers.location;
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
         if (onPulse) onPulse("The page redirected. Following the next public https address.");
@@ -2897,12 +2902,12 @@ async function probeRead(raw) {
       try {
         res = await requestOnce(current, pinned, null, true);
       } catch (error) {
-        if (upgraded) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
+        if (upgraded && !upgradeSlow(error)) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
         throw error;
       }
       const location = header(res.headers, "location");
       hops.push({ url: clean(current.toString(), 300), status: res.status, location: clean(location, 300) });
-      if (upgraded && res.status >= 400) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
+      if (upgraded && res.status >= 400 && !upgradeRefused(res, current.toString())) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
         const next = new URL(location, current);
         upgraded = next.protocol === "http:" ? httpsUpgrade(next, upgrades) : "";
