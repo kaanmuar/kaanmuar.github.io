@@ -3,13 +3,14 @@
 .dash-modal.multi-modal { width: min(1680px, calc(100vw - 36px)); overflow: clip; }
 .multi-head { align-items: center; }
 #multi-title { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 16px; margin: 8px 0 6px; }
-.multi-site { display: grid; justify-items: center; align-content: start; gap: 6px; width: 132px; text-align: center; }
+.multi-site { display: flex; align-items: flex-start; gap: 16px; }
+.multi-badge { display: grid; justify-items: center; align-content: start; gap: 6px; width: 132px; text-align: center; }
 .multi-mark { position: relative; display: grid; place-items: center; width: 60px; height: 60px; border: 2px solid var(--site, var(--line)); border-radius: 16px; background: #fff; overflow: hidden; }
 .multi-mark > span { font-size: 1.6rem; font-weight: 800; color: var(--site, var(--muted)); }
 .multi-logo { width: 40px; height: 40px; object-fit: contain; }
 .multi-logo + span { display: none; }
-.multi-site-name { font-size: 1.02rem; line-height: 1.2; overflow-wrap: anywhere; }
-.multi-site small { margin-top: -3px; font-size: .74rem; font-weight: 500; font-family: var(--font-ui, system-ui, sans-serif); color: var(--muted); overflow-wrap: anywhere; }
+.multi-site-name { font-size: 1.02rem; line-height: 1.2; overflow-wrap: break-word; }
+.multi-site small { margin-top: -3px; font-size: .74rem; font-weight: 500; font-family: var(--font-ui, system-ui, sans-serif); color: var(--muted); overflow-wrap: break-word; }
 .multi-vs { margin-top: 20px; font-size: .8rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-family: var(--font-ui, system-ui, sans-serif); }
 .multi-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 #multi-status:empty { display: none; }

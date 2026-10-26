@@ -86,7 +86,7 @@ test('a saved comparison sets the summary and every report section side by side,
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
   const box = page.locator('#multi-overlay');
   await expect(box).toBeVisible({ timeout: 20000 });
-  await expect(box.locator('#multi-title')).toHaveAttribute('aria-label', hosts.slice(0, 2).concat(sample.report.insights.previews.google.site).join(' vs '));
+  await expect(box.locator('#multi-title')).toHaveAttribute('aria-label', hosts.slice(0, 2).concat('Carlos A. Muñoz').join(' vs '));
   const table = box.locator('.multi-table');
   await expect(table.locator('thead th')).toHaveCount(4);
   await expect(table.locator('tbody tr').first().locator('th')).toHaveText('Overall');
@@ -151,37 +151,53 @@ test('the comparison title shows each site as its logo with its name below, a le
   ['https://wordpress.org/logo-test.png', 'https://excalidraw.com/logo-missing.png'].forEach((icon, index) => {
     records[index].report.insights = Object.assign({}, records[index].report.insights, { previews: { google: { icon } } });
   });
+  records[1].report.host = 'www.excalidraw.com';
   await page.setViewportSize({ width: 1280, height: 900 });
   await signIn(page, records, '/qa-review.html?comparison=cmp1', seen);
   const title = page.locator('#multi-title');
   await expect(title.locator('.multi-site')).toHaveCount(3, { timeout: 20000 });
   await expect(title.locator('.multi-vs')).toHaveText(['vs', 'vs']);
+  expect(await title.evaluate((el) => [...el.children].map((site) => site.className + ':' + !!site.querySelector(':scope > .multi-vs')))).toEqual(['multi-site:false', 'multi-site:true', 'multi-site:true']);
   const [first, second, third] = [0, 1, 2].map((i) => title.locator('.multi-site').nth(i));
   await expect(first.locator('.multi-site-name')).toHaveText('wordpress.org');
   await expect(first.locator('small')).toHaveCount(0);
   await expect(first.locator('img.multi-logo')).toBeVisible();
   expect(await first.locator('img.multi-logo').evaluate((img) => img.complete && img.naturalWidth)).toBeGreaterThan(0);
   await expect(second.locator('img')).toHaveCount(0);
+  await expect(second.locator('.multi-site-name')).toHaveText('excalidraw.com');
   await expect(second.locator('.multi-mark > span')).toHaveText('E');
   await expect(second.locator('.multi-mark > span')).toBeVisible();
-  await expect(third.locator('.multi-site-name')).toHaveText(sample.report.insights.previews.google.site);
+  await expect(third.locator('.multi-site-name')).toHaveText('Carlos A. Muñoz');
   await expect(third.locator('small')).toHaveText('carlosandmunoz.com');
+  expect(await third.locator('small').innerHTML()).toBe('carlosandmunoz.<wbr>com');
   await expect(third.locator('img.multi-logo')).toBeVisible();
   const boxes = await Promise.all([first, second, third].map((site) => site.locator('.multi-mark').boundingBox()));
   expect(new Set(boxes.map((box) => Math.round(box.y))).size).toBe(1);
   const nameBox = await third.locator('.multi-site-name').boundingBox();
   expect(nameBox.y).toBeGreaterThan(boxes[2].y + boxes[2].height - 1);
 
+  await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
   await page.locator('#multi-overlay').getByRole('button', { name: 'Download PDF' }).click();
   await expect(page.locator('#multi-status')).toHaveText('The PDF is downloaded.');
+  expect(seen.pdf[0]).not.toMatch(/<html[^>]*dark-mode/);
   expect(seen.pdf[0]).toContain('<img class="multi-logo" data-logo="0">');
   expect(seen.pdf[0]).toContain('<img class="multi-logo" data-logo="2">');
   expect(seen.pdf[0]).not.toContain('data-logo="1"');
   expect(seen.pdf[0]).not.toMatch(/logo-test|favicon/);
-  expect(seen.pdf[0]).toContain('<title>' + hosts.join(' vs ') + '</title>');
+  expect(seen.pdf[0]).toContain('<title>' + [own.host, 'www.excalidraw.com', sample.report.host].join(' vs ') + '</title>');
   const filled = multi.withLogos(seen.pdf[0], ['data:image/png;base64,' + png.toString('base64'), '', '']);
   expect(filled).toContain('<img class="multi-logo" src="data:image/png;base64,');
   expect(filled).not.toContain('data-logo="2"');
+
+  // The server prints what the page sends, with JavaScript off and outside requests blocked (#1533).
+  const printed = await page.context().newPage();
+  await printed.route(/^https?:/, (route) => route.abort());
+  await printed.emulateMedia({ media: 'print' });
+  await printed.setContent(filled, { waitUntil: 'load' });
+  await expect(printed.locator('#multi-title')).toBeVisible();
+  await expect(printed.locator('.multi-sec[data-sec="exec"] .multi-cell').first()).toBeVisible();
+  expect(await printed.evaluate(() => document.documentElement.classList.contains('dark-mode'))).toBe(false);
+  await printed.close();
 });
 
 test('six sites fit a 1920px window side by side without scrolling sideways (#1475)', async ({ page }) => {
