@@ -69,6 +69,19 @@
 .multi-cell .shots { grid-template-columns: minmax(0, 1fr) minmax(0, 110px); }
 .multi-cell .shots-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .multi-cell .shots-3 figure:first-child { grid-column: 1 / -1; }
+/* At a glance: the four cards of every column share the rows of the section, so each card, and each mark
+   ([data-mark]) in it, starts level with the same one of every site. */
+.multi-sec[data-sec="glance"] .multi-row { grid-template-rows: repeat(4, auto); }
+/* A container would contain its layout, and a contained grid cannot be a subgrid. */
+.multi-sec[data-sec="glance"] .multi-cell { display: grid; grid-row: span 4; grid-template-rows: subgrid; container-type: normal; }
+.multi-sec[data-sec="glance"] .multi-cell > :not(.visuals) { grid-row: 1 / -1; }
+.multi-sec[data-sec="glance"] .multi-cell > [hidden] { display: none; }
+.multi-sec[data-sec="glance"] .multi-cell > .visuals:not([hidden]) { display: grid; grid-row: span 4; grid-template: subgrid / minmax(0, 1fr); }
+.multi-cell .ticks { grid-template-columns: repeat(auto-fit, minmax(max(96px, 34%), 1fr)); }
+.multi-cell .tick { min-width: 0; padding: 8px 10px; overflow-wrap: break-word; }
+.multi-cell .tick b { font-size: 12px; }
+.multi-cell .tick.on b { color: var(--green); }
+.multi-cell .tick.off b { color: var(--red); }
 @container (max-width: 300px) {
   .multi-cell .areas, .multi-cell .stat-row, .multi-cell .checks-grid, .multi-cell .kpis { grid-template-columns: minmax(0, 1fr); }
 }
@@ -191,6 +204,12 @@
   body.printing-multi .multi-row.fold-panel[hidden] { display: grid !important; }
   /* A section can run over many pages, so each column names its site where the section starts. */
   body.printing-multi .multi-sec .multi-cell::before { content: attr(data-host); padding-bottom: 3px; border-bottom: 2px solid var(--site, var(--own)); font: 700 8pt/1.2 Inter, system-ui, sans-serif; color: #12181f; overflow-wrap: anywhere; break-after: avoid; }
+  body.printing-multi .multi-sec[data-sec="glance"] .multi-row { grid-template-rows: repeat(5, auto); }
+  body.printing-multi .multi-sec[data-sec="glance"] .multi-cell { grid-row: span 5; }
+  body.printing-multi .multi-sec[data-sec="glance"] .multi-cell > :not(.visuals) { grid-row: 2 / -1; }
+  body.printing-multi .multi-sec[data-sec="glance"] .multi-cell > .visuals { grid-row: 2 / span 4; }
+  body.printing-multi .multi-cell .meter { grid-template-columns: minmax(0, 1fr) auto; gap: 1px 6px; margin: 4px 0; font-size: 7.5pt; }
+  body.printing-multi .multi-cell .meter > span:first-child { grid-column: 1 / -1; }
   body.printing-multi .multi-cell .card, body.printing-multi .multi-cell [data-slot] { max-height: none !important; overflow: visible !important; }
   /* A whole card pushed to the next page in one column would set that column a page behind the others. */
   body.printing-multi .multi-cell .card { break-inside: auto; }

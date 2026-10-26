@@ -797,16 +797,16 @@
       return '<div class="meter"><span>' + esc(label) + '</span><div class="track"><i style="width:' + width + '%"></i></div><span>' + esc(page.ms || 0) + " ms</span></div>";
     }).join("") || '<p class="muted">' + esc(rc.t("visNoTimes")) + "</p>";
     const checks = [
-      ["HTTPS", true],
-      ["HSTS", !!headers.hsts],
-      ["CSP", !!headers.csp],
-      ["nosniff", !!headers.nosniff],
-      [rc.t("markFrame"), (!!headers.frame && !/allow-from/i.test(headers.frame)) || /frame-ancestors/i.test(headers.csp || "")],
-      [rc.t("markReferrer"), !!headers.referrer],
-      [rc.t("markLang"), !!obs.lang],
-      ["Viewport", !!sig.viewport]
+      ["https", "HTTPS", true],
+      ["hsts", "HSTS", !!headers.hsts],
+      ["csp", "CSP", !!headers.csp],
+      ["nosniff", "nosniff", !!headers.nosniff],
+      ["frame", rc.t("markFrame"), (!!headers.frame && !/allow-from/i.test(headers.frame)) || /frame-ancestors/i.test(headers.csp || "")],
+      ["referrer", rc.t("markReferrer"), !!headers.referrer],
+      ["lang", rc.t("markLang"), !!obs.lang],
+      ["viewport", "Viewport", !!sig.viewport]
     ];
-    const ticks = checks.map(([label, on]) => '<div class="tick ' + (on ? "on" : "off") + '"><b>' + esc(rc.t(on ? "visPresent" : "visMissing")) + "</b>" + esc(label) + "</div>").join("");
+    const ticks = checks.map(([mark, label, on]) => '<div class="tick ' + (on ? "on" : "off") + '" data-mark="' + mark + '"><b>' + esc(rc.t(on ? "visPresent" : "visMissing")) + "</b>" + esc(label) + "</div>").join("");
     const groups = {};
     (report.technologies || []).forEach((item) => {
       const name = item.group || "Other";

@@ -260,6 +260,44 @@ test('a long host wraps inside its cover card when six sites sit side by side (#
   }
 });
 
+test('the public marks of At a glance fit their tiles and line up across six sites, and the response times keep their bars and numbers, on screen and in print (#1612)', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 900 });
+  const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
+    const base = [own, rival, sample.report][index];
+    return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id, host: 'site' + (index + 4) + '.example', pages: (base.pages || []).slice(0, 2 + index) }) };
+  }));
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const glance = page.locator('#multi-overlay .multi-sec[data-sec="glance"]');
+  await expect(glance.locator('.ticks')).toHaveCount(6, { timeout: 20000 });
+  const marks = () => glance.locator('.ticks').evaluateAll((lists) => lists.map((list) => [...list.querySelectorAll('.tick')].map((tick) => ({
+    mark: tick.dataset.mark,
+    top: Math.round(tick.getBoundingClientRect().top),
+    over: Math.max(tick.scrollWidth - tick.clientWidth, ...[...tick.children].map((part) => part.scrollWidth - part.clientWidth))
+  }))));
+  const check = (cols, where) => {
+    expect(cols[0].map((tick) => tick.mark), where).toEqual(['https', 'hsts', 'csp', 'nosniff', 'frame', 'referrer', 'lang', 'viewport']);
+    for (const col of cols) {
+      col.forEach((tick, index) => {
+        expect(tick.over, where + ' ' + tick.mark).toBeLessThanOrEqual(0);
+        expect(tick.top, where + ' ' + tick.mark).toBe(cols[0][index].top);
+      });
+    }
+  };
+  const meters = async (where) => {
+    const rows = await glance.locator('.meter').evaluateAll((list) => list.map((row) => ({ text: row.textContent, over: row.lastElementChild.scrollWidth - row.lastElementChild.clientWidth, track: row.querySelector('.track').clientWidth })));
+    for (const row of rows) {
+      expect(row.over, where + ' ' + row.text).toBeLessThanOrEqual(0);
+      expect(row.track, where + ' ' + row.text).toBeGreaterThan(20);
+    }
+  };
+  check(await marks(), 'screen');
+  await meters('screen');
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  check(await marks(), 'print');
+  await meters('print');
+});
+
 test('one toggle per section folds it for every site together, the boxes of a row end level, and print and the PDF show every section open (#1459)', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
