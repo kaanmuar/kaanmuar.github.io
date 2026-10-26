@@ -1794,7 +1794,7 @@
     const letter = score.grade || gradeOf(value);
     host.innerHTML =
       historyBlock(report.history) +
-      '<div class="exec-head"><span class="grade grade-' + esc(letter) + '">' + esc(letter) + "</span><p>" + esc(healthSummary(ins) || rc.t("outOf", { n: value })) + "</p></div>" +
+      '<div class="exec-head"><span class="grade grade-' + esc(letter) + '">' + esc(letter) + "</span><p>" + esc(healthSummary(ins) || rc.t("outOf", { n: value })).replace(/\.(?=[^\s.])/g, ".<wbr>") + "</p></div>" +
       '<p class="meta-line">' + esc(rc.t("sevLine", { critical: sev.critical || 0, high: sev.high || 0, medium: sev.medium || 0, low: sev.low || 0 })) + " · " +
       esc(rc.t(found ? "readOf" : "read", { n: read, found: found })) + (report.browser && report.browser.ok ? " · " + esc(rc.t("headless")) : "") + "</p>" +
       '<div class="exec-cols"><div><h3>' + esc(rc.t("risks")) + "</h3>" + list(risks) + "</div><div><h3>" + esc(rc.t("quick")) + "</h3>" + list(quick) + "</div><div><h3>" + esc(rc.t("solid")) + "</h3>" +

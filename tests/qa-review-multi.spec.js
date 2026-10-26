@@ -464,6 +464,21 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(box.locator('.multi-sec[data-sec="fixkit"] .multi-cell').first()).not.toContainText(/Security headers|The scripts ZIP/);
 });
 
+test('a long host in the one-page summary wraps inside its card instead of running past it', async ({ page }) => {
+  const seen = { saved: [], deleted: [], pdf: [] };
+  const records = recordsWith(true);
+  const long = 'www.hotelestequendamabogotacolombia.com.co';
+  records[0].report.insights = Object.assign({}, records[0].report.insights, { summary: long + ' scores 34 out of 100 (F). 6 checks fail now, 42 are at risk, and 26 pass.' });
+  await page.setViewportSize({ width: 1024, height: 800 });
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', seen);
+  const card = page.locator('#multi-overlay .multi-sec[data-sec="exec"] .multi-cell').first().locator('[data-slot="exec"]');
+  const line = card.locator('.exec-head p');
+  await expect(line).toContainText(long, { timeout: 20000 });
+  const [lineBox, cardBox] = await Promise.all([line.boundingBox(), card.boundingBox()]);
+  expect(lineBox.x + lineBox.width).toBeLessThanOrEqual(cardBox.x + cardBox.width);
+  expect(await line.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+});
+
 test('a comparison the account no longer has is refused in the page language', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review-es.html?comparison=gone', seen);
