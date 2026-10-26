@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Commits the Buffer and Facebook Page ledgers (scripts/social-ledger.js) straight to main with [skip ci].
+# Commits the Buffer, Facebook Page, and Bluesky and Mastodon ledgers (scripts/social-ledger.js) straight to main
+# with [skip ci].
 #   scripts/commit-social-ledgers.sh "<what ran>"
-# Both the Live Reports and the Facebook Page workflows write them, so a push that loses the race is retried on
+# The Live Reports, Facebook Page and Bluesky and Mastodon workflows write them, so a push that loses the race is retried on
 # the new main with each ledger merged entry by entry, not overwritten.
 # The social hub pages show chips read from the ledgers, so they are rebuilt and committed with them, or every PR
 # fails the hub check in CI.
@@ -26,7 +27,7 @@ main() {
 		echo "Runs only in GitHub Actions: it commits to main as the bot, fetches main with --depth=1, which makes a local clone shallow, and resets this checkout to it." >&2
 		return 1
 	fi
-	for file in assets/social/buffer.json assets/social/facebook.json; do
+	for file in assets/social/buffer.json assets/social/facebook.json assets/social/open-social.json; do
 		[ -f "$file" ] && files+=("$file")
 	done
 	[ ${#files[@]} -gt 0 ] || {
