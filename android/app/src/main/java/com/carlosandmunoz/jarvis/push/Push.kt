@@ -28,10 +28,16 @@ import com.carlosandmunoz.jarvis.data.JSON
 object Push {
     const val ALERTS = "alerts"
     const val BRIEFING = "briefing"
+    const val MONEY = "money"
+    const val REVIEWS = "reviews"
+    const val OUTREACH = "outreach"
     const val EXTRA_TAB = "jarvis.tab"
     private val CHANNELS = mapOf(
         ALERTS to Triple("Alerts", "Threshold crossings from the hourly watch: a page down, TLS, failed jobs and runs.", NotificationManager.IMPORTANCE_HIGH),
         BRIEFING to Triple("Daily briefing", "The 07:40 briefing: the last 24 hours, goals and alerts.", NotificationManager.IMPORTANCE_DEFAULT),
+        MONEY to Triple("Payments", "Each live PayPal payment: what was bought, the amount and who paid.", NotificationManager.IMPORTANCE_HIGH),
+        REVIEWS to Triple("New reviews", "A customer's URL review finished: the site, its score and the plan.", NotificationManager.IMPORTANCE_DEFAULT),
+        OUTREACH to Triple("Outreach approvals", "Owner notices waiting for you to send or drop, at most once an hour.", NotificationManager.IMPORTANCE_DEFAULT),
         "review" to Triple("Reviews", "URL reviews you started by sharing a link to Jarvis.", NotificationManager.IMPORTANCE_DEFAULT),
         "test" to Triple("Tests", "Test notifications sent from Settings.", NotificationManager.IMPORTANCE_LOW)
     )
@@ -41,7 +47,7 @@ object Push {
         CHANNELS.forEach { (id, c) -> nm.createNotificationChannel(NotificationChannel(id, c.first, c.third).apply { description = c.second }) }
     }
 
-    fun kinds(app: JarvisApp) = listOf(ALERTS, BRIEFING).associateWith { app.vault.flag("push.$it", true) }
+    fun kinds(app: JarvisApp) = listOf(ALERTS, BRIEFING, MONEY, REVIEWS, OUTREACH).associateWith { app.vault.flag("push.$it", true) }
 
     suspend fun token(): String? = suspendCoroutine { done ->
         FirebaseMessaging.getInstance().token.addOnCompleteListener { done.resume(if (it.isSuccessful) it.result else null) }
@@ -63,7 +69,7 @@ object Push {
     }
 
     fun show(context: Context, data: Map<String, String>) {
-        if (data["kind"] == ALERTS || data["kind"] == BRIEFING) Home.refreshSoon(context)
+        if (data["kind"] in setOf(ALERTS, BRIEFING, MONEY, REVIEWS)) Home.refreshSoon(context)
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         val kind = data["kind"]?.takeIf { it in CHANNELS } ?: ALERTS
         val title = data["title"] ?: "Jarvis"
