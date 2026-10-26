@@ -874,3 +874,17 @@ test("outreach notices push what is new, at most once an hour", () => {
 test("phones keep the new push kinds on unless turned off", () => {
   assert.deepEqual(push.cleanKinds({ money: false }), { alerts: true, briefing: true, money: false, reviews: true, outreach: true });
 });
+
+test("the approvals list shows pending notices newest first, with the review link", () => {
+  const rows = notify.noticeRows([
+    { domain: "a.com", status: "pending", host: "a.com", email: "x@a.com", candidates: [{ email: "x@a.com", sources: ["footer"], onDomain: true, extra: 1 }], reviewId: "r1", lang: "es", createdAt: "2026-10-25T10:00:00Z" },
+    { domain: "b.com", status: "sent", createdAt: "2026-10-25T12:00:00Z" },
+    { domain: "c.com", status: "pending", createdAt: "2026-10-25T11:00:00Z", lastError: "Not public yet." }
+  ], (n) => "https://site/" + n.lang + "?report=" + n.reviewId);
+  assert.deepEqual(rows.map((r) => r.domain), ["c.com", "a.com"]);
+  assert.deepEqual(rows[1].candidates, [{ email: "x@a.com", sources: ["footer"], url: "", onDomain: true }]);
+  assert.equal(rows[1].report, "https://site/es?report=r1");
+  assert.equal(rows[0].report, "");
+  assert.equal(rows[0].host, "c.com");
+  assert.equal(rows[0].lastError, "Not public yet.");
+});

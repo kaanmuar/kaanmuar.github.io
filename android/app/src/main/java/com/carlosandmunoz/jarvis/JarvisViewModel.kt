@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.carlosandmunoz.jarvis.data.Auth
 import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.data.num
+import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.push.Push
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -45,7 +47,9 @@ data class UiState(
     val push: Map<String, Boolean> = emptyMap(),
     val heard: Heard = Heard(),
     val speaking: String? = null,
-    val speak: Boolean = true
+    val speak: Boolean = true,
+    val notices: JsonObject? = null,
+    val noticeErrors: Map<String, String> = emptyMap(),
 )
 
 class JarvisViewModel(app: Application) : AndroidViewModel(app) {
@@ -138,6 +142,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 .onFailure { e -> fail(e) { it.copy(loading = false, error = e.message ?: "Could not reach Jarvis.") } }
         }
+        loadNotices()
     }
 
     fun brief() {
@@ -196,6 +201,37 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun toastShown() = _state.update { it.copy(toast = null) }
+
+    /** Owner notices waiting for Send or Drop (#1420). */
+    fun loadNotices() {
+        if (fixture != null) { _state.update { it.copy(notices = _state.value.snapshot?.get("notices") as? JsonObject) }; return }
+        if (!auth.signedIn || "notices" in _state.value.running) return
+        _state.update { it.copy(running = it.running + "notices") }
+        viewModelScope.launch {
+            runCatching { api.call("notices", _state.value.days) }
+                .onSuccess { out -> _state.update { it.copy(running = it.running - "notices", notices = out) } }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - "notices") } }
+        }
+    }
+
+    fun decideNotice(domain: String, send: Boolean, email: String) {
+        val key = "notice:$domain"
+        _state.update { it.copy(running = it.running + key) }
+        viewModelScope.launch {
+            runCatching {
+                if (fixture != null) JsonObject(mapOf("email" to JsonPrimitive(email)))
+                else api.call("notice-decide", _state.value.days, mapOf("domain" to JsonPrimitive(domain), "send" to JsonPrimitive(send), "email" to JsonPrimitive(email)))
+            }
+                .onSuccess { out ->
+                    _state.update { s ->
+                        val left = s.notices?.let { n -> JsonObject(n + ("notices" to JsonArray(n.objs("notices").filter { it.str("domain") != domain }))) }
+                        s.copy(running = s.running - key, notices = left, noticeErrors = s.noticeErrors - domain,
+                            toast = if (send) "Sent to " + (out.str("email") ?: email) + "." else "Dropped $domain.")
+                    }
+                }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - key, noticeErrors = it.noticeErrors + (domain to (e.message ?: "Failed.")), toast = e.message ?: "Failed.") } }
+        }
+    }
 
     private fun showSaved() {
         val saved = api.saved("snapshot", _state.value.days)
