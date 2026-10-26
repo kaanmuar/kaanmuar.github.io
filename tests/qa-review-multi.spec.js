@@ -1276,6 +1276,41 @@ test('in print a long list stops after twelve rows with a line counting the rest
   expect(seen.pdf[0]).toContain('<tr class="print-more">');
 });
 
+test('a note every column words the same shows once under the section title, and a note a site words its own way stays in its column (#1657)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
+  const sec = (key) => page.locator('#multi-overlay .multi-sec[data-sec="' + key + '"]');
+  await expect(sec('health').locator('.multi-cell')).toHaveCount(3, { timeout: 20000 });
+  await expect(sec('health').locator('> .multi-note')).toHaveText(/^Every check below was measured from the public response, not guessed\./);
+  await expect(sec('health').locator('.multi-cell [data-note]:visible')).toHaveCount(0);
+  await expect(sec('fix').locator('> .multi-note')).toHaveText(/^Ranked by severity/);
+  await expect(sec('fix').locator('.multi-cell [data-note]:visible')).toHaveCount(0);
+  await expect(sec('geo').locator('> .multi-note')).toHaveText(['From the rules in robots.txt, checked for each crawler.']);
+  await expect(sec('geo').locator('.multi-cell [data-part="excerpt"] [data-note]:visible')).toHaveCount(3);
+  await expect(sec('geo').locator('.multi-cell[data-col="1"] [data-part="excerpt"] [data-note]')).toContainText('empty app shell');
+
+  await expect(sec('fixkit').locator('> .multi-note')).toHaveText(/^The scripts ZIP now carries a fix-kit\/ folder/);
+  for (const [index, hosting] of [[0, 'nginx'], [1, 'Vercel'], [2, 'GitHub Pages']]) {
+    const intro = sec('fixkit').locator('.multi-cell[data-col="' + index + '"] [data-slot="fixkit"] > p');
+    await expect(intro).toBeVisible();
+    await expect(intro).toContainText(hosting, { useInnerText: true });
+    await expect(intro).not.toContainText('fix-kit/', { useInnerText: true });
+  }
+  await sec('health').locator('> h2 .fold-toggle').click();
+  await expect(sec('health').locator('> .multi-note')).toBeHidden();
+  await sec('health').locator('> h2 .fold-toggle').click();
+
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  await expect(sec('health').locator('> .multi-note')).toBeVisible();
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+  await page.locator('#multi-overlay').getByRole('button', { name: 'Download PDF' }).click();
+  await expect(page.locator('#multi-status')).toHaveText('The PDF is downloaded.');
+  expect(seen.pdf[0]).toContain('<p class="multi-note">Every check below was measured');
+});
+
 test('a long list opens in place with Show all and folds back with Show fewer, no box scrolls inside a cell, and print keeps its caps (#1657)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const seen = { saved: [], deleted: [], pdf: [] };

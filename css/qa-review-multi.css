@@ -157,6 +157,10 @@
   .multi-modal .multi-cell .page-table td:nth-child(3) { grid-area: 3 / 2; line-height: 15px; }
   .multi-modal .multi-cell .page-table td:nth-child(4) { grid-area: 2 / 1 / 4 / 2; }
 }
+/* A note every column words the same shows once under the section title (js shareNotes). */
+.multi-cell .is-shared { display: none !important; }
+.multi-sec > .multi-note { position: sticky; left: 0; max-width: min(760px, 100%); margin: -4px 0 12px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.multi-sec.is-folded > .multi-note { display: none; }
 /* A long list shows its first rows and a button that shows the rest in place (js capLists). */
 body:not(.printing-multi) .multi-cell .screen-cut { display: none !important; }
 .multi-modal .multi-show { display: block; margin: 8px 0 0; padding: 0; border: 0; background: none; color: var(--own); font: 600 12px/1.4 Inter, system-ui, sans-serif; text-align: left; cursor: pointer; }
@@ -448,6 +452,7 @@ body:not(.printing-multi) .multi-cell .print-more { display: none !important; }
   body.printing-multi #multi-overlay { display: block !important; position: static; background: #fff; padding: 0; overflow: visible; }
   body.printing-multi .multi-modal { page: multi; width: auto; margin: 0; padding: 0; border: 0; box-shadow: none; overflow: visible; background: #fff; color: #12181f; font-size: 9.5pt; }
   body.printing-multi .no-print, body.printing-multi .multi-locked { display: none !important; }
+  body.printing-multi .multi-sec > .multi-note { margin: 0 0 6px; font-size: 8pt; color: #4a5560; }
   body.printing-multi .multi-scroll { overflow: visible; }
   body.printing-multi .multi-table { min-width: 0; }
   body.printing-multi .multi-sheet { --col-min: 0px; --col-gap: 8px; }

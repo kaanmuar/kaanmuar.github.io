@@ -527,6 +527,21 @@
     });
   }
 
+  // A note every column words the same (data-note, the intro of a section) shows once under the section's title;
+  // a note one site words its own way stays in each column. A paragraph a shared sentence leaves empty keeps its
+  // place, since it can hold a row of a subgrid.
+  function shareNotes(grid) {
+    grid.querySelectorAll(".multi-sec").forEach((sec) => {
+      const cells = [...sec.querySelectorAll(".multi-cell")].filter((cell) => !cell.matches(".is-empty, .is-note"));
+      if (cells.length < 2) return;
+      const notes = cells.map((cell) => [...cell.querySelectorAll("[data-note]")]);
+      const said = [...new Set(notes[0].map((note) => note.textContent.trim()))].filter((text) => notes.every((list) => list.some((note) => note.textContent.trim() === text)));
+      if (!said.length) return;
+      notes.flat().filter((note) => said.includes(note.textContent.trim())).forEach((note) => note.classList.add("is-shared"));
+      sec.querySelector(":scope > h2").insertAdjacentHTML("afterend", said.map((text) => '<p class="multi-note">' + esc(text) + "</p>").join(""));
+    });
+  }
+
   // A fix-kit file no site needs is left out of every column; the rest keep one row each (css/qa-review-multi.css).
   function levelKit(grid) {
     const row = grid.querySelector('.multi-sec[data-sec="fixkit"] .multi-row');
@@ -795,6 +810,7 @@
     tidySeo(grid, data);
     pageRows(grid);
     settle(grid);
+    shareNotes(grid);
     levelKit(grid);
     stackTables(grid);
     capLists(grid);

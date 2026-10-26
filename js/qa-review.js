@@ -830,7 +830,7 @@
     advice.push(tip("adSnap"));
     const adviceHtml = advice.slice(0, slotRoot ? advice.length : 4).map(([title, body, finding, key]) => "<article" + (key === "adSnap" ? ' data-advice="snapshot"' : "") + "><strong>" + esc(title) + "</strong><span>" + (finding ? fadeText(body, paid) : esc(body)) + "</span></article>").join("");
     slot("report-visuals").innerHTML =
-      '<article class="card" data-card="speed"><h2>' + esc(rc.t("visTimes")) + '</h2><p class="muted">' + esc(rc.t("visTimesNote")) + "</p>" + times + "</article>" +
+      '<article class="card" data-card="speed"><h2>' + esc(rc.t("visTimes")) + '</h2><p class="muted" data-note>' + esc(rc.t("visTimesNote")) + "</p>" + times + "</article>" +
       '<article class="card" data-card="marks"><h2>' + esc(rc.t("visMarks")) + '</h2><div class="ticks">' + ticks + "</div></article>" +
       '<article class="card" data-card="tech"><h2>' + esc(rc.t("visTech")) + "</h2>" + groupBars + "</article>" +
       '<article class="card" data-card="practices"><h2>' + esc(rc.t("visAdvice")) + '</h2><div class="advice">' + adviceHtml + "</div></article>";
@@ -938,7 +938,7 @@
         '<span class="vchip v-' + key + '"><b>' + (totals[key] || 0) + "</b>" + esc(VERDICT_LABEL[key]) + "</span>").join("") + "</div>" +
       '<div class="verdict-chips" aria-label="' + esc(rc.t("sevAria")) + '">' + ["critical", "high", "medium", "low"].map((key) =>
         '<span class="vchip s-' + ((score.severities || {})[key] ? key : "low") + '"><b>' + ((score.severities || {})[key] || 0) + "</b>" + esc(cc.severity(key)) + "</span>").join("") + "</div>" +
-      '<p class="meta-line">' + esc(rc.t("measured", { person: VERDICT_LABEL.person })) + "</p></div></div>" +
+      '<p class="meta-line" data-note>' + esc(rc.t("measured", { person: VERDICT_LABEL.person })) + "</p></div></div>" +
       '<div class="areas">' + Object.keys(AREA_NOTE).map((name) => {
         const area = areas[name] || { score: 0, grade: "F", fail: 0, risk: 0, pass: 0 };
         const past = current && current.report && current.report.history && current.report.history.areas && current.report.history.areas[name];
@@ -1810,7 +1810,7 @@
   function paintFixFirst(ins, paid) {
     const top = (ins.findings || []).filter((item) => item.rank).slice(0, slotRoot ? undefined : 10);
     slot("fix-first").innerHTML = top.length
-      ? '<p class="muted">' + esc(rc.t("fixIntro")) + '</p><ol class="fix-list">' + top.map((item) =>
+      ? '<p class="muted" data-note>' + esc(rc.t("fixIntro")) + '</p><ol class="fix-list">' + top.map((item) =>
         '<li><span class="fix-rank">' + item.rank + "</span><div>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span>" +
         "<strong>" + esc(said(item, "title")) + "</strong>" +
         '<p class="meta-line">' + fadeText(said(item, "evidence"), paid) + "</p>" +
@@ -1961,7 +1961,7 @@
       gauge("Largest Contentful Paint", vit.lcp || 0, 2500, 4000, 6000, ((vit.lcp || 0) / 1000).toFixed(1) + " s") +
       gauge("Cumulative Layout Shift", vit.cls || 0, 0.1, 0.25, 0.5, String(vit.cls || 0)) +
       gauge("Total Blocking Time", vit.tbt || 0, 200, 600, 1200, (vit.tbt || 0) + " ms") +
-      '</div><p class="meta-line">' + esc(rc.t("labNote")) + "</p>" : "";
+      '</div><p class="meta-line" data-note>' + esc(rc.t("labNote")) + "</p>" : "";
     const shots = b.shots || {};
     const shotCount = ["desktop", "tablet", "mobile"].filter((key) => shots[key]).length;
     const chatCard = chatHtml(report.insights && report.insights.chat) + talkHtml(talk);
@@ -1972,9 +1972,9 @@
         (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="' + esc(rc.t("altDesktop")) + '" loading="lazy"><figcaption>' + esc(rc.t("capDesktop")) + "</figcaption></figure>" : "<div></div>") +
         (shots.tablet ? '<figure><img src="' + esc(shots.tablet) + '" alt="' + esc(rc.t("altTablet")) + '" loading="lazy"><figcaption>' + esc(rc.t("capTablet")) + "</figcaption></figure>" : "") +
         (shots.mobile ? '<figure><img src="' + esc(shots.mobile) + '" alt="' + esc(rc.t("altPhone")) + '" loading="lazy"><figcaption>' + esc(rc.t("capPhone")) + "</figcaption></figure>" : "") + "</div>" : "") +
-      '<div class="split"><article class="card" data-part="tracking"><h3>' + esc(rc.t("trackingTitle")) + '</h3><p class="muted">' + bannerLine + " " + esc(rc.t("pingsNote")) + "</p>" +
+      '<div class="split"><article class="card" data-part="tracking"><h3>' + esc(rc.t("trackingTitle")) + '</h3><p class="muted">' + bannerLine + ' <span data-note>' + esc(rc.t("pingsNote")) + "</span></p>" +
       '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thTool")) + "</th><th>" + esc(rc.t("tileBefore")) + "</th><th>" + esc(rc.t("tileAfter")) + "</th></tr></thead><tbody>" + consentRows + "</tbody></table></article>" +
-      '<article class="card" data-part="text"><h3>' + esc(rc.t("textTitle")) + '</h3><p class="muted">' + esc(rc.t("textNote")) + "</p>" +
+      '<article class="card" data-part="text"><h3>' + esc(rc.t("textTitle")) + '</h3><p class="muted" data-note>' + esc(rc.t("textNote")) + "</p>" +
       '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thPage")) + "</th><th>" + esc(rc.t("thInHtml")) + "</th><th>" + esc(rc.t("thWords")) + "</th></tr></thead><tbody>" + textRows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + (row.share == null ? "—" : row.share + "%") + "</td><td>" + (row.words || 0) + "</td></tr>").join("") + "</tbody></table></article></div>" + chatCard +
       '<article class="card" data-part="axe" style="margin-top:12px"><h3>' + esc(rc.t("axeTitle")) + "</h3>" + (axePages.length
         ? (axeRows ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thRule")) + "</th><th>" + esc(rc.t("thImpact")) + "</th><th>" + esc(rc.t("thElements")) + "</th><th>" + esc(rc.t("thPages")) + "</th></tr></thead><tbody>" + axeRows + "</tbody></table>" : '<p class="muted">' + esc(rc.t("axeClean", { n: axePages.length })) + "</p>") +
@@ -2056,10 +2056,10 @@
     const outlineHtml = (view.outline || []).length ? '<ul class="ai-outline">' + view.outline.map((item) => '<li class="l' + item.level + '">H' + item.level + " · " + esc(item.text) + "</li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noHeadings")) + "</p>";
     slot("geo").innerHTML =
       '<div class="checks-grid" data-part="facts" style="margin-bottom:12px">' + facts.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" +
-      '<div class="split"><article class="card"><div data-part="excerpt"><h3>' + esc(rc.t("aiTextTitle")) + '</h3><p class="muted">' + esc(rc.t(view.appShell ? "aiTextShell" : "aiTextNote")) + "</p>" +
+      '<div class="split"><article class="card"><div data-part="excerpt"><h3>' + esc(rc.t("aiTextTitle")) + '</h3><p class="muted" data-note>' + esc(rc.t(view.appShell ? "aiTextShell" : "aiTextNote")) + "</p>" +
       '<div class="ai-view notranslate" translate="no">' + esc(view.text || rc.t("noReadable")) + (view.chars > (view.text || "").length ? " …" : "") + "</div>" +
       '<p class="meta-line">' + esc(rc.t("wordsChars", { words: view.words || 0, chars: view.chars || 0 })) + '</p></div><div data-part="headings"><h3>' + esc(rc.t("headingsTitle")) + "</h3>" + outlineHtml + "</div></article>" +
-      '<article class="card" data-part="crawlers"><h3>' + esc(rc.t("whoTitle")) + '</h3><p class="muted">' + esc(rc.t(geo.robotsFound ? "robotsFound" : "robotsNone")) + "</p>" + bots + "</article></div>";
+      '<article class="card" data-part="crawlers"><h3>' + esc(rc.t("whoTitle")) + '</h3><p class="muted" data-note>' + esc(rc.t(geo.robotsFound ? "robotsFound" : "robotsNone")) + "</p>" + bots + "</article></div>";
   }
 
   function paintAnalytics(ins) {
@@ -2239,7 +2239,7 @@
       return '<li class="' + esc(tile.state) + '" data-check="' + esc(label.toLowerCase().replace(/[^a-z0-9]+/g, "-")) + '"><span class="notranslate" translate="no" title="' + esc(label) + '">' + esc(label) +
         '</span><b role="img" aria-label="' + esc(word) + '" title="' + esc(word) + '">' + (tile.person ? "?" : CHECK_MARK[tile.state] || "–") + "</b></li>";
     }).join("");
-    return '<div class="sec-cover"><h3>' + esc(rc.t("matrixTitle")) + '</h3><p class="muted">' + esc(rc.t("matrixNote")) + '</p><ul class="sec-cov">' + cover +
+    return '<div class="sec-cover"><h3>' + esc(rc.t("matrixTitle")) + '</h3><p class="muted" data-note>' + esc(rc.t("matrixNote")) + '</p><ul class="sec-cov">' + cover +
       line("cookies", rc.t("thCookies"), jarState, jarText) + "</ul></div>" + diff + '<ul class="sec-checks">' + checks + '</ul><div class="sec-meta">' + meta + "</div>";
   }
 
@@ -2334,8 +2334,8 @@
     const folderMark = "\u0000";
     const hostingMark = "\u0001";
     slot("fixkit").innerHTML =
-      "<p>" + esc(rc.t("kitIntro", { folder: folderMark }) + (kit.hosting ? " " + rc.t("kitHosting", { hosting: hostingMark }) : ""))
-        .replace(folderMark, () => '<span class="notranslate" translate="no">fix-kit/</span>').replace(hostingMark, () => "<strong>" + esc(kit.hosting) + "</strong>") + "</p>" +
+      "<p><span data-note>" + esc(rc.t("kitIntro", { folder: folderMark })).replace(folderMark, () => '<span class="notranslate" translate="no">fix-kit/</span>') + "</span>" +
+        (kit.hosting ? " " + esc(rc.t("kitHosting", { hosting: hostingMark })).replace(hostingMark, () => "<strong>" + esc(kit.hosting) + "</strong>") : "") + "</p>" +
       '<div class="fixkit-list">' + items.map(([kind, title, body, none]) => '<article data-kit="' + kind + '"' + (none ? ' class="is-none"' : "") + "><strong>" + esc(title) + "</strong><span class=\"muted\"" +
         (slotRoot ? ' title="' + esc(body) + '"' : "") + ">" + esc(body) + "</span></article>").join("") + "</div>" +
       '<div class="code-peek notranslate" translate="no">' + fadeText(peek, paid) + "</div>";
