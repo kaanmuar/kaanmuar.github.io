@@ -124,6 +124,8 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
+    await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
+    await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
     await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices', 'social-proposals', 'social-runs', 'proposals']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 

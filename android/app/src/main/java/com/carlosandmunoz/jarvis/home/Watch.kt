@@ -34,7 +34,7 @@ object Watch {
     }
 
     /** No-op without a connected watch, so phones without one never pay for the extra one-day snapshot. */
-    suspend fun sync(context: Context) {
+    suspend fun sync(context: Context, today: suspend () -> JsonObject?) {
         val app = context.applicationContext as JarvisApp
         val nodes = runCatching { Wearable.getNodeClient(app).connectedNodes.await() }.getOrNull().orEmpty()
         if (nodes.isEmpty()) return
@@ -43,9 +43,7 @@ object Watch {
         if (saved == null) req.dataMap.putBoolean("empty", true)
         else {
             val (snap, at) = saved
-            val today = if (Home.days(app) == 1 || !app.auth.signedIn) snap
-                else runCatching { app.api.fetch("snapshot", 1).json }.getOrNull() ?: app.api.saved("snapshot", 1)?.json
-            val s = summary(snap, today, at)
+            val s = summary(snap, today(), at)
             req.dataMap.apply {
                 putDouble("readiness", s.readiness ?: -1.0)
                 putInt("alerts", s.alerts)

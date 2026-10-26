@@ -9,6 +9,7 @@ import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.home.Home
+import com.carlosandmunoz.jarvis.home.Ongoing
 import com.carlosandmunoz.jarvis.push.Push
 import com.carlosandmunoz.jarvis.voice.Heard
 import com.carlosandmunoz.jarvis.voice.Listener
@@ -45,6 +46,7 @@ data class UiState(
     val toast: String? = null,
     val running: Set<String> = emptySet(),
     val push: Map<String, Boolean> = emptyMap(),
+    val ongoing: Boolean = true,
     val heard: Heard = Heard(),
     val speaking: String? = null,
     val speak: Boolean = true,
@@ -58,7 +60,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     private val jarvis = app as JarvisApp
     private val auth = jarvis.auth
     private val api = jarvis.api
-    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp), speak = Voice.speakOn(app)))
+    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp), ongoing = Ongoing.enabled(app), speak = Voice.speakOn(app)))
     val state: StateFlow<UiState> = _state
     private val listener = Listener(app) { ask(it, spoken = true) }
     private val speaker = Speaker(jarvis)
@@ -90,7 +92,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     fun cancelCode() = _state.update { it.copy(pendingCode = null, authError = null) }
 
     fun signOut() {
-        _state.value = UiState(email = auth.email, push = _state.value.push)
+        _state.value = UiState(email = auth.email, push = _state.value.push, ongoing = _state.value.ongoing)
         viewModelScope.launch {
             runCatching { Push.forget(jarvis) }
             auth.signOut()
@@ -101,6 +103,12 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Turns one push kind on or off for this phone; the jarvis function only pushes the kinds a phone keeps. */
+    fun setOngoing(on: Boolean) {
+        jarvis.vault.setFlag(Ongoing.FLAG, on)
+        _state.update { it.copy(ongoing = on) }
+        viewModelScope.launch { Home.redraw(jarvis) }
+    }
+
     fun setPush(kind: String, on: Boolean) {
         jarvis.vault.setFlag("push.$kind", on)
         _state.update { it.copy(push = Push.kinds(jarvis)) }
