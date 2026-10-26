@@ -876,12 +876,6 @@
     }
   }
 
-  function filterOf() {
-    if (!slotRoot) return findingFilter;
-    if (!slotRoot.findingFilter) slotRoot.findingFilter = { area: "All", verdict: "open" };
-    return slotRoot.findingFilter;
-  }
-
   function foundCount(limits) {
     const count = Number(limits && limits.pagesFound) || 0;
     return count ? count + (limits.pagesFoundPartial ? "+" : "") : "";
@@ -955,12 +949,9 @@
       }).join("") + "</div></article>";
     slot("health").querySelectorAll(".area").forEach((button) => {
       button.addEventListener("click", () => {
+        // The comparison filters the findings of every column at once (js/qa-review-multi.js).
         if (column) {
-          inSlot(column, () => {
-            Object.assign(filterOf(), { area: button.getAttribute("data-area"), verdict: "all" });
-            paintFindings(column.payload.report.insights, !!column.payload.paid);
-          });
-          slot("findings", column).scrollIntoView({ behavior: "smooth", block: "start" });
+          slot("findings", column).dispatchEvent(new CustomEvent("findingfilter", { bubbles: true, detail: { area: button.getAttribute("data-area"), verdict: "all" } }));
           return;
         }
         findingFilter = { area: button.getAttribute("data-area"), verdict: "all" };
@@ -2262,13 +2253,32 @@
         "<td>" + (row.cookies ? row.cookies + (row.looseCookies ? ", " + esc(rc.t("withoutSecure", { n: row.looseCookies })) : "") : "—") + "</td></tr>").join("") + "</tbody></table></div>";
   }
 
+  const VERDICT_RANK = { fail: 0, risk: 1, person: 2, pass: 3 };
+  const SEVERITY_RANK = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+
+  // A comparison column lists every finding under its area, in the order of the health card, worst first;
+  // the comparison's one filter bar hides what it leaves out, so all columns filter together.
+  function paintFindingGroups(ins, paid) {
+    const rank = (table, key) => (key in table ? table[key] : 9);
+    const all = (ins.findings || []).slice().sort((a, b) => rank(VERDICT_RANK, a.verdict) - rank(VERDICT_RANK, b.verdict) || rank(SEVERITY_RANK, a.severity) - rank(SEVERITY_RANK, b.severity));
+    slot("findings").innerHTML = Object.keys(AREA_NOTE).map((name) => {
+      const items = all.filter((item) => item.area === name);
+      return '<section class="finding-group" data-group="' + esc(name) + '"><h3 class="group-head"><button type="button" class="group-toggle" aria-expanded="true"><span>' + esc(cc.area(name)) + '</span> <span class="group-count">' + items.length + "</span></button></h3>" +
+        items.map((item) => '<details class="finding" data-verdict="' + esc(item.verdict || "") + '" data-severity="' + esc(item.severity || "") + '"><summary><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) +
+          "<strong>" + esc(said(item, "title")) + "</strong></summary><p class=\"muted\">" + fadeText(said(item, "evidence"), paid) + "</p>" +
+          (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
+          ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + esc(item.pages.slice(0, 6).join(" · ")) + (item.pages.length > 6 ? " …" : "") + "</p>" : "") +
+          ((item.cases || []).length ? '<p class="meta-line">' + esc(rc.t("testCases", { list: item.cases.join(", ") })) + "</p>" : "") + "</details>").join("") + "</section>";
+    }).join("");
+  }
+
   function paintFindings(ins, paid) {
+    if (slotRoot) return paintFindingGroups(ins, paid);
     const all = ins.findings || [];
     const areas = ["All"].concat(Object.keys(AREA_NOTE));
     const verdicts = [["open", rc.t("fOpen")], ["all", rc.t("fAll")], ["fail", VERDICT_LABEL.fail], ["risk", VERDICT_LABEL.risk], ["pass", VERDICT_LABEL.pass], ["person", VERDICT_LABEL.person]];
     const bar = slot("finding-filters");
-    const filter = filterOf();
-    const column = slotRoot;
+    const filter = findingFilter;
     bar.innerHTML = areas.map((name) => '<button type="button" data-area="' + esc(name) + '"' + (filter.area === name ? ' class="on"' : "") + ">" + esc(name === "All" ? rc.t("allAreas") : cc.area(name)) + "</button>").join("") +
       '<span style="width:12px;display:inline-block"></span>' +
       verdicts.map(([key, label]) => '<button type="button" data-verdict="' + key + '"' + (filter.verdict === key ? ' class="on"' : "") + ">" + esc(label) + "</button>").join("");
@@ -2277,7 +2287,7 @@
       if (!button) return;
       if (button.hasAttribute("data-area")) filter.area = button.getAttribute("data-area");
       if (button.hasAttribute("data-verdict")) filter.verdict = button.getAttribute("data-verdict");
-      inSlot(column, () => paintFindings(ins, paid));
+      paintFindings(ins, paid);
     };
     const shown = all.filter((item) => (filter.area === "All" || item.area === filter.area) &&
       (filter.verdict === "all" || (filter.verdict === "open" ? (item.verdict === "fail" || item.verdict === "risk") : item.verdict === filter.verdict)));

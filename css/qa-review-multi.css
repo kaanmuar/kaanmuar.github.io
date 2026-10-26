@@ -133,8 +133,8 @@
 .multi-modal .multi-cell .fix-list li .meta-line:not(:last-child) { display: none; }
 .multi-modal .multi-cell .fix-list .fix-line { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; font-size: 12.5px; line-height: 1.4; }
 /* Long lists scroll inside their box; the fade at the foot says there is more. */
-.multi-sec:is([data-sec="fix"], [data-sec="findings"], [data-sec="pages"], [data-sec="log"]) .multi-cell > .card { max-height: 640px; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
-.multi-sec:is([data-sec="fix"], [data-sec="findings"], [data-sec="pages"], [data-sec="log"]) .multi-cell > .card::after { content: ""; position: sticky; bottom: -18px; display: block; height: 36px; margin: -18px -18px -18px; background: linear-gradient(transparent, var(--look-card, var(--card)) 85%); pointer-events: none; }
+.multi-sec:is([data-sec="fix"], [data-sec="pages"], [data-sec="log"]) .multi-cell > .card { max-height: 640px; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.multi-sec:is([data-sec="fix"], [data-sec="pages"], [data-sec="log"]) .multi-cell > .card::after { content: ""; position: sticky; bottom: -18px; display: block; height: 36px; margin: -18px -18px -18px; background: linear-gradient(transparent, var(--look-card, var(--card)) 85%); pointer-events: none; }
 .multi-cell .page-table thead th { position: sticky; top: -18px; z-index: 1; background: var(--look-card, var(--card)); }
 .multi-empty { flex-grow: 1; display: grid; place-items: start center; min-height: 72px; padding: 26px 16px; border: 1px dashed var(--line); border-radius: 18px; color: var(--muted); font-size: 13px; text-align: center; background: color-mix(in srgb, var(--panel) 40%, transparent); }
 .multi-cell.is-note > :not([hidden]) { padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; color: var(--muted); background: color-mix(in srgb, var(--panel) 55%, transparent); }
@@ -265,6 +265,28 @@
 @container (max-width: 200px) {
   .multi-modal .multi-sec[data-sec="seo"] .multi-cell .stat-row { grid-template-columns: minmax(0, 1fr); }
 }
+/* Every check: one filter bar for all columns, then each column's findings by area, a line each until opened.
+   Selectors, URLs and paths have no place to break, so they break anywhere rather than widen the column. */
+.multi-modal .multi-filters { position: sticky; left: 0; z-index: 1; width: fit-content; max-width: min(100%, 72vw); margin: 0 0 14px; }
+.multi-modal .multi-filter-gap { width: 12px; }
+.multi-modal .multi-sec.is-folded > .multi-filters, .multi-modal .multi-filter-say { display: none; }
+.multi-cell [data-slot="findings"] { min-width: 0; padding-top: 8px; padding-bottom: 8px; overflow-wrap: anywhere; }
+.multi-cell .finding-group + .finding-group { border-top: 1px solid var(--line); }
+.multi-cell .group-head { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+.multi-cell .group-toggle { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 0; border: 0; background: none; color: var(--text); font: inherit; letter-spacing: inherit; text-transform: inherit; text-align: left; cursor: pointer; }
+.multi-cell .group-toggle::after { content: ""; width: 7px; height: 7px; margin: -3px 2px 0 auto; border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.multi-cell .is-folded .group-toggle::after { margin-top: 2px; transform: rotate(-135deg); }
+.multi-cell .group-count { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--own) 16%, transparent); color: var(--text); font-size: 11px; letter-spacing: 0; text-align: center; }
+.multi-cell .finding-group.is-none .group-toggle { color: var(--muted); }
+.multi-cell .finding-group.is-none .group-count { background: transparent; color: var(--muted); }
+.multi-cell .finding-group.is-folded > .finding, .multi-cell .finding-group.is-folded > .print-more { display: none; }
+.multi-cell details.finding { padding: 8px 0; border-bottom: 0; border-top: 1px dashed color-mix(in srgb, var(--line) 70%, transparent); }
+.multi-cell details.finding > summary { list-style: none; cursor: pointer; line-height: 1.5; }
+.multi-cell details.finding > summary::-webkit-details-marker { display: none; }
+.multi-cell details.finding > summary strong { display: block; margin-top: 2px; font-size: 13.5px; line-height: 1.35; }
+.multi-cell details.finding[open] > summary { margin-bottom: 4px; }
+.multi-cell details.finding > .muted { font-size: 13px; line-height: 1.45; }
+.multi-cell details.finding > summary:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 4px; }
 
 /* Security and email: each block of a column sits on a row shared by every column (subgrid), and the rows inside a
    block have one fixed height, so a header or check reads straight across the sites. The first track holds the
@@ -443,6 +465,10 @@
   body.printing-multi .multi-cell .cases-toggle { padding: 4px 0; font-size: 9pt; }
   body.printing-multi .multi-cell .cases-toggle::after { display: none; }
   body.printing-multi .multi-cell .cases-why { display: -webkit-box !important; -webkit-line-clamp: 2 !important; overflow: hidden !important; font-size: 8pt; }
+  body.printing-multi .multi-modal .multi-filter-say { display: block; margin: -8px 0 8px; }
+  body.printing-multi .multi-cell .finding-group.is-folded > .finding:not([hidden]), body.printing-multi .multi-cell .finding-group.is-folded > .print-more { display: block; }
+  body.printing-multi .multi-cell .group-toggle { padding: 6px 0 2px; }
+  body.printing-multi .multi-cell .group-toggle::after { display: none; }
   body.printing-multi .multi-cell .print-more { display: revert; list-style: none; color: #6b7785; font-style: italic; }
   /* The host line each column prints first takes a row of its own. */
   body.printing-multi .multi-sec[data-sec="geo"] .multi-cell { grid-row: span 5; }
