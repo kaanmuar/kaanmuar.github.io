@@ -23,7 +23,7 @@ const JOBS = [
   { job: "emailWeeklyReviewReport", cron: "35 7 * * 1", gap: 7 * 24 + 2, what: "Weekly URL review report" },
   { job: "jarvisDailyBriefing", cron: "40 7 * * *", gap: 26, what: "Jarvis daily briefing: the last 24 hours, goals and alerts, by email (Admin > Statistics > Settings)" },
   { job: "jarvisWeeklyStrategy", cron: "0 19 * * 0", gap: 7 * 24 + 2, what: "Jarvis weekly strategy to the owner: four weeks side by side, the proposals and Gemini's plan for next week (Admin > Statistics > Settings)" },
-  { job: "jarvisWatch", cron: "5 * * * *", gap: 2, what: "Jarvis watch: mail an alert-level threshold crossing (uptime, TLS, jobs, failed runs), once a day per issue" },
+  { job: "jarvisWatch", cron: "5 * * * *", gap: 2, what: "Jarvis safe actions within daily caps (clean held re-runs, failed owner notices in Ley 2300 hours, a stale hub), then the watch: mail an alert-level threshold crossing (uptime, TLS, jobs, failed runs), once a day per issue, and one push for new outreach notices" },
   { job: "emailMonthlySiteReport", cron: "45 7 1 * *", gap: 31 * 24 + 2, what: "Monthly site report" },
   { job: "emailMonthlyReviewReport", cron: "50 7 1 * *", gap: 31 * 24 + 2, what: "Monthly URL review report" },
   { job: "emailQuarterSiteReport", cron: "*/15 * * * *", gap: 1, what: "Quarter-hour site report, only when something happened" },
