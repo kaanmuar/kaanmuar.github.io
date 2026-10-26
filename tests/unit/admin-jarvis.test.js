@@ -437,6 +437,48 @@ test("money: sales, credit runs, refunds and test rows each land in the right pl
   assert.deepEqual(out.byProvider, [{ label: "paypal", value: 28 }]);
 });
 
+test("money: a refused Transaction search still sums fees from confirmed PayPal payments", async () => {
+  const calls = [];
+  const fetch = async (url) => {
+    calls.push(url);
+    if (/disputes/.test(url)) return json({ items: [{ status: "RESOLVED" }, { status: "OPEN" }] });
+    if (/reporting\/transactions/.test(url)) return json({ name: "NOT_AUTHORIZED", message: "Authorization failed due to insufficient permissions." }, 403);
+    if (/captures\/CAP123456789012345/.test(url)) return json({ seller_receivable_breakdown: { gross_amount: { currency_code: "USD", value: "16.15" }, paypal_fee: { currency_code: "USD", value: "0.82" }, net_amount: { currency_code: "USD", value: "15.33" } } });
+    if (/orders\/ORD123456789012345/.test(url)) return json({ purchase_units: [{ payments: { captures: [{ seller_receivable_breakdown: { gross_amount: { currency_code: "USD", value: "9.00" }, paypal_fee: { currency_code: "USD", value: "0.61" }, net_amount: { currency_code: "USD", value: "8.39" } } }] } }] });
+    throw new Error("unexpected " + url);
+  };
+  const rows = [
+    { id: "a", createdAt: daysAgo(1).toISOString(), paid: true, priceUsd: 16.15, captureId: "CAP123456789012345" },
+    { id: "b", createdAt: daysAgo(2).toISOString(), paid: true, priceUsd: 9, method: "paypal", sessionId: "ORD123456789012345" },
+    { id: "dup", createdAt: daysAgo(2).toISOString(), paid: true, priceUsd: 16.15, provider: "paypal", captureId: "CAP123456789012345" },
+    { id: "test", createdAt: daysAgo(1).toISOString(), paid: true, priceUsd: 9, provider: "paypal", captureId: "SANDBOXCAPTURE00001", paypalMode: "sandbox" },
+    { id: "other", createdAt: daysAgo(1).toISOString(), paid: true, priceUsd: 3, provider: "stripe", captureId: "SHOULDNOTFETCH00001" }
+  ];
+  const docsOf = (list) => ({ docs: list.map((row) => ({ id: row.id, data: () => row })) });
+  const db = { collection() { return { where() { return this; }, limit() { return this; }, get: async () => docsOf(rows) }; } };
+  const paypal = { host: "api-m.paypal.com", token: async () => "token" };
+  const out = await sources.money({ fetch, env: { STRIPE_SECRET_KEY: "sk_test_x" }, db, now: NOW.getTime(), days: 7, paypal });
+  assert.equal(out.paypal.disputesOpen, 1);
+  assert.deepEqual(out.paypal.transactions, { count: 2, grossUsd: 25.15, feesUsd: 1.43, netUsd: 23.72, source: "payments" });
+  assert.deepEqual(out.needs, []);
+  assert.equal(calls.some((url) => /SANDBOX|SHOULDNOT/.test(url)), false);
+  const quiet = await sources.money({
+    fetch: async (url) => /reporting\/transactions/.test(url) ? json({ name: "NOT_AUTHORIZED", message: "no" }, 403) : json({ items: [] }),
+    env: {}, db: { collection() { return { where() { return this; }, limit() { return this; }, get: async () => docsOf([]) }; } }, now: NOW.getTime(), days: 7, paypal
+  });
+  assert.deepEqual(quiet.paypal.transactions, { count: 0, grossUsd: 0, feesUsd: 0, netUsd: 0, source: "payments" });
+  assert.deepEqual(quiet.needs, []);
+  const blocked = await sources.money({
+    fetch: async (url) => {
+      if (/reporting\/transactions/.test(url) || /captures\//.test(url)) return json({ name: "NOT_AUTHORIZED", message: "no" }, 403);
+      return json({ items: [] });
+    },
+    env: {}, db, now: NOW.getTime(), days: 7, paypal
+  });
+  assert.equal(blocked.paypal.transactions, null);
+  assert.equal(blocked.needs.length, 1);
+});
+
 test("money: rows saved before test and provider were recorded are read from the session and capture", () => {
   const start = daysAgo(7).getTime();
   const at = (n) => daysAgo(n).toISOString();

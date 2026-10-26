@@ -108,6 +108,59 @@ function moneyRows(rows, { start, priorStart }) {
   };
 }
 
+// Transaction search is a separate grant. Confirmed captures and orders already carry the fee breakdown.
+function paypalMoney(capture) {
+  const breakdown = (capture && capture.seller_receivable_breakdown) || {};
+  const amount = breakdown.gross_amount || (capture && capture.amount) || {};
+  const gross = Number(amount.value);
+  const fee = Math.abs(Number((breakdown.paypal_fee || {}).value) || 0);
+  const net = Number((breakdown.net_amount || {}).value);
+  if (String(amount.currency_code || "USD") !== "USD" || !Number.isFinite(gross) || gross <= 0) return null;
+  return { gross, fee, net: Number.isFinite(net) ? net : gross - fee };
+}
+
+function paypalBookIds(rows, start, end) {
+  const captures = [];
+  const orders = [];
+  (rows || []).forEach((row) => {
+    if (isTestPayment(row) || (providerOf(row) !== "paypal" && row.method !== "paypal")) return;
+    const at = Date.parse(row.createdAt || "");
+    if (!Number.isFinite(at) || at < start || at > end) return;
+    const capture = String(row.captureId || "");
+    const order = String(row.sessionId || "");
+    if (/^[A-Z0-9]{10,22}$/.test(capture)) { if (captures.indexOf(capture) === -1) captures.push(capture); }
+    else if (/^[A-Z0-9]{10,22}$/.test(order) && orders.indexOf(order) === -1) orders.push(order);
+  });
+  return { captures: captures.slice(0, 40), orders: orders.slice(0, 40) };
+}
+
+async function paypalFeesFromPayments(ctx, rows, { start, end }) {
+  const ids = paypalBookIds(rows, start, end);
+  const empty = { count: 0, grossUsd: 0, feesUsd: 0, netUsd: 0, source: "payments" };
+  if (!ctx.paypal || (!ids.captures.length && !ids.orders.length)) return empty;
+  let token;
+  try { token = await ctx.paypal.token(); } catch (error) { return null; }
+  const host = "https://" + ctx.paypal.host;
+  const auth = { headers: { Authorization: "Bearer " + token } };
+  let gross = 0, fees = 0, count = 0, denied = false;
+  const load = async (url, read) => {
+    try {
+      const fee = paypalMoney(read(await getJson(ctx.fetch, url, auth, "PayPal payment")));
+      if (!fee) return;
+      gross += fee.gross;
+      fees += fee.fee;
+      count += 1;
+    } catch (error) { if (error.status === 403) denied = true; }
+  };
+  for (const id of ids.captures) await load(host + "/v2/payments/captures/" + id, (body) => body);
+  for (const id of ids.orders) await load(host + "/v2/checkout/orders/" + id, (body) => {
+    const unit = ((body && body.purchase_units) || [])[0] || {};
+    return (((unit.payments || {}).captures) || [])[0] || null;
+  });
+  if (denied && count === 0) return null;
+  return { count, grossUsd: round(gross, 2), feesUsd: round(fees, 2), netUsd: round(gross - fees, 2), source: "payments" };
+}
+
 async function paypalPart(ctx, { start, end }) {
   const out = { ok: false, disputesOpen: null, transactions: null, needs: [] };
   if (!ctx.paypal) { out.error = "PayPal is not set up."; return out; }
@@ -146,8 +199,16 @@ async function money(ctx) {
   const start = ctx.now - days * DAY;
   const priorStart = ctx.now - 2 * days * DAY;
   const snap = await ctx.db.collection("url_reviews").where("paid", "==", true).where("createdAt", ">=", new Date(priorStart).toISOString()).limit(3000).get();
-  const out = Object.assign({ ok: true, days }, moneyRows(snap.docs.map((d) => Object.assign({ id: d.id }, d.data())), { start, priorStart }));
+  const rows = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+  const out = Object.assign({ ok: true, days }, moneyRows(rows, { start, priorStart }));
   out.paypal = await paypalPart(ctx, { start, end: ctx.now });
+  if (!out.paypal.transactions && out.paypal.needs.length) {
+    const fromPayments = await paypalFeesFromPayments(ctx, rows, { start, end: ctx.now });
+    if (fromPayments) {
+      out.paypal.transactions = fromPayments;
+      out.paypal.needs = [];
+    }
+  }
   const stripe = String((ctx.env || {}).STRIPE_SECRET_KEY || "");
   out.stripe = { mode: /^(sk|rk)_live_/.test(stripe) ? "live" : /^(sk|rk)_test_/.test(stripe) ? "test" : "none" };
   out.needs = out.paypal.needs.slice();
