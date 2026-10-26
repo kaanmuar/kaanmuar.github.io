@@ -153,6 +153,41 @@
 .multi-modal .multi-sec[data-sec="geo"] .bot > div { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .multi-modal .multi-sec[data-sec="geo"] .bot :is(.bot-product, small) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* Security and email: each block of a column sits on a row shared by every column (subgrid), and the rows inside a
+   block have one fixed height, so a header or check reads straight across the sites. The first track holds the
+   host label printed above each column. A size container cannot be a subgrid. Rows carry data-header and
+   data-check for any later cross-column hook. */
+.multi-sec[data-sec="security"] .multi-row { grid-template-rows: auto repeat(4, auto); row-gap: 0; }
+.multi-sec[data-sec="security"] .multi-cell { grid-row: 1 / span 5; display: grid; grid-template-rows: subgrid; row-gap: 0; container-type: normal; }
+.multi-sec[data-sec="security"] .multi-cell > .card:not([hidden]) { grid-row: 2 / span 4; display: grid; grid-template-rows: subgrid; row-gap: 0; align-content: start; }
+.multi-sec[data-sec="security"] .multi-cell > .card > :not(:first-child) { margin-top: 14px; }
+.multi-cell :is(.sec-cov, .sec-checks, .sec-diff ol) { list-style: none; margin: 0; padding: 0; }
+.multi-cell .sec-cover h3 { margin: 0 0 4px; }
+.multi-cell .sec-cover > .muted { margin: 0 0 10px; font-size: 13px; }
+.multi-cell :is(.sec-cov, .sec-checks) { display: grid; gap: 4px; }
+.multi-cell .sec-checks { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.multi-cell :is(.sec-cov, .sec-checks) li { --c: var(--muted); position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 30px; padding: 0 10px; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); font-size: 12.5px; }
+.multi-cell :is(.sec-cov, .sec-checks) .pass { --c: var(--green); }
+.multi-cell :is(.sec-cov, .sec-checks) .risk { --c: var(--amber); }
+.multi-cell :is(.sec-cov, .sec-checks) .fail { --c: var(--red); }
+.multi-cell :is(.sec-cov, .sec-checks) li > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.multi-cell :is(.sec-cov, .sec-checks) b { color: var(--c); font-weight: 800; white-space: nowrap; }
+.multi-cell .sec-cov li > span { flex: none; font-weight: 700; }
+.multi-cell .sec-cov b { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.multi-cell .sec-cov li::after { content: ""; position: absolute; left: 0; bottom: 0; width: var(--cov, 0%); height: 3px; background: var(--c); }
+.multi-cell .sec-checks b { flex: none; width: 1.4em; text-align: center; font-size: 13.5px; }
+.multi-cell .sec-diff { align-self: start; margin: 0; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--amber) 45%, var(--line)); border-radius: 12px; font-size: 12.5px; }
+.multi-cell p.sec-diff { border-color: var(--line); color: var(--muted); }
+.multi-cell .sec-diff h4 { margin: 0 0 8px; font-size: 13px; }
+.multi-cell .sec-diff ol { display: grid; gap: 7px; }
+.multi-cell .sec-diff li { display: grid; gap: 1px; }
+.multi-cell .sec-diff li > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.multi-cell .sec-diff li small { color: var(--red); font-weight: 700; font-size: 11.5px; }
+.multi-cell .sec-more summary { margin-top: 8px; cursor: pointer; font-weight: 700; color: var(--muted); }
+.multi-cell .sec-more ol { max-height: 220px; overflow: auto; margin-top: 7px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.multi-cell .sec-meta:empty { display: none; }
+.multi-cell .sec-meta > p { margin: 0 0 6px; }
+
 /* Six sites fit the side-by-side table without scrolling sideways; the line names stay in view.
    Under .multi-modal, so these win over the .compare-table rules in the page's own style tag, which loads later. */
 .multi-modal { --own: var(--cyan); }
@@ -286,6 +321,13 @@
   body.printing-multi .multi-cell .sec-matrix th { font-size: 6pt; letter-spacing: 0; overflow-wrap: anywhere; }
   body.printing-multi .multi-cell .sec-matrix td:first-child { min-width: 0; }
   body.printing-multi .multi-cell :is(.finding, .case, .area, .check-tile, .stat, .kpi, .fix-list > li, tr, .alarm-list > li) { break-inside: avoid; }
+  body.printing-multi .multi-cell :is(.sec-cov, .sec-checks) li { height: 17px; padding: 0 5px; border-radius: 5px; background: transparent; font-size: 7pt; break-inside: avoid; }
+  body.printing-multi .multi-cell :is(.sec-cov, .sec-checks), body.printing-multi .multi-cell .sec-diff ol { gap: 2px; }
+  body.printing-multi .multi-cell .sec-diff { padding: 5px 6px; font-size: 7pt; }
+  body.printing-multi .multi-cell .sec-diff li small { font-size: 6.5pt; }
+  body.printing-multi .multi-cell .sec-more > :not(summary) { display: none; }
+  body.printing-multi .multi-cell .sec-more summary { list-style: none; font-weight: 400; font-style: italic; color: #6b7785; }
+  body.printing-multi .multi-sec[data-sec="security"] .multi-cell > .card > :not(:first-child) { margin-top: 8px; }
   body.printing-multi .multi-table th, body.printing-multi .multi-table td { padding-top: 4px; padding-bottom: 4px; }
   body.printing-multi .multi-modal, body.printing-multi .multi-table td.lead { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   /* Page 1: the ranking and what it means; then the areas, the indicators, the table, and the sections. */

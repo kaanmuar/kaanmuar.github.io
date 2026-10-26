@@ -2188,22 +2188,73 @@
     const sec = ins.security || {};
     const domain = sec.domain;
     const domainMark = "\u0000";
-    slot("security").innerHTML = '<div class="checks-grid">' + (sec.headers || []).map((item) =>
-      '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(item.person ? VERDICT_LABEL.person : rc.word("secState", item.state)) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
-      (sec.tls ? '<p class="meta-line">' + esc(rc.t("tls", { date: sec.tls.validTo, days: rc.t("days", { n: sec.tls.daysLeft }) }) + (sec.tls.issuer ? rc.t("tlsIssuer", { issuer: sec.tls.issuer }) : "")) + ".</p>" : "") +
+    const meta = (sec.tls ? '<p class="meta-line">' + esc(rc.t("tls", { date: sec.tls.validTo, days: rc.t("days", { n: sec.tls.daysLeft }) }) + (sec.tls.issuer ? rc.t("tlsIssuer", { issuer: sec.tls.issuer }) : "")) + ".</p>" : "") +
       (domain ? '<p class="meta-line">' + esc(rc.t("domainLine", {
         domain: domainMark,
         registrar: domain.registrar ? rc.t("domainWith", { registrar: domain.registrar }) : "",
         until: domain.expires ? rc.t("domainUntil", { date: domain.expires, days: rc.t("days", { n: domain.daysLeft }) }) : "",
         lock: domain.locked == null ? "" : rc.t(domain.locked ? "domainLocked" : "domainUnlocked")
       })).replace(domainMark, () => '<span class="notranslate" translate="no">' + esc(domain.domain) + "</span>") + "</p>" : "") +
-      (sec.bimi ? '<p class="meta-line">' + esc(rc.t(sec.bimi.record ? "bimiOn" : sec.bimi.eligible ? "bimiOffEligible" : "bimiOff") + " " + rc.t("notScored")) + "</p>" : "") +
-      securityMatrix(sec.pages || []);
+      (sec.bimi ? '<p class="meta-line">' + esc(rc.t(sec.bimi.record ? "bimiOn" : sec.bimi.eligible ? "bimiOffEligible" : "bimiOff") + " " + rc.t("notScored")) + "</p>" : "");
+    if (slotRoot) {
+      slot("security").innerHTML = (sec.headers || []).length || (sec.pages || []).length || meta ? securityColumn(sec, meta) : "";
+      return;
+    }
+    slot("security").innerHTML = '<div class="checks-grid">' + (sec.headers || []).map((item) =>
+      '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(item.person ? VERDICT_LABEL.person : rc.word("secState", item.state)) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
+      meta + securityMatrix(sec.pages || []);
+  }
+
+  function headerCols() {
+    return [["hsts", "HSTS"], ["csp", "CSP"], ["frame", rc.t("colFraming")], ["nosniff", "nosniff"], ["referrer", rc.t("colReferrer")], ["permissions", rc.t("colPermissions")]];
+  }
+
+  // The checks in the order the review writes them, so a check one site lacks keeps its row in that column.
+  const CHECK_ORDER = ["HTTPS redirect", "HSTS", "Content-Security-Policy", "Frame protection", "X-Content-Type-Options", "Referrer-Policy", "Permissions-Policy", "Cross-Origin-Opener-Policy",
+    "TLS certificate", "security.txt", "SPF", "DMARC", "CAA", "Safe Browsing", "Domain expiry", "MTA-STS", "TLS-RPT", "Front-end libraries", "Privacy notice", "Imprint", "Accessibility statement"];
+  const CHECK_MARK = { pass: "✓", risk: "!", fail: "✗", unknown: "–" };
+  const DIFF_SHOWN = 6;
+
+  // A comparison column: how many pages send each header, the pages that drop one the start page sends, then every
+  // check, each in the same rows and order for every site so they read across the columns.
+  function securityColumn(sec, meta) {
+    const rows = sec.pages || [];
+    const n = rows.length;
+    const start = rows[0] || {};
+    const cols = headerCols();
+    const unknown = rc.word("secState", "unknown");
+    const line = (key, label, state, text, share) => '<li class="' + state + '" data-header="' + key + '"' + (share == null ? "" : ' style="--cov:' + share + '%"') +
+      "><span>" + esc(label) + '</span><b title="' + esc(text) + '">' + esc(text) + "</b></li>";
+    const cover = cols.map(([key, label]) => {
+      if (!n) return line(key, label, "unknown", unknown);
+      const k = rows.filter((row) => row[key]).length;
+      const [state, text] = k === n ? ["pass", "✓ " + rc.t("covAll", { n })] : !k ? ["fail", "✗ " + rc.t("covNone")]
+        : k === 1 && start[key] ? ["risk", "✗ " + rc.t("covStart")] : ["risk", "✗ " + rc.t("covSome", { k, n })];
+      return line(key, label, state, text, Math.round(k / n * 100));
+    }).join("");
+    const loose = rows.reduce((sum, row) => sum + (row.looseCookies || 0), 0);
+    const [jarState, jarText] = !n ? ["unknown", unknown] : loose ? ["risk", "✗ " + rc.t("withoutSecure", { n: loose })]
+      : rows.some((row) => row.cookies) ? ["pass", "✓ " + rc.t("covSecure")] : ["unknown", rc.t("covNoCookies")];
+    const differ = rows.slice(1).map((row) => ({ row, miss: cols.filter(([key]) => start[key] && !row[key]).map(([, label]) => label) }))
+      .filter((page) => page.miss.length).sort((a, b) => b.miss.length - a.miss.length);
+    const item = ({ row, miss }) => '<li title="' + esc(row.path) + '"><span class="notranslate" translate="no">' + esc(String(row.path).replace(/[?#].*$/, "")) + "</span><small>" + esc(miss.join(" · ")) + "</small></li>";
+    const diff = n < 2 ? "<div></div>" : !differ.length ? '<p class="sec-diff">' + esc(rc.t(cols.some(([key]) => start[key]) ? "diffNone" : "diffNoStart")) + "</p>"
+      : '<div class="sec-diff"><h4>' + esc(rc.t("diffTitle")) + "</h4><ol>" + differ.slice(0, DIFF_SHOWN).map(item).join("") + "</ol>" +
+        (differ.length > DIFF_SHOWN ? '<details class="sec-more"><summary>' + esc(rc.t("covMore", { n: differ.length - DIFF_SHOWN })) + "</summary><ol>" + differ.slice(DIFF_SHOWN).map(item).join("") + "</ol></details>" : "") + "</div>";
+    const tiles = new Map((sec.headers || []).map((tile) => [tile.label, tile]));
+    const checks = CHECK_ORDER.concat([...tiles.keys()].filter((label) => !CHECK_ORDER.includes(label))).map((label) => {
+      const tile = tiles.get(label) || { state: "unknown" };
+      const word = tile.person ? VERDICT_LABEL.person : rc.word("secState", tile.state);
+      return '<li class="' + esc(tile.state) + '" data-check="' + esc(label.toLowerCase().replace(/[^a-z0-9]+/g, "-")) + '"><span class="notranslate" translate="no" title="' + esc(label) + '">' + esc(label) +
+        '</span><b role="img" aria-label="' + esc(word) + '" title="' + esc(word) + '">' + (tile.person ? "?" : CHECK_MARK[tile.state] || "–") + "</b></li>";
+    }).join("");
+    return '<div class="sec-cover"><h3>' + esc(rc.t("matrixTitle")) + '</h3><p class="muted">' + esc(rc.t("matrixNote")) + '</p><ul class="sec-cov">' + cover +
+      line("cookies", rc.t("thCookies"), jarState, jarText) + "</ul></div>" + diff + '<ul class="sec-checks">' + checks + '</ul><div class="sec-meta">' + meta + "</div>";
   }
 
   function securityMatrix(rows) {
     if (rows.length < 2) return "";
-    const cols = [["hsts", "HSTS"], ["csp", "CSP"], ["frame", rc.t("colFraming")], ["nosniff", "nosniff"], ["referrer", rc.t("colReferrer")], ["permissions", rc.t("colPermissions")]];
+    const cols = headerCols();
     const mark = (on) => on ? '<td class="ok" aria-label="' + esc(rc.t("sent")) + '">✓</td>' : '<td class="no" aria-label="' + esc(rc.t("missing")) + '">✗</td>';
     return "<h3>" + esc(rc.t("matrixTitle")) + '</h3><p class="muted">' + esc(rc.t("matrixNote")) + "</p>" +
       '<div class="table-scroll"><table class="mini-table sec-matrix"><thead><tr><th>' + esc(rc.t("thPage")) + "</th>" + cols.map(([, label]) => "<th>" + esc(label) + "</th>").join("") + "<th>" + esc(rc.t("thCookies")) + "</th></tr></thead><tbody>" +
