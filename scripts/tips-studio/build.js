@@ -43,7 +43,11 @@ const ROOT = path.resolve(__dirname, "../..");
 const FFMPEG = fs.existsSync("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg";
 const FFPROBE = FFMPEG.replace(/ffmpeg$/, "ffprobe");
 // Microsoft neural voices through edge-tts (pip install edge-tts): warm and upbeat, never the Piper ones.
-const EDGE_TTS = process.env.EDGE_TTS || "/tmp/review-tts/bin/edge-tts";
+// macOS clears /tmp, so the studio's virtualenv lives under ~/.local/share; EDGE_TTS or one on the PATH also works.
+const TTS_HOME = path.join(require("os").homedir(), ".local/share/review-tts");
+const TTS_INSTALL = "python3 -m venv " + TTS_HOME + " && " + TTS_HOME + "/bin/pip install edge-tts";
+const EDGE_TTS = process.env.EDGE_TTS || [path.join(TTS_HOME, "bin/edge-tts"), "/tmp/review-tts/bin/edge-tts", "edge-tts"]
+  .find((bin) => spawnSync(bin, ["--version"]).status === 0) || path.join(TTS_HOME, "bin/edge-tts");
 const VOICES = [
   ["en-w", "en-US-AvaMultilingualNeural"], ["en-m", "en-US-AndrewMultilingualNeural"],
   ["es-w", "es-ES-XimenaNeural"], ["es-m", "es-ES-AlvaroNeural"],
@@ -268,8 +272,10 @@ function speak(voice, text, file) {
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const run = spawnSync(EDGE_TTS, ["--voice", voice.voice, "--rate=+6%", "--pitch=+2Hz", "--text", text, "--write-media", file], { encoding: "utf8" });
     if (run.status === 0 && seconds(file) > 0.5) return seconds(file);
+    if (run.error || /ModuleNotFoundError|No module named/.test(run.stderr)) break;
     spawnSync("sleep", [String(3 + attempt * 5)]);
   }
+  if (spawnSync(EDGE_TTS, ["--version"]).status !== 0) throw new Error("edge-tts does not run at " + EDGE_TTS + "; install it with: " + TTS_INSTALL);
   throw new Error("voice failed for " + voice.file);
 }
 
