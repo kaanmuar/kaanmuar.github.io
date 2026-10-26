@@ -299,7 +299,7 @@
     const order = orderOf(data);
     const columns = order.map((index) => [data.columns[index], index]);
     const hosts = '<div class="multi-hosts-bar"><div class="multi-row multi-hosts">' + columns.map(([col, index]) =>
-      '<div class="multi-cell" style="--site:' + siteColor(index) + '"><p class="multi-host" translate="no">' + esc(col.host).replace(/\./g, ".<wbr>") + "</p>" +
+      '<div class="multi-cell" style="--site:' + siteColor(index) + '"><p class="multi-host" translate="no" title="' + esc(col.host) + '">' + hostHtml(col.host) + "</p>" +
       (col.missing ? "" : '<p class="meta-line" translate="no">' + esc(col.at ? new Date(col.at).toLocaleDateString(code) : "") + (col.paid ? "" : ' · <a class="no-print" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>") + "</p>") + "</div>").join("") + "</div></div>";
     const foldAll = rc ? '<div class="fold-bar no-print"><button class="btn btn-ghost" type="button" id="multi-fold-all" aria-expanded="true" translate="no">' + esc(rc.t("collapseAll")) + "</button></div>" : "";
     const bench = window.QAReviewBenchmark ? QAReviewBenchmark.html(data) : "";
@@ -308,7 +308,7 @@
       const bar = key === "cases" && rc ? '<div class="cases-bar no-print"><button class="btn btn-ghost cases-all" type="button" aria-expanded="false" translate="no">' + esc(rc.t("expandAll")) + "</button></div>" : "";
       return '<section class="multi-sec" data-sec="' + key + '"><h2 translate="no"><button class="fold-toggle" type="button" id="multi-toggle-' + key + '" aria-expanded="true" aria-controls="multi-row-' + key + '"><span>' + title +
         '</span><span class="fold-icon" aria-hidden="true"></span></button></h2>' + bar + '<div class="multi-row fold-panel" id="multi-row-' + key + '" role="region" aria-labelledby="multi-toggle-' + key + '">' +
-        columns.map(([col, index]) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '" data-host="' + esc(col.host) + '" style="--site:' + siteColor(index) + '">' +
+        columns.map(([col, index]) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '" data-host="' + esc(bareHost(col.host)) + '" style="--site:' + siteColor(index) + '">' +
           (col.missing ? '<p class="muted">' + esc(t("missing")) + "</p>" : cell) + "</div>").join("") +
         "</div></section>";
     }).join("") + "</div></div>";
@@ -352,14 +352,17 @@
 
   // In print a long list stops after PRINT_ROWS with a line counting the rest, as the screen stops it in a
   // scroll box, so one long column does not leave the others blank for pages.
+  // Fix first stops sooner: each finding is a box of its own.
   const PRINT_ROWS = 12;
+  const PRINT_FIXES = 5;
   const PRINT_CASES = 3;
   function capForPrint(grid) {
-    grid.querySelectorAll('[data-slot="pages"], [data-slot="report-log"], .ai-outline').forEach((list) => {
+    grid.querySelectorAll('[data-slot="pages"], [data-slot="report-log"], .ai-outline, [data-slot="fix-first"] > .fix-list').forEach((list) => {
+      const max = list.matches(".fix-list") ? PRINT_FIXES : PRINT_ROWS;
       const rows = [...list.children].filter((row) => !row.hidden);
-      if (rows.length <= PRINT_ROWS) return;
-      rows.slice(PRINT_ROWS).forEach((row) => row.classList.add("print-cut"));
-      const text = esc(t("more", { n: rows.length - PRINT_ROWS }));
+      if (rows.length <= max) return;
+      rows.slice(max).forEach((row) => row.classList.add("print-cut"));
+      const text = esc(t("more", { n: rows.length - max }));
       list.insertAdjacentHTML("beforeend", list.tagName === "TBODY" ? '<tr class="print-more"><td colspan="4">' + text + "</td></tr>" : '<li class="print-more">' + text + "</li>");
     });
     grid.querySelectorAll(".cases-list").forEach((list) => {
@@ -470,9 +473,14 @@
     return String(host || "").replace(/^www\./i, "");
   }
 
-  // An address breaks only after a dot, never inside a word.
+  // An address breaks after a dot of its name, and a name too long for the line inside its first part; the end of
+  // the name keeps its public suffix (.com.co) on the same line.
   function hostHtml(host) {
-    return esc(bareHost(host)).replace(/\./g, ".<wbr>");
+    const bare = bareHost(host);
+    const suffix = (bare.match(/(\.(com|org|net|edu|gov|gob|ac|co|or|ne))?\.[a-z]{2,}$/i) || [""])[0];
+    const name = bare.slice(0, bare.length - suffix.length);
+    const cut = name.length - Math.min(8, name.length - name.lastIndexOf(".") - 1);
+    return esc(name.slice(0, cut)).replace(/\./g, ".<wbr>") + '<span class="multi-host-end">' + esc(name.slice(cut) + suffix) + "</span>";
   }
 
   // The host without www. and its public suffix, so a column is as wide as the site's name, not its address.
