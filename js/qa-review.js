@@ -1964,7 +1964,7 @@
       : esc(rc.t("noBannerFirst"));
     const order = { critical: 4, serious: 3, moderate: 2, minor: 1 };
     const axeRows = [...rules.values()].sort((x, y) => (order[y.impact] - order[x.impact]) || (y.nodes - x.nodes)).slice(0, 10).map((rule) =>
-      "<tr><td>" + esc(rule.help) + ' <a class="notranslate" translate="no" href="' + esc(rule.helpUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(rule.id) + "</a></td><td>" + esc(rc.word("impact", rule.impact)) + "</td><td>" + rule.nodes + "</td><td>" + rule.pages + "</td></tr>").join("");
+      '<tr data-impact="' + esc(rule.impact) + '"><td>' + esc(rule.help) + ' <a class="notranslate" translate="no" href="' + esc(rule.helpUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(rule.id) + "</a></td><td>" + esc(rc.word("impact", rule.impact)) + "</td><td>" + rule.nodes + "</td><td>" + rule.pages + "</td></tr>").join("");
     const gauge = gaugeHtml;
     const gauges = start.status ? '<div class="gauges">' +
       gauge("Largest Contentful Paint", vit.lcp || 0, 2500, 4000, 6000, ((vit.lcp || 0) / 1000).toFixed(1) + " s") +
@@ -1981,11 +1981,11 @@
         (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="' + esc(rc.t("altDesktop")) + '" loading="lazy"><figcaption>' + esc(rc.t("capDesktop")) + "</figcaption></figure>" : "<div></div>") +
         (shots.tablet ? '<figure><img src="' + esc(shots.tablet) + '" alt="' + esc(rc.t("altTablet")) + '" loading="lazy"><figcaption>' + esc(rc.t("capTablet")) + "</figcaption></figure>" : "") +
         (shots.mobile ? '<figure><img src="' + esc(shots.mobile) + '" alt="' + esc(rc.t("altPhone")) + '" loading="lazy"><figcaption>' + esc(rc.t("capPhone")) + "</figcaption></figure>" : "") + "</div>" : "") +
-      '<div class="split"><article class="card"><h3>' + esc(rc.t("trackingTitle")) + '</h3><p class="muted">' + bannerLine + " " + esc(rc.t("pingsNote")) + "</p>" +
+      '<div class="split"><article class="card" data-part="tracking"><h3>' + esc(rc.t("trackingTitle")) + '</h3><p class="muted">' + bannerLine + " " + esc(rc.t("pingsNote")) + "</p>" +
       '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thTool")) + "</th><th>" + esc(rc.t("tileBefore")) + "</th><th>" + esc(rc.t("tileAfter")) + "</th></tr></thead><tbody>" + consentRows + "</tbody></table></article>" +
-      '<article class="card"><h3>' + esc(rc.t("textTitle")) + '</h3><p class="muted">' + esc(rc.t("textNote")) + "</p>" +
+      '<article class="card" data-part="text"><h3>' + esc(rc.t("textTitle")) + '</h3><p class="muted">' + esc(rc.t("textNote")) + "</p>" +
       '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thPage")) + "</th><th>" + esc(rc.t("thInHtml")) + "</th><th>" + esc(rc.t("thWords")) + "</th></tr></thead><tbody>" + textRows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + (row.share == null ? "—" : row.share + "%") + "</td><td>" + (row.words || 0) + "</td></tr>").join("") + "</tbody></table></article></div>" + chatCard +
-      '<article class="card" style="margin-top:12px"><h3>' + esc(rc.t("axeTitle")) + "</h3>" + (axePages.length
+      '<article class="card" data-part="axe" style="margin-top:12px"><h3>' + esc(rc.t("axeTitle")) + "</h3>" + (axePages.length
         ? (axeRows ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thRule")) + "</th><th>" + esc(rc.t("thImpact")) + "</th><th>" + esc(rc.t("thElements")) + "</th><th>" + esc(rc.t("thPages")) + "</th></tr></thead><tbody>" + axeRows + "</tbody></table>" : '<p class="muted">' + esc(rc.t("axeClean", { n: axePages.length })) + "</p>") +
           '<p class="meta-line notranslate" translate="no">' + esc(axePages.map((page) => page.path).join(" · ")) + "</p>"
         : '<p class="muted">' + esc(rc.t("axeTimeout")) + "</p>") + "</article>" +

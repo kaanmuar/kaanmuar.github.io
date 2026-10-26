@@ -356,20 +356,36 @@
   const PRINT_ROWS = 12;
   const PRINT_FIXES = 5;
   const PRINT_CASES = 3;
+  const PRINT_ROWS_BROWSER = 6;
   function capForPrint(grid) {
-    grid.querySelectorAll('[data-slot="pages"], [data-slot="report-log"], .ai-outline, [data-slot="fix-first"] > .fix-list').forEach((list) => {
-      const max = list.matches(".fix-list") ? PRINT_FIXES : PRINT_ROWS;
+    const lists = [...grid.querySelectorAll('[data-slot="pages"], [data-slot="report-log"], .ai-outline')].map((list) => [list, PRINT_ROWS])
+      .concat([...grid.querySelectorAll('[data-slot="fix-first"] > .fix-list')].map((list) => [list, PRINT_FIXES]))
+      .concat([...grid.querySelectorAll('.multi-sec[data-sec="browser"] [data-part] tbody')].map((list) => [list, PRINT_ROWS_BROWSER]));
+    lists.forEach(([list, max]) => {
       const rows = [...list.children].filter((row) => !row.hidden);
       if (rows.length <= max) return;
       rows.slice(max).forEach((row) => row.classList.add("print-cut"));
       const text = esc(t("more", { n: rows.length - max }));
-      list.insertAdjacentHTML("beforeend", list.tagName === "TBODY" ? '<tr class="print-more"><td colspan="4">' + text + "</td></tr>" : '<li class="print-more">' + text + "</li>");
+      const span = list.tagName === "TBODY" ? list.closest("table").querySelectorAll("thead th").length || 4 : 0;
+      list.insertAdjacentHTML("beforeend", span ? '<tr class="print-more"><td colspan="' + span + '">' + text + "</td></tr>" : '<li class="print-more">' + text + "</li>");
     });
     grid.querySelectorAll(".cases-list").forEach((list) => {
       const rows = [...list.children];
       if (rows.length <= PRINT_CASES) return;
       rows.slice(PRINT_CASES).forEach((row) => row.classList.add("print-cut"));
       list.insertAdjacentHTML("beforeend", '<li class="print-more">' + esc(t("more", { n: rows.length - PRINT_CASES })) + "</li>");
+    });
+  }
+
+  // A browser-pass table in a column stacks each row: its first cell on a line of its own, the rest side by side
+  // under their column's heading, so no word is split to fit a column a few letters wide.
+  function stackTables(grid) {
+    grid.querySelectorAll('.multi-sec[data-sec="browser"] [data-part] table').forEach((table) => {
+      const heads = [...table.querySelectorAll("thead th")].map((th) => th.textContent.trim());
+      table.classList.add("multi-stack");
+      table.querySelectorAll("tbody tr").forEach((row) => [...row.children].forEach((cell, index) => {
+        if (index && heads[index]) cell.setAttribute("data-th", heads[index]);
+      }));
     });
   }
 
@@ -544,6 +560,7 @@
     pruneChecks(grid);
     settle(grid);
     levelKit(grid);
+    stackTables(grid);
     capForPrint(grid);
     const bar = body.querySelector(".multi-hosts-bar");
     grid.addEventListener("scroll", () => { bar.scrollLeft = grid.scrollLeft; }, { passive: true });
