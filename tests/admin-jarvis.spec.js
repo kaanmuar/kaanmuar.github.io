@@ -43,7 +43,12 @@ const EXTERNAL = {
   uptime: { ok: true, pages: [{ product: 'cv', name: 'CV', url: 'https://carlosandmunoz.com/', status: 200, ms: 320, bytes: 1000, ok: true }], tlsDaysLeft: 60 },
   ga4: { ok: true, groups: [{ group: 'cv', sessions: 40, users: 30, views: 90, engagement: 55, duration: 70, priorSessions: 20, priorUsers: 15 }], countries: [{ label: 'Colombia', value: 25, prior: 10 }], sources: [], daily: [] },
   cloudflare: { ok: false, error: 'The Cloudflare token needs Zone > Analytics > Read.' },
-  settings: { ok: true, goals: [{ product: 'cv', metric: 'visits', period: 'week', target: 300 }], thresholds: {}, mail: { daily: true, gemini: true, watch: true }, updatedAt: '2026-10-24T12:00:00Z' },
+  settings: { ok: true, goals: [{ product: 'cv', metric: 'visits', period: 'week', target: 300 }], thresholds: {}, mail: { daily: true, gemini: true, watch: true, weekly: true }, updatedAt: '2026-10-24T12:00:00Z' },
+  proposals: { ok: true, gemini: true, at: '2026-10-25T12:00:00Z', hidden: 1, proposals: [
+    { rank: 1, key: 'job', title: 'Fix the failing job', impact: 5, level: 'alert', effort: 'hours', why: 'The sweep feeds the hub.', evidence: ['Job sweepReviews failed: quota.'], source: 'gemini+rules', action: null, tab: 'systems', link: null },
+    { rank: 2, key: 'review:held', title: 'Re-run the held reviews', impact: 3, level: 'warn', evidence: ['4 re-runs are held on the desk.'], source: 'gemini+rules', action: 'rerun-held', tab: 'systems', link: null },
+    { rank: 3, key: 'ai:price-test', title: 'Test a lower first-review price', impact: 4, level: 'info', evidence: ['3 opens, 1 paid review'], source: 'gemini', action: null, tab: null, link: null }
+  ] },
   goals: { ok: true, goals: [{ key: 'cv.visits.week', product: 'cv', metric: 'visits', period: 'week', target: 300, label: 'CV visits this week', value: 120, pct: 40, expected: 107, projected: 336, elapsed: 36, status: 'on-track' }] },
   speed: { ok: true, pages: [{ product: 'cv', name: 'CV', url: 'https://carlosandmunoz.com/', ok: true, score: 93, lab: {}, field: {} }], crux: null },
   money: { ok: true, days: 30, revenue: { usd: 27, count: 3, avgUsd: 9, paidRuns: 5 }, prior: { usd: 9, count: 1, paidRuns: 2 }, refundsUsd: 0, byProvider: [{ label: 'paypal', value: 27 }], byPurpose: [{ label: 'review', value: 27 }], daily: [{ date: '2026-10-24', usd: 9 }], paypal: { ok: true, disputesOpen: 0, transactions: null, needs: [] }, stripe: { mode: 'test' }, needs: ['PayPal: turn on Transaction Search for the live app.'] },
@@ -114,7 +119,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
-    expect(new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'proposals']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -231,7 +236,7 @@ test.describe('admin statistics (Jarvis)', () => {
     const save = calls.find((c) => c.op === 'settings-save');
     expect(save.body.settings.goals).toEqual([{ product: 'cv', metric: 'visits', period: 'week', target: 300 }, { product: 'review', metric: 'paid', period: 'month', target: 12 }]);
     expect(save.body.settings.thresholds.pendingRatings).toBe(25);
-    expect(save.body.settings.mail).toEqual({ daily: true, gemini: false, watch: true });
+    expect(save.body.settings.mail).toEqual({ daily: true, gemini: false, watch: true, weekly: true });
     expect(save.body.settings.searchQueries).toEqual(['qa review', 'qa review', 'carlos qa']);
     await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(1);
 
@@ -240,8 +245,35 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await page.locator('.jv-settings-box [data-act="daily-now"]').click();
     await expect.poll(() => calls.some((c) => c.op === 'daily-now')).toBe(true);
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.locator('.jv-settings-box [data-act="weekly-now"]').click();
+    await expect.poll(() => calls.some((c) => c.op === 'weekly-now')).toBe(true);
     await page.keyboard.press('Escape');
     await expect(page.locator('.jv-settings')).toBeHidden();
+    expect(errors).toEqual([]);
+  });
+
+  test('Overview ranks proposals with evidence, and Done hides one through the function', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page);
+    const panel = page.locator('[data-view="overview"] [data-panel-id="overview-proposals"]');
+    await expect(panel).toContainText('Ranked by Gemini');
+    await expect(panel.locator('.jv-prop')).toHaveCount(3);
+    await expect(panel.locator('.jv-prop').first()).toContainText('Fix the failing job');
+    await expect(panel.locator('.jv-prop').first()).toContainText('impact 5/5');
+    await expect(panel.locator('.jv-prop').first()).toContainText('Job sweepReviews failed: quota.');
+    await expect(panel.locator('.jv-prop').nth(1)).toContainText('Safe action: re-run held reviews');
+    await expect(panel.locator('.jv-prop').nth(2)).toContainText('from Gemini');
+    await expect(panel).toContainText('1 hidden as done or dismissed');
+    const ask = calls.find((c) => c.op === 'proposals');
+    expect(ask.body.candidates.some((p) => p.key === 'job' && p.evidence.length)).toBe(true);
+    expect(ask.body.snapshot.products).toBeTruthy();
+
+    await panel.locator('[data-proposal="done"][data-key="review:held"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'proposal-mark').map((c) => [c.body.key, c.body.status])).toEqual([['review:held', 'done']]);
+    await expect(panel.locator('.jv-prop')).toHaveCount(2);
+    await expect(panel).toContainText('2 hidden as done or dismissed');
     expect(errors).toEqual([]);
   });
 });

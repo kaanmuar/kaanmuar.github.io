@@ -297,13 +297,13 @@ test("server: GitHub skips cancelled runs, Cloudflare prefers the analytics toke
 test("server: settings are cleaned on save and read back with defaults", async () => {
   const db = fakeDb({});
   const empty = await jarvis.readSettings(db);
-  assert.deepEqual(empty.mail, { daily: true, gemini: true, watch: true });
+  assert.deepEqual(empty.mail, { daily: true, gemini: true, watch: true, weekly: true });
   assert.equal(empty.thresholds.tlsDays, 21);
   const saved = await jarvis.saveSettings(db, { goals: [{ product: "review", metric: "paid", period: "week", target: 10 }, { product: "x" }], thresholds: { tlsDays: 30, uptimeMs: "abc" }, mail: { daily: false, gemini: "yes" } }, "kaanmuar@gmail.com");
   assert.equal(saved.goals.length, 1);
   assert.equal(saved.thresholds.tlsDays, 30);
   assert.equal(saved.thresholds.uptimeMs, 3000);
-  assert.deepEqual(saved.mail, { daily: false, gemini: true, watch: true });
+  assert.deepEqual(saved.mail, { daily: false, gemini: true, watch: true, weekly: true });
   assert.equal(db.writes[0].path, "jarvis_settings/main");
   assert.equal(db.writes[0].value.by, "kaanmuar@gmail.com");
 });

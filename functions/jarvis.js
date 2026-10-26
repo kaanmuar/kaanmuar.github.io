@@ -106,7 +106,7 @@ async function health(db, { days, now }) {
     failures: { total: failures.length, causes: top(causes), hosts: top(failedHosts, 8), latest: failures.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8).map((row) => ({ at: row.at, host: row.host, cause: causeLabel(row), message: String((row.error && row.error.message) || "").slice(0, 140) })) },
     reruns: { total: reruns.length, status: top(rerunStatus), held: reruns.filter((row) => row.status === "held").length },
     alerts: { total: alerts.length, kinds: top(alertKinds), latest: alerts.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8).map((row) => ({ at: row.at, kind: row.kind, title: String(row.title || "").slice(0, 120), url: row.url || "" })) },
-    notices: { total: notices.length, status: top(noticeStatus) },
+    notices: { total: notices.length, status: top(noticeStatus), failed: notices.filter((row) => row.status === "pending" && row.lastError && !row.unlistedAt).length },
     rivals: { total: rivals.length },
     coupons: { total: coupons.length, uses: couponUses },
     captures: { total: captures.length, kinds: top(captureKinds) }
@@ -448,7 +448,7 @@ function briefingMail(snapshot, text) {
 
 // --- settings: goals, thresholds, mail switches (jarvis_settings/main) -----------------------------------------
 
-const MAIL_DEFAULTS = { daily: true, gemini: true, watch: true };
+const MAIL_DEFAULTS = { daily: true, gemini: true, watch: true, weekly: true };
 
 function normalizeSettings(data) {
   const d = data || {};
@@ -625,4 +625,4 @@ async function unsentToday(db, items, { now }) {
 }
 
 module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, speak, speakable, langCode, briefingMail, top,
-  normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday };
+  normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
