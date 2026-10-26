@@ -118,3 +118,15 @@ test("a logo is only read from a public https address (#1507)", async () => {
     assert.equal(await core.iconData(url), "", url);
   }
 });
+
+test("a tagline, a generic page word or the host itself is not a site's name (#1535, #1536)", () => {
+  const name = (site, host) => multi.faceOf({ insights: { previews: { google: { site } } } }, host).name;
+  assert.equal(name("Carlos A. Muñoz — Interactive CV", "carlosandmunoz.com"), "Carlos A. Muñoz");
+  assert.equal(name("Sauce Labs | Cross Browser Testing", "saucelabs.com"), "Sauce Labs");
+  assert.equal(name("BrowserStack", "www.browserstack.com"), "BrowserStack");
+  assert.equal(name("Wal-Mart", "walmart.com"), "Wal-Mart");
+  assert.equal(name("AI-driven E2E automation with code-like flexibility for your most resilient test", "www.testim.io"), "");
+  assert.equal(name("testmuai.com", "www.testmuai.com"), "");
+  assert.equal(name("Inicio", "colegio.edu.co"), "");
+  assert.equal(name("Home", "example.com"), "");
+});

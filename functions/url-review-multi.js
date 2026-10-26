@@ -104,13 +104,24 @@ function summaryOf(columns) {
   return { rows, wins };
 }
 
-// The name and icon the title shows for a site: its og:site_name when that is more than the host, and its
-// icon tag, or /favicon.ico when it has none.
+const NAME_MAX = 40;
+const NAME_WORDS = 5;
+const NOT_A_NAME = /^(home|homepage|home page|start|welcome|index|inicio|bienvenidos?|página (de )?inicio|início|página inicial|startseite|willkommen|accueil|bienvenue|pagina iniziale|benvenuti)$/i;
+
+// A site's name from its og:site_name: the part before a tagline separator, and only when it is short enough
+// to be a name. "" when it is just the host, or reads like a marketing line.
+function siteName(raw, host) {
+  const name = String(raw || "").replace(/\s+/g, " ").trim().split(/\s+[—–|·:-]\s+|\s*[|·]\s*/)[0].trim();
+  const bare = (value) => String(value || "").toLowerCase().replace(/^www\./, "");
+  if (!name || name.length > NAME_MAX || name.split(" ").length > NAME_WORDS || NOT_A_NAME.test(name)) return "";
+  return bare(name) === bare(host) ? "" : name;
+}
+
+// The name and icon the title shows for a site: its own name, and its icon tag, or /favicon.ico when it has none.
 function faceOf(report, host) {
   const google = ((report.insights || {}).previews || {}).google || {};
-  const name = String(google.site || "").replace(/\s+/g, " ").trim().slice(0, 80);
   const icon = /^https:\/\/[^\s"'<>]+$/i.test(google.icon || "") && String(google.icon).length <= 500 ? google.icon : host ? "https://" + host + "/favicon.ico" : "";
-  return { name: name && name.toLowerCase() !== String(host).toLowerCase() ? name : "", icon };
+  return { name: siteName(google.site, host), icon };
 }
 
 // The PDF's site logos: the page sends each one empty, marked with its column, and the server fills in the

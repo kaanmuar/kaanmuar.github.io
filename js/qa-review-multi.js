@@ -378,12 +378,23 @@
 
   // A site in the title: its logo, with a letter under it that shows when there is no logo or it fails to load,
   // then its name, and its address when the name is more than the address.
+  function bareHost(host) {
+    return String(host || "").replace(/^www\./i, "");
+  }
+
+  // An address breaks only after a dot, never inside a word.
+  function hostHtml(host) {
+    return esc(bareHost(host)).replace(/\./g, ".<wbr>");
+  }
+
+  // Each "vs" stays with the site after it, so a wrapped row never starts or ends on a lone "vs".
   function siteBadge(col, index) {
-    const name = col.name || col.host;
-    const letter = (name.replace(/^www\./i, "").match(/[\p{L}\p{N}]/u) || ["?"])[0].toUpperCase();
+    const name = col.name || bareHost(col.host);
+    const letter = (name.match(/[\p{L}\p{N}]/u) || ["?"])[0].toUpperCase();
     const logo = col.icon ? '<img class="multi-logo" src="' + esc(col.icon) + '" alt="" referrerpolicy="no-referrer" decoding="async" data-logo="' + index + '">' : "";
-    return '<span class="multi-site" style="--site:' + siteColor(index) + '"><span class="multi-mark" aria-hidden="true">' + logo + "<span>" + esc(letter) + "</span></span>" +
-      '<span class="multi-site-name">' + esc(name) + "</span>" + (col.name ? "<small>" + esc(col.host) + "</small>" : "") + "</span>";
+    return '<span class="multi-site" style="--site:' + siteColor(index) + '">' + (index ? '<span class="multi-vs">' + esc(t("vs")) + "</span>" : "") +
+      '<span class="multi-badge"><span class="multi-mark" aria-hidden="true">' + logo + "<span>" + esc(letter) + "</span></span>" +
+      '<span class="multi-site-name">' + (col.name ? esc(name) : hostHtml(col.host)) + "</span>" + (col.name ? "<small>" + hostHtml(col.host) + "</small>" : "") + "</span></span>";
   }
 
   function paint(data) {
@@ -391,8 +402,8 @@
     const root = shell();
     const S = window.QAReviewSections;
     const title = root.querySelector("#multi-title");
-    title.innerHTML = data.columns.map(siteBadge).join('<span class="multi-vs">' + esc(t("vs")) + "</span>");
-    title.setAttribute("aria-label", data.columns.map((col) => col.name || col.host).join(" " + t("vs") + " "));
+    title.innerHTML = data.columns.map(siteBadge).join("");
+    title.setAttribute("aria-label", data.columns.map((col) => col.name || bareHost(col.host)).join(" " + t("vs") + " "));
     title.querySelectorAll("img.multi-logo").forEach((img) => img.addEventListener("error", () => img.remove(), { once: true }));
     root.querySelector("#multi-when").textContent = data.at ? t("saved", { date: new Date(data.at).toLocaleDateString(code) }) : "";
     const printBtn = root.querySelector("#multi-print");
@@ -489,9 +500,9 @@
       mark.setAttribute("data-logo", img.getAttribute("data-logo"));
       img.replaceWith(mark);
     });
-    const theme = [...document.documentElement.attributes].filter((attr) => attr.name !== "style").map((attr) => " " + attr.name + '="' + esc(attr.value) + '"').join("");
+    const theme = [...document.documentElement.attributes].filter((attr) => attr.name !== "style").map((attr) => " " + attr.name + '="' + esc(attr.name === "class" ? attr.value.replace(/\bdark-mode\b/g, "").trim() : attr.value) + '"').join("");
     return "<!doctype html><html" + theme + '><head><meta charset="utf-8"><title>' + esc(made.columns.map((col) => col.host).join(" " + t("vs") + " ")) + "</title><style>" + css.replace(/<\/style/gi, "<\\/style") +
-      "</style></head><body class=\"" + esc(document.body.className) + ' printing-multi multi-pdf"><div class="dash-overlay multi-overlay open">' + copy.outerHTML + "</div></body></html>";
+      "</style></head><body class=\"" + esc(document.body.className) + ' printing-multi multi-pdf"><div class="dash-overlay multi-overlay open" id="multi-overlay">' + copy.outerHTML + "</div></body></html>";
   }
 
   async function download() {
