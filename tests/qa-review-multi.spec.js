@@ -260,6 +260,90 @@ test('a long host wraps inside its cover card when six sites sit side by side (#
   }
 });
 
+// The spread across columns of the top, and for a tile the height, of each matching box of a section.
+function drift(root = document) {
+  const boxes = [['health', '.health-summary'], ['health', '.verdict-chips:not([aria-label])'], ['health', '.verdict-chips[aria-label]'], ['health', '.health .meta-line'],
+    ...['SEO', 'GEO', 'Analytics', 'Security', 'Accessibility', 'Performance'].map((name) => ['health', '.area[data-area="' + name + '"]', true]),
+    ['exec', '.card > .exec-head'], ['exec', '.card > .meta-line'], ['exec', '.exec-cols > :nth-child(1)'], ['exec', '.exec-cols > :nth-child(2)'], ['exec', '.exec-cols > :nth-child(3)']];
+  const overlaps = [...root.querySelectorAll('.multi-sec[data-sec="health"] .multi-cell')].flatMap((cell, col) => {
+    const tiles = [...cell.querySelectorAll('.area')].map((tile) => [tile.dataset.area, tile.getBoundingClientRect()]);
+    return tiles.flatMap(([name, a], i) => tiles.slice(i + 1).filter(([, b]) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1)
+      .map(([other]) => ({ box: 'column ' + col + ': ' + name + ' over ' + other })));
+  });
+  return overlaps.concat(boxes.map(([sec, selector, tile]) => {
+    const rects = [...root.querySelectorAll('.multi-sec[data-sec="' + sec + '"] .multi-cell')].map((cell) => cell.querySelector(selector).getBoundingClientRect());
+    const spread = (key) => Math.max(...rects.map((r) => r[key])) - Math.min(...rects.map((r) => r[key]));
+    return { box: selector, columns: rects.length, top: spread('top'), height: tile ? spread('height') : 0 };
+  }).filter((row) => row.columns < 2 || row.top > 1 || row.height > 1));
+}
+
+test('the boxes of the health score and the one-page summary line up across sites, on the page, in print and in the PDF (#1601)', async ({ page }) => {
+  const seen = { saved: [], deleted: [], pdf: [] };
+  const records = recordsWith(true);
+  const ins = records[1].report.insights;
+  records[1].report.insights = Object.assign({}, ins, { summary: 'The site answered slowly and two pages timed out while they were read, so some checks used fewer pages. ' + ins.summary });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', seen);
+  const box = page.locator('#multi-overlay');
+  const health = box.locator('.multi-sec[data-sec="health"] .multi-cell');
+  await expect(health.nth(2).locator('.area')).toHaveCount(6, { timeout: 20000 });
+  const heights = await health.locator('.health-summary').evaluateAll((els) => els.map((el) => { const range = document.createRange(); range.selectNodeContents(el); return Math.round(range.getBoundingClientRect().height); }));
+  expect(new Set(heights).size).toBeGreaterThan(1);
+  expect(await page.evaluate(drift)).toEqual([]);
+  const pair = await health.first().evaluate((cell) => ['SEO', 'GEO'].map((name) => Math.round(cell.querySelector('.area[data-area="' + name + '"]').getBoundingClientRect().top)));
+  expect(pair[0]).toBe(pair[1]);
+  if (process.env.MULTI_SHOT) {
+    await box.locator('.multi-sec[data-sec="health"]').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: process.env.MULTI_SHOT + '/multi-health-1440.png' });
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await box.locator('.multi-sec[data-sec="health"]').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: process.env.MULTI_SHOT + '/multi-health-1024.png' });
+    await box.locator('.multi-sec[data-sec="exec"]').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: process.env.MULTI_SHOT + '/multi-exec-1024.png' });
+    expect(await page.evaluate(drift)).toEqual([]);
+    await page.setViewportSize({ width: 1440, height: 900 });
+  }
+
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  expect(await page.evaluate(drift)).toEqual([]);
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+
+  await box.getByRole('button', { name: 'Download PDF' }).click();
+  await expect(box.locator('#multi-status')).toHaveText('The PDF is downloaded.');
+  const printed = await page.context().newPage();
+  await printed.route(/^https?:/, (route) => route.abort());
+  await printed.emulateMedia({ media: 'print' });
+  await printed.setContent(seen.pdf[0], { waitUntil: 'load' });
+  await expect(printed.locator('.multi-sec[data-sec="health"] div.area')).toHaveCount(18);
+  expect(await printed.evaluate(drift)).toEqual([]);
+  if (process.env.MULTI_SHOT) await printed.pdf({ path: process.env.MULTI_SHOT + '/multi-health-print.pdf', preferCSSPageSize: true, printBackground: true });
+  await printed.close();
+});
+
+test('six sites side by side keep one area tile per row level across columns (#1601)', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
+    const base = [own, rival, sample.report][index];
+    return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id }) };
+  }));
+  ['www.hotelestequendama.com', 'www.movichhotels.com', 'www.ghlhoteles.com', 'www.cgb.edu.co', 'ciedi.edu.co', 'montessori.edu.co']
+    .forEach((host, index) => { records[index].report.host = host; });
+  records[3].report.insights = Object.assign({}, records[3].report.insights, { summary: 'Two pages timed out while they were read. ' + records[3].report.insights.summary });
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const health = page.locator('#multi-overlay .multi-sec[data-sec="health"] .multi-cell');
+  await expect(health).toHaveCount(6, { timeout: 20000 });
+  await expect(health.nth(5).locator('.area')).toHaveCount(6);
+  expect(await page.evaluate(drift)).toEqual([]);
+  const [seo, geo] = await health.first().evaluate((cell) => ['SEO', 'GEO'].map((name) => cell.querySelector('.area[data-area="' + name + '"]').getBoundingClientRect()));
+  expect(geo.top).toBeGreaterThanOrEqual(seo.bottom);
+  if (process.env.MULTI_SHOT) {
+    await page.locator('#multi-overlay .multi-sec[data-sec="health"]').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: process.env.MULTI_SHOT + '/multi-health-6.png' });
+  }
+});
+
 test('one toggle per section folds it for every site together, the boxes of a row end level, and print and the PDF show every section open (#1459)', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
