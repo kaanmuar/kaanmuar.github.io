@@ -795,18 +795,18 @@
       const width = Math.max(4, Math.round(((page.ms || 0) / maxMs) * 100));
       const label = String(page.path || "/").slice(0, 28);
       return '<div class="meter"><span>' + esc(label) + '</span><div class="track"><i style="width:' + width + '%"></i></div><span>' + esc(page.ms || 0) + " ms</span></div>";
-    }).join("") || '<p class="muted">No page timing was saved.</p>';
+    }).join("") || '<p class="muted">' + esc(rc.t("visNoTimes")) + "</p>";
     const checks = [
       ["HTTPS", true],
       ["HSTS", !!headers.hsts],
       ["CSP", !!headers.csp],
       ["nosniff", !!headers.nosniff],
-      ["Frame policy", (!!headers.frame && !/allow-from/i.test(headers.frame)) || /frame-ancestors/i.test(headers.csp || "")],
-      ["Referrer", !!headers.referrer],
-      ["Language", !!obs.lang],
+      [rc.t("markFrame"), (!!headers.frame && !/allow-from/i.test(headers.frame)) || /frame-ancestors/i.test(headers.csp || "")],
+      [rc.t("markReferrer"), !!headers.referrer],
+      [rc.t("markLang"), !!obs.lang],
       ["Viewport", !!sig.viewport]
     ];
-    const ticks = checks.map(([label, on]) => '<div class="tick ' + (on ? "on" : "off") + '"><b>' + (on ? "Present" : "Missing") + "</b>" + esc(label) + "</div>").join("");
+    const ticks = checks.map(([label, on]) => '<div class="tick ' + (on ? "on" : "off") + '"><b>' + esc(rc.t(on ? "visPresent" : "visMissing")) + "</b>" + esc(label) + "</div>").join("");
     const groups = {};
     (report.technologies || []).forEach((item) => {
       const name = item.group || "Other";
@@ -815,36 +815,39 @@
     const groupEntries = Object.entries(groups);
     const groupMax = Math.max.apply(null, groupEntries.map((pair) => pair[1]).concat([1]));
     const groupBars = groupEntries.length ? groupEntries.map(([name, count]) =>
-      '<div class="meter"><span>' + esc(name) + '</span><div class="track"><i style="width:' + Math.round(count / groupMax * 100) + '%"></i></div><span>' + count + "</span></div>"
-    ).join("") : '<p class="muted">No technology group was named.</p>';
+      '<div class="meter"><span>' + esc(rc.word("techGroup", name, name)) + '</span><div class="track"><i style="width:' + Math.round(count / groupMax * 100) + '%"></i></div><span>' + count + "</span></div>"
+    ).join("") : '<p class="muted">' + esc(rc.t("visNoTech")) + "</p>";
     const ranked = ((report.insights && report.insights.findings) || []).filter((item) => item.rank && item.fix).slice(0, 3).map((item) => [said(item, "title"), said(item, "fix"), true]);
     const advice = ranked.slice();
-    if (!ranked.length && !headers.hsts) advice.push(["Send HSTS", "Put Strict-Transport-Security on the host with a max-age of at least six months so the next visit stays on https."]);
-    if (!ranked.length && !headers.csp) advice.push(["Add a content security policy", "Name the script sources and frame-ancestors, then tighten the policy from what a real browser reports."]);
-    if (!ranked.length && (obs.missingAlt || 0) > 0) advice.push(["Name the images", obs.missingAlt + " images had no alt. Informative images need a description. Decorative images need an empty alt."]);
-    if (!ranked.length && !obs.lang) advice.push(["Declare the language", "Set lang on the html element to the language a person reads on the page."]);
-    if (!ranked.length && (obs.scripts || 0) > 12) advice.push(["Budget the scripts", obs.scripts + " external scripts were referenced. Defer the ones that are not needed for the first view."]);
-    if (!ranked.length && (obs.ms || 0) > 800) advice.push(["Watch the first response", "This document took " + obs.ms + " ms. Keep that path under a budget you can re-check."]);
-    if (!advice.length) advice.push(["Keep the proposal separate from a run", "These cases are a plan. Run them later in a browser you control, with accounts the owner issued."]);
-    advice.push(["This is a snapshot", "The review does not certify that the site is safe, fast, or compliant."]);
+    const tip = (key, vars) => [rc.t(key), rc.t(key + "Body", vars)];
+    if (!ranked.length && !headers.hsts) advice.push(tip("adHsts"));
+    if (!ranked.length && !headers.csp) advice.push(tip("adCsp"));
+    if (!ranked.length && (obs.missingAlt || 0) > 0) advice.push(tip("adAlt", { n: obs.missingAlt }));
+    if (!ranked.length && !obs.lang) advice.push(tip("adLang"));
+    if (!ranked.length && (obs.scripts || 0) > 12) advice.push(tip("adScripts", { n: obs.scripts }));
+    if (!ranked.length && (obs.ms || 0) > 800) advice.push(tip("adFirst", { ms: obs.ms }));
+    if (!advice.length) advice.push(tip("adPlan"));
+    advice.push(tip("adSnap"));
     const adviceHtml = advice.slice(0, 4).map(([title, body, finding]) => "<article><strong>" + esc(title) + "</strong><span>" + (finding ? fadeText(body, paid) : esc(body)) + "</span></article>").join("");
     slot("report-visuals").innerHTML =
-      '<article class="card"><h2>Response time across the pages analyzed</h2><p class="muted">Milliseconds, in the order the pages were opened. One review, not a history of earlier days.</p>' + times + "</article>" +
-      '<article class="card"><h2>Public marks on the first response</h2><div class="ticks">' + ticks + "</div></article>" +
-      '<article class="card"><h2>Technology groups in this review</h2>' + groupBars + "</article>" +
-      '<article class="card"><h2>Practices worth implementing</h2><div class="advice">' + adviceHtml + "</div></article>";
-    const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString() : "";
+      '<article class="card"><h2>' + esc(rc.t("visTimes")) + '</h2><p class="muted">' + esc(rc.t("visTimesNote")) + "</p>" + times + "</article>" +
+      '<article class="card"><h2>' + esc(rc.t("visMarks")) + '</h2><div class="ticks">' + ticks + "</div></article>" +
+      '<article class="card"><h2>' + esc(rc.t("visTech")) + "</h2>" + groupBars + "</article>" +
+      '<article class="card"><h2>' + esc(rc.t("visAdvice")) + '</h2><div class="advice">' + adviceHtml + "</div></article>";
+    const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString(rc.lang) : "";
     slot("report-cover").innerHTML =
-      '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261013c" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || "Report") + '</h2><p class="muted">' + esc(when) + "</p>" +
+      '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261013c" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || rc.t("dashTitle")) + '</h2><p class="muted">' + esc(when) + "</p>" +
       (report.signature ? '<p class="sign-line">' + esc(report.signature.mark) + "</p>" : "") + "</div>" +
-      '<div><p class="report-kicker">' + ((report.counts && report.counts.cases) || 0) + ' proposed cases</p><p>' + esc(report.statement || "") + "</p></div>";
+      '<div><p class="report-kicker">' + esc(rc.t("coverCases", { n: (report.counts && report.counts.cases) || 0 })) + "</p><p>" + esc(report.statement || "") + "</p></div>";
     if (!slotRoot) document.getElementById("print-mark").textContent = "";
   }
 
   const cc = window.QAReviewCompareCopy;
   const rc = window.QAReviewReportCopy;
   const fc = window.QAReviewFindingsCopy || { translated: false, line: (message, fallback) => fallback };
-  const said = (item, part) => fc.line(item.msg && item.msg[part], item[part]);
+  // Reports saved before axe titles carried an id are read by the finding key.
+  const axeTitle = (item) => /^ax-/.test(item.key || "") ? { id: "ax-title." + item.key.slice(3) } : null;
+  const said = (item, part) => fc.line((item.msg && item.msg[part]) || (part === "title" ? axeTitle(item) : null), item[part]);
   // A title still in the server's English is marked so the browser can translate it.
   const titleLang = (item) => said(item, "title") === item.title ? ' translate="yes" lang="en"' : "";
   const VERDICT_LABEL = { fail: cc.verdict("fail"), risk: cc.verdict("risk"), pass: cc.verdict("pass"), person: cc.verdict("person") };
@@ -2415,7 +2418,7 @@
     const tech = slot("tech");
     const technologies = report.technologies || [];
     tech.innerHTML = technologies.length
-      ? technologies.map((item) => '<span class="pill"><b>' + esc(item.name) + "</b> " + esc(item.group) + "</span>").join("")
+      ? technologies.map((item) => '<span class="pill"><b>' + esc(item.name) + "</b> " + esc(rc.word("techGroup", item.group, item.group)) + "</span>").join("")
       : '<span class="muted">No known technology marker was found in the HTML or headers.</span>';
     const obs = report.observed || {};
     const limits = report.limits || {};
@@ -3745,7 +3748,7 @@
       const words = rc.english ? null : {
         lang: document.documentElement.lang,
         summary: report.insights ? healthSummary(report.insights) : "",
-        line: (item, part) => fc.line(item.msg && item.msg[part], item[part])
+        line: said
       };
       const pack = QAReviewScripts.bundle(report, pickedCases(report, layers), chosenFrameworks(), words);
       download("qa-lab-scripts-" + id + ".zip", QAReviewScripts.zip(pack.files, "qa-lab-" + id), "application/zip");

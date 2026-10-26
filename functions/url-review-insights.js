@@ -593,7 +593,7 @@ function browserChecks(b, add, ctx) {
       const raw = AXE_RAW[rule.id];
       if (raw && ctx.findings.some((item) => item.key === raw && item.verdict !== "pass")) return;
       const [verdict, severity] = AXE_SEVERITY[rule.impact] || AXE_SEVERITY.minor;
-      add("Accessibility", verdict, severity, "ax-" + rule.id, rule.help,
+      add("Accessibility", verdict, severity, "ax-" + rule.id, AXE_FIX.has(rule.id) ? say("ax-title." + rule.id) : rule.help,
         say("ax.evidence", { version: axe.version, elements: say("a11y.elements", { n: rule.nodes }), pages: some(rule.pages, 3), example: rule.targets.length ? say("a11y.example", { list: { items: rule.targets.slice(0, 2), join: "and" } }) : "", impact: say("ax.impact." + rule.impact) }),
         AXE_FIX.has(rule.id) ? say("ax-fix." + rule.id) : say("ax.guide", { url: rule.helpUrl }), { pages: rule.pages, count: rule.nodes, effort: rule.nodes > 20 ? "hours" : "minutes", cases: AXE_CASES[rule.id] || [] });
     });
