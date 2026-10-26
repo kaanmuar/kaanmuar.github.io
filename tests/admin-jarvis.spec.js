@@ -33,7 +33,7 @@ const STUBS = {
     export async function deleteDoc() {}
     export async function addDoc() { return { id: 'new' }; }
     export function serverTimestamp() { return { serverTimestamp: true }; }`,
-  'firebase-storage.js': 'export function getStorage() { return {}; } export function ref() { return {}; } export async function uploadString() {} export async function getDownloadURL() { return ""; }'
+  'firebase-storage.js': 'export function getStorage() { return {}; } export function ref() { return {}; } export async function uploadString() {} export async function uploadBytes(r, file) { window.__uploads = (window.__uploads || []).concat([file.name]); } export async function getDownloadURL() { return ""; }'
 };
 
 const EXTERNAL = {
@@ -61,6 +61,9 @@ const EXTERNAL = {
   platform: { ok: true, needs: ['Costs: turn on the billing export.'], functions: { executions: 3000, notOk: 2800, failures: 4, failureRate: 0.13, byFunction: [{ label: 'reviewUrl', value: 4 }], kinds: [{ label: 'timeout', value: 4 }], latest: [], capped: false }, gemini: { days: 7, requests: 92, ok: 10, errorRate: 89.1, byClass: [], failedMethods: [{ label: 'ListModels', value: 82 }] }, firestore: { reads: 20000, writes: 900, deletes: 10, readsFreePct: 40, writesFreePct: 4.5, deletesFreePct: 0.05 }, users: { total: 9, newInRange: 2, activeInRange: 4 } },
   'social-proposals': { ok: true, built: '2026-10-25T06:00:00Z', proposals: [{ id: 'fid-gone', title: 'Google drops FID from Core Web Vitals', source: 'web.dev', lang: 'en', score: 9, summary: 'INP replaced FID.', url: 'https://web.dev/' }] },
   'social-runs': { ok: true, runs: [{ name: 'Buffer', status: 'completed', conclusion: 'success', at: '2026-10-25T06:00:00Z', event: 'schedule', url: 'https://github.com/' }, { name: 'Facebook Page', status: 'completed', conclusion: 'failure', at: '2026-10-25T07:00:00Z', event: 'schedule', url: 'https://github.com/' }] },
+  'share-list': { ok: true, items: [{ id: 'old1', kind: 'image', caption: 'Launch day', title: 'Launch day photo', status: 'posted', at: '2026-10-24T15:00:00Z', url: 'https://github.com/' }] },
+  'share-draft': { ok: true, id: 'new1', kind: 'image', draft: { lang: 'en', kind: 'tip', title: 'Check SSL', alt: 'A card', linkedin: 'LinkedIn draft', x: 'X draft', facebook: 'Facebook draft', instagram: 'Instagram draft' }, note: '' },
+  'share-queue': { ok: true, id: 'new1', note: 'Queued. The hub page goes live first.' },
   'social-post-now': { ok: true, started: ['Buffer', 'Facebook Page'], note: 'Started Buffer and Facebook Page.' },
   outreach: { ok: true, needs: ['Instantly: put the API key in functions/.env as INSTANTLY_API_KEY.'],
     pipeline: { ok: true, queued: 40, swept: 12, left: 28, bySegment: [{ label: 'tvet', value: 10 }, { label: 'university', value: 10 }], reviews: 12, thisWeek: 12, results: [{ label: 'reviewed', value: 11 }], segments: [], avgScore: 64, withLiveReport: 6, reviewedWithLiveReport: 5, daily: [{ date: '2026-10-24', reviews: 12 }] },
@@ -126,7 +129,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices', 'social-proposals', 'social-runs', 'proposals']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'proposals']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -230,6 +233,29 @@ test.describe('admin statistics (Jarvis)', () => {
     await post.click();
     await expect.poll(() => calls.filter((c) => c.op === 'social-post-now').length).toBe(1);
     await expect(page.locator('.jv-toast')).toContainText('Started Buffer and Facebook Page');
+  });
+
+  test('Share a post uploads the media, shows the Gemini drafts to edit, and queues the edited posts (#1420)', async ({ page }) => {
+    const calls = await openStats(page, '#stats/hub/30');
+    const share = page.locator('[data-panel="hub-share"], .jv-panel:has(h3:text("Share a post"))').first();
+    await expect(share).toContainText('Launch day photo');
+    await expect(share.locator('[data-act="share-draft"]')).toBeDisabled();
+    await share.locator('[data-share-file]').setInputFiles({ name: 'launch.jpg', mimeType: 'image/jpeg', buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]) });
+    await share.locator('[data-share-caption]').fill('Our new SSL check is live.');
+    await share.locator('[data-act="share-draft"]').click();
+    await expect.poll(() => page.evaluate(() => window.__uploads || [])).toEqual(['launch.jpg']);
+    const draft = calls.find((c) => c.op === 'share-draft');
+    expect(draft.body.caption).toBe('Our new SSL check is live.');
+    expect(draft.body.path).toMatch(/^social-inbox\/[\w-]+\.jpg$/);
+
+    const x = share.locator('[data-share-field="x"]');
+    await expect(x).toHaveValue('X draft');
+    await expect(share.locator('[data-share-field="tiktok"]')).toHaveCount(0);
+    await x.fill('Edited X post');
+    await share.locator('[data-act="share-queue"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'share-queue').map((c) => [c.body.id, c.body.draft.x])).toEqual([['new1', 'Edited X post']]);
+    await expect(page.locator('.jv-toast')).toContainText('Queued.');
+    await expect(share.locator('[data-share-caption]')).toHaveValue('');
   });
 
   test('a job only runs after confirming', async ({ page }) => {

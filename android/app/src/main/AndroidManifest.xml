@@ -37,6 +37,26 @@
         </activity>
 
         <activity
+            android:name=".SharePostActivity"
+            android:exported="true"
+            android:label="@string/share_post_label"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Jarvis.Sheet"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/jpeg" />
+                <data android:mimeType="image/png" />
+                <data android:mimeType="image/webp" />
+                <data android:mimeType="video/mp4" />
+                <data android:mimeType="video/quicktime" />
+                <data android:mimeType="video/webm" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".ShareActivity"
             android:exported="true"
             android:label="@string/share_label"

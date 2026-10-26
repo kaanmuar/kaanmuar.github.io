@@ -1,0 +1,130 @@
+# .github/workflows/social-inbox.yml
+# Share to post (#1420): a photo or video the owner shared from the Jarvis app or web Jarvis becomes a one-post batch
+# (scripts/social-inbox.js), goes live on the social hub, and is queued on Buffer and the Facebook Page about 30 minutes out.
+# Started by the jarvis function (op share-queue) with the reviewed captions; the run name carries the inbox id so Jarvis
+# can show its progress. Secrets as in auto-live-reports.yml: BUFFER_API_KEY, LIVE_REPORTS_DEPLOY_KEY (pushes to main,
+# bypassing the ruleset, with [skip ci]), FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN.
+
+name: Social inbox post
+run-name: Inbox ${{ inputs.id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: 'social_inbox document id'
+        required: true
+      media_url:
+        description: 'Firebase Storage download URL of the shared media'
+        required: true
+      media_type:
+        description: 'image or video'
+        required: true
+        type: choice
+        options: [image, video]
+      entry:
+        description: 'captions.json entry (JSON) the owner approved in Jarvis'
+        required: true
+
+concurrency:
+  group: social-inbox
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pages: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install the renderer and the critical CSS builder
+        run: |
+          locked() { node -p "require('./package-lock.json').packages['node_modules/$1'].version"; }
+          npm install --no-save --ignore-scripts sharp@"$(locked sharp)"
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
+          npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}"
+          echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
+
+      - name: Build the batch
+        id: batch
+        env:
+          ID: ${{ inputs.id }}
+          MEDIA_URL: ${{ inputs.media_url }}
+          MEDIA_TYPE: ${{ inputs.media_type }}
+          ENTRY: ${{ inputs.entry }}
+        run: node scripts/social-inbox.js
+
+      - name: Commit and publish the hub page
+        env:
+          BATCH: ${{ steps.batch.outputs.batch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add "media/social-posts/$BATCH"
+          git add -f "media/social-posts/$BATCH/story"
+          node scripts/build-social-hub.js
+          git add assets/social qa-review-social*.html sitemap-social.xml social
+          git commit -q -m "Social inbox: $BATCH [skip ci]"
+          for attempt in 1 2 3 4 5; do
+            git push origin HEAD:main && break
+            if [ "$attempt" = 5 ]; then echo "::error::main kept moving; $BATCH was not pushed."; exit 1; fi
+            sleep $((attempt * 5))
+            DATA=$(git rev-parse HEAD)
+            git fetch -q --depth=1 origin main
+            git reset -q --hard FETCH_HEAD
+            git cherry-pick -X theirs "$DATA"
+            node scripts/build-social-hub.js --offline
+            git add assets/social qa-review-social*.html sitemap-social.xml social
+            git diff --cached --quiet || git commit -q --amend --no-edit
+          done
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true
+
+      - name: Release the clip
+        if: steps.batch.outputs.video == '1'
+        env:
+          BATCH: ${{ steps.batch.outputs.batch }}
+        run: |
+          gh release create "$BATCH" media/social-posts/$BATCH/clip/*.mp4 --target main --latest=false \
+            --title "Social inbox $BATCH" --notes "TikTok and YouTube clip shared from Jarvis. Posted through Buffer."
+
+      - name: Wait for the hub page
+        env:
+          BATCH: ${{ steps.batch.outputs.batch }}
+          SLUG: ${{ steps.batch.outputs.slug }}
+        run: |
+          url="https://carlosandmunoz.com/social/$BATCH/$SLUG.html"
+          for i in $(seq 1 40); do
+            [ "$(curl -s -o /dev/null -w '%{http_code}' -I "$url")" = "200" ] && { echo "Live: $url"; exit 0; }
+            sleep 30
+          done
+          echo "::warning::$url did not answer 200 in 20 minutes; the queue scripts wait and the hub gate may hold the posts."
+
+      - name: Queue the post in Buffer
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          CLIP_BASE: https://github.com/${{ github.repository }}/releases/download/${{ steps.batch.outputs.batch }}
+        run: node scripts/buffer-queue.js --batch "${{ steps.batch.outputs.batch }}"
+
+      - name: Schedule the post on the Facebook Page
+        if: ${{ !cancelled() && steps.batch.outcome == 'success' }}
+        env:
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
+          FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+        run: node scripts/facebook-queue.js --batch "${{ steps.batch.outputs.batch }}"
+
+      - name: Commit the Buffer and Facebook ledgers
+        if: ${{ !cancelled() && steps.batch.outcome == 'success' }}
+        run: scripts/commit-social-ledgers.sh "${{ steps.batch.outputs.batch }}"

@@ -259,3 +259,12 @@
     .jv-bar-fill { box-shadow: none; }
     .jv-feed { max-height: none; }
 }
+
+/* Share a post (#1420) */
+.jv-share-form, .jv-share-fields { display: grid; gap: 0.6rem; }
+.jv-share-fields { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.jv-share-field { display: grid; gap: 0.25rem; align-content: start; font-size: 0.78rem; color: var(--muted); letter-spacing: 0.04em; }
+.jv-share-form textarea, .jv-share-field textarea { width: 100%; box-sizing: border-box; resize: vertical; background: rgba(4, 18, 28, 0.85); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0.5rem 0.6rem; font: inherit; font-size: 0.88rem; transition: border-color 0.15s, box-shadow 0.15s; }
+.jv-share-form textarea:focus, .jv-share-field textarea:focus { outline: none; border-color: var(--line-hi); box-shadow: 0 0 0 3px rgba(56, 225, 255, 0.12); }
+.jv-share-pick { justify-self: start; }
+.jv-share-fields + .jv-actions { margin-top: 0.4rem; }
