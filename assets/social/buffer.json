@@ -1227,6 +1227,40 @@
     "checked": "2026-10-26T10:42:31.823Z"
    }
   ],
+  "digest-2026-10-30/01-this-week": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6adf3254d53d0b841b2db25c",
+    "at": "2026-10-30T15:49:00.000Z",
+    "result": "queued",
+    "checked": "2026-10-26T10:58:28.253Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6adf32531eb81f34415a7f7a",
+    "at": "2026-10-31T02:21:00.000Z",
+    "result": "queued",
+    "checked": "2026-10-26T10:58:26.606Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6adf32541eb81f34415a7fbd",
+    "at": "2026-10-31T00:51:00.000Z",
+    "result": "queued",
+    "checked": "2026-10-26T10:58:28.004Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6adf3253ee0ab0f8f0f8458c",
+    "at": "2026-10-31T01:36:00.000Z",
+    "result": "queued",
+    "checked": "2026-10-26T10:58:27.311Z"
+   }
+  ],
   "launch-2026-10/en/a11y": [
    {
     "channel": "youtube",
