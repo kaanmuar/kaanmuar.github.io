@@ -981,8 +981,14 @@ test('Every check and Cases start folded, one line per area or layer with its co
       });
     }
   }
+  const chevron = (selector) => page.locator(selector).first().evaluate((el) => getComputedStyle(el, '::after').transform);
+  const foldedCase = await chevron('#multi-overlay .cases-group:not(.is-none) .cases-toggle');
+  expect(await chevron('#multi-overlay .finding-group.is-folded .group-toggle'), 'folded chevrons (#1664)').toBe(foldedCase);
   const findings = page.locator('#multi-overlay .multi-sec[data-sec="findings"] .multi-cell');
   await findings.nth(2).locator('[data-group="Security"] .group-toggle').click();
+  await page.locator('#multi-overlay .multi-sec[data-sec="cases"] .multi-cell').first().locator('.cases-group:not(.is-none) .cases-toggle').first().click();
+  const openFinding = await chevron('#multi-overlay .finding-group:not(.is-folded) .group-toggle');
+  await expect.poll(() => chevron('#multi-overlay .cases-group.is-open .cases-toggle'), { message: 'open chevrons (#1664)' }).toBe(openFinding);
   for (const index of [0, 1, 2, 3, 4, 5]) await expect(findings.nth(index).locator('[data-group="Security"] .group-toggle')).toHaveAttribute('aria-expanded', 'true');
   await expect(findings.locator('[data-group="SEO"] .finding:visible')).toHaveCount(0);
   await page.locator('#multi-overlay .multi-sec[data-sec="health"] .multi-cell').nth(1).locator('.area[data-area="Performance"]').click();
