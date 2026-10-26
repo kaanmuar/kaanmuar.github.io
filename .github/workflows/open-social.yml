@@ -1,0 +1,65 @@
+# Posts each rendered social batch to Bluesky and Mastodon as its x slots come (scripts/open-social-queue.js, #1621).
+# Bluesky cannot schedule a post, so this runs every 30 minutes and posts what is due. A network whose secrets are
+# missing is skipped: BLUESKY_HANDLE and BLUESKY_APP_PASSWORD, MASTODON_URL and MASTODON_TOKEN.
+# The run updates the ledger, assets/social/open-social.json, and pushes it to main with the LIVE_REPORTS_DEPLOY_KEY
+# write deploy key, like the Facebook Page queue.
+name: Bluesky and Mastodon
+
+on:
+  schedule:
+    - cron: '13,43 * * * *'
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Network'
+        type: choice
+        options: ['both', 'bluesky', 'mastodon']
+        default: 'both'
+      dry_run:
+        description: 'List what is due, post nothing'
+        type: boolean
+        default: false
+
+concurrency:
+  group: open-social
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+      BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+      MASTODON_URL: ${{ secrets.MASTODON_URL }}
+      MASTODON_TOKEN: ${{ secrets.MASTODON_TOKEN }}
+      NETWORK: ${{ inputs.network != 'both' && inputs.network || '' }}
+    steps:
+      - name: Check a network is connected
+        id: ready
+        run: |
+          if [ -n "$BLUESKY_APP_PASSWORD$MASTODON_TOKEN" ] || [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No Bluesky or Mastodon secrets yet, so nothing is posted (see scripts/open-social-queue.js)."
+          fi
+      - uses: actions/checkout@v4
+        if: steps.ready.outputs.ok == 'true'
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+      - uses: actions/setup-node@v4
+        if: steps.ready.outputs.ok == 'true'
+        with:
+          node-version: '22'
+      - name: Post what is due
+        id: post
+        if: steps.ready.outputs.ok == 'true'
+        run: node scripts/open-social-queue.js ${NETWORK:+--network "$NETWORK"} ${{ inputs.dry_run && '--dry-run' || '' }}
+      - name: Commit the ledger
+        if: ${{ !cancelled() && !inputs.dry_run && steps.post.outcome != 'skipped' }}
+        run: |
+          if git status --porcelain assets/social/open-social.json | grep -q .; then
+            scripts/commit-social-ledgers.sh "Bluesky and Mastodon"
+          else
+            echo "Nothing went out."
+          fi

@@ -357,7 +357,7 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
       post("instagram", linked(cap.instagram), [image("feed")], { instagram: { type: "post", shouldShareToFeed: true } }),
       post("instagram-story", cap.title, [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
     ];
-    case "twitter": case "threads": case "bluesky": case "mastodon": return [post("x", linked(cap.x), [image("feed")])];
+    case "twitter": case "threads": return [post("x", linked(cap.x), [image("feed")])];
     case "tiktok": return clipBase ? [post("tiktok", linked(cap.tiktok), [video()])] : [];
     case "youtube": return clipBase ? [post("youtube", linked(cap.youtube), [video()], { youtube: { title: cap.youtubeTitle, categoryId: "28" } })] : [];
     default: return [];
