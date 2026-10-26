@@ -239,6 +239,7 @@ exports.notifyOwnerOnMessage = withMail.firestore
     } catch (error) {
       console.error("Owner message notification failed:", error);
     }
+    await pushOwner(jarvisMailPush.messageMessage(snap.id, data, topic));
     return null;
   });
 
@@ -264,6 +265,7 @@ exports.notifyOwnerOnRating = withMail.firestore
     } catch (error) {
       console.error("Owner rating notification failed:", error);
     }
+    await pushOwner(jarvisMailPush.ratingMessage(snap.id, data));
     return null;
   });
 
@@ -1287,6 +1289,7 @@ async function rerunReviewFailures() {
   console.log("URL review re-runs: " + done.length + " of " + plan.runs.length + " ran, " + plan.skipped.length + " skipped.");
   if (!done.length) return null;
   const mail = reviewFailures.rerunMail(done);
+  await pushOwner(jarvisMailPush.rerunMessage(done, REVIEW_FN_URL + "/desk"));
   await sendOwnerEmail({ to: REVIEW_ALERT_TO, subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, respondUrl: REVIEW_FN_URL + "/desk", buttonLabel: "Open the review desk" });
   return null;
 }
@@ -1466,6 +1469,7 @@ exports.exportFirestoreWeekly = scheduled(withMail, "exportFirestoreWeekly", asy
     console.log("Firestore export started:", operation && operation.name ? operation.name : stamp);
   } catch (error) {
     console.error("Firestore export failed:", error);
+    await pushOwner(jarvisMailPush.backupMessage(stamp, error && error.message));
     try {
       await sendOwnerEmail({
         subject: "Firestore backup did not start",
@@ -1534,6 +1538,7 @@ async function mailReviewedSites(ip, source) {
 // A comparison notice carries the scores, problems, and market presence. A mail failure still leaves the comparison saved.
 async function mailComparison(notice) {
   if (!notice) return;
+  await pushOwner(jarvisMailPush.comparisonMessage(notice));
   try {
     await sendOwnerEmail({
       eyebrow: "QA-lab URL Review",
@@ -2290,6 +2295,7 @@ async function opsWatchdog() {
     { label: "Failure re-runs, 7 days", value: String(reruns.data().count) },
     { label: "Owner replies, 7 days", value: replies.data().count + " in, " + waiting.data().count + " waiting for a decision" }
   ]);
+  await pushOwner(jarvisMailPush.opsMessage(problems));
   await sendOwnerEmail({
     to: REVIEW_ALERT_TO,
     subject: problems.length ? "Ops: " + problems.length + " scheduled job" + (problems.length === 1 ? "" : "s") + " missed or failed" : "Ops: weekly digest, every job on time",
@@ -2391,6 +2397,7 @@ async function takeOwnerReply(mail, auth) {
   for (const action of decision.apply) await applyReplyAction(action, row);
   if (ref) await ref.set({ lastReplyAt: row.at, lastReplyKind: row.kind }, { merge: true });
   if (row.kind !== "auto" && row.kind !== "bounce") {
+    await pushOwner(jarvisMailPush.ownerReplyMessage(id, row, ownerReplies.summary(row, decision), OWNER_REPLIES_URL + "/decide?t=" + id));
     await sendOwnerEmail({
       to: REVIEW_ALERT_TO,
       replyTo: row.from,
@@ -2545,15 +2552,7 @@ async function rememberReview(kind, source) {
   } catch (error) {
     console.error("Review alert mail failed:", error);
   }
-  const push = jarvisNotify.paymentMessage(kind, source || {}, note) || jarvisNotify.reviewMessage(kind, source || {});
-  if (push) {
-    try {
-      const db = admin.firestore();
-      await jarvisPush.send(admin.messaging(), db, await jarvisPush.targets(db, push.kind), push);
-    } catch (error) {
-      console.error("Jarvis push failed:", error && error.message);
-    }
-  }
+  await pushOwner(jarvisNotify.paymentMessage(kind, source || {}, note) || jarvisNotify.reviewMessage(kind, source || {}) || jarvisMailPush.runMessage(source || {}, note));
 }
 const REVIEW_ORIGINS = new Set([
   "https://carlosandmunoz.com",
@@ -4897,6 +4896,19 @@ const jarvisSources = require("./jarvis-sources");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
 const jarvisNotify = require("./jarvis-notify");
+const jarvisMailPush = require("./jarvis-mail-push");
+
+// A push failure is logged and never stops the owner email it mirrors.
+async function pushOwner(msg) {
+  if (!msg) return null;
+  try {
+    const db = admin.firestore();
+    return await jarvisPush.send(admin.messaging(), db, await jarvisPush.targets(db, msg.kind), msg);
+  } catch (error) {
+    console.error("Jarvis push failed:", error && error.message);
+    return null;
+  }
+}
 const jarvisSocial = require("./jarvis-social");
 
 async function socialProposals() {
