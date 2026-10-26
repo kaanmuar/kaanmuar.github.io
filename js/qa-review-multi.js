@@ -17,7 +17,8 @@
       failedRuns: "Not in this comparison, because their review did not finish:",
       signIn: "Sign in with the account that saved this comparison to open it.", failed: "The comparison did not open. Try again in a moment.",
       saving: "Saving the comparison…", saveFailed: "The comparison was not saved. Try again in a moment.",
-      nothing: "Nothing here for this site.", more: "…and {n} more, in the report on the page.",
+      nothing: "Nothing here for this site.", more: "…and {n} more, in the report on the page.", showAll: "Show all {n}", showFewer: "Show fewer",
+      seoBlocked: "Pages not indexable, by reason", seoCanonical: "Canonical to another page",
       sections: {
         cover: "Cover and key figures", exec: "One-page summary", health: "Health score", fix: "Fix first", browser: "In a real browser",
         previews: "How it looks in Google and when shared", geo: "What AI sees", analytics: "Analytics and consent", seo: "Search visibility",
@@ -38,7 +39,8 @@
       failedRuns: "No están en esta comparación porque su revisión no terminó:",
       signIn: "Inicia sesión con la cuenta que guardó esta comparación para abrirla.", failed: "La comparación no se abrió. Inténtalo de nuevo en un momento.",
       saving: "Guardando la comparación…", saveFailed: "La comparación no se guardó. Inténtalo de nuevo en un momento.",
-      nothing: "Nada aquí para este sitio.", more: "…y {n} más, en el informe de la página.",
+      nothing: "Nada aquí para este sitio.", more: "…y {n} más, en el informe de la página.", showAll: "Mostrar los {n}", showFewer: "Mostrar menos",
+      seoBlocked: "Páginas no indexables, por motivo", seoCanonical: "Canonical hacia otra página",
       sections: {
         cover: "Portada y cifras clave", exec: "Resumen en una página", health: "Puntuación de salud", fix: "Corregir primero", browser: "En un navegador real",
         previews: "Cómo se ve en Google y al compartirse", geo: "Lo que ve la IA", analytics: "Analítica y consentimiento", seo: "Visibilidad en buscadores",
@@ -59,7 +61,8 @@
       failedRuns: "Não estão nesta comparação porque a revisão não terminou:",
       signIn: "Entre com a conta que salvou esta comparação para abri-la.", failed: "A comparação não abriu. Tente de novo em instantes.",
       saving: "Salvando a comparação…", saveFailed: "A comparação não foi salva. Tente de novo em instantes.",
-      nothing: "Nada aqui para este site.", more: "…e mais {n}, no relatório da página.",
+      nothing: "Nada aqui para este site.", more: "…e mais {n}, no relatório da página.", showAll: "Mostrar todos os {n}", showFewer: "Mostrar menos",
+      seoBlocked: "Páginas não indexáveis, por motivo", seoCanonical: "Canonical para outra página",
       sections: {
         cover: "Capa e números principais", exec: "Resumo em uma página", health: "Pontuação de saúde", fix: "Corrigir primeiro", browser: "Em um navegador real",
         previews: "Como aparece no Google e ao compartilhar", geo: "O que a IA vê", analytics: "Analytics e consentimento", seo: "Visibilidade nas pesquisas",
@@ -80,7 +83,8 @@
       failedRuns: "Nicht in diesem Vergleich, weil ihre Prüfung nicht fertig wurde:",
       signIn: "Melden Sie sich mit dem Konto an, das diesen Vergleich gespeichert hat, um ihn zu öffnen.", failed: "Der Vergleich wurde nicht geöffnet. Versuchen Sie es gleich noch einmal.",
       saving: "Der Vergleich wird gespeichert…", saveFailed: "Der Vergleich wurde nicht gespeichert. Versuchen Sie es gleich noch einmal.",
-      nothing: "Für diese Website nichts.", more: "…und {n} weitere, im Bericht auf der Seite.",
+      nothing: "Für diese Website nichts.", more: "…und {n} weitere, im Bericht auf der Seite.", showAll: "Alle {n} zeigen", showFewer: "Weniger zeigen",
+      seoBlocked: "Nicht indexierbare Seiten, nach Grund", seoCanonical: "Canonical auf eine andere Seite",
       sections: {
         cover: "Deckblatt und Kennzahlen", exec: "Zusammenfassung auf einer Seite", health: "Gesundheitswert", fix: "Zuerst beheben", browser: "In einem echten Browser",
         previews: "So sieht es bei Google und beim Teilen aus", geo: "Was KI sieht", analytics: "Analytics und Einwilligung", seo: "Sichtbarkeit in der Suche",
@@ -101,7 +105,8 @@
       failedRuns: "Absents de cette comparaison, car leur analyse n’a pas abouti :",
       signIn: "Connectez-vous avec le compte qui a enregistré cette comparaison pour l'ouvrir.", failed: "La comparaison ne s'est pas ouverte. Réessayez dans un instant.",
       saving: "Enregistrement de la comparaison…", saveFailed: "La comparaison n'a pas été enregistrée. Réessayez dans un instant.",
-      nothing: "Rien ici pour ce site.", more: "…et {n} de plus, dans le rapport en ligne.",
+      nothing: "Rien ici pour ce site.", more: "…et {n} de plus, dans le rapport en ligne.", showAll: "Afficher les {n}", showFewer: "Afficher moins",
+      seoBlocked: "Pages non indexables, par motif", seoCanonical: "Canonical vers une autre page",
       sections: {
         cover: "Couverture et chiffres clés", exec: "Résumé en une page", health: "Score de santé", fix: "À corriger d'abord", browser: "Dans un vrai navigateur",
         previews: "L'aperçu dans Google et en partage", geo: "Ce que voit l'IA", analytics: "Analytics et consentement", seo: "Visibilité dans la recherche",
@@ -122,7 +127,8 @@
       failedRuns: "Non sono in questo confronto perché la revisione non è terminata:",
       signIn: "Accedi con l'account che ha salvato questo confronto per aprirlo.", failed: "Il confronto non si è aperto. Riprova tra un momento.",
       saving: "Salvataggio del confronto…", saveFailed: "Il confronto non è stato salvato. Riprova tra un momento.",
-      nothing: "Niente qui per questo sito.", more: "…e altri {n}, nel report sulla pagina.",
+      nothing: "Niente qui per questo sito.", more: "…e altri {n}, nel report sulla pagina.", showAll: "Mostra tutti i {n}", showFewer: "Mostra meno",
+      seoBlocked: "Pagine non indicizzabili, per motivo", seoCanonical: "Canonical verso un'altra pagina",
       sections: {
         cover: "Copertina e cifre chiave", exec: "Riepilogo in una pagina", health: "Punteggio di salute", fix: "Da correggere prima", browser: "In un browser reale",
         previews: "Come appare su Google e quando è condiviso", geo: "Cosa vede l'IA", analytics: "Analytics e consenso", seo: "Visibilità nella ricerca",
@@ -147,7 +153,7 @@
     ["seo", '<div data-slot="seo"></div>'],
     ["graph", '<article class="card" data-slot="site-graph"></article>'],
     ["security", '<article class="card" data-slot="security"></article>'],
-    ["findings", '<div class="filters no-print" data-slot="finding-filters"></div><article class="card" data-slot="findings"></article>'],
+    ["findings", '<article class="card" data-slot="findings"></article>'],
     ["fixkit", '<article class="card" data-slot="fixkit"></article>'],
     ["glance", '<div class="visuals" data-slot="report-visuals"></div>'],
     ["layers", '<article class="card"><div data-slot="layers"></div></article>'],
@@ -212,6 +218,9 @@
     document.body.appendChild(overlay);
     overlay.querySelector("#multi-close").addEventListener("click", close);
     overlay.querySelector("#multi-body").addEventListener("click", fold);
+    overlay.querySelector("#multi-body").addEventListener("click", pickFindings);
+    overlay.querySelector("#multi-body").addEventListener("click", showAll);
+    overlay.querySelector("#multi-body").addEventListener("findingfilter", pickArea);
     overlay.querySelector("#multi-print").addEventListener("click", () => (made && made.paid ? print() : pay()));
     overlay.querySelector("#multi-pdf").addEventListener("click", () => (made && made.paid ? download() : pay()));
     overlay.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); });
@@ -254,17 +263,23 @@
     return String(row.key === "cls" ? Math.round(raw * 1000) / 1000 : raw);
   }
 
-  function summaryHtml(data) {
+  // Every list of sites after the benchmark's ranking keeps its order, by health score.
+  function orderOf(data) {
+    return window.QAReviewBenchmark && QAReviewBenchmark.order ? QAReviewBenchmark.order(data) : data.columns.map((col, index) => index);
+  }
+
+  function summaryHtml(data, order) {
     const S = window.QAReviewSections;
     const cols = data.columns;
-    const head = "<tr><th scope=\"col\">" + esc(t("indicator")) + "</th>" + cols.map((col) => '<th scope="col" translate="no">' + esc(col.host).replace(/\./g, ".<wbr>") + "</th>").join("") + "</tr>";
+    const head = "<tr><th scope=\"col\">" + esc(t("indicator")) + "</th>" + order.map((index) => columnHead(cols[index], index)).join("") + "</tr>";
     const rows = data.summary.rows.map((row) => "<tr><th scope=\"row\">" + esc(label(row)) + (row.better === "low" && cc ? ' <small class="muted">' + esc(cc.t("lower")) + "</small>" : "") + "</th>" +
-      row.values.map((raw, index) => {
+      order.map((index) => {
+        const raw = row.values[index];
         const lead = row.leads.length === 1 && row.leads[0] === index;
         const shown = row.kind === "score" && raw != null ? '<b style="color:' + S.scoreColor(raw) + '">' + esc(raw) + "</b>" : esc(value(row, raw));
         return "<td" + (lead ? ' class="lead"' : "") + ">" + shown + "</td>";
       }).join("") + "</tr>").join("");
-    const wins = "<tr class=\"multi-wins\"><th scope=\"row\">" + esc(t("wins")) + "</th>" + data.summary.wins.map((n) => "<td>" + n + "</td>").join("") + "</tr>";
+    const wins = "<tr class=\"multi-wins\"><th scope=\"row\">" + esc(t("wins")) + "</th>" + order.map((index) => "<td>" + data.summary.wins[index] + "</td>").join("") + "</tr>";
     return '<section class="multi-summary"><h2 translate="no">' + esc(t("summary")) + '</h2><div class="multi-scroll"><table class="compare-table multi-table">' +
       "<thead>" + head + "</thead><tbody>" + rows + wins + "</tbody></table></div><p class=\"meta-line\" translate=\"no\">" + esc(t("leadNote")) + "</p></section>";
   }
@@ -287,19 +302,69 @@
 
   const siteColor = (index) => (window.QAReviewBenchmark && QAReviewBenchmark.color ? QAReviewBenchmark.color(index) : "var(--own)");
 
+  // The findings of every column answer one filter bar, so the columns always show the same kind of check.
+  const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
+  const VERDICTS = ["open", "all", "fail", "risk", "pass", "person"];
+  let filter = { area: "All", verdict: "open" };
+
+  function filterLabel(kind, key) {
+    const rc = window.QAReviewReportCopy;
+    if (kind === "area") return key === "All" ? rc.t("allAreas") : cc ? cc.area(key) : key;
+    if (key === "open" || key === "all") return rc.t(key === "open" ? "fOpen" : "fAll");
+    return cc ? cc.verdict(key) : key;
+  }
+
+  function filtersHtml() {
+    if (!window.QAReviewReportCopy) return "";
+    const chip = (kind, key) => '<button type="button" data-' + kind + '="' + key + '">' + esc(filterLabel(kind, key)) + "</button>";
+    return '<div class="filters multi-filters no-print" role="toolbar" aria-label="' + esc(book.sections.findings || COPY.en.sections.findings) + '" translate="no">' +
+      ["All"].concat(AREAS).map((key) => chip("area", key)).join("") + '<span class="multi-filter-gap" aria-hidden="true"></span>' + VERDICTS.map((key) => chip("verdict", key)).join("") +
+      '</div><p class="meta-line multi-filter-say" translate="no"></p>';
+  }
+
+  function shows(item) {
+    const verdict = item.getAttribute("data-verdict");
+    return filter.verdict === "all" || (filter.verdict === "open" ? verdict === "fail" || verdict === "risk" : verdict === filter.verdict);
+  }
+
+  function applyFilter(sec) {
+    if (!sec) return;
+    sec.querySelectorAll(".multi-filters button").forEach((button) => {
+      const on = button.getAttribute("data-area") === filter.area || button.getAttribute("data-verdict") === filter.verdict;
+      button.classList.toggle("on", on);
+      button.setAttribute("aria-pressed", String(on));
+    });
+    const say = sec.querySelector(".multi-filter-say");
+    if (say) say.textContent = filterLabel("area", filter.area) + " · " + filterLabel("verdict", filter.verdict);
+    sec.querySelectorAll(".finding-group").forEach((group) => {
+      let count = 0;
+      group.querySelectorAll(".finding").forEach((item) => {
+        item.hidden = !shows(item);
+        if (!item.hidden) count += 1;
+      });
+      group.hidden = filter.area !== "All" && group.getAttribute("data-group") !== filter.area;
+      group.classList.toggle("is-none", !count);
+      group.querySelector(".group-count").textContent = count;
+    });
+    capFindings(sec);
+  }
+
   function bodyHtml(data) {
     const n = data.columns.length;
     const rc = window.QAReviewReportCopy;
-    const hosts = '<div class="multi-hosts-bar"><div class="multi-row multi-hosts">' + data.columns.map((col, index) =>
-      '<div class="multi-cell" style="--site:' + siteColor(index) + '"><p class="multi-host" translate="no">' + esc(col.host).replace(/\./g, ".<wbr>") + "</p>" +
+    const order = orderOf(data);
+    const columns = order.map((index) => [data.columns[index], index]);
+    const hosts = '<div class="multi-hosts-bar"><div class="multi-row multi-hosts">' + columns.map(([col, index]) =>
+      '<div class="multi-cell" style="--site:' + siteColor(index) + '"><p class="multi-host" translate="no" title="' + esc(col.host) + '">' + hostHtml(col.host) + "</p>" +
       (col.missing ? "" : '<p class="meta-line" translate="no">' + esc(col.at ? new Date(col.at).toLocaleDateString(code) : "") + (col.paid ? "" : ' · <a class="no-print" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>") + "</p>") + "</div>").join("") + "</div></div>";
     const foldAll = rc ? '<div class="fold-bar no-print"><button class="btn btn-ghost" type="button" id="multi-fold-all" aria-expanded="true" translate="no">' + esc(rc.t("collapseAll")) + "</button></div>" : "";
     const bench = window.QAReviewBenchmark ? QAReviewBenchmark.html(data) : "";
-    return bench + summaryHtml(data) + '<div class="multi-sheet" style="--cols:' + n + '">' + foldAll + hosts + '<div class="multi-scroll multi-grid">' + SECTIONS.map(([key, cell]) => {
+    return bench + summaryHtml(data, order) + '<div class="multi-sheet" style="--cols:' + n + '">' + foldAll + hosts + '<div class="multi-scroll multi-grid">' + SECTIONS.map(([key, cell]) => {
       const title = esc(book.sections[key] || COPY.en.sections[key]);
+      const bar = key === "cases" && rc ? '<div class="cases-bar no-print"><button class="btn btn-ghost cases-all" type="button" aria-expanded="false" translate="no">' + esc(rc.t("expandAll")) + "</button></div>" : "";
       return '<section class="multi-sec" data-sec="' + key + '"><h2 translate="no"><button class="fold-toggle" type="button" id="multi-toggle-' + key + '" aria-expanded="true" aria-controls="multi-row-' + key + '"><span>' + title +
-        '</span><span class="fold-icon" aria-hidden="true"></span></button></h2><div class="multi-row fold-panel" id="multi-row-' + key + '" role="region" aria-labelledby="multi-toggle-' + key + '">' +
-        data.columns.map((col, index) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '" data-host="' + esc(col.host) + '" style="--site:' + siteColor(index) + '">' +
+        '</span><span class="fold-icon" aria-hidden="true"></span></button></h2>' + bar + (key === "findings" ? filtersHtml() : "") + '<div class="multi-row fold-panel" id="multi-row-' + key + '" role="region" aria-labelledby="multi-toggle-' + key + '">' +
+        columns.map(([col, index]) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '" data-host="' + esc(bareHost(col.host)) + '" style="--site:' + siteColor(index) + '">' +
           (col.missing ? '<p class="muted">' + esc(t("missing")) + "</p>" : cell) + "</div>").join("") +
         "</div></section>";
     }).join("") + "</div></div>";
@@ -334,16 +399,232 @@
     });
   }
 
-  // In print a long list stops after PRINT_ROWS with a line counting the rest, as the screen stops it in a
-  // scroll box, so one long column does not leave the others blank for pages.
-  const PRINT_ROWS = 12;
-  function capForPrint(grid) {
-    grid.querySelectorAll('[data-slot="pages"], [data-slot="report-log"]').forEach((list) => {
-      const rows = [...list.children].filter((row) => !row.hidden);
-      if (rows.length <= PRINT_ROWS) return;
-      rows.slice(PRINT_ROWS).forEach((row) => row.classList.add("print-cut"));
-      const text = esc(t("more", { n: rows.length - PRINT_ROWS }));
-      list.insertAdjacentHTML("beforeend", list.tagName === "TBODY" ? '<tr class="print-more"><td colspan="4">' + text + "</td></tr>" : '<li class="print-more">' + text + "</li>");
+  // A security check no site was read for leaves every column, so the rows stay the same in all of them.
+  function pruneChecks(grid) {
+    const rows = [...grid.querySelectorAll('.multi-sec[data-sec="security"] [data-check]')];
+    const read = new Set(rows.filter((row) => !row.classList.contains("unknown")).map((row) => row.dataset.check));
+    rows.forEach((row) => { if (!read.has(row.dataset.check)) row.remove(); });
+  }
+
+  // The path and title of a page are cut short in a column, so each keeps its full text as a tooltip. Status and
+  // time are tinted as on the site map: amber for a redirect or over 1.8 s, red for an error.
+  function pageRows(grid) {
+    grid.querySelectorAll('[data-slot="pages"] > tr').forEach((row) => {
+      const [path, status, ms, title] = row.cells;
+      if (!title) return;
+      row.dataset.path = path.title = path.textContent;
+      title.title = title.textContent;
+      const answer = Number(status.textContent);
+      if (answer !== 200) status.classList.add(answer >= 300 && answer < 400 ? "is-warn" : "is-bad");
+      if (Number(ms.textContent) > 1800) ms.classList.add("is-slow");
+    });
+    grid.querySelectorAll('[data-slot="pages-found"]').forEach((note) => { note.innerHTML = esc(note.textContent).replace(/\.(?=\S)/g, ".<wbr>"); });
+  }
+
+  // A long list shows its first rows on screen with a button that shows the rest in place, and in print stops
+  // with a line counting the rest, so one long column does not leave the others blank for pages: [lists, rows on
+  // screen, rows in print]. Fix first stops sooner, each finding being a box of its own, and a browser-pass row
+  // stacks its cells, so a few of them already fill a narrow column.
+  const LIST_CAPS = [
+    ['[data-slot="pages"], [data-slot="report-log"], .ai-outline', 12, 12],
+    ['[data-slot="fix-first"] > .fix-list', 5, 5],
+    ['.multi-sec[data-sec="browser"] [data-part] tbody', 3, 6],
+    [".multi-seo-pages", 5, 5],
+    [".sec-diff ol", 6, 6],
+    ['[data-card="practices"] .advice', 4, 4],
+    ['[data-card="speed"]', 10, 10]
+  ];
+  const PRINT_CASES = 3;
+  function capLists(grid) {
+    LIST_CAPS.forEach(([selector, max, printMax]) => grid.querySelectorAll(selector).forEach((list) => {
+      const rows = [...list.children].filter((row) => !row.hidden && (/^(LI|TR|ARTICLE)$/.test(row.tagName) || row.classList.contains("meter")));
+      const table = list.tagName === "TBODY" ? list.closest("table") : null;
+      if (rows.length > printMax) {
+        rows.slice(printMax).forEach((row) => row.classList.add("print-cut"));
+        const text = esc(t("more", { n: rows.length - printMax }));
+        list.insertAdjacentHTML("beforeend", table ? '<tr class="print-more"><td colspan="' + (table.querySelectorAll("thead th").length || 4) + '">' + text + "</td></tr>"
+          : /^(UL|OL)$/.test(list.tagName) ? '<li class="print-more">' + text + "</li>" : '<p class="print-more">' + text + "</p>");
+      }
+      if (rows.length <= max) return;
+      const rest = rows.slice(max);
+      rest.forEach((row) => row.classList.add("screen-cut"));
+      const button = showButton(t("showAll", { n: rows.length }));
+      button.rows = rest;
+      button.dataset.n = rows.length;
+      if (table) (table.parentElement.classList.contains("table-scroll") ? table.parentElement : table).after(button);
+      else if (list.hasAttribute("data-card")) list.appendChild(button);
+      else list.after(button);
+    }));
+    grid.querySelectorAll(".cases-list").forEach((list) => {
+      const rows = [...list.children];
+      if (rows.length <= PRINT_CASES) return;
+      rows.slice(PRINT_CASES).forEach((row) => row.classList.add("print-cut"));
+      list.insertAdjacentHTML("beforeend", '<li class="print-more">' + esc(t("more", { n: rows.length - PRINT_CASES })) + "</li>");
+    });
+  }
+
+  function showButton(text) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "multi-show no-print";
+    button.setAttribute("aria-expanded", "false");
+    button.textContent = text;
+    return button;
+  }
+
+  // A text box (what AI reads, a fix-kit file) keeps one height in every column; one that holds more gets a
+  // button that opens it in place. It is measured once its section is drawn and open.
+  function clampBoxes(grid) {
+    grid.querySelectorAll('.multi-sec:not(.is-folded) :is(.ai-view, .code-peek):not(.is-clamped)').forEach((box) => {
+      if (!box.clientHeight || box.scrollHeight <= box.clientHeight + 4) return;
+      box.classList.add("is-clamped");
+      const button = showButton(QAReviewReportCopy.t("caseMore"));
+      button.box = box;
+      if (box.classList.contains("code-peek")) {
+        const wrap = document.createElement("div");
+        wrap.className = "multi-peek";
+        box.replaceWith(wrap);
+        wrap.append(box, button);
+      } else box.after(button);
+    });
+  }
+
+  function showAll(event) {
+    const button = event.target.closest(".multi-show");
+    if (!button) return;
+    const open = button.getAttribute("aria-expanded") !== "true";
+    button.setAttribute("aria-expanded", String(open));
+    if (button.box) {
+      button.box.classList.toggle("is-all", open);
+      button.textContent = QAReviewReportCopy.t(open ? "caseLess" : "caseMore");
+      return;
+    }
+    (button.rows || []).forEach((row) => row.classList.toggle("screen-cut", !open));
+    button.textContent = open ? t("showFewer") : t("showAll", { n: button.dataset.n });
+  }
+
+  // A browser-pass table in a column stacks each row: its first cell on a line of its own, the rest side by side
+  // under their column's heading, so no word is split to fit a column a few letters wide.
+  function stackTables(grid) {
+    grid.querySelectorAll('.multi-sec[data-sec="browser"] [data-part] table').forEach((table) => {
+      const heads = [...table.querySelectorAll("thead th")].map((th) => th.textContent.trim());
+      table.classList.add("multi-stack");
+      table.querySelectorAll("tbody tr").forEach((row) => [...row.children].forEach((cell, index) => {
+        if (index && heads[index]) cell.setAttribute("data-th", heads[index]);
+      }));
+    });
+  }
+
+  // What AI sees: the text and its headings get a box each, like the crawlers. A crawler is a chip whose product and
+  // verdict are in its tooltip, and each role counts the crawlers it lets in and keeps out.
+  function boxGeo(grid) {
+    grid.querySelectorAll('.multi-sec[data-sec="geo"] .split > .card > [data-part]').forEach((part) => part.classList.add("card"));
+    grid.querySelectorAll('.multi-sec[data-sec="geo"] .bot-role').forEach((role) => {
+      const bots = [...role.querySelectorAll(".bot")];
+      bots.forEach((bot) => { bot.title = bot.querySelector("span").textContent + bot.querySelector(".bot-product").textContent + " · " + bot.querySelector("small").textContent; });
+      const out = bots.filter((bot) => bot.classList.contains("no")).length;
+      role.querySelector(".bot-group").insertAdjacentHTML("beforeend", '<span class="bot-tally" aria-hidden="true">✓ ' + (bots.length - out) + " ✕ " + out + "</span>");
+    });
+  }
+
+  // A note every column words the same (data-note, the intro of a section) shows once under the section's title;
+  // a note one site words its own way stays in each column. A paragraph a shared sentence leaves empty keeps its
+  // place, since it can hold a row of a subgrid.
+  function shareNotes(grid) {
+    grid.querySelectorAll(".multi-sec").forEach((sec) => {
+      const cells = [...sec.querySelectorAll(".multi-cell")].filter((cell) => !cell.matches(".is-empty, .is-note"));
+      if (cells.length < 2) return;
+      const notes = cells.map((cell) => [...cell.querySelectorAll("[data-note]")]);
+      const said = [...new Set(notes[0].map((note) => note.textContent.trim()))].filter((text) => notes.every((list) => list.some((note) => note.textContent.trim() === text)));
+      if (!said.length) return;
+      notes.flat().filter((note) => said.includes(note.textContent.trim())).forEach((note) => note.classList.add("is-shared"));
+      sec.querySelector(":scope > h2").insertAdjacentHTML("afterend", said.map((text) => '<p class="multi-note">' + esc(text) + "</p>").join(""));
+    });
+  }
+
+  // A fix-kit file no site needs is left out of every column; the rest keep one row each (css/qa-review-multi.css).
+  function levelKit(grid) {
+    const row = grid.querySelector('.multi-sec[data-sec="fixkit"] .multi-row');
+    if (!row) return;
+    const tiles = [...row.querySelectorAll("[data-kit]")];
+    const kinds = [...new Set(tiles.map((tile) => tile.dataset.kit))].filter((kind) => {
+      const same = tiles.filter((tile) => tile.dataset.kit === kind);
+      if (!same.every((tile) => tile.classList.contains("is-none"))) return true;
+      same.forEach((tile) => tile.remove());
+      return false;
+    });
+    row.style.setProperty("--kit-rows", String(kinds.length + 2));
+  }
+
+  // The reason a page cannot be indexed, from the server's English line: unpaid reports come without reasonMsg.
+  function seoReason(row) {
+    const why = String(row.reason || "");
+    const status = why.match(/^Status (\d+)/);
+    if (status) return { key: "status-" + status[1], msg: { id: "reason.status", vars: { status: status[1] } }, en: "Status " + status[1] };
+    if (/^Canonical points to /.test(why)) return { key: "canonical", label: t("seoCanonical") };
+    if (why === "noindex") return { key: "noindex", label: "noindex" };
+    if (/^Blocked for Googlebot/.test(why)) return { key: "googlebot", msg: { id: "reason.googlebot" }, en: why };
+    const bot = why.match(/^(.+) bot check$/);
+    if (bot) return { key: "bot-" + bot[1], msg: { id: "reason.botCheck", vars: { vendor: bot[1] } }, en: why };
+    return { key: "unread", msg: { id: "reason.notRead" }, en: "Not read" };
+  }
+
+  // Search visibility in a column: its figures, then the pages that cannot be indexed summed by reason and listed
+  // one of each reason first, then the notes, each in its own box. data-part names the boxes in the same order in
+  // every column.
+  function tidySeo(grid, data) {
+    const fc = window.QAReviewFindingsCopy || { line: (message, fallback) => fallback };
+    grid.querySelectorAll('.multi-sec[data-sec="seo"] .multi-cell').forEach((cell) => {
+      const col = data.columns[Number(cell.dataset.col)];
+      const slot = cell.querySelector('[data-slot="seo"]');
+      const stats = slot && slot.querySelector(":scope > .stat-row");
+      const card = slot && slot.querySelector(":scope > .card");
+      if (!col || col.missing || !stats || !card) return;
+      stats.dataset.part = "stats";
+      card.dataset.part = "unindexable";
+      const notes = [...card.querySelectorAll(":scope > .meta-line")];
+      if (notes.length) {
+        const box = document.createElement("article");
+        box.className = "card multi-seo-notes";
+        box.dataset.part = "notes";
+        notes.forEach((note) => { note.title = note.textContent; box.appendChild(note); });
+        card.after(box);
+      }
+      const all = (((col.report || {}).insights || {}).seo || {}).indexability || [];
+      const blocked = all.filter((row) => !row.indexable).map((row) => Object.assign({ why: seoReason(row) }, row));
+      const lone = card.querySelector(":scope > .muted");
+      if (lone) lone.title = lone.textContent;
+      if (!blocked.length) return;
+      const groups = new Map();
+      blocked.forEach((row) => {
+        if (!groups.has(row.why.key)) groups.set(row.why.key, { why: row.why, rows: [] });
+        groups.get(row.why.key).rows.push(row);
+      });
+      const ranked = [...groups.values()].sort((a, b) => b.rows.length - a.rows.length);
+      const firsts = ranked.map((group) => group.rows[0]);
+      const shown = firsts.concat(blocked.filter((row) => !firsts.includes(row)));
+      const label = (why) => why.label || fc.line(why.msg, why.en);
+      card.innerHTML = '<h3 class="multi-seo-head" translate="no">' + esc(t("seoBlocked")) + "</h3>" +
+        '<ul class="multi-seo-reasons" translate="no">' + ranked.map((group) => "<li><span>" + esc(label(group.why)) + "</span> <b>" + group.rows.length + "</b></li>").join("") + "</ul>" +
+        '<ul class="multi-seo-pages">' + shown.map((row) => {
+          const why = fc.line(row.reasonMsg, row.reason);
+          return '<li><span class="notranslate" translate="no" title="' + esc(row.path) + '">' + esc(row.path) + '</span><small title="' + esc(why) + '">' + esc(why) + "</small></li>";
+        }).join("") + "</ul>";
+    });
+  }
+
+  // Each area prints its first findings under the filter, opened, so every area of every site gets a share of the page.
+  const PRINT_GROUP_ROWS = 3;
+  function capFindings(sec) {
+    sec.querySelectorAll(".finding-group .print-more").forEach((line) => line.remove());
+    sec.querySelectorAll(".finding-group").forEach((group) => {
+      const shown = [...group.querySelectorAll(".finding")].filter((item) => {
+        item.classList.remove("print-cut");
+        return !item.hidden;
+      });
+      if (shown.length <= PRINT_GROUP_ROWS) return;
+      shown.slice(PRINT_GROUP_ROWS).forEach((item) => item.classList.add("print-cut"));
+      group.insertAdjacentHTML("beforeend", '<p class="print-more">' + esc(t("more", { n: shown.length - PRINT_GROUP_ROWS })) + "</p>");
     });
   }
 
@@ -351,6 +632,7 @@
     sec.querySelector(".multi-row").hidden = !open;
     sec.querySelector(".fold-toggle").setAttribute("aria-expanded", String(open));
     sec.classList.toggle("is-folded", !open);
+    if (open) clampBoxes(sec);
   }
 
   function paintFoldAll(body) {
@@ -361,8 +643,47 @@
     all.setAttribute("aria-expanded", String(anyOpen));
   }
 
+  // A group of cases opens or closes in every column at once, so the groups under it stay level.
+  function setCaseGroup(sec, name, open) {
+    sec.querySelectorAll('.cases-group[data-group="' + CSS.escape(name) + '"]').forEach((group) => {
+      const list = group.querySelector(".cases-list");
+      if (!list) return;
+      list.hidden = !open;
+      group.classList.toggle("is-open", open);
+      group.querySelector(".cases-toggle").setAttribute("aria-expanded", String(open));
+    });
+  }
+
+  function foldCases(event) {
+    const sec = event.target.closest('.multi-sec[data-sec="cases"]');
+    const toggle = sec && event.target.closest(".cases-toggle");
+    const all = sec && event.target.closest(".cases-all");
+    const more = sec && event.target.closest(".cases-more");
+    if (toggle) {
+      const group = toggle.closest(".cases-group");
+      setCaseGroup(sec, group.dataset.group, !group.classList.contains("is-open"));
+    } else if (all) {
+      const open = all.getAttribute("aria-expanded") !== "true";
+      new Set([...sec.querySelectorAll(".cases-group")].map((group) => group.dataset.group)).forEach((name) => setCaseGroup(sec, name, open));
+    } else if (more) {
+      const open = more.getAttribute("aria-expanded") !== "true";
+      more.closest(".case").classList.toggle("is-open", open);
+      more.setAttribute("aria-expanded", String(open));
+      more.textContent = QAReviewReportCopy.t(open ? "caseLess" : "caseMore");
+      return true;
+    } else return false;
+    const button = sec.querySelector(".cases-all");
+    if (button) {
+      const anyOpen = !!sec.querySelector(".cases-group.is-open");
+      button.textContent = QAReviewReportCopy.t(anyOpen ? "collapseAll" : "expandAll");
+      button.setAttribute("aria-expanded", String(anyOpen));
+    }
+    return true;
+  }
+
   // One toggle per section opens or closes it for every site at once, so the columns stay level.
   function fold(event) {
+    if (foldCases(event)) return;
     const body = event.currentTarget;
     const toggle = event.target.closest(".multi-sec > h2 .fold-toggle");
     const all = event.target.closest("#multi-fold-all");
@@ -376,24 +697,77 @@
     paintFoldAll(body);
   }
 
+  // An area folds or opens in every column at once, so the areas below it stay in step.
+  function pickFindings(event) {
+    const sec = event.target.closest('.multi-sec[data-sec="findings"]');
+    const chip = event.target.closest(".multi-filters button");
+    const toggle = event.target.closest(".group-toggle");
+    if (!sec || (!chip && !toggle)) return;
+    if (chip) {
+      if (chip.hasAttribute("data-area")) filter.area = chip.getAttribute("data-area");
+      if (chip.hasAttribute("data-verdict")) filter.verdict = chip.getAttribute("data-verdict");
+      applyFilter(sec);
+      return;
+    }
+    setFindingGroup(sec, toggle.closest(".finding-group").getAttribute("data-group"), toggle.getAttribute("aria-expanded") !== "true");
+  }
+
+  function setFindingGroup(sec, name, open) {
+    sec.querySelectorAll('.finding-group[data-group="' + CSS.escape(name) + '"]').forEach((group) => {
+      group.classList.toggle("is-folded", !open);
+      group.querySelector(".group-toggle").setAttribute("aria-expanded", String(open));
+    });
+  }
+
+  // An area of a column's health card shows that area's findings, every verdict, in every column, opened.
+  function pickArea(event) {
+    const sec = event.target.closest('.multi-sec[data-sec="findings"]');
+    if (!sec) return;
+    filter = Object.assign({}, filter, event.detail);
+    applyFilter(sec);
+    if (filter.area !== "All") setFindingGroup(sec, filter.area, true);
+    setFold(sec, true);
+    paintFoldAll(event.currentTarget);
+    sec.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   // A site in the title: its logo, with a letter under it that shows when there is no logo or it fails to load,
   // then its name, and its address when the name is more than the address.
   function bareHost(host) {
     return String(host || "").replace(/^www\./i, "");
   }
 
-  // An address breaks only after a dot, never inside a word.
+  // An address breaks after a dot of its name, and a name too long for the line inside its first part; the end of
+  // the name keeps its public suffix (.com.co) on the same line.
   function hostHtml(host) {
-    return esc(bareHost(host)).replace(/\./g, ".<wbr>");
+    const bare = bareHost(host);
+    const suffix = (bare.match(/(\.(com|org|net|edu|gov|gob|ac|co|or|ne))?\.[a-z]{2,}$/i) || [""])[0];
+    const name = bare.slice(0, bare.length - suffix.length);
+    const cut = name.length - Math.min(8, name.length - name.lastIndexOf(".") - 1);
+    return esc(name.slice(0, cut)).replace(/\./g, ".<wbr>") + '<span class="multi-host-end">' + esc(name.slice(cut) + suffix) + "</span>";
+  }
+
+  // The host without www. and its public suffix, so a column is as wide as the site's name, not its address.
+  function shortHost(host) {
+    return bareHost(host).replace(/(\.(com|org|net|edu|gov|gob|ac|co|or|ne))?\.[a-z]{2,}$/i, "") || bareHost(host);
+  }
+
+  function siteMark(col, index) {
+    const letter = ((col.name || bareHost(col.host)).match(/[\p{L}\p{N}]/u) || ["?"])[0].toUpperCase();
+    const logo = col.icon ? '<img class="multi-logo" src="' + esc(col.icon) + '" alt="" referrerpolicy="no-referrer" decoding="async" data-logo="' + index + '">' : "";
+    return logo + "<span>" + esc(letter) + "</span>";
+  }
+
+  function columnHead(col, index) {
+    return '<th scope="col" translate="no" title="' + esc(bareHost(col.host)) + '" style="--site:' + siteColor(index) + '"><span class="multi-col"><span class="multi-col-mark" aria-hidden="true">' + siteMark(col, index) +
+      '</span><span class="multi-col-name">' + esc(col.name || shortHost(col.host)) + "</span></span></th>";
   }
 
   // Each "vs" stays with the site after it, so a wrapped row never starts or ends on a lone "vs".
   function siteBadge(col, index) {
     const name = col.name || bareHost(col.host);
-    const letter = (name.match(/[\p{L}\p{N}]/u) || ["?"])[0].toUpperCase();
-    const logo = col.icon ? '<img class="multi-logo" src="' + esc(col.icon) + '" alt="" referrerpolicy="no-referrer" decoding="async" data-logo="' + index + '">' : "";
     return '<span class="multi-site" style="--site:' + siteColor(index) + '">' + (index ? '<span class="multi-vs">' + esc(t("vs")) + "</span>" : "") +
-      '<span class="multi-badge"><span class="multi-mark" aria-hidden="true">' + logo + "<span>" + esc(letter) + "</span></span>" +
+      '<span class="multi-badge"><span class="multi-mark" aria-hidden="true">' + siteMark(col, index) + "</span>" +
       '<span class="multi-site-name">' + (col.name ? esc(name) : hostHtml(col.host)) + "</span>" + (col.name ? "<small>" + hostHtml(col.host) + "</small>" : "") + "</span></span>";
   }
 
@@ -404,7 +778,6 @@
     const title = root.querySelector("#multi-title");
     title.innerHTML = data.columns.map(siteBadge).join("");
     title.setAttribute("aria-label", data.columns.map((col) => col.name || bareHost(col.host)).join(" " + t("vs") + " "));
-    title.querySelectorAll("img.multi-logo").forEach((img) => img.addEventListener("error", () => img.remove(), { once: true }));
     root.querySelector("#multi-when").textContent = data.at ? t("saved", { date: new Date(data.at).toLocaleDateString(code) }) : "";
     const printBtn = root.querySelector("#multi-print");
     const pdfBtn = root.querySelector("#multi-pdf");
@@ -415,19 +788,34 @@
     locked.innerHTML = data.paid ? "" : "<p>" + esc(t("locked", { n: data.locked.length })) + "</p><p>" +
       data.locked.map((col) => '<a class="btn btn-ghost" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>").join(" ") + "</p>";
     const body = root.querySelector("#multi-body");
+    filter = { area: "All", verdict: "open" };
     body.innerHTML = bodyHtml(data);
+    root.querySelectorAll("img.multi-logo").forEach((img) => img.addEventListener("error", () => img.remove(), { once: true }));
     const grid = body.querySelector(".multi-grid");
+    const caseGroups = S.caseGroups(data.columns.map((col) => col.report));
+    const caseRow = grid.querySelector('.multi-sec[data-sec="cases"] .multi-row');
+    caseRow.style.setProperty("--case-rows", caseGroups.length + 1);
+    caseRow.style.setProperty("--case-rows-print", caseGroups.length + 2);
     data.columns.forEach((col, index) => {
       if (col.missing) return;
       try {
-        S.paint({ report: col.report, paid: col.paid, frameworks: col.frameworks || [] }, columnRoot(grid, index, null));
+        S.paint({ report: col.report, paid: col.paid, frameworks: col.frameworks || [], caseGroups }, columnRoot(grid, index, null));
       } catch (error) {
         console.error("A comparison column did not draw:", error);
       }
     });
     grid.querySelectorAll(".report-cover h2").forEach((heading) => { heading.innerHTML = esc(heading.textContent).replace(/\./g, ".<wbr>"); });
+    boxGeo(grid);
+    pruneChecks(grid);
+    tidySeo(grid, data);
+    pageRows(grid);
     settle(grid);
-    capForPrint(grid);
+    shareNotes(grid);
+    levelKit(grid);
+    stackTables(grid);
+    capLists(grid);
+    applyFilter(grid.querySelector('.multi-sec[data-sec="findings"]'));
+    requestAnimationFrame(() => clampBoxes(grid));
     const bar = body.querySelector(".multi-hosts-bar");
     grid.addEventListener("scroll", () => { bar.scrollLeft = grid.scrollLeft; }, { passive: true });
     say("");
@@ -473,17 +861,44 @@
     }
   }
 
-  function print() {
+  // Print is on paper, so it drops dark mode as the PDF does, and gives it back after.
+  // The site look paints its colours from the theme, so the theme changes through SiteTheme, without saving it.
+  let darkBeforePrint = false;
+  function setDark(on) {
+    if (window.SiteTheme) SiteTheme.apply(on, false);
+    else document.documentElement.classList.toggle("dark-mode", on);
+  }
+  function startPrint() {
     document.body.classList.add("printing-multi");
+    if (!document.documentElement.classList.contains("dark-mode")) return;
+    darkBeforePrint = true;
+    setDark(false);
+  }
+
+  function print() {
+    startPrint();
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_multi_print", "URL Review", "print");
     window.print();
   }
 
   // The browser's own print command prints an open, paid comparison too; an unpaid one stays out of print.
+  // Print opens the findings it shows and closes them again after.
+  let openedForPrint = [];
   window.addEventListener("beforeprint", () => {
-    if (overlay && overlay.classList.contains("open") && made && made.paid) document.body.classList.add("printing-multi");
+    if (!overlay || !overlay.classList.contains("open") || !made || !made.paid) return;
+    startPrint();
+    overlay.querySelectorAll("details.finding:not([open])").forEach((item) => {
+      item.open = true;
+      openedForPrint.push(item);
+    });
   });
-  window.addEventListener("afterprint", () => document.body.classList.remove("printing-multi"));
+  window.addEventListener("afterprint", () => {
+    document.body.classList.remove("printing-multi");
+    if (darkBeforePrint) setDark(true);
+    darkBeforePrint = false;
+    openedForPrint.forEach((item) => { item.open = false; });
+    openedForPrint = [];
+  });
 
   // The PDF is printed on the server from the comparison as drawn here, with the page's styles inlined.
   function snapshot() {
@@ -492,10 +907,24 @@
     }).join("\n");
     const copy = overlay.querySelector(".multi-modal").cloneNode(true);
     copy.querySelectorAll(".multi-sec > h2 .fold-toggle").forEach((toggle) => toggle.replaceWith(toggle.firstChild));
-    copy.querySelectorAll(".multi-row[hidden]").forEach((row) => { row.hidden = false; });
+    copy.querySelectorAll(".group-toggle").forEach((toggle) => toggle.replaceWith(...toggle.childNodes));
+    copy.querySelectorAll("details.finding").forEach((item) => { item.open = true; });
+    copy.querySelectorAll(".multi-row[hidden], .cases-list[hidden]").forEach((row) => { row.hidden = false; });
+    copy.querySelectorAll(".cases-toggle").forEach((toggle) => toggle.replaceWith(...toggle.childNodes));
+    copy.querySelectorAll(".screen-cut").forEach((row) => row.classList.remove("screen-cut"));
+    copy.querySelectorAll(".is-clamped, .is-all").forEach((box) => box.classList.remove("is-clamped", "is-all"));
+    copy.querySelectorAll(".multi-peek").forEach((wrap) => wrap.replaceWith(...wrap.childNodes));
+    // An area score tile is a button on the page, and buttons do not print.
+    copy.querySelectorAll("button.area").forEach((tile) => {
+      const box = document.createElement("div");
+      box.className = tile.className;
+      box.setAttribute("data-area", tile.getAttribute("data-area"));
+      box.innerHTML = tile.innerHTML;
+      tile.replaceWith(box);
+    });
     copy.querySelectorAll(".no-print, script, button").forEach((node) => node.remove());
     copy.querySelectorAll("img").forEach((img) => {
-      if (!img.matches("#multi-title img.multi-logo")) return img.remove();
+      if (!img.matches("img.multi-logo")) return img.remove();
       const mark = document.createElement("img");
       mark.className = "multi-logo";
       mark.setAttribute("data-logo", img.getAttribute("data-logo"));

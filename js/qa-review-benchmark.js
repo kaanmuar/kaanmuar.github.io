@@ -260,12 +260,14 @@
     }).filter(Boolean);
     const total = rows.filter((row) => row.key !== "overall").length;
     const wins = (data.summary && data.summary.wins) || [];
-    return {
+    const a = {
       cols, rows, overall, scores, ranked, rankOf, lines, total, wins,
       average: mean(ranked.map((item) => item.score)),
       leads: lines.filter((line) => line.lead),
       trails: lines.filter((line) => !line.lead && line.gap >= 0.1 && !SIZE.has(line.row.key)).sort((a, b) => b.gap - a.gap)
     };
+    a.seq = podium(a).map((item) => item.index);
+    return a;
   }
 
   function ring(score, index, host) {
@@ -280,9 +282,19 @@
       '<b class="bench-score">' + shown + (score == null ? "" : "<small>" + esc(copy ? copy.t("grade", { g: S().gradeOf(value) }) : S().gradeOf(value)) + "</small>") + "</b>";
   }
 
+  // The podium's order: by health score, highest first, then the sites without one in column order.
+  function podium(a) {
+    return a.ranked.concat(a.cols.map((col, index) => ({ index, score: null })).filter((item) => a.scores[item.index] == null));
+  }
+
+  // Column indexes in the podium's order, which every list of sites after it follows.
+  function order(data) {
+    return analyse(data || {}).seq;
+  }
+
   function rankHtml(a) {
     const own = a.scores[0];
-    const order = a.ranked.concat(a.cols.map((col, index) => ({ index, score: null })).filter((item) => a.scores[item.index] == null));
+    const order = podium(a);
     const cards = order.map(({ index, score }) => {
       const col = a.cols[index];
       const diff = score != null && own != null ? score - own : null;
@@ -383,22 +395,24 @@
     const order = a.cols.map((col, index) => index).filter((index) => areas.some((row) => row.values[index] != null)).reverse();
     const shapes = order.map((index) => '<g class="bench-shape' + (index === 0 ? " is-you" : "") + '" style="--site:' + color(index) + '"><polygon points="' + pts((row) => row.values[index] || 0) + '"></polygon>' +
       areas.map((row, i) => { const [x, y] = point(i, row.values[index] || 0); return '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.6"></circle>'; }).join("") + "</g>").join("");
-    const aria = areas.map((row) => label(row) + ": " + a.cols.map((col, index) => short(col.host) + " " + (row.values[index] == null ? "–" : row.values[index])).join(", ")).join("; ");
+    const aria = areas.map((row) => label(row) + ": " + a.seq.map((index) => short(a.cols[index].host) + " " + (row.values[index] == null ? "–" : row.values[index])).join(", ")).join("; ");
     return '<figure class="bench-fig bench-radar-fig"><h4>' + esc(t("radarTitle")) + '</h4><svg class="bench-radar" viewBox="-70 -12 440 324" role="img" aria-label="' + esc(aria) + '">' + grid + shapes + labels + "</svg>" +
-      '<figcaption><span class="bench-legend">' + a.cols.map((col, index) => '<span style="--site:' + color(index) + '"><i></i>' + esc(short(col.host)) + "</span>").join("") + "</span>" + esc(t("radarCaption")) + "</figcaption></figure>";
+      '<figcaption><span class="bench-legend">' + a.seq.map((index) => '<span style="--site:' + color(index) + '"><i></i>' + esc(short(a.cols[index].host)) + "</span>").join("") + "</span>" + esc(t("radarCaption")) + "</figcaption></figure>";
   }
 
   function heatHtml(a) {
     const rows = a.rows.filter((row) => row.kind === "score");
-    const head = "<tr><th scope=\"col\"></th>" + a.cols.map((col, index) => '<th scope="col" style="--site:' + color(index) + '" translate="no"><i></i>' + esc(short(col.host)).replace(/\./g, ".<wbr>") + "</th>").join("") +
+    const head = "<tr><th scope=\"col\"></th>" + a.seq.map((index) => '<th scope="col" style="--site:' + color(index) + '" translate="no"><i></i>' + esc(short(a.cols[index].host)).replace(/\./g, ".<wbr>") + "</th>").join("") +
       '<th scope="col" class="bench-extra">' + esc(t("averageCol")) + '</th><th scope="col" class="bench-extra">' + esc(t("gapCol")) + "</th></tr>";
     const body = rows.map((row) => {
       const known = row.values.filter((value) => value != null);
       const best = known.length ? Math.max(...known) : null;
       const own = row.values[0];
       const gap = own == null || best == null ? "–" : best === own ? "✓ " + t("bestYou") : "−" + Math.round(best - own);
-      return "<tr" + (row.key === "overall" ? ' class="is-overall"' : "") + '><th scope="row">' + esc(label(row)) + "</th>" + row.values.map((value, index) =>
-        '<td class="' + (index === 0 ? "is-you " : "") + (row.leads.indexOf(index) !== -1 ? "lead" : "") + '"' + (value == null ? "" : ' style="--heat:' + S().scoreColor(value) + '"') + ">" + (value == null ? "–" : "<b>" + value + "</b>") + "</td>").join("") +
+      return "<tr" + (row.key === "overall" ? ' class="is-overall"' : "") + '><th scope="row">' + esc(label(row)) + "</th>" + a.seq.map((index) => {
+        const value = row.values[index];
+        return '<td class="' + (index === 0 ? "is-you " : "") + (row.leads.indexOf(index) !== -1 ? "lead" : "") + '"' + (value == null ? "" : ' style="--heat:' + S().scoreColor(value) + '"') + ">" + (value == null ? "–" : "<b>" + value + "</b>") + "</td>";
+      }).join("") +
         '<td class="bench-extra">' + (known.length ? Math.round(mean(known)) : "–") + '</td><td class="bench-extra' + (best === own ? " is-best" : "") + '">' + esc(gap) + "</td></tr>";
     }).join("");
     return '<figure class="bench-fig bench-heat-fig"><h4>' + esc(t("heatTitle")) + '</h4><div class="multi-scroll"><table class="bench-heat">' + "<thead>" + head + "</thead><tbody>" + body + "</tbody></table></div></figure>";
@@ -412,7 +426,8 @@
       const known = row.values.filter((value) => value != null);
       const top = Math.max(...known) || 1;
       const avg = mean(known);
-      const bars = row.values.map((value, index) => {
+      const bars = a.seq.map((index) => {
+        const value = row.values[index];
         const best = row.leads.indexOf(index) !== -1;
         return '<div class="bench-bar' + (index === 0 ? " is-you" : "") + (best ? " is-best" : "") + '" style="--site:' + color(index) + '"><span translate="no">' + esc(short(a.cols[index].host)) + "</span>" +
           '<span class="bench-track"><i style="width:' + (value == null ? 0 : Math.max(2, value / top * 100)).toFixed(1) + '%"></i></span><b>' + esc(fmt(row, value)) + (best ? ' <small>' + esc(t("bestMark")) + "</small>" : "") + "</b></div>";
@@ -436,5 +451,5 @@
       '<p class="meta-line bench-note">' + esc(t("note")) + "</p></section>";
   }
 
-  window.QAReviewBenchmark = { html, analyse, t, color };
+  window.QAReviewBenchmark = { html, analyse, order, t, color };
 })();
