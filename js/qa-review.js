@@ -939,7 +939,7 @@
       '<div class="ring" role="img" aria-label="' + esc(rc.t("ring", { n: value, g: score.grade || gradeOf(value) })) + '">' +
       '<svg viewBox="0 0 196 196"><circle class="ring-track" cx="98" cy="98" r="80"></circle><circle class="ring-value" cx="98" cy="98" r="80" stroke="' + scoreColor(value) + '" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + (circumference * (1 - value / 100)).toFixed(1) + '"></circle></svg>' +
       "<b>" + value + "<small>" + esc(rc.t("grade", { g: score.grade || gradeOf(value) })) + "</small></b></div>" +
-      '<div><p class="health-summary">' + esc(healthSummary(ins)) + "</p>" +
+      '<div><p class="health-summary">' + esc(healthSummary(ins)).replace(/\.(?=[^\s.])/g, ".<wbr>") + "</p>" +
       '<div class="verdict-chips">' + ["fail", "risk", "pass", "person"].map((key) =>
         '<span class="vchip v-' + key + '"><b>' + (totals[key] || 0) + "</b>" + esc(VERDICT_LABEL[key]) + "</span>").join("") + "</div>" +
       '<div class="verdict-chips" aria-label="' + esc(rc.t("sevAria")) + '">' + ["critical", "high", "medium", "low"].map((key) =>
