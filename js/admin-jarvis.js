@@ -258,7 +258,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -346,7 +346,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}" data-panel-id="${id}"><header><h3>${esc(title)}</h3>${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
     }
 
-    const ACTION_LABELS = { 'rerun-held': 're-run held reviews', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub' };
+    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again' };
+    const ACTION_CAPS = { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2 };
 
     function proposalsPanel() {
         const P = S.proposals || {};
@@ -355,11 +356,27 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         const items = list.length ? list.map((p, i) => `<li class="jv-prop lv-${esc(p.level)}"><span class="jv-prop-rank">${i + 1}</span><div class="jv-prop-body">
             <p class="jv-prop-title"><strong>${esc(p.title)}</strong> <span class="jv-chip">impact ${esc(p.impact)}/5</span>${p.effort ? ` <span class="jv-chip">${esc(p.effort)}</span>` : ''}${p.source === 'gemini' ? ' <span class="jv-chip c-average">from Gemini</span>' : ''}</p>
             ${p.why ? `<p class="jv-prop-why">${esc(p.why)}</p>` : ''}<ul class="jv-prop-ev">${(p.evidence || []).map((e) => `<li>${esc(e)}</li>`).join('')}</ul>
-            <div class="jv-prop-acts">${p.tab && p.tab !== 'overview' ? `<button type="button" data-go="${esc(p.tab)}">Open ${esc((C.PRODUCTS.find((x) => x.key === p.tab) || {}).name || p.tab)} →</button>` : ''}${p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener">Open ↗</a>` : ''}${p.action ? `<span class="jv-prop-safe" data-action="${esc(p.action)}">Safe action: ${esc(ACTION_LABELS[p.action] || p.action)}</span>` : ''}
+            <div class="jv-prop-acts">${p.tab && p.tab !== 'overview' ? `<button type="button" data-go="${esc(p.tab)}">Open ${esc((C.PRODUCTS.find((x) => x.key === p.tab) || {}).name || p.tab)} →</button>` : ''}${p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener">Open ↗</a>` : ''}${p.action ? `<span class="jv-prop-safe" data-action="${esc(p.action)}">${autoOn() ? 'Jarvis runs this on its own' : 'Safe action'}</span><button type="button" data-run-action="${esc(p.action)}" data-key="${esc(p.key)}">Run now: ${esc(ACTION_LABELS[p.action] || p.action)}</button>` : ''}${(p.jobs || []).map((j) => `<button type="button" data-run-action="run-job" data-job="${esc(j)}" data-key="${esc(p.key)}">Run ${esc(j)} again</button>`).join('')}
             <button type="button" data-proposal="done" data-key="${esc(p.key)}">Done</button><button type="button" data-proposal="dismissed" data-key="${esc(p.key)}">Dismiss</button></div></div></li>`).join('')
             : `<li class="jv-prop lv-good"><span class="jv-prop-rank">✓</span><div class="jv-prop-body"><p>${P.loading || !S.externalAt ? 'Jarvis is reading the sources…' : 'Nothing to propose right now.'}</p></div></li>`;
         return panel('overview-proposals', 'Proposals', `<p class="jv-note">${esc(state)}${P.hidden ? ` · ${P.hidden} hidden as done or dismissed` : ''}${P.loading ? '' : ' <button type="button" class="jv-link" data-act="proposals">Rank again</button>'}</p><ol class="jv-props">${items}</ol>`,
             { wide: true, data: list.map((p, i) => ({ rank: i + 1, title: p.title, impact: p.impact, effort: p.effort || '', evidence: (p.evidence || []).join(' | '), source: p.source, action: p.action || '' })) });
+    }
+
+    const autoOn = () => !S.settings || !S.settings.actions || S.settings.actions.auto !== false;
+
+    function actionsPanel() {
+        const a = S.external.actions;
+        if (!a || !a.ok) return panel('systems-actions', 'Jarvis actions', `<p class="jv-empty">${S.pending.actions ? 'Reading the actions log…' : esc((a && a.error) || 'Not loaded.')}</p>`, { wide: true });
+        const caps = (a.settings && a.settings.caps) || ACTION_CAPS;
+        const usage = Object.keys(ACTION_CAPS).map((k) => `<span class="jv-chip${a.used[k] >= caps[k] ? ' c-average' : ''}">${esc(ACTION_LABELS[k])}: ${fmt(a.used[k] || 0)} of ${fmt(caps[k])} today</span>`).join('');
+        const p = a.pending || {};
+        const waiting = `<ul class="jv-facts"><li>Held re-runs: <b>${fmt(p.held || 0)}</b> (${fmt(p.clean || 0)} clean, Jarvis sends those on its own)</li><li>Failed owner notices: <b>${fmt(p.notices || 0)}</b>${a.noticesLive ? (a.noticeHours ? '' : ' · outside Monday-Saturday 08:00-19:00 Bogotá') : ' · owner notices are off (OWNER_NOTICES_LIVE)'}</li></ul>`;
+        const buttons = `<div class="jv-actions">${['rerun-held', 'resend-notices', 'publish-hub'].map((k) => `<button type="button" class="jv-btn small" data-run-action="${k}">Run now: ${esc(ACTION_LABELS[k])}</button>`).join('')}</div>`;
+        const rows = a.actions || [];
+        const log = table([['When', (r) => esc(when(r.at))], ['Action', (r) => esc(ACTION_LABELS[r.action] || r.action)], ['How', (r) => `<span class="jv-chip">${r.mode === 'auto' ? 'on its own' : 'clicked'}</span>`], ['Result', (r) => `<span class="jv-chip ${r.status === 'done' ? 'c-fast' : r.status === 'failed' ? 'c-slow' : 'c-average'}">${esc(r.status)}</span>`], ['Target', (r) => esc(r.target)], ['Detail', (r) => esc(r.detail)]], rows.slice(0, 30), 'Nothing yet.');
+        return panel('systems-actions', `Jarvis actions${a.settings && a.settings.auto === false ? ' (automatic runs off)' : ''}`, `<p>${usage}</p>${waiting}${buttons}${log}`,
+            { wide: true, data: rows, note: 'Every hour Jarvis runs the safe actions within these caps; anything over a cap or outside the rules waits for Run now. Caps and the switch are in ⚙ Settings.' });
     }
 
     function listPanel(key, id, title, list, opts) {
@@ -665,7 +682,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         const up = e.uptime;
         const sp = e.speed;
         out.systems = `<div class="jv-grid">${briefPanel('systems')}
-            ${connectionsPanel()}${safetyPanel()}${platformPanel()}
+            ${actionsPanel()}${connectionsPanel()}${safetyPanel()}${platformPanel()}
             ${panel('systems-ready', 'Readiness', `<div class="jv-rings">${ring(C.readiness(e), 'ready', null, 120)}</div><p class="jv-note">Share of checks that pass: scheduled jobs, CI on main, uptime and PageSpeed within your limits (⚙ Settings).</p>`)}
             ${panel('systems-uptime', 'Uptime', up && up.ok ? table([['Page', (p) => `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a>`], ['Status', (p) => `<span class="jv-chip ${p.ok ? 'c-fast' : 'c-slow'}">${esc(p.status || 'down')}</span>`], ['Time', (p) => fmt(p.ms) + ' ms'], ['Size', (p) => p.bytes ? Math.round(p.bytes / 1024) + ' KB' : '']], up.pages) + `<p class="jv-note">TLS certificate: ${up.tlsDaysLeft === null ? 'unknown' : esc(up.tlsDaysLeft) + ' days left'}.</p>` : `<p class="jv-empty">${S.pending.uptime ? 'Pinging…' : esc((up && up.error) || 'Not loaded.')}</p>`, { data: up && up.pages })}
             ${panel('systems-speed', 'PageSpeed (mobile) and CrUX', sp && sp.ok ? `<div class="jv-rings">${sp.pages.map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 90)).join('')}</div>${sp.crux && sp.crux.ok && sp.crux.phone ? `<p class="jv-note">CrUX phone LCP p75 over ${sp.crux.phone.weeks || ''} weeks: ${spark(sp.crux.phone.lcp || [], COLORS.amber)}</p>` : ''}` : `<p class="jv-empty">${S.pending.speed ? 'Running PageSpeed on five pages (up to 90 s)…' : esc((sp && sp.error) || 'Not loaded.')}</p>`, { wide: true, data: sp && sp.pages && sp.pages.map((p) => ({ page: p.name, score: p.score, lcp: p.lab && p.lab.lcp, tbt: p.lab && p.lab.tbt, cls: p.lab && p.lab.cls, error: p.error })) })}
@@ -862,6 +879,21 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         if (out.ok) setTimeout(() => loadExternal(['jobs', 'health']), 20000);
     }
 
+    const ACTION_ASK = {
+        'rerun-held': () => { const p = ((S.external.actions || {}).pending) || {}; return `send ${p.held === undefined ? 'every' : p.held} held re-run${p.held === 1 ? '' : 's'} to the askers by email${p.held > p.clean ? ` (${p.held - p.clean} not clean)` : ''}`; },
+        'resend-notices': () => 're-send the failed owner notices (Monday-Saturday 08:00-19:00, inside today\'s notice budget)',
+        'publish-hub': () => 'publish the Social hub (run refreshSocialHubStats)',
+        'run-job': (job) => `run ${job} again`
+    };
+
+    async function runAction(action, job, proposal) {
+        if (!confirmRun(ACTION_ASK[action](job))) return;
+        toast('Running…', 30000);
+        const out = await call('action-run', { action, job, proposal });
+        toast(out.ok ? `${ACTION_LABELS[action]}: ${out.ran ? out.ran + ' started' : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.` : 'Not run: ' + out.error, 6000);
+        loadExternal(['actions', 'health', 'jobs']);
+    }
+
     async function aiBrief() {
         toast('Gemini is reading the numbers…', 6000);
         const out = await call('brief', { snapshot: snapshot() });
@@ -1037,7 +1069,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
 
     function draftSettings() {
         const s = S.settings || {};
-        return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true }, s.mail || {}), searchQueries: (s.searchQueries || []).slice() };
+        return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true, weekly: true }, s.mail || {}), searchQueries: (s.searchQueries || []).slice(),
+            actions: { auto: !(s.actions && s.actions.auto === false), caps: Object.assign({}, ACTION_CAPS, (s.actions || {}).caps) } };
     }
 
     function goalEditor(g, i) {
@@ -1061,6 +1094,10 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
               <label class="jv-check"><input type="checkbox" name="m-watch"${d.mail.watch ? ' checked' : ''}> Watch every hour and mail an alert once a day per issue (pages down, TLS, failed jobs, failed runs)</label>
               <label class="jv-check"><input type="checkbox" name="m-weekly"${d.mail.weekly ? ' checked' : ''}> Weekly strategy on Sunday at 19:00 (Bogotá): four weeks side by side, the proposals and the plan for next week</label>
               <div class="jv-actions"><button type="button" class="jv-btn" data-act="daily-now">Send today's briefing now</button><button type="button" class="jv-btn" data-act="weekly-now">Send the weekly strategy now</button></div></section>
+            <section><h4>Actions</h4>
+              <label class="jv-check"><input type="checkbox" name="a-auto"${d.actions.auto ? ' checked' : ''}> Let Jarvis run the safe actions on its own every hour, within these daily caps</label>
+              <div class="jv-th-grid">${Object.keys(ACTION_CAPS).map((k) => `<label class="jv-field">${esc(ACTION_LABELS[k].replace(/^./, (c) => c.toUpperCase()))} per day<input type="number" name="a-cap-${k}" min="0" max="100" step="1" value="${esc(d.actions.caps[k])}"></label>`).join('')}</div>
+              <p class="jv-note">Held re-runs go out on their own only when clean (a complete report with a score). Owner notices keep Monday-Saturday 08:00-19:00 Bogotá, three tries and the daily notice budget, even when you click.</p></section>
             <section><h4>Goals</h4><div class="jv-goal-list">${d.goals.map(goalEditor).join('') || '<p class="jv-note">No goals yet. Add one: a product, what to count, the period, and the target.</p>'}</div>
               <div class="jv-actions"><button type="button" class="jv-btn" data-goal-add>Add a goal</button></div>
               <p class="jv-note">Goals count every row on the server (tests included) over the current Bogotá day, week (from Monday) or month.</p></section>
@@ -1081,7 +1118,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         const thresholds = {};
         Object.keys(C.THRESHOLDS).forEach((k) => { thresholds[k] = Number(val('t-' + k).value); });
         const searchQueries = String(val('s-queries').value || '').split('\n').map((q) => q.trim()).filter(Boolean).slice(0, 8);
-        return { goals, thresholds, mail: { daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked, weekly: !!val('m-weekly').checked }, searchQueries };
+        return { goals, thresholds, mail: { daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked, weekly: !!val('m-weekly').checked }, searchQueries,
+            actions: { auto: !!val('a-auto').checked, caps: Object.keys(ACTION_CAPS).reduce((m, k) => { m[k] = Number(val('a-cap-' + k).value); return m; }, {}) } };
     }
 
     function openSettings() {
@@ -1143,6 +1181,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint })
         if (t.dataset.menu) { const list = $(`[data-list="${t.dataset.menu}"]`); const open = list.hidden; $$('.jv-menu-list').forEach((l) => { l.hidden = true; }); list.hidden = !open; return; }
         $$('.jv-menu-list').forEach((l) => { l.hidden = true; });
         if (t.dataset.proposal) { markProposal(t.dataset.key, t.dataset.proposal); return; }
+        if (t.dataset.runAction) { runAction(t.dataset.runAction, t.dataset.job, t.dataset.key); return; }
         if (t.dataset.go) { go(t.dataset.go); return; }
         if (t.dataset.mail) { S.mail = t.dataset.mail; compute(); render(); return; }
         if (t.dataset.run) { runJob(t.dataset.run); return; }

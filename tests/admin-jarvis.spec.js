@@ -44,8 +44,10 @@ const EXTERNAL = {
   ga4: { ok: true, groups: [{ group: 'cv', sessions: 40, users: 30, views: 90, engagement: 55, duration: 70, priorSessions: 20, priorUsers: 15 }], countries: [{ label: 'Colombia', value: 25, prior: 10 }], sources: [], daily: [] },
   cloudflare: { ok: false, error: 'The Cloudflare token needs Zone > Analytics > Read.' },
   settings: { ok: true, goals: [{ product: 'cv', metric: 'visits', period: 'week', target: 300 }], thresholds: {}, mail: { daily: true, gemini: true, watch: true, weekly: true }, updatedAt: '2026-10-24T12:00:00Z' },
+  actions: { ok: true, settings: { auto: true, caps: { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2 } }, used: { 'rerun-held': 3, 'resend-notices': 0, 'publish-hub': 2 }, pending: { held: 4, clean: 1, notices: 2 }, noticeHours: false, noticesLive: true,
+    actions: [{ action: 'rerun-held', mode: 'auto', status: 'done', target: 'shop.example', detail: 'Sent to the asker.', at: '2026-10-25T15:05:00Z' }, { action: 'publish-hub', mode: 'auto', status: 'waiting', count: 1, target: '', detail: "Over today's cap of 2.", at: '2026-10-25T16:05:00Z' }, { action: 'run-job', mode: 'click', status: 'done', target: 'sweepReviews', detail: 'Started.', at: '2026-10-25T17:00:00Z' }] },
   proposals: { ok: true, gemini: true, at: '2026-10-25T12:00:00Z', hidden: 1, proposals: [
-    { rank: 1, key: 'job', title: 'Fix the failing job', impact: 5, level: 'alert', effort: 'hours', why: 'The sweep feeds the hub.', evidence: ['Job sweepReviews failed: quota.'], source: 'gemini+rules', action: null, tab: 'systems', link: null },
+    { rank: 1, key: 'job', title: 'Fix the failing job', impact: 5, level: 'alert', effort: 'hours', why: 'The sweep feeds the hub.', evidence: ['Job sweepReviews failed: quota.'], source: 'gemini+rules', action: null, jobs: ['sweepReviews'], tab: 'systems', link: null },
     { rank: 2, key: 'review:held', title: 'Re-run the held reviews', impact: 3, level: 'warn', evidence: ['4 re-runs are held on the desk.'], source: 'gemini+rules', action: 'rerun-held', tab: 'systems', link: null },
     { rank: 3, key: 'ai:price-test', title: 'Test a lower first-review price', impact: 4, level: 'info', evidence: ['3 opens, 1 paid review'], source: 'gemini', action: null, tab: null, link: null }
   ] },
@@ -119,7 +121,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'proposals']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'proposals']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -230,6 +232,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await row.locator('[name="g-target"]').fill('12');
     await box.locator('[name="t-pendingRatings"]').fill('25');
     await box.locator('[name="m-gemini"]').uncheck();
+    await box.locator('[name="a-cap-rerun-held"]').fill('4');
     await box.locator('[name="s-queries"]').fill('qa review\n\nqa review\n  carlos qa  ');
     await box.locator('button[type="submit"]').click();
     await expect(page.locator('.jv-settings')).toBeHidden();
@@ -237,6 +240,7 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(save.body.settings.goals).toEqual([{ product: 'cv', metric: 'visits', period: 'week', target: 300 }, { product: 'review', metric: 'paid', period: 'month', target: 12 }]);
     expect(save.body.settings.thresholds.pendingRatings).toBe(25);
     expect(save.body.settings.mail).toEqual({ daily: true, gemini: false, watch: true, weekly: true });
+    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2 } });
     expect(save.body.settings.searchQueries).toEqual(['qa review', 'qa review', 'carlos qa']);
     await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(1);
 
@@ -263,7 +267,8 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(panel.locator('.jv-prop').first()).toContainText('Fix the failing job');
     await expect(panel.locator('.jv-prop').first()).toContainText('impact 5/5');
     await expect(panel.locator('.jv-prop').first()).toContainText('Job sweepReviews failed: quota.');
-    await expect(panel.locator('.jv-prop').nth(1)).toContainText('Safe action: re-run held reviews');
+    await expect(panel.locator('.jv-prop').nth(1)).toContainText('Jarvis runs this on its own');
+    await expect(panel.locator('.jv-prop').first().locator('[data-run-action="run-job"]')).toHaveText('Run sweepReviews again');
     await expect(panel.locator('.jv-prop').nth(2)).toContainText('from Gemini');
     await expect(panel).toContainText('1 hidden as done or dismissed');
     const ask = calls.find((c) => c.op === 'proposals');
@@ -274,6 +279,31 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect.poll(() => calls.filter((c) => c.op === 'proposal-mark').map((c) => [c.body.key, c.body.status])).toEqual([['review:held', 'done']]);
     await expect(panel.locator('.jv-prop')).toHaveCount(2);
     await expect(panel).toContainText('2 hidden as done or dismissed');
+    expect(errors).toEqual([]);
+  });
+
+  test('Systems logs what Jarvis did, and Run now asks first and goes through action-run', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/systems/30');
+    const panel = page.locator('[data-panel-id="systems-actions"]');
+    await expect(panel).toContainText('send held re-runs: 3 of 10 today');
+    await expect(panel).toContainText('publish the hub: 2 of 2 today');
+    await expect(panel).toContainText('4 (1 clean');
+    await expect(panel).toContainText('outside Monday-Saturday 08:00-19:00');
+    await expect(panel.locator('tbody tr')).toHaveCount(3);
+    await expect(panel.locator('tbody tr').first()).toContainText('on its own');
+    await expect(panel.locator('tbody tr').nth(2)).toContainText('clicked');
+
+    let asked = '';
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.dismiss(); });
+    await panel.locator('[data-run-action="rerun-held"]').click();
+    await expect.poll(() => asked).toContain('send 4 held re-runs to the askers by email (3 not clean)');
+    expect(calls.some((c) => c.op === 'action-run')).toBe(false);
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await panel.locator('[data-run-action="publish-hub"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => c.body.action)).toEqual(['publish-hub']);
     expect(errors).toEqual([]);
   });
 });
