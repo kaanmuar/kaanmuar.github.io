@@ -373,6 +373,10 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 val context = LocalContext.current
                 val allowed = NotificationManagerCompat.from(context).areNotificationsEnabled()
                 if (!allowed) Text("Notifications are off for Jarvis on this phone.", color = J.amber, fontSize = 13.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) { Text("Live status"); Muted("Readiness as a ring in the status bar, what needs you and today's money. Updates silently on each refresh.") }
+                    Switch(s.ongoing, vm::setOngoing)
+                }
                 mapOf(
                     Push.ALERTS to ("Alerts" to "A threshold crossing from the hourly watch, at any hour."),
                     Push.BRIEFING to ("Daily briefing" to "The 07:40 briefing, next to the email."),
