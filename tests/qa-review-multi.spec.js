@@ -108,10 +108,11 @@ test('a saved comparison sets the summary and every report section side by side,
   await expect(box.locator('.multi-cell .fade-line')).toHaveCount(0);
   await expect(box.locator('#multi-locked')).toBeHidden();
 
-  const filters = box.locator('.multi-sec[data-sec="findings"] .multi-cell').nth(0);
+  const filters = box.locator('.multi-sec[data-sec="findings"] .multi-filters');
   await filters.locator('[data-verdict="pass"]').click();
   await expect(filters.locator('[data-verdict="pass"]')).toHaveClass('on');
-  await expect(box.locator('.multi-sec[data-sec="findings"] .multi-cell').nth(1).locator('[data-verdict="open"]')).toHaveClass('on');
+  await expect(filters.locator('[data-verdict="open"]')).not.toHaveClass('on');
+  for (const index of [0, 1, 2]) await expect(box.locator('.multi-sec[data-sec="findings"] .multi-cell').nth(index).locator('.finding[data-verdict="pass"]:visible').first()).toBeVisible();
 
   if (process.env.MULTI_SHOT) {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -301,6 +302,136 @@ test('one toggle per section folds it for every site together, the boxes of a ro
   await expect(box.locator('.multi-sec .fold-toggle[aria-expanded="false"]')).toHaveCount(0);
 });
 
+// Six sites, the first with evidence, fixes and paths that hold no place to break, as axe selectors and long URLs do.
+function sixWithLongEvidence() {
+  const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
+    const base = [own, rival, sample.report][index];
+    return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id, host: 'site' + (index + 4) + '.example' }) };
+  }));
+  const selector = '.elementor-element-d12c70c.elementor-sticky--active.elementor-section--handles-inside.elementor-column-gap-default.elementor-section-boxed'.replace(/-/g, '_');
+  const report = records[0].report;
+  records[0].report = Object.assign({}, report, { host: 'www.hotelestequendama.com.co', insights: Object.assign({}, report.insights, {
+    findings: report.insights.findings.map((item, index) => index % 3 ? item : Object.assign({}, item, {
+      verdict: index % 2 ? 'fail' : 'risk',
+      evidence: 'axe-core found 20 elements on /, for example ' + selector + selector + ' and https://www.hotelestequendama.com.co/es/convenios.html?sectionContent=politica_de_privacidad_y_tratamiento_de_datos_personales_' + 'x'.repeat(120),
+      fix: 'Follow https://dequeuniversity.com/rules/axe/4.14/aria_allowed_attr?application=axeAPI&' + 'y'.repeat(120),
+      pages: ['/es/?sectionContent=politica_de_privacidad_' + 'z'.repeat(150), '/en/']
+    }))
+  }) });
+  return records;
+}
+
+test('one filter bar above the findings filters every column, and each column groups its findings by area in the same order (#1609)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await signIn(page, sixWithLongEvidence(), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const sec = page.locator('#multi-overlay .multi-sec[data-sec="findings"]');
+  const cells = sec.locator('.multi-cell');
+  await expect(cells).toHaveCount(6, { timeout: 20000 });
+  await expect(sec.locator('.multi-filters')).toHaveCount(1);
+  await expect(cells.locator('[data-slot="finding-filters"] button')).toHaveCount(0);
+  const order = ['SEO', 'GEO', 'Analytics', 'Security', 'Accessibility', 'Performance'];
+  const groups = await cells.evaluateAll((list) => list.map((cell) => [...cell.querySelectorAll('[data-group]')].map((group) => group.getAttribute('data-group'))));
+  for (const list of groups) expect(list).toEqual(order);
+  const counted = (verdict) => cells.evaluateAll((list, wanted) => list.map((cell) => [...cell.querySelectorAll('.finding')].filter((item) => item.offsetParent).every((item) => wanted.includes(item.getAttribute('data-verdict')))), verdict);
+  expect(await counted(['fail', 'risk'])).toEqual([true, true, true, true, true, true]);
+
+  await sec.locator('.multi-filters [data-verdict="pass"]').click();
+  await expect(sec.locator('.multi-filters [data-verdict="pass"]')).toHaveClass('on');
+  expect(await counted(['pass'])).toEqual([true, true, true, true, true, true]);
+  for (const index of [0, 1, 2]) expect(await cells.nth(index).locator('.finding[data-verdict="pass"]:visible').count()).toBeGreaterThan(0);
+
+  await sec.locator('.multi-filters [data-area="Security"]').click();
+  const shown = await cells.evaluateAll((list) => list.map((cell) => [...cell.querySelectorAll('[data-group]')].filter((group) => !group.hidden).map((group) => group.getAttribute('data-group'))));
+  for (const list of shown) expect(list).toEqual(['Security']);
+  const tops = await cells.evaluateAll((list) => list.map((cell) => Math.round(cell.querySelector('[data-group="Security"]').getBoundingClientRect().top)));
+  expect(new Set(tops).size).toBe(1);
+
+  await sec.locator('.multi-filters [data-area="All"]').click();
+  await cells.first().locator('[data-group="SEO"] .group-toggle').click();
+  for (const index of [0, 1, 2, 3, 4, 5]) {
+    await expect(cells.nth(index).locator('[data-group="SEO"] .group-toggle')).toHaveAttribute('aria-expanded', 'false');
+    await expect(cells.nth(index).locator('[data-group="SEO"] .finding:visible')).toHaveCount(0);
+  }
+  const groupTops = await cells.evaluateAll((list) => list.map((cell) => Math.round(cell.querySelector('[data-group="GEO"]').getBoundingClientRect().top)));
+  expect(new Set(groupTops).size).toBe(1);
+
+  await page.locator('#multi-overlay .multi-sec[data-sec="health"] .multi-cell').nth(1).locator('.area[data-area="Performance"]').click();
+  await expect(sec.locator('.multi-filters [data-area="Performance"]')).toHaveClass('on');
+  await expect(sec.locator('.multi-filters [data-verdict="all"]')).toHaveClass('on');
+  for (const index of [0, 1, 2]) await expect(cells.nth(index).locator('[data-group]:visible')).toHaveAttribute('data-group', 'Performance');
+});
+
+test('in print each area of the findings opens its first three under the filter, counts the rest, and the PDF prints them open without JavaScript (#1609)', async ({ page }) => {
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
+  const sec = page.locator('#multi-overlay .multi-sec[data-sec="findings"]');
+  await expect(sec.locator('.multi-cell')).toHaveCount(3, { timeout: 20000 });
+  await sec.locator('.multi-filters [data-verdict="all"]').click();
+  const group = sec.locator('.multi-cell').first().locator('[data-group="Security"]');
+  const total = await group.locator('.finding').count();
+  expect(total).toBeGreaterThan(3);
+  await group.locator('.group-toggle').click();
+  await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+  await page.emulateMedia({ media: 'print' });
+  await expect(sec.locator('.multi-filters')).toBeHidden();
+  await expect(sec.locator('.multi-filter-say')).toHaveText('All · Everything');
+  await expect(group.locator('.finding:visible')).toHaveCount(3);
+  await expect(group.locator('.finding:visible').first()).toHaveAttribute('open', '');
+  await expect(group.locator('.finding:visible').first().locator('.muted')).toBeVisible();
+  await expect(group.locator('.print-more')).toHaveText('…and ' + (total - 3) + ' more, in the report on the page.');
+  if (process.env.MULTI_SHOT) {
+    await page.setViewportSize({ width: 1123, height: 794 });
+    await sec.screenshot({ path: process.env.MULTI_SHOT + '/findings-print.png' });
+    await page.pdf({ path: process.env.MULTI_SHOT + '/findings-print.pdf', preferCSSPageSize: true, printBackground: true });
+  }
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+  await expect(sec.locator('.multi-cell').first().locator('details.finding[open]')).toHaveCount(0);
+
+  await page.locator('#multi-overlay').getByRole('button', { name: 'Download PDF' }).click();
+  await expect(page.locator('#multi-status')).toHaveText('The PDF is downloaded.');
+  expect(seen.pdf[0]).not.toContain('class="group-toggle"');
+  expect(seen.pdf[0]).toMatch(/<details class="finding"[^>]* open=""/);
+  const printed = await page.context().newPage();
+  await printed.route(/^https?:/, (route) => route.abort());
+  await printed.emulateMedia({ media: 'print' });
+  await printed.setContent(seen.pdf[0], { waitUntil: 'load', javaScriptEnabled: false });
+  const copy = printed.locator('.multi-sec[data-sec="findings"] .multi-cell').first().locator('[data-group="Security"]');
+  await expect(copy.locator('.finding:visible')).toHaveCount(3);
+  await expect(copy.locator('.finding:visible').first().locator('.muted')).toBeVisible();
+  await expect(printed.locator('.multi-filters')).toHaveCount(0);
+  await printed.close();
+});
+
+test('a column whose evidence holds long selectors and paths keeps its findings in view and never scrolls sideways (#1609)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  if (process.env.MULTI_DARK) await page.addInitScript(() => localStorage.setItem('theme', 'dark'));
+  await signIn(page, sixWithLongEvidence(), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const sec = page.locator('#multi-overlay .multi-sec[data-sec="findings"]');
+  await expect(sec.locator('.multi-cell')).toHaveCount(6, { timeout: 20000 });
+  await page.waitForLoadState('networkidle');
+  await sec.locator('.multi-cell').first().locator('details.finding').evaluateAll((list) => list.forEach((item) => { item.open = true; }));
+  if (process.env.MULTI_SHOT) {
+    for (const width of [1440, 1024]) {
+      await page.setViewportSize({ width, height: 900 });
+      await sec.evaluate((el) => { el.scrollIntoView({ block: 'start' }); let box = el.parentElement; while (box && !(/(auto|scroll)/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight)) box = box.parentElement; if (box) box.scrollTop -= 150; });
+      await page.screenshot({ path: process.env.MULTI_SHOT + '/findings-' + width + (process.env.MULTI_DARK ? '-dark' : '') + '.png' });
+    }
+    await page.setViewportSize({ width: 1440, height: 900 });
+  }
+  const spill = await sec.locator('.multi-cell').evaluateAll((list) => list.map((cell) => {
+    const box = cell.getBoundingClientRect();
+    const wide = [cell, ...cell.querySelectorAll('*')].filter((el) => el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== 'visible').length;
+    const out = [...cell.querySelectorAll('.finding *')].filter((el) => el.offsetParent && el.getBoundingClientRect().right > box.right + 1).length;
+    return { host: cell.getAttribute('data-host'), wide, out };
+  }));
+  for (const row of spill) expect(row, row.host).toEqual({ host: row.host, wide: 0, out: 0 });
+  await sec.locator('.multi-cell').first().locator('.finding').first().scrollIntoViewIfNeeded();
+  const title = sec.locator('.multi-cell').first().locator('.finding strong').first();
+  await expect(title).toBeVisible();
+  await expect(title).toBeInViewport();
+});
+
 test('a cell holding only a placeholder line keeps its own height beside a tall cell (#1477)', async ({ page }) => {
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
   const box = page.locator('#multi-overlay');
@@ -435,7 +566,7 @@ test('the comparison speaks the page language', async ({ page }) => {
   await expect(browser).toContainText('Seguimiento antes y después de elegir');
   await expect(browser).toContainText(/desde una dirección de la UE \(Bélgica\)/);
   await expect(browser).not.toContainText(/Before a choice|Tracking before and after|from an EU address/);
-  const filters = box.locator('.multi-sec[data-sec="findings"] .multi-cell').first().locator('.filters button');
+  const filters = box.locator('.multi-sec[data-sec="findings"] .multi-filters button');
   await expect(filters.first()).toHaveText('Todas');
   await expect(filters.filter({ hasText: 'Fallas y riesgos' })).toHaveCount(1);
   await expect(filters.filter({ hasText: 'Seguridad' })).toHaveCount(1);

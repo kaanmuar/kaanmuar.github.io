@@ -147,7 +147,7 @@
     ["seo", '<div data-slot="seo"></div>'],
     ["graph", '<article class="card" data-slot="site-graph"></article>'],
     ["security", '<article class="card" data-slot="security"></article>'],
-    ["findings", '<div class="filters no-print" data-slot="finding-filters"></div><article class="card" data-slot="findings"></article>'],
+    ["findings", '<article class="card" data-slot="findings"></article>'],
     ["fixkit", '<article class="card" data-slot="fixkit"></article>'],
     ["glance", '<div class="visuals" data-slot="report-visuals"></div>'],
     ["layers", '<article class="card"><div data-slot="layers"></div></article>'],
@@ -212,6 +212,8 @@
     document.body.appendChild(overlay);
     overlay.querySelector("#multi-close").addEventListener("click", close);
     overlay.querySelector("#multi-body").addEventListener("click", fold);
+    overlay.querySelector("#multi-body").addEventListener("click", pickFindings);
+    overlay.querySelector("#multi-body").addEventListener("findingfilter", pickArea);
     overlay.querySelector("#multi-print").addEventListener("click", () => (made && made.paid ? print() : pay()));
     overlay.querySelector("#multi-pdf").addEventListener("click", () => (made && made.paid ? download() : pay()));
     overlay.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); });
@@ -287,6 +289,53 @@
 
   const siteColor = (index) => (window.QAReviewBenchmark && QAReviewBenchmark.color ? QAReviewBenchmark.color(index) : "var(--own)");
 
+  // The findings of every column answer one filter bar, so the columns always show the same kind of check.
+  const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
+  const VERDICTS = ["open", "all", "fail", "risk", "pass", "person"];
+  let filter = { area: "All", verdict: "open" };
+
+  function filterLabel(kind, key) {
+    const rc = window.QAReviewReportCopy;
+    if (kind === "area") return key === "All" ? rc.t("allAreas") : cc ? cc.area(key) : key;
+    if (key === "open" || key === "all") return rc.t(key === "open" ? "fOpen" : "fAll");
+    return cc ? cc.verdict(key) : key;
+  }
+
+  function filtersHtml() {
+    if (!window.QAReviewReportCopy) return "";
+    const chip = (kind, key) => '<button type="button" data-' + kind + '="' + key + '">' + esc(filterLabel(kind, key)) + "</button>";
+    return '<div class="filters multi-filters no-print" role="toolbar" aria-label="' + esc(book.sections.findings || COPY.en.sections.findings) + '" translate="no">' +
+      ["All"].concat(AREAS).map((key) => chip("area", key)).join("") + '<span class="multi-filter-gap" aria-hidden="true"></span>' + VERDICTS.map((key) => chip("verdict", key)).join("") +
+      '</div><p class="meta-line multi-filter-say" translate="no"></p>';
+  }
+
+  function shows(item) {
+    const verdict = item.getAttribute("data-verdict");
+    return filter.verdict === "all" || (filter.verdict === "open" ? verdict === "fail" || verdict === "risk" : verdict === filter.verdict);
+  }
+
+  function applyFilter(sec) {
+    if (!sec) return;
+    sec.querySelectorAll(".multi-filters button").forEach((button) => {
+      const on = button.getAttribute("data-area") === filter.area || button.getAttribute("data-verdict") === filter.verdict;
+      button.classList.toggle("on", on);
+      button.setAttribute("aria-pressed", String(on));
+    });
+    const say = sec.querySelector(".multi-filter-say");
+    if (say) say.textContent = filterLabel("area", filter.area) + " · " + filterLabel("verdict", filter.verdict);
+    sec.querySelectorAll(".finding-group").forEach((group) => {
+      let count = 0;
+      group.querySelectorAll(".finding").forEach((item) => {
+        item.hidden = !shows(item);
+        if (!item.hidden) count += 1;
+      });
+      group.hidden = filter.area !== "All" && group.getAttribute("data-group") !== filter.area;
+      group.classList.toggle("is-none", !count);
+      group.querySelector(".group-count").textContent = count;
+    });
+    capFindings(sec);
+  }
+
   function bodyHtml(data) {
     const n = data.columns.length;
     const rc = window.QAReviewReportCopy;
@@ -298,7 +347,7 @@
     return bench + summaryHtml(data) + '<div class="multi-sheet" style="--cols:' + n + '">' + foldAll + hosts + '<div class="multi-scroll multi-grid">' + SECTIONS.map(([key, cell]) => {
       const title = esc(book.sections[key] || COPY.en.sections[key]);
       return '<section class="multi-sec" data-sec="' + key + '"><h2 translate="no"><button class="fold-toggle" type="button" id="multi-toggle-' + key + '" aria-expanded="true" aria-controls="multi-row-' + key + '"><span>' + title +
-        '</span><span class="fold-icon" aria-hidden="true"></span></button></h2><div class="multi-row fold-panel" id="multi-row-' + key + '" role="region" aria-labelledby="multi-toggle-' + key + '">' +
+        '</span><span class="fold-icon" aria-hidden="true"></span></button></h2>' + (key === "findings" ? filtersHtml() : "") + '<div class="multi-row fold-panel" id="multi-row-' + key + '" role="region" aria-labelledby="multi-toggle-' + key + '">' +
         data.columns.map((col, index) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '" data-host="' + esc(col.host) + '" style="--site:' + siteColor(index) + '">' +
           (col.missing ? '<p class="muted">' + esc(t("missing")) + "</p>" : cell) + "</div>").join("") +
         "</div></section>";
@@ -347,6 +396,21 @@
     });
   }
 
+  // Each area prints its first findings under the filter, opened, so every area of every site gets a share of the page.
+  const PRINT_GROUP_ROWS = 3;
+  function capFindings(sec) {
+    sec.querySelectorAll(".finding-group .print-more").forEach((line) => line.remove());
+    sec.querySelectorAll(".finding-group").forEach((group) => {
+      const shown = [...group.querySelectorAll(".finding")].filter((item) => {
+        item.classList.remove("print-cut");
+        return !item.hidden;
+      });
+      if (shown.length <= PRINT_GROUP_ROWS) return;
+      shown.slice(PRINT_GROUP_ROWS).forEach((item) => item.classList.add("print-cut"));
+      group.insertAdjacentHTML("beforeend", '<p class="print-more">' + esc(t("more", { n: shown.length - PRINT_GROUP_ROWS })) + "</p>");
+    });
+  }
+
   function setFold(sec, open) {
     sec.querySelector(".multi-row").hidden = !open;
     sec.querySelector(".fold-toggle").setAttribute("aria-expanded", String(open));
@@ -374,6 +438,36 @@
       body.querySelectorAll(".multi-sec").forEach((sec) => setFold(sec, open));
     } else return;
     paintFoldAll(body);
+  }
+
+  // An area folds or opens in every column at once, so the areas below it stay in step.
+  function pickFindings(event) {
+    const sec = event.target.closest('.multi-sec[data-sec="findings"]');
+    const chip = event.target.closest(".multi-filters button");
+    const toggle = event.target.closest(".group-toggle");
+    if (!sec || (!chip && !toggle)) return;
+    if (chip) {
+      if (chip.hasAttribute("data-area")) filter.area = chip.getAttribute("data-area");
+      if (chip.hasAttribute("data-verdict")) filter.verdict = chip.getAttribute("data-verdict");
+      applyFilter(sec);
+      return;
+    }
+    const open = toggle.getAttribute("aria-expanded") !== "true";
+    sec.querySelectorAll('.finding-group[data-group="' + toggle.closest(".finding-group").getAttribute("data-group") + '"]').forEach((group) => {
+      group.classList.toggle("is-folded", !open);
+      group.querySelector(".group-toggle").setAttribute("aria-expanded", String(open));
+    });
+  }
+
+  // An area of a column's health card shows that area's findings, every verdict, in every column.
+  function pickArea(event) {
+    const sec = event.target.closest('.multi-sec[data-sec="findings"]');
+    if (!sec) return;
+    filter = Object.assign({}, filter, event.detail);
+    applyFilter(sec);
+    setFold(sec, true);
+    paintFoldAll(event.currentTarget);
+    sec.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   // A site in the title: its logo, with a letter under it that shows when there is no logo or it fails to load,
@@ -415,6 +509,7 @@
     locked.innerHTML = data.paid ? "" : "<p>" + esc(t("locked", { n: data.locked.length })) + "</p><p>" +
       data.locked.map((col) => '<a class="btn btn-ghost" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>").join(" ") + "</p>";
     const body = root.querySelector("#multi-body");
+    filter = { area: "All", verdict: "open" };
     body.innerHTML = bodyHtml(data);
     const grid = body.querySelector(".multi-grid");
     data.columns.forEach((col, index) => {
@@ -428,6 +523,7 @@
     grid.querySelectorAll(".report-cover h2").forEach((heading) => { heading.innerHTML = esc(heading.textContent).replace(/\./g, ".<wbr>"); });
     settle(grid);
     capForPrint(grid);
+    applyFilter(grid.querySelector('.multi-sec[data-sec="findings"]'));
     const bar = body.querySelector(".multi-hosts-bar");
     grid.addEventListener("scroll", () => { bar.scrollLeft = grid.scrollLeft; }, { passive: true });
     say("");
@@ -480,10 +576,21 @@
   }
 
   // The browser's own print command prints an open, paid comparison too; an unpaid one stays out of print.
+  // Print opens the findings it shows and closes them again after.
+  let openedForPrint = [];
   window.addEventListener("beforeprint", () => {
-    if (overlay && overlay.classList.contains("open") && made && made.paid) document.body.classList.add("printing-multi");
+    if (!overlay || !overlay.classList.contains("open") || !made || !made.paid) return;
+    document.body.classList.add("printing-multi");
+    overlay.querySelectorAll("details.finding:not([open])").forEach((item) => {
+      item.open = true;
+      openedForPrint.push(item);
+    });
   });
-  window.addEventListener("afterprint", () => document.body.classList.remove("printing-multi"));
+  window.addEventListener("afterprint", () => {
+    document.body.classList.remove("printing-multi");
+    openedForPrint.forEach((item) => { item.open = false; });
+    openedForPrint = [];
+  });
 
   // The PDF is printed on the server from the comparison as drawn here, with the page's styles inlined.
   function snapshot() {
@@ -492,6 +599,8 @@
     }).join("\n");
     const copy = overlay.querySelector(".multi-modal").cloneNode(true);
     copy.querySelectorAll(".multi-sec > h2 .fold-toggle").forEach((toggle) => toggle.replaceWith(toggle.firstChild));
+    copy.querySelectorAll(".group-toggle").forEach((toggle) => toggle.replaceWith(...toggle.childNodes));
+    copy.querySelectorAll("details.finding").forEach((item) => { item.open = true; });
     copy.querySelectorAll(".multi-row[hidden]").forEach((row) => { row.hidden = false; });
     copy.querySelectorAll(".no-print, script, button").forEach((node) => node.remove());
     copy.querySelectorAll("img").forEach((img) => {
