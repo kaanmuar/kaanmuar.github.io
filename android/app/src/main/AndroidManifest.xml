@@ -136,5 +136,7 @@
         <receiver android:name=".update.UpdateReceiver" android:exported="false">
             <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
         </receiver>
+
+        <receiver android:name=".push.ActionReceiver" android:exported="false" />
     </application>
 </manifest>

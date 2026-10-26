@@ -6,9 +6,9 @@
  */
 const crypto = require("crypto");
 
-const KINDS = ["alerts", "briefing", "money", "reviews", "outreach", "inbox", "desk"];
+const KINDS = ["alerts", "briefing", "money", "reviews", "outreach", "inbox", "desk", "social"];
 const DEAD = new Set(["messaging/registration-token-not-registered", "messaging/invalid-registration-token", "messaging/invalid-argument"]);
-const TTL = { alerts: 6 * 3600 * 1000, briefing: 12 * 3600 * 1000, review: 24 * 3600 * 1000, money: 24 * 3600 * 1000, reviews: 24 * 3600 * 1000, outreach: 12 * 3600 * 1000, inbox: 24 * 3600 * 1000, desk: 12 * 3600 * 1000, update: 24 * 3600 * 1000, test: 3600 * 1000 };
+const TTL = { alerts: 6 * 3600 * 1000, briefing: 12 * 3600 * 1000, review: 24 * 3600 * 1000, money: 24 * 3600 * 1000, reviews: 24 * 3600 * 1000, outreach: 12 * 3600 * 1000, inbox: 24 * 3600 * 1000, desk: 12 * 3600 * 1000, social: 24 * 3600 * 1000, update: 24 * 3600 * 1000, test: 3600 * 1000 };
 
 const devices = (db) => db.collection("jarvis_devices");
 const idOf = (token) => crypto.createHash("sha256").update(String(token)).digest("hex").slice(0, 40);
@@ -51,19 +51,25 @@ function alertMessage(fresh) {
   };
 }
 
-function briefingMessage({ items, aiText, dateLabel }) {
+/** top is the best-ranked proposal; Done and Dismiss on the push mark it (#1670). */
+function briefingMessage({ items, aiText, dateLabel, top }) {
   const alerts = items.filter((r) => r.level === "alert").length;
   const warns = items.filter((r) => r.level === "warn").length;
   const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
   const head = alerts + warns ? plural(alerts, "alert") + ", " + plural(warns, "warning") : "All clear";
   const first = String(aiText || "").split(/\n+/).map((s) => s.trim()).find(Boolean) || (items[0] && items[0].text) || "Nothing to flag.";
+  const lines = items.filter((r) => r.level === "alert" || r.level === "warn").slice(0, 6).map((r) => r.text.slice(0, 120));
+  const key = top && top.key ? String(top.key).slice(0, 140) : "";
+  if (key) lines.unshift(("Do next: " + (top.title || key)).slice(0, 120));
   return {
     kind: "briefing",
     title: "Jarvis briefing, " + dateLabel + ": " + head,
     body: first.slice(0, 220),
-    lines: items.filter((r) => r.level === "alert" || r.level === "warn").slice(0, 6).map((r) => r.text.slice(0, 120)),
+    lines: lines.slice(0, 6),
     tab: "overview",
-    tag: "jarvis-briefing"
+    tag: "jarvis-briefing",
+    ref: key ? "proposal:" + key : "",
+    actions: key ? [{ act: "done", label: "Done" }, { act: "dismissed", label: "Dismiss" }] : []
   };
 }
 
@@ -74,6 +80,7 @@ async function send(messaging, db, tokens, msg) {
   if (msg.url) data.url = msg.url;
   if (msg.ref) data.ref = msg.ref;
   if (msg.quiet) data.quiet = "1";
+  if (msg.actions && msg.actions.length) data.actions = JSON.stringify(msg.actions.slice(0, 3));
   const res = await messaging.sendEachForMulticast({ tokens, data, android: { priority: msg.quiet ? "normal" : "high", ttl: TTL[msg.kind] || TTL.test } });
   const dead = [];
   res.responses.forEach((r, i) => { if (!r.success && r.error && DEAD.has(r.error.code)) dead.push(tokens[i]); });

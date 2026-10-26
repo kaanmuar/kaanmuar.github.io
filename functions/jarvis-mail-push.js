@@ -3,10 +3,24 @@
  * Owner emails as Jarvis pushes (#1669): each owner email that moves to Jarvis also pushes, so the
  * phone hears it first. "inbox" is what people wrote to Carlos, "desk" is the URL review desk, and the
  * backup and ops failures go to "alerts". Each builder returns a jarvis-push message, or null.
- * "ref" names the thing a notification button acts on (#1670).
+ * Notification buttons (#1670): "ref" names the thing a button acts on and "actions" lists the buttons,
+ * at most three because Android shows no more. The jarvis "notify-act" op runs them through ACTS.
  */
 const clip = (value, n) => String(value == null ? "" : value).replace(/\s+/g, " ").trim().slice(0, n);
 const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+
+// What each ref type accepts from a button.
+const ACTS = {
+  message: ["reply"],
+  rating: ["reply"],
+  "owner-reply": ["resend", "stop", "unlist", "done"],
+  "rerun-held": ["send-all", "drop-all"],
+  ops: ["rerun"],
+  proposal: ["done", "dismissed"],
+  notice: ["send", "skip"],
+  social: ["approved", "dismissed"]
+};
+const REPLY = { act: "reply", label: "Reply", input: "Your reply" };
 
 // Run events that need Carlos push loud, each on its own; the rest update one quiet notification per run.
 const PROBLEMS = new Set(["blocked", "failed", "payment-due", "payment-unmatched", "payment-refunded", "payment-disputed", "credit-returned"]);
@@ -28,6 +42,18 @@ function hostOf(url) {
 const rowLines = (rows) => (Array.isArray(rows) ? rows : []).filter((r) => r && r.label && r.value).slice(0, 6).map((r) => clip(r.label + ": " + r.value, 120));
 const httpsOnly = (url) => (/^https:\/\//.test(String(url || "")) ? String(url) : "");
 
+/** A button press: the ref's type and id, and an act that type accepts. Throws on anything else. */
+function parseAct(ref, act) {
+  const raw = String(ref || "");
+  const cut = raw.indexOf(":");
+  const type = cut < 0 ? raw : raw.slice(0, cut);
+  const id = cut < 0 ? "" : raw.slice(cut + 1).slice(0, 200);
+  const a = String(act || "");
+  if (!ACTS[type] || !ACTS[type].includes(a)) throw new Error("That button no longer works.");
+  if (type !== "rerun-held" && !id) throw new Error("That button no longer works.");
+  return { type, id, act: a };
+}
+
 function messageMessage(id, data, topic) {
   const d = data || {};
   const who = clip(d.name, 60) || "Someone";
@@ -38,7 +64,8 @@ function messageMessage(id, data, topic) {
     lines: [clip(d.email, 120), d.fileURL ? "Has an attachment" : ""].filter(Boolean),
     tab: "products:inbox",
     tag: "jarvis-message-" + clip(id, 60),
-    ref: "message:" + clip(id, 60)
+    ref: "message:" + clip(id, 60),
+    actions: d.email ? [REPLY] : []
   };
 }
 
@@ -52,12 +79,23 @@ function ratingMessage(id, data) {
     lines: [clip(d.email, 120)].filter(Boolean),
     tab: "products:inbox",
     tag: "jarvis-rating-" + clip(id, 60),
-    ref: "rating:" + clip(id, 60)
+    ref: "rating:" + clip(id, 60),
+    actions: d.email ? [REPLY] : []
   };
+}
+
+/** The address a reply asked the notice to go to, from ownerReplies.plan's "resend:<email>". */
+function proposedAddress(row) {
+  const p = String((row && row.propose) || "");
+  return p.startsWith("resend:") ? p.slice(7) : "";
 }
 
 function ownerReplyMessage(id, row, summary, decideUrl) {
   const r = row || {};
+  const to = proposedAddress(r);
+  const actions = r.status !== "waiting" ? []
+    : to ? [{ act: "resend", label: "Send to " + clip(to, 28) }, { act: "stop", label: "Stop" }, { act: "done", label: "Done" }]
+    : [{ act: "stop", label: "Stop" }, { act: "unlist", label: "Unlist" }, { act: "done", label: "Done" }];
   return {
     kind: "inbox",
     title: "Owner reply · " + (clip(r.host, 60) || clip(r.from, 60) || "a site owner"),
@@ -66,7 +104,8 @@ function ownerReplyMessage(id, row, summary, decideUrl) {
     tab: "products:outreach",
     tag: "jarvis-owner-reply-" + clip(id, 40),
     url: httpsOnly(decideUrl),
-    ref: "owner-reply:" + clip(id, 40)
+    ref: "owner-reply:" + clip(id, 40),
+    actions
   };
 }
 
@@ -85,7 +124,8 @@ function rerunMessage(done, deskUrl) {
     tab: "products:review",
     tag: "jarvis-reruns",
     url: httpsOnly(deskUrl),
-    ref: "rerun-held"
+    ref: "rerun-held",
+    actions: held ? [{ act: "send-all", label: "Send all" }, { act: "drop-all", label: "Drop all" }] : []
   };
 }
 
@@ -131,9 +171,11 @@ function backupMessage(day, error) {
   };
 }
 
-function opsMessage(problems) {
+/** rerunnable lists the jobs Cloud Scheduler can start now; GitHub workflows get no button. */
+function opsMessage(problems, rerunnable) {
   const list = Array.isArray(problems) ? problems : [];
   if (!list.length) return null;
+  const jobs = list.map((p) => p.job).filter((job) => (rerunnable || []).includes(job));
   return {
     kind: "alerts",
     title: plural(list.length, "scheduled job") + " missed or failed",
@@ -141,8 +183,49 @@ function opsMessage(problems) {
     lines: list.slice(0, 6).map((p) => clip(p.job + ": " + p.why, 120)),
     tab: "systems",
     tag: "jarvis-ops",
-    ref: "ops:" + clip(list.map((p) => p.job).join(","), 200)
+    ref: jobs.length ? "ops:" + clip(jobs.join(","), 200) : "",
+    actions: jobs.length ? [{ act: "rerun", label: jobs.length === 1 ? "Rerun job" : "Rerun " + jobs.length + " jobs" }] : []
   };
 }
 
-module.exports = { PROBLEMS, messageMessage, ratingMessage, ownerReplyMessage, rerunMessage, comparisonMessage, runMessage, backupMessage, opsMessage };
+/** One pending owner notice, from the hourly watch: send it to the address it found, or skip it. */
+function noticeMessage(n) {
+  const domain = clip(n && n.domain, 120);
+  if (!domain) return null;
+  const host = clip(n.host, 80) || domain;
+  return {
+    kind: "outreach",
+    title: "Outreach notice · " + host,
+    body: (n.email ? "To " + clip(n.email, 120) : "No address found yet") + (n.critical ? ". Critical security finding." : "."),
+    lines: [],
+    tab: "products:outreach",
+    tag: "jarvis-notice-" + domain,
+    ref: "notice:" + domain,
+    actions: n.email ? [{ act: "send", label: "Send" }, { act: "skip", label: "Skip" }] : [{ act: "skip", label: "Skip" }]
+  };
+}
+
+/** A social post Jarvis proposes: Post adds it to the hub queue, Skip dismisses it. */
+function socialMessage(p) {
+  const id = clip(p && p.id, 40);
+  if (!id) return null;
+  return {
+    kind: "social",
+    title: "Post this? " + clip(p.title, 100),
+    body: clip([p.source, p.topic].filter(Boolean).join(" · ") + (p.summary ? ". " + p.summary : ""), 220),
+    lines: [],
+    tab: "products:hub",
+    tag: "jarvis-social-" + id,
+    ref: "social:" + id,
+    actions: [{ act: "approved", label: "Post" }, { act: "dismissed", label: "Skip" }]
+  };
+}
+
+/** Social proposals not pushed yet, best first, at most max. A first run only remembers what is there. */
+function socialDue(pending, seen, max) {
+  if (!Array.isArray(seen)) return [];
+  const known = new Set(seen);
+  return (pending || []).filter((p) => p && p.id && !known.has(p.id)).slice(0, max || 3);
+}
+
+module.exports = { ACTS, PROBLEMS, parseAct, proposedAddress, messageMessage, ratingMessage, ownerReplyMessage, rerunMessage, comparisonMessage, runMessage, backupMessage, opsMessage, noticeMessage, socialMessage, socialDue };
