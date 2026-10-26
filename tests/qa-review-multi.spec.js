@@ -1260,7 +1260,7 @@ test('the security headers line up across sites: one coverage row per header in 
     expect(new Set(rows.map((column) => column[i][2])).size, key).toBe(1);
   });
   const checks = await cells.evaluateAll((list) => list.map((cell) => [...cell.querySelectorAll('[data-check]')].map((row) => [row.dataset.check, Math.round(row.getBoundingClientRect().top)])));
-  expect(checks[0].length).toBeGreaterThan(15);
+  expect(checks[0].length).toBeGreaterThan(10);
   for (const column of checks) expect(column.map(([key]) => key)).toEqual(checks[0].map(([key]) => key));
   checks[0].forEach(([key], i) => expect(Math.max(...checks.map((column) => column[i][1])) - Math.min(...checks.map((column) => column[i][1])), key).toBeLessThanOrEqual(1));
 
@@ -1275,6 +1275,18 @@ test('the security headers line up across sites: one coverage row per header in 
   await expect(sampleCell.locator('[data-header="hsts"]')).toHaveText(/✗ Not sent/);
   await expect(sampleCell.locator('[data-header="hsts"]')).toHaveClass(/fail/);
   await expect(sampleCell.locator('.sec-diff')).toHaveText('The start page sends none of these headers, so there is nothing to compare page by page.');
+});
+
+test('the security checks leave out the headers the coverage rows already show, page by page (#1657)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await signIn(page, recordsWithHeaders(), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const cells = page.locator('#multi-overlay .multi-sec[data-sec="security"] .multi-cell');
+  await expect(cells.locator('[data-header]')).toHaveCount(21, { timeout: 20000 });
+  const checks = await cells.evaluateAll((list) => list.map((cell) => [...cell.querySelectorAll('[data-check]')].map((row) => row.dataset.check)));
+  for (const column of checks) {
+    for (const covered of ['hsts', 'content-security-policy', 'frame-protection', 'x-content-type-options', 'referrer-policy', 'permissions-policy']) expect(column).not.toContain(covered);
+    expect(column).toEqual(expect.arrayContaining(['https-redirect', 'cross-origin-opener-policy', 'tls-certificate', 'security-txt', 'spf', 'dmarc', 'caa']));
+  }
 });
 
 test('a site with many pages lists only the first pages that differ, with a line counting the rest, on the page, in print and in the PDF (#1607)', async ({ page }) => {

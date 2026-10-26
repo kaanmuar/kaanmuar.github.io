@@ -2203,6 +2203,8 @@
   // The checks in the order the review writes them, so a check one site lacks keeps its row in that column.
   const CHECK_ORDER = ["HTTPS redirect", "HSTS", "Content-Security-Policy", "Frame protection", "X-Content-Type-Options", "Referrer-Policy", "Permissions-Policy", "Cross-Origin-Opener-Policy",
     "TLS certificate", "security.txt", "SPF", "DMARC", "CAA", "Safe Browsing", "Domain expiry", "MTA-STS", "TLS-RPT", "Front-end libraries", "Privacy notice", "Imprint", "Accessibility statement"];
+  // The header checks the coverage rows at the top of a comparison column already show, page by page.
+  const COVERED_CHECKS = ["HSTS", "Content-Security-Policy", "Frame protection", "X-Content-Type-Options", "Referrer-Policy", "Permissions-Policy"];
   const CHECK_MARK = { pass: "✓", risk: "!", fail: "✗", unknown: "–" };
   const DIFF_SHOWN = 6;
 
@@ -2233,7 +2235,7 @@
       : '<div class="sec-diff"><h4>' + esc(rc.t("diffTitle")) + "</h4><ol>" + differ.slice(0, DIFF_SHOWN).map(item).join("") + "</ol>" +
         (differ.length > DIFF_SHOWN ? '<details class="sec-more"><summary>' + esc(rc.t("covMore", { n: differ.length - DIFF_SHOWN })) + "</summary><ol>" + differ.slice(DIFF_SHOWN).map(item).join("") + "</ol></details>" : "") + "</div>";
     const tiles = new Map((sec.headers || []).map((tile) => [tile.label, tile]));
-    const checks = CHECK_ORDER.concat([...tiles.keys()].filter((label) => !CHECK_ORDER.includes(label))).map((label) => {
+    const checks = CHECK_ORDER.concat([...tiles.keys()].filter((label) => !CHECK_ORDER.includes(label))).filter((label) => !COVERED_CHECKS.includes(label)).map((label) => {
       const tile = tiles.get(label) || { state: "unknown" };
       const word = tile.person ? VERDICT_LABEL.person : rc.word("secState", tile.state);
       return '<li class="' + esc(tile.state) + '" data-check="' + esc(label.toLowerCase().replace(/[^a-z0-9]+/g, "-")) + '"><span class="notranslate" translate="no" title="' + esc(label) + '">' + esc(label) +
