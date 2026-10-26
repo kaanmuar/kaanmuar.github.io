@@ -25,6 +25,23 @@ test.describe('Review page language', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
   });
 
+  test('the header, the empty news strip and the competitor note read in Spanish on the Spanish page (#1409, #1410)', async ({ page }) => {
+    await prime(page, 'es');
+    await page.goto('/qa-review-es.html');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+    const top = page.locator('header.topbar');
+    for (const name of ['Laboratorio de regresión', 'Tus revisiones', 'Cómo funciona esta revisión']) {
+      await expect(top.getByText(name, { exact: true })).toHaveAttribute('translate', 'no');
+    }
+    await expect(page.locator('#langToggle')).toHaveAttribute('aria-label', 'Idioma');
+    await expect(page.locator('#theme-toggle')).toHaveAttribute('aria-label', 'Cambiar el modo oscuro');
+    const waiting = page.locator('.wire-item').first();
+    await expect(waiting).toContainText('La cinta de noticias espera titulares.');
+    await expect(waiting).toHaveAttribute('lang', 'es');
+    await expect(waiting).toHaveAttribute('href', 'qa-review-es.html');
+    await expect(page.locator('#compare-note')).toContainText('se revisan hasta tres a la vez');
+  });
+
   test('an English choice stays on the English page', async ({ page }) => {
     await prime(page, 'en');
     await page.goto('/qa-review.html');

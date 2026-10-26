@@ -16,7 +16,7 @@ import pathlib
 import re
 import sys
 
-from review_langs_copy import AND, COMPARE_NOTE, COPY, DATE, FACTS, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE, SKIP
+from review_langs_copy import AND, COMPARE_NOTE, COPY, DATE, FACTS, HEADER, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE, SKIP
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BASE = "https://carlosandmunoz.com/"
@@ -129,6 +129,18 @@ def retag(s, start, end, body, code):
     j = s.index(end, i + len(start))
     head = re.sub(r"^<(\w+)([^>]*)>", lambda m: f'<{m.group(1)}{m.group(2)} lang="{code}" translate="no">', start, count=1)
     return s[:i] + head + body + s[j:]
+
+
+def header(s, code):
+    """The header buttons and the toggle names, hand-written so the page reads in one language before any translator runs."""
+    h = HEADER[code]
+    mark = f' lang="{code}" translate="no"'
+    s = swap(s, '<a class="btn btn-ghost" href="qa-lab.html">Regression lab</a>', f'<a class="btn btn-ghost" href="qa-lab.html"{mark}>{h["lab"]}</a>')
+    s = swap(s, '<a class="btn btn-ghost" href="qa-review-account.html">Your reviews</a>', f'<a class="btn btn-ghost" href="qa-review-account.html"{mark}>{h["reviews"]}</a>', 2)
+    s = swap(s, '<button class="btn btn-ghost" id="tour-start-btn" type="button">How this review works</button>', f'<button class="btn btn-ghost" id="tour-start-btn" type="button"{mark}>{h["tour"]}</button>')
+    s = swap(s, '<button class="btn btn-ghost" id="share-open" type="button" disabled>Report</button>', f'<button class="btn btn-ghost" id="share-open" type="button" disabled{mark}>{h["report"]}</button>')
+    s = swap(s, 'type="button" aria-label="Language">', f'type="button" aria-label="{h["language"]}">', 2)
+    return swap(s, '<button id="theme-toggle" type="button" aria-label="Toggle dark mode">', f'<button id="theme-toggle" type="button" aria-label="{h["theme"]}">')
 
 
 def gate(s, code):
@@ -273,6 +285,7 @@ def build(source, code, data):
         f"                <span>{d[3]}</span>",
     )
     s = structured(s, code)
+    s = header(s, code)
     s = gate(s, code)
     s = facts(s, code)
     s = ask_panel(s, code)

@@ -4020,13 +4020,13 @@
   let wireAt = 0;
   function wireMarkup(items, clipStart) {
     return items.map((item, index) =>
-      '<a class="wire-item" href="' + esc(item.href) + '" target="_blank" rel="noopener noreferrer"><video class="wire-art" muted loop playsinline autoplay preload="auto" src="' + esc(WIRE_CLIPS[(clipStart + index) % WIRE_CLIPS.length]) + '"></video><span><strong>' + esc(item.title) + "</strong><small>" + esc(item.meta) + "</small></span></a>"
+      '<a class="wire-item" href="' + esc(item.href) + '"' + (item.lang ? ' lang="' + item.lang + '" translate="no"' : "") + ' target="_blank" rel="noopener noreferrer"><video class="wire-art" muted loop playsinline autoplay preload="auto" src="' + esc(WIRE_CLIPS[(clipStart + index) % WIRE_CLIPS.length]) + '"></video><span><strong>' + esc(item.title) + "</strong><small>" + esc(item.meta) + "</small></span></a>"
     ).join("");
   }
   let wireKey = "";
   function paintWireRows() {
     const rows = wire.querySelectorAll(".wire-row");
-    const waiting = [{ href: "qa-review.html", title: "The wire is waiting for headlines.", meta: "This pass did not retrieve a headline." }];
+    const waiting = [{ href: location.pathname.split("/").pop() || "qa-review.html", title: rc.t("wireWaiting"), meta: rc.t("wireNone"), lang: rc.english ? "" : rc.lang }];
     const source = wireItems.length ? wireItems : waiting;
     const key = source.map((item) => item.href + "|" + item.title).join("\n") + "@" + wire.clientWidth;
     if (key === wireKey) return;

@@ -121,7 +121,7 @@ test.describe('The competitor comparison is drawn as charts', () => {
       await card.evaluate((node) => node.scrollIntoView({ block: 'start' }));
       await page.screenshot({ path: process.env.COMPARE_SHOT + '-es.png' });
     }
-    await expect(page.locator('#compare-note')).toHaveText(/^Cada competidor cuesta 9 USD, y se revisan uno tras otro\. Ves el total antes de pagar\./);
+    await expect(page.locator('#compare-note')).toHaveText(/^Cada competidor cuesta 9 USD, y se revisan hasta tres a la vez, cada uno con su propia fila de progreso\. Ves el total antes de pagar\./);
   });
 
   test('a comparison saved before the charts still shows its scores, leads and lists', async ({ page }) => {
