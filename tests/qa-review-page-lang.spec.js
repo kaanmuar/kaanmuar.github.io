@@ -202,33 +202,6 @@ test.describe('Review page language', () => {
     await expect(card).not.toContainText('Retest on');
   });
 
-  test('the report charts and Practices worth implementing read in the page language, axe titles included (#1588)', async ({ page }) => {
-    await prime(page, 'es');
-    const sample = require('../assets/qa-review-sample.json');
-    const axe = {
-      key: 'ax-button-name', area: 'Accessibility', verdict: 'fail', severity: 'medium', rank: 1, effort: 'minutes',
-      title: 'Buttons must have discernible text', evidence: 'axe-core 4.14.0 found 1 element on /.', fix: 'Give each icon button visible text or an aria-label.',
-      msg: { fix: { id: 'ax-fix.button-name', vars: {} } }
-    };
-    const insights = Object.assign({}, sample.report.insights, { findings: [axe].concat(sample.report.insights.findings) });
-    const report = Object.assign({}, sample.report, { id: 'ax12cd34ef56', insights });
-    await page.route('http://127.0.0.1:8768/**', (route) => {
-      const req = route.request();
-      const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
-      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
-      const path = new URL(req.url()).pathname;
-      const body = path === '/review/open' ? { report, frameworks: sample.frameworks, paid: true } : path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] };
-      return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(body) });
-    });
-    await page.goto('/qa-review-es.html?report=ax12cd34ef56');
-    const visuals = page.locator('#report-visuals');
-    await expect(visuals).toContainText('Prácticas que vale la pena implementar');
-    await expect(visuals).toContainText('Señales públicas en la primera respuesta');
-    await expect(visuals).toContainText('Los botones deben tener un texto reconocible');
-    await expect(visuals).not.toContainText('Practices worth implementing');
-    await expect(visuals).not.toContainText('Buttons must have discernible text');
-  });
-
   test('the charts and practices read in the page language, axe titles of saved reports included (#1588)', async ({ page }) => {
     await prime(page, 'es');
     const sample = require('../assets/qa-review-sample.json');
