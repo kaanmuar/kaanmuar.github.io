@@ -45,7 +45,7 @@ jobs:
         run: |
           echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/jarvis.jks"
           JARVIS_KEYSTORE="$RUNNER_TEMP/jarvis.jks" ./gradlew --console=plain assembleRelease
-          for w in Status Numbers Goals Needs Alerts; do
+          for w in Status Numbers Goals Needs Alerts Ask; do
             c="com.carlosandmunoz.jarvis.home.${w}Widget"
             grep -qx "$c -> $c:" app/build/outputs/mapping/release/mapping.txt || { echo "::error::R8 renamed or merged $c; each widget would draw another's content"; exit 1; }
           done
