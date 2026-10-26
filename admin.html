@@ -340,8 +340,8 @@
     <style data-critical="css/site-look.css?v=20261104a">html[data-look] body{background-color:var(--bg, var(--bg-primary));background-image:var(--look-gradient);background-attachment:fixed;color:var(--text, var(--text-secondary))}html[data-look] .login-box,html[data-look] .filter-container,html[data-look] .response-modal-box{background:var(--look-card);border-color:var(--look-edge);border-radius:var(--look-radius);backdrop-filter:blur(var(--look-blur)) saturate(1.35);-webkit-backdrop-filter:blur(var(--look-blur)) saturate(1.35)}html[data-look] .tab-bar,html[data-look] .admin-bar{background:color-mix(in srgb, var(--bg-secondary) 42%, transparent);border-color:var(--look-edge);backdrop-filter:blur(var(--look-blur)) saturate(1.5);-webkit-backdrop-filter:blur(var(--look-blur)) saturate(1.5)}html[data-look] .admin-bar,html[data-look] .admin-bar h1,html[data-look] #logout-btn{color:var(--text-primary)}html[data-look] #logout-btn{border-color:color-mix(in srgb, var(--text-primary) 30%, transparent)}html[data-look] .admin-bar a{color:var(--accent-ink)!important}html[data-look] .tab-btn.active,html[data-look] .bg-cyan-600,html[data-look] #dashboard .bg-cyan-600,html[data-look] .login-box .bg-cyan-600,html[data-look] #cv-pane .bg-cyan-600{background-color:var(--accent)!important;color:var(--on-accent)!important}html[data-look] .text-cyan-600,html[data-look] .text-cyan-700,html[data-look] .text-cyan-800,html[data-look] .login-box .text-cyan-700,html[data-look] #dashboard .text-cyan-800{color:var(--accent)!important}html[data-look] .cv-btn,html[data-look] #style-keep{border-color:var(--accent);color:var(--accent-ink)}html[data-look] #style-keep{background:var(--accent);color:var(--on-accent)}#styles-pane h2,#styles-pane h3{font-family:"Source Serif 4", Georgia, serif}.style-actions,.style-color-row{display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center}.style-actions{margin:0.75rem 0 1rem}#style-undo:disabled,#style-preview:disabled,#style-keep:disabled{opacity:0.45;cursor:not-allowed}#style-status{margin:0 0 1rem;font-weight:600}.style-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));gap:0.75rem}.style-swatches{display:flex;flex-wrap:wrap;gap:0.45rem;margin:0.4rem 0 0.8rem}.style-color-row input[type="color"]{width:2.6rem;height:2rem;padding:0;border:0;background:transparent;cursor:pointer}.style-minis{display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:0.7rem;margin-top:0.8rem}.style-mini{min-height:108px;padding:0.55rem;border:1px solid rgba(18, 24, 31, 0.08);display:flex;flex-direction:column;gap:0.35rem}.style-mini-bar{height:10px;border-radius:999px}.style-mini-chip,.style-mini-btn{border-radius:999px;padding:0.2rem 0.45rem;font-size:0.72rem;font-weight:700}.style-mini strong{font-size:0.8rem}@media (max-width: 720px){.style-minis{grid-template-columns:1fr 1fr}}</style>
     <link rel="preload" href="css/site-look.css?v=20261104a" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="css/site-look.css?v=20261104a"></noscript>
-    <link rel="preload" href="css/admin-jarvis.css?v=df682b797c" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="css/admin-jarvis.css?v=df682b797c"></noscript>
+    <link rel="preload" href="css/admin-jarvis.css?v=3d890f25dd" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/admin-jarvis.css?v=3d890f25dd"></noscript>
     <script src="js/site-look.js"></script>
     <script>SiteLook.boot();</script>
 </head>
@@ -632,7 +632,7 @@
     </script>
     <script src="js/cv-data.js?v=20261104a"></script>
     <script src="js/social-hub-admin.js?v=20261024c"></script>
-    <script src="js/admin-jarvis-core.js?v=df682b797c"></script>
+    <script src="js/admin-jarvis-core.js?v=3d890f25dd"></script>
     <script type="module">
     // Firebase Imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -642,7 +642,7 @@
     import { createCvEditor } from "./js/cv-editor.js?v=20260928c";
     import { createHubEditor } from "./js/social-hub-editor.js?v=20261024c";
     import { createHubNumbers } from "./js/social-hub-numbers.js?v=20261024a";
-    import { mountJarvis } from "./js/admin-jarvis.js?v=df682b797c";
+    import { mountJarvis } from "./js/admin-jarvis.js?v=3d890f25dd";
 
     // Firebase Config
     const firebaseConfig = { apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w", authDomain: "carlosm-interactive-cv.firebaseapp.com", projectId: "carlosm-interactive-cv", storageBucket: "carlosm-interactive-cv.firebasestorage.app", messagingSenderId: "976558418058", appId: "1:976558418058:web:1dc19bcd40915ea233e573" };

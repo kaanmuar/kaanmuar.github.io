@@ -69,10 +69,25 @@ function noticesMessage(fresh, pendingTotal) {
     title: plural(pendingTotal, "outreach notice") + " waiting for you",
     body: (fresh.length === pendingTotal ? "" : fresh.length + " new: ") + hosts.slice(0, 4).join(", ") + (hosts.length > 4 ? " and " + (hosts.length - 4) + " more" : "") +
       (critical ? ". " + plural(critical, "critical security finding") : "") + ". Send or drop each one.",
-    lines: fresh.slice(0, 6).map((n) => (n.host || n.domain) + " → " + (n.email || "?") + (n.critical ? " · critical" : "")),
-    tab: "products:outreach",
+    lines: fresh.slice(0, 6).map((n) => (n.host || n.domain) + " → " + (n.email || "?") + (n.critical ? " · critical" : "")),    tab: "products:outreach",
     tag: "jarvis-outreach"
   };
 }
 
-module.exports = { PAID, NOTICES_EVERY_MS, paymentMessage, isCustomer, reviewMessage, noticesDue, noticesMessage };
+/** What the approvals list shows for each pending notice, newest first; reportOf builds the review link. */
+function noticeRows(rows, reportOf) {
+  return rows.filter((n) => n && n.status === "pending").map((n) => ({
+    domain: n.domain,
+    host: n.host || n.domain,
+    email: n.email || "",
+    candidates: (Array.isArray(n.candidates) ? n.candidates : []).slice(0, 8).map((c) => ({ email: c.email, sources: (c.sources || []).slice(0, 3), url: c.url || "", onDomain: !!c.onDomain })),
+    critical: !!n.critical,
+    lang: n.lang || "en",
+    createdAt: n.createdAt || "",
+    reviewedAt: n.reviewedAt || "",
+    lastError: n.lastError || "",
+    report: n.reviewId && reportOf ? reportOf(n) : ""
+  })).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+}
+
+module.exports = { PAID, NOTICES_EVERY_MS, paymentMessage, isCustomer, reviewMessage, noticesDue, noticesMessage, noticeRows };
