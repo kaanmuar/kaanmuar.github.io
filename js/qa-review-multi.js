@@ -512,18 +512,19 @@
     try {
       const response = await post("/account/comparison/pdf", { id: made.id, html: snapshot() });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.pdf) {
+      const stored = /^https:\/\/firebasestorage\.googleapis\.com\//.test(data.url || "");
+      if (!response.ok || (!data.pdf && !stored)) {
         say(QAReviewReportCopy.error(data, t("pdfFailed")), true);
         return;
       }
-      const bytes = Uint8Array.from(atob(data.pdf), (ch) => ch.charCodeAt(0));
+      // A large PDF comes as a link to the stored file, which is sent as an attachment under its own name.
       const link = document.createElement("a");
-      link.href = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+      link.href = stored ? data.url : URL.createObjectURL(new Blob([Uint8Array.from(atob(data.pdf), (ch) => ch.charCodeAt(0))], { type: "application/pdf" }));
       link.download = data.filename || "qa-review-comparison.pdf";
       document.body.appendChild(link);
       link.click();
       link.remove();
-      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      if (!stored) setTimeout(() => URL.revokeObjectURL(link.href), 1000);
       say(t("pdfDone"));
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_multi_pdf", "URL Review", "pdf");
     } catch (error) {
