@@ -995,11 +995,18 @@ test("social: each channel shows what is next, what went out last and what faile
     "b/one": [{ channel: "linkedin", at: "2026-10-26T15:00:00Z", result: "queued" }, { channel: "x", at: "2026-10-24T15:00:00Z", result: "sent", url: "https://x.com/1" }],
     "b/two": [{ channel: "linkedin", at: "2026-10-25T18:00:00Z", result: "queued" }, { channel: "x", at: "2026-10-23T15:00:00Z", result: "failed" }, { channel: "nope", at: "2026-10-26T15:00:00Z" }]
   } };
-  const rows = social.byChannel([buffer, null], now, now - 7 * 86400000);
-  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "instagram", "instagram-story", "facebook", "youtube", "tiktok"]);
+  const open = { posts: { "b/one": [{ channel: "bluesky", at: "2026-10-24T15:01:00Z", result: "sent", url: "https://bsky.app/profile/q/post/1" }, { channel: "mastodon", at: "2026-10-24T15:02:00Z", result: "failed" }] } };
+  const rows = social.byChannel([buffer, null, open], now, now - 7 * 86400000);
+  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "bluesky", "mastodon", "instagram", "instagram-story", "facebook", "youtube", "tiktok"]);
   assert.deepEqual(rows[0].next.map((n) => n.post), ["b/two", "b/one"]);
   assert.equal(rows[0].scheduled, 2);
   assert.deepEqual([rows[1].sent, rows[1].failed, rows[1].last.url], [1, 1, "https://x.com/1"]);
+  assert.deepEqual([rows[2].sent, rows[2].last.url, rows[3].failed], [1, "https://bsky.app/profile/q/post/1", 1]);
+});
+
+test("social: Jarvis can start the Bluesky and Mastodon poster with the Buffer and Page ones", () => {
+  assert.deepEqual(social.WORKFLOWS.map((w) => w.file), ["buffer-batch.yml", "facebook-page.yml", "open-social.yml"]);
+  social.WORKFLOWS.forEach((w) => assert.ok(fs.existsSync(path.join(__dirname, "../../.github/workflows", w.file)), w.file));
 });
 
 test("social: approving a proposal adds the hub item and the decision; dismissing only records it", () => {

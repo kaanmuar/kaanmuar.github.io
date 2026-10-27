@@ -379,7 +379,7 @@ async function social(ctx) {
     daily: Object.keys(daily).sort().map((date) => ({ date, posts: daily[date] })),
     latest: latest.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 15),
     scheduled,
-    queue: jarvisSocial.byChannel([buffer, facebook], ctx.now, since),
+    queue: jarvisSocial.byChannel([buffer, facebook, open], ctx.now, since),
     youtube: { videos: videos.sort((a, b) => (b.views || 0) - (a.views || 0) || Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 10), views },
     needs
   };

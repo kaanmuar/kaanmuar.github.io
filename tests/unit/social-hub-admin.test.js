@@ -81,7 +81,7 @@ test("channel status without a ledger entry: the calendar slot is only Scheduled
   const now = Date.parse("2026-10-25T18:00:00-05:00");
   const slots = { linkedin: "2026-10-25T07:30:00-05:00", facebook: "2026-10-26T17:10:00-05:00", youtube: "2026-10-25T17:45:00-05:00" };
   const byNet = (list) => Object.fromEntries(list.map((c) => [c.net, c.state]));
-  assert.deepEqual(byNet(admin.channels(slots, null, now)), { linkedin: "scheduled", x: "none", instagram: "none", "instagram-story": "none", facebook: "scheduled", youtube: "missing", tiktok: "none" });
+  assert.deepEqual(byNet(admin.channels(slots, null, now)), { linkedin: "scheduled", x: "none", bluesky: "none", mastodon: "none", instagram: "none", "instagram-story": "none", facebook: "scheduled", youtube: "missing", tiktok: "none" });
   assert.equal(byNet(admin.channels(slots, "5b4Hr6r-cBk", now)).youtube, "live");
   const facebook = admin.channels(slots, null, now).find((c) => c.net === "facebook");
   assert.equal(facebook.via, "Facebook Page");
@@ -111,15 +111,30 @@ test("channel status from the Buffer and Page ledgers: failed if any profile fai
   assert.deepEqual(admin.ledgerEntries(ledgers, "auto-2026-10-24/02-b"), []);
   const list = admin.channels(slots, null, now, entries);
   const byNet = Object.fromEntries(list.map((c) => [c.net, c]));
-  assert.deepEqual(list.map((c) => c.state), ["sent", "queued", "failed", "none", "queued", "failed", "none"]);
+  assert.deepEqual(list.map((c) => c.state), ["sent", "queued", "scheduled", "scheduled", "failed", "none", "queued", "failed", "none"]);
   assert.equal(admin.statusLabel(byNet.linkedin), "Sent Oct 25");
   assert.equal(admin.statusLabel(byNet.x), "Queued Oct 25, 09:00");
   assert.equal(admin.statusLabel(byNet.instagram), "Failed Oct 25");
   assert.equal(byNet.instagram.error, "Image ratio not supported");
   assert.equal(byNet.linkedin.error, undefined);
   assert.equal(admin.statusLabel(byNet.facebook), "Queued Oct 26, 17:10");
-  assert.equal(admin.channels(slots, "5b4Hr6r-cBk", now, entries)[5].state, "live");
+  assert.equal(admin.channels(slots, "5b4Hr6r-cBk", now, entries)[7].state, "live");
   assert.equal(admin.statusLabel({ state: "failed", at: "" }), "Failed");
+});
+
+test("Bluesky and Mastodon take the x slot and their own ledger, and a slot the poster missed by 12 hours is not planned", () => {
+  const now = Date.parse("2026-10-26T22:00:00-05:00");
+  const open = { version: 1, posts: { "auto-2026-10-25/01-a": [
+    { channel: "bluesky", profile: "qalaburlreview.bsky.social", id: "at://x", at: "2026-10-27T03:07:53.765Z", result: "sent" },
+    { channel: "mastodon", profile: "qalaburlreview@mastodon.social", at: "2026-10-27T03:07:58.922Z", result: "failed", error: "422 Unprocessable" }
+  ] } };
+  const byNet = (list) => Object.fromEntries(list.map((c) => [c.net, c]));
+  const posted = byNet(admin.channels({ x: "2026-10-26T21:05:00-05:00" }, null, now, admin.ledgerEntries([null, null, open], "auto-2026-10-25/01-a")));
+  assert.deepEqual([posted.bluesky.state, posted.bluesky.via, posted.mastodon.state, posted.mastodon.error], ["sent", "Bluesky API", "failed", "422 Unprocessable"]);
+  const next = byNet(admin.channels({ x: "2026-10-27T21:05:00-05:00" }, null, now, []));
+  assert.equal(admin.statusLabel(next.bluesky), "Scheduled Oct 27, 21:05");
+  const missed = byNet(admin.channels({ x: "2026-10-26T09:00:00-05:00" }, null, now, []));
+  assert.deepEqual([missed.x.state, missed.bluesky.state, missed.mastodon.state], ["scheduled", "none", "none"]);
 });
 
 test("a pick with a remote image renders on the hub with its own thumbnail, link and kind label", () => {
