@@ -54,8 +54,16 @@ for (const must of ["index.html", "404.html", "CNAME", ".nojekyll", "robots.txt"
 function target(ref, from) {
   ref = ref.trim().replace(/&amp;/g, "&");
   if (!ref || ref.startsWith("#") || /[{}$<>`'+]/.test(ref)) return null;
-  if (ref.startsWith(ORIGIN)) ref = ref.slice(ORIGIN.length) || "/";
-  else if (/^[a-z][a-z0-9+.-]*:|^\/\//i.test(ref)) return null;
+  if (/^[a-z][a-z0-9+.-]*:|^\/\//i.test(ref)) {
+    let url;
+    try {
+      url = new URL(ref, ORIGIN);
+    } catch {
+      return null;
+    }
+    if (url.origin !== ORIGIN) return null;
+    ref = url.pathname;
+  }
   ref = ref.split("#")[0].split("?")[0];
   if (!ref) return null;
   let rel;
@@ -84,7 +92,7 @@ const LOC = /<(?:loc|image:loc|video:content_loc|video:thumbnail_loc)>([^<]+)</g
 function refsOf(file, text) {
   const refs = [];
   if (file.endsWith(".html")) {
-    const html = text.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, (tag) => tag.slice(0, tag.indexOf(">") + 1));
+    const html = text.replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, (tag) => tag.slice(0, tag.indexOf(">") + 1));
     for (const m of html.matchAll(ATTR)) refs.push(m[1]);
     for (const m of html.matchAll(SRCSET)) refs.push(...m[1].split(",").map((part) => part.trim().split(/\s+/)[0]));
     for (const m of html.matchAll(META)) {
