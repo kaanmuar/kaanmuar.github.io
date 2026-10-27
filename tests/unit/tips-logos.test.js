@@ -14,7 +14,7 @@ test("a tip shows the most specific mark it names, never Google twice", () => {
 
 test("every network on the end card has its mark in designs/brand-logos", () => {
   const nets = networks();
-  assert.deepStrictEqual(nets.map((n) => n.slug), ["youtube", "tiktok", "instagram", "linkedin", "x", "facebook", "bluesky", "mastodon"]);
+  assert.deepStrictEqual(nets.map((n) => n.slug), ["youtube", "tiktok", "instagram", "threads", "linkedin", "x", "facebook", "bluesky", "mastodon"]);
   nets.forEach((n) => assert.ok(fs.existsSync(path.join(__dirname, "../../designs/brand-logos", n.slug + ".svg")), n.slug));
 });
 

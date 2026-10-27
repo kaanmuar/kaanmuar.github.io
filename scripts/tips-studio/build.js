@@ -249,11 +249,12 @@ async function extrasFor(tip, browser) {
   const x = { nets: brands.networks(), handle: brands.HANDLE };
   if (v.type === "matrix") {
     x.logos = {};
-    for (const row of v.rows) x.logos[row[0]] = await assets.siteLogo(row[0]);
+    for (const row of v.rows) x.logos[row[0]] = await assets.siteKind(row[0]) ? "" : await assets.siteLogo(row[0]);
   } else if (/^[\w.-]+\.[a-z]{2,}$/i.test(host)) {
     x.host = assets.bare(host);
-    x.logo = await assets.siteLogo(host);
-    const shot = browser ? await assets.siteShot(browser, host) : "";
+    x.sensitive = await assets.siteKind(host);
+    x.logo = x.sensitive ? "" : await assets.siteLogo(host);
+    const shot = browser && !x.sensitive ? await assets.siteShot(browser, host) : "";
     if (shot) x.shot = "file://" + shot;
     x.bench = assets.bench(host, v.overall);
   } else x.brands = brands.brandsIn(tip);
@@ -521,10 +522,12 @@ function rewriteCaptions(all, networks) {
     const said = localize(tip, index, total, i18n);
     if (said.lang !== "en" && studio.OWN_LINE && said.tiktok.includes(studio.OWN_LINE.en)) throw new Error(slug + ": the " + said.lang + " TikTok caption carries the English call to action");
     const cap = Object.assign(studio.captions(tip, index, total), { tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube });
+    // The networks restrict adult and gambling sites, so a post about one is held even if its source let it through.
+    const held = tip.hold || !!(EXTRAS.get(tip.id) || {}).sensitive;
     captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip), alt: tip.alt || altText(tip), lang: said.lang, voice: said.voice.file },
-      tip.lang ? { textLang: tip.lang } : {}, tip.hold ? { hold: true } : {}, tip.pin ? { pin: true } : {}, hubFields(tip, slugOf), cap);
+      tip.lang ? { textLang: tip.lang } : {}, held ? { hold: true } : {}, tip.pin ? { pin: true } : {}, hubFields(tip, slugOf), cap);
     const windows = studio.WINDOWS || WINDOWS;
-    for (const channel of tip.hold ? [] : Object.keys(windows)) {
+    for (const channel of held ? [] : Object.keys(windows)) {
       const video = ["tiktok", "youtube"].includes(channel);
       rows.push({ date, time: (tip.times || {})[channel] || randomTime(windows[channel], rand, slot), channel, slug,
         asset: video ? "clip/" + slug + ".mp4" : channel === "instagram-story" ? "story/" + slug + ".jpg" : "feed/" + slug + ".jpg",

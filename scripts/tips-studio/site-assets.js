@@ -1,11 +1,13 @@
 /* What a real-run post shows of the site it reviews: the site's own icon, its home page on a phone for the hook's
-   mini clip, and where its score lands among every published Live Report. Each is read once per host into
+   mini clip, and where its score lands among every published Live Report. An adult or gambling site shows neither
+   its icon nor its pages (siteKind). Each is read once per host into
    previews/site-assets (git-ignored); a site that cannot be read simply goes without, and the clip still renders. */
 
 const fs = require("fs");
 const path = require("path");
 const { iconData } = require("../../functions/url-review-core");
 const live = require("../build-live-reports");
+const { kind } = require("../sensitive-sites");
 
 const ROOT = path.resolve(__dirname, "../..");
 const CACHE = path.join(ROOT, "previews/site-assets");
@@ -91,4 +93,18 @@ function bench(host, overall) {
   return { n: others.length, pct: Math.round(100 * others.filter((c) => c.overall < overall).length / others.length), bins, overall };
 }
 
-module.exports = { siteLogo, siteShot, bench, bare, iconCandidates };
+// "adult" or "gambling" for a site the networks restrict (scripts/sensitive-sites.js), read from its page titles and
+// its home page; a home page that does not answer leaves the host name and titles to decide.
+async function siteKind(host, titles = []) {
+  if (!host) return "";
+  const file = cacheFile(host, ".kind.txt");
+  if (fs.existsSync(file)) return fs.readFileSync(file, "utf8");
+  let html = "";
+  try { html = (await homePage(host)).html; } catch (error) { html = ""; }
+  const found = kind({ host: bare(host), titles, html });
+  fs.mkdirSync(CACHE, { recursive: true });
+  fs.writeFileSync(file, found);
+  return found;
+}
+
+module.exports = { siteLogo, siteShot, siteKind, bench, bare, iconCandidates, homePage };
