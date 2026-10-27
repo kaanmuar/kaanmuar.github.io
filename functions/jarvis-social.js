@@ -1,6 +1,6 @@
 "use strict";
 /*
- * Jarvis social hub (#1420): the queue per channel from the Buffer and Facebook ledgers, the field-sweep
+ * Jarvis social hub (#1420): the queue per channel from the Buffer, Facebook and Bluesky/Mastodon ledgers, the field-sweep
  * proposals still waiting for a decision, approving or dismissing one in socialHub/live the way the hub
  * editor does, and starting the posting workflows now instead of at their nightly slot.
  */
@@ -8,7 +8,8 @@ const Admin = require("./social-hub-admin");
 
 const WORKFLOWS = [
   { file: "buffer-batch.yml", name: "Buffer", inputs: { mode: "retry" } },
-  { file: "facebook-page.yml", name: "Facebook Page" }
+  { file: "facebook-page.yml", name: "Facebook Page" },
+  { file: "open-social.yml", name: "Bluesky and Mastodon" }
 ];
 
 /** Every channel in calendar order, with what is scheduled next, what went out last and what failed in the window. */

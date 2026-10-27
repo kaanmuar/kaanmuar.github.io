@@ -12,8 +12,13 @@
 })(typeof self !== "undefined" ? self : this, function () {
   const NETS = ["linkedin", "x", "instagram", "facebook", "tiktok", "youtube"];
   const LANGS = ["en", "es", "pt", "de", "fr", "it"];
-  // Calendar channels in the order a post goes out. Facebook goes through the Graph API, the rest through Buffer.
-  const CHANNELS = [["linkedin", "LinkedIn"], ["x", "X"], ["instagram", "Instagram"], ["instagram-story", "Story"], ["facebook", "Facebook"], ["youtube", "YouTube"], ["tiktok", "TikTok"]];
+  // Calendar channels in the order a post goes out. Facebook goes through the Graph API, Bluesky and Mastodon
+  // straight to their APIs, the rest through Buffer.
+  const CHANNELS = [["linkedin", "LinkedIn"], ["x", "X"], ["bluesky", "Bluesky"], ["mastodon", "Mastodon"], ["instagram", "Instagram"], ["instagram-story", "Story"], ["facebook", "Facebook"], ["youtube", "YouTube"], ["tiktok", "TikTok"]];
+  // Bluesky and Mastodon have no calendar slot of their own: scripts/open-social-queue.js posts the X caption at
+  // the x slot, and leaves a slot it missed by more than 12 hours.
+  const DIRECT = { bluesky: "Bluesky", mastodon: "Mastodon" };
+  const DIRECT_MISSED_MS = 12 * 3600000;
   const DAY = /^\d{4}-\d{2}-\d{2}$/;
   const HTTPS = /^https:\/\/[^\s<>"'`]+$/;
   const REPO_IMAGE = /^(assets|media)\/[\w/.-]+\.(jpe?g|png|webp)$/i;
@@ -156,8 +161,8 @@
     return slots;
   }
 
-  // A post's entries in the Buffer and Facebook Page ledgers (assets/social/buffer.json and facebook.json,
-  // written by scripts/social-ledger.js).
+  // A post's entries in the Buffer, Facebook Page and Bluesky/Mastodon ledgers (assets/social/buffer.json,
+  // facebook.json and open-social.json, written by scripts/social-ledger.js).
   function ledgerEntries(ledgers, id) {
     return (ledgers || []).flatMap((ledger) => (ledger && ledger.posts && Array.isArray(ledger.posts[id]) ? ledger.posts[id] : []));
   }
@@ -168,8 +173,12 @@
   // ahead; later Facebook slots wait for a later run.
   function channels(slots, youtube, now, entries) {
     return CHANNELS.map(([net, name]) => {
-      const slot = (slots && slots[net]) || "";
-      const via = net === "facebook" ? "Facebook Page" : "Buffer";
+      let slot = (slots && slots[net]) || "";
+      if (DIRECT[net]) {
+        const x = (slots && slots.x) || "";
+        slot = x && new Date(x).getTime() > now - DIRECT_MISSED_MS ? x : "";
+      }
+      const via = net === "facebook" ? "Facebook Page" : DIRECT[net] ? DIRECT[net] + " API" : "Buffer";
       const time = slot ? new Date(slot).getTime() : 0;
       const mine = (entries || []).filter((entry) => entry.channel === net);
       const failed = mine.filter((entry) => entry.result === "failed");
