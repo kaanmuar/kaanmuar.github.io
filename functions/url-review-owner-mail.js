@@ -330,8 +330,9 @@ function healthFacts(score, card) {
   };
 }
 
-function chip(text, color) {
-  return "<span style=\"display:inline-block;margin:0 6px 6px 0;padding:3px 10px;border:1px solid " + color + ";border-radius:999px;font-size:12px;line-height:18px;color:" + color + ";\">" + text + "</span>";
+function chip(text, color, filled) {
+  const fill = filled ? "background-color:" + color + ";color:" + PANEL + ";" : "color:" + color + ";";
+  return "<span style=\"display:inline-block;margin:0 6px 6px 0;padding:3px 10px;border:1px solid " + color + ";border-radius:999px;font-size:12px;line-height:18px;" + fill + "\">" + text + "</span>";
 }
 
 function healthBlock(t, host, facts) {
@@ -343,7 +344,7 @@ function healthBlock(t, host, facts) {
       (totals.person ? chip("<b>" + totals.person + "</b> " + esc(h.person), QUIET) : "")
     : "";
   const sev = facts.severities
-    ? ["critical", "high", "medium", "low"].map((key) => chip("<b>" + (facts.severities[key] || 0) + "</b> " + esc(h[key]), { critical: QUIET, high: FUSION.coral, medium: FUSION.gold, low: QUIET }[key])).join("")
+    ? ["critical", "high", "medium", "low"].map((key) => chip("<b>" + (facts.severities[key] || 0) + "</b> " + esc(h[key]), { critical: FUSION.coral, high: FUSION.coral, medium: FUSION.gold, low: QUIET }[key], key === "critical")).join("")
     : "";
   const areaCard = (area) => {
     const row = facts.areas[area];
