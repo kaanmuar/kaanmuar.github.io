@@ -202,6 +202,12 @@ function adminRespondUrl(type, id) {
   return url.toString();
 }
 
+// An owner email that moved to Jarvis pushes sends only when its switch is on in Jarvis settings (#1672).
+async function mailOn(key) {
+  const settings = await jarvis.readSettings(admin.firestore());
+  return settings.mail[key] === true;
+}
+
 async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLabel, to, replyTo, eyebrow }) {
   const from = prepareMail();
   if (!from) return false;
@@ -224,7 +230,7 @@ exports.notifyOwnerOnMessage = withMail.firestore
     const data = snap.data() || {};
     const topic = TOPIC_LABELS[data.topic] || data.topic || "—";
     try {
-      await sendOwnerEmail({
+      if (await mailOn("messages")) await sendOwnerEmail({
         subject: "New CV message — " + clip(topic, 60),
         intro: "New message on your CV",
         rows: [
@@ -251,7 +257,7 @@ exports.notifyOwnerOnRating = withMail.firestore
     const data = snap.data() || {};
     const score = Math.min(5, Math.max(0, Number(data.rating) || 0));
     try {
-      await sendOwnerEmail({
+      if (await mailOn("ratings")) await sendOwnerEmail({
         subject: "New CV feedback — " + score + "/5",
         intro: "New feedback on your CV",
         rows: [
@@ -943,10 +949,10 @@ async function sendPeriodReport(period) {
   return null;
 }
 
-exports.emailDailySiteReport = scheduled(withMail, "emailDailySiteReport", () => sendPeriodReport("daily"));
+exports.emailDailySiteReport = scheduled(withMail, "emailDailySiteReport", async () => (await mailOn("siteDaily")) ? sendPeriodReport("daily") : "mail off in Jarvis settings");
 exports.emailWeeklySiteReport = scheduled(withMail, "emailWeeklySiteReport", () => sendPeriodReport("weekly"));
 exports.emailMonthlySiteReport = scheduled(withMail, "emailMonthlySiteReport", () => sendPeriodReport("monthly"));
-exports.emailQuarterSiteReport = scheduled(withMail, "emailQuarterSiteReport", () => sendPeriodReport("quarter"));
+exports.emailQuarterSiteReport = scheduled(withMail, "emailQuarterSiteReport", async () => (await mailOn("siteQuarter")) ? sendPeriodReport("quarter") : "mail off in Jarvis settings");
 
 const reviewMail = require("./url-review-mail");
 
@@ -1133,10 +1139,10 @@ async function sendReviewPeriodReport(period) {
   return null;
 }
 
-exports.emailDailyReviewReport = scheduled(withMail, "emailDailyReviewReport", () => sendReviewPeriodReport("daily"));
+exports.emailDailyReviewReport = scheduled(withMail, "emailDailyReviewReport", async () => (await mailOn("reviewDaily")) ? sendReviewPeriodReport("daily") : "mail off in Jarvis settings");
 exports.emailWeeklyReviewReport = scheduled(withMail, "emailWeeklyReviewReport", () => sendReviewPeriodReport("weekly"));
 exports.emailMonthlyReviewReport = scheduled(withMail, "emailMonthlyReviewReport", () => sendReviewPeriodReport("monthly"));
-exports.emailQuarterReviewReport = scheduled(withMail, "emailQuarterReviewReport", () => sendReviewPeriodReport("quarter"));
+exports.emailQuarterReviewReport = scheduled(withMail, "emailQuarterReviewReport", async () => (await mailOn("reviewQuarter")) ? sendReviewPeriodReport("quarter") : "mail off in Jarvis settings");
 
 async function probeFailure(url) {
   let host = "";
@@ -1290,7 +1296,7 @@ async function rerunReviewFailures() {
   if (!done.length) return null;
   const mail = reviewFailures.rerunMail(done);
   await pushOwner(jarvisMailPush.rerunMessage(done, REVIEW_FN_URL + "/desk"));
-  await sendOwnerEmail({ to: REVIEW_ALERT_TO, subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, respondUrl: REVIEW_FN_URL + "/desk", buttonLabel: "Open the review desk" });
+  if (await mailOn("reruns")) await sendOwnerEmail({ to: REVIEW_ALERT_TO, subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, respondUrl: REVIEW_FN_URL + "/desk", buttonLabel: "Open the review desk" });
   return null;
 }
 
@@ -1527,7 +1533,7 @@ async function mailReviewedSites(ip, source) {
     report: source && source.report,
     urls
   });
-  await sendOwnerEmail({
+  if (await mailOn("reviewOpened")) await sendOwnerEmail({
     eyebrow: "QA-lab URL Review",
     subject: "QA-lab URL Review was opened",
     intro: "Someone opened the QA-lab URL Review",
@@ -1539,6 +1545,7 @@ async function mailReviewedSites(ip, source) {
 async function mailComparison(notice) {
   if (!notice) return;
   await pushOwner(jarvisMailPush.comparisonMessage(notice));
+  if (!(await mailOn("comparisons"))) return;
   try {
     await sendOwnerEmail({
       eyebrow: "QA-lab URL Review",
@@ -2296,7 +2303,7 @@ async function opsWatchdog() {
     { label: "Owner replies, 7 days", value: replies.data().count + " in, " + waiting.data().count + " waiting for a decision" }
   ]);
   await pushOwner(jarvisMailPush.opsMessage(problems, ops.JOBS.filter((row) => row.host !== "github").map((row) => row.job)));
-  await sendOwnerEmail({
+  if (!problems.length || await mailOn("ops")) await sendOwnerEmail({
     to: REVIEW_ALERT_TO,
     subject: problems.length ? "Ops: " + problems.length + " scheduled job" + (problems.length === 1 ? "" : "s") + " missed or failed" : "Ops: weekly digest, every job on time",
     intro: problems.length ? "These jobs failed or went quiet for longer than their schedule allows." : "Every scheduled job ran on time last week.",
@@ -2411,7 +2418,7 @@ async function takeOwnerReply(mail, auth) {
   if (ref) await ref.set({ lastReplyAt: row.at, lastReplyKind: row.kind }, { merge: true });
   if (row.kind !== "auto" && row.kind !== "bounce") {
     await pushOwner(jarvisMailPush.ownerReplyMessage(id, row, ownerReplies.summary(row, decision), OWNER_REPLIES_URL + "/decide?t=" + id));
-    await sendOwnerEmail({
+    if (await mailOn("ownerReplies")) await sendOwnerEmail({
       to: REVIEW_ALERT_TO,
       replyTo: row.from,
       subject: "Owner reply: " + ownerReplies.summary(row, decision),
@@ -2525,7 +2532,10 @@ async function remindOwnerReplies() {
   return old.length + " waiting";
 }
 
-exports.remindOwnerReplies = scheduled(withMail, "remindOwnerReplies", () => remindOwnerReplies());
+exports.remindOwnerReplies = scheduled(withMail, "remindOwnerReplies", async () => (await mailOn("ownerRemind")) ? remindOwnerReplies() : "in the evening digest (mail off in Jarvis settings)");
+
+// Refunds, disputes and unmatched payments stay instant email; the other review events wait for the evening digest (#1672).
+const INSTANT_REVIEW_MAIL = new Set(["payment-refunded", "payment-disputed", "payment-unmatched"]);
 
 async function rememberReview(kind, source) {
   const note = reviewDesk.alertFrom(kind, source || {});
@@ -2548,7 +2558,7 @@ async function rememberReview(kind, source) {
     console.error("Review alert record failed:", error);
   }
   try {
-    await sendOwnerEmail({
+    if (INSTANT_REVIEW_MAIL.has(kind) || await mailOn("reviewEvents")) await sendOwnerEmail({
       to: REVIEW_ALERT_TO,
       subject: note.subject,
       intro: note.title,
@@ -5090,6 +5100,7 @@ async function shareDrop(body) {
 
 const jarvisProposals = require("./jarvis-proposals");
 const jarvisActions = require("./jarvis-actions");
+const jarvisDigest = require("./jarvis-digest");
 
 // A URL shared to the Jarvis app: the owner's own review, run like a sweep review and pushed to the phone that asked.
 exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB" }).firestore.document("jarvis_reviews/{id}").onCreate(async (snap) => {
@@ -5412,7 +5423,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100) };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100) };
 
 async function jarvisWatchRun() {
   const db = admin.firestore();
@@ -5442,6 +5453,38 @@ exports.jarvisDailyBriefing = scheduled(functions.runWith({ timeoutSeconds: 300,
   const out = await jarvisDaily({ force: false });
   return typeof out === "string" ? out : (out.sent ? "sent" : "not sent") + ", " + out.items + " lines";
 });
+
+// The evening digest (#1672): the last 24 hours of pushes, what still waits for a decision, and what ran.
+async function jarvisEvening({ force }) {
+  const db = admin.firestore();
+  const settings = await jarvis.readSettings(db);
+  if (!settings.mail.digest && !force) return "off in settings";
+  const since = new Date(Date.now() - 24 * 3600000).toISOString();
+  const [pushes, actions, held, replies, notices, marks] = await Promise.all([
+    db.collection("jarvis_pushes").where("at", ">=", since).limit(500).get(),
+    db.collection("jarvis_actions").where("at", ">=", since).limit(500).get(),
+    jarvisHeld(),
+    db.collection("url_review_owner_replies").where("status", "==", "waiting").limit(50).get(),
+    db.collection("url_review_owner_notices").where("status", "==", "pending").limit(300).get(),
+    jarvisProposals.saved(db)
+  ]);
+  const mail = jarvisDigest.digestMail({
+    pushes: pushes.docs.map((doc) => doc.data()),
+    actions: actions.docs.map((doc) => doc.data()),
+    waiting: {
+      reruns: held.map((h) => ({ host: h.data.host || h.id })),
+      ownerReplies: replies.docs.map((doc) => ({ domain: doc.get("domain") || doc.get("from") })),
+      notices: notices.docs.map((doc) => ({ domain: doc.id }))
+    },
+    marked: new Set(marks.map((row) => row.key))
+  });
+  if (!mail) return "empty day, nothing sent";
+  const sent = await sendOwnerEmail({ subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL, buttonLabel: "Open Jarvis" });
+  if (!sent) throw new Error("The evening digest email was not sent.");
+  return mail.subject;
+}
+
+exports.jarvisEveningDigest = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB", secrets: ["SENDGRID_API_KEY"] }), "jarvisEveningDigest", () => jarvisEvening({ force: false }));
 exports.jarvisWeeklyStrategy = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }), "jarvisWeeklyStrategy", async () => {
   const out = await jarvisWeekly({ force: false });
   return typeof out === "string" ? out : (out.sent ? "sent" : "not sent") + ", " + out.proposals + " proposals";
@@ -5540,6 +5583,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     else if (op === "goals") out = { goals: await jarvis.goals(admin.firestore(), await jarvis.readSettings(admin.firestore()), { now, sum: jarvisSum }) };
     else if (op === "daily-now") out = await jarvisDaily({ force: true });
     else if (op === "weekly-now") out = await jarvisWeekly({ force: true });
+    else if (op === "digest-now") out = { result: await jarvisEvening({ force: true }) };
     else if (op === "proposals") {
       if (Array.isArray(body.candidates)) out = await jarvisRanked({ candidates: jarvisProposals.cleanCandidates(body.candidates), snapshot: body.snapshot || {}, useGemini: body.gemini !== false });
       else {

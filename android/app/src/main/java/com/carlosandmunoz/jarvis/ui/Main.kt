@@ -348,7 +348,7 @@ private fun openAssistantSettings(context: android.content.Context) {
 @Composable
 fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (Boolean) -> Unit, back: () -> Unit) {
     val settings = s.snapshot.obj("settings")
-    var mail by remember(settings) { mutableStateOf(listOf("daily", "gemini", "watch").associateWith { settings.obj("mail").bool(it) ?: false }) }
+    var mail by remember(settings) { mutableStateOf(MAIL_LABELS.keys.associateWith { settings.obj("mail").bool(it) ?: false }) }
     Scaffold(containerColor = Color.Transparent, topBar = {
         TopAppBar(modifier = Modifier.topFade(), title = { Text("Settings") }, navigationIcon = { IconButton(onClick = back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent))
@@ -363,8 +363,8 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 TextButton(onClick = vm::signOut) { Text("Sign out", color = J.pink) }
             }
             if (settings != null) Panel("Jarvis mail") {
-                val labels = mapOf("daily" to "Daily briefing email (07:40)", "gemini" to "Gemini summary in the daily email", "watch" to "Hourly alert email")
-                labels.forEach { (k, label) ->
+                Muted("Everything below also arrives as a push. Off, it waits for the evening digest.")
+                MAIL_LABELS.forEach { (k, label) ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(label, Modifier.weight(1f))
                         Switch(mail[k] == true, { on ->
@@ -445,5 +445,15 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
     }
 }
 
+// Merged into the saved switches, so the ones the app does not show (the weekly strategy) keep their value.
 private fun withMail(settings: JsonObject, mail: Map<String, Boolean>): JsonObject =
-    JsonObject(settings + ("mail" to JsonObject(mail.mapValues { JsonPrimitive(it.value) })))
+    JsonObject(settings + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })))
+
+// The owner emails Jarvis also pushes (#1672), as in Admin › Statistics › Settings.
+private val MAIL_LABELS = linkedMapOf(
+    "digest" to "Evening digest email (20:00)", "daily" to "Daily briefing email (07:40)", "gemini" to "Gemini summary in the daily email", "watch" to "Alert email",
+    "messages" to "New CV messages", "ratings" to "New CV feedback", "siteDaily" to "Daily CV site report", "siteQuarter" to "Quarter-hour CV site report",
+    "reviewDaily" to "Daily URL review report", "reviewQuarter" to "Quarter-hour URL review report", "reruns" to "Held URL review re-runs",
+    "reviewOpened" to "URL Review was opened", "comparisons" to "Comparison saved", "reviewEvents" to "URL review events (refunds and disputes always email)",
+    "ops" to "Ops: jobs missed or failed", "ownerReplies" to "Owner replies", "ownerRemind" to "Owner replies still waiting"
+)

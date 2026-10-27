@@ -392,6 +392,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line' };
+    // Owner emails that also arrive as Jarvis pushes (#1672): off, they wait for the evening digest.
+    const MOVED_MAIL = {
+        messages: "New CV messages", ratings: "New CV feedback", siteDaily: "Daily CV site report (07:15)", siteQuarter: "Quarter-hour CV site report",
+        reviewDaily: "Daily URL review report (07:20)", reviewQuarter: "Quarter-hour URL review report", reruns: "URL review re-runs held for you", reviewOpened: "QA-lab URL Review was opened",
+        comparisons: "Comparison saved", reviewEvents: "URL review events (runs, payments, captures; refunds, disputes and unmatched payments always email)",
+        ops: "Ops: jobs missed or failed", ownerReplies: "Owner replies", ownerRemind: "Owner replies still waiting (09:00)"
+    };
     const ACTION_CAPS = { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2 };
 
     function proposalsPanel() {
@@ -1433,11 +1440,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const th = C.THRESHOLDS;
         $('.jv-settings-box').innerHTML = `<header><h3>Jarvis settings</h3><button type="button" class="jv-btn small" data-settings-close aria-label="Close">✕</button></header>
             <section><h4>Email</h4>
-              <label class="jv-check"><input type="checkbox" name="m-daily"${d.mail.daily ? ' checked' : ''}> Daily briefing at 07:40 (Bogotá): the last 24 hours, goals and alerts</label>
+              <label class="jv-check"><input type="checkbox" name="m-daily"${d.mail.daily ? ' checked' : ''}> Daily briefing email at 07:40 (Bogotá): the last 24 hours, goals and alerts (it is always pushed)</label>
               <label class="jv-check"><input type="checkbox" name="m-gemini"${d.mail.gemini ? ' checked' : ''}> Add the Gemini summary to the daily briefing</label>
-              <label class="jv-check"><input type="checkbox" name="m-watch"${d.mail.watch ? ' checked' : ''}> Watch every hour and mail an alert once a day per issue (pages down, TLS, failed jobs, failed runs)</label>
+              <label class="jv-check"><input type="checkbox" name="m-watch"${d.mail.watch ? ' checked' : ''}> Alert email, once a day per issue (pages down, TLS, failed jobs, failed runs); the hourly watch always pushes</label>
               <label class="jv-check"><input type="checkbox" name="m-weekly"${d.mail.weekly ? ' checked' : ''}> Weekly strategy on Sunday at 19:00 (Bogotá): four weeks side by side, the proposals and the plan for next week</label>
-              <div class="jv-actions"><button type="button" class="jv-btn" data-act="daily-now">Send today's briefing now</button><button type="button" class="jv-btn" data-act="weekly-now">Send the weekly strategy now</button></div></section>
+              <label class="jv-check"><input type="checkbox" name="m-digest"${d.mail.digest ? ' checked' : ''}> Evening digest at 20:00 (Bogotá): what Jarvis pushed in the last 24 hours, what still waits for you and what ran. Skipped on an empty day.</label>
+              <p class="jv-note">These arrive as Jarvis pushes and in the digest. Tick one to get its email as well.</p>
+              <div class="jv-th-grid">${Object.keys(MOVED_MAIL).map((k) => `<label class="jv-check"><input type="checkbox" name="m-${k}"${d.mail[k] ? ' checked' : ''}> ${esc(MOVED_MAIL[k])}</label>`).join('')}</div>
+              <div class="jv-actions"><button type="button" class="jv-btn" data-act="daily-now">Send today's briefing now</button><button type="button" class="jv-btn" data-act="weekly-now">Send the weekly strategy now</button><button type="button" class="jv-btn" data-act="digest-now">Send the evening digest now</button></div></section>
             <section data-bp-section></section>
             <section><h4>Actions</h4>
               <label class="jv-check"><input type="checkbox" name="a-auto"${d.actions.auto ? ' checked' : ''}> Let Jarvis run the safe actions on its own every hour, within these daily caps</label>
@@ -1531,7 +1541,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const thresholds = {};
         Object.keys(C.THRESHOLDS).forEach((k) => { thresholds[k] = Number(val('t-' + k).value); });
         const searchQueries = String(val('s-queries').value || '').split('\n').map((q) => q.trim()).filter(Boolean).slice(0, 8);
-        return { goals, thresholds, mail: { daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked, weekly: !!val('m-weekly').checked }, searchQueries,
+        return { goals, thresholds, mail: Object.assign({ daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked, weekly: !!val('m-weekly').checked, digest: !!val('m-digest').checked },
+            Object.fromEntries(Object.keys(MOVED_MAIL).map((k) => [k, !!val('m-' + k).checked]))), searchQueries,
             actions: { auto: !!val('a-auto').checked, caps: Object.keys(ACTION_CAPS).reduce((m, k) => { m[k] = Number(val('a-cap-' + k).value); return m; }, {}) } };
     }
 
@@ -1565,6 +1576,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         toast('Building the daily briefing…', 30000);
         const out = await call('daily-now');
         toast(out.ok && out.sent ? `Daily briefing sent: ${out.items} lines${out.gemini ? ' with the Gemini summary' : ''}.` : 'Not sent: ' + (out.error || 'mail is not set up'), 6000);
+    }
+
+    async function digestNow() {
+        if (!confirmRun('email the evening digest now (the last 24 hours)')) return;
+        toast('Building the evening digest…', 30000);
+        const out = await call('digest-now');
+        toast(out.ok ? 'Evening digest: ' + out.result : 'Not sent: ' + (out.error || 'mail is not set up'), 6000);
     }
 
     async function weeklyNow() {
@@ -1625,7 +1643,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             'copy-link': () => copy(link(), 'Link copied.'), 'web-share': webShare, 'copy-brief': () => copy(markdown(), 'Briefing copied.'), email: emailBriefing,
             'export-json': exportAll, 'export-csv': () => run({ type: 'export', format: 'csv' }), 'export-png': () => run({ type: 'export', format: 'png' }),
             'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief,
-            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, proposals: loadProposals, 'social-post-now': postNow, 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop
+            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop
         };
         if (acts[act]) acts[act]();
     });
