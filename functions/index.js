@@ -5,7 +5,7 @@
  */
 
 // Import necessary Firebase and SendGrid modules
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const sgMail = require("@sendgrid/mail");
 
