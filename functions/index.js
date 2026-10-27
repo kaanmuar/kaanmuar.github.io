@@ -4903,6 +4903,7 @@ const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
 const jarvisNotify = require("./jarvis-notify");
 const jarvisMailPush = require("./jarvis-mail-push");
+const jarvisWebPush = require("./jarvis-webpush");
 
 // A push failure is logged and never stops the owner email it mirrors.
 async function pushOwner(msg) {
@@ -5189,7 +5190,7 @@ async function jarvisDaily({ force }) {
   const db = admin.firestore();
   const settings = await jarvis.readSettings(db);
   const phones = await jarvisPush.targets(db, "briefing");
-  if (!settings.mail.daily && !phones.length && !force) return "off in settings";
+  if (!settings.mail.daily && !force && !(await jarvisPush.anyTargets(db, "briefing"))) return "off in settings";
   const now = Date.now();
   const [{ products }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now }),
@@ -5397,7 +5398,7 @@ async function jarvisWatchRun() {
   const db = admin.firestore();
   const settings = await jarvis.readSettings(db);
   const phones = await jarvisPush.targets(db, "alerts");
-  if (!settings.mail.watch && !phones.length) return "off in settings";
+  if (!settings.mail.watch && !(await jarvisPush.anyTargets(db, "alerts"))) return "off in settings";
   const now = Date.now();
   const external = await jarvisExternal(["health", "jobs", "uptime", "money", "safety", "platform"], 1);
   const { day, ref, sent, fresh } = await jarvis.unsentToday(db, jarvis.watchItems(external, settings.thresholds), { now });
@@ -5428,7 +5429,7 @@ exports.jarvisWeeklyStrategy = scheduled(functions.runWith({ timeoutSeconds: 300
 async function jarvisNoticesRun() {
   const db = admin.firestore();
   const phones = await jarvisPush.targets(db, "outreach");
-  if (!phones.length) return "no phones for outreach";
+  if (!(await jarvisPush.anyTargets(db, "outreach"))) return "no phones or browsers for outreach";
   const ref = db.collection("jarvis_watch").doc("notices");
   const [state, snap] = await Promise.all([ref.get(), db.collection("url_review_owner_notices").where("status", "==", "pending").get()]);
   const pending = snap.docs.map((d) => Object.assign({ domain: d.id }, d.data()));
@@ -5464,6 +5465,23 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
   if ((req.body || {}).op === "app-release") {
     try { res.json(await jarvisPush.releasePush(fetch, admin.firestore(), admin.messaging(), { token: process.env.GITHUB_BUGS_TOKEN, now: Date.now() })); }
     catch (error) { res.status(502).json({ error: error.message }); }
+    return;
+  }
+  // A browser notification's button (#1671): the service worker holds no sign-in, so the push signed each button.
+  if ((req.body || {}).op === "notify-act" && (req.body || {}).sig) {
+    const b = req.body;
+    const db = admin.firestore();
+    const target = String(b.act || "") + " " + String(b.ref || "").slice(0, 100);
+    try {
+      const k = await jarvisWebPush.keys(db, require("web-push"));
+      if (b.text || !jarvisWebPush.verify(k.signKey, b, Date.now())) { res.status(403).json({ ok: false, error: "This button expired. Open Jarvis to do it." }); return; }
+      const out = await jarvisNotifyAct({ ref: b.ref, act: b.act }, "browser push");
+      await jarvisActions.log(db, { action: "notify-act", mode: "click", status: "done", target, by: "browser push" }, Date.now()).catch(() => null);
+      res.json(Object.assign({ ok: true, op: "notify-act" }, out));
+    } catch (error) {
+      await jarvisActions.log(db, { action: "notify-act", mode: "click", status: "failed", target, detail: String((error && error.message) || error), by: "browser push" }, Date.now()).catch(() => null);
+      res.json({ ok: false, op: "notify-act", error: String((error && error.message) || error).slice(0, 300) });
+    }
     return;
   }
   const presented = String(req.get("authorization") || "");
@@ -5513,12 +5531,19 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     else if (op === "notify-act") out = await jarvisNotifyAct(body, operator);
     else if (op === "actions") out = await jarvisActionsView(now);
     else if (op === "register-device") out = await jarvisPush.register(admin.firestore(), body, operator, now);
-    else if (op === "unregister-device") out = await jarvisPush.unregister(admin.firestore(), body.token);
-    else if (op === "devices") out = { devices: (await jarvisPush.list(admin.firestore())).map((d) => ({ id: d.id, name: d.name, kinds: d.kinds, updatedAt: d.updatedAt })) };
+    else if (op === "unregister-device") out = await jarvisPush.unregister(admin.firestore(), body.endpoint || body.token);
+    else if (op === "devices") out = { devices: (await jarvisPush.list(admin.firestore())).map((d) => ({ id: d.id, type: d.type || "android", name: d.name, kinds: d.kinds, updatedAt: d.updatedAt })) };
+    else if (op === "test-push" && body.endpoint) {
+      const db = admin.firestore();
+      const device = (await jarvisPush.list(db)).find((d) => d.id === jarvisPush.idOf(body.endpoint) && d.subscription);
+      if (!device) throw new Error("This browser is not registered.");
+      out = await jarvisPush.send(admin.messaging(), db, [], { kind: "test", title: "Jarvis test", body: "Push notifications reach this browser.", tab: "overview", tag: "jarvis-test" }, [device]);
+    }
     else if (op === "test-push") {
       const tokens = body.token ? [String(body.token)] : await jarvisPush.targets(admin.firestore(), "test");
       out = await jarvisPush.send(admin.messaging(), admin.firestore(), tokens, { kind: "test", title: "Jarvis test", body: "Push notifications reach this phone.", tab: "overview", tag: "jarvis-test" });
     }
+    else if (op === "web-push-key") out = { publicKey: (await jarvisWebPush.keys(admin.firestore(), require("web-push"))).publicKey };
     else if (op === "review") out = await jarvisReview.enqueue(admin.firestore(), body, operator, now);
     else if (op === "snapshot") out = await jarvisCached(op, days, () => jarvisSnapshot(days));
     else if (op === "notices") {
