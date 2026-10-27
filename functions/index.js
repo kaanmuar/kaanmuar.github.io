@@ -5573,7 +5573,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     else if (op === "uptime") out = await jarvisCached(op, 0, () => jarvis.uptime(fetch, { now }));
     else if (op === "brief") out = await jarvis.brief(fetch, env, body.snapshot || await appAskSnapshot());
     else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot || await appAskSnapshot(), { lang: body.lang, spoken: body.spoken === true });
-    else if (op === "speak") out = await jarvis.speak(fetch, body.text, body.lang);
+    else if (op === "speak") out = await jarvis.speak(fetch, body.text, body.lang, { voice: body.voice, rate: body.rate });
     else if (op === "run-job") out = await jarvis.runJob(fetch, body.job);
     else if (op === "settings") out = await jarvis.readSettings(admin.firestore());
     else if (op === "settings-save") {

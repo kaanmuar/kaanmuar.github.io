@@ -139,7 +139,7 @@ class AssistActivity : FragmentActivity() {
         answer = null
         thinking = true
         lifecycleScope.launch {
-            val extra = mapOf("question" to JsonPrimitive(q), "lang" to JsonPrimitive(Voice.lang()), "spoken" to JsonPrimitive(true))
+            val extra = mapOf("question" to JsonPrimitive(q), "lang" to JsonPrimitive(Voice.lang(app)), "spoken" to JsonPrimitive(true))
             runCatching { app.api.call("ask", Home.days(app), extra).str("text") ?: "No answer." }
                 .onSuccess { a ->
                     thinking = false

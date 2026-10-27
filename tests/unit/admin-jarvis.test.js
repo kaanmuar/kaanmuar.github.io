@@ -908,19 +908,48 @@ test("voice: spoken asks answer in the phone's language, plain text for speech",
   assert.equal(jarvis.langCode("??"), "en");
 });
 
-test("voice: speak strips markdown, asks for Charon, and falls back to any male voice", async () => {
+test("voice: speak strips markdown, uses the language's default voice, and falls back to any male voice", async () => {
   assert.equal(jarvis.speakable("**Revenue** is up.\n- 3 sales\n# Next: [post](https://x.y)"), "Revenue is up. 3 sales Next: post");
-  const voices = [];
+  const calls = [];
   const fetchImpl = async (url, init) => {
     if (/metadata/.test(url)) return json({ access_token: "t" });
     const body = JSON.parse(init.body);
-    voices.push(body.voice);
+    calls.push([body.voice, body.audioConfig.speakingRate]);
     return body.voice.name ? json({ error: { message: "no such voice" } }, 400) : json({ audioContent: "QUJD" });
   };
   const out = await jarvis.speak(fetchImpl, "*Hola*", "es");
-  assert.deepEqual(out, { audio: "QUJD", format: "mp3", lang: "es" });
-  assert.deepEqual(voices, [{ languageCode: "es-ES", name: "es-ES-Chirp3-HD-Charon" }, { languageCode: "es-ES", ssmlGender: "MALE" }]);
+  assert.deepEqual(out, { audio: "QUJD", format: "mp3", lang: "es", voice: null, rate: 0.95 });
+  const latam = { languageCode: "es-US", name: "es-US-Chirp3-HD-Algenib" };
+  assert.deepEqual(calls, [[latam, 0.95], [latam, undefined], [{ languageCode: "es-US", ssmlGender: "MALE" }, undefined]]);
   await assert.rejects(jarvis.speak(fetchImpl, "  ", "en"), /Nothing to say/);
+});
+
+test("voice: a picked voice is used only for its own language, and the speed is clamped (#1674)", async () => {
+  assert.deepEqual(jarvis.voiceFor("en"), { languageCode: "en-GB", name: "en-GB-Chirp3-HD-Orus" });
+  assert.deepEqual(jarvis.voiceFor("en", "en-US-Chirp3-HD-Charon"), { languageCode: "en-US", name: "en-US-Chirp3-HD-Charon" });
+  assert.deepEqual(jarvis.voiceFor("es", "en-US-Chirp3-HD-Charon"), { languageCode: "es-US", name: "es-US-Chirp3-HD-Algenib" });
+  assert.deepEqual(jarvis.voiceFor("de", "made-up"), { languageCode: "de-DE", name: "de-DE-Chirp3-HD-Charon" });
+  assert.equal(jarvis.voiceRate(3), 1.25);
+  assert.equal(jarvis.voiceRate(0.5), 0.75);
+  assert.equal(jarvis.voiceRate("x"), 0.95);
+  let sent;
+  const fetchImpl = async (url, init) => (/metadata/.test(url) ? json({ access_token: "t" }) : (sent = JSON.parse(init.body), json({ audioContent: "QUJD" })));
+  const out = await jarvis.speak(fetchImpl, "Hello", "en-GB", { voice: "en-US-Chirp3-HD-Charon", rate: 1.1 });
+  assert.equal(sent.voice.name, "en-US-Chirp3-HD-Charon");
+  assert.equal(sent.audioConfig.speakingRate, 1.1);
+  assert.equal(out.voice, "en-US-Chirp3-HD-Charon");
+});
+
+test("voice: the web offers the server's voices, and saved choices are made safe (#1674)", () => {
+  assert.deepEqual(core.VOICES, jarvis.VOICES);
+  assert.deepEqual(core.VOICE_RATE.default, 0.95);
+  assert.deepEqual(core.voicePrefs({}, "es-CO"), { lang: null, speak: "es", en: "en-GB-Chirp3-HD-Orus", es: "es-US-Chirp3-HD-Algenib", rate: 0.95 });
+  const p = core.voicePrefs({ lang: "en", en: "en-US-Chirp3-HD-Charon", es: "en-GB-Chirp3-HD-Orus", rate: 9 }, "es-CO");
+  assert.equal(p.speak, "en");
+  assert.equal(p.en, "en-US-Chirp3-HD-Charon");
+  assert.equal(p.es, "es-US-Chirp3-HD-Algenib");
+  assert.equal(p.rate, 1.25);
+  assert.equal(core.voicePrefs({ lang: "fr" }, "pt-BR").speak, "pt");
 });
 
 const notify = require("../../functions/jarvis-notify.js");

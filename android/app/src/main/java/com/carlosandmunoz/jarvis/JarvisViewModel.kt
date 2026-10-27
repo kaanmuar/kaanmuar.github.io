@@ -51,6 +51,9 @@ data class UiState(
     val heard: Heard = Heard(),
     val speaking: String? = null,
     val speak: Boolean = true,
+    val voiceLang: String? = null,
+    val voices: Map<String, String> = emptyMap(),
+    val rate: Float = Voice.RATE_DEFAULT,
     val notices: JsonObject? = null,
     val noticeErrors: Map<String, String> = emptyMap(),
     val proposals: List<JsonObject>? = null,
@@ -62,7 +65,8 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     private val jarvis = app as JarvisApp
     private val auth = jarvis.auth
     private val api = jarvis.api
-    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp), ongoing = Ongoing.enabled(app), speak = Voice.speakOn(app)))
+    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp), ongoing = Ongoing.enabled(app), speak = Voice.speakOn(app),
+        voiceLang = Voice.langChoice(app as JarvisApp), voices = voices(app), rate = Voice.rate(app)))
     val state: StateFlow<UiState> = _state
     private val listener = Listener(app) { ask(it, spoken = true) }
     private val speaker = Speaker(jarvis)
@@ -181,7 +185,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         if (q.isEmpty()) return
         _state.update { it.copy(chat = it.chat + Chat(q, null, spoken = spoken)) }
         viewModelScope.launch {
-            val extra = mapOf("question" to JsonPrimitive(q), "lang" to JsonPrimitive(Voice.lang()), "spoken" to JsonPrimitive(spoken))
+            val extra = mapOf("question" to JsonPrimitive(q), "lang" to JsonPrimitive(Voice.lang(jarvis)), "spoken" to JsonPrimitive(spoken))
             val answer = runCatching { api.call("ask", _state.value.days, extra).str("text") ?: "No answer." }
             _state.update { s ->
                 val i = s.chat.indexOfLast { it.question == q && it.answer == null }
@@ -207,6 +211,31 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         Voice.setSpeak(jarvis, on)
         if (!on) speaker.stop()
         _state.update { it.copy(speak = on) }
+    }
+
+    private fun voices(app: JarvisApp) = listOf("en", "es").mapNotNull { l -> Voice.voice(app, l)?.let { l to it } }.toMap()
+
+    /** null follows the phone's language. */
+    fun setVoiceLang(lang: String?) {
+        Voice.setLangChoice(jarvis, lang)
+        _state.update { it.copy(voiceLang = lang) }
+    }
+
+    /** Picks the voice for its language and lets it say the sample. */
+    fun setVoice(option: Voice.Option) {
+        Voice.setVoice(jarvis, option.lang, option.name)
+        _state.update { it.copy(voices = voices(jarvis)) }
+        preview(option.lang)
+    }
+
+    fun setRate(rate: Float) {
+        Voice.setRate(jarvis, rate)
+        _state.update { it.copy(rate = Voice.rate(jarvis)) }
+    }
+
+    fun preview(lang: String = Voice.lang(jarvis)) {
+        val text = Voice.SAMPLE[lang] ?: Voice.SAMPLE.getValue("en")
+        viewModelScope.launch { runCatching { speaker.say(text, lang) }.onFailure { e -> fail(e) { it.copy(toast = e.message ?: "Could not speak.") } } }
     }
 
     override fun onCleared() { listener.stop(); speaker.stop() }

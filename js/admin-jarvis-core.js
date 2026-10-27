@@ -897,7 +897,27 @@
         return { start, end, days, prior: { start: new Date(start.getTime() - days * DAY), end: start } };
     }
 
-    const api = { THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
+    /** #1674: the jarvis function's voice catalog; the first of each language is its default. */
+    const VOICES = [
+        { name: 'en-GB-Chirp3-HD-Orus', lang: 'en', label: 'Orus, British' },
+        { name: 'en-US-Chirp3-HD-Charon', lang: 'en', label: 'Charon, American' },
+        { name: 'es-US-Chirp3-HD-Algenib', lang: 'es', label: 'Algenib, Latin American' },
+        { name: 'es-ES-Chirp3-HD-Charon', lang: 'es', label: 'Charon, Spain' }
+    ];
+    const VOICE_RATE = { min: 0.75, max: 1.25, step: 0.05, default: 0.95 };
+    const VOICE_SAMPLE = { en: 'Good evening, Carlos. All systems are running, and two things need you today.', es: 'Buenas noches, Carlos. Todos los sistemas funcionan, y hoy hay dos cosas que te esperan.' };
+
+    /** Saved voice choices made safe: lang is "en", "es" or null (follow the browser), voices belong to their language, rate is in range. */
+    function voicePrefs(saved, browserLang) {
+        const s = saved && typeof saved === 'object' ? saved : {};
+        const lang = s.lang === 'en' || s.lang === 'es' ? s.lang : null;
+        const pick = (code) => (VOICES.find((v) => v.name === s[code] && v.lang === code) || VOICES.find((v) => v.lang === code)).name;
+        const rate = Number(s.rate);
+        return { lang, speak: lang || String(browserLang || 'en').slice(0, 2).toLowerCase(), en: pick('en'), es: pick('es'),
+            rate: Number.isFinite(rate) && rate > 0 ? Math.min(VOICE_RATE.max, Math.max(VOICE_RATE.min, rate)) : VOICE_RATE.default };
+    }
+
+    const api = { VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);
