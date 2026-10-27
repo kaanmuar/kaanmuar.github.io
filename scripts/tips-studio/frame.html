@@ -164,7 +164,7 @@
   .foot strong { color: var(--text); font-weight: 600; }
 
   .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; text-align: center; padding: 120px; background: radial-gradient(60% 40% at 50% 45%, rgba(77,179,187,.3), transparent 70%), linear-gradient(rgba(5,12,15,.5), rgba(5,12,15,.86)), url(../../media/fusion-stage/story-b.jpg) center / cover, #050c0f; opacity: 0; }
-  .end img { width: 180px; height: 180px; filter: drop-shadow(0 18px 60px rgba(77,179,187,.5)); }
+  .end > img { width: 180px; height: 180px; filter: drop-shadow(0 18px 60px rgba(77,179,187,.5)); }
   .end h2 { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 110px; line-height: 1; }
   .end p { margin: 0; font-size: 40px; color: #cfe0e3; }
   .end .url { white-space: nowrap; font-family: "Fira Code", monospace; font-size: 34px; color: var(--cyan-hi); border: 2px solid rgba(126,246,251,.35); border-radius: 999px; padding: 14px 30px; }
@@ -278,7 +278,88 @@
   .fix .picks .pick { animation: inUp .6s cubic-bezier(.2,.8,.2,1) both; }
   .fix .url { align-self: flex-start; font-family: "Fira Code", monospace; font-size: 30px; color: var(--cyan-hi); border: 2px solid rgba(126,246,251,.35); border-radius: 999px; padding: 12px 28px; background: rgba(5,12,15,.5); }
   .scenes .end { z-index: 5; }
-  .scenes .end img { animation: logoIn 1.2s cubic-bezier(.2,.8,.2,1) both; animation-delay: inherit; }
+  .scenes .end > img { animation: logoIn 1.2s cubic-bezier(.2,.8,.2,1) both; animation-delay: inherit; }
+
+  /* Official marks: the reviewed site's own icon, and product and network marks in their brand colour, each on a white tile. */
+  .logo, .bmark { display: inline-grid; place-items: center; flex: none; width: var(--ls, 96px); height: var(--ls, 96px); border-radius: 24%; background: #fff; overflow: hidden; box-shadow: 0 12px 34px rgba(0,0,0,.45), 0 0 0 2px rgba(255,255,255,.2); vertical-align: middle; }
+  .logo img { width: 76%; height: 76%; object-fit: contain; }
+  .logo.small img { width: 52%; height: 52%; }
+  .bmark svg { width: 62%; height: 62%; }
+  .marks { display: flex; align-items: center; flex-wrap: wrap; gap: 18px 20px; }
+  .marks .host { font-family: "Fira Code", monospace; font-size: 34px; font-weight: 600; color: var(--text); }
+  .marks .vs { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: 46px; color: var(--gold); }
+  .marks .bname { font-size: 30px; font-weight: 700; color: var(--text); margin-right: 10px; }
+  .chipline { display: flex; align-items: center; gap: 18px; }
+  .chipline .chip { align-self: center; }
+  .clip .logo.a, .clip .bmark.a { animation-name: popIn; animation-duration: .9s; }
+  @keyframes popIn { from { opacity: 0; transform: scale(.3) rotate(-28deg); } 60% { opacity: 1; transform: scale(1.12) rotate(5deg); } to { opacity: 1; transform: none; } }
+  .sitehead { display: flex; align-items: center; gap: 18px; margin-bottom: calc(var(--u) * .8); font-family: "Fira Code", monospace; font-size: calc(var(--mono) * .9); font-weight: 600; }
+  .matrix td .logo { --ls: 1.1em; margin-right: 8px; border-radius: 22%; box-shadow: none; }
+  .matrix:has(td .logo) col.host { width: 32%; }
+  .matrix:has(td .logo) td:first-child { padding-left: 12px; font-size: calc(var(--body) * .6); }
+
+  /* The hook's mini clip: the reviewed home page scrolling on a phone. */
+  .split { display: grid; grid-template-columns: 1fr 360px; gap: 44px; align-items: center; }
+  .split .col { display: flex; flex-direction: column; gap: 34px; min-width: 0; }
+  .split .title { font-size: 112px; }
+  .phone { position: relative; width: 360px; height: 740px; padding: 14px; border-radius: 58px; background: linear-gradient(145deg, #34474e, #0b1418 60%); box-shadow: 0 50px 110px rgba(0,0,0,.65), inset 0 0 0 2px rgba(255,255,255,.14), 0 0 70px color-mix(in srgb, var(--accent) 30%, transparent); transform: rotateY(-16deg) rotateX(4deg); }
+  .phone::before { content: ""; position: absolute; z-index: 2; top: 28px; left: 50%; width: 104px; height: 30px; margin-left: -52px; border-radius: 20px; background: #000; }
+  .phone .screen { width: 100%; height: 100%; border-radius: 45px; overflow: hidden; background: #fff; }
+  .phone .screen img { display: block; width: 100%; animation: scrollShot linear both; }
+  @keyframes scrollShot { 0%, 14% { transform: none; } 100% { transform: translateY(var(--scroll, 0)); } }
+  .clip .phone.a { animation-name: phoneIn; animation-duration: 1.2s; }
+  @keyframes phoneIn { from { opacity: 0; transform: translateY(300px) rotateY(-60deg) rotateX(20deg); } to { opacity: 1; transform: rotateY(-16deg) rotateX(4deg); } }
+  .phone .tag { position: absolute; z-index: 3; left: 50%; bottom: -26px; transform: translateX(-50%); white-space: nowrap; font-family: "Fira Code", monospace; font-size: 24px; color: var(--ink); background: var(--cyan-hi); border-radius: 999px; padding: 8px 20px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+
+  /* Benchmark: where the score lands among every published Live Report. */
+  .bench { padding: 44px 48px 40px; }
+  .bins { display: flex; align-items: flex-end; gap: 12px; height: 240px; padding-top: 70px; box-sizing: content-box; }
+  .bins i { position: relative; flex: 1; height: var(--h); min-height: 6px; border-radius: 12px 12px 4px 4px; background: rgba(126,246,251,.24); transform-origin: bottom; }
+  .bins i.me { background: linear-gradient(180deg, var(--gold), var(--cyan-hi)); box-shadow: 0 0 30px color-mix(in srgb, var(--gold) 60%, transparent); }
+  .bins i em { position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, -14px); display: flex; align-items: center; gap: 10px; font-style: normal; font-family: "Instrument Serif", Georgia, serif; font-size: 60px; line-height: 1; color: var(--gold); white-space: nowrap; }
+  .bins i em .logo { --ls: 54px; }
+  .clip .bins i.a { animation-name: rise; animation-duration: .7s; }
+  @keyframes rise { from { transform: scaleY(0); } to { transform: none; } }
+  .axis { display: flex; justify-content: space-between; margin-top: 12px; font-family: "Fira Code", monospace; font-size: 24px; color: var(--muted); }
+  .bench p { margin: 22px 0 0; font-size: 40px; font-weight: 700; line-height: 1.2; }
+  .bench p b { color: var(--gold); }
+
+  /* Six-area radar under the strongest and weakest areas. */
+  .radar { width: 100%; max-width: 640px; align-self: center; overflow: visible; }
+  .radar .grid { fill: none; stroke: rgba(255,255,255,.12); stroke-width: 2; }
+  .radar .axis-l { stroke: rgba(255,255,255,.1); stroke-width: 2; }
+  .radar .poly { fill: color-mix(in srgb, var(--cyan-hi) 22%, transparent); stroke: var(--cyan-hi); stroke-width: 4; stroke-linejoin: round; filter: drop-shadow(0 0 14px rgba(126,246,251,.5)); transform-box: view-box; transform-origin: 320px 290px; }
+  .radar circle { fill: var(--cyan-hi); }
+  .radar circle.hi { fill: var(--pass); filter: drop-shadow(0 0 12px var(--pass)); }
+  .radar circle.lo { fill: var(--fail); filter: drop-shadow(0 0 12px var(--fail)); }
+  .radar text { font-family: Inter, system-ui, sans-serif; font-size: 26px; font-weight: 700; fill: var(--muted); letter-spacing: .04em; }
+  .radar text.hi { fill: var(--pass); } .radar text.lo { fill: var(--fail); }
+  .clip .radar .poly.a { animation-name: radarIn; animation-duration: 1.3s; }
+  @keyframes radarIn { from { opacity: 0; transform: scale(0) rotate(-40deg); } to { opacity: 1; transform: none; } }
+
+  /* Numbers that count up, and the comparison's score race. */
+  @property --n { syntax: "<integer>"; initial-value: 0; inherits: false; }
+  .count-up { counter-reset: n var(--n); }
+  .count-up::after { content: counter(n); }
+  .clip .count-up.a { animation-name: countUp; animation-duration: 1.6s; }
+  @keyframes countUp { from { --n: 0; } to { --n: var(--to); } }
+  .race { display: flex; flex-direction: column; gap: 22px; }
+  .lane { display: grid; grid-template-columns: 64px 250px 1fr 90px; gap: 18px; align-items: center; }
+  .lane .logo { --ls: 64px; }
+  .lane .h { font-family: "Fira Code", monospace; font-size: 26px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lane .t { height: 34px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+  .lane .t span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--cyan), var(--cyan-hi)); transform-origin: left; }
+  .lane.lead .t span { background: linear-gradient(90deg, var(--cyan-hi), var(--gold)); box-shadow: 0 0 22px color-mix(in srgb, var(--gold) 50%, transparent); }
+  .lane b { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 54px; text-align: right; }
+  .clip .lane .t span.a { animation-name: grow; animation-duration: 1.4s; }
+
+  /* End card: the site just reviewed, and where to follow. */
+  .end .reviewed { display: flex; align-items: center; gap: 18px; font-family: "Fira Code", monospace; font-size: 30px; color: var(--text); background: rgba(5,12,15,.55); border: 2px solid rgba(255,255,255,.14); border-radius: 999px; padding: 10px 28px 10px 10px; }
+  .end .reviewed .logo { --ls: 64px; border-radius: 50%; }
+  .end .follow { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .end .follow small { font-size: 28px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .end .nets { display: flex; gap: 16px; }
+  .end .nets .bmark { --ls: 76px; }
   @keyframes logoIn { from { transform: rotateY(-200deg) scale(.4); } to { transform: none; } }
 </style>
 </head>
@@ -291,6 +372,77 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 const title = (lines) => lines.map((l) => "<span>" + esc(l).replace(/\*(.+?)\*/g, "<em>$1</em>") + "</span>").join("");
 const hl = (line) => esc(line).replace(/^(\s*)([\w-]+)(:)/, '$1<b>$2</b>$3').replace(/(&lt;\/?)([a-z0-9]+)/g, '$1<b>$2</b>');
 const MARKS = { pass: "✓", fail: "✕", risk: "!" };
+
+// What build.js read for this post: { host, logo, logos: { host: src }, brands, shot, bench, nets, handle }.
+let X = {};
+const logoOf = (host) => (X.logos || {})[host] || (host === X.host ? X.logo : "");
+const logo = (src, style, cls) => src ? '<span class="logo' + (cls ? " " + cls : "") + '"' + (style ? ' style="' + style + '"' : "") + '><img src="' + esc(src) + '" alt=""></span>' : "";
+const bmark = (b, style, cls) => '<span class="bmark' + (cls ? " " + cls : "") + '" title="' + esc(b.name) + '"' + (style ? ' style="' + style + '"' : "") + '><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="' + b.hex + '" d="' + b.d + '"/></svg></span>';
+const fillIn = (text, values) => String(text || "").replace(/\{(\w+)\}/g, (all, k) => values[k] !== undefined ? values[k] : all);
+// A number written as plain digits counts up; "1 in 3" or "1,200" is drawn as written.
+function countUp(value, delay) {
+  const m = String(value).match(/^(\D*?)(\d{1,4})(\D*)$/);
+  if (!m) return esc(value);
+  return esc(m[1]) + '<span class="count-up a" style="--n:' + m[2] + ";--to:" + m[2] + ";animation-delay:" + delay.toFixed(2) + 's"></span>' + esc(m[3]);
+}
+
+// The site, the competitors, or the products the post names, in a row of official marks.
+function marksRow(t0, big) {
+  const size = big ? "--ls:110px;" : "--ls:72px;";
+  let k = 0;
+  const at = () => "animation-delay:" + (t0 + .16 * k++).toFixed(2) + "s";
+  const hosts = Object.keys(X.logos || {}).filter((h) => X.logos[h]);
+  if (hosts.length > 1) return '<div class="marks">' + hosts.slice(0, 4).map((h, i) => (i ? '<span class="vs">vs</span>' : "") + logo(X.logos[h], size + at(), "a")).join("") + "</div>";
+  if (X.logo) return '<div class="marks">' + logo(X.logo, size + at(), "a") + '<span class="host">' + esc(X.host) + "</span></div>";
+  if ((X.brands || []).length) return '<div class="marks">' + X.brands.map((b) => bmark(b, size + at(), "a") + (X.brands.length <= 2 ? '<span class="bname">' + esc(b.name) + "</span>" : "")).join("") + "</div>";
+  return "";
+}
+
+function radar(areas, t0) {
+  const nums = areas.filter((a) => typeof a[1] === "number");
+  if (nums.length < 3) return "";
+  const cx = 320, cy = 290, R = 210, n = areas.length;
+  const pt = (i, r) => { const a = (-90 + 360 * i / n) * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
+  const poly = (f) => areas.map((a, i) => pt(i, f(a)).map((v) => v.toFixed(1)).join(",")).join(" ");
+  const hi = Math.max(...nums.map((a) => a[1]));
+  const lo = Math.min(...nums.map((a) => a[1]));
+  const tone = (s) => hi === lo ? "" : s === hi ? "hi" : s === lo ? "lo" : "";
+  const grid = [.25, .5, .75, 1].map((f) => '<polygon class="grid" points="' + poly(() => R * f) + '"/>').join("");
+  const axes = areas.map((a, i) => { const [x, y] = pt(i, R); return '<line class="axis-l" x1="' + cx + '" y1="' + cy + '" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '"/>'; }).join("");
+  const dots = areas.map((a, i) => typeof a[1] !== "number" ? "" : (([x, y]) => '<circle class="' + tone(a[1]) + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (tone(a[1]) ? 12 : 8) + '"/>')(pt(i, R * a[1] / 100))).join("");
+  const labels = areas.map((a, i) => { const [x, y] = pt(i, R + 52); return '<text class="' + tone(a[1]) + '" x="' + x.toFixed(1) + '" y="' + (y + 9).toFixed(1) + '" text-anchor="middle">' + esc(a[0]) + " " + (a[1] == null ? "–" : a[1]) + "</text>"; }).join("");
+  return '<svg class="radar" viewBox="0 0 640 580">' + grid + axes + '<g class="poly a" style="animation-delay:' + t0.toFixed(2) + 's"><polygon class="poly" points="' + poly((a) => R * (a[1] || 0) / 100) + '"/>' + dots + "</g>" + labels + "</svg>";
+}
+
+function benchStrip(t0) {
+  const b = X.bench;
+  if (!b || !ui.bench) return "";
+  const mine = Math.min(9, Math.floor(b.overall / 10));
+  const top = Math.max(...b.bins, 1);
+  const bars = b.bins.map((n, i) => '<i class="a' + (i === mine ? " me" : "") + '" style="--h:' + (100 * n / top).toFixed(1) + "%;animation-delay:" + (t0 + i * .07).toFixed(2) + 's">' +
+    (i === mine ? "<em>" + logo(X.logo, "", "") + b.overall + "</em>" : "") + "</i>").join("");
+  const line = b.pct >= 100 && ui.benchTop ? ui.benchTop : ui.bench;
+  return '<div class="glass bench" style="--sweep:' + (t0 + 1).toFixed(2) + 's"><div class="bins">' + bars + '</div><div class="axis"><span>0</span><span>50</span><span>100</span></div><p>' +
+    fillIn(esc(line), { pct: "<b>" + new Intl.NumberFormat(ui.locale, { style: "percent" }).format(b.pct / 100) + "</b>", n: "<b>" + b.n.toLocaleString(ui.locale) + "</b>" }) + "</p></div>";
+}
+
+function race(rows, t0) {
+  const best = Math.max(...rows.map((r) => r[1] || 0));
+  return '<div class="glass race">' + rows.slice(0, 5).map((r, i) => '<div class="lane' + (r[1] === best ? " lead" : "") + '">' + (logo(logoOf(r[0])) || "<span></span>") + '<span class="h">' + esc(r[0]) + '</span><span class="t"><span class="a" style="width:' + (r[1] || 0) + "%;animation-delay:" + (t0 + i * .2).toFixed(2) + 's"></span></span><b>' + countUp(String(r[1] == null ? "–" : r[1]), t0 + i * .2) + "</b></div>").join("") + "</div>";
+}
+
+// A 16 or 32 px favicon is drawn smaller in its tile rather than blown up into a blur.
+function smallLogos(c) {
+  return Promise.all([...c.querySelectorAll(".logo img")].map((img) => img.decode().catch(() => {}).then(() => {
+    if (img.naturalWidth && img.naturalWidth < 48 && !/svg/.test(img.src.slice(0, 30))) img.parentElement.classList.add("small");
+  })));
+}
+
+function phone(s) {
+  if (!X.shot) return "";
+  return '<div class="phone a" style="animation-delay:' + (s.start + .5).toFixed(2) + 's"><div class="screen"><img src="' + esc(X.shot) + '" alt="" style="animation-duration:' + Math.max(2, s.dur - 1.4).toFixed(2) + "s;animation-delay:" + (s.start + 1).toFixed(2) + 's"></div>' +
+    '<span class="tag">' + esc(X.host) + "</span></div>";
+}
 
 function visual(v, t0) {
   let at = t0;
@@ -323,14 +475,15 @@ function visual(v, t0) {
     };
     const big = '<div class="ring big">' + ring(v.overall, 110, "gold", step(.3)) + '<span class="n a in-up" style="animation-delay:' + (at - .1).toFixed(2) + 's">' + v.overall + "</span></div>";
     const areas = v.areas.map((a) => '<div class="area"><div class="ring">' + ring(a[1], 46, "", step(.22)) + '<span class="n">' + a[1] + "</span></div><small>" + esc(a[0]) + "</small></div>").join("");
-    return '<div class="glass"><div class="scores">' + big + '<div class="areas">' + areas + "</div></div>" + (v.note ? '<div class="scores-note">' + esc(v.note) + "</div>" : "") + "</div>";
+    const head = X.logo ? '<div class="sitehead">' + logo(X.logo, "--ls:64px") + "<span>" + esc(X.host) + "</span></div>" : "";
+    return '<div class="glass">' + head + '<div class="scores">' + big + '<div class="areas">' + areas + "</div></div>" + (v.note ? '<div class="scores-note">' + esc(v.note) + "</div>" : "") + "</div>";
   }
   if (v.type === "matrix") {
     const tone = (n) => n >= 90 ? "pass" : n >= 70 ? "risk" : "fail";
     const best = v.cols.map((c, i) => Math.max(...v.rows.map((r) => typeof r[i + 1] === "number" ? r[i + 1] : -1)));
     const cell = (n, i) => typeof n !== "number" ? '<td' + (i === 0 ? ' class="total"' : "") + ">–</td>" : '<td class="' + tone(n) + (i === 0 ? " total" : "") + (n === best[i] && v.rows.length > 1 ? " lead" : "") + '">' + n + "</td>";
     return '<div class="glass"><table class="matrix"><colgroup><col class="host"><col class="total">' + v.cols.slice(1).map(() => "<col>").join("") + '</colgroup><thead><tr><th></th>' + v.cols.map((c) => "<th>" + esc(c) + "</th>").join("") + "</tr></thead><tbody>" +
-      v.rows.map((r, k) => '<tr class="a' + (k === 0 ? " own" : "") + '" style="animation-delay:' + step(.45).toFixed(2) + 's"><td>' + esc(r[0]) + "</td>" + r.slice(1).map(cell).join("") + "</tr>").join("") +
+      v.rows.map((r, k) => '<tr class="a' + (k === 0 ? " own" : "") + '" style="animation-delay:' + step(.45).toFixed(2) + 's"><td>' + logo(logoOf(r[0])) + esc(r[0]) + "</td>" + r.slice(1).map(cell).join("") + "</tr>").join("") +
       "</tbody></table>" + (v.note ? '<div class="scores-note">' + esc(v.note) + "</div>" : "") + "</div>";
   }
   if (v.type === "quiz") {
@@ -348,7 +501,8 @@ function visual(v, t0) {
       (v.note ? '<div class="note">' + esc(v.note) + "</div>" : "") + "</div>";
   }
   if (v.type === "stat") {
-    return '<div class="glass stat"><b class="a in-up" style="animation-delay:' + step(.5).toFixed(2) + 's">' + esc(v.value) + "</b><small>" + esc(v.caption) + "</small></div>";
+    const t = step(.5);
+    return '<div class="glass stat"><b class="a in-up" style="animation-delay:' + t.toFixed(2) + 's">' + countUp(v.value, t + .2) + "</b><small>" + esc(v.caption) + "</small></div>";
   }
   return "";
 }
@@ -356,8 +510,9 @@ function visual(v, t0) {
 const UI_EN = { tryThis: "Try this", tip: "Tip", guided: "Guided tour", never: "Never runs your tests", end: "", endNote: "How a public-page review works, step by step.", locale: "en-US" };
 let ui = UI_EN;
 
-window.paint = function (tip, cat, fmt, index, total, guideHost, lang) {
+window.paint = function (tip, cat, fmt, index, total, guideHost, lang, extras) {
   ui = Object.assign({}, UI_EN, lang || {});
+  X = extras || {};
   document.documentElement.lang = ui.locale.slice(0, 2);
   const c = document.getElementById("c");
   c.className = fmt;
@@ -373,7 +528,7 @@ window.paint = function (tip, cat, fmt, index, total, guideHost, lang) {
     fusion(fmt) + '<div class="floor a"></div>' + cubes + '<div class="grain"></div>' +
     '<div class="stack">' +
       '<div class="top a in-up" style="animation-delay:.1s"><div class="brand">' + MARK + '<div><b>QA-lab</b><small>URL Review</small></div></div><span class="count">' + esc(tip.counter || ui.tip + " " + String(index + 1).padStart(2, "0") + " / " + total) + "</span></div>" +
-      '<span class="chip a in-up" style="animation-delay:.4s"><i></i>' + esc(cat.label) + "</span>" +
+      '<div class="chipline"><span class="chip a in-up" style="animation-delay:.4s"><i></i>' + esc(cat.label) + "</span>" + marksRow(.5, false).replace(/^<div class="marks">|<\/div>$/g, "") + "</div>" +
       '<h1 class="title a in-up" style="animation-delay:.7s">' + title(tip.title) + "</h1>" +
       '<p class="body a in-up" style="animation-delay:1.2s">' + esc(tip.body) + "</p>" +
       '<div class="scene"><div class="card3d a" style="animation-delay:1.5s">' + visual(tip.visual, 2.6) + "</div></div>" +
@@ -382,7 +537,7 @@ window.paint = function (tip, cat, fmt, index, total, guideHost, lang) {
     "</div>" +
     (fmt === "clip" ? '<div class="end a" style="animation-delay:10s">' + MARK + "<h2>" + (ui.end ? esc(ui.end) : 'Let your page<br><em style="font-style:italic">do the talking.</em>') + "</h2><p>" + esc(ui.endNote) + '</p><span class="url">' + esc(guideHost) + "</span></div>" : "");
   if (fmt !== "clip") c.querySelectorAll(".a").forEach((el) => { el.style.animation = "none"; });
-  return document.fonts.ready.then(() => {
+  return Promise.all([document.fonts.ready, smallLogos(c)]).then(() => {
     const scene = c.querySelector(".scene");
     const card = c.querySelector(".card3d");
     const room = scene.clientHeight * 0.94;
@@ -414,8 +569,10 @@ function hookTitle(lines, t0) {
   }).join(" ") + "</span>").join("");
 }
 
-window.paintClip = function (tip, cat, index, total, guideHost, lang, scenes) {
+window.paintClip = function (tip, cat, index, total, guideHost, lang, scenes, extras) {
   ui = Object.assign({}, UI_EN, lang || {});
+  X = extras || {};
+  const v = tip.visual || {};
   const label = (key) => (lang && lang[key]) || (ui.locale.startsWith("en") ? CLIP_EN[key] : "");
   document.documentElement.lang = ui.locale.slice(0, 2);
   const c = document.getElementById("c");
@@ -433,16 +590,22 @@ window.paintClip = function (tip, cat, index, total, guideHost, lang, scenes) {
     const [enter, leave] = SWAP[s.id];
     return '<section class="sc ' + s.id + '" style="animation:' + enter + " .9s cubic-bezier(.2,.8,.2,1) " + sec(s.start) + " both, " + leave + " .6s cubic-bezier(.6,0,.8,.3) " + sec(s.start + s.dur - .6) + ' forwards"><div class="in">' + inner + "</div></section>";
   };
-  const body = { hook: (s) => '<span class="chip a in-up" style="animation-delay:' + sec(s.start + .3) + '"><i></i>' + esc(cat.label) + "</span>" +
-      '<h1 class="title fit">' + hookTitle(tip.title, s.start + .45) + "</h1>",
-    why: (s) => (label("why") ? '<div class="kicker">' + esc(label("why")) + "</div>" : "") + '<p class="say fit">' + karaoke(tip.body, s.voiceAt, s.voiceDur) + "</p>",
+  const body = { hook: (s) => {
+      const head = '<span class="chip a in-up" style="animation-delay:' + sec(s.start + .3) + '"><i></i>' + esc(cat.label) + "</span>" + marksRow(s.start + .4, true) +
+        '<h1 class="title fit">' + hookTitle(tip.title, s.start + .45) + "</h1>";
+      return X.shot ? '<div class="split"><div class="col">' + head + "</div>" + phone(s) + "</div>" : head;
+    },
+    why: (s) => (label("why") ? '<div class="kicker">' + esc(label("why")) + "</div>" : "") + '<p class="say fit">' + karaoke(tip.body, s.voiceAt, s.voiceDur) + "</p>" +
+      (v.type === "matrix" ? race(v.rows, s.voiceAt + .6) : ""),
     look: (s) => '<span class="chip"><i></i>' + esc(cat.label) + '</span><div class="stage"><div class="orbit" style="animation-duration:' + sec(s.dur) + ";animation-delay:" + sec(s.start) +
-      '"><div class="card3d a" style="animation-delay:' + sec(s.start + .15) + ";--sweep:" + sec(s.start + 2.6) + '">' + visual(tip.visual, s.start + 1.1) + "</div></div></div>",
+      '"><div class="card3d a" style="animation-delay:' + sec(s.start + .15) + ";--sweep:" + sec(s.start + 2.6) + '">' + visual(tip.visual, s.start + 1.1) + "</div></div></div>" +
+      (v.type === "scores" ? benchStrip(s.start + 2.4) : ""),
     more: (s) => {
       const lead = label("more");
       const spoken = (lead ? lead + " " : "") + tip.more;
       const shift = s.voiceDur * (lead ? (lead.length + 1) / spoken.length : 0);
       return '<div class="glass fact" style="--sweep:' + sec(s.start + 1) + '"><span class="glyph">?</span>' + (lead ? '<div class="kicker">' + esc(lead) + "</div>" : "") +
+        (v.type === "scores" ? radar(v.areas, s.start + .6) : "") +
         '<p class="say fit">' + karaoke(tip.more, s.voiceAt + shift, s.voiceDur - shift) + "</p></div>";
     },
     fix: (s) => {
@@ -458,8 +621,12 @@ window.paintClip = function (tip, cat, index, total, guideHost, lang, scenes) {
     '<div class="progress">' + scenes.map((s) => '<i style="--w:' + s.dur.toFixed(2) + '"><b style="animation-duration:' + sec(s.dur) + ";animation-delay:" + sec(s.start) + '"></b></i>').join("") + "</div>" +
     '<div class="masthead top a in-up" style="animation-delay:.1s"><div class="brand">' + MARK + '<div><b>QA-lab</b><small>URL Review</small></div></div><span class="count">' + esc(tip.counter || ui.tip + " " + String(index + 1).padStart(2, "0") + " / " + total) + "</span></div>" +
     '<div class="rig" style="' + L + '">' + scenes.filter((s) => body[s.id]).map((s) => scene(s, body[s.id](s))).join("") + "</div>" +
-    '<div class="end a" style="animation-delay:' + sec(end.start) + '">' + MARK + "<h2>" + (ui.end ? esc(ui.end) : 'Let your page<br><em style="font-style:italic">do the talking.</em>') + "</h2><p>" + esc(ui.endNote) + '</p><span class="url">' + esc(guideHost) + "</span></div>";
-  return document.fonts.ready.then(() => {
+    '<div class="end a" style="animation-delay:' + sec(end.start) + '">' + MARK + "<h2>" + (ui.end ? esc(ui.end) : 'Let your page<br><em style="font-style:italic">do the talking.</em>') + "</h2><p>" + esc(ui.endNote) + '</p><span class="url">' + esc(guideHost) + "</span>" +
+      (X.logo && ui.reviewed ? '<span class="reviewed">' + logo(X.logo) + esc(ui.reviewed) + " · " + esc(X.host) + "</span>" : "") +
+      ((X.nets || []).length && ui.follow ? '<div class="follow"><small>' + esc(ui.follow) + " " + esc(X.handle || "") + '</small><div class="nets">' + X.nets.map((b) => bmark(b)).join("") + "</div></div>" : "") + "</div>";
+  const shot = c.querySelector(".phone img");
+  const ready = shot ? shot.decode().catch(() => {}).then(() => { shot.style.setProperty("--scroll", Math.min(0, shot.parentElement.clientHeight - shot.offsetHeight) + "px"); }) : Promise.resolve();
+  return Promise.all([document.fonts.ready, ready, smallLogos(c)]).then(() => {
     c.querySelectorAll(".sc").forEach((sc) => {
       const box = sc.firstElementChild;
       for (let k = 0; k < 12 && box.offsetHeight > sc.clientHeight; k += 1) {

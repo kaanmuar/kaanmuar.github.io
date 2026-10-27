@@ -42,6 +42,9 @@ GLOSSARY = {
     "Your guess:": {"es": "Tu apuesta:", "pt": "Seu palpite:", "de": "Ihr Tipp:", "fr": "Votre pronostic\u00a0:", "it": "La tua ipotesi:"},
     "Spot it:": {"es": "Detéctalo:", "pt": "Confira:", "de": "Erkennen Sie es:", "fr": "Repérez-le\u00a0:", "it": "Trovalo:"},
     "Guide:": {"es": "Guía:", "pt": "Guia:", "de": "Leitfaden:", "fr": "Guide\u00a0:", "it": "Guida:"},
+    # A run of the review, never a race: on its own the translator says Carrera, Corrida, Course, Corsa or Lauf.
+    "Real run": {"es": "Análisis real", "pt": "Análise real", "de": "Echte Prüfung", "fr": "Analyse réelle", "it": "Analisi reale"},
+    "Real runs": {"es": "Análisis reales", "pt": "Análises reais", "de": "Echte Prüfungen", "fr": "Analyses réelles", "it": "Analisi reali"},
 }
 
 # The register each language speaks to the viewer in: tú, você and tu, but Sie and vous. These are the forms of the
@@ -142,6 +145,9 @@ def fill(texts, lang, cache):
     with a glossary label sends only the rest."""
     if lang == "en":
         return
+    # A label said on its own takes the glossary's wording over anything the cache learned before it was listed.
+    for p in (p for t in texts for p in pieces(t) if p in GLOSSARY):
+        cache[lang + "\x00" + p] = GLOSSARY[p][lang]
     asked = {}
     for p in dict.fromkeys(p for t in texts for p in pieces(t) if lang + "\x00" + p not in cache):
         name, rest = label(p)
