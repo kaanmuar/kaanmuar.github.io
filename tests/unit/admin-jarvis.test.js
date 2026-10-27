@@ -1069,7 +1069,7 @@ test("rerunCi re-runs the failed jobs of the newest failed run on main, and says
   await assert.rejects(() => jarvis.rerunCi(fetchOk, "t", "Nope"), /No finished run/);
   const fetchNo = async (url) => (/rerun-failed-jobs/.test(url) ? json({ message: "Resource not accessible" }, 403) : json(runs));
   await assert.rejects(() => jarvis.rerunCi(fetchNo, "t", "Buffer batch queue"), /Actions: write/);
-  await assert.rejects(() => jarvis.rerunCi(fetchOk, "", "Deploy"), /GITHUB_BUGS_TOKEN/);
+  await assert.rejects(() => jarvis.rerunCi(fetchOk, "", "Deploy"), /No GitHub token/);
 });
 
 test("decideRatings approves or rejects pending ratings only, and briefItems lists them without test senders", async () => {
