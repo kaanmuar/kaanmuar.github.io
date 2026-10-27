@@ -5,9 +5,155 @@
     <link>https://carlosandmunoz.com/qa-review-social-it.html</link>
     <description>Ogni post di QA-lab URL Review: consigli, revisioni reali di siti e clip brevi.</description>
     <language>it</language>
-    <lastBuildDate>Mon, 26 Oct 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 27 Oct 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-it.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-it.html</link></image>
+    <item>
+      <title>lamega.com.co: 63. La lacuna: i titoli delle pagine.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-22/05-u-lamega-com-co-it.html</link>
+      <guid isPermaLink="false">auto-2026-10-22/05-u-lamega-com-co-it</guid>
+      <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Requested</category>
+      <description>Le card di condivisione hanno titolo, descrizione, immagine e URL, e i crawler AI di risposta e di ricerca possono leggere la pagina iniziale. Ma 1 pagina non ha un titolo.
+
+La lezione per ogni team: Dai a ogni pagina un titolo unico di circa 60 caratteri: prima la pagina, poi il sito.
+
+Un’analisi automatica di pagine pubbliche: 21 ott. 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-lamega-com-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-lamega-com-co
+
+#SEO #Titles #SERP #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/05-u-lamega-com-co.jpg" length="207080" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/05-u-lamega-com-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>nibo.com.br: 79. La lacuna: il contrasto del testo.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-24/03-u-nibo-com-br-it.html</link>
+      <guid isPermaLink="false">auto-2026-10-24/03-u-nibo-com-br-it</guid>
+      <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>National</category>
+      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma gli elementi devono rispettare le soglie minime di contrasto dei colori.
+
+La lezione per ogni team: Mantieni il testo con un rapporto di contrasto di almeno 4.5:1 rispetto allo sfondo.
+
+Un’analisi automatica di pagine pubbliche: 24 ott. 2026, uno dei siti più visitati del suo paese, dallo sweep per paese di QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-nibo-com-br&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-nibo-com-br
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #Automation #QA #Contrast #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/03-u-nibo-com-br.jpg" length="206495" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/03-u-nibo-com-br.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>corporacionjaar.com: 59. La lacuna: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-25/02-u-corporacionjaar-com-it.html</link>
+      <guid isPermaLink="false">auto-2026-10-25/02-u-corporacionjaar-com-it</guid>
+      <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>National</category>
+      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma HSTS non viene inviato.
+
+La lezione per ogni team: Invia Strict-Transport-Security con un max-age di almeno un anno, così i browser non tornano mai su http in chiaro.
+
+Un’analisi automatica di pagine pubbliche: 24 ott. 2026, uno dei siti più visitati del suo paese, dallo sweep per paese di QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-corporacionjaar-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-corporacionjaar-com
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #CyberSecurity #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/02-u-corporacionjaar-com.jpg" length="206688" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/02-u-corporacionjaar-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>hubspot.com: 55. La lacuna: il contrasto del testo.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-26/01-u-hubspot-com-it.html</link>
+      <guid isPermaLink="false">auto-2026-10-26/01-u-hubspot-com-it</guid>
+      <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Requested</category>
+      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma gli elementi devono rispettare le soglie minime di contrasto dei colori.
+
+La lezione per ogni team: Mantieni il testo con un rapporto di contrasto di almeno 4.5:1 rispetto allo sfondo.
+
+Un’analisi automatica di pagine pubbliche: 25 ott. 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-hubspot-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-hubspot-com
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #SoftwareTesting #QA #Contrast #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/01-u-hubspot-com.jpg" length="206386" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/01-u-hubspot-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Berlino 86, Vienna 85. Un punto di differenza.</title>
+      <link>https://carlosandmunoz.com/social/compare-2026-11/02-berlin-vienna-it.html</link>
+      <guid isPermaLink="false">compare-2026-11/02-berlin-vienna-it</guid>
+      <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Confronto</category>
+      <category>Local</category>
+      <description>Vienna è avanti nella SEO di 19 punti, 94 a 75. Berlino risponde nella sicurezza, 86 a 72, e nell'accessibilità, 97 a 85. GEO, analytics e velocità sono in parità.
+
+Lezione: Un punto di vantaggio può nascondere un divario di 19 punti. Guarda i punteggi per area del tuo sito, non solo il totale.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=berlin-vienna
+
+#WebQuality #SoftwareTesting #DevOps #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/02-berlin-vienna.jpg" length="204633" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/02-berlin-vienna.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Abbiamo analizzato noi stessi. Sicurezza: 54.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/03-self-review-it.html</link>
+      <guid isPermaLink="false">tips-2026-10/03-self-review-it</guid>
+      <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Consiglio</category>
+      <category>Field</category>
+      <description>Il nostro sito ha preso 86 di punteggio complessivo, e la sicurezza era l’area più debole. Le sei correzioni in cima alla lista erano tutte header di risposta.
+
+Provalo oggi: Fai lo stesso controllo degli header sul tuo sito. Le prime correzioni di solito sono configurazione, non codice.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=self-review
+
+#QA #WebSecurity #BuildInPublic #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/03-self-review.jpg" length="196456" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/03-self-review.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>La pagina più lenta raramente è la home.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/04-slowest-page-it.html</link>
+      <guid isPermaLink="false">tips-2026-10/04-slowest-page-it</guid>
+      <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Consiglio</category>
+      <category>Perf</category>
+      <description>I team ottimizzano la home page e dimenticano le pagine a cui le persone arrivano dalla ricerca. Misura ogni pagina che linki, nell’ordine in cui un visitatore le aprirebbe.
+
+Provalo oggi: Prendi dagli analytics le cinque pagine più visitate e cronometra ognuna. Sistema prima la più lenta.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=slowest-page
+
+#WebPerformance #CoreWebVitals #QA #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/04-slowest-page.jpg" length="200382" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/04-slowest-page.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>La CSP mancante: qualsiasi cosa può strisciare dentro.</title>
+      <link>https://carlosandmunoz.com/social/tips-horror-headers-2026-10/01-missing-csp-it.html</link>
+      <guid isPermaLink="false">tips-horror-headers-2026-10/01-missing-csp-it</guid>
+      <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Serie</category>
+      <category>Security</category>
+      <description>Senza l’intestazione Content-Security-Policy, il browser esegue qualsiasi script finisca nella tua pagina, compreso uno iniettato da un attaccante.
+
+Esorcizzalo oggi: Controlla se le intestazioni di risposta contengono Content-Security-Policy. Parti in modalità report-only, leggi i report, poi applica la policy.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=horror-headers-2026-10&amp;utm_content=missing-csp
+
+#Halloween #CyberSecurity #Vulnerability #QA #CSP #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/01-missing-csp.jpg" length="213873" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/01-missing-csp.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>telegram.com: 61. La lacuna: Accesso dei crawler AI.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/04-u-telegram-com-it.html</link>
