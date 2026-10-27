@@ -19,7 +19,8 @@
    Clips take six languages in turn (en, es, pt, de, fr, it; woman, then man), starting --lang-offset N
    along that cycle: the card, voice, and TikTok/YouTube captions are all in the clip's language.
    A render exports the strings and runs translate.py first (--no-translate skips it); a clip still
-   untranslated speaks English, and a clip that comes out silent stops the build.
+   untranslated speaks English, and a clip that comes out silent stops the build. A translation in the wrong
+   register (usted, du) stops it too, except in CI, where that clip goes out in English.
    To translate by hand or by agent instead, fill <batch>/i18n.json in translate.py's format, then rebuild its
    cache with translate.py <batch> --seed so a later render does not send every string back to the translator:
      node scripts/tips-studio/build.js --source runs-100 --export-strings
@@ -455,7 +456,9 @@ function rewriteCaptions(all, networks) {
 
   if (!opts["skip-video"] && !opts["schedule-only"] && !opts["no-translate"]) {
     exportStrings(all);
-    const run = spawnSync(process.env.PYTHON || "python3", [path.join(__dirname, "translate.py"), OUT], { stdio: "inherit" });
+    const args = [path.join(__dirname, "translate.py"), OUT].concat(process.env.CI ? ["--drop-slips"] : []);
+    const run = spawnSync(process.env.PYTHON || "python3", args, { stdio: "inherit" });
+    if (run.status === 3) { console.error("translations speak in the wrong register; nothing was rendered"); process.exit(1); }
     if (run.status !== 0) console.warn("translation failed; untranslated clips speak English");
   }
   const i18n = loadI18n();
