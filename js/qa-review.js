@@ -836,7 +836,7 @@
       '<article class="card" data-card="practices"><h2>' + esc(rc.t("visAdvice")) + '</h2><div class="advice">' + adviceHtml + "</div></article>";
     const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString(rc.lang) : "";
     slot("report-cover").innerHTML =
-      '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261013c" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || rc.t("dashTitle")) + '</h2><p class="muted">' + esc(when) + "</p>" +
+      '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261027a" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || rc.t("dashTitle")) + '</h2><p class="muted">' + esc(when) + "</p>" +
       (report.signature ? '<p class="sign-line">' + esc(report.signature.mark) + "</p>" : "") + "</div>" +
       '<div><p class="report-kicker">' + esc(rc.t("coverCases", { n: (report.counts && report.counts.cases) || 0 })) + "</p><p>" + esc(report.statement || "") + "</p></div>";
     if (!slotRoot) document.getElementById("print-mark").textContent = "";
