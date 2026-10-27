@@ -1,0 +1,65 @@
+{
+ "version": 1,
+ "posts": {
+  "auto-2026-10-25/01-u-kemik-gt": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mytb2f6ozs27",
+    "at": "2026-10-27T03:07:53.765Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mytb2f6ozs27",
+    "checked": "2026-10-27T03:07:55.226Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117510667006079826",
+    "at": "2026-10-27T03:07:58.922Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117510667006079826",
+    "checked": "2026-10-27T03:08:00.590Z"
+   }
+  ],
+  "compare-2026-11/01-quiz-berlin-vienna": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mytb2dulow25",
+    "at": "2026-10-27T03:07:52.256Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mytb2dulow25",
+    "checked": "2026-10-27T03:07:53.765Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117510666895440331",
+    "at": "2026-10-27T03:07:57.452Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117510666895440331",
+    "checked": "2026-10-27T03:07:58.922Z"
+   }
+  ],
+  "tips-2026-10/01-img-size": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mytb2gkkqx2i",
+    "at": "2026-10-27T03:07:55.226Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mytb2gkkqx2i",
+    "checked": "2026-10-27T03:07:56.569Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117510667092654844",
+    "at": "2026-10-27T03:08:00.590Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117510667092654844",
+    "checked": "2026-10-27T03:08:01.925Z"
+   }
+  ]
+ }
+}

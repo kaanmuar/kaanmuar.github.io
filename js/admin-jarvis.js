@@ -5,6 +5,7 @@
    collections, Cloud Scheduler, GitHub, GA4, Cloudflare, PageSpeed/CrUX, uptime, Gemini, and the owner actions.
    The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { collection, query, where, orderBy, limit, getDocs, getDoc, doc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { createBrowserPush, productOf } from "./admin-jarvis-push.js";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -148,6 +149,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
       <div class="jv-palette" hidden><div class="jv-palette-box" role="dialog" aria-label="Command bar"><input id="jv-cmd" type="text" placeholder="Type a command, a product, or ask Jarvis anything…" autocomplete="off"><ul id="jv-cmd-list" role="listbox"></ul><p class="jv-note">↑↓ to move · Enter to run · Esc to close · end with ? to ask Gemini</p></div></div>
       <div class="jv-settings" hidden><form class="jv-settings-box" data-settings role="dialog" aria-label="Jarvis settings"></form></div>
       <div class="jv-sheet" data-sheet-root hidden><section class="jv-sheet-box" role="dialog" aria-modal="true" aria-label="Briefing line"></section></div>
+      <div class="jv-reply" hidden><form class="jv-reply-box" data-reply role="dialog" aria-label="Reply"></form></div>
+      <div class="jv-pushes" aria-live="polite"></div>
       <div class="jv-toast" role="status" hidden></div>
     </div>`;
     const root = host.querySelector('.jv');
@@ -1435,6 +1438,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
               <label class="jv-check"><input type="checkbox" name="m-watch"${d.mail.watch ? ' checked' : ''}> Watch every hour and mail an alert once a day per issue (pages down, TLS, failed jobs, failed runs)</label>
               <label class="jv-check"><input type="checkbox" name="m-weekly"${d.mail.weekly ? ' checked' : ''}> Weekly strategy on Sunday at 19:00 (Bogotá): four weeks side by side, the proposals and the plan for next week</label>
               <div class="jv-actions"><button type="button" class="jv-btn" data-act="daily-now">Send today's briefing now</button><button type="button" class="jv-btn" data-act="weekly-now">Send the weekly strategy now</button></div></section>
+            <section data-bp-section></section>
             <section><h4>Actions</h4>
               <label class="jv-check"><input type="checkbox" name="a-auto"${d.actions.auto ? ' checked' : ''}> Let Jarvis run the safe actions on its own every hour, within these daily caps</label>
               <div class="jv-th-grid">${Object.keys(ACTION_CAPS).map((k) => `<label class="jv-field">${esc(ACTION_LABELS[k].replace(/^./, (c) => c.toUpperCase()))} per day<input type="number" name="a-cap-${k}" min="0" max="100" step="1" value="${esc(d.actions.caps[k])}"></label>`).join('')}</div>
@@ -1447,7 +1451,75 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             <section><h4>Search rankings</h4><label class="jv-field">Searches to rank on Brave, one per line (up to 8)<textarea name="s-queries" rows="5" placeholder="${esc(C.SEARCH_QUERIES.join('\n'))}">${esc((d.searchQueries || []).join('\n'))}</textarea></label>
               <p class="jv-note">Left empty, Jarvis checks the default searches shown. Brave is asked once a day.</p></section>
             <footer><span class="jv-note">${S.settings && S.settings.updatedAt ? 'Saved ' + esc(when(S.settings.updatedAt)) : 'Using the defaults'}</span><button type="button" class="jv-btn" data-settings-close>Cancel</button><button type="submit" class="jv-btn is-primary">Save</button></footer>`;
+        bp.paint($('[data-bp-section]'));
     }
+
+    // --- pushes in the page (#1671) -------------------------------------------------------------------------
+
+    const bp = createBrowserPush({ call, toast, esc });
+    const pushes = [];
+
+    function pushCard(msg) {
+        const i = pushes.push(msg) - 1;
+        const card = document.createElement('div');
+        card.className = 'jv-push';
+        card.dataset.push = String(i);
+        card.innerHTML = `<strong>${esc(msg.title)}</strong><p>${esc(msg.body)}</p>
+            <div class="jv-actions">${(msg.ref ? msg.actions || [] : []).map((a, n) => `<button type="button" class="jv-btn small" data-push-act="${n}">${esc(a.label)}</button>`).join('')}
+            <button type="button" class="jv-btn small" data-push-open>Open</button><button type="button" class="jv-btn small" data-push-close aria-label="Close">✕</button></div>`;
+        $('.jv-pushes').prepend(card);
+        if (msg.quiet) setTimeout(() => card.remove(), 8000);
+    }
+
+    async function pushAct(card, n) {
+        const msg = pushes[Number(card.dataset.push)];
+        const a = msg && (msg.actions || [])[n];
+        if (!a) return;
+        if (a.input) { card.remove(); openReply(msg); return; }
+        card.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+        const out = await call('notify-act', { ref: msg.ref, act: a.act });
+        toast(out.ok ? out.message || 'Done.' : 'Not done: ' + out.error, 6000);
+        if (out.ok) card.remove(); else card.querySelectorAll('button').forEach((b) => { b.disabled = false; });
+    }
+
+    function openFromPush(msg) {
+        if (msg.url) { window.open(msg.url, '_blank', 'noopener'); return; }
+        const key = productOf(msg.tab, C.PRODUCTS.map((p) => p.key));
+        if (key) go(key);
+    }
+
+    function openReply(msg) {
+        S.reply = { ref: String(msg.ref || ''), title: String(msg.title || ''), body: String(msg.body || '') };
+        $('[data-reply]').innerHTML = `<header><h3>${esc(S.reply.title || 'Reply')}</h3><button type="button" class="jv-btn small" data-reply-close aria-label="Close">✕</button></header>
+            <section><blockquote class="jv-note">${esc(S.reply.body)}</blockquote>
+              <label class="jv-field">Your reply, emailed to them now<textarea name="text" rows="7" minlength="10" required></textarea></label></section>
+            <footer><span class="jv-note">At least 10 characters. It goes out like the Respond button's reply.</span><button type="button" class="jv-btn" data-reply-close>Cancel</button><button type="submit" class="jv-btn is-primary">Send</button></footer>`;
+        $('.jv-reply').hidden = false;
+        $('[data-reply] textarea').focus();
+    }
+
+    async function sendReply(form) {
+        const text = form.text.value.trim();
+        if (text.length < 10) { toast('A reply needs at least 10 characters.', 4000); return; }
+        toast('Sending…');
+        const out = await call('notify-act', { ref: S.reply.ref, act: 'reply', text });
+        if (!out.ok) { toast('Not sent: ' + out.error, 6000); return; }
+        $('.jv-reply').hidden = true;
+        toast(out.message || 'Reply sent.');
+    }
+
+    /** ?jarvis=<tab> or ?jarvis=reply&ref=…: from a browser notification, once Jarvis is showing. */
+    function openLink(params) {
+        const j = params.get('jarvis');
+        if (!j) return;
+        if (j === 'reply' && /^(message|rating):/.test(params.get('ref') || '')) openReply({ ref: params.get('ref'), title: params.get('title'), body: params.get('body') });
+        else { const key = productOf(j, C.PRODUCTS.map((p) => p.key)); if (key) go(key); }
+        const url = new URL(window.location.href);
+        ['jarvis', 'ref', 'title', 'body'].forEach((k) => url.searchParams.delete(k));
+        history.replaceState({}, '', url.pathname + url.search + url.hash);
+    }
+
+    if (bp.supported) navigator.serviceWorker.addEventListener('message', (event) => { if (event.data && event.data.jarvisPush) pushCard(event.data.jarvisPush); });
 
     function readSettings() {
         const form = $('.jv-settings-box');
@@ -1520,6 +1592,11 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.briefHidden !== undefined) { S.showHidden = !S.showHidden; render(); return; }
         if (t.dataset.sheet !== undefined) { sheetAct(t); return; }
         if (t.dataset.settingsClose !== undefined) { closeSettings(); return; }
+        if (t.dataset.bp) { bp.handle($('[data-bp-section]'), t.dataset.bp); return; }
+        if (t.dataset.replyClose !== undefined) { $('.jv-reply').hidden = true; return; }
+        if (t.dataset.pushAct) { pushAct(t.closest('.jv-push'), Number(t.dataset.pushAct)); return; }
+        if (t.dataset.pushOpen !== undefined) { const card = t.closest('.jv-push'); openFromPush(pushes[Number(card.dataset.push)] || {}); card.remove(); return; }
+        if (t.dataset.pushClose !== undefined) { t.closest('.jv-push').remove(); return; }
         if (t.dataset.goalAdd !== undefined) { const d = readSettings(); d.goals.push({ product: 'cv', metric: 'visits', period: 'week', target: '' }); paintSettings(d); return; }
         if (t.dataset.goalRemove !== undefined) { const d = readSettings(); d.goals.splice(Number(t.dataset.goalRemove), 1); paintSettings(d); return; }
         if (t.dataset.thReset !== undefined) { const d = readSettings(); d.thresholds = C.thresholds({}); paintSettings(d); return; }
@@ -1560,6 +1637,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     });
     root.addEventListener('change', (event) => {
         if (event.target.dataset.shareFile !== undefined) { S.share.file = event.target.files[0] || null; render(); return; }
+        if (event.target.dataset.bpKind) { bp.kindChanged(event.target.dataset.bpKind, event.target.checked); return; }
         if (event.target.name !== 'g-product') return;
         const d = readSettings();
         const i = Number(event.target.closest('[data-goal]').dataset.goal);
@@ -1571,6 +1649,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const form = event.target;
         event.preventDefault();
         if (form.dataset.settings !== undefined) { saveSettings(); return; }
+        if (form.dataset.reply !== undefined) { sendReply(form); return; }
         if (form.dataset.ask !== undefined) {
             const q = form.q.value.trim();
             if (q) run(C.parseCommand(q).type === 'ask' ? { type: 'ask', question: q } : C.parseCommand(q));
@@ -1628,7 +1707,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             greet();
             if (!S.mounted) { S.mounted = true; refresh(); } else { compute(); render(); }
             writeHash();
+            openLink(new URLSearchParams(window.location.search));
         },
+        open(search) { openLink(new URLSearchParams(search)); },
         inboxChanged() { if (S.mounted) { compute(); render(); } },
         state: S,
         run,

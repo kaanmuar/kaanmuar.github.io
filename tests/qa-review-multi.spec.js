@@ -1368,6 +1368,75 @@ test('a long list opens in place with Show all and folds back with Show fewer, n
 
 // One site sends most headers on its start page and drops some on 39 more pages, one sends every header on all
 // its pages, and the sample sends none.
+test('the cookies, the sitemap notes and the pages of a finding show six, open the rest in place with Show all, and print keeps six (#1687)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const records = manyUnindexable();
+  records[2].report = Object.assign({}, records[2].report, { browser: busyBrowser() });
+  const seen = { saved: [], deleted: [], pdf: [] };
+  await signIn(page, records, '/qa-review.html?comparison=cmp1', seen);
+  const box = page.locator('#multi-overlay');
+  await expect(box.locator('.multi-sec[data-sec="seo"] .multi-cell')).toHaveCount(6, { timeout: 20000 });
+
+  const notes = box.locator('.multi-sec[data-sec="seo"] .multi-cell[data-col="0"] [data-part="notes"]');
+  const note = notes.locator('.meta-line', { has: page.locator('.list-more') }).first();
+  expect(await note.innerText()).not.toContain('a-long-path-name-2');
+  await expect(note.locator('.list-more')).toHaveText('Show all 14');
+  await note.locator('.list-more').click();
+  await expect(note).toContainText('/sitemap-only/a-long-path-name-13');
+  await expect(note.locator('.list-dots')).toBeHidden();
+  await expect(note.locator('.list-more')).toHaveText('Show fewer');
+  await expect(note.locator('.list-more')).toHaveAttribute('aria-expanded', 'true');
+  expect(await note.evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+
+  const browserCell = box.locator('.multi-sec[data-sec="browser"] .multi-cell[data-col="2"]');
+  const cookies = browserCell.locator('td', { has: page.locator('.list-more') }).first();
+  await cookies.evaluate((cell) => {
+    const table = cell.closest('table');
+    const after = (table.parentElement.classList.contains('table-scroll') ? table.parentElement : table).nextElementSibling;
+    if (after && after.matches('.multi-show') && after.getAttribute('aria-expanded') !== 'true') after.click();
+  });
+  await expect(cookies.locator('.list-more')).toHaveText('Show all 9');
+  expect(await cookies.innerText()).not.toContain('_ga_LONGCOOKIENAME6');
+  await cookies.locator('.list-more').click();
+  await expect(cookies).toContainText('_ga_LONGCOOKIENAME8');
+
+  const findings = box.locator('.multi-sec[data-sec="findings"] .multi-cell[data-col="0"]');
+  await findings.locator('[data-group="Accessibility"] .group-toggle').click();
+  const finding = findings.locator('details.finding', { has: page.locator('.id', { hasText: 'F-01' }) });
+  await finding.locator('summary').click();
+  await expect(finding.locator('.list-more')).toHaveText('Show all 10');
+  await expect(finding.locator('.list-rest')).toBeHidden();
+  await finding.locator('.list-more').click();
+  await expect(finding.locator('.list-rest')).toBeVisible();
+  await expect(finding).toHaveAttribute('open', '');
+
+  await page.evaluate(() => document.body.classList.add('printing-multi'));
+  await page.emulateMedia({ media: 'print' });
+  for (const list of [note, finding]) {
+    await expect(list.locator('.list-rest')).toBeHidden();
+    await expect(list.locator('.list-dots')).toBeVisible();
+    await expect(list.locator('.list-more')).toBeHidden();
+  }
+  await expect(cookies.locator('.list-more')).toBeHidden();
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.body.classList.remove('printing-multi'));
+  await box.getByRole('button', { name: 'Download PDF' }).click();
+  await expect(box.locator('#multi-status')).toHaveText('The PDF is downloaded.');
+  expect(seen.pdf[0]).not.toMatch(/class="list-more/);
+  expect(seen.pdf[0]).not.toMatch(/class="list-rest"(?! hidden)/);
+});
+
+test('Search visibility says no page was checked for indexability when the run read none, not that every page can be indexed (#1623)', async ({ page }) => {
+  await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
+  const cells = page.locator('#multi-overlay .multi-sec[data-sec="seo"] .multi-cell');
+  await expect(cells).toHaveCount(3, { timeout: 20000 });
+  const empty = cells.and(page.locator('[data-col="0"]'));
+  await expect(empty.locator('.stat').first().locator('b')).toHaveText('—');
+  await expect(empty).toContainText('No page was checked for indexability in this run.');
+  await expect(empty).not.toContainText('Every page that was analyzed can be indexed');
+  await expect(cells.and(page.locator('[data-col="2"]')).locator('.stat').first().locator('b')).toHaveText(/^\d+ \/ 10$/);
+});
+
 function recordsWithHeaders() {
   const tiles = (extra) => ['HTTPS redirect', 'HSTS', 'Content-Security-Policy', 'Frame protection', 'X-Content-Type-Options', 'Referrer-Policy', 'Permissions-Policy',
     'Cross-Origin-Opener-Policy', 'TLS certificate', 'security.txt', 'SPF', 'DMARC', 'CAA', 'Safe Browsing', 'Domain expiry'].concat(extra).map((label, i) => ({ label, state: ['pass', 'risk', 'fail'][i % 3] }));
