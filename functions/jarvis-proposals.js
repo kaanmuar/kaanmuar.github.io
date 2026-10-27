@@ -55,6 +55,27 @@ async function mark(db, { key, status, title }, by, now) {
   return row;
 }
 
+// Briefing lines (#1695): jarvis_brief_marks/<key>, snoozed for a day or a week, dismissed for 30 days (core.openBrief).
+async function savedBrief(db) {
+  const snap = await db.collection("jarvis_brief_marks").limit(500).get().catch(() => null);
+  return snap ? snap.docs.map((doc) => doc.data()) : [];
+}
+
+async function markBrief(db, { key, status, text: line }, by, now) {
+  const k = text(key, 140);
+  if (!k) throw new Error("Which briefing line?");
+  const ref = db.collection("jarvis_brief_marks").doc(docId(k));
+  if (status === "open") {
+    await ref.delete();
+    return { key: k, status: "open" };
+  }
+  const days = core.BRIEF_HIDE_DAYS[status];
+  if (!days) throw new Error("Snooze or dismiss the line.");
+  const row = { key: k, status, text: text(line, 240), at: new Date(now).toISOString(), until: new Date(now + days * DAY).toISOString(), by: text(by, 120) };
+  await ref.set(row);
+  return row;
+}
+
 function parseJson(raw) {
   const body = String(raw || "").replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
   const start = body.indexOf("{");
@@ -247,4 +268,4 @@ function weeklyMail({ hist, proposals, aiText }) {
   };
 }
 
-module.exports = { HIDE_DAYS, WEEK_ROWS, docId, cleanCandidates, saved, mark, parseJson, rankPrompt, mergeRanked, rank, mailLines, weekWindows, weekSum, pointValues, ga4Weeks, history, strategyPrompt, weeklyMail };
+module.exports = { HIDE_DAYS, WEEK_ROWS, docId, cleanCandidates, saved, mark, savedBrief, markBrief, parseJson, rankPrompt, mergeRanked, rank, mailLines, weekWindows, weekSum, pointValues, ga4Weeks, history, strategyPrompt, weeklyMail };
