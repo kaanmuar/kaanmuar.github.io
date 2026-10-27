@@ -46,7 +46,7 @@ jobs:
         run: node scripts/build-social-hub.js --check
       - name: Jarvis rules in functions match the admin page
         run: node scripts/build-jarvis-core.js --check
-      - name: Finding copy in functions matches the review pages
+      - name: Finding copy in functions and the per-language page files match the source
         run: node scripts/build-findings-copy.js --check
 
   playwright:

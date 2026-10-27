@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* Renders the LinkedIn Premium kit for the QA-lab URL Review company page:
    cover slideshow, proof cards from the Live Reports, a carousel PDF, the page copy, and the month plan.
-     node scripts/linkedin-studio/build.js [--batch premium-2026-10] [--start 2026-10-21] [--renews 2026-11-19] */
+     node scripts/linkedin-studio/build.js [--batch premium-2026-10] [--start 2026-10-21] [--renews 2026-11-19]
+     node scripts/linkedin-studio/build.js --batch premium-2026-10 --covers */
 
 const fs = require("fs");
 const path = require("path");
@@ -183,7 +184,26 @@ async function pdfFrom(browser, images, file) {
   fs.unlinkSync(tmp);
 }
 
+async function renderCovers(browser, t) {
+  const cover = await browser.newPage({ deviceScaleFactor: 2 });
+  await cover.goto("file://" + path.join(__dirname, "frame.html"));
+  for (const variant of ["promise", "proof", "handoff"]) {
+    await shoot(cover, { kind: "cover", variant, data: t }, path.join(OUT, "cover-" + variant + ".png"), [1128, 191], 2);
+  }
+  await cover.close();
+}
+
+// --covers re-renders only the cover slides from the batch's page.json totals, so the page copy, plan and carousel stay as uploaded.
+async function coversOnly() {
+  const t = JSON.parse(fs.readFileSync(path.join(OUT, "page.json"), "utf8")).totals;
+  const browser = await chromium.launch({ channel: "chromium" });
+  await renderCovers(browser, t);
+  await browser.close();
+  console.log("LinkedIn covers:", path.relative(ROOT, OUT), "·", nf(t.reports), "sites");
+}
+
 async function main() {
+  if (opts.covers) return coversOnly();
   fs.mkdirSync(OUT, { recursive: true });
   const reports = readReports();
   const t = totals(reports);
@@ -192,12 +212,7 @@ async function main() {
   const rows = plan(copy);
 
   const browser = await chromium.launch({ channel: "chromium" });
-  const cover = await browser.newPage({ deviceScaleFactor: 2 });
-  await cover.goto("file://" + path.join(__dirname, "frame.html"));
-  for (const variant of ["promise", "proof", "handoff"]) {
-    await shoot(cover, { kind: "cover", variant, data: t }, path.join(OUT, "cover-" + variant + ".png"), [1128, 191], 2);
-  }
-  await cover.close();
+  await renderCovers(browser, t);
 
   const page = await browser.newPage();
   await page.goto("file://" + path.join(__dirname, "frame.html"));
