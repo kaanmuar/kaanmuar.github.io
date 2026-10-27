@@ -14,7 +14,9 @@
 # them again from the batch's captions.json at the same time, for a caption fixed after queueing (#1191).
 # A queue that finds Buffer's daily limit spent lists its batch under retry in the ledger and passes (#1188). The
 # nightly run, before the sync and whatever pauses the sync, queues those batches again; mode retry does it by hand.
-# Every mode but a dry run commits the ledger (scripts/commit-social-ledgers.sh).
+# Mode media lists the scheduled posts by batch, channel and where their media lives (site, release, or a copy
+# uploaded into Buffer), and changes nothing.
+# Every mode but a dry run and media commits the ledger (scripts/commit-social-ledgers.sh).
 name: Buffer batch queue
 
 on:
@@ -23,9 +25,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, re-queue the batches a spent limit stopped, delete scheduled posts not on the hub, or delete and requeue listed posts'
+        description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, re-queue the batches a spent limit stopped, delete scheduled posts not on the hub, delete and requeue listed posts, or list where scheduled posts take their media from'
         type: choice
-        options: [queue, seed, check, sync, retry, delete-unmatched, requeue]
+        options: [queue, seed, check, sync, retry, delete-unmatched, requeue, media]
         default: queue
       batch:
         description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10 (queue only)'
@@ -144,6 +146,13 @@ jobs:
             echo "::warning::No $BATCH release, so TikTok and YouTube are skipped."
           fi
           if [ "$DRY_RUN" = "true" ]; then node scripts/buffer-queue.js --batch "$BATCH" --dry-run; else node scripts/buffer-queue.js --batch "$BATCH"; fi
+      - name: List where scheduled posts take their media from
+        if: ${{ env.MODE == 'media' }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          set -o pipefail
+          node scripts/buffer-queue.js --media | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Commit the Buffer ledger
-        if: ${{ !cancelled() && !inputs.dry_run }}
+        if: ${{ !cancelled() && !inputs.dry_run && env.MODE != 'media' }}
         run: scripts/commit-social-ledgers.sh "Buffer $MODE ${BATCH:-all}"
