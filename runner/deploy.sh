@@ -11,7 +11,7 @@ IMAGE="$REGION-docker.pkg.dev/$PROJECT/$REPO/runner:$(git rev-parse --short HEAD
 ROOT=$(git rev-parse --show-toplevel)
 
 gcloud artifacts repositories describe "$REPO" --project "$PROJECT" --location "$REGION" >/dev/null 2>&1 ||
-  gcloud artifacts repositories create "$REPO" --project "$PROJECT" --location "$REGION" --repository-format docker --description "Cube runner images (#1935)"
+	gcloud artifacts repositories create "$REPO" --project "$PROJECT" --location "$REGION" --repository-format docker --description "Cube runner images (#1935)"
 
 CTX=$(mktemp -d)
 trap 'rm -rf "$CTX"' EXIT
@@ -22,6 +22,6 @@ printf 'steps:\n- name: gcr.io/cloud-builders/docker\n  args: [build, -f, runner
 gcloud builds submit "$CTX" --project "$PROJECT" --region "$REGION" --config "$CTX/cloudbuild.yaml"
 
 gcloud run jobs deploy "$JOB" --project "$PROJECT" --region "$REGION" --image "$IMAGE" \
-  --cpu 2 --memory 4Gi --task-timeout 15m --max-retries 0 --tasks 1 \
-  --set-env-vars "CUBE_WORKERS=2,CUBE_BUCKET=$PROJECT.firebasestorage.app"
+	--cpu 2 --memory 4Gi --task-timeout 15m --max-retries 0 --tasks 1 \
+	--set-env-vars "CUBE_WORKERS=2,CUBE_BUCKET=$PROJECT.firebasestorage.app"
 echo "Deployed $IMAGE as $JOB"

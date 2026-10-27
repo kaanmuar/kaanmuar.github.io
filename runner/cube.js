@@ -40,12 +40,12 @@ function prepare(report, frameworks, dir) {
     fs.writeFileSync(target, file.content);
   });
   fs.writeFileSync(path.join(dir, "playwright.config.js"), CONFIG);
-  const link = path.join(dir, "node_modules");
-  if (!fs.existsSync(link)) fs.symlinkSync(modulesDir(), link, "dir");
   return used;
 }
 
 function execute(dir, onLine) {
+  const link = path.join(dir, "node_modules");
+  if (!fs.existsSync(link)) fs.symlinkSync(modulesDir(), link, "dir");
   return new Promise((resolve) => {
     const cli = path.join(modulesDir(), "@playwright", "test", "cli.js");
     const child = spawn(process.execPath, [cli, "test"], { cwd: dir, env: Object.assign({}, process.env, { FORCE_COLOR: "0" }) });

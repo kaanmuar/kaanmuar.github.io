@@ -2,7 +2,9 @@
 FROM mcr.microsoft.com/playwright:v1.63.0-noble
 WORKDIR /app
 COPY runner/package.json runner/
-RUN cd runner && npm install --omit=dev --no-audit --no-fund
+WORKDIR /app/runner
+RUN npm install --omit=dev --no-audit --no-fund
+WORKDIR /app
 COPY js/qa-review-scripts.js js/
 COPY runner/cube.js runner/run.js runner/
 ENV NODE_ENV=production CUBE_WORKERS=2
