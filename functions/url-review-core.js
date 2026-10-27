@@ -18,6 +18,7 @@ const caseRank = require("./url-review-cases");
 const chatTalk = require("./url-review-chat-talk");
 const ownerProofs = require("./url-review-owner-proof");
 const { registrable, registryDomain } = require("./url-review-suffix");
+const { ipBlocked } = require("./url-review-ip");
 const { siteLabel } = caseRank;
 
 const TERMS_VERSION = "2026-10-26";
@@ -226,43 +227,6 @@ const TECH = [
   ["jsDelivr", "CDN", /cdn\.jsdelivr\.net/i],
   ["unpkg", "CDN", /unpkg\.com/i]
 ];
-
-function ipv4ToInt(ip) {
-  const parts = String(ip).split(".");
-  if (parts.length !== 4) return null;
-  const nums = parts.map((part) => Number(part));
-  if (nums.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return null;
-  return (((nums[0] * 16777216) + (nums[1] * 65536) + (nums[2] * 256) + nums[3]) >>> 0);
-}
-
-function inRange(ip, start, end) {
-  const n = ipv4ToInt(ip);
-  if (n == null) return false;
-  return n >= ipv4ToInt(start) && n <= ipv4ToInt(end);
-}
-
-function ipBlocked(raw) {
-  let ip = String(raw || "").toLowerCase().replace(/^\[|\]$/g, "");
-  if (ip.startsWith("::ffff:")) ip = ip.slice(7);
-  if (net.isIP(ip) === 4) {
-    return inRange(ip, "0.0.0.0", "0.255.255.255")
-      || inRange(ip, "10.0.0.0", "10.255.255.255")
-      || inRange(ip, "100.64.0.0", "100.127.255.255")
-      || inRange(ip, "127.0.0.0", "127.255.255.255")
-      || inRange(ip, "169.254.0.0", "169.254.255.255")
-      || inRange(ip, "172.16.0.0", "172.31.255.255")
-      || inRange(ip, "192.0.2.0", "192.0.2.255")
-      || inRange(ip, "192.168.0.0", "192.168.255.255")
-      || inRange(ip, "198.51.100.0", "198.51.100.255")
-      || inRange(ip, "203.0.113.0", "203.0.113.255")
-      || inRange(ip, "224.0.0.0", "255.255.255.255");
-  }
-  if (net.isIP(ip) !== 6) return true;
-  if (ip === "::1" || ip === "::") return true;
-  if (ip.startsWith("fc") || ip.startsWith("fd")) return true;
-  if (ip.startsWith("fe8") || ip.startsWith("fe9") || ip.startsWith("fea") || ip.startsWith("feb")) return true;
-  return false;
-}
 
 function hostBlocked(hostname) {
   const host = String(hostname || "").replace(/\.$/, "").toLowerCase();

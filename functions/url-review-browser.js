@@ -10,6 +10,9 @@
 const fs = require("fs");
 const crypto = require("crypto");
 const dns = require("dns").promises;
+const http = require("http");
+const net = require("net");
+const { ipBlocked } = require("./url-review-ip");
 const { legalLinks, LEGAL_ANY } = require("./url-review-legal");
 const chatTalk = require("./url-review-chat-talk");
 const { registrable: siteOf } = require("./url-review-suffix");
@@ -129,21 +132,67 @@ function blockedHost(raw) {
   if (url.protocol !== "http:" && url.protocol !== "https:") return true;
   const host = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
   if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal") || host === "metadata" || host.endsWith(".local")) return true;
-  const v4 = host.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
-  if (v4) {
-    const [a, b] = [Number(v4[1]), Number(v4[2])];
-    return a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224;
-  }
-  if (host.includes(":")) return host === "::1" || host === "::" || /^f[cd]/.test(host) || /^fe[89ab]/.test(host) || host.startsWith("::ffff:");
-  return false;
+  return net.isIP(host) ? ipBlocked(host) : /^[\d.]+$|:/.test(host);
 }
 
+// The address a host may be reached at, or "" when it is internal, points at an internal address, or does not resolve.
+async function publicAddress(host, lookup = dns.lookup) {
+  const name = String(host || "").replace(/^\[|\]$/g, "").toLowerCase();
+  if (!name || blockedHost("https://" + (net.isIP(name) === 6 ? "[" + name + "]" : name) + "/")) return "";
+  if (net.isIP(name)) return name;
+  const list = await Promise.resolve().then(() => lookup(name, { all: true, verbatim: true })).catch(() => []);
+  return list.length && !list.some((row) => ipBlocked(row.address)) ? list[0].address : "";
+}
+
+const RESOLVED_MS = 60000;
 const resolved = new Map();
 function privateAddress(host) {
-  if (!resolved.has(host)) {
-    resolved.set(host, dns.lookup(host, { all: true }).then((list) => list.some((row) => blockedHost("https://" + (row.family === 6 ? "[" + row.address + "]" : row.address) + "/"))).catch(() => false));
-  }
-  return resolved.get(host);
+  const hit = resolved.get(host);
+  if (hit && Date.now() - hit.at < RESOLVED_MS) return hit.blocked;
+  const blocked = publicAddress(host).then((ip) => !ip);
+  resolved.set(host, { at: Date.now(), blocked });
+  return blocked;
+}
+
+// Chromium resolves names itself, so a host could pass the check above and then answer Chromium with an internal
+// address. Every request goes through this proxy instead: it resolves the name once and connects to the address it checked.
+async function guard(lookup = dns.lookup) {
+  const sockets = new Set();
+  const track = (sock) => { sockets.add(sock); sock.on("close", () => sockets.delete(sock)); };
+  const server = http.createServer(async (req, res) => {
+    let url = null;
+    try { url = new URL(req.url); } catch (error) { url = null; }
+    const ip = url && url.protocol === "http:" ? await publicAddress(url.hostname, lookup) : "";
+    if (!ip) { res.writeHead(403).end(); return; }
+    const headers = { ...req.headers };
+    delete headers["proxy-connection"];
+    delete headers["proxy-authorization"];
+    const out = http.request({ host: ip, port: Number(url.port) || 80, path: url.pathname + url.search, method: req.method, headers, setHost: false }, (up) => {
+      res.writeHead(up.statusCode, up.rawHeaders);
+      up.pipe(res);
+    });
+    out.on("error", () => res.destroy());
+    req.pipe(out);
+  });
+  server.on("connection", track);
+  server.on("connect", async (req, sock, head) => {
+    sock.on("error", () => sock.destroy());
+    const [, host, port] = String(req.url).match(/^\[?([^\]]*?)\]?:(\d{1,5})$/) || [];
+    const ip = host ? await publicAddress(host, lookup) : "";
+    if (!ip) { sock.end("HTTP/1.1 403 Forbidden\r\n\r\n"); return; }
+    const up = net.connect(Number(port), ip, () => {
+      sock.write("HTTP/1.1 200 Connection Established\r\n\r\n");
+      if (head && head.length) up.write(head);
+      up.pipe(sock);
+      sock.pipe(up);
+    });
+    track(up);
+    up.on("error", () => sock.destroy());
+    sock.on("close", () => up.destroy());
+  });
+  await new Promise((resolve, reject) => server.once("error", reject).listen(0, "127.0.0.1", resolve));
+  server.unref();
+  return { port: server.address().port, close: () => { server.close(); sockets.forEach((sock) => sock.destroy()); } };
 }
 
 function vendorOf(host) {
@@ -1302,17 +1351,32 @@ async function sendTurn(box, text) {
   return clickedAt;
 }
 
+// <-loopback> drops Chromium's built-in proxy bypass for localhost; WebRTC's UDP would skip the proxy.
+function proxyArgs(port) {
+  return ["--proxy-server=http://127.0.0.1:" + port, "--proxy-bypass-list=<-loopback>", "--force-webrtc-ip-handling-policy=disable_non_proxied_udp"];
+}
+
 async function launch() {
   const puppeteer = (await import("puppeteer-core")).default;
-  const local = process.env.CHROME_PATH;
-  if (local) {
-    return puppeteer.launch({ executablePath: local, headless: true, args: ["--no-first-run", "--hide-scrollbars", "--mute-audio", "--disable-extensions"] });
+  const proxy = await guard();
+  try {
+    const local = process.env.CHROME_PATH;
+    let browser;
+    if (local) {
+      browser = await puppeteer.launch({ executablePath: local, headless: true, args: ["--no-first-run", "--hide-scrollbars", "--mute-audio", "--disable-extensions"].concat(proxyArgs(proxy.port)) });
+    } else {
+      const chromium = (await import("@sparticuz/chromium")).default;
+      chromium.setGraphicsMode = false;
+      const unsafe = /^--(single-process|disable-web-security|allow-running-insecure-content|disable-site-isolation-trials|in-process-gpu|ignore-gpu-blocklist|enable-unsafe-swiftshader|use-gl=.*|use-angle=.*|proxy-.*)$/;
+      const args = chromium.args.filter((arg) => !unsafe.test(arg)).concat(["--hide-scrollbars", "--mute-audio", "--disable-dev-shm-usage", "--disable-gpu"], proxyArgs(proxy.port));
+      browser = await puppeteer.launch({ executablePath: await chromium.executablePath(), headless: "shell", args });
+    }
+    browser.once("disconnected", proxy.close);
+    return browser;
+  } catch (error) {
+    proxy.close();
+    throw error;
   }
-  const chromium = (await import("@sparticuz/chromium")).default;
-  chromium.setGraphicsMode = false;
-  const unsafe = /^--(single-process|disable-web-security|allow-running-insecure-content|disable-site-isolation-trials|in-process-gpu|ignore-gpu-blocklist|enable-unsafe-swiftshader|use-gl=.*|use-angle=.*)$/;
-  const args = chromium.args.filter((arg) => !unsafe.test(arg)).concat(["--hide-scrollbars", "--mute-audio", "--disable-dev-shm-usage", "--disable-gpu"]);
-  return puppeteer.launch({ executablePath: await chromium.executablePath(), headless: "shell", args });
 }
 
 async function printPdf(html) {
@@ -1810,4 +1874,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, backForward, imageRows, open, tagCut, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, launcherFacts, cookiesOf, CHATS, CHAT_LAUNCHER, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, backForward, imageRows, open, tagCut, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, launcherFacts, cookiesOf, CHATS, CHAT_LAUNCHER, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, publicAddress, privateAddress, guard, proxyArgs, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
