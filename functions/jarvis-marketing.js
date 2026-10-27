@@ -116,7 +116,7 @@ async function instantly(ctx, path, init) {
   return data;
 }
 
-const needKey = (ctx) => { if (!(ctx.env || {}).INSTANTLY_API_KEY) throw new Error("INSTANTLY_API_KEY is not set in functions/.env."); };
+const needKey = (ctx) => { if (!(ctx.env || {}).INSTANTLY_API_KEY) throw new Error("INSTANTLY_API_KEY is not set in Secret Manager."); };
 
 async function marketing(ctx) {
   const out = { ok: true, needs: [], days: ctx.days };
@@ -137,7 +137,7 @@ async function marketing(ctx) {
       return noteRows(snap.docs.map((d) => d.data()), ctx);
     })
   ]);
-  if (out.campaigns.ok === false && /INSTANTLY_API_KEY/.test(out.campaigns.error)) out.needs.push("Instantly: put the API key in functions/.env as INSTANTLY_API_KEY.");
+  if (out.campaigns.ok === false && /INSTANTLY_API_KEY/.test(out.campaigns.error)) out.needs.push("Instantly: put the API key in Secret Manager as INSTANTLY_API_KEY.");
   return out;
 }
 

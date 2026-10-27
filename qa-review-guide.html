@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' https://ipwho.is https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com; frame-src https://translate.google.com;">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>How it works, a guided tour · QA-lab URL Review</title>
     <meta name="description" content="A plain-language tour of QA-lab URL Review: who it helps, the six steps from checkbox to export, how to read the six scores, and what a review never does.">
     <meta name="keywords" content="QA-lab URL Review guide, how to review a website, website QA checklist, SEO GEO analytics security accessibility performance review, test cases from a URL, Playwright Cypress test cases">
@@ -16,7 +17,7 @@
     <meta property="og:url" content="https://carlosandmunoz.com/qa-review-guide.html">
     <meta property="og:title" content="How it works, a guided tour · QA-lab URL Review">
     <meta property="og:description" content="Who it helps, what happens step by step, how to read the six scores, and what the review will never do to your site.">
-    <meta property="og:image" content="https://carlosandmunoz.com/assets/share/qa-review-guide.jpg?v=20261019">
+    <meta property="og:image" content="https://carlosandmunoz.com/assets/share/qa-review-guide.jpg?v=20261027">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -27,7 +28,7 @@
     <meta name="twitter:site" content="@qalaburlreview">
     <meta name="twitter:title" content="How QA-lab URL Review works, a guided tour">
     <meta name="twitter:description" content="From the first checkbox to the last export, in plain language.">
-    <meta name="twitter:image" content="https://carlosandmunoz.com/assets/share/qa-review-guide.jpg?v=20261019">
+    <meta name="twitter:image" content="https://carlosandmunoz.com/assets/share/qa-review-guide.jpg?v=20261027">
     <meta name="twitter:image:alt" content="QA-lab URL Review guided tour: here is how we listen. Six steps, six scores.">
     <script type="application/ld+json">
     {
@@ -83,10 +84,13 @@
         ]
     }
     </script>
-    <meta name="theme-color" content="#0d6e76">
-    <link rel="icon" href="assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <link rel="manifest" href="site.webmanifest">
+    <meta name="theme-color" content="#071116" data-fixed>
+    <link rel="icon" href="assets/qa-review-mark.svg?v=20261027a" type="image/svg+xml">
+    <link rel="icon" href="assets/qa-review-icon-32.png?v=20261027a" sizes="32x32" type="image/png">
+    <link rel="icon" href="assets/qa-review-icon-16.png?v=20261027a" sizes="16x16" type="image/png">
+    <link rel="icon" href="assets/qa-review-favicon.ico?v=20261027a" sizes="48x48">
+    <link rel="apple-touch-icon" href="assets/qa-review-apple-touch-icon.png?v=20261027a">
+    <link rel="manifest" href="qa-review.webmanifest?v=20261027a">
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <script src="js/site-look.js"></script>
@@ -97,6 +101,9 @@
     <style data-critical="css/site-look.css?v=20261104a">html[data-look] body{background-color:var(--bg, var(--bg-primary));background-image:var(--look-gradient);background-attachment:fixed;color:var(--text, var(--text-secondary))}html[data-look] .card{background:var(--look-card);border-color:var(--look-edge);border-radius:var(--look-radius);backdrop-filter:blur(var(--look-blur)) saturate(1.35);-webkit-backdrop-filter:blur(var(--look-blur)) saturate(1.35)}.skip-link{position:fixed;top:8px;left:8px;z-index:10000;padding:10px 16px;border-radius:8px;background:#12181f;color:#ffffff;font:600 15px/1.2 Inter, system-ui, sans-serif;text-decoration:none;transform:translateY(calc(-100% - 16px))}.skip-link:focus{transform:none;outline:3px solid #4db3bb;outline-offset:2px}html.dark-mode .skip-link{background:#ffffff;color:#12181f;outline-color:#0d6e76}main[tabindex="-1"]:focus{outline:none}</style>
     <link rel="preload" href="css/site-look.css?v=20261104a" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="css/site-look.css?v=20261104a"></noscript>
+    <style data-critical="css/fusion-band.css?v=20261027a">.fx-band{--bg:#071116;--panel:#102226;--card:#102226;--line:rgba(159, 214, 220, .24);--edge:rgba(126, 246, 251, .22);--text:#e8f3f4;--muted:#a9bec2;--cyan:#7ef6fb;--on-cyan:#071116;--green:#6fe3b1;--amber:#e2c48a;--red:#f39a8b;position:relative;isolation:isolate;color:var(--text);color-scheme:dark}.fx-bg{position:absolute;z-index:-1;top:var(--fx-top, -32px);bottom:var(--fx-bottom, -32px);left:calc(50% - 50vw);width:100vw;overflow:hidden;pointer-events:none;border-bottom:1px solid rgba(159, 214, 220, .16);background:radial-gradient(34% 72% at 80% 46%, rgba(77, 179, 187, .3), transparent 70%), radial-gradient(26% 50% at 94% 8%, rgba(185, 168, 255, .16), transparent 70%), radial-gradient(40% 40% at 76% 100%, rgba(226, 196, 138, .12), transparent 70%), #071116}.fx-bg > .fx{position:absolute;inset:0;display:block;width:100%;height:100%;opacity:0;transition:opacity 1.2s ease}.fx-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg, rgba(7, 17, 22, .9) 0%, rgba(7, 17, 22, .74) max(320px, 36%), rgba(7, 17, 22, 0) max(700px, 66%))}.fx-band .pill.primary{border-color:transparent;background:linear-gradient(180deg, #b7f3f1 0%, #3ec4c8 34%, #14939b 100%);color:#04262a;box-shadow:inset 0 1px 0 rgba(255, 255, 255, .82), 0 8px 18px rgba(13, 110, 118, .35)}html:has(.fx-bg) body{overflow-x:clip}@media (max-width: 800px){.fx-bg::after{background:linear-gradient(180deg, rgba(7, 17, 22, .3) 0%, rgba(7, 17, 22, .82) 62%)}}@media (prefers-reduced-motion: reduce){.fx-bg > .fx{transition:none}}</style>
+    <link rel="preload" href="css/fusion-band.css?v=20261027a" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/fusion-band.css?v=20261027a"></noscript>
     <style>
         :root { --bg: #eef2f4; --card: #fff; --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76; --fail: #b3261e; --risk: #b26a00; --pass: #1b7f4b; --person: #5b5fc7; }
         html.dark-mode { --bg: #10161d; --card: #1a2430; --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb; --fail: #ff8a80; --risk: #ffc266; --pass: #6fd3a0; --person: #a9adff; color-scheme: dark; }
@@ -120,14 +127,8 @@
         .muted { color: var(--muted); }
         .lede { font-size: 1.15rem; max-width: 640px; }
         section { margin: 56px 0; }
-        .hero { display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px; align-items: center; margin-top: 18px; }
+        .hero { display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px; align-items: center; margin-top: 18px; padding: 30px 0 34px; --fx-top: -26px; --fx-bottom: 0px; }
         .hero-art { position: relative; aspect-ratio: 1 / 1; max-width: 400px; justify-self: center; width: 100%; }
-        .hero-art svg { width: 100%; height: 100%; overflow: visible; }
-        .wave { fill: none; stroke: var(--cyan); stroke-width: 2; opacity: 0; transform-origin: 250px 200px; animation: talk 3.2s ease-out infinite; }
-        .wave.w2 { animation-delay: .8s; } .wave.w3 { animation-delay: 1.6s; }
-        @keyframes talk { 0% { opacity: 0; transform: scale(.7); } 25% { opacity: .75; } 100% { opacity: 0; transform: scale(1.35); } }
-        .float { animation: bob 6s ease-in-out infinite; }
-        @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         .cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
         .card { background: color-mix(in srgb, var(--card) 92%, transparent); border: 1px solid var(--line); border-radius: 22px; padding: 20px; }
         .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
@@ -205,8 +206,6 @@
             .cookie-actions button { flex: 1; min-height: 40px; }
         }
         @media (prefers-reduced-motion: reduce) {
-            .wave, .float { animation: none; }
-            .wave { opacity: .4; }
             .reveal { opacity: 1; transform: none; transition: none; }
             .ring .arc, .stack span { transition: none; }
         }
@@ -215,7 +214,7 @@
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
 <header>
-    <a class="brand" href="qa-review.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a>
+    <a class="brand" href="qa-review.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a>
     <div class="head-actions">
         <a class="pill" href="qa-review.html?sample=1">Sample report</a>
         <div class="lang-wrap notranslate" id="langWrap">
@@ -227,7 +226,8 @@
     </div>
 </header>
 <main id="main" tabindex="-1">
-    <section class="hero" aria-labelledby="guide-title">
+    <section class="hero fx-band" aria-labelledby="guide-title">
+        <div class="fx-bg" data-fx data-fx-mode="1" data-fx-place="art" aria-hidden="true"><canvas class="fx"></canvas></div>
         <div>
             <p class="eyebrow">A guided tour</p>
             <h1 id="guide-title">Find the leaks, breaks and blocks. Here is how a review works.</h1>
@@ -238,28 +238,7 @@
                 <a class="pill" href="#tour">Walk me through it</a>
             </div>
         </div>
-        <div class="hero-art" aria-hidden="true">
-            <svg viewBox="0 0 400 400" role="presentation">
-                <defs>
-                    <linearGradient id="pageGrad" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#0d6e76"/><stop offset="1" stop-color="#5b5fc7"/></linearGradient>
-                </defs>
-                <circle class="wave" cx="250" cy="200" r="90"/>
-                <circle class="wave w2" cx="250" cy="200" r="90"/>
-                <circle class="wave w3" cx="250" cy="200" r="90"/>
-                <g class="float">
-                    <rect x="70" y="70" width="190" height="250" rx="18" fill="url(#pageGrad)" opacity=".95"/>
-                    <rect x="92" y="96" width="120" height="12" rx="6" fill="#fff" opacity=".9"/>
-                    <rect x="92" y="122" width="146" height="8" rx="4" fill="#fff" opacity=".55"/>
-                    <rect x="92" y="140" width="132" height="8" rx="4" fill="#fff" opacity=".55"/>
-                    <rect x="92" y="158" width="100" height="8" rx="4" fill="#fff" opacity=".55"/>
-                    <rect x="92" y="190" width="146" height="70" rx="10" fill="#fff" opacity=".18"/>
-                    <circle cx="118" cy="290" r="10" fill="#6fd3a0"/>
-                    <circle cx="148" cy="290" r="10" fill="#ffc266"/>
-                    <circle cx="178" cy="290" r="10" fill="#ff8a80"/>
-                    <path d="M260 180 q30 20 0 40" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>
-                </g>
-            </svg>
-        </div>
+        <div class="hero-art" data-fx-art aria-hidden="true"></div>
     </section>
 
     <section class="reveal" aria-labelledby="who-title">
@@ -558,5 +537,6 @@
     }
 })();
 </script>
+<script type="module" src="js/fusion/boot.js?v=20261027a"></script>
 </body>
 </html>

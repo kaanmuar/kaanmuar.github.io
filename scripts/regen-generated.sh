@@ -20,6 +20,7 @@ main() {
 		scripts/build-critical-css.js
 		scripts/build-llms-full.py
 		scripts/build-review-langs.py
+		scripts/build-findings-copy.js
 		scripts/build-social-hub.js
 	)
 	local rebuilt=()

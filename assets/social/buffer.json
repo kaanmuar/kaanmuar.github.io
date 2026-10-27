@@ -8093,31 +8093,35 @@
  "retry": {
   "auto-2026-10-25": {
    "since": "2026-10-26T16:13:29.869Z",
-   "error": "Buffer's 24h limit is spent; it frees up in 4 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+   "error": "Buffer's 24h limit is spent; it frees up in 11 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
   },
   "auto-2026-10-26": {
    "since": "2026-10-26T18:01:53.270Z",
-   "error": "Buffer's 24h limit is spent; it frees up in 2 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+   "error": "Buffer's 24h limit is spent; it frees up in 11 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+  },
+  "auto-2026-10-27": {
+   "since": "2026-10-27T11:38:33.893Z",
+   "error": "Buffer's 24h limit is spent; it frees up in 9 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
   },
   "compare-2026-11": {
    "since": "2026-10-26T17:06:31.914Z",
-   "error": "Buffer's 24h limit is spent; it frees up in 3 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+   "error": "Buffer's 24h limit is spent; it frees up in 11 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
   },
   "digest-2026-10-30": {
    "since": "2026-10-26T16:33:56.009Z",
-   "error": "Buffer's 24h limit is spent; it frees up in 3 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+   "error": "Buffer's 24h limit is spent; it frees up in 11 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
   },
   "evergreen-2026-11": {
    "since": "2026-10-26T17:22:20.037Z",
-   "error": "Buffer's 24h limit is spent; it frees up in 3 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+   "error": "Buffer's 24h limit is spent; it frees up in 11 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
   },
   "series-dia-de-muertos-2026-11": {
    "since": "2026-10-26T16:50:22.124Z",
-   "error": "Buffer's 24h limit is spent; it frees up in 3 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+   "error": "Buffer's 24h limit is spent; it frees up in 11 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
   },
   "skits-friday-release": {
    "since": "2026-10-26T12:03:36.029Z",
-   "error": "Buffer's 24h limit is spent; it frees up in 2 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+   "error": "Buffer's 24h limit is spent; it frees up in 11 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
   }
  }
 }

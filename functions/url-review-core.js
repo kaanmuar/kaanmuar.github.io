@@ -3542,8 +3542,44 @@ function stoppedReport(rawUrl, lines, host, scope) {
   };
 }
 
+// Firestore refuses a map key that is empty or named like __x__, an array directly inside an array, and a field nested past
+// 20 maps and arrays ("Property report contains an invalid nested entity"). Page data can carry any of them, so they are rewritten.
+const STORE_DEPTH = 20;
+
+function storable(value, fixed, at, depth) {
+  const level = depth || 1;
+  const path = at || "report";
+  const plain = (item) => Array.isArray(item) || (!!item && typeof item === "object" && Object.getPrototypeOf(item) === Object.prototype);
+  if (!plain(value)) return value;
+  const inner = (item, where) => {
+    if (!plain(item)) return item;
+    if (level >= STORE_DEPTH) {
+      fixed.push(where + " (past " + STORE_DEPTH + " levels, kept as JSON)");
+      return JSON.stringify(item);
+    }
+    if (Array.isArray(value) && Array.isArray(item)) {
+      fixed.push(where + " (an array in an array, kept as { items })");
+      return storable({ items: item }, fixed, where, level + 1);
+    }
+    return storable(item, fixed, where, level + 1);
+  };
+  if (Array.isArray(value)) return value.map((item, index) => inner(item, path + "." + index));
+  const out = {};
+  Object.keys(value).forEach((key) => {
+    let name = key;
+    if (!name) name = "(empty)";
+    else if (/^__.*__$/.test(name)) name = name.slice(1);
+    if (name !== key) fixed.push(path + "." + JSON.stringify(key) + " (renamed " + JSON.stringify(name) + ")");
+    out[name] = inner(value[key], path + "." + name);
+  });
+  return out;
+}
+
 function intakeRecord(value, report, meta) {
   const now = Date.now();
+  const fixed = [];
+  const kept = storable(report, fixed);
+  if (fixed.length) console.warn("URL review report " + report.id + " had fields Firestore refuses: " + fixed.slice(0, 20).join("; "));
   return {
     id: report.id,
     createdAt: new Date(now).toISOString(),
@@ -3582,7 +3618,7 @@ function intakeRecord(value, report, meta) {
     compareWith: value.compareWith || "",
     query: value.query || "",
     referrerHost: value.referrerHost || "",
-    report
+    report: kept
   };
 }
 
@@ -4490,6 +4526,7 @@ module.exports = {
   journeys,
   toolsForPage,
   intakeRecord,
+  storable,
   analyzeHtml: inspect,
   challengeOf,
   dnsFacts,

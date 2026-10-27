@@ -3,7 +3,7 @@
 # and goes into the Buffer queues, onto the Facebook Page, and into the social hub (qa-review-social*.html). Filtering and privacy live in functions/url-review-publish.js.
 # What Buffer and the Page took goes into assets/social/buffer.json and facebook.json (scripts/social-ledger.js), committed after the queue steps.
 # When Buffer's daily limit is spent, the batch is listed for the nightly buffer-batch.yml run to queue (#1188).
-# Secrets: PUBLISH_KEY (same value as functions/.env), BUFFER_API_KEY (Buffer → Settings → API),
+# Secrets: PUBLISH_KEY (same value as the PUBLISH_KEY secret in Secret Manager), BUFFER_API_KEY (Buffer → Settings → API),
 # LIVE_REPORTS_DEPLOY_KEY (write deploy key), FACEBOOK_PAGE_ID (the Graph ID, not the profile ID in Page URLs) and
 # FACEBOOK_PAGE_TOKEN (never-expiring Page token from the "QA-lab Page Publisher" Meta app, with pages_manage_posts;
 # changing the Facebook password revokes it, see scripts/facebook-queue.js). Deploy keys bypass the "main: fast checks before merge"
@@ -83,11 +83,11 @@ jobs:
             exit 1
           fi
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
 
@@ -134,7 +134,7 @@ jobs:
 
       - name: Keep the render for a look
         if: inputs.dry_run && steps.reports.outputs.social != '0'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ steps.reports.outputs.batch }}
           path: media/social-posts/${{ steps.reports.outputs.batch }}

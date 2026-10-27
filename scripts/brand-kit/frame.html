@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brand kit frame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@500&display=block" rel="stylesheet">
+<style>
+  :root { --night: #071116; --cyan: #7ef6fb; --teal: #4db3bb; --gold: #e2c48a; --mint: #6fe3b1; --coral: #f39a8b; --violet: #b9a8ff; --pearl: #e9fdff; --text: #f4fafb; --muted: #9fb3b8; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: transparent; }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+  #c { position: relative; overflow: hidden; background: var(--night); }
+  #c.clear { background: transparent; }
+  .bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .shade { position: absolute; inset: 0; }
+  .mark { display: block; width: 100%; height: 100%; }
+
+  .brand { display: flex; align-items: center; gap: calc(var(--u) * .34); }
+  .brand img { width: var(--u); height: var(--u); filter: drop-shadow(0 8px 22px rgba(77, 179, 187, .35)); }
+  .brand b { display: block; font: 400 calc(var(--u) * .62)/1 "Instrument Serif", Georgia, serif; }
+  .brand small { display: block; margin-top: calc(var(--u) * .1); font: 600 calc(var(--u) * .2)/1 Inter, sans-serif; letter-spacing: .2em; color: var(--muted); }
+  h1 { margin: 0; font: 400 var(--title)/1 "Instrument Serif", Georgia, serif; letter-spacing: -.01em; text-shadow: 0 4px 24px rgba(7, 17, 22, .6); }
+  h1 span, h1 em { display: block; }
+  h1 em { font-style: italic; color: var(--cyan); }
+  .areas { font-size: var(--small); font-weight: 600; letter-spacing: .02em; color: #cfe0e3; }
+  .url { font: 500 var(--small)/1 "Fira Code", monospace; color: var(--cyan); }
+
+  /* X header 1500x500: the profile photo covers about x 40-375, y 325-500, and some views trim 60 px off the top and bottom. */
+  .x .shade { background: linear-gradient(90deg, rgba(7, 17, 22, .9) 0%, rgba(7, 17, 22, .78) 36%, rgba(7, 17, 22, .2) 58%, rgba(7, 17, 22, 0) 70%); }
+  .x .copy { position: absolute; left: 96px; top: 84px; display: flex; flex-direction: column; gap: 26px; --u: 64px; --title: 66px; --small: 21px; }
+  .x .url { position: absolute; right: 64px; bottom: 74px; --small: 22px; }
+
+  /* YouTube 2560x1440: TVs show it all, desktops a 2560x423 band, phones the 1546x423 middle (x 507-2053, y 508-932). */
+  .yt .shade { background: radial-gradient(60% 34% at 50% 50%, rgba(7, 17, 22, 0), rgba(7, 17, 22, .45)), linear-gradient(90deg, rgba(7, 17, 22, .5) 0%, rgba(7, 17, 22, .86) 22%, rgba(7, 17, 22, .8) 48%, rgba(7, 17, 22, .1) 64%, rgba(7, 17, 22, .1) 80%, rgba(7, 17, 22, .5) 100%); }
+  .yt .copy { position: absolute; left: 580px; top: 540px; height: 360px; display: flex; flex-direction: column; justify-content: center; gap: 24px; --u: 70px; --title: 78px; --small: 23px; }
+  .yt .row { display: flex; gap: 34px; align-items: center; }
+
+  /* Instagram highlight 1080x1920: the app shows the middle as a circle. */
+  .hl .shade { background: radial-gradient(closest-side at 50% 50%, rgba(7, 17, 22, .1), rgba(7, 17, 22, .55) 70%, rgba(7, 17, 22, .8)); }
+  .hl .disc { position: absolute; left: 160px; top: 580px; width: 760px; height: 760px; border-radius: 50%; display: grid; place-items: center;
+    background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--accent) 30%, transparent), rgba(7, 17, 22, .72) 68%);
+    border: 4px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    box-shadow: 0 0 120px color-mix(in srgb, var(--accent) 35%, transparent), inset 0 2px 0 rgba(255, 255, 255, .12); backdrop-filter: blur(6px); }
+  .hl .disc svg { width: 420px; height: 420px; color: var(--accent); filter: drop-shadow(0 0 28px color-mix(in srgb, var(--accent) 70%, transparent)); }
+</style>
+</head>
+<body>
+<div id="c"></div>
+<script>
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+const MARK = "../../designs/3d/icon/qa-review-mark-fusion.svg";
+const COPY = { lines: ["One public URL in.", "*A QA review out.*"], areas: "SEO · AI search · Analytics · Security · Accessibility · Speed", url: "carlosandmunoz.com/qa-review" };
+const ICONS = {
+  reports: '<path d="M20 100h80"/><rect x="28" y="62" width="14" height="28" rx="3"/><rect x="53" y="44" width="14" height="46" rx="3"/><rect x="78" y="26" width="14" height="64" rx="3"/>',
+  tips: '<path d="M60 16a30 30 0 0 0-17 54.6c3.6 2.6 5 6.4 5 10.4v5h24v-5c0-4 1.4-7.8 5-10.4A30 30 0 0 0 60 16z"/><path d="M50 98h20M53 108h14"/>',
+  skits: '<rect x="18" y="48" width="84" height="56" rx="7"/><path d="M18 48l-3-14 82-16 3 14"/><path d="M38 30l8 13M60 26l8 13M82 22l8 13"/><path d="M52 62v28l22-14z" fill="currentColor" stroke="none"/>',
+  runs: '<circle cx="60" cy="60" r="44"/><circle cx="60" cy="60" r="24"/><path d="M60 60l31-31"/><circle cx="80" cy="74" r="6" fill="currentColor" stroke="none"/><circle cx="60" cy="60" r="5" fill="currentColor" stroke="none"/>',
+  guide: '<circle cx="60" cy="60" r="44"/><path d="M78 42 66 66 42 78 54 54z"/><circle cx="60" cy="60" r="4" fill="currentColor" stroke="none"/>'
+};
+
+function headline(lines) {
+  return "<h1>" + lines.map((l) => /^\*.*\*$/.test(l) ? "<em>" + esc(l.slice(1, -1)) + "</em>" : "<span>" + esc(l) + "</span>").join("") + "</h1>";
+}
+function brand() { return '<div class="brand"><img src="' + MARK + '" alt=""><div><b>QA-lab</b><small>URL REVIEW</small></div></div>'; }
+
+// spec: { kind, w, h, bg (data URI of a Fusion still), mark (data URI), theme: { icon, accent } }
+window.paint = function (spec) {
+  const c = document.getElementById("c");
+  c.className = { header: "x", youtube: "yt", highlight: "hl", watermark: "clear" }[spec.kind] || "";
+  c.style.width = spec.w + "px";
+  c.style.height = spec.h + "px";
+  const bg = spec.bg ? '<img class="bg" src="' + spec.bg + '" alt=""><div class="shade"></div>' : "";
+  let html = "";
+  if (spec.kind === "avatar" || spec.kind === "watermark") html = '<img class="mark" src="' + spec.mark + '" alt="">';
+  if (spec.kind === "header") html = bg + '<div class="copy">' + brand() + headline(COPY.lines) + '<div class="areas">' + esc(COPY.areas) + '</div></div><div class="url">' + esc(COPY.url) + "</div>";
+  if (spec.kind === "youtube") html = bg + '<div class="copy">' + brand() + headline(COPY.lines) + '<div class="row"><span class="areas">' + esc(COPY.areas) + '</span><span class="url">' + esc(COPY.url) + "</span></div></div>";
+  if (spec.kind === "highlight") {
+    c.style.setProperty("--accent", spec.theme.accent);
+    html = bg + '<div class="disc"><svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round">' + ICONS[spec.theme.icon] + "</svg></div>";
+  }
+  c.innerHTML = html;
+  return Promise.all([document.fonts.ready].concat(Array.from(document.images).map((img) => img.decode().catch(() => null)))).then(() => true);
+};
+</script>
+</body>
+</html>

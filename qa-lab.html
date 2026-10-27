@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.gstatic.com https://cdn.jsdelivr.net https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' http://127.0.0.1:8770 https://ipwho.is https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://*.googleapis.com https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; frame-src 'self' https://translate.google.com; form-action 'self';">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>Free QA regression lab · Playwright, Cypress, Robot</title>
     <meta name="description" content="Free in-browser QA regression lab: run 20 frameworks, from Playwright, Cypress, and Robot to Appium and k6, against a live CV. Dashboard and report included.">
     <meta name="author" content="Carlos A. Muñoz Ardila">
@@ -37,13 +39,6 @@
     <meta name="twitter:description" content="Free 20-framework QA lab: Playwright, Cypress, Robot, Selenium, Appium, k6, and more run smoke, functional, security, accessibility, mobile, and load checks on a live CV.">
     <meta name="twitter:image" content="https://carlosandmunoz.com/assets/share/qa-lab.jpg?v=20261019">
     <meta name="twitter:image:alt" content="Free QA regression lab: 20 frameworks run against one live CV.">
-    <link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-lab.html">
-    <link rel="alternate" hreflang="en" href="https://carlosandmunoz.com/qa-lab.html">
-    <link rel="alternate" hreflang="es" href="https://carlosandmunoz.com/qa-lab.html?lang=es">
-    <link rel="alternate" hreflang="pt" href="https://carlosandmunoz.com/qa-lab.html?lang=pt">
-    <link rel="alternate" hreflang="de" href="https://carlosandmunoz.com/qa-lab.html?lang=de">
-    <link rel="alternate" hreflang="fr" href="https://carlosandmunoz.com/qa-lab.html?lang=fr">
-    <link rel="alternate" hreflang="it" href="https://carlosandmunoz.com/qa-lab.html?lang=it">
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -719,7 +714,7 @@
 <script src="js/site-glossary.js?v=20261102a" defer></script>
 <script src="js/site-tour.js?v=20261104a" defer></script>
 <script src="js/lab-observer.js" defer></script>
-<script src="js/qa-lab.js?v=20261104a" defer></script>
+<script src="js/qa-lab.js?v=20261104b" defer></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('theme-toggle').addEventListener('click', () => SiteTheme.toggle());

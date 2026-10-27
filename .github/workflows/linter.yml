@@ -18,13 +18,13 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           # Fetch all history so changed-file linting can diff against the previous commit
           fetch-depth: 0
 
       - name: Run Super-Linter
-        uses: github/super-linter@v6
+        uses: github/super-linter@4e51915f4a812abf59fed160bb14595c0a38a9e7 # v6
         env:
           # v6 fatals unless this exact name is true or false. The old
           # VALIDATE_ALL_CODE_BASE spelling was ignored, so every run aborted.
@@ -45,6 +45,9 @@ jobs:
           FILTER_REGEX_EXCLUDE: android/gradlew.*
           VALIDATE_JAVASCRIPT_ES: false
           VALIDATE_JAVASCRIPT_STANDARD: false
+          # The cf CLI only reads cloudflare.config.ts (#1866); TypeScript Standard ran out of heap on it.
+          VALIDATE_TYPESCRIPT_ES: false
+          VALIDATE_TYPESCRIPT_STANDARD: false
           VALIDATE_JSCPD: false
           VALIDATE_MARKDOWN: false
           VALIDATE_NATURAL_LANGUAGE: false

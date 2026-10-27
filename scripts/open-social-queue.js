@@ -184,6 +184,18 @@ function bluesky(env = process.env) {
       if (links.length) record.facets = links;
       const { uri } = await xrpc("com.atproto.repo.createRecord", { body: { repo: session.did, collection: "app.bsky.feed.post", record } });
       return { id: uri, url: "https://bsky.app/profile/" + session.handle + "/post/" + uri.split("/").pop() };
+    },
+    // putRecord replaces the whole profile record, so the name, bio and other fields are carried over from the current one.
+    async profile({ avatar, banner }) {
+      const current = await xrpc("com.atproto.repo.getRecord", { query: { repo: session.did, collection: "app.bsky.actor.profile", rkey: "self" } })
+        .catch((error) => { if (/RecordNotFound|Could not locate record/i.test(error.message)) return null; throw error; });
+      const record = Object.assign({ $type: "app.bsky.actor.profile" }, current ? current.value : {});
+      record.avatar = (await xrpc("com.atproto.repo.uploadBlob", { body: fs.readFileSync(avatar), type: "image/jpeg" })).blob;
+      record.banner = (await xrpc("com.atproto.repo.uploadBlob", { body: fs.readFileSync(banner), type: "image/jpeg" })).blob;
+      const body = { repo: session.did, collection: "app.bsky.actor.profile", rkey: "self", record };
+      if (current && current.cid) body.swapRecord = current.cid;
+      await xrpc("com.atproto.repo.putRecord", { body });
+      return "https://bsky.app/profile/" + session.handle;
     }
   };
 }
@@ -222,6 +234,13 @@ function mastodon(env = process.env) {
       }
       const status = await call("POST", "/api/v1/statuses", { status: text, media_ids: [media.id], visibility: "public", language: lang }, { "Idempotency-Key": key });
       return { id: status.id, url: status.url };
+    },
+    async profile({ avatar, banner }) {
+      const form = new FormData();
+      form.append("avatar", new Blob([fs.readFileSync(avatar)], { type: "image/jpeg" }), path.basename(avatar));
+      form.append("header", new Blob([fs.readFileSync(banner)], { type: "image/jpeg" }), path.basename(banner));
+      const account = await call("PATCH", "/api/v1/accounts/update_credentials", form);
+      return account.url;
     }
   };
 }
@@ -357,4 +376,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { PER_RUN, MISSED_MS, ROUTES, NETWORKS, xSlots, posts, due, caption, facets, run };
+module.exports = { PER_RUN, MISSED_MS, ROUTES, NETWORKS, xSlots, posts, due, caption, facets, run, bluesky, mastodon };

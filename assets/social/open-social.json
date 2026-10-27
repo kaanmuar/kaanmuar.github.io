@@ -60,6 +60,26 @@
     "url": "https://mastodon.social/@qalaburlreview/117510667092654844",
     "checked": "2026-10-27T03:08:01.925Z"
    }
+  ],
+  "tips-2026-10/02-release-day": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3myumzrjguo2n",
+    "at": "2026-10-27T16:14:57.483Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3myumzrjguo2n",
+    "checked": "2026-10-27T16:14:59.266Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117513761708741922",
+    "at": "2026-10-27T16:15:00.345Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117513761708741922",
+    "checked": "2026-10-27T16:15:02.051Z"
+   }
   ]
  }
 }

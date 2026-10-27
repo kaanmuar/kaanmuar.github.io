@@ -4,8 +4,10 @@
    Nothing here names the asker. */
 
 const base = require("./url-review-customer-mail");
+const fusion = require("./url-review-fusion");
 
 const { SITE, POSTAL, AREAS, esc, fill, button, shell } = base;
+const { FUSION, TEXT, ON_NIGHT } = fusion;
 const DEEPER = "qa@carlosandmunoz.com";
 
 const COPY = {
@@ -287,10 +289,11 @@ const COPY = {
   }
 };
 
-const GRADE_COLOR = { A: "#5fb88a", B: "#7fb08a", C: "#c9a86a", D: "#e0896a", F: "#e8796b" };
-const PANEL = "#171412";
-const CARD = "#1f1b18";
-const LINE = "#3a332e";
+const GRADE_COLOR = { A: FUSION.mint, B: FUSION.teal, C: FUSION.gold, D: FUSION.coral, F: "#e8796b" };
+const PANEL = FUSION.night;
+const CARD = FUSION.ink;
+const LINE = "#21434a";
+const QUIET = ON_NIGHT.meta;
 
 function copyFor(lang) {
   return COPY[base.langOf(lang)];
@@ -327,8 +330,9 @@ function healthFacts(score, card) {
   };
 }
 
-function chip(text, color) {
-  return "<span style=\"display:inline-block;margin:0 6px 6px 0;padding:3px 10px;border:1px solid " + color + ";border-radius:999px;font-size:12px;line-height:18px;color:" + color + ";\">" + text + "</span>";
+function chip(text, color, filled) {
+  const fill = filled ? "background-color:" + color + ";color:" + PANEL + ";" : "color:" + color + ";";
+  return "<span style=\"display:inline-block;margin:0 6px 6px 0;padding:3px 10px;border:1px solid " + color + ";border-radius:999px;font-size:12px;line-height:18px;" + fill + "\">" + text + "</span>";
 }
 
 function healthBlock(t, host, facts) {
@@ -336,11 +340,11 @@ function healthBlock(t, host, facts) {
   const totals = facts.totals;
   const summary = totals ? fill(h.summary, { host, overall: facts.overall, grade: facts.grade, fail: totals.fail, risk: totals.risk, pass: totals.pass }) : "";
   const chips = totals
-    ? chip("<b>" + totals.fail + "</b> " + esc(h.fail), "#f0897b") + chip("<b>" + totals.risk + "</b> " + esc(h.risk), "#e3b866") + chip("<b>" + totals.pass + "</b> " + esc(h.pass), "#6fcf97") +
-      (totals.person ? chip("<b>" + totals.person + "</b> " + esc(h.person), "#b8b0a8") : "")
+    ? chip("<b>" + totals.fail + "</b> " + esc(h.fail), FUSION.coral) + chip("<b>" + totals.risk + "</b> " + esc(h.risk), FUSION.gold) + chip("<b>" + totals.pass + "</b> " + esc(h.pass), FUSION.mint) +
+      (totals.person ? chip("<b>" + totals.person + "</b> " + esc(h.person), QUIET) : "")
     : "";
   const sev = facts.severities
-    ? ["critical", "high", "medium", "low"].map((key) => chip("<b>" + (facts.severities[key] || 0) + "</b> " + esc(h[key]), { critical: "#b8b0a8", high: "#f0897b", medium: "#e3b866", low: "#b8b0a8" }[key])).join("")
+    ? ["critical", "high", "medium", "low"].map((key) => chip("<b>" + (facts.severities[key] || 0) + "</b> " + esc(h[key]), { critical: FUSION.coral, high: FUSION.coral, medium: FUSION.gold, low: QUIET }[key], key === "critical")).join("")
     : "";
   const areaCard = (area) => {
     const row = facts.areas[area];
@@ -348,28 +352,28 @@ function healthBlock(t, host, facts) {
     const counts = row.fail == null ? "" : fill(h.counts, { fail: row.fail, risk: row.risk, pass: row.pass }) + " — ";
     return "<td width=\"50%\" valign=\"top\" style=\"padding:5px;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + CARD + "\" style=\"background:" + CARD + ";border:1px solid " + LINE + ";border-radius:12px;\"><tr><td style=\"padding:12px 14px;font-family:Arial,Helvetica,sans-serif;\">" +
       "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>" +
-      "<td style=\"font-size:15px;color:#f5f0eb;\"><b style=\"font-size:20px;\">" + row.score + "</b> " + esc(h.areas[area] || area) + "</td>" +
-      "<td align=\"right\"><span style=\"display:inline-block;min-width:22px;text-align:center;padding:3px 6px;border-radius:6px;background:" + (GRADE_COLOR[row.grade] || GRADE_COLOR.F) + ";color:#ffffff;font-size:13px;font-weight:bold;\">" + esc(row.grade) + "</span></td>" +
+      "<td style=\"font-size:15px;color:" + FUSION.pearl + ";\"><b style=\"font-size:20px;\">" + row.score + "</b> " + esc(h.areas[area] || area) + "</td>" +
+      "<td align=\"right\"><span style=\"display:inline-block;min-width:22px;text-align:center;padding:3px 6px;border-radius:6px;background:" + (GRADE_COLOR[row.grade] || GRADE_COLOR.F) + ";color:" + FUSION.night + ";font-size:13px;font-weight:bold;\">" + esc(row.grade) + "</span></td>" +
       "</tr></table>" +
-      "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:8px 0;background:#0f2a3a;border-radius:4px;\"><tr>" +
-      (row.score > 0 ? "<td width=\"" + Math.min(100, row.score) + "%\" style=\"height:6px;line-height:6px;font-size:0;background:" + barColor(row.score) + ";border-radius:4px;\">&nbsp;</td>" : "") +
+      "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + FUSION.night + "\" style=\"margin:8px 0;background:" + FUSION.night + ";border-radius:4px;\"><tr>" +
+      (row.score > 0 ? "<td width=\"" + Math.min(100, row.score) + "%\" bgcolor=\"" + barColor(row.score) + "\" style=\"height:6px;line-height:6px;font-size:0;background:" + barColor(row.score) + ";border-radius:4px;\">&nbsp;</td>" : "") +
       (row.score < 100 ? "<td style=\"height:6px;line-height:6px;font-size:0;\">&nbsp;</td>" : "") +
       "</tr></table>" +
-      "<p style=\"margin:0;font-size:12px;line-height:17px;color:#b8b0a8;\">" + esc(counts + h.about[area]) + "</p>" +
+      "<p style=\"margin:0;font-size:12px;line-height:17px;color:" + QUIET + ";\">" + esc(counts + h.about[area]) + "</p>" +
       "</td></tr></table></td>";
   };
   const shown = AREAS.filter((area) => facts.areas[area]);
   const grid = shown.filter((area, i) => i % 2 === 0).map((area, i) => "<tr>" + areaCard(area) + areaCard(shown[i * 2 + 1]) + "</tr>").join("");
-  return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + PANEL + "\" style=\"background:" + PANEL + ";border-radius:14px;margin:0 0 18px;\"><tr><td style=\"padding:18px 14px 12px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 6px 12px;font-family:Georgia,serif;font-size:19px;font-weight:bold;color:#f5f0eb;\">" + esc(h.title) + "</p>" +
+  return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + PANEL + "\" style=\"" + fusion.PANEL + "border-radius:14px;margin:0 0 18px;\"><tr><td style=\"padding:18px 14px 12px;font-family:Arial,Helvetica,sans-serif;\">" +
+    "<p style=\"margin:0 6px 12px;" + fusion.SERIF + "font-size:22px;line-height:26px;color:" + FUSION.pearl + ";\">" + esc(h.title) + "</p>" +
     "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>" +
     "<td width=\"112\" valign=\"top\" align=\"center\" style=\"padding:0 6px;\"><div style=\"width:96px;height:96px;border-radius:96px;border:8px solid " + barColor(facts.overall) + ";text-align:center;\">" +
-    "<p style=\"margin:18px 0 0;font-family:Georgia,serif;font-size:38px;line-height:40px;font-weight:bold;color:#f5f0eb;\">" + facts.overall + "</p>" +
-    "<p style=\"margin:2px 0 0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#b8b0a8;\">" + esc(h.grade) + " " + esc(facts.grade) + "</p></div></td>" +
+    "<p style=\"margin:18px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:38px;line-height:40px;font-weight:bold;color:#ffffff;\">" + facts.overall + "</p>" +
+    "<p style=\"margin:2px 0 0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:" + QUIET + ";\">" + esc(h.grade) + " " + esc(facts.grade) + "</p></div></td>" +
     "<td valign=\"top\" style=\"padding:0 6px;\">" +
-    (summary ? "<p style=\"margin:0 0 10px;font-size:15px;line-height:22px;color:#f5f0eb;\">" + esc(summary) + "</p>" : "") +
+    (summary ? "<p style=\"margin:0 0 10px;font-size:15px;line-height:22px;color:" + FUSION.pearl + ";\">" + esc(summary) + "</p>" : "") +
     (chips ? "<div>" + chips + "</div>" : "") + (sev ? "<div>" + sev + "</div>" : "") +
-    "<p style=\"margin:4px 0 0;font-size:12px;line-height:17px;color:#b8b0a8;\">" + esc(h.measured) + "</p>" +
+    "<p style=\"margin:4px 0 0;font-size:12px;line-height:17px;color:" + QUIET + ";\">" + esc(h.measured) + "</p>" +
     "</td></tr></table>" +
     "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-top:12px;\">" + grid + "</table>" +
     "</td></tr></table>";
@@ -387,14 +391,11 @@ function healthText(t, host, facts) {
 }
 
 function header(title) {
-  return "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 24px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
-    "<p style=\"margin:0;font-size:24px;line-height:30px;color:#ffffff;font-weight:bold;\">" + esc(title) + "</p>" +
-    "</td></tr>";
+  return fusion.band("QA-lab URL Review", esc(title), "", { size: 26 });
 }
 
 function para(text, style) {
-  return "<p style=\"margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;" + (style || "font-size:15px;line-height:23px;color:#334155;") + "\">" + esc(text) + "</p>";
+  return "<p style=\"margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;" + (style || "font-size:15px;line-height:23px;color:" + TEXT.body + ";") + "\">" + esc(text) + "</p>";
 }
 
 function sourceText(t, notice) {
@@ -409,8 +410,8 @@ function whyText(t, notice) {
 
 function footer(t, notice, stopUrl) {
   return esc(whyText(t, notice)) + "<br>" +
-    "<a href=\"" + esc(stopUrl) + "\" style=\"color:#0e7490;\">" + esc(t.stop) + "</a><br>" +
-    "<a href=\"" + SITE + "/qa-review.html\" style=\"color:#0e7490;\">QA-lab URL Review</a> &middot; " + esc(POSTAL);
+    "<a href=\"" + esc(stopUrl) + "\" style=\"color:" + TEXT.link + ";\">" + esc(t.stop) + "</a><br>" +
+    "<a href=\"" + SITE + "/qa-review.html\" style=\"color:" + TEXT.link + ";\">QA-lab URL Review</a> &middot; " + esc(POSTAL);
 }
 
 // notice: the url_review_owner_notices row, addressed. card: the Live Report card.
@@ -423,11 +424,11 @@ function noticeMail(notice, card, links, score) {
     "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:22px 24px 22px;\">" +
     para(fill(t.lead, vars)) +
     healthBlock(t, notice.host, facts) +
-    (notice.critical ? para(t.critical, "font-size:15px;line-height:23px;color:#7f1d1d;font-weight:bold;") : "") +
+    (notice.critical ? para(t.critical, "font-size:15px;line-height:23px;color:" + TEXT.critical + ";font-weight:bold;") : "") +
     button(links.claim, t.claim, true) + button(links.unlist, fill(t.unlist, vars), false) +
-    para(fill(t.claimNote, vars), "font-size:13px;line-height:19px;color:#64748b;margin:6px 0 8px;") +
-    para(fill(t.unlistNote, vars), "font-size:13px;line-height:19px;color:#64748b;margin:0 0 12px;") +
-    "<p style=\"margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;\"><a href=\"" + esc(links.live) + "\" style=\"color:#0e7490;\">" + esc(t.view) + "</a></p>" +
+    para(fill(t.claimNote, vars), "font-size:13px;line-height:19px;color:" + TEXT.muted + ";margin:6px 0 8px;") +
+    para(fill(t.unlistNote, vars), "font-size:13px;line-height:19px;color:" + TEXT.muted + ";margin:0 0 12px;") +
+    "<p style=\"margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;\"><a href=\"" + esc(links.live) + "\" style=\"color:" + TEXT.link + ";\">" + esc(t.view) + "</a></p>" +
     "</td></tr>";
   const text = [
     fill(t.title, vars), "",
@@ -449,12 +450,12 @@ function claimWhy(lang, host) {
   return fill(copyFor(lang).claimWhy, { host });
 }
 
-const PAGE_STYLE = "body{margin:0;min-height:100vh;display:grid;place-items:center;background:#e8eef4;font-family:Arial,Helvetica,sans-serif;color:#0f172a}" +
-  "main{background:#fff;border-radius:16px;padding:32px;max-width:460px;margin:16px;text-align:center}h1{font-size:22px;line-height:1.3;font-weight:normal}" +
-  "p{color:#334155;line-height:1.5}label{display:block;text-align:left;font-size:14px;margin:0 0 6px}" +
-  "input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #9cc7d3;border-radius:10px;font-size:16px;margin:0 0 14px}" +
-  "button{background:#0e7490;color:#fff;border:0;border-radius:10px;padding:13px 22px;font-size:15px;font-weight:bold;cursor:pointer}" +
-  ".error{color:#b91c1c}a{color:#0e7490}";
+const PAGE_STYLE = "body{margin:0;min-height:100vh;display:grid;place-items:center;background:" + fusion.PAGE_BG + ";font-family:Arial,Helvetica,sans-serif;color:" + TEXT.strong + "}" +
+  "main{background:#fff;border-radius:16px;border-top:4px solid " + FUSION.teal + ";padding:32px;max-width:460px;margin:16px;text-align:center}h1{font-size:22px;line-height:1.3;font-weight:normal}" +
+  "p{color:" + TEXT.body + ";line-height:1.5}label{display:block;text-align:left;font-size:14px;margin:0 0 6px}" +
+  "input{box-sizing:border-box;width:100%;padding:12px;border:1px solid " + FUSION.teal + ";border-radius:10px;font-size:16px;margin:0 0 14px}" +
+  "button{background:" + FUSION.teal + ";color:" + FUSION.night + ";border:0;border-radius:999px;padding:13px 22px;font-size:15px;font-weight:bold;cursor:pointer}" +
+  ".error{color:" + TEXT.fail + "}a{color:" + TEXT.link + "}";
 
 // state: claim, claimed, claim-limit, unlist, unlisted, stop, stopped, gone.
 // link: the url_review_owner_links row, plus email (claimed) or wrong (a rejected claim address).
