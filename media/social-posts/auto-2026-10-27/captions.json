@@ -456,7 +456,8 @@
         "instagram": "megaxh.com: 64. La lacuna: i nomi dei pulsanti.\n\nOgni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma i pulsanti devono avere un testo riconoscibile.\n\nLezione: Dai a ogni pulsante un testo o un aria-label, così uno screen reader può annunciarlo.\n\nUn’analisi automatica di pagine pubbliche: 27 ott. 2026, uno dei siti più visitati del suo paese, dallo sweep per paese di QA-lab URL Review. Un punto di partenza, non un verdetto.\nReport completo: link in bio.\n\nAnalizza il tuo sito: https://carlosandmunoz.com/qa-review.html\n\n#Accessibility #CSS #QA #A11y #QAlab",
         "facebook": "megaxh.com: 64. La lacuna: i nomi dei pulsanti.\n\nOgni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma i pulsanti devono avere un testo riconoscibile.\n\nLezione: Dai a ogni pulsante un testo o un aria-label, così uno screen reader può annunciarlo.\n\nUn’analisi automatica di pagine pubbliche: 27 ott. 2026, uno dei siti più visitati del suo paese, dallo sweep per paese di QA-lab URL Review. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review.html?live=u-megaxh-com&utm_source=facebook&utm_medium=social&utm_campaign=country-sweep&utm_content=u-megaxh-com\n\nAnalizza il tuo sito: https://carlosandmunoz.com/qa-review.html\n\n#Accessibility #CSS #QA #QAlab"
       }
-    }
+    },
+    "hold": true
   },
   "12-vs-looksharpstore-co-nz": {
     "date": "2026-11-08",

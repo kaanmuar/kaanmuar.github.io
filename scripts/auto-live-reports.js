@@ -11,11 +11,14 @@
    (scripts/tips-studio/runs-auto.js). Hosts with a hand-checked card keep it. A host gets one
    social post per POST_EVERY_DAYS; its card still refreshes. Copy is a template: the engine's own
    finding titles plus a general lesson that holds for any site. State (since, posted hosts, recent
-   lessons) lives in scripts/auto-live-reports.state.json and is committed by the workflow. */
+   lessons) lives in scripts/auto-live-reports.state.json and is committed by the workflow.
+   Adult and gambling sites (scripts/sensitive-sites.js) keep their card but get no social post, and a comparison
+   drops them from its competitors (#1929). */
 
 const fs = require("fs");
 const path = require("path");
 const live = require("./build-live-reports");
+const { siteKind } = require("./tips-studio/site-assets");
 
 const ROOT = path.resolve(__dirname, "..");
 const STATE = path.join(__dirname, "auto-live-reports.state.json");
@@ -231,6 +234,7 @@ async function main() {
   const today = new Date().toISOString().slice(0, 10);
   const batch = [];
   let added = 0;
+  let held = 0;
   let sweepPosts = 0;
   for (const { report, source } of payload.reports || []) {
     const host = bare(report.host);
@@ -246,6 +250,8 @@ async function main() {
     const at = items.findIndex((x) => x.card.id === run.id);
     if (at >= 0) items.splice(at, 1, built); else items.push(built);
     added += 1;
+    const restricted = await siteKind(host, (report.pages || []).map((page) => page.title || ""));
+    if (restricted) { console.log("no post for", host, "-", restricted); held += 1; continue; }
     const last = (state.posted || {})[host];
     if (last && (Date.parse(today) - Date.parse(last)) / 864e5 < POST_EVERY_DAYS) continue;
     if (source === "rivals" || source === "outreach") continue;
@@ -265,8 +271,10 @@ async function main() {
     const host = bare(cmp.host);
     const key = "vs:" + host;
     const id = "u-" + host.replace(/[^a-z0-9]+/g, "-").slice(0, 60);
-    const sites = [cmp].concat(cmp.rivals || []).filter((site) => !gone(site.host));
-    if (cmp.outreach || gone(host) || sites.length < 2 || !items.some((x) => x.card.id === id)) continue;
+    if (cmp.outreach || gone(host) || await siteKind(host) || !items.some((x) => x.card.id === id)) continue;
+    const sites = [];
+    for (const site of [cmp].concat(cmp.rivals || [])) if (!gone(site.host) && !await siteKind(site.host)) sites.push(site);
+    if (sites.length < 2) continue;
     const last = (state.posted || {})[key];
     if (last && (Date.parse(today) - Date.parse(last)) / 864e5 < POST_EVERY_DAYS) continue;
     const copy = versusCopy(sites.map((site) => Object.assign({}, site, { host: bare(site.host) })));
@@ -283,7 +291,7 @@ async function main() {
   if (!opts.from) state.since = payload.until || state.since;
   fs.writeFileSync(STATE, JSON.stringify(state, null, 1) + "\n");
   console.log("read " + (payload.read || 0) + ", held " + JSON.stringify(payload.held || {}));
-  output({ cards: added, removed, social: batch.length, batch: "auto-" + today, total: items.length });
+  output({ cards: added, removed, social: batch.length, restricted: held, batch: "auto-" + today, total: items.length });
 }
 
 main().catch((error) => { console.error(error); process.exit(1); });

@@ -30,10 +30,10 @@ const BRANDS = [
   ["css", "CSS", "663399", /\bCSS\b/]
 ].map(([slug, name, hex, re]) => ({ slug, name, hex, re }));
 
-// Where the clips and posts go out, in the order the end card lists them; Bluesky and Mastodon through
+// Where the clips and posts go out, in the order the end card lists them; Threads, Bluesky and Mastodon through
 // scripts/open-social-queue.js.
 const NETWORKS = [["youtube", "YouTube", "FF0000"], ["tiktok", "TikTok", "000000"], ["instagram", "Instagram", "FF0069"],
-  ["linkedin", "LinkedIn", "0A66C2"], ["x", "X", "000000"], ["facebook", "Facebook", "0866FF"],
+  ["threads", "Threads", "000000"], ["linkedin", "LinkedIn", "0A66C2"], ["x", "X", "000000"], ["facebook", "Facebook", "0866FF"],
   ["bluesky", "Bluesky", "1185FE"], ["mastodon", "Mastodon", "6364FF"]];
 const HANDLE = "@qalaburlreview";
 
