@@ -305,12 +305,14 @@ function rerunRows(docs) {
 }
 
 const STYLE = `
-    :root { color-scheme: light; --ink:#102027; --muted:#5c6e78; --line:#d5e0e4; --teal:#0d6e76; --paper:#f4f7f8; --card:#fff; }
+    :root { color-scheme: light; --ink:#102226; --muted:#56707a; --line:#dbe7e9; --teal:#0d6e76; --paper:#eef4f5; --card:#fff; --night:#071116; --accent:#4db3bb; }
     * { box-sizing: border-box; }
     body { margin: 0; font: 16px/1.45 Georgia, "Times New Roman", serif; color: var(--ink); background: var(--paper); }
+    body::before { content: ""; display: block; height: 4px; background: #4db3bb linear-gradient(90deg, #7ef6fb, #4db3bb 50%, #e2c48a); }
     header, main { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
     header { padding: 28px 0 8px; }
-    h1 { font-weight: normal; font-size: 32px; margin: 0 0 6px; }
+    h1 { font-weight: normal; font-size: 32px; margin: 0 0 6px; display: flex; align-items: center; gap: 12px; }
+    h1::before { content: ""; width: 40px; height: 40px; flex: none; border-radius: 10px; background: var(--night) url(https://carlosandmunoz.com/assets/qa-review-logo.png) center / cover; }
     .lede { margin: 0; color: var(--muted); }
     .stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0; }
     .stat { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-family: Arial, sans-serif; font-size: 13px; }
@@ -329,7 +331,7 @@ const STYLE = `
     th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
     th { color: var(--muted); font-weight: 600; }
     tr { cursor: pointer; }
-    tr[aria-selected="true"] { background: #e7f4f5; }
+    tr[aria-selected="true"] { background: #e3f5f6; }
     .detail { margin-top: 14px; }
     .detail dl { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; margin: 0; }
     .detail dt { color: var(--muted); font-family: Arial, sans-serif; font-size: 13px; }
@@ -337,7 +339,7 @@ const STYLE = `
     ul { margin: 8px 0 0; padding-left: 18px; }
     .empty { color: var(--muted); margin: 0; }
     pre { white-space: pre-wrap; font: 14px/1.45 Georgia, serif; margin: 8px 0 0; }
-    button { font: 14px Arial, sans-serif; background: var(--teal); color: #fff; border: 0; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+    button { font: 14px Arial, sans-serif; font-weight: bold; background: var(--accent); color: var(--night); border: 0; border-radius: 999px; padding: 8px 14px; cursor: pointer; }
     .held { color: var(--muted); }
     #desk-gate { display: none; }
     body.desk-locked main > section:not(#desk-gate) { display: none; }

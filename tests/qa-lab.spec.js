@@ -121,7 +121,7 @@ test.describe('CV regression lab', () => {
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /qa-lab\.html/);
     await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);
     await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
-    await expect(page.locator('link[hreflang="es"]')).toHaveAttribute('href', /lang=es/);
+    await expect(page.locator('link[hreflang]')).toHaveCount(0);
     const jsonLd = await page.locator('script[type="application/ld+json"]').textContent();
     expect(jsonLd).toContain('WebApplication');
     expect(jsonLd).toContain('BreadcrumbList');

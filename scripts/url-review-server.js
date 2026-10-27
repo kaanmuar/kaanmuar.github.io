@@ -17,8 +17,9 @@ const phraser = require("../functions/url-review-phrase");
 const accountData = require("../functions/url-review-account-data");
 const oauth = require("../functions/url-review-oauth");
 
-function loadEnvFile() {
-  const file = path.join(__dirname, "..", "functions", ".env");
+// Keys deployed through Secret Manager are kept locally in functions/.secret.local, as the emulator reads them.
+function loadEnvFile(name) {
+  const file = path.join(__dirname, "..", "functions", name);
   let text = "";
   try { text = fs.readFileSync(file, "utf8"); } catch (error) { return; }
   text.split("\n").forEach((line) => {
@@ -30,7 +31,8 @@ function loadEnvFile() {
     if (!process.env[key]) process.env[key] = trimmed.slice(eq + 1).trim();
   });
 }
-loadEnvFile();
+loadEnvFile(".env");
+loadEnvFile(".secret.local");
 
 function paymentKeys() {
   return {

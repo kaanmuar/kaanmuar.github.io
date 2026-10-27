@@ -200,7 +200,8 @@ async function money(ctx) {
   const days = ctx.days;
   const start = ctx.now - days * DAY;
   const priorStart = ctx.now - 2 * days * DAY;
-  const snap = await ctx.db.collection("url_reviews").where("paid", "==", true).where("createdAt", ">=", new Date(priorStart).toISOString()).limit(3000).get();
+  const snap = await ctx.db.collection("url_reviews").where("paid", "==", true).where("createdAt", ">=", new Date(priorStart).toISOString())
+    .select("createdAt", "paid", "priceUsd", "provider", "purpose", "refundedUsd", "status", "test", "paypalMode", "sessionId", "captureId", "method").limit(3000).get();
   const rows = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
   const out = Object.assign({ ok: true, days }, moneyRows(rows, { start, priorStart }));
   out.paypal = await paypalPart(ctx, { start, end: ctx.now });
@@ -366,7 +367,7 @@ async function social(ctx) {
       videos.forEach((v) => { const s = stats[v.id] || {}; v.views = Number(s.viewCount) || 0; v.likes = Number(s.likeCount) || 0; v.comments = Number(s.commentCount) || 0; });
       views = videos.reduce((s, v) => s + (v.views || 0), 0);
     } catch (error) { needs.push("YouTube: " + clean(error)); }
-  } else if (!key) needs.push("YouTube: set YOUTUBE_KEY (an API key limited to the YouTube Data API v3) in functions/.env.");
+  } else if (!key) needs.push("YouTube: set YOUTUBE_KEY (an API key limited to the YouTube Data API v3) in Secret Manager.");
   if (!(ctx.env || {}).FACEBOOK_PAGE_TOKEN) needs.push("Facebook: copy FACEBOOK_PAGE_TOKEN from the GitHub secrets into functions/.env so Jarvis can read post reach.");
   const failed = Object.keys(results).filter((k) => /:failed$/.test(k)).reduce((s, k) => s + results[k], 0);
   return {

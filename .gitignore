@@ -2,6 +2,7 @@ node_modules
 __pycache__/
 .worktrees/
 functions/.env
+functions/.secret.local
 *.jdk/
 .DS_Store
 cypress/screenshots/
@@ -48,3 +49,6 @@ firebase-debug.log
 
 # Private notes; Pages would publish them
 PubSap/
+
+# cf build output and dev state for the qalabreview.com Worker (#1866)
+qalabreview/.cloudflare/

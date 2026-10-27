@@ -16,6 +16,14 @@
 
   .floor { position: absolute; left: -50%; right: -50%; bottom: -12%; height: 62%; transform-origin: 50% 0; transform: perspective(900px) rotateX(72deg); background-image: linear-gradient(rgba(126,246,251,.16) 2px, transparent 2px), linear-gradient(90deg, rgba(126,246,251,.16) 2px, transparent 2px); background-size: 90px 90px; -webkit-mask-image: linear-gradient(180deg, transparent, #000 35%, #000); animation: drift 12s linear both; }
   @keyframes drift { from { background-position: 0 0; } to { background-position: 0 360px; } }
+  /* Fusion backdrop (media/fusion-stage, rendered by scripts/fusion/stage.js); the themed series keep their own skies. */
+  .fusion { position: absolute; inset: 0; overflow: hidden; }
+  .fusion img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 62% 22%; animation: fusionDrift 12s linear both; }
+  .fusion::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,12,15,.3) 0%, rgba(5,12,15,.62) 30%, rgba(5,12,15,.8) 60%, rgba(5,12,15,.88) 100%); }
+  .feed .fusion img, .story .fusion img { animation: none; }
+  @keyframes fusionDrift { from { transform: scale(1); } to { transform: scale(1.09) translateY(-1.5%); } }
+  #c:not([data-theme="horror"]):not([data-theme="muertos"]) .floor, #c:not([data-theme="horror"]):not([data-theme="muertos"]) .cube { display: none; }
+  [data-theme="horror"] .fusion, [data-theme="muertos"] .fusion { display: none; }
   .grain { position: absolute; inset: 0; opacity: .08; mix-blend-mode: overlay; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
 
   .cube { position: absolute; width: var(--s); height: var(--s); transform-style: preserve-3d; transform: perspective(800px) rotateX(-20deg) rotateY(35deg); animation: spin 12s linear both; }
@@ -32,7 +40,7 @@
   .stack { position: absolute; inset: 0; display: flex; flex-direction: column; padding: var(--pad); gap: calc(var(--u) * 1.2); }
   .top { display: flex; align-items: center; justify-content: space-between; }
   .brand { display: flex; align-items: center; gap: 16px; }
-  .brand svg { width: 64px; height: 64px; filter: drop-shadow(0 6px 18px rgba(77,179,187,.4)); }
+  .brand img { width: 64px; height: 64px; filter: drop-shadow(0 6px 18px rgba(77,179,187,.4)); }
   .brand b { display: block; font-weight: 700; font-size: 24px; letter-spacing: .14em; text-transform: uppercase; }
   .brand small { display: block; margin-top: 4px; color: var(--muted); font-size: 20px; }
   .count { font-family: "Fira Code", monospace; font-size: 24px; color: var(--muted); }
@@ -155,8 +163,8 @@
   .foot { display: flex; justify-content: space-between; align-items: center; gap: 20px; font-size: 21px; color: var(--muted); white-space: nowrap; }
   .foot strong { color: var(--text); font-weight: 600; }
 
-  .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; text-align: center; padding: 120px; background: radial-gradient(60% 40% at 50% 45%, rgba(77,179,187,.35), transparent 70%), #050c0f; opacity: 0; }
-  .end svg { width: 180px; height: 180px; }
+  .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; text-align: center; padding: 120px; background: radial-gradient(60% 40% at 50% 45%, rgba(77,179,187,.3), transparent 70%), linear-gradient(rgba(5,12,15,.5), rgba(5,12,15,.86)), url(../../media/fusion-stage/story-b.jpg) center / cover, #050c0f; opacity: 0; }
+  .end img { width: 180px; height: 180px; filter: drop-shadow(0 18px 60px rgba(77,179,187,.5)); }
   .end h2 { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 110px; line-height: 1; }
   .end p { margin: 0; font-size: 40px; color: #cfe0e3; }
   .end .url { white-space: nowrap; font-family: "Fira Code", monospace; font-size: 34px; color: var(--cyan-hi); border: 2px solid rgba(126,246,251,.35); border-radius: 999px; padding: 14px 30px; }
@@ -166,7 +174,7 @@
     background: radial-gradient(circle at 900px 198px, #f3ead6 0 52px, rgba(243,234,214,.18) 56px, transparent 150px), radial-gradient(70% 45% at 85% 5%, rgba(232,113,26,.22), transparent 70%), radial-gradient(60% 40% at 0% 100%, rgba(150,70,200,.28), transparent 70%), linear-gradient(180deg, #140a16, #07040a 60%); }
   [data-theme="horror"] .floor { background-image: linear-gradient(rgba(255,154,61,.14) 2px, transparent 2px), linear-gradient(90deg, rgba(255,154,61,.14) 2px, transparent 2px); }
   [data-theme="horror"] .cube { display: none; }
-  [data-theme="horror"] .brand svg { filter: drop-shadow(0 6px 18px rgba(232,113,26,.45)); }
+  [data-theme="horror"] .brand img { filter: drop-shadow(0 6px 18px rgba(232,113,26,.45)); }
   [data-theme="horror"] .chip { background: rgba(40,16,8,.6); }
   [data-theme="horror"] .body { color: #e6d9cc; }
   [data-theme="horror"] .glass { border-color: rgba(255,154,61,.26); }
@@ -192,7 +200,7 @@
   [data-theme="muertos"] .floor { background-image: radial-gradient(circle, rgba(255,176,46,.30) 0 7px, transparent 8px), radial-gradient(circle, rgba(255,111,174,.20) 0 5px, transparent 6px); background-size: 90px 90px, 90px 90px; background-position: 0 0, 45px 45px; }
   [data-theme="muertos"] .cube { display: none; }
   [data-theme="muertos"] .title em { background-image: linear-gradient(92deg, var(--cyan-hi), #ff9a3d 50%, var(--gold)); }
-  [data-theme="muertos"] .brand svg { filter: drop-shadow(0 6px 18px rgba(242,154,12,.45)); }
+  [data-theme="muertos"] .brand img { filter: drop-shadow(0 6px 18px rgba(242,154,12,.45)); }
   [data-theme="muertos"] .chip { background: rgba(44,18,10,.6); }
   [data-theme="muertos"] .body { color: #eadccd; }
   [data-theme="muertos"] .glass { border-color: rgba(255,176,46,.28); }
@@ -270,14 +278,15 @@
   .fix .picks .pick { animation: inUp .6s cubic-bezier(.2,.8,.2,1) both; }
   .fix .url { align-self: flex-start; font-family: "Fira Code", monospace; font-size: 30px; color: var(--cyan-hi); border: 2px solid rgba(126,246,251,.35); border-radius: 999px; padding: 12px 28px; background: rgba(5,12,15,.5); }
   .scenes .end { z-index: 5; }
-  .scenes .end svg { animation: logoIn 1.2s cubic-bezier(.2,.8,.2,1) both; animation-delay: inherit; }
+  .scenes .end img { animation: logoIn 1.2s cubic-bezier(.2,.8,.2,1) both; animation-delay: inherit; }
   @keyframes logoIn { from { transform: rotateY(-200deg) scale(.4); } to { transform: none; } }
 </style>
 </head>
 <body>
 <div id="c"></div>
 <script>
-const MARK = '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#12a3ad"/><stop offset="1" stop-color="#0d6e76"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#g)"/><path d="M19 33l9 9 18-20" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const MARK = '<img src="../../designs/3d/icon/qa-review-mark-fusion.svg" alt="">';
+const fusion = (fmt, style) => '<div class="fusion"><img src="../../media/fusion-stage/' + (fmt === "feed" ? "portrait" : "story") + '-a.jpg" alt=""' + (style ? ' style="' + style + '"' : "") + "></div>";
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const title = (lines) => lines.map((l) => "<span>" + esc(l).replace(/\*(.+?)\*/g, "<em>$1</em>") + "</span>").join("");
 const hl = (line) => esc(line).replace(/^(\s*)([\w-]+)(:)/, '$1<b>$2</b>$3').replace(/(&lt;\/?)([a-z0-9]+)/g, '$1<b>$2</b>');
@@ -361,7 +370,7 @@ window.paint = function (tip, cat, fmt, index, total, guideHost, lang) {
     ? '<div class="cube a" style="--s:120px;left:820px;top:260px"><i></i><i></i><i></i><i></i><i></i><i></i></div>' + lower
     : '<div class="cube a" style="--s:90px;left:900px;top:190px"><i></i><i></i><i></i><i></i><i></i><i></i></div>';
   c.innerHTML =
-    '<div class="floor a"></div>' + cubes + '<div class="grain"></div>' +
+    fusion(fmt) + '<div class="floor a"></div>' + cubes + '<div class="grain"></div>' +
     '<div class="stack">' +
       '<div class="top a in-up" style="animation-delay:.1s"><div class="brand">' + MARK + '<div><b>QA-lab</b><small>URL Review</small></div></div><span class="count">' + esc(tip.counter || ui.tip + " " + String(index + 1).padStart(2, "0") + " / " + total) + "</span></div>" +
       '<span class="chip a in-up" style="animation-delay:.4s"><i></i>' + esc(cat.label) + "</span>" +
@@ -371,7 +380,7 @@ window.paint = function (tip, cat, fmt, index, total, guideHost, lang) {
       '<div class="action a in-up" style="animation-delay:5s"><b>' + esc(tip.actionLabel || ui.tryThis) + "</b><span>" + esc(tip.action) + "</span></div>" +
       '<div class="foot a in-up" style="animation-delay:5.4s"><span>' + esc(ui.guided) + ' · <strong>' + esc(guideHost) + "</strong></span><span>" + esc(tip.footRight || ui.never) + "</span></div>" +
     "</div>" +
-    (fmt === "clip" ? '<div class="end a" style="animation-delay:10s">' + MARK.replace('viewBox', 'width="180" height="180" viewBox') + "<h2>" + (ui.end ? esc(ui.end) : 'Let your page<br><em style="font-style:italic">do the talking.</em>') + "</h2><p>" + esc(ui.endNote) + '</p><span class="url">' + esc(guideHost) + "</span></div>" : "");
+    (fmt === "clip" ? '<div class="end a" style="animation-delay:10s">' + MARK + "<h2>" + (ui.end ? esc(ui.end) : 'Let your page<br><em style="font-style:italic">do the talking.</em>') + "</h2><p>" + esc(ui.endNote) + '</p><span class="url">' + esc(guideHost) + "</span></div>" : "");
   if (fmt !== "clip") c.querySelectorAll(".a").forEach((el) => { el.style.animation = "none"; });
   return document.fonts.ready.then(() => {
     const scene = c.querySelector(".scene");
@@ -443,13 +452,13 @@ window.paintClip = function (tip, cat, index, total, guideHost, lang, scenes) {
     } };
   const end = scenes.find((s) => s.id === "end");
   c.innerHTML =
-    '<div class="world" style="' + L + '"><div class="floor" style="' + L + '"></div>' +
+    fusion("clip", L) + '<div class="world" style="' + L + '"><div class="floor" style="' + L + '"></div>' +
       cubeHtml("--s:120px;left:820px;top:300px;" + L) + cubeHtml("--s:70px;left:120px;top:1500px;animation-direction:reverse;" + L) + cubeHtml("--s:46px;left:930px;top:1640px;" + L) + dots + "</div>" +
     '<div class="grain"></div>' +
     '<div class="progress">' + scenes.map((s) => '<i style="--w:' + s.dur.toFixed(2) + '"><b style="animation-duration:' + sec(s.dur) + ";animation-delay:" + sec(s.start) + '"></b></i>').join("") + "</div>" +
     '<div class="masthead top a in-up" style="animation-delay:.1s"><div class="brand">' + MARK + '<div><b>QA-lab</b><small>URL Review</small></div></div><span class="count">' + esc(tip.counter || ui.tip + " " + String(index + 1).padStart(2, "0") + " / " + total) + "</span></div>" +
     '<div class="rig" style="' + L + '">' + scenes.filter((s) => body[s.id]).map((s) => scene(s, body[s.id](s))).join("") + "</div>" +
-    '<div class="end a" style="animation-delay:' + sec(end.start) + '">' + MARK.replace('viewBox', 'width="180" height="180" viewBox') + "<h2>" + (ui.end ? esc(ui.end) : 'Let your page<br><em style="font-style:italic">do the talking.</em>') + "</h2><p>" + esc(ui.endNote) + '</p><span class="url">' + esc(guideHost) + "</span></div>";
+    '<div class="end a" style="animation-delay:' + sec(end.start) + '">' + MARK + "<h2>" + (ui.end ? esc(ui.end) : 'Let your page<br><em style="font-style:italic">do the talking.</em>') + "</h2><p>" + esc(ui.endNote) + '</p><span class="url">' + esc(guideHost) + "</span></div>";
   return document.fonts.ready.then(() => {
     c.querySelectorAll(".sc").forEach((sc) => {
       const box = sc.firstElementChild;

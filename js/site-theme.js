@@ -24,7 +24,7 @@
     function apply(dark, persist) {
         const next = !!dark;
         document.documentElement.classList.toggle('dark-mode', next);
-        const meta = document.querySelector('meta[name="theme-color"]');
+        const meta = document.querySelector('meta[name="theme-color"]:not([data-fixed])');
         if (meta) meta.setAttribute('content', next ? '#0c1118' : '#eef2f4');
         if (persist) {
             try { localStorage.setItem(KEY, next ? 'dark' : 'light'); } catch (e) { /* ignore */ }

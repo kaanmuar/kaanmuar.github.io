@@ -42,7 +42,7 @@ const PRERENDER = 24;
 const TEXT_MAX = 1200;
 const LAUNCH = "launch-2026-10";
 const ORG = SITE + "qa-review.html#organization";
-const SHARE_VERSION = "20261024";
+const SHARE_VERSION = "20261027";
 const RSS_MAX = 50;
 // Post kinds in the order the filter chips list them; a batch's captions.json names its kind (scripts/tips-studio/build.js).
 const KINDS = Object.keys(COPY.en.kind);
@@ -456,7 +456,7 @@ function jsonLd(lang, shown, total, copy) {
         "@id": ORG,
         name: "QA-lab URL Review",
         url: SITE + "qa-review.html",
-        logo: SITE + "assets/qa-review-mark.svg",
+        logo: SITE + "assets/qa-review-mark-full.svg",
         sameAs: PROFILES.map((profile) => profile.url)
       },
       {
@@ -483,7 +483,7 @@ function version(file) {
   return require("crypto").createHash("sha1").update(read(file)).digest("hex").slice(0, 10);
 }
 
-const CSP = "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com; frame-src https://www.youtube-nocookie.com; form-action 'self';";
+const CSP = "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.google.com https://www.googletagmanager.com https://*.googleapis.com; frame-src https://www.youtube-nocookie.com; form-action 'self';";
 
 function page(lang, posts, asOf) {
   const copy = COPY[lang];
@@ -520,14 +520,19 @@ function page(lang, posts, asOf) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="${CSP}">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>${esc(copy.title)}</title>
     <meta name="description" content="${esc(copy.description)}">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-    <meta name="theme-color" content="#0d6e76">
+    <meta name="theme-color" content="#071116" data-fixed>
     <link rel="canonical" href="${url}">
 ${alternates}
-    <link rel="icon" href="assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" href="assets/qa-review-mark.svg?v=20261027a" type="image/svg+xml">
+    <link rel="icon" href="assets/qa-review-icon-32.png?v=20261027a" sizes="32x32" type="image/png">
+    <link rel="icon" href="assets/qa-review-icon-16.png?v=20261027a" sizes="16x16" type="image/png">
+    <link rel="icon" href="assets/qa-review-favicon.ico?v=20261027a" sizes="48x48">
+    <link rel="apple-touch-icon" href="assets/qa-review-apple-touch-icon.png?v=20261027a">
+    <link rel="manifest" href="qa-review.webmanifest?v=20261027a">
     <link rel="alternate" type="application/json" href="${SITE}${OUT}/feed${sfx}.json" title="QA-lab URL Review social feed">
     <link rel="alternate" type="application/rss+xml" href="${SITE}${OUT}/rss${sfx}.xml" title="QA-lab URL Review · Social (RSS)">
     <meta property="og:type" content="website">
@@ -559,11 +564,12 @@ ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, 
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/site-look.css?v=${version("css/site-look.css")}">
     <link rel="stylesheet" href="css/social-hub.css?v=${version("css/social-hub.css")}">
+    <link rel="stylesheet" href="css/fusion-band.css?v=${version("css/fusion-band.css")}">
 </head>
 <body>
 <a class="skip-link" href="#main">${esc(copy.skip)}</a>
 <header class="topbar">
-    <div class="brand"><a href="qa-review${sfx}.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
+    <div class="brand"><a href="qa-review${sfx}.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
     <nav class="actions" aria-label="QA-lab URL Review">
         <a class="btn btn-ghost" href="qa-review${sfx}.html">${esc(copy.nav.review)}</a>
         <a class="btn btn-ghost" href="qa-review${sfx}.html#live-reports">${esc(copy.nav.live)}</a>
@@ -571,7 +577,8 @@ ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, 
     </nav>
 </header>
 <main id="main" class="hub" tabindex="-1">
-    <section class="hub-hero">
+    <section class="hub-hero fx-band">
+        <div class="fx-bg" data-fx data-fx-mode="2" data-fx-place="band" aria-hidden="true"><canvas class="fx"></canvas></div>
         <p class="hub-eyebrow" translate="no">QA-lab URL Review · Social</p>
         <h1>${esc(copy.h1)}</h1>
         <p class="hub-lead">${esc(copy.lead)}</p>
@@ -604,6 +611,7 @@ ${shown.map((post) => "        " + card.cardHtml(post, copy, lang)).join("\n")}
 <script>window.SocialHubCopy = ${JSON.stringify(hubCopy).replace(/</g, "\\u003c")};</script>
 <script src="js/social-hub-card.js?v=${version("js/social-hub-card.js")}" defer></script>
 <script src="js/social-hub.js?v=${version("js/social-hub.js")}" defer></script>
+<script type="module" src="js/fusion/boot.js?v=${version("js/fusion/boot.js")}"></script>
 </body>
 </html>
 `;
@@ -640,7 +648,7 @@ ${admin.remote(post.image)
     <language>${lang}</language>
     <lastBuildDate>${rfc822(asOf)}</lastBuildDate>
     <atom:link href="${SITE}${OUT}/rss${sfx}.xml" rel="self" type="application/rss+xml"/>
-    <image><url>${SITE}apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>${SITE}${card.pageFor(lang)}</link></image>
+    <image><url>${SITE}assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>${SITE}${card.pageFor(lang)}</link></image>
 ${items.join("\n")}
   </channel>
 </rss>
@@ -730,7 +738,7 @@ function postPage(post, siblings, related, asOf, answer, question) {
     "@context": "https://schema.org",
     "@graph": [
       Object.assign(posting(post, true, answerOut ? answer : null), { mainEntityOfPage: url, isPartOf: { "@type": "CollectionPage", "@id": hub + "#page", url: hub } }),
-      { "@type": "Organization", "@id": ORG, name: "QA-lab URL Review", url: SITE + "qa-review.html", logo: SITE + "assets/qa-review-mark.svg", sameAs: PROFILES.map((profile) => profile.url) },
+      { "@type": "Organization", "@id": ORG, name: "QA-lab URL Review", url: SITE + "qa-review.html", logo: SITE + "assets/qa-review-mark-full.svg", sameAs: PROFILES.map((profile) => profile.url) },
       { "@type": "BreadcrumbList", itemListElement: [
         { "@type": "ListItem", position: 1, name: "QA-lab URL Review", item: SITE + "qa-review" + sfx + ".html" },
         { "@type": "ListItem", position: 2, name: "Social", item: hub },
@@ -748,10 +756,14 @@ function postPage(post, siblings, related, asOf, answer, question) {
     <title>${esc(title)}</title>
     <meta name="description" content="${esc(description)}">
     <meta name="robots" content="${upcoming ? "noindex, follow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"}">
-    <meta name="theme-color" content="#0d6e76">
+    <meta name="theme-color" content="#071116" data-fixed>
     <link rel="canonical" href="${url}">
-${alternates}    <link rel="icon" href="/assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+${alternates}    <link rel="icon" href="/assets/qa-review-mark.svg?v=20261027a" type="image/svg+xml">
+    <link rel="icon" href="/assets/qa-review-icon-32.png?v=20261027a" sizes="32x32" type="image/png">
+    <link rel="icon" href="/assets/qa-review-icon-16.png?v=20261027a" sizes="16x16" type="image/png">
+    <link rel="icon" href="/assets/qa-review-favicon.ico?v=20261027a" sizes="48x48">
+    <link rel="apple-touch-icon" href="/assets/qa-review-apple-touch-icon.png?v=20261027a">
+    <link rel="manifest" href="/qa-review.webmanifest?v=20261027a">
     <link rel="alternate" type="application/rss+xml" href="${SITE}${OUT}/rss${sfx}.xml" title="QA-lab URL Review · Social (RSS)">
     <meta property="og:type" content="article">
     <meta property="og:site_name" content="QA-lab URL Review">
@@ -784,7 +796,7 @@ ${json(graph)}
 </head>
 <body>
 <header class="topbar">
-    <div class="brand"><a href="/qa-review${sfx}.html"><img class="logo" src="/assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
+    <div class="brand"><a href="/qa-review${sfx}.html"><img class="logo" src="/assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
     <nav class="actions" aria-label="QA-lab URL Review">
         <a class="btn btn-ghost" href="/qa-review${sfx}.html">${esc(copy.nav.review)}</a>
         <a class="btn btn-ghost" href="/qa-review-social${sfx}.html">${esc(copy.allPosts)}</a>

@@ -7,6 +7,8 @@
      BUFFER_API_KEY=... node scripts/buffer-queue.js --seed    read Buffer's scheduled and sent posts into the
        ledger, matched to their batch post by image address or caption, and list the ones no batch has; it
        queues nothing
+     BUFFER_API_KEY=... node scripts/buffer-queue.js --media   list the scheduled posts by batch, channel and where
+       their media lives (site, release, or a copy uploaded into Buffer); changes nothing
      BUFFER_API_KEY=... node scripts/buffer-queue.js --delete-unmatched [--dry-run]   delete the scheduled posts
        dated after now that match no batch post and that the ledger does not know (not on the hub)
      BUFFER_API_KEY=... node scripts/buffer-queue.js --requeue <batch/slug,...> [--channel youtube] [--dry-run]
@@ -222,6 +224,35 @@ async function seed() {
   if (process.env.BUFFER_SEED_EXPORT) fs.writeFileSync(process.env.BUFFER_SEED_EXPORT, JSON.stringify(unsent, null, 1));
 }
 
+// Where a scheduled post's media lives. Buffer fetches a site or release address when the post goes out, so
+// replacing that file is enough; a file uploaded in Buffer's composer is Buffer's own copy and only an edit swaps it.
+function mediaHost(source) {
+  const url = String(source || "");
+  if (!url) return "none";
+  if (url.startsWith(SITE + "/")) return "site";
+  if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//.test(url)) return "release";
+  if (/buffer-media-uploads|bufferapp|buffer\.com/.test(url)) return "buffer";
+  return "other";
+}
+
+// Read only: every scheduled post by batch, channel and where its media lives, then the ones Buffer holds a copy of.
+async function mediaReport() {
+  const index = batchIndex();
+  const book = ledger.read(ledger.BUFFER);
+  const counts = {};
+  const copies = [];
+  for (const item of await bufferPosts(["scheduled"])) {
+    const name = matchPost(index, item.node, item.slot, takenBy(book, item)) || "(no batch)";
+    const hosts = [...new Set((item.node.assets || []).map((a) => mediaHost(a.source)))].join("+") || "none";
+    const key = name.split("/")[0] + " " + item.slot + " " + hosts;
+    counts[key] = (counts[key] || 0) + 1;
+    if (hosts !== "site" && hosts !== "release" && hosts !== "none") copies.push([name, item.slot, item.node.id, item.node.dueAt, hosts, (item.node.assets || []).map((a) => String(a.source || "").replace(/\?.*$/, "")).join(" ")].join(" "));
+  }
+  Object.keys(counts).sort().forEach((key) => console.log(String(counts[key]).padStart(4) + "  " + key));
+  console.log(copies.length + " scheduled posts whose media is not fetched from the site or a release:");
+  copies.sort().forEach((line) => console.log("  " + line));
+}
+
 // The scheduled posts --delete-unmatched may delete: still to go out, matching no batch post, and unknown to the
 // ledger. A sent post, or one dated before now, is never picked.
 function staleScheduled(index, items, book, now) {
@@ -377,6 +408,10 @@ async function main() {
     if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
     return seed();
   }
+  if (opts.media) {
+    if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
+    return mediaReport();
+  }
   if (opts.requeue) {
     const posts = String(opts.requeue).split(",").map((p) => p.trim()).filter(Boolean);
     const bad = posts.find((p) => !/^[\w-]+\/[\w-]+$/.test(p));
@@ -483,4 +518,4 @@ function leaveForTonight(book, batch, why) {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { batchIndex, matchPost, staleScheduled, inputsFor, gql, requeueTargets };
+module.exports = { batchIndex, matchPost, staleScheduled, inputsFor, gql, requeueTargets, mediaHost, SLOT };

@@ -15,7 +15,12 @@
   body { font-family: Inter, system-ui, sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
   #c { position: relative; overflow: hidden; background: var(--ink); }
   .glow { position: absolute; inset: 0; background: radial-gradient(55% 90% at 88% 0%, rgba(77, 179, 187, .32), transparent 70%), radial-gradient(45% 80% at 30% 120%, rgba(226, 196, 138, .18), transparent 70%); }
-  .grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(126, 246, 251, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(126, 246, 251, .05) 1px, transparent 1px); background-size: 28px 28px; mask-image: linear-gradient(90deg, transparent 0%, #000 35%, #000 100%); }
+  /* Fusion backdrops from media/fusion-stage (scripts/fusion/stage.js). */
+  .fusion { position: absolute; inset: 0; }
+  .fusion img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .fusion::after { content: ""; position: absolute; inset: 0; }
+  .cover .fusion::after { background: linear-gradient(90deg, rgba(5,12,15,0) 0%, rgba(5,12,15,.1) 20%, rgba(5,12,15,.7) 30%, rgba(5,12,15,.78) 100%); }
+  .portrait .fusion::after { background: linear-gradient(180deg, rgba(5,12,15,.4) 0%, rgba(5,12,15,.72) 35%, rgba(5,12,15,.88) 70%, rgba(5,12,15,.92) 100%); }
   .serif { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; letter-spacing: -0.02em; }
   em.hi { font-style: italic; background: linear-gradient(92deg, var(--cyan-hi) 0%, #b8f3ea 45%, var(--gold) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .06em; }
   .chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: rgba(10, 30, 36, .6); border-radius: 999px; padding: 4px 11px; font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--cyan-hi); white-space: nowrap; }
@@ -80,7 +85,7 @@
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
   const nf = (n) => Number(n).toLocaleString("en-US");
   const chip = (text) => '<span class="chip"><i></i>' + esc(text) + "</span>";
-  const backdrop = '<div class="glow"></div><div class="grid"></div>';
+  const backdrop = (kind) => '<div class="fusion"><img src="../../media/fusion-stage/' + (kind === "cover" ? "linkedin-cover" : "portrait-b") + '.jpg" alt=""></div><div class="glow"></div>';
 
   const COVERS = {
     promise: (d) => '<div class="body"><div>' + chip("QA-lab URL Review") +
@@ -131,8 +136,8 @@
     if (spec.kind === "cover") inner = COVERS[spec.variant](spec.data);
     else if (spec.kind === "proof") inner = proof(spec.data);
     else inner = PAGES[spec.variant](spec.data);
-    c.innerHTML = backdrop + inner;
-    return document.fonts.ready.then(() => true);
+    c.innerHTML = backdrop(spec.kind) + inner;
+    return Promise.all([document.fonts.ready].concat(Array.from(document.images).map((img) => img.decode().catch(() => null)))).then(() => true);
   };
 </script>
 </body>

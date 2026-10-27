@@ -35,9 +35,7 @@ authClient.refreshHandler = async () => fresh();
 authClient.setCredentials(fresh());
 const db = new Firestore({ projectId: PROJECT, authClient });
 
-const admin = fnRequire("firebase-admin");
-const realFirestore = admin.firestore;
-Object.defineProperty(admin, "firestore", { value: Object.assign(() => db, realFirestore), configurable: true, writable: true });
+fnRequire("firebase-admin/firestore").getFirestore = () => db;
 
 const file = path.join(FN, "index.js");
 const indexModule = new Module(file, module);
