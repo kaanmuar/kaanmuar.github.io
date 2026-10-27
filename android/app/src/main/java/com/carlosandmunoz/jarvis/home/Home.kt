@@ -241,11 +241,33 @@ object Home {
 
     data class Traffic(val label: String, val value: String, val delta: String?, val dir: Int, val series: List<Double>, val countries: List<Pair<String, String>>, val sources: List<Pair<String, String>>)
 
-    /** Google Analytics sessions against the window before, top countries and sources; Cloudflare visitors when Analytics is down. */
+    data class SiteVisits(val value: Double, val prior: Double?, val series: List<Double>, val parts: List<Pair<String, Double>>)
+
+    /** Visits the site records itself (CV, Studio and Lab visits, URL Review opens), counted with or without analytics consent. */
+    fun siteVisits(snap: JsonObject): SiteVisits? {
+        val parts = listOf("cv" to "CV", "studio" to "QA Studio", "lab" to "QA Lab", "review" to "URL Review").mapNotNull { (key, name) ->
+            val p = snap.obj("products").obj(key) ?: return@mapNotNull null
+            val k = p.objs("kpis").firstOrNull() ?: return@mapNotNull null
+            Triple(name, k, p.obj("series").at("values").doubles())
+        }
+        if (parts.isEmpty()) return null
+        val priors = parts.map { it.second.num("prior") }
+        val days = parts.maxOf { it.third.size }
+        val series = (0 until days).map { i -> parts.sumOf { it.third.getOrNull(i - (days - it.third.size)) ?: 0.0 } }
+        return SiteVisits(parts.sumOf { it.second.num("value") ?: 0.0 }, if (priors.all { it != null }) priors.sumOf { it ?: 0.0 } else null, series,
+            parts.map { it.first to (it.second.num("value") ?: 0.0) })
+    }
+
+    /** Site visits against the window before, then Google Analytics sessions, then Cloudflare visitors; GA4 countries and sources. */
     fun traffic(snap: JsonObject): Traffic {
         val ext = snap.obj("external")
         fun top(list: List<JsonObject>) = list.sortedByDescending { it.num("value") ?: 0.0 }.take(3).map { (it.str("label") ?: "?") to fmt(it.num("value"), 0) }
         val ga = ext.obj("ga4")?.takeIf { it.isOk() && it.objs("groups").isNotEmpty() }
+        val site = siteVisits(snap)
+        if (site != null) {
+            val delta = change(site.value, site.prior)
+            return Traffic("Site visits", fmt(site.value, 0), delta, dirOf(delta), site.series, top(ga.objs("countries")), top(ga.objs("sources")))
+        }
         if (ga != null) {
             val now = ga.objs("groups").sumOf { it.num("sessions") ?: 0.0 }
             val delta = change(now, ga.objs("groups").sumOf { it.num("priorSessions") ?: 0.0 })
@@ -257,7 +279,7 @@ object Home {
 
     /** What a Pick a number widget can show, keyed by what is stored for it. */
     val PICKS = listOf("revenue" to "Revenue", "sales" to "Sales", "readiness" to "Readiness", "alerts" to "Alerts", "needs" to "Waiting for you",
-        "reviews" to "Reviews", "cv" to "CV visits", "outreach" to "Outreach reviewed", "sessions" to "Sessions", "queued" to "Social queued")
+        "reviews" to "Reviews", "cv" to "CV visits", "outreach" to "Outreach reviewed", "sessions" to "Site visits", "queued" to "Social queued")
 
     data class Pick(val label: String, val value: String, val sub: String?, val level: String, val tab: String)
 

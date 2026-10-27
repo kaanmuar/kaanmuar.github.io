@@ -2,6 +2,7 @@
 # for #1109 (#1222). Waits for the scheduled buffer-batch run of Oct 27 03:37 UTC, watches it to the end, and comments
 # on #1109 with what it did: the batches a spent limit stopped that it queued again, and the queued posts it moved to
 # their calendar slots (moved, failed, left, skipped, rate-limit waits). Delete this file once it has run.
+# Cron has no year field, so a scheduled run outside 2026 stops at once.
 name: Buffer sync check (once)
 
 on:
@@ -25,6 +26,7 @@ jobs:
     steps:
       - name: Report the nightly sync on the ticket
         run: |
+          if [ "$GITHUB_EVENT_NAME" = schedule ] && [ "$(date -u +%Y)" != 2026 ]; then echo "Scheduled for 2026 only."; exit 0; fi
           link() { echo "[run $1]($GITHUB_SERVER_URL/$GH_REPO/actions/runs/$1)"; }
           comment() {
             echo "$1" >> "$GITHUB_STEP_SUMMARY"
