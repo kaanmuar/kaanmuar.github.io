@@ -456,7 +456,8 @@
         .phone-container:hover .phone-text, .phone-container:focus .phone-text { display: none; }
         .phone-container:hover .phone-number, .phone-container:focus .phone-number { display: inline; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
-        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        /* Visible at once on open: while visibility is still mid-transition the close control cannot take focus. */
+        .modal-overlay.visible { opacity: 1; visibility: visible; transition: opacity 0.3s ease, visibility 0s; }
         .modal-content { background: var(--bg-secondary); padding: 10px; border-radius: 12px; position: relative; transform: scale(0.9); transition: transform 0.3s ease; }
         .modal-overlay.visible .modal-content { transform: scale(1); }
         .modal-content img { max-width: 80vw; max-height: 80vh; border-radius: 8px; }
