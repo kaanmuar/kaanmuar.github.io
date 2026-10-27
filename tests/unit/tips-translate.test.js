@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
 const path = require('node:path');
 
 const dir = path.join(__dirname, '../../scripts/tips-studio');
@@ -47,6 +48,42 @@ test('each emphasised span keeps its marks through translation', () => {
   assert.equal(translate('One header. *180 days* of HTTPS only.'), 'ONE HEADER. *180 DAYS* OF HTTPS ONLY.');
   assert.equal(translate('*one canonical.*'), '*ONE CANONICAL.*');
   assert.equal(translate('*QA-lab URL Review*'), '*QA-lab URL Review*');
+});
+
+test('a finished translation is split into the same fragments as its English', () => {
+  const pair = (src, out) => py('pair(*args)', src, out);
+  assert.deepEqual(pair('One header. *180 days* of HTTPS only.', 'Un encabezado. *180 días* solo de HTTPS.'),
+    [['One header.', 'Un encabezado.'], ['180 days', '180 días'], ['of HTTPS only.', 'solo de HTTPS.']]);
+  assert.deepEqual(pair('Requested reviews · QA-lab URL Review', 'Análisis solicitados · QA-lab URL Review'), [['Requested reviews', 'Análisis solicitados']]);
+  assert.deepEqual(pair('The answer.\n\nGuide: https://x.com/a\n\n#QA #WebDev', 'La respuesta.\n\nGuía: https://x.com/a'),
+    [['The answer.', 'La respuesta.'], ['Guide:', 'Guía:']]);
+  assert.deepEqual(pair('*One point apart.*', 'Un punto de diferencia.'), []);
+  assert.deepEqual(pair('Read it · QA-lab', 'Léelo QA-lab'), []);
+});
+
+test('a translation left behind by an English edit is not learned as the new English', () => {
+  const src = (title, body) => ({ ui: {}, clips: { a: { lang: 'es', strings: { title, body } } } });
+  const done = (title, body) => ({ ui: {}, clips: { a: { title, body } }, cache: {} });
+  const versions = [
+    [src('Answer in our next post.', 'Ten pages.'), done('Respuesta en nuestra próxima publicación.', 'Diez páginas.')],
+    [src('Answer comes out tomorrow.', 'Twelve pages.'), done('Respuesta en nuestra próxima publicación.', 'Doce páginas.')]
+  ];
+  assert.deepEqual(py('seed(args[0])', versions), {
+    'es\u0000Answer in our next post.': 'Respuesta en nuestra próxima publicación.',
+    'es\u0000Ten pages.': 'Diez páginas.',
+    'es\u0000Twelve pages.': 'Doce páginas.'
+  });
+});
+
+test('no batch is committed with translations but an empty cache', () => {
+  const root = path.join(__dirname, '../../media/social-posts');
+  const empty = fs.readdirSync(root).filter((batch) => {
+    const file = path.join(root, batch, 'i18n.json');
+    if (!fs.existsSync(file)) return false;
+    const done = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return Object.keys(done.clips || {}).length && !Object.keys(done.cache || {}).length;
+  });
+  assert.deepEqual(empty, [], 'run python3 scripts/tips-studio/translate.py media/social-posts/<batch> --seed');
 });
 
 test('a translated fragment starts in the case the English starts', () => {
