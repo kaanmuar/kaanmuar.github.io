@@ -18,8 +18,13 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="https://carlosandmunoz.com/assets/share/qa-review-pay.jpg?v=20261027">
     <meta name="twitter:image:alt" content="QA-lab URL Review payment: pay through PayPal and see the amount first.">
-    <meta name="theme-color" content="#0d6e76">
-    <link rel="icon" href="assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
+    <meta name="theme-color" content="#071116" data-fixed>
+    <link rel="icon" href="assets/qa-review-mark.svg?v=20261027a" type="image/svg+xml">
+    <link rel="icon" href="assets/qa-review-icon-32.png?v=20261027a" sizes="32x32" type="image/png">
+    <link rel="icon" href="assets/qa-review-icon-16.png?v=20261027a" sizes="16x16" type="image/png">
+    <link rel="icon" href="assets/qa-review-favicon.ico?v=20261027a" sizes="48x48">
+    <link rel="apple-touch-icon" href="assets/qa-review-apple-touch-icon.png?v=20261027a">
+    <link rel="manifest" href="qa-review.webmanifest?v=20261027a">
     <script>
         try {
             const lang = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("cv-preferred-lang") || "").slice(0, 2).toLowerCase();
@@ -38,6 +43,9 @@
     <style data-critical="css/site-look.css?v=20261104a">html[data-look] body{background-color:var(--bg, var(--bg-primary));background-image:var(--look-gradient);background-attachment:fixed;color:var(--text, var(--text-secondary))}html[data-look] .btn-primary{background-color:var(--accent)!important;color:var(--on-accent)!important}.skip-link{position:fixed;top:8px;left:8px;z-index:10000;padding:10px 16px;border-radius:8px;background:#12181f;color:#ffffff;font:600 15px/1.2 Inter, system-ui, sans-serif;text-decoration:none;transform:translateY(calc(-100% - 16px))}.skip-link:focus{transform:none;outline:3px solid #4db3bb;outline-offset:2px}html.dark-mode .skip-link{background:#ffffff;color:#12181f;outline-color:#0d6e76}main[tabindex="-1"]:focus{outline:none}</style>
     <link rel="preload" href="css/site-look.css?v=20261104a" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="css/site-look.css?v=20261104a"></noscript>
+    <style data-critical="css/fusion-band.css?v=20261027a">.fx-page{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(50% 60% at 82% 40%, rgba(77, 179, 187, .26), transparent 70%), radial-gradient(40% 50% at 10% 100%, rgba(226, 196, 138, .1), transparent 70%), #071116}.fx-page > .fx{position:absolute;inset:0;display:block;width:100%;height:100%;opacity:0;transition:opacity 1.2s ease}@media (prefers-reduced-motion: reduce){.fx-page > .fx{transition:none}}</style>
+    <link rel="preload" href="css/fusion-band.css?v=20261027a" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/fusion-band.css?v=20261027a"></noscript>
     <style>
         :root { --bg: #eef2f4; --card: #fff; --line: #d5dce3; --text: #12181f; --muted: #4a5560; --cyan: #0d6e76; }
         html.dark-mode { --bg: #10161d; --card: #1a2430; --line: #2a3440; --text: #e8eef2; --muted: #9aa5b1; --cyan: #4db3bb; color-scheme: dark; }
@@ -105,9 +113,10 @@
 </head>
 <body class="preview-copy">
 <a class="skip-link" href="#main">Skip to main content</a>
+    <div class="fx-page" data-fx data-fx-mode="2" data-fx-place="section" aria-hidden="true"><canvas class="fx"></canvas></div>
     <div class="mark" aria-hidden="true"></div>
     <main id="main" class="sheet" tabindex="-1">
-        <a class="brand" href="qa-review-fr.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span>QA-lab<small>URL Review</small></span></a>
+        <a class="brand" href="qa-review-fr.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36"><span>QA-lab<small>URL Review</small></span></a>
         <p class="test-mode" id="test-mode" role="status" hidden lang="fr" translate="no">Mode test · sandbox PayPal. Payez avec un compte acheteur sandbox. Aucun argent réel ne circule.</p>
         <p class="eyebrow" lang="fr" translate="no">Paiement</p>
         <h1 id="pay-heading" lang="fr" translate="no">Une nouvelle analyse</h1>
@@ -619,5 +628,6 @@
         }
         loadReportPrice().then(loadQuote);
     </script>
+<script type="module" src="js/fusion/boot.js?v=20261027a"></script>
 </body>
 </html>

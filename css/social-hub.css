@@ -34,7 +34,8 @@ a:focus-visible, button:focus-visible, select:focus-visible, iframe:focus-visibl
 .btn[hidden] { display: none; }
 
 .hub { max-width: 1240px; margin: 0 auto; padding: 0 16px 48px; }
-.hub-hero { padding: 48px 0 24px; max-width: 760px; }
+.hub-hero { padding: 48px 0 32px; margin-bottom: 20px; --fx-top: 0px; --fx-bottom: 0px; }
+.hub-hero > :not(.fx-bg) { max-width: 760px; }
 .hub-eyebrow { margin: 0 0 8px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .hub-hero h1 { margin: 0; font: 400 clamp(2.2rem, 5vw, 3.6rem)/1.05 "Instrument Serif", Georgia, serif; letter-spacing: -0.03em; overflow-wrap: break-word; hyphens: auto; }
 .hub-lead { margin: 14px 0 20px; color: var(--muted); font-size: 1.05rem; }
@@ -163,7 +164,7 @@ a:focus-visible, button:focus-visible, select:focus-visible, iframe:focus-visibl
 
 @media (max-width: 640px) {
   .topbar { position: static; }
-  .hub-hero { padding: 24px 0 12px; }
+  .hub-hero { padding: 24px 0 22px; }
   .hub-lead { font-size: 1rem; margin-bottom: 16px; }
   .hub-follow { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -16px; padding-right: 16px; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); }
   .hub-follow::-webkit-scrollbar, .hub-chips::-webkit-scrollbar { display: none; }
