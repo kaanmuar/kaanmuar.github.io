@@ -3,8 +3,8 @@
 // included; a missing name reads as undefined at runtime. Firebase refuses to deploy a name that is also in
 // functions/.env.
 const MAIL = ["SENDGRID_API_KEY"];
-// functions/github-app.js mints app tokens from the private key and falls back to the classic token.
-const GITHUB = ["GITHUB_APP_PRIVATE_KEY", "GITHUB_BUGS_TOKEN"];
+// functions/github-app.js mints app tokens from the private key.
+const GITHUB = ["GITHUB_APP_PRIVATE_KEY"];
 const BROWSER = ["BROWSER_KEY"];
 // What a review run calls: the headless browser, PageSpeed, CrUX, Web Risk and the web search.
 const SCAN = ["BROWSER_KEY", "PAGESPEED_KEY", "CRUX_KEY", "WEBRISK_KEY", "BRAVE_SEARCH_KEY"];

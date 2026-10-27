@@ -5065,7 +5065,7 @@ async function shareDraft(body) {
 
 async function shareQueue(body) {
   const token = await githubApp.token();
-  if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager, or GITHUB_BUGS_TOKEN in Secret Manager), so Jarvis cannot start the post workflow.");
+  if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager), so Jarvis cannot start the post workflow.");
   const ref = admin.firestore().collection("social_inbox").doc(String(body.id || "x"));
   const snap = await ref.get();
   if (!snap.exists) throw new Error("That draft is gone.");
@@ -5636,7 +5636,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     } else if (op === "social-runs") out = { runs: await socialRuns() };
     else if (op === "social-post-now") {
       const token = await githubApp.token();
-      if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager, or GITHUB_BUGS_TOKEN in Secret Manager), so Jarvis cannot start the workflows.");
+      if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager), so Jarvis cannot start the workflows.");
       const started = [];
       for (const w of jarvisSocial.WORKFLOWS) {
         const path = "/repos/" + BUG_REPO + "/actions/workflows/" + w.file;
