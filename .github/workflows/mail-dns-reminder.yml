@@ -26,7 +26,7 @@ jobs:
       issues: write
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Comment on #928
         env:
           GH_TOKEN: ${{ github.token }}
