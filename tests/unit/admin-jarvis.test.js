@@ -96,6 +96,26 @@ test("the briefing ranks alerts first and readiness counts every check", () => {
   assert.equal(core.readiness({}), null);
 });
 
+test("site visits add CV, Studio, Lab and URL Review, and a GA4 drop they do not share is consent, not an outage", () => {
+  const product = (value, prior, values) => ({ kpis: [{ value, prior }], totals: { visits: value }, lists: {}, series: { labels: ["2026-10-25", "2026-10-26"], values } });
+  const products = { cv: product(40, 50, [10, 30]), lab: product(5, 5, [5, 0]), review: product(60, 50, [20, 40]) };
+  const visits = core.siteVisits(products);
+  assert.equal(visits.label, "Site visits");
+  assert.equal(visits.value, 105);
+  assert.equal(visits.prior, 105);
+  assert.deepEqual(visits.series.values, [35, 70]);
+  assert.deepEqual(visits.parts.map((row) => row.label), ["CV", "QA Lab", "URL Review"]);
+  assert.equal(core.siteVisits({}), null);
+
+  const ga4 = { ok: true, groups: [{ sessions: 39, priorSessions: 5518 }] };
+  const held = core.briefing({ products, external: { ga4 } }).find((row) => row.key === "ga4:swing");
+  assert.equal(held.level, "info");
+  assert.match(held.text, /only counts visitors who allow analytics/);
+  const fell = core.briefing({ products: { cv: product(4, 50, [1, 3]) }, external: { ga4 } }).find((row) => row.key === "ga4:swing");
+  assert.equal(fell.level, "warn");
+  assert.equal(core.briefing({ external: { ga4 } }).find((row) => row.key === "ga4:swing").level, "warn");
+});
+
 test("voice and command-bar phrases map to actions", () => {
   assert.deepEqual(core.parseCommand("Jarvis, show URL review"), { type: "go", product: "review" });
   assert.deepEqual(core.parseCommand("simulator"), { type: "go", product: "studio" });
