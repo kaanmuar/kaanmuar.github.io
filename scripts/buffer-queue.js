@@ -518,4 +518,4 @@ function leaveForTonight(book, batch, why) {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { batchIndex, matchPost, staleScheduled, inputsFor, gql, requeueTargets, mediaHost };
+module.exports = { batchIndex, matchPost, staleScheduled, inputsFor, gql, requeueTargets, mediaHost, SLOT };

@@ -15,8 +15,10 @@
 # A queue that finds Buffer's daily limit spent lists its batch under retry in the ledger and passes (#1188). The
 # nightly run, before the sync and whatever pauses the sync, queues those batches again; mode retry does it by hand.
 # Mode media lists the scheduled posts by batch, channel and where their media lives (site, release, or a copy
-# uploaded into Buffer), and changes nothing.
-# Every mode but a dry run and media commits the ledger (scripts/commit-social-ledgers.sh).
+# uploaded into Buffer), and changes nothing. Mode remedia points the scheduled posts of the batches in batch
+# (comma-separated) that hold Buffer's own copy of their media at the re-rendered file on the site or the batch's
+# release, editing them in place (scripts/buffer-remedia.js); a dry run lists them.
+# Every mode but a dry run, media and remedia commits the ledger (scripts/commit-social-ledgers.sh).
 name: Buffer batch queue
 
 on:
@@ -25,12 +27,12 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, re-queue the batches a spent limit stopped, delete scheduled posts not on the hub, delete and requeue listed posts, or list where scheduled posts take their media from'
+        description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, re-queue the batches a spent limit stopped, delete scheduled posts not on the hub, delete and requeue listed posts, list where scheduled posts take their media from, or point Buffer-held copies at re-rendered media'
         type: choice
-        options: [queue, seed, check, sync, retry, delete-unmatched, requeue, media]
+        options: [queue, seed, check, sync, retry, delete-unmatched, requeue, media, remedia]
         default: queue
       batch:
-        description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10 (queue only)'
+        description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10 (queue; remedia takes batch,batch)'
         required: false
       dry_run:
         description: 'List what would be queued or deleted, change nothing'
@@ -44,7 +46,7 @@ on:
         required: false
         default: 'youtube'
       windows:
-        description: 'sync only: 15-minute windows of Buffer calls before it stops (about 115 calls each)'
+        description: 'sync and remedia: 15-minute windows of Buffer calls before it stops (about 115 calls each)'
         required: false
         default: '1'
 
@@ -55,7 +57,7 @@ concurrency:
 jobs:
   queue:
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ (inputs.mode || 'sync') == 'sync' && 110 || 30 }}
+    timeout-minutes: ${{ ((inputs.mode || 'sync') == 'sync' || inputs.mode == 'remedia') && 110 || 30 }}
     permissions:
       contents: read
     env:
@@ -153,6 +155,16 @@ jobs:
         run: |
           set -o pipefail
           node scripts/buffer-queue.js --media | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Point Buffer-held copies at the re-rendered media
+        if: ${{ env.MODE == 'remedia' }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          set -o pipefail
+          if ! [[ "$BATCH" =~ ^[a-z0-9,-]+$ ]]; then echo "::error::batch takes batch,batch"; exit 1; fi
+          if ! [[ "$WINDOWS" =~ ^[1-6]$ ]]; then echo "::error::windows is 1 to 6"; exit 1; fi
+          if [ "$DRY_RUN" = "true" ]; then set -- --dry-run; else set -- --windows "$WINDOWS"; fi
+          node scripts/buffer-remedia.js --batches "$BATCH" "$@" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Commit the Buffer ledger
-        if: ${{ !cancelled() && !inputs.dry_run && env.MODE != 'media' }}
+        if: ${{ !cancelled() && !inputs.dry_run && env.MODE != 'media' && env.MODE != 'remedia' }}
         run: scripts/commit-social-ledgers.sh "Buffer $MODE ${BATCH:-all}"
