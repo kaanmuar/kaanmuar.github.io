@@ -16,6 +16,7 @@
         { key: 'hub', name: 'Social hub', short: 'HUB' },
         { key: 'business', name: 'Business', short: 'BIZ' },
         { key: 'outreach', name: 'Outreach', short: 'OUT' },
+        { key: 'marketing', name: 'Marketing', short: 'MKT' },
         { key: 'traffic', name: 'Traffic', short: 'WEB' },
         { key: 'systems', name: 'Systems', short: 'SYS' }
     ];

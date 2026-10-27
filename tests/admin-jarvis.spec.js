@@ -68,8 +68,18 @@ const EXTERNAL = {
   outreach: { ok: true, needs: ['Instantly: put the API key in functions/.env as INSTANTLY_API_KEY.'],
     pipeline: { ok: true, queued: 40, swept: 12, left: 28, bySegment: [{ label: 'tvet', value: 10 }, { label: 'university', value: 10 }], reviews: 12, thisWeek: 12, results: [{ label: 'reviewed', value: 11 }], segments: [], avgScore: 64, withLiveReport: 6, reviewedWithLiveReport: 5, daily: [{ date: '2026-10-24', reviews: 12 }] },
     instantly: { ok: false, error: 'INSTANTLY_API_KEY is not set.' },
-    plan: { start: '2026-10-20', end: '2027-01-17', day: 6, length: 90, phase: { name: 'Set up', end: '2026-11-02', daysLeft: 8 }, next: { date: '2026-10-30', label: 'First wave out', daysLeft: 5 }, milestones: [{ date: '2026-10-30', label: 'First wave out', past: false }], deadlines: [{ date: '2026-10-31', label: 'Instantly trial ends', daysLeft: 6 }], weekly: { prospects: 40, liveReportPct: 100 }, targets: [{ key: 'unlocks', label: 'Paid unlocks', target: 30, actual: 3 }] },
-    mail: { domain: 'qalabreview.com', ok: false, checks: [{ name: 'SPF', ok: true, detail: 'v=spf1 include:spf.protection.outlook.com -all' }, { name: 'DMARC', ok: false, detail: 'p=none (monitor only)' }] } }
+    plan: { start: '2026-10-20', end: '2027-01-17', day: 6, length: 90, phases: [{ name: 'Set up', start: '2026-10-20', end: '2026-11-02' }, { name: 'First waves', start: '2026-11-03', end: '2026-12-06' }, { name: 'Scale', start: '2026-12-07', end: '2027-01-17' }], phase: { name: 'Set up', end: '2026-11-02', daysLeft: 8 }, next: { date: '2026-10-30', label: 'First wave out', daysLeft: 5 }, milestones: [{ date: '2026-10-30', label: 'First wave out', past: false }], deadlines: [{ date: '2026-10-31', label: 'Instantly trial ends', daysLeft: 6 }], weekly: { prospects: 40, liveReportPct: 100 }, targets: [{ key: 'unlocks', label: 'Paid unlocks', target: 30, actual: 3 }] },
+    mail: { domain: 'qalabreview.com', ok: false, checks: [{ name: 'SPF', ok: true, detail: 'v=spf1 include:spf.protection.outlook.com -all' }, { name: 'DMARC', ok: false, detail: 'p=none (monitor only)' }] } },
+  marketing: { ok: true, needs: [],
+    campaigns: { ok: true, firstStart: '2099-11-10', leads: 0, steps: 6,
+      rows: [{ id: '11111111-2222-3333-4444-555555555555', name: 'W1 B-es Americas', week: 'W1', sequence: 'B', lang: 'es', region: 'Americas', status: 'draft', start: '2099-11-10', window: 'Tue-Thu 08:00-10:30 America/Bogota', dailyLimit: 10, steps: 4, leads: 0, contacted: 0, sent: 0, opened: 0, replies: 0, bounced: 0 },
+        { id: '66666666-7777-8888-9999-000000000000', name: 'W1 E-pt Brazil', week: 'W1', sequence: 'E', lang: 'pt', region: 'Brazil', status: 'active', start: '2099-11-10', window: 'Tue-Thu 08:00-10:30 America/Sao_Paulo', dailyLimit: 10, steps: 2, leads: 5, contacted: 0, sent: 0, opened: 0, replies: 0, bounced: 0 }],
+      byStatus: [{ label: 'draft', value: 1 }, { label: 'active', value: 1 }], byLang: [{ label: 'es', value: 1 }, { label: 'pt', value: 1 }], byRegion: [{ label: 'Americas', value: 1 }, { label: 'Brazil', value: 1 }], bySequence: [{ label: 'B', value: 1 }, { label: 'E', value: 1 }], byWeek: [{ label: 'W1', value: 2 }] },
+    prospects: { ok: true, total: 40, byCountry: [{ label: 'CO', value: 22 }, { label: 'MX', value: 18 }], bySegment: [{ label: 'university', value: 20 }, { label: 'tvet', value: 20 }], updated: '2026-10-25T00:00:00Z' },
+    notes: { ok: true, sent: 9, stopped: 1, people: 7, byKind: [{ label: 'return', value: 9 }], byScene: [{ label: 'paid-once', value: 9 }], daily: [{ date: '2026-10-24', sent: 9, stopped: 1 }] } },
+  'marketing-campaign': { ok: true, id: '11111111-2222-3333-4444-555555555555', name: 'W1 B-es Americas', status: 'active' },
+  'marketing-queue': { ok: true, added: 2, already: 0, skipped: [] },
+  'marketing-block': { ok: true, blocked: 'no@example.edu' }
 };
 
 function seed() {
@@ -123,14 +133,14 @@ test.describe('admin statistics (Jarvis)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page);
     const tabs = page.locator('.jv-tabs [role="tab"]');
-    await expect(tabs).toHaveCount(11);
-    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Traffic', 'Systems']);
+    await expect(tabs).toHaveCount(12);
+    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Marketing', 'Traffic', 'Systems']);
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'proposals', 'brief-marks']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'proposals', 'brief-marks']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -257,6 +267,49 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect.poll(() => calls.filter((c) => c.op === 'share-queue').map((c) => [c.body.id, c.body.draft.x])).toEqual([['new1', 'Edited X post']]);
     await expect(page.locator('.jv-toast')).toContainText('Queued.');
     await expect(share.locator('[data-share-caption]')).toHaveValue('');
+  });
+
+  test('Marketing shows every marketing number with pies, the plan timeline and countdowns, and its buttons go through the function after confirming (#1722)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/marketing/30');
+    const mk = page.locator('[data-view="marketing"]');
+    await expect(mk).toContainText('First cold emails go out');
+    await expect(mk).toContainText('Instantly trial ends');
+    await expect(mk.locator('.jv-count')).not.toHaveCount(0);
+    await expect(mk).toContainText('Marketing visits');
+    await expect(mk.locator('.jv-tl-phase, .jv-tl-pin').first()).toBeVisible();
+    await expect(mk).toContainText('W1 B-es Americas');
+    await expect(mk.locator('[data-panel-id="marketing-camp-lang"] .jv-pie li')).toHaveCount(2);
+    await expect(mk.locator('[data-panel-id="marketing-countries"]')).toContainText('CO');
+    await expect(mk.locator('[data-panel-id="marketing-notes"]')).toContainText('paid-once');
+    await expect(mk.locator('[data-panel-id="marketing-domain"]')).toContainText('p=none');
+    await expect(mk.locator('.jv-briefing')).toContainText('Instantly trial ends in 6 days');
+
+    const activate = mk.locator('[data-mk-campaign="activate"]');
+    await expect(mk.locator('[data-mk-campaign="pause"]')).toHaveCount(1);
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await activate.click();
+    expect(calls.some((c) => c.op === 'marketing-campaign')).toBe(false);
+    page.once('dialog', (dialog) => { expect(dialog.message()).toContain('no leads yet'); dialog.accept(); });
+    await activate.click();
+    await expect.poll(() => calls.filter((c) => c.op === 'marketing-campaign').map((c) => [c.body.id, c.body.action])).toEqual([['11111111-2222-3333-4444-555555555555', 'activate']]);
+
+    await mk.locator('[data-mk-queue] textarea').fill('uni.example.edu.co, co, university\nmx.example.mx');
+    await mk.locator('[data-mk-queue] input[name="cc"]').fill('mx');
+    page.once('dialog', (dialog) => dialog.accept());
+    await mk.locator('[data-mk-queue] button[type="submit"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'marketing-queue').map((c) => [c.body.cc, c.body.sector, c.body.hosts.split('\n').length])).toEqual([['mx', 'university', 2]]);
+
+    await mk.locator('[data-mk-block] input').fill('no@example.edu');
+    const before = calls.filter((c) => c.op === 'notices').length;
+    await mk.locator('[data-act="mk-reload"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'notices').length).toBeGreaterThan(before);
+    await expect(mk.locator('[data-mk-block] input')).toHaveValue('no@example.edu');
+    page.once('dialog', (dialog) => dialog.accept());
+    await mk.locator('[data-mk-block] button').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'marketing-block').map((c) => c.body.value)).toEqual(['no@example.edu']);
+    expect(errors).toEqual([]);
   });
 
   test('a job only runs after confirming', async ({ page }) => {
