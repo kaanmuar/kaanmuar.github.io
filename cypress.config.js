@@ -60,6 +60,10 @@ module.exports = defineConfig({
         catalogRecord(test) {
           record('Cypress', test);
           return null;
+        },
+        log(message) {
+          console.log(message);
+          return null;
         }
       });
       on('before:browser:launch', (browser, launchOptions) => {

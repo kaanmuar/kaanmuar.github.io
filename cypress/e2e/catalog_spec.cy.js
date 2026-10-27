@@ -10,6 +10,16 @@ describe('Full catalog', () => {
 
   afterEach(function () {
     const failed = this.currentTest.state !== 'passed';
+    if (failed && /remote page to load/.test((this.currentTest.err && this.currentTest.err.message) || '')) {
+      cy.window({ log: false }).then((win) => {
+        const done = new Set(win.performance.getEntriesByType('resource').map((entry) => entry.name));
+        const open = Array.from(win.document.querySelectorAll('img[src], script[src], link[href][rel~="stylesheet"], link[href][rel="preload"], iframe[src]'))
+          .filter((el) => !(el.tagName === 'IMG' && (el.complete || el.loading === 'lazy')))
+          .map((el) => el.src || el.href)
+          .filter((url) => url && !done.has(url));
+        cy.task('log', `Page load stalled on ${win.location.href}: ${open.join(', ') || 'every resource in the page finished'}`);
+      });
+    }
     cy.task('catalogRecord', {
       title: this.currentTest.title,
       state: failed ? 'failed' : 'passed',
