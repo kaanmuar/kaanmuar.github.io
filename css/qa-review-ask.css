@@ -3,7 +3,7 @@
 .ask-panel[aria-busy="true"] .ask-log::after { content: ""; display: block; width: 28px; height: 4px; margin: 6px 0; border-radius: 99px; background: var(--cyan); animation: ask-pulse 1s ease-in-out infinite alternate; }
 @keyframes ask-pulse { from { opacity: .25; } to { opacity: 1; } }
 .ask-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--ask-edge); }
-.ask-head > div { min-height: 36px; padding-left: 46px; background: url("../assets/qa-review-mark.svg?v=20261013c") left center / 36px 36px no-repeat; }
+.ask-head > div { min-height: 36px; padding-left: 46px; background: url("../assets/qa-review-mark.svg?v=20261027a") left center / 36px 36px no-repeat; }
 .ask-head .eyebrow { margin-bottom: 2px; }
 .ask-head h2 { margin: 0; font-size: 1.15rem; }
 .ask-note { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
