@@ -65,7 +65,7 @@ const EXTERNAL = {
   'share-draft': { ok: true, id: 'new1', kind: 'image', draft: { lang: 'en', kind: 'tip', title: 'Check SSL', alt: 'A card', linkedin: 'LinkedIn draft', x: 'X draft', facebook: 'Facebook draft', instagram: 'Instagram draft' }, note: '' },
   'share-queue': { ok: true, id: 'new1', note: 'Queued. The hub page goes live first.' },
   'social-post-now': { ok: true, started: ['Buffer', 'Facebook Page'], note: 'Started Buffer and Facebook Page.' },
-  outreach: { ok: true, needs: ['Instantly: put the API key in functions/.env as INSTANTLY_API_KEY.'],
+  outreach: { ok: true, needs: ['Instantly: put the API key in Secret Manager as INSTANTLY_API_KEY.'],
     pipeline: { ok: true, queued: 40, swept: 12, left: 28, bySegment: [{ label: 'tvet', value: 10 }, { label: 'university', value: 10 }], reviews: 12, thisWeek: 12, results: [{ label: 'reviewed', value: 11 }], segments: [], avgScore: 64, withLiveReport: 6, reviewedWithLiveReport: 5, daily: [{ date: '2026-10-24', reviews: 12 }] },
     instantly: { ok: false, error: 'INSTANTLY_API_KEY is not set.' },
     plan: { start: '2026-10-20', end: '2027-01-17', day: 6, length: 90, phases: [{ name: 'Set up', start: '2026-10-20', end: '2026-11-02' }, { name: 'First waves', start: '2026-11-03', end: '2026-12-06' }, { name: 'Scale', start: '2026-12-07', end: '2027-01-17' }], phase: { name: 'Set up', end: '2026-11-02', daysLeft: 8 }, next: { date: '2026-10-30', label: 'First wave out', daysLeft: 5 }, milestones: [{ date: '2026-10-30', label: 'First wave out', past: false }], deadlines: [{ date: '2026-10-31', label: 'Instantly trial ends', daysLeft: 6 }], weekly: { prospects: 40, liveReportPct: 100 }, targets: [{ key: 'unlocks', label: 'Paid unlocks', target: 30, actual: 3 }] },
