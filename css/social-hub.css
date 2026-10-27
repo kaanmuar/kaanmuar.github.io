@@ -53,6 +53,16 @@ a:focus-visible, button:focus-visible, select:focus-visible, iframe:focus-visibl
 .hub-field select, .hub-field input { font: 14px Inter, system-ui, sans-serif; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; min-height: 36px; }
 .hub-field select { max-width: 11rem; cursor: pointer; }
 .hub-field input:focus, .hub-field select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px var(--ring); }
+.hub-sort select { border-radius: 10px 0 0 10px; }
+.hub-dir { font: 600 13px Inter, system-ui, sans-serif; color: var(--text); background: var(--panel-2); border: 1px solid var(--line); border-left: 0; border-radius: 0 10px 10px 0; padding: 7px 10px; min-height: 36px; margin-left: -6px; cursor: pointer; white-space: nowrap; }
+.hub-dir::after { content: " ↓"; }
+.hub-dir[data-dir="asc"]::after { content: " ↑"; }
+.hub-dir:focus-visible { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px var(--ring); }
+.hub-dates { display: contents; }
+.hub-dates[hidden] { display: none; }
+.hub-field input[type="date"] { min-width: 9.5rem; }
+.hub-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text); cursor: pointer; white-space: nowrap; }
+.hub-check input { width: 16px; height: 16px; accent-color: var(--cyan); margin: 0; }
 .hub-search { flex: 1 1 200px; min-width: 200px; }
 .hub-search input { width: 100%; }
 .hub-count { margin: 0 0 0 auto; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -96,6 +106,8 @@ a:focus-visible, button:focus-visible, select:focus-visible, iframe:focus-visibl
 .post-foot { margin: 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; font-size: 12px; color: var(--muted); }
 .post-report { font-weight: 600; text-decoration: none; }
 .post-report:hover { text-decoration: underline; }
+.post-stats { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.post-stat { display: inline-flex; align-items: center; gap: 4px; }
 .post-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); }
 .post-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; border: 1px solid var(--line); background: transparent; color: var(--text); border-radius: 999px; padding: 6px 12px; font: 600 12px/1.2 Inter, system-ui, sans-serif; cursor: pointer; text-decoration: none; }
 .post-btn:hover { border-color: var(--cyan); color: var(--cyan); }
@@ -162,6 +174,12 @@ a:focus-visible, button:focus-visible, select:focus-visible, iframe:focus-visibl
   .hub-selects { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .hub-selects .hub-field { flex-direction: column; align-items: stretch; gap: 3px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
   .hub-field select { max-width: none; width: 100%; min-height: 42px; }
+  .hub-selects .hub-sort { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .hub-sort label { grid-column: 1 / -1; }
+  .hub-dir { min-height: 42px; margin-left: 0; font-size: 13px; letter-spacing: 0; text-transform: none; }
+  .hub-field input[type="date"] { width: 100%; min-width: 0; min-height: 42px; }
+  .hub-dates { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hub-check { grid-column: 1 / -1; min-height: 32px; }
   .hub-search input { min-height: 42px; }
   .hub-search { min-width: 0; }
   .hub-count { margin: 0; }

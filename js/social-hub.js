@@ -13,10 +13,30 @@
   const langSel = document.getElementById("hub-lang");
   const topicSel = document.getElementById("hub-topic");
   const searchEl = document.getElementById("hub-q");
+  const sortSel = document.getElementById("hub-sort");
+  const dirBtn = document.getElementById("hub-dir");
+  const mediaSel = document.getElementById("hub-media");
+  const netSel = document.getElementById("hub-net");
+  const rangeSel = document.getElementById("hub-range");
+  const datesEl = document.getElementById("hub-dates");
+  const fromEl = document.getElementById("hub-from");
+  const toEl = document.getElementById("hub-to");
+  const reportEl = document.getElementById("hub-report");
   const dialog = document.getElementById("hub-dialog");
   const dialogBody = document.getElementById("hub-dialog-body");
   const params = new URLSearchParams(location.search);
-  const state = { kind: params.get("k") || "all", lang: params.get("l") || "all", topic: params.get("t") || "all", q: params.get("q") || "", shown: STEP };
+  const pick = (value, list, fallback) => (list.includes(value) ? value : fallback);
+  const isDay = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value || "") ? value : "";
+  const sort = pick(params.get("s"), Card.SORTS, "date");
+  // Links from before the Media filter (?k=video) open the Videos view.
+  const state = {
+    kind: params.get("k") === "video" ? "all" : params.get("k") || "all", lang: params.get("l") || "all", topic: params.get("t") || "all", q: params.get("q") || "",
+    sort, dir: pick(params.get("d"), ["asc", "desc"], Card.defaultDir(sort)),
+    media: params.get("k") === "video" ? "video" : pick(params.get("m"), ["image", "video"], "all"), net: params.get("n") || "all",
+    range: pick(params.get("r"), ["7", "30", "90", "custom"], "all"), from: isDay(params.get("from")), to: isDay(params.get("to")),
+    report: params.get("rep") === "1", shown: STEP
+  };
+  const DEFAULTS = { kind: "all", lang: "all", topic: "all", q: "", sort: "date", dir: "desc", media: "all", net: "all", range: "all", from: "", to: "", report: false };
   let posts = [];
   let captions = null;
 
@@ -28,8 +48,23 @@
     return new Date().toISOString().slice(0, 10);
   }
 
+  function daysAgo(n) {
+    return new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+  }
+
+  // Last N days runs up to today; a custom range takes either end alone.
+  function inRange(date) {
+    if (state.range === "all") return true;
+    if (state.range === "custom") return (!state.from || date >= state.from) && (!state.to || date <= state.to);
+    return date >= daysAgo(Number(state.range)) && date <= today();
+  }
+
   function matches(post) {
-    if (state.kind === "trending" ? !post.trend : state.kind === "video" ? !post.youtube : state.kind !== "all" && post.kind !== state.kind) return false;
+    if (state.kind === "trending" ? !post.trend : state.kind !== "all" && post.kind !== state.kind) return false;
+    if (state.media === "video" ? !post.youtube : state.media === "image" && post.youtube) return false;
+    if (state.net !== "all" && !(post.nets || []).includes(state.net)) return false;
+    if (state.report && !post.report) return false;
+    if (!inRange(post.date)) return false;
     if (state.lang !== "all" && post.clipLang !== state.lang) return false;
     if (state.topic !== "all" && post.cat !== state.topic) return false;
     if (!state.q) return true;
@@ -39,20 +74,46 @@
 
   function syncUrl() {
     const url = new URL(location.href);
-    [["k", state.kind], ["l", state.lang], ["t", state.topic], ["q", state.q]].forEach(([key, value]) => {
+    const custom = state.range === "custom";
+    [["k", state.kind], ["l", state.lang], ["t", state.topic], ["q", state.q], ["s", state.sort === "date" ? "" : state.sort],
+      ["d", state.dir === Card.defaultDir(state.sort) ? "" : state.dir], ["m", state.media], ["n", state.net], ["r", state.range],
+      ["from", custom ? state.from : ""], ["to", custom ? state.to : ""], ["rep", state.report ? "1" : ""]].forEach(([key, value]) => {
       if (value && value !== "all") url.searchParams.set(key, value); else url.searchParams.delete(key);
     });
     history.replaceState(null, "", url);
   }
 
+  function dirLabel() {
+    const labels = state.sort === "date" ? copy.dirs.date : state.sort === "title" ? copy.dirs.title : copy.dirs.metric;
+    const desc = state.sort === "title" ? state.dir === "asc" : state.dir === "desc";
+    return labels[desc ? 0 : 1];
+  }
+
+  // Trending keeps its rank order until the reader picks another sort.
   function render() {
-    const list = posts.filter(matches);
-    if (state.kind === "trending") list.sort((a, b) => a.trend - b.trend);
-    feedEl.innerHTML = list.slice(0, state.shown).map((post) => Card.cardHtml(post, copy, lang)).join("");
+    let list = posts.filter(matches);
+    if (state.kind === "trending" && state.sort === "date" && state.dir === "desc") list.sort((a, b) => a.trend - b.trend);
+    else list = Card.sortPosts(list, state.sort, state.dir, state.net);
+    feedEl.innerHTML = list.slice(0, state.shown).map((post) => Card.cardHtml(post, copy, lang, state.net)).join("");
     countEl.textContent = copy.count.replace("{n}", list.length);
     emptyEl.hidden = list.length > 0;
     moreBtn.hidden = list.length <= state.shown;
+    controls();
+  }
+
+  function controls() {
     document.querySelectorAll(".hub-chip").forEach((chip) => chip.setAttribute("aria-pressed", String(chip.dataset.kind === state.kind)));
+    dirBtn.textContent = dirLabel();
+    dirBtn.setAttribute("aria-label", copy.sortDir + ": " + dirLabel());
+    dirBtn.dataset.dir = state.dir;
+    datesEl.hidden = state.range !== "custom";
+  }
+
+  function update(changes, label) {
+    Object.assign(state, changes, { shown: STEP });
+    syncUrl();
+    render();
+    if (label) track("hub_filter", label);
   }
 
   function byId(id) {
@@ -192,34 +253,21 @@
       const url = new URL(location.href);
       if (url.searchParams.has("p")) { url.searchParams.delete("p"); history.replaceState(null, "", url); }
     });
-    document.querySelectorAll(".hub-chip").forEach((chip) => chip.addEventListener("click", () => {
-      state.kind = chip.dataset.kind;
-      state.shown = STEP;
-      syncUrl();
-      render();
-      track("hub_filter", "kind:" + state.kind);
-    }));
-    langSel.addEventListener("change", () => {
-      state.lang = langSel.value;
-      state.shown = STEP;
-      syncUrl();
-      render();
-      track("hub_filter", "lang:" + state.lang);
-    });
-    topicSel.addEventListener("change", () => {
-      state.topic = topicSel.value;
-      state.shown = STEP;
-      syncUrl();
-      render();
-      track("hub_filter", "topic:" + state.topic);
-    });
+    document.querySelectorAll(".hub-chip").forEach((chip) => chip.addEventListener("click", () => update({ kind: chip.dataset.kind }, "kind:" + chip.dataset.kind)));
+    langSel.addEventListener("change", () => update({ lang: langSel.value }, "lang:" + langSel.value));
+    topicSel.addEventListener("change", () => update({ topic: topicSel.value }, "topic:" + topicSel.value));
+    sortSel.addEventListener("change", () => update({ sort: sortSel.value, dir: Card.defaultDir(sortSel.value) }, "sort:" + sortSel.value));
+    dirBtn.addEventListener("click", () => update({ dir: state.dir === "asc" ? "desc" : "asc" }, "dir:" + state.sort + ":" + (state.dir === "asc" ? "desc" : "asc")));
+    mediaSel.addEventListener("change", () => update({ media: mediaSel.value }, "media:" + mediaSel.value));
+    netSel.addEventListener("change", () => update({ net: netSel.value }, "net:" + netSel.value));
+    rangeSel.addEventListener("change", () => update({ range: rangeSel.value }, "range:" + rangeSel.value));
+    fromEl.addEventListener("change", () => update({ from: isDay(fromEl.value) }, "range:from"));
+    toEl.addEventListener("change", () => update({ to: isDay(toEl.value) }, "range:to"));
+    reportEl.addEventListener("change", () => update({ report: reportEl.checked }, "report:" + reportEl.checked));
     document.getElementById("hub-clear").addEventListener("click", () => {
-      Object.assign(state, { kind: "all", lang: "all", topic: "all", q: "", shown: STEP });
-      langSel.value = topicSel.value = "all";
-      searchEl.value = "";
-      syncUrl();
-      render();
-      track("hub_filter", "clear");
+      Object.assign(state, DEFAULTS);
+      fill();
+      update({}, "clear");
     });
     let timer = null;
     searchEl.addEventListener("input", () => {
@@ -239,10 +287,24 @@
     });
   }
 
-  async function boot() {
-    langSel.value = state.lang;
-    topicSel.value = state.topic;
+  // A value the page has no option for (a topic or network gone from the feed) falls back to all.
+  function fill() {
+    [[langSel, "lang"], [topicSel, "topic"], [netSel, "net"]].forEach(([el, key]) => {
+      el.value = state[key];
+      if (el.value !== state[key]) { el.value = "all"; state[key] = "all"; }
+    });
+    sortSel.value = state.sort;
+    mediaSel.value = state.media;
+    rangeSel.value = state.range;
+    fromEl.value = state.from;
+    toEl.value = state.to;
+    reportEl.checked = state.report;
     searchEl.value = state.q;
+    controls();
+  }
+
+  async function boot() {
+    fill();
     bind();
     if (!params.get("p")) track("hub_view", lang);
     try {
