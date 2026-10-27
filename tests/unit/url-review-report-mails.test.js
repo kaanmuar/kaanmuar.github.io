@@ -9,7 +9,7 @@ const record = { id: "r7Kq2mWx9", email: "ana@example.com", lang: "en", createdA
 
 test("the report mail labels each finding with its severity and states the date and the fail and risk counts", () => {
   const mail = customerMail.reportMail(record, {});
-  assert.match(mail.html, /Analytics &middot; <\/span><span [^>]*color:#b91c1c;">high<\/span>/);
+  assert.match(mail.html, /Analytics &middot; <\/span><span [^>]*color:#b3412f;">high<\/span>/);
   assert.match(mail.html, /Analyzed on 2026-10-19 &middot; 20 pages analyzed &middot; 77 proposed test cases/);
   assert.match(mail.html, />0 fail now<\/span>.*>26 at risk<\/span>/);
   assert.match(mail.text, /^- \[Analytics · high\] Tracking starts on/m);
@@ -187,7 +187,8 @@ test("the period report leads with volume and money, puts deltas inline, and dro
 
 test("the owner mail renders section headings and its eyebrow", () => {
   const mail = ownerMail({ intro: "Report", eyebrow: "QA-lab URL Review", rows: [{ heading: "Money" }, { label: "Revenue", value: "9 USD" }, { heading: "Empty" }, { label: "Nothing", value: "" }] });
-  assert.match(mail.html, />QA-lab URL Review<\/p>/);
+  assert.match(mail.html, />QA-lab URL Review<\/td>/);
+  assert.match(mail.html, /<img src="https:\/\/carlosandmunoz\.com\/assets\/qa-review-logo\.png" width="48" height="48" alt="QA-lab URL Review"/);
   assert.match(mail.html, />Money<\/td>/);
   assert.doesNotMatch(mail.html, />Empty</);
   assert.equal(mail.text, "Report\n\nMONEY\nRevenue: 9 USD\n\n");
