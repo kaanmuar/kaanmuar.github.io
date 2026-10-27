@@ -79,7 +79,17 @@ const EXTERNAL = {
     notes: { ok: true, sent: 9, stopped: 1, people: 7, byKind: [{ label: 'return', value: 9 }], byScene: [{ label: 'paid-once', value: 9 }], daily: [{ date: '2026-10-24', sent: 9, stopped: 1 }] } },
   'marketing-campaign': { ok: true, id: '11111111-2222-3333-4444-555555555555', name: 'W1 B-es Americas', status: 'active' },
   'marketing-queue': { ok: true, added: 2, already: 0, skipped: [] },
-  'marketing-block': { ok: true, blocked: 'no@example.edu' }
+  'marketing-block': { ok: true, blocked: 'no@example.edu' },
+  'marketing-sync': { ok: true, needs: [], at: new Date().toISOString(), age: 60000, stale: false, running: false,
+    leads: { weeks: [{ week: 'W1', total: 3, complete: 2, missing: 1, approved: 1, uploaded: 0, ready: 1 }],
+      rows: [{ week: 'W1', email: 'ana@uni.edu.co', first_name: 'Ana', last_name: 'Pérez', title: 'CIO', org: 'Uni Norte', host: 'uni.edu.co', cc: 'co', campaign: 'W1 B-es Americas', score: '71', top_finding_en: 'No alt text', missing: '', approved: false, uploaded: '', live_report_url: 'https://qa-lab.co/r/uni' },
+        { week: 'W1', email: 'leo@uni2.edu.co', first_name: 'Leo', org: 'Uni Sur', host: 'uni2.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: 'report (not published yet)', approved: false, uploaded: '' },
+        { week: 'W1', email: 'eva@uni3.edu.co', first_name: 'Eva', org: 'Uni Este', host: 'uni3.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: '', approved: true, uploaded: '' }] },
+    replies: [{ id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', at: '2026-10-25T12:00:00Z', from: 'dean@uni.edu.co', to: 'carlos@mail.qa-lab.co', subject: 'Re: Su sitio', campaign: 'W1 B-es Americas', text: 'Nos interesa', category: 'interested', summary: 'Wants the walkthrough', lang: 'es', draft: 'Hola, gracias', sent: '' }],
+    linkedin: { date: '2026-10-26', items: [{ name: 'Ana Pérez', title: 'CIO', org: 'Uni Norte (UN)', cc: 'CO', sent: false, profile: 'https://www.linkedin.com/in/ana', lines: [] }] },
+    dnc: [], jobs: [{ mode: 'leads', at: '2026-10-26T12:00:00Z', notify: 'W1 leads ready: 2 complete', failed: false, tail: ['done'] }], paused: [], kpis: [{ week_start: '2026-10-26', notes: 'setup week' }],
+    commands: { pending: 0, items: [] } },
+  'marketing-command': { ok: true, queued: 'c1', action: 'approve', label: 'Approve ana@uni.edu.co (W1)' }
 };
 
 function seed() {
@@ -140,7 +150,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'proposals', 'brief-marks']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'proposals', 'brief-marks']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -309,6 +319,49 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await mk.locator('[data-mk-block] button').click();
     await expect.poll(() => calls.filter((c) => c.op === 'marketing-block').map((c) => c.body.value)).toEqual(['no@example.edu']);
+    expect(errors).toEqual([]);
+  });
+
+  test('Marketing approves leads, uploads, ticks LinkedIn and answers replies through the Mac sync after confirming (#1730)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/marketing/30');
+    const mk = page.locator('[data-view="marketing"]');
+    const leads = mk.locator('[data-panel-id="marketing-leads"]');
+    await expect(leads).toContainText('Uni Norte');
+    await expect(leads.locator('[data-mk-cmd="approve"]')).toHaveCount(2);
+    await expect(leads).toContainText('missing');
+    await expect(mk.locator('[data-panel-id="marketing-jobs"]')).toContainText('W1 leads ready');
+    await expect(mk.locator('[data-panel-id="marketing-kpis"]')).toContainText('setup week');
+    const cmds = () => calls.filter((c) => c.op === 'marketing-command').map(({ body: { op, days, ...rest } }) => rest);
+
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await leads.locator('[data-mk-cmd="approve"][data-email="ana@uni.edu.co"]').click();
+    expect(cmds()).toEqual([]);
+    page.once('dialog', (dialog) => dialog.accept());
+    await leads.locator('[data-mk-cmd="approve"][data-email="ana@uni.edu.co"]').click();
+    await expect.poll(cmds).toEqual([{ action: 'approve', week: 'W1', email: 'ana@uni.edu.co', on: true }]);
+    page.once('dialog', (dialog) => { expect(dialog.message()).toContain('upload W1'); dialog.accept(); });
+    await leads.locator('[data-mk-cmd="upload"]').click();
+    await expect.poll(() => cmds().map((c) => c.action)).toEqual(['approve', 'upload']);
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await mk.locator('[data-panel-id="marketing-linkedin"] [data-mk-cmd="linkedin"]').click();
+    await expect.poll(() => cmds().slice(-1)).toEqual([{ action: 'linkedin', date: '2026-10-26', name: 'Ana Pérez', sent: true }]);
+
+    const draft = mk.locator('[data-mk-draft="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"]');
+    await expect(draft).toHaveValue('Hola, gracias');
+    await draft.fill('Hola Dean, ¿le sirve el martes?');
+    await mk.locator('[data-act="mk-reload"]').click();
+    await expect(draft).toHaveValue('Hola Dean, ¿le sirve el martes?');
+    page.once('dialog', (dialog) => { expect(dialog.message()).toContain('dean@uni.edu.co'); dialog.accept(); });
+    await mk.locator('[data-mk-reply]').click();
+    await expect.poll(() => cmds().slice(-1)).toEqual([{ action: 'reply', id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', text: 'Hola Dean, ¿le sirve el martes?' }]);
+
+    await mk.locator('[data-mk-dnc] input[name="addr"]').fill('stop@uni.edu.co');
+    page.once('dialog', (dialog) => dialog.accept());
+    await mk.locator('[data-mk-dnc] button').click();
+    await expect.poll(() => cmds().slice(-1).map((c) => [c.action, c.value])).toEqual([['dnc', 'stop@uni.edu.co']]);
     expect(errors).toEqual([]);
   });
 
