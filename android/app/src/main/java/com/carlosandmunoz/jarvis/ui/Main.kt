@@ -24,6 +24,7 @@ import com.carlosandmunoz.jarvis.home.MoneyWidgetReceiver
 import com.carlosandmunoz.jarvis.home.HealthWidgetReceiver
 import com.carlosandmunoz.jarvis.home.SocialWidgetReceiver
 import com.carlosandmunoz.jarvis.home.NextWidgetReceiver
+import com.carlosandmunoz.jarvis.home.MarketingWidgetReceiver
 import com.carlosandmunoz.jarvis.home.PipelineWidgetReceiver
 import com.carlosandmunoz.jarvis.home.TrafficWidgetReceiver
 import com.carlosandmunoz.jarvis.home.PickWidgetReceiver
@@ -441,6 +442,7 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     ActionButton("Social queue", false) { Home.pin(context, SocialWidgetReceiver::class.java) }
                     ActionButton("Next up", false) { Home.pin(context, NextWidgetReceiver::class.java) }
                     ActionButton("Pipeline", false) { Home.pin(context, PipelineWidgetReceiver::class.java) }
+                    ActionButton("Marketing", false) { Home.pin(context, MarketingWidgetReceiver::class.java) }
                     ActionButton("Traffic", false) { Home.pin(context, TrafficWidgetReceiver::class.java) }
                     ActionButton("Pick a number", false) { Home.pin(context, PickWidgetReceiver::class.java, Intent(context, PickConfigActivity::class.java)) }
                 }

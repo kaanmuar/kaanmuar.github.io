@@ -35,6 +35,7 @@ import com.carlosandmunoz.jarvis.data.prim
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.data.text
 import com.carlosandmunoz.jarvis.ui.CHIPS
+import com.carlosandmunoz.jarvis.ui.Marketing
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlinx.serialization.json.JsonObject
@@ -212,6 +213,32 @@ object Home {
         return Funnel(stages, note)
     }
 
+    data class MarketingCard(val headline: String?, val lines: List<Line>)
+
+    /** Days to the first cold email, then what waits for Carlos (leads to upload, replies, LinkedIn) and what came back (#1729). */
+    fun marketing(snap: JsonObject, now: Long, today: java.time.LocalDate = java.time.LocalDate.now()): MarketingCard {
+        val ext = snap.obj("external")
+        val sy = ext.obj("marketing-sync")?.takeIf { it.isOk() }
+        val mail = ext.obj("outreach").obj("instantly")?.takeIf { it.isOk() }
+        val first = ext.obj("marketing").obj("campaigns").str("firstStart")?.let { d -> runCatching { java.time.temporal.ChronoUnit.DAYS.between(today, java.time.LocalDate.parse(d.take(10))) }.getOrNull() }
+        val headline = when { first == null -> null; first > 1 -> "First emails in $first days"; first == 1L -> "First emails tomorrow"; first == 0L -> "First emails go out today"; else -> null }
+        val weeks = Marketing.weeks(sy)
+        val replies = Marketing.repliesToAnswer(sy).size
+        val li = sy.obj("linkedin").objs("items")
+        val liSent = li.count { it.bool("sent") == true }
+        val lines = buildList {
+            if (weeks.isNotEmpty()) {
+                val ready = weeks.sumOf { it.ready }
+                add(Line("To upload", if (ready > 0) "$ready approved" else "${weeks.sumOf { it.complete - it.approved - it.uploaded }.coerceAtLeast(0)} to approve", if (ready > 0) "warn" else "info"))
+            }
+            if (sy != null) add(Line("Replies", if (replies > 0) "$replies to answer" else "none waiting", if (replies > 0) "alert" else "good"))
+            if (li.isNotEmpty()) add(Line("LinkedIn", "$liSent / ${li.size} sent", if (liSent < li.size) "warn" else "good"))
+            if (mail != null) add(Line("Sent", "${fmt(mail.num("sent"), 0)} · ${fmt(mail.num("replies"), 0)} replies · ${fmt(mail.num("meetings"), 0)} meetings", "info"))
+            if (sy != null) add(Line("Mac sync", rel(sy.str("at"), now) ?: "never", if (sy.bool("stale") == true) "alert" else "good"))
+        }
+        return MarketingCard(headline, lines)
+    }
+
     data class Traffic(val label: String, val value: String, val delta: String?, val dir: Int, val series: List<Double>, val countries: List<Pair<String, String>>, val sources: List<Pair<String, String>>)
 
     /** Google Analytics sessions against the window before, top countries and sources; Cloudflare visitors when Analytics is down. */
@@ -299,6 +326,7 @@ object Home {
         runCatching { SocialWidget().updateAll(context) }
         runCatching { NextWidget().updateAll(context) }
         runCatching { PipelineWidget().updateAll(context) }
+        runCatching { MarketingWidget().updateAll(context) }
         runCatching { TrafficWidget().updateAll(context) }
         runCatching { PickWidget().updateAll(context) }
         runCatching { StatusWidget().updateAll(context) }

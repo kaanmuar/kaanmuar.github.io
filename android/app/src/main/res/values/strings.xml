@@ -11,6 +11,7 @@
     <string name="widget_health_desc">Uptime, page speed, CI on main, the last deploy and the TLS certificate</string>
     <string name="widget_social_desc">The next post on each channel, with Post now</string>
     <string name="widget_next_desc">Scheduled jobs still to run today and the next social post</string>
+    <string name="widget_marketing_desc">Days to the first cold email, leads to upload, replies to answer and LinkedIn requests</string>
     <string name="widget_pipeline_desc">Outreach from reviewed sites to replies and meetings</string>
     <string name="widget_traffic_desc">Sessions against the window before, top countries and sources</string>
     <string name="widget_pick_desc">One number you choose: revenue, readiness, alerts, sessions and more</string>
