@@ -2063,6 +2063,12 @@ function journeys(pages, dom) {
     .map((row) => ({ path: start, selector: row.link.selector, text: row.link.text, target: row.link.target, h1: heading(row.page), where: row.link.where }));
 }
 
+// A privacy link is often named for the page, not the word: "Privacy and disclaimers" can point to /legal.html.
+function privacyCheck(link, path) {
+  const tail = link && link.href ? String(link.href).split(/[?#]/)[0].replace(/\/+$/, "").split("/").pop().replace(/["\\]/g, "") : "";
+  return tail ? { check: { kind: "count", path, selector: "a[href*=\"" + tail + "\" i]", op: "gte", n: 1 } } : {};
+}
+
 function propose(pages, robotsBlocked, limits, dom) {
   const cases = [];
   const home = pages[0];
@@ -2186,7 +2192,7 @@ function propose(pages, robotsBlocked, limits, dom) {
   if (sriHosts.length) addCase(cases, { id: "SEC-14", layer: "Security", title: "Scripts from other hosts on " + here + " carry an integrity hash", why: "Scripts from " + sriHosts.slice(0, 4).join(", ") + " load on " + here + " without an integrity attribute. A changed file on one of those hosts would run on " + host + " unchecked. The case would assert integrity and crossorigin on each pinned script.", fw: browser, keys: ["sec-sri"], verdict: "risk", severity: "low" });
   const formHosts = (face.resources && face.resources.forms) || [];
   if (formHosts.length) addCase(cases, { id: "SEC-15", layer: "Security", title: "Forms on " + here + " post only to hosts the owner names", why: "A form on " + here + " posts to " + formHosts.slice(0, 3).join(", ") + ", not to " + host + ". The case would check that the host is the owner's processor, uses https, and is named in the privacy notice. Nothing is submitted.", fw: browser });
-  addCase(cases, { id: "PR-01", layer: "Privacy", title: "A privacy notice is linked from " + here, why: (legal.privacy ? here + " links \"" + (legal.privacy.text || legal.privacy.href) + "\"." : sig.privacyLink ? "The HTML of " + here + " mentions a privacy or legal destination, but no link to a privacy notice was found." : "No privacy or legal wording was found on " + here + ".") + " Confirm the link in a browser before treating it as found.", fw: browser });
+  addCase(cases, { id: "PR-01", layer: "Privacy", title: "A privacy notice is linked from " + here, why: (legal.privacy ? here + " links \"" + (legal.privacy.text || legal.privacy.href) + "\"." : sig.privacyLink ? "The HTML of " + here + " mentions a privacy or legal destination, but no link to a privacy notice was found." : "No privacy or legal wording was found on " + here + ".") + " Confirm the link in a browser before treating it as found.", fw: browser, ...privacyCheck(legal.privacy, startPath) });
   if (legal.imprint || germanSpeaking(face.lang, face.textLang, home.url)) addCase(cases, { id: "PR-04", layer: "Privacy", title: "An imprint on " + host + " names who runs the site", why: (legal.imprint ? here + " links \"" + (legal.imprint.text || legal.imprint.href) + "\"." : here + " links no imprint.") + " German-speaking sites must name the provider, an address and a contact (§ 5 DDG in Germany, § 5 ECG in Austria). The case would open the imprint from every template.", fw: browser });
   addCase(cases, { id: "PR-02", layer: "Privacy", title: "Third-party scripts on " + here + " are named before they run", why: (sig.thirdParty || []).length + " other hosts were referenced by script src on " + here + ((sig.thirdParty || []).length ? " (" + sig.thirdParty.slice(0, 4).join(", ") + ")." : ".") + " A privacy case would load the page with tags blocked and then with consent.", fw: browser });
   if (tracked) addCase(cases, { id: "PR-03", layer: "Privacy", title: "A consent notice on " + here + " appears before tags or cookies", why: (sig.consent ? "Cookie or consent wording was found on " + here + "." : "No cookie or consent wording was found on " + here + ".") + " The case would assert the notice before analytics storage is written.", fw: browser });
@@ -4419,6 +4425,7 @@ function previewReport(report) {
 }
 
 module.exports = {
+  privacyCheck,
   outboundLink,
   outboundKind,
   checkOutbound,
