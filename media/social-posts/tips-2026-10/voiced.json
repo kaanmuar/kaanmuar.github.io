@@ -1,0 +1,128 @@
+{
+ "01-img-size": {
+  "lang": "en",
+  "voice": "en-w",
+  "tiktok": "Give images a size. Stop the jump. Search your templates for <img without width. Add the intrinsic size to each one. #WebPerformance #CLS #CoreWebVitals #QA #techtok #QAlab",
+  "youtubeTitle": "Give images a size. Stop the jump. #Shorts"
+ },
+ "02-release-day": {
+  "lang": "es",
+  "voice": "es-w",
+  "tiktok": "Día de release: ¿la página sigue bien? Añade a tu checklist de release una revisión de cinco minutos de la página pública, después del deploy y antes del anuncio. #QA #ReleaseManagement #DevOps #QA #techtok #QAlab",
+  "youtubeTitle": "Día de release: ¿la página sigue bien? #Shorts"
+ },
+ "03-self-review": {
+  "lang": "pt",
+  "voice": "pt-w",
+  "tiktok": "Nós nos avaliamos. Segurança: 54. Rode a mesma verificação de cabeçalhos no seu site. As primeiras correções costumam ser de configuração, não de código. #QA #WebSecurity #BuildInPublic #QA #techtok #QAlab",
+  "youtubeTitle": "Nós nos avaliamos. Segurança: 54. #Shorts"
+ },
+ "04-slowest-page": {
+  "lang": "de",
+  "voice": "de-w",
+  "tiktok": "Die langsamste Seite ist selten die Startseite. Hol dir deine fünf meistbesuchten Seiten aus der Analytics und miss bei jeder die Ladezeit. Die langsamste reparierst du zuerst. #WebPerformance #CoreWebVitals #QA #QA #techtok #QAlab",
+  "youtubeTitle": "Die langsamste Seite ist selten die Startseite. #Shorts"
+ },
+ "05-contrast": {
+  "lang": "fr",
+  "voice": "fr-w",
+  "tiktok": "Le contraste, c’est des maths, pas une question de goût. Vérifiez la couleur de votre texte atténué par rapport à son fond dans les DevTools. Le sélecteur de couleur affiche le ratio. #Accessibility #Design #WCAG #QA #techtok #QAlab",
+  "youtubeTitle": "Le contraste, c’est des maths, pas une question de goût. #Shorts"
+ },
+ "06-utm": {
+  "lang": "it",
+  "voice": "it-w",
+  "tiktok": "Tagga i link delle campagne sempre allo stesso modo, ogni volta. Crea un foglio condiviso con le sorgenti e i mezzi ammessi. Mettine il link in ogni brief di campagna. #Analytics #GA4 #UTM #QA #techtok #QAlab",
+  "youtubeTitle": "Tagga i link delle campagne sempre allo stesso modo, ogni volta. #Shorts"
+ },
+ "07-nosniff": {
+  "lang": "en",
+  "voice": "en-m",
+  "tiktok": "Stop browsers guessing file types. Add it next to HSTS in the same rule, so both ship together. #WebSecurity #AppSec #HTTPHeaders #QA #techtok #QAlab",
+  "youtubeTitle": "Stop browsers guessing file types. #Shorts"
+ },
+ "08-input-names": {
+  "lang": "es",
+  "voice": "es-m",
+  "tiktok": "Cada campo necesita un nombre. Recorre tu formulario de contacto con el tabulador y el lector de pantalla activado. Cada campo debería decir qué es. #Accessibility #a11y #WCAG #QA #techtok #QAlab",
+  "youtubeTitle": "Cada campo necesita un nombre. #Shorts"
+ },
+ "09-llms-txt": {
+  "lang": "pt",
+  "voice": "pt-m",
+  "tiktok": "llms.txt: um resumo curto para os motores de resposta. Escreva cinco linhas sobre o seu site como se estivesse apresentando ele a um colega novo. Publique como /llms.txt. #GEO #llmstxt #AISearch #QA #techtok #QAlab",
+  "youtubeTitle": "llms.txt: um resumo curto para os motores de resposta. #Shorts"
+ },
+ "10-keyboard": {
+  "lang": "de",
+  "voice": "de-m",
+  "tiktok": "Leg die Maus weg. Erreichst du alles? Erledige die Hauptaufgabe auf deiner eigenen Website nur mit der Tastatur. Notier jede Stelle, an der du hängen bleibst. #Accessibility #a11y #UX #QA #techtok #QAlab",
+  "youtubeTitle": "Leg die Maus weg. Erreichst du alles? #Shorts"
+ },
+ "11-hsts": {
+  "lang": "fr",
+  "voice": "fr-m",
+  "tiktok": "Un seul en-tête. 180 jours de HTTPS uniquement. Lancez curl -sI sur votre domaine et cherchez strict-transport-security. S'il manque, ajoutez-le chez votre hébergeur ou votre CDN. #WebSecurity #HTTPS #DevOps #QA #techtok #QAlab",
+  "youtubeTitle": "Un seul en-tête. 180 jours de HTTPS uniquement. #Shorts"
+ },
+ "12-one-h1": {
+  "lang": "it",
+  "voice": "it-m",
+  "tiktok": "Un solo h1 per pagina, che dica cos'è la pagina. Leggi solo l'h1 delle tue dieci pagine principali. Uno sconosciuto capirebbe di cosa parla ciascuna? #SEO #Accessibility #Content #QA #techtok #QAlab",
+  "youtubeTitle": "Un solo h1 per pagina, che dica cos'è la pagina. #Shorts"
+ },
+ "13-consent-before": {
+  "lang": "en",
+  "voice": "en-w",
+  "tiktok": "Consent means before, too. Open your site in a private window with DevTools on the Network tab. Filter by collect or gtag before you click anything. #Analytics #Privacy #ConsentMode #QA #techtok #QAlab",
+  "youtubeTitle": "Consent means before, too. #Shorts"
+ },
+ "14-share-card": {
+  "lang": "es",
+  "voice": "es-w",
+  "tiktok": "Tu tarjeta para compartir es la primera impresión. Pega tu enlace en un chat privado contigo mismo. Lo que se ve ahí es tu primera impresión real. #SEO #OpenGraph #Marketing #QA #techtok #QAlab",
+  "youtubeTitle": "Tu tarjeta para compartir es la primera impresión. #Shorts"
+ },
+ "15-csp-report-only": {
+  "lang": "pt",
+  "voice": "pt-w",
+  "tiktok": "Comece sua CSP em Report-Only. Publique o header Report-Only esta semana. Leia os relatórios na semana seguinte antes de ativar. #WebSecurity #CSP #AppSec #QA #techtok #QAlab",
+  "youtubeTitle": "Comece sua CSP em Report-Only. #Shorts"
+ },
+ "16-list-first": {
+  "lang": "de",
+  "voice": "de-w",
+  "tiktok": "Schreib die Testliste vor dem Testcode. Schreib vor deinem nächsten Automatisierungssprint zehn Fälle in einfacher Sprache. Dann wähl das Tool. #QA #TestAutomation #SoftwareTesting #QA #techtok #QAlab",
+  "youtubeTitle": "Schreib die Testliste vor dem Testcode. #Shorts"
+ },
+ "17-robots-ai": {
+  "lang": "fr",
+  "voice": "fr-w",
+  "tiktok": "robots.txt décide qui peut vous lire. Ouvrez votresite.com/robots.txt aujourd'hui. Vérifiez qu'il dit bien ce que vous voulez pour les robots de recherche et d'IA. #GEO #AISearch #robotsTxt #QA #techtok #QAlab",
+  "youtubeTitle": "robots.txt décide qui peut vous lire. #Shorts"
+ },
+ "18-broken-links": {
+  "lang": "it",
+  "voice": "it-w",
+  "tiktok": "Un link rotto è un test che hai dimenticato di scrivere. Raccogli i link di footer e navigazione. Verifica che ognuno risponda sotto 400. #QA #Playwright #TestAutomation #QA #techtok #QAlab",
+  "youtubeTitle": "Un link rotto è un test che hai dimenticato di scrivere. #Shorts"
+ },
+ "19-measure-action": {
+  "lang": "en",
+  "voice": "en-m",
+  "tiktok": "Measure the action, not just the visit. Pick the one action each key page exists for. Make sure an event fires only when it succeeds. #Analytics #GA4 #CRO #QA #techtok #QAlab",
+  "youtubeTitle": "Measure the action, not just the visit. #Shorts"
+ },
+ "20-html-first": {
+  "lang": "es",
+  "voice": "es-m",
+  "tiktok": "La búsqueda con IA lee tu HTML, no tu app. Mira el código fuente de tu página de inicio. ¿Encuentras qué vendes y para quién es, sin ejecutar scripts? #GEO #AISearch #SEO #QA #techtok #QAlab",
+  "youtubeTitle": "La búsqueda con IA lee tu HTML, no tu app. #Shorts"
+ },
+ "21-canonical": {
+  "lang": "pt",
+  "voice": "pt-m",
+  "tiktok": "Uma página, um canonical. Abra sua página principal com e sem barra final e com tags ?utm_. As duas versões devem apontar para um único canonical. #SEO #TechnicalSEO #WebDev #QA #techtok #QAlab",
+  "youtubeTitle": "Uma página, um canonical. #Shorts"
+ }
+}
