@@ -587,7 +587,7 @@
         const box = document.createElement("article");
         box.className = "card multi-seo-notes";
         box.dataset.part = "notes";
-        notes.forEach((note) => { note.title = note.textContent; box.appendChild(note); });
+        notes.forEach((note) => box.appendChild(note));
         card.after(box);
       }
       const all = (((col.report || {}).insights || {}).seo || {}).indexability || [];
@@ -914,6 +914,8 @@
     copy.querySelectorAll(".screen-cut").forEach((row) => row.classList.remove("screen-cut"));
     copy.querySelectorAll(".is-clamped, .is-all").forEach((box) => box.classList.remove("is-clamped", "is-all"));
     copy.querySelectorAll(".multi-peek").forEach((wrap) => wrap.replaceWith(...wrap.childNodes));
+    copy.querySelectorAll(".list-rest").forEach((rest) => { rest.hidden = true; });
+    copy.querySelectorAll(".list-dots").forEach((dots) => { dots.hidden = false; });
     // An area score tile is a button on the page, and buttons do not print.
     copy.querySelectorAll("button.area").forEach((tile) => {
       const box = document.createElement("div");
