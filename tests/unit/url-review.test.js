@@ -1895,7 +1895,7 @@ test("the intake takes the current terms and the ones just before, and records w
   const now = core.validateIntake(body(core.TERMS_VERSION));
   assert.deepEqual(now.errors, []);
   assert.equal(now.value.termsVersion, core.TERMS_VERSION);
-  assert.equal(core.validateIntake(body("2026-10-23")).value.termsVersion, "2026-10-23");
+  assert.equal(core.validateIntake(body("2026-10-24")).value.termsVersion, "2026-10-24");
   assert.ok(core.validateIntake(body("2026-09-01")).errors.some((e) => e.field === "terms"));
 });
 
