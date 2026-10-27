@@ -4927,6 +4927,7 @@ async function pushOwner(msg) {
   }
 }
 const jarvisSocial = require("./jarvis-social");
+const jarvisMarketing = require("./jarvis-marketing");
 
 async function socialProposals() {
   const res = await fetch(customerMail.SITE + "/assets/social/proposals.json?t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(10000) });
@@ -5423,7 +5424,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100) };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts" };
 
 async function jarvisWatchRun() {
   const db = admin.firestore();
@@ -5645,6 +5646,12 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
       const decided = await decideOwnerNotice(body.domain, body.send === true, body.email, operator);
       if (decided.error) throw new Error(decided.error);
       out = decided;
+    }
+    else if (op === "marketing-campaign" || op === "marketing-block" || op === "marketing-queue") {
+      const db = admin.firestore();
+      const ctx = { fetch, env, now };
+      out = op === "marketing-campaign" ? await jarvisMarketing.campaignAct(ctx, body) : op === "marketing-block" ? await jarvisMarketing.block(ctx, body) : await jarvisMarketing.queueProspects(db, body, now);
+      await Promise.all([1, 7, 30, 90, 365].flatMap((d) => ["marketing-" + d, "outreach-" + d]).map((id) => db.collection("jarvis_cache").doc(id).delete().catch(() => null)));
     }
     else if (jarvisSources.SOURCES[op]) out = await jarvisSource(op, days);
     else if (op === "send-report") {

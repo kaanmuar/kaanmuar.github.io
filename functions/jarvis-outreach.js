@@ -129,6 +129,7 @@ function planNow(plan, now) {
     day: Math.max(0, Math.floor((now - at(plan.start)) / DAY) + 1), length: Math.round((at(plan.end) - at(plan.start)) / DAY) + 1,
     phase: phase ? { name: phase.name, end: phase.end, daysLeft: daysTo(phase.end) } : null,
     next: next ? { date: next.date, label: next.label, daysLeft: daysTo(next.date) } : null,
+    phases: (plan.phases || []).map((p) => ({ name: p.name, start: p.start, end: p.end })),
     milestones: (plan.milestones || []).map((m) => ({ date: m.date, label: m.label, past: at(m.date) < now - 12 * 3600 * 1000 })),
     deadlines: (plan.deadlines || []).map((d) => ({ date: d.date, label: d.label, daysLeft: daysTo(d.date) })).sort((a, b) => a.daysLeft - b.daysLeft),
     weekly: plan.weekly || {},
