@@ -5,7 +5,7 @@ const githubApp = require("../../functions/github-app");
 
 const { privateKey, publicKey } = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
 const pem = privateKey.export({ type: "pkcs8", format: "pem" });
-const env = { GITHUB_APP_ID: "Iv1.abc", GITHUB_APP_PRIVATE_KEY: Buffer.from(pem).toString("base64"), GITHUB_BUGS_TOKEN: "gho_fallback" };
+const env = { GITHUB_APP_ID: "Iv1.abc", GITHUB_APP_PRIVATE_KEY: Buffer.from(pem).toString("base64") };
 const NOW = Date.parse("2026-10-27T06:00:00Z");
 
 function fakeGitHub({ repoInstalled = true } = {}) {
@@ -44,9 +44,9 @@ test("the board scope uses the org installation", async () => {
   assert.strictEqual(await githubApp.token("board", { fetchImpl: gh.fetchImpl, env, now: NOW }), "ghs_22");
 });
 
-test("without the app key both scopes use GITHUB_BUGS_TOKEN", async () => {
+test("without the app key both scopes have no token, even with the retired GITHUB_BUGS_TOKEN set", async () => {
   const gh = fakeGitHub();
-  assert.strictEqual(await githubApp.token("repo", { fetchImpl: gh.fetchImpl, env: { GITHUB_BUGS_TOKEN: "gho_fallback" }, now: NOW }), "gho_fallback");
+  assert.strictEqual(await githubApp.token("repo", { fetchImpl: gh.fetchImpl, env: { GITHUB_BUGS_TOKEN: "gho_old" }, now: NOW }), "");
   assert.strictEqual(await githubApp.token("board", { fetchImpl: gh.fetchImpl, env: {}, now: NOW }), "");
   assert.strictEqual(gh.calls.length, 0);
 });
@@ -57,15 +57,15 @@ test("a raw PEM with escaped newlines works as the key", async () => {
   assert.strictEqual(await githubApp.token("repo", { fetchImpl: gh.fetchImpl, env: raw, now: NOW }), "ghs_11");
 });
 
-test("while the app is not installed on the repo, the repo scope falls back and waits ten minutes before asking again", async () => {
+test("while the app is not installed on the repo, the repo scope has no token and waits a minute before asking again", async () => {
   const gh = fakeGitHub({ repoInstalled: false });
   const warn = console.warn;
   console.warn = () => {};
   try {
-    assert.strictEqual(await githubApp.token("repo", { fetchImpl: gh.fetchImpl, env, now: NOW }), "gho_fallback");
-    assert.strictEqual(await githubApp.token("repo", { fetchImpl: gh.fetchImpl, env, now: NOW + 5 * 60000 }), "gho_fallback");
+    assert.strictEqual(await githubApp.token("repo", { fetchImpl: gh.fetchImpl, env, now: NOW }), "");
+    assert.strictEqual(await githubApp.token("repo", { fetchImpl: gh.fetchImpl, env, now: NOW + 30000 }), "");
     assert.strictEqual(gh.calls.length, 1);
-    await githubApp.token("repo", { fetchImpl: gh.fetchImpl, env, now: NOW + 11 * 60000 });
+    await githubApp.token("repo", { fetchImpl: gh.fetchImpl, env, now: NOW + 61000 });
     assert.strictEqual(gh.calls.length, 2);
   } finally {
     console.warn = warn;

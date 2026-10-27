@@ -1,14 +1,14 @@
 // GitHub access for the functions (#1734): hour-long installation tokens of the qa-lab-agents app, minted from
 // GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY (scripts/functions-github-app-env.js writes both). "repo" acts on the site
-// repo (Actions, Issues, Contents); "board" on the carlosandmunoz-hq project. Until the app key is set, or while the app
-// is not installed where a scope needs it, both scopes use GITHUB_BUGS_TOKEN.
+// repo (Actions, Issues, Contents); "board" on the carlosandmunoz-hq project. Without the key, or while minting fails,
+// a scope gets "" and its caller reports that no GitHub token is set.
 const crypto = require("crypto");
 
 const REPO = "kaanmuar/kaanmuar.github.io";
 const ORG = "carlosandmunoz-hq";
 const INSTALLATION = { repo: "/repos/" + REPO + "/installation", board: "/orgs/" + ORG + "/installation" };
 const EARLY = 5 * 60 * 1000;
-const RETRY = 10 * 60 * 1000;
+const RETRY = 60 * 1000;
 const cache = new Map();
 
 function b64url(value) {
@@ -40,12 +40,11 @@ async function call(fetchImpl, path, jwt, method) {
 }
 
 async function token(scope = "repo", { fetchImpl = fetch, env = process.env, now = Date.now() } = {}) {
-  const fallback = String(env.GITHUB_BUGS_TOKEN || "");
   const id = String(env.GITHUB_APP_ID || "");
   const key = privateKey(env);
-  if (!id || !key || !INSTALLATION[scope]) return fallback;
+  if (!id || !key || !INSTALLATION[scope]) return "";
   const hit = cache.get(scope);
-  if (hit && hit.until > now) return hit.token || fallback;
+  if (hit && hit.until > now) return hit.token;
   try {
     const jwt = appJwt(id, key, now);
     const installation = await call(fetchImpl, INSTALLATION[scope], jwt);
@@ -53,9 +52,9 @@ async function token(scope = "repo", { fetchImpl = fetch, env = process.env, now
     cache.set(scope, { token: minted.token, until: Date.parse(minted.expires_at) - EARLY });
     return minted.token;
   } catch (error) {
-    console.warn("GitHub app token for " + scope + " failed, so GITHUB_BUGS_TOKEN is used:", error.message);
+    console.warn("GitHub app token for " + scope + " failed:", error.message);
     cache.set(scope, { token: "", until: now + RETRY });
-    return fallback;
+    return "";
   }
 }
 
