@@ -20,7 +20,8 @@
    along that cycle: the card, voice, and TikTok/YouTube captions are all in the clip's language.
    A render exports the strings and runs translate.py first (--no-translate skips it); a clip still
    untranslated speaks English, and a clip that comes out silent stops the build.
-   To translate by hand or by agent instead, fill <batch>/i18n.json in translate.py's format:
+   To translate by hand or by agent instead, fill <batch>/i18n.json in translate.py's format, then rebuild its
+   cache with translate.py <batch> --seed so a later render does not send every string back to the translator:
      node scripts/tips-studio/build.js --source runs-100 --export-strings
      node scripts/tips-studio/build.js --source runs-100 --rotate [--shard 0/2] [--resume]
    Captions take their hashtags from scripts/social-tags.js; every run first refreshes the day's trending

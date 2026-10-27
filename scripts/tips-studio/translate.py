@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Translate the strings build.js --export-strings wrote, one language per clip.
 
-   python3 scripts/tips-studio/translate.py media/social-posts/<batch>
+   python3 scripts/tips-studio/translate.py media/social-posts/<batch> [--seed]
 
 Reads <batch>/i18n-src.json and writes <batch>/i18n.json. URLs, hashtags, @handles, line breaks, the brand and
 product names and the category labels are kept, each *...* span keeps its emphasis, and each fragment starts in
-the case the English starts. Finished strings are cached in i18n.json, so a rerun only asks for what changed."""
+the case the English starts. Finished strings are cached in i18n.json, so a rerun only asks for what changed; the
+cache is also rebuilt from the batch's committed translations, so strings filled by hand are not asked again.
+--seed only rebuilds the cache, with no translator: run it after filling i18n.json by hand or by agent."""
 import json
 import re
+import subprocess
 import sys
 import time
 import urllib.parse
@@ -19,6 +22,7 @@ NAMES = ["QA-lab URL Review", "QA-lab", "Live Reports", "carlosandmunoz.com"]
 KEEP = re.compile(r"(https?://\S+|#\w+|(?<!\w)@\w+|\n| · |" + "|".join(re.escape(n) + r"\S*" for n in NAMES) + ")")
 LABEL = re.compile(r"QA|SEO|GEO|A11y")
 STAR = re.compile(r"(\*[^*\n]+\*)")
+TAGS = re.compile(r"\n+#\w+(?: #\w+)*\s*$")
 HOST = re.compile(r"\b(?:[a-z0-9-]+\.)+[a-z]{2,6}\b", re.I)
 URL = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&dt=t&tl="
 
@@ -114,15 +118,77 @@ def translate(text, lang, cache):
     return "".join(out)
 
 
+def parts(text):
+    """(emphasised, [text, kept, text, ...]) for each span, the shape both pieces() and translate() walk."""
+    return [(star, KEEP.split(span)) for star, span in spans(text)]
+
+
+def pair(src, out):
+    """(English fragment, translated fragment) pairs of one finished string, or none when the two don't line up
+    span for span and kept token for kept token. A caption's translation leaves out the tag line, which build.js
+    puts back with the clip's own tags."""
+    if TAGS.search(src) and not TAGS.search(out):
+        src = TAGS.sub("", src)
+    a, b = parts(src), parts(out)
+    if [(s, len(p), p[1::2]) for s, p in a] != [(s, len(p), p[1::2]) for s, p in b]:
+        return []
+    return [(x.strip(), y.strip()) for (_, p), (_, q) in zip(a, b) for x, y in zip(p[::2], q[::2]) if wanted(x) and y.strip()]
+
+
+def history(out_dir):
+    """(i18n-src.json, i18n.json) of each commit that changed the batch's translations, oldest first, then the
+    working copy. build.js rewrites i18n-src.json before each run, so only a pair from the same commit tells which
+    English a translation was made from."""
+    def show(rev, name):
+        res = subprocess.run(["git", "show", rev + ":./" + name], cwd=out_dir, capture_output=True, text=True)
+        return json.loads(res.stdout) if res.returncode == 0 else None
+    log = subprocess.run(["git", "log", "--reverse", "--format=%H", "--", "i18n.json"], cwd=out_dir, capture_output=True, text=True)
+    for rev in log.stdout.split() if log.returncode == 0 else []:
+        yield show(rev, "i18n-src.json"), show(rev, "i18n.json")
+    read = lambda name: json.loads((out_dir / name).read_text()) if (out_dir / name).exists() else None
+    yield read("i18n-src.json"), read("i18n.json")
+
+
+def seed(versions):
+    """A cache rebuilt from finished translations. A translation is paired with the English beside it only in the
+    version where it first appears or changes, so one left behind by a later English edit is not learned as the
+    translation of the new English, and that string goes back to the translator."""
+    cache, last = {}, {}
+
+    def learn(at, english, text, lang):
+        if english is None or last.get(at) == text:
+            return
+        last[at] = text
+        for en, out in pair(english, text):
+            cache[lang + "\x00" + en] = out
+
+    for src, done in versions:
+        if not src or not done:
+            continue
+        cache.update(done.get("cache") or {})
+        for lang, ui in (done.get("ui") or {}).items():
+            for key, text in ui.items():
+                learn(("ui", lang, key), src.get("ui", {}).get(key), text, lang)
+        for slug, strings in (done.get("clips") or {}).items():
+            clip = src.get("clips", {}).get(slug)
+            for key, text in strings.items() if clip else []:
+                learn((slug, key), clip["strings"].get(key), text, clip["lang"])
+    return cache
+
+
 def main():
     out_dir = Path(sys.argv[1])
     src = json.loads((out_dir / "i18n-src.json").read_text())
     dest = out_dir / "i18n.json"
     done = json.loads(dest.read_text()) if dest.exists() else {}
     cache = {}
-    for key, value in done.get("cache", {}).items():
+    for key, value in {**seed(history(out_dir)), **(done.get("cache") or {})}.items():
         lang, text = key.split("\x00", 1)
         cache[key] = tidy(text, value, lang)
+    if "--seed" in sys.argv:
+        dest.write_text(json.dumps({**done, "cache": cache}, ensure_ascii=False, indent=1))
+        print("seeded", len(cache), "fragments")
+        return
     result = {"ui": {}, "clips": {}, "cache": cache}
     for lang in sorted({clip["lang"] for clip in src["clips"].values()}):
         fill(src["ui"].values(), lang, cache)
