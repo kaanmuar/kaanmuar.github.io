@@ -1,22 +1,23 @@
 #!/usr/bin/env node
 /* Render the share cards and app icons the pages point at.
 
-     node scripts/build-share-images.js          # every card and icon
-     node scripts/build-share-images.js social   # only the outputs whose path contains "social"
+     node scripts/build-share-images.js            # every card and icon
+     node scripts/build-share-images.js social     # only the outputs whose path contains "social"
+     node scripts/build-share-images.js qa-review  # the URL Review cards and logo
 
    Share cards are 1200x630 JPEGs under assets/share/; WhatsApp drops previews over
-   about 300 KB, which PNG cards exceed. Icons are written next to the files that
+   about 300 KB, which PNG cards exceed. The URL Review cards sit on a Fusion frame
+   (designs/3d/fx.js), so the run needs WebGL2. Icons are written next to the files that
    reference them: apple-touch-icon.png and favicon.ico at the root (browsers ask for
    both there), app icons and the URL Review logo under assets/. Fonts load from
    Google Fonts, so the run needs network access. */
 
 const fs = require("fs");
 const path = require("path");
-require("./playwright-sandbox");
-const { chromium } = require("playwright");
+const fusion = require("./fusion/still");
 
 const ROOT = path.resolve(__dirname, "..");
-const FONTS = "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=block";
+const FONTS = "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;600;700&family=Fira+Code:wght@500&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=block";
 
 function dataUri(file) {
   const ext = path.extname(file).slice(1).replace("jpg", "jpeg").replace("svg", "svg+xml");
@@ -42,12 +43,30 @@ function card({ eyebrow, title, em, sub, art, size = 84 }) {
   </div></body></html>`;
 }
 
-function rings(scores) {
-  const c = 2 * Math.PI * 34;
-  return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px 22px">' + scores.map(([name, n]) => {
-    const tone = n >= 90 ? "#6fd3a0" : n >= 70 ? "#ffc266" : "#ff8a80";
-    return `<div style="text-align:center;color:#e9fdff;font:600 15px Inter"><svg width="92" height="92" viewBox="0 0 80 80"><circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="8"/><circle cx="40" cy="40" r="34" fill="none" stroke="${tone}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(c * n / 100).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 40 40)"/><text x="40" y="47" text-anchor="middle" font-family="Instrument Serif, Georgia, serif" font-size="24" fill="#fff">${n}</text></svg><div>${name}</div></div>`;
-  }).join("") + "</div>";
+// URL Review cards: a Fusion frame with the pyramid on the right, the copy on a dark fade on the left.
+// lines: [text, emphasis]; the emphasis line is the cyan italic one.
+const FUSION_OG = { w: 1200, h: 630, subject: [0.44, -0.02], zoom: 1.4 };
+function fusionCard({ eyebrow, lines, sub, url, size = 70, t = 6 }) {
+  return { t, html: (bg) => `<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${FONTS}"><style>
+  * { box-sizing: border-box; margin: 0; }
+  body { width: 1200px; height: 630px; overflow: hidden; position: relative; font-family: Inter, sans-serif; color: #f4fafb; background: #071116 url(${bg}) center / cover no-repeat; }
+  .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(7,17,22,.92) 0%, rgba(7,17,22,.8) 34%, rgba(7,17,22,.35) 56%, rgba(7,17,22,0) 70%), linear-gradient(0deg, rgba(7,17,22,.55), rgba(7,17,22,0) 26%); }
+  .brand { position: absolute; left: 72px; top: 54px; display: flex; align-items: center; gap: 18px; }
+  .brand img { width: 64px; height: 64px; filter: drop-shadow(0 8px 22px rgba(77,179,187,.35)); }
+  .brand b { display: block; font: 400 38px/1 "Instrument Serif", Georgia, serif; }
+  .brand small { display: block; margin-top: 6px; font: 600 12.5px/1 Inter, sans-serif; letter-spacing: .2em; color: #9fb3b8; }
+  .copy { position: absolute; left: 72px; width: 620px; top: 158px; bottom: 112px; display: flex; flex-direction: column; justify-content: center; }
+  .eyebrow { font: 600 16px/1 Inter, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #e2c48a; margin-bottom: 22px; }
+  h1 { font: 400 ${size}px/1 "Instrument Serif", Georgia, serif; letter-spacing: -.01em; text-shadow: 0 4px 24px rgba(7,17,22,.6); }
+  h1 span { display: block; }
+  h1 em { display: block; font-style: italic; color: #7ef6fb; }
+  .sub { margin-top: 22px; font-size: 22px; line-height: 1.38; color: #cfe0e3; max-width: 540px; }
+  .url { position: absolute; left: 72px; bottom: 56px; font: 500 20px/1 "Fira Code", monospace; color: #7ef6fb; }
+  </style></head><body><div class="shade"></div>
+  <div class="brand"><img src="${fusion.markUri(64)}" alt=""><div><b>QA-lab</b><small>URL REVIEW</small></div></div>
+  <div class="copy"><p class="eyebrow">${eyebrow}</p><h1>${lines.map(([text, em]) => em ? `<em>${text}</em>` : `<span>${text}</span>`).join("")}</h1>${sub ? `<p class="sub">${sub}</p>` : ""}</div>
+  <p class="url">${url}</p>
+  </body></html>` };
 }
 
 const FRAMEWORKS = ["playwright.svg", "cypress.svg", "robot.svg", "selenium.svg", "webdriverio.svg", "k6.svg", "jest.svg", "appium.svg", "cucumber.svg", "jmeter.svg", "vitest.svg", "gatling.svg"];
@@ -74,39 +93,42 @@ const CARDS = {
     sub: "Jira story, Gherkin and Xray cases, Playwright, Cypress, and Robot scripts.",
     art: '<div style="display:flex;flex-direction:column;gap:16px;width:200px">' + [["Ticket Steward", "#e2c48a"], ["Test Designer", "#7ef6fb"], ["Automation Engineer", "#6fd3a0"], ["Release Verifier", "#f4efe4"]].map(([name, tone], i) => `<div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:14px 12px;color:#e9fdff;font:600 15px Inter"><span style="width:30px;height:30px;border-radius:50%;background:${tone};color:#10363a;display:grid;place-items:center;font-weight:700">${i + 1}</span>${name}</div>`).join("") + "</div>"
   }),
-  "assets/share/qa-review.jpg": card({
-    eyebrow: "QA-lab URL Review",
-    title: "Find the leaks,",
-    em: "breaks and blocks.",
-    sub: "Privacy, accessibility and security from one URL, with the fix and the test.",
-    art: rings([["Security", 66], ["A11y", 77], ["Analytics", 83], ["GEO", 84], ["SEO", 67], ["Speed", 78]]),
-    size: 72
+  "assets/share/qa-review.jpg": fusionCard({
+    eyebrow: "Privacy · Accessibility · Security",
+    lines: [["Find the leaks,"], ["breaks and blocks", true], ["before customers"], ["or regulators do."]],
+    url: "carlosandmunoz.com/qa-review",
+    size: 66
   }),
-  "assets/share/qa-review-guide.jpg": card({
-    eyebrow: "QA-lab URL Review · Guided tour",
-    title: "Here is how",
-    em: "we listen.",
+  "assets/share/qa-review-guide.jpg": fusionCard({
+    eyebrow: "Guided tour",
+    lines: [["Here is how"], ["we listen.", true]],
     sub: "Six steps, six scores, and what a review never does.",
-    art: rings([["SEO", 94], ["GEO", 89], ["Analytics", 100], ["Security", 54], ["A11y", 100], ["Speed", 88]])
+    url: "carlosandmunoz.com/qa-review-guide",
+    size: 84,
+    t: 9.5
+  }),
+  "assets/share/qa-review-pay.jpg": fusionCard({
+    eyebrow: "Payment",
+    lines: [["Pay through PayPal,"], ["see the amount first.", true]],
+    sub: "The total shows before you confirm. Card numbers are entered on PayPal, never here.",
+    url: "carlosandmunoz.com/qa-review-pay",
+    size: 72,
+    t: 13
   })
 };
 
-// The social hub's card, one per language, over a wall of its latest tip posts.
+// The social hub's card, one per language.
 const HUB = require("./social-hub/copy");
-const HUB_POSTS = JSON.parse(fs.readFileSync(path.join(ROOT, "assets/social/feed.json"), "utf8")).posts
-  .filter((post) => post.kind === "tip" && post.thumb && fs.existsSync(path.join(ROOT, post.thumb)))
-  .sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id))
-  .slice(0, 6);
-const HUB_WALL = '<div style="display:grid;grid-template-columns:repeat(2,112px);gap:12px">' + HUB_POSTS.map((post) => `<img src="${dataUri(post.thumb)}" style="width:112px;height:140px;object-fit:cover;border-radius:12px;box-shadow:0 8px 18px rgba(0,0,0,.25)">`).join("") + "</div>";
 Object.keys(HUB.LANGS).forEach((lang) => {
   const { title, em, sub } = HUB.COPY[lang].card;
-  CARDS["assets/share/qa-review-social" + (lang === "en" ? "" : "-" + lang) + ".jpg"] = card({
-    eyebrow: "QA-lab URL Review · Social", title, em, sub, art: HUB_WALL, size: Math.max(title.length, em.length) > 18 ? 68 : 80
+  CARDS["assets/share/qa-review-social" + (lang === "en" ? "" : "-" + lang) + ".jpg"] = fusionCard({
+    eyebrow: "Social", lines: [[title], [em, true]], sub, url: "carlosandmunoz.com/qa-review-social",
+    size: Math.max(title.length, em.length) > 18 ? 66 : 84, t: 3
   });
 });
 
 function icon(svgFile, size, maskable) {
-  const svg = fs.readFileSync(path.join(ROOT, svgFile), "utf8");
+  const svg = svgFile.startsWith("<") ? svgFile : fs.readFileSync(path.join(ROOT, svgFile), "utf8");
   const inner = maskable
     ? `<div style="width:${size}px;height:${size}px;background:#0d6e76;display:grid;place-items:center"><div style="width:${size * 0.72}px;height:${size * 0.72}px">${svg.replace(/rx="14"/, 'rx="0"')}</div></div>`
     : `<div style="width:${size}px;height:${size}px">${svg}</div>`;
@@ -118,7 +140,7 @@ const ICONS = [
   ["assets/app-icon-192.png", "favicon.svg", 192, false],
   ["assets/app-icon-512.png", "favicon.svg", 512, false],
   ["assets/app-icon-maskable-512.png", "favicon.svg", 512, true],
-  ["assets/qa-review-logo.png", "assets/qa-review-mark.svg", 512, false]
+  ["assets/qa-review-logo.png", fusion.markSvg(512, { square: true }), 512, false]
 ];
 
 function ico(pngs) {
@@ -143,8 +165,10 @@ function ico(pngs) {
 
 async function main() {
   const only = process.argv[2];
-  const browser = await chromium.launch();
+  const browser = await fusion.launch();
   const page = await browser.newPage({ deviceScaleFactor: 1 });
+  const frames = {};
+  const frame = async (t) => frames[t] || (frames[t] = fusion.dataUri(await fusion.still(browser, Object.assign({ t }, FUSION_OG))));
   async function shoot(html, width, height, out, transparent) {
     await page.setViewportSize({ width, height });
     await page.setContent(html, { waitUntil: "networkidle" });
@@ -158,9 +182,9 @@ async function main() {
     }
     return buffer;
   }
-  for (const [out, html] of Object.entries(CARDS)) if (!only || out.includes(only)) await shoot(html, 1200, 630, out);
+  for (const [out, html] of Object.entries(CARDS)) if (!only || out.includes(only)) await shoot(typeof html === "string" ? html : html.html(await frame(html.t)), 1200, 630, out);
+  for (const [out, svg, size, maskable] of ICONS) if (!only || out.includes(only)) await shoot(icon(svg, size, maskable), size, size, out, !maskable);
   if (only) return browser.close();
-  for (const [out, svg, size, maskable] of ICONS) await shoot(icon(svg, size, maskable), size, size, out, !maskable);
   const sizes = [16, 32, 48];
   const pngs = [];
   for (const size of sizes) pngs.push([size, await shoot(icon("favicon.svg", size, false), size, size, null, true)]);
