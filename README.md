@@ -27,7 +27,7 @@ The page is markup, SEO, and JSON-LD. Content is `js/cv-data.js` (toolkit, exper
 * **Trademark:** A frosted seal sits on the portrait and again in the footer. The letters default to **CAM**. The fill uses the current look’s paper at about 60%, with the same blur as the cards, so the portrait shows through a little. The letters use the accent ink.
 * **Contact and ratings:** The floating widget sends a message (optional attachment up to 5MB) or a rating to Firestore.
 * **Testimonials:** Approved public ratings and admin replies render from Firestore.
-* **SEO and analytics:** Person JSON-LD, a ProfessionalService offer (`#qa-practice`) for contract, freelance, advisory, and mentoring, and competency JSON-LD (each competency has a `?topic=` URL). The visible offer line is `#engagement-offer`. Also `hreflang`, canonical on `carlosandmunoz.com`, and Google Analytics events for filters, tour, language, and export.
+* **SEO and analytics:** Person JSON-LD, a ProfessionalService offer (`#qa-practice`) for contract, freelance, advisory, and mentoring, and competency JSON-LD (each competency has a `?topic=` URL). The visible offer line is `#engagement-offer`. Also a canonical on `carlosandmunoz.com` (the page translates in the browser, so it lists no `?lang=` hreflang alternates), and Google Analytics events for filters, tour, language, and export.
 
 ### SDLC studio (`simulador.html`)
 

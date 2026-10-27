@@ -70,7 +70,7 @@
   {"id":"PERF-03","layer":"Performance","title":"Studio page answers inside the latency budget","path":"simulador.html","phone":false},
   {"id":"PERF-04","layer":"Performance","title":"Stylesheet and CV script answer inside the latency budget","path":"index.html","phone":false},
   {"id":"SMK-03","layer":"Smoke","title":"Clip pages name the video, poster, and duration","path":"index.html","phone":false},
-  {"id":"SEC-09","layer":"Security","title":"Sitemap hreflang lists every language and omits admin","path":"index.html","phone":false},
+  {"id":"SEC-09","layer":"Security","title":"Sitemap lists no ?lang= hreflang and omits admin","path":"index.html","phone":false},
   {"id":"FN-35","layer":"Functional","title":"Every language shows its own summary title","path":"index.html","phone":false},
   {"id":"FN-36","layer":"Functional","title":"Profile photo is a dialog and Escape closes it","path":"index.html","phone":false},
   {"id":"FN-37","layer":"Functional","title":"A short or invalid note keeps Send disabled","path":"index.html","phone":false},
