@@ -39,7 +39,7 @@
   "license": "ISC",
   "devDependencies": {
     "@cucumber/cucumber": "^13.3.0",
-    "@cypress/grep": "^4.1.0",
+    "@cypress/grep": "^7.0.0",
     "@cypress/webpack-preprocessor": "^6.0.4",
     "@playwright/test": "^1.54.2",
     "@tailwindcss/cli": "^4.3.3",
