@@ -1058,3 +1058,65 @@ test("decideRatings approves or rejects pending ratings only, and briefItems lis
   assert.equal(store.r2.isAnonymous, undefined, "an approved rating is left alone");
   await assert.rejects(() => jarvis.decideRatings(db, { ids: ["r3"], decision: "maybe" }), /Approve or reject/);
 });
+
+const marketingSrc = require("../../functions/jarvis-marketing.js");
+
+test("marketing (#1722): campaigns read their week, sequence, language, region, window and the first send day", () => {
+  assert.deepEqual(marketingSrc.parseName("W1 E-pt Brazil"), { week: "W1", sequence: "E", lang: "pt", region: "Brazil" });
+  assert.deepEqual(marketingSrc.parseName("Newsletter"), { week: "", sequence: "", lang: "", region: "" });
+  assert.equal(marketingSrc.windowOf({ schedules: [{ timing: { from: "08:00", to: "10:30" }, days: { 0: false, 2: true, 3: true, 4: true }, timezone: "America/Bogota" }] }), "Tue-Thu 08:00-10:30 America/Bogota");
+  assert.equal(marketingSrc.windowOf({ schedules: [{ days: { 1: true, 3: true } }] }), "Mon, Wed");
+  const sched = (start) => ({ start_date: start, schedules: [] });
+  const out = marketingSrc.campaignRows([
+    { id: "a", name: "W1 B-es Americas", status: 0, campaign_schedule: sched("2026-11-10"), sequences: [{ steps: [1, 2, 3] }] },
+    { id: "b", name: "W1 E-pt Brazil", status: 1, campaign_schedule: sched("2026-11-03") },
+    { id: "c", name: "W0 A-en UK", status: 3, campaign_schedule: sched("2026-10-01") }
+  ], [{ campaign_id: "b", leads_count: 5, emails_sent_count: 9, reply_count_unique: 2 }], NOW.getTime());
+  assert.equal(out.firstStart, "2026-11-03");
+  assert.equal(out.leads, 5);
+  assert.equal(out.steps, 3);
+  assert.deepEqual(out.rows.find((r) => r.id === "b") && [out.rows.find((r) => r.id === "b").status, out.rows.find((r) => r.id === "b").sent, out.rows.find((r) => r.id === "b").replies], ["active", 9, 2]);
+  assert.deepEqual(out.byLang.map((r) => r.label).sort(), ["en", "es", "pt"]);
+  assert.deepEqual(out.byStatus.find((r) => r.label === "completed"), { label: "completed", value: 1 });
+});
+
+test("marketing (#1722): follow-up notes count sent and stopped per day, and prospects split by country and segment", () => {
+  const notes = marketingSrc.noteRows([
+    { status: "follow-note", email: "A@x.com", kind: "return", scene: "free", createdAt: daysAgo(1).toISOString() },
+    { status: "follow-note", email: "a@x.com", kind: "return", scene: "paid", createdAt: daysAgo(2).toISOString() },
+    { status: "follow-stop", email: "b@x.com", createdAt: daysAgo(1).toISOString() },
+    { status: "follow-note", email: "c@x.com", kind: "old", createdAt: daysAgo(40).toISOString() }
+  ], { now: NOW.getTime(), days: 7 });
+  assert.deepEqual([notes.sent, notes.stopped, notes.people], [2, 1, 1]);
+  assert.equal(notes.daily.reduce((n, d) => n + d.sent, 0), 2);
+  assert.deepEqual(notes.byKind, [{ label: "return", value: 2 }]);
+  const pros = marketingSrc.prospectRows({ hosts: [{ host: "a.co", cc: "co", sector: "university" }, { host: "b.co", cc: "co", sector: "tvet" }, { host: "c.mx", cc: "mx" }] });
+  assert.deepEqual(pros.byCountry, [{ label: "CO", value: 2 }, { label: "MX", value: 1 }]);
+  assert.equal(pros.bySegment.find((r) => r.label === "other").value, 1);
+});
+
+test("marketing (#1722): pause or activate checks the id and action, and block takes only an email or a domain", async () => {
+  const calls = [];
+  const ctx = { env: { INSTANTLY_API_KEY: "k" }, now: NOW.getTime(), fetch: async (url, init) => { calls.push([init.method || "GET", url.replace("https://api.instantly.ai/api/v2/", ""), init.body]); return json(/\/campaigns\/[^/]+$/.test(url) ? { name: "W1 B-es Americas", status: 1 } : {}); } };
+  const id = "11111111-2222-3333-4444-555555555555";
+  assert.deepEqual(await marketingSrc.campaignAct(ctx, { id, action: "activate" }), { id, name: "W1 B-es Americas", status: "active" });
+  assert.deepEqual(calls.map((c) => c.slice(0, 2)), [["POST", "campaigns/" + id + "/activate"], ["GET", "campaigns/" + id]]);
+  await assert.rejects(marketingSrc.campaignAct(ctx, { id: "../accounts", action: "pause" }), /campaign id/);
+  await assert.rejects(marketingSrc.campaignAct(ctx, { id, action: "delete" }), /Pause or activate/);
+  await assert.rejects(marketingSrc.campaignAct({ env: {} }, { id, action: "pause" }), /INSTANTLY_API_KEY/);
+  assert.deepEqual(await marketingSrc.block(ctx, { value: " No@Example.edu " }), { blocked: "no@example.edu" });
+  assert.equal(JSON.parse(calls[calls.length - 1][2]).bl_value, "no@example.edu");
+  await assert.rejects(marketingSrc.block(ctx, { value: "not an address" }), /email address or a domain/);
+});
+
+test("marketing (#1722): queued prospects append once, take the form's country and segment, and skip what the sweep refuses", async () => {
+  const parsed = marketingSrc.prospectLines("https://www.Uni.edu.co/admisiones, co, University\nshop.example.mx\ncasino.example.com, co\nlocalhost", { cc: "mx", sector: "startup" });
+  assert.deepEqual(parsed.hosts, [{ host: "www.uni.edu.co", cc: "co", sector: "university" }, { host: "shop.example.mx", cc: "mx", sector: "startup" }]);
+  assert.deepEqual(parsed.skipped.map((s) => s.why), ["blocked", "no host"]);
+  const docs = { "url_review_sweep/outreach": { hosts: [{ host: "uni.edu.co", cc: "co", sector: "university" }] } };
+  const db = { collection: (name) => ({ doc: (id) => ({ path: name + "/" + id }) }), runTransaction: async (fn) => fn({ get: async (ref) => ({ data: () => docs[ref.path] }), set: (ref, value) => { docs[ref.path] = value; } }) };
+  const out = await marketingSrc.queueProspects(db, { hosts: "uni.edu.co, co\nnew.edu.co", cc: "co", sector: "tvet" }, NOW.getTime());
+  assert.deepEqual([out.added, out.already], [1, 1]);
+  assert.deepEqual(docs["url_review_sweep/outreach"].hosts.map((h) => h.host), ["uni.edu.co", "new.edu.co"]);
+  await assert.rejects(marketingSrc.queueProspects(db, { hosts: "nothing here" }, NOW.getTime()), /Nothing to add/);
+});
