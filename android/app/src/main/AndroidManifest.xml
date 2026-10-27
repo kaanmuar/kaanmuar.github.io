@@ -115,6 +115,38 @@
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_money" />
         </receiver>
+        <receiver android:name=".home.HealthWidgetReceiver" android:exported="true" android:label="Jarvis site health">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_health" />
+        </receiver>
+        <receiver android:name=".home.SocialWidgetReceiver" android:exported="true" android:label="Jarvis social queue">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_social" />
+        </receiver>
+        <receiver android:name=".home.NextWidgetReceiver" android:exported="true" android:label="Jarvis next up">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_next" />
+        </receiver>
+        <receiver android:name=".home.PipelineWidgetReceiver" android:exported="true" android:label="Jarvis outreach pipeline">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_pipeline" />
+        </receiver>
+        <receiver android:name=".home.TrafficWidgetReceiver" android:exported="true" android:label="Jarvis traffic">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_traffic" />
+        </receiver>
+        <receiver android:name=".home.PickWidgetReceiver" android:exported="true" android:label="Jarvis number">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_pick" />
+        </receiver>
+        <activity
+            android:name=".PickConfigActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Jarvis.Sheet">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
+        </activity>
         <activity
             android:name=".PickPostActivity"
             android:exported="false"

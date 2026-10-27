@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.ui.ActionButton
 import com.carlosandmunoz.jarvis.ui.J
@@ -49,7 +50,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 
-/** Needs you (#1666): a widget row's one-tap decision on an owner notice or a social pick, behind the app lock when it is on. */
+/** Widgets (#1666): a one-tap decision on an owner notice, a social pick or posting the social queue, behind the app lock when it is on. */
 class ConfirmActivity : FragmentActivity() {
     private class Choice(val label: String, val op: String, val extra: Map<String, JsonElement>, val done: String)
 
@@ -63,14 +64,15 @@ class ConfirmActivity : FragmentActivity() {
         val detail = intent.getStringExtra(EXTRA_DETAIL)
         val email = intent.getStringExtra(EXTRA_EMAIL)
         val notice = kind == "notice"
-        val reload = if (notice) "notices" else "social-proposals"
+        val post = kind == "post"
+        val reload = if (notice) "notices" else if (post) null else "social-proposals"
         fun noticeChoice(send: Boolean) = Choice(if (send) "Send" else "Drop", "notice-decide",
             mapOf("domain" to JsonPrimitive(id), "send" to JsonPrimitive(send), "email" to JsonPrimitive(email.orEmpty())), if (send) "Sent to $email." else "Dropped.")
         fun socialChoice(approve: Boolean) = Choice(if (approve) "Approve" else "Dismiss", "social-decide",
             mapOf("id" to JsonPrimitive(id), "decision" to JsonPrimitive(if (approve) "approved" else "dismissed")),
             if (approve) "Approved. The next daily hub build publishes it." else "Dismissed.")
-        val primary = if (notice) noticeChoice(true).takeIf { email != null } else socialChoice(true)
-        val secondary = if (notice) noticeChoice(false) else socialChoice(false)
+        val primary = if (post) Choice("Post now", "social-post-now", emptyMap(), "Started.") else if (notice) noticeChoice(true).takeIf { email != null } else socialChoice(true)
+        val secondary = if (post) null else if (notice) noticeChoice(false) else socialChoice(false)
         setContent {
             JarvisTheme {
                 val scope = rememberCoroutineScope()
@@ -80,10 +82,10 @@ class ConfirmActivity : FragmentActivity() {
                 fun run(c: Choice) = unlocked {
                     busy = c.label; error = null
                     scope.launch {
-                        runCatching { if (!fixture) app.api.call(c.op, 1, c.extra) }
-                            .onSuccess {
-                                result = c.done
-                                runCatching { if (!fixture) app.api.fetch(reload, 1) }
+                        runCatching { if (fixture) null else app.api.call(c.op, 1, c.extra) }
+                            .onSuccess { out ->
+                                result = out?.str("note") ?: c.done
+                                if (reload != null) runCatching { if (!fixture) app.api.fetch(reload, 1) } else Home.refreshSoon(app)
                                 Home.redraw(app)
                                 delay(1400)
                                 finish()
@@ -96,12 +98,13 @@ class ConfirmActivity : FragmentActivity() {
                         Modifier.fillMaxWidth().navigationBarsPadding().padding(12.dp).reveal()
                             .background(J.bg.copy(alpha = 0.94f), RoundedCornerShape(18.dp)).glass(radius = 18.dp).clickable(remember { MutableInteractionSource() }, null) { }.padding(18.dp)
                     ) {
-                        Text(if (notice) "OWNER NOTICE" else "SOCIAL PICK", color = J.cyan, fontFamily = Mono, fontSize = 11.sp, letterSpacing = 2.sp)
+                        Text(if (notice) "OWNER NOTICE" else if (post) "SOCIAL QUEUE" else "SOCIAL PICK", color = J.cyan, fontFamily = Mono, fontSize = 11.sp, letterSpacing = 2.sp)
                         Spacer(Modifier.height(10.dp))
                         Text(title, color = J.text, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                         if (detail != null) Text(detail, color = J.muted, fontSize = 13.sp)
                         Spacer(Modifier.height(8.dp))
-                        Text(if (notice) "Send emails the site owner the review's findings. Drop takes the site out of the queue."
+                        Text(if (post) "Starts every channel's posting run now instead of at its next scheduled time."
+                            else if (notice) "Send emails the site owner the review's findings. Drop takes the site out of the queue."
                             else "Approve adds it to the Social hub's next daily build. Dismiss drops it.", color = J.dim, fontSize = 12.sp)
                         when {
                             !app.auth.signedIn && !fixture -> Text("Sign in to Jarvis first.", color = J.pink, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp))
@@ -111,7 +114,7 @@ class ConfirmActivity : FragmentActivity() {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     primary?.let { c -> ActionButton(if (busy == c.label) c.label + "…" else c.label, busy == c.label) { if (busy == null) run(c) } }
                                     Spacer(Modifier.width(8.dp))
-                                    ActionButton(if (busy == secondary.label) secondary.label + "…" else secondary.label, busy == secondary.label) { if (busy == null) run(secondary) }
+                                    secondary?.let { c -> ActionButton(if (busy == c.label) c.label + "…" else c.label, busy == c.label) { if (busy == null) run(c) } }
                                     Spacer(Modifier.weight(1f))
                                     TextButton(onClick = { startActivity(Home.open(this@ConfirmActivity, if (notice) "products:outreach" else "products:hub")); finish() }) { Text("Open", color = J.muted) }
                                 }

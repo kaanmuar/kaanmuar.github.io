@@ -21,6 +21,13 @@ import com.carlosandmunoz.jarvis.home.GoalsWidgetReceiver
 import com.carlosandmunoz.jarvis.home.AlertsWidgetReceiver
 import com.carlosandmunoz.jarvis.home.AskWidgetReceiver
 import com.carlosandmunoz.jarvis.home.MoneyWidgetReceiver
+import com.carlosandmunoz.jarvis.home.HealthWidgetReceiver
+import com.carlosandmunoz.jarvis.home.SocialWidgetReceiver
+import com.carlosandmunoz.jarvis.home.NextWidgetReceiver
+import com.carlosandmunoz.jarvis.home.PipelineWidgetReceiver
+import com.carlosandmunoz.jarvis.home.TrafficWidgetReceiver
+import com.carlosandmunoz.jarvis.home.PickWidgetReceiver
+import com.carlosandmunoz.jarvis.PickConfigActivity
 import com.carlosandmunoz.jarvis.home.NeedsWidgetReceiver
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.NumbersWidgetReceiver
@@ -430,6 +437,12 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     ActionButton("Alerts", false) { Home.pin(context, AlertsWidgetReceiver::class.java) }
                     ActionButton("Ask bar", false) { Home.pin(context, AskWidgetReceiver::class.java) }
                     ActionButton("Money", false) { Home.pin(context, MoneyWidgetReceiver::class.java) }
+                    ActionButton("Site health", false) { Home.pin(context, HealthWidgetReceiver::class.java) }
+                    ActionButton("Social queue", false) { Home.pin(context, SocialWidgetReceiver::class.java) }
+                    ActionButton("Next up", false) { Home.pin(context, NextWidgetReceiver::class.java) }
+                    ActionButton("Pipeline", false) { Home.pin(context, PipelineWidgetReceiver::class.java) }
+                    ActionButton("Traffic", false) { Home.pin(context, TrafficWidgetReceiver::class.java) }
+                    ActionButton("Pick a number", false) { Home.pin(context, PickWidgetReceiver::class.java, Intent(context, PickConfigActivity::class.java)) }
                 }
                 if (Build.VERSION.SDK_INT >= 33) Row { ActionButton("Add the quick-settings tile", false) { Home.addTile(context) } }
                 Muted(if (pinnable) "Widgets refresh every half hour and whenever the app or a push brings new numbers. Long-press the app icon for shortcuts; share a link to Jarvis to review it."

@@ -8,6 +8,12 @@
     <string name="widget_alerts_desc">Today\'s briefing: every alert and warning, each opening where it happened</string>
     <string name="widget_ask_desc">Ask by voice, review a link or post a photo in one tap</string>
     <string name="widget_money_desc">Revenue in the last 24 hours against the day before, sales and the daily trend</string>
+    <string name="widget_health_desc">Uptime, page speed, CI on main, the last deploy and the TLS certificate</string>
+    <string name="widget_social_desc">The next post on each channel, with Post now</string>
+    <string name="widget_next_desc">Scheduled jobs still to run today and the next social post</string>
+    <string name="widget_pipeline_desc">Outreach from reviewed sites to replies and meetings</string>
+    <string name="widget_traffic_desc">Sessions against the window before, top countries and sources</string>
+    <string name="widget_pick_desc">One number you choose: revenue, readiness, alerts, sessions and more</string>
     <string name="tile_label">Jarvis</string>
     <string name="share_label">Review with Jarvis</string>
     <string name="share_post_label">Post with Jarvis</string>
