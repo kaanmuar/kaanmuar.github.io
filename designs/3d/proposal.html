@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>3D look proposal · QA-lab URL Review</title>
+    <link rel="icon" href="../../assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
+    <link rel="stylesheet" href="look.css">
+</head>
+<body>
+<header class="bar">
+    <a class="brand" href="index.html"><img src="../../assets/qa-review-mark.svg?v=20261013c" alt="" width="34" height="34"><span>QA-lab<small>3D LOOKS</small></span></a>
+    <nav class="switch" aria-label="Proposals" id="switch"></nav>
+</header>
+<main>
+    <section class="hero" data-fx aria-labelledby="hero-title">
+        <canvas class="fx" id="hero"></canvas>
+        <div class="hero-copy">
+            <p class="eyebrow" translate="no">QA-lab URL Review</p>
+            <h1 id="hero-title" class="display"><span>Find the leaks,</span><span><em>breaks and blocks</em></span><span>before customers</span><span>or regulators do.</span></h1>
+            <p class="lede">Bring one public address. See what tracks visitors before consent, what fails WCAG 2.2 AA, which security headers are missing, and how search and AI answer engines read the page.</p>
+            <form class="review" onsubmit="return false"><input type="url" placeholder="https://your-site.com" aria-label="Address to review"><button type="submit">Review</button></form>
+            <ul class="facts"><li><b>21</b><span>kinds of cases</span></li><li><b>20</b><span>frameworks</span></li><li><b>1</b><span>address to begin</span></li></ul>
+        </div>
+    </section>
+
+    <section class="wrap notes">
+        <div>
+            <p class="eyebrow" id="num"></p>
+            <h2 id="name"></h2>
+            <p class="lede" id="pitch"></p>
+            <dl><dt>Best for</dt><dd id="best"></dd><dt>Cost</dt><dd id="cost"></dd><dt>Motion</dt><dd>Reduced motion shows a still frame. Off-screen canvases pause.</dd></dl>
+        </div>
+        <ul id="effects" aria-label="Effects"></ul>
+    </section>
+
+    <section class="wrap" aria-labelledby="banners-title" style="padding-top:0">
+        <h2 id="banners-title">Banners</h2>
+        <p class="lede">Rendered live in the same look. Download renders the PNG at full size from the frame you are seeing.</p>
+        <div class="banners" id="banners"></div>
+    </section>
+
+    <section class="bgsec" data-fx aria-labelledby="bg-title">
+        <canvas class="fx" id="bg"></canvas>
+        <div class="wrap">
+            <p class="eyebrow">Section background</p>
+            <h2 id="bg-title" style="margin:0;font:400 clamp(2rem,3.6vw,3rem)/1 var(--serif);letter-spacing:-.03em">The same look, <em style="color:var(--cyan)">turned down</em> behind content.</h2>
+            <div class="cards">
+                <div class="card"><b>21</b><p>kinds of test cases, each with the fix next to it.</p></div>
+                <div class="card"><b>20</b><p>frameworks your team already uses, from Playwright to k6.</p></div>
+                <div class="card"><b>1</b><p>public address to begin. No install, no account to look.</p></div>
+            </div>
+            <div class="row"><span class="chip c">3 tracking before consent</span><span class="chip g">7 WCAG 2.2 AA</span><span class="chip m">Security headers 9 of 11</span><span style="margin-left:auto;color:var(--muted);font-size:13px">example.com · read just now</span></div>
+        </div>
+    </section>
+
+    <section class="wrap foot"><span>Compare: <span id="others"></span></span><a href="index.html">All five proposals</a></section>
+</main>
+<script type="module">
+    import { mount, focusAt } from './fx.js';
+    import { PROPOSALS, FORMATS, byId, drawCopy, exportPng, ready } from './proposals.js';
+
+    const p = byId(new URLSearchParams(location.search).get('p'));
+    const i = PROPOSALS.indexOf(p);
+    document.title = `${p.name} · 3D look ${i + 1} of 5 · QA-lab`;
+    document.getElementById('switch').innerHTML = PROPOSALS.map((q, k) => `<a href="?p=${q.id}"${q === p ? ' aria-current="page"' : ''}>${k + 1} · ${q.name}</a>`).join('');
+    document.getElementById('num').textContent = `Proposal ${i + 1} of 5`;
+    document.getElementById('name').innerHTML = `${p.name}. <em>${p.tag}</em>`;
+    document.getElementById('pitch').textContent = p.pitch;
+    document.getElementById('best').textContent = p.best;
+    document.getElementById('cost').textContent = p.cost;
+    document.getElementById('effects').innerHTML = p.effects.map((e) => `<li>${e}</li>`).join('');
+    document.getElementById('others').innerHTML = PROPOSALS.filter((q) => q !== p).map((q) => `<a href="?p=${q.id}">${q.name}</a>`).join(' · ');
+
+    const heroEl = document.getElementById('hero');
+    const start = p.start ?? 6;
+    const hero = mount(heroEl, p.id, { mode: 0, start });
+    const place = () => {
+        if (!hero) return;
+        const r = heroEl.getBoundingClientRect(), a = r.width / r.height;
+        hero.opts.subject = a > 1.15 ? [Math.min(0.48, a * 0.26), 0] : [0, 0.26];
+        hero.opts.zoom = a > 1.15 ? 1 : 2.3;
+    };
+    place();
+    addEventListener('resize', place);
+
+    if (p.id === 'rack' && hero) {
+        const vf = document.createElement('div');
+        vf.className = 'viewfinder';
+        vf.innerHTML = '<i></i><i></i><i></i><i></i><output>FOCUS <b>1.60 m</b> · f/1.4 · 35 mm</output>';
+        document.querySelector('.hero').append(vf);
+        const b = vf.querySelector('b');
+        hero.opts.onFrame = (t) => { b.textContent = `${focusAt(t).toFixed(2)} m`; };
+    }
+
+    mount(document.getElementById('bg'), p.id, { mode: 2, zoom: 1.2, maxPixels: 0.9e6, start });
+
+    const host = document.getElementById('banners');
+    for (const f of FORMATS) {
+        const fig = document.createElement('figure');
+        fig.className = 'banner';
+        fig.dataset.fmt = f.id;
+        fig.innerHTML = `<div class="frame" data-fx style="aspect-ratio:${f.w}/${f.h}"><canvas class="fx"></canvas><canvas class="copy"></canvas></div><figcaption><span><b>${f.label}</b> · ${f.w}×${f.h}</span><button class="dl" type="button">Download PNG</button></figcaption>`;
+        host.append(fig);
+        const run = mount(fig.querySelector('canvas.fx'), p.id, { mode: 1, subject: f.subject, zoom: f.zoom, maxPixels: 0.6e6, start });
+        const copy = fig.querySelector('canvas.copy');
+        const paint = () => {
+            const r = copy.getBoundingClientRect(), s = Math.min(devicePixelRatio || 1, 2);
+            copy.width = Math.round(r.width * s);
+            copy.height = Math.round(r.height * s);
+            drawCopy(copy.getContext('2d'), copy.width, copy.height, f, p);
+        };
+        ready.then(() => new ResizeObserver(paint).observe(copy));
+        fig.querySelector('.dl').addEventListener('click', () => exportPng(p, f, run ? run.time() : start));
+    }
+</script>
+</body>
+</html>
