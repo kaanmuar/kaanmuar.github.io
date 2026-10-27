@@ -341,7 +341,7 @@ function manyUnindexable() {
   records[0].report = Object.assign({}, records[0].report, { insights: Object.assign({}, records[0].report.insights, { seo: {
     indexable: 10, indexability: blocked.concat(open), duplicates: { titles: [] }, schemaTypes: ['Organization', 'WebSite', 'BreadcrumbList', 'Article', 'Person', 'ImageObject'],
     sitemap: { found: true, count: 120, notListed: list, listedNotIndexable: list, notLinked: list }
-  } }) });
+  }, analytics: Object.assign({}, records[0].report.insights.analytics, { untagged: list }) }) });
   return records;
 }
 
@@ -1387,6 +1387,10 @@ test('the cookies, the sitemap notes and the pages of a finding show six, open t
   await expect(note.locator('.list-more')).toHaveText('Show fewer');
   await expect(note.locator('.list-more')).toHaveAttribute('aria-expanded', 'true');
   expect(await note.evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+
+  const untagged = box.locator('.multi-sec[data-sec="analytics"] .multi-cell[data-col="0"] .meta-line', { hasText: 'Pages without a tag' });
+  expect(await untagged.innerText()).not.toContain('a-long-path-name-2');
+  await expect(untagged.locator('.list-more')).toHaveText('Show all 14');
 
   const browserCell = box.locator('.multi-sec[data-sec="browser"] .multi-cell[data-col="2"]');
   const cookies = browserCell.locator('td', { has: page.locator('.list-more') }).first();

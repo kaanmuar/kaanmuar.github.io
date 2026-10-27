@@ -20,9 +20,9 @@ const ownerProofs = require("./url-review-owner-proof");
 const { registrable, registryDomain } = require("./url-review-suffix");
 const { siteLabel } = caseRank;
 
-const TERMS_VERSION = "2026-10-24";
+const TERMS_VERSION = "2026-10-26";
 // A page loaded before a terms change still sends the version before it.
-const PREVIOUS_TERMS_VERSION = "2026-10-23";
+const PREVIOUS_TERMS_VERSION = "2026-10-24";
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 const EXTRA_FRAMEWORK_USD = 5;

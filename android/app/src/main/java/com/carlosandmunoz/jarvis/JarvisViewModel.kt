@@ -222,6 +222,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun toastShown() = _state.update { it.copy(toast = null) }
+    fun say(text: String) = _state.update { it.copy(toast = text) }
 
     /** Owner notices waiting for Send or Drop (#1420). */
     fun loadNotices() {

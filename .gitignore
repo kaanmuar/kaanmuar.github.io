@@ -44,3 +44,4 @@ media/skits/
 owner-notices-*.csv
 scripts/trending-tags.json
 .shots/
+firebase-debug.log

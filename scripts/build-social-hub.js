@@ -17,7 +17,8 @@
    assets/social/thumbs/*.webp and the six pages. Share cards come from scripts/build-share-images.js social. Posts still to come follow the posted ones
    and stay out of the JSON-LD until their day. They are marked Scheduled when the Buffer or Facebook ledger
    (assets/social/buffer.json, facebook.json) has them queued or sent, Planned when nothing has queued them yet,
-   and carry no tag when captions.json holds them for the hub alone. */
+   and carry no tag when captions.json holds them for the hub alone. Each card lists the networks the ledgers have
+   it on, and the numbers scripts/social-metrics.js wrote to assets/social/metrics.json, for the hub's sort. */
 
 const fs = require("fs");
 const path = require("path");
@@ -26,6 +27,7 @@ const card = require("../js/social-hub-card");
 const admin = require("../js/social-hub-admin");
 const critical = require("./build-critical-css");
 const queues = require("./social-ledger");
+const metrics = require("./social-metrics");
 const { PROFILES, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -222,9 +224,30 @@ function queuedIds(books = [queues.read(queues.BUFFER), queues.read(queues.FACEB
   return ids;
 }
 
+// The networks that queued or sent each post, for the hub's network filter.
+function networkIds(books = [queues.read(queues.BUFFER), queues.read(queues.FACEBOOK)]) {
+  const nets = new Map();
+  books.forEach((book) => Object.entries(book.posts).forEach(([id, list]) => list.forEach((entry) => {
+    if (!entry.channel || (entry.result !== "queued" && entry.result !== "sent")) return;
+    if (!nets.has(id)) nets.set(id, new Set());
+    nets.get(id).add(entry.channel);
+  })));
+  return nets;
+}
+
+// A post's networks in the order the Follow row lists them; a post with a clip on the channel is on YouTube.
+function postNets(post, nets) {
+  const set = new Set(nets.get(post.base || post.id) || []);
+  if (post.youtube) set.add("youtube");
+  const order = PROFILES.map((profile) => profile.net);
+  return [...set].sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99) || a.localeCompare(b));
+}
+
 function collect() {
   const files = tracked();
   const queued = queuedIds();
+  const nets = networkIds();
+  const numbers = metrics.read().posts;
   const edits = admin.clean(exists(EDITS) ? readJson(EDITS) : null);
   const posts = expand(admin.apply(batchPosts(files, liveIds()).concat(launchPosts(files)), edits, isTracked));
   const ledger = exists(LEDGER) ? readJson(LEDGER) : { videos: {} };
@@ -242,6 +265,8 @@ function collect() {
     post.text = body(post);
     post.group = groupOf(post) || post.base || (post.i18n && Object.keys(post.i18n).length ? post.id : null);
     post.queued = queued.has(post.base || post.id);
+    post.nets = postNets(post, nets);
+    post.stats = numbers[post.base || post.id] || null;
     delete post.i18n;
   });
   // A view of any language's page ranks the whole post.
@@ -349,6 +374,7 @@ function feedJson(posts, asOf) {
     id: post.id, kind: post.kind, date: post.date, lang: post.lang, clipLang: post.clipLang, cat: post.cat, title: post.title,
     text: post.text.length > TEXT_MAX ? post.text.slice(0, TEXT_MAX).replace(/\s+\S*$/, "") + "…" : post.text,
     image: post.image, thumb: post.thumb, alt: post.alt, youtube: post.youtube, report: post.report, trend: post.trend,
+    nets: post.nets && post.nets.length ? post.nets : undefined, stats: post.stats || undefined,
     queued: post.date >= asOf && post.queued ? true : undefined, held: post.date >= asOf && post.held ? true : undefined
   }));
   return JSON.stringify({ version: 1, asOf, count: cards.length, posts: cards }) + "\n";
@@ -477,10 +503,15 @@ function page(lang, posts, asOf) {
     "<a href=\"" + card.pageFor(code) + "\" hreflang=\"" + code + "\" lang=\"" + code + "\"" + (code === lang ? " aria-current=\"page\"" : "") + ">"
     + "<img src=\"https://hatscripts.github.io/circle-flags/flags/" + info.flag + ".svg\" alt=\"\" width=\"18\" height=\"18\">" + esc(info.native) + "</a>").join("");
   const follow = PROFILES.map((profile) => "<a class=\"hub-follow-" + profile.net + "\" href=\"" + profile.url + "\" rel=\"me noopener\" data-net=\"" + profile.net + "\">" + esc(profile.name) + "</a>").join("");
-  const kinds = ["all"].concat(visible.some((post) => post.trend) ? ["trending"] : [], KINDS.filter((kind) => visible.some((post) => post.kind === kind)), ["video"]).map((kind) =>
+  const kinds = ["all"].concat(visible.some((post) => post.trend) ? ["trending"] : [], KINDS.filter((kind) => visible.some((post) => post.kind === kind))).map((kind) =>
     "<button type=\"button\" class=\"hub-chip\" data-kind=\"" + kind + "\" aria-pressed=\"" + (kind === "all") + "\">" + esc(copy.kinds[kind]) + "</button>").join("");
-  const langOptions = "<option value=\"all\">" + esc(copy.allLangs) + "</option>" + Object.entries(LANGS).map(([code, info]) => "<option value=\"" + code + "\">" + esc(info.native) + "</option>").join("");
-  const topicOptions = "<option value=\"all\">" + esc(copy.allTopics) + "</option>" + topics(visible).map((cat) => "<option value=\"" + esc(cat) + "\">" + esc(card.topic({ cat }, copy)) + "</option>").join("");
+  const option = (value, label) => "<option value=\"" + esc(value) + "\">" + esc(label) + "</option>";
+  const langOptions = option("all", copy.allLangs) + Object.entries(LANGS).map(([code, info]) => option(code, info.native)).join("");
+  const topicOptions = option("all", copy.allTopics) + topics(visible).map((cat) => option(cat, card.topic({ cat }, copy))).join("");
+  const sortOptions = card.SORTS.map((key) => option(key, copy.sorts[key])).join("");
+  const mediaOptions = ["all", "image", "video"].map((key) => option(key, copy.medias[key])).join("");
+  const netOptions = option("all", copy.allNets) + PROFILES.filter((profile) => visible.some((post) => (post.nets || []).includes(profile.net))).map((profile) => option(profile.net, profile.name)).join("");
+  const rangeOptions = ["all", "7", "30", "90", "custom"].map((key) => option(key, copy.ranges[key])).join("");
   const hubCopy = Object.assign({}, copy, { captions: CAPTIONS, lang, asOf });
   const json = (value) => JSON.stringify(value, null, 1).replace(/</g, "\\u003c");
   return `<!DOCTYPE html>
@@ -550,8 +581,14 @@ ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, 
     <section class="hub-tools" aria-label="${esc(copy.search)}">
         <div class="hub-chips" role="group" aria-label="${esc(copy.kinds.all)}">${kinds}</div>
         <div class="hub-selects">
+            <div class="hub-field hub-sort"><label for="hub-sort">${esc(copy.sort)}</label><select id="hub-sort">${sortOptions}</select><button class="hub-dir" id="hub-dir" type="button" aria-label="${esc(copy.sortDir + ": " + copy.dirs.date[0])}" data-dir="desc">${esc(copy.dirs.date[0])}</button></div>
+            <label class="hub-field"><span>${esc(copy.media)}</span><select id="hub-media">${mediaOptions}</select></label>
+            <label class="hub-field"><span>${esc(copy.network)}</span><select id="hub-net">${netOptions}</select></label>
+            <label class="hub-field"><span>${esc(copy.range)}</span><select id="hub-range">${rangeOptions}</select></label>
+            <span class="hub-dates" id="hub-dates" hidden><label class="hub-field"><span>${esc(copy.from)}</span><input id="hub-from" type="date"></label><label class="hub-field"><span>${esc(copy.to)}</span><input id="hub-to" type="date"></label></span>
             <label class="hub-field"><span>${esc(copy.clipLang)}</span><select id="hub-lang">${langOptions}</select></label>
             <label class="hub-field"><span>${esc(copy.topic)}</span><select id="hub-topic">${topicOptions}</select></label>
+            <label class="hub-check"><input id="hub-report" type="checkbox"><span>${esc(copy.withReport)}</span></label>
         </div>
         <label class="hub-field hub-search"><span class="sr-only">${esc(copy.search)}</span><input id="hub-q" type="search" placeholder="${esc(copy.search)}" autocomplete="off"></label>
         <p class="hub-count" id="hub-count" aria-live="polite">${esc(copy.count.replace("{n}", visible.length))}</p>
@@ -879,4 +916,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { KINDS, mergeFeed, titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, expand, forLang, pairQuizzes, unspoiled, queuedIds, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };
+module.exports = { KINDS, mergeFeed, titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, expand, forLang, pairQuizzes, unspoiled, queuedIds, networkIds, postNets, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };

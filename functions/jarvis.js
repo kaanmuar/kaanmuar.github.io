@@ -186,6 +186,60 @@ async function github(fetchImpl, token, { now }) {
   };
 }
 
+// The newest failed run of a workflow on main gets its failed jobs re-run; the token needs Actions: write.
+async function rerunCi(fetchImpl, token, workflow) {
+  if (!token) throw new Error("GITHUB_BUGS_TOKEN is not set.");
+  const name = String(workflow || "").slice(0, 120);
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  const runs = await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs?branch=main&status=completed&per_page=50", { headers, signal: AbortSignal.timeout(15000) }), "GitHub");
+  const run = (runs.workflow_runs || []).find((r) => r.name === name && r.conclusion !== "cancelled");
+  if (!run) throw new Error("No finished run of " + name + " on main.");
+  if (["success", "skipped", "neutral"].includes(run.conclusion)) return { workflow: name, run: run.id, url: run.html_url, already: run.conclusion };
+  const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs/" + run.id + "/rerun-failed-jobs", { method: "POST", headers, signal: AbortSignal.timeout(15000) });
+  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); GITHUB_BUGS_TOKEN needs Actions: write.");
+  if (!res.ok) throw new Error("GitHub " + res.status + " on the re-run.");
+  return { workflow: name, run: run.id, url: run.html_url };
+}
+
+// --- briefing rows (#1695) ------------------------------------------------------------------------------------
+
+// The rows a briefing sheet lists: pending ratings, or the messages in range with no answer, test senders left out.
+async function briefItems(db, { list, days, now }) {
+  const at = (v) => { const d = core.toDate(v); return d ? d.toISOString() : ""; };
+  if (list === "ratings") {
+    const snap = await db.collection("ratings").where("status", "==", "pending").limit(300).get();
+    const rows = snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())).filter((r) => !core.isTestEmail(r.email));
+    return { list, total: rows.length, rows: rows.sort((a, b) => at(b.createdAt).localeCompare(at(a.createdAt))).slice(0, 50)
+      .map((r) => ({ id: r.id, name: String(r.name || "").slice(0, 120), rating: Number(r.rating) || 0, text: String(r.comment || "").slice(0, 600), at: at(r.createdAt) })) };
+  }
+  if (list === "messages") {
+    const snap = await db.collection("messages").where("createdAt", ">=", new Date(now - rangeDays(days) * DAY)).limit(2000).get();
+    const rows = snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())).filter((m) => m.status !== "rejected" && !m.response && !m.respondedAt && !core.isTestEmail(m.email));
+    return { list, total: rows.length, rows: rows.sort((a, b) => at(b.createdAt).localeCompare(at(a.createdAt))).slice(0, 50)
+      .map((m) => ({ id: m.id, name: String(m.name || "").slice(0, 120), email: String(m.email || "").slice(0, 160), topic: String(m.topic || "").slice(0, 120), text: String(m.message || "").slice(0, 600), at: at(m.createdAt) })) };
+  }
+  throw new Error("Unknown list.");
+}
+
+const RATING_DECISIONS = { approved: { status: "approved", isAnonymous: false }, "approved-anon": { status: "approved", isAnonymous: true }, rejected: { status: "rejected" } };
+
+// Approve, approve without the name, or reject pending ratings, as Admin > CV Ratings does; at most 50 per call.
+async function decideRatings(db, { ids, decision }) {
+  const change = RATING_DECISIONS[decision];
+  if (!change) throw new Error("Approve or reject the rating.");
+  const list = (Array.isArray(ids) ? ids : [ids]).map((id) => String(id || "")).filter((id) => /^[\w-]{1,64}$/.test(id)).slice(0, 50);
+  if (!list.length) throw new Error("Which rating?");
+  let done = 0;
+  for (const id of list) {
+    const ref = db.collection("ratings").doc(id);
+    const snap = await ref.get();
+    if (!snap.exists || (snap.data().status || "pending") !== "pending") continue;
+    await ref.update(change);
+    done += 1;
+  }
+  return { decision, done, skipped: list.length - done };
+}
+
 // --- ga4 ------------------------------------------------------------------------------------------------------
 
 async function ga4(fetchImpl, { days }) {
@@ -633,5 +687,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, speak, speakable, langCode, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, briefItems, decideRatings, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, speak, speakable, langCode, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };

@@ -239,7 +239,7 @@ fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, openTab: String
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) { Reactor(null, "LOADING"); Spacer(Modifier.height(12.dp)); Muted("Jarvis is gathering every number. The first load takes up to a minute.") }
                             }
                             if (s.snapshot != null) when (shownTab) {
-                                Tab.Overview -> OverviewScreen(s, vm) { product = it; tab = Tab.Products }
+                                Tab.Overview -> OverviewScreen(s, vm) { target -> Tab.entries.firstOrNull { it.name.equals(target, ignoreCase = true) }?.let { tab = it } ?: run { product = target; tab = Tab.Products } }
                                 Tab.Products -> ProductsScreen(s, vm, product) { product = it }
                                 Tab.Business -> BusinessScreen(s)
                                 Tab.Traffic -> TrafficScreen(s)

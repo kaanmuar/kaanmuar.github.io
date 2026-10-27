@@ -5281,9 +5281,18 @@ async function jarvisSnapshot(days) {
     jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "social", "safety", "platform", "search", "outreach"], days),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
-  const briefing = jarvisCore.briefing({ products, external, thresholds: settings.thresholds, goals: goalRows });
+  const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
+  const briefing = jarvisCore.briefing(state).map((b) => Object.assign({ detail: jarvisCore.briefDetail(b, state) }, b));
   const proposals = jarvisCore.openProposals(jarvisCore.proposalRules({ products, external, thresholds: settings.thresholds, goals: goalRows }, briefing), await jarvisProposals.saved(db)).slice(0, 5);
   return { window, products, external, outreachVisits, goals: goalRows, briefing, proposals, readiness: jarvisCore.readiness(external), connections: jarvisCore.connections(external), settings, thresholds: jarvisCore.thresholds(settings.thresholds) };
+}
+
+// The cached snapshot keeps every line; snoozed and dismissed ones move to briefHidden on each read.
+async function jarvisBriefOpen(snap) {
+  const marks = await jarvisProposals.savedBrief(admin.firestore());
+  const { open, hidden } = jarvisCore.openBrief(snap.briefing, marks);
+  const until = marks.reduce((m, r) => { m[r.key] = { status: r.status, until: r.until }; return m; }, {});
+  return Object.assign({}, snap, { briefing: open, briefHidden: hidden.map((b) => Object.assign({}, b, until[b.key])) });
 }
 
 async function jarvisHeld() {
@@ -5356,6 +5365,17 @@ async function jarvisClickAction(body, by) {
       throw error;
     }
   }
+  if (action === "rerun-ci") {
+    const workflow = String(body.workflow || "").slice(0, 120);
+    try {
+      const out = await jarvis.rerunCi(fetch, process.env.GITHUB_BUGS_TOKEN, workflow);
+      await note({ action, status: "done", target: workflow, detail: out.already ? "Already " + out.already + "." : "Re-running run " + out.run + "." });
+      return { action, done: out.already ? 0 : 1, ran: workflow, url: out.url, already: out.already || null };
+    } catch (error) {
+      await note({ action, status: "failed", target: workflow, detail: error.message || String(error) });
+      throw error;
+    }
+  }
   if (action === "rerun-held") {
     const held = await act.held();
     let done = 0, failed = 0;
@@ -5403,7 +5423,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100) };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100) };
 
 async function jarvisWatchRun() {
   const db = admin.firestore();
@@ -5412,7 +5432,8 @@ async function jarvisWatchRun() {
   if (!settings.mail.watch && !(await jarvisPush.anyTargets(db, "alerts"))) return "off in settings";
   const now = Date.now();
   const external = await jarvisExternal(["health", "jobs", "uptime", "money", "safety", "platform"], 1);
-  const { day, ref, sent, fresh } = await jarvis.unsentToday(db, jarvis.watchItems(external, settings.thresholds), { now });
+  const items = jarvisCore.openBrief(jarvis.watchItems(external, settings.thresholds), await jarvisProposals.savedBrief(db), new Date(now)).open;
+  const { day, ref, sent, fresh } = await jarvis.unsentToday(db, items, { now });
   if (!fresh.length) return "nothing new";
   const push = await jarvisPush.send(admin.messaging(), db, phones, jarvisPush.alertMessage(fresh)).catch((error) => ({ sent: 0, error: String(error.message || error).slice(0, 200) }));
   if (settings.mail.watch) await sendOwnerEmail({
@@ -5589,7 +5610,11 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     }
     else if (op === "web-push-key") out = { publicKey: (await jarvisWebPush.keys(admin.firestore(), require("web-push"))).publicKey };
     else if (op === "review") out = await jarvisReview.enqueue(admin.firestore(), body, operator, now);
-    else if (op === "snapshot") out = await jarvisCached(op, days, () => jarvisSnapshot(days));
+    else if (op === "snapshot") out = await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days)));
+    else if (op === "brief-mark") out = await jarvisProposals.markBrief(admin.firestore(), body, operator, now);
+    else if (op === "brief-marks") out = { marks: await jarvisProposals.savedBrief(admin.firestore()) };
+    else if (op === "brief-items") out = await jarvis.briefItems(admin.firestore(), { list: body.list, days, now });
+    else if (op === "rating-decide") out = await jarvis.decideRatings(admin.firestore(), body);
     else if (op === "notices") {
       const snap = await admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get();
       const rows = snap.docs.map((d) => Object.assign({ domain: d.id }, d.data()));

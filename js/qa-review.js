@@ -3,7 +3,7 @@
   const DEVICE_KEY = "qa-review-device";
   const SHOWN_KEY = "qa-review-shown";
   const SAMPLE_URL = "assets/qa-review-sample.json";
-  const TERMS_VERSION = "2026-10-24";
+  const TERMS_VERSION = "2026-10-26";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
   const PAGE_CENTS = { 20: 0, 40: 500, 60: 900, 80: 1200, 100: 1500 };
@@ -873,8 +873,8 @@
     return shown + '<span class="list-rest" hidden>' + sep + items.slice(max).map(esc).join(sep) + '</span><span class="list-dots"> …</span> ' +
       '<button type="button" class="list-more no-print" aria-expanded="false" data-n="' + items.length + '">' + esc(rc.t("listAll", { n: items.length })) + "</button>";
   }
-  function listLine(key, items) {
-    return esc(rc.t(key, { list: "{list}" })).replace("{list}", () => moreList(items, ", ", slotRoot ? 2 : 6));
+  function listLine(key, items, cap) {
+    return esc(rc.t(key, { list: "{list}" })).replace("{list}", () => moreList(items, ", ", slotRoot ? 2 : cap));
   }
   document.addEventListener("click", (event) => {
     const button = event.target.closest && event.target.closest(".list-more");
@@ -2101,7 +2101,7 @@
       '<div class="check-tile ' + (a.consentMode ? ((a.consentMode.analytics === "denied" || regions.length) && a.consentMode.v2 ? "pass" : "risk") : "unknown") + '"><b>Consent Mode</b>' + esc(mode) + "</div>" +
       '<div class="check-tile ' + (a.utm ? (a.utm.kept ? "pass" : "fail") : "unknown") + '"><b>' + esc(rc.t("tileUtm")) + "</b>" + esc(utm) + "</div></div>" +
       '<article class="card">' + (rows ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thTool")) + "</th><th>" + esc(rc.t("thIds")) + "</th><th>" + esc(rc.t("thPagesWith")) + "</th></tr></thead><tbody>" + rows + "</tbody></table>" : '<p class="muted">' + esc(rc.t("noTags")) + "</p>") +
-      ((a.untagged || []).length ? '<p class="meta-line">' + esc(rc.t("untagged", { list: a.untagged.slice(0, 8).join(", ") })) + "</p>" : "") + "</article>";
+      ((a.untagged || []).length ? '<p class="meta-line">' + listLine("untagged", a.untagged, 8) + "</p>" : "") + "</article>";
   }
 
   function paintSeo(ins) {
