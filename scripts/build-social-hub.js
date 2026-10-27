@@ -520,6 +520,7 @@ function page(lang, posts, asOf) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="${CSP}">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>${esc(copy.title)}</title>
     <meta name="description" content="${esc(copy.description)}">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
