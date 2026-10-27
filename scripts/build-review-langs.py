@@ -3,9 +3,10 @@
 from qa-review-pay.html with the copy in js/qa-review-pay-copy.js.
 
 The head, the structured data, the consent screen, the stage headline, the hero stats, the price list, the noscript
-Live Reports text, and the stored language are translated by hand (review_langs_copy.py),
-and the Ask the report panel copy comes from js/qa-review-ask.js;
-the rest of the body stays English and is translated in the browser. The noscript text on
+Live Reports text, and the stored language are translated by hand (review_langs_copy.py).
+The rest of the body ships translated too, so search engines and visitors without JavaScript get one language:
+what the browser would write comes from its copy tables (js/qa-review-*.js, js/site-glossary.js), and the
+text no table holds from review_langs_body.py. The noscript text on
 every page, English included, is written from assets/live-reports/index.json.
 
     python3 scripts/build-review-langs.py            # write the pages
@@ -15,7 +16,9 @@ import json
 import pathlib
 import re
 import sys
+from html.parser import HTMLParser
 
+from review_langs_body import BODY, WRITTEN
 from review_langs_copy import AND, COMPARE_NOTE, COPY, DATE, FACTS, HEADER, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE, SKIP
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -197,17 +200,173 @@ def locale_block(code):
 ASK_KEYS = ("open", "title", "close", "note", "inputLabel", "placeholder", "send", "repo")
 
 
-def ask_copy(code):
-    """The Ask the report panel strings for one language, read from js/qa-review-ask.js."""
-    js = (ROOT / "js/qa-review-ask.js").read_text(encoding="utf-8")
+def js_strings(path, code, keys):
+    """String values from one language's block (`    es: {` up to its closing `    }`) of a browser copy table."""
+    js = (ROOT / path).read_text(encoding="utf-8")
     start = js.index(f"\n    {code}: {{\n")
+    end = js.index("\n    }", start)
     out = {}
-    for key in ASK_KEYS:
-        m = re.compile(rf'\b{key}: ("(?:[^"\\]|\\.)*")').search(js, start)
+    for key in keys:
+        m = re.compile(rf'\b{key}: ("(?:[^"\\]|\\.)*")').search(js, start, end)
         if not m:
-            raise SystemExit(f"js/qa-review-ask.js has no {code}.{key}")
+            raise SystemExit(f"{path} has no {code}.{key}")
         out[key] = json.loads(m.group(1))
     return out
+
+
+COPY_TABLES = ("js/qa-review-report-copy.js", "js/qa-review-multi.js", "js/qa-review-compare-copy.js", "js/qa-review-progress.js",
+               "js/qa-review-verify.js", "js/qa-review-benchmark.js", "js/qa-review-live.js", "js/qa-review-ask.js", "js/qa-review-pay-copy.js")
+PAIR = re.compile(r'\b(\w+): ("(?:[^"\\]|\\.)*")')
+
+
+def js_index(code):
+    """English text to the page language's text, from every key the browser copy tables hold once, the first table winning."""
+    out = {}
+    for path in COPY_TABLES:
+        js = (ROOT / path).read_text(encoding="utf-8")
+        blocks = []
+        for lang in ("en", code):
+            start = js.index(f"\n    {lang}: {{\n")
+            pairs = PAIR.findall(js, start, js.index("\n    }", start))
+            once = {key for key in {k for k, _ in pairs} if sum(k == key for k, _ in pairs) == 1}
+            blocks.append({k: json.loads(v) for k, v in pairs if k in once})
+        en, local = blocks
+        for key, text in en.items():
+            if key in local and "{" not in text and "<" not in text:
+                out.setdefault(squash(text), local[key])
+    return out
+
+
+def ask_copy(code):
+    """The Ask the report panel strings for one language, read from js/qa-review-ask.js."""
+    return js_strings("js/qa-review-ask.js", code, ASK_KEYS)
+
+
+def report_copy(s, code):
+    """What js/qa-review-report-copy.js does in the browser to each data-report-copy element, done here so the HTML ships it."""
+    found = list(re.finditer(r'<(\w+)([^>]*) data-report-copy="(\w+)"([^>]*)>([^<]*)</\1>', s))
+    keys = sorted({m.group(3) for m in found})
+    en, t = js_strings("js/qa-review-report-copy.js", "en", keys), js_strings("js/qa-review-report-copy.js", code, keys)
+    for m in reversed(found):
+        tag, before, key, after, text = m.groups()
+        if text != en[key]:
+            raise SystemExit(f"qa-review.html data-report-copy={key} reads {text!r}, js/qa-review-report-copy.js en has {en[key]!r}")
+        s = s[:m.start()] + f'<{tag}{before} data-report-copy="{key}"{after} lang="{code}" translate="no">{t[key]}</{tag}>' + s[m.end():]
+    return s
+
+
+def live_head(s, code, data):
+    """The Live Reports heading as js/qa-review-live.js writes it."""
+    t = js_strings("js/qa-review-live.js", code, ("eyebrow", "title", "titleEm", "lede"))
+    s = retag(s, '<p class="eyebrow" data-live-eyebrow>', "</p>", t["eyebrow"], code)
+    s = retag(s, '<h2 id="live-title" class="live-title" data-live-title>', "</h2>", f'{t["title"]} <em>{t["titleEm"]}</em>', code)
+    return retag(s, '<p class="live-lede" data-live-lede>', "</p>", t["lede"].replace("{n}", str(data["count"])), code)
+
+
+VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
+OPAQUE = {"script", "style", "svg", "noscript", "template", "canvas"}
+TEXT_ATTRS = ("placeholder", "aria-label", "title", "alt")
+squash = lambda text: " ".join(text.split())
+
+
+class Spans(HTMLParser):
+    """Offsets of every body element, text run and translatable attribute, skipping what is already in another language or kept as is."""
+
+    def __init__(self, s):
+        super().__init__(convert_charrefs=False)
+        self.lines = [0] + [i + 1 for i, ch in enumerate(s) if ch == "\n"]
+        self.stack, self.elements, self.texts, self.attrs, self.body = [], [], [], [], False
+
+    def at(self):
+        line, col = self.getpos()
+        return self.lines[line - 1] + col
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag == "body":
+            self.body = True
+        start = self.at()
+        end = start + len(self.get_starttag_text())
+        parent = self.stack[-1] if self.stack else None
+        kept = (parent and parent["kept"]) or tag in OPAQUE or a.get("translate") == "no" or ("lang" in a and tag != "html") or "notranslate" in (a.get("class") or "").split()
+        if self.body and not kept:
+            self.attrs += [(start, end, name, a[name]) for name in TEXT_ATTRS if a.get(name)]
+        if tag in VOID:
+            return
+        self.stack.append({"tag": tag, "start": start, "open": end, "kept": kept, "id": a.get("id")})
+
+    def handle_endtag(self, tag):
+        for i in range(len(self.stack) - 1, -1, -1):
+            if self.stack[i]["tag"] == tag:
+                el = self.stack[i]
+                del self.stack[i:]
+                if self.body and not el["kept"]:
+                    self.elements.append((el, self.at()))
+                return
+
+    def handle_data(self, data):
+        if self.body and self.stack and not self.stack[-1]["kept"] and data.strip():
+            self.texts.append((self.at(), data, self.stack[-1]))
+
+
+def mark(tag_text, code):
+    return re.sub(r"\s*/?>$", lambda m: f' lang="{code}" translate="no"' + m.group(0).lstrip(), tag_text, count=1)
+
+
+def glossary_lines(code):
+    """The whole lines js/site-glossary.js puts over machine translation (its LINES), which win over every other source."""
+    js = (ROOT / "js/site-glossary.js").read_text(encoding="utf-8")
+    start = js.index(f"\n        {code}: {{\n", js.index("const LINES = {"))
+    block = js[start:js.index("\n        }", start)]
+    return {squash(en): local for en, local in re.findall(r"'((?:[^'\\]|\\.)*)': '((?:[^'\\]|\\.)*)'", block)}
+
+
+def body_table(code):
+    """English to the page language for the rest of the body: the browser copy tables, then review_langs_body.BODY, then the glossary lines."""
+    table = js_index(code)
+    table["(4 left)"] = js_strings("js/qa-review-report-copy.js", code, ("left",))["left"].replace("{n}", "4")
+    table.update({squash(en): row[code] for en, row in BODY})
+    table.update(glossary_lines(code))
+    return table
+
+
+def body_copy(s, code, table, ids_written):
+    """The rest of the body: whole elements (when they hold links or emphasis), text runs, and attributes.
+    The element that gets the text is marked lang and translate="no" unless a script rewrites it, so a later machine pass skips it."""
+    p = Spans(s)
+    p.feed(s)
+    edits, used, whole, marked = [], set(), set(), set()
+    for el, close in p.elements:
+        inner = s[el["open"]:close]
+        if "<" in inner and squash(inner) in table:
+            edits.append((el["open"], close, table[squash(inner)]))
+            whole.add(el["start"])
+            marked.add(el["start"])
+            used.add(squash(inner))
+    inside = lambda pos: any(el["open"] <= pos < close for el, close in p.elements if el["start"] in whole)
+    for pos, data, parent in p.texts:
+        key = squash(data)
+        if key in table and not inside(pos):
+            lead, trail = data[: len(data) - len(data.lstrip())], data[len(data.rstrip()):]
+            edits.append((pos, pos + len(data), lead + table[key] + trail))
+            marked.add(parent["start"])
+            used.add(key)
+    tags = {}
+    for start, end, name, value in p.attrs:
+        if squash(value) in table:
+            tag_text = tags.get(start, (end, s[start:end]))[1]
+            tags[start] = (end, tag_text.replace(f'{name}="{value}"', f'{name}="{table[squash(value)]}"', 1))
+            used.add(squash(value))
+    for el, _ in p.elements:
+        if el["start"] in marked and el["id"] not in ids_written:
+            tags[el["start"]] = (el["open"], mark(tags.get(el["start"], (0, s[el["start"]:el["open"]]))[1], code))
+    edits += [(start, end, tag_text) for start, (end, tag_text) in tags.items()]
+    missing = {squash(en) for en, _ in BODY} - used
+    if missing:
+        raise SystemExit("review_langs_body.BODY has text the page no longer holds: " + "; ".join(sorted(missing))[:400])
+    for a, b, text in sorted(edits, key=lambda e: e[0], reverse=True):
+        s = s[:a] + text + s[b:]
+    return s
 
 
 def ask_panel(s, code):
@@ -290,6 +449,9 @@ def build(source, code, data):
     s = facts(s, code)
     s = ask_panel(s, code)
     s = retag(s, '<p class="meta-line" id="compare-note">', "</p>", COMPARE_NOTE[code], code)
+    s = report_copy(s, code)
+    s = live_head(s, code, data)
+    s = body_copy(s, code, body_table(code), WRITTEN)
     s = with_live(s, code, data)
     s = swap(s, '<script src="js/qa-review-findings-copy.en.js?', f'<script src="js/qa-review-findings-copy.{code}.js?')
     s = swap(s, '<script src="js/site-i18n.js', f'<script>try{{localStorage.setItem("cv-preferred-lang","{code}")}}catch(e){{}}</script>\n<script src="js/site-i18n.js')
@@ -302,16 +464,7 @@ PAY_KEYS = ("title", "description", "testMode", "eyebrow", "headingRun", "intro"
 
 def pay_copy(code):
     """The static payment page strings for one language, read from js/qa-review-pay-copy.js."""
-    js = (ROOT / "js/qa-review-pay-copy.js").read_text(encoding="utf-8")
-    start = js.index(f"\n    {code}: {{\n")
-    end = js.index("\n    }", start)
-    out = {}
-    for key in PAY_KEYS:
-        m = re.compile(rf'\b{key}: ("(?:[^"\\]|\\.)*")').search(js, start, end)
-        if not m:
-            raise SystemExit(f"js/qa-review-pay-copy.js has no {code}.{key}")
-        out[key] = json.loads(m.group(1)).replace("{name}", "PayPal")
-    return out
+    return {key: text.replace("{name}", "PayPal") for key, text in js_strings("js/qa-review-pay-copy.js", code, PAY_KEYS).items()}
 
 
 def build_pay(source, code):
