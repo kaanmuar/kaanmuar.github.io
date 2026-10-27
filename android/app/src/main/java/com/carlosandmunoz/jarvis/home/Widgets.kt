@@ -69,7 +69,7 @@ private fun Glass(open: Intent, title: String, content: @Composable ColumnScope.
             Text(title.uppercase(), style = TextStyle(color = color(Art.CYAN), fontSize = 10.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium))
         }
         Spacer(GlanceModifier.height(6.dp))
-        content()
+        Column(GlanceModifier.fillMaxWidth().defaultWeight(), content = content)
     }
 }
 
@@ -192,7 +192,7 @@ private fun NeedsBody(saved: Pair<JsonObject, Long>?, needs: List<Home.Need>) {
     val open = Home.open(context, "products:outreach")
     if (saved == null) return SignedOut(open, "Needs you")
     val decide = needs.count { it.kind != "proposal" }
-    val fits = ((LocalSize.current.height.value - 44) / 34).toInt().coerceAtLeast(1)
+    val fits = ((LocalSize.current.height.value - 44) / 34).toInt().coerceIn(1, 9)
     Glass(open, if (decide > 0) "Needs you · $decide" else "Needs you") {
         if (needs.isEmpty()) {
             Text("Nothing waiting on you", style = TextStyle(color = color(Art.GREEN), fontSize = 14.sp, fontWeight = FontWeight.Medium))
@@ -235,7 +235,7 @@ private fun AlertsBody(saved: Pair<JsonObject, Long>?) {
     if (saved == null) return SignedOut(open, "Alerts")
     val st = Home.status(saved.first)
     val alerts = Home.alerts(saved.first)
-    val fits = ((LocalSize.current.height.value - 64) / 32).toInt().coerceAtLeast(1)
+    val fits = ((LocalSize.current.height.value - 64) / 32).toInt().coerceIn(1, 7)
     Glass(open, "Alerts") {
         Text(st.headline, style = TextStyle(color = color(if (st.alerts > 0) Art.PINK else if (st.warns > 0) Art.AMBER else Art.GREEN), fontSize = 13.sp, fontWeight = FontWeight.Bold), maxLines = 1)
         Spacer(GlanceModifier.height(2.dp))
@@ -323,6 +323,220 @@ private fun MoneyBody(saved: Pair<JsonObject, Long>?, money: Home.Money?, days: 
             Image(ImageProvider(Art.sparkline(context.px(sparkW), context.px(sparkH), money.series, Art.GREEN)), "Daily revenue, last $days days", GlanceModifier.width(sparkW).height(sparkH))
             Text("Daily revenue, last $days days", style = TextStyle(color = color(Art.DIM), fontSize = 10.sp), maxLines = 1)
         }
+    }
+}
+
+/** One label-and-value row of the list widgets, the value in its level colour. */
+@Composable
+private fun LineRow(line: Home.Line, labelWidth: Dp = 84.dp, dot: Boolean = false) =
+    Row(GlanceModifier.fillMaxWidth().height(24.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (dot) {
+            Text("●", style = TextStyle(color = color(Art.level(line.level)), fontSize = 9.sp))
+            Spacer(GlanceModifier.width(8.dp))
+            Text(line.label, style = TextStyle(color = color(Art.TEXT), fontSize = 12.sp), maxLines = 1, modifier = GlanceModifier.defaultWeight())
+            Text(line.value, style = TextStyle(color = color(Art.CYAN), fontSize = 11.sp, fontFamily = FontFamily.Monospace), maxLines = 1)
+        } else {
+            Text(line.label, style = TextStyle(color = color(Art.MUTED), fontSize = 11.sp), maxLines = 1, modifier = GlanceModifier.width(labelWidth))
+            Text(line.value, style = TextStyle(color = color(if (line.level == "info") Art.TEXT else Art.level(line.level)), fontSize = 12.sp), maxLines = 1, modifier = GlanceModifier.defaultWeight())
+        }
+    }
+
+/** Rows that fit the widget, at most nine so a trailing link still fits Glance's ten children per Column. */
+private fun fits(height: Dp, used: Int, row: Int) = ((height.value - used) / row).toInt().coerceIn(1, 9)
+
+// ---------------------------------------------------------------- Site health
+
+class HealthWidget : GlanceAppWidget() {
+    override val sizeMode = SizeMode.Exact
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val saved = Home.snapshot(context)
+        provideContent { HealthBody(saved, saved?.let { Home.health(it.first, System.currentTimeMillis()) }.orEmpty()) }
+    }
+}
+
+class HealthWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget = HealthWidget() }
+
+@Composable
+private fun HealthBody(saved: Pair<JsonObject, Long>?, lines: List<Home.Line>) {
+    val open = Home.open(LocalContext.current, "systems")
+    if (saved == null) return SignedOut(open, "Site health")
+    Glass(open, "Site health") {
+        if (lines.isEmpty()) Text("No health data in the last snapshot.", style = Muted)
+        lines.take(fits(LocalSize.current.height, 44, 24)).forEach { LineRow(it) }
+    }
+}
+
+// ---------------------------------------------------------------- Social queue
+
+class SocialWidget : GlanceAppWidget() {
+    override val sizeMode = SizeMode.Exact
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val saved = Home.snapshot(context)
+        provideContent { SocialBody(saved, saved?.let { Home.social(it.first, System.currentTimeMillis()) }) }
+    }
+}
+
+class SocialWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget = SocialWidget() }
+
+@Composable
+private fun SocialBody(saved: Pair<JsonObject, Long>?, queue: Home.Queue?) {
+    val context = LocalContext.current
+    val open = Home.open(context, "products:hub")
+    if (saved == null || queue == null) return SignedOut(open, "Social queue")
+    Glass(open, "Social · ${queue.count} queued") {
+        if (queue.rows.isEmpty()) Text("Nothing scheduled. Approve picks or share a post to fill the queue.", style = Muted, maxLines = 2)
+        queue.rows.take(fits(LocalSize.current.height, 70, 24)).forEach { LineRow(it, 76.dp) }
+        if (queue.count > 0) Row(GlanceModifier.fillMaxWidth()) {
+            Spacer(GlanceModifier.defaultWeight())
+            val post = ConfirmActivity.intent(context, Home.Need("post", "queue", "Post the queue now", Home.plural(queue.count, "scheduled post"), "info"))
+            Text("Post now ›", style = TextStyle(color = color(Art.CYAN), fontSize = 11.sp, fontFamily = FontFamily.Monospace),
+                modifier = GlanceModifier.padding(top = 4.dp, start = 12.dp, bottom = 2.dp).clickable(actionStartActivity(post)))
+        }
+    }
+}
+
+// ---------------------------------------------------------------- Next up
+
+class NextWidget : GlanceAppWidget() {
+    override val sizeMode = SizeMode.Exact
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val saved = Home.snapshot(context)
+        provideContent { NextBody(saved, saved?.let { Home.next(it.first, System.currentTimeMillis()) }.orEmpty()) }
+    }
+}
+
+class NextWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget = NextWidget() }
+
+@Composable
+private fun NextBody(saved: Pair<JsonObject, Long>?, lines: List<Home.Line>) {
+    val open = Home.open(LocalContext.current, "systems")
+    if (saved == null) return SignedOut(open, "Next up")
+    Glass(open, "Next up") {
+        if (lines.isEmpty()) Text("No scheduled runs ahead in the last snapshot.", style = Muted, maxLines = 2)
+        lines.take(fits(LocalSize.current.height, 44, 24)).forEach { LineRow(it, dot = true) }
+    }
+}
+
+// ---------------------------------------------------------------- Outreach pipeline
+
+class PipelineWidget : GlanceAppWidget() {
+    override val sizeMode = SizeMode.Exact
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val saved = Home.snapshot(context)
+        provideContent { PipelineBody(saved, saved?.let { Home.pipeline(it.first) }) }
+    }
+}
+
+class PipelineWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget = PipelineWidget() }
+
+@Composable
+private fun PipelineBody(saved: Pair<JsonObject, Long>?, funnel: Home.Funnel?) {
+    val context = LocalContext.current
+    val open = Home.open(context, "products:outreach")
+    if (saved == null || funnel == null) return SignedOut(open, "Outreach pipeline")
+    val barW = LocalSize.current.width - 28.dp
+    val top = funnel.stages.firstOrNull()?.second?.takeIf { it > 0 } ?: 1.0
+    Glass(open, "Outreach pipeline") {
+        if (funnel.stages.isEmpty()) Text("No outreach numbers in the last snapshot.", style = Muted)
+        // Glance drops a Column's children past the tenth, so each stage is one child.
+        funnel.stages.take(fits(LocalSize.current.height, if (funnel.note != null) 62 else 46, 27)).forEach { (label, value) ->
+            Column(GlanceModifier.fillMaxWidth().padding(bottom = 3.dp)) {
+                Row(GlanceModifier.fillMaxWidth()) {
+                    Text(label, style = TextStyle(color = color(Art.MUTED), fontSize = 11.sp), maxLines = 1, modifier = GlanceModifier.defaultWeight())
+                    Text(com.carlosandmunoz.jarvis.data.fmt(value, 0), style = TextStyle(color = color(Art.TEXT), fontSize = 11.sp, fontFamily = FontFamily.Monospace), maxLines = 1)
+                }
+                Image(ImageProvider(Art.glowBar(context.px(barW), context.px(8.dp), (value / top).coerceIn(0.0, 1.0), Art.CYAN)), null, GlanceModifier.width(barW).height(8.dp))
+            }
+        }
+        if (funnel.note != null) Text(funnel.note, style = TextStyle(color = color(Art.VIOLET), fontSize = 11.sp), maxLines = 1)
+    }
+}
+
+// ---------------------------------------------------------------- Traffic
+
+class TrafficWidget : GlanceAppWidget() {
+    override val sizeMode = SizeMode.Exact
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val saved = Home.snapshot(context)
+        val days = Home.days(context.applicationContext as com.carlosandmunoz.jarvis.JarvisApp)
+        provideContent { TrafficBody(saved, saved?.let { Home.traffic(it.first) }, days) }
+    }
+}
+
+class TrafficWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget = TrafficWidget() }
+
+@Composable
+private fun TrafficBody(saved: Pair<JsonObject, Long>?, t: Home.Traffic?, days: Int) {
+    val context = LocalContext.current
+    val open = Home.open(context, "traffic")
+    if (saved == null || t == null) return SignedOut(open, "Traffic")
+    val size = LocalSize.current
+    val half = (size.width - 28.dp - 12.dp) / 2
+    Glass(open, if (days == 1) "Traffic · last 24 hours" else "Traffic · last $days days") {
+        Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(GlanceModifier.width(half)) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(t.value, style = TextStyle(color = color(Art.TEXT), fontSize = 22.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+                    if (t.delta != null) {
+                        Spacer(GlanceModifier.width(6.dp))
+                        Text(t.delta, style = TextStyle(color = color(when (t.dir) { 1 -> Art.GREEN; -1 -> Art.PINK; else -> Art.MUTED }), fontSize = 11.sp), maxLines = 1)
+                    }
+                }
+                Text(t.label, style = Muted, maxLines = 1)
+            }
+            Spacer(GlanceModifier.width(12.dp))
+            if (t.series.size > 1) Image(ImageProvider(Art.sparkline(context.px(half), context.px(36.dp), t.series)), "Daily ${t.label.lowercase()}", GlanceModifier.width(half).height(36.dp))
+        }
+        if (size.height > 150.dp) {
+            Spacer(GlanceModifier.height(6.dp))
+            Row(GlanceModifier.fillMaxWidth()) {
+                listOf("Countries" to t.countries, "Sources" to t.sources).filter { it.second.isNotEmpty() }.forEachIndexed { i, (title, rows) ->
+                    if (i > 0) Spacer(GlanceModifier.width(12.dp))
+                    Column(GlanceModifier.width(half)) {
+                        Text(title.uppercase(), style = TextStyle(color = color(Art.DIM), fontSize = 9.sp, fontFamily = FontFamily.Monospace), maxLines = 1)
+                        rows.forEach { (label, value) ->
+                            Row(GlanceModifier.fillMaxWidth()) {
+                                Text(label, style = TextStyle(color = color(Art.TEXT), fontSize = 11.sp), maxLines = 1, modifier = GlanceModifier.defaultWeight())
+                                Text(value, style = TextStyle(color = color(Art.MUTED), fontSize = 11.sp, fontFamily = FontFamily.Monospace), maxLines = 1)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------- Pick a number
+
+class PickWidget : GlanceAppWidget() {
+    override val sizeMode = SizeMode.Exact
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val app = context.applicationContext as com.carlosandmunoz.jarvis.JarvisApp
+        val key = app.vault.get("pick." + androidx.glance.appwidget.GlanceAppWidgetManager(context).getAppWidgetId(id)) ?: "revenue"
+        val saved = Home.snapshot(context)
+        val pick = saved?.let {
+            val needs = Home.waiting(context, it.first).let { (n, p) -> Home.needs(it.first, n, p).count { x -> x.kind != "proposal" } }
+            Home.pick(key, it.first, Home.day(context, it.first).first, needs, Home.days(app))
+        }
+        provideContent { PickBody(pick) }
+    }
+}
+
+class PickWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget = PickWidget() }
+
+@Composable
+private fun PickBody(pick: Home.Pick?) {
+    val context = LocalContext.current
+    val small = LocalSize.current.width < 140.dp
+    Column(
+        GlanceModifier.fillMaxSize().cornerRadius(20.dp).background(ImageProvider(R.drawable.widget_glass)).padding(10.dp)
+            .clickable(actionStartActivity(Home.open(context, pick?.tab ?: "overview"))),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text((pick?.label ?: "Jarvis").uppercase(), style = TextStyle(color = color(Art.CYAN), fontSize = 9.sp, fontFamily = FontFamily.Monospace), maxLines = 1)
+        Text(pick?.value ?: "—", style = TextStyle(color = color(Art.TEXT), fontSize = if (small) 24.sp else 30.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+        Text(pick?.sub ?: "Sign in to Jarvis", style = TextStyle(color = color(if (pick == null || pick.level == "info") Art.MUTED else Art.level(pick.level)), fontSize = 10.sp), maxLines = 1)
     }
 }
 

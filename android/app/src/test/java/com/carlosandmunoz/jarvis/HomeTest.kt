@@ -67,6 +67,67 @@ class HomeTest {
         assertTrue(m.flags.isEmpty())
     }
 
+    private val now = java.time.Instant.parse("2026-10-26T20:00:00Z").toEpochMilli()
+
+    @Test fun healthListsUptimeSpeedCiDeployAndTls() {
+        val h = Home.health(json("""{"external":{
+            "uptime":{"pages":[{"name":"CV","ok":true,"ms":300},{"name":"Lab","ok":false,"ms":500}],"tlsDaysLeft":9},
+            "speed":{"pages":[{"name":"CV","score":97},{"name":"Lab","score":0.62}]},
+            "github":{"ci":[{"name":"E2E and Visual Tests","conclusion":"failure","at":"2026-10-26T19:00:00Z"},{"name":"pages build and deployment","conclusion":"success","at":"2026-10-26T18:00:00Z"}]}}}"""), now)
+        assertEquals(listOf("Uptime", "Speed", "CI on main", "Last deploy", "TLS"), h.map { it.label })
+        assertEquals("1/2 up · 400 ms", h[0].value)
+        assertEquals("alert", h[0].level)
+        assertEquals("avg 80 · lowest Lab 62", h[1].value)
+        assertEquals("warn", h[1].level)
+        assertEquals("1 failing: E2E and Visual Tests", h[2].value)
+        assertEquals("2 h ago", h[3].value)
+        assertEquals("warn", h[4].level)
+    }
+
+    @Test fun socialQueueIsSoonestFirst() {
+        val q = Home.social(json("""{"external":{"social":{"ok":true,"scheduled":{"count":5},"queue":[
+            {"name":"Bluesky","next":[{"at":"2026-10-26T23:00:00Z","post":"HSTS tip"}]},{"name":"LinkedIn","next":[{"at":"2026-10-26T20:35:00Z","post":"CWV tip"}]},{"name":"Empty","next":[]}]}}}"""), now)
+        assertEquals(5, q.count)
+        assertEquals(listOf("LinkedIn", "Bluesky"), q.rows.map { it.label })
+        assertEquals("in 35 min · CWV tip", q.rows[0].value)
+    }
+
+    @Test fun nextUpSkipsPastRunsAndFlagsFailures() {
+        val n = Home.next(json("""{"external":{"jobs":{"jobs":[{"name":"sweepReviews","nextRun":"2026-10-26T21:00:00Z","ok":false},
+            {"name":"dailyBriefing","nextRun":"2026-10-26T10:00:00Z","ok":true},{"name":"probe-failures","nextRun":"2026-10-26T20:20:00Z","ok":true}]},
+            "social":{"scheduled":{"next":"2026-10-26T20:50:00Z"}}}}"""), now)
+        assertEquals(listOf("Probe failures", "Next social post", "Sweep reviews"), n.map { it.label })
+        assertEquals("alert", n[2].level)
+        assertEquals("in 1 h", n[2].value)
+    }
+
+    @Test fun pipelineKeepsStagesWithNumbers() {
+        val f = Home.pipeline(json("""{"external":{"outreach":{"ok":true,"pipeline":{"reviews":120},"instantly":{"sent":80,"opened":40,"replies":9},"plan":{"next":{"label":"first 50 emails","daysLeft":3}}}}}"""))
+        assertEquals(listOf("Reviewed" to 120.0, "Contacted" to 80.0, "Opened" to 40.0, "Replied" to 9.0), f.stages)
+        assertEquals("Next: first 50 emails in 3 days", f.note)
+    }
+
+    @Test fun trafficUsesAnalyticsThenCloudflare() {
+        val ga = Home.traffic(json("""{"external":{"ga4":{"ok":true,"groups":[{"sessions":1200,"priorSessions":1000},{"sessions":110,"priorSessions":100}],
+            "countries":[{"label":"Spain","value":20},{"label":"US","value":300},{"label":"Mexico","value":90},{"label":"Peru","value":5}],"daily":[{"sessions":1},{"sessions":2}]}}}"""))
+        assertEquals("1,310", ga.value)
+        assertEquals(1, ga.dir)
+        assertEquals(listOf("US", "Mexico", "Spain"), ga.countries.map { it.first })
+        val cf = Home.traffic(json("""{"external":{"ga4":{"ok":false},"cloudflare":{"ok":true,"uniques":900}}}"""))
+        assertEquals("Visitors", cf.label)
+        assertEquals("900", cf.value)
+    }
+
+    @Test fun pickFallsBackToRevenue() {
+        val snap = json("""{"readiness":92,"briefing":[{"level":"alert","text":"x"}]}""")
+        val day = json("""{"external":{"money":{"ok":true,"revenue":{"usd":184.4,"count":3}}}}""")
+        assertEquals("$184", Home.pick("nonsense", snap, day, 0, 7).value)
+        assertEquals("3", Home.pick("sales", snap, day, 0, 7).value)
+        assertEquals("92%", Home.pick("readiness", snap, day, 0, 7).value)
+        assertEquals("alert", Home.pick("readiness", snap, day, 0, 7).level)
+        assertEquals("products:outreach", Home.pick("needs", snap, day, 2, 7).tab)
+    }
+
     @Test fun nothingWaitingWhenTheListsAreMissing() {
         assertTrue(Home.needs(json("{}"), null, null).isEmpty())
     }
