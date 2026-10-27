@@ -5,73 +5,73 @@
                 skills: {
                     pm: [
                         { name: 'Agile', stars: 5, years: '10+ Yrs', icon: 'assets/icons/agile.svg' },
-                        { name: 'Kanban', stars: 5, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/trello/0079BF' },
-                        { name: 'Scrum', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/jira/0052CC' },
+                        { name: 'Kanban', stars: 5, years: '8+ Yrs', icon: 'assets/icons/skills/trello.svg' },
+                        { name: 'Scrum', stars: 5, years: '10+ Yrs', icon: 'assets/icons/skills/jira.svg' },
                         { name: 'Strategic Planning', years: '10+ Yrs', stars: 5, icon: 'assets/icons/strategy.svg' },
                         { name: 'Risk Management', years: '10+ Yrs', stars: 5, icon: 'assets/icons/risk.svg' },
                         { name: 'Stakeholder Mgmt', years: '10+ Yrs', stars: 5, icon: 'assets/icons/stakeholders.svg' },
-                        { name: 'Jira', stars: 5, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/jira/0052CC' },
-                        { name: 'TestRail', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/testrail/78C644' },
+                        { name: 'Jira', stars: 5, years: '15+ Yrs', icon: 'assets/icons/skills/jira.svg' },
+                        { name: 'TestRail', stars: 4, years: '15+ Yrs', icon: 'assets/icons/skills/testrail.svg' },
                         { name: 'Testlio', stars: 3, years: '5+ Yrs', icon: 'assets/icons/mobile.svg' },
                         { name: 'MS Project', stars: 4, years: '10+ Yrs', icon: 'assets/icons/calendar.svg' },
                         { name: 'CMMI', stars: 3, years: '15+ Yrs', icon: 'assets/icons/process.svg' },
                         { name: 'ISO Standards', stars: 4, years: '15+ Yrs', icon: 'assets/icons/standards.svg' }
                     ],
                     qa: [
-                        { name: 'Selenium', stars: 5, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/selenium/43B02A' },
-                        { name: 'Cypress', stars: 5, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/cypress/17202C' },
+                        { name: 'Selenium', stars: 5, years: '6+ Yrs', icon: 'assets/icons/skills/selenium.svg' },
+                        { name: 'Cypress', stars: 5, years: '6+ Yrs', icon: 'assets/icons/skills/cypress.svg' },
                         { name: 'Playwright', stars: 4, years: '6+ Yrs', icon: 'assets/icons/playwright.svg' },
-                        { name: 'WebdriverIO', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/webdriverio/EA5906' },
-                        { name: 'Protractor', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/protractor/E23237' },
-                        { name: 'Appium', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/appium/F15367' },
-                        { name: 'Expresso', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/android/3DDC84' },
-                        { name: 'Robot Framework', years: '6+ Yrs', stars: 4, icon: 'https://cdn.simpleicons.org/robotframework/000000' },
-                        { name: 'Cucumber', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/cucumber/23D96C' },
+                        { name: 'WebdriverIO', stars: 4, years: '5+ Yrs', icon: 'assets/icons/skills/webdriverio.svg' },
+                        { name: 'Protractor', stars: 3, years: '4+ Yrs', icon: 'assets/icons/skills/protractor.svg' },
+                        { name: 'Appium', stars: 4, years: '6+ Yrs', icon: 'assets/icons/skills/appium.svg' },
+                        { name: 'Expresso', stars: 3, years: '3+ Yrs', icon: 'assets/icons/skills/android.svg' },
+                        { name: 'Robot Framework', years: '6+ Yrs', stars: 4, icon: 'assets/icons/skills/robotframework.svg' },
+                        { name: 'Cucumber', stars: 4, years: '6+ Yrs', icon: 'assets/icons/skills/cucumber.svg' },
                         { name: 'Gauge', stars: 3, years: '3+ Yrs', icon: 'assets/icons/gauge.svg' },
                         { name: 'Karate DSL', stars: 4, years: '4+ Yrs', icon: 'assets/icons/karate.svg' },
-                        { name: 'JMeter', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/apachejmeter/D22128' },
+                        { name: 'JMeter', stars: 4, years: '8+ Yrs', icon: 'assets/icons/skills/apachejmeter.svg' },
                         { name: 'Katalon', stars: 4, years: '6+ Yrs', icon: 'assets/icons/puzzle.svg' }
                     ],
                     lang: [
-                        { name: 'Python', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/python/3776AB' },
-                        { name: 'Java', stars: 5, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/openjdk/437291' },
-                        { name: 'JavaScript', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/javascript/F7DF1E' },
-                        { name: 'TypeScript', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/typescript/3178C6' },
-                        { name: 'Ruby on Rails', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/rubyonrails/CC0000' },
+                        { name: 'Python', stars: 5, years: '10+ Yrs', icon: 'assets/icons/skills/python.svg' },
+                        { name: 'Java', stars: 5, years: '15+ Yrs', icon: 'assets/icons/skills/openjdk.svg' },
+                        { name: 'JavaScript', stars: 5, years: '10+ Yrs', icon: 'assets/icons/skills/javascript.svg' },
+                        { name: 'TypeScript', stars: 4, years: '4+ Yrs', icon: 'assets/icons/skills/typescript.svg' },
+                        { name: 'Ruby on Rails', stars: 3, years: '4+ Yrs', icon: 'assets/icons/skills/rubyonrails.svg' },
                         { name: 'TestNG', stars: 5, years: '10+ Yrs', icon: 'assets/icons/testing.svg' },
-                        { name: 'Jasmin', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/jasmine/8A4182' },
-                        { name: 'Jest', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/jest/C21325' },
-                        { name: 'Mocha', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/mocha/8D6748' },
-                        { name: 'Chai', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/chai/A30707' },
-                        { name: 'Watir', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/ruby/CC342D' },
+                        { name: 'Jasmin', stars: 4, years: '5+ Yrs', icon: 'assets/icons/skills/jasmine.svg' },
+                        { name: 'Jest', stars: 4, years: '4+ Yrs', icon: 'assets/icons/skills/jest.svg' },
+                        { name: 'Mocha', stars: 4, years: '5+ Yrs', icon: 'assets/icons/skills/mocha.svg' },
+                        { name: 'Chai', stars: 4, years: '5+ Yrs', icon: 'assets/icons/skills/chai.svg' },
+                        { name: 'Watir', stars: 3, years: '3+ Yrs', icon: 'assets/icons/skills/ruby.svg' },
                         { name: 'Watin', stars: 3, years: '3+ Yrs', icon: 'assets/icons/csharp.svg' }
                     ],
                     cloud: [
                         { name: 'AWS', stars: 5, years: '8+ Yrs', icon: 'assets/icons/amazonaws.svg' },
                         { name: 'Azure DevOps', stars: 4, years: '5+ Yrs', icon: 'assets/icons/azuredevops.svg' },
-                        { name: 'GCP', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/googlecloud/4285F4' },
-                        { name: 'Jenkins', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/jenkins/D24939' },
-                        { name: 'Docker', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/docker/2496ED' },
-                        { name: 'GitHub', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/github/181717' },
+                        { name: 'GCP', stars: 4, years: '4+ Yrs', icon: 'assets/icons/skills/googlecloud.svg' },
+                        { name: 'Jenkins', stars: 5, years: '10+ Yrs', icon: 'assets/icons/skills/jenkins.svg' },
+                        { name: 'Docker', stars: 4, years: '6+ Yrs', icon: 'assets/icons/skills/docker.svg' },
+                        { name: 'GitHub', stars: 5, years: '10+ Yrs', icon: 'assets/icons/skills/github.svg' },
                     ],
                     analytics: [
-                        { name: 'Datadog', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/datadog/632CA6' },
-                        { name: 'Grafana', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/grafana/F46800' },
-                        { name: 'New Relic', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/newrelic/14B78D' },
-                        { name: 'Splunk', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/splunk/000000' },
-                        { name: 'Owasp', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/owasp/000000' },
+                        { name: 'Datadog', stars: 4, years: '4+ Yrs', icon: 'assets/icons/skills/datadog.svg' },
+                        { name: 'Grafana', stars: 4, years: '5+ Yrs', icon: 'assets/icons/skills/grafana.svg' },
+                        { name: 'New Relic', stars: 4, years: '4+ Yrs', icon: 'assets/icons/skills/newrelic.svg' },
+                        { name: 'Splunk', stars: 3, years: '3+ Yrs', icon: 'assets/icons/skills/splunk.svg' },
+                        { name: 'Owasp', stars: 4, years: '8+ Yrs', icon: 'assets/icons/skills/owasp.svg' },
                         { name: 'W3C', stars: 5, years: '10+ Yrs', icon: 'assets/icons/globe.svg' }
                     ],
                     platform: [
                         { name: 'Salesforce', stars: 4, years: '6+ Yrs', icon: 'assets/icons/salesforce.svg' },
                         { name: 'MS Dynamics', stars: 3, years: '4+ Yrs', icon: 'assets/icons/building.svg' },
-                        { name: 'SAP', stars: 3, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/sap/008FD3' },
-                        { name: 'Zoho CRM', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/zoho/E42525' }
+                        { name: 'SAP', stars: 3, years: '5+ Yrs', icon: 'assets/icons/skills/sap.svg' },
+                        { name: 'Zoho CRM', stars: 3, years: '3+ Yrs', icon: 'assets/icons/skills/zoho.svg' }
                     ],
                     system: [
                         { name: 'Middleware', stars: 4, years: '8+ Yrs', icon: 'assets/icons/api.svg'},
                         { name: 'Toad', stars: 4, years: '10+ Yrs', icon: 'assets/icons/database.svg'},
-                        { name: 'Eclipse', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/eclipseide/2C2255'},
+                        { name: 'Eclipse', stars: 4, years: '10+ Yrs', icon: 'assets/icons/skills/eclipseide.svg'},
                         { name: 'Cygwin', stars: 3, years: '10+ Yrs', icon: 'assets/icons/terminal.svg'}
                     ],
                     ai: [
@@ -570,7 +570,7 @@
                         techUsed: ['Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
                     },
                     {
-                        title: 'Business Tender Specialist - LATAM', company: 'Intel Corporation', logo: 'https://cdn.simpleicons.org/intel/0071C5', dates: 'Mar 2011 - Dec 2011',
+                        title: 'Business Tender Specialist - LATAM', company: 'Intel Corporation', logo: 'assets/icons/skills/intel.svg', dates: 'Mar 2011 - Dec 2011',
                         details: {
                             en: [
                                 'Provided technical assessment and advice to government, B2B, and corporate customers on Intel product acquisitions.',
@@ -666,7 +666,7 @@
                         techUsed: ['Strategic Planning', 'Agile', 'Kanban', 'Scrum', 'Jira']
                     },
                     {
-                        title: 'Partner Product Manager - NOLA', company: 'McAfee', logo: 'https://cdn.simpleicons.org/mcafee/C01818', dates: 'Nov 2009 - Aug 2010',
+                        title: 'Partner Product Manager - NOLA', company: 'McAfee', logo: 'assets/icons/skills/mcafee.svg', dates: 'Nov 2009 - Aug 2010',
                         details: {
                             en: [
                                 'Served as both a Business Development Manager and a technical implementation leader for the North of Latin America region.',

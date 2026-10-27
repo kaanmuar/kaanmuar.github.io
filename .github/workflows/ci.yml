@@ -94,8 +94,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The catalog repeats the 86 checks the playwright job runs and takes about 20 minutes, so pull requests skip it.
-        group: ${{ fromJSON(github.event_name == 'pull_request' && '["cv","competency","lab"]' || '["catalog","cv","competency","lab"]') }}
+        group: [catalog, cv, competency, lab]
     env:
       CYPRESS_SPECS: >-
         {"catalog": "cypress/e2e/catalog_spec.cy.js",
