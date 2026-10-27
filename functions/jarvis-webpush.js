@@ -10,7 +10,9 @@ const crypto = require("crypto");
 const SIGN_DAYS = 7;
 const MAX_ACTIONS = 2;
 const DEAD = new Set([404, 410]);
-const URGENCY = { alerts: "high", money: "high", inbox: "high" };
+const URGENCY = { alerts: "high", money: "high", inbox: "high", codes: "high" };
+// A sign-in code is dead within minutes, so a browser that was offline longer never shows it.
+const TTL_S = { codes: 15 * 60 };
 const SUBJECT = "mailto:qa@carlosandmunoz.com";
 
 const keyRef = (db) => db.collection("jarvis_private").doc("webpush");
@@ -57,7 +59,7 @@ async function sendWeb(webpush, db, devices, msg, now) {
   if (!devices.length) return { sent: 0, failed: 0, removed: 0 };
   const k = await keys(db, webpush);
   const body = payload(msg, k.signKey, now);
-  const options = { vapidDetails: { subject: SUBJECT, publicKey: k.publicKey, privateKey: k.privateKey }, TTL: 12 * 3600, urgency: msg.quiet ? "low" : URGENCY[msg.kind] || "normal" };
+  const options = { vapidDetails: { subject: SUBJECT, publicKey: k.publicKey, privateKey: k.privateKey }, TTL: TTL_S[msg.kind] || 12 * 3600, urgency: msg.quiet ? "low" : URGENCY[msg.kind] || "normal" };
   let sent = 0, failed = 0, removed = 0;
   await Promise.all(devices.map(async (d) => {
     try {

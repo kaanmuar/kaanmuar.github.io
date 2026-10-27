@@ -11,9 +11,9 @@ const webPush = require("./jarvis-webpush");
 // Kinds that only make sense on the phone: app updates and reviews started from a shared link.
 const PHONE_ONLY = new Set(["update", "review"]);
 
-const KINDS = ["alerts", "briefing", "money", "reviews", "outreach", "inbox", "desk", "social"];
+const KINDS = ["alerts", "briefing", "money", "reviews", "outreach", "inbox", "desk", "social", "codes"];
 const DEAD = new Set(["messaging/registration-token-not-registered", "messaging/invalid-registration-token", "messaging/invalid-argument"]);
-const TTL = { alerts: 6 * 3600 * 1000, briefing: 12 * 3600 * 1000, review: 24 * 3600 * 1000, money: 24 * 3600 * 1000, reviews: 24 * 3600 * 1000, outreach: 12 * 3600 * 1000, inbox: 24 * 3600 * 1000, desk: 12 * 3600 * 1000, social: 24 * 3600 * 1000, update: 24 * 3600 * 1000, test: 3600 * 1000 };
+const TTL = { alerts: 6 * 3600 * 1000, briefing: 12 * 3600 * 1000, review: 24 * 3600 * 1000, money: 24 * 3600 * 1000, reviews: 24 * 3600 * 1000, outreach: 12 * 3600 * 1000, inbox: 24 * 3600 * 1000, desk: 12 * 3600 * 1000, social: 24 * 3600 * 1000, codes: 15 * 60 * 1000, update: 24 * 3600 * 1000, test: 3600 * 1000 };
 
 const devices = (db) => db.collection("jarvis_devices");
 const idOf = (token) => crypto.createHash("sha256").update(String(token)).digest("hex").slice(0, 40);
@@ -132,6 +132,7 @@ async function sendPhones(messaging, db, tokens, msg) {
   const data = { kind: msg.kind, title: msg.title, body: msg.body, lines: JSON.stringify(msg.lines || []), tab: msg.tab || "overview", tag: msg.tag || msg.kind };
   if (msg.url) data.url = msg.url;
   if (msg.ref) data.ref = msg.ref;
+  if (msg.code) data.code = msg.code;
   if (msg.quiet) data.quiet = "1";
   if (msg.actions && msg.actions.length) data.actions = JSON.stringify(msg.actions.slice(0, 3));
   const res = await messaging.sendEachForMulticast({ tokens, data, android: { priority: msg.quiet ? "normal" : "high", ttl: TTL[msg.kind] || TTL.test } });
