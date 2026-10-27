@@ -655,6 +655,13 @@
                 if (active && cold.length) add('warn', 'outreach', `Campaigns are sending while ${plural(cold.length, 'mailbox has', 'mailboxes have')} a warm-up score under ${th.outreachWarmup}.`, 'outreach:warmup');
             }
             if (ou.mail && ou.mail.checks) ou.mail.checks.filter((c) => !c.ok).forEach((c) => add('warn', 'outreach', `${ou.mail.domain} ${c.name}: ${c.detail}`, 'outreach:dns:' + c.name));
+            const links = ou.links && ou.links.ok ? ou.links : null;
+            if (links) {
+                const sending = mail && (mail.status || []).some((s) => s.label === 'active' && s.value > 0);
+                if (!links.live) add(sending ? 'alert' : 'warn', 'outreach', `qalabreview.com short links are not live (robots.txt answered ${links.workerStatus || 'nothing'}); emails${sending ? '' : ' about to go out'} link to them. Deploy the Worker in qalabreview/.`, 'outreach:links-down');
+                if (links.paid > 0) add('info', 'outreach', `${plural(links.paid, 'paid unlock', 'paid unlocks')} (${links.usd} USD) came from qalabreview.com links.`, 'outreach:links-paid');
+                else if (links.visits > 0) add('info', 'outreach', `${plural(links.visits, 'visit', 'visits')} and ${plural(links.reviews, 'free review', 'free reviews')} came from qalabreview.com links.`, 'outreach:links-visits');
+            }
         }
         const waiting = CONNECTIONS.reduce((n, c) => n + (((ext[c.key] || {}).needs) || []).length, 0);
         if (waiting) add('info', 'systems', `${plural(waiting, 'connection waits', 'connections wait')} for a one-time grant; see Systems > Connections.`, 'connections:needs');
@@ -675,6 +682,7 @@
         { prefix: 'money:disputes', impact: 5, title: 'Answer the open PayPal disputes before PayPal decides them', link: 'https://www.paypal.com/resolutioncenter' },
         { prefix: 'email:blocklist', impact: 5, title: 'Get the sending IP off the blocklist', link: 'https://app.sendgrid.com/' },
         { prefix: 'outreach:bounce', impact: 5, title: 'Pause outreach and clean the prospect list', tab: 'outreach' },
+        { prefix: 'outreach:links-down', impact: 5, title: 'Deploy the qalabreview.com short-link Worker', tab: 'outreach' },
         { prefix: 'email:spam', impact: 4, title: 'Find which emails were reported as spam and fix the list or the copy', link: 'https://app.sendgrid.com/' },
         { prefix: 'safety:', impact: 4, group: true, title: (n) => `Fix ${n === 1 ? 'the failing safety check' : n + ' failing safety checks'}`, tab: 'systems' },
         { prefix: 'job:', impact: 4, group: true, title: (n) => `Fix ${n === 1 ? 'the failing job' : n + ' failing jobs'}`, tab: 'systems' },

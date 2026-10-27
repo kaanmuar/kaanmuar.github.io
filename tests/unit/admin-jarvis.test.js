@@ -807,6 +807,41 @@ test("outreach briefing: close deadlines, bounces, replies, cold mailboxes and D
   assert.equal(byKey["outreach:dns:SPF"], undefined);
 });
 
+test("qalabreview.com links: visits, reviews and payments per prospect, paid credited through the review it unlocked", () => {
+  const ctx = { now: NOW.getTime(), days: 7 };
+  const at = (h) => new Date(NOW.getTime() - h * 3600 * 1000).toISOString();
+  const q = (campaign, host) => "?utm_source=qalabreview&utm_campaign=" + campaign + (host ? "&utm_content=" + host : "") + "&utm_medium=email";
+  const opens = [
+    { query: q("outreach", "upb.edu.co"), createdAt: at(2) }, { query: q("outreach", "upb.edu.co"), createdAt: at(30) },
+    { query: q("qr"), createdAt: at(5) }, { query: "?utm_source=outreach", createdAt: at(1) }, { query: q("outreach", "old.edu"), createdAt: at(24 * 9) }
+  ];
+  const reviews = [
+    { id: "r1", query: q("outreach", "upb.edu.co"), email: "a@upb.edu.co", status: "complete", createdAt: at(2) },
+    { id: "p1", status: "paid-report", paid: true, reportId: "r1", email: "a@upb.edu.co", priceUsd: 12, createdAt: at(1) },
+    { id: "p2", status: "paid-report", paid: true, refunded: true, reportId: "r1", priceUsd: 12, createdAt: at(1) },
+    { id: "r2", query: q("outreach-new", "acme.io"), status: "complete", test: true, createdAt: at(3) },
+    { id: "p3", status: "paid-report", paid: true, reportId: "elsewhere", priceUsd: 9, createdAt: at(1) }
+  ];
+  const x = outreachSrc.linkRows(opens, reviews, ctx);
+  assert.deepEqual([x.visits, x.reviews, x.paid, x.usd], [3, 1, 1, 12]);
+  assert.deepEqual(x.byCampaign, [{ label: "outreach", value: 2 }, { label: "qr", value: 1 }]);
+  assert.deepEqual(x.prospects, [{ host: "upb.edu.co", visits: 2, reviews: 1, paid: 1, usd: 12, last: at(2) }]);
+  assert.equal(x.reviewRate, 33.3);
+  assert.equal(outreachSrc.linkTags("?utm_source=youtube"), null);
+});
+
+test("qalabreview.com briefing: a dead Worker alerts once campaigns send, and link revenue is reported", () => {
+  const th = core.thresholds();
+  const brief = (links, active) => Object.fromEntries(core.briefing({ thresholds: th, now: NOW, products: {}, external: { outreach: { ok: true, needs: [], links: Object.assign({ ok: true }, links),
+    instantly: { ok: true, sent: 0, replies: 0, interested: 0, rates: {}, accounts: [], status: [{ label: active ? "active" : "draft", value: 1 }] } } } })
+    .filter((i) => i.product === "outreach").map((i) => [i.key, i.level]));
+  assert.equal(brief({ live: false, workerStatus: 301, visits: 0, paid: 0 }, false)["outreach:links-down"], "warn");
+  assert.equal(brief({ live: false, workerStatus: 301, visits: 0, paid: 0 }, true)["outreach:links-down"], "alert");
+  const ok = brief({ live: true, visits: 4, reviews: 1, paid: 1, usd: 12 }, true);
+  assert.equal(ok["outreach:links-down"], undefined);
+  assert.equal(ok["outreach:links-paid"], "info");
+});
+
 const parity = require("../../scripts/check-jarvis-parity.js");
 
 test("parity: a web Jarvis change needs an android/ change or 'no app change' in the PR body", () => {
