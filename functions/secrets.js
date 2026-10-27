@@ -11,8 +11,8 @@ const SCAN = ["BROWSER_KEY", "PAGESPEED_KEY", "CRUX_KEY", "WEBRISK_KEY", "BRAVE_
 const SITE_TOKEN = ["REVIEW_VERIFY_KEY"];
 const PAY = ["STRIPE_SECRET_KEY", "PAYPAL_CLIENT_SECRET", "PAYPAL_SANDBOX_CLIENT_SECRET"];
 const GEMINI = ["GEMINI_API_KEY"];
-// jarvisExternal and the jarvis-sources table: GitHub, speed, money, social, safety, search and outreach.
-const JARVIS_SOURCES = [...GITHUB, "PAGESPEED_KEY", "CRUX_KEY", "WEBRISK_KEY", "BRAVE_SEARCH_KEY", "YOUTUBE_KEY", "INSTANTLY_API_KEY", ...PAY];
+// jarvisExternal and the jarvis-sources table: GitHub, speed, money, social, safety, search, outreach and mailbox.
+const JARVIS_SOURCES = [...GITHUB, "PAGESPEED_KEY", "CRUX_KEY", "WEBRISK_KEY", "BRAVE_SEARCH_KEY", "YOUTUBE_KEY", "INSTANTLY_API_KEY", "IMPROVMX_API_KEY", ...PAY];
 const CLOUDFLARE = ["CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ANALYTICS_TOKEN"];
 
 const list = (...groups) => [...new Set(groups.flat())];
@@ -37,6 +37,8 @@ const BY_FUNCTION = {
   // The key in the webhook URL each ImprovMX alias posts to (functions/mail-inbound.js); an owner reply to qa@
   // mails the operator like ownerReplies does (#1899).
   mailInbound: list(MAIL, ["MAIL_WEBHOOK_KEY"]),
+  // The daily canary mails canary@ through SendGrid (functions/mail-health.js, #1900).
+  mailCanary: list(MAIL),
   jarvis: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE)
 };
 

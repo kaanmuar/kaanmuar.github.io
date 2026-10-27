@@ -343,7 +343,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -405,6 +405,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                 ga4: e.ga4 && e.ga4.groups, cloudflare: e.cloudflare && e.cloudflare.ok ? { requests: e.cloudflare.requests, threats: e.cloudflare.threats, cacheRatio: e.cloudflare.cacheRatio, statuses: e.cloudflare.statuses, paths: (e.cloudflare.paths || []).slice(0, 8) } : null,
                 money: e.money && e.money.ok ? { revenue: e.money.revenue, prior: e.money.prior, refundsUsd: e.money.refundsUsd, disputesOpen: e.money.paypal && e.money.paypal.disputesOpen } : null,
                 email: e.email && e.email.ok ? { totals: e.email.totals, rates: e.email.rates } : null,
+                mailbox: e.mailbox && e.mailbox.ok ? { totals: e.mailbox.totals, smtp: e.mailbox.smtp, canary: e.mailbox.canary && e.mailbox.canary.state, problems: (e.mailbox.problems || []).slice(0, 5).map((m) => `${m.alias}@ ${m.outcome}: ${m.reason}`) } : null,
                 search: e.search && e.search.ok ? { brave: e.search.brave && e.search.brave.queries, console: e.search.console && e.search.console.ok ? { clicks: e.search.console.clicks, impressions: e.search.console.impressions, position: e.search.console.position, queries: (e.search.console.queries || []).slice(0, 8) } : null } : null,
                 social: e.social && e.social.ok ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views } : null,
                 safety: e.safety && e.safety.ok ? e.safety.checks.map((c) => `${c.level}: ${c.name} ${c.detail}`) : null,
@@ -587,6 +588,36 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ['Subject', (r) => esc(r.subject)],
             ['Received', (r) => `<span class="jv-nowrap">${esc(when(r.at))}</span>`]
         ], rows) : '<p class="jv-empty">No codes in the last day.</p>', { wide: true, note: 'Mail to qa@ and the channel addresses reaches Jarvis through the ImprovMX webhook; Gmail keeps a copy.' });
+    }
+
+    const CANARY_TEXT = {
+        ok: (c) => `came back in ${fmt(c.seconds)} s`, waiting: () => 'sent, waiting for it to come back', lost: () => 'did not come back within 30 minutes',
+        stale: () => 'has not run in over a day', never: () => 'has not run yet'
+    };
+
+    function mailboxPanel() {
+        const b = S.external.mailbox;
+        if (!b || !b.ok) return panel('systems-mailbox', 'Mail forwarding (ImprovMX)', waiting('mailbox', 'Asking ImprovMX…'), { wide: true });
+        const t = b.totals || {};
+        const smtp = b.smtp || {};
+        const c = b.canary || { state: 'never' };
+        const canary = `<p class="jv-note">Daily round trip to canary@: <span class="jv-chip ${c.state === 'ok' ? 'c-fast' : c.state === 'waiting' ? '' : 'c-slow'}">${esc(c.state)}</span> ${esc((CANARY_TEXT[c.state] || CANARY_TEXT.never)(c))}${c.sentAt ? ', sent ' + esc(when(c.sentAt)) : ''}.${(c.history || []).length ? ` Last ${c.history.length}: ${c.history.map((h) => h.seconds === null ? '✗' : '✓').join('')}` : ''}</p>`;
+        return panel('systems-mailbox', `Mail forwarding (ImprovMX), last ${b.days === 1 ? 'day' : b.days + ' days'}`, kpis([
+            { label: 'Mails in', value: t.mails || 0 }, { label: 'Forwarded', value: t.forwarded || 0 },
+            { label: 'Bounced', value: t.bounced || 0, alert: t.bounced > 0 }, { label: 'Refused (aliases)', value: t.refused || 0, alert: t.refused > 0 },
+            { label: 'Refused (no such address)', value: t.unknown || 0 },
+            { label: 'SMTP sends this month', value: smtp.monthLimit ? `${fmt(smtp.month)} / ${fmt(smtp.monthLimit)}` : smtp.month || 0, alert: smtp.monthLimit && smtp.month >= smtp.monthLimit * 0.8 }
+        ]) + canary + table([
+            ['Alias', (r) => esc(r.alias + '@')], ['Mails', (r) => fmt(r.mails)], ['Forwarded', (r) => fmt(r.forwarded)],
+            ['Bounced', (r) => r.bounced ? `<span class="jv-chip c-slow">${fmt(r.bounced)}</span>` : '0'], ['Refused', (r) => r.refused ? `<span class="jv-chip c-slow">${fmt(r.refused)}</span>` : '0'],
+            ['Last', (r) => `<span class="jv-nowrap">${esc(when(r.last))}</span>`]
+        ], b.aliases, 'No mail to the aliases in range.') + ((b.problems || []).length ? table([
+            ['When', (r) => `<span class="jv-nowrap">${esc(when(r.at))}</span>`], ['To', (r) => esc(r.alias + '@' + (r.to.length ? ' → ' + r.to.join(', ') : ''))],
+            ['What', (r) => `<span class="jv-chip c-slow">${esc(r.outcome)}</span>`], ['From', (r) => esc(r.from)], ['Reason', (r) => esc((r.code ? r.code + ' ' : '') + r.reason)]
+        ], b.problems) : ''), {
+            wide: true, data: b.aliases,
+            note: `${b.aliasCount} aliases. Mail refused to addresses that are not aliases is expected: there is no catch-all. SMTP sends today: ${fmt(smtp.today || 0)}${smtp.dayLimit ? ' of ' + fmt(smtp.dayLimit) : ''}.${b.partial ? ' Only the newest 1,000 deliveries in range were read.' : ''}`
+        });
     }
 
     function safetyPanel() {
@@ -1257,7 +1288,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const up = e.uptime;
         const sp = e.speed;
         out.systems = `<div class="jv-grid">${briefPanel('systems')}
-            ${actionsPanel()}${codesPanel()}${connectionsPanel()}${safetyPanel()}${platformPanel()}
+            ${actionsPanel()}${codesPanel()}${mailboxPanel()}${connectionsPanel()}${safetyPanel()}${platformPanel()}
             ${panel('systems-ready', 'Readiness', `<div class="jv-rings">${ring(C.readiness(e), 'ready', null, 120)}</div><p class="jv-note">Share of checks that pass: scheduled jobs, CI on main, uptime and PageSpeed within your limits (⚙ Settings).</p>`)}
             ${panel('systems-uptime', 'Uptime', up && up.ok ? table([['Page', (p) => `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a>`], ['Status', (p) => `<span class="jv-chip ${p.ok ? 'c-fast' : 'c-slow'}">${esc(p.status || 'down')}</span>`], ['Time', (p) => fmt(p.ms) + ' ms'], ['Size', (p) => p.bytes ? Math.round(p.bytes / 1024) + ' KB' : '']], up.pages) + `<p class="jv-note">TLS certificate: ${up.tlsDaysLeft === null ? 'unknown' : esc(up.tlsDaysLeft) + ' days left'}.</p>` : `<p class="jv-empty">${S.pending.uptime ? 'Pinging…' : esc((up && up.error) || 'Not loaded.')}</p>`, { data: up && up.pages })}
             ${panel('systems-speed', 'PageSpeed (mobile) and CrUX', sp && sp.ok ? `<div class="jv-rings">${sp.pages.map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 90)).join('')}</div>${sp.crux && sp.crux.ok && sp.crux.phone ? `<p class="jv-note">CrUX phone LCP p75 over ${sp.crux.phone.weeks || ''} weeks: ${spark(sp.crux.phone.lcp || [], COLORS.amber)}</p>` : ''}` : `<p class="jv-empty">${S.pending.speed ? 'Running PageSpeed on five pages (up to 90 s)…' : esc((sp && sp.error) || 'Not loaded.')}</p>`, { wide: true, data: sp && sp.pages && sp.pages.map((p) => ({ page: p.name, score: p.score, lcp: p.lab && p.lab.lcp, tbt: p.lab && p.lab.tbt, cls: p.lab && p.lab.cls, error: p.error })) })}

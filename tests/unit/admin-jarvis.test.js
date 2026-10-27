@@ -657,7 +657,7 @@ test("admin.html loads the Jarvis files with a version that changes with their c
   const html = fs.readFileSync(path.join(root, "admin.html"), "utf8");
   const seen = Array.from(html.matchAll(/admin-jarvis(?:-core)?\.(?:css|js)\?v=([^"]+)"/g)).map((m) => m[1]);
   assert.equal(seen.length, 5);
-  assert.deepEqual(Array.from(new Set(seen)), [want], "set ?v=" + want + " on the Jarvis links in admin.html");
+  assert.deepEqual(Array.from(new Set(seen)), [want], "set ?v=" + want + " on the Jarvis links in admin.html, then run node scripts/build-csp-hashes.js (the module import is an inline script)");
 });
 
 test("costs: asks for the export, waits for its first rows, then sums net spend by service", async () => {
