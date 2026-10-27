@@ -148,6 +148,127 @@ object Home {
         return app.api.saved("snapshot", 1)?.json?.let { it to true } ?: (snap to false)
     }
 
+    /** A labelled value with its level colour, for the list widgets; [at] orders timed rows. */
+    data class Line(val label: String, val value: String, val level: String, val at: Long = 0)
+
+    /** Uptime, page speed, CI on main, the last deploy and the TLS certificate, in that order; rows without data are left out. */
+    fun health(snap: JsonObject, now: Long): List<Line> {
+        val ext = snap.obj("external")
+        val pages = ext.obj("uptime").objs("pages")
+        val up = pages.count { it.bool("ok") == true }
+        val ms = pages.mapNotNull { it.num("ms") }.takeIf { it.isNotEmpty() }?.average()
+        val speeds = ext.obj("speed").objs("pages").mapNotNull { p -> p.num("score")?.let { (p.str("name") ?: "") to if (it <= 1) it * 100 else it } }
+        val ci = ext.obj("github").objs("ci")
+        val failing = ci.filter { it.str("conclusion") !in setOf("success", "skipped", null) }
+        val deploy = ci.firstOrNull { (it.str("name") ?: "").contains("deploy", ignoreCase = true) }
+        val tls = ext.obj("uptime").num("tlsDaysLeft")
+        return listOfNotNull(
+            pages.takeIf { it.isNotEmpty() }?.let { Line("Uptime", "$up/${it.size} up" + (ms?.let { m -> " · " + fmt(m, 0) + " ms" } ?: ""), if (up == it.size) "good" else "alert") },
+            speeds.takeIf { it.isNotEmpty() }?.let { s ->
+                val low = s.minBy { it.second }
+                Line("Speed", "avg " + fmt(s.map { it.second }.average(), 0) + " · lowest " + low.first + " " + fmt(low.second, 0), if (low.second < 50) "alert" else if (low.second < 90) "warn" else "good")
+            },
+            ci.takeIf { it.isNotEmpty() }?.let { Line("CI on main", if (failing.isEmpty()) "all ${it.size} passing" else "${failing.size} failing: " + failing.joinToString(", ") { f -> f.str("name") ?: "?" }, if (failing.isEmpty()) "good" else "alert") },
+            (deploy ?: ci.maxByOrNull { it.str("at").orEmpty() })?.let { r -> rel(r.str("at"), now)?.let { Line(if (deploy != null) "Last deploy" else "Last CI run", it, "info") } },
+            tls?.let { Line("TLS", fmt(it, 0) + " days left", if (it < 5) "alert" else if (it < 14) "warn" else "good") }
+        )
+    }
+
+    data class Queue(val count: Int, val rows: List<Line>)
+
+    /** The next post on each channel, soonest first, and how many are scheduled in all. */
+    fun social(snap: JsonObject, now: Long): Queue {
+        val s = snap.obj("external").obj("social")?.takeIf { it.isOk() }
+        val rows = s.objs("queue").mapNotNull { q ->
+            val next = q.objs("next").firstOrNull() ?: return@mapNotNull null
+            val at = next.str("at")
+            Line(q.str("name") ?: q.str("channel") ?: "?", listOfNotNull(rel(at, now), next.str("post")).joinToString(" · "), "info", epoch(at) ?: Long.MAX_VALUE)
+        }.sortedBy { it.at }
+        return Queue(s.at("scheduled").num("count")?.toInt() ?: s.objs("queue").sumOf { it.num("scheduled")?.toInt() ?: 0 }, rows)
+    }
+
+    /** Scheduled jobs still to run and the next social post, soonest first; a job whose last run failed is pink. */
+    fun next(snap: JsonObject, now: Long): List<Line> {
+        val ext = snap.obj("external")
+        val jobs = ext.obj("jobs").objs("jobs").mapNotNull { j ->
+            val at = epoch(j.str("nextRun"))?.takeIf { it >= now - 60_000 } ?: return@mapNotNull null
+            Line(humanize(j.str("name") ?: "?"), rel(j.str("nextRun"), now) ?: "", if (j.bool("ok") == false) "alert" else "good", at)
+        }
+        val post = ext.obj("social").obj("scheduled").str("next")?.let { iso -> epoch(iso)?.takeIf { it >= now }?.let { Line("Next social post", rel(iso, now) ?: "", "info", it) } }
+        return (jobs + listOfNotNull(post)).sortedBy { it.at }
+    }
+
+    data class Funnel(val stages: List<Pair<String, Double>>, val note: String?)
+
+    /** Reviewed sites, then each Instantly stage that has a number, and the plan's next milestone. */
+    fun pipeline(snap: JsonObject): Funnel {
+        val o = snap.obj("external").obj("outreach")?.takeIf { it.isOk() }
+        val i = o.obj("instantly")
+        val stages = listOf("Reviewed" to o.obj("pipeline").num("reviews"), "Contacted" to (i.num("contacted") ?: i.num("sent")), "Opened" to i.num("opened"),
+            "Replied" to i.num("replies"), "Interested" to i.num("interested"), "Meetings" to i.num("meetings"))
+            .mapNotNull { (k, v) -> v?.let { k to it } }
+        val next = o.obj("plan").obj("next")
+        val note = next.str("label")?.let { label -> "Next: " + label + (next.num("daysLeft")?.toInt()?.let { d -> if (d <= 0) " today" else if (d == 1) " tomorrow" else " in $d days" } ?: "") }
+        return Funnel(stages, note)
+    }
+
+    data class Traffic(val label: String, val value: String, val delta: String?, val dir: Int, val series: List<Double>, val countries: List<Pair<String, String>>, val sources: List<Pair<String, String>>)
+
+    /** Google Analytics sessions against the window before, top countries and sources; Cloudflare visitors when Analytics is down. */
+    fun traffic(snap: JsonObject): Traffic {
+        val ext = snap.obj("external")
+        fun top(list: List<JsonObject>) = list.sortedByDescending { it.num("value") ?: 0.0 }.take(3).map { (it.str("label") ?: "?") to fmt(it.num("value"), 0) }
+        val ga = ext.obj("ga4")?.takeIf { it.isOk() && it.objs("groups").isNotEmpty() }
+        if (ga != null) {
+            val now = ga.objs("groups").sumOf { it.num("sessions") ?: 0.0 }
+            val delta = change(now, ga.objs("groups").sumOf { it.num("priorSessions") ?: 0.0 })
+            return Traffic("Sessions", fmt(now, 0), delta, dirOf(delta), ga.objs("daily").map { it.num("sessions") ?: 0.0 }, top(ga.objs("countries")), top(ga.objs("sources")))
+        }
+        val cf = ext.obj("cloudflare")?.takeIf { it.isOk() }
+        return Traffic("Visitors", fmt(cf.num("uniques"), 0), null, 0, cf.objs("daily").map { it.num("uniques") ?: it.num("requests") ?: 0.0 }, top(cf.objs("countries")), emptyList())
+    }
+
+    /** What a Pick a number widget can show, keyed by what is stored for it. */
+    val PICKS = listOf("revenue" to "Revenue", "sales" to "Sales", "readiness" to "Readiness", "alerts" to "Alerts", "needs" to "Waiting for you",
+        "reviews" to "Reviews", "cv" to "CV visits", "outreach" to "Outreach reviewed", "sessions" to "Sessions", "queued" to "Social queued")
+
+    data class Pick(val label: String, val value: String, val sub: String?, val level: String, val tab: String)
+
+    fun pick(key: String, snap: JsonObject, day: JsonObject, needs: Int, days: Int): Pick {
+        val window = if (days == 1) "24 h" else "$days days"
+        val money = day.obj("external").obj("money")?.takeIf { it.isOk() }
+        val st = status(snap)
+        fun product(k: String, label: String): Pick {
+            val kpi = snap.obj("products").obj(k).objs("kpis").firstOrNull()
+            return Pick(label, kpi?.prim("value").text(), listOfNotNull(kpi?.str("delta"), window).joinToString(" · "), if (kpi?.str("delta")?.startsWith("-") == true) "alert" else "info", "products:$k")
+        }
+        return when (key) {
+            "sales" -> Pick("Sales", money.at("revenue").num("count")?.let { fmt(it, 0) } ?: "—", "24 h", "info", "business")
+            "readiness" -> Pick("Readiness", st.readiness?.let { fmt(it, 0) + "%" } ?: "—", st.headline, if (st.alerts > 0) "alert" else if (st.warns > 0) "warn" else "good", "overview")
+            "alerts" -> Pick("Alerts", (st.alerts + st.warns).toString(), st.headline, if (st.alerts > 0) "alert" else if (st.warns > 0) "warn" else "good", "overview")
+            "needs" -> Pick("Waiting for you", needs.toString(), "notices and picks", if (needs > 0) "warn" else "good", "products:outreach")
+            "reviews" -> product("review", "Reviews")
+            "cv" -> product("cv", "CV visits")
+            "outreach" -> Pick("Outreach reviewed", snap.obj("external").obj("outreach").obj("pipeline").prim("reviews").text(), window, "info", "products:outreach")
+            "sessions" -> traffic(snap).let { Pick(it.label, it.value, listOfNotNull(it.delta, window).joinToString(" · "), if (it.dir < 0) "alert" else "info", "traffic") }
+            "queued" -> Pick("Social queued", social(snap, 0).count.toString(), "scheduled posts", "info", "products:hub")
+            else -> money.at("revenue").num("usd").let { usd -> Pick("Revenue", if (usd == null) "—" else "$" + fmt(usd, 0), "24 h", "good", "business") }
+        }
+    }
+
+    /** "in 35 min", "2 h ago" and so on, from an ISO time; null when it cannot be read. */
+    fun rel(iso: String?, now: Long): String? {
+        val at = epoch(iso) ?: return null
+        val min = (at - now) / 60_000
+        val size = kotlin.math.abs(min)
+        val span = when { size < 1 -> return "now"; size < 60 -> "$size min"; size < 48 * 60 -> "${size / 60} h"; else -> "${size / 1440} d" }
+        return if (min > 0) "in $span" else "$span ago"
+    }
+
+    private fun epoch(iso: String?) = iso?.takeIf { it.isNotBlank() }?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
+
+    private fun humanize(name: String) = name.replace(Regex("([a-z])([A-Z])"), "$1 $2").replace('-', ' ').lowercase().replaceFirstChar { it.uppercase() }
+
     /** A product chip opens Products on that chip; anything else is a tab name. */
     private fun route(target: String) = if (CHIPS.any { it.first == target }) "products:$target" else target
 
@@ -174,6 +295,12 @@ object Home {
         runCatching { NeedsWidget().updateAll(context) }
         runCatching { AlertsWidget().updateAll(context) }
         runCatching { MoneyWidget().updateAll(context) }
+        runCatching { HealthWidget().updateAll(context) }
+        runCatching { SocialWidget().updateAll(context) }
+        runCatching { NextWidget().updateAll(context) }
+        runCatching { PipelineWidget().updateAll(context) }
+        runCatching { TrafficWidget().updateAll(context) }
+        runCatching { PickWidget().updateAll(context) }
         runCatching { StatusWidget().updateAll(context) }
         runCatching { NumbersWidget().updateAll(context) }
         runCatching { GoalsWidget().updateAll(context) }
@@ -225,8 +352,13 @@ object Home {
     fun canPin(context: Context) = AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported
 
     /** Asks the launcher to place a widget; it shows its own confirm sheet. */
-    fun pin(context: Context, receiver: Class<*>) {
-        AppWidgetManager.getInstance(context).requestPinAppWidget(ComponentName(context, receiver), null, null)
+    /** [after] opens once the launcher has placed the widget, with its EXTRA_APPWIDGET_ID filled in. */
+    fun pin(context: Context, receiver: Class<*>, after: Intent? = null) {
+        // Android 15 blocks the launcher from starting `after` unless the creator opts in.
+        val options = if (Build.VERSION.SDK_INT >= 35) android.app.ActivityOptions.makeBasic()
+            .setPendingIntentCreatorBackgroundActivityStartMode(android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle() else null
+        val callback = after?.let { android.app.PendingIntent.getActivity(context, receiver.name.hashCode(), it, android.app.PendingIntent.FLAG_CANCEL_CURRENT or android.app.PendingIntent.FLAG_MUTABLE, options) }
+        AppWidgetManager.getInstance(context).requestPinAppWidget(ComponentName(context, receiver), null, callback)
     }
 
     /** Android 13+: the system sheet that adds the quick-settings tile without editing the shade. */
