@@ -148,7 +148,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
       <main id="jv-views">${C.PRODUCTS.map((p) => `<section class="jv-view" data-view="${p.key}" role="tabpanel" aria-label="${esc(p.name)}"${p.key === S.product ? '' : ' hidden'}></section>`).join('')}</main>
       <div class="jv-palette" hidden><div class="jv-palette-box" role="dialog" aria-label="Command bar"><input id="jv-cmd" type="text" placeholder="Type a command, a product, or ask Jarvis anything…" autocomplete="off"><ul id="jv-cmd-list" role="listbox"></ul><p class="jv-note">↑↓ to move · Enter to run · Esc to close · end with ? to ask Gemini</p></div></div>
       <div class="jv-settings" hidden><form class="jv-settings-box" data-settings role="dialog" aria-label="Jarvis settings"></form></div>
-      <div class="jv-settings jv-reply" hidden><form class="jv-settings-box" data-reply role="dialog" aria-label="Reply"></form></div>
+      <div class="jv-reply" hidden><form class="jv-reply-box" data-reply role="dialog" aria-label="Reply"></form></div>
       <div class="jv-pushes" aria-live="polite"></div>
       <div class="jv-toast" role="status" hidden></div>
     </div>`;
