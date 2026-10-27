@@ -167,7 +167,8 @@ function inline(html, page, lib = deps()) {
     const href = (attrs.match(/\bhref=["']([^"']+)["']/i) || [])[1];
     if (!href) continue;
     const pad = m[1];
-    const plain = `<link rel="stylesheet" href="${href}">`;
+    const sri = ["integrity", "crossorigin"].map((name) => (attrs.match(new RegExp(`\\s${name}=["'][^"']*["']`, "i")) || [""])[0]).join("");
+    const plain = `<link rel="stylesheet" href="${href}"${sri}>`;
     const lines = [];
     if (!/^(https?:)?\/\//i.test(href)) {
       const file = localFile(href, page);
@@ -175,7 +176,7 @@ function inline(html, page, lib = deps()) {
       const css = critical(fs.readFileSync(file, "utf8"), matches, lib);
       if (css) lines.push(`<style data-critical="${href}">${css}</style>`);
     }
-    lines.push(`<link rel="preload" href="${href}" ${ASYNC}>`, `<noscript>${plain}</noscript>`);
+    lines.push(`<link rel="preload" href="${href}"${sri} ${ASYNC}>`, `<noscript>${plain}</noscript>`);
     out += source.slice(at, start) + lines.join("\n" + pad);
     at = start + m[0].length - m[1].length;
   }
