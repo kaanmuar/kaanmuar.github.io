@@ -47,6 +47,26 @@ class HomeTest {
         assertNull(a[2].label)
     }
 
+    @Test fun moneyComparesTheDayWithTheDayBefore() {
+        val day = json("""{"external":{"money":{"ok":true,"revenue":{"usd":184.4,"count":3,"avgUsd":61.47},"prior":{"usd":120},"refundsUsd":29,"paypal":{"disputesOpen":1}}}}""")
+        val week = json("""{"external":{"money":{"ok":true,"daily":[{"date":"2026-10-20","usd":90},{"date":"2026-10-21","usd":140}]}}}""")
+        val m = Home.money(day, week, 7, true)
+        assertEquals("Money · last 24 hours", m.title)
+        assertEquals("$184", m.usd)
+        assertEquals(1, m.dir)
+        assertEquals("3 sales · avg $61", m.sales)
+        assertEquals(listOf(90.0, 140.0), m.series)
+        assertEquals(listOf("$29 refunded", "1 PayPal dispute open"), m.flags)
+    }
+
+    @Test fun moneyFallsBackToTheMainWindow() {
+        val m = Home.money(json("""{"external":{"money":{"ok":false}}}"""), json("{}"), 30, false)
+        assertEquals("Money · last 30 days", m.title)
+        assertEquals("—", m.usd)
+        assertEquals("No sales data", m.sales)
+        assertTrue(m.flags.isEmpty())
+    }
+
     @Test fun nothingWaitingWhenTheListsAreMissing() {
         assertTrue(Home.needs(json("{}"), null, null).isEmpty())
     }

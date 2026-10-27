@@ -111,6 +111,10 @@
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_ask" />
         </receiver>
+        <receiver android:name=".home.MoneyWidgetReceiver" android:exported="true" android:label="Jarvis money">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_money" />
+        </receiver>
         <activity
             android:name=".PickPostActivity"
             android:exported="false"

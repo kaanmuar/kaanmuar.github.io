@@ -286,6 +286,46 @@ private fun AskBody() {
     } }
 }
 
+// ---------------------------------------------------------------- Money today
+
+class MoneyWidget : GlanceAppWidget() {
+    override val sizeMode = SizeMode.Exact
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val saved = Home.snapshot(context)
+        val days = Home.days(context.applicationContext as com.carlosandmunoz.jarvis.JarvisApp)
+        val money = saved?.let { val (day, isDay) = Home.day(context, it.first); Home.money(day, it.first, days, isDay) }
+        provideContent { MoneyBody(saved, money, days) }
+    }
+}
+
+class MoneyWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget = MoneyWidget() }
+
+@Composable
+private fun MoneyBody(saved: Pair<JsonObject, Long>?, money: Home.Money?, days: Int) {
+    val context = LocalContext.current
+    val open = Home.open(context, "business")
+    if (saved == null || money == null) return SignedOut(open, "Money")
+    val size = LocalSize.current
+    val sparkW = size.width - 28.dp
+    val sparkH = (size.height - 44.dp - 80.dp - (money.flags.size * 15).dp).coerceAtLeast(0.dp)
+    Glass(open, money.title) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(money.usd, style = TextStyle(color = color(Art.TEXT), fontSize = 28.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+            if (money.delta != null) {
+                Spacer(GlanceModifier.width(8.dp))
+                Text(money.delta, style = TextStyle(color = color(when (money.dir) { 1 -> Art.GREEN; -1 -> Art.PINK; else -> Art.MUTED }), fontSize = 13.sp, fontWeight = FontWeight.Medium), maxLines = 1)
+            }
+        }
+        Text(money.sales + " · updated " + ago(saved.second), style = Muted, maxLines = 1)
+        money.flags.forEach { Text(it, style = TextStyle(color = color(Art.AMBER), fontSize = 11.sp), maxLines = 1) }
+        if (money.series.size > 1 && sparkH > 16.dp) {
+            Spacer(GlanceModifier.height(4.dp))
+            Image(ImageProvider(Art.sparkline(context.px(sparkW), context.px(sparkH), money.series, Art.GREEN)), "Daily revenue, last $days days", GlanceModifier.width(sparkW).height(sparkH))
+            Text("Daily revenue, last $days days", style = TextStyle(color = color(Art.DIM), fontSize = 10.sp), maxLines = 1)
+        }
+    }
+}
+
 // ---------------------------------------------------------------- Goals
 
 class GoalsWidget : GlanceAppWidget() {
