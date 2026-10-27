@@ -343,7 +343,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -574,6 +574,19 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ['What to do', (r) => r.needs.length ? r.needs.map((n) => esc(n)).join('<br>') : esc(r.detail)],
             ['Updated', (r) => `<span class="jv-nowrap">${esc(r.at ? when(r.at) : '')}</span>`]
         ], rows), { wide: true, data: rows.map((r) => ({ source: r.name, state: r.state, needs: r.needs.join(' | '), error: r.detail })), note: 'Partial: the source works but part of it waits for a one-time grant.' });
+    }
+
+    function codesPanel() {
+        const m = S.external['mail-codes'];
+        if (!m || !m.ok) return panel('systems-codes', 'Sign-in codes', waiting('mail-codes', 'Reading the codes mailed in the last day…'));
+        const rows = m.codes || [];
+        return panel('systems-codes', `Sign-in codes (${rows.length})`, rows.length ? table([
+            ['Service', (r) => `${esc(r.label)}${r.trusted ? '' : ' <span class="jv-chip c-slow">sender not checked</span>'}`],
+            ['Code', (r) => r.code ? `<code>${esc(r.code)}</code> <button type="button" class="jv-btn small" data-copy-code="${esc(r.code)}">Copy</button>` : r.link ? `<a href="${esc(r.link)}" target="_blank" rel="noopener noreferrer">Confirm link ↗</a>` : ''],
+            ['To', (r) => esc(r.alias ? r.alias + '@' : '')],
+            ['Subject', (r) => esc(r.subject)],
+            ['Received', (r) => `<span class="jv-nowrap">${esc(when(r.at))}</span>`]
+        ], rows) : '<p class="jv-empty">No codes in the last day.</p>', { wide: true, note: 'Mail to qa@ and the channel addresses reaches Jarvis through the ImprovMX webhook; Gmail keeps a copy.' });
     }
 
     function safetyPanel() {
@@ -1244,7 +1257,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const up = e.uptime;
         const sp = e.speed;
         out.systems = `<div class="jv-grid">${briefPanel('systems')}
-            ${actionsPanel()}${connectionsPanel()}${safetyPanel()}${platformPanel()}
+            ${actionsPanel()}${codesPanel()}${connectionsPanel()}${safetyPanel()}${platformPanel()}
             ${panel('systems-ready', 'Readiness', `<div class="jv-rings">${ring(C.readiness(e), 'ready', null, 120)}</div><p class="jv-note">Share of checks that pass: scheduled jobs, CI on main, uptime and PageSpeed within your limits (⚙ Settings).</p>`)}
             ${panel('systems-uptime', 'Uptime', up && up.ok ? table([['Page', (p) => `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a>`], ['Status', (p) => `<span class="jv-chip ${p.ok ? 'c-fast' : 'c-slow'}">${esc(p.status || 'down')}</span>`], ['Time', (p) => fmt(p.ms) + ' ms'], ['Size', (p) => p.bytes ? Math.round(p.bytes / 1024) + ' KB' : '']], up.pages) + `<p class="jv-note">TLS certificate: ${up.tlsDaysLeft === null ? 'unknown' : esc(up.tlsDaysLeft) + ' days left'}.</p>` : `<p class="jv-empty">${S.pending.uptime ? 'Pinging…' : esc((up && up.error) || 'Not loaded.')}</p>`, { data: up && up.pages })}
             ${panel('systems-speed', 'PageSpeed (mobile) and CrUX', sp && sp.ok ? `<div class="jv-rings">${sp.pages.map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 90)).join('')}</div>${sp.crux && sp.crux.ok && sp.crux.phone ? `<p class="jv-note">CrUX phone LCP p75 over ${sp.crux.phone.weeks || ''} weeks: ${spark(sp.crux.phone.lcp || [], COLORS.amber)}</p>` : ''}` : `<p class="jv-empty">${S.pending.speed ? 'Running PageSpeed on five pages (up to 90 s)…' : esc((sp && sp.error) || 'Not loaded.')}</p>`, { wide: true, data: sp && sp.pages && sp.pages.map((p) => ({ page: p.name, score: p.score, lcp: p.lab && p.lab.lcp, tbt: p.lab && p.lab.tbt, cls: p.lab && p.lab.cls, error: p.error })) })}
@@ -2048,6 +2061,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.mkReply) { mkReply(t); return; }
         if (t.dataset.mkWeek) { S.mkWeek = t.dataset.mkWeek; render(); return; }
         if (t.dataset.copyLink) { copy(t.dataset.copyLink, 'Link copied.'); return; }
+        if (t.dataset.copyCode) { copy(t.dataset.copyCode, 'Code copied.'); return; }
         if (t.dataset.qlBuild !== undefined) {
             const host = String($('#jv-ql-host').value || '').trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0].replace(/^www\./, '');
             if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host)) { toast('Type a domain like prospect.edu.'); return; }

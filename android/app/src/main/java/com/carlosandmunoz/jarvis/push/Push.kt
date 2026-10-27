@@ -35,6 +35,7 @@ object Push {
     const val INBOX = "inbox"
     const val DESK = "desk"
     const val SOCIAL = "social"
+    const val CODES = "codes"
     const val EXTRA_TAB = "jarvis.tab"
     private val CHANNELS = mapOf(
         ALERTS to Triple("Alerts", "Threshold crossings from the hourly watch: a page down, TLS, failed jobs and runs.", NotificationManager.IMPORTANCE_HIGH),
@@ -45,6 +46,7 @@ object Push {
         INBOX to Triple("Inbox", "CV messages, CV feedback and site owners' replies to outreach.", NotificationManager.IMPORTANCE_HIGH),
         DESK to Triple("Review desk", "URL review runs as they go, held re-runs, comparisons, and runs that need you.", NotificationManager.IMPORTANCE_DEFAULT),
         SOCIAL to Triple("Social posts", "Posts Jarvis proposes for the social hub, to post or skip.", NotificationManager.IMPORTANCE_DEFAULT),
+        CODES to Triple("Sign-in codes", "Codes and confirm links mailed to qa@ and the channel addresses, with a Copy button.", NotificationManager.IMPORTANCE_HIGH),
         "review" to Triple("Reviews", "URL reviews you started by sharing a link to Jarvis.", NotificationManager.IMPORTANCE_DEFAULT),
         "test" to Triple("Tests", "Test notifications sent from Settings.", NotificationManager.IMPORTANCE_LOW)
     )
@@ -54,7 +56,7 @@ object Push {
         CHANNELS.forEach { (id, c) -> nm.createNotificationChannel(NotificationChannel(id, c.first, c.third).apply { description = c.second }) }
     }
 
-    fun kinds(app: JarvisApp) = listOf(ALERTS, BRIEFING, MONEY, REVIEWS, OUTREACH, INBOX, DESK, SOCIAL).associateWith { app.vault.flag("push.$it", true) }
+    fun kinds(app: JarvisApp) = listOf(ALERTS, BRIEFING, MONEY, REVIEWS, OUTREACH, INBOX, DESK, SOCIAL, CODES).associateWith { app.vault.flag("push.$it", true) }
 
     suspend fun token(): String? = suspendCoroutine { done ->
         FirebaseMessaging.getInstance().token.addOnCompleteListener { done.resume(if (it.isSuccessful) it.result else null) }
@@ -99,6 +101,7 @@ object Push {
         val lines = runCatching { (JSON.parseToJsonElement(data["lines"] ?: "[]") as JsonArray).map { (it as JsonPrimitive).content } }.getOrDefault(emptyList())
         val n = builder(context, data, body, lines).setSilent(data["quiet"] == "1")
         if (!data["ref"].isNullOrEmpty()) buttons(data).forEach { n.addAction(NotifyActions.action(context, data, it)) }
+        data["code"]?.takeIf { kindOf(data) == CODES && it.isNotBlank() }?.let { n.addAction(CodeCopy.action(context, it, tagOf(data))).setTimeoutAfter(15 * 60 * 1000L) }
         NotificationManagerCompat.from(context).notify(tagOf(data), 1, n.build())
     }
 

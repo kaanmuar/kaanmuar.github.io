@@ -14,7 +14,8 @@ export const PUSH_KINDS = [
     ['inbox', 'Inbox', 'CV messages, CV feedback and site owners\u2019 replies'],
     ['desk', 'Review desk', 'Runs as they go, held re-runs, comparisons, runs that need you'],
     ['outreach', 'Outreach notices', 'Each notice waiting, with Send and Skip'],
-    ['social', 'Social posts', 'Each post Jarvis proposes, with Post and Skip']
+    ['social', 'Social posts', 'Each post Jarvis proposes, with Post and Skip'],
+    ['codes', 'Sign-in codes', 'Codes and confirm links mailed to qa@ and the channel addresses']
 ];
 
 function keyBytes(b64) {

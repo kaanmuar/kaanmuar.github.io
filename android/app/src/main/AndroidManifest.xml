@@ -202,5 +202,6 @@
         </receiver>
 
         <receiver android:name=".push.ActionReceiver" android:exported="false" />
+        <receiver android:name=".push.CodeCopyReceiver" android:exported="false" />
     </application>
 </manifest>

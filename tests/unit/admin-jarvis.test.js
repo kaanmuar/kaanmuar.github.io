@@ -867,7 +867,7 @@ test("push: phones register with their kinds, and each kind reaches only the pho
   const a = "a".repeat(40), b = "b".repeat(40);
   await push.register(db, { token: a, name: "Pixel" }, "owner", Date.parse("2026-10-25T12:00:00Z"));
   await push.register(db, { token: b, kinds: { briefing: false } }, "owner", Date.parse("2026-10-25T12:00:00Z"));
-  assert.deepEqual((await push.list(db)).find((d) => d.token === b).kinds, { alerts: true, briefing: false, money: true, reviews: true, outreach: true, inbox: true, desk: true, social: true });
+  assert.deepEqual((await push.list(db)).find((d) => d.token === b).kinds, { alerts: true, briefing: false, money: true, reviews: true, outreach: true, inbox: true, desk: true, social: true, codes: true });
   assert.deepEqual(await push.targets(db, "briefing"), [a]);
   assert.deepEqual((await push.targets(db, "alerts")).sort(), [a, b]);
   await assert.rejects(push.register(db, { token: "short" }, "owner", 0), /not a device token/);
@@ -1064,7 +1064,7 @@ test("outreach notices push what is new, at most once an hour", () => {
 });
 
 test("phones keep the new push kinds on unless turned off", () => {
-  assert.deepEqual(push.cleanKinds({ money: false }), { alerts: true, briefing: true, money: false, reviews: true, outreach: true, inbox: true, desk: true, social: true });
+  assert.deepEqual(push.cleanKinds({ money: false }), { alerts: true, briefing: true, money: false, reviews: true, outreach: true, inbox: true, desk: true, social: true, codes: true });
 });
 
 test("the approvals list shows pending notices newest first, with the review link", () => {

@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
 import com.carlosandmunoz.jarvis.home.Home
+import com.carlosandmunoz.jarvis.push.CodeCopy
 import com.carlosandmunoz.jarvis.data.ago
 import com.carlosandmunoz.jarvis.data.arr
 import com.carlosandmunoz.jarvis.data.at
@@ -515,10 +517,33 @@ fun TrafficScreen(s: UiState) {
 
 // ---------------------------------------------------------------- Systems
 
+/** Codes and confirm links mailed to qa@ and the channel addresses in the last day (#1898); a tap copies the code. */
+@Composable
+fun SignInCodes(codes: List<JsonObject>) {
+    val context = LocalContext.current
+    Panel("Sign-in codes") {
+        if (codes.isEmpty()) Muted("No codes in the last day.")
+        codes.forEach { c ->
+            val code = c.str("code").orEmpty()
+            val detail = listOfNotNull(
+                c.str("alias")?.takeIf { it.isNotBlank() }?.let { "$it@" },
+                c.str("subject")?.takeIf { it.isNotBlank() },
+                ago(c.str("at")),
+                "sender not checked".takeIf { c.bool("trusted") != true }
+            ).joinToString(" · ")
+            StatusRow(if (c.bool("trusted") == true) "good" else "warn", "${c.str("label") ?: ""}: ${code.ifBlank { "confirm link" }}", detail,
+                url = c.str("link")?.takeIf { it.startsWith("https://") },
+                onClick = if (code.isNotBlank()) ({ CodeCopy.copy(context, code) }) else null)
+        }
+        Muted("Tap a code to copy it. Gmail keeps every mail.")
+    }
+}
+
 @Composable
 fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
     val snap = s.snapshot
     JarvisActions(s, vm)
+    SignInCodes(snap.objs("mailCodes"))
     Panel("Connections") {
         snap.objs("connections").forEach { c -> StatusRow(c.str("state"), c.str("name") ?: "", listOfNotNull(c.str("state"), c.str("detail")?.takeIf { it.isNotBlank() }, c.arr("needs").takeIf { it.isNotEmpty() }?.joinToString(" ") { it.text() }).filter { it.isNotBlank() }.joinToString(" · ")) }
     }

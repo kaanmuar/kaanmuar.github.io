@@ -5481,6 +5481,57 @@ async function tiktokBusinessRun() {
 
 exports.tiktokBusinessWatch = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB", secrets: SECRETS.tiktokBusinessWatch }), "tiktokBusinessWatch", tiktokBusinessRun);
 
+const mailInbound = require("./mail-inbound");
+const mailCodes = () => getFirestore().collection("jarvis_mail_codes");
+
+async function mailCodeRows() {
+  const now = Date.now();
+  const snap = await mailCodes().where("at", ">", new Date(now - mailInbound.KEEP_MS).toISOString()).orderBy("at", "desc").limit(10).get();
+  return mailInbound.rows(snap.docs.map((d) => d.data()), now);
+}
+
+// ImprovMX posts each mail to qa@ and the per-channel aliases here as JSON (#1898). A code or a checked confirm
+// link is kept for a day and pushed to Jarvis once; a retry of the same mail finds its row and pushes nothing.
+exports.mailInbound = functions.runWith({ timeoutSeconds: 60, memory: "256MB", maxInstances: 5, secrets: SECRETS.mailInbound }).https.onRequest(async (req, res) => {
+  res.set("X-Robots-Tag", "noindex");
+  const key = process.env.MAIL_WEBHOOK_KEY || "";
+  const given = String(req.query.key || "");
+  if (!key || given.length !== key.length || !crypto.timingSafeEqual(Buffer.from(given), Buffer.from(key))) {
+    res.status(403).send("Forbidden");
+    return;
+  }
+  if (req.method !== "POST" || !req.body || typeof req.body !== "object") {
+    res.status(400).send("Expected an ImprovMX webhook POST");
+    return;
+  }
+  try {
+    const mail = mailInbound.read(req.body, req.query.alias);
+    const row = mailInbound.codeOf(mail);
+    if (!row) {
+      res.status(200).send("no code");
+      return;
+    }
+    const now = Date.now();
+    const saved = Object.assign({}, row, { at: new Date(now).toISOString(), expireAt: new Date(now + mailInbound.KEEP_MS) });
+    try {
+      await mailCodes().doc(mailInbound.docId(mail)).create(saved);
+    } catch (error) {
+      if (error && (error.code === 6 || /already exists/i.test(error.message || ""))) {
+        res.status(200).send("seen");
+        return;
+      }
+      throw error;
+    }
+    await pushOwner(mailInbound.message(row));
+    const old = await mailCodes().where("at", "<", new Date(now - mailInbound.KEEP_MS).toISOString()).limit(20).get();
+    await Promise.all(old.docs.map((d) => d.ref.delete().catch(() => null)));
+    res.status(200).send("pushed " + row.service);
+  } catch (error) {
+    console.error("mailInbound failed:", error);
+    res.status(500).send("Failed");
+  }
+});
+
 exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxInstances: 3, secrets: SECRETS.jarvis }).https.onRequest(async (req, res) => {
   res.set("Access-Control-Allow-Origin", reviewOrigin(req));
   res.set("Vary", "Origin");
@@ -5573,7 +5624,8 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     }
     else if (op === "web-push-key") out = { publicKey: (await jarvisWebPush.keys(getFirestore(), require("web-push"))).publicKey };
     else if (op === "review") out = await jarvisReview.enqueue(getFirestore(), body, operator, now);
-    else if (op === "snapshot") out = await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days)));
+    else if (op === "snapshot") out = Object.assign(await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days))), { mailCodes: await mailCodeRows().catch(() => []) });
+    else if (op === "mail-codes") out = { codes: await mailCodeRows() };
     else if (op === "brief-mark") out = await jarvisProposals.markBrief(getFirestore(), body, operator, now);
     else if (op === "brief-marks") out = { marks: await jarvisProposals.savedBrief(getFirestore()) };
     else if (op === "brief-items") out = await jarvis.briefItems(getFirestore(), { list: body.list, days, now });
