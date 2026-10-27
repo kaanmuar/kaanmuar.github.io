@@ -14,7 +14,7 @@ const core = require("./jarvis-core");
 
 const SAFE = core.SAFE_ACTIONS;
 const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2 };
-const LABELS = { "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again" };
+const LABELS = { "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again", "rerun-ci": "Re-run failed CI jobs", "rating-decide": "Decide ratings", "brief-mark": "Snooze or dismiss a briefing line" };
 const NOTICE_TRIES = 3;
 const NOTICE_HOURS = { from: 8, to: 19 };
 const DAY = 24 * 60 * 60 * 1000;

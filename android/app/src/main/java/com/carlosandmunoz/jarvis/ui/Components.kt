@@ -221,9 +221,9 @@ fun KeyRow(label: String, value: String, color: Color = J.text, url: String? = n
 }
 
 @Composable
-fun StatusRow(level: String?, title: String, detail: String? = null, url: String? = null) {
+fun StatusRow(level: String?, title: String, detail: String? = null, url: String? = null, onClick: (() -> Unit)? = null) {
     val uri = LocalUriHandler.current
-    Row(Modifier.fillMaxWidth().let { if (url != null) it.clickable { runCatching { uri.openUri(url) } } else it }, verticalAlignment = Alignment.Top) {
+    Row(Modifier.fillMaxWidth().let { if (onClick != null) it.clickable(onClick = onClick) else if (url != null) it.clickable { runCatching { uri.openUri(url) } } else it }, verticalAlignment = Alignment.Top) {
         Box(Modifier.padding(top = 4.dp)) { Dot(J.level(level)) }
         Spacer(Modifier.width(8.dp))
         Column(Modifier.weight(1f)) {

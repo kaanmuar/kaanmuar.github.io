@@ -105,6 +105,7 @@ async function openStats(page, hash) {
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type, Authorization' } });
     const body = JSON.parse(request.postData() || '{}');
     calls.push({ op: body.op, auth: request.headers().authorization, body });
+    if (body.op === 'brief-mark') return route.fulfill({ json: { op: body.op, ok: true, key: body.key, status: body.status, until: new Date(Date.now() + 864e5).toISOString() }, headers: { 'Access-Control-Allow-Origin': '*' } });
     if (body.op === 'settings-save') return route.fulfill({ json: Object.assign({ op: body.op, ok: true, updatedAt: new Date().toISOString() }, body.settings), headers: { 'Access-Control-Allow-Origin': '*' } });
     const answer = EXTERNAL[body.op] || (body.op === 'brief' || body.op === 'ask' ? { ok: true, text: 'Jarvis says the CV is up. Next: answer the inbox.' } : { ok: true, ran: body.job });
     return route.fulfill({ json: Object.assign({ op: body.op }, answer), headers: { 'Access-Control-Allow-Origin': '*' } });
@@ -129,7 +130,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'proposals']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'proposals', 'brief-marks']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -359,6 +360,37 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await panel.locator('[data-run-action="publish-hub"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => c.body.action)).toEqual(['publish-hub']);
+    expect(errors).toEqual([]);
+  });
+
+  test('a briefing line opens its sheet: the numbers, Run again after confirming, Gemini, and Snooze through the function (#1695)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page);
+    const line = page.locator('[data-view="overview"] .jv-brief li[data-brief="job:sweepReviews"]');
+    await line.click();
+    const sheet = page.locator('.jv-sheet-box');
+    await expect(sheet).toBeVisible();
+    await expect(sheet.locator('h3')).toContainText('Fix the failing job');
+    await expect(sheet.locator('.jv-sheet-facts')).toContainText('quota');
+    await page.screenshot({ path: 'test-results/jarvis-brief-sheet.png' });
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await sheet.locator('[data-sheet="action"][data-action="run-job"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => [c.body.action, c.body.job, c.body.proposal])).toEqual([['run-job', 'sweepReviews', 'job:sweepReviews']]);
+
+    await sheet.locator('[data-sheet="explain"]').click();
+    await expect(sheet.locator('.jv-ai-text')).toContainText('Jarvis says');
+    expect(calls.find((c) => c.op === 'ask').body.question).toContain('sweepReviews');
+
+    await sheet.locator('[data-sheet="mark"][data-status="snoozed"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'brief-mark').map((c) => [c.body.key, c.body.status])).toEqual([['job:sweepReviews', 'snoozed']]);
+    await expect(page.locator('.jv-sheet')).toBeHidden();
+    await expect(line).toHaveCount(0);
+    const more = page.locator('[data-view="overview"] .jv-brief-more');
+    await expect(more).toContainText('1 snoozed or dismissed');
+    await more.locator('[data-brief-hidden]').click();
+    await expect(line).toHaveClass(/is-hidden/);
     expect(errors).toEqual([]);
   });
 });

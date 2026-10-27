@@ -108,7 +108,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
         rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), alerts: [], reports: [],
-        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, truncated: false,
+        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, truncated: false,
         panels: new Map(), voice: null, listening: false, timers: []
     };
     readHash();
@@ -147,6 +147,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
       <main id="jv-views">${C.PRODUCTS.map((p) => `<section class="jv-view" data-view="${p.key}" role="tabpanel" aria-label="${esc(p.name)}"${p.key === S.product ? '' : ' hidden'}></section>`).join('')}</main>
       <div class="jv-palette" hidden><div class="jv-palette-box" role="dialog" aria-label="Command bar"><input id="jv-cmd" type="text" placeholder="Type a command, a product, or ask Jarvis anything…" autocomplete="off"><ul id="jv-cmd-list" role="listbox"></ul><p class="jv-note">↑↓ to move · Enter to run · Esc to close · end with ? to ask Gemini</p></div></div>
       <div class="jv-settings" hidden><form class="jv-settings-box" data-settings role="dialog" aria-label="Jarvis settings"></form></div>
+      <div class="jv-sheet" data-sheet-root hidden><section class="jv-sheet-box" role="dialog" aria-modal="true" aria-label="Briefing line"></section></div>
       <div class="jv-toast" role="status" hidden></div>
     </div>`;
     const root = host.querySelector('.jv');
@@ -331,7 +332,10 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         }, w);
         sum.hub = C.summarizeHub(S.hub, S.rows.events, w);
         S.summaries = sum;
-        S.brief = C.briefing({ products: sum, external: S.external, thresholds: (S.settings || {}).thresholds, goals: S.goals });
+        S.briefState = { products: sum, external: S.external, thresholds: (S.settings || {}).thresholds, goals: S.goals };
+        const split = C.openBrief(C.briefing(S.briefState), S.marks);
+        S.brief = split.open;
+        S.briefHidden = split.hidden;
     }
 
     function snapshot() {
@@ -384,7 +388,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}" data-panel-id="${id}"><header><h3>${esc(title)}</h3>${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
     }
 
-    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again' };
+    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line' };
     const ACTION_CAPS = { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2 };
 
     function proposalsPanel() {
@@ -423,7 +427,10 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     function briefPanel(product) {
         const list = S.brief.filter((b) => product === 'overview' || b.product === product);
-        const items = list.length ? list.map((b) => `<li class="lv-${b.level}"><b>${b.level}</b><span>${esc(b.text)}</span>${product === 'overview' && b.product !== 'overview' ? `<button type="button" data-go="${b.product}">${esc((C.PRODUCTS.find((p) => p.key === b.product) || {}).name || b.product)} →</button>` : ''}</li>`).join('') : '<li class="lv-good"><b>clear</b><span>All quiet. Nothing needs you right now.</span></li>';
+        const row = (b, hidden) => `<li class="lv-${b.level}${hidden ? ' is-hidden' : ''}" data-brief="${esc(b.key)}" tabindex="0" role="button" aria-haspopup="dialog" title="What this is and what you can do"><b>${b.level}</b><span>${esc(b.text)}</span>${product === 'overview' && b.product !== 'overview' ? `<button type="button" data-go="${b.product}">${esc((C.PRODUCTS.find((p) => p.key === b.product) || {}).name || b.product)} →</button>` : '<i aria-hidden="true">›</i>'}</li>`;
+        const hiddenHere = S.briefHidden.filter((b) => product === 'overview' || b.product === product);
+        const items = (list.length ? list.map((b) => row(b)).join('') : '<li class="lv-good"><b>clear</b><span>All quiet. Nothing needs you right now.</span></li>')
+            + (hiddenHere.length ? `<li class="lv-info jv-brief-more"><b>hidden</b><span>${hiddenHere.length} snoozed or dismissed</span><button type="button" data-brief-hidden>${S.showHidden ? 'Hide' : 'Show'}</button></li>` + (S.showHidden ? hiddenHere.map((b) => row(b, true)).join('') : '') : '');
         return `<section class="jv-panel is-wide jv-briefing"><header><h3>Briefing</h3><span class="jv-panel-tools"><button type="button" data-act="speak">Read aloud</button><button type="button" data-act="ai-brief">Gemini briefing</button></span></header><ul class="jv-brief">${items}</ul>
             <div class="jv-ai"${S.ai ? '' : ' hidden'}><span class="jv-eyebrow">Gemini · ${S.aiAt ? when(S.aiAt) : ''}</span><div class="jv-ai-text">${esc(S.ai).replace(/\n/g, '<br>')}</div></div>
             <form class="jv-ask" data-ask><input type="text" name="q" placeholder="Ask Jarvis: why did opens jump? which source pays? what should I fix first?" aria-label="Ask Jarvis"><button type="submit" class="jv-btn">Ask</button></form></section>`;
@@ -957,6 +964,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         }
         S.loading = false;
         if (all !== false) loadExternal().then(() => loadProposals());
+        if (!S.marksAt) { S.marksAt = Date.now(); loadMarks(); }
     }
 
     // The rules answer at once; Gemini then ranks them on the server, which also drops the Done and Dismissed ones.
@@ -967,6 +975,145 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const out = await call('proposals', { candidates: rules, snapshot: snapshot() }).catch((error) => ({ ok: false, error: error.message }));
         S.proposals = out.ok ? Object.assign(out, { loading: false, rules }) : { loading: false, rules, error: out.error };
         render();
+    }
+
+    // --- briefing sheet (#1695): what a line is about, its numbers, links and actions ------------------------
+
+    async function loadMarks() {
+        const out = await call('brief-marks').catch(() => ({ ok: false }));
+        if (!out.ok) return;
+        S.marks = out.marks || [];
+        if (S.briefState) { compute(); render(); }
+    }
+
+    function sheetItem(key) {
+        return S.brief.concat(S.briefHidden).find((b) => b.key === key);
+    }
+
+    function openSheet(key) {
+        const item = sheetItem(key);
+        if (!item) return;
+        const detail = C.briefDetail(item, S.briefState || {});
+        S.sheet = { key, item, detail, rows: null, ai: '', hidden: S.briefHidden.some((b) => b.key === key) };
+        paintSheet();
+        $('[data-sheet-root]').hidden = false;
+        const first = $('.jv-sheet-box button');
+        if (first) first.focus();
+        if (detail.list) loadSheetRows(detail.list);
+    }
+
+    function closeSheet() {
+        const box = $('[data-sheet-root]');
+        if (!box || box.hidden) return;
+        box.hidden = true;
+        const back = S.sheet && $(`[data-brief="${CSS.escape(S.sheet.key)}"]`);
+        S.sheet = null;
+        if (back) back.focus();
+    }
+
+    async function loadSheetRows(list) {
+        const out = await call('brief-items', { list });
+        if (!S.sheet) return;
+        S.sheet.rows = out.ok ? out : { error: out.error };
+        paintSheet();
+    }
+
+    function sheetRows() {
+        const sh = S.sheet;
+        if (!sh.detail.list) return '';
+        if (!sh.rows) return '<p class="jv-note">Loading…</p>';
+        if (sh.rows.error) return `<p class="jv-note">Could not load: ${esc(sh.rows.error)}</p>`;
+        const rows = sh.rows.rows || [];
+        if (!rows.length) return '<p class="jv-note">Nothing waiting now.</p>';
+        const head = `<p class="jv-note">${fmt(sh.rows.total)} waiting${sh.rows.total > rows.length ? `, newest ${rows.length} shown` : ''}.</p>`;
+        if (sh.detail.list === 'ratings') return head + `<div class="jv-actions"><button type="button" class="jv-btn small" data-sheet="rate-all">Approve the ${rows.length} shown</button></div><ul class="jv-sheet-rows">${rows.map((r) => `<li><strong>${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} ${esc(r.name)}</strong><small>${esc(when(r.at))}</small>${r.text ? `<p>${esc(r.text)}</p>` : ''}
+            <div class="jv-prop-acts"><button type="button" data-sheet="rate" data-id="${esc(r.id)}" data-decision="approved">Approve</button><button type="button" data-sheet="rate" data-id="${esc(r.id)}" data-decision="approved-anon">Approve without name</button><button type="button" data-sheet="rate" data-id="${esc(r.id)}" data-decision="rejected">Reject</button></div></li>`).join('')}</ul>`;
+        return head + `<ul class="jv-sheet-rows">${rows.map((m) => `<li><strong>${esc(m.name)}${m.topic ? ' · ' + esc(m.topic) : ''}</strong><small>${esc(when(m.at))}</small>${m.text ? `<p>${esc(m.text)}</p>` : ''}
+            <div class="jv-prop-acts">${m.email ? `<a href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: ' + (m.topic || 'your message'))}">Reply by email ↗</a>` : ''}</div></li>`).join('')}</ul>`;
+    }
+
+    function paintSheet() {
+        const sh = S.sheet;
+        if (!sh) return;
+        const d = sh.detail;
+        const tab = d.tab && d.tab !== S.product ? C.PRODUCTS.find((p) => p.key === d.tab) : null;
+        const until = sh.hidden ? (S.marks.find((m) => m.key === sh.key) || {}).until : null;
+        $('.jv-sheet-box').innerHTML = `<header><h3><span class="jv-chip lv-${sh.item.level}">${esc(sh.item.level)}</span> ${esc(d.title)}</h3><button type="button" class="jv-btn small" data-sheet="close" aria-label="Close">✕</button></header>
+            <p class="jv-sheet-line">${esc(sh.item.text)}</p>
+            ${d.facts.length ? `<dl class="jv-sheet-facts">${d.facts.map((f) => `<dt>${esc(f.label)}</dt><dd>${esc(/^\d{4}-\d{2}-\d{2}T/.test(f.value) ? when(f.value) : f.value)}</dd>`).join('')}</dl>` : ''}
+            ${sheetRows()}
+            ${d.actions.length || tab || d.links.length ? `<h4>What you can do</h4><div class="jv-actions">${d.actions.map((a) => `<button type="button" class="jv-btn" data-sheet="action" data-action="${esc(a.id)}"${a.job ? ` data-job="${esc(a.job)}"` : ''}${a.workflow ? ` data-workflow="${esc(a.workflow)}"` : ''}>${esc(a.label)}</button>`).join('')}${tab ? `<button type="button" class="jv-btn" data-go="${esc(tab.key)}">Open ${esc(tab.name)} →</button>` : ''}${d.links.map((l) => `<a class="jv-btn" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}${/↗$/.test(l.label) ? '' : ' ↗'}</a>`).join('')}</div>` : ''}
+            <div class="jv-ai"${sh.ai ? '' : ' hidden'}><span class="jv-eyebrow">Gemini</span><div class="jv-ai-text">${esc(sh.ai).replace(/\n/g, '<br>')}</div></div>
+            <div class="jv-actions jv-sheet-tools"><button type="button" class="jv-btn small" data-sheet="explain">Explain with Gemini</button>
+              ${sh.hidden ? `<button type="button" class="jv-btn small" data-sheet="mark" data-status="open">Show it again${until ? ` (hidden until ${esc(when(until))})` : ''}</button>` : `<button type="button" class="jv-btn small" data-sheet="mark" data-status="snoozed">Snooze 1 day</button><button type="button" class="jv-btn small" data-sheet="mark" data-status="week">Snooze 1 week</button><button type="button" class="jv-btn small" data-sheet="mark" data-status="dismissed">Dismiss 30 days</button>`}
+              <button type="button" class="jv-btn small" data-sheet="copy">Copy</button><button type="button" class="jv-btn small" data-sheet="share">Share</button></div>`;
+    }
+
+    function sheetText() {
+        const sh = S.sheet;
+        return [`[${sh.item.level}] ${sh.item.text}`].concat(sh.detail.facts.map((f) => `- ${f.label}: ${f.value}`), sh.detail.links.map((l) => `${l.label.replace(/ ↗$/, '')}: ${l.url}`)).join('\n');
+    }
+
+    const SHEET_ASK = {
+        'rerun-ci': (b) => `re-run the failed jobs of "${b.dataset.workflow}" on main`,
+        'run-job': (b) => `run ${b.dataset.job} again`
+    };
+
+    async function sheetAct(b) {
+        const sh = S.sheet;
+        if (!sh) return;
+        const what = b.dataset.sheet;
+        if (what === 'close') { closeSheet(); return; }
+        if (what === 'copy') { copy(sheetText(), 'Copied.'); return; }
+        if (what === 'share') {
+            const data = { title: 'Jarvis: ' + sh.detail.title, text: sheetText(), url: link() };
+            if (navigator.share) { try { await navigator.share(data); } catch (error) { /* closed */ } } else copy(data.text + '\n' + data.url, 'Copied with a link.');
+            return;
+        }
+        if (what === 'explain') {
+            sh.ai = 'Thinking…';
+            paintSheet();
+            const out = await call('ask', { question: `Explain this Jarvis briefing line in 3 to 5 sentences: what it means, why it matters, and the first thing to do. Quote the numbers.\n${sheetText()}`, snapshot: snapshot() });
+            if (S.sheet !== sh) return;
+            sh.ai = out.ok ? out.text : 'Gemini: ' + out.error;
+            paintSheet();
+            return;
+        }
+        if (what === 'mark') {
+            const status = b.dataset.status;
+            const out = await call('brief-mark', { key: sh.key, status, text: sh.item.text });
+            if (!out.ok) { toast('Not saved: ' + out.error, 5000); return; }
+            S.marks = S.marks.filter((m) => m.key !== sh.key).concat(status === 'open' ? [] : [Object.assign({ key: sh.key, status }, out)]);
+            closeSheet();
+            compute();
+            render();
+            toast({ snoozed: 'Snoozed for a day.', week: 'Snoozed for a week.', dismissed: 'Dismissed for 30 days.', open: 'Back in the briefing.' }[status], 3000);
+            return;
+        }
+        if (what === 'action') {
+            const action = b.dataset.action;
+            const ask = SHEET_ASK[action] ? SHEET_ASK[action](b) : (ACTION_ASK[action] || (() => action))(b.dataset.job);
+            if (!confirmRun(ask)) return;
+            b.disabled = true;
+            toast('Running…', 30000);
+            const out = await call('action-run', { action, job: b.dataset.job, workflow: b.dataset.workflow, proposal: sh.key });
+            b.disabled = false;
+            toast(out.ok ? (out.already ? `${out.ran} already ended with ${out.already}.` : `${ACTION_LABELS[action] || action}: ${out.ran ? out.ran + ' started' : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.`) : 'Not run: ' + out.error, 6000);
+            if (out.ok) loadExternal(['actions', 'health', 'jobs', 'github']);
+            return;
+        }
+        if (what === 'rate' || what === 'rate-all') {
+            const rows = (sh.rows && sh.rows.rows) || [];
+            const ids = what === 'rate' ? [b.dataset.id] : rows.map((r) => r.id);
+            const decision = what === 'rate' ? b.dataset.decision : 'approved';
+            if (what === 'rate-all' && !confirmRun(`approve ${ids.length} rating${ids.length === 1 ? '' : 's'} and show them on the CV`)) return;
+            const out = await call('rating-decide', { ids, decision });
+            if (!out.ok) { toast('Not saved: ' + out.error, 5000); return; }
+            sh.rows.rows = rows.filter((r) => !ids.includes(r.id));
+            sh.rows.total = Math.max(0, sh.rows.total - out.done);
+            paintSheet();
+            toast(`${fmt(out.done)} rating${out.done === 1 ? '' : 's'} ${decision === 'rejected' ? 'rejected' : 'approved'}.`, 3000);
+        }
     }
 
     async function markProposal(key, status) {
@@ -1365,9 +1512,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     // --- events ---------------------------------------------------------------------------------------------
 
     root.addEventListener('click', (event) => {
-        const t = event.target.closest('button, a, li[data-hit]');
+        if (event.target.matches('[data-sheet-root]')) { closeSheet(); return; }
+        const t = event.target.closest('button, a, li[data-hit], li[data-brief]');
         if (!t || !root.contains(t)) return;
         if (t.dataset.hit !== undefined) { choose(Number(t.dataset.hit)); return; }
+        if (t.dataset.brief !== undefined) { openSheet(t.dataset.brief); return; }
+        if (t.dataset.briefHidden !== undefined) { S.showHidden = !S.showHidden; render(); return; }
+        if (t.dataset.sheet !== undefined) { sheetAct(t); return; }
         if (t.dataset.settingsClose !== undefined) { closeSettings(); return; }
         if (t.dataset.goalAdd !== undefined) { const d = readSettings(); d.goals.push({ product: 'cv', metric: 'visits', period: 'week', target: '' }); paintSettings(d); return; }
         if (t.dataset.goalRemove !== undefined) { const d = readSettings(); d.goals.splice(Number(t.dataset.goalRemove), 1); paintSettings(d); return; }
@@ -1378,7 +1529,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.runAction) { runAction(t.dataset.runAction, t.dataset.job, t.dataset.key); return; }
         if (t.dataset.socialDecide) { decideSocial(t.dataset.key, t.dataset.socialDecide); return; }
         if (t.dataset.noticeSend || t.dataset.noticeDrop) { decideNotice(t.dataset.noticeSend || t.dataset.noticeDrop, !!t.dataset.noticeSend); return; }
-        if (t.dataset.go) { go(t.dataset.go); return; }
+        if (t.dataset.go) { closeSheet(); go(t.dataset.go); return; }
         if (t.dataset.mail) { S.mail = t.dataset.mail; compute(); render(); return; }
         if (t.dataset.run) { runJob(t.dataset.run); return; }
         if (t.dataset.report) { const [kind, period] = t.dataset.report.split(':'); sendReport(kind, period); return; }
@@ -1449,7 +1600,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (!visible()) return;
         const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((event.target || {}).tagName || '') || (event.target && event.target.isContentEditable);
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); palette($('.jv-palette').hidden); return; }
-        if (event.key === 'Escape') { palette(false); closeSettings(); return; }
+        if (event.key === 'Escape') { palette(false); closeSettings(); closeSheet(); return; }
+        if (!S.sheet && !typing && (event.key === 'Enter' || event.key === ' ') && event.target.closest && event.target.closest('li[data-brief]')) { event.preventDefault(); openSheet(event.target.closest('li[data-brief]').dataset.brief); return; }
+        if (S.sheet) return;
         if (typing || event.metaKey || event.ctrlKey || event.altKey) return;
         if (/^[1-9]$/.test(event.key) && C.PRODUCTS[Number(event.key) - 1]) go(C.PRODUCTS[Number(event.key) - 1].key);
         else if (event.key === 'r') refresh();

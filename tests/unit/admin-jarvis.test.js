@@ -1019,3 +1019,34 @@ test("social: approving a proposal adds the hub item and the decision; dismissin
   assert.throws(() => social.decide(live, p, "maybe", "2026-10-25"), /approved or dismissed/);
   assert.equal(social.state({ json: "{not json" }).items.length, 0);
 });
+
+test("rerunCi re-runs the failed jobs of the newest failed run on main, and says when the token cannot (#1695)", async () => {
+  const calls = [];
+  const runs = { workflow_runs: [{ id: 9, name: "Buffer batch queue", conclusion: "failure", html_url: "https://github.com/r/9" }, { id: 7, name: "Deploy", conclusion: "success", html_url: "https://github.com/r/7" }] };
+  const fetchOk = async (url, opts) => { calls.push([url, (opts || {}).method || "GET"]); return /rerun-failed-jobs/.test(url) ? json({}, 201) : json(runs); };
+  const out = await jarvis.rerunCi(fetchOk, "t", "Buffer batch queue");
+  assert.equal(out.run, 9);
+  assert.match(calls[1][0], /actions\/runs\/9\/rerun-failed-jobs$/);
+  assert.equal(calls[1][1], "POST");
+  assert.equal((await jarvis.rerunCi(fetchOk, "t", "Deploy")).already, "success");
+  await assert.rejects(() => jarvis.rerunCi(fetchOk, "t", "Nope"), /No finished run/);
+  const fetchNo = async (url) => (/rerun-failed-jobs/.test(url) ? json({ message: "Resource not accessible" }, 403) : json(runs));
+  await assert.rejects(() => jarvis.rerunCi(fetchNo, "t", "Buffer batch queue"), /Actions: write/);
+  await assert.rejects(() => jarvis.rerunCi(fetchOk, "", "Deploy"), /GITHUB_BUGS_TOKEN/);
+});
+
+test("decideRatings approves or rejects pending ratings only, and briefItems lists them without test senders", async () => {
+  const store = { r1: { status: "pending", name: "Ana", email: "ana@real.co", rating: 5, comment: "Great", createdAt: daysAgo(1) }, r2: { status: "approved", email: "b@real.co" }, r3: { status: "pending", email: "qa@example.com", rating: 1, createdAt: daysAgo(2) } };
+  const db = { collection: () => ({
+    doc: (id) => ({ get: async () => ({ exists: !!store[id], data: () => store[id] }), update: async (change) => { Object.assign(store[id], change); } }),
+    where: () => ({ limit: () => ({ get: async () => ({ docs: Object.keys(store).filter((id) => store[id].status === "pending").map((id) => ({ id, data: () => store[id] })) }) }) })
+  }) };
+  const listed = await jarvis.briefItems(db, { list: "ratings", days: 7, now: NOW.getTime() });
+  assert.deepEqual(listed.rows.map((r) => r.id), ["r1"]);
+  assert.equal(listed.rows[0].text, "Great");
+  const out = await jarvis.decideRatings(db, { ids: ["r1", "r2", "../bad"], decision: "approved-anon" });
+  assert.deepEqual([out.done, out.skipped], [1, 1]);
+  assert.deepEqual([store.r1.status, store.r1.isAnonymous], ["approved", true]);
+  assert.equal(store.r2.isAnonymous, undefined, "an approved rating is left alone");
+  await assert.rejects(() => jarvis.decideRatings(db, { ids: ["r3"], decision: "maybe" }), /Approve or reject/);
+});

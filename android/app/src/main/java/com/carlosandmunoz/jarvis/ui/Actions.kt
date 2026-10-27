@@ -28,7 +28,7 @@ import com.carlosandmunoz.jarvis.data.str
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" to "Re-send failed notices", "publish-hub" to "Publish the hub", "run-job" to "Run a job again")
+val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" to "Re-send failed notices", "publish-hub" to "Publish the hub", "run-job" to "Run a job again", "rerun-ci" to "Re-run failed CI jobs")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
 
 /** One action waiting for a yes: what it does, in words, and the call. Shown by [ConfirmAction]. */
@@ -47,13 +47,14 @@ fun ConfirmAction(pending: PendingAction?, close: () -> Unit) {
 }
 
 /** Runs one action through the jarvis function's action-run op, which logs it to jarvis_actions. */
-fun runAction(vm: JarvisViewModel, action: String, job: String? = null, proposal: String? = null) {
+fun runAction(vm: JarvisViewModel, action: String, job: String? = null, proposal: String? = null, workflow: String? = null) {
     val extra = buildMap {
         put("action", JsonPrimitive(action))
         job?.let { put("job", JsonPrimitive(it)) }
         proposal?.let { put("proposal", JsonPrimitive(it)) }
+        workflow?.let { put("workflow", JsonPrimitive(it)) }
     }
-    vm.act("action:$action:${job ?: ""}", "action-run", extra) { out ->
+    vm.act("action:$action:${job ?: workflow ?: ""}", "action-run", extra) { out ->
         (ACTION_LABELS[action] ?: action) + ": " + (out.str("ran")?.let { "$it started" } ?: (fmt(out.num("done")) + " done")) +
             (out.num("failed")?.takeIf { it > 0 }?.let { ", ${fmt(it)} failed" } ?: "") + (out.num("left")?.takeIf { it > 0 }?.let { ", ${fmt(it)} left" } ?: "") + "."
     }

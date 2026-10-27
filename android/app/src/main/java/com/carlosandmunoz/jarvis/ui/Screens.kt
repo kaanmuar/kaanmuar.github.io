@@ -67,6 +67,8 @@ private fun JsonObject?.ext(key: String): JsonObject? = this.obj("external").obj
 @Composable
 fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
     val snap = s.snapshot
+    var sheet by remember { mutableStateOf<JsonObject?>(null) }
+    var showHidden by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Ring(snap.num("readiness"), "READY")
         Spacer(Modifier.width(16.dp))
@@ -85,9 +87,13 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
             Row { ActionButton("Email it to me", "email-briefing" in s.running) { vm.act("email-briefing", "email-briefing", mapOf("text" to JsonPrimitive(text))) { if (it.bool("sent") == true) "Briefing sent." else "Mail is off." } } }
         }
         val items = snap.objs("briefing")
+        val hidden = snap.objs("briefHidden")
         if (items.isEmpty()) Muted("Nothing to flag.")
-        items.forEach { StatusRow(it.str("level"), it.str("text") ?: "", it.str("product")?.let { p -> CHIPS.toMap()[p] ?: humanize(p) }) }
+        items.forEach { b -> BriefRow(b) { sheet = b } }
+        if (hidden.isNotEmpty()) TextButton(onClick = { showHidden = !showHidden }) { Text((if (showHidden) "Hide " else "Show ") + "${hidden.size} snoozed or dismissed", fontSize = 12.sp) }
+        if (showHidden) hidden.forEach { b -> BriefRow(b, dim = true) { sheet = b } }
     }
+    sheet?.let { BriefSheet(it, s, vm, open) { sheet = null } }
 
     Proposals(s, vm, open)
 

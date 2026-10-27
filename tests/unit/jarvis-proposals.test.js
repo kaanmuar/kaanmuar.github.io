@@ -185,3 +185,54 @@ test("the weekly strategy runs Sunday 19:00 Bogotá and the settings keep a week
   assert.equal(jarvis.normalizeSettings({}).mail.weekly, true);
   assert.equal(jarvis.normalizeSettings({ mail: { weekly: false } }).mail.weekly, false);
 });
+
+test("each briefing line opens a detail: the rule's title and tab, the numbers behind it, links and actions (#1695)", () => {
+  const state = {
+    products: { inbox: { totals: { messages: 9, unanswered: 1, pending: 147, avg: 4.6 } } },
+    external: {
+      health: { ok: true, jobs: [{ job: "sweepReviews", ok: false, endedAt: "2026-10-25T10:00:00Z", error: "timeout" }], failures: { total: 62, causes: [{ label: "Bot protection", value: 40 }], hosts: [], latest: [] }, reruns: { held: 14, total: 30 } },
+      github: { ok: true, ci: [{ name: "E2E and Visual Tests", conclusion: "failure", at: "2026-10-25T09:00:00Z", url: "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/1", sha: "abc1234" }] },
+      email: { ok: true, totals: { processed: 400 }, rates: { bad: 1 }, blocklisted: [{ label: "spamcop", value: 122 }], suppressions: { blocks: [{ domain: "x.co", reason: "listed on spamcop" }] } }
+    },
+    thresholds: { heldReruns: 1, failuresWarn: 1, pendingRatings: 1 }
+  };
+  const lines = core.briefing(state);
+  const detail = (key) => core.briefDetail(lines.find((b) => b.key === key), state);
+  const ci = detail("ci:E2E and Visual Tests");
+  assert.equal(ci.title, "Get CI on main green again");
+  assert.deepEqual(ci.actions, [{ id: "rerun-ci", label: "Re-run the failed jobs", workflow: "E2E and Visual Tests" }]);
+  assert.equal(ci.links[0].url, "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/1");
+  assert.ok(ci.facts.some((f) => f.label === "Commit" && f.value === "abc1234"));
+  assert.deepEqual(detail("review:held").actions.map((a) => a.id), ["rerun-held"]);
+  assert.deepEqual(detail("job:sweepReviews").actions, [{ id: "run-job", label: "Run sweepReviews again", job: "sweepReviews" }]);
+  assert.ok(detail("review:failures").facts.some((f) => f.label === "Bot protection" && f.value === "40"));
+  const ratings = detail("inbox:pending");
+  assert.equal(ratings.list, "ratings");
+  assert.equal(ratings.tab, "inbox");
+  const listed = detail("email:blocklist");
+  assert.ok(listed.facts.some((f) => f.label === "Refused by spamcop" && f.value === "122"));
+  assert.ok(listed.links.some((l) => /spamcop/.test(l.url)));
+  lines.forEach((b) => { const d = core.briefDetail(b, state); assert.ok(d.title && Array.isArray(d.facts) && Array.isArray(d.actions), b.key); });
+});
+
+test("snoozed and dismissed briefing lines stay hidden until their date", () => {
+  const now = new Date("2026-10-25T12:00:00Z");
+  const items = [{ key: "a" }, { key: "b" }, { key: "c" }, { key: "d" }];
+  const saved = [{ key: "a", status: "snoozed", until: "2026-10-26T12:00:00Z" }, { key: "b", status: "week", until: "2026-10-20T00:00:00Z" }, { key: "c", status: "dismissed", until: "2026-11-24T12:00:00Z" }, { key: "d", status: "done", until: "2026-11-24T12:00:00Z" }];
+  const { open, hidden } = core.openBrief(items, saved, now);
+  assert.deepEqual(open.map((b) => b.key), ["b", "d"]);
+  assert.deepEqual(hidden.map((b) => b.key), ["a", "c"]);
+});
+
+test("markBrief snoozes for a day or a week, dismisses for 30 days, and open brings the line back", async () => {
+  const db = fakeDb();
+  const now = Date.parse("2026-10-25T12:00:00Z");
+  assert.equal((await proposals.markBrief(db, { key: "inbox:pending", status: "snoozed", text: "147 ratings wait" }, "carlos@x", now)).until, "2026-10-26T12:00:00.000Z");
+  assert.equal((await proposals.markBrief(db, { key: "ci:E2E/Visual", status: "week" }, "carlos@x", now)).until, "2026-11-01T12:00:00.000Z");
+  assert.ok(db.store["jarvis_brief_marks/ci:E2E_Visual"]);
+  assert.equal((await proposals.markBrief(db, { key: "ga4:swing", status: "dismissed" }, "carlos@x", now)).until, "2026-11-24T12:00:00.000Z");
+  assert.equal((await proposals.savedBrief(db)).length, 3);
+  await proposals.markBrief(db, { key: "inbox:pending", status: "open" }, "carlos@x", now);
+  assert.equal(db.store["jarvis_brief_marks/inbox:pending"], undefined);
+  await assert.rejects(() => proposals.markBrief(db, { key: "x", status: "later" }, "", now), /Snooze or dismiss/);
+});
