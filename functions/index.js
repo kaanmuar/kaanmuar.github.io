@@ -294,7 +294,7 @@ function decodePlace(value) {
   try { return decodeURIComponent(raw); } catch (error) { return raw; }
 }
 
-exports.noteCvVisit = functions.https.onRequest(async (req, res) => {
+exports.noteCvVisit = functions.runWith({ maxInstances: 10 }).https.onRequest(async (req, res) => {
   const origin = String(req.get("origin") || "");
   const allowed = CV_ORIGINS.has(origin);
   res.set("Access-Control-Allow-Origin", allowed ? origin : "https://carlosandmunoz.com");
@@ -3526,7 +3526,7 @@ function reviewHeaders(req, res) {
   res.set("Cache-Control", "no-store");
 }
 
-exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
+exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxInstances: 20, secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
   reviewHeaders(req, res);
   if (req.method === "OPTIONS") {
     res.status(204).send("");
@@ -4769,6 +4769,7 @@ exports.reviewRun = require("firebase-functions/v2/https").onRequest({
   memory: "512MiB",
   timeoutSeconds: 180,
   concurrency: 1,
+  maxInstances: 10,
   secrets: ["SENDGRID_API_KEY"]
 }, async (req, res) => {
   reviewHeaders(req, res);
@@ -5519,7 +5520,7 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
   return watch + "; " + acts + "; " + notices + "; " + social;
 });
 
-exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
+exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxInstances: 3, secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
   res.set("Access-Control-Allow-Origin", reviewOrigin(req));
   res.set("Vary", "Origin");
   res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
