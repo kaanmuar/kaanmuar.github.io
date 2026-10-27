@@ -75,6 +75,7 @@ test("wiring: hourly job, its secret and its export", () => {
   assert.ok(secrets.tiktokBusinessWatch.includes("QA_MAIL_APP_PASSWORD"));
   const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
   assert.match(index, /exports\.tiktokBusinessWatch = scheduled\(/);
+  assert.doesNotMatch(index, /\badmin\.(firestore|messaging|auth|storage)\(/, "index.js uses the modular admin SDK (getFirestore() and friends)");
   const pkg = require("../../functions/package.json");
   assert.ok(pkg.dependencies.imapflow && pkg.dependencies.mailparser);
 });
