@@ -102,7 +102,8 @@
     <script src="js/site-look.js"></script>
     <script>SiteLook.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap" as="style">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Fira+Code:wght@400;500&display=swap"></noscript>
     <style>
         :root {
@@ -531,8 +532,10 @@
         }
     </style>
     <style data-critical="css/site-look.css?v=20261104a">html[data-look] body{background-color:var(--bg, var(--bg-primary));background-image:var(--look-gradient);background-attachment:fixed;color:var(--text, var(--text-secondary))}html[data-look] .topbar{background:color-mix(in srgb, var(--bg-secondary) 42%, transparent);border-color:var(--look-edge);backdrop-filter:blur(var(--look-blur)) saturate(1.5);-webkit-backdrop-filter:blur(var(--look-blur)) saturate(1.5)}html[data-look] .nav,html[data-look] .runner-drawer{background-color:var(--look-bar);background-image:var(--look-bar-gradient);background-attachment:fixed}html[data-look] .btn-primary{background-color:var(--accent)!important;color:var(--on-accent)!important}html[data-look] .topbar #tour-start-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;height:36px;margin-left:4px;padding:0 14px 0 36px;border:0;border-radius:999px;background:linear-gradient(180deg, #b7f3f1 0%, #3ec4c8 34%, #14939b 100%);color:#f7fffe;font-weight:650;letter-spacing:0.01em;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 8px 16px rgba(13, 110, 118, 0.28);transition:transform 0.28s cubic-bezier(.2, .8, .2, 1), filter 0.2s ease}html[data-look] .topbar #tour-start-btn::before{content:"";position:absolute;left:5px;top:50%;width:26px;height:26px;margin-top:-13px;border-radius:50%;background:linear-gradient(180deg, #ffffff 0%, #e7f8f7 100%);box-shadow:0 1px 2px rgba(8, 60, 66, 0.22)}html[data-look] .topbar #tour-start-btn::after{content:"";position:absolute;left:14px;top:50%;margin-top:-5px;border-style:solid;border-width:5px 0 5px 8px;border-color:transparent transparent transparent #0d6e76}html[data-look] .topbar #tour-start-btn:hover{background:linear-gradient(180deg, #d7fffd 0%, #67d7da 36%, #1aa3ab 100%);color:#f7fffe;transform:scale(1.045);filter:brightness(1.06)}html[data-look] .topbar #theme-toggle,html[data-look] .topbar .lang-toggle{position:relative;isolation:isolate;border-color:transparent;background:transparent;transition:transform 0.28s cubic-bezier(.2, .8, .2, 1)}html[data-look] .topbar #theme-toggle::before,html[data-look] .topbar .lang-toggle::before{content:"";position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(183, 243, 241, 0.72) 48%, rgba(20, 147, 155, 0.28) 100%);box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 10px rgba(13, 110, 118, 0.18);z-index:-1;pointer-events:none}html[data-look] .topbar #theme-toggle:hover,html[data-look] .topbar .lang-toggle:hover{background:transparent;transform:scale(1.06)}@media (prefers-reduced-motion: reduce){html[data-look] .topbar #tour-start-btn,html[data-look] .topbar #theme-toggle,html[data-look] .topbar .lang-toggle{transition:none}html[data-look] .topbar #tour-start-btn:hover,html[data-look] .topbar #theme-toggle:hover,html[data-look] .topbar .lang-toggle:hover{transform:none;filter:none}}.skip-link{position:fixed;top:8px;left:8px;z-index:10000;padding:10px 16px;border-radius:8px;background:#12181f;color:#ffffff;font:600 15px/1.2 Inter, system-ui, sans-serif;text-decoration:none;transform:translateY(calc(-100% - 16px))}.skip-link:focus{transform:none;outline:3px solid #4db3bb;outline-offset:2px}html.dark-mode .skip-link{background:#ffffff;color:#12181f;outline-color:#0d6e76}main[tabindex="-1"]:focus{outline:none}</style>
-    <link rel="preload" href="css/site-look.css?v=20261104a" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="css/site-look.css?v=20261104a" as="style">
+    <link rel="stylesheet" href="css/site-look.css?v=20261104a" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/site-look.css?v=20261104a"></noscript>
+    <script src="js/async-css.js?v=1b01469eb2" async></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
@@ -2019,7 +2022,7 @@ function bindBoardChoices() {
 function ticketShell(t, inner, extraClass) {
     const cls = t.decision === 'accept' ? 'changed' : t.decision === 'keep' ? 'kept' : t.decision === 'ok' ? 'ok' : '';
     return `<div class="ticket-wrap" id="wrap-${t.key}">
-        <article class="ticket ${extraClass || ''} ${cls}" id="card-${t.key}" onclick="openTicket('${t.key}')">
+        <article class="ticket ${extraClass || ''} ${cls}" id="card-${t.key}" data-open-ticket="${t.key}">
             <div class="laser"></div>
             ${inner}
         </article>
@@ -2245,7 +2248,7 @@ function openTicket(key, opts = {}) {
     modal.innerHTML = `
         <div class="m-head">
             <div><span class="pill">${t.type}</span> <strong>${t.key}</strong> · ${stageLabel(t.column)}</div>
-            <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+            <button class="btn btn-ghost" data-sim-action="close-modal">Close</button>
         </div>
         <div class="scan-stage" id="ticketScanStage">
             <div class="laser"></div>
@@ -2261,7 +2264,7 @@ function openTicket(key, opts = {}) {
                 <div id="tab-desc">
                     <p style="white-space:pre-wrap;line-height:1.55">${t.description}</p>
                     ${(t.gaps || []).length ? `<div class="intake-gaps"><b>Filed with gaps</b><ul>${t.gaps.map(g => `<li>${escapeHtml(g)}</li>`).join('')}</ul></div>` : ''}
-                    ${t.blocks ? `<p><strong>Blocks</strong> <button type="button" class="btn btn-ghost" onclick="openTicket('${t.blocks}')">${t.blocks}</button></p>` : ''}
+                    ${t.blocks ? `<p><strong>Blocks</strong> <button type="button" class="btn btn-ghost" data-open-ticket="${t.blocks}">${t.blocks}</button></p>` : ''}
                 </div>
                 <div id="tab-ac" hidden>
                     <div class="ac" id="acBox">${escapeHtml(ac)}</div>
@@ -2270,8 +2273,8 @@ function openTicket(key, opts = {}) {
                         <p>${t.findings}</p>
                         <div class="ac">${escapeHtml(t.proposedAc)}</div>
                         <div class="row">
-                            <button class="btn btn-accept" onclick="this.disabled=true; resume('accept')">Accept rewrite</button>
-                            <button class="btn btn-reject" onclick="this.disabled=true; resume('keep')">Keep original</button>
+                            <button class="btn btn-accept" data-resume="accept">Accept rewrite</button>
+                            <button class="btn btn-reject" data-resume="keep">Keep original</button>
                         </div>
                     </div>
                 </div>
@@ -2451,7 +2454,7 @@ function stepTable(tc, platform) {
 function caseSheet(t, tc, platform) {
     const key = caseKey(platform, tc.id);
     const folder = CASE_FOLDERS[t.key] || t.key;
-    const check = `<label class="in-sprint"><input type="checkbox" ${tc.include ? 'checked' : ''} onchange="toggleCase('${t.key}','${tc.id}', this.checked)"> In this run</label>`;
+    const check = `<label class="in-sprint"><input type="checkbox" ${tc.include ? 'checked' : ''} data-toggle-case="${t.key}" data-case="${tc.id}"> In this run</label>`;
     const fields = platform === 'testrail'
         ? `<span>Section ${escapeHtml(folder)}</span><span>Template Test Case (Steps)</span><span>Type Functional</span><span>Priority ${escapeHtml(tc.priority)}</span><span>Estimate ${escapeHtml(tc.est)}</span><span>References ${t.key}</span>`
         : platform === 'zephyr'
@@ -2486,7 +2489,7 @@ function platformRepoHtml(platform) {
             <td>${escapeHtml(tc.title)}</td>
             <td>${escapeHtml(t.key)}</td>
             <td>${escapeHtml(tc.priority)}</td>
-            <td><input type="checkbox" ${tc.include ? 'checked' : ''} onchange="toggleCase('${t.key}','${tc.id}', this.checked)"></td>
+            <td><input type="checkbox" ${tc.include ? 'checked' : ''} data-toggle-case="${t.key}" data-case="${tc.id}"></td>
         </tr>`).join('');
     const sheets = focus ? caseSheet(focus.t, focus.tc, platform) : '';
     const place = platform === 'testrail'
@@ -2598,11 +2601,11 @@ function renderVerify() {
         <h2 style="margin-top:0">Sprint verification · Agent 4</h2>
         <p style="color:var(--muted)">Tick every control, then sign off. The four checks are the decision.</p>
         <div class="card">
-            <label class="check"><input type="checkbox" ${v.ac ? 'checked' : ''} onchange="toggleVerify('ac', this.checked)"> All sprint stories have testable acceptance criteria (post Agent 1).</label>
-            <label class="check"><input type="checkbox" ${v.auto ? 'checked' : ''} onchange="toggleVerify('auto', this.checked)"> Selected cases have automation results in ${(state.frameworks || ['Playwright', 'Cypress', 'Robot']).join(', ')}.</label>
-            <label class="check"><input type="checkbox" ${v.sev ? 'checked' : ''} onchange="toggleVerify('sev', this.checked)"> No Sev-1 defects remain in Ready for QA / Done.</label>
-            <label class="check"><input type="checkbox" ${v.notes ? 'checked' : ''} onchange="toggleVerify('notes', this.checked)"> Release notes + 3DS / capture / a11y evidence attached.</label>
-            <div class="row"><button class="btn btn-accept" onclick="signOff()">Sign off increment</button></div>
+            <label class="check"><input type="checkbox" ${v.ac ? 'checked' : ''} data-toggle-verify="ac"> All sprint stories have testable acceptance criteria (post Agent 1).</label>
+            <label class="check"><input type="checkbox" ${v.auto ? 'checked' : ''} data-toggle-verify="auto"> Selected cases have automation results in ${(state.frameworks || ['Playwright', 'Cypress', 'Robot']).join(', ')}.</label>
+            <label class="check"><input type="checkbox" ${v.sev ? 'checked' : ''} data-toggle-verify="sev"> No Sev-1 defects remain in Ready for QA / Done.</label>
+            <label class="check"><input type="checkbox" ${v.notes ? 'checked' : ''} data-toggle-verify="notes"> Release notes + 3DS / capture / a11y evidence attached.</label>
+            <div class="row"><button class="btn btn-accept" data-sim-action="sign-off">Sign off increment</button></div>
         </div>
         <div class="action-list">${actions}</div>`;
 }
@@ -3087,6 +3090,20 @@ function runnerSkin(fw, logHtml) {
     return '<div class="skin ' + bar[0] + '"><div class="skin-bar">' + bar[1] + '</div><div class="runner-log">' + logHtml + '</div></div>';
 }
 
+document.addEventListener('click', e => {
+    const resumeBtn = e.target.closest('[data-resume]');
+    if (resumeBtn) { resumeBtn.disabled = true; resume(resumeBtn.dataset.resume); return; }
+    const action = e.target.closest('[data-sim-action]');
+    if (action && action.dataset.simAction === 'close-modal') { closeModal(); return; }
+    if (action && action.dataset.simAction === 'sign-off') { signOff(); return; }
+    const ticket = e.target.closest('[data-open-ticket]');
+    if (ticket) openTicket(ticket.dataset.openTicket);
+});
+document.addEventListener('change', e => {
+    const box = e.target;
+    if (box.dataset.toggleCase) toggleCase(box.dataset.toggleCase, box.dataset.case, box.checked);
+    else if (box.dataset.toggleVerify) toggleVerify(box.dataset.toggleVerify, box.checked);
+});
 document.getElementById('nav').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return; setView(b.dataset.view);
 });
