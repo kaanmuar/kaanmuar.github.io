@@ -198,6 +198,51 @@ Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=lin
     </video:video>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/pick/debunking-ai-agent-accessibility-claims-and-solving-ai-align.html</loc>
+    <lastmod>2026-10-27</lastmod>
+    <image:image><image:loc>https://www.deque.com/wp-content/uploads/2026/10/alignment.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/first-public-working-draft-animation-triggers.html</loc>
+    <lastmod>2026-10-27</lastmod>
+    <image:image><image:loc>https://www.w3.org/assets/website-2021/images/w3c-opengraph-image.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/geo-is-a-distraction-here-s-where-the-real-opportunity-is-vi.html</loc>
+    <lastmod>2026-10-27</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/geo-460.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/02-release-day.html</loc>
+    <lastmod>2026-10-27</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-de.html</loc>
+    <lastmod>2026-10-27</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-es.html</loc>
+    <lastmod>2026-10-27</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-fr.html</loc>
+    <lastmod>2026-10-27</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-it.html</loc>
+    <lastmod>2026-10-27</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-pt.html</loc>
+    <lastmod>2026-10-27</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/tips-2026-10/03-self-review.html</loc>
     <lastmod>2026-10-27</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/03-self-review.jpg</image:loc></image:image>
@@ -291,151 +336,601 @@ Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=lin
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/04-u-telegram-com.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/04-u-telegram-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/uy5NnvqeAG8/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>telegram.com: 61. The gap: AI crawler access.</video:title>
+      <video:description>Every page has a title, and model-training crawlers are blocked by choice. But 10 AI answer or search crawlers are blocked.
+
+The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-telegram-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-telegram-com
+
+#GEO #AISearch #RobotsTxt #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/uy5NnvqeAG8</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/04-u-telegram-com-de.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/04-u-telegram-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/uy5NnvqeAG8/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>telegram.com: 61. Die Lücke: Zugriff für KI-Crawler.</video:title>
+      <video:description>Jede Seite hat einen Titel, und Crawler fürs Modelltraining sind bewusst gesperrt. Doch 10 KI-Antwort- oder Such-Crawler sind blockiert.
+
+Die Lektion für jedes Team: Entscheiden Sie in robots.txt pro Bot: Lassen Sie die Antwortmaschinen zu, von denen Sie zitiert werden wollen, und blockieren Sie nur Trainings-Crawler.
+
+Eine automatisierte Analyse öffentlicher Seiten am 21. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-telegram-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-telegram-com
+
+#GEO #AISearch #RobotsTxt #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/uy5NnvqeAG8</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/04-u-telegram-com-es.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/04-u-telegram-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/uy5NnvqeAG8/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>telegram.com: 61. El punto débil: Acceso de rastreadores de IA.</video:title>
+      <video:description>Cada página tiene título, y los rastreadores de entrenamiento de modelos están bloqueados a propósito. Pero 10 rastreadores de búsqueda o de respuestas con IA están bloqueados.
+
+La lección para cualquier equipo: Decide bot por bot en robots.txt: permite los motores de respuesta que quieres que te citen y bloquea solo los rastreadores de entrenamiento.
+
+Un análisis automatizado de páginas públicas el 21 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-telegram-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-telegram-com
+
+#GEO #AISearch #RobotsTxt #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/uy5NnvqeAG8</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/04-u-telegram-com-fr.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/04-u-telegram-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/uy5NnvqeAG8/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>telegram.com: 61. Le point faible : Accès des robots IA.</video:title>
+      <video:description>Chaque page a un titre, et les crawlers d’entraînement de modèles sont bloqués par choix. Mais 10 robots de recherche ou de réponses IA sont bloqués.
+
+La leçon pour chaque équipe : Décidez robot par robot dans robots.txt : autorisez les moteurs de réponse qui doivent vous citer, et ne bloquez que les robots d’entraînement.
+
+Une analyse automatisée des pages publiques, le 21 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-telegram-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-telegram-com
+
+#GEO #AISearch #RobotsTxt #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/uy5NnvqeAG8</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/04-u-telegram-com-it.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/04-u-telegram-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/uy5NnvqeAG8/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>telegram.com: 61. La lacuna: Accesso dei crawler AI.</video:title>
+      <video:description>Ogni pagina ha un titolo, e i crawler per il training dei modelli sono bloccati per scelta. Ma 10 crawler di ricerca o di risposte AI sono bloccati.
+
+La lezione per ogni team: Decidi bot per bot in robots.txt: consenti i motori di risposta da cui vuoi essere citato e blocca solo i crawler di training.
+
+Un’analisi automatica di pagine pubbliche: 21 ott. 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-telegram-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-telegram-com
+
+#GEO #AISearch #RobotsTxt #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/uy5NnvqeAG8</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/04-u-telegram-com-pt.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/04-u-telegram-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/uy5NnvqeAG8/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>telegram.com: 61. A lacuna: Acesso de crawlers de IA.</video:title>
+      <video:description>Toda página tem título, e os crawlers de treinamento de modelos são bloqueados por escolha. Mas 10 crawlers de busca ou de respostas de IA estão bloqueados.
+
+A lição para toda equipe: Decida bot a bot no robots.txt: libere os motores de resposta pelos quais você quer ser citado e bloqueie só os crawlers de treinamento.
+
+Uma análise automatizada de páginas públicas em 21 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-telegram-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-telegram-com
+
+#GEO #AISearch #RobotsTxt #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/uy5NnvqeAG8</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-23/03-u-monsterenergy-com.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/tNdyq1I9A3A/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>monsterenergy.com: 71. The gap: link names.</video:title>
+      <video:description>Every page has a title, and AI answer and search crawlers may read the start page. But links must have discernible text.
+
+The lesson for every team: Give every link text that says where it goes. An icon alone needs an aria-label.
+
+One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-monsterenergy-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-monsterenergy-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #A11y #WebDev #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/tNdyq1I9A3A</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-23/03-u-monsterenergy-com-de.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/tNdyq1I9A3A/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>monsterenergy.com: 71. Die Lücke: Linknamen.</video:title>
+      <video:description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Links brauchen erkennbaren Text.
+
+Die Lektion für jedes Team: Geben Sie jedem Link einen Text, der sagt, wohin er führt. Ein Icon allein braucht ein aria-label.
+
+Eine automatisierte Analyse öffentlicher Seiten am 22. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-monsterenergy-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-monsterenergy-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #A11y #WebDev #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/tNdyq1I9A3A</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-23/03-u-monsterenergy-com-es.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/tNdyq1I9A3A/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>monsterenergy.com: 71. El punto débil: nombres de enlaces.</video:title>
+      <video:description>Cada página tiene título, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero los enlaces deben tener texto discernible.
+
+La lección para cualquier equipo: Dale a cada enlace un texto que diga adónde lleva. Un icono solo necesita un aria-label.
+
+Un análisis automatizado de páginas públicas el 22 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-monsterenergy-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-monsterenergy-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #A11y #WebDev #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/tNdyq1I9A3A</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-23/03-u-monsterenergy-com-fr.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/tNdyq1I9A3A/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>monsterenergy.com: 71. Le point faible : les noms de liens.</video:title>
+      <video:description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais les liens doivent avoir un texte discernable.
+
+La leçon pour chaque équipe : Donnez à chaque lien un texte qui dit où il mène. Une icône seule a besoin d’un aria-label.
+
+Une analyse automatisée des pages publiques, le 22 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-monsterenergy-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-monsterenergy-com
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #A11y #WebDev #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/tNdyq1I9A3A</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-23/03-u-monsterenergy-com-it.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/tNdyq1I9A3A/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>monsterenergy.com: 71. La lacuna: i nomi dei link.</video:title>
+      <video:description>Ogni pagina ha un titolo, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma i link devono avere un testo riconoscibile.
+
+La lezione per ogni team: Dai a ogni link un testo che dica dove porta. Un’icona da sola ha bisogno di un aria-label.
+
+Un’analisi automatica di pagine pubbliche: 22 ott. 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-monsterenergy-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-monsterenergy-com
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #A11y #WebDev #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/tNdyq1I9A3A</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-23/03-u-monsterenergy-com-pt.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/tNdyq1I9A3A/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>monsterenergy.com: 71. A lacuna: nomes de links.</video:title>
+      <video:description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os links precisam ter texto discernível.
+
+A lição para toda equipe: Dê a todo link um texto que diga para onde ele leva. Um ícone sozinho precisa de um aria-label.
+
+Uma análise automatizada de páginas públicas em 22 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-monsterenergy-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-monsterenergy-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #A11y #WebDev #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/tNdyq1I9A3A</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-24/02-u-colombia-com.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/i_D_7s6LLTU/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>colombia.com: 64. The gap: JSON-LD.</video:title>
+      <video:description>Every page has a title, and AI answer and search crawlers may read the start page. But 2 JSON-LD blocks do not parse.
+
+The lesson for every team: Validate each JSON-LD block after every release. One stray comma hides all of it.
+
+One automated analysis of public pages on 23 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-colombia-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-colombia-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#StructuredData #Automation #SoftwareTesting #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/i_D_7s6LLTU</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-24/02-u-colombia-com-de.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/i_D_7s6LLTU/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>colombia.com: 64. Die Lücke: JSON-LD.</video:title>
+      <video:description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 2 JSON-LD-Blöcke lassen sich nicht parsen.
+
+Die Lektion für jedes Team: Validieren Sie jeden JSON-LD-Block nach jedem Release. Ein verirrtes Komma versteckt alles.
+
+Eine automatisierte Analyse öffentlicher Seiten am 23. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-colombia-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-colombia-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#StructuredData #Automation #SoftwareTesting #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/i_D_7s6LLTU</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-24/02-u-colombia-com-es.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/i_D_7s6LLTU/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>colombia.com: 64. El punto débil: JSON-LD.</video:title>
+      <video:description>Cada página tiene título, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 2 bloques JSON-LD no se pueden procesar.
+
+La lección para cualquier equipo: Valida cada bloque JSON-LD tras cada lanzamiento. Una coma suelta lo oculta todo.
+
+Un análisis automatizado de páginas públicas el 23 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-colombia-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-colombia-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#StructuredData #Automation #SoftwareTesting #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/i_D_7s6LLTU</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-24/02-u-colombia-com-fr.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/i_D_7s6LLTU/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>colombia.com: 64. Le point faible : JSON-LD.</video:title>
+      <video:description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais 2 blocs JSON-LD ne s’analysent pas.
+
+La leçon pour chaque équipe : Validez chaque bloc JSON-LD après chaque mise en production. Une virgule égarée masque tout.
+
+Une analyse automatisée des pages publiques, le 23 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-colombia-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-colombia-com
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#StructuredData #Automation #SoftwareTesting #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/i_D_7s6LLTU</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-24/02-u-colombia-com-it.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/i_D_7s6LLTU/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>colombia.com: 64. La lacuna: JSON-LD.</video:title>
+      <video:description>Ogni pagina ha un titolo, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma 2 blocchi JSON-LD non si leggono senza errori.
+
+La lezione per ogni team: Valida ogni blocco JSON-LD dopo ogni release. Una virgola di troppo nasconde tutto.
+
+Un’analisi automatica di pagine pubbliche: 23 ott. 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-colombia-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-colombia-com
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#StructuredData #Automation #SoftwareTesting #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/i_D_7s6LLTU</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-24/02-u-colombia-com-pt.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/i_D_7s6LLTU/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>colombia.com: 64. A lacuna: JSON-LD.</video:title>
+      <video:description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 2 blocos JSON-LD não fazem parse.
+
+A lição para toda equipe: Valide cada bloco JSON-LD após cada release. Uma vírgula perdida esconde tudo isso.
+
+Uma análise automatizada de páginas públicas em 23 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-colombia-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-colombia-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#StructuredData #Automation #SoftwareTesting #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/i_D_7s6LLTU</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-25/01-u-kemik-gt.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zvJ33npuc14/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>kemik.gt: 77. The gap: AI crawler access.</video:title>
+      <video:description>Every page has a title, and model-training crawlers are blocked by choice. But 4 AI answer or search crawlers are blocked.
+
+The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
+
+One automated analysis of public pages on 24 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-kemik-gt
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#GEO #AI #SoftwareTesting #QA #AISearch #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zvJ33npuc14</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-25/01-u-kemik-gt-de.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zvJ33npuc14/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>kemik.gt: 77. Die Lücke: Zugriff für KI-Crawler.</video:title>
+      <video:description>Jede Seite hat einen Titel, und Crawler fürs Modelltraining sind bewusst gesperrt. Doch 4 KI-Antwort- oder Such-Crawler sind blockiert.
+
+Die Lektion für jedes Team: Entscheiden Sie in robots.txt pro Bot: Lassen Sie die Antwortmaschinen zu, von denen Sie zitiert werden wollen, und blockieren Sie nur Trainings-Crawler.
+
+Eine automatisierte Analyse öffentlicher Seiten am 24. Okt. 2026, eine der meistbesuchten Websites ihres Landes, aus dem Länder-Scan von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-kemik-gt
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#GEO #AI #SoftwareTesting #QA #AISearch #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zvJ33npuc14</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-25/01-u-kemik-gt-es.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zvJ33npuc14/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>kemik.gt: 77. El punto débil: Acceso de rastreadores de IA.</video:title>
+      <video:description>Cada página tiene título, y los rastreadores de entrenamiento de modelos están bloqueados a propósito. Pero 4 rastreadores de búsqueda o de respuestas con IA están bloqueados.
+
+La lección para cualquier equipo: Decide bot por bot en robots.txt: permite los motores de respuesta que quieres que te citen y bloquea solo los rastreadores de entrenamiento.
+
+Un análisis automatizado de páginas públicas el 24 oct. 2026, uno de los sitios más visitados de su país, del barrido por países de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-kemik-gt
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#GEO #AI #SoftwareTesting #QA #AISearch #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zvJ33npuc14</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-25/01-u-kemik-gt-fr.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zvJ33npuc14/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>kemik.gt: 77. Le point faible : Accès des robots IA.</video:title>
+      <video:description>Chaque page a un titre, et les crawlers d’entraînement de modèles sont bloqués par choix. Mais 4 robots de recherche ou de réponses IA sont bloqués.
+
+La leçon pour chaque équipe : Décidez robot par robot dans robots.txt : autorisez les moteurs de réponse qui doivent vous citer, et ne bloquez que les robots d’entraînement.
+
+Une analyse automatisée des pages publiques, le 24 oct. 2026, sur l’un des sites les plus visités de son pays, issue du tour des pays de QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-kemik-gt
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#GEO #AI #SoftwareTesting #QA #AISearch #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zvJ33npuc14</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-25/01-u-kemik-gt-it.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zvJ33npuc14/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>kemik.gt: 77. La lacuna: Accesso dei crawler AI.</video:title>
+      <video:description>Ogni pagina ha un titolo, e i crawler per il training dei modelli sono bloccati per scelta. Ma 4 crawler di ricerca o di risposte AI sono bloccati.
+
+La lezione per ogni team: Decidi bot per bot in robots.txt: consenti i motori di risposta da cui vuoi essere citato e blocca solo i crawler di training.
+
+Un’analisi automatica di pagine pubbliche: 24 ott. 2026, uno dei siti più visitati del suo paese, dallo sweep per paese di QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-kemik-gt
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#GEO #AI #SoftwareTesting #QA #AISearch #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zvJ33npuc14</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-25/01-u-kemik-gt-pt.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zvJ33npuc14/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>kemik.gt: 77. A lacuna: Acesso de crawlers de IA.</video:title>
+      <video:description>Toda página tem título, e os crawlers de treinamento de modelos são bloqueados por escolha. Mas 4 crawlers de busca ou de respostas de IA estão bloqueados.
+
+A lição para toda equipe: Decida bot a bot no robots.txt: libere os motores de resposta pelos quais você quer ser citado e bloqueie só os crawlers de treinamento.
+
+Uma análise automatizada de páginas públicas em 24 out. 2026, um dos sites mais visitados do seu país, da varredura por país do QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-kemik-gt
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#GEO #AI #SoftwareTesting #QA #AISearch #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zvJ33npuc14</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/compare-2026-11/01-quiz-berlin-vienna.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/7VTt0hdaHgg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Berlin or Vienna: which city portal scored higher?</video:title>
+      <video:description>Two capital city portals, 20 pages each, analyzed by the same public-page review in October 2026. One of them leads by a single point.
+
+Your guess: Make your guess. The answer, with all six area scores, comes out tomorrow.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=quiz-berlin-vienna
+
+#WebQuality #Playwright #AI #QA #Quiz #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/7VTt0hdaHgg</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/compare-2026-11/01-quiz-berlin-vienna-de.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/7VTt0hdaHgg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Berlin oder Wien: Welches Stadtportal schnitt besser ab?</video:title>
+      <video:description>Zwei Hauptstadtportale, je 20 Seiten, im Oktober 2026 mit derselben Prüfung öffentlicher Seiten analysiert. Einer von beiden liegt nur einen Punkt vorn.
+
+Ihr Tipp: Geben Sie Ihren Tipp ab. Die Antwort mit allen sechs Bereichswerten kommt morgen.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=quiz-berlin-vienna
+
+#WebQuality #Playwright #AI #QA #Quiz #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/7VTt0hdaHgg</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/compare-2026-11/01-quiz-berlin-vienna-es.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/7VTt0hdaHgg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Berlín o Viena: ¿qué portal de ciudad obtuvo más puntos?</video:title>
+      <video:description>Dos portales de capitales, 20 páginas cada uno, analizados con la misma revisión de páginas públicas en octubre de 2026. Uno de ellos gana por un solo punto.
+
+Tu apuesta: Haz tu apuesta. La respuesta, con las seis puntuaciones por área, sale mañana.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=quiz-berlin-vienna
+
+#WebQuality #Playwright #AI #QA #Quiz #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/7VTt0hdaHgg</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/compare-2026-11/01-quiz-berlin-vienna-fr.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/7VTt0hdaHgg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Berlin ou Vienne : quel portail de ville a obtenu le meilleur score ?</video:title>
+      <video:description>Deux portails de capitales, 20 pages chacun, analysés par la même revue de pages publiques en octobre 2026. L'un d'eux mène d'un seul point.
+
+Votre pronostic : Faites votre pronostic. La réponse, avec les scores des six domaines, arrive demain.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=quiz-berlin-vienna
+
+#WebQuality #Playwright #AI #QA #Quiz #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/7VTt0hdaHgg</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/compare-2026-11/01-quiz-berlin-vienna-it.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/7VTt0hdaHgg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Berlino o Vienna: quale portale cittadino ha ottenuto di più?</video:title>
+      <video:description>Due portali di capitali, 20 pagine ciascuno, analizzati con la stessa revisione di pagine pubbliche a ottobre 2026. Uno dei due è avanti di un solo punto.
+
+La tua ipotesi: Fai la tua ipotesi. La risposta, con tutti e sei i punteggi per area, arriva domani.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=quiz-berlin-vienna
+
+#WebQuality #Playwright #AI #QA #Quiz #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/7VTt0hdaHgg</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/compare-2026-11/01-quiz-berlin-vienna-pt.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/7VTt0hdaHgg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Berlim ou Viena: qual portal de cidade teve a nota mais alta?</video:title>
+      <video:description>Dois portais de capitais, 20 páginas cada, analisados pela mesma revisão de páginas públicas em outubro de 2026. Um deles lidera por um único ponto.
+
+Seu palpite: Dê seu palpite. A resposta, com as notas das seis áreas, sai amanhã.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=quiz-berlin-vienna
+
+#WebQuality #Playwright #AI #QA #Quiz #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/7VTt0hdaHgg</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/launch-2026-10/en/a11y.html</loc>
@@ -463,9 +958,97 @@ Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=lin
     </video:video>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/pick/accessibility-testing-with-playwright-and-axe-core.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fuby4o6yupct9t54dakv9.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/ai-search-is-not-a-distraction-it-s-a-branding-channel.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://ipullrank.com/wp-content/uploads/2026/10/image1.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/china-wrote-the-first-geo-rulebook-after-a-tv-scandal-wester.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/china-geo-rulebook-780.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cypressconf-2026-answering-the-signal.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://storage.ghost.io/c/12/89/12899ca1-4786-4eea-b7e1-9c5268baa48a/content/images/2026/10/cypressconf-2026-blog-header-2x.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/emoji-and-accessibility-how-screen-readers-announce-emoji-an.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fk840xdek9o2feis3n9z2.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/ethanplusai-astro-conversion-kit-agent-skills-that-convert-a.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://opengraph.githubassets.com/1/ethanplusai/astro-conversion-kit</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://www.deque.com/wp-content/uploads/2026/10/Deque-Blog-Featured-Image-10.16.26-Find-Label-02-scaled.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/google-crawls-raw-and-encoded-bracket-urls-separately-via-se.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/google-bracket-urls-code-2459907273.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/google-explains-503s-robots-txt-limits-bracket-urls-seo-puls.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/seo-pulse-october-24-2026.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/how-to-check-core-web-vitals-for-1-000-urls-in-python-pagesp.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F9jk4hdyb1okki3vcuge1.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/moz-profound-partner-to-connect-seo-and-ai-visibility.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://moz.com/images/blog/Blog-OG-images/Moz-Profound-Partner-to-Connect-SEO-and-AI-Visibility-OG-Image.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1792681082&amp;s=be172cab30a2cb36ce07bef4701ebc16</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/show-hn-i-built-a-markdown-and-raw-html-blog-platform-scorin.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://bloffy.co/landing/og.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/w3c-and-the-state-of-the-web-in-the-ai-era.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://www.w3.org/assets/website-2021/images/w3c-opengraph-image.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/you-know-you-can-automate-screen-reader-tests-right.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F0fkqu3pa49b5f70cg70d.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/zhuyansen-new-term-radar-daily-radar-for-new-ai-terms-names-.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <image:image><image:loc>https://opengraph.githubassets.com/1/zhuyansen/new-term-radar</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/01-one-page-en.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/01-one-page-en.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zI7jR1nV8_I/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Every post, one page.</video:title>
+      <video:description>Tips, real site reviews and short clips from YouTube, TikTok, LinkedIn, X and Facebook, together in one feed you can search.
+
+Try this: Open the hub and filter by tips, site reviews or videos.
+
+Every post, in one place: https://carlosandmunoz.com/qa-review-social.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=one-page-en
+
+#SocialMedia #SoftwareTesting #OpenSource #QA #WebDev #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zI7jR1nV8_I</video:player_loc>
+      <video:publication_date>2026-10-26</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/02-one-page-es.html</loc>
@@ -516,36 +1099,6 @@ Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=lin
     <loc>https://carlosandmunoz.com/social/tips-2026-10/01-img-size-pt.html</loc>
     <lastmod>2026-10-26</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/02-release-day.html</loc>
-    <lastmod>2026-10-26</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-de.html</loc>
-    <lastmod>2026-10-26</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-es.html</loc>
-    <lastmod>2026-10-26</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-fr.html</loc>
-    <lastmod>2026-10-26</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-it.html</loc>
-    <lastmod>2026-10-26</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-pt.html</loc>
-    <lastmod>2026-10-26</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/03-u-whatsapp-com.html</loc>
