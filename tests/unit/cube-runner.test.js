@@ -49,8 +49,8 @@ test("case ids are read from the test title", () => {
   assert.equal(cube.caseId("Untitled"), "");
 });
 
-test("a failure the review saw pass is the script's to fix; an unanswered page judges nothing", () => {
-  assert.equal(cube.triage({ verdict: "pass" }, "Received: 0"), "test");
+test("a failure the review saw pass is flagged as a disagreement; an unanswered page judges nothing", () => {
+  assert.equal(cube.triage({ verdict: "pass" }, "Received: 0"), "disagree");
   assert.equal(cube.triage({ verdict: "risk" }, "Received: 3"), "site");
   assert.equal(cube.triage({}, "Received: 3"), "site");
   assert.equal(cube.triage({ verdict: "pass" }, "page.goto: Timeout 30000ms exceeded."), "unreachable");
@@ -61,7 +61,7 @@ test("each case becomes one row with its status, triage, and kept files", () => 
   const { cases, summary } = cube.collect(results, report);
   const row = (id) => cases.find((item) => item.id === id);
   assert.deepEqual(cases.map((item) => item.id), ["PR-01", "A11Y-01", "FN-02", "CT-02", "PERF-02"]);
-  assert.equal(row("PR-01").triage, "test");
+  assert.equal(row("PR-01").triage, "disagree");
   assert.equal(row("PR-01").error, "Expected: >= 1\nReceived: 0");
   assert.deepEqual(row("PR-01").artifacts, [{ name: "trace", path: "/tmp/a/trace.zip", type: "application/zip" }]);
   assert.equal(row("A11Y-01").triage, "site");
@@ -72,7 +72,7 @@ test("each case becomes one row with its status, triage, and kept files", () => 
   assert.equal(row("CT-02").triage, undefined);
   assert.equal(row("PERF-02").status, "skipped");
   assert.equal(row("PERF-02").title, "Field data stays good");
-  assert.deepEqual(summary, { total: 5, passed: 0, failed: 3, flaky: 1, skipped: 1, site: 1, test: 1, unreachable: 1, ms: 4211 });
+  assert.deepEqual(summary, { total: 5, passed: 0, failed: 3, flaky: 1, skipped: 1, site: 1, disagree: 1, unreachable: 1, ms: 4211 });
 });
 
 test("prepare writes the Playwright suite and a config, never the fix kit or a workflow", () => {
@@ -92,4 +92,61 @@ test("prepare writes the Playwright suite and a config, never the fix kit or a w
 
 test("a choice with no framework the Cube can run is refused", () => {
   assert.throws(() => cube.prepare(report, ["Cypress"], os.tmpdir()), /can run in the Cube yet/);
+});
+
+const queue = require("../../functions/cube.js");
+
+function fakeDb(reviews) {
+  const added = [];
+  return {
+    added,
+    collection(name) {
+      return {
+        doc: (id) => ({ get: async () => ({ exists: name === "url_reviews" && !!reviews[id], data: () => ({ report: reviews[id] }) }) }),
+        add: async (row) => { added.push({ name, row }); return { id: "run" + added.length }; }
+      };
+    }
+  };
+}
+
+test("the queue runs only frameworks the runner has, and falls back to Playwright", () => {
+  assert.deepEqual(queue.cleanFrameworks(["playwright", "Cypress"]), ["Playwright"]);
+  assert.deepEqual(queue.cleanFrameworks("Selenium"), ["Playwright"]);
+  assert.deepEqual(queue.cleanFrameworks(), ["Playwright"]);
+});
+
+test("a run is queued only for a report that has cases", async () => {
+  const db = fakeDb({ abc123: report, empty1: { host: "x.example", cases: [] } });
+  const out = await queue.enqueue(db, { reviewId: "abc123", frameworks: ["Cypress"], source: "nowhere" }, "carlos@example.com", Date.UTC(2026, 9, 27));
+  assert.deepEqual(out, { id: "run1", reviewId: "abc123", host: "shop.example.com", frameworks: ["Playwright"], cases: 4 });
+  assert.equal(db.added[0].name, "url_review_runs");
+  assert.equal(db.added[0].row.status, "queued");
+  assert.equal(db.added[0].row.source, "jarvis");
+  assert.equal(db.added[0].row.at, "2026-10-27T00:00:00.000Z");
+  await assert.rejects(queue.enqueue(db, { reviewId: "empty1" }, "", 0), /no cases/);
+  await assert.rejects(queue.enqueue(db, { reviewId: "../x" }, "", 0), /not a report id/);
+  await assert.rejects(queue.enqueue(db, { reviewId: "missing1" }, "", 0), /no cases/);
+});
+
+test("starting the job passes the run id to the container and reports Cloud Run's refusal", async () => {
+  const calls = [];
+  const ok = async (url, init) => { calls.push({ url, init }); return { ok: true, json: async () => ({ name: "operations/1" }) }; };
+  assert.equal(await queue.startJob(ok, "tok", "run9"), "operations/1");
+  assert.equal(calls[0].url, "https://run.googleapis.com/v2/projects/carlosm-interactive-cv/locations/us-central1/jobs/cube-runner:run");
+  assert.equal(calls[0].init.headers.Authorization, "Bearer tok");
+  assert.deepEqual(JSON.parse(calls[0].init.body).overrides.containerOverrides[0].env, [{ name: "RUN_ID", value: "run9" }]);
+  const refused = async () => ({ ok: false, status: 403, json: async () => ({ error: { message: "Permission denied" } }) });
+  await assert.rejects(queue.startJob(refused, "tok", "run9"), /refused the run \(403\): Permission denied/);
+});
+
+test("the push goes out once, when a run finishes, and names the failed cases", () => {
+  assert.equal(queue.finished({ status: "running" }, { status: "done" }), true);
+  assert.equal(queue.finished({ status: "done" }, { status: "done" }), false);
+  assert.equal(queue.finished({ status: "queued" }, { status: "running" }), false);
+  const done = queue.doneMessage({ status: "done", host: "shop.example.com", reviewId: "abc123", summary: { passed: 37, failed: 3, disagree: 1, flaky: 0 }, cases: [{ id: "MB-02", title: "Tablet width", status: "failed" }, { id: "FN-01", title: "Home", status: "passed" }] }, "https://x/r");
+  assert.equal(done.kind, "review");
+  assert.equal(done.title, "Run done: shop.example.com");
+  assert.equal(done.body, "37 passed, 3 failed, 1 disagree with the review. Tap to open the report.");
+  assert.deepEqual(done.lines, ["MB-02 Tablet width"]);
+  assert.equal(queue.doneMessage({ status: "failed", host: "h", reviewId: "r", error: "No run" }, "u").title, "Run failed: h");
 });

@@ -68,12 +68,12 @@ function caseId(title) {
 
 /**
  * site: the run confirms a problem on the site.
- * test: the review saw this pass but the script failed, so the script needs a look before anyone fixes the site.
+ * disagree: the review passed this case and the run failed it. Either the site changed or the script reads it differently; a person looks before anyone fixes the site.
  * unreachable: the page did not answer; nothing was judged.
  */
 function triage(item, error) {
   if (UNREACHABLE.test(error || "")) return "unreachable";
-  if (item && item.verdict === "pass") return "test";
+  if (item && item.verdict === "pass") return "disagree";
   return "site";
 }
 
@@ -114,7 +114,7 @@ function collect(results, report) {
 }
 
 function summarize(rows, stats) {
-  const summary = { total: rows.length, passed: 0, failed: 0, flaky: 0, skipped: 0, site: 0, test: 0, unreachable: 0, ms: Math.round((stats && stats.duration) || 0) };
+  const summary = { total: rows.length, passed: 0, failed: 0, flaky: 0, skipped: 0, site: 0, disagree: 0, unreachable: 0, ms: Math.round((stats && stats.duration) || 0) };
   rows.forEach((row) => {
     summary[row.status] += 1;
     if (row.triage) summary[row.triage] += 1;

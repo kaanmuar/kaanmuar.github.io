@@ -28,7 +28,7 @@ async function local() {
   const result = await cube.run(report, { dir, frameworks, onLine: (line) => process.stdout.write(line + "\n") });
   fs.writeFileSync(path.join(dir, "cube-result.json"), JSON.stringify(result, null, 2));
   const s = result.summary;
-  console.log("\n" + s.passed + " passed, " + s.failed + " failed (" + s.site + " site, " + s.test + " test, " + s.unreachable + " unreachable), " + s.flaky + " flaky, " + s.skipped + " left to a person. " + path.join(dir, "cube-result.json"));
+  console.log("\n" + s.passed + " passed, " + s.failed + " failed (" + s.site + " site, " + s.disagree + " disagree with the review, " + s.unreachable + " unreachable), " + s.flaky + " flaky, " + s.skipped + " left to a person. " + path.join(dir, "cube-result.json"));
 }
 
 async function job(runId) {

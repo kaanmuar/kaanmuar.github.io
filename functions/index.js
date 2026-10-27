@@ -6,7 +6,7 @@
 
 // Import necessary Firebase and SendGrid modules
 const functions = require("firebase-functions/v1");
-const { initializeApp } = require("firebase-admin/app");
+const { initializeApp, applicationDefault } = require("firebase-admin/app");
 const { getFirestore, FieldValue, Timestamp, AggregateField } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
 const { getAuth } = require("firebase-admin/auth");
@@ -4844,6 +4844,7 @@ const jarvisSum = (field) => AggregateField.sum(field);
 const jarvisSources = require("./jarvis-sources");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
+const cube = require("./cube");
 const jarvisNotify = require("./jarvis-notify");
 const jarvisMailPush = require("./jarvis-mail-push");
 const jarvisWebPush = require("./jarvis-webpush");
@@ -5071,6 +5072,25 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
     const push = await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.failedMessage(row.url, reason)).catch(() => null);
     await snap.ref.update({ status: "failed", error: reason, push, doneAt: new Date().toISOString() });
   }
+});
+
+exports.cubeRunStart = functions.runWith({ timeoutSeconds: 60, memory: "256MB" }).firestore.document(cube.RUNS + "/{id}").onCreate(async (snap) => {
+  try {
+    const { access_token: token } = await applicationDefault().getAccessToken();
+    await snap.ref.update({ execution: await cube.startJob(fetch, token, snap.id) });
+  } catch (error) {
+    console.error("Cube run " + snap.id + " did not start:", error);
+    await snap.ref.update({ status: "failed", error: String((error && error.message) || error).slice(0, 300), finishedAt: new Date().toISOString() });
+  }
+});
+
+exports.cubeRunDone = functions.runWith({ timeoutSeconds: 60, memory: "256MB" }).firestore.document(cube.RUNS + "/{id}").onUpdate(async (change) => {
+  const run = change.after.data() || {};
+  if (!cube.finished(change.before.data(), run)) return;
+  const db = getFirestore();
+  const tokens = run.token ? [run.token] : await jarvisPush.targets(db, "alerts");
+  const link = customerMail.pageUrl("en", { report: run.reviewId });
+  await jarvisPush.send(getMessaging(), db, tokens, cube.doneMessage(run, link)).catch((error) => console.error("Cube run push failed:", error));
 });
 
 async function jarvisUsers() {
