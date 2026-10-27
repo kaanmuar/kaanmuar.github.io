@@ -61,6 +61,9 @@ const EXTERNAL = {
   platform: { ok: true, needs: ['Costs: turn on the billing export.'], functions: { executions: 3000, notOk: 2800, failures: 4, failureRate: 0.13, byFunction: [{ label: 'reviewUrl', value: 4 }], kinds: [{ label: 'timeout', value: 4 }], latest: [], capped: false }, gemini: { days: 7, requests: 92, ok: 10, errorRate: 89.1, byClass: [], failedMethods: [{ label: 'ListModels', value: 82 }] }, firestore: { reads: 20000, writes: 900, deletes: 10, readsFreePct: 40, writesFreePct: 4.5, deletesFreePct: 0.05 }, users: { total: 9, newInRange: 2, activeInRange: 4 } },
   'social-proposals': { ok: true, built: '2026-10-25T06:00:00Z', proposals: [{ id: 'fid-gone', title: 'Google drops FID from Core Web Vitals', source: 'web.dev', lang: 'en', score: 9, summary: 'INP replaced FID.', url: 'https://web.dev/' }] },
   'social-runs': { ok: true, runs: [{ name: 'Buffer', status: 'completed', conclusion: 'success', at: '2026-10-25T06:00:00Z', event: 'schedule', url: 'https://github.com/' }, { name: 'Facebook Page', status: 'completed', conclusion: 'failure', at: '2026-10-25T07:00:00Z', event: 'schedule', url: 'https://github.com/' }] },
+  mailbox: { ok: true, days: 30, partial: false, aliasCount: 19, plan: { name: 'Premium - Monthly', retentionDays: 180 }, smtp: { month: 2, monthLimit: 12000, today: 2, dayLimit: 400 },
+    totals: { mails: 372, forwarded: 369, bounced: 0, refused: 0, unknown: 3, queued: 0 }, aliases: [{ alias: 'qa', mails: 364, forwarded: 364, bounced: 0, refused: 0, queued: 0, last: '2026-10-27T20:06:07Z' }], problems: [],
+    canary: { state: 'ok', sentAt: '2026-10-27T14:10:00Z', receivedAt: '2026-10-27T14:10:38Z', seconds: 38, history: [] }, needs: [] },
   'mail-codes': { ok: true, codes: [{ service: 'tiktok', label: 'TikTok', code: '739201', link: '', alias: 'tiktok', from: 'TikTok <no-reply@account.tiktok.com>', subject: 'Your TikTok verification code', trusted: true, at: '2026-10-27T17:00:00Z' }] },
   'share-list': { ok: true, items: [{ id: 'old1', kind: 'image', caption: 'Launch day', title: 'Launch day photo', status: 'posted', at: '2026-10-24T15:00:00Z', url: 'https://github.com/' }] },
   'share-draft': { ok: true, id: 'new1', kind: 'image', draft: { lang: 'en', kind: 'tip', title: 'Check SSL', alt: 'A card', linkedin: 'LinkedIn draft', x: 'X draft', facebook: 'Facebook draft', instagram: 'Instagram draft' }, note: '' },
@@ -152,7 +155,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'proposals', 'brief-marks']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -195,6 +198,8 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(systems).toContainText('Connections');
     await expect(systems.locator('[data-panel-id="systems-codes"]')).toContainText('TikTok');
     await expect(systems.locator('[data-copy-code="739201"]')).toBeVisible();
+    await expect(systems.locator('[data-panel-id="systems-mailbox"]')).toContainText('came back in 38 s');
+    await expect(systems.locator('[data-panel-id="systems-mailbox"]')).toContainText('2 / 12,000');
     await expect(systems).toContainText('DMARC');
     await expect(systems).toContainText('reviewUrl');
     await expect(systems).toContainText('billing export');
