@@ -56,17 +56,18 @@ export function createHubEditor(deps) {
 
     async function pull() {
         $('hub-admin-status').textContent = 'Loading the hub…';
-        const [feedJson, captionsJson, editsJson, proposalsJson, bufferJson, facebookJson] = await Promise.all([
+        const [feedJson, captionsJson, editsJson, proposalsJson, bufferJson, facebookJson, openJson] = await Promise.all([
             fetchJson('assets/social/feed.json', { posts: [], asOf: '' }),
             fetchJson('assets/social/captions.json', {}),
             fetchJson('assets/social/edits.json', null),
             fetchJson('assets/social/proposals.json', null),
             fetchJson('assets/social/buffer.json', null),
-            fetchJson('assets/social/facebook.json', null)
+            fetchJson('assets/social/facebook.json', null),
+            fetchJson('assets/social/open-social.json', null)
         ]);
         proposals.load(proposalsJson);
         feed = feedJson;
-        ledgers = [bufferJson, facebookJson];
+        ledgers = [bufferJson, facebookJson, openJson];
         captions = captionsJson;
         published = Admin.clean(editsJson);
         saved = published;
@@ -163,7 +164,7 @@ export function createHubEditor(deps) {
         const fields = nets.map((net) => `<label class="filter-label">${NET_NAMES[net]}<textarea name="cap-${net}" rows="4" maxlength="5000">${escapeHtml(own[net] ?? base[net] ?? '')}</textarea></label>`).join('');
         return `<form class="hub-admin-edit">${date}`
             + `<label class="cv-check"><input type="checkbox" name="hidden"${row.hidden ? ' checked' : ''}> Hide from the hub</label>`
-            + (fields ? `<div class="hub-admin-captions">${fields}</div><p class="cv-note">The hub's copy menu offers these captions. Posts Buffer or the Page already have queued keep their own text.</p>` : '')
+            + (fields ? `<div class="hub-admin-captions">${fields}</div><p class="cv-note">The hub's copy menu offers these captions. Posts Buffer or the Page already have queued keep their own text. Bluesky and Mastodon post the X caption.</p>` : '')
             + '<div class="hub-admin-buttons"><button type="submit" class="cv-btn">Save</button>'
             + (row.edited ? `<button type="button" class="cv-btn" data-act="${row.item ? 'remove' : 'reset'}">${row.item ? 'Remove the item' : 'Drop my edits'}</button>` : '')
             + '<button type="button" class="cv-btn" data-act="close">Close</button></div></form>';
