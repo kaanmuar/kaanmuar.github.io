@@ -6,6 +6,7 @@
     <string name="widget_goals_desc">Progress toward each goal</string>
     <string name="widget_needs_desc">Owner notices and social picks waiting for your OK, and Jarvis\'s suggestions</string>
     <string name="widget_alerts_desc">Today\'s briefing: every alert and warning, each opening where it happened</string>
+    <string name="widget_ask_desc">Ask by voice, review a link or post a photo in one tap</string>
     <string name="tile_label">Jarvis</string>
     <string name="share_label">Review with Jarvis</string>
     <string name="share_post_label">Post with Jarvis</string>

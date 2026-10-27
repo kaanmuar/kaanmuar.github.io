@@ -24,10 +24,12 @@ import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
+import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.ColumnScope
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
@@ -39,7 +41,10 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import com.carlosandmunoz.jarvis.AssistActivity
 import com.carlosandmunoz.jarvis.ConfirmActivity
+import com.carlosandmunoz.jarvis.PickPostActivity
+import com.carlosandmunoz.jarvis.ShareActivity
 import com.carlosandmunoz.jarvis.R
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -248,6 +253,37 @@ private fun AlertsBody(saved: Pair<JsonObject, Long>?) {
         if (alerts.size > fits) Text("+${alerts.size - fits} more in Jarvis", style = Muted, maxLines = 1)
         else if (alerts.isEmpty()) Text("Nothing in today's briefing. Updated " + ago(saved.second) + ".", style = Muted, maxLines = 2)
     }
+}
+
+// ---------------------------------------------------------------- Ask Jarvis bar
+
+class AskWidget : GlanceAppWidget() {
+    override suspend fun provideGlance(context: Context, id: GlanceId) = provideContent { AskBody() }
+}
+
+class AskWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget = AskWidget() }
+
+@Composable
+private fun AskBody() {
+    val context = LocalContext.current
+    val ask = Intent(context, AssistActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val review = Intent(context, ShareActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val post = Intent(context, PickPostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.Center) { Row(
+        GlanceModifier.fillMaxWidth().height(56.dp).cornerRadius(28.dp).background(ImageProvider(R.drawable.widget_glass)).padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(GlanceModifier.defaultWeight().fillMaxHeight().clickable(actionStartActivity(ask)), verticalAlignment = Alignment.CenterVertically) {
+            Image(ImageProvider(R.drawable.widget_cube), null, GlanceModifier.size(18.dp))
+            Spacer(GlanceModifier.width(10.dp))
+            Text("Ask Jarvis…", style = TextStyle(color = color(Art.MUTED), fontSize = 14.sp), maxLines = 1, modifier = GlanceModifier.defaultWeight())
+            Image(ImageProvider(R.drawable.widget_mic), "Ask by voice", GlanceModifier.size(22.dp))
+        }
+        Spacer(GlanceModifier.width(14.dp))
+        Image(ImageProvider(R.drawable.widget_review), "Review a URL", GlanceModifier.size(22.dp).clickable(actionStartActivity(review)))
+        Spacer(GlanceModifier.width(14.dp))
+        Image(ImageProvider(R.drawable.widget_post), "Post a photo or video", GlanceModifier.size(22.dp).clickable(actionStartActivity(post)))
+    } }
 }
 
 // ---------------------------------------------------------------- Goals

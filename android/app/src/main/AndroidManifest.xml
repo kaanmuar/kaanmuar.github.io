@@ -107,6 +107,16 @@
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_alerts" />
         </receiver>
+        <receiver android:name=".home.AskWidgetReceiver" android:exported="true" android:label="Ask Jarvis">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_ask" />
+        </receiver>
+        <activity
+            android:name=".PickPostActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Jarvis.Sheet" />
         <activity
             android:name=".ConfirmActivity"
             android:exported="false"
