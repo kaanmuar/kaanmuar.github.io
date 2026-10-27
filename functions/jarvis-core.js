@@ -720,6 +720,118 @@
         return (list || []).filter((p) => !hidden.has(p.key));
     }
 
+    // Snooze hides a briefing line for a day or a week, Dismiss for a month; a saved state is { key, status, until }.
+    const BRIEF_HIDE_DAYS = { snoozed: 1, week: 7, dismissed: 30 };
+    function openBrief(items, saved, now) {
+        const at = (now || new Date()).getTime();
+        const hidden = new Set((saved || []).filter((s) => BRIEF_HIDE_DAYS[s.status] && Date.parse(s.until) > at).map((s) => s.key));
+        return { open: (items || []).filter((b) => !hidden.has(b.key)), hidden: (items || []).filter((b) => hidden.has(b.key)) };
+    }
+
+    const BRIEF_LINKS = {
+        github: 'https://github.com/kaanmuar/kaanmuar.github.io/actions', sendgrid: 'https://app.sendgrid.com/suppressions/blocks', spamcop: 'https://www.spamcop.net/bl.shtml',
+        paypal: 'https://www.paypal.com/resolutioncenter', ga4: 'https://analytics.google.com/analytics/web/#/p495572902/reports/intelligenthome',
+        admin: 'https://carlosandmunoz.com/admin.html', cloudflare: 'https://dash.cloudflare.com/', firebase: 'https://console.firebase.google.com/project/carlosm-interactive-cv/functions'
+    };
+
+    /* What a briefing line opens: a title and tab from PROPOSAL_RULES, the numbers behind it, links, the actions the jarvis
+       function can run (action-run ids), and list: 'ratings' | 'messages' when the sheet loads rows through brief-items. */
+    function briefDetail(item, state) {
+        const k = (item && item.key) || '';
+        const s = state || {};
+        const ext = s.external || {};
+        const p = s.products || {};
+        const tail = k.slice(k.indexOf(':') + 1);
+        const rule = PROPOSAL_RULES.find((r) => k === r.prefix || k.startsWith(r.prefix));
+        const t = rule && rule.title;
+        const facts = [], links = [], actions = [];
+        const fact = (label, value) => { if (value !== null && value !== undefined && value !== '') facts.push({ label, value: String(value) }); };
+        const link = (label, url) => { if (url) links.push({ label, url }); };
+        const act = (id, label, extra) => actions.push(Object.assign({ id, label }, extra || {}));
+        const name = (key) => (PRODUCTS.find((r) => r.key === key) || {}).name || key;
+        const out = { title: (typeof t === 'function' ? t(rule.group ? 1 : item) : t) || item.text, tab: (rule && rule.tab) || (item.product !== 'overview' ? item.product : null), facts, links, actions, list: null };
+        const health = ext.health || {};
+        const mail = ext.email || {};
+        const pf = ext.platform || {};
+        if (k.startsWith('ci:')) {
+            const run = ((ext.github || {}).ci || []).find((r) => r.name === tail) || {};
+            fact('Workflow', tail); fact('Result', run.conclusion); fact('Commit', run.sha); fact('Finished', run.at);
+            link('Open the run on GitHub', run.url || BRIEF_LINKS.github);
+            act('rerun-ci', 'Re-run the failed jobs', { workflow: tail });
+        } else if (k === 'review:failures') {
+            const f = health.failures || {};
+            fact('Failed runs', f.total);
+            (f.causes || []).slice(0, 5).forEach((c) => fact(c.label, c.value));
+            (f.hosts || []).slice(0, 3).forEach((h) => fact('Site: ' + h.label, h.value));
+            (f.latest || []).slice(0, 3).forEach((r) => fact('Latest: ' + r.host, r.cause));
+        } else if (k === 'review:held') {
+            fact('Held re-runs', (health.reruns || {}).held); fact('Re-runs in range', (health.reruns || {}).total);
+            act('rerun-held', 'Send the held re-runs');
+        } else if (k.startsWith('job:')) {
+            const job = (health.jobs || []).find((j) => j.job === tail) || {};
+            fact('Job', tail); fact('Started', job.startedAt); fact('Ended', job.endedAt); fact('Error', job.error || job.note);
+            link('Function logs', BRIEF_LINKS.firebase);
+            act('run-job', 'Run ' + tail + ' again', { job: tail });
+        } else if (k.startsWith('scheduler:')) {
+            const job = ((ext.jobs || {}).jobs || []).find((j) => j.name === tail) || {};
+            fact('Job', tail); fact('Schedule', job.schedule && job.schedule + (job.timeZone ? ' (' + job.timeZone + ')' : '')); fact('Last attempt', job.lastAttempt); fact('Next run', job.nextRun); fact('Error', job.error);
+            act('run-job', 'Run ' + tail + ' again', { job: tail });
+        } else if (k === 'email:blocklist') {
+            (mail.blocklisted || []).forEach((l) => fact('Refused by ' + l.label, l.value));
+            ((mail.suppressions || {}).blocks || []).filter((r) => /list|spamcop|spamhaus|barracuda/i.test(r.reason)).slice(0, 3).forEach((r) => fact('Blocked at ' + r.domain, r.reason));
+            link('SendGrid blocks', BRIEF_LINKS.sendgrid); link('SpamCop lookup', BRIEF_LINKS.spamcop);
+        } else if (/^email:(spam|bad)$/.test(k)) {
+            const m = mail.totals || {};
+            fact('Processed', m.processed); fact('Bounces', m.bounces); fact('Blocks', m.blocks); fact('Spam reports', m.spam_reports); fact('Bad rate', (mail.rates || {}).bad !== undefined ? mail.rates.bad + '%' : null);
+            link('SendGrid suppressions', BRIEF_LINKS.sendgrid);
+        } else if (k === 'inbox:unanswered' || k === 'inbox:pending') {
+            const i = (p.inbox || {}).totals || {};
+            fact('Messages in range', i.messages); fact('No answer yet', i.unanswered); fact('Ratings waiting', i.pending); fact('Average rating', i.avg);
+            out.list = k === 'inbox:pending' ? 'ratings' : 'messages';
+            link('Open the admin inbox', BRIEF_LINKS.admin);
+        } else if (k === 'ga4:swing') {
+            const groups = (ext.ga4 || {}).groups || [];
+            fact('Sessions', groups.reduce((n, g) => n + g.sessions, 0)); fact('Period before', groups.reduce((n, g) => n + g.priorSessions, 0));
+            groups.slice().sort((a, b) => (a.sessions - a.priorSessions) - (b.sessions - b.priorSessions)).slice(0, 4).forEach((g) => fact(g.group, g.sessions + ' vs ' + g.priorSessions));
+            ((ext.ga4 || {}).sources || []).slice(0, 3).forEach((r) => fact('Source: ' + r.label, r.value + ' vs ' + r.prior));
+            link('Open GA4', BRIEF_LINKS.ga4);
+        } else if (/^(cv|studio|lab|review):(swing|anomaly|source)$/.test(k)) {
+            const sum = p[item.product] || {};
+            const kpi = (sum.kpis || [])[0] || {};
+            fact(kpi.label, kpi.value); fact('Period before', kpi.prior);
+            if (sum.anomaly) fact('Today vs daily average', sum.anomaly.last + ' vs ' + sum.anomaly.mean);
+            ((sum.lists || {}).sources || []).slice(0, 4).forEach((r) => fact('Source: ' + r.label, r.value));
+        } else if (/^(uptime|slow|speed):/.test(k)) {
+            const page = (((k.startsWith('speed:') ? ext.speed : ext.uptime) || {}).pages || []).find((r) => r.product === item.product) || {};
+            fact('Page', page.name); fact('Status', page.status); fact('Answer time', page.ms !== undefined ? page.ms + ' ms' : null); fact('Mobile score', page.score); fact('Error', page.error);
+            link('Open the page', page.url); link('Cloudflare', BRIEF_LINKS.cloudflare);
+        } else if (k === 'tls') {
+            fact('Days left', (ext.uptime || {}).tlsDaysLeft);
+        } else if (k.startsWith('money:')) {
+            const m = ext.money || {};
+            fact('Revenue', (m.revenue || {}).usd !== undefined ? m.revenue.usd + ' USD' : null); fact('Sales', (m.revenue || {}).count); fact('Period before', (m.prior || {}).usd !== undefined ? m.prior.usd + ' USD' : null);
+            fact('Refunded', m.refundsUsd ? m.refundsUsd + ' USD' : null); fact('Open disputes', (m.paypal || {}).disputesOpen);
+            if (k === 'money:disputes') link('PayPal resolution center', BRIEF_LINKS.paypal);
+        } else if (k.startsWith('platform:')) {
+            const f = pf.functions || {}, g = pf.gemini || {}, fs = pf.firestore || {};
+            if (k === 'platform:failures') { fact('Failed runs (24 h)', f.failures); fact('Failure rate', f.failureRate !== undefined ? f.failureRate + '%' : null); (f.byFunction || []).slice(0, 4).forEach((r) => fact(r.label, r.value)); link('Function logs', BRIEF_LINKS.firebase); }
+            if (k === 'platform:gemini') { fact('Calls', g.requests); fact('Error rate', g.errorRate + '%'); (g.failedMethods || []).slice(0, 4).forEach((r) => fact(r.label, r.value)); }
+            if (k === 'platform:reads') { fact('Reads today', fs.reads); fact('Share of the free quota', fs.readsFreePct + '%'); }
+        } else if (k.startsWith('goal:')) {
+            const g = (s.goals || []).find((r) => 'goal:' + r.key === k) || {};
+            fact('Goal', g.label); fact('Now', g.value); fact('Target', g.target); fact('Time gone', g.elapsed !== undefined ? g.elapsed + '%' : null); fact('Pace', g.projected);
+        } else if (k === 'hub:stale' || k === 'hub:ga') {
+            fact('Updated', (p.hub || {}).updatedAt);
+            if (k === 'hub:stale') act('publish-hub', 'Publish the Social hub');
+        } else if (k.startsWith('safety:')) {
+            const c = ((ext.safety || {}).checks || []).find((r) => 'safety:' + r.key === k) || {};
+            fact('Check', c.name); fact('Detail', c.detail);
+        }
+        if (rule && rule.link) link('Open ↗', rule.link);
+        if (rule && rule.action && !actions.some((a) => a.id === rule.action)) act(rule.action, rule.title);
+        return out;
+    }
+
     // Share of checks that pass, for the reactor ring: jobs, CI, uptime, speed, failures.
     function readiness(external) {
         const checks = [];
@@ -784,7 +896,7 @@
         return { start, end, days, prior: { start: new Date(start.getTime() - days * DAY), end: start } };
     }
 
-    const api = { THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, readiness, csv, parseCommand, windowFor };
+    const api = { THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);
