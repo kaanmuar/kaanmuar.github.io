@@ -1,14 +1,17 @@
 #!/usr/bin/env node
-/* Posts each rendered social batch to Bluesky and Mastodon through their own APIs (#1621). Buffer's free plan has
-   no room for them, and neither needs it.
+/* Posts each rendered social batch to Bluesky, Mastodon, Threads and Instagram through their own APIs (#1621, #526).
+   Buffer's free plan has no room for them, and none needs it.
 
      BLUESKY_HANDLE=... BLUESKY_APP_PASSWORD=... MASTODON_URL=https://mastodon.social MASTODON_TOKEN=... \
-       node scripts/open-social-queue.js [--network bluesky|mastodon] [--batch <name>] [--dry-run]
+     THREADS_TOKEN=... INSTAGRAM_USER_ID=... FACEBOOK_PAGE_TOKEN=... \
+       node scripts/open-social-queue.js [--network <one of NETWORKS>] [--batch <name>] [--dry-run]
 
-   Bluesky cannot schedule a post, so neither network is scheduled ahead: open-social.yml runs this every 30 minutes
-   and it posts each feed image with its x caption once the post's calendar.csv x slot has come, at most PER_RUN per
-   network a run. A slot more than MISSED_MS old is left alone, so connecting a network does not flood it with the
-   backlog. A network whose secrets are missing is skipped.
+   Bluesky, Threads and Instagram cannot schedule a post, so no network is scheduled ahead: open-social.yml runs this
+   every 30 minutes and it posts what has come due, at most PER_RUN per network a run. Bluesky, Mastodon and Threads
+   post each feed image with its x caption at the post's calendar.csv x slot; Instagram posts the feed image with its
+   instagram caption at the instagram slot, and the story image at the instagram-story slot (ROUTES). A slot more
+   than MISSED_MS old is left alone, so connecting a network does not flood it with the backlog. A network whose
+   secrets are missing is skipped.
 
    Every post goes into the ledger assets/social/open-social.json (scripts/social-ledger.js) as sent or failed. A
    failed post is tried again on the next run while its slot is within reach. Before posting, each run reads the
@@ -18,7 +21,10 @@
 
    Bluesky: an app password (Settings > Privacy and security > App passwords); BLUESKY_SERVICE when the account is
    not on bsky.social. Mastodon: the instance address and an application token with write:statuses, write:media and
-   read:accounts, read:statuses (Preferences > Development > New application). */
+   read:accounts, read:statuses (Preferences > Development > New application). Threads: a long-lived user token with
+   threads_basic and threads_content_publish; it lasts 60 days, and scripts/meta-token.js renews it. Instagram: the
+   professional account's id and the Facebook Page token with instagram_basic and instagram_content_publish
+   (scripts/meta-token.js sets both). Threads and Instagram fetch the image from the site, so it must be live. */
 
 const fs = require("fs");
 const path = require("path");
@@ -26,8 +32,19 @@ const ledger = require("./social-ledger");
 const { createGate, withHubLink } = require("./hub-gate");
 
 const ROOT = path.resolve(__dirname, "..");
+const SITE = process.env.SITE || "https://carlosandmunoz.com";
+const GRAPH = "https://graph.facebook.com/" + (process.env.FACEBOOK_GRAPH_VERSION || "v23.0");
+const THREADS = "https://graph.threads.net/v1.0";
 const PER_RUN = 4;
 const MISSED_MS = 12 * 3600e3;
+// The calendar.csv slot and the captions.json caption each network posts; a story carries no caption.
+const ROUTES = {
+  bluesky: { slot: "x", caption: "x" },
+  mastodon: { slot: "x", caption: "x" },
+  threads: { slot: "x", caption: "x" },
+  instagram: { slot: "instagram", caption: "instagram" },
+  "instagram-story": { slot: "instagram-story", caption: null }
+};
 
 function args() {
   const out = {};
@@ -42,16 +59,18 @@ function args() {
 }
 
 // calendar.csv times are Bogotá wall-clock (UTC-5, no daylight saving).
-function xSlots(dir) {
+function slots(dir, channel) {
   const when = {};
   const file = path.join(dir, "calendar.csv");
   if (!fs.existsSync(file)) return when;
   fs.readFileSync(file, "utf8").trim().split("\n").slice(1).forEach((line) => {
-    const [date, time, channel, slug] = line.split(",");
-    if (channel === "x") when[slug] = new Date(date + "T" + time + ":00-05:00").getTime();
+    const [date, time, ch, slug, asset] = line.split(",");
+    if (ch === channel) when[slug] = { at: new Date(date + "T" + time + ":00-05:00").getTime(), asset: (asset || "").trim() };
   });
   return when;
 }
+
+const xSlots = (dir) => Object.fromEntries(Object.entries(slots(dir, "x")).map(([slug, s]) => [slug, s.at]));
 
 function allBatches(root = ROOT) {
   const dir = path.join(root, "media/social-posts");
@@ -59,12 +78,16 @@ function allBatches(root = ROOT) {
     && fs.existsSync(path.join(dir, name, "captions.json")) && fs.existsSync(path.join(dir, name, "calendar.csv"))).sort();
 }
 
-function posts(batch, root = ROOT) {
+function posts(batch, root = ROOT, network = "bluesky") {
+  const route = ROUTES[network];
   const dir = path.join(root, "media/social-posts", batch);
   const captions = JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
-  const when = xSlots(dir);
-  return Object.keys(captions).filter((slug) => captions[slug].x && !captions[slug].hold && when[slug])
-    .map((slug) => ({ batch, slug, cap: captions[slug], at: when[slug], image: path.join(dir, "feed", slug + ".jpg") }));
+  const when = slots(dir, route.slot);
+  return Object.keys(captions).filter((slug) => captions[slug].x && !captions[slug].hold && when[slug] && (!route.caption || captions[slug][route.caption]))
+    .map((slug) => {
+      const asset = when[slug].asset || "feed/" + slug + ".jpg";
+      return { batch, slug, cap: captions[slug], at: when[slug].at, image: path.join(dir, asset), url: SITE + "/media/social-posts/" + batch + "/" + asset };
+    });
 }
 
 // Slots that have come and are not MISSED_MS old, oldest first.
@@ -76,7 +99,9 @@ const marker = (post) => "/social/" + post.batch + "/" + post.slug + ".html";
 
 // The x caption's own links are tagged utm_source=x.
 function caption(post, network) {
-  const text = String(post.cap.x).replace(/utm_source=x\b/g, "utm_source=" + network);
+  const key = (ROUTES[network] || ROUTES.bluesky).caption;
+  if (!key) return "";
+  const text = key === "x" ? String(post.cap.x).replace(/utm_source=x\b/g, "utm_source=" + network) : String(post.cap[key]);
   return withHubLink(text, { batch: post.batch, slug: post.slug, network });
 }
 
@@ -99,8 +124,36 @@ function facets(text) {
 
 async function reply(res, label) {
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(label + " " + res.status + ": " + String(json.message || json.error || JSON.stringify(json)).slice(0, 300));
+  const why = json.error && json.error.message ? json.error.message : json.message || json.error;
+  if (!res.ok || (json.error && json.error.message)) throw new Error(label + " " + res.status + ": " + String(why || JSON.stringify(json)).slice(0, 300));
   return json;
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// The Graph APIs of Instagram and Threads, with the token as a parameter.
+function graph(base, token, label) {
+  return async (method, edge, params = {}) => {
+    const qs = new URLSearchParams(Object.assign({}, params, { access_token: token || "" }));
+    const res = method === "GET" ? await fetch(base + "/" + edge + "?" + qs) : await fetch(base + "/" + edge, { method, body: qs });
+    return reply(res, label + " " + edge.split("/").pop());
+  };
+}
+
+// Instagram and Threads fetch the image themselves: a slot whose image the site does not serve yet fails and is retried.
+async function served(url) {
+  const res = await fetch(url, { method: "HEAD" }).catch(() => null);
+  if (!res || !res.ok) throw new Error("the site does not serve " + url + " yet");
+}
+
+// A media container is ready once the network has fetched and processed the image.
+async function ready(status, id) {
+  for (let i = 0; ; i += 1) {
+    const s = await status(id);
+    if (s === "FINISHED") return;
+    if (s === "ERROR" || s === "EXPIRED" || i === 20) throw new Error("media container " + id + " is " + s);
+    await sleep(3000);
+  }
 }
 
 function bluesky(env = process.env) {
@@ -173,7 +226,57 @@ function mastodon(env = process.env) {
   };
 }
 
-const NETWORKS = { bluesky, mastodon };
+function threads(env = process.env) {
+  const call = graph(THREADS, env.THREADS_TOKEN, "Threads");
+  return {
+    ready: Boolean(env.THREADS_TOKEN),
+    async login() {
+      const me = await call("GET", "me", { fields: "id,username" });
+      return "threads.net/@" + me.username;
+    },
+    async recent() {
+      const { data } = await call("GET", "me/threads", { fields: "id,text,permalink", limit: "100" });
+      return (data || []).map((t) => ({ id: t.id, text: t.text || "", url: t.permalink || "" }));
+    },
+    async post({ text, url, alt }) {
+      await served(url);
+      const box = await call("POST", "me/threads", { media_type: "IMAGE", image_url: url, text, alt_text: alt });
+      await ready(async (id) => (await call("GET", id, { fields: "status" })).status, box.id);
+      const { id } = await call("POST", "me/threads_publish", { creation_id: box.id });
+      const { permalink } = await call("GET", id, { fields: "permalink" }).catch(() => ({}));
+      return { id, url: permalink || "" };
+    }
+  };
+}
+
+// The feed and the stories of the Instagram professional account linked to the Facebook Page.
+function instagram(env = process.env, story = false) {
+  const call = graph(GRAPH, env.FACEBOOK_PAGE_TOKEN, "Instagram");
+  const ig = env.INSTAGRAM_USER_ID;
+  return {
+    ready: Boolean(ig && env.FACEBOOK_PAGE_TOKEN),
+    async login() {
+      const me = await call("GET", ig, { fields: "username" });
+      return "instagram.com/" + me.username;
+    },
+    // Stories carry no caption to match on; the ledger alone keeps one from going out twice.
+    async recent() {
+      if (story) return [];
+      const { data } = await call("GET", ig + "/media", { fields: "id,caption,permalink", limit: "100" });
+      return (data || []).map((m) => ({ id: m.id, text: m.caption || "", url: m.permalink || "" }));
+    },
+    async post({ text, url, alt }) {
+      await served(url);
+      const box = await call("POST", ig + "/media", story ? { image_url: url, media_type: "STORIES" } : { image_url: url, caption: text, alt_text: alt });
+      await ready(async (id) => (await call("GET", id, { fields: "status_code" })).status_code, box.id);
+      const { id } = await call("POST", ig + "/media_publish", { creation_id: box.id });
+      const { permalink } = await call("GET", id, { fields: "permalink" }).catch(() => ({}));
+      return { id, url: permalink || "" };
+    }
+  };
+}
+
+const NETWORKS = { bluesky, mastodon, threads, instagram: (env) => instagram(env, false), "instagram-story": (env) => instagram(env, true) };
 
 async function run(network, client, list, book, { live, now, gate }) {
   const todo = due(list, now).filter((post) => !(book.posts[post.batch + "/" + post.slug] || []).some((e) => e.channel === network && e.result === "sent"));
@@ -209,7 +312,7 @@ async function run(network, client, list, book, { live, now, gate }) {
       continue;
     }
     try {
-      const r = await client.post({ text: caption(post, network), image: post.image, alt: post.cap.alt || post.cap.title || "", lang: post.cap.lang || "en", key: name });
+      const r = await client.post({ text: caption(post, network), image: post.image, url: post.url, alt: post.cap.alt || post.cap.title || "", lang: post.cap.lang || "en", key: name });
       counts.posted += 1;
       console.log("posted", network, name, r.url);
       record(post, { id: r.id, url: r.url, at, result: "sent" });
@@ -229,7 +332,7 @@ async function main() {
   if (only && !NETWORKS[only]) throw new Error("--network must be one of " + Object.keys(NETWORKS).join(", "));
   const batch = opts.batch ? String(opts.batch) : "";
   if (batch && !/^[\w-]+$/.test(batch)) throw new Error("--batch takes a batch name");
-  const list = (batch ? [batch] : allBatches()).flatMap((name) => posts(name));
+  const batches = batch ? [batch] : allBatches();
   const book = ledger.read(ledger.OPEN_SOCIAL);
   const before = JSON.stringify(book);
   const gate = createGate();
@@ -239,6 +342,7 @@ async function main() {
     const client = NETWORKS[network]();
     if (live && !client.ready) { console.log(network + ": no secrets, skipped"); continue; }
     try {
+      const list = batches.flatMap((name) => posts(name, ROOT, network));
       const c = await run(network, client, list, book, { live, now, gate });
       console.log(network + ": " + c.posted + " posted, " + c.already + " already on the account, " + c.held + " held, " + c.failed + " failed, " + c.waiting + " due for a later run");
       if (c.failed) broken = true;
@@ -253,4 +357,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { PER_RUN, MISSED_MS, xSlots, posts, due, caption, facets, run };
+module.exports = { PER_RUN, MISSED_MS, ROUTES, NETWORKS, xSlots, posts, due, caption, facets, run };

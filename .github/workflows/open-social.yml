@@ -1,9 +1,10 @@
-# Posts each rendered social batch to Bluesky and Mastodon as its x slots come (scripts/open-social-queue.js, #1621).
-# Bluesky cannot schedule a post, so this runs every 30 minutes and posts what is due. A network whose secrets are
-# missing is skipped: BLUESKY_HANDLE and BLUESKY_APP_PASSWORD, MASTODON_URL and MASTODON_TOKEN.
+# Posts each rendered social batch to Bluesky, Mastodon, Threads and Instagram as its slots come
+# (scripts/open-social-queue.js, #1621, #526). None of them can schedule a post, so this runs every 30 minutes and
+# posts what is due. A network whose secrets are missing is skipped: BLUESKY_HANDLE and BLUESKY_APP_PASSWORD,
+# MASTODON_URL and MASTODON_TOKEN, THREADS_TOKEN, INSTAGRAM_USER_ID and FACEBOOK_PAGE_TOKEN.
 # The run updates the ledger, assets/social/open-social.json, and pushes it to main with the LIVE_REPORTS_DEPLOY_KEY
 # write deploy key, like the Facebook Page queue.
-name: Bluesky and Mastodon
+name: Bluesky, Mastodon, Threads and Instagram
 
 on:
   schedule:
@@ -13,8 +14,8 @@ on:
       network:
         description: 'Network'
         type: choice
-        options: ['both', 'bluesky', 'mastodon']
-        default: 'both'
+        options: ['all', 'bluesky', 'mastodon', 'threads', 'instagram', 'instagram-story']
+        default: 'all'
       dry_run:
         description: 'List what is due, post nothing'
         type: boolean
@@ -33,15 +34,27 @@ jobs:
       BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
       MASTODON_URL: ${{ secrets.MASTODON_URL }}
       MASTODON_TOKEN: ${{ secrets.MASTODON_TOKEN }}
-      NETWORK: ${{ inputs.network != 'both' && inputs.network || '' }}
+      THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+      INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
+      FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+      NETWORK: ${{ inputs.network != 'all' && inputs.network || '' }}
     steps:
       - name: Check a network is connected
         id: ready
         run: |
-          if [ -n "$BLUESKY_APP_PASSWORD$MASTODON_TOKEN" ] || [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ -n "$BLUESKY_APP_PASSWORD$MASTODON_TOKEN$THREADS_TOKEN$INSTAGRAM_USER_ID" ] || [ "${{ inputs.dry_run }}" = "true" ]; then
             echo "ok=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::No Bluesky or Mastodon secrets yet, so nothing is posted (see scripts/open-social-queue.js)."
+            echo "::notice::No network secrets yet, so nothing is posted (see scripts/open-social-queue.js)."
+          fi
+      - name: Warn before the Threads token runs out
+        if: ${{ vars.THREADS_TOKEN_EXPIRES != '' }}
+        env:
+          EXPIRES: ${{ vars.THREADS_TOKEN_EXPIRES }}
+        run: |
+          left=$(( ($(date -d "$EXPIRES" +%s) - $(date +%s)) / 86400 ))
+          if [ "$left" -le 10 ]; then
+            echo "::warning::The Threads token runs out in $left days ($EXPIRES). Renew it with: node scripts/meta-token.js renew-threads"
           fi
       - uses: actions/checkout@v4
         if: steps.ready.outputs.ok == 'true'
@@ -59,7 +72,7 @@ jobs:
         if: ${{ !cancelled() && !inputs.dry_run && steps.post.outcome != 'skipped' }}
         run: |
           if git status --porcelain assets/social/open-social.json | grep -q .; then
-            scripts/commit-social-ledgers.sh "Bluesky and Mastodon"
+            scripts/commit-social-ledgers.sh "Bluesky, Mastodon, Threads and Instagram"
           else
             echo "Nothing went out."
           fi

@@ -45,6 +45,31 @@ test("posts reads the x slot in Bogotá time and skips held captions", () => {
   fs.writeFileSync(path.join(dir, "calendar.csv"), "Date,Time,Channel,Post,Asset\n2026-10-26,09:30,x,01-a,feed/01-a.jpg\n2026-10-26,10:00,linkedin,01-a,feed/01-a.jpg\n2026-10-26,11:00,x,02-b,feed/02-b.jpg\n");
   const list = q.posts("b1", root);
   assert.deepEqual(list.map((p) => [p.slug, new Date(p.at).toISOString()]), [["01-a", "2026-10-26T14:30:00.000Z"]]);
+  assert.equal(list[0].url, "https://carlosandmunoz.com/media/social-posts/b1/feed/01-a.jpg");
+});
+
+test("Threads posts at the x slot; Instagram at its own feed and story slots, with the instagram caption and the story image", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "open-social-"));
+  const dir = path.join(root, "media/social-posts/b2");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "captions.json"), JSON.stringify({ "01-a": { x: "A on X", instagram: "A on Instagram #qa" }, "02-b": { x: "B" } }));
+  fs.writeFileSync(path.join(dir, "calendar.csv"), "Date,Time,Channel,Post,Asset\n2026-10-27,13:40,instagram-story,01-a,story/01-a.jpg\n2026-10-27,15:45,instagram,01-a,feed/01-a.jpg\n2026-10-27,21:05,x,01-a,feed/01-a.jpg\n2026-10-27,15:45,instagram,02-b,feed/02-b.jpg\n");
+  const at = (list) => list.map((p) => [p.slug, new Date(p.at).toISOString()]);
+  assert.deepEqual(at(q.posts("b2", root, "threads")), [["01-a", "2026-10-28T02:05:00.000Z"]]);
+  assert.deepEqual(at(q.posts("b2", root, "instagram")), [["01-a", "2026-10-27T20:45:00.000Z"]]);
+  const [story] = q.posts("b2", root, "instagram-story");
+  assert.equal(story.url, "https://carlosandmunoz.com/media/social-posts/b2/story/01-a.jpg");
+  assert.equal(q.caption(story, "instagram-story"), "");
+  const [feed] = q.posts("b2", root, "instagram");
+  assert.match(q.caption(feed, "instagram"), /^A on Instagram #qa\n\nhttps:\/\/carlosandmunoz\.com\/social\/b2\/01-a\.html\?utm_source=instagram&/);
+  assert.match(q.caption(q.posts("b2", root, "threads")[0], "threads"), /utm_source=threads&/);
+  assert.deepEqual(Object.keys(q.NETWORKS), Object.keys(q.ROUTES));
+});
+
+test("Threads and Instagram are skipped until their secrets are set", () => {
+  assert.equal(q.NETWORKS.threads({}).ready, false);
+  assert.equal(q.NETWORKS.instagram({ FACEBOOK_PAGE_TOKEN: "t" }).ready, false);
+  assert.equal(q.NETWORKS["instagram-story"]({ FACEBOOK_PAGE_TOKEN: "t", INSTAGRAM_USER_ID: "1" }).ready, true);
 });
 
 function fakeClient(recent = []) {
