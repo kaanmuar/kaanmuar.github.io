@@ -146,23 +146,6 @@ https://www.searchenginejournal.com/geo-is-a-distraction-heres-where-the-real-op
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/geo-460.png" medium="image"/>
     </item>
     <item>
-      <title>Release-Tag: Stimmt die Seite noch?</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-de.html</link>
-      <guid isPermaLink="false">tips-2026-10/02-release-day-de</guid>
-      <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Tipp</category>
-      <category>QA</category>
-      <description>Grüne Builds und bestandene Smoke-Tests sagen Ihnen nicht, ob die öffentliche Seite noch Titel, Share-Card und Consent-Banner hat.
-
-Probieren Sie es heute: Nehmen Sie einen fünfminütigen Check der öffentlichen Seiten in Ihre Release-Checkliste auf, nach dem Deploy und vor der Ankündigung.
-
-So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=release-day
-
-#QA #ReleaseManagement #DevOps #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" length="196736" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>Wir haben uns selbst geprüft. Sicherheit: 54.</title>
       <link>https://carlosandmunoz.com/social/tips-2026-10/03-self-review-de.html</link>
       <guid isPermaLink="false">tips-2026-10/03-self-review-de</guid>
@@ -540,6 +523,23 @@ So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https:/
 #WebPerformance #CLS #CoreWebVitals #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg" length="179623" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Release-Tag: Stimmt die Seite noch?</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/02-release-day-de</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>QA</category>
+      <description>Grüne Builds und bestandene Smoke-Tests sagen Ihnen nicht, ob die öffentliche Seite noch Titel, Share-Card und Consent-Banner hat.
+
+Probieren Sie es heute: Nehmen Sie einen fünfminütigen Check der öffentlichen Seiten in Ihre Release-Checkliste auf, nach dem Deploy und vor der Ankündigung.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=release-day
+
+#QA #ReleaseManagement #DevOps #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" length="196736" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>whatsapp.com: 67. Die Lücke: hreflang.</title>
