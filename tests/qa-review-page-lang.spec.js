@@ -290,4 +290,19 @@ test.describe('Review page language', () => {
     await expect(labels.first()).toHaveAttribute('translate', 'no');
     await expect(page.locator('.live-jump')).toHaveText('Voir les rapports en direct de vrais sites ↓');
   });
+
+  for (const [code, own] of [['es', /\b(el|la|los|las|que|para|con|una|del)\b/g], ['de', /\b(der|die|das|und|ist|für|mit|ein|eine|nicht)\b/g]]) {
+    test(`the ${code} page body is written in its language before any script runs`, async ({ browser }) => {
+      const context = await browser.newContext({ javaScriptEnabled: false });
+      const page = await context.newPage();
+      await page.goto(`/qa-review-${code}.html`);
+      const text = await page.locator('body').innerText();
+      const english = (text.match(/\b(the|and|of|to|is|are|for|with|your|you|this|that|from)\b/g) || []).length;
+      const local = (text.match(own) || []).length;
+      expect(local).toBeGreaterThan(40);
+      expect(english * 10).toBeLessThan(local);
+      await expect(page.locator('#review-app summary h2').first()).toHaveAttribute('translate', 'no');
+      await context.close();
+    });
+  }
 });
