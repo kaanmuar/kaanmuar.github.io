@@ -48,14 +48,37 @@ const TTS_HOME = path.join(require("os").homedir(), ".local/share/review-tts");
 const TTS_INSTALL = "python3 -m venv " + TTS_HOME + " && " + TTS_HOME + "/bin/pip install edge-tts";
 const EDGE_TTS = process.env.EDGE_TTS || [path.join(TTS_HOME, "bin/edge-tts"), "/tmp/review-tts/bin/edge-tts", "edge-tts"]
   .find((bin) => spawnSync(bin, ["--version"]).status === 0) || path.join(TTS_HOME, "bin/edge-tts");
+// Single-language voices only: a Multilingual one guesses the language of every request, and a clip sends one per
+// scene, so a French clip switched to English on a line of hosts. Spanish speaks in a LATAM voice.
 const VOICES = [
-  ["en-w", "en-US-AvaMultilingualNeural"], ["en-m", "en-US-AndrewMultilingualNeural"],
-  ["es-w", "es-ES-XimenaNeural"], ["es-m", "es-ES-AlvaroNeural"],
-  ["pt-w", "pt-BR-ThalitaMultilingualNeural"], ["pt-m", "pt-BR-AntonioNeural"],
-  ["de-w", "de-DE-SeraphinaMultilingualNeural"], ["de-m", "de-DE-FlorianMultilingualNeural"],
-  ["fr-w", "fr-FR-VivienneMultilingualNeural"], ["fr-m", "fr-FR-RemyMultilingualNeural"],
-  ["it-w", "it-IT-IsabellaNeural"], ["it-m", "it-IT-GiuseppeMultilingualNeural"]
+  ["en-w", "en-US-AvaNeural"], ["en-m", "en-US-AndrewNeural"],
+  ["es-w", "es-MX-DaliaNeural"], ["es-m", "es-MX-JorgeNeural"],
+  ["pt-w", "pt-BR-FranciscaNeural"], ["pt-m", "pt-BR-AntonioNeural"],
+  ["de-w", "de-DE-KatjaNeural"], ["de-m", "de-DE-ConradNeural"],
+  ["fr-w", "fr-FR-DeniseNeural"], ["fr-m", "fr-FR-HenriNeural"],
+  ["it-w", "it-IT-IsabellaNeural"], ["it-m", "it-IT-DiegoNeural"]
 ].map(([file, voice]) => ({ file, voice, lang: file.slice(0, 2) }));
+// How a voice reads an English term it says wrong as written, so a LATAM voice says "deploy" the English way. Only the
+// voice gets these; card text stays as written. The es-MX voices already say most tech words right (release,
+// JavaScript, Search Console, header names), so list a term only when its respelling is heard as the English word
+// more often. Longer terms first, since each matches a whole word, case aside.
+const SAY_AS = {
+  es: [
+    ["Report-Only", "Report Ounli"], ["robots.txt", "róbots punto te equis te"], ["llms.txt", "ele ele eme ese punto te equis te"],
+    ["QA-lab", "kiu ei lab"], ["Consent Mode", "Cónsent Moud"], ["Safe Browsing", "Séif Bráusin"], ["Open Graph", "Óupen Graf"],
+    ["smoke tests", "smóuk tests"], ["smoke test", "smóuk test"], ["lazy-load", "léisi lóud"], ["lazy load", "léisi lóud"],
+    ["Lighthouse", "Láit Jáus"], ["Analytics", "Anályticks"], ["Googlebot", "Gúgol bot"], ["GitHub", "Git Hub"],
+    ["Playwright", "Pléirait"], ["Stripe", "Straip"], ["deployments", "diplóiments"], ["deployed", "deplóid"],
+    ["deploys", "deplóis"], ["deploy", "deplói"], ["snippets", "snípets"], ["sitemaps", "sáitmaps"], ["sitemap", "sáitmap"],
+    ["headers", "jéders"], ["header", "jéder"], ["plugins", "plóguins"], ["screenshots", "scrínshots"],
+    ["screenshot", "scrínshot"], ["browser", "bráuser"], ["crawlers", "królers"], ["crawler", "króler"]
+  ]
+};
+const SAY_AS_RE = Object.fromEntries(Object.entries(SAY_AS).map(([lang, pairs]) =>
+  [lang, pairs.map(([term, said]) => [new RegExp("(^|[^\\p{L}\\d])" + term.replace(/[.+]/g, "\\$&") + "(?![\\p{L}\\d])", "giu"), said])]));
+function sayAs(lang, text) {
+  return (SAY_AS_RE[lang] || []).reduce((out, [re, said]) => out.replace(re, (m, before) => before + said), text);
+}
 // The bed is git-ignored: a worktree from scripts/ticket-worktree.sh borrows the main checkout's, and a fresh
 // clone downloads it from the studio-assets release the way auto-live-reports.yml does.
 const BED_REL = "media/url-review-demos/bed.wav";
@@ -205,17 +228,31 @@ function loadI18n() {
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : { ui: {}, clips: {} };
 }
 
-// A clip whose translation is missing speaks English in the same voice slot rather than go out muted.
+// A clip whose translation is missing speaks English in the same voice slot rather than go out muted, and a
+// translated clip never voices an English line: one missing its title, body or action goes out in English as a
+// whole, and an untranslated fact, note or area name drops out of the voice-over.
+const SAID = /^(title|body|action|more|say|visual\.note|visual\.areas)(\.|$)/;
+const MUST_SAY = /^(title|body|action)(\.|$)/;
+function untranslated(tip, tr) {
+  return Object.entries(strings(tip, "", {})).filter(([at, text]) => SAID.test(at) && !(at in tr) && /[a-z]{3}/.test(text)).map(([at]) => at);
+}
 function localize(tip, index, total, i18n) {
   let voice = voiceFor(index, tip);
-  if (!translated(tip, voice.lang, i18n)) voice = VOICES.find((v) => v.file === "en-" + voice.file.slice(3));
-  const tr = voice.lang === "en" || tip.lang ? {} : i18n.clips[tip.id] || {};
+  let tr = voice.lang === "en" || tip.lang ? {} : i18n.clips[tip.id] || {};
+  let unsaid = voice.lang === "en" || tip.lang ? [] : untranslated(tip, tr);
+  if (!translated(tip, voice.lang, i18n) || unsaid.some((at) => MUST_SAY.test(at))) {
+    voice = VOICES.find((v) => v.file === "en-" + voice.file.slice(3));
+    tr = {};
+    unsaid = [];
+  }
   const local = Object.assign(JSON.parse(JSON.stringify(tip)), { lang: voice.lang });
   const cat = Object.assign({}, studio.CATS[tip.cat]);
   Object.keys(tr).forEach((at) => { if (at === "cat.label") cat.label = tr[at]; else if (!at.startsWith("cap.")) setPath(local, at, tr[at]); });
   const cap = studio.captions(local, index, total);
   const ui = uiFor(voice.lang, i18n);
-  const lines = narration(local, ui);
+  const voiced = JSON.parse(JSON.stringify(local));
+  unsaid.forEach((at) => setPath(voiced, at, ""));
+  const lines = narration(voiced, ui);
   local.more = lines.fact;
   delete lines.fact;
   return { tip: local, cat, ui, voice, lang: voice.lang, lines,
@@ -234,7 +271,7 @@ function narration(tip, ui) {
 
 // A scorecard's own related fact: its strongest and weakest area. A comparison's title already names its leader.
 function related(v, say) {
-  if (v.type !== "scores" || !say("strongest") || !say("weakest")) return "";
+  if (v.type !== "scores" || !say("strongest") || !say("weakest") || v.areas.some((a) => !a[0])) return "";
   const areas = v.areas.filter((a) => typeof a[1] === "number").sort((a, b) => b[1] - a[1]);
   const hi = areas[0];
   const lo = areas[areas.length - 1];
@@ -295,7 +332,7 @@ function timeline(said, tmp) {
     const text = said.lines[id];
     if (id === "more" && !text) continue;
     const audio = text ? path.join(tmp, id + ".mp3") : null;
-    const voiceDur = text ? speak(said.voice, text, audio) : 0;
+    const voiceDur = text ? speak(said.voice, sayAs(said.lang, text), audio) : 0;
     const lead = id === "hook" ? VOICE_AT : LEAD;
     const dur = Math.max(SCENES[id], text ? lead + voiceDur + TAIL : 0);
     scenes.push({ id, start: at, dur, voiceAt: at + lead, voiceDur, audio });
