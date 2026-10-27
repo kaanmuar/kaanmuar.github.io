@@ -1,0 +1,41 @@
+# .github/dependabot.yml
+# Weekly version updates, with minor and patch bumps grouped into one PR per ecosystem; major bumps come one by one.
+# Security updates are switched on in the repository settings and are not limited by these groups.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      site-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /functions
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      functions-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: maven
+    directory: /gatling
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      gatling-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-patch:
+        update-types: [minor, patch]
