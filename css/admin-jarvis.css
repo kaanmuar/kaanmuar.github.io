@@ -339,3 +339,10 @@
 .jv-share-form textarea:focus, .jv-share-field textarea:focus { outline: none; border-color: var(--line-hi); box-shadow: 0 0 0 3px rgba(56, 225, 255, 0.12); }
 .jv-share-pick { justify-self: start; }
 .jv-share-fields + .jv-actions { margin-top: 0.4rem; }
+
+/* Marketing: replies and logs from the Mac sync (#1730) */
+.jv-mk-replies { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.8rem; }
+.jv-mk-replies li { border: 1px solid var(--line); border-radius: 12px; padding: 0.6rem 0.75rem; }
+.jv-mk-replies p { margin: 0.35rem 0; }
+.jv-mk-replies textarea { width: 100%; box-sizing: border-box; margin: 0.4rem 0; background: rgba(4, 18, 28, 0.85); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0.45rem 0.6rem; font: 0.86rem system-ui, sans-serif; resize: vertical; }
+.jv-pre { white-space: pre-wrap; word-break: break-word; max-height: 16rem; overflow: auto; margin: 0.35rem 0 0; font: 0.78rem ui-monospace, Menlo, monospace; color: var(--muted, #9fb3c8); }

@@ -22,7 +22,7 @@ const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/se
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, marketing: 10 * MINUTE };
+const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE };
 const { SEARCH_QUERIES } = require("./jarvis-core");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisMarketing = require("./jarvis-marketing");
@@ -576,7 +576,7 @@ async function platform(ctx) {
   return out;
 }
 
-const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, marketing: jarvisMarketing.marketing };
+const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource };
 
 async function run(name, ctx) {
   const source = SOURCES[name];

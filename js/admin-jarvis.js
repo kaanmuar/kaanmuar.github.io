@@ -151,7 +151,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const api = endpoint || ENDPOINT;
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
-        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, alerts: [], reports: [],
+        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', alerts: [], reports: [],
         external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, truncated: false,
         panels: new Map(), voice: null, listening: false, timers: []
     };
@@ -343,7 +343,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -997,7 +997,63 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
               <button type="button" class="jv-btn" data-report="review:weekly">Send the weekly report</button><button type="button" class="jv-btn" data-act="ai-brief">Gemini briefing</button><button type="button" class="jv-btn" data-act="export-csv">Export this tab (CSV)</button></div></div>
           </div>`;
 
-        return head + `<div class="jv-grid">${briefPanel('marketing')}
+        const sy = e['marketing-sync'] && e['marketing-sync'].ok ? e['marketing-sync'] : null;
+        const syWait = wait('marketing-sync', 'Reading the Mac sync…');
+        const cmds = sy ? sy.commands.items : [];
+        const pendingFor = (action, key) => cmds.some((c) => c.status === 'pending' && c.action === action && c.label.includes(key));
+        const cmdBtn = (label, data, opts) => `<button type="button" class="jv-btn small${(opts && opts.cls) || ''}" data-mk-cmd="${esc(data.action)}" ${Object.entries(data).filter(([k]) => k !== 'action').map(([k, v]) => `data-${k}="${esc(v)}"`).join(' ')}${opts && opts.disabled ? ' disabled' : ''}>${esc(label)}</button>`;
+        const lw = sy ? sy.leads.weeks : [];
+        const week = lw.find((w) => w.week === S.mkWeek) || lw.filter((w) => w.uploaded < w.total).pop() || lw[lw.length - 1] || null;
+        const weekRows = sy && week ? sy.leads.rows.filter((r) => r.week === week.week) : [];
+        const leadAct = (r) => r.uploaded ? `<span class="jv-chip c-fast">uploaded ${esc(r.uploaded)}</span>`
+            : pendingFor('approve', r.email) ? '<span class="jv-chip c-average">waiting for the Mac</span>'
+            : r.approved ? cmdBtn('Unapprove', { action: 'approve', week: r.week, email: r.email, on: 'no' })
+            : r.missing ? `<span class="jv-chip c-slow" title="${esc(r.missing)}">missing</span>` : cmdBtn('Approve', { action: 'approve', week: r.week, email: r.email, on: 'yes' });
+        const leadsBody = !sy ? syWait : !lw.length ? '<p class="jv-empty">No leads files on the Mac yet; the Monday leads job writes them.</p>'
+            : `<div class="jv-chips">${lw.map((w) => `<button type="button" class="jv-btn small" aria-pressed="${week && w.week === week.week}" data-mk-week="${esc(w.week)}">${esc(w.week)} · ${w.uploaded}/${w.total}</button>`).join(' ')}</div>`
+            + stats([{ label: 'Leads', value: week.total }, { label: 'Complete', value: week.complete }, { label: 'Missing something', value: week.missing, alert: week.missing > 0 }, { label: 'Approved', value: week.approved }, { label: 'Uploaded', value: week.uploaded }, { label: 'Ready to upload', value: week.ready }])
+            + `<div class="jv-actions">${cmdBtn(`Approve every complete lead in ${week.week}`, { action: 'approve-week', week: week.week }, { disabled: week.complete <= week.approved + week.uploaded })}${cmdBtn(`Upload ${week.ready} approved to Instantly`, { action: 'upload', week: week.week }, { cls: ' is-primary', disabled: !week.ready || pendingFor('upload', week.week) })}</div>`
+            + table([['Lead', (r) => `<strong>${esc([r.first_name, r.last_name].filter(Boolean).join(' ') || r.email)}</strong><br><span class="jv-note">${esc(r.title || r.email)}</span>`], ['Organisation', (r) => `${esc(r.org)}<br><span class="jv-note">${esc(r.host)} · ${esc(String(r.cc).toUpperCase())}</span>`],
+                ['Campaign', (r) => `<span class="jv-note">${esc(r.campaign)}</span>`], ['Score', (r) => esc(r.score || '—')], ['Top finding', (r) => `<span class="jv-note">${esc(String(r.top_finding_en || '').slice(0, 120))}</span>`],
+                ['Report', (r) => (r.live_report_url ? `<a href="${esc(r.live_report_url)}" target="_blank" rel="noopener">open</a>` : '—')], ['Missing', (r) => (r.missing ? `<span class="jv-note">${esc(r.missing)}</span>` : '')], ['', leadAct]], weekRows, 'No leads in this week.');
+        const repliesTodo = sy ? sy.replies.filter((r) => !r.sent && r.draft) : [];
+        const repliesBody = !sy ? syWait : !sy.replies.length ? `<p class="jv-empty">No replies in the last 14 days${camps && camps.firstStart ? '; the first emails go out ' + esc(camps.firstStart) : ''}.</p>`
+            : `${pie(Object.entries(sy.replies.reduce((m, r) => { const k = r.category || 'not sorted'; m[k] = (m[k] || 0) + 1; return m; }, {})).map(([label, value]) => ({ label, value })), { unit: 'replies' })}<ul class="jv-mk-replies">${sy.replies.map((r) => `<li>
+                <div class="jv-goal-head"><span><strong>${esc(r.from)}</strong> · <span class="jv-note">${esc(r.campaign)} · ${esc(when(r.at))}</span></span>${r.category ? `<span class="jv-chip ${/interest/.test(r.category) ? 'c-fast' : /opt|bounce/.test(r.category) ? 'c-slow' : 'c-average'}">${esc(r.category)}</span>` : ''}</div>
+                ${r.summary ? `<p>${esc(r.summary)}</p>` : ''}<details><summary>${esc(r.subject || 'Their email')}</summary><pre class="jv-pre">${esc(r.text)}</pre></details>
+                ${r.sent ? `<p class="jv-note">Answered ${esc(when(r.sent))}.</p>` : `<textarea rows="5" data-keep="mk-reply-${esc(r.id)}" data-mk-draft="${esc(r.id)}" aria-label="Answer to ${esc(r.from)}">${esc(S.mkDrafts[r.id] !== undefined ? S.mkDrafts[r.id] : r.draft)}</textarea>
+                <div class="jv-actions"><button type="button" class="jv-btn small is-primary" data-mk-reply="${esc(r.id)}" data-to="${esc(r.from)}">Send in the same thread</button>${cmdBtn('Do not contact', { action: 'dnc', value: r.from, reason: 'asked from a reply' }, { cls: ' danger' })}</div>`}</li>`).join('')}</ul>`;
+        const li = sy ? sy.linkedin : null;
+        const liSent = li ? li.items.filter((p) => p.sent).length : 0;
+        const linkedinBody = !sy ? syWait : !li.items.length ? '<p class="jv-empty">No LinkedIn list yet; tools/linkedin-day.py writes one each working day.</p>'
+            : `<div class="jv-rings">${ring(pct(liSent, li.items.length), liSent + ' of ' + li.items.length + ' sent', COLORS.cyan, 92)}</div><ul class="jv-facts">${li.items.map((p) => `<li><span class="jv-chip ${p.sent ? 'c-fast' : ''}">${p.sent ? 'sent' : 'to send'}</span> <strong>${esc(p.name)}</strong>, ${esc(p.title)} <span class="jv-note">(${esc(p.org)}, ${esc(p.cc)})</span>
+                ${p.profile ? `<a class="jv-btn small" href="${esc(p.profile)}" target="_blank" rel="noopener">Profile</a>` : ''}${pendingFor('linkedin', p.name) ? '<span class="jv-chip c-average">waiting for the Mac</span>' : cmdBtn(p.sent ? 'Not sent' : 'Mark sent', { action: 'linkedin', date: li.date, name: p.name, sent: p.sent ? 'no' : 'yes' })}</li>`).join('')}</ul>`;
+        const dncBody = !sy ? syWait : stats([{ label: 'Never contact', value: sy.dnc.length }]) + (sy.dnc.length ? table([['Address or domain', (d) => esc(d.value)], ['Added', (d) => esc(d.at)], ['Why', (d) => `<span class="jv-note">${esc(d.reason)}</span>`]], sy.dnc.slice(-12).reverse()) : '<p class="jv-empty">Nobody has asked to stop yet.</p>')
+            + `<form class="jv-inline" data-mk-dnc><input name="addr" data-mk-field="dnc" data-keep="mk-dnc" value="${esc(f.dnc || '')}" placeholder="email or domain" aria-label="Address or domain to never contact"><input name="reason" data-mk-field="dncWhy" data-keep="mk-dnc-why" value="${esc(f.dncWhy || '')}" placeholder="why (optional)" aria-label="Why"><button type="submit" class="jv-btn danger">Add and block</button></form>`;
+        const jobsBody = !sy ? syWait : table([['Job', (j) => `<strong>${esc(j.mode)}</strong>`], ['Last run', (j) => (j.at ? esc(when(j.at)) : 'never')], ['Result', (j) => (j.failed ? '<span class="jv-chip c-slow">failed</span> ' : '') + `<span class="jv-note">${esc(j.notify || '')}</span>` + (j.tail.length ? `<details><summary>log</summary><pre class="jv-pre">${esc(j.tail.join('\n'))}</pre></details>` : '')],
+            ['', (j) => (pendingFor('run', j.mode) ? '<span class="jv-chip c-average">waiting for the Mac</span>' : cmdBtn('Run now', { action: 'run', job: j.mode }, { disabled: sy.running }))]], sy.jobs)
+            + (sy.paused.length ? `<p class="jv-note">Paused for public holidays: ${sy.paused.map((p) => esc(p.name)).join(', ')}.</p>` : '');
+        const syncBody = !sy ? syWait : `${stats([{ label: 'Last sync', value: sy.at ? when(sy.at) : 'never', alert: sy.stale }, { label: 'Waiting for the Mac', value: sy.commands.pending, alert: sy.stale && sy.commands.pending > 0 }, { label: 'Agent run', value: sy.running ? 'running' : 'idle' }])}`
+            + (cmds.length ? table([['Command', (c) => esc(c.label)], ['Asked', (c) => esc(when(c.createdAt))], ['Status', (c) => `<span class="jv-chip ${c.status === 'done' ? 'c-fast' : c.status === 'failed' ? 'c-slow' : 'c-average'}">${esc(c.status)}</span>`], ['Result', (c) => `<span class="jv-note">${esc(c.result)}</span>`]], cmds.slice(0, 10)) : '<p class="jv-empty">No commands sent to the Mac yet.</p>');
+        const kpiRows = sy ? sy.kpis : [];
+        const kpiCols = ['new_prospects', 'emails_sent', 'linkedin_requests', 'positive_replies', 'calls', 'paid_reviews', 'revenue_usd'];
+        const kpiBody = !sy ? syWait : kpiRows.length ? table([['Week', (r) => esc(r.week_start)]].concat(kpiCols.map((k) => [k.replace(/_/g, ' '), (r) => esc(r[k] || '—')])).concat([['Notes', (r) => `<span class="jv-note">${esc(r.notes || '')}</span>`]]), kpiRows.slice().reverse()) : '<p class="jv-empty">The weekly KPI tracker is empty.</p>';
+
+        return head + kpis([
+            { label: 'Leads approved', value: lw.length ? lw.reduce((n, w) => n + w.approved, 0) : '—' },
+            { label: 'Ready to upload', value: lw.length ? lw.reduce((n, w) => n + w.ready, 0) : '—' },
+            { label: 'Replies to answer', value: sy ? repliesTodo.length : '—', alert: repliesTodo.length > 0 },
+            { label: 'LinkedIn sent today', value: li ? liSent + ' / ' + li.items.length : '—' },
+            { label: 'Do not contact', value: sy ? sy.dnc.length : '—' },
+            { label: 'Mac synced', value: sy && sy.at ? when(sy.at) : '—', alert: !!(sy && sy.stale) }
+        ]) + `<div class="jv-grid">${briefPanel('marketing')}
+            ${panel('marketing-sync', 'Mac sync', syncBody, { data: cmds, note: 'The Mac uploads the outreach folder every 5 minutes and then runs what you asked here. Replies and blocks go to Instantly at once.' })}
+            ${panel('marketing-jobs', 'Outreach jobs on the Mac', jobsBody, { data: sy && sy.jobs })}
+            ${panel('marketing-leads', `Leads to approve${week ? ' · ' + esc(week.week) : ''}`, leadsBody, { wide: true, data: weekRows, note: 'Approve the complete ones, then Upload: the Mac sends the approved rows to their Instantly campaigns. Rows that still miss something need an edit in the CSV first.' })}
+            ${panel('marketing-replies', `Replies${repliesTodo.length ? ' · ' + repliesTodo.length + ' to answer' : ''}`, repliesBody, { wide: true, data: sy && sy.replies.map((r) => ({ at: r.at, from: r.from, campaign: r.campaign, category: r.category, sent: r.sent })) })}
+            ${panel('marketing-linkedin', `LinkedIn${li && li.date ? ' · ' + esc(li.date) : ''}`, linkedinBody, { data: li && li.items.map((p) => ({ name: p.name, org: p.org, cc: p.cc, sent: p.sent })) })}
+            ${panel('marketing-dnc', 'Do not contact', dncBody, { data: sy && sy.dnc })}
+            ${panel('marketing-kpis', 'Weekly KPI tracker', kpiBody, { wide: true, data: kpiRows })}
             ${panel('marketing-health', 'Marketing health', `<div class="jv-rings">${rings}</div>`, { wide: true, note: 'Plan elapsed, prospects reviewed against the weekly target, queued prospects with a Live Report, lowest mailbox warm-up, sending-domain checks passed, social posts that went out, and email delivered.' })}
             ${panel('marketing-channels', 'Channel mix (GA4 sessions)', ga ? pie(channels, { unit: 'sessions', empty: 'No GA4 sessions in this range.' }) : wait('ga4', 'Reading GA4…'), { data: channels })}
             ${panel('marketing-funnel', 'Outreach funnel', funnel(steps), { data: steps })}
@@ -1030,7 +1086,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${panel('marketing-revenue', 'Revenue by purpose', mo ? pie(mo.byPurpose.map((r) => ({ label: r.label, value: Math.round(r.value) })), { unit: 'USD', empty: 'No sales in this range.' }) : wait('money', 'Reading payments…'), { data: mo && mo.byPurpose })}
             ${panel('marketing-deck', 'Command deck', deck, { wide: true, note: 'Every button asks before it acts. Queued prospects join the nightly sweep (up to 48 a night); a review now runs at once and shows in the URL Review tab.' })}
             ${panel('marketing-links', 'Consoles', `<div class="jv-actions">${MK_LINKS.map(([label, url]) => `<a class="jv-btn" href="${esc(url)}" target="_blank" rel="noopener">${esc(label)}</a>`).join('')}</div>`, { wide: true })}
-        </div>${needList(e.marketing)}${needList(e.outreach)}`;
+        </div>${needList(e.marketing)}${needList(e['marketing-sync'])}${needList(e.outreach)}`;
     }
 
     async function campaignAct(t) {
@@ -1041,6 +1097,44 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const out = await call('marketing-campaign', { id, action, name }).catch((error) => ({ ok: false, error: error.message }));
         toast(out.ok ? `${out.name || name} is ${out.status}.` : 'Not done: ' + out.error, 6000);
         loadExternal(['marketing', 'outreach']);
+    }
+
+    const MK_ASK = {
+        approve: (d) => (d.on === 'no' ? `unapprove ${d.email}` : `approve ${d.email} for upload`),
+        'approve-week': (d) => `approve every complete lead in ${d.week}`,
+        upload: (d) => `upload ${d.week}'s approved leads to their Instantly campaigns (they start getting emails on the campaign's start date once it is active)`,
+        linkedin: (d) => `mark the LinkedIn request to ${d.name} as ${d.sent === 'no' ? 'not sent' : 'sent'}`,
+        dnc: (d) => `never contact ${d.value} again and block it in Instantly`,
+        run: (d) => `run the ${d.job} job on the Mac now (an agent run can take an hour)`
+    };
+
+    async function mkCommand(body, ask) {
+        if (!confirmRun(ask)) return null;
+        const out = await call('marketing-command', body).catch((error) => ({ ok: false, error: error.message }));
+        toast(out.ok ? (out.sent ? `Sent to ${out.sent.to}.` : `${out.label}: the Mac does it on its next sync (within 5 minutes)${out.blocked ? '; blocked in Instantly now' : ''}.`) : 'Not done: ' + out.error, 7000);
+        loadExternal(['marketing-sync']);
+        return out;
+    }
+
+    async function mkCmdClick(t) {
+        const d = t.dataset;
+        const body = { action: d.mkCmd };
+        ['week', 'email', 'date', 'name', 'value', 'reason', 'job'].forEach((k) => { if (d[k] !== undefined) body[k] = d[k]; });
+        if (d.on !== undefined) body.on = d.on !== 'no';
+        if (d.sent !== undefined) body.sent = d.sent !== 'no';
+        t.disabled = true;
+        const out = await mkCommand(body, MK_ASK[d.mkCmd] ? MK_ASK[d.mkCmd](d) : d.mkCmd);
+        if (!out || !out.ok) t.disabled = false;
+    }
+
+    async function mkReply(t) {
+        const id = t.dataset.mkReply;
+        const box = root.querySelector(`[data-mk-draft="${CSS.escape(id)}"]`);
+        const text = box ? box.value.trim() : '';
+        if (!text) { toast('Write the answer first.', 4000); return; }
+        t.disabled = true;
+        const out = await mkCommand({ action: 'reply', id, text }, `send this answer to ${t.dataset.to} from the campaign's mailbox, in the same thread`);
+        if (out && out.ok) delete S.mkDrafts[id]; else t.disabled = false;
     }
 
     function views() {
@@ -1871,6 +1965,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.runAction) { runAction(t.dataset.runAction, t.dataset.job, t.dataset.key); return; }
         if (t.dataset.socialDecide) { decideSocial(t.dataset.key, t.dataset.socialDecide); return; }
         if (t.dataset.mkCampaign) { campaignAct(t); return; }
+        if (t.dataset.mkCmd) { mkCmdClick(t); return; }
+        if (t.dataset.mkReply) { mkReply(t); return; }
+        if (t.dataset.mkWeek) { S.mkWeek = t.dataset.mkWeek; render(); return; }
         if (t.dataset.noticeSend || t.dataset.noticeDrop) { decideNotice(t.dataset.noticeSend || t.dataset.noticeDrop, !!t.dataset.noticeSend); return; }
         if (t.dataset.go) { closeSheet(); go(t.dataset.go); return; }
         if (t.dataset.mail) { S.mail = t.dataset.mail; compute(); render(); return; }
@@ -1891,7 +1988,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             'copy-link': () => copy(link(), 'Link copied.'), 'web-share': webShare, 'copy-brief': () => copy(markdown(), 'Briefing copied.'), email: emailBriefing,
             'export-json': exportAll, 'export-csv': () => run({ type: 'export', format: 'csv' }), 'export-png': () => run({ type: 'export', format: 'png' }),
             'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief,
-            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'outreach', 'social', 'notices']), 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop
+            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'social', 'notices']), 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop
         };
         if (acts[act]) acts[act]();
     });
@@ -1901,6 +1998,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.shareField && S.share.draft) S.share.draft[t.dataset.shareField] = t.value;
         else if (t.dataset.shareCaption !== undefined) S.share.caption = t.value;
         else if (t.dataset.mkField) S.mkForm[t.dataset.mkField] = t.value;
+        else if (t.dataset.mkDraft) S.mkDrafts[t.dataset.mkDraft] = t.value;
     });
     root.addEventListener('change', (event) => {
         if (event.target.dataset.shareFile !== undefined) { S.share.file = event.target.files[0] || null; render(); return; }
@@ -1939,6 +2037,11 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             const out = await call('marketing-block', { value }).catch((error) => ({ ok: false, error: error.message }));
             toast(out.ok ? `${out.blocked} is blocked in Instantly.` : 'Not blocked: ' + out.error, 6000);
             if (out.ok) { S.mkForm.address = ''; form.address.value = ''; }
+        } else if (form.dataset.mkDnc !== undefined) {
+            const value = form.addr.value.trim();
+            if (!value) return;
+            const out = await mkCommand({ action: 'dnc', value, reason: form.reason.value.trim() }, MK_ASK.dnc({ value }));
+            if (out && out.ok) { S.mkForm.dnc = ''; S.mkForm.dncWhy = ''; form.addr.value = ''; form.reason.value = ''; }
         } else if (form.dataset.unlist !== undefined) {
             const hostName = form.host.value.trim();
             if (!hostName || !confirmRun(`unlist ${hostName} from Live Reports`)) return;
