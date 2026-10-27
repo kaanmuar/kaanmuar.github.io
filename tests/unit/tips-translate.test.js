@@ -86,6 +86,47 @@ test('no batch is committed with translations but an empty cache', () => {
   assert.deepEqual(empty, [], 'run python3 scripts/tips-studio/translate.py media/social-posts/<batch> --seed');
 });
 
+test('a caption label comes from the glossary and only the rest goes to the translator', () => {
+  const code = 'import json, translate; asked = []; translate.gtx = lambda text, lang: asked.append(text) or text.upper(); '
+    + 'cache = {}; translate.fill(["Your guess: Make your guess.", "Guide: https://x.com/a"], "es", cache); print(json.dumps([cache, asked], ensure_ascii=False))';
+  const [cache, asked] = JSON.parse(execFileSync(process.env.PYTHON || 'python3', ['-c', code], { cwd: dir, encoding: 'utf8' }));
+  assert.deepEqual(cache, { 'es\u0000Your guess: Make your guess.': 'Tu apuesta: MAKE YOUR GUESS.', 'es\u0000Guide:': 'Guía:' });
+  assert.deepEqual(asked, ['Make your guess.']);
+});
+
+test('a line that speaks to the viewer in the other register is caught', () => {
+  const register = (cases) => py('[register(*c) for c in args[0]]', cases);
+  assert.deepEqual(register([
+    ['Su suposición: haga su suposición.', 'es', 'Your guess: make your guess.'],
+    ['Verifique sus propios enlaces y corrija o redirija los que respondan 404.', 'es', 'Check your own links.'],
+    ['Revise su propio sitio:', 'es', 'Review your own site:'],
+    ['Haz tu apuesta. Cuando utilice roles ARIA, puede que Google no lo vea.', 'es', 'Make your guess.'],
+    ['Sus sitios web, de 20 páginas cada uno, pasaron por la misma revisión.', 'es', 'Their websites went through the same review.'],
+    ['Prüfe deine Seite.', 'de', 'Check your page.'],
+    ['Prüfen Sie Ihre Seite.', 'de', 'Check your page.'],
+    ['Vérifie ton site.', 'fr', 'Check your site.'],
+    ['Abbiamo letto i controlli del modulo. Verifichi il Suo sito.', 'it', 'Check your site.'],
+    ['Lei è qui. Confira o teu site.', 'pt', 'Check your site.']
+  ]), [['haga', 'Su', 'su'], ['Verifique', 'corrija', 'redirija', 'sus'], ['Revise', 'su'], [], [], ['deine'], [], ['ton'], ['Verifichi', 'Suo'], ['teu']]);
+});
+
+test('in CI a clip in the other register goes out in English and the rest stay translated', () => {
+  const code = 'import json, translate; src = {"ui": {}, "clips": {"a": {"lang": "es", "strings": {"action": "Check it."}}, "b": {"lang": "es", "strings": {"action": "Check it."}}}}; '
+    + 'done = {"ui": {}, "clips": {"a": {"action": "Revise su sitio."}, "b": {"action": "Revisa tu sitio."}}}; '
+    + 'print(json.dumps([translate.check(src, done, True), sorted(done["clips"])]))';
+  const out = execFileSync(process.env.PYTHON || 'python3', ['-c', code], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  assert.deepEqual(JSON.parse(out), [true, ['b']]);
+});
+
+test('no batch is committed with a translation in the other register', () => {
+  const root = path.join(__dirname, '../../media/social-posts');
+  const batches = fs.readdirSync(root).filter((batch) => fs.existsSync(path.join(root, batch, 'i18n.json')) && fs.existsSync(path.join(root, batch, 'i18n-src.json')));
+  const code = 'import json, sys; from pathlib import Path; from translate import slips; root = Path(sys.argv[1]); '
+    + 'print(json.dumps([[b, at] for b in json.loads(sys.argv[2]) for at, _, _ in slips(json.loads((root / b / "i18n-src.json").read_text()), json.loads((root / b / "i18n.json").read_text()))]))';
+  const found = JSON.parse(execFileSync(process.env.PYTHON || 'python3', ['-c', code, root, JSON.stringify(batches)], { cwd: dir, encoding: 'utf8' }));
+  assert.deepEqual(found, [], 'fix them in the batch cache and rerun translate.py, or list the line in registerOk');
+});
+
 test('a translated fragment starts in the case the English starts', () => {
   const cases = [
     ['Exorcise it', 'exorcizarlo', 'es', 'Exorcizarlo'],
