@@ -22,7 +22,8 @@ else
 	git -C "$main" worktree add -q --no-track -b "$branch" "$dir" origin/main
 fi
 
-for deps in node_modules functions/node_modules; do
-	[ -d "$main/$deps" ] && [ ! -e "$dir/$deps" ] && ln -s "$main/$deps" "$dir/$deps"
+# functions/.env is gitignored; without it a deploy from the worktree ships every function without its keys (#1739).
+for deps in node_modules functions/node_modules functions/.env; do
+	[ -e "$main/$deps" ] && [ ! -e "$dir/$deps" ] && ln -s "$main/$deps" "$dir/$deps"
 done
 echo "$dir"
