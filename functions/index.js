@@ -372,119 +372,39 @@ exports.noteCvVisit = functions.runWith({ maxInstances: 10 }).https.onRequest(as
 });
 
 const crypto = require("crypto");
-const FORM_WINDOW_MS = 10 * 60 * 1000;
-const FORM_BURST = 8;
-const FORM_HOLD_MS = 30 * 60 * 1000;
-const CHALLENGE_MS = 5 * 60 * 1000;
-const CAPTCHA_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-function hashAnswer(value) {
-  return crypto.createHash("sha256").update(String(value || "").trim().toLowerCase()).digest("hex");
-}
-
-function randomCaptchaText() {
-  let text = "";
-  for (let i = 0; i < 5; i++) text += CAPTCHA_ALPHABET[crypto.randomInt(CAPTCHA_ALPHABET.length)];
-  return text;
-}
-
-function captchaImage(text) {
-  const glyphs = text.split("").map((ch, i) => {
-    const x = 16 + i * 30;
-    const y = 38 + (i % 2 === 0 ? -4 : 6);
-    const rot = (i * 8) - 16;
-    return `<text x="${x}" y="${y}" transform="rotate(${rot} ${x} ${y})" font-family="Georgia,serif" font-size="28" fill="#1a2832">${ch}</text>`;
-  }).join("");
-  const lines = [0, 1, 2, 3].map((n) => {
-    const y = 10 + n * 12;
-    return `<line x1="0" y1="${y}" x2="168" y2="${y + 6}" stroke="#8aa0ad" stroke-width="1"/>`;
-  }).join("");
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="168" height="56" viewBox="0 0 168 56"><rect width="168" height="56" fill="#f4f7f8"/>${lines}${glyphs}</svg>`;
-  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-}
-
-async function formGate() {
-  const snap = await getFirestore().doc("abuse/forms").get();
-  if (!snap.exists) return { required: false };
-  const data = snap.data() || {};
-  const until = data.until && data.until.toMillis ? data.until.toMillis() : 0;
-  return { required: data.captcha === true && until > Date.now() };
-}
-
-async function noteFormBurst() {
-  const ref = getFirestore().doc("abuse/forms");
-  await getFirestore().runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const now = Date.now();
-    const prev = snap.exists ? snap.data() : {};
-    const start = prev.windowStart && prev.windowStart.toMillis ? prev.windowStart.toMillis() : 0;
-    const until = prev.until && prev.until.toMillis ? prev.until.toMillis() : 0;
-    const holding = prev.captcha === true && until > now;
-    if (holding) {
-      tx.set(ref, { count: (prev.count || 0) + 1 }, { merge: true });
-      return;
-    }
-    if (!start || now - start > FORM_WINDOW_MS) {
-      tx.set(ref, {
-        windowStart: Timestamp.fromMillis(now),
-        count: 1,
-        captcha: false,
-        until: null
-      });
-      return;
-    }
-    const count = (prev.count || 0) + 1;
-    const captcha = count >= FORM_BURST;
-    tx.set(ref, {
-      windowStart: prev.windowStart,
-      count,
-      captcha,
-      until: captcha ? Timestamp.fromMillis(now + FORM_HOLD_MS) : null
-    });
-  });
-}
-
-exports.getFormChallenge = functions.https.onCall(async () => {
-  const gate = await formGate();
-  if (!gate.required) return { required: false };
-  const text = randomCaptchaText();
-  const ref = getFirestore().collection("form_challenges").doc();
-  await ref.set({
-    answer: hashAnswer(text),
-    expiresAt: Timestamp.fromMillis(Date.now() + CHALLENGE_MS)
-  });
-  return { required: true, id: ref.id, image: captchaImage(text) };
-});
+const formGuard = require("./form-guard");
 
 function cleanText(value, max) {
   return String(value == null ? "" : value).trim().slice(0, max);
 }
 
-exports.submitGuardedForm = functions.https.onCall(async (data) => {
-  const gate = await formGate();
-  if (!gate.required) {
-    throw new functions.https.HttpsError("failed-precondition", "The form check is not active.");
-  }
+function callerIp(context) {
+  const req = context && context.rawRequest;
+  if (!req) return "";
+  const forwarded = String((req.headers && req.headers["x-forwarded-for"]) || "").split(",")[0].trim();
+  return String(req.ip || forwarded || "").slice(0, 80);
+}
+
+exports.submitGuardedForm = functions.runWith({ secrets: SECRETS.turnstile, maxInstances: 10 }).https.onCall(async (data, context) => {
   const payload = data || {};
   const kind = payload.kind === "rating" ? "rating" : (payload.kind === "message" ? "message" : "");
   if (!kind) throw new functions.https.HttpsError("invalid-argument", "Unknown form.");
-  const challengeId = String(payload.challengeId || "");
-  const ref = challengeId ? getFirestore().collection("form_challenges").doc(challengeId) : null;
-  const challenge = ref ? await ref.get() : null;
-  const expires = challenge && challenge.exists && challenge.data().expiresAt && challenge.data().expiresAt.toMillis
-    ? challenge.data().expiresAt.toMillis()
-    : 0;
-  const expected = challenge && challenge.exists ? String(challenge.data().answer || "") : "";
-  const given = hashAnswer(payload.answer);
-  let match = false;
-  try {
-    match = expected.length === given.length && crypto.timingSafeEqual(Buffer.from(given, "hex"), Buffer.from(expected, "hex"));
-  } catch (error) {
-    match = false;
+  const ip = callerIp(context);
+  if (!(await formGuard.takeFormSlot(getFirestore(), ip))) {
+    throw new functions.https.HttpsError("resource-exhausted", "Too many posts from this connection. Try again in a few minutes.");
   }
-  if (challenge && challenge.exists) await ref.delete();
-  if (!challenge || !challenge.exists || expires < Date.now() || !match) {
-    throw new functions.https.HttpsError("invalid-argument", "The characters did not match.");
+  const check = await formGuard.verifyTurnstile({
+    secret: process.env.TURNSTILE_SECRET_KEY,
+    token: payload.token,
+    ip,
+    action: kind
+  });
+  if (!check.ok) {
+    if (check.reason === "unreachable" || check.reason === "config") {
+      console.error("Form check could not run:", check.reason);
+      throw new functions.https.HttpsError("unavailable", "The bot check could not run. Try again in a minute.");
+    }
+    throw new functions.https.HttpsError("permission-denied", "The bot check did not pass.");
   }
 
   const email = cleanText(payload.email, 120).toLowerCase();
@@ -492,7 +412,7 @@ exports.submitGuardedForm = functions.https.onCall(async (data) => {
     throw new functions.https.HttpsError("invalid-argument", "Check the email.");
   }
   const blocked = await getFirestore().doc("blocked_senders/" + email).get();
-  if (blocked.exists) throw new functions.https.HttpsError("permission-denied", "Could not send.");
+  if (blocked.exists) throw new functions.https.HttpsError("failed-precondition", "Could not send.");
   const name = cleanText(payload.name, 120);
   if (name.length < 2) throw new functions.https.HttpsError("invalid-argument", "Check the name.");
 
@@ -5070,7 +4990,7 @@ async function shareDraft(body) {
 
 async function shareQueue(body) {
   const token = await githubApp.token();
-  if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager, or GITHUB_BUGS_TOKEN in Secret Manager), so Jarvis cannot start the post workflow.");
+  if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager), so Jarvis cannot start the post workflow.");
   const ref = getFirestore().collection("social_inbox").doc(String(body.id || "x"));
   const snap = await ref.get();
   if (!snap.exists) throw new Error("That draft is gone.");
@@ -5533,6 +5453,34 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
   return watch + "; " + acts + "; " + notices + "; " + social;
 });
 
+const tiktokWatch = require("./tiktok-business-watch");
+
+// Every hour until TikTok answers the Business application (#1889): the decision is pushed, mailed and noted on #1888 once.
+async function tiktokBusinessRun() {
+  const ref = getFirestore().collection("jarvis_watch").doc("tiktok_business");
+  const state = (await ref.get()).data() || {};
+  if (state.decided) return "decided: " + state.decided.verdict;
+  if (!process.env.QA_MAIL_APP_PASSWORD) throw new Error("QA_MAIL_APP_PASSWORD is not set.");
+  const mails = await tiktokWatch.fetchMails({ user: process.env.QA_MAIL_USER || tiktokWatch.MAILBOX, pass: process.env.QA_MAIL_APP_PASSWORD },
+    require("imapflow").ImapFlow, require("mailparser").simpleParser);
+  const { decided, unclear } = tiktokWatch.sort(mails, state.seen);
+  for (const m of decided ? [decided] : unclear) {
+    await pushOwner(tiktokWatch.message(m));
+    await sendOwnerEmail(tiktokWatch.mail(m)).catch((error) => console.error("TikTok decision mail failed:", error));
+  }
+  if (decided) {
+    const token = await githubApp.token();
+    if (token) await github("/repos/" + BUG_REPO + "/issues/" + tiktokWatch.TICKET + "/comments", { body: tiktokWatch.comment(decided) }, token)
+      .catch((error) => console.error("TikTok decision comment failed:", error));
+  }
+  const seen = Array.from(new Set((state.seen || []).concat(unclear.map((m) => m.id)))).slice(-100);
+  await ref.set(Object.assign({ seen, checkedAt: new Date().toISOString(), mails: mails.length },
+    decided ? { decided: { verdict: decided.verdict, id: decided.id, from: decided.from, subject: decided.subject, date: decided.date } } : {}));
+  return decided ? "decided: " + decided.verdict : mails.length + " TikTok mails, " + unclear.length + " unclear pushed";
+}
+
+exports.tiktokBusinessWatch = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB", secrets: SECRETS.tiktokBusinessWatch }), "tiktokBusinessWatch", tiktokBusinessRun);
+
 exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxInstances: 3, secrets: SECRETS.jarvis }).https.onRequest(async (req, res) => {
   res.set("Access-Control-Allow-Origin", reviewOrigin(req));
   res.set("Vary", "Origin");
@@ -5642,7 +5590,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     } else if (op === "social-runs") out = { runs: await socialRuns() };
     else if (op === "social-post-now") {
       const token = await githubApp.token();
-      if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager, or GITHUB_BUGS_TOKEN in Secret Manager), so Jarvis cannot start the workflows.");
+      if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager), so Jarvis cannot start the workflows.");
       const started = [];
       for (const w of jarvisSocial.WORKFLOWS) {
         const path = "/repos/" + BUG_REPO + "/actions/workflows/" + w.file;

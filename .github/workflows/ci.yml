@@ -24,7 +24,7 @@ jobs:
       contents: read
     steps:
       - name: Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -44,19 +44,26 @@ jobs:
         run: python3 scripts/build-review-langs.py --check
       - name: Social hub pages match their builder
         run: node scripts/build-social-hub.js --check
+      - name: CSP script hashes match the pages' inline scripts
+        run: node scripts/build-csp-hashes.js --check
       - name: Jarvis rules in functions match the admin page
         run: node scripts/build-jarvis-core.js --check
       - name: Finding copy in functions and the per-language page files match the source
         run: node scripts/build-findings-copy.js --check
 
-  playwright:
+  playwright-shard:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    name: playwright (${{ matrix.shard }}/2)
     steps:
       - name: Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -66,27 +73,40 @@ jobs:
         run: npm ci
         env:
           CYPRESS_INSTALL_BINARY: 0
+      - name: Read the Playwright version
+        id: pw-version
+        run: echo "version=$(node -p "require('./node_modules/playwright/package.json').version")" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
         id: pw-cache
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/ms-playwright
-          key: pw-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: pw-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+      # No --with-deps: the runner image already has Chromium's libraries, and apt-get from the
+      # Ubuntu mirror has stalled for 5 to 14 minutes.
       - name: Install Chromium
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
-      - name: Install Chromium system libraries
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+        run: npx playwright install chromium
       - name: Run Playwright tests
-        run: npx playwright test --workers=4
+        run: npx playwright test --workers=4 --shard=${{ matrix.shard }}/2
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
           retention-days: 30
+
+  # The main ruleset requires a check named playwright, so this job stands for both shards.
+  playwright:
+    needs: playwright-shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Both Playwright shards passed
+        run: test "${{ needs.playwright-shard.result }}" = success
 
   cypress:
     runs-on: ubuntu-latest
@@ -106,7 +126,7 @@ jobs:
     name: cypress (${{ matrix.group }})
     steps:
       - name: Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -128,7 +148,7 @@ jobs:
         run: npx cypress run --spec "${{ fromJSON(env.CYPRESS_SPECS)[matrix.group] }}"
       - name: Upload Cypress report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cypress-${{ matrix.group }}
           path: |
@@ -143,7 +163,7 @@ jobs:
       contents: read
     steps:
       - name: Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
@@ -159,7 +179,7 @@ jobs:
         run: npm run test:robot
       - name: Upload Robot results
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: robot-results
           path: robot-results
@@ -172,7 +192,7 @@ jobs:
       contents: read
     steps:
       - name: Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -182,21 +202,32 @@ jobs:
       - name: Run k6 load tests
         run: npm run test:k6
       - name: Set up Java
-        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: '17'
           cache: maven
           cache-dependency-path: gatling/pom.xml
+      - name: Cache JMeter
+        id: jmeter-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/apache-jmeter-5.6.3
+          key: jmeter-5.6.3
+      # archive.apache.org has served this tarball at 30 to 60 kB/s, so try the CDN first.
       - name: Install JMeter
+        if: steps.jmeter-cache.outputs.cache-hit != 'true'
         run: |
-          curl -fsSL -o /tmp/jmeter.tgz https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.3.tgz
-          sudo tar -xzf /tmp/jmeter.tgz -C /opt
-          echo "/opt/apache-jmeter-5.6.3/bin" >> "$GITHUB_PATH"
+          f=jmeter/binaries/apache-jmeter-5.6.3.tgz
+          curl -fsSL --max-time 120 -o /tmp/jmeter.tgz "https://dlcdn.apache.org/$f" \
+            || curl -fsSL --max-time 600 -o /tmp/jmeter.tgz "https://archive.apache.org/dist/$f"
+          tar -xzf /tmp/jmeter.tgz -C ~
+      - name: Add JMeter to PATH
+        run: echo "$HOME/apache-jmeter-5.6.3/bin" >> "$GITHUB_PATH"
       - name: Run JMeter load tests
         run: npm run test:jmeter
       - name: Install Maven
-        run: sudo apt-get update && sudo apt-get install -y maven
+        run: command -v mvn || { sudo apt-get update && sudo apt-get install -y maven; }
       - name: Run Gatling load tests
         run: npm run test:gatling
 
@@ -205,7 +236,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -228,7 +259,7 @@ jobs:
         continue-on-error: true
       - name: Upload native results
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: native-catalog-results
           path: |
@@ -240,7 +271,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -261,7 +292,7 @@ jobs:
         continue-on-error: true
       - name: Upload Apple results
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: apple-catalog-results
           path: |
@@ -274,7 +305,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:

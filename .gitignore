@@ -52,3 +52,4 @@ PubSap/
 
 # cf build output and dev state for the qalabreview.com Worker (#1866)
 qalabreview/.cloudflare/
+_site/

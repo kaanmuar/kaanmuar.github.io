@@ -1,3 +1,4 @@
+const fs = require('fs');
 const { test, expect } = require('@playwright/test');
 const { catalog } = require('./native/cases');
 const { record, reset } = require('./native/summary');
@@ -23,7 +24,7 @@ for (const row of rows) {
     });
     await page.reload();
     await page.waitForFunction(() => !document.getElementById('experience-container') || document.documentElement.dataset.cvSettled, null, { timeout: 20000 }).catch(() => {});
-    await page.addScriptTag({ path: 'js/catalog-checks.js' });
+    await page.evaluate(fs.readFileSync('js/catalog-checks.js', 'utf8'));
     const message = await page.evaluate(async (id) => {
       const check = window.CatalogChecks && window.CatalogChecks[id];
       if (!check) return 'FAIL: missing ' + id;

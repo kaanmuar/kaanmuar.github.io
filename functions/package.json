@@ -11,6 +11,8 @@
     "axe-core": "^4.14.0",
     "firebase-admin": "^14.5.0",
     "firebase-functions": "^7.4.0",
+    "imapflow": "^2.9.1",
+    "mailparser": "^3.12.4",
     "puppeteer-core": "^25.14.0",
     "web-push": "^3.6.7"
   }

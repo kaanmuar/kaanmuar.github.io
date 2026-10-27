@@ -266,6 +266,33 @@ test.describe('CV desktop', () => {
     await page.locator('#widget-close-btn').click();
   });
 
+  test('a rating carries a Turnstile token to submitGuardedForm and nothing writes to Firestore', async ({ page }) => {
+    const calls = [];
+    const firestore = [];
+    await page.route(/cloudfunctions\.net\/submitGuardedForm/, (route) => {
+      calls.push(route.request().postDataJSON().data);
+      return route.fulfill({ status: 200, contentType: 'application/json', body: '{"result":{"ok":true}}' });
+    });
+    await page.route(/firestore\.googleapis\.com/, (route) => { firestore.push(route.request().url()); return route.abort(); });
+    await page.addInitScript(() => {
+      window.__csp = [];
+      document.addEventListener('securitypolicyviolation', (event) => window.__csp.push(event.violatedDirective + ' ' + event.blockedURI));
+    });
+    await page.reload();
+    await waitForCVApp(page);
+    await page.locator('#contact-widget-fab').click();
+    await expect(page.locator('#rating-turnstile input[name="cf-turnstile-response"]')).toHaveValue(/\S/, { timeout: 20000 });
+    await page.locator('#rating-tab').click();
+    await page.locator('#rater-name').fill('Ada Test');
+    await page.locator('#rater-email').fill('ada@example.com');
+    await page.locator('#star-rating [data-value="5"]').click();
+    await page.locator('#send-rating-btn').click();
+    await expect.poll(() => calls.length, { timeout: 30000 }).toBe(1);
+    expect(calls[0]).toMatchObject({ kind: 'rating', name: 'Ada Test', email: 'ada@example.com', rating: 5, token: 'XXXX.DUMMY.TOKEN.XXXX' });
+    expect(firestore.filter((url) => /messages|ratings/.test(url))).toEqual([]);
+    expect(await page.evaluate(() => window.__csp)).toEqual([]);
+  });
+
   test('company names open their sites and leave the job closed', async ({ page }) => {
     const team = page.locator('#experience-0 .company-link');
     await expect(team).toHaveAttribute('href', 'https://www.teaminternational.com');
