@@ -1711,6 +1711,59 @@ test.describe("address guards", () => {
     assert.equal(core.hostBlocked("example.com"), false);
   });
 
+  test("benchmark, IETF, reserved and IPv4-carrying IPv6 addresses are refused by both guards", () => {
+    const browser = require("../../functions/url-review-browser");
+    ["192.0.0.8", "198.18.0.1", "198.19.255.255", "240.0.0.1", "::ffff:169.254.169.254", "::ffff:a9fe:a9fe", "64:ff9b::a9fe:a9fe", "2002:a9fe:a9fe::1", "ff02::1", "::7f00:1"].forEach((ip) => {
+      assert.equal(core.ipBlocked(ip), true, ip);
+      assert.equal(browser.blockedHost("https://" + (ip.includes(":") ? "[" + ip + "]" : ip) + "/"), true, ip);
+    });
+    ["8.8.8.8", "198.20.0.1", "::ffff:8.8.8.8", "2606:4700:4700::1111"].forEach((ip) => {
+      assert.equal(core.ipBlocked(ip), false, ip);
+      assert.equal(browser.blockedHost("https://" + (ip.includes(":") ? "[" + ip + "]" : ip) + "/"), false, ip);
+    });
+  });
+
+  test("the browser refuses a host whose lookup fails or returns any internal address", async () => {
+    const browser = require("../../functions/url-review-browser");
+    const fake = (table) => async (name) => { if (!table[name]) throw new Error("ENOTFOUND"); return table[name]; };
+    const lookup = fake({ "mixed.test": [{ address: "93.184.215.14", family: 4 }, { address: "169.254.169.254", family: 4 }], "ok.test": [{ address: "93.184.215.14", family: 4 }], "empty.test": [] });
+    assert.equal(await browser.publicAddress("gone.test", lookup), "");
+    assert.equal(await browser.publicAddress("empty.test", lookup), "");
+    assert.equal(await browser.publicAddress("mixed.test", lookup), "");
+    assert.equal(await browser.publicAddress("metadata.google.internal", lookup), "");
+    assert.equal(await browser.publicAddress("[::1]", lookup), "");
+    assert.equal(await browser.publicAddress("ok.test", lookup), "93.184.215.14");
+    const dns = require("dns").promises;
+    const real = dns.lookup;
+    dns.lookup = async () => { throw new Error("ESERVFAIL"); };
+    try { assert.equal(await browser.privateAddress("fails-" + Date.now() + ".test"), true); } finally { dns.lookup = real; }
+  });
+
+  test("Chromium is sent through the pinning proxy, which refuses internal and unresolved hosts", async () => {
+    const browser = require("../../functions/url-review-browser");
+    const http = require("node:http");
+    const args = browser.proxyArgs(4321);
+    assert.ok(args.includes("--proxy-server=http://127.0.0.1:4321") && args.includes("--proxy-bypass-list=<-loopback>"));
+    const proxy = await browser.guard(async (name) => {
+      if (name === "rebind.test") return [{ address: "169.254.169.254", family: 4 }];
+      throw new Error("ENOTFOUND");
+    });
+    const tunnel = (path) => new Promise((resolve, reject) => {
+      http.request({ host: "127.0.0.1", port: proxy.port, method: "CONNECT", path }).on("connect", (res, sock) => { sock.destroy(); resolve(res.statusCode); }).on("error", reject).end();
+    });
+    const plain = (url) => new Promise((resolve, reject) => {
+      http.get({ host: "127.0.0.1", port: proxy.port, path: url }, (res) => { res.resume(); resolve(res.statusCode); }).on("error", reject);
+    });
+    try {
+      assert.equal(await tunnel("rebind.test:443"), 403);
+      assert.equal(await tunnel("gone.test:443"), 403);
+      assert.equal(await tunnel("127.0.0.1:443"), 403);
+      assert.equal(await tunnel("[::ffff:169.254.169.254]:80"), 403);
+      assert.equal(await plain("http://rebind.test/latest/meta-data/"), 403);
+      assert.equal(await plain("http://localhost:8080/"), 403);
+    } finally { proxy.close(); }
+  });
+
   test("the mailbox must share the site's registrable domain", () => {
     assert.equal(core.mailboxMatchesHost("qa@shop.example.co.uk", "www.shop.example.co.uk"), true);
     assert.equal(core.mailboxMatchesHost("someone@gmail.com", "example.com"), false);
