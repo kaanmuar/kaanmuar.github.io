@@ -81,7 +81,7 @@ test("channel status without a ledger entry: the calendar slot is only Scheduled
   const now = Date.parse("2026-10-25T18:00:00-05:00");
   const slots = { linkedin: "2026-10-25T07:30:00-05:00", facebook: "2026-10-26T17:10:00-05:00", youtube: "2026-10-25T17:45:00-05:00" };
   const byNet = (list) => Object.fromEntries(list.map((c) => [c.net, c.state]));
-  assert.deepEqual(byNet(admin.channels(slots, null, now)), { linkedin: "scheduled", x: "none", bluesky: "none", mastodon: "none", instagram: "none", "instagram-story": "none", facebook: "scheduled", youtube: "missing", tiktok: "none" });
+  assert.deepEqual(byNet(admin.channels(slots, null, now)), { linkedin: "scheduled", x: "none", bluesky: "none", mastodon: "none", threads: "none", instagram: "none", "instagram-story": "none", facebook: "scheduled", youtube: "missing", tiktok: "none" });
   assert.equal(byNet(admin.channels(slots, "5b4Hr6r-cBk", now)).youtube, "live");
   const facebook = admin.channels(slots, null, now).find((c) => c.net === "facebook");
   assert.equal(facebook.via, "Facebook Page");
@@ -111,14 +111,14 @@ test("channel status from the Buffer and Page ledgers: failed if any profile fai
   assert.deepEqual(admin.ledgerEntries(ledgers, "auto-2026-10-24/02-b"), []);
   const list = admin.channels(slots, null, now, entries);
   const byNet = Object.fromEntries(list.map((c) => [c.net, c]));
-  assert.deepEqual(list.map((c) => c.state), ["sent", "queued", "scheduled", "scheduled", "failed", "none", "queued", "failed", "none"]);
+  assert.deepEqual(list.map((c) => c.state), ["sent", "queued", "scheduled", "scheduled", "scheduled", "failed", "none", "queued", "failed", "none"]);
   assert.equal(admin.statusLabel(byNet.linkedin), "Sent Oct 25");
   assert.equal(admin.statusLabel(byNet.x), "Queued Oct 25, 09:00");
   assert.equal(admin.statusLabel(byNet.instagram), "Failed Oct 25");
   assert.equal(byNet.instagram.error, "Image ratio not supported");
   assert.equal(byNet.linkedin.error, undefined);
   assert.equal(admin.statusLabel(byNet.facebook), "Queued Oct 26, 17:10");
-  assert.equal(admin.channels(slots, "5b4Hr6r-cBk", now, entries)[7].state, "live");
+  assert.equal(admin.channels(slots, "5b4Hr6r-cBk", now, entries)[8].state, "live");
   assert.equal(admin.statusLabel({ state: "failed", at: "" }), "Failed");
 });
 
@@ -133,8 +133,17 @@ test("Bluesky and Mastodon take the x slot and their own ledger, and a slot the 
   assert.deepEqual([posted.bluesky.state, posted.bluesky.via, posted.mastodon.state, posted.mastodon.error], ["sent", "Bluesky API", "failed", "422 Unprocessable"]);
   const next = byNet(admin.channels({ x: "2026-10-27T21:05:00-05:00" }, null, now, []));
   assert.equal(admin.statusLabel(next.bluesky), "Scheduled Oct 27, 21:05");
-  const missed = byNet(admin.channels({ x: "2026-10-26T09:00:00-05:00" }, null, now, []));
-  assert.deepEqual([missed.x.state, missed.bluesky.state, missed.mastodon.state], ["scheduled", "none", "none"]);
+  const missed = byNet(admin.channels({ x: "2026-10-26T09:00:00-05:00", instagram: "2026-10-26T09:00:00-05:00" }, null, now, []));
+  assert.deepEqual([missed.x.state, missed.bluesky.state, missed.mastodon.state, missed.threads.state, missed.instagram.state], ["scheduled", "none", "none", "none", "none"]);
+});
+
+test("Threads takes the x slot and Instagram its own slots, both through their APIs", () => {
+  const now = Date.parse("2026-10-27T08:00:00-05:00");
+  const byNet = Object.fromEntries(admin.channels({ x: "2026-10-27T21:05:00-05:00", instagram: "2026-10-27T15:45:00-05:00", "instagram-story": "2026-10-27T13:40:00-05:00" }, null, now, []).map((c) => [c.net, c]));
+  assert.deepEqual([byNet.threads.via, byNet.instagram.via, byNet["instagram-story"].via], ["Threads API", "Instagram API", "Instagram API"]);
+  assert.equal(admin.statusLabel(byNet.threads), "Scheduled Oct 27, 21:05");
+  assert.equal(admin.statusLabel(byNet.instagram), "Scheduled Oct 27, 15:45");
+  assert.equal(admin.statusLabel(byNet["instagram-story"]), "Scheduled Oct 27, 13:40");
 });
 
 test("a pick with a remote image renders on the hub with its own thumbnail, link and kind label", () => {

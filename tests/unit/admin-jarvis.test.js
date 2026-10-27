@@ -997,7 +997,7 @@ test("social: each channel shows what is next, what went out last and what faile
   } };
   const open = { posts: { "b/one": [{ channel: "bluesky", at: "2026-10-24T15:01:00Z", result: "sent", url: "https://bsky.app/profile/q/post/1" }, { channel: "mastodon", at: "2026-10-24T15:02:00Z", result: "failed" }] } };
   const rows = social.byChannel([buffer, null, open], now, now - 7 * 86400000);
-  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "bluesky", "mastodon", "instagram", "instagram-story", "facebook", "youtube", "tiktok"]);
+  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "bluesky", "mastodon", "threads", "instagram", "instagram-story", "facebook", "youtube", "tiktok"]);
   assert.deepEqual(rows[0].next.map((n) => n.post), ["b/two", "b/one"]);
   assert.equal(rows[0].scheduled, 2);
   assert.deepEqual([rows[1].sent, rows[1].failed, rows[1].last.url], [1, 1, "https://x.com/1"]);
