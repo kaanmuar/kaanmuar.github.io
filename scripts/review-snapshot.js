@@ -5,7 +5,7 @@
  *
  * Reports go to previews/insights-test/<name>-current.json. The browser pass
  * runs when CHROME_PATH is set, and PageSpeed Insights when PAGESPEED_KEY is
- * set in the environment or in functions/.env.
+ * set in the environment or in functions/.secret.local.
  *
  *   node scripts/review-snapshot.js --sample https://carlosandmunoz.com/
  *
@@ -19,9 +19,9 @@ const ROOT = path.join(__dirname, "..");
 const OUT = path.join(ROOT, "previews", "insights-test");
 const SAMPLE = path.join(ROOT, "assets", "qa-review-sample.json");
 
-function loadEnvFile() {
+function loadEnvFile(name) {
   let text = "";
-  try { text = fs.readFileSync(path.join(ROOT, "functions", ".env"), "utf8"); } catch (error) { return; }
+  try { text = fs.readFileSync(path.join(ROOT, "functions", name), "utf8"); } catch (error) { return; }
   text.split("\n").forEach((line) => {
     const trimmed = line.trim();
     const eq = trimmed.indexOf("=");
@@ -39,7 +39,8 @@ function summary(name, report) {
 }
 
 async function main() {
-  loadEnvFile();
+  loadEnvFile(".env");
+  loadEnvFile(".secret.local");
   const args = process.argv.slice(2);
   if (args[0] === "--sample") {
     if (!args[1]) {
