@@ -139,7 +139,21 @@ function altFor(tip) {
   if (tip.kind === "quiz") parts.push("Scores hidden until tomorrow.");
   return parts.reduce((out, part) => (out.length + part.length + 1 <= 300 ? (out ? out + " " : "") + part : out), "");
 }
-TIPS.forEach((tip) => { tip.alt = tip.alt || altFor(tip); });
+// Each clip's "Did you know?" scene (#1663): one more number from SCORES, never the one a quiz's answer hinges on.
+const MORE = {
+  "quiz-berlin-vienna": "Both portals score the same for GEO, analytics and speed, so the other three areas decide it.",
+  "berlin-vienna": "Berlin's weakest area is SEO, at 75. Vienna's is security, at 72.",
+  "three-universities": "The lowest single score of the three is Harvard's security, at 54. MIT's weakest area is SEO, at 59.",
+  "quiz-banks": "Both banks score exactly 85 for analytics, so that area will not decide it.",
+  banks: "Bancolombia's weakest area is SEO, at 41. Davivienda's is speed, at 50.",
+  "quiz-govuk-usagov": "Both portals score a perfect 100 for accessibility, so the gap is in the other five areas.",
+  "govuk-usagov": "GOV.UK's 92 is the highest overall score in this whole comparison series.",
+  "quiz-metros": "Both metro sites score 86 for GEO, so that area will not decide it.",
+  metros: "Metro de Bogotá's 97 for speed ties MIT's for the fastest pages in this comparison series.",
+  "quiz-cities": "Same review, same day: 20 pages of Bogotá's portal and 19 of Medellín's, on 19 October 2026.",
+  cities: "Bogotá's 97 for SEO is the highest SEO score in this whole comparison series."
+};
+TIPS.forEach((tip) => { tip.alt = tip.alt || altFor(tip); tip.more = MORE[tip.id]; });
 
 function link(platform, tip) {
   const q = new URLSearchParams({ utm_source: platform, utm_medium: "social", utm_campaign: CAMPAIGN, utm_content: tip.id });
