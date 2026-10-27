@@ -62,6 +62,7 @@ test("read: the alias comes from the webhook URL first, then the To address; htm
   assert.equal(inbound.read(p).alias, "youtube");
   assert.equal(code(p).code, "918273");
   assert.deepEqual(inbound.passedDomains(auth("tiktok.com")), ["tiktok.com"]);
+  assert.equal(inbound.htmlText("<p>&amp;quot; &quot;</p>").trim(), "&quot; \"");
 });
 
 test("message: a codes push with the code, the alias and a warning for an unchecked sender", () => {
