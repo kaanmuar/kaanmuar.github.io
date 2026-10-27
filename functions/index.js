@@ -6,13 +6,17 @@
 
 // Import necessary Firebase and SendGrid modules
 const functions = require("firebase-functions/v1");
-const admin = require("firebase-admin");
+const { initializeApp } = require("firebase-admin/app");
+const { getFirestore, FieldValue, Timestamp, AggregateField } = require("firebase-admin/firestore");
+const { getMessaging } = require("firebase-admin/messaging");
+const { getAuth } = require("firebase-admin/auth");
+const { getStorage } = require("firebase-admin/storage");
 const sgMail = require("@sendgrid/mail");
 
 // Initialize Firebase Admin SDK
-admin.initializeApp();
+initializeApp();
 // An optional field left undefined is dropped instead of failing the whole write, such as a finished review's report.
-admin.firestore().settings({ ignoreUndefinedProperties: true });
+getFirestore().settings({ ignoreUndefinedProperties: true });
 
 // Keys and tokens are Secret Manager secrets, bound per function in ./secrets.
 // Plain settings such as SENDGRID_FROM are env vars in functions/.env.
@@ -42,7 +46,7 @@ const githubApp = require("./github-app");
 // Runs a scheduled job and leaves its outcome in ops_runs/<job> for opsWatchdog. A job may return a
 // short note ("12 sent") for the digest.
 async function track(job, run) {
-  const ref = admin.firestore().collection("ops_runs").doc(job);
+  const ref = getFirestore().collection("ops_runs").doc(job);
   const startedAt = new Date().toISOString();
   try {
     const note = await run();
@@ -99,7 +103,7 @@ exports.sendEmailOnNewMail = withMail.firestore
       console.log(`Sending email to ${msg.to} using template ${msg.templateId}`);
       await sgMail.send(msg);
       console.log("Email sent successfully!");
-      return snap.ref.update({ status: "sent", sentAt: admin.firestore.FieldValue.serverTimestamp() });
+      return snap.ref.update({ status: "sent", sentAt: FieldValue.serverTimestamp() });
     } catch (error) {
       console.error("Error sending email:", error);
       if (error.response) {
@@ -135,7 +139,7 @@ exports.queueEmailOnMessageResponse = functions.firestore
       };
 
       try {
-        await admin.firestore().collection("mail").add(Object.assign({}, newMail, { expireAt: keepUntil() }));
+        await getFirestore().collection("mail").add(Object.assign({}, newMail, { expireAt: keepUntil() }));
         console.log(`Message reply to ${newData.email} has been successfully queued.`);
       } catch (error) {
         console.error("Error queueing message reply:", error);
@@ -175,7 +179,7 @@ exports.queueEmailOnRatingResponse = functions.firestore
       };
 
       try {
-        await admin.firestore().collection("mail").add(Object.assign({}, newMail, { expireAt: keepUntil() }));
+        await getFirestore().collection("mail").add(Object.assign({}, newMail, { expireAt: keepUntil() }));
         console.log(`Rating reply to ${newData.email} has been successfully queued.`);
       } catch (error) {
         console.error("Error queueing rating reply:", error);
@@ -207,7 +211,7 @@ function adminRespondUrl(type, id) {
 
 // An owner email that moved to Jarvis pushes sends only when its switch is on in Jarvis settings (#1672).
 async function mailOn(key) {
-  const settings = await jarvis.readSettings(admin.firestore());
+  const settings = await jarvis.readSettings(getFirestore());
   return settings.mail[key] === true;
 }
 
@@ -333,10 +337,10 @@ exports.noteCvVisit = functions.runWith({ maxInstances: 10 }).https.onRequest(as
     region: clip(decodePlace(req.get("x-appengine-region") || ""), 80),
     city: clip(decodePlace(req.get("x-appengine-city") || ""), 80)
   };
-  const stamp = admin.firestore.FieldValue.serverTimestamp();
-  const batch = admin.firestore().batch();
-  batch.set(admin.firestore().collection("visits").doc(), Object.assign({}, record, { createdAt: stamp }));
-  batch.set(admin.firestore().collection("site_events").doc(), {
+  const stamp = FieldValue.serverTimestamp();
+  const batch = getFirestore().batch();
+  batch.set(getFirestore().collection("visits").doc(), Object.assign({}, record, { createdAt: stamp }));
+  batch.set(getFirestore().collection("site_events").doc(), {
     site: "cv",
     kind: "visit",
     name: "visit",
@@ -400,7 +404,7 @@ function captchaImage(text) {
 }
 
 async function formGate() {
-  const snap = await admin.firestore().doc("abuse/forms").get();
+  const snap = await getFirestore().doc("abuse/forms").get();
   if (!snap.exists) return { required: false };
   const data = snap.data() || {};
   const until = data.until && data.until.toMillis ? data.until.toMillis() : 0;
@@ -408,8 +412,8 @@ async function formGate() {
 }
 
 async function noteFormBurst() {
-  const ref = admin.firestore().doc("abuse/forms");
-  await admin.firestore().runTransaction(async (tx) => {
+  const ref = getFirestore().doc("abuse/forms");
+  await getFirestore().runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     const now = Date.now();
     const prev = snap.exists ? snap.data() : {};
@@ -422,7 +426,7 @@ async function noteFormBurst() {
     }
     if (!start || now - start > FORM_WINDOW_MS) {
       tx.set(ref, {
-        windowStart: admin.firestore.Timestamp.fromMillis(now),
+        windowStart: Timestamp.fromMillis(now),
         count: 1,
         captcha: false,
         until: null
@@ -435,7 +439,7 @@ async function noteFormBurst() {
       windowStart: prev.windowStart,
       count,
       captcha,
-      until: captcha ? admin.firestore.Timestamp.fromMillis(now + FORM_HOLD_MS) : null
+      until: captcha ? Timestamp.fromMillis(now + FORM_HOLD_MS) : null
     });
   });
 }
@@ -444,10 +448,10 @@ exports.getFormChallenge = functions.https.onCall(async () => {
   const gate = await formGate();
   if (!gate.required) return { required: false };
   const text = randomCaptchaText();
-  const ref = admin.firestore().collection("form_challenges").doc();
+  const ref = getFirestore().collection("form_challenges").doc();
   await ref.set({
     answer: hashAnswer(text),
-    expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + CHALLENGE_MS)
+    expiresAt: Timestamp.fromMillis(Date.now() + CHALLENGE_MS)
   });
   return { required: true, id: ref.id, image: captchaImage(text) };
 });
@@ -465,7 +469,7 @@ exports.submitGuardedForm = functions.https.onCall(async (data) => {
   const kind = payload.kind === "rating" ? "rating" : (payload.kind === "message" ? "message" : "");
   if (!kind) throw new functions.https.HttpsError("invalid-argument", "Unknown form.");
   const challengeId = String(payload.challengeId || "");
-  const ref = challengeId ? admin.firestore().collection("form_challenges").doc(challengeId) : null;
+  const ref = challengeId ? getFirestore().collection("form_challenges").doc(challengeId) : null;
   const challenge = ref ? await ref.get() : null;
   const expires = challenge && challenge.exists && challenge.data().expiresAt && challenge.data().expiresAt.toMillis
     ? challenge.data().expiresAt.toMillis()
@@ -487,7 +491,7 @@ exports.submitGuardedForm = functions.https.onCall(async (data) => {
   if (!/^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/.test(email)) {
     throw new functions.https.HttpsError("invalid-argument", "Check the email.");
   }
-  const blocked = await admin.firestore().doc("blocked_senders/" + email).get();
+  const blocked = await getFirestore().doc("blocked_senders/" + email).get();
   if (blocked.exists) throw new functions.https.HttpsError("permission-denied", "Could not send.");
   const name = cleanText(payload.name, 120);
   if (name.length < 2) throw new functions.https.HttpsError("invalid-argument", "Check the name.");
@@ -502,14 +506,14 @@ exports.submitGuardedForm = functions.https.onCall(async (data) => {
     if (fileURL && !/^https:\/\/.+/.test(fileURL)) {
       throw new functions.https.HttpsError("invalid-argument", "Check the attachment.");
     }
-    await admin.firestore().collection("messages").add({
+    await getFirestore().collection("messages").add({
       name,
       email,
       topic,
       message,
       fileURL,
       status: "inbox",
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: FieldValue.serverTimestamp()
     });
     return { ok: true };
   }
@@ -519,14 +523,14 @@ exports.submitGuardedForm = functions.https.onCall(async (data) => {
   if ([1, 2, 3, 4, 5].indexOf(rating) === -1) {
     throw new functions.https.HttpsError("invalid-argument", "Check the rating.");
   }
-  await admin.firestore().collection("ratings").add({
+  await getFirestore().collection("ratings").add({
     name,
     email,
     rating,
     comment,
     status: "pending",
     isAnonymous: false,
-    createdAt: admin.firestore.FieldValue.serverTimestamp()
+    createdAt: FieldValue.serverTimestamp()
   });
   return { ok: true };
 });
@@ -813,9 +817,9 @@ async function loadEvents(start, end) {
   const rows = [];
   let cursor = null;
   for (;;) {
-    let query = admin.firestore().collection("site_events")
-      .where("createdAt", ">=", admin.firestore.Timestamp.fromDate(start))
-      .where("createdAt", "<", admin.firestore.Timestamp.fromDate(end))
+    let query = getFirestore().collection("site_events")
+      .where("createdAt", ">=", Timestamp.fromDate(start))
+      .where("createdAt", "<", Timestamp.fromDate(end))
       .orderBy("createdAt", "asc")
       .limit(400);
     if (cursor) query = query.startAfter(cursor);
@@ -833,9 +837,9 @@ async function loadEvents(start, end) {
 }
 
 async function countCreated(name, start, end) {
-  const snap = await admin.firestore().collection(name)
-    .where("createdAt", ">=", admin.firestore.Timestamp.fromDate(start))
-    .where("createdAt", "<", admin.firestore.Timestamp.fromDate(end))
+  const snap = await getFirestore().collection(name)
+    .where("createdAt", ">=", Timestamp.fromDate(start))
+    .where("createdAt", "<", Timestamp.fromDate(end))
     .count()
     .get();
   return snap.data().count;
@@ -852,16 +856,16 @@ async function sendPeriodReport(period) {
   let messageRows = [];
   let ratingRows = [];
   try {
-    const startStamp = admin.firestore.Timestamp.fromDate(window.start);
-    const endStamp = admin.firestore.Timestamp.fromDate(window.end);
+    const startStamp = Timestamp.fromDate(window.start);
+    const endStamp = Timestamp.fromDate(window.end);
     messageRows = await loadBound("messages", "createdAt", startStamp, endStamp);
     ratingRows = await loadBound("ratings", "createdAt", startStamp, endStamp);
   } catch (countError) {
     console.error(period + " inbox load skipped:", countError);
   }
   if (period === "quarter" && !events.length && !messageRows.length && !ratingRows.length) return null;
-  const ref = admin.firestore().collection("site_reports").doc(id);
-  const claimed = await admin.firestore().runTransaction(async (tx) => {
+  const ref = getFirestore().collection("site_reports").doc(id);
+  const claimed = await getFirestore().runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     const data = snap.exists ? snap.data() || {} : {};
     if (data.emailedAt) return false;
@@ -881,8 +885,8 @@ async function sendPeriodReport(period) {
     await ref.set({
       period: period,
       label: window.label,
-      start: admin.firestore.Timestamp.fromDate(window.start),
-      end: admin.firestore.Timestamp.fromDate(window.end),
+      start: Timestamp.fromDate(window.start),
+      end: Timestamp.fromDate(window.end),
       opens: summary.opens,
       clicks: summary.clicks,
       exports: summary.exports,
@@ -905,7 +909,7 @@ async function sendPeriodReport(period) {
       previous: { opens: previous.opens, clicks: previous.clicks, exports: previous.exports, runs: previous.runs },
       messages: messages,
       ratings: ratings,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: FieldValue.serverTimestamp()
     }, { merge: true });
     const title = period === "quarter" ? "15-minute" : period.charAt(0).toUpperCase() + period.slice(1);
     const rows = [
@@ -943,7 +947,7 @@ async function sendPeriodReport(period) {
       buttonLabel: "Open statistics"
     });
     if (!sent) throw new Error("Site report email was not sent.");
-    await ref.set({ emailedAt: admin.firestore.FieldValue.serverTimestamp(), sending: false }, { merge: true });
+    await ref.set({ emailedAt: FieldValue.serverTimestamp(), sending: false }, { merge: true });
   } catch (error) {
     await ref.set({ sending: false }, { merge: true });
     console.error(period + " site report failed:", error);
@@ -963,7 +967,7 @@ async function loadBound(name, field, startVal, endVal) {
   const rows = [];
   let cursor = null;
   for (;;) {
-    let query = admin.firestore().collection(name)
+    let query = getFirestore().collection(name)
       .where(field, ">=", startVal)
       .where(field, "<", endVal)
       .orderBy(field, "asc")
@@ -979,7 +983,7 @@ async function loadBound(name, field, startVal, endVal) {
 }
 
 function loadSummaries(name, fields, start, end) {
-  return admin.firestore().collection(name)
+  return getFirestore().collection(name)
     .where("at", ">=", start.toISOString())
     .where("at", "<", end.toISOString())
     .select(...fields)
@@ -990,7 +994,7 @@ function loadSummaries(name, fields, start, end) {
 
 // What went out after the reviews in a period. Single-field ranges only, so no composite index is needed.
 async function loadFollowUp(start, end) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const within = (name, field, fields) => db.collection(name).where(field, ">=", start).where(field, "<", end).select(...fields).limit(5000).get()
     .then((snap) => snap.docs.map((doc) => doc.data()));
   const [notes, notices, unlisted, replies, redemptions] = await Promise.all([
@@ -1012,7 +1016,7 @@ async function loadFollowUp(start, end) {
 
 // A failure bug seen closed on GitHub is marked once, so only the open ones are asked about again.
 async function loadFailureBugs() {
-  const snap = await admin.firestore().collection("url_review_failure_bugs").get();
+  const snap = await getFirestore().collection("url_review_failure_bugs").get();
   const token = await githubApp.token();
   return Promise.all(snap.docs.map(async (doc) => {
     const bug = Object.assign({ key: doc.id }, doc.data());
@@ -1042,8 +1046,8 @@ async function sendReviewPeriodReport(period) {
   const window = period === "quarter" ? quarterWindow(new Date()) : reportWindow(period, new Date());
   const earlier = period === "quarter" ? previousQuarter(window) : previousWindow(period, window);
   const id = "review-" + period + "-" + window.label.replace(/[\s:]/g, "-");
-  const startStamp = admin.firestore.Timestamp.fromDate(window.start);
-  const endStamp = admin.firestore.Timestamp.fromDate(window.end);
+  const startStamp = Timestamp.fromDate(window.start);
+  const endStamp = Timestamp.fromDate(window.end);
   const [opens, allReviews, captures, alerts, pageEvents, failed, priorFailed, reruns] = await Promise.all([
     loadBound("url_review_opens", "createdAt", startStamp, endStamp),
     loadBound("url_reviews", "createdAt", window.start.toISOString(), window.end.toISOString()),
@@ -1056,8 +1060,8 @@ async function sendReviewPeriodReport(period) {
   ]);
   const reviews = askedFor(allReviews);
   if (period === "quarter" && !opens.length && !reviews.length && !captures.length && !alerts.length && !pageEvents.length) return null;
-  const ref = admin.firestore().collection("url_review_reports").doc(id);
-  const claimed = await admin.firestore().runTransaction(async (tx) => {
+  const ref = getFirestore().collection("url_review_reports").doc(id);
+  const claimed = await getFirestore().runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     const data = snap.exists ? snap.data() || {} : {};
     if (data.emailedAt) return false;
@@ -1068,7 +1072,7 @@ async function sendReviewPeriodReport(period) {
   try {
     const summary = reviewMail.summarizePeriod(opens, reviews, captures, alerts);
     const [priorOpens, priorReviews] = await Promise.all([
-      loadBound("url_review_opens", "createdAt", admin.firestore.Timestamp.fromDate(earlier.start), startStamp),
+      loadBound("url_review_opens", "createdAt", Timestamp.fromDate(earlier.start), startStamp),
       loadBound("url_reviews", "createdAt", earlier.start.toISOString(), window.start.toISOString()).then(askedFor)
     ]);
     const previous = reviewMail.summarizePeriod(priorOpens, priorReviews, [], []);
@@ -1117,7 +1121,7 @@ async function sendReviewPeriodReport(period) {
       captureKinds: summary.captureKinds,
       previous: { opens: previous.opens, reviews: previous.reviews, paidUsd: previous.paidUsd },
       failures: { failed: failures.failed, stopped: failures.stopped, previous: failures.previous, cleared: failures.cleared, causes: failures.causes, hosts: failures.hosts, reruns: failures.reruns, openBugs: failures.openBugs },
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: FieldValue.serverTimestamp()
     }, { merge: true });
     const title = period === "quarter" ? "15-minute" : period.charAt(0).toUpperCase() + period.slice(1);
     const pageBody = pageEvents.length ? siteReport.reportBody(pageEvents, actionTitle) : "";
@@ -1133,7 +1137,7 @@ async function sendReviewPeriodReport(period) {
       body: [summary.body, quiet ? "" : failures.body, pageBody].filter(Boolean).join("\n\n")
     });
     if (!sent) throw new Error("URL review report email was not sent.");
-    await ref.set({ emailedAt: admin.firestore.FieldValue.serverTimestamp(), sending: false }, { merge: true });
+    await ref.set({ emailedAt: FieldValue.serverTimestamp(), sending: false }, { merge: true });
   } catch (error) {
     await ref.set({ sending: false }, { merge: true });
     console.error(period + " URL review report failed:", error);
@@ -1177,7 +1181,7 @@ async function probeFailure(url) {
 }
 
 async function diagnoseReviewFailures() {
-  const db = admin.firestore();
+  const db = getFirestore();
   const col = db.collection("url_review_failures");
   const since = new Date(Date.now() - 3 * 86400000).toISOString();
   const [alertSnap, savedSnap] = await Promise.all([
@@ -1212,7 +1216,7 @@ async function diagnoseReviewFailures() {
           : reviewFailures.diagnose(doc.data(), probe),
         probe,
         diagnosedAt: new Date().toISOString(),
-        checks: admin.firestore.FieldValue.increment(1)
+        checks: FieldValue.increment(1)
       })));
     }
   };
@@ -1224,7 +1228,7 @@ async function diagnoseReviewFailures() {
 exports.diagnoseReviewFailures = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.diagnoseReviewFailures }), "diagnoseReviewFailures", () => diagnoseReviewFailures());
 
 async function rerunFailure(group) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const ref = db.collection("url_review_reruns").doc();
   const startedAt = Date.now();
   const lines = [];
@@ -1272,7 +1276,7 @@ async function rerunFailure(group) {
 }
 
 async function rerunReviewFailures() {
-  const db = admin.firestore();
+  const db = getFirestore();
   const col = db.collection("url_review_failures");
   const since = new Date(Date.now() - reviewFailures.RERUN_DAYS * 86400000).toISOString();
   const rows = (await col.where("at", ">=", since).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
@@ -1345,7 +1349,7 @@ async function fileReviewFailureBugs() {
     console.log("URL review failure bugs: no GitHub token is set, so no bug was opened.");
     return null;
   }
-  const db = admin.firestore();
+  const db = getFirestore();
   const since = new Date(Date.now() - reviewFailures.RERUN_DAYS * 86400000).toISOString();
   const read = (name) => db.collection(name).where("at", ">=", since).get().then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
   const filed = db.collection("url_review_failure_bugs");
@@ -1382,9 +1386,9 @@ async function fileReviewFailureBugs() {
       }
       await github("/repos/" + BUG_REPO + "/issues/" + note.issue + "/comments", { body: note.body }, token);
       await ref.update({
-        runs: admin.firestore.FieldValue.increment(note.runs),
+        runs: FieldValue.increment(note.runs),
         hosts: Array.from(new Set((bug.hosts || []).concat(note.hosts))).slice(0, 40),
-        ids: admin.firestore.FieldValue.arrayUnion(...note.ids),
+        ids: FieldValue.arrayUnion(...note.ids),
         lastAt: note.lastAt,
         commentedAt: new Date().toISOString()
       });
@@ -1464,7 +1468,7 @@ async function dispatchFacebookQueue() {
 exports.dispatchFacebookQueue = scheduled(withMailAndGithub, "dispatchFacebookQueue", () => dispatchFacebookQueue());
 
 exports.refreshSocialHubStats = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB" }), "refreshSocialHubStats", () =>
-  require("./social-hub-stats").refresh(admin.firestore()));
+  require("./social-hub-stats").refresh(getFirestore()));
 
 exports.exportFirestoreWeekly = scheduled(withMail, "exportFirestoreWeekly", async () => {
   const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "carlosm-interactive-cv";
@@ -1505,8 +1509,8 @@ async function noteReviewOpen(req) {
     city: req.get("x-appengine-city") || ""
   });
   if (!record) return;
-  await admin.firestore().collection("url_review_opens").add(Object.assign({}, record, {
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  await getFirestore().collection("url_review_opens").add(Object.assign({}, record, {
+    createdAt: FieldValue.serverTimestamp(),
     expireAt: keepUntil()
   }));
 }
@@ -1517,7 +1521,7 @@ async function mailReviewedSites(ip, source) {
   let record = null;
   const address = clip(ip, 80);
   if (address) {
-    const snap = await admin.firestore().collection("url_review_opens").where("ip", "==", address).limit(8).get();
+    const snap = await getFirestore().collection("url_review_opens").where("ip", "==", address).limit(8).get();
     let newest = null;
     snap.docs.forEach((doc) => {
       const data = doc.data() || {};
@@ -1585,7 +1589,7 @@ const ownerProofs = require("./url-review-owner-proof");
 async function ownerProofRows(email) {
   if (!ownerProofs.emailOf(email)) return [];
   try {
-    const snap = await admin.firestore().collection(ownerProofs.COLLECTION).where("email", "==", ownerProofs.emailOf(email)).limit(50).get();
+    const snap = await getFirestore().collection(ownerProofs.COLLECTION).where("email", "==", ownerProofs.emailOf(email)).limit(50).get();
     return snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
   } catch (error) {
     console.error("Owner proofs read failed:", error);
@@ -1602,7 +1606,7 @@ function siteTokenFor(email) {
 async function rememberSiteProof(email, host, how) {
   const row = ownerProofs.siteRecord({ email, host, how });
   if (!row.email || !row.host) return null;
-  await admin.firestore().collection(ownerProofs.COLLECTION).doc(ownerProofs.docId("site", row.email, row.host)).set(row);
+  await getFirestore().collection(ownerProofs.COLLECTION).doc(ownerProofs.docId("site", row.email, row.host)).set(row);
   return row;
 }
 const ownerContactSearch = require("./url-review-owner-contacts");
@@ -1610,7 +1614,7 @@ const REVIEW_FN_URL = process.env.REVIEW_FN_URL || "https://us-central1-carlosm-
 
 async function stopLinkFor(email, lang) {
   const token = crypto.randomBytes(16).toString("hex");
-  await admin.firestore().collection("url_review_stop_links").doc(token).set({
+  await getFirestore().collection("url_review_stop_links").doc(token).set({
     email: String(email || "").trim().toLowerCase(),
     lang: customerMail.langOf(lang),
     createdAt: new Date().toISOString(),
@@ -1670,7 +1674,7 @@ async function printHtml(html, max) {
 // and fetched by its download-token link, which is unguessable and needs no signing.
 async function storePdf(base64, filename) {
   const token = crypto.randomUUID();
-  const file = admin.storage().bucket(PDF_BUCKET).file("comparison-pdfs/" + token + ".pdf");
+  const file = getStorage().bucket(PDF_BUCKET).file("comparison-pdfs/" + token + ".pdf");
   await file.save(Buffer.from(base64, "base64"), {
     resumable: false,
     contentType: "application/pdf",
@@ -1714,13 +1718,13 @@ async function sendReportMail(id, send, pdf) {
     mark.error = String((error && error.message) || "mail failed").slice(0, 200);
     throw error;
   } finally {
-    if (id) await admin.firestore().collection("url_reviews").doc(id).set({ mail: mark }, { merge: true }).catch((error) => console.error("Report mail mark failed:", error));
+    if (id) await getFirestore().collection("url_reviews").doc(id).set({ mail: mark }, { merge: true }).catch((error) => console.error("Report mail mark failed:", error));
   }
 }
 
 async function noteSharedOpen(ref, record) {
   const at = new Date().toISOString();
-  const step = await admin.firestore().runTransaction(async (tx) => {
+  const step = await getFirestore().runTransaction(async (tx) => {
     const next = reviewAuth.sharedOpenStep((await tx.get(ref)).data(), at);
     tx.set(ref, { sharedOpen: next.sharedOpen }, { merge: true });
     return next;
@@ -1736,14 +1740,14 @@ async function noteSharedOpen(ref, record) {
 }
 
 async function ownerStops(emails, domain) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const keys = [].concat(emails || [], "@" + domain).filter((key) => key && key !== "@");
   const snaps = await Promise.all(keys.map((key) => db.collection("url_review_owner_stops").doc(key).get()));
   return new Set(keys.filter((key, i) => snaps[i].exists));
 }
 
 async function unlistedHosts() {
-  const snap = await admin.firestore().collection("url_review_unlisted").get();
+  const snap = await getFirestore().collection("url_review_unlisted").get();
   return snap.docs.map((doc) => doc.id);
 }
 
@@ -1767,7 +1771,7 @@ async function queueOwnerNotice(record, options) {
   const report = record && record.report;
   if (!report || !report.host) return;
   const domain = ownerNotice.domainOf(report.host);
-  const ref = admin.firestore().collection("url_review_owner_notices").doc(domain);
+  const ref = getFirestore().collection("url_review_owner_notices").doc(domain);
   const [unlisted, domainStop, last] = await Promise.all([unlistedHosts(), ownerStops([], domain), ref.get()]);
   if (ownerNotice.heldBack(record, { unlisted, stopped: domainStop, notice: last.exists ? last.data() : null })) return;
   let more = [];
@@ -1781,7 +1785,7 @@ async function queueOwnerNotice(record, options) {
 // Send or Drop on a pending owner notice, from the desk or Jarvis. Returns { status } or { error }.
 async function decideOwnerNotice(rawDomain, send, email, operator) {
   const domain = String(rawDomain || "").toLowerCase().replace(/[^a-z0-9.-]/g, "").slice(0, 120);
-  const db = admin.firestore();
+  const db = getFirestore();
   const ref = db.collection("url_review_owner_notices").doc(domain || "-");
   const decidedAt = new Date().toISOString();
   let notice = null;
@@ -1836,7 +1840,7 @@ async function sendOwnerNotice(queued, email) {
     unlistedHosts(),
     ownerStops([notice.email], notice.domain),
     liveReportIndex(),
-    admin.firestore().collection("url_reviews").doc(notice.reviewId || "-").get()
+    getFirestore().collection("url_reviews").doc(notice.reviewId || "-").get()
   ]);
   const card = ownerNotice.liveCard(index, notice.host);
   const blocked = ownerNotice.sendBlock(notice, { stopped, unlisted, card });
@@ -1844,7 +1848,7 @@ async function sendOwnerNotice(queued, email) {
   const review = reviewSnap.exists ? reviewSnap.data() : null;
   const score = review && review.report && review.report.insights ? review.report.insights.score : null;
   const token = crypto.randomBytes(16).toString("hex");
-  await admin.firestore().collection("url_review_owner_links").doc(token).set({
+  await getFirestore().collection("url_review_owner_links").doc(token).set({
     domain: notice.domain,
     host: notice.host,
     email: notice.email,
@@ -1874,7 +1878,7 @@ async function sendReviewNotes() {
     console.error("Pass renewals failed:", error);
   }
   if (process.env.REVIEW_NOTES_LIVE !== "1") return null;
-  const db = admin.firestore();
+  const db = getFirestore();
   const now = Date.now();
   const since = new Date(now - 31 * 24 * 60 * 60 * 1000).toISOString();
   const [runSnap, passSnap, stopSnap, noteSnap] = await Promise.all([
@@ -1916,7 +1920,7 @@ exports.sendReviewNotes = scheduled(withMail, "sendReviewNotes", () => sendRevie
 // Claims one pending owner notice, sends it, and records the outcome. Shared by sendOwnerNotices and
 // scripts/owner-notice-send-all.js. Returns { outcome, reason, email, source, sourceUrl, sentAt }.
 async function sendQueuedNotice(ref, by) {
-  const db = admin.firestore();
+  const db = getFirestore();
   let notice = null;
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
@@ -1936,7 +1940,7 @@ async function sendQueuedNotice(ref, by) {
     result = { error: String((error && error.message) || "The notice failed.").slice(0, 200) };
   }
   if (result.error) {
-    await ref.update({ status: "pending", lastError: result.error, tries: admin.firestore.FieldValue.increment(1) });
+    await ref.update({ status: "pending", lastError: result.error, tries: FieldValue.increment(1) });
     return { outcome: "failed", reason: result.error, email: notice.email };
   }
   const at = new Date().toISOString();
@@ -1951,7 +1955,7 @@ async function sendQueuedNotice(ref, by) {
 
 // Sends (or drops) one held re-run: the desk's Send button and Jarvis's rerun-held action. Null when it is no longer held.
 async function releaseHeldRerun(id, send, by) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const ref = db.collection("url_review_reruns").doc(String(id || "-"));
   const decidedAt = new Date().toISOString();
   let doc = null;
@@ -1990,7 +1994,7 @@ async function sendOwnerNotices() {
   if (process.env.OWNER_NOTICES_LIVE !== "1") return "off: OWNER_NOTICES_LIVE is not 1";
   const cap = ops.budget("ownerNoticesPerDay", process.env);
   const [pending, index] = await Promise.all([
-    admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(300).get(),
+    getFirestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(300).get(),
     liveReportIndex()
   ]);
   const ready = pending.docs.filter((doc) => (doc.data().tries || 0) < NOTICE_TRIES && ownerNotice.liveCard(index, doc.data().host));
@@ -2018,7 +2022,7 @@ async function sweepJson(name) {
 // Reviewed by anyone (or the sweep, which may have landed on another host) within REVISIT_DAYS.
 async function reviewedLately(host) {
   const since = new Date(Date.now() - sweep.REVISIT_DAYS * 864e5).toISOString();
-  const reviews = admin.firestore().collection("url_reviews");
+  const reviews = getFirestore().collection("url_reviews");
   const snaps = await Promise.all([
     reviews.where("report.host", "==", host).select("createdAt").limit(20).get(),
     reviews.where("sweep.host", "==", host).select("createdAt").limit(20).get()
@@ -2030,7 +2034,7 @@ async function reviewedLately(host) {
 async function sweepReviews() {
   if (process.env.SWEEP_LIVE !== "1") return "off: SWEEP_LIVE is not 1";
   const tickStarted = Date.now();
-  const db = admin.firestore();
+  const db = getFirestore();
   const ref = db.collection("url_review_sweep").doc("state");
   const day = new Date().toISOString().slice(0, 10);
   const cap = ops.budget("sweepPerDay", process.env);
@@ -2115,7 +2119,7 @@ async function sweepReview(target, controls) {
     webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined
   }, controls));
   const record = Object.assign(urlReview.intakeRecord(value, report, { country: target.cc.toUpperCase() }), { source: "sweep", sweep: target });
-  await admin.firestore().collection("url_reviews").doc(record.id).set(record);
+  await getFirestore().collection("url_reviews").doc(record.id).set(record);
   await countReviewed(record.report);
   try {
     await queueOwnerNotice(record, { search: false });
@@ -2127,7 +2131,7 @@ async function sweepReview(target, controls) {
 
 async function saveSweepFailure(target, error, lines, startedAt) {
   try {
-    const col = admin.firestore().collection("url_review_failures");
+    const col = getFirestore().collection("url_review_failures");
     const runId = "sweep-" + col.doc().id;
     const run = Object.assign({}, sweep.intake(target), { kind: "failed", runId, error, lines, startedAt, endedAt: Date.now(), source: "sweep", sweep: target });
     await col.doc(runId).set(reviewFailures.failureRecord(run));
@@ -2149,7 +2153,7 @@ const rivals = require("./url-review-rivals");
 
 // Reviews of a host (with or without www.) that could go public; the newest recent one, or null.
 async function latestPublicReview(host, unlisted) {
-  const reviews = admin.firestore().collection("url_reviews");
+  const reviews = getFirestore().collection("url_reviews");
   const name = rivals.bare(host);
   const snaps = await Promise.all([name, "www." + name].map((value) => reviews.where("report.host", "==", value).limit(20).get()));
   const records = [].concat(...snaps.map((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()))));
@@ -2182,7 +2186,7 @@ async function rivalsOf(ref, data, field) {
    SWEEP_LIVE=1 turns it on, like the country sweep. */
 async function rivalSweep() {
   if (process.env.SWEEP_LIVE !== "1") return "off: SWEEP_LIVE is not 1";
-  const db = admin.firestore();
+  const db = getFirestore();
   const ref = db.collection("url_review_sweep").doc("rivals");
   const day = new Date().toISOString().slice(0, 10);
   let state = (await ref.get()).data() || {};
@@ -2266,7 +2270,7 @@ exports.rivalSweep = require("firebase-functions/v2/scheduler").onSchedule({
 // Each morning: any job that failed or went quiet past its gap is mailed at once; on Mondays the mail
 // goes out anyway, with last week's sweep, notices and re-runs against their budgets.
 async function opsWatchdog() {
-  const db = admin.firestore();
+  const db = getFirestore();
   const now = Date.now();
   const metaRef = db.collection("ops_state").doc("watchdog");
   const meta = (await metaRef.get()).data() || {};
@@ -2344,7 +2348,7 @@ function htmlText(html) {
 }
 
 async function applyReplyAction(action, row) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const at = new Date().toISOString();
   const domain = row.noticeDomain || row.domain;
   if (action === "stop-address" && row.noticeEmail) {
@@ -2363,7 +2367,7 @@ async function applyReplyAction(action, row) {
 async function resendNotice(row, email) {
   if (!urlReview.emailSyntax(email)) return "That is not an email address.";
   if (!row.noticeDomain) return "This reply matched no owner notice, so there is nothing to send.";
-  const ref = admin.firestore().collection("url_review_owner_notices").doc(row.noticeDomain);
+  const ref = getFirestore().collection("url_review_owner_notices").doc(row.noticeDomain);
   const snap = await ref.get();
   if (!snap.exists) return "The notice for " + row.noticeDomain + " is gone.";
   const notice = snap.data();
@@ -2376,7 +2380,7 @@ async function resendNotice(row, email) {
 }
 
 async function noticeForReply(reply) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const link = reply.token ? (await db.collection("url_review_owner_links").doc(reply.token).get()).data() || null : null;
   const notices = db.collection("url_review_owner_notices");
   let snap = null;
@@ -2419,7 +2423,7 @@ async function takeOwnerReply(mail, auth) {
     applied: decision.apply,
     expireAt: keepUntil()
   });
-  await admin.firestore().collection("url_review_owner_replies").doc(id).set(row);
+  await getFirestore().collection("url_review_owner_replies").doc(id).set(row);
   for (const action of decision.apply) await applyReplyAction(action, row);
   if (ref) await ref.set({ lastReplyAt: row.at, lastReplyKind: row.kind }, { merge: true });
   if (row.kind !== "auto" && row.kind !== "bounce") {
@@ -2496,7 +2500,7 @@ exports.ownerReplies = functions.runWith({ timeoutSeconds: 60, memory: "256MB", 
     if (req.path.startsWith("/decide")) {
       res.set("Content-Type", "text/html; charset=utf-8");
       const id = String(req.query.t || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-      const ref = id.length === 32 ? admin.firestore().collection("url_review_owner_replies").doc(id) : null;
+      const ref = id.length === 32 ? getFirestore().collection("url_review_owner_replies").doc(id) : null;
       const snap = ref ? await ref.get() : null;
       if (!snap || !snap.exists) {
         res.status(404).send("<p>This reply is gone or the link is wrong.</p>");
@@ -2524,7 +2528,7 @@ exports.ownerReplies = functions.runWith({ timeoutSeconds: 60, memory: "256MB", 
 
 // Weekday mornings: replies still waiting for a decision after a day, in one mail.
 async function remindOwnerReplies() {
-  const snap = await admin.firestore().collection("url_review_owner_replies").where("status", "==", "waiting").limit(50).get();
+  const snap = await getFirestore().collection("url_review_owner_replies").where("status", "==", "waiting").limit(50).get();
   const old = snap.docs.filter((doc) => Date.now() - Date.parse(doc.get("at") || "") > 20 * 3600000);
   if (!old.length) return "nothing waiting";
   await sendOwnerEmail({
@@ -2546,7 +2550,7 @@ const INSTANT_REVIEW_MAIL = new Set(["payment-refunded", "payment-disputed", "pa
 async function rememberReview(kind, source) {
   const note = reviewDesk.alertFrom(kind, source || {});
   try {
-    await admin.firestore().collection("url_review_alerts").add({
+    await getFirestore().collection("url_review_alerts").add({
       at: note.at,
       kind: note.kind,
       title: note.title,
@@ -2601,7 +2605,7 @@ async function hasFreeRuns(email) {
   const listed = String(process.env.FREE_RUN_EMAILS || "").split(",").map(freeRunKey).filter(Boolean);
   if (listed.indexOf(key) !== -1) return true;
   try {
-    const snap = await admin.firestore().collection("url_review_free_runs").doc(key).get();
+    const snap = await getFirestore().collection("url_review_free_runs").doc(key).get();
     return snap.exists;
   } catch (error) {
     console.error("Free-run lookup failed:", error);
@@ -2610,7 +2614,7 @@ async function hasFreeRuns(email) {
 }
 
 async function reviewRowsFor(deviceId, ip) {
-  const col = admin.firestore().collection("url_reviews");
+  const col = getFirestore().collection("url_reviews");
   const none = Promise.resolve({ docs: [] });
   // Credits and their use are read on their own, so a device with many runs cannot push a paid credit out of the 20 rows.
   const [byDevice, byIp, credits, spent] = await Promise.all([
@@ -2631,12 +2635,12 @@ async function couponFor(code, purpose, reportId, email) {
   const key = reviewOffers.cleanCode(code);
   if (!key) return null;
   try {
-    const snap = await admin.firestore().collection("url_review_coupons").doc(key).get();
+    const snap = await getFirestore().collection("url_review_coupons").doc(key).get();
     const coupon = snap.exists ? Object.assign({ code: key }, snap.data()) : null;
     const address = String(email || "").trim().toLowerCase();
     let used = null;
     if (coupon && Number(coupon.perEmail) > 0 && address) {
-      const prior = await admin.firestore().collection("url_review_redemptions").where("code", "==", key).where("email", "==", address).limit(Number(coupon.perEmail)).get();
+      const prior = await getFirestore().collection("url_review_redemptions").where("code", "==", key).where("email", "==", address).limit(Number(coupon.perEmail)).get();
       used = prior.size;
     }
     return reviewOffers.couponOpen(coupon, purpose, reportId, null, used) ? coupon : null;
@@ -2648,7 +2652,7 @@ async function couponFor(code, purpose, reportId, email) {
 
 async function runsForEmail(email) {
   if (!email) return [];
-  const snap = await admin.firestore().collection("url_reviews").where("email", "==", email).select("status", "createdAt").limit(60).get();
+  const snap = await getFirestore().collection("url_reviews").where("email", "==", email).select("status", "createdAt").limit(60).get();
   return snap.docs.map((doc) => doc.data());
 }
 
@@ -2713,14 +2717,14 @@ function dealFields(deal) {
 async function mintReturnCoupon(note) {
   const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   const code = "BACK-" + Array.from({ length: 8 }, () => alphabet[crypto.randomInt(alphabet.length)]).join("");
-  await admin.firestore().collection("url_review_coupons").doc(code).set(reviewOffers.returnCoupon(note));
+  await getFirestore().collection("url_review_coupons").doc(code).set(reviewOffers.returnCoupon(note));
   return code;
 }
 
 async function redeemCoupon(code, record) {
   const key = reviewOffers.cleanCode(code);
   if (!key) return;
-  const db = admin.firestore();
+  const db = getFirestore();
   try {
     await db.runTransaction(async (tx) => {
       const ref = db.collection("url_review_coupons").doc(key);
@@ -2740,7 +2744,7 @@ const UNMATCHED = "This payment does not match an open checkout.";
 // The confirm page and the PayPal webhook can arrive together. Only the one that claims the checkout fulfils it;
 // a claim older than two minutes was left by a call that failed part way, so the next one finishes it.
 async function claimCheckout(result, testRun) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const ref = db.collection("url_reviews").doc(result.reference);
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
@@ -2772,7 +2776,7 @@ async function noteUnmatchedPayment(result, testRun, reason) {
     expireAt: urlReview.paymentExpireAt()
   };
   try {
-    const ref = admin.firestore().collection("url_reviews").doc("unmatched-" + order);
+    const ref = getFirestore().collection("url_reviews").doc("unmatched-" + order);
     if ((await ref.get()).exists) return;
     await ref.set(row);
   } catch (error) {
@@ -2784,7 +2788,7 @@ async function noteUnmatchedPayment(result, testRun, reason) {
 // The address's passes and its unspent extras credits: all a run on a pass and the standing read.
 async function passRowsFor(email) {
   if (!email) return [];
-  const col = admin.firestore().collection("url_reviews");
+  const col = getFirestore().collection("url_reviews");
   const [passes, credits] = await Promise.all([
     col.where("email", "==", email).where("status", "==", "monthly-pass").limit(40).get(),
     col.where("email", "==", email).where("passExtra", "==", true).where("usedAt", "==", "").limit(40).get()
@@ -2794,7 +2798,7 @@ async function passRowsFor(email) {
 
 async function giveBackPassRun(passId, creditId) {
   try {
-    await reviewPass.giveBackPassRun(admin.firestore(), passId, creditId);
+    await reviewPass.giveBackPassRun(getFirestore(), passId, creditId);
   } catch (error) {
     console.error("Pass run give-back failed:", error);
   }
@@ -2828,12 +2832,12 @@ async function passDecision(email, value) {
       runsLeft: left
     };
   }
-  if (!(await reviewPass.takePassRun(admin.firestore(), run.row.id, run.credit && run.credit.id))) return null;
+  if (!(await reviewPass.takePassRun(getFirestore(), run.row.id, run.credit && run.credit.id))) return null;
   return { ok: true, consumeId: run.credit ? run.credit.id : "", pass: { id: run.row.id, plan: run.plan.id, name: run.plan.name, left: left - 1, extrasUsd: extras.usd } };
 }
 
 async function sendPassRenewals() {
-  const db = admin.firestore();
+  const db = getFirestore();
   const now = Date.now();
   const snap = await db.collection("url_reviews").where("status", "==", "monthly-pass").limit(500).get();
   const due = reviewOffers.renewalsDue(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), now);
@@ -2848,7 +2852,7 @@ async function sendPassRenewals() {
       });
       if (!claimed) continue;
       const sent = await sendAskerMail(row.email, reviewOffers.renewalMail(row), "", "url-review-pass-renewal");
-      if (!sent) await ref.update({ renewalSentAt: admin.firestore.FieldValue.delete() });
+      if (!sent) await ref.update({ renewalSentAt: FieldValue.delete() });
     } catch (error) {
       console.error("Pass renewal note failed:", error);
     }
@@ -2887,11 +2891,11 @@ async function fulfillPayment(result, ctx) {
     const purpose = open.paidPurpose || reviewOffers.paidPurpose(open.purpose);
     return { code: 200, body: paidBody(purpose) };
   }
-  const checkoutRef = admin.firestore().collection("url_reviews").doc(result.reference);
+  const checkoutRef = getFirestore().collection("url_reviews").doc(result.reference);
   const closeCheckout = (paidPurpose) => checkoutRef.update({ status: "paid", paidAt: new Date().toISOString(), paidPurpose, expireAt: urlReview.paymentExpireAt() });
   if (open.status === "checkout-open") {
     // Checkouts confirmed before claims existed stayed open; their payment rows carry the order id.
-    const existing = await admin.firestore().collection("url_reviews").where("sessionId", "==", result.sessionId).limit(1).get();
+    const existing = await getFirestore().collection("url_reviews").where("sessionId", "==", result.sessionId).limit(1).get();
     if (!existing.empty) {
       const prior = existing.docs[0].data() || {};
       const purpose = prior.report ? "report" : reviewOffers.paidPurpose(prior.purpose);
@@ -2913,12 +2917,12 @@ async function fulfillPayment(result, ctx) {
   const payerName = result.payerName || "";
   const who = { name: payerName, email: String(open.email || "") || payerEmail };
   if (open.coupon) {
-    const owner = paidReport ? await admin.firestore().collection("url_reviews").doc(paidReport).get() : null;
+    const owner = paidReport ? await getFirestore().collection("url_reviews").doc(paidReport).get() : null;
     const email = String((owner && owner.exists && owner.get("email")) || open.email || "").trim().toLowerCase();
     await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, email, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
   }
   if (paidPurpose === "report" && paidReport) {
-    const runRef = admin.firestore().collection("url_reviews").doc(paidReport);
+    const runRef = getFirestore().collection("url_reviews").doc(paidReport);
     await runRef.set({
       paid: true,
       sessionId: result.sessionId,
@@ -2927,7 +2931,7 @@ async function fulfillPayment(result, ctx) {
     }, { merge: true });
     // The run and its report go after 12 months; the payment is tax support for five years.
     const run = (await runRef.get()).data() || {};
-    await admin.firestore().collection("url_reviews").doc("paid-report-" + paidReport).set(reviewOffers.reportPayment(run, {
+    await getFirestore().collection("url_reviews").doc("paid-report-" + paidReport).set(reviewOffers.reportPayment(run, {
       reportId: paidReport,
       provider: result.provider,
       method: choice,
@@ -2959,7 +2963,7 @@ async function fulfillPayment(result, ctx) {
     });
   } else if (paidPurpose === "pass") {
     const passEmail = String(open.email || "").trim().toLowerCase();
-    const made = await reviewPass.writePass(admin.firestore(), open, {
+    const made = await reviewPass.writePass(getFirestore(), open, {
       provider: result.provider,
       method: choice,
       deviceId: payer,
@@ -2975,12 +2979,12 @@ async function fulfillPayment(result, ctx) {
     }, await passRowsFor(passEmail));
     if (made) await rememberReview("pass-paid", Object.assign({ via }, made));
   } else if (reviewOffers.ADDONS.indexOf(paidPurpose) !== -1) {
-    const runRef = paidReport ? admin.firestore().collection("url_reviews").doc(paidReport) : null;
+    const runRef = paidReport ? getFirestore().collection("url_reviews").doc(paidReport) : null;
     const runSnap = runRef ? await runRef.get() : null;
     const run = runSnap && runSnap.exists ? runSnap.data() || {} : {};
     if (runSnap && runSnap.exists) {
-      const opened = { addons: admin.firestore.FieldValue.arrayUnion(paidPurpose) };
-      if (paidPurpose === "cases" && paidLayers.length) opened.addonLayers = admin.firestore.FieldValue.arrayUnion(...paidLayers);
+      const opened = { addons: FieldValue.arrayUnion(paidPurpose) };
+      if (paidPurpose === "cases" && paidLayers.length) opened.addonLayers = FieldValue.arrayUnion(...paidLayers);
       await runRef.update(opened);
     }
     const addon = reviewOffers.addonPayment(run, {
@@ -3003,7 +3007,7 @@ async function fulfillPayment(result, ctx) {
       createdAt: new Date().toISOString(),
       expireAt: urlReview.paymentExpireAt()
     });
-    await admin.firestore().collection("url_reviews").doc("paid-" + paidPurpose + "-" + String(result.reference || result.sessionId).replace(/[^A-Za-z0-9-]/g, "").slice(0, 64)).set(addon);
+    await getFirestore().collection("url_reviews").doc("paid-" + paidPurpose + "-" + String(result.reference || result.sessionId).replace(/[^A-Za-z0-9-]/g, "").slice(0, 64)).set(addon);
     await rememberReview("addon-paid", Object.assign({ id: paidReport, via }, addon, { name: payerName, email: addon.email || who.email }));
   } else {
     const credit = {
@@ -3037,9 +3041,9 @@ async function fulfillPayment(result, ctx) {
     // One comparison checkout pays for each competitor run: one credit per competitor, each tied to the base review.
     // The first credit carries the payment; the others name it, so the amount is counted once.
     const competitors = paidCompare && open.billing === "compare" ? Math.max(1, Math.min(urlReview.MAX_COMPETITORS, Number(open.competitors) || 1)) : 1;
-    await admin.firestore().collection("url_reviews").doc("credit-" + result.reference).set(competitors > 1 ? Object.assign({}, credit, { competitors }) : credit);
+    await getFirestore().collection("url_reviews").doc("credit-" + result.reference).set(competitors > 1 ? Object.assign({}, credit, { competitors }) : credit);
     for (let n = 2; n <= competitors; n += 1) {
-      await admin.firestore().collection("url_reviews").doc("credit-" + result.reference + "-" + n).set(Object.assign({}, credit, { priceUsd: 0, amount: 0, paidWith: "credit-" + result.reference, competitors }));
+      await getFirestore().collection("url_reviews").doc("credit-" + result.reference + "-" + n).set(Object.assign({}, credit, { priceUsd: 0, amount: 0, paidWith: "credit-" + result.reference, competitors }));
     }
     await rememberReview("run-paid", Object.assign({ via }, credit, competitors > 1 ? { competitors } : {}, who));
   }
@@ -3050,7 +3054,7 @@ async function fulfillPayment(result, ctx) {
 
 // The receipt, and the full report when a report is bought after its run; a mail that fails never undoes the payment.
 async function mailAfterPayment(open, result, paid) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const runSnap = paid.reportId ? await db.collection("url_reviews").doc(paid.reportId).get().catch(() => null) : null;
   const run = runSnap && runSnap.exists ? Object.assign({ id: runSnap.id }, runSnap.data()) : null;
   const to = String(open.email || (run && run.email) || result.payerEmail || "").trim().toLowerCase();
@@ -3106,7 +3110,7 @@ async function reversePayment(ids, keys, testRun) {
     }
   }
   if (!orderId) return false;
-  const db = admin.firestore();
+  const db = getFirestore();
   const snap = await db.collection("url_reviews").where("sessionId", "==", orderId).limit(20).get();
   const rows = snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
   let kind = "dispute";
@@ -3122,7 +3126,7 @@ async function reversePayment(ids, keys, testRun) {
   for (const update of updates) {
     const ref = db.collection("url_reviews").doc(update.id);
     if (update.removeAddon) {
-      await ref.update({ addons: admin.firestore.FieldValue.arrayRemove(update.removeAddon) }).catch(() => {});
+      await ref.update({ addons: FieldValue.arrayRemove(update.removeAddon) }).catch(() => {});
     } else {
       await ref.set(update.set, { merge: true });
     }
@@ -3232,7 +3236,7 @@ exports.dropReviewAuthUser = functions.firestore
   .document("url_review_accounts/{email}")
   .onDelete(async (snap, context) => {
     const email = (snap.data() || {}).email || context.params.email;
-    const dropped = await reviewAuth.dropAuthUsers(admin.auth(), email);
+    const dropped = await reviewAuth.dropAuthUsers(getAuth(), email);
     if (dropped) console.log("Dropped " + dropped + " Firebase Auth user(s) for a deleted review account.");
     return null;
   });
@@ -3268,7 +3272,7 @@ async function sendSignIn(res, store, input) {
 }
 
 async function reviewSignIn(req, res, pathName) {
-  const store = reviewAuth.firestoreStore(admin.firestore());
+  const store = reviewAuth.firestoreStore(getFirestore());
   const body = req.body || {};
   const enabled = process.env.REVIEW_SIGN_IN_PROVIDERS;
   if (req.method === "GET" && pathName.endsWith("/auth/providers")) {
@@ -3304,7 +3308,7 @@ async function reviewSignIn(req, res, pathName) {
   if (pathName.endsWith("/auth/provider")) {
     let decoded = null;
     try {
-      decoded = await admin.auth().verifyIdToken(String(body.idToken || ""));
+      decoded = await getAuth().verifyIdToken(String(body.idToken || ""));
     } catch (error) {
       res.status(401).json({ error: "That sign-in was not accepted. Try again." });
       return;
@@ -3353,7 +3357,7 @@ async function reviewAccount(req, res, pathName) {
     res.status(405).json({ error: "Use POST." });
     return;
   }
-  const db = admin.firestore();
+  const db = getFirestore();
   const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(db), Object.assign({}, req.body || {}, { touch: false }));
   if (!signedIn.ok) {
     res.status(signedIn.status).json({ error: signedIn.error, signIn: true });
@@ -3416,7 +3420,7 @@ async function reviewAccount(req, res, pathName) {
       res.status(400).json({ error: "Type the address you are signed in with to confirm." });
       return;
     }
-    const counts = await accountData.deleteAccount(reviewAuth.firestoreStore(db), signedIn.email, { authApi: admin.auth() });
+    const counts = await accountData.deleteAccount(reviewAuth.firestoreStore(db), signedIn.email, { authApi: getAuth() });
     console.log("Review account deleted on request:", JSON.stringify(counts));
     res.status(200).json({ ok: true, paymentsKept: counts.paymentsKept || 0 });
     return;
@@ -3608,14 +3612,14 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     }
     if (deskName === "data" && req.method === "GET") {
       const [reviewSnap, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap, proofSnap] = await Promise.all([
-        admin.firestore().collection("url_reviews").limit(400).get(),
-        admin.firestore().collection("url_review_alerts").limit(80).get(),
-        admin.firestore().collection("url_review_free_runs").limit(200).get(),
-        admin.firestore().collection("url_review_notes").limit(1000).get(),
-        admin.firestore().collection("url_review_reruns").orderBy("at", "desc").limit(30).get(),
-        admin.firestore().collection("url_review_unlisted").get(),
-        admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get(),
-        admin.firestore().collection(ownerProofs.COLLECTION).limit(200).get()
+        getFirestore().collection("url_reviews").limit(400).get(),
+        getFirestore().collection("url_review_alerts").limit(80).get(),
+        getFirestore().collection("url_review_free_runs").limit(200).get(),
+        getFirestore().collection("url_review_notes").limit(1000).get(),
+        getFirestore().collection("url_review_reruns").orderBy("at", "desc").limit(30).get(),
+        getFirestore().collection("url_review_unlisted").get(),
+        getFirestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get(),
+        getFirestore().collection(ownerProofs.COLLECTION).limit(200).get()
       ]);
       const ownerProofList = proofSnap.docs.map((doc) => ownerProofs.publicRow(doc.id, doc.data() || {}))
         .sort((a, b) => String(b.at).localeCompare(String(a.at)));
@@ -3646,7 +3650,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     }
     if (deskName === "proof" && req.method === "POST") {
       const body = req.body || {};
-      const ref = (id) => admin.firestore().collection(ownerProofs.COLLECTION).doc(id);
+      const ref = (id) => getFirestore().collection(ownerProofs.COLLECTION).doc(id);
       if (body.on === false) {
         const id = String(body.id || "").replace(/[^a-z0-9-]/g, "").slice(0, 60);
         if (!id) {
@@ -3674,7 +3678,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       return;
     }
     if (deskName === "failures-data" && req.method === "GET") {
-      const db = admin.firestore();
+      const db = getFirestore();
       const id = String(req.query.id || "").replace(/[^A-Za-z0-9_.:-]/g, "").slice(0, 60);
       if (id) {
         const snap = await db.collection("url_review_failures").doc(id).get();
@@ -3717,7 +3721,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         res.status(400).json({ error: "That is not a host name." });
         return;
       }
-      await admin.firestore().collection("url_review_unlisted").doc(host).set({ at: new Date().toISOString(), by: operator, from: "desk" });
+      await getFirestore().collection("url_review_unlisted").doc(host).set({ at: new Date().toISOString(), by: operator, from: "desk" });
       res.status(200).json({ ok: true, host });
       return;
     }
@@ -3727,13 +3731,13 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         res.status(400).json({ error: "That address is missing." });
         return;
       }
-      const ref = admin.firestore().collection("url_review_free_runs").doc(key);
+      const ref = getFirestore().collection("url_review_free_runs").doc(key);
       if (req.body && req.body.on === false) {
         await ref.delete();
       } else {
         await ref.set({
           note: String((req.body && req.body.note) || "").trim().slice(0, 120),
-          at: admin.firestore.FieldValue.serverTimestamp(),
+          at: FieldValue.serverTimestamp(),
           by: operator
         });
       }
@@ -3760,7 +3764,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         createdAt: new Date().toISOString(),
         expireAt: urlReview.paymentExpireAt()
       };
-      await admin.firestore().collection("url_reviews").add(record);
+      await getFirestore().collection("url_reviews").add(record);
       await rememberReview("monthly", record);
       res.status(200).json({ ok: true, paidUntil: until, charged: false });
       return;
@@ -3779,9 +3783,9 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     const since = /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(String(req.query.since || "")) ? String(req.query.since) : new Date(Date.now() - 864e5).toISOString();
     try {
       const [reviewSnap, unlistedSnap, rivalSnap] = await Promise.all([
-        admin.firestore().collection("url_reviews").where("createdAt", ">", since).orderBy("createdAt").limit(500).get(),
-        admin.firestore().collection("url_review_unlisted").get(),
-        admin.firestore().collection("url_review_rivals").where("createdAt", ">", since).orderBy("createdAt").limit(50).get()
+        getFirestore().collection("url_reviews").where("createdAt", ">", since).orderBy("createdAt").limit(500).get(),
+        getFirestore().collection("url_review_unlisted").get(),
+        getFirestore().collection("url_review_rivals").where("createdAt", ">", since).orderBy("createdAt").limit(50).get()
       ]);
       const unlisted = unlistedSnap.docs.map((doc) => doc.id);
       const records = reviewSnap.docs.map((doc) => doc.data());
@@ -3841,7 +3845,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     res.set("X-Robots-Tag", "noindex");
     res.set("Content-Type", "text/html; charset=utf-8");
     const token = String(req.query.t || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-    const linkSnap = token.length === 32 ? await admin.firestore().collection("url_review_stop_links").doc(token).get() : null;
+    const linkSnap = token.length === 32 ? await getFirestore().collection("url_review_stop_links").doc(token).get() : null;
     const link = linkSnap && linkSnap.exists ? linkSnap.data() : null;
     if (!link || !link.email) {
       res.status(404).send(customerMail.stopPage("en", "gone"));
@@ -3851,7 +3855,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       res.status(200).send(customerMail.stopPage(link.lang, "ask"));
       return;
     }
-    await admin.firestore().collection("url_review_notes").add({
+    await getFirestore().collection("url_review_notes").add({
       status: "follow-stop",
       email: link.email,
       via: "link",
@@ -3864,7 +3868,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
   if (pathName.indexOf("/owner") !== -1) {
     res.set("X-Robots-Tag", "noindex");
     res.set("Content-Type", "text/html; charset=utf-8");
-    const db = admin.firestore();
+    const db = getFirestore();
     const token = String(req.query.t || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     const action = ["claim", "unlist", "stop"].indexOf(String(req.query.do || "")) === -1 ? "" : String(req.query.do);
     const ref = token.length === 32 ? db.collection("url_review_owner_links").doc(token) : null;
@@ -3923,7 +3927,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       report
     };
     await db.collection("url_reviews").doc(id).set(copy);
-    await ref.update({ claims: admin.firestore.FieldValue.increment(1), claimedAt: at });
+    await ref.update({ claims: FieldValue.increment(1), claimedAt: at });
     const pdf = await reportPdfFor(copy);
     const mail = customerMail.reportMail(copy, { lang: link.lang, attached: !!pdf, why: ownerMail.claimWhy(link.lang, link.host) });
     await sendReportMail(id, () => sendAskerMail(email, mail, "", "url-review-owner-claim", pdf ? [pdf] : []), !!pdf);
@@ -3947,10 +3951,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
   if (req.method === "POST" && pathName.endsWith("/review/ask")) {
     const body = req.body || {};
     const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-    const snap = id ? await admin.firestore().collection("url_reviews").doc(id).get() : null;
+    const snap = id ? await getFirestore().collection("url_reviews").doc(id).get() : null;
     const row = snap && snap.exists ? snap.data() || {} : null;
     const free = !!row && (row.free === true || await hasFreeRuns(row.email));
-    const access = await reviewAuth.askAccess(reviewAuth.firestoreStore(admin.firestore()), body, row, free);
+    const access = await reviewAuth.askAccess(reviewAuth.firestoreStore(getFirestore()), body, row, free);
     if (!access.ok) {
       res.status(access.status).json({ error: access.error, code: access.code || "", signIn: !!access.signIn });
       return;
@@ -3961,8 +3965,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
   if (req.method === "POST" && pathName.endsWith("/review/ask/phrase")) {
     const body = req.body || {};
     const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-    const store = reviewAuth.firestoreStore(admin.firestore());
-    const snap = id ? await admin.firestore().collection("url_reviews").doc(id).get() : null;
+    const store = reviewAuth.firestoreStore(getFirestore());
+    const snap = id ? await getFirestore().collection("url_reviews").doc(id).get() : null;
     const row = snap && snap.exists ? snap.data() || {} : null;
     const free = !!row && (row.free === true || await hasFreeRuns(row.email));
     const access = await reviewAuth.askAccess(store, body, row, free);
@@ -3975,7 +3979,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/stop") !== -1) {
-    const stop = await reviewAuth.stopRun(reviewAuth.firestoreStore(admin.firestore()), req.body || {});
+    const stop = await reviewAuth.stopRun(reviewAuth.firestoreStore(getFirestore()), req.body || {});
     if (!stop.ok) {
       res.status(stop.status).json({ error: stop.error, signIn: !!stop.signIn });
       return;
@@ -3989,7 +3993,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       res.status(400).json({ error: "Missing run id." });
       return;
     }
-    await admin.firestore().collection("url_review_places").doc(runId).set(Object.assign(requestPlace(req), {
+    await getFirestore().collection("url_review_places").doc(runId).set(Object.assign(requestPlace(req), {
       at: new Date().toISOString(),
       expireAt: new Date(Date.now() + 864e5)
     }));
@@ -4004,7 +4008,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       res.status(400).json({ error: "The capture note was incomplete." });
       return;
     }
-    await admin.firestore().collection("url_review_captures").add({
+    await getFirestore().collection("url_review_captures").add({
       reportId,
       kind,
       deviceId,
@@ -4019,7 +4023,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
   if (req.method === "POST" && pathName.indexOf("/standing") !== -1) {
     try {
       const body = req.body || {};
-      const signedIn = body.session ? await reviewAuth.checkSession(reviewAuth.firestoreStore(admin.firestore()), Object.assign({}, body, { touch: false })) : { ok: false };
+      const signedIn = body.session ? await reviewAuth.checkSession(reviewAuth.firestoreStore(getFirestore()), Object.assign({}, body, { touch: false })) : { ok: false };
       const free = signedIn.ok ? await hasFreeRuns(signedIn.email) : false;
       const deviceId = String(body.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
       const ip = req.ip || "";
@@ -4073,7 +4077,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         const quoteReport = String(req.query.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
         let owner = {};
         if (quotePurpose === "report" && quoteReport) {
-          const ownerSnap = await admin.firestore().collection("url_reviews").doc(quoteReport).get();
+          const ownerSnap = await getFirestore().collection("url_reviews").doc(quoteReport).get();
           owner = ownerSnap.exists ? ownerSnap.data() : {};
           priced = urlReview.priceForReport(priced.frameworks, priced.tools, urlReview.creditFor(owner));
         }
@@ -4151,9 +4155,9 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         return;
       }
       if (purpose === "report" || purpose === "fixlist") {
-        const reportSnap = await admin.firestore().collection("url_reviews").doc(reportId).get();
+        const reportSnap = await getFirestore().collection("url_reviews").doc(reportId).get();
         reportData = reportSnap.exists ? reportSnap.data() : {};
-        const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), req.body || {}, reportData, false);
+        const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(getFirestore()), req.body || {}, reportData, false);
         if (!access.ok && access.status !== 402) {
           res.status(access.status).json({ error: access.locked ? "Only the account that ran this report can unlock it. Sign in with that account. No charge was made." : access.error, signIn: !!access.signIn });
           return;
@@ -4163,7 +4167,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       let passOwner = "";
       let passPlan = null;
       if (purpose === "pass" || (purpose === "new-run" && req.body && req.body.pass)) {
-        const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(admin.firestore()), Object.assign({}, req.body || {}, { touch: false }));
+        const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(getFirestore()), Object.assign({}, req.body || {}, { touch: false }));
         if (!signedIn.ok) {
           res.status(signedIn.status || 401).json({ error: "Sign in first. A pass belongs to the address you sign in with. No charge was made.", signIn: true });
           return;
@@ -4255,8 +4259,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         cancelUrl,
         pendingUrl
       }, keys));
-      const buyer = await reviewAuth.checkSession(reviewAuth.firestoreStore(admin.firestore()), Object.assign({}, req.body || {}, { touch: false })).catch(() => null);
-      await admin.firestore().collection("url_reviews").doc(reference).set(Object.assign({
+      const buyer = await reviewAuth.checkSession(reviewAuth.firestoreStore(getFirestore()), Object.assign({}, req.body || {}, { touch: false })).catch(() => null);
+      await getFirestore().collection("url_reviews").doc(reference).set(Object.assign({
         status: "checkout-open",
         email: (buyer && buyer.ok && buyer.email) || String(reportData.email || ""),
         provider: urlReview.paymentProvider(choice),
@@ -4319,7 +4323,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
   if (req.method === "POST" && pathName.endsWith("/review/rivals")) {
     const body = req.body || {};
     const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-    const snap = id ? await admin.firestore().collection("url_reviews").doc(id).get() : null;
+    const snap = id ? await getFirestore().collection("url_reviews").doc(id).get() : null;
     const data = snap && snap.exists ? snap.data() || {} : null;
     if (!data || !data.report || !data.report.insights) {
       res.status(404).json({ error: "That report was not found." });
@@ -4327,7 +4331,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     }
     try {
       const free = data.free === true || await hasFreeRuns(data.email);
-      const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), { session: body.session, deviceKey: body.deviceKey }, data, free);
+      const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(getFirestore()), { session: body.session, deviceKey: body.deviceKey }, data, free);
       if (access.status === 404) {
         res.status(404).json({ error: access.error });
         return;
@@ -4356,7 +4360,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       res.status(400).json({ error: "Missing report id." });
       return;
     }
-    const snap = await admin.firestore().collection("url_reviews").doc(id).get();
+    const snap = await getFirestore().collection("url_reviews").doc(id).get();
     if (!snap.exists) {
       res.status(404).json({ error: "That report was not found." });
       return;
@@ -4365,7 +4369,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     const free = data.free === true || await hasFreeRuns(data.email);
     // A GET carries no session, so a bare link always lands on the preview.
     const proof = req.method === "GET" ? {} : { session: opening.session, deviceKey: opening.deviceKey };
-    const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), proof, data, free);
+    const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(getFirestore()), proof, data, free);
     if (access.status === 404) {
       res.status(404).json({ error: access.error });
       return;
@@ -4428,11 +4432,11 @@ async function versusFrom(base, opening, proof) {
   const vs = reviewCompare.cleanId(opening.vs);
   if (!vs || vs === base.id) return null;
   try {
-    const snap = await admin.firestore().collection("url_reviews").doc(vs).get();
+    const snap = await getFirestore().collection("url_reviews").doc(vs).get();
     if (!snap.exists) return null;
     const other = Object.assign({ id: vs }, snap.data() || {});
     const free = other.free === true || await hasFreeRuns(other.email);
-    const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(admin.firestore()), proof, other, free);
+    const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(getFirestore()), proof, other, free);
     const made = reviewCompare.savedComparison([base, other], base.email, [base.id, vs], (row) => row === base || access.ok);
     return (made.list && made.list[0] && made.list[0].compare) || null;
   } catch (error) {
@@ -4443,7 +4447,7 @@ async function versusFrom(base, opening, proof) {
 
 async function comparisonsFrom(id, email) {
   try {
-    const snap = await admin.firestore().collection("url_reviews")
+    const snap = await getFirestore().collection("url_reviews")
       .where("compareWith", "==", id)
       .select("email", "createdAt", "compareWith", "report.id", "report.host", "report.compare.ownId", "report.compare.ownHost", "report.compare.rivalHost", "report.compare.overall", "report.compare.dominance")
       .limit(40)
@@ -4466,7 +4470,7 @@ function requestPlace(req) {
 async function storedPlace(runId) {
   if (!runId) return {};
   try {
-    const snap = await admin.firestore().collection("url_review_places").doc(runId).get();
+    const snap = await getFirestore().collection("url_review_places").doc(runId).get();
     const data = snap.exists ? snap.data() || {} : {};
     return { country: data.country || "", region: data.region || "", city: data.city || "" };
   } catch (error) {
@@ -4477,7 +4481,7 @@ async function storedPlace(runId) {
 
 // spentBy on a run-credit row marks it taken by a run; a failed run clears it with the credit's return.
 async function lockCredit(creditId, runId) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const ref = db.collection("url_reviews").doc(creditId);
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
@@ -4489,14 +4493,14 @@ async function lockCredit(creditId, runId) {
 
 async function unlockCredit(creditId) {
   try {
-    await admin.firestore().collection("url_reviews").doc(creditId).update({ spentBy: admin.firestore.FieldValue.delete(), spentAt: admin.firestore.FieldValue.delete() });
+    await getFirestore().collection("url_reviews").doc(creditId).update({ spentBy: FieldValue.delete(), spentAt: FieldValue.delete() });
   } catch (error) {
     console.error("Credit unlock failed:", error);
   }
 }
 
 async function runReview(req, res, placeOf) {
-  const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(admin.firestore()), req.body || {});
+  const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(getFirestore()), req.body || {});
   if (!signedIn.ok) {
     res.status(signedIn.status).json({ error: signedIn.error, signIn: true });
     return;
@@ -4511,7 +4515,7 @@ async function runReview(req, res, placeOf) {
   }
   let base = null;
   if (intake.value.compareWith) {
-    const baseSnap = await admin.firestore().collection("url_reviews").doc(intake.value.compareWith).get();
+    const baseSnap = await getFirestore().collection("url_reviews").doc(intake.value.compareWith).get();
     base = baseSnap.exists ? baseSnap.data() : null;
     const refused = reviewCompare.baseProblem(base, signedIn.email, intake.value.url);
     if (refused) {
@@ -4566,7 +4570,7 @@ async function runReview(req, res, placeOf) {
       clientUrl: intake.value.clientUrl,
       log: [{ at: new Date().toISOString(), text: decision.message }]
     };
-    await admin.firestore().collection("url_reviews").add(denied);
+    await getFirestore().collection("url_reviews").add(denied);
     await rememberReview(denied.status === "payment-due" ? "payment-due" : "blocked", denied);
     await mailReviewedSites(ip, denied);
     res.status(decision.code === "payment" ? 402 : 429).json({
@@ -4592,7 +4596,7 @@ async function runReview(req, res, placeOf) {
     });
     return;
   }
-  const claim = await reviewAuth.claimRun(reviewAuth.firestoreStore(admin.firestore()), {
+  const claim = await reviewAuth.claimRun(reviewAuth.firestoreStore(getFirestore()), {
     runId: req.body && req.body.runId,
     email: signedIn.email,
     deviceKey: req.body && req.body.deviceKey
@@ -4605,7 +4609,7 @@ async function runReview(req, res, placeOf) {
   }
   let usedCredit = null;
   if (decision.consumeId) {
-    usedCredit = await admin.firestore().collection("url_reviews").add({
+    usedCredit = await getFirestore().collection("url_reviews").add({
       status: "run-credit-used",
       creditId: decision.consumeId,
       deviceId,
@@ -4621,7 +4625,7 @@ async function runReview(req, res, placeOf) {
   let stopped = false;
   const stopTimer = runId ? setInterval(async () => {
     try {
-      const snap = await admin.firestore().collection("url_review_stops").doc(runId).get();
+      const snap = await getFirestore().collection("url_review_stops").doc(runId).get();
       if (snap.exists && snap.get("stopped") === true) stopped = true;
     } catch (error) {
       console.error("URL review stop check failed:", error);
@@ -4641,7 +4645,7 @@ async function runReview(req, res, placeOf) {
   const saveRunLog = async (kind, error) => {
     try {
       const record = reviewFailures.failureRecord(Object.assign({}, intake.value, { kind, runId, error, lines: runLines, startedAt: runStarted, endedAt: Date.now() }));
-      const col = admin.firestore().collection("url_review_failures");
+      const col = getFirestore().collection("url_review_failures");
       await (runId ? col.doc(runId) : col.doc()).set(record);
     } catch (saveError) {
       console.error("URL review log save failed:", saveError);
@@ -4716,7 +4720,7 @@ async function runReview(req, res, placeOf) {
       }
     }
     writeLine({ type: "log", text: "Saving the report." });
-    await admin.firestore().collection("url_reviews").doc(report.id).set(record);
+    await getFirestore().collection("url_reviews").doc(report.id).set(record);
     await countReviewed(report);
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
     if (record.status === "stopped") await saveRunLog("stopped");
@@ -4765,8 +4769,8 @@ async function runReview(req, res, placeOf) {
     res.end();
   } finally {
     if (stopTimer) clearInterval(stopTimer);
-    if (runId) admin.firestore().collection("url_review_stops").doc(runId).delete().catch(() => {});
-    if (runId) admin.firestore().collection("url_review_places").doc(runId).delete().catch(() => {});
+    if (runId) getFirestore().collection("url_review_stops").doc(runId).delete().catch(() => {});
+    if (runId) getFirestore().collection("url_review_places").doc(runId).delete().catch(() => {});
   }
 }
 
@@ -4791,18 +4795,17 @@ exports.reviewRun = require("firebase-functions/v2/https").onRequest({
 });
 
 async function reviewTotals() {
-  const ref = admin.firestore().collection("url_review_stats").doc("totals");
+  const ref = getFirestore().collection("url_review_stats").doc("totals");
   const snap = await ref.get();
   if (snap.exists) return snap.data();
-  const { AggregateField } = admin.firestore;
-  const done = admin.firestore().collection("url_reviews").where("report.limits.pagesRead", ">", 0);
+  const done = getFirestore().collection("url_reviews").where("report.limits.pagesRead", ">", 0);
   const sums = (await done.aggregate({
     pages: AggregateField.sum("report.limits.pagesRead"),
     reviews: AggregateField.count()
   }).get()).data();
   const seeded = { pages: Number(sums.pages) || 0, reviews: Number(sums.reviews) || 0 };
   try {
-    await ref.create(Object.assign({ seededAt: admin.firestore.FieldValue.serverTimestamp() }, seeded));
+    await ref.create(Object.assign({ seededAt: FieldValue.serverTimestamp() }, seeded));
   } catch (error) {
     if (error.code !== 6) throw error;
     return (await ref.get()).data();
@@ -4814,15 +4817,15 @@ async function countReviewed(report) {
   const pages = Number(report && report.limits && report.limits.pagesRead) || 0;
   if (!pages) return;
   try {
-    const ref = admin.firestore().collection("url_review_stats").doc("totals");
+    const ref = getFirestore().collection("url_review_stats").doc("totals");
     if (!(await ref.get()).exists) {
       await reviewTotals();
       return;
     }
     await ref.set({
-      pages: admin.firestore.FieldValue.increment(pages),
-      reviews: admin.firestore.FieldValue.increment(1),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      pages: FieldValue.increment(pages),
+      reviews: FieldValue.increment(1),
+      updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });
   } catch (error) {
     console.error("Review totals update failed:", error);
@@ -4832,7 +4835,7 @@ async function countReviewed(report) {
 async function previousRun(email, report) {
   if (!email || !report || !report.host || !report.insights) return null;
   try {
-    const snap = await admin.firestore().collection("url_reviews")
+    const snap = await getFirestore().collection("url_reviews")
       .where("email", "==", email)
       .select("createdAt", "status", "report.id", "report.host", "report.fetchedAt", "report.insights.score", "report.insights.findings")
       .limit(60)
@@ -4851,7 +4854,7 @@ async function previousRun(email, report) {
 async function scoreTrail(email, ownHost, report) {
   const trail = { own: [], rival: [] };
   try {
-    const snap = await admin.firestore().collection("url_reviews")
+    const snap = await getFirestore().collection("url_reviews")
       .where("email", "==", email)
       .select("createdAt", "status", "report.id", "report.host", "report.fetchedAt", "report.insights.score.overall")
       .limit(120)
@@ -4877,7 +4880,9 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
   concurrency: 1,
   maxInstances: 6,
   timeoutSeconds: 120,
-  secrets: SECRETS.reviewBrowser
+  secrets: SECRETS.reviewBrowser,
+  // Renders untrusted pages, so it runs as an account whose only grant is secretAccessor on BROWSER_KEY.
+  serviceAccount: "review-browser@carlosm-interactive-cv.iam.gserviceaccount.com"
 }, async (req, res) => {
   const key = process.env.BROWSER_KEY || "";
   const given = String(req.get("x-review-key") || "");
@@ -4915,7 +4920,7 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
 // Admin Statistics (js/admin-jarvis.js): server-only numbers, external sources, and owner actions. See functions/jarvis.js.
 const jarvis = require("./jarvis");
 const jarvisCore = require("./jarvis-core");
-const jarvisSum = (field) => admin.firestore.AggregateField.sum(field);
+const jarvisSum = (field) => AggregateField.sum(field);
 const jarvisSources = require("./jarvis-sources");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
@@ -4927,8 +4932,8 @@ const jarvisWebPush = require("./jarvis-webpush");
 async function pushOwner(msg) {
   if (!msg) return null;
   try {
-    const db = admin.firestore();
-    return await jarvisPush.send(admin.messaging(), db, await jarvisPush.targets(db, msg.kind), msg);
+    const db = getFirestore();
+    return await jarvisPush.send(getMessaging(), db, await jarvisPush.targets(db, msg.kind), msg);
   } catch (error) {
     console.error("Jarvis push failed:", error && error.message);
     return null;
@@ -4946,18 +4951,18 @@ async function socialProposals() {
 async function jarvisSocialDecide(id, decision, now) {
   const proposal = ((await socialProposals()).proposals || []).find((p) => p && p.id === String(id || ""));
   if (!proposal) throw new Error("That proposal is no longer in the list.");
-  const ref = admin.firestore().collection("socialHub").doc("live");
+  const ref = getFirestore().collection("socialHub").doc("live");
   const today = new Date(now - 5 * 3600 * 1000).toISOString().slice(0, 10);
-  await admin.firestore().runTransaction(async (tx) => {
+  await getFirestore().runTransaction(async (tx) => {
     const next = jarvisSocial.decide(jarvisSocial.state((await tx.get(ref)).data()), proposal, decision, today);
-    tx.set(ref, { json: JSON.stringify(next), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+    tx.set(ref, { json: JSON.stringify(next), updatedAt: FieldValue.serverTimestamp() });
   });
   return { id: proposal.id, decision };
 }
 
 // Hourly: each social post Jarvis newly proposes pushes with Post and Skip, at most 3 an hour (#1670).
 async function jarvisSocialRun() {
-  const db = admin.firestore();
+  const db = getFirestore();
   const ref = db.collection("jarvis_watch").doc("social");
   const [state, book, live] = await Promise.all([ref.get(), socialProposals(), db.collection("socialHub").doc("live").get()]);
   const pending = jarvisSocial.pending(book.proposals, jarvisSocial.state(live.data()));
@@ -4970,7 +4975,7 @@ async function jarvisSocialRun() {
 
 // A notification button (#1670): ref names the thing, act what to do with it. Returns the line the notification shows after.
 async function jarvisNotifyAct(body, by) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const now = Date.now();
   const { type, id, act } = jarvisMailPush.parseAct(body.ref, body.act);
   if (type === "message" || type === "rating") {
@@ -4981,7 +4986,7 @@ async function jarvisNotifyAct(body, by) {
       const snap = await tx.get(ref);
       if (!snap.exists) throw new Error("That " + type + " is gone.");
       if (snap.get("response")) throw new Error("It already has a reply.");
-      tx.update(ref, { response: text, respondedAt: admin.firestore.FieldValue.serverTimestamp(), isPublicResponse: false });
+      tx.update(ref, { response: text, respondedAt: FieldValue.serverTimestamp(), isPublicResponse: false });
     });
     return { message: "Reply sent." };
   }
@@ -5041,7 +5046,7 @@ const SHARE_WORKFLOW = "social-inbox.yml";
 async function shareMedia(path) {
   const clean = jarvisShare.inboxPath(path);
   if (!clean) throw new Error("Upload the media to social-inbox/ first.");
-  const file = admin.storage().bucket(SHARE_BUCKET).file(clean);
+  const file = getStorage().bucket(SHARE_BUCKET).file(clean);
   const [exists] = await file.exists();
   if (!exists) throw new Error("The upload is not in storage yet; try again.");
   const [meta] = await file.getMetadata();
@@ -5057,16 +5062,16 @@ async function shareDraft(body) {
   let text = "";
   try { text = await jarvis.gemini(fetch, process.env, jarvisShare.draftPrompt(caption, media.kind === "video"), 2400); } catch (error) { text = ""; }
   const draft = jarvisShare.cleanDraft(text, caption, media.kind === "video");
-  const ref = admin.firestore().collection("social_inbox").doc();
+  const ref = getFirestore().collection("social_inbox").doc();
   await ref.set({ path: media.path, kind: media.kind, contentType: media.meta.contentType, size: Number(media.meta.size) || 0, caption, draft,
-    gemini: !!text, status: "draft", createdAt: admin.firestore.FieldValue.serverTimestamp() });
+    gemini: !!text, status: "draft", createdAt: FieldValue.serverTimestamp() });
   return { id: ref.id, kind: media.kind, draft, note: text ? "" : "Gemini did not answer, so every post starts from your caption." };
 }
 
 async function shareQueue(body) {
   const token = await githubApp.token();
   if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager, or GITHUB_BUGS_TOKEN in Secret Manager), so Jarvis cannot start the post workflow.");
-  const ref = admin.firestore().collection("social_inbox").doc(String(body.id || "x"));
+  const ref = getFirestore().collection("social_inbox").doc(String(body.id || "x"));
   const snap = await ref.get();
   if (!snap.exists) throw new Error("That draft is gone.");
   const doc = snap.data();
@@ -5079,13 +5084,13 @@ async function shareQueue(body) {
   const url = "https://firebasestorage.googleapis.com/v0/b/" + SHARE_BUCKET + "/o/" + encodeURIComponent(media.path) + "?alt=media&token=" + tokenId;
   await github("/repos/" + BUG_REPO + "/actions/workflows/" + SHARE_WORKFLOW + "/dispatches",
     { ref: "main", inputs: { id: ref.id, media_url: url, media_type: media.kind, entry: JSON.stringify(draft) } }, token);
-  await ref.update({ draft, status: "queued", queuedAt: admin.firestore.FieldValue.serverTimestamp() });
+  await ref.update({ draft, status: "queued", queuedAt: FieldValue.serverTimestamp() });
   return { id: ref.id, note: "Queued. The hub page goes live first, then Buffer and the Facebook Page post it in about 30 minutes." };
 }
 
 async function shareList() {
   const token = await githubApp.token();
-  const docs = (await admin.firestore().collection("social_inbox").orderBy("createdAt", "desc").limit(10).get()).docs;
+  const docs = (await getFirestore().collection("social_inbox").orderBy("createdAt", "desc").limit(10).get()).docs;
   const runs = token ? ((await githubGet("/repos/" + BUG_REPO + "/actions/workflows/" + SHARE_WORKFLOW + "/runs?per_page=20", token).catch(() => ({}))).workflow_runs || []) : [];
   return docs.map((d) => {
     const x = d.data();
@@ -5097,12 +5102,12 @@ async function shareList() {
 }
 
 async function shareDrop(body) {
-  const ref = admin.firestore().collection("social_inbox").doc(String(body.id || "x"));
+  const ref = getFirestore().collection("social_inbox").doc(String(body.id || "x"));
   const snap = await ref.get();
   if (!snap.exists) return { dropped: false };
   if (snap.data().status !== "draft") throw new Error("Only a draft can be dropped; this one is already queued.");
   const path = jarvisShare.inboxPath(snap.data().path);
-  if (path) await admin.storage().bucket(SHARE_BUCKET).file(path).delete({ ignoreNotFound: true });
+  if (path) await getStorage().bucket(SHARE_BUCKET).file(path).delete({ ignoreNotFound: true });
   await ref.delete();
   return { dropped: true };
 }
@@ -5114,7 +5119,7 @@ const jarvisDigest = require("./jarvis-digest");
 // A URL shared to the Jarvis app: the owner's own review, run like a sweep review and pushed to the phone that asked.
 exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB", secrets: SECRETS.jarvisReviewRun }).firestore.document("jarvis_reviews/{id}").onCreate(async (snap) => {
   const row = snap.data() || {};
-  const db = admin.firestore();
+  const db = getFirestore();
   const tokens = row.token ? [row.token] : await jarvisPush.targets(db, "alerts");
   const startedAt = Date.now();
   await snap.ref.update({ status: "running", startedAt: new Date(startedAt).toISOString() });
@@ -5137,13 +5142,13 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
     linkUrl.searchParams.set("utm_source", "jarvis");
     linkUrl.searchParams.set("utm_medium", "push");
     const link = linkUrl.toString();
-    const push = await jarvisPush.send(admin.messaging(), db, tokens, jarvisReview.doneMessage(report, link));
+    const push = await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.doneMessage(report, link));
     const score = report.insights && report.insights.score ? report.insights.score.overall : null;
     await snap.ref.update({ status: "done", reportId: record.id, score: score == null ? null : score, link, push, doneAt: new Date().toISOString() });
   } catch (error) {
     const reason = String((error && error.message) || error).slice(0, 200);
     console.error("Jarvis review of " + row.url + " failed:", error);
-    const push = await jarvisPush.send(admin.messaging(), db, tokens, jarvisReview.failedMessage(row.url, reason)).catch(() => null);
+    const push = await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.failedMessage(row.url, reason)).catch(() => null);
     await snap.ref.update({ status: "failed", error: reason, push, doneAt: new Date().toISOString() });
   }
 });
@@ -5152,7 +5157,7 @@ async function jarvisUsers() {
   const users = [];
   let page;
   do {
-    const batch = await admin.auth().listUsers(1000, page);
+    const batch = await getAuth().listUsers(1000, page);
     batch.users.forEach((u) => users.push({ created: u.metadata.creationTime, lastSignIn: u.metadata.lastSignInTime }));
     page = batch.pageToken;
   } while (page && users.length < 20000);
@@ -5160,7 +5165,7 @@ async function jarvisUsers() {
 }
 
 async function jarvisSource(name, days) {
-  const settings = await jarvis.readSettings(admin.firestore());
+  const settings = await jarvis.readSettings(getFirestore());
   const keys = paypalKeys("live");
   let paypal = null;
   try {
@@ -5168,14 +5173,14 @@ async function jarvisSource(name, days) {
     paypal = { host: creds.host, token: () => urlReview.paypalAccessToken(creds) };
   } catch (error) { paypal = null; }
   return jarvisCached(name, days, () => jarvisSources.run(name, {
-    fetch, env: process.env, db: admin.firestore(), now: Date.now(), days, settings, thresholds: jarvisCore.thresholds(settings.thresholds),
+    fetch, env: process.env, db: getFirestore(), now: Date.now(), days, settings, thresholds: jarvisCore.thresholds(settings.thresholds),
     paypal, tls: jarvis.tlsDaysLeft, listUsers: jarvisUsers
   }));
 }
 const JARVIS_REPORTS = { site: (period) => sendPeriodReport(period), review: (period) => sendReviewPeriodReport(period) };
 
 async function jarvisCached(op, days, load) {
-  const ref = admin.firestore().collection("jarvis_cache").doc(op + "-" + days);
+  const ref = getFirestore().collection("jarvis_cache").doc(op + "-" + days);
   const snap = await ref.get().catch(() => null);
   const saved = snap && snap.exists ? snap.data() : null;
   if (saved && Date.now() - Date.parse(saved.at) < (jarvis.TTL[op] || jarvisSources.TTL[op] || 60000)) return Object.assign(JSON.parse(saved.json), { cachedAt: saved.at });
@@ -5191,7 +5196,7 @@ async function jarvisExternal(ops, days) {
   const env = process.env;
   const now = Date.now();
   const load = {
-    health: () => jarvisCached("health", days, () => jarvis.health(admin.firestore(), { days, now })),
+    health: () => jarvisCached("health", days, () => jarvis.health(getFirestore(), { days, now })),
     jobs: () => jarvisCached("jobs", 0, async () => ({ ok: true, jobs: await jarvis.jobs(fetch) })),
     github: () => jarvisCached("github", 0, async () => jarvis.github(fetch, await githubApp.token(), { now })),
     uptime: () => jarvisCached("uptime", 0, () => jarvis.uptime(fetch, { now })),
@@ -5207,7 +5212,7 @@ async function jarvisExternal(ops, days) {
 }
 
 async function jarvisDaily({ force }) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const settings = await jarvis.readSettings(db);
   const phones = await jarvisPush.targets(db, "briefing");
   if (!settings.mail.daily && !force && !(await jarvisPush.anyTargets(db, "briefing"))) return "off in settings";
@@ -5230,7 +5235,7 @@ async function jarvisDaily({ force }) {
   const actionLines = jarvisActions.briefLines(await jarvisActions.recent(db, 200), now);
   if (actionLines.length) mail.body = (actionLines.join("\n") + "\n\n" + mail.body).slice(0, 12000);
   const sent = settings.mail.daily || force ? await sendOwnerEmail({ subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL, buttonLabel: "Open Jarvis" }) : false;
-  const push = await jarvisPush.send(admin.messaging(), db, phones, jarvisPush.briefingMessage({ items, aiText, dateLabel, top: ranked && ranked.proposals && ranked.proposals[0] })).catch((error) => ({ error: String(error.message || error).slice(0, 200) }));
+  const push = await jarvisPush.send(getMessaging(), db, phones, jarvisPush.briefingMessage({ items, aiText, dateLabel, top: ranked && ranked.proposals && ranked.proposals[0] })).catch((error) => ({ error: String(error.message || error).slice(0, 200) }));
   return { sent: sent !== false, push, items: items.length, goals: goalRows.length, gemini: !!aiText, proposals: proposalLines.length };
 }
 
@@ -5239,7 +5244,7 @@ async function jarvisRanked({ state, items, days, candidates, snapshot, useGemin
   const list = candidates || jarvisCore.proposalRules(state, items);
   const snap = snapshot || jarvis.askSnapshot(Object.assign({}, state, { briefing: items || [] }), days);
   return jarvisProposals.rank({
-    candidates: list, snapshot: snap, savedRows: await jarvisProposals.saved(admin.firestore()), now: Date.now(),
+    candidates: list, snapshot: snap, savedRows: await jarvisProposals.saved(getFirestore()), now: Date.now(),
     gemini: useGemini ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null
   });
 }
@@ -5248,7 +5253,7 @@ const JARVIS_OPS = ["health", "jobs", "github", "uptime", "speed", "ga4", "money
 
 // Sunday 19:00 Bogotá: four weeks side by side, this week's proposals and Gemini's strategy for the next one.
 async function jarvisWeekly({ force }) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const settings = await jarvis.readSettings(db);
   if (!settings.mail.weekly && !force) return "off in settings";
   const now = Date.now();
@@ -5282,7 +5287,7 @@ async function jarvisWeekly({ force }) {
 
 // Everything the stats page computes, in one answer for the Android app, which reads no Firestore itself.
 async function jarvisSnapshot(days) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const settings = await jarvis.readSettings(db);
   const now = Date.now();
   const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
@@ -5298,21 +5303,21 @@ async function jarvisSnapshot(days) {
 
 // The cached snapshot keeps every line; snoozed and dismissed ones move to briefHidden on each read.
 async function jarvisBriefOpen(snap) {
-  const marks = await jarvisProposals.savedBrief(admin.firestore());
+  const marks = await jarvisProposals.savedBrief(getFirestore());
   const { open, hidden } = jarvisCore.openBrief(snap.briefing, marks);
   const until = marks.reduce((m, r) => { m[r.key] = { status: r.status, until: r.until }; return m; }, {});
   return Object.assign({}, snap, { briefing: open, briefHidden: hidden.map((b) => Object.assign({}, b, until[b.key])) });
 }
 
 async function jarvisHeld() {
-  const snap = await admin.firestore().collection("url_review_reruns").where("status", "==", "held").limit(100).get();
+  const snap = await getFirestore().collection("url_review_reruns").where("status", "==", "held").limit(100).get();
   return snap.docs.map((doc) => ({ id: doc.id, data: doc.data() }));
 }
 
 // Pending owner notices whose last send failed, still under the tries and with the site on Live Reports.
 async function jarvisFailedNotices() {
   const [pending, index] = await Promise.all([
-    admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(300).get(),
+    getFirestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(300).get(),
     liveReportIndex()
   ]);
   return pending.docs.filter((doc) => { const d = doc.data(); return d.lastError && !d.unlistedAt && (d.tries || 0) < jarvisActions.NOTICE_TRIES && ownerNotice.liveCard(index, d.host); })
@@ -5322,7 +5327,7 @@ async function jarvisFailedNotices() {
 // How many owner notices may still go out today (Bogotá day, the same budget as sendOwnerNotices).
 async function jarvisNoticeBudget(now) {
   const start = jarvisCore.zoneParts(new Date(now)).day + "T05:00:00.000Z";
-  const sent = (await admin.firestore().collection("url_review_owner_notice_log").where("sentAt", ">=", start).count().get()).data().count;
+  const sent = (await getFirestore().collection("url_review_owner_notice_log").where("sentAt", ">=", start).count().get()).data().count;
   return Math.max(0, ops.budget("ownerNoticesPerDay", process.env) - sent);
 }
 
@@ -5336,7 +5341,7 @@ function jarvisActionOps(settings, now) {
     noticeBudget: () => jarvisNoticeBudget(now),
     resend: (ref, by) => sendQueuedNotice(ref, by),
     hubStale: async () => {
-      const snap = await admin.firestore().collection("socialHubStats").doc("latest").get().catch(() => null);
+      const snap = await getFirestore().collection("socialHubStats").doc("latest").get().catch(() => null);
       const at = snap && snap.exists ? Date.parse(snap.data().updatedAt || "") : NaN;
       return !Number.isFinite(at) || now - at > th.hubStaleDays * 864e5;
     },
@@ -5345,18 +5350,18 @@ function jarvisActionOps(settings, now) {
 }
 
 async function jarvisAutoActions() {
-  const db = admin.firestore();
+  const db = getFirestore();
   const settings = await jarvis.readSettings(db);
   const now = Date.now();
   const result = await jarvisActions.autoRun({ db, now, settings, ops: jarvisActionOps(settings, now) });
   const msg = jarvisActions.pushMessage(result);
-  if (msg) await jarvisPush.send(admin.messaging(), db, await jarvisPush.targets(db, "alerts"), msg).catch((error) => console.error("Jarvis action push failed:", error));
+  if (msg) await jarvisPush.send(getMessaging(), db, await jarvisPush.targets(db, "alerts"), msg).catch((error) => console.error("Jarvis action push failed:", error));
   return jarvisActions.summary(result);
 }
 
 // A clicked action: not held to Jarvis's own caps or the clean rule, but notices keep the hours, tries and budget.
 async function jarvisClickAction(body, by) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const now = Date.now();
   const action = String(body.action || "");
   const proposal = String(body.proposal || "").slice(0, 140);
@@ -5418,7 +5423,7 @@ async function jarvisClickAction(body, by) {
 }
 
 async function jarvisActionsView(now) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const settings = await jarvis.readSettings(db);
   const [rows, today, held, notices] = await Promise.all([
     jarvisActions.recent(db, 60), jarvisActions.todayRows(db, now), jarvisHeld().catch(() => []),
@@ -5435,7 +5440,7 @@ async function jarvisActionsView(now) {
 const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100) };
 
 async function jarvisWatchRun() {
-  const db = admin.firestore();
+  const db = getFirestore();
   const settings = await jarvis.readSettings(db);
   const phones = await jarvisPush.targets(db, "alerts");
   if (!settings.mail.watch && !(await jarvisPush.anyTargets(db, "alerts"))) return "off in settings";
@@ -5444,7 +5449,7 @@ async function jarvisWatchRun() {
   const items = jarvisCore.openBrief(jarvis.watchItems(external, settings.thresholds), await jarvisProposals.savedBrief(db), new Date(now)).open;
   const { day, ref, sent, fresh } = await jarvis.unsentToday(db, items, { now });
   if (!fresh.length) return "nothing new";
-  const push = await jarvisPush.send(admin.messaging(), db, phones, jarvisPush.alertMessage(fresh)).catch((error) => ({ sent: 0, error: String(error.message || error).slice(0, 200) }));
+  const push = await jarvisPush.send(getMessaging(), db, phones, jarvisPush.alertMessage(fresh)).catch((error) => ({ sent: 0, error: String(error.message || error).slice(0, 200) }));
   if (settings.mail.watch) await sendOwnerEmail({
     subject: "Jarvis alert: " + fresh[0].text.slice(0, 90) + (fresh.length > 1 ? " (+" + (fresh.length - 1) + " more)" : ""),
     intro: "Jarvis crossed an alert threshold you set. Each issue is mailed once a day.",
@@ -5465,7 +5470,7 @@ exports.jarvisDailyBriefing = scheduled(functions.runWith({ timeoutSeconds: 300,
 
 // The evening digest (#1672): the last 24 hours of pushes, what still waits for a decision, and what ran.
 async function jarvisEvening({ force }) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const settings = await jarvis.readSettings(db);
   if (!settings.mail.digest && !force) return "off in settings";
   const since = new Date(Date.now() - 24 * 3600000).toISOString();
@@ -5500,7 +5505,7 @@ exports.jarvisWeeklyStrategy = scheduled(functions.runWith({ timeoutSeconds: 300
 });
 // Outreach notices waiting for Send or Drop: one push for whatever arrived since the last, at most hourly.
 async function jarvisNoticesRun() {
-  const db = admin.firestore();
+  const db = getFirestore();
   const phones = await jarvisPush.targets(db, "outreach");
   if (!(await jarvisPush.anyTargets(db, "outreach"))) return "no phones or browsers for outreach";
   const ref = db.collection("jarvis_watch").doc("notices");
@@ -5511,8 +5516,8 @@ async function jarvisNoticesRun() {
   if (!fresh.length) return pending.length + " pending, none new";
   // One notification per notice with Send and Skip (#1670); past 6, the rest share one.
   let sent = 0;
-  for (const n of fresh.slice(0, 6)) sent += (await jarvisPush.send(admin.messaging(), db, phones, jarvisMailPush.noticeMessage(n))).sent;
-  if (fresh.length > 6) sent += (await jarvisPush.send(admin.messaging(), db, phones, jarvisNotify.noticesMessage(fresh.slice(6), pending.length))).sent;
+  for (const n of fresh.slice(0, 6)) sent += (await jarvisPush.send(getMessaging(), db, phones, jarvisMailPush.noticeMessage(n))).sent;
+  if (fresh.length > 6) sent += (await jarvisPush.send(getMessaging(), db, phones, jarvisNotify.noticesMessage(fresh.slice(6), pending.length))).sent;
   await ref.set({ lastAt: new Date(now).toISOString(), pending: pending.length });
   return fresh.length + " new notices, " + sent + " pushes";
 }
@@ -5536,14 +5541,14 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
   if (req.method === "OPTIONS") { res.status(204).send(""); return; }
   if (req.method !== "POST") { res.status(405).json({ error: "POST only." }); return; }
   if ((req.body || {}).op === "app-release") {
-    try { res.json(await jarvisPush.releasePush(fetch, admin.firestore(), admin.messaging(), { token: await githubApp.token(), now: Date.now() })); }
+    try { res.json(await jarvisPush.releasePush(fetch, getFirestore(), getMessaging(), { token: await githubApp.token(), now: Date.now() })); }
     catch (error) { res.status(502).json({ error: error.message }); }
     return;
   }
   // A browser notification's button (#1671): the service worker holds no sign-in, so the push signed each button.
   if ((req.body || {}).op === "notify-act" && (req.body || {}).sig) {
     const b = req.body;
-    const db = admin.firestore();
+    const db = getFirestore();
     const target = String(b.act || "") + " " + String(b.ref || "").slice(0, 100);
     try {
       const k = await jarvisWebPush.keys(db, require("web-push"));
@@ -5572,7 +5577,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
   const appAskSnapshot = async () => jarvis.askSnapshot(await jarvisCached("snapshot", days, () => jarvisSnapshot(days)), days);
   try {
     let out;
-    if (op === "health") out = await jarvisCached(op, days, () => jarvis.health(admin.firestore(), { days, now }));
+    if (op === "health") out = await jarvisCached(op, days, () => jarvis.health(getFirestore(), { days, now }));
     else if (op === "jobs") out = await jarvisCached(op, 0, async () => ({ ok: true, jobs: await jarvis.jobs(fetch) }));
     else if (op === "github") out = await jarvisCached(op, 0, async () => jarvis.github(fetch, await githubApp.token(), { now }));
     else if (op === "ga4") out = await jarvisCached(op, days, () => jarvis.ga4(fetch, { days }));
@@ -5583,13 +5588,13 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot || await appAskSnapshot(), { lang: body.lang, spoken: body.spoken === true });
     else if (op === "speak") out = await jarvis.speak(fetch, body.text, body.lang, { voice: body.voice, rate: body.rate });
     else if (op === "run-job") out = await jarvis.runJob(fetch, body.job);
-    else if (op === "settings") out = await jarvis.readSettings(admin.firestore());
+    else if (op === "settings") out = await jarvis.readSettings(getFirestore());
     else if (op === "settings-save") {
-      out = await jarvis.saveSettings(admin.firestore(), body.settings, operator);
-      const cache = admin.firestore().collection("jarvis_cache");
+      out = await jarvis.saveSettings(getFirestore(), body.settings, operator);
+      const cache = getFirestore().collection("jarvis_cache");
       await Promise.all([1, 7, 30, 90, 365].map((d) => cache.doc("search-" + d).delete().catch(() => null)));
     }
-    else if (op === "goals") out = { goals: await jarvis.goals(admin.firestore(), await jarvis.readSettings(admin.firestore()), { now, sum: jarvisSum }) };
+    else if (op === "goals") out = { goals: await jarvis.goals(getFirestore(), await jarvis.readSettings(getFirestore()), { now, sum: jarvisSum }) };
     else if (op === "daily-now") out = await jarvisDaily({ force: true });
     else if (op === "weekly-now") out = await jarvisWeekly({ force: true });
     else if (op === "digest-now") out = { result: await jarvisEvening({ force: true }) };
@@ -5600,36 +5605,36 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
         out = await jarvisRanked({ candidates: jarvisCore.proposalRules({ products: snap.products, external: snap.external, thresholds: snap.thresholds, goals: snap.goals }, snap.briefing), snapshot: jarvis.askSnapshot(snap, days), useGemini: body.gemini !== false });
       }
     }
-    else if (op === "proposal-mark") out = await jarvisProposals.mark(admin.firestore(), body, operator, now);
+    else if (op === "proposal-mark") out = await jarvisProposals.mark(getFirestore(), body, operator, now);
     else if (op === "action-run") out = await jarvisClickAction(body, operator);
     else if (op === "notify-act") out = await jarvisNotifyAct(body, operator);
     else if (op === "actions") out = await jarvisActionsView(now);
-    else if (op === "register-device") out = await jarvisPush.register(admin.firestore(), body, operator, now);
-    else if (op === "unregister-device") out = await jarvisPush.unregister(admin.firestore(), body.endpoint || body.token);
-    else if (op === "devices") out = { devices: (await jarvisPush.list(admin.firestore())).map((d) => ({ id: d.id, type: d.type || "android", name: d.name, kinds: d.kinds, updatedAt: d.updatedAt })) };
+    else if (op === "register-device") out = await jarvisPush.register(getFirestore(), body, operator, now);
+    else if (op === "unregister-device") out = await jarvisPush.unregister(getFirestore(), body.endpoint || body.token);
+    else if (op === "devices") out = { devices: (await jarvisPush.list(getFirestore())).map((d) => ({ id: d.id, type: d.type || "android", name: d.name, kinds: d.kinds, updatedAt: d.updatedAt })) };
     else if (op === "test-push" && body.endpoint) {
-      const db = admin.firestore();
+      const db = getFirestore();
       const device = (await jarvisPush.list(db)).find((d) => d.id === jarvisPush.idOf(body.endpoint) && d.subscription);
       if (!device) throw new Error("This browser is not registered.");
-      out = await jarvisPush.send(admin.messaging(), db, [], { kind: "test", title: "Jarvis test", body: "Push notifications reach this browser.", tab: "overview", tag: "jarvis-test" }, [device]);
+      out = await jarvisPush.send(getMessaging(), db, [], { kind: "test", title: "Jarvis test", body: "Push notifications reach this browser.", tab: "overview", tag: "jarvis-test" }, [device]);
     }
     else if (op === "test-push") {
-      const tokens = body.token ? [String(body.token)] : await jarvisPush.targets(admin.firestore(), "test");
-      out = await jarvisPush.send(admin.messaging(), admin.firestore(), tokens, { kind: "test", title: "Jarvis test", body: "Push notifications reach this phone.", tab: "overview", tag: "jarvis-test" });
+      const tokens = body.token ? [String(body.token)] : await jarvisPush.targets(getFirestore(), "test");
+      out = await jarvisPush.send(getMessaging(), getFirestore(), tokens, { kind: "test", title: "Jarvis test", body: "Push notifications reach this phone.", tab: "overview", tag: "jarvis-test" });
     }
-    else if (op === "web-push-key") out = { publicKey: (await jarvisWebPush.keys(admin.firestore(), require("web-push"))).publicKey };
-    else if (op === "review") out = await jarvisReview.enqueue(admin.firestore(), body, operator, now);
+    else if (op === "web-push-key") out = { publicKey: (await jarvisWebPush.keys(getFirestore(), require("web-push"))).publicKey };
+    else if (op === "review") out = await jarvisReview.enqueue(getFirestore(), body, operator, now);
     else if (op === "snapshot") out = await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days)));
-    else if (op === "brief-mark") out = await jarvisProposals.markBrief(admin.firestore(), body, operator, now);
-    else if (op === "brief-marks") out = { marks: await jarvisProposals.savedBrief(admin.firestore()) };
-    else if (op === "brief-items") out = await jarvis.briefItems(admin.firestore(), { list: body.list, days, now });
-    else if (op === "rating-decide") out = await jarvis.decideRatings(admin.firestore(), body);
+    else if (op === "brief-mark") out = await jarvisProposals.markBrief(getFirestore(), body, operator, now);
+    else if (op === "brief-marks") out = { marks: await jarvisProposals.savedBrief(getFirestore()) };
+    else if (op === "brief-items") out = await jarvis.briefItems(getFirestore(), { list: body.list, days, now });
+    else if (op === "rating-decide") out = await jarvis.decideRatings(getFirestore(), body);
     else if (op === "notices") {
-      const snap = await admin.firestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get();
+      const snap = await getFirestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get();
       const rows = snap.docs.map((d) => Object.assign({ domain: d.id }, d.data()));
       out = { notices: jarvisNotify.noticeRows(rows, (row) => customerMail.pageUrl(row.lang, { report: row.reviewId })), auto: process.env.OWNER_NOTICES_LIVE === "1" };
     } else if (op === "social-proposals") {
-      const [book, doc] = await Promise.all([socialProposals(), admin.firestore().collection("socialHub").doc("live").get()]);
+      const [book, doc] = await Promise.all([socialProposals(), getFirestore().collection("socialHub").doc("live").get()]);
       out = { proposals: jarvisSocial.pending(book.proposals, jarvisSocial.state(doc.data())), built: book.built || "" };
     } else if (op === "social-decide") {
       out = await jarvisSocialDecide(body.id, body.decision, now);
@@ -5656,7 +5661,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       out = decided;
     }
     else if (op === "marketing-campaign" || op === "marketing-block" || op === "marketing-queue" || op === "marketing-command") {
-      const db = admin.firestore();
+      const db = getFirestore();
       const ctx = { fetch, env, now };
       out = op === "marketing-campaign" ? await jarvisMarketing.campaignAct(ctx, body) : op === "marketing-block" ? await jarvisMarketing.block(ctx, body)
         : op === "marketing-command" ? await jarvisMarketing.command(ctx, db, body) : await jarvisMarketing.queueProspects(db, body, now);
@@ -5671,17 +5676,17 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     } else if (op === "unlist") {
       const host = reviewPublish.bare(String(body.host || "").toLowerCase().trim());
       if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host)) throw new Error("That is not a host.");
-      await admin.firestore().collection("url_review_unlisted").doc(host).set({ at: new Date().toISOString(), by: operator, from: "jarvis" });
+      await getFirestore().collection("url_review_unlisted").doc(host).set({ at: new Date().toISOString(), by: operator, from: "jarvis" });
       out = { unlisted: host };
     } else if (op === "email-briefing") {
       const mail = jarvis.briefingMail(body.snapshot || await appAskSnapshot(), body.text);
       const sent = await sendOwnerEmail({ subject: mail.subject, intro: "Your Jarvis briefing from Admin > Statistics.", rows: mail.rows, body: mail.body, eyebrow: "Jarvis" });
       out = { sent: sent !== false };
     } else { res.status(400).json({ error: "Unknown op." }); return; }
-    if (JARVIS_LOGGED[op]) await jarvisActions.log(admin.firestore(), { action: op, mode: "click", status: "done", target: JARVIS_LOGGED[op](body), by: operator }, Date.now()).catch(() => null);
+    if (JARVIS_LOGGED[op]) await jarvisActions.log(getFirestore(), { action: op, mode: "click", status: "done", target: JARVIS_LOGGED[op](body), by: operator }, Date.now()).catch(() => null);
     res.status(200).json(Object.assign({ ok: true, op }, out));
   } catch (error) {
-    if (JARVIS_LOGGED[op]) await jarvisActions.log(admin.firestore(), { action: op, mode: "click", status: "failed", target: JARVIS_LOGGED[op](body), detail: String((error && error.message) || error), by: operator }, Date.now()).catch(() => null);
+    if (JARVIS_LOGGED[op]) await jarvisActions.log(getFirestore(), { action: op, mode: "click", status: "failed", target: JARVIS_LOGGED[op](body), detail: String((error && error.message) || error), by: operator }, Date.now()).catch(() => null);
     res.status(200).json({ ok: false, op, error: String((error && error.message) || error).slice(0, 300) });
   }
 });
