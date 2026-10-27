@@ -11,7 +11,7 @@
    Clips: a TikTok or YouTube post is matched by its text or title to the clip's voiced copy in <batch>/voiced.json,
    so the new clip speaks the language the post is written in, and takes <slug>.mp4 from the <batch> release.
    A post that matches nothing, has more than one asset, is due within 30 minutes, or whose new file does not answer
-   200 is listed and left as it is. Calls share --sync's budget (15-minute windows, a reserve of the daily calls). */
+   200 is listed and left as it is. Calls share --sync's budget (15-minute windows, a reserve of the daily and 30-day calls). */
 
 const fs = require("fs");
 const path = require("path");

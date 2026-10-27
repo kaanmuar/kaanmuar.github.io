@@ -70,7 +70,7 @@ async function gql(query, variables, { request = fetch, sleep = pause } = {}) {
     const after = Number(res.headers && res.headers.get("retry-after")) || 0;
     if (window && window !== "15m") {
       error.spent = true;
-      error.message = "Buffer's " + window + " limit is spent; it frees up in " + Math.ceil(after / 3600) + " h. " + error.message;
+      error.message = "Buffer's " + window + " limit is spent; it frees up in " + (after >= 2 * 86400 ? Math.ceil(after / 86400) + " days" : Math.ceil(after / 3600) + " h") + ". " + error.message;
       throw error;
     }
     if (attempt >= RETRY_WAITS.length) throw error;
