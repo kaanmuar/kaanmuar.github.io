@@ -2310,6 +2310,11 @@ async function noticeForReply(reply) {
     const hit = await notices.where("email", "==", reply.from).limit(1).get();
     snap = hit.empty ? null : hit.docs[0];
   }
+  // A bounce comes from the receiving server, so its notice is found by the address it names.
+  if ((!snap || !snap.exists) && reply.kind === "bounce" && (reply.mentioned || []).length) {
+    const hit = await notices.where("email", "in", reply.mentioned.slice(0, 10)).limit(1).get();
+    snap = hit.empty ? null : hit.docs[0];
+  }
   return { link, ref: snap && snap.exists ? snap.ref : null, notice: snap && snap.exists ? snap.data() : null };
 }
 
@@ -2326,11 +2331,15 @@ async function decideOwnerReply(ref, row, action, rawEmail) {
   return { problem, saved, row: Object.assign({}, row, saved ? decided : {}) };
 }
 
-async function takeOwnerReply(mail, auth) {
+// Files one reply and returns { id, outcome }: "taken", "seen" (this mail is already filed), "operator" or
+// "unmatched". matchedOnly is for mail to qa@, where only mail that matches a notice is an owner's reply.
+async function takeOwnerReply(mail, auth, matchedOnly) {
   const reply = ownerReplies.read(mail);
+  if (matchedOnly && ownerReplies.OPERATORS.includes(reply.from)) return { id: "", outcome: "operator" };
   const { link, ref, notice } = await noticeForReply(reply);
+  if (matchedOnly && !ref && !link) return { id: "", outcome: "unmatched" };
   const decision = ownerReplies.plan(reply, notice);
-  const id = crypto.randomBytes(16).toString("hex");
+  const id = ownerReplies.replyId(mail.messageId) || crypto.randomBytes(16).toString("hex");
   const row = Object.assign({}, reply, {
     at: new Date().toISOString(),
     noticeDomain: ref ? ref.id : "",
@@ -2343,7 +2352,12 @@ async function takeOwnerReply(mail, auth) {
     applied: decision.apply,
     expireAt: keepUntil()
   });
-  await getFirestore().collection("url_review_owner_replies").doc(id).set(row);
+  try {
+    await getFirestore().collection("url_review_owner_replies").doc(id).create(row);
+  } catch (error) {
+    if (error && (error.code === 6 || /already exists/i.test(error.message || ""))) return { id, outcome: "seen" };
+    throw error;
+  }
   for (const action of decision.apply) await applyReplyAction(action, row);
   if (ref) await ref.set({ lastReplyAt: row.at, lastReplyKind: row.kind }, { merge: true });
   if (row.kind !== "auto" && row.kind !== "bounce") {
@@ -2365,7 +2379,7 @@ async function takeOwnerReply(mail, auth) {
       buttonLabel: row.status === "waiting" ? "Decide" : "See what was done"
     });
   }
-  return id;
+  return { id, outcome: "taken" };
 }
 
 function replyPage(id, row, message) {
@@ -2407,14 +2421,15 @@ exports.ownerReplies = functions.runWith({ timeoutSeconds: 60, memory: "256MB", 
       }
       const form = await new Response(req.rawBody, { headers: { "content-type": req.get("content-type") || "" } }).formData();
       const field = (name) => String(form.get(name) || "");
-      const id = await takeOwnerReply({
+      const out = await takeOwnerReply({
         from: field("from"),
         to: field("to") + " " + field("envelope"),
         subject: field("subject"),
         text: field("text") || htmlText(field("html")),
-        headers: field("headers")
+        headers: field("headers"),
+        messageId: ownerReplies.messageIdOf(field("headers"))
       }, { spf: field("SPF"), dkim: field("dkim") });
-      res.status(200).send("ok " + id);
+      res.status(200).send((out.outcome === "seen" ? "seen " : "ok ") + out.id);
       return;
     }
     if (req.path.startsWith("/decide")) {
@@ -5492,6 +5507,7 @@ async function mailCodeRows() {
 
 // ImprovMX posts each mail to qa@ and the per-channel aliases here as JSON (#1898). A code or a checked confirm
 // link is kept for a day and pushed to Jarvis once; a retry of the same mail finds its row and pushes nothing.
+// Other mail to qa@ that matches an owner notice goes into the owner-replies queue (#1899).
 exports.mailInbound = functions.runWith({ timeoutSeconds: 60, memory: "256MB", maxInstances: 5, secrets: SECRETS.mailInbound }).https.onRequest(async (req, res) => {
   res.set("X-Robots-Tag", "noindex");
   const key = process.env.MAIL_WEBHOOK_KEY || "";
@@ -5507,6 +5523,11 @@ exports.mailInbound = functions.runWith({ timeoutSeconds: 60, memory: "256MB", m
   try {
     const mail = mailInbound.read(req.body, req.query.alias);
     const row = mailInbound.codeOf(mail);
+    if (!row && mail.alias === "qa" && !mailInbound.fromUs(mail.fromEmail)) {
+      const out = await takeOwnerReply(mailInbound.replyMail(req.body), mailInbound.replyAuth(req.body.headers), true);
+      res.status(200).send(out.outcome === "taken" ? "owner reply " + out.id : out.outcome === "seen" ? "seen" : "no code, " + out.outcome);
+      return;
+    }
     if (!row) {
       res.status(200).send("no code");
       return;

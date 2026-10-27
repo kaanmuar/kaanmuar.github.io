@@ -159,4 +159,35 @@ function rows(docs, now) {
     .map((d) => ({ service: d.service, label: d.label, code: d.code || "", link: d.link || "", alias: d.alias || "", from: d.from || "", subject: d.subject || "", trusted: !!d.trusted, at: d.at }));
 }
 
-module.exports = { KEEP_MS, SERVICES, passedDomains, htmlText, read, codeOf, docId, message, rows };
+/* Mail to qa@ that is not a code may be an owner writing back to a notice (#1899). The webhook hands it to the
+   owner-replies flow of #550 in the shape SendGrid Inbound Parse gives: headers as lines, recipients as one string. */
+function replyMail(payload) {
+  const p = payload || {};
+  const from = p.from && typeof p.from === "object" ? p.from : { email: String(p.from || "") };
+  const people = (list) => (Array.isArray(list) ? list : []).map((t) => String((t && t.email) || "")).filter(Boolean);
+  const headers = Object.keys(p.headers || {}).map((k) => {
+    const v = p.headers[k];
+    return (Array.isArray(v) ? v : [v]).map((one) => k + ": " + String(one == null ? "" : one)).join("\n");
+  }).join("\n");
+  return {
+    from: (from.name ? "\"" + clip(from.name, 80).replace(/"/g, "") + "\" " : "") + "<" + String(from.email || "") + ">",
+    to: people(p.to).concat(people(p.cc)).join(" "),
+    subject: String(p.subject || ""),
+    text: String(p.text || "") || htmlText(p.html),
+    headers,
+    messageId: String(p["message-id"] || header(p.headers, "Message-ID") || "")
+  };
+}
+
+/** SPF and DKIM results from the Authentication-Results ImprovMX adds, in the form SendGrid's fields use. */
+function replyAuth(headers) {
+  const auth = header(headers, "Authentication-Results");
+  const spf = (auth.match(/\bspf=([a-z]+)/i) || [])[1] || "";
+  const dkim = [...auth.matchAll(/\bdkim=([a-z]+)[^;]*?header\.(?:d|i)=@?([a-z0-9.-]+)/gi)].map((m) => "{@" + m[2].toLowerCase() + " : " + m[1].toLowerCase() + "}");
+  return { spf: spf.toLowerCase(), dkim: dkim.join(", ") };
+}
+
+/** Our own mail (alerts, owner-reply notices) also reaches qa@; it is never an owner's reply. */
+const fromUs = (email) => /(^|\.)carlosandmunoz\.com$/.test(domainOf(String(email || "").replace(/^.*</, "")));
+
+module.exports = { KEEP_MS, SERVICES, passedDomains, htmlText, read, codeOf, docId, message, rows, replyMail, replyAuth, fromUs };

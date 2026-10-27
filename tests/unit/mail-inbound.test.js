@@ -89,9 +89,72 @@ test("rows: the last day only, newest first, at most ten", () => {
 test("wiring: mailInbound reads its key, the snapshot carries the codes, and both apps list the codes kind", () => {
   const root = path.join(__dirname, "../..");
   const index = fs.readFileSync(path.join(root, "functions/index.js"), "utf8");
-  assert.deepEqual(secrets.mailInbound, ["MAIL_WEBHOOK_KEY"]);
+  assert.deepEqual(secrets.mailInbound, ["SENDGRID_API_KEY", "MAIL_WEBHOOK_KEY"]);
   assert.match(index, /exports\.mailInbound = functions\.runWith\(\{[^}]*secrets: SECRETS\.mailInbound/);
   assert.match(index, /op === "snapshot"\) out = Object\.assign\([^\n]*mailCodes: await mailCodeRows\(\)/);
   assert.match(fs.readFileSync(path.join(root, "js/admin-jarvis-push.js"), "utf8"), /\['codes', 'Sign-in codes'/);
   assert.match(fs.readFileSync(path.join(root, "android/app/src/main/java/com/carlosandmunoz/jarvis/push/Push.kt"), "utf8"), /CODES to Triple\("Sign-in codes"/);
+});
+
+const replies = require("../../functions/url-review-owner-replies");
+const ownerPayload = (from, subject, text, extra) => payload(from, subject, text, Object.assign({ to: [{ name: null, email: "qa@carlosandmunoz.com" }] }, extra));
+
+test("replyMail: an owner's mail to qa@ reads like an Inbound Parse post (#1899)", () => {
+  const p = ownerPayload("ana@ejemplo.co", "RE: Informe público de ejemplo.co", "Por favor escriban a comunicaciones@ejemplo.co en adelante.", {
+    cc: [{ name: null, email: "web@ejemplo.co" }],
+    headers: Object.assign(auth("ejemplo.co"), { "Auto-Submitted": "no", "Message-ID": "<abc@ejemplo.co>" })
+  });
+  const mail = inbound.replyMail(p);
+  assert.equal(mail.to, "qa@carlosandmunoz.com web@ejemplo.co");
+  assert.match(mail.headers, /^Auto-Submitted: no$/m);
+  assert.match(mail.headers, /^Authentication-Results: mx1\.improvmx\.com; spf=pass/m);
+  assert.equal(mail.messageId, p["message-id"]);
+  const reply = replies.read(mail);
+  assert.equal(reply.from, "ana@ejemplo.co");
+  assert.equal(reply.kind, "redirect");
+  assert.deepEqual(reply.mentioned, ["comunicaciones@ejemplo.co"]);
+  assert.equal(inbound.replyMail(Object.assign({}, p, { text: "", html: "<p>Gracias &amp; saludos</p>" })).text.trim(), "Gracias & saludos");
+});
+
+test("replyAuth: SPF and DKIM in the form SendGrid's fields use", () => {
+  assert.deepEqual(inbound.replyAuth(auth("ejemplo.co")), { spf: "pass", dkim: "{@ejemplo.co : pass}" });
+  assert.deepEqual(inbound.replyAuth({}), { spf: "", dkim: "" });
+});
+
+test("fromUs: our own alerts to qa@ are never taken as owner replies", () => {
+  assert.equal(inbound.fromUs("reviews@carlosandmunoz.com"), true);
+  assert.equal(inbound.fromUs("Reviews <bot@mail.carlosandmunoz.com>"), true);
+  assert.equal(inbound.fromUs("ana@ejemplo.co"), false);
+  assert.equal(inbound.fromUs("x@notcarlosandmunoz.com"), false);
+});
+
+test("replyId: the same mail gets the same row id through ImprovMX and SendGrid, retries included", () => {
+  const id = replies.replyId("<abc@ejemplo.co>");
+  assert.match(id, /^[a-f0-9]{32}$/);
+  assert.equal(replies.replyId("abc@ejemplo.co"), id);
+  assert.equal(replies.replyId(replies.messageIdOf("Received: by mx\r\nMessage-ID: <abc@ejemplo.co>\r\nSubject: RE: x")), id);
+  assert.equal(replies.replyId(inbound.replyMail(ownerPayload("ana@ejemplo.co", "RE", "x", { "message-id": "<abc@ejemplo.co>" })).messageId), id);
+  assert.equal(replies.replyId(""), "");
+});
+
+test("wiring: qa@ mail that is not a code goes to the owner-replies flow, matched notices only", () => {
+  const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  assert.match(index, /!row && mail\.alias === "qa" && !mailInbound\.fromUs\(mail\.fromEmail\)\) \{\n\s+const out = await takeOwnerReply\(mailInbound\.replyMail\(req\.body\), mailInbound\.replyAuth\(req\.body\.headers\), true\)/);
+  assert.match(index, /if \(matchedOnly && ownerReplies\.OPERATORS\.includes\(reply\.from\)\)/);
+  assert.match(index, /if \(matchedOnly && !ref && !link\) return/);
+  assert.match(index, /const id = ownerReplies\.replyId\(mail\.messageId\) \|\| crypto\.randomBytes/);
+  assert.match(index, /collection\("url_review_owner_replies"\)\.doc\(id\)\.create\(row\)/);
+  assert.match(index, /messageId: ownerReplies\.messageIdOf\(field\("headers"\)\)/);
+  assert.match(index, /reply\.kind === "bounce" && \(reply\.mentioned \|\| \[\]\)\.length\) \{\n\s+const hit = await notices\.where\("email", "in", reply\.mentioned\.slice\(0, 10\)\)/);
+});
+
+test("a notice bounce at qa@ is a bounce that names the address it bounced from, Postfix and Gmail", () => {
+  const postfix = replies.read(inbound.replyMail(ownerPayload("MAILER-DAEMON@mx.ejemplo.co", "Undelivered Mail Returned to Sender",
+    "I am sorry to inform you that your message could not be delivered.\n\n<info@ejemplo.co>: host mx.ejemplo.co said: 550 5.1.1 User unknown\n\n--- Original message ---\nFrom: qa@carlosandmunoz.com\nTo: info@ejemplo.co")));
+  assert.equal(postfix.kind, "bounce");
+  assert.deepEqual(postfix.mentioned, ["info@ejemplo.co"]);
+  const gmail = replies.read(inbound.replyMail(ownerPayload("mailer-daemon@googlemail.com", "Delivery Status Notification (Failure)",
+    "Address not found\n\nYour message wasn't delivered to ana@ejemplo.co because the address couldn't be found.")));
+  assert.equal(gmail.kind, "bounce");
+  assert.deepEqual(gmail.mentioned, ["ana@ejemplo.co"]);
 });
