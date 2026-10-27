@@ -9,6 +9,7 @@
 #   security add-generic-password -a qa-lab-bot -s qa-lab-bot -w
 #
 #   scripts/gh-budget.sh project item-edit ...     # any non-interactive gh command; output is printed at the end
+#   scripts/gh-budget.sh --item 1582               # board item ID of an issue or PR in kaanmuar/kaanmuar.github.io
 #   scripts/gh-budget.sh --status                  # GraphQL points left on each account
 set -uo pipefail
 
@@ -29,6 +30,12 @@ if [ "${1:-}" = "--status" ]; then
 		else echo "$who: no token"; fi
 	done
 	exit 0
+fi
+
+# An issue's projectItems, and item-edit --url, come back empty for this org board, so search the board's items.
+if [ "${1:-}" = "--item" ]; then
+	exec "$0" api graphql -f query="query{node(id:\"PVT_kwDOFLbZIM4BokiS\"){... on ProjectV2{items(first:20,query:\"$2\"){nodes{id content{... on Issue{number repository{nameWithOwner}} ... on PullRequest{number repository{nameWithOwner}}}}}}}}" \
+		-q ".data.node.items.nodes[] | select(.content.number == $2 and .content.repository.nameWithOwner == \"kaanmuar/kaanmuar.github.io\") | .id"
 fi
 
 order="me bot"
