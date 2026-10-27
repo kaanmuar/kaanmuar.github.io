@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 require('../../scripts/playwright-sandbox');
 const { chromium, firefox, webkit } = require('playwright');
@@ -40,7 +41,7 @@ async function openPage(browser, file, phone) {
 
 async function runCheckOn(page, id) {
   await page.waitForFunction(ready, null, { timeout: 15000 });
-  await page.addScriptTag({ path: CHECKS });
+  await page.evaluate(fs.readFileSync(CHECKS, 'utf8'));
   return String(await page.evaluate(async (caseId) => {
     const check = window.CatalogChecks && window.CatalogChecks[caseId];
     if (!check) return 'FAIL: missing ' + caseId;
