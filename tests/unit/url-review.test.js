@@ -1932,15 +1932,36 @@ test.describe("publishing user reviews to Live Reports", () => {
   });
 });
 
-test("functions/.env.example lists every key the functions read", () => {
+test("functions/.env.example or functions/secrets.js lists every key the functions read", () => {
   const dir = path.join(__dirname, "../../functions");
   const listed = new Set(fs.readFileSync(path.join(dir, ".env.example"), "utf8").match(/^[A-Z0-9_]+(?==)/gm));
+  const secrets = new Set(require("../../functions/secrets").ALL);
   const runtime = new Set(["GCLOUD_PROJECT", "GCP_PROJECT"]);
   const read = new Set();
   fs.readdirSync(dir).filter((name) => name.endsWith(".js")).forEach((name) => {
     for (const m of fs.readFileSync(path.join(dir, name), "utf8").matchAll(/process\.env\.([A-Z0-9_]+)/g)) read.add(m[1]);
   });
-  assert.deepEqual([...read].filter((key) => !listed.has(key) && !runtime.has(key)).sort(), []);
+  assert.deepEqual([...read].filter((key) => !listed.has(key) && !secrets.has(key) && !runtime.has(key)).sort(), []);
+});
+
+test("a Secret Manager secret is never also a functions/.env.example line, and every one is read", () => {
+  const dir = path.join(__dirname, "../../functions");
+  const example = fs.readFileSync(path.join(dir, ".env.example"), "utf8");
+  const code = fs.readdirSync(dir).filter((name) => name.endsWith(".js") && name !== "secrets.js").map((name) => fs.readFileSync(path.join(dir, name), "utf8")).join("\n");
+  const all = require("../../functions/secrets").ALL;
+  assert.deepEqual(all.filter((name) => new RegExp("^" + name + "=", "m").test(example)), [], "Firebase refuses to deploy a secret that is also an env var");
+  assert.deepEqual(all.filter((name) => !new RegExp("\\." + name + "\\b").test(code)), [], "bound but never read");
+});
+
+test("every function binds its secrets through functions/secrets.js", () => {
+  const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  const secrets = require("../../functions/secrets");
+  const used = Array.from(index.matchAll(/secrets: ([^,}\n]+)/g)).map((m) => m[1].trim());
+  assert.ok(used.length >= 15);
+  for (const ref of used) {
+    const key = (ref.match(/^SECRETS\.(\w+)$/) || [])[1];
+    assert.ok(key && Array.isArray(secrets[key]), "bind " + ref + " through a list in functions/secrets.js");
+  }
 });
 
 test("the intake takes the current terms and the ones just before, and records which", () => {
@@ -1974,6 +1995,41 @@ test("the optional don't-publish box rides from the form to the stored record an
   assert.equal(require("../../functions/url-review-failures").failureRecord(Object.assign({ kind: "failed", runId: "a1" }, value)).intake.unlisted, true);
 });
 
+test("a finished report is stored without the shapes Firestore refuses, and the rest is kept as it was", () => {
+  // Firestore counts the report's own map as level 1 and refuses a 21st level of maps and arrays.
+  const levels = (value) => Array.isArray(value) || (value && typeof value === "object" && !(value instanceof Date))
+    ? 1 + Math.max(0, ...Object.values(value).map(levels)) : 0;
+  const tower = (n) => (n ? { k: tower(n - 1) } : "leaf");
+  const at = new Date("2026-10-27T07:33:01Z");
+  const report = {
+    id: "r1",
+    at,
+    browser: { scripts: { "": 120, "cdn.example.com": 40 }, globals: { __NEXT_DATA__: { page: "/" } } },
+    points: [[1, 2], [3, 4]],
+    deep: tower(25),
+    fine: { list: [1, "two", { three: 3 }], nothing: null, at }
+  };
+  const fixed = [];
+  const kept = core.storable(report, fixed);
+  assert.deepEqual(kept.browser.scripts, { "(empty)": 120, "cdn.example.com": 40 });
+  assert.deepEqual(kept.browser.globals, { _NEXT_DATA__: { page: "/" } });
+  assert.deepEqual(kept.points, [{ items: [1, 2] }, { items: [3, 4] }]);
+  assert.ok(levels(kept) <= 20);
+  assert.equal(typeof kept.deep.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k, "string");
+  assert.deepEqual(kept.fine, report.fine);
+  assert.equal(kept.at, at);
+  assert.equal(report.browser.scripts[""], 120);
+  assert.deepEqual(fixed.slice(0, 3), [
+    "report.browser.scripts.\"\" (renamed \"(empty)\")",
+    "report.browser.globals.\"__NEXT_DATA__\" (renamed \"_NEXT_DATA__\")",
+    "report.points.0 (an array in an array, kept as { items })"
+  ]);
+  assert.match(fixed[fixed.length - 1], /^report\.deep(\.k){19} \(past 20 levels, kept as JSON\)$/);
+  const record = core.intakeRecord(core.validateIntake({ termsAccepted: true, termsVersion: core.TERMS_VERSION, name: "Ana Ruiz", email: "ana@example.org", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://example.org/" }).value, report, {});
+  assert.deepEqual(record.report.points, kept.points);
+  assert.deepEqual(core.storable(record.report, []), record.report);
+});
+
 const failures = require("../../functions/url-review-failures");
 // The failure tests are written against the fixes up to #365; a later fix to a cause they use would re-run their example failures.
 failures.FIXES.splice(failures.FIXES.findIndex((fix) => fix.ref === "#365") + 1);
@@ -1996,6 +2052,8 @@ test("failure causes are classed from the review's own messages", () => {
     ["certificate has expired", "tls"],
     ["connect ECONNREFUSED 1.2.3.4:443", "connection"],
     ["Value for argument \"data\" is not a valid Firestore document. Cannot use \"undefined\" as a Firestore value (found in field \"report.cases.`28`.path\").", "save"],
+    ["3 INVALID_ARGUMENT: Property report contains an invalid nested entity.", "save"],
+    ["3 INVALID_ARGUMENT: field name '__NEXT_DATA__' is reserved.", "save"],
     ["Cannot read properties of undefined (reading 'x')", "unknown"]
   ];
   cases.forEach(([message, id]) => assert.equal(failures.causeOf(message).id, id, message));

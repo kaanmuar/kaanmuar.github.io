@@ -1,0 +1,626 @@
+{
+ "01-wikipedia": {
+  "lang": "en",
+  "voice": "en-w",
+  "tiktok": "Wikipedia leaves the snippet to search. Write a description of about 150 characters for each key page, so you choose the pitch, not the crawler. #SEO #MetaDescription #OpenKnowledge #QA #techtok #QAlab",
+  "youtubeTitle": "Wikipedia leaves the snippet to search. #Shorts"
+ },
+ "02-mozilla": {
+  "lang": "es",
+  "voice": "es-w",
+  "tiktok": "Mozilla: 85 idiomas, y sin sitemap. Publica un sitemap.xml con las páginas que quieres que se encuentren e indícalo en robots.txt con una línea Sitemap:. #SEO #Sitemap #i18n #QA #techtok #QAlab",
+  "youtubeTitle": "Mozilla: 85 idiomas, y sin sitemap. #Shorts"
+ },
+ "03-mdn": {
+  "lang": "pt",
+  "voice": "pt-w",
+  "tiktok": "MDN Web Docs: 95. E nada de JSON-LD. Adicione um bloco Organization com name, url, logo e links sameAs. As respostas de IA usam isso para te nomear e descrever. #GEO #StructuredData #WebDev #QA #techtok #QAlab",
+  "youtubeTitle": "MDN Web Docs: 95. E nada de JSON-LD. #Shorts"
+ },
+ "04-w3c": {
+  "lang": "de",
+  "voice": "de-w",
+  "tiktok": "Die Startseiten des W3C teilen sich einen Titel. Übersetze Titel und Beschreibung zusammen mit der Seite. Jede Sprachversion sollte in ihrer Sprache sagen, was sie ist. #SEO #i18n #Multilingual #QA #techtok #QAlab",
+  "youtubeTitle": "Die Startseiten des W3C teilen sich einen Titel. #Shorts"
+ },
+ "05-unesco": {
+  "lang": "fr",
+  "voice": "fr-w",
+  "tiktok": "L'UNESCO a un llms.txt, mais pas de HSTS. Envoyez Strict-Transport-Security avec un max-age d'au moins un an, et faites du passage de http vers https une 301. #WebSecurity #HSTS #HTTPS #QA #techtok #QAlab",
+  "youtubeTitle": "L'UNESCO a un llms.txt, mais pas de HSTS. #Shorts"
+ },
+ "06-unicef": {
+  "lang": "it",
+  "voice": "it-w",
+  "tiktok": "Il filtro data di UNICEF non ha un'etichetta. Dai a ogni campo un <label> o un aria-label. Il placeholder è un suggerimento, non un nome, e sparisce appena scrivi. #Accessibility #A11y #Forms #QA #techtok #QAlab",
+  "youtubeTitle": "Il filtro data di UNICEF non ha un'etichetta. #Shorts"
+ },
+ "07-worldbank": {
+  "lang": "en",
+  "voice": "en-m",
+  "tiktok": "The World Bank: GEO 97. Start with Content-Security-Policy-Report-Only to see what would break, then enforce. default-src 'self' is a start. #WebSecurity #CSP #GEO #QA #techtok #QAlab",
+  "youtubeTitle": "The World Bank: GEO 97. #Shorts"
+ },
+ "08-icrc": {
+  "lang": "es",
+  "voice": "es-m",
+  "tiktok": "El CICR prueba una CSP. Ya puede aplicarla. Lee los informes unas semanas, corrige lo que señalen y luego cambia la cabecera a Content-Security-Policy. #WebSecurity #CSP #Humanitarian #QA #techtok #QAlab",
+  "youtubeTitle": "El CICR prueba una CSP. Ya puede aplicarla. #Shorts"
+ },
+ "09-msf": {
+  "lang": "pt",
+  "voice": "pt-m",
+  "tiktok": "MSF serve todas as páginas sem HSTS. Adicione Strict-Transport-Security: max-age=31536000; includeSubDomains. Depois, considere a lista de preload dos navegadores. #WebSecurity #HSTS #Humanitarian #QA #techtok #QAlab",
+  "youtubeTitle": "MSF serve todas as páginas sem HSTS. #Shorts"
+ },
+ "10-amnesty": {
+  "lang": "de",
+  "voice": "de-m",
+  "tiktok": "Amnestys robots.txt schickt Bingbot weg. Prüf robots.txt Zeile für Zeile. Wer einen Such-Crawler blockiert, verschwindet aus jedem Produkt, das auf dessen Index aufbaut. #GEO #SEO #AISearch #QA #techtok #QAlab",
+  "youtubeTitle": "Amnestys robots.txt schickt Bingbot weg. #Shorts"
+ },
+ "100-bucaramanga": {
+  "lang": "de",
+  "voice": "de-w",
+  "tiktok": "Bucaramangas Startseite hat kein Title-Tag. Gib jeder Seite einen eigenen <title>. Er ist Tab-Beschriftung, Überschrift im Suchergebnis und Text der Share-Card. #SEO #Titles #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "Bucaramangas Startseite hat kein Title-Tag. #Shorts"
+ },
+ "101-metrolinea": {
+  "lang": "fr",
+  "voice": "fr-w",
+  "tiktok": "Le viewport de Metrolínea désactive le zoom. Supprimez user-scalable=no et maximum-scale. Laissez les lecteurs zoomer, et corrigez la mise en page qui casse. #Accessibility #Zoom #Mobility #QA #techtok #QAlab",
+  "youtubeTitle": "Le viewport de Metrolínea désactive le zoom. #Shorts"
+ },
+ "102-pereira": {
+  "lang": "it",
+  "voice": "it-w",
+  "tiktok": "La feature policy di Pereira apre a ogni origine. Parti da camera=(), microphone=(), geolocation=(). Concedi le funzioni solo dove servono. #WebSecurity #PermissionsPolicy #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "La feature policy di Pereira apre a ogni origine. #Shorts"
+ },
+ "103-manizales": {
+  "lang": "en",
+  "voice": "en-m",
+  "tiktok": "Manizales' visitors wait 5.7 s to see it. Start with the server: cache the HTML. Then preload the hero image and defer scripts that aren't needed. #WebPerformance #CoreWebVitals #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "Manizales' visitors wait 5.7 s to see it. #Shorts"
+ },
+ "104-santamarta": {
+  "lang": "es",
+  "voice": "es-m",
+  "tiktok": "Santa Marta sigue con una etiqueta UA. Borra el snippet de UA y quédate con GA4. Una etiqueta viva inspira más confianza que dos medio muertas. #Analytics #GA4 #Tourism #QA #techtok #QAlab",
+  "youtubeTitle": "Santa Marta sigue con una etiqueta UA. #Shorts"
+ },
+ "11-guardian": {
+  "lang": "fr",
+  "voice": "fr-m",
+  "tiktok": "La une du Guardian n'a pas de h1. Donnez à chaque page un h1 qui la nomme, même masqué visuellement sur une page d'accueil. Beaucoup de gens naviguent par les titres. #Accessibility #A11y #Headings #QA #techtok #QAlab",
+  "youtubeTitle": "La une du Guardian n'a pas de h1. #Shorts"
+ },
+ "12-aljazeera": {
+  "lang": "it",
+  "voice": "it-m",
+  "tiktok": "Al Jazeera marca il testo per la voce, blocca l'IA. Decidi crawler per crawler. I bot di training e quelli di risposta sono user-agent distinti, quindi ognuno può avere la sua regola. #GEO #AISearch #News #QA #techtok #QAlab",
+  "youtubeTitle": "Al Jazeera marca il testo per la voce, blocca l'IA. #Shorts"
+ },
+ "13-dw": {
+  "lang": "en",
+  "voice": "en-w",
+  "tiktok": "DW blocks framing. It skips nosniff. Send X-Content-Type-Options: nosniff on every response. One header stops browsers running a file as the wrong type. #WebSecurity #HTTPHeaders #News #QA #techtok #QAlab",
+  "youtubeTitle": "DW blocks framing. It skips nosniff. #Shorts"
+ },
+ "14-elpais": {
+  "lang": "es",
+  "voice": "es-w",
+  "tiktok": "El País no envía cabeceras de seguridad. Empieza con cuatro cabeceras: Strict-Transport-Security, X-Content-Type-Options, frame-ancestors y una CSP en modo report-only. #WebSecurity #HTTPHeaders #News #QA #techtok #QAlab",
+  "youtubeTitle": "El País no envía cabeceras de seguridad. #Shorts"
+ },
+ "15-lemonde": {
+  "lang": "pt",
+  "voice": "pt-w",
+  "tiktok": "O Le Monde tem uma CSP que libera qualquer https. Liste os hosts de script que você realmente usa e tire o 'unsafe-eval'. Uma política que libera tudo não bloqueia nada. #WebSecurity #CSP #News #QA #techtok #QAlab",
+  "youtubeTitle": "O Le Monde tem uma CSP que libera qualquer https. #Shorts"
+ },
+ "16-mit": {
+  "lang": "de",
+  "voice": "de-w",
+  "tiktok": "Die Canonical-Tags des MIT zeigen aufs CMS. Canonical-URLs müssen öffentlich, erreichbar und die Seite selbst sein. Prüf sie nach jedem CMS- oder Domainwechsel. #SEO #Canonical #HigherEd #QA #techtok #QAlab",
+  "youtubeTitle": "Die Canonical-Tags des MIT zeigen aufs CMS. #Shorts"
+ },
+ "17-stanford": {
+  "lang": "fr",
+  "voice": "fr-w",
+  "tiktok": "La canonique de Stanford mène à une 404. Testez chaque URL canonique dans votre suite de tests. Elle doit répondre 200 et se déclarer elle-même canonique. #SEO #Canonical #HigherEd #QA #techtok #QAlab",
+  "youtubeTitle": "La canonique de Stanford mène à une 404. #Shorts"
+ },
+ "18-harvard": {
+  "lang": "it",
+  "voice": "it-w",
+  "tiktok": "Qualsiasi sito può mettere in un frame le pagine di Harvard. Invia Content-Security-Policy: frame-ancestors 'self'. Blocca il clickjacking e sostituisce X-Frame-Options. #WebSecurity #Clickjacking #HigherEd #QA #techtok #QAlab",
+  "youtubeTitle": "Qualsiasi sito può mettere in un frame le pagine di Harvard. #Shorts"
+ },
+ "19-nodejs": {
+  "lang": "en",
+  "voice": "en-m",
+  "tiktok": "Node.js has llms.txt. Its pages share a pitch. Write a description per page that says what that page answers. A shared one tells search nothing new. #SEO #MetaDescription #OpenSource #QA #techtok #QAlab",
+  "youtubeTitle": "Node.js has llms.txt. Its pages share a pitch. #Shorts"
+ },
+ "20-rust": {
+  "lang": "es",
+  "voice": "es-m",
+  "tiktok": "Las páginas de Rust no indican canonical. Añade un canonical autorreferente en cada página. Le dice al buscador qué dirección posicionar cuando varias llevan al mismo contenido. #SEO #Canonical #OpenSource #QA #techtok #QAlab",
+  "youtubeTitle": "Las páginas de Rust no indican canonical. #Shorts"
+ },
+ "21-kubernetes": {
+  "lang": "pt",
+  "voice": "pt-m",
+  "tiktok": "13 páginas do Kubernetes com o mesmo título. Coloque o propósito da página no título, no idioma dela. Cada página inicial localizada precisa se sustentar sozinha na busca. #SEO #i18n #CloudNative #QA #techtok #QAlab",
+  "youtubeTitle": "13 páginas do Kubernetes com o mesmo título. #Shorts"
+ },
+ "22-apache": {
+  "lang": "de",
+  "voice": "de-m",
+  "tiktok": "Apache.org läuft ohne Descriptions. Gib jeder Seite eine Description mit etwa 150 Zeichen. Suche und KI-Antworten zitieren sie, wenn sie dich vorstellen. #SEO #MetaDescription #OpenSource #QA #techtok #QAlab",
+  "youtubeTitle": "Apache.org läuft ohne Descriptions. #Shorts"
+ },
+ "23-linuxfoundation": {
+  "lang": "fr",
+  "voice": "fr-m",
+  "tiktok": "La Linux Foundation n'indique jamais de langue. Ajoutez lang=\"en\" à la balise html du template du site. Un seul attribut corrige toutes les pages d'un coup. #Accessibility #A11y #i18n #QA #techtok #QAlab",
+  "youtubeTitle": "La Linux Foundation n'indique jamais de langue. #Shorts"
+ },
+ "24-react": {
+  "lang": "it",
+  "voice": "it-m",
+  "tiktok": "Le docs di React non hanno descrizione. Scrivi una descrizione di una riga per pagina: cosa insegna e a chi. È nelle pagine di documentazione che rende di più. #SEO #MetaDescription #Docs #QA #techtok #QAlab",
+  "youtubeTitle": "Le docs di React non hanno descrizione. #Shorts"
+ },
+ "25-githubdocs": {
+  "lang": "en",
+  "voice": "en-w",
+  "tiktok": "GitHub Docs sets no canonical link. Add a self-referencing canonical to every docs page. Versioned and translated docs need it most. #SEO #Canonical #Docs #QA #techtok #QAlab",
+  "youtubeTitle": "GitHub Docs sets no canonical link. #Shorts"
+ },
+ "26-stripedocs": {
+  "lang": "es",
+  "voice": "es-w",
+  "tiktok": "Stripe Docs se salta el landmark main. Envuelve el contenido principal en un único elemento <main>. Los lectores de pantalla lo muestran como un landmark al que puedes saltar. #Accessibility #A11y #Docs #QA #techtok #QAlab",
+  "youtubeTitle": "Stripe Docs se salta el landmark main. #Shorts"
+ },
+ "27-cloudflare": {
+  "lang": "pt",
+  "voice": "pt-w",
+  "tiktok": "A CSP da Cloudflare pula 5 de 20 páginas. Defina os headers de segurança uma vez só, na edge ou no servidor, e não por template de página. Atacantes procuram a página mais fraca. #WebSecurity #CSP #HTTPHeaders #QA #techtok #QAlab",
+  "youtubeTitle": "A CSP da Cloudflare pula 5 de 20 páginas. #Shorts"
+ },
+ "28-webdev": {
+  "lang": "de",
+  "voice": "de-w",
+  "tiktok": "Die Startseite von web.dev hat eine leere Headline. Validiere strukturierte Daten in der CI. Ein Eintrag mit leeren Pflichtfeldern ist Rauschen, das die Suche ignorieren kann. #StructuredData #SEO #WebDev #QA #techtok #QAlab",
+  "youtubeTitle": "Die Startseite von web.dev hat eine leere Headline. #Shorts"
+ },
+ "29-louvre": {
+  "lang": "fr",
+  "voice": "fr-w",
+  "tiktok": "Trois pages du Louvre, un seul titre. Donnez à chaque page un titre unique qui commence par son sujet. Onglets, favoris et résultats de recherche l'affichent tous. #SEO #Titles #Museums #QA #techtok #QAlab",
+  "youtubeTitle": "Trois pages du Louvre, un seul titre. #Shorts"
+ },
+ "30-rijksmuseum": {
+  "lang": "it",
+  "voice": "it-w",
+  "tiktok": "L'HSTS del Rijksmuseum dura 30 giorni. Porta il max-age di HSTS ad almeno un anno, meglio due, e rendi permanente il redirect da http con un 301. #WebSecurity #HSTS #Museums #QA #techtok #QAlab",
+  "youtubeTitle": "L'HSTS del Rijksmuseum dura 30 giorni. #Shorts"
+ },
+ "31-lonelyplanet": {
+  "lang": "en",
+  "voice": "en-m",
+  "tiktok": "Lonely Planet's home is 1.8 MB of HTML. Move bulky inline data out of the HTML and load it when needed. Smaller documents parse and paint sooner. #WebPerformance #PageWeight #Travel #QA #techtok #QAlab",
+  "youtubeTitle": "Lonely Planet's home is 1.8 MB of HTML. #Shorts"
+ },
+ "32-ikea": {
+  "lang": "es",
+  "voice": "es-m",
+  "tiktok": "La home de IKEA pesa 1.9 MB de HTML. Mide el peso del HTML en CI con un presupuesto. El estado inline y el marcado repetido suelen ser los culpables. #WebPerformance #PageWeight #Ecommerce #QA #techtok #QAlab",
+  "youtubeTitle": "La home de IKEA pesa 1.9 MB de HTML. #Shorts"
+ },
+ "33-gutenberg": {
+  "lang": "pt",
+  "voice": "pt-m",
+  "tiktok": "75.000 livros grátis, nenhum markup Book. Adicione JSON-LD Book a cada página de título: name, author, inLanguage e url. Respostas de IA citam o que conseguem interpretar. #StructuredData #GEO #OpenKnowledge #QA #techtok #QAlab",
+  "youtubeTitle": "75.000 livros grátis, nenhum markup Book. #Shorts"
+ },
+ "34-creativecommons": {
+  "lang": "de",
+  "voice": "de-m",
+  "tiktok": "Creative Commons leitet per 302 auf https um. Nutz ein 301 von http auf https und ergänze Strict-Transport-Security, damit Browser http beim nächsten Mal überspringen. #WebSecurity #HTTPS #HSTS #QA #techtok #QAlab",
+  "youtubeTitle": "Creative Commons leitet per 302 auf https um. #Shorts"
+ },
+ "35-eff": {
+  "lang": "fr",
+  "voice": "fr-m",
+  "tiktok": "Les pages de l'EFF n'envoient pas de HSTS. Ajoutez Strict-Transport-Security avec un long max-age. Il dit aux navigateurs d'utiliser https avant même que la requête ne parte. #WebSecurity #HSTS #DigitalRights #QA #techtok #QAlab",
+  "youtubeTitle": "Les pages de l'EFF n'envoient pas de HSTS. #Shorts"
+ },
+ "36-wikimedia": {
+  "lang": "it",
+  "voice": "it-m",
+  "tiktok": "La home di Wikimedia non ha un h1. Un h1 per pagina, che dica cos'è la pagina. Chi usa uno screen reader spesso salta lì per primo. #Accessibility #A11y #Headings #QA #techtok #QAlab",
+  "youtubeTitle": "La home di Wikimedia non ha un h1. #Shorts"
+ },
+ "37-fao": {
+  "lang": "en",
+  "voice": "en-w",
+  "tiktok": "FAO's HTML is fast. Visitors still wait. Find your Largest Contentful Paint element, load it early, give it a size, and never lazy-load it. #WebPerformance #CoreWebVitals #LCP #QA #techtok #QAlab",
+  "youtubeTitle": "FAO's HTML is fast. Visitors still wait. #Shorts"
+ },
+ "38-wfp": {
+  "lang": "es",
+  "voice": "es-w",
+  "tiktok": "El viewport del WFP desactiva el zoom. Quita user-scalable=no y maximum-scale de la etiqueta viewport. Deja que la gente haga zoom. #Accessibility #A11y #MobileUX #QA #techtok #QAlab",
+  "youtubeTitle": "El viewport del WFP desactiva el zoom. #Shorts"
+ },
+ "39-esa": {
+  "lang": "pt",
+  "voice": "pt-w",
+  "tiktok": "A busca da ESA não tem nome. Adicione um label visível ou aria-label ao campo de busca. Leitores de tela anunciam o nome, não a dica. #Accessibility #A11y #Forms #QA #techtok #QAlab",
+  "youtubeTitle": "A busca da ESA não tem nome. #Shorts"
+ },
+ "40-cern": {
+  "lang": "de",
+  "voice": "de-w",
+  "tiktok": "Die Seiten des CERN haben keine Description. Fang mit der Startseite und deinen zehn meistbesuchten Seiten an: je ein Satz dazu, was Leser dort finden. #SEO #MetaDescription #Science #QA #techtok #QAlab",
+  "youtubeTitle": "Die Seiten des CERN haben keine Description. #Shorts"
+ },
+ "41-natgeo": {
+  "lang": "fr",
+  "voice": "fr-w",
+  "tiktok": "NatGeo pose des cookies sans Secure. Marquez chaque cookie Secure et envoyez Strict-Transport-Security. Un identifiant visiteur ne doit jamais circuler en http clair. #WebSecurity #Cookies #Privacy #QA #techtok #QAlab",
+  "youtubeTitle": "NatGeo pose des cookies sans Secure. #Shorts"
+ },
+ "42-coursera": {
+  "lang": "it",
+  "voice": "it-w",
+  "tiktok": "I tap su Coursera ci mettono 565 ms a rispondere. Spezza i task JavaScript lunghi in parti più piccole e cedi il controllo al browser, così i tap ricevono una risposta rapida. #WebPerformance #INP #CoreWebVitals #QA #techtok #QAlab",
+  "youtubeTitle": "I tap su Coursera ci mettono 565 ms a rispondere. #Shorts"
+ },
+ "43-php": {
+  "lang": "en",
+  "voice": "en-m",
+  "tiktok": "PHP's sitemap lists http://php.net. Generate the sitemap from your canonical URLs: same scheme, same host. Every redirect in it wastes crawl. #SEO #Sitemap #OpenSource #QA #techtok #QAlab",
+  "youtubeTitle": "PHP's sitemap lists http://php.net. #Shorts"
+ },
+ "44-gnu": {
+  "lang": "es",
+  "voice": "es-m",
+  "tiktok": "GNU.org responde al http plano con un 200. Redirige toda petición http a https con un 301. HSTS solo ayuda cuando el navegador ya ha visto https una vez. #WebSecurity #HTTPS #FreeSoftware #QA #techtok #QAlab",
+  "youtubeTitle": "GNU.org responde al http plano con un 200. #Shorts"
+ },
+ "45-debian": {
+  "lang": "pt",
+  "voice": "pt-m",
+  "tiktok": "O campo de busca do Debian não tem nome. Adicione <label for> ou aria-label=\"Search\" ao campo. Um atributo já o torna utilizável por voz. #Accessibility #A11y #Forms #QA #techtok #QAlab",
+  "youtubeTitle": "O campo de busca do Debian não tem nome. #Shorts"
+ },
+ "46-ubuntu": {
+  "lang": "de",
+  "voice": "de-m",
+  "tiktok": "Ubuntu spricht Markdown und verrät sein nginx. Schalte Versionsangaben ab (server_tokens off in nginx). Exakte Versionen machen es leicht, bekannte Lücken zuzuordnen. #WebSecurity #GEO #OpenSource #QA #techtok #QAlab",
+  "youtubeTitle": "Ubuntu spricht Markdown und verrät sein nginx. #Shorts"
+ },
+ "47-paho": {
+  "lang": "fr",
+  "voice": "fr-m",
+  "tiktok": "PAHO n'a pas de JSON-LD Organization. Ajoutez un JSON-LD Organization avec name, logo, url et sameAs. Il aide les réponses IA à citer la bonne agence. #GEO #StructuredData #PublicHealth #QA #techtok #QAlab",
+  "youtubeTitle": "PAHO n'a pas de JSON-LD Organization. #Shorts"
+ },
+ "48-dian": {
+  "lang": "it",
+  "voice": "it-m",
+  "tiktok": "La home della DIAN dice di essere in inglese. Imposta lang=\"es\" sul tag <html> di ogni pagina. Screen reader, traduttori e motori di ricerca lo leggono tutti. #Accessibility #Lang #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "La home della DIAN dice di essere in inglese. #Shorts"
+ },
+ "49-mineducacion": {
+  "lang": "en",
+  "voice": "en-w",
+  "tiktok": "MinEducación's sitemap lists the old address. Build the sitemap from canonical URLs: https, the www host you serve. Redirecting entries waste crawl. #SEO #Sitemap #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "MinEducación's sitemap lists the old address. #Shorts"
+ },
+ "50-minsalud": {
+  "lang": "es",
+  "voice": "es-w",
+  "tiktok": "La home de MinSalud enlaza a 404. Revisa los enlaces de tu página de inicio cada semana. Es la página por la que empieza casi todo el mundo. #SEO #BrokenLinks #PublicHealth #QA #techtok #QAlab",
+  "youtubeTitle": "La home de MinSalud enlaza a 404. #Shorts"
+ },
+ "51-mintic": {
+  "lang": "pt",
+  "voice": "pt-w",
+  "tiktok": "O analytics do MinTIC parou há anos. Confira se suas tags alimentam uma propriedade ativa. Troque o ID UA- por um ID G- do GA4, ou remova a tag morta. #Analytics #GA4 #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "O analytics do MinTIC parou há anos. #Shorts"
+ },
+ "52-cancilleria": {
+  "lang": "de",
+  "voice": "de-w",
+  "tiktok": "Cancillería sendet an zwei GA4-Properties. Bleib bei einer GA4-Property pro Website. Wenn zwei Teams die Daten brauchen, teil den Zugriff, statt ein zweites Tag einzubauen. #Analytics #GA4 #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "Cancillería sendet an zwei GA4-Properties. #Shorts"
+ },
+ "53-dane": {
+  "lang": "fr",
+  "voice": "fr-w",
+  "tiktok": "Le viewport du DANE bloque le zoom à 1x. Retirez maximum-scale du viewport. width=device-width, initial-scale=1 suffit à la plupart des sites. #Accessibility #Zoom #OpenData #QA #techtok #QAlab",
+  "youtubeTitle": "Le viewport du DANE bloque le zoom à 1x. #Shorts"
+ },
+ "54-procuraduria": {
+  "lang": "it",
+  "voice": "it-w",
+  "tiktok": "Il canonical della Procuraduría ha un host che non risolve. I canonical devono usare il tuo host pubblico. Controllali dopo le migrazioni, quando si infilano hostname interni. #SEO #Canonical #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "Il canonical della Procuraduría ha un host che non risolve. #Shorts"
+ },
+ "55-icetex": {
+  "lang": "en",
+  "voice": "en-m",
+  "tiktok": "ICETEX's inner pages all point to the home. Each page's canonical should be its own URL. A template that defaults to the home URL hides every inner page. #SEO #Canonical #Education #QA #techtok #QAlab",
+  "youtubeTitle": "ICETEX's inner pages all point to the home. #Shorts"
+ },
+ "56-icfes": {
+  "lang": "es",
+  "voice": "es-m",
+  "tiktok": "El HTML de ICFES tarda 2 s en arrancar. Cachea el HTML de la home en una CDN o en el servidor. El tiempo hasta el primer byte es el suelo de todo lo demás. #WebPerformance #TTFB #Education #QA #techtok #QAlab",
+  "youtubeTitle": "El HTML de ICFES tarda 2 s en arrancar. #Shorts"
+ },
+ "57-colpensiones": {
+  "lang": "pt",
+  "voice": "pt-m",
+  "tiktok": "Colpensiones responde http com 503. Mantenha a porta 80 ativa só para enviar um 301 para https. Links antigos e endereços digitados ainda chegam por ali. #WebSecurity #HTTPS #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "Colpensiones responde http com 503. #Shorts"
+ },
+ "58-migracion": {
+  "lang": "de",
+  "voice": "de-m",
+  "tiktok": "Migración Colombia hat keine Sitemap. Veröffentliche robots.txt mit einer Sitemap:-Zeile und generier die Sitemap aus deinem CMS, damit sie aktuell bleibt. #SEO #Sitemap #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "Migración Colombia hat keine Sitemap. #Shorts"
+ },
+ "59-satena": {
+  "lang": "fr",
+  "voice": "fr-m",
+  "tiktok": "Les pages de SATENA n'ont pas de canonical. Ajoutez à chaque page un canonical qui pointe vers elle-même, plus des liens hreflang entre les versions linguistiques. #SEO #Canonical #Travel #QA #techtok #QAlab",
+  "youtubeTitle": "Les pages de SATENA n'ont pas de canonical. #Shorts"
+ },
+ "60-davivienda": {
+  "lang": "it",
+  "voice": "it-m",
+  "tiktok": "Il robots.txt di Davivienda è un modello. L'LCP no. Trova l'elemento Largest Contentful Paint della tua home e servilo per primo: preload, dimensioni, compressione. #WebPerformance #CoreWebVitals #Banking #QA #techtok #QAlab",
+  "youtubeTitle": "Il robots.txt di Davivienda è un modello. L'LCP no. #Shorts"
+ },
+ "61-movistar": {
+  "lang": "en",
+  "voice": "en-w",
+  "tiktok": "Movistar's headers have a value mix-up. Send X-Content-Type-Options: nosniff, and X-Frame-Options: SAMEORIGIN. Recheck headers after config changes. #WebSecurity #Headers #Telecom #QA #techtok #QAlab",
+  "youtubeTitle": "Movistar's headers have a value mix-up. #Shorts"
+ },
+ "62-claro": {
+  "lang": "es",
+  "voice": "es-w",
+  "tiktok": "La redirección de Claro cae a http sin cifrar. Escribe las redirecciones con el destino https:// completo. Un Location en http añade un salto y una petición sin cifrar. #WebSecurity #Redirects #Telecom #QA #techtok #QAlab",
+  "youtubeTitle": "La redirección de Claro cae a http sin cifrar. #Shorts"
+ },
+ "63-exito": {
+  "lang": "pt",
+  "voice": "pt-w",
+  "tiktok": "O título do Éxito diz exito.com duas vezes. Escreva um título de home que diga quem você é e o que oferece, em menos de 60 caracteres. #SEO #Titles #Ecommerce #QA #techtok #QAlab",
+  "youtubeTitle": "O título do Éxito diz exito.com duas vezes. #Shorts"
+ },
+ "64-falabella": {
+  "lang": "de",
+  "voice": "de-w",
+  "tiktok": "Die Startseite von Falabella nennt keine Sprache. Ergänz lang=\"es-CO\" im <html>-Tag deines Basis-Templates. Ein Attribut repariert jede Seite. #Accessibility #Lang #Ecommerce #QA #techtok #QAlab",
+  "youtubeTitle": "Die Startseite von Falabella nennt keine Sprache. #Shorts"
+ },
+ "65-eltiempo": {
+  "lang": "fr",
+  "voice": "fr-w",
+  "tiktok": "El Tiempo charge encore une balise UA retraitée. Cherchez les ID UA- dans vos templates et supprimez-les. Ils ajoutent une requête et ne collectent rien. #Analytics #GA4 #News #QA #techtok #QAlab",
+  "youtubeTitle": "El Tiempo charge encore une balise UA retraitée. #Shorts"
+ },
+ "66-semana": {
+  "lang": "it",
+  "voice": "it-w",
+  "tiktok": "La descrizione di Semana ripete il titolo. Scrivi la descrizione della home come un pitch di una riga: cosa trovano oggi i lettori, in 150 caratteri o meno. #SEO #MetaDescription #News #QA #techtok #QAlab",
+  "youtubeTitle": "La descrizione di Semana ripete il titolo. #Shorts"
+ },
+ "67-elespectador": {
+  "lang": "en",
+  "voice": "en-m",
+  "tiktok": "El Espectador has no main landmark. Wrap each page's primary content in one <main>. Skip links and screen readers use it to find the story. #Accessibility #Landmarks #News #QA #techtok #QAlab",
+  "youtubeTitle": "El Espectador has no main landmark. #Shorts"
+ },
+ "68-uniandes": {
+  "lang": "es",
+  "voice": "es-m",
+  "tiktok": "Uniandes se salta un eslabón en su cadena TLS. Sirve la cadena completa: hoja más intermedios. Compruébalo con openssl s_client o SSL Labs tras cada renovación. #WebSecurity #TLS #Education #QA #techtok #QAlab",
+  "youtubeTitle": "Uniandes se salta un eslabón en su cadena TLS. #Shorts"
+ },
+ "69-sura": {
+  "lang": "pt",
+  "voice": "pt-m",
+  "tiktok": "A página inicial da SURA tem três h1. Dê a cada página um h1 que diga o tema dela. Use h2 e h3 para as seções abaixo. #Accessibility #Headings #Insurance #QA #techtok #QAlab",
+  "youtubeTitle": "A página inicial da SURA tem três h1. #Shorts"
+ },
+ "70-compensar": {
+  "lang": "de",
+  "voice": "de-m",
+  "tiktok": "Compensar lässt jede Azure-Site einbetten. Liste in frame-ancestors nur die exakten Origins, die dich einbetten. Cloud-Wildcards schließen Fremde mit ein. #WebSecurity #CSP #Health #QA #techtok #QAlab",
+  "youtubeTitle": "Compensar lässt jede Azure-Site einbetten. #Shorts"
+ },
+ "71-ecopetrol": {
+  "lang": "fr",
+  "voice": "fr-m",
+  "tiktok": "Ecopetrol configure encore un ID UA. Supprimez la ligne de config UA et gardez celle de GA4. Un audit trimestriel des tags repère ces restes. #Analytics #GA4 #Energy #QA #techtok #QAlab",
+  "youtubeTitle": "Ecopetrol configure encore un ID UA. #Shorts"
+ },
+ "72-rappi": {
+  "lang": "it",
+  "voice": "it-m",
+  "tiktok": "Il viewport di Rappi imposta maximum-scale=1. Usa width=device-width, initial-scale=1 e nient'altro. Sistema l'overflow del layout invece di bloccare lo zoom. #Accessibility #Zoom #Delivery #QA #techtok #QAlab",
+  "youtubeTitle": "Il viewport di Rappi imposta maximum-scale=1. #Shorts"
+ },
+ "73-rtvc": {
+  "lang": "en",
+  "voice": "en-w",
+  "tiktok": "RTVC's search box has no label. Add a <label> or aria-label to every input. Placeholders vanish while typing and aren't reliably announced. #Accessibility #Forms #PublicMedia #QA #techtok #QAlab",
+  "youtubeTitle": "RTVC's search box has no label. #Shorts"
+ },
+ "74-bibliotecanacional": {
+  "lang": "es",
+  "voice": "es-w",
+  "tiktok": "El canonical de la Biblioteca Nacional dice http. Pon como canonical la URL pública exacta: https, tu host real y sin puerto. Revisa el ajuste de URL pública de tu CMS. #SEO #Canonical #Libraries #QA #techtok #QAlab",
+  "youtubeTitle": "El canonical de la Biblioteca Nacional dice http. #Shorts"
+ },
+ "75-supersalud": {
+  "lang": "pt",
+  "voice": "pt-w",
+  "tiktok": "A Supersalud não carrega nenhuma tag de analytics. Meça alguma coisa, nem que seja com uma ferramenta sem cookies e focada em privacidade. Não dá para melhorar páginas que você não vê sendo usadas. #Analytics #Measurement #PublicHealth #QA #techtok #QAlab",
+  "youtubeTitle": "A Supersalud não carrega nenhuma tag de analytics. #Shorts"
+ },
+ "76-contraloria": {
+  "lang": "de",
+  "voice": "de-w",
+  "tiktok": "Die Sitemap der Contraloría liegt auf Port 8080. Trag die öffentliche https-URL der Sitemap in robots.txt ein und öffne sie im Browser, um zu prüfen, ob sie antwortet. #SEO #Sitemap #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "Die Sitemap der Contraloría liegt auf Port 8080. #Shorts"
+ },
+ "77-procolombia": {
+  "lang": "fr",
+  "voice": "fr-w",
+  "tiktok": "Le canonical de ProColombia renvoie vers l'accueil. Un canonical doit être l'URL finale, qui répond 200. Ne le faites jamais pointer vers une adresse qui redirige. #SEO #Canonical #Trade #QA #techtok #QAlab",
+  "youtubeTitle": "Le canonical de ProColombia renvoie vers l'accueil. #Shorts"
+ },
+ "78-nequi": {
+  "lang": "it",
+  "voice": "it-w",
+  "tiktok": "L'hreflang di Nequi punta alla home page. Le alternative hreflang devono puntare alla stessa pagina in ogni lingua, compresa la pagina stessa. #SEO #Hreflang #Fintech #QA #techtok #QAlab",
+  "youtubeTitle": "L'hreflang di Nequi punta alla home page. #Shorts"
+ },
+ "79-educacionbogota": {
+  "lang": "en",
+  "voice": "en-m",
+  "tiktok": "Educación Bogotá has no robots.txt. Serve a robots.txt with a Sitemap: line. Two lines of text point every crawler to your map. #SEO #RobotsTxt #Education #QA #techtok #QAlab",
+  "youtubeTitle": "Educación Bogotá has no robots.txt. #Shorts"
+ },
+ "80-movilidadbogota": {
+  "lang": "es",
+  "voice": "es-m",
+  "tiktok": "El sitemap de Movilidad Bogotá dice default. Configura la URL base del CMS con tu dirección https pública y vuelve a generar el sitemap. #SEO #Sitemap #Mobility #QA #techtok #QAlab",
+  "youtubeTitle": "El sitemap de Movilidad Bogotá dice default. #Shorts"
+ },
+ "81-saludcapital": {
+  "lang": "pt",
+  "voice": "pt-m",
+  "tiktok": "A home da Salud Capital tem três canonicals. Emita exatamente uma canonical por página. Procure cópias no template, no CMS e nos plugins de SEO. #SEO #Canonical #PublicHealth #QA #techtok #QAlab",
+  "youtubeTitle": "A home da Salud Capital tem três canonicals. #Shorts"
+ },
+ "82-metrobogota": {
+  "lang": "de",
+  "voice": "de-m",
+  "tiktok": "Das HSTS der Metro de Bogotá hält 17 Minuten. Setz HSTS max-age auf mindestens ein Jahr (31536000), sobald https überall funktioniert. #WebSecurity #HSTS #Mobility #QA #techtok #QAlab",
+  "youtubeTitle": "Das HSTS der Metro de Bogotá hält 17 Minuten. #Shorts"
+ },
+ "83-idrd": {
+  "lang": "fr",
+  "voice": "fr-m",
+  "tiktok": "La Referrer-Policy de l'IDRD est en unsafe-url. Utilisez strict-origin-when-cross-origin. Les autres sites ne voient alors que votre domaine, jamais les chemins ni les recherches. #WebSecurity #Privacy #Sports #QA #techtok #QAlab",
+  "youtubeTitle": "La Referrer-Policy de l'IDRD est en unsafe-url. #Shorts"
+ },
+ "84-idartes": {
+  "lang": "it",
+  "voice": "it-m",
+  "tiktok": "La root https di Idartes reindirizza su http. Fai usare https a ogni redirect e canonical. Cerca http:// nella config del server e nei template. #WebSecurity #HTTPS #Arts #QA #techtok #QAlab",
+  "youtubeTitle": "La root https di Idartes reindirizza su http. #Shorts"
+ },
+ "85-visitbogota": {
+  "lang": "en",
+  "voice": "en-w",
+  "tiktok": "Visit Bogotá responds slowly to taps. Find long tasks in the Performance panel and split them. Keep INP under 200 ms. #WebPerformance #INP #Tourism #QA #techtok #QAlab",
+  "youtubeTitle": "Visit Bogotá responds slowly to taps. #Shorts"
+ },
+ "86-biblored": {
+  "lang": "es",
+  "voice": "es-w",
+  "tiktok": "BibloRed responde en http con un 200. Redirige cada petición http a https con un 301. El HSTS solo cuenta cuando llega por https. #WebSecurity #HTTPS #Libraries #QA #techtok #QAlab",
+  "youtubeTitle": "BibloRed responde en http con un 200. #Shorts"
+ },
+ "87-catastro": {
+  "lang": "pt",
+  "voice": "pt-w",
+  "tiktok": "O Catastro Bogotá não tem descrições. Escreva uma descrição de uma frase para cada página importante: o que ela oferece e para quem, em menos de 155 caracteres. #SEO #MetaDescription #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "O Catastro Bogotá não tem descrições. #Shorts"
+ },
+ "88-jbb": {
+  "lang": "de",
+  "voice": "de-w",
+  "tiktok": "Der Botanische Garten lädt Logos über http. Lade jedes Asset über https oder als relative URL. Eine Suche nach src=\"http:// in deinem Theme findet sie. #WebSecurity #MixedContent #Nature #QA #techtok #QAlab",
+  "youtubeTitle": "Der Botanische Garten lädt Logos über http. #Shorts"
+ },
+ "89-planetario": {
+  "lang": "fr",
+  "voice": "fr-w",
+  "tiktok": "Le Planétarium oublie un maillon de sa chaîne TLS. Installez la chaîne complète fournie par votre autorité de certification, puis testez avec openssl s_client ou SSL Labs. #WebSecurity #TLS #Science #QA #techtok #QAlab",
+  "youtubeTitle": "Le Planétarium oublie un maillon de sa chaîne TLS. #Shorts"
+ },
+ "90-antioquia": {
+  "lang": "it",
+  "voice": "it-w",
+  "tiktok": "La home di Antioquia si intitola \"Inicio\". Metti nel titolo della home il nome dell'organizzazione, insieme a ciò per cui le persone arrivano. \"Home\" da solo spreca lo spazio. #SEO #Titles #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "La home di Antioquia si intitola \"Inicio\". #Shorts"
+ },
+ "91-medellin": {
+  "lang": "en",
+  "voice": "en-m",
+  "tiktok": "Medellín's portal sends no HSTS. Send HSTS with a one-year max-age once every subdomain serves https. #WebSecurity #HSTS #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "Medellín's portal sends no HSTS. #Shorts"
+ },
+ "92-metromedellin": {
+  "lang": "es",
+  "voice": "es-m",
+  "tiktok": "Metro de Medellín aún usa una etiqueta UA. Quita las llamadas UA de analytics.js. Si necesitas datos, envíalos a una propiedad de GA4 o a otra herramienta activa. #Analytics #GA4 #Mobility #QA #techtok #QAlab",
+  "youtubeTitle": "Metro de Medellín aún usa una etiqueta UA. #Shorts"
+ },
+ "93-epm": {
+  "lang": "pt",
+  "voice": "pt-m",
+  "tiktok": "O canonical da EPM termina em 404. Mapeie os caminhos do CMS para URLs públicas. Abra seu canonical no navegador: ele precisa responder 200. #SEO #Canonical #Utilities #QA #techtok #QAlab",
+  "youtubeTitle": "O canonical da EPM termina em 404. #Shorts"
+ },
+ "94-udea": {
+  "lang": "de",
+  "voice": "de-m",
+  "tiktok": "Die Seiten der UdeA sparen sich Security-Header. Starte mit HSTS, X-Content-Type-Options: nosniff und frame-ancestors 'self'. Dann setz deine CSP durch. #WebSecurity #Headers #Education #QA #techtok #QAlab",
+  "youtubeTitle": "Die Seiten der UdeA sparen sich Security-Header. #Shorts"
+ },
+ "95-eafit": {
+  "lang": "fr",
+  "voice": "fr-m",
+  "tiktok": "Les pages d'EAFIT n'ont pas de repère main. Enveloppez le contenu principal de chaque template dans un seul <main> pour les liens d'évitement. #Accessibility #Landmarks #Education #QA #techtok #QAlab",
+  "youtubeTitle": "Les pages d'EAFIT n'ont pas de repère main. #Shorts"
+ },
+ "96-cali": {
+  "lang": "it",
+  "voice": "it-m",
+  "tiktok": "Il robots.txt di Cali indica una sitemap che non c'è. Apri ogni riga Sitemap: del robots.txt dopo ogni rilascio. Un 404 lì significa che i crawler perdono la tua mappa. #SEO #Sitemap #GovTech #QA #techtok #QAlab",
+  "youtubeTitle": "Il robots.txt di Cali indica una sitemap che non c'è. #Shorts"
+ },
+ "97-metrocali": {
+  "lang": "en",
+  "voice": "en-w",
+  "tiktok": "Metro Cali's home describes an old notice. Write a fixed home description about your service. Don't let the CMS fill it from the latest post. #SEO #MetaDescription #Mobility #QA #techtok #QAlab",
+  "youtubeTitle": "Metro Cali's home describes an old notice. #Shorts"
+ },
+ "98-univalle": {
+  "lang": "es",
+  "voice": "es-w",
+  "tiktok": "El enlace en inglés de Univalle devuelve 404. Prueba el selector de idioma en cada versión. Suele ser el primer clic de quien te visita desde fuera. #SEO #BrokenLinks #Education #QA #techtok #QAlab",
+  "youtubeTitle": "El enlace en inglés de Univalle devuelve 404. #Shorts"
+ },
+ "99-transcaribe": {
+  "lang": "pt",
+  "voice": "pt-w",
+  "tiktok": "A Transcaribe bagunça o caminho do teclado. Use só tabindex=\"0\" ou \"-1\". Corrija a ordem de foco ordenando o HTML, não com números positivos. #Accessibility #Keyboard #Mobility #QA #techtok #QAlab",
+  "youtubeTitle": "A Transcaribe bagunça o caminho do teclado. #Shorts"
+ }
+}

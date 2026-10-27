@@ -413,7 +413,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                     pipeline: e.outreach.pipeline && e.outreach.pipeline.ok ? { queued: e.outreach.pipeline.queued, swept: e.outreach.pipeline.swept, reviews: e.outreach.pipeline.reviews, thisWeek: e.outreach.pipeline.thisWeek, withLiveReport: e.outreach.pipeline.withLiveReport, bySegment: e.outreach.pipeline.bySegment } : null,
                     instantly: e.outreach.instantly && e.outreach.instantly.ok ? { campaigns: e.outreach.instantly.status, sent: e.outreach.instantly.sent, rates: e.outreach.instantly.rates, replies: e.outreach.instantly.replies, interested: e.outreach.instantly.interested, meetings: e.outreach.instantly.meetings, warmup: (e.outreach.instantly.accounts || []).map((a) => a.score) } : null,
                     plan: e.outreach.plan && e.outreach.plan.ok !== false ? { day: e.outreach.plan.day, length: e.outreach.plan.length, phase: e.outreach.plan.phase, next: e.outreach.plan.next, weekly: e.outreach.plan.weekly, targets: e.outreach.plan.targets } : null,
-                    visits: C.outreachVisits(S.rows.events).total
+                    visits: C.outreachVisits(S.rows.events).total,
+                    links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10) } : null
                 } : null,
                 waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
             }
@@ -652,7 +653,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const R = S.external['social-runs'];
         const runs = (R && R.runs) || [];
         const state = (r) => (r.status && r.status !== 'completed' ? `<span class="jv-chip c-average">${esc(r.status)}</span>` : r.conclusion ? `<span class="jv-chip ${r.conclusion === 'success' ? 'c-fast' : 'c-slow'}">${esc(r.conclusion)}</span>` : '—');
-        const body = runs.length ? table([['Workflow', (r) => esc(r.name)], ['Last run', (r) => (r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(when(r.at))}</a>` : '—')], ['How', (r) => esc(r.event || '')], ['Result', state]], runs) : `<p class="jv-empty">${esc((R && R.error) || (R ? 'Set GITHUB_BUGS_TOKEN in functions/.env to see the runs.' : 'Reading the workflow runs…'))}</p>`;
+        const body = runs.length ? table([['Workflow', (r) => esc(r.name)], ['Last run', (r) => (r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(when(r.at))}</a>` : '—')], ['How', (r) => esc(r.event || '')], ['Result', state]], runs) : `<p class="jv-empty">${esc((R && R.error) || (R ? 'Set GITHUB_BUGS_TOKEN in Secret Manager to see the runs.' : 'Reading the workflow runs…'))}</p>`;
         return panel('hub-runs', 'Posting', body + `<div class="jv-actions"><button type="button" class="jv-btn" data-act="social-post-now"${S.pending['social-post-now'] ? ' disabled' : ''}>Post now</button></div>`,
             { note: 'Post now runs the Buffer queue (the batches a spent daily limit held back) and the Facebook Page queue instead of waiting for their nightly slots.' });
     }
@@ -804,7 +805,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             { label: 'Emails sent', value: mail ? mail.sent : '—' },
             { label: 'Reply rate', value: mail && mail.contacted ? mail.rates.reply + '%' : '—', alert: mail && mail.contacted >= 50 && mail.rates.reply < (weekly.replyPct || 0) },
             { label: 'Interested', value: mail ? mail.interested : '—' },
-            { label: 'Lowest warm-up', value: warm === null ? '—' : warm, alert: warm !== null && warm < th.outreachWarmup }
+            { label: 'Lowest warm-up', value: warm === null ? '—' : warm, alert: warm !== null && warm < th.outreachWarmup },
+            { label: 'Paid from qalabreview.com', value: ou.links && ou.links.ok ? ou.links.paid + ' · ' + ou.links.usd + ' USD' : '—', alert: !!(ou.links && ou.links.ok && !ou.links.live) }
         ]);
         const chip = (ok, text) => `<span class="jv-chip ${ok ? 'c-fast' : 'c-slow'}">${esc(text)}</span>`;
         const days = (n) => (n === 0 ? 'today' : n > 0 ? 'in ' + n + (n === 1 ? ' day' : ' days') : Math.abs(n) + ' days ago');
@@ -828,7 +830,18 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             + table([['Campaign', (c) => esc(c.name)], ['Sent', (c) => fmt(c.sent)], ['Opened', (c) => fmt(c.opened)], ['Replies', (c) => fmt(c.replies)], ['Bounced', (c) => fmt(c.bounced)]], mail.byCampaign, 'No campaign has sent yet.') : `<p class="jv-empty">${esc((ou.instantly && ou.instantly.error) || 'Not loaded.')}</p>`;
         const boxBody = mail ? table([['Mailbox', (a) => esc(a.email)], ['Status', (a) => chip(a.status === 'active', a.status)], ['Warm-up', (a) => chip(a.warmup === 'on', a.warmup)], ['Score', (a) => (a.score === null ? '—' : chip(a.score >= th.outreachWarmup, String(a.score)))], ['Daily limit', (a) => (a.dailyLimit ? fmt(a.dailyLimit) : '—')]], mail.accounts, 'No mailboxes connected.') : '';
         const dnsBody = ou.mail && ou.mail.checks ? `<ul class="jv-facts">${ou.mail.checks.map((c) => `<li>${chip(c.ok, c.name)} ${esc(c.detail)}</li>`).join('')}</ul>` : `<p class="jv-empty">${esc((ou.mail && ou.mail.error) || 'Not loaded.')}</p>`;
+        const links = ou.links && ou.links.ok ? ou.links : null;
+        const copyBtn = (url) => `<button class="jv-btn" type="button" data-copy-link="${esc(url)}">Copy</button>`;
+        const linksBody = links ? `<p>${chip(links.live, links.live ? 'Worker live' : 'Worker not live')} <a href="${esc(links.base)}" target="_blank" rel="noopener">${esc(links.base.replace(/^https:\/\//, ''))} →</a></p>`
+            + kpis([{ label: 'Visits', value: links.visits }, { label: 'Free reviews', value: links.reviews }, { label: 'Visit → review', value: links.reviewRate + '%' }, { label: 'Paid unlocks', value: links.paid }, { label: 'Review → paid', value: links.payRate + '%' }, { label: 'Revenue', value: links.usd + ' USD' }])
+            + bars(links.byCampaign, { color: COLORS.green, empty: 'No visits from qalabreview.com links in this range yet.' })
+            + table([['Prospect', (p) => `<a href="${esc(links.base + '/' + p.host)}" target="_blank" rel="noopener">${esc(p.host)}</a>`], ['Visits', (p) => fmt(p.visits)], ['Reviews', (p) => fmt(p.reviews)], ['Paid', (p) => fmt(p.paid)], ['USD', (p) => fmt(p.usd)], ['Last visit', (p) => esc(p.last ? p.last.slice(0, 10) : '—')]], links.prospects, 'No prospect has opened a link yet.')
+            + `<div class="jv-inline"><input id="jv-ql-host" type="text" placeholder="prospect.edu" aria-label="Prospect domain"><select id="jv-ql-lang" aria-label="Language">${['en', 'es', 'pt', 'de', 'fr', 'it'].map((l) => `<option>${l}</option>`).join('')}</select><button class="jv-btn" type="button" data-ql-build>Make and copy link</button> <a id="jv-ql-out" target="_blank" rel="noopener"></a></div>`
+            + table([['Channel', (c) => esc(c.label)], ['Link', (c) => `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url.replace(/^https:\/\//, ''))}</a>`], ['', (c) => copyBtn(c.url)]], links.channels)
+            + `<p class="jv-note">Funnel work: ${links.funnel.map((f) => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.label)}</a>`).join(' · ')}</p>`
+            : `<p class="jv-empty">${esc((ou.links && ou.links.error) || 'Not loaded.')}</p>`;
         return head + `<div class="jv-grid">${approvalsPanel()}${briefPanel('outreach')}
+            ${panel('outreach-links', 'qalabreview.com links: visits, reviews and revenue', linksBody, { wide: true, data: links ? links.prospects : [] })}
             ${panel('outreach-plan', '90-day plan', planBody)}
             ${panel('outreach-funnel', 'Weekly funnel against the plan', funnelBody, { data: funnel })}
             ${plan ? panel('outreach-targets', '90-day targets', targets, { data: plan.targets }) : ''}
@@ -2034,6 +2047,17 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.mkCmd) { mkCmdClick(t); return; }
         if (t.dataset.mkReply) { mkReply(t); return; }
         if (t.dataset.mkWeek) { S.mkWeek = t.dataset.mkWeek; render(); return; }
+        if (t.dataset.copyLink) { copy(t.dataset.copyLink, 'Link copied.'); return; }
+        if (t.dataset.qlBuild !== undefined) {
+            const host = String($('#jv-ql-host').value || '').trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0].replace(/^www\./, '');
+            if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host)) { toast('Type a domain like prospect.edu.'); return; }
+            const url = `https://qalabreview.com/${$('#jv-ql-lang').value}/${host}`;
+            const out = $('#jv-ql-out');
+            out.href = url;
+            out.textContent = url.replace(/^https:\/\//, '') + ' →';
+            copy(url, 'Link copied.');
+            return;
+        }
         if (t.dataset.noticeSend || t.dataset.noticeDrop) { decideNotice(t.dataset.noticeSend || t.dataset.noticeDrop, !!t.dataset.noticeSend); return; }
         if (t.dataset.go) { closeSheet(); go(t.dataset.go); return; }
         if (t.dataset.mail) { S.mail = t.dataset.mail; compute(); render(); return; }

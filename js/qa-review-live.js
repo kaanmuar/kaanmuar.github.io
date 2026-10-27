@@ -794,7 +794,7 @@
     viewer.setAttribute("aria-modal", "true");
     viewer.setAttribute("aria-labelledby", "lv-name");
     viewer.innerHTML = '<div class="lv-panel" tabindex="-1"><div class="lv-mark" aria-hidden="true"></div>' +
-      '<header class="lv-bar"><div class="lv-brand"><img src="assets/qa-review-mark.svg?v=20261013c" alt="" width="28" height="28"><span class="lv-brand-text"></span></div><div class="lv-actions"></div></header>' +
+      '<header class="lv-bar"><div class="lv-brand"><img src="assets/qa-review-mark.svg?v=20261027a" alt="" width="28" height="28"><span class="lv-brand-text"></span></div><div class="lv-actions"></div></header>' +
       '<div class="lv-body"></div></div>';
     document.body.appendChild(viewer);
     vbody = viewer.querySelector(".lv-body");

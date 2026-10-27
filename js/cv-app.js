@@ -36,6 +36,24 @@
     // Cypress's default Electron browser leaves navigator.webdriver false.
     const AUTOMATED = navigator.webdriver === true || /HeadlessChrome|Cypress|Electron\//.test(navigator.userAgent);
 
+    // Cloudflare's always-pass test key on local hosts; the live widget only accepts carlosandmunoz.com.
+    const TURNSTILE_SITEKEY = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? '1x00000000000000000000AA' : '0x4AAAAAAFoMHSvmRtt1Z3Lz';
+    let turnstileReady = null;
+    function turnstile() {
+        if (!turnstileReady) {
+            turnstileReady = new Promise((resolve, reject) => {
+                if (window.turnstile) return resolve(window.turnstile);
+                const script = document.createElement('script');
+                script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+                script.async = true;
+                script.onload = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error('Turnstile did not start')));
+                script.onerror = () => reject(new Error('Turnstile did not load'));
+                document.head.appendChild(script);
+            }).catch((error) => { turnstileReady = null; throw error; });
+        }
+        return turnstileReady;
+    }
+
     const PRINT_COPY = {
         en: {
             print_confidential: 'Confidential',
@@ -407,8 +425,7 @@
                 hasAutoOpenedRating: false,
                 // **NEW**: A set to hold the emails of blocked senders
                 blockList: new Set(),
-                captchaRequired: false,
-                captchaIds: { message: '', rating: '' },
+                formChecks: { ids: {}, langs: {}, tokens: {}, waiters: {} },
                 // --- NEW STATE ---
                 chartIndex: 0,
                 chartPaused: false,
@@ -1801,6 +1818,7 @@
                 const isNative = !machine && !!(window.SiteI18n ? SiteI18n.isNative(requested) : this.data.translations[requested]);
                 this.state.lang = requested;
                 this.state.dictLang = isNative ? requested : 'en';
+                if (Object.keys(this.state.formChecks.ids).length) this._renderFormChecks();
                 const translation = this._t();
                 if (!translation) return;
 
@@ -2548,10 +2566,6 @@
 
                 messageForm.addEventListener('input', () => this._updateMessageButtonState());
                 ratingForm.addEventListener('input', () => this._updateRatingButtonState());
-                const messageRefresh = document.getElementById('message-captcha-refresh');
-                const ratingRefresh = document.getElementById('rating-captcha-refresh');
-                if (messageRefresh) messageRefresh.addEventListener('click', () => this._loadFormChallenge('message'));
-                if (ratingRefresh) ratingRefresh.addEventListener('click', () => this._loadFormChallenge('rating'));
 
                 fileUpload.addEventListener('change', () => this._handleFileAttachment());
 
@@ -2565,6 +2579,7 @@
             _openContactWidget() {
                 this.DOMElements.contactWidget.classList.add('visible');
                 this.DOMElements.contactWidget.setAttribute('aria-hidden', 'false');
+                this._renderFormChecks();
             },
 
             _closeContactWidget() {
@@ -2664,7 +2679,7 @@
                 const isTopicValid = messageTopic.value.trim() !== '';
                 const isMessageValid = senderMessage.value.trim().length >= 10;
 
-                sendMessageBtn.disabled = !(isNameValid && isEmailValid && isTopicValid && isMessageValid && this._captchaReady('message'));
+                sendMessageBtn.disabled = !(isNameValid && isEmailValid && isTopicValid && isMessageValid);
             },
 
             _updateRatingButtonState() {
@@ -2673,105 +2688,107 @@
                 const isEmailValid = /^\S+@\S+\.\S+$/.test(raterEmail.value.trim());
                 const isRatingValid = parseInt(ratingValue.value, 10) > 0;
 
-                sendRatingBtn.disabled = !(isNameValid && isEmailValid && isRatingValid && this._captchaReady('rating'));
+                sendRatingBtn.disabled = !(isNameValid && isEmailValid && isRatingValid);
             },
 
-            _captchaReady(kind) {
-                if (!this.state.captchaRequired) return true;
-                const input = document.getElementById(kind + '-captcha-answer');
-                return !!input && input.value.trim().length === 5;
+            _turnstileLanguage() {
+                const lang = String(this.state.lang || 'en').slice(0, 2);
+                if (lang === 'pt') return 'pt-br';
+                return ['en', 'es', 'de', 'fr', 'it'].includes(lang) ? lang : 'auto';
             },
 
-            _watchFormCaptcha() {
-                if (AUTOMATED) return;
-                firebase().then((fb) => fb.onSnapshot(fb.doc(fb.db, 'abuse', 'forms'), (snap) => {
-                    const data = snap.exists() ? snap.data() : null;
-                    const until = data && data.until && typeof data.until.toMillis === 'function' ? data.until.toMillis() : 0;
-                    const on = !!(data && data.captcha === true && until > Date.now());
-                    if (on === this.state.captchaRequired) return;
-                    this.state.captchaRequired = on;
-                    this._syncFormCaptcha();
-                }, () => {
-                    this.state.captchaRequired = false;
-                })).catch(() => {
-                    this.state.captchaRequired = false;
+            async _renderFormChecks() {
+                let api;
+                try {
+                    api = await turnstile();
+                } catch (error) {
+                    console.warn('Bot check did not load', error && error.message);
+                    return;
+                }
+                const checks = this.state.formChecks;
+                const language = this._turnstileLanguage();
+                const theme = document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light';
+                ['message', 'rating'].forEach((kind) => {
+                    const box = document.getElementById(kind + '-turnstile');
+                    if (!box) return;
+                    if (checks.ids[kind] != null) {
+                        if (checks.langs[kind] === language) return;
+                        api.remove(checks.ids[kind]);
+                    }
+                    checks.tokens[kind] = '';
+                    checks.langs[kind] = language;
+                    checks.ids[kind] = api.render(box, {
+                        sitekey: TURNSTILE_SITEKEY,
+                        action: kind,
+                        language,
+                        theme,
+                        size: 'flexible',
+                        appearance: 'interaction-only',
+                        callback: (token) => this._setFormCheckToken(kind, token),
+                        'expired-callback': () => this._setFormCheckToken(kind, ''),
+                        'error-callback': () => this._setFormCheckToken(kind, ''),
+                        'before-interactive-callback': () => this._toggleFormCheckRoom(true),
+                        'after-interactive-callback': () => this._toggleFormCheckRoom(false)
+                    });
                 });
             },
 
-            _syncFormCaptcha() {
-                const on = !!this.state.captchaRequired;
+            _toggleFormCheckRoom(on) {
                 const widget = document.getElementById('contact-widget');
                 if (widget) widget.classList.toggle('captcha-on', on);
-                ['message', 'rating'].forEach((kind) => {
-                    const box = document.getElementById(kind + '-captcha');
-                    if (box) box.hidden = !on;
-                    if (on && box) box.scrollIntoView({ block: 'nearest' });
-                    if (on) this._loadFormChallenge(kind);
-                });
-                this._updateMessageButtonState();
-                this._updateRatingButtonState();
             },
 
-            async _loadFormChallenge(kind) {
-                const image = document.getElementById(kind + '-captcha-image');
-                const input = document.getElementById(kind + '-captcha-answer');
-                const error = document.getElementById(kind + '-captcha-error');
-                if (!image) return;
-                if (input) input.value = '';
-                if (error) error.style.display = 'none';
-                try {
-                    const fb = await firebase();
-                    const ask = fb.httpsCallable(fb.functions, 'getFormChallenge');
-                    const result = await ask({});
-                    if (!result.data || !result.data.required) {
-                        this.state.captchaRequired = false;
-                        const widget = document.getElementById('contact-widget');
-                        if (widget) widget.classList.remove('captcha-on');
-                        ['message', 'rating'].forEach((name) => {
-                            const box = document.getElementById(name + '-captcha');
-                            if (box) box.hidden = true;
-                        });
-                        this._updateMessageButtonState();
-                        this._updateRatingButtonState();
-                        return;
-                    }
-                    this.state.captchaIds[kind] = result.data.id;
-                    image.src = result.data.image;
-                } catch (error) {
-                    console.warn('Form check was not ready', error && error.code ? error.code : error);
+            _setFormCheckToken(kind, token) {
+                const checks = this.state.formChecks;
+                checks.tokens[kind] = token || '';
+                if (token && checks.waiters[kind]) {
+                    checks.waiters[kind](token);
+                    checks.waiters[kind] = null;
                 }
-                this._updateMessageButtonState();
-                this._updateRatingButtonState();
+            },
+
+            // A visitor who must click the check gets half a minute before Send reports it unfinished.
+            _formCheckToken(kind) {
+                const checks = this.state.formChecks;
+                if (checks.tokens[kind]) return Promise.resolve(checks.tokens[kind]);
+                this._renderFormChecks();
+                return new Promise((resolve) => {
+                    const timer = setTimeout(() => { checks.waiters[kind] = null; resolve(''); }, 30000);
+                    checks.waiters[kind] = (token) => { clearTimeout(timer); resolve(token); };
+                });
+            },
+
+            _resetFormCheck(kind) {
+                const checks = this.state.formChecks;
+                checks.tokens[kind] = '';
+                if (window.turnstile && checks.ids[kind] != null) window.turnstile.reset(checks.ids[kind]);
+            },
+
+            _formCheckFailed(kind) {
+                const err = document.getElementById(kind + '-captcha-error');
+                if (err) {
+                    err.textContent = this._t().captcha_error || 'The bot check did not pass. Wait for it to finish, then send again.';
+                    err.style.display = 'block';
+                }
+                const failed = new Error('captcha');
+                failed.captcha = true;
+                return failed;
             },
 
             async _storeForm(kind, payload) {
+                const err = document.getElementById(kind + '-captcha-error');
+                if (err) err.style.display = 'none';
+                const token = await this._formCheckToken(kind);
+                if (!token) throw this._formCheckFailed(kind);
                 const fb = await firebase();
-                if (!this.state.captchaRequired) {
-                    await fb.addDoc(fb.collection(fb.db, kind === 'message' ? 'messages' : 'ratings'), payload);
-                    return;
-                }
-                const answer = document.getElementById(kind + '-captcha-answer').value;
                 const send = fb.httpsCallable(fb.functions, 'submitGuardedForm');
                 try {
-                    await send(Object.assign({
-                        kind,
-                        challengeId: this.state.captchaIds[kind],
-                        answer
-                    }, payload, { createdAt: null }));
+                    await send(Object.assign({}, payload, { kind, token }));
                 } catch (error) {
-                    const code = String(error && error.code || '');
-                    if (code.indexOf('invalid-argument') !== -1) {
-                        const err = document.getElementById(kind + '-captcha-error');
-                        if (err) {
-                            err.textContent = this._t().captcha_error || 'Those characters did not match. Try the new set.';
-                            err.style.display = 'block';
-                        }
-                        await this._loadFormChallenge(kind);
-                        const mismatch = new Error('captcha');
-                        mismatch.captcha = true;
-                        throw mismatch;
-                    }
+                    if (String(error && error.code || '').indexOf('permission-denied') !== -1) throw this._formCheckFailed(kind);
                     throw error;
+                } finally {
+                    this._resetFormCheck(kind);
                 }
             },
 
@@ -2838,9 +2855,7 @@
                         email,
                         topic: messageTopic.value,
                         message: senderMessage.value.trim(),
-                        fileURL,
-                        status: 'inbox',
-                        createdAt: fb.serverTimestamp()
+                        fileURL
                     });
 
                     // This corrected line uses the available 'messageTopic' variable.
@@ -2877,15 +2892,11 @@
                 this._setButtonSendingState(sendRatingBtn, true);
 
                 try {
-                    const fb = await firebase();
                     await this._storeForm('rating', {
                         name: raterName.value.trim(),
                         email,
                         rating: parseInt(ratingValue.value, 10),
-                        comment: raterComment.value.trim(),
-                        status: 'pending',
-                        isAnonymous: false,
-                        createdAt: fb.serverTimestamp()
+                        comment: raterComment.value.trim()
                     });
 
                     this._trackEvent('submit_rating', 'Form Submission', `Rating: ${ratingValue.value} Stars`);
@@ -4201,7 +4212,6 @@
                 this._initScrollAnimations();
                 this._initUrlHighlighting();
                 this._initContactWidget();
-                this._watchFormCaptcha();
                 this._initScrollTrigger();
                 this._noteCvAccess();
 
