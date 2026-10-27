@@ -40,13 +40,13 @@ describe('Full catalog', () => {
         win.localStorage.setItem('theme', 'light');
       });
       cy.reload();
-      cy.readFile('js/catalog-checks.js').then((src) => {
-        cy.document().then((doc) => {
-          const script = doc.createElement('script');
-          script.textContent = src;
-          doc.head.appendChild(script);
-        });
+      // script-src refuses an inline script; the checks load from the site's own origin.
+      cy.document().then((doc) => {
+        const script = doc.createElement('script');
+        script.src = '/js/catalog-checks.js';
+        doc.head.appendChild(script);
       });
+      cy.window().its('CatalogChecks', { timeout: 20000 }).should('exist');
       cy.window({ timeout: 90000 }).then((win) => win.CatalogChecks[row.id]());
     });
   });
