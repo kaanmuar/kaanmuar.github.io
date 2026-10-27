@@ -1,0 +1,168 @@
+{
+  "batch": "brand-kit-2026-10",
+  "look": "Fusion (designs/3d)",
+  "files": [
+    {
+      "network": "X",
+      "where": "Profile photo",
+      "file": "media/brand-kit-2026-10/x/avatar-400.jpg",
+      "size": [
+        400,
+        400
+      ]
+    },
+    {
+      "network": "X",
+      "where": "Header photo; the profile photo covers the lower left",
+      "file": "media/brand-kit-2026-10/x/header-1500x500.jpg",
+      "size": [
+        1500,
+        500
+      ]
+    },
+    {
+      "network": "LinkedIn",
+      "where": "Page logo",
+      "file": "media/brand-kit-2026-10/linkedin/logo-400.png",
+      "size": [
+        400,
+        400
+      ]
+    },
+    {
+      "network": "LinkedIn",
+      "where": "Page cover (Edit page > Header); the logo covers the lower left",
+      "file": "media/brand-kit-2026-10/linkedin/cover-1128x191@2x.jpg",
+      "size": [
+        2256,
+        382
+      ]
+    },
+    {
+      "network": "YouTube",
+      "where": "Channel picture",
+      "file": "media/brand-kit-2026-10/youtube/avatar-800.jpg",
+      "size": [
+        800,
+        800
+      ]
+    },
+    {
+      "network": "YouTube",
+      "where": "Banner image; phones show only the outlined middle",
+      "file": "media/brand-kit-2026-10/youtube/banner-2560x1440.jpg",
+      "size": [
+        2560,
+        1440
+      ]
+    },
+    {
+      "network": "YouTube",
+      "where": "Video watermark (Customization > Branding)",
+      "file": "media/brand-kit-2026-10/youtube/watermark-150.png",
+      "size": [
+        150,
+        150
+      ]
+    },
+    {
+      "network": "TikTok",
+      "where": "Profile photo",
+      "file": "media/brand-kit-2026-10/tiktok/avatar-1080.jpg",
+      "size": [
+        1080,
+        1080
+      ]
+    },
+    {
+      "network": "Instagram",
+      "where": "Profile picture",
+      "file": "media/brand-kit-2026-10/instagram/avatar-1080.jpg",
+      "size": [
+        1080,
+        1080
+      ]
+    },
+    {
+      "network": "Instagram",
+      "where": "Highlight cover: Live Reports",
+      "file": "media/brand-kit-2026-10/instagram/highlight-reports.jpg",
+      "size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "network": "Instagram",
+      "where": "Highlight cover: Tips",
+      "file": "media/brand-kit-2026-10/instagram/highlight-tips.jpg",
+      "size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "network": "Instagram",
+      "where": "Highlight cover: Skits",
+      "file": "media/brand-kit-2026-10/instagram/highlight-skits.jpg",
+      "size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "network": "Instagram",
+      "where": "Highlight cover: Live runs",
+      "file": "media/brand-kit-2026-10/instagram/highlight-runs.jpg",
+      "size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "network": "Instagram",
+      "where": "Highlight cover: How it works",
+      "file": "media/brand-kit-2026-10/instagram/highlight-guide.jpg",
+      "size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "network": "Reddit",
+      "where": "Avatar (u/qalaburlreview)",
+      "file": "media/brand-kit-2026-10/reddit/avatar-256.png",
+      "size": [
+        256,
+        256
+      ]
+    },
+    {
+      "network": "Reddit",
+      "where": "Banner; the copy stays in the middle third",
+      "file": "media/reddit/profile-2026-10/banner.jpg",
+      "size": [
+        1920,
+        384
+      ]
+    },
+    {
+      "network": "Facebook",
+      "where": "Profile picture",
+      "file": "media/brand-kit-2026-10/facebook/avatar-720.jpg",
+      "size": [
+        720,
+        720
+      ]
+    },
+    {
+      "network": "Facebook",
+      "where": "Cover photo; phones show only the outlined middle",
+      "file": "media/facebook/page-2026-10/cover.jpg",
+      "size": [
+        1640,
+        624
+      ]
+    }
+  ]
+}
