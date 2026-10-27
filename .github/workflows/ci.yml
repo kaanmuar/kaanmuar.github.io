@@ -49,11 +49,16 @@ jobs:
       - name: Finding copy in functions and the per-language page files match the source
         run: node scripts/build-findings-copy.js --check
 
-  playwright:
+  playwright-shard:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    name: playwright (${{ matrix.shard }}/2)
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -81,14 +86,25 @@ jobs:
         if: steps.pw-cache.outputs.cache-hit != 'true'
         run: npx playwright install chromium
       - name: Run Playwright tests
-        run: npx playwright test --workers=4
+        run: npx playwright test --workers=4 --shard=${{ matrix.shard }}/2
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
           retention-days: 30
+
+  # The main ruleset requires a check named playwright, so this job stands for both shards.
+  playwright:
+    needs: playwright-shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Both Playwright shards passed
+        run: test "${{ needs.playwright-shard.result }}" = success
 
   cypress:
     runs-on: ubuntu-latest
