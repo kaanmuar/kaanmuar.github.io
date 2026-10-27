@@ -246,7 +246,7 @@ async function mediaReport() {
     const hosts = [...new Set((item.node.assets || []).map((a) => mediaHost(a.source)))].join("+") || "none";
     const key = name.split("/")[0] + " " + item.slot + " " + hosts;
     counts[key] = (counts[key] || 0) + 1;
-    if (hosts !== "site" && hosts !== "release" && hosts !== "none") copies.push([name, item.slot, item.node.id, item.node.dueAt, hosts].join(" "));
+    if (hosts !== "site" && hosts !== "release" && hosts !== "none") copies.push([name, item.slot, item.node.id, item.node.dueAt, hosts, (item.node.assets || []).map((a) => String(a.source || "").replace(/\?.*$/, "")).join(" ")].join(" "));
   }
   Object.keys(counts).sort().forEach((key) => console.log(String(counts[key]).padStart(4) + "  " + key));
   console.log(copies.length + " scheduled posts whose media is not fetched from the site or a release:");
