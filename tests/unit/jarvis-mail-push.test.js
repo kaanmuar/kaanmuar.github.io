@@ -73,7 +73,7 @@ test("backup and ops failures go to alerts, ops only when a job failed", () => {
   assert.equal(b.kind, "alerts");
   assert.equal(b.body, "2026-10-25: permission denied");
   assert.equal(mailPush.opsMessage([]), null);
-  const o = mailPush.opsMessage([{ job: "sweepReviews", why: "no successful run" }, { job: "buffer-sync", why: "last success 2026-10-20" }]);
+  const o = mailPush.opsMessage([{ job: "sweepReviews", why: "no successful run" }, { job: "buffer-sync", why: "last success 2026-10-20" }], ["sweepReviews", "buffer-sync"]);
   assert.equal(o.title, "2 scheduled jobs missed or failed");
   assert.equal(o.ref, "ops:sweepReviews,buffer-sync");
 });
@@ -93,4 +93,75 @@ test("send passes ref and quiet, and a quiet push goes at normal priority", asyn
 test("inbox and desk are kinds a device can turn off", () => {
   assert.deepEqual(jarvisPush.cleanKinds({ inbox: false }).inbox, false);
   assert.equal(jarvisPush.cleanKinds({}).desk, true);
+});
+
+test("buttons: each push lists at most three, and only what its ref accepts", () => {
+  const m = mailPush.messageMessage("abc", { name: "Ana", email: "ana@x.co", message: "hi" }, "");
+  assert.deepEqual(m.actions, [{ act: "reply", label: "Reply", input: "Your reply" }]);
+  assert.deepEqual(mailPush.messageMessage("abc", { message: "no address" }, "").actions, []);
+
+  const waiting = { status: "waiting", propose: "resend:owner@shop.co", host: "shop.co" };
+  assert.deepEqual(mailPush.ownerReplyMessage("f00d", waiting, "s", "https://d").actions.map((a) => a.act), ["resend", "stop", "done"]);
+  assert.equal(mailPush.ownerReplyMessage("f00d", waiting, "s", "https://d").actions[0].label, "Send to owner@shop.co");
+  assert.deepEqual(mailPush.ownerReplyMessage("f00d", { status: "waiting", propose: "answer" }, "s", "").actions.map((a) => a.act), ["stop", "unlist", "done"]);
+  assert.deepEqual(mailPush.ownerReplyMessage("f00d", { status: "applied" }, "s", "").actions, []);
+
+  assert.deepEqual(mailPush.rerunMessage([{ status: "failed", host: "c.co" }], "").actions, []);
+  assert.deepEqual(mailPush.rerunMessage([{ status: "held", host: "c.co" }], "").actions.map((a) => a.act), ["send-all", "drop-all"]);
+
+  const ops = mailPush.opsMessage([{ job: "sweepReviews", why: "x" }, { job: "live-reports.yml", why: "y" }], ["sweepReviews"]);
+  assert.equal(ops.ref, "ops:sweepReviews");
+  assert.equal(ops.actions[0].label, "Rerun job");
+  assert.deepEqual(mailPush.opsMessage([{ job: "live-reports.yml", why: "y" }], ["sweepReviews"]).actions, []);
+
+  for (const msg of [m, ops, mailPush.ownerReplyMessage("f", waiting, "s", "")]) {
+    const { type } = mailPush.parseAct(msg.ref, msg.actions[0].act);
+    assert.ok(mailPush.ACTS[type].includes(msg.actions[0].act));
+  }
+});
+
+test("parseAct refuses unknown refs, acts and missing ids", () => {
+  assert.deepEqual(mailPush.parseAct("notice:shop.co", "send"), { type: "notice", id: "shop.co", act: "send" });
+  assert.deepEqual(mailPush.parseAct("rerun-held", "drop-all"), { type: "rerun-held", id: "", act: "drop-all" });
+  assert.deepEqual(mailPush.parseAct("proposal:review:conv:low", "done"), { type: "proposal", id: "review:conv:low", act: "done" });
+  assert.throws(() => mailPush.parseAct("message:abc", "delete"), /no longer works/);
+  assert.throws(() => mailPush.parseAct("run:abc", "reply"), /no longer works/);
+  assert.throws(() => mailPush.parseAct("message:", "reply"), /no longer works/);
+});
+
+test("outreach notices push one by one; social posts push once each, and a first run only remembers", () => {
+  const n = mailPush.noticeMessage({ domain: "shop.co", host: "www.shop.co", email: "info@shop.co", critical: true });
+  assert.equal(n.ref, "notice:shop.co");
+  assert.equal(n.body, "To info@shop.co. Critical security finding.");
+  assert.deepEqual(n.actions.map((a) => a.act), ["send", "skip"]);
+  assert.deepEqual(mailPush.noticeMessage({ domain: "x.co" }).actions.map((a) => a.act), ["skip"]);
+  assert.equal(mailPush.noticeMessage({}), null);
+
+  const s = mailPush.socialMessage({ id: "14d11eaabbc6", title: "Accessibility testing", source: "DEV", topic: "Testing", summary: "Playwright and axe." });
+  assert.equal(s.kind, "social");
+  assert.equal(s.ref, "social:14d11eaabbc6");
+  assert.deepEqual(s.actions.map((a) => a.act), ["approved", "dismissed"]);
+
+  const pending = [{ id: "a" }, { id: "b" }, { id: "c" }, { id: "d" }, { id: "e" }];
+  assert.deepEqual(mailPush.socialDue(pending, null, 3), []);
+  assert.deepEqual(mailPush.socialDue(pending, ["a"], 3).map((p) => p.id), ["b", "c", "d"]);
+});
+
+test("the briefing push carries Done and Dismiss for the top proposal", () => {
+  const items = [{ level: "warn", text: "Conversion is low" }];
+  const b = jarvisPush.briefingMessage({ items, aiText: "", dateLabel: "Mon", top: { key: "review:conversion", title: "Fix the checkout copy" } });
+  assert.equal(b.ref, "proposal:review:conversion");
+  assert.equal(b.lines[0], "Do next: Fix the checkout copy");
+  assert.deepEqual(b.actions.map((a) => a.act), ["done", "dismissed"]);
+  assert.deepEqual(jarvisPush.briefingMessage({ items, aiText: "", dateLabel: "Mon" }).actions, []);
+});
+
+test("send carries the buttons as JSON, three at most", async () => {
+  const sent = [];
+  const messaging = { sendEachForMulticast: async (m) => { sent.push(m); return { successCount: 1, failureCount: 0, responses: [{ success: true }] }; } };
+  const four = [1, 2, 3, 4].map((i) => ({ act: "a" + i, label: "L" + i }));
+  await jarvisPush.send(messaging, null, ["tok"], { kind: "inbox", title: "t", body: "b", actions: four });
+  assert.equal(JSON.parse(sent[0].data.actions).length, 3);
+  await jarvisPush.send(messaging, null, ["tok"], { kind: "inbox", title: "t", body: "b", actions: [] });
+  assert.equal(sent[1].data.actions, undefined);
 });

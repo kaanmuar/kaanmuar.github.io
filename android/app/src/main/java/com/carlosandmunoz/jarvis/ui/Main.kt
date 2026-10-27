@@ -390,6 +390,7 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     Push.OUTREACH to ("Outreach approvals" to "Owner notices waiting to be sent, at most hourly."),
                     Push.INBOX to ("Inbox" to "CV messages, CV feedback and site owners' replies."),
                     Push.DESK to ("Review desk" to "Runs as they go, held re-runs, comparisons and runs that need you."),
+                    Push.SOCIAL to ("Social posts" to "Each post Jarvis proposes, with Post and Skip."),
                 )
                     .forEach { (kind, text) ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
