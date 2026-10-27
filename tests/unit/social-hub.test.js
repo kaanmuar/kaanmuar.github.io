@@ -124,8 +124,69 @@ test("the filter offers a chip for each kind that has posts, in lane order, labe
   for (const lang of Object.keys(LANGS)) for (const kind of hub.KINDS) assert.ok(COPY[lang].kinds[kind] && COPY[lang].kind[kind], lang + " " + kind);
   const html = hub.page("pt", [post({ id: "a/1", kind: "myth" }), post({ id: "a/2", kind: "trick" }), post({ id: "a/3" })], "2026-10-24");
   const chips = [...html.matchAll(/class="hub-chip" data-kind="([a-z]+)"[^>]*>([^<]+)</g)].map((m) => m[1] + ":" + m[2]);
-  assert.deepEqual(chips, ["all:Tudo", "trick:Truques", "review:Análises de sites", "myth:Mito ou verdade", "video:Vídeos"]);
+  assert.deepEqual(chips, ["all:Tudo", "trick:Truques", "review:Análises de sites", "myth:Mito ou verdade"]);
+  assert.match(html, /<select id="hub-media"><option value="all">Tudo<\/option><option value="image">Imagens<\/option><option value="video">Vídeos<\/option><\/select>/);
   assert.match(card.cardHtml(post({ kind: "term" }), COPY.it, "it"), /<span class="post-tag post-kind-term">Glossario<\/span>/);
+});
+
+test("the sort, network, date range and report controls are labelled in every language and list only networks with posts", () => {
+  const sortKeys = (lang) => Object.keys(COPY[lang].sorts).join();
+  for (const lang of Object.keys(LANGS)) {
+    assert.equal(sortKeys(lang), card.SORTS.join(), lang);
+    for (const key of ["sort", "sortDir", "media", "network", "allNets", "range", "from", "to", "withReport"]) assert.ok(COPY[lang][key], lang + " " + key);
+    assert.deepEqual(Object.keys(COPY[lang].ranges), ["7", "30", "90", "all", "custom"], lang);
+    for (const pair of Object.values(COPY[lang].dirs)) assert.equal(pair.length, 2, lang);
+  }
+  const html = hub.page("de", [post({ id: "a/1", nets: ["tiktok", "linkedin"] }), post({ id: "a/2", nets: ["facebook"] })], "2026-10-24");
+  assert.match(html, /<select id="hub-net"><option value="all">Alle Netzwerke<\/option><option value="tiktok">TikTok<\/option><option value="linkedin">LinkedIn<\/option><option value="facebook">Facebook<\/option><\/select>/);
+  assert.match(html, /<select id="hub-sort"><option value="date">Datum<\/option><option value="title">Titel<\/option>/);
+  assert.match(html, /id="hub-dir" type="button" aria-label="Sortierrichtung: Neueste zuerst" data-dir="desc">Neueste zuerst</);
+  assert.match(html, /<input id="hub-report" type="checkbox"><span>Mit vollständigem Bericht<\/span>/);
+});
+
+test("a post's networks come from both ledgers and its clip, in Follow-row order", () => {
+  const books = [
+    { posts: { "a/1": [{ channel: "x", result: "sent" }, { channel: "tiktok", result: "queued" }, { channel: "linkedin", result: "failed" }] } },
+    { posts: { "a/1": [{ channel: "facebook", result: "sent" }] } }
+  ];
+  const nets = hub.networkIds(books);
+  assert.deepEqual(hub.postNets({ id: "a/1-es", base: "a/1", youtube: "abc" }, nets), ["youtube", "tiktok", "x", "facebook"]);
+  assert.deepEqual(hub.postNets({ id: "a/2", youtube: null }, nets), []);
+});
+
+test("sorting keeps posted posts ahead of scheduled ones by date, and puts posts without the count last", () => {
+  const p = (id, date, extra) => Object.assign({ id, date, title: id, kind: "tip" }, extra);
+  const list = card.arrange([
+    p("b", "2026-10-20", { stats: { tiktok: { views: 50, likes: 2 }, x: { views: 10 } } }),
+    p("a", "2026-10-22", { stats: { x: { views: 90 } } }),
+    p("c", "2026-10-25"),
+    p("d", "2026-11-02"),
+    p("e", "2026-10-30")
+  ], "2026-10-26");
+  const ids = (out) => out.map((post) => post.id).join("");
+  assert.equal(ids(card.sortPosts(list, "date", "desc")), "cabed");
+  assert.equal(ids(card.sortPosts(list, "date", "asc")), "baced");
+  assert.equal(ids(card.sortPosts(list, "title", "asc")), "abcde");
+  assert.equal(ids(card.sortPosts(list, "title", "desc")), "edcba");
+  assert.equal(ids(card.sortPosts(list, "views", "desc")), "abced", "a 90 beats b 60, then arrange order");
+  assert.equal(ids(card.sortPosts(list, "views", "asc")), "baced");
+  assert.equal(ids(card.sortPosts(list, "views", "desc", "tiktok")), "bcaed");
+  assert.equal(card.metric(list[2], "likes"), 2);
+  assert.equal(card.metric(list[0], "likes"), null);
+  assert.equal(card.defaultDir("title"), "asc");
+  assert.equal(card.defaultDir("comments"), "desc");
+});
+
+test("a card shows its numbers summed over networks, or for the filtered network, with a per-network tooltip", () => {
+  const stats = { tiktok: { views: 1200, likes: 30 }, x: { impressions: 400, views: 300, comments: 2 } };
+  const html = card.cardHtml(post({ stats }), COPY.en, "en");
+  assert.match(html, /<p class="post-stats" title="TikTok: plays 1200, likes 30 · X: impressions 400, plays 300, comments 2">/);
+  assert.match(html, /<span class="sr-only">Plays: <\/span><svg[^>]*>.*?<\/svg>1\.5K<\/span>/);
+  assert.match(html, /<span class="sr-only">Comments: <\/span>/);
+  const tiktok = card.cardHtml(post({ stats }), COPY.en, "en", "tiktok");
+  assert.doesNotMatch(tiktok, /Comments: /);
+  assert.match(tiktok, /title="TikTok: plays 1200, likes 30"/);
+  assert.doesNotMatch(card.cardHtml(post(), COPY.en, "en"), /post-stats/);
 });
 
 test("a batch names its kind in captions.json, and a batch without one keeps the kind of its name", () => {

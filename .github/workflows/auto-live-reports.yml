@@ -148,6 +148,15 @@ jobs:
           npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}"
           echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
 
+      - name: Read each sent post's numbers from Buffer and Facebook
+        # The hub sorts and labels cards by them (#1587); a network that fails keeps yesterday's numbers.
+        if: ${{ !inputs.dry_run }}
+        continue-on-error: true
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+        run: node scripts/social-metrics.js | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Commit and publish the site
         id: commit
         if: ${{ !inputs.dry_run }}
