@@ -94,6 +94,13 @@ test('a caption label comes from the glossary and only the rest goes to the tran
   assert.deepEqual(asked, ['Make your guess.']);
 });
 
+test('a run of the review is never translated as a race, even when the cache learned it so', () => {
+  const code = 'import json, translate; translate.gtx = lambda text, lang: text; '
+    + 'cache = {"es\\u0000Real run": "Carrera real", "es\\u0000requested": "solicitado"}; translate.fill(["Real run · requested"], "es", cache); '
+    + 'print(json.dumps(translate.translate("Real run · requested", "es", cache), ensure_ascii=False))';
+  assert.equal(JSON.parse(execFileSync(process.env.PYTHON || 'python3', ['-c', code], { cwd: dir, encoding: 'utf8' })), 'Análisis real · solicitado');
+});
+
 test('a line that speaks to the viewer in the other register is caught', () => {
   const register = (cases) => py('[register(*c) for c in args[0]]', cases);
   assert.deepEqual(register([

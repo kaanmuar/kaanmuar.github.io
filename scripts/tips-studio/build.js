@@ -16,6 +16,9 @@
    visual's note), a related fact (tip.more, or one read off a scorecard), the fix (action) and the end card. Each
    line is spoken on its own in a neural voice (edge-tts) over the launch reels' bed (media/url-review-demos/bed.wav),
    and its scene lasts as long as the line.
+   Each post shows the official marks of what it covers (#1917): a reviewed site's own icon, its home page scrolling on a
+   phone, its benchmark among the Live Reports and a six-area radar; each competitor's icon and a score race; or the
+   marks of the products a tip names. The end card lists the networks we post on.
    Clips take six languages in turn (en, es, pt, de, fr, it; woman, then man), starting --lang-offset N
    along that cycle: the card, voice, and TikTok/YouTube captions are all in the clip's language.
    A render exports the strings and runs translate.py first (--no-translate skips it); a clip still
@@ -41,6 +44,8 @@ const path = require("path");
 const { spawnSync } = require("child_process");
 require("../playwright-sandbox");
 const { chromium } = require("playwright");
+const brands = require("./brands");
+const assets = require("./site-assets");
 const ROOT = path.resolve(__dirname, "../..");
 const FFMPEG = fs.existsSync("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg";
 const FFPROBE = FFMPEG.replace(/ffmpeg$/, "ffprobe");
@@ -98,6 +103,15 @@ const LOCALES = { en: "en-US", es: "es-ES", pt: "pt-BR", de: "de-DE", fr: "fr-FR
 const UI_EN = { tryThis: "Try this", tip: "Tip", guided: "Guided tour", never: "Never runs your tests",
   end: "Let your page do the talking.", endNote: "How a public-page review works, step by step.",
   why: "Why it matters", more: "Did you know?", strongest: "Strongest area", weakest: "Weakest area" };
+// Card labels of the logo and chart scenes, written here in every clip language rather than sent to the translator.
+const UI_MARKS = {
+  en: { bench: "Better than {pct} of {n} sites we reviewed", benchTop: "Top score of {n} sites we reviewed", reviewed: "Reviewed", follow: "Follow" },
+  es: { bench: "Mejor que el {pct} de {n} sitios que analizamos", benchTop: "La mejor puntuación de {n} sitios que analizamos", reviewed: "Analizado", follow: "Síguenos" },
+  pt: { bench: "Melhor que {pct} de {n} sites que analisamos", benchTop: "A maior nota entre {n} sites que analisamos", reviewed: "Analisado", follow: "Siga-nos" },
+  de: { bench: "Besser als {pct} von {n} geprüften Websites", benchTop: "Bestwert unter {n} geprüften Websites", reviewed: "Geprüft", follow: "Folgen Sie uns" },
+  fr: { bench: "Mieux que {pct} des {n} sites analysés", benchTop: "Meilleur score sur {n} sites analysés", reviewed: "Analysé", follow: "Suivez-nous" },
+  it: { bench: "Meglio del {pct} di {n} siti analizzati", benchTop: "Il punteggio più alto su {n} siti analizzati", reviewed: "Analizzato", follow: "Seguici" }
+};
 const VOICE_AT = 0.7;
 // Scene order and the shortest each may run, in seconds; a longer line stretches its scene.
 const SCENES = { hook: 3, why: 3.5, look: 5, more: 3.5, fix: 4, end: 3.4 };
@@ -223,7 +237,29 @@ function voiceFor(index, tip) {
   return VOICES.find((v) => v.file === lang + "-" + (Math.floor(turn / LANGS.length) % 2 ? "m" : "w"));
 }
 function translated(tip, lang, i18n) { return lang === "en" || tip.lang === lang || !!(i18n.clips[tip.id] && i18n.ui[lang]); }
-function uiFor(lang, i18n) { return Object.assign({}, lang === "en" ? {} : i18n.ui[lang], (studio.UI || {})[lang], { locale: LOCALES[lang] }); }
+function uiFor(lang, i18n) { return Object.assign({}, UI_MARKS[lang], lang === "en" ? {} : i18n.ui[lang], (studio.UI || {})[lang], { locale: LOCALES[lang] }); }
+
+// The official marks a post shows (scripts/tips-studio/brands.js, site-assets.js): the reviewed site's icon, its
+// home page on a phone and its benchmark, every competitor's icon, or the marks of the products a tip names.
+const EXTRAS = new Map();
+async function extrasFor(tip, browser) {
+  if (EXTRAS.has(tip.id)) return EXTRAS.get(tip.id);
+  const v = tip.visual || {};
+  const host = tip.host || (v.type === "scores" && v.note ? v.note.split(" · ")[0].trim() : "");
+  const x = { nets: brands.networks(), handle: brands.HANDLE };
+  if (v.type === "matrix") {
+    x.logos = {};
+    for (const row of v.rows) x.logos[row[0]] = await assets.siteLogo(row[0]);
+  } else if (/^[\w.-]+\.[a-z]{2,}$/i.test(host)) {
+    x.host = assets.bare(host);
+    x.logo = await assets.siteLogo(host);
+    const shot = browser ? await assets.siteShot(browser, host) : "";
+    if (shot) x.shot = "file://" + shot;
+    x.bench = assets.bench(host, v.overall);
+  } else x.brands = brands.brandsIn(tip);
+  EXTRAS.set(tip.id, x);
+  return x;
+}
 function hostFor(tip) { return studio.hostFor ? studio.hostFor(tip) : GUIDE_HOST; }
 function loadI18n() {
   const file = path.join(OUT, "i18n.json");
@@ -318,10 +354,10 @@ function speak(voice, text, file) {
   throw new Error("voice failed for " + voice.file);
 }
 
-async function renderStill(page, tip, fmt, index, total, file, ui, cat) {
+async function renderStill(page, tip, fmt, index, total, file, ui, cat, extras) {
   const size = fmt === "feed" ? { width: 1080, height: 1350 } : { width: 1080, height: 1920 };
   await page.setViewportSize(size);
-  await page.evaluate(([t, c, f, i, n, h, u]) => window.paint(t, c, f, i, n, h, u), [tip, cat || studio.CATS[tip.cat], fmt, index, total, hostFor(tip), ui || {}]);
+  await page.evaluate(([t, c, f, i, n, h, u, x]) => window.paint(t, c, f, i, n, h, u, x), [tip, cat || studio.CATS[tip.cat], fmt, index, total, hostFor(tip), ui || {}, extras || {}]);
   await page.waitForTimeout(150);
   await page.locator("#c").screenshot({ path: file, type: "jpeg", quality: 92 });
 }
@@ -355,15 +391,15 @@ async function framePages(browser, page) {
   return Promise.all(pages.map(async (p) => ({ page: p, cdp: await p.context().newCDPSession(p) })));
 }
 
-async function renderClip(workers, tip, index, total, file, cover, said) {
+async function renderClip(workers, tip, index, total, file, cover, said, extras) {
   const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "tip-"));
   const { scenes, length } = timeline(said, tmp);
   const frames = Math.ceil(length * FPS);
   const size = { width: 1080, height: 1920 };
   await Promise.all(workers.map(async ({ page, cdp }, k) => {
     await page.setViewportSize(size);
-    await page.evaluate(([t, c, i, n, h, u, s]) => window.paintClip(t, c, i, n, h, u, s),
-      [said.tip, said.cat, index, total, hostFor(tip), said.ui, scenes.map(({ audio, ...s }) => s)]);
+    await page.evaluate(([t, c, i, n, h, u, s, x]) => window.paintClip(t, c, i, n, h, u, s, x),
+      [said.tip, said.cat, index, total, hostFor(tip), said.ui, scenes.map(({ audio, ...s }) => s), extras || {}]);
     for (let f = k; f < frames; f += workers.length) {
       await page.evaluate((s) => window.seek(s), f / FPS);
       const shot = await cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 90, clip: Object.assign({ x: 0, y: 0, scale: 1 }, size) });
@@ -372,7 +408,7 @@ async function renderClip(workers, tip, index, total, file, cover, said) {
   }));
   const page = workers[0].page;
   // Buffer previews and TikTok's default cover use the first frame, so it shows the finished story card.
-  await renderStill(page, said.tip, "story", index, total, cover, said.ui, said.cat);
+  await renderStill(page, said.tip, "story", index, total, cover, said.ui, said.cat, extras);
   fs.copyFileSync(cover, path.join(tmp, "00000.jpg"));
   // Same bed level, fades and loudness as the launch reels in post-studio.
   const voiced = scenes.filter((s) => s.audio);
@@ -445,7 +481,7 @@ function rewriteCaptions(all, networks) {
       if (opts.resume && fs.existsSync(file.replace(/\.mp4$/, ".json"))) continue;
       if (!translated(tip, voiceFor(index, tip).lang, i18n)) { console.log("untranslated", slug); continue; }
       const said = localize(tip, index, total, i18n);
-      await renderClip(workers, tip, index, total, file, path.join(OUT, "voiced", "cover", slug + ".jpg"), said);
+      await renderClip(workers, tip, index, total, file, path.join(OUT, "voiced", "cover", slug + ".jpg"), said, await extrasFor(tip, browser));
       fs.writeFileSync(file.replace(/\.mp4$/, ".json"), JSON.stringify({ slug, lang: said.lang, voice: said.voice.file,
         speech: said.speech, tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube }, null, 1));
       console.log("voiced", slug, said.voice.file);
@@ -466,10 +502,11 @@ function rewriteCaptions(all, networks) {
     const index = all.indexOf(tip);
     const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
     const ui = tip.lang ? uiFor(tip.lang, i18n) : studio.UI ? uiFor("en", i18n) : {};
-    await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"), ui);
-    await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"), ui);
+    const extras = await extrasFor(tip, opts["skip-video"] ? null : browser);
+    await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"), ui, null, extras);
+    await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"), ui, null, extras);
     const said = localize(tip, index, total, i18n);
-    if (!opts["skip-video"]) await renderClip(workers, tip, index, total, path.join(OUT, "clip", slug + ".mp4"), path.join(OUT, "cover", slug + ".jpg"), said);
+    if (!opts["skip-video"]) await renderClip(workers, tip, index, total, path.join(OUT, "clip", slug + ".mp4"), path.join(OUT, "cover", slug + ".jpg"), said, extras);
     console.log("rendered", slug, said.voice.file);
   }
   await browser.close();
