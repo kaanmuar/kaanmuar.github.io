@@ -3,8 +3,13 @@
  * Jarvis push (#1416): the Android app registers its FCM token here, and the hourly watch and the
  * daily briefing push to every phone that keeps that kind on, alongside the owner email.
  * Data-only messages, so the app picks the channel and what a tap opens.
+ * Browsers (#1671) register a Web Push subscription in the same collection and get every broadcast kind too.
  */
 const crypto = require("crypto");
+const webPush = require("./jarvis-webpush");
+
+// Kinds that only make sense on the phone: app updates and reviews started from a shared link.
+const PHONE_ONLY = new Set(["update", "review"]);
 
 const KINDS = ["alerts", "briefing", "money", "reviews", "outreach", "inbox", "desk", "social"];
 const DEAD = new Set(["messaging/registration-token-not-registered", "messaging/invalid-registration-token", "messaging/invalid-argument"]);
@@ -17,7 +22,14 @@ function cleanKinds(kinds) {
   return KINDS.reduce((out, k) => { out[k] = !(kinds && kinds[k] === false); return out; }, {});
 }
 
-async function register(db, { token, name, kinds }, by, now) {
+async function register(db, { token, name, kinds, subscription }, by, now) {
+  if (subscription) {
+    const sub = webPush.cleanSubscription(subscription);
+    if (!sub) throw new Error("That is not a browser subscription.");
+    const row = { type: "web", subscription: sub, name: String(name || "Browser").slice(0, 80), kinds: cleanKinds(kinds), by: String(by || ""), updatedAt: new Date(now).toISOString() };
+    await devices(db).doc(idOf(sub.endpoint)).set(row);
+    return { id: idOf(sub.endpoint), name: row.name, kinds: row.kinds };
+  }
   const t = String(token || "").trim();
   if (t.length < 20 || t.length > 4096) throw new Error("That is not a device token.");
   const row = { token: t, name: String(name || "Android phone").slice(0, 80), kinds: cleanKinds(kinds), by: String(by || ""), updatedAt: new Date(now).toISOString() };
@@ -35,8 +47,22 @@ async function list(db) {
   return snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
 }
 
+const wants = (d, kind) => kind === "test" || !(d.kinds && d.kinds[kind] === false);
+
+/** Phone tokens that keep this kind on. */
 async function targets(db, kind) {
-  return (await list(db)).filter((d) => kind === "test" || !(d.kinds && d.kinds[kind] === false)).map((d) => d.token);
+  return (await list(db)).filter((d) => d.token && wants(d, kind)).map((d) => d.token);
+}
+
+/** Browsers that keep this kind on. */
+async function webTargets(db, kind) {
+  if (PHONE_ONLY.has(kind)) return [];
+  return (await list(db)).filter((d) => d.subscription && wants(d, kind));
+}
+
+/** True when a phone or a browser would get this kind. */
+async function anyTargets(db, kind) {
+  return (await list(db)).some((d) => (d.token || (d.subscription && !PHONE_ONLY.has(kind))) && wants(d, kind));
 }
 
 function alertMessage(fresh) {
@@ -73,8 +99,20 @@ function briefingMessage({ items, aiText, dateLabel, top }) {
   };
 }
 
-/** Sends one message to the tokens and deletes the ones FCM says are gone. */
-async function send(messaging, db, tokens, msg) {
+/**
+ * Sends one message to the phone tokens and to the browsers that keep its kind on (or to the browsers
+ * given, for a test), and deletes the devices their push service says are gone.
+ */
+async function send(messaging, db, tokens, msg, browsers) {
+  const phones = await sendPhones(messaging, db, tokens, msg);
+  const web = browsers || (db && msg.kind !== "test" ? await webTargets(db, msg.kind) : []);
+  if (!web.length) return phones;
+  const out = await webPush.sendWeb(require("web-push"), db, web, msg, Date.now())
+    .catch((error) => ({ sent: 0, failed: web.length, removed: 0, error: String(error.message || error).slice(0, 200) }));
+  return { sent: phones.sent + out.sent, failed: phones.failed + out.failed, removed: phones.removed + out.removed, web: out.sent };
+}
+
+async function sendPhones(messaging, db, tokens, msg) {
   if (!tokens.length) return { sent: 0, failed: 0, removed: 0 };
   const data = { kind: msg.kind, title: msg.title, body: msg.body, lines: JSON.stringify(msg.lines || []), tab: msg.tab || "overview", tag: msg.tag || msg.kind };
   if (msg.url) data.url = msg.url;
@@ -123,4 +161,4 @@ async function releasePush(fetchFn, db, messaging, { token, now }) {
   return Object.assign({ pushed: true, version: rel.name }, out);
 }
 
-module.exports = { KINDS, idOf, cleanKinds, register, unregister, list, targets, alertMessage, briefingMessage, send, newestRelease, releasePush };
+module.exports = { KINDS, PHONE_ONLY, idOf, cleanKinds, register, unregister, list, targets, webTargets, anyTargets, alertMessage, briefingMessage, send, newestRelease, releasePush };

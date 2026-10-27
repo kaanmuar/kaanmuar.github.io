@@ -188,6 +188,10 @@
 .jv-palette-box kbd { font-size: 0.7rem; color: var(--dim); }
 .jv-toast { position: fixed; right: 22px; bottom: 22px; z-index: 90; background: #061a27; color: var(--text); border: 1px solid var(--line-hi); border-radius: 12px; padding: 0.6rem 0.9rem; font-size: 0.88rem; box-shadow: 0 0 30px rgba(56, 225, 255, 0.3); max-width: 420px; }
 .jv-toast[hidden] { display: none; }
+.jv-pushes { position: fixed; right: 22px; top: 22px; z-index: 91; display: flex; flex-direction: column; gap: 0.6rem; width: min(380px, calc(100vw - 44px)); pointer-events: none; }
+.jv-push { pointer-events: auto; background: #061a27; color: var(--text); border: 1px solid var(--line-hi); border-radius: 12px; padding: 0.7rem 0.9rem; box-shadow: 0 0 30px rgba(56, 225, 255, 0.3); font-size: 0.86rem; }
+.jv-push p { margin: 0.3rem 0 0.5rem; color: var(--muted, #9fc4d6); }
+.jv-reply blockquote { margin: 0 0 0.6rem; padding-left: 0.6rem; border-left: 2px solid var(--line-hi); }
 /* Goals */
 .jv-goals { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
 .jv-goal-head { display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.85rem; }
