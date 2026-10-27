@@ -169,23 +169,6 @@ https://www.searchenginejournal.com/geo-is-a-distraction-heres-where-the-real-op
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/geo-460.png" medium="image"/>
     </item>
     <item>
-      <title>Release day: is the page still right?</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/02-release-day.html</link>
-      <guid isPermaLink="false">tips-2026-10/02-release-day</guid>
-      <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Tip</category>
-      <category>QA</category>
-      <description>Green builds and passing smoke tests do not tell you whether the public page still has its title, share card, and consent banner.
-
-Try this today: Add a five-minute public-page check to your release checklist, after deploy and before the announcement.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=release-day
-
-#QA #ReleaseManagement #DevOps #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" length="196736" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>We reviewed ourselves. Security: 54.</title>
       <link>https://carlosandmunoz.com/social/tips-2026-10/03-self-review.html</link>
       <guid isPermaLink="false">tips-2026-10/03-self-review</guid>
@@ -607,6 +590,23 @@ How a public-page review works, step by step: https://carlosandmunoz.com/qa-revi
 #WebPerformance #CLS #CoreWebVitals #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg" length="179623" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Release day: is the page still right?</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/02-release-day.html</link>
+      <guid isPermaLink="false">tips-2026-10/02-release-day</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Tip</category>
+      <category>QA</category>
+      <description>Green builds and passing smoke tests do not tell you whether the public page still has its title, share card, and consent banner.
+
+Try this today: Add a five-minute public-page check to your release checklist, after deploy and before the announcement.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=release-day
+
+#QA #ReleaseManagement #DevOps #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" length="196736" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>whatsapp.com: 67. The gap: hreflang.</title>

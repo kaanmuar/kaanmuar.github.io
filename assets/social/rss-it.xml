@@ -146,23 +146,6 @@ https://www.searchenginejournal.com/geo-is-a-distraction-heres-where-the-real-op
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/geo-460.png" medium="image"/>
     </item>
     <item>
-      <title>Giorno di release: la pagina è ancora giusta?</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-it.html</link>
-      <guid isPermaLink="false">tips-2026-10/02-release-day-it</guid>
-      <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Consiglio</category>
-      <category>QA</category>
-      <description>Build verdi e smoke test superati non ti dicono se la pagina pubblica ha ancora titolo, card di condivisione e banner del consenso.
-
-Provalo oggi: Aggiungi alla checklist di release un controllo di cinque minuti delle pagine pubbliche, dopo il deploy e prima dell’annuncio.
-
-Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=release-day
-
-#QA #ReleaseManagement #DevOps #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" length="196736" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>Abbiamo analizzato noi stessi. Sicurezza: 54.</title>
       <link>https://carlosandmunoz.com/social/tips-2026-10/03-self-review-it.html</link>
       <guid isPermaLink="false">tips-2026-10/03-self-review-it</guid>
@@ -557,6 +540,23 @@ Come funziona la review di una pagina pubblica, passo dopo passo: https://carlos
 #WebPerformance #CLS #CoreWebVitals #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg" length="179623" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Giorno di release: la pagina è ancora giusta?</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-it.html</link>
+      <guid isPermaLink="false">tips-2026-10/02-release-day-it</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Consiglio</category>
+      <category>QA</category>
+      <description>Build verdi e smoke test superati non ti dicono se la pagina pubblica ha ancora titolo, card di condivisione e banner del consenso.
+
+Provalo oggi: Aggiungi alla checklist di release un controllo di cinque minuti delle pagine pubbliche, dopo il deploy e prima dell’annuncio.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=release-day
+
+#QA #ReleaseManagement #DevOps #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" length="196736" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>whatsapp.com: 67. La lacuna: hreflang.</title>
