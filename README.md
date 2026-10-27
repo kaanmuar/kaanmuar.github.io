@@ -27,7 +27,7 @@ The page is markup, SEO, and JSON-LD. Content is `js/cv-data.js` (toolkit, exper
 * **Trademark:** A frosted seal sits on the portrait and again in the footer. The letters default to **CAM**. The fill uses the current look’s paper at about 60%, with the same blur as the cards, so the portrait shows through a little. The letters use the accent ink.
 * **Contact and ratings:** The floating widget sends a message (optional attachment up to 5MB) or a rating to Firestore.
 * **Testimonials:** Approved public ratings and admin replies render from Firestore.
-* **SEO and analytics:** Person JSON-LD, a ProfessionalService offer (`#qa-practice`) for contract, freelance, advisory, and mentoring, and competency JSON-LD (each competency has a `?topic=` URL). The visible offer line is `#engagement-offer`. Also `hreflang`, canonical on `carlosandmunoz.com`, and Google Analytics events for filters, tour, language, and export.
+* **SEO and analytics:** Person JSON-LD, a ProfessionalService offer (`#qa-practice`) for contract, freelance, advisory, and mentoring, and competency JSON-LD (each competency has a `?topic=` URL). The visible offer line is `#engagement-offer`. Also a canonical on `carlosandmunoz.com` (the page translates in the browser, so it lists no `?lang=` hreflang alternates), and Google Analytics events for filters, tour, language, and export.
 
 ### SDLC studio (`simulador.html`)
 
@@ -207,6 +207,19 @@ npm run build:css
 7. Cloud Functions run on Node 22. A morning job emails a daily report at 7:15, a weekly report on Monday at 7:30, and a monthly report on the 1st at 7:45, America/Bogota, through the existing SendGrid setup. Each report counts opens, clicks, exports, lab runs, and link opens, then splits them by site, language, referrer, action, export type, phone or desktop, and the busiest hour in America/Bogota. A studio open is counted once per visit, the same way as the lab. A tour, a clip, a sprint start, and a sprint finish are clicks. A studio report is an export. Weekly and monthly reports also name the busiest day. Each report compares those four totals with the previous day, the previous 7 days, or the previous month. The same counts appear on Admin → Statistics → Site activity. Counts start once these pages are published. Google Analytics still holds the older history. A new visit can record phone or desktop after `firestore.rules` is deployed; until then that split stays unrecorded.
 8. A Sunday 8:00 job exports Firestore to `gs://carlosm-interactive-cv-backups`. The bucket is private, and the Firestore service account can write to it. The Cloud Functions service account can start the export. If a backup cannot start, the same SendGrid path sends one failure note.
 9. Three items still need a click in the Google account. App Check still needs a real reCAPTCHA site key before it can be required on public writes; do not turn on enforcement without that key, or messages, ratings, and visits will be rejected. The billing budget API lives on the billing account’s project, and this Firebase login cannot enable it: open [Cloud Billing Budget API](https://console.developers.google.com/apis/api/billingbudgets.googleapis.com/overview?project=563584335869), enable it, then add a budget at [Billing budgets](https://console.cloud.google.com/billing/budgets). Search Console for `carlosandmunoz.com` is added at [Search Console](https://search.google.com/search-console). Looker Studio can email the older Google Analytics history for property `G-J8GNF5380F` on the same three schedules from [Looker Studio](https://lookerstudio.google.com/). The Firestore emails cover the counts collected after the site pages are published.
+10. Cloud Functions read plain settings (ids, addresses, URLs, switches) from `functions/.env`; `functions/.env.example` lists them. Keys, tokens and shared secrets are Secret Manager secrets, and `functions/secrets.js` binds each one to the functions that read it. Firebase refuses to deploy a name that is both a secret and a line in `functions/.env`, so before the first functions deploy that carries `functions/secrets.js`, set each secret once, pasting its value from `functions/.env` at the prompt:
+
+   ```bash
+   for name in STRIPE_SECRET_KEY PAYPAL_CLIENT_SECRET PAYPAL_SANDBOX_CLIENT_SECRET GITHUB_APP_PRIVATE_KEY GITHUB_BUGS_TOKEN \
+     CLOUDFLARE_API_TOKEN CLOUDFLARE_ANALYTICS_TOKEN GEMINI_API_KEY INSTANTLY_API_KEY OWNER_REPLY_KEY \
+     REVIEW_VERIFY_KEY PUBLISH_KEY QA_TEST_KEY BROWSER_KEY PAGESPEED_KEY CRUX_KEY WEBRISK_KEY \
+     BRAVE_SEARCH_KEY YOUTUBE_KEY; do
+     firebase functions:secrets:set "$name" --project carlosm-interactive-cv
+   done
+   firebase functions:secrets:get SENDGRID_API_KEY --project carlosm-interactive-cv
+   ```
+
+   The last line only confirms `SENDGRID_API_KEY` is already there. Then move those 18 lines out of `functions/.env` into `functions/.secret.local` (gitignored), which the local review server and the emulator read, and deploy with `firebase deploy --only functions`. A new key or token goes the same way: `firebase functions:secrets:set NAME`, then add it to the lists in `functions/secrets.js` for every function whose code reads it.
 
 </details>
 

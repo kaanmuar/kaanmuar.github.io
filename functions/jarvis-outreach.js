@@ -105,7 +105,7 @@ function instantlyRows(campaigns, overview, perCampaign, accounts) {
 }
 
 async function instantly(ctx) {
-  if (!(ctx.env || {}).INSTANTLY_API_KEY) return { ok: false, error: "INSTANTLY_API_KEY is not set.", need: "Instantly: put the API key (Settings > Integrations > API keys) in functions/.env as INSTANTLY_API_KEY." };
+  if (!(ctx.env || {}).INSTANTLY_API_KEY) return { ok: false, error: "INSTANTLY_API_KEY is not set.", need: "Instantly: put the API key (Settings > Integrations > API keys) in Secret Manager as INSTANTLY_API_KEY." };
   const from = new Date(ctx.now - ctx.days * DAY).toISOString().slice(0, 10);
   const to = new Date(ctx.now).toISOString().slice(0, 10);
   const [campaigns, overview, per, accounts] = await Promise.all([
@@ -175,7 +175,7 @@ async function outreach(ctx) {
       const [queue, state, reviews, index] = await Promise.all([
         ctx.db.collection("url_review_sweep").doc("outreach").get(),
         ctx.db.collection("url_review_sweep").doc("state").get(),
-        ctx.db.collection("url_reviews").where("createdAt", ">=", since).orderBy("createdAt", "desc").limit(3000).get(),
+        ctx.db.collection("url_reviews").where("createdAt", ">=", since).orderBy("createdAt", "desc").select("sweep", "createdAt", "status", "requestedUrl", "score").limit(3000).get(),
         ctx.fetch(ORIGIN + "/assets/live-reports/index.json", { signal: AbortSignal.timeout(10000) }).then((r) => r.json()).catch(() => ({ reports: [] }))
       ]);
       return Object.assign({ ok: true }, pipelineRows(queue.exists ? queue.data() : null, state.exists ? state.data() : null, reviews.docs.map((d) => d.data()), (index.reports || []).map((r) => r.host), ctx));

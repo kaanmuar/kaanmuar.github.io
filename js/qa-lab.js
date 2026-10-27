@@ -656,12 +656,9 @@
         const xml = await fetchText('sitemap.xml');
         assert(xml.includes('simulador.html'), 'studio missing from sitemap');
         assert(xml.includes('qa-lab.html'), 'qa-lab missing from sitemap');
-        assert(xml.includes('hreflang="en" href="https://carlosandmunoz.com/qa-lab.html"'), 'english hreflang missing');
-        ['es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
-          assert(xml.includes('qa-lab.html?lang=' + lang), 'qa-lab hreflang missing for ' + lang);
-        });
+        assert(!xml.includes('?lang='), 'sitemap lists a ?lang= alternate');
         assert(!xml.includes('admin.html'), 'admin leaked into sitemap');
-        return 'public URLs + hreflang';
+        return 'public URLs';
       }
     },
     {
@@ -1526,30 +1523,24 @@
     },
     {
       id: 'SEC-09', layer: 'Security', fw: ['Playwright', 'Cypress', 'Robot'],
-      title: 'Sitemap hreflang lists every language and omits admin',
+      title: 'Sitemap lists no ?lang= hreflang and omits admin',
       where: 'sitemap.xml xhtml:link',
       when: 'The CV, studio, and lab URL entries are parsed.',
-      how: 'Each of those three URLs has en, es, pt, de, fr, it, and x-default. es, pt, de, fr, and it point at ?lang=. admin.html is absent.',
+      how: 'Those three URLs translate in the browser on one canonical URL, so they list no hreflang alternates. No href in the sitemap has ?lang=. admin.html is absent.',
       async run() {
         const xml = await fetchText('sitemap.xml');
         const doc = new DOMParser().parseFromString(xml, 'text/xml');
-        const want = ['en', 'es', 'pt', 'de', 'fr', 'it', 'x-default'];
         const pages = ['https://carlosandmunoz.com/', 'https://carlosandmunoz.com/simulador.html', 'https://carlosandmunoz.com/qa-lab.html'];
         const urls = [...doc.getElementsByTagName('url')];
         pages.forEach((loc) => {
           const url = urls.find((node) => node.getElementsByTagName('loc')[0]?.textContent === loc);
           assert(url, 'sitemap missing ' + loc);
           const links = [...url.getElementsByTagNameNS('http://www.w3.org/1999/xhtml', 'link')];
-          const langs = links.map((link) => link.getAttribute('hreflang')).sort();
-          assert(langs.join(',') === [...want].sort().join(','), loc + ' hreflang ' + langs.join(','));
-          want.forEach((code) => {
-            if (code === 'x-default' || code === 'en') return;
-            const link = links.find((item) => item.getAttribute('hreflang') === code);
-            assert(link && link.getAttribute('href') === loc + '?lang=' + code, loc + ' ' + code);
-          });
+          assert(links.length === 0, loc + ' hreflang ' + links.map((link) => link.getAttribute('hreflang')).join(','));
         });
+        assert(!xml.includes('?lang='), 'sitemap lists a ?lang= alternate');
         assert(!xml.includes('admin.html'), 'admin leaked into sitemap');
-        return '7 hreflang codes on 3 pages';
+        return '3 pages without ?lang= alternates';
       }
     },
     {
@@ -1822,19 +1813,19 @@
     'FN-20': 451, 'FN-21': 467, 'FN-22': 484,
     'FN-07': 504, 'FN-08': 519, 'FN-09': 534, 'FN-10': 547, 'FN-11': 559, 'FN-12': 572,
     'FN-13': 585, 'FN-14': 605,
-    'FN-23': 1059, 'FN-24': 1079, 'FN-25': 1098, 'FN-26': 1139, 'FN-27': 1162, 'FN-28': 1187,
-    'FN-29': 1277, 'FN-30': 1297, 'FN-31': 1324, 'FN-32': 1337, 'FN-33': 1374, 'FN-34': 1438,
-    'STU-04': 1359, 'STU-05': 1392, 'STU-06': 1407, 'STU-07': 1422,
-    'SEC-01': 635, 'SEC-02': 650, 'SEC-03': 668, 'SEC-04': 680, 'SEC-05': 697, 'SEC-06': 710,
-    'SEC-07': 726, 'SEC-08': 748,
+    'FN-23': 1056, 'FN-24': 1076, 'FN-25': 1095, 'FN-26': 1136, 'FN-27': 1159, 'FN-28': 1184,
+    'FN-29': 1274, 'FN-30': 1294, 'FN-31': 1321, 'FN-32': 1334, 'FN-33': 1371, 'FN-34': 1435,
+    'STU-04': 1356, 'STU-05': 1389, 'STU-06': 1404, 'STU-07': 1419,
+    'SEC-01': 635, 'SEC-02': 650, 'SEC-03': 665, 'SEC-04': 677, 'SEC-05': 694, 'SEC-06': 707,
+    'SEC-07': 723, 'SEC-08': 745,
     'A11Y-01': 751, 'A11Y-02': 768, 'A11Y-03': 780, 'A11Y-04': 795, 'A11Y-05': 816, 'A11Y-06': 837,
-    'ADM-01': 869, 'ADM-02': 882, 'ADM-03': 895,
-    'STU-01': 908, 'STU-02': 921, 'STU-03': 936,
-    'MOB-01': 951, 'MOB-02': 969, 'MOB-03': 983, 'MOB-04': 1004, 'MOB-05': 1021, 'MOB-06': 1040,
-    'PERF-01': 1453, 'PERF-02': 1463, 'PERF-03': 1473, 'PERF-04': 1483,
-    'SMK-03': 1495, 'SEC-09': 1528, 'FN-35': 1556, 'FN-36': 1573, 'FN-37': 1593, 'FN-38': 1629, 'STU-08': 1661, 'STU-09': 1683,
-    'FN-39': 1705, 'FN-40': 1720, 'FN-41': 1739, 'FN-42': 1752,
-    'PERF-05': 1770, 'PERF-06': 1780, 'PERF-07': 1792, 'PERF-08': 1804
+    'ADM-01': 866, 'ADM-02': 879, 'ADM-03': 892,
+    'STU-01': 905, 'STU-02': 918, 'STU-03': 933,
+    'MOB-01': 948, 'MOB-02': 966, 'MOB-03': 980, 'MOB-04': 1001, 'MOB-05': 1018, 'MOB-06': 1037,
+    'PERF-01': 1450, 'PERF-02': 1460, 'PERF-03': 1470, 'PERF-04': 1480,
+    'SMK-03': 1492, 'SEC-09': 1525, 'FN-35': 1547, 'FN-36': 1564, 'FN-37': 1584, 'FN-38': 1620, 'STU-08': 1652, 'STU-09': 1674,
+    'FN-39': 1696, 'FN-40': 1711, 'FN-41': 1730, 'FN-42': 1743,
+    'PERF-05': 1761, 'PERF-06': 1771, 'PERF-07': 1783, 'PERF-08': 1795
   };
   const SRC = {
     'SMK-01': { Playwright: ['tests/smoke.spec.js', 5] },
@@ -1896,7 +1887,7 @@
     'PERF-07': { k6: ['k6/load.js', 36], JMeter: ['jmeter/pages.csv', 10], Gatling: ['gatling/src/test/java/CvLoad.java', 45] },
     'PERF-08': { k6: ['k6/load.js', 38], JMeter: ['jmeter/pages.csv', 12], Gatling: ['gatling/src/test/java/CvLoad.java', 49] },
     'SMK-03': { Playwright: ['tests/security.spec.js', 84], Cypress: ['cypress/e2e/security_spec.cy.js', 65] },
-    'SEC-09': { Playwright: ['tests/security.spec.js', 110], Cypress: ['cypress/e2e/security_spec.cy.js', 90], Robot: ['tests/robot/catalog.robot', 297] },
+    'SEC-09': { Playwright: ['tests/security.spec.js', 115], Cypress: ['cypress/e2e/security_spec.cy.js', 92], Robot: ['tests/robot/catalog.robot', 297] },
     'FN-35': { Playwright: ['tests/cv.spec.js', 150], Cypress: ['cypress/e2e/cv_spec.cy.js', 168], Robot: ['tests/robot/catalog.robot', 301] },
     'FN-36': { Playwright: ['tests/cv.spec.js', 177], Cypress: ['cypress/e2e/cv_spec.cy.js', 194] },
     'FN-37': { Playwright: ['tests/cv.spec.js', 187], Cypress: ['cypress/e2e/cv_spec.cy.js', 202] },

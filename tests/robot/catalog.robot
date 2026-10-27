@@ -294,7 +294,7 @@ SMK-03 Clip pages name the video, poster, and duration
     [Tags]    SMK-03
     SMK-03    index.html    ${FALSE}
 
-SEC-09 Sitemap hreflang lists every language and omits admin
+SEC-09 Sitemap lists no ?lang= hreflang and omits admin
     [Tags]    SEC-09
     SEC-09    index.html    ${FALSE}
 
