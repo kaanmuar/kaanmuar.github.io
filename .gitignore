@@ -45,3 +45,6 @@ owner-notices-*.csv
 scripts/trending-tags.json
 .shots/
 firebase-debug.log
+
+# Private notes; Pages would publish them
+PubSap/
