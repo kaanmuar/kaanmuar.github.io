@@ -1,0 +1,36 @@
+# Sets the QA-lab URL Review avatar and banner on Bluesky and Mastodon from the brand kit
+# (scripts/open-social-profile.js, #1848). Run by hand when the kit changes; only the two images change.
+name: Bluesky and Mastodon profile images
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Network'
+        type: choice
+        options: ['all', 'bluesky', 'mastodon']
+        default: 'all'
+      dry_run:
+        description: 'Sign in and report, change nothing'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+      BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+      MASTODON_URL: ${{ secrets.MASTODON_URL }}
+      MASTODON_TOKEN: ${{ secrets.MASTODON_TOKEN }}
+      NETWORK: ${{ inputs.network != 'all' && inputs.network || '' }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - run: node scripts/open-social-profile.js ${{ inputs.dry_run && '--dry-run' || '' }}

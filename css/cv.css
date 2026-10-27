@@ -923,12 +923,7 @@
         #sender-message { min-height: 3.25rem; }
         #message-form .submit-btn { flex-shrink: 0; margin-top: 0.15rem; }
         .form-captcha { margin: 0.2rem 0 0.25rem; flex-shrink: 0; }
-        .form-captcha[hidden] { display: none !important; }
-        .form-captcha-row { display: flex; align-items: center; gap: 8px; margin-bottom: 0.2rem; }
-        .form-captcha img { display: block; height: 42px; width: auto; border-radius: 8px; border: 1px solid var(--border-color); background: #f4f7f8; }
-        .form-captcha-refresh { border: 0; background: transparent; color: var(--accent); font: inherit; font-size: 0.75rem; font-weight: 600; cursor: pointer; padding: 0; }
-        .form-captcha label { margin-bottom: 0.1rem; font-size: 0.75rem; }
-        .form-captcha input { padding-top: 0.35rem; padding-bottom: 0.35rem; }
+        .form-turnstile { max-width: 100%; }
         #contact-widget.captcha-on #message-form { overflow: auto; }
         /* Short screens (landscape phones, the QA lab's CV frame): the widget drops over the button to keep Send on screen. */
         @media (max-height: 560px) {

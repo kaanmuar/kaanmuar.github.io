@@ -375,6 +375,12 @@
     syncLegal();
     syncSection();
   });
+  // Outreach links on qalabreview.com open the free review with the prospect's site already typed in.
+  const prefill = String(new URLSearchParams(location.search).get("url") || "").trim().replace(/^https?:\/\//i, "");
+  if (/^[a-z0-9.-]+\.[a-z]{2,}(\/[\w./-]*)?$/i.test(prefill) && !urlInput.value) {
+    urlInput.value = prefill;
+    urlInput.dispatchEvent(new Event("input"));
+  }
 
   document.getElementById("theme-toggle").addEventListener("click", () => {
     if (window.SiteTheme && SiteTheme.toggle) SiteTheme.toggle();

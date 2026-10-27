@@ -6,6 +6,7 @@
    plan       the private 90-day plan (jarvis_settings/outreach, uploaded by scripts/jarvis-outreach-plan.js):
               phase today, next milestone, deadlines, weekly funnel targets and the 90-day targets
    mail       the sending domain's MX, SPF, DKIM and DMARC
+   links      qalabreview.com short links: Worker live, visits, reviews, paid unlocks and USD per campaign and prospect
 
    The plan, prospect names and email copy stay out of the repo; only counts reach the dashboard. */
 
@@ -164,22 +165,105 @@ async function mailHealth(ctx, domain) {
   return { domain, checks, ok: checks.every((c) => c.ok) };
 }
 
+/* qalabreview.com links (#1864, #1868). The Worker in qalabreview/ tags every link utm_source=qalabreview, with the
+   prospect's host in utm_content; page opens and reviews keep that query, and a payment takes the source of the
+   review it unlocked, else of the payer's review in range (as the daily review report does). */
+const SHORT = "https://qalabreview.com";
+const REVENUE = new Set(["paid-report", "paid-addon", "run-credit", "monthly-pass"]);
+const SHORT_PATHS = [["yt", "YouTube"], ["tiktok", "TikTok"], ["li", "LinkedIn"], ["ig", "Instagram"], ["qr", "QR code"], ["pdf", "One-pager"],
+  ["lecture", "Lecture slides"], ["webinar", "Webinar"], ["sig", "Email signature"], ["call", "Book a call"]];
+const FUNNEL = [[1866, "Short links (Worker)"], [1867, "Landing in six languages"], [1868, "Jarvis clicks and revenue"], [1869, "Shared mailboxes"],
+  [1870, "Partner referral links"], [1871, "Score badge"], [1872, "Prospect vs peers"], [1873, "Education hub"], [1874, "Score-change follow-up"], [1875, "Benchmark pages"]];
+
+function linkTags(query) {
+  try {
+    const p = new URLSearchParams(String(query || ""));
+    return p.get("utm_source") === "qalabreview" ? { campaign: (p.get("utm_campaign") || "unknown").slice(0, 40), host: bare(p.get("utm_content") || "").slice(0, 80) } : null;
+  } catch (error) { return null; }
+}
+
+function linkRows(opens, reviews, ctx) {
+  const start = ctx.now - ctx.days * DAY;
+  const byCampaign = {};
+  const prospects = {};
+  const sourceById = {};
+  const sourceByEmail = {};
+  const row = (host) => prospects[host] || (prospects[host] = { host, visits: 0, reviews: 0, paid: 0, usd: 0, last: "" });
+  const t = { visits: 0, reviews: 0, paid: 0, usd: 0 };
+  opens.forEach((o) => {
+    const tags = linkTags(o.query);
+    const at = toMs(o.createdAt);
+    if (!tags || at < start) return;
+    t.visits += 1;
+    tally(byCampaign, tags.campaign);
+    if (!tags.host) return;
+    const r = row(tags.host);
+    r.visits += 1;
+    const iso = new Date(at).toISOString();
+    if (iso > r.last) r.last = iso;
+  });
+  const inRange = reviews.filter((r) => toMs(r.createdAt) >= start && !r.test);
+  inRange.filter((r) => !REVENUE.has(r.status)).forEach((r) => {
+    const tags = linkTags(r.query);
+    if (!tags) return;
+    t.reviews += 1;
+    if (r.id) sourceById[r.id] = tags;
+    const email = String(r.email || "").toLowerCase();
+    if (email && !sourceByEmail[email]) sourceByEmail[email] = tags;
+    if (tags.host) row(tags.host).reviews += 1;
+  });
+  inRange.filter((r) => r.paid === true && r.refunded !== true && REVENUE.has(r.status)).forEach((r) => {
+    const tags = sourceById[r.reportId] || sourceByEmail[String(r.email || "").toLowerCase()] || linkTags(r.query);
+    if (!tags) return;
+    const usd = (Number(r.priceUsd) || 0) - (Number(r.refundedUsd) || 0);
+    t.paid += 1;
+    t.usd += usd;
+    if (tags.host) { const x = row(tags.host); x.paid += 1; x.usd = Math.round((x.usd + usd) * 100) / 100; }
+  });
+  return {
+    visits: t.visits, reviews: t.reviews, paid: t.paid, usd: Math.round(t.usd * 100) / 100,
+    reviewRate: pct(t.reviews, t.visits), payRate: pct(t.paid, t.reviews),
+    byCampaign: listOf(byCampaign),
+    prospects: Object.values(prospects).sort((a, b) => b.usd - a.usd || b.reviews - a.reviews || b.visits - a.visits || a.host.localeCompare(b.host)).slice(0, 50)
+  };
+}
+
+async function shortLinks(ctx, reviewsP) {
+  const since = new Date(ctx.now - ctx.days * DAY);
+  const [opens, reviews, worker] = await Promise.all([
+    ctx.db.collection("url_review_opens").where("createdAt", ">=", since).select("query", "createdAt").limit(10000).get().then((s) => s.docs.map((d) => d.data())),
+    reviewsP,
+    ctx.fetch(SHORT + "/robots.txt", { redirect: "manual", signal: AbortSignal.timeout(8000) })
+      .then(async (r) => ({ status: r.status, body: r.status === 200 ? (await r.text()).slice(0, 200) : "" })).catch((error) => ({ status: 0, body: clean(error) }))
+  ]);
+  const live = worker.status === 200 && /User-agent/i.test(worker.body);
+  return Object.assign({ ok: true, live, workerStatus: worker.status, base: SHORT,
+    channels: SHORT_PATHS.map(([path, label]) => ({ label, url: SHORT + "/" + path })),
+    funnel: FUNNEL.map(([n, label]) => ({ label, url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/" + n })) },
+  linkRows(opens, reviews, ctx));
+}
+
 async function outreach(ctx) {
   const needs = [];
   const out = { ok: true, needs, days: ctx.days };
   const part = async (name, run) => { try { out[name] = await run(); } catch (error) { out[name] = { ok: false, error: clean(error) }; } };
   let planDoc = null;
+  const since = new Date(Math.min(ctx.now - ctx.days * DAY, weekStart(ctx.now))).toISOString();
+  const reviewsP = ctx.db.collection("url_reviews").where("createdAt", ">=", since).orderBy("createdAt", "desc")
+    .select("sweep", "createdAt", "status", "requestedUrl", "score", "query", "paid", "priceUsd", "refundedUsd", "refunded", "test", "email", "reportId").limit(3000).get()
+    .then((s) => s.docs.map((d) => Object.assign({ id: d.id }, d.data())));
+  reviewsP.catch(() => {});
   await Promise.all([
     part("pipeline", async () => {
-      const since = new Date(Math.min(ctx.now - ctx.days * DAY, weekStart(ctx.now))).toISOString();
       const [queue, state, reviews, index] = await Promise.all([
         ctx.db.collection("url_review_sweep").doc("outreach").get(),
         ctx.db.collection("url_review_sweep").doc("state").get(),
-        ctx.db.collection("url_reviews").where("createdAt", ">=", since).orderBy("createdAt", "desc").select("sweep", "createdAt", "status", "requestedUrl", "score").limit(3000).get(),
+        reviewsP,
         ctx.fetch(ORIGIN + "/assets/live-reports/index.json", { signal: AbortSignal.timeout(10000) }).then((r) => r.json()).catch(() => ({ reports: [] }))
       ]);
-      return Object.assign({ ok: true }, pipelineRows(queue.exists ? queue.data() : null, state.exists ? state.data() : null, reviews.docs.map((d) => d.data()), (index.reports || []).map((r) => r.host), ctx));
+      return Object.assign({ ok: true }, pipelineRows(queue.exists ? queue.data() : null, state.exists ? state.data() : null, reviews, (index.reports || []).map((r) => r.host), ctx));
     }),
+    part("links", () => shortLinks(ctx, reviewsP)),
     part("instantly", () => instantly(ctx)),
     part("plan", async () => {
       const snap = await ctx.db.collection("jarvis_settings").doc("outreach").get();
@@ -194,4 +278,4 @@ async function outreach(ctx) {
   return out;
 }
 
-module.exports = { outreach, pipelineRows, instantlyRows, planNow, mailHealth, weekStart, TTL: 30 * 60 * 1000 };
+module.exports = { outreach, pipelineRows, instantlyRows, planNow, mailHealth, linkRows, linkTags, weekStart, TTL: 30 * 60 * 1000 };

@@ -3,8 +3,8 @@
 // included; a missing name reads as undefined at runtime. Firebase refuses to deploy a name that is also in
 // functions/.env.
 const MAIL = ["SENDGRID_API_KEY"];
-// functions/github-app.js mints app tokens from the private key and falls back to the classic token.
-const GITHUB = ["GITHUB_APP_PRIVATE_KEY", "GITHUB_BUGS_TOKEN"];
+// functions/github-app.js mints app tokens from the private key.
+const GITHUB = ["GITHUB_APP_PRIVATE_KEY"];
 const BROWSER = ["BROWSER_KEY"];
 // What a review run calls: the headless browser, PageSpeed, CrUX, Web Risk and the web search.
 const SCAN = ["BROWSER_KEY", "PAGESPEED_KEY", "CRUX_KEY", "WEBRISK_KEY", "BRAVE_SEARCH_KEY"];
@@ -19,6 +19,7 @@ const list = (...groups) => [...new Set(groups.flat())];
 
 const BY_FUNCTION = {
   mail: list(MAIL),
+  turnstile: list(["TURNSTILE_SECRET_KEY"]),
   mailWithGithub: list(MAIL, GITHUB),
   diagnoseReviewFailures: list(BROWSER),
   rerunReviewFailures: list(MAIL, SCAN),
@@ -31,6 +32,8 @@ const BY_FUNCTION = {
   jarvisReviewRun: list(SCAN, SITE_TOKEN),
   jarvisMail: list(MAIL, JARVIS_SOURCES, GEMINI),
   jarvisWatch: list(MAIL, JARVIS_SOURCES, BROWSER),
+  // A Gmail app password for the inbox qa@carlosandmunoz.com forwards to (functions/tiktok-business-watch.js).
+  tiktokBusinessWatch: list(MAIL, GITHUB, ["QA_MAIL_APP_PASSWORD"]),
   jarvis: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE)
 };
 

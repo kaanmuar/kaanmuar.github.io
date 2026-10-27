@@ -665,11 +665,13 @@ function outreachAsk(ou, visits) {
   const pipe = ou.pipeline && ou.pipeline.ok ? ou.pipeline : null;
   const mail = ou.instantly && ou.instantly.ok ? ou.instantly : null;
   const plan = ou.plan && ou.plan.ok !== false ? ou.plan : null;
+  const links = ou.links && ou.links.ok ? ou.links : null;
   return {
     pipeline: pipe ? { queued: pipe.queued, swept: pipe.swept, reviews: pipe.reviews, thisWeek: pipe.thisWeek, withLiveReport: pipe.withLiveReport, bySegment: pipe.bySegment } : null,
     instantly: mail ? { campaigns: mail.status, sent: mail.sent, rates: mail.rates, replies: mail.replies, interested: mail.interested, meetings: mail.meetings, warmup: (mail.accounts || []).map((a) => a.score) } : null,
     plan: plan ? { day: plan.day, length: plan.length, phase: plan.phase, next: plan.next, weekly: plan.weekly, targets: plan.targets } : null,
-    visits: visits ? visits.total : 0
+    visits: visits ? visits.total : 0,
+    links: links ? { live: links.live, visits: links.visits, reviews: links.reviews, paid: links.paid, usd: links.usd, byCampaign: links.byCampaign, topProspects: (links.prospects || []).slice(0, 10) } : null
   };
 }
 
