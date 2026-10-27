@@ -14,6 +14,9 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const META = /(<meta\s+http-equiv="Content-Security-Policy"\s+content=")([^"]*)(")/i;
 const DATA_TYPES = /^(application\/(ld\+)?json|text\/(plain|template|html|x-template))$/i;
+// Google Translate's element.js runs this inline script in a srcdoc iframe, which inherits the page's CSP. When Google
+// changes it, tests/csp.spec.js fails with the new hash from Chrome's console message; update it here and in csp_hashes.py.
+const TRANSLATE = { host: "https://translate.google.com", hashes: ["'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='"] };
 
 /** The text of each inline script the browser would run, in document order (comments are skipped). */
 function inlineScripts(html) {
@@ -53,7 +56,8 @@ function apply(html) {
     const tokens = part.trim().split(/\s+/);
     if (tokens[0] !== "script-src") return part;
     const kept = tokens.filter((token) => token !== "'unsafe-inline'" && !/^'sha(256|384|512)-/.test(token));
-    return (part.match(/^\s*/)[0]) + kept.concat(hashes).join(" ");
+    const extra = kept.includes(TRANSLATE.host) ? TRANSLATE.hashes.filter((h) => !hashes.includes(h)) : [];
+    return (part.match(/^\s*/)[0]) + kept.concat(hashes, extra).join(" ");
   }).join(";");
   return html.replace(META, (all, open, _, close) => open + policy + close);
 }
@@ -90,6 +94,6 @@ function main() {
   console.log(check ? `CSP script hashes match their inline scripts (${list.length} pages)` : `CSP script hashes: rewrote ${stale.length} of ${list.length} pages`);
 }
 
-module.exports = { apply, inlineScripts, hash };
+module.exports = { apply, inlineScripts, hash, TRANSLATE };
 
 if (require.main === module) main();

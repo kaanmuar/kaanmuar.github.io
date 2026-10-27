@@ -8,6 +8,8 @@ META = re.compile(r'(<meta\s+http-equiv="Content-Security-Policy"\s+content=")([
 DATA_TYPES = re.compile(r"^(application/(ld\+)?json|text/(plain|template|html|x-template))$", re.I)
 TAG = re.compile(r"<!--|<script\b([^>]*)>", re.I)
 CLOSE = re.compile(r"</script[\s/>]", re.I)
+TRANSLATE_HOST = "https://translate.google.com"
+TRANSLATE_HASHES = ["'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='"]
 
 
 def inline_scripts(html):
@@ -55,6 +57,7 @@ def apply(html):
             parts.append(part)
             continue
         kept = [t for t in tokens if t != "'unsafe-inline'" and not re.match(r"^'sha(256|384|512)-", t)]
-        parts.append(re.match(r"^\s*", part).group(0) + " ".join(kept + hashes))
+        extra = [h for h in TRANSLATE_HASHES if h not in hashes] if TRANSLATE_HOST in kept else []
+        parts.append(re.match(r"^\s*", part).group(0) + " ".join(kept + hashes + extra))
     policy = ";".join(parts)
     return META.sub(lambda m: m.group(1) + policy + m.group(3), html, count=1)
