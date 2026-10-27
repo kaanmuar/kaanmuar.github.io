@@ -41,6 +41,26 @@
     "checked": "2026-10-27T03:07:58.922Z"
    }
   ],
+  "compare-2026-11/02-berlin-vienna": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3myv3zlzric2z",
+    "at": "2026-10-27T20:43:18.033Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3myv3zlzric2z",
+    "checked": "2026-10-27T20:43:19.640Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117514816848562786",
+    "at": "2026-10-27T20:43:20.229Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117514816848562786",
+    "checked": "2026-10-27T20:43:22.138Z"
+   }
+  ],
   "tips-2026-10/01-img-size": [
    {
     "channel": "bluesky",
