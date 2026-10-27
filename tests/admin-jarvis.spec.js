@@ -287,6 +287,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await row.locator('[name="g-target"]').fill('12');
     await box.locator('[name="t-pendingRatings"]').fill('25');
     await box.locator('[name="m-gemini"]').uncheck();
+    await box.locator('[name="m-messages"]').check();
     await box.locator('[name="a-cap-rerun-held"]').fill('4');
     await box.locator('[name="s-queries"]').fill('qa review\n\nqa review\n  carlos qa  ');
     await box.locator('button[type="submit"]').click();
@@ -294,7 +295,7 @@ test.describe('admin statistics (Jarvis)', () => {
     const save = calls.find((c) => c.op === 'settings-save');
     expect(save.body.settings.goals).toEqual([{ product: 'cv', metric: 'visits', period: 'week', target: 300 }, { product: 'review', metric: 'paid', period: 'month', target: 12 }]);
     expect(save.body.settings.thresholds.pendingRatings).toBe(25);
-    expect(save.body.settings.mail).toEqual({ daily: true, gemini: false, watch: true, weekly: true });
+    expect(save.body.settings.mail).toMatchObject({ daily: true, gemini: false, watch: true, weekly: true, messages: true, ratings: false, ownerReplies: false });
     expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2 } });
     expect(save.body.settings.searchQueries).toEqual(['qa review', 'qa review', 'carlos qa']);
     await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(1);
@@ -307,6 +308,9 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await page.locator('.jv-settings-box [data-act="weekly-now"]').click();
     await expect.poll(() => calls.some((c) => c.op === 'weekly-now')).toBe(true);
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.locator('.jv-settings-box [data-act="digest-now"]').click();
+    await expect.poll(() => calls.some((c) => c.op === 'digest-now')).toBe(true);
     await page.keyboard.press('Escape');
     await expect(page.locator('.jv-settings')).toBeHidden();
     expect(errors).toEqual([]);
