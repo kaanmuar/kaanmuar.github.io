@@ -32,6 +32,8 @@ const BY_FUNCTION = {
   jarvisReviewRun: list(SCAN, SITE_TOKEN),
   jarvisMail: list(MAIL, JARVIS_SOURCES, GEMINI),
   jarvisWatch: list(MAIL, JARVIS_SOURCES, BROWSER),
+  // A Gmail app password for the inbox qa@carlosandmunoz.com forwards to (functions/tiktok-business-watch.js).
+  tiktokBusinessWatch: list(MAIL, GITHUB, ["QA_MAIL_APP_PASSWORD"]),
   jarvis: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE)
 };
 
