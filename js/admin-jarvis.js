@@ -1596,11 +1596,11 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         return out.text;
     }
 
-    async function ask(question) {
+    async function ask(question, lang) {
         S.ai = 'Thinking about: ' + question;
         S.aiAt = Date.now();
         render();
-        const out = await call('ask', { question, snapshot: snapshot() });
+        const out = await call('ask', Object.assign({ question, snapshot: snapshot() }, lang ? { lang, spoken: true } : {}));
         S.ai = out.ok ? `Q: ${question}\n\n${out.text}` : 'Gemini: ' + out.error;
         S.aiAt = Date.now();
         render();
@@ -1609,26 +1609,70 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     // --- voice ----------------------------------------------------------------------------------------------
 
-    function voice() {
-        if (S.voice || !window.speechSynthesis) return S.voice;
-        const all = window.speechSynthesis.getVoices();
-        S.voice = all.find((v) => /Daniel|Arthur|UK English Male|en-GB.*Male/i.test(v.name)) || all.find((v) => /^en-GB/.test(v.lang)) || all.find((v) => /^en/.test(v.lang)) || null;
-        return S.voice;
+    const VOICE_KEY = 'jarvis.voice';
+
+    function voicePrefs() {
+        let saved = {};
+        try { saved = JSON.parse(localStorage.getItem(VOICE_KEY) || '{}'); } catch (error) { saved = {}; }
+        return C.voicePrefs(saved, navigator.language);
     }
 
-    function speak(text) {
+    function saveVoice(patch) {
+        const p = Object.assign(voicePrefs(), patch);
+        try { localStorage.setItem(VOICE_KEY, JSON.stringify({ lang: p.lang, en: p.en, es: p.es, rate: p.rate })); } catch (error) { /* private mode: this visit only */ }
+    }
+
+    function voice(lang) {
+        if (!window.speechSynthesis) return null;
+        S.voices = S.voices || {};
+        if (S.voices[lang]) return S.voices[lang];
+        const all = window.speechSynthesis.getVoices();
+        const male = lang === 'es' ? /Jorge|Diego|Juan|Male/i : /Daniel|Arthur|UK English Male|en-GB.*Male/i;
+        const region = lang === 'es' ? /^es-(US|MX|419)/ : /^en-GB/;
+        S.voices[lang] = all.find((v) => v.lang.startsWith(lang) && male.test(v.name)) || all.find((v) => region.test(v.lang)) || all.find((v) => v.lang.startsWith(lang)) || null;
+        return S.voices[lang];
+    }
+
+    /** The browser's own voice, when the server voice cannot be reached. */
+    function browserSpeak(text, lang, rate) {
         if (!window.speechSynthesis) { toast('This browser cannot speak.'); return; }
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(String(text || '').replace(/[•*#|]/g, ' ').slice(0, 3000));
-        const v = voice();
+        const u = new SpeechSynthesisUtterance(text);
+        const v = voice(lang);
         if (v) u.voice = v;
-        u.rate = 1.03; u.pitch = 0.92;
+        u.lang = v ? v.lang : lang;
+        u.rate = rate; u.pitch = 0.92;
         window.speechSynthesis.speak(u);
+    }
+
+    function stopSpeaking() {
+        S.speakSeq = (S.speakSeq || 0) + 1;
+        if (S.audio) { S.audio.pause(); S.audio = null; }
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+    }
+
+    /** #1674: the same Cloud voice as the app, picked in Settings; the browser's voice if the server cannot answer. */
+    async function speak(text, lang, voiceName) {
+        stopSpeaking();
+        const seq = S.speakSeq;
+        const clean = String(text || '').replace(/[•*#|]/g, ' ').slice(0, 3000);
+        const p = voicePrefs();
+        const code = lang || 'en';
+        try {
+            const out = await call('speak', { text: clean, lang: code, voice: voiceName || p[code], rate: p.rate });
+            if (seq !== S.speakSeq) return;
+            if (!out.audio) throw new Error(out.error || 'No audio.');
+            const audio = new Audio('data:audio/mp3;base64,' + out.audio);
+            S.audio = audio;
+            audio.onended = () => { if (S.audio === audio) S.audio = null; };
+            await audio.play();
+        } catch (error) {
+            if (seq === S.speakSeq) browserSpeak(clean, code, p.rate);
+        }
     }
 
     function speakBriefing() {
         const lead = $('#jv-status').textContent;
-        speak(`${$('#jv-hello').textContent}. ${lead} ${S.ai ? S.ai : briefText(S.product).replace(/•/g, '')}`);
+        speak(`${$('#jv-hello').textContent}. ${lead} ${S.ai ? S.ai : briefText(S.product).replace(/•/g, '')}`, 'en');
     }
 
     function listen() {
@@ -1637,7 +1681,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (S.listening && S.rec) { S.rec.stop(); return; }
         const rec = new Rec();
         S.rec = rec;
-        rec.lang = 'en-US';
+        const heard = voicePrefs().speak;
+        rec.lang = heard === 'es' ? 'es-US' : heard === 'en' ? 'en-US' : navigator.language || 'en-US';
         rec.interimResults = false;
         rec.maxAlternatives = 1;
         rec.onstart = () => { S.listening = true; $('[data-act="listen"]').setAttribute('aria-pressed', 'true'); toast('Listening…', 8000); };
@@ -1683,11 +1728,11 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             case 'email': emailBriefing(); break;
             case 'refresh': refresh(); say('Refreshing.'); break;
             case 'speak': speakBriefing(); break;
-            case 'stop': if (window.speechSynthesis) window.speechSynthesis.cancel(); break;
+            case 'stop': stopSpeaking(); break;
             case 'run-job': runJob(cmd.job); break;
             case 'settings': openSettings(); break;
             case 'daily': dailyNow(); break;
-            case 'ask': { const text = await ask(cmd.question); if (text) say(text); break; }
+            case 'ask': { const lang = voicePrefs().speak; const text = await ask(cmd.question, spoken ? lang : null); if (text && spoken) speak(text, lang); break; }
             default: break;
         }
     }
@@ -1790,6 +1835,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
               <div class="jv-th-grid">${Object.keys(MOVED_MAIL).map((k) => `<label class="jv-check"><input type="checkbox" name="m-${k}"${d.mail[k] ? ' checked' : ''}> ${esc(MOVED_MAIL[k])}</label>`).join('')}</div>
               <div class="jv-actions"><button type="button" class="jv-btn" data-act="daily-now">Send today's briefing now</button><button type="button" class="jv-btn" data-act="weekly-now">Send the weekly strategy now</button><button type="button" class="jv-btn" data-act="digest-now">Send the evening digest now</button></div></section>
             <section data-bp-section></section>
+            <section data-voice-section>${voiceSection()}</section>
             <section><h4>Actions</h4>
               <label class="jv-check"><input type="checkbox" name="a-auto"${d.actions.auto ? ' checked' : ''}> Let Jarvis run the safe actions on its own every hour, within these daily caps</label>
               <div class="jv-th-grid">${Object.keys(ACTION_CAPS).map((k) => `<label class="jv-field">${esc(ACTION_LABELS[k].replace(/^./, (c) => c.toUpperCase()))} per day<input type="number" name="a-cap-${k}" min="0" max="100" step="1" value="${esc(d.actions.caps[k])}"></label>`).join('')}</div>
@@ -1803,6 +1849,21 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
               <p class="jv-note">Left empty, Jarvis checks the default searches shown. Brave is asked once a day.</p></section>
             <footer><span class="jv-note">${S.settings && S.settings.updatedAt ? 'Saved ' + esc(when(S.settings.updatedAt)) : 'Using the defaults'}</span><button type="button" class="jv-btn" data-settings-close>Cancel</button><button type="submit" class="jv-btn is-primary">Save</button></footer>`;
         bp.paint($('[data-bp-section]'));
+    }
+
+    /** #1674: kept in this browser, like the app keeps its own; applies at once, without Save. */
+    function voiceSection() {
+        const p = voicePrefs();
+        const opt = (value, label, on) => `<option value="${esc(value)}"${on ? ' selected' : ''}>${esc(label)}</option>`;
+        const browser = (() => { try { return new Intl.DisplayNames(['en'], { type: 'language' }).of(String(navigator.language || 'en').slice(0, 2)); } catch (error) { return 'browser'; } })();
+        const pick = (code, title) => `<label class="jv-field">${title}<select data-voice-pick="${code}" data-menu-ready="1">${C.VOICES.filter((v) => v.lang === code).map((v) => opt(v.name, v.label, v.name === p[code])).join('')}</select></label>`;
+        const r = C.VOICE_RATE;
+        return `<h4>Voice</h4><div class="jv-th-grid">
+              <label class="jv-field">Language<select data-voice-lang data-menu-ready="1">${opt('', 'Browser (' + browser + ')', !p.lang)}${opt('en', 'English', p.lang === 'en')}${opt('es', 'Español', p.lang === 'es')}</select></label>
+              ${pick('en', 'English voice')}${pick('es', 'Spanish voice')}
+              <label class="jv-field">Speed <output data-voice-rate-out>${p.rate.toFixed(2)}×</output><input type="range" data-voice-rate min="${r.min}" max="${r.max}" step="${r.step}" value="${p.rate}"></label></div>
+              <div class="jv-actions"><button type="button" class="jv-btn" data-voice-preview>Preview</button></div>
+              <p class="jv-note">The same voice as the phone app. Spoken questions are heard and answered in the language above; the briefing is read in English. If the voice cannot be reached, the browser's own voice reads instead.</p>`;
     }
 
     // --- pushes in the page (#1671) -------------------------------------------------------------------------
@@ -1951,6 +2012,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.briefHidden !== undefined) { S.showHidden = !S.showHidden; render(); return; }
         if (t.dataset.sheet !== undefined) { sheetAct(t); return; }
         if (t.dataset.settingsClose !== undefined) { closeSettings(); return; }
+        if (t.dataset.voicePreview !== undefined) { const lang = voicePrefs().speak === 'es' ? 'es' : 'en'; speak(C.VOICE_SAMPLE[lang], lang); return; }
         if (t.dataset.bp) { bp.handle($('[data-bp-section]'), t.dataset.bp); return; }
         if (t.dataset.replyClose !== undefined) { $('.jv-reply').hidden = true; return; }
         if (t.dataset.pushAct) { pushAct(t.closest('.jv-push'), Number(t.dataset.pushAct)); return; }
@@ -1999,11 +2061,15 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         else if (t.dataset.shareCaption !== undefined) S.share.caption = t.value;
         else if (t.dataset.mkField) S.mkForm[t.dataset.mkField] = t.value;
         else if (t.dataset.mkDraft) S.mkDrafts[t.dataset.mkDraft] = t.value;
+        else if (t.dataset.voiceRate !== undefined) $('[data-voice-rate-out]').textContent = Number(t.value).toFixed(2) + '×';
     });
     root.addEventListener('change', (event) => {
         if (event.target.dataset.shareFile !== undefined) { S.share.file = event.target.files[0] || null; render(); return; }
         if (event.target.dataset.mkField) { S.mkForm[event.target.dataset.mkField] = event.target.value; return; }
         if (event.target.dataset.bpKind) { bp.kindChanged(event.target.dataset.bpKind, event.target.checked); return; }
+        if (event.target.dataset.voiceLang !== undefined) { saveVoice({ lang: event.target.value || null }); return; }
+        if (event.target.dataset.voiceRate !== undefined) { saveVoice({ rate: Number(event.target.value) }); return; }
+        if (event.target.dataset.voicePick) { const code = event.target.dataset.voicePick; saveVoice({ [code]: event.target.value }); speak(C.VOICE_SAMPLE[code], code, event.target.value); return; }
         if (event.target.name !== 'g-product') return;
         const d = readSettings();
         const i = Number(event.target.closest('[data-goal]').dataset.goal);
@@ -2079,7 +2145,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         else if (event.key === '/') { const ask = $(`[data-view="${S.product}"] .jv-ask input`); if (ask) { event.preventDefault(); ask.focus(); } }
     }
     document.addEventListener('keydown', onKey);
-    if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => { S.voice = null; voice(); };
+    if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => { S.voices = {}; };
 
     S.timers.push(setInterval(() => {
         const node = $('#jv-ago');

@@ -35,6 +35,7 @@ function keepUntil() {
 const siteReport = require("./site-report-mail");
 const ownerLayout = require("./owner-mail");
 const ops = require("./ops-schedule");
+const githubApp = require("./github-app");
 
 // Runs a scheduled job and leaves its outcome in ops_runs/<job> for opsWatchdog. A job may return a
 // short note ("12 sent") for the digest.
@@ -1010,7 +1011,7 @@ async function loadFollowUp(start, end) {
 // A failure bug seen closed on GitHub is marked once, so only the open ones are asked about again.
 async function loadFailureBugs() {
   const snap = await admin.firestore().collection("url_review_failure_bugs").get();
-  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  const token = await githubApp.token();
   return Promise.all(snap.docs.map(async (doc) => {
     const bug = Object.assign({ key: doc.id }, doc.data());
     if (!bug.issue || bug.closedAt) return bug;
@@ -1310,7 +1311,7 @@ exports.rerunReviewFailures = require("firebase-functions/v2/scheduler").onSched
 
 const BUG_REPO = "kaanmuar/kaanmuar.github.io";
 const BUG_TICKET = 320;
-const BOARD = { project: "PVT_kwHOALfwis4BmsxO", status: "PVTSSF_lAHOALfwis4BmsxOzhlUt04", backlog: "3f4ac4fe" };
+const BOARD = { project: "PVT_kwDOFLbZIM4BokiS", status: "PVTSSF_lADOFLbZIM4BokiSzhnEBTE", backlog: "3f4ac4fe" };
 
 async function github(path, body, token) {
   const res = await fetch("https://api.github.com" + path, Object.assign({
@@ -1324,11 +1325,12 @@ async function github(path, body, token) {
 
 async function openFailureBug(bug, token) {
   const issue = await github("/repos/" + BUG_REPO + "/issues", { title: bug.title, body: bug.body, labels: ["bug", "area:be"] }, token);
-  const board = github("/graphql", { query: "mutation($p:ID!,$c:ID!){addProjectV2ItemById(input:{projectId:$p,contentId:$c}){item{id}}}", variables: { p: BOARD.project, c: issue.node_id } }, token)
+  const boardToken = await githubApp.token("board");
+  const board = github("/graphql", { query: "mutation($p:ID!,$c:ID!){addProjectV2ItemById(input:{projectId:$p,contentId:$c}){item{id}}}", variables: { p: BOARD.project, c: issue.node_id } }, boardToken)
     .then((added) => github("/graphql", {
       query: "mutation($p:ID!,$i:ID!,$f:ID!,$o:String!){updateProjectV2ItemFieldValue(input:{projectId:$p,itemId:$i,fieldId:$f,value:{singleSelectOptionId:$o}}){projectV2Item{id}}}",
       variables: { p: BOARD.project, i: added.data.addProjectV2ItemById.item.id, f: BOARD.status, o: BOARD.backlog }
-    }, token));
+    }, boardToken));
   const parent = github("/repos/" + BUG_REPO + "/issues/" + BUG_TICKET + "/sub_issues", { sub_issue_id: issue.id }, token);
   (await Promise.allSettled([board, parent])).filter((step) => step.status === "rejected")
     .forEach((step) => console.error("Failure bug #" + issue.number + " was opened, but not filed on the board or under #" + BUG_TICKET + ":", step.reason));
@@ -1336,9 +1338,9 @@ async function openFailureBug(bug, token) {
 }
 
 async function fileReviewFailureBugs() {
-  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  const token = await githubApp.token();
   if (!token) {
-    console.log("URL review failure bugs: GITHUB_BUGS_TOKEN is not set, so no bug was opened.");
+    console.log("URL review failure bugs: no GitHub token is set, so no bug was opened.");
     return null;
   }
   const db = admin.firestore();
@@ -1409,9 +1411,9 @@ async function githubGet(path, token) {
 }
 
 async function ensureLiveReportsBatch() {
-  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  const token = await githubApp.token();
   if (!token) {
-    console.log("Live Reports watchdog: GITHUB_BUGS_TOKEN is not set, so the batch was not checked.");
+    console.log("Live Reports watchdog: no GitHub token is set, so the batch was not checked.");
     return null;
   }
   const today = new Date().toISOString().slice(0, 10);
@@ -1439,9 +1441,9 @@ exports.ensureLiveReportsBatch = scheduled(withMail, "ensureLiveReportsBatch", (
 const FACEBOOK_WORKFLOW = "facebook-page.yml";
 
 async function dispatchFacebookQueue() {
-  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  const token = await githubApp.token();
   if (!token) {
-    console.log("Facebook queue: GITHUB_BUGS_TOKEN is not set, so the workflow was not started.");
+    console.log("Facebook queue: no GitHub token is set, so the workflow was not started.");
     return null;
   }
   const today = new Date().toISOString().slice(0, 10);
@@ -2273,7 +2275,7 @@ async function opsWatchdog() {
   const sweepCap = ops.budget("sweepPerDay", process.env);
   const lastNight = sweep.night(sweepState, new Date(now).toISOString().slice(0, 10), sweepCap);
   if (process.env.SWEEP_LIVE === "1" && lastNight.short) problems.push({ job: "sweepReviews", why: "last night reviewed " + (lastNight.done + lastNight.failed) + " of " + sweepCap });
-  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  const token = await githubApp.token();
   for (const row of ops.JOBS.filter((item) => item.host === "github")) {
     if (!token) break;
     try {
@@ -5019,7 +5021,7 @@ async function jarvisNotifyAct(body, by) {
 
 // The latest run of each posting workflow, for the Social hub panel.
 async function socialRuns() {
-  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  const token = await githubApp.token();
   if (!token) return [];
   return Promise.all(jarvisSocial.WORKFLOWS.map(async (w) => {
     const run = ((await githubGet("/repos/" + BUG_REPO + "/actions/workflows/" + w.file + "/runs?per_page=1", token).catch(() => ({}))).workflow_runs || [])[0];
@@ -5057,8 +5059,8 @@ async function shareDraft(body) {
 }
 
 async function shareQueue(body) {
-  const token = process.env.GITHUB_BUGS_TOKEN || "";
-  if (!token) throw new Error("GITHUB_BUGS_TOKEN is not set in functions/.env, so Jarvis cannot start the post workflow.");
+  const token = await githubApp.token();
+  if (!token) throw new Error("No GitHub token is set in functions/.env (GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY, or GITHUB_BUGS_TOKEN), so Jarvis cannot start the post workflow.");
   const ref = admin.firestore().collection("social_inbox").doc(String(body.id || "x"));
   const snap = await ref.get();
   if (!snap.exists) throw new Error("That draft is gone.");
@@ -5077,7 +5079,7 @@ async function shareQueue(body) {
 }
 
 async function shareList() {
-  const token = process.env.GITHUB_BUGS_TOKEN || "";
+  const token = await githubApp.token();
   const docs = (await admin.firestore().collection("social_inbox").orderBy("createdAt", "desc").limit(10).get()).docs;
   const runs = token ? ((await githubGet("/repos/" + BUG_REPO + "/actions/workflows/" + SHARE_WORKFLOW + "/runs?per_page=20", token).catch(() => ({}))).workflow_runs || []) : [];
   return docs.map((d) => {
@@ -5186,7 +5188,7 @@ async function jarvisExternal(ops, days) {
   const load = {
     health: () => jarvisCached("health", days, () => jarvis.health(admin.firestore(), { days, now })),
     jobs: () => jarvisCached("jobs", 0, async () => ({ ok: true, jobs: await jarvis.jobs(fetch) })),
-    github: () => jarvisCached("github", 0, () => jarvis.github(fetch, env.GITHUB_BUGS_TOKEN, { now })),
+    github: () => jarvisCached("github", 0, async () => jarvis.github(fetch, await githubApp.token(), { now })),
     uptime: () => jarvisCached("uptime", 0, () => jarvis.uptime(fetch, { now })),
     speed: () => jarvisCached("speed", 0, () => jarvis.speed(urlReview, env)),
     ga4: () => jarvisCached("ga4", days, () => jarvis.ga4(fetch, { days })),
@@ -5370,7 +5372,7 @@ async function jarvisClickAction(body, by) {
   if (action === "rerun-ci") {
     const workflow = String(body.workflow || "").slice(0, 120);
     try {
-      const out = await jarvis.rerunCi(fetch, process.env.GITHUB_BUGS_TOKEN, workflow);
+      const out = await jarvis.rerunCi(fetch, await githubApp.token(), workflow);
       await note({ action, status: "done", target: workflow, detail: out.already ? "Already " + out.already + "." : "Re-running run " + out.run + "." });
       return { action, done: out.already ? 0 : 1, ran: workflow, url: out.url, already: out.already || null };
     } catch (error) {
@@ -5529,7 +5531,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
   if (req.method === "OPTIONS") { res.status(204).send(""); return; }
   if (req.method !== "POST") { res.status(405).json({ error: "POST only." }); return; }
   if ((req.body || {}).op === "app-release") {
-    try { res.json(await jarvisPush.releasePush(fetch, admin.firestore(), admin.messaging(), { token: process.env.GITHUB_BUGS_TOKEN, now: Date.now() })); }
+    try { res.json(await jarvisPush.releasePush(fetch, admin.firestore(), admin.messaging(), { token: await githubApp.token(), now: Date.now() })); }
     catch (error) { res.status(502).json({ error: error.message }); }
     return;
   }
@@ -5567,14 +5569,14 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     let out;
     if (op === "health") out = await jarvisCached(op, days, () => jarvis.health(admin.firestore(), { days, now }));
     else if (op === "jobs") out = await jarvisCached(op, 0, async () => ({ ok: true, jobs: await jarvis.jobs(fetch) }));
-    else if (op === "github") out = await jarvisCached(op, 0, () => jarvis.github(fetch, env.GITHUB_BUGS_TOKEN, { now }));
+    else if (op === "github") out = await jarvisCached(op, 0, async () => jarvis.github(fetch, await githubApp.token(), { now }));
     else if (op === "ga4") out = await jarvisCached(op, days, () => jarvis.ga4(fetch, { days }));
     else if (op === "cloudflare") out = await jarvisCached(op, days, () => jarvis.cloudflare(fetch, env, { days, now }));
     else if (op === "speed") out = await jarvisCached(op, 0, () => jarvis.speed(urlReview, env));
     else if (op === "uptime") out = await jarvisCached(op, 0, () => jarvis.uptime(fetch, { now }));
     else if (op === "brief") out = await jarvis.brief(fetch, env, body.snapshot || await appAskSnapshot());
     else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot || await appAskSnapshot(), { lang: body.lang, spoken: body.spoken === true });
-    else if (op === "speak") out = await jarvis.speak(fetch, body.text, body.lang);
+    else if (op === "speak") out = await jarvis.speak(fetch, body.text, body.lang, { voice: body.voice, rate: body.rate });
     else if (op === "run-job") out = await jarvis.runJob(fetch, body.job);
     else if (op === "settings") out = await jarvis.readSettings(admin.firestore());
     else if (op === "settings-save") {
@@ -5628,8 +5630,8 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       out = await jarvisSocialDecide(body.id, body.decision, now);
     } else if (op === "social-runs") out = { runs: await socialRuns() };
     else if (op === "social-post-now") {
-      const token = process.env.GITHUB_BUGS_TOKEN || "";
-      if (!token) throw new Error("GITHUB_BUGS_TOKEN is not set in functions/.env, so Jarvis cannot start the workflows.");
+      const token = await githubApp.token();
+      if (!token) throw new Error("No GitHub token is set in functions/.env (GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY, or GITHUB_BUGS_TOKEN), so Jarvis cannot start the workflows.");
       const started = [];
       for (const w of jarvisSocial.WORKFLOWS) {
         const path = "/repos/" + BUG_REPO + "/actions/workflows/" + w.file;

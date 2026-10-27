@@ -154,7 +154,7 @@ async function runJob(fetchImpl, name) {
 // --- github ---------------------------------------------------------------------------------------------------
 
 async function github(fetchImpl, token, { now }) {
-  if (!token) return { ok: false, error: "GITHUB_BUGS_TOKEN is not set." };
+  if (!token) return { ok: false, error: "No GitHub token is set." };
   const get = async (path) => readJson(await fetchImpl("https://api.github.com/" + path, {
     headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" },
     signal: AbortSignal.timeout(15000)
@@ -188,7 +188,7 @@ async function github(fetchImpl, token, { now }) {
 
 // The newest failed run of a workflow on main gets its failed jobs re-run; the token needs Actions: write.
 async function rerunCi(fetchImpl, token, workflow) {
-  if (!token) throw new Error("GITHUB_BUGS_TOKEN is not set.");
+  if (!token) throw new Error("No GitHub token is set.");
   const name = String(workflow || "").slice(0, 120);
   const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
   const runs = await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs?branch=main&status=completed&per_page=50", { headers, signal: AbortSignal.timeout(15000) }), "GitHub");
@@ -196,7 +196,7 @@ async function rerunCi(fetchImpl, token, workflow) {
   if (!run) throw new Error("No finished run of " + name + " on main.");
   if (["success", "skipped", "neutral"].includes(run.conclusion)) return { workflow: name, run: run.id, url: run.html_url, already: run.conclusion };
   const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs/" + run.id + "/rerun-failed-jobs", { method: "POST", headers, signal: AbortSignal.timeout(15000) });
-  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); GITHUB_BUGS_TOKEN needs Actions: write.");
+  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); the GitHub token needs Actions: write.");
   if (!res.ok) throw new Error("GitHub " + res.status + " on the re-run.");
   return { workflow: name, run: run.id, url: run.html_url };
 }
@@ -436,6 +436,27 @@ async function brief(fetchImpl, env, snapshot) {
 const TTS = "https://texttospeech.googleapis.com/v1/text:synthesize";
 const VOICE_LOCALE = { en: "en-US", es: "es-ES", pt: "pt-BR", de: "de-DE", fr: "fr-FR", it: "it-IT" };
 const VOICE_NAME = "Chirp3-HD-Charon";
+/** #1674: the voices the app and the web offer; the first of each language is its default. */
+const VOICES = [
+  { name: "en-GB-Chirp3-HD-Orus", lang: "en", label: "Orus, British" },
+  { name: "en-US-Chirp3-HD-Charon", lang: "en", label: "Charon, American" },
+  { name: "es-US-Chirp3-HD-Algenib", lang: "es", label: "Algenib, Latin American" },
+  { name: "es-ES-Chirp3-HD-Charon", lang: "es", label: "Charon, Spain" }
+];
+const VOICE_RATE = { min: 0.75, max: 1.25, default: 0.95 };
+
+/** The catalog voice asked for when it speaks the answer's language, else that language's default, else Charon. */
+function voiceFor(code, asked) {
+  const pick = VOICES.find((v) => v.name === asked && v.lang === code) || VOICES.find((v) => v.lang === code);
+  if (pick) return { languageCode: pick.name.slice(0, 5), name: pick.name };
+  const locale = VOICE_LOCALE[code] || code;
+  return { languageCode: locale, name: locale + "-" + VOICE_NAME };
+}
+
+function voiceRate(rate) {
+  const r = Number(rate);
+  return Number.isFinite(r) && r > 0 ? Math.min(VOICE_RATE.max, Math.max(VOICE_RATE.min, r)) : VOICE_RATE.default;
+}
 
 function langCode(lang) {
   const code = String(lang || "").toLowerCase().split(/[-_]/)[0];
@@ -471,23 +492,27 @@ function speakable(text) {
     .slice(0, 2400);
 }
 
-async function speak(fetchImpl, text, lang) {
+async function speak(fetchImpl, text, lang, opts) {
   const input = speakable(text);
   if (!input) throw new Error("Nothing to say.");
+  const o = opts || {};
   const code = langCode(lang);
-  const locale = VOICE_LOCALE[code] || code;
+  const voice = voiceFor(code, o.voice);
+  const rate = voiceRate(o.rate);
   const bearer = await googleToken(fetchImpl, "https://www.googleapis.com/auth/cloud-platform");
-  const call = (voice) => fetchImpl(TTS, {
+  const call = (v, audioConfig) => fetchImpl(TTS, {
     method: "POST",
     headers: { Authorization: "Bearer " + bearer, "Content-Type": "application/json" },
-    body: JSON.stringify({ input: { text: input }, voice, audioConfig: { audioEncoding: "MP3" } }),
+    body: JSON.stringify({ input: { text: input }, voice: v, audioConfig: Object.assign({ audioEncoding: "MP3" }, audioConfig) }),
     signal: AbortSignal.timeout(30000)
   });
-  let res = await call({ languageCode: locale, name: locale + "-" + VOICE_NAME });
-  if (!res.ok) res = await call({ languageCode: locale, ssmlGender: "MALE" });
+  let used = voice.name;
+  let res = await call(voice, { speakingRate: rate });
+  if (!res.ok) res = await call(voice, {});
+  if (!res.ok) { used = null; res = await call({ languageCode: voice.languageCode, ssmlGender: "MALE" }, {}); }
   const data = await readJson(res, "Text-to-Speech");
   if (!data.audioContent) throw new Error("Text-to-Speech sent no audio.");
-  return { audio: data.audioContent, format: "mp3", lang: code };
+  return { audio: data.audioContent, format: "mp3", lang: code, voice: used, rate };
 }
 
 function briefingMail(snapshot, text) {
@@ -687,5 +712,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, briefItems, decideRatings, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, speak, speakable, langCode, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, briefItems, decideRatings, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
