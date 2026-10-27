@@ -473,6 +473,15 @@ fun BusinessScreen(s: UiState) {
 @Composable
 fun TrafficScreen(s: UiState) {
     val snap = s.snapshot
+    snap?.let { Home.siteVisits(it) }?.let { site ->
+        Panel("Site visits") {
+            val d = delta(site.value, site.prior)
+            KpiPairs(listOf(KpiData("Site visits", fmt(site.value), d, site.prior?.let { site.value.compareTo(it) } ?: 0)) +
+                site.parts.map { (name, value) -> KpiData(name, fmt(value)) })
+            BarChart(site.series, color = J.green)
+            Muted("Counted by the site with or without analytics consent. GA4 below only sees visitors who allow analytics.")
+        }
+    }
     val ga = snap.ext("ga4")
     Panel("Google Analytics") {
         Needs(ga)
