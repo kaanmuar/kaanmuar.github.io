@@ -18,6 +18,7 @@ import re
 import sys
 from html.parser import HTMLParser
 
+import csp_hashes
 from review_langs_body import BODY, WRITTEN
 from review_langs_copy import AND, COMPARE_NOTE, COPY, DATE, FACTS, HEADER, LIVE, LIVE_EXAMPLES, MONTHS, GATE_LINKS, SAMPLE, SKIP
 
@@ -455,7 +456,7 @@ def build(source, code, data):
     s = with_live(s, code, data)
     s = swap(s, '<script src="js/qa-review-findings-copy.en.js?', f'<script src="js/qa-review-findings-copy.{code}.js?')
     s = swap(s, '<script src="js/site-i18n.js', f'<script>try{{localStorage.setItem("cv-preferred-lang","{code}")}}catch(e){{}}</script>\n<script src="js/site-i18n.js')
-    return page, s
+    return page, csp_hashes.apply(s)
 
 
 PAY_KEYS = ("title", "description", "testMode", "eyebrow", "headingRun", "intro", "payWith", "paypalWays", "itemRun",
@@ -492,7 +493,7 @@ def build_pay(source, code):
     s = swap(s, f'<a class="btn btn-ghost" href="qa-review.html">{en["back"]}</a>', f'<a class="btn btn-ghost" href="qa-review-{code}.html"{mark}>{t["back"]}</a>')
     s = retag(s, '<button class="btn btn-primary" id="charge" type="button">', "</button>", t["continueTo"], code)
     s = swap(s, '<script src="js/site-i18n.js', f'<script>try{{localStorage.setItem("cv-preferred-lang","{code}")}}catch(e){{}}</script>\n    <script src="js/site-i18n.js')
-    return page, s
+    return page, csp_hashes.apply(s)
 
 
 def main(check=None):
@@ -500,7 +501,7 @@ def main(check=None):
     data = json.loads((ROOT / "assets/live-reports/index.json").read_text(encoding="utf-8"))
     english = ROOT / "qa-review.html"
     current = english.read_text(encoding="utf-8")
-    source = with_live(current, "en", data)
+    source = csp_hashes.apply(with_live(current, "en", data))
     stale = []
     if source != current:
         if check:

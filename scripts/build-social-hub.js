@@ -26,6 +26,7 @@ const { execFileSync } = require("child_process");
 const card = require("../js/social-hub-card");
 const admin = require("../js/social-hub-admin");
 const critical = require("./build-critical-css");
+const cspHashes = require("./build-csp-hashes");
 const queues = require("./social-ledger");
 const metrics = require("./social-metrics");
 const { PROFILES, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
@@ -483,7 +484,7 @@ function version(file) {
   return require("crypto").createHash("sha1").update(read(file)).digest("hex").slice(0, 10);
 }
 
-const CSP = "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.google.com https://www.googletagmanager.com https://*.googleapis.com; frame-src https://www.youtube-nocookie.com; form-action 'self';";
+const CSP = "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.google.com https://www.googletagmanager.com https://*.googleapis.com; frame-src https://www.youtube-nocookie.com; form-action 'self';";
 
 function page(lang, posts, asOf) {
   const copy = COPY[lang];
@@ -866,7 +867,7 @@ function outputs(posts, asOf) {
   });
   Object.assign(files, postPages(posts, asOf));
   Object.keys(files).filter((file) => file.endsWith(".html")).forEach((file) => {
-    files[file] = critical.inline(files[file], file);
+    files[file] = cspHashes.apply(critical.inline(files[file], file));
   });
   return files;
 }
