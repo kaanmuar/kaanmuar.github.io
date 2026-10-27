@@ -584,8 +584,9 @@
     'SEC-02': async function () {
       var xml = await textOf('sitemap.xml');
       assert(xml.includes('simulador.html') && xml.includes('qa-lab.html'), 'public urls missing');
+      assert(!xml.includes('?lang='), 'sitemap lists a ?lang= alternate');
       assert(!xml.includes('admin.html'), 'admin leaked into sitemap');
-      return 'public URLs + hreflang';
+      return 'public URLs';
     },
     'SEC-03': async function () {
       var html = await textOf('admin.html');
@@ -850,23 +851,17 @@
     'SEC-09': async function () {
       var xml = await textOf('sitemap.xml');
       var doc = new DOMParser().parseFromString(xml, 'text/xml');
-      var want = ['en', 'es', 'pt', 'de', 'fr', 'it', 'x-default'];
       var pages = ['https://carlosandmunoz.com/', 'https://carlosandmunoz.com/simulador.html', 'https://carlosandmunoz.com/qa-lab.html'];
       var urls = [].slice.call(doc.getElementsByTagName('url'));
       pages.forEach(function (loc) {
         var url = urls.filter(function (node) { return (node.getElementsByTagName('loc')[0] || {}).textContent === loc; })[0];
         assert(url, 'sitemap missing ' + loc);
         var links = [].slice.call(url.getElementsByTagNameNS('http://www.w3.org/1999/xhtml', 'link'));
-        var langs = links.map(function (link) { return link.getAttribute('hreflang'); }).sort();
-        assert(langs.join(',') === want.slice().sort().join(','), loc + ' hreflang ' + langs.join(','));
-        want.forEach(function (code) {
-          if (code === 'x-default' || code === 'en') return;
-          var link = links.filter(function (item) { return item.getAttribute('hreflang') === code; })[0];
-          assert(link && link.getAttribute('href') === loc + '?lang=' + code, loc + ' ' + code);
-        });
+        assert(links.length === 0, loc + ' hreflang ' + links.map(function (link) { return link.getAttribute('hreflang'); }).join(','));
       });
+      assert(xml.indexOf('?lang=') === -1, 'sitemap lists a ?lang= alternate');
       assert(xml.indexOf('admin.html') === -1, 'admin leaked into sitemap');
-      return '7 hreflang codes on 3 pages';
+      return '3 pages without ?lang= alternates';
     },
     'FN-35': async function () {
       var original = currentLang();
