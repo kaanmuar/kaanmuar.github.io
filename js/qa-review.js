@@ -864,6 +864,28 @@
     return at ? at.querySelector('[data-slot="' + id + '"]') : document.getElementById(id);
   }
 
+  // A list longer than its cap shows the first items, then a button that opens the rest in place. Print keeps the cap.
+  // A note in a comparison column stops at two, so a large site's column stays as short as the others.
+  function moreList(items, sep, cap) {
+    const max = cap || 6;
+    const shown = items.slice(0, max).map(esc).join(sep);
+    if (items.length <= max) return shown;
+    return shown + '<span class="list-rest" hidden>' + sep + items.slice(max).map(esc).join(sep) + '</span><span class="list-dots"> …</span> ' +
+      '<button type="button" class="list-more no-print" aria-expanded="false" data-n="' + items.length + '">' + esc(rc.t("listAll", { n: items.length })) + "</button>";
+  }
+  function listLine(key, items) {
+    return esc(rc.t(key, { list: "{list}" })).replace("{list}", () => moreList(items, ", ", slotRoot ? 2 : 6));
+  }
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest && event.target.closest(".list-more");
+    if (!button) return;
+    const open = button.getAttribute("aria-expanded") !== "true";
+    button.setAttribute("aria-expanded", String(open));
+    button.parentElement.querySelectorAll(":scope > .list-rest").forEach((rest) => { rest.hidden = !open; });
+    button.parentElement.querySelectorAll(":scope > .list-dots").forEach((dots) => { dots.hidden = open; });
+    button.textContent = open ? rc.t("listFewer") : rc.t("listAll", { n: button.dataset.n });
+  });
+
   function inSlot(root, paint) {
     const before = { root: slotRoot, current };
     slotRoot = root;
@@ -1941,9 +1963,9 @@
     const names = [];
     (before.vendors || []).concat(after ? after.vendors || [] : []).forEach((row) => { if (names.indexOf(row.name) === -1) names.push(row.name); });
     const find = (rows, name) => (rows || []).find((row) => row.name === name);
-    const cookieList = (rows) => (rows || []).length ? rows.slice(0, 6).map((row) => row.name + (row.third ? " (" + row.domain + ")" : "")).join(", ") + (rows.length > 6 ? " …" : "") : rc.t("none");
+    const cookieList = (rows) => (rows || []).length ? moreList(rows.map((row) => row.name + (row.third ? " (" + row.domain + ")" : "")), ", ") : esc(rc.t("none"));
     const consentRows = names.map((name) => "<tr><td><strong>" + esc(name) + "</strong></td><td>" + esc(cell(find(before.vendors, name))) + "</td><td>" + (after ? esc(cell(find(after.vendors, name))) : "—") + "</td></tr>").join("") +
-      "<tr><td><strong>" + esc(rc.t("trackingCookies")) + '</strong></td><td class="notranslate" translate="no">' + esc(cookieList(before.cookies)) + '</td><td class="notranslate" translate="no">' + (after ? esc(cookieList(after.cookies)) + (after.kept ? " · " + esc(rc.t("keptBefore", { n: after.kept })) : "") : "—") + "</td></tr>" +
+      "<tr><td><strong>" + esc(rc.t("trackingCookies")) + '</strong></td><td class="notranslate" translate="no">' + cookieList(before.cookies) + '</td><td class="notranslate" translate="no">' + (after ? cookieList(after.cookies) + (after.kept ? " · " + esc(rc.t("keptBefore", { n: after.kept })) : "") : "—") + "</td></tr>" +
       (watch.before ? [
         [rc.t("fingerprinting"), (row) => printers(row).join(", ") || rc.t("none")],
         [rc.t("sessionRecording"), (row) => (row.recorders || []).map((rr) => rr.sent ? rr.name : rc.t("loadedOnly", { name: rr.name })).join(" · ") || rc.t("none")],
@@ -2089,15 +2111,15 @@
     const blocked = rows.filter((row) => !row.indexable);
     const dup = (seo.duplicates && seo.duplicates.titles) || [];
     slot("seo").innerHTML =
-      '<div class="stat-row"><div class="stat"><b>' + (seo.indexable || 0) + " / " + rows.length + "</b><span>" + esc(rc.t("statIndexable")) + "</span></div>" +
+      '<div class="stat-row"><div class="stat"><b>' + (rows.length ? (seo.indexable || 0) + " / " + rows.length : "—") + "</b><span>" + esc(rc.t("statIndexable")) + "</span></div>" +
       '<div class="stat"><b>' + (map.found ? map.count : "—") + "</b><span>" + esc(rc.t("statSitemap")) + "</span></div>" +
       '<div class="stat"><b>' + (map.found ? (map.notListed || []).length : "—") + "</b><span>" + esc(rc.t("statNotListed")) + "</span></div>" +
       '<div class="stat"><b>' + dup.length + "</b><span>" + esc(rc.t("statShared")) + "</span></div></div>" +
       '<article class="card">' + (blocked.length
         ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thNotIndexable")) + "</th><th>" + esc(rc.t("thWhy")) + "</th></tr></thead><tbody>" + blocked.slice(0, 30).map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + esc(fc.line(row.reasonMsg, row.reason)) + "</td></tr>").join("") + "</tbody></table>"
-        : '<p class="muted">' + esc(rc.t("allIndexable")) + "</p>") +
-      ((map.listedNotIndexable || []).length ? '<p class="meta-line">' + esc(rc.t("listedNotIndexable", { list: map.listedNotIndexable.slice(0, 6).join(", ") })) + "</p>" : "") +
-      ((map.notLinked || []).length ? '<p class="meta-line">' + esc(rc.t("notLinked", { list: map.notLinked.slice(0, 6).join(", ") + (map.notLinked.length > 6 ? " …" : "") })) + "</p>" : "") +
+        : '<p class="muted">' + esc(rc.t(rows.length ? "allIndexable" : "noneIndexChecked")) + "</p>") +
+      ((map.listedNotIndexable || []).length ? '<p class="meta-line">' + listLine("listedNotIndexable", map.listedNotIndexable) + "</p>" : "") +
+      ((map.notLinked || []).length ? '<p class="meta-line">' + listLine("notLinked", map.notLinked) + "</p>" : "") +
       ((seo.schemaTypes || []).length ? '<p class="meta-line">' + esc(rc.t("schemaTypes", { list: seo.schemaTypes.join(", ") })) + "</p>" : "") + "</article>";
   }
 
@@ -2267,7 +2289,7 @@
         items.map((item) => '<details class="finding" data-verdict="' + esc(item.verdict || "") + '" data-severity="' + esc(item.severity || "") + '"><summary><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) +
           "<strong>" + esc(said(item, "title")) + "</strong></summary><p class=\"muted\">" + fadeText(said(item, "evidence"), paid) + "</p>" +
           (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
-          ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + esc(item.pages.slice(0, 6).join(" · ")) + (item.pages.length > 6 ? " …" : "") + "</p>" : "") +
+          ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + moreList(item.pages, " · ") + "</p>" : "") +
           ((item.cases || []).length ? '<p class="meta-line">' + esc(rc.t("testCases", { list: item.cases.join(", ") })) + "</p>" : "") + "</details>").join("") + "</section>";
     }).join("");
   }
@@ -2295,7 +2317,7 @@
       '<div class="finding"><div><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span></div>" +
       "<strong>" + esc(said(item, "title")) + "</strong><p class=\"muted\">" + fadeText(said(item, "evidence"), paid) + "</p>" +
       (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
-      ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + esc(item.pages.slice(0, 6).join(" · ")) + (item.pages.length > 6 ? " …" : "") + "</p>" : "") +
+      ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + moreList(item.pages, " · ") + "</p>" : "") +
       ((item.cases || []).length ? '<p class="meta-line">' + esc(rc.t("testCases", { list: item.cases.join(", ") })) + "</p>" : "") +
       (!slotRoot && window.QAReviewAsk && QAReviewAsk.cardLink ? QAReviewAsk.cardLink(item.id) : "") + "</div>").join("")
       : '<p class="muted">' + esc(rc.t("noMatch")) + "</p>";

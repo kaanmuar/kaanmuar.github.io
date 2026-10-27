@@ -188,6 +188,10 @@
 .jv-palette-box kbd { font-size: 0.7rem; color: var(--dim); }
 .jv-toast { position: fixed; right: 22px; bottom: 22px; z-index: 90; background: #061a27; color: var(--text); border: 1px solid var(--line-hi); border-radius: 12px; padding: 0.6rem 0.9rem; font-size: 0.88rem; box-shadow: 0 0 30px rgba(56, 225, 255, 0.3); max-width: 420px; }
 .jv-toast[hidden] { display: none; }
+.jv-pushes { position: fixed; right: 22px; top: 22px; z-index: 91; display: flex; flex-direction: column; gap: 0.6rem; width: min(380px, calc(100vw - 44px)); pointer-events: none; }
+.jv-push { pointer-events: auto; background: #061a27; color: var(--text); border: 1px solid var(--line-hi); border-radius: 12px; padding: 0.7rem 0.9rem; box-shadow: 0 0 30px rgba(56, 225, 255, 0.3); font-size: 0.86rem; }
+.jv-push p { margin: 0.3rem 0 0.5rem; color: var(--muted, #9fc4d6); }
+.jv-reply blockquote { margin: 0 0 0.6rem; padding-left: 0.6rem; border-left: 2px solid var(--line-hi); }
 /* Goals */
 .jv-goals { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
 .jv-goal-head { display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.85rem; }
@@ -209,22 +213,22 @@
 .jv-needs { margin: 0.5rem 0 0; padding-left: 1.1rem; color: var(--amber); font-size: 0.8rem; display: grid; gap: 0.3rem; }
 .jv-facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; font-size: 0.86rem; color: var(--muted); }
 .jv-facts b { color: var(--text); font-family: ui-monospace, Menlo, monospace; }
-.jv-settings-box textarea { width: 100%; background: rgba(4, 18, 28, 0.85); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0.45rem 0.55rem; font: 0.85rem ui-monospace, Menlo, monospace; resize: vertical; }
+.jv-settings-box textarea, .jv-reply-box textarea { width: 100%; background: rgba(4, 18, 28, 0.85); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0.45rem 0.55rem; font: 0.85rem ui-monospace, Menlo, monospace; resize: vertical; }
 
 .jv-sub { margin: 0.9rem 0 0.4rem; font: 600 0.72rem ui-monospace, Menlo, monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--amber); }
 .jv-nowrap { white-space: nowrap; }
 
 /* Settings */
-.jv-settings { position: fixed; inset: 0; z-index: 60; display: grid; place-items: start center; padding: 6vh 1rem; background: rgba(1, 6, 10, 0.72); backdrop-filter: blur(4px); overflow-y: auto; }
-.jv-settings[hidden] { display: none; }
-.jv-settings-box { width: min(760px, 100%); background: #061a27; border: 1px solid var(--line-hi); border-radius: 16px; box-shadow: 0 30px 80px -30px rgba(56, 225, 255, 0.5); color: var(--text); }
-.jv-settings-box header, .jv-settings-box footer { display: flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1rem; }
-.jv-settings-box header { justify-content: space-between; border-bottom: 1px solid var(--line); }
-.jv-settings-box header h3 { margin: 0; font: 600 0.8rem ui-monospace, Menlo, monospace; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cyan); }
-.jv-settings-box footer { justify-content: flex-end; border-top: 1px solid var(--line); position: sticky; bottom: 0; background: #061a27; border-radius: 0 0 16px 16px; }
-.jv-settings-box footer .jv-note { margin-right: auto; }
-.jv-settings-box section { padding: 0.8rem 1rem; border-bottom: 1px solid rgba(56, 225, 255, 0.08); display: grid; gap: 0.5rem; }
-.jv-settings-box h4 { margin: 0; font-size: 0.9rem; color: var(--text); }
+.jv-settings, .jv-reply { position: fixed; inset: 0; z-index: 60; display: grid; place-items: start center; padding: 6vh 1rem; background: rgba(1, 6, 10, 0.72); backdrop-filter: blur(4px); overflow-y: auto; }
+.jv-settings[hidden], .jv-reply[hidden] { display: none; }
+.jv-settings-box, .jv-reply-box { width: min(760px, 100%); background: #061a27; border: 1px solid var(--line-hi); border-radius: 16px; box-shadow: 0 30px 80px -30px rgba(56, 225, 255, 0.5); color: var(--text); }
+.jv-settings-box header, .jv-settings-box footer, .jv-reply-box header, .jv-reply-box footer { display: flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1rem; }
+.jv-settings-box header, .jv-reply-box header { justify-content: space-between; border-bottom: 1px solid var(--line); }
+.jv-settings-box header h3, .jv-reply-box header h3 { margin: 0; font: 600 0.8rem ui-monospace, Menlo, monospace; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cyan); }
+.jv-settings-box footer, .jv-reply-box footer { justify-content: flex-end; border-top: 1px solid var(--line); position: sticky; bottom: 0; background: #061a27; border-radius: 0 0 16px 16px; }
+.jv-settings-box footer .jv-note, .jv-reply-box footer .jv-note { margin-right: auto; }
+.jv-settings-box section, .jv-reply-box section { padding: 0.8rem 1rem; border-bottom: 1px solid rgba(56, 225, 255, 0.08); display: grid; gap: 0.5rem; }
+.jv-settings-box h4, .jv-reply-box h4 { margin: 0; font-size: 0.9rem; color: var(--text); }
 .jv-check { display: flex; gap: 0.55rem; align-items: flex-start; font-size: 0.85rem; color: var(--muted); }
 .jv-check input { margin-top: 0.2rem; accent-color: var(--cyan); }
 .jv-goal-list { display: grid; gap: 0.4rem; }
@@ -247,7 +251,7 @@
     body.jv-printing #stats-pane { position: absolute; left: 0; top: 0; width: 100%; }
     .jv { --text: #0b1d27; --muted: #44606f; --dim: #6b8492; --panel: #fff; --line: #c9dbe4; --cyan: #0b6f86; --amber: #a35f00; --pink: #b4234f; --green: #137a4d;
         background: #fff !important; box-shadow: none; color: #0b1d27; padding: 0; }
-    .jv-scan, .jv-controls, .jv-tabs, .jv-palette, .jv-settings, .jv-toast, .jv-panel-tools, .jv-ask, .jv-actions, .jv-inline, .jv-reactor, .jv-tiles .jv-badge { display: none !important; }
+    .jv-scan, .jv-controls, .jv-tabs, .jv-palette, .jv-settings, .jv-reply, .jv-pushes, .jv-toast, .jv-panel-tools, .jv-ask, .jv-actions, .jv-inline, .jv-reactor, .jv-tiles .jv-badge { display: none !important; }
     .jv-top { grid-template-columns: 1fr; margin-bottom: 0.4rem; }
     .jv-print-head { display: block; font-size: 0.8rem; color: #44606f; margin-bottom: 0.6rem; }
     .jv-print-title { display: block; font-size: 1.2rem; margin: 1rem 0 0.4rem; page-break-before: always; }
