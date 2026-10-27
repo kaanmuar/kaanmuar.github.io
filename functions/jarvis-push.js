@@ -106,10 +106,25 @@ function briefingMessage({ items, aiText, dateLabel, top }) {
 async function send(messaging, db, tokens, msg, browsers) {
   const phones = await sendPhones(messaging, db, tokens, msg);
   const web = browsers || (db && msg.kind !== "test" ? await webTargets(db, msg.kind) : []);
-  if (!web.length) return phones;
+  if (!web.length) return logged(db, msg, phones);
   const out = await webPush.sendWeb(require("web-push"), db, web, msg, Date.now())
     .catch((error) => ({ sent: 0, failed: web.length, removed: 0, error: String(error.message || error).slice(0, 200) }));
-  return { sent: phones.sent + out.sent, failed: phones.failed + out.failed, removed: phones.removed + out.removed, web: out.sent };
+  return logged(db, msg, { sent: phones.sent + out.sent, failed: phones.failed + out.failed, removed: phones.removed + out.removed, web: out.sent });
+}
+
+// Every push except tests lands in jarvis_pushes for the evening digest, delivered or not.
+async function logged(db, msg, out) {
+  if (!db || msg.kind === "test") return out;
+  const now = Date.now();
+  try {
+    await db.collection("jarvis_pushes").add({
+      kind: msg.kind, title: String(msg.title || "").slice(0, 200), body: String(msg.body || "").slice(0, 400), ref: String(msg.ref || ""),
+      at: new Date(now).toISOString(), sent: out.sent, expireAt: new Date(now + 30 * 86400000)
+    });
+  } catch (error) {
+    console.error("Jarvis push log failed:", error && error.message);
+  }
+  return out;
 }
 
 async function sendPhones(messaging, db, tokens, msg) {

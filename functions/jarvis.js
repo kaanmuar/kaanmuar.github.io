@@ -503,14 +503,19 @@ function briefingMail(snapshot, text) {
 
 // --- settings: goals, thresholds, mail switches (jarvis_settings/main) -----------------------------------------
 
-const MAIL_DEFAULTS = { daily: true, gemini: true, watch: true, weekly: true };
+// The emails Jarvis also pushes are off by default and wait for the evening digest (#1672); a switch brings one back.
+const MOVED_MAIL = ["messages", "ratings", "siteDaily", "siteQuarter", "reviewDaily", "reviewQuarter", "reruns", "reviewOpened", "comparisons", "reviewEvents", "ops", "ownerReplies", "ownerRemind"];
+const MAIL_DEFAULTS = Object.assign({ daily: false, gemini: true, watch: false, weekly: true, digest: true }, Object.fromEntries(MOVED_MAIL.map((key) => [key, false])));
+// Settings saved before the digest kept daily and watch on; those two read as the new defaults until saved again.
+const MAIL_VERSION = 2;
 
 function normalizeSettings(data) {
   const d = data || {};
   const mail = Object.assign({}, MAIL_DEFAULTS);
-  Object.keys(MAIL_DEFAULTS).forEach((key) => { if (d.mail && typeof d.mail[key] === "boolean") mail[key] = d.mail[key]; });
+  const kept = d.mailVersion === MAIL_VERSION ? Object.keys(MAIL_DEFAULTS) : Object.keys(MAIL_DEFAULTS).filter((key) => key !== "daily" && key !== "watch");
+  kept.forEach((key) => { if (d.mail && typeof d.mail[key] === "boolean") mail[key] = d.mail[key]; });
   const searchQueries = Array.from(new Set((Array.isArray(d.searchQueries) ? d.searchQueries : []).map((q) => String(q || "").replace(/\s+/g, " ").trim().slice(0, 80)).filter(Boolean))).slice(0, 8);
-  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, searchQueries, actions: actions.cleanSettings(d.actions), updatedAt: String(d.updatedAt || "") };
+  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, mailVersion: MAIL_VERSION, searchQueries, actions: actions.cleanSettings(d.actions), updatedAt: String(d.updatedAt || "") };
 }
 
 async function readSettings(db) {
@@ -519,8 +524,8 @@ async function readSettings(db) {
 }
 
 async function saveSettings(db, input, by) {
-  const clean = normalizeSettings(input);
-  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, searchQueries: clean.searchQueries, actions: clean.actions, updatedAt: new Date().toISOString(), by: String(by || "") };
+  const clean = normalizeSettings(Object.assign({}, input, { mailVersion: MAIL_VERSION }));
+  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, mailVersion: MAIL_VERSION, searchQueries: clean.searchQueries, actions: clean.actions, updatedAt: new Date().toISOString(), by: String(by || "") };
   await db.collection("jarvis_settings").doc("main").set(doc);
   return normalizeSettings(doc);
 }
@@ -683,4 +688,4 @@ async function unsentToday(db, items, { now }) {
 }
 
 module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, briefItems, decideRatings, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, speak, speakable, langCode, briefingMail, top,
-  normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
+  MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
