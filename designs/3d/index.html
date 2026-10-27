@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Five 3D looks · QA-lab URL Review</title>
+    <link rel="icon" href="../../assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
+    <link rel="stylesheet" href="look.css">
+</head>
+<body>
+<header class="bar">
+    <a class="brand" href="../../qa-review.html"><img src="../../assets/qa-review-mark.svg?v=20261013c" alt="" width="34" height="34"><span>QA-lab<small>URL REVIEW</small></span></a>
+    <nav class="switch" aria-label="Proposals" id="switch"></nav>
+</header>
+<main class="wrap">
+    <p class="eyebrow">Design proposals · #1772</p>
+    <h1 class="display"><span>Five 3D looks,</span><span><em>one fusion.</em></span></h1>
+    <p class="lede">Each look keeps the QA-lab palette, the Instrument Serif headlines and the crystal pyramid mark, and comes as a live hero, four social banners you can download as PNG, and a section background behind real content. Move the pointer over any of them; they respond. <b>Fusion</b> mixes all five and redraws the QA-lab URL Review icon in the same look.</p>
+    <div class="palette" aria-label="Palette kept in every proposal">
+        <span style="--c:#071116">#071116 night</span><span style="--c:#102226">#102226 ink</span><span style="--c:#0d6e76">#0d6e76 deep</span><span style="--c:#4db3bb">#4db3bb teal</span><span style="--c:#7ef6fb">#7ef6fb cyan</span><span style="--c:#e2c48a">#e2c48a gold</span><span style="--c:#6fe3b1">#6fe3b1 mint</span><span style="--c:#f39a8b">#f39a8b coral</span><span style="--c:#b9a8ff">#b9a8ff violet</span>
+    </div>
+    <div class="gallery" id="gallery"></div>
+    <p class="foot" style="margin-top:40px"><span>All five are WebGL fragment shaders with no third-party scripts, so the chosen one can ship under the site's Content-Security-Policy. With reduced motion turned on, each shows a still frame.</span></p>
+</main>
+<script type="module">
+    import { mount } from './fx.js';
+    import { PROPOSALS } from './proposals.js';
+    const gallery = document.getElementById('gallery');
+    document.getElementById('switch').innerHTML = PROPOSALS.map((p, i) => `<a href="proposal.html?p=${p.id}">${i + 1} · ${p.name}</a>`).join('');
+    const order = [...PROPOSALS].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+    order.forEach((p) => {
+        const i = PROPOSALS.indexOf(p);
+        const a = document.createElement('a');
+        a.className = p.featured ? 'pick feature' : 'pick';
+        a.href = `proposal.html?p=${p.id}`;
+        a.innerHTML = `<div class="frame" data-fx><canvas class="fx"></canvas></div><div class="txt"><h3><small>${p.featured ? 'ALL FIVE' : '0' + (i + 1)}</small>${p.name}</h3><p>${p.tag} ${p.best}</p><span class="go">${p.featured ? 'Open hero, banners, background and icon →' : 'Open hero, banners and background →'}</span></div>`;
+        gallery.append(a);
+        mount(a.querySelector('canvas'), p.id, { maxPixels: 0.45e6, zoom: 1.1, start: p.start ?? 6 });
+    });
+</script>
+</body>
+</html>
