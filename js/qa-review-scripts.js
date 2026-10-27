@@ -9,7 +9,7 @@
   const LOAD_TOOLS = ["JMeter", "Gatling", "k6"];
   const MISSING_PATH = "/qa-lab-missing-page-404";
   const PHONE = { width: 390, height: 844 };
-  const TABLET = { width: 820, height: 1180 };
+  const TABLET = { width: 768, height: 1024 };
 
   function oneLine(value) {
     return String(value == null ? "" : value).replace(/\s+/g, " ").trim();

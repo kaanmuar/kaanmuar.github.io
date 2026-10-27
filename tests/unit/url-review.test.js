@@ -3479,6 +3479,13 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.equal(core.previewReport({ cases: rt }).cases[0].msg, undefined);
   });
 
+  test("the privacy case looks for the link the review found, not the word privacy in its address (#1954)", () => {
+    assert.deepEqual(core.privacyCheck({ text: "Privacy and disclaimers", href: "qa-review-legal.html" }, "/"), { check: { kind: "count", path: "/", selector: "a[href*=\"qa-review-legal.html\" i]", op: "gte", n: 1 } });
+    assert.equal(core.privacyCheck({ href: "https://shop.example.com/legal/privacy/?tab=1#top" }, "/").check.selector, "a[href*=\"privacy\" i]");
+    assert.deepEqual(core.privacyCheck(undefined, "/"), {});
+    assert.deepEqual(core.privacyCheck({ text: "Privacy" }, "/"), {});
+  });
+
   test("a case's own check and path drive its script", () => {
     const report = { finalUrl: "https://shop.example.com/", host: "shop.example.com", pages: [{ path: "/", status: 200 }], cases: [
       { id: "A11Y-07", layer: "Accessibility", title: "Pinch zoom is allowed", why: "Blocked. Expected none.", fw: ["Playwright"], path: "/login", check: { kind: "count", path: "/login", selector: "meta[name=\"viewport\"][content*=\"user-scalable=no\" i]", op: "eq", n: 0 } },
