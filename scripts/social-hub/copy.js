@@ -84,6 +84,8 @@ const COPY = {
     close: "Close",
     nav: { review: "URL Review", live: "Live Reports", guide: "Guide" },
     accessibility: "Accessibility",
+    legal: "Legal",
+    jsonFeed: "JSON feed",
     skip: "Skip to main content",
     footer: "Posts are written from public reviews of public pages. A review analyzes pages; it never runs tests on them."
   },
@@ -144,6 +146,8 @@ const COPY = {
     close: "Cerrar",
     nav: { review: "URL Review", live: "Informes en vivo", guide: "Guía" },
     accessibility: "Accesibilidad",
+    legal: "Aviso legal",
+    jsonFeed: "Feed JSON",
     skip: "Saltar al contenido principal",
     footer: "Las publicaciones salen de revisiones públicas de páginas públicas. Una revisión analiza las páginas; nunca ejecuta pruebas en ellas."
   },
@@ -204,6 +208,8 @@ const COPY = {
     close: "Fechar",
     nav: { review: "URL Review", live: "Relatórios ao vivo", guide: "Guia" },
     accessibility: "Acessibilidade",
+    legal: "Aviso legal",
+    jsonFeed: "Feed JSON",
     skip: "Pular para o conteúdo principal",
     footer: "As publicações vêm de análises públicas de páginas públicas. Uma análise examina as páginas; nunca executa testes nelas."
   },
@@ -264,6 +270,8 @@ const COPY = {
     close: "Schließen",
     nav: { review: "URL Review", live: "Live-Berichte", guide: "Leitfaden" },
     accessibility: "Barrierefreiheit",
+    legal: "Rechtliches",
+    jsonFeed: "JSON-Feed",
     skip: "Zum Hauptinhalt springen",
     footer: "Die Beiträge entstehen aus öffentlichen Prüfungen öffentlicher Seiten. Eine Prüfung analysiert Seiten; sie führt nie Tests auf ihnen aus."
   },
@@ -324,6 +332,8 @@ const COPY = {
     close: "Fermer",
     nav: { review: "URL Review", live: "Rapports en direct", guide: "Guide" },
     accessibility: "Accessibilité",
+    legal: "Mentions légales",
+    jsonFeed: "Flux JSON",
     skip: "Aller au contenu principal",
     footer: "Les publications viennent de revues publiques de pages publiques. Une revue analyse les pages ; elle n’y exécute jamais de tests."
   },
@@ -384,6 +394,8 @@ const COPY = {
     close: "Chiudi",
     nav: { review: "URL Review", live: "Report dal vivo", guide: "Guida" },
     accessibility: "Accessibilità",
+    legal: "Note legali",
+    jsonFeed: "Feed JSON",
     skip: "Vai al contenuto principale",
     footer: "I post nascono da revisioni pubbliche di pagine pubbliche. Una revisione analizza le pagine; non vi esegue mai test."
   }
