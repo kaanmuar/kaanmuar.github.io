@@ -452,6 +452,30 @@ private fun PipelineBody(saved: Pair<JsonObject, Long>?, funnel: Home.Funnel?) {
     }
 }
 
+// ---------------------------------------------------------------- Marketing
+
+class MarketingWidget : GlanceAppWidget() {
+    override val sizeMode = SizeMode.Exact
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val saved = Home.snapshot(context)
+        provideContent { MarketingBody(saved, saved?.let { Home.marketing(it.first, System.currentTimeMillis()) }) }
+    }
+}
+
+class MarketingWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget = MarketingWidget() }
+
+@Composable
+private fun MarketingBody(saved: Pair<JsonObject, Long>?, card: Home.MarketingCard?) {
+    val open = Home.open(LocalContext.current, "products:marketing")
+    if (saved == null || card == null) return SignedOut(open, "Marketing")
+    Glass(open, "Marketing") {
+        if (card.headline != null) Text(card.headline, style = TextStyle(color = color(Art.VIOLET), fontSize = 15.sp, fontWeight = FontWeight.Bold), maxLines = 1,
+            modifier = GlanceModifier.padding(bottom = 4.dp))
+        if (card.lines.isEmpty()) Text("No marketing numbers in the last snapshot.", style = Muted, maxLines = 2)
+        card.lines.take(fits(LocalSize.current.height, if (card.headline != null) 68 else 44, 24)).forEach { LineRow(it, 70.dp) }
+    }
+}
+
 // ---------------------------------------------------------------- Traffic
 
 class TrafficWidget : GlanceAppWidget() {

@@ -131,6 +131,10 @@
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_pipeline" />
         </receiver>
+        <receiver android:name=".home.MarketingWidgetReceiver" android:exported="true" android:label="Jarvis marketing">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_marketing" />
+        </receiver>
         <receiver android:name=".home.TrafficWidgetReceiver" android:exported="true" android:label="Jarvis traffic">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_traffic" />
