@@ -38,6 +38,19 @@ test("every page's script-src lists its inline scripts' hashes and no 'unsafe-in
   }
 });
 
+test("every page lets Cloudflare's beacon run, and Google Translate frame the page and send its gen204 image", () => {
+  for (const page of rootPages.concat(["qa-review-social.html", "social/runs-3/77-fiba-pt.html"])) {
+    const policy = (read(page).match(/Content-Security-Policy"\s+content="([^"]*)"/) || [])[1];
+    const directive = (name) => (policy.match(new RegExp(`(?:^|;)\\s*${name} ([^;]*)`)) || [])[1].split(/\s+/);
+    assert.ok(directive("script-src").includes("https://static.cloudflareinsights.com"), `${page}: script-src refuses the Web Analytics beacon Cloudflare injects (#1910)`);
+    assert.ok(directive("connect-src").includes("https://cloudflareinsights.com"), `${page}: connect-src refuses the beacon's report`);
+    if (!directive("script-src").includes("https://translate.google.com")) continue;
+    assert.ok(directive("frame-src").includes("'self'"), `${page}: Google Translate frames the page itself (#1904)`);
+    const img = directive("img-src");
+    assert.ok(img.includes("https:") || img.includes("https://translate.google.com"), `${page}: img-src refuses Translate's gen204 image`);
+  }
+});
+
 test("pages and the scripts that render HTML use no inline event handlers or javascript: URLs", () => {
   const js = [];
   (function walk(dir) {
