@@ -5532,6 +5532,34 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
   return watch + "; " + acts + "; " + notices + "; " + social;
 });
 
+const tiktokWatch = require("./tiktok-business-watch");
+
+// Every hour until TikTok answers the Business application (#1889): the decision is pushed, mailed and noted on #1888 once.
+async function tiktokBusinessRun() {
+  const ref = admin.firestore().collection("jarvis_watch").doc("tiktok_business");
+  const state = (await ref.get()).data() || {};
+  if (state.decided) return "decided: " + state.decided.verdict;
+  if (!process.env.QA_MAIL_APP_PASSWORD) throw new Error("QA_MAIL_APP_PASSWORD is not set.");
+  const mails = await tiktokWatch.fetchMails({ user: process.env.QA_MAIL_USER || tiktokWatch.MAILBOX, pass: process.env.QA_MAIL_APP_PASSWORD },
+    require("imapflow").ImapFlow, require("mailparser").simpleParser);
+  const { decided, unclear } = tiktokWatch.sort(mails, state.seen);
+  for (const m of decided ? [decided] : unclear) {
+    await pushOwner(tiktokWatch.message(m));
+    await sendOwnerEmail(tiktokWatch.mail(m)).catch((error) => console.error("TikTok decision mail failed:", error));
+  }
+  if (decided) {
+    const token = await githubApp.token();
+    if (token) await github("/repos/" + BUG_REPO + "/issues/" + tiktokWatch.TICKET + "/comments", { body: tiktokWatch.comment(decided) }, token)
+      .catch((error) => console.error("TikTok decision comment failed:", error));
+  }
+  const seen = Array.from(new Set((state.seen || []).concat(unclear.map((m) => m.id)))).slice(-100);
+  await ref.set(Object.assign({ seen, checkedAt: new Date().toISOString(), mails: mails.length },
+    decided ? { decided: { verdict: decided.verdict, id: decided.id, from: decided.from, subject: decided.subject, date: decided.date } } : {}));
+  return decided ? "decided: " + decided.verdict : mails.length + " TikTok mails, " + unclear.length + " unclear pushed";
+}
+
+exports.tiktokBusinessWatch = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB", secrets: SECRETS.tiktokBusinessWatch }), "tiktokBusinessWatch", tiktokBusinessRun);
+
 exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxInstances: 3, secrets: SECRETS.jarvis }).https.onRequest(async (req, res) => {
   res.set("Access-Control-Allow-Origin", reviewOrigin(req));
   res.set("Vary", "Origin");
