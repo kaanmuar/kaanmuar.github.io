@@ -26,8 +26,39 @@
    "visual.items.4.title": "CSS Animation Triggers: a first draft",
    "action": "W3C on AI agents, axe-core 4.14, screen reader tests in Playwright, bracket URLs and CSS animation triggers. Sources on our social hub.",
    "cat.label": "Field sweep",
-   "cap.youtube": "Five picks from our daily sweep of the field, each summed up in our own words and credited to its source.\n\n1. W3C maps the web for AI agents: https://www.w3.org/news/2026/w3c-and-the-state-of-the-web-in-the-ai-era/\n2. axe-core 4.14 turns on Label in Name: https://www.deque.com/blog/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0/\n3. Screen reader tests in Playwright: https://dev.to/craigmorten/you-know-you-can-automate-screen-reader-tests-right-2dnk\n4. Encoded brackets make a new URL: https://www.searchenginejournal.com/google-crawls-raw-and-encoded-bracket-urls-separately/593765/\n5. CSS Animation Triggers: a first draft: https://www.w3.org/news/2026/first-public-working-draft-animation-triggers/\n\nSummaries and sources: https://carlosandmunoz.com/social/digest-2026-10-30/01-this-week.html?utm_source=youtube&utm_medium=social&utm_campaign=weekly-digest&utm_content=digest-2026-10-30\n\nThis week in web quality, Oct 30, 2026 · QA-lab URL Review\n\n#WebDev #Programming #OpenSource #QA #Accessibility #SEO #Coding #JavaScript #InclusiveDesign #ContentMarketing #Testing #QAlab"
+   "cap.youtube": "Five picks from our daily sweep of the field, each summed up in our own words and credited to its source.\n\n1. W3C maps the web for AI agents: https://www.w3.org/news/2026/w3c-and-the-state-of-the-web-in-the-ai-era/\n2. axe-core 4.14 turns on Label in Name: https://www.deque.com/blog/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0/\n3. Screen reader tests in Playwright: https://dev.to/craigmorten/you-know-you-can-automate-screen-reader-tests-right-2dnk\n4. Encoded brackets make a new URL: https://www.searchenginejournal.com/google-crawls-raw-and-encoded-bracket-urls-separately/593765/\n5. CSS Animation Triggers: a first draft: https://www.w3.org/news/2026/first-public-working-draft-animation-triggers/\n\nSummaries and sources: https://carlosandmunoz.com/social/digest-2026-10-30/01-this-week.html?utm_source=youtube&utm_medium=social&utm_campaign=weekly-digest&utm_content=digest-2026-10-30\n\nThis week in web quality, Oct 30, 2026 · QA-lab URL Review\n\n#WebDev #QA #Accessibility #SEO #Programming #LearnOnYouTube #DigitalAccessibility #QAEngineer #WebDesign #UXDesign #TechnicalSEO #QAlab"
   }
  },
- "cache": {}
+ "cache": {
+  "en\u0000Try this": "Try this",
+  "en\u0000Tip": "Tip",
+  "en\u0000Guided tour": "Guided tour",
+  "en\u0000Never runs your tests": "Never runs your tests",
+  "en\u0000Let your page do the talking.": "Let your page do the talking.",
+  "en\u0000How a public-page review works, step by step.": "How a public-page review works, step by step.",
+  "en\u0000news": "news",
+  "en\u0000Oct 30, 2026": "Oct 30, 2026",
+  "en\u0000This week in": "This week in",
+  "en\u0000web quality.": "web quality.",
+  "en\u0000Five picks from our daily sweep of the field, each summed up in our own words and credited to its source.": "Five picks from our daily sweep of the field, each summed up in our own words and credited to its source.",
+  "en\u0000W3C maps the web for AI agents": "W3C maps the web for AI agents",
+  "en\u0000axe-core 4.14 turns on Label in Name": "axe-core 4.14 turns on Label in Name",
+  "en\u0000Screen reader tests in Playwright": "Screen reader tests in Playwright",
+  "en\u0000Encoded brackets make a new URL": "Encoded brackets make a new URL",
+  "en\u0000CSS Animation Triggers: a first draft": "CSS Animation Triggers: a first draft",
+  "en\u0000W3C on AI agents, axe-core 4.14, screen reader tests in Playwright, bracket URLs and CSS animation triggers. Sources on our social hub.": "W3C on AI agents, axe-core 4.14, screen reader tests in Playwright, bracket URLs and CSS animation triggers. Sources on our social hub.",
+  "en\u0000This week in web quality card, Oct 30, 2026, five picks: W3C maps the web for AI agents; axe-core 4.14 turns on Label in Name; Screen reader tests in Playwright; Encoded brackets make a new URL; CSS Animation Triggers: a first draft.": "This week in web quality card, Oct 30, 2026, five picks: W3C maps the web for AI agents; axe-core 4.14 turns on Label in Name; Screen reader tests in Playwright; Encoded brackets make a new URL; CSS Animation Triggers: a first draft.",
+  "en\u0000Field sweep": "Field sweep",
+  "en\u00001. W3C maps the web for AI agents:": "1. W3C maps the web for AI agents:",
+  "en\u00002. axe-core 4.14 turns on Label in Name:": "2. axe-core 4.14 turns on Label in Name:",
+  "en\u00003. Screen reader tests in Playwright:": "3. Screen reader tests in Playwright:",
+  "en\u00004. Encoded brackets make a new URL:": "4. Encoded brackets make a new URL:",
+  "en\u00005. CSS Animation Triggers: a first draft:": "5. CSS Animation Triggers: a first draft:",
+  "en\u0000Summaries and sources:": "Summaries and sources:",
+  "en\u0000This week in web quality, Oct 30, 2026": "This week in web quality, Oct 30, 2026",
+  "en\u0000Why it matters": "Why it matters",
+  "en\u0000Did you know?": "Did you know?",
+  "en\u0000Strongest area": "Strongest area",
+  "en\u0000Weakest area": "Weakest area"
+ }
 }
