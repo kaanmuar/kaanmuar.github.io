@@ -5457,7 +5457,7 @@ const tiktokWatch = require("./tiktok-business-watch");
 
 // Every hour until TikTok answers the Business application (#1889): the decision is pushed, mailed and noted on #1888 once.
 async function tiktokBusinessRun() {
-  const ref = admin.firestore().collection("jarvis_watch").doc("tiktok_business");
+  const ref = getFirestore().collection("jarvis_watch").doc("tiktok_business");
   const state = (await ref.get()).data() || {};
   if (state.decided) return "decided: " + state.decided.verdict;
   if (!process.env.QA_MAIL_APP_PASSWORD) throw new Error("QA_MAIL_APP_PASSWORD is not set.");
