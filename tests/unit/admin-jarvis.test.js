@@ -492,16 +492,19 @@ test("money: a refused Transaction search still sums fees from confirmed PayPal 
     { id: "other", createdAt: daysAgo(1).toISOString(), paid: true, priceUsd: 3, provider: "stripe", captureId: "SHOULDNOTFETCH00001" }
   ];
   const docsOf = (list) => ({ docs: list.map((row) => ({ id: row.id, data: () => row })) });
-  const db = { collection() { return { where() { return this; }, limit() { return this; }, get: async () => docsOf(rows) }; } };
+  let selected = null;
+  const db = { collection() { return { where() { return this; }, select(...fields) { selected = fields; return this; }, limit() { return this; }, get: async () => docsOf(rows) }; } };
   const paypal = { host: "api-m.paypal.com", token: async () => "token" };
   const out = await sources.money({ fetch, env: { STRIPE_SECRET_KEY: "sk_test_x" }, db, now: NOW.getTime(), days: 7, paypal });
+  // A url_reviews document carries the whole report (about 1.3 MB), so a week of them overflows the function (#1740).
+  assert.ok(selected && selected.includes("captureId") && selected.includes("sessionId") && selected.includes("method"));
   assert.equal(out.paypal.disputesOpen, 1);
   assert.deepEqual(out.paypal.transactions, { count: 2, grossUsd: 25.15, feesUsd: 1.43, netUsd: 23.72, source: "payments" });
   assert.deepEqual(out.needs, []);
   assert.equal(calls.some((url) => /SANDBOX|SHOULDNOT/.test(url)), false);
   const quiet = await sources.money({
     fetch: async (url) => /reporting\/transactions/.test(url) ? json({ name: "NOT_AUTHORIZED", message: "no" }, 403) : json({ items: [] }),
-    env: {}, db: { collection() { return { where() { return this; }, limit() { return this; }, get: async () => docsOf([]) }; } }, now: NOW.getTime(), days: 7, paypal
+    env: {}, db: { collection() { return { where() { return this; }, select() { return this; }, limit() { return this; }, get: async () => docsOf([]) }; } }, now: NOW.getTime(), days: 7, paypal
   });
   assert.deepEqual(quiet.paypal.transactions, { count: 0, grossUsd: 0, feesUsd: 0, netUsd: 0, source: "payments" });
   assert.deepEqual(quiet.needs, []);
