@@ -291,6 +291,7 @@ def build(source, code, data):
     s = ask_panel(s, code)
     s = retag(s, '<p class="meta-line" id="compare-note">', "</p>", COMPARE_NOTE[code], code)
     s = with_live(s, code, data)
+    s = swap(s, '<script src="js/qa-review-findings-copy.en.js?', f'<script src="js/qa-review-findings-copy.{code}.js?')
     s = swap(s, '<script src="js/site-i18n.js', f'<script>try{{localStorage.setItem("cv-preferred-lang","{code}")}}catch(e){{}}</script>\n<script src="js/site-i18n.js')
     return page, s
 
