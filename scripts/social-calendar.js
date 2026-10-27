@@ -9,9 +9,10 @@
        the Page app may not edit scheduled posts (Graph error #10), and Carlos keeps those (#1109).
      BUFFER_API_KEY=... node scripts/social-calendar.js --sync [--dry-run] [--windows N]
        move the posts Buffer holds to their calendar slots (editPost with the whole post, as Buffer validates it),
-       never queueing or deleting any, and record each new time in the ledger. Buffer allows 100 calls in 15
-       minutes and 250 or 500 a day per account, so each window makes at most WINDOW_CALLS and the next one waits,
-       and it stops while DAILY_RESERVE of the day's calls is left; whatever is left is moved by running it again
+       never queueing or deleting any, and record each new time in the ledger. Buffer's Essentials plan allows 450
+       calls in 15 minutes, 1,800 a day and 3,000 per unlocked channel in 30 days (#1947), shared by every job on
+       the key, so each window makes at most WINDOW_CALLS and the next one waits, and it stops while DAILY_RESERVE
+       of the day's calls or MONTHLY_RESERVE of the 30 days' is left; whatever is left is moved by running it again
        (the buffer-batch workflow does every night). --write --move-queued marks each post it moves with its new
        slot in the Buffer ledger until then. --dry-run lists the moves and re-saves one post per channel at its
        current time, as every run does first, so a payload Buffer rejects shows up before anything moves.
@@ -44,8 +45,9 @@ const BUFFER_API = "https://api.buffer.com";
 const EDIT_AHEAD = 30 * 60e3;
 const PACE = 400;
 const WINDOW = 15 * 60e3;
-const WINDOW_CALLS = 95;
+const WINDOW_CALLS = 400;
 const DAILY_RESERVE = 0.4;
+const MONTHLY_RESERVE = 0.4;
 
 const minutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const hhmm = (min) => String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0");
@@ -369,20 +371,28 @@ function editInput(post, dueAt) {
   return input;
 }
 
-// What is left of Buffer's daily calls, from the RateLimit headers of the last response (one policy per window).
+// What is left of Buffer's daily and 30-day calls, from the RateLimit headers of the last response (one policy per
+// window, matched by its length, as the policy names change with the plan).
 const daily = { left: null, quota: null, reset: null };
+const monthly = { left: null, quota: null, reset: null };
 
 function readLimits(headers) {
   const split = (name) => (headers.get(name) || "").split(/,\s*(?=")/).filter(Boolean);
-  const policy = split("ratelimit-policy").find((p) => /;\s*w=86400\b/.test(p));
-  if (!policy) return;
-  const name = policy.match(/"([^"]+)"/)[1];
-  const status = split("ratelimit").find((s) => s.includes('"' + name + '"'));
-  if (!status) return;
-  daily.quota = Number(policy.match(/q=(\d+)/)[1]);
-  daily.left = Number(status.match(/r=(\d+)/)[1]);
-  daily.reset = Number(status.match(/t=(\d+)/)[1]);
+  const read = (into, seconds) => {
+    const policy = split("ratelimit-policy").find((p) => new RegExp(";\\s*w=" + seconds + "\\b").test(p));
+    if (!policy) return;
+    const name = policy.match(/"([^"]+)"/)[1];
+    const status = split("ratelimit").find((s) => s.includes('"' + name + '"'));
+    if (!status) return;
+    into.quota = Number(policy.match(/q=(\d+)/)[1]);
+    into.left = Number(status.match(/r=(\d+)/)[1]);
+    into.reset = Number(status.match(/t=(\d+)/)[1]);
+  };
+  read(daily, 86400);
+  read(monthly, 30 * 86400);
 }
+
+const waitText = (seconds) => (seconds >= 2 * 86400 ? Math.ceil(seconds / 86400) + " days" : Math.ceil(seconds / 3600) + " h");
 
 async function bufferGql(query, variables) {
   const res = await fetch(BUFFER_API, {
@@ -406,8 +416,8 @@ const rateLimited = (error) => !!error.window || /\b429\b|RATE_LIMIT|rate limit/
 /* Calls go through one budget: at most WINDOW_CALLS a window, then it waits for the next window, or stops after the
    last one. A 429 on the 15-minute window ends the window early. The daily and 30-day windows are shared with the
    Live Reports queue and every other job on the key, so it stops once the day's calls left fall to DAILY_RESERVE
-   of the quota, or on a 429 for either; the next run picks up the rest. */
-function budget({ windows, perWindow = WINDOW_CALLS, gql, sleep, now, limits = daily }) {
+   of the quota or the 30 days' to MONTHLY_RESERVE, or on a 429 for either; the next run picks up the rest. */
+function budget({ windows, perWindow = WINDOW_CALLS, gql, sleep, now, limits = daily, month = monthly }) {
   let calls = 0;
   let left = windows;
   let start = now();
@@ -426,7 +436,10 @@ function budget({ windows, perWindow = WINDOW_CALLS, gql, sleep, now, limits = d
     for (;;) {
       if (call.stopped) return null;
       if (limits.left != null && limits.left <= Math.ceil(limits.quota * DAILY_RESERVE)) {
-        return stop(limits.left + " of Buffer's " + limits.quota + " daily calls left, kept for the other jobs; the oldest frees up in " + Math.ceil(limits.reset / 3600) + " h");
+        return stop(limits.left + " of Buffer's " + limits.quota + " daily calls left, kept for the other jobs; the oldest frees up in " + waitText(limits.reset));
+      }
+      if (month.left != null && month.left <= Math.ceil(month.quota * MONTHLY_RESERVE)) {
+        return stop(month.left + " of Buffer's " + month.quota + " calls for 30 days left, kept for the other jobs; the oldest frees up in " + waitText(month.reset));
       }
       if (calls >= perWindow && !(await next())) return null;
       calls += 1;
@@ -434,7 +447,7 @@ function budget({ windows, perWindow = WINDOW_CALLS, gql, sleep, now, limits = d
         return await gql(query, variables);
       } catch (error) {
         if (!rateLimited(error)) throw error;
-        if (error.window && error.window !== "15m") return stop("Buffer's " + error.window + " limit is spent; retry in " + Math.ceil((error.retryAfter || 0) / 3600) + " h");
+        if (error.window && error.window !== "15m") return stop("Buffer's " + error.window + " limit is spent; retry in " + waitText(error.retryAfter || 0));
         console.log("rate limited after " + calls + " calls this window");
         calls = perWindow;
       }
@@ -463,7 +476,7 @@ async function scheduledPosts(call) {
 
 const EDIT = "mutation($input: EditPostInput!) { editPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }";
 
-async function sync({ dryRun, windows = 1, perWindow, limits, root = ROOT, gql = bufferGql, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = Date.now, pace = PACE } = {}) {
+async function sync({ dryRun, windows = 1, perWindow, limits, month, root = ROOT, gql = bufferGql, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = Date.now, pace = PACE } = {}) {
   const list = targets(root, now());
   const counts = {};
   list.forEach((t) => { counts[t.channel] = (counts[t.channel] || 0) + 1; });
@@ -471,7 +484,7 @@ async function sync({ dryRun, windows = 1, perWindow, limits, root = ROOT, gql =
   list.forEach((t) => console.log("  " + t.channel.padEnd(8) + " " + t.id + "  " + t.from + " -> " + t.to));
   const result = { list, moved: {}, failed: 0, left: list.length, checked: {} };
   if (!list.length) return result;
-  const call = budget({ windows: dryRun ? 1 : windows, perWindow, gql, sleep, now, limits });
+  const call = budget({ windows: dryRun ? 1 : windows, perWindow, gql, sleep, now, limits, month });
   const held = await scheduledPosts(call);
   if (!held) { result.stopped = call.stopped || "ran out of calls reading Buffer's posts"; console.log(result.stopped + "; run --sync again"); return result; }
 
@@ -602,4 +615,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { NETWORKS, WINDOWS, LANES, WINDOW_CALLS, slotTime, kindOf, launchCalendar, load, plan, rowsFor, hubDay, write, reconcile, summary, targets, mark, editInput, daily, readLimits, sync, hubLate, budget, bufferGql, scheduledPosts, EDIT, EDIT_AHEAD };
+module.exports = { NETWORKS, WINDOWS, LANES, WINDOW_CALLS, slotTime, kindOf, launchCalendar, load, plan, rowsFor, hubDay, write, reconcile, summary, targets, mark, editInput, daily, monthly, readLimits, waitText, sync, hubLate, budget, bufferGql, scheduledPosts, EDIT, EDIT_AHEAD };

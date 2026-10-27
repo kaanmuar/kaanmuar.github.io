@@ -46,7 +46,7 @@ on:
         required: false
         default: 'youtube'
       windows:
-        description: 'sync and remedia: 15-minute windows of Buffer calls before it stops (about 115 calls each)'
+        description: 'sync and remedia: 15-minute windows of Buffer calls before it stops (up to 400 calls each)'
         required: false
         default: '1'
 
