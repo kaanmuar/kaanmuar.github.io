@@ -2,6 +2,7 @@ node_modules
 __pycache__/
 .worktrees/
 functions/.env
+functions/.secret.local
 *.jdk/
 .DS_Store
 cypress/screenshots/

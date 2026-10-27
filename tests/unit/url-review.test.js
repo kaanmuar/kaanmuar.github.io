@@ -1932,15 +1932,36 @@ test.describe("publishing user reviews to Live Reports", () => {
   });
 });
 
-test("functions/.env.example lists every key the functions read", () => {
+test("functions/.env.example or functions/secrets.js lists every key the functions read", () => {
   const dir = path.join(__dirname, "../../functions");
   const listed = new Set(fs.readFileSync(path.join(dir, ".env.example"), "utf8").match(/^[A-Z0-9_]+(?==)/gm));
+  const secrets = new Set(require("../../functions/secrets").ALL);
   const runtime = new Set(["GCLOUD_PROJECT", "GCP_PROJECT"]);
   const read = new Set();
   fs.readdirSync(dir).filter((name) => name.endsWith(".js")).forEach((name) => {
     for (const m of fs.readFileSync(path.join(dir, name), "utf8").matchAll(/process\.env\.([A-Z0-9_]+)/g)) read.add(m[1]);
   });
-  assert.deepEqual([...read].filter((key) => !listed.has(key) && !runtime.has(key)).sort(), []);
+  assert.deepEqual([...read].filter((key) => !listed.has(key) && !secrets.has(key) && !runtime.has(key)).sort(), []);
+});
+
+test("a Secret Manager secret is never also a functions/.env.example line, and every one is read", () => {
+  const dir = path.join(__dirname, "../../functions");
+  const example = fs.readFileSync(path.join(dir, ".env.example"), "utf8");
+  const code = fs.readdirSync(dir).filter((name) => name.endsWith(".js") && name !== "secrets.js").map((name) => fs.readFileSync(path.join(dir, name), "utf8")).join("\n");
+  const all = require("../../functions/secrets").ALL;
+  assert.deepEqual(all.filter((name) => new RegExp("^" + name + "=", "m").test(example)), [], "Firebase refuses to deploy a secret that is also an env var");
+  assert.deepEqual(all.filter((name) => !new RegExp("\\." + name + "\\b").test(code)), [], "bound but never read");
+});
+
+test("every function binds its secrets through functions/secrets.js", () => {
+  const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  const secrets = require("../../functions/secrets");
+  const used = Array.from(index.matchAll(/secrets: ([^,}\n]+)/g)).map((m) => m[1].trim());
+  assert.ok(used.length >= 15);
+  for (const ref of used) {
+    const key = (ref.match(/^SECRETS\.(\w+)$/) || [])[1];
+    assert.ok(key && Array.isArray(secrets[key]), "bind " + ref + " through a list in functions/secrets.js");
+  }
 });
 
 test("the intake takes the current terms and the ones just before, and records which", () => {

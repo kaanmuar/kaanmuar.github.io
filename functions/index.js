@@ -14,8 +14,9 @@ admin.initializeApp();
 // An optional field left undefined is dropped instead of failing the whole write, such as a finished review's report.
 admin.firestore().settings({ ignoreUndefinedProperties: true });
 
-// SENDGRID_API_KEY is a Secret Manager secret (firebase functions:secrets:set).
-// SENDGRID_FROM is a plain env var in functions/.env.
+// Keys and tokens are Secret Manager secrets, bound per function in ./secrets.
+// Plain settings such as SENDGRID_FROM are env vars in functions/.env.
+const SECRETS = require("./secrets");
 const OWNER_EMAIL = "kaanmuar@gmail.com";
 const TOPIC_LABELS = {
   opportunity: "Job Opportunity / Collaboration",
@@ -25,7 +26,8 @@ const TOPIC_LABELS = {
 };
 
 
-const withMail = functions.runWith({ secrets: ["SENDGRID_API_KEY"] });
+const withMail = functions.runWith({ secrets: SECRETS.mail });
+const withMailAndGithub = functions.runWith({ secrets: SECRETS.mailWithGithub });
 const KEEP_MS = 365 * 24 * 60 * 60 * 1000;
 
 // Rows that carry expireAt are deleted by a Firestore TTL policy once it passes.
@@ -1140,10 +1142,10 @@ async function sendReviewPeriodReport(period) {
   return null;
 }
 
-exports.emailDailyReviewReport = scheduled(withMail, "emailDailyReviewReport", async () => (await mailOn("reviewDaily")) ? sendReviewPeriodReport("daily") : "mail off in Jarvis settings");
-exports.emailWeeklyReviewReport = scheduled(withMail, "emailWeeklyReviewReport", () => sendReviewPeriodReport("weekly"));
-exports.emailMonthlyReviewReport = scheduled(withMail, "emailMonthlyReviewReport", () => sendReviewPeriodReport("monthly"));
-exports.emailQuarterReviewReport = scheduled(withMail, "emailQuarterReviewReport", async () => (await mailOn("reviewQuarter")) ? sendReviewPeriodReport("quarter") : "mail off in Jarvis settings");
+exports.emailDailyReviewReport = scheduled(withMailAndGithub, "emailDailyReviewReport", async () => (await mailOn("reviewDaily")) ? sendReviewPeriodReport("daily") : "mail off in Jarvis settings");
+exports.emailWeeklyReviewReport = scheduled(withMailAndGithub, "emailWeeklyReviewReport", () => sendReviewPeriodReport("weekly"));
+exports.emailMonthlyReviewReport = scheduled(withMailAndGithub, "emailMonthlyReviewReport", () => sendReviewPeriodReport("monthly"));
+exports.emailQuarterReviewReport = scheduled(withMailAndGithub, "emailQuarterReviewReport", async () => (await mailOn("reviewQuarter")) ? sendReviewPeriodReport("quarter") : "mail off in Jarvis settings");
 
 async function probeFailure(url) {
   let host = "";
@@ -1219,7 +1221,7 @@ async function diagnoseReviewFailures() {
   return null;
 }
 
-exports.diagnoseReviewFailures = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB" }), "diagnoseReviewFailures", () => diagnoseReviewFailures());
+exports.diagnoseReviewFailures = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.diagnoseReviewFailures }), "diagnoseReviewFailures", () => diagnoseReviewFailures());
 
 async function rerunFailure(group) {
   const db = admin.firestore();
@@ -1306,7 +1308,7 @@ exports.rerunReviewFailures = require("firebase-functions/v2/scheduler").onSched
   timeZone: ops.TIME_ZONE,
   timeoutSeconds: 1800,
   memory: "1GiB",
-  secrets: ["SENDGRID_API_KEY"]
+  secrets: SECRETS.rerunReviewFailures
 }, () => track("rerunReviewFailures", () => rerunReviewFailures()));
 
 const BUG_REPO = "kaanmuar/kaanmuar.github.io";
@@ -1395,7 +1397,7 @@ async function fileReviewFailureBugs() {
   return null;
 }
 
-exports.fileReviewFailureBugs = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB" }), "fileReviewFailureBugs", () => fileReviewFailureBugs());
+exports.fileReviewFailureBugs = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB", secrets: SECRETS.fileReviewFailureBugs }), "fileReviewFailureBugs", () => fileReviewFailureBugs());
 
 // GitHub starts scheduled runs hours late or skips them, so Cloud Scheduler starts the Live Reports batch:
 // when today's batch (auto-YYYY-MM-DD, dated in UTC) is neither on main nor underway, it dispatches the
@@ -1435,7 +1437,7 @@ async function ensureLiveReportsBatch() {
   return null;
 }
 
-exports.ensureLiveReportsBatch = scheduled(withMail, "ensureLiveReportsBatch", () => ensureLiveReportsBatch());
+exports.ensureLiveReportsBatch = scheduled(withMailAndGithub, "ensureLiveReportsBatch", () => ensureLiveReportsBatch());
 
 // The same for the Facebook queue: Cloud Scheduler starts it unless today's run (UTC) succeeded or is underway.
 const FACEBOOK_WORKFLOW = "facebook-page.yml";
@@ -1459,7 +1461,7 @@ async function dispatchFacebookQueue() {
   return null;
 }
 
-exports.dispatchFacebookQueue = scheduled(withMail, "dispatchFacebookQueue", () => dispatchFacebookQueue());
+exports.dispatchFacebookQueue = scheduled(withMailAndGithub, "dispatchFacebookQueue", () => dispatchFacebookQueue());
 
 exports.refreshSocialHubStats = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB" }), "refreshSocialHubStats", () =>
   require("./social-hub-stats").refresh(admin.firestore()));
@@ -2003,7 +2005,7 @@ async function sendOwnerNotices() {
   return tally.sent + " sent, " + tally.failed + " failed, " + (pending.size - ready.length) + " waiting for a card";
 }
 
-exports.sendOwnerNotices = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }), "sendOwnerNotices", () => sendOwnerNotices());
+exports.sendOwnerNotices = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.mail }), "sendOwnerNotices", () => sendOwnerNotices());
 
 const sweep = require("./url-review-sweep");
 
@@ -2139,7 +2141,8 @@ exports.sweepReviews = require("firebase-functions/v2/scheduler").onSchedule({
   timeZone: ops.TIME_ZONE,
   timeoutSeconds: sweep.TICK_SECONDS,
   memory: "1GiB",
-  maxInstances: 1
+  maxInstances: 1,
+  secrets: SECRETS.sweep
 }, () => track("sweepReviews", () => sweepReviews()));
 
 const rivals = require("./url-review-rivals");
@@ -2256,7 +2259,8 @@ exports.rivalSweep = require("firebase-functions/v2/scheduler").onSchedule({
   timeZone: ops.TIME_ZONE,
   timeoutSeconds: 540,
   memory: "1GiB",
-  maxInstances: 1
+  maxInstances: 1,
+  secrets: SECRETS.sweep
 }, () => track("rivalSweep", () => rivalSweep()));
 
 // Each morning: any job that failed or went quiet past its gap is mailed at once; on Mondays the mail
@@ -2316,7 +2320,7 @@ async function opsWatchdog() {
   return problems.length + " problems mailed";
 }
 
-exports.opsWatchdog = scheduled(withMail, "opsWatchdog", () => opsWatchdog());
+exports.opsWatchdog = scheduled(withMailAndGithub, "opsWatchdog", () => opsWatchdog());
 
 const ownerReplies = require("./url-review-owner-replies");
 const OWNER_REPLIES_URL = process.env.OWNER_REPLIES_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/ownerReplies";
@@ -2463,7 +2467,7 @@ function replyPage(id, row, message) {
     "</body></html>";
 }
 
-exports.ownerReplies = functions.runWith({ timeoutSeconds: 60, memory: "256MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
+exports.ownerReplies = functions.runWith({ timeoutSeconds: 60, memory: "256MB", secrets: SECRETS.ownerReplies }).https.onRequest(async (req, res) => {
   res.set("X-Robots-Tag", "noindex");
   try {
     if (req.path.startsWith("/inbound")) {
@@ -3528,7 +3532,7 @@ function reviewHeaders(req, res) {
   res.set("Cache-Control", "no-store");
 }
 
-exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxInstances: 20, secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
+exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxInstances: 20, secrets: SECRETS.reviewUrl }).https.onRequest(async (req, res) => {
   reviewHeaders(req, res);
   if (req.method === "OPTIONS") {
     res.status(204).send("");
@@ -4772,7 +4776,7 @@ exports.reviewRun = require("firebase-functions/v2/https").onRequest({
   timeoutSeconds: 180,
   concurrency: 1,
   maxInstances: 10,
-  secrets: ["SENDGRID_API_KEY"]
+  secrets: SECRETS.reviewRun
 }, async (req, res) => {
   reviewHeaders(req, res);
   if (req.method === "OPTIONS") {
@@ -4872,7 +4876,8 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
   cpu: 4,
   concurrency: 1,
   maxInstances: 6,
-  timeoutSeconds: 120
+  timeoutSeconds: 120,
+  secrets: SECRETS.reviewBrowser
 }, async (req, res) => {
   const key = process.env.BROWSER_KEY || "";
   const given = String(req.get("x-review-key") || "");
@@ -5060,7 +5065,7 @@ async function shareDraft(body) {
 
 async function shareQueue(body) {
   const token = await githubApp.token();
-  if (!token) throw new Error("No GitHub token is set in functions/.env (GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY, or GITHUB_BUGS_TOKEN), so Jarvis cannot start the post workflow.");
+  if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager, or GITHUB_BUGS_TOKEN in Secret Manager), so Jarvis cannot start the post workflow.");
   const ref = admin.firestore().collection("social_inbox").doc(String(body.id || "x"));
   const snap = await ref.get();
   if (!snap.exists) throw new Error("That draft is gone.");
@@ -5107,7 +5112,7 @@ const jarvisActions = require("./jarvis-actions");
 const jarvisDigest = require("./jarvis-digest");
 
 // A URL shared to the Jarvis app: the owner's own review, run like a sweep review and pushed to the phone that asked.
-exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB" }).firestore.document("jarvis_reviews/{id}").onCreate(async (snap) => {
+exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB", secrets: SECRETS.jarvisReviewRun }).firestore.document("jarvis_reviews/{id}").onCreate(async (snap) => {
   const row = snap.data() || {};
   const db = admin.firestore();
   const tokens = row.token ? [row.token] : await jarvisPush.targets(db, "alerts");
@@ -5453,7 +5458,7 @@ async function jarvisWatchRun() {
   return fresh.length + " new alert" + (fresh.length > 1 ? "s" : "") + ", pushed to " + push.sent + " phone" + (push.sent === 1 ? "" : "s");
 }
 
-exports.jarvisDailyBriefing = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }), "jarvisDailyBriefing", async () => {
+exports.jarvisDailyBriefing = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.jarvisMail }), "jarvisDailyBriefing", async () => {
   const out = await jarvisDaily({ force: false });
   return typeof out === "string" ? out : (out.sent ? "sent" : "not sent") + ", " + out.items + " lines";
 });
@@ -5488,8 +5493,8 @@ async function jarvisEvening({ force }) {
   return mail.subject;
 }
 
-exports.jarvisEveningDigest = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB", secrets: ["SENDGRID_API_KEY"] }), "jarvisEveningDigest", () => jarvisEvening({ force: false }));
-exports.jarvisWeeklyStrategy = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }), "jarvisWeeklyStrategy", async () => {
+exports.jarvisEveningDigest = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB", secrets: SECRETS.mail }), "jarvisEveningDigest", () => jarvisEvening({ force: false }));
+exports.jarvisWeeklyStrategy = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.jarvisMail }), "jarvisWeeklyStrategy", async () => {
   const out = await jarvisWeekly({ force: false });
   return typeof out === "string" ? out : (out.sent ? "sent" : "not sent") + ", " + out.proposals + " proposals";
 });
@@ -5513,7 +5518,7 @@ async function jarvisNoticesRun() {
 }
 
 // Every hour: the safe actions first (jarvis-actions.js), then the alert watch and the outreach notices push.
-exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }), "jarvisWatch", async () => {
+exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.jarvisWatch }), "jarvisWatch", async () => {
   let acts;
   try { acts = await jarvisAutoActions(); } catch (error) { console.error("Jarvis actions failed:", error); acts = "actions failed: " + String(error.message || error).slice(0, 120); }
   const watch = await jarvisWatchRun();
@@ -5522,7 +5527,7 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
   return watch + "; " + acts + "; " + notices + "; " + social;
 });
 
-exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxInstances: 3, secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
+exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxInstances: 3, secrets: SECRETS.jarvis }).https.onRequest(async (req, res) => {
   res.set("Access-Control-Allow-Origin", reviewOrigin(req));
   res.set("Vary", "Origin");
   res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -5631,7 +5636,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     } else if (op === "social-runs") out = { runs: await socialRuns() };
     else if (op === "social-post-now") {
       const token = await githubApp.token();
-      if (!token) throw new Error("No GitHub token is set in functions/.env (GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY, or GITHUB_BUGS_TOKEN), so Jarvis cannot start the workflows.");
+      if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager, or GITHUB_BUGS_TOKEN in Secret Manager), so Jarvis cannot start the workflows.");
       const started = [];
       for (const w of jarvisSocial.WORKFLOWS) {
         const path = "/repos/" + BUG_REPO + "/actions/workflows/" + w.file;
