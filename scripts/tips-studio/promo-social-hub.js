@@ -63,7 +63,7 @@ const TOPICS = [
   },
   {
     id: "clips", tags: ["ShortVideo", "QA", "WebDev"],
-    visual: (lang) => ({ type: "stat", value: "12 s", caption: WORDS[lang].clip }),
+    visual: (lang) => ({ type: "stat", value: "40 s", caption: WORDS[lang].clip }),
     text: {
       en: { title: ["Short clips,", "*in your language.*"], body: "Voiced clips play right on the page, no app needed. Each one is spoken in English, Spanish, Portuguese, German, French or Italian.", action: "Press play on any card with a video." },
       es: { title: ["Clips cortos,", "*en tu idioma.*"], body: "Los clips con voz se reproducen en la misma página, sin apps. Cada uno habla en inglés, español, portugués, alemán, francés o italiano.", action: "Pulsa reproducir en cualquier tarjeta con video." },

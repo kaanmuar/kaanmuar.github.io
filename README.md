@@ -71,6 +71,7 @@ Sign in, give a public https address, and the review analyzes up to 20 pages of 
 * **The hero counts** pages read and reviews run so far (`/stats`, every two minutes). Only finished runs that read a page add to them.
 * **Live Reports:** `.github/workflows/auto-live-reports.yml` publishes new requested reviews daily to `assets/live-reports/`, unless the asker ticked "Don't publish this review", then regenerates the site count in `llms.txt`, the review pages, and `llms-full.txt` with `scripts/build-llms-full.py` (`--check` fails when they are stale).
 * **Facebook:** `.github/workflows/facebook-page.yml` posts the Facebook Page queue daily.
+* **Bluesky and Mastodon:** `.github/workflows/open-social.yml` posts each batch's x slots as they come, every 30 minutes, once their secrets are set (`scripts/open-social-queue.js`).
 
 ### Admin panel (`admin.html`)
 

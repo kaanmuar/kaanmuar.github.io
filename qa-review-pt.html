@@ -367,8 +367,8 @@
     <style data-critical="css/qa-review-ask.css?v=20261024c">.ask-panel{--ask-edge:var(--look-edge, var(--line));--ask-card:var(--look-card, color-mix(in srgb, var(--card) 92%, transparent));position:fixed;top:12px;right:12px;bottom:12px;z-index:90;width:min(440px, calc(100vw - 24px));box-sizing:border-box;display:flex;flex-direction:column;gap:12px;padding:18px;background:var(--look-card, color-mix(in srgb, var(--card) 92%, transparent));color:var(--text);border:1px solid var(--ask-edge);border-radius:var(--look-radius, 22px);box-shadow:0 24px 70px rgba(8, 14, 18, .35);-webkit-backdrop-filter:blur(var(--look-blur, 28px)) saturate(1.35);backdrop-filter:blur(var(--look-blur, 28px)) saturate(1.35)}.ask-panel[hidden],.ask-panel [hidden]{display:none!important}.ask-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--ask-edge)}.ask-head > div{min-height:36px;padding-left:46px;background:url("../assets/qa-review-mark.svg?v=20261013c") left center / 36px 36px no-repeat}.ask-head .eyebrow{margin-bottom:2px}.ask-head h2{margin:0;font-size:1.15rem}.ask-note{margin:0;font-size:13px;line-height:1.5;color:var(--muted)}.ask-log{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;display:flex;flex-direction:column;gap:10px;padding-right:2px}.ask-chips{display:flex;flex-wrap:wrap;gap:6px}.ask-form{display:flex;gap:8px}.ask-form input,.ask-repo input{flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--ask-edge);border-radius:10px;padding:10px 12px;background:color-mix(in srgb, var(--panel) 70%, transparent);color:var(--text);font:inherit;font-size:14px}.ask-form input:focus,.ask-repo input:focus{outline:2px solid var(--cyan);outline-offset:1px}.ask-repo{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}.ask-repo input{padding:7px 10px;font-size:13px}.ask-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}@media (max-width: 560px){.ask-panel{inset:0;width:100vw;padding:14px;border:0;border-radius:0;box-shadow:none}.ask-form input,.ask-repo input{font-size:16px}}</style>
     <link rel="preload" href="css/qa-review-ask.css?v=20261024c" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="css/qa-review-ask.css?v=20261024c"></noscript>
-    <link rel="preload" href="css/qa-review-multi.css?v=20261126b" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="css/qa-review-multi.css?v=20261126b"></noscript>
+    <link rel="preload" href="css/qa-review-multi.css?v=20261128b" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/qa-review-multi.css?v=20261128b"></noscript>
     <style>
         :root {
             --bg: #eef2f4; --panel: #f7f8fa; --panel-2: #e8edf0; --card: #ffffff;
@@ -491,13 +491,13 @@
         .meter span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .meter i { display: block; height: 8px; border-radius: 99px; background: var(--cyan); }
         .meter .track { height: 8px; border-radius: 99px; background: var(--panel-2); overflow: hidden; }
-        .ticks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-        .tick { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--panel); }
+        .ticks { display: grid; grid-template-columns: repeat(auto-fit, minmax(max(96px, 22%), 1fr)); gap: 8px; }
+        .tick { min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--panel); overflow-wrap: break-word; }
         .tick b { display: block; font-size: 13px; margin-bottom: 4px; }
         .tick.on { border-color: color-mix(in srgb, var(--green) 55%, var(--line)); }
         .tick.off { border-color: color-mix(in srgb, var(--amber) 55%, var(--line)); }
         .advice { display: grid; gap: 8px; }
-        .advice article { padding: 10px 12px; border-left: 3px solid var(--cyan); background: var(--panel); border-radius: 0 12px 12px 0; }
+        .advice article { min-width: 0; padding: 10px 12px; border-left: 3px solid var(--cyan); background: var(--panel); border-radius: 0 12px 12px 0; overflow-wrap: anywhere; }
         .advice strong { display: block; margin-bottom: 4px; }
         .case-note { font-size: 13px; }
         .case-fade { filter: blur(var(--fade, 3px)); opacity: .72; user-select: none; }
@@ -511,7 +511,7 @@
         .ring b small { display: block; font-family: inherit; font-size: 11px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-top: 8px; }
         .grade { display: inline-grid; place-content: center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 9px; font-weight: 700; color: #fff; font-size: 15px; }
         .grade-A { background: var(--green); } .grade-B { background: color-mix(in srgb, var(--green) 60%, var(--amber)); } .grade-C { background: var(--amber); } .grade-D { background: color-mix(in srgb, var(--amber) 45%, var(--red)); } .grade-F { background: var(--red); }
-        .health-summary { font-size: 1.05rem; margin: 0 0 8px; }
+        .health-summary { min-width: 0; font-size: 1.05rem; margin: 0 0 8px; overflow-wrap: anywhere; }
         .verdict-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
         .vchip { border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 12px; background: var(--card); }
         .vchip b { font-size: 14px; margin-right: 4px; }
@@ -524,7 +524,7 @@
         .s-medium { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); }
         .s-low { color: var(--muted); }
         .exec-head { display: flex; gap: 12px; align-items: flex-start; }
-        .exec-head p { margin: 2px 0 0; font-size: 1.05rem; }
+        .exec-head p { min-width: 0; margin: 2px 0 0; font-size: 1.05rem; overflow-wrap: anywhere; }
         .exec-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 12px; }
         .exec-cols h3 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; margin: 0 0 6px; }
         .exec-cols ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
@@ -1032,7 +1032,7 @@
         .filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
         .filters button { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
         .filters button.on { background: var(--cyan); color: #fff; border-color: var(--cyan); }
-        .case { padding: 10px 0; border-bottom: 1px solid var(--line); }
+        .case { min-width: 0; padding: 10px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
         .case .id { font-family: "Fira Code", ui-monospace, monospace; font-size: 12px; color: var(--cyan); }
         .prio { display: inline-block; margin-right: 8px; padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; font-family: "Fira Code", ui-monospace, monospace; font-size: 11px; font-weight: 700; color: var(--muted); }
         .prio-P1 { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); }
@@ -1401,7 +1401,7 @@
             </header>
             <div class="live-filters-slot" data-live-filters></div>
         </div>
-        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="pt" translate="no">Os Live Reports precisam de JavaScript para abrir. Em 25 de outubro de 2026, a série reúne 331 sites públicos em 27 setores, analisados desde 19 de outubro de 2026 pela mesma revisão que qualquer pessoa pode fazer; novas revisões entram em um lote diário. A pontuação geral média é 73 de 100: SEO 67, GEO 84, analytics 80, segurança 63, acessibilidade 73 e desempenho 77. As maiores pontuações gerais são MDN Web Docs 95, CA.gov 92, GOV.UK 92 e GitHub Docs 91. A série inclui portais de governo como GOV.UK, GOV.CO e a Alcaldía de Bogotá; governos regionais como CA.gov, a Generalitat de Catalunya e a Gobernación del Valle del Cauca; veículos de imprensa como BBC, The Guardian e El País; bancos como Bancolombia e Davivienda; universidades como MIT, Stanford e Universidad de los Andes; projetos de código aberto como Python.org, Node.js e Kubernetes; e sistemas de transporte como TransMilenio e Metro de Medellín. Cada relatório é uma análise automatizada de páginas públicas, um ponto de partida e não um veredito.</p></noscript></div>
+        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="pt" translate="no">Os Live Reports precisam de JavaScript para abrir. Em 26 de outubro de 2026, a série reúne 401 sites públicos em 27 setores, analisados desde 19 de outubro de 2026 pela mesma revisão que qualquer pessoa pode fazer; novas revisões entram em um lote diário. A pontuação geral média é 72 de 100: SEO 67, GEO 84, analytics 77, segurança 62, acessibilidade 70 e desempenho 75. As maiores pontuações gerais são MDN Web Docs 95, CA.gov 92, GOV.UK 92 e GitHub Docs 91. A série inclui portais de governo como GOV.UK, GOV.CO e a Alcaldía de Bogotá; governos regionais como CA.gov, a Generalitat de Catalunya e a Gobernación del Valle del Cauca; veículos de imprensa como BBC, The Guardian e El País; bancos como Bancolombia e Davivienda; universidades como MIT, Stanford e Universidad de los Andes; projetos de código aberto como Python.org, Node.js e Kubernetes; e sistemas de transporte como TransMilenio e Metro de Medellín. Cada relatório é uma análise automatizada de páginas públicas, um ponto de partida e não um veredito.</p></noscript></div>
     </div>
 </section>
 <main id="review-app" tabindex="-1">
@@ -1877,11 +1877,11 @@
 <script src="js/qa-review-ask.js?v=20261109a" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261108c" defer></script>
-<script src="js/qa-review-findings-copy.js?v=20261110a" defer></script>
-<script src="js/qa-review.js?v=20261110g" defer></script>
-<script src="js/qa-review-benchmark.js?v=20261125d" defer></script>
-<script src="js/qa-review-multi.js?v=20261126c" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261128b" defer></script>
+<script src="js/qa-review-findings-copy.js?v=20261110b" defer></script>
+<script src="js/qa-review.js?v=20261128b" defer></script>
+<script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
+<script src="js/qa-review-multi.js?v=20261128b" defer></script>
 <script src="js/url-suggest.js?v=20261109a" defer></script>
 <script src="js/qa-review-live.js?v=20261109a" defer></script>
 </body>

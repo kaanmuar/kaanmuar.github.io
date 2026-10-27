@@ -6,7 +6,11 @@
    "guided": "Visita guiada",
    "never": "Nunca ejecuta tus pruebas",
    "end": "Deja que tu página hable por ti.",
-   "endNote": "Cómo funciona la revisión de una página pública, paso a paso."
+   "endNote": "Cómo funciona la revisión de una página pública, paso a paso.",
+   "why": "Por qué importa",
+   "more": "¿Lo sabías?",
+   "strongest": "Área más fuerte",
+   "weakest": "Área más débil"
   },
   "pt": {
    "tryThis": "Experimente",
@@ -14,7 +18,11 @@
    "guided": "Visita guiada",
    "never": "Nunca executa seus testes",
    "end": "Deixe sua página falar por você.",
-   "endNote": "Como funciona a revisão de uma página pública, passo a passo."
+   "endNote": "Como funciona a revisão de uma página pública, passo a passo.",
+   "why": "Por que isso importa",
+   "more": "Você sabia?",
+   "strongest": "Área mais forte",
+   "weakest": "Área mais fraca"
   },
   "de": {
    "tryThis": "Probieren Sie es aus",
@@ -22,7 +30,11 @@
    "guided": "Geführte Tour",
    "never": "Führt nie Ihre Tests aus",
    "end": "Lassen Sie Ihre Seite für sich sprechen.",
-   "endNote": "So funktioniert die Prüfung einer öffentlichen Seite, Schritt für Schritt."
+   "endNote": "So funktioniert die Prüfung einer öffentlichen Seite, Schritt für Schritt.",
+   "why": "Warum das zählt",
+   "more": "Schon gewusst?",
+   "strongest": "Stärkster Bereich",
+   "weakest": "Schwächster Bereich"
   },
   "fr": {
    "tryThis": "Essayez",
@@ -30,7 +42,11 @@
    "guided": "Visite guidée",
    "never": "N'exécute jamais vos tests",
    "end": "Laissez votre page parler pour vous.",
-   "endNote": "Comment fonctionne l'analyse d'une page publique, étape par étape."
+   "endNote": "Comment fonctionne l'analyse d'une page publique, étape par étape.",
+   "why": "Pourquoi c'est important",
+   "more": "Le saviez-vous ?",
+   "strongest": "Point le plus fort",
+   "weakest": "Point le plus faible"
   },
   "it": {
    "tryThis": "Prova subito",
@@ -38,7 +54,11 @@
    "guided": "Visita guidata",
    "never": "Non esegue mai i tuoi test",
    "end": "Lascia che la tua pagina parli per te.",
-   "endNote": "Come funziona la revisione di una pagina pubblica, passo dopo passo."
+   "endNote": "Come funziona la revisione di una pagina pubblica, passo dopo passo.",
+   "why": "Perché conta",
+   "more": "Lo sapevi?",
+   "strongest": "Area più forte",
+   "weakest": "Area più debole"
   }
  },
  "clips": {
@@ -60,7 +80,8 @@
    "visual.cols.3": "Analítica",
    "visual.cols.4": "Seguridad",
    "visual.cols.6": "Velocidad",
-   "cap.youtube": "Viena gana en SEO por 19 puntos, 94 a 75. Berlín responde en seguridad, 86 a 72, y en accesibilidad, 97 a 85. GEO, analítica y velocidad quedan empatadas.\n\nLección: Una ventaja de un punto puede esconder una brecha de 19. Mira las puntuaciones por área de tu sitio, no solo el total.\n\nGuía: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=berlin-vienna\n\nLa respuesta · QA-lab URL Review"
+   "cap.youtube": "Viena gana en SEO por 19 puntos, 94 a 75. Berlín responde en seguridad, 86 a 72, y en accesibilidad, 97 a 85. GEO, analítica y velocidad quedan empatadas.\n\nLección: Una ventaja de un punto puede esconder una brecha de 19. Mira las puntuaciones por área de tu sitio, no solo el total.\n\nGuía: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=berlin-vienna\n\nLa respuesta · QA-lab URL Review",
+   "more": "El área más débil de Berlín es el SEO, con 75. La de Viena es la seguridad, con 72."
   },
   "three-universities": {
    "counter": "Comparativo",
@@ -81,7 +102,8 @@
    "visual.cols.3": "Analytics",
    "visual.cols.4": "Segurança",
    "visual.cols.6": "Velocidade",
-   "cap.youtube": "Stanford lidera no geral com 86 e em segurança. O MIT tem as páginas mais rápidas, 97 em velocidade. Harvard lidera em GEO com 89 e divide com Stanford a nota máxima de 100 em acessibilidade.\n\nLição: Escolha seus dois concorrentes mais próximos e compare área por área. O total esconde onde cada um é forte.\n\nGuia: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=three-universities\n\nComparativo · QA-lab URL Review"
+   "cap.youtube": "Stanford lidera no geral com 86 e em segurança. O MIT tem as páginas mais rápidas, 97 em velocidade. Harvard lidera em GEO com 89 e divide com Stanford a nota máxima de 100 em acessibilidade.\n\nLição: Escolha seus dois concorrentes mais próximos e compare área por área. O total esconde onde cada um é forte.\n\nGuia: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=three-universities\n\nComparativo · QA-lab URL Review",
+   "more": "A nota mais baixa entre as três é a de segurança de Harvard, 54. A área mais fraca do MIT é o SEO, com 59."
   },
   "quiz-banks": {
    "counter": "Quiz · wer liegt vorn?",
@@ -96,7 +118,8 @@
    "visual.sides.1.label": "Bancolombia",
    "visual.note": "Gesamtpunktzahl von 100 · nur öffentliche Seiten",
    "cat.label": "Echte Analysen im Vergleich · national",
-   "cap.youtube": "Zwei der größten Banken Kolumbiens, je 20 öffentliche Seiten, am selben Tag im Oktober 2026 analysiert.\n\nIhr Tipp: Geben Sie Ihren Tipp ab. Die Antwort mit allen sechs Bereichswerten kommt morgen.\n\nLeitfaden: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-banks\n\nQuiz · wer liegt vorn? · QA-lab URL Review"
+   "cap.youtube": "Zwei der größten Banken Kolumbiens, je 20 öffentliche Seiten, am selben Tag im Oktober 2026 analysiert.\n\nIhr Tipp: Geben Sie Ihren Tipp ab. Die Antwort mit allen sechs Bereichswerten kommt morgen.\n\nLeitfaden: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-banks\n\nQuiz · wer liegt vorn? · QA-lab URL Review",
+   "more": "Beide Banken erreichen bei Analytics genau 85, dieser Bereich entscheidet es also nicht."
   },
   "banks": {
    "counter": "La réponse",
@@ -116,7 +139,8 @@
    "visual.cols.3": "Analytics",
    "visual.cols.4": "Sécurité",
    "visual.cols.6": "Vitesse",
-   "cap.youtube": "Davivienda obtient 86 en accessibilité, Bancolombia 45. Bancolombia a les pages les plus rapides, 73 contre 50, et les deux sont à égalité en analytics, à 85.\n\nLeçon: Vérifiez d'abord les libellés, le contraste et les titres de vos pages publiques. Ici, ils ont pesé sur le total plus que tout autre domaine.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=banks\n\nLa réponse · QA-lab URL Review"
+   "cap.youtube": "Davivienda obtient 86 en accessibilité, Bancolombia 45. Bancolombia a les pages les plus rapides, 73 contre 50, et les deux sont à égalité en analytics, à 85.\n\nLeçon: Vérifiez d'abord les libellés, le contraste et les titres de vos pages publiques. Ici, ils ont pesé sur le total plus que tout autre domaine.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=banks\n\nLa réponse · QA-lab URL Review",
+   "more": "Le point le plus faible de Bancolombia est le SEO, à 41. Celui de Davivienda est la vitesse, à 50."
   },
   "quiz-govuk-usagov": {
    "counter": "Quiz · chi ha ottenuto di più?",
@@ -131,7 +155,8 @@
    "visual.sides.1.label": "Stati Uniti",
    "visual.note": "Punteggio complessivo su 100 · 20 pagine ciascuno",
    "cat.label": "Siti reali a confronto · nazionale",
-   "cap.youtube": "Due portali governativi nazionali, entrambi costruiti su un design system pubblico, 20 pagine ciascuno, analizzati a ottobre 2026.\n\nLa tua ipotesi: Fai la tua ipotesi. La risposta, con tutti e sei i punteggi per area, arriva domani.\n\nGuida: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-govuk-usagov\n\nQuiz · chi ha ottenuto di più? · QA-lab URL Review"
+   "cap.youtube": "Due portali governativi nazionali, entrambi costruiti su un design system pubblico, 20 pagine ciascuno, analizzati a ottobre 2026.\n\nLa tua ipotesi: Fai la tua ipotesi. La risposta, con tutti e sei i punteggi per area, arriva domani.\n\nGuida: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-govuk-usagov\n\nQuiz · chi ha ottenuto di più? · QA-lab URL Review",
+   "more": "Entrambi i portali ottengono un 100 pieno in accessibilità, quindi la differenza sta nelle altre cinque aree."
   },
   "quiz-metros": {
    "counter": "Quiz · ¿cuál obtuvo más?",
@@ -146,7 +171,8 @@
    "visual.sides.1.label": "Metro de Bogotá",
    "visual.note": "Puntuación general sobre 100 · 20 páginas cada uno",
    "cat.label": "Sitios reales comparados · local",
-   "cap.youtube": "El metro de Medellín lleva pasajeros desde 1995, y la primera línea del de Bogotá aún está en obra. Sus sitios web, de 20 páginas cada uno, pasaron por la misma revisión.\n\nTu apuesta: Haz tu apuesta. La respuesta, con las seis puntuaciones por área, sale mañana.\n\nGuía: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-metros\n\nQuiz · ¿cuál obtuvo más? · QA-lab URL Review"
+   "cap.youtube": "El metro de Medellín lleva pasajeros desde 1995, y la primera línea del de Bogotá aún está en obra. Sus sitios web, de 20 páginas cada uno, pasaron por la misma revisión.\n\nTu apuesta: Haz tu apuesta. La respuesta, con las seis puntuaciones por área, sale mañana.\n\nGuía: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-metros\n\nQuiz · ¿cuál obtuvo más? · QA-lab URL Review",
+   "more": "Los dos sitios de metro sacan 86 en GEO, así que esa área no decide."
   },
   "metros": {
    "counter": "A resposta",
@@ -166,7 +192,8 @@
    "visual.cols.3": "Analytics",
    "visual.cols.4": "Segurança",
    "visual.cols.6": "Velocidade",
-   "cap.youtube": "O Metro de Medellín lidera em SEO, 83 a 65, e em segurança, 77 a 61. O Metro de Bogotá vence em velocidade, 97 a 94, e em acessibilidade, 86 a 79. Em GEO, empate em 86.\n\nLição: Um site mais rápido ainda pode perder no geral. Corrija primeiro a área mais fraca: no Metro de Bogotá, é a segurança, com 61.\n\nGuia: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=metros\n\nA resposta · QA-lab URL Review"
+   "cap.youtube": "O Metro de Medellín lidera em SEO, 83 a 65, e em segurança, 77 a 61. O Metro de Bogotá vence em velocidade, 97 a 94, e em acessibilidade, 86 a 79. Em GEO, empate em 86.\n\nLição: Um site mais rápido ainda pode perder no geral. Corrija primeiro a área mais fraca: no Metro de Bogotá, é a segurança, com 61.\n\nGuia: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=metros\n\nA resposta · QA-lab URL Review",
+   "more": "O 97 de velocidade do Metro de Bogotá empata com o do MIT como as páginas mais rápidas desta série de comparações."
   },
   "quiz-cities": {
    "counter": "Quiz · wer liegt vorn?",
@@ -181,7 +208,8 @@
    "visual.sides.1.label": "Medellín",
    "visual.note": "Gesamtpunktzahl von 100 · Portale der Stadtverwaltungen",
    "cat.label": "Echte Analysen im Vergleich · lokal",
-   "cap.youtube": "Die zwei größten Städte Kolumbiens und ihre offiziellen Portale, im Oktober 2026 mit derselben Prüfung öffentlicher Seiten analysiert.\n\nIhr Tipp: Geben Sie Ihren Tipp ab. Die Antwort mit allen sechs Bereichswerten kommt morgen.\n\nLeitfaden: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-cities\n\nQuiz · wer liegt vorn? · QA-lab URL Review"
+   "cap.youtube": "Die zwei größten Städte Kolumbiens und ihre offiziellen Portale, im Oktober 2026 mit derselben Prüfung öffentlicher Seiten analysiert.\n\nIhr Tipp: Geben Sie Ihren Tipp ab. Die Antwort mit allen sechs Bereichswerten kommt morgen.\n\nLeitfaden: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=quiz-cities\n\nQuiz · wer liegt vorn? · QA-lab URL Review",
+   "more": "Gleiche Prüfung, gleicher Tag: 20 Seiten des Portals von Bogotá und 19 von Medellín, am 19. Oktober 2026."
   },
   "cities": {
    "counter": "La réponse",
@@ -201,7 +229,8 @@
    "visual.cols.3": "Analytics",
    "visual.cols.4": "Sécurité",
    "visual.cols.6": "Vitesse",
-   "cap.youtube": "Bogotá mène en sécurité, 77 contre 54, et en SEO, 97 contre 89. Medellín a les pages les plus rapides, 80 contre 73, et devance de peu en GEO, 91 contre 89.\n\nLeçon: Le portail de Medellín n'envoie ni HSTS, ni CSP, ni Referrer-Policy, ni Permissions-Policy. La plupart des hébergeurs et des CDN règlent les en-têtes par configuration, sans code.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=cities\n\nLa réponse · QA-lab URL Review"
+   "cap.youtube": "Bogotá mène en sécurité, 77 contre 54, et en SEO, 97 contre 89. Medellín a les pages les plus rapides, 80 contre 73, et devance de peu en GEO, 91 contre 89.\n\nLeçon: Le portail de Medellín n'envoie ni HSTS, ni CSP, ni Referrer-Policy, ni Permissions-Policy. La plupart des hébergeurs et des CDN règlent les en-têtes par configuration, sans code.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11&utm_content=cities\n\nLa réponse · QA-lab URL Review",
+   "more": "Le 97 de Bogotá en SEO est le meilleur score SEO de toute cette série de comparaisons."
   }
  },
  "cache": {}

@@ -196,9 +196,10 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6ad9eafb28df0d23e734f210",
-    "at": "2026-10-26T14:50:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
+    "at": "2026-10-26T14:50:23.886Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7520497060756770816",
+    "checked": "2026-10-26T20:24:39.425Z",
     "slot": "2026-10-26T13:01:00.000Z"
    },
    {
@@ -214,19 +215,19 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6ad9eafab3b4a1914c93dd22",
-    "at": "2026-10-26T14:50:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
+    "at": "2026-10-26T14:50:03.687Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2114731287076372689",
+    "checked": "2026-10-26T20:24:39.425Z",
     "slot": "2026-10-26T14:06:00.000Z"
    },
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6ad9eafaebec8224f3ba0d0d",
+    "id": "6adfb70e3ffda7dd058ddf7e",
     "at": "2026-10-26T23:50:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
-    "slot": "2026-10-26T21:34:00.000Z"
+    "checked": "2026-10-26T20:24:45.484Z"
    }
   ],
   "auto-2026-10-22/05-u-lamega-com-co": [
@@ -260,11 +261,10 @@
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6ad9eafcb7096b8d380ee4c5",
+    "id": "6adfb7100988d5affea202da",
     "at": "2026-10-27T23:20:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
-    "slot": "2026-11-01T22:09:00.000Z"
+    "checked": "2026-10-26T20:24:48.198Z"
    }
   ],
   "auto-2026-10-22/06-u-cognizant-com": [
@@ -298,11 +298,10 @@
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6ad9eafdb7096b8d380ee5a7",
+    "id": "6adfb7123c00530d93a5ddae",
     "at": "2026-10-28T21:05:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
-    "slot": "2026-11-04T00:25:00.000Z"
+    "checked": "2026-10-26T20:24:49.453Z"
    }
   ],
   "auto-2026-10-22/07-u-zipdev-com": [
@@ -374,11 +373,10 @@
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6ad9eb01b7096b8d380ee7af",
+    "id": "6adfb7143c00530d93a5de56",
     "at": "2026-10-30T22:15:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
-    "slot": "2026-11-07T23:33:00.000Z"
+    "checked": "2026-10-26T20:24:51.961Z"
    }
   ],
   "auto-2026-10-22/09-u-lenovo-com": [
@@ -412,11 +410,10 @@
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6ad9eb03b7096b8d380ee834",
+    "id": "6adfb7150988d5affea20393",
     "at": "2026-10-31T23:05:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
-    "slot": "2026-11-09T00:32:00.000Z"
+    "checked": "2026-10-26T20:24:53.155Z"
    }
   ],
   "auto-2026-10-22/10-u-uniminuto-edu": [
@@ -450,11 +447,10 @@
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6ad9eb04b7096b8d380ee89d",
+    "id": "6adfb7173ffda7dd058de0d8",
     "at": "2026-11-02T00:20:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
-    "slot": "2026-11-10T01:21:00.000Z"
+    "checked": "2026-10-26T20:24:54.522Z"
    }
   ],
   "auto-2026-10-22/11-u-davibank-com": [
@@ -488,11 +484,10 @@
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6ad9eb06bcda36d1d415a1a6",
+    "id": "6adfb7183c00530d93a5df5c",
     "at": "2026-11-03T00:05:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
-    "slot": "2026-11-10T21:20:00.000Z"
+    "checked": "2026-10-26T20:24:55.752Z"
    }
   ],
   "auto-2026-10-22/12-u-confluence-com": [
@@ -526,11 +521,10 @@
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6ad9eb0828df0d23e734f628",
+    "id": "6adfb7193c00530d93a5e029",
     "at": "2026-11-04T00:40:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
-    "slot": "2026-11-11T22:51:00.000Z"
+    "checked": "2026-10-26T20:24:57.073Z"
    }
   ],
   "auto-2026-10-22/13-u-atlassian-com": [
@@ -602,11 +596,10 @@
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6ad9eb0cb3b4a1914c93e42d",
+    "id": "6adfb71b2e4832a623d3e661",
     "at": "2026-11-05T21:05:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
-    "slot": "2026-11-14T00:25:00.000Z"
+    "checked": "2026-10-26T20:24:58.431Z"
    }
   ],
   "auto-2026-10-22/15-u-nice-com": [
@@ -640,11 +633,10 @@
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6ad9eb0eebec8224f3ba14b3",
+    "id": "6adfb71e3ffda7dd058de735",
     "at": "2026-11-06T23:25:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
-    "slot": "2026-11-15T22:17:00.000Z"
+    "checked": "2026-10-26T20:24:59.723Z"
    }
   ],
   "auto-2026-10-22/16-u-honda-com": [
@@ -678,11 +670,10 @@
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6ad9eb0febec8224f3ba1561",
+    "id": "6adfb7203ffda7dd058de8d4",
     "at": "2026-11-07T23:10:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.995Z",
-    "slot": "2026-11-17T23:22:00.000Z"
+    "checked": "2026-10-26T20:25:03.404Z"
    }
   ],
   "auto-2026-10-23/01-u-pirouline-com": [
@@ -766,9 +757,10 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6adb2e76efac72e60fbffa29",
-    "at": "2026-10-26T13:00:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T00:45:01.658Z",
+    "at": "2026-10-26T13:04:09.948Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7520470325873152003",
+    "checked": "2026-10-26T20:24:39.425Z",
     "slot": "2026-10-28T14:12:00.000Z"
    },
    {
@@ -784,19 +776,19 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6adb2e75efac72e60fbffa01",
-    "at": "2026-10-26T16:35:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T00:45:01.658Z",
+    "at": "2026-10-26T16:35:08.376Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2114757730770542791",
+    "checked": "2026-10-26T20:24:39.425Z",
     "slot": "2026-10-28T19:59:00.000Z"
    },
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6adb2e75efac72e60fbff9d8",
+    "id": "6adfb70b3ffda7dd058ddeb6",
     "at": "2026-10-26T21:55:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.658Z",
-    "slot": "2026-10-28T23:35:00.000Z"
+    "checked": "2026-10-26T20:24:42.948Z"
    }
   ],
   "auto-2026-10-24/01-u-grupoexito-com-co": [
@@ -842,9 +834,10 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6adc6dc90b5343d070729d45",
-    "at": "2026-10-26T13:10:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T00:45:01.658Z",
+    "at": "2026-10-26T13:10:25.009Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7520471899470991360",
+    "checked": "2026-10-26T20:24:39.425Z",
     "slot": "2026-10-31T12:52:00.000Z"
    },
    {
@@ -860,19 +853,19 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6adc6dc86887a2efc1a81bce",
-    "at": "2026-10-26T18:25:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T00:45:01.658Z",
+    "at": "2026-10-26T18:25:04.795Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2114785398534569994",
+    "checked": "2026-10-26T20:24:39.425Z",
     "slot": "2026-10-31T14:08:00.000Z"
    },
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6adc6dc8bd33ce99c312933f",
+    "id": "6adfb70c3ffda7dd058ddf1d",
     "at": "2026-10-26T22:55:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.658Z",
-    "slot": "2026-10-31T21:33:00.000Z"
+    "checked": "2026-10-26T20:24:44.200Z"
    }
   ],
   "auto-2026-10-24/03-u-nibo-com-br": [
@@ -906,11 +899,10 @@
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6adc6dca8b3d437ddcab9cc9",
+    "id": "6adfb70f2e4832a623d3e403",
     "at": "2026-10-27T21:55:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.658Z",
-    "slot": "2026-11-02T23:15:00.000Z"
+    "checked": "2026-10-26T20:24:46.940Z"
    }
   ],
   "auto-2026-10-24/04-u-kreuzwort-raetsel-net": [
@@ -944,11 +936,10 @@
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
-    "id": "6adc6dcbe4be8a4d864b3752",
+    "id": "6adfb7133c00530d93a5de00",
     "at": "2026-10-28T23:50:00.000Z",
     "result": "queued",
-    "checked": "2026-10-25T00:45:01.658Z",
-    "slot": "2026-11-05T01:34:00.000Z"
+    "checked": "2026-10-26T20:24:50.652Z"
    }
   ],
   "auto-2026-10-24/05-u-roottcostore-com": [
@@ -994,9 +985,10 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6adf2e8cd53d0b841b2caa4b",
-    "at": "2026-10-26T15:07:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-26T10:42:20.158Z"
+    "at": "2026-10-26T15:07:22.393Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7520501333188259842",
+    "checked": "2026-10-26T20:24:39.425Z"
    },
    {
     "channel": "tiktok",
@@ -1232,9 +1224,10 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6adf39dd17249a591120c5d4",
-    "at": "2026-10-26T13:42:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-26T11:30:37.052Z"
+    "at": "2026-10-26T13:42:23.665Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7520479947015217152",
+    "checked": "2026-10-26T20:24:39.425Z"
    },
    {
     "channel": "tiktok",
@@ -1248,9 +1241,10 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6adf39dc4dcf9e76ce4e8234",
-    "at": "2026-10-26T16:41:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-26T11:30:36.315Z"
+    "at": "2026-10-26T16:41:04.742Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2114759225750565092",
+    "checked": "2026-10-26T20:24:39.425Z"
    },
    {
     "channel": "youtube",
@@ -2318,36 +2312,40 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6add0ca0e4be8a4d86760587",
-    "at": "2026-10-26T17:00:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T00:45:01.658Z",
+    "at": "2026-10-26T17:03:29.436Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7520530555013287936",
+    "checked": "2026-10-26T20:24:39.425Z",
     "slot": "2026-11-03T12:57:00.000Z"
    },
    {
     "channel": "tiktok",
     "profile": "tiktok (qalaburlreview)",
     "id": "6add0c9d0b5343d0709d673a",
-    "at": "2026-10-26T17:50:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T00:45:01.658Z",
+    "at": "2026-10-26T17:51:44.280Z",
+    "result": "sent",
+    "url": "https://tiktok.com/@qalaburlreview/video/7701035279695514888",
+    "checked": "2026-10-26T20:24:39.425Z",
     "slot": "2026-11-03T22:42:00.000Z"
    },
    {
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6add0c9f3d5b27036b9e7da2",
-    "at": "2026-10-26T18:35:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T00:45:01.658Z",
+    "at": "2026-10-26T18:35:02.860Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2114787907017777264",
+    "checked": "2026-10-26T20:24:39.425Z",
     "slot": "2026-11-03T15:06:00.000Z"
    },
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
     "id": "6add0c9ee4be8a4d86760548",
-    "at": "2026-10-26T19:20:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T00:45:01.658Z",
+    "at": "2026-10-26T19:20:07.454Z",
+    "result": "sent",
+    "url": "https://www.youtube.com/shorts/zI7jR1nV8_I",
+    "checked": "2026-10-26T20:24:39.425Z",
     "slot": "2026-11-03T21:25:00.000Z"
    }
   ],
@@ -7208,18 +7206,20 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6ad8c754660f3fbd820357ce",
-    "at": "2026-10-26T12:50:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T00:45:03.513Z",
+    "at": "2026-10-26T12:50:25.432Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7520466869003280386",
+    "checked": "2026-10-26T20:24:39.425Z",
     "slot": "2026-10-26T15:49:00.000Z"
    },
    {
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6ade58eb0b5343d070eaeaf8",
-    "at": "2026-10-26T17:15:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T19:30:50.415Z"
+    "at": "2026-10-26T17:15:13.189Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2114767817723552174",
+    "checked": "2026-10-26T20:24:39.425Z"
    },
    {
     "channel": "youtube",
@@ -7236,18 +7236,20 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6ad8c7554ada66fc810d3436",
-    "at": "2026-10-26T15:15:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T00:45:03.513Z",
+    "at": "2026-10-26T15:15:36.250Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7520503404155109378",
+    "checked": "2026-10-26T20:24:39.425Z",
     "slot": "2026-10-27T12:42:00.000Z"
    },
    {
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6ade58ec3d5b27036bebd278",
-    "at": "2026-10-26T19:50:00.000Z",
-    "result": "queued",
-    "checked": "2026-10-25T19:30:51.812Z"
+    "at": "2026-10-26T19:50:04.951Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2114806790181257570",
+    "checked": "2026-10-26T20:24:39.425Z"
    },
    {
     "channel": "youtube",
@@ -8093,13 +8095,29 @@
    "since": "2026-10-26T16:13:29.869Z",
    "error": "Buffer's 24h limit is spent; it frees up in 4 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
   },
+  "auto-2026-10-26": {
+   "since": "2026-10-26T18:01:53.270Z",
+   "error": "Buffer's 24h limit is spent; it frees up in 2 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+  },
+  "compare-2026-11": {
+   "since": "2026-10-26T17:06:31.914Z",
+   "error": "Buffer's 24h limit is spent; it frees up in 3 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+  },
   "digest-2026-10-30": {
    "since": "2026-10-26T16:33:56.009Z",
    "error": "Buffer's 24h limit is spent; it frees up in 3 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
   },
+  "evergreen-2026-11": {
+   "since": "2026-10-26T17:22:20.037Z",
+   "error": "Buffer's 24h limit is spent; it frees up in 3 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+  },
+  "series-dia-de-muertos-2026-11": {
+   "since": "2026-10-26T16:50:22.124Z",
+   "error": "Buffer's 24h limit is spent; it frees up in 3 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+  },
   "skits-friday-release": {
    "since": "2026-10-26T12:03:36.029Z",
-   "error": "Buffer's 24h limit is spent; it frees up in 8 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
+   "error": "Buffer's 24h limit is spent; it frees up in 2 h. Buffer 429: [{\"message\":\"Too many requests from this client. Please try again later. Upgrade your Buffer plan for higher API limits: https://buffer.com/pricing\",\"extensions\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"window\":\"24h\"}}]"
   }
  }
 }

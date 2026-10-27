@@ -99,6 +99,20 @@
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_numbers" />
         </receiver>
+        <receiver android:name=".home.NeedsWidgetReceiver" android:exported="true" android:label="Jarvis needs you">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_needs" />
+        </receiver>
+        <receiver android:name=".home.AlertsWidgetReceiver" android:exported="true" android:label="Jarvis alerts">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_alerts" />
+        </receiver>
+        <activity
+            android:name=".ConfirmActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Jarvis.Sheet" />
         <receiver android:name=".home.GoalsWidgetReceiver" android:exported="true" android:label="Jarvis goals">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_goals" />
@@ -136,5 +150,7 @@
         <receiver android:name=".update.UpdateReceiver" android:exported="false">
             <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
         </receiver>
+
+        <receiver android:name=".push.ActionReceiver" android:exported="false" />
     </application>
 </manifest>

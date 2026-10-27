@@ -216,7 +216,7 @@ function pairQuizzes(posts) {
 }
 
 // Post ids a network has taken: queued or sent in either ledger. A translated variant counts through its base post.
-function queuedIds(books = [queues.read(queues.BUFFER), queues.read(queues.FACEBOOK)]) {
+function queuedIds(books = [queues.read(queues.BUFFER), queues.read(queues.FACEBOOK), queues.read(queues.OPEN_SOCIAL)]) {
   const ids = new Set();
   books.forEach((book) => Object.entries(book.posts).forEach(([id, list]) => {
     if (list.some((entry) => entry.result === "queued" || entry.result === "sent")) ids.add(id);

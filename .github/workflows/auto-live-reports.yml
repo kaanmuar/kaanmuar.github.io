@@ -65,7 +65,8 @@ jobs:
     needs: gate
     if: needs.gate.outputs.go == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # A 40 s scene clip draws about 1,200 frames; a 16-review day renders for about an hour.
+    timeout-minutes: 180
     permissions:
       contents: write
       pages: write

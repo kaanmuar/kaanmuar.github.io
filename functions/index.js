@@ -239,6 +239,7 @@ exports.notifyOwnerOnMessage = withMail.firestore
     } catch (error) {
       console.error("Owner message notification failed:", error);
     }
+    await pushOwner(jarvisMailPush.messageMessage(snap.id, data, topic));
     return null;
   });
 
@@ -264,6 +265,7 @@ exports.notifyOwnerOnRating = withMail.firestore
     } catch (error) {
       console.error("Owner rating notification failed:", error);
     }
+    await pushOwner(jarvisMailPush.ratingMessage(snap.id, data));
     return null;
   });
 
@@ -1287,6 +1289,7 @@ async function rerunReviewFailures() {
   console.log("URL review re-runs: " + done.length + " of " + plan.runs.length + " ran, " + plan.skipped.length + " skipped.");
   if (!done.length) return null;
   const mail = reviewFailures.rerunMail(done);
+  await pushOwner(jarvisMailPush.rerunMessage(done, REVIEW_FN_URL + "/desk"));
   await sendOwnerEmail({ to: REVIEW_ALERT_TO, subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, respondUrl: REVIEW_FN_URL + "/desk", buttonLabel: "Open the review desk" });
   return null;
 }
@@ -1466,6 +1469,7 @@ exports.exportFirestoreWeekly = scheduled(withMail, "exportFirestoreWeekly", asy
     console.log("Firestore export started:", operation && operation.name ? operation.name : stamp);
   } catch (error) {
     console.error("Firestore export failed:", error);
+    await pushOwner(jarvisMailPush.backupMessage(stamp, error && error.message));
     try {
       await sendOwnerEmail({
         subject: "Firestore backup did not start",
@@ -1534,6 +1538,7 @@ async function mailReviewedSites(ip, source) {
 // A comparison notice carries the scores, problems, and market presence. A mail failure still leaves the comparison saved.
 async function mailComparison(notice) {
   if (!notice) return;
+  await pushOwner(jarvisMailPush.comparisonMessage(notice));
   try {
     await sendOwnerEmail({
       eyebrow: "QA-lab URL Review",
@@ -2290,6 +2295,7 @@ async function opsWatchdog() {
     { label: "Failure re-runs, 7 days", value: String(reruns.data().count) },
     { label: "Owner replies, 7 days", value: replies.data().count + " in, " + waiting.data().count + " waiting for a decision" }
   ]);
+  await pushOwner(jarvisMailPush.opsMessage(problems, ops.JOBS.filter((row) => row.host !== "github").map((row) => row.job)));
   await sendOwnerEmail({
     to: REVIEW_ALERT_TO,
     subject: problems.length ? "Ops: " + problems.length + " scheduled job" + (problems.length === 1 ? "" : "s") + " missed or failed" : "Ops: weekly digest, every job on time",
@@ -2370,6 +2376,19 @@ async function noticeForReply(reply) {
   return { link, ref: snap && snap.exists ? snap.ref : null, notice: snap && snap.exists ? snap.data() : null };
 }
 
+// The Decide page's buttons and Jarvis's notification buttons: resend, stop, unlist or done.
+async function decideOwnerReply(ref, row, action, rawEmail) {
+  if (row.status !== "waiting" || ["resend", "stop", "unlist", "done"].indexOf(action) === -1) return { conflict: true, row };
+  const email = String(rawEmail || "").trim().toLowerCase().slice(0, 200);
+  let problem = "";
+  if (action === "resend") problem = ownerReplies.resendChoices(row).includes(email) ? await resendNotice(row, email) : "Pick one of the addresses in the reply.";
+  else if (action !== "done") await applyReplyAction(action === "stop" ? "stop-domain" : "unlist", row);
+  const decided = { status: "decided", decision: action, decidedAt: new Date().toISOString(), decidedEmail: action === "resend" ? email : "" };
+  const saved = !problem || problem.startsWith("Saved");
+  if (saved) await ref.update(decided);
+  return { problem, saved, row: Object.assign({}, row, saved ? decided : {}) };
+}
+
 async function takeOwnerReply(mail, auth) {
   const reply = ownerReplies.read(mail);
   const { link, ref, notice } = await noticeForReply(reply);
@@ -2391,6 +2410,7 @@ async function takeOwnerReply(mail, auth) {
   for (const action of decision.apply) await applyReplyAction(action, row);
   if (ref) await ref.set({ lastReplyAt: row.at, lastReplyKind: row.kind }, { merge: true });
   if (row.kind !== "auto" && row.kind !== "bounce") {
+    await pushOwner(jarvisMailPush.ownerReplyMessage(id, row, ownerReplies.summary(row, decision), OWNER_REPLIES_URL + "/decide?t=" + id));
     await sendOwnerEmail({
       to: REVIEW_ALERT_TO,
       replyTo: row.from,
@@ -2474,19 +2494,12 @@ exports.ownerReplies = functions.runWith({ timeoutSeconds: 60, memory: "256MB", 
         res.status(200).send(replyPage(id, row, ""));
         return;
       }
-      const action = String((req.body && req.body.do) || "");
-      if (row.status !== "waiting" || ["resend", "stop", "unlist", "done"].indexOf(action) === -1) {
+      const out = await decideOwnerReply(ref, row, String((req.body && req.body.do) || ""), (req.body && req.body.email) || "");
+      if (out.conflict) {
         res.status(409).send(replyPage(id, row, "This reply was already decided."));
         return;
       }
-      const email = String((req.body && req.body.email) || "").trim().toLowerCase().slice(0, 200);
-      let problem = "";
-      if (action === "resend") problem = ownerReplies.resendChoices(row).includes(email) ? await resendNotice(row, email) : "Pick one of the addresses in the reply.";
-      else if (action !== "done") await applyReplyAction(action === "stop" ? "stop-domain" : "unlist", row);
-      const decided = { status: "decided", decision: action, decidedAt: new Date().toISOString(), decidedEmail: action === "resend" ? email : "" };
-      if (!problem || problem.startsWith("Saved")) await ref.update(decided);
-      const shown = Object.assign({}, row, !problem || problem.startsWith("Saved") ? decided : {});
-      res.status(200).send(replyPage(id, shown, problem || "Done."));
+      res.status(200).send(replyPage(id, out.row, out.problem || "Done."));
       return;
     }
     res.status(404).send("Not found");
@@ -2545,15 +2558,7 @@ async function rememberReview(kind, source) {
   } catch (error) {
     console.error("Review alert mail failed:", error);
   }
-  const push = jarvisNotify.paymentMessage(kind, source || {}, note) || jarvisNotify.reviewMessage(kind, source || {});
-  if (push) {
-    try {
-      const db = admin.firestore();
-      await jarvisPush.send(admin.messaging(), db, await jarvisPush.targets(db, push.kind), push);
-    } catch (error) {
-      console.error("Jarvis push failed:", error && error.message);
-    }
-  }
+  await pushOwner(jarvisNotify.paymentMessage(kind, source || {}, note) || jarvisNotify.reviewMessage(kind, source || {}) || jarvisMailPush.runMessage(source || {}, note));
 }
 const REVIEW_ORIGINS = new Set([
   "https://carlosandmunoz.com",
@@ -4897,12 +4902,106 @@ const jarvisSources = require("./jarvis-sources");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
 const jarvisNotify = require("./jarvis-notify");
+const jarvisMailPush = require("./jarvis-mail-push");
+
+// A push failure is logged and never stops the owner email it mirrors.
+async function pushOwner(msg) {
+  if (!msg) return null;
+  try {
+    const db = admin.firestore();
+    return await jarvisPush.send(admin.messaging(), db, await jarvisPush.targets(db, msg.kind), msg);
+  } catch (error) {
+    console.error("Jarvis push failed:", error && error.message);
+    return null;
+  }
+}
 const jarvisSocial = require("./jarvis-social");
 
 async function socialProposals() {
   const res = await fetch(customerMail.SITE + "/assets/social/proposals.json?t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error("The proposals list answered " + res.status + ".");
   return res.json();
+}
+
+async function jarvisSocialDecide(id, decision, now) {
+  const proposal = ((await socialProposals()).proposals || []).find((p) => p && p.id === String(id || ""));
+  if (!proposal) throw new Error("That proposal is no longer in the list.");
+  const ref = admin.firestore().collection("socialHub").doc("live");
+  const today = new Date(now - 5 * 3600 * 1000).toISOString().slice(0, 10);
+  await admin.firestore().runTransaction(async (tx) => {
+    const next = jarvisSocial.decide(jarvisSocial.state((await tx.get(ref)).data()), proposal, decision, today);
+    tx.set(ref, { json: JSON.stringify(next), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+  });
+  return { id: proposal.id, decision };
+}
+
+// Hourly: each social post Jarvis newly proposes pushes with Post and Skip, at most 3 an hour (#1670).
+async function jarvisSocialRun() {
+  const db = admin.firestore();
+  const ref = db.collection("jarvis_watch").doc("social");
+  const [state, book, live] = await Promise.all([ref.get(), socialProposals(), db.collection("socialHub").doc("live").get()]);
+  const pending = jarvisSocial.pending(book.proposals, jarvisSocial.state(live.data()));
+  const fresh = jarvisMailPush.socialDue(pending, state.exists ? state.data().seen : null, 3);
+  for (const p of fresh) await pushOwner(jarvisMailPush.socialMessage(p));
+  const seen = Array.from(new Set(((state.exists && state.data().seen) || []).concat(state.exists ? fresh.map((p) => p.id) : pending.map((p) => p.id)))).slice(-300);
+  await ref.set({ seen, at: new Date().toISOString() });
+  return fresh.length + " social pushed";
+}
+
+// A notification button (#1670): ref names the thing, act what to do with it. Returns the line the notification shows after.
+async function jarvisNotifyAct(body, by) {
+  const db = admin.firestore();
+  const now = Date.now();
+  const { type, id, act } = jarvisMailPush.parseAct(body.ref, body.act);
+  if (type === "message" || type === "rating") {
+    const text = String(body.text || "").trim().slice(0, 5000);
+    if (text.length < 10) throw new Error("A reply needs at least 10 characters.");
+    const ref = db.collection(type === "message" ? "messages" : "ratings").doc(id);
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error("That " + type + " is gone.");
+      if (snap.get("response")) throw new Error("It already has a reply.");
+      tx.update(ref, { response: text, respondedAt: admin.firestore.FieldValue.serverTimestamp(), isPublicResponse: false });
+    });
+    return { message: "Reply sent." };
+  }
+  if (type === "owner-reply") {
+    const ref = db.collection("url_review_owner_replies").doc(id.replace(/[^a-f0-9]/g, "").slice(0, 32) || "-");
+    const snap = await ref.get();
+    if (!snap.exists) throw new Error("That reply is gone.");
+    const row = snap.data();
+    const out = await decideOwnerReply(ref, row, act, act === "resend" ? jarvisMailPush.proposedAddress(row) : "");
+    if (out.conflict) throw new Error("This reply was already decided.");
+    if (!out.saved) throw new Error(out.problem);
+    return { message: out.problem || { resend: "Sent to " + out.row.decidedEmail + ".", stop: "Stopped.", unlist: "Unlisted.", done: "Marked done." }[act] };
+  }
+  if (type === "rerun-held") {
+    if (act === "send-all") {
+      const out = await jarvisClickAction({ action: "rerun-held" }, by);
+      return { message: out.done + " sent" + (out.failed ? ", " + out.failed + " failed" : "") + (out.left ? ", " + out.left + " left" : "") + "." };
+    }
+    let dropped = 0;
+    for (const h of await jarvisHeld()) if (await releaseHeldRerun(h.id, false, by)) dropped += 1;
+    return { message: dropped + " dropped." };
+  }
+  if (type === "ops") {
+    const known = new Set(ops.JOBS.filter((row) => row.host !== "github").map((row) => row.job));
+    const jobs = id.split(",").filter((job) => known.has(job));
+    if (!jobs.length) throw new Error("None of those jobs can be started from here.");
+    for (const job of jobs) await jarvisClickAction({ action: "run-job", job }, by);
+    return { message: "Started " + jobs.join(", ") + "." };
+  }
+  if (type === "proposal") {
+    await jarvisProposals.mark(db, { key: id, status: act }, by, now);
+    return { message: act === "done" ? "Marked done." : "Dismissed." };
+  }
+  if (type === "notice") {
+    const out = await decideOwnerNotice(id, act === "send", "", by);
+    if (out.error) throw new Error(out.error);
+    return { message: out.status === "sent" ? "Sent to " + out.email + "." : "Skipped." };
+  }
+  await jarvisSocialDecide(id, act, now);
+  return { message: act === "approved" ? "Added to the hub queue." : "Skipped." };
 }
 
 // The latest run of each posting workflow, for the Social hub panel.
@@ -5110,7 +5209,7 @@ async function jarvisDaily({ force }) {
   const actionLines = jarvisActions.briefLines(await jarvisActions.recent(db, 200), now);
   if (actionLines.length) mail.body = (actionLines.join("\n") + "\n\n" + mail.body).slice(0, 12000);
   const sent = settings.mail.daily || force ? await sendOwnerEmail({ subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL, buttonLabel: "Open Jarvis" }) : false;
-  const push = await jarvisPush.send(admin.messaging(), db, phones, jarvisPush.briefingMessage({ items, aiText, dateLabel })).catch((error) => ({ error: String(error.message || error).slice(0, 200) }));
+  const push = await jarvisPush.send(admin.messaging(), db, phones, jarvisPush.briefingMessage({ items, aiText, dateLabel, top: ranked && ranked.proposals && ranked.proposals[0] })).catch((error) => ({ error: String(error.message || error).slice(0, 200) }));
   return { sent: sent !== false, push, items: items.length, goals: goalRows.length, gemini: !!aiText, proposals: proposalLines.length };
 }
 
@@ -5292,7 +5391,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "email-briefing": () => "briefing", review: (b) => b.url };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100) };
 
 async function jarvisWatchRun() {
   const db = admin.firestore();
@@ -5332,13 +5431,16 @@ async function jarvisNoticesRun() {
   if (!phones.length) return "no phones for outreach";
   const ref = db.collection("jarvis_watch").doc("notices");
   const [state, snap] = await Promise.all([ref.get(), db.collection("url_review_owner_notices").where("status", "==", "pending").get()]);
-  const pending = snap.docs.map((d) => d.data());
+  const pending = snap.docs.map((d) => Object.assign({ domain: d.id }, d.data()));
   const now = Date.now();
   const fresh = jarvisNotify.noticesDue(pending, state.exists ? state.data().lastAt : "", now);
   if (!fresh.length) return pending.length + " pending, none new";
-  const push = await jarvisPush.send(admin.messaging(), db, phones, jarvisNotify.noticesMessage(fresh, pending.length));
+  // One notification per notice with Send and Skip (#1670); past 6, the rest share one.
+  let sent = 0;
+  for (const n of fresh.slice(0, 6)) sent += (await jarvisPush.send(admin.messaging(), db, phones, jarvisMailPush.noticeMessage(n))).sent;
+  if (fresh.length > 6) sent += (await jarvisPush.send(admin.messaging(), db, phones, jarvisNotify.noticesMessage(fresh.slice(6), pending.length))).sent;
   await ref.set({ lastAt: new Date(now).toISOString(), pending: pending.length });
-  return fresh.length + " new notices, pushed to " + push.sent;
+  return fresh.length + " new notices, " + sent + " pushes";
 }
 
 // Every hour: the safe actions first (jarvis-actions.js), then the alert watch and the outreach notices push.
@@ -5347,7 +5449,8 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
   try { acts = await jarvisAutoActions(); } catch (error) { console.error("Jarvis actions failed:", error); acts = "actions failed: " + String(error.message || error).slice(0, 120); }
   const watch = await jarvisWatchRun();
   const notices = await jarvisNoticesRun().catch((error) => "notices failed: " + String(error.message || error).slice(0, 120));
-  return watch + "; " + acts + "; " + notices;
+  const social = await jarvisSocialRun().catch((error) => "social failed: " + String(error.message || error).slice(0, 120));
+  return watch + "; " + acts + "; " + notices + "; " + social;
 });
 
 exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: ["SENDGRID_API_KEY"] }).https.onRequest(async (req, res) => {
@@ -5407,6 +5510,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
     }
     else if (op === "proposal-mark") out = await jarvisProposals.mark(admin.firestore(), body, operator, now);
     else if (op === "action-run") out = await jarvisClickAction(body, operator);
+    else if (op === "notify-act") out = await jarvisNotifyAct(body, operator);
     else if (op === "actions") out = await jarvisActionsView(now);
     else if (op === "register-device") out = await jarvisPush.register(admin.firestore(), body, operator, now);
     else if (op === "unregister-device") out = await jarvisPush.unregister(admin.firestore(), body.token);
@@ -5425,15 +5529,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", secre
       const [book, doc] = await Promise.all([socialProposals(), admin.firestore().collection("socialHub").doc("live").get()]);
       out = { proposals: jarvisSocial.pending(book.proposals, jarvisSocial.state(doc.data())), built: book.built || "" };
     } else if (op === "social-decide") {
-      const proposal = ((await socialProposals()).proposals || []).find((p) => p && p.id === String(body.id || ""));
-      if (!proposal) throw new Error("That proposal is no longer in the list.");
-      const ref = admin.firestore().collection("socialHub").doc("live");
-      const today = new Date(now - 5 * 3600 * 1000).toISOString().slice(0, 10);
-      await admin.firestore().runTransaction(async (tx) => {
-        const next = jarvisSocial.decide(jarvisSocial.state((await tx.get(ref)).data()), proposal, body.decision, today);
-        tx.set(ref, { json: JSON.stringify(next), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
-      });
-      out = { id: proposal.id, decision: body.decision };
+      out = await jarvisSocialDecide(body.id, body.decision, now);
     } else if (op === "social-runs") out = { runs: await socialRuns() };
     else if (op === "social-post-now") {
       const token = process.env.GITHUB_BUGS_TOKEN || "";

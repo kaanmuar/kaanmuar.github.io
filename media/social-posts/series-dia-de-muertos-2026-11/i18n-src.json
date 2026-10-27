@@ -5,7 +5,11 @@
   "guided": "Guided tour",
   "never": "Never runs your tests",
   "end": "Let your page do the talking.",
-  "endNote": "How a public-page review works, step by step."
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
  },
  "clips": {
   "ofrenda": {
@@ -24,10 +28,10 @@
     "visual.items.2.0": "18 of those 30",
     "visual.items.2.1": "The dead link was on the home page",
     "visual.items.3.1": "The usual answer: Not Found",
+    "xLine": "Open every link on your home page today. Fix each one that answers 404.",
     "action": "Open every link on your home page. Fix or remove each one that answers 404, or redirect it with a 301 to the closest live page.",
-    "alt": "Día de Muertos card: An ofrenda for the links that died. October's Live Reports followed the internal links of 263 public sites: on 178 every link answered, on 30 at least one led to a page that is gone, and on 18 of those the dead link was on the home page. The usual answer was 404 Not Found.",
     "cat.label": "Día de Muertos · SEO",
-    "cap.youtube": "In October, our Live Reports followed the internal links of 263 public sites. Most answered. On 30 sites, at least one led to a page that is gone.\n\nCheck it today: Open every link on your home page. Fix or remove each one that answers 404, or redirect it with a 301 to the closest live page.\n\nLive Reports: https://carlosandmunoz.com/qa-review.html?utm_source=youtube&utm_medium=social&utm_campaign=series-dia-de-muertos-2026-11&utm_content=ofrenda#live-reports\n\nDía de Muertos 1/2 · QA-lab URL Review\n\n#DiaDeMuertos #Playwright #AI #QA #BrokenLinks #SEO #Programming #LearnOnYouTube #GoogleSearch #SoftwareTesting #SearchConsole #QAlab"
+    "cap.youtube": "In October, our Live Reports followed the internal links of 263 public sites. Most answered. On 30 sites, at least one led to a page that is gone.\n\nCheck it today: Open every link on your home page. Fix or remove each one that answers 404, or redirect it with a 301 to the closest live page.\n\nLive Reports: https://carlosandmunoz.com/qa-review.html?utm_source=youtube&utm_medium=social&utm_campaign=series-dia-de-muertos-2026-11&utm_content=ofrenda#live-reports\n\nDía de Muertos 1/2 · QA-lab URL Review\n\n#DiaDeMuertos #Automation #SEO #QA #BrokenLinks #LearnOnYouTube #TechTips #SearchConsole #QualityAssurance #ContentMarketing #TestAutomation #QAlab"
    }
   },
   "epitaphs": {
@@ -40,10 +44,10 @@
     "title.1": "*October's dead links.*",
     "body": "Two sites linked to an error page that was itself missing. A template printed its placeholder where a link belonged. Three sites linked PDFs that were gone.",
     "visual.note": "Real paths from October's Live Reports",
+    "xLine": "Request your error page and every PDF you link to. Each one should open.",
     "action": "Open the PDFs and language links on your home page, request your error page, and search your templates for unfilled placeholders.",
-    "alt": "Día de Muertos card: Epitaphs for October's dead links. Real paths from October's Live Reports and their answers: an error page link, 404; an unfilled template placeholder, 404; a PDF, 404; a language switch, 404; a login page, 500.",
     "cat.label": "Día de Muertos · SEO",
-    "cap.youtube": "Two sites linked to an error page that was itself missing. A template printed its placeholder where a link belonged. Three sites linked PDFs that were gone.\n\nCheck it today: Open the PDFs and language links on your home page, request your error page, and search your templates for unfilled placeholders.\n\nLive Reports: https://carlosandmunoz.com/qa-review.html?utm_source=youtube&utm_medium=social&utm_campaign=series-dia-de-muertos-2026-11&utm_content=epitaphs#live-reports\n\nDía de Muertos 2/2 · QA-lab URL Review\n\n#DiaDeMuertos #DevOps #Playwright #QA #BrokenLinks #SEO #Coding #Programming #ContentMarketing #QualityAssurance #TestAutomation #QAlab"
+    "cap.youtube": "Two sites linked to an error page that was itself missing. A template printed its placeholder where a link belonged. Three sites linked PDFs that were gone.\n\nCheck it today: Open the PDFs and language links on your home page, request your error page, and search your templates for unfilled placeholders.\n\nLive Reports: https://carlosandmunoz.com/qa-review.html?utm_source=youtube&utm_medium=social&utm_campaign=series-dia-de-muertos-2026-11&utm_content=epitaphs#live-reports\n\nDía de Muertos 2/2 · QA-lab URL Review\n\n#DiaDeMuertos #SoftwareTesting #Automation #QA #BrokenLinks #SEO #Programming #LearnOnYouTube #TestAutomation #TechnicalSEO #Testing #QAlab"
    }
   }
  }

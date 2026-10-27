@@ -24,6 +24,7 @@ import com.carlosandmunoz.jarvis.JarvisApp
 import com.carlosandmunoz.jarvis.MainActivity
 import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.data.at
+import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.doubles
 import com.carlosandmunoz.jarvis.data.fmt
 import com.carlosandmunoz.jarvis.data.isOk
@@ -33,6 +34,7 @@ import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.prim
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.data.text
+import com.carlosandmunoz.jarvis.ui.CHIPS
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlinx.serialization.json.JsonObject
@@ -49,6 +51,11 @@ object Home {
     data class Cell(val label: String, val value: String, val delta: String?, val dir: Int, val series: List<Double>, val note: String? = null)
 
     data class Goal(val label: String, val value: Double?, val target: Double?, val pct: Double, val status: String?)
+
+    /** One row of the Needs you widget: an owner notice or social pick to decide, or a rule proposal to open. */
+    data class Alert(val level: String, val text: String, val label: String?, val tab: String)
+
+    data class Need(val kind: String, val id: String, val title: String, val detail: String?, val level: String, val tab: String? = null, val email: String? = null)
 
     fun days(app: JarvisApp) = app.vault.get("days")?.toIntOrNull() ?: 7
 
@@ -88,16 +95,58 @@ object Home {
         Goal(it.str("label") ?: "", it.num("value"), it.num("target"), ((it.num("pct") ?: 0.0) / 100).coerceIn(0.0, 1.0), it.str("status"))
     }
 
+    /** Owner notices first, then social picks, then the snapshot's rule proposals. */
+    fun needs(snap: JsonObject, notices: JsonObject?, picks: JsonObject?): List<Need> {
+        val sends = notices.objs("notices").mapNotNull { n ->
+            val domain = n.str("domain") ?: return@mapNotNull null
+            val email = n.str("email") ?: n.objs("candidates").firstNotNullOfOrNull { it.str("email") }
+            Need("notice", domain, "Send notice to " + (n.str("host") ?: domain), email ?: "No address found", if (n.bool("critical") == true) "alert" else "warn", email = email)
+        }
+        val approve = picks.objs("proposals").mapNotNull { p ->
+            val id = p.str("id") ?: return@mapNotNull null
+            Need("social", id, p.str("title") ?: "Social pick", listOfNotNull("Social pick", p.str("source")).joinToString(" · "), "info")
+        }
+        val rules = snap.objs("proposals").mapNotNull { p ->
+            Need("proposal", p.str("key") ?: return@mapNotNull null, p.str("title") ?: return@mapNotNull null, null, p.str("level") ?: "info", tab = p.str("tab")?.let(::route))
+        }
+        return sends + approve + rules
+    }
+
+    /** Briefing lines, alerts first, then warnings, notes and good news, each opening its product or tab. */
+    fun alerts(snap: JsonObject): List<Alert> {
+        val rank = listOf("alert", "warn", "info", "good")
+        return snap.objs("briefing").mapNotNull { b ->
+            val text = b.str("text") ?: return@mapNotNull null
+            val product = b.str("product")
+            val label = product?.let { p -> CHIPS.firstOrNull { it.first == p }?.second ?: p.replaceFirstChar { it.uppercase() } }
+            Alert(b.str("level") ?: "info", text, label, product?.let(::route) ?: "overview")
+        }.sortedBy { a -> rank.indexOf(a.level).let { if (it < 0) rank.size else it } }
+    }
+
+    /** A product chip opens Products on that chip; anything else is a tab name. */
+    private fun route(target: String) = if (CHIPS.any { it.first == target }) "products:$target" else target
+
+    /** The notices and social picks behind Needs you, as last fetched; a debug fixture carries them as "notices" and "socialHub". */
+    fun waiting(context: Context, snap: JsonObject): Pair<JsonObject?, JsonObject?> {
+        val app = context.applicationContext as JarvisApp
+        if (BuildConfig.DEBUG && File(app.filesDir, "jarvis/fixture.json").exists()) return snap.obj("notices") to snap.obj("socialHub")
+        return app.api.saved("notices", 1)?.json to app.api.saved("social-proposals", 1)?.json
+    }
+
     /** Fetches a fresh snapshot in the background and redraws every surface; false when signed out or offline. */
     suspend fun refresh(context: Context): Boolean {
         val app = context.applicationContext as JarvisApp
         if (!app.auth.signedIn) return false
         val ok = runCatching { app.api.fetch("snapshot", days(app)) }.isSuccess
+        runCatching { app.api.fetch("notices", 1) }
+        runCatching { app.api.fetch("social-proposals", 1) }
         redraw(context)
         return ok
     }
 
     suspend fun redraw(context: Context) {
+        runCatching { NeedsWidget().updateAll(context) }
+        runCatching { AlertsWidget().updateAll(context) }
         runCatching { StatusWidget().updateAll(context) }
         runCatching { NumbersWidget().updateAll(context) }
         runCatching { GoalsWidget().updateAll(context) }
