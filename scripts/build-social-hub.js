@@ -42,7 +42,7 @@ const PRERENDER = 24;
 const TEXT_MAX = 1200;
 const LAUNCH = "launch-2026-10";
 const ORG = SITE + "qa-review.html#organization";
-const SHARE_VERSION = "20261024";
+const SHARE_VERSION = "20261027";
 const RSS_MAX = 50;
 // Post kinds in the order the filter chips list them; a batch's captions.json names its kind (scripts/tips-studio/build.js).
 const KINDS = Object.keys(COPY.en.kind);
