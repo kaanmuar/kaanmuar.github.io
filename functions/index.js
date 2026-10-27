@@ -5202,6 +5202,7 @@ async function jarvisExternal(ops, days) {
     uptime: () => jarvisCached("uptime", 0, () => jarvis.uptime(fetch, { now })),
     speed: () => jarvisCached("speed", 0, () => jarvis.speed(urlReview, env)),
     ga4: () => jarvisCached("ga4", days, () => jarvis.ga4(fetch, { days })),
+    cloudflare: () => jarvisCached("cloudflare", days, () => jarvis.cloudflare(fetch, env, { days, now })),
     ...Object.keys(jarvisSources.SOURCES).reduce((m, name) => { m[name] = () => jarvisSource(name, days); return m; }, {})
   };
   const out = {};
