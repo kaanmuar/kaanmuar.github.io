@@ -19,6 +19,7 @@ const list = (...groups) => [...new Set(groups.flat())];
 
 const BY_FUNCTION = {
   mail: list(MAIL),
+  turnstile: list(["TURNSTILE_SECRET_KEY"]),
   mailWithGithub: list(MAIL, GITHUB),
   diagnoseReviewFailures: list(BROWSER),
   rerunReviewFailures: list(MAIL, SCAN),
