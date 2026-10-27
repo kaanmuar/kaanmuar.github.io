@@ -397,7 +397,7 @@
         { key: 'uptime', name: 'Uptime and TLS' }, { key: 'money', name: 'Payments (paid reviews, PayPal, Stripe)' }, { key: 'email', name: 'SendGrid' },
         { key: 'search', name: 'Search (Brave, Search Console)' }, { key: 'social', name: 'Social (ledgers, YouTube, Facebook)' },
         { key: 'safety', name: 'Safety (Web Risk, DNS, domain, TLS)' }, { key: 'platform', name: 'Google Cloud (Monitoring, Logging, Auth)' },
-        { key: 'outreach', name: 'Outreach (sweep prospects, Instantly, 90-day plan)' }
+        { key: 'outreach', name: 'Outreach (sweep prospects, Instantly, 90-day plan)' }, { key: 'mailbox', name: 'ImprovMX (mail forwarding)' }
     ];
 
     function connections(external, pending) {
@@ -618,6 +618,22 @@
         }
         const safety = ext.safety;
         if (safety && safety.ok) (safety.checks || []).filter((c) => c.level === 'alert' || c.level === 'warn').forEach((c) => add(c.level, 'systems', `${c.name}: ${c.detail}`, 'safety:' + c.key));
+        const box = ext.mailbox;
+        if (box && box.ok) {
+            const byAlias = {};
+            (box.problems || []).forEach((m) => { (byAlias[m.alias] = byAlias[m.alias] || []).push(m); });
+            Object.keys(byAlias).forEach((alias) => {
+                const rows = byAlias[alias];
+                const refused = rows.filter((m) => m.outcome === 'refused').length;
+                const what = refused === rows.length ? 'refused' : refused ? 'bounced or refused' : 'bounced';
+                add('alert', 'systems', `${plural(rows.length, 'mail to ' + alias + '@ was', 'mails to ' + alias + '@ were')} ${what} by ImprovMX in range: ${rows[0].reason || rows[0].code || 'no detail'}.`, 'mailbox:' + alias + ':' + rows[0].id);
+            });
+            const c = box.canary || {};
+            if (c.state === 'lost') add('alert', 'systems', 'The daily mail round trip to canary@ did not come back through ImprovMX and the webhook within 30 minutes.', 'mailbox:canary:' + c.sentAt);
+            else if (c.state === 'stale') add('warn', 'systems', 'The daily mail round trip (mailCanary) has not run in over a day.', 'mailbox:canary-stale');
+            const smtp = box.smtp || {};
+            if (smtp.monthLimit && smtp.month >= smtp.monthLimit * 0.8) add(smtp.month >= smtp.monthLimit ? 'alert' : 'warn', 'systems', `ImprovMX SMTP: ${smtp.month} of ${smtp.monthLimit} sends used this month.`, 'mailbox:smtp');
+        }
         const pf = ext.platform;
         if (pf && pf.ok) {
             const f = pf.functions || {};

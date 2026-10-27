@@ -539,11 +539,42 @@ fun SignInCodes(codes: List<JsonObject>) {
     }
 }
 
+private val CANARY_TEXT = mapOf("waiting" to "sent, waiting for it to come back", "lost" to "did not come back within 30 minutes", "stale" to "has not run in over a day", "never" to "has not run yet")
+
+/** What ImprovMX did with the mail to the aliases, SMTP sends against the plan, and the daily canary round trip (#1900). */
+@Composable
+fun MailHealth(box: JsonObject?) {
+    Panel("Mail forwarding (ImprovMX)") {
+        if (box == null || !box.isOk()) { Muted(box.str("error") ?: "Asking ImprovMX…"); return@Panel }
+        val t = box.obj("totals"); val smtp = box.obj("smtp"); val c = box.obj("canary")
+        val month = smtp.num("month") ?: 0.0; val limit = smtp.num("monthLimit")
+        KpiPairs(listOf(
+            KpiData("Mails in", fmt(t.num("mails"))), KpiData("Forwarded", fmt(t.num("forwarded"))),
+            KpiData("Bounced", fmt(t.num("bounced")), alert = (t.num("bounced") ?: 0.0) > 0), KpiData("Refused (aliases)", fmt(t.num("refused")), alert = (t.num("refused") ?: 0.0) > 0),
+            KpiData("No such address", fmt(t.num("unknown"))), KpiData("SMTP this month", fmt(month) + (limit?.let { " / " + fmt(it) } ?: ""), alert = limit != null && month >= limit * 0.8)
+        ))
+        val state = c.str("state") ?: "never"
+        val history = c.objs("history").joinToString("") { if (it.num("seconds") == null) "✗" else "✓" }
+        StatusRow(when (state) { "ok" -> "good"; "waiting" -> "info"; "stale" -> "warn"; else -> "alert" }, "Daily round trip to canary@",
+            listOfNotNull(if (state == "ok") "came back in ${fmt(c.num("seconds"))} s" else CANARY_TEXT[state] ?: state, ago(c.str("sentAt"))?.let { "sent $it" }, history.takeIf { it.isNotEmpty() }).joinToString(" · "))
+        box.objs("problems").take(8).forEach { p ->
+            val to = p.arr("to").joinToString(", ") { it.text() }
+            StatusRow("alert", "${p.str("alias")}@ ${p.str("outcome")}", listOfNotNull(ago(p.str("at")), p.str("from"), to.takeIf { it.isNotBlank() }?.let { "→ $it" }, p.str("reason")).filter { it.isNotBlank() }.joinToString(" · "))
+        }
+        box.objs("aliases").forEach { a ->
+            val bad = (a.num("bounced") ?: 0.0) + (a.num("refused") ?: 0.0)
+            KeyRow("${a.str("alias")}@", "${fmt(a.num("forwarded"))} of ${fmt(a.num("mails"))}" + (if (bad > 0) " · ${fmt(bad)} failed" else ""), if (bad > 0) J.pink else J.text)
+        }
+        Muted("${fmt(box.num("aliasCount"))} aliases, last ${fmt(box.num("days"))} days. Mail refused to addresses that are not aliases is expected: there is no catch-all.")
+    }
+}
+
 @Composable
 fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
     val snap = s.snapshot
     JarvisActions(s, vm)
     SignInCodes(snap.objs("mailCodes"))
+    MailHealth(snap.ext("mailbox"))
     Panel("Connections") {
         snap.objs("connections").forEach { c -> StatusRow(c.str("state"), c.str("name") ?: "", listOfNotNull(c.str("state"), c.str("detail")?.takeIf { it.isNotBlank() }, c.arr("needs").takeIf { it.isNotEmpty() }?.joinToString(" ") { it.text() }).filter { it.isNotBlank() }.joinToString(" · ")) }
     }

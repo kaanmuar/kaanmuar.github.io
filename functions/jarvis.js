@@ -649,6 +649,7 @@ function askSnapshot(snap, days) {
       cloudflare: ok(e.cloudflare) ? { requests: e.cloudflare.requests, threats: e.cloudflare.threats, cacheRatio: e.cloudflare.cacheRatio, statuses: e.cloudflare.statuses, paths: (e.cloudflare.paths || []).slice(0, 8) } : null,
       money: ok(e.money) ? { revenue: e.money.revenue, prior: e.money.prior, refundsUsd: e.money.refundsUsd, disputesOpen: e.money.paypal && e.money.paypal.disputesOpen } : null,
       email: ok(e.email) ? { totals: e.email.totals, rates: e.email.rates } : null,
+      mailbox: ok(e.mailbox) ? { totals: e.mailbox.totals, smtp: e.mailbox.smtp, canary: e.mailbox.canary && e.mailbox.canary.state, problems: (e.mailbox.problems || []).slice(0, 5).map((m) => m.alias + "@ " + m.outcome + ": " + m.reason) } : null,
       search: ok(e.search) ? { brave: e.search.brave && e.search.brave.queries, console: e.search.console && e.search.console.ok ? { clicks: e.search.console.clicks, impressions: e.search.console.impressions, position: e.search.console.position, queries: (e.search.console.queries || []).slice(0, 8) } : null } : null,
       social: ok(e.social) ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views } : null,
       safety: ok(e.safety) && e.safety.checks ? e.safety.checks.map((c) => c.level + ": " + c.name + " " + c.detail) : null,

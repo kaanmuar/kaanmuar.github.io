@@ -5185,7 +5185,7 @@ async function jarvisRanked({ state, items, days, candidates, snapshot, useGemin
   });
 }
 
-const JARVIS_OPS = ["health", "jobs", "github", "uptime", "speed", "ga4", "money", "email", "social", "safety", "platform", "search", "outreach"];
+const JARVIS_OPS = ["health", "jobs", "github", "uptime", "speed", "ga4", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach"];
 
 // Sunday 19:00 Bogotá: four weeks side by side, this week's proposals and Gemini's strategy for the next one.
 async function jarvisWeekly({ force }) {
@@ -5228,7 +5228,7 @@ async function jarvisSnapshot(days) {
   const now = Date.now();
   const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now, days }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync"], days),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync"], days),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
@@ -5381,7 +5381,7 @@ async function jarvisWatchRun() {
   const phones = await jarvisPush.targets(db, "alerts");
   if (!settings.mail.watch && !(await jarvisPush.anyTargets(db, "alerts"))) return "off in settings";
   const now = Date.now();
-  const external = await jarvisExternal(["health", "jobs", "uptime", "money", "safety", "platform"], 1);
+  const external = await jarvisExternal(["health", "jobs", "uptime", "money", "safety", "platform", "mailbox"], 1);
   const items = jarvisCore.openBrief(jarvis.watchItems(external, settings.thresholds), await jarvisProposals.savedBrief(db), new Date(now)).open;
   const { day, ref, sent, fresh } = await jarvis.unsentToday(db, items, { now });
   if (!fresh.length) return "nothing new";
@@ -5505,9 +5505,45 @@ async function mailCodeRows() {
   return mailInbound.rows(snap.docs.map((d) => d.data()), now);
 }
 
+const mailHealth = require("./mail-health");
+const mailCanaryDoc = () => getFirestore().collection("jarvis_mail").doc(mailHealth.CANARY);
+
+async function mailCanaryBack(token, now) {
+  if (!token) return false;
+  return getFirestore().runTransaction(async (tx) => {
+    const ref = mailCanaryDoc();
+    const snap = await tx.get(ref);
+    const back = mailHealth.canaryBack(snap.exists ? snap.data() : null, token, now);
+    if (back) tx.update(ref, back);
+    return !!back;
+  });
+}
+
+// The daily round trip (#1900): SendGrid mails canary@, ImprovMX forwards it to the webhook, and the webhook marks
+// it back. The mailbox source in Jarvis alerts when it has not come back within half an hour.
+async function mailCanaryRun() {
+  const from = prepareMail();
+  if (!from) throw new Error("SendGrid is not configured.");
+  const now = Date.now();
+  const ref = mailCanaryDoc();
+  const prev = await ref.get();
+  const before = mailHealth.canaryState(prev.exists ? prev.data() : null, now);
+  const token = crypto.randomBytes(6).toString("hex");
+  const mail = mailHealth.canaryMail(token);
+  await ref.set(mailHealth.canarySent(prev.exists ? prev.data() : null, token, now));
+  await sgMail.send({
+    to: mail.to, from, subject: mail.subject, text: mail.text, categories: ["mail-canary"],
+    trackingSettings: { clickTracking: { enable: false, enableText: false }, openTracking: { enable: false } }
+  });
+  return "sent " + token + "; the last one was " + before.state;
+}
+
+exports.mailCanary = scheduled(functions.runWith({ timeoutSeconds: 60, memory: "256MB", secrets: SECRETS.mailCanary }), "mailCanary", mailCanaryRun);
+
 // ImprovMX posts each mail to qa@ and the per-channel aliases here as JSON (#1898). A code or a checked confirm
 // link is kept for a day and pushed to Jarvis once; a retry of the same mail finds its row and pushes nothing.
 // Other mail to qa@ that matches an owner notice goes into the owner-replies queue (#1899).
+// The daily canary to canary@ only marks its round trip back (#1900).
 exports.mailInbound = functions.runWith({ timeoutSeconds: 60, memory: "256MB", maxInstances: 5, secrets: SECRETS.mailInbound }).https.onRequest(async (req, res) => {
   res.set("X-Robots-Tag", "noindex");
   const key = process.env.MAIL_WEBHOOK_KEY || "";
@@ -5522,6 +5558,10 @@ exports.mailInbound = functions.runWith({ timeoutSeconds: 60, memory: "256MB", m
   }
   try {
     const mail = mailInbound.read(req.body, req.query.alias);
+    if (mail.alias === mailHealth.CANARY) {
+      res.status(200).send(await mailCanaryBack(mailHealth.tokenOf(mail.subject), Date.now()) ? "canary back" : "canary not in flight");
+      return;
+    }
     const row = mailInbound.codeOf(mail);
     if (!row && mail.alias === "qa" && !mailInbound.fromUs(mail.fromEmail)) {
       const out = await takeOwnerReply(mailInbound.replyMail(req.body), mailInbound.replyAuth(req.body.headers), true);
