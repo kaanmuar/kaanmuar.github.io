@@ -110,6 +110,30 @@ test("each page shows posts to come after posted ones, keeps them out of JSON-LD
   assert.match(html, /2 Beiträge/);
 });
 
+test("an English pick gets a variant in each language whose phrasebook covers every sentence", () => {
+  const pick = post({ id: "pick/a", kind: "pick", title: "Testing with axe.", text: "Read it.\n\nhttps://a.dev/x", captions: { linkedin: "Testing with axe.\n\nRead it.\n\nhttps://a.dev/x" } });
+  const books = { es: { "Testing with axe.": "Pruebas con axe.", "Read it.": { text: "Léelo.", machine: true } }, de: { "Testing with axe.": "Testen mit axe." } };
+  const [es, ...rest] = hub.expand(hub.translatePicks([pick], books)).slice(1);
+  assert.equal(rest.length, 0);
+  assert.equal(es.id, "pick/a-es");
+  assert.equal(es.title, "Pruebas con axe.");
+  assert.equal(es.alt, "Pruebas con axe.");
+  assert.equal(es.text, "Léelo.\n\nhttps://a.dev/x");
+  assert.equal(es.captions.linkedin, "Pruebas con axe.\n\nLéelo.\n\nhttps://a.dev/x");
+  assert.equal(hub.translatePicks([post()], books)[0].i18n, undefined);
+});
+
+for (const [lang, own] of Object.entries({ es: /\b(el|la|los|las|que|para|con|una|del)\b/g, pt: /\b(os|as|que|para|com|uma|do|da|não)\b/g, de: /\b(der|die|das|und|ist|für|mit|ein|eine|nicht)\b/g, fr: /\b(le|la|les|des|que|pour|avec|une|est|pas)\b/g, it: /\b(il|lo|gli|che|per|con|una|del|della|non)\b/g })) {
+  test(`the ${lang} hub page is written in its language before any script runs`, () => {
+    const html = require("fs").readFileSync(require("path").join(__dirname, "..", "..", `qa-review-social-${lang}.html`), "utf8");
+    const text = html.slice(html.indexOf("<body")).replace(/<(script|style)[\s\S]*?<\/\1>/g, " ").replace(/<[^>]+>/g, " ");
+    const english = (text.match(/\b(the|and|of|to|is|are|for|with|your|you|this|that|from)\b/g) || []).length;
+    const local = (text.match(own) || []).length;
+    assert.ok(local > 40, lang + ": " + local + " local stopwords");
+    assert.ok(english * 10 < local, lang + ": " + english + " English stopwords against " + local);
+  });
+}
+
 test("every language has the full interface copy", () => {
   const keys = (obj) => Object.keys(obj).sort().join(",");
   for (const lang of Object.keys(LANGS)) {

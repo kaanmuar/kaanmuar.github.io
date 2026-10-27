@@ -6,7 +6,9 @@
 
      node scripts/social-hub/translate-captions.js [batch ...]           apply the phrasebooks (all batches by default)
      node scripts/social-hub/translate-captions.js --export todo.json    list the English sentences a book still lacks
-     node scripts/social-hub/translate-captions.js --machine [batch ...] fill gaps with Google's translator first (CI) */
+     node scripts/social-hub/translate-captions.js --machine [batch ...] fill gaps with Google's translator first (CI)
+     node scripts/social-hub/translate-captions.js --picks [--machine]   the same for the picks in assets/social/edits.json,
+                                                                         which build-social-hub.js translates from the books */
 const fs = require("fs");
 const path = require("path");
 const i18n = require("./i18n");
@@ -35,6 +37,16 @@ function sources(names) {
     }
   }
   return out;
+}
+
+// The English picks added in the Social hub pane, with any caption the owner rewrote for one.
+function pickSources(file = path.join(ROOT, "assets", "social", "edits.json")) {
+  const state = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : {};
+  const edits = state.edits || {};
+  return (state.items || []).filter((item) => (item.lang || "en") === "en").flatMap((item) => {
+    const captions = (edits[item.id] && edits[item.id].captions) || {};
+    return [item.title, item.text, captions.linkedin, captions.facebook].filter(Boolean);
+  });
 }
 
 function missing(texts, books, langs = i18n.LANGS) {
@@ -98,6 +110,12 @@ async function main() {
     console.log(todo.length + " sentences missing from at least one phrasebook -> " + out);
     return;
   }
+  if (args.includes("--picks")) {
+    const texts = pickSources();
+    if (args.includes("--machine")) console.log("Google's translator: " + (await machine(texts, books)) + " sentences");
+    console.log("Picks: " + missing(texts, books).length + " sentences still missing from at least one phrasebook");
+    return;
+  }
   const names = args.filter((arg) => !arg.startsWith("--"));
   if (args.includes("--machine")) console.log("Google's translator: " + (await machine(sources(names), books)) + " sentences");
   const { posts, complete } = apply(names, books);
@@ -111,4 +129,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { missing, apply, batches };
+module.exports = { missing, apply, batches, pickSources };

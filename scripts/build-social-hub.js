@@ -30,6 +30,7 @@ const cspHashes = require("./build-csp-hashes");
 const queues = require("./social-ledger");
 const metrics = require("./social-metrics");
 const { PROFILES, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
+const i18n = require("./social-hub/i18n");
 
 const ROOT = path.resolve(__dirname, "..");
 const SITE = card.SITE;
@@ -177,6 +178,21 @@ function groupOf(post) {
   return match && match[3] === post.lang ? match[1] + "/" + match[2] : null;
 }
 
+// Picks added by hand in the Social hub pane are English; the phrasebooks hold their sentences
+// (translate-captions.js --picks), so each one gets the languages whose book covers all of it.
+function translatePicks(posts, books = Object.fromEntries(i18n.LANGS.map((lang) => [lang, i18n.readBook(lang)]))) {
+  return posts.map((post) => {
+    if (post.kind !== "pick" || post.lang !== "en") return post;
+    const langs = {};
+    i18n.LANGS.forEach((lang) => {
+      const say = (text) => (text ? i18n.translate(text, books[lang] || {}) : "");
+      const t = { title: say(post.title), text: say(post.text), linkedin: say(post.captions.linkedin), facebook: say(post.captions.facebook) };
+      if (Object.values(t).every((value) => value != null)) langs[lang] = Object.assign(t, { alt: t.title });
+    });
+    return Object.keys(langs).length ? Object.assign({}, post, { i18n: langs }) : post;
+  });
+}
+
 // A post with translated captions (scripts/social-hub/translate-captions.js) gets a variant per language,
 // with its own page; the English post keeps its id and the others add "-<lang>".
 function expand(posts) {
@@ -187,7 +203,7 @@ function expand(posts) {
       base: post.id,
       lang,
       title: cleanTitle(t.title || post.title),
-      text: t.linkedin || t.facebook || post.text,
+      text: t.text || t.linkedin || t.facebook || post.text,
       alt: t.alt || post.alt,
       steps: Array.isArray(t.steps) && t.steps.length ? t.steps.map(String) : null,
       captions: Object.assign({}, post.captions, Object.fromEntries(TEXT_NETS.filter((net) => t[net]).map((net) => [net, t[net]])))
@@ -250,7 +266,7 @@ function collect() {
   const nets = networkIds();
   const numbers = metrics.read().posts;
   const edits = admin.clean(exists(EDITS) ? readJson(EDITS) : null);
-  const posts = expand(admin.apply(batchPosts(files, liveIds()).concat(launchPosts(files)), edits, isTracked));
+  const posts = expand(translatePicks(admin.apply(batchPosts(files, liveIds()).concat(launchPosts(files)), edits, isTracked)));
   const ledger = exists(LEDGER) ? readJson(LEDGER) : { videos: {} };
   const byTitle = new Map();
   Object.entries(ledger.videos).forEach(([id, video]) => {
@@ -607,7 +623,7 @@ ${shown.map((post) => "        " + card.cardHtml(post, copy, lang)).join("\n")}
     <div class="hub-empty" id="hub-empty" hidden><p>${esc(copy.empty)}</p><button class="btn btn-ghost" id="hub-clear" type="button">${esc(copy.clear)}</button></div>
     <p class="hub-more-wrap"><button class="btn btn-primary" id="hub-more" type="button"${visible.length > PRERENDER ? "" : " hidden"}>${esc(copy.loadMore)}</button></p>
 </main>
-<footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="qa-review-legal.html?lang=${lang}">Legal</a> · <a href="accessibility.html?lang=${lang}">${esc(copy.accessibility)}</a> · <a href="${OUT}/rss${sfx}.xml">RSS</a> · <a href="${OUT}/feed${sfx}.json">JSON feed</a></p></footer>
+<footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="qa-review-legal.html?lang=${lang}">${esc(copy.legal)}</a> · <a href="accessibility.html?lang=${lang}">${esc(copy.accessibility)}</a> · <a href="${OUT}/rss${sfx}.xml">RSS</a> · <a href="${OUT}/feed${sfx}.json">${esc(copy.jsonFeed)}</a></p></footer>
 <dialog class="hub-dialog" id="hub-dialog" aria-label="${esc(copy.share)}"><form method="dialog"><button class="hub-close" value="close" aria-label="${esc(copy.close)}">×</button></form><div id="hub-dialog-body"></div></dialog>
 <script>window.SocialHubCopy = ${JSON.stringify(hubCopy).replace(/</g, "\\u003c")};</script>
 <script src="js/social-hub-card.js?v=${version("js/social-hub-card.js")}" defer></script>
@@ -929,4 +945,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { KINDS, mergeFeed, titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, expand, forLang, pairQuizzes, unspoiled, queuedIds, networkIds, postNets, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };
+module.exports = { KINDS, mergeFeed, titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, translatePicks, expand, forLang, pairQuizzes, unspoiled, queuedIds, networkIds, postNets, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };

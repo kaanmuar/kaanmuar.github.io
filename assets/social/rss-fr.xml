@@ -104,27 +104,27 @@ Comment se déroule la revue d’une page publique, étape par étape : https://
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/02-berlin-vienna.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Debunking AI agent accessibility claims and solving AI alignment for accessibility</title>
-      <link>https://carlosandmunoz.com/social/pick/debunking-ai-agent-accessibility-claims-and-solving-ai-align.html</link>
-      <guid isPermaLink="false">pick/debunking-ai-agent-accessibility-claims-and-solving-ai-align</guid>
+      <title>Démystifier les affirmations sur l'accessibilité des agents IA et résoudre l'alignement de l'IA pour l'accessibilité</title>
+      <link>https://carlosandmunoz.com/social/pick/debunking-ai-agent-accessibility-claims-and-solving-ai-align-fr.html</link>
+      <guid isPermaLink="false">pick/debunking-ai-agent-accessibility-claims-and-solving-ai-align-fr</guid>
       <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>Accessibility</category>
-      <description>There is a digital accessibility approach that gives us the best of both worlds: the reliability and predictability of rules-based testing and the velocity of AI-powered automation. By taking this approach, we can close the gap between presumed and actual accessibility. The post Debunking AI agent accessibility claims and solving AI alignment for accessibility appeared first on Deque .
+      <description>Il existe une approche de l'accessibilité numérique qui offre le meilleur des deux mondes : la fiabilité et la prévisibilité des tests fondés sur des règles et la rapidité de l'automatisation par l'IA. Grâce à cette approche, nous pouvons combler l'écart entre l'accessibilité supposée et l'accessibilité réelle. L'article Démystifier les affirmations sur l'accessibilité des agents IA et résoudre l'alignement de l'IA pour l'accessibilité est apparu en premier sur Deque.
 
-Via Deque, by Dylan Barrell, 2026-10-21.
+Via Deque, par Dylan Barrell, 2026-10-21.
 
 https://www.deque.com/blog/debunking-ai-agent-accessibility-claims-and-solving-ai-alignment-for-accessibility/</description>
       <media:content url="https://www.deque.com/wp-content/uploads/2026/10/alignment.png" medium="image"/>
     </item>
     <item>
-      <title>First Public Working Draft: Animation Triggers</title>
-      <link>https://carlosandmunoz.com/social/pick/first-public-working-draft-animation-triggers.html</link>
-      <guid isPermaLink="false">pick/first-public-working-draft-animation-triggers</guid>
+      <title>Premier projet de travail public : Déclencheurs d'animation</title>
+      <link>https://carlosandmunoz.com/social/pick/first-public-working-draft-animation-triggers-fr.html</link>
+      <guid isPermaLink="false">pick/first-public-working-draft-animation-triggers-fr</guid>
       <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>Standards</category>
-      <description>Defines CSS properties and an API for creating mechanisms that affect animation playback, based on DOM events resulting from user interaction, or on entry/exit of ranges on animation timelines.
+      <description>Définit des propriétés CSS et une API pour créer des mécanismes qui agissent sur la lecture des animations, en fonction d'événements DOM issus de l'interaction de l'utilisateur ou de l'entrée/sortie de plages sur les chronologies d'animation.
 
 Via W3C, 2026-10-20.
 
@@ -132,15 +132,15 @@ https://www.w3.org/news/2026/first-public-working-draft-animation-triggers/</des
       <media:content url="https://www.w3.org/assets/website-2021/images/w3c-opengraph-image.png" medium="image"/>
     </item>
     <item>
-      <title>GEO Is A Distraction: Here’s Where The Real Opportunity Is via @sejournal, @marie_haynes</title>
-      <link>https://carlosandmunoz.com/social/pick/geo-is-a-distraction-here-s-where-the-real-opportunity-is-vi.html</link>
-      <guid isPermaLink="false">pick/geo-is-a-distraction-here-s-where-the-real-opportunity-is-vi</guid>
+      <title>Le GEO est une distraction : Voici où se trouve la vraie opportunité via @sejournal, @marie_haynes</title>
+      <link>https://carlosandmunoz.com/social/pick/geo-is-a-distraction-here-s-where-the-real-opportunity-is-vi-fr.html</link>
+      <guid isPermaLink="false">pick/geo-is-a-distraction-here-s-where-the-real-opportunity-is-vi-fr</guid>
       <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>GEO</category>
-      <description>Universal Cart, UCP, WebMCP, intelligent eyewear: the agentic web is arriving. Marie Haynes maps the opportunities most businesses are ignoring. The post GEO Is A Distraction: Here’s Where The Real Opportunity Is appeared first on Search Engine Journal .
+      <description>Universal Cart, UCP, WebMCP, lunettes intelligentes : le web agentique arrive. Marie Haynes recense les opportunités que la plupart des entreprises ignorent. L'article Le GEO est une distraction : Voici où se trouve la vraie opportunité est apparu en premier sur Search Engine Journal.
 
-Via Search Engine Journal, by Marie Haynes, 2026-10-23.
+Via Search Engine Journal, par Marie Haynes, 2026-10-23.
 
 https://www.searchenginejournal.com/geo-is-a-distraction-heres-where-the-real-opportunity-is/593870/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/geo-460.png" medium="image"/>
@@ -302,177 +302,177 @@ https://www.youtube.com/shorts/7VTt0hdaHgg</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Accessibility testing with Playwright and axe-core</title>
-      <link>https://carlosandmunoz.com/social/pick/accessibility-testing-with-playwright-and-axe-core.html</link>
-      <guid isPermaLink="false">pick/accessibility-testing-with-playwright-and-axe-core</guid>
+      <title>Tests d'accessibilité avec Playwright et axe-core</title>
+      <link>https://carlosandmunoz.com/social/pick/accessibility-testing-with-playwright-and-axe-core-fr.html</link>
+      <guid isPermaLink="false">pick/accessibility-testing-with-playwright-and-axe-core-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>Testing</category>
-      <description>Playwright drives a real browser, and axe-core is the open-source rule engine behind most automated...
+      <description>Playwright pilote un vrai navigateur, et axe-core est le moteur de règles open source derrière la plupart des tests automatisés...
 
-Via DEV, by Vadym Liubyvyi, 2026-10-23.
+Via DEV, par Vadym Liubyvyi, 2026-10-23.
 
 https://pandus.online/en/accessibility-testing-playwright</description>
       <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fuby4o6yupct9t54dakv9.png" medium="image"/>
     </item>
     <item>
-      <title>AI Search Is Not a Distraction, It’s a Branding Channel</title>
-      <link>https://carlosandmunoz.com/social/pick/ai-search-is-not-a-distraction-it-s-a-branding-channel.html</link>
-      <guid isPermaLink="false">pick/ai-search-is-not-a-distraction-it-s-a-branding-channel</guid>
+      <title>La recherche IA n'est pas une distraction, c'est un canal de marque</title>
+      <link>https://carlosandmunoz.com/social/pick/ai-search-is-not-a-distraction-it-s-a-branding-channel-fr.html</link>
+      <guid isPermaLink="false">pick/ai-search-is-not-a-distraction-it-s-a-branding-channel-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>GEO</category>
-      <description>Three studies dropped in the same week, and they all arrived at the same verdict. Marie Haynes looked at 12 months of GA4 data across 100 sites and found that ChatGPT sent 0.62% of the traffic Google organic did. SEO Works found that organic delivered 39 times the traffic of AI assistants and roughly 30 […] The post AI Search Is Not a Distraction, It’s a Branding Channel appeared first on…
+      <description>Trois études sont parues la même semaine, et toutes sont arrivées au même verdict. Marie Haynes a examiné 12 mois de données GA4 sur 100 sites et a constaté que ChatGPT envoyait 0.62% du trafic apporté par Google en organique. SEO Works a constaté que l'organique a généré 39 fois plus de trafic que les assistants IA et environ 30 […] L'article La recherche IA n'est pas une distraction, c'est un canal de marque est apparu en premier sur…
 
-Via iPullRank, by Mike King, 2026-10-22.
+Via iPullRank, par Mike King, 2026-10-22.
 
 https://ipullrank.com/ai-search-is-a-branding-channel</description>
       <media:content url="https://ipullrank.com/wp-content/uploads/2026/10/image1.png" medium="image"/>
     </item>
     <item>
-      <title>China Wrote The First GEO Rulebook After A TV Scandal – Western SEOs Should Take Notes via @sejournal, @MPentzek</title>
-      <link>https://carlosandmunoz.com/social/pick/china-wrote-the-first-geo-rulebook-after-a-tv-scandal-wester.html</link>
-      <guid isPermaLink="false">pick/china-wrote-the-first-geo-rulebook-after-a-tv-scandal-wester</guid>
+      <title>La Chine a écrit le premier règlement GEO après un scandale télévisé – les SEO occidentaux devraient en prendre note via @sejournal, @MPentzek</title>
+      <link>https://carlosandmunoz.com/social/pick/china-wrote-the-first-geo-rulebook-after-a-tv-scandal-wester-fr.html</link>
+      <guid isPermaLink="false">pick/china-wrote-the-first-geo-rulebook-after-a-tv-scandal-wester-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>SEO</category>
-      <description>China's five-part GEO standard offers Western SEOs a practical framework for measuring AI visibility, evaluating vendors, and separating optimization from manipulation. The post China Wrote The First GEO Rulebook After A TV Scandal – Western SEOs Should Take Notes appeared first on Search Engine Journal .
+      <description>La norme GEO chinoise en cinq parties offre aux SEO occidentaux un cadre pratique pour mesurer la visibilité dans l'IA, évaluer les prestataires et distinguer l'optimisation de la manipulation. L'article La Chine a écrit le premier règlement GEO après un scandale télévisé – les SEO occidentaux devraient en prendre note est apparu en premier sur Search Engine Journal.
 
-Via Search Engine Journal, by Marcus Pentzek, 2026-10-21.
+Via Search Engine Journal, par Marcus Pentzek, 2026-10-21.
 
 https://www.searchenginejournal.com/china-wrote-the-first-geo-rulebook-after-a-tv-scandal-western-seos-should-take-notes/593199/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/china-geo-rulebook-780.png" medium="image"/>
     </item>
     <item>
-      <title>CypressConf 2026: Answering the signal</title>
-      <link>https://carlosandmunoz.com/social/pick/cypressconf-2026-answering-the-signal.html</link>
-      <guid isPermaLink="false">pick/cypressconf-2026-answering-the-signal</guid>
+      <title>CypressConf 2026: Répondre au signal</title>
+      <link>https://carlosandmunoz.com/social/pick/cypressconf-2026-answering-the-signal-fr.html</link>
+      <guid isPermaLink="false">pick/cypressconf-2026-answering-the-signal-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>Testing</category>
-      <description>CypressConf 2026 is a wrap! Thank you to everyone who joined us for three days of talks and hands-on workshops. This year’s theme, The Signal Is Up, asked a question every team knows well: how do you know a release is ready when the build is green? From the founders: Quality in the era of the agentic SDLC In the founder session, Brian Mann, Founder of Cypress.io, and Jennifer Shehane, Co-founder…
+      <description>La CypressConf 2026, c'est terminé ! Merci à toutes celles et ceux qui nous ont rejoints pour trois jours de conférences et d'ateliers pratiques. Le thème de cette année, The Signal Is Up, posait une question que toutes les équipes connaissent bien : comment savoir qu'une version est prête quand le build est vert ? De la part des fondateurs : La qualité à l'ère du SDLC agentique Lors de la session des fondateurs, Brian Mann, fondateur de Cypress.io, et Jennifer Shehane, cofondatrice…
 
-Via Cypress, by Melissa Milligan, 2026-10-26.
+Via Cypress, par Melissa Milligan, 2026-10-26.
 
 https://www.cypress.io/blog/cypressconf-2026-answering-the-signal/</description>
       <media:content url="https://storage.ghost.io/c/12/89/12899ca1-4786-4eea-b7e1-9c5268baa48a/content/images/2026/10/cypressconf-2026-blog-header-2x.png" medium="image"/>
     </item>
     <item>
-      <title>Emoji and Accessibility: How Screen Readers Announce Emoji and How to Use Them Considerately</title>
-      <link>https://carlosandmunoz.com/social/pick/emoji-and-accessibility-how-screen-readers-announce-emoji-an.html</link>
-      <guid isPermaLink="false">pick/emoji-and-accessibility-how-screen-readers-announce-emoji-an</guid>
+      <title>Emoji et accessibilité : Comment les lecteurs d'écran annoncent les emoji et comment les utiliser avec discernement</title>
+      <link>https://carlosandmunoz.com/social/pick/emoji-and-accessibility-how-screen-readers-announce-emoji-an-fr.html</link>
+      <guid isPermaLink="false">pick/emoji-and-accessibility-how-screen-readers-announce-emoji-an-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>Accessibility</category>
-      <description>Via DEV, by Ling Chen, 2026-10-25.
+      <description>Via DEV, par Ling Chen, 2026-10-25.
 
 https://dev.to/lingchen865dev/emoji-and-accessibility-how-screen-readers-announce-emoji-and-how-to-use-them-considerately-3mb0</description>
       <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fk840xdek9o2feis3n9z2.png" medium="image"/>
     </item>
     <item>
-      <title>ethanplusai/astro-conversion-kit: Agent Skills that convert a WordPress site (or any live site) into a static Astro site with URL, SEO, content and pixel parity, then take it through launch. Works…</title>
-      <link>https://carlosandmunoz.com/social/pick/ethanplusai-astro-conversion-kit-agent-skills-that-convert-a.html</link>
-      <guid isPermaLink="false">pick/ethanplusai-astro-conversion-kit-agent-skills-that-convert-a</guid>
+      <title>ethanplusai/astro-conversion-kit: Des Agent Skills qui convertissent un site WordPress (ou tout site en ligne) en site Astro statique avec une parité d'URL, de SEO, de contenu et au pixel près, puis l'accompagnent jusqu'au lancement. Fonctionne…</title>
+      <link>https://carlosandmunoz.com/social/pick/ethanplusai-astro-conversion-kit-agent-skills-that-convert-a-fr.html</link>
+      <guid isPermaLink="false">pick/ethanplusai-astro-conversion-kit-agent-skills-that-convert-a-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>SEO</category>
-      <description>Agent Skills that convert a WordPress site (or any live site) into a static Astro site with URL, SEO, content and pixel parity, then take it through launch. Works in Claude Code, Codex and any agent that reads SKILL.md.
+      <description>Des Agent Skills qui convertissent un site WordPress (ou tout site en ligne) en site Astro statique avec une parité d'URL, de SEO, de contenu et au pixel près, puis l'accompagnent jusqu'au lancement. Fonctionne dans Claude Code, Codex et tout agent qui lit SKILL.md.
 
-Via GitHub, by ethanplusai, 2026-10-22.
+Via GitHub, par ethanplusai, 2026-10-22.
 
 https://github.com/ethanplusai/astro-conversion-kit</description>
       <media:content url="https://opengraph.githubassets.com/1/ethanplusai/astro-conversion-kit" medium="image"/>
     </item>
     <item>
-      <title>Find Label in Name issues in every scan with Axe-core 4.14.0</title>
-      <link>https://carlosandmunoz.com/social/pick/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0.html</link>
-      <guid isPermaLink="false">pick/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0</guid>
+      <title>Détectez les problèmes « Étiquette dans le nom » à chaque analyse avec Axe-core 4.14.0</title>
+      <link>https://carlosandmunoz.com/social/pick/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0-fr.html</link>
+      <guid isPermaLink="false">pick/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>Accessibility</category>
-      <description>With our latest update, when you scan with Axe-core 4.14.0, you’ll now get a result for any control whose accessible name doesn't contain its visible label. This Axe-core release also speeds up scans, makes fix instructions clearer, and begins support for EN 301 549 v4.1.1, the pending update to the European Union’s (EU) harmonized standard for accessibility requirements. The post Find Label in…
+      <description>Avec notre dernière mise à jour, lorsque vous analysez avec Axe-core 4.14.0, vous obtenez désormais un résultat pour tout contrôle dont le nom accessible ne contient pas son libellé visible. Cette version d'Axe-core accélère aussi les analyses, clarifie les instructions de correction et commence à prendre en charge l'EN 301 549 v4.1.1, la future mise à jour de la norme harmonisée de l'Union européenne (UE) relative aux exigences d'accessibilité. L'article Détectez les problèmes « Étiquette dans…
 
-Via Deque, by Wilco Fiers, 2026-10-22.
+Via Deque, par Wilco Fiers, 2026-10-22.
 
 https://www.deque.com/blog/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0/</description>
       <media:content url="https://www.deque.com/wp-content/uploads/2026/10/Deque-Blog-Featured-Image-10.16.26-Find-Label-02-scaled.png" medium="image"/>
     </item>
     <item>
-      <title>Google Crawls Raw And Encoded Bracket URLs Separately via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/google-crawls-raw-and-encoded-bracket-urls-separately-via-se.html</link>
-      <guid isPermaLink="false">pick/google-crawls-raw-and-encoded-bracket-urls-separately-via-se</guid>
+      <title>Google explore séparément les URL avec crochets bruts et encodés via @sejournal, @MattGSouthern</title>
+      <link>https://carlosandmunoz.com/social/pick/google-crawls-raw-and-encoded-bracket-urls-separately-via-se-fr.html</link>
+      <guid isPermaLink="false">pick/google-crawls-raw-and-encoded-bracket-urls-separately-via-se-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>SEO</category>
-      <description>Google's John Mueller says raw and percent-encoded brackets are different URLs and recommends using one form across links, canonical tags, and sitemaps. The post Google Crawls Raw And Encoded Bracket URLs Separately appeared first on Search Engine Journal .
+      <description>John Mueller, de Google, affirme que les crochets bruts et encodés en pourcentage forment des URL différentes et recommande d'utiliser une seule forme dans les liens, les balises canoniques et les sitemaps. L'article Google explore séparément les URL avec crochets bruts et encodés est apparu en premier sur Search Engine Journal.
 
-Via Search Engine Journal, by Matt G. Southern, 2026-10-21.
+Via Search Engine Journal, par Matt G. Southern, 2026-10-21.
 
 https://www.searchenginejournal.com/google-crawls-raw-and-encoded-bracket-urls-separately/593765/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/google-bracket-urls-code-2459907273.jpg" medium="image"/>
     </item>
     <item>
-      <title>Google Explains 503s, Robots.txt Limits &amp; Bracket URLs – SEO Pulse via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/google-explains-503s-robots-txt-limits-bracket-urls-seo-puls.html</link>
-      <guid isPermaLink="false">pick/google-explains-503s-robots-txt-limits-bracket-urls-seo-puls</guid>
+      <title>Google explique les codes 503, les limites du Robots.txt et les URL avec crochets – SEO Pulse via @sejournal, @MattGSouthern</title>
+      <link>https://carlosandmunoz.com/social/pick/google-explains-503s-robots-txt-limits-bracket-urls-seo-puls-fr.html</link>
+      <guid isPermaLink="false">pick/google-explains-503s-robots-txt-limits-bracket-urls-seo-puls-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>SEO</category>
-      <description>Google reminds sites to use 503s during PHP patch downtime. Other updates cover robots.txt controls, bracket URLs, and JPEG XL in Google Images and Discover. The post Google Explains 503s, Robots.txt Limits &amp; Bracket URLs – SEO Pulse appeared first on Search Engine Journal .
+      <description>Google rappelle aux sites d'utiliser des codes 503 pendant les interruptions liées aux correctifs PHP. D'autres mises à jour concernent les contrôles robots.txt, les URL avec crochets et le JPEG XL dans Google Images et Discover. L'article Google explique les codes 503, les limites du Robots.txt et les URL avec crochets – SEO Pulse est apparu en premier sur Search Engine Journal.
 
-Via Search Engine Journal, by Matt G. Southern, 2026-10-24.
+Via Search Engine Journal, par Matt G. Southern, 2026-10-24.
 
 https://www.searchenginejournal.com/seo-pulse-google-explains-503s-robots-txt-limits-bracket-urls/594085/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/seo-pulse-october-24-2026.jpg" medium="image"/>
     </item>
     <item>
-      <title>How to check Core Web Vitals for 1,000 URLs in Python (PageSpeed Insights API, CrUX field data, quotas and retries)</title>
-      <link>https://carlosandmunoz.com/social/pick/how-to-check-core-web-vitals-for-1-000-urls-in-python-pagesp.html</link>
-      <guid isPermaLink="false">pick/how-to-check-core-web-vitals-for-1-000-urls-in-python-pagesp</guid>
+      <title>Comment vérifier les Core Web Vitals de 1,000 URL en Python (API PageSpeed Insights, données de terrain CrUX, quotas et nouvelles tentatives)</title>
+      <link>https://carlosandmunoz.com/social/pick/how-to-check-core-web-vitals-for-1-000-urls-in-python-pagesp-fr.html</link>
+      <guid isPermaLink="false">pick/how-to-check-core-web-vitals-for-1-000-urls-in-python-pagesp-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>Performance</category>
-      <description>A ~100-line Python script that runs PageSpeed Insights for a list of URLs with concurrency, retries and quota handling, separates lab data from real-user CrUX data (LCP, INP, CLS) and writes one CSV. Tested in October 2026.
+      <description>Un script Python de ~100 lignes qui exécute PageSpeed Insights pour une liste d'URL avec concurrence, nouvelles tentatives et gestion des quotas, sépare les données de laboratoire des données réelles d'utilisateurs CrUX (LCP, INP, CLS) et écrit un seul CSV. Testé en octobre 2026.
 
-Via DEV, by Datawright Labs, 2026-10-21.
+Via DEV, par Datawright Labs, 2026-10-21.
 
 https://dev.to/datawrightlabs/how-to-check-core-web-vitals-for-1000-urls-in-python-pagespeed-insights-api-crux-field-data-32f4</description>
       <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F9jk4hdyb1okki3vcuge1.png" medium="image"/>
     </item>
     <item>
-      <title>Moz &amp; Profound Partner to Connect SEO and AI Visibility</title>
-      <link>https://carlosandmunoz.com/social/pick/moz-profound-partner-to-connect-seo-and-ai-visibility.html</link>
-      <guid isPermaLink="false">pick/moz-profound-partner-to-connect-seo-and-ai-visibility</guid>
+      <title>Moz et Profound s'associent pour relier SEO et visibilité dans l'IA</title>
+      <link>https://carlosandmunoz.com/social/pick/moz-profound-partner-to-connect-seo-and-ai-visibility-fr.html</link>
+      <guid isPermaLink="false">pick/moz-profound-partner-to-connect-seo-and-ai-visibility-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>SEO</category>
-      <description>Moz partners with Profound to deliver industry-leading SEO metrics and citation data directly inside Profound’s AI marketing platform.
+      <description>Moz s'associe à Profound pour fournir des métriques SEO et des données de citation de référence directement dans la plateforme marketing IA de Profound.
 
-Via Moz, by Tom Capper, 2026-10-22.
+Via Moz, par Tom Capper, 2026-10-22.
 
 https://moz.com/blog/moz-and-profound-data-partnership</description>
       <media:content url="https://moz.com/images/blog/Blog-OG-images/Moz-Profound-Partner-to-Connect-SEO-and-AI-Visibility-OG-Image.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1792681082&amp;s=be172cab30a2cb36ce07bef4701ebc16" medium="image"/>
     </item>
     <item>
-      <title>Show HN: I built a Markdown and raw HTML blog platform scoring 99 on PageSpeed</title>
-      <link>https://carlosandmunoz.com/social/pick/show-hn-i-built-a-markdown-and-raw-html-blog-platform-scorin.html</link>
-      <guid isPermaLink="false">pick/show-hn-i-built-a-markdown-and-raw-html-blog-platform-scorin</guid>
+      <title>Show HN: J'ai créé une plateforme de blog en Markdown et HTML brut qui obtient 99 sur PageSpeed</title>
+      <link>https://carlosandmunoz.com/social/pick/show-hn-i-built-a-markdown-and-raw-html-blog-platform-scorin-fr.html</link>
+      <guid isPermaLink="false">pick/show-hn-i-built-a-markdown-and-raw-html-blog-platform-scorin-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>Performance</category>
-      <description>Via Hacker News, by textlanes33, 2026-10-21.
+      <description>Via Hacker News, par textlanes33, 2026-10-21.
 
 https://bloffy.co/en</description>
       <media:content url="https://bloffy.co/landing/og.png" medium="image"/>
     </item>
     <item>
-      <title>W3C and the State of the Web in the AI Era</title>
-      <link>https://carlosandmunoz.com/social/pick/w3c-and-the-state-of-the-web-in-the-ai-era.html</link>
-      <guid isPermaLink="false">pick/w3c-and-the-state-of-the-web-in-the-ai-era</guid>
+      <title>Le W3C et l'état du web à l'ère de l'IA</title>
+      <link>https://carlosandmunoz.com/social/pick/w3c-and-the-state-of-the-web-in-the-ai-era-fr.html</link>
+      <guid isPermaLink="false">pick/w3c-and-the-state-of-the-web-in-the-ai-era-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>Standards</category>
-      <description>This W3C paper from the Strategy Team is intended to foster discussion in the technical community at TPAC — the most important W3C community event of the year — about how the W3C technical agenda for the web needs to evolve based on the rise of AI agents. It is part of building a consistent, coherent shared vision for evolving the web, starting with AI.
+      <description>Ce document du W3C, rédigé par l'équipe Stratégie, vise à nourrir la discussion au sein de la communauté technique lors de TPAC — l'événement communautaire le plus important du W3C de l'année — sur la manière dont l'agenda technique du W3C pour le web doit évoluer face à l'essor des agents IA. Cela s'inscrit dans la construction d'une vision partagée, cohérente et homogène de l'évolution du web, à commencer par l'IA.
 
 Via W3C, 2026-10-21.
 
@@ -480,29 +480,29 @@ https://www.w3.org/news/2026/w3c-and-the-state-of-the-web-in-the-ai-era/</descri
       <media:content url="https://www.w3.org/assets/website-2021/images/w3c-opengraph-image.png" medium="image"/>
     </item>
     <item>
-      <title>You know you can automate screen reader tests right?</title>
-      <link>https://carlosandmunoz.com/social/pick/you-know-you-can-automate-screen-reader-tests-right.html</link>
-      <guid isPermaLink="false">pick/you-know-you-can-automate-screen-reader-tests-right</guid>
+      <title>Vous savez que vous pouvez automatiser les tests de lecteurs d'écran, n'est-ce pas ?</title>
+      <link>https://carlosandmunoz.com/social/pick/you-know-you-can-automate-screen-reader-tests-right-fr.html</link>
+      <guid isPermaLink="false">pick/you-know-you-can-automate-screen-reader-tests-right-fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>Accessibility</category>
-      <description>There is a common misconception that accessibility testing can only fall into two groups: Some...
+      <description>Une idée reçue répandue veut que les tests d'accessibilité ne puissent se classer qu'en deux catégories : Certains...
 
-Via DEV, by Craig Morten, 2026-10-24.
+Via DEV, par Craig Morten, 2026-10-24.
 
 https://dev.to/craigmorten/you-know-you-can-automate-screen-reader-tests-right-2dnk</description>
       <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F0fkqu3pa49b5f70cg70d.png" medium="image"/>
     </item>
     <item>
-      <title>zhuyansen/new-term-radar: Daily radar for new AI terms: names of new models, products and repos, caught on X, Hugging Face, GitHub and sitemaps before keyword tools list them.</title>
-      <link>https://carlosandmunoz.com/social/pick/zhuyansen-new-term-radar-daily-radar-for-new-ai-terms-names-.html</link>
-      <guid isPermaLink="false">pick/zhuyansen-new-term-radar-daily-radar-for-new-ai-terms-names-</guid>
+      <title>zhuyansen/new-term-radar: Radar quotidien des nouveaux termes d'IA : noms de nouveaux modèles, produits et dépôts, repérés sur X, Hugging Face, GitHub et dans les sitemaps avant que les outils de mots-clés ne les recensent.</title>
+      <link>https://carlosandmunoz.com/social/pick/zhuyansen-new-term-radar-daily-radar-for-new-ai-terms-names--fr.html</link>
+      <guid isPermaLink="false">pick/zhuyansen-new-term-radar-daily-radar-for-new-ai-terms-names--fr</guid>
       <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
       <category>Coup de cœur</category>
       <category>SEO</category>
-      <description>Daily radar for new AI terms: names of new models, products and repos, caught on X, Hugging Face, GitHub and sitemaps before keyword tools list them.
+      <description>Radar quotidien des nouveaux termes d'IA : noms de nouveaux modèles, produits et dépôts, repérés sur X, Hugging Face, GitHub et dans les sitemaps avant que les outils de mots-clés ne les recensent.
 
-Via GitHub, by zhuyansen, 2026-10-12.
+Via GitHub, par zhuyansen, 2026-10-12.
 
 https://github.com/zhuyansen/new-term-radar</description>
       <media:content url="https://opengraph.githubassets.com/1/zhuyansen/new-term-radar" medium="image"/>
