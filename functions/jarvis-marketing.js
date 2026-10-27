@@ -191,4 +191,112 @@ async function queueProspects(db, body, now) {
   return { added: added.length, already: parsed.hosts.length - added.length, skipped: parsed.skipped };
 }
 
-module.exports = { marketing, campaignRows, prospectRows, noteRows, parseName, windowOf, campaignAct, block, prospectLines, queueProspects, TTL: 10 * 60 * 1000 };
+// --- The Mac's outreach folder (#1730) ------------------------------------------------------------------------
+// scripts/jarvis-marketing-sync.js uploads the folder to jarvis_settings/marketing_sync every 5 minutes and runs
+// the commands queued here in jarvis_commands. Replies and blocks go to Instantly at once; the rest wait for the Mac.
+const WEEK = /^W\d{1,2}$/;
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const JOBS = ["prospects", "leads", "replies"];
+const STALE = 20 * 60 * 1000;
+const arr = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
+const str = (v, max) => String(v == null ? "" : v).slice(0, max);
+
+function syncRows(doc, commands, now) {
+  const d = doc || {};
+  const at = toMs(d.at);
+  const items = (commands || []).filter((c) => c && c.kind === "marketing").map((c) => ({
+    id: str(c.id, 40), action: str(c.action, 20), label: str(c.label, 160), status: str(c.status, 12),
+    createdAt: str(c.createdAt, 30), doneAt: str(c.doneAt, 30), result: str(c.result, 300)
+  }));
+  const leads = d.leads || {};
+  return {
+    at: at ? new Date(at).toISOString() : "", age: at ? now - at : null, stale: !at || now - at > STALE, running: !!d.running,
+    leads: { weeks: arr(leads.weeks, 60), rows: arr(leads.rows, 800) },
+    replies: arr((d.replies || {}).items, 80),
+    linkedin: { date: str((d.linkedin || {}).date, 10), items: arr((d.linkedin || {}).items, 80) },
+    dnc: arr((d.dnc || {}).items, 400),
+    jobs: arr(d.jobs, 10), paused: arr(d.paused, 40), kpis: arr((d.kpis || {}).weeks, 30),
+    commands: { pending: items.filter((c) => c.status === "pending").length, items: items.slice(0, 30) }
+  };
+}
+
+async function syncSource(ctx) {
+  const [doc, cmds] = await Promise.all([
+    ctx.db.collection("jarvis_settings").doc("marketing_sync").get(),
+    ctx.db.collection("jarvis_commands").orderBy("createdAt", "desc").limit(60).get()
+  ]);
+  const out = Object.assign({ ok: true, needs: [] }, syncRows(doc.exists ? doc.data() : null, cmds.docs.map((c) => Object.assign({ id: c.id }, c.data())), ctx.now));
+  if (!out.at) out.needs.push("Mac sync: run `tools/weekly/run.sh install` on the Mac so the outreach folder reaches Jarvis.");
+  else if (out.stale) out.needs.push("Mac sync: last synced " + Math.round(out.age / 60000) + " minutes ago; the Mac is asleep or the job stopped.");
+  return out;
+}
+
+// Checks a command from the tab and returns { action, args, label }; throws on anything else.
+function commandOf(body) {
+  const b = body || {};
+  const action = str(b.action, 20);
+  const week = str(b.week, 4).toUpperCase();
+  const needWeek = () => { if (!WEEK.test(week)) throw new Error("Give a week like W1."); };
+  if (action === "approve") {
+    needWeek();
+    const email = str(b.email, 200).trim().toLowerCase();
+    if (!EMAIL.test(email)) throw new Error("That is not a lead's email.");
+    const on = b.on !== false;
+    return { action, args: { week, email, on }, label: (on ? "Approve " : "Unapprove ") + email + " (" + week + ")" };
+  }
+  if (action === "approve-week") { needWeek(); return { action, args: { week }, label: "Approve every complete lead in " + week }; }
+  if (action === "upload") { needWeek(); return { action, args: { week }, label: "Upload " + week + "'s approved leads to Instantly" }; }
+  if (action === "linkedin") {
+    const date = str(b.date, 10);
+    const name = str(b.name, 120).trim();
+    if (!DATE.test(date) || !name) throw new Error("Give the LinkedIn list's date and the person's name.");
+    const sent = b.sent !== false;
+    return { action, args: { date, name, sent }, label: (sent ? "LinkedIn request sent: " : "LinkedIn request not sent: ") + name };
+  }
+  if (action === "dnc") {
+    const value = str(b.value, 200).trim().toLowerCase();
+    if (!EMAIL.test(value) && !DOMAIN.test(value)) throw new Error("Give an email address or a domain.");
+    return { action, args: { value, reason: str(b.reason, 120).trim() || "added from Jarvis" }, label: "Do not contact " + value };
+  }
+  if (action === "run") {
+    const job = str(b.job, 20);
+    if (!JOBS.includes(job)) throw new Error("Run prospects, leads or replies.");
+    return { action, args: { job }, label: "Run the " + job + " job on the Mac" };
+  }
+  throw new Error("Unknown marketing command.");
+}
+
+async function sendReply(ctx, db, body) {
+  needKey(ctx);
+  const id = str(body && body.id, 60);
+  const text = str(body && body.text, 8000).trim();
+  if (!ID.test(id)) throw new Error("That is not a reply id.");
+  if (!text) throw new Error("Write the answer first.");
+  const snap = await db.collection("jarvis_settings").doc("marketing_sync").get();
+  const reply = ((snap.exists && (snap.data().replies || {}).items) || []).find((r) => r && r.id === id);
+  if (!reply || !EMAIL.test(String(reply.to || ""))) throw new Error("That reply is not in the last sync.");
+  if (reply.sent) throw new Error("That reply was already answered on " + String(reply.sent).slice(0, 10) + ".");
+  const subject = /^re:/i.test(String(reply.subject || "")) ? String(reply.subject) : "Re: " + String(reply.subject || "");
+  const html = text.split(/\n/).map((l) => "<div>" + (l.trim() ? l.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "<br>") + "</div>").join("");
+  await instantly(ctx, "emails/reply", { method: "POST", body: JSON.stringify({ eaccount: reply.to, reply_to_uuid: id, subject, body: { text, html } }) });
+  return { id, to: String(reply.from || ""), subject };
+}
+
+async function command(ctx, db, body) {
+  const now = new Date(ctx.now).toISOString();
+  const add = (c) => db.collection("jarvis_commands").add({ kind: "marketing", action: c.action, args: c.args, label: c.label, status: "pending", createdAt: now })
+    .then((ref) => ({ queued: ref.id, action: c.action, label: c.label }));
+  if (body && body.action === "reply") {
+    const sent = await sendReply(ctx, db, body);
+    return Object.assign(await add({ action: "replied", args: { id: sent.id, at: now }, label: "Answered " + sent.to }), { sent });
+  }
+  const c = commandOf(body);
+  const out = await add(c);
+  if (c.action === "dnc" && (ctx.env || {}).INSTANTLY_API_KEY) out.blocked = (await block(ctx, { value: c.args.value })).blocked;
+  return out;
+}
+
+module.exports = {
+  marketing, campaignRows, prospectRows, noteRows, parseName, windowOf, campaignAct, block, prospectLines, queueProspects,
+  syncRows, syncSource, commandOf, sendReply, command, TTL: 10 * 60 * 1000
+};
