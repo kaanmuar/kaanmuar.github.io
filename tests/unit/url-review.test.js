@@ -1995,6 +1995,41 @@ test("the optional don't-publish box rides from the form to the stored record an
   assert.equal(require("../../functions/url-review-failures").failureRecord(Object.assign({ kind: "failed", runId: "a1" }, value)).intake.unlisted, true);
 });
 
+test("a finished report is stored without the shapes Firestore refuses, and the rest is kept as it was", () => {
+  // Firestore counts the report's own map as level 1 and refuses a 21st level of maps and arrays.
+  const levels = (value) => Array.isArray(value) || (value && typeof value === "object" && !(value instanceof Date))
+    ? 1 + Math.max(0, ...Object.values(value).map(levels)) : 0;
+  const tower = (n) => (n ? { k: tower(n - 1) } : "leaf");
+  const at = new Date("2026-10-27T07:33:01Z");
+  const report = {
+    id: "r1",
+    at,
+    browser: { scripts: { "": 120, "cdn.example.com": 40 }, globals: { __NEXT_DATA__: { page: "/" } } },
+    points: [[1, 2], [3, 4]],
+    deep: tower(25),
+    fine: { list: [1, "two", { three: 3 }], nothing: null, at }
+  };
+  const fixed = [];
+  const kept = core.storable(report, fixed);
+  assert.deepEqual(kept.browser.scripts, { "(empty)": 120, "cdn.example.com": 40 });
+  assert.deepEqual(kept.browser.globals, { _NEXT_DATA__: { page: "/" } });
+  assert.deepEqual(kept.points, [{ items: [1, 2] }, { items: [3, 4] }]);
+  assert.ok(levels(kept) <= 20);
+  assert.equal(typeof kept.deep.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k, "string");
+  assert.deepEqual(kept.fine, report.fine);
+  assert.equal(kept.at, at);
+  assert.equal(report.browser.scripts[""], 120);
+  assert.deepEqual(fixed.slice(0, 3), [
+    "report.browser.scripts.\"\" (renamed \"(empty)\")",
+    "report.browser.globals.\"__NEXT_DATA__\" (renamed \"_NEXT_DATA__\")",
+    "report.points.0 (an array in an array, kept as { items })"
+  ]);
+  assert.match(fixed[fixed.length - 1], /^report\.deep(\.k){19} \(past 20 levels, kept as JSON\)$/);
+  const record = core.intakeRecord(core.validateIntake({ termsAccepted: true, termsVersion: core.TERMS_VERSION, name: "Ana Ruiz", email: "ana@example.org", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://example.org/" }).value, report, {});
+  assert.deepEqual(record.report.points, kept.points);
+  assert.deepEqual(core.storable(record.report, []), record.report);
+});
+
 const failures = require("../../functions/url-review-failures");
 // The failure tests are written against the fixes up to #365; a later fix to a cause they use would re-run their example failures.
 failures.FIXES.splice(failures.FIXES.findIndex((fix) => fix.ref === "#365") + 1);
@@ -2017,6 +2052,8 @@ test("failure causes are classed from the review's own messages", () => {
     ["certificate has expired", "tls"],
     ["connect ECONNREFUSED 1.2.3.4:443", "connection"],
     ["Value for argument \"data\" is not a valid Firestore document. Cannot use \"undefined\" as a Firestore value (found in field \"report.cases.`28`.path\").", "save"],
+    ["3 INVALID_ARGUMENT: Property report contains an invalid nested entity.", "save"],
+    ["3 INVALID_ARGUMENT: field name '__NEXT_DATA__' is reserved.", "save"],
     ["Cannot read properties of undefined (reading 'x')", "unknown"]
   ];
   cases.forEach(([message, id]) => assert.equal(failures.causeOf(message).id, id, message));

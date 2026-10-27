@@ -146,23 +146,6 @@ https://www.searchenginejournal.com/geo-is-a-distraction-heres-where-the-real-op
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/geo-460.png" medium="image"/>
     </item>
     <item>
-      <title>Jour de mise en prod : la page est-elle toujours juste ?</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-fr.html</link>
-      <guid isPermaLink="false">tips-2026-10/02-release-day-fr</guid>
-      <pubDate>Tue, 27 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Conseil</category>
-      <category>QA</category>
-      <description>Des builds au vert et des smoke tests réussis ne disent pas si la page publique a encore son titre, sa carte de partage et sa bannière de consentement.
-
-À essayer aujourd’hui : Ajoutez un contrôle de cinq minutes des pages publiques à votre checklist de mise en prod, après le déploiement et avant l’annonce.
-
-Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=release-day
-
-#QA #ReleaseManagement #DevOps #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" length="196736" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>Nous nous sommes analysés nous-mêmes. Sécurité : 54.</title>
       <link>https://carlosandmunoz.com/social/tips-2026-10/03-self-review-fr.html</link>
       <guid isPermaLink="false">tips-2026-10/03-self-review-fr</guid>
@@ -557,6 +540,23 @@ Comment se déroule la revue d’une page publique, étape par étape : https://
 #WebPerformance #CLS #CoreWebVitals #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg" length="179623" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/01-img-size.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Jour de mise en prod : la page est-elle toujours juste ?</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/02-release-day-fr.html</link>
+      <guid isPermaLink="false">tips-2026-10/02-release-day-fr</guid>
+      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Conseil</category>
+      <category>QA</category>
+      <description>Des builds au vert et des smoke tests réussis ne disent pas si la page publique a encore son titre, sa carte de partage et sa bannière de consentement.
+
+À essayer aujourd’hui : Ajoutez un contrôle de cinq minutes des pages publiques à votre checklist de mise en prod, après le déploiement et avant l’annonce.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=release-day
+
+#QA #ReleaseManagement #DevOps #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" length="196736" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/02-release-day.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>whatsapp.com: 67. Le point faible : hreflang.</title>
