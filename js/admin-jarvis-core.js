@@ -485,6 +485,28 @@
         return { key: goalKey(goal), product: goal.product, metric: goal.metric, period: goal.period, target: goal.target, label: goalLabel(goal), value: v, pct, expected: Math.round(expected * 10) / 10, projected, elapsed: Math.round(elapsed * 100), status };
     }
 
+    // Visits the site records itself (CV, Studio and Lab visits, URL Review opens), with or without analytics consent.
+    // GA4 only sees visitors who allow analytics, so this is the traffic number that does not drop with consent.
+    function siteVisits(products) {
+        const p = products || {};
+        const parts = [['cv', 'CV'], ['studio', 'QA Studio'], ['lab', 'QA Lab'], ['review', 'URL Review']]
+            .filter(([key]) => p[key] && p[key].kpis && p[key].kpis[0])
+            .map(([key, name]) => ({ key, name, value: Number(p[key].kpis[0].value) || 0, prior: p[key].kpis[0].prior, series: p[key].series || { labels: [], values: [] } }));
+        if (!parts.length) return null;
+        const value = parts.reduce((sum, row) => sum + row.value, 0);
+        const hasPrior = parts.every((row) => row.prior !== undefined && row.prior !== null);
+        const prior = hasPrior ? parts.reduce((sum, row) => sum + (Number(row.prior) || 0), 0) : undefined;
+        const labels = parts.reduce((best, row) => (row.series.labels.length > best.length ? row.series.labels : best), []);
+        const values = labels.map((day) => parts.reduce((sum, row) => {
+            const i = row.series.labels.indexOf(day);
+            return sum + (i === -1 ? 0 : Number(row.series.values[i]) || 0);
+        }, 0));
+        return Object.assign(kpi('Site visits', value, prior), {
+            parts: parts.map((row) => kpi(row.name, row.value, row.prior === null ? undefined : row.prior, { key: row.key })),
+            series: { labels, values }
+        });
+    }
+
     // The instant briefing: rules over the summaries, most urgent first. Levels: alert, warn, good, info.
     function briefing(state) {
         const out = [];
@@ -558,7 +580,12 @@
             const sessions = (ga.groups || []).reduce((s, g) => s + g.sessions, 0);
             const prior = (ga.groups || []).reduce((s, g) => s + g.priorSessions, 0);
             const d = delta(sessions, prior);
-            if (d.pct !== null && Math.abs(d.pct) >= th.sessionsSwingPct && Math.max(sessions, prior) >= 20) add(d.pct > 0 ? 'good' : 'warn', 'traffic', `GA4 sessions ${d.pct > 0 ? 'rose' : 'fell'} ${Math.abs(d.pct)}% (${sessions} vs ${prior}).`, 'ga4:swing');
+            const site = siteVisits(p);
+            const siteHeld = site && site.pct !== null && site.pct > -th.sessionsSwingPct;
+            if (d.pct !== null && Math.abs(d.pct) >= th.sessionsSwingPct && Math.max(sessions, prior) >= 20) {
+                if (d.pct < 0 && siteHeld) add('info', 'traffic', `GA4 sessions fell ${Math.abs(d.pct)}% (${sessions} vs ${prior}) while the site's own visit count moved ${site.delta} (${site.value} vs ${site.prior}). GA4 only counts visitors who allow analytics.`, 'ga4:swing');
+                else add(d.pct > 0 ? 'good' : 'warn', 'traffic', `GA4 sessions ${d.pct > 0 ? 'rose' : 'fell'} ${Math.abs(d.pct)}% (${sessions} vs ${prior}).`, 'ga4:swing');
+            }
         }
         const money = ext.money;
         if (money && money.ok) {
@@ -917,7 +944,7 @@
             rate: Number.isFinite(rate) && rate > 0 ? Math.min(VOICE_RATE.max, Math.max(VOICE_RATE.min, rate)) : VOICE_RATE.default };
     }
 
-    const api = { VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
+    const api = { VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

@@ -1145,7 +1145,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             const sum = s[p.key];
             let main = null, series = [];
             if (sum && sum.kpis) { main = sum.kpis[0]; series = sum.series ? sum.series.values : []; }
-            if (p.key === 'traffic' && e.ga4 && e.ga4.ok) { const n = e.ga4.groups.reduce((a, g) => a + g.sessions, 0); const b = e.ga4.groups.reduce((a, g) => a + g.priorSessions, 0); const d = C.delta(n, b); main = { label: 'GA4 sessions', value: n, delta: d.text, dir: d.dir }; series = e.ga4.daily.map((x) => x.sessions); }
+            const visits = p.key === 'traffic' ? C.siteVisits(s) : null;
+            if (visits) { main = visits; series = visits.series.values; }
+            else if (p.key === 'traffic' && e.ga4 && e.ga4.ok) { const n = e.ga4.groups.reduce((a, g) => a + g.sessions, 0); const b = e.ga4.groups.reduce((a, g) => a + g.priorSessions, 0); const d = C.delta(n, b); main = { label: 'GA4 sessions', value: n, delta: d.text, dir: d.dir }; series = e.ga4.daily.map((x) => x.sessions); }
             if (p.key === 'systems') { const r = C.readiness(e); main = { label: 'Readiness', value: r === null ? '—' : r + '%' }; }
             if (p.key === 'outreach' && e.outreach && e.outreach.pipeline && e.outreach.pipeline.ok) { main = { label: 'Prospects reviewed', value: e.outreach.pipeline.reviews }; series = e.outreach.pipeline.daily.map((x) => x.reviews); }
             if (p.key === 'marketing') { main = { label: 'Marketing visits', value: socialVisits().reduce((n, r) => n + r.value, 0) + C.outreachVisits(S.rows.events).total }; series = e.social && e.social.ok ? e.social.daily.map((x) => x.posts) : []; }
@@ -1210,8 +1212,10 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const ga = e.ga4;
         const cf = e.cloudflare;
         const gaBody = ga && ga.ok ? table([['Content group', (g) => esc(g.group)], ['Sessions', (g) => `${fmt(g.sessions)} <em class="${C.delta(g.sessions, g.priorSessions).dir > 0 ? 'up' : 'down'}">${esc(C.delta(g.sessions, g.priorSessions).text)}</em>`], ['Users', (g) => fmt(g.users)], ['Views', (g) => fmt(g.views)], ['Engaged', (g) => g.engagement + '%'], ['Avg session', (g) => g.duration + 's']], ga.groups) : `<p class="jv-empty">${S.pending.ga4 ? 'Reading GA4…' : esc((ga && ga.error) || 'Not loaded.')}</p>`;
+        const sv = C.siteVisits(s);
         out.traffic = `<div class="jv-grid">${briefPanel('traffic')}
-            ${panel('traffic-groups', 'GA4 by content group', gaBody, { wide: true, data: ga && ga.groups, note: 'Property 495572902. GA4 only counts visitors who allowed analytics; the product tabs count every visit.' })}
+            ${sv ? panel('traffic-site', 'Site visits, with or without analytics consent', kpis([sv].concat(sv.parts)) + area(sv.series.labels, [{ name: 'Visits', values: sv.series.values, color: COLORS.green }]), { wide: true, data: sv.series.labels.map((d, i) => ({ day: d, visits: sv.series.values[i] })), note: 'Counted by the site itself: CV, Studio and Lab visits and URL Review opens. Test browsers are left out.' }) : ''}
+            ${panel('traffic-groups', 'GA4 by content group', gaBody, { wide: true, data: ga && ga.groups, note: 'Property 495572902. Since 19 Oct 2026 GA4 only counts visitors who allow analytics, so it reads far below Site visits; compare GA4 with itself, not with the weeks before.' })}
             ${ga && ga.ok ? panel('traffic-daily', 'GA4 sessions and users per day', area(ga.daily.map((d) => d.date), [{ name: 'Sessions', values: ga.daily.map((d) => d.sessions), color: COLORS.cyan }, { name: 'Users', values: ga.daily.map((d) => d.users), color: COLORS.amber }]), { wide: true, data: ga.daily }) : ''}
             ${ga && ga.ok ? listPanel('traffic', 'countries', 'GA4 countries', ga.countries) + listPanel('traffic', 'sources', 'GA4 source / medium', ga.sources, { color: COLORS.amber }) : ''}
             ${cf && cf.ok && cf.paths ? listPanel('traffic', 'cf-paths', 'Cloudflare: top paths, last 24 hours', cf.paths, { color: COLORS.violet }) : ''}
