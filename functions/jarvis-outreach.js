@@ -175,7 +175,7 @@ async function outreach(ctx) {
       const [queue, state, reviews, index] = await Promise.all([
         ctx.db.collection("url_review_sweep").doc("outreach").get(),
         ctx.db.collection("url_review_sweep").doc("state").get(),
-        ctx.db.collection("url_reviews").where("createdAt", ">=", since).orderBy("createdAt", "desc").limit(3000).get(),
+        ctx.db.collection("url_reviews").where("createdAt", ">=", since).orderBy("createdAt", "desc").select("sweep", "createdAt", "status", "requestedUrl", "score").limit(3000).get(),
         ctx.fetch(ORIGIN + "/assets/live-reports/index.json", { signal: AbortSignal.timeout(10000) }).then((r) => r.json()).catch(() => ({ reports: [] }))
       ]);
       return Object.assign({ ok: true }, pipelineRows(queue.exists ? queue.data() : null, state.exists ? state.data() : null, reviews.docs.map((d) => d.data()), (index.reports || []).map((r) => r.host), ctx));

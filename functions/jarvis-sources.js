@@ -200,7 +200,8 @@ async function money(ctx) {
   const days = ctx.days;
   const start = ctx.now - days * DAY;
   const priorStart = ctx.now - 2 * days * DAY;
-  const snap = await ctx.db.collection("url_reviews").where("paid", "==", true).where("createdAt", ">=", new Date(priorStart).toISOString()).limit(3000).get();
+  const snap = await ctx.db.collection("url_reviews").where("paid", "==", true).where("createdAt", ">=", new Date(priorStart).toISOString())
+    .select("createdAt", "paid", "priceUsd", "provider", "purpose", "refundedUsd", "status", "test", "paypalMode", "sessionId", "captureId", "method").limit(3000).get();
   const rows = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
   const out = Object.assign({ ok: true, days }, moneyRows(rows, { start, priorStart }));
   out.paypal = await paypalPart(ctx, { start, end: ctx.now });
