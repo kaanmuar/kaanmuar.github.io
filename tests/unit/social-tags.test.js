@@ -62,10 +62,10 @@ test("a review clip's TikTok caption calls to action in the clip's language", ()
 
 test("trending tags older than three days are ignored", () => {
   const stale = path.join(path.dirname(FILE), "stale.json");
-  fs.writeFileSync(stale, JSON.stringify({ date: "2020-01-01", tags: [{ tag: "CyberSecurity", topic: "Security", score: 3 }] }));
+  fs.writeFileSync(stale, JSON.stringify({ date: "2020-01-01", tags: [{ tag: "StaleTrendOnly", topic: "Security", score: 3 }] }));
   const out = execFileSync(process.execPath, ["-e", "console.log(JSON.stringify(require('./scripts/social-tags.js').tagsFor(" + JSON.stringify(hsts) + ", 'tiktok', 'en')))"],
     { cwd: path.resolve(__dirname, "../.."), env: Object.assign({}, process.env, { TRENDING_TAGS: stale }), encoding: "utf8" });
-  assert.ok(!JSON.parse(out).includes("#CyberSecurity"));
+  assert.ok(!JSON.parse(out).includes("#StaleTrendOnly"));
 });
 
 test("trends only count when they are about our field and not about sensitive news", () => {
