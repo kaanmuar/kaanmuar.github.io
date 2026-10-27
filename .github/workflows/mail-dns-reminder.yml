@@ -2,6 +2,7 @@
 # One-off reminder for #928: on Nov 7 (stage 1: DMARC pct=100, MTA-STS enforce) and Nov 21 (stage 2: DMARC reject)
 # scripts/mail-dns-reminder.sh comments on #928 with the live records and the go/no-go checklist.
 # Not in functions/ops-schedule.js, since it does not recur. Delete this file when #928 closes.
+# Cron has no year field, so a scheduled run outside 2026 stops at once.
 
 name: Mail DNS reminder
 
@@ -26,9 +27,11 @@ jobs:
       issues: write
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Comment on #928
         env:
           GH_TOKEN: ${{ github.token }}
           STAGE: ${{ inputs.stage }}
-        run: scripts/mail-dns-reminder.sh ${STAGE:+"$STAGE"}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = schedule ] && [ "$(date -u +%Y)" != 2026 ]; then echo "Scheduled for 2026 only."; exit 0; fi
+          scripts/mail-dns-reminder.sh ${STAGE:+"$STAGE"}

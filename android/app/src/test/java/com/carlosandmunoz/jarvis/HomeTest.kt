@@ -118,6 +118,16 @@ class HomeTest {
         assertEquals("900", cf.value)
     }
 
+    @Test fun trafficLeadsWithSiteVisits() {
+        val t = Home.traffic(json("""{"products":{"cv":{"kpis":[{"value":40,"prior":50}],"series":{"values":[10,30]}},"review":{"kpis":[{"value":60,"prior":50}],"series":{"values":[20,40]}}},
+            "external":{"ga4":{"ok":true,"groups":[{"sessions":15,"priorSessions":5500}],"sources":[{"label":"facebook / social","value":9}]}}}"""))
+        assertEquals("Site visits", t.label)
+        assertEquals("100", t.value)
+        assertEquals("0%", t.delta)
+        assertEquals(listOf(30.0, 70.0), t.series)
+        assertEquals("facebook / social", t.sources.first().first)
+    }
+
     @Test fun pickFallsBackToRevenue() {
         val snap = json("""{"readiness":92,"briefing":[{"level":"alert","text":"x"}]}""")
         val day = json("""{"external":{"money":{"ok":true,"revenue":{"usd":184.4,"count":3}}}}""")
