@@ -13,6 +13,7 @@ const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 const { minifyPages } = require("./minify-pages");
+const csp = require("./build-csp-hashes");
 
 const ROOT = path.join(__dirname, "..");
 const OUT = path.resolve(ROOT, process.argv[2] || "_site");
@@ -51,6 +52,16 @@ for (const file of files) {
   bytes += fs.statSync(dest).size;
 }
 fs.writeFileSync(path.join(OUT, ".nojekyll"), "");
+
+// A page committed with stale script hashes would have its inline scripts refused; CI flags it, the artifact is rehashed.
+const rehashed = files.filter((file) => file.endsWith(".html")).filter((file) => {
+  const dest = path.join(OUT, file);
+  const html = fs.readFileSync(dest, "utf8");
+  const next = csp.apply(html);
+  if (next !== html) fs.writeFileSync(dest, next);
+  return next !== html;
+});
+if (rehashed.length) console.warn(`CSP script hashes were stale in ${rehashed.join(", ")}; run node scripts/build-csp-hashes.js`);
 
 console.log(`${path.relative(ROOT, OUT) || "."}: ${files.length} files, ${(bytes / 1048576).toFixed(1)} MB`);
 
