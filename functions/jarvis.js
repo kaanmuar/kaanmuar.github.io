@@ -154,7 +154,7 @@ async function runJob(fetchImpl, name) {
 // --- github ---------------------------------------------------------------------------------------------------
 
 async function github(fetchImpl, token, { now }) {
-  if (!token) return { ok: false, error: "GITHUB_BUGS_TOKEN is not set." };
+  if (!token) return { ok: false, error: "No GitHub token is set." };
   const get = async (path) => readJson(await fetchImpl("https://api.github.com/" + path, {
     headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" },
     signal: AbortSignal.timeout(15000)
@@ -188,7 +188,7 @@ async function github(fetchImpl, token, { now }) {
 
 // The newest failed run of a workflow on main gets its failed jobs re-run; the token needs Actions: write.
 async function rerunCi(fetchImpl, token, workflow) {
-  if (!token) throw new Error("GITHUB_BUGS_TOKEN is not set.");
+  if (!token) throw new Error("No GitHub token is set.");
   const name = String(workflow || "").slice(0, 120);
   const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
   const runs = await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs?branch=main&status=completed&per_page=50", { headers, signal: AbortSignal.timeout(15000) }), "GitHub");
@@ -196,7 +196,7 @@ async function rerunCi(fetchImpl, token, workflow) {
   if (!run) throw new Error("No finished run of " + name + " on main.");
   if (["success", "skipped", "neutral"].includes(run.conclusion)) return { workflow: name, run: run.id, url: run.html_url, already: run.conclusion };
   const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs/" + run.id + "/rerun-failed-jobs", { method: "POST", headers, signal: AbortSignal.timeout(15000) });
-  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); GITHUB_BUGS_TOKEN needs Actions: write.");
+  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); the GitHub token needs Actions: write.");
   if (!res.ok) throw new Error("GitHub " + res.status + " on the re-run.");
   return { workflow: name, run: run.id, url: run.html_url };
 }
