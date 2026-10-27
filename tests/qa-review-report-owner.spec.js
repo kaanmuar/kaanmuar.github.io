@@ -94,6 +94,19 @@ test.describe('A paid report opens only for the account that ran it', () => {
     await expect(page.locator('.exec-cols')).not.toContainText('chat launcher');
   });
 
+  test('the pages without an analytics tag show the first eight and open the rest with Show all (#1692)', async ({ page }) => {
+    const untagged = Array.from({ length: 12 }, (_, i) => '/no-tag-' + i);
+    const analytics = Object.assign({}, sample.report.insights.analytics, { untagged });
+    await open(page, 'ana', Object.assign({}, sample.report, { insights: Object.assign({}, sample.report.insights, { analytics }) }));
+    const note = page.locator('#analytics .meta-line', { hasText: 'Pages without a tag' });
+    await expect(note.locator('.list-more')).toHaveText('Show all 12');
+    expect(await note.innerText()).toContain('/no-tag-7');
+    expect(await note.innerText()).not.toContain('/no-tag-8');
+    await note.locator('.list-more').click();
+    await expect(note).toContainText('/no-tag-11');
+    await expect(note.locator('.list-more')).toHaveText('Show fewer');
+  });
+
   test('an emailed link opened signed out shows the blurred preview and asks to sign in', async ({ page }) => {
     await open(page, null);
     await expect(page.locator('#form-status')).toContainText('Sign in with the account that ran this report');
