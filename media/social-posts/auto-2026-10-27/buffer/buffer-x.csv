@@ -1,0 +1,74 @@
+Text,Image URL,Tags,Posting Time
+"ciedi.edu.co: 68. The gap: the CSP.
+
+Tighten the content security policy one directive at a time, starting from default-src 'self'.
+
+carlosandmunoz.com/qa-review?live=u-ciedi-edu-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ciedi-edu-co
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/01-u-ciedi-edu-co.jpg","","2026-10-28 08:35"
+"ghlhoteles.com: 40. The gap: broken links.
+
+Check your own links after each release, and fix or redirect every one that answers 404.
+
+carlosandmunoz.com/qa-review?live=u-ghlhoteles-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ghlhoteles-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/02-u-ghlhoteles-com.jpg","","2026-10-29 13:25"
+"temu.com: 64. The gap: page titles.
+
+Give every page a unique title of about 60 characters: the page first, the site second.
+
+https://carlosandmunoz.com/qa-review.html?live=u-temu-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-temu-com
+#SEO #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/03-u-temu-com.jpg","","2026-10-30 11:35"
+"samsung.com: 68. The gap: ARIA roles.
+
+Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.
+
+carlosandmunoz.com/qa-review?live=u-samsung-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-samsung-com
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/04-u-samsung-com.jpg","","2026-10-31 09:50"
+"ag.org: 60. The gap: link names.
+
+Give every link text that says where it goes. An icon alone needs an aria-label.
+
+https://carlosandmunoz.com/qa-review.html?live=u-ag-org&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ag-org
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/05-u-ag-org.jpg","","2026-11-01 16:55"
+"onepagelove.com: 81. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it…
+
+carlosandmunoz.com/qa-review?live=u-onepagelove-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-onepagelove-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/06-u-onepagelove-com.jpg","","2026-11-02 16:05"
+"bbva.com.co: 68. The gap: the https redirect.
+
+Redirect every http request to https with one permanent 301, then add HSTS.
+
+carlosandmunoz.com/qa-review?live=u-bbva-com-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-bbva-com-co
+#WebSecurity #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/07-u-bbva-com-co.jpg","","2026-11-03 15:30"
+"indrive.com: 64. The gap: TLS.
+
+Renew the TLS certificate automatically, and alert well before it expires.
+
+https://carlosandmunoz.com/qa-review.html?live=u-indrive-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-indrive-com
+#WebSecurity #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/08-u-indrive-com.jpg","","2026-11-04 11:15"
+"sony.com.co: 51. The gap: the https redirect.
+
+Redirect every http request to https with one permanent 301, then add HSTS.
+
+carlosandmunoz.com/qa-review?live=u-sony-com-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-sony-com-co
+#WebSecurity #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/09-u-sony-com-co.jpg","","2026-11-05 14:10"
+"Scored 57 of 100. The gap: ARIA roles.
+
+Use native HTML elements first. When you use ARIA roles, nest them the way the…
+
+carlosandmunoz.com/qa-review?live=u-diamondsinternational-mt&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-diamondsinternational-mt","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/10-u-diamondsinternational-mt.jpg","","2026-11-06 14:25"
+"megaxh.com: 64. The gap: button names.
+
+Give every button text or an aria-label, so a screen reader can announce it.
+
+carlosandmunoz.com/qa-review?live=u-megaxh-com&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-megaxh-com
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/11-u-megaxh-com.jpg","","2026-11-07 16:10"
+"3 natural competitors. halloweencostumes.com leads: 75.
+
+Benchmark against the sites your visitors compare you with, not…
+
+carlosandmunoz.com/qa-review?live=u-looksharpstore-co-nz&utm_source=x&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-looksharpstore-co-nz","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/12-vs-looksharpstore-co-nz.jpg","","2026-11-08 13:00"
+"3 natural competitors. A tie at the top: 78.
+
+Benchmark against the sites your visitors compare you with, not against a perfect score…
+
+carlosandmunoz.com/qa-review?live=u-trygghansa-se&utm_source=x&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-trygghansa-se","https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/13-vs-trygghansa-se.jpg","","2026-11-09 16:00"

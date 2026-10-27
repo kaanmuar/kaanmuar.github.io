@@ -379,6 +379,8 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
         }
     }
 
+    QalabLinksPanel(ou, vm)
+
     val dns = ou.obj("mail")
     Panel("Sending domain" + (dns.str("domain")?.let { " ($it)" } ?: "")) {
         val checks = dns.objs("checks")

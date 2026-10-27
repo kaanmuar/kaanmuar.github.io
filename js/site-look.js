@@ -298,7 +298,7 @@
         root.dataset.lookMode = nextMode;
         painted = applied;
         mode = nextMode;
-        const meta = document.querySelector('meta[name="theme-color"]');
+        const meta = document.querySelector('meta[name="theme-color"]:not([data-fixed])');
         if (meta) meta.setAttribute('content', isDark() ? values['--bg'] : applied.accent);
         document.dispatchEvent(new CustomEvent('cv-look-change', { detail: { id: applied.id, accent: applied.accent, mode: nextMode } }));
         renderControls();

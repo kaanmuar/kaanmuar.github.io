@@ -107,6 +107,23 @@ test("a finding message renders in the page language and falls back to the Engli
   assert.equal(load("it").line(undefined, "English"), "English");
 });
 
+test("each review page loads only its own findings dictionary, which renders like the full copy (#1769)", () => {
+  const { EN, say } = require("../../functions/url-review-findings-en.js");
+  const run = (file, lang) => {
+    const sandbox = { window: {}, document: { documentElement: { lang } } };
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../js/" + file), "utf8"), sandbox);
+    return sandbox.window.QAReviewFindingsCopy;
+  };
+  for (const lang of ["en", ...LANGS]) {
+    const page = fs.readFileSync(path.join(__dirname, "../../qa-review" + (lang === "en" ? "" : "-" + lang) + ".html"), "utf8");
+    assert.deepEqual(page.match(/js\/qa-review-findings-copy[^"?]*/g), ["js/qa-review-findings-copy." + lang + ".js"], "qa-review " + lang);
+    const full = run("qa-review-findings-copy.js", lang);
+    const one = run("qa-review-findings-copy." + lang + ".js", lang);
+    assert.equal(one.translated, full.translated, lang);
+    for (const id of Object.keys(EN)) assert.equal(one.line(say(id, { n: 2 }), "x"), full.line(say(id, { n: 2 }), "x"), lang + " " + id);
+  }
+});
+
 test("axe-core titles keep axe's English and read in the page language (#1589)", () => {
   const { EN } = require("../../functions/url-review-findings-en.js");
   assert.equal(EN["ax-title.button-name"], "Buttons must have discernible text");

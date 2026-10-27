@@ -3,7 +3,9 @@
  * An unpaid report is cut here, so the hidden part of a line never leaves in mail.
  */
 const findingsCopy = require("./url-review-findings-copy");
+const fusion = require("./url-review-fusion");
 
+const { FUSION, TEXT, ON_NIGHT } = fusion;
 const SITE = "https://carlosandmunoz.com";
 const DEEPER = "qa@carlosandmunoz.com";
 const ACCOUNT_PAGE = "qa-review-account.html";
@@ -378,12 +380,21 @@ function frost(title) {
 }
 
 function scoreColor(score) {
-  if (score >= 80) return "#15803d";
-  if (score >= 50) return "#b45309";
-  return "#b91c1c";
+  if (score >= 80) return TEXT.pass;
+  if (score >= 50) return TEXT.risk;
+  return TEXT.fail;
 }
 
-const SEVERITY_COLOR = { critical: "#7f1d1d", high: "#b91c1c", medium: "#b45309", low: "#64748b" };
+// Bars, rings and chips carry the palette itself; numbers on white use scoreColor.
+function scoreFill(score) {
+  if (score >= 80) return FUSION.mint;
+  if (score >= 50) return FUSION.gold;
+  return FUSION.coral;
+}
+
+const SEVERITY_COLOR = { critical: TEXT.critical, high: TEXT.fail, medium: TEXT.risk, low: TEXT.muted };
+const SEVERITY_DOT = { critical: TEXT.critical, high: FUSION.coral, medium: FUSION.gold, low: "#a9bcc1" };
+const SEVERITY_CHIP = { critical: "background:" + TEXT.critical + ";color:#ffffff", high: "background:" + FUSION.coral, medium: "background:" + FUSION.gold, low: "background:" + fusion.LINE };
 
 function reportFacts(record, open, lang) {
   const report = (record && record.report) || {};
@@ -412,35 +423,37 @@ function reportFacts(record, open, lang) {
 }
 
 function button(href, label, primary) {
-  const style = primary
-    ? "display:inline-block;background:#0e7490;color:#ffffff;border:1px solid #0e7490;"
-    : "display:inline-block;background:#ffffff;color:#0e7490;border:1px solid #9cc7d3;";
-  return "<a href=\"" + esc(href) + "\" style=\"" + style + "text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;line-height:20px;padding:13px 22px;border-radius:10px;margin:0 8px 10px 0;\">" + esc(label) + "</a>";
+  return fusion.button(esc(href), esc(label), primary);
 }
 
 function shell(lang, preheader, inner, footer) {
   return "<!DOCTYPE html><html lang=\"" + esc(lang) + "\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
     "<meta name=\"color-scheme\" content=\"light\"><meta name=\"supported-color-schemes\" content=\"light\"><title>QA-lab URL Review</title></head>" +
-    "<body style=\"margin:0;padding:0;background:#e8eef4;\">" +
-    "<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;color:#e8eef4;\">" + esc(preheader) + "&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>" +
-    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#e8eef4;\"><tr><td align=\"center\" style=\"padding:28px 12px;\">" +
+    "<body style=\"margin:0;padding:0;background:" + fusion.PAGE_BG + ";\">" +
+    "<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;color:" + fusion.PAGE_BG + ";\">" + esc(preheader) + "&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>" +
+    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + fusion.PAGE_BG + "\" style=\"background:" + fusion.PAGE_BG + ";\"><tr><td align=\"center\" style=\"padding:28px 12px;\">" +
     "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;\">" +
     inner +
-    "<tr><td style=\"padding:20px 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#5b6b7b;text-align:center;\">" + footer + "</td></tr>" +
+    "<tr><td style=\"padding:20px 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#4a5d63;text-align:center;\">" + footer + "</td></tr>" +
     "</table></td></tr></table></body></html>";
 }
 
+// The white body under the band; `last` rounds the bottom corners.
+function bodyCell(padding, last, style) {
+  return "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;" + (last ? "border-radius:0 0 16px 16px;" : "") + "padding:" + padding + ";" + (style || "") + "\">";
+}
+
 function deeperBlock(t, host, reportId) {
-  return "<tr><td style=\"padding:0 0 16px;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(120deg,#0f172a 0%,#134e5e 100%);border-radius:16px;\">" +
+  return "<tr><td style=\"padding:0 0 16px;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + FUSION.night + "\" style=\"" + fusion.PANEL + "border-radius:16px;\">" +
     "<tr><td style=\"padding:26px 28px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 12px;font-size:20px;line-height:26px;color:#ffffff;font-weight:bold;\">" + esc(t.deeper) + "</p>" +
-    t.deeperLines.map((line) => "<p style=\"margin:0 0 8px;font-size:15px;line-height:22px;color:#cfe3ea;\"><span style=\"color:#5eead4;\">&rarr;</span>&nbsp; " + esc(line) + "</p>").join("") +
-    "<p style=\"margin:16px 0 0;\"><a href=\"" + esc(deeperUrl(t, host, reportId)) + "\" style=\"display:inline-block;background:#5eead4;color:#0f172a;text-decoration:none;font-size:15px;font-weight:bold;line-height:20px;padding:12px 20px;border-radius:10px;\">" + esc(t.deeperCta) + "</a></p>" +
+    "<p style=\"margin:0 0 12px;" + fusion.SERIF + "font-size:24px;line-height:29px;color:#ffffff;\">" + esc(t.deeper) + "</p>" +
+    t.deeperLines.map((line) => "<p style=\"margin:0 0 8px;font-size:15px;line-height:22px;color:" + ON_NIGHT.soft + ";\"><span style=\"color:" + FUSION.cyan + ";\">&rarr;</span>&nbsp; " + esc(line) + "</p>").join("") +
+    "<p style=\"margin:16px 0 0;\"><a href=\"" + esc(deeperUrl(t, host, reportId)) + "\" style=\"display:inline-block;background:" + FUSION.cyan + ";color:" + FUSION.night + ";text-decoration:none;font-size:15px;font-weight:bold;line-height:20px;padding:12px 20px;border-radius:999px;\">" + esc(t.deeperCta) + "</a></p>" +
     "</td></tr></table></td></tr>";
 }
 
 function link(href, label) {
-  return "<a href=\"" + esc(href) + "\" style=\"color:#0e7490;\">" + esc(label) + "</a>";
+  return "<a href=\"" + esc(href) + "\" style=\"color:" + TEXT.link + ";\">" + esc(label) + "</a>";
 }
 
 // `kept` is the retention date and `live` adds the Live Reports line; both belong to the report mail only.
@@ -468,9 +481,9 @@ function footerText(t, why, opts) {
 }
 
 function metaHtml(t, p, facts) {
-  return "<p style=\"margin:14px 0 0;font-size:13px;line-height:19px;color:#cbd5e1;\">" +
+  return "<p style=\"margin:14px 0 0;font-size:13px;line-height:19px;color:" + ON_NIGHT.meta + ";\">" +
     [facts.date ? esc(fill(p.read, { date: facts.date })) : "", facts.pages + " " + esc(t.pages) + (facts.found ? " " + esc(t.pagesFound.replace("{n}", facts.found)) : ""), facts.cases + " " + esc(t.cases)].filter(Boolean).join(" &middot; ") + "</p>" +
-    (facts.total ? "<p style=\"margin:4px 0 0;font-size:13px;line-height:19px;font-weight:bold;\"><span style=\"color:#fca5a5;\">" + facts.fails + " " + esc(p.fails) + "</span><span style=\"color:#cbd5e1;\"> &middot; </span><span style=\"color:#fcd34d;\">" + facts.risks + " " + esc(p.risks) + "</span></p>" : "");
+    (facts.total ? "<p style=\"margin:4px 0 0;font-size:13px;line-height:19px;font-weight:bold;\"><span style=\"color:" + FUSION.coral + ";\">" + facts.fails + " " + esc(p.fails) + "</span><span style=\"color:" + ON_NIGHT.meta + ";\"> &middot; </span><span style=\"color:" + FUSION.gold + ";\">" + facts.risks + " " + esc(p.risks) + "</span></p>" : "");
 }
 
 function metaText(t, p, facts) {
@@ -488,47 +501,44 @@ function scoreBlock(t, p, facts, title) {
     if (!row) return "";
     const value = Math.max(0, Math.min(100, Number(row.score) || 0));
     return "<tr>" +
-      "<td style=\"padding:5px 10px 5px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#334155;white-space:nowrap;width:112px;\">" + esc(t.areas[area] || area) + "</td>" +
-      "<td style=\"padding:5px 0;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#e5eaf0;border-radius:6px;\"><tr>" +
-      (value > 0 ? "<td width=\"" + value + "%\" style=\"height:10px;line-height:10px;font-size:0;background:" + scoreColor(value) + ";border-radius:6px;\">&nbsp;</td>" : "") +
+      "<td style=\"padding:5px 10px 5px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:" + TEXT.body + ";white-space:nowrap;width:112px;\">" + esc(t.areas[area] || area) + "</td>" +
+      "<td style=\"padding:5px 0;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + fusion.TRACK + "\" style=\"background:" + fusion.TRACK + ";border-radius:6px;\"><tr>" +
+      (value > 0 ? "<td width=\"" + value + "%\" bgcolor=\"" + scoreFill(value) + "\" style=\"height:10px;line-height:10px;font-size:0;background:" + scoreFill(value) + ";border-radius:6px;\">&nbsp;</td>" : "") +
       (value < 100 ? "<td style=\"height:10px;line-height:10px;font-size:0;\">&nbsp;</td>" : "") +
       "</tr></table></td>" +
       "<td style=\"padding:5px 0 5px 12px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:" + scoreColor(value) + ";text-align:right;width:34px;\">" + value + "</td>" +
       "</tr>";
   }).join("");
-  return "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 26px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 6px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
-    "<p style=\"margin:0 0 18px;font-size:22px;line-height:28px;color:#ffffff;\">" + esc(title) + "</p>" +
-    "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\"><tr>" +
-    "<td style=\"font-size:64px;line-height:64px;font-weight:bold;color:#ffffff;padding-right:14px;\">" + overall + "</td>" +
-    "<td style=\"vertical-align:bottom;padding-bottom:8px;\"><span style=\"display:inline-block;background:" + scoreColor(overall) + ";color:#ffffff;font-size:14px;font-weight:bold;padding:4px 10px;border-radius:999px;\">" + esc(facts.score.grade || "") + "</span><br><span style=\"font-size:13px;color:#cbd5e1;\">" + esc(t.outOf) + "</span></td>" +
+  return fusion.band("QA-lab URL Review", esc(title),
+    "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-top:16px;\"><tr>" +
+    "<td style=\"font-family:Arial,Helvetica,sans-serif;font-size:64px;line-height:64px;font-weight:bold;color:#ffffff;padding-right:14px;\">" + overall + "</td>" +
+    "<td style=\"vertical-align:bottom;padding-bottom:8px;font-family:Arial,Helvetica,sans-serif;\"><span style=\"display:inline-block;background:" + scoreFill(overall) + ";color:" + FUSION.night + ";font-size:14px;font-weight:bold;padding:4px 10px;border-radius:999px;\">" + esc(facts.score.grade || "") + "</span><br><span style=\"font-size:13px;color:" + ON_NIGHT.meta + ";\">" + esc(t.outOf) + "</span></td>" +
     "</tr></table>" +
-    metaHtml(t, p, facts) +
-    "</td></tr>" +
-    "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;padding:20px 28px 8px;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">" + bars + "</table></td></tr>";
+    metaHtml(t, p, facts), { size: 24 }) +
+    bodyCell("20px 28px 8px") + "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">" + bars + "</table></td></tr>";
 }
 
 function findingsBlock(t, p, lang, facts) {
   if (!facts.findings.length) return "";
   const rows = facts.findings.map((item) =>
-    "<tr><td style=\"padding:10px 0;border-top:1px solid #eef2f6;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<span style=\"display:inline-block;width:8px;height:8px;border-radius:8px;background:" + (SEVERITY_COLOR[item.severity] || SEVERITY_COLOR.low) + ";\"></span>&nbsp; " +
-    "<span style=\"font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#64748b;\">" + esc(t.areas[item.area] || item.area) + " &middot; </span>" +
+    "<tr><td style=\"padding:10px 0;border-top:1px solid " + fusion.LINE + ";font-family:Arial,Helvetica,sans-serif;\">" +
+    "<span style=\"display:inline-block;width:8px;height:8px;border-radius:8px;background:" + (SEVERITY_DOT[item.severity] || SEVERITY_DOT.low) + ";\"></span>&nbsp; " +
+    "<span style=\"font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:" + TEXT.muted + ";\">" + esc(t.areas[item.area] || item.area) + " &middot; </span>" +
     "<span style=\"font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:bold;color:" + (SEVERITY_COLOR[item.severity] || SEVERITY_COLOR.low) + ";\">" + esc(p.sev[item.severity] || item.severity) + "</span><br>" +
-    "<span style=\"font-size:15px;line-height:24px;color:#0f172a;\">" + esc(item.shown) + "</span>" +
-    (item.hidden ? " <span aria-hidden=\"true\" style=\"display:inline-block;background:#d6dee8;color:#d6dee8;border-radius:5px;font-size:15px;line-height:18px;\">" + "&nbsp;".repeat(Math.min(34, item.hidden)) + "</span>" : "") +
-    (item.fix ? "<br><span style=\"font-size:13px;line-height:20px;color:#475569;\"><b style=\"color:#0e7490;\">" + esc(FIX_LABEL[lang]) + ":</b> " + esc(item.fix) + "</span>" : "") +
+    "<span style=\"font-size:15px;line-height:24px;color:" + TEXT.strong + ";\">" + esc(item.shown) + "</span>" +
+    (item.hidden ? " <span aria-hidden=\"true\" style=\"display:inline-block;background:#d3e2e5;color:#d3e2e5;border-radius:5px;font-size:15px;line-height:18px;\">" + "&nbsp;".repeat(Math.min(34, item.hidden)) + "</span>" : "") +
+    (item.fix ? "<br><span style=\"font-size:13px;line-height:20px;color:" + TEXT.body + ";\"><b style=\"color:" + TEXT.link + ";\">" + esc(FIX_LABEL[lang]) + ":</b> " + esc(item.fix) + "</span>" : "") +
     "</td></tr>"
   ).join("");
-  const more = facts.moreCount ? "<p style=\"margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#64748b;\">" + esc(fill(t.more, { n: facts.moreCount })) + "</p>" : "";
-  return "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;padding:14px 28px 6px;\">" +
-    "<p style=\"margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;letter-spacing:0.08em;text-transform:uppercase;color:#0e7490;\">" + esc(t.findings) + "</p>" +
+  const more = facts.moreCount ? "<p style=\"margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:" + TEXT.muted + ";\">" + esc(fill(t.more, { n: facts.moreCount })) + "</p>" : "";
+  return bodyCell("14px 28px 6px") +
+    "<p style=\"margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;letter-spacing:0.08em;text-transform:uppercase;color:" + TEXT.link + ";\">" + esc(t.findings) + "</p>" +
     "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">" + rows + "</table>" + more +
     "</td></tr>";
 }
 
-const OWN_COLOR = "#0e7490";
-const RIVAL_COLOR = "#7c3aed";
+const OWN_COLOR = TEXT.link;
+const RIVAL_COLOR = TEXT.rival;
 
 function scoreOf(value) {
   return typeof value === "number" && isFinite(value) ? value : null;
@@ -573,35 +583,35 @@ function leadText(lead) {
 }
 
 function leadColor(lead) {
-  return lead == null || lead === 0 ? "#64748b" : lead > 0 ? "#15803d" : "#b91c1c";
+  return lead == null || lead === 0 ? TEXT.muted : lead > 0 ? TEXT.pass : TEXT.fail;
 }
 
 function compareBlock(c, cf, baseUrl) {
   const font = "font-family:Arial,Helvetica,sans-serif;";
   const th = (text, color, align) => "<th style=\"" + font + "padding:0 0 6px 10px;font-size:11px;letter-spacing:0.04em;text-align:" + (align || "right") + ";color:" + color + ";font-weight:bold;word-break:break-all;\">" + esc(text) + "</th>";
-  const td = (text, color, bold) => "<td style=\"" + font + "padding:6px 0 6px 10px;border-top:1px solid #eef2f6;font-size:14px;text-align:right;color:" + color + ";" + (bold ? "font-weight:bold;" : "") + "\">" + esc(text) + "</td>";
+  const td = (text, color, bold) => "<td style=\"" + font + "padding:6px 0 6px 10px;border-top:1px solid " + fusion.LINE + ";font-size:14px;text-align:right;color:" + color + ";" + (bold ? "font-weight:bold;" : "") + "\">" + esc(text) + "</td>";
   const rows = cf.rows.map((row) =>
-    "<tr><td style=\"" + font + "padding:6px 0;border-top:1px solid #eef2f6;font-size:13px;color:#334155;\">" + esc(row.label) + "</td>" +
-    td(row.own == null ? "–" : row.own, row.own == null ? "#94a3b8" : scoreColor(row.own), true) +
-    td(row.rival == null ? "–" : row.rival, row.rival == null ? "#94a3b8" : scoreColor(row.rival), true) +
+    "<tr><td style=\"" + font + "padding:6px 0;border-top:1px solid " + fusion.LINE + ";font-size:13px;color:" + TEXT.body + ";\">" + esc(row.label) + "</td>" +
+    td(row.own == null ? "–" : row.own, row.own == null ? TEXT.muted : scoreColor(row.own), true) +
+    td(row.rival == null ? "–" : row.rival, row.rival == null ? TEXT.muted : scoreColor(row.rival), true) +
     td(leadText(row.lead), leadColor(row.lead), true) + "</tr>").join("");
-  const tile = (site, side, color) => "<td width=\"50%\" valign=\"top\" style=\"" + font + "padding:12px 14px;background:#f8fafc;border-top:3px solid " + color + ";border-radius:10px;\">" +
-    "<p style=\"margin:0;font-size:12px;line-height:17px;color:#475569;word-break:break-all;\">" + esc(fill(c.onlyHas, { site })) + "</p>" +
+  const tile = (site, side, color) => "<td width=\"50%\" valign=\"top\" bgcolor=\"#f3f8f8\" style=\"" + font + "padding:12px 14px;background:#f3f8f8;border-top:3px solid " + color + ";border-radius:10px;\">" +
+    "<p style=\"margin:0;font-size:12px;line-height:17px;color:" + TEXT.body + ";word-break:break-all;\">" + esc(fill(c.onlyHas, { site })) + "</p>" +
     "<p style=\"margin:2px 0 0;font-size:26px;line-height:30px;font-weight:bold;color:" + color + ";\">" + side.count + "</p>" +
-    "<p style=\"margin:0;font-size:12px;line-height:17px;color:#64748b;\">" + esc(c.openProblems) + "</p></td>";
+    "<p style=\"margin:0;font-size:12px;line-height:17px;color:" + TEXT.muted + ";\">" + esc(c.openProblems) + "</p></td>";
   const ownName = "<b style=\"color:" + OWN_COLOR + ";\">" + esc(cf.own) + "</b>";
-  return "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;padding:18px 28px 6px;\">" +
-    "<p style=\"margin:0 0 6px;" + font + "font-size:13px;font-weight:bold;letter-spacing:0.08em;text-transform:uppercase;color:#0e7490;\">" + esc(c.title) + "</p>" +
-    "<p style=\"margin:0 0 12px;" + font + "font-size:15px;line-height:23px;color:#334155;\">" + fill(esc(c.intro), {
+  return bodyCell("18px 28px 6px") +
+    "<p style=\"margin:0 0 6px;" + font + "font-size:13px;font-weight:bold;letter-spacing:0.08em;text-transform:uppercase;color:" + TEXT.link + ";\">" + esc(c.title) + "</p>" +
+    "<p style=\"margin:0 0 12px;" + font + "font-size:15px;line-height:23px;color:" + TEXT.body + ";\">" + fill(esc(c.intro), {
       own: baseUrl ? "<a href=\"" + esc(baseUrl) + "\" style=\"text-decoration:underline;color:" + OWN_COLOR + ";\">" + ownName + "</a>" : ownName,
       when: esc(cf.intro.when),
       rival: "<b style=\"color:" + RIVAL_COLOR + ";\">" + esc(cf.rival) + "</b>"
     }) + "</p>" +
-    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>" + th(c.area, "#64748b", "left") + th(cf.own, OWN_COLOR) + th(cf.rival, RIVAL_COLOR) + th(c.yourLead, "#64748b") + "</tr>" + rows + "</table>" +
-    (cf.verdict ? "<p style=\"margin:12px 0 0;" + font + "font-size:14px;line-height:21px;color:#0f172a;font-weight:bold;\">" + esc(cf.verdict) + "</p>" : "") +
+    "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>" + th(c.area, TEXT.muted, "left") + th(cf.own, OWN_COLOR) + th(cf.rival, RIVAL_COLOR) + th(c.yourLead, TEXT.muted) + "</tr>" + rows + "</table>" +
+    (cf.verdict ? "<p style=\"margin:12px 0 0;" + font + "font-size:14px;line-height:21px;color:" + TEXT.strong + ";font-weight:bold;\">" + esc(cf.verdict) + "</p>" : "") +
     "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:12px 0 0;\"><tr>" + tile(cf.own, cf.ownOnly, OWN_COLOR) + "<td width=\"12\" style=\"font-size:0;\">&nbsp;</td>" + tile(cf.rival, cf.rivalOnly, RIVAL_COLOR) + "</tr></table>" +
-    "<p style=\"margin:10px 0 0;" + font + "font-size:13px;line-height:19px;color:#334155;\">" + esc(cf.shared) + "</p>" +
-    "<p style=\"margin:6px 0 0;" + font + "font-size:12px;line-height:18px;color:#64748b;\">" + esc(cf.note) + "</p>" +
+    "<p style=\"margin:10px 0 0;" + font + "font-size:13px;line-height:19px;color:" + TEXT.body + ";\">" + esc(cf.shared) + "</p>" +
+    "<p style=\"margin:6px 0 0;" + font + "font-size:12px;line-height:18px;color:" + TEXT.muted + ";\">" + esc(cf.note) + "</p>" +
     "</td></tr>";
 }
 
@@ -662,17 +672,15 @@ function reportMail(record, options) {
   const cf = compareFacts(record, lang);
   const baseUrl = cf && cf.ownId ? pageUrl(lang, { report: cf.ownId, utm_campaign: "report-compare" }) : "";
   const scoreHtml = scoreBlock(t, p, facts, story.title);
-  const head = scoreHtml || "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 26px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 6px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
-    "<p style=\"margin:0;font-size:22px;line-height:28px;color:#ffffff;\">" + esc(story.title) + "</p>" + metaHtml(t, p, facts) + "</td></tr>";
+  const head = scoreHtml || fusion.band("QA-lab URL Review", esc(story.title), metaHtml(t, p, facts), { size: 24 });
   const inner = head +
-    "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;padding:16px 28px 4px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#334155;\">" + esc(story.lead) + "</td></tr>" +
+    bodyCell("16px 28px 4px", false, "font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:" + TEXT.body + ";") + esc(story.lead) + "</td></tr>" +
     (cf ? compareBlock(CMP_COPY[lang], cf, baseUrl) : "") +
     findingsBlock(t, p, lang, facts) +
-    "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:18px 28px 22px;\">" +
+    bodyCell("18px 28px 22px", true) +
     button(openUrl, story.cta, true) + button(anotherUrl, t.another, false) +
-    "<p style=\"margin:4px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#64748b;\">" + esc(t.openNote) + "</p>" +
-    (opts.attached ? "<p style=\"margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#0e7490;font-weight:bold;\">&#128206; " + esc(attached) + "</p>" : "") +
+    "<p style=\"margin:4px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:" + TEXT.muted + ";\">" + esc(t.openNote) + "</p>" +
+    (opts.attached ? "<p style=\"margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:" + TEXT.link + ";font-weight:bold;\">&#128206; " + esc(attached) + "</p>" : "") +
     "</td></tr>" +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
     deeperBlock(t, facts.host, facts.id);
@@ -732,6 +740,15 @@ function stripUrl() {
   return frostStrip;
 }
 
+let markSvg = "";
+
+function markUrl() {
+  if (!markSvg) {
+    markSvg = "data:image/svg+xml;base64," + require("fs").readFileSync(require("path").join(__dirname, "assets", "qa-review-mark-fusion.svg")).toString("base64");
+  }
+  return markSvg;
+}
+
 function frostedLine(text, seed) {
   const cut = frost(text);
   if (!cut.shown) return "";
@@ -744,51 +761,55 @@ function frostedLine(text, seed) {
 }
 
 const PDF_STYLE = "@page{size:A4;margin:12mm 0 14mm}@page:first{margin:0 0 14mm}*{box-sizing:border-box}html,body{margin:0;padding:0}" +
-  "body{font-family:Inter,'Helvetica Neue',Arial,sans-serif;color:#0f172a;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10.5pt;line-height:1.45}" +
+  "body{font-family:Inter,'Helvetica Neue',Arial,sans-serif;color:" + TEXT.strong + ";background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10.5pt;line-height:1.45}" +
   ".page{position:relative;z-index:1;padding:0 0 4mm}" +
-  ".wm{position:fixed;top:-30%;left:-30%;width:160%;height:160%;z-index:3;pointer-events:none;display:flex;flex-wrap:wrap;align-content:space-around;justify-content:space-around;gap:18mm 26mm;transform:rotate(-30deg);font-size:13pt;font-weight:600;color:rgba(15,23,42,.08);white-space:nowrap;overflow:hidden}" +
-  ".hero{background:#0f172a;background-image:radial-gradient(circle at 85% 20%,rgba(94,234,212,.28),transparent 45%),linear-gradient(135deg,#0f172a 0%,#0e4a5c 60%,#0e7490 100%);color:#fff;padding:14mm 16mm 12mm;display:flex;gap:10mm;align-items:center}" +
-  ".hero .who{flex:1}.eyebrow{font-size:8.5pt;letter-spacing:.16em;text-transform:uppercase;color:#7dd3fc;margin:0 0 3mm}" +
-  ".host{font-family:Georgia,'Times New Roman',serif;font-size:26pt;line-height:1.1;margin:0 0 3mm;word-break:break-all}" +
-  ".meta{font-size:9pt;color:#cbd5e1;margin:0}.meta code{font-family:Menlo,Consolas,monospace;color:#e2e8f0}" +
-  ".badge{display:inline-block;margin-top:4mm;padding:1.2mm 3.4mm;border-radius:99px;background:rgba(94,234,212,.16);border:1px solid rgba(94,234,212,.55);color:#99f6e4;font-size:8.5pt;font-weight:700;letter-spacing:.04em}" +
+  ".wm{position:fixed;top:-30%;left:-30%;width:160%;height:160%;z-index:3;pointer-events:none;display:flex;flex-wrap:wrap;align-content:space-around;justify-content:space-around;gap:18mm 26mm;transform:rotate(-30deg);font-size:13pt;font-weight:600;color:rgba(7,17,22,.08);white-space:nowrap;overflow:hidden}" +
+  ".hero{position:relative;background:" + FUSION.night + ";background-image:radial-gradient(circle at 12% 0%,rgba(77,179,187,.42),transparent 48%),radial-gradient(circle at 88% 8%,rgba(185,168,255,.26),transparent 40%),radial-gradient(ellipse at 50% 120%,rgba(126,246,251,.22),transparent 55%),linear-gradient(180deg," + FUSION.ink + " 0%,#0a171c 62%," + FUSION.night + " 100%);color:#fff;padding:13mm 16mm 13mm;display:flex;gap:9mm;align-items:center}" +
+  ".hero:after{content:'';position:absolute;left:0;right:0;bottom:0;height:1.2mm;background:linear-gradient(90deg," + FUSION.cyan + " 0%," + FUSION.teal + " 50%," + FUSION.gold + " 100%)}" +
+  ".mark{width:24mm;height:24mm;flex:none;display:block;border-radius:5.6mm;border:.3mm solid rgba(126,246,251,.4)}" +
+  ".hero .who{flex:1;min-width:0}.eyebrow{font-size:8.5pt;letter-spacing:.16em;text-transform:uppercase;color:" + FUSION.cyan + ";margin:0 0 2.4mm}" +
+  ".host{font-family:'Instrument Serif',Georgia,'Times New Roman',serif;font-size:28pt;line-height:1.08;margin:0 0 3mm;word-break:break-all;color:" + FUSION.pearl + "}" +
+  ".meta{font-size:9pt;color:" + ON_NIGHT.meta + ";margin:0}.meta code{font-family:'Fira Code',Menlo,Consolas,monospace;color:" + FUSION.pearl + "}" +
+  ".badge{display:inline-block;margin-top:4mm;padding:1.2mm 3.4mm;border-radius:99px;background:rgba(226,196,138,.14);border:1px solid rgba(226,196,138,.6);color:" + FUSION.gold + ";font-size:8.5pt;font-weight:700;letter-spacing:.04em}" +
   ".ring{width:42mm;height:42mm;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}" +
-  ".ring div{width:33mm;height:33mm;border-radius:50%;background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center}" +
-  ".ring b{font-size:30pt;line-height:1}.ring i{font-style:normal;font-size:8.5pt;color:#94a3b8}.ring em{font-style:normal;margin-top:1mm;padding:.6mm 2.6mm;border-radius:99px;font-size:9pt;font-weight:700;color:#fff}" +
-  ".stats{display:flex;gap:4mm;padding:0 16mm;margin-top:-6mm}" +
-  ".stat{flex:1;background:#fff;border:1px solid #dbe3ea;border-radius:4mm;padding:3.4mm 4mm}" +
-  ".stat b{display:block;font-size:17pt;line-height:1.1}.stat span{font-size:8pt;color:#64748b;text-transform:uppercase;letter-spacing:.06em}" +
-  ".sec{margin:7mm 16mm 0}.sec h2{font-size:9pt;letter-spacing:.14em;text-transform:uppercase;color:#0e7490;margin:0 0 3mm}" +
-  ".note{font-size:9pt;color:#475569;margin:0 0 3mm}" +
-  ".areas{display:grid;grid-template-columns:1fr 1fr;gap:2.4mm 8mm;background:#fff;border:1px solid #dbe3ea;border-radius:4mm;padding:5mm}" +
+  ".ring div{width:33mm;height:33mm;border-radius:50%;background:" + FUSION.night + ";display:flex;flex-direction:column;align-items:center;justify-content:center}" +
+  ".ring b{font-size:30pt;line-height:1;color:#fff}.ring i{font-style:normal;font-size:8.5pt;color:" + ON_NIGHT.meta + "}.ring em{font-style:normal;margin-top:1mm;padding:.6mm 2.6mm;border-radius:99px;font-size:9pt;font-weight:700;color:" + FUSION.night + "}" +
+  ".stats{display:flex;gap:4mm;padding:0 16mm;margin-top:-6mm;position:relative}" +
+  ".stat{flex:1;background:#fff;border:1px solid " + fusion.LINE + ";border-top:.8mm solid " + FUSION.teal + ";border-radius:4mm;padding:3.4mm 4mm}" +
+  ".stat b{display:block;font-size:17pt;line-height:1.1}.stat span{font-size:8pt;color:" + TEXT.muted + ";text-transform:uppercase;letter-spacing:.06em}" +
+  ".stat.fail{border-top-color:" + FUSION.coral + "}.stat.risk{border-top-color:" + FUSION.gold + "}" +
+  ".sec{margin:7mm 16mm 0}.sec h2{font-size:9pt;letter-spacing:.14em;text-transform:uppercase;color:" + TEXT.link + ";margin:0 0 3mm}" +
+  ".note{font-size:9pt;color:" + TEXT.body + ";margin:0 0 3mm}" +
+  ".areas{display:grid;grid-template-columns:1fr 1fr;gap:2.4mm 8mm;background:#fff;border:1px solid " + fusion.LINE + ";border-radius:4mm;padding:5mm}" +
   ".area{display:grid;grid-template-columns:27mm 1fr 9mm;align-items:center;gap:3mm;font-size:9.5pt}" +
-  ".bar{height:2.6mm;border-radius:2mm;background:#e5eaf0;overflow:hidden}.bar i{display:block;height:100%;border-radius:2mm}" +
+  ".bar{height:2.6mm;border-radius:2mm;background:" + fusion.TRACK + ";overflow:hidden}.bar i{display:block;height:100%;border-radius:2mm}" +
   ".area b{text-align:right}" +
-  ".finding{background:#fff;border:1px solid #dbe3ea;border-left:1.4mm solid #94a3b8;border-radius:3mm;padding:3.2mm 4mm;margin:0 0 2.6mm;break-inside:avoid}" +
-  ".finding .k{font-size:7.8pt;letter-spacing:.08em;text-transform:uppercase;color:#64748b;margin:0 0 1mm}" +
-  ".finding .t{font-weight:700;margin:0 0 1mm}.finding .e{color:#475569;margin:0;font-size:9.5pt}" +
-  ".finding .f{margin:1.6mm 0 0;padding:1.6mm 2.4mm;border-radius:2mm;background:#f0f9fb;color:#0f172a;font-size:9.5pt}.finding .f b{color:#0e7490}" +
-  ".meta .url{display:block;margin-top:1mm;color:#94a3b8;word-break:break-all}" +
+  ".finding{background:#fff;border:1px solid " + fusion.LINE + ";border-left:1.4mm solid #a9bcc1;border-radius:3mm;padding:3.2mm 4mm;margin:0 0 2.6mm;break-inside:avoid}" +
+  ".finding .k{font-size:7.8pt;letter-spacing:.08em;text-transform:uppercase;color:" + TEXT.muted + ";margin:0 0 1mm}" +
+  ".finding .k b{display:inline-block;padding:.2mm 2mm;border-radius:99px;color:" + FUSION.night + ";letter-spacing:.06em}" +
+  ".finding .t{font-weight:700;margin:0 0 1mm}.finding .e{color:" + TEXT.body + ";margin:0;font-size:9.5pt}" +
+  ".finding .f{margin:1.6mm 0 0;padding:1.6mm 2.4mm;border-radius:2mm;background:#effafb;color:" + TEXT.strong + ";font-size:9.5pt}.finding .f b{color:" + TEXT.link + "}" +
+  ".meta .url{display:block;margin-top:1mm;color:" + ON_NIGHT.meta + ";word-break:break-all}" +
   ".fz{display:inline-block;height:1.25em;vertical-align:-.28em;background-repeat:repeat-x;background-size:auto 2.3em}" +
   ".cases{display:grid;grid-template-columns:1fr 1fr;gap:2mm 5mm}" +
-  ".case{background:#fff;border:1px solid #e2e8f0;border-radius:2.6mm;padding:2.4mm 3mm;font-size:9pt;break-inside:avoid}" +
-  ".case code{font-family:Menlo,Consolas,monospace;font-size:7.8pt;color:#0e7490;margin-right:1.6mm}.case small{color:#64748b;font-size:7.8pt}" +
-  ".more{font-size:9pt;color:#64748b;margin:2.6mm 0 0}" +
-  ".cta{margin:8mm 16mm 0;border-radius:5mm;padding:7mm 8mm;color:#fff;background:#0f172a;background-image:linear-gradient(120deg,#0f172a 0%,#134e5e 100%);break-inside:avoid}" +
-  ".cta h3{margin:0 0 2mm;font-size:15pt}.cta p{margin:0 0 1.6mm;color:#cfe3ea;font-size:10pt}" +
+  ".case{background:#fff;border:1px solid " + fusion.LINE + ";border-radius:2.6mm;padding:2.4mm 3mm;font-size:9pt;break-inside:avoid}" +
+  ".case code{font-family:'Fira Code',Menlo,Consolas,monospace;font-size:7.8pt;color:" + TEXT.link + ";margin-right:1.6mm}.case small{color:" + TEXT.muted + ";font-size:7.8pt}" +
+  ".more{font-size:9pt;color:" + TEXT.muted + ";margin:2.6mm 0 0}" +
+  ".cta{margin:8mm 16mm 0;border-radius:5mm;padding:7mm 8mm;color:#fff;background:" + FUSION.night + ";background-image:radial-gradient(circle at 95% 0%,rgba(226,196,138,.22),transparent 45%),linear-gradient(120deg," + FUSION.night + " 0%," + FUSION.ink + " 70%,#0d4f55 100%);border-left:1.4mm solid " + FUSION.gold + ";break-inside:avoid}" +
+  ".cta h3{margin:0 0 2mm;font-family:'Instrument Serif',Georgia,'Times New Roman',serif;font-weight:normal;font-size:19pt;color:" + FUSION.pearl + "}.cta p{margin:0 0 1.6mm;color:" + ON_NIGHT.soft + ";font-size:10pt}" +
   ".btns{margin-top:4mm;display:flex;gap:3mm;flex-wrap:wrap}" +
-  ".btn{display:inline-block;padding:2.8mm 5mm;border-radius:2.6mm;font-weight:700;text-decoration:none;font-size:10pt}" +
-  ".btn.p{background:#5eead4;color:#0f172a}.btn.s{border:1px solid #5eead4;color:#99f6e4}" +
-  ".cmp{background:#fff;border:1px solid #dbe3ea;border-radius:4mm;padding:5mm;break-inside:avoid}.cmp .note{margin:0 0 3mm}" +
-  ".cmp table{width:100%;border-collapse:collapse;font-size:9.5pt}.cmp th,.cmp td{padding:1.4mm 0 1.4mm 3mm;text-align:right;border-bottom:1px solid #eef2f6}" +
+  ".btn{display:inline-block;padding:2.8mm 5mm;border-radius:99px;font-weight:700;text-decoration:none;font-size:10pt}" +
+  ".btn.p{background:" + FUSION.cyan + ";color:" + FUSION.night + "}.btn.s{border:1px solid " + FUSION.teal + ";color:" + FUSION.cyan + "}" +
+  ".cmp{background:#fff;border:1px solid " + fusion.LINE + ";border-radius:4mm;padding:5mm;break-inside:avoid}.cmp .note{margin:0 0 3mm}" +
+  ".cmp table{width:100%;border-collapse:collapse;font-size:9.5pt}.cmp th,.cmp td{padding:1.4mm 0 1.4mm 3mm;text-align:right;border-bottom:1px solid " + fusion.LINE + "}" +
   ".cmp th{font-size:7.8pt;letter-spacing:.06em;text-transform:uppercase;word-break:break-all}.cmp th:first-child,.cmp td:first-child{text-align:left;padding-left:0}" +
   ".cmp .own{color:" + OWN_COLOR + "}.cmp .rival{color:" + RIVAL_COLOR + "}.cmp .verdict{font-weight:700;margin:3mm 0 0}" +
   ".only{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin-top:4mm}.only>div{border-top:1mm solid;padding-top:2mm;font-size:9pt}.only h3{margin:0 0 1.6mm;font-size:9pt;word-break:break-all}" +
-  ".only ul{margin:0;padding-left:4mm}.only li{margin:0 0 1mm}.only small{color:#64748b}";
+  ".only ul{margin:0;padding-left:4mm}.only li{margin:0 0 1mm}.only small{color:" + TEXT.muted + "}";
 
 // The running footer sits in the page margin: a position:fixed footer lands over the content on pages after the first.
 function pdfFooter(id) {
-  const box = "font-family:Inter,'Helvetica Neue',Arial,sans-serif;font-size:8pt;color:#64748b;border-top:1px solid #dbe3ea;vertical-align:middle;";
+  const box = "font-family:Inter,'Helvetica Neue',Arial,sans-serif;font-size:8pt;color:" + TEXT.muted + ";border-top:1px solid " + fusion.LINE + ";vertical-align:middle;";
   const quoted = "\"" + String(id || "").replace(/[^A-Za-z0-9_-]/g, "") + "\"";
   return "@page{@bottom-left{content:\"QA-lab URL Review · carlosandmunoz.com/qa-review.html\";padding-left:16mm;" + box + "}" +
     "@bottom-right{content:" + quoted + " \"  ·  \" counter(page) \" / \" counter(pages);padding-right:16mm;text-align:right;" + box + "}}";
@@ -829,7 +850,7 @@ function reportPdf(record, options) {
     .sort((a, b) => (a.rank || 999) - (b.rank || 999));
   const fails = all.filter((item) => item.verdict === "fail").length;
   const overall = facts.score ? Number(facts.score.overall) || 0 : 0;
-  const ringColor = scoreColor(overall);
+  const ringColor = scoreFill(overall);
   const when = new Date(report.fetchedAt || (record && record.createdAt) || Date.now());
   const date = isNaN(when) ? "" : when.toISOString().slice(0, 10);
   const openUrl = pageUrl(lang, { report: facts.id, utm_campaign: "report-pdf" });
@@ -837,11 +858,11 @@ function reportPdf(record, options) {
     const row = (facts.score.areas || {})[area];
     if (!row) return "";
     const value = Math.max(0, Math.min(100, Number(row.score) || 0));
-    return "<div class=\"area\"><span>" + esc(t.areas[area] || area) + "</span><div class=\"bar\"><i style=\"width:" + value + "%;background:" + scoreColor(value) + "\"></i></div><b style=\"color:" + scoreColor(value) + "\">" + value + "</b></div>";
+    return "<div class=\"area\"><span>" + esc(t.areas[area] || area) + "</span><div class=\"bar\"><i style=\"width:" + value + "%;background:" + scoreFill(value) + "\"></i></div><b style=\"color:" + scoreColor(value) + "\">" + value + "</b></div>";
   }).join("") : "";
   const findings = all.map((item, index) =>
-    "<div class=\"finding\" style=\"border-left-color:" + (SEVERITY_COLOR[item.severity] || SEVERITY_COLOR.low) + "\">" +
-    "<p class=\"k\">" + esc(t.areas[item.area] || item.area || "") + " · " + esc(p.sev[item.severity] || item.severity || p.sev.low) + "</p>" +
+    "<div class=\"finding\" style=\"border-left-color:" + (SEVERITY_DOT[item.severity] || SEVERITY_DOT.low) + "\">" +
+    "<p class=\"k\">" + esc(t.areas[item.area] || item.area || "") + " · <b style=\"" + (SEVERITY_CHIP[item.severity] || SEVERITY_CHIP.low) + "\">" + esc(p.sev[item.severity] || item.severity || p.sev.low) + "</b></p>" +
     "<p class=\"t\">" + lineOf(findingLine(lang, item, "title"), index) + "</p>" +
     (item.evidence ? "<p class=\"e\">" + lineOf(findingLine(lang, item, "evidence"), index + 3) + "</p>" : "") +
     (open && item.fix ? "<p class=\"f\"><b>" + esc(FIX_LABEL[lang]) + ":</b> " + esc(findingLine(lang, item, "fix")) + "</p>" : "") +
@@ -858,15 +879,15 @@ function reportPdf(record, options) {
   const html = "<!DOCTYPE html><html lang=\"" + lang + "\"><head><meta charset=\"utf-8\"><title>QA-lab URL Review · " + esc(facts.host) + "</title><style>" + PDF_STYLE + pdfFooter(facts.id) + (open ? "" : ".fz{background-image:url(" + stripUrl() + ")}") + "</style></head><body>" +
     watermark +
     "<div class=\"page\">" +
-    "<div class=\"hero\"><div class=\"who\"><p class=\"eyebrow\">QA-lab URL Review</p><p class=\"host\">" + esc(facts.host) + "</p>" +
+    "<div class=\"hero\"><img class=\"mark\" src=\"" + markUrl() + "\" alt=\"QA-lab URL Review\"><div class=\"who\"><p class=\"eyebrow\">QA-lab URL Review</p><p class=\"host\">" + esc(facts.host) + "</p>" +
     "<p class=\"meta\">" + esc(fill(p.read, { date })) + " · <code>" + esc(facts.id) + "</code>" + (finalUrl ? "<span class=\"url\">" + esc(finalUrl) + "</span>" : "") + "</p><span class=\"badge\">" + esc(open ? p.badgeOpen : p.badge) + "</span></div>" +
-    (facts.score ? "<div class=\"ring\" style=\"background:conic-gradient(" + ringColor + " " + overall * 3.6 + "deg,rgba(255,255,255,.14) 0)\"><div><b>" + overall + "</b><i>" + esc(t.outOf) + "</i><em style=\"background:" + ringColor + "\">" + esc(facts.score.grade || "") + "</em></div></div>" : "") +
+    (facts.score ? "<div class=\"ring\" style=\"background:conic-gradient(" + ringColor + " " + overall * 3.6 + "deg,rgba(233,253,255,.14) 0)\"><div><b>" + overall + "</b><i>" + esc(t.outOf) + "</i><em style=\"background:" + ringColor + "\">" + esc(facts.score.grade || "") + "</em></div></div>" : "") +
     "</div>" +
     "<div class=\"stats\">" +
     "<div class=\"stat\"><b>" + facts.pages + "</b><span>" + esc(t.pages) + (facts.found ? " " + esc(t.pagesFound.replace("{n}", facts.found)) : "") + "</span></div>" +
     "<div class=\"stat\"><b>" + facts.cases + "</b><span>" + esc(t.cases) + "</span></div>" +
-    "<div class=\"stat\"><b style=\"color:#b91c1c\">" + fails + "</b><span>" + esc(p.fails) + "</span></div>" +
-    "<div class=\"stat\"><b style=\"color:#b45309\">" + (all.length - fails) + "</b><span>" + esc(p.risks) + "</span></div>" +
+    "<div class=\"stat fail\"><b style=\"color:" + TEXT.fail + "\">" + fails + "</b><span>" + esc(p.fails) + "</span></div>" +
+    "<div class=\"stat risk\"><b style=\"color:" + TEXT.risk + "\">" + (all.length - fails) + "</b><span>" + esc(p.risks) + "</span></div>" +
     "</div>" +
     (areas ? "<div class=\"sec\"><div class=\"areas\">" + areas + "</div></div>" : "") +
     (cf ? comparePdf(CMP_COPY[lang], cf, t, lineOf) : "") +
@@ -886,14 +907,11 @@ function noteMail(note, options) {
   const host = (note && note.host) || "your site";
   const openUrl = pageUrl(lang, { report: note && note.reportId, coupon: opts.coupon, utm_campaign: "note-" + ((note && note.kind) || "return") });
   const anotherUrl = pageUrl(lang, { coupon: opts.coupon, utm_campaign: "note-another" });
-  const inner = "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 24px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review &middot; " + esc(host) + "</p>" +
-    "<p style=\"margin:0;font-size:26px;line-height:32px;color:#ffffff;font-weight:bold;\">" + esc(note && note.title) + "</p>" +
-    "</td></tr>" +
-    "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:22px 28px 22px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 18px;font-size:16px;line-height:25px;color:#334155;\">" + esc(note && note.body) + "</p>" +
+  const inner = fusion.band("QA-lab URL Review &middot; " + esc(host), esc(note && note.title)) +
+    bodyCell("22px 28px 22px", true, "font-family:Arial,Helvetica,sans-serif;") +
+    "<p style=\"margin:0 0 18px;font-size:16px;line-height:25px;color:" + TEXT.body + ";\">" + esc(note && note.body) + "</p>" +
     (note && note.reportId ? button(openUrl, t.reopen, true) : "") + button(anotherUrl, t.another, !(note && note.reportId)) +
-    "<p style=\"margin:4px 0 0;font-size:13px;line-height:19px;color:#64748b;\">" + esc(t.openNote) + "</p>" +
+    "<p style=\"margin:4px 0 0;font-size:13px;line-height:19px;color:" + TEXT.muted + ";\">" + esc(t.openNote) + "</p>" +
     "</td></tr>" +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
     deeperBlock(t, host, note && note.reportId);
@@ -982,16 +1000,13 @@ function signInMail(lang, sign, page) {
   const t = SIGN_IN[code];
   const back = String(page || "").replace(/^\//, "") === ACCOUNT_PAGE ? ACCOUNT_PAGE : "";
   const link = pageUrl(code, { signin: sign.id, key: sign.token, utm_campaign: "sign-in" }, back);
-  const inner = "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 24px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
-    "<p style=\"margin:0;font-size:26px;line-height:32px;color:#ffffff;font-weight:bold;\">" + esc(t.title) + "</p>" +
-    "</td></tr>" +
-    "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:22px 28px 22px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 14px;font-size:16px;line-height:25px;color:#334155;\">" + esc(t.lead) + "</p>" +
-    "<p style=\"margin:0 0 20px;font-family:'Courier New',monospace;font-size:34px;line-height:40px;letter-spacing:0.3em;font-weight:bold;color:#0f172a;\">" + esc(sign.code) + "</p>" +
-    "<p style=\"margin:0 0 12px;font-size:14px;line-height:21px;color:#334155;\">" + esc(t.link) + "</p>" +
+  const inner = fusion.band("QA-lab URL Review", esc(t.title)) +
+    bodyCell("22px 28px 22px", true, "font-family:Arial,Helvetica,sans-serif;") +
+    "<p style=\"margin:0 0 14px;font-size:16px;line-height:25px;color:" + TEXT.body + ";\">" + esc(t.lead) + "</p>" +
+    "<p style=\"margin:0 0 20px;\"><span style=\"display:inline-block;padding:10px 6px 10px 18px;background:#f3f8f8;border:1px solid " + fusion.LINE + ";border-left:4px solid " + FUSION.gold + ";border-radius:10px;font-family:'Fira Code','Courier New',monospace;font-size:34px;line-height:40px;letter-spacing:0.3em;font-weight:bold;color:" + TEXT.strong + ";\">" + esc(sign.code) + "</span></p>" +
+    "<p style=\"margin:0 0 12px;font-size:14px;line-height:21px;color:" + TEXT.body + ";\">" + esc(t.link) + "</p>" +
     button(link, t.button, true) +
-    "<p style=\"margin:6px 0 0;font-size:13px;line-height:19px;color:#64748b;\">" + esc(t.device) + "</p>" +
+    "<p style=\"margin:6px 0 0;font-size:13px;line-height:19px;color:" + TEXT.muted + ";\">" + esc(t.device) + "</p>" +
     "</td></tr>";
   return {
     lang: code,
@@ -1060,15 +1075,12 @@ function sharedOpenMail(record, at) {
   const vars = { host, date: dateOf(at) };
   const link = pageUrl(code, { report: record && record.id, utm_campaign: "shared-open" });
   const why = fill(COPY[code].why, { host });
-  const inner = "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 24px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
-    "<p style=\"margin:0;font-size:26px;line-height:32px;color:#ffffff;font-weight:bold;\">" + esc(t.title) + "</p>" +
-    "</td></tr>" +
-    "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:22px 28px 22px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 14px;font-size:16px;line-height:25px;color:#334155;\">" + esc(fill(t.lead, vars)) + "</p>" +
-    "<p style=\"margin:0 0 20px;font-size:15px;line-height:23px;color:#334155;\">" + esc(t.safe) + "</p>" +
+  const inner = fusion.band("QA-lab URL Review", esc(t.title)) +
+    bodyCell("22px 28px 22px", true, "font-family:Arial,Helvetica,sans-serif;") +
+    "<p style=\"margin:0 0 14px;font-size:16px;line-height:25px;color:" + TEXT.body + ";\">" + esc(fill(t.lead, vars)) + "</p>" +
+    "<p style=\"margin:0 0 20px;font-size:15px;line-height:23px;color:" + TEXT.body + ";\">" + esc(t.safe) + "</p>" +
     button(link, t.button, true) +
-    "<p style=\"margin:6px 0 0;font-size:13px;line-height:19px;color:#64748b;\">" + esc(t.once) + "</p>" +
+    "<p style=\"margin:6px 0 0;font-size:13px;line-height:19px;color:" + TEXT.muted + ";\">" + esc(t.once) + "</p>" +
     "</td></tr>";
   return {
     lang: code,
@@ -1182,18 +1194,15 @@ function receiptMail(p) {
   const link = pageUrl(code, { utm_campaign: "receipt" });
   const why = t.why;
   const table = "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:0 0 18px;border-collapse:collapse;\">" +
-    rows.map((row) => "<tr><td style=\"padding:8px 12px 8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;line-height:20px;color:#64748b;vertical-align:top;\">" + esc(row[0]) +
-      "</td><td style=\"padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;line-height:20px;color:#0f172a;font-weight:bold;\">" + esc(row[1]) + "</td></tr>").join("") +
+    rows.map((row) => "<tr><td style=\"padding:8px 12px 8px 0;border-bottom:1px solid " + fusion.LINE + ";font-size:14px;line-height:20px;color:" + TEXT.muted + ";vertical-align:top;\">" + esc(row[0]) +
+      "</td><td style=\"padding:8px 0;border-bottom:1px solid " + fusion.LINE + ";font-size:14px;line-height:20px;color:" + TEXT.strong + ";font-weight:bold;\">" + esc(row[1]) + "</td></tr>").join("") +
     "</table>";
-  const inner = "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 24px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
-    "<p style=\"margin:0;font-size:26px;line-height:32px;color:#ffffff;font-weight:bold;\">" + esc(t.title) + "</p>" +
-    "</td></tr>" +
-    "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:22px 28px 22px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 16px;font-size:16px;line-height:25px;color:#334155;\">" + esc(fill(t.lead, vars)) + "</p>" +
-    (p.test ? "<p style=\"margin:0 0 16px;font-size:14px;line-height:21px;color:#b45309;font-weight:bold;\">" + esc(t.test) + "</p>" : "") +
+  const inner = fusion.band("QA-lab URL Review", esc(t.title)) +
+    bodyCell("22px 28px 22px", true, "font-family:Arial,Helvetica,sans-serif;") +
+    "<p style=\"margin:0 0 16px;font-size:16px;line-height:25px;color:" + TEXT.body + ";\">" + esc(fill(t.lead, vars)) + "</p>" +
+    (p.test ? "<p style=\"margin:0 0 16px;font-size:14px;line-height:21px;color:" + TEXT.risk + ";font-weight:bold;\">" + esc(t.test) + "</p>" : "") +
     table +
-    "<p style=\"margin:0 0 20px;font-size:13px;line-height:19px;color:#64748b;\">" + esc(fill(t.notInvoice, vars)) + "</p>" +
+    "<p style=\"margin:0 0 20px;font-size:13px;line-height:19px;color:" + TEXT.muted + ";\">" + esc(fill(t.notInvoice, vars)) + "</p>" +
     button(link, t.button, true) +
     "</td></tr>";
   return {
@@ -1211,8 +1220,8 @@ function stopPage(lang, state, email) {
     ? "<h1>" + esc(t[0]) + "</h1><form method=\"post\"><button type=\"submit\">" + esc(t[1]) + "</button></form>"
     : "<h1>" + esc(state === "done" ? fill(t[2], { email }) : t[3]) + "</h1><p><a href=\"" + SITE + "/" + PAGE_FOR[code] + "\">QA-lab URL Review</a></p>";
   return "<!DOCTYPE html><html lang=\"" + code + "\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>QA-lab URL Review</title>" +
-    "<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#e8eef4;font-family:Arial,Helvetica,sans-serif;color:#0f172a}main{background:#fff;border-radius:16px;padding:32px;max-width:440px;margin:16px;text-align:center}h1{font-size:22px;line-height:1.3;font-weight:normal}button{background:#0e7490;color:#fff;border:0;border-radius:10px;padding:13px 22px;font-size:15px;font-weight:bold;cursor:pointer}a{color:#0e7490}</style></head>" +
+    "<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:" + fusion.PAGE_BG + ";font-family:Arial,Helvetica,sans-serif;color:" + TEXT.strong + "}main{background:#fff;border-radius:16px;border-top:4px solid " + FUSION.teal + ";padding:32px;max-width:440px;margin:16px;text-align:center}h1{font-size:22px;line-height:1.3;font-weight:normal}button{background:" + FUSION.teal + ";color:" + FUSION.night + ";border:0;border-radius:999px;padding:13px 22px;font-size:15px;font-weight:bold;cursor:pointer}a{color:" + TEXT.link + "}</style></head>" +
     "<body><main>" + body + "</main></body></html>";
 }
 
-module.exports = { SITE, POSTAL, LANGS, AREAS, langOf, esc, fill, button, shell, scoreColor, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, sharedOpenMail, receiptMail, stopPage, pageUrl };
+module.exports = { SITE, POSTAL, LANGS, AREAS, langOf, esc, fill, button, shell, scoreColor, scoreFill, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, sharedOpenMail, receiptMail, stopPage, pageUrl };

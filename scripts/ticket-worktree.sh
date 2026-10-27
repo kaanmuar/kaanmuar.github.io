@@ -23,7 +23,7 @@ else
 fi
 
 # functions/.env is gitignored; without it a deploy from the worktree ships every function without its keys (#1739).
-for deps in node_modules functions/node_modules functions/.env; do
+for deps in node_modules functions/node_modules functions/.env functions/.secret.local; do
 	[ -e "$main/$deps" ] && [ ! -e "$dir/$deps" ] && ln -s "$main/$deps" "$dir/$deps"
 done
 echo "$dir"

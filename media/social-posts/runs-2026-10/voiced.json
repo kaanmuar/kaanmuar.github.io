@@ -1,0 +1,62 @@
+{
+ "01-govuk": {
+  "lang": "en",
+  "voice": "en-w",
+  "tiktok": "We analyzed GOV.UK. It scores 92. Give every page a canonical link, even when only one address serves it. One line settles which URL ranks. #SEO #WebPerformance #Accessibility #QA #techtok #QAlab",
+  "youtubeTitle": "We analyzed GOV.UK. It scores 92. #Shorts"
+ },
+ "02-bogota": {
+  "lang": "es",
+  "voice": "es-w",
+  "tiktok": "Alcaldía de Bogotá: SEO 97. Un sitio, una propiedad de GA4, un gtag.js. Si dos equipos necesitan los datos, comparte el acceso en lugar de añadir otra etiqueta. #Analytics #GA4 #SEO #QA #techtok #QAlab",
+  "youtubeTitle": "Alcaldía de Bogotá: SEO 97. #Shorts"
+ },
+ "03-who": {
+  "lang": "pt",
+  "voice": "pt-w",
+  "tiktok": "As fichas informativas da OMS terminam com um ponto e vírgula sobrando. Passe cada bloco JSON-LD por um validador de JSON antes do release. Um único caractere pode invalidar o bloco inteiro. #StructuredData #SEO #GEO #QA #techtok #QAlab",
+  "youtubeTitle": "As fichas informativas da OMS terminam com um ponto e vírgula sobrando. #Shorts"
+ },
+ "04-govco": {
+  "lang": "de",
+  "voice": "de-w",
+  "tiktok": "GOV.CO ist leer, bis JavaScript läuft. Rendere den Haupttext auf dem Server oder prerendere die Startseite. Der Quelltext sollte zeigen, was Besucher lesen. #GEO #AISearch #JavaScriptSEO #QA #techtok #QAlab",
+  "youtubeTitle": "GOV.CO ist leer, bis JavaScript läuft. #Shorts"
+ },
+ "05-bbc": {
+  "lang": "fr",
+  "voice": "fr-w",
+  "tiktok": "La BBC choisit qui peut la lire. Bloquer l'entraînement IA et bloquer les réponses IA sont deux choix distincts. Nommez chaque crawler dans robots.txt, en connaissance de cause. #GEO #AISearch #SEO #QA #techtok #QAlab",
+  "youtubeTitle": "La BBC choisit qui peut la lire. #Shorts"
+ },
+ "06-transmilenio": {
+  "lang": "it",
+  "voice": "it-w",
+  "tiktok": "TransMilenio lascia il suo pitch ai motori di ricerca. Scrivi una descrizione di circa 150 caratteri per le tue dieci pagine più visitate, partendo dalla home page. #SEO #MetaDescription #SERP #QA #techtok #QAlab",
+  "youtubeTitle": "TransMilenio lascia il suo pitch ai motori di ricerca. #Shorts"
+ },
+ "07-python": {
+  "lang": "en",
+  "voice": "en-m",
+  "tiktok": "Python.org reads well. Its site name is missing. Add \"name\" to your WebSite JSON-LD, written exactly as you want the site named in search results. #StructuredData #SEO #OpenSource #QA #techtok #QAlab",
+  "youtubeTitle": "Python.org reads well. Its site name is missing. #Shorts"
+ },
+ "08-bancolombia": {
+  "lang": "es",
+  "voice": "es-m",
+  "tiktok": "La web de Bancolombia no te deja hacer zoom. Quita maximum-scale y user-scalable=no de tu etiqueta viewport. Mucha gente lee gracias al zoom. #Accessibility #A11y #MobileUX #QA #techtok #QAlab",
+  "youtubeTitle": "La web de Bancolombia no te deja hacer zoom. #Shorts"
+ },
+ "09-un": {
+  "lang": "pt",
+  "voice": "pt-m",
+  "tiktok": "A página inicial da ONU nunca diz seu idioma. Coloque lang na tag html de cada versão de idioma: lang=\"en\", lang=\"fr\", lang=\"ar\". Um atributo por página. #Accessibility #i18n #A11y #QA #techtok #QAlab",
+  "youtubeTitle": "A página inicial da ONU nunca diz seu idioma. #Shorts"
+ },
+ "10-nasa": {
+  "lang": "de",
+  "voice": "de-m",
+  "tiktok": "Die NASA ist weit offen für KI-Suche. Vier Header schließen den Großteil der Lücke: Content-Security-Policy, X-Content-Type-Options, Referrer-Policy und Permissions-Policy. #WebSecurity #GEO #AISearch #QA #techtok #QAlab",
+  "youtubeTitle": "Die NASA ist weit offen für KI-Suche. #Shorts"
+ }
+}

@@ -226,6 +226,10 @@ test("the notice email carries the health score, both buttons, the source and th
   }
   const fromCard = ownerMail.noticeMail(Object.assign({}, row, { lang: "en" }), card, links, null);
   assert.ok(fromCard.html.includes(">49<") && fromCard.html.includes(">24</b>"));
+  const severe = ownerMail.noticeMail(Object.assign({}, row, { lang: "en" }), card, links, Object.assign({}, SCORE, { severities: { critical: 3, high: 4, medium: 14, low: 24 } }));
+  const chipOf = (count) => severe.html.match(new RegExp("<span style=\"([^\"]*)\"><b>" + count + "</b>"))[1];
+  assert.match(chipOf(3), /background-color:/, "critical is a filled chip");
+  assert.notEqual(chipOf(3), chipOf(24), "critical does not look like low");
 });
 
 test("a claimed report goes out as the blurred report mail with the owner's footer line", () => {

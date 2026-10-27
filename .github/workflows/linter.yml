@@ -45,6 +45,9 @@ jobs:
           FILTER_REGEX_EXCLUDE: android/gradlew.*
           VALIDATE_JAVASCRIPT_ES: false
           VALIDATE_JAVASCRIPT_STANDARD: false
+          # The cf CLI only reads cloudflare.config.ts (#1866); TypeScript Standard ran out of heap on it.
+          VALIDATE_TYPESCRIPT_ES: false
+          VALIDATE_TYPESCRIPT_STANDARD: false
           VALIDATE_JSCPD: false
           VALIDATE_MARKDOWN: false
           VALIDATE_NATURAL_LANGUAGE: false
