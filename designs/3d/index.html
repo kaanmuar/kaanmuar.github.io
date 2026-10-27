@@ -17,8 +17,8 @@
 </header>
 <main class="wrap">
     <p class="eyebrow">Design proposals · #1772</p>
-    <h1 class="display"><span>Five 3D looks,</span><span><em>one brand.</em></span></h1>
-    <p class="lede">Each look keeps the QA-lab palette, the Instrument Serif headlines and the crystal pyramid mark, and comes as a live hero, four social banners you can download as PNG, and a section background behind real content. Move the pointer over any of them; they respond.</p>
+    <h1 class="display"><span>Five 3D looks,</span><span><em>one fusion.</em></span></h1>
+    <p class="lede">Each look keeps the QA-lab palette, the Instrument Serif headlines and the crystal pyramid mark, and comes as a live hero, four social banners you can download as PNG, and a section background behind real content. Move the pointer over any of them; they respond. <b>Fusion</b> mixes all five and redraws the QA-lab URL Review icon in the same look.</p>
     <div class="palette" aria-label="Palette kept in every proposal">
         <span style="--c:#071116">#071116 night</span><span style="--c:#102226">#102226 ink</span><span style="--c:#0d6e76">#0d6e76 deep</span><span style="--c:#4db3bb">#4db3bb teal</span><span style="--c:#7ef6fb">#7ef6fb cyan</span><span style="--c:#e2c48a">#e2c48a gold</span><span style="--c:#6fe3b1">#6fe3b1 mint</span><span style="--c:#f39a8b">#f39a8b coral</span><span style="--c:#b9a8ff">#b9a8ff violet</span>
     </div>
@@ -30,11 +30,13 @@
     import { PROPOSALS } from './proposals.js';
     const gallery = document.getElementById('gallery');
     document.getElementById('switch').innerHTML = PROPOSALS.map((p, i) => `<a href="proposal.html?p=${p.id}">${i + 1} · ${p.name}</a>`).join('');
-    PROPOSALS.forEach((p, i) => {
+    const order = [...PROPOSALS].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+    order.forEach((p) => {
+        const i = PROPOSALS.indexOf(p);
         const a = document.createElement('a');
-        a.className = 'pick';
+        a.className = p.featured ? 'pick feature' : 'pick';
         a.href = `proposal.html?p=${p.id}`;
-        a.innerHTML = `<div class="frame" data-fx><canvas class="fx"></canvas></div><div class="txt"><h3><small>0${i + 1}</small>${p.name}</h3><p>${p.tag} ${p.best}</p><span class="go">Open hero, banners and background →</span></div>`;
+        a.innerHTML = `<div class="frame" data-fx><canvas class="fx"></canvas></div><div class="txt"><h3><small>${p.featured ? 'ALL FIVE' : '0' + (i + 1)}</small>${p.name}</h3><p>${p.tag} ${p.best}</p><span class="go">${p.featured ? 'Open hero, banners, background and icon →' : 'Open hero, banners and background →'}</span></div>`;
         gallery.append(a);
         mount(a.querySelector('canvas'), p.id, { maxPixels: 0.45e6, zoom: 1.1, start: p.start ?? 6 });
     });

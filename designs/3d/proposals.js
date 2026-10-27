@@ -36,6 +36,13 @@ export const PROPOSALS = [
 		best: 'Launch heroes, video intros and event banners. The most immersive; the busiest behind text.',
 		cost: 'Medium.',
 	},
+	{
+		id: 'fusion', featured: true, mark: 'icon/qa-review-mark-fusion.svg', name: 'Fusion', tag: 'Every look, one crystal.',
+		pitch: 'All five in one shot. The Prism Core pyramid splits its beam over the Tidal Scan dot floor, whose scan is now a ring rolling out from under the pyramid. Aurora curtains fill the sky, seven Crystal Lattice bipyramids (one per palette colour) orbit the mark, and Rack Focus crystals hang behind and in front, pulling focus. The icon is redrawn in the same look.',
+		effects: ['Glass pyramid with dispersion and the spectrum fan (Prism Core)', 'Wave dot floor with a ring scan leaving coral and mint dots (Tidal Scan)', 'Rising light wall where the scan ring passes (Tidal Scan)', 'Aurora curtains in the sky (Aurora Glass)', 'Seven orbiting crystal bipyramids with glow (Crystal Lattice)', 'Depth crystals with focus pulls and hexagonal bokeh (Rack Focus)', 'New QA-lab URL Review icon, full and small, with a live version'],
+		best: 'The whole brand: hero, link previews, social, section backgrounds, the icon and video end cards.',
+		cost: 'Medium to heavy, close to Prism Core. Resolution adapts; backgrounds run at half speed.',
+	},
 ];
 
 export const FORMATS = [
@@ -47,11 +54,15 @@ export const FORMATS = [
 
 export const byId = (id) => PROPOSALS.find((p) => p.id === id) || PROPOSALS[0];
 
-const mark = new Image();
-mark.src = '../../assets/qa-review-mark.svg?v=20261013c';
-export const ready = Promise.all([document.fonts.load('400 40px "Instrument Serif"'), document.fonts.load('italic 400 40px "Instrument Serif"'), document.fonts.load('600 20px Inter'), mark.decode().catch(() => {})]);
+export const markSrc = (p) => p.mark || '../../assets/qa-review-mark.svg?v=20261013c';
+const marks = new Map();
+for (const p of PROPOSALS) {
+	const src = markSrc(p);
+	if (!marks.has(src)) { const img = new Image(); img.src = src; marks.set(src, img); }
+}
+export const ready = Promise.all([document.fonts.load('400 40px "Instrument Serif"'), document.fonts.load('italic 400 40px "Instrument Serif"'), document.fonts.load('600 20px Inter'), ...[...marks.values()].map((m) => m.decode().catch(() => {}))]);
 
-function brand(ctx, x, y, s, align = 'left') {
+function brand(ctx, x, y, s, align, mark) {
 	ctx.font = `400 ${s * 0.62}px "Instrument Serif"`;
 	const wText = Math.max(ctx.measureText('QA-lab').width, (ctx.font = `600 ${s * 0.2}px Inter`, ctx.measureText('URL REVIEW').width * 1.15));
 	const total = s + s * 0.28 + wText;
@@ -92,7 +103,7 @@ export function drawCopy(ctx, w, h, fmt, p) {
 		ctx.fillRect(0, 0, w, h);
 		const pad = fmt.id === 'og' ? w * 0.06 : w * 0.05;
 		const u = h / (fmt.id === 'og' ? 630 : 500);
-		brand(ctx, pad, h * 0.1, 54 * u);
+		brand(ctx, pad, h * 0.1, 54 * u, 'left', marks.get(markSrc(p)));
 		ctx.textBaseline = 'alphabetic';
 		if (fmt.id === 'og') headline(ctx, four, pad, h * 0.42, 62 * u, 'left');
 		else headline(ctx, [['Find the leaks, '], ['breaks and blocks', true], ['before customers or regulators do.']], pad, h * 0.45, 52 * u, 'left');
@@ -110,7 +121,7 @@ export function drawCopy(ctx, w, h, fmt, p) {
 		ctx.fillRect(0, 0, w, h);
 		const u = w / 1080;
 		const story = fmt.id === 'story';
-		brand(ctx, story ? w / 2 : w * 0.07, story ? h * 0.06 : w * 0.07, 72 * u, story ? 'center' : 'left');
+		brand(ctx, story ? w / 2 : w * 0.07, story ? h * 0.06 : w * 0.07, 72 * u, story ? 'center' : 'left', marks.get(markSrc(p)));
 		const size = (story ? 104 : 86) * u;
 		const x = story ? w / 2 : w * 0.07;
 		const top = story ? h * 0.62 : h * 0.56;

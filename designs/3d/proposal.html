@@ -57,17 +57,21 @@
         </div>
     </section>
 
+    <section class="wrap icon-sec" id="icon" hidden aria-labelledby="icon-title"></section>
+
     <section class="wrap foot"><span>Compare: <span id="others"></span></span><a href="index.html">All five proposals</a></section>
 </main>
 <script type="module">
     import { mount, focusAt } from './fx.js';
-    import { PROPOSALS, FORMATS, byId, drawCopy, exportPng, ready } from './proposals.js';
+    import { PROPOSALS, FORMATS, byId, drawCopy, exportPng, ready, markSrc } from './proposals.js';
+    import { mountIcon } from './icon.js';
 
     const p = byId(new URLSearchParams(location.search).get('p'));
     const i = PROPOSALS.indexOf(p);
-    document.title = `${p.name} · 3D look ${i + 1} of 5 · QA-lab`;
+    document.title = `${p.name} · 3D look ${i + 1} of ${PROPOSALS.length} · QA-lab`;
+    document.querySelector('.bar .brand img').src = markSrc(p);
     document.getElementById('switch').innerHTML = PROPOSALS.map((q, k) => `<a href="?p=${q.id}"${q === p ? ' aria-current="page"' : ''}>${k + 1} · ${q.name}</a>`).join('');
-    document.getElementById('num').textContent = `Proposal ${i + 1} of 5`;
+    document.getElementById('num').textContent = p.featured ? 'The mix of all five' : `Proposal ${i + 1} of ${PROPOSALS.length - 1}`;
     document.getElementById('name').innerHTML = `${p.name}. <em>${p.tag}</em>`;
     document.getElementById('pitch').textContent = p.pitch;
     document.getElementById('best').textContent = p.best;
@@ -95,6 +99,8 @@
         const b = vf.querySelector('b');
         hero.opts.onFrame = (t) => { b.textContent = `${focusAt(t).toFixed(2)} m`; };
     }
+
+    if (p.id === 'fusion') mountIcon(document.getElementById('icon'));
 
     mount(document.getElementById('bg'), p.id, { mode: 2, zoom: 1.2, maxPixels: 0.9e6, start });
 

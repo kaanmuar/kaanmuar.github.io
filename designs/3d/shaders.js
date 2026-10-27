@@ -104,7 +104,7 @@ vec3 finish(vec3 c){
 
 // 1. Prism Core: a ray-marched glass pyramid with dispersion. One white beam goes in, the palette fans out:
 // one address in, every finding out. Caustics on a mirrored floor, bokeh dust in front.
-const prism = /* glsl */ `
+const PYR_LIB = /* glsl */ `
 const float PH = 1.3;
 const float PS = .95;
 float bob(){ return .06*sin(tm()*.8); }
@@ -133,9 +133,9 @@ float sdPyr(vec3 p, float h){
 	float d2 = min(q.y, -q.x*m2 - q.y*.5) > 0. ? 0. : min(a,b);
 	return sqrt((d2 + q.z*q.z)/m2)*sign(max(q.z, -p.y));
 }
-float map(vec3 p){ return sdPyr(toObj(p), PH)*PS; }
-vec3 nor(vec3 p){ const vec2 e = vec2(.0015,-.0015);
-	return normalize(e.xyy*map(p+e.xyy) + e.yyx*map(p+e.yyx) + e.yxy*map(p+e.yxy) + e.xxx*map(p+e.xxx)); }
+float mapPyr(vec3 p){ return sdPyr(toObj(p), PH)*PS; }
+vec3 norPyr(vec3 p){ const vec2 e = vec2(.0015,-.0015);
+	return normalize(e.xyy*mapPyr(p+e.xyy) + e.yyx*mapPyr(p+e.yyx) + e.yxy*mapPyr(p+e.yxy) + e.xxx*mapPyr(p+e.xxx)); }
 
 vec3 env(vec3 d){
 	vec3 c = mix(BG*.7, INK*1.5, smoothstep(-.4,.6,d.y));
@@ -167,7 +167,8 @@ vec3 dust(vec2 p, float t){
 	}
 	return c;
 }
-
+`;
+const prism = PYR_LIB + /* glsl */ `
 void main(){
 	vec2 p = frameP();
 	float t = tm();
@@ -201,7 +202,7 @@ void main(){
 	}
 
 	float tt = 0.; bool hit = false;
-	for(int i=0;i<90;i++){ float d = map(ro + rd*tt); if(d < .001){ hit = true; break; } tt += d; if(tt > 9.) break; }
+	for(int i=0;i<90;i++){ float d = mapPyr(ro + rd*tt); if(d < .001){ hit = true; break; } tt += d; if(tt > 9.) break; }
 
 	if(rd.y < -.012){
 		float tf = (-.78 - ro.y)/rd.y;
@@ -221,7 +222,7 @@ void main(){
 	}
 
 	if(hit){
-		vec3 pos = ro + rd*tt, n = nor(pos);
+		vec3 pos = ro + rd*tt, n = norPyr(pos);
 		float fre = .04 + .96*pow(1. - max(dot(-rd, n), 0.), 5.);
 		vec3 refl = env(reflect(rd, n));
 		vec3 rdi = refract(rd, n, 1./1.5);
@@ -332,14 +333,15 @@ void main(){
 
 // 3. Rack Focus: crystals hang at eight depths; the lens pulls focus between the mark, the near swarm and the far field,
 // out-of-focus highlights turn into hexagonal bokeh with a coral fringe. Pointer height nudges the focus.
-const rack = /* glsl */ `
+const BOKEH_LIB = /* glsl */ `
 vec3 hexBokeh(vec2 f, float r, float b, vec3 tint, out float a){
 	float d = sdHex(f, r);
 	a = 1. - smoothstep(-b, b, d);
 	float rim = smoothstep(-b*1.6, 0., d)*a;
 	float fringe = (1. - smoothstep(-b*.4, b*1.6, d - b*.6)) - a;
 	return tint*(.16 + rim*.32) + CORAL*max(fringe, 0.)*.35;
-}
+}`;
+const rack = BOKEH_LIB + /* glsl */ `
 void main(){
 	vec2 p = frameP();
 	float t = tm();
@@ -386,7 +388,7 @@ void main(){
 
 // 4. Aurora Glass: curtains of teal, gold and violet aurora behind the mark as a turning crystal lens. The lens refracts
 // the aurora with a chromatic split, a shine sweeps across it and ripple rings fan out like a wave illusion.
-const aurora = /* glsl */ `
+const SKY_LIB = /* glsl */ `
 vec3 sky(vec2 p, float t){
 	float n1 = fbm(p*1.1 + vec2(t*.03, -t*.02));
 	float n2 = fbm(p*1.7 + n1*1.6 + vec2(-t*.025, t*.04));
@@ -405,7 +407,8 @@ vec3 sky(vec2 p, float t){
 	vec2 sg = p*60., sid = floor(sg);
 	if(h21(sid) > .992) c += PEARL*(1. - smoothstep(0.,.15,length(fract(sg) - .5)))*(.4 + .4*sin(t*2. + h21(sid)*90.));
 	return c;
-}
+}`;
+const aurora = SKY_LIB + /* glsl */ `
 void main(){
 	vec2 p = frameP();
 	float t = tm();
@@ -487,4 +490,179 @@ void main(){
 	outColor = vec4(finish(col), 1.);
 }`;
 
-export const SHADERS = { prism, tidal, rack, aurora, lattice };
+// 6. Fusion: all five in one shot. The Prism Core pyramid and beam stand on the Tidal Scan dot floor, whose scan is now a ring
+// that rolls out from under the pyramid; Aurora Glass curtains fill the sky; seven Crystal Lattice bipyramids, one per palette
+// colour, orbit the mark; Rack Focus crystals hang behind and in front, pulling focus.
+const fusion = PYR_LIB + SKY_LIB + BOKEH_LIB + /* glsl */ `
+const float RING = 1.45;
+vec3 ot(float k){ k = mod(k, 7.); return k < 1. ? TEAL : k < 2. ? GOLD : k < 3. ? CYAN : k < 4. ? MINT : k < 5. ? VIOLET : k < 6. ? TEAL : CORAL; }
+float orbit(vec3 p, out float id, out vec3 lo){
+	vec3 q = p - vec3(0., -.3, 0.);
+	const float SEC = 6.2831853/7.;
+	float a = atan(q.z, q.x) + tm()*.22;
+	float i = floor(a/SEC + .5);
+	id = mod(i, 7.);
+	float la = a - i*SEC, r = length(q.xz);
+	lo = vec3(r*cos(la) - RING, q.y - .22*sin(id*1.7 + tm()*.8), r*sin(la));
+	lo.xz *= rot(tm()*.9 + id*2.1);
+	lo.xy *= rot(.45 + id);
+	vec3 al = abs(lo); al.y *= .7;
+	return (al.x + al.y + al.z - .1)*.57735*.7;
+}
+float fwave(vec2 xz, float t){
+	float rr = length(xz);
+	float h = sin(xz.x*.6 + t*.8)*.07 + sin(xz.y*.75 - t)*.05 + sin(rr*2.4 - t*2.2)*.07*exp(-rr*.12);
+	float dm = length(xz - vec2(uMouse.x*2.5, 1.8 + uMouse.y));
+	return h + sin(dm*3. - t*4.)*.08*exp(-dm*.5) - .95;
+}
+vec3 rackLayer(vec2 p, float z, float fi, vec3 col, float t){
+	float bs = clamp(abs(1./z - 1./uFocus)*.075, 0., .13);
+	float dim = mix(.4, 1., smoothstep(7., 1., z))*mix(.32, 1., exp(-dot(p, p)*.7));
+	const float cs = 1.35;
+	vec2 q = (p + uMouse*.06/z)*z + vec2(fi*13.7, fi*7.1 + t*.05*(1. + fi*.15));
+	vec2 id = floor(q/cs), f = q - (id + .5)*cs;
+	float h = h21(id + fi*17.3);
+	if(h < .68) return col;
+	f -= (h22(id + fi) - .5)*cs*.3;
+	float r = cs*(.1 + .08*h21(id*1.3 + fi));
+	float bq = (bs + px())*z, bk = smoothstep(.015,.07,bs);
+	vec3 tint = h21(id + 9.) < .55 ? mix(TEAL, CYAN, h21(id+2.)) : (h21(id + 4.) < .8 ? GOLD : VIOLET);
+	Glass g = glassPyr(f, r, t*.3*(h - .75)*4. + h*20., bq);
+	float ha; vec3 hb = hexBokeh(f, r*.75, bq, tint, ha);
+	vec3 sharp = col*(1. - g.mask*.25*dim) + g.col*dim*.5;
+	return mix(sharp, mix(col, hb*dim, ha*.55), bk);
+}
+void main(){
+	vec2 p = frameP();
+	float t = tm();
+	float ang = uMouse.x*.35 + sin(t*.13)*.18;
+	vec3 ro = vec3(sin(ang)*4.8, .75 + uMouse.y*.25, cos(ang)*4.8);
+	vec3 ta = vec3(0., -.2, 0.);
+	vec3 ww = normalize(ta-ro), uu = normalize(cross(ww, vec3(0,1,0))), vv = cross(uu, ww);
+	const float FL = 2.3;
+	vec3 rd = normalize(p.x*uu + p.y*vv + FL*ww);
+	#define PROJ(w) (vec2(dot((w)-ro,uu), dot((w)-ro,vv))/dot((w)-ro,ww)*FL)
+
+	vec3 col = BG;
+	if(rd.y > -.08) col = sky(vec2(p.x*.85, p.y*.85 + .12), t)*.9;
+	col += TEAL*.28*exp(-abs(rd.y + .03)*16.);
+
+	float rs = mod(t*1.5, 11.), scanIn = smoothstep(0., 1.5, rs)*smoothstep(11., 8., rs);
+	float tf = 1e5;
+	if(rd.y < -.012){
+		tf = (-.95 - ro.y)/rd.y; vec3 pos;
+		for(int i=0;i<5;i++){ pos = ro + rd*tf; tf = (fwave(pos.xz, t) - ro.y)/rd.y; }
+		pos = ro + rd*tf;
+		float h = fwave(pos.xz, t) + .95;
+		vec2 g = pos.xz/.22, id = floor(g), f = fract(g) - .5;
+		float aa = max(length(fwidth(g)), .001)*.75;
+		float r = .1 + .12*smoothstep(-.15,.2,h);
+		float dotm = 1. - smoothstep(r - aa, r + aa, length(f));
+		dotm = mix(dotm, 3.14*r*r*1.4, smoothstep(.12,.45,aa));
+		vec3 dc = mix(DEEP*1.1, CYAN, smoothstep(-.15,.2,h));
+		float rr = length(pos.xz), ds = rr - rs;
+		float band = exp(-ds*ds*7.)*scanIn, since = max(-ds, 0.)/1.5, hz = h21(id);
+		vec3 c = mix(dc*.75, GOLD*1.5, band);
+		if(ds < 0.){
+			if(hz > .975) c = mix(c, CORAL*1.7, exp(-since*.25)*scanIn);
+			else if(hz < .05) c = mix(c, MINT*1.3, exp(-since*.6)*scanIn);
+		}
+		vec3 fl = BG*.7 + env(reflect(rd, vec3(0,1,0)))*.08 + c*dotm;
+		float ca = pow(vnoise(pos.xz*4.2 + t*.35)*vnoise(pos.xz*3.1 - t*.28)*2.3, 3.);
+		float pool = exp(-rr*rr*1.4);
+		fl += mix(TEAL, GOLD, smoothstep(-.4,.4,pos.x))*ca*pool*1.1 + CYAN*pool*.06;
+		fl = mix(INK*1.05 + TEAL*.07, fl, exp(-tf*.13));
+		col = mix(col, fl, smoothstep(-.012,-.07,rd.y));
+	}
+
+	col = rackLayer(p, 5., 1., col, t);
+	col = rackLayer(p, 3.2, 2., col, t);
+
+	vec2 A = PROJ(vec3(-.32,-.2,.15)), B = PROJ(vec3(.3,-.22,.12)), S = PROJ(vec3(0., -.62 + bob() + PH*PS, 0.));
+	vec2 din = normalize(vec2(1., -.2)), q = p - A;
+	float along = dot(q, din);
+	if(along < 0.){
+		float perp = abs(q.x*din.y - q.y*din.x);
+		col += PEARL*(exp(-perp*perp*9000.) + exp(-perp*perp*350.)*.22)*exp(along*2.4)*(.85 + .15*sin(along*40. + t*8.));
+	}
+	vec2 qb = p - B;
+	float rb = length(qb), aOut = atan(qb.y, qb.x), a0 = -.38 + .04*sin(t*.5), spread = .3;
+	float s = (aOut - (a0 - spread*.5))/spread;
+	if(s > 0. && s < 1. && qb.x > 0.){
+		float bnd = fract(s*6.);
+		float fan = smoothstep(0.,.06,s)*smoothstep(1.,.94,s)*(.7 + .3*smoothstep(0.,.2,bnd)*smoothstep(1.,.8,bnd));
+		col += spectrum(s)*fan*smoothstep(0.,.12,rb)*exp(-rb*.75)*.7*(.85 + .15*sin(rb*30. - t*5.));
+	}
+
+	float tt = 0.; int obj = 0; vec3 glow = vec3(0.);
+	float oid; vec3 lo;
+	for(int i=0;i<100;i++){
+		vec3 pp = ro + rd*tt;
+		float dP = mapPyr(pp), dO = orbit(pp, oid, lo);
+		glow += ot(oid)*exp(-dO*16.)*.011;
+		float d = min(dP, dO);
+		if(d < .001){ obj = dP < dO ? 1 : 2; break; }
+		tt += d*.85;
+		if(tt > 10.) break;
+	}
+	if(obj == 1){
+		vec3 pos = ro + rd*tt, n = norPyr(pos);
+		float fre = .04 + .96*pow(1. - max(dot(-rd, n), 0.), 5.);
+		vec3 refl = env(reflect(rd, n));
+		vec3 rdi = refract(rd, n, 1./1.5);
+		vec3 dO = rdi; dO.xz *= rot(spin());
+		vec4 ex = exitPyr(toObj(pos), dO);
+		vec3 ne = ex.xyz; ne.xz *= rot(-spin()); ne = -ne;
+		vec3 tr;
+		for(int k=0;k<3;k++){
+			vec3 o = refract(rdi, ne, 1.47 + float(k)*.035);
+			if(dot(o,o) < .01) o = reflect(rdi, ne);
+			tr[k] = (env(o) + VIOLET*.12*smoothstep(.1,.7,o.y))[k];
+		}
+		vec3 ob = toObj(pos);
+		vec3 tint = mix(vec3(1.), mix(TEAL, GOLD, smoothstep(-.12,.12,ob.x - ob.z*.3))*1.3, .55);
+		col = mix(tr*tint*1.3*exp(-ex.w*PS*.15) + TEAL*.05, refl, fre);
+		float e1 = abs(abs(ob.x) - abs(ob.z));
+		float e2 = abs(ob.y) + abs(max(abs(ob.x), abs(ob.z)) - .5);
+		float edge = max(smoothstep(.03,0.,e1)*step(.015, ob.y), smoothstep(.035,0.,e2));
+		col += CYAN*edge*.9 + PEARL*edge*fre*1.5;
+		col += PEARL*pow(max(dot(reflect(rd,n), normalize(vec3(-.4,.8,.5))),0.), 70.)*2.2;
+	} else if(obj == 2){
+		vec3 pos = ro + rd*tt;
+		orbit(pos, oid, lo);
+		vec2 e = vec2(.002, 0.); float i1; vec3 l1;
+		vec3 n = normalize(vec3(orbit(pos+e.xyy,i1,l1) - orbit(pos-e.xyy,i1,l1), orbit(pos+e.yxy,i1,l1) - orbit(pos-e.yxy,i1,l1), orbit(pos+e.yyx,i1,l1) - orbit(pos-e.yyx,i1,l1)));
+		vec3 base = ot(oid);
+		float fre = pow(1. - max(dot(-rd, n), 0.), 3.);
+		vec3 sh = base*(.25 + .55*max(dot(n, normalize(vec3(.3,.8,.4))), 0.)) + mix(base, PEARL, .5)*fre;
+		vec3 aq = abs(lo);
+		sh += mix(base, PEARL, .4)*(1. - smoothstep(0., .02, min(min(aq.x, aq.y), aq.z)));
+		col = sh;
+	}
+	col += glow;
+
+	float tw0 = obj > 0 ? min(tt, tf) : tf;
+	vec2 o2 = ro.xz, d2 = rd.xz;
+	float qa = dot(d2,d2), qb2 = 2.*dot(o2,d2), qd = qb2*qb2 - 4.*qa*(dot(o2,o2) - rs*rs);
+	if(qd > 0.){
+		for(int k=0;k<2;k++){
+			float tw = (-qb2 + (k == 0 ? -1. : 1.)*sqrt(qd))/(2.*qa);
+			if(tw > 0. && tw < tw0){
+				vec3 w = ro + rd*tw;
+				float hf = (w.y + .95)/.85;
+				if(hf > 0. && hf < 1.) col += mix(GOLD, CYAN, hf)*pow(1. - hf, 2.)*.16*scanIn*(.6 + .4*vnoise(vec2(atan(w.z, w.x)*8., t)));
+			}
+		}
+	}
+
+	col = rackLayer(p, .8, 6., col, t);
+	col = rackLayer(p, .55, 7., col, t);
+
+	vec2 sp = p - S;
+	float glint = .35 + .65*pow(.5 + .5*sin(t*1.1), 8.);
+	col += PEARL*glint*(.0009/(abs(sp.x)*abs(sp.y)*4. + .00025))*exp(-length(sp)*7.)*.06 + CYAN*glint*.006/(length(sp) + .015);
+	col += dust(p, t)*.5;
+	outColor = vec4(finish(col), 1.);
+}`;
+
+export const SHADERS = { prism, tidal, rack, aurora, lattice, fusion };
