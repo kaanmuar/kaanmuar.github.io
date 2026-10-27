@@ -105,6 +105,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
+import com.carlosandmunoz.jarvis.voice.Voice
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -419,9 +423,31 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
             Panel("Voice") {
                 val context = LocalContext.current
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) { Text("Speak answers"); Muted("Questions you ask by voice are answered aloud, in the phone's language.") }
+                    Column(Modifier.weight(1f)) { Text("Speak answers"); Muted("Questions you ask by voice are answered aloud.") }
                     Switch(s.speak, vm::setSpeak)
                 }
+                val phone = java.util.Locale.getDefault().getDisplayLanguage(java.util.Locale.ENGLISH)
+                Text("Language")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GlassChip("Phone ($phone)", s.voiceLang == null) { vm.setVoiceLang(null) }
+                    GlassChip("English", s.voiceLang == "en") { vm.setVoiceLang("en") }
+                    GlassChip("Español", s.voiceLang == "es") { vm.setVoiceLang("es") }
+                }
+                listOf("en" to "English voice", "es" to "Spanish voice").forEach { (lang, title) ->
+                    Text(title)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Voice.VOICES.filter { it.lang == lang }.forEach { o -> GlassChip(o.label, s.voices[lang] == o.name) { vm.setVoice(o) } }
+                    }
+                }
+                var rate by remember(s.rate) { mutableFloatStateOf(s.rate) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Speed", Modifier.weight(1f))
+                    Muted("%.2f×".format(java.util.Locale.ROOT, rate))
+                }
+                Slider(rate, { rate = it }, onValueChangeFinished = { vm.setRate(rate) }, valueRange = Voice.RATE_MIN..Voice.RATE_MAX, steps = 9,
+                    colors = SliderDefaults.colors(thumbColor = J.cyan, activeTrackColor = J.cyan, inactiveTrackColor = J.line))
+                Row { ActionButton(if (s.speaking in Voice.SAMPLE.values) "Playing…" else "Preview", false) { vm.preview() } }
+                Muted("Tap a voice to hear it. Jarvis listens and answers in the language above; other languages keep the standard Google voice.")
                 val held = Build.VERSION.SDK_INT >= 29 && context.getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_ASSISTANT)
                 Row { ActionButton(if (held) "Assistant settings" else "Use Jarvis as the phone's assistant", false) { openAssistantSettings(context) } }
                 Muted(if (held) "Jarvis is the phone's assistant: long-press the power or home button and ask."
