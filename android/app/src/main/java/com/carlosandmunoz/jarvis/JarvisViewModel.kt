@@ -221,6 +221,16 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** A Marketing button (#1729): like act, then the snapshot is read again so the screen shows the command waiting for the Mac. */
+    fun market(key: String, op: String, extra: Map<String, JsonElement>, done: (JsonObject) -> String) {
+        _state.update { it.copy(running = it.running + key) }
+        viewModelScope.launch {
+            runCatching { api.call(op, _state.value.days, extra) }
+                .onSuccess { out -> _state.update { it.copy(running = it.running - key, toast = done(out)) }; refresh() }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
+        }
+    }
+
     fun toastShown() = _state.update { it.copy(toast = null) }
     fun say(text: String) = _state.update { it.copy(toast = text) }
 
