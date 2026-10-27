@@ -455,6 +455,17 @@ test("server: Jarvis rules in functions are a byte copy of the admin page's", ()
   ["settings", "settings-save", "goals", "daily-now"].forEach((op) => assert.match(index, new RegExp('op === "' + op + '"')));
 });
 
+test("jarvisExternal has a loader for every op the snapshot, briefing and watch ask it for (#1837)", () => {
+  const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  const start = index.indexOf("async function jarvisExternal");
+  const loaders = index.slice(start, index.indexOf("const out = {}", start));
+  const known = new Set([...loaders.matchAll(/^\s+"?([\w-]+)"?: \(\) =>/gm)].map((m) => m[1]).concat(Object.keys(sources.SOURCES)));
+  const asked = [...index.matchAll(/jarvisExternal\(\[([^\]]+)\]/g)].concat([...index.matchAll(/const JARVIS_OPS = \[([^\]]+)\]/g)])
+    .flatMap((m) => m[1].match(/"[\w-]+"/g).map((s) => s.slice(1, -1)));
+  assert.ok(asked.includes("cloudflare"));
+  assert.deepEqual(asked.filter((op) => !known.has(op)), []);
+});
+
 const sources = require("../../functions/jarvis-sources.js");
 
 test("money: sales, credit runs, refunds and test rows each land in the right place", () => {
