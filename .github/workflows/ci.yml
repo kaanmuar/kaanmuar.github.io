@@ -36,6 +36,8 @@ jobs:
           echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
       - name: URL review scoring, journeys, pricing, guards, and generated scripts
         run: npm run test:review
+      - name: style.css matches input.css
+        run: node scripts/build-style-css.js --check
       - name: Critical CSS matches the stylesheets
         run: node scripts/build-critical-css.js --check
       - name: Review language pages match their builder

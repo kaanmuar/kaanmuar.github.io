@@ -4,8 +4,9 @@
 #   scripts/regen-generated.sh --push   # in the Regenerate workflow: rebuild on the tip of main, commit, push
 # Two PRs that each passed CI can together leave generated pages stale on main (#968), so the workflow runs this on
 # every push to main. A builder runs only when its check fails, so dates such as the social hub's as-of day do not churn.
-# Order matters: build-llms-full.py also writes the review language pages, and they copy the head build-critical-css.js
-# writes into qa-review.html. A builder not on this branch yet is skipped.
+# Order matters: build-critical-css.js inlines style.css into the pages, build-llms-full.py also writes the review
+# language pages, and they copy the head build-critical-css.js writes into qa-review.html. A builder not on this branch
+# yet is skipped.
 # The social hub rebuilds offline, from committed sources only; the daily Live Reports job pulls YouTube and the admin edits.
 # A push that loses the race is not rebased: the rebuild is redone on the new tip, so generated files never conflict.
 # The body is one function so bash has read all of it before git reset rewrites this file.
@@ -15,6 +16,7 @@ main() {
 	local builders=(
 		scripts/build-catalog-suites.js
 		scripts/build-legal-html.js
+		scripts/build-style-css.js
 		scripts/build-critical-css.js
 		scripts/build-llms-full.py
 		scripts/build-review-langs.py
