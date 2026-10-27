@@ -96,7 +96,7 @@ function refsOf(file, text) {
     for (const m of text.matchAll(CSS_URL)) refs.push(m[1]);
   } else if (/^sitemap[^/]*\.xml$/.test(file)) {
     for (const m of text.matchAll(LOC)) refs.push(m[1]);
-  } else if (file === "site.webmanifest") {
+  } else if (file.endsWith(".webmanifest")) {
     const manifest = JSON.parse(text);
     refs.push(manifest.start_url, ...(manifest.icons || []).map((icon) => icon.src));
   }
@@ -105,7 +105,7 @@ function refsOf(file, text) {
 
 let checked = 0;
 for (const file of files) {
-  if (!/\.(html|css|xml)$/.test(file) && file !== "site.webmanifest") continue;
+  if (!/\.(html|css|xml|webmanifest)$/.test(file)) continue;
   const text = fs.readFileSync(path.join(OUT, file), "utf8");
   for (const ref of refsOf(file, text)) {
     const rel = target(ref, file);
