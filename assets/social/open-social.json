@@ -21,6 +21,26 @@
     "checked": "2026-10-27T03:08:00.590Z"
    }
   ],
+  "auto-2026-10-26/01-u-hubspot-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3myw25zq7h625",
+    "at": "2026-10-28T05:42:38.387Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3myw25zq7h625",
+    "checked": "2026-10-28T05:42:40.460Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117516937735262550",
+    "at": "2026-10-28T05:42:42.891Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117516937735262550",
+    "checked": "2026-10-28T05:42:44.460Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "bluesky",
@@ -99,6 +119,26 @@
     "result": "sent",
     "url": "https://mastodon.social/@qalaburlreview/117513761708741922",
     "checked": "2026-10-27T16:15:02.051Z"
+   }
+  ],
+  "tips-horror-headers-2026-10/01-missing-csp": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3myw2636nsw26",
+    "at": "2026-10-28T05:42:40.460Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3myw2636nsw26",
+    "checked": "2026-10-28T05:42:41.970Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117516937837111970",
+    "at": "2026-10-28T05:42:44.460Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117516937837111970",
+    "checked": "2026-10-28T05:42:45.856Z"
    }
   ]
  }

@@ -5,9 +5,192 @@
     <link>https://carlosandmunoz.com/qa-review-social-es.html</link>
     <description>Cada publicación de QA-lab URL Review: consejos, revisiones reales de sitios y clips cortos.</description>
     <language>es</language>
-    <lastBuildDate>Tue, 27 Oct 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 28 Oct 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-es.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-es.html</link></image>
+    <item>
+      <title>cognizant.com: 73. El punto débil: texto alt.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-22/06-u-cognizant-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-10-22/06-u-cognizant-com-es</guid>
+      <pubDate>Wed, 28 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Cada página tiene título, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 759 imágenes no tienen atributo alt.
+
+La lección para cualquier equipo: Describe lo que muestra cada imagen en su atributo alt y usa alt=&quot;&quot; en las puramente decorativas.
+
+Un análisis automatizado de páginas públicas el 21 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-cognizant-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-cognizant-com
+
+#Accessibility #A11y #WebDev #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/06-u-cognizant-com.jpg" length="229460" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/06-u-cognizant-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>kreuzwort-raetsel.net: 86. El punto débil: etiquetas de formulario.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-24/04-u-kreuzwort-raetsel-net-es.html</link>
+      <guid isPermaLink="false">auto-2026-10-24/04-u-kreuzwort-raetsel-net-es</guid>
+      <pubDate>Wed, 28 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>National</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 115 controles de formulario no tienen etiqueta.
+
+La lección para cualquier equipo: Dale a cada campo una etiqueta visible vinculada con for e id. Los lectores de pantalla la anuncian y el área táctil crece.
+
+Un análisis automatizado de páginas públicas el 24 oct. 2026, uno de los sitios más visitados de su país, del barrido por países de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-kreuzwort-raetsel-net&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-kreuzwort-raetsel-net
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #SoftwareTesting #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/04-u-kreuzwort-raetsel-net.jpg" length="247980" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/04-u-kreuzwort-raetsel-net.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>bible.com: 68. El punto débil: enmarcado.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-25/03-u-bible-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-10-25/03-u-bible-com-es</guid>
+      <pubDate>Wed, 28 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero otros sitios pueden enmarcar la página.
+
+La lección para cualquier equipo: Envía frame-ancestors 'self' en la CSP, o X-Frame-Options: SAMEORIGIN, así que otros sitios no pueden enmarcar tus páginas.
+
+Un análisis automatizado de páginas públicas el 24 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-bible-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-bible-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #SoftwareTesting #QA #Clickjacking #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/03-u-bible-com.jpg" length="234838" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/03-u-bible-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>thekeyinmobiliaria.com: 51. El punto débil: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-26/02-u-thekeyinmobiliaria-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-10-26/02-u-thekeyinmobiliaria-com-es</guid>
+      <pubDate>Wed, 28 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero no se envía HSTS.
+
+La lección para cualquier equipo: Envía Strict-Transport-Security con un max-age de al menos un año, para que los navegadores no vuelvan a probar http sin cifrar.
+
+Un análisis automatizado de páginas públicas el 25 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-thekeyinmobiliaria-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-thekeyinmobiliaria-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Automation #CyberSecurity #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/02-u-thekeyinmobiliaria-com.jpg" length="236018" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/02-u-thekeyinmobiliaria-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>ciedi.edu.co: 68. The gap: the CSP.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-27/01-u-ciedi-edu-co.html</link>
+      <guid isPermaLink="false">auto-2026-10-27/01-u-ciedi-edu-co</guid>
+      <pubDate>Wed, 28 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But no content security policy.
+
+The lesson for every team: Tighten the content security policy one directive at a time, starting from default-src 'self'.
+
+One automated analysis of public pages on 26 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-ciedi-edu-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ciedi-edu-co
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #Passkeys #QA #CSP #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/01-u-ciedi-edu-co.jpg" length="229600" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/01-u-ciedi-edu-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Stanford, MIT, Harvard: cada una gana en algo.</title>
+      <link>https://carlosandmunoz.com/social/compare-2026-11/03-three-universities-es.html</link>
+      <guid isPermaLink="false">compare-2026-11/03-three-universities-es</guid>
+      <pubDate>Wed, 28 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Comparativa</category>
+      <category>Worldwide</category>
+      <description>Stanford lidera en general con 86, y en seguridad. El MIT tiene las páginas más rápidas, 97 en velocidad. Harvard lidera en GEO con 89 y comparte con Stanford un 100 perfecto en accesibilidad.
+
+Lección: Elige a tus dos pares más cercanos y compara área por área. El total esconde dónde es fuerte cada uno.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=three-universities
+
+#WebQuality #Playwright #SoftwareTesting #QA #HigherEd #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/03-three-universities.jpg" length="258785" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/03-three-universities.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Copia el texto. Compártelo donde quieras.</title>
+      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/06-copy-caption-es.html</link>
+      <guid isPermaLink="false">promo-social-hub-2026-10/06-copy-caption-es</guid>
+      <pubDate>Wed, 28 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Producto</category>
+      <category>Social</category>
+      <description>Cada publicación trae su texto para LinkedIn, X, Facebook, TikTok y YouTube, y la imagen para descargar. Reutiliza lo que le sirva a tu equipo.
+
+Pruébalo: Elige una publicación, pulsa Copiar y pégala donde habla tu equipo.
+
+Todas las publicaciones, en un solo lugar: https://carlosandmunoz.com/qa-review-social-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=copy-caption-es
+
+#SocialMedia #AI #OpenSource #QA #ContentMarketing #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/06-copy-caption-es.jpg" length="220494" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/06-copy-caption-es.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>El contraste es matemática, no gusto.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-es.html</link>
+      <guid isPermaLink="false">tips-2026-10/05-contrast-es</guid>
+      <pubDate>Wed, 28 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Consejo</category>
+      <category>A11y</category>
+      <description>WCAG AA pide un contraste de al menos 4.5 a 1 para el texto normal y 3 a 1 para el texto grande. El gris claro sobre blanco casi nunca llega.
+
+Prueba esto hoy: Comprueba en DevTools el color de tu texto atenuado contra su fondo. El selector de color muestra la ratio.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=contrast
+
+#Accessibility #Design #WCAG #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg" length="202325" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Etiqueta los enlaces de campaña igual, siempre.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/06-utm-es.html</link>
+      <guid isPermaLink="false">tips-2026-10/06-utm-es</guid>
+      <pubDate>Wed, 28 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Consejo</category>
+      <category>Analytics</category>
+      <description>LinkedIn, linkedin y Linked-In acaban siendo tres fuentes en tus informes. Elige una forma de escribirlo y mantenla.
+
+Prueba esto hoy: Crea una hoja compartida con las fuentes y medios permitidos. Enlázala desde cada brief de campaña.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=utm
+
+#Analytics #GA4 #UTM #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg" length="216164" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>La cadena de redirecciones zombi: vuelve una y otra vez.</title>
+      <link>https://carlosandmunoz.com/social/tips-horror-headers-2026-10/02-zombie-redirects-es.html</link>
+      <guid isPermaLink="false">tips-horror-headers-2026-10/02-zombie-redirects-es</guid>
+      <pubDate>Wed, 28 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Serie</category>
+      <category>SEO</category>
+      <description>Un enlace antiguo salta de http a https, luego a www y luego a la barra final. Cada salto cuesta un viaje de ida y vuelta, y los rastreadores pueden dejar de seguir una cadena larga antes de llegar a la página.
+
+Exorcízalo hoy: Sigue tus enlaces antiguos hasta su dirección final. Llévalos hasta allí con una sola redirección y actualiza los enlaces que controlas.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=horror-headers-2026-10&amp;utm_content=zombie-redirects
+
+#Halloween #AI #SoftwareTesting #QA #Redirects #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/02-zombie-redirects.jpg" length="230130" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/02-zombie-redirects.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>lamega.com.co: 63. El punto débil: títulos de página.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/05-u-lamega-com-co-es.html</link>
@@ -683,151 +866,6 @@ El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-epssura-co
 https://www.youtube.com/shorts/0FypyDn0reM</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/02-u-epssura-com.jpg" length="202224" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/02-u-epssura-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>uber.com: 66. El punto débil: títulos de página.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-22/01-u-uber-com-es.html</link>
-      <guid isPermaLink="false">auto-2026-10-22/01-u-uber-com-es</guid>
-      <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Requested</category>
-      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 56 páginas no tienen título.
-
-La lección para cualquier equipo: Dale a cada página un título único de unos 60 caracteres: primero la página, después el sitio.
-
-Un análisis automatizado de páginas públicas el 21 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-uber-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uber-com
-
-#SEO #Titles #SERP #QA #QAlab
-
-https://www.youtube.com/shorts/5b4Hr6r-cBk</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg" length="201762" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/01-u-uber-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Heredaste un sitio. Sin documentación, sin pruebas, sin idea de qué hay por dentro.</title>
-      <link>https://carlosandmunoz.com/social/launch-2026-10/es/inherited.html</link>
-      <guid isPermaLink="false">launch-2026-10/es/inherited</guid>
-      <pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Producto</category>
-      <description>Un análisis de la página pública nombra las tecnologías que se ven, sigue los enlaces reales y propone los primeros casos, para que empieces por los hechos y no por suposiciones.
-
-→ Tecnologías visibles en público
-→ Los enlaces reales, recorridos
-→ Primeros casos de regresión
-
-Primera revisión incluida · 20 páginas · 2 enlaces de profundidad
-Propone casos de prueba a partir de una lectura pública. No los ejecuta, no inicia sesión, no envía formularios ni genera carga.
-
-Pruébalo con una URL pública: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-inherited&amp;utm_content=es
-
-#PruebasDeSoftware #QA #AutomatizaciónDePruebas #LegacyCode #RegressionTesting</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/inherited-portrait.jpg" length="204817" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/inherited-portrait.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>teaminternational.com: 64. El punto débil: enlaces rotos.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-21/01-u-teaminternational-com-es.html</link>
-      <guid isPermaLink="false">auto-2026-10-21/01-u-teaminternational-com-es</guid>
-      <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Requested</category>
-      <description>Cada página tiene título, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 16 enlaces internos llevan a un error.
-
-La lección para cualquier equipo: Revisa tus enlaces tras cada lanzamiento y corrige o redirige cada uno que responda 404.
-
-Un análisis automatizado de páginas públicas el 19 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-teaminternational-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-teaminternational-com
-
-#SEO #BrokenLinks #QA #QA #QAlab
-
-https://www.youtube.com/shorts/BZTtWQCzPCM</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg" length="214038" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-21/feed/01-u-teaminternational-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>La entrega está cerca y nadie ha escrito los casos de prueba. ¿Te suena?</title>
-      <link>https://carlosandmunoz.com/social/launch-2026-10/es/release.html</link>
-      <guid isPermaLink="false">launch-2026-10/es/release</guid>
-      <pubDate>Thu, 22 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Producto</category>
-      <description>Apunta QA-lab URL Review a la página pública. Propone los casos que querrías en papel antes de publicar, para que el equipo empiece con una lista y no con un documento en blanco.
-
-→ Funcional, enlaces, contenido, móvil
-→ Accesibilidad, seguridad, rendimiento
-→ Lista para entregar al equipo
-
-Primera revisión incluida · 20 páginas · 2 enlaces de profundidad
-Propone casos de prueba a partir de una lectura pública. No los ejecuta, no inicia sesión, no envía formularios ni genera carga.
-
-Pruébalo con una URL pública: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-release&amp;utm_content=es
-
-#PruebasDeSoftware #QA #AutomatizaciónDePruebas #RegressionTesting #ReleaseManagement</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/release-portrait.jpg" length="201320" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/release-portrait.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Deja de traducir a mano ideas de prueba genéricas a tu framework.</title>
-      <link>https://carlosandmunoz.com/social/launch-2026-10/es/frameworks.html</link>
-      <guid isPermaLink="false">launch-2026-10/es/frameworks</guid>
-      <pubDate>Wed, 21 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Producto</category>
-      <description>Elige Playwright, Cypress, Robot, Selenium, WebdriverIO, Appium, JMeter, Gatling u otros doce, de Cucumber a k6, y los casos propuestos salen con esa forma.
-
-→ Elige uno, o los veinte
-→ Cada framework adicional tiene descuento
-→ Nada se ejecuta. Te llevas la lista.
-
-Primera revisión incluida · 20 páginas · 2 enlaces de profundidad
-Propone casos de prueba a partir de una lectura pública. No los ejecuta, no inicia sesión, no envía formularios ni genera carga.
-
-Pruébalo con una URL pública: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-frameworks&amp;utm_content=es
-
-#PruebasDeSoftware #QA #AutomatizaciónDePruebas #Playwright #Cypress</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/frameworks-portrait.jpg" length="174138" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/frameworks-portrait.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Tu primera revisión está incluida: 20 páginas, 2 enlaces de profundidad.</title>
-      <link>https://carlosandmunoz.com/social/launch-2026-10/es/first-read.html</link>
-      <guid isPermaLink="false">launch-2026-10/es/first-read</guid>
-      <pubDate>Tue, 20 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Producto</category>
-      <description>Pega una URL pública, acepta lo que la revisión hará y no hará, y mira cómo se escribe el informe. Guárdalo solo si vale la pena.
-
-→ El informe se muestra una vez sin costo
-→ Guardar, descargar o compartir desde 19 USD
-→ El monto aparece antes de confirmar
-
-Primera revisión incluida · 20 páginas · 2 enlaces de profundidad
-Propone casos de prueba a partir de una lectura pública. No los ejecuta, no inicia sesión, no envía formularios ni genera carga.
-
-Pruébalo con una URL pública: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-first-read&amp;utm_content=es
-
-#PruebasDeSoftware #QA #AutomatizaciónDePruebas #TestCases #QAtools</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/first-read-portrait.jpg" length="241275" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/first-read-portrait.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Cada página pública ya te dice qué probar. La mayoría de los equipos nunca lo escribe.</title>
-      <link>https://carlosandmunoz.com/social/launch-2026-10/es/talking.html</link>
-      <guid isPermaLink="false">launch-2026-10/es/talking</guid>
-      <pubDate>Mon, 19 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Producto</category>
-      <description>QA-lab URL Review lee una página https pública, describe la respuesta y propone los casos de prueba, con el nombre del framework que tu equipo ya usa.
-
-→ 21 tipos de casos
-→ Scripts para 20 frameworks
-→ 1 dirección pública para empezar
-
-Primera revisión incluida · 20 páginas · 2 enlaces de profundidad
-Propone casos de prueba a partir de una lectura pública. No los ejecuta, no inicia sesión, no envía formularios ni genera carga.
-
-Pruébalo con una URL pública: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-talking&amp;utm_content=es
-
-#PruebasDeSoftware #QA #AutomatizaciónDePruebas #TestCases #Playwright</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/talking-portrait.jpg" length="169442" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/talking-portrait.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
