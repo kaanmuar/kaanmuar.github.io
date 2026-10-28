@@ -1,6 +1,26 @@
 {
  "version": 1,
  "posts": {
+  "auto-2026-10-23/03-u-monsterenergy-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3myxqhnujzq27",
+    "at": "2026-10-28T21:54:23.710Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3myxqhnujzq27",
+    "checked": "2026-10-28T21:54:25.801Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117520758800780695",
+    "at": "2026-10-28T21:54:27.395Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117520758800780695",
+    "checked": "2026-10-28T21:54:29.544Z"
+   }
+  ],
   "auto-2026-10-25/01-u-kemik-gt": [
    {
     "channel": "bluesky",
