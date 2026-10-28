@@ -41,6 +41,26 @@
     "checked": "2026-10-28T05:42:44.460Z"
    }
   ],
+  "auto-2026-10-27/01-u-ciedi-edu-co": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3myx2qrvo7f2z",
+    "at": "2026-10-28T15:25:47.500Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3myx2qrvo7f2z",
+    "checked": "2026-10-28T15:25:49.818Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117519230938697970",
+    "at": "2026-10-28T15:25:52.984Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117519230938697970",
+    "checked": "2026-10-28T15:25:56.600Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "bluesky",
