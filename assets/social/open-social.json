@@ -121,6 +121,26 @@
     "checked": "2026-10-27T20:43:22.138Z"
    }
   ],
+  "compare-2026-11/03-three-universities": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3myy5kl4t7s2z",
+    "at": "2026-10-29T01:48:40.222Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3myy5kl4t7s2z",
+    "checked": "2026-10-29T01:48:42.079Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117521679931748458",
+    "at": "2026-10-29T01:48:42.863Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117521679931748458",
+    "checked": "2026-10-29T01:48:44.513Z"
+   }
+  ],
   "tips-2026-10/01-img-size": [
    {
     "channel": "bluesky",
