@@ -200,6 +200,25 @@
     "url": "https://mastodon.social/@qalaburlreview/117516937837111970",
     "checked": "2026-10-28T05:42:45.856Z"
    }
+  ],
+  "tips-horror-headers-2026-10/02-zombie-redirects": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3myym7iep5f22",
+    "at": "2026-10-29T06:10:54.527Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3myym7iep5f22",
+    "checked": "2026-10-29T06:10:56.270Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "at": "2026-10-29T06:10:57.022Z",
+    "result": "failed",
+    "error": "Mastodon /api/v1/statuses 503: {}",
+    "checked": "2026-10-29T06:10:58.224Z"
+   }
   ]
  }
 }
