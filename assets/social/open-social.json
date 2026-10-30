@@ -260,6 +260,26 @@
     "url": "https://mastodon.social/@qalaburlreview/117523257825729432",
     "checked": "2026-10-29T08:30:01.270Z"
    }
+  ],
+  "tips-horror-headers-2026-10/03-haunted-404": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mz35ptj2ak26",
+    "at": "2026-10-30T06:29:36.220Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mz35ptj2ak26",
+    "checked": "2026-10-30T06:29:37.889Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117528446905198329",
+    "at": "2026-10-30T06:29:38.875Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117528446905198329",
+    "checked": "2026-10-30T06:29:40.311Z"
+   }
   ]
  }
 }
