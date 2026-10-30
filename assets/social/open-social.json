@@ -161,6 +161,26 @@
     "checked": "2026-10-30T00:25:14.266Z"
    }
   ],
+  "compare-2026-11/05-banks": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mz4hb2u45h26",
+    "at": "2026-10-30T18:52:57.323Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mz4hb2u45h26",
+    "checked": "2026-10-30T18:53:00.256Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117531370029595776",
+    "at": "2026-10-30T18:53:01.731Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117531370029595776",
+    "checked": "2026-10-30T18:53:03.709Z"
+   }
+  ],
   "tips-2026-10/01-img-size": [
    {
     "channel": "bluesky",
