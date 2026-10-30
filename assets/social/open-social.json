@@ -141,6 +141,26 @@
     "checked": "2026-10-29T01:48:44.513Z"
    }
   ],
+  "compare-2026-11/04-quiz-banks": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mz2je67dfs2i",
+    "at": "2026-10-30T00:25:09.730Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mz2je67dfs2i",
+    "checked": "2026-10-30T00:25:11.579Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117527013891451375",
+    "at": "2026-10-30T00:25:12.821Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117527013891451375",
+    "checked": "2026-10-30T00:25:14.266Z"
+   }
+  ],
   "tips-2026-10/01-img-size": [
    {
     "channel": "bluesky",

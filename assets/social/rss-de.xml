@@ -5,9 +5,209 @@
     <link>https://carlosandmunoz.com/qa-review-social-de.html</link>
     <description>Jeder Beitrag von QA-lab URL Review: Tipps, echte Website-Prüfungen und kurze Clips.</description>
     <language>de</language>
-    <lastBuildDate>Thu, 29 Oct 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 30 Oct 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-de.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-de.html</link></image>
+    <item>
+      <title>avvillas.com.co: 57. Die Lücke: defekte Links.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-22/08-u-avvillas-com-co-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-22/08-u-avvillas-com-co-de</guid>
+      <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 1 interner Link führt zu einem Fehler.
+
+Die Lektion für jedes Team: Prüfen Sie Ihre eigenen Links nach jedem Release und reparieren Sie jeden, der 404 liefert, oder leiten Sie ihn um.
+
+Eine automatisierte Analyse öffentlicher Seiten am 21. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-avvillas-com-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-avvillas-com-co
+
+#SEO #BrokenLinks #QA #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/08-u-avvillas-com-co.jpg" length="230772" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/08-u-avvillas-com-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>idmji.org: 62. Die Lücke: Formular-Labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-25/05-u-idmji-org-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-25/05-u-idmji-org-de</guid>
+      <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 20 Formularfelder haben kein Label.
+
+Die Lektion für jedes Team: Geben Sie jedem Eingabefeld ein sichtbares Label, verknüpft über for und id. Screenreader sagen es an, und die Tippfläche wächst.
+
+Eine automatisierte Analyse öffentlicher Seiten am 24. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-idmji-org&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-idmji-org
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #DevOps #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/05-u-idmji-org.jpg" length="230102" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/05-u-idmji-org.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>cng.edu: 52. Die Lücke: ARIA-Rollen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-26/04-u-cng-edu-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-26/04-u-cng-edu-de</guid>
+      <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch bestimmte ARIA-Rollen müssen in bestimmten Elternelementen stehen.
+
+Die Lektion für jedes Team: Verwenden Sie zunächst native HTML-Elemente. Wenn Sie ARIA-Rollen verwenden, verschachteln Sie diese so, wie es die Rolle erfordert.
+
+Eine automatisierte Analyse öffentlicher Seiten am 25. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-cng-edu&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-cng-edu
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #SoftwareTesting #QA #ARIA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/04-u-cng-edu.jpg" length="232690" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/04-u-cng-edu.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>temu.com: 64. Die Lücke: Seitentitel.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-27/03-u-temu-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-27/03-u-temu-com-de</guid>
+      <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 1 Seite hat keinen Titel.
+
+Die Lektion für jedes Team: Geben Sie jeder Seite einen eindeutigen Titel mit etwa 60 Zeichen: zuerst die Seite, dann die Website.
+
+Eine automatisierte Analyse öffentlicher Seiten am 24. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-temu-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-temu-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Automation #QA #Titles #SERP #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/03-u-temu-com.jpg" length="227143" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/03-u-temu-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Davivienda 72, Bancolombia 65. Der Unterschied ist die Barrierefreiheit.</title>
+      <link>https://carlosandmunoz.com/social/compare-2026-11/05-banks-de.html</link>
+      <guid isPermaLink="false">compare-2026-11/05-banks-de</guid>
+      <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Vergleich</category>
+      <category>National</category>
+      <description>Davivienda erreicht 86 bei der Barrierefreiheit, Bancolombia 45. Bancolombia hat die schnelleren Seiten, 73 zu 50, und bei Analytics steht es gleich, 85.
+
+Lektion: Prüfen Sie zuerst Labels, Kontrast und Überschriften Ihrer öffentlichen Seiten. Hier haben sie die Summe stärker bewegt als jeder andere Bereich.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=banks
+
+#WebQuality #DevOps #Accessibility #QA #Fintech #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/05-banks.jpg" length="252664" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/05-banks.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Diese Woche in Sachen Web-Qualität.</title>
+      <link>https://carlosandmunoz.com/social/digest-2026-10-30/01-this-week-de.html</link>
+      <guid isPermaLink="false">digest-2026-10-30/01-this-week-de</guid>
+      <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>Field</category>
+      <description>Diese Woche in Sachen Web-Qualität, 30. Oktober 2026
+
+Fünf Empfehlungen aus unserer täglichen Branchenschau, jeweils in eigenen Worten zusammengefasst und mit Quelle.
+
+1. Das W3C skizziert das Web für KI-Agenten
+Das Strategieteam des W3C beschreibt, wie sich die technische Agenda des Webs ändern sollte, wenn KI-Agenten im Auftrag von Menschen handeln, und der Mensch dabei im Mittelpunkt bleibt. Das Papier wird am 29. Oktober auf der TPAC der Web and AI Interest Group vorgestellt, und das W3C bittet um Feedback.
+Von Philippe Le Hegaret, W3C: https://www.w3.org/news/2026/w3c-and-the-state-of-the-web-in-the-ai-era/
+
+2. axe-core 4.14 aktiviert Beschriftung im Namen
+Axe-core 4.14.0 prüft jetzt standardmäßig die WCAG-Regel 2.5.3, Beschriftung im Namen. Sie meldet jedes Bedienelement, dessen zugänglicher Name die sichtbare Beschriftung nicht enthält, etwa eine Schaltfläche Home mit dem Namen Start page, die sich per Sprachsteuerung mit dem Befehl Home womöglich nicht anklicken lässt. Deque hat vor dem Aktivieren der Regel die integrierte Sprachsteuerung von macOS, iOS, Android und Windows getestet.
+Von Wilco Fiers, Deque: https://www.deque.com/blog/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0/
+
+3. Screenreader-Tests in Playwright
+Craig Morten zeigt, wie Guidepup einen Playwright-Test einen echten Screenreader steuern und prüfen lässt, was VoiceOver, NVDA oder Orca tatsächlich ansagen, statt den Accessibility Tree auszulesen. Die Einrichtung braucht zwei zusätzliche Befehle, und sein Beispiel führt über die BBC-Startseite zu BBC Sounds.
+Von Craig Morten, DEV: https://dev.to/craigmorten/you-know-you-can-automate-screen-reader-tests-right-2dnk
+
+4. Kodierte eckige Klammern ergeben eine neue URL
+John Mueller von Google sagte, dass rohe eckige Klammern und ihre kodierte Form, %5B und %5D, zwei verschiedene URLs ergeben. Google crawlt beide und behält eine, wenn der Inhalt übereinstimmt. Sein Rat: eckige Klammern kodieren und in jedem Link, Canonical-Tag, Sitemap und in den strukturierten Daten dieselbe Form verwenden.
+Von Matt G. Southern, Search Engine Journal: https://www.searchenginejournal.com/google-crawls-raw-and-encoded-bracket-urls-separately/593765/
+
+5. CSS Animation Triggers: ein erster Entwurf
+Die CSS Working Group hat den ersten öffentlichen Arbeitsentwurf (First Public Working Draft) von Animation Triggers veröffentlicht. Er definiert CSS-Eigenschaften und eine API, die eine Animation durch eine Nutzeraktion starten, etwa einen Klick oder Tastendruck, oder wenn ein Element einen Bereich einer Zeitleiste erreicht, zum Beispiel beim Scrollen ins Bild.
+Von der W3C CSS Working Group: https://www.w3.org/news/2026/first-public-working-draft-animation-triggers/
+
+Alle Rückblicke, Tipps und Website-Prüfungen im Social Hub: https://carlosandmunoz.com/qa-review-social.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=weekly-digest&amp;utm_content=digest-2026-10-30
+
+#WebDev #OpenSource #SoftwareTesting #QA #Accessibility #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/digest-2026-10-30/feed/01-this-week.jpg" length="231834" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/digest-2026-10-30/feed/01-this-week.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Kurze Clips, in Ihrer Sprache.</title>
+      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/14-clips-de.html</link>
+      <guid isPermaLink="false">promo-social-hub-2026-10/14-clips-de</guid>
+      <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Produkt</category>
+      <category>Social</category>
+      <description>Gesprochene Clips laufen direkt auf der Seite, ohne App. Jeder spricht Englisch, Spanisch, Portugiesisch, Deutsch, Französisch oder Italienisch.
+
+Probieren Sie es aus: Klicken Sie bei einer Karte mit Video auf Abspielen.
+
+Alle Beiträge an einem Ort: https://carlosandmunoz.com/qa-review-social-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=clips-de
+
+#ShortVideo #OpenSource #Programming #QA #WebDev #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/14-clips-de.jpg" length="175390" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/14-clips-de.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>llms.txt: ein kurzes Briefing für Antwortmaschinen.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/09-llms-txt-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/09-llms-txt-de</guid>
+      <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>GEO</category>
+      <description>Eine einfache Textdatei im Root, die sagt, was die Website ist, welche Seiten zählen und wie man Sie erreicht. Kurz schlägt vollständig.
+
+Probieren Sie es heute: Schreiben Sie fünf Zeilen über Ihre Website, so wie Sie neue Kollegen einweisen würden. Veröffentlichen Sie sie als /llms.txt.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=llms-txt
+
+#GEO #llmstxt #AISearch #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/09-llms-txt.jpg" length="225832" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/09-llms-txt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Legen Sie die Maus weg. Erreichen Sie alles?</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/10-keyboard-de</guid>
+      <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>A11y</category>
+      <description>In Menüs, Dialogen und Cookie-Bannern bleiben Tastaturnutzer hängen. Tab, Shift+Tab, Enter und Escape sollten genügen.
+
+Probieren Sie es heute: Erledigen Sie Ihre Hauptaufgabe auf der eigenen Website nur mit der Tastatur. Notieren Sie jede Stelle, an der Sie hängen geblieben sind.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=keyboard
+
+#Accessibility #a11y #UX #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" length="236132" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Der verfluchte Alt-Text: IMG_2041.jpg sagt nichts.</title>
+      <link>https://carlosandmunoz.com/social/tips-horror-headers-2026-10/04-cursed-alt-de.html</link>
+      <guid isPermaLink="false">tips-horror-headers-2026-10/04-cursed-alt-de</guid>
+      <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Serie</category>
+      <category>A11y</category>
+      <description>Screenreader lesen Alt-Texte laut vor. Ein Dateiname oder das Wort Bild lässt das Foto ein Rätsel bleiben, und eine lange Beschreibung für ein dekoratives Bild kostet die Zuhörer Zeit.
+
+Heute austreiben: Gehen Sie die Bilder Ihrer wichtigsten Seite durch. Beschreiben Sie die informativen und geben Sie dekorativen ein leeres alt.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=horror-headers-2026-10&amp;utm_content=cursed-alt
+
+#Halloween #DevOps #Accessibility #QA #AltText #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/04-cursed-alt.jpg" length="230337" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/04-cursed-alt.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>zipdev.com: 77. Die Lücke: Formular-Labels.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/07-u-zipdev-com-de.html</link>
@@ -717,144 +917,6 @@ https://www.cypress.io/blog/cypressconf-2026-answering-the-signal/</description>
 
 https://dev.to/lingchen865dev/emoji-and-accessibility-how-screen-readers-announce-emoji-and-how-to-use-them-considerately-3mb0</description>
       <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fk840xdek9o2feis3n9z2.png" medium="image"/>
-    </item>
-    <item>
-      <title>ethanplusai/astro-conversion-kit: Agent Skills, die eine WordPress-Website (oder jede Live-Website) in eine statische Astro-Website mit URL-, SEO-, Inhalts- und Pixelparität umwandeln und sie anschließend bis zum Launch begleiten. Funktioniert…</title>
-      <link>https://carlosandmunoz.com/social/pick/ethanplusai-astro-conversion-kit-agent-skills-that-convert-a-de.html</link>
-      <guid isPermaLink="false">pick/ethanplusai-astro-conversion-kit-agent-skills-that-convert-a-de</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>Agent Skills, die eine WordPress-Website (oder jede Live-Website) in eine statische Astro-Website mit URL-, SEO-, Inhalts- und Pixelparität umwandeln und sie anschließend bis zum Launch begleiten. Funktioniert in Claude Code, Codex und jedem Agenten, der SKILL.md liest.
-
-Via GitHub, von ethanplusai, 2026-10-22.
-
-https://github.com/ethanplusai/astro-conversion-kit</description>
-      <media:content url="https://opengraph.githubassets.com/1/ethanplusai/astro-conversion-kit" medium="image"/>
-    </item>
-    <item>
-      <title>Finden Sie Probleme mit „Beschriftung im Namen“ bei jedem Scan mit Axe-core 4.14.0</title>
-      <link>https://carlosandmunoz.com/social/pick/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0-de.html</link>
-      <guid isPermaLink="false">pick/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0-de</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Accessibility</category>
-      <description>Mit unserem neuesten Update erhalten Sie beim Scannen mit Axe-core 4.14.0 jetzt ein Ergebnis für jedes Steuerelement, dessen zugänglicher Name seine sichtbare Beschriftung nicht enthält. Dieses Axe-core-Release beschleunigt außerdem Scans, macht Anleitungen zur Behebung klarer und beginnt mit der Unterstützung von EN 301 549 v4.1.1, dem anstehenden Update der harmonisierten Norm der Europäischen Union (EU) für Barrierefreiheitsanforderungen. Der Beitrag Finden Sie „Beschriftung im…
-
-Via Deque, von Wilco Fiers, 2026-10-22.
-
-https://www.deque.com/blog/find-label-in-name-issues-in-every-scan-with-axe-core-4-14-0/</description>
-      <media:content url="https://www.deque.com/wp-content/uploads/2026/10/Deque-Blog-Featured-Image-10.16.26-Find-Label-02-scaled.png" medium="image"/>
-    </item>
-    <item>
-      <title>Google crawlt rohe und codierte Klammer-URLs getrennt via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/google-crawls-raw-and-encoded-bracket-urls-separately-via-se-de.html</link>
-      <guid isPermaLink="false">pick/google-crawls-raw-and-encoded-bracket-urls-separately-via-se-de</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>Googles John Mueller sagt, dass rohe und prozentcodierte Klammern unterschiedliche URLs sind, und empfiehlt, in Links, Canonical-Tags und Sitemaps eine einheitliche Form zu verwenden. Der Beitrag Google crawlt rohe und codierte Klammer-URLs getrennt erschien zuerst auf Search Engine Journal.
-
-Via Search Engine Journal, von Matt G. Southern, 2026-10-21.
-
-https://www.searchenginejournal.com/google-crawls-raw-and-encoded-bracket-urls-separately/593765/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/google-bracket-urls-code-2459907273.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Google erklärt 503-Statuscodes, Robots.txt-Limits und Klammer-URLs – SEO Pulse via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/google-explains-503s-robots-txt-limits-bracket-urls-seo-puls-de.html</link>
-      <guid isPermaLink="false">pick/google-explains-503s-robots-txt-limits-bracket-urls-seo-puls-de</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>Google erinnert Websites daran, während Ausfallzeiten durch PHP-Patches den Statuscode 503 zu verwenden. Weitere Updates betreffen robots.txt-Steuerung, Klammer-URLs und JPEG XL in Google Images und Discover. Der Beitrag Google erklärt 503-Statuscodes, Robots.txt-Limits und Klammer-URLs – SEO Pulse erschien zuerst auf Search Engine Journal.
-
-Via Search Engine Journal, von Matt G. Southern, 2026-10-24.
-
-https://www.searchenginejournal.com/seo-pulse-google-explains-503s-robots-txt-limits-bracket-urls/594085/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/seo-pulse-october-24-2026.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>So prüfen Sie Core Web Vitals für 1,000 URLs in Python (PageSpeed Insights API, CrUX-Felddaten, Kontingente und Wiederholungen)</title>
-      <link>https://carlosandmunoz.com/social/pick/how-to-check-core-web-vitals-for-1-000-urls-in-python-pagesp-de.html</link>
-      <guid isPermaLink="false">pick/how-to-check-core-web-vitals-for-1-000-urls-in-python-pagesp-de</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Performance</category>
-      <description>Ein Python-Skript mit ~100 Zeilen, das PageSpeed Insights für eine Liste von URLs mit Parallelität, Wiederholungen und Kontingentverwaltung ausführt, Labordaten von echten CrUX-Nutzerdaten (LCP, INP, CLS) trennt und eine einzige CSV-Datei schreibt. Getestet im Oktober 2026.
-
-Via DEV, von Datawright Labs, 2026-10-21.
-
-https://dev.to/datawrightlabs/how-to-check-core-web-vitals-for-1000-urls-in-python-pagespeed-insights-api-crux-field-data-32f4</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F9jk4hdyb1okki3vcuge1.png" medium="image"/>
-    </item>
-    <item>
-      <title>Moz und Profound gehen Partnerschaft ein, um SEO und KI-Sichtbarkeit zu verbinden</title>
-      <link>https://carlosandmunoz.com/social/pick/moz-profound-partner-to-connect-seo-and-ai-visibility-de.html</link>
-      <guid isPermaLink="false">pick/moz-profound-partner-to-connect-seo-and-ai-visibility-de</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>Moz arbeitet mit Profound zusammen, um branchenführende SEO-Metriken und Zitationsdaten direkt in der KI-Marketingplattform von Profound bereitzustellen.
-
-Via Moz, von Tom Capper, 2026-10-22.
-
-https://moz.com/blog/moz-and-profound-data-partnership</description>
-      <media:content url="https://moz.com/images/blog/Blog-OG-images/Moz-Profound-Partner-to-Connect-SEO-and-AI-Visibility-OG-Image.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1792681082&amp;s=be172cab30a2cb36ce07bef4701ebc16" medium="image"/>
-    </item>
-    <item>
-      <title>Show HN: Ich habe eine Blogplattform für Markdown und reines HTML gebaut, die 99 bei PageSpeed erreicht</title>
-      <link>https://carlosandmunoz.com/social/pick/show-hn-i-built-a-markdown-and-raw-html-blog-platform-scorin-de.html</link>
-      <guid isPermaLink="false">pick/show-hn-i-built-a-markdown-and-raw-html-blog-platform-scorin-de</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Performance</category>
-      <description>Via Hacker News, von textlanes33, 2026-10-21.
-
-https://bloffy.co/en</description>
-      <media:content url="https://bloffy.co/landing/og.png" medium="image"/>
-    </item>
-    <item>
-      <title>Das W3C und der Zustand des Webs im KI-Zeitalter</title>
-      <link>https://carlosandmunoz.com/social/pick/w3c-and-the-state-of-the-web-in-the-ai-era-de.html</link>
-      <guid isPermaLink="false">pick/w3c-and-the-state-of-the-web-in-the-ai-era-de</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Standards</category>
-      <description>Dieses W3C-Papier des Strategy Teams soll in der Fachcommunity auf der TPAC – der wichtigsten W3C-Community-Veranstaltung des Jahres – die Diskussion darüber anregen, wie sich die technische Agenda des W3C für das Web mit dem Aufstieg von KI-Agenten weiterentwickeln muss. Es ist Teil des Aufbaus einer konsistenten, kohärenten gemeinsamen Vision für die Weiterentwicklung des Webs, beginnend mit KI.
-
-Via W3C, 2026-10-21.
-
-https://www.w3.org/news/2026/w3c-and-the-state-of-the-web-in-the-ai-era/</description>
-      <media:content url="https://www.w3.org/assets/website-2021/images/w3c-opengraph-image.png" medium="image"/>
-    </item>
-    <item>
-      <title>Wussten Sie, dass Sie Screenreader-Tests automatisieren können?</title>
-      <link>https://carlosandmunoz.com/social/pick/you-know-you-can-automate-screen-reader-tests-right-de.html</link>
-      <guid isPermaLink="false">pick/you-know-you-can-automate-screen-reader-tests-right-de</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Accessibility</category>
-      <description>Es gibt das weit verbreitete Missverständnis, dass Barrierefreiheitstests nur in zwei Gruppen fallen können: Einige...
-
-Via DEV, von Craig Morten, 2026-10-24.
-
-https://dev.to/craigmorten/you-know-you-can-automate-screen-reader-tests-right-2dnk</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F0fkqu3pa49b5f70cg70d.png" medium="image"/>
-    </item>
-    <item>
-      <title>zhuyansen/new-term-radar: Tägliches Radar für neue KI-Begriffe: Namen neuer Modelle, Produkte und Repos, erfasst auf X, Hugging Face, GitHub und in Sitemaps, bevor Keyword-Tools sie listen.</title>
-      <link>https://carlosandmunoz.com/social/pick/zhuyansen-new-term-radar-daily-radar-for-new-ai-terms-names--de.html</link>
-      <guid isPermaLink="false">pick/zhuyansen-new-term-radar-daily-radar-for-new-ai-terms-names--de</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>Tägliches Radar für neue KI-Begriffe: Namen neuer Modelle, Produkte und Repos, erfasst auf X, Hugging Face, GitHub und in Sitemaps, bevor Keyword-Tools sie listen.
-
-Via GitHub, von zhuyansen, 2026-10-12.
-
-https://github.com/zhuyansen/new-term-radar</description>
-      <media:content url="https://opengraph.githubassets.com/1/zhuyansen/new-term-radar" medium="image"/>
     </item>
   </channel>
 </rss>
