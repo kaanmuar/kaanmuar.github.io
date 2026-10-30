@@ -1,32 +1,68 @@
 {
  "version": 1,
- "built": "2026-10-29T19:01:59.227Z",
+ "built": "2026-10-30T18:41:48.430Z",
  "sources": {
-  "moz": 10,
-  "w3c": 25,
-  "w3c-wai": 10,
-  "ahrefs": 10,
   "search-engine-journal": 20,
+  "w3c": 25,
+  "moz": 10,
+  "w3c-wai": 10,
   "google-search-central": 10,
-  "ipullrank": 5,
   "deque": 10,
-  "chrome-developers": 10,
-  "whatwg": 10,
+  "ahrefs": 10,
   "debugbear": "failed: www.debugbear.com answered 530",
+  "tpgi": 12,
+  "simo-ahava": 30,
+  "whatwg": 10,
   "a11y-project": 30,
   "web-dev": 10,
-  "simo-ahava": 30,
-  "martin-fowler": 30,
-  "webaim": 10,
-  "cypress": 15,
-  "tpgi": 12,
-  "playwright-releases": 10,
   "perfplanet": 10,
-  "devto": 40,
-  "github": 29,
-  "hn": 62
+  "chrome-developers": 10,
+  "devto": 60,
+  "cypress": 15,
+  "ipullrank": 5,
+  "playwright-releases": 10,
+  "webaim": 10,
+  "martin-fowler": 30,
+  "hn": 63,
+  "github": 30
  },
  "proposals": [
+  {
+   "id": "826e8cad104a",
+   "title": "What Search Console Can Still Tell You When Indexing Data Lags via @sejournal, @MattGSouthern",
+   "url": "https://www.searchenginejournal.com/what-search-console-can-still-tell-you-when-indexing-data-lags/595016/",
+   "source": "Search Engine Journal",
+   "author": "Matt G. Southern",
+   "date": "2026-10-30",
+   "topic": "SEO",
+   "lang": "en",
+   "summary": "Search Console's Page indexing report has fallen behind before. Here's what Google has said and what each remaining check can show while the data lags. The post What Search Console Can Still Tell You When Indexing Data Lags appeared first on Search Engine Journal .",
+   "image": "https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/search-console-indexing-report-delay.jpg",
+   "why": "SEO keywords in the title",
+   "weight": 0.9,
+   "relevance": 4,
+   "trend": 0,
+   "firstSeen": "2026-10-30",
+   "score": 4.17
+  },
+  {
+   "id": "a2aba86559e6",
+   "title": "zhtyyx/codex-seo: Free, open-source SEO audits inside OpenAI Codex CLI. Port of claude-seo: 26 skills, 19 specialist roles, technical SEO / schema / GEO / local / ecommerce.",
+   "url": "https://github.com/zhtyyx/codex-seo",
+   "source": "GitHub",
+   "author": "zhtyyx",
+   "date": "2026-10-27",
+   "topic": "SEO",
+   "lang": "en",
+   "summary": "Free, open-source SEO audits inside OpenAI Codex CLI. Port of claude-seo: 26 skills, 19 specialist roles, technical SEO / schema / GEO / local / ecommerce.",
+   "image": "https://opengraph.githubassets.com/1/zhtyyx/codex-seo",
+   "why": "108 stars on GitHub; SEO keywords in the title",
+   "weight": 0.9,
+   "relevance": 4,
+   "trend": 0.78,
+   "firstSeen": "2026-10-28",
+   "score": 4.06
+  },
   {
    "id": "1482cd41a348",
    "title": "How Screen Readers Interpret and Expose Complex ARIA Roles in Dynamic Web Apps",
@@ -43,25 +79,7 @@
    "relevance": 5,
    "trend": 0,
    "firstSeen": "2026-10-29",
-   "score": 4.44
-  },
-  {
-   "id": "a2aba86559e6",
-   "title": "zhtyyx/codex-seo: Free, open-source SEO audits inside OpenAI Codex CLI. Port of claude-seo: 26 skills, 19 specialist roles, technical SEO / schema / GEO / local / ecommerce.",
-   "url": "https://github.com/zhtyyx/codex-seo",
-   "source": "GitHub",
-   "author": "zhtyyx",
-   "date": "2026-10-27",
-   "topic": "SEO",
-   "lang": "en",
-   "summary": "Free, open-source SEO audits inside OpenAI Codex CLI. Port of claude-seo: 26 skills, 19 specialist roles, technical SEO / schema / GEO / local / ecommerce.",
-   "image": "https://opengraph.githubassets.com/1/zhtyyx/codex-seo",
-   "why": "93 stars on GitHub; SEO keywords in the title",
-   "weight": 0.9,
-   "relevance": 4,
-   "trend": 0.7,
-   "firstSeen": "2026-10-28",
-   "score": 4.37
+   "score": 4.02
   },
   {
    "id": "e0b45eb832b1",
@@ -79,7 +97,7 @@
    "relevance": 4,
    "trend": 0.28,
    "firstSeen": "2026-10-29",
-   "score": 4.19
+   "score": 3.8
   },
   {
    "id": "e3d51db105fb",
@@ -97,7 +115,7 @@
    "relevance": 3,
    "trend": 0,
    "firstSeen": "2026-10-29",
-   "score": 3.7
+   "score": 3.35
   },
   {
    "id": "1df1e24f24ac",
@@ -115,7 +133,25 @@
    "relevance": 4,
    "trend": 0.14,
    "firstSeen": "2026-10-29",
-   "score": 3.54
+   "score": 3.21
+  },
+  {
+   "id": "ae519a246ba3",
+   "title": "nautnhanahp-design/payback-coupon-bot: Payback Coupon Activator 2026: Community-Driven Windows Playwright Automation for Coupons",
+   "url": "https://github.com/nautnhanahp-design/payback-coupon-bot",
+   "source": "GitHub",
+   "author": "nautnhanahp-design",
+   "date": "2026-10-29",
+   "topic": "Testing",
+   "lang": "en",
+   "summary": "Payback Coupon Activator 2026: Community-Driven Windows Playwright Automation for Coupons",
+   "image": "https://opengraph.githubassets.com/1/nautnhanahp-design/payback-coupon-bot",
+   "why": "82 stars on GitHub; Testing keywords in the title",
+   "weight": 0.9,
+   "relevance": 2,
+   "trend": 0.63,
+   "firstSeen": "2026-10-30",
+   "score": 3.21
   },
   {
    "id": "7a35e607d90c",
@@ -133,7 +169,7 @@
    "relevance": 2,
    "trend": 0.37,
    "firstSeen": "2026-10-29",
-   "score": 3.11
+   "score": 2.82
   },
   {
    "id": "f1edc327d355",
@@ -151,7 +187,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-29",
-   "score": 3.05
+   "score": 2.77
   },
   {
    "id": "4b2b1a0f47ee",
@@ -169,7 +205,43 @@
    "relevance": 3,
    "trend": 0,
    "firstSeen": "2026-10-29",
-   "score": 2.96
+   "score": 2.68
+  },
+  {
+   "id": "f041d99d423e",
+   "title": "Supporting a shared AI training control for websites",
+   "url": "https://developers.google.com/search/blog/2026/10/ai-training-control",
+   "source": "Google Search Central",
+   "author": "",
+   "date": "2026-10-30",
+   "topic": "SEO",
+   "lang": "en",
+   "summary": "Today, we're announcing our plans to support a shared AI training control in robots.txt. This will help websites express their AI training preferences across multiple AI providers in a single step and is based on work from the AIPREF working group at the Internet Engineering Task Force (IETF). This builds on our long history of providing website owners with clear controls, including through…",
+   "image": "https://developers.google.com/static/search/blog/images/social-share-blog.png",
+   "why": "",
+   "weight": 1.4,
+   "relevance": 1,
+   "trend": 0,
+   "firstSeen": "2026-10-30",
+   "score": 2.59
+  },
+  {
+   "id": "22232c7a4106",
+   "title": "How To Analyze Server Logs for AI Search",
+   "url": "https://moz.com/blog/analyze-log-files-ai-search",
+   "source": "Moz",
+   "author": "Zach Chahalis",
+   "date": "2026-10-29",
+   "topic": "GEO",
+   "lang": "en",
+   "summary": "Learn how to find AI crawler requests in server logs and fix pages that crawlers cannot read",
+   "image": "https://moz.com/images/blog/Blog-OG-images/How-To-Analyze-Server-Logs-for-AI-Search-OG-Image.png?w=1200&h=630&q=82&auto=format&fit=crop&dm=1793109722&s=b0071b9a0030b67cb45cf2abb3dc1952",
+   "why": "GEO keywords in the title",
+   "weight": 1,
+   "relevance": 2,
+   "trend": 0,
+   "firstSeen": "2026-10-30",
+   "score": 2.52
   },
   {
    "id": "f1d355db7dca",
@@ -187,25 +259,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-29",
-   "score": 2.77
-  },
-  {
-   "id": "535237f9af98",
-   "title": "Sagabringer/ai-resocket-test-architect: AI-Driven Visual & Functional QA Agent powered by Gemini Multimodal Structured Outputs & Terminal CLI",
-   "url": "https://github.com/Sagabringer/ai-resocket-test-architect",
-   "source": "GitHub",
-   "author": "Sagabringer",
-   "date": "2026-10-28",
-   "topic": "Testing",
-   "lang": "en",
-   "summary": "AI-Driven Visual & Functional QA Agent powered by Gemini Multimodal Structured Outputs & Terminal CLI",
-   "image": "https://opengraph.githubassets.com/1/Sagabringer/ai-resocket-test-architect",
-   "why": "32 stars on GitHub; Testing keywords in the title",
-   "weight": 0.9,
-   "relevance": 2,
-   "trend": 0.28,
-   "firstSeen": "2026-10-29",
-   "score": 2.68
+   "score": 2.52
   },
   {
    "id": "1027734ce2cf",
@@ -223,7 +277,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-28",
-   "score": 2.51
+   "score": 2.28
   },
   {
    "id": "fb8a044b4619",
@@ -241,43 +295,25 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-29",
-   "score": 2.5
+   "score": 2.26
   },
   {
-   "id": "9d4fed5c4d57",
-   "title": "Your calculator returns nothing to crawlers. Here's how I fixed it with Playwright.",
-   "url": "https://dev.to/jianzhujisuan/your-calculator-returns-nothing-to-crawlers-heres-how-i-fixed-it-with-playwright-108o",
+   "id": "225baf594319",
+   "title": "Stop Scraping DOMs When JSON APIs Are Hiding in Plain Sight: Benchmarks with Async Python & Playwright",
+   "url": "https://dev.to/tthanh2k6/stop-scraping-doms-when-json-apis-are-hiding-in-plain-sight-benchmarks-with-async-python--5bia",
    "source": "DEV",
-   "author": "Jianzhujisuan",
-   "date": "2026-10-29",
+   "author": "Trung Thanh Tran",
+   "date": "2026-10-30",
    "topic": "Testing",
    "lang": "en",
-   "summary": "Client-side calculator pages ship an empty div in their HTML source. bingbot doesn't run JavaScript, so it indexes a blank page. A build-time Playwright prerender fixes it — and there are three traps you'll hit.",
-   "image": "https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fop6d35zwzl9aawd2gbz8.png",
-   "why": "1 reactions on DEV; Testing keywords in the title",
+   "summary": "Every week I audit broken data pipelines where an engineering team is spending hundreds of dollars a...",
+   "image": "https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fnq6jav3p6srbrbc3vsk7.png",
+   "why": "Testing keywords in the title",
    "weight": 0.8,
    "relevance": 2,
-   "trend": 0.05,
-   "firstSeen": "2026-10-29",
-   "score": 2.29
-  },
-  {
-   "id": "4709a7cf6225",
-   "title": "Bitly’s New Data Says SEOs Are Half Right About Short Links via @sejournal, @gregjarboe",
-   "url": "https://www.searchenginejournal.com/bitlys-new-data-says-seos-are-half-right-about-short-links/593983/",
-   "source": "Search Engine Journal",
-   "author": "Greg Jarboe",
-   "date": "2026-10-28",
-   "topic": "SEO",
-   "lang": "en",
-   "summary": "Bitly's survey shows why SEOs should look beyond short links to fix mismatched landing pages and rethink what click-through rates reveal. The post Bitly’s New Data Says SEOs Are Half Right About Short Links appeared first on Search Engine Journal .",
-   "image": "https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/bitly-data-206.png",
-   "why": "SEO keywords in the title",
-   "weight": 0.9,
-   "relevance": 2,
    "trend": 0,
-   "firstSeen": "2026-10-29",
-   "score": 2.26
+   "firstSeen": "2026-10-30",
+   "score": 2.22
   },
   {
    "id": "fcee1d5d3580",
@@ -295,25 +331,25 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-28",
-   "score": 2.26
+   "score": 2.05
   },
   {
-   "id": "0d9e5fe6f260",
-   "title": "HubSpot Lost 80% Of Its Traffic – CMO Kipp Bodnar Explains Why Revenue Kept Growing via @sejournal, @gregjarboe",
-   "url": "https://www.searchenginejournal.com/hubspot-lost-80-of-its-traffic-cmo-kipp-bodnar-explains-why-revenue-kept-growing/594004/",
+   "id": "4bf96b0182de",
+   "title": "The Link Building Graveyard: What To Bury & What Still Wins via @sejournal, @hethr_campbell",
+   "url": "https://www.searchenginejournal.com/the-link-building-graveyard-what-to-bury-what-still-wins-recap/593932/",
    "source": "Search Engine Journal",
-   "author": "Greg Jarboe",
-   "date": "2026-10-29",
+   "author": "Heather Campbell",
+   "date": "2026-10-30",
    "topic": "SEO",
    "lang": "en",
-   "summary": "HubSpot's traffic collapse shows why SEOs need to measure revenue per visit, track AI referral conversions, and build audiences beyond Google. The post HubSpot Lost 80% Of Its Traffic – CMO Kipp Bodnar Explains Why Revenue Kept Growing appeared first on Search Engine Journal .",
-   "image": "https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/husbpot-traffic-93.png",
-   "why": "SEO keywords in the summary",
+   "summary": "Resolve's Michael Johnson outlined a keep-or-cut approach to link building, from qualifying publishers and earning roundup placements to creating linkable assets and a 90-day execution plan. The post The Link Building Graveyard: What To Bury & What Still Wins appeared first on Search Engine Journal .",
+   "image": "https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/resolve-link-building-graveyard-on-demand-sej.png",
+   "why": "",
    "weight": 0.9,
    "relevance": 1,
    "trend": 0,
-   "firstSeen": "2026-10-29",
-   "score": 1.66
+   "firstSeen": "2026-10-30",
+   "score": 1.67
   }
  ]
 }
