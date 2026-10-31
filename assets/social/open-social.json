@@ -201,6 +201,26 @@
     "checked": "2026-10-30T18:53:03.709Z"
    }
   ],
+  "compare-2026-11/06-quiz-govuk-usagov": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mz6zxxn4um26",
+    "at": "2026-10-31T19:33:12.600Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mz6zxxn4um26",
+    "checked": "2026-10-31T19:33:14.633Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117537190541802702",
+    "at": "2026-10-31T19:33:16.078Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117537190541802702",
+    "checked": "2026-10-31T19:33:17.780Z"
+   }
+  ],
   "digest-2026-10-30/01-this-week": [
    {
     "channel": "bluesky",
