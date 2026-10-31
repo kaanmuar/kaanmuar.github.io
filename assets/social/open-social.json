@@ -21,6 +21,26 @@
     "checked": "2026-10-28T21:54:29.544Z"
    }
   ],
+  "auto-2026-10-24/02-u-colombia-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mz6lu3lqf52i",
+    "at": "2026-10-31T15:20:30.175Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mz6lu3lqf52i",
+    "checked": "2026-10-31T15:20:32.107Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117536196854425042",
+    "at": "2026-10-31T15:20:33.654Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117536196854425042",
+    "checked": "2026-10-31T15:20:35.191Z"
+   }
+  ],
   "auto-2026-10-25/01-u-kemik-gt": [
    {
     "channel": "bluesky",
