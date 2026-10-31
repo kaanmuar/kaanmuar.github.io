@@ -5,9 +5,173 @@
     <link>https://carlosandmunoz.com/qa-review-social-fr.html</link>
     <description>Chaque publication de QA-lab URL Review : conseils, vraies revues de sites et clips courts.</description>
     <language>fr</language>
-    <lastBuildDate>Fri, 30 Oct 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Sat, 31 Oct 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-fr.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-fr.html</link></image>
+    <item>
+      <title>lenovo.com: 67. Le point faible : la redirection https.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-22/09-u-lenovo-com-fr.html</link>
+      <guid isPermaLink="false">auto-2026-10-22/09-u-lenovo-com-fr</guid>
+      <pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revue de site</category>
+      <category>Requested</category>
+      <description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais le http simple sert le site sans rediriger.
+
+La leçon pour chaque équipe : Redirigez chaque requête http vers https avec un 301 permanent, puis ajoutez HSTS.
+
+Une analyse automatisée des pages publiques, le 21 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-lenovo-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-lenovo-com
+
+#WebSecurity #HTTPS #Redirects #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/09-u-lenovo-com.jpg" length="236469" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/09-u-lenovo-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>uniminuto.edu: 63. Le point faible : les libellés de formulaire.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-22/10-u-uniminuto-edu-fr.html</link>
+      <guid isPermaLink="false">auto-2026-10-22/10-u-uniminuto-edu-fr</guid>
+      <pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revue de site</category>
+      <category>Requested</category>
+      <description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais 213 champs de formulaire n’ont pas de libellé.
+
+La leçon pour chaque équipe : Donnez à chaque champ un libellé visible, relié par for et id. Les lecteurs d’écran l’annoncent, et la zone tactile s’agrandit.
+
+Une analyse automatisée des pages publiques, le 21 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-uniminuto-edu&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uniminuto-edu
+
+#Accessibility #Forms #A11y #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/10-u-uniminuto-edu.jpg" length="239399" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/10-u-uniminuto-edu.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>3 concurrents naturels. subastasventura.com est en tête : 76.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-25/06-vs-subastasventura-com-fr.html</link>
+      <guid isPermaLink="false">auto-2026-10-25/06-vs-subastasventura-com-fr</guid>
+      <pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revue de site</category>
+      <category>Versus</category>
+      <description>mapfre.com.mx mène en SEO et en GEO ; subastasventura.com mène en analytics, sécurité, accessibilité et performance.
+
+La leçon pour chaque équipe : Comparez-vous aux sites auxquels vos visiteurs vous comparent, pas à un score parfait : l’écart qui vous coûte, c’est celui qu’un concurrent a déjà comblé.
+
+Analyses automatisées des pages publiques de subastasventura.com, sothebys.com, mapfre.com.mx, le 24 oct. 2026 : des concurrents naturels repérés sur le web public par le tour des concurrents de QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-subastasventura-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-subastasventura-com
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#SEO #Playwright #WebPerformance #QA #WebPerf #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/06-vs-subastasventura-com.jpg" length="234241" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/06-vs-subastasventura-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>montesofia.com: 45. Le point faible : l’intégration en iframe.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-26/05-u-montesofia-com-fr.html</link>
+      <guid isPermaLink="false">auto-2026-10-26/05-u-montesofia-com-fr</guid>
+      <pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revue de site</category>
+      <category>Requested</category>
+      <description>Chaque lien externe qui a été vérifié a répondu, et les robots de réponse et de recherche IA peuvent lire la page de démarrage. Mais d’autres sites peuvent intégrer la page en iframe.
+
+La leçon pour chaque équipe : Envoyez frame-ancestors 'self' dans la CSP, ou X-Frame-Options: SAMEORIGIN, pour que d’autres sites ne puissent pas intégrer vos pages en iframe.
+
+Une analyse automatisée des pages publiques, le 25 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-montesofia-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-montesofia-com
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/05-u-montesofia-com.jpg" length="235573" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/05-u-montesofia-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>samsung.com: 68. Le point faible : Rôles ARIA.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-27/04-u-samsung-com-fr.html</link>
+      <guid isPermaLink="false">auto-2026-10-27/04-u-samsung-com-fr</guid>
+      <pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revue de site</category>
+      <category>Requested</category>
+      <description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais certains rôles ARIA doivent être contenus dans des parents précis.
+
+La leçon pour chaque équipe : Utilisez d'abord les éléments HTML natifs. Lorsque vous utilisez des rôles ARIA, imbriquez-les comme le rôle l'exige.
+
+Une analyse automatisée des pages publiques, le 21 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-samsung-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-samsung-com
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #Automation #QA #ARIA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/04-u-samsung-com.jpg" length="236270" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/04-u-samsung-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>GOV.UK ou USA.gov : quel portail national a obtenu le meilleur score ?</title>
+      <link>https://carlosandmunoz.com/social/compare-2026-11/06-quiz-govuk-usagov-fr.html</link>
+      <guid isPermaLink="false">compare-2026-11/06-quiz-govuk-usagov-fr</guid>
+      <pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Quiz</category>
+      <category>National</category>
+      <description>Deux portails gouvernementaux nationaux, chacun bâti sur un design system public, 20 pages chacun, analysés en octobre 2026.
+
+Votre pronostic : Faites votre pronostic. La réponse, avec les scores des six domaines, arrive demain.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=quiz-govuk-usagov
+
+#WebQuality #Playwright #AI #QA #Quiz #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/06-quiz-govuk-usagov.jpg" length="244806" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/06-quiz-govuk-usagov.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Un seul en-tête. 180 jours de HTTPS seulement.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/11-hsts-fr.html</link>
+      <guid isPermaLink="false">tips-2026-10/11-hsts-fr</guid>
+      <pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Conseil</category>
+      <category>Security</category>
+      <description>HSTS dit aux navigateurs de ne plus jamais charger votre site en HTTP simple. Une ligne de configuration suffit chez la plupart des hébergeurs.
+
+À essayer aujourd’hui : Lancez curl -sI sur votre domaine et cherchez strict-transport-security. S’il manque, ajoutez-le chez votre hébergeur ou votre CDN.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=hsts
+
+#WebSecurity #HTTPS #DevOps #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg" length="208110" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Un seul h1 par page, qui dit ce qu’est la page.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-fr.html</link>
+      <guid isPermaLink="false">tips-2026-10/12-one-h1-fr</guid>
+      <pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Conseil</category>
+      <category>SEO</category>
+      <description>Logos et slogans s’accaparent souvent le h1. Moteurs de recherche et lecteurs d’écran s’en servent pour comprendre la page.
+
+À essayer aujourd’hui : Lisez uniquement le h1 de vos dix pages principales. Un inconnu saurait-il ce qu’est chaque page ?
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=one-h1
+
+#SEO #Accessibility #Content #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg" length="218575" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Le poltergeist de la mise en page : le bouton a bougé tout seul.</title>
+      <link>https://carlosandmunoz.com/social/tips-horror-headers-2026-10/05-poltergeist-cls-fr.html</link>
+      <guid isPermaLink="false">tips-horror-headers-2026-10/05-poltergeist-cls-fr</guid>
+      <pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Série</category>
+      <category>Perf</category>
+      <description>Des images sans dimensions, des pubs tardives et des polices remplacées poussent le contenu vers le bas pendant qu’on lit et qu’on tape. Le Cumulative Layout Shift le mesure, et 0.1 ou moins est considéré comme bon.
+
+Exorcisez-le aujourd’hui : Chargez votre page sur une connexion lente et regardez-la se stabiliser. Donnez une largeur et une hauteur aux images, et réservez la place des pubs et des intégrations.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=horror-headers-2026-10&amp;utm_content=poltergeist-cls
+
+#Halloween #WebPerformance #SoftwareTesting #QA #CLS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/05-poltergeist-cls.jpg" length="238037" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-horror-headers-2026-10/feed/05-poltergeist-cls.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>avvillas.com.co: 57. Le point faible : les liens cassés.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/08-u-avvillas-com-co-fr.html</link>
@@ -769,151 +933,6 @@ Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
 https://www.youtube.com/shorts/tNdyq1I9A3A</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg" length="233946" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-23/feed/03-u-monsterenergy-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>colombia.com: 64. Le point faible : JSON-LD.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-24/02-u-colombia-com-fr.html</link>
-      <guid isPermaLink="false">auto-2026-10-24/02-u-colombia-com-fr</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>Requested</category>
-      <description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais 2 blocs JSON-LD ne s’analysent pas.
-
-La leçon pour chaque équipe : Validez chaque bloc JSON-LD après chaque mise en production. Une virgule égarée masque tout.
-
-Une analyse automatisée des pages publiques, le 23 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-colombia-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-colombia-com
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#StructuredData #Automation #SoftwareTesting #QA #SEO #QAlab
-
-https://www.youtube.com/shorts/i_D_7s6LLTU</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg" length="225859" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-24/feed/02-u-colombia-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>kemik.gt: 77. Le point faible : Accès des robots IA.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-25/01-u-kemik-gt-fr.html</link>
-      <guid isPermaLink="false">auto-2026-10-25/01-u-kemik-gt-fr</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>National</category>
-      <description>Chaque page a un titre, et les crawlers d’entraînement de modèles sont bloqués par choix. Mais 4 robots de recherche ou de réponses IA sont bloqués.
-
-La leçon pour chaque équipe : Décidez robot par robot dans robots.txt : autorisez les moteurs de réponse qui doivent vous citer, et ne bloquez que les robots d’entraînement.
-
-Une analyse automatisée des pages publiques, le 24 oct. 2026, sur l’un des sites les plus visités de son pays, issue du tour des pays de QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-kemik-gt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-kemik-gt
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#GEO #AI #SoftwareTesting #QA #AISearch #QAlab
-
-https://www.youtube.com/shorts/zvJ33npuc14</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg" length="203850" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/01-u-kemik-gt.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Berlin ou Vienne : quel portail de ville a obtenu le meilleur score ?</title>
-      <link>https://carlosandmunoz.com/social/compare-2026-11/01-quiz-berlin-vienna-fr.html</link>
-      <guid isPermaLink="false">compare-2026-11/01-quiz-berlin-vienna-fr</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Quiz</category>
-      <category>Local</category>
-      <description>Deux portails de capitales, 20 pages chacun, analysés par la même revue de pages publiques en octobre 2026. L'un d'eux mène d'un seul point.
-
-Votre pronostic : Faites votre pronostic. La réponse, avec les scores des six domaines, arrive demain.
-
-Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=quiz-berlin-vienna
-
-#WebQuality #Playwright #AI #QA #Quiz #QAlab
-
-https://www.youtube.com/shorts/7VTt0hdaHgg</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg" length="235218" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/01-quiz-berlin-vienna.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Tests d'accessibilité avec Playwright et axe-core</title>
-      <link>https://carlosandmunoz.com/social/pick/accessibility-testing-with-playwright-and-axe-core-fr.html</link>
-      <guid isPermaLink="false">pick/accessibility-testing-with-playwright-and-axe-core-fr</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Coup de cœur</category>
-      <category>Testing</category>
-      <description>Playwright pilote un vrai navigateur, et axe-core est le moteur de règles open source derrière la plupart des tests automatisés...
-
-Via DEV, par Vadym Liubyvyi, 2026-10-23.
-
-https://pandus.online/en/accessibility-testing-playwright</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fuby4o6yupct9t54dakv9.png" medium="image"/>
-    </item>
-    <item>
-      <title>La recherche IA n'est pas une distraction, c'est un canal de marque</title>
-      <link>https://carlosandmunoz.com/social/pick/ai-search-is-not-a-distraction-it-s-a-branding-channel-fr.html</link>
-      <guid isPermaLink="false">pick/ai-search-is-not-a-distraction-it-s-a-branding-channel-fr</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Coup de cœur</category>
-      <category>GEO</category>
-      <description>Trois études sont parues la même semaine, et toutes sont arrivées au même verdict. Marie Haynes a examiné 12 mois de données GA4 sur 100 sites et a constaté que ChatGPT envoyait 0.62% du trafic apporté par Google en organique. SEO Works a constaté que l'organique a généré 39 fois plus de trafic que les assistants IA et environ 30 […] L'article La recherche IA n'est pas une distraction, c'est un canal de marque est apparu en premier sur…
-
-Via iPullRank, par Mike King, 2026-10-22.
-
-https://ipullrank.com/ai-search-is-a-branding-channel</description>
-      <media:content url="https://ipullrank.com/wp-content/uploads/2026/10/image1.png" medium="image"/>
-    </item>
-    <item>
-      <title>La Chine a écrit le premier règlement GEO après un scandale télévisé – les SEO occidentaux devraient en prendre note via @sejournal, @MPentzek</title>
-      <link>https://carlosandmunoz.com/social/pick/china-wrote-the-first-geo-rulebook-after-a-tv-scandal-wester-fr.html</link>
-      <guid isPermaLink="false">pick/china-wrote-the-first-geo-rulebook-after-a-tv-scandal-wester-fr</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Coup de cœur</category>
-      <category>SEO</category>
-      <description>La norme GEO chinoise en cinq parties offre aux SEO occidentaux un cadre pratique pour mesurer la visibilité dans l'IA, évaluer les prestataires et distinguer l'optimisation de la manipulation. L'article La Chine a écrit le premier règlement GEO après un scandale télévisé – les SEO occidentaux devraient en prendre note est apparu en premier sur Search Engine Journal.
-
-Via Search Engine Journal, par Marcus Pentzek, 2026-10-21.
-
-https://www.searchenginejournal.com/china-wrote-the-first-geo-rulebook-after-a-tv-scandal-western-seos-should-take-notes/593199/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/china-geo-rulebook-780.png" medium="image"/>
-    </item>
-    <item>
-      <title>CypressConf 2026: Répondre au signal</title>
-      <link>https://carlosandmunoz.com/social/pick/cypressconf-2026-answering-the-signal-fr.html</link>
-      <guid isPermaLink="false">pick/cypressconf-2026-answering-the-signal-fr</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Coup de cœur</category>
-      <category>Testing</category>
-      <description>La CypressConf 2026, c'est terminé ! Merci à toutes celles et ceux qui nous ont rejoints pour trois jours de conférences et d'ateliers pratiques. Le thème de cette année, The Signal Is Up, posait une question que toutes les équipes connaissent bien : comment savoir qu'une version est prête quand le build est vert ? De la part des fondateurs : La qualité à l'ère du SDLC agentique Lors de la session des fondateurs, Brian Mann, fondateur de Cypress.io, et Jennifer Shehane, cofondatrice…
-
-Via Cypress, par Melissa Milligan, 2026-10-26.
-
-https://www.cypress.io/blog/cypressconf-2026-answering-the-signal/</description>
-      <media:content url="https://storage.ghost.io/c/12/89/12899ca1-4786-4eea-b7e1-9c5268baa48a/content/images/2026/10/cypressconf-2026-blog-header-2x.png" medium="image"/>
-    </item>
-    <item>
-      <title>Emoji et accessibilité : Comment les lecteurs d'écran annoncent les emoji et comment les utiliser avec discernement</title>
-      <link>https://carlosandmunoz.com/social/pick/emoji-and-accessibility-how-screen-readers-announce-emoji-an-fr.html</link>
-      <guid isPermaLink="false">pick/emoji-and-accessibility-how-screen-readers-announce-emoji-an-fr</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Coup de cœur</category>
-      <category>Accessibility</category>
-      <description>Via DEV, par Ling Chen, 2026-10-25.
-
-https://dev.to/lingchen865dev/emoji-and-accessibility-how-screen-readers-announce-emoji-and-how-to-use-them-considerately-3mb0</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fk840xdek9o2feis3n9z2.png" medium="image"/>
-    </item>
-    <item>
-      <title>ethanplusai/astro-conversion-kit: Des Agent Skills qui convertissent un site WordPress (ou tout site en ligne) en site Astro statique avec une parité d'URL, de SEO, de contenu et au pixel près, puis l'accompagnent jusqu'au lancement. Fonctionne…</title>
-      <link>https://carlosandmunoz.com/social/pick/ethanplusai-astro-conversion-kit-agent-skills-that-convert-a-fr.html</link>
-      <guid isPermaLink="false">pick/ethanplusai-astro-conversion-kit-agent-skills-that-convert-a-fr</guid>
-      <pubDate>Mon, 26 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Coup de cœur</category>
-      <category>SEO</category>
-      <description>Des Agent Skills qui convertissent un site WordPress (ou tout site en ligne) en site Astro statique avec une parité d'URL, de SEO, de contenu et au pixel près, puis l'accompagnent jusqu'au lancement. Fonctionne dans Claude Code, Codex et tout agent qui lit SKILL.md.
-
-Via GitHub, par ethanplusai, 2026-10-22.
-
-https://github.com/ethanplusai/astro-conversion-kit</description>
-      <media:content url="https://opengraph.githubassets.com/1/ethanplusai/astro-conversion-kit" medium="image"/>
     </item>
   </channel>
 </rss>
