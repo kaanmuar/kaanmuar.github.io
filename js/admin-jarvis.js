@@ -417,7 +417,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                     visits: C.outreachVisits(S.rows.events).total,
                     links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10) } : null
                 } : null,
-                engagement: e.engagement && e.engagement.ok ? { paused: e.engagement.paused, totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`) } : null,
+                engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`) } : null,
                 waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
             }
         };
@@ -1207,7 +1207,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     function engagementView() {
         const g = S.external.engagement;
-        if (!g || !g.ok) return `<div class="jv-grid">${briefPanel('engagement')}${panel('engagement-wait', 'Engagement', waiting('engagement', 'Reading the engagement scout…'), { wide: true })}</div>`;
+        if (!g || !g.ok || !g.report) return `<div class="jv-grid">${briefPanel('engagement')}${panel('engagement-wait', 'Engagement', waiting('engagement', 'Reading the engagement scout…'), { wide: true })}</div>`;
         const r = g.report;
         const t = r.totals;
         const net = (k) => (g.networks.find((n) => n.network === k) || {}).name || k;
@@ -1282,6 +1282,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const g = S.external.engagement;
         const d = g && g.waiting ? g.waiting.find((x) => x.key === key) : null;
         if (!d) return;
+        if (decision === 'dismiss' && !confirmRun('dismiss this reply draft')) return;
         const text = S.egDrafts[key] !== undefined ? S.egDrafts[key].trim() : d.actions.reply.draft;
         const edited = decision === 'approve' && text !== d.actions.reply.draft;
         S.pending['eg:' + key] = true;
