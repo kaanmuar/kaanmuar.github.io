@@ -381,6 +381,14 @@ def ask_panel(s, code):
     return swap(s, f'placeholder="{en["placeholder"]}"', f'placeholder="{t["placeholder"]}"')
 
 
+# The hero's link to book.html (#1971).
+BOOK = {
+    "es": "Agenda una llamada de 15 min",
+    "pt": "Agende uma conversa de 15 min",
+    "de": "15-Minuten-Gespräch buchen",
+    "fr": "Réserver un appel de 15 min",
+    "it": "Prenota una chiamata di 15 minuti",
+}
 FACT_LABELS = ["kinds of cases", "frameworks you already know", "address to begin", "pages read so far", "reviews run so far"]
 
 
@@ -394,6 +402,10 @@ def facts(s, code):
     sample = COPY[code]["gate"]["sample"]
     s = retag(s, '<button class="stage-link" id="stage-sample-open" type="button">', "</button>", sample["button"], code)
     s = retag(s, '<a class="stage-link" id="stage-guide" href="qa-review-guide.html">', "</a>", sample["tour"], code)
+    book = '<a class="stage-link" id="stage-book" href="book.html?type=intro&amp;utm_source=qa-review&amp;utm_campaign=review-hero" data-analytics-event="open_booking" data-analytics-category="Navigation" data-analytics-label="Review hero">'
+    local = book.replace("type=intro&amp;", f"type=intro&amp;lang={code}&amp;")
+    s = swap(s, book, local)
+    s = retag(s, local, "</a>", BOOK[code], code)
     return retag(s, '<a class="live-jump" href="#live-reports">', "</a>", FACTS[code][-1], code)
 
 

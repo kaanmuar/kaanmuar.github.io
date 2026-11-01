@@ -774,6 +774,17 @@
       : "<li class=\"muted\">No public write-up was retrieved on this pass.</li>";
   }
 
+  // The walkthrough call (#1971): book.html with this report, in the page language.
+  function paintCall(report, sample) {
+    const box = document.getElementById("report-call");
+    if (!box) return;
+    box.hidden = Boolean(sample) || !report || !report.id;
+    if (box.hidden) return;
+    const query = new URLSearchParams({ type: "walkthrough", lang: String(document.documentElement.lang || "en").slice(0, 2), review: report.id, utm_source: "qa-review", utm_campaign: "report" });
+    if (report.host) query.set("host", report.host);
+    document.getElementById("report-call-link").href = "book.html?" + query.toString();
+  }
+
   function paintCredential(payload) {
     const box = document.getElementById("credential-run");
     if (!box) return;
@@ -2664,6 +2675,7 @@
     paintAlarm(report, paid || alertsOpen(report.id));
     paintMentions(report);
     paintCredential(payload);
+    paintCall(report, sample);
     const names = ["All"].concat(layers.map((pair) => pair[0]));
     document.getElementById("layer-filters").innerHTML = names.map((name) =>
       '<button type="button" data-layer="' + esc(name) + '"' + (name === layer ? ' class="on"' : "") + ">" + esc(name === "All" ? name : layerName(name)) + "</button>"

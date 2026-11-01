@@ -1,10 +1,10 @@
-// Guards the CV contact and rating forms: a Cloudflare Turnstile token checked at Siteverify, and a per-visitor limit.
+// Guards the CV contact and rating forms and the booking page: a Cloudflare Turnstile token checked at Siteverify, and a per-visitor limit.
 const crypto = require("crypto");
 
 const SITEVERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 // Production hostnames only: a token minted on localhost must not post to the live inbox.
 const HOSTNAMES = new Set(["carlosandmunoz.com", "www.carlosandmunoz.com"]);
-const ACTIONS = new Set(["message", "rating"]);
+const ACTIONS = new Set(["message", "rating", "booking"]);
 const LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const LIMIT_POSTS = 5;
 

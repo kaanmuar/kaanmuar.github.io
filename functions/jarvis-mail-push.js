@@ -84,6 +84,21 @@ function ratingMessage(id, data) {
   };
 }
 
+// A call booked on book.html (#1971). `when` is the start already written in Bogota time.
+function callMessage(id, b, when) {
+  const d = b || {};
+  return {
+    kind: "inbox",
+    title: "Call booked · " + (clip(d.name, 60) || "Someone") + " · " + clip(when, 40),
+    body: [clip(d.label, 60), clip(d.host, 80), clip(d.note, 160)].filter(Boolean).join(" · ") || "(no note)",
+    lines: [clip(d.email, 120), d.meet ? "Meet: " + clip(d.meet, 80) : ""].filter(Boolean),
+    tab: "business",
+    tag: "jarvis-call-" + clip(id, 60),
+    ref: "call:" + clip(id, 60),
+    actions: []
+  };
+}
+
 /** The address a reply asked the notice to go to, from ownerReplies.plan's "resend:<email>". */
 function proposedAddress(row) {
   const p = String((row && row.propose) || "");
@@ -228,4 +243,4 @@ function socialDue(pending, seen, max) {
   return (pending || []).filter((p) => p && p.id && !known.has(p.id)).slice(0, max || 3);
 }
 
-module.exports = { ACTS, PROBLEMS, parseAct, proposedAddress, messageMessage, ratingMessage, ownerReplyMessage, rerunMessage, comparisonMessage, runMessage, backupMessage, opsMessage, noticeMessage, socialMessage, socialDue };
+module.exports = { ACTS, PROBLEMS, parseAct, proposedAddress, messageMessage, ratingMessage, callMessage, ownerReplyMessage, rerunMessage, comparisonMessage, runMessage, backupMessage, opsMessage, noticeMessage, socialMessage, socialDue };
