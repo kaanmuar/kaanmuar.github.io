@@ -1,0 +1,42 @@
+name: Pre-flight index
+# Keeps the pre-flight brain (#1970, workers/preflight) current: changed files on every push to main,
+# tickets updated in the last two days every night, everything on demand.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+    inputs:
+      full:
+        description: Re-index every file and ticket
+        type: boolean
+        default: false
+
+concurrency:
+  group: preflight-index
+  cancel-in-progress: false
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PREFLIGHT_TOKEN: ${{ secrets.PREFLIGHT_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Changed files
+        if: github.event_name == 'push'
+        run: node scripts/preflight-index.js --changed "${{ github.event.before }}" "${{ github.sha }}"
+      - name: Recent tickets
+        if: github.event_name == 'schedule'
+        run: node scripts/preflight-index.js --issues-since "$(date -u -d '2 days ago' +%FT%TZ)"
+      - name: Everything
+        if: github.event_name == 'workflow_dispatch' && inputs.full
+        run: node scripts/preflight-index.js --full
