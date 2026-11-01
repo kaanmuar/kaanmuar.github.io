@@ -5,6 +5,7 @@
 
 const base = require("./url-review-customer-mail");
 const fusion = require("./url-review-fusion");
+const booking = require("./booking");
 
 const { SITE, POSTAL, AREAS, esc, fill, button, shell } = base;
 const { FUSION, TEXT, ON_NIGHT } = fusion;
@@ -22,6 +23,7 @@ const COPY = {
     unlist: "Remove {host} from Live Reports",
     unlistNote: "It leaves the public page with the next daily update, and later reviews of {host} are not published either.",
     view: "See the public page",
+    call: "Questions about the scores? Book a 15-min call with Carlos",
     source: { "security.txt": "the site's security.txt", schema: "the site's structured data", llms: "the site's llms.txt", rdap: "the domain's registration record (RDAP)", dmarc: "the domain's DMARC record", soa: "the domain's DNS records", search: "public web search results for {domain}", page: "{url}" },
     why: "You get this single notice because {email} is public: we found it in {source}. We send at most one per domain every six months, and we never fill in contact forms.",
     forwardWhy: "You get this notice because someone at {domain}, replying to our first notice, asked us to send it to {email}.",
@@ -68,6 +70,7 @@ const COPY = {
     unlist: "Retirar {host} de Live Reports",
     unlistNote: "Sale de la página pública con la siguiente actualización diaria, y las revisiones futuras de {host} tampoco se publican.",
     view: "Ver la página pública",
+    call: "¿Dudas sobre los puntajes? Agenda una llamada de 15 min con Carlos",
     source: { "security.txt": "el security.txt del sitio", schema: "los datos estructurados del sitio", llms: "el llms.txt del sitio", rdap: "el registro del dominio (RDAP)", dmarc: "el registro DMARC del dominio", soa: "los registros DNS del dominio", search: "resultados públicos de búsqueda web para {domain}", page: "{url}" },
     why: "Recibes este único aviso porque {email} es público: lo encontramos en {source}. Enviamos como máximo uno por dominio cada seis meses y nunca llenamos formularios de contacto.",
     forwardWhy: "Recibes este aviso porque alguien de {domain}, al responder nuestro primer aviso, nos pidió enviarlo a {email}.",
@@ -114,6 +117,7 @@ const COPY = {
     unlist: "Retirar {host} do Live Reports",
     unlistNote: "Ele sai da página pública na próxima atualização diária, e as próximas revisões de {host} também não são publicadas.",
     view: "Ver a página pública",
+    call: "Dúvidas sobre as notas? Agende uma conversa de 15 min com o Carlos",
     source: { "security.txt": "o security.txt do site", schema: "os dados estruturados do site", llms: "o llms.txt do site", rdap: "o registro do domínio (RDAP)", dmarc: "o registro DMARC do domínio", soa: "os registros DNS do domínio", search: "resultados públicos de busca na web para {domain}", page: "{url}" },
     why: "Você recebe este único aviso porque {email} é público: nós o encontramos em {source}. Enviamos no máximo um por domínio a cada seis meses e nunca preenchemos formulários de contato.",
     forwardWhy: "Você recebe este aviso porque alguém de {domain}, ao responder nosso primeiro aviso, pediu que o enviássemos para {email}.",
@@ -160,6 +164,7 @@ const COPY = {
     unlist: "{host} von Live Reports entfernen",
     unlistNote: "Die Seite verschwindet mit dem nächsten täglichen Update, und spätere Prüfungen von {host} werden auch nicht veröffentlicht.",
     view: "Öffentliche Seite ansehen",
+    call: "Fragen zu den Werten? Buchen Sie ein 15-Minuten-Gespräch mit Carlos",
     source: { "security.txt": "der security.txt der Website", schema: "den strukturierten Daten der Website", llms: "der llms.txt der Website", rdap: "dem Registrierungseintrag der Domain (RDAP)", dmarc: "dem DMARC-Eintrag der Domain", soa: "den DNS-Einträgen der Domain", search: "öffentlichen Websuchergebnissen zu {domain}", page: "{url}" },
     why: "Sie erhalten diesen einen Hinweis, weil {email} öffentlich ist: Wir haben die Adresse in {source} gefunden. Wir senden höchstens einen pro Domain alle sechs Monate und füllen nie Kontaktformulare aus.",
     forwardWhy: "Sie erhalten diesen Hinweis, weil jemand von {domain} in einer Antwort auf unseren ersten Hinweis gebeten hat, ihn an {email} zu senden.",
@@ -206,6 +211,7 @@ const COPY = {
     unlist: "Retirer {host} de Live Reports",
     unlistNote: "La page publique disparaît à la prochaine mise à jour quotidienne, et les revues suivantes de {host} ne sont pas publiées non plus.",
     view: "Voir la page publique",
+    call: "Des questions sur les scores ? Réservez un appel de 15 min avec Carlos",
     source: { "security.txt": "le security.txt du site", schema: "les données structurées du site", llms: "le llms.txt du site", rdap: "la fiche d'enregistrement du domaine (RDAP)", dmarc: "l'enregistrement DMARC du domaine", soa: "les enregistrements DNS du domaine", search: "les résultats publics de recherche web pour {domain}", page: "{url}" },
     why: "Vous recevez cet avis unique parce que {email} est public : nous l'avons trouvé dans {source}. Nous en envoyons au plus un par domaine tous les six mois, et nous ne remplissons jamais de formulaire de contact.",
     forwardWhy: "Vous recevez cet avis parce qu'une personne de {domain}, en répondant à notre premier avis, nous a demandé de l'envoyer à {email}.",
@@ -252,6 +258,7 @@ const COPY = {
     unlist: "Togli {host} da Live Reports",
     unlistNote: "Esce dalla pagina pubblica con il prossimo aggiornamento giornaliero, e le revisioni successive di {host} non vengono pubblicate.",
     view: "Vedi la pagina pubblica",
+    call: "Domande sui punteggi? Prenota una chiamata di 15 minuti con Carlos",
     source: { "security.txt": "il security.txt del sito", schema: "i dati strutturati del sito", llms: "il llms.txt del sito", rdap: "la registrazione del dominio (RDAP)", dmarc: "il record DMARC del dominio", soa: "i record DNS del dominio", search: "i risultati pubblici di ricerca web per {domain}", page: "{url}" },
     why: "Ricevi questo unico avviso perché {email} è pubblico: l'abbiamo trovato in {source}. Ne inviamo al massimo uno per dominio ogni sei mesi e non compiliamo mai moduli di contatto.",
     forwardWhy: "Ricevi questo avviso perché qualcuno di {domain}, rispondendo al nostro primo avviso, ci ha chiesto di inviarlo a {email}.",
@@ -420,6 +427,7 @@ function noticeMail(notice, card, links, score) {
   const t = copyFor(notice.lang);
   const vars = { host: notice.host, domain: notice.domain, date: String(card.read || notice.reviewedAt || "").slice(0, 10) };
   const facts = healthFacts(score, card);
+  const callUrl = booking.bookUrl("intro", notice.lang, { host: notice.host, from: "owner-notice" });
   const inner = header(fill(t.title, vars)) +
     "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:22px 24px 22px;\">" +
     para(fill(t.lead, vars)) +
@@ -429,6 +437,7 @@ function noticeMail(notice, card, links, score) {
     para(fill(t.claimNote, vars), "font-size:13px;line-height:19px;color:" + TEXT.muted + ";margin:6px 0 8px;") +
     para(fill(t.unlistNote, vars), "font-size:13px;line-height:19px;color:" + TEXT.muted + ";margin:0 0 12px;") +
     "<p style=\"margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;\"><a href=\"" + esc(links.live) + "\" style=\"color:" + TEXT.link + ";\">" + esc(t.view) + "</a></p>" +
+    "<p style=\"margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;\"><a href=\"" + esc(callUrl) + "\" style=\"color:" + TEXT.link + ";\">" + esc(t.call) + "</a></p>" +
     "</td></tr>";
   const text = [
     fill(t.title, vars), "",
@@ -437,7 +446,8 @@ function noticeMail(notice, card, links, score) {
     notice.critical ? t.critical : "",
     t.claim + ": " + links.claim, fill(t.claimNote, vars), "",
     fill(t.unlist, vars) + ": " + links.unlist, fill(t.unlistNote, vars), "",
-    t.view + ": " + links.live, "",
+    t.view + ": " + links.live,
+    t.call + ": " + callUrl, "",
     whyText(t, notice),
     t.stop + ": " + links.stop,
     "QA-lab URL Review · " + POSTAL

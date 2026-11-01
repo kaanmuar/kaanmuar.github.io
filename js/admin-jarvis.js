@@ -343,7 +343,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'calls'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -689,6 +689,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const social = socialVisits();
         const pp = okMoney ? mo.paypal || {} : {};
         return head + `<div class="jv-grid">${briefPanel('business')}
+            ${callsPanel()}
             ${panel('business-revenue', 'Revenue per day (USD)', okMoney ? (mo.daily.length ? area(mo.daily.map((d) => d.date), [{ name: 'USD', values: mo.daily.map((d) => d.usd), color: COLORS.green }]) : '<p class="jv-empty">No sales in this range.</p>') + bars(mo.byProvider, { color: COLORS.green, empty: 'No sales by provider yet.' }) : waiting('money', 'Reading payments…'), { wide: true, data: okMoney ? mo.daily : null, note: okMoney ? `Test payments are left out. ${fmt(mo.revenue.paidRuns)} paid review runs used credits bought earlier.` : '' })}
             ${panel('business-paypal', 'PayPal and Stripe', okMoney ? `<ul class="jv-facts"><li>Open PayPal disputes: <b>${pp.disputesOpen === null || pp.disputesOpen === undefined ? '—' : fmt(pp.disputesOpen)}</b></li>${pp.transactions ? `<li>PayPal in range: ${fmt(pp.transactions.count)} payments, ${fmt(pp.transactions.grossUsd)} USD gross, ${fmt(pp.transactions.feesUsd)} USD fees, <b>${fmt(pp.transactions.netUsd)} USD net</b></li>` : ''}<li>Refunded in range: <b>${fmt(mo.refundsUsd)} USD</b></li><li>Stripe: ${esc(mo.stripe.mode === 'live' ? 'live' : mo.stripe.mode === 'test' ? 'test key only, checkout uses PayPal' : 'not set up')}</li></ul>${needList(mo)}` : waiting('money', 'Asking PayPal…'))}
             ${panel('business-email', 'Email delivery (SendGrid)', okMail ? kpis([
@@ -701,6 +702,30 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${listPanel('business', 'social-visits', 'Visits that came from social', social, { color: COLORS.violet, empty: 'No visits from social links in this range.' })}
             ${okSocial && so.youtube && so.youtube.videos.length ? panel('business-youtube', `YouTube${so.youtube.views !== null ? ' (' + fmt(so.youtube.views) + ' views)' : ''}`, table([['Video', (v) => `<a href="https://youtu.be/${esc(v.id)}" target="_blank" rel="noopener">${esc(String(v.title || v.id).slice(0, 70))}</a>`], ['Views', (v) => v.views === undefined ? '—' : fmt(v.views)], ['Likes', (v) => v.likes === undefined ? '—' : fmt(v.likes)], ['Published', (v) => esc(when(v.published))]], so.youtube.videos), { wide: true, data: so.youtube.videos }) : ''}
         </div>`;
+    }
+
+    // Calls booked on book.html (#1971), and the Google Calendar they are read from and written to.
+    function callsPanel() {
+        const c = S.external.calls;
+        if (!c) return panel('business-calls', 'Calls', waiting('calls', 'Reading bookings…'), { wide: true });
+        if (!c.ok) return panel('business-calls', 'Calls', `<p class="jv-empty">${esc(c.error || 'Not loaded.')}</p>`, { wide: true });
+        const rows = c.upcoming || [];
+        const head = c.connected
+            ? `<p class="jv-note">Booking page <a href="${esc(c.page)}" target="_blank" rel="noopener">book.html</a> reads ${esc(c.account || 'your Google Calendar')}.${c.error ? ` <span class="jv-chip c-slow">${esc(c.error)}</span>` : ''} <button type="button" class="jv-link" data-act="calendar-connect">Reconnect</button></p>`
+            : `<p class="jv-empty">Google Calendar is not connected, so book.html shows booking as closed.</p><p><button type="button" class="jv-btn" data-act="calendar-connect">Connect Google Calendar</button></p>`;
+        return panel('business-calls', `Calls: ${fmt(rows.length)} ahead, ${fmt(c.bookedInRange)} booked in range`, head + table([
+            ['When', (r) => esc(when(r.start))],
+            ['Call', (r) => `${esc(r.label)} <span class="jv-note">${fmt(r.minutes)} min · ${esc(r.lang)}</span>`],
+            ['Who', (r) => `${esc(r.name)}<br><span class="jv-note">${esc(r.email)}${r.company ? ' · ' + esc(r.company) : ''}</span>`],
+            ['About', (r) => esc([r.host, r.note].filter(Boolean).join(' · ').slice(0, 140))],
+            ['Meet', (r) => (r.meet ? `<a href="${esc(r.meet)}" target="_blank" rel="noopener">Join</a>` : '—')]
+        ], rows, 'No calls ahead.'), { wide: true, data: rows });
+    }
+
+    async function calendarConnect() {
+        const out = await call('calendar-connect');
+        if (out.ok && out.url) window.open(out.url, '_blank', 'noopener');
+        else toast(out.error || 'Could not start the Google sign-in.', 7000);
     }
 
     // Social hub (#1420): the Buffer and Facebook queue per channel, the posting runs, and field-sweep proposals.
@@ -2147,7 +2172,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             'copy-link': () => copy(link(), 'Link copied.'), 'web-share': webShare, 'copy-brief': () => copy(markdown(), 'Briefing copied.'), email: emailBriefing,
             'export-json': exportAll, 'export-csv': () => run({ type: 'export', format: 'csv' }), 'export-png': () => run({ type: 'export', format: 'png' }),
             'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief,
-            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'social', 'notices']), 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop
+            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'social', 'notices']), 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop, 'calendar-connect': calendarConnect
         };
         if (acts[act]) acts[act]();
     });

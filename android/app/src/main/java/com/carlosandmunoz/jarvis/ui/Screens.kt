@@ -399,8 +399,9 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
 // ---------------------------------------------------------------- Business
 
 @Composable
-fun BusinessScreen(s: UiState) {
+fun BusinessScreen(s: UiState, vm: JarvisViewModel) {
     val snap = s.snapshot
+    CallsPanel(s, vm)
     val money = snap.ext("money")
     Panel("Revenue") {
         Needs(money)

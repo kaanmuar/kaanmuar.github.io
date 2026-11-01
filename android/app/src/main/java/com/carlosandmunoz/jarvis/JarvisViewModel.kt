@@ -260,6 +260,20 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Connect Google Calendar for book.html (#1971): Google's consent page opens in the browser. */
+    fun connectCalendar(open: (String) -> Unit) {
+        if (fixture != null) { say("Connect is off with a fixture."); return }
+        _state.update { it.copy(running = it.running + "calendar") }
+        viewModelScope.launch {
+            runCatching { api.call("calendar-connect", _state.value.days) }
+                .onSuccess { out ->
+                    _state.update { it.copy(running = it.running - "calendar") }
+                    out.str("url")?.let(open) ?: say(out.str("error") ?: "Google sent no sign-in link.")
+                }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - "calendar", toast = e.message ?: "Failed.") } }
+        }
+    }
+
     fun toastShown() = _state.update { it.copy(toast = null) }
     fun say(text: String) = _state.update { it.copy(toast = text) }
 

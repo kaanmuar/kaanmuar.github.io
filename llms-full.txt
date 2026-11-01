@@ -10,6 +10,7 @@ Full text for answer engines, in one file: https://carlosandmunoz.com/llms-full.
 - CV languages: [Spanish](https://carlosandmunoz.com/?lang=es), [Portuguese](https://carlosandmunoz.com/?lang=pt), [German](https://carlosandmunoz.com/?lang=de), [French](https://carlosandmunoz.com/?lang=fr), [Italian](https://carlosandmunoz.com/?lang=it)
 - [LinkedIn](https://www.linkedin.com/in/carlos-andres-m-2a60b8b/)
 - [Accessibility statement](https://carlosandmunoz.com/accessibility.html): the WCAG 2.2 AA target for the whole site, how it is checked, the known gaps, and how to report a barrier
+- [Schedule a call](https://carlosandmunoz.com/book.html): book a free time in Carlos's Google Calendar, in six languages: a 15-minute QA-lab URL Review intro, a 30-minute report walkthrough, a 30-minute call about a role, or a general 30-minute call. The invite comes with a Google Meet link.
 - Contact: the form on the CV, or kaanmuar@gmail.com.
 
 ## Free QA tools

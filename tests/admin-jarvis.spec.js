@@ -155,7 +155,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');

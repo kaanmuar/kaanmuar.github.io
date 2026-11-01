@@ -5,6 +5,7 @@
 
   const COPY = {
     en: {
+      callEyebrow: "Walkthrough", callTitle: "Go through this report with Carlos", callCopy: "A 30-minute video call on what the findings mean for your site and what to fix first.", callButton: "Book a 30-min walkthrough",
       dashEyebrow: "Run dashboard", dashTitle: "Report", captureNote: "This sheet does not include the report. The attempt is recorded with the review.",
       copyLink: "Copy link (opens for you)", caseExport: "Export and print test cases", export: "Export", text: "Text", printPdf: "Print or save as PDF",
       share: "Share", email: "Email", shareSheet: "Share sheet", close: "Close",
@@ -132,6 +133,7 @@
       }
     },
     es: {
+      callEyebrow: "Recorrido", callTitle: "Revisa este informe con Carlos", callCopy: "Una videollamada de 30 minutos sobre qué significan los hallazgos para tu sitio y qué corregir primero.", callButton: "Agenda un recorrido de 30 min",
       dashEyebrow: "Panel de la revisión", dashTitle: "Informe", captureNote: "Esta hoja no incluye el informe. El intento queda registrado con la revisión.",
       copyLink: "Copiar enlace (se abre para ti)", caseExport: "Exportar e imprimir casos de prueba", export: "Exportar", text: "Texto", printPdf: "Imprimir o guardar como PDF",
       share: "Compartir", email: "Correo", shareSheet: "Menú para compartir", close: "Cerrar",
@@ -261,6 +263,7 @@
       }
     },
     pt: {
+      callEyebrow: "Tour guiado", callTitle: "Veja este relatório com o Carlos", callCopy: "Uma videochamada de 30 minutos sobre o que os achados significam para o seu site e o que corrigir primeiro.", callButton: "Agende um tour de 30 min",
       dashEyebrow: "Painel da revisão", dashTitle: "Relatório", captureNote: "Esta folha não inclui o relatório. A tentativa fica registrada com a revisão.",
       copyLink: "Copiar link (abre para você)", caseExport: "Exportar e imprimir casos de teste", export: "Exportar", text: "Texto", printPdf: "Imprimir ou salvar como PDF",
       share: "Compartilhar", email: "Email", shareSheet: "Menu de compartilhamento", close: "Fechar",
@@ -391,6 +394,7 @@
       }
     },
     de: {
+      callEyebrow: "Durchgang", callTitle: "Gehen Sie diesen Bericht mit Carlos durch", callCopy: "Ein 30-minütiger Videoanruf dazu, was die Befunde für Ihre Website bedeuten und was zuerst zu beheben ist.", callButton: "30-Minuten-Durchgang buchen",
       dashEyebrow: "Prüfungs-Dashboard", dashTitle: "Bericht", captureNote: "Dieses Blatt enthält den Bericht nicht. Der Versuch wird mit der Prüfung gespeichert.",
       copyLink: "Link kopieren (öffnet sich für Sie)", caseExport: "Testfälle exportieren und drucken", export: "Exportieren", text: "Text", printPdf: "Drucken oder als PDF speichern",
       share: "Teilen", email: "E-Mail", shareSheet: "Teilen-Menü", close: "Schließen",
@@ -520,6 +524,7 @@
       }
     },
     fr: {
+      callEyebrow: "Visite guidée", callTitle: "Parcourez ce rapport avec Carlos", callCopy: "Un appel vidéo de 30 minutes sur ce que les constats signifient pour votre site et ce qu’il faut corriger en premier.", callButton: "Réserver une visite de 30 min",
       dashEyebrow: "Tableau de bord de l’analyse", dashTitle: "Rapport", captureNote: "Cette feuille n’inclut pas le rapport. La tentative est enregistrée avec l’analyse.",
       copyLink: "Copier le lien (s’ouvre pour vous)", caseExport: "Exporter et imprimer les cas de test", export: "Exporter", text: "Texte", printPdf: "Imprimer ou enregistrer en PDF",
       share: "Partager", email: "E-mail", shareSheet: "Menu de partage", close: "Fermer",
@@ -648,6 +653,7 @@
       }
     },
     it: {
+      callEyebrow: "Giro guidato", callTitle: "Guarda questo report con Carlos", callCopy: "Una videochiamata di 30 minuti su cosa significano i risultati per il tuo sito e cosa correggere per primo.", callButton: "Prenota un giro guidato di 30 minuti",
       dashEyebrow: "Pannello della revisione", dashTitle: "Report", captureNote: "Questo foglio non include il report. Il tentativo viene registrato con la revisione.",
       copyLink: "Copia link (si apre per te)", caseExport: "Esporta e stampa i casi di test", export: "Esporta", text: "Testo", printPdf: "Stampa o salva come PDF",
       share: "Condividi", email: "Email", shareSheet: "Menu di condivisione", close: "Chiudi",
