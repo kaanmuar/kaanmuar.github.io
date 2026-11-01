@@ -32,9 +32,11 @@ async function post(route, body) {
 
 function header(lines) {
   const top = [];
+  const MARKS = ["/**", "/*", "//", "*", "#", "<" + "!--"];
   for (const l of lines.slice(0, 20)) {
-    const m = l.match(/^\s*(?:\/\/|#(?!!)|\*|\/\*\*?|<!--)\s?(.*)$/);
-    if (m) { if (m[1].trim()) top.push(m[1].trim()); } else if (top.length || l.trim()) break;
+    const t = l.trim();
+    const mark = t.startsWith("#!") ? null : MARKS.find((m) => t.startsWith(m));
+    if (mark) { const text = t.slice(mark.length).trim(); if (text) top.push(text); } else if (top.length || t) break;
   }
   return top.join(" ").slice(0, 300);
 }

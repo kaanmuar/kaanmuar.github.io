@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2016 # GraphQL $variables stay literal
 # Board and ticket chores in one call each (#1970), so agents run them instead of composing gh calls.
 #   scripts/ticket.sh new <title> <area> [column] [body]        request ticket on the board; prints its number
 #   scripts/ticket.sh bug <parent> <title> <area> <what happened> <fix> [fixed-pr]
@@ -50,7 +51,7 @@ child() { gh api $R/issues/"$1"/sub_issues -F sub_issue_id="$(gh api $R/issues/"
 close() { # <n> <pr>
 	gh api $R/issues/"$1"/comments -f body="Fixed in #$2." >/dev/null
 	gh api -X PATCH $R/issues/"$1" -f state=closed -f state_reason=completed >/dev/null
-	board "$1" done
+	board "$1" "done"
 }
 
 area_name() { case "$1" in be) echo BE ;; fe) echo FE ;; ui) echo UI ;; qa) echo QA ;; ci) echo CI ;; *) echo "$(tr '[:lower:]' '[:upper:]' <<<"${1:0:1}")${1:1}" ;; esac }
@@ -102,7 +103,7 @@ design)
 	;;
 move) board "${1:?n}" "${2:?column}" ;;
 child) child "${1:?parent}" "${2:?child}" ;;
-done) close "${1:?n}" "${2:?pr}" ;;
+"done") close "${1:?n}" "${2:?pr}" ;;
 log)
 	now=$(date -u +%FT%TZ)
 	case "${1:?start|end}" in

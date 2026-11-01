@@ -13,6 +13,10 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+  issues: read
+
 concurrency:
   group: preflight-index
   cancel-in-progress: false

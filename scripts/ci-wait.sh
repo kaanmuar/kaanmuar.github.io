@@ -6,7 +6,11 @@ set -uo pipefail
 R=repos/kaanmuar/kaanmuar.github.io
 ref=${1:?usage: scripts/ci-wait.sh <sha|pr-number> [lines]}
 lines=${2:-40}
-[[ "$ref" =~ ^[0-9]+$ ]] && ref=$(gh api $R/pulls/"$ref" -q .head.sha)
+if [[ "$ref" =~ ^[0-9]+$ ]]; then
+	ref=$(gh api $R/pulls/"$ref" -q .head.sha)
+else
+	ref=$(gh api $R/commits/"$ref" -q .sha)
+fi
 
 ids=""
 for _ in $(seq 1 20); do

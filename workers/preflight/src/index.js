@@ -70,7 +70,8 @@ export default {
       if (pathname === "/index") return json(await index(env, body));
       if (pathname === "/delete") return json(await env.VEC.deleteByIds((body.ids || []).slice(0, 100)));
     } catch (e) {
-      return json({ error: String(e.message || e) }, 500);
+      console.error(pathname, e);
+      return json({ error: "failed" }, 500);
     }
     return json({ error: "not found" }, 404);
   },
