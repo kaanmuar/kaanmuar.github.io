@@ -1,30 +1,30 @@
 {
  "version": 1,
- "built": "2026-10-31T17:50:12.002Z",
+ "built": "2026-11-01T18:28:18.019Z",
  "sources": {
+  "search-engine-journal": 20,
   "moz": 10,
+  "google-search-central": 10,
+  "ahrefs": 10,
   "w3c": 25,
   "w3c-wai": 10,
-  "search-engine-journal": 20,
-  "ahrefs": 10,
-  "google-search-central": 10,
   "deque": 10,
-  "ipullrank": 5,
-  "debugbear": "failed: www.debugbear.com answered 530",
   "a11y-project": 30,
-  "whatwg": 10,
-  "web-dev": 10,
-  "simo-ahava": 30,
+  "debugbear": "failed: www.debugbear.com answered 530",
   "chrome-developers": 10,
-  "martin-fowler": 30,
-  "webaim": 10,
+  "whatwg": 10,
+  "simo-ahava": 30,
+  "ipullrank": 5,
+  "web-dev": 10,
   "tpgi": 12,
-  "devto": 60,
-  "playwright-releases": 10,
+  "martin-fowler": 30,
   "cypress": 15,
+  "playwright-releases": 10,
+  "hn": 63,
+  "webaim": 10,
+  "devto": 39,
   "perfplanet": 10,
-  "github": 28,
-  "hn": 63
+  "github": 30
  },
  "proposals": [
   {
@@ -43,25 +43,7 @@
    "relevance": 5,
    "trend": 0,
    "firstSeen": "2026-10-31",
-   "score": 5.02
-  },
-  {
-   "id": "034b7440f099",
-   "title": "The AI Search Measurement Gap Brands Must Close In 2027 And Beyond via @sejournal, @gregjarboe",
-   "url": "https://www.searchenginejournal.com/the-ai-search-measurement-gap-brands-must-close-in-2027-and-beyond/593881/",
-   "source": "Search Engine Journal",
-   "author": "Greg Jarboe",
-   "date": "2026-10-30",
-   "topic": "GEO",
-   "lang": "en",
-   "summary": "Measure whether AI recommends your brand to buyers, fix outdated sources, and turn shortlist visibility into customer relationships your CFO can value. The post The AI Search Measurement Gap Brands Must Close In 2027 And Beyond appeared first on Search Engine Journal .",
-   "image": "https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/measurement-gap-682.png",
-   "why": "GEO keywords in the title",
-   "weight": 0.9,
-   "relevance": 4,
-   "trend": 0,
-   "firstSeen": "2026-10-31",
-   "score": 3.79
+   "score": 4.53
   },
   {
    "id": "826e8cad104a",
@@ -79,7 +61,25 @@
    "relevance": 4,
    "trend": 0,
    "firstSeen": "2026-10-30",
-   "score": 3.79
+   "score": 3.42
+  },
+  {
+   "id": "a2aba86559e6",
+   "title": "zhtyyx/codex-seo: Free, open-source SEO audits inside OpenAI Codex CLI. Port of claude-seo: 26 skills, 19 specialist roles, technical SEO / schema / GEO / local / ecommerce.",
+   "url": "https://github.com/zhtyyx/codex-seo",
+   "source": "GitHub",
+   "author": "zhtyyx",
+   "date": "2026-10-27",
+   "topic": "SEO",
+   "lang": "en",
+   "summary": "Free, open-source SEO audits inside OpenAI Codex CLI. Port of claude-seo: 26 skills, 19 specialist roles, technical SEO / schema / GEO / local / ecommerce.",
+   "image": "https://opengraph.githubassets.com/1/zhtyyx/codex-seo",
+   "why": "109 stars on GitHub; SEO keywords in the title",
+   "weight": 0.9,
+   "relevance": 4,
+   "trend": 0.79,
+   "firstSeen": "2026-10-28",
+   "score": 3.34
   },
   {
    "id": "e0b45eb832b1",
@@ -97,25 +97,7 @@
    "relevance": 4,
    "trend": 0.48,
    "firstSeen": "2026-10-29",
-   "score": 3.7
-  },
-  {
-   "id": "a2aba86559e6",
-   "title": "zhtyyx/codex-seo: Free, open-source SEO audits inside OpenAI Codex CLI. Port of claude-seo: 26 skills, 19 specialist roles, technical SEO / schema / GEO / local / ecommerce.",
-   "url": "https://github.com/zhtyyx/codex-seo",
-   "source": "GitHub",
-   "author": "zhtyyx",
-   "date": "2026-10-27",
-   "topic": "SEO",
-   "lang": "en",
-   "summary": "Free, open-source SEO audits inside OpenAI Codex CLI. Port of claude-seo: 26 skills, 19 specialist roles, technical SEO / schema / GEO / local / ecommerce.",
-   "image": "https://opengraph.githubassets.com/1/zhtyyx/codex-seo",
-   "why": "108 stars on GitHub; SEO keywords in the title",
-   "weight": 0.9,
-   "relevance": 4,
-   "trend": 0.78,
-   "firstSeen": "2026-10-28",
-   "score": 3.69
+   "score": 3.34
   },
   {
    "id": "1482cd41a348",
@@ -133,7 +115,7 @@
    "relevance": 5,
    "trend": 0,
    "firstSeen": "2026-10-29",
-   "score": 3.66
+   "score": 3.3
   },
   {
    "id": "a1c96ab7cf39",
@@ -151,7 +133,7 @@
    "relevance": 4,
    "trend": 0,
    "firstSeen": "2026-10-31",
-   "score": 3.37
+   "score": 3.04
   },
   {
    "id": "288e4fd4ecfd",
@@ -169,7 +151,7 @@
    "relevance": 4,
    "trend": 0,
    "firstSeen": "2026-10-31",
-   "score": 3.05
+   "score": 2.75
   },
   {
    "id": "e3d51db105fb",
@@ -187,25 +169,7 @@
    "relevance": 3,
    "trend": 0,
    "firstSeen": "2026-10-29",
-   "score": 3.05
-  },
-  {
-   "id": "1df1e24f24ac",
-   "title": "aria-selected on tabs: the selected tab that lies (WCAG 4.1.2)",
-   "url": "https://www.wasexamprep.com/blog/aria-selected-tab-that-lies",
-   "source": "DEV",
-   "author": "A11Y Practice",
-   "date": "2026-10-28",
-   "topic": "Accessibility",
-   "lang": "en",
-   "summary": "The Notifications tab is open. Its panel is on screen: \"Choose which email and push alerts you...",
-   "image": "https://media2.dev.to/dynamic/image/width=1000,height=500,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fi.ytimg.com%2Fvi%2F939KZzpMFuk%2Fmaxresdefault.jpg",
-   "why": "3 reactions on DEV; Accessibility keywords in the title",
-   "weight": 0.8,
-   "relevance": 4,
-   "trend": 0.14,
-   "firstSeen": "2026-10-29",
-   "score": 2.92
+   "score": 2.75
   },
   {
    "id": "ae519a246ba3",
@@ -223,7 +187,25 @@
    "relevance": 2,
    "trend": 0.63,
    "firstSeen": "2026-10-30",
-   "score": 2.92
+   "score": 2.64
+  },
+  {
+   "id": "1df1e24f24ac",
+   "title": "aria-selected on tabs: the selected tab that lies (WCAG 4.1.2)",
+   "url": "https://www.wasexamprep.com/blog/aria-selected-tab-that-lies",
+   "source": "DEV",
+   "author": "A11Y Practice",
+   "date": "2026-10-28",
+   "topic": "Accessibility",
+   "lang": "en",
+   "summary": "The Notifications tab is open. Its panel is on screen: \"Choose which email and push alerts you...",
+   "image": "https://media2.dev.to/dynamic/image/width=1000,height=500,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fi.ytimg.com%2Fvi%2F939KZzpMFuk%2Fmaxresdefault.jpg",
+   "why": "3 reactions on DEV; Accessibility keywords in the title",
+   "weight": 0.8,
+   "relevance": 4,
+   "trend": 0.14,
+   "firstSeen": "2026-10-29",
+   "score": 2.63
   },
   {
    "id": "7a35e607d90c",
@@ -241,25 +223,7 @@
    "relevance": 2,
    "trend": 0.37,
    "firstSeen": "2026-10-29",
-   "score": 2.57
-  },
-  {
-   "id": "f1edc327d355",
-   "title": "Captioned Doesn’t Always Mean Accessible",
-   "url": "https://webaim.org/blog/captioned-doesnt-always-mean-accessible/",
-   "source": "WebAIM",
-   "author": "Christopher Phillips",
-   "date": "2026-10-29",
-   "topic": "Accessibility",
-   "lang": "en",
-   "summary": "Accurate dialogue is only part of accessible video captions. Quality captions also identify speakers, convey meaningful sounds, and provide readable, synchronized text. Whether captions come from an automatic tool or a professional service, this article explains why evaluating the finished viewing experience is essential for people who rely on captions.",
-   "image": "",
-   "why": "Accessibility keywords in the title",
-   "weight": 1.1,
-   "relevance": 2,
-   "trend": 0,
-   "firstSeen": "2026-10-29",
-   "score": 2.52
+   "score": 2.32
   },
   {
    "id": "6c7d5d54c0cd",
@@ -277,7 +241,25 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-31",
-   "score": 2.51
+   "score": 2.27
+  },
+  {
+   "id": "f1edc327d355",
+   "title": "Captioned Doesn’t Always Mean Accessible",
+   "url": "https://webaim.org/blog/captioned-doesnt-always-mean-accessible/",
+   "source": "WebAIM",
+   "author": "Christopher Phillips",
+   "date": "2026-10-29",
+   "topic": "Accessibility",
+   "lang": "en",
+   "summary": "Accurate dialogue is only part of accessible video captions. Quality captions also identify speakers, convey meaningful sounds, and provide readable, synchronized text. Whether captions come from an automatic tool or a professional service, this article explains why evaluating the finished viewing experience is essential for people who rely on captions.",
+   "image": "",
+   "why": "Accessibility keywords in the title",
+   "weight": 1.1,
+   "relevance": 2,
+   "trend": 0,
+   "firstSeen": "2026-10-29",
+   "score": 2.27
   },
   {
    "id": "f041d99d423e",
@@ -295,7 +277,7 @@
    "relevance": 1,
    "trend": 0,
    "firstSeen": "2026-10-30",
-   "score": 2.36
+   "score": 2.13
   },
   {
    "id": "22232c7a4106",
@@ -313,7 +295,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-30",
-   "score": 2.29
+   "score": 2.07
   },
   {
    "id": "f1d355db7dca",
@@ -331,7 +313,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-29",
-   "score": 2.29
+   "score": 2.07
   },
   {
    "id": "1027734ce2cf",
@@ -349,7 +331,25 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-10-28",
-   "score": 2.07
+   "score": 1.87
+  },
+  {
+   "id": "fb8a044b4619",
+   "title": "How Can I Tell If My Images Are Optimized For Multimodal Search? – Ask an SEO via @sejournal, @HelenPollitt1",
+   "url": "https://www.searchenginejournal.com/ask-an-seo-how-can-i-tell-if-my-images-are-optimised-for-multimodal-search/593861/",
+   "source": "Search Engine Journal",
+   "author": "Helen Pollitt",
+   "date": "2026-10-29",
+   "topic": "SEO",
+   "lang": "en",
+   "summary": "Check whether search engines can find and understand your images, and spot technical issues that limit their visibility in multimodal search. The post How Can I Tell If My Images Are Optimized For Multimodal Search? – Ask an SEO appeared first on Search Engine Journal .",
+   "image": "https://cdn.searchenginejournal.com/wp-content/uploads/2024/06/ask-an-seo-helen-904.jpg",
+   "why": "SEO keywords in the title",
+   "weight": 0.9,
+   "relevance": 2,
+   "trend": 0,
+   "firstSeen": "2026-11-01",
+   "score": 1.86
   }
  ]
 }
