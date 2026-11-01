@@ -26,9 +26,16 @@ column() {
 }
 
 board() { # <n> <column>
-	local item
-	item=$(scripts/gh-budget.sh api graphql -f query='mutation($p:ID!,$c:ID!){addProjectV2ItemById(input:{projectId:$p,contentId:$c}){item{id}}}' \
-		-f p=$P -f c="$(gh api $R/issues/"$1" -q .node_id)" -q .data.addProjectV2ItemById.item.id 2>/dev/null) || item=$(scripts/gh-budget.sh --item "$1")
+	local item="" node try
+	node=$(gh api $R/issues/"$1" -q .node_id)
+	for try in 1 2 3; do
+		item=$(scripts/gh-budget.sh api graphql -f query='mutation($p:ID!,$c:ID!){addProjectV2ItemById(input:{projectId:$p,contentId:$c}){item{id}}}' \
+			-f p=$P -f c="$node" -q .data.addProjectV2ItemById.item.id 2>/dev/null || true)
+		[ -z "$item" ] && item=$(scripts/gh-budget.sh --item "$1" 2>/dev/null || true)
+		[ -n "$item" ] && break
+		sleep $((try * 3))
+	done
+	[ -z "$item" ] && { echo "#$1: could not add it to the board" >&2; return 1; }
 	scripts/gh-budget.sh project item-edit --id "$item" --project-id $P --field-id $F --single-select-option-id "$(column "$2")" >/dev/null
 }
 
