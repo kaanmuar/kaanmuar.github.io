@@ -24,11 +24,17 @@ done
 }
 
 failed=0
-for id in $ids; do
-	gh run watch "$id" -i 30 --exit-status >/dev/null 2>&1 && continue
-	failed=1
-	gh run view "$id" --json name,url -q '"FAILED  \(.name)  \(.url)"'
-	gh run view "$id" --log-failed 2>/dev/null | cut -f3- | sed 's/^[0-9T:.-]*Z //' | tail -n "$lines"
+seen=" "
+while [ -n "$ids" ]; do
+	for id in $ids; do
+		seen="$seen$id "
+		gh run watch "$id" -i 30 --exit-status >/dev/null 2>&1 && continue
+		failed=1
+		gh run view "$id" --json name,url -q '"FAILED  \(.name)  \(.url)"'
+		gh run view "$id" --log-failed 2>/dev/null | cut -f3- | sed 's/^[0-9T:.-]*Z //' | tail -n "$lines"
+	done
+	sleep 20
+	ids=$(gh run list --commit "$ref" --json databaseId -q '.[].databaseId' | while read -r id; do [[ "$seen" == *" $id "* ]] || echo "$id"; done)
 done
 [ $failed = 0 ] && echo "All runs passed for ${ref:0:7}."
 exit $failed
