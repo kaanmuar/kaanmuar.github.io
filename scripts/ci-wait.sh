@@ -14,7 +14,10 @@ for _ in $(seq 1 20); do
 	[ -n "$ids" ] && break
 	sleep 15
 done
-[ -z "$ids" ] && { echo "No runs for ${ref:0:7} after 5 minutes."; exit 1; }
+[ -z "$ids" ] && {
+	echo "No runs for ${ref:0:7} after 5 minutes."
+	exit 1
+}
 
 failed=0
 for id in $ids; do

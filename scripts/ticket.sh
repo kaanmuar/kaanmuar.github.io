@@ -21,7 +21,10 @@ column() {
 	case "$1" in
 	backlog) echo 3f4ac4fe ;; next) echo dc8fb26d ;; design) echo a8250664 ;; dev) echo 698df321 ;;
 	qa) echo 71ce1b86 ;; stg) echo 727e0727 ;; prod) echo 060490af ;; done) echo bebf6b88 ;;
-	*) echo "unknown column: $1" >&2; exit 1 ;;
+	*)
+		echo "unknown column: $1" >&2
+		exit 1
+		;;
 	esac
 }
 
@@ -35,7 +38,10 @@ board() { # <n> <column>
 		[ -n "$item" ] && break
 		sleep $((try * 3))
 	done
-	[ -z "$item" ] && { echo "#$1: could not add it to the board" >&2; return 1; }
+	[ -z "$item" ] && {
+		echo "#$1: could not add it to the board" >&2
+		return 1
+	}
 	scripts/gh-budget.sh project item-edit --id "$item" --project-id $P --field-id $F --single-select-option-id "$(column "$2")" >/dev/null
 }
 
@@ -47,13 +53,15 @@ close() { # <n> <pr>
 	board "$1" done
 }
 
-area_name() { case "$1" in be) echo BE ;; fe) echo FE ;; ui) echo UI ;; qa) echo QA ;; ci) echo CI ;; *) echo "$(tr '[:lower:]' '[:upper:]' <<<"${1:0:1}")${1:1}" ;; esac; }
+area_name() { case "$1" in be) echo BE ;; fe) echo FE ;; ui) echo UI ;; qa) echo QA ;; ci) echo CI ;; *) echo "$(tr '[:lower:]' '[:upper:]' <<<"${1:0:1}")${1:1}" ;; esac }
 
 cmd=${1:?usage: scripts/ticket.sh new|bug|design|move|child|done|log ...}
 shift
 case "$cmd" in
 new)
-	title=${1:?title}; area=${2:?area}; col=${3:-dev}
+	title=${1:?title}
+	area=${2:?area}
+	col=${3:-dev}
 	body=${4:-"**Kind:** Request
 **Area:** $(area_name "$area")"}
 	n=$(gh api $R/issues -f title="$title" -f body="$body" -f 'labels[]=kind:request' -f "labels[]=area:$area" -q .number)
@@ -61,7 +69,12 @@ new)
 	echo "$n"
 	;;
 bug)
-	parent=${1:?parent}; title=${2:?title}; area=${3:?area}; what=${4:?what happened}; fix=${5:?fix}; pr=${6:-}
+	parent=${1:?parent}
+	title=${2:?title}
+	area=${3:?area}
+	what=${4:?what happened}
+	fix=${5:?fix}
+	pr=${6:-}
 	stands=$([ -n "$pr" ] && echo "Fixed in #$pr." || echo "Open, not fixed yet.")
 	body="**Kind:** Bug
 **Area:** $(area_name "$area")
@@ -79,7 +92,9 @@ $fix"
 	echo "$n"
 	;;
 design)
-	parent=${1:?parent}; title=${2:?title}; body=${3:?body}
+	parent=${1:?parent}
+	title=${2:?title}
+	body=${3:?body}
 	n=$(gh api $R/issues -f title="$title" -f body="$body" -f 'labels[]=area:design' -q .number)
 	child "$parent" "$n"
 	board "$n" design
@@ -92,7 +107,8 @@ log)
 	now=$(date -u +%FT%TZ)
 	case "${1:?start|end}" in
 	start) echo "$now,,${2:?n},${3:-},${CURSOR_CONVERSATION_ID:-chat}," >>"$LOG" ;;
-	end) python3 - "$LOG" "${2:?n}" "$now" <<'PY'
+	end)
+		python3 - "$LOG" "${2:?n}" "$now" <<'PY'
 import csv, sys
 path, ticket, now = sys.argv[1:]
 rows = list(csv.reader(open(path)))
@@ -102,8 +118,11 @@ for row in reversed(rows):
         break
 csv.writer(open(path, "w", newline="")).writerows(rows)
 PY
-	;;
+		;;
 	esac
 	;;
-*) echo "unknown command: $cmd" >&2; exit 1 ;;
+*)
+	echo "unknown command: $cmd" >&2
+	exit 1
+	;;
 esac
