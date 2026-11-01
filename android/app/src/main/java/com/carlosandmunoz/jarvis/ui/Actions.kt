@@ -85,7 +85,7 @@ fun JarvisActions(s: UiState, vm: JarvisViewModel) {
     ConfirmAction(confirm) { confirm = null }
     val v = view
     val off = v.obj("settings")?.bool("auto") == false
-    Panel(if (off) "Jarvis actions (automatic off)" else "Jarvis actions") {
+    Panel(if (off) "Jarvis actions (automatic off)" else "Jarvis actions", key = "Jarvis actions") {
         if (v == null) { Muted(error ?: "Reading the actions log…"); return@Panel }
         val caps = v.obj("settings").obj("caps")
         CAPS.forEach { k -> KeyRow(ACTION_LABELS[k] ?: k, fmt(v.obj("used").num(k)) + " of " + fmt(caps.num(k)) + " today", if ((v.obj("used").num(k) ?: 0.0) >= (caps.num(k) ?: 0.0)) J.amber else J.text) }

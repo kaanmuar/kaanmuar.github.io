@@ -1,6 +1,9 @@
 package com.carlosandmunoz.jarvis.ui
 
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -28,13 +31,18 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -61,8 +69,40 @@ import kotlinx.serialization.json.JsonObject
 
 val Mono = FontFamily.Monospace
 
+/** Which panels are folded, kept on this phone across launches. */
+object Folds {
+    private var prefs: SharedPreferences? = null
+    private val shut = mutableStateMapOf<String, Boolean>()
+    private val seen = mutableSetOf<String>()
+
+    fun load(context: Context) {
+        if (prefs != null) return
+        prefs = context.applicationContext.getSharedPreferences("jarvis_ui", Context.MODE_PRIVATE).also { p ->
+            p.getStringSet("folded", emptySet())?.forEach { shut[it] = true }
+        }
+    }
+
+    fun seen(key: String) { seen += key }
+    fun isShut(key: String) = shut[key] == true
+    fun any() = shut.isNotEmpty()
+    fun set(key: String, folded: Boolean) { if (folded) shut[key] = true else shut.remove(key); save() }
+    fun all(folded: Boolean) { if (folded) seen.forEach { shut[it] = true } else shut.clear(); save() }
+    private fun save() { prefs?.edit()?.putStringSet("folded", shut.keys.toSet())?.apply() }
+}
+
 @Composable
-fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
+fun FoldAllButton() {
+    val open = !Folds.any()
+    TextButton(onClick = { Folds.all(open) }) { Text(if (open) "Collapse all" else "Expand all", fontSize = 12.sp) }
+}
+
+@Composable
+fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null, key: String = title, content: @Composable ColumnScope.() -> Unit) {
+    val context = LocalContext.current
+    remember { Folds.load(context) }
+    Folds.seen(key)
+    val folded = Folds.isShut(key)
+    val turn by animateFloatAsState(if (folded) -90f else 0f, tween(200), label = "fold")
     Column(
         modifier
             .fillMaxWidth()
@@ -73,16 +113,21 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.clickable(onClickLabel = if (folded) "Expand" else "Collapse") { Folds.set(key, !folded) },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             CubeGlyph()
             Spacer(Modifier.width(8.dp))
             Text(title.uppercase(), color = J.cyan, fontFamily = Mono, fontSize = 12.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.SemiBold,
                 style = LocalTextStyle.current.copy(shadow = Shadow(J.cyan.copy(alpha = 0.6f), blurRadius = 12f)))
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(6.dp))
+            Text("▾", color = J.cyan, fontSize = 13.sp, modifier = Modifier.rotate(turn))
+            Spacer(Modifier.width(8.dp))
             Box(Modifier.weight(1f).height(1.dp).background(Brush.horizontalGradient(listOf(J.cyan.copy(alpha = 0.45f), Color.Transparent))))
             trailing?.let { Spacer(Modifier.width(8.dp)); it() }
         }
-        content()
+        if (!folded) content()
     }
 }
 

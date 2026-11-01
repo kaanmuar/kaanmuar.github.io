@@ -226,6 +226,25 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('[data-view="systems"]')).toBeHidden();
   });
 
+  test('every section folds and unfolds, Collapse all and Expand all work, and the folds survive a reload (#1973)', async ({ page }) => {
+    await openStats(page, '#stats/hub/30');
+    const share = page.locator('[data-view="hub"] .jv-panel[data-panel-id="hub-share"]');
+    const fold = share.locator('.jv-fold');
+    await expect(fold).toHaveAttribute('aria-expanded', 'true');
+    await fold.click();
+    await expect(share).toHaveClass(/is-folded/);
+    await expect(fold).toHaveAttribute('aria-expanded', 'false');
+    await expect(share.locator('[data-share-caption]')).toBeHidden();
+    await page.reload();
+    await expect(page.locator('[data-view="hub"] .jv-panel[data-panel-id="hub-share"]')).toHaveClass(/is-folded/);
+    await page.locator('[data-view="hub"] .jv-panel[data-panel-id="hub-share"] .jv-fold').click();
+    await expect(page.locator('[data-view="hub"] .jv-panel[data-panel-id="hub-share"]')).not.toHaveClass(/is-folded/);
+    const view = page.locator('[data-view="hub"]');
+    await view.locator('[data-fold-all="1"]').click();
+    await expect(view.locator('.jv-panel[data-panel-id]:not(.is-folded)')).toHaveCount(0);    await view.locator('[data-fold-all="0"]').click();
+    await expect(view.locator('.jv-panel.is-folded')).toHaveCount(0);
+  });
+
   test('exports JSON and CSV, and the Gemini briefing comes back from the function', async ({ page }) => {
     const calls = await openStats(page);
     await page.locator('[data-menu="export"]').click();
@@ -271,7 +290,7 @@ test.describe('admin statistics (Jarvis)', () => {
 
   test('Share a post uploads the media, shows the Gemini drafts to edit, and queues the edited posts (#1420)', async ({ page }) => {
     const calls = await openStats(page, '#stats/hub/30');
-    const share = page.locator('[data-panel="hub-share"], .jv-panel:has(h3:text("Share a post"))').first();
+    const share = page.locator('.jv-panel[data-panel-id="hub-share"]').first();
     await expect(share).toContainText('Launch day photo');
     await expect(share.locator('[data-act="share-draft"]')).toBeDisabled();
     await share.locator('[data-share-file]').setInputFiles({ name: 'launch.jpg', mimeType: 'image/jpeg', buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]) });
