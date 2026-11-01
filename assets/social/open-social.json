@@ -1,6 +1,26 @@
 {
  "version": 1,
  "posts": {
+  "auto-2026-10-22/05-u-lamega-com-co": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzbbcodxno22",
+    "at": "2026-11-01T16:49:48.188Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzbbcodxno22",
+    "checked": "2026-11-01T16:49:49.509Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117542210361749269",
+    "at": "2026-11-01T16:49:51.985Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117542210361749269",
+    "checked": "2026-11-01T16:49:53.981Z"
+   }
+  ],
   "auto-2026-10-23/03-u-monsterenergy-com": [
    {
     "channel": "bluesky",
@@ -339,6 +359,26 @@
     "result": "sent",
     "url": "https://mastodon.social/@qalaburlreview/117538769728867064",
     "checked": "2026-11-01T02:14:54.183Z"
+   }
+  ],
+  "tips-2026-10/06-utm": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzbbcmxud32n",
+    "at": "2026-11-01T16:49:45.975Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzbbcmxud32n",
+    "checked": "2026-11-01T16:49:48.188Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117542210227655438",
+    "at": "2026-11-01T16:49:50.607Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117542210227655438",
+    "checked": "2026-11-01T16:49:51.984Z"
    }
   ],
   "tips-horror-headers-2026-10/01-missing-csp": [
