@@ -429,11 +429,33 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     // --- render --------------------------------------------------------------------------------------------
 
+    const FOLD_KEY = 'jarvis-folded';
+    const folded = new Set((() => { try { return JSON.parse(localStorage.getItem(FOLD_KEY) || '[]'); } catch (error) { return []; } })());
+
+    function foldHead(id, title) {
+        const shut = folded.has(id);
+        return `<h3><button type="button" class="jv-fold" data-fold="${esc(id)}" aria-expanded="${!shut}" title="${shut ? 'Expand' : 'Collapse'}">${esc(title)}</button></h3>`;
+    }
+
+    function fold(id, shut) {
+        if (shut) folded.add(id); else folded.delete(id);
+        try { localStorage.setItem(FOLD_KEY, JSON.stringify([...folded])); } catch (error) { /* private mode: this visit only */ }
+        $$(`.jv-panel[data-panel-id="${CSS.escape(id)}"]`).forEach((sec) => {
+            sec.classList.toggle('is-folded', shut);
+            const b = sec.querySelector('.jv-fold');
+            if (b) { b.setAttribute('aria-expanded', String(!shut)); b.title = shut ? 'Expand' : 'Collapse'; }
+        });
+    }
+
+    function foldAll(shut) {
+        $$('.jv-panel[data-panel-id]').forEach((sec) => fold(sec.dataset.panelId, shut));
+    }
+
     function panel(id, title, body, opts) {
         const o = opts || {};
         if (o.data) S.panels.set(id, { title, rows: o.data, product: S.product });
         const tools = o.data ? `<span class="jv-panel-tools"><button type="button" data-panel-export="csv" data-panel="${id}" title="CSV">CSV</button><button type="button" data-panel-export="json" data-panel="${id}" title="JSON">JSON</button><button type="button" data-panel-export="png" data-panel="${id}" title="PNG">PNG</button></span>` : '';
-        return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}" data-panel-id="${id}"><header><h3>${esc(title)}</h3>${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
+        return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}"><header>${foldHead(id, title)}${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
     }
 
     const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line' };
@@ -486,7 +508,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const hiddenHere = S.briefHidden.filter((b) => inTab(b, product));
         const items = (list.length ? list.map((b) => row(b)).join('') : '<li class="lv-good"><b>clear</b><span>All quiet. Nothing needs you right now.</span></li>')
             + (hiddenHere.length ? `<li class="lv-info jv-brief-more"><b>hidden</b><span>${hiddenHere.length} snoozed or dismissed</span><button type="button" data-brief-hidden>${S.showHidden ? 'Hide' : 'Show'}</button></li>` + (S.showHidden ? hiddenHere.map((b) => row(b, true)).join('') : '') : '');
-        return `<section class="jv-panel is-wide jv-briefing"><header><h3>Briefing</h3><span class="jv-panel-tools"><button type="button" data-act="speak">Read aloud</button><button type="button" data-act="ai-brief">Gemini briefing</button></span></header><ul class="jv-brief">${items}</ul>
+        return `<section class="jv-panel is-wide jv-briefing${folded.has('briefing') ? ' is-folded' : ''}" data-panel-id="briefing"><header>${foldHead('briefing', 'Briefing')}<span class="jv-panel-tools"><button type="button" data-fold-all="1">Collapse all</button><button type="button" data-fold-all="0">Expand all</button><button type="button" data-act="speak">Read aloud</button><button type="button" data-act="ai-brief">Gemini briefing</button></span></header><ul class="jv-brief">${items}</ul>
             <div class="jv-ai"${S.ai ? '' : ' hidden'}><span class="jv-eyebrow">Gemini · ${S.aiAt ? when(S.aiAt) : ''}</span><div class="jv-ai-text">${esc(S.ai).replace(/\n/g, '<br>')}</div></div>
             <form class="jv-ask" data-ask><input type="text" name="q" placeholder="Ask Jarvis: why did opens jump? which source pays? what should I fix first?" aria-label="Ask Jarvis"><button type="submit" class="jv-btn">Ask</button></form></section>`;
     }
@@ -2093,6 +2115,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (event.target.matches('[data-sheet-root]')) { closeSheet(); return; }
         const t = event.target.closest('button, a, li[data-hit], li[data-brief]');
         if (!t || !root.contains(t)) return;
+        if (t.dataset.fold !== undefined) { fold(t.dataset.fold, !folded.has(t.dataset.fold)); return; }
+        if (t.dataset.foldAll !== undefined) { foldAll(t.dataset.foldAll === '1'); return; }
         if (t.dataset.hit !== undefined) { choose(Number(t.dataset.hit)); return; }
         if (t.dataset.brief !== undefined) { openSheet(t.dataset.brief); return; }
         if (t.dataset.briefHidden !== undefined) { S.showHidden = !S.showHidden; render(); return; }
