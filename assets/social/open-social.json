@@ -321,6 +321,26 @@
     "checked": "2026-10-30T22:58:47.875Z"
    }
   ],
+  "tips-2026-10/05-contrast": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mz7qg3ycne24",
+    "at": "2026-11-01T02:14:49.736Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mz7qg3ycne24",
+    "checked": "2026-11-01T02:14:51.216Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117538769728867064",
+    "at": "2026-11-01T02:14:52.481Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117538769728867064",
+    "checked": "2026-11-01T02:14:54.183Z"
+   }
+  ],
   "tips-horror-headers-2026-10/01-missing-csp": [
    {
     "channel": "bluesky",
