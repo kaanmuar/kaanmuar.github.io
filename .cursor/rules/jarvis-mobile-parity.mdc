@@ -1,6 +1,7 @@
 ---
-description: Every Jarvis change also lands in the Android app
-alwaysApply: true
+description: Every Jarvis change also lands in the Android app: read before changing the web Jarvis, its functions, the snapshot op, or android/
+globs: js/admin-jarvis*.js,css/admin-jarvis.css,admin.html,functions/jarvis*.js,functions/index.js,android/**,scripts/check-jarvis-parity.js
+alwaysApply: false
 ---
 # Jarvis and the Android app change together
 The Jarvis Android app (`android/`, #1414) shows everything the web Jarvis (`admin.html#stats`) shows. Carlos, 2026-10-25: every change or update to Jarvis is also done in the app.
