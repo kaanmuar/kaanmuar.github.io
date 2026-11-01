@@ -255,7 +255,7 @@ fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, openTab: String
                             if (s.snapshot != null) when (shownTab) {
                                 Tab.Overview -> OverviewScreen(s, vm) { target -> Tab.entries.firstOrNull { it.name.equals(target, ignoreCase = true) }?.let { tab = it } ?: run { product = target; tab = Tab.Products } }
                                 Tab.Products -> ProductsScreen(s, vm, product) { product = it }
-                                Tab.Business -> BusinessScreen(s)
+                                Tab.Business -> BusinessScreen(s, vm)
                                 Tab.Traffic -> TrafficScreen(s)
                                 Tab.Systems -> SystemsScreen(s, vm)
                             }

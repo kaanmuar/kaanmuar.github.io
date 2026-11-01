@@ -13,6 +13,7 @@
   // A review analyzes a site; it never "reads" it. Spanish is Latin American (tú), Portuguese is Brazilian (você).
   const T = {
     en: {
+      book: "Book a 15-min call about it",
       eyebrow: "Live reports", title: "Real sites. Real reviews.", titleEm: "Open any of them.",
       lede: "<b>{n} public sites</b>, analyzed by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Turn the ring, filter by sector or country, and open a report. Reviews people request are added in a daily batch. View and share only.",
       hub: "Back to Social", prev: "Previous report", next: "Next report", pause: "Pause rotation", play: "Play rotation", open: "Open report",
@@ -40,6 +41,7 @@
       filterBy: "Filter by {group}", shareLine: "{name} scored {score}/100 ({grade}) in a QA-lab URL Review live report"
     },
     es: {
+      book: "Agenda una llamada de 15 min sobre esto",
       eyebrow: "Informes en vivo", title: "Sitios reales. Análisis reales.", titleEm: "Abre el informe que quieras.",
       lede: "<b>{n} sitios públicos</b>, analizados con la misma revisión que cualquiera puede ejecutar: portales de gobierno, medios de noticias, bancos, universidades, proyectos de código abierto y sistemas de transporte. Recorre el carrusel, filtra por sector o país y abre un informe. Las revisiones que la gente solicita se suman en un lote diario. Solo para ver y compartir.",
       hub: "Volver a Social", prev: "Informe anterior", next: "Informe siguiente", pause: "Pausar el carrusel", play: "Reanudar el carrusel", open: "Abrir informe",
@@ -67,6 +69,7 @@
       filterBy: "Filtrar por {group}", shareLine: "{name} obtuvo {score}/100 ({grade}) en un informe en vivo de QA-lab URL Review"
     },
     pt: {
+      book: "Agende uma conversa de 15 min sobre isto",
       eyebrow: "Relatórios ao vivo", title: "Sites reais. Análises reais.", titleEm: "Abra o relatório que quiser.",
       lede: "<b>{n} sites públicos</b>, analisados pela mesma revisão que qualquer pessoa pode executar: portais de governo, veículos de imprensa, bancos, universidades, projetos de código aberto e sistemas de transporte. Percorra o carrossel, filtre por setor ou país e abra um relatório. As revisões que as pessoas solicitam entram em um lote diário. Só para ver e compartilhar.",
       hub: "Voltar ao Social", prev: "Relatório anterior", next: "Próximo relatório", pause: "Pausar o carrossel", play: "Retomar o carrossel", open: "Abrir relatório",
@@ -94,6 +97,7 @@
       filterBy: "Filtrar por {group}", shareLine: "{name} fez {score}/100 ({grade}) em um relatório ao vivo do QA-lab URL Review"
     },
     de: {
+      book: "15-Minuten-Gespräch dazu buchen",
       eyebrow: "Live-Berichte", title: "Echte Websites. Echte Prüfungen.", titleEm: "Öffnen Sie jeden Bericht.",
       lede: "<b>{n} öffentliche Websites</b>, analysiert mit derselben Prüfung, die jeder starten kann: Regierungsportale, Redaktionen, Banken, Universitäten, Open-Source-Projekte und Verkehrsbetriebe. Blättern Sie durch das Karussell, filtern Sie nach Branche oder Land und öffnen Sie einen Bericht. Von Nutzern angefragte Prüfungen kommen täglich gesammelt hinzu. Nur ansehen und teilen.",
       hub: "Zurück zu Social", prev: "Vorheriger Bericht", next: "Nächster Bericht", pause: "Karussell anhalten", play: "Karussell fortsetzen", open: "Bericht öffnen",
@@ -121,6 +125,7 @@
       filterBy: "Nach {group} filtern", shareLine: "{name} erreicht {score}/100 ({grade}) in einem Live-Bericht von QA-lab URL Review"
     },
     fr: {
+      book: "Réserver un appel de 15 min à ce sujet",
       eyebrow: "Rapports en direct", title: "De vrais sites. De vraies analyses.", titleEm: "Ouvrez le rapport de votre choix.",
       lede: "<b>{n} sites publics</b>, analysés par le même outil que chacun peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Parcourez le carrousel, filtrez par secteur ou pays, puis ouvrez un rapport. Les analyses demandées par les visiteurs s’ajoutent chaque jour, par lot. Consultation et partage uniquement.",
       hub: "Retour à Social", prev: "Rapport précédent", next: "Rapport suivant", pause: "Mettre le carrousel en pause", play: "Relancer le carrousel", open: "Ouvrir le rapport",
@@ -148,6 +153,7 @@
       filterBy: "Filtrer par {group}", shareLine: "{name} obtient {score}/100 ({grade}) dans un rapport en direct de QA-lab URL Review"
     },
     it: {
+      book: "Prenota una chiamata di 15 minuti su questo",
       eyebrow: "Report dal vivo", title: "Siti veri. Analisi vere.", titleEm: "Apri il report che vuoi.",
       lede: "<b>{n} siti pubblici</b>, analizzati con la stessa revisione che chiunque può avviare: portali pubblici, redazioni, banche, università, progetti open source e trasporti. Scorri il carosello, filtra per settore o paese e apri un report. Le revisioni richieste dagli utenti si aggiungono ogni giorno, in un unico lotto. Solo visualizzazione e condivisione.",
       hub: "Torna a Social", prev: "Report precedente", next: "Report successivo", pause: "Metti in pausa il carosello", play: "Riprendi il carosello", open: "Apri il report",
@@ -946,7 +952,11 @@
       return '<button class="lv-btn icon" type="button" data-act="net" data-net="' + net + '" aria-label="' + esc(t("shareOn", { net: name })) + '" title="' + esc(t("shareOn", { net: name })) + '">' + ICONS[net] + "</button>";
     }).join("");
     const hub = state.hub ? '<a class="lv-btn" data-act="hub" href="' + hubUrl() + '"' + nt() + ">" + ICONS.prev + "<span>" + esc(t("hub")) + "</span></a>" : "";
-    actions.innerHTML = hub + native + nets +
+    const open = state.all.find((r) => r.id === state.openId);
+    const query = new URLSearchParams({ type: "intro", lang: state.lang, utm_source: "live-reports", utm_campaign: "live-report" });
+    if (open && open.host) query.set("host", open.host);
+    const book = '<a class="lv-btn" data-act="book" href="book.html?' + esc(query.toString()) + '"' + nt() + "><span>" + esc(t("book")) + "</span></a>";
+    actions.innerHTML = hub + native + nets + book +
       '<button class="lv-btn" type="button" data-act="copy"' + nt() + ">" + ICONS.link + "<span>" + esc(t("copy")) + "</span></button>" +
       '<button class="lv-btn icon close" type="button" data-act="close" aria-label="' + esc(t("close")) + '">' + ICONS.close + "</button>";
   }

@@ -135,6 +135,9 @@ exports.queueEmailOnMessageResponse = functions.firestore
           recipient_name: newData.name,
           original_message: newData.message,
           admin_response: newData.response,
+          // The template shows its Schedule a call button only when booking_url is set (scripts/sendgrid-booking-button.js).
+          booking_url: booking.bookUrl(newData.topic === "opportunity" ? "cv" : "call", newData.lang, { from: "cv-message-reply" }),
+          booking_label: "Schedule a call with me",
         },
       };
 
@@ -175,6 +178,8 @@ exports.queueEmailOnRatingResponse = functions.firestore
           rating_stars: stars, // Pass the generated star string
           original_comment: newData.comment,
           admin_response: newData.response,
+          booking_url: booking.bookUrl("cv", newData.lang, { from: "cv-rating-reply" }),
+          booking_label: "Schedule a call with me",
         },
       };
 
@@ -453,6 +458,142 @@ exports.submitGuardedForm = functions.runWith({ secrets: SECRETS.turnstile, maxI
     createdAt: FieldValue.serverTimestamp()
   });
   return { ok: true };
+});
+
+// Calls with Carlos (#1971). book.html reads the free slots and books one; Google mails the invite with the Meet
+// link. Jarvis's Connect Google Calendar (op calendar-connect) sends Carlos to Google, which comes back to /callback.
+const booking = require("./booking");
+const BOOKING_URL = "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/booking";
+const BOOKING_REDIRECT = BOOKING_URL + "/callback";
+const BOOKING_STATE_MS = 10 * 60 * 1000;
+let bookingToken = { value: "", until: 0 };
+
+function bookingKeys() {
+  return { clientId: String(process.env.GOOGLE_CALENDAR_CLIENT_ID || "").trim(), secret: String(process.env.GOOGLE_CALENDAR_CLIENT_SECRET || "").trim() };
+}
+
+// "" when the calendar is not connected yet, so the page says booking is closed instead of failing.
+async function bookingAccess() {
+  if (bookingToken.value && bookingToken.until > Date.now()) return bookingToken.value;
+  const keys = bookingKeys();
+  const ref = getFirestore().doc("booking_private/google");
+  const snap = await ref.get();
+  const refresh = snap.exists ? (snap.data() || {}).refresh : "";
+  if (!keys.clientId || !keys.secret || !refresh) return "";
+  try {
+    const value = await booking.accessToken({ clientId: keys.clientId, secret: keys.secret, refresh });
+    bookingToken = { value, until: Date.now() + 45 * 60 * 1000 };
+    return value;
+  } catch (error) {
+    await ref.set({ error: clip(error.message, 200), errorAt: new Date().toISOString() }, { merge: true }).catch(() => null);
+    throw error;
+  }
+}
+
+async function bookingConnectUrl() {
+  const { clientId } = bookingKeys();
+  if (!clientId) throw new Error("Set GOOGLE_CALENDAR_CLIENT_ID in functions/.env and redeploy first.");
+  const state = crypto.randomBytes(16).toString("hex");
+  await getFirestore().doc("booking_private/state").set({ state, at: Date.now() });
+  return { url: booking.authUrl(clientId, BOOKING_REDIRECT, state) };
+}
+
+function bookingPage(res, text) {
+  const safe = String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]));
+  res.status(200).set("Content-Type", "text/html; charset=utf-8").send("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Calls · Jarvis</title>" +
+    "<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b1d22;font-family:Arial,Helvetica,sans-serif;color:#e6f4f5}main{max-width:440px;margin:16px;text-align:center}a{color:#5fd4dc}</style></head>" +
+    "<body><main><p>" + safe + "</p><p><a href=\"https://carlosandmunoz.com/admin.html#stats\">Back to Jarvis</a></p></main></body></html>");
+}
+
+async function bookingCallback(req, res) {
+  const db = getFirestore();
+  const saved = await db.doc("booking_private/state").get();
+  const s = saved.exists ? saved.data() || {} : {};
+  const state = String(req.query.state || "");
+  if (!state || state !== s.state || Date.now() - Number(s.at) > BOOKING_STATE_MS) { bookingPage(res, "This link expired. Connect Google Calendar again from Jarvis."); return; }
+  await db.doc("booking_private/state").delete();
+  if (req.query.error) { bookingPage(res, "Google did not connect the calendar: " + clip(req.query.error, 80) + "."); return; }
+  const keys = bookingKeys();
+  try {
+    const got = await booking.tokenFromCode({ clientId: keys.clientId, secret: keys.secret, code: String(req.query.code || ""), redirect: BOOKING_REDIRECT });
+    await db.doc("booking_private/google").set({ refresh: got.refresh, email: got.email, scope: got.scope, connectedAt: new Date().toISOString(), error: "" });
+    bookingToken = { value: "", until: 0 };
+    bookingPage(res, "Google Calendar is connected" + (got.email ? " as " + got.email : "") + ". Visitors can book calls now.");
+  } catch (error) {
+    console.error("Calendar connect failed:", error);
+    bookingPage(res, clip(error.message, 240));
+  }
+}
+
+function bookingIp(req) {
+  return String(req.ip || String(req.get("x-forwarded-for") || "").split(",")[0]).trim().slice(0, 80);
+}
+
+async function bookCall(body, req) {
+  const db = getFirestore();
+  const now = Date.now();
+  const ip = bookingIp(req);
+  if (!(await formGuard.takeFormSlot(db, ip, now))) return [429, { ok: false, code: "limit", error: "Too many tries from this connection. Try again in a few minutes." }];
+  const check = await formGuard.verifyTurnstile({ secret: process.env.TURNSTILE_SECRET_KEY, token: body.token, ip, action: "booking" });
+  if (!check.ok) {
+    if (check.reason === "unreachable" || check.reason === "config") return [503, { ok: false, code: "bot", error: "The bot check could not run. Try again in a minute." }];
+    return [403, { ok: false, code: "bot", error: "The bot check did not pass. Reload the page and try again." }];
+  }
+  const read = booking.readBooking(body, now);
+  if (!read.ok) return [400, read];
+  const b = read.value;
+  if ((await db.doc("blocked_senders/" + b.email).get()).exists) return [403, { ok: false, error: "Could not book." }];
+  const mine = await db.collection("bookings").where("email", "==", b.email).get();
+  const ahead = mine.docs.filter((d) => String((d.data() || {}).start || "") > new Date(now).toISOString() && (d.data() || {}).status !== "cancelled");
+  if (ahead.length >= booking.MAX_UPCOMING_PER_EMAIL) return [409, { ok: false, code: "limit", error: "You already have calls booked. Reply to an invite to move one." }];
+  const token = await bookingAccess();
+  if (!token) return [503, { ok: false, code: "closed", error: "Booking is closed right now. Write to qa@carlosandmunoz.com." }];
+  const start = Date.parse(b.start);
+  const busy = await booking.busyTimes({ token, timeMin: new Date(start - 60 * 60 * 1000).toISOString(), timeMax: new Date(Date.parse(b.end) + 60 * 60 * 1000).toISOString() });
+  if (!booking.freeSlots(busy, { type: b.type, now }).includes(b.start)) return [409, { ok: false, code: "taken", error: "That time was just taken. Pick another one." }];
+  const ref = db.collection("bookings").doc();
+  const made = await booking.createEvent({ token, booking: b, id: ref.id });
+  const row = Object.assign({}, b, made, { status: "booked", createdAt: new Date(now).toISOString(), expireAt: new Date(Date.parse(b.end) + 180 * 24 * 60 * 60 * 1000) });
+  await ref.set(row);
+  const label = booking.LABELS.en[b.type];
+  const when = new Date(start).toLocaleString("en-US", { timeZone: booking.TZ, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  await Promise.all([
+    sendOwnerEmail({ subject: "Call booked: " + b.name + ", " + when, intro: label + " with " + b.name + ". Google sent the invite.", rows: booking.ownerRows(row), body: b.note, respondUrl: made.htmlLink, buttonLabel: "Open in Google Calendar" })
+      .catch((error) => console.error("Booking owner mail failed:", error)),
+    pushOwner(jarvisMailPush.callMessage(ref.id, Object.assign({ label }, row), when))
+  ]);
+  return [200, { ok: true, start: b.start, end: b.end, meet: made.meet }];
+}
+
+exports.booking = functions.runWith({ maxInstances: 5, secrets: SECRETS.booking }).https.onRequest(async (req, res) => {
+  if (req.method === "GET" && /\/callback\/?$/.test(req.path)) { await bookingCallback(req, res); return; }
+  const origin = String(req.get("origin") || "");
+  const allowed = CV_ORIGINS.has(origin);
+  res.set("Access-Control-Allow-Origin", allowed ? origin : "https://carlosandmunoz.com");
+  res.set("Vary", "Origin");
+  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+  res.set("Cache-Control", "no-store");
+  if (req.method === "OPTIONS") { res.status(204).send(""); return; }
+  if (!allowed || req.method !== "POST") { res.status(allowed ? 405 : 403).json({ ok: false, error: "This page cannot book calls." }); return; }
+  const body = req.body || {};
+  try {
+    if (body.op === "slots") {
+      const token = await bookingAccess();
+      if (!token) { res.json({ ok: true, open: false, tz: booking.TZ, slots: [] }); return; }
+      const now = Date.now();
+      const busy = await booking.busyTimes(Object.assign({ token }, booking.busyWindow(now)));
+      res.json({ ok: true, open: true, tz: booking.TZ, slots: booking.freeSlots(busy, { type: body.type, now }) });
+    } else if (body.op === "book") {
+      const [status, out] = await bookCall(body, req);
+      res.status(status).json(out);
+    } else {
+      res.status(400).json({ ok: false, error: "Unknown op." });
+    }
+  } catch (error) {
+    console.error("Booking failed:", error);
+    res.status(502).json({ ok: false, error: "Booking is not working right now. Write to qa@carlosandmunoz.com." });
+  }
 });
 
 function bogotaParts(date) {
@@ -3000,6 +3141,7 @@ async function mailAfterPayment(open, result, paid) {
         lang: open.lang || (run && run.lang),
         purpose: paid.purpose,
         host: (run && run.report && run.report.host) || "",
+        reportId: paid.reportId || "",
         priceUsd: paid.priceUsd,
         listUsd: open.listUsd,
         coupon: open.coupon,
@@ -5248,7 +5390,7 @@ async function jarvisSnapshot(days) {
   const now = Date.now();
   const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now, days }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync"], days),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync", "calls"], days),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
@@ -5707,6 +5849,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "review") out = await jarvisReview.enqueue(getFirestore(), body, operator, now);
     else if (op === "snapshot") out = Object.assign(await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days))), { mailCodes: await mailCodeRows().catch(() => []) });
     else if (op === "mail-codes") out = { codes: await mailCodeRows() };
+    else if (op === "calendar-connect") out = await bookingConnectUrl();
     else if (op === "brief-mark") out = await jarvisProposals.markBrief(getFirestore(), body, operator, now);
     else if (op === "brief-marks") out = { marks: await jarvisProposals.savedBrief(getFirestore()) };
     else if (op === "brief-items") out = await jarvis.briefItems(getFirestore(), { list: body.list, days, now });

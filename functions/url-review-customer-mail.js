@@ -4,6 +4,7 @@
  */
 const findingsCopy = require("./url-review-findings-copy");
 const fusion = require("./url-review-fusion");
+const booking = require("./booking");
 
 const { FUSION, TEXT, ON_NIGHT } = fusion;
 const SITE = "https://carlosandmunoz.com";
@@ -47,6 +48,7 @@ const COPY = {
     deeper: "Want to go deeper?",
     deeperLines: ["Want to evaluate more pages, more links, or more sites?", "Want full, real test cases run in any or all of the automation frameworks?"],
     deeperCta: "Write to qa@carlosandmunoz.com",
+    book: "Book a 30-min call with Carlos",
     deeperSubject: "Going deeper on {host}",
     why: "You get this because a review of {host} was run with this address at carlosandmunoz.com.",
     stop: "Stop follow-up notes",
@@ -90,6 +92,7 @@ const COPY = {
     deeper: "¿Quieres ir más a fondo?",
     deeperLines: ["¿Quieres evaluar más páginas, más enlaces o más sitios?", "¿Quieres casos de prueba reales y completos, corridos en uno o en todos los frameworks de automatización?"],
     deeperCta: "Escribe a qa@carlosandmunoz.com",
+    book: "Agenda una llamada de 30 min con Carlos",
     deeperSubject: "Ir más a fondo con {host}",
     why: "Recibes esto porque se hizo una revisión de {host} con este correo en carlosandmunoz.com.",
     stop: "Dejar de recibir notas",
@@ -133,6 +136,7 @@ const COPY = {
     deeper: "Quer ir mais fundo?",
     deeperLines: ["Quer avaliar mais páginas, mais links ou mais sites?", "Quer casos de teste reais e completos, rodando em um ou em todos os frameworks de automação?"],
     deeperCta: "Escreva para qa@carlosandmunoz.com",
+    book: "Agende uma conversa de 30 min com o Carlos",
     deeperSubject: "Ir mais fundo com {host}",
     why: "Você recebe isto porque uma revisão de {host} foi feita com este e-mail em carlosandmunoz.com.",
     stop: "Parar de receber notas",
@@ -176,6 +180,7 @@ const COPY = {
     deeper: "Möchten Sie tiefer gehen?",
     deeperLines: ["Mehr Seiten, mehr Links oder mehr Websites prüfen?", "Echte, vollständige Testfälle in einem oder allen Automatisierungs-Frameworks ausführen?"],
     deeperCta: "Schreiben Sie an qa@carlosandmunoz.com",
+    book: "Buchen Sie ein 30-Minuten-Gespräch mit Carlos",
     deeperSubject: "Tiefer gehen mit {host}",
     why: "Sie erhalten diese Nachricht, weil mit dieser Adresse eine Prüfung von {host} auf carlosandmunoz.com gestartet wurde.",
     stop: "Keine Notizen mehr",
@@ -219,6 +224,7 @@ const COPY = {
     deeper: "Envie d'aller plus loin ?",
     deeperLines: ["Évaluer plus de pages, plus de liens ou plus de sites ?", "Faire tourner de vrais cas de test complets dans un ou tous les frameworks d'automatisation ?"],
     deeperCta: "Écrivez à qa@carlosandmunoz.com",
+    book: "Réservez un appel de 30 min avec Carlos",
     deeperSubject: "Aller plus loin avec {host}",
     why: "Vous recevez ce message parce qu'une revue de {host} a été lancée avec cette adresse sur carlosandmunoz.com.",
     stop: "Ne plus recevoir de notes",
@@ -262,6 +268,7 @@ const COPY = {
     deeper: "Vuoi andare più a fondo?",
     deeperLines: ["Valutare più pagine, più link o più siti?", "Eseguire casi di test reali e completi in uno o in tutti i framework di automazione?"],
     deeperCta: "Scrivi a qa@carlosandmunoz.com",
+    book: "Prenota una chiamata di 30 minuti con Carlos",
     deeperSubject: "Andare più a fondo con {host}",
     why: "Ricevi questo messaggio perché con questo indirizzo è stata avviata una revisione di {host} su carlosandmunoz.com.",
     stop: "Non ricevere più note",
@@ -443,12 +450,18 @@ function bodyCell(padding, last, style) {
   return "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;" + (last ? "border-radius:0 0 16px 16px;" : "") + "padding:" + padding + ";" + (style || "") + "\">";
 }
 
-function deeperBlock(t, host, reportId) {
+// The call link: a report walkthrough when there is a report, the 15-min intro otherwise.
+function bookLink(lang, host, reportId, from) {
+  return booking.bookUrl(reportId ? "walkthrough" : "intro", lang, { host, report: reportId, from });
+}
+
+function deeperBlock(t, host, reportId, lang, from) {
   return "<tr><td style=\"padding:0 0 16px;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + FUSION.night + "\" style=\"" + fusion.PANEL + "border-radius:16px;\">" +
     "<tr><td style=\"padding:26px 28px;font-family:Arial,Helvetica,sans-serif;\">" +
     "<p style=\"margin:0 0 12px;" + fusion.SERIF + "font-size:24px;line-height:29px;color:#ffffff;\">" + esc(t.deeper) + "</p>" +
     t.deeperLines.map((line) => "<p style=\"margin:0 0 8px;font-size:15px;line-height:22px;color:" + ON_NIGHT.soft + ";\"><span style=\"color:" + FUSION.cyan + ";\">&rarr;</span>&nbsp; " + esc(line) + "</p>").join("") +
-    "<p style=\"margin:16px 0 0;\"><a href=\"" + esc(deeperUrl(t, host, reportId)) + "\" style=\"display:inline-block;background:" + FUSION.cyan + ";color:" + FUSION.night + ";text-decoration:none;font-size:15px;font-weight:bold;line-height:20px;padding:12px 20px;border-radius:999px;\">" + esc(t.deeperCta) + "</a></p>" +
+    "<p style=\"margin:16px 0 0;\"><a href=\"" + esc(deeperUrl(t, host, reportId)) + "\" style=\"display:inline-block;background:" + FUSION.cyan + ";color:" + FUSION.night + ";text-decoration:none;font-size:15px;font-weight:bold;line-height:20px;padding:12px 20px;border-radius:999px;\">" + esc(t.deeperCta) + "</a>" +
+    "<a href=\"" + esc(bookLink(lang, host, reportId, from)) + "\" style=\"display:inline-block;background:transparent;color:#ffffff;border:1px solid " + FUSION.cyan + ";text-decoration:none;font-size:15px;font-weight:bold;line-height:20px;padding:11px 20px;border-radius:999px;margin:10px 0 0 8px;\">" + esc(t.book) + "</a></p>" +
     "</td></tr></table></td></tr>";
 }
 
@@ -683,7 +696,7 @@ function reportMail(record, options) {
     (opts.attached ? "<p style=\"margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:" + TEXT.link + ";font-weight:bold;\">&#128206; " + esc(attached) + "</p>" : "") +
     "</td></tr>" +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
-    deeperBlock(t, facts.host, facts.id);
+    deeperBlock(t, facts.host, facts.id, lang, "report");
   const findingLines = facts.findings.map((item) => "- [" + (t.areas[item.area] || item.area) + " · " + (p.sev[item.severity] || item.severity) + "] " + item.shown + (item.hidden ? " …" : "") +
     (item.fix ? "\n  " + FIX_LABEL[lang] + ": " + item.fix : ""));
   const why = opts.why || fill(t.why, { host: facts.host });
@@ -706,6 +719,7 @@ function reportMail(record, options) {
     t.deeper,
     t.deeperLines.join("\n"),
     t.deeperCta,
+    t.book + ": " + bookLink(lang, facts.host, facts.id, "report"),
     "",
     footerText(t, why, foot)
   ].filter((line, index, all) => line !== "" || all[index - 1] !== "").join("\n");
@@ -894,7 +908,7 @@ function reportPdf(record, options) {
     (findings ? "<div class=\"sec\"><h2>" + esc(p.findings) + "</h2>" + (open ? "" : "<p class=\"note\">" + esc(p.note) + "</p>") + findings + "</div>" : "") +
     (caseRows ? "<div class=\"sec\"><h2>" + esc(p.cases) + "</h2><div class=\"cases\">" + caseRows + "</div>" + (moreCases ? "<p class=\"more\">" + esc(fill(p.moreCases, { n: moreCases })) + "</p>" : "") + "</div>" : "") +
     "<div class=\"cta\"><h3>" + esc(t.deeper) + "</h3>" + t.deeperLines.map((line) => "<p>→ " + esc(line) + "</p>").join("") +
-    "<div class=\"btns\"><a class=\"btn p\" href=\"" + esc(openUrl) + "\">" + esc(open ? t.openFull : p.unlock) + "</a><a class=\"btn s\" href=\"" + esc(deeperUrl(t, facts.host, facts.id)) + "\">" + esc(t.deeperCta) + "</a></div></div>" +
+    "<div class=\"btns\"><a class=\"btn p\" href=\"" + esc(openUrl) + "\">" + esc(open ? t.openFull : p.unlock) + "</a><a class=\"btn s\" href=\"" + esc(deeperUrl(t, facts.host, facts.id)) + "\">" + esc(t.deeperCta) + "</a><a class=\"btn s\" href=\"" + esc(bookLink(lang, facts.host, facts.id, "report-pdf")) + "\">" + esc(t.book) + "</a></div></div>" +
     "</div></body></html>";
   const slug = facts.host.replace(/[^a-z0-9.-]/gi, "-").replace(/-+/g, "-").slice(0, 60);
   return { html, filename: "qa-lab-" + slug + "-" + (open ? p.fileOpen : p.file) + ".pdf" };
@@ -914,7 +928,7 @@ function noteMail(note, options) {
     "<p style=\"margin:4px 0 0;font-size:13px;line-height:19px;color:" + TEXT.muted + ";\">" + esc(t.openNote) + "</p>" +
     "</td></tr>" +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
-    deeperBlock(t, host, note && note.reportId);
+    deeperBlock(t, host, note && note.reportId, lang, "note");
   const text = [
     note && note.title,
     "",
@@ -926,6 +940,7 @@ function noteMail(note, options) {
     t.deeper,
     t.deeperLines.join("\n"),
     t.deeperCta,
+    t.book + ": " + bookLink(lang, note && note.host, note && note.reportId, "note"),
     "",
     footerText(t, fill(t.why, { host }), { stopUrl: opts.stopUrl })
   ].filter((line, index, all) => line !== "" || all[index - 1] !== "").join("\n");
@@ -1203,12 +1218,12 @@ function receiptMail(p) {
     (p.test ? "<p style=\"margin:0 0 16px;font-size:14px;line-height:21px;color:" + TEXT.risk + ";font-weight:bold;\">" + esc(t.test) + "</p>" : "") +
     table +
     "<p style=\"margin:0 0 20px;font-size:13px;line-height:19px;color:" + TEXT.muted + ";\">" + esc(fill(t.notInvoice, vars)) + "</p>" +
-    button(link, t.button, true) +
+    button(link, t.button, true) + button(bookLink(code, p.host, p.reportId, "receipt"), COPY[code].book, false) +
     "</td></tr>";
   return {
     lang: code,
     subject: fill(t.subject, vars),
-    text: [t.title, "", fill(t.lead, vars), p.test ? "\n" + t.test : "", "", rows.map((row) => row[0] + ": " + row[1]).join("\n"), "", fill(t.notInvoice, vars), "", t.button + ": " + link, "", footerText(COPY[code], why)].join("\n"),
+    text: [t.title, "", fill(t.lead, vars), p.test ? "\n" + t.test : "", "", rows.map((row) => row[0] + ": " + row[1]).join("\n"), "", fill(t.notInvoice, vars), "", t.button + ": " + link, COPY[code].book + ": " + bookLink(code, p.host, p.reportId, "receipt"), "", footerText(COPY[code], why)].join("\n"),
     html: shell(code, fill(t.lead, vars), inner, footerHtml(COPY[code], why))
   };
 }
