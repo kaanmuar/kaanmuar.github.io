@@ -255,6 +255,7 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
     }
     if (product == "review") {
         PeoplePanel(s)
+        LocalPanel(s)
         TopList("Funnel", p.pairs("funnel"), 4)
     }
 

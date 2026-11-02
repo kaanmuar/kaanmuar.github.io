@@ -711,6 +711,7 @@ function askSnapshot(snap, days) {
       outreach: outreachAsk(e.outreach, s.outreachVisits),
       engagement: engagementAsk(e.engagement),
       signedInPeople: ok(e.people) ? e.people.totals : null,
+      googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
       waiting: core.connections(e).filter((c) => c.needs.length).map((c) => c.name + ": " + c.needs.join(" "))
     }
   };

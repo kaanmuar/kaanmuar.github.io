@@ -103,6 +103,14 @@ const EXTERNAL = {
   'marketing-command': { ok: true, queued: 'c1', action: 'approve', label: 'Approve ana@uni.edu.co (W1)' },
   engagement: require('./fixtures/jarvis-engagement.json'),
   'engagement-decide': { ok: true, message: 'Edited and approved.' },
+  local: { ok: true, since: '2026-11-02', more: 0,
+    totals: { reviews: 9, local: 2, profiles: 1, noProfile: 1, withIssues: 2, failing: 0, outreach: 1, calls: 4, errors: 1, callsToday: 2 },
+    issues: [{ key: 'local-hours', count: 1, fail: 0 }, { key: 'local-profile', count: 1, fail: 0 }],
+    lastError: { at: '2026-11-01T12:00:00.000Z', error: 'status 429' },
+    sites: [
+      { id: 'a', host: 'speed-plumbing.com', at: '2026-11-01T15:00:00.000Z', source: 'sweep', outreach: true, profile: true, worst: 'risk', issues: [{ key: 'local-hours', verdict: 'risk', severity: 'medium' }] },
+      { id: 'b', host: 'bakery.example', at: '2026-11-01T14:00:00.000Z', source: '', outreach: false, profile: false, worst: 'risk', issues: [{ key: 'local-profile', verdict: 'risk', severity: 'low' }] }
+    ] },
   people: { ok: true, since: '2026-11-01', more: 0,
     totals: { people: 2, active: 2, new: 1, returning: 1, visits: 3, activeMs: 1260000, avgVisitMs: 420000, runs: 2 },
     testTotals: { people: 1, active: 1, new: 1, returning: 0, visits: 1, activeMs: 5000, avgVisitMs: 5000, runs: 0 },
@@ -189,7 +197,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['rows', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls', 'device']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['rows', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls', 'device']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
     expect(calls.every((c) => c.body.device?.kind === 'desktop' && c.body.device.app === 'web')).toBe(true);
 
@@ -344,6 +352,21 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect.poll(() => calls.filter((c) => c.op === 'share-queue').map((c) => [c.body.id, c.body.draft.x])).toEqual([['new1', 'Edited X post']]);
     await expect(page.locator('.jv-toast')).toContainText('Queued.');
     await expect(share.locator('[data-share-caption]')).toHaveValue('');
+  });
+
+  test('URL Review shows the Google Maps Local check across reviews and its Places calls (#2118)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.setViewportSize({ width: 1280, height: 1000 });
+    await openStats(page, '#stats/review/30');
+    const local = page.locator('[data-view="review"] [data-panel-id="review-local"]');
+    await expect(local).toContainText('Google Maps: local businesses · 2');
+    await expect(local.locator('.jv-stats')).toContainText('Places errors');
+    await expect(local).toContainText('speed-plumbing.com');
+    await expect(local).toContainText('Opening hours');
+    await expect(local).toContainText('No profile found');
+    await expect(local).toContainText('status 429');
+    expect(errors).toEqual([]);
   });
 
   test('URL Review lists the signed-in people, their runs, returns and time, and the switch keeps tests apart (#1976)', async ({ page }) => {
