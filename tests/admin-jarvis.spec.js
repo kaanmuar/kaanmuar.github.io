@@ -464,7 +464,7 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(save.body.settings.goals).toEqual([{ product: 'cv', metric: 'visits', period: 'week', target: 300 }, { product: 'review', metric: 'paid', period: 'month', target: 12 }]);
     expect(save.body.settings.thresholds.pendingRatings).toBe(25);
     expect(save.body.settings.mail).toMatchObject({ daily: true, gemini: false, watch: true, weekly: true, messages: true, ratings: false, ownerReplies: false });
-    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2 } });
+    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2, 'run-job': 6, 'rerun-ci': 4, 'pause-outreach': 2, 'refresh-data': 4, 'rerun-reviews': 2, 'ai-fix': 3 }, confidence: 0.8 });
     expect(save.body.settings.searchQueries).toEqual(['qa review', 'qa review', 'carlos qa']);
     await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(1);
 
