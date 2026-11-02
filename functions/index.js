@@ -5399,7 +5399,8 @@ async function jarvisExternal(ops, days) {
     health: () => jarvisCached("health", days, () => jarvis.health(getFirestore(), { days, now })),
     jobs: () => jarvisCached("jobs", 0, async () => ({ ok: true, jobs: await jarvis.jobs(fetch) })),
     github: () => jarvisCached("github", 0, async () => jarvis.github(fetch, await githubApp.token(), { now })),
-    uptime: async () => Object.assign(await jarvisCached("uptime", 0, () => jarvis.uptime(fetch, { now })), { history: await jarvis.uptimeHistory(getFirestore(), now).catch(() => []) }),
+    uptime: () => Promise.all([jarvisCached("uptime", 0, () => jarvis.uptime(fetch, { now })), jarvis.uptimeHistory(getFirestore(), now).catch(() => [])])
+      .then(([up, history]) => Object.assign({}, up, { history })),
     speed: () => jarvisCached("speed", 0, () => jarvis.speed(urlReview, env)),
     ga4: () => jarvisCached("ga4", days, () => jarvis.ga4(fetch, { days })),
     cloudflare: () => jarvisCached("cloudflare", days, () => jarvis.cloudflare(fetch, env, { days, now })),
@@ -6200,7 +6201,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "ga4") out = await jarvisCached(op, days, () => jarvis.ga4(fetch, { days }));
     else if (op === "cloudflare") out = await jarvisCached(op, days, () => jarvis.cloudflare(fetch, env, { days, now }));
     else if (op === "speed") out = await jarvisCached(op, 0, () => jarvis.speed(urlReview, env));
-    else if (op === "uptime") out = Object.assign(await jarvisCached(op, 0, () => jarvis.uptime(fetch, { now })), { history: await jarvis.uptimeHistory(getFirestore(), now).catch(() => []) });
+    else if (op === "uptime") out = Object.assign({}, await jarvisCached(op, 0, () => jarvis.uptime(fetch, { now })), { history: await jarvis.uptimeHistory(getFirestore(), now).catch(() => []) });
     else if (op === "brief") out = await jarvis.brief(fetch, env, body.snapshot || await appAskSnapshot());
     else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot || await appAskSnapshot(), { lang: body.lang, spoken: body.spoken === true, device: body.device });
     else if (op === "speak") out = await jarvis.speak(fetch, body.text, body.lang, { voice: body.voice, rate: body.rate });
