@@ -25,15 +25,31 @@
   "text": "⟦1⟧ lead in SEO, GEO, Analytics, Sicurezza; ⟦2⟧ leader in Accessibilità, Prestazioni.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, GEO, Analytics; ⟦2⟧ leads in Security, Performance; ⟦3⟧ leads in Accessibility.": {
+  "text": "⟦1⟧ lead in SEO, GEO, Analytics; ⟦2⟧ leader in Sicurezza, Prestazioni; ⟦3⟧ porta in Accessibilità.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security, Accessibility, Performance.": "⟦1⟧ è in testa in SEO e GEO; ⟦2⟧ in Analytics, Sicurezza, Accessibilità e Prestazioni.",
+ "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO; ⟦3⟧ leads in Analytics, Accessibility, Performance.": {
+  "text": "⟦1⟧ lead in SEO, sicurezza; ⟦2⟧ lead in GEO; ⟦3⟧ leader in analisi, accessibilità, prestazioni.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Accessibility, Performance.": "⟦1⟧ è in testa nella SEO; ⟦2⟧ in GEO e Sicurezza; ⟦3⟧ in Analytics, Accessibilità e Prestazioni.",
  "⟦1⟧ leads security, ⟦2⟧ to ⟦3⟧, and analytics, ⟦4⟧ to ⟦5⟧.": "⟦1⟧ è avanti nella sicurezza, ⟦2⟧ a ⟦3⟧, e negli analytics, ⟦4⟧ a ⟦5⟧.",
  "⟦1⟧ lets AI answer bots like OAI-SearchBot and PerplexityBot in while blocking the training bots GPTBot, CCBot, and Google-Extended.": "⟦1⟧ lascia entrare i bot di risposta AI come OAI-SearchBot e PerplexityBot e blocca i bot di training GPTBot, CCBot e Google-Extended.",
  "⟦1⟧ lists ⟦2⟧ links but names no entity.": "⟦1⟧ elenca ⟦2⟧ link ma non nomina nessuna entità.",
  "⟦1⟧ names news sitemaps, http goes to https with a ⟦2⟧, and section pages have their own descriptions.": "⟦1⟧ indica le sitemap news, http passa a https con un ⟦2⟧ e le pagine di sezione hanno descrizioni proprie.",
+ "⟦1⟧ natural competitors.": {
+  "text": "⟦1⟧ concorrenti naturali.",
+  "machine": true
+ },
  "⟦1⟧ natural competitors. ⟦2⟧ leads:": "⟦1⟧ concorrenti naturali. ⟦2⟧ è in testa:",
  "⟦1⟧ of the ⟦2⟧ pages analyzed have no canonical link.": "⟦1⟧ delle ⟦2⟧ pagine analizzate non hanno un link canonical.",
  "⟦1⟧ or ⟦2⟧: which national portal scored higher?": "⟦1⟧ o ⟦2⟧: quale portale nazionale ha ottenuto di più?",
+ "⟦1⟧ pages are kept out of search on purpose, and AI answer and search crawlers may read the start page.": {
+  "text": "⟦1⟧ le pagine vengono tenute fuori dalla ricerca di proposito e i crawler di risposta e di ricerca dell'IA possono leggere la pagina iniziale.",
+  "machine": true
+ },
  "⟦1⟧ points AI crawlers to Markdown versions of pages, port ⟦2⟧ is closed, and the CSP starts at default-src 'self'.": "⟦1⟧ indirizza i crawler AI alle versioni Markdown delle pagine, la porta ⟦2⟧ è chiusa e la CSP parte da default-src 'self'.",
  "⟦1⟧ reads well.": "⟦1⟧ si legge bene.",
  "⟦1⟧ receives mail, but has no SPF.": "⟦1⟧ riceve email, ma non ha SPF.",
@@ -375,6 +391,10 @@
  "But buttons must have discernible text.": "Ma i pulsanti devono avere un testo riconoscibile.",
  "But canonical links point to ⟦1⟧, a host that did not answer our request, and the home page names a news story as its canonical.": "Ma i link canonical puntano a ⟦1⟧, un host che non ha risposto alla nostra richiesta, e la home page indica una notizia come canonical.",
  "But certain ARIA roles must be contained by particular parents.": "Ma alcuni ruoli ARIA devono stare dentro genitori specifici.",
+ "But certain ARIA roles must contain particular children.": {
+  "text": "Ma alcuni ruoli ARIA devono contenere bambini particolari.",
+  "machine": true
+ },
  "But CSP frame-ancestors allows *.⟦1⟧ and *.⟦2⟧, hosts any Azure customer can publish on, so any of them could embed its pages.": "Ma la CSP frame-ancestors consente *.⟦1⟧ e *.⟦2⟧, host su cui qualsiasi cliente Azure può pubblicare, quindi chiunque di loro potrebbe incorporarne le pagine.",
  "But DMARC is p=none, so spoofed ⟦1⟧ mail is reported, not stopped.": "Ma DMARC è p=none, quindi la posta ⟦1⟧ contraffatta viene segnalata, non fermata.",
  "But elements must meet minimum color contrast ratio thresholds.": "Ma gli elementi devono rispettare le soglie minime di contrasto dei colori.",
@@ -392,6 +412,10 @@
  "But its Organization JSON-LD has a logo and URL with no name or sameAs.": "Ma il suo Organization JSON-LD ha logo e URL senza name né sameAs.",
  "But its sitemap lists URLs like ⟦1⟧ and ⟦2⟧ because the CMS never learned its public address.": "Ma la sua sitemap elenca URL come ⟦1⟧ e ⟦2⟧ perché il CMS non ha mai saputo il proprio indirizzo pubblico.",
  "But links must have discernible text.": "Ma i link devono avere un testo riconoscibile.",
+ "But no content security policy.": {
+  "text": "Ma nessuna politica di sicurezza dei contenuti.",
+  "machine": true
+ },
  "But no page analyzed carries JSON-LD saying who PAHO is.": "Ma nessuna pagina analizzata ha JSON-LD che dica chi è PAHO.",
  "But no page analyzed carries JSON-LD, so nothing tells search or AI which pages are books.": "Ma nessuna pagina analizzata ha JSON-LD, quindi niente dice alla ricerca o all’AI quali pagine sono libri.",
  "But no page analyzed carries JSON-LD, so search and AI answers get no entity naming the project.": "Ma nessuna pagina analizzata ha JSON-LD, quindi ricerca e risposte AI non ricevono un’entità che nomini il progetto.",
@@ -1425,6 +1449,10 @@
   "text": "Punteggi affiancati: ⟦1⟧ Punteggio ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Sicurezza ⟦6⟧, A11y ⟦7⟧, Velocità ⟦8⟧; ⟦9⟧ Punteggio ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analisi ⟦13⟧, Sicurezza ⟦14⟧, A11y ⟦15⟧, Velocità ⟦16⟧.",
   "machine": true
  },
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed…": {
+  "text": "Punteggi affiancati: ⟦1⟧ Punteggio ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Sicurezza ⟦6⟧, A11y ⟦7⟧, Velocità ⟦8⟧; ⟦9⟧ Punteggio ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analisi ⟦13⟧, Sicurezza ⟦14⟧, A11y ⟦15⟧, Velocità...",
+  "machine": true
+ },
  "Scouts: a consent tool, no Consent Mode.": "Scout: uno strumento di consenso, ma niente Consent Mode.",
  "Screen reader tests in Playwright": "Test con screen reader in Playwright",
  "Screen readers announce it, and the tap target grows.": "Gli screen reader la annunciano e l’area di tocco cresce.",
@@ -1432,6 +1460,10 @@
  "Screen readers announce it, and the tap…": "Gli screen reader lo annunciano, e il tap…",
  "Screen readers announce it, and the…": "Gli screen reader lo annunciano, e il…",
  "Screen readers announce it, and…": "Gli screen reader lo annunciano, e…",
+ "Screen readers announce it…": {
+  "text": "Gli screen reader lo annunciano...",
+  "machine": true
+ },
  "Screen readers announce the name, not the hint.": "Gli screen reader annunciano il nome, non il suggerimento.",
  "Screen readers jump by heading.": "Gli screen reader saltano da un titolo all’altro.",
  "Screen readers list it as a landmark you can jump to.": "Gli screen reader lo elencano come landmark a cui saltare.",
@@ -1617,6 +1649,10 @@
  "The gap: page titles.": "La lacuna: i titoli delle pagine.",
  "The gap: schema fields.": "La lacuna: i campi schema.",
  "The gap: text contrast.": "La lacuna: il contrasto del testo.",
+ "The gap: the CSP.": {
+  "text": "Il divario: il CSP.",
+  "machine": true
+ },
  "The gap: the https redirect.": "La lacuna: il redirect a https.",
  "The Global Fund sets no cache rules.": "Il Global Fund non imposta regole di cache.",
  "The Guardian front page has no h1.": "La prima pagina del Guardian non ha h1.",
@@ -1678,6 +1714,10 @@
  "Three sites linked PDFs that were gone.": "Tre siti collegavano PDF che non c’erano più.",
  "Three studies dropped in the same week, and they all arrived at the same verdict.": "Tre studi sono usciti nella stessa settimana e sono arrivati tutti allo stesso verdetto.",
  "Tie each field to a ⟦1⟧, or give it an aria-label.": "Collega ogni campo a un ⟦1⟧, oppure dagli un aria-label.",
+ "Tighten the content security policy one directive at a time, starting from default-src 'self'.": {
+  "text": "Rafforzare la politica di sicurezza del contenuto una direttiva alla volta, iniziando da default-src 'self'.",
+  "machine": true
+ },
  "Time to first byte is a floor for everything else.": "Il time to first byte è il minimo sotto cui nient’altro può scendere.",
  "Time your server in one line.": "Misura il tuo server in una riga.",
  "Time your server in one line. curl can report when the first byte of the page arrived. ⟦1⟧ suggests a Time to First Byte of ⟦2⟧ seconds or less for most sites.": "Misura il tuo server in una riga. curl può dirti quando è arrivato il primo byte della pagina. ⟦1⟧ suggerisce un Time to First Byte di ⟦2⟧ secondi o meno per la maggior parte dei siti.",
@@ -1774,6 +1814,10 @@
  "When the same content answers at several addresses, ranking signals split between them.": "Quando lo stesso contenuto risponde a più indirizzi, i segnali di ranking si dividono tra loro.",
  "When you use ARIA roles, nest them the way the role requires.": {
   "text": "Quando utilizzi i ruoli ARIA, nidificali nel modo richiesto dal ruolo.",
+  "machine": true
+ },
+ "When you use ARIA roles, nest them the way the…": {
+  "text": "Quando usi i ruoli ARIA, nidificali nel modo in cui...",
   "machine": true
  },
  "WHO welcomes AI answer crawlers and its pages read well without JavaScript:": "L’OMS accoglie i crawler di risposta AI e le sue pagine si leggono bene senza JavaScript:",
