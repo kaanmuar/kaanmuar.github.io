@@ -20,6 +20,7 @@ const BY_EMAIL = [
   ["stopLinks", "url_review_stop_links"],
   ["signIns", "url_review_sign_ins"],
   ["sessions", "url_review_sessions"],
+  ["visits", "url_review_visits"],
   ["ownerProofs", "url_review_owner_proofs"]
 ];
 

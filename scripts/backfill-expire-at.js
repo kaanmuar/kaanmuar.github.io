@@ -22,6 +22,7 @@ const RULES = {
   url_review_sessions: (row) => at(row.expiresAt),
   url_review_oauth: (row) => at(row.expiresAt),
   url_review_opens: (row) => year(row.createdAt),
+  url_review_visits: (row) => year(row.startedAt),
   url_review_notes: (row) => row.status === "follow-stop" ? null : year(row.createdAt),
   url_review_stop_links: (row) => year(row.createdAt),
   url_review_redemptions: (row) => paid(row.at),
