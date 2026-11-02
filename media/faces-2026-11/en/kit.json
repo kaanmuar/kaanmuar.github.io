@@ -30,7 +30,7 @@
           },
           {
             "label": "Website",
-            "value": "https://carlosandmunoz.com/qa-review.html?utm_source=x&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
+            "value": "https://carlosandmunoz.com/qalaburlreview.html?utm_source=x&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
           }
         ],
         "images": [
@@ -70,7 +70,7 @@
             "value": [
               [
                 "Website",
-                "https://carlosandmunoz.com/qa-review.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
+                "https://carlosandmunoz.com/qalaburlreview.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
               ],
               [
                 "Social hub",
@@ -123,7 +123,7 @@
           },
           {
             "label": "Website",
-            "value": "https://carlosandmunoz.com/qa-review.html?utm_source=tiktok&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
+            "value": "https://carlosandmunoz.com/qalaburlreview.html?utm_source=tiktok&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
           }
         ],
         "images": [
@@ -157,7 +157,7 @@
             "value": [
               [
                 "Website",
-                "https://carlosandmunoz.com/qa-review.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
+                "https://carlosandmunoz.com/qalaburlreview.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
               ],
               [
                 "Social hub",
@@ -208,7 +208,7 @@
           },
           {
             "label": "Website",
-            "value": "https://carlosandmunoz.com/qa-review.html?utm_source=facebook&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
+            "value": "https://carlosandmunoz.com/qalaburlreview.html?utm_source=facebook&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
           },
           {
             "label": "Email",
@@ -255,7 +255,7 @@
           },
           {
             "label": "Website",
-            "value": "https://carlosandmunoz.com/qa-review.html?utm_source=devto&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
+            "value": "https://carlosandmunoz.com/qalaburlreview.html?utm_source=devto&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
           }
         ],
         "images": [
@@ -316,7 +316,7 @@
             "value": [
               [
                 "Website",
-                "https://carlosandmunoz.com/qa-review.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
+                "https://carlosandmunoz.com/qalaburlreview.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
               ],
               [
                 "Social hub",
@@ -344,7 +344,7 @@
           }
         ],
         "steps": [
-          "Preferences > Public profile > Verification: the face landing page (#2311) will carry rel=\"me\" so the website field shows as verified."
+          "Preferences > Public profile: put the Website link below in the first extra field and save. The face landing page links back with rel=\"me\" once this file marks the account as existing, so Mastodon shows the field as verified; save the profile again if it was set before."
         ],
         "access": "Preferences > Development > New application with write:statuses, write:media, read:accounts and read:statuses: set the repo secrets MASTODON_URL (https://mastodon.social) and MASTODON_TOKEN (#2310)."
       },
@@ -368,7 +368,7 @@
             "value": [
               [
                 "Website",
-                "https://carlosandmunoz.com/qa-review.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
+                "https://carlosandmunoz.com/qalaburlreview.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
               ],
               [
                 "Social hub",
@@ -430,7 +430,7 @@
           },
           {
             "label": "Link",
-            "value": "https://carlosandmunoz.com/qa-review.html?utm_source=threads&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
+            "value": "https://carlosandmunoz.com/qalaburlreview.html?utm_source=threads&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
           }
         ],
         "images": [
@@ -469,7 +469,7 @@
           },
           {
             "label": "Website",
-            "value": "https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
+            "value": "https://carlosandmunoz.com/qalaburlreview.html?utm_source=linkedin&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en"
           },
           {
             "label": "Industry",

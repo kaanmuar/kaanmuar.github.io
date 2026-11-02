@@ -17,7 +17,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Website:
   ```text
-  https://carlosandmunoz.com/qa-review-es.html?utm_source=x&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
+  https://carlosandmunoz.com/qaurlreview.html?utm_source=x&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   ```
 - [ ] Upload Profile photo: `media/faces-2026-11/es/x/avatar-400.jpg`
 - [ ] Upload Header photo; the profile photo covers the lower left: `media/faces-2026-11/es/x/header-1500x500.jpg`
@@ -46,7 +46,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   English, Deutsch, Français, Italiano: @qalaburlreview
   ```
 - [ ] Links:
-  - Website: https://carlosandmunoz.com/qa-review-es.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
+  - Website: https://carlosandmunoz.com/qaurlreview.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - Social hub: https://carlosandmunoz.com/qa-review-social-es.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - Português: https://carlosandmunoz.com/qa-review-pt.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - EN · DE · FR · IT: https://www.youtube.com/@qalaburlreview
@@ -73,7 +73,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Website:
   ```text
-  https://carlosandmunoz.com/qa-review-es.html?utm_source=tiktok&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
+  https://carlosandmunoz.com/qaurlreview.html?utm_source=tiktok&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   ```
 - [ ] Upload Profile photo: `media/faces-2026-11/es/tiktok/avatar-1080.jpg`
 - [ ] Access: Connect the account in Buffer (#2310).
@@ -90,7 +90,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: u/qalaburlreview
   ```
 - [ ] Social links (5):
-  - Website: https://carlosandmunoz.com/qa-review-es.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
+  - Website: https://carlosandmunoz.com/qaurlreview.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - Social hub: https://carlosandmunoz.com/qa-review-social-es.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - Português: https://carlosandmunoz.com/qa-review-pt.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - EN · DE · FR · IT: https://www.reddit.com/user/qalaburlreview/
@@ -126,7 +126,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Website:
   ```text
-  https://carlosandmunoz.com/qa-review-es.html?utm_source=facebook&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
+  https://carlosandmunoz.com/qaurlreview.html?utm_source=facebook&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   ```
 - [ ] Email:
   ```text
@@ -157,7 +157,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Website:
   ```text
-  https://carlosandmunoz.com/qa-review-es.html?utm_source=devto&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
+  https://carlosandmunoz.com/qaurlreview.html?utm_source=devto&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   ```
 - [ ] Upload Profile image (dev.to has no banner): `media/faces-2026-11/es/devto/avatar-1000.jpg`
 - [ ] Access: Settings > Extensions > DEV Community API Keys: make a key for the dev.to poster (#2326).
@@ -180,7 +180,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
 ## Mastodon: new account, https://mastodon.social/@qaurlreview
 
 - [ ] Sign up at mastodon.social/auth/sign_up with `qaurlreview@carlosandmunoz.com` and the username `qaurlreview`, then confirm the email.
-- [ ] Preferences > Public profile > Verification: the face landing page (#2311) will carry rel="me" so the website field shows as verified.
+- [ ] Preferences > Public profile: put the Website link below in the first extra field and save. The face landing page links back with rel="me" once this file marks the account as existing, so Mastodon shows the field as verified; save the profile again if it was set before.
 - [ ] Display name:
   ```text
   QA-lab URL Review · ES/PT
@@ -190,7 +190,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad y velocidad, con casos de prueba para 20 frameworks. La primera revisión va incluida. En español y português. EN/DE/FR/IT: @qalaburlreview@mastodon.social
   ```
 - [ ] Extra fields (4):
-  - Website: https://carlosandmunoz.com/qa-review-es.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
+  - Website: https://carlosandmunoz.com/qaurlreview.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - Social hub: https://carlosandmunoz.com/qa-review-social-es.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - Português: https://carlosandmunoz.com/qa-review-pt.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - EN · DE · FR · IT: https://mastodon.social/@qalaburlreview
@@ -211,7 +211,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: @qalaburlreview
   ```
 - [ ] Links (5):
-  - Website: https://carlosandmunoz.com/qa-review-es.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
+  - Website: https://carlosandmunoz.com/qaurlreview.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - Social hub: https://carlosandmunoz.com/qa-review-social-es.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - Português: https://carlosandmunoz.com/qa-review-pt.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - EN · DE · FR · IT: https://www.instagram.com/qalaburlreview/
@@ -236,7 +236,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Link:
   ```text
-  https://carlosandmunoz.com/qa-review-es.html?utm_source=threads&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
+  https://carlosandmunoz.com/qaurlreview.html?utm_source=threads&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   ```
 - [ ] Upload Profile picture (Threads can import it from Instagram): `media/faces-2026-11/es/threads/avatar-1080.jpg`
 - [ ] Access: Nothing in Buffer: a Threads user token of the app (User Token Generator) through pbpaste | FACE=es node scripts/meta-token.js threads sets THREADS_TOKEN_ES, and scripts/open-social-queue.js posts (#2310).
@@ -268,7 +268,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Website:
   ```text
-  https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
+  https://carlosandmunoz.com/qaurlreview.html?utm_source=linkedin&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   ```
 - [ ] Industry:
   ```text

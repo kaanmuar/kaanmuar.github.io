@@ -43,6 +43,10 @@ a:focus-visible, button:focus-visible, select:focus-visible, iframe:focus-visibl
 .hub-follow span { font-weight: 600; margin-right: 4px; }
 .hub-follow a, .hub-langs a { border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 13px; font-weight: 600; text-decoration: none; color: var(--text); background: var(--card); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 @media (hover: hover) { .hub-follow a:hover, .hub-langs a:hover, .hub-chip:hover { border-color: var(--cyan); } }
+.hub-follow { display: grid; justify-items: start; }
+.hub-face { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0; max-width: 100%; }
+.hub-follow a.hub-face-page { border-color: var(--cyan); color: var(--cyan); }
+.hub-face-page small { color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .04em; }
 .hub-langs a[aria-current="page"] { border-color: var(--cyan); color: var(--cyan); box-shadow: inset 0 0 0 1px var(--cyan); }
 
 .hub-tools { position: sticky; top: 57px; z-index: 10; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 0; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); margin-bottom: 20px; }
@@ -166,8 +170,9 @@ a:focus-visible, button:focus-visible, select:focus-visible, iframe:focus-visibl
   .topbar { position: static; }
   .hub-hero { padding: 24px 0 22px; }
   .hub-lead { font-size: 1rem; margin-bottom: 16px; }
-  .hub-follow { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -16px; padding-right: 16px; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); }
-  .hub-follow::-webkit-scrollbar, .hub-chips::-webkit-scrollbar { display: none; }
+  .hub-follow { justify-items: stretch; margin-right: -16px; }
+  .hub-face { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-right: 16px; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); }
+  .hub-face::-webkit-scrollbar, .hub-chips::-webkit-scrollbar { display: none; }
   .hub-follow span { white-space: nowrap; }
   .hub-tools { top: 0; position: static; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
   .hub-chips { grid-column: 1 / -1; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -16px; padding: 2px 16px 2px 2px; }
