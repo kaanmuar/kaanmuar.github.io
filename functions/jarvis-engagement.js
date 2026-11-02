@@ -90,12 +90,18 @@ async function scout(deps) {
   const candidates = Array.from(seen.values());
   const refs = candidates.map((p) => db.collection("engagement_posts").doc(p.key));
   const known = refs.length ? await db.getAll(...refs) : [];
-  const fresh = candidates.filter((p, i) => !known[i].exists);
-  const stale = candidates.filter((p, i) => known[i].exists);
+  const fresh = [];
+  const stale = [];
+  const risen = [];
+  candidates.forEach((p, i) => {
+    if (!known[i].exists) fresh.push(p);
+    else if (E.rises(known[i].data(), p, conf, now)) risen.push({ post: p, doc: known[i].data() });
+    else stale.push(p);
+  });
 
   let ai = {};
   let aiError = "";
-  const asked = E.forAi(fresh, conf, now);
+  const asked = E.forAi(fresh.concat(risen.filter((r) => E.askAgain(r.doc, conf)).map((r) => r.post)), conf, now);
   if (asked.length && env.GEMINI_API_KEY) {
     try { ai = E.parseAi(await geminiJson(deps.fetch, env, E.aiPrompt(asked)), asked); } catch (error) { aiError = String(error.message || error).slice(0, 200); }
   }
@@ -105,13 +111,19 @@ async function scout(deps) {
   const dailySnap = await dailyRef.get();
   const used = usedToday(dailySnap.exists ? dailySnap.data() : null);
   const follows = await followed(db, now).catch(() => new Set());
-  const docs = fresh.map((p) => {
-    const d = E.decide(p, ai[p.key], conf, used, now, follows);
+  const plan = (p, read) => {
+    const d = E.decide(p, read, conf, used, now, follows);
     if (d.actions.follow && d.actions.follow.status === "planned") follows.add(p.network + ":" + String((p.author || {}).handle || "").toLowerCase());
-    return Object.assign({ key: p.key }, E.postDoc(p, ai[p.key], d, now));
+    return Object.assign({ key: p.key }, E.postDoc(p, read, d, now));
+  };
+  const docs = fresh.map((p) => plan(p, ai[p.key]));
+  const again = risen.map(({ post, doc }) => {
+    const d = plan(post, ai[post.key] || E.storedAi(doc));
+    return Object.assign(d, { seenAt: doc.seenAt, day: doc.day, decidedAgainAt: new Date(now).toISOString() });
   });
 
   const writes = docs.map((d) => ({ ref: db.collection("engagement_posts").doc(d.key), data: d, set: true }))
+    .concat(again.map((d) => ({ ref: db.collection("engagement_posts").doc(d.key), data: d, set: true })))
     .concat(stale.map((p) => ({ ref: db.collection("engagement_posts").doc(p.key), data: { metrics: p.metrics, trend: p.trend, score: p.score, updatedAt: new Date(now).toISOString() } })));
   for (let i = 0; i < writes.length; i += 400) {
     const batch = db.batch();
@@ -120,17 +132,18 @@ async function scout(deps) {
   }
 
   const errors = Object.keys(read.errors).length;
-  const counters = E.rollup(read.read, docs, { errors });
+  const counters = E.rollup(read.read, docs, { errors }, again);
   await dailyRef.set(Object.assign({ day }, increments(counters, inc)), { merge: true });
 
-  const waiting = docs.filter((d) => d.actions.reply && d.actions.reply.status === "waiting").sort((a, b) => b.score - a.score);
+  const decided = docs.concat(again);
+  const waiting = decided.filter((d) => d.actions.reply && d.actions.reply.status === "waiting").sort((a, b) => b.score - a.score);
   let pushed = 0;
   if (!conf.paused && deps.push) for (const d of waiting.slice(0, PUSH_PER_RUN)) { await deps.push(E.replyPush(d)).catch(() => null); pushed += 1; }
 
   const run = {
     at: new Date(now).toISOString(), ms: Date.now() - started, paused: conf.paused, read: read.read, errors: read.errors, skipped: read.skipped,
-    candidates: candidates.length, fresh: fresh.length, updated: stale.length, asked: asked.length, aiError,
-    engaged: docs.filter((d) => d.verdict === "engage").length, drafted: waiting.length, pushed, expired
+    candidates: candidates.length, fresh: fresh.length, updated: stale.length, risen: again.length, asked: asked.length, aiError,
+    engaged: decided.filter((d) => d.verdict === "engage").length, drafted: waiting.length, pushed, expired
   };
   await db.collection("engagement_runs").doc(run.at).set(run);
   await clearCache(db);

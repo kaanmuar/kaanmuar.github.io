@@ -313,6 +313,33 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.equal(src.networks.find((n) => n.network === "linkedin").reads, "Mac browser");
 });
 
+test("a post first seen quiet is decided again once it starts to trend, counted once in the field, and not again for 6 hours (#2001)", async () => {
+  const db = fakeDb();
+  await db.collection("jarvis_settings").doc("engagement").set({ thresholds: { like: 50, repost: 1000, follow: 1000, reply: 1000 } });
+  const deps = { db, fetch: fakeFetch(), env: { GEMINI_API_KEY: "k" }, now: NOW, inc: (n) => ({ inc: n }), push: async () => {} };
+  const first = await J.scout(deps);
+  assert.equal(first.engaged, 0);
+  const key = Array.from(db.data.keys()).find((p) => p.startsWith("engagement_posts/") && db.data.get(p).author.handle === "ana1@m.s");
+  assert.equal(db.data.get(key).verdict, "watch");
+
+  await db.collection("jarvis_settings").doc("engagement").set({ thresholds: { like: 4, repost: 1000, follow: 1000, reply: 4 } });
+  const risen = await J.scout(Object.assign({}, deps, { now: NOW + 1800000 }));
+  assert.equal(risen.risen, 1);
+  assert.equal(risen.asked, 1, "Gemini never read it, so it gets a read and a draft now");
+  const doc = db.data.get(key);
+  assert.equal(doc.verdict, "engage");
+  assert.equal(doc.actions.like.status, "planned");
+  assert.equal(doc.actions.reply.status, "waiting");
+  assert.equal(doc.seenAt, new Date(NOW).toISOString(), "first seen stays");
+  const day = db.data.get("engagement_daily/" + E.bogotaDay(NOW));
+  assert.equal(day.n.mastodon.candidates, 2, "not counted twice in the field");
+  assert.equal(day.n.mastodon.like, 1);
+
+  assert.equal(E.rises(Object.assign({}, doc, { verdict: "watch" }), { network: "mastodon", score: 99 }, E.settings({}), NOW + 3 * 3600000), false, "at most every 6 hours");
+  assert.equal(E.rises({ verdict: "skip", skip: "old" }, { network: "mastodon", score: 99 }, E.settings({}), NOW), false);
+  assert.equal(E.rises({ verdict: "watch" }, { network: "hn", score: 99 }, E.settings({}), NOW), false);
+});
+
 test("a paused scout reads and counts but drafts and pushes nothing, and expired drafts are counted", async () => {
   const db = fakeDb();
   await db.collection("jarvis_settings").doc("engagement").set({ paused: true });
