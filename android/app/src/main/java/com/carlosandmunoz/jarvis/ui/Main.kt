@@ -146,6 +146,7 @@ import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.Tab
 import com.carlosandmunoz.jarvis.UiState
 import com.carlosandmunoz.jarvis.data.bool
+import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
@@ -498,6 +499,17 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 }
                 Muted("Goals, thresholds and search queries are edited in Admin › Statistics on the web.")
             }
+            if (settings != null) Panel("Jarvis actions") {
+                val hours = settings.obj("actions").num("countdownHours") ?: Countdowns.HOURS
+                Muted("How long a risky action Jarvis starts by itself waits for Do it now or Cancel: mail to third parties, posts off schedule, merges and deploys, resuming outreach.")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    COUNTDOWN_CHOICES.forEach { h ->
+                        TextButton(onClick = { vm.market("settings", "settings-save", mapOf("settings" to withCountdown(settings, h))) { "Countdown: ${Countdowns.hoursText(h)}." } }, enabled = "settings" !in s.running) {
+                            Text(Countdowns.hoursText(h), color = if (h == hours) J.cyan else J.muted, fontSize = 13.sp)
+                        }
+                    }
+                }
+            }
             Panel("Push notifications") {
                 val context = LocalContext.current
                 val allowed = NotificationManagerCompat.from(context).areNotificationsEnabled()
@@ -623,6 +635,11 @@ private fun Devices(s: UiState) {
 // Merged into the saved switches, so the ones the app does not show (the weekly strategy) keep their value.
 private fun withMail(settings: JsonObject, mail: Map<String, Boolean>): JsonObject =
     JsonObject(settings + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })))
+
+private val COUNTDOWN_CHOICES = listOf(0.5, 1.0, 2.0, 4.0, 8.0)
+
+private fun withCountdown(settings: JsonObject, hours: Double): JsonObject =
+    JsonObject(settings + ("actions" to JsonObject((settings.obj("actions") ?: JsonObject(emptyMap())) + ("countdownHours" to JsonPrimitive(hours)))))
 
 // The owner emails Jarvis also pushes (#1672), as in Admin › Statistics › Settings.
 private val MAIL_LABELS = linkedMapOf(

@@ -3370,8 +3370,10 @@ async function reviewTarget(rawUrl, hooks) {
       }
     }
   }
+  // Only the crawl counts: PageSpeed and CrUX may wait past the deadline after every page was read (#2016).
+  const timedOut = !stopped && pages.length < chosen.pages && Date.now() >= deadline;
   if (stopped) note("Stopped. The report keeps the " + pages.length + " page" + (pages.length === 1 ? "" : "s") + " analyzed before the stop.");
-  else if (pages.length < chosen.pages && Date.now() >= deadline) note("The time budget ended with " + pages.length + " page" + (pages.length === 1 ? "" : "s") + " saved. This review was capped at " + chosen.pages + ".");
+  else if (timedOut) note("The time budget ended with " + pages.length + " page" + (pages.length === 1 ? "" : "s") + " saved. This review was capped at " + chosen.pages + ".");
   else note("Analyzed " + pages.length + " page" + (pages.length === 1 ? "" : "s") + ". Writing the proposed cases now.");
   const techMap = new Map();
   pages.forEach((page) => {
@@ -3456,7 +3458,7 @@ async function reviewTarget(rawUrl, hooks) {
       alerts,
       technologies: technologiesFound,
       homeText: homeText(first.body),
-      limits: { maxPages: chosen.pages, maxDepth: chosen.depth, pagesRead: pages.length, timedOut: Date.now() >= deadline }
+      limits: { maxPages: chosen.pages, maxDepth: chosen.depth, pagesRead: pages.length, timedOut }
     });
     note("Scored " + analysis.findings.length + " checks: " + analysis.score.totals.fail + " fail, " + analysis.score.totals.risk + " at risk, " + analysis.score.totals.pass + " pass. Health " + analysis.score.overall + "/100.");
   } catch (error) {
@@ -3506,7 +3508,7 @@ async function reviewTarget(rawUrl, hooks) {
       pagesFoundPartial: found.partial,
       robotsBlocked,
       robotsNote,
-      timedOut: Date.now() >= deadline,
+      timedOut,
       pageLang: acceptLanguage,
       section: prefix,
       passive

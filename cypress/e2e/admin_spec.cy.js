@@ -12,7 +12,7 @@ class LoginPage {
 }
 
 const loginPage = new LoginPage();
-const hasAdminPassword = Boolean(Cypress.env('ADMIN_PASSWORD'));
+const hasAdminPassword = Boolean(Cypress.expose('HAS_ADMIN_PASSWORD'));
 
 describe('Admin panel', () => {
   it('shows the login overlay when unauthenticated', () => {

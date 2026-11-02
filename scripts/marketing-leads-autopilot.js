@@ -1,7 +1,8 @@
 /* Jarvis settles the outreach leads by itself (#2016), from scripts/jarvis-marketing-sync.js, at most once an hour:
      - translates a top finding still in English into the lead's language;
      - queues a fresh review (jarvis_reviews, the owner's 7-minute run) for a lead whose site has no Live Report,
-       at most twice per host and two days apart, then rebuilds the week once the report is published;
+       at most twice per host and two days apart and three per pass (more at once and the browser answers "busy"),
+       on www. when the bare host does not resolve, then rebuilds the week once the report is published;
      - approves every lead with nothing missing that Carlos has not turned down (approved = "no").
    Upload stays with Carlos. A row it cannot settle gets `ask`: why, for the buttons in Jarvis > Marketing. */
 
@@ -13,6 +14,7 @@ const SITE = "https://carlosandmunoz.com";
 const EVERY_MS = 60 * 60 * 1000;
 const RERUN_TRIES = 2;
 const RERUN_GAP_MS = 2 * 24 * 60 * 60 * 1000;
+const RERUNS_PER_PASS = 3;
 const YES = /^(yes|y|x|1)$/i;
 const NO = /^no$/i;
 const TRANSLATE = "top_finding (translate)";
@@ -75,6 +77,16 @@ async function translate(text, lang, fetchImpl) {
   }
 }
 
+/** The leads keep bare hosts, but some sites (sena.edu.co, itm.edu.co, ufpe.br) only answer on www. */
+async function siteUrl(host, lookup) {
+  try {
+    await lookup(host);
+    return "https://" + host + "/";
+  } catch (error) {
+    return "https://www." + host + "/";
+  }
+}
+
 const readJson = (file, fallback) => { try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch (error) { return fallback; } };
 
 /**
@@ -89,6 +101,8 @@ async function run(dir, state, deps) {
   const rerunFile = path.join(state, "lead-reruns.json");
   const reruns = readJson(rerunFile, {});
   const notes = [];
+  const lookup = deps.lookup || require("dns").promises.lookup;
+  let rerunsLeft = RERUNS_PER_PASS;
   let published = null;
   const index = async () => {
     if (!published) {
@@ -119,8 +133,9 @@ async function run(dir, state, deps) {
         if (text) { row.top_finding = text; dropMissing(row, [TRANSLATE]); changed = true; translated++; }
       }
       const host = bareHost(row.host);
-      if ((d.auto || []).includes("rerun") && host && !queued.has(host) && deps.db) {
-        await deps.db.collection("jarvis_reviews").add({ url: "https://" + host + "/", lang: row.language || "en", token: "", quiet: true, by: OWNER, status: "queued", at: new Date(now).toISOString(), source: "leads " + week });
+      if ((d.auto || []).includes("rerun") && host && !queued.has(host) && deps.db && rerunsLeft > 0) {
+        rerunsLeft--;
+        await deps.db.collection("jarvis_reviews").add({ url: await siteUrl(host, lookup), lang: row.language || "en", token: "", quiet: true, by: OWNER, status: "queued", at: new Date(now).toISOString(), source: "leads " + week });
         const r = reruns[host] || { tries: 0 };
         reruns[host] = { tries: r.tries + 1, at: new Date(now).toISOString() };
         queued.add(host);
@@ -135,4 +150,4 @@ async function run(dir, state, deps) {
   return notes;
 }
 
-module.exports = { OWNER, EDITABLE, TRANSLATE, NO_REPORT, PERSONAL, RERUN_TRIES, missingOf, dropMissing, decide, translate, run, bareHost };
+module.exports = { OWNER, EDITABLE, TRANSLATE, NO_REPORT, PERSONAL, RERUN_TRIES, RERUNS_PER_PASS, missingOf, dropMissing, decide, translate, run, bareHost };

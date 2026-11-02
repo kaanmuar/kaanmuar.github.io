@@ -55,7 +55,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 private val ISO = Regex("^\\d{4}-\\d{2}-\\d{2}T")
-private val TABS = mapOf("overview" to "Overview", "business" to "Business", "traffic" to "Traffic", "systems" to "Systems")
+internal val TABS = mapOf("overview" to "Overview", "business" to "Business", "traffic" to "Traffic", "systems" to "Systems")
 
 /** A briefing line's sheet (#1695): what it is about, the numbers behind it, what can be done, Gemini, snooze and share.
  *  The detail comes with the line from the snapshot (jarvis-core briefDetail); hidden lines carry status and until. */
@@ -152,10 +152,11 @@ fun BriefSheet(item: JsonObject, s: UiState, vm: JarvisViewModel, open: (String)
                         val id = a.str("id") ?: return@forEach
                         val job = a.str("job")
                         val workflow = a.str("workflow")
-                        val runKey = "action:$id:${job ?: workflow ?: ""}"
+                        val pr = a.num("pr")?.toInt()
+                        val runKey = actionKey(id, job ?: workflow ?: pr?.toString())
                         ActionButton(a.str("label") ?: id, runKey in s.running) {
-                            val ask = if (id == "rerun-ci") "re-run the failed jobs of \"$workflow\" on main" else askFor(id, job, null)
-                            confirm = PendingAction(ask) { runAction(vm, id, job, key, workflow) }
+                            val ask = if (id == "rerun-ci") "re-run the failed jobs of \"$workflow\" on main" else askFor(id, job, null, pr)
+                            confirm = PendingAction(ask) { runAction(vm, id, job, key, workflow, pr) }
                         }
                     }
                     val tabName = tab?.let { t -> CHIPS.toMap()[t] ?: TABS[t] }
