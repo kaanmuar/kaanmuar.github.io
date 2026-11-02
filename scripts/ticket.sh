@@ -64,6 +64,7 @@ case "$cmd" in
 new)
 	title=${1:?title}
 	area=${2:?area}
+	area=${area#area:}
 	col=${3:-dev}
 	body=${4:-"**Kind:** Request
 **Area:** $(area_name "$area")"}
@@ -75,6 +76,7 @@ bug)
 	parent=${1:?parent}
 	title=${2:?title}
 	area=${3:?area}
+	area=${area#area:}
 	what=${4:?what happened}
 	fix=${5:?fix}
 	pr=${6:-}
