@@ -126,7 +126,7 @@ test("an English pick gets a variant in each language whose phrasebook covers ev
 for (const [lang, own] of Object.entries({ es: /\b(el|la|los|las|que|para|con|una|del)\b/g, pt: /\b(os|as|que|para|com|uma|do|da|não)\b/g, de: /\b(der|die|das|und|ist|für|mit|ein|eine|nicht)\b/g, fr: /\b(le|la|les|des|que|pour|avec|une|est|pas)\b/g, it: /\b(il|lo|gli|che|per|con|una|del|della|non)\b/g })) {
   test(`the ${lang} hub page is written in its language before any script runs`, () => {
     const html = require("fs").readFileSync(require("path").join(__dirname, "..", "..", `qa-review-social-${lang}.html`), "utf8");
-    const text = html.slice(html.indexOf("<body")).replace(/<(script|style)[\s\S]*?<\/\1>/g, " ").replace(/<[^>]+>/g, " ");
+    const text = html.slice(html.indexOf("<body")).replace(/<(script|style)[\s\S]*?<\/\1>/g, " ").replace(/<[^>]+>/g, " ").replace(/\b[\w.-]+\.[a-z]{2,}\/\S*/g, " ");
     const english = (text.match(/\b(the|and|of|to|is|are|for|with|your|you|this|that|from)\b/g) || []).length;
     const local = (text.match(own) || []).length;
     assert.ok(local > 40, lang + ": " + local + " local stopwords");
