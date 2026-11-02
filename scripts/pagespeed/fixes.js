@@ -161,7 +161,7 @@ function lazy(html, ctx) {
 
 function scripts(html) {
   const out = [];
-  const re = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
+  const re = /<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi;
   const inComment = (() => {
     const ranges = [];
     const c = /<!--[\s\S]*?-->/g;
