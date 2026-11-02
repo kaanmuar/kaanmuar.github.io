@@ -76,4 +76,7 @@ function channelFace(channel) {
   }) || null;
 }
 
-module.exports = { DEFAULT, SECRETS, faceOf, postLang, route, postFace, faceEnv, channelFace, voiced };
+// The Facebook ledger profile of a face's Page.
+const pageProfile = (face) => "Facebook Page" + (face === DEFAULT ? "" : " (" + FACES[face].handle + ")");
+
+module.exports = { DEFAULT, SECRETS, pageProfile, faceOf, postLang, route, postFace, faceEnv, channelFace, voiced };

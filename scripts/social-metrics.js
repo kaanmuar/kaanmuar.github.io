@@ -4,7 +4,7 @@
      node scripts/social-metrics.js   # writes assets/social/metrics.json
 
    LinkedIn, TikTok, X and YouTube come from Buffer (Post.metrics, BUFFER_API_KEY), Facebook from the Graph API
-   (FACEBOOK_PAGE_TOKEN). Only ledger entries marked sent are asked about (assets/social/buffer.json, facebook.json).
+   (FACEBOOK_PAGE_TOKEN, and FACEBOOK_PAGE_TOKEN_ES for @qaurlreview's Page, #2327). Only ledger entries marked sent are asked about (assets/social/buffer.json, facebook.json).
    A network without its key, or one that fails, keeps the numbers of the last run, so a bad morning blanks nothing.
    scripts/build-social-hub.js writes them into the feed; auto-live-reports.yml runs this before it every day.
 
@@ -13,6 +13,8 @@
 const fs = require("fs");
 const path = require("path");
 const queues = require("./social-ledger");
+const faceRoute = require("./face-route");
+const { FACES } = require("./brand-kit/faces");
 
 const ROOT = path.resolve(__dirname, "..");
 const OUT = "assets/social/metrics.json";
@@ -53,7 +55,7 @@ function fromBuffer(metrics) {
 function sentEntries(book, channels) {
   const list = [];
   Object.entries(book.posts || {}).forEach(([post, entries]) => (entries || []).forEach((entry) => {
-    if (entry.result === "sent" && entry.id && (!channels || channels.includes(entry.channel))) list.push({ post, channel: entry.channel, id: entry.id });
+    if (entry.result === "sent" && entry.id && (!channels || channels.includes(entry.channel))) list.push(Object.assign({ post, channel: entry.channel, id: entry.id }, entry.profile ? { profile: entry.profile } : {}));
   }));
   return list;
 }
@@ -128,6 +130,10 @@ function merge(previous, found, updatedAt) {
   return { version: 1, updatedAt, posts: sorted };
 }
 
+// A face's Facebook entries, read with its own Page token (#2327); entries from before the faces have no profile of
+// another face, so they stay with the default one.
+const pageEntries = (entries, face) => entries.filter((e) => (e.profile || faceRoute.pageProfile(faceRoute.DEFAULT)) === faceRoute.pageProfile(face));
+
 async function main() {
   const found = [];
   const notes = [];
@@ -141,11 +147,15 @@ async function main() {
       notes.push("Buffer kept the last numbers: " + error.message);
     }
   } else notes.push("Buffer skipped: no BUFFER_API_KEY");
-  if (process.env.FACEBOOK_PAGE_TOKEN) {
-    const entries = sentEntries(queues.read(queues.FACEBOOK), ["facebook"]);
-    found.push(...await facebookNumbers(entries, process.env.FACEBOOK_PAGE_TOKEN, fetch));
-    notes.push("Facebook: " + entries.length + " sent posts asked");
-  } else notes.push("Facebook skipped: no FACEBOOK_PAGE_TOKEN");
+  const facebook = sentEntries(queues.read(queues.FACEBOOK), ["facebook"]);
+  for (const face of Object.keys(FACES)) {
+    const token = faceRoute.faceEnv(face).FACEBOOK_PAGE_TOKEN;
+    const profile = faceRoute.pageProfile(face);
+    const entries = pageEntries(facebook, face);
+    if (!token) { if (face === faceRoute.DEFAULT || entries.length) notes.push(profile + " skipped: no FACEBOOK_PAGE_TOKEN" + FACES[face].env); continue; }
+    found.push(...await facebookNumbers(entries, token, fetch));
+    notes.push(profile + ": " + entries.length + " sent posts asked");
+  }
   const next = merge(read(), found, new Date().toISOString());
   fs.mkdirSync(path.dirname(path.join(ROOT, OUT)), { recursive: true });
   fs.writeFileSync(path.join(ROOT, OUT), JSON.stringify(next, null, 1) + "\n");
@@ -154,4 +164,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { METRICS, OUT, read, counts, fromBuffer, sentEntries, bufferNumbers, facebookNumbers, merge };
+module.exports = { METRICS, OUT, read, counts, fromBuffer, sentEntries, pageEntries, bufferNumbers, facebookNumbers, merge };

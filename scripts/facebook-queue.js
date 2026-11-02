@@ -45,7 +45,7 @@ const { FACES } = require("./brand-kit/faces");
 const ROOT = path.resolve(__dirname, "..");
 // The Page token of the face being posted; main() sets it per face.
 let TOKEN = process.env.FACEBOOK_PAGE_TOKEN;
-const profileOf = (face) => "Facebook Page" + (face === faceRoute.DEFAULT ? "" : " (" + FACES[face].handle + ")");
+const profileOf = faceRoute.pageProfile;
 const SITE = process.env.SITE || "https://carlosandmunoz.com";
 const GRAPH = "https://graph.facebook.com/" + (process.env.FACEBOOK_GRAPH_VERSION || "v23.0");
 // The Graph API only schedules between 10 minutes and 30 days ahead.

@@ -91,3 +91,11 @@ test("each live face plans its own days, at most its cadence a day, and the defa
   assert.equal(both.moves.filter((m) => m.post.face === "es").length, 8);
   assert.ok([...both.days.keys()].every((key) => /^(en|es)\|/.test(key)));
 });
+
+test("post numbers read each Facebook Page with its own face's token", () => {
+  const metrics = require("../../scripts/social-metrics");
+  const entries = [{ post: "a/1", id: "1" }, { post: "a/2", id: "2", profile: "Facebook Page" }, { post: "a/3", id: "3", profile: "Facebook Page (qaurlreview)" }];
+  assert.deepEqual(metrics.pageEntries(entries, "en").map((e) => e.id), ["1", "2"]);
+  assert.deepEqual(metrics.pageEntries(entries, "es").map((e) => e.id), ["3"]);
+  assert.equal(route.pageProfile("es"), "Facebook Page (qaurlreview)");
+});
