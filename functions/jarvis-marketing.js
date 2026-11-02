@@ -3,10 +3,11 @@
 
    campaigns  every Instantly campaign with its id, week, sequence, language, region, start date, sending window and
               stats, so the tab can pause or activate one, plus the mix by language, region, sequence and status
+   sent       every cold email Instantly sent, with what the lead did since and the resends from Jarvis
    prospects  the sweep list (url_review_sweep/outreach) by country and segment
    notes      follow-up notes to askers (url_review_notes): sent and stopped per day, by kind and scene
 
-   And the owner actions behind the tab's buttons: pause or activate a campaign, block an address or domain in
+   And the owner actions behind the tab's buttons: pause or activate a campaign, send a cold email again, block an address or domain in
    Instantly, and append prospects to the sweep list the way scripts/sweep-outreach.js does. */
 
 const sweep = require("./url-review-sweep");
@@ -107,6 +108,38 @@ function noteRows(notes, ctx) {
   };
 }
 
+const LEAD_STATUS = { 1: "active", 2: "paused", 3: "completed", "-1": "bounced", "-2": "unsubscribed", "-3": "skipped" };
+const domainOf = (email) => String(email || "").toLowerCase().split("@")[1] || "";
+
+// Every cold email Instantly sent (campaign steps, ue_type 1) and every resend from Jarvis (manual, ue_type 3), newest
+// first, with what the lead did since: opened, replied, bounced, unsubscribed.
+function sentRows(emails, leads, campaigns, resends) {
+  const names = {};
+  (campaigns || []).forEach((c) => { if (c && c.id) names[c.id] = String(c.name || ""); });
+  const byLead = {};
+  (leads || []).forEach((l) => { if (l && l.email) byLead[String(l.email).toLowerCase()] = l; });
+  const done = resends || {};
+  const rows = (emails || []).filter((e) => e && (Number(e.ue_type) === 1 || Number(e.ue_type) === 3)).map((e) => {
+    const to = String(e.lead || String(e.to_address_email_list || "").split(",")[0] || "").trim().toLowerCase();
+    const l = byLead[to] || {};
+    const status = LEAD_STATUS[String(l.status)] || "";
+    return {
+      id: String(e.id || ""), at: String(e.timestamp_email || e.timestamp_created || ""), to, from: String(e.eaccount || ""),
+      subject: String(e.subject || "").slice(0, 160), campaign: names[e.campaign_id] || "", step: Number(e.step) || 0,
+      kind: Number(e.ue_type) === 1 ? "campaign" : "resend",
+      org: String(l.company_name || "").slice(0, 80) || domainOf(to),
+      name: [l.first_name, l.last_name].filter(Boolean).join(" ").slice(0, 80),
+      opened: Number(l.email_open_count) || 0, replied: Number(l.email_reply_count) || 0,
+      bounced: status === "bounced", unsubscribed: status === "unsubscribed", status,
+      resent: (Array.isArray(done[e.id]) ? done[e.id] : []).slice(-3)
+    };
+  }).sort((a, b) => b.at.localeCompare(a.at));
+  return {
+    rows: rows.slice(0, 200), total: rows.length,
+    opened: rows.filter((r) => r.opened).length, replied: rows.filter((r) => r.replied).length, bounced: rows.filter((r) => r.bounced).length
+  };
+}
+
 async function instantly(ctx, path, init) {
   const res = await ctx.fetch(INSTANTLY + path, Object.assign({ signal: AbortSignal.timeout(15000) }, init || {}, {
     headers: Object.assign({ Authorization: "Bearer " + ctx.env.INSTANTLY_API_KEY, "User-Agent": "qalab-jarvis" }, init && init.body ? { "Content-Type": "application/json" } : {})
@@ -126,6 +159,16 @@ async function marketing(ctx) {
       needKey(ctx);
       const [list, analytics] = await Promise.all([instantly(ctx, "campaigns?limit=100"), instantly(ctx, "campaigns/analytics").catch(() => [])]);
       return campaignRows(list.items, Array.isArray(analytics) ? analytics : analytics.items, ctx.now);
+    }),
+    part("sent", async () => {
+      needKey(ctx);
+      const [emails, leads, list, done] = await Promise.all([
+        instantly(ctx, "emails?email_type=sent&mode=emode_all&preview_only=true&limit=100"),
+        instantly(ctx, "leads/list", { method: "POST", body: JSON.stringify({ filter: "FILTER_VAL_CONTACTED", limit: 100 }) }).catch(() => ({ items: [] })),
+        instantly(ctx, "campaigns?limit=100").catch(() => ({ items: [] })),
+        ctx.db.collection("jarvis_settings").doc("marketing_resends").get().catch(() => null)
+      ]);
+      return sentRows(emails.items, leads.items, list.items, done && done.exists ? done.data() : {});
     }),
     part("prospects", async () => {
       const snap = await ctx.db.collection("url_review_sweep").doc("outreach").get();
@@ -311,6 +354,34 @@ async function sendReply(ctx, db, body) {
   return { id, to: String(reply.from || ""), subject };
 }
 
+// Sends a cold email again by forwarding it with its original body from the mailbox that sent it: to the same address
+// (it never arrived or got buried) or to another contact at the organisation. Never to anyone on do-not-contact.
+async function resend(ctx, db, body) {
+  needKey(ctx);
+  const id = str(body && body.id, 60);
+  if (!ID.test(id)) throw new Error("That is not a sent email's id.");
+  const e = await instantly(ctx, "emails/" + id);
+  if (Number(e.ue_type) !== 1 && Number(e.ue_type) !== 3) throw new Error("Only an email we sent can be sent again.");
+  const lead = String(e.lead || String(e.to_address_email_list || "").split(",")[0] || "").trim().toLowerCase();
+  const to = str(body && body.to, 200).trim().toLowerCase() || lead;
+  if (!EMAIL.test(to)) throw new Error("Give the address to send it to.");
+  const sync = await db.collection("jarvis_settings").doc("marketing_sync").get();
+  const dnc = ((sync.exists && (sync.data().dnc || {}).items) || []).map((d) => String((d && d.value) || "").toLowerCase());
+  if (dnc.includes(to) || dnc.includes(domainOf(to))) throw new Error(to + " is on the do-not-contact list.");
+  const note = str(body && body.note, 2000).trim();
+  await instantly(ctx, "emails/forward", { method: "POST", body: JSON.stringify({
+    reply_to_uuid: id, eaccount: String(e.eaccount || ""), to_address_email_list: to, subject: String(e.subject || "").replace(/^(fwd?|re):\s*/i, ""),
+    body: note ? { text: note, html: note.split(/\n/).map((l) => "<div>" + (l.trim() ? l.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "<br>") + "</div>").join("") } : undefined,
+    include_original_body: true
+  }) });
+  const at = new Date(ctx.now).toISOString();
+  const ref = db.collection("jarvis_settings").doc("marketing_resends");
+  const done = await ref.get();
+  const list = (done.exists && Array.isArray(done.data()[id]) ? done.data()[id] : []).concat({ to, at, same: to === lead });
+  await ref.set({ [id]: list.slice(-5) }, { merge: true });
+  return { id, to, same: to === lead, from: String(e.eaccount || ""), subject: String(e.subject || "") };
+}
+
 async function command(ctx, db, body) {
   const now = new Date(ctx.now).toISOString();
   const add = (c) => db.collection("jarvis_commands").add({ kind: "marketing", action: c.action, args: c.args, label: c.label, status: "pending", createdAt: now })
@@ -327,5 +398,5 @@ async function command(ctx, db, body) {
 
 module.exports = {
   marketing, campaignRows, prospectRows, noteRows, parseName, windowOf, campaignAct, pauseActive, block, prospectLines, queueProspects,
-  syncRows, syncSource, commandOf, sendReply, command, TTL: 10 * 60 * 1000
+  syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, TTL: 10 * 60 * 1000
 };

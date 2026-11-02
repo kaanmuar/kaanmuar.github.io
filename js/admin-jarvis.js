@@ -1045,6 +1045,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const camps = mk.campaigns && mk.campaigns.ok ? mk.campaigns : null;
         const pros = mk.prospects && mk.prospects.ok ? mk.prospects : null;
         const notes = mk.notes && mk.notes.ok ? mk.notes : null;
+        const sent = mk.sent && mk.sent.ok ? mk.sent : null;
         const so = e.social && e.social.ok ? e.social : null;
         const em = e.email && e.email.ok ? e.email : null;
         const gsc = e.search && e.search.console && e.search.console.ok ? e.search.console : null;
@@ -1195,6 +1196,15 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                 ${r.summary ? `<p>${esc(r.summary)}</p>` : ''}<details><summary>${esc(r.subject || 'Their email')}</summary><pre class="jv-pre">${esc(r.text)}</pre></details>
                 ${r.sent ? `<p class="jv-note">Answered ${esc(when(r.sent))}.</p>` : `<textarea rows="5" data-keep="mk-reply-${esc(r.id)}" data-mk-draft="${esc(r.id)}" aria-label="Answer to ${esc(r.from)}">${esc(S.mkDrafts[r.id] !== undefined ? S.mkDrafts[r.id] : r.draft)}</textarea>
                 <div class="jv-actions"><button type="button" class="jv-btn small is-primary" data-mk-reply="${esc(r.id)}" data-to="${esc(r.from)}">Send in the same thread</button>${cmdBtn('Do not contact', { action: 'dnc', value: r.from, reason: 'asked from a reply' }, { cls: ' danger' })}</div>`}</li>`).join('')}</ul>`;
+        const sentWhat = (r) => [r.replied ? '<span class="jv-chip c-fast">replied</span>' : '', r.bounced ? '<span class="jv-chip c-slow">bounced</span>' : '', r.unsubscribed ? '<span class="jv-chip c-slow">unsubscribed</span>' : '',
+            r.opened ? `<span class="jv-chip c-average">opened ${fmt(r.opened)}×</span>` : '', !r.replied && !r.bounced && !r.unsubscribed && !r.opened ? '<span class="jv-note">no open yet</span>' : '',
+            ...r.resent.map((x) => `<br><span class="jv-note">sent again to ${esc(x.to)} ${esc(when(x.at))}</span>`)].filter(Boolean).join(' ');
+        const sentAct = (r) => (r.replied || r.unsubscribed ? '' : `<div class="jv-actions">${r.bounced ? '' : `<button type="button" class="jv-btn small" data-mk-resend="${esc(r.id)}" data-to="${esc(r.to)}">Send again</button>`}<button type="button" class="jv-btn small" data-mk-resend="${esc(r.id)}" data-to="${esc(r.to)}" data-org="${esc(r.org)}" data-other="1">To someone else</button></div>`);
+        const sentBody = !sent ? (mk.sent ? `<p class="jv-empty">${esc(mk.sent.error || 'Not loaded.')}</p>` : wait('marketing', 'Asking Instantly…'))
+            : stats([{ label: 'Sent', value: sent.total }, { label: 'Opened', value: sent.opened }, { label: 'Replied', value: sent.replied }, { label: 'Bounced', value: sent.bounced, alert: sent.bounced > 0 }])
+            + table([['Sent', (r) => esc(when(r.at))], ['To', (r) => `<strong>${esc(r.name || r.to)}</strong><br><span class="jv-note">${esc(r.name ? r.to : '')}${r.name ? ' · ' : ''}${esc(r.org)}</span>`],
+                ['Campaign', (r) => `<span class="jv-note">${r.kind === 'resend' ? 'sent again from Jarvis' : esc(r.campaign) + (r.step ? ' · step ' + r.step : '')}<br>from ${esc(r.from)}</span>`], ['Subject', (r) => `<span class="jv-note">${esc(r.subject)}</span>`],
+                ['Since', sentWhat], ['', sentAct]], sent.rows, `No cold email has gone out yet${camps && camps.firstStart ? '; the first goes out ' + esc(camps.firstStart) : ''}.`);
         const li = sy ? sy.linkedin : null;
         const liSent = li ? li.items.filter((p) => p.sent).length : 0;
         const linkedinBody = !sy ? syWait : !li.items.length ? '<p class="jv-empty">No LinkedIn list yet; the Mac writes one each working day from 07:00, with up to 15 prospects never listed before.</p>'
@@ -1223,6 +1233,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${panel('marketing-jobs', 'Outreach jobs on the Mac', jobsBody, { data: sy && sy.jobs })}
             ${panel('marketing-leads', `Leads to approve${week ? ' · ' + esc(week.week) : ''}`, leadsBody, { wide: true, data: weekRows, note: 'Every hour Jarvis translates top findings, re-runs the review of a site with no Live Report (twice at most) and approves complete leads. Rows marked "needs you" are the ones it cannot settle: use their buttons. Upload stays with you: the Mac sends the approved rows to their Instantly campaigns.' })}
             ${panel('marketing-replies', `Replies${repliesTodo.length ? ' · ' + repliesTodo.length + ' to answer' : ''}`, repliesBody, { wide: true, data: sy && sy.replies.map((r) => ({ at: r.at, from: r.from, campaign: r.campaign, category: r.category, sent: r.sent })) })}
+            ${panel('marketing-sent', `Cold emails sent${sent ? ' · ' + fmt(sent.total) : ''}`, sentBody, { wide: true, data: sent && sent.rows.map((r) => ({ at: r.at, to: r.to, name: r.name, org: r.org, campaign: r.campaign, step: r.step, kind: r.kind, from: r.from, subject: r.subject, opened: r.opened, replied: r.replied, bounced: r.bounced, unsubscribed: r.unsubscribed, resent: r.resent.map((x) => x.to + ' ' + x.at).join('; ') })), note: 'Send again forwards the same email, with its original text, from the mailbox that sent it: to the same address when it may have got lost, or to another contact at the organisation. Nobody on Do not contact can be picked.' })}
             ${panel('marketing-linkedin', `LinkedIn${li && li.date ? ' · ' + esc(li.date) : ''}`, linkedinBody, { data: li && li.items.map((p) => ({ name: p.name, org: p.org, cc: p.cc, sent: p.sent })) })}
             ${panel('marketing-dnc', 'Do not contact', dncBody, { data: sy && sy.dnc })}
             ${panel('marketing-kpis', 'Weekly KPI tracker', kpiBody, { wide: true, data: kpiRows })}
@@ -1386,6 +1397,17 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const out = await call('marketing-campaign', { id, action, name }).catch((error) => ({ ok: false, error: error.message }));
         toast(out.ok ? `${out.name || name} is ${out.status}.` : 'Not done: ' + out.error, 6000);
         loadExternal(['marketing', 'outreach']);
+    }
+
+    async function resendAct(t) {
+        const { mkResend: id, to, org, other } = t.dataset;
+        const target = other ? (prompt(`Who else at ${org || 'the organisation'} should get it? Their email address:`, '') || '').trim() : to;
+        if (!target || !confirmRun(`send the email to ${to} again${target !== to ? ', this time to ' + target : ''} (forwarded with its original text)`)) return;
+        t.disabled = true;
+        const out = await call('marketing-resend', { id, to: target }).catch((error) => ({ ok: false, error: error.message }));
+        toast(out.ok ? `Sent again to ${out.to} from ${out.from}.` : 'Not sent: ' + out.error, 7000);
+        t.disabled = false;
+        loadExternal(['marketing']);
     }
 
     const MK_ASK = {
@@ -2345,6 +2367,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.runAction) { runAction(t.dataset.runAction, t.dataset.job, t.dataset.key); return; }
         if (t.dataset.socialDecide) { decideSocial(t.dataset.key, t.dataset.socialDecide); return; }
         if (t.dataset.mkCampaign) { campaignAct(t); return; }
+        if (t.dataset.mkResend) { resendAct(t); return; }
         if (t.dataset.mkCmd) { mkCmdClick(t); return; }
         if (t.dataset.mkRereview) { leadReview(t); return; }
         if (t.dataset.mkReply) { mkReply(t); return; }

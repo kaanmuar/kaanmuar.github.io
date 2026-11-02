@@ -5,6 +5,8 @@
 const PROFILES = [
   { net: "youtube", name: "YouTube", url: "https://www.youtube.com/@qalaburlreview" },
   { net: "tiktok", name: "TikTok", url: "https://www.tiktok.com/@qalaburlreview" },
+  { net: "instagram", name: "Instagram", url: "https://www.instagram.com/qaurlreview/" },
+  { net: "threads", name: "Threads", url: "https://www.threads.com/@qaurlreview" },
   { net: "linkedin", name: "LinkedIn", url: "https://www.linkedin.com/company/qalab-url-review" },
   { net: "x", name: "X", url: "https://x.com/qalaburlreview" },
   { net: "facebook", name: "Facebook", url: "https://www.facebook.com/qalaburlreview" },
