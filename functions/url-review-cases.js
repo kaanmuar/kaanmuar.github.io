@@ -120,6 +120,7 @@ function axeCases(cases, byId, browser, host, fw) {
       path: rule.pages[0],
       pages: rule.pages.slice(0, 12),
       selectors: rule.targets,
+      check: { kind: "axe", paths: rule.pages.slice(0, 6), rules: [rule.id] },
       keys
     });
   });
