@@ -178,7 +178,7 @@
       if (DIRECT[net] && slot && new Date(slot).getTime() <= now - DIRECT_MISSED_MS) slot = "";
       const via = net === "facebook" ? "Facebook Page" : DIRECT[net] || "Buffer";
       const time = slot ? new Date(slot).getTime() : 0;
-      const mine = (entries || []).filter((entry) => entry.channel === net);
+      const mine = (entries || []).filter((entry) => entry.channel === net && entry.result !== "moved");
       const failed = mine.filter((entry) => entry.result === "failed");
       const at = mine.map((entry) => entry.at || "").filter(Boolean).sort()[0] || slot;
       const error = failed.map((entry) => entry.error).filter(Boolean).join("; ");

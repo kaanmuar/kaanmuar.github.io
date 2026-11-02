@@ -1,7 +1,8 @@
 # Posts each rendered social batch to Bluesky, Mastodon, Threads and Instagram as its slots come
 # (scripts/open-social-queue.js, #1621, #526). None of them can schedule a post, so this runs every 30 minutes and
 # posts what is due. A network whose secrets are missing is skipped: BLUESKY_HANDLE and BLUESKY_APP_PASSWORD,
-# MASTODON_URL and MASTODON_TOKEN, THREADS_TOKEN, INSTAGRAM_USER_ID and FACEBOOK_PAGE_TOKEN.
+# MASTODON_URL and MASTODON_TOKEN, THREADS_TOKEN, INSTAGRAM_USER_ID and FACEBOOK_PAGE_TOKEN. es/pt posts go to the
+# @qaurlreview face once its secrets, the same names ending in _ES, are set (scripts/face-route.js, #2310).
 # The run updates the ledger, assets/social/open-social.json, and pushes it to main with the LIVE_REPORTS_DEPLOY_KEY
 # write deploy key, like the Facebook Page queue.
 name: Bluesky, Mastodon, Threads and Instagram
@@ -37,25 +38,37 @@ jobs:
       THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
       INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
       FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+      BLUESKY_HANDLE_ES: ${{ secrets.BLUESKY_HANDLE_ES }}
+      BLUESKY_APP_PASSWORD_ES: ${{ secrets.BLUESKY_APP_PASSWORD_ES }}
+      MASTODON_URL_ES: ${{ secrets.MASTODON_URL_ES }}
+      MASTODON_TOKEN_ES: ${{ secrets.MASTODON_TOKEN_ES }}
+      THREADS_TOKEN_ES: ${{ secrets.THREADS_TOKEN_ES }}
+      INSTAGRAM_USER_ID_ES: ${{ secrets.INSTAGRAM_USER_ID_ES }}
+      FACEBOOK_PAGE_TOKEN_ES: ${{ secrets.FACEBOOK_PAGE_TOKEN_ES }}
       NETWORK: ${{ inputs.network != 'all' && inputs.network || '' }}
     steps:
       - name: Check a network is connected
         id: ready
         run: |
-          if [ -n "$BLUESKY_APP_PASSWORD$MASTODON_TOKEN$THREADS_TOKEN$INSTAGRAM_USER_ID" ] || [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ -n "$BLUESKY_APP_PASSWORD$MASTODON_TOKEN$THREADS_TOKEN$INSTAGRAM_USER_ID$BLUESKY_APP_PASSWORD_ES$MASTODON_TOKEN_ES$THREADS_TOKEN_ES$INSTAGRAM_USER_ID_ES" ] || [ "${{ inputs.dry_run }}" = "true" ]; then
             echo "ok=true" >> "$GITHUB_OUTPUT"
           else
             echo "::notice::No network secrets yet, so nothing is posted (see scripts/open-social-queue.js)."
           fi
-      - name: Warn before the Threads token runs out
-        if: ${{ vars.THREADS_TOKEN_EXPIRES != '' }}
+      - name: Warn before a Threads token runs out
+        if: ${{ vars.THREADS_TOKEN_EXPIRES != '' || vars.THREADS_TOKEN_EXPIRES_ES != '' }}
         env:
-          EXPIRES: ${{ vars.THREADS_TOKEN_EXPIRES }}
+          EXPIRES_EN: ${{ vars.THREADS_TOKEN_EXPIRES }}
+          EXPIRES_ES: ${{ vars.THREADS_TOKEN_EXPIRES_ES }}
         run: |
-          left=$(( ($(date -d "$EXPIRES" +%s) - $(date +%s)) / 86400 ))
-          if [ "$left" -le 10 ]; then
-            echo "::warning::The Threads token runs out in $left days ($EXPIRES). Renew it with: node scripts/meta-token.js renew-threads"
-          fi
+          for face in en es; do
+            var="EXPIRES_${face^^}"; expires="${!var}"
+            [ -n "$expires" ] || continue
+            left=$(( ($(date -d "$expires" +%s) - $(date +%s)) / 86400 ))
+            if [ "$left" -le 10 ]; then
+              echo "::warning::The $face face's Threads token runs out in $left days ($expires). Renew it with: FACE=$face node scripts/meta-token.js renew-threads"
+            fi
+          done
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.ready.outputs.ok == 'true'
         with:
