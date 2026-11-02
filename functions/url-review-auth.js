@@ -301,7 +301,7 @@ async function checkSession(store, input) {
     return fail(401, "This sign-in belongs to another device. Sign in on this one to run a review here.", { signIn: true });
   }
   if (input.touch !== false) await store.set("url_review_sessions", id, { lastSeenAt: new Date(now).toISOString() });
-  return { ok: true, email: row.email, provider: row.provider, uid: row.uid || "" };
+  return { ok: true, email: row.email, provider: row.provider, uid: row.uid || "", sessionId: id };
 }
 
 function cleanRunId(runId) {
