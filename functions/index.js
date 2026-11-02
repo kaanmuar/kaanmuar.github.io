@@ -5067,6 +5067,7 @@ async function pushOwner(msg) {
   }
 }
 const jarvisSocial = require("./jarvis-social");
+const socialHubAdmin = require("./social-hub-admin");
 const jarvisStudio = require("./jarvis-studio");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisEngagement = require("./jarvis-engagement");
@@ -5079,9 +5080,11 @@ function engagementDeps() {
 }
 
 async function socialProposals() {
-  const res = await fetch(customerMail.SITE + "/assets/social/proposals.json?t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(10000) });
+  const get = (file) => fetch(customerMail.SITE + "/assets/social/" + file + "?t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(10000) });
+  const [res, roundups] = await Promise.all([get("proposals.json"), get("sweep-roundups.json").catch(() => null)]);
   if (!res.ok) throw new Error("The proposals list answered " + res.status + ".");
-  return res.json();
+  const extra = roundups && roundups.ok ? await roundups.json().catch(() => null) : null;
+  return socialHubAdmin.mergeProposals(await res.json(), extra);
 }
 
 async function jarvisSocialDecide(id, decision, now) {
