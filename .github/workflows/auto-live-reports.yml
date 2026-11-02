@@ -156,6 +156,7 @@ jobs:
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
           FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+          FACEBOOK_PAGE_TOKEN_ES: ${{ secrets.FACEBOOK_PAGE_TOKEN_ES }}
         run: node scripts/social-metrics.js | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Commit and publish the site
