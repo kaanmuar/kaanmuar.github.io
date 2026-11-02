@@ -147,11 +147,16 @@ function linkedin(dir) {
 }
 
 // Each working day from 07:00 (Mac time), writes the day's LinkedIn list once; the tool skips people listed before.
+// No agent run writes linkedin/, so it does not wait for the lock (#2240), only for the prospects run's CSVs to settle.
+const SETTLE = 10 * 60 * 1000;
 function linkedinDay(dir, now, run) {
   const at = new Date(now);
   if (at.getDay() === 0 || at.getDay() === 6 || at.getHours() < 7) return "";
   const date = at.toLocaleDateString("en-CA");
   if (fs.existsSync(path.join(dir, "linkedin", date + ".md"))) return "";
+  const folder = path.join(dir, "prospects");
+  const csvs = fs.existsSync(folder) ? fs.readdirSync(folder).filter((f) => /^week.*\.csv$/.test(f)) : [];
+  if (csvs.some((f) => now - fs.statSync(path.join(folder, f)).mtimeMs < SETTLE)) return "";
   run(["tools/linkedin-day.py", date]);
   return "LinkedIn list for " + date + " written";
 }
@@ -333,12 +338,12 @@ async function main(argv) {
     const notes = await autopilot.run(dir, state, { parseCsv, toCsv, leadFiles, tool, fetch, db, now: Date.now() })
       .catch((error) => ["leads autopilot failed: " + String((error && error.message) || error).split("\n")[0].slice(0, 200)]);
     if (notes && notes.length) console.log("leads autopilot: " + notes.join("; "));
-    try {
-      const note = linkedinDay(dir, Date.now(), (args) => execFileSync("python3", args, { cwd: dir, stdio: "pipe", timeout: 120000 }));
-      if (note) console.log(note);
-    } catch (error) {
-      console.log("LinkedIn list failed: " + String((error && error.message) || error).split("\n")[0].slice(0, 200));
-    }
+  }
+  try {
+    const note = linkedinDay(dir, Date.now(), (args) => execFileSync("python3", args, { cwd: dir, stdio: "pipe", timeout: 120000 }));
+    if (note) console.log(note);
+  } catch (error) {
+    console.log("LinkedIn list failed: " + String((error && error.message) || error).split("\n")[0].slice(0, 200));
   }
   const s = snapshot(dir, state, Date.now());
   await db.collection("jarvis_settings").doc("marketing_sync").set(s);
