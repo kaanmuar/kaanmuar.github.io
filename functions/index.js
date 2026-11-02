@@ -5018,6 +5018,7 @@ async function pushOwner(msg) {
   }
 }
 const jarvisSocial = require("./jarvis-social");
+const jarvisStudio = require("./jarvis-studio");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisEngagement = require("./jarvis-engagement");
 
@@ -5900,6 +5901,11 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
         started.push({ name: w.name, state: "started", url: "https://github.com/" + BUG_REPO + "/actions/workflows/" + w.file });
       }
       out = { started, note: started.map((s) => s.name + " " + s.state).join(", ") + "." };
+    } else if (op === "studio" || op === "studio-render") {
+      const token = await githubApp.token();
+      if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager), so Jarvis cannot start renders.");
+      out = op === "studio" ? await jarvisStudio.overview((p) => githubGet(p, token), BUG_REPO)
+        : await jarvisStudio.start((p, b) => github(p, b, token), BUG_REPO, body);
     } else if (op === "share-draft") out = await shareDraft(body);
     else if (op === "share-queue") out = await shareQueue(body);
     else if (op === "share-list") out = { items: await shareList() };

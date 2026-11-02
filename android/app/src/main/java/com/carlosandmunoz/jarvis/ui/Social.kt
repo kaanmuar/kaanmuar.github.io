@@ -100,6 +100,8 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
         containerColor = J.bg,
     )
 
+    StudioPanel(s, vm)
+
     val proposals = s.proposals.orEmpty()
     Panel("Post proposals" + if (proposals.isNotEmpty()) " (${proposals.size})" else "") {
         if (s.proposals == null) Muted("Reading the field sweep proposals…")
