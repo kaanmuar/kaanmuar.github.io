@@ -13,6 +13,7 @@ const os = require("os");
 const path = require("path");
 const { execFileSync, spawnSync } = require("child_process");
 const { SITE_REASONS } = require("../functions/url-review-failures");
+const cursorPlan = require("./cursor-plan");
 
 const ROOT = path.resolve(__dirname, "..");
 const R = "repos/kaanmuar/kaanmuar.github.io";
@@ -64,15 +65,6 @@ function siteComment(result, today) {
 }
 
 // A cache from an ended billing cycle, or older than two days, is unknown: the agent starts, and a refused run is held back after all.
-function planPercent(cache, now) {
-  const data = (cache && cache.data) || {};
-  const pct = data.individualUsage && data.individualUsage.plan && data.individualUsage.plan.totalPercentUsed;
-  const at = Number(cache && cache.at) || 0;
-  const written = at < 1e12 ? at * 1000 : at;
-  if (typeof pct !== "number" || Date.parse(data.billingCycleEnd) <= now || written < now - 2 * 86400000) return null;
-  return pct;
-}
-
 function agentPrompt(queue, pack) {
   return [
     "You run unattended on the owner's Mac for the daily fix of failed URL reviews (#320, #1982). Nobody will answer questions: decide, act, and finish. The repo is kaanmuar/kaanmuar.github.io and this checkout is a clean `main`.",
@@ -207,9 +199,7 @@ function main() {
   const queue = plan.filter((item) => item.action === "agent");
   if (!queue.length) return console.log("No bug needs an agent today.");
   const budgetOk = () => {
-    let cache = null;
-    try { cache = JSON.parse(fs.readFileSync(path.join(USAGE, "quota-cache.json"), "utf8")); } catch (error) {}
-    const pct = planPercent(cache, Date.now());
+    const pct = cursorPlan.planPercent(cursorPlan.readCache(), Date.now());
     return pct == null || pct < PLAN_LIMIT;
   };
   const defer = (why) => {
@@ -233,4 +223,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { triage, siteComment, planPercent, agentPrompt, MARK };
+module.exports = { triage, siteComment, agentPrompt, MARK };

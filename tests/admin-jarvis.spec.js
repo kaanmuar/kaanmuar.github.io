@@ -430,7 +430,9 @@ test.describe('admin statistics (Jarvis)', () => {
     const leads = mk.locator('[data-panel-id="marketing-leads"]');
     await expect(leads).toContainText('Uni Norte');
     await expect(leads.locator('[data-mk-cmd="approve"]')).toHaveCount(2);
-    await expect(leads).toContainText('missing');
+    await expect(leads).toContainText('Jarvis is on it.');
+    await expect(leads.locator('[data-mk-rereview="uni2.edu.co"]')).toHaveCount(1);
+    await expect(leads.locator('[data-mk-cmd="lead-drop"][data-email="leo@uni2.edu.co"]')).toHaveCount(1);
     await expect(mk.locator('[data-panel-id="marketing-jobs"]')).toContainText('W1 leads ready');
     await expect(mk.locator('[data-panel-id="marketing-kpis"]')).toContainText('setup week');
     const cmds = () => calls.filter((c) => c.op === 'marketing-command').map(({ body: { op, days, device, ...rest } }) => rest);

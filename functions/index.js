@@ -1025,7 +1025,9 @@ exports.emailQuarterSiteReport = scheduled(withMail, "emailQuarterSiteReport", a
 
 const reviewMail = require("./url-review-mail");
 
-async function loadBound(name, field, startVal, endVal) {
+async function loadBound(name, field, startVal, endVal, options) {
+  const pageSize = (options && options.pageSize) || 400;
+  const map = (options && options.map) || ((row) => row);
   const rows = [];
   let cursor = null;
   for (;;) {
@@ -1033,15 +1035,20 @@ async function loadBound(name, field, startVal, endVal) {
       .where(field, ">=", startVal)
       .where(field, "<", endVal)
       .orderBy(field, "asc")
-      .limit(400);
+      .limit(pageSize);
     if (cursor) query = query.startAfter(cursor);
     const snap = await query.get();
     if (snap.empty) break;
-    snap.forEach((doc) => rows.push(Object.assign({ id: doc.id }, doc.data() || {})));
+    snap.forEach((doc) => rows.push(map(Object.assign({ id: doc.id }, doc.data() || {}))));
     cursor = snap.docs[snap.docs.length - 1];
-    if (snap.size < 400 || rows.length >= 5000) break;
+    if (snap.size < pageSize || rows.length >= 5000) break;
   }
   return rows;
+}
+
+// Each url_reviews row holds its whole report, so they are read in small pages and kept slim.
+function loadReviewRows(startIso, endIso) {
+  return loadBound("url_reviews", "createdAt", startIso, endIso, { pageSize: 50, map: reviewMail.slimReview });
 }
 
 function loadSummaries(name, fields, start, end) {
@@ -1112,7 +1119,7 @@ async function sendReviewPeriodReport(period) {
   const endStamp = Timestamp.fromDate(window.end);
   const [opens, allReviews, captures, alerts, pageEvents, failed, priorFailed, reruns] = await Promise.all([
     loadBound("url_review_opens", "createdAt", startStamp, endStamp),
-    loadBound("url_reviews", "createdAt", window.start.toISOString(), window.end.toISOString()),
+    loadReviewRows(window.start.toISOString(), window.end.toISOString()),
     loadBound("url_review_captures", "at", window.start.toISOString(), window.end.toISOString()),
     loadBound("url_review_alerts", "at", window.start.toISOString(), window.end.toISOString()),
     loadEvents(window.start, window.end).then((rows) => rows.filter((row) => row.site === "review")),
@@ -1135,7 +1142,7 @@ async function sendReviewPeriodReport(period) {
     const summary = reviewMail.summarizePeriod(opens, reviews, captures, alerts);
     const [priorOpens, priorReviews] = await Promise.all([
       loadBound("url_review_opens", "createdAt", Timestamp.fromDate(earlier.start), startStamp),
-      loadBound("url_reviews", "createdAt", earlier.start.toISOString(), window.start.toISOString()).then(askedFor)
+      loadReviewRows(earlier.start.toISOString(), window.start.toISOString()).then(askedFor)
     ]);
     const previous = reviewMail.summarizePeriod(priorOpens, priorReviews, [], []);
     const followUp = period === "quarter" ? null : await loadFollowUp(window.start.toISOString(), window.end.toISOString());
@@ -1208,10 +1215,11 @@ async function sendReviewPeriodReport(period) {
   return null;
 }
 
-exports.emailDailyReviewReport = scheduled(withMailAndGithub, "emailDailyReviewReport", async () => (await mailOn("reviewDaily")) ? sendReviewPeriodReport("daily") : "mail off in Jarvis settings");
-exports.emailWeeklyReviewReport = scheduled(withMailAndGithub, "emailWeeklyReviewReport", () => sendReviewPeriodReport("weekly"));
-exports.emailMonthlyReviewReport = scheduled(withMailAndGithub, "emailMonthlyReviewReport", () => sendReviewPeriodReport("monthly"));
-exports.emailQuarterReviewReport = scheduled(withMailAndGithub, "emailQuarterReviewReport", async () => (await mailOn("reviewQuarter")) ? sendReviewPeriodReport("quarter") : "mail off in Jarvis settings");
+const withReviewReport = functions.runWith({ memory: "512MB", secrets: SECRETS.mailWithGithub });
+exports.emailDailyReviewReport = scheduled(withReviewReport, "emailDailyReviewReport", async () => (await mailOn("reviewDaily")) ? sendReviewPeriodReport("daily") : "mail off in Jarvis settings");
+exports.emailWeeklyReviewReport = scheduled(withReviewReport, "emailWeeklyReviewReport", () => sendReviewPeriodReport("weekly"));
+exports.emailMonthlyReviewReport = scheduled(withReviewReport, "emailMonthlyReviewReport", () => sendReviewPeriodReport("monthly"));
+exports.emailQuarterReviewReport = scheduled(withReviewReport, "emailQuarterReviewReport", async () => (await mailOn("reviewQuarter")) ? sendReviewPeriodReport("quarter") : "mail off in Jarvis settings");
 
 async function probeFailure(url) {
   let host = "";
@@ -1314,7 +1322,8 @@ async function rerunFailure(group) {
         browse: browseForReview,
         pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
         crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => urlReview.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
-        webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
+        webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+        places: process.env.PLACES_KEY ? (request) => urlReview.placesSearch(request, process.env.PLACES_KEY) : undefined
       });
       record = urlReview.intakeRecord(Object.assign({}, group.intake, {
         url: group.url,
@@ -2178,7 +2187,8 @@ async function sweepReview(target, controls) {
     browse: browseForReview,
     pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
     crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
-    webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined
+    webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
+    places: process.env.PLACES_KEY ? (request) => urlReview.placesSearch(request, process.env.PLACES_KEY) : undefined
   }, controls));
   const record = Object.assign(urlReview.intakeRecord(value, report, { country: target.cc.toUpperCase() }), { source: "sweep", sweep: target });
   await getFirestore().collection("url_reviews").doc(record.id).set(record);
@@ -2286,7 +2296,8 @@ async function rivalSweep() {
           browse: browseForReview,
           pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
           crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
-          webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined
+          webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
+          places: process.env.PLACES_KEY ? (request) => urlReview.placesSearch(request, process.env.PLACES_KEY) : undefined
         });
         const record = Object.assign(urlReview.intakeRecord(value, report, { country: job.cc.toUpperCase() }), { source: "rivals", rivalOf: job.baseId });
         await db.collection("url_reviews").doc(record.id).set(record);
@@ -4773,7 +4784,8 @@ async function runReview(req, res, placeOf) {
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => urlReview.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
-      webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
+      webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+      places: process.env.PLACES_KEY ? (request) => urlReview.placesSearch(request, process.env.PLACES_KEY) : undefined
     });
     const record = urlReview.intakeRecord(intake.value, report, Object.assign({
       ip,
@@ -5229,7 +5241,7 @@ const jarvisDigest = require("./jarvis-digest");
 exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB", secrets: SECRETS.jarvisReviewRun }).firestore.document("jarvis_reviews/{id}").onCreate(async (snap) => {
   const row = snap.data() || {};
   const db = getFirestore();
-  const tokens = row.token ? [row.token] : await jarvisPush.targets(db, "alerts");
+  const tokens = row.token ? [row.token] : row.quiet === true ? [] : await jarvisPush.targets(db, "alerts");
   const startedAt = Date.now();
   await snap.ref.update({ status: "running", startedAt: new Date(startedAt).toISOString() });
   try {
@@ -5242,7 +5254,8 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
       crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
-      webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined
+      webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
+      places: process.env.PLACES_KEY ? (request) => urlReview.placesSearch(request, process.env.PLACES_KEY) : undefined
     });
     const record = Object.assign(urlReview.intakeRecord(value, report, {}), { source: "jarvis", paid: true, free: true, priceUsd: 0 });
     await db.collection("url_reviews").doc(record.id).set(record);
@@ -5251,13 +5264,13 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
     linkUrl.searchParams.set("utm_source", "jarvis");
     linkUrl.searchParams.set("utm_medium", "push");
     const link = linkUrl.toString();
-    const push = await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.doneMessage(report, link));
+    const push = row.quiet === true ? null : await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.doneMessage(report, link));
     const score = report.insights && report.insights.score ? report.insights.score.overall : null;
     await snap.ref.update({ status: "done", reportId: record.id, score: score == null ? null : score, link, push, doneAt: new Date().toISOString() });
   } catch (error) {
     const reason = String((error && error.message) || error).slice(0, 200);
     console.error("Jarvis review of " + row.url + " failed:", error);
-    const push = await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.failedMessage(row.url, reason)).catch(() => null);
+    const push = row.quiet === true ? null : await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.failedMessage(row.url, reason)).catch(() => null);
     await snap.ref.update({ status: "failed", error: reason, push, doneAt: new Date().toISOString() });
   }
 });
