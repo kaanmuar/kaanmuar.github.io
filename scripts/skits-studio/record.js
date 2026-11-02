@@ -6,7 +6,7 @@
 
    The page is the deployed one; its Cloud Functions are answered here so nothing runs, nobody signs in, and no
    record is written: the session comes from functions/url-review-auth like the Playwright specs, and the report
-   is the bundled sample (a real run) moved to the skit's example host with the skit's finding set.
+   is our own site's review (a real run) moved to the skit's example host with the skit's finding set.
    Writes media/skits/screen/<skit>-<lang>.mp4 (1000x1580) and .json with the times of each step. */
 
 require("../playwright-sandbox");
@@ -16,7 +16,7 @@ const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
 const auth = require("../../functions/url-review-auth");
-const sample = require("../../assets/qa-review-sample.json");
+const sample = { frameworks: require("../../functions/url-review-core").FRAMEWORKS, report: require("../../tests/unit/fixtures/review-carlosandmunoz.json") };
 const { SKITS, LANGS, pageFor } = require("./skits");
 
 const ROOT = path.resolve(__dirname, "../..");
@@ -42,7 +42,7 @@ function args() {
   return out;
 }
 
-// The sample run on carlosandmunoz.com, moved to the skit's host, with its broken-links check failing.
+// Our own run on carlosandmunoz.com, moved to the skit's host, with its broken-links check failing.
 function reportFor(skit, lang) {
   const text = JSON.stringify(sample.report).split("carlosandmunoz.com").join(skit.host);
   const report = Object.assign(JSON.parse(text), { id: "5k1t" + skit.id.replace(/[^a-z]/g, "").slice(0, 8), fetchedAt: new Date().toISOString() });

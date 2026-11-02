@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const ask = require("../../js/qa-review-ask.js");
 const auth = require("../../functions/url-review-auth");
-const sample = require("../../assets/qa-review-sample.json").report;
+const sample = require("./fixtures/review-carlosandmunoz.json");
 
 const DESKTOP = "a".repeat(64);
 const PHONE = "b".repeat(64);
