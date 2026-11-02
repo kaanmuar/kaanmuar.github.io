@@ -108,6 +108,13 @@ const HANDLERS = [
     return runs.map((r) => `${r.conclusion || r.status}  ${r.name}${r.conclusion === "failure" ? `  ${r.url}` : ""}`).join("\n");
   }],
   [/^(worktrees|tickets in flight)\??$/i, () => sh("git", ["worktree", "list"]).split("\n").filter((l) => l.includes(".worktrees")).map((l) => l.replace(/^.*\.worktrees\//, "")).join("\n") || "No ticket worktrees."],
+  // Renders run in studio-render.yml (#2056): "render evergreen --start 2026-11-10 for #1990", "render skit friday-release".
+  [/^render (?:(tips|skit) )?([a-z0-9-]+)((?: --[a-z]+ [\w,.:-]+)*)(?: for #?(\d+))?$/, (m) => {
+    const studio = require(path.join(ROOT, "scripts/studio-render.js"));
+    const j = studio.job(Object.assign(studio.parseCommand(`/render ${m[1] || "tips"} ${m[2]}${m[3]}`), m[4] ? { ticket: m[4] } : {}));
+    sh("gh", ["workflow", "run", "studio-render.yml", "-R", "kaanmuar/kaanmuar.github.io", ...Object.entries(j).flatMap(([k, v]) => ["-f", `${k}=${v}`])]);
+    return `Render of ${j.kind} ${j.name} (${j.mode}) started: https://github.com/kaanmuar/kaanmuar.github.io/actions/workflows/studio-render.yml\nIts review PR opens when it finishes${j.ticket ? `, and #${j.ticket} gets the links` : ""}.`;
+  }],
   [/^handoff$/i, (m, input) => fs.existsSync(file(`handoff-${input.conversation_id}.md`)) ? fs.readFileSync(file(`handoff-${input.conversation_id}.md`), "utf8") : writeHandoff(input)],
 ];
 

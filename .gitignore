@@ -37,6 +37,7 @@ media/url-review-demos/
 media/social-posts/*/story/
 media/social-posts/*/clip/
 media/social-posts/*/cover/
+media/social-posts/*/voiced/
 media/buffer-upload/
 # Gemini takes and product screen recordings for scripts/skits-studio
 media/skits/
