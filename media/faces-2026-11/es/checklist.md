@@ -160,7 +160,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   https://carlosandmunoz.com/qa-review-es.html?utm_source=devto&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   ```
 - [ ] Upload Profile image (dev.to has no banner): `media/faces-2026-11/es/devto/avatar-1000.jpg`
-- [ ] Access: Settings > Extensions > DEV Community API Keys: make a key for the dev.to poster (#2326).
+- [ ] Access: Settings > Extensions > DEV Community API Keys: generate a key named QA-lab poster, then store it: pbpaste | gh secret set DEVTO_API_KEY_ES -R kaanmuar/kaanmuar.github.io. scripts/devto-queue.js then posts one article a day (#2326).
 
 ## Bluesky: new account, https://bsky.app/profile/qaurlreview.bsky.social
 

@@ -50,7 +50,7 @@ const postFace = (batch, slug, cap, slot, connected, root = ROOT) => route(postL
 
 // The account secrets a face holds under its suffix; anything else in the environment is shared.
 const SECRETS = ["BLUESKY_HANDLE", "BLUESKY_APP_PASSWORD", "BLUESKY_SERVICE", "MASTODON_URL", "MASTODON_TOKEN",
-  "THREADS_TOKEN", "INSTAGRAM_USER_ID", "FACEBOOK_PAGE_ID", "FACEBOOK_PAGE_TOKEN"];
+  "THREADS_TOKEN", "INSTAGRAM_USER_ID", "FACEBOOK_PAGE_ID", "FACEBOOK_PAGE_TOKEN", "DEVTO_API_KEY"];
 
 // A face's view of the environment: its own secrets under their plain names, never another face's.
 function faceEnv(face, env = process.env) {

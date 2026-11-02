@@ -170,7 +170,7 @@ const NETWORKS = [
     fields: [["Name", "name"], ["Username", "handle"], ["Bio (200)", "bio"], ["Website", "site"]],
     images: [{ file: "avatar-1000.jpg", w: 1000, h: 1000, kind: "avatar", circle: true, where: "Profile image (dev.to has no banner)" }],
     steps: ["Sign up at dev.to/enter with email: {email}, username {handle}."],
-    access: "Settings > Extensions > DEV Community API Keys: make a key for the dev.to poster (#2326)."
+    access: "Settings > Extensions > DEV Community API Keys: generate a key named QA-lab poster, then store it: pbpaste | gh secret set DEVTO_API_KEY{env} -R kaanmuar/kaanmuar.github.io. scripts/devto-queue.js then posts one article a day (#2326)."
   },
   {
     id: "bluesky", name: "Bluesky",
