@@ -93,10 +93,16 @@ async function shot(page, name) {
   return file;
 }
 
+/** { who, why }: who is the account the agent acts as, or "" with why it will not act there. */
 async function signedIn(page, k) {
-  await page.goto(NETWORKS[k].home, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => null);
+  const net = NETWORKS[k];
+  await page.goto(net.home, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => null);
   await pause(2000, 4000);
-  return NETWORKS[k].signedIn(page).catch(() => "");
+  let who = "";
+  try { who = await net.signedIn(page); } catch (error) { return { who: "", why: String(error.message || error).slice(0, 180) }; }
+  if (!who) return { who: "", why: "Not signed in in the agent's Chrome." };
+  if (net.account && who.toLowerCase().replace(/^@/, "") !== net.account) return { who: "", why: "Signed in as " + who + ", not our @" + net.account + "." };
+  return { who, why: "" };
 }
 
 // --- pair ----------------------------------------------------------------------------------------------------------
@@ -132,8 +138,8 @@ async function check(nets, read) {
   const { ctx, page } = await launch(true);
   try {
     for (const k of nets) {
-      const who = await signedIn(page, k);
-      let line = NETWORKS[k].name.padEnd(10) + (who ? "signed in as " + who : "NOT signed in");
+      const { who, why } = await signedIn(page, k);
+      let line = NETWORKS[k].name.padEnd(10) + (who ? "signed in as " + who : "NOT ready: " + why);
       if (who && read) {
         const posts = await NETWORKS[k].read(page, NETWORKS[k].queries[0]).catch((error) => ({ error: error.message }));
         line += posts.error ? "; read failed: " + posts.error : "; read " + posts.length + " posts for \"" + NETWORKS[k].queries[0] + "\"";
@@ -186,9 +192,9 @@ async function run(opts) {
     for (const [i, k] of nets.entries()) {
       const net = NETWORKS[k];
       if (c.blocked[k]) { seen.errors[k] = "Held until " + c.blocked[k] + " after a check."; seen.signedIn[k] = true; continue; }
-      const who = await signedIn(page, k);
+      const { who, why } = await signedIn(page, k);
       seen.signedIn[k] = !!who;
-      if (!who) { seen.errors[k] = "Not signed in in the agent's Chrome."; continue; }
+      if (!who) { seen.errors[k] = why; continue; }
       seen.accounts[k] = who;
       const q = net.queries[(slot + i * 3) % net.queries.length];
       try {

@@ -63,10 +63,14 @@ const need = async (loc, what) => { if (!(await visible(loc))) throw new Error(w
 const NUM = "const num = (s) => { const m = String(s || '').replace(/,/g, '').match(/([\\d.]+)\\s*([KkMm])?/); if (!m) return 0; const v = parseFloat(m[1]) * ({ k: 1e3, m: 1e6 }[(m[2] || '').toLowerCase()] || 1); return Number.isFinite(v) ? Math.round(v) : 0; };";
 const evaluate = (page, body, arg) => page.evaluate(new Function("arg", NUM + body), arg);
 
+// On LinkedIn and Facebook the agent acts as our page, never as the person signed in (Carlos, #1991).
+const PAGES = { linkedin: "qalab-url-review", facebook: "qalaburlreview" };
+const PAGE_NAME = /QA-?lab/i;
+
 const GENERAL = ["web accessibility", "WCAG", "core web vitals", "technical SEO", "Playwright testing", "test automation", "AI Overviews SEO", "web performance", "GA4", "software testing", "a11y", "Google Search Console", "QA engineer", "Lighthouse performance"];
 
 const x = {
-  name: "X", home: "https://x.com/home", queries: GENERAL,
+  name: "X", account: "qalaburlreview", home: "https://x.com/home", queries: GENERAL,
   async signedIn(page) {
     const btn = page.locator('[data-testid="SideNav_AccountSwitcher_Button"]');
     if (!(await visible(btn, 15000))) return "";
@@ -127,7 +131,7 @@ const x = {
 };
 
 const threads = {
-  name: "Threads", home: "https://www.threads.com/", queries: GENERAL,
+  name: "Threads", account: "qaurlreview", home: "https://www.threads.com/", queries: GENERAL,
   async signedIn(page) {
     const me = page.locator('a[href^="/@"]:has(svg[aria-label="Profile"])');
     if (!(await visible(me, 15000))) return "";
@@ -185,7 +189,7 @@ const threads = {
 };
 
 const instagram = {
-  name: "Instagram", home: "https://www.instagram.com/",
+  name: "Instagram", account: "qaurlreview", home: "https://www.instagram.com/",
   queries: ["webaccessibility", "accessibility", "seo", "technicalseo", "softwaretesting", "qatesting", "webperformance", "webdevelopment", "wcag", "testautomation", "a11y", "googleanalytics"],
   async signedIn(page) {
     if (!(await visible(page.locator('svg[aria-label="Home"]'), 15000))) return "";
@@ -236,7 +240,7 @@ const instagram = {
 };
 
 const tiktok = {
-  name: "TikTok", home: "https://www.tiktok.com/",
+  name: "TikTok", account: "qalaburlreview", home: "https://www.tiktok.com/",
   queries: ["seo tips", "web accessibility", "software testing", "qa tester", "website speed", "google analytics 4", "playwright testing", "technical seo"],
   async signedIn(page) {
     if (await visible(page.locator('[data-e2e="top-login-button"]'), 6000)) return "";
@@ -293,7 +297,18 @@ const linkedin = {
   async signedIn(page) {
     const me = page.locator("img.global-nav__me-photo, .global-nav__me img");
     if (!(await visible(me, 15000))) return "";
-    return (await me.first().getAttribute("alt").catch(() => "")) || "LinkedIn";
+    return ((await me.first().getAttribute("alt").catch(() => "")) || "LinkedIn") + ", acting as /company/" + PAGES.linkedin;
+  },
+  // A page admin picks who reacts or comments in the post's identity menu; without it the agent does nothing.
+  async asPage(page, scope) {
+    const toggle = scope.locator('button[aria-label*="identity" i], button[aria-label*="reacting as" i], button[aria-label*="commenting as" i], button[aria-label*="switch" i]').first();
+    if (!(await visible(toggle, 6000))) throw new Error("LinkedIn offered no way to act as the QA-lab page on this post.");
+    if (PAGE_NAME.test((await toggle.getAttribute("aria-label")) || "")) return;
+    await click(toggle);
+    await click(await need(page.locator('[role="dialog"], [role="menu"], .artdeco-dropdown__content, .artdeco-modal').getByText(PAGE_NAME), "The QA-lab page in the identity menu"));
+    const save = page.getByRole("button", { name: /^(Save|Done)$/ });
+    if (await visible(save, 2000)) await click(save.first());
+    if (!PAGE_NAME.test((await toggle.getAttribute("aria-label").catch(() => "")) || "")) throw new Error("LinkedIn did not switch to the QA-lab page.");
   },
   async read(page, q) {
     await go(page, this, "https://www.linkedin.com/search/results/content/?keywords=" + enc(q) + "&datePosted=%22past-24h%22&sortBy=%22relevance%22");
@@ -322,28 +337,16 @@ const linkedin = {
   },
   async like(page, task) {
     const main = await this.post(page, task);
+    await this.asPage(page, main);
     const btn = await need(main.locator('button[aria-label^="React Like"], button.react-button__trigger'), "Like");
     if ((await btn.getAttribute("aria-pressed")) === "true") return {};
     await click(btn);
     return {};
   },
-  async repost(page, task) {
-    const main = await this.post(page, task);
-    await click(await need(main.locator("button").filter({ hasText: /^\s*Repost\s*$/ }), "Repost"));
-    await click(await need(page.locator('.artdeco-dropdown__item, [role="menuitem"], [role="button"]').filter({ hasText: /Instantly bring|^\s*Repost\s*$/ }), "Repost in the menu"));
-    return {};
-  },
-  async follow(page, task) {
-    const main = await this.post(page, task);
-    if (await has(main.locator('button[aria-label^="Following"], button[aria-label^="Unfollow"]'))) return {};
-    const btn = main.locator('button[aria-label^="Follow"]');
-    if (!(await visible(btn, 6000))) throw new Error("No Follow button on the post (a connection already, or a company page).");
-    await click(btn.first());
-    return {};
-  },
   async reply(page, task) {
     const main = await this.post(page, task);
     await click(await need(main.locator('button[aria-label="Comment"], button[aria-label^="Comment"]'), "Comment"));
+    await this.asPage(page, main);
     await type(page, await need(main.locator('.ql-editor[contenteditable="true"], div[contenteditable="true"][role="textbox"]'), "The comment box"), task.draft);
     await click(await need(main.locator("button.comments-comment-box__submit-button, button.comments-comment-box__submit-button--cr, button").filter({ hasText: /^\s*(Comment|Post)\s*$/ }), "Post"));
     await pause(3000, 5000);
@@ -353,42 +356,64 @@ const linkedin = {
 
 const facebook = {
   name: "Facebook", home: "https://www.facebook.com/", queries: GENERAL,
+  // Switched into the page, Facebook keeps the page's id in the i_user cookie and everything acts as the page.
+  async asPage(page) { return (await page.context().cookies("https://www.facebook.com")).some((c) => c.name === "i_user" && c.value); },
   async signedIn(page) {
     if (await visible(page.locator('input[name="email"]'), 5000)) return "";
-    const me = page.locator('[aria-label="Your profile"], [aria-label="Account controls and settings"]');
-    return (await visible(me, 10000)) ? "Facebook" : "";
+    const me = page.locator('[aria-label="Your profile"], [aria-label="Account controls and settings"], [aria-label="Tu perfil"], [aria-label="Controles y configuración de la cuenta"]');
+    if (!(await visible(me, 10000))) return "";
+    if (!(await this.asPage(page))) {
+      await go(page, this, "https://www.facebook.com/" + PAGES.facebook);
+      const sw = page.getByRole("button", { name: /^(Switch( now)?|Cambiar( ahora)?)$/ });
+      if (await visible(sw, 8000)) {
+        await click(sw.first());
+        const ok = page.locator('[role="dialog"]').getByRole("button", { name: /^(Switch|Cambiar)$/ });
+        if (await visible(ok, 4000)) await click(ok.first());
+        await pause(4000, 6000);
+      }
+    }
+    if (!(await this.asPage(page))) throw new Error("Facebook is signed in but not switched to the " + PAGES.facebook + " page, and offered no Switch button there.");
+    return "page " + PAGES.facebook;
   },
+  // Search's "Recent posts" filter; Facebook fills a post's permalink only once its timestamp link is hovered.
   async read(page, q) {
-    await go(page, this, "https://www.facebook.com/search/posts/?q=" + enc(q));
-    await visible(page.locator('div[role="feed"], div[role="article"]'), 20000);
-    await scroll(page, 3);
-    return evaluate(page, `
-      const seen = new Set();
-      return Array.from(document.querySelectorAll('div[role="feed"] > div, div[role="article"]')).map((c) => {
-        const link = Array.from(c.querySelectorAll('a[href]')).map((a) => a.href).find((h) => /\\/posts\\/|permalink\\.php|story_fbid=|\\/videos\\/|\\/reel\\//.test(h));
-        if (!link) return null;
-        const url = /permalink\\.php|story_fbid=/.test(link) ? link.split('&__')[0] : link.split('?')[0];
-        if (seen.has(url)) return null;
-        seen.add(url);
-        const msg = c.querySelector('[data-ad-preview="message"], [data-ad-comet-preview="message"], [data-ad-rendering-role="story_message"]');
-        const a = c.querySelector('h2 a, h3 a, h4 a, strong a');
-        const ahref = a ? a.href.split('?')[0] : '';
+    await go(page, this, "https://www.facebook.com/search/posts/?q=" + enc(q) + "&filters=" + enc(Buffer.from(JSON.stringify({ "recent_posts:0": JSON.stringify({ name: "recent_posts", args: "" }) })).toString("base64")));
+    await visible(page.locator('div[role="feed"]'), 20000);
+    await scroll(page, 2);
+    const items = page.locator('div[role="feed"] > div');
+    const posts = [];
+    for (let i = 0; i < Math.min(await items.count(), 10); i += 1) {
+      const it = items.nth(i);
+      const links = it.locator('a[role="link"]:not([href*="/hashtag/"])');
+      for (let j = 0; j < Math.min(await links.count(), 12); j += 1) await links.nth(j).hover({ timeout: 3000 }).then(() => pause(100, 250), () => null);
+      const p = await it.evaluate(new Function("c", NUM + `
+        const link = Array.from(c.querySelectorAll('a[href]')).map((a) => a.href).find((h) => /\\/posts\\/|permalink\\.php|story_fbid=|\\/videos\\/|\\/reel\\//.test(h) && !/search\\/posts/.test(h));
+        const msg = c.querySelector('[data-ad-rendering-role="story_message"], [data-ad-preview="message"], [data-ad-comet-preview="message"]');
+        if (!link || !msg) return null;
+        const u = new URL(link);
+        const url = u.pathname.includes('permalink.php') ? u.origin + u.pathname + '?story_fbid=' + u.searchParams.get('story_fbid') + '&id=' + (u.searchParams.get('id') || '') : u.origin + u.pathname;
+        const h = c.querySelector('h2 a, h3 a, h4 a, strong a');
+        const ahref = h ? h.href.split('?')[0] : '';
         const t = c.innerText;
         const pick = (re) => { const m = t.match(re); return m ? num(m[1]) : 0; };
-        return { network: 'facebook', id: url, url, author: { handle: (ahref.match(/facebook\\.com\\/([^/?]+)/) || [])[1] || (a ? a.innerText : ''), name: a ? a.innerText : '', id: ahref },
-          text: msg ? msg.innerText : '', createdAt: '',
-          metrics: { likes: pick(/All reactions:\\s*([\\d.,]+\\s*[KM]?)/i), replies: pick(/([\\d.,]+\\s*[KM]?)\\s+comments?/i), reposts: pick(/([\\d.,]+\\s*[KM]?)\\s+shares?/i), views: 0 } };
-      }).filter((p) => p && p.text);`);
+        return { network: 'facebook', id: url, url, author: { handle: (ahref.match(/facebook\\.com\\/([^/?]+)/) || [])[1] || '', name: h ? h.innerText.split('\\n')[0].trim() : '', id: ahref },
+          text: msg.innerText.replace(/…\\s*(Ver más|See more)\\s*$/, '').trim(), createdAt: '',
+          metrics: { likes: pick(/(?:All reactions|Todas las reacciones):\\s*([\\d.,]+\\s*[KM]?)/i), replies: pick(/([\\d.,]+\\s*[KM]?)\\s+(?:comments?|comentarios?)/i), reposts: pick(/([\\d.,]+\\s*[KM]?)\\s+(?:shares?|veces compartido|compartidos?)/i), views: 0 } };`)).catch(() => null);
+      if (p && !posts.some((x) => x.url === p.url)) posts.push(p);
+    }
+    return posts;
   },
   async like(page, task) {
     await go(page, this, task.url);
-    if (await visible(page.locator('[aria-label="Remove Like"]'), 6000)) return {};
-    await click(await need(page.locator('[aria-label="Like"][role="button"]'), "Like"));
+    if (!(await this.asPage(page))) throw new Refused("Facebook is not acting as the " + PAGES.facebook + " page.");
+    if (await visible(page.locator('[aria-label="Remove Like"], [aria-label="Quitar Me gusta"]'), 6000)) return {};
+    await click(await need(page.locator('[aria-label="Like"][role="button"], [aria-label="Me gusta"][role="button"]'), "Like"));
     return {};
   },
   async reply(page, task) {
     await go(page, this, task.url);
-    const box = await need(page.locator('[contenteditable="true"][role="textbox"][aria-label^="Write a"], [contenteditable="true"][role="textbox"][aria-label^="Comment"], [contenteditable="true"][role="textbox"]'), "The comment box");
+    if (!(await this.asPage(page))) throw new Refused("Facebook is not acting as the " + PAGES.facebook + " page.");
+    const box = await need(page.locator('[contenteditable="true"][role="textbox"][aria-label^="Write a"], [contenteditable="true"][role="textbox"][aria-label^="Comment"], [contenteditable="true"][role="textbox"][aria-label^="Escribe"], [contenteditable="true"][role="textbox"][aria-label^="Comenta"], [contenteditable="true"][role="textbox"]'), "The comment box");
     await type(page, box, task.draft);
     await page.keyboard.press("Enter");
     await pause(3000, 5000);
