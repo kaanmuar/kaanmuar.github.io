@@ -135,7 +135,7 @@ function seed() {
   };
 }
 
-async function openStats(page, hash) {
+async function openStats(page, hash, extra) {
   const calls = [];
   await page.addInitScript((data) => { window.__data = data; }, seed());
   for (const [file, body] of Object.entries(STUBS)) {
@@ -148,7 +148,7 @@ async function openStats(page, hash) {
     calls.push({ op: body.op, auth: request.headers().authorization, body });
     if (body.op === 'brief-mark') return route.fulfill({ json: { op: body.op, ok: true, key: body.key, status: body.status, until: new Date(Date.now() + 864e5).toISOString() }, headers: { 'Access-Control-Allow-Origin': '*' } });
     if (body.op === 'settings-save') return route.fulfill({ json: Object.assign({ op: body.op, ok: true, updatedAt: new Date().toISOString() }, body.settings), headers: { 'Access-Control-Allow-Origin': '*' } });
-    const answer = EXTERNAL[body.op] || (body.op === 'brief' || body.op === 'ask' ? { ok: true, text: 'Jarvis says the CV is up. Next: answer the inbox.' } : { ok: true, ran: body.job });
+    const answer = (extra || {})[body.op] || EXTERNAL[body.op] || (body.op === 'brief' || body.op === 'ask' ? { ok: true, text: 'Jarvis says the CV is up. Next: answer the inbox.' } : { ok: true, ran: body.job });
     return route.fulfill({ json: Object.assign({ op: body.op }, answer), headers: { 'Access-Control-Allow-Origin': '*' } });
   });
   await page.goto('/admin.html' + (hash || ''));
@@ -171,7 +171,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -571,6 +571,37 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await panel.locator('[data-run-action="publish-hub"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => c.body.action)).toEqual(['publish-hub']);
+    expect(errors).toEqual([]);
+  });
+
+  test('Systems shows every page worst first and the PageSpeed PRs; Merge asks first and goes through action-run (#1978)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const fixture = require('./fixtures/jarvis-pagespeed.json');
+    const calls = await openStats(page, '#stats/systems/30', { pagespeed: fixture, 'action-run': { ok: true, done: 1, ran: '#2042', note: 'Merging #2042; Jarvis pushes the result.' } });
+    const health = page.locator('[data-panel-id="systems-pages"]');
+    await expect(health).toContainText('Page health: every page (45)');
+    await expect(health.locator('tbody tr').first()).toContainText('/qa-review.html');
+    await expect(health.locator('details summary')).toHaveText('Show the other 5 pages');
+    await health.scrollIntoViewIfNeeded();
+    await health.screenshot({ path: 'test-results/jarvis-page-health.png' });
+    const routine = page.locator('[data-panel-id="systems-pagespeed"]');
+    await expect(routine).toContainText('merges on a countdown');
+    await expect(routine).toContainText('waits in Proposals');
+    await expect(routine).toContainText('Short cache lifetimes');
+    await routine.screenshot({ path: 'test-results/jarvis-pagespeed-routine.png' });
+
+    let asked = '';
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await routine.locator('[data-ps-act="pagespeed-merge"][data-pr="2042"]').click();
+    await expect.poll(() => asked).toContain('merge PageSpeed fixes #2042 into main now');
+    await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => [c.body.action, c.body.pr])).toEqual([['pagespeed-merge', 2042]]);
+
+    await page.locator('[data-go="overview"]').first().click();
+    const line = page.locator('[data-view="overview"] .jv-brief li[data-brief="pagespeed:pr:2042"]');
+    await line.click();
+    const sheet = page.locator('.jv-sheet-box');
+    await expect(sheet.locator('[data-sheet="action"][data-action="pagespeed-close"]')).toHaveAttribute('data-pr', '2042');
     expect(errors).toEqual([]);
   });
 

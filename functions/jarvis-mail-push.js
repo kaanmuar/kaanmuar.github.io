@@ -20,7 +20,8 @@ const ACTS = {
   notice: ["send", "skip"],
   social: ["approved", "dismissed"],
   engagement: ["approve", "edit", "dismiss"],
-  countdown: ["now", "cancel"]
+  countdown: ["now", "cancel"],
+  pagespeed: ["merge", "close"]
 };
 const REPLY = { act: "reply", label: "Reply", input: "Your reply" };
 

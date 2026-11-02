@@ -42,9 +42,10 @@ const JOBS = [
   { job: "sendReviewNotes", cron: "0 10 * * 1-6", gap: 50, what: "Follow-up notes to askers (REVIEW_NOTES_LIVE=1)" },
   { job: "sendOwnerNotices", cron: "0 11 * * 1-6", gap: 50, what: "Owner notices for sites now on Live Reports (OWNER_NOTICES_LIVE=1)" },
   { job: "dispatchFacebookQueue", cron: "7 11 * * *", gap: 26, what: "Start the Facebook queue workflow (GitHub fires its own slot hours late)" },
-  // GitHub Actions crons are UTC, as written in .github/workflows (06:41, 11:07, 08:23, 04:00 and 05:00 Bogotá). GitHub
+  // GitHub Actions crons are UTC, as written in .github/workflows (06:41, 11:07, 08:23, 04:00, 05:00 and 01:00 Bogotá). GitHub
   // starts them hours late, so nothing that must happen at a set time hangs on them.
   { job: "auto-live-reports.yml", host: "github", cron: "41 11 * * *", gap: 26, what: "Publish yesterday's reviews as Live Reports and social posts (backup slots)" },
+  { job: "pagespeed-daily.yml", host: "github", cron: "0 6 * * *", gap: 30, what: "PageSpeed on every sitemap page, mobile and desktop; safe fixes and Gemini's fixes for pages under 90 go to PRs (Jarvis merges the safe ones that score up on a 2 h countdown, the rest wait in Proposals) (#1978)" },
   { job: "open-social.yml", host: "github", cron: "13,43 * * * *", gap: 6, what: "Post the slots that have come to Bluesky and Mastodon" },
   { job: "facebook-page.yml", host: "github", cron: "7 16 * * *", gap: 24, what: "Schedule the Facebook queue (started by dispatchFacebookQueue; this slot is the backup)" },
   { job: "field-sweep.yml", host: "github", cron: "23 13 * * *", gap: 50, what: "Propose standout items from the field for the social hub (the owner approves them in admin)" },

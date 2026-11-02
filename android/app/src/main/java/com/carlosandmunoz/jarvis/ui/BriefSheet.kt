@@ -152,10 +152,11 @@ fun BriefSheet(item: JsonObject, s: UiState, vm: JarvisViewModel, open: (String)
                         val id = a.str("id") ?: return@forEach
                         val job = a.str("job")
                         val workflow = a.str("workflow")
-                        val runKey = "action:$id:${job ?: workflow ?: ""}"
+                        val pr = a.num("pr")?.toInt()
+                        val runKey = actionKey(id, job ?: workflow ?: pr?.toString())
                         ActionButton(a.str("label") ?: id, runKey in s.running) {
-                            val ask = if (id == "rerun-ci") "re-run the failed jobs of \"$workflow\" on main" else askFor(id, job, null)
-                            confirm = PendingAction(ask) { runAction(vm, id, job, key, workflow) }
+                            val ask = if (id == "rerun-ci") "re-run the failed jobs of \"$workflow\" on main" else askFor(id, job, null, pr)
+                            confirm = PendingAction(ask) { runAction(vm, id, job, key, workflow, pr) }
                         }
                     }
                     val tabName = tab?.let { t -> CHIPS.toMap()[t] ?: TABS[t] }
