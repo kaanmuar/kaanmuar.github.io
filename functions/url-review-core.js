@@ -22,9 +22,9 @@ const { registrable, registryDomain } = require("./url-review-suffix");
 const { ipBlocked } = require("./url-review-ip");
 const { siteLabel } = caseRank;
 
-const TERMS_VERSION = "2026-11-01";
+const TERMS_VERSION = "2026-11-02";
 // A page loaded before a terms change still sends the version before it.
-const PREVIOUS_TERMS_VERSION = "2026-10-26";
+const PREVIOUS_TERMS_VERSION = "2026-11-01";
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 const EXTRA_FRAMEWORK_USD = 5;
@@ -4419,9 +4419,12 @@ function frostAll(value) {
 
 // The page blurs a free report with CSS, so a paid reopen sends only this copy:
 // the readable opening of every line in every section, filler for the rest, and no fix-kit files.
-function previewReport(report) {
+// The top case stays whole, with what its script needs, as the sample the page shows in full; a comparison column passes { sample: false }.
+function previewReport(report, options) {
   const copy = JSON.parse(JSON.stringify(report || {}));
-  (copy.cases || []).forEach((item) => {
+  const cases = copy.cases || [];
+  const top = options && options.sample === false ? null : cases.shift();
+  cases.forEach((item) => {
     item.title = frostText(item.title);
     item.why = frostText(item.why);
     delete item.msg;
@@ -4455,6 +4458,7 @@ function previewReport(report) {
   // The comparison names the asker's own site and its open problems, so a shared link must not carry it.
   delete copy.compare;
   const frosted = frostAll(copy);
+  if (top) frosted.cases.unshift(Object.assign(top, { sample: true }));
   frosted.preview = true;
   return frosted;
 }

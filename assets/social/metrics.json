@@ -1,5 +1,435 @@
 {
  "version": 1,
- "updatedAt": "2026-10-27T11:37:59.490Z",
- "posts": {}
+ "updatedAt": "2026-11-02T04:11:11.795Z",
+ "posts": {
+  "auto-2026-10-21/01-u-teaminternational-com": {
+   "linkedin": {
+    "impressions": 8,
+    "likes": 2
+   },
+   "tiktok": {
+    "impressions": 125,
+    "views": 143,
+    "likes": 5
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
+    "views": 5,
+    "likes": 1
+   }
+  },
+  "auto-2026-10-21/02-u-epssura-com": {
+   "linkedin": {
+    "impressions": 4,
+    "likes": 1
+   },
+   "tiktok": {
+    "impressions": 127,
+    "views": 156,
+    "likes": 7
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
+    "views": 11,
+    "likes": 2
+   }
+  },
+  "auto-2026-10-22/01-u-uber-com": {
+   "linkedin": {
+    "impressions": 3,
+    "likes": 1,
+    "comments": 2
+   },
+   "tiktok": {
+    "impressions": 112,
+    "views": 120,
+    "likes": 3
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 10,
+    "likes": 2
+   }
+  },
+  "auto-2026-10-22/02-u-mercadolibre-com-co": {
+   "linkedin": {
+    "impressions": 22,
+    "likes": 4,
+    "comments": 6
+   },
+   "tiktok": {
+    "impressions": 173,
+    "views": 206,
+    "likes": 8,
+    "comments": 2
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 5,
+    "likes": 2
+   }
+  },
+  "auto-2026-10-22/03-u-whatsapp-com": {
+   "linkedin": {
+    "impressions": 14,
+    "likes": 2,
+    "comments": 2
+   },
+   "tiktok": {
+    "impressions": 88,
+    "views": 104,
+    "likes": 4,
+    "comments": 2
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 2,
+    "likes": 2
+   }
+  },
+  "auto-2026-10-22/04-u-telegram-com": {
+   "linkedin": {
+    "impressions": 5,
+    "likes": 2,
+    "comments": 2
+   },
+   "tiktok": {
+    "impressions": 63,
+    "views": 74,
+    "likes": 4
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 95,
+    "likes": 2
+   }
+  },
+  "auto-2026-10-22/05-u-lamega-com-co": {
+   "linkedin": {
+    "impressions": 10,
+    "likes": 2,
+    "comments": 2
+   },
+   "tiktok": {
+    "impressions": 94,
+    "views": 104,
+    "likes": 4
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 14,
+    "likes": 1
+   }
+  },
+  "auto-2026-10-23/01-u-pirouline-com": {
+   "linkedin": {
+    "impressions": 6,
+    "likes": 1,
+    "comments": 2
+   },
+   "tiktok": {
+    "impressions": 164,
+    "views": 185,
+    "likes": 9
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 7,
+    "likes": 1
+   }
+  },
+  "auto-2026-10-23/02-u-postobon-com": {
+   "linkedin": {
+    "impressions": 25,
+    "likes": 1,
+    "comments": 2
+   },
+   "tiktok": {
+    "impressions": 91,
+    "views": 101,
+    "likes": 4,
+    "comments": 2
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 3,
+    "likes": 2
+   }
+  },
+  "auto-2026-10-23/03-u-monsterenergy-com": {
+   "linkedin": {
+    "impressions": 3,
+    "likes": 2,
+    "comments": 2
+   },
+   "tiktok": {
+    "impressions": 1,
+    "views": 16,
+    "likes": 4
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 3,
+    "likes": 2
+   }
+  },
+  "auto-2026-10-24/01-u-grupoexito-com-co": {
+   "linkedin": {
+    "impressions": 13,
+    "likes": 3
+   },
+   "tiktok": {
+    "impressions": 114,
+    "views": 132,
+    "likes": 6,
+    "comments": 2
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 3,
+    "likes": 2
+   }
+  },
+  "auto-2026-10-24/02-u-colombia-com": {
+   "linkedin": {
+    "impressions": 3,
+    "likes": 2
+   },
+   "tiktok": {
+    "impressions": 78,
+    "views": 83,
+    "likes": 4
+   },
+   "x": {
+    "impressions": 1,
+    "likes": 1
+   },
+   "youtube": {
+    "views": 5,
+    "likes": 2
+   }
+  },
+  "auto-2026-10-24/03-u-nibo-com-br": {
+   "linkedin": {
+    "impressions": 6,
+    "likes": 2,
+    "comments": 2
+   },
+   "tiktok": {
+    "impressions": 108,
+    "views": 124,
+    "likes": 6,
+    "comments": 2
+   },
+   "x": {
+    "impressions": 3,
+    "comments": 1
+   },
+   "youtube": {
+    "views": 6,
+    "likes": 1
+   }
+  },
+  "auto-2026-10-25/01-u-kemik-gt": {
+   "linkedin": {
+    "impressions": 4,
+    "likes": 2,
+    "comments": 2
+   },
+   "tiktok": {
+    "impressions": 85,
+    "views": 90,
+    "likes": 4
+   },
+   "x": {
+    "impressions": 3
+   },
+   "youtube": {
+    "views": 4,
+    "likes": 3
+   }
+  },
+  "compare-2026-11/01-quiz-berlin-vienna": {
+   "linkedin": {
+    "impressions": 3,
+    "likes": 2
+   },
+   "tiktok": {
+    "impressions": 122,
+    "views": 128,
+    "likes": 5
+   },
+   "x": {
+    "impressions": 1,
+    "likes": 1
+   },
+   "youtube": {
+    "views": 7,
+    "likes": 2
+   }
+  },
+  "compare-2026-11/02-berlin-vienna": {
+   "linkedin": {
+    "impressions": 4,
+    "likes": 3
+   },
+   "tiktok": {
+    "impressions": 122,
+    "views": 210,
+    "likes": 6,
+    "comments": 2
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
+    "views": 4,
+    "likes": 1
+   }
+  },
+  "launch-2026-10/en/a11y": {
+   "youtube": {
+    "views": 3,
+    "likes": 1
+   }
+  },
+  "launch-2026-10/en/exports": {
+   "youtube": {
+    "views": 11,
+    "likes": 2
+   }
+  },
+  "launch-2026-10/en/first-read": {
+   "youtube": {
+    "likes": 1
+   }
+  },
+  "launch-2026-10/en/release": {
+   "youtube": {
+    "views": 28,
+    "likes": 1
+   }
+  },
+  "launch-2026-10/en/security": {
+   "youtube": {
+    "views": 2,
+    "likes": 1
+   }
+  },
+  "launch-2026-10/en/talking": {
+   "youtube": {
+    "views": 11,
+    "likes": 1
+   }
+  },
+  "promo-social-hub-2026-10/01-one-page-en": {
+   "linkedin": {
+    "impressions": 4,
+    "likes": 2
+   },
+   "tiktok": {
+    "impressions": 165,
+    "views": 184,
+    "likes": 7,
+    "comments": 2
+   },
+   "x": {
+    "impressions": 1,
+    "likes": 1
+   },
+   "youtube": {
+    "views": 4,
+    "likes": 2
+   }
+  },
+  "tips-2026-10/01-img-size": {
+   "linkedin": {
+    "impressions": 3,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 1,
+    "likes": 1
+   }
+  },
+  "tips-2026-10/02-release-day": {
+   "linkedin": {
+    "impressions": 3,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 3
+   },
+   "youtube": {
+    "views": 4,
+    "likes": 2
+   }
+  },
+  "tips-2026-10/03-self-review": {
+   "linkedin": {
+    "impressions": 6,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 4
+   },
+   "youtube": {
+    "views": 5,
+    "likes": 1
+   }
+  },
+  "tips-2026-10/04-slowest-page": {
+   "linkedin": {
+    "impressions": 14,
+    "likes": 4
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 14,
+    "likes": 2
+   }
+  },
+  "tips-horror-headers-2026-10/01-missing-csp": {
+   "linkedin": {
+    "impressions": 13,
+    "likes": 3
+   },
+   "tiktok": {
+    "impressions": 146,
+    "views": 171,
+    "likes": 5
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 21,
+    "likes": 2
+   }
+  }
+ }
 }

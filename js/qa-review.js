@@ -2,8 +2,9 @@
   const TERMS_KEY = "qa-review-terms";
   const DEVICE_KEY = "qa-review-device";
   const SHOWN_KEY = "qa-review-shown";
+  const REOPEN_FREE_MS = 7 * 24 * 60 * 60 * 1000;
   const SAMPLE_URL = "assets/qa-review-sample.json";
-  const TERMS_VERSION = "2026-11-01";
+  const TERMS_VERSION = "2026-11-02";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
   const PAGE_CENTS = { 20: 0, 40: 500, 60: 900, 80: 1200, 100: 1500 };
@@ -596,6 +597,13 @@
     return (sessionStorage.getItem(SHOWN_KEY) || "").split(",").filter(Boolean).indexOf(id) !== -1;
   }
 
+  // Same rule as reopenFree in functions/url-review-offers.js: the blurred copy opens again at no charge for 7 days.
+  function reopenFree(payload) {
+    const until = Date.parse(payload.reopenUntil || "");
+    const ran = Date.parse((payload.report && payload.report.fetchedAt) || "");
+    return until > Date.now() || Date.now() - ran < REOPEN_FREE_MS;
+  }
+
   function remember(id) {
     const ids = (sessionStorage.getItem(SHOWN_KEY) || "").split(",").filter(Boolean);
     if (ids.indexOf(id) === -1) ids.push(id);
@@ -603,7 +611,7 @@
   }
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer";
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample";
   // A bought fix list opens the scores and findings; the cases, signals and fix kit stay blurred.
   const FIX_OPEN = "#exec, #health, #fix-first, #browser-pass, #previews, #geo, #analytics, #seo, #site-graph, #security, #findings";
 
@@ -2640,7 +2648,7 @@
     const report = payload.report;
     if (!report) return;
     const sample = !!payload.sample;
-    if (!sample && !payload.paid && !report.preview && seenBefore(report.id) && liveId !== report.id) {
+    if (!sample && !payload.paid && !report.preview && seenBefore(report.id) && liveId !== report.id && !reopenFree(payload)) {
       openPay({ id: report.id, priceUsd: reportUsd(payload), frameworks: payload.frameworks || [], addons: payload.addons || [] });
       return;
     }
@@ -2657,7 +2665,7 @@
     sampleNote.hidden = !sample;
     if (sample) {
       const when = new Date(report.fetchedAt);
-      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way an unpaid report is: the opening of each line is readable and the rest stays blurred in every section. Close it to read the disclaimers and review your own address.";
+      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way an unpaid report is: the top case is shown in full as a sample; the opening of every other line is readable and the rest stays blurred in every section. Close it to read the disclaimers and review your own address.";
     }
     dash.classList.add("open");
     document.body.style.overflow = "hidden";
@@ -2694,7 +2702,7 @@
       : "";
     document.getElementById("case-note").textContent = (paid
       ? shown.length + " cases for the selected frameworks. The full wording is open because this copy is paid."
-      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The opening of each line stays visible, here and in every section. The rest stays blurred until the report is paid.") + ranked;
+      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The top case is shown in full as a sample. The opening of every other line stays visible, here and in every section. The rest stays blurred until the report is paid.") + ranked;
     const extras = [];
     (report.cases || []).forEach((item) => {
       (item.also || []).forEach((name) => {
@@ -2711,12 +2719,22 @@
         : "";
     }
     paintTools(report);
+    // Cases are stored best-first, so an unpaid report shows the first one in full; a server preview marks the one it kept whole.
+    const top = paid ? null : (report.cases || [])[0];
+    const sampleCase = top && (!report.preview || top.sample) ? top : null;
     document.getElementById("cases").innerHTML = shown.map((item) => {
       const extra = (item.also || []).filter(Boolean);
       const tools = item.fw.filter((fw) => picked.has(fw)).map(fwName).concat(extra.map(fwName)).join("");
       const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '" title="Risk ' + esc(item.risk) + ' of 100">' + esc(item.priority) + "</span>" : "";
       const where = (item.pages || []).length > 1 ? '<p class="muted case-pages">Pages: ' + esc(item.pages.slice(0, 6).join(", ") + (item.pages.length > 6 ? " and " + (item.pages.length - 6) + " more" : "")) + "</p>" : "";
-      return '<article class="case"><div>' + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(layerName(item.layer)) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : esc(rc.t("caseProposed"))) + "</span></div><strong>" + fadeText(fc.line(item.msg && item.msg.title, item.title), paid) + '</strong><p class="muted">' + fadeText(fc.line(item.msg && item.msg.why, item.why), paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
+      const head = "<div>" + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(layerName(item.layer)) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : esc(rc.t("caseProposed"))) + "</span></div>";
+      const title = fc.line(item.msg && item.msg.title, item.title);
+      const why = fc.line(item.msg && item.msg.why, item.why);
+      if (item === sampleCase) {
+        return '<article class="case case-sample">' + head + '<p class="case-sample-label">' + esc(rc.t("caseSample")) + "</p><strong>" + esc(title) + "</strong>" +
+          sampleBody(report, item, why, payload.frameworks || selectedFrameworks()) + where + '<p class="muted fw-line">' + tools + "</p></article>";
+      }
+      return '<article class="case">' + head + "<strong>" + fadeText(title, paid) + '</strong><p class="muted">' + fadeText(why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
     }).join("") || '<p class="muted">No proposed case matches this filter.</p>';
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
@@ -3816,13 +3834,15 @@
           }
           openPay(body);
           setStatus(body.preview
-            ? "Your last report of " + (body.host || "this site") + " is below, under the frost. Unlock it to read it in full."
-            : "This report was already shown. Opening it again asks for payment.", true);
+            ? "Your last report of " + (body.host || "this site") + " is below, under the frost. The 7 days of free reopening have ended. Unlock it to read it in full."
+            : "The 7 days of free reopening for this report have ended. Opening it again asks for payment.", true);
           return;
         }
         if (!res.ok) throw new Error(body.error || "That report was not found.");
         render(body);
         showSharedCompare(body);
+        const until = new Date(body.reopenUntil || "");
+        if (!body.paid && !isNaN(until)) setStatus("Your report of " + (body.host || (body.report && body.report.host) || "this site") + " is below, under the frost. Opening it again is free until " + until.toISOString().slice(0, 10) + ". Unlock it to read it in full.", false);
       } catch (error) {
         setStatus(error.message, true);
       }
@@ -3861,6 +3881,16 @@
     const cut = text.indexOf(". ");
     if (cut === -1) return { step: text, expected: "The page still matches this proposed case." };
     return { step: text.slice(0, cut + 1), expected: text.slice(cut + 2) };
+  }
+
+  // The sample case of an unpaid report: its step, what is expected, and the script for the first chosen framework.
+  function sampleBody(report, item, why, frameworks) {
+    const parts = splitWhy(why);
+    let scripts = [];
+    try { scripts = window.QAReviewScripts ? QAReviewScripts.snippets(report, item, frameworks) : []; } catch (error) { scripts = []; }
+    const one = scripts[0] && scripts[0].code ? scripts[0] : null;
+    return '<dl class="case-split"><dt>' + esc(rc.t("caseStep")) + "</dt><dd>" + esc(parts.step) + "</dd><dt>" + esc(rc.t("caseExpected")) + "</dt><dd>" + esc(parts.expected) + "</dd></dl>" +
+      (one ? '<p class="case-script-fw">' + esc(one.framework) + '</p><pre class="case-script"><code>' + esc(one.code) + "</code></pre>" : "");
   }
 
   function pickedCases(report, layers) {

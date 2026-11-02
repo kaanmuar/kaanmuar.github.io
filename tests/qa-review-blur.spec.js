@@ -4,7 +4,7 @@ const sample = require('../assets/qa-review-sample.json');
 
 const TERMS = fs.readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 const ID = 'bl12cd34ef56';
-const CLEAR = 'h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-pick, #case-note, #alarm-note, #tool-note, #unlock-offer';
+const CLEAR = 'h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-pick, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample';
 
 async function openUnpaid(page, extra) {
   await page.addInitScript((version) => {
@@ -55,6 +55,33 @@ test.describe('An unpaid report is blurred in every section, and its files cut w
     }
   });
 
+  test('the top case is shown in full as a sample, with its step, what is expected, and one script', async ({ page }) => {
+    await openUnpaid(page);
+    const cards = page.locator('#cases .case');
+    const card = cards.first();
+    await expect(card).toHaveClass(/case-sample/);
+    await expect(page.locator('#cases .case-sample')).toHaveCount(1);
+    await expect(card.locator('.case-sample-label')).toHaveText('Sample case, shown in full');
+    await expect(card.locator('.case-fade')).toHaveCount(0);
+    const top = sample.report.cases[0];
+    await expect(card.locator('.id')).toHaveText(top.id);
+    await expect(card.locator('strong')).toHaveText(top.title);
+    await expect(card.locator('.case-split dt')).toHaveText(['Step', 'Expected']);
+    await expect(card.locator('.case-split dd').first()).toHaveText(top.why.slice(0, top.why.indexOf('. ') + 1));
+    await expect(card.locator('pre.case-script')).toHaveCount(1);
+    await expect(card.locator('pre.case-script code')).not.toBeEmpty();
+    await expect(card.locator('.case-script-fw')).toHaveText(/\S/);
+    expect(await cards.nth(1).locator('.case-fade').count()).toBeGreaterThan(0);
+    await expect(page.locator('#case-note')).toContainText('The top case is shown in full as a sample.');
+  });
+
+  test('a paid report has no sample card', async ({ page }) => {
+    await openUnpaid(page, { paid: true });
+    await expect(page.locator('body')).toHaveClass(/paid-copy/);
+    await expect(page.locator('#cases .case-sample')).toHaveCount(0);
+    await expect(page.locator('#cases .case-sample-label')).toHaveCount(0);
+  });
+
   test('the two prices sit in the clear above the frost: a 5 USD fix list and the full report', async ({ page }) => {
     await openUnpaid(page);
     const offers = page.locator('#unlock-offer a.offer');
@@ -80,7 +107,7 @@ test.describe('An unpaid report is blurred in every section, and its files cut w
 
   test('the JSON and the text file keep the readable opening and cut the rest', async ({ page }) => {
     await openUnpaid(page);
-    const card = page.locator('#cases .case').first();
+    const card = page.locator('#cases .case:not(.case-sample)').first();
     const caseId = (await card.locator('.id').textContent()).trim();
     const shown = (await card.locator('strong .fade-line').evaluate((line) => line.firstChild.nodeValue)).trimEnd();
     const full = sample.report.cases.find((item) => item.id === caseId);
