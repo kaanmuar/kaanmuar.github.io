@@ -77,7 +77,7 @@ jobs:
           git add -f "media/social-posts/$BATCH/story"
           node scripts/build-social-hub.js
           # This commit skips CI, so a hub page in the wrong language would fail every PR after it.
-          node --test tests/unit/social-hub.test.js
+          scripts/social-hub/guard-hub-lang.sh
           git add assets/social qa-review-social*.html sitemap-social.xml social
           git commit -q -m "Social inbox: $BATCH [skip ci]"
           for attempt in 1 2 3 4 5; do
@@ -89,7 +89,7 @@ jobs:
             git reset -q --hard FETCH_HEAD
             git cherry-pick -X theirs "$DATA"
             node scripts/build-social-hub.js --offline
-            node --test tests/unit/social-hub.test.js
+            scripts/social-hub/guard-hub-lang.sh HEAD~1
             git add assets/social qa-review-social*.html sitemap-social.xml social
             git diff --cached --quiet || git commit -q --amend --no-edit
           done

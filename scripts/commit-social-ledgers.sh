@@ -19,7 +19,7 @@ stage() {
 	fi
 	node scripts/build-social-hub.js --offline
 	# The commit skips CI, so a hub page in the wrong language would fail every PR after it.
-	node --test tests/unit/social-hub.test.js
+	scripts/social-hub/guard-hub-lang.sh
 	git add "${files[@]}" assets/social qa-review-social*.html sitemap-social.xml
 }
 
