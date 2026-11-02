@@ -267,7 +267,17 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.ok(src.needs.some((n) => /Bluesky: paste an app password/.test(n)));
   assert.equal(src.live, false, "a dry run until Carlos turns it live");
   assert.equal(src.accounts.length, 3);
-  assert.equal(src.networks.find((n) => n.network === "linkedin").reads, "Mac browser");
+  assert.equal(src.networks.find((n) => n.network === "linkedin").reads, "Mac browser, not set up");
+  assert.ok(src.needs.some((n) => /X, LinkedIn, Facebook, Instagram, Threads and TikTok wait for the Mac's browser agent/.test(n)));
+});
+
+test("a browser network's own daily ceiling holds under the settings' caps (#1991)", () => {
+  const conf = E.settings({ caps: { like: 500, repost: 500, follow: 500, reply: 500 } });
+  const used = { linkedin: { repost: 3 }, x: { repost: 3 } };
+  const post = (network) => ({ network, id: "1", score: 100, text: "accessibility", author: { handle: "ana" }, createdAt: new Date(NOW).toISOString() });
+  assert.equal(E.decide(post("linkedin"), null, conf, used, NOW).actions.repost.status, "capped");
+  assert.equal(E.decide(post("x"), null, conf, used, NOW).actions.repost.status, "planned");
+  assert.equal(E.decide(post("facebook"), null, conf, used, NOW).actions.follow, undefined, "Facebook takes likes and replies only");
 });
 
 test("a post first seen quiet is decided again once it starts to trend, counted once in the field, and not again for 6 hours (#2001)", async () => {

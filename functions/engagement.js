@@ -25,16 +25,18 @@ const ACTIONS = ["like", "repost", "follow", "reply"];
 // acts: the network takes likes, reposts, follows and replies (through its API, or the Mac's browser when browser).
 // only: the actions it has when not all four (YouTube has no repost; a follow is a subscribe there).
 // limit: the longest reply it takes. scale: how much engagement an hour counts as trending there.
+// caps: a browser network's own daily ceiling under the settings' caps, the most an account takes from a real
+// browser without the network flagging it as automated (#1991); LinkedIn and Facebook flag soonest.
 const NETWORKS = {
   bluesky: { name: "Bluesky", acts: true, api: true, limit: 300, scale: 20, weight: 1 },
   mastodon: { name: "Mastodon", acts: true, api: true, limit: 500, scale: 10, weight: 1 },
   youtube: { name: "YouTube", acts: true, api: true, only: ["like", "follow", "reply"], limit: 500, scale: 200, weight: 0.9 },
-  x: { name: "X", acts: true, browser: true, limit: 280, scale: 40, weight: 1 },
-  linkedin: { name: "LinkedIn", acts: true, browser: true, limit: 1200, scale: 15, weight: 1.2 },
-  facebook: { name: "Facebook", acts: true, browser: true, limit: 1000, scale: 20, weight: 0.8 },
-  instagram: { name: "Instagram", acts: true, browser: true, limit: 1000, scale: 60, weight: 0.8 },
-  threads: { name: "Threads", acts: true, browser: true, limit: 500, scale: 30, weight: 0.9 },
-  tiktok: { name: "TikTok", acts: true, browser: true, limit: 150, scale: 300, weight: 0.8 },
+  x: { name: "X", acts: true, browser: true, limit: 280, scale: 40, weight: 1, caps: { like: 50, repost: 10, follow: 15, reply: 10 } },
+  linkedin: { name: "LinkedIn", acts: true, browser: true, limit: 1200, scale: 15, weight: 1.2, caps: { like: 25, repost: 3, follow: 10, reply: 8 } },
+  facebook: { name: "Facebook", acts: true, browser: true, only: ["like", "reply"], limit: 1000, scale: 20, weight: 0.8, caps: { like: 25, reply: 6 } },
+  instagram: { name: "Instagram", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 1000, scale: 60, weight: 0.8, caps: { like: 50, follow: 15, reply: 8 } },
+  threads: { name: "Threads", acts: true, browser: true, limit: 500, scale: 30, weight: 0.9, caps: { like: 50, repost: 10, follow: 15, reply: 10 } },
+  tiktok: { name: "TikTok", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 150, scale: 300, weight: 0.8, caps: { like: 50, follow: 15, reply: 8 } },
   hn: { name: "Hacker News", acts: false, scale: 30, weight: 1 },
   devto: { name: "DEV", acts: false, scale: 20, weight: 0.8 },
   lobsters: { name: "Lobsters", acts: false, scale: 10, weight: 0.9 }
@@ -219,7 +221,8 @@ function parseAi(text, items) {
 /** used[network][action] counts what today's runs already planned; decide adds to it. */
 function capped(used, network, action, conf) {
   const n = ((used[network] || {})[action]) || 0;
-  return n >= conf.caps[action];
+  const own = ((NETWORKS[network] || {}).caps || {})[action];
+  return n >= Math.min(conf.caps[action], own === undefined ? Infinity : own);
 }
 function take(used, network, action) {
   used[network] = used[network] || {};
