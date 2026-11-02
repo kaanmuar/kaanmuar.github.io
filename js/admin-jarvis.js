@@ -517,10 +517,12 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     // A panel whose whole body is one "nothing here" line joins the view's No data yet chips instead (#2139).
     const EMPTY_BODY = /^\s*<p class="jv-empty">([^<]*)<\/p>\s*$/;
+    // DOMParser reads the text without running or loading anything in it.
+    const plainText = (html) => new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
     function panel(id, title, body, opts) {
         const o = opts || {};
         const empty = !o.keep && EMPTY_BODY.exec(body);
-        if (empty) { S.empties.push({ title: title.replace(/<[^>]+>/g, ''), why: empty[1].replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>') }); return ''; }
+        if (empty) { S.empties.push({ title: plainText(title), why: plainText(empty[1]) }); return ''; }
         if (o.data) S.panels.set(id, { title, rows: o.data, product: S.product });
         const tools = o.data ? `<span class="jv-panel-tools"><button type="button" data-panel-export="csv" data-panel="${id}" title="CSV">CSV</button><button type="button" data-panel-export="json" data-panel="${id}" title="JSON">JSON</button><button type="button" data-panel-export="png" data-panel="${id}" title="PNG">PNG</button></span>` : '';
         return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}"><header>${foldHead(id, title)}${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
