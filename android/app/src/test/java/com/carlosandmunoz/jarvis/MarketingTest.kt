@@ -55,7 +55,7 @@ class MarketingTest {
             "outreach":{"ok":true,"instantly":{"ok":true,"sent":0,"replies":0,"meetings":0}}}}""")
         val card = Home.marketing(snap, now, today)
         assertEquals("First emails in 15 days", card.headline)
-        assertEquals(listOf("To upload" to "4 approved", "Replies" to "1 to answer", "LinkedIn" to "1 / 3 sent", "Sent" to "0 · 0 replies · 0 meetings", "Mac sync" to "2 min ago"),
+        assertEquals(listOf("To upload" to "4 approved", "Replies" to "1 to answer", "LinkedIn" to "1 / 3 sent", "Sent" to "0 · 0 replies · 0 meetings", "Outreach sync" to "2 min ago"),
             card.lines.map { it.label to it.value })
         assertEquals("alert", card.lines[1].level)
         val empty = Home.marketing(json("""{"external":{}}"""), now, today)

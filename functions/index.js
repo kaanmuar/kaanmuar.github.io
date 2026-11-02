@@ -6268,7 +6268,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     }
     else if (op === "marketing-campaign" || op === "marketing-block" || op === "marketing-queue" || op === "marketing-command" || op === "marketing-resend") {
       const db = getFirestore();
-      const ctx = { fetch, env, now };
+      const ctx = { fetch, env, now, githubToken: () => githubApp.token() };
       out = op === "marketing-campaign" ? await jarvisMarketing.campaignAct(ctx, body) : op === "marketing-block" ? await jarvisMarketing.block(ctx, body)
         : op === "marketing-command" ? await jarvisMarketing.command(ctx, db, body) : op === "marketing-resend" ? await jarvisMarketing.resend(ctx, db, body) : await jarvisMarketing.queueProspects(db, body, now);
       await Promise.all([1, 7, 30, 90, 365].flatMap((d) => ["marketing-" + d, "outreach-" + d, "marketing-sync-" + d]).map((id) => db.collection("jarvis_cache").doc(id).delete().catch(() => null)));
