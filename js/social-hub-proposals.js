@@ -1,4 +1,5 @@
-/* Proposals from the field sweep (scripts/field-sweep.js writes assets/social/proposals.json each day) in the
+/* Proposals from the field sweep (scripts/field-sweep.js writes assets/social/proposals.json each day) and the weekly
+   sweep round-up (scripts/sweep-roundup.js, assets/social/sweep-roundups.json) in the
    Social hub pane. Approve fills in Add an item; the item and the decision save together when it is added.
    Dismiss saves the decision alone, so the sweep leaves that address out from then on. */
 const PAGE = 10;
@@ -16,7 +17,7 @@ export function createProposals(deps) {
 
     function rowHtml(proposal) {
         const tags = [proposal.topic, proposal.source].filter(Boolean).map((tag) => `<span class="hub-admin-tag">${escapeHtml(tag)}</span>`).join('');
-        const thumb = Admin.remote(proposal.image) ? `<img src="${escapeHtml(proposal.image)}" alt="" width="72" height="90" loading="lazy" referrerpolicy="no-referrer">` : '<span class="hub-admin-thumb"></span>';
+        const thumb = Admin.imageOk(proposal.image) ? `<img src="${escapeHtml(proposal.image)}" alt="" width="72" height="90" loading="lazy" referrerpolicy="no-referrer">` : '<span class="hub-admin-thumb"></span>';
         const link = /^https:\/\//.test(proposal.url || '') ? `<a href="${escapeHtml(proposal.url)}" target="_blank" rel="noopener nofollow">${escapeHtml(proposal.title)}</a>` : escapeHtml(proposal.title);
         const credit = [proposal.author && `by ${proposal.author}`, proposal.why].filter(Boolean).join(' · ');
         return `<article class="hub-admin-row hub-proposal" data-id="${escapeHtml(proposal.id)}">${thumb}`

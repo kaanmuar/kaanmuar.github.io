@@ -385,8 +385,8 @@ const SIGN_IN = `
     }
     async function deskHeaders() {
       const headers = { "content-type": "application/json" };
-      const auth = deskApp();
-      if (auth && auth.currentUser) headers.authorization = "Bearer " + await auth.currentUser.getIdToken();
+      const desk = await deskApp();
+      if (desk && desk.auth.currentUser) headers.authorization = "Bearer " + await desk.auth.currentUser.getIdToken();
       return headers;
     }
     function lockDesk() {
@@ -409,16 +409,28 @@ const SIGN_IN = `
       unlockDesk();
       return response.json();
     }
+    // The compat build has no TotpMultiFactorGenerator, so the authenticator step needs the modular one.
+    const FIREBASE = "https://www.gstatic.com/firebasejs/10.14.1/";
+    let deskLoading = null;
     function deskApp() {
-      if (!window.firebase || !firebase.auth) return null;
-      if (!firebase.apps.length) {
-        firebase.initializeApp({
-          apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
-          authDomain: "carlosm-interactive-cv.firebaseapp.com",
-          projectId: "carlosm-interactive-cv"
-        });
+      if (!deskLoading) {
+        deskLoading = Promise.all([import(FIREBASE + "firebase-app.js"), import(FIREBASE + "firebase-auth.js")])
+          .then(async ([app, fa]) => {
+            const auth = fa.getAuth(app.initializeApp({
+              apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w",
+              authDomain: "carlosm-interactive-cv.firebaseapp.com",
+              projectId: "carlosm-interactive-cv"
+            }));
+            await auth.authStateReady();
+            return { auth, fa };
+          })
+          .catch((error) => {
+            console.error("Desk sign-in did not load:", error);
+            deskLoading = null;
+            return null;
+          });
       }
-      return firebase.auth();
+      return deskLoading;
     }
     async function finishDesk(user) {
       const note = document.getElementById("desk-gate-note");
@@ -452,9 +464,9 @@ const SIGN_IN = `
       document.getElementById("desk-link-form").hidden = false;
       document.getElementById("desk-link-email").focus();
     }
-    function askForCode(error) {
-      if (!error || error.code !== "auth/multi-factor-auth-required" || !error.resolver) return false;
-      deskResolver = error.resolver;
+    function askForCode(desk, error) {
+      if (!error || error.code !== "auth/multi-factor-auth-required") return false;
+      deskResolver = desk.fa.getMultiFactorResolver(desk.auth, error);
       document.getElementById("desk-gate-note").textContent = "";
       showCodeStep(true);
       return true;
@@ -462,17 +474,17 @@ const SIGN_IN = `
     document.getElementById("desk-password").addEventListener("submit", async (event) => {
       event.preventDefault();
       const note = document.getElementById("desk-gate-note");
-      const auth = deskApp();
-      if (!auth) {
+      const desk = await deskApp();
+      if (!desk) {
         note.textContent = "Sign-in did not load.";
         return;
       }
       note.textContent = "Signing in…";
       try {
-        const cred = await auth.signInWithEmailAndPassword(document.getElementById("desk-email").value.trim(), document.getElementById("desk-pass").value);
+        const cred = await desk.fa.signInWithEmailAndPassword(desk.auth, document.getElementById("desk-email").value.trim(), document.getElementById("desk-pass").value);
         await finishDesk(cred.user);
       } catch (error) {
-        if (askForCode(error)) return;
+        if (askForCode(desk, error)) return;
         console.error("Desk sign-in failed:", error);
         const code = error && error.code;
         note.textContent = code === "auth/too-many-requests"
@@ -484,7 +496,8 @@ const SIGN_IN = `
       event.preventDefault();
       const note = document.getElementById("desk-gate-note");
       const code = String(document.getElementById("desk-code").value || "").replace(/\\D/g, "").slice(0, 6);
-      const totp = firebase.auth.TotpMultiFactorGenerator;
+      const desk = await deskApp();
+      const totp = desk && desk.fa.TotpMultiFactorGenerator;
       const hint = deskResolver && deskResolver.hints.find((item) => totp && item.factorId === totp.FACTOR_ID);
       if (!hint) {
         note.textContent = "This account's second step is not an authenticator app.";
@@ -514,15 +527,15 @@ const SIGN_IN = `
       const note = document.getElementById("desk-gate-note");
       const field = document.getElementById("desk-email");
       if (!field.reportValidity()) return;
-      const auth = deskApp();
-      if (!auth) {
+      const desk = await deskApp();
+      if (!desk) {
         note.textContent = "Sign-in did not load.";
         return;
       }
       const email = field.value.trim();
       note.textContent = "Sending the link…";
       try {
-        await auth.sendSignInLinkToEmail(email, { url: location.origin + location.pathname, handleCodeInApp: true });
+        await desk.fa.sendSignInLinkToEmail(desk.auth, email, { url: location.origin + location.pathname, handleCodeInApp: true });
         localStorage.setItem(LINK_EMAIL, email);
         note.textContent = "A sign-in link is on its way to " + email + ". Open it in this browser.";
       } catch (error) {
@@ -535,11 +548,11 @@ const SIGN_IN = `
             : "The link could not be sent (" + (code || "no code") + ").";
       }
     });
-    async function finishLink(auth, email) {
+    async function finishLink(desk, email) {
       const note = document.getElementById("desk-gate-note");
       note.textContent = "Signing in…";
       try {
-        const cred = await auth.signInWithEmailLink(email, location.href);
+        const cred = await desk.fa.signInWithEmailLink(desk.auth, email, location.href);
         localStorage.removeItem(LINK_EMAIL);
         history.replaceState(null, "", location.pathname);
         showCodeStep(false);
@@ -550,7 +563,7 @@ const SIGN_IN = `
           localStorage.removeItem(LINK_EMAIL);
           history.replaceState(null, "", location.pathname);
         }
-        if (askForCode(error)) return;
+        if (askForCode(desk, error)) return;
         console.error("Desk link sign-in failed:", error);
         if (code === "auth/invalid-email") {
           note.textContent = "That is not the email the link was sent to.";
@@ -562,25 +575,25 @@ const SIGN_IN = `
           : "The link did not sign you in (" + (code || "no code") + ").";
       }
     }
-    document.getElementById("desk-link-form").addEventListener("submit", (event) => {
+    document.getElementById("desk-link-form").addEventListener("submit", async (event) => {
       event.preventDefault();
-      const auth = deskApp();
-      if (auth) finishLink(auth, document.getElementById("desk-link-email").value.trim());
+      const desk = await deskApp();
+      if (desk) finishLink(desk, document.getElementById("desk-link-email").value.trim());
     });
-    const startingAuth = deskApp();
-    if (startingAuth) {
-      startingAuth.onAuthStateChanged((user) => {
+    deskApp().then((desk) => {
+      if (!desk) return;
+      desk.fa.onAuthStateChanged(desk.auth, (user) => {
         if (user) load();
       });
-      if (startingAuth.isSignInWithEmailLink(location.href)) {
+      if (desk.fa.isSignInWithEmailLink(desk.auth, location.href)) {
         const saved = localStorage.getItem(LINK_EMAIL);
-        if (saved) finishLink(startingAuth, saved);
+        if (saved) finishLink(desk, saved);
         else showLinkStep();
       }
-    }
+    });
     document.getElementById("desk-out").addEventListener("click", async () => {
-      const auth = deskApp();
-      if (auth && auth.currentUser) await auth.signOut();
+      const desk = await deskApp();
+      if (desk && desk.auth.currentUser) await desk.fa.signOut(desk.auth);
       await fetch(deskBase() + "/desk/logout", { method: "POST", credentials: "include" });
       lockDesk();
     });`;
@@ -678,8 +691,6 @@ const PAGE = `<!DOCTYPE html>
       <div class="detail" id="detail" hidden></div>
     </section>
   </main>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script>
     const statsEl = document.getElementById("stats");
     const alertsEl = document.getElementById("alerts");
@@ -1190,8 +1201,6 @@ const FAILURES_PAGE = `<!DOCTYPE html>
       <div class="detail" id="detail" hidden></div>
     </section>
   </main>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script>
     const statsEl = document.getElementById("stats");
     const bugsEl = document.getElementById("bugs");

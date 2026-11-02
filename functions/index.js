@@ -499,11 +499,11 @@ async function bookingConnectUrl() {
   return { url: booking.authUrl(clientId, BOOKING_REDIRECT, state) };
 }
 
-function bookingPage(res, text) {
+function bookingPage(res, text, hash, label) {
   const safe = String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]));
   res.status(200).set("Content-Type", "text/html; charset=utf-8").send("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Calls · Jarvis</title>" +
     "<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b1d22;font-family:Arial,Helvetica,sans-serif;color:#e6f4f5}main{max-width:440px;margin:16px;text-align:center}a{color:#5fd4dc}</style></head>" +
-    "<body><main><p>" + safe + "</p><p><a href=\"https://carlosandmunoz.com/admin.html#stats\">Back to Jarvis</a></p></main></body></html>");
+    "<body><main><p>" + safe + "</p><p><a href=\"https://carlosandmunoz.com/admin.html" + (hash || "#stats") + "\">" + (label || "Back to Jarvis") + "</a></p></main></body></html>");
 }
 
 async function bookingCallback(req, res) {
@@ -567,7 +567,14 @@ async function bookCall(body, req) {
 }
 
 exports.booking = functions.runWith({ maxInstances: 5, secrets: SECRETS.booking }).https.onRequest(async (req, res) => {
-  if (req.method === "GET" && /\/callback\/?$/.test(req.path)) { await bookingCallback(req, res); return; }
+  if (req.method === "GET" && /\/callback\/?$/.test(req.path)) {
+    // Connect YouTube and Connect Mastodon (#1990) come back here too: the Google OAuth client allows this one redirect.
+    const engaged = await require("./engagement-act").connectCallback(engagementDeps(), req.query, BOOKING_REDIRECT, bookingKeys())
+      .catch((error) => ({ ok: false, message: clip(error.message, 240) }));
+    if (engaged) { bookingPage(res, engaged.message, "#stats/engagement/7", "Back to Engagement"); return; }
+    await bookingCallback(req, res);
+    return;
+  }
   const origin = String(req.get("origin") || "");
   const allowed = CV_ORIGINS.has(origin);
   res.set("Access-Control-Allow-Origin", allowed ? origin : "https://carlosandmunoz.com");
@@ -5054,6 +5061,7 @@ const cube = require("./cube");
 const jarvisNotify = require("./jarvis-notify");
 const jarvisMailPush = require("./jarvis-mail-push");
 const jarvisWebPush = require("./jarvis-webpush");
+const jarvisDevice = require("./jarvis-device");
 
 // A push failure is logged and never stops the owner email it mirrors.
 async function pushOwner(msg) {
@@ -5067,21 +5075,24 @@ async function pushOwner(msg) {
   }
 }
 const jarvisSocial = require("./jarvis-social");
+const socialHubAdmin = require("./social-hub-admin");
 const jarvisStudio = require("./jarvis-studio");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisEngagement = require("./jarvis-engagement");
 
 function engagementDeps() {
   return {
-    db: getFirestore(), fetch, env: process.env, now: Date.now(), inc: (n) => FieldValue.increment(n), push: pushOwner,
+    db: getFirestore(), fetch, env: process.env, now: Date.now(), inc: (n) => FieldValue.increment(n), push: pushOwner, keys: bookingKeys(),
     mail: (m) => sendOwnerEmail({ subject: m.subject, intro: m.intro, rows: m.rows, body: m.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL.replace(/#.*/, "#stats/engagement/7"), buttonLabel: "Open Engagement" })
   };
 }
 
 async function socialProposals() {
-  const res = await fetch(customerMail.SITE + "/assets/social/proposals.json?t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(10000) });
+  const get = (file) => fetch(customerMail.SITE + "/assets/social/" + file + "?t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(10000) });
+  const [res, roundups] = await Promise.all([get("proposals.json"), get("sweep-roundups.json").catch(() => null)]);
   if (!res.ok) throw new Error("The proposals list answered " + res.status + ".");
-  return res.json();
+  const extra = roundups && roundups.ok ? await roundups.json().catch(() => null) : null;
+  return socialHubAdmin.mergeProposals(await res.json(), extra);
 }
 
 async function jarvisSocialDecide(id, decision, now) {
@@ -5598,7 +5609,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-report": (b) => String(b.period || "daily") + " engagement report" };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-connect": (b) => (b.disconnect ? "disconnect " : "connect ") + String(b.network || "").slice(0, 20), "engagement-report": (b) => String(b.period || "daily") + " engagement report" };
 
 async function jarvisWatchRun() {
   const db = getFirestore();
@@ -5876,8 +5887,11 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
   const env = process.env;
   const appAskSnapshot = async () => jarvis.askSnapshot(await jarvisCached("snapshot", days, () => jarvisSnapshot(days)), days);
   try {
+    // #2068: the app and the page send their screen with every call; these ops keep its row in Settings › Devices.
+    if (["snapshot", "ask", "device"].includes(op) && !body.gone) await jarvisDevice.seen(getFirestore(), body.device, operator, now).catch(() => null);
     let out;
-    if (op === "health") out = await jarvisCached(op, days, () => jarvis.health(getFirestore(), { days, now }));
+    if (op === "device") out = body.gone ? await jarvisDevice.forget(getFirestore(), body.device) : { devices: await jarvisDevice.list(getFirestore(), now, body.device) };
+    else if (op === "health") out = await jarvisCached(op, days, () => jarvis.health(getFirestore(), { days, now }));
     else if (op === "jobs") out = await jarvisCached(op, 0, async () => ({ ok: true, jobs: await jarvis.jobs(fetch) }));
     else if (op === "github") out = await jarvisCached(op, 0, async () => jarvis.github(fetch, await githubApp.token(), { now }));
     else if (op === "ga4") out = await jarvisCached(op, days, () => jarvis.ga4(fetch, { days }));
@@ -5885,7 +5899,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "speed") out = await jarvisCached(op, 0, () => jarvis.speed(urlReview, env));
     else if (op === "uptime") out = await jarvisCached(op, 0, () => jarvis.uptime(fetch, { now }));
     else if (op === "brief") out = await jarvis.brief(fetch, env, body.snapshot || await appAskSnapshot());
-    else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot || await appAskSnapshot(), { lang: body.lang, spoken: body.spoken === true });
+    else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot || await appAskSnapshot(), { lang: body.lang, spoken: body.spoken === true, device: body.device });
     else if (op === "speak") out = await jarvis.speak(fetch, body.text, body.lang, { voice: body.voice, rate: body.rate });
     else if (op === "run-job") out = await jarvis.runJob(fetch, body.job);
     else if (op === "settings") out = await jarvis.readSettings(getFirestore());
@@ -5924,7 +5938,8 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     }
     else if (op === "web-push-key") out = { publicKey: (await jarvisWebPush.keys(getFirestore(), require("web-push"))).publicKey };
     else if (op === "review") out = await jarvisReview.enqueue(getFirestore(), body, operator, now);
-    else if (op === "snapshot") out = Object.assign(await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days))), { mailCodes: await mailCodeRows().catch(() => []) });
+    else if (op === "snapshot") out = Object.assign(await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days))), { mailCodes: await mailCodeRows().catch(() => []),
+      devices: await jarvisDevice.list(getFirestore(), now, body.device).catch(() => []) });
     else if (op === "mail-codes") out = { codes: await mailCodeRows() };
     else if (op === "calendar-connect") out = await bookingConnectUrl();
     else if (op === "brief-mark") out = await jarvisProposals.markBrief(getFirestore(), body, operator, now);
@@ -5976,6 +5991,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     }
     else if (op === "engagement-decide") out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), body, operator);
     else if (op === "engagement-settings") out = await jarvisEngagement.saveSettings(getFirestore(), body.settings || body, operator, now);
+    else if (op === "engagement-connect") out = await jarvisEngagement.connect(Object.assign(engagementDeps(), { now }), body, BOOKING_REDIRECT);
     else if (op === "engagement-report") out = await jarvisEngagement.sendReport(Object.assign(engagementDeps(), { now }), ["daily", "weekly", "monthly"].includes(body.period) ? body.period : "daily");
     else if (jarvisSources.SOURCES[op]) out = await jarvisSource(op, days);
     else if (op === "send-report") {

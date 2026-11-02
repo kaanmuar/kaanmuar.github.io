@@ -15,7 +15,8 @@ function caps() {
         'appium:udid': device.udid,
         'appium:noReset': true,
         'appium:wdaLaunchTimeout': 180000,
-        'appium:wdaConnectionTimeout': 180000
+        'appium:wdaConnectionTimeout': 180000,
+        'appium:webviewConnectTimeout': 30000
       };
     }
     if (device.platform === 'android') {
@@ -24,8 +25,11 @@ function caps() {
         browserName: 'Chrome',
         'appium:automationName': 'UiAutomator2',
         'appium:deviceName': device.name,
+        ...(device.id ? { 'appium:udid': device.id } : {}),
         ...(device.avd ? { 'appium:avd': device.avd } : {}),
-        'appium:noReset': true
+        'appium:noReset': true,
+        'appium:uiautomator2ServerLaunchTimeout': 120000,
+        'appium:chromedriverAutodownload': true
       };
     }
   }
@@ -47,10 +51,13 @@ exports.config = {
   hostname: '127.0.0.1',
   port: 4723,
   path: '/',
+  // A cold runner builds WebDriverAgent inside the first iOS session request; a retry starts a second build that collides with it.
+  connectionRetryTimeout: 600000,
+  connectionRetryCount: 1,
   services: [
     ['appium', {
       command: path.join(__dirname, '..', 'node_modules', '.bin', 'appium'),
-      args: { basePath: '/', allowCors: true }
+      args: { basePath: '/', allowCors: true, allowInsecure: 'uiautomator2:chromedriver_autodownload' }
     }]
   ],
   capabilities: [caps()],

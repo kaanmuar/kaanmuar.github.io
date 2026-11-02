@@ -45,6 +45,7 @@ import com.carlosandmunoz.jarvis.ui.JarvisTheme
 import com.carlosandmunoz.jarvis.ui.Mono
 import com.carlosandmunoz.jarvis.ui.glass
 import com.carlosandmunoz.jarvis.ui.reveal
+import com.carlosandmunoz.jarvis.ui.sheetFit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
@@ -95,7 +96,7 @@ class ConfirmActivity : FragmentActivity() {
                 }
                 Box(Modifier.fillMaxSize().clickable(remember { MutableInteractionSource() }, null) { finish() }, contentAlignment = Alignment.BottomCenter) {
                     Column(
-                        Modifier.fillMaxWidth().navigationBarsPadding().padding(12.dp).reveal()
+                        Modifier.sheetFit().fillMaxWidth().navigationBarsPadding().padding(12.dp).reveal()
                             .background(J.bg.copy(alpha = 0.94f), RoundedCornerShape(18.dp)).glass(radius = 18.dp).clickable(remember { MutableInteractionSource() }, null) { }.padding(18.dp)
                     ) {
                         Text(if (notice) "OWNER NOTICE" else if (post) "SOCIAL QUEUE" else "SOCIAL PICK", color = J.cyan, fontFamily = Mono, fontSize = 11.sp, letterSpacing = 2.sp)

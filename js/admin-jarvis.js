@@ -5,7 +5,7 @@
    collections, Cloud Scheduler, GitHub, GA4, Cloudflare, PageSpeed/CrUX, uptime, Gemini, and the owner actions.
    The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { collection, query, where, orderBy, limit, getDocs, getDoc, doc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { createBrowserPush, productOf } from "./admin-jarvis-push.js";
+import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2068";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -333,11 +333,50 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (added > 0) { compute(); render(); pulse(added); }
     }
 
+    // --- this browser's screen (#2068): sent with every call, like the app's ----------------------------------
+    let deviceModel = '';
+    let deviceKey = '';
+    if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) navigator.userAgentData.getHighEntropyValues(['model']).then((v) => { deviceModel = v.model || ''; }).catch(() => null);
+
+    function deviceId() {
+        try {
+            let id = localStorage.getItem('jv-device-id');
+            if (!id) { id = crypto.randomUUID(); localStorage.setItem('jv-device-id', id); }
+            return id;
+        } catch (error) { return ''; }
+    }
+
+    function device() {
+        const mq = (q) => !!(window.matchMedia && window.matchMedia(q).matches);
+        const segs = (axis) => [2, 3].find((n) => mq(`(${axis}-viewport-segments: ${n})`)) || 1;
+        const d = C.browserDevice({ ua: navigator.userAgent, model: deviceModel, mobile: navigator.userAgentData ? navigator.userAgentData.mobile : undefined,
+            width: window.innerWidth, height: window.innerHeight, screenW: screen.width, screenH: screen.height, touch: navigator.maxTouchPoints > 0, coarse: mq('(pointer: coarse)'),
+            posture: navigator.devicePosture ? navigator.devicePosture.type : '', segments: { across: segs('horizontal'), down: segs('vertical') }, name: browserName(navigator.userAgent, deviceModel) });
+        return d && Object.assign(d, { id: deviceId() });
+    }
+
+    /** Marks the page with its kind for CSS, and tells the server when the kind or the fold changes. */
+    async function reportDevice() {
+        const d = device();
+        if (!d) return;
+        root.dataset.device = d.kind;
+        root.dataset.posture = d.posture || '';
+        const key = d.kind + ':' + (d.posture || '');
+        if (key === deviceKey || !auth.currentUser) return;
+        deviceKey = key;
+        const out = await call('device').catch(() => null);
+        if (out && out.ok) { S.devices = out.devices || []; paintDevices(); }
+    }
+
+    let resized = 0;
+    window.addEventListener('resize', () => { clearTimeout(resized); resized = setTimeout(reportDevice, 1500); });
+    if (navigator.devicePosture) navigator.devicePosture.addEventListener('change', reportDevice);
+
     async function call(op, extra) {
         const user = auth.currentUser;
         if (!user) throw new Error('Sign in first.');
         const token = await user.getIdToken();
-        const res = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(Object.assign({ op, days: S.range === 'all' ? 365 : Number(S.range) }, extra || {})) });
+        const res = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(Object.assign({ op, days: S.range === 'all' ? 365 : Number(S.range), device: device() }, extra || {})) });
         const data = await res.json().catch(() => ({ ok: false, error: 'No answer (' + res.status + ')' }));
         if (!res.ok && data.ok !== false) data.ok = false;
         return data;
@@ -418,7 +457,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                     visits: C.outreachVisits(S.rows.events).total,
                     links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10) } : null
                 } : null,
-                engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`) } : null,
+                engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`) } : null,
                 signedInPeople: e.people && e.people.ok ? e.people.totals : null,
                 waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
             }
@@ -1309,7 +1348,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const text = (d.title || String(d.text || '')).replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim();
         return text.length > max ? text.slice(0, max - 1).trimEnd() + '…' : text;
     };
-    const EG_STATUS_CHIP = { planned: 'c-fast', waiting: 'c-average', approved: 'c-fast', done: 'c-fast', capped: 'c-slow', paused: '', dismissed: '', expired: 'c-slow', failed: 'c-slow' };
+    const EG_STATUS_CHIP = { planned: 'c-average', waiting: 'c-average', approved: 'c-average', done: 'c-fast', posted: 'c-fast', dry: '', capped: 'c-slow', paused: '', dismissed: '', expired: 'c-slow', missed: 'c-slow', failed: 'c-slow' };
     const egChips = (d) => Object.entries(d.actions || {}).map(([a, x]) => `<span class="jv-chip ${EG_STATUS_CHIP[x.status] || ''}">${esc(a)}: ${esc(x.status)}</span>`).join(' ')
         + (d.skip ? ` <span class="jv-chip c-slow">left alone: ${esc(d.skip)}</span>` : d.verdict === 'trend' ? ' <span class="jv-chip">trend only</span>' : '');
 
@@ -1336,22 +1375,32 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const readTotal = (run) => Object.values((run && run.read) || {}).reduce((a, b) => a + b, 0);
         const statusBody = stats([
             { label: 'State', value: g.paused ? 'paused' : 'running', alert: g.paused },
+            { label: 'Likes, reposts, follows', value: g.live ? 'live' : 'dry run' },
             { label: 'Last run', value: last ? when(last.at) : 'never', alert: g.stale },
             { label: 'Read last run', value: last ? readTotal(last) : '—' },
             { label: 'New in field', value: last ? last.fresh : '—' },
             { label: 'Gemini read', value: last ? last.asked : '—', alert: !!(last && last.aiError) }
-        ]) + `<div class="jv-actions"><button type="button" class="jv-btn${g.paused ? ' is-primary' : ' danger'}" data-eg-pause="${g.paused ? 'off' : 'on'}">${g.paused ? 'Resume engagement' : 'Pause everything'}</button><button type="button" class="jv-btn" data-run="engagementScout">Run the scout now</button></div>`
-            + table([['Run', (x) => `<span class="jv-nowrap">${esc(when(x.at))}</span>`], ['Read', (x) => fmt(readTotal(x))], ['New', (x) => fmt(x.fresh)], ['Engage', (x) => fmt(x.engaged)], ['Drafts', (x) => fmt(x.drafted)],
-                ['Problems', (x) => `<span class="jv-note">${esc([Object.keys(x.errors || {}).map((k) => k + ': ' + x.errors[k]).join('; '), x.aiError ? 'Gemini: ' + x.aiError : '', x.paused ? 'paused' : ''].filter(Boolean).join(' · '))}</span>`]], g.runs.slice(0, 8), 'No runs yet.');
+        ]) + `<div class="jv-actions"><button type="button" class="jv-btn${g.paused ? ' is-primary' : ' danger'}" data-eg-pause="${g.paused ? 'off' : 'on'}">${g.paused ? 'Resume engagement' : 'Pause everything'}</button><button type="button" class="jv-btn${g.live ? '' : ' is-primary'}" data-eg-live="${g.live ? 'off' : 'on'}">${g.live ? 'Back to a dry run' : 'Go live'}</button><button type="button" class="jv-btn" data-run="engagementScout">Run the scout now</button></div>`
+            + table([['Run', (x) => `<span class="jv-nowrap">${esc(when(x.at))}</span>`], ['Read', (x) => fmt(readTotal(x))], ['New', (x) => fmt(x.fresh)], ['Engage', (x) => fmt(x.engaged)], ['Drafts', (x) => fmt(x.drafted)], ['Done', (x) => (x.live === false && x.dry ? `${fmt(x.dry)} dry` : fmt((x.done || 0) + (x.posted || 0)))],
+                ['Problems', (x) => `<span class="jv-note">${esc([Object.keys(x.errors || {}).map((k) => k + ': ' + x.errors[k]).join('; '), Object.keys(x.acted || {}).filter((k) => x.acted[k].error).map((k) => k + ' poster: ' + x.acted[k].error).join('; '), x.aiError ? 'Gemini: ' + x.aiError : '', x.paused ? 'paused' : ''].filter(Boolean).join(' · '))}</span>`]], g.runs.slice(0, 8), 'No runs yet.');
+        const accounts = g.accounts || [];
+        const accountRow = (a) => `<li><strong>${esc(a.name)}</strong> ${a.connected ? `<span class="jv-chip c-fast">connected as ${esc(a.account)}</span>${a.bot ? ' <span class="jv-chip">bot flag on</span>' : ''}` : '<span class="jv-chip c-slow">not connected</span>'}${a.error ? ` <span class="jv-chip c-slow">${esc(a.error)}</span>` : ''}
+            ${a.network === 'bluesky' ? `<form class="jv-eg-bluesky" data-eg-bluesky><label>Handle<input name="handle" autocomplete="off" value="${esc(a.account || 'qalaburlreview.bsky.social')}"></label><label>App password<input name="password" type="password" autocomplete="off" placeholder="xxxx-xxxx-xxxx-xxxx"></label><button type="submit" class="jv-btn">${a.connected ? 'Replace' : 'Connect Bluesky'}</button></form><span class="jv-note">bsky.app &gt; Settings &gt; Privacy and security &gt; App passwords. Never the account password.</span>`
+                : `<button type="button" class="jv-btn${a.connected ? '' : ' is-primary'}" data-eg-connect="${esc(a.network)}">${a.connected ? 'Reconnect' : 'Connect ' + esc(a.name)}</button>`}
+            ${a.connected ? ` <button type="button" class="jv-link" data-eg-disconnect="${esc(a.network)}">Disconnect</button>` : ''}</li>`;
+        const accountsBody = `<ul class="jv-facts jv-eg-accounts">${accounts.map(accountRow).join('')}</ul><p class="jv-note">X, LinkedIn, Facebook, Instagram, Threads and TikTok act through the Mac's browser agent (#1991), signed in once in its own Chrome profile.</p>`;
         const used = (k, a) => ((g.used || {})[k] || {})[a] || 0;
-        const netBody = table([['Network', (n) => `<strong>${esc(n.name)}</strong>`], ['Reads', (n) => `<span class="jv-chip ${n.reads === 'API' ? 'c-fast' : n.reads === 'needs a key' ? 'c-slow' : ''}">${esc(n.reads)}</span>${n.error ? `<br><span class="jv-note">${esc(n.error)}</span>` : ''}`],
+        const netBody = table([['Network', (n) => `<strong>${esc(n.name)}</strong>`], ['Reads', (n) => `<span class="jv-chip ${n.reads === 'API' ? 'c-fast' : n.reads.startsWith('needs') ? 'c-slow' : ''}">${esc(n.reads)}</span>${n.error ? `<br><span class="jv-note">${esc(n.error)}</span>` : ''}`],
             ['Last run', (n) => fmt(n.lastRead)], ['In field', (n) => fmt(n.row ? n.row.candidates : 0)],
             ['Today', (n) => (EG_NETWORK_LIMIT[n.network] ? ['like', 'repost', 'follow', 'reply'].map((a) => `${a} ${used(n.network, a)}/${(g.caps || {})[a]}`).join(' · ') : '—')],
             ['Acting', (n) => `<span class="jv-note">${esc(n.acts)}</span>`]], g.networks);
         const postsBody = table([['Post', (d) => `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 110))}</a><br><span class="jv-note">${esc(net(d.network))} · ${esc(meta(d))}</span>${d.about ? `<br><span class="jv-note">${esc(d.about)}</span>` : ''}`],
             ['Topic', (d) => esc(d.topic)], ['Trend', (d) => fmt(d.trend)], ['Plan', egChips]], g.posts, 'No posts from our field in this range yet.');
-        const approvedBody = g.approved.length ? `<ul class="jv-facts">${g.approved.map((d) => `<li><span class="jv-chip c-fast">${d.actions.reply.edited ? 'edited' : 'approved'}</span> <strong>${esc(net(d.network))}</strong> · <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 80))}</a><br><span class="jv-note">${esc(d.actions.reply.draft)}</span></li>`).join('')}</ul>`
+        const replyChip = (r) => `<span class="jv-chip ${EG_STATUS_CHIP[r.status] || ''}">${esc(r.status)}${r.edited ? ', edited' : ''}</span>`;
+        const approvedBody = g.approved.length ? `<ul class="jv-facts">${g.approved.map((d) => `<li>${replyChip(d.actions.reply)} <strong>${esc(net(d.network))}</strong> · <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 80))}</a>${d.actions.reply.url ? ` · <a href="${esc(d.actions.reply.url)}" target="_blank" rel="noopener">Our reply ↗</a>` : ''}<br><span class="jv-note">${esc(d.actions.reply.draft)}</span>${d.actions.reply.error ? `<br><span class="jv-note">${esc(d.actions.reply.error)}</span>` : ''}</li>`).join('')}</ul>`
             : '<p class="jv-empty">Nothing approved yet.</p>';
+        const done = (t.like_done || 0) + (t.repost_done || 0) + (t.follow_done || 0);
+        const dry = (t.like_dry || 0) + (t.repost_dry || 0) + (t.follow_dry || 0);
         const daily = g.daily || [];
         const funnelSteps = [{ label: 'Drafted', value: t.drafted }, { label: 'Approved', value: t.approved + t.edited }, { label: 'Posted', value: t.posted }];
         const reportsBody = (g.reports.length ? table([['Report', (x) => `<strong>${esc(x.period)}</strong> <span class="jv-note">${esc(x.from)}${x.to !== x.from ? ' to ' + esc(x.to) : ''}</span>`], ['In field', (x) => fmt((x.totals || {}).candidates || 0)], ['Likes', (x) => fmt((x.totals || {}).like || 0)], ['Drafts', (x) => fmt((x.totals || {}).drafted || 0)], ['Approval', (x) => (x.approvalRate === null ? '—' : x.approvalRate + '%')], ['Sent', (x) => `<span class="jv-nowrap">${esc(when(x.at))}</span>`]], g.reports) : '<p class="jv-empty">No report sent yet. The daily one goes out at 20:30.</p>')
@@ -1366,13 +1415,15 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             <div class="jv-actions"><button type="submit" class="jv-btn is-primary">Save settings</button>${c.updatedAt ? `<span class="jv-note">Saved ${esc(when(c.updatedAt))}</span>` : ''}</div></form>`;
         return kpis([
             { label: 'Posts in our field', value: t.candidates }, { label: 'Likes planned', value: t.like }, { label: 'Reposts planned', value: t.repost }, { label: 'Follows planned', value: t.follow },
-            { label: 'Replies waiting', value: g.waiting.length, alert: g.waiting.length > 0 }, { label: 'Replies approved', value: t.approved + t.edited },
+            { label: g.live ? 'Done' : 'Done (dry run)', value: g.live ? done : dry, delta: g.live && dry ? `${fmt(dry)} in the dry run` : '' },
+            { label: 'Replies waiting', value: g.waiting.length, alert: g.waiting.length > 0 }, { label: 'Replies posted', value: t.posted, delta: `${fmt(t.approved + t.edited)} approved` },
             { label: 'Approval rate', value: r.approvalRate === null ? '—' : r.approvalRate + '%' }, { label: 'Scout', value: g.paused ? 'paused' : last ? when(last.at) : 'never', alert: g.paused || g.stale }
         ]) + `<div class="jv-grid">${briefPanel('engagement')}
-            ${panel('engagement-waiting', `Replies waiting for you${g.waiting.length ? ' · ' + g.waiting.length : ''}`, waitingBody, { wide: true, data: g.waiting.map((d) => ({ network: d.network, url: d.url, author: who(d), score: d.score, draft: d.actions.reply.draft, expires: d.actions.reply.expiresAt })), note: 'Approve sends your edit when you changed the text. Drafts expire 6 hours after the scout found the post. Approved replies go out once the network\'s poster ships (#1990 for Bluesky, Mastodon and YouTube, #1991 for the Mac\'s browser).' })}
-            ${panel('engagement-status', 'Scout', statusBody, { wide: true, data: g.runs, note: 'Every 30 minutes. Pause stops every planned action, draft and push at once; the scout keeps reading so the reports stay whole.' })}
+            ${panel('engagement-waiting', `Replies waiting for you${g.waiting.length ? ' · ' + g.waiting.length : ''}`, waitingBody, { wide: true, data: g.waiting.map((d) => ({ network: d.network, url: d.url, author: who(d), score: d.score, draft: d.actions.reply.draft, expires: d.actions.reply.expiresAt })), note: 'Approve sends your edit when you changed the text. Drafts expire 6 hours after the scout found the post. An approved reply posts at once on Bluesky, Mastodon and YouTube (in a dry run too); on X, LinkedIn, Meta and TikTok it waits for the Mac\'s browser agent (#1991).' })}
+            ${panel('engagement-status', 'Scout', statusBody, { wide: true, data: g.runs, note: 'Every 30 minutes. Pause stops every planned action, draft, reply and push at once; the scout keeps reading so the reports stay whole. In a dry run, planned likes, reposts and follows are only logged; Go live carries them out.' })}
+            ${panel('engagement-accounts', 'Accounts', accountsBody, { wide: true, data: accounts, note: 'The poster acts as these accounts. Connect signs in on the network\'s own page and comes back here; Mastodon is marked as a bot when it connects.' })}
             ${panel('engagement-networks', 'Networks', netBody, { wide: true, data: g.networks.map((n) => ({ network: n.name, reads: n.reads, lastRead: n.lastRead, error: n.error, acting: n.acts })) })}
-            ${panel('engagement-daily', 'Per day', area(daily.map((d) => d.day), [{ name: 'In field', values: daily.map((d) => d.candidates), color: COLORS.cyan }, { name: 'Likes', values: daily.map((d) => d.like), color: COLORS.green }, { name: 'Replies drafted', values: daily.map((d) => d.drafted), color: COLORS.amber }, { name: 'Approved', values: daily.map((d) => d.approved), color: COLORS.violet }]), { wide: true, data: daily })}
+            ${panel('engagement-daily', 'Per day', area(daily.map((d) => d.day), [{ name: 'In field', values: daily.map((d) => d.candidates), color: COLORS.cyan }, { name: 'Likes', values: daily.map((d) => d.like), color: COLORS.green }, { name: g.live ? 'Done' : 'Done (dry run)', values: daily.map((d) => (g.live ? d.done : d.dry) || 0), color: COLORS.pink }, { name: 'Replies drafted', values: daily.map((d) => d.drafted), color: COLORS.amber }, { name: 'Approved', values: daily.map((d) => d.approved), color: COLORS.violet }]), { wide: true, data: daily })}
             ${panel('engagement-posts', `Top posts in our field · ${fmt(g.posts.length)}`, postsBody, { wide: true, data: g.posts.map((d) => ({ network: d.network, url: d.url, author: who(d), title: d.title || d.text, about: d.about, topic: d.topic, lang: d.lang, score: d.score, trend: d.trend, likes: d.metrics.likes, replies: d.metrics.replies, reposts: d.metrics.reposts, verdict: d.verdict, skip: d.skip })) })}
             ${panel('engagement-funnel', 'Reply funnel', funnel(funnelSteps) + stats([{ label: 'Dismissed', value: t.dismissed }, { label: 'Expired', value: t.expired, alert: t.drafted > 4 && t.expired / t.drafted > 0.5 }, { label: 'Edited', value: t.edited }, { label: 'Avg time to decide', value: r.avgDecideMin === null ? '—' : r.avgDecideMin + ' min' }]), { data: funnelSteps })}
             ${panel('engagement-topics', 'Topics', pie(r.topics, { unit: 'posts', empty: 'No posts in this range.' }), { data: r.topics })}
@@ -1408,7 +1459,16 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     async function egSettings(patch, ask) {
         if (ask && !confirmRun(ask)) return;
         const out = await call('engagement-settings', { settings: patch }).catch((error) => ({ ok: false, error: error.message }));
-        toast(out.ok ? (patch.paused === true ? 'Engagement is paused.' : patch.paused === false ? 'Engagement is running again.' : 'Settings saved.') : 'Not saved: ' + out.error, 5000);
+        toast(out.ok ? (patch.paused === true ? 'Engagement is paused.' : patch.paused === false ? 'Engagement is running again.' : patch.live === true ? 'Live: the next scout run carries out the planned likes, reposts and follows.' : patch.live === false ? 'Back to a dry run: planned actions are only logged.' : 'Settings saved.') : 'Not saved: ' + out.error, 6000);
+        loadExternal(['engagement']);
+    }
+
+    // Accounts (#1990): YouTube and Mastodon sign in on their own page and come back to the booking callback.
+    async function egConnect(body, ask) {
+        if (ask && !confirmRun(ask)) return;
+        const out = await call('engagement-connect', body).catch((error) => ({ ok: false, error: error.message }));
+        if (out.ok && out.url) { window.open(out.url, '_blank', 'noopener'); toast(`Sign in on the ${out.network} page that opened, then come back and refresh.`, 7000); return; }
+        toast(out.ok ? out.message : 'Not connected: ' + out.error, 7000);
         loadExternal(['engagement']);
     }
 
@@ -1680,6 +1740,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         S.loading = false;
         if (all !== false) loadExternal().then(() => loadProposals());
         if (!S.marksAt) { S.marksAt = Date.now(); loadMarks(); }
+        reportDevice();
     }
 
     // The rules answer at once; Gemini then ranks them on the server, which also drops the Done and Dismissed ones.
@@ -2200,6 +2261,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
               <div class="jv-actions"><button type="button" class="jv-btn" data-act="daily-now">Send today's briefing now</button><button type="button" class="jv-btn" data-act="weekly-now">Send the weekly strategy now</button><button type="button" class="jv-btn" data-act="digest-now">Send the evening digest now</button></div></section>
             <section data-bp-section></section>
             <section data-voice-section>${voiceSection()}</section>
+            <section data-devices-section>${devicesSection()}</section>
             <section><h4>Actions</h4>
               <label class="jv-check"><input type="checkbox" name="a-auto"${d.actions.auto ? ' checked' : ''}> Let Jarvis run the safe actions on its own every hour, within these daily caps</label>
               <div class="jv-th-grid">${Object.keys(ACTION_CAPS).map((k) => `<label class="jv-field">${esc(ACTION_LABELS[k].replace(/^./, (c) => c.toUpperCase()))} per day<input type="number" name="a-cap-${k}" min="0" max="100" step="1" value="${esc(d.actions.caps[k])}"></label>`).join('')}</div>
@@ -2214,6 +2276,18 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             <footer><span class="jv-note">${S.settings && S.settings.updatedAt ? 'Saved ' + esc(when(S.settings.updatedAt)) : 'Using the defaults'}</span><button type="button" class="jv-btn" data-settings-close>Cancel</button><button type="submit" class="jv-btn is-primary">Save</button></footer>`;
         bp.paint($('[data-bp-section]'));
     }
+
+    /** #2068: this browser as Jarvis reads it, and every phone and browser seen in the last 30 days, as in the app's Settings. */
+    function devicesSection() {
+        const d = device();
+        const rows = (S.devices || []).map((r) => `<li${r.mine ? ' class="is-mine"' : ''}><strong>${esc(r.name || 'Unknown device')}${r.mine ? ' (this one)' : ''}</strong>
+            <span class="jv-note">${esc(r.label)} · ${r.app === 'web' ? 'browser' : 'app'} · ${esc(when(r.seenAt))}</span></li>`).join('');
+        return `<h4>Devices</h4><p class="jv-note">This browser: ${esc(d ? C.deviceLabel(d) : 'unknown')}.</p>
+            ${rows ? `<ul class="jv-devices">${rows}</ul>` : '<p class="jv-note">No device has checked in yet.</p>'}
+            <p class="jv-note">Phones and browsers signed in during the last 30 days. Ask keeps answers short on phone-sized screens and goes longer on large ones.</p>`;
+    }
+
+    function paintDevices() { const node = $('[data-devices-section]'); if (node) node.innerHTML = devicesSection(); }
 
     /** #1674: kept in this browser, like the app keeps its own; applies at once, without Save. */
     function voiceSection() {
@@ -2406,6 +2480,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.egPause) { egSettings({ paused: t.dataset.egPause === 'on' }, t.dataset.egPause === 'on' ? 'pause every engagement action, draft and push' : 'resume engagement'); return; }
         if (t.dataset.egReport) { egReport(t.dataset.egReport); return; }
         if (t.dataset.egAll) { S.egAll = t.dataset.egAll === 'on'; render(); return; }
+        if (t.dataset.egLive) { egSettings({ live: t.dataset.egLive === 'on' }, t.dataset.egLive === 'on' ? 'go live: planned likes, reposts and follows go out on the connected networks, within the daily caps' : 'go back to a dry run, where planned actions are only logged'); return; }
+        if (t.dataset.egConnect) { egConnect({ network: t.dataset.egConnect }); return; }
+        if (t.dataset.egDisconnect) { egConnect({ network: t.dataset.egDisconnect, disconnect: true }, `disconnect ${t.dataset.egDisconnect}, so nothing goes out there`); return; }
         if (t.dataset.copyLink) { copy(t.dataset.copyLink, 'Link copied.'); return; }
         if (t.dataset.copyCode) { copy(t.dataset.copyCode, 'Code copied.'); return; }
         if (t.dataset.qlBuild !== undefined) {
@@ -2505,6 +2582,12 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             if (!value) return;
             const out = await mkCommand({ action: 'dnc', value, reason: form.reason.value.trim() }, MK_ASK.dnc({ value }));
             if (out && out.ok) { S.mkForm.dnc = ''; S.mkForm.dncWhy = ''; form.addr.value = ''; form.reason.value = ''; }
+        } else if (form.dataset.egBluesky !== undefined) {
+            const handle = form.elements.handle.value.trim();
+            const password = form.elements.password.value.trim();
+            if (!handle || !password) { toast('Write the handle and an app password.', 5000); return; }
+            form.elements.password.value = '';
+            egConnect({ network: 'bluesky', handle, password });
         } else if (form.dataset.egSettings !== undefined) {
             const n = (name) => Number(form.elements[name].value);
             const acts = ['like', 'repost', 'follow', 'reply'];
