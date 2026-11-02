@@ -74,17 +74,15 @@ function usedToday(daily) {
   return used;
 }
 
-/** One scout run. Returns the run document. */
-async function scout(deps) {
+/**
+ * Posts read this run, from the cloud readers or the Mac's browser (functions/engagement-mac.js): kept when in our
+ * field, scored, read by Gemini, planned, stored and counted, and the best waiting replies pushed to Carlos.
+ * read: posts read per network; errors: per network.
+ */
+async function takeIn(deps, conf, posts, read, errors) {
   const { db, now, env, inc } = deps;
-  const started = Date.now();
-  const conf = await readSettings(db);
-  const expired = await expire(deps).catch(() => 0);
-  const read = await Sources.readAll({ fetch: deps.fetch, env: withAccounts(env, await Act.readCreds(db).catch(() => ({}))), now });
-
-  // Our field only, once each, best first.
   const seen = new Map();
-  read.posts.forEach((p) => {
+  posts.forEach((p) => {
     const s = E.score(p, now);
     if (!s.relevance) return;
     const key = E.keyOf(p.network, p.id);
@@ -134,14 +132,27 @@ async function scout(deps) {
     await batch.commit();
   }
 
-  const errors = Object.keys(read.errors).length;
-  const counters = E.rollup(read.read, docs, { errors }, again);
+  const counters = E.rollup(read, docs, { errors: Object.keys(errors || {}).length }, again);
   await dailyRef.set(Object.assign({ day }, increments(counters, inc)), { merge: true });
 
   const decided = docs.concat(again);
   const waiting = decided.filter((d) => d.actions.reply && d.actions.reply.status === "waiting").sort((a, b) => b.score - a.score);
   let pushed = 0;
   if (!conf.paused && deps.push) for (const d of waiting.slice(0, PUSH_PER_RUN)) { await deps.push(E.replyPush(d)).catch(() => null); pushed += 1; }
+  return {
+    candidates: candidates.length, fresh: fresh.length, updated: stale.length, risen: again.length, asked: asked.length, aiError,
+    engaged: decided.filter((d) => d.verdict === "engage").length, drafted: waiting.length, pushed
+  };
+}
+
+/** One scout run. Returns the run document. */
+async function scout(deps) {
+  const { db, now, env } = deps;
+  const started = Date.now();
+  const conf = await readSettings(db);
+  const expired = await expire(deps).catch(() => 0);
+  const read = await Sources.readAll({ fetch: deps.fetch, env: withAccounts(env, await Act.readCreds(db).catch(() => ({}))), now });
+  const took = await takeIn(deps, conf, read.posts, read.read, read.errors);
 
   let acted = {};
   let actError = "";
@@ -150,8 +161,8 @@ async function scout(deps) {
 
   const run = {
     at: new Date(now).toISOString(), ms: Date.now() - started, paused: conf.paused, live: conf.live, read: read.read, errors: read.errors, skipped: read.skipped,
-    candidates: candidates.length, fresh: fresh.length, updated: stale.length, risen: again.length, asked: asked.length, aiError,
-    engaged: decided.filter((d) => d.verdict === "engage").length, drafted: waiting.length, pushed, expired,
+    candidates: took.candidates, fresh: took.fresh, updated: took.updated, risen: took.risen, asked: took.asked, aiError: took.aiError,
+    engaged: took.engaged, drafted: took.drafted, pushed: took.pushed, expired,
     done: sum("done"), dry: sum("dry"), missed: sum("missed"), posted: sum("posted"), actFailed: sum("failed"), acted, actError
   };
   await db.collection("engagement_runs").doc(run.at).set(run);
@@ -246,7 +257,7 @@ async function decide(deps, body, by) {
   const name = net.name || out.network;
   if (out.d.counter === "dismissed") { await clearCache(db); return { key, status: "dismissed", message: "Dismissed." }; }
   const said = out.d.counter === "edited" ? "Your version is approved" : "Approved";
-  if (!net.api) { await clearCache(db); return { key, status: "approved", message: said + "; it goes out on " + name + " once the Mac's browser agent is running (#1991)." }; }
+  if (!net.api) { await clearCache(db); return { key, status: "approved", message: said + "; the Mac's browser agent posts it on " + name + " on its next run (every 30 minutes, 7:00 to 22:00)." }; }
   if ((await readSettings(db)).paused) { await clearCache(db); return { key, status: "approved", message: said + "; engagement is paused, so it goes out on " + name + " when you resume." }; }
   const sent = await Act.replyNow(deps, key).catch((error) => ({ status: "approved", error: error.message }));
   await clearCache(db);
@@ -277,13 +288,14 @@ async function saveSettings(db, body, by, now) {
   return { settings: next };
 }
 
-const STAGE = {
-  bluesky: "likes, reposts, follows and replies", mastodon: "likes, boosts, follows and replies", youtube: "likes, subscribes and comments",
-  x: "reads and acts once the Mac browser agent ships (#1991)", linkedin: "reads and acts once the Mac browser agent ships (#1991)",
-  facebook: "reads and acts once the Mac browser agent ships (#1991)", instagram: "reads and acts once the Mac browser agent ships (#1991)",
-  threads: "reads and acts once the Mac browser agent ships (#1991)", tiktok: "reads and acts once the Mac browser agent ships (#1991)",
-  hn: "trends only", devto: "trends only", lobsters: "trends only"
-};
+const WORDS = { like: "likes", repost: "reposts", follow: "follows", reply: "replies" };
+const joinAnd = (list) => list.length > 1 ? list.slice(0, -1).join(", ") + " and " + list[list.length - 1] : list.join("");
+const STAGE = Object.assign(
+  Object.fromEntries(Object.entries(E.NETWORKS).filter(([, n]) => n.browser).map(([k, n]) => [k, joinAnd((n.only || Object.keys(WORDS)).map((a) => WORDS[a]))])),
+  { bluesky: "likes, reposts, follows and replies", mastodon: "likes, boosts, follows and replies", youtube: "likes, subscribes and comments", hn: "trends only", devto: "trends only", lobsters: "trends only" }
+);
+const MAC_STALE = 2 * 3600000;
+const AGENT = "node scripts/engagement-browser/agent.js";
 
 const brief = (d) => ({
   key: d.key, network: d.network, url: d.url, author: d.author || {}, title: d.title || "", text: String(d.text || "").slice(0, 600), lang: d.lang, topic: d.topic, words: d.words || [],
@@ -297,7 +309,7 @@ async function source(ctx) {
   const now = ctx.now;
   const days = Math.max(1, Math.min(365, Number(ctx.days) || 7));
   const range = dayList(E.bogotaDay(now), Math.min(days, 92));
-  const [conf, runsSnap, waitingSnap, approvedSnap, cur, prev, top, reportsSnap, accounts, creds] = await Promise.all([
+  const [conf, runsSnap, waitingSnap, approvedSnap, cur, prev, top, reportsSnap, accounts, creds, macSnap] = await Promise.all([
     readSettings(db),
     db.collection("engagement_runs").orderBy("at", "desc").limit(12).get(),
     db.collection("engagement_posts").where("actions.reply.status", "==", "waiting").limit(60).get(),
@@ -307,8 +319,12 @@ async function source(ctx) {
     topPosts(db, range[0], range[range.length - 1], 40),
     db.collection("engagement_reports").orderBy("at", "desc").limit(9).get(),
     Act.connections(db),
-    Act.readCreds(db)
+    Act.readCreds(db),
+    db.collection("engagement_private").doc("mac").get()
   ]);
+  const mac = macSnap.exists && macSnap.data().at ? macSnap.data() : null;
+  const signed = (k) => !!(mac && (mac.signedIn || {})[k]);
+  const macReads = (k) => (!mac ? "Mac browser, not set up" : !signed(k) ? "Mac browser, not signed in" : "Mac browser" + ((mac.accounts || {})[k] ? " as " + mac.accounts[k] : ""));
   const runs = runsSnap.docs.map((d) => d.data());
   const last = runs[0] || null;
   const stale = !last || now - Date.parse(last.at) > STALE;
@@ -316,14 +332,20 @@ async function source(ctx) {
   const env = withAccounts(ctx.env || {}, creds);
   const readers = Object.fromEntries(Sources.readable(env).map((r) => [r.network, r]));
   const acting = (k) => {
+    if ((E.NETWORKS[k] || {}).browser) {
+      if (!signed(k)) return STAGE[k] + " through the Mac's browser once it is signed in there";
+      const until = (mac.blocked || {})[k];
+      return "Mac browser: " + STAGE[k] + (conf.live ? "" : " (dry run: replies post, the rest is only logged)") + (until ? "; held until " + until + " after a check" : "");
+    }
     const a = accounts.find((x) => x.network === k);
     if (!a) return STAGE[k] || "";
     if (!a.connected) return "API, not connected: connect it under Accounts";
     return "API as " + a.account + ": " + STAGE[k] + (conf.live ? "" : " (dry run: replies post, the rest is only logged)") + (a.error ? "; last error: " + a.error : "");
   };
   const networks = Object.entries(E.NETWORKS).map(([k, n]) => ({
-    network: k, name: n.name, reads: readers[k] ? (readers[k].ok ? "API" : k === "bluesky" ? "needs the account" : "needs a key") : "Mac browser",
-    lastRead: last && last.read ? last.read[k] || 0 : 0, error: last && last.errors ? last.errors[k] || "" : "", acts: acting(k),
+    network: k, name: n.name, reads: readers[k] ? (readers[k].ok ? "API" : k === "bluesky" ? "needs the account" : "needs a key") : n.browser ? macReads(k) : "",
+    lastRead: n.browser ? (mac && mac.read ? mac.read[k] || 0 : 0) : last && last.read ? last.read[k] || 0 : 0,
+    error: n.browser ? (mac && mac.errors ? mac.errors[k] || "" : "") : last && last.errors ? last.errors[k] || "" : "", acts: acting(k),
     row: report.networks.find((r) => r.network === k) || null
   }));
   const needs = [];
@@ -332,6 +354,14 @@ async function source(ctx) {
   Sources.readable(env).filter((r) => !r.ok && r.network !== "bluesky").forEach((r) => needs.push(r.help));
   accounts.filter((a) => !a.connected).forEach((a) => needs.push("Engagement: " + a.help));
   accounts.filter((a) => a.connected && a.error).forEach((a) => needs.push("Engagement: " + a.name + " poster failed (" + a.error + "). Connect it again if the sign-in expired."));
+  const browser = Object.keys(E.NETWORKS).filter((k) => E.NETWORKS[k].browser);
+  const bogotaHour = new Date(now - 5 * 3600000).getUTCHours();
+  if (!mac) needs.push("Engagement: " + joinAnd(browser.map((k) => E.NETWORKS[k].name)) + " wait for the Mac's browser agent; on the Mac run " + AGENT + " setup (#1991).");
+  else {
+    if (now - Date.parse(mac.at) > MAC_STALE && bogotaHour >= 8 && bogotaHour < 22) needs.push("Engagement: the Mac's browser agent last reported " + Math.round((now - Date.parse(mac.at)) / 3600000) + " hours ago; it runs every 30 minutes from 7:00 to 22:00 while the Mac is awake (" + AGENT + " status).");
+    browser.filter((k) => !signed(k)).forEach((k) => needs.push("Engagement: sign in to " + E.NETWORKS[k].name + " in the agent's Chrome: " + AGENT + " login " + k + "."));
+    browser.filter((k) => (mac.blocked || {})[k]).forEach((k) => needs.push("Engagement: " + E.NETWORKS[k].name + " asked for a check (a captcha or unusual activity), so the agent leaves it alone until " + mac.blocked[k] + ". Clear it with " + AGENT + " login " + k + "."));
+  }
   if (last && last.aiError) needs.push("Engagement: Gemini failed on the last run (" + last.aiError + "), so no reply was drafted.");
   if (conf.paused) needs.push("Engagement is paused: nothing is planned or pushed until you resume it.");
   const byScore = (a, b) => b.score - a.score;
@@ -350,4 +380,4 @@ async function source(ctx) {
   };
 }
 
-module.exports = { scout, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
+module.exports = { scout, takeIn, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };

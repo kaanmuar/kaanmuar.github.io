@@ -5155,6 +5155,7 @@ const jarvisStudio = require("./jarvis-studio");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisEngagement = require("./jarvis-engagement");
+const engagementMac = require("./engagement-mac");
 const jarvisPageSpeed = require("./jarvis-pagespeed");
 
 // The daily PageSpeed routine's PRs (#1978): pushes go to the alerts kind, outcomes to the actions log.
@@ -6263,6 +6264,12 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       await jarvisActions.log(db, { action: "notify-act", mode: "click", status: "failed", target, detail: String((error && error.message) || error), by: "browser push" }, Date.now()).catch(() => null);
       res.json({ ok: false, op: "notify-act", error: String((error && error.message) || error).slice(0, 300) });
     }
+    return;
+  }
+  // The Mac's browser agent (#1991) signs with the token it paired, not the owner sign-in.
+  if (String((req.body || {}).op || "").startsWith("engagement-mac-")) {
+    try { res.json(await engagementMac.handle(Object.assign(engagementDeps(), { now: Date.now() }), req.body, String(req.get("x-mac-token") || ""))); }
+    catch (error) { res.status(error.status || 400).json({ ok: false, error: String(error.message || error).slice(0, 300) }); }
     return;
   }
   const presented = String(req.get("authorization") || "");
