@@ -67,6 +67,12 @@ const evaluate = (page, body, arg) => page.evaluate(new Function("arg", NUM + bo
 const PAGES = { linkedin: "146731408", facebook: "qalaburlreview" };
 const PAGE_NAME = /QA-?lab/i;
 
+// Meta's pages follow the account's language (ours are in Spanish), and Threads names its icons with an svg <title>.
+const SAYS = { like: ["Like", "Me gusta"], unlike: ["Unlike", "Ya no me gusta", "Quitar me gusta"], reply: ["Reply", "Comment", "Responder", "Comentar"], repost: ["Repost", "Republicar"], profile: ["Profile", "Perfil"], home: ["Home", "Inicio"] };
+const icon = (names, extra) => names.flatMap((n) => ['svg[aria-label="' + n + '"]' + (extra || ""), 'svg' + (extra || "") + ':has(> title:text-is("' + n + '"))']).join(", ");
+const button = (scope, names, extra) => scope.locator('[role="button"], button').filter({ has: scope.page().locator(icon(names, extra)) });
+const words = (names) => new RegExp("^(" + names.join("|") + ")$");
+
 const GENERAL = ["web accessibility", "WCAG", "core web vitals", "technical SEO", "Playwright testing", "test automation", "AI Overviews SEO", "web performance", "GA4", "software testing", "a11y", "Google Search Console", "QA engineer", "Lighthouse performance"];
 
 const x = {
@@ -133,7 +139,7 @@ const x = {
 const threads = {
   name: "Threads", account: "qaurlreview", home: "https://www.threads.com/", queries: GENERAL,
   async signedIn(page) {
-    const me = page.locator('a[href^="/@"]:has(svg[aria-label="Profile"])');
+    const me = page.locator('a[href^="/@"]').filter({ has: page.locator(icon(SAYS.profile)) }).filter({ visible: true });
     if (!(await visible(me, 15000))) return "";
     return "@" + String(await me.first().getAttribute("href")).replace(/^\/@/, "").split("/")[0];
   },
@@ -147,11 +153,11 @@ const threads = {
         const href = time && time.closest('a') ? time.closest('a').getAttribute('href') : '';
         const m = href.match(/^\\/@([^/]+)\\/post\\/([^/?]+)/);
         if (!m) return null;
-        const count = (l) => { const s = c.querySelector('svg[aria-label="' + l + '"]'); const b = s && s.closest('[role="button"], button'); return b ? num(b.innerText) : 0; };
+        const count = (l) => { const s = Array.from(c.querySelectorAll('svg')).find((x) => arg[l].includes(x.getAttribute('aria-label') || (x.querySelector('title') || {}).textContent)); const b = s && s.closest('[role="button"], button'); return b ? num(b.innerText) : 0; };
         const text = Array.from(c.querySelectorAll('span[dir="auto"]')).map((s) => s.innerText.trim()).filter((t) => t && t !== m[1]).sort((a, b) => b.length - a.length)[0] || '';
         return { network: 'threads', id: m[2], url: 'https://www.threads.com' + href.split('?')[0], author: { handle: m[1], name: m[1] }, text, createdAt: time.getAttribute('datetime'),
-          metrics: { likes: count('Like') || count('Unlike'), replies: count('Reply') || count('Comment'), reposts: count('Repost'), views: 0 } };
-      }).filter(Boolean);`);
+          metrics: { likes: count('like') || count('unlike'), replies: count('reply'), reposts: count('repost'), views: 0 } };
+      }).filter(Boolean);`, SAYS);
   },
   async post(page, task) {
     await go(page, this, task.url);
@@ -159,30 +165,30 @@ const threads = {
   },
   async like(page, task) {
     const main = await this.post(page, task);
-    if (await has(main.locator('svg[aria-label="Unlike"]'))) return {};
-    await click(main.locator('[role="button"]:has(svg[aria-label="Like"])').first());
+    if (await has(main.locator(icon(SAYS.unlike)))) return {};
+    await click(button(main, SAYS.like).first());
     return {};
   },
   async repost(page, task) {
     const main = await this.post(page, task);
-    await click(main.locator('[role="button"]:has(svg[aria-label="Repost"])').first());
-    const item = page.getByText("Repost", { exact: true });
+    await click(button(main, SAYS.repost).first());
+    const item = page.getByText(words(SAYS.repost));
     if (!(await visible(item, 5000))) return {};
     await click(item.last());
     return {};
   },
   async follow(page, task) {
     await go(page, this, "https://www.threads.com/@" + enc(task.author.handle));
-    if (await visible(page.getByRole("button", { name: "Following", exact: true }), 6000)) return {};
-    await click(await need(page.getByRole("button", { name: "Follow", exact: true }), "Follow"));
+    if (await visible(page.getByRole("button", { name: /^(Following|Siguiendo)$/ }), 6000)) return {};
+    await click(await need(page.getByRole("button", { name: /^(Follow|Seguir)$/ }), "Follow"));
     return {};
   },
   async reply(page, task) {
     const main = await this.post(page, task);
-    await click(main.locator('[role="button"]:has(svg[aria-label="Reply"])').first());
+    await click(button(main, SAYS.reply).first());
     const dialog = page.locator('[role="dialog"]');
     await type(page, await need(dialog.locator('[contenteditable="true"]'), "The reply box"), task.draft);
-    await click(await need(dialog.getByRole("button", { name: "Post", exact: true }), "Post"));
+    await click(await need(dialog.getByRole("button", { name: /^(Post|Publicar)$/ }), "Post"));
     await dialog.first().waitFor({ state: "hidden", timeout: 15000 }).catch(() => { throw new Error("The reply did not send."); });
     return { url: task.url };
   }
@@ -192,47 +198,52 @@ const instagram = {
   name: "Instagram", account: "qaurlreview", home: "https://www.instagram.com/",
   queries: ["webaccessibility", "accessibility", "seo", "technicalseo", "softwaretesting", "qatesting", "webperformance", "webdevelopment", "wcag", "testautomation", "a11y", "googleanalytics"],
   async signedIn(page) {
-    if (!(await visible(page.locator('svg[aria-label="Home"]'), 15000))) return "";
+    if (!(await visible(page.locator(icon(SAYS.home)), 15000))) return "";
+    // This endpoint sometimes answers with an HTML page that still carries the username.
     const me = await page.evaluate(() => fetch("/api/v1/accounts/current_user/?edit=true", { headers: { "x-ig-app-id": "936619743392459" }, credentials: "include" })
-      .then((r) => (r.ok ? r.json() : {})).then((j) => (j.user || {}).username || "", () => ""));
+      .then((r) => (r.ok ? r.text() : "")).then((t) => (t.match(/"username":"([^"]+)"/) || [])[1] || "", () => ""));
     return me ? "@" + me : "Instagram";
   },
-  // Instagram's own web endpoint behind a hashtag page, called from the signed-in page.
+  // The posts Instagram's own keyword search page loads through its GraphQL calls.
   async read(page, tag) {
     if (!page.url().startsWith("https://www.instagram.com/")) await go(page, this, this.home);
-    await go(page, this, "https://www.instagram.com/explore/search/keyword/?q=" + enc("#" + tag));
-    const out = await evaluate(page, `
-      return fetch('/api/v1/tags/web_info/?tag_name=' + encodeURIComponent(arg), { headers: { 'x-ig-app-id': '936619743392459' }, credentials: 'include' }).then(async (r) => {
-        if (!r.ok) return { error: 'Instagram answered ' + r.status };
-        const found = [];
-        const walk = (o) => { if (!o || typeof o !== 'object') return; if (o.code && o.taken_at && o.user) { found.push(o); return; } Object.values(o).forEach(walk); };
-        walk(await r.json());
-        return { posts: found.map((m) => ({ network: 'instagram', id: String(m.pk || m.id || m.code), url: 'https://www.instagram.com/p/' + m.code + '/',
-          author: { handle: m.user.username, name: m.user.full_name || m.user.username, id: String(m.user.pk || m.user.id || '') },
-          text: (m.caption && m.caption.text) || '', createdAt: new Date(m.taken_at * 1000).toISOString(),
-          metrics: { likes: m.like_count || 0, replies: m.comment_count || 0, reposts: 0, views: m.play_count || m.view_count || 0 } })) };
-      });`, tag);
-    if (out.error) throw new Error(out.error);
-    return out.posts;
+    const found = new Map();
+    const walk = (o) => {
+      if (!o || typeof o !== "object") return;
+      if (o.code && o.taken_at && o.user && o.user.username) { found.set(o.code, o); return; }
+      Object.values(o).forEach(walk);
+    };
+    const on = async (r) => {
+      if (!/\/(api\/graphql|graphql\/query)/.test(r.url())) return;
+      walk(await r.json().catch(() => null));
+    };
+    page.on("response", on);
+    try { await go(page, this, "https://www.instagram.com/explore/search/keyword/?q=" + enc("#" + tag)); await pause(4000, 6000); await scroll(page, 2); } finally { page.off("response", on); }
+    return Array.from(found.values()).map((m) => ({
+      network: "instagram", id: String(m.pk || m.id || m.code), url: "https://www.instagram.com/p/" + m.code + "/",
+      author: { handle: m.user.username, name: m.user.full_name || m.user.username, id: String(m.user.pk || m.user.id || "") },
+      text: (m.caption && m.caption.text) || "", createdAt: new Date(m.taken_at * 1000).toISOString(),
+      metrics: { likes: m.like_count || 0, replies: m.comment_count || 0, reposts: 0, views: m.play_count || m.view_count || 0 }
+    }));
   },
   async like(page, task) {
     await go(page, this, task.url);
-    if (await visible(page.locator('svg[aria-label="Unlike"][height="24"]'), 6000)) return {};
-    await click(await need(page.locator('[role="button"]:has(svg[aria-label="Like"][height="24"])'), "Like"));
+    if (await visible(page.locator(icon(SAYS.unlike, '[height="24"]')), 6000)) return {};
+    await click(await need(button(page.locator("body"), SAYS.like, '[height="24"]'), "Like"));
     return {};
   },
   async follow(page, task) {
     await go(page, this, task.url);
     const header = page.locator("header");
-    if (await visible(header.getByText("Following", { exact: true }), 6000)) return {};
-    await click(await need(header.getByRole("button", { name: "Follow", exact: true }), "Follow"));
+    if (await visible(header.getByText(/^(Following|Siguiendo)$/), 6000)) return {};
+    await click(await need(header.getByRole("button", { name: /^(Follow|Seguir)$/ }), "Follow"));
     return {};
   },
   async reply(page, task) {
     await go(page, this, task.url);
-    const box = await need(page.locator('textarea[aria-label^="Add a comment"]'), "The comment box");
+    const box = await need(page.locator('textarea[aria-label^="Add a comment"], textarea[aria-label^="Añade un comentario"]'), "The comment box");
     await type(page, box, task.draft);
-    await click(await need(page.getByRole("button", { name: "Post", exact: true }), "Post"));
+    await click(await need(page.getByRole("button", { name: /^(Post|Publicar)$/ }), "Post"));
     await pause(3000, 5000);
     if ((await box.inputValue().catch(() => "")).trim()) throw new Error("The comment did not send.");
     return { url: task.url };
