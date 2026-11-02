@@ -35,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
+      actions: write
       contents: write
       pages: write
     env:
@@ -93,7 +94,7 @@ jobs:
             git add assets/social qa-review-social*.html sitemap-social.xml social
             git diff --cached --quiet || git commit -q --amend --no-edit
           done
-          gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true
+          gh workflow run pages.yml --ref main -R "${{ github.repository }}" || echo "::warning::Pages was not dispatched; the next push to main deploys this batch."
 
       - name: Release the clip
         if: steps.batch.outputs.video == '1'
