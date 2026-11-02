@@ -106,7 +106,8 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
             ProductRow(name, (k?.str("label") ?: "") + " " + k?.prim("value").text(), p.obj("series").at("values").doubles(), k?.str("delta"), (k?.num("dir") ?: 0.0).toInt()) { open(key) }
         }
         val pipe = snap.ext("outreach").obj("pipeline")?.takeIf { it.isOk() }
-        ProductRow("Outreach", "Reviewed " + (pipe?.prim("reviews")).text(), pipe.objs("daily").map { it.num("reviews") ?: 0.0 }, null, 0) { open("outreach") }
+        val reviewed = delta(pipe.num("reviews"), pipe.num("priorReviews"))
+        ProductRow("Outreach", "Reviewed " + (pipe?.prim("reviews")).text(), pipe.objs("daily").map { it.num("reviews") ?: 0.0 }, reviewed, dirOf(reviewed)) { open("outreach") }
     }
 
     Goals(snap.objs("goals"))
@@ -141,6 +142,12 @@ fun delta(now: Double?, prior: Double?): String? {
 }
 
 fun dirOf(delta: String?) = when { delta == null -> 0; delta.startsWith("+") || delta == "new" -> 1; delta.startsWith("-") -> -1; else -> 0 }
+
+/** A KPI with its change against the period before; no change when either number is missing. */
+fun kpiVs(label: String, now: Double?, prior: Double?, alert: Boolean = false, shown: (Double?) -> String = { fmt(it) }): KpiData {
+    val d = delta(now, prior)
+    return KpiData(label, shown(now), d, dirOf(d), alert)
+}
 
 @Composable
 fun Goals(goals: List<JsonObject>) {
@@ -191,7 +198,7 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
     }
 
     val series = p.obj("series")
-    Panel(if (product == "inbox") "Messages per day" else if (product == "review") "Opens per day" else "Visits per day") {
+    Panel(when (product) { "inbox" -> "Messages per day"; "review" -> "Opens per day"; "hub" -> "Hub and post views per day"; else -> "Visits per day" }) {
         BarChart(series.at("values").doubles(), series.at("labels").strings())
     }
     p.obj("reviewSeries")?.let { Panel("Reviews per day") { BarChart(it.at("values").doubles(), it.at("labels").strings(), J.violet) } }
@@ -296,16 +303,23 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
     val contacted = mail.num("contacted") ?: 0.0
     val rates = mail.obj("rates")
     var confirm by remember { mutableStateOf<PendingAction?>(null) }
+    val was = mail.obj("prior")
+    val links = ou.obj("links")?.takeIf { it.isOk() }
+    fun paid(l: JsonObject?) = fmt(l.num("paid")) + " · " + fmt(l.num("usd")) + " USD"
 
     Panel("Outreach") {
         KpiPairs(listOf(
             KpiData("Prospects queued", fmt(pipe.num("queued"))),
-            KpiData("Reviewed in range", fmt(pipe.num("reviews"))),
+            kpiVs("Reviewed in range", pipe.num("reviews"), pipe.num("priorReviews")),
             KpiData("With a Live Report", fmt(pipe.num("withLiveReport"))),
-            KpiData("Emails sent", fmt(mail.num("sent"))),
-            KpiData("Reply rate", if (contacted > 0) fmt(rates.num("reply")) + "%" else "—", alert = contacted >= 50 && (rates.num("reply") ?: 0.0) < (weekly.num("replyPct") ?: 0.0)),
-            KpiData("Interested", fmt(mail.num("interested"))),
-            KpiData("Lowest warm-up", fmt(warm), alert = warm != null && warm < warmNeed)
+            kpiVs("Emails sent", mail.num("sent"), was.num("sent")),
+            if (contacted > 0) kpiVs("Reply rate", rates.num("reply"), if ((was.num("contacted") ?: 0.0) > 0) was.obj("rates").num("reply") else null,
+                alert = contacted >= 50 && (rates.num("reply") ?: 0.0) < (weekly.num("replyPct") ?: 0.0)) { fmt(it) + "%" }
+            else KpiData("Reply rate", "—"),
+            kpiVs("Interested", mail.num("interested"), was.num("interested")),
+            KpiData("Lowest warm-up", fmt(warm), alert = warm != null && warm < warmNeed),
+            if (links != null) kpiVs("Paid from qalabreview.com", links.num("paid"), links.obj("prior").num("paid"), alert = links.bool("live") != true) { paid(links) }
+            else KpiData("Paid from qalabreview.com", "—")
         ))
     }
 

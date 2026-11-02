@@ -620,7 +620,7 @@ async function dailyProducts(db, { now, days = 1 }) {
     studio: core.summarizeSite("studio", now1, was, window),
     lab: core.summarizeSite("lab", now1, was, window),
     review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window),
-    hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window)
+    hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window, was)
   };
   return { window, products, outreachVisits: core.outreachVisits(now1) };
 }

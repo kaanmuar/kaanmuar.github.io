@@ -330,10 +330,26 @@
         };
     }
 
-    function summarizeHub(stats, rows, window) {
+    // Social hub: views and interactions in the range from hub_/post_ site_events, so each has a period before.
+    // socialHubStats/latest keeps the running totals, the GA4 views and the post ranking.
+    function summarizeHub(stats, rows, window, priorRows) {
         const s = stats || {};
         const totals = s.totals || {};
         const hubRows = (rows || []).filter(isHubEvent);
+        const isView = (row) => row.name === 'hub_view' || row.name === 'post_view';
+        const tally = (list) => {
+            const t = { views: 0, hubViews: 0, postViews: 0, interactions: 0 };
+            list.forEach((row) => {
+                if (row.name === 'hub_view') t.hubViews += 1;
+                else if (row.name === 'post_view') t.postViews += 1;
+                else t.interactions += 1;
+            });
+            t.views = t.hubViews + t.postViews;
+            return t;
+        };
+        const now = tally(hubRows);
+        const was = priorRows ? tally(priorRows.filter(isHubEvent)) : null;
+        const prior = (key) => (was ? was[key] : undefined);
         const names = {};
         hubRows.forEach((row) => bump(names, row.name));
         const posts = (s.posts || []).slice().sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -342,14 +358,16 @@
             updatedAt: s.updatedAt || '',
             ga: s.ga || null,
             totals,
+            range: now,
+            prior: was,
             kpis: [
-                kpi('Hub views', totals.hubViews || 0),
-                kpi('Post views', totals.postViews || 0),
-                kpi('Post views, 7 days', totals.postViews7 || 0),
-                kpi('GA4 views', totals.gaViews || 0),
-                kpi('Interactions', totals.interactions || 0)
+                kpi('Hub + post views', now.views, prior('views')),
+                kpi('Hub views', now.hubViews, prior('hubViews')),
+                kpi('Post views', now.postViews, prior('postViews')),
+                kpi('Interactions', now.interactions, prior('interactions')),
+                kpi('GA4 views', totals.gaViews || 0)
             ],
-            series: dailySeries(hubRows, window.start, window.end),
+            series: dailySeries(hubRows, window.start, window.end, isView),
             lists: {
                 posts: posts.slice(0, 15).map((p) => ({ label: p.id, value: p.score || p.views || 0 })),
                 sources: (s.sources || []).slice(0, 15).map((row) => ({ label: [row.source, row.medium, row.campaign].filter(Boolean).join(' / '), value: row.sessions || 0 })),
@@ -975,7 +993,7 @@
             rate: Number.isFinite(rate) && rate > 0 ? Math.min(VOICE_RATE.max, Math.max(VOICE_RATE.min, rate)) : VOICE_RATE.default };
     }
 
-    const api = { VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
+    const api = { VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

@@ -377,7 +377,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             reviewTotal: S.counts.reviewTotal === null ? undefined : S.counts.reviewTotal,
             prior: S.counts.priorOpens === null || S.counts.priorOpens === undefined ? null : { opens: S.counts.priorOpens, reviews: S.counts.priorReviews }
         }, w);
-        sum.hub = C.summarizeHub(S.hub, S.rows.events, w);
+        sum.hub = C.summarizeHub(S.hub, S.rows.events, w, S.rows.prior);
         S.summaries = sum;
         S.briefState = { products: sum, external: S.external, thresholds: (S.settings || {}).thresholds, goals: S.goals };
         const split = C.openBrief(C.briefing(S.briefState), S.marks);
@@ -927,6 +927,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         return a.error ? `${esc(a.email)}<br><span class="jv-note">${esc(a.error)}</span> <a href="https://app.instantly.ai/app/accounts" target="_blank" rel="noopener">Reconnect →</a>` : esc(a.email);
     }
 
+    // A KPI with its change against the period before. The All range has no period before, as on the other tabs.
+    function vsBefore(label, value, prior, opts) {
+        const o = opts || {};
+        const k = C.kpi(label, value, (S.window || {}).prior && prior !== null && prior !== undefined ? prior : undefined, o.alert === undefined ? undefined : { alert: o.alert });
+        return o.shown ? Object.assign(k, { value: o.shown(value), prior: k.prior === undefined ? undefined : o.shown(k.prior) }) : k;
+    }
+
     function outreachView() {
         const ou = S.external.outreach;
         if (!ou || !ou.ok) return `<div class="jv-grid">${approvalsPanel()}${briefPanel('outreach')}${panel('outreach-wait', 'Outreach', waiting('outreach', 'Reading the outreach pipeline, Instantly and the plan…'))}</div>`;
@@ -939,15 +946,18 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const visits = C.outreachVisits(S.rows.events);
         const weekly = (plan && plan.weekly) || {};
         const warm = mail && mail.accounts.length ? Math.min(...mail.accounts.map((a) => (a.score === null ? 0 : a.score))) : null;
+        const was = mail && mail.prior ? mail.prior : null;
+        const linked = ou.links && ou.links.ok ? ou.links : null;
+        const paid = (l) => l.paid + ' · ' + l.usd + ' USD';
         const head = kpis([
             { label: 'Prospects queued', value: pipe ? pipe.queued : '—' },
-            { label: 'Reviewed in range', value: pipe ? pipe.reviews : '—' },
+            pipe ? vsBefore('Reviewed in range', pipe.reviews, pipe.priorReviews) : { label: 'Reviewed in range', value: '—' },
             { label: 'With a Live Report', value: pipe ? pipe.withLiveReport : '—' },
-            { label: 'Emails sent', value: mail ? mail.sent : '—' },
-            { label: 'Reply rate', value: mail && mail.contacted ? mail.rates.reply + '%' : '—', alert: mail && mail.contacted >= 50 && mail.rates.reply < (weekly.replyPct || 0) },
-            { label: 'Interested', value: mail ? mail.interested : '—' },
+            mail ? vsBefore('Emails sent', mail.sent, was && was.sent) : { label: 'Emails sent', value: '—' },
+            mail && mail.contacted ? vsBefore('Reply rate', mail.rates.reply, was && was.contacted ? was.rates.reply : null, { shown: (n) => n + '%', alert: mail.contacted >= 50 && mail.rates.reply < (weekly.replyPct || 0) }) : { label: 'Reply rate', value: '—' },
+            mail ? vsBefore('Interested', mail.interested, was && was.interested) : { label: 'Interested', value: '—' },
             { label: 'Lowest warm-up', value: warm === null ? '—' : warm, alert: warm !== null && warm < th.outreachWarmup },
-            { label: 'Paid from qalabreview.com', value: ou.links && ou.links.ok ? ou.links.paid + ' · ' + ou.links.usd + ' USD' : '—', alert: !!(ou.links && ou.links.ok && !ou.links.live) }
+            linked ? Object.assign(vsBefore('Paid from qalabreview.com', linked.paid, linked.prior && linked.prior.paid, { alert: !linked.live }), { value: paid(linked) }, linked.prior ? { prior: paid(linked.prior) } : {}) : { label: 'Paid from qalabreview.com', value: '—' }
         ]);
         const chip = (ok, text) => `<span class="jv-chip ${ok ? 'c-fast' : 'c-slow'}">${esc(text)}</span>`;
         const days = (n) => (n === 0 ? 'today' : n > 0 ? 'in ' + n + (n === 1 ? ' day' : ' days') : Math.abs(n) + ' days ago');
@@ -975,7 +985,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const links = ou.links && ou.links.ok ? ou.links : null;
         const copyBtn = (url) => `<button class="jv-btn" type="button" data-copy-link="${esc(url)}">Copy</button>`;
         const linksBody = links ? `<p>${chip(links.live, links.live ? 'Worker live' : 'Worker not live')} <a href="${esc(links.base)}" target="_blank" rel="noopener">${esc(links.base.replace(/^https:\/\//, ''))} →</a></p>`
-            + kpis([{ label: 'Visits', value: links.visits }, { label: 'Free reviews', value: links.reviews }, { label: 'Visit → review', value: links.reviewRate + '%' }, { label: 'Paid unlocks', value: links.paid }, { label: 'Review → paid', value: links.payRate + '%' }, { label: 'Revenue', value: links.usd + ' USD' }])
+            + kpis([['Visits', 'visits'], ['Free reviews', 'reviews'], ['Visit → review', 'reviewRate', (n) => n + '%'], ['Paid unlocks', 'paid'], ['Review → paid', 'payRate', (n) => n + '%'], ['Revenue', 'usd', (n) => n + ' USD']]
+                .map(([label, key, shown]) => vsBefore(label, links[key], links.prior ? links.prior[key] : null, { shown })))
             + bars(links.byCampaign, { color: COLORS.green, empty: 'No visits from qalabreview.com links in this range yet.' })
             + table([['Prospect', (p) => `<a href="${esc(links.base + '/' + p.host)}" target="_blank" rel="noopener">${esc(p.host)}</a>`], ['Visits', (p) => fmt(p.visits)], ['Reviews', (p) => fmt(p.reviews)], ['Paid', (p) => fmt(p.paid)], ['USD', (p) => fmt(p.usd)], ['Last visit', (p) => esc(p.last ? p.last.slice(0, 10) : '—')]], links.prospects, 'No prospect has opened a link yet.')
             + `<div class="jv-inline"><input id="jv-ql-host" type="text" placeholder="prospect.edu" aria-label="Prospect domain"><select id="jv-ql-lang" aria-label="Language">${['en', 'es', 'pt', 'de', 'fr', 'it'].map((l) => `<option>${l}</option>`).join('')}</select><button class="jv-btn" type="button" data-ql-build>Make and copy link</button> <a id="jv-ql-out" target="_blank" rel="noopener"></a></div>`
@@ -1069,9 +1080,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const head = countdown(counts) + kpis([
             { label: 'Marketing visits', value: socialTotal + outVisits.total },
             { label: 'Social posts', value: so ? so.sent : '—', alert: so && so.failed > 0 },
-            { label: 'Hub + post views', value: (hub.totals.hubViews || 0) + (hub.totals.postViews || 0) },
+            (hub.kpis || [])[0] || { label: 'Hub + post views', value: '—' },
             { label: 'YouTube views', value: so && so.youtube && so.youtube.views !== null && so.youtube.views !== undefined ? so.youtube.views : '—' },
-            { label: 'Prospects reviewed', value: pipe ? pipe.reviews : '—' },
+            pipe ? vsBefore('Prospects reviewed', pipe.reviews, pipe.priorReviews) : { label: 'Prospects reviewed', value: '—' },
             { label: 'Cold emails sent', value: mail ? mail.sent : '—' },
             { label: 'Replies', value: mail ? mail.replies : '—' },
             { label: 'Meetings', value: mail ? mail.meetings : '—' },
@@ -1452,7 +1463,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             if (visits) { main = visits; series = visits.series.values; }
             else if (p.key === 'traffic' && e.ga4 && e.ga4.ok) { const n = e.ga4.groups.reduce((a, g) => a + g.sessions, 0); const b = e.ga4.groups.reduce((a, g) => a + g.priorSessions, 0); const d = C.delta(n, b); main = { label: 'GA4 sessions', value: n, delta: d.text, dir: d.dir }; series = e.ga4.daily.map((x) => x.sessions); }
             if (p.key === 'systems') { const r = C.readiness(e); main = { label: 'Readiness', value: r === null ? '—' : r + '%' }; }
-            if (p.key === 'outreach' && e.outreach && e.outreach.pipeline && e.outreach.pipeline.ok) { main = { label: 'Prospects reviewed', value: e.outreach.pipeline.reviews }; series = e.outreach.pipeline.daily.map((x) => x.reviews); }
+            if (p.key === 'outreach' && e.outreach && e.outreach.pipeline && e.outreach.pipeline.ok) { main = vsBefore('Prospects reviewed', e.outreach.pipeline.reviews, e.outreach.pipeline.priorReviews); series = e.outreach.pipeline.daily.map((x) => x.reviews); }
             if (p.key === 'marketing') { main = { label: 'Marketing visits', value: socialVisits().reduce((n, r) => n + r.value, 0) + C.outreachVisits(S.rows.events).total }; series = e.social && e.social.ok ? e.social.daily.map((x) => x.posts) : []; }
             if (p.key === 'business' && e.money && e.money.ok) { const d = C.delta(e.money.revenue.usd, e.money.prior.usd); main = { label: 'Revenue (USD)', value: e.money.revenue.usd, delta: d.text, dir: d.dir }; series = e.money.daily.map((x) => x.usd); }
             const alerts = S.brief.filter((b) => inTab(b, p.key) && (b.level === 'alert' || b.level === 'warn')).length;
@@ -1502,7 +1513,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
         const hub = s.hub;
         out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${sharePanel()}${socialQueuePanel()}${socialRunsPanel()}${socialProposalsPanel()}
-            ${panel('hub-trend', 'Hub and post events per day', area(hub.series.labels, [{ name: 'Events', values: hub.series.values, color: COLORS.violet }]), { wide: true, data: hub.series.labels.map((d, k) => ({ day: d, events: hub.series.values[k] })) })}
+            ${panel('hub-trend', 'Hub and post views per day', area(hub.series.labels, [{ name: 'Views', values: hub.series.values, color: COLORS.violet }]), { wide: true, data: hub.series.labels.map((d, k) => ({ day: d, views: hub.series.values[k] })) })}
             ${listPanel('hub', 'posts', 'Top posts (score)', hub.lists.posts)}${listPanel('hub', 'sources', 'GA4 sources', hub.lists.sources, { color: COLORS.amber })}
             ${listPanel('hub', 'networks', 'Shares by network', hub.lists.networks, { color: COLORS.green })}${listPanel('hub', 'events', 'Events in range', hub.lists.events, { color: COLORS.violet })}${listPanel('hub', 'langs', 'Hub pages by language', hub.lists.langs)}
             ${speedCard('hub')}

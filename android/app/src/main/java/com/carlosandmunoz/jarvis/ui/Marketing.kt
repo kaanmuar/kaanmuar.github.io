@@ -118,8 +118,9 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
     Panel("Marketing") {
         KpiPairs(listOf(
             KpiData("Social posts", fmt(so.num("sent")), alert = (so.num("failed") ?: 0.0) > 0),
+            snap.obj("products").obj("hub").objs("kpis").firstOrNull()?.let(::kpiOf) ?: KpiData("Hub + post views", "—"),
             KpiData("YouTube views", fmt(so.obj("youtube").num("views"))),
-            KpiData("Prospects reviewed", fmt(pipe.num("reviews"))),
+            kpiVs("Prospects reviewed", pipe.num("reviews"), pipe.num("priorReviews")),
             KpiData("Cold emails sent", fmt(mail.num("sent"))),
             KpiData("Replies", fmt(mail.num("replies"))),
             KpiData("Meetings", fmt(mail.num("meetings"))),
