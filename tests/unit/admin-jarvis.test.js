@@ -96,6 +96,18 @@ test("the briefing ranks alerts first and readiness counts every check", () => {
   assert.equal(core.readiness({}), null);
 });
 
+test("URL review bugs the daily fix held back for the Cursor plan are an alert that lists them (#1982)", () => {
+  const needsAgent = [{ number: 330, title: "BE: bot walls", url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/330" }, { number: 1176, title: "BE: TLS", url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/1176" }];
+  const external = { github: { ok: true, ci: [], openBugs: 2, bugAreas: [], merged: { total: 0 }, needsAgent } };
+  const item = core.briefing({ products: {}, external }).find((row) => row.key === "github:needs-agent");
+  assert.equal(item.level, "alert");
+  assert.equal(item.text, "2 URL review bugs wait for the daily fix agent, held back to stay inside the Cursor plan: #330, #1176.");
+  const detail = core.briefDetail(item, { external });
+  assert.deepEqual(detail.facts, [{ label: "Waiting for an agent", value: "2" }]);
+  assert.deepEqual(detail.links.map((row) => row.url), needsAgent.map((row) => row.url));
+  assert.equal(core.briefing({ products: {}, external: { github: Object.assign({}, external.github, { needsAgent: [] }) } }).some((row) => row.key === "github:needs-agent"), false);
+});
+
 test("site visits add CV, Studio, Lab and URL Review, and a GA4 drop they do not share is consent, not an outage", () => {
   const product = (value, prior, values) => ({ kpis: [{ value, prior }], totals: { visits: value }, lists: {}, series: { labels: ["2026-10-25", "2026-10-26"], values } });
   const products = { cv: product(40, 50, [10, 30]), lab: product(5, 5, [5, 0]), review: product(60, 50, [20, 40]) };
