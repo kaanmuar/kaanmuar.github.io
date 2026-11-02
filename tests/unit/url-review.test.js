@@ -2617,6 +2617,16 @@ test("the review desk lists re-runs with their report summary and log", () => {
   assert.match(desk.PAGE, /\/desk\/rerun/);
 });
 
+test("both desk pages sign in through the modular Firebase build, which has the authenticator step (#2111)", () => {
+  const desk = require("../../functions/url-review-desk");
+  for (const page of [desk.PAGE, desk.FAILURES_PAGE]) {
+    assert.doesNotMatch(page, /-compat\.js/);
+    assert.match(page, /firebase-auth\.js/);
+    assert.match(page, /getMultiFactorResolver\(desk\.auth, error\)/);
+    assert.match(page, /desk\.fa\.TotpMultiFactorGenerator/);
+  }
+});
+
 test("the review reports carry a failure section with causes, sites, re-runs, open bugs and the trend", () => {
   const bot = (at, host) => failedAt(at, { host, url: "https://" + host + "/", cause: { id: "bot-protection" }, diagnosis: { cleared: false, nowLabel: "The plain read is refused (status 403)" } });
   const rows = [
