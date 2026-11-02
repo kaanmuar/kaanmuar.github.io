@@ -52,7 +52,13 @@
     if (!paths.length) paths.push(startPath);
     const slow = pages.slice().sort((a, b) => (b.ms || 0) - (a.ms || 0))[0];
     const observed = report.observed || {};
-    const geo = (report.insights && report.insights.geo) || {};
+    const insights = report.insights || {};
+    const geo = insights.geo || {};
+    const registered = (insights.security && insights.security.domain) || {};
+    const findings = {};
+    (insights.findings || []).forEach((finding) => {
+      if (finding && finding.id) findings[finding.id] = { key: finding.key || "", evidence: finding.evidence || "", title: (finding.msg && finding.msg.title && finding.msg.title.id) || "", cases: finding.cases || [] };
+    });
     return {
       base: start.origin,
       host: start.host,
@@ -64,6 +70,9 @@
       datedPath: geo.datedPath || "",
       scripts: Number(observed.scripts) || 0,
       h1: Array.isArray(observed.h1) && observed.h1[0] ? oneLine(observed.h1[0]) : "",
+      domain: registered.domain || start.hostname.replace(/^www\./, ""),
+      findings,
+      libraries: ((report.browser && report.browser.libraries) || []).filter((lib) => lib && lib.name && lib.version),
       label: "QA-lab URL Review · " + (report.host || start.host)
     };
   }
@@ -75,6 +84,7 @@
   const AI_BLOCK = "^user-agent:\\s*(?:OAI-SearchBot|ChatGPT-User|PerplexityBot|Perplexity-User|Claude-SearchBot|Claude-User|\\*)\\s*$(?:\\s*^user-agent:[^\\n]*$)*\\s*^disallow:\\s*/\\s*$";
   const MAX_AXE_PAGES = 6;
   const MAX_COOKIE_PAGES = 12;
+  const MAX_TITLE_PAGES = 20;
   const TRACKER_WAIT_MS = 5000;
 
   function pathsOf(item, at, max) {
@@ -91,6 +101,65 @@
 
   function axeCheck(item, at, rules) {
     return { kind: "axe", paths: pathsOf(item, at, MAX_AXE_PAGES), rules };
+  }
+
+  // The case's own pages first, then the other pages the review analyzed.
+  function spread(item, at, ctx, max) {
+    const all = pathsOf(item, at, max);
+    (ctx.paths || []).forEach((path) => { if (all.length < max && all.indexOf(path) === -1) all.push(path); });
+    return all;
+  }
+
+  // An in-page probe from PROBES, run on each path with a list of strings.
+  function probe(name, paths, args) {
+    return { kind: "probe", probe: name, paths, args };
+  }
+
+  // DNS answers read through Google's DNS-over-HTTPS JSON API, so every framework can check a record with its HTTP client.
+  function dnsText(name, pattern) {
+    return { kind: "text", url: "https://dns.google/resolve?name=" + encodeURIComponent(name) + "&type=TXT", pattern, match: true };
+  }
+
+  // The finding a case was built from: by the id ranking linked, else by key, else by the message the retest case quotes.
+  function findingOf(item, ctx, key) {
+    const findings = ctx.findings || {};
+    if (item.finding && findings[item.finding]) return findings[item.finding];
+    const byKey = key && Object.keys(findings).map((id) => findings[id]).find((finding) => finding.key === key);
+    if (byKey) return byKey;
+    const quoted = item.msg && item.msg.title && item.msg.title.vars && item.msg.title.vars.title;
+    const title = quoted && quoted.id ? String(quoted.id) : "";
+    return { key: title.split(".")[0], evidence: "", title, cases: [] };
+  }
+
+  // The flawed libraries the review named, as "via version url name" rows. A library seen only as a page global has no file to reread.
+  function libraryCheck(item, at, ctx) {
+    const evidence = findingOf(item, ctx, "sec-libraries").evidence;
+    const rows = [];
+    (ctx.libraries || []).forEach((lib) => {
+      if (!lib.url || lib.via === "global" || evidence.indexOf(lib.name + " " + lib.version + " (") === -1) return;
+      const row = lib.via + " " + lib.version + " " + lib.url + " " + lib.name;
+      if (rows.indexOf(row) === -1) rows.push(row);
+    });
+    return rows.length ? probe("library-versions", [at], rows) : { kind: "manual" };
+  }
+
+  // A retest case fails while the finding it came from is still true.
+  function retestCheck(item, at, ctx) {
+    const finding = findingOf(item, ctx);
+    const pages = pathsOf(item, at, MAX_AXE_PAGES);
+    switch (finding.key) {
+      case "pf-img-format": return probe("image-format", pages, []);
+      case "pf-img-size": return probe("image-size", pages, []);
+      case "seo-duplicate-titles": return probe("distinct-titles", [at], spread(item, at, ctx, MAX_TITLE_PAGES));
+      case "sec-libraries": return libraryCheck(item, at, ctx);
+      case "a11y-statement": return probe("accessibility-statement", spread(item, at, ctx, MAX_AXE_PAGES), []);
+      case "sec-spf": return dnsText(ctx.domain, "v=spf1");
+      case "sec-dmarc": return dnsText("_dmarc." + ctx.domain, finding.title === "sec-dmarc.monitor.title" ? "v=DMARC1\\s*;\\s*p=(quarantine|reject)" : "v=DMARC1");
+      default: {
+        const source = (finding.cases || []).find((id) => !/^RT-/.test(id));
+        return source ? checkFor(Object.assign({}, item, { id: source }), ctx) : { kind: "manual" };
+      }
+    }
   }
 
   function checkFor(item, ctx) {
@@ -149,13 +218,17 @@
       case "A11Y-04": return axeCheck(item, at, ["color-contrast"]);
       case "SEC-06": return { kind: "setCookies", paths: pathsOf(item, at, MAX_COOKIE_PAGES) };
       case "PR-03": return { kind: "trackers", path: at, wait: TRACKER_WAIT_MS };
+      case "FN-08": return probe("distinct-titles", [at], spread(item, at, ctx, MAX_TITLE_PAGES));
+      case "A11Y-06": return probe("accessibility-statement", spread(item, at, ctx, MAX_AXE_PAGES), []);
+      case "SEC-10": return libraryCheck(item, at, ctx);
       default:
         if (/^AXE-\d+$/.test(item.id) && axeRule(item)) return axeCheck(item, at, [axeRule(item)]);
+        if (/^RT-\d+$/.test(item.id)) return retestCheck(item, at, ctx);
         return { kind: "manual" };
     }
   }
 
-  const BROWSER_KINDS = ["status", "title", "count", "attr", "statusAll", "titleAll", "metaLength", "headers", "headerNoDigits", "httpsRedirect", "notFound", "robotsSitemap", "text", "budget", "viewport", "linksResolve", "journey", "axe", "setCookies", "trackers"];
+  const BROWSER_KINDS = ["status", "title", "count", "attr", "statusAll", "titleAll", "metaLength", "headers", "headerNoDigits", "httpsRedirect", "notFound", "robotsSitemap", "text", "budget", "viewport", "linksResolve", "journey", "axe", "setCookies", "trackers", "probe"];
 
   const AXE_URL = "https://cdn.jsdelivr.net/npm/axe-core@4.14.0/axe.min.js";
   // The same names and hosts the review's browser pass counts, so a script fails on what the report saw.
@@ -174,6 +247,37 @@
     " const requested = win.performance.getEntriesByType(\"resource\").map((entry) => { try { return new URL(entry.name).hostname; } catch (error) { return \"\"; } }).filter((host) => hosts.test(host));" +
     " const cookies = win.document.cookie.split(\";\").map((part) => part.split(\"=\")[0].trim()).filter((name) => names.test(name));" +
     " return [...new Set(requested)].map((host) => \"request to \" + host).concat(cookies.map((name) => \"cookie \" + name)); })";
+  // The images the review's browser pass weighs: rendered, at least 30 KB, read with the Accept header an img request sends.
+  const IMAGE_MIN = 30720;
+  const IMAGE_ROWS = "new Promise((resolve) => { win.scrollTo(0, win.document.body.scrollHeight); setTimeout(resolve, 1500); }).then(() => { win.scrollTo(0, 0); const seen = new Set();" +
+    " return Promise.all([...win.document.images].slice(0, 200).map((img) => { const box = img.getBoundingClientRect(); const src = img.currentSrc || img.src;" +
+    " if (!/^https?:/.test(src) || !box.width || !box.height || seen.has(src)) return null; seen.add(src);" +
+    " return win.fetch(src, { headers: { accept: \"image/avif,image/webp,image/*,*/*;q=0.8\" } }).then((res) => res.blob().then((blob) => ({ src, type: (res.headers.get(\"content-type\") || blob.type).split(\";\")[0].trim(), bytes: blob.size, nw: img.naturalWidth, w: Math.round(box.width) }))).catch(() => null);" +
+    " })).then((rows) => rows.filter((row) => row && row.bytes >= " + IMAGE_MIN + ")); })";
+  // The words, addresses and overlay hosts functions/url-review-legal.js reads as a link to an accessibility statement.
+  const STATEMENT = {
+    text: "^(web )?(accessibility|accesibilidad|acessibilidade|barrierefreiheit|accessibilit[ée]|accessibilit[àa])$|(statement|declaraci[oó]n|declara[cç][ãa]o|erkl[äa]rung|d[ée]claration|dichiarazione)\\b.{0,30}(accessib|accesib|acessib|barrierefrei)|(accessib|barrierefrei)\\S*\\s+(statement|erkl[äa]rung)|accessibilit[ée]\\s*:\\s*(non|partiellement|totalement)\\s+conforme",
+    href: "\\/[a-z-]*(accessib|accesib|acessib|barrierefrei)[a-z-]*(\\.[a-z]+)?\\/?$",
+    away: "\\/(forums?|blog|news|tags?|categor(y|ies)|topics?|support|help|kb|articles?|docs?|products?|collections?)\\/",
+    overlay: "(^|\\.)(accessibe\\.com|userway\\.org|audioeye\\.com|equalweb\\.com|userway\\.com|accessiblyapp\\.com|eye-able\\.com)$"
+  };
+  // Probes for cases without a check kind of their own. Each takes the window and a list of strings.
+  const PROBES = {
+    "image-format": "(win, args) => " + IMAGE_ROWS + ".then((rows) => rows.filter((row) => /^image\\/(jpeg|png|gif)$/i.test(row.type)).map((row) => row.src + \" is \" + row.type + \", \" + Math.round(row.bytes / 1024) + \" KB\"))",
+    "image-size": "(win, args) => " + IMAGE_ROWS + ".then((rows) => rows.filter((row) => row.nw > 2 * row.w).map((row) => row.src + \" is \" + row.nw + \" px wide, shown at \" + row.w + \" px\"))",
+    "distinct-titles": "(win, paths) => Promise.all(paths.map((path) => win.fetch(path).then((res) => res.text()).then((html) => [path, (new win.DOMParser().parseFromString(html, \"text/html\").title || \"\").replace(/\\s+/g, \" \").trim()], () => [path, \"\"])))" +
+      ".then((rows) => { const by = new Map(); rows.forEach((row) => { if (row[1]) by.set(row[1], (by.get(row[1]) || []).concat(row[0])); });" +
+      " return [...by.entries()].filter((entry) => entry[1].length > 1).map((entry) => \"'\" + entry[0] + \"' on \" + entry[1].join(\", \")); })",
+    "library-versions": "(win, rows) => Promise.all(rows.map((row) => { const parts = row.split(\" \"); const via = parts[0], version = parts[1], url = parts[2], label = parts.slice(3).join(\" \") + \" \" + version;" +
+      " if (via !== \"banner\") return [...win.document.scripts].some((script) => script.src === url) || win.performance.getEntriesByName(url).length ? [label + \" still loads from \" + url] : [];" +
+      " const same = new RegExp(\"(^|[^\\\\d.])\" + version.replace(/\\./g, \"\\\\.\") + \"(?![\\\\d.])\");" +
+      " return win.fetch(url, { cache: \"no-store\" }).then((res) => res.ok ? res.text() : \"\").then((text) => same.test(text.slice(0, 3000)) ? [label + \" is still served at \" + url] : [], () => [\"could not read \" + url]); }))" +
+      ".then((lists) => [].concat(...lists))",
+    "accessibility-statement": "(win, args) => { const text = new RegExp(" + q(STATEMENT.text) + ", \"i\"), href = new RegExp(" + q(STATEMENT.href) + ", \"i\"), away = new RegExp(" + q(STATEMENT.away) + ", \"i\"), overlay = new RegExp(" + q(STATEMENT.overlay) + ", \"i\");" +
+      " const links = [...win.document.querySelectorAll(\"a[href]\")].filter((link) => /^https?:$/.test(link.protocol) && !overlay.test(link.hostname)).map((link) => { let path = link.pathname; try { path = decodeURIComponent(path); } catch (error) { path = link.pathname; }" +
+      " return { path: path.toLowerCase(), words: (link.textContent || \"\").replace(/\\s+/g, \" \").trim() || link.getAttribute(\"aria-label\") || link.getAttribute(\"title\") || \"\" }; }).filter((link) => !away.test(link.path));" +
+      " return links.some((link) => text.test(link.words) || href.test(link.path)) ? [] : [\"no link to an accessibility statement\"]; }"
+  };
   // A Set-Cookie line that lacks Secure, or lacks HttpOnly on a session-like name, as the review's cookie finding reads it.
   const LOOSE_JS = "(line) => !/;\\s*secure\\s*(;|$)/i.test(line) || (/" + SESSION_COOKIE + "/i.test(line.split(\"=\")[0].trim()) && !/;\\s*httponly\\s*(;|$)/i.test(line))";
   const SECURE_RE = ";\\s*secure\\s*(;|$)";
@@ -182,6 +286,11 @@
   // The probe as a page function, for runners that pass a function and its argument to the page.
   function pageProbe(probe) {
     return probe.replace(/^\(win, (\w+)\) =>/, "($1) =>").replace(/\bwin\./g, "window.");
+  }
+
+  // A text check reads a page of the site, or an absolute address such as a DNS lookup.
+  function urlOf(check, quote) {
+    return check.url ? quote(check.url) : "BASE + " + quote(check.path);
   }
 
   function asyncScript(probe) {
@@ -252,7 +361,7 @@
         body.push("const res = await request.get(BASE + \"/robots.txt\");", "expect(await res.text()).toMatch(/^sitemap:/im);");
         break;
       case "text":
-        body.push("const res = await request.get(BASE + " + q(check.path) + ");", "expect(await res.text())." + (check.match ? "" : "not.") + "toMatch(new RegExp(" + q(check.pattern) + ", \"im\"));");
+        body.push("const res = await request.get(" + urlOf(check, q) + ");", "expect(await res.text())." + (check.match ? "" : "not.") + "toMatch(new RegExp(" + q(check.pattern) + ", \"im\"));");
         break;
       case "budget":
         body.push("const started = Date.now();", "const res = await request.get(BASE + " + q(check.path) + ");", "const body = await res.body();", "expect(res.status()).toBeLessThan(400);", "expect(Date.now() - started).toBeLessThan(" + check.ms + ");", "expect(body.length).toBeLessThan(" + check.bytes + ");");
@@ -280,6 +389,9 @@
         break;
       case "trackers":
         go(check.path); body.push("expect(await page.evaluate(" + pageProbe(TRACKERS_PROBE) + ", " + check.wait + ")).toEqual([]);");
+        break;
+      case "probe":
+        body.push("for (const path of " + JSON.stringify(check.paths) + ") {", "  await page.goto(BASE + path);", "  expect.soft(await page.evaluate(" + pageProbe(PROBES[check.probe]) + ", " + JSON.stringify(check.args) + "), path).toEqual([]);", "}");
         break;
       default:
         break;
@@ -334,7 +446,8 @@
         body.push("cy.request(BASE + \"/robots.txt\").its(\"body\").should(\"match\", /^sitemap:/im);");
         break;
       case "text":
-        body.push("cy.request({ url: BASE + " + q(check.path) + ", failOnStatusCode: false }).its(\"body\").should(\"" + (check.match ? "match" : "not.match") + "\", new RegExp(" + q(check.pattern) + ", \"im\"));");
+        if (check.url) body.push("cy.request({ url: " + q(check.url) + ", failOnStatusCode: false }).its(\"body\").then((body) => (typeof body === \"string\" ? body : JSON.stringify(body)))", "  .should(\"" + (check.match ? "match" : "not.match") + "\", new RegExp(" + q(check.pattern) + ", \"im\"));");
+        else body.push("cy.request({ url: BASE + " + q(check.path) + ", failOnStatusCode: false }).its(\"body\").should(\"" + (check.match ? "match" : "not.match") + "\", new RegExp(" + q(check.pattern) + ", \"im\"));");
         break;
       case "budget":
         body.push("cy.request(BASE + " + q(check.path) + ").then((res) => {", "  expect(res.status).to.be.lessThan(400);", "  expect(res.duration).to.be.lessThan(" + check.ms + ");", "  expect(String(res.body).length).to.be.lessThan(" + check.bytes + ");", "});");
@@ -363,6 +476,10 @@
       case "trackers":
         go(check.path); body.push("cy.window().then({ timeout: 30000 }, (win) => (" + TRACKERS_PROBE + ")(win, " + check.wait + "))", "  .then((problems) => expect(problems).to.deep.equal([]));");
         break;
+      case "probe":
+        body.push(JSON.stringify(check.paths) + ".forEach((path) => {", "  cy.visit(BASE + path);", "  cy.window().then({ timeout: 60000 }, (win) => (" + PROBES[check.probe] + ")(win, " + JSON.stringify(check.args) + "))",
+          "    .then((problems) => expect(problems, path).to.deep.equal([]));", "});");
+        break;
       default:
         break;
     }
@@ -378,7 +495,7 @@
     if (check.kind === "manual") {
       return "@pytest.mark.skip(reason=\"A person runs this case with access the owner provides.\")\ndef " + pyName(item) + "():\n" + doc + "\n";
     }
-    const browser = ["title", "titleAll", "count", "attr", "metaLength", "viewport", "linksResolve", "journey", "axe", "trackers"].indexOf(check.kind) !== -1;
+    const browser = ["title", "titleAll", "count", "attr", "metaLength", "viewport", "linksResolve", "journey", "axe", "trackers", "probe"].indexOf(check.kind) !== -1;
     const body = [];
     const go = (path) => body.push("driver.get(BASE + " + q(path) + ")");
     switch (check.kind) {
@@ -420,7 +537,7 @@
         body.push("text = requests.get(BASE + \"/robots.txt\", timeout=30).text", "assert re.search(r\"^sitemap:\", text, re.I | re.M)");
         break;
       case "text":
-        body.push("text = requests.get(BASE + " + q(check.path) + ", timeout=30).text", "assert " + (check.match ? "" : "not ") + "re.search(r\"" + check.pattern + "\", text, re.I | re.M)");
+        body.push("text = requests.get(" + urlOf(check, q) + ", timeout=30).text", "assert " + (check.match ? "" : "not ") + "re.search(r\"" + check.pattern + "\", text, re.I | re.M)");
         break;
       case "budget":
         body.push("started = time.perf_counter()", "res = requests.get(BASE + " + q(check.path) + ", timeout=30)", "elapsed_ms = (time.perf_counter() - started) * 1000", "assert res.status_code < 400", "assert elapsed_ms < " + check.ms, "assert len(res.content) < " + check.bytes);
@@ -448,6 +565,10 @@
         break;
       case "trackers":
         go(check.path); body.push("problems = driver.execute_async_script(" + q(asyncScript(TRACKERS_PROBE)) + ", " + check.wait + ")", "assert not problems, problems");
+        break;
+      case "probe":
+        body.push("problems = []", "for path in " + JSON.stringify(check.paths) + ":", "    driver.get(BASE + path)",
+          "    problems += [path + \" \" + problem for problem in driver.execute_async_script(" + q(asyncScript(PROBES[check.probe])) + ", " + JSON.stringify(check.args) + ")]", "assert not problems, problems");
         break;
       default:
         break;
@@ -511,7 +632,7 @@
         lines.push("    ${resp}=    GET    ${BASE}/robots.txt", "    Should Match Regexp    ${resp.text}    (?im)^sitemap:");
         break;
       case "text":
-        lines.push("    ${resp}=    GET    ${BASE}" + check.path + "    expected_status=any", "    Should " + (check.match ? "" : "Not ") + "Match Regexp    ${resp.text}    (?im)" + check.pattern.replace(/\\/g, "\\\\"));
+        lines.push("    ${resp}=    GET    " + (check.url || "${BASE}" + check.path) + "    expected_status=any", "    Should " + (check.match ? "" : "Not ") + "Match Regexp    ${resp.text}    (?im)" + check.pattern.replace(/\\/g, "\\\\"));
         break;
       case "budget":
         lines.push("    ${resp}=    GET    ${BASE}" + check.path, "    Should Be True    ${resp.status_code} < 400", "    Should Be True    ${resp.elapsed.total_seconds()} < " + (check.ms / 1000), "    ${size}=    Get Length    ${resp.content}", "    Should Be True    ${size} < " + check.bytes);
@@ -542,6 +663,13 @@
         break;
       case "trackers":
         open(check.path); lines.push("    Set Selenium Timeout    30 seconds", "    ${problems}=    Execute Async Javascript    " + robotCode(asyncScript(TRACKERS_PROBE)) + "    ARGUMENTS    ${" + check.wait + "}", "    Should Be Empty    ${problems}    ${problems}"); close();
+        break;
+      case "probe":
+        lines.push("    ${args}=    Create List" + check.args.map((arg) => "    " + robotCode(arg)).join(""));
+        open(check.paths[0]);
+        lines.push("    Set Selenium Timeout    60 seconds", "    FOR    ${path}    IN    " + check.paths.join("    "), "        Go To    ${BASE}${path}",
+          "        ${problems}=    Execute Async Javascript    " + robotCode(asyncScript(PROBES[check.probe])) + "    ARGUMENTS    ${args}", "        Should Be Empty    ${problems}    ${path}: ${problems}", "    END");
+        close();
         break;
       default:
         break;
@@ -595,7 +723,7 @@
         body.push("const res = await fetch(BASE + \"/robots.txt\");", "expect(await res.text()).toMatch(/^sitemap:/im);");
         break;
       case "text":
-        body.push("const res = await fetch(BASE + " + q(check.path) + ");", "expect(await res.text())." + (check.match ? "" : "not.") + "toMatch(new RegExp(" + q(check.pattern) + ", \"im\"));");
+        body.push("const res = await fetch(" + urlOf(check, q) + ");", "expect(await res.text())." + (check.match ? "" : "not.") + "toMatch(new RegExp(" + q(check.pattern) + ", \"im\"));");
         break;
       case "budget":
         body.push("const started = Date.now();", "const res = await fetch(BASE + " + q(check.path) + ");", "const body = await res.arrayBuffer();", "expect(res.status).toBeLessThan(400);", "expect(Date.now() - started).toBeLessThan(" + check.ms + ");", "expect(body.byteLength).toBeLessThan(" + check.bytes + ");");
@@ -623,6 +751,10 @@
         break;
       case "trackers":
         go(check.path); body.push("expect(await browser.execute(" + pageProbe(TRACKERS_PROBE) + ", " + check.wait + ")).toEqual([]);");
+        break;
+      case "probe":
+        body.push("const problems = [];", "for (const path of " + JSON.stringify(check.paths) + ") {", "  await browser.url(BASE + path);",
+          "  problems.push(...(await browser.execute(" + pageProbe(PROBES[check.probe]) + ", " + JSON.stringify(check.args) + ")).map((problem) => path + \" \" + problem));", "}", "expect(problems).toEqual([]);");
         break;
       default:
         break;
@@ -756,7 +888,7 @@
         body.push("const res = await fetch(BASE + \"/robots.txt\");", A.match("await res.text()", "/^sitemap:/im"));
         break;
       case "text":
-        body.push("const res = await fetch(BASE + " + q(check.path) + ");", (check.match ? A.match : A.noMatch)("await res.text()", "new RegExp(" + q(check.pattern) + ", \"im\")"));
+        body.push("const res = await fetch(" + urlOf(check, q) + ");", (check.match ? A.match : A.noMatch)("await res.text()", "new RegExp(" + q(check.pattern) + ", \"im\")"));
         break;
       case "budget":
         body.push("const started = Date.now();", "const res = await fetch(BASE + " + q(check.path) + ");", "const body = await res.arrayBuffer();", A.lt("res.status", 400), A.lt("Date.now() - started", check.ms), A.lt("body.byteLength", check.bytes));
@@ -784,6 +916,10 @@
         break;
       case "trackers":
         go(check.path); body.push("const problems = " + D.run(pageProbe(TRACKERS_PROBE), String(check.wait)) + ";", A.none("problems"));
+        break;
+      case "probe":
+        body.push("const problems = [];", "for (const path of " + JSON.stringify(check.paths) + ") {", "  " + D.go("path"),
+          "  problems.push(...(" + D.run(pageProbe(PROBES[check.probe]), JSON.stringify(check.args)) + ").map((problem) => path + \" \" + problem));", "}", A.none("problems"));
         break;
       default:
         break;
@@ -880,7 +1016,7 @@
         body.push("String robots = new String(get(BASE + \"/robots.txt\").body(), StandardCharsets.UTF_8);", ok("Pattern.compile(\"^sitemap:\", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(robots).find()", "\"sitemap\""));
         break;
       case "text":
-        body.push("String text = new String(get(BASE + " + q(check.path) + ").body(), StandardCharsets.UTF_8);", ok((check.match ? "" : "!") + "Pattern.compile(" + q(check.pattern) + ", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(text).find()", q(check.path)));
+        body.push("String text = new String(get(" + urlOf(check, q) + ").body(), StandardCharsets.UTF_8);", ok((check.match ? "" : "!") + "Pattern.compile(" + q(check.pattern) + ", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(text).find()", q(check.url || check.path)));
         break;
       case "budget":
         body.push("long started = System.nanoTime();", "HttpResponse<byte[]> res = get(BASE + " + q(check.path) + ");", "long elapsedMs = (System.nanoTime() - started) / 1_000_000;", ok("res.statusCode() < 400", "\"status \" + res.statusCode()"), ok("elapsedMs < " + check.ms, "elapsedMs + \" ms\""), ok("res.body().length < " + check.bytes, "res.body().length + \" bytes\""));
@@ -911,6 +1047,10 @@
         break;
       case "trackers":
         go(check.path); body.push("List<?> problems = (List<?>) " + D.runAsync(asyncScript(TRACKERS_PROBE), String(check.wait)) + ";", ok("problems.isEmpty()", "String.valueOf(problems)"));
+        break;
+      case "probe":
+        body.push("List<String> problems = new ArrayList<>();", "for (String path : List.of(" + check.paths.map(q).join(", ") + ")) {", "  " + D.go("path"),
+          "  for (Object problem : (List<?>) " + D.runAsync(asyncScript(PROBES[check.probe]), "List.of(" + check.args.map(q).join(", ") + ")") + ") problems.add(path + \" \" + problem);", "}", ok("problems.isEmpty()", "String.valueOf(problems)"));
         break;
       default:
         break;
@@ -993,7 +1133,7 @@
         body.push("expect(http_get(BASE + \"/robots.txt\").body.to_s).to match(/^sitemap:/i)");
         break;
       case "text":
-        body.push("expect(http_get(BASE + " + rb(check.path) + ").body.to_s)." + (check.match ? "to" : "not_to") + " match(Regexp.new(" + rb(check.pattern) + ", Regexp::IGNORECASE))");
+        body.push("expect(http_get(" + urlOf(check, rb) + ").body.to_s)." + (check.match ? "to" : "not_to") + " match(Regexp.new(" + rb(check.pattern) + ", Regexp::IGNORECASE))");
         break;
       case "budget":
         body.push("started = Process.clock_gettime(Process::CLOCK_MONOTONIC)", "res = http_get(BASE + " + rb(check.path) + ")", "elapsed_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000", "expect(res.code.to_i).to be < 400", "expect(elapsed_ms).to be < " + check.ms, "expect(res.body.to_s.bytesize).to be < " + check.bytes);
@@ -1021,6 +1161,10 @@
         break;
       case "trackers":
         go(rb(check.path)); body.push("expect(@browser.driver.execute_async_script(" + rb(asyncScript(TRACKERS_PROBE)) + ", " + check.wait + ")).to be_empty");
+        break;
+      case "probe":
+        body.push("problems = []", "[" + check.paths.map(rb).join(", ") + "].each do |path|", "  @browser.goto(BASE + path)",
+          "  problems += @browser.driver.execute_async_script(" + rb(asyncScript(PROBES[check.probe])) + ", [" + check.args.map(rb).join(", ") + "]).map { |problem| \"#{path} #{problem}\" }", "end", "expect(problems).to be_empty");
         break;
       default:
         break;
@@ -1096,7 +1240,7 @@
         steps.push("Then robots.txt advertises a sitemap");
         break;
       case "text":
-        steps.push("Then the body of " + gq(check.path) + (check.match ? " matches " : " does not match ") + gq(check.pattern));
+        steps.push("Then the body of " + gq(check.url || check.path) + (check.match ? " matches " : " does not match ") + gq(check.pattern));
         break;
       case "budget":
         steps.push("Then " + gq(check.path) + " answers within " + check.ms + " ms and under " + check.bytes + " bytes");
@@ -1120,6 +1264,9 @@
         break;
       case "trackers":
         open(check.path); steps.push("Then no tracker request or tracking cookie appears in the first " + Math.round(check.wait / 1000) + " seconds");
+        break;
+      case "probe":
+        check.paths.forEach((path) => steps.push("Then the " + gq(check.probe) + " page check finds no problem on " + gq(path) + " with these values:", "| value |", ...check.args.map((arg) => "| " + gCell(arg) + " |")));
         break;
       default:
         return scenario(item, ["@manual", "@ignore"], ["Given this case is run by a person with access the owner provides"], notes);
@@ -1193,6 +1340,9 @@
       .replace(/__LOOSE__/g, () => LOOSE_JS)
       .replace(/__AXE_SCRIPT__/g, () => q(asyncScript(AXE_PROBE)))
       .replace(/__TRACKERS_SCRIPT__/g, () => q(asyncScript(TRACKERS_PROBE)))
+      .replace(/__PROBES_PAGE__/g, () => "{\n" + Object.keys(PROBES).map((key) => "  " + q(key) + ": " + pageProbe(PROBES[key])).join(",\n") + "\n}")
+      .replace(/__PROBES_SCRIPT__/g, () => "{\n" + Object.keys(PROBES).map((key) => "    " + q(key) + ": " + q(asyncScript(PROBES[key])) + ",").join("\n") + "\n}")
+      .replace(/__PROBES_CS__/g, () => "new Dictionary<string, string>\n        {\n" + Object.keys(PROBES).map((key) => "            { " + q(key) + ", " + q(asyncScript(PROBES[key])) + " }").join(",\n") + "\n        }")
       .replace(/__SESSION__/g, () => q(SESSION_COOKIE));
   }
 
@@ -1205,6 +1355,7 @@ const { chromium } = require("playwright");
 const BASE = __BASE__;
 const HOST = __HOST__;
 const MISSING = __MISSING__;
+const PROBES = __PROBES_PAGE__;
 
 setDefaultTimeout(60 * 1000);
 let browser;
@@ -1317,7 +1468,7 @@ Then(/^robots\.txt advertises a sitemap$/, async function () {
 });
 
 Then(/^the body of "([^"]*)" (matches|does not match) "([^"]*)"$/, async function (path, verb, pattern) {
-  const res = await fetch(BASE + path);
+  const res = await fetch(/^https?:\/\//.test(path) ? path : BASE + path);
   const text = await res.text();
   if (verb === "matches") assert.match(text, new RegExp(pattern, "im"));
   else assert.doesNotMatch(text, new RegExp(pattern, "im"));
@@ -1355,6 +1506,11 @@ Then(/^cookies set by these paths are Secure, and HttpOnly when they carry a ses
 Then(/^no tracker request or tracking cookie appears in the first (\d+) seconds$/, async function (seconds) {
   assert.deepEqual(await this.page.evaluate(__TRACKERS_PAGE__, Number(seconds) * 1000), []);
 });
+
+Then(/^the "([^"]*)" page check finds no problem on "([^"]*)" with these values:$/, async function (probe, path, table) {
+  await this.page.goto(BASE + path);
+  assert.deepEqual(await this.page.evaluate(PROBES[probe], table.hashes().map((row) => row.value)), []);
+});
 `;
 
   const BEHAVE_STEPS = String.raw`# __LINE__
@@ -1376,6 +1532,7 @@ AXE_URL = __AXE_URL__
 AXE_SCRIPT = __AXE_SCRIPT__
 TRACKERS_SCRIPT = __TRACKERS_SCRIPT__
 SESSION_COOKIE = __SESSION__
+PROBES = __PROBES_SCRIPT__
 
 
 def driver(context):
@@ -1517,7 +1674,7 @@ def robots_sitemap(context):
 
 @step(r'the body of "(?P<path>[^"]*)" (?P<verb>matches|does not match) "(?P<pattern>[^"]*)"')
 def body_matches(context, path, verb, pattern):
-    text = requests.get(BASE + path, timeout=30).text
+    text = requests.get(path if re.match(r"https?://", path) else BASE + path, timeout=30).text
     assert bool(re.search(pattern, text, re.I | re.M)) == (verb == "matches"), path
 
 
@@ -1556,6 +1713,13 @@ def cookies_flagged(context):
 @step(r"no tracker request or tracking cookie appears in the first (?P<seconds>\d+) seconds")
 def no_trackers(context, seconds):
     problems = driver(context).execute_async_script(TRACKERS_SCRIPT, int(seconds) * 1000)
+    assert not problems, problems
+
+
+@step(r'the "(?P<probe>[^"]*)" page check finds no problem on "(?P<path>[^"]*)" with these values:')
+def probe_clean(context, probe, path):
+    driver(context).get(BASE + path)
+    problems = driver(context).execute_async_script(PROBES[probe], [row["value"] for row in context.table])
     assert not problems, problems
 `;
 
@@ -1596,6 +1760,7 @@ namespace QaLab
         const string AxeScript = __AXE_SCRIPT__;
         const string TrackersScript = __TRACKERS_SCRIPT__;
         const string SessionCookie = __SESSION__;
+        static readonly Dictionary<string, string> Probes = __PROBES_CS__;
         static readonly HttpClient Http = new HttpClient(new HttpClientHandler { AllowAutoRedirect = true }) { Timeout = TimeSpan.FromSeconds(30) };
         static readonly HttpClient Raw = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(30) };
         static IWebDriver driver;
@@ -1747,7 +1912,7 @@ namespace QaLab
         [StepDefinition(@"^the body of ""([^""]*)"" (matches|does not match) ""([^""]*)""$")]
         public void BodyMatches(string path, string verb, string pattern)
         {
-            var text = Get(BaseUrl + path).Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var text = Get(Regex.IsMatch(path, "^https?://") ? path : BaseUrl + path).Content.ReadAsStringAsync().GetAwaiter().GetResult();
             Assert.That(Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline), Is.EqualTo(verb == "matches"), path);
         }
 
@@ -1799,6 +1964,16 @@ namespace QaLab
         public void NoTrackers(int seconds)
         {
             var problems = (IReadOnlyCollection<object>)RunAsync(TrackersScript, seconds * 1000);
+            Assert.That(problems, Is.Empty, string.Join("; ", problems));
+        }
+
+        [StepDefinition(@"^the ""([^""]*)"" page check finds no problem on ""([^""]*)"" with these values:$")]
+        public void ProbeClean(string probe, string path, DataTable table)
+        {
+            Driver.Navigate().GoToUrl(BaseUrl + path);
+            var values = new List<string>();
+            foreach (var row in table.Rows) values.Add(row["value"]);
+            var problems = (IReadOnlyCollection<object>)RunAsync(Probes[probe], new object[] { values.ToArray() });
             Assert.That(problems, Is.Empty, string.Join("; ", problems));
         }
     }
