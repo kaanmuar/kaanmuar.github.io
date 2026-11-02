@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
 // Firestore is an in-memory stub seeded from window.__data (collection name → rows), and the
-// owner-only /jarvis function is answered by page.route, so the whole Statistics tab runs offline.
+// owner-only /jarvis function is answered by page.route (its rows op from the same seed), so the whole Statistics tab runs offline.
 const FIREBASE = 'https://www.gstatic.com/firebasejs/10.14.1/';
 const STUBS = {
   'firebase-app.js': 'export function initializeApp() { return {}; }',
@@ -153,7 +153,8 @@ function seed() {
 
 async function openStats(page, hash, extra) {
   const calls = [];
-  await page.addInitScript((data) => { window.__data = data; }, seed());
+  const data = seed();
+  await page.addInitScript((rows) => { window.__data = rows; }, data);
   for (const [file, body] of Object.entries(STUBS)) {
     await page.route(FIREBASE + file, (route) => route.fulfill({ contentType: 'text/javascript', body }));
   }
@@ -164,6 +165,7 @@ async function openStats(page, hash, extra) {
     calls.push({ op: body.op, auth: request.headers().authorization, body });
     if (body.op === 'brief-mark') return route.fulfill({ json: { op: body.op, ok: true, key: body.key, status: body.status, until: new Date(Date.now() + 864e5).toISOString() }, headers: { 'Access-Control-Allow-Origin': '*' } });
     if (body.op === 'settings-save') return route.fulfill({ json: Object.assign({ op: body.op, ok: true, updatedAt: new Date().toISOString() }, body.settings), headers: { 'Access-Control-Allow-Origin': '*' } });
+    if (body.op === 'rows') return route.fulfill({ json: { op: body.op, ok: true, from: body.from, events: data.site_events, opens: data.url_review_opens, reviews: data.url_reviews, alerts: data.url_review_alerts }, headers: { 'Access-Control-Allow-Origin': '*' } });
     const answer = (extra || {})[body.op] || EXTERNAL[body.op] || (body.op === 'brief' || body.op === 'ask' ? { ok: true, text: 'Jarvis says the CV is up. Next: answer the inbox.' } : { ok: true, ran: body.job });
     return route.fulfill({ json: Object.assign({ op: body.op }, answer), headers: { 'Access-Control-Allow-Origin': '*' } });
   });
@@ -187,7 +189,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls', 'device']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['rows', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls', 'device']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
     expect(calls.every((c) => c.body.device?.kind === 'desktop' && c.body.device.app === 'web')).toBe(true);
 
