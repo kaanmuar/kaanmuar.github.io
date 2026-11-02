@@ -96,7 +96,21 @@ const EXTERNAL = {
     commands: { pending: 0, items: [] } },
   'marketing-command': { ok: true, queued: 'c1', action: 'approve', label: 'Approve ana@uni.edu.co (W1)' },
   engagement: require('./fixtures/jarvis-engagement.json'),
-  'engagement-decide': { ok: true, message: 'Edited and approved.' }
+  'engagement-decide': { ok: true, message: 'Edited and approved.' },
+  people: { ok: true, since: '2026-11-01', more: 0,
+    totals: { people: 2, active: 2, new: 1, returning: 1, visits: 3, activeMs: 1260000, avgVisitMs: 420000, runs: 2 },
+    testTotals: { people: 1, active: 1, new: 1, returning: 0, visits: 1, activeMs: 5000, avgVisitMs: 5000, runs: 0 },
+    allTotals: { people: 3, active: 3, new: 2, returning: 1, visits: 4, activeMs: 1265000, avgVisitMs: 316250, runs: 2 },
+    people: [
+      { email: 'ana@ruiz.co', name: 'Ana Ruiz', picture: '', providers: ['google.com'], test: false, firstAt: '2026-10-21T15:00:00.000Z', lastSignInAt: '2026-11-01T14:00:00.000Z', lastSeenAt: '2026-11-01T15:20:00.000Z',
+        visits: 3, returns: 2, days: 3, views: 7, activeMs: 1200000, avgVisitMs: 400000, runs: 2, paid: 1,
+        urls: [{ url: 'https://ana-shop.co/', at: '2026-11-01T15:05:00.000Z', status: 'done', paid: true }, { url: 'https://ana-shop.co/blog', at: '2026-10-25T10:00:00.000Z', status: 'done', paid: false }],
+        recent: [{ startedAt: '2026-11-01T15:00:00.000Z', lastAt: '2026-11-01T15:20:00.000Z', activeMs: 840000, views: 4, pages: ['qa-review.html', 'qa-review-account.html'] }, { startedAt: '2026-10-28T12:00:00.000Z', lastAt: '2026-10-28T12:05:00.000Z', activeMs: 300000, views: 2, pages: ['qa-review-es.html'] }] },
+      { email: 'leo@uni.edu', name: '', picture: '', providers: ['email'], test: false, firstAt: '2026-10-30T09:00:00.000Z', lastSignInAt: '2026-10-30T09:00:00.000Z', lastSeenAt: '2026-10-30T09:10:00.000Z',
+        visits: 1, returns: 0, days: 1, views: 1, activeMs: 60000, avgVisitMs: 60000, runs: 0, paid: 0, urls: [], recent: [{ startedAt: '2026-10-30T09:00:00.000Z', lastAt: '2026-10-30T09:10:00.000Z', activeMs: 60000, views: 1, pages: ['qa-review.html'] }] },
+      { email: 'playwright@example.com', name: '', picture: '', providers: ['email'], test: true, firstAt: '2026-10-31T09:00:00.000Z', lastSignInAt: '2026-10-31T09:00:00.000Z', lastSeenAt: '2026-10-31T09:00:00.000Z',
+        visits: 1, returns: 0, days: 1, views: 1, activeMs: 5000, avgVisitMs: 5000, runs: 0, paid: 0, urls: [], recent: [] }
+    ] }
 };
 
 function seed() {
@@ -157,7 +171,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -311,6 +325,30 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect.poll(() => calls.filter((c) => c.op === 'share-queue').map((c) => [c.body.id, c.body.draft.x])).toEqual([['new1', 'Edited X post']]);
     await expect(page.locator('.jv-toast')).toContainText('Queued.');
     await expect(share.locator('[data-share-caption]')).toHaveValue('');
+  });
+
+  test('URL Review lists the signed-in people, their runs, returns and time, and the switch keeps tests apart (#1976)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.setViewportSize({ width: 1280, height: 1000 });
+    await openStats(page, '#stats/review/30');
+    const people = page.locator('[data-view="review"] [data-panel-id="review-people"]');
+    await expect(people).toContainText('Signed-in people · 2');
+    await expect(people.locator('.jv-stats')).toContainText('21 min');
+    await expect(people).not.toContainText('playwright@example.com');
+    const ana = people.locator('[data-person="ana@ruiz.co"]');
+    await expect(ana).toContainText('back 2×');
+    await ana.locator('summary').click();
+    await expect(ana).toContainText('ana-shop.co/blog');
+    await expect(ana).toContainText('qa-review-account.html');
+    await people.scrollIntoViewIfNeeded();
+    await people.screenshot({ path: 'test-results/jarvis-signed-in-people.png' });
+    await page.locator('.jv-seg [data-mail="test"]').click();
+    await expect(people).toContainText('playwright@example.com');
+    await expect(people).not.toContainText('Ana Ruiz');
+    await page.locator('.jv-seg [data-mail="real"]').click();
+    await expect(people.locator('[data-person="ana@ruiz.co"]')).toHaveAttribute('open', '');
+    expect(errors).toEqual([]);
   });
 
   test('Engagement shows the reply drafts, the scout and the networks, and Approve, Dismiss and Pause go through the function (#1988)', async ({ page }) => {
