@@ -140,10 +140,13 @@ private fun NumbersBody(saved: Pair<JsonObject, Long>?, days: Int) {
     if (saved == null) return SignedOut(open, title)
     val cells = Home.numbers(saved.first)
     val size = LocalSize.current
-    val cellW = (size.width - 28.dp - 10.dp) / 2
-    val rowH = (size.height - 44.dp) / 2
+    // Wide and short, as on an unfolded Fold's home screen (#2068): every number in one row.
+    val across = if (size.width >= 400.dp && size.height < 170.dp) cells.size.coerceAtLeast(1) else 2
+    val rows = (cells.size + across - 1) / across
+    val cellW = (size.width - 28.dp - 10.dp * (across - 1)) / across
+    val rowH = (size.height - 44.dp) / rows.coerceAtLeast(1)
     Glass(open, title) {
-        cells.chunked(2).forEach { pair ->
+        cells.chunked(across).forEach { pair ->
             Row(GlanceModifier.fillMaxWidth().height(rowH)) {
                 pair.forEachIndexed { i, cell ->
                     if (i > 0) Spacer(GlanceModifier.width(10.dp))
@@ -193,12 +196,13 @@ private fun NeedsBody(saved: Pair<JsonObject, Long>?, needs: List<Home.Need>) {
     if (saved == null) return SignedOut(open, "Needs you")
     val decide = needs.count { it.kind != "proposal" }
     val fits = ((LocalSize.current.height.value - 44) / 34).toInt().coerceIn(1, 9)
+    val shown = shown(needs.size, fits)
     Glass(open, if (decide > 0) "Needs you · $decide" else "Needs you") {
         if (needs.isEmpty()) {
             Text("Nothing waiting on you", style = TextStyle(color = color(Art.GREEN), fontSize = 14.sp, fontWeight = FontWeight.Medium))
             Text("Notices, social picks and Jarvis's suggestions show up here.", style = Muted, maxLines = 2)
         }
-        needs.take(fits).forEach { n ->
+        Split(needs, fits) { n ->
             val tap = if (n.kind == "proposal") Home.open(context, n.tab ?: "overview").setData(Uri.parse("jarvis://open/" + (n.tab ?: "overview") + "/" + n.id))
                 else ConfirmActivity.intent(context, n)
             Row(GlanceModifier.fillMaxWidth().height(34.dp).clickable(actionStartActivity(tap)), verticalAlignment = Alignment.CenterVertically) {
@@ -212,7 +216,7 @@ private fun NeedsBody(saved: Pair<JsonObject, Long>?, needs: List<Home.Need>) {
                 Text(if (n.kind == "proposal") "Open ›" else "Review ›", style = TextStyle(color = color(Art.CYAN), fontSize = 10.sp, fontFamily = FontFamily.Monospace))
             }
         }
-        if (needs.size > fits) Text("+${needs.size - fits} more in Jarvis", style = Muted, maxLines = 1)
+        if (needs.size > shown) Text("+${needs.size - shown} more in Jarvis", style = Muted, maxLines = 1)
     }
 }
 
@@ -236,10 +240,11 @@ private fun AlertsBody(saved: Pair<JsonObject, Long>?) {
     val st = Home.status(saved.first)
     val alerts = Home.alerts(saved.first)
     val fits = ((LocalSize.current.height.value - 64) / 32).toInt().coerceIn(1, 7)
+    val shown = shown(alerts.size, fits)
     Glass(open, "Alerts") {
         Text(st.headline, style = TextStyle(color = color(if (st.alerts > 0) Art.PINK else if (st.warns > 0) Art.AMBER else Art.GREEN), fontSize = 13.sp, fontWeight = FontWeight.Bold), maxLines = 1)
         Spacer(GlanceModifier.height(2.dp))
-        alerts.take(fits).forEachIndexed { i, a ->
+        Split(alerts.withIndex().toList(), fits) { (i, a) ->
             val tap = Home.open(context, a.tab).setData(Uri.parse("jarvis://open/" + a.tab + "/alert/" + i))
             Row(GlanceModifier.fillMaxWidth().height(32.dp).clickable(actionStartActivity(tap)), verticalAlignment = Alignment.CenterVertically) {
                 Text("●", style = TextStyle(color = color(Art.level(a.level)), fontSize = 9.sp))
@@ -250,7 +255,7 @@ private fun AlertsBody(saved: Pair<JsonObject, Long>?) {
                 }
             }
         }
-        if (alerts.size > fits) Text("+${alerts.size - fits} more in Jarvis", style = Muted, maxLines = 1)
+        if (alerts.size > shown) Text("+${alerts.size - shown} more in Jarvis", style = Muted, maxLines = 1)
         else if (alerts.isEmpty()) Text("Nothing in today's briefing. Updated " + ago(saved.second) + ".", style = Muted, maxLines = 2)
     }
 }
@@ -344,6 +349,25 @@ private fun LineRow(line: Home.Line, labelWidth: Dp = 84.dp, dot: Boolean = fals
 /** Rows that fit the widget, at most nine so a trailing link still fits Glance's ten children per Column. */
 private fun fits(height: Dp, used: Int, row: Int) = ((height.value - used) / row).toInt().coerceIn(1, 9)
 
+/** Two columns once the widget is wide enough and the rows overflow one, as on an unfolded Fold's home screen (#2068). */
+@Composable
+private fun columns(count: Int, fits: Int) = if (LocalSize.current.width >= 400.dp && count > fits) 2 else 1
+
+@Composable
+private fun shown(count: Int, fits: Int) = min(count, fits * columns(count, fits))
+
+/** The rows that fit, continued in a second column when [columns] says so; each column keeps under Glance's ten children. */
+@Composable
+private fun <T> Split(items: List<T>, fits: Int, row: @Composable (T) -> Unit) {
+    if (columns(items.size, fits) == 1) { items.take(fits).forEach { row(it) }; return }
+    Row(GlanceModifier.fillMaxWidth()) {
+        items.take(fits * 2).chunked(fits).forEachIndexed { i, col ->
+            if (i > 0) Spacer(GlanceModifier.width(14.dp))
+            Column(GlanceModifier.defaultWeight()) { col.forEach { row(it) } }
+        }
+    }
+}
+
 // ---------------------------------------------------------------- Site health
 
 class HealthWidget : GlanceAppWidget() {
@@ -362,7 +386,7 @@ private fun HealthBody(saved: Pair<JsonObject, Long>?, lines: List<Home.Line>) {
     if (saved == null) return SignedOut(open, "Site health")
     Glass(open, "Site health") {
         if (lines.isEmpty()) Text("No health data in the last snapshot.", style = Muted)
-        lines.take(fits(LocalSize.current.height, 44, 24)).forEach { LineRow(it) }
+        Split(lines, fits(LocalSize.current.height, 44, 24)) { LineRow(it) }
     }
 }
 
@@ -385,7 +409,7 @@ private fun SocialBody(saved: Pair<JsonObject, Long>?, queue: Home.Queue?) {
     if (saved == null || queue == null) return SignedOut(open, "Social queue")
     Glass(open, "Social · ${queue.count} queued") {
         if (queue.rows.isEmpty()) Text("Nothing scheduled. Approve picks or share a post to fill the queue.", style = Muted, maxLines = 2)
-        queue.rows.take(fits(LocalSize.current.height, 70, 24)).forEach { LineRow(it, 76.dp) }
+        Split(queue.rows, fits(LocalSize.current.height, 70, 24)) { LineRow(it, 76.dp) }
         if (queue.count > 0) Row(GlanceModifier.fillMaxWidth()) {
             Spacer(GlanceModifier.defaultWeight())
             val post = ConfirmActivity.intent(context, Home.Need("post", "queue", "Post the queue now", Home.plural(queue.count, "scheduled post"), "info"))
@@ -413,7 +437,7 @@ private fun NextBody(saved: Pair<JsonObject, Long>?, lines: List<Home.Line>) {
     if (saved == null) return SignedOut(open, "Next up")
     Glass(open, "Next up") {
         if (lines.isEmpty()) Text("No scheduled runs ahead in the last snapshot.", style = Muted, maxLines = 2)
-        lines.take(fits(LocalSize.current.height, 44, 24)).forEach { LineRow(it, dot = true) }
+        Split(lines, fits(LocalSize.current.height, 44, 24)) { LineRow(it, dot = true) }
     }
 }
 
@@ -472,7 +496,7 @@ private fun MarketingBody(saved: Pair<JsonObject, Long>?, card: Home.MarketingCa
         if (card.headline != null) Text(card.headline, style = TextStyle(color = color(Art.VIOLET), fontSize = 15.sp, fontWeight = FontWeight.Bold), maxLines = 1,
             modifier = GlanceModifier.padding(bottom = 4.dp))
         if (card.lines.isEmpty()) Text("No marketing numbers in the last snapshot.", style = Muted, maxLines = 2)
-        card.lines.take(fits(LocalSize.current.height, if (card.headline != null) 68 else 44, 24)).forEach { LineRow(it, 70.dp) }
+        Split(card.lines, fits(LocalSize.current.height, if (card.headline != null) 68 else 44, 24)) { LineRow(it, 70.dp) }
     }
 }
 
