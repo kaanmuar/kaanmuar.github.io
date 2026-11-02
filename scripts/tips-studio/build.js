@@ -37,7 +37,9 @@
    A source names its social hub kind with studio.KIND or tip.kind (trick, news, advice, compare, myth, quiz, term,
    skit, series); a quiz sets tip.answer to the id of the tip that reveals it, tip.steps and tip.term are optional.
    --rotate writes voiced/<slug>.mp4 and voiced/<slug>.json (language, speech, TikTok and YouTube copy)
-   for clips already queued, and leaves the stills, calendar, and Buffer CSVs alone. */
+   for clips already queued, and leaves the stills, calendar, and Buffer CSVs alone.
+   With STRICT_TRANSLATE set, a translator that refuses stops the build with exit 75 before anything is drawn, so no
+   clip goes out in English (studio-render.js sets it and hands the strings to an agent). */
 
 const fs = require("fs");
 const path = require("path");
@@ -496,6 +498,7 @@ function rewriteCaptions(all, networks) {
     const args = [path.join(__dirname, "translate.py"), OUT].concat(process.env.CI ? ["--drop-slips"] : []);
     const run = spawnSync(process.env.PYTHON || "python3", args, { stdio: "inherit" });
     if (run.status === 3) { console.error("translations speak in the wrong register; nothing was rendered"); process.exit(1); }
+    if (run.status !== 0 && process.env.STRICT_TRANSLATE) { console.error("translation failed; nothing was rendered (STRICT_TRANSLATE)"); process.exit(75); }
     if (run.status !== 0) console.warn("translation failed; untranslated clips speak English");
   }
   const i18n = loadI18n();
