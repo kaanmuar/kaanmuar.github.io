@@ -96,6 +96,15 @@ test("the briefing ranks alerts first and readiness counts every check", () => {
   assert.equal(core.readiness({}), null);
 });
 
+test("an empty briefing names down connections and low readiness instead of all clear (#2266)", () => {
+  const conns = [{ state: "live" }, { state: "down" }, { state: "partial" }, { state: "off" }, { state: "loading" }];
+  assert.equal(core.systemsNote(conns, 71, 80), "2 connections need a look");
+  assert.equal(core.systemsNote([{ state: "down" }], 95, 80), "1 connection needs a look");
+  assert.equal(core.systemsNote([{ state: "live" }, { state: "off" }], 71, 80), "Readiness below 80%");
+  assert.equal(core.systemsNote([{ state: "live" }], 92, 80), "");
+  assert.equal(core.systemsNote([], null, 80), "");
+});
+
 test("URL review bugs the daily fix held back for the Cursor plan are an alert that lists them (#1982)", () => {
   const needsAgent = [{ number: 330, title: "BE: bot walls", url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/330" }, { number: 1176, title: "BE: TLS", url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/1176" }];
   const external = { github: { ok: true, ci: [], openBugs: 2, bugAreas: [], merged: { total: 0 }, needsAgent } };
