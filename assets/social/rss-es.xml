@@ -65,20 +65,20 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/07-u-cgb-edu-co.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>onepagelove.com: 81. The gap: form labels.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-27/06-u-onepagelove-com.html</link>
-      <guid isPermaLink="false">auto-2026-10-27/06-u-onepagelove-com</guid>
+      <title>onepagelove.com: 81. El punto débil: etiquetas de formulario.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-27/06-u-onepagelove-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-10-27/06-u-onepagelove-com-es</guid>
       <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
       <category>Revisión de sitio</category>
       <category>Requested</category>
-      <description>Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 421 form controls have no label.
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de entrenamiento de modelos están bloqueados a propósito. Pero 421 controles de formulario no tienen etiqueta.
 
-The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+La lección para cualquier equipo: Dale a cada campo una etiqueta visible vinculada con for e id. Los lectores de pantalla la anuncian y el área táctil crece.
 
-One automated analysis of public pages on 24 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-onepagelove-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-onepagelove-com
+Un análisis automatizado de páginas públicas el 24 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-onepagelove-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-onepagelove-com
 
-Review your own site: https://carlosandmunoz.com/qa-review.html
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 
 #Accessibility #Automation #SoftwareTesting #QA #Forms #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/06-u-onepagelove-com.jpg" length="241813" type="image/jpeg"/>
@@ -117,21 +117,6 @@ Todos los Live Reports de octubre: https://carlosandmunoz.com/qa-review.html?utm
 #DiaDeMuertos #Playwright #AI #QA #BrokenLinks #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/series-dia-de-muertos-2026-11/feed/02-epitaphs.jpg" length="254455" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/series-dia-de-muertos-2026-11/feed/02-epitaphs.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Friday, 5 pm: we release in an hour. Did anyone check the site?</title>
-      <link>https://carlosandmunoz.com/social/skits-friday-release/01-friday-release-en.html</link>
-      <guid isPermaLink="false">skits-friday-release/01-friday-release-en</guid>
-      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Sketch</category>
-      <category>QA</category>
-      <description>Two broken links, found and fixed before the release. Paste a URL and get a review of the site's public pages: QA, SEO, accessibility, security, performance and privacy.
-
-Review your site before you ship: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=skits&amp;utm_content=01-friday-release-en
-
-#QA #Release #BrokenLinks #WebDevelopment #Testing #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/skits-friday-release/feed/01-friday-release-en.jpg" length="132696" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/skits-friday-release/feed/01-friday-release-en.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>Empieza tu CSP en Report-Only.</title>
@@ -801,20 +786,20 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/03-u-millanenlinea-com.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>ghlhoteles.com: 40. The gap: broken links.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-27/02-u-ghlhoteles-com.html</link>
-      <guid isPermaLink="false">auto-2026-10-27/02-u-ghlhoteles-com</guid>
+      <title>ghlhoteles.com: 40. El punto débil: enlaces rotos.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-27/02-u-ghlhoteles-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-10-27/02-u-ghlhoteles-com-es</guid>
       <pubDate>Thu, 29 Oct 2026 12:00:00 GMT</pubDate>
       <category>Revisión de sitio</category>
       <category>Requested</category>
-      <description>2 pages are kept out of search on purpose, and AI answer and search crawlers may read the start page. But 6 internal links lead to an error.
+      <description>2 las páginas se mantienen fuera de la búsqueda a propósito, y los rastreadores de búsqueda y respuestas de IA pueden leer la página de inicio. Pero 6 enlaces internos llevan a un error.
 
-The lesson for every team: Check your own links after each release, and fix or redirect every one that answers 404.
+La lección para cualquier equipo: Revisa tus enlaces tras cada lanzamiento y corrige o redirige cada uno que responda 404.
 
-One automated analysis of public pages on 26 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-ghlhoteles-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ghlhoteles-com
+Un análisis automatizado de páginas públicas el 26 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-ghlhoteles-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ghlhoteles-com
 
-Review your own site: https://carlosandmunoz.com/qa-review.html
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 
 #SEO #Automation #QA #BrokenLinks #SoftwareEngineering #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/02-u-ghlhoteles-com.jpg" length="233815" type="image/jpeg"/>
@@ -949,6 +934,26 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 #WebSecurity #CyberSecurity #SoftwareTesting #QA #Clickjacking #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/03-u-bible-com.jpg" length="234838" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/03-u-bible-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>thekeyinmobiliaria.com: 51. El punto débil: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-26/02-u-thekeyinmobiliaria-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-10-26/02-u-thekeyinmobiliaria-com-es</guid>
+      <pubDate>Wed, 28 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero no se envía HSTS.
+
+La lección para cualquier equipo: Envía Strict-Transport-Security con un max-age de al menos un año, para que los navegadores no vuelvan a probar http sin cifrar.
+
+Un análisis automatizado de páginas públicas el 25 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-thekeyinmobiliaria-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-thekeyinmobiliaria-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Automation #CyberSecurity #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/02-u-thekeyinmobiliaria-com.jpg" length="236018" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/02-u-thekeyinmobiliaria-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
