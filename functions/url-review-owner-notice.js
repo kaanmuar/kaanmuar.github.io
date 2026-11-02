@@ -3,7 +3,7 @@
 
    A finished review queues one notice per registrable domain in Firestore
    url_review_owner_notices/<domain>, with every address found for the site, ranked. Nothing is sent
-   until a person picks an address and sends it from the desk, and the desk sends it only once the
+   until a person picks one or more addresses (one email to each) and sends it, and it goes out only once the
    host's card is on assets/live-reports/index.json. The notice never names or describes the asker,
    and never goes through a contact form. */
 
@@ -153,6 +153,25 @@ function addressed(notice, email) {
   return Object.assign({}, notice, { email: row.email, source: row.sources[0], sourceUrl: row.url || "" });
 }
 
+// The addresses picked for one Send, lowercased and without repeats; the notice's own address when none are.
+function pickedEmails(notice, emails) {
+  const list = [].concat(emails || []).map((email) => String(email || "").trim().toLowerCase()).filter(Boolean);
+  const unique = list.filter((email, i) => list.indexOf(email) === i).slice(0, 8);
+  return unique.length ? unique : [String((notice && notice.email) || "")];
+}
+
+// Where a pending notice stands: "ready", "waiting" (no Live Report yet), "unlisted" or "stopped";
+// "" when the Live Reports index could not be read. ctx: { index, unlisted: [host], stopped: Set of emails and "@domain" }.
+function readiness(notice, ctx) {
+  const opts = ctx || {};
+  const stopped = opts.stopped || new Set();
+  const emails = ((notice.candidates || []).length ? notice.candidates.map((row) => row.email) : [notice.email]).filter(Boolean);
+  if (stopped.has("@" + notice.domain) || (emails.length && emails.every((email) => stopped.has(email)))) return "stopped";
+  if (publish.heldReason({ status: "complete", report: { host: notice.host } }, opts.unlisted || []) === "unlisted") return "unlisted";
+  if (!opts.index) return "";
+  return liveCard(opts.index, notice.host) ? "ready" : "waiting";
+}
+
 // The Live Report card for a host in assets/live-reports/index.json, or null when it is not public.
 function liveCard(index, host) {
   const target = publish.bare(host);
@@ -170,4 +189,4 @@ function sendBlock(notice, ctx) {
   return "";
 }
 
-module.exports = { LANGS, QUIET_MS, SOURCE_POINTS, criticalSecurity, localLead, domainOf, rankContacts, pickContact, noticeLang, due, heldBack, usableContacts, skipReason, noticeRow, addressed, liveCard, sendBlock };
+module.exports = { LANGS, QUIET_MS, SOURCE_POINTS, criticalSecurity, localLead, domainOf, rankContacts, pickContact, noticeLang, due, heldBack, usableContacts, skipReason, noticeRow, addressed, pickedEmails, readiness, liveCard, sendBlock };
