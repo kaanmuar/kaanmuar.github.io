@@ -417,6 +417,7 @@
         { key: 'search', name: 'Search (Brave, Search Console)' }, { key: 'social', name: 'Social (ledgers, YouTube, Facebook)' },
         { key: 'safety', name: 'Safety (Web Risk, DNS, domain, TLS)' }, { key: 'platform', name: 'Google Cloud (Monitoring, Logging, Auth)' },
         { key: 'outreach', name: 'Outreach (sweep prospects, Instantly, 90-day plan)' }, { key: 'mailbox', name: 'ImprovMX (mail forwarding)' },
+        { key: 'addresses', name: 'Email addresses (ImprovMX, Microsoft 365, Instantly, SendGrid)' },
         { key: 'pagespeed', name: 'Daily PageSpeed run (every page, its PRs)' }
     ];
 
@@ -714,6 +715,20 @@
                 else if (links.visits > 0) add('info', 'outreach', `${plural(links.visits, 'visit', 'visits')} and ${plural(links.reviews, 'free review', 'free reviews')} came from qalabreview.com links.`, 'outreach:links-visits');
             }
         }
+        // Email addresses (#2338): a line only for what the outreach and mailbox sources do not already say.
+        const ad = ext.addresses;
+        if (ad && ad.ok) {
+            const outBoxes = new Set(((ou && ou.ok && ou.instantly && ou.instantly.accounts) || []).map((a) => String(a.email).toLowerCase()));
+            const outDns = new Set(((ou && ou.ok && ou.mail && ou.mail.checks) || []).filter((c) => !c.ok).map((c) => ou.mail.domain + ':' + c.name));
+            const siteDns = new Set(((ext.safety && ext.safety.ok && ext.safety.checks) || []).filter((c) => c.level === 'alert' || c.level === 'warn').map((c) => c.name));
+            const bouncing = new Set(((box && box.ok && box.problems) || []).map((m) => m.alias));
+            (ad.issues || []).forEach((i) => {
+                if (i.system === 'Instantly' && outBoxes.has(i.address)) return;
+                if (i.system === 'DNS' && (outDns.has(i.address + ':' + i.check) || ((ad.domains || []).some((d) => d.site && d.domain === i.address) && siteDns.has(i.check)))) return;
+                if (i.problem === 'bounce' && bouncing.has(i.address.split('@')[0])) return;
+                add(i.level, 'systems', i.text, 'addresses:' + i.key);
+            });
+        }
         const waiting = CONNECTIONS.reduce((n, c) => n + (((ext[c.key] || {}).needs) || []).length, 0);
         if (waiting) add('info', 'systems', `${plural(waiting, 'connection waits', 'connections wait')} for a one-time grant; see Systems > Connections.`, 'connections:needs');
         (state.goals || []).forEach((g) => {
@@ -745,6 +760,11 @@
         { prefix: 'money:none', impact: 4, title: 'Find out why sales stopped', tab: 'business' },
         { prefix: 'outreach:warmup', impact: 4, title: 'Hold the campaigns until the mailboxes are warm', click: 'pause-outreach', tab: 'outreach' },
         { prefix: 'outreach:dns:', impact: 4, group: true, title: 'Fix the sending domain records', click: 'pause-outreach', tab: 'outreach' },
+        { prefix: 'addresses:instantly:reconnect:', impact: 4, group: true, title: 'Reconnect the mailboxes in Instantly', link: 'https://app.instantly.ai/app/accounts' },
+        { prefix: 'addresses:dns:', impact: 4, group: true, title: 'Fix the mail records on our domains', tab: 'systems' },
+        { prefix: 'addresses:m365:', impact: 3, group: true, title: 'Fix the Microsoft 365 mailboxes', link: 'https://admin.microsoft.com/#/users' },
+        { prefix: 'addresses:improvmx:', impact: 3, group: true, title: 'Fix the ImprovMX aliases', tab: 'systems' },
+        { prefix: 'addresses:sendgrid:', impact: 3, title: 'Add an ImprovMX alias for the SendGrid sender', link: 'https://app.improvmx.com/' },
         { prefix: 'review:held', impact: 3, title: 'Re-run the held reviews', action: 'rerun-held', tab: 'systems' },
         { prefix: 'notices:failed', impact: 3, title: 'Re-send the owner notices that failed', action: 'resend-notices', tab: 'review' },
         { prefix: 'hub:stale', impact: 3, title: 'Publish the Social hub', action: 'publish-hub', tab: 'hub' },

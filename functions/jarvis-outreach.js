@@ -102,6 +102,15 @@ function mailCounts(overview) {
   };
 }
 
+function accountRows(accounts) {
+  return (accounts || []).map((a) => ({
+    email: String(a.email || ""), status: a.status === 1 ? "active" : a.status === 2 ? "paused" : a.status < 0 ? "error" : "status " + a.status,
+    warmup: a.warmup_status === 1 ? "on" : a.warmup_status === 0 ? "off" : "status " + a.warmup_status, score: a.stat_warmup_score == null ? null : Number(a.stat_warmup_score),
+    dailyLimit: a.daily_limit || null,
+    error: a.status < 0 ? String((a.status_message && (a.status_message.e_message || a.status_message.message)) || "").replace(/\s*Trace ID:.*$/s, "").slice(0, 240) : ""
+  }));
+}
+
 function instantlyRows(campaigns, overview, perCampaign, accounts, priorOverview) {
   const status = {};
   (campaigns || []).forEach((c) => tally(status, CAMPAIGN_STATUS[String(c.status)] || "status " + c.status));
@@ -114,12 +123,7 @@ function instantlyRows(campaigns, overview, perCampaign, accounts, priorOverview
       name: String(c.campaign_name || "").slice(0, 60), sent: c.emails_sent_count || 0, opened: c.open_count_unique || c.open_count || 0,
       replies: c.reply_count_unique || c.reply_count || 0, bounced: c.bounced_count || 0
     })).sort((a, b) => b.sent - a.sent).slice(0, 12),
-    accounts: (accounts || []).map((a) => ({
-      email: String(a.email || ""), status: a.status === 1 ? "active" : a.status === 2 ? "paused" : a.status < 0 ? "error" : "status " + a.status,
-      warmup: a.warmup_status === 1 ? "on" : a.warmup_status === 0 ? "off" : "status " + a.warmup_status, score: a.stat_warmup_score == null ? null : Number(a.stat_warmup_score),
-      dailyLimit: a.daily_limit || null,
-      error: a.status < 0 ? String((a.status_message && (a.status_message.e_message || a.status_message.message)) || "").replace(/\s*Trace ID:.*$/s, "").slice(0, 240) : ""
-    }))
+    accounts: accountRows(accounts)
   });
 }
 
@@ -171,18 +175,23 @@ async function dnsTxt(ctx, name, type) {
   return (data.Answer || []).filter((a) => a.type === code).map((a) => String(a.data || "").replace(/^"|"$/g, "").replace(/" "/g, ""));
 }
 
-async function mailHealth(ctx, domain) {
-  const [txt, dmarc, mx, s1, s2] = await Promise.all([
+// selectors: the DKIM CNAMEs the domain must publish; Microsoft 365's selector1 and selector2 unless given.
+async function mailHealth(ctx, domain, selectors) {
+  const keys = selectors || ["selector1", "selector2"];
+  const [txt, dmarc, mx, ...dkim] = await Promise.all([
     dnsTxt(ctx, domain, "TXT"), dnsTxt(ctx, "_dmarc." + domain, "TXT"), dnsTxt(ctx, domain, "MX"),
-    dnsTxt(ctx, "selector1._domainkey." + domain, "CNAME"), dnsTxt(ctx, "selector2._domainkey." + domain, "CNAME")
+    ...keys.map((s) => dnsTxt(ctx, s + "._domainkey." + domain, "CNAME"))
   ]);
   const spf = txt.filter((r) => /^v=spf1/i.test(r));
   const dm = dmarc.find((r) => /^v=DMARC1/i.test(r)) || "";
   const p = (/;\s*p=([a-z]+)/i.exec(dm) || [])[1] || "";
+  const missing = keys.filter((s, i) => !dkim[i].length);
+  const dkimDetail = !missing.length ? keys.join(", ").replace(/, ([^,]+)$/, " and $1") + " are published."
+    : selectors ? "DKIM selector " + missing.join(", ") + " missing." : "Microsoft 365 DKIM selector " + (dkim[0].length ? "2" : "1") + " is missing.";
   const checks = [
     { name: "MX", ok: mx.length > 0, detail: mx.length ? mx.join(", ").slice(0, 100) : "No MX record: replies bounce." },
     { name: "SPF", ok: spf.length === 1, detail: spf.length === 1 ? spf[0].slice(0, 100) : spf.length ? "Two SPF records." : "No SPF record." },
-    { name: "DKIM", ok: s1.length > 0 && s2.length > 0, detail: s1.length && s2.length ? "selector1 and selector2 are published." : "Microsoft 365 DKIM selector " + (s1.length ? "2" : "1") + " is missing." },
+    { name: "DKIM", ok: !missing.length, detail: dkimDetail },
     { name: "DMARC", ok: !!dm && p !== "none", detail: dm ? "p=" + (p || "?") + (p === "none" ? " (monitor only)" : "") : "No DMARC record." }
   ];
   return { domain, checks, ok: checks.every((c) => c.ok) };
@@ -307,4 +316,4 @@ async function outreach(ctx) {
   return out;
 }
 
-module.exports = { outreach, pipelineRows, instantlyRows, planNow, mailHealth, linkRows, linkPrior, linkTags, weekStart, TTL: 30 * 60 * 1000 };
+module.exports = { outreach, pipelineRows, instantlyRows, accountRows, instantlyGet, planNow, mailHealth, linkRows, linkPrior, linkTags, weekStart, TTL: 30 * 60 * 1000 };

@@ -701,6 +701,50 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test('Systems lists every email address by domain with its state, the mail records and who fixes what (#2338)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const row = (address, system, kind, state, detail, extra) => Object.assign({ address, domain: address.split('@')[1], system, kind, forwards: [], aliasOf: '', state, detail, fix: null }, extra);
+    const gmail = ['kaanmuar@gmail.com'];
+    const addresses = {
+      ok: true, graph: false, errors: [],
+      needs: ['Microsoft 365: register a read-only Graph app (User.Read.All, application) and put MS_GRAPH_TENANT_ID, MS_GRAPH_CLIENT_ID and MS_GRAPH_CLIENT_SECRET in Secret Manager.'],
+      counts: { addresses: 7, ok: 4, warn: 2, error: 2, paused: 0 },
+      domains: [
+        { domain: 'carlosandmunoz.com', systems: ['ImprovMX', 'SendGrid'], ok: true, checks: [{ name: 'MX', ok: true, detail: '10 mx1.improvmx.com.' }, { name: 'SPF', ok: true, detail: 'v=spf1 ...' }, { name: 'DKIM', ok: true, detail: 's1, s2, dkimprovmx1 and dkimprovmx2 are published.' }, { name: 'DMARC', ok: true, detail: 'p=quarantine' }] },
+        { domain: 'qalabreview.com', systems: ['Microsoft 365', 'Instantly'], ok: true, checks: [{ name: 'MX', ok: true, detail: '' }, { name: 'SPF', ok: true, detail: '' }, { name: 'DKIM', ok: true, detail: '' }, { name: 'DMARC', ok: true, detail: 'p=quarantine' }] }
+      ],
+      rows: [
+        row('canary@carlosandmunoz.com', 'ImprovMX', 'alias', 'error', 'Missing from ImprovMX: the daily round trip cannot come back.', { forwards: gmail.concat('webhook'), fix: { by: 'jarvis', action: 'restore-alias' } }),
+        row('hello@carlosandmunoz.com', 'ImprovMX', 'alias', 'ok', '2 mails in the last day, 2 forwarded.', { forwards: gmail }),
+        row('qa@carlosandmunoz.com', 'ImprovMX', 'alias', 'ok', 'No mail in the last day.', { forwards: gmail.concat('webhook') }),
+        row('notices@carlosandmunoz.com', 'ImprovMX', 'smtp login', 'ok', 'Sends through smtp.improvmx.com.'),
+        row('qa@carlosandmunoz.com', 'SendGrid', 'sender', 'ok', 'Site and review mail goes out from this address; replies reach its ImprovMX alias.'),
+        row('carlos@qalabreview.com', 'Microsoft 365', 'mailbox', 'warn', 'Known from Instantly; Jarvis reads Microsoft 365 once the Graph app is connected.', { fix: { by: 'carlos', action: 'Connect Graph', link: 'https://entra.microsoft.com/' } }),
+        row('hello@qalabreview.com', 'Microsoft 365', 'mailbox', 'warn', 'Known from Instantly; Jarvis reads Microsoft 365 once the Graph app is connected.', { fix: { by: 'carlos', action: 'Connect Graph', link: 'https://entra.microsoft.com/' } }),
+        row('carlos@qalabreview.com', 'Instantly', 'sending mailbox', 'ok', 'warm-up on, score 100.'),
+        row('hello@qalabreview.com', 'Instantly', 'sending mailbox', 'error', 'Permanent OAuth failure: AADSTS50076 Due to a configuration change made by your administrator, you must use multi-factor authentication.', { fix: { by: 'carlos', action: 'Reconnect', link: 'https://app.instantly.ai/app/accounts' } })
+      ],
+      issues: [
+        { key: 'improvmx:missing:canary@carlosandmunoz.com', level: 'alert', by: 'jarvis', action: 'restore-alias', system: 'ImprovMX', address: 'canary@carlosandmunoz.com', problem: 'missing', text: 'canary@carlosandmunoz.com is missing from ImprovMX; Jarvis restores it.', push: true },
+        { key: 'instantly:reconnect:hello@qalabreview.com', level: 'alert', by: 'carlos', action: 'Reconnect', link: 'https://app.instantly.ai/app/accounts', system: 'Instantly', address: 'hello@qalabreview.com', problem: 'reconnect', text: 'Reconnect hello@qalabreview.com in Instantly: Permanent OAuth failure: AADSTS50076', push: true }
+      ]
+    };
+    await page.setViewportSize({ width: 1400, height: 1000 });
+    await openStats(page, '#stats/systems/30', { addresses });
+    const panel = page.locator('[data-panel-id="systems-addresses"]');
+    await expect(panel).toContainText('Email addresses (7)');
+    await expect(panel.locator('.jv-addr-domain')).toHaveText(['carlosandmunoz.com', 'qalabreview.com']);
+    await expect(panel).toContainText('Jarvis fixes it');
+    await expect(panel.locator('a[href="https://app.instantly.ai/app/accounts"]')).toHaveText('Reconnect →');
+    await expect(panel.locator('.jv-needs')).toContainText('MS_GRAPH_TENANT_ID');
+    await expect(panel).toContainText('kaanmuar@gmail.com, webhook');
+    await expect(panel.locator('[data-panel-export="csv"]')).toHaveCount(1);
+    await expect(page.locator('#stats-pane')).toContainText('canary@carlosandmunoz.com is missing from ImprovMX; Jarvis restores it.');
+    await panel.screenshot({ path: 'test-results/jarvis-addresses.png' });
+    expect(errors).toEqual([]);
+  });
+
   test('Systems lists the countdowns: Do it now asks first, Cancel goes straight through the countdown op (#1977)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));

@@ -5154,6 +5154,7 @@ const socialHubAdmin = require("./social-hub-admin");
 const jarvisStudio = require("./jarvis-studio");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisOutreach = require("./jarvis-outreach");
+const jarvisAddresses = require("./jarvis-addresses");
 const jarvisEngagement = require("./jarvis-engagement");
 const engagementMac = require("./engagement-mac");
 const jarvisPageSpeed = require("./jarvis-pagespeed");
@@ -5586,7 +5587,7 @@ async function jarvisSnapshot(days) {
   const now = Date.now();
   const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now, days }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync", "calls", "engagement", "people"], days),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "addresses", "marketing", "marketing-sync", "calls", "engagement", "people"], days),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
@@ -5661,6 +5662,8 @@ function jarvisAutoOps(settings, now, th) {
   const ctx = { fetch, env: process.env, now, db };
   let token = null;
   const gh = async () => token || (token = await githubApp.token());
+  // After a fix the panel reads the addresses again rather than waiting out the cache.
+  const dropAddresses = () => Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("addresses-" + d).delete().catch(() => null)));
   const out = {
     runJob: (job) => jarvis.runJob(fetch, job),
     failedJobs: async () => Object.values(await jarvisOpsRuns())
@@ -5687,6 +5690,11 @@ function jarvisAutoOps(settings, now, th) {
       const pauses = (await db.collection("jarvis_outreach_pauses").get()).docs.map((doc) => doc.data());
       return { domain, failing, warmupMin: th.outreachWarmup, mailboxes: ou.instantly.accounts || [], pauses };
     },
+    addresses: async () => (await jarvisExternal(["addresses"], 1)).addresses || null,
+    addressState: async () => { const snap = await db.collection("jarvis_watch").doc("addresses").get().catch(() => null); return snap && snap.exists ? snap.data() : null; },
+    setAddressState: (row) => db.collection("jarvis_watch").doc("addresses").set(row),
+    enableWarmup: (emails) => jarvisAddresses.enableWarmup(ctx, emails).finally(dropAddresses),
+    restoreAlias: (alias) => jarvisAddresses.restoreAlias(ctx, alias).finally(dropAddresses),
     pauseMailbox: (email) => jarvisMarketing.mailboxAct(ctx, email, "pause"),
     setPause: (email, row) => row ? db.collection("jarvis_outreach_pauses").doc(email).set(row) : db.collection("jarvis_outreach_pauses").doc(email).delete(),
     socialFailed: async () => {
