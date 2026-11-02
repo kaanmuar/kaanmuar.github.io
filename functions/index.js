@@ -5399,7 +5399,8 @@ async function jarvisExternal(ops, days) {
     health: () => jarvisCached("health", days, () => jarvis.health(getFirestore(), { days, now })),
     jobs: () => jarvisCached("jobs", 0, async () => ({ ok: true, jobs: await jarvis.jobs(fetch) })),
     github: () => jarvisCached("github", 0, async () => jarvis.github(fetch, await githubApp.token(), { now })),
-    uptime: () => jarvisCached("uptime", 0, () => jarvis.uptime(fetch, { now })),
+    uptime: () => Promise.all([jarvisCached("uptime", 0, () => jarvis.uptime(fetch, { now })), jarvis.uptimeHistory(getFirestore(), now).catch(() => [])])
+      .then(([up, history]) => Object.assign({}, up, { history })),
     speed: () => jarvisCached("speed", 0, () => jarvis.speed(urlReview, env)),
     ga4: () => jarvisCached("ga4", days, () => jarvis.ga4(fetch, { days })),
     cloudflare: () => jarvisCached("cloudflare", days, () => jarvis.cloudflare(fetch, env, { days, now })),
@@ -5504,7 +5505,7 @@ async function jarvisSnapshot(days) {
   const candidates = jarvisCore.proposalRules({ products, external, thresholds: settings.thresholds, goals: goalRows }, briefing).concat(await jarvisAiProposals(now));
   const proposals = jarvisCore.openProposals(candidates, await jarvisProposals.saved(db)).slice(0, 5).map(jarvisProposals.withButtons);
   const countdowns = await jarvisCountdown.view(db, now);
-  return { window, products, external, outreachVisits, goals: goalRows, briefing, proposals, countdowns, readiness: jarvisCore.readiness(external), connections: jarvisCore.connections(external), settings, thresholds: jarvisCore.thresholds(settings.thresholds) };
+  return { window, products, external, outreachVisits, goals: goalRows, briefing, proposals, countdowns, readiness: jarvisCore.readiness(external), connections: jarvisCore.connections(external), settings, thresholds: jarvisCore.thresholds(settings.thresholds), wide: jarvisCore.wide({ products, external, briefing, now: new Date(now) }) };
 }
 
 // The cached snapshot keeps every line; snoozed and dismissed ones move to briefHidden on each read.
@@ -5978,6 +5979,7 @@ async function jarvisNoticesRun() {
 
 // Every hour: the safe actions first (jarvis-actions.js), then the alert watch and the outreach notices push.
 exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.jarvisWatch }), "jarvisWatch", async () => {
+  const up = await jarvisUptimeRun().catch((error) => "uptime log failed: " + String(error.message || error).slice(0, 120));
   let acts;
   try { acts = await jarvisAutoActions(); } catch (error) { console.error("Jarvis actions failed:", error); acts = "actions failed: " + String(error.message || error).slice(0, 120); }
   const watch = await jarvisWatchRun();
@@ -5986,8 +5988,14 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
   const resent = await mailRetry.retry({ db: getFirestore(), sgMail: prepareMail() ? sgMail : null, fetch, key: process.env.SENDGRID_API_KEY })
     .catch((error) => "mail retry failed: " + String(error.message || error).slice(0, 120));
   const pagespeed = await pageSpeedDeps("jarvis").then((deps) => jarvisPageSpeed.tick(deps)).catch((error) => "pagespeed failed: " + String(error.message || error).slice(0, 120));
-  return watch + "; " + acts + "; " + notices + "; " + social + "; " + resent + "; " + pagespeed;
+  return watch + "; " + acts + "; " + notices + "; " + social + "; " + resent + "; " + pagespeed + "; " + up;
 });
+
+async function jarvisUptimeRun() {
+  const now = Date.now();
+  const t = await jarvis.uptimeLog(getFirestore(), await jarvisCached("uptime", 0, () => jarvis.uptime(fetch, { now })), now, (n) => FieldValue.increment(n));
+  return "uptime " + t.up + "/" + t.checks + " pages up";
+}
 
 // Every ten minutes (#1977): the countdowns that came due run.
 exports.jarvisCountdowns = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.jarvisCountdowns }), "jarvisCountdowns", jarvisCountdownRun);
@@ -6193,7 +6201,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "ga4") out = await jarvisCached(op, days, () => jarvis.ga4(fetch, { days }));
     else if (op === "cloudflare") out = await jarvisCached(op, days, () => jarvis.cloudflare(fetch, env, { days, now }));
     else if (op === "speed") out = await jarvisCached(op, 0, () => jarvis.speed(urlReview, env));
-    else if (op === "uptime") out = await jarvisCached(op, 0, () => jarvis.uptime(fetch, { now }));
+    else if (op === "uptime") out = Object.assign({}, await jarvisCached(op, 0, () => jarvis.uptime(fetch, { now })), { history: await jarvis.uptimeHistory(getFirestore(), now).catch(() => []) });
     else if (op === "brief") out = await jarvis.brief(fetch, env, body.snapshot || await appAskSnapshot());
     else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot || await appAskSnapshot(), { lang: body.lang, spoken: body.spoken === true, device: body.device });
     else if (op === "speak") out = await jarvis.speak(fetch, body.text, body.lang, { voice: body.voice, rate: body.rate });
