@@ -280,7 +280,7 @@
         "steps": [
           "Sign up at dev.to/enter with email: `qaurlreview@carlosandmunoz.com`, username `qaurlreview`."
         ],
-        "access": "Settings > Extensions > DEV Community API Keys: make a key for the dev.to poster (#2326)."
+        "access": "Settings > Extensions > DEV Community API Keys: generate a key named QA-lab poster, then store it: pbpaste | gh secret set DEVTO_API_KEY_ES -R kaanmuar/kaanmuar.github.io. scripts/devto-queue.js then posts one article a day (#2326)."
       },
       {
         "network": "Bluesky",
