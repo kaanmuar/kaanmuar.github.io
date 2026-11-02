@@ -164,7 +164,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
         var picked by rememberSaveable { mutableStateOf<String?>(null) }
         val week = Marketing.openWeek(weeks, picked)
         Panel("Leads to approve" + (week?.let { " · ${it.week}" } ?: "")) {
-            if (week == null) { Muted("No leads files yet; the Monday leads job writes them."); return@Panel }
+            if (week == null) { Muted("No leads files yet; the weekday leads job writes them."); return@Panel }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 weeks.forEach { w -> GlassChip("${w.week} · ${w.uploaded}/${w.total}", w.week == week.week) { picked = w.week } }
             }
