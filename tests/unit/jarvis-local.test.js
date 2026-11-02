@@ -12,7 +12,7 @@ const reviews = [
   { id: "a", createdAt: at(1), report: { host: "speed-plumbing.com" }, sweep: { host: "speed-plumbing.com", outreach: true }, source: "sweep",
     local: { profile: true, issues: [{ key: "local-hours", verdict: "risk", severity: "medium" }, { key: "local-utm", verdict: "risk", severity: "low" }] } },
   { id: "b", createdAt: at(2), report: { host: "smile.dental" }, local: { profile: true, issues: [{ key: "local-website", verdict: "fail", severity: "high" }, { key: "local-utm", verdict: "risk", severity: "low" }] } },
-  { id: "c", createdAt: at(3), requestedUrl: "https://bakery.example/", local: { profile: false, issues: [{ key: "local-profile", verdict: "risk", severity: "low" }] } },
+  { id: "c", createdAt: at(3), requestedUrl: "https://bakery.example/", local: { profile: false, issues: [{ key: "local-profile", verdict: "person", severity: "low" }] } },
   { id: "d", createdAt: at(3), report: { host: "clean.example" }, local: { profile: true, issues: [] } },
   { id: "e", createdAt: at(4), report: { host: "saas.example" }, local: null },
   { id: "t", createdAt: at(1), test: true, report: { host: "test.example" }, local: { profile: true, issues: [{ key: "local-hours", verdict: "risk" }] } },
@@ -57,9 +57,10 @@ test("a review keeps only the Local finding keys and verdicts, never the profile
     { key: "local-profile", verdict: "pass", severity: "info", evidence: "https://www.google.com/maps/place/?q=place_id:abc" },
     { key: "local-hours", verdict: "risk", severity: "medium", evidence: "Wednesday differs" },
     { key: "local-nap", verdict: "pass", severity: "info" },
+    { key: "local-utm", verdict: "person", severity: "low" },
     { key: "meta-title", verdict: "risk", severity: "low" }
   ] } };
-  assert.deepEqual(core.localSummary(report), { profile: true, issues: [{ key: "local-hours", verdict: "risk", severity: "medium" }] });
+  assert.deepEqual(core.localSummary(report), { profile: true, issues: [{ key: "local-hours", verdict: "risk", severity: "medium" }, { key: "local-utm", verdict: "person", severity: "low" }] });
   assert.equal(core.localSummary({ insights: { findings: [{ key: "meta-title", verdict: "risk" }] } }), null);
   assert.equal(core.intakeRecord({ frameworks: ["Playwright"] }, Object.assign({ id: "r1" }, report), {}).local.profile, true);
 });

@@ -3627,7 +3627,7 @@ function localSummary(report) {
   const profile = local.find((f) => f.key === "local-profile");
   return {
     profile: !!profile && profile.verdict === "pass",
-    issues: local.filter((f) => f.verdict === "fail" || f.verdict === "risk").map((f) => ({ key: f.key, verdict: f.verdict, severity: f.severity || "" }))
+    issues: local.filter((f) => f.verdict === "fail" || f.verdict === "risk" || f.verdict === "person").map((f) => ({ key: f.key, verdict: f.verdict, severity: f.severity || "" }))
   };
 }
 
