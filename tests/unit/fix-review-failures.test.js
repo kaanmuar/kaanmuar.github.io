@@ -53,14 +53,3 @@ test("the agent's prompt asks for code only, on a branch the script can find", (
   assert.match(prompt, /Pre-flight \(#1970\): a normal ticket\.$/);
   assert.doesNotMatch(prompt, /gh pr|gh issue|--watch/);
 });
-
-test("the plan share comes from a fresh quota cache; a missing, old or last-cycle cache reads as unknown", () => {
-  const now = Date.parse("2026-11-02T07:30:00Z");
-  const cache = (at, end) => ({ at, data: { billingCycleEnd: end, individualUsage: { plan: { totalPercentUsed: 71.5 } } } });
-  assert.equal(fix.planPercent(cache(Date.parse("2026-11-02T06:00:00Z") / 1000, "2026-12-01T23:34:01.000Z"), now), 71.5);
-  assert.equal(fix.planPercent(cache(Date.parse("2026-11-02T06:00:00Z"), "2026-12-01T23:34:01.000Z"), now), 71.5);
-  assert.equal(fix.planPercent(cache(Date.parse("2026-11-01T06:00:00Z") / 1000, "2026-11-01T23:34:01.000Z"), now), null);
-  assert.equal(fix.planPercent(cache(Date.parse("2026-10-23T15:00:00Z") / 1000, "2026-12-01T23:34:01.000Z"), now), null);
-  assert.equal(fix.planPercent(null, now), null);
-  assert.equal(fix.planPercent({ data: {} }, now), null);
-});

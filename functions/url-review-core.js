@@ -17,6 +17,7 @@ const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
 const caseRank = require("./url-review-cases");
 const chatTalk = require("./url-review-chat-talk");
 const ownerProofs = require("./url-review-owner-proof");
+const localProfile = require("./url-review-local");
 const { registrable, registryDomain } = require("./url-review-suffix");
 const { ipBlocked } = require("./url-review-ip");
 const { siteLabel } = caseRank;
@@ -939,7 +940,7 @@ async function assertPublic(hostname) {
   records.forEach((record) => {
     if (ipBlocked(record.address)) throw new Error("That host points at a private address.");
   });
-  return records[0].address;
+  return (records.find((record) => record.family === 4) || records[0]).address;
 }
 
 // Inflates at most MAX_BYTES * 5; past that it keeps the start of the input, so a huge file still yields its first part.
@@ -993,6 +994,22 @@ function serverLeaf(hostname, pinned) {
   });
 }
 
+// Must answer asynchronously: answered in the same tick, a connect error (an IPv6 address on an IPv4-only runner)
+// reaches the socket before the request listens for it and ends the process instead of rejecting.
+function pinnedLookup(pinned) {
+  return (hostname, options, callback) => {
+    if (typeof options === "function") {
+      callback = options;
+      options = {};
+    }
+    const family = net.isIP(pinned);
+    process.nextTick(() => {
+      if (options && options.all) callback(null, [{ address: pinned, family }]);
+      else callback(null, pinned, family);
+    });
+  };
+}
+
 async function issuerBytes(raw) {
   const target = new URL(raw);
   if (!/^https?:$/.test(target.protocol) || target.username || target.password || (target.port && !["80", "443"].includes(target.port))) throw new Error("The AIA address is not a plain public URL.");
@@ -1009,15 +1026,7 @@ async function issuerBytes(raw) {
       method: "GET",
       timeout: ISSUER_TIMEOUT_MS,
       headers: { "user-agent": USER_AGENT, connection: "close" },
-      lookup: (hostname, options, callback) => {
-        if (typeof options === "function") {
-          callback = options;
-          options = {};
-        }
-        const family = net.isIP(pinned);
-        if (options && options.all) callback(null, [{ address: pinned, family }]);
-        else callback(null, pinned, family);
-      }
+      lookup: pinnedLookup(pinned)
     }, (res) => {
       if (res.statusCode !== 200) {
         req.destroy();
@@ -1105,15 +1114,7 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
         connection: "close"
       }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
       ca: chain ? tls.rootCertificates.concat(chain.pem) : undefined,
-      lookup: (hostname, options, callback) => {
-        if (typeof options === "function") {
-          callback = options;
-          options = {};
-        }
-        const family = net.isIP(pinned);
-        if (options && options.all) callback(null, [{ address: pinned, family }]);
-        else callback(null, pinned, family);
-      }
+      lookup: pinnedLookup(pinned)
     }, (res) => {
       const chunks = [];
       let size = 0;
@@ -1712,7 +1713,9 @@ function schemaScan(html) {
     if (!types.length) return;
     keepEmails(node, types);
     const sameAs = node.sameAs ? (Array.isArray(node.sameAs) ? node.sameAs : [node.sameAs]).filter((item) => typeof item === "string").slice(0, 12).map((item) => clean(item, 200)) : [];
-    result.items.push({ types: types.slice(0, 4), props: Object.keys(node).filter((key) => key.charAt(0) !== "@").slice(0, 40), sameAs });
+    const item = { types: types.slice(0, 4), props: Object.keys(node).filter((key) => key.charAt(0) !== "@").slice(0, 40), sameAs };
+    if (types.some(localProfile.isLocalType)) item.local = localProfile.facts(node);
+    result.items.push(item);
   };
   blocks.slice(0, 12).forEach((block) => {
     const text = block.replace(/^<script\b[^>]*>/i, "").replace(/<\/script>$/i, "").trim();
@@ -1770,6 +1773,17 @@ function inspect(html, headers, pageUrl) {
     else if (/^\s*mailto:/i.test(href)) addMail(mailOf(href));
   });
   (markup.match(/data-cfemail=["'][0-9a-f]+["']/gi) || []).forEach((hit) => addMail(mailOf(cfEmail(hit.slice(14, -1)))));
+  const phones = [];
+  collect(markup, "a").forEach((tag) => {
+    const href = decode(attr(tag, "href"));
+    if (!/^\s*tel:/i.test(href)) return;
+    let phone = href.replace(/^\s*tel:/i, "");
+    try { phone = decodeURIComponent(phone); } catch (error) { /* a stray % stays as written */ }
+    phone = clean(phone, 40);
+    if (phone.replace(/\D/g, "").length >= 7 && phones.indexOf(phone) === -1 && phones.length < 5) phones.push(phone);
+  });
+  const mapsLinks = collect(markup, "a").map((tag) => attr(tag, "href")).concat(collect(markup, "iframe").map((tag) => attr(tag, "src")))
+    .filter((href) => /^https?:\/\/(?:(?:www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+\/|maps\.app\.goo\.gl\/|goo\.gl\/maps\/|g\.page\/)/i.test(href)).length;
   const scripts = collect(html, "script").map((tag) => attr(tag, "src")).filter(Boolean);
   const styles = collect(html, "link").filter((tag) => attr(tag, "rel").toLowerCase().includes("stylesheet")).length;
   const generator = collect(html, "meta").map((tag) => attr(tag, "name").toLowerCase() === "generator" ? attr(tag, "content") : "").find(Boolean) || "";
@@ -1936,6 +1950,7 @@ function inspect(html, headers, pageUrl) {
     analytics: analyticsScan(html),
     socialLinks,
     mailtos,
+    local: { phones, maps: mapsLinks },
     textEmails: emailsInText(text, 5),
     legal: legalLinks(anchors, pageUrl),
     libraries,
@@ -2286,6 +2301,17 @@ function domainCases(cases, extras) {
   const at = cases.reduce((last, item, index) => /^SEC-/.test(item.id) ? index + 1 : last, cases.length);
   return cases.slice(0, at).concat(more.map((item) => Object.assign({ status: "proposed", fw: BROWSER_FW }, item)), cases.slice(at))
     .map((item, index) => Object.assign(item, { n: index + 1 }));
+}
+
+function localCase(cases, extras, host) {
+  const local = extras && extras.local;
+  if (!local) return cases;
+  const why = local.placeId
+    ? "Google Maps has a Business Profile that " + (local.by === "website" ? "links to " + host : "lists the site's phone") + " (" + localProfile.mapsLink(local.placeId) + "). People tap its website link, phone and hours before they ever open the site. The case would open the profile, follow its website link to a 200 page on " + host + ", and compare its name, phone, address and hours with the site's footer and LocalBusiness data."
+    : "The site describes a local business, and a Google Maps search for \"" + local.query + "\" found no profile that links to " + host + " or lists its phone. The case would confirm the business has a claimed profile whose website field is " + host + ".";
+  const item = { id: "SEO-05", layer: "SEO", title: "The Google Business Profile links to a working page of " + host + " and matches the site", why, status: "proposed", fw: BROWSER_FW };
+  const at = cases.reduce((last, one, index) => /^SEO-/.test(one.id) ? index + 1 : last, cases.length);
+  return cases.slice(0, at).concat(item, cases.slice(at)).map((one, index) => Object.assign(one, { n: index + 1 }));
 }
 
 function pagePath(pageUrl) {
@@ -2792,15 +2818,7 @@ function readIcon(target, pinned) {
       method: "GET",
       timeout: 5000,
       headers: { "user-agent": USER_AGENT, accept: "image/*", connection: "close" },
-      lookup: (hostname, options, callback) => {
-        if (typeof options === "function") {
-          callback = options;
-          options = {};
-        }
-        const family = net.isIP(pinned);
-        if (options && options.all) callback(null, [{ address: pinned, family }]);
-        else callback(null, pinned, family);
-      }
+      lookup: pinnedLookup(pinned)
     }, (res) => {
       const chunks = [];
       let size = 0;
@@ -2968,6 +2986,7 @@ function ownerContacts(pages, extras) {
 async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups) {
   const say = typeof note === "function" ? note : () => {};
   const checkRisk = lookups && typeof lookups.webrisk === "function" ? lookups.webrisk : null;
+  const findPlaces = lookups && typeof lookups.places === "function" ? lookups.places : null;
   const done = (promise, line) => promise.then((value) => { say(line(value)); return value; });
   const origin = new URL(first.url);
   const allowed = (path) => !robotsGroups.length || robotsAllows(path, robotsGroups);
@@ -2985,7 +3004,15 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   const sitemapJob = lookups && lookups.sitemap ? lookups.sitemap : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
   say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registryDomain(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
   say(tls && tls.validTo ? "The TLS certificate from " + (tls.issuer || "an unnamed issuer") + " is valid until " + tls.validTo + " (" + tls.daysLeft + " days left)." : "The TLS certificate did not give an expiry date.");
-  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing] = await Promise.all([
+  const reach = (url) => {
+    const target = new URL(url);
+    if (target.hostname === origin.hostname && !allowed(pagePath(target.toString()))) return Promise.reject(new Error("robots.txt disallows that address"));
+    return fetchPublic(target.toString(), halt, null, false, acceptLanguage);
+  };
+  const localJob = findPlaces && lookups.inspect
+    ? withTimeout(localProfile.lookup(lookups.inspect, origin.hostname, { places: findPlaces, reach }), 25000, null).catch(() => null)
+    : Promise.resolve(null);
+  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local] = await Promise.all([
     done(sitemapJob, (map) => map.urls && map.urls.length
       ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
       : "No sitemap with URLs was found (status " + (map.status || "none") + ")."),
@@ -3020,10 +3047,18 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
       ? done(Promise.resolve().then(() => checkRisk(first.url)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) })), (res) => !res || !res.ok
         ? "Google's Safe Browsing lists could not be read" + (res && res.error ? " (" + res.error + ")" : "") + "."
         : res.threats.length ? "Google's Safe Browsing lists flag the site: " + res.threats.join(", ") + "." : "Google's Safe Browsing lists do not flag the site.")
-      : Promise.resolve(null)
+      : Promise.resolve(null),
+    localJob.then((res) => {
+      if (!res) return null;
+      if (!res.ok) say("Google Maps did not answer the Business Profile search (" + res.error + ").");
+      else if (!res.placeId) say("Google Maps was searched for \"" + res.query + "\": " + res.candidates + " place" + (res.candidates === 1 ? "" : "s") + " came back, and none links to " + origin.hostname + " or lists its phone.");
+      else say("Google Maps has a Business Profile that " + (res.by === "website" ? "links to " + origin.hostname : "lists the site's phone") + " (place ID " + res.placeId + ")" +
+        (res.website.reach ? res.website.reach.error ? "; its website link could not be read (" + res.website.reach.error + ")" : "; its website link answered " + res.website.reach.status + (res.website.reach.hops ? " after " + res.website.reach.hops + " redirect" + (res.website.reach.hops === 1 ? "" : "s") : "") : "") + ".");
+      return res;
+    })
   ]);
   const trim = (item) => item ? { status: item.status, html: !!item.html, body: String(item.body || "").slice(0, 20000) } : null;
-  return { sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null };
+  return { sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null };
 }
 
 async function reviewTarget(rawUrl, hooks) {
@@ -3172,7 +3207,7 @@ async function reviewTarget(rawUrl, hooks) {
   const keep = (url) => !prefix || underSection(url, prefix);
   const homeInspect = inspect(first.body, first.headers, first.url);
   const sitemapPromise = stopped ? Promise.resolve({ status: 0, urls: [] }) : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
-  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
+  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, places: controls.places, inspect: homeInspect, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
   const canBrowse = !stopped && !readInBrowser && typeof controls.browse === "function";
   const browsePaths = (homeInspect.links || []).filter((url) => keep(url) && pagePath(url) !== pagePath(first.url) && !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
   if (canBrowse) note("Opening the start page in a headless browser alongside the analysis" + (browsePaths.length ? ", then " + browsePaths.map(pagePath).join(" and ") : "") + ".");
@@ -3383,7 +3418,7 @@ async function reviewTarget(rawUrl, hooks) {
     const count = (kind) => out.rows.filter((row) => row.kind === kind).length;
     note("Checked " + out.checked + " of " + out.found + " external links: " + count("broken") + " broken, " + count("moved") + " moved, " + count("blocked") + " blocked for this reader" + (out.httpCount ? ", " + out.httpCount + " on plain http, not requested" : "") + ".");
   }
-  cases = domainCases(cases, extras);
+  cases = localCase(domainCases(cases, extras), extras, origin.hostname);
   const found = pagesFound(pages, startQueue, await sitemapPromise, first.url, prefix);
   found.count = Math.max(found.count, pages.length);
   note(found.count + (found.partial ? "+" : "") + " page" + (found.count === 1 ? " was" : "s were") + " found on " + origin.hostname + " in the links of the pages analyzed and the sitemap. " + pages.length + " of them were analyzed.");
@@ -4442,6 +4477,7 @@ module.exports = {
   cruxHistory,
   summarizeCruxHistory,
   webRisk,
+  placesSearch: localProfile.placesSearch,
   domainFacts,
   readRdap,
   mtaStsPolicy,
@@ -4548,5 +4584,7 @@ module.exports = {
   sitePaths,
   ipBlocked,
   hostBlocked,
-  iconData
+  iconData,
+  assertPublic,
+  pinnedLookup
 };
