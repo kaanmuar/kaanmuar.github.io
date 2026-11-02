@@ -21,7 +21,7 @@ function fakeDb(rows) {
       where: (field, op, value) => ({ limit: () => ({ get: async () => ({ docs: all(name).filter((r) => (op === "in" ? value.includes(r[field]) : r[field] === value)).map(wrap) }) }) }),
       orderBy: (field) => ({ limit: (n) => ({ get: async () => ({ docs: all(name).slice().sort((a, b) => String(b[field]).localeCompare(String(a[field]))).slice(0, n).map(wrap) }) }) })
     }),
-    runTransaction: async (fn) => fn({ get: (r) => r.get(), update: (r, patch) => { r.update(patch); } })
+    runTransaction: async (fn) => fn({ get: (r) => r.get(), update: (r, patch) => { r.update(patch); }, set: (r, row) => { r.set(row); } })
   };
 }
 

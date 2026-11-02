@@ -2,41 +2,54 @@
    and the log of every action, automatic or clicked, in jarvis_actions.
 
    rerun-held      send held re-runs to their askers; on its own only clean ones (a complete report with a score and an
-                   asker's address), the rest wait for a click
+                   asker's address), after the countdown; the rest wait for a click
    resend-notices  re-send owner notices whose last send failed: Monday-Saturday 08:00-19:00 Bogotá (Ley 2300 de 2023),
-                   under NOTICE_TRIES, inside the day's owner-notice budget and only while OWNER_NOTICES_LIVE=1, click or not
+                   under NOTICE_TRIES, inside the day's owner-notice budget and only while OWNER_NOTICES_LIVE=1, click or
+                   not; on its own after the countdown
    publish-hub     run refreshSocialHubStats when the hub stats are stale
    run-job         clicked only: run a scheduled job again
 
    #1977, each at most once per failure:
    rerun-job       a scheduled job whose last run failed (ops_runs ok=false) is started again once per failed run
-   rerun-ci        a failed GitHub Actions run on main or a Jarvis branch gets its failed jobs re-run once (attempt 1 only)
+   rerun-ci        a failed GitHub Actions run on main or a Jarvis branch (JARVIS_BRANCH: jarvis/..., and #1978's
+                   pagespeed/safe-<day> and pagespeed/ai-<day>) gets its failed jobs re-run once (attempt 1 only);
+                   other chats' branches are left alone
    refresh-stale   a scheduled job overdue by its gap is started once a day
    rerun-reviews   rerunReviewFailures starts when a FIXES row is newer than its last run
    pause-outreach  an active mailbox is paused while its domain's DNS fails, its warm-up is off or its score is under
-                   the warm-up threshold; after RESUME_PASSES healthy hourly checks resume-outreach waits for a click
-   retry-social    failed social posts wait for a click (public posts go on the countdown in #1977's second PR)
+                   the warm-up threshold; after RESUME_PASSES healthy hourly checks resume-outreach goes on the countdown,
+                   which trouble coming back cancels
+   retry-social    failed social posts are posted again after the countdown
+   merge-pr        an open PR labelled jarvis-merge, green and mergeable, squash-merged after the countdown
    ai-ask, ai-fix  open alerts no rule handles go to Gemini once per alert set and day, AI_CALLS a day; it may only pick
-                   from AI_CATALOG, and a pick runs alone at confidence >= settings.confidence; the rest become proposals
+                   from AI_CATALOG, and a pick runs alone at confidence >= settings.confidence (the risky ones after the
+                   countdown); the rest become proposals
+   Jobs and workflows that mail third parties, post in public or deploy (RISKY_JOBS, RISKY_CI) run on their own only
+   after the countdown (jarvis-countdown.js), which Carlos can cancel or run at once.
 
-   jarvis_settings/main.actions = { auto, caps: { action: per day }, confidence }. A click is not capped by Jarvis's own caps. */
+   jarvis_settings/main.actions = { auto, caps: { action: per day }, confidence, countdownHours }. A click is not capped
+   by Jarvis's own caps; a countdown counts against its cap from the moment it is queued. */
 
 const crypto = require("crypto");
 const core = require("./jarvis-core");
 
 const SAFE = core.SAFE_ACTIONS;
-const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5 };
+const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3 };
 const LABELS = {
   "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again", "rerun-ci": "Re-run failed CI jobs",
   "rating-decide": "Decide ratings", "brief-mark": "Snooze or dismiss a briefing line", "rerun-job": "Re-run a failed job", "refresh-stale": "Refresh stale data", "rerun-reviews": "Re-run reviews after a fix",
   "pause-outreach": "Pause an outreach mailbox", "resume-outreach": "Resume outreach mailboxes", "retry-social": "Retry failed social posts", "ai-ask": "Ask the AI what to fix", "ai-fix": "Run a fix the AI picked",
+  "merge-pr": "Merge a green PR",
   "pagespeed-merge": "Merge PageSpeed fixes", "pagespeed-close": "Close PageSpeed fixes", "pagespeed-run": "Start the PageSpeed run"
 };
 const NOTICE_TRIES = 3;
 const NOTICE_HOURS = { from: 8, to: 19 };
 const CONFIDENCE = 0.8;
+const COUNTDOWN_HOURS = 2;
 const AI_CALLS = 24;
 const RESUME_PASSES = 2;
+const RISKY_JOBS = ["sendOwnerNotices", "sendReviewNotes", "dispatchFacebookQueue", "ensureLiveReportsBatch", "jarvisWatch"];
+const RISKY_CI = /live reports|buffer batch|facebook|bluesky|mastodon|social inbox|^pages$|jarvis android/i;
 const JARVIS_BRANCH = /^(jarvis|pagespeed)\//;
 const AI_CATALOG = {
   "run-job": "start a scheduled job again; args { \"job\": one of jobs }",
@@ -54,9 +67,16 @@ function cleanSettings(saved) {
     const n = Number(s.caps && s.caps[key]);
     caps[key] = Number.isFinite(n) && s.caps[key] !== "" && s.caps[key] !== null ? Math.max(0, Math.min(100, Math.round(n))) : CAPS[key];
   });
-  const c = Number(s.confidence);
-  return { auto: typeof s.auto === "boolean" ? s.auto : true, caps, confidence: Number.isFinite(c) && s.confidence !== "" && s.confidence !== null ? Math.max(0.5, Math.min(1, Math.round(c * 100) / 100)) : CONFIDENCE };
+  const set = (v) => v !== "" && v !== null && v !== undefined && Number.isFinite(Number(v));
+  return {
+    auto: typeof s.auto === "boolean" ? s.auto : true, caps,
+    confidence: set(s.confidence) ? Math.max(0.5, Math.min(1, Math.round(Number(s.confidence) * 100) / 100)) : CONFIDENCE,
+    countdownHours: set(s.countdownHours) ? Math.max(0.25, Math.min(24, Math.round(Number(s.countdownHours) * 4) / 4)) : COUNTDOWN_HOURS
+  };
 }
+
+// Jobs and workflows that mail third parties, post in public or deploy: on their own only after a countdown.
+const risky = (action, target) => (["run-job", "rerun-job", "refresh-stale"].includes(action) && RISKY_JOBS.includes(target)) || (action === "rerun-ci" && RISKY_CI.test(target));
 
 // Why a mailbox should not send, or "" when it may: its domain's DNS, an error, warm-up off or a score under the threshold.
 function mailboxProblem(m, o) {
@@ -166,15 +186,19 @@ async function recent(db, limit) {
      outreach()        -> { domain, failing: [check], warmupMin, mailboxes: [{ email, status, warmup, score, error }], pauses: [{ email, reason, passes }] }
      pauseMailbox(e)   -> pause a mailbox in Instantly;  setPause(email, row | null) -> save or clear Jarvis's pause
      socialFailed()    -> failed social posts in range
+     mergeCandidates() -> [{ number, sha, title, url }] open PRs labelled jarvis-merge, green and mergeable
      alerts()          -> [{ key, level, text }] open briefing and watch lines;  catalog() -> { jobs, workflows }
      ask(prompt)       -> Gemini's text;  saveProposals([pick]) -> keep the picks Jarvis did not run as proposals }
-   Returns { done: [rows], waiting: [{ action, count, reason }] }; every action and every wait is logged. */
+   Returns { done: [rows], queued: [countdowns], waiting: [{ action, count, reason }] }; every action and every wait
+   is logged. */
 async function autoRun({ db, now, settings, ops }) {
   const cfg = cleanSettings((settings || {}).actions);
-  const out = { done: [], waiting: [] };
+  const out = { done: [], queued: [], waiting: [] };
   if (!cfg.auto) return Object.assign(out, { off: true });
-  const rows = await todayRows(db, now);
-  const left = (action) => Math.max(0, cfg.caps[action] - usedToday(rows, action));
+  const countdown = require("./jarvis-countdown");
+  const day = core.zoneParts(new Date(now)).day;
+  const [rows, pending] = await Promise.all([todayRows(db, now), countdown.open(db)]);
+  const left = (action) => Math.max(0, cfg.caps[action] - usedToday(rows, action) - countdown.queued(pending, action, day));
   const wait = async (action, count, reason) => {
     if (!count) return;
     out.waiting.push({ action, count, reason });
@@ -182,35 +206,43 @@ async function autoRun({ db, now, settings, ops }) {
       rows.push(await log(db, { action, mode: "auto", status: "waiting", count, detail: reason }, now));
     }
   };
+  // A risky action goes on the countdown, inside its cap; one Carlos cancelled waits for him.
+  const later = async (entry) => {
+    const count = entry.count || 1;
+    if (left(entry.action) < count) return wait(entry.action, count, "Over today's cap of " + cfg.caps[entry.action] + ".");
+    const res = await countdown.queue(db, entry, { now, hours: cfg.countdownHours });
+    if (res.row) { pending.push(res.row); out.queued.push(res.row); return res.row; }
+    if (res.existing.status === "cancelled") return wait(entry.action, count, entry.target + ": you cancelled its countdown; " + (entry.onCancel || "it runs on a click") + ".");
+    return null;
+  };
+  const isOpen = (r) => countdown.OPEN.includes(r.status);
+  const busy = (action) => new Set(pending.filter((r) => r.action === action && isOpen(r)).flatMap((r) => ((r.payload || {}).items || []).map((i) => i.id)));
+  const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+  const names = (list) => list.slice(0, 4).join(", ") + (list.length > 4 ? " and " + (list.length - 4) + " more" : "");
 
   const held = await ops.held();
-  const clean = held.filter((h) => cleanRerun(h.data).ok);
+  const inHeld = busy("rerun-held");
+  const cleanAll = held.filter((h) => cleanRerun(h.data).ok);
+  const clean = cleanAll.filter((h) => !inHeld.has(h.id));
   const sendable = clean.slice(0, left("rerun-held"));
-  for (const h of sendable) {
-    try {
-      const res = await ops.release(h.id, "jarvis");
-      if (!res) continue;
-      out.done.push(await log(db, { action: "rerun-held", mode: "auto", status: "done", target: h.data.host || h.id, detail: "Sent to the asker" + (res.mailed === false ? ", but the mail failed" : "") + (res.reportId ? " (report " + res.reportId + ")" : "") + "." }, now));
-    } catch (error) {
-      await log(db, { action: "rerun-held", mode: "auto", status: "failed", target: h.data.host || h.id, detail: error.message || String(error) }, now);
-    }
+  if (sendable.length) {
+    await later({ action: "rerun-held", target: plural(sendable.length, "held re-run"), count: sendable.length, part: sendable.map((h) => h.id).sort().join(","),
+      payload: { items: sendable.map((h) => ({ id: h.id, host: h.data.host || h.id })) }, why: "Clean reports for " + names(sendable.map((h) => h.data.host || h.id)) + "." });
   }
   await wait("rerun-held", clean.length - sendable.length, "Over today's cap of " + cfg.caps["rerun-held"] + ".");
-  await wait("rerun-held", held.length - clean.length, "Not clean: " + Array.from(new Set(held.filter((h) => !cleanRerun(h.data).ok).map((h) => cleanRerun(h.data).reason))).join(", ") + ".");
+  await wait("rerun-held", held.length - cleanAll.length, "Not clean: " + Array.from(new Set(held.filter((h) => !cleanRerun(h.data).ok).map((h) => cleanRerun(h.data).reason))).join(", ") + ".");
 
-  const notices = ops.noticesLive ? await ops.failedNotices() : [];
+  const inNotices = busy("resend-notices");
+  const notices = (ops.noticesLive ? await ops.failedNotices() : []).filter((n) => !inNotices.has(n.id));
   if (notices.length) {
-    if (!noticeHours(now)) await wait("resend-notices", notices.length, "Outside Monday-Saturday 08:00-19:00 Bogotá.");
-    else {
-      const room = Math.min(left("resend-notices"), Math.max(0, await ops.noticeBudget()));
-      for (const n of notices.slice(0, room)) {
-        const res = await ops.resend(n.ref, "jarvis");
-        if (res.outcome === "skipped") continue;
-        const row = await log(db, { action: "resend-notices", mode: "auto", status: res.outcome === "sent" ? "done" : "failed", target: n.data.domain || n.id, detail: res.outcome === "sent" ? "Sent to " + res.email + "." : res.reason }, now);
-        if (row.status === "done") out.done.push(row);
-      }
-      await wait("resend-notices", notices.length - Math.min(room, notices.length), room < left("resend-notices") ? "Today's owner-notice budget is used." : "Over today's cap of " + cfg.caps["resend-notices"] + ".");
+    const capLeft = left("resend-notices");
+    const room = Math.min(capLeft, Math.max(0, await ops.noticeBudget()));
+    const take = notices.slice(0, room);
+    if (take.length) {
+      await later({ action: "resend-notices", target: plural(take.length, "failed owner notice"), count: take.length, part: take.map((n) => n.id).sort().join(","),
+        payload: { items: take.map((n) => ({ id: n.id, domain: n.data.domain || n.id })) }, why: "Their last send failed: " + names(take.map((n) => n.data.domain || n.id)) + "." });
     }
+    await wait("resend-notices", notices.length - take.length, room < capLeft ? "Today's owner-notice budget is used." : "Over today's cap of " + cfg.caps["resend-notices"] + ".");
   }
 
   if (await ops.hubStale()) {
@@ -240,26 +272,31 @@ async function autoRun({ db, now, settings, ops }) {
     if (left(action) <= 0) return wait(action, 1, "Over today's cap of " + cfg.caps[action] + ".");
     await attempt(action, target, detail, run);
   };
-  const day = core.zoneParts(new Date(now)).day;
+  // A job or run that mails third parties, posts or deploys goes on the countdown instead, once per target.
+  const onceOrLater = async (action, target, detail, risk, payload, run) => {
+    if (!risk) return once(action, target, detail, run);
+    if (await seen(db, action, target)) return;
+    await later({ action, target, part: target, payload, why: detail });
+  };
 
   if (ops.failedJobs && ops.runJob) {
     for (const f of await ops.failedJobs()) {
       handled.add("job:" + f.job).add("scheduler:" + f.job);
-      await once("rerun-job", f.job + " @ " + f.endedAt, "The run that ended " + f.endedAt + " failed: " + text(f.error, 200), () => ops.runJob(f.job));
+      await onceOrLater("rerun-job", f.job + " @ " + f.endedAt, "The run that ended " + f.endedAt + " failed: " + text(f.error, 200), risky("rerun-job", f.job), { job: f.job }, () => ops.runJob(f.job));
     }
   }
   if (ops.overdueJobs && ops.runJob) {
     for (const o of await ops.overdueJobs()) {
       if (handled.has("job:" + o.job)) continue;
       handled.add("job:" + o.job).add("scheduler:" + o.job);
-      await once("refresh-stale", o.job + " @ " + day, "Overdue: " + text(o.why, 200) + ".", () => ops.runJob(o.job));
+      await onceOrLater("refresh-stale", o.job + " @ " + day, "Overdue: " + text(o.why, 200) + ".", risky("refresh-stale", o.job), { job: o.job }, () => ops.runJob(o.job));
     }
   }
   if (ops.failedCi && ops.rerunRun) {
     for (const run of await ops.failedCi()) {
       handled.add("ci:" + run.name);
       if (run.attempt > 1 || (run.branch !== "main" && !JARVIS_BRANCH.test(run.branch || ""))) continue;
-      await once("rerun-ci", run.name + " #" + run.id, "Re-running the failed jobs on " + run.branch + ".", () => ops.rerunRun(run.id));
+      await onceOrLater("rerun-ci", run.name + " #" + run.id, "Re-running the failed jobs on " + run.branch + ".", risky("rerun-ci", run.name), { run: run.id, name: run.name }, () => ops.rerunRun(run.id));
     }
   }
   if (ops.reviewFix && ops.runJob) {
@@ -286,21 +323,51 @@ async function autoRun({ db, now, settings, ops }) {
           await log(db, { action: "pause-outreach", mode: "auto", status: "failed", target: m.email, detail: error.message || String(error) }, now);
         }
       }
-      let ready = 0;
+      const ready = [];
+      const troubled = new Set();
       for (const p of pauses.values()) {
         const m = (o.mailboxes || []).find((x) => x.email === p.email);
         if (!m || m.status === "active") { await ops.setPause(p.email, null); continue; }
         const passes = mailboxProblem(m, o) ? 0 : (Number(p.passes) || 0) + 1;
-        if (passes !== p.passes) await ops.setPause(p.email, Object.assign({}, p, { passes }));
-        if (passes >= RESUME_PASSES) ready += 1;
+        // since: when the current healthy streak began, so a streak gets one countdown and a cancelled one stays cancelled.
+        const row = Object.assign({}, p, { passes }, passes === 0 && p.passes ? { since: new Date(now).toISOString() } : {});
+        if (passes !== p.passes) await ops.setPause(p.email, row);
+        if (passes === 0) troubled.add(p.email);
+        else if (passes >= RESUME_PASSES) ready.push(row);
       }
-      await wait("resume-outreach", ready, "Healthy for " + RESUME_PASSES + " hourly checks; resuming waits for a click.");
+      const resumes = pending.filter((r) => r.action === "resume-outreach" && isOpen(r));
+      for (const r of resumes.filter((x) => x.status === "waiting" && ((x.payload || {}).emails || []).some((e) => troubled.has(e)))) {
+        await countdown.cancel(db, r.id, { now, by: "jarvis", why: "the mailbox trouble came back" }).then(() => { r.status = "cancelled"; }).catch(() => null);
+      }
+      const queuedEmails = new Set(resumes.filter(isOpen).flatMap((r) => (r.payload || {}).emails || []));
+      const fresh = ready.filter((p) => !queuedEmails.has(p.email));
+      if (fresh.length) {
+        const emails = fresh.map((p) => p.email).sort();
+        const streak = fresh.map((p) => p.since || p.pausedAt || "").sort().pop();
+        await later({ action: "resume-outreach", target: names(emails), part: emails.join(",") + "@" + streak, payload: { emails },
+          why: "Healthy for " + RESUME_PASSES + " hourly checks in a row (paused for " + names(Array.from(new Set(fresh.map((p) => p.reason)))) + ").", onCancel: "resume them from Proposals or Outreach" });
+      }
     }
   }
 
   if (ops.socialFailed) {
     handled.add("social:failed");
-    await wait("retry-social", await ops.socialFailed(), "A public post off schedule waits for a click.");
+    const failed = await ops.socialFailed();
+    if (failed && !pending.some((r) => r.action === "retry-social" && isOpen(r))) {
+      await later({ action: "retry-social", target: plural(failed, "failed social post"), part: day + "#" + failed, why: "Buffer re-queues the failed posts when the posting workflows run again." });
+    }
+  }
+
+  if (ops.mergeCandidates) {
+    let prs = [];
+    try { prs = await ops.mergeCandidates(); } catch (error) {
+      const detail = "GitHub: " + text(error.message || error, 200);
+      if (!rows.some((r) => r.action === "merge-pr" && r.status === "failed" && r.detail === detail)) rows.push(await log(db, { action: "merge-pr", mode: "auto", status: "failed", target: "jarvis-merge PRs", detail }, now));
+    }
+    for (const pr of prs) {
+      await later({ action: "merge-pr", target: "#" + pr.number, part: pr.sha, payload: { number: pr.number, sha: pr.sha, url: pr.url }, why: text(pr.title, 200) + " (green, labelled jarvis-merge).",
+        onCancel: "remove the label or merge it yourself" });
+    }
   }
 
   if (ops.alerts && ops.ask && ops.catalog) {
@@ -322,7 +389,12 @@ async function autoRun({ db, now, settings, ops }) {
         for (const p of picks || []) {
           const runnable = pickOk(p, catalog);
           if (runnable && p.confidence >= cfg.confidence && left("ai-fix") > 0) {
-            const what = p.action + (p.args.job || p.args.workflow ? " " + (p.args.job || p.args.workflow) : "");
+            const arg = p.args.job || p.args.workflow || "";
+            const what = p.action + (arg ? " " + arg : "");
+            if (risky(p.action, arg)) {
+              await later({ action: "ai-fix", target: what, key: p.key, part: what, payload: { action: p.action, target: arg }, why: "For " + p.key + ": " + p.why, by: "gemini", confidence: p.confidence });
+              continue;
+            }
             await attempt("ai-fix", what, "For " + p.key + ": " + p.why + " (confidence " + p.confidence + ").", () =>
               p.action === "run-job" ? ops.runJob(p.args.job) : p.action === "rerun-ci" ? ops.rerunCi(p.args.workflow) : ops.publishHub());
           } else if (p.title || runnable) {
@@ -343,7 +415,8 @@ function summary(result) {
   (r.done || []).forEach((row) => { by[row.action] = (by[row.action] || 0) + 1; });
   const parts = Object.keys(by).map((k) => LABELS[k].toLowerCase() + " " + by[k]);
   const waiting = (r.waiting || []).reduce((n, w) => n + w.count, 0);
-  return (parts.length ? parts.join(", ") : "no actions") + (waiting ? "; " + waiting + " waiting for a click" : "");
+  const queued = (r.queued || []).length;
+  return (parts.length ? parts.join(", ") : "no actions") + (queued ? "; " + queued + " on the countdown" : "") + (waiting ? "; " + waiting + " waiting for a click" : "");
 }
 
 function pushMessage(result) {
@@ -372,4 +445,4 @@ function briefLines(rows, now) {
   return lines;
 }
 
-module.exports = { SAFE, CAPS, LABELS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, AI_CALLS, AI_CATALOG, RESUME_PASSES, JARVIS_BRANCH, cleanSettings, cleanRerun, noticeHours, mailboxProblem, aiPrompt, parsePicks, pickOk, usedToday, todayRows, log, seen, recent, autoRun, summary, pushMessage, briefLines };
+module.exports = { SAFE, CAPS, LABELS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, COUNTDOWN_HOURS, AI_CALLS, AI_CATALOG, RESUME_PASSES, JARVIS_BRANCH, RISKY_JOBS, RISKY_CI, risky, cleanSettings, cleanRerun, noticeHours, mailboxProblem, aiPrompt, parsePicks, pickOk, usedToday, todayRows, log, seen, recent, autoRun, summary, pushMessage, briefLines };

@@ -23,8 +23,10 @@ function ops(over) {
     runJob: async (name) => { calls.jobs.push(name); return { ran: name }; },
     rerunCi: async (name) => { calls.ci.push(name); return { run: 41 }; },
     sending: true, pauseOutreach: async () => ({ paused: [] }), dropCache: async () => ({}), fixes: [], gemini: null,
-    postNow: async () => { calls.posted += 1; return { note: "Buffer batch started, Facebook Page queue started." }; },
-    resumeOutreach: async (list) => { calls.resumed.push(list.map((c) => c.id)); return { resumed: list }; },
+    rerunRun: async (id) => { calls.ci.push(id); return {}; },
+    retrySocial: async () => { calls.posted += 1; return { note: "Buffer batch started, Facebook Page queue started." }; },
+    resumeMailboxes: async (emails) => { calls.resumed.push(emails); return { resumed: emails, left: [] }; },
+    pagespeedMerge: async (n, sha) => { calls.merged.push(["pagespeed", n, sha]); return { message: "Merging #" + n + "; Jarvis pushes the result." }; },
     mergePr: async (n, sha) => { calls.merged.push([n, sha]); return { merged: true, sha: "abc1234ff" }; },
     push: async (msg) => { calls.pushes.push(msg); return { sent: 1 }; }
   }, over || {});
@@ -42,7 +44,9 @@ test("each risky action has its kind: email, post, code, outreach; anything else
   assert.equal(countdown.kindOf("rerun-ci", "Pages"), "code");
   assert.equal(countdown.kindOf("rerun-ci", "Jarvis Android"), "code");
   assert.equal(countdown.kindOf("merge-pr"), "code");
-  assert.equal(countdown.kindOf("post-now"), "post");
+  assert.equal(countdown.kindOf("rerun-job", "sendOwnerNotices"), "email");
+  assert.equal(countdown.kindOf("refresh-stale", "ensureLiveReportsBatch"), "post");
+  assert.equal(countdown.kindOf("retry-social"), "post");
   assert.equal(countdown.kindOf("resume-outreach"), "outreach");
   assert.equal(countdown.kindOf("payout"), "money");
   assert.deepEqual(Object.keys(countdown.KINDS), ["email", "post", "code", "outreach", "money"]);
@@ -66,20 +70,20 @@ test("the queued push says when, with Do it now and Cancel on signed buttons", a
   const db = fakeDb();
   const { row } = await queue(db, { action: "rerun-ci", target: "Pages", why: "CI Pages on main is failure." });
   const msg = countdown.queuedMessage(row, 2);
-  assert.equal(msg.title, "Doing re-run failed ci jobs in 2 h");
+  assert.equal(msg.title, "Doing re-run failed CI jobs in 2 h");
   assert.equal(msg.ref, "countdown:" + row.id);
   assert.equal(msg.tag, "jarvis-countdown-" + row.id);
   assert.deepEqual(msg.actions, [{ act: "now", label: "Do it now" }, { act: "cancel", label: "Cancel" }]);
   assert.deepEqual(mailPush.parseAct(msg.ref, "now"), { type: "countdown", id: row.id, act: "now" });
   assert.deepEqual(mailPush.parseAct(msg.ref, "cancel"), { type: "countdown", id: row.id, act: "cancel" });
-  const night = await queue(db, { action: "post-now", target: "queues" }, MONDAY_20);
-  assert.equal(countdown.queuedMessage(night.row, 2).title, "Doing post the queues now at 08:00 Bogotá", "due at 22:00, a post waits for the morning");
-  assert.equal(countdown.queuedMessage(row, 0.5).title, "Doing re-run failed ci jobs in 30 min");
+  const night = await queue(db, { action: "retry-social", target: "2 failed social posts" }, MONDAY_20);
+  assert.equal(countdown.queuedMessage(night.row, 2).title, "Doing retry failed social posts at 08:00 Bogotá", "due at 22:00, a post waits for the morning");
+  assert.equal(countdown.queuedMessage(row, 0.5).title, "Doing re-run failed CI jobs in 30 min");
 });
 
 test("a due countdown runs, pushes when it starts and with the result, and is logged so the fix is checked", async () => {
   const db = fakeDb();
-  const { row } = await queue(db, { action: "run-job", target: "ensureLiveReportsBatch", key: "scheduler:ensureLiveReportsBatch" });
+  const { row } = await queue(db, { action: "rerun-job", target: "ensureLiveReportsBatch @ 2026-10-26T14:00:00Z", payload: { job: "ensureLiveReportsBatch" } });
   const { ops: o, calls } = ops();
   const early = await countdown.runDue({ db, now: MONDAY_10 + H, ops: o });
   assert.equal(early.started.length, 0);
@@ -87,10 +91,10 @@ test("a due countdown runs, pushes when it starts and with the result, and is lo
   assert.deepEqual(calls.jobs, ["ensureLiveReportsBatch"]);
   assert.equal(due.started[0].status, "done");
   assert.equal(db.doc("jarvis_countdowns", row.id).status, "done");
-  assert.deepEqual(calls.pushes.map((m) => m.title), ["Doing run a job again now", "Done: run a job again"]);
+  assert.deepEqual(calls.pushes.map((m) => m.title), ["Doing re-run a failed job now", "Done: re-run a failed job"]);
   assert.ok(calls.pushes.every((m) => m.tag === "jarvis-countdown-" + row.id), "the same notification updates");
   const logged = db.added.find((r) => r._c === "jarvis_actions");
-  assert.deepEqual([logged.action, logged.mode, logged.status, logged.key, logged.by], ["run-job", "auto", "done", "scheduler:ensureLiveReportsBatch", "jarvis (countdown)"]);
+  assert.deepEqual([logged.action, logged.mode, logged.status, logged.by], ["rerun-job", "auto", "done", "jarvis (countdown)"]);
   assert.match(logged.detail, /^After the countdown: Started ensureLiveReportsBatch\./);
   assert.equal(countdown.summary(due), "1 started (1 done), 0 waiting for daytime");
 });
@@ -113,13 +117,13 @@ test("at night email and posts wait for 08:00-21:00 Bogotá; code runs right awa
 
 test("Do it now skips the daytime wait but not the owner-notice hours; Cancel drops it and frees the cap", async () => {
   const db = fakeDb();
-  const post = (await queue(db, { action: "post-now", target: "queues" }, MONDAY_20)).row;
+  const post = (await queue(db, { action: "retry-social", target: "2 failed social posts" }, MONDAY_20)).row;
   const { ops: o, calls } = ops();
   const now = await countdown.decide(db, { id: post.id, act: "now" }, { ops: o, now: MONDAY_20 + 10 * 60000, by: "carlos@x.co" });
   assert.equal(calls.posted, 1);
   assert.match(now.message, /^Done: Buffer batch started/);
   assert.equal(db.doc("jarvis_countdowns", post.id).decidedBy, "carlos@x.co");
-  assert.match(db.added.find((r) => r.action === "post-now").by, /Do it now by carlos@x\.co/);
+  assert.match(db.added.find((r) => r.action === "retry-social").by, /Do it now by carlos@x\.co/);
   await assert.rejects(countdown.decide(db, { id: post.id, act: "now" }, { ops: o, now: MONDAY_20, by: "carlos@x.co" }), /already done/);
 
   const notices = (await queue(db, { action: "resend-notices", target: "1 failed owner notice", payload: { items: [{ id: "x.co" }] } }, SATURDAY_20)).row;
@@ -129,7 +133,7 @@ test("Do it now skips the daytime wait but not the owner-notice hours; Cancel dr
   const ci = (await queue(db, { action: "rerun-ci", target: "Facebook Page", count: 1 })).row;
   assert.equal(countdown.queued(await countdown.open(db), "rerun-ci", "2026-10-26"), 1);
   const out = await countdown.decide(db, { id: ci.id, act: "cancel" }, { ops: o, now: MONDAY_10 + H, by: "carlos@x.co" });
-  assert.equal(out.message, "Cancelled: re-run failed ci jobs.");
+  assert.equal(out.message, "Cancelled: re-run failed CI jobs.");
   assert.equal(countdown.queued(await countdown.open(db), "rerun-ci", "2026-10-26"), 0, "a cancelled countdown gives its slot back");
   assert.deepEqual(calls.ci, []);
   const log = db.added.find((r) => r.action === "rerun-ci" && r.status === "skipped");
@@ -139,13 +143,54 @@ test("Do it now skips the daytime wait but not the owner-notice hours; Cancel dr
 
 test("a countdown Carlos cancelled is not queued again that day; Jarvis says it waits for him", async () => {
   const db = fakeDb();
-  const { ops: o } = ops();
-  const items = [line("ci:Facebook Page")];
-  const first = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops: o, items, external: {} });
+  const { ops: o, calls } = ops({ failedCi: async () => [{ id: 7, name: "Facebook Page", branch: "main", attempt: 1 }] });
+  const first = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops: o });
+  assert.deepEqual(first.queued.map((r) => [r.action, r.target, r.kind, r.payload.run]), [["rerun-ci", "Facebook Page #7", "post", 7]]);
   await countdown.cancel(db, first.queued[0].id, { now: MONDAY_10 + 600000, by: "carlos@x.co" });
-  const next = await actions.autoRun({ db, now: MONDAY_10 + H, settings: {}, ops: o, items, external: {} });
+  const next = await actions.autoRun({ db, now: MONDAY_10 + H, settings: {}, ops: o });
   assert.equal(next.queued.length, 0);
-  assert.match(next.waiting[0].reason, /Facebook Page: you cancelled its countdown today; it runs on a click\./);
+  assert.deepEqual(calls.ci, []);
+
+  const social = ops({ socialFailed: async () => 2 });
+  const db2 = fakeDb();
+  const queued = await actions.autoRun({ db: db2, now: MONDAY_10, settings: {}, ops: social.ops });
+  await countdown.cancel(db2, queued.queued[0].id, { now: MONDAY_10 + 600000, by: "carlos@x.co" });
+  const after = await actions.autoRun({ db: db2, now: MONDAY_10 + H, settings: {}, ops: social.ops });
+  assert.equal(after.queued.length, 0);
+  assert.match(after.waiting[0].reason, /2 failed social posts: you cancelled its countdown; it runs on a click\./);
+});
+
+test("risky jobs and workflows go on the countdown; the rest still run at once", async () => {
+  const db = fakeDb();
+  const { ops: o, calls } = ops({
+    failedJobs: async () => [{ job: "sendOwnerNotices", endedAt: "2026-10-26T14:00:00Z", error: "SMTP" }, { job: "fetchTraffic", endedAt: "2026-10-26T14:00:00Z", error: "timeout" }],
+    failedCi: async () => [{ id: 8, name: "Pages", branch: "main", attempt: 1 }, { id: 9, name: "Lint Code", branch: "pagespeed/safe-2026-11-02", attempt: 1 }]
+  });
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops: o });
+  assert.deepEqual(calls.jobs, ["fetchTraffic"]);
+  assert.deepEqual(calls.ci, [9]);
+  assert.deepEqual(out.queued.map((r) => [r.action, r.kind, r.payload.job || r.payload.run]), [["rerun-job", "email", "sendOwnerNotices"], ["rerun-ci", "code", 8]]);
+  await countdown.runDue({ db, now: Date.parse("2026-10-26T17:05:00Z"), ops: o });
+  assert.deepEqual(calls.jobs, ["fetchTraffic", "sendOwnerNotices"]);
+  assert.deepEqual(calls.ci, [9, 8]);
+  const again = await actions.autoRun({ db, now: MONDAY_10 + 3 * H, settings: {}, ops: o });
+  assert.equal(again.queued.length, 0, "a failure that already ran on the countdown is not queued again");
+});
+
+test("failed social posts are retried on the countdown, once per failed count, inside the cap", async () => {
+  const db = fakeDb();
+  let failed = 2;
+  const { ops: o, calls } = ops({ socialFailed: async () => failed });
+  const one = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops: o });
+  assert.deepEqual(one.queued.map((r) => [r.action, r.target, r.kind]), [["retry-social", "2 failed social posts", "post"]]);
+  assert.equal((await actions.autoRun({ db, now: MONDAY_10 + H, settings: {}, ops: o })).queued.length, 0, "one at a time");
+  await countdown.runDue({ db, now: MONDAY_10 + 2 * H, ops: o });
+  assert.equal(calls.posted, 1);
+  assert.equal((await actions.autoRun({ db, now: MONDAY_10 + 3 * H, settings: {}, ops: o })).queued.length, 0, "the same failures are not retried twice");
+  failed = 3;
+  assert.equal((await actions.autoRun({ db, now: MONDAY_10 + 4 * H, settings: {}, ops: o })).queued.length, 1);
+  const capped = await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: { actions: { caps: { "retry-social": 0 } } }, ops: o });
+  assert.match(capped.waiting[0].reason, /Over today's cap of 0/);
 });
 
 test("the countdown checks the action's rules again when it runs: clean re-runs only, inside the notice budget", async () => {
@@ -161,27 +206,45 @@ test("the countdown checks the action's rules again when it runs: clean re-runs 
   assert.equal(db.doc("jarvis_countdowns", notices.id).result, "Sent 1 of 2; today's notice budget ran out.");
 });
 
-test("outreach Jarvis paused resumes on the countdown after two clear passes, and trouble coming back cancels it", async () => {
+test("a mailbox Jarvis paused resumes on the countdown after two healthy checks, and trouble coming back cancels it", async () => {
   const db = fakeDb();
-  let pause = { paused: [{ id: "c1", name: "W1 E-pt Brazil" }], at: "2026-10-26T09:00:00.000Z", clear: 0 };
-  const { ops: o, calls } = ops({ outreachPause: async () => pause, setOutreachPause: async (patch) => { pause = Object.assign({}, pause, patch); } });
-  const one = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops: o, items: [], external: {} });
-  assert.equal(pause.clear, 1);
+  const email = "ana@qalabreview.com";
+  const pauses = new Map([[email, { email, domain: "qalabreview.com", reason: "warm-up off", pausedAt: "2026-10-26T09:00:00.000Z", passes: 0 }]]);
+  let box = { email, status: "paused", warmup: "on", score: 98 };
+  const { ops: o, calls } = ops({
+    outreach: async () => ({ domain: "qalabreview.com", failing: [], warmupMin: 80, mailboxes: [box], pauses: Array.from(pauses.values()) }),
+    pauseMailbox: async () => ({}), setPause: async (e, row) => { if (row) pauses.set(e, row); else pauses.delete(e); }
+  });
+  const one = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops: o });
+  assert.equal(pauses.get(email).passes, 1);
   assert.equal(one.queued.length, 0);
-  const two = await actions.autoRun({ db, now: MONDAY_10 + H, settings: {}, ops: o, items: [], external: {} });
-  assert.deepEqual(two.queued.map((r) => [r.action, r.kind, r.payload.campaigns.map((c) => c.id)]), [["resume-outreach", "outreach", ["c1"]]]);
-  assert.match(two.queued[0].why, /resumes W1 E-pt Brazil/);
-  await actions.autoRun({ db, now: MONDAY_10 + 2 * H, settings: {}, ops: Object.assign({}, o, { sending: false }), items: [line("outreach:warmup", "warn")], external: {} });
-  assert.equal(pause.clear, 0);
+  const two = await actions.autoRun({ db, now: MONDAY_10 + H, settings: {}, ops: o });
+  assert.deepEqual(two.queued.map((r) => [r.action, r.kind, r.payload.emails]), [["resume-outreach", "outreach", [email]]]);
+  assert.match(two.queued[0].why, /Healthy for 2 hourly checks in a row \(paused for warm-up off\)/);
+  assert.equal((await actions.autoRun({ db, now: MONDAY_10 + H + 60000, settings: {}, ops: o })).queued.length, 0, "a waiting resume is not queued twice");
+  box = Object.assign({}, box, { warmup: "off" });
+  await actions.autoRun({ db, now: MONDAY_10 + 2 * H, settings: {}, ops: o });
+  assert.equal(pauses.get(email).passes, 0);
   assert.equal(db.doc("jarvis_countdowns", two.queued[0].id).status, "cancelled");
   assert.match(db.doc("jarvis_countdowns", two.queued[0].id).result, /trouble came back/);
 
-  const db2 = fakeDb();
-  pause = { paused: [{ id: "c1", name: "W1" }], at: "x", clear: 1 };
-  const queued = await actions.autoRun({ db: db2, now: MONDAY_10, settings: {}, ops: o, items: [], external: {} });
-  await countdown.runDue({ db: db2, now: MONDAY_10 + 2 * H, ops: o });
-  assert.deepEqual(calls.resumed, [["c1"]]);
-  assert.equal(db2.doc("jarvis_countdowns", queued.queued[0].id).result, "Resumed W1.");
+  box = Object.assign({}, box, { warmup: "on" });
+  await actions.autoRun({ db, now: MONDAY_10 + 3 * H, settings: {}, ops: o });
+  const again = await actions.autoRun({ db, now: MONDAY_10 + 4 * H, settings: {}, ops: o });
+  assert.equal(again.queued.length, 1, "a new healthy streak gets a new countdown");
+  await countdown.runDue({ db, now: MONDAY_10 + 6 * H, ops: o });
+  assert.deepEqual(calls.resumed, [[email]]);
+  assert.equal(db.doc("jarvis_countdowns", again.queued[0].id).result, "Resumed " + email + ".");
+});
+
+test("a safe PageSpeed PR merges through its workflow from the countdown", async () => {
+  const db = fakeDb();
+  const { ops: o, calls } = ops();
+  const { row } = await queue(db, { action: "merge-pr", kind: "code", target: "#2210", label: "Merge PageSpeed fixes #2210", payload: { number: 2210, sha: "fe12", pagespeed: true } }, MONDAY_20);
+  assert.equal(countdown.queuedMessage(row, 2).title, "Doing merge PageSpeed fixes #2210 in 2 h");
+  await countdown.runDue({ db, now: MONDAY_20 + 2 * H, ops: o });
+  assert.deepEqual(calls.merged, [["pagespeed", 2210, "fe12"]], "code runs at night");
+  assert.equal(db.doc("jarvis_countdowns", row.id).result, "Merging #2210; Jarvis pushes the result.");
 });
 
 test("a green PR labelled jarvis-merge is merged after the countdown, at the commit it was green on", async () => {
@@ -210,7 +273,7 @@ test("a failed run is pushed and logged as failed; one stuck running is closed; 
   const money = (await queue(db, { action: "payout", target: "PayPal", kind: "money" })).row;
   await countdown.runDue({ db, now: MONDAY_10 + 2 * H, ops: o });
   assert.equal(db.doc("jarvis_countdowns", ci.id).status, "failed");
-  assert.equal(calls.pushes.find((m) => m.title.startsWith("Failed")).title, "Failed: re-run failed ci jobs");
+  assert.equal(calls.pushes.find((m) => m.title.startsWith("Failed")).title, "Failed: re-run failed CI jobs");
   assert.match(db.doc("jarvis_countdowns", money.id).result, /no action for this yet/);
   const stuck = (await queue(db, { action: "rerun-ci", target: "Jarvis Android" })).row;
   await db.collection("jarvis_countdowns").doc(stuck.id).update({ status: "running", startedAt: new Date(MONDAY_10).toISOString() });
@@ -221,7 +284,7 @@ test("a failed run is pushed and logged as failed; one stuck running is closed; 
 
 test("the view lists what waits with its start time and what ended in the last day", async () => {
   const db = fakeDb();
-  const post = (await queue(db, { action: "post-now", target: "queues" }, MONDAY_20)).row;
+  const post = (await queue(db, { action: "retry-social", target: "2 failed social posts" }, MONDAY_20)).row;
   const ci = (await queue(db, { action: "rerun-ci", target: "Pages" }, MONDAY_20)).row;
   await countdown.cancel(db, ci.id, { now: MONDAY_20 + 60000, by: "carlos@x.co" });
   const v = await countdown.view(db, MONDAY_20 + H);

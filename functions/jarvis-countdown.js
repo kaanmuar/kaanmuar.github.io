@@ -3,17 +3,20 @@
    Cancel, then a push when it starts and one with the result; the web and the app list the pending ones.
 
    kinds      email     third-party email: held re-runs to their askers, owner notices, the jobs that mail people
-              post      public posts off schedule: Post now, a failed posting workflow re-run
-              code      code reaching production: merging a green PR labelled jarvis-merge, the Pages and app workflows
-              outreach  resuming the campaigns Jarvis paused (jarvis_watch/outreach-pause)
+              post      public posts off schedule: retrying failed social posts, a failed posting job or workflow re-run
+              code      code reaching production: merging a green PR (labelled jarvis-merge, or a safe PageSpeed PR),
+                        the Pages and app workflows
+              outreach  resuming the mailboxes Jarvis paused (jarvis_outreach_pauses)
               money     money other than refunds; Jarvis has no such action yet
    Refunds and deletes are never queued: they wait for a click.
-   A countdown that ends at night holds email and posts until Bogotá 08:00-21:00, and owner notices until their
-   Ley 2300 hours (Monday-Saturday 08:00-19:00); the rest runs right away. Do it now skips the daytime window but not
-   the notice hours. Only what Jarvis starts goes through here: Carlos's own clicks run at once.
+   A countdown starts at any hour. One that ends at night holds email and posts until Bogotá 08:00-21:00, and owner
+   notices until their Ley 2300 hours (Monday-Saturday 08:00-19:00); the rest runs right away. Do it now skips the
+   daytime window but not the notice hours. Only what Jarvis starts goes through here: Carlos's own clicks run at once.
 
    jarvis_countdowns/<id> = { id, action, target, label, kind, key, count, payload, why, by, confidence, status
-   (waiting, running, done, failed, cancelled), day, createdAt, dueAt, hold, startedAt, endedAt, result, decidedBy } */
+   (waiting, running, done, failed, cancelled), day, createdAt, dueAt, hold, startedAt, endedAt, result, decidedBy }.
+   The same collection keeps the PageSpeed PR records (jarvis-pagespeed.js, pagespeed-<pr>, with state and no status),
+   which the queries here never match. */
 
 const crypto = require("crypto");
 const core = require("./jarvis-core");
@@ -22,23 +25,30 @@ const KINDS = { email: "third-party email", post: "public post", code: "code rea
 const DAYTIME = { from: 8, to: 21 };
 const OPEN = ["waiting", "running"];
 const MERGE_LABEL = "jarvis-merge";
-const CLEAR_PASSES = 2;
 const STUCK = 30 * 60 * 1000;
 const DAY = 24 * 60 * 60 * 1000;
-const EXTRA_LABELS = { "resume-outreach": "Resume outreach", "merge-pr": "Merge a green PR", "post-now": "Post the queues now", money: "Move money" };
+const EXTRA_LABELS = { "merge-pr": "Merge a green PR", money: "Move money" };
 const MAIL_JOBS = ["sendOwnerNotices", "sendReviewNotes", "jarvisWatch"];
+const JOB_ACTIONS = ["run-job", "rerun-job", "refresh-stale"];
 
 const text = (value, max) => String(value === null || value === undefined ? "" : value).replace(/\s+/g, " ").trim().slice(0, max);
 const actions = () => require("./jarvis-actions");
+const lower = (s) => s.charAt(0).toLowerCase() + s.slice(1);
 
-// The action that runs: a Gemini pick carries its catalog action and target.
-const inner = (row) => (row.action === "ai-fix" && row.payload ? { action: row.payload.action, target: row.payload.target } : { action: row.action, target: row.target });
+// The action that runs: a Gemini pick carries its catalog action and target. Jobs and runs name theirs in the payload.
+function inner(row) {
+  const p = row.payload || {};
+  if (row.action === "ai-fix" && p.action) return { action: p.action, target: p.target };
+  if (JOB_ACTIONS.includes(row.action)) return { action: row.action, target: p.job || row.target };
+  if (row.action === "rerun-ci") return { action: row.action, target: p.name || row.target };
+  return { action: row.action, target: row.target };
+}
 
 function kindOf(action, target) {
   if (action === "rerun-held" || action === "resend-notices") return "email";
-  if (action === "run-job") return MAIL_JOBS.includes(target) ? "email" : "post";
+  if (JOB_ACTIONS.includes(action)) return MAIL_JOBS.includes(target) ? "email" : "post";
   if (action === "rerun-ci") return /^pages$|jarvis android/i.test(String(target)) ? "code" : "post";
-  if (action === "post-now") return "post";
+  if (action === "retry-social") return "post";
   if (action === "merge-pr") return "code";
   if (action === "resume-outreach") return "outreach";
   return "money";
@@ -86,6 +96,11 @@ function idOf(action, target, part) {
 const col = (db) => db.collection("jarvis_countdowns");
 const cleanId = (id) => String(id || "").replace(/[^a-f0-9]/g, "").slice(0, 24) || "-";
 
+async function get(db, id) {
+  const snap = await col(db).doc(cleanId(id)).get();
+  return snap.exists ? snap.data() : null;
+}
+
 async function open(db) {
   const snap = await col(db).where("status", "in", OPEN).limit(100).get().catch(() => null);
   return snap ? snap.docs.map((doc) => doc.data()) : [];
@@ -96,7 +111,7 @@ function queued(rows, action, day) {
   return (rows || []).filter((r) => r.action === action && r.day === day && OPEN.includes(r.status)).reduce((n, r) => n + (Number(r.count) || 1), 0);
 }
 
-/* Queues one countdown. entry = { action, target, key, count, payload, why, by, confidence, part }; part makes the
+/* Queues one countdown. entry = { action, target, key, count, payload, why, by, confidence, part, kind, label }; part makes the
    id (the day by default, so an action and target is queued once a day). Returns { row } when queued, or
    { existing } with the row already there. */
 async function queue(db, entry, { now, hours }) {
@@ -109,7 +124,7 @@ async function queue(db, entry, { now, hours }) {
     status: "waiting", day, createdAt: new Date(now).toISOString(), dueAt: new Date(now + hours * 3600000).toISOString(), hold: "", startedAt: "", endedAt: "", result: "", decidedBy: "",
     expireAt: new Date(now + 60 * DAY)
   };
-  row.label = labelOf(row);
+  row.label = text(entry.label, 80) || labelOf(row);
   const ref = col(db).doc(id);
   try {
     await ref.create(row);
@@ -121,19 +136,22 @@ async function queue(db, entry, { now, hours }) {
   }
 }
 
-/* Runs a row's action. ops as in jarvis-actions autoRun, plus postNow(), resumeOutreach(campaigns) -> { resumed },
-   mergePr(number, sha) -> { merged, sha }. Returns { count, detail }; throws when it did nothing. */
+/* Runs a row's action. ops as in jarvis-actions autoRun, plus retrySocial() -> { note },
+   resumeMailboxes(emails) -> { resumed: [email], left: [email: why] }, mergePr(number, sha) -> { merged, sha } and
+   pagespeedMerge(number, sha) -> { message }. Returns { count, detail }; throws when it did nothing. */
 async function execute(row, ops, now) {
   const A = actions();
   const { action, target } = inner(row);
   const p = row.payload || {};
-  if (action === "run-job") { await ops.runJob(target); return { count: 1, detail: "Started " + target + "." }; }
+  if (JOB_ACTIONS.includes(action)) { await ops.runJob(target); return { count: 1, detail: "Started " + target + "." }; }
+  if (action === "rerun-ci" && p.run) { await ops.rerunRun(p.run); return { count: 1, detail: "Re-running the failed jobs of run " + p.run + "." }; }
   if (action === "rerun-ci") {
     const res = await ops.rerunCi(target);
     if (res.already === "re-run once") throw new Error("Run " + res.run + " failed again after one re-run; it is yours now.");
     return { count: res.already ? 0 : 1, detail: res.already ? "Already " + res.already + "." : "Re-running run " + res.run + "." };
   }
-  if (action === "post-now") { const res = await ops.postNow(); return { count: 1, detail: text(res.note, 300) || "Started the posting queues." }; }
+  if (action === "publish-hub") { await ops.publishHub(); return { count: 1, detail: "Started refreshSocialHubStats." }; }
+  if (action === "retry-social") { const res = await ops.retrySocial(); return { count: 1, detail: text(res.note, 300) || "Started the posting workflows." }; }
   if (action === "rerun-held") {
     const ids = new Set((p.items || []).map((i) => i.id));
     const held = (await ops.held()).filter((h) => ids.has(h.id));
@@ -163,9 +181,11 @@ async function execute(row, ops, now) {
     return { count: sent, detail: "Sent " + sent + " of " + due.length + (failed ? ", " + failed + " failed" : "") + (due.length > budget ? "; today's notice budget ran out" : "") + "." };
   }
   if (action === "resume-outreach") {
-    const res = await ops.resumeOutreach(p.campaigns || []);
-    return { count: res.resumed.length, detail: res.resumed.length ? "Resumed " + res.resumed.map((c) => c.name || c.id).join(", ") + "." : "Nothing to resume." };
+    const res = await ops.resumeMailboxes(p.emails || []);
+    if (!res.resumed.length) throw new Error("Nothing resumed" + (res.left.length ? ": " + res.left.join("; ") : "") + ".");
+    return { count: res.resumed.length, detail: "Resumed " + res.resumed.join(", ") + (res.left.length ? "; left: " + res.left.join("; ") : "") + "." };
   }
+  if (action === "merge-pr" && p.pagespeed) { const res = await ops.pagespeedMerge(p.number, p.sha); return { count: 1, detail: res.message }; }
   if (action === "merge-pr") { const res = await ops.mergePr(p.number, p.sha); return { count: 1, detail: "Merged #" + p.number + " at " + String(res.sha || p.sha || "").slice(0, 7) + "." }; }
   throw new Error("Jarvis has no action for this yet; do it by hand.");
 }
@@ -175,7 +195,7 @@ function queuedMessage(row, hours) {
   const late = at > Date.parse(row.dueAt);
   return {
     kind: "alerts", tab: "systems", tag: "jarvis-countdown-" + row.id, ref: "countdown:" + row.id,
-    title: ("Doing " + row.label.toLowerCase() + (late ? " at " + bogotaTime(at) + " Bogotá" : " in " + hoursText(hours))).slice(0, 120),
+    title: ("Doing " + lower(row.label) + (late ? " at " + bogotaTime(at) + " Bogotá" : " in " + hoursText(hours))).slice(0, 120),
     body: (row.target + ". " + (row.why || KINDS[row.kind] + ".")).slice(0, 220),
     lines: [KINDS[row.kind] ? "Kind: " + KINDS[row.kind] : "", row.confidence !== null ? "Gemini confidence " + row.confidence : ""].filter(Boolean),
     actions: [{ act: "now", label: "Do it now" }, { act: "cancel", label: "Cancel" }]
@@ -183,11 +203,11 @@ function queuedMessage(row, hours) {
 }
 
 function startMessage(row) {
-  return { kind: "alerts", tab: "systems", tag: "jarvis-countdown-" + row.id, title: ("Doing " + row.label.toLowerCase() + " now").slice(0, 120), body: row.target.slice(0, 220) };
+  return { kind: "alerts", tab: "systems", tag: "jarvis-countdown-" + row.id, title: ("Doing " + lower(row.label) + " now").slice(0, 120), body: row.target.slice(0, 220) };
 }
 
 function resultMessage(row) {
-  return { kind: "alerts", tab: "systems", tag: "jarvis-countdown-" + row.id, title: ((row.status === "done" ? "Done: " : "Failed: ") + row.label.toLowerCase()).slice(0, 120), body: (row.target + ". " + row.result).slice(0, 220) };
+  return { kind: "alerts", tab: "systems", tag: "jarvis-countdown-" + row.id, title: ((row.status === "done" ? "Done: " : "Failed: ") + lower(row.label)).slice(0, 120), body: (row.target + ". " + row.result).slice(0, 220) };
 }
 
 // Moves a row from one status to the next inside a transaction; throws when it is no longer in `from`.
@@ -233,7 +253,7 @@ async function cancel(db, id, { now, by, why }) {
 
 // A notification button or a web/app button: "now" runs it, "cancel" drops it.
 async function decide(db, { id, act }, { ops, now, by }) {
-  if (act === "cancel") { const row = await cancel(db, id, { now, by }); return { message: "Cancelled: " + row.label.toLowerCase() + ".", countdown: row }; }
+  if (act === "cancel") { const row = await cancel(db, id, { now, by }); return { message: "Cancelled: " + lower(row.label) + ".", countdown: row }; }
   if (act !== "now") throw new Error("Do it now or Cancel only.");
   const row = await start(db, id, { ops, now, by });
   return { message: (row.status === "done" ? "Done: " : "Failed: ") + row.result, countdown: row };
@@ -279,6 +299,6 @@ async function view(db, now) {
 }
 
 module.exports = {
-  KINDS, DAYTIME, OPEN, MERGE_LABEL, CLEAR_PASSES, kindOf, labelOf, daytime, windowOf, nextOpen, runsAt, idOf, open, queued, queue, execute,
+  KINDS, DAYTIME, OPEN, MERGE_LABEL, kindOf, labelOf, daytime, windowOf, nextOpen, runsAt, idOf, get, open, queued, queue, execute,
   queuedMessage, startMessage, resultMessage, start, cancel, decide, runDue, summary, view
 };

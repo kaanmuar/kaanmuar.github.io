@@ -3,6 +3,8 @@ const assert = require("node:assert/strict");
 const ps = require("../../functions/jarvis-pagespeed");
 const mailPush = require("../../functions/jarvis-mail-push");
 const core = require("../../functions/jarvis-core");
+const countdown = require("../../functions/jarvis-countdown");
+const { fakeDb } = require("./fake-jarvis-db");
 
 const DAY = "2026-11-01T15:00:00Z"; // 10:00 Bogotá
 const NIGHT = "2026-11-01T08:30:00Z"; // 03:30 Bogotá
@@ -37,20 +39,21 @@ function github(routes, data) {
   return { fetchImpl, calls };
 }
 
+// The shared fake, with the PageSpeed records as db.docs["pagespeed-<pr>"].
 function firestore(seed) {
-  const docs = Object.assign({}, seed);
-  const ref = (id) => ({ id, get: async () => ({ data: () => docs[id] }), set: async (v, o) => { docs[id] = o && o.merge ? Object.assign({}, docs[id], v) : v; } });
-  return {
-    docs,
-    collection: () => ({ doc: ref }),
-    runTransaction: async (fn) => fn({ get: (r) => r.get(), set: (r, v) => { docs[r.id] = v; } })
-  };
+  const db = fakeDb();
+  Object.keys(seed || {}).forEach((id) => db.collection("jarvis_countdowns").doc(id).set(seed[id]));
+  db.docs = new Proxy({}, { get: (t, id) => db.doc("jarvis_countdowns", id) });
+  return db;
 }
 
 function deps(gh, db, now, extra) {
   const pushes = [], logs = [];
-  return Object.assign({ fetchImpl: gh.fetchImpl, token: "t", db, now: Date.parse(now), by: "jarvis", push: async (m) => { pushes.push(m); }, log: async (e) => { logs.push(e); }, pushes, logs }, extra || {});
+  return Object.assign({ fetchImpl: gh.fetchImpl, token: "t", db, now: Date.parse(now), by: "jarvis", hours: 2, push: async (m) => { pushes.push(m); }, log: async (e) => { logs.push(e); }, pushes, logs }, extra || {});
 }
+
+// The countdown runner's ops for a PageSpeed merge, as index.js wires them.
+const runner = (d) => ({ pagespeedMerge: (number, sha) => ps.merge(Object.assign({}, d, { pr: number, sha, quiet: true })), push: d.push });
 
 const pr = (number, ref, extra) => Object.assign({ number, state: "open", html_url: "https://github.com/pull/" + number, title: "PageSpeed: fixes", head: { ref, sha: "sha" + number }, created_at: "2026-11-01T08:45:00Z" }, extra || {});
 const green = { check_runs: ["Lint Code", "url-review-unit", "playwright"].map((name) => ({ name, status: "completed", conclusion: "success" })) };
@@ -90,21 +93,30 @@ test("Gemini's PR goes to Proposals with Merge and Close; a safe one that scored
   assert.match(note, /#9 to proposals/);
   assert.match(note, /#8 countdown started/);
   assert.equal(db.docs["pagespeed-9"].state, "proposal");
-  assert.equal(db.docs["pagespeed-8"].state, "countdown");
-  const [proposal, countdown] = [d.pushes.find((m) => m.ref === "pagespeed:9"), d.pushes.find((m) => m.ref === "countdown:pagespeed-8")];
+  const doc = db.docs["pagespeed-8"];
+  assert.equal(doc.state, "countdown");
+  const row = db.doc("jarvis_countdowns", doc.countdown);
+  assert.deepEqual([row.action, row.kind, row.target, row.status, row.dueAt, row.payload], ["merge-pr", "code", "#8", "waiting", "2026-11-01T17:00:00.000Z", { number: 8, sha: "sha8", url: "https://github.com/pull/8", pagespeed: true }]);
+  assert.equal(doc.dueAt, row.dueAt);
+  const [proposal, push] = [d.pushes.find((m) => m.ref === "pagespeed:9"), d.pushes.find((m) => m.ref === "countdown:" + row.id)];
   assert.deepEqual(proposal.actions.map((a) => a.act), ["merge", "close"]);
-  assert.equal(countdown.title, "Merging PageSpeed fixes in 2 h");
-  assert.deepEqual(countdown.actions.map((a) => a.label), ["Cancel", "Do it now"]);
-  assert.match(countdown.body, /#8 goes to production at 11:50 Bogotá/);
-  assert.deepEqual(mailPush.parseAct(countdown.ref, "cancel"), { type: "countdown", id: "pagespeed-8", act: "cancel" });
+  assert.equal(push.title, "Doing merge PageSpeed fixes #8 in 2 h");
+  assert.deepEqual(push.actions.map((a) => a.label), ["Do it now", "Cancel"]);
+  assert.match(push.body, /^#8\. Rose on index\.html/);
+  assert.deepEqual(mailPush.parseAct(push.ref, "cancel"), { type: "countdown", id: row.id, act: "cancel" });
   assert.deepEqual(mailPush.parseAct(proposal.ref, "merge"), { type: "pagespeed", id: "9", act: "merge" });
+  await ps.tick(deps(gh, db, "2026-11-01T16:00:00Z"));
+  assert.equal(countdown.queued(await countdown.open(db), "merge-pr", "2026-11-01"), 1, "queued once");
 });
 
-test("a countdown waits for daytime, and red CI or a branch that did not score up goes to Proposals", async () => {
+test("a countdown starts at night too, and red CI or a branch that did not score up goes to Proposals", async () => {
   const night = github({ "GET /pulls": [pr(8, SAFE)], "GET /commits/sha8/check-runs": green }, { "runs.json": runs(true) });
   const dbN = firestore();
-  assert.match(await ps.tick(deps(night, dbN, NIGHT)), /waits for 08:00 Bogotá/);
-  assert.equal(dbN.docs["pagespeed-8"], undefined);
+  const dN = deps(night, dbN, NIGHT);
+  assert.match(await ps.tick(dN), /#8 countdown started/);
+  const row = dbN.doc("jarvis_countdowns", dbN.docs["pagespeed-8"].countdown);
+  assert.equal(countdown.runsAt(row), Date.parse(row.dueAt), "code reaching production does not wait for daytime");
+  assert.equal(dN.pushes[0].title, "Doing merge PageSpeed fixes #8 in 2 h");
 
   const red = github({ "GET /pulls": [pr(8, SAFE)], "GET /commits/sha8/check-runs": { check_runs: [{ name: "playwright", status: "completed", conclusion: "failure" }] }, "POST /issues/8/labels": {} }, { "runs.json": runs(true) });
   const dbR = firestore();
@@ -118,20 +130,52 @@ test("a countdown waits for daytime, and red CI or a branch that did not score u
   assert.match(dbF.docs["pagespeed-8"].reason, /No page rose/);
 });
 
-test("when the countdown ends Jarvis starts the merge workflow; a moved branch goes to Proposals instead", async () => {
-  const due = { pr: 8, kind: "safe", state: "countdown", sha: "sha8", dueAt: "2026-11-01T14:00:00Z", at: "2026-11-01T12:10:00Z", url: "u", title: "t" };
+test("when the countdown ends its runner starts the merge workflow; a moved branch, red CI or a cancel goes to Proposals instead", async () => {
   const gh = github({ "GET /pulls": [pr(8, SAFE)], "GET /commits/sha8/check-runs": green, "GET /pulls/8": pr(8, SAFE), "POST /actions/workflows/pagespeed-merge.yml/dispatches": null }, { "runs.json": runs(true) });
-  const db = firestore({ "pagespeed-8": due });
+  const db = firestore();
   const d = deps(gh, db, DAY);
-  assert.match(await ps.tick(d), /Merging #8/);
+  await ps.tick(d);
+  const id = db.docs["pagespeed-8"].countdown;
+  const out = await countdown.runDue({ db, now: Date.parse(DAY) + 2 * 3600000, ops: runner(d) });
+  assert.equal(out.started[0].status, "done");
   assert.equal(db.docs["pagespeed-8"].state, "merging");
   assert.deepEqual(gh.calls.find((c) => c.url.endsWith("/dispatches")).body, { ref: "main", inputs: { pr: "8", by: "jarvis" } });
-  assert.equal(d.pushes[0].title, "Merging PageSpeed fixes #8 now");
+  assert.deepEqual(d.pushes.map((m) => m.title).slice(1), ["Doing merge PageSpeed fixes #8 now", "Done: merge PageSpeed fixes #8"], "the countdown's start and result, no second start push");
+  assert.equal(db.doc("jarvis_countdowns", id).result, "Merging #8; Jarvis pushes the result.");
 
   const moved = github({ "GET /pulls": [pr(8, SAFE, { head: { ref: SAFE, sha: "other" } })], "GET /commits/other/check-runs": green, "POST /issues/8/labels": {} }, { "runs.json": runs(true) });
-  const db2 = firestore({ "pagespeed-8": due });
-  await ps.tick(deps(moved, db2, DAY));
+  const db2 = firestore();
+  await ps.tick(deps(gh, db2, DAY));
+  const id2 = db2.docs["pagespeed-8"].countdown;
+  await ps.tick(deps(moved, db2, "2026-11-01T16:00:00Z"));
   assert.equal(db2.docs["pagespeed-8"].reason, "The branch changed during the countdown.");
+  assert.deepEqual([db2.doc("jarvis_countdowns", id2).status, db2.doc("jarvis_countdowns", id2).decidedBy], ["cancelled", "jarvis"]);
+
+  const red = github({ "GET /pulls": [pr(8, SAFE)], "GET /commits/sha8/check-runs": { check_runs: [{ name: "playwright", status: "completed", conclusion: "failure" }] }, "POST /issues/8/labels": {} }, { "runs.json": runs(true) });
+  const db3 = firestore();
+  await ps.tick(deps(gh, db3, DAY));
+  await ps.tick(deps(red, db3, "2026-11-01T16:00:00Z"));
+  assert.equal(db3.doc("jarvis_countdowns", db3.docs["pagespeed-8"].countdown).status, "cancelled", "red CI stops the merge");
+
+  const db4 = firestore();
+  await ps.tick(deps(gh, db4, DAY));
+  await countdown.cancel(db4, db4.docs["pagespeed-8"].countdown, { now: Date.parse(DAY) + 60000, by: "carlos" });
+  await ps.tick(deps(gh, db4, "2026-11-01T16:00:00Z"));
+  assert.deepEqual([db4.docs["pagespeed-8"].state, db4.docs["pagespeed-8"].reason], ["proposal", "You cancelled the countdown."]);
+});
+
+test("a countdown started before the shared queue moves onto it with its time left and no second push", async () => {
+  const legacy = { pr: 8, kind: "safe", state: "countdown", sha: "sha8", dueAt: "2026-11-01T16:00:00Z", at: "2026-11-01T14:10:00Z", reason: "Rose.", url: "u", title: "t" };
+  const gh = github({ "GET /pulls": [pr(8, SAFE)], "GET /commits/sha8/check-runs": green }, { "runs.json": runs(true) });
+  const db = firestore({ "pagespeed-8": legacy });
+  const d = deps(gh, db, DAY);
+  await ps.tick(d);
+  const row = db.doc("jarvis_countdowns", db.docs["pagespeed-8"].countdown);
+  assert.equal(row.dueAt, "2026-11-01T16:00:00.000Z");
+  assert.equal(d.pushes.length, 0);
+  const decided = [];
+  await ps.countdownAct(Object.assign({}, d, { decide: async (b) => { decided.push(b); return { message: "ok" }; } }), "pagespeed-8", "now");
+  assert.deepEqual(decided, [{ id: row.id, act: "now" }], "its old push buttons reach the queue");
 });
 
 test("Cancel sends the countdown to Proposals; Do it now merges at once", async () => {
@@ -142,7 +186,7 @@ test("Cancel sends the countdown to Proposals; Do it now merges at once", async 
   assert.match((await ps.countdownAct(d, "pagespeed-8", "cancel")).message, /waits in Proposals/);
   assert.equal(db.docs["pagespeed-8"].state, "cancelled");
   await assert.rejects(ps.countdownAct(d, "pagespeed-8", "now"), /no longer counting down/);
-  db.docs["pagespeed-8"] = Object.assign({}, doc);
+  await db.collection("jarvis_countdowns").doc("pagespeed-8").set(Object.assign({}, doc));
   await ps.countdownAct(d, "pagespeed-8", "now");
   assert.equal(db.docs["pagespeed-8"].state, "merging");
   assert.equal(gh.calls.find((c) => c.url.endsWith("/dispatches")).body.inputs.by, "carlos");
