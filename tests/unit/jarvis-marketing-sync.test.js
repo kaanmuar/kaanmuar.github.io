@@ -137,3 +137,16 @@ test("marketing sync (#1730): the Mac applies approvals, LinkedIn, do-not-contac
   assert.equal(run("approve-week", { week: "W1" }), null);
   assert.equal(run("replied", { id: REPLY, at: "x" }).status, "done");
 });
+
+test("the sync writes each working day's LinkedIn list once, from 07:00, never at weekends", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mk-li-"));
+  fs.mkdirSync(path.join(dir, "linkedin"));
+  const calls = [];
+  const run = (args) => { calls.push(args); fs.writeFileSync(path.join(dir, "linkedin", args[1] + ".md"), "# list\n"); };
+  const at = (d, h) => new Date(2026, 10, d, h).getTime();
+  assert.equal(sync.linkedinDay(dir, at(2, 6), run), "");
+  assert.equal(sync.linkedinDay(dir, at(2, 9), run), "LinkedIn list for 2026-11-02 written");
+  assert.equal(sync.linkedinDay(dir, at(2, 10), run), "");
+  assert.equal(sync.linkedinDay(dir, at(1, 9), run), "");
+  assert.deepEqual(calls, [["tools/linkedin-day.py", "2026-11-02"]]);
+});

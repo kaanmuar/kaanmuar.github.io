@@ -189,7 +189,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
         }
 
         Panel("LinkedIn" + (li.str("date")?.takeIf { it.isNotEmpty() }?.let { " · $it" } ?: "")) {
-            if (liItems.isEmpty()) { Muted("No LinkedIn list yet; tools/linkedin-day.py writes one each working day."); return@Panel }
+            if (liItems.isEmpty()) { Muted("No LinkedIn list yet; the Mac writes one each working day from 07:00, with up to 15 prospects never listed before."); return@Panel }
             val uri = LocalUriHandler.current
             GlowBar(liSent.toFloat() / liItems.size)
             Muted("$liSent of ${liItems.size} requests sent")

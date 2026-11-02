@@ -146,6 +146,16 @@ function linkedin(dir) {
   return { date, items: items.slice(0, 80) };
 }
 
+// Each working day from 07:00 (Mac time), writes the day's LinkedIn list once; the tool skips people listed before.
+function linkedinDay(dir, now, run) {
+  const at = new Date(now);
+  if (at.getDay() === 0 || at.getDay() === 6 || at.getHours() < 7) return "";
+  const date = at.toLocaleDateString("en-CA");
+  if (fs.existsSync(path.join(dir, "linkedin", date + ".md"))) return "";
+  run(["tools/linkedin-day.py", date]);
+  return "LinkedIn list for " + date + " written";
+}
+
 function dnc(dir) {
   return { items: parseCsv(read(path.join(dir, "prospects", "do-not-contact.csv"), "")).rows.map((r) => ({ value: r.email_or_domain, at: r.added_utc, reason: r.reason })).slice(-400) };
 }
@@ -323,6 +333,12 @@ async function main(argv) {
     const notes = await autopilot.run(dir, state, { parseCsv, toCsv, leadFiles, tool, fetch, db, now: Date.now() })
       .catch((error) => ["leads autopilot failed: " + String((error && error.message) || error).split("\n")[0].slice(0, 200)]);
     if (notes && notes.length) console.log("leads autopilot: " + notes.join("; "));
+    try {
+      const note = linkedinDay(dir, Date.now(), (args) => execFileSync("python3", args, { cwd: dir, stdio: "pipe", timeout: 120000 }));
+      if (note) console.log(note);
+    } catch (error) {
+      console.log("LinkedIn list failed: " + String((error && error.message) || error).split("\n")[0].slice(0, 200));
+    }
   }
   const s = snapshot(dir, state, Date.now());
   await db.collection("jarvis_settings").doc("marketing_sync").set(s);
@@ -332,4 +348,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch((error) => { console.error(error.message); process.exit(1); });
 
-module.exports = { parseCsv, toCsv, leadFiles, leads, replies, linkedin, linkedinHeading, dnc, jobs, kpis, snapshot, runCommand, HANDLERS };
+module.exports = { parseCsv, toCsv, leadFiles, leads, replies, linkedin, linkedinHeading, linkedinDay, dnc, jobs, kpis, snapshot, runCommand, HANDLERS };
