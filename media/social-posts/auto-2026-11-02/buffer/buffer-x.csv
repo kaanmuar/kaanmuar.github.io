@@ -1,0 +1,44 @@
+Text,Image URL,Tags,Posting Time
+"edeq.com.co: 62. The gap: link names.
+
+Give every link text that says where it goes. An icon alone needs an aria-label.
+
+carlosandmunoz.com/qa-review?live=u-edeq-com-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-edeq-com-co
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/01-u-edeq-com-co.jpg","","2026-11-03 08:35"
+"eep.com.co: 33. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+carlosandmunoz.com/qa-review?live=u-eep-com-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-eep-com-co
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/02-u-eep-com-co.jpg","","2026-11-04 13:25"
+"efigas.com.co: 54. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+carlosandmunoz.com/qa-review?live=u-efigas-com-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-efigas-com-co
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/03-u-efigas-com-co.jpg","","2026-11-05 11:35"
+"epa.gov.co: 74. The gap: AI crawler access.
+
+Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only…
+
+carlosandmunoz.com/qa-review?live=u-epa-gov-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-epa-gov-co","https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/04-u-epa-gov-co.jpg","","2026-11-06 09:50"
+"Scored 55 of 100. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers…
+
+carlosandmunoz.com/qa-review?live=u-augsburger-allgemeine-de&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-augsburger-allgemeine-de","https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/05-u-augsburger-allgemeine-de.jpg","","2026-11-07 16:55"
+"mercadolibre.com.ec: 44. The gap: page titles.
+
+Give every page a unique title of about 60 characters: the page first, the site…
+
+carlosandmunoz.com/qa-review?live=u-mercadolibre-com-ec&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-mercadolibre-com-ec","https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/06-u-mercadolibre-com-ec.jpg","","2026-11-08 16:05"
+"4 natural competitors. toolstory.ai leads: 85.
+
+Benchmark against the sites your visitors compare you with, not against a perfect…
+
+carlosandmunoz.com/qa-review?live=u-voicertool-com&utm_source=x&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-voicertool-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/07-vs-voicertool-com.jpg","","2026-11-09 15:30"
+"unn.edu.ng vs uniport.edu.ng. unn.edu.ng leads: 55.
+
+Benchmark against the sites your visitors compare you with, not against a perfect…
+
+carlosandmunoz.com/qa-review?live=u-unn-edu-ng&utm_source=x&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-unn-edu-ng","https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/08-vs-unn-edu-ng.jpg","","2026-11-10 11:15"
