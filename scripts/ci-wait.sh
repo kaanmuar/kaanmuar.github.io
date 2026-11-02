@@ -29,6 +29,8 @@ while [ -n "$ids" ]; do
 	for id in $ids; do
 		seen="$seen$id "
 		gh run watch "$id" -i 30 --exit-status >/dev/null 2>&1 && continue
+		# --exit-status fails any conclusion but success; a run whose jobs all skipped has passed.
+		[ "$(gh run view "$id" --json conclusion -q .conclusion)" = skipped ] && continue
 		failed=1
 		gh run view "$id" --json name,url -q '"FAILED  \(.name)  \(.url)"'
 		gh run view "$id" --log-failed 2>/dev/null | cut -f3- | sed 's/^[0-9T:.-]*Z //' | tail -n "$lines"
