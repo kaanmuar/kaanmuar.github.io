@@ -213,7 +213,7 @@ const photo = (post, caption, due) => ({
    row is now later than its Page time (scripts/facebook-reslot.js --write) is deleted and scheduled again at the row.
    The run stops at the first delete the Page refuses. A post whose re-create fails is no longer on the Page, so the
    next --all run schedules it at its row. */
-async function reslot({ page, profile }, live) {
+async function reslot({ face, page, profile }, live) {
   const book = ledger.read(ledger.FACEBOOK);
   const gate = createGate();
   const moves = [];
@@ -229,7 +229,7 @@ async function reslot({ page, profile }, live) {
   let failed = 0;
   for (const { post, name, entry } of moves) {
     const at = new Date(post.at).toISOString();
-    const params = photo(post, withHubLink(post.cap.facebook, { batch: post.batch, slug: post.slug, network: "facebook" }), post.at);
+    const params = photo(post, withHubLink(faceRoute.captionFor(post.cap, "facebook", face), { batch: post.batch, slug: post.slug, network: "facebook" }), post.at);
     const hub = await gate(post.batch, post.slug, post.cap, at);
     const why = hub.why ? "Hub first: " + hub.why : !(await served(params.url)) ? "image not served: " + params.url : null;
     if (!live) { console.log("  " + name + " " + entry.at + " -> " + at + (why ? " HELD: " + why : "")); continue; }
@@ -340,7 +340,7 @@ async function queue(p, { batch, all, live, connected }) {
   let late = 0;
   for (const post of list) {
     const name = post.batch + "/" + post.slug;
-    const caption = withHubLink(post.cap.facebook, { batch: post.batch, slug: post.slug, network: "facebook" });
+    const caption = withHubLink(faceRoute.captionFor(post.cap, "facebook", face), { batch: post.batch, slug: post.slug, network: "facebook" });
     const there = done.get(key(caption)) || done.get(key(post.cap.facebook));
     if (there) {
       already += 1;

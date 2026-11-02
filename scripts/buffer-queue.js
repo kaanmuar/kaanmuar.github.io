@@ -429,6 +429,19 @@ function rerouteTargets(index, items, book, list, now, root = ROOT) {
 
 // Creates the copy before deleting the original, so a failed delete leaves a post twice rather than nowhere; the
 // next run only deletes, since the ledger has the copy.
+// The caption the new face posts in its own language (#2346), or null to keep the queued text.
+function translated(name, slot, face, service, root = ROOT) {
+  const key = faceRoute.TEXT_KEY[slot];
+  const cut = name.indexOf("/");
+  const batch = name.slice(0, cut);
+  const slug = name.slice(cut + 1);
+  const file = path.join(root, "media", "social-posts", batch, "captions.json");
+  const cap = key && fs.existsSync(file) && JSON.parse(fs.readFileSync(file, "utf8"))[slug];
+  if (!cap || faceRoute.captionFor(cap, key, face) === cap[key]) return null;
+  const text = faceRoute.captionFor(cap, key, face);
+  return slot === "instagram-story" ? text : withHubLink(text, { batch, slug, network: service === "twitter" ? "x" : service });
+}
+
 async function reroute(dry, max) {
   const { scheduledPosts, editInput } = require("./social-calendar");
   const book = ledger.read(ledger.BUFFER);
@@ -453,6 +466,8 @@ async function reroute(dry, max) {
       if (!(copy && copy.id && copy.result === "queued")) {
         const input = Object.assign(editInput(item.node, item.node.dueAt), { channelId: to.id });
         delete input.id;
+        const text = translated(name, item.slot, to.face, item.service);
+        if (text) input.text = text;
         const r = (await gql("mutation($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }", { input })).createPost;
         if (!r.post) throw new Error("create: " + r.message);
         ledger.record(book, name, { channel: item.slot, profile, id: r.post.id, at: r.post.dueAt || item.node.dueAt, result: "queued", checked });
@@ -502,19 +517,20 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
   const video = () => ({ video: { url: clipBase + "/" + slug + ".mp4", metadata: { thumbnailOffset: 0 } } });
   const soon = new Date(Date.now() + 20 * 60e3).toISOString();
   const linked = (text) => withHubLink(text, { batch, slug, network: channel.service === "twitter" ? "x" : channel.service });
+  const own = (key) => faceRoute.captionFor(cap, key, channel.face || faceRoute.DEFAULT);
   const post = (slot, text, assets, metadata) => {
     const at = when[slug + "|" + slot];
     return { slot, input: Object.assign({ channelId: channel.id, schedulingType: "automatic", text, assets },
       at ? { mode: "customScheduled", dueAt: at > soon ? at : soon } : { mode: "addToQueue" }, metadata ? { metadata } : {}) };
   };
   switch (channel.service) {
-    case "linkedin": return [post("linkedin", linked(cap.linkedin), [image("feed")])];
-    case "facebook": return [post("facebook", linked(cap.facebook), [image("feed")], { facebook: { type: "post" } })];
+    case "linkedin": return [post("linkedin", linked(own("linkedin")), [image("feed")])];
+    case "facebook": return [post("facebook", linked(own("facebook")), [image("feed")], { facebook: { type: "post" } })];
     case "instagram": return [
-      post("instagram", linked(cap.instagram), [image("feed")], { instagram: { type: "post", shouldShareToFeed: true } }),
-      post("instagram-story", cap.title, [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
+      post("instagram", linked(own("instagram")), [image("feed")], { instagram: { type: "post", shouldShareToFeed: true } }),
+      post("instagram-story", own("title"), [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
     ];
-    case "twitter": case "threads": return [post("x", linked(cap.x), [image("feed")])];
+    case "twitter": case "threads": return [post("x", linked(own("x")), [image("feed")])];
     case "tiktok": return clipBase ? [post("tiktok", linked(cap.tiktok), [video()])] : [];
     case "youtube": return clipBase ? [post("youtube", linked(cap.youtube), [video()], { youtube: { title: cap.youtubeTitle, categoryId: "28" } })] : [];
     default: return [];
@@ -657,4 +673,4 @@ function leaveForTonight(book, batch, why) {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { batchIndex, matchPost, staleScheduled, duplicateScheduled, inputsFor, gql, requeueTargets, rerouteTargets, facesOn, onNetwork, mediaHost, SLOT };
+module.exports = { batchIndex, matchPost, staleScheduled, duplicateScheduled, inputsFor, gql, requeueTargets, rerouteTargets, translated, facesOn, onNetwork, mediaHost, SLOT };

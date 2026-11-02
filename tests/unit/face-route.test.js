@@ -14,8 +14,9 @@ function batchRoot() {
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, "captions.json"), JSON.stringify({
     "01-a": { linkedin: "A in English", x: "A on X" },
-    "02-b": { linkedin: "B en español", x: "B en X", lang: "es" },
-    "03-c": { linkedin: "C auf Deutsch", lang: "de" }
+    "02-b": { linkedin: "B en español", x: "B en X", lang: "es", textLang: "es" },
+    "03-c": { linkedin: "C auf Deutsch", lang: "de", textLang: "de" },
+    "04-d": { linkedin: "D in English", x: "D on X", lang: "es", i18n: { es: { linkedin: "D en español" } } }
   }));
   fs.writeFileSync(path.join(dir, "voiced.json"), JSON.stringify([["01-a", { lang: "pt", tiktok: "A em português" }]]));
   return root;
@@ -25,7 +26,9 @@ test("a post's language is its caption's, its clip's voice on TikTok and YouTube
   const root = batchRoot();
   assert.equal(route.postLang("runs-9", "01-a", { x: "A" }, "x", root), "en");
   assert.equal(route.postLang("runs-9", "01-a", { x: "A" }, "tiktok", root), "pt");
-  assert.equal(route.postLang("runs-9", "02-b", { lang: "es" }, "linkedin", root), "es");
+  assert.equal(route.postLang("runs-9", "02-b", { lang: "es", textLang: "es" }, "linkedin", root), "es");
+  assert.equal(route.postLang("runs-9", "02-b", { lang: "es", x: "English" }, "x", root), "en");
+  assert.equal(route.postLang("runs-9", "02-b", { lang: "es", x: "English" }, "tiktok", root), "es");
   assert.equal(route.postLang("launch-2026-10", "fr/hub", null, "x", root), "fr");
   assert.deepEqual(["en", "de", "fr", "it", "es", "pt", "ja"].map(route.faceOf), ["en", "en", "en", "en", "es", "es", "en"]);
 });
@@ -106,4 +109,33 @@ test("an account belongs to the face whose handle it logs in as, whichever secre
   assert.equal(route.accountFace("threads.net/@qaurlreview"), "es");
   assert.equal(route.accountFace("instagram.com/qaurlreview"), "es");
   assert.equal(route.accountFace("instagram.com/someone"), null);
+});
+
+test("text posts speak their caption's language: a face posts the hub's translation, a fallback face the English", () => {
+  const cap = { x: "On X", linkedin: "In English", lang: "pt", i18n: { pt: { linkedin: "Em português" }, de: { linkedin: "Auf Deutsch" } } };
+  assert.equal(route.textLang(cap, "linkedin"), "pt");
+  assert.equal(route.textLang(cap, "x"), "en");
+  assert.equal(route.captionFor(cap, "linkedin", "es"), "Em português");
+  assert.equal(route.captionLang(cap, "linkedin", "es"), "pt");
+  assert.equal(route.captionFor(cap, "linkedin", "en"), "In English");
+  assert.equal(route.captionLang(cap, "linkedin", "en"), "en");
+  assert.equal(route.captionFor(cap, "x", "es"), "On X");
+  const own = { x: "Viernes", lang: "es", textLang: "es" };
+  assert.equal(route.captionFor(own, "x", "en"), "Viernes");
+  assert.equal(route.captionLang(own, "x", "en"), "es");
+  const de = { linkedin: "In English", lang: "de", i18n: { de: { linkedin: "Auf Deutsch" } } };
+  assert.equal(route.captionFor(de, "linkedin", "en"), "Auf Deutsch");
+});
+
+test("Buffer posts each face's caption, and --reroute rewrites a moved post into the new face's language", () => {
+  const root = batchRoot();
+  const cap = JSON.parse(fs.readFileSync(path.join(root, "media/social-posts/runs-9/captions.json"), "utf8"))["04-d"];
+  const es = { id: "c2", service: "linkedin", face: "es" };
+  const en = { id: "c1", service: "linkedin", face: "en" };
+  const text = (channel) => bq.inputsFor(channel, "04-d", cap, "https://x.test", "", {}, "runs-9")[0].input.text;
+  assert.match(text(es), /^D en español/);
+  assert.match(text(en), /^D in English/);
+  assert.match(bq.translated("runs-9/04-d", "linkedin", "es", "linkedin", root), /^D en español/);
+  assert.equal(bq.translated("runs-9/04-d", "linkedin", "en", "linkedin", root), null);
+  assert.equal(bq.translated("runs-9/02-b", "linkedin", "es", "linkedin", root), null);
 });

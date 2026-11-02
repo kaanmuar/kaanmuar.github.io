@@ -106,11 +106,13 @@ function due(list, now) {
 
 const marker = (post) => "/social/" + post.batch + "/" + post.slug + ".html";
 
-// The x caption's own links are tagged utm_source=x.
-function caption(post, network) {
+// The x caption's own links are tagged utm_source=x. A face posts the caption in its own language when the hub
+// has translated it (scripts/face-route.js captionFor, #2346).
+function caption(post, network, face = faceRoute.DEFAULT) {
   const key = (ROUTES[network] || ROUTES.bluesky).caption;
   if (!key) return "";
-  const text = key === "x" ? String(post.cap.x).replace(/utm_source=x\b/g, "utm_source=" + network) : String(post.cap[key]);
+  const own = String(faceRoute.captionFor(post.cap, key, face));
+  const text = key === "x" ? own.replace(/utm_source=x\b/g, "utm_source=" + network) : own;
   return withHubLink(text, { batch: post.batch, slug: post.slug, network });
 }
 
@@ -306,14 +308,15 @@ function instagram(env = process.env, story = false) {
 
 const NETWORKS = { bluesky, mastodon, threads, instagram: (env) => instagram(env, false), "instagram-story": (env) => instagram(env, true) };
 
-async function run(network, client, list, book, { live, now, gate }) {
+async function run(network, client, list, book, { live, now, gate, face = faceRoute.DEFAULT }) {
+  const key = (ROUTES[network] || ROUTES.bluesky).caption || "x";
   const todo = due(list, now).filter((post) => !(book.posts[post.batch + "/" + post.slug] || []).some((e) => e.channel === network && e.result === "sent"));
   const counts = { posted: 0, already: 0, held: 0, failed: 0, waiting: Math.max(0, todo.length - PER_RUN) };
   if (!live) {
     for (const post of todo.slice(0, PER_RUN)) {
       const hub = await gate(post.batch, post.slug, post.cap, new Date(now).toISOString());
-      const text = caption(post, network);
-      console.log("dry-run", network, post.batch + "/" + post.slug, new Date(post.at).toISOString(), hub.why ? "HELD: " + hub.why : "hub ok", [...text].length + " chars", text.split("\n").pop());
+      const text = caption(post, network, face);
+      console.log("dry-run", "@" + FACES[face].handle, faceRoute.captionLang(post.cap, key, face), network, post.batch + "/" + post.slug, new Date(post.at).toISOString(), hub.why ? "HELD: " + hub.why : "hub ok", [...text].length + " chars", text.split("\n").pop());
     }
     return counts;
   }
@@ -340,7 +343,7 @@ async function run(network, client, list, book, { live, now, gate }) {
       continue;
     }
     try {
-      const r = await client.post({ text: caption(post, network), image: post.image, url: post.url, alt: post.cap.alt || post.cap.title || "", lang: post.cap.lang || "en", key: name });
+      const r = await client.post({ text: caption(post, network, face), image: post.image, url: post.url, alt: post.cap.alt || post.cap.title || "", lang: faceRoute.captionLang(post.cap, key, face), key: name });
       counts.posted += 1;
       console.log("posted", network, name, r.url);
       record(post, { id: r.id, url: r.url, at, result: "sent" });
@@ -395,7 +398,7 @@ async function main() {
       const list = all.filter((post) => faceRoute.postFace(post.batch, post.slug, post.cap, ROUTES[network].slot, connected) === face);
       if (!live && !list.length) continue;
       try {
-        const c = await run(network, client, list, book, { live, now, gate });
+        const c = await run(network, client, list, book, { live, now, gate, face });
         console.log(label + ": " + c.posted + " posted, " + c.already + " already on the account, " + c.held + " held, " + c.failed + " failed, " + c.waiting + " due for a later run");
         if (c.failed) broken = true;
       } catch (error) {
