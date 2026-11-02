@@ -127,6 +127,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -291,7 +292,9 @@ fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, openTab: String
 private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, modifier: Modifier, pickProduct: (String) -> Unit, open: (String) -> Unit) {
     PullToRefreshBox(isRefreshing = s.loading, onRefresh = vm::refresh, modifier = modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val columns = Device.columns(maxWidth.value.toInt())
+            val width = maxWidth.value.toInt()
+            val columns = Device.columns(width, Device.dense(LocalForm.current))
+            CompositionLocalProvider(LocalDense provides (columns == 3 && width < 1100), LocalColumns provides columns) {
             AnimatedContent(tab, transitionSpec = {
                 val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
                 (fadeIn(tween(300)) + slideInHorizontally(tween(450, easing = FastOutSlowInEasing)) { dir * it / 5 } + scaleIn(tween(450), 0.96f)) togetherWith
@@ -316,6 +319,7 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                     }
                     Spacer(Modifier.height(24.dp))
                 }
+            }
             }
         }
     }
