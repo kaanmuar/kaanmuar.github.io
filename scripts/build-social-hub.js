@@ -210,7 +210,9 @@ function expand(posts) {
     }))));
 }
 
-// One card per post on each language's page: the post in that language, else in English, else as written.
+// One card per post on each language's page: the post in that language. The English page falls back to
+// the post as written; a localized page leaves out posts not yet in its language, such as a new pick the
+// translator refused.
 function forLang(posts, lang) {
   const best = new Map();
   const fit = (post) => (post.lang === lang ? 2 : post.lang === "en" ? 1 : 0);
@@ -219,7 +221,7 @@ function forLang(posts, lang) {
     const held = best.get(key);
     if (!held || fit(post) > fit(held)) best.set(key, post);
   });
-  return posts.filter((post) => best.get(post.group || post.id) === post);
+  return posts.filter((post) => best.get(post.group || post.id) === post && (lang === "en" || post.lang === lang));
 }
 
 // A quiz names its answer post; each language's quiz points at the answer in the same language when there is one.
