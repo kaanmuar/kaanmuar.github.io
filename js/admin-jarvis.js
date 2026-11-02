@@ -1337,7 +1337,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             : r.ask ? `<span class="jv-chip c-slow">needs you</span> <span class="jv-note">${esc(r.ask)}</span>${leadFix(r)}`
             : r.missing ? `<span class="jv-chip c-average" title="${esc(r.missing)}">Jarvis</span> <span class="jv-note">${esc(r.wait || 'Jarvis is on it.')}</span>${leadFix(r)}`
             : cmdBtn('Approve', { action: 'approve', week: r.week, email: r.email, on: 'yes' });
-        const leadsBody = !sy ? syWait : !lw.length ? '<p class="jv-empty">No leads files yet; the Monday leads job writes them.</p>'
+        const leadsBody = !sy ? syWait : !lw.length ? '<p class="jv-empty">No leads files yet; the weekday leads job writes them.</p>'
             : `<div class="jv-chips">${lw.map((w) => `<button type="button" class="jv-btn small" aria-pressed="${week && w.week === week.week}" data-mk-week="${esc(w.week)}">${esc(w.week)} · ${w.uploaded}/${w.total}</button>`).join(' ')}</div>`
             + stats([{ label: 'Leads', value: week.total }, { label: 'Complete', value: week.complete }, { label: 'Missing something', value: week.missing }, { label: 'Needs you', value: week.ask || 0, alert: week.ask > 0 }, { label: 'Approved', value: week.approved }, { label: 'Uploaded', value: week.uploaded }, { label: 'Ready to upload', value: week.ready }])
             + `<div class="jv-actions">${cmdBtn(`Approve every complete lead in ${week.week}`, { action: 'approve-week', week: week.week }, { disabled: week.complete <= week.approved + week.uploaded })}${cmdBtn(`Upload ${week.ready} approved to Instantly`, { action: 'upload', week: week.week }, { cls: ' is-primary', disabled: !week.ready || pendingFor('upload', week.week) })}</div>`
