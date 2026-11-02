@@ -263,6 +263,21 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Connect YouTube or Mastodon for the engagement poster (#1990): the network's sign-in opens in the browser. */
+    fun connectEngagement(network: String, open: (String) -> Unit) {
+        if (fixture != null) { say("Connect is off with a fixture."); return }
+        val key = "eg:connect:$network"
+        _state.update { it.copy(running = it.running + key) }
+        viewModelScope.launch {
+            runCatching { api.call("engagement-connect", _state.value.days, mapOf("network" to JsonPrimitive(network))) }
+                .onSuccess { out ->
+                    _state.update { it.copy(running = it.running - key) }
+                    out.str("url")?.let(open) ?: say(out.str("error") ?: "No sign-in link came back.")
+                }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
+        }
+    }
+
     /** Connect Google Calendar for book.html (#1971): Google's consent page opens in the browser. */
     fun connectCalendar(open: (String) -> Unit) {
         if (fixture != null) { say("Connect is off with a fixture."); return }

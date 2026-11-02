@@ -6,6 +6,7 @@ const E = require("../../functions/engagement.js");
 const S = require("../../functions/engagement-sources.js");
 const J = require("../../functions/jarvis-engagement.js");
 const push = require("../../functions/jarvis-mail-push.js");
+const { fakeDb } = require("./fixtures/fake-firestore.js");
 
 const NOW = Date.parse("2026-11-01T22:00:00Z");
 const hoursAgo = (h) => new Date(NOW - h * 3600000).toISOString();
@@ -210,54 +211,7 @@ test("monthly reports cover the calendar month before, against the one before it
   assert.equal(wk.days[6], "2026-11-01");
 });
 
-// --- An in-memory Firestore, enough for the scout, a decision and the Jarvis source --------------------------
-
-function fakeDb() {
-  const data = new Map();
-  const get = (path) => data.get(path);
-  const merge = (a, b) => {
-    const out = Object.assign({}, a);
-    Object.entries(b).forEach(([k, v]) => {
-      if (v && v.inc !== undefined) out[k] = (out[k] || 0) + v.inc;
-      else if (v && typeof v === "object" && !Array.isArray(v)) out[k] = merge(out[k] || {}, v);
-      else out[k] = v;
-    });
-    return out;
-  };
-  const setPath = (obj, dotted, v) => { const parts = dotted.split("."); let o = obj; parts.slice(0, -1).forEach((p) => { o[p] = Object.assign({}, o[p]); o = o[p]; }); o[parts[parts.length - 1]] = v; };
-  const at = (obj, dotted) => dotted.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
-  const snap = (path) => ({ id: path.split("/").pop(), exists: data.has(path), data: () => JSON.parse(JSON.stringify(get(path) || {})), get: (k) => at(get(path) || {}, k), ref: docRef(path) });
-  function docRef(path) {
-    return {
-      path, id: path.split("/").pop(),
-      get: async () => snap(path),
-      set: async (v, o) => { data.set(path, o && o.merge ? merge(get(path) || {}, v) : merge({}, v)); },
-      update: async (v) => { const cur = JSON.parse(JSON.stringify(get(path) || {})); Object.entries(v).forEach(([k, x]) => setPath(cur, k, x)); data.set(path, cur); },
-      delete: async () => { data.delete(path); }
-    };
-  }
-  function query(coll, filters, order, lim) {
-    return {
-      where: (f, op, v) => query(coll, filters.concat([[f, op, v]]), order, lim),
-      orderBy: (f, dir) => query(coll, filters, [f, dir || "asc"], lim),
-      limit: (n) => query(coll, filters, order, n),
-      get: async () => {
-        let rows = Array.from(data.keys()).filter((p) => p.startsWith(coll + "/") && p.split("/").length === 2).map((p) => snap(p));
-        filters.forEach(([f, op, v]) => { rows = rows.filter((s) => { const x = at(s.data(), f); return op === "==" ? x === v : op === ">=" ? x >= v : op === "<" ? x < v : true; }); });
-        if (order) rows.sort((a, b) => String(at(a.data(), order[0])).localeCompare(String(at(b.data(), order[0]))) * (order[1] === "desc" ? -1 : 1));
-        return { docs: rows.slice(0, lim || rows.length) };
-      }
-    };
-  }
-  const db = {
-    data,
-    collection: (name) => Object.assign(query(name, [], null, 0), { doc: (id) => docRef(name + "/" + id) }),
-    getAll: async (...refs) => refs.map((r) => snap(r.path)),
-    batch: () => { const ops = []; return { set: (r, v) => ops.push(() => r.set(v)), update: (r, v) => ops.push(() => r.update(v)), commit: async () => { for (const op of ops) await op(); } }; },
-    runTransaction: async (fn) => fn({ get: (r) => r.get(), update: (r, v) => r.update(v), set: (r, v) => r.set(v) })
-  };
-  return db;
-}
+// --- The scout end to end, on an in-memory Firestore ------------------------------------------------------
 
 function fakeFetch(gemini) {
   const toot = (id, text, likes) => ({ id, uri: "https://m.s/u/" + id, url: "https://m.s/@a/" + id, content: "<p>" + text + "</p>", language: "en", created_at: hoursAgo(1), favourites_count: likes, reblogs_count: likes, replies_count: 5, account: { acct: "ana" + id + "@m.s", display_name: "Ana" } });
@@ -288,7 +242,8 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.equal(day.runs, 1);
   assert.equal(day.n.mastodon.drafted, 1);
   assert.equal(day.skip.competitor, 1);
-  assert.match(J.runNote(run), /2 new in field, 1 to engage, 1 replies drafted; failed: /);
+  assert.match(J.runNote(run), /2 new in field, 1 to engage, 1 replies drafted; dry run 3; failed: /);
+  assert.equal(day.n.mastodon.like_dry, 1, "a dry run logs the like it would have done");
 
   const again = await J.scout(Object.assign({}, deps, { now: NOW + 60000 }));
   assert.equal(again.fresh, 0);
@@ -309,7 +264,9 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.equal(src.approved.length, 1);
   assert.equal(src.report.totals.edited, 1);
   assert.equal(src.stale, false);
-  assert.ok(src.needs.some((n) => /BLUESKY_APP_PASSWORD/.test(n)));
+  assert.ok(src.needs.some((n) => /Bluesky: paste an app password/.test(n)));
+  assert.equal(src.live, false, "a dry run until Carlos turns it live");
+  assert.equal(src.accounts.length, 3);
   assert.equal(src.networks.find((n) => n.network === "linkedin").reads, "Mac browser");
 });
 
@@ -328,7 +285,7 @@ test("a post first seen quiet is decided again once it starts to trend, counted 
   assert.equal(risen.asked, 1, "Gemini never read it, so it gets a read and a draft now");
   const doc = db.data.get(key);
   assert.equal(doc.verdict, "engage");
-  assert.equal(doc.actions.like.status, "planned");
+  assert.equal(doc.actions.like.status, "dry", "planned, then logged by the dry-run poster in the same run");
   assert.equal(doc.actions.reply.status, "waiting");
   assert.equal(doc.seenAt, new Date(NOW).toISOString(), "first seen stays");
   const day = db.data.get("engagement_daily/" + E.bogotaDay(NOW));
