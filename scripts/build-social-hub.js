@@ -211,10 +211,12 @@ function expand(posts) {
 }
 
 // One card per post on each language's page: the post in that language, else in English, else as written.
+// A skit is spoken in its take's language, so a page with no take in its language leaves the skit out.
 function forLang(posts, lang) {
   const best = new Map();
   const fit = (post) => (post.lang === lang ? 2 : post.lang === "en" ? 1 : 0);
   posts.forEach((post) => {
+    if (post.kind === "skit" && post.lang !== lang) return;
     const key = post.group || post.id;
     const held = best.get(key);
     if (!held || fit(post) > fit(held)) best.set(key, post);

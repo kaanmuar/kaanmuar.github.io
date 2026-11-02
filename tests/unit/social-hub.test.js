@@ -327,6 +327,13 @@ test("a post with translated captions gets a page per language, and each hub pag
   assert.deepEqual(hub.forLang(posts, "fr").map((p) => p.id), ["b/01-x"]);
 });
 
+test("a skit shows only on the pages of the languages it has a take in", () => {
+  const takes = ["en", "es"].map((lang, i) => ({ id: "s/0" + (i + 1) + "-friday-" + lang, kind: "skit", lang, group: "s/friday" }));
+  assert.deepEqual(hub.forLang(takes, "en").map((p) => p.id), ["s/01-friday-en"]);
+  assert.deepEqual(hub.forLang(takes, "es").map((p) => p.id), ["s/02-friday-es"]);
+  assert.deepEqual(hub.forLang(takes, "de"), []);
+});
+
 test("the YouTube feed adds new uploads and re-titles the ones it still lists, and leaves older ones as they were", () => {
   const ledger = { videos: { a: { title: "Old title #Shorts", published: "2026-10-19T06:02:40+00:00" }, b: { title: "Gone from the feed", published: "2026-10-01T00:00:00+00:00" } } };
   const entry = (id, title, published) => "<entry><yt:videoId>" + id + "</yt:videoId><published>" + published + "</published><media:title>" + title + "</media:title></entry>";
