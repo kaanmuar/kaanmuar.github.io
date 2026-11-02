@@ -57,7 +57,9 @@ test("the article is the hub text in markdown: links tagged for dev.to, card aft
   assert.match(md, /The full report: <https:\/\/carlosandmunoz\.com\/qa-review\.html\?live=u-a-com&utm_source=devto&utm_medium=social>/);
   assert.doesNotMatch(md, /#SEO|utm_source=linkedin/);
   assert.match(md, /\*First published on the \[QA-lab URL Review social hub\]\(https:\/\/carlosandmunoz\.com\/social\/auto-1\/01-u-a-com\.html\?utm_source=devto&utm_medium=social&utm_campaign=auto-1\)\.\*\n$/);
-  assert.match(q.markdown(article({ lang: "pt" })), /\*Publicado primeiro no \[hub social do QA-lab URL Review\]/);
+  const pt = q.markdown(article({ lang: "pt" }));
+  assert.match(pt, /\*Publicado primeiro no \[hub social do QA-lab URL Review\]/);
+  assert.match(pt, /<https:\/\/carlosandmunoz\.com\/qa-review-pt\.html\?live=u-a-com&utm_source=devto/);
   const body = q.payload(article());
   assert.equal(body.canonical_url, "https://carlosandmunoz.com/social/auto-1/01-u-a-com.html");
   assert.equal(body.published, true);

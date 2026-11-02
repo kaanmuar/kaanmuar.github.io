@@ -132,12 +132,19 @@ function tags(text) {
 
 const imageUrl = (image) => (/^https?:\/\//.test(image) ? image : SITE + "/" + String(image).replace(/^\//, ""));
 
+// The hub's translated text still links the English report page; each language has its own.
+const REPORT_PAGES = new Set(["es", "pt", "de", "fr", "it"]);
+const link = (url, lang) => {
+  const tagged = url.replace(/utm_source=[\w-]+/, "utm_source=devto");
+  return REPORT_PAGES.has(lang) ? tagged.replace(/\/qa-review\.html(?=[?#]|$)/, "/qa-review-" + lang + ".html") : tagged;
+};
+
 // A line of caption text in markdown: its links tagged for dev.to and kept whole, any other angle bracket shown as text.
-function mdLine(line) {
+function mdLine(line, lang) {
   const out = [];
   let last = 0;
   for (const match of line.matchAll(URL_RE)) {
-    out.push(escape(line.slice(last, match.index)), "<" + match[0].replace(/utm_source=[\w-]+/, "utm_source=devto") + ">");
+    out.push(escape(line.slice(last, match.index)), "<" + link(match[0], lang) + ">");
     last = match.index + match[0].length;
   }
   out.push(escape(line.slice(last)));
@@ -147,7 +154,7 @@ const escape = (text) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").repla
 
 // The hub text a line per paragraph, the card after its opening paragraph, and where it was first published.
 function markdown(article) {
-  const lines = String(article.text).split("\n").map((line) => line.trim()).filter((line) => line && !isTagLine(line)).map(mdLine);
+  const lines = String(article.text).split("\n").map((line) => line.trim()).filter((line) => line && !isTagLine(line)).map((line) => mdLine(line, article.lang));
   const hub = hubUrl(article.batch, article.slug) + "?utm_source=devto&utm_medium=social&utm_campaign=" + article.batch;
   const card = article.image ? "![" + String(article.alt).replace(/[[\]\n]/g, " ").trim() + "](" + imageUrl(article.image) + ")" : null;
   const body = lines.slice(0, 1).concat(card ? [card] : [], lines.slice(1));
