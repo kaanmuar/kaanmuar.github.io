@@ -12,6 +12,7 @@ const { getMessaging } = require("firebase-admin/messaging");
 const { getAuth } = require("firebase-admin/auth");
 const { getStorage } = require("firebase-admin/storage");
 const sgMail = require("@sendgrid/mail");
+const mailRetry = require("./mail-retry");
 
 // Initialize Firebase Admin SDK
 initializeApp();
@@ -224,7 +225,7 @@ async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLa
   const from = prepareMail();
   if (!from) return false;
   const { text, html } = ownerLayout.ownerMail({ intro, rows, body, respondUrl, buttonLabel, eyebrow: eyebrow || (to === REVIEW_ALERT_TO ? "QA-lab URL Review" : "") });
-  await sgMail.send(Object.assign({
+  await mailRetry.send(sgMail, getFirestore(), Object.assign({
     to: to || OWNER_EMAIL,
     from: from,
     subject: clip(subject, 140),
@@ -5639,7 +5640,9 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
   const watch = await jarvisWatchRun();
   const notices = await jarvisNoticesRun().catch((error) => "notices failed: " + String(error.message || error).slice(0, 120));
   const social = await jarvisSocialRun().catch((error) => "social failed: " + String(error.message || error).slice(0, 120));
-  return watch + "; " + acts + "; " + notices + "; " + social;
+  const resent = await mailRetry.retry({ db: getFirestore(), sgMail: prepareMail() ? sgMail : null, fetch, key: process.env.SENDGRID_API_KEY })
+    .catch((error) => "mail retry failed: " + String(error.message || error).slice(0, 120));
+  return watch + "; " + acts + "; " + notices + "; " + social + "; " + resent;
 });
 
 // Every 30 minutes (#1988): read our field's posts, plan likes, reposts and follows, and push reply drafts for approval.
@@ -5717,10 +5720,10 @@ async function mailCanaryRun() {
   const token = crypto.randomBytes(6).toString("hex");
   const mail = mailHealth.canaryMail(token);
   await ref.set(mailHealth.canarySent(prev.exists ? prev.data() : null, token, now));
-  await sgMail.send({
+  await mailRetry.send(sgMail, getFirestore(), {
     to: mail.to, from, subject: mail.subject, text: mail.text, categories: ["mail-canary"],
     trackingSettings: { clickTracking: { enable: false, enableText: false }, openTracking: { enable: false } }
-  });
+  }, now);
   return "sent " + token + "; the last one was " + before.state;
 }
 
