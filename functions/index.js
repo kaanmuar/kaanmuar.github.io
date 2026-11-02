@@ -5841,6 +5841,25 @@ async function jarvisClickAction(body, by) {
     }
     return { action, done, failed, left: ou.pauses.length - done };
   }
+  if (action === "pause-outreach") {
+    const ou = await act.outreach();
+    if (!ou) throw new Error("Instantly did not answer, so Jarvis cannot check the mailboxes.");
+    const targets = jarvisActions.pauseTargets(ou);
+    if (!targets.length) throw new Error("No active mailbox is left to pause.");
+    let done = 0, failed = 0;
+    for (const m of targets) {
+      try {
+        await act.pauseMailbox(m.email);
+        await act.setPause(m.email, { email: m.email, domain: ou.domain, reason: m.why, pausedAt: new Date(now).toISOString(), passes: 0 });
+        done += 1;
+        await note({ action, status: "done", target: m.email, detail: "Paused: " + m.why + "." });
+      } catch (error) {
+        failed += 1;
+        await note({ action, status: "failed", target: m.email, detail: error.message || String(error) });
+      }
+    }
+    return { action, done, failed, ran: targets.slice(0, 3).map((m) => m.email).join(", ") + (targets.length > 3 ? " and " + (targets.length - 3) + " more" : "") };
+  }
   throw new Error("Unknown action.");
 }
 

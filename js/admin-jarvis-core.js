@@ -714,7 +714,7 @@
         { prefix: 'tls', impact: 5, title: 'Renew the TLS certificate', tab: 'systems' },
         { prefix: 'money:disputes', impact: 5, title: 'Answer the open PayPal disputes before PayPal decides them', link: 'https://www.paypal.com/resolutioncenter' },
         { prefix: 'email:blocklist', impact: 5, title: 'Get the sending IP off the blocklist', link: 'https://app.sendgrid.com/' },
-        { prefix: 'outreach:bounce', impact: 5, title: 'Pause outreach and clean the prospect list', tab: 'outreach' },
+        { prefix: 'outreach:bounce', impact: 5, title: 'Pause outreach and clean the prospect list', click: 'pause-outreach', tab: 'outreach' },
         { prefix: 'outreach:links-down', impact: 5, title: 'Deploy the qalabreview.com short-link Worker', tab: 'outreach' },
         { prefix: 'email:spam', impact: 4, title: 'Find which emails were reported as spam and fix the list or the copy', link: 'https://app.sendgrid.com/' },
         { prefix: 'safety:', impact: 4, group: true, title: (n) => `Fix ${n === 1 ? 'the failing safety check' : n + ' failing safety checks'}`, tab: 'systems' },
@@ -725,8 +725,8 @@
         { prefix: 'inbox:unanswered', impact: 4, title: 'Answer the messages that are waiting', tab: 'inbox' },
         { prefix: 'review:conversion', impact: 4, title: 'Make the URL Review page turn more opens into reviews', tab: 'review' },
         { prefix: 'money:none', impact: 4, title: 'Find out why sales stopped', tab: 'business' },
-        { prefix: 'outreach:warmup', impact: 4, title: 'Hold the campaigns until the mailboxes are warm', tab: 'outreach' },
-        { prefix: 'outreach:dns:', impact: 4, group: true, title: 'Fix the sending domain records', tab: 'outreach' },
+        { prefix: 'outreach:warmup', impact: 4, title: 'Hold the campaigns until the mailboxes are warm', click: 'pause-outreach', tab: 'outreach' },
+        { prefix: 'outreach:dns:', impact: 4, group: true, title: 'Fix the sending domain records', click: 'pause-outreach', tab: 'outreach' },
         { prefix: 'review:held', impact: 3, title: 'Re-run the held reviews', action: 'rerun-held', tab: 'systems' },
         { prefix: 'notices:failed', impact: 3, title: 'Re-send the owner notices that failed', action: 'resend-notices', tab: 'review' },
         { prefix: 'hub:stale', impact: 3, title: 'Publish the Social hub', action: 'publish-hub', tab: 'hub' },
@@ -760,7 +760,7 @@
     ];
     const SAFE_ACTIONS = ['rerun-held', 'resend-notices', 'publish-hub'];
     // Actions a proposal offers as a button that only run on a click (#1977).
-    const CLICK_ACTIONS = ['retry-social', 'resume-outreach'];
+    const CLICK_ACTIONS = ['retry-social', 'resume-outreach', 'pause-outreach'];
 
     function proposalRules(state, briefed) {
         const items = (briefed || briefing(state)).slice();
@@ -791,7 +791,7 @@
 
     const RUN_LABELS = {
         'rerun-held': 'Send held re-runs', 'resend-notices': 'Re-send failed notices', 'publish-hub': 'Publish the hub',
-        'retry-social': 'Retry failed posts', 'resume-outreach': 'Resume mailboxes'
+        'retry-social': 'Retry failed posts', 'resume-outreach': 'Resume mailboxes', 'pause-outreach': 'Pause outreach'
     };
 
     const pageSpeedPr = (key) => Number((/^pagespeed:pr:(\d+)$/.exec(key || '') || [])[1]) || 0;

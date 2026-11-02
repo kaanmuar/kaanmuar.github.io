@@ -213,6 +213,16 @@ test("rerunReviewFailures starts when a fix is newer than its last run, once per
   assert.deepEqual(calls.jobs, ["rerunReviewFailures"]);
 });
 
+test("Pause outreach pauses the sick mailboxes, else every active one on the domain, never one Jarvis already paused (#1977)", () => {
+  const box = (email, extra) => Object.assign({ email, status: "active", warmup: "on", score: 95 }, extra);
+  const o = { domain: "qalabreview.com", failing: [], warmupMin: 80, pauses: [{ email: "c@qalabreview.com" }],
+    mailboxes: [box("a@qalabreview.com", { score: 60 }), box("b@qalabreview.com"), box("c@qalabreview.com", { warmup: "off" }), box("d@other.com"), box("e@qalabreview.com", { status: "paused" })] };
+  assert.deepEqual(actions.pauseTargets(o), [{ email: "a@qalabreview.com", why: "warm-up score 60 under 80" }]);
+  const bounces = Object.assign({}, o, { mailboxes: o.mailboxes.filter((m) => m.email !== "a@qalabreview.com") });
+  assert.deepEqual(actions.pauseTargets(bounces).map((m) => m.email), ["b@qalabreview.com"], "no sick one: the domain's active mailboxes");
+  assert.deepEqual(actions.pauseTargets(null), []);
+});
+
 test("a mailbox problem is its domain's DNS, an error, warm-up off or a low score", () => {
   const o = { domain: "qalabreview.com", failing: [], warmupMin: 80 };
   const ok = { email: "a@qalabreview.com", status: "active", warmup: "on", score: 95 };

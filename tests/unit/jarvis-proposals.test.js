@@ -70,6 +70,8 @@ test("each proposal kind gets its own buttons, 3 at most: its run, Open, then Di
   assert.deepEqual(acts({ key: "review:held", action: "rerun-held", tab: "systems" }), ["run:Send held re-runs", "open:Open Systems", "dismissed:Dismiss"]);
   assert.deepEqual(acts({ key: "social:failed", click: "retry-social", tab: "hub" }), ["run:Retry failed posts", "open:Open Social hub", "dismissed:Dismiss"]);
   assert.deepEqual(acts({ key: "outreach:mailbox", click: "resume-outreach", tab: "outreach" }), ["run:Resume mailboxes", "open:Open Outreach", "dismissed:Dismiss"]);
+  assert.deepEqual(acts({ key: "outreach:bounce", click: "pause-outreach", tab: "outreach" }), ["run:Pause outreach", "open:Open Outreach", "dismissed:Dismiss"]);
+  ["outreach:bounce", "outreach:warmup", "outreach:dns:"].forEach((k) => assert.equal(core.PROPOSAL_RULES.find((r) => r.prefix === k).click, "pause-outreach", k));
   assert.deepEqual(acts({ key: "job", jobs: ["rivalSweep"], tab: "systems" }), ["run:Run rivalSweep again", "open:Open Systems", "dismissed:Dismiss"]);
   assert.deepEqual(acts({ key: "job", jobs: ["a1x", "b2y"], tab: "systems" })[0], "run:Run 2 jobs again");
   assert.deepEqual(acts({ key: "ci", workflows: ["Pages"], link: "https://github.com/x/actions" }), ["run:Re-run Pages", "open:Open ↗", "dismissed:Dismiss"]);
