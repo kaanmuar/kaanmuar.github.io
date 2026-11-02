@@ -181,6 +181,7 @@ async function github(fetchImpl, token, { now }) {
     ci: Object.values(byWorkflow),
     openBugs: bugs.total_count || 0,
     bugAreas: top(areas),
+    needsAgent: (bugs.items || []).filter((issue) => (issue.labels || []).some((label) => label.name === "needs-agent")).map((issue) => ({ number: issue.number, title: issue.title, url: issue.html_url })),
     merged: { total: merged.total_count || 0, items: (merged.items || []).slice(0, 10).map((pr) => ({ number: pr.number, title: pr.title, url: pr.html_url, at: pr.closed_at })) },
     recent: (recent || []).map((issue) => ({ number: issue.number, title: issue.title, url: issue.html_url, state: issue.state, pr: !!issue.pull_request, at: issue.created_at }))
   };
