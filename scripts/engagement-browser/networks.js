@@ -64,7 +64,7 @@ const NUM = "const num = (s) => { const m = String(s || '').replace(/,/g, '').ma
 const evaluate = (page, body, arg) => page.evaluate(new Function("arg", NUM + body), arg);
 
 // On LinkedIn and Facebook the agent acts as our page, never as the person signed in (Carlos, #1991).
-const PAGES = { linkedin: "qalab-url-review", facebook: "qalaburlreview" };
+const PAGES = { linkedin: "146731408", facebook: "qalaburlreview" };
 const PAGE_NAME = /QA-?lab/i;
 
 const GENERAL = ["web accessibility", "WCAG", "core web vitals", "technical SEO", "Playwright testing", "test automation", "AI Overviews SEO", "web performance", "GA4", "software testing", "a11y", "Google Search Console", "QA engineer", "Lighthouse performance"];
@@ -292,63 +292,93 @@ const tiktok = {
   }
 };
 
+// LinkedIn's search page renders server-driven markup with no post ids in it, so the agent reads through the
+// signed-in session's own Voyager API. The query id is LinkedIn's; when it rotates, `check linkedin --read` fails here.
+const LI_SEARCH = "voyagerSearchDashClusters.ef3d0937fb65bd7812e32e5a85028e79";
+const LI_API = "const csrf = (document.cookie.match(/JSESSIONID=\"?([^\";]+)/) || [])[1] || ''; const api = (path) => fetch(path, { credentials: 'include', headers: { 'csrf-token': csrf, accept: 'application/vnd.linkedin.normalized+json+2.1', 'x-restli-protocol-version': '2.0.0' } });";
+// LinkedIn sometimes renders without its data-view-name hooks, so the agent goes by accessibility labels.
+const LI_LIKE = 'button[aria-label^="Estado del botón de reacción"], button[aria-label^="Reaction button state"]';
+const LI_PAGE = 'input[type="radio"][aria-label*="QA-lab" i], [role="radio"][aria-label*="QA-lab" i]';
+
 const linkedin = {
   name: "LinkedIn", home: "https://www.linkedin.com/feed/", queries: GENERAL,
   async signedIn(page) {
-    const me = page.locator("img.global-nav__me-photo, .global-nav__me img");
-    if (!(await visible(me, 15000))) return "";
-    return ((await me.first().getAttribute("alt").catch(() => "")) || "LinkedIn") + ", acting as /company/" + PAGES.linkedin;
+    if (!(await page.context().cookies("https://www.linkedin.com")).some((c) => c.name === "li_at" && c.value)) return "";
+    const me = await evaluate(page, LI_API + `
+      return api('/voyager/api/me').then(async (r) => {
+        if (!r.ok) return '';
+        const p = ((await r.json()).included || []).find((e) => e.firstName) || {};
+        return [p.firstName, p.lastName].filter(Boolean).join(' ');
+      }, () => '');`);
+    return me ? me + ", acting as the QA-lab URL Review page (company " + PAGES.linkedin + ")" : "";
   },
-  // A page admin picks who reacts or comments in the post's identity menu; without it the agent does nothing.
+  // The post's identity dialog lists Carlos and every page he admins; the agent picks QA-lab or does nothing. Its
+  // opener is the unlabelled avatar link just before the like button.
   async asPage(page, scope) {
-    const toggle = scope.locator('button[aria-label*="identity" i], button[aria-label*="reacting as" i], button[aria-label*="commenting as" i], button[aria-label*="switch" i]').first();
-    if (!(await visible(toggle, 6000))) throw new Error("LinkedIn offered no way to act as the QA-lab page on this post.");
-    if (PAGE_NAME.test((await toggle.getAttribute("aria-label")) || "")) return;
-    await click(toggle);
-    await click(await need(page.locator('[role="dialog"], [role="menu"], .artdeco-dropdown__content, .artdeco-modal').getByText(PAGE_NAME), "The QA-lab page in the identity menu"));
-    const save = page.getByRole("button", { name: /^(Save|Done)$/ });
-    if (await visible(save, 2000)) await click(save.first());
-    if (!PAGE_NAME.test((await toggle.getAttribute("aria-label").catch(() => "")) || "")) throw new Error("LinkedIn did not switch to the QA-lab page.");
+    const open = scope.locator(LI_LIKE).first().locator("xpath=preceding::a[1]");
+    if (!(await visible(open, 8000))) throw new Error("LinkedIn offered no way to act as the QA-lab page on this post.");
+    await click(open);
+    const radio = page.locator(LI_PAGE).first();
+    if (!(await radio.waitFor({ state: "attached", timeout: 10000 }).then(() => true, () => false))) throw new Error("The QA-lab page was not in LinkedIn's identity dialog.");
+    if (!(await radio.isChecked())) {
+      const label = page.locator('label[for="' + (await radio.getAttribute("id")) + '"]');
+      const name = page.locator('dialog[open], [role="dialog"]').getByText("QA-lab URL Review", { exact: true });
+      if (await visible(label, 1500)) await click(label.first());
+      else if (await visible(name, 1500)) await click(name.first());
+      else await radio.dispatchEvent("click");
+    }
+    if (!(await radio.isChecked())) throw new Error("LinkedIn did not select the QA-lab page.");
+    const save = page.getByRole("button", { name: /^(Guardar|Save)$/ });
+    if (await save.isEnabled().catch(() => false)) await click(save);
+    else await click(page.getByRole("button", { name: /^(Cancelar|Cancel)$/ }));
+    await radio.waitFor({ state: "detached", timeout: 10000 }).catch(() => { throw new Error("LinkedIn's identity dialog did not close."); });
+    await pause(1500, 2500);
   },
   async read(page, q) {
-    await go(page, this, "https://www.linkedin.com/search/results/content/?keywords=" + enc(q) + "&datePosted=%22past-24h%22&sortBy=%22relevance%22");
-    await visible(page.locator('[data-urn^="urn:li:activity:"], [data-id^="urn:li:activity:"]'), 20000);
-    await scroll(page, 3);
-    return evaluate(page, `
-      const unit = { m: 6e4, h: 36e5, d: 864e5, w: 6048e5, mo: 2592e6, yr: 31536e6 };
-      return Array.from(document.querySelectorAll('[data-urn^="urn:li:activity:"], [data-id^="urn:li:activity:"]')).map((c) => {
-        const urn = c.getAttribute('data-urn') || c.getAttribute('data-id');
-        const text = (c.querySelector('.update-components-text, .feed-shared-update-v2__description, .feed-shared-inline-show-more-text') || {}).innerText || '';
-        const actor = c.querySelector('a.update-components-actor__meta-link, a.update-components-actor__image, .update-components-actor__container a');
-        const href = actor ? actor.href.split('?')[0] : '';
-        const handle = (href.match(/linkedin\\.com\\/(?:in|company)\\/([^/]+)/) || [])[1] || '';
-        const name = ((c.querySelector('.update-components-actor__title span[aria-hidden="true"], .update-components-actor__name span[aria-hidden="true"]') || {}).innerText || handle).trim();
-        const age = ((c.querySelector('.update-components-actor__sub-description') || {}).innerText || '').match(/(\\d+)\\s*(mo|yr|m|h|d|w)\\b/);
-        const btn = (re) => num(((Array.from(c.querySelectorAll('button[aria-label]')).find((b) => re.test(b.getAttribute('aria-label'))) || {}).innerText) || '');
-        return { network: 'linkedin', id: urn, url: 'https://www.linkedin.com/feed/update/' + urn + '/', author: { handle, name, id: href }, text,
-          createdAt: age ? new Date(Date.now() - Number(age[1]) * unit[age[2]]).toISOString() : '',
-          metrics: { likes: num((c.querySelector('.social-details-social-counts__reactions-count') || {}).innerText), replies: btn(/comment/i), reposts: btn(/repost/i), views: 0 } };
-      }).filter((p) => p.text);`);
+    if (!page.url().startsWith("https://www.linkedin.com/")) await go(page, this, this.home);
+    const out = await evaluate(page, LI_API + `
+      const vars = '(start:0,origin:FACETED_SEARCH,query:(keywords:' + encodeURIComponent(arg.q.replace(/[(),:]/g, ' ')) + ',flagshipSearchIntent:SEARCH_SRP,queryParameters:List((key:datePosted,value:List(past-24h)),(key:resultType,value:List(CONTENT))),includeFiltersInResponse:false))';
+      return api('/voyager/api/graphql?variables=' + vars + '&queryId=' + arg.id).then(async (r) => {
+        if (!r.ok) return { error: 'LinkedIn search answered ' + r.status };
+        const inc = (await r.json()).included || [];
+        const by = {};
+        inc.forEach((e) => { if (e.entityUrn) by[e.entityUrn] = e; });
+        return { posts: inc.filter((u) => /feed\\.Update$/.test(u.$type) && /^urn:li:activity:\\d+$/.test((u.metadata || {}).backendUrn || '')).map((u) => {
+          const urn = u.metadata.backendUrn, a = u.actor || {};
+          const href = String((a.navigationContext || {}).actionTarget || '').split('?')[0];
+          const handle = (href.match(/linkedin\\.com\\/(?:in|company)\\/([^/]+)/) || [])[1] || '';
+          const counts = by[(by[u['*socialDetail']] || {})['*totalSocialActivityCounts']] || {};
+          return { network: 'linkedin', id: urn, url: 'https://www.linkedin.com/feed/update/' + urn + '/', author: { handle, name: ((a.name || {}).text || handle).trim(), id: href },
+            text: ((u.commentary || {}).text || {}).text || '', createdAt: new Date(Number(BigInt(urn.split(':').pop()) >> 22n)).toISOString(),
+            metrics: { likes: counts.numLikes || 0, replies: counts.numComments || 0, reposts: counts.numShares || 0, views: counts.numImpressions || 0 } };
+        }).filter((p) => p.text) };
+      }, (e) => ({ error: 'LinkedIn search failed: ' + e.message }));`, { q, id: LI_SEARCH });
+    if (out.error) throw new Error(out.error);
+    return out.posts;
   },
   async post(page, task) {
     await go(page, this, task.url);
-    const main = page.locator('[data-urn^="urn:li:activity:"], [data-id^="urn:li:activity:"]');
-    return (await visible(main)) ? main.first() : page.locator("main");
+    const main = page.locator("main").first();
+    if (!(await visible(main.locator(LI_LIKE), 20000))) throw new Error("LinkedIn did not show the post.");
+    return main;
   },
   async like(page, task) {
     const main = await this.post(page, task);
     await this.asPage(page, main);
-    const btn = await need(main.locator('button[aria-label^="React Like"], button.react-button__trigger'), "Like");
-    if ((await btn.getAttribute("aria-pressed")) === "true") return {};
+    const btn = await need(main.locator(LI_LIKE), "Like");
+    const none = /ninguna reacci|no reaction/i;
+    if (!none.test((await btn.getAttribute("aria-label")) || "")) return {};
     await click(btn);
+    if (none.test((await btn.getAttribute("aria-label")) || "")) throw new Error("LinkedIn did not take the like.");
     return {};
   },
   async reply(page, task) {
     const main = await this.post(page, task);
-    await click(await need(main.locator('button[aria-label="Comment"], button[aria-label^="Comment"]'), "Comment"));
     await this.asPage(page, main);
-    await type(page, await need(main.locator('.ql-editor[contenteditable="true"], div[contenteditable="true"][role="textbox"]'), "The comment box"), task.draft);
-    await click(await need(main.locator("button.comments-comment-box__submit-button, button.comments-comment-box__submit-button--cr, button").filter({ hasText: /^\s*(Comment|Post)\s*$/ }), "Post"));
+    const box = main.locator('[contenteditable="true"][aria-label*="coment" i], [contenteditable="true"][aria-label*="comment" i]');
+    if (!(await visible(box, 4000))) await click(await need(main.locator('button[aria-label="Comentar"], button[aria-label="Comment"]'), "Comment"));
+    await type(page, await need(box, "The comment box"), task.draft);
+    await click(await need(main.locator("button:not([aria-label])").filter({ hasText: /^\s*(Comentar|Comment|Publicar|Post)\s*$/ }), "Post"));
     await pause(3000, 5000);
     return { url: task.url };
   }
