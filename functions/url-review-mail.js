@@ -163,6 +163,24 @@ function hostOf(row) {
   return clip(report.host || "", 120);
 }
 
+// A stored report runs to about half a megabyte; the period reports read only these parts of it.
+function slimReview(row) {
+  const report = row && row.report;
+  if (!report || typeof report !== "object") return row;
+  const pages = Array.isArray(report.pages) ? report.pages.slice(0, 40).map((page) => ({ url: page && typeof page === "object" ? page.url : page })) : undefined;
+  const score = report.insights && report.insights.score;
+  return Object.assign({}, row, {
+    report: {
+      finalUrl: report.finalUrl,
+      host: report.host,
+      pages,
+      counts: report.counts,
+      alerts: Array.isArray(report.alerts) ? report.alerts.map(() => 0) : undefined,
+      insights: score ? { score } : undefined
+    }
+  });
+}
+
 // url_reviews also holds payments, owner claims and runs turned away; only runs are reviews.
 const PAYMENTS = new Set(["paid-report", "paid-addon", "run-credit", "run-credit-used", "monthly-pass", "checkout-open"]);
 const TURNED_AWAY = new Set(["payment-due", "blocked"]);
@@ -431,6 +449,7 @@ module.exports = {
   openRows,
   openSource,
   reviewUrls,
+  slimReview,
   summarizePeriod,
   reportRows,
   reportSubject
