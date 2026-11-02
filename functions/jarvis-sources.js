@@ -31,6 +31,7 @@ const jarvisMarketing = require("./jarvis-marketing");
 const jarvisEngagement = require("./jarvis-engagement");
 const jarvisPeople = require("./jarvis-people");
 const jarvisSocial = require("./jarvis-social");
+const jarvisMedia = require("./jarvis-media");
 const mailHealth = require("./mail-health");
 const booking = require("./booking");
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
@@ -337,7 +338,7 @@ async function social(ctx) {
   const ledger = async (name) => {
     try { return await getJson(ctx.fetch, ORIGIN + "/assets/social/" + name + ".json?t=" + Math.floor(ctx.now / HOUR), {}, name + " ledger"); } catch (error) { return null; }
   };
-  const [buffer, facebook, open, youtube] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("youtube")]);
+  const [buffer, facebook, open, youtube, metrics] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("youtube"), ledger("metrics")]);
   const channels = {};
   const results = {};
   const daily = {};
@@ -388,6 +389,7 @@ async function social(ctx) {
     latest: latest.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 15),
     scheduled,
     queue: jarvisSocial.byChannel([buffer, facebook, open], ctx.now, since),
+    media: jarvisMedia.mediaStats([buffer, facebook, open], metrics, videos),
     youtube: { videos: videos.sort((a, b) => (b.views || 0) - (a.views || 0) || Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 10), views },
     needs
   };

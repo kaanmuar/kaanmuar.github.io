@@ -717,11 +717,21 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             { label: 'Paid runs', value: okMoney ? mo.revenue.paidRuns : '—' },
             { label: 'Emails delivered', value: okMail && em.rates.delivered !== null ? em.rates.delivered + '%' : '—', alert: okMail && em.rates.bad >= th.emailBadPct },
             { label: 'Social posts', value: okSocial ? so.sent : '—', alert: okSocial && so.failed > 0 },
+            { label: 'Clip plays', value: okSocial && so.media ? so.media.total.plays : '—' },
             { label: 'Google clicks', value: gsc && gsc.ok ? gsc.clicks : '—' }
         ]);
         const social = socialVisits();
+        const media = okSocial ? so.media : null;
+        const num = (n, on) => (on ? fmt(n) : '—');
+        const mediaNets = media ? table([['Network', (n) => `<strong>${esc(n.name)}</strong>`], ['Posts', (n) => fmt(n.posts)], ['Plays', (n) => num(n.plays, n.measured)], ['Reach', (n) => num(n.reach, n.measured)],
+            ['Likes', (n) => num(n.likes, n.measured)], ['Shares', (n) => num(n.shares, n.measured)], ['Comments', (n) => num(n.comments, n.measured)], ['', (n) => (n.state ? `<span class="jv-note">${esc(n.state)}</span>` : '')]], media.networks)
+            + bars(media.networks.filter((n) => n.plays).map((n) => ({ label: n.name, value: n.plays })), { color: COLORS.pink, empty: '' }) : waiting('social', 'Reading the social ledgers…');
+        const mediaClips = media ? table([['Clip', (c) => `<strong>${esc(c.title)}</strong><br><span class="jv-note">${esc(when(c.at))}</span>`], ['Plays', (c) => fmt(c.total.plays)], ['Likes', (c) => fmt(c.total.likes)], ['Shares', (c) => fmt(c.total.shares)], ['Comments', (c) => fmt(c.total.comments)],
+            ['On', (c) => c.networks.map((n) => `<a class="jv-chip" href="${esc(n.url)}" target="_blank" rel="noopener" title="${esc(n.network)}: ${n.plays} plays, ${n.likes} likes, ${n.shares} shares, ${n.comments} comments">${esc(n.network)}${n.plays ? ' ' + fmt(n.plays) : ''}</a>`).join(' ')]], media.clips, 'No clip has gone out yet.') : waiting('social', '');
         const pp = okMoney ? mo.paypal || {} : {};
         return head + `<div class="jv-grid">${briefPanel('business')}
+            ${panel('business-media', `Media per network${media ? ' · ' + fmt(media.total.plays) + ' plays' : ''}`, mediaNets, { wide: true, data: media && media.networks, note: `Every clip we posted, all time. YouTube plays come from the YouTube Data API; LinkedIn, TikTok, X and YouTube numbers from Buffer, Facebook from the Graph API, Bluesky and Mastodon from their public APIs, read once a day${media && media.updatedAt ? ' (last ' + esc(when(media.updatedAt)) + ')' : ''}. Instagram and Threads have no stats reader yet.` })}
+            ${panel('business-clips', `Plays per clip${media ? ' · ' + fmt(media.total.clips) : ''}`, mediaClips, { wide: true, data: media && media.clips.map((c) => Object.assign({ key: c.key, title: c.title, at: c.at }, c.total, Object.fromEntries(c.networks.map((n) => [n.network, n.plays])))) })}
             ${callsPanel()}
             ${panel('business-revenue', 'Revenue per day (USD)', okMoney ? (mo.daily.length ? area(mo.daily.map((d) => d.date), [{ name: 'USD', values: mo.daily.map((d) => d.usd), color: COLORS.green }]) : '<p class="jv-empty">No sales in this range.</p>') + bars(mo.byProvider, { color: COLORS.green, empty: 'No sales by provider yet.' }) : waiting('money', 'Reading payments…'), { wide: true, data: okMoney ? mo.daily : null, note: okMoney ? `Test payments are left out. ${fmt(mo.revenue.paidRuns)} paid review runs used credits bought earlier.` : '' })}
             ${panel('business-paypal', 'PayPal and Stripe', okMoney ? `<ul class="jv-facts"><li>Open PayPal disputes: <b>${pp.disputesOpen === null || pp.disputesOpen === undefined ? '—' : fmt(pp.disputesOpen)}</b></li>${pp.transactions ? `<li>PayPal in range: ${fmt(pp.transactions.count)} payments, ${fmt(pp.transactions.grossUsd)} USD gross, ${fmt(pp.transactions.feesUsd)} USD fees, <b>${fmt(pp.transactions.netUsd)} USD net</b></li>` : ''}<li>Refunded in range: <b>${fmt(mo.refundsUsd)} USD</b></li><li>Stripe: ${esc(mo.stripe.mode === 'live' ? 'live' : mo.stripe.mode === 'test' ? 'test key only, checkout uses PayPal' : 'not set up')}</li></ul>${needList(mo)}` : waiting('money', 'Asking PayPal…'))}
