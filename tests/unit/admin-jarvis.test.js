@@ -1119,11 +1119,24 @@ test("the approvals list shows pending notices newest first, with the review lin
     { domain: "c.com", status: "pending", createdAt: "2026-10-25T11:00:00Z", lastError: "Not public yet." }
   ], (n) => "https://site/" + n.lang + "?report=" + n.reviewId);
   assert.deepEqual(rows.map((r) => r.domain), ["c.com", "a.com"]);
-  assert.deepEqual(rows[1].candidates, [{ email: "x@a.com", sources: ["footer"], url: "", onDomain: true }]);
+  assert.deepEqual(rows[1].candidates, [{ email: "x@a.com", sources: ["footer"], url: "", onDomain: true, stopped: false }]);
   assert.equal(rows[1].report, "https://site/es?report=r1");
   assert.equal(rows[0].report, "");
   assert.equal(rows[0].host, "c.com");
   assert.equal(rows[0].lastError, "Not public yet.");
+});
+
+test("the approvals list puts ready notices first and those without a Live Report last, with their badges", () => {
+  const index = { reports: [{ id: "u-a", host: "a.com" }, { id: "u-d", host: "d.com" }] };
+  const rows = notify.noticeRows([
+    { domain: "a.com", status: "pending", host: "a.com", email: "x@a.com", candidates: [{ email: "x@a.com" }, { email: "y@a.com" }], createdAt: "2026-10-25T09:00:00Z" },
+    { domain: "b.com", status: "pending", host: "b.com", email: "x@b.com", createdAt: "2026-10-25T12:00:00Z", tries: 2, lastError: "Not public yet." },
+    { domain: "c.com", status: "pending", host: "c.com", email: "x@c.com", createdAt: "2026-10-25T11:00:00Z" },
+    { domain: "d.com", status: "pending", host: "d.com", email: "x@d.com", createdAt: "2026-10-25T10:00:00Z" }
+  ], null, { index, unlisted: ["c.com"], stopped: new Set(["y@a.com"]) });
+  assert.deepEqual(rows.map((r) => r.domain + ":" + r.state), ["d.com:ready", "a.com:ready", "c.com:unlisted", "b.com:waiting"]);
+  assert.deepEqual(rows[1].candidates.map((c) => c.email + (c.stopped ? " stopped" : "")), ["x@a.com", "y@a.com stopped"]);
+  assert.equal(rows[3].tries, 2);
 });
 
 const social = require("../../functions/jarvis-social.js");

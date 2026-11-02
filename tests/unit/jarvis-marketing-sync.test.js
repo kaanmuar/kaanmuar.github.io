@@ -161,6 +161,25 @@ test("the sync writes each working day's LinkedIn list once, from 07:00, never a
   assert.deepEqual(calls, [["tools/linkedin-day.py", "2026-11-02"]]);
 });
 
+test("under a run's lock the LinkedIn list waits only while the prospect CSVs are being written (#2240)", () => {
+  const nine = new Date(2026, 10, 2, 9).getTime();
+  const folder = () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mk-li-"));
+    fs.mkdirSync(path.join(dir, "linkedin"));
+    fs.mkdirSync(path.join(dir, "prospects"));
+    const csv = path.join(dir, "prospects", "week2-education.csv");
+    fs.writeFileSync(csv, "org,host\n");
+    fs.utimesSync(csv, new Date(nine - 2 * 60000), new Date(nine - 2 * 60000));
+    return { dir, csv, run: (args) => fs.writeFileSync(path.join(dir, "linkedin", args[1] + ".md"), "# list\n") };
+  };
+  const held = folder();
+  assert.equal(sync.linkedinDay(held.dir, nine, held.run, true), "");
+  fs.utimesSync(held.csv, new Date(nine - 11 * 60000), new Date(nine - 11 * 60000));
+  assert.equal(sync.linkedinDay(held.dir, nine, held.run, true), "LinkedIn list for 2026-11-02 written");
+  const fresh = folder();
+  assert.equal(sync.linkedinDay(fresh.dir, nine, fresh.run, false), "LinkedIn list for 2026-11-02 written");
+});
+
 const SENT = "11111111-2222-3333-4444-555555555555";
 
 test("sent emails (#2017): every cold email with what the lead did since, newest first", () => {

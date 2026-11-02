@@ -25,6 +25,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
+      actions: write
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -64,3 +65,9 @@ jobs:
               echo "main already has this round-up."; exit 0
             fi
           done
+      # Jarvis and admin read the round-up from the live site, and the [skip ci] push starts no Pages run (#2238).
+      - name: Publish it to the site
+        if: steps.roundup.outputs.written == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main

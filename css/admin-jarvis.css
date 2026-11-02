@@ -232,9 +232,18 @@
 .jv-prop-acts [data-proposal="dismissed"] { color: var(--dim); }
 .jv-approvals { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.55rem; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
 .jv-approval { display: grid; gap: 0.45rem; padding: 0.6rem 0.75rem; border-radius: 10px; background: rgba(4, 18, 28, 0.55); border-left: 3px solid var(--cyan); font-size: 0.85rem; }
+.jv-approval.is-ready { border-left-color: var(--green); }
+.jv-approval.is-waiting, .jv-approval.is-unlisted, .jv-approval.is-stopped { border-left-color: var(--line-hi); }
 .jv-approval.is-critical { border-left-color: var(--pink); }
-.jv-approval .jv-field { display: grid; gap: 0.2rem; }
-.jv-approval select { width: 100%; }
+.jv-approval p { margin: 0; }
+.jv-approval-pick { display: grid; gap: 0.3rem; margin: 0; padding: 0; border: 0; min-width: 0; }
+.jv-approval-pick legend { padding: 0; margin-bottom: 0.2rem; color: var(--muted); font-size: 0.78rem; }
+.jv-approval-to { display: flex; gap: 0.45rem; align-items: flex-start; cursor: pointer; overflow-wrap: anywhere; }
+.jv-approval-to input { margin-top: 0.2rem; accent-color: var(--cyan); }
+.jv-approval-to small { display: block; color: var(--dim); font-size: 0.72rem; }
+.jv-approval-to.is-all { color: var(--muted); }
+.jv-approval-to.is-stopped { opacity: 0.55; cursor: default; }
+.jv-prop-acts [data-notice-send]:disabled { opacity: 0.45; cursor: not-allowed; }
 .jv-approval-err { color: var(--amber); font-size: 0.78rem; margin: 0; }
 .jv-prop-acts [data-notice-drop] { color: var(--dim); }
 .jv-prop-acts button:disabled { opacity: 0.4; cursor: wait; }

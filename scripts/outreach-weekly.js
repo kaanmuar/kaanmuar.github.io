@@ -2,9 +2,10 @@
 /* The weekly outreach cycle of #1278 with no Cursor agent (#1980). The private kaanmuar/qa-lab-outreach repo holds the
    outreach folder and runs this from its GitHub Action (.github/workflows/outreach.yml there):
      node scripts/outreach-weekly.js <mode> --dir <outreach folder> [--dry] [--since YYYY-MM-DD] [--week W2]
-   prospects  Friday     next week's prospects from the seed lists, with addresses their own sites publish; the sweep
-                         queue; the week's draft campaigns; seasonal first-email drafts for Carlos
-   leads      Monday     rebuilds every open week's leads and fills what `missing` asks that a model can answer
+   prospects  weekdays   40 new prospects a day from the seed lists (10 per segment, universities fill what a segment
+                         lacks), with addresses their own sites publish, added to the week's files; the night's sweep
+                         queue; the week's draft campaigns; on Fridays, seasonal first-email drafts for Carlos
+   leads      weekdays   rebuilds every open week's leads and fills what `missing` asks that a model can answer
    replies    weekdays   fetches, sorts and drafts answers to replies; blocks opt-outs and bounces; drafts what is left
                          from yesterday, or from every day since --since
    holidays   every run  pauses campaigns on their countries' public holidays
@@ -26,14 +27,17 @@ const AI_URL = process.env.PREFLIGHT_URL || CFG.url || "https://preflight.carlos
 const BOOKING = "https://carlosandmunoz.com/book.html";
 const JOBS = ["prospects", "leads", "replies"];
 const PER_SEGMENT = 10;
+const PER_DAY = 40;
+const SEGMENTS = ["university", "tvet", "agency", "startup"];
+const FOUND_HEADER = ["host", "org", "contact_name", "email", "kind", "source_url", "notes"];
 const UA = "Mozilla/5.0 (compatible; QA-lab-outreach/1.0; +https://carlosandmunoz.com)";
 const PROSPECT_HEADER = ["segment", "org", "host", "cc", "country", "language", "contact_name", "contact_title", "email", "linkedin_url", "source", "sequence", "sender", "trigger", "status"];
 const COUNTRY = { co: "Colombia", mx: "Mexico", pe: "Peru", ar: "Argentina", cl: "Chile", ec: "Ecuador", br: "Brazil", es: "Spain", pt: "Portugal", us: "United States", gb: "United Kingdom", ie: "Ireland", au: "Australia", fr: "France", it: "Italy" };
 const LANG = { br: "pt", pt: "pt", us: "en", gb: "en", ie: "en", au: "en", fr: "fr", it: "it" };
-// Ten countries per segment a week, weighted to Colombia and Latin America; the last slot rotates through the rest.
+// Ten countries per segment a day, weighted to Colombia and Latin America; the last slot rotates through the rest.
 const SLOTS = ["co", "co", "co", "mx", "pe", "cl", "ar", "br", "es"];
 const ROTATE = ["pt", "us", "gb", "ie", "au", "ec"];
-const SKIP_INBOX = /^(support|soporte|suporte|help|ayuda|news|newsletter|noreply|no-reply|donotreply|privacy|privacidad|rgpd|gdpr|dpo|abuse|postmaster|webmaster|jobs|careers|empleo|rrhh|hr)@/i;
+const SKIP_INBOX = /^((support|soporte|suporte|helpdesk|mesadeayuda|newsletter|noreply|no-reply|donotreply)[a-z0-9._-]*|help|ayuda|news|privacy|privacidad|rgpd|gdpr|dpo|abuse|postmaster|webmaster|jobs|careers|empleo|rrhh|hr)@/i;
 const FREE_MAIL = /@(gmail|googlemail|hotmail|outlook|live|yahoo|icloud|me|aol|proton(mail)?|gmx|uol|bol|terra)\./i;
 const CONTACT_LINK = /contact|contacto|contato|nosotros|about|equipo|team|quienes|sobre|prensa|imprensa|press|comunicaci|directorio|directory/i;
 const ANSWER = new Set(["interested", "question", "not_now", "wrong_person"]);
@@ -358,15 +362,15 @@ async function judge(segment, cc, r, facts, used, log) {
   };
 }
 
-// One prospect per slot's country: sites are fetched five at a time, at most MAX_CHECKS per segment.
-const MAX_CHECKS = 80;
+// One prospect per slot's country: sites are fetched five at a time, at most CHECKS_PER_SLOT per slot asked.
+const CHECKS_PER_SLOT = 8;
 async function pick(segment, pool, slots, used, log) {
   const picked = [];
   let checked = 0;
   for (const cc of slots) {
     const queue = pool.filter((x) => x.cc === cc && !used.has(bare(x.host)));
     let row = null;
-    while (!row && queue.length && checked < MAX_CHECKS) {
+    while (!row && queue.length && checked < slots.length * CHECKS_PER_SLOT) {
       const batch = queue.splice(0, 5);
       batch.forEach((r) => used.add(bare(r.host)));
       checked += batch.length;
@@ -408,44 +412,70 @@ async function seasonal(week, countries, log) {
   return items.map((i) => i.hook);
 }
 
+// The countries of k slots, round the day's ten.
+const slotsFor = (countries, k) => Array.from({ length: k }, (_, i) => countries[i % countries.length]);
+const foundOn = (rows, day) => rows.filter((r) => String(r.notes) === "prospects run " + day).length;
+
+function append(rel, header, rows) {
+  const c = csvOf(rel, header);
+  c.rows.push(...rows);
+  saveCsv(rel, c);
+  return c.rows.length;
+}
+
 async function prospects(log) {
   const week = WEEK || tool("week").trim();
   const n = week.slice(1);
+  const today = utcDay();
   const site = path.join(__dirname, "..");
-  const done = fs.existsSync(path.join(DIR, "prospects", `week${n}-education.csv`));
+  const foundRel = `prospects/week${n}-emails-found.csv`;
+  const want = Math.max(0, PER_DAY - foundOn(csvOf(foundRel, FOUND_HEADER).rows, today));
+  const used = usedHosts();
+  const day = Math.floor(Date.parse(today) / 86400000);
+  const countries = [...SLOTS, ROTATE[day % ROTATE.length]];
+  const left = {};
   let picked = [];
-  if (done) {
-    log(`${week}: prospects already exist; only seasonal drafts.`);
-  } else {
-    const used = usedHosts();
-    const slots = [...SLOTS, ROTATE[Number(n) % ROTATE.length]];
-    for (const segment of ["university", "tvet", "agency", "startup"]) {
-      const pool = shuffled(await candidates(segment, used), Number(n) * 7919);
-      picked = picked.concat(await pick(segment, pool, slots, used, log));
-    }
-    const edu = picked.filter((r) => r.segment === "university" || r.segment === "tvet");
-    const biz = picked.filter((r) => r.segment === "agency" || r.segment === "startup");
-    write(`prospects/week${n}-education.csv`, toCsv(PROSPECT_HEADER, edu, "\n"));
-    write(`prospects/week${n}-agencies-startups.csv`, toCsv(PROSPECT_HEADER, biz, "\n"));
-    write(`prospects/week${n}-emails-found.csv`, toCsv(["host", "org", "contact_name", "email", "kind", "source_url", "notes"],
-      picked.map((r) => ({ host: r.host, org: r.org, contact_name: r.contact_name, email: r.email, kind: r.contact_name ? "personal" : "generic", source_url: r.source, notes: "found by the Friday Action " + utcDay() })), "\n"));
+  if (!want) log(`${week}: today's ${PER_DAY} prospects are already there.`);
+  const pools = {};
+  for (const segment of want ? SEGMENTS : []) {
+    pools[segment] = shuffled(await candidates(segment, used), day * 7919);
+    const k = Math.min(PER_SEGMENT, want - picked.length);
+    if (k > 0) picked = picked.concat(await pick(segment, pools[segment], slotsFor(countries, k), used, log));
+  }
+  if (want > picked.length && pools.university) {
+    log(`filling ${want - picked.length} from universities`);
+    picked = picked.concat(await pick("university", pools.university, slotsFor(countries, want - picked.length), used, log));
+  }
+  for (const segment of Object.keys(pools)) left[segment] = pools[segment].filter((r) => !used.has(bare(r.host))).length;
+  let total = 0;
+  if (picked.length) {
+    total = append(`prospects/week${n}-education.csv`, PROSPECT_HEADER, picked.filter((r) => r.segment === "university" || r.segment === "tvet"))
+      + append(`prospects/week${n}-agencies-startups.csv`, PROSPECT_HEADER, picked.filter((r) => r.segment === "agency" || r.segment === "startup"));
+    append(foundRel, FOUND_HEADER, picked.map((r) => ({ host: r.host, org: r.org, contact_name: r.contact_name, email: r.email,
+      kind: r.contact_name ? "personal" : "generic", source_url: r.source, notes: "prospects run " + today })));
     const sweepRel = `prospects/week${n}-sweep.csv`;
-    write(sweepRel, toCsv(["host", "cc", "segment"], picked.map((r) => ({ host: r.host, cc: r.cc, segment: r.segment })), "\n"));
-    if (!DRY && picked.length) {
+    append(sweepRel, ["host", "cc", "segment"], picked.map((r) => ({ host: r.host, cc: r.cc, segment: r.segment })));
+    if (!DRY) {
       log(execFileSync("node", [path.join(site, "scripts", "sweep-outreach.js"), "add", path.join(DIR, sweepRel)], { encoding: "utf8" }).trim());
       log(tool("campaigns", "--week", week).trim());
     }
   }
-  const recent = new Set();
-  for (let w = Math.max(1, Number(n) - 3); w <= Number(n); w += 1) {
-    for (const f of [`week${w}-education.csv`, `week${w}-agencies-startups.csv`]) csvOf("prospects/" + f).rows.forEach((r) => r.country && recent.add(r.country));
+  let drafts = [];
+  if (new Date().getUTCDay() === 5 || DRY) {
+    const recent = new Set();
+    for (let w = Math.max(1, Number(n) - 3); w <= Number(n); w += 1) {
+      for (const f of [`week${w}-education.csv`, `week${w}-agencies-startups.csv`]) csvOf("prospects/" + f).rows.forEach((r) => r.country && recent.add(r.country));
+    }
+    drafts = await seasonal(week, [...recent], log).catch((error) => { log("seasonal: " + error.message); return []; });
   }
-  const drafts = await seasonal(week, [...recent], log).catch((error) => { log("seasonal: " + error.message); return []; });
-  const short = done ? "" : ["university", "tvet", "agency", "startup"].filter((s) => picked.filter((r) => r.segment === s).length < PER_SEGMENT);
-  const line = done ? `${week}: prospects were already there` : `${week}: ${picked.length} prospects queued for the weekend sweep and the week's draft campaigns`;
+  const bySegment = SEGMENTS.map((s) => [s, picked.filter((r) => r.segment === s).length]).filter(([, k]) => k).map(([s, k]) => `${k} ${s}`);
+  const low = SEGMENTS.filter((s) => s in left && left[s] < PER_SEGMENT * 5).map((s) => `${s} ${left[s]}`);
+  const line = !want ? `${week}: today's prospects were already there`
+    : `${week}: ${picked.length} new prospects (${bySegment.join(", ") || "none"}) queued for tonight's sweep; ${total} this week`;
   const status = read("04-sending-setup.md");
-  if (status) write("04-sending-setup.md", status.replace(/^(## Status[^\n]*\n)/m, `$1- ${utcDay()} Friday Action: ${line}${drafts.length ? `; seasonal drafts: ${drafts.join(", ")}` : ""}.\n`));
-  return `${line}${short.length ? `; short on ${short.join(", ")} (add rows to prospects/seeds/)` : ""}${drafts.length ? `; ${drafts.length} seasonal drafts to review (${drafts.join(", ")})` : ""}.`;
+  if (status && want) write("04-sending-setup.md", status.replace(/^(## Status[^\n]*\n)/m, `$1- ${today} prospects run: ${line}${drafts.length ? `; seasonal drafts: ${drafts.join(", ")}` : ""}.\n`));
+  return `${line}${picked.length < want ? `; ${want - picked.length} short of ${PER_DAY}` : ""}${low.length ? `; seed lists running low (${low.join(", ")} left; add rows to prospects/seeds/)` : ""}`
+    + `${drafts.length ? `; ${drafts.length} seasonal drafts to review (${drafts.join(", ")})` : ""}.`;
 }
 
 // --- Main ---------------------------------------------------------------------------------------------------------
@@ -482,4 +512,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch((error) => { console.error(error.message); process.exit(1); });
 
-module.exports = { emailsIn, openWeeks, bare };
+module.exports = { emailsIn, openWeeks, bare, slotsFor, foundOn };

@@ -1860,7 +1860,8 @@ async function queueOwnerNotice(record, options) {
   if (usable.length) await ref.set(Object.assign(ownerNotice.noticeRow(record, usable), { expireAt: keepUntil() }));
 }
 
-// Send or Drop on a pending owner notice, from the desk or Jarvis. Returns { status } or { error }.
+// Send or Drop on a pending owner notice, from the desk or Jarvis. email is one address or several; each gets its own
+// email. Returns { status, email, emails, failed } once any went out, else { error }.
 async function decideOwnerNotice(rawDomain, send, email, operator) {
   const domain = String(rawDomain || "").toLowerCase().replace(/[^a-z0-9.-]/g, "").slice(0, 120);
   const db = getFirestore();
@@ -1876,32 +1877,44 @@ async function decideOwnerNotice(rawDomain, send, email, operator) {
   });
   if (!notice) return { error: "That notice is not waiting for a decision." };
   if (!send) return { status: "dropped" };
-  let result;
-  try {
-    result = await sendOwnerNotice(notice, String(email || ""));
-  } catch (error) {
-    console.error("Owner notice failed:", error);
-    result = { error: String((error && error.message) || "The notice failed.").slice(0, 200) };
+  const shared = {};
+  const sent = [];
+  const failed = [];
+  for (const address of ownerNotice.pickedEmails(notice, email)) {
+    let result;
+    try {
+      result = await sendOwnerNotice(notice, address, shared);
+    } catch (error) {
+      console.error("Owner notice failed:", error);
+      result = { error: String((error && error.message) || "The notice failed.").slice(0, 200) };
+    }
+    if (result.error) failed.push({ email: address, error: result.error });
+    else sent.push(result);
   }
-  if (result.error) {
-    await ref.update({ status: "pending", lastError: result.error });
-    return { error: result.error };
+  const reasons = failed.map((row) => row.error).filter((reason, i, all) => all.indexOf(reason) === i);
+  const failText = reasons.length === 1 ? reasons[0] : failed.map((row) => row.email + ": " + row.error).join(" ");
+  if (!sent.length) {
+    await ref.update({ status: "pending", lastError: failText });
+    return { error: failText };
   }
-  const sentTo = result.notice;
-  await ref.update({ status: "sent", sentAt: decidedAt, decidedAt, by: operator, cardId: result.card.id, email: sentTo.email, source: sentTo.source, sourceUrl: sentTo.sourceUrl || "", lastError: "", expireAt: keepUntil() });
-  await db.collection("url_review_owner_notice_log").add({
+  const first = sent[0];
+  await ref.update({
+    status: "sent", sentAt: decidedAt, decidedAt, by: operator, cardId: first.card.id, email: first.notice.email, emails: sent.map((row) => row.notice.email),
+    failed, source: first.notice.source, sourceUrl: first.notice.sourceUrl || "", lastError: failed.length ? failText : "", expireAt: keepUntil()
+  });
+  await Promise.all(sent.map((row) => db.collection("url_review_owner_notice_log").add({
     domain: notice.domain,
     host: notice.host,
-    email: sentTo.email,
-    source: sentTo.source,
-    sourceUrl: sentTo.sourceUrl || "",
+    email: row.notice.email,
+    source: row.notice.source,
+    sourceUrl: row.notice.sourceUrl || "",
     reviewId: notice.reviewId,
-    cardId: result.card.id,
+    cardId: row.card.id,
     sentAt: decidedAt,
     by: operator,
     expireAt: keepUntil()
-  });
-  return { status: "sent", email: sentTo.email };
+  })));
+  return { status: "sent", email: first.notice.email, emails: sent.map((row) => row.notice.email), failed };
 }
 
 async function liveReportIndex() {
@@ -1910,15 +1923,18 @@ async function liveReportIndex() {
   return res.json();
 }
 
-// Sends a pending notice once its card is public. Returns { error } or { card }.
-async function sendOwnerNotice(queued, email) {
+// Sends a pending notice once its card is public. Returns { error } or { card, notice }.
+// shared ({} kept across calls) reads the unlisted hosts, Live Reports index and review once for several addresses.
+async function sendOwnerNotice(queued, email, shared) {
   const notice = ownerNotice.addressed(queued, email);
   if (!notice) return { error: "That address is not one of the contacts found for this site." };
+  const memo = shared || {};
+  const once = (key, load) => memo[key] || (memo[key] = load());
   const [unlisted, stopped, index, reviewSnap] = await Promise.all([
-    unlistedHosts(),
+    once("unlisted", unlistedHosts),
     ownerStops([notice.email], notice.domain),
-    liveReportIndex(),
-    getFirestore().collection("url_reviews").doc(notice.reviewId || "-").get()
+    once("index", liveReportIndex),
+    once("review", () => getFirestore().collection("url_reviews").doc(notice.reviewId || "-").get())
   ]);
   const card = ownerNotice.liveCard(index, notice.host);
   const blocked = ownerNotice.sendBlock(notice, { stopped, unlisted, card });
@@ -2227,6 +2243,48 @@ exports.sweepReviews = require("firebase-functions/v2/scheduler").onSchedule({
   maxInstances: 1,
   secrets: SECRETS.sweep
 }, () => track("sweepReviews", () => sweepReviews()));
+
+// Local-business prospects from Google Maps for tonight's sweep (#2120); see functions/url-review-prospects.js.
+async function placesProspects() {
+  const key = process.env.PLACES_KEY;
+  if (!key) return "no PLACES_KEY";
+  const db = getFirestore();
+  const sweepRef = db.collection("url_review_sweep");
+  const [stateSnap, outreachSnap, sweepSnap] = await Promise.all([sweepRef.doc("places").get(), sweepRef.doc("outreach").get(), sweepRef.doc("state").get()]);
+  const hosts = (outreachSnap.data() || {}).hosts || [];
+  const waiting = Math.max(0, hosts.length - (Number((sweepSnap.data() || {}).outreachAt) || 0));
+  const day = new Date().toISOString().slice(0, 10);
+  const out = await prospects.night({
+    state: stateSnap.data(), known: new Set(hosts.map((h) => h.host)), waiting, day,
+    search: (body) => prospects.placesSearch(body, key)
+  });
+  if (out.calls) {
+    await db.collection("url_review_places").doc(day).set({ day, calls: FieldValue.increment(out.calls), prospectCalls: FieldValue.increment(out.calls), errors: FieldValue.increment(out.errors), ok: FieldValue.increment(out.calls - out.errors) }, { merge: true });
+  }
+  let added = 0;
+  if (out.rows.length) {
+    added = await db.runTransaction(async (tx) => {
+      const ref = sweepRef.doc("outreach");
+      const list = ((await tx.get(ref)).data() || {}).hosts || [];
+      const known = new Set(list.map((h) => String(h.host || "").replace(/^www\./, "")));
+      const fresh = out.rows.filter((r) => !known.has(r.host.replace(/^www\./, "")));
+      if (fresh.length) tx.set(ref, { hosts: list.concat(fresh), updated: new Date().toISOString() }, { merge: true });
+      return fresh.length;
+    });
+  }
+  await sweepRef.doc("places").set(out.state);
+  return out.state.last.skipped ? "skipped: " + out.state.last.waiting + " prospects still waiting" : out.calls + " Places searches, " + added + " prospects added" + (out.errors ? ", " + out.errors + " errors" : "");
+}
+
+const prospects = require("./url-review-prospects");
+exports.placesProspects = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("placesProspects"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: 300,
+  memory: "256MiB",
+  maxInstances: 1,
+  secrets: SECRETS.prospects
+}, () => track("placesProspects", () => placesProspects()));
 
 const rivals = require("./url-review-rivals");
 
@@ -6255,9 +6313,16 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "brief-items") out = await jarvis.briefItems(getFirestore(), { list: body.list, days, now });
     else if (op === "rating-decide") out = await jarvis.decideRatings(getFirestore(), body);
     else if (op === "notices") {
-      const snap = await getFirestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get();
+      const db = getFirestore();
+      const [snap, index, unlisted, stops] = await Promise.all([
+        db.collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get(),
+        liveReportIndex().catch(() => null),
+        unlistedHosts(),
+        db.collection("url_review_owner_stops").select().get()
+      ]);
       const rows = snap.docs.map((d) => Object.assign({ domain: d.id }, d.data()));
-      out = { notices: jarvisNotify.noticeRows(rows, (row) => customerMail.pageUrl(row.lang, { report: row.reviewId })), auto: process.env.OWNER_NOTICES_LIVE === "1" };
+      const ctx = { index, unlisted, stopped: new Set(stops.docs.map((d) => d.id)) };
+      out = { notices: jarvisNotify.noticeRows(rows, (row) => customerMail.pageUrl(row.lang, { report: row.reviewId }), ctx), auto: process.env.OWNER_NOTICES_LIVE === "1", tries: jarvisActions.NOTICE_TRIES };
     } else if (op === "social-proposals") {
       const [book, doc] = await Promise.all([socialProposals(), getFirestore().collection("socialHub").doc("live").get()]);
       out = { proposals: jarvisSocial.pending(book.proposals, jarvisSocial.state(doc.data())), built: book.built || "" };

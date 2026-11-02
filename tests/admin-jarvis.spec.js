@@ -117,7 +117,16 @@ const EXTERNAL = {
       { email: 'playwright@example.com', name: '', picture: '', providers: ['email'], test: true, firstAt: '2026-10-31T09:00:00.000Z', lastSignInAt: '2026-10-31T09:00:00.000Z', lastSeenAt: '2026-10-31T09:00:00.000Z',
         visits: 1, returns: 0, days: 1, views: 1, activeMs: 5000, avgVisitMs: 5000, runs: 0, paid: 0, urls: [], recent: [] }
     ] },
-  'engagement-connect': { ok: true, network: 'bluesky', account: 'qalaburlreview.bsky.social', message: 'Bluesky is connected as @qalaburlreview.bsky.social.' }
+  'engagement-connect': { ok: true, network: 'bluesky', account: 'qalaburlreview.bsky.social', message: 'Bluesky is connected as @qalaburlreview.bsky.social.' },
+  notices: { ok: true, auto: true, tries: 3, notices: [
+    { domain: 'acme.co', host: 'acme.co', email: 'info@acme.co', state: 'ready', critical: true, lang: 'es', tries: 0, createdAt: '2026-10-25T09:00:00Z', lastError: '', report: 'https://qalabreview.com/es?report=r1',
+      candidates: [{ email: 'info@acme.co', sources: ['footer'], url: '', onDomain: true, stopped: false }, { email: 'ventas@acme.co', sources: ['contact page'], url: '', onDomain: true, stopped: false }, { email: 'old@acme.co', sources: ['rdap'], url: '', onDomain: false, stopped: true }] },
+    { domain: 'gone.org', host: 'gone.org', email: 'web@gone.org', state: 'unlisted', critical: false, lang: 'en', tries: 0, createdAt: '2026-10-25T11:00:00Z', lastError: '', report: '',
+      candidates: [{ email: 'web@gone.org', sources: ['schema'], url: '', onDomain: true, stopped: false }] },
+    { domain: 'later.edu', host: 'later.edu', email: 'web@later.edu', state: 'waiting', critical: false, lang: 'pt', tries: 2, createdAt: '2026-10-25T12:00:00Z', lastError: 'later.edu is not on Live Reports yet. Send it after the daily publish lands.', report: '',
+      candidates: [{ email: 'web@later.edu', sources: ['footer'], url: '', onDomain: true, stopped: false }, { email: 'reitoria@later.edu', sources: ['web search'], url: '', onDomain: false, stopped: false }] }
+  ] },
+  'notice-decide': { ok: true, status: 'sent', email: 'info@acme.co', emails: ['info@acme.co', 'ventas@acme.co'], failed: [] }
 };
 
 function seed() {
@@ -489,6 +498,36 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await mk.locator('[data-mk-dnc] button').click();
     await expect.poll(() => cmds().slice(-1).map((c) => [c.action, c.value])).toEqual([['dnc', 'stop@uni.edu.co']]);
+    expect(errors).toEqual([]);
+  });
+
+  test('Approvals list ready notices first with a badge for each kind, and one Send goes to every address picked (#1975)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/outreach/30');
+    const list = page.locator('[data-panel-id="outreach-approvals"] .jv-approval');
+    await expect(list.locator('.jv-prop-title strong')).toHaveText(['acme.co', 'gone.org', 'later.edu']);
+    const [acme, gone, later] = [list.nth(0), list.nth(1), list.nth(2)];
+    for (const text of ['ready to send', 'critical security', 'ES']) await expect(acme.locator('.jv-approval-badges')).toContainText(text);
+    await expect(gone.locator('.jv-approval-badges')).toContainText('off Live Reports');
+    await expect(later.locator('.jv-approval-badges')).toContainText('waiting for Live Report');
+    await expect(later.locator('.jv-approval-badges')).toContainText('last try failed · 2/3 auto tries');
+    await expect(gone.locator('[data-notice-send]')).toBeDisabled();
+    await expect(later.locator('[data-notice-send]')).toBeDisabled();
+    await expect(later).toContainText('Send opens once its Live Report is public.');
+
+    await expect(acme.locator('input[value="info@acme.co"]')).toBeChecked();
+    await expect(acme.locator('input[value="ventas@acme.co"]')).not.toBeChecked();
+    await expect(acme.locator('input[value="old@acme.co"]')).toBeDisabled();
+    await acme.locator('[data-notice-all]').check();
+    await expect(acme.locator('input[value="ventas@acme.co"]')).toBeChecked();
+    await expect(acme.locator('[data-notice-send]')).toHaveText('Send to 2');
+    let asked = '';
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await acme.locator('[data-notice-send]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'notice-decide').map((c) => [c.body.domain, c.body.send, c.body.email])).toEqual([['acme.co', true, ['info@acme.co', 'ventas@acme.co']]]);
+    expect(asked).toContain('Each address gets its own email.');
+    await expect(list).toHaveCount(2);
     expect(errors).toEqual([]);
   });
 
