@@ -74,7 +74,7 @@ const DEFAULTS = {
   maxAgeHours: 48,
   perRun: 12,
   competitors: COMPETITORS,
-  own: ["carlosandmunoz", "qalabreview", "kaanmuar"]
+  own: ["carlosandmunoz", "qalabreview", "qalaburlreview", "kaanmuar"]
 };
 
 const clip = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);

@@ -12,6 +12,7 @@
  *   node scripts/engagement-browser/agent.js login [network]  sign in (or clear a check) in the agent's Chrome
  *   node scripts/engagement-browser/agent.js check [--read]   who it is signed in as, and what one search reads
  *   node scripts/engagement-browser/agent.js run [--force]    one run now (--force: outside the hours too)
+ *   node scripts/engagement-browser/agent.js import <file>    sessions signed in elsewhere (Playwright cookies JSON)
  *   node scripts/engagement-browser/agent.js pair             a new token for Jarvis (with this Mac's gcloud sign-in)
  *   node scripts/engagement-browser/agent.js install|uninstall|status
  *
@@ -143,6 +144,15 @@ async function check(nets, read) {
   } finally { await ctx.close(); }
 }
 
+/** Sessions signed in elsewhere on this Mac (Playwright cookies as JSON), only for the agent's networks. */
+async function importCookies(file) {
+  const hosts = /(^|\.)(x\.com|twitter\.com|linkedin\.com|facebook\.com|instagram\.com|threads\.com|threads\.net|tiktok\.com)$/;
+  const list = JSON.parse(fs.readFileSync(file, "utf8")).filter((c) => hosts.test(String(c.domain || "").replace(/^\./, "")));
+  const { ctx } = await launch(true);
+  try { await ctx.addCookies(list); } finally { await ctx.close(); }
+  log("Imported " + list.length + " cookies for " + [...new Set(list.map((c) => c.domain.replace(/^\.|^www\./g, "")))].join(", "));
+}
+
 // --- run ---------------------------------------------------------------------------------------------------------------
 
 async function act(page, task) {
@@ -269,6 +279,7 @@ async function main() {
   if (cmd === "pair") return pair();
   if (cmd === "login") return login(pickNets(arg));
   if (cmd === "check") return check(pickNets(arg), flag("--read"));
+  if (cmd === "import") return importCookies(arg);
   if (cmd === "run") return run({ force: flag("--force"), only: arg });
   if (cmd === "install") return install();
   if (cmd === "uninstall") return uninstall();

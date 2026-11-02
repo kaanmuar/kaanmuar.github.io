@@ -271,6 +271,10 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.ok(src.needs.some((n) => /X, LinkedIn, Facebook, Instagram, Threads and TikTok wait for the Mac's browser agent/.test(n)));
 });
 
+test("our X, TikTok and Bluesky account @qalaburlreview counts as our own (#1991)", () => {
+  assert.equal(E.guard(post({ network: "x", author: { handle: "qalaburlreview", name: "QA-lab URL Review" } }), E.settings(null), NOW), "own");
+});
+
 test("a browser network's own daily ceiling holds under the settings' caps (#1991)", () => {
   const conf = E.settings({ caps: { like: 500, repost: 500, follow: 500, reply: 500 } });
   const used = { linkedin: { repost: 3 }, x: { repost: 3 } };
