@@ -281,6 +281,26 @@
     "checked": "2026-10-31T02:24:06.151Z"
    }
   ],
+  "series-dia-de-muertos-2026-11/01-ofrenda": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzc4czbupd2n",
+    "at": "2026-11-02T00:53:10.150Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzc4czbupd2n",
+    "checked": "2026-11-02T00:53:12.216Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qalaburlreview@mastodon.social",
+    "id": "117544110962965023",
+    "at": "2026-11-02T00:53:13.218Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qalaburlreview/117544110962965023",
+    "checked": "2026-11-02T00:53:14.921Z"
+   }
+  ],
   "tips-2026-10/01-img-size": [
    {
     "channel": "bluesky",
