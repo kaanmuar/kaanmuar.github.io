@@ -58,3 +58,5 @@ _site/
 # Pre-flight Worker build output (#1970)
 workers/preflight/.cloudflare/
 workers/preflight/dist/
+workers/outreach-cron/.cloudflare/
+workers/outreach-cron/dist/
