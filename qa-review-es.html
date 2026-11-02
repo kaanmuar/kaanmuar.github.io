@@ -1016,6 +1016,13 @@
         .prio-P1 { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); }
         .prio-P2 { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); }
         .case-pages { font-size: 12px; overflow-wrap: anywhere; }
+        .case-sample { margin: 6px 0; padding: 12px 14px; border: 1px solid var(--line); border-left: 4px solid var(--cyan); border-radius: 10px; background: var(--panel); }
+        .case-sample-label { margin: 6px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--cyan); }
+        .case-split { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 8px 0; font-size: 14px; }
+        .case-split dt { color: var(--muted); font-size: 12px; font-weight: 700; }
+        .case-split dd { margin: 0; }
+        .case-script-fw { margin: 10px 0 4px; font-size: 12px; color: var(--muted); }
+        .case-script { margin: 0; max-height: 16rem; overflow: auto; white-space: pre; overflow-wrap: normal; font-family: "Fira Code", ui-monospace, monospace; font-size: 11.5px; line-height: 1.5; background: var(--panel-2); border-radius: 10px; padding: 10px 12px; }
         .tag { display: inline-block; margin-left: 6px; font-size: 11px; color: var(--amber); }
         .muted { color: var(--muted); }
         .gate { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 88%, #000); z-index: 40; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px; overflow: auto; }
@@ -1311,7 +1318,7 @@
                     <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg><span class="tg-text"><b class="tg-title" data-tg="pay" lang="es" translate="no">Pago y tus derechos</b><span class="tg-gist" data-tg="pay" lang="es" translate="no">La primera revisión está incluida; lo demás se paga antes de empezar. No renuncias a los derechos de desistimiento que la ley mantiene.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
                     <div class="tg-body">
                         <label class="check" lang="es" translate="no"><input type="checkbox" name="t7"> La primera revisión incluida es de 20 páginas y 2 enlaces de profundidad. Una revisión más amplia o más profunda, y cada ejecución posterior, pide un pago antes de empezar, salvo que la cuenta tenga una asignación gratuita o de prueba, un cupón o un pase otorgado por el operador. El monto se muestra en ese momento, en la página de pago. Usar otro nombre u otro correo no evita ese cobro. Las revisiones detenidas se guardan. Tres detenciones en un día pausan nuevas revisiones.</label>
-                        <label class="check" lang="es" translate="no"><input type="checkbox" name="t8"> El informe se muestra una vez, y las ejecuciones con sesión iniciada aparecen en la página de mi cuenta. El informe completo solo se abre para la cuenta con sesión iniciada que lo ejecutó. Cualquier otra persona con el enlace ve la vista previa difuminada y se le pide iniciar sesión. La primera vez que otra cuenta con sesión iniciada abre el enlace, recibo un correo. El informe cuenta esas aperturas y guarda la primera y la última hora, nunca quién lo abrió. Verlo, descargarlo o imprimirlo otra vez pide un pago, salvo que la cuenta tenga una asignación gratuita o de prueba, un cupón o un pase otorgado por el operador. El monto se muestra entonces. El inicio de cada caso propuesto sigue legible. El resto del caso sigue difuminado hasta que se confirme ese pago. Una copia de las puntuaciones y los hallazgos llega a mi correo cuando termina la revisión, difuminada salvo que el informe esté pagado o mi cuenta sea gratuita. El PDF adjunto lleva mi correo en cada página.</label>
+                        <label class="check" lang="es" translate="no"><input type="checkbox" name="t8"> El informe se muestra cuando termina la revisión, y las ejecuciones con sesión iniciada aparecen en la página de mi cuenta. El informe completo solo se abre para la cuenta con sesión iniciada que lo ejecutó. Cualquier otra persona con el enlace ve la vista previa difuminada y se le pide iniciar sesión. La primera vez que otra cuenta con sesión iniciada abre el enlace, recibo un correo. El informe cuenta esas aperturas y guarda la primera y la última hora, nunca quién lo abrió. Durante 7 días después de la revisión, la cuenta que la ejecutó puede abrir otra vez el informe difuminado sin costo. Después de eso, verlo, descargarlo o imprimirlo otra vez pide un pago, salvo que la cuenta tenga una asignación gratuita o de prueba, un cupón o un pase otorgado por el operador. El monto se muestra entonces. En la página del informe, el primer caso propuesto se muestra completo como muestra, con sus pasos y un script. El inicio de cada uno de los demás casos sigue legible, y el resto sigue difuminado hasta que se confirme ese pago. Una copia de las puntuaciones y los hallazgos llega a mi correo cuando termina la revisión, difuminada salvo que el informe esté pagado o mi cuenta sea gratuita. El PDF adjunto lleva mi correo en cada página.</label>
                         <label class="check" lang="es" translate="no"><input type="checkbox" name="t10"> Pido que el servicio empiece durante cualquier plazo de desistimiento. Reconozco que un consumidor en la Unión Europea, según la Directiva 2011/83/UE, artículo 16, y un consumidor en el Reino Unido, según las Consumer Contracts Regulations 2013, regulación 36(2), pierde el derecho de desistimiento solo cuando el servicio se ha prestado por completo. No renuncio a un derecho de desistimiento que esas normas mantengan.</label>
                     </div>
                 </details>
@@ -1849,9 +1856,9 @@
 <script src="js/qa-review-ask.js?v=20261109a" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261128d" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261128e" defer></script>
 <script src="js/qa-review-findings-copy.es.js?v=20261110b" defer></script>
-<script src="js/qa-review.js?v=20261128e" defer></script>
+<script src="js/qa-review.js?v=20261128f" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261128c" defer></script>
 <script src="js/url-suggest.js?v=20261109a" defer></script>

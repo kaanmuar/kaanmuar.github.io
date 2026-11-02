@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com https://static.cloudflareinsights.com 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-0TNxRsic1JqmisUytkt+v0Za9+CZz7YAI5J8pjBVM7g=' 'sha256-9CXT4GeG7uM6znpjVMFRCm5mzJzhWQnmSX9w8jKgtDs=' 'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.googleapis.com https://translate.googleapis.com https://cloudflareinsights.com; frame-src 'self' https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com https://static.cloudflareinsights.com 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-0TNxRsic1JqmisUytkt+v0Za9+CZz7YAI5J8pjBVM7g=' 'sha256-xn3hdPDtHuYPwE1NEe97BIX1T6b3RBWw55iwFkyACJQ=' 'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.googleapis.com https://translate.googleapis.com https://cloudflareinsights.com; frame-src 'self' https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#071116" data-fixed>
   <title>Your reviews · QA-lab URL Review</title>
-  <meta name="description" content="Sign in to see the QA-lab URL Review reviews saved under your email. A paid report or a free account opens in full; otherwise the opening of each shows.">
+  <meta name="description" content="Sign in to see the QA-lab URL Review reviews saved under your email. A paid report or a free account opens in full; otherwise the top case and the opening of each line show.">
   <link rel="icon" href="assets/qa-review-mark.svg?v=20261027a" type="image/svg+xml">
   <link rel="icon" href="assets/qa-review-icon-32.png?v=20261027a" sizes="32x32" type="image/png">
   <link rel="icon" href="assets/qa-review-icon-16.png?v=20261027a" sizes="16x16" type="image/png">
@@ -434,7 +434,7 @@
     <div class="hero-copy">
       <p class="eyebrow">Your account</p>
       <h1>Your <em>reviews</em></h1>
-      <p class="lede">Sign in to see the reviews saved under your email. A paid report or a free account opens in full; otherwise the opening of each one shows, and the rest opens when that report is paid.</p>
+      <p class="lede">Sign in to see the reviews saved under your email. A paid report or a free account opens in full; otherwise the top case shows in full as a sample and the opening of every other line shows. The rest opens when that report is paid. For 7 days after a review, its blurred report opens again at no charge.</p>
       <p class="returns">A return takes <b>10%</b> off the first time in 30 days, <b>15%</b> the second, and <b>20%</b> after that. A return price never takes a price below half its list price.</p>
     </div>
     <div class="stage" id="stage" data-fx-art aria-hidden="true">
@@ -798,8 +798,8 @@
     const opened = runs.filter((run) => run.open).length;
     document.getElementById("file-status").textContent = data.free ? "Your account opens every report."
       : data.pass ? "A 30-day pass is open on this account until " + new Date(data.paidUntil).toLocaleString() + ". Reports run on this pass are open. An older report opens when that report is paid."
-        : opened ? "Paid reports are open. For the others, the opening of each shows, and the rest opens when that report is paid."
-          : "The opening of each review shows. The rest opens when that report is paid.";
+        : opened ? "Paid reports are open. For the others, the top case and the opening of each line show, and the rest opens when that report is paid."
+          : "The top case and the opening of each line show. The rest opens when that report is paid.";
     paintPass(data);
     listEl.classList.remove("settled");
     render();

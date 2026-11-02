@@ -148,7 +148,7 @@ function payloadOf(id, doc, records, isOpen) {
       at: String(row.createdAt || row.report.fetchedAt || ""),
       paid: open,
       frameworks: row.frameworks || [],
-      report: open ? Object.assign({}, row.report, { id: clean }) : Object.assign(core.previewReport(row.report), { id: clean })
+      report: open ? Object.assign({}, row.report, { id: clean }) : Object.assign(core.previewReport(row.report, { sample: false }), { id: clean })
     }, faceOf(row.report, row.report.host || host));
   });
   const present = columns.filter((col) => !col.missing);

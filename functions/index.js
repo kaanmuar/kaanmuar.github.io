@@ -4420,7 +4420,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     res.status(402).json({
       paymentRequired: true,
       priceUsd: urlReview.PRICE_USD,
-      error: "Reopening a report asks for payment. A card payment is not connected on this page."
+      error: "After 7 days, reopening a report asks for payment. A card payment is not connected on this page."
     });
     return;
   }
@@ -4507,6 +4507,23 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       const addons = data.addons || [];
       // A bought fix list opens the findings to the owner; the cases stay in the frosted preview.
       const fixList = addons.indexOf("fixlist") !== -1 && data.report ? { insights: data.report.insights || null } : {};
+      if (data.report && reviewOffers.reopenFree(data, Date.now())) {
+        const preview = urlReview.previewReport(data.report);
+        res.status(200).json(Object.assign({
+          report: fixList.insights ? Object.assign(preview, { insights: fixList.insights }) : preview,
+          frameworks: data.frameworks || [],
+          paid: false,
+          free: false,
+          addons,
+          reopenUntil: reviewOffers.reopenFreeUntil(data),
+          priceUsd: deal.usd,
+          creditUsd: priced.creditUsd || 0,
+          tools: priced.tools || [],
+          id,
+          host: data.report.host
+        }, dealFields(deal)));
+        return;
+      }
       res.status(402).json(Object.assign({
         paymentRequired: true,
         priceUsd: deal.usd,
@@ -4834,7 +4851,9 @@ async function runReview(req, res, placeOf) {
     await mailReviewedSites(ip, record);
     if (record.report && record.report.compare) await mailComparison(compareMail.runNotice(record));
     writeLine({ type: "log", text: "Report saved. Emailing a copy to " + intake.value.email + "." });
-    writeLine({ type: "done", report, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
+    // The page only blurs an unpaid report, so the stream carries the frosted copy; the asker keeps their own comparison.
+    const shown = record.paid === true ? report : Object.assign(urlReview.previewReport(report), report.compare ? { compare: report.compare } : {});
+    writeLine({ type: "done", report: shown, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
     try {
       await mailReportToAsker(record);
     } catch (error) {
