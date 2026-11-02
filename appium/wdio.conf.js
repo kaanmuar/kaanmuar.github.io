@@ -51,6 +51,9 @@ exports.config = {
   hostname: '127.0.0.1',
   port: 4723,
   path: '/',
+  // A cold runner builds WebDriverAgent inside the first iOS session request; a retry starts a second build that collides with it.
+  connectionRetryTimeout: 600000,
+  connectionRetryCount: 1,
   services: [
     ['appium', {
       command: path.join(__dirname, '..', 'node_modules', '.bin', 'appium'),
