@@ -84,7 +84,7 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
         }
     }
 
-    Panel("Briefing", trailing = { FoldAllButton(); TextButton(onClick = vm::brief, enabled = !s.briefBusy) { Text(if (s.briefBusy) "Thinking…" else if (s.brief == null) "Ask Gemini" else "Again") } }) {
+    Panel("Briefing", trailing = { FoldAllButton(); TextButton(onClick = vm::brief, enabled = !s.briefBusy) { Text(if (s.briefBusy) "Thinking…" else if (s.brief == null) "Ask Gemini" else "Again", maxLines = 1, softWrap = false) } }) {
         s.brief?.let { text ->
             Text(text, fontSize = 14.sp)
             Row { ActionButton("Email it to me", "email-briefing" in s.running) { vm.act("email-briefing", "email-briefing", mapOf("text" to JsonPrimitive(text))) { if (it.bool("sent") == true) "Briefing sent." else "Mail is off." } } }
