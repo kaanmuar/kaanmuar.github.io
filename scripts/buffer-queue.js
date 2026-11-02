@@ -448,7 +448,7 @@ async function main() {
       return leaveForTonight(book, batch, error.message);
     }
     const first = base + "/feed/" + slugs[0] + ".jpg";
-    if (!(await waitFor(first, 60))) throw new Error("The site never served " + first);
+    if (!(await waitFor(first, 60))) return leaveForTonight(book, batch, "The site did not serve " + first + " within 60 minutes.");
     try {
       await settle(book);
     } catch (error) {
@@ -509,8 +509,9 @@ async function main() {
   if (failed) process.exit(1);
 }
 
-/* A spent daily limit frees up hours later, so the batch is listed in the ledger's retry and the run passes: the
-   nightly buffer-batch.yml run queues it again, skipping what the ledger already has (#1188). */
+/* A spent daily limit frees up hours later, and a site that has not served the batch yet is waiting on its Pages
+   deploy (#2160), so the batch is listed in the ledger's retry and the run passes: the nightly buffer-batch.yml run
+   queues it again, skipping what the ledger already has (#1188). */
 function leaveForTonight(book, batch, why) {
   ledger.write(ledger.BUFFER, ledger.markRetry(book, batch, why, new Date().toISOString()));
   console.log("::warning::" + batch + " is not fully queued: " + why + " The nightly Buffer batch run (03:37 UTC) queues the rest.");

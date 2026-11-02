@@ -265,7 +265,10 @@ async function main() {
   if (live && !opts.all) {
     const first = SITE + "/media/social-posts/" + batch + "/feed/" + list[0].slug + ".jpg";
     console.log("Waiting up to 60 minutes for the site to serve " + first);
-    if (!(await waitFor(first, 60))) throw new Error("The site never served " + first);
+    if (!(await waitFor(first, 60))) {
+      console.log("::warning::The site did not serve " + first + " within 60 minutes. The daily Facebook Page queue (facebook-page.yml) schedules " + batch + " once it does.");
+      return;
+    }
   }
   const found = live || process.env.FACEBOOK_PAGE_TOKEN ? await onPage(page) : { published: [], keys: new Map() };
   const done = found.keys;
