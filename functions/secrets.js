@@ -6,9 +6,9 @@ const MAIL = ["SENDGRID_API_KEY"];
 // functions/github-app.js mints app tokens from the private key.
 const GITHUB = ["GITHUB_APP_PRIVATE_KEY"];
 const BROWSER = ["BROWSER_KEY"];
-// What a review run calls: the headless browser, PageSpeed, CrUX, Web Risk and the web search. The Google Maps
-// lookup (functions/url-review-local.js) uses PAGESPEED_KEY.
-const SCAN = ["BROWSER_KEY", "PAGESPEED_KEY", "CRUX_KEY", "WEBRISK_KEY", "BRAVE_SEARCH_KEY"];
+// What a review run calls: the headless browser, PageSpeed, CrUX, Web Risk, Places (the Google Business Profile
+// check) and the web search.
+const SCAN = ["BROWSER_KEY", "PAGESPEED_KEY", "CRUX_KEY", "WEBRISK_KEY", "PLACES_KEY", "BRAVE_SEARCH_KEY"];
 const SITE_TOKEN = ["REVIEW_VERIFY_KEY"];
 const PAY = ["STRIPE_SECRET_KEY", "PAYPAL_CLIENT_SECRET", "PAYPAL_SANDBOX_CLIENT_SECRET"];
 const GEMINI = ["GEMINI_API_KEY"];

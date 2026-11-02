@@ -231,7 +231,7 @@
       "local-nap.phone": "el teléfono ({phones} en el sitio)",
       "local-nap.address": "la dirección ({street} en el sitio)",
       "local-nap.name": "el nombre de la empresa ({name} en el sitio)",
-      "local-nap.fix": "Usa el mismo nombre, teléfono y dirección en todas partes: corrige el perfil en el administrador del Perfil de Empresa, o el pie de página y los datos LocalBusiness del sitio, lo que esté desactualizado.",
+      "local-nap.fix": "Usa el mismo nombre, teléfono y dirección en todas partes: corrige el perfil en el administrador del Perfil de Empresa, o el pie de página y los datos LocalBusiness del sitio, lo que esté desactualizado. Si el perfil muestra a propósito un número de seguimiento de llamadas, agrega el número del sitio como teléfono adicional.",
       "local-nap.pass.title": "El sitio y su Perfil de Empresa de Google coinciden",
       "local-nap.pass.evidence": "Lo que el sitio dice de la empresa coincide con el perfil.",
       "local-hours.title": "El horario del sitio difiere del de Google Maps",

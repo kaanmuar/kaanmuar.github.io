@@ -231,7 +231,7 @@
       "local-nap.phone": "der Telefonnummer ({phones} auf der Website)",
       "local-nap.address": "der Adresse ({street} auf der Website)",
       "local-nap.name": "dem Firmennamen ({name} auf der Website)",
-      "local-nap.fix": "Verwenden Sie überall denselben Namen, dieselbe Telefonnummer und Adresse: Korrigieren Sie das Profil im Unternehmensprofil-Manager oder die Fußzeile und die LocalBusiness-Daten der Website, je nachdem, was veraltet ist.",
+      "local-nap.fix": "Verwenden Sie überall denselben Namen, dieselbe Telefonnummer und Adresse: Korrigieren Sie das Profil im Unternehmensprofil-Manager oder die Fußzeile und die LocalBusiness-Daten der Website, je nachdem, was veraltet ist. Zeigt das Profil bewusst eine Tracking-Rufnummer, tragen Sie die Nummer der Website als zusätzliche Telefonnummer ein.",
       "local-nap.pass.title": "Die Website und ihr Google-Unternehmensprofil stimmen überein",
       "local-nap.pass.evidence": "Was die Website über das Unternehmen sagt, stimmt mit dem Profil überein.",
       "local-hours.title": "Die Öffnungszeiten auf der Website weichen von Google Maps ab",

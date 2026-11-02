@@ -231,7 +231,7 @@
       "local-nap.phone": "il telefono ({phones} sul sito)",
       "local-nap.address": "l’indirizzo ({street} sul sito)",
       "local-nap.name": "il nome dell’attività ({name} sul sito)",
-      "local-nap.fix": "Usa ovunque lo stesso nome, telefono e indirizzo: correggi il profilo nel gestore del Profilo dell’attività, oppure il footer e i dati LocalBusiness del sito, a seconda di cosa non è aggiornato.",
+      "local-nap.fix": "Usa ovunque lo stesso nome, telefono e indirizzo: correggi il profilo nel gestore del Profilo dell’attività, oppure il footer e i dati LocalBusiness del sito, a seconda di cosa non è aggiornato. Se il profilo mostra di proposito un numero di monitoraggio delle chiamate, aggiungi il numero del sito come telefono aggiuntivo.",
       "local-nap.pass.title": "Il sito e il suo Profilo dell’attività su Google coincidono",
       "local-nap.pass.evidence": "Quello che il sito dice dell’attività coincide con il profilo.",
       "local-hours.title": "Gli orari del sito differiscono da Google Maps",

@@ -20,7 +20,10 @@ const LOCAL_TYPES = new Set([
   "ShoppingCenter", "AnimalShelter", "Florist", "EmergencyService"
 ]);
 const LOCAL_SUFFIX = /(Store|Shop|Restaurant|Salon|Clinic|Business|Agency|Contractor)$/;
-const DAYS = { su: 0, mo: 1, tu: 2, we: 3, th: 4, fr: 5, sa: 6, sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+const DAYS = { su: 0, mo: 1, tu: 2, we: 3, th: 4, fr: 5, sa: 6, sun: 0, mon: 1, tue: 2, tues: 2, wed: 3, thu: 4, thur: 4, thurs: 4, fri: 5, sat: 6,
+  sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+const TIME = "\\d{1,2}(?::\\d{2})?\\s*(?:[ap]\\.?m\\.?)?";
+const HOURS_RULE = new RegExp("([A-Za-z]{2,9}(?:\\s*[-–,]\\s*[A-Za-z]{2,9})*)[\\s,:]+(" + TIME + ")\\s*[-–]\\s*(" + TIME + ")", "gi");
 const NAME_NOISE = new Set(["the", "and", "de", "del", "la", "el", "los", "las", "y", "e", "da", "do", "der", "die", "und", "le", "les", "et", "di", "il",
   "sas", "s.a.s", "sa", "s.a", "ltda", "llc", "inc", "ltd", "gmbh", "srl", "sl", "spa", "co", "corp", "company"]);
 
@@ -35,10 +38,13 @@ function isLocalType(type) {
   return !/^Online/.test(name) && (LOCAL_TYPES.has(name) || LOCAL_SUFFIX.test(name));
 }
 
+// "09:00", "09:00:00", "8:00am", "5pm" as "HHMM"; a bare "9" is too vague to read.
 function clock(value) {
-  const match = String(value || "").match(/^(\d{1,2}):(\d{2})/);
-  if (!match) return "";
-  const hhmm = match[1].padStart(2, "0") + match[2];
+  const match = String(value || "").trim().match(/^(\d{1,2})(?::(\d{2}))?(?::\d{2})?\s*(?:([ap])\.?m\.?)?$/i);
+  if (!match || (match[2] == null && !match[3])) return "";
+  let hour = Number(match[1]) % (match[3] ? 12 : 24);
+  if (match[3] && match[3].toLowerCase() === "p") hour += 12;
+  const hhmm = String(hour).padStart(2, "0") + (match[2] || "00");
   return hhmm === "2359" ? "2400" : hhmm;
 }
 
@@ -51,7 +57,7 @@ function span(opens, closes) {
 function dayRange(spec) {
   const out = [];
   spec.split(/\s*,\s*/).forEach((part) => {
-    const [from, to] = part.split(/\s*-\s*/).map((day) => DAYS[day.toLowerCase()]);
+    const [from, to] = part.split(/\s*[-–]\s*/).map((day) => DAYS[day.toLowerCase()]);
     if (from == null) return;
     if (to == null) { out.push(from); return; }
     for (let day = from, guard = 0; guard < 7; day = (day + 1) % 7, guard += 1) {
@@ -78,12 +84,12 @@ function weekHours(spec, text) {
     });
   });
   if (!seen) {
-    const rule = /([A-Za-z]{2}(?:\s*[-,]\s*[A-Za-z]{2})*)\s+(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/g;
     (Array.isArray(text) ? text : [text]).filter((line) => typeof line === "string").forEach((line) => {
+      const rule = new RegExp(HOURS_RULE.source, "gi");
       let match;
       while ((match = rule.exec(line))) {
         const range = span(clock(match[2]), clock(match[3]));
-        dayRange(match[1]).forEach((day) => { seen = true; if (range) week[day].push(range); });
+        if (range) dayRange(match[1]).forEach((day) => { seen = true; week[day].push(range); });
       }
     });
   }

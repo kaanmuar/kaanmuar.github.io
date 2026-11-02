@@ -1045,7 +1045,7 @@ const server = http.createServer(async (req, res) => {
       pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined,
-      places: process.env.PAGESPEED_KEY ? (request) => core.placesSearch(request, process.env.PAGESPEED_KEY) : undefined
+      places: process.env.PLACES_KEY ? (request) => core.placesSearch(request, process.env.PLACES_KEY) : undefined
     });
     const record = core.intakeRecord(intake.value, report, {
       ip: identity.ip,

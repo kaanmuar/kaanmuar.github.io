@@ -231,7 +231,7 @@
       "local-nap.phone": "le téléphone ({phones} sur le site)",
       "local-nap.address": "l’adresse ({street} sur le site)",
       "local-nap.name": "le nom de l’établissement ({name} sur le site)",
-      "local-nap.fix": "Utilisez partout le même nom, le même téléphone et la même adresse : corrigez la fiche dans le gestionnaire de fiches, ou le pied de page et les données LocalBusiness du site, selon ce qui n’est plus à jour.",
+      "local-nap.fix": "Utilisez partout le même nom, le même téléphone et la même adresse : corrigez la fiche dans le gestionnaire de fiches, ou le pied de page et les données LocalBusiness du site, selon ce qui n’est plus à jour. Si la fiche affiche volontairement un numéro de suivi d’appels, ajoutez le numéro du site comme téléphone supplémentaire.",
       "local-nap.pass.title": "Le site et sa fiche d’établissement Google concordent",
       "local-nap.pass.evidence": "Ce que le site dit de l’établissement concorde avec la fiche.",
       "local-hours.title": "Les horaires du site diffèrent de Google Maps",

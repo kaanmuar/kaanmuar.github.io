@@ -54,6 +54,10 @@ test("site hours read the same from openingHoursSpecification and openingHours, 
   assert.deepEqual(local.weekHours(null, "Mo-Fr 09:00-18:00 Sa 09:00-13:00"), SITE_WEEK);
   assert.deepEqual(local.weekHours(null, ["Mo,Tu,We,Th,Fr 09:00-18:00", "Sa 9:00-13:00"]), SITE_WEEK);
   assert.deepEqual(local.placeHours({ periods: PERIODS }), SITE_WEEK);
+  assert.deepEqual(local.weekHours(null, "Mon-Fri,9:00am-6:00pm Sat 9am-1pm"), SITE_WEEK);
+  assert.deepEqual(local.weekHours(null, "Monday–Friday 09:00–18:00, Saturday 09:00–13:00"), SITE_WEEK);
+  assert.deepEqual(local.weekHours(null, "Su 12:00am-12:00pm")[0], ["0000-1200"]);
+  assert.equal(local.weekHours(null, "Mo-Fr 9-5"), null, "hours without minutes or am/pm are too vague");
   assert.deepEqual(local.weekHours(null, "Fr-Sa 22:00-02:00")[5], ["2200-2400"]);
   assert.deepEqual(local.weekHours([{ dayOfWeek: "Sunday", opens: "00:00", closes: "23:59" }])[0], ["0000-2400"]);
   assert.deepEqual(local.placeHours({ periods: [{ open: { day: 0, hour: 0, minute: 0 } }] }), Array(7).fill(["0000-2400"]));

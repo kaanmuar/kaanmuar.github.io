@@ -709,7 +709,7 @@ function localChecks(local, host, add) {
   if (differ.phone) fields.push(say("local-nap.phone", { phones: { items: differ.phone, join: "or" } }));
   if (differ.address) fields.push(say("local-nap.address", { street: differ.address }));
   if (differ.name) fields.push(say("local-nap.name", { name: differ.name }));
-  if (fields.length) add("SEO", "risk", differ.phone || differ.address ? "medium" : "low", "local-nap", say("local-nap.title"), say("local-nap.evidence", { list: { items: fields, join: "and" } }),
+  if (fields.length) add("SEO", "risk", differ.address ? "medium" : "low", "local-nap", say("local-nap.title"), say("local-nap.evidence", { list: { items: fields, join: "and" } }),
     say("local-nap.fix"), { count: fields.length, effort: "hours", cases });
   else add("SEO", "pass", "info", "local-nap", say("local-nap.pass.title"), say("local-nap.pass.evidence"), "", { cases });
   if (differ.hours && differ.hours.length) add("SEO", "risk", "medium", "local-hours", say("local-hours.title"),

@@ -231,7 +231,7 @@ const EN = {
   "local-nap.phone": "the phone ({phones} on the site)",
   "local-nap.address": "the street address ({street} on the site)",
   "local-nap.name": "the business name ({name} on the site)",
-  "local-nap.fix": "Use one name, phone and address everywhere: correct the profile in the Business Profile manager, or the site's footer and LocalBusiness data, whichever is out of date.",
+  "local-nap.fix": "Use one name, phone and address everywhere: correct the profile in the Business Profile manager, or the site's footer and LocalBusiness data, whichever is out of date. If the profile shows a call-tracking number on purpose, add the site's number as its additional phone.",
   "local-nap.pass.title": "The site and its Google Business Profile agree",
   "local-nap.pass.evidence": "What the site says about the business matches the profile.",
   "local-hours.title": "Opening hours on the site differ from Google Maps",

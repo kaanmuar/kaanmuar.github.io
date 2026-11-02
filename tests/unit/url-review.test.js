@@ -3326,7 +3326,8 @@ test.describe("domain health", () => {
     const off = run(Object.assign({}, base, { website: Object.assign({}, base.website, { utm: false, reach: { status: 200, hops: 3, sameSite: true } }), mismatch: { phone: ["+1 415 555 0100"], hours: [1, 0] } }));
     assert.equal(find(off, "local-website").title, "The Google Business Profile's link takes 3 redirects");
     assert.equal(find(off, "local-utm").severity, "low");
-    assert.deepEqual([find(off, "local-nap").severity, find(off, "local-nap").evidence], ["medium", "The profile differs from the site in the phone (+1 415 555 0100 on the site)."]);
+    assert.deepEqual([find(off, "local-nap").severity, find(off, "local-nap").evidence], ["low", "The profile differs from the site in the phone (+1 415 555 0100 on the site)."], "a different phone may be a call-tracking number");
+    assert.equal(find(run(Object.assign({}, base, { mismatch: { address: "12 Garden Way", phone: ["+1 415 555 0100"] } })), "local-nap").severity, "medium");
     assert.equal(find(off, "local-hours").evidence, "The LocalBusiness hours on the site and the Business Profile disagree on Monday and Sunday.");
     assert.equal(find(run(Object.assign({}, base, { mismatch: { name: "Example" } })), "local-nap").severity, "low");
 
