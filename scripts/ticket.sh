@@ -35,8 +35,10 @@ board() { # <n> <column>
 	for try in 1 2 3; do
 		item=$(scripts/gh-budget.sh api graphql -f query='mutation($p:ID!,$c:ID!){addProjectV2ItemById(input:{projectId:$p,contentId:$c}){item{id}}}' \
 			-f p=$P -f c="$node" -q .data.addProjectV2ItemById.item.id 2>/dev/null || true)
-		[ -z "$item" ] && item=$(scripts/gh-budget.sh --item "$1" 2>/dev/null || true)
-		[ -n "$item" ] && break
+		# An error response, such as "Content already exists" for an auto-added issue, also lands on stdout (#2032).
+		[[ $item == PVTI_* ]] || item=$(scripts/gh-budget.sh --item "$1" 2>/dev/null || true)
+		[[ $item == PVTI_* ]] && break
+		item=""
 		sleep $((try * 3))
 	done
 	[ -z "$item" ] && {
