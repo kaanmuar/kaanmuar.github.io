@@ -42,6 +42,9 @@ android {
         }
     }
 
+    // CI points this at the release's whats-new.txt (#2169); builds without it show no What's new window.
+    System.getenv("JARVIS_WHATS_NEW_DIR")?.let { sourceSets["main"].assets.srcDir(it) }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
