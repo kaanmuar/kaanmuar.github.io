@@ -1861,6 +1861,8 @@ test.describe("publishing user reviews to Live Reports", () => {
     assert.equal(publish.heldReason(record("acme.de", { status: "stopped" }), []), "not-complete");
     assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 1 } }), []), "too-few-pages");
     assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 5, timedOut: true } }), []), "timed-out");
+    assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 5, maxPages: 20, timedOut: true } }), []), "timed-out");
+    assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 20, maxPages: 20, timedOut: true } }), []), "");
     assert.equal(publish.heldReason(record("acme.de", {}, { pages: [{ status: 403 }] }), []), "start-page-blocked");
     assert.equal(publish.heldReason(record("acme.de", {}, { pages: [{ status: 200, challenge: "cloudflare" }] }), []), "start-page-blocked");
     const shell = report("acme.de");

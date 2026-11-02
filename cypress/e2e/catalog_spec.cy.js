@@ -1,6 +1,6 @@
 const catalog = require('../../tests/native/catalog.json');
 
-const wanted = new Set(String(Cypress.env('CATALOG_IDS') || '').split(',').map((item) => item.trim()).filter(Boolean));
+const wanted = new Set(String(Cypress.expose('CATALOG_IDS') || '').split(',').map((item) => item.trim()).filter(Boolean));
 const rows = catalog.filter((row) => !wanted.size || wanted.has(row.id));
 
 describe('Full catalog', () => {
