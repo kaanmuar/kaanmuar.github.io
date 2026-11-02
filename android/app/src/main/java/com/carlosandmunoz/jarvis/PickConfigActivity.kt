@@ -37,6 +37,7 @@ import com.carlosandmunoz.jarvis.ui.JarvisTheme
 import com.carlosandmunoz.jarvis.ui.Mono
 import com.carlosandmunoz.jarvis.ui.glass
 import com.carlosandmunoz.jarvis.ui.reveal
+import com.carlosandmunoz.jarvis.ui.sheetFit
 import kotlinx.coroutines.launch
 
 /** Pick a number (#1666): chooses what one widget shows, when it is placed from the launcher, pinned from Settings or reconfigured. */
@@ -53,7 +54,7 @@ class PickConfigActivity : ComponentActivity() {
             JarvisTheme {
                 Box(Modifier.fillMaxSize().clickable(remember { MutableInteractionSource() }, null) { finish() }, contentAlignment = Alignment.BottomCenter) {
                     Column(
-                        Modifier.fillMaxWidth().navigationBarsPadding().padding(12.dp).reveal()
+                        Modifier.sheetFit().fillMaxWidth().navigationBarsPadding().padding(12.dp).reveal()
                             .background(J.bg.copy(alpha = 0.94f), RoundedCornerShape(18.dp)).glass(radius = 18.dp).clickable(remember { MutableInteractionSource() }, null) { }.padding(18.dp)
                     ) {
                         Text("PICK A NUMBER", color = J.cyan, fontFamily = Mono, fontSize = 11.sp, letterSpacing = 2.sp)
