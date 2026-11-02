@@ -951,11 +951,28 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         toast(send ? 'Sent to ' + (out.email || email) + '.' : 'Dropped ' + domain + '.', 3000);
     }
 
+    function campStatusChip(s) {
+        return `<span class="jv-chip ${s === 'active' ? 'c-fast' : s === 'paused' || s === 'draft' ? 'c-average' : s === 'completed' ? '' : 'c-slow'}">${esc(s)}</span>`;
+    }
+
+    // Activate or Pause for an Instantly campaign row from the marketing source; handled by campaignAct().
+    function campaignButton(c) {
+        if (c.status === 'active') return `<button type="button" class="jv-btn small" data-mk-campaign="pause" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-leads="${c.leads}">Pause</button>`;
+        if (c.status === 'draft' || c.status === 'paused') return `<button type="button" class="jv-btn small" data-mk-campaign="activate" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-leads="${c.leads}" data-start="${esc(c.start)}">Activate</button>`;
+        return '';
+    }
+
+    function mailboxCell(a) {
+        return a.error ? `${esc(a.email)}<br><span class="jv-note">${esc(a.error)}</span> <a href="https://app.instantly.ai/app/accounts" target="_blank" rel="noopener">Reconnect →</a>` : esc(a.email);
+    }
+
     function outreachView() {
         const ou = S.external.outreach;
         if (!ou || !ou.ok) return `<div class="jv-grid">${approvalsPanel()}${briefPanel('outreach')}${panel('outreach-wait', 'Outreach', waiting('outreach', 'Reading the outreach pipeline, Instantly and the plan…'))}</div>`;
         const pipe = ou.pipeline && ou.pipeline.ok ? ou.pipeline : null;
         const mail = ou.instantly && ou.instantly.ok ? ou.instantly : null;
+        const mk = S.external.marketing;
+        const camps = mk && mk.ok && mk.campaigns && mk.campaigns.ok ? mk.campaigns : null;
         const plan = ou.plan && ou.plan.ok !== false ? ou.plan : null;
         const th = C.thresholds((S.settings || {}).thresholds);
         const visits = C.outreachVisits(S.rows.events);
@@ -990,8 +1007,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const targets = plan ? table([['90-day target', (r) => esc(r.label)], ['So far', (r) => (r.actual === null || r.actual === undefined ? '—' : fmt(r.actual))], ['Target', (r) => fmt(r.target)], ['', (r) => (r.actual === null || r.actual === undefined ? '' : `<span class="jv-meter"><i style="width:${Math.min(100, Math.round((r.actual / Math.max(1, r.target)) * 100))}%"></i></span>`)]], plan.targets) + '<p class="jv-note">Counts come from the weekly KPI tracker; upload it with scripts/jarvis-outreach-plan.js.</p>' : '';
         const pipeBody = pipe ? kpis([{ label: 'Swept', value: pipe.swept }, { label: 'Left in queue', value: pipe.left, alert: pipe.left === 0 && pipe.queued > 0 }, { label: 'Avg score', value: pipe.avgScore === null ? '—' : pipe.avgScore }]) + bars(pipe.bySegment, { color: COLORS.cyan, empty: 'No prospects queued. Add a list with scripts/sweep-outreach.js.' }) + (pipe.results.length ? bars(pipe.results, { color: COLORS.green }) : '') : waiting('outreach', '');
         const campBody = mail ? bars(mail.status, { color: COLORS.violet, empty: 'No campaigns yet.' }) + kpis([{ label: 'Contacted', value: mail.contacted }, { label: 'Opened', value: mail.opened }, { label: 'Replies', value: mail.replies }, { label: 'Meetings', value: mail.meetings }, { label: 'Bounced', value: mail.bounced, alert: mail.sent >= 20 && mail.rates.bounce >= th.outreachBouncePct }, { label: 'Unsubscribed', value: mail.unsubscribed }])
-            + table([['Campaign', (c) => esc(c.name)], ['Sent', (c) => fmt(c.sent)], ['Opened', (c) => fmt(c.opened)], ['Replies', (c) => fmt(c.replies)], ['Bounced', (c) => fmt(c.bounced)]], mail.byCampaign, 'No campaign has sent yet.') : `<p class="jv-empty">${esc((ou.instantly && ou.instantly.error) || 'Not loaded.')}</p>`;
-        const boxBody = mail ? table([['Mailbox', (a) => esc(a.email)], ['Status', (a) => chip(a.status === 'active', a.status)], ['Warm-up', (a) => chip(a.warmup === 'on', a.warmup)], ['Score', (a) => (a.score === null ? '—' : chip(a.score >= th.outreachWarmup, String(a.score)))], ['Daily limit', (a) => (a.dailyLimit ? fmt(a.dailyLimit) : '—')]], mail.accounts, 'No mailboxes connected.') : '';
+            + (camps ? table([['Campaign', (c) => esc(c.name)], ['Status', (c) => campStatusChip(c.status)], ['Starts', (c) => esc(c.start || '—')], ['Leads', (c) => fmt(c.leads)], ['Sent', (c) => fmt(c.sent)], ['Opened', (c) => fmt(c.opened)], ['Replies', (c) => fmt(c.replies)], ['Bounced', (c) => fmt(c.bounced)], ['', campaignButton]], camps.rows, 'No campaigns in Instantly yet.')
+                : table([['Campaign', (c) => esc(c.name)], ['Sent', (c) => fmt(c.sent)], ['Opened', (c) => fmt(c.opened)], ['Replies', (c) => fmt(c.replies)], ['Bounced', (c) => fmt(c.bounced)]], mail.byCampaign, 'No campaign has sent yet.')) : `<p class="jv-empty">${esc((ou.instantly && ou.instantly.error) || 'Not loaded.')}</p>`;
+        const boxBody = mail ? table([['Mailbox', mailboxCell], ['Status', (a) => chip(a.status === 'active', a.status)], ['Warm-up', (a) => chip(a.warmup === 'on', a.warmup)], ['Score', (a) => (a.score === null ? '—' : chip(a.score >= th.outreachWarmup, String(a.score)))], ['Daily limit', (a) => (a.dailyLimit ? fmt(a.dailyLimit) : '—')]], mail.accounts, 'No mailboxes connected.') : '';
         const dnsBody = ou.mail && ou.mail.checks ? `<ul class="jv-facts">${ou.mail.checks.map((c) => `<li>${chip(c.ok, c.name)} ${esc(c.detail)}</li>`).join('')}</ul>` : `<p class="jv-empty">${esc((ou.mail && ou.mail.error) || 'Not loaded.')}</p>`;
         const links = ou.links && ou.links.ok ? ou.links : null;
         const copyBtn = (url) => `<button class="jv-btn" type="button" data-copy-link="${esc(url)}">Copy</button>`;
@@ -1009,7 +1027,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${panel('outreach-funnel', 'Weekly funnel against the plan', funnelBody, { data: funnel })}
             ${plan ? panel('outreach-targets', '90-day targets', targets, { data: plan.targets }) : ''}
             ${panel('outreach-pipeline', 'Prospect pipeline (nightly sweep)', pipeBody, { data: pipe ? pipe.bySegment : [] })}
-            ${panel('outreach-campaigns', 'Campaigns (Instantly)', campBody, { data: mail ? mail.byCampaign : [] })}
+            ${panel('outreach-campaigns', 'Campaigns (Instantly)', campBody, { data: camps ? camps.rows : mail ? mail.byCampaign : [], note: camps ? 'Activate starts a campaign on its start date and sending window; nothing goes out to a campaign with no leads. Pause stops it at once.' : '' })}
             ${mail ? panel('outreach-mailboxes', 'Mailboxes and warm-up', boxBody, { data: mail.accounts }) : ''}
             ${panel('outreach-dns', `Sending domain${ou.mail && ou.mail.domain ? ' (' + esc(ou.mail.domain) + ')' : ''}`, dnsBody)}
             ${listPanel('outreach', 'visits', 'Visits from outreach links', visits.campaigns, { color: COLORS.green, empty: 'No visits tagged utm_source=outreach in this range yet.' })}
@@ -1130,15 +1148,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             { name: 'Revenue (USD)', color: COLORS.amber, rows: mo ? mo.daily : [], key: 'usd' }
         ]);
 
-        const statusChip = (s) => `<span class="jv-chip ${s === 'active' ? 'c-fast' : s === 'paused' || s === 'draft' ? 'c-average' : s === 'completed' ? '' : 'c-slow'}">${esc(s)}</span>`;
-        const campAct = (c) => c.status === 'active' ? `<button type="button" class="jv-btn small" data-mk-campaign="pause" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-leads="${c.leads}">Pause</button>`
-            : c.status === 'draft' || c.status === 'paused' ? `<button type="button" class="jv-btn small" data-mk-campaign="activate" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-leads="${c.leads}" data-start="${esc(c.start)}">Activate</button>` : '';
+        const statusChip = campStatusChip;
         const campBody = camps ? table([
             ['Campaign', (c) => `<strong>${esc(c.name)}</strong>`], ['Status', (c) => statusChip(c.status)], ['Starts', (c) => esc(c.start || '—')], ['Window', (c) => `<span class="jv-note">${esc(c.window)}</span>`],
-            ['Steps', (c) => fmt(c.steps)], ['Leads', (c) => fmt(c.leads)], ['Sent', (c) => fmt(c.sent)], ['Opened', (c) => fmt(c.opened)], ['Replies', (c) => fmt(c.replies)], ['Bounced', (c) => (c.bounced ? `<span class="jv-chip c-slow">${fmt(c.bounced)}</span>` : '0')], ['', campAct]
+            ['Steps', (c) => fmt(c.steps)], ['Leads', (c) => fmt(c.leads)], ['Sent', (c) => fmt(c.sent)], ['Opened', (c) => fmt(c.opened)], ['Replies', (c) => fmt(c.replies)], ['Bounced', (c) => (c.bounced ? `<span class="jv-chip c-slow">${fmt(c.bounced)}</span>` : '0')], ['', campaignButton]
         ], camps.rows, 'No campaigns in Instantly yet.') : `<p class="jv-empty">${esc((mk.campaigns && mk.campaigns.error) || (S.pending.marketing ? 'Asking Instantly for the campaigns…' : 'Not loaded.'))}</p>`;
 
-        const boxes = mail && mail.accounts.length ? `<div class="jv-rings">${mail.accounts.map((a) => ring(a.score, a.email.split('@')[0], a.score !== null && a.score >= th.outreachWarmup ? COLORS.green : null, 92)).join('')}</div>` + table([['Mailbox', (a) => esc(a.email)], ['Status', (a) => statusChip(a.status)], ['Warm-up', (a) => `<span class="jv-chip ${a.warmup === 'on' ? 'c-fast' : 'c-slow'}">${esc(a.warmup)}</span>`], ['Daily limit', (a) => (a.dailyLimit ? fmt(a.dailyLimit) : '—')]], mail.accounts) : ou.instantly && ou.instantly.ok === false ? `<p class="jv-empty">${esc(ou.instantly.error)}</p>` : wait('outreach', 'Reading the mailboxes…');
+        const boxes = mail && mail.accounts.length ? `<div class="jv-rings">${mail.accounts.map((a) => ring(a.score, a.email.split('@')[0], a.score !== null && a.score >= th.outreachWarmup ? COLORS.green : null, 92)).join('')}</div>` + table([['Mailbox', mailboxCell], ['Status', (a) => statusChip(a.status)], ['Warm-up', (a) => `<span class="jv-chip ${a.warmup === 'on' ? 'c-fast' : 'c-slow'}">${esc(a.warmup)}</span>`], ['Daily limit', (a) => (a.dailyLimit ? fmt(a.dailyLimit) : '—')]], mail.accounts) : ou.instantly && ou.instantly.ok === false ? `<p class="jv-empty">${esc(ou.instantly.error)}</p>` : wait('outreach', 'Reading the mailboxes…');
         const dns = checks ? `<ul class="jv-facts">${checks.map((c) => `<li><span class="jv-chip ${c.ok ? 'c-fast' : 'c-slow'}">${esc(c.name)}</span> ${esc(c.detail)}</li>`).join('')}</ul>` : wait('outreach', 'Checking the sending domain…');
         const targets = plan && plan.targets.length ? `<ul class="jv-goals">${plan.targets.map((t) => { const p = t.actual === null || t.actual === undefined ? null : Math.min(100, pct(t.actual, Math.max(1, t.target))); return `<li class="jv-goal ${p === null ? 'is-far' : p >= 100 ? 'is-done' : 'is-on'}"><div class="jv-goal-head"><span>${esc(t.label)}</span><b>${t.actual === null || t.actual === undefined ? '—' : fmt(t.actual)} / ${fmt(t.target)}</b></div><div class="jv-goal-bar"><i style="width:${p || 0}%"></i><s style="left:${plan.day > 0 ? Math.min(100, pct(plan.day, plan.length)) : 0}%"></s></div></li>`; }).join('')}</ul>` : '<p class="jv-empty">No 90-day targets uploaded.</p>';
         const weeklyRows = [
@@ -1222,7 +1238,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             { label: 'LinkedIn sent today', value: li ? liSent + ' / ' + li.items.length : '—' },
             { label: 'Do not contact', value: sy ? sy.dnc.length : '—' },
             { label: 'Mac synced', value: sy && sy.at ? when(sy.at) : '—', alert: !!(sy && sy.stale) }
-        ]) + `<div class="jv-grid">${briefPanel('marketing')}
+        ]) + `<div class="jv-grid">
             ${panel('marketing-sync', 'Mac sync', syncBody, { data: cmds, note: 'The Mac uploads the outreach folder every 5 minutes and then runs what you asked here. Replies and blocks go to Instantly at once.' })}
             ${panel('marketing-jobs', 'Outreach jobs on the Mac', jobsBody, { data: sy && sy.jobs })}
             ${panel('marketing-leads', `Leads to approve${week ? ' · ' + esc(week.week) : ''}`, leadsBody, { wide: true, data: weekRows, note: 'Approve the complete ones, then Upload: the Mac sends the approved rows to their Instantly campaigns. Rows that still miss something need an edit in the CSV first.' })}

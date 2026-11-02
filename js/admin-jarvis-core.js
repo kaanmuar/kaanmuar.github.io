@@ -668,7 +668,7 @@
                 if (mail.sent >= 20 && mail.rates.bounce >= th.outreachBouncePct) add('alert', 'outreach', `${mail.rates.bounce}% of outreach emails bounced (${mail.bounced} of ${mail.sent}); pause and clean the list.`, 'outreach:bounce');
                 const replies = mail.replies - (mail.autoReplies || 0);
                 if (replies > 0) add('info', 'outreach', `${plural(replies, 'outreach reply', 'outreach replies')} in range, ${mail.interested} interested.`, 'outreach:replies');
-                (mail.accounts || []).filter((a) => a.status !== 'active' || a.warmup !== 'on').forEach((a) => add('warn', 'outreach', `Mailbox ${a.email} is ${a.status}, warm-up ${a.warmup}.`, 'outreach:mailbox:' + a.email));
+                (mail.accounts || []).filter((a) => a.status !== 'active' || a.warmup !== 'on').forEach((a) => add('warn', 'outreach', `Mailbox ${a.email} is ${a.status}, warm-up ${a.warmup}${a.error ? ': ' + a.error.slice(0, 140) + ' Reconnect it in Instantly' : ''}.`, 'outreach:mailbox:' + a.email));
                 const active = (mail.status || []).some((s) => s.label === 'active' && s.value > 0);
                 const cold = (mail.accounts || []).filter((a) => a.score !== null && a.score < th.outreachWarmup);
                 if (active && cold.length) add('warn', 'outreach', `Campaigns are sending while ${plural(cold.length, 'mailbox has', 'mailboxes have')} a warm-up score under ${th.outreachWarmup}.`, 'outreach:warmup');
