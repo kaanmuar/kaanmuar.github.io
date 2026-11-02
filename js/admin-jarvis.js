@@ -461,7 +461,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}"><header>${foldHead(id, title)}${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
     }
 
-    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run' };
+    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR' };
     const psPr = (key) => Number((/^pagespeed:pr:(\d+)$/.exec(key || '') || [])[1]) || 0;
     // Owner emails that also arrive as Jarvis pushes (#1672): off, they wait for the evening digest.
     const MOVED_MAIL = {
@@ -470,7 +470,20 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         comparisons: "Comparison saved", reviewEvents: "URL review events (runs, payments, captures; refunds, disputes and unmatched payments always email)",
         ops: "Ops: jobs missed or failed", ownerReplies: "Owner replies", ownerRemind: "Owner replies still waiting (09:00)"
     };
-    const ACTION_CAPS = { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5 };
+    const ACTION_CAPS = { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3 };
+    const COUNTDOWN_HOURS = 2;
+    const hoursText = (h) => (h >= 1 ? `${h} h` : `${Math.round(h * 60)} min`);
+
+    // The risky actions Jarvis queued (#1977): each runs when its countdown ends unless cancelled.
+    function countdownList(c, hours) {
+        const pending = (c && c.pending) || [];
+        const recent = (c && c.recent) || [];
+        const row = (r) => `<li class="jv-countdown" data-countdown="${esc(r.id)}"><div><strong>${esc(r.label)}</strong>: ${esc(r.target)} <span class="jv-chip">${esc(r.kindLabel || r.kind)}</span>${r.by === 'gemini' && r.confidence !== null ? ` <span class="jv-chip">Gemini ${esc(r.confidence)}</span>` : ''}
+            <small>${r.status === 'running' ? 'Running now' : `Runs ${esc(when(r.runsAt))}`}${r.hold ? ' · ' + esc(r.hold) : ''}${r.why ? ' · ' + esc(r.why) : ''}</small></div>
+            ${r.status === 'waiting' ? `<div class="jv-countdown-acts"><button type="button" class="jv-btn small" data-countdown-act="now" data-id="${esc(r.id)}">Do it now</button><button type="button" class="jv-btn small" data-countdown-act="cancel" data-id="${esc(r.id)}">Cancel</button></div>` : ''}</li>`;
+        const ended = recent.map((r) => `<li>${esc(r.label)}: ${esc(r.target)} · <span class="jv-chip ${r.status === 'done' ? 'c-fast' : r.status === 'failed' ? 'c-slow' : 'c-average'}">${esc(r.status)}</span>${r.result ? ' ' + esc(r.result) : ''}</li>`).join('');
+        return `<h4>On the countdown (${hoursText(hours)})</h4>${pending.length ? `<ul class="jv-countdowns">${pending.map(row).join('')}</ul>` : '<p class="jv-empty">Nothing waits on the countdown.</p>'}${ended ? `<details><summary>Ended in the last day (${recent.length})</summary><ul class="jv-facts">${ended}</ul></details>` : ''}`;
+    }
 
     function proposalsPanel() {
         const P = S.proposals || {};
@@ -494,12 +507,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const caps = (a.settings && a.settings.caps) || ACTION_CAPS;
         const usage = Object.keys(ACTION_CAPS).map((k) => `<span class="jv-chip${a.used[k] >= caps[k] ? ' c-average' : ''}">${esc(ACTION_LABELS[k])}: ${fmt(a.used[k] || 0)} of ${fmt(caps[k])} today</span>`).join('') + `<span class="jv-chip">AI acts alone at confidence ${esc(String((a.settings && a.settings.confidence) || 0.8))} or more</span>`;
         const p = a.pending || {};
-        const waiting = `<ul class="jv-facts"><li>Held re-runs: <b>${fmt(p.held || 0)}</b> (${fmt(p.clean || 0)} clean, Jarvis sends those on its own)</li><li>Failed owner notices: <b>${fmt(p.notices || 0)}</b>${a.noticesLive ? (a.noticeHours ? '' : ' · outside Monday-Saturday 08:00-19:00 Bogotá') : ' · owner notices are off (OWNER_NOTICES_LIVE)'}</li></ul>`;
+        const hours = (a.settings && a.settings.countdownHours) || COUNTDOWN_HOURS;
+        const waiting = `<ul class="jv-facts"><li>Held re-runs: <b>${fmt(p.held || 0)}</b> (${fmt(p.clean || 0)} clean, Jarvis sends those after the countdown)</li><li>Failed owner notices: <b>${fmt(p.notices || 0)}</b>${a.noticesLive ? (a.noticeHours ? '' : ' · outside Monday-Saturday 08:00-19:00 Bogotá') : ' · owner notices are off (OWNER_NOTICES_LIVE)'}</li></ul>`;
         const buttons = `<div class="jv-actions">${['rerun-held', 'resend-notices', 'publish-hub'].map((k) => `<button type="button" class="jv-btn small" data-run-action="${k}">Run now: ${esc(ACTION_LABELS[k])}</button>`).join('')}</div>`;
         const rows = a.actions || [];
         const log = table([['When', (r) => esc(when(r.at))], ['Action', (r) => esc(ACTION_LABELS[r.action] || r.action)], ['How', (r) => `<span class="jv-chip">${r.mode === 'auto' ? 'on its own' : 'clicked'}</span>`], ['Result', (r) => `<span class="jv-chip ${r.status === 'done' ? 'c-fast' : r.status === 'failed' ? 'c-slow' : 'c-average'}">${esc(r.status)}</span>`], ['Target', (r) => esc(r.target)], ['Detail', (r) => esc(r.detail)]], rows.slice(0, 30), 'Nothing yet.');
-        return panel('systems-actions', `Jarvis actions${a.settings && a.settings.auto === false ? ' (automatic runs off)' : ''}`, `<p>${usage}</p>${waiting}${buttons}${log}`,
-            { wide: true, data: rows, note: 'Every hour Jarvis runs the safe actions within these caps; anything over a cap or outside the rules waits for Run now. Caps and the switch are in ⚙ Settings.' });
+        return panel('systems-actions', `Jarvis actions${a.settings && a.settings.auto === false ? ' (automatic runs off)' : ''}`, `<p>${usage}</p>${countdownList(a.countdowns, hours)}${waiting}${buttons}${log}`,
+            { wide: true, data: rows, note: `Every hour Jarvis runs the safe actions within these caps; anything over a cap or outside the rules waits for Run now. Risky ones (mail to third parties, posts off schedule, merging a green PR, deploying, resuming outreach) wait ${hoursText(hours)} on the countdown with Do it now and Cancel, at any hour; at night, mail and posts then wait for 08:00-21:00 Bogotá. Refunds and deletes always wait for your click. Caps, the countdown and the switch are in ⚙ Settings.` });
     }
 
     // URL Review > Signed-in people (#1976): who signed in, what they ran, whether they came back and for how long.
@@ -1990,6 +2004,17 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         loadExternal(['actions', 'health', 'jobs']);
     }
 
+    async function countdownAct(id, act) {
+        const row = ((((S.external.actions || {}).countdowns) || {}).pending || []).find((r) => r.id === id) || {};
+        if (act === 'now' && !confirmRun(`do it now: ${(row.label || 'this action').replace(/^./, (c) => c.toLowerCase())} (${row.target || ''})`)) return;
+        S.pending['countdown:' + id] = true;
+        toast(act === 'now' ? 'Running…' : 'Cancelling…', 30000);
+        const out = await call('countdown', { id, act });
+        S.pending['countdown:' + id] = false;
+        toast(out.ok ? out.message : 'Not done: ' + out.error, 6000);
+        loadExternal(['actions']);
+    }
+
     async function aiBrief() {
         toast('Gemini is reading the numbers…', 6000);
         const out = await call('brief', { snapshot: snapshot() });
@@ -2211,7 +2236,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     function draftSettings() {
         const s = S.settings || {};
         return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true, weekly: true }, s.mail || {}), searchQueries: (s.searchQueries || []).slice(),
-            actions: { auto: !(s.actions && s.actions.auto === false), caps: Object.assign({}, ACTION_CAPS, (s.actions || {}).caps), confidence: Number((s.actions || {}).confidence) || 0.8 } };
+            actions: { auto: !(s.actions && s.actions.auto === false), caps: Object.assign({}, ACTION_CAPS, (s.actions || {}).caps), confidence: Number((s.actions || {}).confidence) || 0.8, countdownHours: Number((s.actions || {}).countdownHours) || COUNTDOWN_HOURS } };
     }
 
     function goalEditor(g, i) {
@@ -2242,7 +2267,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             <section data-voice-section>${voiceSection()}</section>
             <section><h4>Actions</h4>
               <label class="jv-check"><input type="checkbox" name="a-auto"${d.actions.auto ? ' checked' : ''}> Let Jarvis run the safe actions on its own every hour, within these daily caps</label>
-              <div class="jv-th-grid">${Object.keys(ACTION_CAPS).map((k) => `<label class="jv-field">${esc(ACTION_LABELS[k].replace(/^./, (c) => c.toUpperCase()))} per day<input type="number" name="a-cap-${k}" min="0" max="100" step="1" value="${esc(d.actions.caps[k])}"></label>`).join('')}<label class="jv-field">AI confidence needed to act alone<input type="number" name="a-confidence" min="0.5" max="1" step="0.05" value="${esc(d.actions.confidence)}"></label></div>
+              <div class="jv-th-grid">${Object.keys(ACTION_CAPS).map((k) => `<label class="jv-field">${esc(ACTION_LABELS[k].replace(/^./, (c) => c.toUpperCase()))} per day<input type="number" name="a-cap-${k}" min="0" max="100" step="1" value="${esc(d.actions.caps[k])}"></label>`).join('')}<label class="jv-field">AI confidence needed to act alone<input type="number" name="a-confidence" min="0.5" max="1" step="0.05" value="${esc(d.actions.confidence)}"></label><label class="jv-field">Countdown before a risky action, hours (0.25-24)<input type="number" name="a-countdown" min="0.25" max="24" step="0.25" value="${esc(d.actions.countdownHours)}"></label></div>
               <p class="jv-note">Held re-runs go out on their own only when clean (a complete report with a score). Owner notices keep Monday-Saturday 08:00-19:00 Bogotá, three tries and the daily notice budget, even when you click. Failed jobs and CI runs are re-run once; outreach mailboxes are paused when their DNS, warm-up or score fails. The AI only picks from Jarvis's own actions; picks under the confidence become proposals.</p></section>
             <section><h4>Goals</h4><div class="jv-goal-list">${d.goals.map(goalEditor).join('') || '<p class="jv-note">No goals yet. Add one: a product, what to count, the period, and the target.</p>'}</div>
               <div class="jv-actions"><button type="button" class="jv-btn" data-goal-add>Add a goal</button></div>
@@ -2349,7 +2374,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const searchQueries = String(val('s-queries').value || '').split('\n').map((q) => q.trim()).filter(Boolean).slice(0, 8);
         return { goals, thresholds, mail: Object.assign({ daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked, weekly: !!val('m-weekly').checked, digest: !!val('m-digest').checked },
             Object.fromEntries(Object.keys(MOVED_MAIL).map((k) => [k, !!val('m-' + k).checked]))), searchQueries,
-            actions: { auto: !!val('a-auto').checked, caps: Object.keys(ACTION_CAPS).reduce((m, k) => { m[k] = Number(val('a-cap-' + k).value); return m; }, {}), confidence: Number(val('a-confidence').value) } };
+            actions: { auto: !!val('a-auto').checked, caps: Object.keys(ACTION_CAPS).reduce((m, k) => { m[k] = Number(val('a-cap-' + k).value); return m; }, {}), confidence: Number(val('a-confidence').value), countdownHours: Number(val('a-countdown').value) } };
     }
 
     function openSettings() {
@@ -2435,6 +2460,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         $$('.jv-menu-list').forEach((l) => { l.hidden = true; });
         if (t.dataset.proposal) { markProposal(t.dataset.key, t.dataset.proposal); return; }
         if (t.dataset.runAction) { runAction(t.dataset.runAction, t.dataset.job, t.dataset.key); return; }
+        if (t.dataset.countdownAct) { countdownAct(t.dataset.id, t.dataset.countdownAct); return; }
         if (t.dataset.psAct) { pageSpeedAct(t); return; }
         if (t.dataset.socialDecide) { decideSocial(t.dataset.key, t.dataset.socialDecide); return; }
         if (t.dataset.mkCampaign) { campaignAct(t); return; }
