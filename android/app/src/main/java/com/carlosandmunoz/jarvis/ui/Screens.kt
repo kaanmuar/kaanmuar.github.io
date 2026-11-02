@@ -88,7 +88,7 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             val st = snap?.let { Home.status(it) } ?: Home.Status(null, 0, 0)
             Text(st.headline, fontSize = 20.sp, fontWeight = FontWeight.SemiBold,
-                color = if (st.alerts > 0) J.pink else if (st.warns > 0) J.amber else J.green)
+                color = when (st.level) { "alert" -> J.pink; "warn" -> J.amber; else -> J.green })
             val down = snap.objs("connections").filter { it.str("state") != "live" }
             Muted(if (down.isEmpty()) "Every connection is live" else down.joinToString { (it.str("name") ?: "") + " " + (it.str("state") ?: "") }, maxLines = if (roomy) 2 else Int.MAX_VALUE)
             if (roomy) { Spacer(Modifier.height(4.dp)); DeckStrip(deck) }

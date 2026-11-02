@@ -1919,7 +1919,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         tabIcon(ready, alerts, warns);
         const checked = ['health', 'jobs', 'uptime'].some((k) => S.external[k] && !S.pending[k]);
         const things = `${warns} thing${warns > 1 ? 's' : ''} to look at`;
-        setStatus(alerts ? `${alerts} alert${alerts > 1 ? 's' : ''} and ${warns} warning${warns === 1 ? '' : 's'} need you.` : !checked ? (warns ? `${things}. Checking systems…` : 'Checking systems…') : warns ? `All systems up. ${things}.` : 'All systems nominal.');
+        const note = C.systemsNote(C.connections(S.external, S.pending), ready, C.thresholds((S.settings || {}).thresholds).readinessMin);
+        setStatus(alerts ? `${alerts} alert${alerts > 1 ? 's' : ''} and ${warns} warning${warns === 1 ? '' : 's'} need you.` : !checked ? (warns ? `${things}. Checking systems…` : 'Checking systems…') : warns ? `${note || 'All systems up'}. ${things}.` : note ? `${note}.` : 'All systems nominal.');
         $$('[data-mail]').forEach((b) => b.classList.toggle('on', b.dataset.mail === S.mail));
         $('[data-print-range]').textContent = (RANGES.find(([v]) => v === S.range) || [])[1] || '';
         $('[data-print-at]').textContent = new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' });

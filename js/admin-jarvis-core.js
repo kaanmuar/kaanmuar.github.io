@@ -985,6 +985,14 @@
         return out;
     }
 
+    // What the headline names once the briefing is empty, so it never reads all clear beside a down connection or low readiness.
+    function systemsNote(conns, ready, readinessMin) {
+        const off = (conns || []).filter((c) => c.state === 'down' || c.state === 'partial').length;
+        if (off) return off + (off > 1 ? ' connections need' : ' connection needs') + ' a look';
+        if (typeof ready === 'number' && ready < readinessMin) return 'Readiness below ' + readinessMin + '%';
+        return '';
+    }
+
     // Share of checks that pass, for the reactor ring: jobs, CI, uptime, speed, failures.
     function readiness(external) {
         const checks = [];
@@ -1308,7 +1316,7 @@
         };
     }
 
-    const api = { TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, proposalRules, pageSpeedPr, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
+    const api = { TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, proposalRules, pageSpeedPr, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);
