@@ -118,10 +118,38 @@ const HANDLERS = [
   [/^handoff$/i, (m, input) => fs.existsSync(file(`handoff-${input.conversation_id}.md`)) ? fs.readFileSync(file(`handoff-${input.conversation_id}.md`), "utf8") : writeHandoff(input)],
 ];
 
+// Worktree locks (#2244, scripts/worktree-lock.sh): keeps this chat's heartbeat fresh, and returns the worktrees
+// another chat took over from it, clearing that note once `report` is set.
+function worktreeLocks(id, report) {
+  const lost = [];
+  if (!id || id === "none") return lost;
+  let base, names;
+  try {
+    base = path.join(sh("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], { timeout: 2000 }), "worktrees");
+    names = fs.readdirSync(base);
+  } catch { return lost; }
+  const now = Math.floor(Date.now() / 1000);
+  for (const name of names) {
+    const p = path.join(base, name, "chat-lock");
+    let lock;
+    try { lock = Object.fromEntries(fs.readFileSync(p, "utf8").split("\n").filter(Boolean).map((l) => l.split(/=(.*)/s).slice(0, 2))); } catch { continue; }
+    if (lock.chat === id && now - Number(lock.heartbeat) >= 60) lock.heartbeat = String(now);
+    else if (lock.chat !== id && lock.previous === id && report) {
+      let dir = name;
+      try { dir = path.dirname(fs.readFileSync(path.join(base, name, "gitdir"), "utf8").trim()); } catch {}
+      lost.push(`${dir} (now held by chat ${lock.chat})`);
+      delete lock.previous;
+    } else continue;
+    try { fs.writeFileSync(p, Object.entries(lock).map(([k, v]) => `${k}=${v}\n`).join("")); } catch {}
+  }
+  return lost;
+}
+
 function onPrompt(input) {
   const prompt = String(input.prompt || "").trim();
   const id = input.conversation_id || "none";
   const s = convState(id);
+  worktreeLocks(id, false);
   if (/^agent:/i.test(prompt)) return out({ continue: true });
 
   if (prompt.length <= 60) {
@@ -212,9 +240,11 @@ async function onPack(id, generation, model) {
 function onTool(input) {
   const id = input.conversation_id || "none";
   const s = convState(id);
-  if (!s.pack || s.delivered || (s.generation && input.generation_id && s.generation !== input.generation_id)) return out({});
-  s.delivered = true; saveConv(id, s);
-  out({ additional_context: s.pack });
+  const lost = worktreeLocks(id, true).map((w) => `Another chat took over the worktree ${w}, with --take or after this chat's lock lapsed (#2244). Stop editing, committing and pushing there; tell Carlos, and only take it back with scripts/ticket-worktree.sh <branch> --take if he says so.`);
+  const due = s.pack && !s.delivered && !(s.generation && input.generation_id && s.generation !== input.generation_id);
+  if (due) { s.delivered = true; saveConv(id, s); }
+  const context = [due && s.pack, ...lost].filter(Boolean).join("\n");
+  out(context ? { additional_context: context } : {});
 }
 
 function onSession(input) {
