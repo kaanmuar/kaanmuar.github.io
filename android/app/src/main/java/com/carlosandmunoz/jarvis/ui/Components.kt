@@ -31,6 +31,11 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.UnfoldLess
+import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -90,10 +95,13 @@ object Folds {
     private fun save() { prefs?.edit()?.putStringSet("folded", shut.keys.toSet())?.apply() }
 }
 
+/** An icon, so the Briefing header keeps room for its own action in a phone-wide column. */
 @Composable
 fun FoldAllButton() {
     val open = !Folds.any()
-    TextButton(onClick = { Folds.all(open) }) { Text(if (open) "Collapse all" else "Expand all", fontSize = 12.sp) }
+    IconButton(onClick = { Folds.all(open) }, modifier = Modifier.size(36.dp)) {
+        Icon(if (open) Icons.Filled.UnfoldLess else Icons.Filled.UnfoldMore, if (open) "Collapse all" else "Expand all", tint = J.cyan, modifier = Modifier.size(20.dp))
+    }
 }
 
 @Composable

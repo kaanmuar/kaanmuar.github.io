@@ -993,7 +993,68 @@
             rate: Number.isFinite(rate) && rate > 0 ? Math.min(VOICE_RATE.max, Math.max(VOICE_RATE.min, rate)) : VOICE_RATE.default };
     }
 
-    const api = { VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
+    /** #2068: what Jarvis runs on. The Android app (device/Device.kt) sends the same kinds and postures. */
+    const DEVICE_KINDS = { phone: 'Phone', 'foldable-folded': 'Foldable, folded', 'foldable-open': 'Foldable, open', tablet: 'Tablet', desktop: 'Desktop' };
+    const POSTURES = { flat: 'flat', tabletop: 'tabletop', book: 'half open like a book' };
+    const FOLD_MODEL = /SM-F9\d\d|Fold|OnePlus Open|CPH2551/i;
+
+    /** A device as the app or the browser reports it, made safe to store; null when the kind is unknown. */
+    function cleanDevice(d) {
+        if (!d || typeof d !== 'object' || !Object.prototype.hasOwnProperty.call(DEVICE_KINDS, d.kind)) return null;
+        const size = (n) => { const v = Math.round(Number(n)); return Number.isFinite(v) && v > 0 && v < 10000 ? v : null; };
+        const text = (s, n) => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, n) || null;
+        return {
+            kind: d.kind, posture: Object.prototype.hasOwnProperty.call(POSTURES, d.posture) ? d.posture : null,
+            width: size(d.width), height: size(d.height), name: text(d.name, 80), model: text(d.model, 40),
+            app: d.app === 'android' ? 'android' : 'web', dex: d.dex === true, windowed: d.windowed === true
+        };
+    }
+
+    /** "Foldable, open · tabletop · 832×750 dp", as both Settings show it. */
+    function deviceLabel(d) {
+        const c = cleanDevice(d);
+        if (!c) return 'Unknown device';
+        return [DEVICE_KINDS[c.kind], c.posture && c.posture !== 'flat' ? POSTURES[c.posture] : null, c.dex ? 'Samsung DeX' : c.windowed ? 'in a window' : null,
+            c.width && c.height ? c.width + '×' + c.height + (c.app === 'android' ? ' dp' : ' px') : null].filter(Boolean).join(' · ');
+    }
+
+    /** How long an Ask answer should be for the screen it lands on; '' when the device is unknown. */
+    function askHint(d) {
+        const c = cleanDevice(d);
+        if (!c) return '';
+        if (c.posture === 'tabletop') return 'The reader has a foldable half-folded on a table and reads the lower half: answer in at most four short sentences, the key number first.';
+        if (c.kind === 'phone' || c.kind === 'foldable-folded' || (c.width && c.width < 600)) return 'The reader is on a phone-sized screen: answer in at most four short sentences, the key number first.';
+        return 'The reader has a large screen (' + DEVICE_KINDS[c.kind].toLowerCase() + '): answer in up to eight sentences, with a short list when it helps compare numbers.';
+    }
+
+    /**
+     * The browser's kind from what it reports: o.ua, o.model and o.mobile (Client Hints), the window (width, height) and screen
+     * (screenW, screenH), touch and a coarse pointer, and the fold: o.posture ('folded' or 'continuous', Device Posture API)
+     * and o.segments ({ across, down }, viewport segments).
+     */
+    function browserDevice(o) {
+        const ua = String(o.ua || '');
+        const seg = o.segments || {};
+        const short = Math.min(Number(o.screenW) || 0, Number(o.screenH) || 0);
+        const split = seg.across > 1 || seg.down > 1 || o.posture === 'folded';
+        const foldable = split || FOLD_MODEL.test(String(o.model || '')) || FOLD_MODEL.test(ua);
+        const tabletUa = /iPad|Tablet/.test(ua) || (/Android/.test(ua) && !/Mobile/.test(ua)) || (/Macintosh/.test(ua) && o.touch === true);
+        const phoneUa = o.mobile === true || /Android.+Mobile|iPhone|iPod/.test(ua);
+        let kind = 'desktop';
+        let posture = null;
+        if (foldable && (split || short >= 600)) {
+            kind = 'foldable-open';
+            if (seg.down > 1) posture = 'tabletop';
+            else if (seg.across > 1) posture = o.posture === 'folded' ? 'book' : 'flat';
+            else if (o.posture === 'folded') posture = Number(o.width) > Number(o.height) ? 'tabletop' : 'book';
+            else posture = 'flat';
+        } else if (foldable) kind = 'foldable-folded';
+        else if (phoneUa) kind = 'phone';
+        else if (tabletUa || (o.touch === true && o.coarse === true)) kind = short >= 600 ? 'tablet' : 'phone';
+        return cleanDevice({ kind, posture, width: o.width, height: o.height, name: o.name, model: o.model, app: 'web' });
+    }
+
+    const api = { DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);
