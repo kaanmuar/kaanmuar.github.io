@@ -386,3 +386,7 @@
 .jv-eg-settings input, .jv-eg-settings textarea { background: rgba(4, 18, 28, 0.85); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 0.35rem 0.5rem; font: 0.84rem system-ui, sans-serif; }
 .jv-eg-settings input { width: 6.5rem; }
 .jv-eg-settings textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.jv-eg-accounts li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
+.jv-eg-bluesky { display: flex; flex-wrap: wrap; align-items: end; gap: 0.5rem; flex-basis: 100%; }
+.jv-eg-bluesky label { display: grid; gap: 0.2rem; font-size: 0.76rem; color: var(--dim); }
+.jv-eg-bluesky input { width: 15rem; max-width: 100%; background: rgba(4, 18, 28, 0.85); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 0.35rem 0.5rem; font: 0.84rem system-ui, sans-serif; }
