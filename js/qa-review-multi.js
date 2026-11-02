@@ -787,7 +787,8 @@
     root.querySelector("#multi-close").hidden = !!data.peers;
     const locked = root.querySelector("#multi-locked");
     locked.hidden = data.paid && !data.peers;
-    locked.innerHTML = data.peers ? "<p>" + esc(t("peersNote", { n: data.columns.length, sector: data.peers.sector, place: data.peers.place ? ", " + data.peers.place : "" })) + "</p>" : data.paid ? "" : "<p>" + esc(t("locked", { n: data.locked.length })) + "</p><p>" +
+    const phrase = data.peers && data.peers.phrase ? data.peers.phrase[code] || data.peers.phrase.en || "" : "";
+    locked.innerHTML = data.peers ? "<p>" + esc(t("peersNote", { n: data.columns.length, sector: phrase || data.peers.sector, place: phrase || !data.peers.place ? "" : ", " + data.peers.place })) + "</p>" : data.paid ? "" : "<p>" + esc(t("locked", { n: data.locked.length })) + "</p><p>" +
       data.locked.map((col) => '<a class="btn btn-ghost" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>").join(" ") + "</p>";
     const body = root.querySelector("#multi-body");
     filter = { area: "All", verdict: "open" };
