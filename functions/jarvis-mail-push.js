@@ -16,10 +16,12 @@ const ACTS = {
   "owner-reply": ["resend", "stop", "unlist", "done"],
   "rerun-held": ["send-all", "drop-all"],
   ops: ["rerun"],
-  proposal: ["done", "dismissed"],
+  proposal: ["run", "close", "done", "dismissed"],
   notice: ["send", "skip"],
   social: ["approved", "dismissed"],
-  engagement: ["approve", "edit", "dismiss"]
+  engagement: ["approve", "edit", "dismiss"],
+  countdown: ["now", "cancel"],
+  pagespeed: ["merge", "close"]
 };
 const REPLY = { act: "reply", label: "Reply", input: "Your reply" };
 

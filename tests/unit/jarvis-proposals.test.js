@@ -61,6 +61,58 @@ test("every safe action in the rules is one #1337 knows", () => {
   core.PROPOSAL_RULES.filter((r) => r.action).forEach((r) => assert.ok(core.SAFE_ACTIONS.includes(r.action), r.prefix));
 });
 
+test("every click in the rules is one action-run knows, and no rule has both kinds", () => {
+  core.PROPOSAL_RULES.filter((r) => r.click).forEach((r) => assert.ok(core.CLICK_ACTIONS.includes(r.click) && !r.action, r.prefix));
+});
+
+test("each proposal kind gets its own buttons, 3 at most: its run, Open, then Dismiss or Done (#1977)", () => {
+  const acts = (p) => core.proposalButtons(p).map((b) => b.act + ":" + b.label);
+  assert.deepEqual(acts({ key: "review:held", action: "rerun-held", tab: "systems" }), ["run:Send held re-runs", "open:Open Systems", "dismissed:Dismiss"]);
+  assert.deepEqual(acts({ key: "social:failed", click: "retry-social", tab: "hub" }), ["run:Retry failed posts", "open:Open Social hub", "dismissed:Dismiss"]);
+  assert.deepEqual(acts({ key: "outreach:mailbox", click: "resume-outreach", tab: "outreach" }), ["run:Resume mailboxes", "open:Open Outreach", "dismissed:Dismiss"]);
+  assert.deepEqual(acts({ key: "outreach:bounce", click: "pause-outreach", tab: "outreach" }), ["run:Pause outreach", "open:Open Outreach", "dismissed:Dismiss"]);
+  ["outreach:bounce", "outreach:warmup", "outreach:dns:"].forEach((k) => assert.equal(core.PROPOSAL_RULES.find((r) => r.prefix === k).click, "pause-outreach", k));
+  assert.deepEqual(acts({ key: "job", jobs: ["rivalSweep"], tab: "systems" }), ["run:Run rivalSweep again", "open:Open Systems", "dismissed:Dismiss"]);
+  assert.deepEqual(acts({ key: "job", jobs: ["a1x", "b2y"], tab: "systems" })[0], "run:Run 2 jobs again");
+  assert.deepEqual(acts({ key: "ci", workflows: ["Pages"], link: "https://github.com/x/actions" }), ["run:Re-run Pages", "open:Open ↗", "dismissed:Dismiss"]);
+  assert.deepEqual(acts({ key: "pagespeed:pr:12", tab: "systems" }), ["run:Merge #12", "close:Close #12", "dismissed:Dismiss"]);
+  assert.deepEqual(acts({ key: "money:disputes", link: "https://www.paypal.com/resolutioncenter" }), ["open:Open ↗", "done:Done", "dismissed:Dismiss"]);
+  assert.deepEqual(acts({ key: "goal:x", tab: "overview" }), ["done:Done", "dismissed:Dismiss"], "Overview is where the card already is");
+  assert.deepEqual(core.proposalRun({ jobs: ["rivalSweep"] }), { action: "run-job", jobs: ["rivalSweep"], label: "Run rivalSweep again" });
+  assert.deepEqual(core.proposalRun({ key: "pagespeed:pr:12" }), { action: "pagespeed-merge", pr: 12, label: "Merge #12" });
+  assert.deepEqual(core.proposalRun({ click: "rm-rf" }), null);
+});
+
+test("the rules carry the failed workflows and the click each kind offers", () => {
+  const list = core.proposalRules({ products: {}, external: {
+    github: { ok: true, ci: [{ name: "Pages", conclusion: "failure" }, { name: "Lint", conclusion: "failure" }], openBugs: 0, bugAreas: [], merged: { total: 1 } },
+    social: { ok: true, failed: 2, sent: 4 }
+  } });
+  assert.deepEqual(list.find((p) => p.key === "ci").workflows, ["Pages", "Lint"]);
+  assert.equal(list.find((p) => p.key === "social:failed").click, "retry-social");
+});
+
+test("cleanCandidates keeps a known click and the workflow names, nothing else", () => {
+  const [a, b] = proposals.cleanCandidates([
+    { key: "social:failed", title: "Re-post", click: "retry-social", workflows: ["Pages", "", "x".repeat(300)] },
+    { key: "y", title: "Y", click: "deploy-everything" }
+  ]);
+  assert.equal(a.click, "retry-social");
+  assert.deepEqual(a.workflows, ["Pages", "x".repeat(120)]);
+  assert.equal(b.click, null);
+  assert.equal(proposals.withButtons(a).buttons[0].label, "Retry failed posts");
+});
+
+test("a push's run waits in Firestore for notify-act, and expires", async () => {
+  const db = fakeDb();
+  const now = Date.parse("2026-11-02T12:00:00Z");
+  assert.equal(await proposals.saveRun(db, { key: "money:disputes", link: "https://x.co" }, now), null, "nothing to run, nothing saved");
+  await proposals.saveRun(db, { key: "job", jobs: ["rivalSweep"] }, now);
+  assert.deepEqual(await proposals.savedRun(db, "job", now + 3600000), { action: "run-job", jobs: ["rivalSweep"], label: "Run rivalSweep again" });
+  await assert.rejects(proposals.savedRun(db, "job", now + 3 * DAY), /expired/);
+  await assert.rejects(proposals.savedRun(db, "ci", now), /expired/);
+});
+
 test("Done and Dismiss hide a proposal until their date", () => {
   const now = new Date("2026-10-25T12:00:00Z");
   const list = [{ key: "a" }, { key: "b" }, { key: "c" }];
@@ -128,7 +180,7 @@ test("rank falls back to the rules when Gemini fails or is off, and never shows 
 
 test("cleanCandidates keeps only the panel's fields and the known safe actions", () => {
   const [row] = proposals.cleanCandidates([{ key: "k", title: "T", impact: 12, level: "x", evidence: ["a", 2], action: "delete-everything", jobs: ["sweepReviews", "bad name;"], link: "javascript:alert(1)", extra: "drop" }]);
-  assert.deepEqual(row, { key: "k", product: "", impact: 5, level: "info", title: "T", evidence: ["a", "2"], source: "rules", action: null, jobs: ["sweepReviews"], tab: null, link: null });
+  assert.deepEqual(row, { key: "k", product: "", impact: 5, level: "info", title: "T", evidence: ["a", "2"], source: "rules", action: null, click: null, jobs: ["sweepReviews"], workflows: null, tab: null, link: null });
 });
 
 test("the daily email lists proposals with impact, effort and evidence", () => {
