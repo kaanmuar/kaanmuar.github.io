@@ -51,6 +51,11 @@ export async function route(url, { acceptLanguage = "", findReport = async () =>
   if (!first) return { status: 302, location: landing(lang, { utm_campaign: "home", utm_medium: "web" }) };
   if (CHANNELS[first] && !rest.length) return { status: 302, location: landing(lang, { utm_campaign: CHANNELS[first], utm_medium: first }) };
 
+  // A peer group's comparison (#2363): /<lang>/peers/<group id>/<the reader's token>, both lowercase hex.
+  if (first === "peers" && rest.length === 2 && rest.every((p) => /^[a-f0-9]{8,40}$/.test(p))) {
+    return { status: 302, location: landing(lang, { utm_campaign: "outreach-peers", utm_medium: "email" }, { peers: rest[0], t: rest[1] }) };
+  }
+
   const host = bare(first);
   if (HOST.test(host) && !rest.length) {
     const tags = { utm_campaign: "outreach", utm_content: host, utm_medium: "email" };

@@ -13,6 +13,15 @@ test("a prospect's domain opens its Live Report in the link's language, tags fir
   assert.equal(params(out.location).get("live"), "upb");
 });
 
+test("a peer group's link opens that reader's comparison, tagged outreach-peers (#2363)", async () => {
+  const { route } = await load();
+  const out = await route(at("/fr/peers/0a1b2c3d4e5f60718293/a1b2c3d4e5f6a1b2c3d4e5f6"));
+  assert.ok(out.location.startsWith("https://carlosandmunoz.com/qa-review-fr.html?utm_source=qalabreview&utm_campaign=outreach-peers"));
+  assert.equal(params(out.location).get("peers"), "0a1b2c3d4e5f60718293");
+  assert.equal(params(out.location).get("t"), "a1b2c3d4e5f6a1b2c3d4e5f6");
+  assert.equal(params((await route(at("/peers/nothex!/x"))).location).get("utm_campaign"), "unknown-path");
+});
+
 test("a domain with no Live Report yet opens the free review with the site typed in", async () => {
   const { route } = await load();
   const out = await route(at("/acme.io"), { acceptLanguage: "pt-BR,pt;q=0.9" });

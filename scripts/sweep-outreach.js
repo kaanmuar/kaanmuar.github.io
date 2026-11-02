@@ -99,4 +99,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error.message || error); process.exit(1); });
 
-module.exports = { parseCsv, prospectOf };
+module.exports = { parseCsv, prospectOf, db };

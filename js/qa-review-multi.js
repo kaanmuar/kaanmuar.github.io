@@ -13,7 +13,7 @@
       locked_one: "{n} report in this comparison is not paid. Its wording stays blurred, and Print and Download PDF open once it is paid.",
       locked_other: "{n} reports in this comparison are not paid. Their wording stays blurred, and Print and Download PDF open once they are paid.",
       summary: "Side by side", indicator: "Indicator", wins: "Indicators won", leadNote: "Shaded cells lead their line. Scores come from automated reviews, a starting point and not a verdict.",
-      missing: "This review was deleted after the comparison was saved.", opening: "Opening the comparison…",
+      yours: "Your site", peersNote: "An automated public review of {n} sites: {sector}{place}. Your column shows everything we found on your site; the other sites' security details are left out, as yours are left out of their copies.", peersLink: "This comparison link is not valid. Ask us for a new one by replying to our email.", missing: "This review was deleted after the comparison was saved.", opening: "Opening the comparison…",
       failedRuns: "Not in this comparison, because their review did not finish:",
       signIn: "Sign in with the account that saved this comparison to open it.", failed: "The comparison did not open. Try again in a moment.",
       saving: "Saving the comparison…", saveFailed: "The comparison was not saved. Try again in a moment.",
@@ -35,7 +35,7 @@
       locked_one: "{n} informe de esta comparación no está pagado. Su texto sigue difuminado, e Imprimir y Descargar PDF se abren cuando se pague.",
       locked_other: "{n} informes de esta comparación no están pagados. Su texto sigue difuminado, e Imprimir y Descargar PDF se abren cuando se paguen.",
       summary: "Lado a lado", indicator: "Indicador", wins: "Indicadores ganados", leadNote: "Las celdas sombreadas encabezan su línea. Las puntuaciones salen de revisiones automáticas: un punto de partida, no un veredicto.",
-      missing: "Esta revisión se eliminó después de guardar la comparación.", opening: "Abriendo la comparación…",
+      yours: "Tu sitio", peersNote: "Una revisión pública automatizada de {n} sitios: {sector}{place}. Tu columna muestra todo lo que encontramos en tu sitio; los detalles de seguridad de los demás sitios no aparecen, igual que los tuyos no aparecen en sus copias.", peersLink: "Este enlace de comparación no es válido. Responde a nuestro correo y te enviamos uno nuevo.", missing: "Esta revisión se eliminó después de guardar la comparación.", opening: "Abriendo la comparación…",
       failedRuns: "No están en esta comparación porque su revisión no terminó:",
       signIn: "Inicia sesión con la cuenta que guardó esta comparación para abrirla.", failed: "La comparación no se abrió. Inténtalo de nuevo en un momento.",
       saving: "Guardando la comparación…", saveFailed: "La comparación no se guardó. Inténtalo de nuevo en un momento.",
@@ -57,7 +57,7 @@
       locked_one: "{n} relatório desta comparação não está pago. O texto continua desfocado, e Imprimir e Baixar PDF abrem quando for pago.",
       locked_other: "{n} relatórios desta comparação não estão pagos. O texto continua desfocado, e Imprimir e Baixar PDF abrem quando forem pagos.",
       summary: "Lado a lado", indicator: "Indicador", wins: "Indicadores ganhos", leadNote: "As células sombreadas lideram a sua linha. As pontuações vêm de revisões automáticas: um ponto de partida, não um veredicto.",
-      missing: "Esta revisão foi apagada depois que a comparação foi salva.", opening: "Abrindo a comparação…",
+      yours: "Seu site", peersNote: "Uma revisão pública automatizada de {n} sites: {sector}{place}. Sua coluna mostra tudo o que encontramos no seu site; os detalhes de segurança dos outros sites ficam de fora, assim como os seus ficam de fora das cópias deles.", peersLink: "Este link de comparação não é válido. Responda ao nosso email e enviamos um novo.", missing: "Esta revisão foi apagada depois que a comparação foi salva.", opening: "Abrindo a comparação…",
       failedRuns: "Não estão nesta comparação porque a revisão não terminou:",
       signIn: "Entre com a conta que salvou esta comparação para abri-la.", failed: "A comparação não abriu. Tente de novo em instantes.",
       saving: "Salvando a comparação…", saveFailed: "A comparação não foi salva. Tente de novo em instantes.",
@@ -79,7 +79,7 @@
       locked_one: "{n} Bericht in diesem Vergleich ist nicht bezahlt. Sein Text bleibt unscharf, und Drucken und PDF herunterladen öffnen sich, sobald er bezahlt ist.",
       locked_other: "{n} Berichte in diesem Vergleich sind nicht bezahlt. Ihr Text bleibt unscharf, und Drucken und PDF herunterladen öffnen sich, sobald sie bezahlt sind.",
       summary: "Nebeneinander", indicator: "Kennzahl", wins: "Gewonnene Kennzahlen", leadNote: "Schattierte Zellen führen ihre Zeile an. Die Werte stammen aus automatischen Prüfungen: ein Ausgangspunkt, kein Urteil.",
-      missing: "Diese Prüfung wurde gelöscht, nachdem der Vergleich gespeichert wurde.", opening: "Der Vergleich wird geöffnet…",
+      yours: "Ihre Website", peersNote: "Eine automatisierte öffentliche Prüfung von {n} Websites: {sector}{place}. Ihre Spalte zeigt alles, was wir auf Ihrer Website gefunden haben; die Sicherheitsdetails der anderen Websites sind ausgelassen, so wie Ihre in deren Kopien fehlen.", peersLink: "Dieser Vergleichslink ist nicht gültig. Antworten Sie auf unsere E-Mail, dann senden wir einen neuen.", missing: "Diese Prüfung wurde gelöscht, nachdem der Vergleich gespeichert wurde.", opening: "Der Vergleich wird geöffnet…",
       failedRuns: "Nicht in diesem Vergleich, weil ihre Prüfung nicht fertig wurde:",
       signIn: "Melden Sie sich mit dem Konto an, das diesen Vergleich gespeichert hat, um ihn zu öffnen.", failed: "Der Vergleich wurde nicht geöffnet. Versuchen Sie es gleich noch einmal.",
       saving: "Der Vergleich wird gespeichert…", saveFailed: "Der Vergleich wurde nicht gespeichert. Versuchen Sie es gleich noch einmal.",
@@ -101,7 +101,7 @@
       locked_one: "{n} rapport de cette comparaison n'est pas payé. Son texte reste flouté, et Imprimer et Télécharger le PDF s'ouvrent une fois qu'il est payé.",
       locked_other: "{n} rapports de cette comparaison ne sont pas payés. Leur texte reste flouté, et Imprimer et Télécharger le PDF s'ouvrent une fois qu'ils sont payés.",
       summary: "Côte à côte", indicator: "Indicateur", wins: "Indicateurs gagnés", leadNote: "Les cellules ombrées mènent leur ligne. Les scores viennent de revues automatiques : un point de départ, pas un verdict.",
-      missing: "Cette revue a été supprimée après l'enregistrement de la comparaison.", opening: "Ouverture de la comparaison…",
+      yours: "Votre site", peersNote: "Une revue publique automatisée de {n} sites : {sector}{place}. Votre colonne montre tout ce que nous avons trouvé sur votre site ; les détails de sécurité des autres sites sont omis, comme les vôtres le sont dans leurs copies.", peersLink: "Ce lien de comparaison n'est pas valide. Répondez à notre e-mail et nous vous en enverrons un nouveau.", missing: "Cette revue a été supprimée après l'enregistrement de la comparaison.", opening: "Ouverture de la comparaison…",
       failedRuns: "Absents de cette comparaison, car leur analyse n’a pas abouti :",
       signIn: "Connectez-vous avec le compte qui a enregistré cette comparaison pour l'ouvrir.", failed: "La comparaison ne s'est pas ouverte. Réessayez dans un instant.",
       saving: "Enregistrement de la comparaison…", saveFailed: "La comparaison n'a pas été enregistrée. Réessayez dans un instant.",
@@ -123,7 +123,7 @@
       locked_one: "{n} report di questo confronto non è pagato. Il testo resta sfocato, e Stampa e Scarica PDF si aprono quando è pagato.",
       locked_other: "{n} report di questo confronto non sono pagati. Il testo resta sfocato, e Stampa e Scarica PDF si aprono quando sono pagati.",
       summary: "Fianco a fianco", indicator: "Indicatore", wins: "Indicatori vinti", leadNote: "Le celle ombreggiate guidano la loro riga. I punteggi vengono da revisioni automatiche: un punto di partenza, non un verdetto.",
-      missing: "Questa revisione è stata eliminata dopo aver salvato il confronto.", opening: "Apertura del confronto…",
+      yours: "Il tuo sito", peersNote: "Una revisione pubblica automatizzata di {n} siti: {sector}{place}. La tua colonna mostra tutto ciò che abbiamo trovato sul tuo sito; i dettagli di sicurezza degli altri siti sono omessi, come i tuoi lo sono nelle loro copie.", peersLink: "Questo link di confronto non è valido. Rispondi alla nostra email e te ne mandiamo uno nuovo.", missing: "Questa revisione è stata eliminata dopo aver salvato il confronto.", opening: "Apertura del confronto…",
       failedRuns: "Non sono in questo confronto perché la revisione non è terminata:",
       signIn: "Accedi con l'account che ha salvato questo confronto per aprirlo.", failed: "Il confronto non si è aperto. Riprova tra un momento.",
       saving: "Salvataggio del confronto…", saveFailed: "Il confronto non è stato salvato. Riprova tra un momento.",
@@ -760,7 +760,7 @@
 
   function columnHead(col, index) {
     return '<th scope="col" translate="no" title="' + esc(bareHost(col.host)) + '" style="--site:' + siteColor(index) + '"><span class="multi-col"><span class="multi-col-mark" aria-hidden="true">' + siteMark(col, index) +
-      '</span><span class="multi-col-name">' + esc(col.name || shortHost(col.host)) + "</span></span></th>";
+      '</span><span class="multi-col-name">' + esc(col.name || shortHost(col.host)) + "</span>" + (col.own ? '<span class="multi-col-own">' + esc(t("yours")) + "</span>" : "") + "</span></th>";
   }
 
   // Each "vs" stays with the site after it, so a wrapped row never starts or ends on a lone "vs".
@@ -783,9 +783,11 @@
     const pdfBtn = root.querySelector("#multi-pdf");
     printBtn.textContent = data.paid ? t("print") : "🔒 " + t("unlockToPrint");
     pdfBtn.textContent = data.paid ? t("pdf") : "🔒 " + t("pdf");
+    pdfBtn.hidden = !!data.peers;
+    root.querySelector("#multi-close").hidden = !!data.peers;
     const locked = root.querySelector("#multi-locked");
-    locked.hidden = data.paid;
-    locked.innerHTML = data.paid ? "" : "<p>" + esc(t("locked", { n: data.locked.length })) + "</p><p>" +
+    locked.hidden = data.paid && !data.peers;
+    locked.innerHTML = data.peers ? "<p>" + esc(t("peersNote", { n: data.columns.length, sector: data.peers.sector, place: data.peers.place ? ", " + data.peers.place : "" })) + "</p>" : data.paid ? "" : "<p>" + esc(t("locked", { n: data.locked.length })) + "</p><p>" +
       data.locked.map((col) => '<a class="btn btn-ghost" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>").join(" ") + "</p>";
     const body = root.querySelector("#multi-body");
     filter = { area: "All", verdict: "open" };
@@ -1001,10 +1003,35 @@
     load(id);
   });
 
-  window.QAReviewMulti = { t, save, load };
+  // A peer group's link from an outreach email (#2363): no account, and the token names the reader's own site.
+  async function loadPeers(id, token) {
+    open();
+    paintFailed([]);
+    say(t("opening"));
+    try {
+      const response = await fetch(endpoint() + "/peers/open", {
+        method: "POST", cache: "no-store", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, t: token })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.error) {
+        say(response.status === 404 ? t("peersLink") : QAReviewReportCopy.error(data, t("failed")), true);
+        return;
+      }
+      paint(data);
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_peers_open", "URL Review", String(data.columns.length));
+    } catch (error) {
+      say(t("failed"), true);
+    }
+  }
 
-  const asked = new URLSearchParams(location.search).get("comparison");
-  if (asked) {
+  window.QAReviewMulti = { t, save, load, loadPeers };
+
+  const query = new URLSearchParams(location.search);
+  const peers = query.get("peers");
+  if (peers) loadPeers(String(peers).replace(/[^A-Za-z0-9]/g, "").slice(0, 40), String(query.get("t") || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 40));
+
+  const asked = query.get("comparison");
+  if (asked && !peers) {
     const start = () => load(String(asked).replace(/[^A-Za-z0-9]/g, "").slice(0, 40));
     if (window.ReviewAuth && ReviewAuth.onChange) {
       let done = false;

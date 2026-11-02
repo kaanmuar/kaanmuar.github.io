@@ -7,6 +7,9 @@ export const MODES = {
   "0 13 * * mon-fri": "replies",
   "0 15 * * mon-fri": "leads",
   "17 */3 * * *": "holidays",
+  // Peer groups (#2363): after leads, the groups the sweep finished are compared and sent; on Mondays, 10 new groups.
+  "30 15 * * mon-fri": "peers",
+  "0 11 * * mon": "peers-build",
 };
 
 const INSTALLATION = 175836846;
