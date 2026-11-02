@@ -21,6 +21,10 @@
  "⟦1⟧ keeps HSTS for only a week.": "⟦1⟧ mantiene HSTS solo una semana.",
  "⟦1⟧ Kubernetes pages share one title.": "⟦1⟧ páginas de Kubernetes comparten un mismo título.",
  "⟦1⟧ languages, no sitemap.": "⟦1⟧ idiomas, sin sitemap.",
+ "⟦1⟧ leads in SEO, Analytics, Performance; ⟦2⟧ leads in GEO, Security, Accessibility.": {
+  "text": "⟦1⟧ líderes en SEO, análisis y rendimiento; ⟦2⟧ lidera en GEO, Seguridad, Accesibilidad.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, GEO, Analytics, Security; ⟦2⟧ leads in Accessibility, Performance.": {
   "text": "⟦1⟧ líderes en SEO, GEO, análisis, seguridad; ⟦2⟧ lidera en Accesibilidad, Rendimiento.",
   "machine": true
@@ -32,6 +36,10 @@
  "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security, Accessibility, Performance.": "⟦1⟧ lidera en SEO y GEO; ⟦2⟧ lidera en Analítica, Seguridad, Accesibilidad y Rendimiento.",
  "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO; ⟦3⟧ leads in Analytics, Accessibility, Performance.": {
   "text": "⟦1⟧ líderes en SEO, Seguridad; ⟦2⟧ lidera en GEO; ⟦3⟧ lidera en Análisis, Accesibilidad, Rendimiento.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Analytics, Security, Accessibility, Performance. ⟦3⟧ leads in none of the six areas.": {
+  "text": "⟦1⟧ clientes potenciales en SEO; ⟦2⟧ lidera en GEO, Análisis, Seguridad, Accesibilidad, Rendimiento. ⟦3⟧ lidera en ninguna de las seis áreas.",
   "machine": true
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Accessibility, Performance.": "⟦1⟧ lidera en SEO; ⟦2⟧ lidera en GEO y Seguridad; ⟦3⟧ lidera en Analítica, Accesibilidad y Rendimiento.",
@@ -62,6 +70,10 @@
  "⟦1⟧ unnamed boxes.": "⟦1⟧ campos sin nombre.",
  "⟦1⟧ vs ⟦2⟧.": {
   "text": "⟦1⟧ contra ⟦2⟧.",
+  "machine": true
+ },
+ "⟦1⟧ vs ⟦2⟧. ⟦3⟧ leads:": {
+  "text": "⟦1⟧ contra ⟦2⟧. ⟦3⟧ pistas:",
   "machine": true
  },
  "⟦1⟧ waits on ⟦2⟧ scripts.": "⟦1⟧ espera a ⟦2⟧ scripts.",
@@ -290,6 +302,14 @@
  "Attackers look for the weakest page.": "Los atacantes buscan la página más débil.",
  "Audit ⟦1⟧ line by line.": "Audita ⟦1⟧ línea a línea.",
  "Audit which pages carry noindex.": "Audita qué páginas llevan noindex.",
+ "Automated analyses of public pages on ⟦1⟧ Nov ⟦2⟧ of ⟦3⟧, ⟦4⟧, ⟦5⟧, ⟦6⟧, natural competitors found on the open web by QA-lab URL Review's rival sweep.": {
+  "text": "Análisis automatizados de páginas públicas el ⟦1⟧ noviembre ⟦2⟧ de ⟦3⟧, ⟦4⟧, ⟦5⟧, ⟦6⟧, competidores naturales encontrados en la web abierta por el barrido rival de QA-lab URL Review.",
+  "machine": true
+ },
+ "Automated analyses of public pages on ⟦1⟧ Nov ⟦2⟧ of ⟦3⟧, ⟦4⟧, natural competitors found on the open web by QA-lab URL Review's rival sweep.": {
+  "text": "Análisis automatizados de páginas públicas el ⟦1⟧ noviembre ⟦2⟧ de ⟦3⟧, ⟦4⟧, competidores naturales encontrados en la web abierta por el barrido rival de QA-lab URL Review.",
+  "machine": true
+ },
  "Automated analyses of public pages on ⟦1⟧ Oct ⟦2⟧ of ⟦3⟧, ⟦4⟧, ⟦5⟧, natural competitors found on the open web by QA-lab URL Review's rival sweep.": "Análisis automáticos de páginas públicas del ⟦1⟧ oct. ⟦2⟧ de ⟦3⟧, ⟦4⟧ y ⟦5⟧, competidores naturales que la búsqueda de rivales de QA-lab URL Review encontró en la web abierta.",
  "Automated analyses of public pages on ⟦1⟧ Oct ⟦2⟧ of ⟦3⟧, ⟦4⟧, natural competitors found on the open web by QA-lab URL Review's rival sweep.": {
   "text": "Análisis automatizados de páginas públicas el ⟦1⟧ ⟦2⟧ de octubre de ⟦3⟧, ⟦4⟧, competidores naturales encontrados en la web abierta por el barrido rival de QA-lab URL Review.",
@@ -308,6 +328,10 @@
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap…": "Compárate con los sitios con los que te comparan tus visitantes, no con una puntuación perfecta: la brecha…",
  "Benchmark against the sites your visitors compare you with, not against a perfect score…": {
   "text": "Compare los sitios con los que sus visitantes lo comparan, no con una puntuación perfecta...",
+  "machine": true
+ },
+ "Benchmark against the sites your visitors compare you with, not against a perfect…": {
+  "text": "Compare los sitios con los que sus visitantes lo comparan, no con un sitio perfecto...",
   "machine": true
  },
  "Benchmark against the sites your visitors compare you with, not…": "Compárate con los sitios con los que te comparan tus visitantes, no…",
@@ -343,6 +367,10 @@
  "Build the sitemap from canonical URLs: https, the www host you serve.": "Genera el sitemap a partir de las URLs canónicas: https y el host www que sirves.",
  "Build the sitemap from the live domain; spot-check it after a move or rebrand.": "Genera el sitemap desde el dominio en producción; revísalo tras una migración o un cambio de marca.",
  "Build, Green (pass); Smoke tests, Passed (pass); Title and description, Still there (pass); Share card, Image changed? (warning); Consent banner, Nothing fires before a choice? (warning).": "Build, en verde (aprobado); Smoke tests, superados (aprobado); Título y descripción, siguen ahí (aprobado); Tarjeta para compartir, ¿cambió la imagen? (aviso); Banner de consentimiento, ¿nada se dispara antes de elegir? (aviso).",
+ "But ⟦1⟧ AI answer or search crawler is blocked.": {
+  "text": "Pero ⟦1⟧ La respuesta de IA o el rastreador de búsqueda están bloqueados.",
+  "machine": true
+ },
  "But ⟦1⟧ AI answer or search crawlers are blocked.": "Pero ⟦1⟧ rastreadores de búsqueda o de respuestas con IA están bloqueados.",
  "But ⟦1⟧ and ⟦2⟧ both serve the site, each names itself canonical, and the sitemap lists only the bare host.": "Pero ⟦1⟧ y ⟦2⟧ sirven ambos el sitio, cada uno se declara canonical y el sitemap solo lista el host sin www.",
  "But ⟦1⟧ disallows bingbot from the whole site, and Bing's index also feeds Copilot.": "Pero ⟦1⟧ prohíbe a bingbot todo el sitio, y el índice de Bing también alimenta a Copilot.",
@@ -725,6 +753,10 @@
  "Decide on purpose, then write it down.": "Decide a propósito y luego déjalo por escrito.",
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by, and block only training crawlers.": "Decide bot por bot en ⟦1⟧: permite los motores de respuesta que quieres que te citen y bloquea solo los rastreadores de entrenamiento.",
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by, and block only training…": "Decide bot por bot en ⟦1⟧: permite los motores de respuesta que quieres que te citen y bloquea solo los de entrenamiento…",
+ "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by, and block only…": {
+  "text": "Decida por bot en ⟦1⟧: permita los motores de respuesta por los que desea ser citado y bloquee solo...",
+  "machine": true
+ },
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by, and block…": "Decide bot por bot en ⟦1⟧: permite los motores de respuestas por los que quieres que te citen, y bloquea…",
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be…": "Decide bot por bot en ⟦1⟧: permite los motores de respuestas por los que quieres que…",
  "Default both to denied where consent is required, and grant them on acceptance.": "Pon ambos en denied por defecto donde se requiera consentimiento y concédelos al aceptar.",
@@ -924,6 +956,10 @@
  "Give every page a canonical link, even when only one address serves it.": "Dale a cada página un enlace canonical, aunque solo la sirva una dirección.",
  "Give every page a unique ⟦1⟧.": "Dale a cada página un ⟦1⟧ único.",
  "Give every page a unique title of about ⟦1⟧ characters: the page first, the site second.": "Dale a cada página un título único de unos ⟦1⟧ caracteres: primero la página, después el sitio.",
+ "Give every page a unique title of about ⟦1⟧ characters: the page first, the site…": {
+  "text": "Asigne a cada página un título único de aproximadamente ⟦1⟧ caracteres: primero la página, el sitio...",
+  "machine": true
+ },
  "Give every page a unique title that leads with its topic.": "Dale a cada página un título único que empiece por su tema.",
  "Give every page one h1 that names it, even a visually hidden one on a front page.": "Dale a cada página un h1 que la nombre, aunque en una portada esté visualmente oculto.",
  "Give images a size.": "Dale tamaño a las imágenes.",
@@ -1481,6 +1517,10 @@
   "text": "Tarjeta de carrera real y competidores naturales. ⟦1⟧ contra ⟦2⟧.",
   "machine": true
  },
+ "Real run, natural competitors card. ⟦1⟧ vs ⟦2⟧. ⟦3⟧ leads:": {
+  "text": "Tarjeta de carrera real y competidores naturales. ⟦1⟧ contra ⟦2⟧. ⟦3⟧ pistas:",
+  "machine": true
+ },
  "Real run, regional card.": "Ejecución real, tarjeta regional.",
  "Real run, requested card.": {
   "text": "Carrera real, tarjeta solicitada.",
@@ -1558,6 +1598,10 @@
  },
  "Scores hidden until tomorrow.": "Puntuaciones ocultas hasta mañana.",
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO…": "Puntuaciones comparadas: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analítica ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analítica ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧; ⟦17⟧ Puntuación ⟦18⟧, SEO…",
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score…": {
+  "text": "Puntuaciones una al lado de la otra: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Análisis ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Análisis ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧; ⟦17⟧ Puntuación…",
+  "machine": true
+ },
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧;…": "Puntuaciones comparadas: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analítica ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analítica ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧;…",
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧.": {
   "text": "Puntuaciones una al lado de la otra: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Análisis ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Análisis ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧.",

@@ -105,6 +105,20 @@ function couponOpen(coupon, purpose, reportId, now, usedByEmail) {
   return true;
 }
 
+// The account that ran a report opens its blurred copy again at no charge for this many days.
+const REOPEN_FREE_DAYS = 7;
+
+function reopenFreeUntil(record) {
+  const raw = record && record.createdAt;
+  const at = raw && typeof raw.toDate === "function" ? raw.toDate().getTime() : Date.parse(raw || "");
+  return at ? new Date(at + REOPEN_FREE_DAYS * DAY_MS).toISOString() : "";
+}
+
+function reopenFree(record, now) {
+  const until = reopenFreeUntil(record);
+  return !!until && (now == null ? Date.now() : new Date(now).getTime()) < Date.parse(until);
+}
+
 function returnsBefore(rows, before) {
   const end = before ? Date.parse(before) : Date.now();
   const month = 30 * 24 * 60 * 60 * 1000;
@@ -534,6 +548,9 @@ module.exports = {
   discountFor,
   cleanCode,
   couponOpen,
+  REOPEN_FREE_DAYS,
+  reopenFreeUntil,
+  reopenFree,
   returnsBefore,
   languageOf,
   catalog,

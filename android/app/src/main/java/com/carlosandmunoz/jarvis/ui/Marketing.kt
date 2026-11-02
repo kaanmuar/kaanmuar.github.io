@@ -245,6 +245,17 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
         }
     }
 
+    val sent = mk.obj("sent")?.takeIf { it.isOk() }
+    Panel("Cold emails sent" + (sent?.num("total")?.let { " · ${fmt(it)}" } ?: "")) {
+        if (sent == null) { Muted(mk.obj("sent").str("error") ?: ext.obj("marketing").str("error") ?: "Pull down to read what Instantly sent."); return@Panel }
+        KpiPairs(listOf(KpiData("Sent", fmt(sent.num("total"))), KpiData("Opened", fmt(sent.num("opened"))), KpiData("Replied", fmt(sent.num("replied"))),
+            KpiData("Bounced", fmt(sent.num("bounced")), alert = (sent.num("bounced") ?: 0.0) > 0)))
+        val rows = sent.objs("rows")
+        if (rows.isEmpty()) Muted("No cold email has gone out yet" + (camps.str("firstStart")?.let { "; the first goes out $it" } ?: "") + ".")
+        rows.take(60).forEach { r -> SentEmail(r, s, ::ask, vm) }
+        Muted("Send again forwards the same email, with its original text, from the mailbox that sent it: to the same address, or to another contact at the organisation.")
+    }
+
     Panel("Campaigns (Instantly)" + (camps?.objs("rows")?.size?.let { " · $it" } ?: "")) {
         if (camps == null) { Muted(mk.obj("campaigns").str("error") ?: ext.obj("marketing").str("error") ?: "Pull down to read the campaigns."); return@Panel }
         CampaignRows(camps, s, vm, ::ask)
@@ -389,6 +400,51 @@ private fun Reply(r: JsonObject, s: UiState, ask: (String, () -> Unit) -> Unit, 
                 TextButton({ ask("never contact $from again and block it in Instantly") {
                     vm.market("mk:dnc:$id", "marketing-command", mapOf("action" to JsonPrimitive("dnc"), "value" to JsonPrimitive(from), "reason" to JsonPrimitive("asked from a reply"))) { "Never contact $from." }
                 } }) { Text("Do not contact", color = J.pink, fontSize = 13.sp) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SentEmail(r: JsonObject, s: UiState, ask: (String, () -> Unit) -> Unit, vm: JarvisViewModel) {
+    val id = r.str("id").orEmpty()
+    val to = r.str("to").orEmpty()
+    val org = r.str("org").orEmpty()
+    val bounced = r.bool("bounced") == true
+    val replied = (r.num("replied") ?: 0.0) > 0
+    val unsubscribed = r.bool("unsubscribed") == true
+    var other by rememberSaveable(id) { mutableStateOf<String?>(null) }
+    fun send(target: String) = ask("send the email to $to again" + (if (target != to) ", this time to $target" else "") + " (forwarded with its original text)") {
+        vm.market("mk:resend:$id", "marketing-resend", mapOf("id" to JsonPrimitive(id), "to" to JsonPrimitive(target))) { out -> "Sent again to ${out.str("to") ?: target} from ${out.str("from").orEmpty()}." }
+    }
+    Column(Modifier.fillMaxWidth().padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(r.str("name")?.ifEmpty { null } ?: to, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            val (label, color) = when {
+                replied -> "replied" to J.green
+                bounced -> "bounced" to J.pink
+                unsubscribed -> "unsubscribed" to J.pink
+                (r.num("opened") ?: 0.0) > 0 -> "opened ${fmt(r.num("opened"))}×" to J.amber
+                else -> "no open yet" to J.muted
+            }
+            Text(label, color = color, fontSize = 12.sp)
+        }
+        Muted(listOfNotNull(to.takeIf { r.str("name")?.isNotEmpty() == true }, org.ifEmpty { null }, ago(r.str("at"))).joinToString(" · "))
+        Muted((if (r.str("kind") == "resend") "sent again from Jarvis" else listOfNotNull(r.str("campaign"), r.num("step")?.takeIf { it > 0 }?.let { "step ${it.toInt()}" }).joinToString(" · ")) + " · from " + r.str("from").orEmpty())
+        r.str("subject")?.takeIf { it.isNotEmpty() }?.let { Text(it, color = J.dim, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        r.objs("resent").forEach { x -> Muted("Sent again to ${x.str("to").orEmpty()} ${ago(x.str("at")) ?: ""}") }
+        if (!replied && !unsubscribed) {
+            if (other != null) {
+                OutlinedTextField(other.orEmpty(), { other = it }, label = { Text("Another contact at ${org.ifEmpty { "the organisation" }}") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (other == null) {
+                    if (!bounced) ActionButton("Send again", "mk:resend:$id" in s.running) { send(to) }
+                    TextButton({ other = "" }) { Text("To someone else", color = J.cyan, fontSize = 13.sp) }
+                } else {
+                    ActionButton("Send to them", "mk:resend:$id" in s.running) { other?.trim()?.takeIf { it.contains("@") }?.let { send(it) } }
+                    TextButton({ other = null }) { Text("Cancel", color = J.muted, fontSize = 13.sp) }
+                }
             }
         }
     }

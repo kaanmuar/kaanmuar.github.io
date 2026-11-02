@@ -247,6 +247,8 @@
                     "https://dev.to/qalaburlreview",
                     "https://www.reddit.com/user/qalaburlreview/",
                     "https://www.tiktok.com/@qalaburlreview",
+                    "https://www.instagram.com/qaurlreview/",
+                    "https://www.threads.com/@qaurlreview",
                     "https://www.facebook.com/qalaburlreview"
                 ]
             },
@@ -1014,6 +1016,13 @@
         .prio-P1 { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); }
         .prio-P2 { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); }
         .case-pages { font-size: 12px; overflow-wrap: anywhere; }
+        .case-sample { margin: 6px 0; padding: 12px 14px; border: 1px solid var(--line); border-left: 4px solid var(--cyan); border-radius: 10px; background: var(--panel); }
+        .case-sample-label { margin: 6px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--cyan); }
+        .case-split { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 8px 0; font-size: 14px; }
+        .case-split dt { color: var(--muted); font-size: 12px; font-weight: 700; }
+        .case-split dd { margin: 0; }
+        .case-script-fw { margin: 10px 0 4px; font-size: 12px; color: var(--muted); }
+        .case-script { margin: 0; max-height: 16rem; overflow: auto; white-space: pre; overflow-wrap: normal; font-family: "Fira Code", ui-monospace, monospace; font-size: 11.5px; line-height: 1.5; background: var(--panel-2); border-radius: 10px; padding: 10px 12px; }
         .tag { display: inline-block; margin-left: 6px; font-size: 11px; color: var(--amber); }
         .muted { color: var(--muted); }
         .gate { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 88%, #000); z-index: 40; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px; overflow: auto; }
@@ -1309,7 +1318,7 @@
                     <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg><span class="tg-text"><b class="tg-title" data-tg="pay" lang="fr" translate="no">Paiement et vos droits</b><span class="tg-gist" data-tg="pay" lang="fr" translate="no">La première analyse est incluse ; le reste est payé avant de commencer. Vous ne renoncez pas aux droits de rétractation que la loi maintient.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
                     <div class="tg-body">
                         <label class="check" lang="fr" translate="no"><input type="checkbox" name="t7"> La première analyse incluse couvre 20 pages et 2 liens de profondeur. Une analyse plus large ou plus profonde, et chaque exécution suivante, demande un paiement avant de commencer, sauf si le compte dispose d’une allocation gratuite ou de test, d’un coupon ou d’un pass accordé par l’opérateur. Le montant s’affiche à ce moment-là, sur la page de paiement. Un autre nom ou un autre e-mail n’évite pas ce paiement. Les analyses arrêtées sont conservées. Trois arrêts dans la journée suspendent les analyses suivantes.</label>
-                        <label class="check" lang="fr" translate="no"><input type="checkbox" name="t8"> Le rapport est affiché une fois, et les exécutions faites en étant connecté figurent sur la page de mon compte. Le rapport complet ne s’ouvre que pour le compte connecté qui l’a lancé. Toute autre personne disposant du lien voit l’aperçu flouté et est invitée à se connecter. La première fois qu’un autre compte connecté ouvre le lien, je reçois un e-mail. Le rapport compte ces ouvertures et garde la première et la dernière heure, jamais qui l’a ouvert. Le revoir, le télécharger ou l’imprimer demande un paiement, sauf si le compte dispose d’une allocation gratuite ou de test, d’un coupon ou d’un pass accordé par l’opérateur. Le montant s’affiche alors. Le début de chaque cas proposé reste lisible. Le reste du cas reste flouté jusqu’à la confirmation de ce paiement. Une copie des scores et des constats arrive dans ma boîte mail à la fin de l’analyse, floutée sauf si le rapport est payé ou si mon compte est gratuit. Le PDF joint porte mon adresse e-mail sur chaque page.</label>
+                        <label class="check" lang="fr" translate="no"><input type="checkbox" name="t8"> Le rapport est affiché à la fin de l’analyse, et les exécutions faites en étant connecté figurent sur la page de mon compte. Le rapport complet ne s’ouvre que pour le compte connecté qui l’a lancé. Toute autre personne disposant du lien voit l’aperçu flouté et est invitée à se connecter. La première fois qu’un autre compte connecté ouvre le lien, je reçois un e-mail. Le rapport compte ces ouvertures et garde la première et la dernière heure, jamais qui l’a ouvert. Pendant 7 jours après l’analyse, le compte qui l’a lancée peut rouvrir le rapport flouté sans frais. Ensuite, le revoir, le télécharger ou l’imprimer demande un paiement, sauf si le compte dispose d’une allocation gratuite ou de test, d’un coupon ou d’un pass accordé par l’opérateur. Le montant s’affiche alors. Sur la page du rapport, le premier cas proposé est montré en entier comme exemple, avec ses étapes et un script. Le début de chacun des autres cas reste lisible, et le reste reste flouté jusqu’à la confirmation de ce paiement. Une copie des scores et des constats arrive dans ma boîte mail à la fin de l’analyse, floutée sauf si le rapport est payé ou si mon compte est gratuit. Le PDF joint porte mon adresse e-mail sur chaque page.</label>
                         <label class="check" lang="fr" translate="no"><input type="checkbox" name="t10"> Je demande que le service commence pendant tout délai de rétractation. Je reconnais qu’un consommateur de l’Union européenne, en vertu de la directive 2011/83/UE, article 16, et un consommateur du Royaume-Uni, en vertu des Consumer Contracts Regulations 2013, règle 36(2), ne perd le droit de rétractation qu’une fois le service pleinement exécuté. Je ne renonce pas à un droit de rétractation que ces règles maintiennent.</label>
                     </div>
                 </details>
@@ -1360,12 +1369,12 @@
                 <div>
                     <p class="eyebrow" data-live-eyebrow lang="fr" translate="no">Rapports en direct</p>
                     <h2 id="live-title" class="live-title" data-live-title lang="fr" translate="no">De vrais sites. De vraies analyses. <em>Ouvrez le rapport de votre choix.</em></h2>
-                    <p class="live-lede" data-live-lede lang="fr" translate="no"><b>457 sites publics</b>, analysés par le même outil que chacun peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Parcourez le carrousel, filtrez par secteur ou pays, puis ouvrez un rapport. Les analyses demandées par les visiteurs s’ajoutent chaque jour, par lot. Consultation et partage uniquement.</p>
+                    <p class="live-lede" data-live-lede lang="fr" translate="no"><b>729 sites publics</b>, analysés par le même outil que chacun peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Parcourez le carrousel, filtrez par secteur ou pays, puis ouvrez un rapport. Les analyses demandées par les visiteurs s’ajoutent chaque jour, par lot. Consultation et partage uniquement.</p>
                 </div>
             </header>
             <div class="live-filters-slot" data-live-filters></div>
         </div>
-        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="fr" translate="no">Les Live Reports ont besoin de JavaScript pour s’ouvrir. Au 27 octobre 2026, la série compte 457 sites publics dans 27 secteurs, analysés depuis le 19 octobre 2026 par la même analyse que chacun peut lancer ; les nouvelles analyses s’ajoutent par lot chaque jour. Le score global moyen est de 71 sur 100 : SEO 67, GEO 84, analytics 75, sécurité 60, accessibilité 68 et performance 75. Les meilleurs scores globaux sont MDN Web Docs 95, CA.gov 92, GOV.UK 92 et GitHub Docs 91. La série couvre des portails publics comme GOV.UK, GOV.CO et l’Alcaldía de Bogotá ; des gouvernements régionaux comme CA.gov, la Generalitat de Catalunya et la Gobernación del Valle del Cauca ; des rédactions comme la BBC, The Guardian et El País ; des banques comme Bancolombia et Davivienda ; des universités comme le MIT, Stanford et l’Universidad de los Andes ; des projets open source comme Python.org, Node.js et Kubernetes ; et des réseaux de transport comme TransMilenio et le Metro de Medellín. Chaque rapport est une analyse automatisée de pages publiques, un point de départ et non un verdict.</p></noscript></div>
+        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="fr" translate="no">Les Live Reports ont besoin de JavaScript pour s’ouvrir. Au 2 novembre 2026, la série compte 729 sites publics dans 27 secteurs, analysés depuis le 19 octobre 2026 par la même analyse que chacun peut lancer ; les nouvelles analyses s’ajoutent par lot chaque jour. Le score global moyen est de 68 sur 100 : SEO 66, GEO 84, analytics 71, sécurité 55, accessibilité 62 et performance 72. Les meilleurs scores globaux sont MDN Web Docs 95, CA.gov 92, GOV.UK 92 et GitHub Docs 91. La série couvre des portails publics comme GOV.UK, GOV.CO et l’Alcaldía de Bogotá ; des gouvernements régionaux comme CA.gov, la Generalitat de Catalunya et la Gobernación del Valle del Cauca ; des rédactions comme la BBC, The Guardian et El País ; des banques comme Bancolombia et Davivienda ; des universités comme le MIT, Stanford et l’Universidad de los Andes ; des projets open source comme Python.org, Node.js et Kubernetes ; et des réseaux de transport comme TransMilenio et le Metro de Medellín. Chaque rapport est une analyse automatisée de pages publiques, un point de départ et non un verdict.</p></noscript></div>
     </div>
 </section>
 <main id="review-app" tabindex="-1">
@@ -1401,7 +1410,7 @@
             <dt lang="fr" translate="no">Règles</dt>
             <dd lang="fr" translate="no">Une analyse examine une page publique, vous dit ce qu’elle a trouvé et suggère des cas de test utilisables par votre équipe. Les avertissements expliquent comment cela fonctionne, y compris ce qui s’applique dans le pays du site analysé.</dd>
             <dt lang="fr" translate="no">Ailleurs</dt>
-            <dd lang="fr" translate="no">Vidéos et notes sur <a href="https://www.youtube.com/@qalaburlreview" rel="me noopener" target="_blank">YouTube</a>, <a href="https://www.tiktok.com/@qalaburlreview" rel="me noopener" target="_blank">TikTok</a>, <a href="https://www.facebook.com/qalaburlreview" rel="me noopener" target="_blank">Facebook</a>, <a href="https://x.com/qalaburlreview" rel="me noopener" target="_blank">X</a>, <a href="https://www.linkedin.com/company/qalab-url-review" rel="me noopener" target="_blank">LinkedIn</a>, <a href="https://dev.to/qalaburlreview" rel="me noopener" target="_blank">DEV</a> et <a href="https://www.reddit.com/user/qalaburlreview/" rel="me noopener" target="_blank">Reddit</a>.</dd>
+            <dd lang="fr" translate="no">Vidéos et notes sur <a href="https://www.youtube.com/@qalaburlreview" rel="me noopener" target="_blank">YouTube</a>, <a href="https://www.tiktok.com/@qalaburlreview" rel="me noopener" target="_blank">TikTok</a>, <a href="https://www.facebook.com/qalaburlreview" rel="me noopener" target="_blank">Facebook</a>, <a href="https://www.instagram.com/qaurlreview/" rel="me noopener" target="_blank">Instagram</a>, <a href="https://www.threads.com/@qaurlreview" rel="me noopener" target="_blank">Threads</a>, <a href="https://x.com/qalaburlreview" rel="me noopener" target="_blank">X</a>, <a href="https://www.linkedin.com/company/qalab-url-review" rel="me noopener" target="_blank">LinkedIn</a>, <a href="https://dev.to/qalaburlreview" rel="me noopener" target="_blank">DEV</a> et <a href="https://www.reddit.com/user/qalaburlreview/" rel="me noopener" target="_blank">Reddit</a>.</dd>
         </dl>
     </details>
     <section id="intake" class="card">
@@ -1847,9 +1856,9 @@
 <script src="js/qa-review-ask.js?v=20261109a" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261128d" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261128e" defer></script>
 <script src="js/qa-review-findings-copy.fr.js?v=20261110b" defer></script>
-<script src="js/qa-review.js?v=20261128e" defer></script>
+<script src="js/qa-review.js?v=20261128f" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261128c" defer></script>
 <script src="js/url-suggest.js?v=20261109a" defer></script>
