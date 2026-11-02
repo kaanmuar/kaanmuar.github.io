@@ -2228,6 +2228,48 @@ exports.sweepReviews = require("firebase-functions/v2/scheduler").onSchedule({
   secrets: SECRETS.sweep
 }, () => track("sweepReviews", () => sweepReviews()));
 
+// Local-business prospects from Google Maps for tonight's sweep (#2120); see functions/url-review-prospects.js.
+async function placesProspects() {
+  const key = process.env.PLACES_KEY;
+  if (!key) return "no PLACES_KEY";
+  const db = getFirestore();
+  const sweepRef = db.collection("url_review_sweep");
+  const [stateSnap, outreachSnap, sweepSnap] = await Promise.all([sweepRef.doc("places").get(), sweepRef.doc("outreach").get(), sweepRef.doc("state").get()]);
+  const hosts = (outreachSnap.data() || {}).hosts || [];
+  const waiting = Math.max(0, hosts.length - (Number((sweepSnap.data() || {}).outreachAt) || 0));
+  const day = new Date().toISOString().slice(0, 10);
+  const out = await prospects.night({
+    state: stateSnap.data(), known: new Set(hosts.map((h) => h.host)), waiting, day,
+    search: (body) => prospects.placesSearch(body, key)
+  });
+  if (out.calls) {
+    await db.collection("url_review_places").doc(day).set({ day, calls: FieldValue.increment(out.calls), prospectCalls: FieldValue.increment(out.calls), errors: FieldValue.increment(out.errors), ok: FieldValue.increment(out.calls - out.errors) }, { merge: true });
+  }
+  let added = 0;
+  if (out.rows.length) {
+    added = await db.runTransaction(async (tx) => {
+      const ref = sweepRef.doc("outreach");
+      const list = ((await tx.get(ref)).data() || {}).hosts || [];
+      const known = new Set(list.map((h) => String(h.host || "").replace(/^www\./, "")));
+      const fresh = out.rows.filter((r) => !known.has(r.host.replace(/^www\./, "")));
+      if (fresh.length) tx.set(ref, { hosts: list.concat(fresh), updated: new Date().toISOString() }, { merge: true });
+      return fresh.length;
+    });
+  }
+  await sweepRef.doc("places").set(out.state);
+  return out.state.last.skipped ? "skipped: " + out.state.last.waiting + " prospects still waiting" : out.calls + " Places searches, " + added + " prospects added" + (out.errors ? ", " + out.errors + " errors" : "");
+}
+
+const prospects = require("./url-review-prospects");
+exports.placesProspects = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("placesProspects"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: 300,
+  memory: "256MiB",
+  maxInstances: 1,
+  secrets: SECRETS.prospects
+}, () => track("placesProspects", () => placesProspects()));
+
 const rivals = require("./url-review-rivals");
 
 // Reviews of a host (with or without www.) that could go public; the newest recent one, or null.
