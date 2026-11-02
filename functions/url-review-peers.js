@@ -61,13 +61,20 @@ function peerReport(report, own) {
   return copy;
 }
 
+// The benchmark (js/qa-review-benchmark.js) reads every "you" line from the first column, so each reader's copy puts
+// their own site first and keeps the others in group order.
+function readerFirst(doc, viewer) {
+  const pairs = (doc.ids || []).map((reviewId, index) => ({ reviewId, host: (doc.hosts || [])[index] || "" }));
+  const at = pairs.findIndex((pair) => compare.sameSite(pair.host, viewer));
+  return at > 0 ? [pairs[at]].concat(pairs.slice(0, at), pairs.slice(at + 1)) : pairs;
+}
+
 // rows: url_reviews records by review id. viewer: the host the token names, or "" for a token that names none.
 function payloadOf(id, doc, rows, viewer) {
   const byId = rows || {};
-  const columns = (doc.ids || []).map((reviewId, index) => {
+  const columns = readerFirst(doc, viewer).map(({ reviewId, host }) => {
     const clean = compare.cleanId(reviewId);
     const row = byId[clean];
-    const host = (doc.hosts || [])[index] || "";
     if (!row || !row.report) return { id: clean, host, missing: true, paid: true };
     const own = compare.sameSite(row.report.host || host, viewer);
     return Object.assign({
