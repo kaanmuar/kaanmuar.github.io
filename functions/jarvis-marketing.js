@@ -243,15 +243,28 @@ async function queueProspects(db, body, now) {
   return { added: added.length, already: parsed.hosts.length - added.length, skipped: parsed.skipped };
 }
 
-// --- The Mac's outreach folder (#1730) ------------------------------------------------------------------------
-// scripts/jarvis-marketing-sync.js uploads the folder to jarvis_settings/marketing_sync every 5 minutes and runs
-// the commands queued here in jarvis_commands. Replies and blocks go to Instantly at once; the rest wait for the Mac.
+// --- The outreach folder (#1730, #1980) ------------------------------------------------------------------------
+// The kaanmuar/qa-lab-outreach Action (scripts/outreach-weekly.js sync) uploads the folder to jarvis_settings/marketing_sync
+// every 3 hours and after each job, and runs the commands queued here in jarvis_commands. Queuing one starts that sync
+// at once. Replies and blocks go to Instantly at once.
 const WEEK = /^W\d{1,2}$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const JOBS = ["prospects", "leads", "replies"];
 // Same list as EDITABLE in scripts/marketing-leads-autopilot.js.
 const LEAD_EDITABLE = ["first_name", "last_name", "title", "top_finding", "best_point", "peer_1", "peer_2", "regulation_line", "course_or_programme", "month", "one_line_from_lecture_kit"];
-const STALE = 20 * 60 * 1000;
+const STALE = 4 * 3600 * 1000;
+const OUTREACH_WORKFLOW = "https://api.github.com/repos/kaanmuar/qa-lab-outreach/actions/workflows/outreach.yml/dispatches";
+
+// Starts the outreach Action's sync; false when there is no GitHub token or GitHub refuses, and the 3-hourly sync runs it.
+async function startSync(ctx) {
+  const token = ctx.githubToken ? await ctx.githubToken().catch(() => "") : "";
+  if (!token) return false;
+  const res = await ctx.fetch(OUTREACH_WORKFLOW, {
+    method: "POST", signal: AbortSignal.timeout(15000), body: JSON.stringify({ ref: "main", inputs: { mode: "sync" } }),
+    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json" }
+  }).catch(() => null);
+  return !!res && res.status === 204;
+}
 const arr = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
 const str = (v, max) => String(v == null ? "" : v).slice(0, max);
 
@@ -280,8 +293,8 @@ async function syncSource(ctx) {
     ctx.db.collection("jarvis_commands").orderBy("createdAt", "desc").limit(60).get()
   ]);
   const out = Object.assign({ ok: true, needs: [] }, syncRows(doc.exists ? doc.data() : null, cmds.docs.map((c) => Object.assign({ id: c.id }, c.data())), ctx.now));
-  if (!out.at) out.needs.push("Mac sync: run `tools/weekly/run.sh install` on the Mac so the outreach folder reaches Jarvis.");
-  else if (out.stale) out.needs.push("Mac sync: last synced " + Math.round(out.age / 60000) + " minutes ago; the Mac is asleep or the job stopped.");
+  if (!out.at) out.needs.push("Outreach sync: run the qa-lab-outreach Action's sync so the outreach folder reaches Jarvis.");
+  else if (out.stale) out.needs.push("Outreach sync: last synced " + Math.round(out.age / 3600000) + " hours ago; check the qa-lab-outreach Action.");
   return out;
 }
 
@@ -330,7 +343,7 @@ function commandOf(body) {
   if (action === "run") {
     const job = str(b.job, 20);
     if (!JOBS.includes(job)) throw new Error("Run prospects, leads or replies.");
-    return { action, args: { job }, label: "Run the " + job + " job on the Mac" };
+    return { action, args: { job }, label: "Run the " + job + " job" };
   }
   throw new Error("Unknown marketing command.");
 }
@@ -385,11 +398,12 @@ async function command(ctx, db, body) {
     .then((ref) => ({ queued: ref.id, action: c.action, label: c.label }));
   if (body && body.action === "reply") {
     const sent = await sendReply(ctx, db, body);
-    return Object.assign(await add({ action: "replied", args: { id: sent.id, at: now }, label: "Answered " + sent.to }), { sent });
+    return Object.assign(await add({ action: "replied", args: { id: sent.id, at: now }, label: "Answered " + sent.to }), { sent, syncing: await startSync(ctx) });
   }
   const c = commandOf(body);
   const out = await add(c);
   if (c.action === "dnc" && (ctx.env || {}).INSTANTLY_API_KEY) out.blocked = (await block(ctx, { value: c.args.value })).blocked;
+  out.syncing = await startSync(ctx);
   return out;
 }
 

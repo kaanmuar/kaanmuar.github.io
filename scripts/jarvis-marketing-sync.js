@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-/* Syncs the private outreach folder with Jarvis > Marketing (#1730). launchd runs it every 5 minutes
-   (`tools/weekly/run.sh sync`, installed by `run.sh install`):
+/* Syncs the private outreach folder with Jarvis > Marketing (#1730). The kaanmuar/qa-lab-outreach Action runs it
+   every 3 hours, after each job, and at once when Jarvis queues a command (`scripts/outreach-weekly.js sync`, #1980):
      1. runs the commands queued from Jarvis in jarvis_commands, oldest first, and marks each done or failed;
      2. uploads the folder to jarvis_settings/marketing_sync: leads per week, replies with their drafts, the LinkedIn
         day, do-not-contact, each job's last run, the campaigns paused for holidays and the weekly KPIs.
@@ -9,7 +9,7 @@
 
    While an agent run holds <state>/lock, commands that edit the folder wait for the next sync.
    The folder's rows stay out of this repo; only the owner-only Firestore document and the jarvis function see them.
-   Uses the gcloud login, like scripts/jarvis-outreach-plan.js. */
+   Uses GOOGLE_APPLICATION_CREDENTIALS in the Action, else the gcloud login, like scripts/jarvis-outreach-plan.js. */
 
 const fs = require("fs");
 const os = require("os");
@@ -146,7 +146,7 @@ function linkedin(dir) {
   return { date, items: items.slice(0, 80) };
 }
 
-// Each working day from 07:00 (Mac time), writes the day's LinkedIn list once; the tool skips people listed before.
+// Each working day from 07:00 local time (the Action sets TZ=America/Bogota), writes the day's LinkedIn list once; the tool skips people listed before.
 function linkedinDay(dir, now, run) {
   const at = new Date(now);
   if (at.getDay() === 0 || at.getDay() === 6 || at.getHours() < 7) return "";
@@ -182,7 +182,7 @@ function paused(dir) {
 
 function snapshot(dir, state, now) {
   return {
-    at: new Date(now).toISOString(), host: os.hostname(), running: fs.existsSync(path.join(state, "lock")),
+    at: new Date(now).toISOString(), host: process.env.GITHUB_ACTIONS ? "GitHub Actions" : os.hostname(), running: fs.existsSync(path.join(state, "lock")),
     leads: leads(dir, state, now), replies: replies(dir, now), linkedin: linkedin(dir), dnc: dnc(dir), jobs: jobs(state), paused: paused(dir), kpis: kpis(dir)
   };
 }
@@ -279,6 +279,10 @@ const HANDLERS = {
   },
   run: (dir, a, now, state) => {
     if (!JOBS.includes(a.job)) throw new Error("Unknown job.");
+    if (process.env.GITHUB_ACTIONS) {
+      execFileSync("gh", ["workflow", "run", "outreach.yml", "-f", "mode=" + a.job], { cwd: dir, encoding: "utf8", timeout: 60000 });
+      return "started " + a.job + " in the outreach Action";
+    }
     const script = path.join(state, "run.sh");
     if (!fs.existsSync(script)) throw new Error("run.sh is not installed in " + state + ".");
     spawn("/bin/bash", [script, a.job], { detached: true, stdio: "ignore" }).unref();
@@ -301,6 +305,7 @@ function runCommand(cmd, dir, state, now) {
 function firestore() {
   const fnRequire = Module.createRequire(path.join(FN, "index.js"));
   const { Firestore } = fnRequire("@google-cloud/firestore");
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) return new Firestore({ projectId: PROJECT });
   const { OAuth2Client } = fnRequire("google-auth-library");
   const authClient = new OAuth2Client({ quotaProjectId: PROJECT });
   authClient.setCredentials({ access_token: execSync("gcloud auth print-access-token", { encoding: "utf8" }).trim(), expiry_date: Date.now() + 45 * 60000 });

@@ -1279,7 +1279,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
           </div>`;
 
         const sy = e['marketing-sync'] && e['marketing-sync'].ok ? e['marketing-sync'] : null;
-        const syWait = wait('marketing-sync', 'Reading the Mac sync…');
+        const syWait = wait('marketing-sync', 'Reading the outreach sync…');
         const cmds = sy ? sy.commands.items : [];
         const pendingFor = (action, key) => cmds.some((c) => c.status === 'pending' && c.action === action && c.label.includes(key));
         const cmdBtn = (label, data, opts) => `<button type="button" class="jv-btn small${(opts && opts.cls) || ''}" data-mk-cmd="${esc(data.action)}" ${Object.entries(data).filter(([k]) => k !== 'action').map(([k, v]) => `data-${k}="${esc(v)}"`).join(' ')}${opts && opts.disabled ? ' disabled' : ''}>${esc(label)}</button>`;
@@ -1299,13 +1299,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             return `<div class="jv-actions">${out.join('')}</div>`;
         };
         const leadAct = (r) => r.uploaded ? `<span class="jv-chip c-fast">uploaded ${esc(r.uploaded)}</span>`
-            : cmds.some((c) => c.status === 'pending' && c.label.includes(r.email)) ? '<span class="jv-chip c-average">waiting for the Mac</span>'
+            : cmds.some((c) => c.status === 'pending' && c.label.includes(r.email)) ? '<span class="jv-chip c-average">waiting for the sync</span>'
             : r.dropped ? '<span class="jv-chip">dropped</span> ' + cmdBtn('Bring back', { action: 'lead-drop', week: r.week, email: r.email, on: 'no' })
             : r.approved ? cmdBtn('Unapprove', { action: 'approve', week: r.week, email: r.email, on: 'no' })
             : r.ask ? `<span class="jv-chip c-slow">needs you</span> <span class="jv-note">${esc(r.ask)}</span>${leadFix(r)}`
             : r.missing ? `<span class="jv-chip c-average" title="${esc(r.missing)}">Jarvis</span> <span class="jv-note">${esc(r.wait || 'Jarvis is on it.')}</span>${leadFix(r)}`
             : cmdBtn('Approve', { action: 'approve', week: r.week, email: r.email, on: 'yes' });
-        const leadsBody = !sy ? syWait : !lw.length ? '<p class="jv-empty">No leads files on the Mac yet; the Monday leads job writes them.</p>'
+        const leadsBody = !sy ? syWait : !lw.length ? '<p class="jv-empty">No leads files yet; the Monday leads job writes them.</p>'
             : `<div class="jv-chips">${lw.map((w) => `<button type="button" class="jv-btn small" aria-pressed="${week && w.week === week.week}" data-mk-week="${esc(w.week)}">${esc(w.week)} · ${w.uploaded}/${w.total}</button>`).join(' ')}</div>`
             + stats([{ label: 'Leads', value: week.total }, { label: 'Complete', value: week.complete }, { label: 'Missing something', value: week.missing }, { label: 'Needs you', value: week.ask || 0, alert: week.ask > 0 }, { label: 'Approved', value: week.approved }, { label: 'Uploaded', value: week.uploaded }, { label: 'Ready to upload', value: week.ready }])
             + `<div class="jv-actions">${cmdBtn(`Approve every complete lead in ${week.week}`, { action: 'approve-week', week: week.week }, { disabled: week.complete <= week.approved + week.uploaded })}${cmdBtn(`Upload ${week.ready} approved to Instantly`, { action: 'upload', week: week.week }, { cls: ' is-primary', disabled: !week.ready || pendingFor('upload', week.week) })}</div>`
@@ -1330,16 +1330,16 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                 ['Since', sentWhat], ['', sentAct]], sent.rows, `No cold email has gone out yet${camps && camps.firstStart ? '; the first goes out ' + esc(camps.firstStart) : ''}.`);
         const li = sy ? sy.linkedin : null;
         const liSent = li ? li.items.filter((p) => p.sent).length : 0;
-        const linkedinBody = !sy ? syWait : !li.items.length ? '<p class="jv-empty">No LinkedIn list yet; the Mac writes one each working day from 07:00, with up to 15 prospects never listed before.</p>'
+        const linkedinBody = !sy ? syWait : !li.items.length ? '<p class="jv-empty">No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before.</p>'
             : `<div class="jv-rings">${ring(pct(liSent, li.items.length), liSent + ' of ' + li.items.length + ' sent', COLORS.cyan, 92)}</div><ul class="jv-facts">${li.items.map((p) => `<li><span class="jv-chip ${p.sent ? 'c-fast' : ''}">${p.sent ? 'sent' : 'to send'}</span> <strong>${esc(p.name)}</strong>, ${esc(p.title)} <span class="jv-note">(${esc(p.org)}, ${esc(p.cc)})</span>
-                ${p.profile ? `<a class="jv-btn small" href="${esc(p.profile)}" target="_blank" rel="noopener">Profile</a>` : ''}${pendingFor('linkedin', p.name) ? '<span class="jv-chip c-average">waiting for the Mac</span>' : cmdBtn(p.sent ? 'Not sent' : 'Mark sent', { action: 'linkedin', date: li.date, name: p.name, sent: p.sent ? 'no' : 'yes' })}</li>`).join('')}</ul>`;
+                ${p.profile ? `<a class="jv-btn small" href="${esc(p.profile)}" target="_blank" rel="noopener">Profile</a>` : ''}${pendingFor('linkedin', p.name) ? '<span class="jv-chip c-average">waiting for the sync</span>' : cmdBtn(p.sent ? 'Not sent' : 'Mark sent', { action: 'linkedin', date: li.date, name: p.name, sent: p.sent ? 'no' : 'yes' })}</li>`).join('')}</ul>`;
         const dncBody = !sy ? syWait : stats([{ label: 'Never contact', value: sy.dnc.length }]) + (sy.dnc.length ? table([['Address or domain', (d) => esc(d.value)], ['Added', (d) => esc(d.at)], ['Why', (d) => `<span class="jv-note">${esc(d.reason)}</span>`]], sy.dnc.slice(-12).reverse()) : '<p class="jv-empty">Nobody has asked to stop yet.</p>')
             + `<form class="jv-inline" data-mk-dnc><input name="addr" data-mk-field="dnc" data-keep="mk-dnc" value="${esc(f.dnc || '')}" placeholder="email or domain" aria-label="Address or domain to never contact"><input name="reason" data-mk-field="dncWhy" data-keep="mk-dnc-why" value="${esc(f.dncWhy || '')}" placeholder="why (optional)" aria-label="Why"><button type="submit" class="jv-btn danger">Add and block</button></form>`;
         const jobsBody = !sy ? syWait : table([['Job', (j) => `<strong>${esc(j.mode)}</strong>`], ['Last run', (j) => (j.at ? esc(when(j.at)) : 'never')], ['Result', (j) => (j.failed ? '<span class="jv-chip c-slow">failed</span> ' : '') + `<span class="jv-note">${esc(j.notify || '')}</span>` + (j.tail.length ? `<details><summary>log</summary><pre class="jv-pre">${esc(j.tail.join('\n'))}</pre></details>` : '')],
-            ['', (j) => (pendingFor('run', j.mode) ? '<span class="jv-chip c-average">waiting for the Mac</span>' : cmdBtn('Run now', { action: 'run', job: j.mode }, { disabled: sy.running }))]], sy.jobs)
+            ['', (j) => (pendingFor('run', j.mode) ? '<span class="jv-chip c-average">waiting for the sync</span>' : cmdBtn('Run now', { action: 'run', job: j.mode }, { disabled: sy.running }))]], sy.jobs)
             + (sy.paused.length ? `<p class="jv-note">Paused for public holidays: ${sy.paused.map((p) => esc(p.name)).join(', ')}.</p>` : '');
-        const syncBody = !sy ? syWait : `${stats([{ label: 'Last sync', value: sy.at ? when(sy.at) : 'never', alert: sy.stale }, { label: 'Waiting for the Mac', value: sy.commands.pending, alert: sy.stale && sy.commands.pending > 0 }, { label: 'Agent run', value: sy.running ? 'running' : 'idle' }])}`
-            + (cmds.length ? table([['Command', (c) => esc(c.label)], ['Asked', (c) => esc(when(c.createdAt))], ['Status', (c) => `<span class="jv-chip ${c.status === 'done' ? 'c-fast' : c.status === 'failed' ? 'c-slow' : 'c-average'}">${esc(c.status)}</span>`], ['Result', (c) => `<span class="jv-note">${esc(c.result)}</span>`]], cmds.slice(0, 10)) : '<p class="jv-empty">No commands sent to the Mac yet.</p>');
+        const syncBody = !sy ? syWait : `${stats([{ label: 'Last sync', value: sy.at ? when(sy.at) : 'never', alert: sy.stale }, { label: 'Waiting for the sync', value: sy.commands.pending, alert: sy.stale && sy.commands.pending > 0 }, { label: 'Job', value: sy.running ? 'running' : 'idle' }])}`
+            + (cmds.length ? table([['Command', (c) => esc(c.label)], ['Asked', (c) => esc(when(c.createdAt))], ['Status', (c) => `<span class="jv-chip ${c.status === 'done' ? 'c-fast' : c.status === 'failed' ? 'c-slow' : 'c-average'}">${esc(c.status)}</span>`], ['Result', (c) => `<span class="jv-note">${esc(c.result)}</span>`]], cmds.slice(0, 10)) : '<p class="jv-empty">No commands sent yet.</p>');
         const kpiRows = sy ? sy.kpis : [];
         const kpiCols = ['new_prospects', 'emails_sent', 'linkedin_requests', 'positive_replies', 'calls', 'paid_reviews', 'revenue_usd'];
         const kpiBody = !sy ? syWait : kpiRows.length ? table([['Week', (r) => esc(r.week_start)]].concat(kpiCols.map((k) => [k.replace(/_/g, ' '), (r) => esc(r[k] || '—')])).concat([['Notes', (r) => `<span class="jv-note">${esc(r.notes || '')}</span>`]]), kpiRows.slice().reverse()) : '<p class="jv-empty">The weekly KPI tracker is empty.</p>';
@@ -1350,11 +1350,11 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             { label: 'Replies to answer', value: sy ? repliesTodo.length : '—', alert: repliesTodo.length > 0 },
             { label: 'LinkedIn sent today', value: li ? liSent + ' / ' + li.items.length : '—' },
             { label: 'Do not contact', value: sy ? sy.dnc.length : '—' },
-            { label: 'Mac synced', value: sy && sy.at ? when(sy.at) : '—', alert: !!(sy && sy.stale) }
+            { label: 'Outreach synced', value: sy && sy.at ? when(sy.at) : '—', alert: !!(sy && sy.stale) }
         ]) + `<div class="jv-grid">
-            ${panel('marketing-sync', 'Mac sync', syncBody, { data: cmds, note: 'The Mac uploads the outreach folder every 5 minutes and then runs what you asked here. Replies and blocks go to Instantly at once.' })}
-            ${panel('marketing-jobs', 'Outreach jobs on the Mac', jobsBody, { data: sy && sy.jobs })}
-            ${panel('marketing-leads', `Leads to approve${week ? ' · ' + esc(week.week) : ''}`, leadsBody, { wide: true, data: weekRows, note: 'Every hour Jarvis translates top findings, re-runs the review of a site with no Live Report (twice at most) and approves complete leads. Rows marked "needs you" are the ones it cannot settle: use their buttons. Upload stays with you: the Mac sends the approved rows to their Instantly campaigns.' })}
+            ${panel('marketing-sync', 'Outreach sync', syncBody, { data: cmds, note: 'The qa-lab-outreach Action runs what you ask here within a few minutes, and uploads the outreach folder after each job and every 3 hours. Replies and blocks go to Instantly at once.' })}
+            ${panel('marketing-jobs', 'Outreach jobs', jobsBody, { data: sy && sy.jobs })}
+            ${panel('marketing-leads', `Leads to approve${week ? ' · ' + esc(week.week) : ''}`, leadsBody, { wide: true, data: weekRows, note: 'With each outreach sync (at most once an hour) Jarvis translates top findings, re-runs the review of a site with no Live Report (twice at most) and approves complete leads. Rows marked "needs you" are the ones it cannot settle: use their buttons. Upload stays with you: the Mac sends the approved rows to their Instantly campaigns.' })}
             ${panel('marketing-replies', `Replies${repliesTodo.length ? ' · ' + repliesTodo.length + ' to answer' : ''}`, repliesBody, { wide: true, data: sy && sy.replies.map((r) => ({ at: r.at, from: r.from, campaign: r.campaign, category: r.category, sent: r.sent })) })}
             ${panel('marketing-sent', `Cold emails sent${sent ? ' · ' + fmt(sent.total) : ''}`, sentBody, { wide: true, data: sent && sent.rows.map((r) => ({ at: r.at, to: r.to, name: r.name, org: r.org, campaign: r.campaign, step: r.step, kind: r.kind, from: r.from, subject: r.subject, opened: r.opened, replied: r.replied, bounced: r.bounced, unsubscribed: r.unsubscribed, resent: r.resent.map((x) => x.to + ' ' + x.at).join('; ') })), note: 'Send again forwards the same email, with its original text, from the mailbox that sent it: to the same address when it may have got lost, or to another contact at the organisation. Nobody on Do not contact can be picked.' })}
             ${panel('marketing-linkedin', `LinkedIn${li && li.date ? ' · ' + esc(li.date) : ''}`, linkedinBody, { data: li && li.items.map((p) => ({ name: p.name, org: p.org, cc: p.cc, sent: p.sent })) })}
@@ -1560,7 +1560,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         upload: (d) => `upload ${d.week}'s approved leads to their Instantly campaigns (they start getting emails on the campaign's start date once it is active)`,
         linkedin: (d) => `mark the LinkedIn request to ${d.name} as ${d.sent === 'no' ? 'not sent' : 'sent'}`,
         dnc: (d) => `never contact ${d.value} again and block it in Instantly`,
-        run: (d) => `run the ${d.job} job on the Mac now (an agent run can take an hour)`,
+        run: (d) => `run the ${d.job} job now (it can take half an hour)`,
         'lead-set': (d) => `set ${d.field} for ${d.email} to "${d.value}"`,
         'lead-drop': (d) => (d.on === 'no' ? `bring ${d.email} back to the leads` : `drop ${d.email}: it is never approved or uploaded`),
         'allow-personal': (d) => `allow the personal address ${d.email} for outreach`
@@ -1569,7 +1569,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     async function mkCommand(body, ask) {
         if (!confirmRun(ask)) return null;
         const out = await call('marketing-command', body).catch((error) => ({ ok: false, error: error.message }));
-        toast(out.ok ? (out.sent ? `Sent to ${out.sent.to}.` : `${out.label}: the Mac does it on its next sync (within 5 minutes)${out.blocked ? '; blocked in Instantly now' : ''}.`) : 'Not done: ' + out.error, 7000);
+        toast(out.ok ? (out.sent ? `Sent to ${out.sent.to}.` : `${out.label}: ${out.syncing ? 'the outreach Action does it in a few minutes' : 'the outreach Action does it on its next sync, within 3 hours'}${out.blocked ? '; blocked in Instantly now' : ''}.`) : 'Not done: ' + out.error, 7000);
         loadExternal(['marketing-sync']);
         return out;
     }
