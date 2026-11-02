@@ -11,17 +11,7 @@ const MONDAY_10 = Date.parse("2026-10-26T15:00:00Z");
 const SUNDAY_10 = Date.parse("2026-10-25T15:00:00Z");
 const MONDAY_21 = Date.parse("2026-10-27T02:00:00Z");
 
-function fakeDb(rows) {
-  const added = rows || [];
-  return {
-    added,
-    collection: (name) => ({
-      add: async (row) => { added.push(Object.assign({ _c: name }, row)); },
-      where: (field, op, value) => ({ limit: () => ({ get: async () => ({ docs: added.filter((r) => r._c === name && r[field] === value).map((r) => ({ data: () => r })) }) }) }),
-      orderBy: () => ({ limit: (n) => ({ get: async () => ({ docs: added.filter((r) => r._c === name).slice().sort((a, b) => b.at.localeCompare(a.at)).slice(0, n).map((r) => ({ data: () => Object.assign({}, r) })) }) }) })
-    })
-  };
-}
+const { fakeDb } = require("./fake-jarvis-db");
 
 const clean = (host) => ({ id: host, data: { status: "held", host, email: "a@" + host, record: { status: "complete", report: { insights: { score: { overall: 72 } } } } } });
 const stopped = (host) => ({ id: host, data: { status: "held", host, email: "a@" + host, record: { status: "stopped", report: {} } } });
@@ -41,14 +31,16 @@ function fakeOps(over) {
   return { ops, calls };
 }
 
-const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "run-job": 6, "rerun-ci": 4, "pause-outreach": 2, "refresh-data": 4, "rerun-reviews": 2, "ai-fix": 3 };
+const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "run-job": 6, "rerun-ci": 4, "pause-outreach": 2, "refresh-data": 4, "rerun-reviews": 2, "ai-fix": 3, "resume-outreach": 1, "merge-pr": 3 };
 
-test("settings: actions are on with the default caps and confidence 0.8 unless saved otherwise, within their bounds", () => {
-  assert.deepEqual(actions.cleanSettings(), { auto: true, caps: CAPS, confidence: 0.8 });
-  const saved = actions.cleanSettings({ auto: false, caps: { "rerun-held": 250, "resend-notices": -3, "publish-hub": "" }, confidence: 0.2 });
-  assert.deepEqual(saved, { auto: false, caps: Object.assign({}, CAPS, { "rerun-held": 100, "resend-notices": 0 }), confidence: 0.5 });
+test("settings: actions are on with the default caps, confidence 0.8 and a 2-hour countdown unless saved otherwise, within their bounds", () => {
+  assert.deepEqual(actions.cleanSettings(), { auto: true, caps: CAPS, confidence: 0.8, countdownHours: 2 });
+  const saved = actions.cleanSettings({ auto: false, caps: { "rerun-held": 250, "resend-notices": -3, "publish-hub": "" }, confidence: 0.2, countdownHours: 0.1 });
+  assert.deepEqual(saved, { auto: false, caps: Object.assign({}, CAPS, { "rerun-held": 100, "resend-notices": 0 }), confidence: 0.5, countdownHours: 0.25 });
   assert.equal(actions.cleanSettings({ confidence: "0.93" }).confidence, 0.93);
   assert.equal(actions.cleanSettings({ confidence: 4 }).confidence, 1);
+  assert.equal(actions.cleanSettings({ countdownHours: 30 }).countdownHours, 24);
+  assert.equal(actions.cleanSettings({ countdownHours: "1.6" }).countdownHours, 1.5);
   assert.deepEqual(jarvis.normalizeSettings({}).actions, actions.cleanSettings());
 });
 
@@ -84,7 +76,7 @@ test("the plan reads failed jobs and workflows, outreach trouble and stale sourc
   assert.equal(plan.keys.has("uptime:cv"), false, "a line no rule fixes is left for Gemini");
 });
 
-test("a failed job and a failed workflow are retried once a day; risky ones wait for a click", async () => {
+test("a failed job and a failed workflow are retried once a day; risky ones go on the countdown", async () => {
   const db = fakeDb();
   const { ops, calls } = fixOps();
   const items = [line("scheduler:rivalSweep"), line("ci:Lint Code Base"), line("scheduler:dispatchFacebookQueue")];
@@ -92,9 +84,11 @@ test("a failed job and a failed workflow are retried once a day; risky ones wait
   assert.deepEqual(calls.jobs, ["rivalSweep"]);
   assert.deepEqual(calls.ci, ["Lint Code Base"]);
   assert.deepEqual(out.done.map((r) => [r.action, r.target, r.key]), [["run-job", "rivalSweep", "scheduler:rivalSweep"], ["rerun-ci", "Lint Code Base", "ci:Lint Code Base"]]);
-  assert.match(out.waiting.find((w) => w.action === "run-job").reason, /dispatchFacebookQueue mails third parties, posts in public or deploys/);
+  assert.deepEqual(out.queued.map((r) => [r.action, r.target, r.kind, r.key, r.status, r.dueAt]), [["run-job", "dispatchFacebookQueue", "post", "scheduler:dispatchFacebookQueue", "waiting", "2026-10-26T17:00:00.000Z"]]);
+  assert.equal(out.waiting.length, 0);
   const again = await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings: {}, ops, items, external: {} });
   assert.deepEqual(calls.jobs, ["rivalSweep"], "not twice in a day");
+  assert.equal(again.queued.length, 0, "the countdown is not queued twice");
   assert.ok(again.waiting.some((w) => /rivalSweep still fails after Jarvis tried once today/.test(w.reason)));
 });
 
@@ -162,12 +156,12 @@ test("reviews a fix covers re-run an hour after its merge, when it is newer than
 
 test("Gemini picks fixes from the catalog; Jarvis runs the sure ones and asks once per set of lines", async () => {
   const external = { jobs: { ok: true, jobs: [{ name: "rivalSweep" }, { name: "sendOwnerNotices" }] }, github: { ok: true, ci: [{ name: "Pages", conclusion: "failure" }, { name: "Lint Code Base", conclusion: "failure" }] }, uptime: { ok: true } };
-  assert.deepEqual(actions.aiCatalog(external), { "run-job": ["rivalSweep"], "rerun-ci": ["Lint Code Base"], "refresh-data": ["jobs", "github", "uptime", "mailCanary"] });
+  assert.deepEqual(actions.aiCatalog(external), { "run-job": ["rivalSweep", "sendOwnerNotices"], "rerun-ci": ["Pages", "Lint Code Base"], "refresh-data": ["jobs", "github", "uptime", "mailCanary"], "post-now": ["queues"] });
   const items = [line("platform:failures", "warn"), line("safety:robots", "warn"), line("uptime:cv")];
   const answer = JSON.stringify({ fixes: [
     { key: "platform:failures", action: "run-job", target: "rivalSweep", confidence: 0.86, why: "Its runs fail." },
     { key: "uptime:cv", action: "refresh-data", target: "uptime", confidence: 0.4, why: "Maybe a cached outage." },
-    { key: "safety:robots", action: "run-job", target: "sendOwnerNotices", confidence: 0.99, why: "Not allowed." },
+    { key: "safety:robots", action: "run-job", target: "sendOwnerNotices", confidence: 0.99, why: "It mails the owners." },
     { key: "made:up", action: "run-job", target: "rivalSweep", confidence: 1, why: "No such line." }
   ] });
   const db = fakeDb();
@@ -175,7 +169,8 @@ test("Gemini picks fixes from the catalog; Jarvis runs the sure ones and asks on
   const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops, items, external });
   assert.deepEqual(calls.jobs, ["rivalSweep"]);
   assert.deepEqual(out.done.map((r) => [r.action, r.target, r.key, r.detail]), [["ai-fix", "run-job:rivalSweep", "platform:failures", "Its runs fail. (confidence 0.86)."]]);
-  assert.match(db.added.find((r) => r.status === "skipped").detail, /3 lines: 1 sure, 1 under 0\.8 \(refresh-data uptime at 0\.4\)/);
+  assert.deepEqual(out.queued.map((r) => [r.action, r.target, r.kind, r.by, r.confidence, r.label]), [["ai-fix", "run-job:sendOwnerNotices", "email", "gemini", 0.99, "Run a job again"]], "a risky pick waits on the countdown");
+  assert.match(db.added.find((r) => r.status === "skipped").detail, /3 lines: 2 sure, 1 under 0\.8 \(refresh-data uptime at 0\.4\)/);
   await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings: {}, ops, items, external });
   assert.equal(calls.asked.length, 1, "the same lines are not asked about twice in a day");
   const strict = fixOps({ gemini: async () => answer });
@@ -207,29 +202,30 @@ test("owner notices go out Monday to Saturday between 08:00 and 19:00 Bogotá", 
   assert.equal(actions.noticeHours(Date.parse("2026-10-31T23:30:00Z")), true, "Saturday 18:30");
 });
 
-test("the hourly pass sends clean held re-runs up to the cap and logs the rest as waiting", async () => {
+test("the hourly pass queues clean held re-runs up to the cap on one countdown and logs the rest as waiting", async () => {
   const db = fakeDb();
   const { ops, calls } = fakeOps({ held: async () => [clean("a.co"), stopped("b.co"), clean("c.co"), clean("d.co")] });
   const out = await actions.autoRun({ db, now: MONDAY_10, settings: { actions: { caps: { "rerun-held": 2 } } }, ops });
-  assert.deepEqual(calls.release, [["a.co", "jarvis"], ["c.co", "jarvis"]]);
-  assert.equal(out.done.length, 2);
+  assert.deepEqual(calls.release, [], "nothing is mailed before the countdown ends");
+  assert.deepEqual(out.queued.map((r) => [r.action, r.target, r.count, r.kind, r.payload.items.map((i) => i.id)]), [["rerun-held", "2 held re-runs", 2, "email", ["a.co", "c.co"]]]);
   assert.deepEqual(out.waiting.map((w) => [w.count, w.reason]), [[1, "Over today's cap of 2."], [1, "Not clean: the report stopped."]]);
   const again = await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings: { actions: { caps: { "rerun-held": 2 } } }, ops });
-  assert.equal(again.done.length, 0, "the cap counts what was already sent today");
+  assert.equal(again.queued.length, 0, "the cap counts what is already on the countdown");
   assert.equal(db.added.filter((r) => r.status === "waiting").length, 2, "a wait is logged once a day per reason");
   assert.ok(db.added.every((r) => r.day === "2026-10-26" && r.mode === "auto"));
 });
 
-test("failed notices wait outside the hours, and inside them stay within the notice budget", async () => {
+test("failed notices go on the countdown within the notice budget; one queued on Sunday runs on Monday 08:00", async () => {
   const notices = async () => ["x.co", "y.co", "z.co"].map((d) => ({ id: d, ref: d, data: { domain: d } }));
   const sunday = fakeOps({ failedNotices: notices });
   const off = await actions.autoRun({ db: fakeDb(), now: SUNDAY_10, settings: {}, ops: sunday.ops });
   assert.equal(sunday.calls.resend.length, 0);
-  assert.match(off.waiting[0].reason, /Outside Monday-Saturday/);
+  assert.equal(new Date(require("../../functions/jarvis-countdown").runsAt(off.queued[0])).toISOString(), "2026-10-26T13:00:00.000Z", "Monday 08:00 Bogotá");
 
   const monday = fakeOps({ failedNotices: notices, noticeBudget: async () => 2 });
   const on = await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: {}, ops: monday.ops });
-  assert.deepEqual(monday.calls.resend, [["x.co", "jarvis"], ["y.co", "jarvis"]]);
+  assert.deepEqual(monday.calls.resend, []);
+  assert.deepEqual(on.queued.map((r) => [r.target, r.payload.items.map((i) => i.id)]), [["2 failed owner notices", ["x.co", "y.co"]]]);
   assert.deepEqual(on.waiting, [{ action: "resend-notices", count: 1, reason: "Today's owner-notice budget is used." }]);
 
   const dark = fakeOps({ failedNotices: notices, noticesLive: false });
@@ -246,30 +242,29 @@ test("a stale hub is published at most twice a day, and the master switch stops 
   const quiet = fakeOps({ hubStale: async () => true, held: async () => [clean("a.co")] });
   const out = await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: { actions: { auto: false } }, ops: quiet.ops });
   assert.equal(out.off, true);
-  assert.equal(quiet.calls.publish + quiet.calls.release.length, 0);
+  assert.equal(quiet.calls.publish + out.queued.length, 0);
 });
 
 test("a failed action is logged as failed and does not stop the pass", async () => {
   const db = fakeDb();
-  const { ops } = fakeOps({ held: async () => [clean("a.co")], release: async () => { throw new Error("Firestore down"); }, hubStale: async () => true });
+  const { ops } = fakeOps({ held: async () => [clean("a.co")], publishHub: async () => { throw new Error("Scheduler down"); }, hubStale: async () => true, failedNotices: async () => { throw new Error("never read"); }, noticesLive: false });
   const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
-  assert.equal(db.added.find((r) => r.action === "rerun-held").status, "failed");
-  assert.equal(out.done[0].action, "publish-hub");
+  assert.equal(db.added.find((r) => r.action === "publish-hub").status, "failed");
+  assert.equal(out.queued[0].action, "rerun-held");
 });
 
 test("summary, push and the briefing lines say what Jarvis did and what waits", async () => {
   const db = fakeDb();
   const { ops } = fakeOps({ held: async () => [clean("a.co"), stopped("b.co")], hubStale: async () => true });
   const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
-  assert.equal(actions.summary(out), "send held re-runs 1, publish the social hub 1; 1 waiting for a click");
+  assert.equal(actions.summary(out), "publish the social hub 1; 1 on the countdown; 1 waiting for a click");
   const push = actions.pushMessage(out);
-  assert.equal(push.title, "Jarvis acted: 2 actions");
+  assert.equal(push.title, "Jarvis acted: 1 action");
   assert.equal(push.tab, "systems");
   assert.equal(push.kind, "alerts");
   assert.equal(actions.pushMessage({ done: [] }), null);
   const lines = actions.briefLines(await actions.recent(db, 50), MONDAY_10 + 3600000);
   assert.deepEqual(lines, [
-    "Jarvis did: send held re-runs x1.",
     "Jarvis did: publish the social hub x1.",
     "Waiting for your click: send held re-runs (1). Not clean: the report stopped."
   ]);
@@ -291,4 +286,9 @@ test("index.js runs the actions in jarvisWatch, logs clicked ops and shares the 
   assert.match(index, /jarvisActions\.autoRun\(\{ db, now, settings, ops, items, external \}\)/);
   assert.match(index, /jarvis\.rerunCi\(fetch, await githubApp\.token\(\), workflow, \{ once: true \}\)/);
   assert.match(fs.readFileSync(path.join(__dirname, "../../functions/secrets.js"), "utf8"), /jarvisWatch: list\(MAIL, JARVIS_SOURCES, BROWSER, GEMINI\)/);
+  assert.match(index, /exports\.jarvisCountdowns = scheduled\([^]*?SECRETS\.jarvisCountdowns[^]*?jarvisCountdownRun\)/);
+  assert.match(index, /jarvisCountdown\.queuedMessage\(row, hours\)/);
+  assert.match(index, /op === "countdown"/);
+  assert.match(index, /type === "countdown"/);
+  assert.match(fs.readFileSync(path.join(__dirname, "../../functions/secrets.js"), "utf8"), /jarvisCountdowns: list\(MAIL, JARVIS_SOURCES, BROWSER\)/);
 });

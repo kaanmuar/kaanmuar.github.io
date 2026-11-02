@@ -19,7 +19,8 @@ const ACTS = {
   proposal: ["done", "dismissed"],
   notice: ["send", "skip"],
   social: ["approved", "dismissed"],
-  engagement: ["approve", "edit", "dismiss"]
+  engagement: ["approve", "edit", "dismiss"],
+  countdown: ["now", "cancel"]
 };
 const REPLY = { act: "reply", label: "Reply", input: "Your reply" };
 

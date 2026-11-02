@@ -2,9 +2,10 @@
    and the log of every action, automatic or clicked, in jarvis_actions.
 
    rerun-held      send held re-runs to their askers; on its own only clean ones (a complete report with a score and an
-                   asker's address), the rest wait for a click
+                   asker's address), after the countdown; the rest wait for a click
    resend-notices  re-send owner notices whose last send failed: Monday-Saturday 08:00-19:00 Bogotá (Ley 2300 de 2023),
-                   under NOTICE_TRIES, inside the day's owner-notice budget and only while OWNER_NOTICES_LIVE=1, click or not
+                   under NOTICE_TRIES, inside the day's owner-notice budget and only while OWNER_NOTICES_LIVE=1, click or not;
+                   on its own after the countdown
    publish-hub     run refreshSocialHubStats when the hub stats are stale
    run-job         a scheduled job whose last run failed runs again, once a day on its own (#1977); clicked, any job
    rerun-ci        a failed workflow on main gets its failed jobs re-run, once on its own
@@ -14,24 +15,31 @@
                    cached answer, so the next read asks again
    rerun-reviews   rerunReviewFailures runs when a FIXES row, an hour after its merge, is newer than its last run
    ai-fix          Gemini picks fixes for the lines the rules leave, from the same actions, each with a confidence;
-                   Jarvis runs the ones at or above actions.confidence
+                   Jarvis runs the ones at or above actions.confidence, the risky ones after the countdown
+   resume-outreach the campaigns pause-outreach paused, after the countdown, once the trouble lines are gone for
+                   CLEAR_PASSES hourly passes
+   merge-pr        an open PR labelled jarvis-merge, green and mergeable, squash-merged after the countdown
    check           45 minutes after a fix, whether its briefing line is gone; pushed as fixed or still failing
-   Jobs and workflows that mail third parties, post in public or deploy never run on their own: they wait for a click.
+   Jobs and workflows that mail third parties, post in public or deploy (RISKY_JOBS, RISKY_CI) run on their own only
+   after the countdown (jarvis-countdown.js), which Carlos can cancel or run at once.
 
-   jarvis_settings/main.actions = { auto, caps: { action: per day }, confidence }. A click is not capped by Jarvis's own caps. */
+   jarvis_settings/main.actions = { auto, caps: { action: per day }, confidence, countdownHours }. A click is not capped
+   by Jarvis's own caps; a countdown counts against its cap from the moment it is queued. */
 
 const core = require("./jarvis-core");
 
 const SAFE = core.SAFE_ACTIONS;
-const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "run-job": 6, "rerun-ci": 4, "pause-outreach": 2, "refresh-data": 4, "rerun-reviews": 2, "ai-fix": 3 };
+const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "run-job": 6, "rerun-ci": 4, "pause-outreach": 2, "refresh-data": 4, "rerun-reviews": 2, "ai-fix": 3, "resume-outreach": 1, "merge-pr": 3 };
 const LABELS = {
   "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again", "rerun-ci": "Re-run failed CI jobs",
   "pause-outreach": "Pause outreach", "refresh-data": "Refresh stale data", "rerun-reviews": "Re-run reviews a fix covers", "ai-fix": "Fix picked by Gemini", check: "Check a fix",
+  "resume-outreach": "Resume outreach", "merge-pr": "Merge a green PR", "post-now": "Post the queues now",
   "rating-decide": "Decide ratings", "brief-mark": "Snooze or dismiss a briefing line"
 };
 const NOTICE_TRIES = 3;
 const NOTICE_HOURS = { from: 8, to: 19 };
 const CONFIDENCE = 0.8;
+const COUNTDOWN_HOURS = 2;
 const RISKY_JOBS = ["sendOwnerNotices", "sendReviewNotes", "dispatchFacebookQueue", "ensureLiveReportsBatch", "jarvisWatch"];
 const RISKY_CI = /live reports|buffer batch|facebook|bluesky|mastodon|social inbox|^pages$|jarvis android/i;
 const OUTREACH_TROUBLE = /^outreach:(dns:|mailbox:|warmup$|bounce$)/;
@@ -50,9 +58,16 @@ function cleanSettings(saved) {
     const n = Number(s.caps && s.caps[key]);
     caps[key] = Number.isFinite(n) && s.caps[key] !== "" && s.caps[key] !== null ? Math.max(0, Math.min(100, Math.round(n))) : CAPS[key];
   });
-  const c = Number(s.confidence);
-  return { auto: typeof s.auto === "boolean" ? s.auto : true, caps, confidence: s.confidence !== "" && s.confidence !== null && Number.isFinite(c) ? Math.max(0.5, Math.min(1, Math.round(c * 100) / 100)) : CONFIDENCE };
+  const set = (v) => v !== "" && v !== null && v !== undefined && Number.isFinite(Number(v));
+  return {
+    auto: typeof s.auto === "boolean" ? s.auto : true, caps,
+    confidence: set(s.confidence) ? Math.max(0.5, Math.min(1, Math.round(Number(s.confidence) * 100) / 100)) : CONFIDENCE,
+    countdownHours: set(s.countdownHours) ? Math.max(0.25, Math.min(24, Math.round(Number(s.countdownHours) * 4) / 4)) : COUNTDOWN_HOURS
+  };
 }
+
+// Jobs and workflows that mail third parties, post in public or deploy, and Post now: on their own only after a countdown.
+const risky = (action, target) => action === "post-now" || (action === "run-job" && RISKY_JOBS.includes(target)) || (action === "rerun-ci" && RISKY_CI.test(target));
 
 // A held re-run Jarvis may send without Carlos: the report finished, it has a score, and there is someone to send it to.
 function cleanRerun(doc) {
@@ -123,13 +138,14 @@ function fixPlan(items) {
 
 const failedCi = (external) => (((external || {}).github || {}).ci || []).filter((r) => r.conclusion && !["success", "skipped", "cancelled", "neutral"].includes(r.conclusion));
 
-// The actions Gemini may pick and the targets each takes; nothing that mails third parties, posts or deploys.
+// The actions Gemini may pick and the targets each takes. The risky ones (risky()) run only after the countdown.
 function aiCatalog(external) {
   const e = external || {};
   return {
-    "run-job": ((e.jobs || {}).jobs || []).map((j) => j.name).filter((n) => /^[A-Za-z][A-Za-z0-9]{2,60}$/.test(n) && !RISKY_JOBS.includes(n)),
-    "rerun-ci": failedCi(e).map((r) => r.name).filter((n) => !RISKY_CI.test(n)),
-    "refresh-data": Object.keys(e).filter((k) => /^[a-z0-9-]{2,30}$/.test(k)).concat(Object.values(STALE_JOBS))
+    "run-job": ((e.jobs || {}).jobs || []).map((j) => j.name).filter((n) => /^[A-Za-z][A-Za-z0-9]{2,60}$/.test(n)),
+    "rerun-ci": failedCi(e).map((r) => r.name),
+    "refresh-data": Object.keys(e).filter((k) => /^[a-z0-9-]{2,30}$/.test(k)).concat(Object.values(STALE_JOBS)),
+    "post-now": ["queues"]
   };
 }
 
@@ -137,6 +153,7 @@ function aiPrompt(lines, catalog) {
   return "Jarvis fixes problems on Carlos's sites without him. These alert lines have no automatic fix:\n" + JSON.stringify(lines.map((l) => ({ key: l.key, text: l.text })))
     + "\n\nYou may only use these actions, each with one target from its list:\n" + JSON.stringify(catalog)
     + "\nrun-job runs a scheduled job again. rerun-ci re-runs the failed jobs of a GitHub workflow on main. refresh-data drops a source's cached answer so it is read again, or runs the job that feeds it (a camelCase target)."
+    + " post-now runs the Buffer and Facebook posting queues a spent daily limit held back. Jobs and workflows that mail people, post or deploy, and post-now, wait 2 hours for Carlos before they run."
     + "\n\nPick a fix only for a line one of these actions can clear; skip the rest. confidence is 0 to 1: how sure you are the action clears the line."
     + "\nAnswer with JSON only: {\"fixes\":[{\"key\":\"the line's key\",\"action\":\"\",\"target\":\"\",\"confidence\":0.0,\"why\":\"one short sentence\"}]}";
 }
@@ -182,15 +199,20 @@ function lastRun(external, name) {
      pauseOutreach(reason) -> { paused: [{ id, name }] }
      dropCache(source)
      fixes           -> the FIXES rows of url-review-failures.js
-     gemini(prompt, maxTokens) -> text, or null without a key }
+     gemini(prompt, maxTokens) -> text, or null without a key
+     outreachPause() -> jarvis_watch/outreach-pause ({ paused, at, clear }) or null; setOutreachPause(patch)
+     mergeCandidates() -> [{ number, sha, title, url }] open PRs labelled jarvis-merge, green and mergeable }
    items are the briefing lines of external (null when it was not read: no fixes, no checks).
-   Returns { done: [rows], waiting: [{ action, count, reason }], checked: [rows] }; every action and every wait is logged. */
+   Returns { done: [rows], queued: [countdowns], waiting: [{ action, count, reason }], checked: [rows] }; every action
+   and every wait is logged. */
 async function autoRun({ db, now, settings, ops, items, external }) {
   const cfg = cleanSettings((settings || {}).actions);
-  const out = { done: [], waiting: [], checked: [] };
+  const out = { done: [], queued: [], waiting: [], checked: [] };
   if (!cfg.auto) return Object.assign(out, { off: true });
-  const rows = await todayRows(db, now);
-  const left = (action) => Math.max(0, cfg.caps[action] - usedToday(rows, action));
+  const countdown = require("./jarvis-countdown");
+  const day = core.zoneParts(new Date(now)).day;
+  const [rows, pending] = await Promise.all([todayRows(db, now), countdown.open(db)]);
+  const left = (action) => Math.max(0, cfg.caps[action] - usedToday(rows, action) - countdown.queued(pending, action, day));
   const wait = async (action, count, reason) => {
     if (!count) return;
     out.waiting.push({ action, count, reason });
@@ -198,35 +220,42 @@ async function autoRun({ db, now, settings, ops, items, external }) {
       rows.push(await log(db, { action, mode: "auto", status: "waiting", count, detail: reason }, now));
     }
   };
+  // A risky action goes on the countdown, inside its cap; one Carlos cancelled today waits for him.
+  const later = async (entry, cap) => {
+    const key = cap || entry.action;
+    const count = entry.count || 1;
+    if (left(key) < count) return wait(key, count, "Over today's cap of " + cfg.caps[key] + ".");
+    const res = await countdown.queue(db, entry, { now, hours: cfg.countdownHours });
+    if (res.row) { pending.push(res.row); out.queued.push(res.row); return res.row; }
+    if (res.existing.status === "cancelled") return wait(key, count, entry.target + ": you cancelled its countdown" + (entry.part ? "" : " today") + "; " + (entry.onCancel || "it runs on a click") + ".");
+    return null;
+  };
+  const busy = (action) => new Set(pending.filter((r) => r.action === action).flatMap((r) => ((r.payload || {}).items || []).map((i) => i.id)));
+  const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+  const names = (list) => list.slice(0, 4).join(", ") + (list.length > 4 ? " and " + (list.length - 4) + " more" : "");
 
   const held = await ops.held();
-  const clean = held.filter((h) => cleanRerun(h.data).ok);
+  const inHeld = busy("rerun-held");
+  const clean = held.filter((h) => cleanRerun(h.data).ok && !inHeld.has(h.id));
   const sendable = clean.slice(0, left("rerun-held"));
-  for (const h of sendable) {
-    try {
-      const res = await ops.release(h.id, "jarvis");
-      if (!res) continue;
-      out.done.push(await log(db, { action: "rerun-held", mode: "auto", status: "done", target: h.data.host || h.id, detail: "Sent to the asker" + (res.mailed === false ? ", but the mail failed" : "") + (res.reportId ? " (report " + res.reportId + ")" : "") + "." }, now));
-    } catch (error) {
-      await log(db, { action: "rerun-held", mode: "auto", status: "failed", target: h.data.host || h.id, detail: error.message || String(error) }, now);
-    }
+  if (sendable.length) {
+    await later({ action: "rerun-held", target: plural(sendable.length, "held re-run"), count: sendable.length, part: sendable.map((h) => h.id).sort().join(","),
+      payload: { items: sendable.map((h) => ({ id: h.id, host: h.data.host || h.id })) }, why: "Clean reports for " + names(sendable.map((h) => h.data.host || h.id)) + "." });
   }
   await wait("rerun-held", clean.length - sendable.length, "Over today's cap of " + cfg.caps["rerun-held"] + ".");
-  await wait("rerun-held", held.length - clean.length, "Not clean: " + Array.from(new Set(held.filter((h) => !cleanRerun(h.data).ok).map((h) => cleanRerun(h.data).reason))).join(", ") + ".");
+  await wait("rerun-held", held.length - held.filter((h) => cleanRerun(h.data).ok).length, "Not clean: " + Array.from(new Set(held.filter((h) => !cleanRerun(h.data).ok).map((h) => cleanRerun(h.data).reason))).join(", ") + ".");
 
-  const notices = ops.noticesLive ? await ops.failedNotices() : [];
+  const inNotices = busy("resend-notices");
+  const notices = (ops.noticesLive ? await ops.failedNotices() : []).filter((n) => !inNotices.has(n.id));
   if (notices.length) {
-    if (!noticeHours(now)) await wait("resend-notices", notices.length, "Outside Monday-Saturday 08:00-19:00 Bogotá.");
-    else {
-      const room = Math.min(left("resend-notices"), Math.max(0, await ops.noticeBudget()));
-      for (const n of notices.slice(0, room)) {
-        const res = await ops.resend(n.ref, "jarvis");
-        if (res.outcome === "skipped") continue;
-        const row = await log(db, { action: "resend-notices", mode: "auto", status: res.outcome === "sent" ? "done" : "failed", target: n.data.domain || n.id, detail: res.outcome === "sent" ? "Sent to " + res.email + "." : res.reason }, now);
-        if (row.status === "done") out.done.push(row);
-      }
-      await wait("resend-notices", notices.length - Math.min(room, notices.length), room < left("resend-notices") ? "Today's owner-notice budget is used." : "Over today's cap of " + cfg.caps["resend-notices"] + ".");
+    const capLeft = left("resend-notices");
+    const room = Math.min(capLeft, Math.max(0, await ops.noticeBudget()));
+    const take = notices.slice(0, room);
+    if (take.length) {
+      await later({ action: "resend-notices", target: plural(take.length, "failed owner notice"), count: take.length, part: take.map((n) => n.id).sort().join(","),
+        payload: { items: take.map((n) => ({ id: n.id, domain: n.data.domain || n.id })) }, why: "Their last send failed: " + names(take.map((n) => n.data.domain || n.id)) + "." });
     }
+    await wait("resend-notices", notices.length - take.length, room < capLeft ? "Today's owner-notice budget is used." : "Over today's cap of " + cfg.caps["resend-notices"] + ".");
   }
 
   if (await ops.hubStale()) {
@@ -238,6 +267,18 @@ async function autoRun({ db, now, settings, ops, items, external }) {
         await log(db, { action: "publish-hub", mode: "auto", status: "failed", target: "refreshSocialHubStats", detail: error.message || String(error) }, now);
       }
     } else await wait("publish-hub", 1, "Over today's cap of " + cfg.caps["publish-hub"] + ".");
+  }
+
+  if (ops.mergeCandidates) {
+    let prs = [];
+    try { prs = await ops.mergeCandidates(); } catch (error) {
+      const detail = "GitHub: " + text(error.message || error, 200);
+      if (!rows.some((r) => r.action === "merge-pr" && r.status === "failed" && r.detail === detail)) rows.push(await log(db, { action: "merge-pr", mode: "auto", status: "failed", target: "jarvis-merge PRs", detail }, now));
+    }
+    for (const pr of prs) {
+      await later({ action: "merge-pr", target: "#" + pr.number, part: pr.sha, payload: { number: pr.number, sha: pr.sha, url: pr.url }, why: text(pr.title, 200) + " (green, labelled jarvis-merge).",
+        onCancel: "remove the label or merge it yourself" });
+    }
   }
   if (!items) return out;
 
@@ -285,7 +326,10 @@ async function autoRun({ db, now, settings, ops, items, external }) {
 
   for (const j of plan.jobs) await once(j, () => ops.runJob(j.target), () => "Its last run failed; started it again.");
   for (const c of plan.ci) await once(c, () => rerunCi(c.target), ciLine);
-  for (const r of plan.risky) await wait(r.action, 1, r.target + " mails third parties, posts in public or deploys; it runs on a click.");
+  for (const r of plan.risky) {
+    if (already(r.action, r.target)) await wait(r.action, 1, r.target + " still fails after Jarvis tried once today.");
+    else await later({ action: r.action, target: r.target, key: r.key, why: r.text });
+  }
 
   if (plan.outreach.length && ops.sending) {
     const reason = plan.outreach.map((o) => o.text).join(" ").slice(0, 300);
@@ -293,6 +337,24 @@ async function autoRun({ db, now, settings, ops, items, external }) {
     else {
       await attempt("pause-outreach", "Instantly", plan.outreach[0].key, () => ops.pauseOutreach(reason),
         (res) => (res.paused.length ? "Paused " + res.paused.map((c) => c.name || c.id).join(", ") + ". " + reason : null));
+    }
+  }
+
+  // What Jarvis paused resumes after the countdown once the trouble lines stay away for CLEAR_PASSES passes.
+  const pause = ops.outreachPause ? await ops.outreachPause() : null;
+  if (pause && (pause.paused || []).length) {
+    if (plan.outreach.length) {
+      if (pause.clear) await ops.setOutreachPause({ clear: 0 });
+      for (const r of pending.filter((x) => x.action === "resume-outreach" && x.status === "waiting")) {
+        await countdown.cancel(db, r.id, { now, by: "jarvis", why: "the outreach trouble came back" }).catch(() => null);
+      }
+    } else {
+      const clear = (Number(pause.clear) || 0) + 1;
+      await ops.setOutreachPause({ clear });
+      if (clear >= countdown.CLEAR_PASSES) {
+        await later({ action: "resume-outreach", target: "Instantly", part: pause.at || day, payload: { campaigns: pause.paused },
+          why: "The domain, mailbox, warm-up and bounce lines are clear; resumes " + names(pause.paused.map((c) => c.name || c.id)) + ".", onCancel: "resume the campaigns in Outreach" });
+      }
     }
   }
 
@@ -319,6 +381,10 @@ async function autoRun({ db, now, settings, ops, items, external }) {
     for (const f of picks.sure) {
       if (already(f.action, f.target)) continue;
       if (left("ai-fix") <= 0) { await wait("ai-fix", 1, "Over today's cap of " + cfg.caps["ai-fix"] + "."); break; }
+      if (risky(f.action, f.target)) {
+        await later({ action: "ai-fix", target: f.action + ":" + f.target, key: f.key, payload: { action: f.action, target: f.target }, why: f.why, by: "gemini", confidence: f.confidence });
+        continue;
+      }
       const run = f.action === "run-job" ? () => ops.runJob(f.target) : f.action === "rerun-ci" ? () => rerunCi(f.target) : () => refresh(f);
       await attempt("ai-fix", f.action + ":" + f.target, f.key, run, () => f.why + " (confidence " + f.confidence + ").");
     }
@@ -335,7 +401,8 @@ function summary(result) {
   const waiting = (r.waiting || []).reduce((n, w) => n + w.count, 0);
   const checked = r.checked || [];
   const fixed = checked.filter((row) => row.status === "done").length;
-  return (parts.length ? parts.join(", ") : "no actions") + (waiting ? "; " + waiting + " waiting for a click" : "")
+  const queued = (r.queued || []).length;
+  return (parts.length ? parts.join(", ") : "no actions") + (queued ? "; " + queued + " on the countdown" : "") + (waiting ? "; " + waiting + " waiting for a click" : "")
     + (checked.length ? "; " + fixed + " fixed, " + (checked.length - fixed) + " still failing" : "");
 }
 
@@ -384,6 +451,6 @@ function briefLines(rows, now) {
 }
 
 module.exports = {
-  SAFE, CAPS, LABELS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, RISKY_JOBS, RISKY_CI, cleanSettings, cleanRerun, noticeHours, usedToday, todayRows, log, recent,
+  SAFE, CAPS, LABELS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, COUNTDOWN_HOURS, RISKY_JOBS, RISKY_CI, risky, cleanSettings, cleanRerun, noticeHours, usedToday, todayRows, log, recent,
   fixPlan, aiCatalog, aiPrompt, aiPicks, newestFix, lastRun, autoRun, summary, pushMessage, checkMessage, briefLines
 };
