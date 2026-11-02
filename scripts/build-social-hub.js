@@ -171,10 +171,10 @@ function isTracked(file) {
   }
 }
 
-// The same topic written in other languages: the launch set and promo batches (<batch>/<NN>-<topic>-<lang>).
+// The same topic written in other languages: the launch set, promo batches and skits (<batch>/<NN>-<topic>-<lang>).
 function groupOf(post) {
   if (post.batch === LAUNCH) return LAUNCH + "/" + post.id.split("/").pop();
-  const match = post.kind === "launch" && post.id.match(/^([^/]+)\/\d+-(.+)-([a-z]{2})$/);
+  const match = (post.kind === "launch" || post.kind === "skit") && post.id.match(/^([^/]+)\/\d+-(.+)-([a-z]{2})$/);
   return match && match[3] === post.lang ? match[1] + "/" + match[2] : null;
 }
 
