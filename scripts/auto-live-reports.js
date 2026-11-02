@@ -25,6 +25,9 @@ const STATE = path.join(__dirname, "auto-live-reports.state.json");
 const BATCH_DIR = path.join(ROOT, "previews/auto-live-reports");
 const ENDPOINT = process.env.PUBLISH_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/publishable";
 const POST_EVERY_DAYS = 30;
+// /publishable holds whole reports in memory, so it answers PAGE reviews at a time (#2038); a run catches up page by page.
+const PAGE = 100;
+const PAGES = 10;
 // Sites the country sweep reviewed (functions/url-review-sweep.js) all get a card, but only this
 // many become social posts per batch, so requested reviews keep the feed and Buffer stays under its cap.
 const SWEEP_POSTS_PER_BATCH = 2;
@@ -208,11 +211,34 @@ function versusCopy(sites) {
   };
 }
 
-async function fetchPublishable(since) {
-  if (!process.env.PUBLISH_KEY) throw new Error("PUBLISH_KEY is not set.");
-  const res = await fetch(ENDPOINT + "?since=" + encodeURIComponent(since), { headers: { "x-publish-key": process.env.PUBLISH_KEY } });
-  if (!res.ok) throw new Error("publishable answered " + res.status + ": " + (await res.text()).slice(0, 200));
-  return res.json();
+function mergePages(pages) {
+  const last = pages[pages.length - 1] || {};
+  const held = {};
+  pages.forEach((p) => Object.entries(p.held || {}).forEach(([k, v]) => { held[k] = (held[k] || 0) + v; }));
+  return {
+    since: (pages[0] || {}).since, until: last.until, read: pages.reduce((n, p) => n + (p.read || 0), 0), held, unlisted: last.unlisted || [],
+    reports: pages.flatMap((p) => p.reports || []), comparisons: pages.flatMap((p) => p.comparisons || [])
+  };
+}
+
+// A page that fails after others came back ends the run there; the next run starts from the last page's until.
+async function fetchPublishable(since, get) {
+  if (!process.env.PUBLISH_KEY && !get) throw new Error("PUBLISH_KEY is not set.");
+  const fetchPage = get || (async (from) => {
+    const res = await fetch(ENDPOINT + "?since=" + encodeURIComponent(from) + "&limit=" + PAGE, { headers: { "x-publish-key": process.env.PUBLISH_KEY } });
+    if (!res.ok) throw new Error("publishable answered " + res.status + ": " + (await res.text()).slice(0, 200));
+    return res.json();
+  });
+  const pages = [];
+  let from = since;
+  for (let i = 0; i < PAGES; i++) {
+    let page;
+    try { page = await fetchPage(from); } catch (error) { if (!pages.length) throw error; console.warn("stopped after", pages.length, "pages:", error.message); break; }
+    pages.push(page);
+    if ((page.read || 0) < PAGE || !page.until || page.until === from) break;
+    from = page.until;
+  }
+  return mergePages(pages);
 }
 
 function output(values) {
@@ -294,4 +320,6 @@ async function main() {
   output({ cards: added, removed, social: batch.length, restricted: held, batch: "auto-" + today, total: items.length });
 }
 
-main().catch((error) => { console.error(error); process.exit(1); });
+if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
+
+module.exports = { fetchPublishable, mergePages, PAGE };

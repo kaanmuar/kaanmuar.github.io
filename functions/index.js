@@ -3860,9 +3860,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       return;
     }
     const since = /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(String(req.query.since || "")) ? String(req.query.since) : new Date(Date.now() - 864e5).toISOString();
+    // Whole reports are large: 500 of them went over the 512 MiB (#2038), so the caller pages with since=until.
+    const limit = Math.min(200, Math.max(20, Number(req.query.limit) || 100));
     try {
       const [reviewSnap, unlistedSnap, rivalSnap] = await Promise.all([
-        getFirestore().collection("url_reviews").where("createdAt", ">", since).orderBy("createdAt").limit(500).get(),
+        getFirestore().collection("url_reviews").where("createdAt", ">", since).orderBy("createdAt").limit(limit).get(),
         getFirestore().collection("url_review_unlisted").get(),
         getFirestore().collection("url_review_rivals").where("createdAt", ">", since).orderBy("createdAt").limit(50).get()
       ]);
