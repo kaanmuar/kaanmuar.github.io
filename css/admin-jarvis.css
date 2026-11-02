@@ -336,6 +336,12 @@
 @media (max-width: 720px) { .jv-top { grid-template-columns: auto 1fr; } .jv-controls { grid-column: 1 / -1; justify-content: flex-start; } .jv-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } .jv-grid { grid-template-columns: 1fr; } .jv-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; } .jv-tile { padding: 0.6rem 0.7rem; } .jv-tile strong { font-size: 1.35rem; } .jv-panel.is-tall { grid-row: auto; } }
 @media (prefers-reduced-motion: reduce) { .jv-scan, .jv-reactor::before, .jv-reactor-core { animation: none; } }
 
+/* #2068: a browser spread across a foldable's fold keeps two columns, with the gap on the hinge. */
+@media (horizontal-viewport-segments: 2) { .jv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: max(0.75rem, calc(env(viewport-segment-left 1 0, 0px) - env(viewport-segment-right 0 0, 0px))); } }
+.jv-devices { list-style: none; margin: 0.4rem 0; padding: 0; display: grid; gap: 0.35rem; }
+.jv-devices li { display: grid; gap: 0.1rem; padding: 0.45rem 0.6rem; border: 1px solid var(--line); border-radius: 8px; }
+.jv-devices li.is-mine { border-color: var(--cyan); }
+
 @media print {
     body.jv-printing * { visibility: hidden; }
     body.jv-printing #stats-pane, body.jv-printing #stats-pane * { visibility: visible; }

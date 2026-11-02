@@ -17,6 +17,9 @@ class JarvisApp : Application() {
     lateinit var auth: Auth
     lateinit var api: Api
 
+    /** This install, so the server keeps one row per device in Settings › Devices. */
+    val installId: String by lazy { vault.get("install.id") ?: java.util.UUID.randomUUID().toString().also { vault.put("install.id", it) } }
+
     override fun onCreate() {
         super.onCreate()
         val http = OkHttpClient.Builder().connectTimeout(20, TimeUnit.SECONDS).readTimeout(200, TimeUnit.SECONDS).build()
