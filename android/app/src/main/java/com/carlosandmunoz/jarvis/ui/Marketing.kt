@@ -108,8 +108,6 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
     val todo = Marketing.repliesToAnswer(sy)
 
     Approvals(s, vm)
-    val brief = snap.objs("briefing").filter { it.str("product") in setOf("marketing", "outreach", "hub") }
-    if (brief.isNotEmpty()) Panel("Briefing") { brief.forEach { StatusRow(it.str("level"), it.str("text") ?: "") } }
 
     val counts = Marketing.countdowns(mk, plan, LocalDate.now())
     if (counts.isNotEmpty()) Panel("Countdowns") {
@@ -247,24 +245,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
 
     Panel("Campaigns (Instantly)" + (camps?.objs("rows")?.size?.let { " · $it" } ?: "")) {
         if (camps == null) { Muted(mk.obj("campaigns").str("error") ?: ext.obj("marketing").str("error") ?: "Pull down to read the campaigns."); return@Panel }
-        camps.objs("rows").forEach { c ->
-            val id = c.str("id").orEmpty()
-            val name = c.str("name").orEmpty()
-            val status = c.str("status").orEmpty()
-            val leads = c.num("leads")?.toInt() ?: 0
-            Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(name, fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                    Muted(listOfNotNull(status, c.str("start")?.let { "starts $it" }, "$leads leads", "${fmt(c.num("sent"))} sent", "${fmt(c.num("replies"))} replies").joinToString(" · "))
-                }
-                val action = when (status) { "active" -> "pause"; "draft", "paused" -> "activate"; else -> null }
-                if (action != null) TextButton({
-                    ask(if (action == "pause") "pause $name now" else "activate $name" + (if (leads == 0) " (it has no leads yet, so nothing sends until leads are uploaded)" else "") + (c.str("start")?.let { ", sending from $it" } ?: "")) {
-                        vm.market("mk:camp:$id", "marketing-campaign", mapOf("id" to JsonPrimitive(id), "action" to JsonPrimitive(action), "name" to JsonPrimitive(name))) { out -> "${out.str("name") ?: name} is ${out.str("status")}." }
-                    }
-                }, enabled = "mk:camp:$id" !in s.running) { Text(action.replaceFirstChar { it.uppercase() }, color = if (action == "pause") J.amber else J.cyan, fontSize = 13.sp) }
-            }
-        }
+        CampaignRows(camps, s, vm, ::ask)
     }
     if (camps != null) {
         TopList("Campaigns by language", camps.pairs("byLang"))
@@ -408,5 +389,28 @@ private fun Deck(s: UiState, vm: JarvisViewModel, ask: (String, () -> Unit) -> U
             RunJob(s, vm, "refreshSocialHubStats", "Hub stats")
         }
         Muted("Every button asks first. Queued prospects join the nightly sweep (up to 48 a night).")
+    }
+}
+
+/** Instantly campaigns, each with Activate or Pause; on Marketing and Outreach. */
+@Composable
+fun CampaignRows(camps: JsonObject, s: UiState, vm: JarvisViewModel, ask: (String, () -> Unit) -> Unit) {
+    camps.objs("rows").forEach { c ->
+        val id = c.str("id").orEmpty()
+        val name = c.str("name").orEmpty()
+        val status = c.str("status").orEmpty()
+        val leads = c.num("leads")?.toInt() ?: 0
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(name, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Muted(listOfNotNull(status, c.str("start")?.let { "starts $it" }, "$leads leads", "${fmt(c.num("sent"))} sent", "${fmt(c.num("replies"))} replies").joinToString(" · "))
+            }
+            val action = when (status) { "active" -> "pause"; "draft", "paused" -> "activate"; else -> null }
+            if (action != null) TextButton({
+                ask(if (action == "pause") "pause $name now" else "activate $name" + (if (leads == 0) " (it has no leads yet, so nothing sends until leads are uploaded)" else "") + (c.str("start")?.let { ", sending from $it" } ?: "")) {
+                    vm.market("mk:camp:$id", "marketing-campaign", mapOf("id" to JsonPrimitive(id), "action" to JsonPrimitive(action), "name" to JsonPrimitive(name))) { out -> "${out.str("name") ?: name} is ${out.str("status")}." }
+                }
+            }, enabled = "mk:camp:$id" !in s.running) { Text(action.replaceFirstChar { it.uppercase() }, color = if (action == "pause") J.amber else J.cyan, fontSize = 13.sp) }
+        }
     }
 }
