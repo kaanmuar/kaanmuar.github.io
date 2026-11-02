@@ -268,7 +268,7 @@ jobs:
 
   catalog-apple:
     runs-on: macos-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -324,6 +324,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 34
+          target: google_apis
           arch: x86_64
           script: APPIUM_DEVICE='{"platform":"android","id":"emulator-5554","name":"emulator-5554","label":"Android emulator"}' npm run test:appium
         continue-on-error: true
