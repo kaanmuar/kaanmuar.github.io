@@ -3,6 +3,10 @@
    YouTube, TikTok, Instagram, Reddit and Facebook, plus a contact sheet of the whole kit.
 
      node scripts/brand-kit/build.js [--batch brand-kit-2026-10]
+     node scripts/brand-kit/build.js --face en|es [--batch faces-2026-11/en]
+
+   --face renders one brand face (#2307) for all 11 networks from faces.js: its own copy, language pill and hue,
+   plus checklist.md, the copy and sign-up steps Carlos follows per account.
 
    Writes media/<batch>/<network>/*, kit.json, index.html and contact-sheet.jpg. The Reddit banner and the Facebook
    cover come from scripts/reddit-studio and scripts/facebook-studio, which also check the profile copy, so they stay
@@ -18,7 +22,11 @@ const fusion = require("../fusion/still");
 const ROOT = fusion.ROOT;
 const argv = process.argv.slice(2);
 const batchAt = argv.indexOf("--batch");
-const BATCH = batchAt >= 0 && argv[batchAt + 1] ? argv[batchAt + 1] : "brand-kit-2026-10";
+const faceAt = argv.indexOf("--face");
+const faces = require("./faces");
+const FACE = faceAt >= 0 ? faces.FACES[argv[faceAt + 1]] : null;
+if (faceAt >= 0 && !FACE) throw new Error("--face takes " + Object.keys(faces.FACES).join(" or "));
+const BATCH = batchAt >= 0 && argv[batchAt + 1] ? argv[batchAt + 1] : FACE ? "faces-2026-11/" + FACE.id : "brand-kit-2026-10";
 const OUT = path.join(ROOT, "media", BATCH);
 
 const THEMES = [
@@ -46,6 +54,79 @@ const KIT = [
   { network: "Facebook", file: "facebook/avatar-720.jpg", w: 720, h: 720, kind: "avatar", circle: true, where: "Profile picture" },
   { network: "Facebook", file: "media/facebook/page-2026-10/cover.jpg", w: 1640, h: 624, studio: "facebook-studio", safe: [265, 0, 1109, 624], where: "Cover photo; phones show only the outlined middle" }
 ];
+
+const FACE_KIT = FACE ? faces.NETWORKS.flatMap((n) => n.images.map((img) => Object.assign({}, img, {
+  network: n.name,
+  file: n.id + "/" + img.file,
+  theme: img.theme ? THEMES.find((t) => t.id === img.theme) : undefined,
+  where: img.theme ? "Highlight cover: " + FACE.highlights[img.theme] : img.where
+}))) : null;
+
+// One account of the face: the copy for each profile field, resolved for this network, and the sign-up steps.
+function account(n) {
+  const other = faces.FACES[FACE.other];
+  const site = faces.SITE + FACE.site + faces.utm(n.id, FACE.id);
+  const hub = faces.SITE + FACE.hub + faces.utm(n.id, FACE.id);
+  const otherLangs = other.langs.map((l) => l.toUpperCase()).join(" · ");
+  const links = [["Website", site], ["Social hub", hub]]
+    .concat(FACE.extra ? [[FACE.extra.label, faces.SITE + FACE.extra.page + faces.utm(n.id, FACE.id)]] : [])
+    .concat([[otherLangs, n.profile(other.handle)]]);
+  const value = (key, label) => {
+    if (FACE.bios[key]) {
+      const text = FACE.bios[key].replace("{other}", n.mention(other.handle));
+      const max = Number((label.match(/\((\d+)\)/) || [])[1]) || faces.LIMITS[key];
+      if (text.length > max) throw new Error(FACE.id + " " + n.name + " " + label + ": " + text.length + " characters, over " + max);
+      return text;
+    }
+    if (key === "name") {
+      if (FACE.name.length > faces.LIMITS.name) throw new Error(FACE.id + " name over " + faces.LIMITS.name);
+      return FACE.name;
+    }
+    if (key === "handle") return n.profile(FACE.handle).replace(/\/$/, "").split("/").pop().replace(/^@/, "");
+    if (key === "site") return site;
+    if (key === "email") return FACE.email;
+    if (key === "links") return links.slice(0, 5);
+    if (key === "fields") return links.slice(0, 3).concat([FACE.extra ? [otherLangs, n.profile(other.handle)] : ["Email", FACE.email]]).slice(0, 4);
+    if (key === "highlights") return THEMES.map((t) => FACE.highlights[t.id]).join(", ");
+    return key;
+  };
+  return {
+    network: n.name,
+    state: n.exists[FACE.id] ? "exists" : "new",
+    handle: FACE.handle,
+    profile: n.profile(FACE.handle),
+    email: FACE.email,
+    fields: n.fields.map(([label, key]) => ({ label, value: value(key, label) })),
+    images: FACE_KIT.filter((i) => i.network === n.name).map((i) => ({ where: i.where, file: path.relative(ROOT, filePath(i)) })),
+    steps: (n.exists[FACE.id] ? n.steps.slice(1) : n.steps).map((s) => s.replace(/\{email\}/g, "`" + FACE.email + "`").replace(/\{handle\}/g, "`" + value("handle") + "`")),
+    access: n.access
+  };
+}
+
+function checklist(accounts) {
+  const block = (v) => "\n  ```text\n  " + String(v).split("\n").join("\n  ") + "\n  ```";
+  const field = (f) => Array.isArray(f.value)
+    ? "- [ ] " + f.label + ":\n" + f.value.map(([label, url]) => "  - " + label + ": " + url).join("\n")
+    : "- [ ] " + f.label + ":" + block(f.value);
+  const other = faces.FACES[FACE.other];
+  return [
+    "# @" + FACE.handle + ": account kit and sign-up checklist",
+    "",
+    "Face of QA-lab URL Review for " + FACE.langs.map((l) => l.toUpperCase()).join(", ") + " (#2307, #2308). The other face, @" + other.handle + ", posts " + other.langs.map((l) => l.toUpperCase()).join(", ") + ". Every sign-up uses `" + FACE.email + "`; codes reach kaanmuar@gmail.com and the inbound webhook (#2309).",
+    "",
+    "Built by `node scripts/brand-kit/build.js --face " + FACE.id + "`; the contact sheet is `media/" + BATCH + "/contact-sheet.jpg`.",
+    ""
+  ].concat(accounts.map((a) => [
+    "## " + a.network + ": " + (a.state === "new" ? "new account" : "existing account") + ", " + a.profile,
+    "",
+    ...(a.state === "new" ? [] : ["- [ ] Log in and check the account email is `" + a.email + "`; change it in the account settings if not."]),
+    ...a.steps.map((s) => "- [ ] " + s),
+    ...a.fields.map(field),
+    ...a.images.map((i) => "- [ ] Upload " + i.where + ": `" + i.file + "`"),
+    "- [ ] Access: " + a.access,
+    ""
+  ].join("\n"))).join("\n");
+}
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
 const own = (item) => !item.file.startsWith("media/");
@@ -83,21 +164,33 @@ function sheet(items) {
   .ring.hl { inset: auto; left: 0; right: 0; top: 50%; aspect-ratio: 1; transform: translateY(-50%); }
   figcaption { margin-top: 10px; overflow-wrap: anywhere; } figcaption b { display: block; font-weight: 600; } figcaption span { font: 13px "Fira Code", monospace; color: #9fb3b8; }
 </style></head><body>
-<h1>QA-lab URL Review · <em>profile kit</em></h1>
+<h1>QA-lab URL Review · <em>${FACE ? "@" + esc(FACE.handle) + " · " + esc(FACE.copy.langs) : "profile kit"}</em></h1>
 <p class="lede">Fusion look, ${esc(BATCH)}. Rings show the circle crop; dashed boxes the area every screen shows. Built by scripts/brand-kit/build.js; nothing is uploaded.</p>
 ${groups.map((g) => "<h2>" + esc(g) + '</h2><div class="row">' + items.filter((i) => i.network === g).map(tile).join("") + "</div>").join("\n")}
 </body></html>`;
 }
 
 async function main() {
-  for (const studio of new Set(KIT.filter((i) => i.studio).map((i) => i.studio))) execFileSync(process.execPath, [path.join(ROOT, "scripts", studio, "build.js")], { stdio: "inherit" });
+  const kit = FACE_KIT || KIT;
+  const accounts = FACE ? faces.NETWORKS.map(account) : null;
+  for (const studio of new Set(kit.filter((i) => i.studio).map((i) => i.studio))) execFileSync(process.execPath, [path.join(ROOT, "scripts", studio, "build.js")], { stdio: "inherit" });
 
   fs.mkdirSync(OUT, { recursive: true });
   const browser = await fusion.launch();
   const page = await browser.newPage({ deviceScaleFactor: 1 });
   await page.goto("file://" + path.join(__dirname, "frame.html"));
   const mark = { square: fusion.markUri(512, { square: true }), tile: fusion.markUri(512) };
-  for (const item of KIT.filter(own)) {
+  for (const item of kit.filter(own)) {
+    if (FACE) {
+      const bg = item.fx ? fusion.dataUri(await fusion.still(browser, Object.assign({ w: item.w, h: item.h, t: 6 }, item.fx))) : null;
+      const p = item.scale ? await browser.newPage({ deviceScaleFactor: item.scale }) : page;
+      if (item.scale) await p.goto("file://" + path.join(__dirname, "frame.html"));
+      await p.setViewportSize({ width: item.w, height: item.h });
+      await p.evaluate((spec) => window.paint(spec), { kind: item.kind, w: item.w, h: item.h, bg, theme: item.theme, safe: item.safe, copy: FACE.copy, hue: FACE.hue, mark: item.kind === "watermark" ? mark.tile : mark.square });
+      await save(await p.locator("#c").screenshot({ omitBackground: item.kind === "watermark", scale: "device" }), item);
+      if (item.scale) await p.close();
+      continue;
+    }
     if (item.kind === "linkedin") {
       const li = await browser.newPage({ deviceScaleFactor: item.scale });
       await li.setViewportSize({ width: item.w, height: item.h });
@@ -113,9 +206,11 @@ async function main() {
     await save(await page.locator("#c").screenshot({ omitBackground: item.kind === "watermark" }), item);
   }
 
-  const manifest = KIT.map((i) => ({ network: i.network, where: i.where, file: path.relative(ROOT, filePath(i)), size: [i.w * (i.scale || 1), i.h * (i.scale || 1)] }));
-  fs.writeFileSync(path.join(OUT, "kit.json"), JSON.stringify({ batch: BATCH, look: "Fusion (designs/3d)", files: manifest }, null, 2) + "\n");
-  fs.writeFileSync(path.join(OUT, "index.html"), sheet(KIT));
+  const manifest = kit.map((i) => ({ network: i.network, where: i.where, file: path.relative(ROOT, filePath(i)), size: [i.w * (i.scale || 1), i.h * (i.scale || 1)] }));
+  const face = FACE ? { id: FACE.id, handle: FACE.handle, email: FACE.email, langs: FACE.langs, hue: FACE.hue, accounts } : undefined;
+  fs.writeFileSync(path.join(OUT, "kit.json"), JSON.stringify({ batch: BATCH, look: "Fusion (designs/3d)", face, files: manifest }, null, 2) + "\n");
+  if (FACE) fs.writeFileSync(path.join(OUT, "checklist.md"), checklist(accounts));
+  fs.writeFileSync(path.join(OUT, "index.html"), sheet(kit));
   await page.setViewportSize({ width: 1800, height: 1000 });
   await page.goto("file://" + path.join(OUT, "index.html"));
   await page.evaluate(() => Promise.all([document.fonts.ready].concat(Array.from(document.images).map((img) => img.decode().catch(() => null)))));

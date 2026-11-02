@@ -1,0 +1,239 @@
+/* The two brand faces (#2307) on the 11 networks: who posts which languages, each account's state, copy, links and
+   the steps Carlos takes to sign it up. steps[0] is the sign-up itself, so an account that exists skips it;
+   {email} and {handle} are filled in per face. scripts/brand-kit/build.js --face <id> renders a face's images, kit.json and
+   checklist.md from this file; nothing is uploaded.
+
+   Faces split by language so the two never post the same thing: @qalaburlreview posts en/de/fr/it, @qaurlreview
+   es/pt. Each bio names the other face, so the pair reads as one brand in two languages rather than twin accounts.
+   Links point at the existing language pages until the face landing pages (#2311) ship. */
+
+const SITE = "https://carlosandmunoz.com/";
+
+// Longest text each field takes; build.js refuses copy that runs over.
+const LIMITS = { name: 30, short: 80, bio: 150, about: 256, long: 1000 };
+
+const FACES = {
+  en: {
+    id: "en",
+    handle: "qalaburlreview",
+    email: "qalaburlreview@carlosandmunoz.com",
+    langs: ["en", "de", "fr", "it"],
+    lang: "en",
+    name: "QA-lab URL Review",
+    other: "es",
+    // Rotates the cyan Fusion look; 0 keeps the look the live accounts already have.
+    hue: 0,
+    site: "qa-review.html",
+    hub: "qa-review-social.html",
+    extra: null,
+    copy: {
+      lines: ["One public URL in.", "*A QA review out.*"],
+      areas: "SEO · AI search · Analytics · Security · Accessibility · Speed",
+      url: "carlosandmunoz.com/qa-review",
+      langs: "English · Deutsch · Français · Italiano"
+    },
+    bios: {
+      short: "One URL in, a QA review out. EN·DE·FR·IT. ES/PT: {other}",
+      bio: "One public URL in, a QA review out: SEO, AI search, analytics, security, accessibility, speed. EN·DE·FR·IT. Español/Português: {other}",
+      about: "One public URL in, a QA review out: SEO, AI search, analytics, security, accessibility and speed, with test cases for 20 frameworks. First review included. We post in English, Deutsch, Français and Italiano. Español y português: {other}",
+      long: [
+        "One public URL in, a plain-language QA review out: SEO, AI search (GEO), analytics, security, accessibility and speed, scored page by page, with proposed test cases for 20 frameworks and exports to Jira, TestRail, Xray and Zephyr. Sign in with email or an account you have; the first review is included.",
+        "Live Reports, tips, skits and live runs, posted in English, Deutsch, Français and Italiano.",
+        "En español y português: {other}"
+      ].join("\n\n")
+    },
+    highlights: { reports: "Live Reports", tips: "Tips", skits: "Skits", runs: "Live runs", guide: "How it works" }
+  },
+  es: {
+    id: "es",
+    handle: "qaurlreview",
+    email: "qaurlreview@carlosandmunoz.com",
+    langs: ["es", "pt"],
+    lang: "es",
+    name: "QA-lab URL Review · ES/PT",
+    other: "en",
+    // Cyan to amber, so the two faces never share an avatar.
+    hue: -150,
+    site: "qa-review-es.html",
+    hub: "qa-review-social-es.html",
+    extra: { label: "Português", page: "qa-review-pt.html" },
+    copy: {
+      lines: ["Entra una URL pública.", "*Sale una revisión QA.*"],
+      areas: "SEO · Búsqueda con IA · Analítica · Seguridad · Accesibilidad · Velocidad",
+      url: "carlosandmunoz.com/qa-review-es",
+      langs: "Español · Português"
+    },
+    bios: {
+      short: "Entra una URL, sale una revisión QA. ES·PT. EN/DE/FR/IT: {other}",
+      bio: "Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: {other}",
+      about: "Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad y velocidad, con casos de prueba para 20 frameworks. La primera revisión va incluida. En español y português. EN/DE/FR/IT: {other}",
+      long: [
+        "Entra una URL pública, sale una revisión QA en lenguaje claro: SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, calificadas página por página, con casos de prueba para 20 frameworks y exportación a Jira, TestRail, Xray y Zephyr. Entra con tu email o una cuenta que ya tengas; la primera revisión va incluida.",
+        "Uma URL pública entra, uma revisão de QA sai: SEO, busca com IA, analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks. A primeira revisão está incluída.",
+        "Informes en vivo, consejos, sketches y revisiones en directo, en español y português.",
+        "English, Deutsch, Français, Italiano: {other}"
+      ].join("\n\n")
+    },
+    highlights: { reports: "Informes en vivo", tips: "Consejos", skits: "Sketches", runs: "En directo", guide: "Cómo funciona" }
+  }
+};
+
+/* Per network: the account state per face, where each piece of copy goes, how the other face is named in a bio,
+   the profile URL, and the images. images[].kind is a frame.html painter; safe is the area every screen shows. */
+const NETWORKS = [
+  {
+    id: "x", name: "X",
+    exists: { en: true, es: false },
+    profile: (h) => "https://x.com/" + h,
+    mention: (h) => "@" + h,
+    fields: [["Name", "name"], ["Bio (160)", "bio"], ["Website", "site"]],
+    images: [
+      { file: "avatar-400.jpg", w: 400, h: 400, kind: "avatar", circle: true, where: "Profile photo" },
+      { file: "header-1500x500.jpg", w: 1500, h: 500, kind: "header", fx: { subject: [0.95, 0], zoom: 1.5 }, where: "Header photo; the profile photo covers the lower left" }
+    ],
+    steps: ["Sign up at x.com/i/flow/signup with {email} and the handle {handle}; X asks for a phone number and a CAPTCHA."],
+    access: "Connect the account in Buffer (#2310)."
+  },
+  {
+    id: "youtube", name: "YouTube",
+    exists: { en: true, es: false },
+    profile: (h) => "https://www.youtube.com/@" + h,
+    mention: (h) => "@" + h,
+    fields: [["Name", "name"], ["Handle", "handle"], ["Description (1000)", "long"], ["Links", "links"], ["Contact email", "email"]],
+    images: [
+      { file: "avatar-800.jpg", w: 800, h: 800, kind: "avatar", circle: true, where: "Picture" },
+      { file: "banner-2560x1440.jpg", w: 2560, h: 1440, kind: "youtube", fx: { subject: [0.4, 0.02], zoom: 2.6 }, safe: [507, 508, 1546, 423], where: "Banner image; phones show only the outlined middle" },
+      { file: "watermark-150.png", w: 150, h: 150, kind: "watermark", where: "Video watermark (Customization > Branding)" }
+    ],
+    steps: [
+      "Create a Google account at accounts.google.com/signup with \"Use your existing email\" and {email}, then studio.youtube.com > Create channel with the handle {handle}.",
+      "Verify the channel by phone (youtube.com/verify) so custom thumbnails and videos over 15 minutes work."
+    ],
+    access: "Connect the channel in Buffer (#2310)."
+  },
+  {
+    id: "tiktok", name: "TikTok",
+    exists: { en: true, es: false },
+    profile: (h) => "https://www.tiktok.com/@" + h,
+    mention: (h) => "@" + h,
+    fields: [["Name", "name"], ["Bio (80)", "short"], ["Website", "site"]],
+    images: [{ file: "avatar-1080.jpg", w: 1080, h: 1080, kind: "avatar", circle: true, where: "Profile photo" }],
+    steps: [
+      "Sign up at tiktok.com/signup with {email}, then set the username to {handle}.",
+      "Settings > Account > Switch to Business Account; personal accounts can't add a website link."
+    ],
+    access: "Connect the account in Buffer (#2310)."
+  },
+  {
+    id: "reddit", name: "Reddit",
+    exists: { en: true, es: false },
+    profile: (h) => "https://www.reddit.com/user/" + h + "/",
+    mention: (h) => "u/" + h,
+    fields: [["Display name", "name"], ["About (200)", "bio"], ["Social links (5)", "links"]],
+    images: [
+      { file: "avatar-256.png", w: 256, h: 256, kind: "avatar", circle: true, where: "Avatar" },
+      { file: "banner-1920x384.jpg", w: 1920, h: 384, kind: "strip", fx: { subject: [0, 0], zoom: 1.6 }, safe: [640, 0, 640, 384], where: "Banner; the copy stays in the middle third" }
+    ],
+    steps: ["Sign up at reddit.com/register with {email} and the username {handle}; Reddit can't rename a username later."],
+    access: "None: Reddit posts stay manual."
+  },
+  {
+    id: "facebook", name: "Facebook",
+    exists: { en: true, es: false },
+    profile: (h) => "https://www.facebook.com/" + h,
+    mention: (h) => "fb.com/" + h,
+    fields: [["Page name", "name"], ["Username", "handle"], ["Intro (101)", "short"], ["About", "long"], ["Website", "site"], ["Email", "email"], ["Categories", "Software, Internet Company"]],
+    images: [
+      { file: "avatar-720.jpg", w: 720, h: 720, kind: "avatar", circle: true, where: "Profile picture" },
+      { file: "cover-1640x624.jpg", w: 1640, h: 624, kind: "strip", fx: { subject: [0.3, 0], zoom: 1.8 }, safe: [265, 0, 1109, 624], where: "Cover photo; phones show only the outlined middle" }
+    ],
+    steps: [
+      "A Page has no login of its own: create it from your Facebook profile at facebook.com/pages/create, then set the username {handle} and {email} as the Page email.",
+      "Link the face's Instagram to this Page (Page settings > Linked accounts); Buffer only publishes to Instagram through a linked Page."
+    ],
+    access: "Add the Page to the Meta app \"QA-lab Page Publisher\" and connect it in Buffer (#2310)."
+  },
+  {
+    id: "devto", name: "dev.to",
+    exists: { en: true, es: false },
+    profile: (h) => "https://dev.to/" + h,
+    mention: (h) => "dev.to/" + h,
+    fields: [["Name", "name"], ["Username", "handle"], ["Bio (200)", "bio"], ["Website", "site"]],
+    images: [{ file: "avatar-1000.jpg", w: 1000, h: 1000, kind: "avatar", circle: true, where: "Profile image (dev.to has no banner)" }],
+    steps: ["Sign up at dev.to/enter with email: {email}, username {handle}."],
+    access: "Settings > Extensions > DEV Community API Keys: make a key for #2310."
+  },
+  {
+    id: "bluesky", name: "Bluesky",
+    exists: { en: true, es: false },
+    profile: (h) => "https://bsky.app/profile/" + h + ".bsky.social",
+    mention: (h) => "@" + h + ".bsky.social",
+    fields: [["Display name", "name"], ["Description (256)", "about"]],
+    images: [
+      { file: "avatar-1000.jpg", w: 1000, h: 1000, kind: "avatar", circle: true, where: "Avatar" },
+      { file: "banner-3000x1000.jpg", w: 1500, h: 500, scale: 2, kind: "header", fx: { subject: [0.95, 0], zoom: 1.5 }, where: "Banner; the avatar covers the lower left" }
+    ],
+    steps: ["Create account on bsky.app with {email} and the handle {handle}."],
+    access: "Settings > Privacy and security > App passwords: make one for #2310."
+  },
+  {
+    id: "mastodon", name: "Mastodon",
+    exists: { en: true, es: false },
+    profile: (h) => "https://mastodon.social/@" + h,
+    mention: (h) => "@" + h + "@mastodon.social",
+    fields: [["Display name", "name"], ["Bio (500)", "about"], ["Extra fields (4)", "fields"]],
+    images: [
+      { file: "avatar-400.jpg", w: 400, h: 400, kind: "avatar", where: "Avatar (rounded square)" },
+      { file: "header-1500x500.jpg", w: 1500, h: 500, kind: "header", fx: { subject: [0.95, 0], zoom: 1.5 }, where: "Header; the avatar covers the lower left" }
+    ],
+    steps: [
+      "Sign up at mastodon.social/auth/sign_up with {email} and the username {handle}, then confirm the email.",
+      "Preferences > Public profile > Verification: the face landing page (#2311) will carry rel=\"me\" so the website field shows as verified."
+    ],
+    access: "Preferences > Development > New application with write:statuses and write:media: give the token to #2310."
+  },
+  {
+    id: "instagram", name: "Instagram",
+    exists: { en: false, es: true },
+    profile: (h) => "https://www.instagram.com/" + h + "/",
+    mention: (h) => "@" + h,
+    fields: [["Name", "name"], ["Bio (150)", "bio"], ["Links (5)", "links"], ["Highlight names", "highlights"]],
+    images: [
+      { file: "avatar-1080.jpg", w: 1080, h: 1080, kind: "avatar", circle: true, where: "Profile picture" },
+      ...["reports", "tips", "skits", "runs", "guide"].map((id) => ({ file: "highlight-" + id + ".jpg", w: 1080, h: 1920, kind: "highlight", theme: id, fx: { subject: [0, 0.3], zoom: 2.4, t: 9.5 }, circle: "highlight", where: "Highlight cover: " + id }))
+    ],
+    steps: [
+      "Sign up at instagram.com/accounts/emailsignup with {email} and the username {handle}; add it to the same Accounts Center so one app switches between faces.",
+      "Settings > Account type and tools > Switch to professional account (Business), then link the face's Facebook Page."
+    ],
+    access: "Connect the account in Buffer through the linked Facebook Page (#2310)."
+  },
+  {
+    id: "threads", name: "Threads",
+    exists: { en: false, es: true },
+    profile: (h) => "https://www.threads.com/@" + h,
+    mention: (h) => "@" + h,
+    fields: [["Bio (150)", "bio"], ["Link", "site"]],
+    images: [{ file: "avatar-1080.jpg", w: 1080, h: 1080, kind: "avatar", circle: true, where: "Profile picture (Threads can import it from Instagram)" }],
+    steps: ["Threads has no sign-up of its own: open the Threads app, log in with the face's Instagram (@{handle}) and keep its handle."],
+    access: "Connect the profile in Buffer (#2310)."
+  },
+  {
+    id: "linkedin", name: "LinkedIn",
+    // The English page has run since October (Premium until 2026-11-19, Buffer posts to it); only the Spanish face is new.
+    exists: { en: true, es: false },
+    profile: (h) => "https://www.linkedin.com/company/" + (h === "qalaburlreview" ? "qalab-url-review" : h),
+    mention: (h) => "linkedin.com/company/" + (h === "qalaburlreview" ? "qalab-url-review" : h),
+    fields: [["Page name", "name"], ["Public URL", "handle"], ["Tagline (120)", "short"], ["Overview", "long"], ["Website", "site"], ["Industry", "Software Development"]],
+    images: [
+      { file: "logo-400.png", w: 400, h: 400, kind: "avatar", where: "Page logo" },
+      { file: "cover-1128x191@2x.jpg", w: 1128, h: 191, scale: 2, kind: "strip", fx: { subject: [0.9, 0], zoom: 1.4 }, safe: [260, 0, 868, 191], where: "Page cover; the logo covers the lower left" }
+    ],
+    steps: ["A Page has no login of its own: create it from your LinkedIn profile at linkedin.com/company/setup/new (Company, public URL {handle}), and add {email} as the page contact."],
+    access: "Connect the Page in Buffer (#2310)."
+  }
+];
+
+const utm = (network, face) => "?utm_source=" + network + "&utm_medium=profile&utm_campaign=profile-link&utm_content=face-" + face;
+
+module.exports = { SITE, LIMITS, FACES, NETWORKS, utm };
