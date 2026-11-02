@@ -51,7 +51,7 @@ object Countdowns {
     fun detail(r: JsonObject): String = listOfNotNull(
         r.str("kindLabel") ?: r.str("kind"),
         if (r.str("by") == "gemini") r.num("confidence")?.let { "Gemini $it" } else null,
-        if (r.str("status") == "running") "running now" else r.str("runsAt")?.takeIf { it.isNotBlank() }?.let { "runs ${ago(it)}" },
+        if (r.str("status") == "running") "running now" else r.str("runsAt")?.takeIf { it.isNotBlank() }?.let { "runs " + (ago(it) ?: it).replaceFirstChar { c -> c.lowercase() } },
         r.str("hold")?.takeIf { it.isNotBlank() },
         r.str("why")?.takeIf { it.isNotBlank() }
     ).joinToString(" · ")
