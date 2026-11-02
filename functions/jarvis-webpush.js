@@ -42,11 +42,12 @@ function verify(signKey, { ref, act, exp, sig }, now) {
   return want.length === got.length && crypto.timingSafeEqual(want, got);
 }
 
-/** What the service worker gets: the push, with at most two buttons, each signed unless it needs typing. */
+/** What the service worker gets: the push, with at most two buttons, each signed unless it needs typing or only opens a page. */
 function payload(msg, signKey, now) {
   const exp = now + SIGN_DAYS * 86400000;
-  const actions = (msg.ref ? (msg.actions || []) : []).slice(0, MAX_ACTIONS).map((a) => (a.input
-    ? { act: a.act, label: a.label, input: a.input }
+  const actions = (msg.ref ? (msg.actions || []) : []).slice(0, MAX_ACTIONS).map((a) => (a.act === "open"
+    ? Object.assign({ act: a.act, label: a.label }, /^https:\/\//.test(a.url || "") ? { url: a.url } : { tab: a.tab || "overview" })
+    : a.input ? { act: a.act, label: a.label, input: a.input }
     : { act: a.act, label: a.label, exp, sig: sign(signKey, msg.ref, a.act, exp) }));
   return JSON.stringify({
     kind: msg.kind, title: msg.title, body: msg.body, lines: msg.lines || [], tab: msg.tab || "overview",
