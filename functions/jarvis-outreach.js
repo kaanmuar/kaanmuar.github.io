@@ -1,6 +1,6 @@
 /* Jarvis outreach source (#1405, data for the outreach plan in #1278). One call returns:
 
-   pipeline   prospects queued for the nightly sweep (url_review_sweep/outreach), how far the sweep got, the outreach
+   pipeline   prospects queued for the outreach lane (url_review_sweep/outreach), how far the lane got, the outreach
               reviews in range (url_reviews with sweep.outreach) by segment and result, and which have a Live Report
    instantly  campaigns by status, sent, opens, replies, positive replies, bounces, meetings, and mailbox warm-up
    plan       the private 90-day plan (jarvis_settings/outreach, uploaded by scripts/jarvis-outreach-plan.js):
@@ -11,6 +11,7 @@
    The plan, prospect names and email copy stay out of the repo; only counts reach the dashboard. */
 
 const dayRows = require("./jarvis-days");
+const sweep = require("./url-review-sweep");
 
 const ORIGIN = "https://carlosandmunoz.com";
 const DAY = 24 * 60 * 60 * 1000;
@@ -293,13 +294,14 @@ async function outreach(ctx) {
   loggedP.catch(() => {});
   await Promise.all([
     part("pipeline", async () => {
-      const [queue, state, { reviews }, index] = await Promise.all([
+      const [queue, state, lane, { reviews }, index] = await Promise.all([
         ctx.db.collection("url_review_sweep").doc("outreach").get(),
         ctx.db.collection("url_review_sweep").doc("state").get(),
+        ctx.db.collection("url_review_sweep").doc("lane").get(),
         loggedP,
         ctx.fetch(ORIGIN + "/assets/live-reports/index.json", { signal: AbortSignal.timeout(10000) }).then((r) => r.json()).catch(() => ({ reports: [] }))
       ]);
-      return Object.assign({ ok: true }, pipelineRows(queue.exists ? queue.data() : null, state.exists ? state.data() : null, reviews, (index.reports || []).map((r) => r.host), ctx));
+      return Object.assign({ ok: true }, pipelineRows(queue.exists ? queue.data() : null, sweep.outreachView(state.exists ? state.data() : null, lane.exists ? lane.data() : null), reviews, (index.reports || []).map((r) => r.host), ctx));
     }),
     part("links", () => shortLinks(ctx, loggedP)),
     part("instantly", () => instantly(ctx)),

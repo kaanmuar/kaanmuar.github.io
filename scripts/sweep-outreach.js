@@ -84,12 +84,12 @@ async function main() {
   }
   if (cmd === "status") {
     const store = db();
-    const [list, state] = await Promise.all(["outreach", "state"].map((id) => store.collection("url_review_sweep").doc(id).get()));
+    const [list, state, lane] = await Promise.all(["outreach", "state", "lane"].map((id) => store.collection("url_review_sweep").doc(id).get()));
     const hosts = (list.data() || {}).hosts || [];
-    const s = state.data() || {};
+    const s = sweep.outreachView(state.data(), lane.data());
     const day = new Date().toISOString().slice(0, 10);
     const at = Math.min(Number(s.outreachAt) || 0, hosts.length);
-    console.log(hosts.length + " on the list, " + at + " taken by the sweep, " + (hosts.length - at) + " waiting; " +
+    console.log(hosts.length + " on the list, " + at + " taken by the outreach lane, " + (hosts.length - at) + " waiting; " +
       ((((s.days || {})[day] || {}).outreach) || 0) + " of " + sweep.OUTREACH_PER_DAY + " reviewed today (" + day + ")");
     return;
   }

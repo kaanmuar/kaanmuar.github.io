@@ -11,6 +11,7 @@ const H = 3600000;
 
 const JOBS = [
   { job: "sweepReviews", cron: "*/15 0-5 * * *", gap: 20, what: "Review the next country-sweep sites (up to 4 a tick, each tick done in 15 minutes, capped per day)" },
+  { job: "outreachSweep", cron: "*/15 * * * *", gap: 20, what: "Review the next outreach prospects and peer-group sites, all day (up to 4 a tick, capped per day, no owner notices)" },
   { job: "placesProspects", cron: "30 23 * * *", gap: 26, what: "Find local-business prospects on Google Maps for tonight's outreach sweep (up to 20 Places searches, skipped while two nights are still queued)" },
   { job: "rivalSweep", cron: "7-52/15 1-5 * * *", gap: 20, what: "Find a country-sweep site's 2-3 natural competitors, review them passively and store the comparison (one step per tick)" },
   { job: "refreshSocialHubStats", cron: "40 5 * * *", gap: 26, what: "GA4 and site_events numbers for the Social hub pane, and the hub's Trending order (pulled by the 06:00 Live Reports run)" },
@@ -58,6 +59,7 @@ const JOBS = [
 // The quotas the schedule is sized to. Change a number here and in the env, not in the job.
 const BUDGETS = {
   sweepPerDay: { env: "SWEEP_PER_DAY", value: 96, why: "24 night ticks x 4 reviews (#1099). Review browser: 4 vCPU x ~100 s a review, ~2,900 a month, well past the ~450 the free tier covers" },
+  outreachPerDay: { env: "OUTREACH_PER_DAY", value: 384, why: "96 ticks x 4 reviews (#2363); the lane only spends what scripts/sweep-outreach.js and peer groups queue, ~$0.01 a review in the review browser" },
   ownerNoticesPerDay: { env: "OWNER_NOTICES_PER_DAY", value: 15, why: "Cold mail to strangers: keep sender reputation while bounces are unknown" },
   rivalsPerDay: { env: "RIVALS_PER_DAY", value: 4, why: "Up to 2 web searches and 3 passive reviews a site; 20 night ticks fit 4 sites" },
   webSearchPerMonth: { value: 2000, why: "Brave ~1,000 + Tavily 1,000 a month; the country sweep spends none, the rival sweep up to 8 a night" },
