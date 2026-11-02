@@ -1081,7 +1081,8 @@ const server = http.createServer(async (req, res) => {
     if (history) report.history = history;
     if (base) report.compare = compare.compareSites(base.report, report);
     writeRecord(record);
-    line(res, { type: "done", report, frameworks: record.frameworks, paid: record.paid === true, priceUsd: record.priceUsd });
+    const shown = record.paid === true ? report : Object.assign(core.previewReport(report), report.compare ? { compare: report.compare } : {});
+    line(res, { type: "done", report: shown, frameworks: record.frameworks, paid: record.paid === true, priceUsd: record.priceUsd });
     res.end();
   } catch (error) {
     noteReview("failed", {

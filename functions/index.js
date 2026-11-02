@@ -4839,7 +4839,9 @@ async function runReview(req, res, placeOf) {
     await mailReviewedSites(ip, record);
     if (record.report && record.report.compare) await mailComparison(compareMail.runNotice(record));
     writeLine({ type: "log", text: "Report saved. Emailing a copy to " + intake.value.email + "." });
-    writeLine({ type: "done", report, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
+    // The page only blurs an unpaid report, so the stream carries the frosted copy; the asker keeps their own comparison.
+    const shown = record.paid === true ? report : Object.assign(urlReview.previewReport(report), report.compare ? { compare: report.compare } : {});
+    writeLine({ type: "done", report: shown, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
     try {
       await mailReportToAsker(record);
     } catch (error) {
