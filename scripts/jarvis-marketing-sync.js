@@ -147,11 +147,17 @@ function linkedin(dir) {
 }
 
 // Each working day from 07:00 local time (the Action sets TZ=America/Bogota), writes the day's LinkedIn list once; the tool skips people listed before.
-function linkedinDay(dir, now, run) {
+// No run writes linkedin/, so a held lock does not stop it (#2240); it only waits for that run's prospect CSVs to settle.
+// Without a lock the mtimes say nothing (a fresh checkout dates every file now), so they are not read.
+const SETTLE = 10 * 60 * 1000;
+function linkedinDay(dir, now, run, locked) {
   const at = new Date(now);
   if (at.getDay() === 0 || at.getDay() === 6 || at.getHours() < 7) return "";
   const date = at.toLocaleDateString("en-CA");
   if (fs.existsSync(path.join(dir, "linkedin", date + ".md"))) return "";
+  const folder = path.join(dir, "prospects");
+  const csvs = locked && fs.existsSync(folder) ? fs.readdirSync(folder).filter((f) => /^week.*\.csv$/.test(f)) : [];
+  if (csvs.some((f) => now - fs.statSync(path.join(folder, f)).mtimeMs < SETTLE)) return "";
   run(["tools/linkedin-day.py", date]);
   return "LinkedIn list for " + date + " written";
 }
@@ -334,16 +340,17 @@ async function main(argv) {
     ran++;
     console.log(c.action, out.status, out.result);
   }
-  if (!fs.existsSync(path.join(state, "lock"))) {
+  const locked = fs.existsSync(path.join(state, "lock"));
+  if (!locked) {
     const notes = await autopilot.run(dir, state, { parseCsv, toCsv, leadFiles, tool, fetch, db, now: Date.now() })
       .catch((error) => ["leads autopilot failed: " + String((error && error.message) || error).split("\n")[0].slice(0, 200)]);
     if (notes && notes.length) console.log("leads autopilot: " + notes.join("; "));
-    try {
-      const note = linkedinDay(dir, Date.now(), (args) => execFileSync("python3", args, { cwd: dir, stdio: "pipe", timeout: 120000 }));
-      if (note) console.log(note);
-    } catch (error) {
-      console.log("LinkedIn list failed: " + String((error && error.message) || error).split("\n")[0].slice(0, 200));
-    }
+  }
+  try {
+    const note = linkedinDay(dir, Date.now(), (args) => execFileSync("python3", args, { cwd: dir, stdio: "pipe", timeout: 120000 }), locked);
+    if (note) console.log(note);
+  } catch (error) {
+    console.log("LinkedIn list failed: " + String((error && error.message) || error).split("\n")[0].slice(0, 200));
   }
   const s = snapshot(dir, state, Date.now());
   await db.collection("jarvis_settings").doc("marketing_sync").set(s);
