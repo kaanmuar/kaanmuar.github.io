@@ -28,7 +28,7 @@
           },
           {
             "label": "Website",
-            "value": "https://carlosandmunoz.com/qa-review-es.html?utm_source=x&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+            "value": "https://carlosandmunoz.com/qaurlreview.html?utm_source=x&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
           }
         ],
         "images": [
@@ -70,7 +70,7 @@
             "value": [
               [
                 "Website",
-                "https://carlosandmunoz.com/qa-review-es.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+                "https://carlosandmunoz.com/qaurlreview.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
               ],
               [
                 "Social hub",
@@ -128,7 +128,7 @@
           },
           {
             "label": "Website",
-            "value": "https://carlosandmunoz.com/qa-review-es.html?utm_source=tiktok&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+            "value": "https://carlosandmunoz.com/qaurlreview.html?utm_source=tiktok&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
           }
         ],
         "images": [
@@ -163,7 +163,7 @@
             "value": [
               [
                 "Website",
-                "https://carlosandmunoz.com/qa-review-es.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+                "https://carlosandmunoz.com/qaurlreview.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
               ],
               [
                 "Social hub",
@@ -220,7 +220,7 @@
           },
           {
             "label": "Website",
-            "value": "https://carlosandmunoz.com/qa-review-es.html?utm_source=facebook&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+            "value": "https://carlosandmunoz.com/qaurlreview.html?utm_source=facebook&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
           },
           {
             "label": "Email",
@@ -268,7 +268,7 @@
           },
           {
             "label": "Website",
-            "value": "https://carlosandmunoz.com/qa-review-es.html?utm_source=devto&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+            "value": "https://carlosandmunoz.com/qaurlreview.html?utm_source=devto&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
           }
         ],
         "images": [
@@ -280,7 +280,7 @@
         "steps": [
           "Sign up at dev.to/enter with email: `qaurlreview@carlosandmunoz.com`, username `qaurlreview`."
         ],
-        "access": "Settings > Extensions > DEV Community API Keys: make a key for the dev.to poster (#2326)."
+        "access": "Settings > Extensions > DEV Community API Keys: generate a key named QA-lab poster, then store it: pbpaste | gh secret set DEVTO_API_KEY_ES -R kaanmuar/kaanmuar.github.io. scripts/devto-queue.js then posts one article a day (#2326)."
       },
       {
         "network": "Bluesky",
@@ -333,7 +333,7 @@
             "value": [
               [
                 "Website",
-                "https://carlosandmunoz.com/qa-review-es.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+                "https://carlosandmunoz.com/qaurlreview.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
               ],
               [
                 "Social hub",
@@ -362,7 +362,7 @@
         ],
         "steps": [
           "Sign up at mastodon.social/auth/sign_up with `qaurlreview@carlosandmunoz.com` and the username `qaurlreview`, then confirm the email.",
-          "Preferences > Public profile > Verification: the face landing page (#2311) will carry rel=\"me\" so the website field shows as verified."
+          "Preferences > Public profile: put the Website link below in the first extra field and save. The face landing page links back with rel=\"me\" once this file marks the account as existing, so Mastodon shows the field as verified; save the profile again if it was set before."
         ],
         "access": "Preferences > Development > New application with write:statuses, write:media, read:accounts and read:statuses: set the repo secrets MASTODON_URL_ES (https://mastodon.social) and MASTODON_TOKEN_ES (#2310)."
       },
@@ -386,7 +386,7 @@
             "value": [
               [
                 "Website",
-                "https://carlosandmunoz.com/qa-review-es.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+                "https://carlosandmunoz.com/qaurlreview.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
               ],
               [
                 "Social hub",
@@ -451,7 +451,7 @@
           },
           {
             "label": "Link",
-            "value": "https://carlosandmunoz.com/qa-review-es.html?utm_source=threads&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+            "value": "https://carlosandmunoz.com/qaurlreview.html?utm_source=threads&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
           }
         ],
         "images": [
@@ -488,7 +488,7 @@
           },
           {
             "label": "Website",
-            "value": "https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+            "value": "https://carlosandmunoz.com/qaurlreview.html?utm_source=linkedin&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
           },
           {
             "label": "Industry",

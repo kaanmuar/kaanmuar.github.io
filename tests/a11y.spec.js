@@ -107,6 +107,7 @@ test.describe('Skip link', () => {
     { url: '/qa-review-guide.html', text: 'Skip to main content', target: '#main' },
     { url: '/accessibility.html', text: 'Skip to main content', target: '#main' },
     { url: '/qa-review-social-de.html', text: 'Zum Hauptinhalt springen', target: '#main' },
+    { url: '/qaurlreview.html', text: 'Saltar al contenido principal', target: '#main' },
     { url: '/media/sdlc-studio-tour.html', text: 'Skip to main content', target: '#main' }
   ];
 

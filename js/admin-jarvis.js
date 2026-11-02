@@ -173,7 +173,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const api = endpoint || ENDPOINT;
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
-        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', egDrafts: {}, egAll: false, alerts: [], reports: [],
+        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, alerts: [], reports: [],
         external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0,
         panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review'
     };
@@ -1409,6 +1409,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const week = lw.find((w) => w.week === S.mkWeek) || lw.filter((w) => w.uploaded < w.total).pop() || lw[lw.length - 1] || null;
         const leadOrder = (r) => (r.uploaded ? 5 : r.dropped ? 4 : r.approved ? 3 : r.ask ? 0 : r.missing ? 2 : 1);
         const weekRows = sy && week ? sy.leads.rows.filter((r) => r.week === week.week).sort((a, b) => leadOrder(a) - leadOrder(b)) : [];
+        const doneRows = weekRows.filter((r) => r.uploaded || r.dropped).length;
+        const leadRows = S.mkDone ? weekRows : weekRows.filter((r) => !r.uploaded && !r.dropped);
         const leadFix = (r) => {
             const miss = String(r.missing || '').split(';').map((m) => m.trim()).filter(Boolean);
             const who = { week: r.week, email: r.email };
@@ -1433,7 +1435,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             + `<div class="jv-actions">${cmdBtn(`Approve every complete lead in ${week.week}`, { action: 'approve-week', week: week.week }, { disabled: week.complete <= week.approved + week.uploaded })}${cmdBtn(`Upload ${week.ready} approved to Instantly`, { action: 'upload', week: week.week }, { cls: ' is-primary', disabled: !week.ready || pendingFor('upload', week.week) })}</div>`
             + table([['Lead', (r) => `<strong>${esc([r.first_name, r.last_name].filter(Boolean).join(' ') || r.email)}</strong><br><span class="jv-note">${esc(r.title || r.email)}</span>`], ['Organisation', (r) => `${esc(r.org)}<br><span class="jv-note">${esc(r.host)} · ${esc(String(r.cc).toUpperCase())}</span>`],
                 ['Campaign', (r) => `<span class="jv-note">${esc(r.campaign)}</span>`], ['Score', (r) => esc(r.score || '—')], ['Top finding', (r) => `<span class="jv-note">${esc(String(r.top_finding || r.top_finding_en || '').slice(0, 120))}</span>`],
-                ['Report', (r) => (r.live_report_url ? `<a href="${esc(r.live_report_url)}" target="_blank" rel="noopener">open</a>` : '—')], ['Missing', (r) => (r.missing ? `<span class="jv-note">${esc(r.missing)}</span>` : '')], ['', leadAct]], weekRows, 'No leads in this week.');
+                ['Report', (r) => (r.live_report_url ? `<a href="${esc(r.live_report_url)}" target="_blank" rel="noopener">open</a>` : '—')], ['Missing', (r) => (r.missing ? `<span class="jv-note">${esc(r.missing)}</span>` : '')], ['', leadAct]], leadRows, doneRows ? 'Every lead in this week is uploaded or dropped.' : 'No leads in this week.')
+            + (doneRows ? `<div class="jv-actions"><button type="button" class="jv-btn" data-mk-done="${S.mkDone ? 'off' : 'on'}">${S.mkDone ? 'Hide' : 'Show'} ${doneRows} done (uploaded or dropped)</button></div>` : '');
         const repliesTodo = sy ? sy.replies.filter((r) => !r.sent && r.draft) : [];
         const repliesBody = !sy ? syWait : !sy.replies.length ? `<p class="jv-empty">No replies in the last 14 days${camps && camps.firstStart ? '; the first emails go out ' + esc(camps.firstStart) : ''}.</p>`
             : `${pie(Object.entries(sy.replies.reduce((m, r) => { const k = r.category || 'not sorted'; m[k] = (m[k] || 0) + 1; return m; }, {})).map(([label, value]) => ({ label, value })), { unit: 'replies' })}<ul class="jv-mk-replies">${sy.replies.map((r) => `<li>
@@ -2823,6 +2826,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.mkRereview) { leadReview(t); return; }
         if (t.dataset.mkReply) { mkReply(t); return; }
         if (t.dataset.mkWeek) { S.mkWeek = t.dataset.mkWeek; render(); return; }
+        if (t.dataset.mkDone) { S.mkDone = t.dataset.mkDone === 'on'; render(); return; }
         if (t.dataset.egDecide) { egDecide(t.dataset.key, t.dataset.egDecide); return; }
         if (t.dataset.egPause) { egSettings({ paused: t.dataset.egPause === 'on' }, t.dataset.egPause === 'on' ? 'pause every engagement action, draft and push' : 'resume engagement'); return; }
         if (t.dataset.egReport) { egReport(t.dataset.egReport); return; }

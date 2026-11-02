@@ -52,6 +52,8 @@ jobs:
         run: node scripts/build-critical-css.js --check
       - name: Review language pages match their builder
         run: python3 scripts/build-review-langs.py --check
+      - name: Face landing pages match scripts/brand-kit/faces.js
+        run: node scripts/build-face-pages.js --check
       - name: CSP script hashes match the pages' inline scripts
         run: node scripts/build-csp-hashes.js --check
       - name: Jarvis rules in functions match the admin page

@@ -99,6 +99,13 @@ BODY = [
     ("Elsewhere", {"es": "En otros sitios", "pt": "Em outros lugares", "de": "Anderswo", "fr": "Ailleurs", "it": "Altrove"}),
     ("Films and notes on", {"es": "Videos y notas en", "pt": "Vídeos e notas em", "de": "Filme und Notizen auf", "fr": "Vidéos et notes sur", "it": "Video e note su"}),
     (", and", {"es": " y", "pt": " e", "de": " und", "fr": " et", "it": " e"}),
+    ('By language: <a href="qalaburlreview.html" translate="no">@qalaburlreview</a> posts in English, German, French, and Italian, and <a href="qaurlreview.html" translate="no">@qaurlreview</a> in Spanish and Portuguese.', {
+        "es": 'Por idioma: <a href="qalaburlreview.html" translate="no">@qalaburlreview</a> publica en inglés, alemán, francés e italiano, y <a href="qaurlreview.html" translate="no">@qaurlreview</a> en español y portugués.',
+        "pt": 'Por idioma: <a href="qalaburlreview.html" translate="no">@qalaburlreview</a> publica em inglês, alemão, francês e italiano, e <a href="qaurlreview.html" translate="no">@qaurlreview</a> em espanhol e português.',
+        "de": 'Nach Sprache: <a href="qalaburlreview.html" translate="no">@qalaburlreview</a> postet auf Englisch, Deutsch, Französisch und Italienisch, <a href="qaurlreview.html" translate="no">@qaurlreview</a> auf Spanisch und Portugiesisch.',
+        "fr": 'Par langue : <a href="qalaburlreview.html" translate="no">@qalaburlreview</a> publie en anglais, allemand, français et italien, et <a href="qaurlreview.html" translate="no">@qaurlreview</a> en espagnol et portugais.',
+        "it": 'Per lingua: <a href="qalaburlreview.html" translate="no">@qalaburlreview</a> pubblica in inglese, tedesco, francese e italiano, e <a href="qaurlreview.html" translate="no">@qaurlreview</a> in spagnolo e portoghese.',
+    }),
     ("The request", {"es": "La solicitud", "pt": "A solicitação", "de": "Der Antrag", "fr": "La demande", "it": "La richiesta"}),
     ("Who is asking, and which address should we open?", {"es": "¿Quién lo pide y qué dirección abrimos?", "pt": "Quem está pedindo e qual endereço devemos abrir?", "de": "Wer fragt an, und welche Adresse sollen wir öffnen?", "fr": "Qui fait la demande, et quelle adresse devons-nous ouvrir ?", "it": "Chi lo chiede, e quale indirizzo dobbiamo aprire?"}),
     ("You", {"es": "Tú", "pt": "Você", "de": "Sie", "fr": "Vous", "it": "Tu"}),

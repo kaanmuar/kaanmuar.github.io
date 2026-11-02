@@ -4,6 +4,7 @@
 
      node scripts/brand-kit/build.js [--batch brand-kit-2026-10]
      node scripts/brand-kit/build.js --face en|es [--batch faces-2026-11/en]
+     node scripts/brand-kit/build.js --face en|es --text   # kit.json and checklist.md only, images untouched
 
    --face renders one brand face (#2307) for all 11 networks from faces.js: its own copy, language pill and hue,
    plus checklist.md, the copy and sign-up steps Carlos follows per account.
@@ -26,6 +27,8 @@ const faceAt = argv.indexOf("--face");
 const faces = require("./faces");
 const FACE = faceAt >= 0 ? faces.FACES[argv[faceAt + 1]] : null;
 if (faceAt >= 0 && !FACE) throw new Error("--face takes " + Object.keys(faces.FACES).join(" or "));
+const TEXT = argv.includes("--text");
+if (TEXT && !FACE) throw new Error("--text takes --face");
 const BATCH = batchAt >= 0 && argv[batchAt + 1] ? argv[batchAt + 1] : FACE ? "faces-2026-11/" + FACE.id : "brand-kit-2026-10";
 const OUT = path.join(ROOT, "media", BATCH);
 
@@ -170,9 +173,22 @@ ${groups.map((g) => "<h2>" + esc(g) + '</h2><div class="row">' + items.filter((i
 </body></html>`;
 }
 
+function writeText(kit, accounts) {
+  const manifest = kit.map((i) => ({ network: i.network, where: i.where, file: path.relative(ROOT, filePath(i)), size: [i.w * (i.scale || 1), i.h * (i.scale || 1)] }));
+  const face = FACE ? { id: FACE.id, handle: FACE.handle, email: FACE.email, langs: FACE.langs, hue: FACE.hue, accounts } : undefined;
+  fs.writeFileSync(path.join(OUT, "kit.json"), JSON.stringify({ batch: BATCH, look: "Fusion (designs/3d)", face, files: manifest }, null, 2) + "\n");
+  if (FACE) fs.writeFileSync(path.join(OUT, "checklist.md"), checklist(accounts));
+}
+
 async function main() {
   const kit = FACE_KIT || KIT;
   const accounts = FACE ? faces.NETWORKS.map(account) : null;
+  if (TEXT) {
+    fs.mkdirSync(OUT, { recursive: true });
+    writeText(kit, accounts);
+    console.log("wrote", path.relative(ROOT, path.join(OUT, "kit.json")), "and checklist.md");
+    return;
+  }
   for (const studio of new Set(kit.filter((i) => i.studio).map((i) => i.studio))) execFileSync(process.execPath, [path.join(ROOT, "scripts", studio, "build.js")], { stdio: "inherit" });
 
   fs.mkdirSync(OUT, { recursive: true });
@@ -206,10 +222,7 @@ async function main() {
     await save(await page.locator("#c").screenshot({ omitBackground: item.kind === "watermark" }), item);
   }
 
-  const manifest = kit.map((i) => ({ network: i.network, where: i.where, file: path.relative(ROOT, filePath(i)), size: [i.w * (i.scale || 1), i.h * (i.scale || 1)] }));
-  const face = FACE ? { id: FACE.id, handle: FACE.handle, email: FACE.email, langs: FACE.langs, hue: FACE.hue, accounts } : undefined;
-  fs.writeFileSync(path.join(OUT, "kit.json"), JSON.stringify({ batch: BATCH, look: "Fusion (designs/3d)", face, files: manifest }, null, 2) + "\n");
-  if (FACE) fs.writeFileSync(path.join(OUT, "checklist.md"), checklist(accounts));
+  writeText(kit, accounts);
   fs.writeFileSync(path.join(OUT, "index.html"), sheet(kit));
   await page.setViewportSize({ width: 1800, height: 1000 });
   await page.goto("file://" + path.join(OUT, "index.html"));
