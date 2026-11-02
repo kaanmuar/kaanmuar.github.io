@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 ref="${1:-HEAD}"
 
-node --test tests/unit/social-hub.test.js > /dev/null 2>&1 && exit 0
+node --test tests/unit/social-hub.test.js >/dev/null 2>&1 && exit 0
 
 files=()
 for lang in $(node -p "require('./scripts/social-hub/i18n').LANGS.join(' ')"); do
