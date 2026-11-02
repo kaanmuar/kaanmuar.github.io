@@ -15,7 +15,8 @@ function caps() {
         'appium:udid': device.udid,
         'appium:noReset': true,
         'appium:wdaLaunchTimeout': 180000,
-        'appium:wdaConnectionTimeout': 180000
+        'appium:wdaConnectionTimeout': 180000,
+        'appium:webviewConnectTimeout': 30000
       };
     }
     if (device.platform === 'android') {

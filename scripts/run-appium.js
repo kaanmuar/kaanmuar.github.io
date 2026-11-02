@@ -7,6 +7,12 @@ const root = path.join(__dirname, '..');
 const home = path.join(root, '.appium');
 const driverDir = path.join(home, 'node_modules', 'appium-chromium-driver');
 const xcode = '/Applications/Xcode.app/Contents/Developer';
+// The newest xcuitest and uiautomator2 majors need Appium 4, so each driver stays on its last Appium 3 release.
+const drivers = {
+  chromium: 'appium-chromium-driver@3.2.0',
+  ios: 'appium-xcuitest-driver@12.22.8',
+  android: 'appium-uiautomator2-driver@8.7.3'
+};
 
 function run(cmd, args) {
   return new Promise((resolve, reject) => {
@@ -27,22 +33,33 @@ function run(cmd, args) {
   });
 }
 
-async function main() {
+// Drivers built for another Appium major fail to load, so a new major or driver pin starts from an empty home.
+function resetStaleHome() {
+  const stamp = path.join(home, '.stack');
+  const want = ['appium@' + require('appium/package.json').version.split('.')[0], ...Object.values(drivers)].join(' ');
+  const have = fs.existsSync(stamp) ? fs.readFileSync(stamp, 'utf8').trim() : '';
+  if (have === want) return;
+  fs.rmSync(home, { recursive: true, force: true });
   fs.mkdirSync(home, { recursive: true });
+  fs.writeFileSync(stamp, want + '\n');
+}
+
+async function main() {
+  resetStaleHome();
   const appium = path.join(root, 'node_modules', '.bin', 'appium');
   const device = process.env.APPIUM_DEVICE ? JSON.parse(process.env.APPIUM_DEVICE) : null;
   if (device && device.platform === 'ios') {
     const xcuitest = path.join(home, 'node_modules', 'appium-xcuitest-driver');
     if (!fs.existsSync(xcuitest)) {
-      await run(appium, ['driver', 'install', '--source', 'npm', 'appium-xcuitest-driver']);
+      await run(appium, ['driver', 'install', '--source', 'npm', drivers.ios]);
     }
   } else if (device && device.platform === 'android') {
     const uia2 = path.join(home, 'node_modules', 'appium-uiautomator2-driver');
     if (!fs.existsSync(uia2)) {
-      await run(appium, ['driver', 'install', '--source', 'npm', 'appium-uiautomator2-driver']);
+      await run(appium, ['driver', 'install', '--source', 'npm', drivers.android]);
     }
   } else if (!fs.existsSync(driverDir)) {
-    await run(appium, ['driver', 'install', '--source', 'npm', 'appium-chromium-driver@1.5.1']);
+    await run(appium, ['driver', 'install', '--source', 'npm', drivers.chromium]);
   }
   if (!device) {
     const driverBin = findChromedriver();
