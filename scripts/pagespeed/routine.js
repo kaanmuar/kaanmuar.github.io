@@ -2,6 +2,8 @@
 /* The daily PageSpeed routine's decisions (#1978), apart from the network and the disk so tests can run them.
 
    needsFix   a page with a file in this repo whose mobile or desktop score is under THRESHOLD
+   toFix      the PER_RUN worst of those: a run fixes and measures only these, so it stays well inside the job's time
+              limit (Lighthouse takes about 5 minutes a page); the other pages are fixed on later days
    affected   the pages a fix branch changes: their HTML changed, or they reference a changed asset
    verdict    the branch may merge on its own when no page and mode fell more than DROP points and one rose RISE or more
               (medians of the local Lighthouse runs; a single run moves by a point or two on its own)
@@ -12,7 +14,7 @@ const THRESHOLD = 90;
 const DROP = 2;
 const RISE = 3;
 const KEEP = 60;
-const MEASURE_MAX = 6;
+const PER_RUN = 6;
 const MODES = ["mobile", "desktop"];
 
 const ok = (r) => r && r.ok !== false && Number.isFinite(r.score);
@@ -25,6 +27,10 @@ function needsFix(page) {
 /** Worst first: the lower of the two scores, then mobile. */
 function worstFirst(a, b) {
   return low(a) - low(b) || ((a.mobile || {}).score || 0) - ((b.mobile || {}).score || 0);
+}
+
+function toFix(pages) {
+  return (pages || []).filter(needsFix).sort(worstFirst).slice(0, PER_RUN);
 }
 
 function affected(changed, pages, readText) {
@@ -89,7 +95,7 @@ function runRow({ check, safe, ai, run, at, error }) {
   const pages = (check && check.pages) || [];
   const scored = pages.filter((p) => MODES.some((m) => ok(p[m])));
   const fix = (f) => (f ? {
-    branch: f.branch || null, files: (f.files || []).slice(0, 60), fixes: (f.fixes || []).slice(0, 80), pages: (f.measured || []).slice(0, MEASURE_MAX),
+    branch: f.branch || null, files: (f.files || []).slice(0, 60), fixes: (f.fixes || []).slice(0, 80), pages: (f.measured || []).slice(0, PER_RUN),
     verdict: f.verdict || null, note: f.note || "", error: f.error || ""
   } : null);
   return {
@@ -103,4 +109,4 @@ function record(runs, row) {
   return [row].concat((runs || []).filter((r) => !(row.run && r.run && r.run.id === row.run.id))).slice(0, KEEP);
 }
 
-module.exports = { THRESHOLD, DROP, RISE, KEEP, MEASURE_MAX, MODES, low, needsFix, worstFirst, affected, verdict, cacheNotes, latest, averages, runRow, record };
+module.exports = { THRESHOLD, DROP, RISE, KEEP, PER_RUN, MODES, low, needsFix, worstFirst, toFix, affected, verdict, cacheNotes, latest, averages, runRow, record };
