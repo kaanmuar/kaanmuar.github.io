@@ -41,9 +41,11 @@ const BY_FUNCTION = {
   // The daily canary mails canary@ through SendGrid (functions/mail-health.js, #1900).
   mailCanary: list(MAIL),
   // The engagement scout (#1988): Gemini reads the posts and drafts replies, YouTube search finds the videos, and
-  // the reports go by mail. BLUESKY_HANDLE and BLUESKY_APP_PASSWORD join once they are in Secret Manager (#1990).
-  engagement: list(MAIL, GEMINI, ["YOUTUBE_KEY"]),
-  jarvis: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE)
+  // the reports go by mail. The poster (#1990) refreshes the YouTube channel's token through the calendar's OAuth
+  // client; the Bluesky and Mastodon accounts are connected in Jarvis and kept in Firestore (engagement_private).
+  engagement: list(MAIL, GEMINI, ["YOUTUBE_KEY", "GOOGLE_CALENDAR_CLIENT_SECRET"]),
+  // An approved YouTube comment goes out from the jarvis function at once, so it refreshes the same token.
+  jarvis: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ["GOOGLE_CALENDAR_CLIENT_SECRET"])
 };
 
 const ALL = list(...Object.values(BY_FUNCTION));
