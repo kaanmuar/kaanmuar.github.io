@@ -108,12 +108,16 @@ fun runAction(vm: JarvisViewModel, action: String, job: String? = null, proposal
     }
     vm.act(actionKey(action, job ?: workflow ?: pr?.toString()), "action-run", extra) { out ->
         if (action.startsWith("pagespeed-")) return@act out.str("note") ?: "Done."
+        if (action == "rerun-ci") out.str("note")?.let { return@act it }
         (ACTION_LABELS[action] ?: action) + ": " + (out.str("ran")?.let { "$it started" } ?: (fmt(out.num("done")) + " done")) +
             (out.num("failed")?.takeIf { it > 0 }?.let { ", ${fmt(it)} failed" } ?: "") + (out.num("left")?.takeIf { it > 0 }?.let { ", ${fmt(it)} left" } ?: "") + "."
     }
 }
 
 fun actionKey(action: String, target: String?) = "action:$action:${target ?: ""}"
+
+/** The confirm text of a briefing sheet's rerun-ci button (#2245): main red re-runs its jobs, main green refreshes the PRs. */
+fun rerunCiAsk(workflow: String?) = "re-run the failed jobs of \"$workflow\" on main, or, when main is green, close and reopen the PRs that failed it on the old main (3 seconds apart, at most 20, conflicting PRs skipped)"
 
 /** The PR number of a PageSpeed proposal or briefing line ("pagespeed:pr:<n>"), else null. */
 fun pageSpeedPr(key: String?): Int? = key?.let { Regex("^pagespeed:pr:(\\d+)$").find(it)?.groupValues?.get(1)?.toIntOrNull() }
@@ -231,6 +235,7 @@ object ProposalButtons {
 /** A proposal's run button through the action-run op, with its jobs or workflows; a tap runs it at once. */
 fun runProposal(vm: JarvisViewModel, b: JsonObject, proposal: String?) {
     vm.act("proposal-run:$proposal", "action-run", ProposalButtons.extra(b, proposal)) { out ->
+        out.str("note")?.let { return@act (b.str("label") ?: "Done") + ": " + it }
         (b.str("label") ?: "Done") + ": " + (out.str("ran")?.trimEnd('.') ?: (fmt(out.num("done")) + " done")) +
             (out.num("failed")?.takeIf { it > 0 }?.let { ", ${fmt(it)} failed" } ?: "") + "."
     }

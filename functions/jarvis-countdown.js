@@ -144,6 +144,11 @@ async function execute(row, ops, now) {
   const { action, target } = inner(row);
   const p = row.payload || {};
   if (JOB_ACTIONS.includes(action)) { await ops.runJob(target); return { count: 1, detail: "Started " + target + "." }; }
+  if (action === "rerun-ci" && p.pr) {
+    const res = await ops.refreshPr(p.pr);
+    if (!res.refreshed) throw new Error("#" + p.pr + " was not reopened: " + res.skipped + ".");
+    return { count: 1, detail: "Closed and reopened #" + p.pr + " for a fresh merge with main." };
+  }
   if (action === "rerun-ci" && p.run) { await ops.rerunRun(p.run); return { count: 1, detail: "Re-running the failed jobs of run " + p.run + "." }; }
   if (action === "rerun-ci") {
     const res = await ops.rerunCi(target);

@@ -190,6 +190,42 @@ test("failed CI is re-run once, only on main or a Jarvis branch and only on its 
   assert.deepEqual(calls.reruns, [1, 4, 5, 6]);
 });
 
+test("a failed PR run on a Jarvis branch is closed and reopened once per main commit, never re-run (#2245)", async () => {
+  const db = fakeDb();
+  const refreshed = [];
+  let main = "aaa1111", runId = 20;
+  const { ops, calls } = autoOps({
+    failedCi: async () => [
+      { id: runId, name: "E2E and Visual Tests", branch: "jarvis/fix-cache", attempt: 1, event: "pull_request", pr: 301, main },
+      { id: 30, name: "E2E and Visual Tests", branch: "fix/123-other-chat", attempt: 1, event: "pull_request", pr: 302, main }
+    ],
+    refreshPr: async (n) => { refreshed.push(n); return { number: n, refreshed: true }; }
+  });
+  const first = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
+  assert.deepEqual(refreshed, [301]);
+  assert.deepEqual(calls.reruns, []);
+  assert.match(first.done[0].detail, /Closed and reopened #301 for a fresh merge with main aaa1111/);
+  runId = 21;
+  await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings: {}, ops });
+  assert.deepEqual(refreshed, [301], "the reopened PR failed again on the same main");
+  main = "bbb2222";
+  await actions.autoRun({ db, now: MONDAY_10 + 7200000, settings: {}, ops });
+  assert.deepEqual(refreshed, [301, 301], "main moved");
+});
+
+test("a PR that conflicts with main is logged as failed, not closed (#2245)", async () => {
+  const db = fakeDb();
+  const { ops } = autoOps({
+    failedCi: async () => [{ id: 40, name: "Lint Code", branch: "pagespeed/safe-2026-10-26", attempt: 1, event: "pull_request", pr: 303, main: "ccc3333" }],
+    refreshPr: async (n) => ({ number: n, skipped: "conflicts" })
+  });
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
+  assert.equal(out.done.length, 0);
+  const row = db.added.find((r) => r.action === "rerun-ci");
+  assert.equal(row.status, "failed");
+  assert.match(row.detail, /#303 was not reopened: conflicts/);
+});
+
 test("every branch the PageSpeed routine creates is one Jarvis re-runs CI on", () => {
   for (const kind of ["safe", "ai"]) {
     const branch = "pagespeed/" + kind + "-2026-11-02";

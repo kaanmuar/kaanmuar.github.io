@@ -2067,7 +2067,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     const SHEET_ASK = {
-        'rerun-ci': (b) => `re-run the failed jobs of "${b.dataset.workflow}" on main`,
+        'rerun-ci': (b) => `re-run the failed jobs of "${b.dataset.workflow}" on main, or, when main is green, close and reopen the PRs that failed it on the old main (3 seconds apart, at most 20, conflicting PRs skipped)`,
         'run-job': (b) => `run ${b.dataset.job} again`,
         'pagespeed-merge': (b) => `merge PageSpeed fixes #${b.dataset.pr} into main now (it goes to production)`,
         'pagespeed-close': (b) => `close PageSpeed fixes #${b.dataset.pr} without merging`,
@@ -2114,7 +2114,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             const out = await call('action-run', { action, job: b.dataset.job, workflow: b.dataset.workflow, pr: b.dataset.pr ? Number(b.dataset.pr) : undefined, proposal: sh.key });
             b.disabled = false;
             if (/^pagespeed-/.test(action)) { toast(out.ok ? out.note : 'Not run: ' + out.error, 6000); if (out.ok) loadExternal(['pagespeed', 'actions']); return; }
-            toast(out.ok ? (out.already ? `${out.ran} already ended with ${out.already}.` : `${ACTION_LABELS[action] || action}: ${out.ran ? out.ran + ' started' : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.`) : 'Not run: ' + out.error, 6000);
+            toast(out.ok ? (out.note ? out.note : out.already ? `${out.ran} already ended with ${out.already}.` : `${ACTION_LABELS[action] || action}: ${out.ran ? out.ran + ' started' : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.`) : 'Not run: ' + out.error, 6000);
             if (out.ok) loadExternal(['actions', 'health', 'jobs', 'github']);
             return;
         }
@@ -2273,7 +2273,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (!confirmRun(ask)) return;
         toast('Running…', 30000);
         const out = await call('action-run', { action: run.action, jobs: run.jobs, workflows: run.workflows, proposal: key });
-        toast(out.ok ? `${run.label}: ${out.ran ? String(out.ran).replace(/\.$/, '') : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.` : 'Not run: ' + out.error, 6000);
+        toast(out.ok ? out.note ? `${run.label}: ${out.note}` : `${run.label}: ${out.ran ? String(out.ran).replace(/\.$/, '') : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.` : 'Not run: ' + out.error, 6000);
         loadExternal(['actions', 'health', 'jobs', 'github']);
     }
 

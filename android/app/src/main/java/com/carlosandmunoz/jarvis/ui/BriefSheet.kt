@@ -155,7 +155,7 @@ fun BriefSheet(item: JsonObject, s: UiState, vm: JarvisViewModel, open: (String)
                         val pr = a.num("pr")?.toInt()
                         val runKey = actionKey(id, job ?: workflow ?: pr?.toString())
                         ActionButton(a.str("label") ?: id, runKey in s.running) {
-                            val ask = if (id == "rerun-ci") "re-run the failed jobs of \"$workflow\" on main" else askFor(id, job, null, pr)
+                            val ask = if (id == "rerun-ci") rerunCiAsk(workflow) else askFor(id, job, null, pr)
                             confirm = PendingAction(ask) { runAction(vm, id, job, key, workflow, pr) }
                         }
                     }

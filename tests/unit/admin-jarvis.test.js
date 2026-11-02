@@ -1211,17 +1211,91 @@ test("social: approving a proposal adds the hub item and the decision; dismissin
 
 test("rerunCi re-runs the failed jobs of the newest failed run on main, and says when the token cannot (#1695)", async () => {
   const calls = [];
-  const runs = { workflow_runs: [{ id: 9, name: "Buffer batch queue", conclusion: "failure", html_url: "https://github.com/r/9" }, { id: 7, name: "Deploy", conclusion: "success", html_url: "https://github.com/r/7" }] };
-  const fetchOk = async (url, opts) => { calls.push([url, (opts || {}).method || "GET"]); return /rerun-failed-jobs/.test(url) ? json({}, 201) : json(runs); };
+  const workflows = { workflows: [{ id: 1, name: "Buffer batch queue" }, { id: 2, name: "Deploy" }] };
+  const runs = {
+    1: { workflow_runs: [{ id: 10, name: "Buffer batch queue", conclusion: "cancelled" }, { id: 9, name: "Buffer batch queue", conclusion: "failure", html_url: "https://github.com/r/9" }] },
+    2: { workflow_runs: [{ id: 7, name: "Deploy", conclusion: "success", html_url: "https://github.com/r/7" }] }
+  };
+  const route = (url) => (/actions\/workflows\?/.test(url) ? json(workflows) : json(runs[(/workflows\/(\d+)\/runs\?branch=main/.exec(url) || [])[1]] || {}));
+  const fetchOk = async (url, opts) => { calls.push([url, (opts || {}).method || "GET"]); return /rerun-failed-jobs/.test(url) ? json({}, 201) : route(url); };
   const out = await jarvis.rerunCi(fetchOk, "t", "Buffer batch queue");
-  assert.equal(out.run, 9);
-  assert.match(calls[1][0], /actions\/runs\/9\/rerun-failed-jobs$/);
-  assert.equal(calls[1][1], "POST");
-  assert.equal((await jarvis.rerunCi(fetchOk, "t", "Deploy")).already, "success");
+  assert.equal(out.run, 9, "the newest run that was not cancelled");
+  assert.match(calls[1][0], /actions\/workflows\/1\/runs\?branch=main&status=completed/);
+  assert.match(calls[2][0], /actions\/runs\/9\/rerun-failed-jobs$/);
+  assert.equal(calls[2][1], "POST");
+  assert.equal((await jarvis.rerunCi(fetchOk, "t", "Deploy", { prs: false })).already, "success");
   await assert.rejects(() => jarvis.rerunCi(fetchOk, "t", "Nope"), /No finished run/);
-  const fetchNo = async (url) => (/rerun-failed-jobs/.test(url) ? json({ message: "Resource not accessible" }, 403) : json(runs));
+  const fetchNo = async (url) => (/rerun-failed-jobs/.test(url) ? json({ message: "Resource not accessible" }, 403) : route(url));
   await assert.rejects(() => jarvis.rerunCi(fetchNo, "t", "Buffer batch queue"), /Actions: write/);
   await assert.rejects(() => jarvis.rerunCi(fetchOk, "", "Deploy"), /No GitHub token/);
+});
+
+test("stalePrs keeps open, non-draft PRs whose newest run at their head failed before main went green (#2245)", () => {
+  const pr = (number, sha, draft) => ({ number, title: "PR " + number, html_url: "u/" + number, draft: !!draft, head: { sha } });
+  const run = (id, sha, conclusion, at, status) => ({ id, name: "Tests", head_sha: sha, conclusion, status: status || "completed", created_at: at });
+  const runs = [
+    run(9, "e", "failure", "2026-11-02T12:00:00Z"), run(8, "d", null, "2026-11-02T08:00:00Z", "in_progress"), run(7, "c", "success", "2026-11-02T07:00:00Z"),
+    run(6, "a", "cancelled", "2026-11-02T06:00:00Z"), run(5, "a", "failure", "2026-11-02T05:00:00Z"), run(4, "f", "failure", "2026-11-02T05:00:00Z"), run(3, "d", "failure", "2026-11-02T04:00:00Z")
+  ];
+  const pulls = [pr(1, "a"), pr(2, "c"), pr(3, "d"), pr(4, "e"), pr(5, "f", true), pr(6, "old")];
+  assert.deepEqual(jarvis.stalePrs(pulls, runs, "Tests", "2026-11-02T10:00:00Z"), [{ number: 1, title: "PR 1", url: "u/1", run: 5 }]);
+  assert.deepEqual(jarvis.stalePrs(pulls, runs, "Lint", "2026-11-02T10:00:00Z"), []);
+});
+
+test("rerunCi on a green main closes and reopens the stale PRs, spaced, skipping conflicts and keeping the cap (#2245)", async () => {
+  const calls = [], slept = [];
+  const mainRuns = { workflow_runs: [{ id: 50, name: "E2E", conclusion: "success", workflow_id: 11, created_at: "2026-11-02T10:00:00Z", html_url: "https://github.com/r/50" }] };
+  const prRuns = { workflow_runs: [1, 2, 3, 4].map((n) => ({ id: 100 + n, name: "E2E", head_sha: "s" + n, status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z" })) };
+  const pulls = [1, 2, 3, 4].map((n) => ({ number: n, title: "PR " + n, html_url: "u/" + n, draft: false, head: { sha: "s" + n } }));
+  const looks = {};
+  const mergeable = (n) => (n === 2 ? false : n === 3 && (looks[n] = (looks[n] || 0) + 1) === 1 ? null : true);
+  const fetchFake = async (url, opts) => {
+    const method = (opts || {}).method || "GET";
+    calls.push(method + " " + url.replace("https://api.github.com/repos/kaanmuar/kaanmuar.github.io/", "") + (opts && opts.body ? " " + opts.body : ""));
+    if (/actions\/workflows\?/.test(url)) return json({ workflows: [{ id: 11, name: "E2E" }] });
+    if (/actions\/workflows\/11\/runs\?branch=main/.test(url)) return json(mainRuns);
+    if (/actions\/workflows\/11\/runs\?event=pull_request/.test(url)) return json(prRuns);
+    if (/pulls\?state=open/.test(url)) return json(pulls);
+    const n = Number((/pulls\/(\d+)$/.exec(url) || [])[1]);
+    if (method === "PATCH") return json({}, 200);
+    return json({ number: n, state: "open", mergeable: mergeable(n) });
+  };
+  const budget = { left: 3, until: Infinity, seen: new Set() };
+  const out = await jarvis.rerunCi(fetchFake, "t", "E2E", { budget, sleep: async (ms) => { slept.push(ms); } });
+  assert.deepEqual(out.prs.refreshed, [1, 3]);
+  assert.deepEqual(out.prs.conflicts, [2]);
+  assert.deepEqual(out.prs.left, [4]);
+  assert.equal(out.note, "Closed and reopened #1, #3. Skipped for conflicts with main: #2. Left for the next click: #4.");
+  assert.deepEqual(calls.filter((c) => c.startsWith("PATCH")), ['PATCH pulls/1 {"state":"closed"}', 'PATCH pulls/1 {"state":"open"}', 'PATCH pulls/3 {"state":"closed"}', 'PATCH pulls/3 {"state":"open"}']);
+  assert.deepEqual(slept, [1000, 3000, 3000, 2000, 1000], "1 s between close and reopen, 3 s between PRs, 2 s for a second mergeability look");
+  assert.ok(!calls.some((c) => /rerun-failed-jobs/.test(c)), "a PR's jobs are never re-run");
+
+  const noPrs = await jarvis.rerunCi(fetchFake, "t", "E2E", { prs: false });
+  assert.equal(noPrs.already, "success");
+  assert.equal(noPrs.prs, undefined);
+});
+
+test("refreshPr retries a failed reopen once and says loudly when a PR stays closed (#2245)", async () => {
+  let opens = 0;
+  const fetchFake = (fail) => async (url, opts) => {
+    if ((opts || {}).method !== "PATCH") return json({ state: "open", mergeable: true });
+    if (/"open"/.test(opts.body)) { opens += 1; return json({}, opens <= fail ? 502 : 200); }
+    return json({}, 200);
+  };
+  const sleep = async () => {};
+  assert.deepEqual(await jarvis.refreshPr(fetchFake(1), "t", 7, { sleep }), { number: 7, refreshed: true });
+  opens = 0;
+  await assert.rejects(() => jarvis.refreshPr(fetchFake(2), "t", 7, { sleep }), /#7 is closed and did not reopen/);
+  const refused = async (url, opts) => ((opts || {}).method === "PATCH" ? json({}, 403) : json({ state: "open", mergeable: true }));
+  await assert.rejects(() => jarvis.refreshPr(refused, "t", 7, { sleep }), /Pull requests: write/);
+});
+
+test("rerunCi with rerunMain false refuses while main is red (scripts/refresh-prs.sh, #2245)", async () => {
+  const runs = { workflow_runs: [{ id: 9, name: "E2E", conclusion: "failure", html_url: "https://github.com/r/9" }] };
+  const posts = [];
+  const fetchFake = async (url, opts) => { if ((opts || {}).method === "POST") posts.push(url); return json(/actions\/workflows\?/.test(url) ? { workflows: [{ id: 3, name: "E2E" }] } : runs); };
+  await assert.rejects(() => jarvis.rerunCi(fetchFake, "t", "E2E", { rerunMain: false }), /E2E is failure on main .*fix main before refreshing PRs/);
+  assert.deepEqual(posts, []);
 });
 
 test("decideRatings approves or rejects pending ratings only, and briefItems lists them without test senders", async () => {

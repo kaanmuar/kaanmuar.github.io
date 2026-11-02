@@ -580,6 +580,7 @@
         const gh = ext.github;
         if (gh && gh.ok) {
             (gh.ci || []).filter((run) => run.conclusion && !['success', 'skipped', 'cancelled', 'neutral'].includes(run.conclusion)).forEach((run) => add('alert', 'systems', `CI "${run.name}" on main is ${run.conclusion}.`, 'ci:' + run.name));
+            (gh.prsStale || []).forEach((w) => add('warn', 'systems', `${plural(w.prs.length, 'open PR', 'open PRs')} failed "${w.workflow}" before main went green again; a re-run would test the old main.`, 'ci-prs:' + w.workflow));
             const waiting = gh.needsAgent || [];
             if (waiting.length) add('alert', 'systems', `${plural(waiting.length, 'URL review bug waits', 'URL review bugs wait')} for the daily fix agent, held back to stay inside the Cursor plan: ${waiting.slice(0, 5).map((bug) => '#' + bug.number).join(', ')}.`, 'github:needs-agent');
             if (gh.openBugs) add('info', 'systems', `${plural(gh.openBugs, 'open bug', 'open bugs')}; most in ${((gh.bugAreas || [])[0] || {}).label || 'none'}. ${plural((gh.merged || {}).total || 0, 'PR', 'PRs')} merged this week.`, 'github:bugs');
@@ -746,6 +747,7 @@
         { prefix: 'outreach:warmup', impact: 4, title: 'Hold the campaigns until the mailboxes are warm', click: 'pause-outreach', tab: 'outreach' },
         { prefix: 'outreach:dns:', impact: 4, group: true, title: 'Fix the sending domain records', click: 'pause-outreach', tab: 'outreach' },
         { prefix: 'review:held', impact: 3, title: 'Re-run the held reviews', action: 'rerun-held', tab: 'systems' },
+        { prefix: 'ci-prs:', impact: 3, group: true, title: 'Close and reopen the PRs that failed on the old main', link: 'https://github.com/kaanmuar/kaanmuar.github.io/pulls' },
         { prefix: 'notices:failed', impact: 3, title: 'Re-send the owner notices that failed', action: 'resend-notices', tab: 'review' },
         { prefix: 'hub:stale', impact: 3, title: 'Publish the Social hub', action: 'publish-hub', tab: 'hub' },
         { prefix: 'money:refunds', impact: 3, title: 'Read why customers asked for refunds', tab: 'business' },
@@ -792,7 +794,7 @@
             const row = out.get(key) || { key, product: item.product, impact: rule.impact, level: item.level, evidence: [], source: 'rules', action: rule.action || null, click: rule.click || null, tab: rule.tab || null, link: rule.link || null, rule };
             row.evidence.push(item.text);
             if (/^(job|scheduler):/.test(item.key)) (row.jobs = row.jobs || []).push(item.key.slice(item.key.indexOf(':') + 1));
-            if (item.key.startsWith('ci:')) (row.workflows = row.workflows || []).push(item.key.slice(3));
+            if (/^ci(-prs)?:/.test(item.key)) (row.workflows = row.workflows || []).push(item.key.slice(item.key.indexOf(':') + 1));
             if (item.level === 'alert') row.level = 'alert';
             row.item = row.item || item;
             out.set(key, row);
@@ -826,6 +828,7 @@
             return { action, label: RUN_LABELS[action] };
         }
         if (p.jobs && p.jobs.length) return { action: 'run-job', jobs: p.jobs.slice(0, 6), label: many(p.jobs, (j) => `Run ${j} again`, (n) => `Run ${n} jobs again`) };
+        if (p.workflows && p.workflows.length && p.key === 'ci-prs') return { action: 'rerun-ci', workflows: p.workflows.slice(0, 6), label: 'Close and reopen the PRs' };
         if (p.workflows && p.workflows.length) return { action: 'rerun-ci', workflows: p.workflows.slice(0, 6), label: many(p.workflows, (w) => `Re-run ${w}`, (n) => `Re-run ${n} workflows`) };
         return null;
     }
@@ -887,6 +890,12 @@
             fact('Workflow', tail); fact('Result', run.conclusion); fact('Commit', run.sha); fact('Finished', run.at);
             link('Open the run on GitHub', run.url || BRIEF_LINKS.github);
             act('rerun-ci', 'Re-run the failed jobs', { workflow: tail });
+        } else if (k.startsWith('ci-prs:')) {
+            const prs = (((ext.github || {}).prsStale || []).find((w) => w.workflow === tail) || {}).prs || [];
+            fact('Workflow', tail); fact('PRs that failed on the old main', prs.length);
+            fact('What the button does', 'Closes and reopens each PR, 3 seconds apart, so GitHub builds a fresh merge with today\'s main. At most 20 a click; PRs that conflict with main are skipped and listed.');
+            prs.slice(0, 8).forEach((pr) => link('#' + pr.number + ' ' + pr.title, pr.url));
+            act('rerun-ci', 'Close and reopen them', { workflow: tail });
         } else if (k === 'github:needs-agent') {
             const waiting = (ext.github || {}).needsAgent || [];
             fact('Waiting for an agent', waiting.length);
