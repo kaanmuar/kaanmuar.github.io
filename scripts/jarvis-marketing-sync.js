@@ -16,6 +16,7 @@ const os = require("os");
 const path = require("path");
 const Module = require("module");
 const { execSync, execFileSync, spawn } = require("child_process");
+const autopilot = require("./marketing-leads-autopilot");
 
 const PROJECT = "carlosm-interactive-cv";
 const FN = path.join(__dirname, "..", "functions");
@@ -23,8 +24,8 @@ const YES = /^(yes|y|x|1)$/i;
 const JOBS = ["prospects", "leads", "replies"];
 const REPLY_DAYS = 14;
 const LEAD_FIELDS = ["campaign", "email", "org", "host", "cc", "language", "sequence", "first_name", "last_name", "title", "score",
-  "top_finding_en", "missing", "live_report_url", "report_read"];
-const EDITS = new Set(["approve", "approve-week", "upload", "linkedin", "dnc", "run"]);
+  "top_finding", "top_finding_en", "missing", "live_report_url", "report_read"];
+const EDITS = new Set(["approve", "approve-week", "upload", "linkedin", "dnc", "run", "lead-set", "lead-drop", "allow-personal"]);
 
 // --- CSV: quoted fields may hold commas, quotes and line breaks; the newline style of the file is kept. -----------
 function parseCsv(text) {
@@ -58,20 +59,30 @@ const readJson = (file, fallback) => { try { return JSON.parse(fs.readFileSync(f
 // --- What the folder holds ----------------------------------------------------------------------------------------
 const leadFile = (dir, week) => path.join(dir, "prospects", "week" + String(week).replace(/^W/i, "") + "-leads.csv");
 
-function leads(dir) {
+function leadFiles(dir) {
   const folder = path.join(dir, "prospects");
-  const files = fs.existsSync(folder) ? fs.readdirSync(folder).filter((f) => /^week\d+-leads\.csv$/.test(f)) : [];
+  return (fs.existsSync(folder) ? fs.readdirSync(folder) : []).filter((f) => /^week\d+-leads\.csv$/.test(f))
+    .sort((a, b) => parseInt(a.slice(4), 10) - parseInt(b.slice(4), 10))
+    .map((f) => ({ week: "W" + parseInt(f.slice(4), 10), file: path.join(folder, f) }));
+}
+
+// Each row says what Jarvis is doing with it (`wait`) or why it needs Carlos (`ask`, #2016).
+function leads(dir, state, now) {
   const weeks = [], rows = [];
-  files.sort((a, b) => parseInt(a.slice(4), 10) - parseInt(b.slice(4), 10)).forEach((f) => {
-    const week = "W" + parseInt(f.slice(4), 10);
-    const list = parseCsv(read(path.join(dir, "prospects", f), "")).rows;
-    list.forEach((r) => rows.push(Object.assign({ week }, Object.fromEntries(LEAD_FIELDS.map((k) => [k, String(r[k] || "").slice(0, 400)])),
-      { approved: YES.test(String(r.approved || "").trim()), uploaded: r.uploaded || "" })));
+  const reruns = state ? readJson(path.join(state, "lead-reruns.json"), {}) || {} : {};
+  leadFiles(dir).forEach(({ week, file }) => {
+    const list = parseCsv(read(file, "")).rows;
+    list.forEach((r) => {
+      const d = autopilot.decide(r, reruns, now || Date.now());
+      rows.push(Object.assign({ week }, Object.fromEntries(LEAD_FIELDS.map((k) => [k, String(r[k] || "").slice(0, 400)])),
+        { approved: YES.test(String(r.approved || "").trim()), dropped: /^no$/i.test(String(r.approved || "").trim()), uploaded: r.uploaded || "",
+          ask: d.kind === "ask" ? d.why : "", wait: d.kind === "wait" ? d.why : d.kind === "rerun" || d.kind === "translate" ? "Jarvis is on it." : "" }));
+    });
     const mine = rows.filter((r) => r.week === week);
     weeks.push({
       week, total: mine.length, complete: mine.filter((r) => !r.missing).length, missing: mine.filter((r) => r.missing).length,
       approved: mine.filter((r) => r.approved).length, uploaded: mine.filter((r) => r.uploaded).length,
-      ready: mine.filter((r) => r.approved && !r.missing && !r.uploaded).length
+      ready: mine.filter((r) => r.approved && !r.missing && !r.uploaded).length, ask: mine.filter((r) => r.ask).length, dropped: mine.filter((r) => r.dropped).length
     });
   });
   return { weeks, rows };
@@ -162,7 +173,7 @@ function paused(dir) {
 function snapshot(dir, state, now) {
   return {
     at: new Date(now).toISOString(), host: os.hostname(), running: fs.existsSync(path.join(state, "lock")),
-    leads: leads(dir), replies: replies(dir, now), linkedin: linkedin(dir), dnc: dnc(dir), jobs: jobs(state), paused: paused(dir), kpis: kpis(dir)
+    leads: leads(dir, state, now), replies: replies(dir, now), linkedin: linkedin(dir), dnc: dnc(dir), jobs: jobs(state), paused: paused(dir), kpis: kpis(dir)
   };
 }
 
@@ -176,6 +187,13 @@ function editLeads(dir, week, change) {
   return result;
 }
 
+function leadRow(rows, a) {
+  const r = rows.find((x) => String(x.email).toLowerCase() === a.email);
+  if (!r) throw new Error(a.email + " is not in " + a.week + ".");
+  if (r.uploaded) throw new Error(a.email + " was uploaded on " + r.uploaded + ".");
+  return r;
+}
+
 const tool = (dir, args) => execFileSync("python3", [path.join(dir, "tools", "instantly_campaigns.py"), ...args], { cwd: dir, encoding: "utf8", timeout: 10 * 60000 });
 
 const HANDLERS = {
@@ -184,11 +202,11 @@ const HANDLERS = {
     if (!r) throw new Error(a.email + " is not in " + a.week + ".");
     if (r.uploaded) throw new Error(a.email + " was uploaded on " + r.uploaded + ".");
     if (a.on && r.missing) throw new Error(a.email + " still needs: " + r.missing + ".");
-    r.approved = a.on ? "yes" : "";
+    r.approved = a.on ? "yes" : "no";
     return (a.on ? "approved " : "unapproved ") + a.email;
   }),
   "approve-week": (dir, a) => editLeads(dir, a.week, (rows) => {
-    const fresh = rows.filter((r) => !r.uploaded && !r.missing && !YES.test(String(r.approved).trim()));
+    const fresh = rows.filter((r) => !r.uploaded && !r.missing && !YES.test(String(r.approved).trim()) && !/^no$/i.test(String(r.approved).trim()));
     fresh.forEach((r) => { r.approved = "yes"; });
     return fresh.length + " approved, " + rows.filter((r) => r.missing && !r.uploaded).length + " still missing something";
   }),
@@ -227,6 +245,27 @@ const HANDLERS = {
     sent[a.id] = a.at;
     fs.writeFileSync(file, JSON.stringify(sent, null, 1));
     return "recorded the answer";
+  },
+  "lead-set": (dir, a) => editLeads(dir, a.week, (rows) => {
+    const r = leadRow(rows, a);
+    if (!autopilot.EDITABLE.includes(a.field)) throw new Error(a.field + " cannot be set from Jarvis.");
+    r[a.field] = a.value;
+    autopilot.dropMissing(r, a.field === "top_finding" ? [a.field, autopilot.TRANSLATE] : [a.field]);
+    return "set " + a.field + " for " + a.email + (r.missing ? "; still needs " + r.missing : "");
+  }),
+  "lead-drop": (dir, a) => editLeads(dir, a.week, (rows) => {
+    const r = leadRow(rows, a);
+    r.approved = a.on ? "no" : "";
+    return (a.on ? "dropped " : "brought back ") + a.email;
+  }),
+  "allow-personal": (dir, a) => {
+    const file = path.join(dir, "prospects", "personal-email-ok.txt");
+    const text = read(file, "");
+    if (!text.split(/\r?\n/).some((l) => l.split("#")[0].trim().toLowerCase() === a.email)) fs.writeFileSync(file, text + (text && !text.endsWith("\n") ? "\n" : "") + a.email + "  # allowed from Jarvis\n");
+    return editLeads(dir, a.week, (rows) => {
+      autopilot.dropMissing(leadRow(rows, a), [autopilot.PERSONAL]);
+      return "allowed the personal address " + a.email;
+    });
   },
   run: (dir, a, now, state) => {
     if (!JOBS.includes(a.job)) throw new Error("Unknown job.");
@@ -280,6 +319,11 @@ async function main(argv) {
     ran++;
     console.log(c.action, out.status, out.result);
   }
+  if (!fs.existsSync(path.join(state, "lock"))) {
+    const notes = await autopilot.run(dir, state, { parseCsv, toCsv, leadFiles, tool, fetch, db, now: Date.now() })
+      .catch((error) => ["leads autopilot failed: " + String((error && error.message) || error).split("\n")[0].slice(0, 200)]);
+    if (notes && notes.length) console.log("leads autopilot: " + notes.join("; "));
+  }
   const s = snapshot(dir, state, Date.now());
   await db.collection("jarvis_settings").doc("marketing_sync").set(s);
   await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("marketing-sync-" + d).delete().catch(() => null)));
@@ -288,4 +332,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch((error) => { console.error(error.message); process.exit(1); });
 
-module.exports = { parseCsv, toCsv, leads, replies, linkedin, linkedinHeading, dnc, jobs, kpis, snapshot, runCommand, HANDLERS };
+module.exports = { parseCsv, toCsv, leadFiles, leads, replies, linkedin, linkedinHeading, dnc, jobs, kpis, snapshot, runCommand, HANDLERS };

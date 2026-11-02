@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -57,7 +58,7 @@ object Marketing {
 
     /** True while a command for this key (an email, a week, a name or a job) waits for the Mac. */
     fun waiting(sync: JsonObject?, action: String, key: String) =
-        sync.obj("commands").objs("items").any { it.str("status") == "pending" && it.str("action") == action && it.str("label").orEmpty().contains(key) }
+        sync.obj("commands").objs("items").any { it.str("status") == "pending" && (action.isEmpty() || it.str("action") == action) && it.str("label").orEmpty().contains(key) }
 
     fun repliesToAnswer(sync: JsonObject?) = sync.objs("replies").filter { it.str("sent").isNullOrEmpty() && !it.str("draft").isNullOrEmpty() }
 
@@ -176,8 +177,8 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
                     ask("upload ${week.week}'s ${week.ready} approved leads to their Instantly campaigns") { command("mk:upload", mapOf("action" to "upload", "week" to week.week)) }
                 }
             }
-            sy.obj("leads").objs("rows").filter { it.str("week") == week.week }.forEach { r -> Lead(r, sy, s, ::ask, ::command) }
-            Muted("Rows that still miss something need an edit in the CSV on the Mac first.")
+            sy.obj("leads").objs("rows").filter { it.str("week") == week.week }.sortedBy { leadOrder(it) }.forEach { r -> Lead(r, sy, s, vm, ::ask, ::command) }
+            Muted("Every hour Jarvis translates top findings, re-runs the review of a site with no Live Report (twice at most) and approves complete leads. \"Needs you\" rows are the ones it cannot settle. Upload stays with you.")
         }
 
         Panel("Replies" + if (todo.isNotEmpty()) " · ${todo.size} to answer" else "") {
@@ -282,28 +283,79 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
 
 private fun json(v: Any): JsonElement = when (v) { is Boolean -> JsonPrimitive(v); is Number -> JsonPrimitive(v); else -> JsonPrimitive(v.toString()) }
 
+private val LEAD_EDITABLE = listOf("first_name", "last_name", "title", "top_finding", "best_point", "peer_1", "peer_2", "regulation_line", "course_or_programme", "month", "one_line_from_lecture_kit")
+
+/** Needs you first, then ready, then what Jarvis is still filling, approved, dropped and uploaded. */
+internal fun leadOrder(r: JsonObject): Int = when {
+    !r.str("uploaded").isNullOrEmpty() -> 5
+    r.bool("dropped") == true -> 4
+    r.bool("approved") == true -> 3
+    !r.str("ask").isNullOrEmpty() -> 0
+    !r.str("missing").isNullOrEmpty() -> 2
+    else -> 1
+}
+
+/** The fields Carlos can set for a row's missing items; report fields come with the Live Report. */
+internal fun leadFields(missing: String): List<String> {
+    val items = missing.split(";").map { it.trim() }.filter { it.isNotEmpty() }
+    val noReport = items.any { it.startsWith("report") }
+    return items.map { if (it == "top_finding (translate)") "top_finding" else it }
+        .filter { it in LEAD_EDITABLE && !(noReport && it in setOf("top_finding", "best_point")) }
+}
+
 @Composable
-private fun Lead(r: JsonObject, sy: JsonObject, s: UiState, ask: (String, () -> Unit) -> Unit, command: (String, Map<String, Any>, (JsonObject) -> String) -> Unit) {
+private fun Lead(r: JsonObject, sy: JsonObject, s: UiState, vm: JarvisViewModel, ask: (String, () -> Unit) -> Unit, command: (String, Map<String, Any>, (JsonObject) -> String) -> Unit) {
     val email = r.str("email").orEmpty()
+    val week = r.str("week").orEmpty()
     val uri = LocalUriHandler.current
     val missing = r.str("missing").orEmpty()
     val approved = r.bool("approved") == true
+    val dropped = r.bool("dropped") == true
     val uploaded = r.str("uploaded").orEmpty()
+    val why = r.str("ask").orEmpty()
+    val busy = "mk:lead:$email" in s.running
+    val queued: (JsonObject) -> String = { out -> (out.str("label") ?: "Queued") + ": the Mac does it on its next sync." }
+    var editing by remember(email) { mutableStateOf<String?>(null) }
     Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(listOfNotNull(r.str("first_name"), r.str("last_name")).joinToString(" ").ifBlank { email }, fontWeight = FontWeight.Medium, fontSize = 14.sp)
             Muted(listOfNotNull(r.str("org"), r.str("cc")?.uppercase(), r.str("score")?.takeIf { it.isNotEmpty() }?.let { "score $it" }).joinToString(" · "))
-            if (missing.isNotEmpty()) Text("Missing: $missing", color = J.amber, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            else r.str("top_finding_en")?.takeIf { it.isNotEmpty() }?.let { Text(it, color = J.dim, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+            when {
+                uploaded.isNotEmpty() || approved || dropped -> {}
+                why.isNotEmpty() -> Text("Needs you: $why", color = J.pink, fontSize = 12.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                missing.isNotEmpty() -> Text("Jarvis: " + (r.str("wait")?.ifEmpty { null } ?: "on it") + " ($missing)", color = J.amber, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            if (missing.isEmpty()) (r.str("top_finding")?.ifEmpty { null } ?: r.str("top_finding_en"))?.takeIf { it.isNotEmpty() }?.let { Text(it, color = J.dim, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis) }
         }
         r.str("live_report_url")?.takeIf { it.startsWith("https://") }?.let { url -> TextButton({ uri.openUri(url) }) { Text("Report", color = J.cyan, fontSize = 13.sp) } }
-        val busy = "mk:lead:$email" in s.running
         when {
             uploaded.isNotEmpty() -> Text("uploaded", color = J.green, fontSize = 12.sp)
-            Marketing.waiting(sy, "approve", email) -> Text("waiting", color = J.amber, fontSize = 12.sp)
-            approved -> TextButton({ ask("unapprove $email") { command("mk:lead:$email", mapOf("action" to "approve", "week" to r.str("week").orEmpty(), "email" to email, "on" to false)) { out -> (out.str("label") ?: "Queued") + ": the Mac does it on its next sync." } } }, enabled = !busy) { Text("Approved ✓", color = J.green, fontSize = 13.sp) }
-            missing.isEmpty() -> TextButton({ ask("approve $email for upload") { command("mk:lead:$email", mapOf("action" to "approve", "week" to r.str("week").orEmpty(), "email" to email, "on" to true)) { out -> (out.str("label") ?: "Queued") + ": the Mac does it on its next sync." } } }, enabled = !busy) { Text("Approve", color = J.cyan, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+            Marketing.waiting(sy, "", email) -> Text("waiting", color = J.amber, fontSize = 12.sp)
+            dropped -> TextButton({ ask("bring $email back to the leads") { command("mk:lead:$email", mapOf("action" to "lead-drop", "week" to week, "email" to email, "on" to false), queued) } }, enabled = !busy) { Text("Dropped · undo", color = J.muted, fontSize = 13.sp) }
+            approved -> TextButton({ ask("unapprove $email") { command("mk:lead:$email", mapOf("action" to "approve", "week" to week, "email" to email, "on" to false), queued) } }, enabled = !busy) { Text("Approved ✓", color = J.green, fontSize = 13.sp) }
+            missing.isEmpty() -> TextButton({ ask("approve $email for upload") { command("mk:lead:$email", mapOf("action" to "approve", "week" to week, "email" to email, "on" to true), queued) } }, enabled = !busy) { Text("Approve", color = J.cyan, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
         }
+    }
+    if (uploaded.isEmpty() && !approved && !dropped && missing.isNotEmpty()) Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        val host = r.str("host").orEmpty()
+        if (missing.contains("report (") && host.isNotEmpty()) TextButton({
+            ask("review $host again now, so its Live Report can be published") {
+                vm.act("review:$host", "review", mapOf("url" to JsonPrimitive("https://$host/"), "lang" to JsonPrimitive(r.str("language") ?: "en"))) { "Reviewing $host. Jarvis fills the lead once its Live Report is published." }
+            }
+        }, enabled = "review:$host" !in s.running) { Text("Review again", color = J.cyan, fontSize = 13.sp) }
+        if (missing.contains("email (personal address)")) TextButton({ ask("allow the personal address $email for outreach") { command("mk:lead:$email", mapOf("action" to "allow-personal", "week" to week, "email" to email), queued) } }, enabled = !busy) { Text("Allow address", color = J.cyan, fontSize = 13.sp) }
+        leadFields(missing).forEach { f -> TextButton({ editing = f }, enabled = !busy) { Text("Set " + f.replace('_', ' '), color = J.cyan, fontSize = 13.sp) } }
+        TextButton({ ask("drop $email: it is never approved or uploaded") { command("mk:lead:$email", mapOf("action" to "lead-drop", "week" to week, "email" to email, "on" to true), queued) } }, enabled = !busy) { Text("Drop", color = J.pink, fontSize = 13.sp) }
+    }
+    editing?.let { field ->
+        var value by remember(field) { mutableStateOf(if (field == "top_finding") r.str("top_finding")?.ifEmpty { null } ?: r.str("top_finding_en").orEmpty() else "") }
+        AlertDialog(
+            onDismissRequest = { editing = null },
+            title = { Text("${field.replace('_', ' ')} for $email") },
+            text = { OutlinedTextField(value, { value = it }, singleLine = false, modifier = Modifier.fillMaxWidth()) },
+            confirmButton = { TextButton({ val v = value.trim(); editing = null; if (v.isNotEmpty()) command("mk:lead:$email", mapOf("action" to "lead-set", "week" to week, "email" to email, "field" to field, "value" to v), queued) }) { Text("Set", color = J.cyan) } },
+            dismissButton = { TextButton({ editing = null }) { Text("Cancel", color = J.muted) } }
+        )
     }
 }
 
