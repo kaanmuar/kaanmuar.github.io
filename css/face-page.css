@@ -1,0 +1,41 @@
+/* Brand face landing pages (qalaburlreview.html, qaurlreview.html; scripts/build-face-pages.js). Tokens, the top bar,
+   buttons and the footer come from social-hub.css. */
+.face { max-width: 1040px; margin: 0 auto; padding: 0 16px 56px; }
+.face-hero { padding: 56px 0 40px; --fx-top: 0px; --fx-bottom: 0px; }
+.face-hero > :not(.fx-bg) { max-width: 660px; }
+.face-handle { display: inline-block; margin: 0 0 14px; padding: 4px 12px; border: 1px solid var(--edge, var(--line)); border-radius: 999px; color: var(--cyan); font: 600 15px/1.4 Inter, system-ui, sans-serif; }
+.face-hero h1 { margin: 0; font: 400 clamp(2.4rem, 6vw, 4rem)/1.02 "Instrument Serif", Georgia, serif; letter-spacing: -0.03em; }
+.face-hero h1 span, .face-hero h1 em { display: block; }
+.face-hero h1 em { color: var(--cyan); }
+.face-lede { margin: 16px 0 0; color: var(--muted); font-size: 1.05rem; }
+.face-areas { display: flex; flex-wrap: wrap; gap: 6px; margin: 20px 0 0; padding: 0; list-style: none; }
+.face-areas li { padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.face-cta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+
+.face-block { margin-top: 48px; }
+.face-block h2, .face-card h2 { margin: 0 0 6px; font: 400 clamp(1.8rem, 4vw, 2.4rem)/1.1 "Instrument Serif", Georgia, serif; letter-spacing: -0.02em; }
+.face-muted { margin: 0; color: var(--muted); }
+.face-nets { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
+.face-net { display: flex; flex-direction: column; gap: 2px; height: 100%; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); color: var(--text); text-decoration: none; }
+.face-net b { font-size: 15px; }
+.face-net small { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+a.face-net small { color: var(--cyan); }
+@media (hover: hover) { a.face-net:hover { border-color: var(--cyan); } }
+.face-net.is-soon { border-style: dashed; background: transparent; }
+.face-soon { margin-top: 4px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.face-lang img { margin-bottom: 6px; }
+
+.face-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.face-card { padding: 22px; border: 1px solid var(--line); border-radius: 20px; background: var(--card); }
+.face-card p:last-child { margin: 14px 0 0; }
+.face-mail { font-weight: 600; overflow-wrap: anywhere; }
+
+.face-footer p { margin: 6px 0; }
+.face-footer-title { font-weight: 700; color: var(--text); }
+
+@media (max-width: 640px) {
+  .face-hero { padding: 28px 0 28px; }
+  .face-pair { grid-template-columns: 1fr; }
+  .face-nets { grid-template-columns: 1fr 1fr; }
+  .face-net { padding: 12px 14px; }
+}

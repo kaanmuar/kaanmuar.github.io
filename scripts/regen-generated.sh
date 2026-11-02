@@ -22,6 +22,7 @@ main() {
 		scripts/build-llms-full.py
 		scripts/build-review-langs.py
 		scripts/build-findings-copy.js
+		scripts/build-face-pages.js
 		scripts/build-social-hub.js
 		scripts/build-csp-hashes.js
 	)

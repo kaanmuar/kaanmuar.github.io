@@ -5,7 +5,9 @@
 
    Faces split by language so the two never post the same thing: @qalaburlreview posts en/de/fr/it, @qaurlreview
    es/pt. Each bio names the other face, so the pair reads as one brand in two languages rather than twin accounts.
-   Links point at the existing language pages until the face landing pages (#2311) ship. */
+   Profile links point at the face's landing page (site, written by scripts/build-face-pages.js, #2311), which links on
+   to the review in each of the face's languages. The site's footers and social hub list both faces' accounts from
+   accounts(); bios.long is the pitch in each of the face's languages, then the post line, then the other face. */
 
 const SITE = "https://carlosandmunoz.com/";
 
@@ -27,7 +29,7 @@ const FACES = {
     live: true,
     // Rotates the cyan Fusion look; 0 keeps the look the live accounts already have.
     hue: 0,
-    site: "qa-review.html",
+    site: "qalaburlreview.html",
     hub: "qa-review-social.html",
     extra: null,
     copy: {
@@ -63,7 +65,7 @@ const FACES = {
     live: false,
     // Cyan to amber, so the two faces never share an avatar.
     hue: -150,
-    site: "qa-review-es.html",
+    site: "qaurlreview.html",
     hub: "qa-review-social-es.html",
     extra: { label: "Português", page: "qa-review-pt.html" },
     copy: {
@@ -163,7 +165,7 @@ const NETWORKS = [
     access: "Add the Page to the Meta app \"QA-lab Page Publisher\", then pipe a user token of that app: pbpaste | FACE={face} FACEBOOK_PAGE_ID=<Page id> node scripts/meta-token.js page. It sets FACEBOOK_PAGE_TOKEN{env}, and scripts/facebook-queue.js posts (#2310)."
   },
   {
-    id: "devto", name: "dev.to",
+    id: "devto", name: "dev.to", label: "DEV",
     exists: { en: true, es: false },
     profile: (h) => "https://dev.to/" + h,
     mention: (h) => "dev.to/" + h,
@@ -197,7 +199,7 @@ const NETWORKS = [
     ],
     steps: [
       "Sign up at mastodon.social/auth/sign_up with {email} and the username {handle}, then confirm the email.",
-      "Preferences > Public profile > Verification: the face landing page (#2311) will carry rel=\"me\" so the website field shows as verified."
+      "Preferences > Public profile: put the Website link below in the first extra field and save. The face landing page links back with rel=\"me\" once this file marks the account as existing, so Mastodon shows the field as verified; save the profile again if it was set before."
     ],
     access: "Preferences > Development > New application with write:statuses, write:media, read:accounts and read:statuses: set the repo secrets MASTODON_URL{env} (https://mastodon.social) and MASTODON_TOKEN{env} (#2310)."
   },
@@ -245,4 +247,9 @@ const NETWORKS = [
 
 const utm = (network, face) => "?utm_source=" + network + "&utm_medium=profile&utm_campaign=profile-link&utm_content=face-" + face;
 
-module.exports = { SITE, LIMITS, FACES, NETWORKS, utm };
+// The order the site lists accounts in: footers, the social hub's Follow row and the face pages.
+const ORDER = ["youtube", "tiktok", "instagram", "threads", "linkedin", "x", "facebook", "bluesky", "mastodon", "reddit", "devto"];
+const ordered = () => ORDER.map((id) => NETWORKS.find((n) => n.id === id));
+const accounts = (face) => ordered().filter((n) => n.exists[face.id]).map((n) => ({ net: n.id, name: n.label || n.name, url: n.profile(face.handle) }));
+
+module.exports = { SITE, LIMITS, FACES, NETWORKS, ORDER, ordered, accounts, utm };
