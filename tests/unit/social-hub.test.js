@@ -317,14 +317,18 @@ test("the calendar parser keeps the header keys", () => {
   assert.deepEqual(hub.csvRows("Date,Language,Post\n2026-10-19,de,talking\n"), [{ Date: "2026-10-19", Language: "de", Post: "talking" }]);
 });
 
-test("a post with translated captions gets a page per language, and each hub page shows it once in its own language", () => {
+test("a post with translated captions gets a page per language, and each hub page shows it once in its own language or not at all", () => {
   const post = { id: "b/01-x", lang: "en", clipLang: "de", title: "Fix it", text: "Fix it.", alt: "Card", captions: { linkedin: "Fix it.", x: "Fix it.", tiktok: "Behebe es." },
     i18n: { es: { title: "Arréglalo", linkedin: "Arréglalo.", x: "Arréglalo." }, xx: { title: "?" } } };
   const posts = hub.expand([post]).map((p) => Object.assign(p, { group: p.base || p.id }));
   assert.deepEqual(posts.map((p) => p.id), ["b/01-x", "b/01-x-es"]);
   assert.deepEqual([posts[1].title, posts[1].text, posts[1].clipLang, posts[1].captions.x, posts[1].captions.tiktok], ["Arréglalo", "Arréglalo.", "de", "Arréglalo.", "Behebe es."]);
   assert.deepEqual(hub.forLang(posts, "es").map((p) => p.id), ["b/01-x-es"]);
-  assert.deepEqual(hub.forLang(posts, "fr").map((p) => p.id), ["b/01-x"]);
+  assert.deepEqual(hub.forLang(posts, "fr").map((p) => p.id), []);
+  assert.deepEqual(hub.forLang(posts, "en").map((p) => p.id), ["b/01-x"]);
+  const launch = { id: "launch/de/x", lang: "de", group: "launch/x" };
+  assert.deepEqual(hub.forLang([launch], "en").map((p) => p.id), ["launch/de/x"]);
+  assert.deepEqual(hub.forLang([launch], "es").map((p) => p.id), []);
 });
 
 test("a skit shows only on the pages of the languages it has a take in", () => {
