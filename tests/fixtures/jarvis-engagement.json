@@ -57,11 +57,12 @@
  "stale": false,
  "lastRun": {
   "at": "2026-11-02T00:30:00.000Z",
-  "ms": 74,
+  "ms": 50,
   "paused": false,
   "live": false,
   "read": {
-   "mastodon": 13
+   "mastodon": 13,
+   "x": 1
   },
   "errors": {
    "devto": "dev.to/api/articles answered 503",
@@ -72,15 +73,15 @@
    "bluesky",
    "youtube"
   ],
-  "candidates": 3,
-  "fresh": 3,
+  "candidates": 4,
+  "fresh": 4,
   "updated": 0,
   "risen": 0,
-  "asked": 2,
+  "asked": 3,
   "aiError": "",
-  "engaged": 2,
-  "drafted": 2,
-  "pushed": 2,
+  "engaged": 3,
+  "drafted": 3,
+  "pushed": 3,
   "expired": 0,
   "done": 0,
   "dry": 6,
@@ -118,11 +119,12 @@
  "runs": [
   {
    "at": "2026-11-02T00:30:00.000Z",
-   "ms": 74,
+   "ms": 50,
    "paused": false,
    "live": false,
    "read": {
-    "mastodon": 13
+    "mastodon": 13,
+    "x": 1
    },
    "errors": {
     "devto": "dev.to/api/articles answered 503",
@@ -133,15 +135,15 @@
     "bluesky",
     "youtube"
    ],
-   "candidates": 3,
-   "fresh": 3,
+   "candidates": 4,
+   "fresh": 4,
    "updated": 0,
    "risen": 0,
-   "asked": 2,
+   "asked": 3,
    "aiError": "",
-   "engaged": 2,
-   "drafted": 2,
-   "pushed": 2,
+   "engaged": 3,
+   "drafted": 3,
+   "pushed": 3,
    "expired": 0,
    "done": 0,
    "dry": 6,
@@ -181,6 +183,7 @@
   {
    "network": "bluesky",
    "name": "Bluesky",
+   "via": "api",
    "connected": false,
    "account": "",
    "bot": false,
@@ -192,6 +195,7 @@
   {
    "network": "mastodon",
    "name": "Mastodon",
+   "via": "api",
    "connected": true,
    "account": "qalaburlreview",
    "bot": true,
@@ -203,6 +207,7 @@
   {
    "network": "youtube",
    "name": "YouTube",
+   "via": "api",
    "connected": true,
    "account": "QA-lab URL Review",
    "bot": false,
@@ -210,8 +215,94 @@
    "error": "",
    "errorAt": "",
    "help": ""
+  },
+  {
+   "network": "x",
+   "name": "X",
+   "via": "mac",
+   "connected": true,
+   "account": "@qalaburlreview",
+   "bot": false,
+   "connectedAt": "",
+   "seenAt": "2026-11-02T00:57:00.000Z",
+   "error": "",
+   "errorAt": "",
+   "help": ""
+  },
+  {
+   "network": "linkedin",
+   "name": "LinkedIn",
+   "via": "mac",
+   "connected": true,
+   "account": "Carlos Muñoz",
+   "bot": false,
+   "connectedAt": "",
+   "seenAt": "2026-11-02T00:57:00.000Z",
+   "error": "",
+   "errorAt": "",
+   "help": ""
+  },
+  {
+   "network": "facebook",
+   "name": "Facebook",
+   "via": "mac",
+   "connected": false,
+   "account": "",
+   "bot": false,
+   "connectedAt": "",
+   "seenAt": "2026-11-02T00:57:00.000Z",
+   "error": "",
+   "errorAt": "",
+   "help": "Facebook: press Sign in on the Mac under Accounts and sign in once in the Chrome window the Mac opens."
+  },
+  {
+   "network": "instagram",
+   "name": "Instagram",
+   "via": "mac",
+   "connected": false,
+   "account": "",
+   "bot": false,
+   "connectedAt": "",
+   "seenAt": "2026-11-02T00:57:00.000Z",
+   "error": "",
+   "errorAt": "",
+   "help": "Instagram: press Sign in on the Mac under Accounts and sign in once in the Chrome window the Mac opens."
+  },
+  {
+   "network": "threads",
+   "name": "Threads",
+   "via": "mac",
+   "connected": false,
+   "account": "",
+   "bot": false,
+   "connectedAt": "",
+   "seenAt": "2026-11-02T00:57:00.000Z",
+   "error": "Threads shows a captcha. Press Sign in on the Mac in Jarvis and solve it once.",
+   "errorAt": "2026-11-02T00:57:00.000Z",
+   "help": "Threads: press Sign in on the Mac under Accounts and sign in once in the Chrome window the Mac opens."
+  },
+  {
+   "network": "tiktok",
+   "name": "TikTok",
+   "via": "mac",
+   "connected": false,
+   "account": "",
+   "bot": false,
+   "connectedAt": "",
+   "seenAt": "2026-11-02T00:57:00.000Z",
+   "error": "",
+   "errorAt": "",
+   "help": "TikTok: press Sign in on the Mac under Accounts and sign in once in the Chrome window the Mac opens."
   }
  ],
+ "mac": {
+  "at": "2026-11-02T00:57:00.000Z",
+  "host": "carlos-mac",
+  "readAt": "2026-11-02T00:36:00.000Z",
+  "late": false,
+  "acted": {},
+  "read": {}
+ },
  "waiting": [
   {
    "key": "mastodon_04b46666bbd39bb08676",
@@ -268,6 +359,59 @@
    },
    "seenAt": "2026-11-02T00:30:00.000Z",
    "createdAt": "2026-11-02T00:00:00.000Z"
+  },
+  {
+   "key": "x_a92d3249a3a0c5a0cd79",
+   "network": "x",
+   "url": "https://x.com/ana/status/1850000000000000001",
+   "author": {
+    "handle": "ana",
+    "name": "Ana",
+    "id": "",
+    "followers": 0
+   },
+   "title": "",
+   "text": "Our WCAG 2.2 audit found focus order bugs; Playwright plus axe-core caught them in CI #a11y",
+   "lang": "en",
+   "topic": "Accessibility",
+   "words": [
+    "playwright",
+    "a11y",
+    "wcag"
+   ],
+   "score": 30.3,
+   "trend": 6.91,
+   "metrics": {
+    "likes": 300,
+    "replies": 20,
+    "reposts": 40,
+    "views": 20000
+   },
+   "about": "a11y in CI",
+   "why": "",
+   "sentiment": "positive",
+   "worth": 0.9,
+   "verdict": "engage",
+   "skip": "",
+   "actions": {
+    "like": {
+     "status": "planned"
+    },
+    "repost": {
+     "status": "planned"
+    },
+    "follow": {
+     "status": "planned"
+    },
+    "reply": {
+     "status": "waiting",
+     "draft": "We run axe in the same Playwright job.",
+     "lang": "en",
+     "expiresAt": "2026-11-02T06:30:00.000Z"
+    }
+   },
+   "seenAt": "2026-11-02T00:30:00.000Z",
+   "createdAt": "2026-11-01T23:00:00.000Z"
   }
  ],
  "approved": [
@@ -456,6 +600,59 @@
    },
    "seenAt": "2026-11-02T00:30:00.000Z",
    "createdAt": "2026-11-02T00:00:00.000Z"
+  },
+  {
+   "key": "x_a92d3249a3a0c5a0cd79",
+   "network": "x",
+   "url": "https://x.com/ana/status/1850000000000000001",
+   "author": {
+    "handle": "ana",
+    "name": "Ana",
+    "id": "",
+    "followers": 0
+   },
+   "title": "",
+   "text": "Our WCAG 2.2 audit found focus order bugs; Playwright plus axe-core caught them in CI #a11y",
+   "lang": "en",
+   "topic": "Accessibility",
+   "words": [
+    "playwright",
+    "a11y",
+    "wcag"
+   ],
+   "score": 30.3,
+   "trend": 6.91,
+   "metrics": {
+    "likes": 300,
+    "replies": 20,
+    "reposts": 40,
+    "views": 20000
+   },
+   "about": "a11y in CI",
+   "why": "",
+   "sentiment": "positive",
+   "worth": 0.9,
+   "verdict": "engage",
+   "skip": "",
+   "actions": {
+    "like": {
+     "status": "planned"
+    },
+    "repost": {
+     "status": "planned"
+    },
+    "follow": {
+     "status": "planned"
+    },
+    "reply": {
+     "status": "waiting",
+     "draft": "We run axe in the same Playwright job.",
+     "lang": "en",
+     "expiresAt": "2026-11-02T06:30:00.000Z"
+    }
+   },
+   "seenAt": "2026-11-02T00:30:00.000Z",
+   "createdAt": "2026-11-01T23:00:00.000Z"
   }
  ],
  "report": {
@@ -466,12 +663,12 @@
   "runs": 1,
   "runErrors": 3,
   "totals": {
-   "read": 13,
-   "candidates": 3,
-   "like": 2,
-   "repost": 2,
-   "follow": 2,
-   "drafted": 2,
+   "read": 14,
+   "candidates": 4,
+   "like": 3,
+   "repost": 3,
+   "follow": 3,
+   "drafted": 3,
    "approved": 1,
    "edited": 0,
    "dismissed": 0,
@@ -555,12 +752,35 @@
     "repost_dry": 2,
     "follow_dry": 2,
     "act_failed": 0
+   },
+   {
+    "network": "x",
+    "name": "X",
+    "read": 1,
+    "candidates": 1,
+    "like": 1,
+    "repost": 1,
+    "follow": 1,
+    "drafted": 1,
+    "approved": 0,
+    "edited": 0,
+    "dismissed": 0,
+    "expired": 0,
+    "posted": 0,
+    "failed": 0,
+    "like_done": 0,
+    "repost_done": 0,
+    "follow_done": 0,
+    "like_dry": 0,
+    "repost_dry": 0,
+    "follow_dry": 0,
+    "act_failed": 0
    }
   ],
   "topics": [
    {
     "label": "accessibility",
-    "value": 1
+    "value": 2
    },
    {
     "label": "performance",
@@ -574,20 +794,20 @@
   "langs": [
    {
     "label": "en",
-    "value": 3
+    "value": 4
    }
   ],
   "tags": [
    {
     "label": "playwright",
-    "value": 1
-   },
-   {
-    "label": "accessibility",
-    "value": 1
+    "value": 2
    },
    {
     "label": "wcag",
+    "value": 2
+   },
+   {
+    "label": "accessibility",
     "value": 1
    },
    {
@@ -601,6 +821,10 @@
    {
     "label": "seo",
     "value": 1
+   },
+   {
+    "label": "a11y",
+    "value": 1
    }
   ],
   "skips": [
@@ -612,7 +836,7 @@
   "verdicts": [
    {
     "label": "engage",
-    "value": 2
+    "value": 3
    },
    {
     "label": "skip",
@@ -653,6 +877,23 @@
     "reposts": 150,
     "verdict": "engage",
     "reply": "posted"
+   },
+   {
+    "key": "x_a92d3249a3a0c5a0cd79",
+    "network": "x",
+    "url": "https://x.com/ana/status/1850000000000000001",
+    "author": "Ana",
+    "title": "Our WCAG 2.2 audit found focus order bugs; Playwright plus axe-core caught them in CI #a11y",
+    "about": "a11y in CI",
+    "topic": "Accessibility",
+    "lang": "en",
+    "score": 30.3,
+    "trend": 6.91,
+    "likes": 300,
+    "replies": 20,
+    "reposts": 40,
+    "verdict": "engage",
+    "reply": "waiting"
    }
   ],
   "authors": [
@@ -662,6 +903,10 @@
    },
    {
     "label": "mastodon:ana4@m.s",
+    "value": 1
+   },
+   {
+    "label": "x:ana",
     "value": 1
    }
   ]
@@ -720,10 +965,32 @@
    "network": "x",
    "name": "X",
    "reads": "Mac browser",
-   "lastRead": 0,
+   "lastRead": 1,
    "error": "",
-   "acts": "reads and acts once the Mac browser agent ships (#1991)",
-   "row": null
+   "acts": "Mac browser as @qalaburlreview: likes, reposts, follows and replies (dry run: replies post, the rest is only logged)",
+   "row": {
+    "network": "x",
+    "name": "X",
+    "read": 1,
+    "candidates": 1,
+    "like": 1,
+    "repost": 1,
+    "follow": 1,
+    "drafted": 1,
+    "approved": 0,
+    "edited": 0,
+    "dismissed": 0,
+    "expired": 0,
+    "posted": 0,
+    "failed": 0,
+    "like_done": 0,
+    "repost_done": 0,
+    "follow_done": 0,
+    "like_dry": 0,
+    "repost_dry": 0,
+    "follow_dry": 0,
+    "act_failed": 0
+   }
   },
   {
    "network": "linkedin",
@@ -731,43 +998,43 @@
    "reads": "Mac browser",
    "lastRead": 0,
    "error": "",
-   "acts": "reads and acts once the Mac browser agent ships (#1991)",
+   "acts": "Mac browser as Carlos Muñoz: likes, reposts, follows and comments (dry run: replies post, the rest is only logged)",
    "row": null
   },
   {
    "network": "facebook",
    "name": "Facebook",
-   "reads": "Mac browser",
+   "reads": "needs sign-in on the Mac",
    "lastRead": 0,
    "error": "",
-   "acts": "reads and acts once the Mac browser agent ships (#1991)",
+   "acts": "Mac browser, not signed in: Sign in on the Mac under Accounts",
    "row": null
   },
   {
    "network": "instagram",
    "name": "Instagram",
-   "reads": "Mac browser",
+   "reads": "needs sign-in on the Mac",
    "lastRead": 0,
    "error": "",
-   "acts": "reads and acts once the Mac browser agent ships (#1991)",
+   "acts": "Mac browser, not signed in: Sign in on the Mac under Accounts",
    "row": null
   },
   {
    "network": "threads",
    "name": "Threads",
-   "reads": "Mac browser",
+   "reads": "needs sign-in on the Mac",
    "lastRead": 0,
    "error": "",
-   "acts": "reads and acts once the Mac browser agent ships (#1991)",
+   "acts": "Mac browser, not signed in: Sign in on the Mac under Accounts",
    "row": null
   },
   {
    "network": "tiktok",
    "name": "TikTok",
-   "reads": "Mac browser",
+   "reads": "needs sign-in on the Mac",
    "lastRead": 0,
    "error": "",
-   "acts": "reads and acts once the Mac browser agent ships (#1991)",
+   "acts": "Mac browser, not signed in: Sign in on the Mac under Accounts",
    "row": null
   },
   {
@@ -811,6 +1078,12 @@
    "repost": 2,
    "follow": 2,
    "reply": 2
+  },
+  "x": {
+   "like": 1,
+   "repost": 1,
+   "follow": 1,
+   "reply": 1
   }
  },
  "daily": [
@@ -894,12 +1167,12 @@
   },
   {
    "day": "2026-11-01",
-   "read": 13,
-   "candidates": 3,
-   "like": 2,
-   "repost": 2,
-   "follow": 2,
-   "drafted": 2,
+   "read": 14,
+   "candidates": 4,
+   "like": 3,
+   "repost": 3,
+   "follow": 3,
+   "drafted": 3,
    "approved": 1,
    "posted": 1,
    "done": 0,
@@ -908,6 +1181,7 @@
  ],
  "needs": [
   "YouTube: YOUTUBE_KEY is not set for the engagement scout.",
-  "Engagement: Bluesky: paste an app password in Engagement > Accounts (bsky.app > Settings > Privacy and security > App passwords)."
+  "Engagement: Bluesky: paste an app password in Engagement > Accounts (bsky.app > Settings > Privacy and security > App passwords).",
+  "Engagement: the Mac is not signed in to Facebook, Instagram, Threads, TikTok. Press Sign in on the Mac under Accounts and sign in once in the window it opens."
  ]
 }

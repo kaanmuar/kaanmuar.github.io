@@ -59,6 +59,13 @@ class EngagementTest {
         assertEquals("connected as QA-lab URL Review · last error: 401", Engagement.account(json("""{"connected":true,"account":"QA-lab URL Review","error":"401"}""")))
     }
 
+    @Test fun theMacsNetworksSaySignedInAndTheAgentSaysWhenItCheckedIn() {
+        assertEquals("Mac · signed in as @qalaburlreview", Engagement.account(json("""{"via":"mac","connected":true,"account":"@qalaburlreview"}""")))
+        assertEquals("Mac · not signed in · last error: X shows a captcha.", Engagement.account(json("""{"via":"mac","connected":false,"account":"","error":"X shows a captcha."}""")))
+        assertTrue(Engagement.mac(null).contains("not installed yet"))
+        assertTrue(Engagement.mac(json("""{"at":"2026-11-01T18:00:00Z","host":"mac-mini"}""")).startsWith("The Mac's browser agent on mac-mini last checked in"))
+    }
+
     @Test fun onlyAnAppPasswordEnablesConnectBluesky() {
         assertTrue(Engagement.APP_PASSWORD.matches("abcd-efgh-ijkl-mnop"))
         assertTrue(!Engagement.APP_PASSWORD.matches("my real password"))

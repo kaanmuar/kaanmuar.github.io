@@ -78,12 +78,21 @@ object Engagement {
     /** Likes, reposts and follows the poster carried out (#1990): done when live, dry in a dry run. */
     fun carried(t: JsonObject?, kind: String): Double = listOf("like", "repost", "follow").sumOf { t.num("${it}_$kind") ?: 0.0 }
 
-    /** One account row: "connected as qalaburlreview · bot flag on", "not connected", plus the last error. */
+    /** One account row: "connected as qalaburlreview · bot flag on", "not connected", plus the last error; the Mac's say "signed in". */
     fun account(a: JsonObject): String = listOfNotNull(
-        if (a.bool("connected") == true) "connected as ${a.str("account").orEmpty()}" else "not connected",
+        if (a.str("via") == "mac") (if (a.bool("connected") == true) "Mac · signed in as ${a.str("account").orEmpty()}" else "Mac · not signed in")
+        else if (a.bool("connected") == true) "connected as ${a.str("account").orEmpty()}" else "not connected",
         if (a.bool("bot") == true) "bot flag on" else null,
         a.str("error")?.ifEmpty { null }?.let { "last error: $it" }
     ).joinToString(" · ")
+
+    /** The Mac's browser agent (#1991) as it last checked in. */
+    fun mac(m: JsonObject?): String {
+        val at = m?.str("at")?.ifEmpty { null } ?: return "The Mac's browser agent is not installed yet: run scripts/engagement-mac/run.sh install on the Mac."
+        val host = m.str("host")?.ifEmpty { null }?.let { " on $it" }.orEmpty()
+        val read = m.str("readAt")?.ifEmpty { null }?.let { ", last read ${ago(it)?.replaceFirstChar { c -> c.lowercase() } ?: it}" }.orEmpty()
+        return "The Mac's browser agent$host last checked in ${ago(at)?.replaceFirstChar { it.lowercase() } ?: at}$read."
+    }
 
     val APP_PASSWORD = Regex("^[a-z0-9]{4}(-[a-z0-9]{4}){3}$", RegexOption.IGNORE_CASE)
     const val SHOWN = 5
@@ -276,7 +285,7 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
     }
 }
 
-/** The accounts the poster acts as (#1990): Connect opens YouTube's or Mastodon's sign-in; Bluesky takes an app password. */
+/** The accounts the poster acts as (#1990): Connect opens YouTube's or Mastodon's sign-in; Bluesky takes an app password; the Mac's networks (#1991) sign in on the Mac. */
 @Composable
 private fun Accounts(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (String, () -> Unit) -> Unit) {
     val uri = LocalUriHandler.current
@@ -300,16 +309,20 @@ private fun Accounts(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Strin
                     vm.market("eg:connect:bluesky", "engagement-connect", mapOf("network" to json("bluesky"), "handle" to json(handle), "password" to json(sent))) { out -> out.str("message") ?: "Bluesky is connected." }
                 }
                 Muted("bsky.app > Settings > Privacy and security > App passwords. Never the account password.")
+            } else if (a.str("via") == "mac") {
+                ActionButton(if (connected) "Sign in again on the Mac" else "Sign in on the Mac", "eg:connect:$net" in s.running) {
+                    vm.market("eg:connect:$net", "engagement-connect", mapOf("network" to json(net))) { out -> out.str("message") ?: "Asked the Mac." }
+                }
             } else {
                 ActionButton(if (connected) "Reconnect $name" else "Connect $name", "eg:connect:$net" in s.running) {
                     vm.connectEngagement(net) { url -> runCatching { uri.openUri(url) } }
                 }
             }
-            if (connected) TextButton({ ask("disconnect $name, so nothing goes out there") { vm.market("eg:connect:$net", "engagement-connect", mapOf("network" to json(net), "disconnect" to json(true))) { out -> out.str("message") ?: "Disconnected." } } }) {
+            if (connected && a.str("via") != "mac") TextButton({ ask("disconnect $name, so nothing goes out there") { vm.market("eg:connect:$net", "engagement-connect", mapOf("network" to json(net), "disconnect" to json(true))) { out -> out.str("message") ?: "Disconnected." } } }) {
                 Text("Disconnect", color = J.muted, fontSize = 13.sp)
             }
         }
-        Muted("X, LinkedIn, Facebook, Instagram, Threads and TikTok act through the Mac's browser agent (#1991). Mastodon is marked as a bot when it connects.")
+        Muted(Engagement.mac(g.obj("mac")) + " It reads and acts on X, LinkedIn, Facebook, Instagram, Threads and TikTok in its own Chrome, every 5 minutes. Sign in on the Mac opens the network there within 5 minutes. Mastodon is marked as a bot when it connects.")
     }
 }
 

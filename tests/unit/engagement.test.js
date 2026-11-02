@@ -266,8 +266,9 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.equal(src.stale, false);
   assert.ok(src.needs.some((n) => /Bluesky: paste an app password/.test(n)));
   assert.equal(src.live, false, "a dry run until Carlos turns it live");
-  assert.equal(src.accounts.length, 3);
-  assert.equal(src.networks.find((n) => n.network === "linkedin").reads, "Mac browser");
+  assert.equal(src.accounts.length, 9);
+  assert.equal(src.networks.find((n) => n.network === "linkedin").reads, "needs sign-in on the Mac");
+  assert.ok(src.needs.some((n) => /Mac browser agent .* is not installed yet/.test(n)));
 });
 
 test("a post first seen quiet is decided again once it starts to trend, counted once in the field, and not again for 6 hours (#2001)", async () => {

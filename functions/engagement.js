@@ -23,7 +23,8 @@ const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const ACTIONS = ["like", "repost", "follow", "reply"];
 
 // acts: the network takes likes, reposts, follows and replies (through its API, or the Mac's browser when browser).
-// only: the actions it has when not all four (YouTube has no repost; a follow is a subscribe there).
+// only: the actions it has when not all four (YouTube has no repost; a follow is a subscribe there; on Facebook,
+// Instagram and TikTok the Mac leaves out what posts or follows as a page through menus it cannot check).
 // limit: the longest reply it takes. scale: how much engagement an hour counts as trending there.
 const NETWORKS = {
   bluesky: { name: "Bluesky", acts: true, api: true, limit: 300, scale: 20, weight: 1 },
@@ -31,10 +32,10 @@ const NETWORKS = {
   youtube: { name: "YouTube", acts: true, api: true, only: ["like", "follow", "reply"], limit: 500, scale: 200, weight: 0.9 },
   x: { name: "X", acts: true, browser: true, limit: 280, scale: 40, weight: 1 },
   linkedin: { name: "LinkedIn", acts: true, browser: true, limit: 1200, scale: 15, weight: 1.2 },
-  facebook: { name: "Facebook", acts: true, browser: true, limit: 1000, scale: 20, weight: 0.8 },
-  instagram: { name: "Instagram", acts: true, browser: true, limit: 1000, scale: 60, weight: 0.8 },
+  facebook: { name: "Facebook", acts: true, browser: true, only: ["like", "reply"], limit: 1000, scale: 20, weight: 0.8 },
+  instagram: { name: "Instagram", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 1000, scale: 60, weight: 0.8 },
   threads: { name: "Threads", acts: true, browser: true, limit: 500, scale: 30, weight: 0.9 },
-  tiktok: { name: "TikTok", acts: true, browser: true, limit: 150, scale: 300, weight: 0.8 },
+  tiktok: { name: "TikTok", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 150, scale: 300, weight: 0.8 },
   hn: { name: "Hacker News", acts: false, scale: 30, weight: 1 },
   devto: { name: "DEV", acts: false, scale: 20, weight: 0.8 },
   lobsters: { name: "Lobsters", acts: false, scale: 10, weight: 0.9 }

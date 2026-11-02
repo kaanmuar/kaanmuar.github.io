@@ -1,13 +1,16 @@
 "use strict";
 /*
  * The engagement poster (#1990): carries the scout's plan out on Bluesky, Mastodon and YouTube through their APIs,
- * as the accounts connected in Jarvis > Engagement > Accounts.
+ * as the accounts connected in Jarvis > Engagement > Accounts. The Mac's browser agent (#1991, scripts/engagement-mac)
+ * runs the same carryOut for X, LinkedIn, Facebook, Instagram, Threads and TikTok with its own side.
  *
  *   engagement_private/bluesky       { handle, did, password }         an app password saved from Jarvis
  *   engagement_private/mastodon      { base, token, acct, bot }        Connect Mastodon (OAuth; marks the account a bot)
  *   engagement_private/mastodon_app  { base, clientId, clientSecret }  the OAuth app, registered on first connect
  *   engagement_private/youtube       { refresh, channelId, channel }   Connect YouTube (Google OAuth, the brand channel)
  *   engagement_private/state         { state, network, at }            the OAuth round trip in flight
+ *   engagement_private/mac           { at, host, readAt, signedIn, errors }  the Mac's browser agent (#1991) as it last checked in
+ *   engagement_private/mac_login     { network, at }                   Sign in on the Mac, pressed in Jarvis
  *
  * After each scout run, planned likes, reposts and follows from the last ACT_WINDOW go out, at most PER_RUN per
  * network a GAP apart; in a dry run (settings.live off) they turn "dry" instead. A plan older than the window, or on
@@ -26,6 +29,8 @@ const STATE_MS = 10 * 60 * 1000;
 const TIMEOUT = 20000;
 const CARRIED = ["like", "repost", "follow"];
 const API = Object.keys(E.NETWORKS).filter((k) => E.NETWORKS[k].api);
+const BROWSER = Object.keys(E.NETWORKS).filter((k) => E.NETWORKS[k].browser);
+const MAC_LATE = 20 * 60 * 1000;
 
 const GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
@@ -158,17 +163,51 @@ const HELP = {
   youtube: "YouTube: Connect YouTube in Engagement > Accounts and pick the QA-lab URL Review channel."
 };
 
-/** What Jarvis shows per API network: connected, as whom, the last error. Never a secret. */
+const macHelp = (k, mac) => E.NETWORKS[k].name + (mac.at
+  ? ": press Sign in on the Mac under Accounts and sign in once in the Chrome window the Mac opens."
+  : ": install the Mac browser agent (scripts/engagement-mac/run.sh install), then press Sign in on the Mac under Accounts.");
+
+/** The Mac's browser agent as it last checked in (engagement_private/mac): { at, host, readAt, signedIn, errors }. */
+async function macStatus(db) {
+  const snap = await privateRef(db, "mac").get();
+  return snap.exists ? snap.data() : {};
+}
+
+/** What Jarvis shows per network it acts on: connected (or signed in on the Mac), as whom, the last error. Never a secret. */
 async function connections(db) {
-  const snaps = await db.getAll(...API.map((k) => privateRef(db, k)));
-  return API.map((k, i) => {
+  const [snaps, mac] = await Promise.all([db.getAll(...API.map((k) => privateRef(db, k))), macStatus(db)]);
+  const api = API.map((k, i) => {
     const d = snaps[i].exists ? snaps[i].data() : {};
     const connected = !!(d.password || d.token || d.refresh);
     return {
-      network: k, name: E.NETWORKS[k].name, connected, account: clip(d.handle || d.acct || d.channel, 120), bot: d.bot === true,
+      network: k, name: E.NETWORKS[k].name, via: "api", connected, account: clip(d.handle || d.acct || d.channel, 120), bot: d.bot === true,
       connectedAt: clip(d.connectedAt, 30), error: clip(d.error, 200), errorAt: clip(d.errorAt, 30), help: connected ? "" : HELP[k]
     };
   });
+  const mine = BROWSER.map((k) => {
+    const account = clip((mac.signedIn || {})[k], 120);
+    const error = clip((mac.errors || {})[k], 200);
+    return {
+      network: k, name: E.NETWORKS[k].name, via: "mac", connected: !!account, account, bot: false, connectedAt: clip((mac.signedInAt || {})[k], 30),
+      seenAt: clip(mac.at, 30), error, errorAt: error ? clip(mac.at, 30) : "", help: account ? "" : macHelp(k, mac)
+    };
+  });
+  return api.concat(mine);
+}
+
+/** Sign in on the Mac, pressed in Jarvis: the agent's next pass opens that network's sign-in in its own Chrome, on screen. */
+async function askMacLogin(deps, network) {
+  if (!BROWSER.includes(network)) throw new Error("The Mac signs in to " + BROWSER.map((k) => E.NETWORKS[k].name).join(", ") + ".");
+  const mac = await macStatus(deps.db);
+  await privateRef(deps.db, "mac_login").set({ network, at: deps.now });
+  const name = E.NETWORKS[network].name;
+  const late = !mac.at || deps.now - Date.parse(mac.at) > MAC_LATE;
+  return {
+    network, mac: true,
+    message: late
+      ? "Asked the Mac to open " + name + "'s sign-in, but its browser agent " + (mac.at ? "last checked in " + mac.at.slice(0, 16).replace("T", " ") + " UTC" : "is not installed yet") + ". It opens once the agent runs."
+      : "The Mac opens " + name + "'s sign-in in its own Chrome within 5 minutes. Sign in there once; the window closes by itself when you are in."
+  };
 }
 
 /** Bluesky: an app password, checked by signing in before it is kept. */
@@ -258,8 +297,24 @@ async function disconnect(db, network) {
 
 const plannedAt = (doc) => Date.parse(doc.decidedAgainAt || doc.seenAt || 0) || 0;
 
-async function client(deps, network, cred) {
-  try { return { c: await CLIENTS[network](cred, deps.fetch, deps.now, deps.keys || {}) }; }
+/**
+ * Who carries the plan out. The API side here; the Mac's browser agent (scripts/engagement-mac) brings its own,
+ * with the networks it is signed in to and a client per network that clicks in Chrome.
+ *   networks             the networks this side acts on
+ *   creds(db)            { network: cred } for the ones it can act on now
+ *   open(deps, n, cred)  a client: like, repost, follow, reply on a post document
+ *   noteError(db, n, message, now) / clearError(db, n, cred)
+ */
+const API_SIDE = {
+  networks: API, perRun: PER_RUN, gap: GAP,
+  creds: (db) => readCreds(db),
+  open: (deps, network, cred) => CLIENTS[network](cred, deps.fetch, deps.now, deps.keys || {}),
+  noteError: (db, network, message, now) => noteError(db, network, message, now),
+  clearError: async (db, network, cred) => { if (cred.error) await privateRef(db, network).set({ error: "" }, { merge: true }); }
+};
+
+async function client(deps, network, cred, side) {
+  try { return { c: await (side || API_SIDE).open(deps, network, cred) }; }
   catch (error) { return { error: error.message, fatal: true }; }
 }
 
@@ -313,21 +368,22 @@ async function mark(deps, task, status, error) {
 }
 
 /**
- * One pass over the plan. deps: { db, fetch, now, inc, keys: { clientId, secret }, sleep }.
+ * One pass over the plan. deps: { db, fetch, now, inc, keys: { clientId, secret }, sleep }; side: API_SIDE unless given.
  * Returns per network what happened: { done, dry, missed, failed, posted, error }.
  */
-async function carryOut(deps, conf) {
+async function carryOut(deps, conf, side) {
   const { db, now } = deps;
+  const s = side || API_SIDE;
   const sleep = deps.sleep || ((ms) => new Promise((r) => setTimeout(r, ms)));
-  const out = Object.fromEntries(API.map((k) => [k, { done: 0, dry: 0, missed: 0, failed: 0, posted: 0, error: "" }]));
+  const out = Object.fromEntries(s.networks.map((k) => [k, { done: 0, dry: 0, missed: 0, failed: 0, posted: 0, error: "" }]));
   if (conf.paused) return out;
-  const docs = (snap) => snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() })).filter((t) => API.includes(t.doc.network));
-  const planned = (await Promise.all(CARRIED.map((a) => db.collection("engagement_posts").where("actions." + a + ".status", "==", "planned").limit(300).get().then((s) => docs(s).map((t) => Object.assign(t, { action: a }))))))
+  const docs = (snap) => snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() })).filter((t) => s.networks.includes(t.doc.network));
+  const planned = (await Promise.all(CARRIED.map((a) => db.collection("engagement_posts").where("actions." + a + ".status", "==", "planned").limit(300).get().then((x) => docs(x).map((t) => Object.assign(t, { action: a }))))))
     .flat().sort((a, b) => (b.doc.score || 0) - (a.doc.score || 0));
   const replies = docs(await db.collection("engagement_posts").where("actions.reply.status", "==", "approved").limit(50).get());
-  const creds = await readCreds(db);
+  const creds = await s.creds(db);
 
-  for (const network of API) {
+  for (const network of s.networks) {
     const tally = out[network];
     const mine = planned.filter((t) => t.doc.network === network);
     const fresh = [];
@@ -338,8 +394,8 @@ async function carryOut(deps, conf) {
     }
     const waiting = replies.filter((t) => t.doc.network === network);
     if (!creds[network] || (!fresh.length && !waiting.length)) continue;
-    const got = await client(deps, network, creds[network]);
-    if (got.error) { tally.error = got.error; await noteError(db, network, got.error, now); continue; }
+    const got = await client(deps, network, creds[network], s);
+    if (got.error) { tally.error = got.error; await s.noteError(db, network, got.error, now); continue; }
     let sent = 0;
     for (const t of waiting) {
       const r = await sendReply(deps, got.c, t);
@@ -347,17 +403,17 @@ async function carryOut(deps, conf) {
       else if (r.status === "failed") tally.failed += 1;
       if (r.fatal) { tally.error = r.error; break; }
       sent += 1;
-      await sleep(GAP);
+      await sleep(s.gap);
     }
-    if (tally.error) { await noteError(db, network, tally.error, now); continue; }
-    for (const t of fresh.slice(0, Math.max(0, PER_RUN - sent))) {
+    if (tally.error) { await s.noteError(db, network, tally.error, now); continue; }
+    for (const t of fresh.slice(0, Math.max(0, s.perRun - sent))) {
       const r = await sendAction(deps, got.c, t);
       if (r.status === "done") tally.done += 1;
       else if (r.status === "failed") tally.failed += 1;
-      if (r.fatal) { tally.error = r.error; await noteError(db, network, r.error, now); break; }
-      await sleep(GAP);
+      if (r.fatal) { tally.error = r.error; await s.noteError(db, network, r.error, now); break; }
+      await sleep(s.gap);
     }
-    if (!tally.error && creds[network].error) await privateRef(db, network).set({ error: "" }, { merge: true });
+    if (!tally.error) await s.clearError(db, network, creds[network]);
   }
   return out;
 }
@@ -377,6 +433,6 @@ async function replyNow(deps, key) {
 }
 
 module.exports = {
-  ACT_WINDOW, PER_RUN, MAX_TRIES, MASTODON_SCOPES, YT_SCOPE, API, ActError,
-  carryOut, replyNow, connections, saveBluesky, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call
+  ACT_WINDOW, PER_RUN, MAX_TRIES, MASTODON_SCOPES, YT_SCOPE, API, BROWSER, MAC_LATE, ActError,
+  carryOut, replyNow, connections, macStatus, askMacLogin, saveBluesky, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call
 };

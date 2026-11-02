@@ -352,15 +352,18 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
-  test('Engagement shows the reply drafts, the scout, the networks and the accounts, and Approve, Dismiss, Pause, Go live and Connect Bluesky go through the function (#1988, #1990)', async ({ page }) => {
+  test('Engagement shows the reply drafts, the scout, the networks and the accounts, and Approve, Dismiss, Pause, Go live, Connect Bluesky and Sign in on the Mac go through the function (#1988, #1990, #1991)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page, '#stats/engagement/7');
     const eg = page.locator('[data-view="engagement"]');
     const waiting = eg.locator('[data-panel-id="engagement-waiting"]');
     await expect(waiting).toContainText('Playwright and WCAG accessibility testing in CI');
-    await expect(waiting.locator('[data-eg-draft]')).toHaveValue('We run axe in the same Playwright job.');
-    await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('Mac browser');
+    await expect(waiting).toContainText('focus order bugs');
+    const card = waiting.locator('.jv-prop', { hasText: 'Playwright and WCAG accessibility testing in CI' });
+    await expect(card.locator('[data-eg-draft]')).toHaveValue('We run axe in the same Playwright job.');
+    await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('Mac browser as @qalaburlreview');
+    await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('needs sign-in on the Mac');
     await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('API as qalaburlreview');
     await expect(eg).toContainText('paste an app password');
     const accounts = eg.locator('[data-panel-id="engagement-accounts"]');
@@ -378,12 +381,19 @@ test.describe('admin statistics (Jarvis)', () => {
       .toEqual([['bluesky', 'qalaburlreview.bsky.social', 'abcd-efgh-ijkl-mnop']]);
     await expect(page.locator('.jv-toast')).toContainText('Bluesky is connected');
 
+    await expect(accounts).toContainText('signed in as @qalaburlreview');
+    await expect(accounts).toContainText('The Mac\'s browser agent on carlos-mac last checked in');
+    await expect(accounts.locator('[data-eg-connect="x"]')).toHaveText('Sign in again on the Mac');
+    await expect(accounts.locator('[data-eg-disconnect="x"]')).toHaveCount(0);
+    await accounts.locator('[data-eg-connect="threads"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'engagement-connect').map((c) => c.body.network)).toEqual(['bluesky', 'threads']);
+
     page.once('dialog', (dialog) => dialog.dismiss());
-    await waiting.locator('[data-eg-decide="dismiss"]').click();
+    await card.locator('[data-eg-decide="dismiss"]').click();
     expect(calls.some((c) => c.op === 'engagement-decide')).toBe(false);
 
-    await waiting.locator('[data-eg-draft]').fill('We run axe-core in the same Playwright job, on every pull request.');
-    await waiting.locator('[data-eg-decide="approve"]').click();
+    await card.locator('[data-eg-draft]').fill('We run axe-core in the same Playwright job, on every pull request.');
+    await card.locator('[data-eg-decide="approve"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'engagement-decide').map((c) => [c.body.decision, c.body.text]))
       .toEqual([['edit', 'We run axe-core in the same Playwright job, on every pull request.']]);
     await expect(page.locator('.jv-toast')).toContainText('Edited and approved.');
