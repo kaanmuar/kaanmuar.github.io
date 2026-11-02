@@ -93,6 +93,15 @@ test("only same-origin images PageSpeed would compress are re-encoded", () => {
   assert.deepEqual(fixes.imagesToCompress(ctx), ["assets/a.png"]);
 });
 
+test("a run fixes only the 6 worst pages under 90; the rest wait for later days", () => {
+  const page = (i, mobile, desktop) => ({ file: "p" + i + ".html", mobile: { score: mobile }, desktop: { score: desktop } });
+  const pages = [page(0, 95, 99), page(1, 40, 90), page(2, 88, 60), page(3, 89, 99), page(4, 70, 70), page(5, 85, 85),
+    page(6, 50, 95), page(7, 80, 99), page(8, 99, 30), { file: "p9.html", mobile: { ok: false, error: "timeout" } }];
+  assert.equal(routine.PER_RUN, 6);
+  assert.deepEqual(routine.toFix(pages).map((p) => p.file), ["p8.html", "p1.html", "p6.html", "p2.html", "p4.html", "p7.html"]);
+  assert.deepEqual(routine.toFix([]), []);
+});
+
 test("a branch merges on its own only when nothing fell and something rose", () => {
   assert.equal(routine.verdict([{ file: "index.html", mobile: { before: 80, after: 86 }, desktop: { before: 95, after: 94 } }]).up, true);
   const fell = routine.verdict([{ file: "index.html", mobile: { before: 80, after: 90 }, desktop: { before: 95, after: 92 } }]);

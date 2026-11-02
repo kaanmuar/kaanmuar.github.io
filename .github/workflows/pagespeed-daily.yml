@@ -1,7 +1,7 @@
 # .github/workflows/pagespeed-daily.yml
-# Daily (#1978): PageSpeed, mobile and desktop, on every page in sitemap.xml and sitemap-social.xml. Pages under 90 get
-# the safe fixes (scripts/pagespeed/fixes.js) on one branch and Gemini's edits on another; each branch is scored with
-# local Lighthouse against main. The run lands in data/pagespeed (Jarvis > Systems > Page health) and Jarvis opens a PR
+# Daily (#1978): PageSpeed, mobile and desktop, on every page in sitemap.xml and sitemap-social.xml. The 6 worst pages under
+# 90 get the safe fixes (scripts/pagespeed/fixes.js) on one branch and the 3 worst get Gemini's edits on another; each
+# branch is scored with local Lighthouse against main. The other pages are fixed on later days. The run lands in data/pagespeed (Jarvis > Systems > Page health) and Jarvis opens a PR
 # per branch (op pagespeed-pr): a safe branch that scored up merges on a 2-hour countdown once CI passes, anything else
 # waits in Proposals. Fix branches and the data commit push with LIVE_REPORTS_DEPLOY_KEY. Schedule: functions/ops-schedule.js.
 

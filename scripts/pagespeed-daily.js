@@ -2,7 +2,7 @@
 /* The daily PageSpeed routine (#1978), one step per command; .github/workflows/pagespeed-daily.yml runs them in order.
 
    check    --out check.json [--limit n] [--only url,...]   PageSpeed, mobile and desktop, on every sitemap page (PAGESPEED_KEY)
-   safe     --check check.json --report safe.json            the safe fixes (scripts/pagespeed/fixes.js) on pages under 90
+   safe     --check check.json --report safe.json            the safe fixes (scripts/pagespeed/fixes.js) on the 6 worst pages under 90
    ai       --check check.json --report ai.json              Gemini's edits on the worst pages (GEMINI_API_KEY)
    measure  --check check.json --report x.json --base dir [--branch b]
                                                             local Lighthouse on main (base) and this checkout for the pages the
@@ -69,7 +69,7 @@ async function check(o) {
 
 async function safe(o) {
   const data = readJson(o.check, { pages: [] });
-  const todo = data.pages.filter(routine.needsFix);
+  const todo = routine.toFix(data.pages);
   const report = { kind: "safe", fixes: [], images: [] };
   const lazyCandidates = todo.filter((p) => fixes.lazyCandidates(readText(p.file) || "")).map((p) => p.file);
   let places = {};
@@ -109,7 +109,8 @@ async function safe(o) {
     writeJson(path.join(ROOT, COMPRESSED), done);
   }
   writeJson(o.report, report);
-  log(report.fixes.length + " safe fixes on " + todo.length + " pages under " + routine.THRESHOLD + ".");
+  const below = data.pages.filter(routine.needsFix).length;
+  log(report.fixes.length + " safe fixes on the " + todo.length + " worst of " + below + " pages under " + routine.THRESHOLD + ".");
 }
 
 async function aiFix(o) {
@@ -155,7 +156,7 @@ async function measure(o) {
     log("Nothing changed.");
     return;
   }
-  const pages = routine.affected(code, data.pages, readText).slice(0, routine.MEASURE_MAX);
+  const pages = routine.affected(code, data.pages, readText).slice(0, routine.PER_RUN);
   try {
     const lighthouse = require("./pagespeed/lighthouse");
     report.measured = await lighthouse.measure({ files: pages.map((p) => p.file), base: o.base, head: ROOT, runs: Number(o.runs) || 5, log });
