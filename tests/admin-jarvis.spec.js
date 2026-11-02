@@ -393,7 +393,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(mk.locator('[data-panel-id="marketing-countries"]')).toContainText('CO');
     await expect(mk.locator('[data-panel-id="marketing-notes"]')).toContainText('paid-once');
     await expect(mk.locator('[data-panel-id="marketing-domain"]')).toContainText('p=none');
-    await expect(mk.locator('.jv-briefing')).toContainText('Instantly trial ends in 6 days');
+    await expect(mk.locator('.jv-briefing')).toHaveCount(0);
 
     const activate = mk.locator('[data-mk-campaign="activate"]');
     await expect(mk.locator('[data-mk-campaign="pause"]')).toHaveCount(1);
@@ -429,7 +429,9 @@ test.describe('admin statistics (Jarvis)', () => {
     const leads = mk.locator('[data-panel-id="marketing-leads"]');
     await expect(leads).toContainText('Uni Norte');
     await expect(leads.locator('[data-mk-cmd="approve"]')).toHaveCount(2);
-    await expect(leads).toContainText('missing');
+    await expect(leads).toContainText('Jarvis is on it.');
+    await expect(leads.locator('[data-mk-rereview="uni2.edu.co"]')).toHaveCount(1);
+    await expect(leads.locator('[data-mk-cmd="lead-drop"][data-email="leo@uni2.edu.co"]')).toHaveCount(1);
     await expect(mk.locator('[data-panel-id="marketing-jobs"]')).toContainText('W1 leads ready');
     await expect(mk.locator('[data-panel-id="marketing-kpis"]')).toContainText('setup week');
     const cmds = () => calls.filter((c) => c.op === 'marketing-command').map(({ body: { op, days, ...rest } }) => rest);

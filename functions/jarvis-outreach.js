@@ -100,7 +100,8 @@ function instantlyRows(campaigns, overview, perCampaign, accounts) {
     accounts: (accounts || []).map((a) => ({
       email: String(a.email || ""), status: a.status === 1 ? "active" : a.status === 2 ? "paused" : a.status < 0 ? "error" : "status " + a.status,
       warmup: a.warmup_status === 1 ? "on" : a.warmup_status === 0 ? "off" : "status " + a.warmup_status, score: a.stat_warmup_score == null ? null : Number(a.stat_warmup_score),
-      dailyLimit: a.daily_limit || null
+      dailyLimit: a.daily_limit || null,
+      error: a.status < 0 ? String((a.status_message && (a.status_message.e_message || a.status_message.message)) || "").replace(/\s*Trace ID:.*$/s, "").slice(0, 240) : ""
     }))
   };
 }
