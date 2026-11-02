@@ -3,7 +3,7 @@ const auth = require('../functions/url-review-auth');
 const multi = require('../functions/url-review-multi');
 const compare = require('../functions/url-review-compare');
 const offers = require('../functions/url-review-offers');
-const sample = require('../assets/qa-review-sample.json');
+const ours = require('./unit/fixtures/review-carlosandmunoz.json');
 const own = require('./unit/fixtures/review-wordpress.json');
 const rival = require('./unit/fixtures/review-excalidraw.json');
 
@@ -15,7 +15,7 @@ function recordsWith(thirdPaid) {
   return [
     { id: 'ab12', email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-24T10:00:00Z', report: Object.assign({}, own, { id: 'ab12' }) },
     { id: 'cd34', email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-23T10:00:00Z', report: Object.assign({}, rival, { id: 'cd34' }) },
-    { id: 'ef56', email: EMAIL, status: 'complete', paid: thirdPaid, createdAt: '2026-10-22T10:00:00Z', report: Object.assign({}, sample.report, { id: 'ef56' }) }
+    { id: 'ef56', email: EMAIL, status: 'complete', paid: thirdPaid, createdAt: '2026-10-22T10:00:00Z', report: Object.assign({}, ours, { id: 'ef56' }) }
   ];
 }
 
@@ -80,7 +80,7 @@ async function signIn(page, records, file, seen) {
   await page.goto(file);
 }
 
-const hosts = [own.host, rival.host, sample.report.host];
+const hosts = [own.host, rival.host, ours.host];
 
 test('a saved comparison sets the summary and every report section side by side, one column per URL', async ({ page }) => {
   const seen = { saved: [], deleted: [], pdf: [] };
@@ -203,7 +203,7 @@ test('the comparison title shows each site as its logo with its name below, a le
   expect(seen.pdf[0]).toContain('<img class="multi-logo" data-logo="2">');
   expect(seen.pdf[0]).not.toContain('data-logo="1"');
   expect(seen.pdf[0]).not.toMatch(/logo-test|favicon/);
-  expect(seen.pdf[0]).toContain('<title>' + [own.host, 'www.excalidraw.com', sample.report.host].join(' vs ') + '</title>');
+  expect(seen.pdf[0]).toContain('<title>' + [own.host, 'www.excalidraw.com', ours.host].join(' vs ') + '</title>');
   const filled = multi.withLogos(seen.pdf[0], ['data:image/png;base64,' + png.toString('base64'), '', '']);
   expect(filled).toContain('<img class="multi-logo" src="data:image/png;base64,');
   expect(filled).not.toContain('data-logo="2"');
@@ -242,7 +242,7 @@ test('a PDF too large to send back is downloaded from the link to the stored fil
 test('six sites fit a 1920px window side by side without scrolling sideways (#1475)', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   const more = ['gh78', 'ij90', 'kl12'].map((id, index) => {
-    const base = [own, rival, sample.report][index];
+    const base = [own, rival, ours][index];
     return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id, host: 'site' + (index + 4) + '.example' }) };
   });
   await signIn(page, recordsWith(true).concat(more), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
@@ -260,7 +260,7 @@ test('six sites fit a 1920px window side by side without scrolling sideways (#14
 test('a long host wraps inside its cover card when six sites sit side by side (#1581)', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
-    const base = [own, rival, sample.report][index];
+    const base = [own, rival, ours][index];
     return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id }) };
   }));
   ['www.hotelestequendama.com', 'www.movichhotels.com', 'www.ghlhoteles.com', 'www.universidadcatolicadecolombia.edu.co', 'ciedi.edu.co', 'montessori.edu.co']
@@ -281,7 +281,7 @@ test('a long host wraps inside its cover card when six sites sit side by side (#
 test('with six sites each analyzed page is one short row: the path on one line, the title on two at most, and the intro stays in its card (#1614)', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 900 });
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
-    const base = [own, rival, sample.report][index];
+    const base = [own, rival, ours][index];
     return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id }) };
   }));
   const pages = own.pages.map((row, index) => Object.assign({}, row, index ? {} : {
@@ -331,7 +331,7 @@ test('with six sites each analyzed page is one short row: the path on one line, 
 // A large site whose run found 40 pages that cannot be indexed, beside sites with none or one.
 function manyUnindexable() {
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
-    const base = [own, rival, sample.report][index];
+    const base = [own, rival, ours][index];
     return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id, host: 'site' + (index + 4) + '.example' }) };
   }));
   const reasons = (i) => (i < 30 ? 'Canonical points to /landing/a-very-long-canonical-target-for-campaign-' + i : i < 36 ? 'Status 404' : i < 38 ? 'noindex' : 'Status 500');
@@ -414,7 +414,7 @@ test('Search visibility sums the pages that cannot be indexed by reason and show
 
 // A browser pass with many trackers, long cookie domains, and axe rules on five long paths.
 function busyBrowser() {
-  const b = JSON.parse(JSON.stringify(sample.report.browser));
+  const b = JSON.parse(JSON.stringify(ours.browser));
   const tools = ['Google Tag Manager', 'Google Analytics 4', 'Meta Pixel', 'Hotjar', 'LinkedIn Insight Tag', 'TikTok Pixel', 'Microsoft Clarity', 'Google Ads Conversion Tracking', 'Bing Universal Event Tracking'];
   const cookies = (n) => Array.from({ length: n }, (_, i) => ({ name: '_ga_LONGCOOKIENAME' + i, domain: '.analytics-collector-' + i + '.very-long-third-party-domain.example.com', third: true }));
   b.consent = {
@@ -436,7 +436,7 @@ test('the "In a real browser" cells fit their column, read in the same order, an
   if (process.env.MULTI_SHOT) test.setTimeout(240000);
   await page.setViewportSize({ width: 1024, height: 900 });
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) =>
-    ({ id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, sample.report, { id, host: 'site' + (index + 4) + '.example', browser: busyBrowser() }) })));
+    ({ id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, ours, { id, host: 'site' + (index + 4) + '.example', browser: busyBrowser() }) })));
   const seen = { saved: [], deleted: [], pdf: [] };
   await signIn(page, records, '/qa-review.html?comparison=cmp1', seen);
   const sec = page.locator('#multi-overlay .multi-sec[data-sec="browser"]');
@@ -498,7 +498,7 @@ test('the "In a real browser" cells fit their column, read in the same order, an
 
 function sixSites() {
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
-    const base = [own, rival, sample.report][index];
+    const base = [own, rival, ours][index];
     return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id }) };
   }));
   ['www.hotelestequendama.com.co', 'www.movichhotels.com', 'www.ghlhoteles.com', 'www.universidadcatolicadecolombia.edu.co', 'ciedi.edu.co', 'montessori.edu.co']
@@ -583,7 +583,7 @@ test('the host bar keeps a domain suffix on the line of the name it ends (#1611)
 test('the public marks of At a glance fit their tiles and line up across six sites, and the response times keep their bars and numbers, on screen and in print (#1612)', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 900 });
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
-    const base = [own, rival, sample.report][index];
+    const base = [own, rival, ours][index];
     return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id, host: 'site' + (index + 4) + '.example', pages: (base.pages || []).slice(0, 2 + index) }) };
   }));
   await signIn(page, records, '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
@@ -621,7 +621,7 @@ test('the public marks of At a glance fit their tiles and line up across six sit
 test('in a six-column print the response-time bars keep at least half of their row, so they read as bars and not dots (#1650)', async ({ page }) => {
   await page.setViewportSize({ width: 1060, height: 760 });
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
-    const base = [own, rival, sample.report][index];
+    const base = [own, rival, ours][index];
     return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id, host: 'site' + (index + 4) + '.example' }) };
   }));
   await signIn(page, records, '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
@@ -637,7 +637,7 @@ test('in a six-column print the response-time bars keep at least half of their r
 test('the At a glance cards line up across the columns, and a long address in a practice wraps inside its card (#1613)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
-    const base = [own, rival, sample.report][index];
+    const base = [own, rival, ours][index];
     return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id }) };
   }));
   const groups = ['CMS', 'Analytics', 'CDN', 'Server', 'Fonts', 'Library', 'Marketing'];
@@ -762,7 +762,7 @@ test('the boxes of the health score and the one-page summary line up across site
 test('six sites side by side keep one area tile per row level across columns (#1601)', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
-    const base = [own, rival, sample.report][index];
+    const base = [own, rival, ours][index];
     return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id }) };
   }));
   ['www.hotelestequendama.com', 'www.movichhotels.com', 'www.ghlhoteles.com', 'www.cgb.edu.co', 'ciedi.edu.co', 'montessori.edu.co']
@@ -785,7 +785,7 @@ test('"What AI sees" keeps its boxes in one order and lined up in every column, 
   await page.setViewportSize({ width: 1024, height: 900 });
   const seen = { saved: [], deleted: [], pdf: [] };
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
-    const base = [own, rival, sample.report][index];
+    const base = [own, rival, ours][index];
     return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id, host: 'site' + (index + 4) + '.example' }) };
   }));
   await signIn(page, records, '/qa-review.html?comparison=cmp1', seen);
@@ -838,7 +838,7 @@ test('"What AI sees" keeps its boxes in one order and lined up in every column, 
   await page.emulateMedia({ media: 'print' });
   const outline = sec.locator('.multi-cell[data-col="2"]').locator('.ai-outline li:visible');
   await expect(outline).toHaveCount(13);
-  await expect(outline.last()).toHaveText('…and ' + (sample.report.insights.geo.aiView.outline.length - 12) + ' more, in the report on the page.');
+  await expect(outline.last()).toHaveText('…and ' + (ours.insights.geo.aiView.outline.length - 12) + ' more, in the report on the page.');
   if (process.env.MULTI_SHOT) {
     await page.setViewportSize({ width: 1047, height: 900 });
     await sec.screenshot({ path: process.env.MULTI_SHOT + '/geo-print.png' });
@@ -901,7 +901,7 @@ test('one toggle per section folds it for every site together, the boxes of a ro
 // Six sites, the first with evidence, fixes and paths that hold no place to break, as axe selectors and long URLs do.
 function sixWithLongEvidence() {
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
-    const base = [own, rival, sample.report][index];
+    const base = [own, rival, ours][index];
     return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id, host: 'site' + (index + 4) + '.example' }) };
   }));
   const selector = '.elementor-element-d12c70c.elementor-sticky--active.elementor-section--handles-inside.elementor-column-gap-default.elementor-section-boxed'.replace(/-/g, '_');
@@ -1091,7 +1091,7 @@ test('the fix-kit files sit level across the columns however each kit differs, o
     { hosting: '', libraries: [{ name: 'Bootstrap', version: '3.2.0', ended: true }] },
     { hosting: 'nginx', mtaSts: 'v=STSv1; id=1' }
   ];
-  const records = [own, rival, sample.report, own].map((base, index) => {
+  const records = [own, rival, ours, own].map((base, index) => {
     const report = JSON.parse(JSON.stringify(base));
     report.id = ['ab12', 'cd34', 'ef56', 'gh78'][index];
     if (index === 3) report.host = 'site4.example';
@@ -1156,7 +1156,7 @@ const LONG_CASE = {
 
 function sixWithLongCase() {
   const records = recordsWith(true).concat(['gh78', 'ij90', 'kl12'].map((id, index) => {
-    const base = [own, rival, sample.report][index];
+    const base = [own, rival, ours][index];
     return { id, email: EMAIL, status: 'complete', paid: true, createdAt: '2026-10-21T10:00:00Z', report: Object.assign({}, base, { id }) };
   }));
   ['www.universidadcatolicadecolombia.edu.co', 'www.movichhotels.com', 'www.ghlhoteles.com', 'www.hotelestequendama.com', 'ciedi.edu.co', 'montessori.edu.co']
@@ -1367,7 +1367,7 @@ test('a long list opens in place with Show all and folds back with Show fewer, n
 });
 
 // One site sends most headers on its start page and drops some on 39 more pages, one sends every header on all
-// its pages, and the sample sends none.
+// its pages, and ours sends none.
 test('the cookies, the sitemap notes and the pages of a finding show six, open the rest in place with Show all, and print keeps six (#1687)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const records = manyUnindexable();
@@ -1454,7 +1454,7 @@ function recordsWithHeaders() {
   const security = [
     { headers: tiles(['MTA-STS', 'TLS-RPT', 'Accessibility statement']), tls: { validTo: '2027-01-01', daysLeft: 67, issuer: "Let's Encrypt" }, pages: ownPages },
     { headers: tiles(['Privacy notice']), pages: ['/', '/about', '/pricing'].map((path) => page(path, all)) },
-    sample.report.insights.security
+    ours.insights.security
   ];
   records.forEach((row, index) => { row.report.insights = Object.assign({}, row.report.insights, { security: security[index] }); });
   return records;
@@ -1544,7 +1544,7 @@ test('the benchmark ranks every site by its health score and reads where the fir
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', seen);
   const bench = page.locator('#multi-overlay .bench');
   await expect(bench).toBeVisible({ timeout: 20000 });
-  const scores = [own, rival, sample.report].map((report) => report.insights.score.overall);
+  const scores = [own, rival, ours].map((report) => report.insights.score.overall);
   const order = scores.map((score, index) => ({ score, index })).sort((a, b) => b.score - a.score);
   const cards = bench.locator('.bench-card');
   await expect(cards).toHaveCount(3);
@@ -1572,7 +1572,7 @@ test('every list of sites after the ranking keeps its order, and every column li
   await signIn(page, recordsWith(true), '/qa-review.html?comparison=cmp1', { saved: [], deleted: [], pdf: [] });
   const box = page.locator('#multi-overlay');
   await expect(box.locator('.multi-sec[data-sec="health"] .ring')).toHaveCount(3, { timeout: 20000 });
-  const scores = [own, rival, sample.report].map((report) => report.insights.score.overall);
+  const scores = [own, rival, ours].map((report) => report.insights.score.overall);
   const ranked = scores.map((score, index) => ({ score, index })).sort((a, b) => b.score - a.score);
   expect(ranked.map((item) => item.index)).not.toEqual([0, 1, 2]);
   const bare = ranked.map((item) => hosts[item.index].replace(/^www\./, ''));
