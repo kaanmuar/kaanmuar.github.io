@@ -171,10 +171,10 @@ function isTracked(file) {
   }
 }
 
-// The same topic written in other languages: the launch set and promo batches (<batch>/<NN>-<topic>-<lang>).
+// The same topic written in other languages: the launch set, promo batches and skits (<batch>/<NN>-<topic>-<lang>).
 function groupOf(post) {
   if (post.batch === LAUNCH) return LAUNCH + "/" + post.id.split("/").pop();
-  const match = post.kind === "launch" && post.id.match(/^([^/]+)\/\d+-(.+)-([a-z]{2})$/);
+  const match = (post.kind === "launch" || post.kind === "skit") && post.id.match(/^([^/]+)\/\d+-(.+)-([a-z]{2})$/);
   return match && match[3] === post.lang ? match[1] + "/" + match[2] : null;
 }
 
@@ -574,7 +574,8 @@ ${ogAlt}
 ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, copy))}
     </script>
     <script src="js/site-analytics.js?v=20261030a" defer></script>
-    <script src="js/qa-review-consent.js?v=20261028p" defer></script>
+    <script src="js/qa-review-consent.js?v=20261101a" defer></script>
+    <script src="js/qa-review-visit.js?v=20261101a" defer></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
