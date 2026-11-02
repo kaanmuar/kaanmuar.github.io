@@ -4,6 +4,7 @@ const { URL } = require("url");
 const libraries = require("./url-review-libraries");
 const { germanSpeaking } = require("./url-review-legal");
 const { say, some, english } = require("./url-review-findings-en");
+const localProfile = require("./url-review-local");
 
 const BROWSER_READ_NOTE = english(say("warn.browserRead"));
 const UNTAGGED_READ_NOTE = english(say("warn.untaggedRead"));
@@ -678,6 +679,43 @@ const SPARK = "▁▂▃▄▅▆▇█";
 
 const THREAT_WORDS = { MALWARE: "malware", SOCIAL_ENGINEERING: "phishing", UNWANTED_SOFTWARE: "unwanted software" };
 
+// The Google Business Profile of a local business (#2067). extras.local holds the place ID and what differed, never
+// the profile's own text.
+function localChecks(local, host, add) {
+  if (!local) return;
+  const cases = ["SEO-05"];
+  if (!local.placeId) {
+    add("SEO", "person", "low", "local-profile", say("local-profile.title"), say("local-profile.evidence", { query: local.query, n: local.candidates, host }),
+      say("local-profile.fix", { host }), { effort: "hours", cases });
+    return;
+  }
+  const link = localProfile.mapsLink(local.placeId);
+  add("SEO", "pass", "info", "local-profile", say("local-profile.pass.title"), say("local-profile.pass." + local.by, { host, link }), "", { cases });
+  if (local.status === "CLOSED_PERMANENTLY") add("SEO", "fail", "high", "local-status", say("local-status.closed.title"), say("local-status.closed.evidence", { link, host }), say("local-status.closed.fix"), { effort: "minutes", cases });
+  else if (local.status === "CLOSED_TEMPORARILY") add("SEO", "risk", "medium", "local-status", say("local-status.paused.title"), say("local-status.paused.evidence", { link }), say("local-status.paused.fix"), { effort: "minutes", cases });
+  const site = local.website || {};
+  const reach = site.reach;
+  if (!site.present) add("SEO", "risk", "medium", "local-website", say("local-website.none.title"), say("local-website.none.evidence", { host }), say("local-website.none.fix", { host }), { effort: "minutes", cases });
+  else if (!site.sameSite) add("SEO", "risk", "medium", "local-website", say("local-website.other.title"), say("local-website.other.evidence", { host }), say("local-website.other.fix", { host }), { effort: "minutes", cases });
+  else if (reach && (reach.error || reach.status >= 400)) add("SEO", "fail", "high", "local-website", say("local-website.broken.title"),
+    reach.error ? say("local-website.unread.evidence", { error: reach.error }) : say("local-website.broken.evidence", { status: reach.status, host }), say("local-website.broken.fix", { host }), { effort: "minutes", cases });
+  else if (reach && !reach.sameSite) add("SEO", "risk", "medium", "local-website", say("local-website.other.title"), say("local-website.away.evidence", { host }), say("local-website.other.fix", { host }), { effort: "minutes", cases });
+  else if (site.http) add("SEO", "risk", "low", "local-website", say("local-website.http.title"), say("local-website.http.evidence"), say("local-website.direct.fix"), { effort: "minutes", cases });
+  else if (reach && reach.hops >= 2) add("SEO", "risk", "low", "local-website", say("local-website.hops.title", { n: reach.hops }), say("local-website.hops.evidence"), say("local-website.direct.fix"), { effort: "minutes", cases });
+  else if (reach) add("SEO", "pass", "info", "local-website", say("local-website.pass.title"), say("local-website.pass.evidence", { status: reach.status, host }), "", { cases });
+  if (site.present && site.sameSite && !site.utm) add("SEO", "risk", "low", "local-utm", say("local-utm.title"), say("local-utm.evidence"), say("local-utm.fix"), { effort: "minutes", cases });
+  const differ = local.mismatch || {};
+  const fields = [];
+  if (differ.phone) fields.push(say("local-nap.phone", { phones: { items: differ.phone, join: "or" } }));
+  if (differ.address) fields.push(say("local-nap.address", { street: differ.address }));
+  if (differ.name) fields.push(say("local-nap.name", { name: differ.name }));
+  if (fields.length) add("SEO", "risk", differ.phone || differ.address ? "medium" : "low", "local-nap", say("local-nap.title"), say("local-nap.evidence", { list: { items: fields, join: "and" } }),
+    say("local-nap.fix"), { count: fields.length, effort: "hours", cases });
+  else add("SEO", "pass", "info", "local-nap", say("local-nap.pass.title"), say("local-nap.pass.evidence"), "", { cases });
+  if (differ.hours && differ.hours.length) add("SEO", "risk", "medium", "local-hours", say("local-hours.title"),
+    say("local-hours.evidence", { days: { items: differ.hours.map((day) => say("day." + day)), join: "and" } }), say("local-hours.fix"), { count: differ.hours.length, effort: "minutes", cases });
+}
+
 // Safe Browsing status, the domain's registration, and how mail to the domain is protected in transit.
 function domainChecks(extras, dnsInfo, dnsRead, add) {
   const end = (text) => String(text).replace(/\.*$/, ".");
@@ -1180,7 +1218,7 @@ function analyze(input) {
     ((page.inspect.schema && page.inspect.schema.items) || []).forEach((item) => {
       (item.types || []).forEach((type) => schemaTypes.add(type));
       (item.types || []).forEach((type) => {
-        const need = REQUIRED_PROPS[type];
+        const need = REQUIRED_PROPS[type] || (localProfile.isLocalType(type) ? REQUIRED_PROPS.LocalBusiness : null);
         if (!need) return;
         const missing = need.filter((prop) => Array.isArray(prop) ? !prop.some((one) => item.props.indexOf(one) !== -1) : item.props.indexOf(prop) === -1)
           .map((prop) => Array.isArray(prop) ? { items: prop, join: "or" } : prop);
@@ -1203,6 +1241,7 @@ function analyze(input) {
   } else if (!schemaErrors && !schemaGaps.length) {
     add("SEO", "pass", "info", "seo-schema", say("seo-schema.pass.title"), say("seo-schema.pass.evidence", { list: some([...schemaTypes], 6) }), "", { cases: ["CT-04"] });
   }
+  localChecks(extras.local, host, add);
 
   // Social previews.
   const social = face.social || {};
