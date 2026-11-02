@@ -87,6 +87,8 @@ test("a note and a claimed report send the 'write to' mail to the face address",
   assert.ok(claimed.html.includes("mailto:qaurlreview@carlosandmunoz.com?") && claimed.text.includes("qaurlreview@carlosandmunoz.com"));
   const asked = customerMail.reportMail(record, { lang: "pt" });
   assert.ok(!asked.text.includes("qaurlreview@") && asked.html.includes("mailto:qa@carlosandmunoz.com?"), "an asker's own report keeps qa@");
+  assert.ok(customerMail.reportPdf(record, { lang: "pt", face: mailFace.faceOf("pt") }).html.includes("mailto:qaurlreview@carlosandmunoz.com?"), "the claimed report's PDF too");
+  assert.ok(customerMail.reportPdf(record, { lang: "pt" }).html.includes("mailto:qa@carlosandmunoz.com?"));
 });
 
 test("notices, claimed reports and notes go out through sendFaceMail and mailRetry", () => {
@@ -98,4 +100,5 @@ test("notices, claimed reports and notes go out through sendFaceMail and mailRet
     assert.doesNotMatch(src, new RegExp("sendAskerMail\\([^\\n]*\"" + category + "\""), category);
   }
   assert.match(src, /mail\.alias === "qa" \|\| mailFace\.isFaceAlias\(mail\.alias\)/);
+  assert.match(src, /const face = mailFace\.faceOf\(link\.lang\);\n\s+const pdf = await reportPdfFor\(copy, \{ face \}\);/);
 });

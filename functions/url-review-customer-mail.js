@@ -921,7 +921,7 @@ function reportPdf(record, options) {
     (findings ? "<div class=\"sec\"><h2>" + esc(p.findings) + "</h2>" + (open ? "" : "<p class=\"note\">" + esc(p.note) + "</p>") + findings + "</div>" : "") +
     (caseRows ? "<div class=\"sec\"><h2>" + esc(p.cases) + "</h2><div class=\"cases\">" + caseRows + "</div>" + (moreCases ? "<p class=\"more\">" + esc(fill(p.moreCases, { n: moreCases })) + "</p>" : "") + "</div>" : "") +
     "<div class=\"cta\"><h3>" + esc(t.deeper) + "</h3>" + t.deeperLines.map((line) => "<p>→ " + esc(line) + "</p>").join("") +
-    "<div class=\"btns\"><a class=\"btn p\" href=\"" + esc(openUrl) + "\">" + esc(open ? t.openFull : p.unlock) + "</a><a class=\"btn s\" href=\"" + esc(deeperUrl(t, facts.host, facts.id)) + "\">" + esc(t.deeperCta) + "</a><a class=\"btn s\" href=\"" + esc(bookLink(lang, facts.host, facts.id, "report-pdf")) + "\">" + esc(t.book) + "</a></div></div>" +
+    "<div class=\"btns\"><a class=\"btn p\" href=\"" + esc(openUrl) + "\">" + esc(open ? t.openFull : p.unlock) + "</a><a class=\"btn s\" href=\"" + esc(deeperUrl(t, facts.host, facts.id, opts.face && opts.face.email)) + "\">" + esc(deeperCta(t, opts.face)) + "</a><a class=\"btn s\" href=\"" + esc(bookLink(lang, facts.host, facts.id, "report-pdf")) + "\">" + esc(t.book) + "</a></div></div>" +
     "</div></body></html>";
   const slug = facts.host.replace(/[^a-z0-9.-]/gi, "-").replace(/-+/g, "-").slice(0, 60);
   return { html, filename: "qa-lab-" + slug + "-" + (open ? p.fileOpen : p.file) + ".pdf" };

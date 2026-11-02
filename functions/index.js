@@ -1795,11 +1795,11 @@ async function storePdf(base64, filename) {
   return "https://firebasestorage.googleapis.com/v0/b/" + PDF_BUCKET + "/o/" + encodeURIComponent(file.name) + "?alt=media&token=" + token;
 }
 
-async function reportPdfFor(record) {
+async function reportPdfFor(record, options) {
   if (!process.env.BROWSER_KEY) return null;
   let page = null;
   try {
-    page = customerMail.reportPdf(record);
+    page = customerMail.reportPdf(record, options);
   } catch (error) {
     console.error("Report PDF failed:", error && error.message);
     return null;
@@ -4115,8 +4115,9 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     };
     await db.collection("url_reviews").doc(id).set(copy);
     await ref.update({ claims: FieldValue.increment(1), claimedAt: at });
-    const pdf = await reportPdfFor(copy);
-    const mail = customerMail.reportMail(copy, { lang: link.lang, attached: !!pdf, why: ownerMail.claimWhy(link.lang, link.host), face: mailFace.faceOf(link.lang) });
+    const face = mailFace.faceOf(link.lang);
+    const pdf = await reportPdfFor(copy, { face });
+    const mail = customerMail.reportMail(copy, { lang: link.lang, attached: !!pdf, why: ownerMail.claimWhy(link.lang, link.host), face });
     await sendReportMail(id, () => sendFaceMail(link.lang, email, mail, "", "url-review-owner-claim", pdf ? [pdf] : []), !!pdf);
     res.status(200).send(ownerMail.ownerPage(link.lang, "claimed", Object.assign({}, link, { email })));
     return;
