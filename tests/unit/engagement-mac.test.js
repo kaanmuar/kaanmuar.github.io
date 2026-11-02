@@ -131,6 +131,38 @@ test("Sign in on the Mac: Jarvis asks, the next pass opens the sign-in on screen
   assert.match(late.message, /not installed yet/);
 });
 
+/** A LinkedIn post page whose identity switch acts as `as`, or has no switch when as is null. */
+function fakeLinkedIn(as, calls) {
+  const state = { as, picked: false };
+  const el = (sel, onClick) => ({
+    first() { return this; }, last() { return this; },
+    count: async () => 1, isVisible: async () => true, scrollIntoViewIfNeeded: async () => null, innerText: async () => "",
+    click: async () => { calls.push("click " + sel); onClick(); }
+  });
+  const toggle = Object.assign(el("switch", () => null), {
+    isVisible: async () => state.as !== null, locator: () => ({ first: () => ({ getAttribute: async () => state.as }) })
+  });
+  const dialog = Object.assign(el("dialog", () => null), {
+    locator: (sel) => (sel.includes(N.LI_AS) ? el("page", () => { state.picked = true; }) : /Save/.test(sel) ? el("save", () => { if (state.picked) state.as = N.LI_AS; }) : el("other", () => null))
+  });
+  return { state, locator: (sel) => (sel === "[role=dialog]" ? dialog : toggle) };
+}
+
+test("LinkedIn acts as the company page, never as the member, and never follows", async () => {
+  assert.deepEqual(require("../../functions/engagement.js").NETWORKS.linkedin.only, ["like", "repost", "reply"]);
+  assert.equal(N.NETWORKS.linkedin.follow, undefined);
+
+  const calls = [];
+  await assert.rejects(N.liAsPage(fakeLinkedIn(null, calls)), /no switch to act as QA-lab URL Review/);
+  await N.liAsPage(fakeLinkedIn("QA-lab URL Review", calls));
+  assert.deepEqual(calls, []);
+
+  const page = fakeLinkedIn("Carlos Muñoz", calls);
+  await N.liAsPage(page);
+  assert.equal(page.state.as, "QA-lab URL Review");
+  assert.deepEqual(calls.map((c) => c.split(" ")[1]), ["switch", "page", "save"]);
+});
+
 test("the scout takes the Mac's inbox once and drops old or foreign posts", async () => {
   const db = fakeDb();
   const p = (network, id) => ({ network, id, url: "https://x.com/a/status/" + id, text: "WCAG" });

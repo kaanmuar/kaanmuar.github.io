@@ -314,7 +314,7 @@ async function saveSettings(db, body, by, now) {
 
 const STAGE = {
   bluesky: "likes, reposts, follows and replies", mastodon: "likes, boosts, follows and replies", youtube: "likes, subscribes and comments",
-  x: "likes, reposts, follows and replies", linkedin: "likes, reposts, follows and comments", facebook: "likes and comments",
+  x: "likes, reposts, follows and replies", linkedin: "likes, reposts and comments", facebook: "likes and comments",
   instagram: "likes, follows and comments", threads: "likes, reposts, follows and replies", tiktok: "likes, follows and comments",
   hn: "trends only", devto: "trends only", lobsters: "trends only"
 };

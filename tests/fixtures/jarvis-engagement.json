@@ -57,7 +57,7 @@
  "stale": false,
  "lastRun": {
   "at": "2026-11-02T00:30:00.000Z",
-  "ms": 50,
+  "ms": 65,
   "paused": false,
   "live": false,
   "read": {
@@ -119,7 +119,7 @@
  "runs": [
   {
    "at": "2026-11-02T00:30:00.000Z",
-   "ms": 50,
+   "ms": 65,
    "paused": false,
    "live": false,
    "read": {
@@ -234,7 +234,7 @@
    "name": "LinkedIn",
    "via": "mac",
    "connected": true,
-   "account": "Carlos Muñoz",
+   "account": "QA-lab URL Review (page), via Carlos Muñoz",
    "bot": false,
    "connectedAt": "",
    "seenAt": "2026-11-02T00:57:00.000Z",
@@ -998,7 +998,7 @@
    "reads": "Mac browser",
    "lastRead": 0,
    "error": "",
-   "acts": "Mac browser as Carlos Muñoz: likes, reposts, follows and comments (dry run: replies post, the rest is only logged)",
+   "acts": "Mac browser as QA-lab URL Review (page), via Carlos Muñoz: likes, reposts and comments (dry run: replies post, the rest is only logged)",
    "row": null
   },
   {

@@ -165,6 +165,28 @@ const x = {
 // --- LinkedIn -----------------------------------------------------------------------------------------------------
 
 const liPost = (page) => page.locator("div.feed-shared-update-v2, [data-urn*='urn:li:activity:'], main article").first();
+const LI_AS = process.env.ENGAGEMENT_LINKEDIN_AS || "QA-lab URL Review";
+const squash = (s) => String(s || "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+const LI_SWITCH = "button.content-admin-identity-toggle-button, button[aria-label*='switching identity' i], button[aria-label*='cambiar de identidad' i], button[aria-label*='identidad' i][aria-haspopup]";
+
+/** Switches the post to act as the company page, or throws: the Mac never likes, reposts or comments as the member. */
+async function liAsPage(page) {
+  const toggle = page.locator(LI_SWITCH).first();
+  if (!(await toggle.isVisible().catch(() => false))) throw new ActError("LinkedIn shows no switch to act as " + LI_AS + " on this post, so the Mac left it. Check that the signed-in member is an admin of the page.");
+  const current = async () => squash((await toggle.locator("img").first().getAttribute("alt").catch(() => "")) + " " + (await toggle.innerText().catch(() => "")));
+  if ((await current()).includes(squash(LI_AS))) return;
+  await toggle.click({ timeout: 8000 });
+  await wait(800, 1600);
+  const dialog = page.locator("[role=dialog]").last();
+  const name = new RegExp(LI_AS.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+  if (!(await click(dialog, ["label", "[role=radio]", "li"].map((s) => s + ":has-text('" + LI_AS.replace(/'/g, "\\'") + "')")))) {
+    if (!(await dialog.getByText(name).first().isVisible().catch(() => false))) throw new ActError("LinkedIn does not offer " + LI_AS + " in the switch, so the Mac left the post.");
+    await dialog.getByText(name).first().click({ timeout: 8000 });
+  }
+  await need(dialog, "button:has-text('Save'), button:has-text('Guardar')", "Save identity");
+  await wait(1200, 2200);
+  if (!(await current()).includes(squash(LI_AS))) throw new ActError("LinkedIn did not switch to " + LI_AS + ", so the Mac left the post.");
+}
 
 const linkedin = {
   name: "LinkedIn", home: "https://www.linkedin.com/feed/", login: "https://www.linkedin.com/login", cookie: ["linkedin.com", "li_at"],
@@ -198,11 +220,12 @@ const linkedin = {
   },
   async account(page) {
     await go(page, linkedin.home, "LinkedIn");
-    const alt = await page.locator("img.global-nav__me-photo").first().getAttribute("alt").catch(() => "");
-    return String(alt || "").trim() || "signed in";
+    const alt = String(await page.locator("img.global-nav__me-photo").first().getAttribute("alt").catch(() => "") || "").trim();
+    return alt ? LI_AS + " (page), via " + alt : "";
   },
   async like(page, d) {
     await go(page, d.url, "LinkedIn");
+    await liAsPage(page);
     const p = liPost(page);
     const btn = "button.react-button__trigger, button[aria-label*='React Like' i], button[aria-label*='Recomendar']";
     if (!(await has(p, "button.react-button__trigger[aria-pressed='true'], button[aria-label*='React Like' i][aria-pressed='true']"))) {
@@ -213,21 +236,15 @@ const linkedin = {
   },
   async repost(page, d) {
     await go(page, d.url, "LinkedIn");
+    await liAsPage(page);
     await need(liPost(page), "button.social-reshare-button, button[aria-label*='Repost' i], button[aria-label*='Compartir' i]", "repost");
     await need(page, "[role=menuitem]:has-text('Repost'), .artdeco-dropdown__item:has-text('Repost'), [role=menuitem]:has-text('Compartir'), .artdeco-dropdown__item:has-text('Compartir')", "Repost menu");
     await until(page, ".artdeco-toast-item, [role=alert]", "The repost");
     return { url: d.url };
   },
-  async follow(page, d) {
-    await go(page, d.url, "LinkedIn");
-    const p = liPost(page);
-    if (await has(p, "button[aria-label^='Following' i], button[aria-label^='Siguiendo' i]")) return { url: d.url };
-    await need(p, "button[aria-label^='Follow' i], button[aria-label^='Seguir' i], button.follow", "follow");
-    await until(p, "button[aria-label^='Following' i], button[aria-label^='Siguiendo' i], button[aria-label*='Unfollow' i]", "The follow");
-    return { url: d.url };
-  },
   async reply(page, d, body) {
     await go(page, d.url, "LinkedIn");
+    await liAsPage(page);
     const p = liPost(page);
     await click(p, "button[aria-label='Comment'], button.comment-button, button[aria-label='Comentar']");
     await need(page, ".comments-comment-box .ql-editor, div.ql-editor[contenteditable='true'], div[role='textbox'][contenteditable='true']", "comment box");
@@ -458,4 +475,4 @@ const tiktok = {
 
 const NETWORKS = { x, linkedin, facebook, instagram, threads, tiktok };
 
-module.exports = { NETWORKS, num, linkedinTime, tiktokTime, tagsOf, post, WALL };
+module.exports = { NETWORKS, num, linkedinTime, tiktokTime, tagsOf, post, WALL, LI_AS, liAsPage };
