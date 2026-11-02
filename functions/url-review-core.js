@@ -21,9 +21,9 @@ const { registrable, registryDomain } = require("./url-review-suffix");
 const { ipBlocked } = require("./url-review-ip");
 const { siteLabel } = caseRank;
 
-const TERMS_VERSION = "2026-10-26";
+const TERMS_VERSION = "2026-11-01";
 // A page loaded before a terms change still sends the version before it.
-const PREVIOUS_TERMS_VERSION = "2026-10-24";
+const PREVIOUS_TERMS_VERSION = "2026-10-26";
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 const EXTRA_FRAMEWORK_USD = 5;

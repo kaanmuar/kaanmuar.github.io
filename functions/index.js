@@ -12,6 +12,7 @@ const { getMessaging } = require("firebase-admin/messaging");
 const { getAuth } = require("firebase-admin/auth");
 const { getStorage } = require("firebase-admin/storage");
 const sgMail = require("@sendgrid/mail");
+const mailRetry = require("./mail-retry");
 
 // Initialize Firebase Admin SDK
 initializeApp();
@@ -224,7 +225,7 @@ async function sendOwnerEmail({ subject, intro, rows, body, respondUrl, buttonLa
   const from = prepareMail();
   if (!from) return false;
   const { text, html } = ownerLayout.ownerMail({ intro, rows, body, respondUrl, buttonLabel, eyebrow: eyebrow || (to === REVIEW_ALERT_TO ? "QA-lab URL Review" : "") });
-  await sgMail.send(Object.assign({
+  await mailRetry.send(sgMail, getFirestore(), Object.assign({
     to: to || OWNER_EMAIL,
     from: from,
     subject: clip(subject, 140),
@@ -3303,6 +3304,7 @@ async function readBrowserStream(body, log, onStart) {
 }
 
 const reviewAuth = require("./url-review-auth");
+const reviewVisits = require("./url-review-visits");
 const reviewPhrase = require("./url-review-phrase");
 const reviewOAuth = require("./url-review-oauth");
 // Each OAuth provider registers exactly this address as its redirect URI.
@@ -3858,9 +3860,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       return;
     }
     const since = /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(String(req.query.since || "")) ? String(req.query.since) : new Date(Date.now() - 864e5).toISOString();
+    // Whole reports are large: 500 of them went over the 512 MiB (#2038), so the caller pages with since=until.
+    const limit = Math.min(200, Math.max(20, Number(req.query.limit) || 100));
     try {
       const [reviewSnap, unlistedSnap, rivalSnap] = await Promise.all([
-        getFirestore().collection("url_reviews").where("createdAt", ">", since).orderBy("createdAt").limit(500).get(),
+        getFirestore().collection("url_reviews").where("createdAt", ">", since).orderBy("createdAt").limit(limit).get(),
         getFirestore().collection("url_review_unlisted").get(),
         getFirestore().collection("url_review_rivals").where("createdAt", ">", since).orderBy("createdAt").limit(50).get()
       ]);
@@ -4009,6 +4013,20 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     const mail = customerMail.reportMail(copy, { lang: link.lang, attached: !!pdf, why: ownerMail.claimWhy(link.lang, link.host) });
     await sendReportMail(id, () => sendAskerMail(email, mail, "", "url-review-owner-claim", pdf ? [pdf] : []), !!pdf);
     res.status(200).send(ownerMail.ownerPage(link.lang, "claimed", Object.assign({}, link, { email })));
+    return;
+  }
+  if (req.method === "POST" && pathName.endsWith("/visit")) {
+    if (!REVIEW_ORIGINS.has(String(req.get("origin") || ""))) {
+      res.status(403).json({ error: "This page cannot note a visit." });
+      return;
+    }
+    let result = { ok: true };
+    try {
+      result = await reviewVisits.note(reviewAuth.firestoreStore(getFirestore()), req.body || {});
+    } catch (error) {
+      console.error("URL review visit note failed:", error);
+    }
+    res.status(result.ok ? 204 : 401).send("");
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/opened") !== -1) {
@@ -5403,7 +5421,7 @@ async function jarvisSnapshot(days) {
   const now = Date.now();
   const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now, days }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync", "calls", "engagement"], days),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync", "calls", "engagement", "people"], days),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
@@ -5640,7 +5658,9 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
   const watch = await jarvisWatchRun();
   const notices = await jarvisNoticesRun().catch((error) => "notices failed: " + String(error.message || error).slice(0, 120));
   const social = await jarvisSocialRun().catch((error) => "social failed: " + String(error.message || error).slice(0, 120));
-  return watch + "; " + acts + "; " + notices + "; " + social;
+  const resent = await mailRetry.retry({ db: getFirestore(), sgMail: prepareMail() ? sgMail : null, fetch, key: process.env.SENDGRID_API_KEY })
+    .catch((error) => "mail retry failed: " + String(error.message || error).slice(0, 120));
+  return watch + "; " + acts + "; " + notices + "; " + social + "; " + resent;
 });
 
 // Every 30 minutes (#1988): read our field's posts, plan likes, reposts and follows, and push reply drafts for approval.
@@ -5718,10 +5738,10 @@ async function mailCanaryRun() {
   const token = crypto.randomBytes(6).toString("hex");
   const mail = mailHealth.canaryMail(token);
   await ref.set(mailHealth.canarySent(prev.exists ? prev.data() : null, token, now));
-  await sgMail.send({
+  await mailRetry.send(sgMail, getFirestore(), {
     to: mail.to, from, subject: mail.subject, text: mail.text, categories: ["mail-canary"],
     trackingSettings: { clickTracking: { enable: false, enableText: false }, openTracking: { enable: false } }
-  });
+  }, now);
   return "sent " + token + "; the last one was " + before.state;
 }
 

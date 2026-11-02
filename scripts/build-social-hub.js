@@ -574,7 +574,8 @@ ${ogAlt}
 ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, copy))}
     </script>
     <script src="js/site-analytics.js?v=20261030a" defer></script>
-    <script src="js/qa-review-consent.js?v=20261028p" defer></script>
+    <script src="js/qa-review-consent.js?v=20261101a" defer></script>
+    <script src="js/qa-review-visit.js?v=20261101a" defer></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
