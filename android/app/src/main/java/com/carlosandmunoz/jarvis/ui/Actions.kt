@@ -28,8 +28,12 @@ import com.carlosandmunoz.jarvis.data.str
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" to "Re-send failed notices", "publish-hub" to "Publish the hub", "run-job" to "Run a job again", "rerun-ci" to "Re-run failed CI jobs")
+val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" to "Re-send failed notices", "publish-hub" to "Publish the hub", "run-job" to "Run a job again", "rerun-ci" to "Re-run failed CI jobs",
+    "rerun-job" to "Re-run failed jobs", "refresh-stale" to "Refresh stale data", "rerun-reviews" to "Re-run reviews after a fix", "pause-outreach" to "Pause an outreach mailbox",
+    "resume-outreach" to "Resume outreach mailboxes", "retry-social" to "Retry failed social posts", "ai-ask" to "Ask the AI what to fix", "ai-fix" to "Run fixes the AI picked")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
+/** Every action with a daily cap, for the used-today rows (#1977). */
+private val AUTO_CAPS = CAPS + listOf("rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix")
 
 /** One action waiting for a yes: what it does, in words, and the call. Shown by [ConfirmAction]. */
 data class PendingAction(val ask: String, val run: () -> Unit)
@@ -68,6 +72,8 @@ fun askFor(action: String, job: String?, pending: JsonObject?): String = when (a
     }
     "resend-notices" -> "re-send the failed owner notices (Monday-Saturday 08:00-19:00, inside today's notice budget)"
     "publish-hub" -> "publish the Social hub (run refreshSocialHubStats)"
+    "retry-social" -> "start the social posting workflows again (Buffer re-queues the failed posts)"
+    "resume-outreach" -> "resume the outreach mailboxes Jarvis paused that have been healthy for two hourly checks"
     else -> "run ${job ?: "the job"} again"
 }
 
@@ -88,7 +94,8 @@ fun JarvisActions(s: UiState, vm: JarvisViewModel) {
     Panel(if (off) "Jarvis actions (automatic off)" else "Jarvis actions", key = "Jarvis actions") {
         if (v == null) { Muted(error ?: "Reading the actions log…"); return@Panel }
         val caps = v.obj("settings").obj("caps")
-        CAPS.forEach { k -> KeyRow(ACTION_LABELS[k] ?: k, fmt(v.obj("used").num(k)) + " of " + fmt(caps.num(k)) + " today", if ((v.obj("used").num(k) ?: 0.0) >= (caps.num(k) ?: 0.0)) J.amber else J.text) }
+        AUTO_CAPS.forEach { k -> KeyRow(ACTION_LABELS[k] ?: k, fmt(v.obj("used").num(k)) + " of " + fmt(caps.num(k)) + " today", if ((v.obj("used").num(k) ?: 0.0) >= (caps.num(k) ?: 0.0)) J.amber else J.text) }
+        Muted("The AI acts alone at confidence " + "%.2f".format(v.obj("settings").num("confidence") ?: 0.8) + " or more; other picks become proposals.")
         val p = v.obj("pending")
         Muted("Held re-runs: ${fmt(p.num("held"))} (${fmt(p.num("clean"))} clean) · failed notices: ${fmt(p.num("notices"))}" +
             (if (v.bool("noticesLive") != true) " · notices off" else if (v.bool("noticeHours") != true) " · outside notice hours" else ""))
@@ -109,6 +116,7 @@ fun ProposalActions(p: JsonObject, vm: JarvisViewModel, ask: (PendingAction) -> 
     val key = p.str("key")
     Column {
         p.str("action")?.let { action -> TextButton(onClick = { ask(PendingAction(askFor(action, null, null)) { runAction(vm, action, proposal = key) }) }) { Text("Run now: " + (ACTION_LABELS[action] ?: action).lowercase(), fontSize = 12.sp) } }
+        p.str("click")?.let { action -> TextButton(onClick = { ask(PendingAction(askFor(action, null, null)) { runAction(vm, action, proposal = key) }) }) { Text(ACTION_LABELS[action] ?: action, fontSize = 12.sp) } }
         (p["jobs"] as? kotlinx.serialization.json.JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }?.forEach { job ->
             TextButton(onClick = { ask(PendingAction(askFor("run-job", job, null)) { runAction(vm, "run-job", job, key) }) }) { Text("Run $job again", fontSize = 12.sp) }
         }
