@@ -939,7 +939,7 @@ async function assertPublic(hostname) {
   records.forEach((record) => {
     if (ipBlocked(record.address)) throw new Error("That host points at a private address.");
   });
-  return records[0].address;
+  return (records.find((record) => record.family === 4) || records[0]).address;
 }
 
 // Inflates at most MAX_BYTES * 5; past that it keeps the start of the input, so a huge file still yields its first part.
@@ -993,6 +993,22 @@ function serverLeaf(hostname, pinned) {
   });
 }
 
+// Must answer asynchronously: answered in the same tick, a connect error (an IPv6 address on an IPv4-only runner)
+// reaches the socket before the request listens for it and ends the process instead of rejecting.
+function pinnedLookup(pinned) {
+  return (hostname, options, callback) => {
+    if (typeof options === "function") {
+      callback = options;
+      options = {};
+    }
+    const family = net.isIP(pinned);
+    process.nextTick(() => {
+      if (options && options.all) callback(null, [{ address: pinned, family }]);
+      else callback(null, pinned, family);
+    });
+  };
+}
+
 async function issuerBytes(raw) {
   const target = new URL(raw);
   if (!/^https?:$/.test(target.protocol) || target.username || target.password || (target.port && !["80", "443"].includes(target.port))) throw new Error("The AIA address is not a plain public URL.");
@@ -1009,15 +1025,7 @@ async function issuerBytes(raw) {
       method: "GET",
       timeout: ISSUER_TIMEOUT_MS,
       headers: { "user-agent": USER_AGENT, connection: "close" },
-      lookup: (hostname, options, callback) => {
-        if (typeof options === "function") {
-          callback = options;
-          options = {};
-        }
-        const family = net.isIP(pinned);
-        if (options && options.all) callback(null, [{ address: pinned, family }]);
-        else callback(null, pinned, family);
-      }
+      lookup: pinnedLookup(pinned)
     }, (res) => {
       if (res.statusCode !== 200) {
         req.destroy();
@@ -1105,15 +1113,7 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
         connection: "close"
       }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
       ca: chain ? tls.rootCertificates.concat(chain.pem) : undefined,
-      lookup: (hostname, options, callback) => {
-        if (typeof options === "function") {
-          callback = options;
-          options = {};
-        }
-        const family = net.isIP(pinned);
-        if (options && options.all) callback(null, [{ address: pinned, family }]);
-        else callback(null, pinned, family);
-      }
+      lookup: pinnedLookup(pinned)
     }, (res) => {
       const chunks = [];
       let size = 0;
@@ -2792,15 +2792,7 @@ function readIcon(target, pinned) {
       method: "GET",
       timeout: 5000,
       headers: { "user-agent": USER_AGENT, accept: "image/*", connection: "close" },
-      lookup: (hostname, options, callback) => {
-        if (typeof options === "function") {
-          callback = options;
-          options = {};
-        }
-        const family = net.isIP(pinned);
-        if (options && options.all) callback(null, [{ address: pinned, family }]);
-        else callback(null, pinned, family);
-      }
+      lookup: pinnedLookup(pinned)
     }, (res) => {
       const chunks = [];
       let size = 0;
@@ -4548,5 +4540,7 @@ module.exports = {
   sitePaths,
   ipBlocked,
   hostBlocked,
-  iconData
+  iconData,
+  assertPublic,
+  pinnedLookup
 };

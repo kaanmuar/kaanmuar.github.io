@@ -5229,7 +5229,7 @@ const jarvisDigest = require("./jarvis-digest");
 exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB", secrets: SECRETS.jarvisReviewRun }).firestore.document("jarvis_reviews/{id}").onCreate(async (snap) => {
   const row = snap.data() || {};
   const db = getFirestore();
-  const tokens = row.token ? [row.token] : await jarvisPush.targets(db, "alerts");
+  const tokens = row.token ? [row.token] : row.quiet === true ? [] : await jarvisPush.targets(db, "alerts");
   const startedAt = Date.now();
   await snap.ref.update({ status: "running", startedAt: new Date(startedAt).toISOString() });
   try {
@@ -5251,13 +5251,13 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
     linkUrl.searchParams.set("utm_source", "jarvis");
     linkUrl.searchParams.set("utm_medium", "push");
     const link = linkUrl.toString();
-    const push = await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.doneMessage(report, link));
+    const push = row.quiet === true ? null : await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.doneMessage(report, link));
     const score = report.insights && report.insights.score ? report.insights.score.overall : null;
     await snap.ref.update({ status: "done", reportId: record.id, score: score == null ? null : score, link, push, doneAt: new Date().toISOString() });
   } catch (error) {
     const reason = String((error && error.message) || error).slice(0, 200);
     console.error("Jarvis review of " + row.url + " failed:", error);
-    const push = await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.failedMessage(row.url, reason)).catch(() => null);
+    const push = row.quiet === true ? null : await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.failedMessage(row.url, reason)).catch(() => null);
     await snap.ref.update({ status: "failed", error: reason, push, doneAt: new Date().toISOString() });
   }
 });

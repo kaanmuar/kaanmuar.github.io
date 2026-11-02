@@ -109,7 +109,7 @@ function folder() {
 test("marketing sync (#1730): the Mac snapshot counts leads per week and joins a reply with a draft written the next day", () => {
   const { dir, state } = folder();
   const s = sync.snapshot(dir, state, NOW);
-  assert.deepEqual(s.leads.weeks, [{ week: "W1", total: 3, complete: 2, missing: 1, approved: 1, uploaded: 1, ready: 0 }]);
+  assert.deepEqual(s.leads.weeks, [{ week: "W1", total: 3, complete: 2, missing: 1, approved: 1, uploaded: 1, ready: 0, ask: 1, dropped: 0 }]);
   assert.deepEqual([s.replies.items.length, s.replies.items[0].category, s.replies.items[0].draft, s.replies.items[0].to], [1, "interested", "Hola", "c@m.co"]);
   assert.deepEqual([s.linkedin.date, s.linkedin.items[0].name, s.linkedin.items[0].profile, s.linkedin.items[0].sent], ["2026-10-26", "Ana Pérez", "https://www.linkedin.com/in/ana", false]);
   assert.equal(s.running, false);
@@ -123,7 +123,7 @@ test("marketing sync (#1730): the Mac applies approvals, LinkedIn, do-not-contac
   assert.equal(run("approve-week", { week: "W1" }).result, "1 approved, 1 still missing something");
   assert.equal(sync.leads(dir).weeks[0].ready, 1);
   assert.equal(run("approve", { week: "W1", email: "a@x.edu", on: false }).result, "unapproved a@x.edu");
-  assert.match(fs.readFileSync(path.join(dir, "prospects", "week1-leads.csv"), "utf8"), /\r\nW1 B-es Americas,a@x\.edu,A,a\.edu,co,,,\r\n/);
+  assert.match(fs.readFileSync(path.join(dir, "prospects", "week1-leads.csv"), "utf8"), /\r\nW1 B-es Americas,a@x\.edu,A,a\.edu,co,,no,\r\n/);
   assert.equal(run("linkedin", { date: "2026-10-26", name: "Ana Pérez", sent: true }).status, "done");
   assert.equal(sync.linkedin(dir).items[0].sent, true);
   assert.equal(run("linkedin", { date: "2026-10-26", name: "Nobody", sent: true }).status, "failed");
@@ -136,4 +136,17 @@ test("marketing sync (#1730): the Mac applies approvals, LinkedIn, do-not-contac
   fs.mkdirSync(path.join(state, "lock"));
   assert.equal(run("approve-week", { week: "W1" }), null);
   assert.equal(run("replied", { id: REPLY, at: "x" }).status, "done");
+});
+
+test("the sync writes each working day's LinkedIn list once, from 07:00, never at weekends", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mk-li-"));
+  fs.mkdirSync(path.join(dir, "linkedin"));
+  const calls = [];
+  const run = (args) => { calls.push(args); fs.writeFileSync(path.join(dir, "linkedin", args[1] + ".md"), "# list\n"); };
+  const at = (d, h) => new Date(2026, 10, d, h).getTime();
+  assert.equal(sync.linkedinDay(dir, at(2, 6), run), "");
+  assert.equal(sync.linkedinDay(dir, at(2, 9), run), "LinkedIn list for 2026-11-02 written");
+  assert.equal(sync.linkedinDay(dir, at(2, 10), run), "");
+  assert.equal(sync.linkedinDay(dir, at(1, 9), run), "");
+  assert.deepEqual(calls, [["tools/linkedin-day.py", "2026-11-02"]]);
 });
