@@ -61,6 +61,17 @@
     "checked": "2026-10-31T15:20:35.191Z"
    }
   ],
+  "auto-2026-10-24/03-u-nibo-com-br": [
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18148621366573520",
+    "at": "2026-11-02T19:38:08.994Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/p/DfQE2lCl5lL/",
+    "checked": "2026-11-02T19:38:19.339Z"
+   }
+  ],
   "auto-2026-10-25/01-u-kemik-gt": [
    {
     "channel": "bluesky",
@@ -261,6 +272,17 @@
     "checked": "2026-11-01T21:11:50.342Z"
    }
   ],
+  "compare-2026-11/08-quiz-metros": [
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18175184314454869",
+    "at": "2026-11-02T19:37:46.297Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/p/DfQEzyJFw2S/",
+    "checked": "2026-11-02T19:37:57.377Z"
+   }
+  ],
   "digest-2026-10-30/01-this-week": [
    {
     "channel": "bluesky",
@@ -430,6 +452,15 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzdtvuvpsw24",
     "checked": "2026-11-02T17:28:02.873Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18349258363253072",
+    "at": "2026-11-02T19:37:57.377Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/p/DfQE1Mjl9rQ/",
+    "checked": "2026-11-02T19:38:08.994Z"
    }
   ],
   "tips-horror-headers-2026-10/01-missing-csp": [
