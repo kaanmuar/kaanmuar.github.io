@@ -100,6 +100,20 @@ test("decide plans likes, reposts and follows by score, waits on replies, and re
   assert.equal(paused.actions.reply.status, "paused");
 });
 
+test("the default thresholds act on the posts a live run scores, not only on viral ones (#2001)", () => {
+  const c = E.settings({});
+  const modest = scored({ text: "How do you check accessibility in CI?", createdAt: hoursAgo(12), metrics: { likes: 2, replies: 1, reposts: 1, views: 0 } });
+  const ai = { worth: 0.8, reply: "We run axe in the same Playwright job.", lang: "en", sentiment: "positive" };
+  const d = E.decide(modest, ai, c, {}, NOW, new Set());
+  assert.ok(modest.score > 2 && modest.score < 3, "a live-like score: " + modest.score);
+  assert.equal(d.actions.like.status, "planned");
+  assert.equal(d.actions.repost, undefined);
+  assert.equal(d.actions.reply.status, "waiting");
+  assert.equal(E.forAi([modest], c, NOW).length, 1);
+  const quiet = scored({ text: "testing", createdAt: hoursAgo(40) });
+  assert.equal(E.decide(quiet, null, c, {}, NOW, new Set()).verdict, "watch");
+});
+
 test("decide skips political, angry and promo posts, replies only in our six languages, and only reads trend networks", () => {
   const c = E.settings(null);
   const p = scored({ text: "WCAG accessibility", metrics: { likes: 300, replies: 40, reposts: 60 } });

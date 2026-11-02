@@ -63,7 +63,7 @@ const COMPETITORS = ["semrush", "ahrefs", "moz", "screamingfrog", "screaming fro
 const DEFAULTS = {
   paused: false,
   caps: { reply: 15, like: 60, repost: 15, follow: 15 },
-  thresholds: { like: 4, repost: 8, follow: 10, reply: 5 },
+  thresholds: { like: 1.5, repost: 3, follow: 3.5, reply: 2 },
   worth: 0.6,
   maxAgeHours: 48,
   perRun: 12,
