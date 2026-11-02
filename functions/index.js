@@ -5019,6 +5019,14 @@ async function pushOwner(msg) {
 }
 const jarvisSocial = require("./jarvis-social");
 const jarvisMarketing = require("./jarvis-marketing");
+const jarvisEngagement = require("./jarvis-engagement");
+
+function engagementDeps() {
+  return {
+    db: getFirestore(), fetch, env: process.env, now: Date.now(), inc: (n) => FieldValue.increment(n), push: pushOwner,
+    mail: (m) => sendOwnerEmail({ subject: m.subject, intro: m.intro, rows: m.rows, body: m.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL.replace(/#.*/, "#stats/engagement/7"), buttonLabel: "Open Engagement" })
+  };
+}
 
 async function socialProposals() {
   const res = await fetch(customerMail.SITE + "/assets/social/proposals.json?t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(10000) });
@@ -5102,6 +5110,10 @@ async function jarvisNotifyAct(body, by) {
     const out = await decideOwnerNotice(id, act === "send", "", by);
     if (out.error) throw new Error(out.error);
     return { message: out.status === "sent" ? "Sent to " + out.email + "." : "Skipped." };
+  }
+  if (type === "engagement") {
+    const out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), { key: id, decision: act, text: body.text }, by);
+    return { message: out.message };
   }
   await jarvisSocialDecide(id, act, now);
   return { message: act === "approved" ? "Added to the hub queue." : "Skipped." };
@@ -5390,7 +5402,7 @@ async function jarvisSnapshot(days) {
   const now = Date.now();
   const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now, days }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync", "calls"], days),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync", "calls", "engagement"], days),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
@@ -5535,7 +5547,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100) };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-report": (b) => String(b.period || "daily") + " engagement report" };
 
 async function jarvisWatchRun() {
   const db = getFirestore();
@@ -5629,6 +5641,18 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
   const social = await jarvisSocialRun().catch((error) => "social failed: " + String(error.message || error).slice(0, 120));
   return watch + "; " + acts + "; " + notices + "; " + social;
 });
+
+// Every 30 minutes (#1988): read our field's posts, plan likes, reposts and follows, and push reply drafts for approval.
+exports.engagementScout = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.engagement }), "engagementScout",
+  async () => jarvisEngagement.runNote(await jarvisEngagement.scout(engagementDeps())));
+const engagementReport = (period) => async () => {
+  const out = await jarvisEngagement.sendReport(engagementDeps(), period);
+  if (!out.sent) throw new Error("The " + period + " engagement report was not mailed.");
+  return out.subject;
+};
+exports.engagementDailyReport = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB", secrets: SECRETS.engagement }), "engagementDailyReport", engagementReport("daily"));
+exports.engagementWeeklyReport = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB", secrets: SECRETS.engagement }), "engagementWeeklyReport", engagementReport("weekly"));
+exports.engagementMonthlyReport = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB", secrets: SECRETS.engagement }), "engagementMonthlyReport", engagementReport("monthly"));
 
 const tiktokWatch = require("./tiktok-business-watch");
 
@@ -5892,6 +5916,9 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
         : op === "marketing-command" ? await jarvisMarketing.command(ctx, db, body) : await jarvisMarketing.queueProspects(db, body, now);
       await Promise.all([1, 7, 30, 90, 365].flatMap((d) => ["marketing-" + d, "outreach-" + d, "marketing-sync-" + d]).map((id) => db.collection("jarvis_cache").doc(id).delete().catch(() => null)));
     }
+    else if (op === "engagement-decide") out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), body, operator);
+    else if (op === "engagement-settings") out = await jarvisEngagement.saveSettings(getFirestore(), body.settings || body, operator, now);
+    else if (op === "engagement-report") out = await jarvisEngagement.sendReport(Object.assign(engagementDeps(), { now }), ["daily", "weekly", "monthly"].includes(body.period) ? body.period : "daily");
     else if (jarvisSources.SOURCES[op]) out = await jarvisSource(op, days);
     else if (op === "send-report") {
       const kind = body.kind === "site" ? "site" : "review";

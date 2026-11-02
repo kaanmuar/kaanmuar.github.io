@@ -18,7 +18,8 @@ const ACTS = {
   ops: ["rerun"],
   proposal: ["done", "dismissed"],
   notice: ["send", "skip"],
-  social: ["approved", "dismissed"]
+  social: ["approved", "dismissed"],
+  engagement: ["approve", "edit", "dismiss"]
 };
 const REPLY = { act: "reply", label: "Reply", input: "Your reply" };
 

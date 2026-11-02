@@ -151,7 +151,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const api = endpoint || ENDPOINT;
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
-        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', alerts: [], reports: [],
+        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', egDrafts: {}, egAll: false, alerts: [], reports: [],
         external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, truncated: false,
         panels: new Map(), voice: null, listening: false, timers: []
     };
@@ -343,7 +343,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'calls'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'calls'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -417,6 +417,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                     visits: C.outreachVisits(S.rows.events).total,
                     links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10) } : null
                 } : null,
+                engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`) } : null,
                 waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
             }
         };
@@ -1193,6 +1194,123 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         </div>${needList(e.marketing)}${needList(e['marketing-sync'])}${needList(e.outreach)}`;
     }
 
+    // --- Engagement (#1988): the scout's posts in our field, what it plans on them, and the replies waiting for you.
+    const EG_NETWORK_LIMIT = { bluesky: 300, mastodon: 500, youtube: 500, x: 280, linkedin: 1200, facebook: 1000, instagram: 1000, threads: 500, tiktok: 150 };
+    const EG_SHOWN = 5;
+    const egHeadline = (d, max = 160) => {
+        const text = (d.title || String(d.text || '')).replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim();
+        return text.length > max ? text.slice(0, max - 1).trimEnd() + '…' : text;
+    };
+    const EG_STATUS_CHIP = { planned: 'c-fast', waiting: 'c-average', approved: 'c-fast', done: 'c-fast', capped: 'c-slow', paused: '', dismissed: '', expired: 'c-slow', failed: 'c-slow' };
+    const egChips = (d) => Object.entries(d.actions || {}).map(([a, x]) => `<span class="jv-chip ${EG_STATUS_CHIP[x.status] || ''}">${esc(a)}: ${esc(x.status)}</span>`).join(' ')
+        + (d.skip ? ` <span class="jv-chip c-slow">left alone: ${esc(d.skip)}</span>` : d.verdict === 'trend' ? ' <span class="jv-chip">trend only</span>' : '');
+
+    function engagementView() {
+        const g = S.external.engagement;
+        if (!g || !g.ok || !g.report) return `<div class="jv-grid">${briefPanel('engagement')}${panel('engagement-wait', 'Engagement', waiting('engagement', 'Reading the engagement scout…'), { wide: true })}</div>`;
+        const r = g.report;
+        const t = r.totals;
+        const net = (k) => (g.networks.find((n) => n.network === k) || {}).name || k;
+        const who = (d) => (d.author || {}).name || (d.author || {}).handle || '';
+        const meta = (d) => [who(d), `♥ ${fmt((d.metrics || {}).likes || 0)}`, `↩ ${fmt((d.metrics || {}).replies || 0)}`, `⟳ ${fmt((d.metrics || {}).reposts || 0)}`, (d.metrics || {}).views ? `▶ ${fmt(d.metrics.views)}` : '', `score ${d.score}`, when(d.createdAt)].filter(Boolean).join(' · ');
+        const head = (d) => `<p class="jv-prop-title"><strong>${esc(egHeadline(d))}</strong> <span class="jv-chip">${esc(net(d.network))}</span>${d.topic ? ` <span class="jv-chip">${esc(d.topic)}</span>` : ''} <span class="jv-chip">${esc(d.lang || '?')}</span></p>
+            <p class="jv-prop-why">${esc(meta(d))}</p>${d.about ? `<p class="jv-prop-why">${esc(d.about)}${d.why ? ' · ' + esc(d.why) : ''}</p>` : ''}`;
+        const draftOf = (d) => (S.egDrafts[d.key] !== undefined ? S.egDrafts[d.key] : d.actions.reply.draft);
+        const shown = S.egAll ? g.waiting : g.waiting.slice(0, EG_SHOWN);
+        const more = g.waiting.length > EG_SHOWN ? `<div class="jv-actions"><button type="button" class="jv-btn" data-eg-all="${S.egAll ? 'off' : 'on'}">${S.egAll ? 'Show fewer' : `Show all ${g.waiting.length}`}</button></div>` : '';
+        const waitingBody = g.waiting.length ? `<ol class="jv-props">${shown.map((d) => `<li class="jv-prop lv-info"><span class="jv-prop-rank">${esc(String(Math.round(d.score)))}</span><div class="jv-prop-body">${head(d)}
+            <details><summary>Show the post</summary><pre class="jv-pre">${esc(d.text)}</pre></details>
+            <textarea rows="3" class="jv-eg-draft" data-keep="eg-${esc(d.key)}" data-eg-draft="${esc(d.key)}" maxlength="${EG_NETWORK_LIMIT[d.network] || 300}" aria-label="Reply to ${esc(who(d))}">${esc(draftOf(d))}</textarea>
+            <div class="jv-prop-acts"><button type="button" data-eg-decide="approve" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Approve</button><button type="button" data-eg-decide="dismiss" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Dismiss</button>${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">Open the post ↗</a>` : ''}
+            <span class="jv-note">${fmt(draftOf(d).length)} / ${fmt(EG_NETWORK_LIMIT[d.network] || 300)} · expires ${esc(when(d.actions.reply.expiresAt))}</span></div></div></li>`).join('')}</ol>${more}`
+            : `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : 'No reply is waiting. Drafts arrive here and on your phone as the scout finds posts worth answering.'}</p>`;
+        const last = g.lastRun;
+        const readTotal = (run) => Object.values((run && run.read) || {}).reduce((a, b) => a + b, 0);
+        const statusBody = stats([
+            { label: 'State', value: g.paused ? 'paused' : 'running', alert: g.paused },
+            { label: 'Last run', value: last ? when(last.at) : 'never', alert: g.stale },
+            { label: 'Read last run', value: last ? readTotal(last) : '—' },
+            { label: 'New in field', value: last ? last.fresh : '—' },
+            { label: 'Gemini read', value: last ? last.asked : '—', alert: !!(last && last.aiError) }
+        ]) + `<div class="jv-actions"><button type="button" class="jv-btn${g.paused ? ' is-primary' : ' danger'}" data-eg-pause="${g.paused ? 'off' : 'on'}">${g.paused ? 'Resume engagement' : 'Pause everything'}</button><button type="button" class="jv-btn" data-run="engagementScout">Run the scout now</button></div>`
+            + table([['Run', (x) => `<span class="jv-nowrap">${esc(when(x.at))}</span>`], ['Read', (x) => fmt(readTotal(x))], ['New', (x) => fmt(x.fresh)], ['Engage', (x) => fmt(x.engaged)], ['Drafts', (x) => fmt(x.drafted)],
+                ['Problems', (x) => `<span class="jv-note">${esc([Object.keys(x.errors || {}).map((k) => k + ': ' + x.errors[k]).join('; '), x.aiError ? 'Gemini: ' + x.aiError : '', x.paused ? 'paused' : ''].filter(Boolean).join(' · '))}</span>`]], g.runs.slice(0, 8), 'No runs yet.');
+        const used = (k, a) => ((g.used || {})[k] || {})[a] || 0;
+        const netBody = table([['Network', (n) => `<strong>${esc(n.name)}</strong>`], ['Reads', (n) => `<span class="jv-chip ${n.reads === 'API' ? 'c-fast' : n.reads === 'needs a key' ? 'c-slow' : ''}">${esc(n.reads)}</span>${n.error ? `<br><span class="jv-note">${esc(n.error)}</span>` : ''}`],
+            ['Last run', (n) => fmt(n.lastRead)], ['In field', (n) => fmt(n.row ? n.row.candidates : 0)],
+            ['Today', (n) => (EG_NETWORK_LIMIT[n.network] ? ['like', 'repost', 'follow', 'reply'].map((a) => `${a} ${used(n.network, a)}/${(g.caps || {})[a]}`).join(' · ') : '—')],
+            ['Acting', (n) => `<span class="jv-note">${esc(n.acts)}</span>`]], g.networks);
+        const postsBody = table([['Post', (d) => `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 110))}</a><br><span class="jv-note">${esc(net(d.network))} · ${esc(meta(d))}</span>${d.about ? `<br><span class="jv-note">${esc(d.about)}</span>` : ''}`],
+            ['Topic', (d) => esc(d.topic)], ['Trend', (d) => fmt(d.trend)], ['Plan', egChips]], g.posts, 'No posts from our field in this range yet.');
+        const approvedBody = g.approved.length ? `<ul class="jv-facts">${g.approved.map((d) => `<li><span class="jv-chip c-fast">${d.actions.reply.edited ? 'edited' : 'approved'}</span> <strong>${esc(net(d.network))}</strong> · <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 80))}</a><br><span class="jv-note">${esc(d.actions.reply.draft)}</span></li>`).join('')}</ul>`
+            : '<p class="jv-empty">Nothing approved yet.</p>';
+        const daily = g.daily || [];
+        const funnelSteps = [{ label: 'Drafted', value: t.drafted }, { label: 'Approved', value: t.approved + t.edited }, { label: 'Posted', value: t.posted }];
+        const reportsBody = (g.reports.length ? table([['Report', (x) => `<strong>${esc(x.period)}</strong> <span class="jv-note">${esc(x.from)}${x.to !== x.from ? ' to ' + esc(x.to) : ''}</span>`], ['In field', (x) => fmt((x.totals || {}).candidates || 0)], ['Likes', (x) => fmt((x.totals || {}).like || 0)], ['Drafts', (x) => fmt((x.totals || {}).drafted || 0)], ['Approval', (x) => (x.approvalRate === null ? '—' : x.approvalRate + '%')], ['Sent', (x) => `<span class="jv-nowrap">${esc(when(x.at))}</span>`]], g.reports) : '<p class="jv-empty">No report sent yet. The daily one goes out at 20:30.</p>')
+            + `<div class="jv-actions"><button type="button" class="jv-btn" data-eg-report="daily">Send today's report</button><button type="button" class="jv-btn" data-eg-report="weekly">Send the weekly report</button><button type="button" class="jv-btn" data-eg-report="monthly">Send last month's report</button></div>`;
+        const c = g.settings;
+        const num = (name, value, label, step) => `<label>${esc(label)}<input type="number" min="0" step="${step || 1}" name="${name}" value="${esc(value)}"></label>`;
+        const settingsBody = `<form class="jv-eg-settings" data-eg-settings>
+            <fieldset><legend>Daily caps per network</legend>${['like', 'repost', 'follow', 'reply'].map((a) => num('cap-' + a, c.caps[a], a)).join('')}</fieldset>
+            <fieldset><legend>Score needed</legend>${['like', 'repost', 'follow', 'reply'].map((a) => num('th-' + a, c.thresholds[a], a, 0.5)).join('')}${num('worth', c.worth, 'Gemini worth for a reply (0-1)', 0.05)}${num('perRun', c.perRun, 'Posts Gemini reads a run')}${num('maxAgeHours', c.maxAgeHours, 'Oldest post (hours)')}</fieldset>
+            <label>Competitors, never answered under (one per line)<textarea name="competitors" rows="4" data-keep="eg-competitors">${esc(c.competitors.join('\n'))}</textarea></label>
+            <label>Our own handles, never engaged<textarea name="own" rows="2" data-keep="eg-own">${esc(c.own.join('\n'))}</textarea></label>
+            <div class="jv-actions"><button type="submit" class="jv-btn is-primary">Save settings</button>${c.updatedAt ? `<span class="jv-note">Saved ${esc(when(c.updatedAt))}</span>` : ''}</div></form>`;
+        return kpis([
+            { label: 'Posts in our field', value: t.candidates }, { label: 'Likes planned', value: t.like }, { label: 'Reposts planned', value: t.repost }, { label: 'Follows planned', value: t.follow },
+            { label: 'Replies waiting', value: g.waiting.length, alert: g.waiting.length > 0 }, { label: 'Replies approved', value: t.approved + t.edited },
+            { label: 'Approval rate', value: r.approvalRate === null ? '—' : r.approvalRate + '%' }, { label: 'Scout', value: g.paused ? 'paused' : last ? when(last.at) : 'never', alert: g.paused || g.stale }
+        ]) + `<div class="jv-grid">${briefPanel('engagement')}
+            ${panel('engagement-waiting', `Replies waiting for you${g.waiting.length ? ' · ' + g.waiting.length : ''}`, waitingBody, { wide: true, data: g.waiting.map((d) => ({ network: d.network, url: d.url, author: who(d), score: d.score, draft: d.actions.reply.draft, expires: d.actions.reply.expiresAt })), note: 'Approve sends your edit when you changed the text. Drafts expire 6 hours after the scout found the post. Approved replies go out once the network\'s poster ships (#1990 for Bluesky, Mastodon and YouTube, #1991 for the Mac\'s browser).' })}
+            ${panel('engagement-status', 'Scout', statusBody, { wide: true, data: g.runs, note: 'Every 30 minutes. Pause stops every planned action, draft and push at once; the scout keeps reading so the reports stay whole.' })}
+            ${panel('engagement-networks', 'Networks', netBody, { wide: true, data: g.networks.map((n) => ({ network: n.name, reads: n.reads, lastRead: n.lastRead, error: n.error, acting: n.acts })) })}
+            ${panel('engagement-daily', 'Per day', area(daily.map((d) => d.day), [{ name: 'In field', values: daily.map((d) => d.candidates), color: COLORS.cyan }, { name: 'Likes', values: daily.map((d) => d.like), color: COLORS.green }, { name: 'Replies drafted', values: daily.map((d) => d.drafted), color: COLORS.amber }, { name: 'Approved', values: daily.map((d) => d.approved), color: COLORS.violet }]), { wide: true, data: daily })}
+            ${panel('engagement-posts', `Top posts in our field · ${fmt(g.posts.length)}`, postsBody, { wide: true, data: g.posts.map((d) => ({ network: d.network, url: d.url, author: who(d), title: d.title || d.text, about: d.about, topic: d.topic, lang: d.lang, score: d.score, trend: d.trend, likes: d.metrics.likes, replies: d.metrics.replies, reposts: d.metrics.reposts, verdict: d.verdict, skip: d.skip })) })}
+            ${panel('engagement-funnel', 'Reply funnel', funnel(funnelSteps) + stats([{ label: 'Dismissed', value: t.dismissed }, { label: 'Expired', value: t.expired, alert: t.drafted > 4 && t.expired / t.drafted > 0.5 }, { label: 'Edited', value: t.edited }, { label: 'Avg time to decide', value: r.avgDecideMin === null ? '—' : r.avgDecideMin + ' min' }]), { data: funnelSteps })}
+            ${panel('engagement-topics', 'Topics', pie(r.topics, { unit: 'posts', empty: 'No posts in this range.' }), { data: r.topics })}
+            ${panel('engagement-langs', 'Languages', pie(r.langs, { unit: 'posts', empty: 'No posts in this range.' }), { data: r.langs })}
+            ${panel('engagement-tags', 'Trending keywords', bars(r.tags.map((x) => ({ label: x.label.replace(/_/g, ' '), value: x.value })), { color: COLORS.violet, empty: 'No keywords yet.' }), { data: r.tags })}
+            ${panel('engagement-skips', 'Left alone, and why', bars(r.skips.map((x) => ({ label: x.label.replace(/_/g, ' '), value: x.value })), { color: COLORS.pink, empty: 'Nothing left alone in this range.' }), { data: r.skips, note: 'own: our posts · competitor: a vendor on your list · sensitive: news about deaths, wars, elections · spam: hashtag walls · old: past the age limit · political, argument, angry, promo: Gemini\'s read · cap: the daily cap was reached.' })}
+            ${panel('engagement-authors', 'Authors seen most', bars(r.authors, { color: COLORS.green, empty: 'No authors yet.' }), { data: r.authors })}
+            ${panel('engagement-approved', 'Approved replies', approvedBody, { wide: true, data: g.approved.map((d) => ({ network: d.network, url: d.url, reply: d.actions.reply.draft, edited: !!d.actions.reply.edited, at: d.actions.reply.decidedAt })) })}
+            ${panel('engagement-reports', 'Reports', reportsBody, { wide: true, data: g.reports, note: 'Daily at 20:30, weekly on Sunday at 20:40, monthly on the 1st at 08:10 (Bogotá), by email and push.' })}
+            ${panel('engagement-settings', 'Settings', settingsBody, { wide: true })}
+        </div>${needList(g)}`;
+    }
+
+    async function egDecide(key, decision) {
+        const g = S.external.engagement;
+        const d = g && g.waiting ? g.waiting.find((x) => x.key === key) : null;
+        if (!d) return;
+        if (decision === 'dismiss' && !confirmRun('dismiss this reply draft')) return;
+        const text = S.egDrafts[key] !== undefined ? S.egDrafts[key].trim() : d.actions.reply.draft;
+        const edited = decision === 'approve' && text !== d.actions.reply.draft;
+        S.pending['eg:' + key] = true;
+        render();
+        const out = await call('engagement-decide', { key, decision: edited ? 'edit' : decision, text }).catch((error) => ({ ok: false, error: error.message }));
+        S.pending['eg:' + key] = false;
+        if (!out.ok) { toast('Not saved: ' + out.error, 6000); render(); return; }
+        delete S.egDrafts[key];
+        g.waiting = g.waiting.filter((x) => x.key !== key);
+        render();
+        toast(out.message, 5000);
+        loadExternal(['engagement']);
+    }
+
+    async function egSettings(patch, ask) {
+        if (ask && !confirmRun(ask)) return;
+        const out = await call('engagement-settings', { settings: patch }).catch((error) => ({ ok: false, error: error.message }));
+        toast(out.ok ? (patch.paused === true ? 'Engagement is paused.' : patch.paused === false ? 'Engagement is running again.' : 'Settings saved.') : 'Not saved: ' + out.error, 5000);
+        loadExternal(['engagement']);
+    }
+
+    async function egReport(period) {
+        if (!confirmRun(`mail and push the ${period} engagement report now`)) return;
+        const out = await call('engagement-report', { period }).catch((error) => ({ ok: false, error: error.message }));
+        toast(out.ok ? (out.sent ? 'Sent: ' + out.subject : 'Built, but the mail did not go out.') : 'Not sent: ' + out.error, 7000);
+        loadExternal(['engagement']);
+    }
+
     async function campaignAct(t) {
         const { mkCampaign: action, id, name, leads, start } = t.dataset;
         const ask = action === 'pause' ? `pause ${name} now` : `activate ${name}${Number(leads) ? '' : ' (it has no leads yet, so nothing sends until leads are uploaded)'}${start ? ', sending from ' + start : ''}`;
@@ -1312,6 +1430,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         out.business = businessView();
         out.outreach = outreachView();
         out.marketing = marketingView();
+        out.engagement = engagementView();
 
         const ga = e.ga4;
         const cf = e.cloudflare;
@@ -2140,6 +2259,10 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.mkCmd) { mkCmdClick(t); return; }
         if (t.dataset.mkReply) { mkReply(t); return; }
         if (t.dataset.mkWeek) { S.mkWeek = t.dataset.mkWeek; render(); return; }
+        if (t.dataset.egDecide) { egDecide(t.dataset.key, t.dataset.egDecide); return; }
+        if (t.dataset.egPause) { egSettings({ paused: t.dataset.egPause === 'on' }, t.dataset.egPause === 'on' ? 'pause every engagement action, draft and push' : 'resume engagement'); return; }
+        if (t.dataset.egReport) { egReport(t.dataset.egReport); return; }
+        if (t.dataset.egAll) { S.egAll = t.dataset.egAll === 'on'; render(); return; }
         if (t.dataset.copyLink) { copy(t.dataset.copyLink, 'Link copied.'); return; }
         if (t.dataset.copyCode) { copy(t.dataset.copyCode, 'Code copied.'); return; }
         if (t.dataset.qlBuild !== undefined) {
@@ -2183,6 +2306,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         else if (t.dataset.shareCaption !== undefined) S.share.caption = t.value;
         else if (t.dataset.mkField) S.mkForm[t.dataset.mkField] = t.value;
         else if (t.dataset.mkDraft) S.mkDrafts[t.dataset.mkDraft] = t.value;
+        else if (t.dataset.egDraft) S.egDrafts[t.dataset.egDraft] = t.value;
         else if (t.dataset.voiceRate !== undefined) $('[data-voice-rate-out]').textContent = Number(t.value).toFixed(2) + '×';
     });
     root.addEventListener('change', (event) => {
@@ -2230,6 +2354,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             if (!value) return;
             const out = await mkCommand({ action: 'dnc', value, reason: form.reason.value.trim() }, MK_ASK.dnc({ value }));
             if (out && out.ok) { S.mkForm.dnc = ''; S.mkForm.dncWhy = ''; form.addr.value = ''; form.reason.value = ''; }
+        } else if (form.dataset.egSettings !== undefined) {
+            const n = (name) => Number(form.elements[name].value);
+            const acts = ['like', 'repost', 'follow', 'reply'];
+            egSettings({
+                caps: Object.fromEntries(acts.map((a) => [a, n('cap-' + a)])), thresholds: Object.fromEntries(acts.map((a) => [a, n('th-' + a)])),
+                worth: n('worth'), perRun: n('perRun'), maxAgeHours: n('maxAgeHours'),
+                competitors: form.elements.competitors.value.split('\n'), own: form.elements.own.value.split('\n')
+            });
         } else if (form.dataset.unlist !== undefined) {
             const hostName = form.host.value.trim();
             if (!hostName || !confirmRun(`unlist ${hostName} from Live Reports`)) return;

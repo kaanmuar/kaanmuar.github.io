@@ -406,6 +406,7 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     Push.DESK to ("Review desk" to "Runs as they go, held re-runs, comparisons and runs that need you."),
                     Push.SOCIAL to ("Social posts" to "Each post Jarvis proposes, with Post and Skip."),
                     Push.CODES to ("Sign-in codes" to "Codes and confirm links mailed to qa@ and the channel addresses, with Copy."),
+                    Push.ENGAGEMENT to ("Social engagement" to "Reply drafts with Approve, Edit and Dismiss, and the engagement reports."),
                 )
                     .forEach { (kind, text) ->
                         Row(verticalAlignment = Alignment.CenterVertically) {

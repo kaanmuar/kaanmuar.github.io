@@ -40,6 +40,9 @@ const BY_FUNCTION = {
   mailInbound: list(MAIL, ["MAIL_WEBHOOK_KEY"]),
   // The daily canary mails canary@ through SendGrid (functions/mail-health.js, #1900).
   mailCanary: list(MAIL),
+  // The engagement scout (#1988): Gemini reads the posts and drafts replies, YouTube search finds the videos, and
+  // the reports go by mail. BLUESKY_HANDLE and BLUESKY_APP_PASSWORD join once they are in Secret Manager (#1990).
+  engagement: list(MAIL, GEMINI, ["YOUTUBE_KEY"]),
   jarvis: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE)
 };
 

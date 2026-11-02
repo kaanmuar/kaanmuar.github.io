@@ -94,7 +94,9 @@ const EXTERNAL = {
     linkedin: { date: '2026-10-26', items: [{ name: 'Ana Pérez', title: 'CIO', org: 'Uni Norte (UN)', cc: 'CO', sent: false, profile: 'https://www.linkedin.com/in/ana', lines: [] }] },
     dnc: [], jobs: [{ mode: 'leads', at: '2026-10-26T12:00:00Z', notify: 'W1 leads ready: 2 complete', failed: false, tail: ['done'] }], paused: [], kpis: [{ week_start: '2026-10-26', notes: 'setup week' }],
     commands: { pending: 0, items: [] } },
-  'marketing-command': { ok: true, queued: 'c1', action: 'approve', label: 'Approve ana@uni.edu.co (W1)' }
+  'marketing-command': { ok: true, queued: 'c1', action: 'approve', label: 'Approve ana@uni.edu.co (W1)' },
+  engagement: require('./fixtures/jarvis-engagement.json'),
+  'engagement-decide': { ok: true, message: 'Edited and approved.' }
 };
 
 function seed() {
@@ -148,14 +150,14 @@ test.describe('admin statistics (Jarvis)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page);
     const tabs = page.locator('.jv-tabs [role="tab"]');
-    await expect(tabs).toHaveCount(12);
-    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Marketing', 'Traffic', 'Systems']);
+    await expect(tabs).toHaveCount(13);
+    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Marketing', 'Engagement', 'Traffic', 'Systems']);
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -309,6 +311,33 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect.poll(() => calls.filter((c) => c.op === 'share-queue').map((c) => [c.body.id, c.body.draft.x])).toEqual([['new1', 'Edited X post']]);
     await expect(page.locator('.jv-toast')).toContainText('Queued.');
     await expect(share.locator('[data-share-caption]')).toHaveValue('');
+  });
+
+  test('Engagement shows the reply drafts, the scout and the networks, and Approve, Dismiss and Pause go through the function (#1988)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/engagement/7');
+    const eg = page.locator('[data-view="engagement"]');
+    const waiting = eg.locator('[data-panel-id="engagement-waiting"]');
+    await expect(waiting).toContainText('Playwright and WCAG accessibility testing in CI');
+    await expect(waiting.locator('[data-eg-draft]')).toHaveValue('We run axe in the same Playwright job.');
+    await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('Mac browser');
+    await expect(eg).toContainText('BLUESKY_HANDLE');
+
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await waiting.locator('[data-eg-decide="dismiss"]').click();
+    expect(calls.some((c) => c.op === 'engagement-decide')).toBe(false);
+
+    await waiting.locator('[data-eg-draft]').fill('We run axe-core in the same Playwright job, on every pull request.');
+    await waiting.locator('[data-eg-decide="approve"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'engagement-decide').map((c) => [c.body.decision, c.body.text]))
+      .toEqual([['edit', 'We run axe-core in the same Playwright job, on every pull request.']]);
+    await expect(page.locator('.jv-toast')).toContainText('Edited and approved.');
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await eg.locator('[data-eg-pause="on"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'engagement-settings').map((c) => c.body.settings)).toEqual([{ paused: true }]);
+    expect(errors).toEqual([]);
   });
 
   test('Marketing shows every marketing number with pies, the plan timeline and countdowns, and its buttons go through the function after confirming (#1722)', async ({ page }) => {

@@ -36,6 +36,7 @@ object Push {
     const val DESK = "desk"
     const val SOCIAL = "social"
     const val CODES = "codes"
+    const val ENGAGEMENT = "engagement"
     const val EXTRA_TAB = "jarvis.tab"
     private val CHANNELS = mapOf(
         ALERTS to Triple("Alerts", "Threshold crossings from the hourly watch: a page down, TLS, failed jobs and runs.", NotificationManager.IMPORTANCE_HIGH),
@@ -46,6 +47,7 @@ object Push {
         INBOX to Triple("Inbox", "CV messages, CV feedback and site owners' replies to outreach.", NotificationManager.IMPORTANCE_HIGH),
         DESK to Triple("Review desk", "URL review runs as they go, held re-runs, comparisons, and runs that need you.", NotificationManager.IMPORTANCE_DEFAULT),
         SOCIAL to Triple("Social posts", "Posts Jarvis proposes for the social hub, to post or skip.", NotificationManager.IMPORTANCE_DEFAULT),
+        ENGAGEMENT to Triple("Social engagement", "Reply drafts to approve, edit or dismiss, and the daily, weekly and monthly engagement reports.", NotificationManager.IMPORTANCE_DEFAULT),
         CODES to Triple("Sign-in codes", "Codes and confirm links mailed to qa@ and the channel addresses, with a Copy button.", NotificationManager.IMPORTANCE_HIGH),
         "review" to Triple("Reviews", "URL reviews you started by sharing a link to Jarvis.", NotificationManager.IMPORTANCE_DEFAULT),
         "test" to Triple("Tests", "Test notifications sent from Settings.", NotificationManager.IMPORTANCE_LOW)
@@ -56,7 +58,7 @@ object Push {
         CHANNELS.forEach { (id, c) -> nm.createNotificationChannel(NotificationChannel(id, c.first, c.third).apply { description = c.second }) }
     }
 
-    fun kinds(app: JarvisApp) = listOf(ALERTS, BRIEFING, MONEY, REVIEWS, OUTREACH, INBOX, DESK, SOCIAL, CODES).associateWith { app.vault.flag("push.$it", true) }
+    fun kinds(app: JarvisApp) = listOf(ALERTS, BRIEFING, MONEY, REVIEWS, OUTREACH, INBOX, DESK, SOCIAL, CODES, ENGAGEMENT).associateWith { app.vault.flag("push.$it", true) }
 
     suspend fun token(): String? = suspendCoroutine { done ->
         FirebaseMessaging.getInstance().token.addOnCompleteListener { done.resume(if (it.isSuccessful) it.result else null) }
