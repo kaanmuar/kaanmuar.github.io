@@ -2,7 +2,7 @@
    edits, hiding, and items added by hand. Edits go to Firestore socialHub/live (js/social-hub-admin.js has
    the format); scripts/build-social-hub.js pulls them on its next online run, which the daily Live Reports
    workflow makes. */
-import { createProposals } from './social-hub-proposals.js?v=20261102a';
+import { createProposals } from './social-hub-proposals.js?v=20261024b';
 
 const PAGE = 40;
 const KIND = { tip: 'Tip', review: 'Site review', launch: 'Product', pick: 'Pick' };

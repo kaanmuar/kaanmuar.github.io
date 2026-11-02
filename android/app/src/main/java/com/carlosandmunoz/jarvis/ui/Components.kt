@@ -111,15 +111,16 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
     Folds.seen(key)
     val folded = Folds.isShut(key)
     val turn by animateFloatAsState(if (folded) -90f else 0f, tween(200), label = "fold")
+    val dense = LocalDense.current
     Column(
         modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .padding(horizontal = if (dense) 7.dp else 14.dp, vertical = if (dense) 5.dp else 8.dp)
             .reveal()
             .glass()
             .animateContentSize(tween(320, easing = FastOutSlowInEasing))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(horizontal = if (dense) 11.dp else 16.dp, vertical = if (dense) 10.dp else 14.dp),
+        verticalArrangement = Arrangement.spacedBy(if (dense) 8.dp else 10.dp)
     ) {
         Row(
             Modifier.clickable(onClickLabel = if (folded) "Expand" else "Collapse") { Folds.set(key, !folded) },
@@ -140,10 +141,10 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
 }
 
 @Composable
-fun Muted(text: String, modifier: Modifier = Modifier) = Text(text, color = J.muted, fontSize = 13.sp, modifier = modifier)
+fun Muted(text: String, modifier: Modifier = Modifier, maxLines: Int = Int.MAX_VALUE) = Text(text, color = J.muted, fontSize = 13.sp, modifier = modifier, maxLines = maxLines, overflow = TextOverflow.Ellipsis)
 
 @Composable
-fun Kpi(label: String, value: String, delta: String? = null, dir: Int = 0, alert: Boolean = false, modifier: Modifier = Modifier) {
+fun Kpi(label: String, value: String, delta: String? = null, dir: Int = 0, alert: Boolean = false, modifier: Modifier = Modifier, labelLines: Int = 1) {
     val edge = if (alert) J.pink else J.cyan
     Column(
         modifier
@@ -157,9 +158,9 @@ fun Kpi(label: String, value: String, delta: String? = null, dir: Int = 0, alert
             }
             .padding(start = 14.dp, end = 10.dp, top = 10.dp, bottom = 10.dp)
     ) {
-        Text(label.uppercase(), color = J.muted, fontFamily = Mono, fontSize = 10.sp, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label.uppercase(), color = J.muted, fontFamily = Mono, fontSize = 10.sp, letterSpacing = 0.8.sp, maxLines = labelLines, overflow = TextOverflow.Ellipsis)
         CountUp(value) {
-            Text(it, color = if (alert) J.pink else J.text, fontSize = 24.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            Text(it, color = if (alert) J.pink else J.text, fontSize = if (LocalDense.current) 19.sp else 24.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 style = LocalTextStyle.current.copy(shadow = Shadow(edge.copy(alpha = 0.45f), blurRadius = 16f)))
         }
         if (!delta.isNullOrBlank()) Text(delta, color = when { dir > 0 -> J.green; dir < 0 -> J.pink; else -> J.muted }, fontFamily = Mono, fontSize = 12.sp)
@@ -291,11 +292,11 @@ fun StatusRow(level: String?, title: String, detail: String? = null, url: String
 
 /** Weekday × hour grid of visits. */
 @Composable
-fun Heatmap(grid: List<List<Double>>, peak: String?) {
+fun Heatmap(grid: List<List<Double>>, peak: String?, title: String = "When people come") {
     if (grid.isEmpty()) return
     val max = grid.flatten().maxOrNull()?.coerceAtLeast(1.0) ?: 1.0
     val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-    Panel("When people come") {
+    Panel(title) {
         grid.forEachIndexed { d, row ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(days.getOrElse(d) { "" }, fontFamily = Mono, fontSize = 9.sp, color = J.dim, modifier = Modifier.width(30.dp))

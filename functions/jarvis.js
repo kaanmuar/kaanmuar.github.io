@@ -418,6 +418,25 @@ async function uptime(fetchImpl, { now, tls }) {
   return { ok: true, pages, tlsDaysLeft: daysLeft };
 }
 
+// The hourly watch counts each page check per Bogota day in jarvis_uptime (#2139), for the 90-day strip.
+function uptimeTally(up, now) {
+  const pages = (up && up.ok !== false && Array.isArray(up.pages)) ? up.pages : [];
+  return { date: core.zoneParts(new Date(now)).day, checks: pages.length, up: pages.filter((p) => p.ok).length };
+}
+
+async function uptimeLog(db, up, now, increment) {
+  const t = uptimeTally(up, now);
+  if (!t.checks) return t;
+  await db.collection("jarvis_uptime").doc(t.date).set({ date: t.date, checks: increment(t.checks), up: increment(t.up), at: new Date(now).toISOString() }, { merge: true });
+  return t;
+}
+
+async function uptimeHistory(db, now) {
+  const from = core.zoneParts(new Date(now - 90 * DAY)).day;
+  const snap = await db.collection("jarvis_uptime").where("date", ">=", from).limit(120).get();
+  return snap.docs.map((d) => d.data()).map((r) => ({ date: r.date, checks: Number(r.checks) || 0, up: Number(r.up) || 0 })).sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
 // --- brief / ask: Gemini --------------------------------------------------------------------------------------
 
 const VOICE = "You are Jarvis, the analyst for Carlos's sites: the CV (carlosandmunoz.com), QA Studio (a test-sprint simulator), "
@@ -751,5 +770,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, briefItems, decideRatings, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
