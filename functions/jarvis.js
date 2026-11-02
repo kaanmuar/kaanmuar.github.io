@@ -33,6 +33,7 @@ const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const MODEL = "gemini-flash-latest";
 const core = require("./jarvis-core");
 const actions = require("./jarvis-actions");
+const dayRows = require("./jarvis-days");
 const ADMIN_URL = ORIGIN + "/admin.html#stats/overview/1";
 
 function rangeDays(value) {
@@ -75,7 +76,8 @@ function causeLabel(row) {
 // --- health: server-only Firestore collections -------------------------------------------------------------
 
 async function health(db, { days, now }) {
-  const since = new Date(now - rangeDays(days) * DAY).toISOString();
+  const from = now - rangeDays(days) * DAY;
+  const since = new Date(from).toISOString();
   const read = async (name, field) => {
     try {
       const snap = await db.collection(name).where(field, ">=", since).limit(2000).get();
@@ -84,16 +86,13 @@ async function health(db, { days, now }) {
       return [];
     }
   };
-  const [runs, failures, reruns, alerts, notices, rivals, coupons, captures] = await Promise.all([
+  const [runs, logged, reruns, coupons] = await Promise.all([
     db.collection("ops_runs").get().then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()))).catch(() => []),
-    read("url_review_failures", "at"),
+    dayRows.rows(db, ["failures", "alerts", "notices", "rivals", "captures"], { from, now }).catch(() => ({})),
     read("url_review_reruns", "at"),
-    read("url_review_alerts", "at"),
-    read("url_review_owner_notices", "createdAt"),
-    read("url_review_rivals", "createdAt"),
-    read("url_review_coupons", "createdAt"),
-    read("url_review_captures", "at")
+    read("url_review_coupons", "createdAt")
   ]);
+  const { failures = [], alerts = [], notices = [], rivals = [], captures = [] } = logged;
   const causes = {}, failedHosts = {}, rerunStatus = {}, alertKinds = {}, noticeStatus = {}, captureKinds = {};
   failures.forEach((row) => { count(causes, causeLabel(row)); count(failedHosts, row.host); });
   reruns.forEach((row) => count(rerunStatus, row.status));
@@ -635,8 +634,20 @@ async function goals(db, settings, { now, sum }) {
 
 // --- daily briefing: the last 24 hours against the 24 before, with the same rules as the page --------------------
 
-// A whole review document holds the report (hundreds of KB); a week of them overran the function's 512 MB (#1579).
-const REVIEW_FIELDS = ["createdAt", "paid", "test", "priceUsd", "status", "score", "requestedUrl", "url", "frameworks", "query", "referrerHost"];
+// Pending ratings outside the range only add to the pending count: a count() probe, and a re-read when it moves.
+async function pendingRatings(db, now) {
+  const pending = db.collection("ratings").where("status", "==", "pending");
+  const ref = db.collection("jarvis_cache").doc("pending-ratings");
+  const [total, saved] = await Promise.all([
+    pending.count().get().then((snap) => snap.data().count),
+    ref.get().then((snap) => (snap.exists ? snap.data() : null)).catch(() => null)
+  ]);
+  if (saved && saved.total === total && now - Date.parse(saved.at) < 6 * 60 * MINUTE) return saved.kept;
+  const snap = await pending.select("email").get();
+  const kept = snap.docs.filter((doc) => !core.isTestEmail((doc.data() || {}).email)).length;
+  await ref.set({ total, kept, at: new Date(now).toISOString() }).catch(() => null);
+  return kept;
+}
 
 async function dailyProducts(db, { now, days = 1 }) {
   const end = new Date(now);
@@ -644,20 +655,20 @@ async function dailyProducts(db, { now, days = 1 }) {
   const priorStart = new Date(now - 2 * days * DAY);
   const window = { start, end, days, prior: { start: priorStart, end: start } };
   const rows = async (q) => (await q.limit(20000).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
-  const since = (name, iso) => db.collection(name).where("createdAt", ">=", iso ? priorStart.toISOString() : priorStart);
-  const [events, opens, reviews, messages, ratings, pending, hubSnap] = await Promise.all([
-    rows(since("site_events")), rows(since("url_review_opens")), rows(since("url_reviews", true).select(...REVIEW_FIELDS)),
+  const since = (name) => db.collection(name).where("createdAt", ">=", priorStart);
+  const [{ events, opens, reviews }, messages, ratings, pending, hubSnap] = await Promise.all([
+    dayRows.rows(db, ["events", "opens", "reviews"], { from: priorStart.getTime(), now }),
     rows(since("messages")), rows(since("ratings")),
-    rows(db.collection("ratings").where("status", "==", "pending")),
+    pendingRatings(db, now),
     db.collection("socialHubStats").doc("latest").get().catch(() => null)
   ]);
   const inside = (row) => { const when = core.toDate(row.createdAt); return !!when && when >= start; };
   const now1 = events.filter(inside);
   const was = events.filter((row) => !inside(row));
-  const seen = new Set(ratings.map((row) => row.id));
-  const allRatings = ratings.concat(pending.filter((row) => !seen.has(row.id)));
+  const keep = (email) => !core.isTestEmail(email);
+  const pendingCount = pending + ratings.filter((row) => !row.status && keep(row.email)).length;
   const products = {
-    inbox: core.summarizeInbox(messages, allRatings, window, window.prior, (email) => !core.isTestEmail(email)),
+    inbox: core.summarizeInbox(messages, ratings, window, window.prior, keep, pendingCount),
     cv: core.summarizeSite("cv", now1, was, window),
     studio: core.summarizeSite("studio", now1, was, window),
     lab: core.summarizeSite("lab", now1, was, window),

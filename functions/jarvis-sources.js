@@ -38,6 +38,19 @@ const booking = require("./booking");
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
 
 const isoDay = (ms) => new Date(ms).toISOString().slice(0, 10);
+
+// Firestore's free daily quota resets at midnight Pacific time; this is that midnight for the day holding `now`.
+function pacificDayStart(now) {
+  const offset = (at) => {
+    const p = {};
+    new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+      .formatToParts(new Date(at)).forEach((x) => { p[x.type] = Number(x.value); });
+    return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - (at - (at % 1000));
+  };
+  const local = new Date(now + offset(now));
+  const midnight = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate());
+  return midnight - offset(midnight - offset(now));
+}
 const clean = (error) => String((error && error.message) || error || "failed").slice(0, 200);
 const round = (n, places) => { const f = Math.pow(10, places || 0); return Math.round((Number(n) || 0) * f) / f; };
 
@@ -565,9 +578,10 @@ async function platform(ctx) {
     }),
     part("firestore", async () => {
       const kinds = { reads: "read_count", writes: "write_count", deletes: "delete_count" };
-      const usage = {};
+      const start = pacificDayStart(end);
+      const usage = { since: new Date(start).toISOString() };
       await Promise.all(Object.keys(kinds).map(async (k) => {
-        const rows = await monitoring(ctx, token, 'metric.type="firestore.googleapis.com/document/' + kinds[k] + '"', { start: day, end });
+        const rows = await monitoring(ctx, token, 'metric.type="firestore.googleapis.com/document/' + kinds[k] + '"', { start, end });
         usage[k] = rows.reduce((s, r) => s + r.value, 0);
       }));
       Object.keys(FIRESTORE_FREE).forEach((k) => { usage[k + "FreePct"] = round((usage[k] / FIRESTORE_FREE[k]) * 100, 1); });
@@ -597,4 +611,4 @@ async function run(name, ctx) {
   }
 }
 
-module.exports = { costs, SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, monitoring, realFailures, hostOf };
+module.exports = { costs, SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, pacificDayStart, monitoring, realFailures, hostOf };

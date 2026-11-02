@@ -5113,6 +5113,7 @@ const jarvis = require("./jarvis");
 const jarvisCore = require("./jarvis-core");
 const jarvisSum = (field) => AggregateField.sum(field);
 const jarvisSources = require("./jarvis-sources");
+const jarvisDays = require("./jarvis-days");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
 const cube = require("./cube");
@@ -5422,6 +5423,19 @@ async function jarvisUsers() {
   return users;
 }
 
+// Sources whose answer does not depend on the range share one cache entry across ranges.
+const JARVIS_DAYLESS = new Set(["marketing-sync"]);
+
+// The web Jarvis's rows for its range and the one before (#2085), from the same day rollups as the app's snapshot.
+async function jarvisRows(body, now) {
+  const from = Math.max(Date.parse(body.from) || now - 30 * 864e5, now - 3 * 366 * 864e5);
+  const out = await jarvisDays.rows(getFirestore(), ["events", "opens", "reviews", "alerts"], { from, now });
+  return Object.keys(out).reduce((m, kind) => {
+    m[kind] = out[kind].map((row) => { const r = jarvisDays.plain(row); delete r.email; return r; });
+    return m;
+  }, { from: new Date(from).toISOString() });
+}
+
 async function jarvisSource(name, days) {
   const settings = await jarvis.readSettings(getFirestore());
   const keys = paypalKeys("live");
@@ -5430,7 +5444,7 @@ async function jarvisSource(name, days) {
     const creds = urlReview.paypalCredentials(keys);
     paypal = { host: creds.host, token: () => urlReview.paypalAccessToken(creds) };
   } catch (error) { paypal = null; }
-  return jarvisCached(name, days, () => jarvisSources.run(name, {
+  return jarvisCached(name, JARVIS_DAYLESS.has(name) ? 0 : days, () => jarvisSources.run(name, {
     fetch, env: process.env, db: getFirestore(), now: Date.now(), days, settings, thresholds: jarvisCore.thresholds(settings.thresholds),
     paypal, tls: jarvis.tlsDaysLeft, listUsers: jarvisUsers, github: () => githubApp.token()
   }));
@@ -6306,6 +6320,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "review") out = await jarvisReview.enqueue(getFirestore(), body, operator, now);
     else if (op === "snapshot") out = Object.assign(await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days))), { mailCodes: await mailCodeRows().catch(() => []),
       devices: await jarvisDevice.list(getFirestore(), now, body.device).catch(() => []) });
+    else if (op === "rows") out = await jarvisRows(body, now);
     else if (op === "mail-codes") out = { codes: await mailCodeRows() };
     else if (op === "calendar-connect") out = await bookingConnectUrl();
     else if (op === "brief-mark") out = await jarvisProposals.markBrief(getFirestore(), body, operator, now);
