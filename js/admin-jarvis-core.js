@@ -398,7 +398,8 @@
         { key: 'uptime', name: 'Uptime and TLS' }, { key: 'money', name: 'Payments (paid reviews, PayPal, Stripe)' }, { key: 'email', name: 'SendGrid' },
         { key: 'search', name: 'Search (Brave, Search Console)' }, { key: 'social', name: 'Social (ledgers, YouTube, Facebook)' },
         { key: 'safety', name: 'Safety (Web Risk, DNS, domain, TLS)' }, { key: 'platform', name: 'Google Cloud (Monitoring, Logging, Auth)' },
-        { key: 'outreach', name: 'Outreach (sweep prospects, Instantly, 90-day plan)' }, { key: 'mailbox', name: 'ImprovMX (mail forwarding)' }
+        { key: 'outreach', name: 'Outreach (sweep prospects, Instantly, 90-day plan)' }, { key: 'mailbox', name: 'ImprovMX (mail forwarding)' },
+        { key: 'pagespeed', name: 'Daily PageSpeed run (every page, its PRs)' }
     ];
 
     function connections(external, pending) {
@@ -570,6 +571,19 @@
             if (page.ok && page.score < th.speedWarn) add('warn', page.product, `${page.name} scores ${page.score} on mobile PageSpeed.`, 'speed:' + page.product);
             else if (page.ok && page.score >= th.speedGood) add('good', page.product, `${page.name} scores ${page.score} on mobile PageSpeed.`, 'speed:' + page.product);
         });
+        const ps = ext.pagespeed;
+        if (ps && ps.ok && !ps.empty) {
+            if (ps.stale) add('alert', 'systems', `The daily PageSpeed run has not finished in over a day${ps.lastError ? ': ' + ps.lastError : ''}.`, 'pagespeed:run');
+            else if (ps.lastStatus === 'failed') add('warn', 'systems', `The last daily PageSpeed run failed: ${ps.lastError || 'no detail'}.`, 'pagespeed:run');
+            (ps.prs || []).filter((pr) => pr.open).forEach((pr) => {
+                if (pr.stage === 'proposal') add('warn', 'systems', `PageSpeed fixes #${pr.number} wait for you: ${pr.reason || pr.title}`, 'pagespeed:pr:' + pr.number);
+                else if (pr.stage === 'countdown') add('info', 'systems', `PageSpeed fixes #${pr.number} merge themselves at ${pr.dueAt ? new Date(pr.dueAt).toLocaleTimeString('en-GB', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }) + ' Bogotá' : 'the end of the countdown'} unless you cancel.`, 'pagespeed:countdown:' + pr.number);
+            });
+            const c = ps.counts || {};
+            if (c.under50) add('warn', 'systems', `${plural(c.under50, 'page scores', 'pages score')} under 50 on PageSpeed, of ${c.scored} measured.`, 'pagespeed:slow');
+            else if (c.below) add('info', 'systems', `${plural(c.below, 'page scores', 'pages score')} under ${ps.threshold || 90} on PageSpeed, of ${c.scored} measured.`, 'pagespeed:below');
+            else if (c.scored) add('good', 'systems', `All ${c.scored} measured pages score ${ps.threshold || 90} or more on PageSpeed.`, 'pagespeed:good');
+        }
         const up = ext.uptime;
         if (up && up.ok) {
             (up.pages || []).forEach((page) => {
@@ -719,13 +733,16 @@
         { prefix: 'money:refunds', impact: 3, title: 'Read why customers asked for refunds', tab: 'business' },
         { prefix: 'email:bad', impact: 3, title: 'Clean the addresses that bounce or block', link: 'https://app.sendgrid.com/' },
         { prefix: 'speed:', impact: 3, levels: ['warn'], title: (i) => `Speed up ${(PRODUCTS.find((p) => p.key === i.product) || {}).name || i.product} on mobile`, tab: 'systems' },
+        { prefix: 'pagespeed:run', impact: 3, title: 'Get the daily PageSpeed run working again', tab: 'systems' },
+        { prefix: 'pagespeed:pr:', impact: 3, title: (i) => 'Merge or close PageSpeed fixes #' + i.key.split(':')[2], tab: 'systems' },
+        { prefix: 'pagespeed:slow', impact: 3, title: 'Speed up the pages that score under 50 on PageSpeed', tab: 'systems' },
         { prefix: 'slow:', impact: 3, group: true, title: 'Find why the pages answer slowly', tab: 'systems' },
         { prefix: 'platform:failures', impact: 3, title: 'Fix the function that fails most', tab: 'systems' },
         { prefix: 'platform:gemini', impact: 3, title: 'Fix the failing Gemini calls', tab: 'systems' },
         { prefix: 'platform:reads', impact: 3, title: 'Cut Firestore reads before the free quota runs out', tab: 'systems' },
-        { prefix: 'social:failed', impact: 3, title: 'Re-post the social posts that failed', tab: 'hub' },
+        { prefix: 'social:failed', impact: 3, title: 'Re-post the social posts that failed', click: 'retry-social', tab: 'hub' },
         { prefix: 'outreach:queue', impact: 3, title: 'Add the next outreach prospect list', tab: 'outreach' },
-        { prefix: 'outreach:mailbox:', impact: 3, group: true, title: 'Turn the outreach mailboxes and warm-up back on', tab: 'outreach' },
+        { prefix: 'outreach:mailbox:', impact: 3, group: true, title: 'Turn the outreach mailboxes and warm-up back on', click: 'resume-outreach', tab: 'outreach' },
         { prefix: 'outreach:deadline:', impact: 3, levels: ['warn'], group: true, title: 'Get ready for the outreach deadline', tab: 'outreach' },
         { prefix: 'goal:', impact: 3, levels: ['warn'], title: (i) => 'Catch up on the goal: ' + i.text.replace(/^Goal behind: /, '').split(' is at ')[0], tab: 'overview' },
         { prefix: 'inbox:pending', impact: 2, title: 'Approve or reject the waiting ratings', tab: 'inbox' },
@@ -742,6 +759,8 @@
         { prefix: 'review:swing', impact: 2, levels: ['warn'], title: 'Find why URL Review opens fell', tab: 'review' }
     ];
     const SAFE_ACTIONS = ['rerun-held', 'resend-notices', 'publish-hub'];
+    // Actions a proposal offers as a button that only run on a click (#1977).
+    const CLICK_ACTIONS = ['retry-social', 'resume-outreach'];
 
     function proposalRules(state, briefed) {
         const items = (briefed || briefing(state)).slice();
@@ -752,7 +771,7 @@
             const rule = PROPOSAL_RULES.find((r) => item.key === r.prefix || item.key.startsWith(r.prefix));
             if (!rule || (rule.levels ? !rule.levels.includes(item.level) : !['alert', 'warn'].includes(item.level) && !['search:brave', 'connections:needs', 'social:none', 'outreach:pace'].includes(rule.prefix))) return;
             const key = rule.group ? rule.prefix.replace(/:$/, '') : item.key;
-            const row = out.get(key) || { key, product: item.product, impact: rule.impact, level: item.level, evidence: [], source: 'rules', action: rule.action || null, tab: rule.tab || null, link: rule.link || null, rule };
+            const row = out.get(key) || { key, product: item.product, impact: rule.impact, level: item.level, evidence: [], source: 'rules', action: rule.action || null, click: rule.click || null, tab: rule.tab || null, link: rule.link || null, rule };
             row.evidence.push(item.text);
             if (/^(job|scheduler):/.test(item.key)) (row.jobs = row.jobs || []).push(item.key.slice(item.key.indexOf(':') + 1));
             if (item.level === 'alert') row.level = 'alert';
@@ -764,7 +783,7 @@
             const t = row.rule.title;
             const title = typeof t === 'function' ? t(row.rule.group ? row.evidence.length : row.item) : t;
             const impact = Math.min(5, row.impact + (row.level === 'alert' && row.impact < 5 ? 1 : 0));
-            return { key: row.key, product: row.product, impact, level: row.level, title, evidence: row.evidence.slice(0, 4), source: 'rules', action: row.action, jobs: row.jobs ? Array.from(new Set(row.jobs)).slice(0, 6) : null, tab: row.tab, link: row.link };
+            return { key: row.key, product: row.product, impact, level: row.level, title, evidence: row.evidence.slice(0, 4), source: 'rules', action: row.action, click: row.click, jobs: row.jobs ? Array.from(new Set(row.jobs)).slice(0, 6) : null, tab: row.tab, link: row.link };
         }).sort((a, b) => b.impact - a.impact || rank[a.level] - rank[b.level]);
     }
 
@@ -864,6 +883,26 @@
             const page = (((k.startsWith('speed:') ? ext.speed : ext.uptime) || {}).pages || []).find((r) => r.product === item.product) || {};
             fact('Page', page.name); fact('Status', page.status); fact('Answer time', page.ms !== undefined ? page.ms + ' ms' : null); fact('Mobile score', page.score); fact('Error', page.error);
             link('Open the page', page.url); link('Cloudflare', BRIEF_LINKS.cloudflare);
+        } else if (k.startsWith('pagespeed:')) {
+            const ps = ext.pagespeed || {};
+            const n = /^pagespeed:(pr|countdown):/.test(k) ? Number(k.split(':')[2]) : 0;
+            const pr = (ps.prs || []).find((r) => r.number === n);
+            if (pr) {
+                fact('PR', '#' + pr.number + ' ' + pr.title); fact('Fixes', pr.kind === 'ai' ? "Gemini's" : 'Safe'); fact('Stage', pr.stage); fact('Why', pr.reason); fact('Merges at', pr.dueAt);
+                link('Open the PR on GitHub', pr.url);
+                if (pr.open) { act('pagespeed-merge', 'Merge #' + n, { pr: n }); act('pagespeed-close', 'Close #' + n, { pr: n }); }
+            } else {
+                const c = ps.counts || {}, last = (ps.runs || [])[0] || {}, avg = last.avg || {};
+                fact('Pages', c.pages); fact('Measured', c.scored); fact('Under ' + (ps.threshold || 90), c.below); fact('Under 50', c.under50);
+                fact('Average', avg.mobile !== undefined ? 'mobile ' + avg.mobile + ', desktop ' + avg.desktop : null);
+                fact('Last run', last.at); fact('Result', last.status); fact('Error', last.error);
+                const score = (p, m) => (Number.isFinite((p[m] || {}).score) ? p[m].score : null);
+                const low = (p) => Math.min(...['mobile', 'desktop'].map((m) => (score(p, m) === null ? 101 : score(p, m))));
+                (ps.pages || []).filter((p) => low(p) < 101).sort((a, b) => low(a) - low(b)).slice(0, 5).forEach((p) => fact(p.file || p.url, 'mobile ' + (score(p, 'mobile') === null ? '—' : score(p, 'mobile')) + ', desktop ' + (score(p, 'desktop') === null ? '—' : score(p, 'desktop'))));
+                link('Last run on GitHub', last.run && last.run.url);
+                link('The daily workflow', 'https://github.com/kaanmuar/kaanmuar.github.io/actions/workflows/pagespeed-daily.yml');
+                if (k === 'pagespeed:run') act('pagespeed-run', 'Start the PageSpeed run now');
+            }
         } else if (k === 'tls') {
             fact('Days left', (ext.uptime || {}).tlsDaysLeft);
         } else if (k.startsWith('money:')) {
@@ -900,6 +939,7 @@
         if (e.github && e.github.ci) e.github.ci.forEach((run) => { if (run.conclusion !== 'cancelled') checks.push(['success', 'skipped', 'neutral'].includes(run.conclusion)); });
         if (e.uptime && e.uptime.pages) e.uptime.pages.forEach((page) => checks.push(!!page.ok && page.ms <= 3000));
         if (e.speed && e.speed.pages) e.speed.pages.forEach((page) => { if (page.ok) checks.push(page.score >= 50); });
+        if (e.pagespeed && e.pagespeed.ok && !e.pagespeed.empty) checks.push(!e.pagespeed.stale && e.pagespeed.lastStatus !== 'failed');
         if (e.safety && e.safety.checks) e.safety.checks.forEach((c) => { if (c.level !== 'info') checks.push(c.ok); });
         if (!checks.length) return null;
         return Math.round((checks.filter(Boolean).length / checks.length) * 100);
@@ -1036,7 +1076,7 @@
         return cleanDevice({ kind, posture, width: o.width, height: o.height, name: o.name, model: o.model, app: 'web' });
     }
 
-    const api = { DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
+    const api = { DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

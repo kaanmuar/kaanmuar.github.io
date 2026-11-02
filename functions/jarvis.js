@@ -202,6 +202,29 @@ async function rerunCi(fetchImpl, token, workflow) {
   return { workflow: name, run: run.id, url: run.html_url };
 }
 
+// #1977: the newest finished run per workflow and branch in the last day, kept when it failed.
+async function failedRuns(fetchImpl, token, { now }) {
+  if (!token) return [];
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  const runs = await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs?status=completed&per_page=100&created=" + encodeURIComponent(">=" + isoDay(now - DAY)), { headers, signal: AbortSignal.timeout(15000) }), "GitHub");
+  const newest = new Map();
+  (runs.workflow_runs || []).forEach((r) => {
+    const key = r.name + " " + r.head_branch;
+    if (r.conclusion !== "cancelled" && !newest.has(key)) newest.set(key, r);
+  });
+  return Array.from(newest.values()).filter((r) => ["failure", "timed_out"].includes(r.conclusion))
+    .map((r) => ({ id: r.id, name: r.name, branch: r.head_branch, attempt: r.run_attempt || 1, url: r.html_url }));
+}
+
+async function rerunRun(fetchImpl, token, id) {
+  if (!token) throw new Error("No GitHub token is set.");
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs/" + Number(id) + "/rerun-failed-jobs", { method: "POST", headers, signal: AbortSignal.timeout(15000) });
+  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); the GitHub token needs Actions: write.");
+  if (!res.ok) throw new Error("GitHub " + res.status + " on the re-run.");
+  return { run: Number(id) };
+}
+
 // --- briefing rows (#1695) ------------------------------------------------------------------------------------
 
 // The rows a briefing sheet lists: pending ratings, or the messages in range with no answer, test senders left out.
@@ -728,5 +751,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, briefItems, decideRatings, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, briefItems, decideRatings, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
