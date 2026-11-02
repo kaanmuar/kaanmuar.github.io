@@ -60,6 +60,7 @@ data class UiState(
     val runs: List<JsonObject>? = null,
     val shares: List<JsonObject>? = null,
     val devices: List<JsonObject>? = null,
+    val studio: JsonObject? = null,
 )
 
 class JarvisViewModel(app: Application) : AndroidViewModel(app) {
@@ -303,7 +304,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     fun loadSocial() {
         if (fixture != null) {
             val f = _state.value.snapshot?.get("socialHub") as? JsonObject
-            _state.update { it.copy(proposals = f.objs("proposals"), runs = f.objs("runs"), shares = f.objs("shares")) }
+            _state.update { it.copy(proposals = f.objs("proposals"), runs = f.objs("runs"), shares = f.objs("shares"), studio = f?.get("studio") as? JsonObject) }
             return
         }
         if (!auth.signedIn || "social" in _state.value.running) return
@@ -313,7 +314,9 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
             val proposals = runCatching { api.call("social-proposals", days).objs("proposals") }
             val runs = runCatching { api.call("social-runs", days).objs("runs") }
             val shares = runCatching { api.call("share-list", days).objs("items") }
+            val studio = runCatching { api.call("studio", days) }
             _state.update { it.copy(running = it.running - "social", proposals = proposals.getOrNull() ?: it.proposals, runs = runs.getOrNull() ?: it.runs, shares = shares.getOrNull() ?: it.shares,
+                studio = studio.getOrNull() ?: it.studio,
                 toast = proposals.exceptionOrNull()?.message?.let { m -> "Proposals: $m" } ?: it.toast) }
         }
     }
@@ -330,6 +333,9 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun postNow() = act("post-now", "social-post-now") { out -> loadSocial(); out.str("note") ?: "Started." }
+
+    /** Studio (#1981): starts studio-render.yml; the PR with clip links follows when the render is done. */
+    fun startRender(request: Map<String, String>) = act("studio-render", "studio-render", request.mapValues { JsonPrimitive(it.value) }) { out -> loadSocial(); out.str("note") ?: "Started." }
 
     fun decideNotice(domain: String, send: Boolean, email: String) {
         val key = "notice:$domain"

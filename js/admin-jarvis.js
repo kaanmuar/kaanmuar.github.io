@@ -152,7 +152,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const api = endpoint || ENDPOINT;
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
-        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', egDrafts: {}, egAll: false, alerts: [], reports: [],
+        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), studio: { kind: 'tips', mode: 'render' }, mkForm: {}, mkDrafts: {}, mkWeek: '', egDrafts: {}, egAll: false, alerts: [], reports: [],
         external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, truncated: false,
         panels: new Map(), voice: null, listening: false, timers: []
     };
@@ -383,7 +383,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'calls'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'calls'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -850,6 +850,39 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         S.pending['social-post-now'] = false;
         toast(out.ok ? out.note : 'Not started: ' + out.error, 6000);
         loadExternal(['social-runs']);
+    }
+
+    // Studio (#1981): clip and skit renders run in studio-render.yml; review links land in a PR and on the ticket.
+    function studioPanel() {
+        const D = S.external.studio;
+        const F = S.studio;
+        if (!D) return panel('hub-studio', 'Studio renders', waiting('studio', 'Reading the studio sources…'), { wide: true });
+        if (D.ok === false) return panel('hub-studio', 'Studio renders', `<p class="jv-empty">${esc(D.error || 'Not loaded.')}</p>`, { wide: true });
+        const names = F.kind === 'skit' ? (D.skits || []).map((s) => [s.id, s.id + (s.takes.length ? ' (' + s.takes.join(', ') + ')' : ' (no takes yet)')]) : (D.sources || []).map((s) => [s, s]);
+        const opt = (list, value) => list.map(([v, label]) => `<option value="${esc(v)}"${v === value ? ' selected' : ''}>${esc(label)}</option>`).join('');
+        const modes = F.kind === 'skit' ? [['render', 'Render'], ['captions', 'Captions only']] : [['render', 'Render'], ['rotate', 'Re-voice queued clips'], ['captions', 'Captions only']];
+        const field = (key, label, hint) => `<label class="jv-share-field"><span>${label}</span><input data-studio-field="${key}" data-keep="studio-${key}" value="${esc(F[key] || '')}" placeholder="${esc(hint)}"></label>`;
+        const form = `<div class="jv-share-fields">
+            <label class="jv-share-field"><span>Kind</span><select data-studio-field="kind">${opt([['tips', 'Tips source'], ['skit', 'Skit']], F.kind)}</select></label>
+            <label class="jv-share-field"><span>${F.kind === 'skit' ? 'Skit' : 'Source'}</span><select data-studio-field="name"><option value="">Pick one</option>${opt(names, F.name)}</select></label>
+            <label class="jv-share-field"><span>Mode</span><select data-studio-field="mode">${opt(modes, F.mode)}</select></label>
+            ${field('start', 'First day', 'YYYY-MM-DD, or the batch first day')}${F.kind === 'skit' ? field('langs', 'Languages', 'en,es (default: every take)') : field('tips', 'Posts', 'ids, comma-separated (default: all)')}${field('ticket', 'Ticket', 'issue number for the review links')}</div>
+            <div class="jv-actions"><button type="button" class="jv-btn" data-act="studio-render"${F.busy || !F.name ? ' disabled' : ''}>${F.busy ? 'Starting…' : 'Render'}</button></div>`;
+        const state = (r) => (r.status && r.status !== 'completed' ? `<span class="jv-chip c-average">${esc(r.status)}</span>` : `<span class="jv-chip ${r.conclusion === 'success' ? 'c-fast' : 'c-slow'}">${esc(r.conclusion || '—')}</span>`);
+        const runs = (D.runs || []).length ? table([['Run', (r) => `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.name)}</a>`], ['How', (r) => esc(r.event)], ['When', (r) => esc(when(r.at))], ['Result', state]], D.runs) : '<p class="jv-empty">No renders yet.</p>';
+        return panel('hub-studio', 'Studio renders', form + runs, { wide: true, data: D.runs, note: `Renders in GitHub Actions, then opens a PR with clip links; merging it makes the clips live and queues the batch in Buffer. Skit takes go in the ${esc(D.takes || 'skit-takes')} release as &lt;skit&gt;-&lt;lang&gt;.mp4.` });
+    }
+
+    async function studioRender() {
+        const F = S.studio;
+        if (!F.name || F.busy) return;
+        F.busy = true;
+        render();
+        const out = await call('studio-render', { kind: F.kind, name: F.name, mode: F.mode, start: F.start, tips: F.tips, langs: F.langs, ticket: F.ticket }).catch((error) => ({ ok: false, error: error.message }));
+        F.busy = false;
+        toast(out.ok ? out.note : 'Not started: ' + out.error, 7000);
+        render();
+        if (out.ok) setTimeout(() => loadExternal(['studio']), 8000);
     }
 
     // Share to post (#1420): a photo or video and one caption; Gemini drafts each network's post, the owner edits, and social-inbox.yml posts it.
@@ -1562,7 +1595,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         </div>${r.truncated ? `<p class="jv-note">Breakdowns cover the newest ${fmt(ROW_CAP)} opens and reviews; the totals are exact server counts.</p>` : ''}`;
 
         const hub = s.hub;
-        out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${sharePanel()}${socialQueuePanel()}${socialRunsPanel()}${socialProposalsPanel()}
+        out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${sharePanel()}${socialQueuePanel()}${socialRunsPanel()}${studioPanel()}${socialProposalsPanel()}
             ${panel('hub-trend', 'Hub and post events per day', area(hub.series.labels, [{ name: 'Events', values: hub.series.values, color: COLORS.violet }]), { wide: true, data: hub.series.labels.map((d, k) => ({ day: d, events: hub.series.values[k] })) })}
             ${listPanel('hub', 'posts', 'Top posts (score)', hub.lists.posts)}${listPanel('hub', 'sources', 'GA4 sources', hub.lists.sources, { color: COLORS.amber })}
             ${listPanel('hub', 'networks', 'Shares by network', hub.lists.networks, { color: COLORS.green })}${listPanel('hub', 'events', 'Events in range', hub.lists.events, { color: COLORS.violet })}${listPanel('hub', 'langs', 'Hub pages by language', hub.lists.langs)}
@@ -2458,7 +2491,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             'copy-link': () => copy(link(), 'Link copied.'), 'web-share': webShare, 'copy-brief': () => copy(markdown(), 'Briefing copied.'), email: emailBriefing,
             'export-json': exportAll, 'export-csv': () => run({ type: 'export', format: 'csv' }), 'export-png': () => run({ type: 'export', format: 'png' }),
             'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief,
-            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'social', 'notices']), 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop, 'calendar-connect': calendarConnect
+            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'social', 'notices']), 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop, 'calendar-connect': calendarConnect, 'studio-render': studioRender
         };
         if (acts[act]) acts[act]();
     });
@@ -2467,6 +2500,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const t = event.target;
         if (t.dataset.shareField && S.share.draft) S.share.draft[t.dataset.shareField] = t.value;
         else if (t.dataset.shareCaption !== undefined) S.share.caption = t.value;
+        else if (t.dataset.studioField && t.tagName === 'INPUT') S.studio[t.dataset.studioField] = t.value.trim();
         else if (t.dataset.mkField) S.mkForm[t.dataset.mkField] = t.value;
         else if (t.dataset.mkDraft) S.mkDrafts[t.dataset.mkDraft] = t.value;
         else if (t.dataset.egDraft) S.egDrafts[t.dataset.egDraft] = t.value;
@@ -2475,6 +2509,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     root.addEventListener('change', (event) => {
         if (event.target.dataset.shareFile !== undefined) { S.share.file = event.target.files[0] || null; render(); return; }
         if (event.target.dataset.mkField) { S.mkForm[event.target.dataset.mkField] = event.target.value; return; }
+        if (event.target.dataset.studioField && event.target.tagName === 'SELECT') {
+            const key = event.target.dataset.studioField;
+            S.studio[key] = event.target.value;
+            if (key === 'kind') Object.assign(S.studio, { name: '', mode: 'render', tips: '', langs: '' });
+            render();
+            return;
+        }
         if (event.target.dataset.bpKind) { bp.kindChanged(event.target.dataset.bpKind, event.target.checked); return; }
         if (event.target.dataset.voiceLang !== undefined) { saveVoice({ lang: event.target.value || null }); return; }
         if (event.target.dataset.voiceRate !== undefined) { saveVoice({ rate: Number(event.target.value) }); return; }
