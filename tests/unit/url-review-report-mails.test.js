@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const customerMail = require("../../functions/url-review-customer-mail.js");
-const { summarizePeriod, reportRows, reportSubject } = require("../../functions/url-review-mail.js");
+const { summarizePeriod, reportRows, reportSubject, slimReview } = require("../../functions/url-review-mail.js");
 const { ownerMail, ownerRows } = require("../../functions/owner-mail.js");
 const report = require("./fixtures/review-wordpress.json");
 
@@ -183,6 +183,15 @@ test("the period report leads with volume and money, puts deltas inline, and dro
   assert.ok(!kept.some((item) => item.label === "Follow-up notes" && !item.value));
   assert.equal(reportSubject("Daily", "22 Oct 2026", summary, 1), "Daily URL review — 22 Oct 2026 · 4 reviews, 28 USD, 1 failed");
   assert.equal(reportSubject("Daily", "22 Oct 2026", summarizePeriod([], [rows[0]], [], []), 0), "Daily URL review — 22 Oct 2026 · 1 review");
+});
+
+test("a slimmed review row keeps everything the period summary reads and drops the rest of the report", () => {
+  const full = Object.assign({}, record, { status: "complete", requestedUrl: "", report: Object.assign({}, report, { finalUrl: "https://x.co/", alerts: [{ a: 1 }, { a: 2 }] }) });
+  const slim = slimReview(full);
+  assert.deepEqual(summarizePeriod([], [slim], [], []), summarizePeriod([], [full], [], []));
+  assert.ok(JSON.stringify(slim).length < JSON.stringify(full).length / 10);
+  assert.equal(slim.report.alerts.length, 2);
+  assert.equal(slimReview({ status: "checkout-open" }).status, "checkout-open");
 });
 
 test("the owner mail renders section headings and its eyebrow", () => {

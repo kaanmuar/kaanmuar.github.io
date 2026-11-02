@@ -1025,7 +1025,9 @@ exports.emailQuarterSiteReport = scheduled(withMail, "emailQuarterSiteReport", a
 
 const reviewMail = require("./url-review-mail");
 
-async function loadBound(name, field, startVal, endVal) {
+async function loadBound(name, field, startVal, endVal, options) {
+  const pageSize = (options && options.pageSize) || 400;
+  const map = (options && options.map) || ((row) => row);
   const rows = [];
   let cursor = null;
   for (;;) {
@@ -1033,15 +1035,20 @@ async function loadBound(name, field, startVal, endVal) {
       .where(field, ">=", startVal)
       .where(field, "<", endVal)
       .orderBy(field, "asc")
-      .limit(400);
+      .limit(pageSize);
     if (cursor) query = query.startAfter(cursor);
     const snap = await query.get();
     if (snap.empty) break;
-    snap.forEach((doc) => rows.push(Object.assign({ id: doc.id }, doc.data() || {})));
+    snap.forEach((doc) => rows.push(map(Object.assign({ id: doc.id }, doc.data() || {}))));
     cursor = snap.docs[snap.docs.length - 1];
-    if (snap.size < 400 || rows.length >= 5000) break;
+    if (snap.size < pageSize || rows.length >= 5000) break;
   }
   return rows;
+}
+
+// Each url_reviews row holds its whole report, so they are read in small pages and kept slim.
+function loadReviewRows(startIso, endIso) {
+  return loadBound("url_reviews", "createdAt", startIso, endIso, { pageSize: 50, map: reviewMail.slimReview });
 }
 
 function loadSummaries(name, fields, start, end) {
@@ -1112,7 +1119,7 @@ async function sendReviewPeriodReport(period) {
   const endStamp = Timestamp.fromDate(window.end);
   const [opens, allReviews, captures, alerts, pageEvents, failed, priorFailed, reruns] = await Promise.all([
     loadBound("url_review_opens", "createdAt", startStamp, endStamp),
-    loadBound("url_reviews", "createdAt", window.start.toISOString(), window.end.toISOString()),
+    loadReviewRows(window.start.toISOString(), window.end.toISOString()),
     loadBound("url_review_captures", "at", window.start.toISOString(), window.end.toISOString()),
     loadBound("url_review_alerts", "at", window.start.toISOString(), window.end.toISOString()),
     loadEvents(window.start, window.end).then((rows) => rows.filter((row) => row.site === "review")),
@@ -1135,7 +1142,7 @@ async function sendReviewPeriodReport(period) {
     const summary = reviewMail.summarizePeriod(opens, reviews, captures, alerts);
     const [priorOpens, priorReviews] = await Promise.all([
       loadBound("url_review_opens", "createdAt", Timestamp.fromDate(earlier.start), startStamp),
-      loadBound("url_reviews", "createdAt", earlier.start.toISOString(), window.start.toISOString()).then(askedFor)
+      loadReviewRows(earlier.start.toISOString(), window.start.toISOString()).then(askedFor)
     ]);
     const previous = reviewMail.summarizePeriod(priorOpens, priorReviews, [], []);
     const followUp = period === "quarter" ? null : await loadFollowUp(window.start.toISOString(), window.end.toISOString());
@@ -1208,10 +1215,11 @@ async function sendReviewPeriodReport(period) {
   return null;
 }
 
-exports.emailDailyReviewReport = scheduled(withMailAndGithub, "emailDailyReviewReport", async () => (await mailOn("reviewDaily")) ? sendReviewPeriodReport("daily") : "mail off in Jarvis settings");
-exports.emailWeeklyReviewReport = scheduled(withMailAndGithub, "emailWeeklyReviewReport", () => sendReviewPeriodReport("weekly"));
-exports.emailMonthlyReviewReport = scheduled(withMailAndGithub, "emailMonthlyReviewReport", () => sendReviewPeriodReport("monthly"));
-exports.emailQuarterReviewReport = scheduled(withMailAndGithub, "emailQuarterReviewReport", async () => (await mailOn("reviewQuarter")) ? sendReviewPeriodReport("quarter") : "mail off in Jarvis settings");
+const withReviewReport = functions.runWith({ memory: "512MB", secrets: SECRETS.mailWithGithub });
+exports.emailDailyReviewReport = scheduled(withReviewReport, "emailDailyReviewReport", async () => (await mailOn("reviewDaily")) ? sendReviewPeriodReport("daily") : "mail off in Jarvis settings");
+exports.emailWeeklyReviewReport = scheduled(withReviewReport, "emailWeeklyReviewReport", () => sendReviewPeriodReport("weekly"));
+exports.emailMonthlyReviewReport = scheduled(withReviewReport, "emailMonthlyReviewReport", () => sendReviewPeriodReport("monthly"));
+exports.emailQuarterReviewReport = scheduled(withReviewReport, "emailQuarterReviewReport", async () => (await mailOn("reviewQuarter")) ? sendReviewPeriodReport("quarter") : "mail off in Jarvis settings");
 
 async function probeFailure(url) {
   let host = "";
