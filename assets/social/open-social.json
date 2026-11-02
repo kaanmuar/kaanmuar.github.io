@@ -461,6 +461,15 @@
     "result": "sent",
     "url": "https://www.instagram.com/p/DfQE1Mjl9rQ/",
     "checked": "2026-11-02T19:38:08.994Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18120165367787456",
+    "at": "2026-11-02T19:40:13.220Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DfQFFwxATBq",
+    "checked": "2026-11-02T19:40:26.671Z"
    }
   ],
   "tips-horror-headers-2026-10/01-missing-csp": [
