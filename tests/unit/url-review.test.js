@@ -2542,7 +2542,7 @@ test("later runs of a class with an open bug are commented on that bug once (#11
   assert.deepEqual([note.key, note.issue, note.runs, note.lastAt], ["bot-protection-319", 330, 3, "2026-10-25T11:30:00Z"]);
   assert.deepEqual(note.ids, ["x9", latest.id, later.id]);
   assert.deepEqual(note.hosts, ["hoka.com", "ag.org", "casio.com"]);
-  assert.match(note.body, /^3 more URL review runs failed with the cause class `bot-protection` since this bug was last updated \(2026-10-21\), on 3 sites: hoka\.com, ag\.org, casio\.com\.\n\n- 2026-10-25 11:30 UTC, failed re-run `x9` of 1 failure on hoka\.com: /);
+  assert.match(note.body, /^3 more URL review runs failed with the cause class `bot-protection` since this bug was last updated \(2026-10-21\), on 3 sites: hoka\.com, ag\.org, casio\.com\.\n\n\*\*Triage:\*\* none of these runs is clearly the site's own state, so the daily fix starts an agent for them\.\n<!-- review-triage \{"runs":3,"ours":3,"site":\{\}\} -->\n\n- 2026-10-25 11:30 UTC, failed re-run `x9` of 1 failure on hoka\.com: /);
   assert.match(note.body, /- 2026-10-23 10:00 UTC, failed run `f-2026-10-23T10:00:00Z` on casio\.com: .* Now: The plain read is refused/);
   assert.match(note.body, /### Probe of the latest failure \(hoka\.com\)\n- DNS: 1 addresses/);
   assert.match(note.body, /### Last log lines of `f-2026-10-23T10:00:00Z`\n```\nReading https:\/\/casio\.com\/\?…\n```/);
@@ -2560,6 +2560,39 @@ test("later runs of a class with an open bug are commented on that bug once (#11
   assert.deepEqual(seeded.ids.slice().sort(), [listed.id, later.id, latest.id].sort());
   assert.deepEqual(failures.bugPlan([listed, later], [], ["bot-protection-319"]), []);
   assert.deepEqual(failures.bugPlan([listed], [], [])[0].ids, [listed.id]);
+});
+
+test("each filed run is triaged as the site's own state or ours, and the issue carries a marker the daily fix reads (#1982)", () => {
+  const dns = { addresses: ["1.2.3.4"] };
+  const filed = (at, cause, message, probe, extra) => failedAt(at, Object.assign({
+    id: "f-" + cause + "-" + at,
+    host: cause + ".example.com",
+    cause: { id: cause },
+    error: { message },
+    diagnosis: { cause, cleared: false, rerun: false, nowLabel: "Still failing" },
+    probe,
+    lines: []
+  }, extra || {}));
+  const wall = filed("2026-10-28T10:00:00Z", "bot-protection", "The site's bot protection refused the review (status 403).",
+    { dns, plain: { hops: [], status: 403, challenge: "Akamai" }, browser: { ok: true, untagged: true, docStatus: 403, challenge: "Akamai" } });
+  const plainOnly = filed("2026-10-28T11:00:00Z", "bot-protection", "The site's bot protection refused the review (status 403).",
+    { dns, plain: { hops: [], status: 403, challenge: "Cloudflare" } });
+  const expired = filed("2026-10-28T10:00:00Z", "tls", "certificate has expired", { dns, plain: { hops: [], error: "certificate has expired", code: "CERT_HAS_EXPIRED" } });
+  const wrongName = filed("2026-10-28T11:00:00Z", "tls", "Hostname/IP does not match certificate's altnames", { dns, plain: { hops: [], error: "x", code: "ERR_TLS_CERT_ALTNAME_INVALID" } });
+  const noIntermediate = filed("2026-10-28T12:00:00Z", "tls", "unable to verify the first certificate", { dns, plain: { hops: [], error: "unable to verify the first certificate", code: "UNABLE_TO_VERIFY_LEAF_SIGNATURE" } });
+  const originDown = filed("2026-10-28T10:00:00Z", "status", "The URL returned status 522.", { dns, plain: { hops: [], status: 522, html: true } });
+  const wallRerun = { id: "x7", status: "failed", at: "2026-10-28T13:00:00Z", host: "walled.example.com", failureIds: [], error: { message: "The site's bot protection refused the review (status 403, an Imperva bot check), in the plain request and in headless Chrome." }, cause: { id: "bot-protection" }, lines: [] };
+
+  const bugs = failures.bugPlan([wall, plainOnly, expired, wrongName, noIntermediate, originDown], [wallRerun], []);
+  const byKey = Object.fromEntries(bugs.map((bug) => [bug.key, bug]));
+  const marker = (body) => JSON.parse(body.match(/<!-- review-triage (\{.*?\}) -->/)[1]);
+
+  assert.deepEqual(marker(byKey["bot-protection-319"].body), { runs: 3, ours: 1, site: { "bot-wall": 2 } });
+  assert.match(byKey["bot-protection-319"].body, /\*\*Triage:\*\* 2 of these 3 runs are the site's own state \(2 runs behind a bot wall that refuses headless Chrome too\)\. The daily fix starts an agent for the other 1\./);
+  assert.match(byKey["bot-protection-319"].body, /on bot-protection\.example\.com: .* Site's own state: behind a bot wall that refuses headless Chrome too\./);
+  assert.deepEqual(marker(byKey.tls.body), { runs: 3, ours: 1, site: { cert: 2 } });
+  assert.deepEqual(marker(byKey.status.body), { runs: 1, ours: 0, site: { "5xx": 1 } });
+  assert.match(byKey.status.body, /\*\*Triage:\*\* every run here is the site's own state \(1 run answering every client with a 5xx\), so the daily fix comments without starting an agent\./);
 });
 
 test("a re-run of a failure that kept no frameworks reviews with the form's default", () => {

@@ -397,6 +397,41 @@ function siteSide(doc, cause) {
   if (SITE_REFUSAL.test(String((doc.error && doc.error.message) || ""))) return true;
   return !!(doc.diagnosis && doc.diagnosis.site);
 }
+
+// Filed, but still the site's own state: the daily fix (scripts/fix-review-failures.js) comments on these without starting an agent (#1982).
+// A certificate missing its intermediate is ours (#736), so only expired, self-signed and wrong-name certificates count.
+const SITE_REASONS = {
+  "bot-wall": "behind a bot wall that refuses headless Chrome too",
+  cert: "with a certificate that is expired, self-signed or for another name",
+  "5xx": "answering every client with a 5xx"
+};
+const SITE_CERT = /CERT_HAS_EXPIRED|certificate has expired|ERR_TLS_CERT_ALTNAME_INVALID|Hostname\/IP does not match|altnames|SELF_SIGNED_CERT|self[- ]signed/i;
+
+function siteReason(lead) {
+  const probe = lead.probe || {};
+  const plain = probe.plain || {};
+  const browser = probe.browser;
+  if (lead.cause === "bot-protection" && (/\bin headless Chrome\b/.test(lead.message) || (browser && browser.ok && (!!browser.challenge || guarded(browser.docStatus))))) return "bot-wall";
+  if (lead.cause === "tls" && SITE_CERT.test(lead.message + " " + (plain.error || "") + " " + (plain.code || ""))) return "cert";
+  if (lead.cause === "status" && plain.status >= 500 && !(browser && browser.ok && browser.docStatus < 400)) return "5xx";
+  return "";
+}
+
+// A line the issue shows, and a marker the daily fix reads: how many runs may be ours to fix.
+function bugTriage(rows) {
+  const site = {};
+  rows.forEach((row) => { if (row.site) site[row.site] = (site[row.site] || 0) + 1; });
+  const settled = Object.values(site).reduce((sum, count) => sum + count, 0);
+  const ours = rows.length - settled;
+  const reasons = Object.keys(site).map((key) => plural(site[key], "run") + " " + SITE_REASONS[key]).join(", ");
+  const line = !settled
+    ? "**Triage:** none of these runs is clearly the site's own state, so the daily fix starts an agent for them."
+    : !ours
+      ? "**Triage:** every run here is the site's own state (" + reasons + "), so the daily fix comments without starting an agent."
+      : "**Triage:** " + settled + " of these " + rows.length + " runs are the site's own state (" + reasons + "). The daily fix starts an agent for the other " + ours + ".";
+  return line + "\n<!-- review-triage " + JSON.stringify({ runs: rows.length, ours, site }) + " -->";
+}
+
 const BUG_ROWS = 12;
 const BUG_LOG_LINES = 15;
 
@@ -484,7 +519,7 @@ function bugEvidence(rows) {
   const day = (at) => at.slice(0, 16).replace("T", " ");
   const listed = rows.slice(0, BUG_ROWS).map((row) => "- " + day(row.at) + " UTC, " + (row.source === "rerun"
     ? "failed re-run `" + row.id + "` of " + plural(row.failures, "failure")
-    : "failed run `" + row.id + "`") + " on " + (row.host || "an unknown host") + ": " + (row.message || "no error text") + (row.now ? " Now: " + row.now : "") + (row.why ? " Why it ran: " + row.why : ""));
+    : "failed run `" + row.id + "`") + " on " + (row.host || "an unknown host") + ": " + (row.message || "no error text") + (row.now ? " Now: " + row.now : "") + (row.why ? " Why it ran: " + row.why : "") + (row.site ? " Site's own state: " + SITE_REASONS[row.site] + "." : ""));
   const probed = rows.find((row) => row.probe);
   const logged = rows.find((row) => row.lines.length);
   return [
@@ -511,6 +546,8 @@ function bugIssue(key, leads) {
       + (fix ? " " + fix.ref + " (" + fix.label + ") shipped before these runs, so it does not cover them." : "")
       + " The daily probe still sees the cause, or a re-run failed again.",
     "",
+    bugTriage(rows),
+    "",
     ...bugEvidence(rows),
     "",
     "## Fix",
@@ -526,6 +563,7 @@ function bugLeads(failures, reruns) {
     const lead = bugLead(row, source);
     if (!lead) return;
     if (source === "rerun") lead.probe = (row.failureIds || []).map((id) => probes.get(id)).find(Boolean) || null;
+    lead.site = siteReason(lead);
     classes.set(lead.key, (classes.get(lead.key) || []).concat(lead));
   }));
   return classes;
@@ -552,6 +590,8 @@ function bugFollowUps(failures, reruns, bugs) {
     const { cause } = rows[0];
     const body = [
       plural(rows.length, "more URL review run") + " failed with the cause class `" + cause + "` since this bug was last updated" + (bug.lastAt ? " (" + String(bug.lastAt).slice(0, 10) + ")" : "") + ", on " + plural(hosts.length, "site") + ": " + hostList(hosts) + ".",
+      "",
+      bugTriage(rows),
       "",
       ...bugEvidence(rows)
     ].join("\n");
@@ -706,5 +746,5 @@ module.exports = {
   KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, FIXES, SUMMARY_FIELDS, RERUN_FIELDS,
   causeOf, failureRecord, failureFromAlert, stateOf, diagnose, probeNeedsTcp, probeNeedsBrowser, unreadUrl,
   recheckDue, rerunTrigger, rerunPlan, rerunDoc, rerunMark, sentRecord, rerunMail,
-  bugPlan, bugFollowUps, periodFailures, failureRow, failureDetail
+  bugPlan, bugFollowUps, periodFailures, failureRow, failureDetail, SITE_REASONS
 };
