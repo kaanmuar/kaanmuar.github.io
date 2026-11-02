@@ -78,6 +78,7 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     const button = (msg.actions || []).find((a) => a.act === event.action);
     if (!button) { event.waitUntil(focusOrOpen(openUrl(msg))); return; }
+    if (button.act === 'open') { event.waitUntil(focusOrOpen(button.url || openUrl({ tab: button.tab }))); return; }
     if (button.input || !button.sig) {
         const reply = new URLSearchParams({ ref: msg.ref || '', title: msg.title || '', body: msg.body || '' });
         event.waitUntil(focusOrOpen(openUrl(msg, 'reply&' + reply.toString())));

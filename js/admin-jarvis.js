@@ -501,7 +501,6 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR' };
-    const psPr = (key) => Number((/^pagespeed:pr:(\d+)$/.exec(key || '') || [])[1]) || 0;
     // Owner emails that also arrive as Jarvis pushes (#1672): off, they wait for the evening digest.
     const MOVED_MAIL = {
         messages: "New CV messages", ratings: "New CV feedback", siteDaily: "Daily CV site report (07:15)", siteQuarter: "Quarter-hour CV site report",
@@ -524,6 +523,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         return `<h4>On the countdown (${hoursText(hours)})</h4>${pending.length ? `<ul class="jv-countdowns">${pending.map(row).join('')}</ul>` : '<p class="jv-empty">Nothing waits on the countdown.</p>'}${ended ? `<details><summary>Ended in the last day (${recent.length})</summary><ul class="jv-facts">${ended}</ul></details>` : ''}`;
     }
 
+    // One of a proposal's buttons (C.proposalButtons, #1977): the same ones its push carries.
+    function propButton(p, b) {
+        if (b.pr) return `<button type="button" data-ps-act="${esc(b.action)}" data-pr="${b.pr}" data-key="${esc(p.key)}">${esc(b.label)}</button>`;
+        if (b.act === 'run') return `<button type="button" data-prop-run="${esc(p.key)}">${esc(b.label)}</button>`;
+        if (b.act === 'open') return b.link ? `<a href="${esc(b.link)}" target="_blank" rel="noopener">${esc(b.label)}</a>` : `<button type="button" data-go="${esc(b.tab)}">${esc(b.label)} →</button>`;
+        return `<button type="button" data-proposal="${esc(b.act)}" data-key="${esc(p.key)}">${esc(b.label)}</button>`;
+    }
+
     function proposalsPanel() {
         const P = S.proposals || {};
         const list = P.proposals || (P.rules || []).slice(0, 5);
@@ -531,8 +538,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const items = list.length ? list.map((p, i) => `<li class="jv-prop lv-${esc(p.level)}"><span class="jv-prop-rank">${i + 1}</span><div class="jv-prop-body">
             <p class="jv-prop-title"><strong>${esc(p.title)}</strong> <span class="jv-chip">impact ${esc(p.impact)}/5</span>${p.effort ? ` <span class="jv-chip">${esc(p.effort)}</span>` : ''}${p.source === 'gemini' ? ' <span class="jv-chip c-average">from Gemini</span>' : ''}</p>
             ${p.why ? `<p class="jv-prop-why">${esc(p.why)}</p>` : ''}<ul class="jv-prop-ev">${(p.evidence || []).map((e) => `<li>${esc(e)}</li>`).join('')}</ul>
-            <div class="jv-prop-acts">${p.tab && p.tab !== 'overview' ? `<button type="button" data-go="${esc(p.tab)}">Open ${esc((C.PRODUCTS.find((x) => x.key === p.tab) || {}).name || p.tab)} →</button>` : ''}${p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener">Open ↗</a>` : ''}${p.action ? `<span class="jv-prop-safe" data-action="${esc(p.action)}">${autoOn() ? 'Jarvis runs this on its own' : 'Safe action'}</span><button type="button" data-run-action="${esc(p.action)}" data-key="${esc(p.key)}">Run now: ${esc(ACTION_LABELS[p.action] || p.action)}</button>` : ''}${p.click ? `<button type="button" data-run-action="${esc(p.click)}" data-key="${esc(p.key)}">${esc((ACTION_LABELS[p.click] || p.click).replace(/^./, (c) => c.toUpperCase()))}</button>` : ''}${psPr(p.key) ? `<button type="button" data-ps-act="pagespeed-merge" data-pr="${psPr(p.key)}" data-key="${esc(p.key)}">Merge #${psPr(p.key)}</button><button type="button" data-ps-act="pagespeed-close" data-pr="${psPr(p.key)}" data-key="${esc(p.key)}">Close #${psPr(p.key)}</button>` : ''}${(p.jobs || []).map((j) => `<button type="button" data-run-action="run-job" data-job="${esc(j)}" data-key="${esc(p.key)}">Run ${esc(j)} again</button>`).join('')}
-            <button type="button" data-proposal="done" data-key="${esc(p.key)}">Done</button><button type="button" data-proposal="dismissed" data-key="${esc(p.key)}">Dismiss</button></div></div></li>`).join('')
+            <div class="jv-prop-acts">${p.action ? `<span class="jv-prop-safe" data-action="${esc(p.action)}">${autoOn() ? 'Jarvis runs this on its own' : 'Safe action'}</span>` : ''}${C.proposalButtons(p).map((b) => propButton(p, b)).join('')}</div></div></li>`).join('')
             : `<li class="jv-prop lv-good"><span class="jv-prop-rank">✓</span><div class="jv-prop-body"><p>${P.loading || !S.externalAt ? 'Jarvis is reading the sources…' : 'Nothing to propose right now.'}</p></div></li>`;
         return panel('overview-proposals', 'Proposals', `<p class="jv-note">${esc(state)}${P.hidden ? ` · ${P.hidden} hidden as done or dismissed` : ''}${P.loading ? '' : ' <button type="button" class="jv-link" data-act="proposals">Rank again</button>'}</p><ol class="jv-props">${items}</ol>`,
             { wide: true, data: list.map((p, i) => ({ rank: i + 1, title: p.title, impact: p.impact, effort: p.effort || '', evidence: (p.evidence || []).join(' | '), source: p.source, action: p.action || '' })) });
@@ -2065,6 +2071,20 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         loadExternal(['actions', 'health', 'jobs']);
     }
 
+    // A proposal's run button: the action-run op with its jobs or workflows; Carlos's click runs it at once.
+    async function runProposal(key) {
+        const P = S.proposals || {};
+        const run = C.proposalRun((P.proposals || []).concat(P.rules || []).find((p) => p.key === key));
+        if (!run) return;
+        const list = run.jobs || run.workflows || [];
+        const ask = ACTION_ASK[run.action] && run.action !== 'run-job' ? ACTION_ASK[run.action]() : run.label.replace(/^./, (c) => c.toLowerCase()) + (list.length > 1 ? ` (${list.join(', ')})` : '');
+        if (!confirmRun(ask)) return;
+        toast('Running…', 30000);
+        const out = await call('action-run', { action: run.action, jobs: run.jobs, workflows: run.workflows, proposal: key });
+        toast(out.ok ? `${run.label}: ${out.ran ? String(out.ran).replace(/\.$/, '') : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.` : 'Not run: ' + out.error, 6000);
+        loadExternal(['actions', 'health', 'jobs', 'github']);
+    }
+
     async function countdownAct(id, act) {
         const row = ((((S.external.actions || {}).countdowns) || {}).pending || []).find((r) => r.id === id) || {};
         if (act === 'now' && !confirmRun(`do it now: ${(row.label || 'this action').replace(/^./, (c) => c.toLowerCase())} (${row.target || ''})`)) return;
@@ -2391,6 +2411,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const a = msg && (msg.actions || [])[n];
         if (!a) return;
         if (a.input) { card.remove(); openReply(msg); return; }
+        if (a.act === 'open') { card.remove(); openFromPush({ url: a.url, tab: a.tab }); return; }
         card.querySelectorAll('button').forEach((b) => { b.disabled = true; });
         const out = await call('notify-act', { ref: msg.ref, act: a.act });
         toast(out.ok ? out.message || 'Done.' : 'Not done: ' + out.error, 6000);
@@ -2533,6 +2554,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.menu) { const list = $(`[data-list="${t.dataset.menu}"]`); const open = list.hidden; $$('.jv-menu-list').forEach((l) => { l.hidden = true; }); list.hidden = !open; return; }
         $$('.jv-menu-list').forEach((l) => { l.hidden = true; });
         if (t.dataset.proposal) { markProposal(t.dataset.key, t.dataset.proposal); return; }
+        if (t.dataset.propRun) { runProposal(t.dataset.propRun); return; }
         if (t.dataset.runAction) { runAction(t.dataset.runAction, t.dataset.job, t.dataset.key); return; }
         if (t.dataset.countdownAct) { countdownAct(t.dataset.id, t.dataset.countdownAct); return; }
         if (t.dataset.psAct) { pageSpeedAct(t); return; }

@@ -55,7 +55,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 private val ISO = Regex("^\\d{4}-\\d{2}-\\d{2}T")
-private val TABS = mapOf("overview" to "Overview", "business" to "Business", "traffic" to "Traffic", "systems" to "Systems")
+internal val TABS = mapOf("overview" to "Overview", "business" to "Business", "traffic" to "Traffic", "systems" to "Systems")
 
 /** A briefing line's sheet (#1695): what it is about, the numbers behind it, what can be done, Gemini, snooze and share.
  *  The detail comes with the line from the snapshot (jarvis-core briefDetail); hidden lines carry status and until. */

@@ -88,6 +88,17 @@ function mailboxProblem(m, o) {
   return "";
 }
 
+/* What a Pause outreach click pauses (#1977): the active mailboxes Jarvis has not paused that have a problem; when
+   none has one (bounces), every active mailbox on the sending domain. [{ email, why }] */
+function pauseTargets(o) {
+  const paused = new Set(((o && o.pauses) || []).map((p) => p.email));
+  const active = ((o && o.mailboxes) || []).filter((m) => m.status === "active" && !paused.has(m.email));
+  const sick = active.map((m) => ({ email: m.email, why: mailboxProblem(m, o) })).filter((m) => m.why);
+  if (sick.length) return sick;
+  const domain = "@" + String((o && o.domain) || "").toLowerCase();
+  return active.filter((m) => m.email.toLowerCase().endsWith(domain)).map((m) => ({ email: m.email, why: "paused from a proposal" }));
+}
+
 function aiPrompt(alerts, catalog) {
   return [
     "Open alerts no rule fixed. For each one you can fix with exactly one catalog action, pick it; skip the rest.",
@@ -445,4 +456,4 @@ function briefLines(rows, now) {
   return lines;
 }
 
-module.exports = { SAFE, CAPS, LABELS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, COUNTDOWN_HOURS, AI_CALLS, AI_CATALOG, RESUME_PASSES, JARVIS_BRANCH, RISKY_JOBS, RISKY_CI, risky, cleanSettings, cleanRerun, noticeHours, mailboxProblem, aiPrompt, parsePicks, pickOk, usedToday, todayRows, log, seen, recent, autoRun, summary, pushMessage, briefLines };
+module.exports = { SAFE, CAPS, LABELS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, COUNTDOWN_HOURS, AI_CALLS, AI_CATALOG, RESUME_PASSES, JARVIS_BRANCH, RISKY_JOBS, RISKY_CI, risky, cleanSettings, cleanRerun, noticeHours, mailboxProblem, pauseTargets, aiPrompt, parsePicks, pickOk, usedToday, todayRows, log, seen, recent, autoRun, summary, pushMessage, briefLines };

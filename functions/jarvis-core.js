@@ -714,7 +714,7 @@
         { prefix: 'tls', impact: 5, title: 'Renew the TLS certificate', tab: 'systems' },
         { prefix: 'money:disputes', impact: 5, title: 'Answer the open PayPal disputes before PayPal decides them', link: 'https://www.paypal.com/resolutioncenter' },
         { prefix: 'email:blocklist', impact: 5, title: 'Get the sending IP off the blocklist', link: 'https://app.sendgrid.com/' },
-        { prefix: 'outreach:bounce', impact: 5, title: 'Pause outreach and clean the prospect list', tab: 'outreach' },
+        { prefix: 'outreach:bounce', impact: 5, title: 'Pause outreach and clean the prospect list', click: 'pause-outreach', tab: 'outreach' },
         { prefix: 'outreach:links-down', impact: 5, title: 'Deploy the qalabreview.com short-link Worker', tab: 'outreach' },
         { prefix: 'email:spam', impact: 4, title: 'Find which emails were reported as spam and fix the list or the copy', link: 'https://app.sendgrid.com/' },
         { prefix: 'safety:', impact: 4, group: true, title: (n) => `Fix ${n === 1 ? 'the failing safety check' : n + ' failing safety checks'}`, tab: 'systems' },
@@ -725,8 +725,8 @@
         { prefix: 'inbox:unanswered', impact: 4, title: 'Answer the messages that are waiting', tab: 'inbox' },
         { prefix: 'review:conversion', impact: 4, title: 'Make the URL Review page turn more opens into reviews', tab: 'review' },
         { prefix: 'money:none', impact: 4, title: 'Find out why sales stopped', tab: 'business' },
-        { prefix: 'outreach:warmup', impact: 4, title: 'Hold the campaigns until the mailboxes are warm', tab: 'outreach' },
-        { prefix: 'outreach:dns:', impact: 4, group: true, title: 'Fix the sending domain records', tab: 'outreach' },
+        { prefix: 'outreach:warmup', impact: 4, title: 'Hold the campaigns until the mailboxes are warm', click: 'pause-outreach', tab: 'outreach' },
+        { prefix: 'outreach:dns:', impact: 4, group: true, title: 'Fix the sending domain records', click: 'pause-outreach', tab: 'outreach' },
         { prefix: 'review:held', impact: 3, title: 'Re-run the held reviews', action: 'rerun-held', tab: 'systems' },
         { prefix: 'notices:failed', impact: 3, title: 'Re-send the owner notices that failed', action: 'resend-notices', tab: 'review' },
         { prefix: 'hub:stale', impact: 3, title: 'Publish the Social hub', action: 'publish-hub', tab: 'hub' },
@@ -760,7 +760,7 @@
     ];
     const SAFE_ACTIONS = ['rerun-held', 'resend-notices', 'publish-hub'];
     // Actions a proposal offers as a button that only run on a click (#1977).
-    const CLICK_ACTIONS = ['retry-social', 'resume-outreach'];
+    const CLICK_ACTIONS = ['retry-social', 'resume-outreach', 'pause-outreach'];
 
     function proposalRules(state, briefed) {
         const items = (briefed || briefing(state)).slice();
@@ -774,6 +774,7 @@
             const row = out.get(key) || { key, product: item.product, impact: rule.impact, level: item.level, evidence: [], source: 'rules', action: rule.action || null, click: rule.click || null, tab: rule.tab || null, link: rule.link || null, rule };
             row.evidence.push(item.text);
             if (/^(job|scheduler):/.test(item.key)) (row.jobs = row.jobs || []).push(item.key.slice(item.key.indexOf(':') + 1));
+            if (item.key.startsWith('ci:')) (row.workflows = row.workflows || []).push(item.key.slice(3));
             if (item.level === 'alert') row.level = 'alert';
             row.item = row.item || item;
             out.set(key, row);
@@ -783,8 +784,44 @@
             const t = row.rule.title;
             const title = typeof t === 'function' ? t(row.rule.group ? row.evidence.length : row.item) : t;
             const impact = Math.min(5, row.impact + (row.level === 'alert' && row.impact < 5 ? 1 : 0));
-            return { key: row.key, product: row.product, impact, level: row.level, title, evidence: row.evidence.slice(0, 4), source: 'rules', action: row.action, click: row.click, jobs: row.jobs ? Array.from(new Set(row.jobs)).slice(0, 6) : null, tab: row.tab, link: row.link };
+            return { key: row.key, product: row.product, impact, level: row.level, title, evidence: row.evidence.slice(0, 4), source: 'rules', action: row.action, click: row.click,
+                jobs: row.jobs ? Array.from(new Set(row.jobs)).slice(0, 6) : null, workflows: row.workflows ? Array.from(new Set(row.workflows)).slice(0, 6) : null, tab: row.tab, link: row.link };
         }).sort((a, b) => b.impact - a.impact || rank[a.level] - rank[b.level]);
+    }
+
+    const RUN_LABELS = {
+        'rerun-held': 'Send held re-runs', 'resend-notices': 'Re-send failed notices', 'publish-hub': 'Publish the hub',
+        'retry-social': 'Retry failed posts', 'resume-outreach': 'Resume mailboxes', 'pause-outreach': 'Pause outreach'
+    };
+
+    const pageSpeedPr = (key) => Number((/^pagespeed:pr:(\d+)$/.exec(key || '') || [])[1]) || 0;
+
+    /* What a proposal's run button does (#1977), or null: { action, label, jobs?, workflows?, pr? } for the jarvis
+       action-run op. A PageSpeed PR merges; otherwise its own action, then its click, then its failed jobs or workflows. */
+    function proposalRun(p) {
+        if (!p) return null;
+        const pr = pageSpeedPr(p.key);
+        if (pr) return { action: 'pagespeed-merge', pr, label: `Merge #${pr}` };
+        const many = (list, one, n) => (list.length === 1 ? one(list[0]) : n(list.length));
+        if (SAFE_ACTIONS.includes(p.action) || CLICK_ACTIONS.includes(p.click)) {
+            const action = SAFE_ACTIONS.includes(p.action) ? p.action : p.click;
+            return { action, label: RUN_LABELS[action] };
+        }
+        if (p.jobs && p.jobs.length) return { action: 'run-job', jobs: p.jobs.slice(0, 6), label: many(p.jobs, (j) => `Run ${j} again`, (n) => `Run ${n} jobs again`) };
+        if (p.workflows && p.workflows.length) return { action: 'rerun-ci', workflows: p.workflows.slice(0, 6), label: many(p.workflows, (w) => `Re-run ${w}`, (n) => `Re-run ${n} workflows`) };
+        return null;
+    }
+
+    /* A proposal's buttons on its card and its push (#1977), at most 3: its run, then Open, then Dismiss; Done only
+       when there is nothing to run. A PageSpeed PR gets Close in Open's place. act is run, close, open, done or
+       dismissed; open carries tab or link. */
+    function proposalButtons(p) {
+        const run = proposalRun(p);
+        if (run && run.action === 'pagespeed-merge') return [Object.assign({ act: 'run' }, run), { act: 'close', action: 'pagespeed-close', pr: run.pr, label: `Close #${run.pr}` }, { act: 'dismissed', label: 'Dismiss' }];
+        const tab = p && p.tab && p.tab !== 'overview' ? p.tab : null;
+        const open = p && p.link ? { act: 'open', label: 'Open ↗', link: p.link }
+            : tab ? { act: 'open', label: 'Open ' + ((PRODUCTS.find((x) => x.key === tab) || {}).name || tab), tab } : null;
+        return [run && Object.assign({ act: 'run' }, run), open, run ? null : { act: 'done', label: 'Done' }, { act: 'dismissed', label: 'Dismiss' }].filter(Boolean).slice(0, 3);
     }
 
     // Done hides a proposal for a week, Dismiss for a month; a saved state is { key, status, until }.
@@ -1076,7 +1113,7 @@
         return cleanDevice({ kind, posture, width: o.width, height: o.height, name: o.name, model: o.model, app: 'web' });
     }
 
-    const api = { DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
+    const api = { DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, proposalRules, pageSpeedPr, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);
