@@ -25,8 +25,11 @@ function caps() {
         browserName: 'Chrome',
         'appium:automationName': 'UiAutomator2',
         'appium:deviceName': device.name,
+        ...(device.id ? { 'appium:udid': device.id } : {}),
         ...(device.avd ? { 'appium:avd': device.avd } : {}),
-        'appium:noReset': true
+        'appium:noReset': true,
+        'appium:uiautomator2ServerLaunchTimeout': 120000,
+        'appium:chromedriverAutodownload': true
       };
     }
   }
@@ -51,7 +54,7 @@ exports.config = {
   services: [
     ['appium', {
       command: path.join(__dirname, '..', 'node_modules', '.bin', 'appium'),
-      args: { basePath: '/', allowCors: true }
+      args: { basePath: '/', allowCors: true, allowInsecure: 'uiautomator2:chromedriver_autodownload' }
     }]
   ],
   capabilities: [caps()],

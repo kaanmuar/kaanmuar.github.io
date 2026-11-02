@@ -2,6 +2,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { findChromedriver } = require('../tests/native/chrome');
+const { PORT } = require('../tests/native/server');
 
 const root = path.join(__dirname, '..');
 const home = path.join(root, '.appium');
@@ -58,6 +59,9 @@ async function main() {
     if (!fs.existsSync(uia2)) {
       await run(appium, ['driver', 'install', '--source', 'npm', drivers.android]);
     }
+    // 127.0.0.1 on the device is the device itself, so the test server's port is forwarded from the host.
+    const adb = process.env.ANDROID_HOME ? path.join(process.env.ANDROID_HOME, 'platform-tools', 'adb') : 'adb';
+    await run(adb, [...(device.id ? ['-s', device.id] : []), 'reverse', 'tcp:' + PORT, 'tcp:' + PORT]);
   } else if (!fs.existsSync(driverDir)) {
     await run(appium, ['driver', 'install', '--source', 'npm', drivers.chromium]);
   }
