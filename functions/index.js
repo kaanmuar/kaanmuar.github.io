@@ -2165,11 +2165,16 @@ async function sweepReviews() {
   const cap = ops.budget("sweepPerDay", process.env);
   let state = (await ref.get()).data() || {};
   if (sweep.doneOn(state, day) >= cap) return "daily cap reached";
-  const [index, unlisted, outreachDoc] = await Promise.all([sweepJson("index.json"), unlistedHosts(), db.collection("url_review_sweep").doc("outreach").get()]);
+  const [index, unlisted] = await Promise.all([sweepJson("index.json"), unlistedHosts()]);
   const countries = Object.keys(index.countries || {}).filter((cc) => index.countries[cc] > 0);
   if (!countries.length) return "no seeds";
-  const outreach = (outreachDoc.data() || {}).hosts || [];
   const seeds = new Map();
+  const next = async (at) => {
+    const slot = sweep.nextSlot(at, countries);
+    if (!seeds.has(slot.cc)) seeds.set(slot.cc, (await sweepJson(slot.cc + ".json")).hosts || []);
+    const hosts = seeds.get(slot.cc);
+    return { state: slot.state, target: hosts.length ? { host: hosts[slot.at % hosts.length], cc: slot.cc, month: index.month || "", rank: (slot.at % hosts.length) + 1 } : null };
+  };
   const notes = [];
   for (let n = 0; n < sweep.PER_TICK; n += 1) {
     if (sweep.doneOn(state, day) >= cap) {
@@ -2177,7 +2182,7 @@ async function sweepReviews() {
       break;
     }
     if (!sweep.roomForReview(Date.now() - tickStarted)) break;
-    const tick = await sweepOne(state, day, countries, index, unlisted, seeds, outreach);
+    const tick = await sweepOne(state, day, unlisted, next);
     state = tick.state;
     await ref.set(state);
     notes.push(tick.note);
@@ -2186,24 +2191,16 @@ async function sweepReviews() {
   return notes.join("; ");
 }
 
-// The next outreach prospect, else the next site of the lap, reviewed and tallied.
+// The next site from next(state) (the lap's, or the outreach lane's), reviewed and tallied.
 // Returns the moved-on state, a note, and whether a review ran.
-async function sweepOne(state, day, countries, index, unlisted, seeds, outreach) {
+async function sweepOne(state, day, unlisted, next) {
   let target = null;
   for (let tries = 0; tries < 8 && !target; tries += 1) {
-    let candidate;
-    const pick = sweep.nextOutreach(state, outreach, day);
-    if (pick) {
-      state = pick.state;
-      candidate = pick.target;
-    } else {
-      const slot = sweep.nextSlot(state, countries);
-      state = slot.state;
-      if (!seeds.has(slot.cc)) seeds.set(slot.cc, (await sweepJson(slot.cc + ".json")).hosts || []);
-      const hosts = seeds.get(slot.cc);
-      if (!hosts.length) continue;
-      candidate = { host: hosts[slot.at % hosts.length], cc: slot.cc, month: index.month || "", rank: (slot.at % hosts.length) + 1 };
-    }
+    const pick = await next(state);
+    if (!pick) break;
+    state = pick.state;
+    const candidate = pick.target;
+    if (!candidate) continue;
     const bare = reviewPublish.bare(candidate.host);
     if (!candidate.host || unlisted.some((u) => bare === u || bare.endsWith("." + u)) || await reviewedLately(candidate.host)) {
       state = sweep.tally(state, day, "skipped", Object.assign({}, candidate, { at: new Date().toISOString(), outcome: "skipped" }));
@@ -2232,8 +2229,33 @@ async function sweepOne(state, day, countries, index, unlisted, seeds, outreach)
   return { state, note, reviewed: true };
 }
 
+// The outreach lane (#2363): prospects and peer-group sites from url_review_sweep/outreach, all day, apart from the
+// country lap's night cap. Its cursor and tallies live in url_review_sweep/lane.
+async function outreachSweep() {
+  if (process.env.SWEEP_LIVE !== "1") return "off: SWEEP_LIVE is not 1";
+  const tickStarted = Date.now();
+  const col = getFirestore().collection("url_review_sweep");
+  const day = new Date().toISOString().slice(0, 10);
+  const cap = ops.budget("outreachPerDay", process.env);
+  const [laneDoc, stateDoc, listDoc, unlisted] = await Promise.all([col.doc("lane").get(), col.doc("state").get(), col.doc("outreach").get(), unlistedHosts()]);
+  let lane = sweep.laneStart(laneDoc.data(), stateDoc.data());
+  const list = (listDoc.data() || {}).hosts || [];
+  const next = (at) => sweep.nextOutreach(at, list, day, cap);
+  const notes = [];
+  for (let n = 0; n < sweep.PER_TICK; n += 1) {
+    if (!sweep.roomForReview(Date.now() - tickStarted)) break;
+    const tick = await sweepOne(lane, day, unlisted, next);
+    lane = tick.state;
+    await col.doc("lane").set(lane);
+    notes.push(tick.note);
+    if (!tick.reviewed) break;
+  }
+  return notes.join("; ");
+}
+
 // One sweep review, saved like any other: its url_reviews row, the counts, and its queued owner notice.
 // Also the path a re-run of a failed sweep review takes, so it has no asker to email.
+// Outreach reviews queue no notice: the campaign's own mail reaches those owners.
 async function sweepReview(target, controls) {
   const value = sweep.intake(target);
   const report = await urlReview.reviewTarget(value.url, Object.assign({
@@ -2247,6 +2269,7 @@ async function sweepReview(target, controls) {
   const record = Object.assign(urlReview.intakeRecord(value, report, { country: target.cc.toUpperCase() }), { source: "sweep", sweep: target });
   await getFirestore().collection("url_reviews").doc(record.id).set(record);
   await countReviewed(record.report);
+  if (target.outreach) return { record, report };
   try {
     await queueOwnerNotice(record, { search: false });
   } catch (error) {
@@ -2275,15 +2298,24 @@ exports.sweepReviews = require("firebase-functions/v2/scheduler").onSchedule({
   secrets: SECRETS.sweep
 }, () => track("sweepReviews", () => sweepReviews()));
 
+exports.outreachSweep = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("outreachSweep"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: sweep.TICK_SECONDS,
+  memory: "1GiB",
+  maxInstances: 1,
+  secrets: SECRETS.sweep
+}, () => track("outreachSweep", () => outreachSweep()));
+
 // Local-business prospects from Google Maps for tonight's sweep (#2120); see functions/url-review-prospects.js.
 async function placesProspects() {
   const key = process.env.PLACES_KEY;
   if (!key) return "no PLACES_KEY";
   const db = getFirestore();
   const sweepRef = db.collection("url_review_sweep");
-  const [stateSnap, outreachSnap, sweepSnap] = await Promise.all([sweepRef.doc("places").get(), sweepRef.doc("outreach").get(), sweepRef.doc("state").get()]);
+  const [stateSnap, outreachSnap, sweepSnap, laneSnap] = await Promise.all(["places", "outreach", "state", "lane"].map((name) => sweepRef.doc(name).get()));
   const hosts = (outreachSnap.data() || {}).hosts || [];
-  const waiting = Math.max(0, hosts.length - (Number((sweepSnap.data() || {}).outreachAt) || 0));
+  const waiting = Math.max(0, hosts.length - sweep.outreachView(sweepSnap.data(), laneSnap.data()).outreachAt);
   const day = new Date().toISOString().slice(0, 10);
   const out = await prospects.night({
     state: stateSnap.data(), known: new Set(hosts.map((h) => h.host)), waiting, day,
