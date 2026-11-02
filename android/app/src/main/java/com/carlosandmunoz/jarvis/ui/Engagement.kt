@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,6 +75,26 @@ object Engagement {
     fun headline(post: JsonObject, max: Int = 160): String =
         (post.str("title")?.ifEmpty { null } ?: post.str("text").orEmpty()).replace(Regex("https?://\\S+"), "").replace(Regex("\\s+"), " ").trim().take(max)
 
+    /** Likes, reposts and follows the poster carried out (#1990): done when live, dry in a dry run. */
+    fun carried(t: JsonObject?, kind: String): Double = listOf("like", "repost", "follow").sumOf { t.num("${it}_$kind") ?: 0.0 }
+
+    /** One account row: "connected as qalaburlreview · bot flag on", "not connected", plus the last error; the Mac's say "signed in". */
+    fun account(a: JsonObject): String = listOfNotNull(
+        if (a.str("via") == "mac") (if (a.bool("connected") == true) "Mac · signed in as ${a.str("account").orEmpty()}" else "Mac · not signed in")
+        else if (a.bool("connected") == true) "connected as ${a.str("account").orEmpty()}" else "not connected",
+        if (a.bool("bot") == true) "bot flag on" else null,
+        a.str("error")?.ifEmpty { null }?.let { "last error: $it" }
+    ).joinToString(" · ")
+
+    /** The Mac's browser agent (#1991) as it last checked in. */
+    fun mac(m: JsonObject?): String {
+        val at = m?.str("at")?.ifEmpty { null } ?: return "The Mac's browser agent is not installed yet: run scripts/engagement-mac/run.sh install on the Mac."
+        val host = m.str("host")?.ifEmpty { null }?.let { " on $it" }.orEmpty()
+        val read = m.str("readAt")?.ifEmpty { null }?.let { ", last read ${ago(it)?.replaceFirstChar { c -> c.lowercase() } ?: it}" }.orEmpty()
+        return "The Mac's browser agent$host last checked in ${ago(at)?.replaceFirstChar { it.lowercase() } ?: at}$read."
+    }
+
+    val APP_PASSWORD = Regex("^[a-z0-9]{4}(-[a-z0-9]{4}){3}$", RegexOption.IGNORE_CASE)
     const val SHOWN = 5
 }
 
@@ -91,8 +112,10 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
     val t = r.obj("totals")
     val waiting = g.objs("waiting")
     val paused = g.bool("paused") == true
+    val live = g.bool("live") == true
     val last = g.obj("lastRun")
     val names = g.objs("networks").associate { (it.str("network") ?: "") to (it.str("name") ?: "") }
+    val uri = LocalUriHandler.current
 
     Panel("Engagement") {
         KpiPairs(listOf(
@@ -100,8 +123,10 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
             KpiData("Likes planned", fmt(t.num("like"))),
             KpiData("Reposts planned", fmt(t.num("repost"))),
             KpiData("Follows planned", fmt(t.num("follow"))),
+            KpiData(if (live) "Done" else "Done (dry run)", fmt(Engagement.carried(t, if (live) "done" else "dry")),
+                delta = Engagement.carried(t, "dry").takeIf { live && it > 0 }?.let { "${fmt(it)} in the dry run" }),
             KpiData("Replies waiting", waiting.size.toString(), alert = waiting.isNotEmpty()),
-            KpiData("Approved", fmt((t.num("approved") ?: 0.0) + (t.num("edited") ?: 0.0))),
+            KpiData("Replies posted", fmt(t.num("posted")), delta = "${fmt((t.num("approved") ?: 0.0) + (t.num("edited") ?: 0.0))} approved"),
             KpiData("Approval rate", r.num("approvalRate")?.let { "${fmt(it)}%" } ?: "—"),
             KpiData("Scout", if (paused) "paused" else if (g.bool("stale") == true) "stale" else if (last == null) "never ran" else "running",
                 delta = ago(last.str("at")), alert = paused || g.bool("stale") == true)
@@ -112,11 +137,13 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
         if (waiting.isEmpty()) { Muted(if (paused) "Paused: no replies are drafted." else "No reply is waiting. Drafts arrive here and as a push when the scout finds a post worth answering."); return@Panel }
         (if (all) waiting else waiting.take(Engagement.SHOWN)).forEach { p -> Draft(p, names, s, vm, ::ask) }
         if (waiting.size > Engagement.SHOWN) TextButton({ all = !all }) { Text(if (all) "Show fewer" else "Show all ${waiting.size}", color = J.cyan, fontSize = 13.sp) }
-        Muted("Approve sends your edit when you changed the text. Approved replies go out once the network's poster ships (#1990, #1991).")
+        Muted("Approve sends your edit when you changed the text. An approved reply posts at once on Bluesky, Mastodon and YouTube; on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent (#1991).")
     }
 
     Panel("Scout") {
         KeyRow("State", if (paused) "paused" else "running", if (paused) J.pink else J.green)
+        KeyRow("Likes, reposts, follows", if (live) "live" else "dry run", if (live) J.green else J.amber)
+        last?.let { KeyRow("Done last run", if (live) "${fmt(it.num("done"))} done · ${fmt(it.num("posted"))} replies posted" else "${fmt(it.num("dry"))} dry · ${fmt(it.num("posted"))} replies posted") }
         KeyRow("Last run", ago(last.str("at")) ?: "never", if (g.bool("stale") == true) J.pink else J.text)
         KeyRow("New in field last run", fmt(last.num("fresh")))
         KeyRow("Replies drafted last run", fmt(last.num("drafted")))
@@ -127,17 +154,24 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
                     vm.market("eg:pause", "engagement-settings", mapOf("settings" to JsonObject(mapOf("paused" to JsonPrimitive(!paused))))) { if (paused) "Engagement is running again." else "Engagement is paused." }
                 }
             }
-            ActionButton("Run the scout now", "run:engagementScout" in s.running) {
-                vm.act("run:engagementScout", "run-job", mapOf("job" to JsonPrimitive("engagementScout"))) { "The scout is running; pull down in a minute." }
+            ActionButton(if (live) "Back to a dry run" else "Go live", "eg:live" in s.running) {
+                ask(if (live) "go back to a dry run, where planned actions are only logged" else "go live: planned likes, reposts and follows go out on the connected networks, within the daily caps") {
+                    vm.market("eg:live", "engagement-settings", mapOf("settings" to JsonObject(mapOf("live" to JsonPrimitive(!live))))) { if (live) "Back to a dry run." else "Live: the next scout run carries out the plan." }
+                }
             }
         }
+        ActionButton("Run the scout now", "run:engagementScout" in s.running) {
+            vm.act("run:engagementScout", "run-job", mapOf("job" to JsonPrimitive("engagementScout"))) { "The scout is running; pull down in a minute." }
+        }
     }
+
+    Accounts(g, s, vm, ::ask)
 
     Panel("Networks") {
         g.objs("networks").forEach { n ->
             val net = n.str("network").orEmpty()
             val reads = n.str("reads").orEmpty()
-            StatusRow(when (reads) { "API" -> "good"; "needs a key" -> "alert"; else -> "info" }, n.str("name").orEmpty(),
+            StatusRow(if (reads == "API") "good" else if (reads.startsWith("needs")) "alert" else "info", n.str("name").orEmpty(),
                 listOfNotNull(reads, n.num("lastRead")?.takeIf { it > 0 }?.let { "${fmt(it)} read last run" }, n.str("error")?.ifEmpty { null },
                     if (Engagement.LIMIT.containsKey(net)) Engagement.usage(g, net) else null, n.str("acts")).joinToString(" · "))
         }
@@ -149,10 +183,11 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
         BarChart(daily.map { it.num("candidates") ?: 0.0 }, daily.map { it.str("day").orEmpty().takeLast(5) }, J.cyan)
         Muted("Replies drafted")
         BarChart(daily.map { it.num("drafted") ?: 0.0 }, daily.map { it.str("day").orEmpty().takeLast(5) }, J.amber)
+        Muted(if (live) "Likes, reposts and follows done" else "Likes, reposts and follows in the dry run")
+        BarChart(daily.map { it.num(if (live) "done" else "dry") ?: 0.0 }, daily.map { it.str("day").orEmpty().takeLast(5) }, J.pink)
     }
 
     Panel("Top posts in our field") {
-        val uri = LocalUriHandler.current
         val posts = g.objs("posts")
         if (posts.isEmpty()) { Muted("No posts from our field in this range yet."); return@Panel }
         posts.take(15).forEach { p ->
@@ -187,7 +222,9 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
     if (approved.isNotEmpty()) Panel("Approved replies") {
         approved.take(10).forEach { p ->
             val reply = p.obj("actions").obj("reply")
-            StatusRow("good", (names[p.str("network")] ?: "") + " · " + Engagement.headline(p, 70), reply.str("draft"))
+            val status = reply.str("status").orEmpty()
+            StatusRow(when (status) { "posted" -> "good"; "failed" -> "alert"; else -> "info" }, "$status · " + (names[p.str("network")] ?: "") + " · " + Engagement.headline(p, 70),
+                listOfNotNull(reply.str("draft"), reply.str("error")?.ifEmpty { null }).joinToString("\n"), url = reply.str("url")?.takeIf { it.startsWith("https://") })
         }
     }
 
@@ -245,6 +282,47 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
             p.str("url")?.takeIf { it.startsWith("https://") }?.let { url -> TextButton({ uri.openUri(url) }) { Text("Open", color = J.cyan, fontSize = 13.sp) } }
         }
         Muted("Expires ${ago(reply.str("expiresAt"))?.replaceFirstChar { it.lowercase() } ?: reply.str("expiresAt").orEmpty()}")
+    }
+}
+
+/** The accounts the poster acts as (#1990): Connect opens YouTube's or Mastodon's sign-in; Bluesky takes an app password; the Mac's networks (#1991) sign in on the Mac. */
+@Composable
+private fun Accounts(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (String, () -> Unit) -> Unit) {
+    val uri = LocalUriHandler.current
+    val accounts = g.objs("accounts")
+    if (accounts.isEmpty()) return
+    Panel("Accounts") {
+        accounts.forEach { a ->
+            val net = a.str("network").orEmpty()
+            val name = a.str("name").orEmpty()
+            val connected = a.bool("connected") == true
+            StatusRow(if (!connected) "alert" else if (a.str("error").isNullOrEmpty()) "good" else "warn", name, Engagement.account(a))
+            if (net == "bluesky") {
+                var handle by rememberSaveable { mutableStateOf(a.str("account")?.ifEmpty { null } ?: "qalaburlreview.bsky.social") }
+                var password by remember { mutableStateOf("") }
+                OutlinedTextField(handle, { handle = it.trim() }, label = { Text("Bluesky handle") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(password, { password = it.trim() }, label = { Text("App password (xxxx-xxxx-xxxx-xxxx)") }, singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+                ActionButton(if (connected) "Replace" else "Connect Bluesky", "eg:connect:bluesky" in s.running || !Engagement.APP_PASSWORD.matches(password)) {
+                    val sent = password
+                    password = ""
+                    vm.market("eg:connect:bluesky", "engagement-connect", mapOf("network" to json("bluesky"), "handle" to json(handle), "password" to json(sent))) { out -> out.str("message") ?: "Bluesky is connected." }
+                }
+                Muted("bsky.app > Settings > Privacy and security > App passwords. Never the account password.")
+            } else if (a.str("via") == "mac") {
+                ActionButton(if (connected) "Sign in again on the Mac" else "Sign in on the Mac", "eg:connect:$net" in s.running) {
+                    vm.market("eg:connect:$net", "engagement-connect", mapOf("network" to json(net))) { out -> out.str("message") ?: "Asked the Mac." }
+                }
+            } else {
+                ActionButton(if (connected) "Reconnect $name" else "Connect $name", "eg:connect:$net" in s.running) {
+                    vm.connectEngagement(net) { url -> runCatching { uri.openUri(url) } }
+                }
+            }
+            if (connected && a.str("via") != "mac") TextButton({ ask("disconnect $name, so nothing goes out there") { vm.market("eg:connect:$net", "engagement-connect", mapOf("network" to json(net), "disconnect" to json(true))) { out -> out.str("message") ?: "Disconnected." } } }) {
+                Text("Disconnect", color = J.muted, fontSize = 13.sp)
+            }
+        }
+        Muted(Engagement.mac(g.obj("mac")) + " It reads and acts on X, LinkedIn, Facebook, Instagram, Threads and TikTok in its own Chrome, every 5 minutes. Sign in on the Mac opens the network there within 5 minutes. Mastodon is marked as a bot when it connects.")
     }
 }
 

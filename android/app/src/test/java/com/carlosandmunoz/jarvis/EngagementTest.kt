@@ -46,6 +46,31 @@ class EngagementTest {
         assertEquals("Lighthouse 13 is out", Engagement.headline(json("""{"title":"Lighthouse 13 is out","text":"https://x.dev long body"}""")))
     }
 
+    @Test fun doneCountsTheCarriedOutLikesRepostsAndFollows() {
+        val t = json("""{"like_done":4,"repost_done":1,"follow_done":2,"like_dry":9,"act_failed":3}""")
+        assertEquals(7.0, Engagement.carried(t, "done"), 0.0)
+        assertEquals(9.0, Engagement.carried(t, "dry"), 0.0)
+        assertEquals(0.0, Engagement.carried(null, "done"), 0.0)
+    }
+
+    @Test fun anAccountRowSaysAsWhomTheBotFlagAndTheLastError() {
+        assertEquals("connected as qalaburlreview · bot flag on", Engagement.account(json("""{"connected":true,"account":"qalaburlreview","bot":true,"error":""}""")))
+        assertEquals("not connected", Engagement.account(json("""{"connected":false,"account":""}""")))
+        assertEquals("connected as QA-lab URL Review · last error: 401", Engagement.account(json("""{"connected":true,"account":"QA-lab URL Review","error":"401"}""")))
+    }
+
+    @Test fun theMacsNetworksSaySignedInAndTheAgentSaysWhenItCheckedIn() {
+        assertEquals("Mac · signed in as @qalaburlreview", Engagement.account(json("""{"via":"mac","connected":true,"account":"@qalaburlreview"}""")))
+        assertEquals("Mac · not signed in · last error: X shows a captcha.", Engagement.account(json("""{"via":"mac","connected":false,"account":"","error":"X shows a captcha."}""")))
+        assertTrue(Engagement.mac(null).contains("not installed yet"))
+        assertTrue(Engagement.mac(json("""{"at":"2026-11-01T18:00:00Z","host":"mac-mini"}""")).startsWith("The Mac's browser agent on mac-mini last checked in"))
+    }
+
+    @Test fun onlyAnAppPasswordEnablesConnectBluesky() {
+        assertTrue(Engagement.APP_PASSWORD.matches("abcd-efgh-ijkl-mnop"))
+        assertTrue(!Engagement.APP_PASSWORD.matches("my real password"))
+    }
+
     @Test fun engagementIsAProductsChipSoItsPushesOpenIt() {
         assertTrue(CHIPS.any { it.first == "engagement" })
     }

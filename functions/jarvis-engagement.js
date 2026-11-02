@@ -5,19 +5,24 @@
  *   engagement_posts/<network>_<hash>  each post in our field the scout kept: metrics, score, Gemini's read, the plan
  *   engagement_daily/<YYYY-MM-DD>      counters per Bogotá day (read, candidates, actions, the reply funnel, topics)
  *   engagement_runs/<ISO>              one per scout run
+ *   engagement_inbox/<ISO>             posts the Mac's browser agent read (#1991), taken by the next scout run
  *   engagement_reports/<period>-<day>  the daily, weekly and monthly reports as sent
- *   jarvis_settings/engagement         pause, caps, thresholds, competitors, own handles
+ *   jarvis_settings/engagement         pause, live (or a dry run), caps, thresholds, competitors, own handles
+ *   engagement_private/*               the accounts the poster acts as (functions/engagement-act.js)
  *
- * deps: { db, fetch, env, now, inc (n => FieldValue.increment(n)), push (msg => Promise), mail (msg => Promise) }
+ * deps: { db, fetch, env, now, inc (n => FieldValue.increment(n)), push (msg => Promise), mail (msg => Promise),
+ *         keys ({ clientId, secret }: the Google OAuth client YouTube refreshes through) }
  */
 const E = require("./engagement");
 const Sources = require("./engagement-sources");
+const Act = require("./engagement-act");
 
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const STALE = 75 * 60 * 1000;
 const PUSH_PER_RUN = 5;
 const DAY = 24 * 3600000;
 const CACHE_DAYS = [1, 7, 30, 90, 365];
+const INBOX_AGE = 2 * 3600000;
 
 const settingsRef = (db) => db.collection("jarvis_settings").doc("engagement");
 
@@ -71,13 +76,40 @@ function usedToday(daily) {
   return used;
 }
 
+/**
+ * What the Mac's browser agent read since the last run (#1991): engagement_inbox/<ISO> { at, posts, read, errors },
+ * taken once. Posts older than INBOX_AGE are dropped: by then the plan's window is mostly gone.
+ */
+async function inbox(db, now) {
+  const snap = await db.collection("engagement_inbox").limit(40).get();
+  const out = { posts: [], read: {}, errors: {} };
+  for (const d of snap.docs) {
+    const x = d.data();
+    if (Date.parse(x.at) > now - INBOX_AGE) {
+      (x.posts || []).filter((p) => p && p.id && p.url && (E.NETWORKS[p.network] || {}).browser).forEach((p) => out.posts.push(p));
+      Object.entries(x.read || {}).forEach(([k, n]) => { out.read[k] = (out.read[k] || 0) + (Number(n) || 0); });
+      Object.assign(out.errors, x.errors || {});
+    }
+    await d.ref.delete();
+  }
+  return out;
+}
+
+function addInbox(read, got) {
+  if (!got) return;
+  read.posts.push(...got.posts);
+  Object.entries(got.read).forEach(([k, n]) => { read.read[k] = (read.read[k] || 0) + n; });
+  Object.assign(read.errors, got.errors);
+}
+
 /** One scout run. Returns the run document. */
 async function scout(deps) {
   const { db, now, env, inc } = deps;
   const started = Date.now();
   const conf = await readSettings(db);
   const expired = await expire(deps).catch(() => 0);
-  const read = await Sources.readAll({ fetch: deps.fetch, env, now });
+  const read = await Sources.readAll({ fetch: deps.fetch, env: withAccounts(env, await Act.readCreds(db).catch(() => ({}))), now });
+  addInbox(read, await inbox(db, now).catch(() => null));
 
   // Our field only, once each, best first.
   const seen = new Map();
@@ -140,18 +172,36 @@ async function scout(deps) {
   let pushed = 0;
   if (!conf.paused && deps.push) for (const d of waiting.slice(0, PUSH_PER_RUN)) { await deps.push(E.replyPush(d)).catch(() => null); pushed += 1; }
 
+  let acted = {};
+  let actError = "";
+  try { acted = await Act.carryOut(deps, conf); } catch (error) { actError = String(error.message || error).slice(0, 200); }
+  const sum = (k) => Object.values(acted).reduce((a, x) => a + (x[k] || 0), 0);
+
   const run = {
-    at: new Date(now).toISOString(), ms: Date.now() - started, paused: conf.paused, read: read.read, errors: read.errors, skipped: read.skipped,
+    at: new Date(now).toISOString(), ms: Date.now() - started, paused: conf.paused, live: conf.live, read: read.read, errors: read.errors, skipped: read.skipped,
     candidates: candidates.length, fresh: fresh.length, updated: stale.length, risen: again.length, asked: asked.length, aiError,
-    engaged: decided.filter((d) => d.verdict === "engage").length, drafted: waiting.length, pushed, expired
+    engaged: decided.filter((d) => d.verdict === "engage").length, drafted: waiting.length, pushed, expired,
+    done: sum("done"), dry: sum("dry"), missed: sum("missed"), posted: sum("posted"), actFailed: sum("failed"), acted, actError
   };
   await db.collection("engagement_runs").doc(run.at).set(run);
   await clearCache(db);
   return run;
 }
 
+const actNote = (r) => {
+  const errs = Object.entries(r.acted || {}).filter(([, x]) => x.error).map(([k, x]) => k + ": " + x.error);
+  return (r.done || r.posted ? "; done " + (r.done || 0) + ", replies posted " + (r.posted || 0) : "") + (r.dry ? "; dry run " + r.dry : "")
+    + (r.actFailed ? "; " + r.actFailed + " actions failed" : "") + (errs.length ? "; poster: " + errs.join("; ") : "") + (r.actError ? "; poster: " + r.actError : "");
+};
 const runNote = (r) => Object.values(r.read).reduce((a, b) => a + b, 0) + " read, " + r.fresh + " new in field, " + r.engaged + " to engage, " + r.drafted + " replies drafted"
-  + (Object.keys(r.errors).length ? "; failed: " + Object.keys(r.errors).join(", ") : "") + (r.aiError ? "; Gemini: " + r.aiError : "") + (r.paused ? "; paused" : "");
+  + actNote(r) + (Object.keys(r.errors).length ? "; failed: " + Object.keys(r.errors).join(", ") : "") + (r.aiError ? "; Gemini: " + r.aiError : "") + (r.paused ? "; paused" : "");
+
+/** The scout reads Bluesky as the connected account when there is no BLUESKY_* secret. */
+function withAccounts(env, creds) {
+  const b = (creds || {}).bluesky;
+  if (!b || (env && env.BLUESKY_HANDLE && env.BLUESKY_APP_PASSWORD)) return env || {};
+  return Object.assign({}, env, { BLUESKY_HANDLE: b.handle, BLUESKY_APP_PASSWORD: b.password });
+}
 
 async function clearCache(db) {
   const cache = db.collection("jarvis_cache");
@@ -221,14 +271,40 @@ async function decide(deps, body, by) {
     return { network: doc.network, d };
   });
   await db.collection("engagement_daily").doc(E.bogotaDay(now)).set(increments({ n: { [out.network]: { [out.d.counter]: 1 } }, decided: 1, decideMs: out.d.waited }, inc), { merge: true });
+  const net = E.NETWORKS[out.network] || {};
+  const name = net.name || out.network;
+  if (out.d.counter === "dismissed") { await clearCache(db); return { key, status: "dismissed", message: "Dismissed." }; }
+  const said = out.d.counter === "edited" ? "Your version is approved" : "Approved";
+  if ((await readSettings(db)).paused) { await clearCache(db); return { key, status: "approved", message: said + "; engagement is paused, so it goes out on " + name + " when you resume." }; }
+  if (!net.api) {
+    await clearCache(db);
+    const mac = await Act.macStatus(db).catch(() => ({}));
+    const late = !mac.at || now - Date.parse(mac.at) > Act.MAC_LATE;
+    return { key, status: "approved", message: said + "; " + (late ? "it goes out on " + name + " once the Mac's browser agent is back (" + (mac.at ? "last seen " + mac.at.slice(0, 16).replace("T", " ") + " UTC" : "not installed yet") + ")." : "the Mac posts it on " + name + " within 5 minutes.") };
+  }
+  const sent = await Act.replyNow(deps, key).catch((error) => ({ status: "approved", error: error.message }));
   await clearCache(db);
-  const name = (E.NETWORKS[out.network] || {}).name || out.network;
-  const message = out.d.counter === "dismissed" ? "Dismissed." : (out.d.counter === "edited" ? "Your version is approved" : "Approved") + "; it goes out on " + name + " when the " + name + " poster is live (#1990, #1991).";
-  return { key, status: out.d.reply.status, message };
+  if (sent.status === "posted") return { key, status: "posted", url: sent.url || "", message: "Posted on " + name + "." };
+  if (sent.status === "failed") return { key, status: "failed", message: "Not posted on " + name + ": " + sent.error };
+  return { key, status: "approved", message: said + "; " + name + " did not take it yet (" + (sent.error || "not sent") + "), so the next scout run tries again." };
+}
+
+/** Jarvis > Engagement > Accounts: save Bluesky's app password, start Connect YouTube or Mastodon, disconnect, or ask the Mac to sign in. */
+async function connect(deps, body, redirect) {
+  const network = String((body && body.network) || "");
+  let out;
+  if ((E.NETWORKS[network] || {}).browser) out = await Act.askMacLogin(deps, network);
+  else if (body && body.disconnect) out = await Act.disconnect(deps.db, network);
+  else if (network === "bluesky") out = await Act.saveBluesky(deps, body);
+  else out = Object.assign({ network }, await Act.connectUrl(deps, network, redirect, deps.keys || {}));
+  await clearCache(deps.db);
+  return out;
 }
 
 async function saveSettings(db, body, by, now) {
-  const next = E.settingsPatch(await readSettings(db), body);
+  const cur = await readSettings(db);
+  const next = E.settingsPatch(cur, body);
+  if (next.live !== cur.live) next.liveAt = new Date(now).toISOString();
   next.updatedAt = new Date(now).toISOString();
   next.by = String(by || "");
   await settingsRef(db).set(next);
@@ -237,12 +313,9 @@ async function saveSettings(db, body, by, now) {
 }
 
 const STAGE = {
-  bluesky: "API: likes, reposts, follows and replies post once #1990 ships",
-  mastodon: "API: likes, boosts, follows and replies post once #1990 ships",
-  youtube: "API: likes and comments post once #1990 ships (needs the channel's OAuth)",
-  x: "reads and acts once the Mac browser agent ships (#1991)", linkedin: "reads and acts once the Mac browser agent ships (#1991)",
-  facebook: "reads and acts once the Mac browser agent ships (#1991)", instagram: "reads and acts once the Mac browser agent ships (#1991)",
-  threads: "reads and acts once the Mac browser agent ships (#1991)", tiktok: "reads and acts once the Mac browser agent ships (#1991)",
+  bluesky: "likes, reposts, follows and replies", mastodon: "likes, boosts, follows and replies", youtube: "likes, subscribes and comments",
+  x: "likes, reposts, follows and replies", linkedin: "likes, reposts and comments", facebook: "likes and comments",
+  instagram: "likes, follows and comments", threads: "likes, reposts, follows and replies", tiktok: "likes, follows and comments",
   hn: "trends only", devto: "trends only", lobsters: "trends only"
 };
 
@@ -258,35 +331,55 @@ async function source(ctx) {
   const now = ctx.now;
   const days = Math.max(1, Math.min(365, Number(ctx.days) || 7));
   const range = dayList(E.bogotaDay(now), Math.min(days, 92));
-  const [conf, runsSnap, waitingSnap, approvedSnap, cur, prev, top, reportsSnap] = await Promise.all([
+  const [conf, runsSnap, waitingSnap, approvedSnap, cur, prev, top, reportsSnap, accounts, creds, mac] = await Promise.all([
     readSettings(db),
     db.collection("engagement_runs").orderBy("at", "desc").limit(12).get(),
     db.collection("engagement_posts").where("actions.reply.status", "==", "waiting").limit(60).get(),
-    db.collection("engagement_posts").where("actions.reply.status", "==", "approved").limit(60).get(),
+    db.collection("engagement_posts").where("actions.reply.status", "in", ["approved", "posted", "failed"]).limit(90).get(),
     dailies(db, range),
     dailies(db, dayList(E.bogotaDay(now - range.length * DAY), range.length)),
     topPosts(db, range[0], range[range.length - 1], 40),
-    db.collection("engagement_reports").orderBy("at", "desc").limit(9).get()
+    db.collection("engagement_reports").orderBy("at", "desc").limit(9).get(),
+    Act.connections(db),
+    Act.readCreds(db),
+    Act.macStatus(db)
   ]);
   const runs = runsSnap.docs.map((d) => d.data());
   const last = runs[0] || null;
   const stale = !last || now - Date.parse(last.at) > STALE;
   const report = E.report("range", cur, prev, top, now);
-  const readers = Object.fromEntries(Sources.readable(ctx.env || {}).map((r) => [r.network, r]));
+  const env = withAccounts(ctx.env || {}, creds);
+  const readers = Object.fromEntries(Sources.readable(env).map((r) => [r.network, r]));
+  const macLate = !mac.at || now - Date.parse(mac.at) > Act.MAC_LATE;
+  const acting = (k) => {
+    const a = accounts.find((x) => x.network === k);
+    if (!a) return STAGE[k] || "";
+    const via = a.via === "mac" ? "Mac browser" : "API";
+    if (!a.connected) return via + (a.via === "mac" ? ", not signed in: Sign in on the Mac under Accounts" : ", not connected: connect it under Accounts");
+    return via + " as " + a.account + ": " + STAGE[k] + (conf.live ? "" : " (dry run: replies post, the rest is only logged)") + (a.error ? "; last error: " + a.error : "");
+  };
+  const signedIn = (k) => !!(mac.signedIn || {})[k];
   const networks = Object.entries(E.NETWORKS).map(([k, n]) => ({
-    network: k, name: n.name, reads: readers[k] ? (readers[k].ok ? "API" : "needs a key") : "Mac browser",
-    lastRead: last && last.read ? last.read[k] || 0 : 0, error: last && last.errors ? last.errors[k] || "" : "", acts: STAGE[k] || "",
+    network: k, name: n.name, reads: readers[k] ? (readers[k].ok ? "API" : k === "bluesky" ? "needs the account" : "needs a key") : signedIn(k) ? "Mac browser" : "needs sign-in on the Mac",
+    lastRead: last && last.read ? last.read[k] || 0 : 0, error: last && last.errors ? last.errors[k] || "" : "", acts: acting(k),
     row: report.networks.find((r) => r.network === k) || null
   }));
   const needs = [];
   if (!last) needs.push("Engagement: the scout has not run yet; it runs every 30 minutes once engagementScout is deployed.");
   else if (stale) needs.push("Engagement: the last scout run was " + Math.round((now - Date.parse(last.at)) / 60000) + " minutes ago; check engagementScout in Systems.");
-  Sources.readable(ctx.env || {}).filter((r) => !r.ok).forEach((r) => needs.push(r.help));
+  Sources.readable(env).filter((r) => !r.ok && r.network !== "bluesky").forEach((r) => needs.push(r.help));
+  accounts.filter((a) => !a.connected && a.via !== "mac").forEach((a) => needs.push("Engagement: " + a.help));
+  const out = accounts.filter((a) => !a.connected && a.via === "mac").map((a) => a.name);
+  if (!mac.at) needs.push("Engagement: the Mac browser agent for " + Act.BROWSER.map((k) => E.NETWORKS[k].name).join(", ") + " is not installed yet. On the Mac: scripts/engagement-mac/run.sh install, then Sign in on the Mac under Accounts (#1991).");
+  else if (macLate) needs.push("Engagement: the Mac browser agent last checked in " + Math.round((now - Date.parse(mac.at)) / 60000) + " minutes ago, so " + Act.BROWSER.map((k) => E.NETWORKS[k].name).join(", ") + " wait. Wake the Mac or check ~/Library/Application Support/QALab/engagement-mac/logs.");
+  else if (out.length) needs.push("Engagement: the Mac is not signed in to " + out.join(", ") + ". Press Sign in on the Mac under Accounts and sign in once in the window it opens.");
+  accounts.filter((a) => a.connected && a.error).forEach((a) => needs.push("Engagement: " + a.name + " poster failed (" + a.error + "). " + (a.via === "mac" ? "Sign in on the Mac again" : "Connect it again") + " if the sign-in expired."));
   if (last && last.aiError) needs.push("Engagement: Gemini failed on the last run (" + last.aiError + "), so no reply was drafted.");
   if (conf.paused) needs.push("Engagement is paused: nothing is planned or pushed until you resume it.");
   const byScore = (a, b) => b.score - a.score;
   return {
-    ok: true, settings: conf, paused: conf.paused, stale, lastRun: last, runs,
+    ok: true, settings: conf, paused: conf.paused, live: conf.live, stale, lastRun: last, runs, accounts,
+    mac: { at: mac.at || "", host: mac.host || "", readAt: mac.readAt || "", late: macLate, acted: mac.acted || {}, read: mac.read || {} },
     waiting: waitingSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data()))).sort(byScore),
     approved: approvedSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data()))).sort((a, b) => String(b.actions.reply.decidedAt).localeCompare(String(a.actions.reply.decidedAt))).slice(0, 30),
     posts: top.map(brief), report, networks,
@@ -294,10 +387,10 @@ async function source(ctx) {
     caps: conf.caps, used: usedToday(cur.find((d) => d.day === E.bogotaDay(now))),
     daily: range.map((day) => {
       const t = E.report("day", cur.filter((d) => d.day === day), [], [], now).totals;
-      return { day, read: t.read, candidates: t.candidates, like: t.like, repost: t.repost, follow: t.follow, drafted: t.drafted, approved: t.approved + t.edited, posted: t.posted };
+      return { day, read: t.read, candidates: t.candidates, like: t.like, repost: t.repost, follow: t.follow, drafted: t.drafted, approved: t.approved + t.edited, posted: t.posted, done: t.like_done + t.repost_done + t.follow_done, dry: t.like_dry + t.repost_dry + t.follow_dry };
     }),
     needs
   };
 }
 
-module.exports = { scout, runNote, sendReport, buildReport, windowOf, decide, saveSettings, readSettings, source, increments, usedToday, clearCache, STALE, geminiJson };
+module.exports = { scout, inbox, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };

@@ -110,7 +110,8 @@ const EXTERNAL = {
         visits: 1, returns: 0, days: 1, views: 1, activeMs: 60000, avgVisitMs: 60000, runs: 0, paid: 0, urls: [], recent: [{ startedAt: '2026-10-30T09:00:00.000Z', lastAt: '2026-10-30T09:10:00.000Z', activeMs: 60000, views: 1, pages: ['qa-review.html'] }] },
       { email: 'playwright@example.com', name: '', picture: '', providers: ['email'], test: true, firstAt: '2026-10-31T09:00:00.000Z', lastSignInAt: '2026-10-31T09:00:00.000Z', lastSeenAt: '2026-10-31T09:00:00.000Z',
         visits: 1, returns: 0, days: 1, views: 1, activeMs: 5000, avgVisitMs: 5000, runs: 0, paid: 0, urls: [], recent: [] }
-    ] }
+    ] },
+  'engagement-connect': { ok: true, network: 'bluesky', account: 'qalaburlreview.bsky.social', message: 'Bluesky is connected as @qalaburlreview.bsky.social.' }
 };
 
 function seed() {
@@ -351,23 +352,48 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
-  test('Engagement shows the reply drafts, the scout and the networks, and Approve, Dismiss and Pause go through the function (#1988)', async ({ page }) => {
+  test('Engagement shows the reply drafts, the scout, the networks and the accounts, and Approve, Dismiss, Pause, Go live, Connect Bluesky and Sign in on the Mac go through the function (#1988, #1990, #1991)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page, '#stats/engagement/7');
     const eg = page.locator('[data-view="engagement"]');
     const waiting = eg.locator('[data-panel-id="engagement-waiting"]');
     await expect(waiting).toContainText('Playwright and WCAG accessibility testing in CI');
-    await expect(waiting.locator('[data-eg-draft]')).toHaveValue('We run axe in the same Playwright job.');
-    await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('Mac browser');
-    await expect(eg).toContainText('BLUESKY_HANDLE');
+    await expect(waiting).toContainText('focus order bugs');
+    const card = waiting.locator('.jv-prop', { hasText: 'Playwright and WCAG accessibility testing in CI' });
+    await expect(card.locator('[data-eg-draft]')).toHaveValue('We run axe in the same Playwright job.');
+    await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('Mac browser as @qalaburlreview');
+    await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('needs sign-in on the Mac');
+    await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('API as qalaburlreview');
+    await expect(eg).toContainText('paste an app password');
+    const accounts = eg.locator('[data-panel-id="engagement-accounts"]');
+    await expect(accounts).toContainText('connected as qalaburlreview');
+    await expect(accounts).toContainText('bot flag on');
+    await expect(accounts).toContainText('connected as QA-lab URL Review');
+    await expect(accounts.locator('[data-eg-connect="youtube"]')).toHaveText('Reconnect');
+    await expect(eg.locator('[data-panel-id="engagement-status"]')).toContainText('dry run');
+    await expect(eg.locator('[data-panel-id="engagement-approved"]')).toContainText('posted');
+    await expect(eg.locator('[data-panel-id="engagement-approved"] a', { hasText: 'Our reply' })).toHaveAttribute('href', /mastodon\.social\/@qalaburlreview\//);
+
+    await accounts.locator('[data-eg-bluesky] [name="password"]').fill('abcd-efgh-ijkl-mnop');
+    await accounts.locator('[data-eg-bluesky] button[type="submit"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'engagement-connect').map((c) => [c.body.network, c.body.handle, c.body.password]))
+      .toEqual([['bluesky', 'qalaburlreview.bsky.social', 'abcd-efgh-ijkl-mnop']]);
+    await expect(page.locator('.jv-toast')).toContainText('Bluesky is connected');
+
+    await expect(accounts).toContainText('signed in as @qalaburlreview');
+    await expect(accounts).toContainText('The Mac\'s browser agent on carlos-mac last checked in');
+    await expect(accounts.locator('[data-eg-connect="x"]')).toHaveText('Sign in again on the Mac');
+    await expect(accounts.locator('[data-eg-disconnect="x"]')).toHaveCount(0);
+    await accounts.locator('[data-eg-connect="threads"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'engagement-connect').map((c) => c.body.network)).toEqual(['bluesky', 'threads']);
 
     page.once('dialog', (dialog) => dialog.dismiss());
-    await waiting.locator('[data-eg-decide="dismiss"]').click();
+    await card.locator('[data-eg-decide="dismiss"]').click();
     expect(calls.some((c) => c.op === 'engagement-decide')).toBe(false);
 
-    await waiting.locator('[data-eg-draft]').fill('We run axe-core in the same Playwright job, on every pull request.');
-    await waiting.locator('[data-eg-decide="approve"]').click();
+    await card.locator('[data-eg-draft]').fill('We run axe-core in the same Playwright job, on every pull request.');
+    await card.locator('[data-eg-decide="approve"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'engagement-decide').map((c) => [c.body.decision, c.body.text]))
       .toEqual([['edit', 'We run axe-core in the same Playwright job, on every pull request.']]);
     await expect(page.locator('.jv-toast')).toContainText('Edited and approved.');
@@ -375,6 +401,9 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await eg.locator('[data-eg-pause="on"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'engagement-settings').map((c) => c.body.settings)).toEqual([{ paused: true }]);
+    page.once('dialog', (dialog) => dialog.accept());
+    await eg.locator('[data-eg-live="on"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'engagement-settings').map((c) => c.body.settings)).toEqual([{ paused: true }, { live: true }]);
     expect(errors).toEqual([]);
   });
 
