@@ -37,6 +37,13 @@ class MarketingTest {
         assertFalse(Marketing.waiting(sync, "upload", "W1"))
     }
 
+    @Test fun linkedinSplitsStillToSendFromSent() {
+        val (toSend, sent) = Marketing.linkedinSplit(sync)
+        assertEquals(listOf("Leo", "Eva"), toSend.map { it["name"].toString().trim('"') })
+        assertEquals(listOf("Ana"), sent.map { it["name"].toString().trim('"') })
+        assertEquals(Pair(emptyList<JsonObject>(), emptyList<JsonObject>()), Marketing.linkedinSplit(null))
+    }
+
     @Test fun repliesToAnswerHaveADraftAndNoAnswer() {
         assertEquals(listOf("a"), Marketing.repliesToAnswer(sync).map { it["id"].toString().trim('"') })
     }
