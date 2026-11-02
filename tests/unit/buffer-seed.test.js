@@ -3,7 +3,7 @@ const assert = require("node:assert");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { batchIndex, matchPost, staleScheduled } = require("../../scripts/buffer-queue");
+const { batchIndex, matchPost, staleScheduled, duplicateScheduled } = require("../../scripts/buffer-queue");
 
 function posts() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "buffer-seed-"));
@@ -81,4 +81,22 @@ test("--delete-unmatched picks only scheduled posts still to come that match no 
     "tips/02-alt": [{ channel: "tiktok", profile: "tiktok (x)", id: "ledgered", result: "queued" }, { channel: "youtube", profile: "youtube (x)", id: "other", result: "queued" }]
   } };
   assert.deepStrictEqual(staleScheduled(index, items, book, now).map((i) => i.node.id), ["stale", "claimed"]);
+});
+
+test("--delete-duplicates keeps the first scheduled copy of a batch post on each profile and picks the later ones (#2160)", () => {
+  const index = posts();
+  const now = Date.parse("2026-10-25T05:00:00.000Z");
+  const clip = "https://github.com/o/r/releases/download/tips/01-hsts.mp4";
+  const item = (id, profile, node) => ({ slot: profile.split(" ")[0], profile, node: Object.assign({ id, status: "scheduled", dueAt: "2026-10-27T23:00:00.000Z", assets: [{ source: clip }] }, node) });
+  const items = [
+    item("6ae82454aaaa", "tiktok (q)"),
+    item("6ae81c2fbbbb", "tiktok (q)"),
+    item("6ae81c30cccc", "youtube (q)"),
+    item("6ae82455dddd", "youtube (q)"),
+    item("6ae82456eeee", "youtube (q)", { dueAt: "2026-10-25T05:10:00.000Z" }),
+    item("6ae82457ffff", "youtube (q)", { status: "sent" }),
+    item("6ae81c31aaaa", "linkedin (q)", { assets: [], text: "Alt text" }),
+    item("6ae82458bbbb", "linkedin (q)", { assets: [], text: "nothing like it" })
+  ];
+  assert.deepStrictEqual(duplicateScheduled(index, items, now).map((i) => i.node.id), ["6ae82454aaaa", "6ae82455dddd"]);
 });

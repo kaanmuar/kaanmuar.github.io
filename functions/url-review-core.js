@@ -3618,6 +3618,19 @@ function storable(value, fixed, at, depth) {
   return out;
 }
 
+// The Local check's findings (#2067) in a few bytes, so Jarvis can count them without reading every report (#2118).
+// Keys and verdicts only: nothing from the Business Profile is kept (Maps Platform terms).
+function localSummary(report) {
+  const findings = (report && report.insights && Array.isArray(report.insights.findings)) ? report.insights.findings : [];
+  const local = findings.filter((f) => f && /^local-/.test(f.key || ""));
+  if (!local.length) return null;
+  const profile = local.find((f) => f.key === "local-profile");
+  return {
+    profile: !!profile && profile.verdict === "pass",
+    issues: local.filter((f) => f.verdict === "fail" || f.verdict === "risk" || f.verdict === "person").map((f) => ({ key: f.key, verdict: f.verdict, severity: f.severity || "" }))
+  };
+}
+
 function intakeRecord(value, report, meta) {
   const now = Date.now();
   const fixed = [];
@@ -3661,6 +3674,7 @@ function intakeRecord(value, report, meta) {
     compareWith: value.compareWith || "",
     query: value.query || "",
     referrerHost: value.referrerHost || "",
+    local: localSummary(report),
     report: kept
   };
 }
@@ -4575,6 +4589,7 @@ module.exports = {
   journeys,
   toolsForPage,
   intakeRecord,
+  localSummary,
   storable,
   analyzeHtml: inspect,
   challengeOf,

@@ -1330,7 +1330,7 @@ async function rerunFailure(group) {
         pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
         crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => urlReview.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
         webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined,
-        places: process.env.PLACES_KEY ? (request) => urlReview.placesSearch(request, process.env.PLACES_KEY) : undefined
+        places: findPlaces()
       });
       record = urlReview.intakeRecord(Object.assign({}, group.intake, {
         url: group.url,
@@ -1651,6 +1651,22 @@ const newsWire = require("./news-wire");
 const reviewDesk = require("./url-review-desk");
 const reviewFailures = require("./url-review-failures");
 const reviewPublish = require("./url-review-publish");
+
+// The Places lookup of the Local check (#2067), counted per UTC day in url_review_places for Jarvis > Local (#2118).
+function findPlaces() {
+  const key = process.env.PLACES_KEY;
+  if (!key) return undefined;
+  return async (request) => {
+    const res = await urlReview.placesSearch(request, key).catch((error) => ({ ok: false, error: String((error && error.message) || error).slice(0, 120) }));
+    const day = new Date().toISOString().slice(0, 10);
+    const ok = !!(res && res.ok);
+    const row = { day, calls: FieldValue.increment(1), [ok ? "ok" : "errors"]: FieldValue.increment(1) };
+    if (!ok) Object.assign(row, { lastError: (res && res.error) || "no answer", lastErrorAt: new Date().toISOString() });
+    await getFirestore().collection("url_review_places").doc(day).set(row, { merge: true }).catch((error) => console.warn("Places count failed:", error.message));
+    return res;
+  };
+}
+
 const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
 const reviewOffers = require("./url-review-offers");
@@ -2211,7 +2227,7 @@ async function sweepReview(target, controls) {
     pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
     crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
     webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
-    places: process.env.PLACES_KEY ? (request) => urlReview.placesSearch(request, process.env.PLACES_KEY) : undefined
+    places: findPlaces()
   }, controls));
   const record = Object.assign(urlReview.intakeRecord(value, report, { country: target.cc.toUpperCase() }), { source: "sweep", sweep: target });
   await getFirestore().collection("url_reviews").doc(record.id).set(record);
@@ -2362,7 +2378,7 @@ async function rivalSweep() {
           pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
           crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
           webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
-          places: process.env.PLACES_KEY ? (request) => urlReview.placesSearch(request, process.env.PLACES_KEY) : undefined
+          places: findPlaces()
         });
         const record = Object.assign(urlReview.intakeRecord(value, report, { country: job.cc.toUpperCase() }), { source: "rivals", rivalOf: job.baseId });
         await db.collection("url_reviews").doc(record.id).set(record);
@@ -4867,7 +4883,7 @@ async function runReview(req, res, placeOf) {
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => urlReview.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined,
-      places: process.env.PLACES_KEY ? (request) => urlReview.placesSearch(request, process.env.PLACES_KEY) : undefined
+      places: findPlaces()
     });
     const record = urlReview.intakeRecord(intake.value, report, Object.assign({
       ip,
@@ -5113,6 +5129,7 @@ const jarvis = require("./jarvis");
 const jarvisCore = require("./jarvis-core");
 const jarvisSum = (field) => AggregateField.sum(field);
 const jarvisSources = require("./jarvis-sources");
+const jarvisDays = require("./jarvis-days");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
 const cube = require("./cube");
@@ -5372,7 +5389,7 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
       pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
       crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
-      places: process.env.PLACES_KEY ? (request) => urlReview.placesSearch(request, process.env.PLACES_KEY) : undefined
+      places: findPlaces()
     });
     const record = Object.assign(urlReview.intakeRecord(value, report, {}), { source: "jarvis", paid: true, free: true, priceUsd: 0 });
     await db.collection("url_reviews").doc(record.id).set(record);
@@ -5422,6 +5439,19 @@ async function jarvisUsers() {
   return users;
 }
 
+// Sources whose answer does not depend on the range share one cache entry across ranges.
+const JARVIS_DAYLESS = new Set(["marketing-sync"]);
+
+// The web Jarvis's rows for its range and the one before (#2085), from the same day rollups as the app's snapshot.
+async function jarvisRows(body, now) {
+  const from = Math.max(Date.parse(body.from) || now - 30 * 864e5, now - 3 * 366 * 864e5);
+  const out = await jarvisDays.rows(getFirestore(), ["events", "opens", "reviews", "alerts"], { from, now });
+  return Object.keys(out).reduce((m, kind) => {
+    m[kind] = out[kind].map((row) => { const r = jarvisDays.plain(row); delete r.email; return r; });
+    return m;
+  }, { from: new Date(from).toISOString() });
+}
+
 async function jarvisSource(name, days) {
   const settings = await jarvis.readSettings(getFirestore());
   const keys = paypalKeys("live");
@@ -5430,7 +5460,7 @@ async function jarvisSource(name, days) {
     const creds = urlReview.paypalCredentials(keys);
     paypal = { host: creds.host, token: () => urlReview.paypalAccessToken(creds) };
   } catch (error) { paypal = null; }
-  return jarvisCached(name, days, () => jarvisSources.run(name, {
+  return jarvisCached(name, JARVIS_DAYLESS.has(name) ? 0 : days, () => jarvisSources.run(name, {
     fetch, env: process.env, db: getFirestore(), now: Date.now(), days, settings, thresholds: jarvisCore.thresholds(settings.thresholds),
     paypal, tls: jarvis.tlsDaysLeft, listUsers: jarvisUsers, github: () => githubApp.token()
   }));
@@ -5555,7 +5585,7 @@ async function jarvisSnapshot(days) {
   const now = Date.now();
   const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now, days }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync", "calls", "engagement", "people"], days),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync", "calls", "engagement", "people"], days),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
@@ -6306,6 +6336,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "review") out = await jarvisReview.enqueue(getFirestore(), body, operator, now);
     else if (op === "snapshot") out = Object.assign(await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days))), { mailCodes: await mailCodeRows().catch(() => []),
       devices: await jarvisDevice.list(getFirestore(), now, body.device).catch(() => []) });
+    else if (op === "rows") out = await jarvisRows(body, now);
     else if (op === "mail-codes") out = { codes: await mailCodeRows() };
     else if (op === "calendar-connect") out = await bookingConnectUrl();
     else if (op === "brief-mark") out = await jarvisProposals.markBrief(getFirestore(), body, operator, now);

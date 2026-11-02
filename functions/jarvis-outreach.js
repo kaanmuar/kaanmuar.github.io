@@ -10,6 +10,8 @@
 
    The plan, prospect names and email copy stay out of the repo; only counts reach the dashboard. */
 
+const dayRows = require("./jarvis-days");
+
 const ORIGIN = "https://carlosandmunoz.com";
 const DAY = 24 * 60 * 60 * 1000;
 const REVIEW_CAP = 3000;
@@ -249,12 +251,9 @@ function linkRows(opens, reviews, ctx) {
   };
 }
 
-async function shortLinks(ctx, reviewsP) {
-  const start = ctx.now - ctx.days * DAY;
-  const priorStart = start - ctx.days * DAY;
-  const [opens, reviews, worker] = await Promise.all([
-    ctx.db.collection("url_review_opens").where("createdAt", ">=", new Date(priorStart)).orderBy("createdAt", "desc").select("query", "createdAt").limit(OPEN_CAP).get().then((s) => s.docs.map((d) => d.data())),
-    reviewsP,
+async function shortLinks(ctx, loggedP) {
+  const [{ opens, reviews }, worker] = await Promise.all([
+    loggedP,
     ctx.fetch(SHORT + "/robots.txt", { redirect: "manual", signal: AbortSignal.timeout(8000) })
       .then(async (r) => ({ status: r.status, body: r.status === 200 ? (await r.text()).slice(0, 200) : "" })).catch((error) => ({ status: 0, body: clean(error) }))
   ]);
@@ -280,22 +279,20 @@ async function outreach(ctx) {
   const out = { ok: true, needs, days: ctx.days };
   const part = async (name, run) => { try { out[name] = await run(); } catch (error) { out[name] = { ok: false, error: clean(error) }; } };
   let planDoc = null;
-  const since = new Date(Math.min(ctx.now - 2 * ctx.days * DAY, weekStart(ctx.now))).toISOString();
-  const reviewsP = ctx.db.collection("url_reviews").where("createdAt", ">=", since).orderBy("createdAt", "desc")
-    .select("sweep", "createdAt", "status", "requestedUrl", "score", "query", "paid", "priceUsd", "refundedUsd", "refunded", "test", "email", "reportId").limit(REVIEW_CAP).get()
-    .then((s) => s.docs.map((d) => Object.assign({ id: d.id }, d.data())));
-  reviewsP.catch(() => {});
+  const since = Math.min(ctx.now - 2 * ctx.days * DAY, weekStart(ctx.now));
+  const loggedP = dayRows.rows(ctx.db, ["reviews", "opens"], { from: since, now: ctx.now });
+  loggedP.catch(() => {});
   await Promise.all([
     part("pipeline", async () => {
-      const [queue, state, reviews, index] = await Promise.all([
+      const [queue, state, { reviews }, index] = await Promise.all([
         ctx.db.collection("url_review_sweep").doc("outreach").get(),
         ctx.db.collection("url_review_sweep").doc("state").get(),
-        reviewsP,
+        loggedP,
         ctx.fetch(ORIGIN + "/assets/live-reports/index.json", { signal: AbortSignal.timeout(10000) }).then((r) => r.json()).catch(() => ({ reports: [] }))
       ]);
       return Object.assign({ ok: true }, pipelineRows(queue.exists ? queue.data() : null, state.exists ? state.data() : null, reviews, (index.reports || []).map((r) => r.host), ctx));
     }),
-    part("links", () => shortLinks(ctx, reviewsP)),
+    part("links", () => shortLinks(ctx, loggedP)),
     part("instantly", () => instantly(ctx)),
     part("plan", async () => {
       const snap = await ctx.db.collection("jarvis_settings").doc("outreach").get();

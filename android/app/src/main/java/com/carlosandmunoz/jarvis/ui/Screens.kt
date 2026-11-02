@@ -255,6 +255,7 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
     }
     if (product == "review") {
         PeoplePanel(s)
+        LocalPanel(s)
         TopList("Funnel", p.pairs("funnel"), 4)
     }
 
@@ -767,10 +768,12 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
         Needs(pl)
         run {
             val f = pl.obj("functions"); val g = pl.obj("gemini"); val fs = pl.obj("firestore"); val u = pl.obj("users")
+            val freeUsed = fs.num("readsFreePct")
+            val freeWarn = snap.obj("thresholds").num("firestoreFreePct") ?: 80.0
             KpiPairs(listOf(
                 KpiData("Function runs", fmt(f.num("executions"))), KpiData("Failure rate", pct(f.num("failureRate")), alert = (f.num("failureRate") ?: 0.0) > 0.02),
                 KpiData("Gemini calls", fmt(g.num("requests"))), KpiData("Gemini errors", pct(g.num("errorRate")), alert = (g.num("errorRate") ?: 0.0) > 0.05),
-                KpiData("Firestore reads", fmt(fs.num("reads"))), KpiData("Free reads left", pct(fs.num("readsFreePct"))),
+                KpiData("Firestore reads today (Pacific)", fmt(fs.num("reads"))), KpiData("Free reads used", if (freeUsed == null) "—" else "${fmt(freeUsed)}%", alert = (freeUsed ?: 0.0) >= freeWarn),
                 KpiData("Users", fmt(u.num("total"))), KpiData("New users", fmt(u.num("newInRange")))
             ))
             f.objs("latest").take(6).forEach { StatusRow("alert", it.str("fn") ?: "", (it.str("kind") ?: "") + " · " + (ago(it.str("at")) ?: "")) }

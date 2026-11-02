@@ -1,16 +1,15 @@
 /* Jarvis: Admin > Statistics as one command center. admin.html mounts it in #stats-pane after sign-in.
 
-   Firestore (owner rules): site_events, url_review_opens, url_reviews, url_review_alerts, url_review_reports,
-   socialHubStats/latest. The jarvis function (functions/jarvis.js) adds what the browser cannot read: server-only
+   The range's site_events, url_review_opens, url_reviews and url_review_alerts come from the jarvis function's day
+   rollups (op rows, functions/jarvis-days.js); live mode then reads only newer rows from Firestore (owner rules), as
+   it does url_review_reports and socialHubStats/latest. The jarvis function (functions/jarvis.js) adds what the browser cannot read: server-only
    collections, Cloud Scheduler, GitHub, GA4, Cloudflare, PageSpeed/CrUX, uptime, Gemini, and the owner actions.
    The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
-import { collection, query, where, orderBy, limit, getDocs, getDoc, doc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { collection, query, where, orderBy, limit, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2068";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
-const EVENT_CAP = 6000;
-const ROW_CAP = 2000;
 const LIVE_MS = 60 * 1000;
 const EXTERNAL_MS = 5 * 60 * 1000;
 const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['all', 'All time']];
@@ -175,7 +174,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
         rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', egDrafts: {}, egAll: false, alerts: [], reports: [],
-        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, truncated: false,
+        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0,
         panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review'
     };
     readHash();
@@ -293,36 +292,26 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const rowsOf = (snap) => snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
     const newest = (rows, field) => rows.reduce((best, row) => { const d = C.toDate(row[field]); return d && (!best || d > best) ? d : best; }, null);
 
+    // The range's rows come from the jarvis function's day rollups (#2085), the store the app's snapshot reads too.
     async function loadFirestore() {
         const w = C.windowFor(S.range);
         S.window = w;
         const from = w.prior ? w.prior.start : w.start;
-        const q = (name, field, value, cap) => getDocs(query(collection(db, name), where(field, '>=', value), orderBy(field, 'desc'), limit(cap)));
-        const countOf = async (name, field, a, b) => {
-            try {
-                const parts = [where(field, '>=', a)].concat(b ? [where(field, '<', b)] : []);
-                return (await getCountFromServer(query(collection(db, name), ...parts))).data().count;
-            } catch (error) { return null; }
-        };
         const safe = (p, fallback) => p.catch(() => fallback);
-        const [events, opens, reviews, hub, alerts, reports, openTotal, reviewTotal, priorOpens, priorReviews] = await Promise.all([
-            safe(q('site_events', 'createdAt', from, EVENT_CAP).then(rowsOf), []),
-            safe(q('url_review_opens', 'createdAt', w.start, ROW_CAP).then(rowsOf), []),
-            safe(q('url_reviews', 'createdAt', w.start.toISOString(), ROW_CAP).then(rowsOf), []),
+        const [got, hub, reports] = await Promise.all([
+            call('rows', { from: from.toISOString() }),
             safe(getDoc(doc(db, 'socialHubStats', 'latest')).then((s) => (s.exists() ? s.data() : null)), null),
-            safe(q('url_review_alerts', 'at', w.start.toISOString(), 200).then(rowsOf), []),
-            safe(getDocs(query(collection(db, 'url_review_reports'), orderBy('emailedAt', 'desc'), limit(12))).then(rowsOf), []),
-            countOf('url_review_opens', 'createdAt', w.start),
-            countOf('url_reviews', 'createdAt', w.start.toISOString()),
-            w.prior ? countOf('url_review_opens', 'createdAt', w.prior.start, w.prior.end) : null,
-            w.prior ? countOf('url_reviews', 'createdAt', w.prior.start.toISOString(), w.prior.end.toISOString()) : null
+            safe(getDocs(query(collection(db, 'url_review_reports'), orderBy('emailedAt', 'desc'), limit(12))).then(rowsOf), [])
         ]);
-        const inRange = (row) => { const d = C.toDate(row.createdAt); return d && d >= w.start; };
-        S.rows = { events: events.filter(inRange), prior: w.prior ? events.filter((row) => !inRange(row)) : null, opens, reviews };
-        S.truncated = events.length >= EVENT_CAP;
-        S.counts = { openTotal, reviewTotal, priorOpens, priorReviews };
+        if (got.ok === false || !Array.isArray(got.events)) throw new Error(got.error || 'no rows');
+        const inRange = (field) => (row) => { const d = C.toDate(row[field]); return d && d >= w.start; };
+        const events = got.events.filter(inRange('createdAt'));
+        const opens = got.opens.filter(inRange('createdAt'));
+        const reviews = got.reviews.filter(inRange('createdAt'));
+        S.rows = { events, prior: w.prior ? got.events.filter((row) => !inRange('createdAt')(row)) : null, opens, reviews };
+        S.counts = { openTotal: opens.length, reviewTotal: reviews.length, priorOpens: w.prior ? got.opens.length - opens.length : null, priorReviews: w.prior ? got.reviews.length - reviews.length : null };
         S.hub = hub;
-        S.alerts = alerts;
+        S.alerts = got.alerts.filter(inRange('at'));
         S.reports = reports;
         S.updatedAt = Date.now();
     }
@@ -405,7 +394,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'calls'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'calls'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -481,6 +470,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                 } : null,
                 engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`) } : null,
                 signedInPeople: e.people && e.people.ok ? e.people.totals : null,
+                googleMapsLocal: e.local && e.local.ok && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
                 waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
             }
         };
@@ -616,6 +606,35 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             wide: true,
             data: list.map((p) => ({ email: p.email, name: p.name, test: p.test, firstAt: p.firstAt, lastSeenAt: p.lastSeenAt, visits: p.visits, returns: p.returns, days: p.days, views: p.views, minutes: Math.round(p.activeMs / 60000), runs: p.runs, paid: p.paid, urls: p.urls.map((u) => u.url).join(' ') })),
             note: `Visits and time on the URL Review pages are recorded for signed-in people only, since ${esc(g.since)}. Time counts while the tab is visible; a visit ends after 30 minutes without activity. The Real / Tests / All switch applies here.`
+        });
+    }
+
+    // URL Review > Local (#2118): the Google Maps Local check (#2067, SEO-05) across the reviews in range, and its Places calls.
+    const LOCAL_ISSUES = { 'local-website': 'Profile website link', 'local-status': 'Marked closed', 'local-nap': 'Name, address or phone', 'local-hours': 'Opening hours', 'local-utm': 'No UTM tags', 'local-profile': 'No profile found' };
+    function localPanel() {
+        const g = S.external.local;
+        if (!g || !g.ok) return panel('review-local', 'Google Maps: local businesses', waiting('local', 'Reading the Local checks…'), { wide: true });
+        const t = g.totals || {};
+        const head = stats([
+            { label: 'Reviews in range', value: t.reviews || 0 }, { label: 'Looked local', value: t.local || 0 }, { label: 'Profile found', value: t.profiles || 0 },
+            { label: 'No profile', value: t.noProfile || 0 }, { label: 'With a Maps issue', value: t.withIssues || 0 }, { label: 'Outreach prospects', value: t.outreach || 0 },
+            { label: 'Places calls', value: t.calls || 0 }, { label: 'Places errors', value: t.errors || 0 }
+        ]);
+        const chip = (verdict) => `<span class="jv-chip ${verdict === 'fail' ? 'c-slow' : verdict === 'risk' ? 'c-average' : 'c-fast'}">${verdict === 'fail' ? 'failing' : verdict === 'risk' ? 'at risk' : 'ok'}</span>`;
+        const issues = table([['Issue', (i) => esc(LOCAL_ISSUES[i.key] || i.key)], ['Sites', (i) => fmt(i.count)], ['Failing', (i) => fmt(i.fail)]], g.issues || [], 'No Maps issues in range.');
+        const sites = table([
+            ['When', (x) => esc(when(x.at))],
+            ['Site', (x) => `${esc(x.host)}${x.outreach ? ' <span class="jv-chip">outreach</span>' : ''}`],
+            ['Profile', (x) => x.profile ? 'found' : 'none'],
+            ['Result', (x) => chip(x.worst)],
+            ['Issues', (x) => esc(x.issues.map((i) => LOCAL_ISSUES[i.key] || i.key).join(', ') || '—')]
+        ], g.sites || [], 'No local businesses reviewed in range.');
+        const err = g.lastError ? `<p class="jv-note">Last Places error ${esc(when(g.lastError.at))}: ${esc(g.lastError.error)}</p>` : '';
+        const body = head + issues + sites + err + (g.more ? `<p class="jv-more">+${fmt(g.more)} more in the export</p>` : '');
+        return panel('review-local', `Google Maps: local businesses · ${fmt(t.local || 0)}`, body, {
+            wide: true,
+            data: (g.sites || []).map((x) => ({ at: x.at, host: x.host, source: x.source, outreach: x.outreach, profile: x.profile, result: x.worst || 'ok', issues: x.issues.map((i) => i.key).join(' ') })),
+            note: `Reviews whose start page looks like a local business are checked against their Google Business Profile (case SEO-05). Only finding keys are kept, never the profile's own data. Counted since ${esc(g.since)}; test runs are left out. ${fmt(t.callsToday || 0)} Places calls today.`
         });
     }
 
@@ -841,7 +860,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             { label: 'Function runs', value: f.executions === undefined ? '—' : f.executions },
             { label: 'Real failures', value: f.failures === undefined ? '—' : f.failures, alert: f.failures >= th.fnFailures },
             { label: 'Gemini ok (7 days)', value: g.requests ? g.ok + ' / ' + g.requests : '—', alert: g.requests >= 10 && g.errorRate >= th.geminiErrorPct },
-            { label: 'Firestore reads', value: fs.reads === undefined ? '—' : fs.reads, delta: fs.readsFreePct === undefined ? '' : fs.readsFreePct + '% of free', alert: fs.readsFreePct >= th.firestoreFreePct },
+            { label: 'Firestore reads today (Pacific)', value: fs.reads === undefined ? '—' : fs.reads, delta: fs.readsFreePct === undefined ? '' : fs.readsFreePct + '% of free', alert: fs.readsFreePct >= th.firestoreFreePct },
             { label: 'Firestore writes', value: fs.writes === undefined ? '—' : fs.writes },
             { label: 'New sign-in accounts', value: u && u.newInRange !== undefined ? u.newInRange : '—' }
         ]) + bars(f.byFunction, { color: COLORS.pink, empty: 'No crashes, timeouts or 5xx answers in 24 hours.' }) + (g.failedMethods && g.failedMethods.length ? `<p class="jv-note">Failed Gemini calls by method: ${g.failedMethods.map((m) => esc(m.label) + ' ' + fmt(m.value)).join(', ')}.</p>` : '') + costsBlock(p.costs),
@@ -1811,7 +1830,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${panel('overview-feed', 'Live feed', feed.length ? `<ul class="jv-feed">${feed.map((f) => `<li><time>${when(f.at)}</time><span>${esc(f.text)}</span></li>`).join('')}</ul>` : '<p class="jv-empty">No events yet.</p>', { tall: true, data: feed.map((f) => ({ at: (C.toDate(f.at) || new Date()).toISOString(), event: f.text })) })}
             ${panel('overview-rings', 'Systems at a glance', `<div class="jv-rings">${ring(C.readiness(e), 'ready')}${(e.speed && e.speed.pages ? e.speed.pages : []).map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 84)).join('')}</div>`)}
             ${panel('overview-mix', 'Visits by product', bars(['cv', 'studio', 'lab'].map((k) => ({ label: (C.PRODUCTS.find((p) => p.key === k) || {}).name, value: s[k].totals.visits })).concat([{ label: 'URL Review (opens)', value: s.review.totals.opens }]), { color: COLORS.violet }), { data: ['cv', 'studio', 'lab'].map((k) => ({ product: k, visits: s[k].totals.visits, clicks: s[k].totals.clicks, exports: s[k].totals.exports, runs: s[k].totals.runs })) })}
-        </div>${S.truncated ? `<p class="jv-note">This range holds more than ${fmt(EVENT_CAP)} site events; breakdowns cover the newest ${fmt(EVENT_CAP)}.</p>` : ''}`;
+        </div>`;
         out.overview += take();
 
         const i = s.inbox;
@@ -1827,6 +1846,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const h = e.health;
         out.review = kpis(r.kpis) + `<div class="jv-grid">${briefPanel('review')}${goalsPanel('review')}
             ${peoplePanel()}
+            ${localPanel()}
             ${panel('review-funnel', 'Funnel', funnel(r.funnel), { data: r.funnel })}
             ${panel('review-trend', 'Opens and reviews per day', area(r.series.labels, [{ name: 'Opens', values: r.series.values, color: COLORS.cyan }, { name: 'Reviews', values: r.reviewSeries.values, color: COLORS.green }]), { wide: true, data: r.series.labels.map((d, k) => ({ day: d, opens: r.series.values[k], reviews: r.reviewSeries.values[k] })) })}
             ${panel('review-heat', 'When they open it', heat(r.heatmap, r.peak), { wide: true })}
@@ -1844,7 +1864,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                 <button type="button" class="jv-btn" data-run="sweepReviews">Run the sweep</button><button type="button" class="jv-btn" data-run="rerunReviewFailures">Re-run failures</button>
                 <button type="button" class="jv-btn" data-report="review:daily">Send the daily report</button><button type="button" class="jv-btn" data-report="review:weekly">Send the weekly report</button></div>
                 <form class="jv-inline" data-unlist><input name="host" data-keep="unlist" placeholder="host to unlist, e.g. example.com" aria-label="Host to unlist"><button type="submit" class="jv-btn danger">Unlist</button></form>`)}
-        </div>${r.truncated ? `<p class="jv-note">Breakdowns cover the newest ${fmt(ROW_CAP)} opens and reviews; the totals are exact server counts.</p>` : ''}`;
+        </div>`;
         out.review += take();
 
         const hub = s.hub;
@@ -1982,7 +2002,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             compute();
             render();
         } catch (error) {
-            setStatus('Firestore did not answer: ' + error.message);
+            setStatus('The rows did not load: ' + error.message);
         }
         S.loading = false;
         if (all !== false) loadExternal().then(() => loadProposals());

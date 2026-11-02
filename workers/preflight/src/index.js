@@ -87,6 +87,7 @@ export default {
       if (pathname === "/complete") return json(await complete(env, body));
     } catch (e) {
       console.error(pathname, e);
+      if (/\b4006\b|daily free allocation/.test(String(e && e.message))) return json({ error: "quota", detail: "Workers AI daily free allocation is used up; it resets at 00:00 UTC." }, 429);
       return json({ error: "failed" }, 500);
     }
     return json({ error: "not found" }, 404);
