@@ -28,7 +28,7 @@ object J {
 }
 
 @Composable
-fun JarvisTheme(content: @Composable () -> Unit) {
+fun JarvisTheme(content: @Composable () -> Unit) = ProvideForm {
     MaterialTheme(
         colorScheme = darkColorScheme(
             primary = J.cyan, onPrimary = J.bg, secondary = J.amber, tertiary = J.violet,

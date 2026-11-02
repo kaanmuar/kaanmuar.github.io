@@ -26,7 +26,9 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.carlosandmunoz.jarvis.ui.Backdrop
 import com.carlosandmunoz.jarvis.ui.JarvisTheme
+import com.carlosandmunoz.jarvis.ui.LocalForm
 import com.carlosandmunoz.jarvis.ui.LockScreen
+import kotlinx.coroutines.delay
 import com.carlosandmunoz.jarvis.ui.MainScreen
 import com.carlosandmunoz.jarvis.ui.SignInScreen
 import com.carlosandmunoz.jarvis.home.Home
@@ -56,7 +58,9 @@ class MainActivity : FragmentActivity() {
             JarvisTheme {
                 Backdrop {
                     val s by vm.state.collectAsStateWithLifecycle()
+                    val form = LocalForm.current
                     LaunchedEffect(s.signedIn) { if (s.signedIn) askForNotifications() }
+                    LaunchedEffect(s.signedIn, form.kind, form.posture, form.dex, form.windowed) { delay(1500); if (s.signedIn) vm.reportDevice() }
                     LaunchedEffect(s.signedIn, locked, pendingAction) { if (s.signedIn && !locked) pendingAction?.let { pendingAction = null; run(it) } }
                     when {
                         !s.signedIn -> SignInScreen(s, vm)
