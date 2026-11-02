@@ -69,6 +69,8 @@ const EXTERNAL = {
   'share-draft': { ok: true, id: 'new1', kind: 'image', draft: { lang: 'en', kind: 'tip', title: 'Check SSL', alt: 'A card', linkedin: 'LinkedIn draft', x: 'X draft', facebook: 'Facebook draft', instagram: 'Instagram draft' }, note: '' },
   'share-queue': { ok: true, id: 'new1', note: 'Queued. The hub page goes live first.' },
   'social-post-now': { ok: true, started: ['Buffer', 'Facebook Page'], note: 'Started Buffer and Facebook Page.' },
+  studio: { ok: true, sources: ['compare', 'evergreen'], skits: [{ id: 'friday-release', takes: ['en', 'es'] }], takes: 'skit-takes', runs: [{ name: 'Studio tips evergreen render', event: 'workflow_dispatch', status: 'completed', conclusion: 'success', at: '2026-10-25T08:00:00Z', url: 'https://github.com/' }] },
+  'studio-render': { ok: true, note: 'Rendering skit friday-release. The review links land in a PR and on #1981 when it is done.' },
   outreach: { ok: true, needs: ['Instantly: put the API key in Secret Manager as INSTANTLY_API_KEY.'],
     pipeline: { ok: true, queued: 40, swept: 12, left: 28, bySegment: [{ label: 'tvet', value: 10 }, { label: 'university', value: 10 }], reviews: 12, thisWeek: 12, results: [{ label: 'reviewed', value: 11 }], segments: [], avgScore: 64, withLiveReport: 6, reviewedWithLiveReport: 5, daily: [{ date: '2026-10-24', reviews: 12 }] },
     instantly: { ok: false, error: 'INSTANTLY_API_KEY is not set.' },
@@ -157,7 +159,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -288,6 +290,23 @@ test.describe('admin statistics (Jarvis)', () => {
     await post.click();
     await expect.poll(() => calls.filter((c) => c.op === 'social-post-now').length).toBe(1);
     await expect(page.locator('.jv-toast')).toContainText('Started Buffer and Facebook Page');
+  });
+
+  test('Studio renders lists sources and skits with their takes, and Render dispatches through the function (#1981)', async ({ page }) => {
+    const calls = await openStats(page, '#stats/hub/30');
+    const studio = page.locator('[data-view="hub"] .jv-panel[data-panel-id="hub-studio"]');
+    await expect(studio).toContainText('Studio tips evergreen render');
+    await expect(studio.locator('[data-studio-field="name"] option')).toHaveText(['Pick one', 'compare', 'evergreen']);
+    await expect(studio.locator('[data-act="studio-render"]')).toBeDisabled();
+    await studio.locator('[data-studio-field="kind"]').selectOption('skit');
+    await expect(studio.locator('[data-studio-field="name"] option')).toHaveText(['Pick one', 'friday-release (en, es)']);
+    await expect(studio.locator('[data-studio-field="mode"] option')).toHaveText(['Render', 'Captions only']);
+    await studio.locator('[data-studio-field="name"]').selectOption('friday-release');
+    await studio.locator('[data-studio-field="langs"]').fill('en');
+    await studio.locator('[data-studio-field="ticket"]').fill('1981');
+    await studio.locator('[data-act="studio-render"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'studio-render').map((c) => [c.body.kind, c.body.name, c.body.mode, c.body.langs, c.body.ticket])).toEqual([['skit', 'friday-release', 'render', 'en', '1981']]);
+    await expect(page.locator('.jv-toast')).toContainText('Rendering skit friday-release');
   });
 
   test('Share a post uploads the media, shows the Gemini drafts to edit, and queues the edited posts (#1420)', async ({ page }) => {
