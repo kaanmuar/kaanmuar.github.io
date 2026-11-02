@@ -12,6 +12,7 @@
  *   node scripts/engagement-browser/agent.js login [network]  sign in (or clear a check) in the agent's Chrome
  *   node scripts/engagement-browser/agent.js check [--read]   who it is signed in as, and what one search reads
  *   node scripts/engagement-browser/agent.js run [--force]    one run now (--force: outside the hours too)
+ *   node scripts/engagement-browser/agent.js import <file>    sessions signed in elsewhere (Playwright cookies JSON)
  *   node scripts/engagement-browser/agent.js pair             a new token for Jarvis (with this Mac's gcloud sign-in)
  *   node scripts/engagement-browser/agent.js install|uninstall|status
  *
@@ -92,10 +93,16 @@ async function shot(page, name) {
   return file;
 }
 
+/** { who, why }: who is the account the agent acts as, or "" with why it will not act there. */
 async function signedIn(page, k) {
-  await page.goto(NETWORKS[k].home, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => null);
+  const net = NETWORKS[k];
+  await page.goto(net.home, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => null);
   await pause(2000, 4000);
-  return NETWORKS[k].signedIn(page).catch(() => "");
+  let who = "";
+  try { who = await net.signedIn(page); } catch (error) { return { who: "", why: String(error.message || error).slice(0, 180) }; }
+  if (!who) return { who: "", why: "Not signed in in the agent's Chrome." };
+  if (net.account && who.toLowerCase().replace(/^@/, "") !== net.account) return { who: "", why: "Signed in as " + who + ", not our @" + net.account + "." };
+  return { who, why: "" };
 }
 
 // --- pair ----------------------------------------------------------------------------------------------------------
@@ -131,8 +138,8 @@ async function check(nets, read) {
   const { ctx, page } = await launch(true);
   try {
     for (const k of nets) {
-      const who = await signedIn(page, k);
-      let line = NETWORKS[k].name.padEnd(10) + (who ? "signed in as " + who : "NOT signed in");
+      const { who, why } = await signedIn(page, k);
+      let line = NETWORKS[k].name.padEnd(10) + (who ? "signed in as " + who : "NOT ready: " + why);
       if (who && read) {
         const posts = await NETWORKS[k].read(page, NETWORKS[k].queries[0]).catch((error) => ({ error: error.message }));
         line += posts.error ? "; read failed: " + posts.error : "; read " + posts.length + " posts for \"" + NETWORKS[k].queries[0] + "\"";
@@ -141,6 +148,15 @@ async function check(nets, read) {
       console.log(line);
     }
   } finally { await ctx.close(); }
+}
+
+/** Sessions signed in elsewhere on this Mac (Playwright cookies as JSON), only for the agent's networks. */
+async function importCookies(file) {
+  const hosts = /(^|\.)(x\.com|twitter\.com|linkedin\.com|facebook\.com|instagram\.com|threads\.com|threads\.net|tiktok\.com)$/;
+  const list = JSON.parse(fs.readFileSync(file, "utf8")).filter((c) => hosts.test(String(c.domain || "").replace(/^\./, "")));
+  const { ctx } = await launch(true);
+  try { await ctx.addCookies(list); } finally { await ctx.close(); }
+  log("Imported " + list.length + " cookies for " + [...new Set(list.map((c) => c.domain.replace(/^\.|^www\./g, "")))].join(", "));
 }
 
 // --- run ---------------------------------------------------------------------------------------------------------------
@@ -176,9 +192,9 @@ async function run(opts) {
     for (const [i, k] of nets.entries()) {
       const net = NETWORKS[k];
       if (c.blocked[k]) { seen.errors[k] = "Held until " + c.blocked[k] + " after a check."; seen.signedIn[k] = true; continue; }
-      const who = await signedIn(page, k);
+      const { who, why } = await signedIn(page, k);
       seen.signedIn[k] = !!who;
-      if (!who) { seen.errors[k] = "Not signed in in the agent's Chrome."; continue; }
+      if (!who) { seen.errors[k] = why; continue; }
       seen.accounts[k] = who;
       const q = net.queries[(slot + i * 3) % net.queries.length];
       try {
@@ -269,6 +285,7 @@ async function main() {
   if (cmd === "pair") return pair();
   if (cmd === "login") return login(pickNets(arg));
   if (cmd === "check") return check(pickNets(arg), flag("--read"));
+  if (cmd === "import") return importCookies(arg);
   if (cmd === "run") return run({ force: flag("--force"), only: arg });
   if (cmd === "install") return install();
   if (cmd === "uninstall") return uninstall();
