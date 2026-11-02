@@ -160,9 +160,11 @@ test("source: with the Graph app set, Microsoft 365 users are read with client c
   assert.match(calls.find(([url]) => new URL(url).hostname === "graph.microsoft.com")[0], /\$select=displayName,userPrincipalName,mail,proxyAddresses,accountEnabled,assignedLicenses/);
 });
 
-test("the Graph secrets stay out of the declared secrets: a missing one would break the deploy", () => {
+test("the Graph secrets are mounted on every function that reads the addresses source", () => {
   const secrets = require("../../functions/secrets");
-  assert.ok(!secrets.ALL.some((s) => /^MS_GRAPH_/.test(s)));
+  for (const fn of ["jarvis", "jarvisWatch", "jarvisMail", "jarvisCountdowns"]) {
+    for (const name of ["MS_GRAPH_TENANT_ID", "MS_GRAPH_CLIENT_ID", "MS_GRAPH_CLIENT_SECRET"]) assert.ok(secrets[fn].includes(name), fn + " lacks " + name);
+  }
 });
 
 test("restoreAlias posts the rebuilt alias and enableWarmup posts the emails to Instantly", async () => {

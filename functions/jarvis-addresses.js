@@ -10,8 +10,8 @@
    SendGrid       the transactional sender (SENDGRID_FROM)
    plus MX, SPF, DKIM and DMARC on the forwarding and the outreach domain.
 
-   The Graph secrets are read from env only when present and are not in secrets.js: a declared secret missing from
-   Secret Manager fails the deploy. One row per address and system, so carlos@ shows as a Microsoft 365 mailbox and
+   The Graph app is "Jarvis mail inventory (read-only)" in the qalabreview.com tenant (User.Read.All, application;
+   its secret expires 2028-11-01). One row per address and system, so carlos@ shows as a Microsoft 365 mailbox and
    as an Instantly sender. issues[] say who fixes what: the hourly pass (jarvis-actions.js) turns warm-up back on and
    restores the required aliases; the rest it pushes to Carlos once per occurrence (jarvis_watch/addresses). Bounces
    are not pushed here: the alert watch already pushes them from the mailbox source. */
