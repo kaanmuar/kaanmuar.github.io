@@ -14,9 +14,11 @@
    secrets are missing is skipped.
 
    Each post goes to the face of its language (scripts/face-route.js, #2310): en/de/fr/it to @qalaburlreview with
-   the secrets above, es/pt to @qaurlreview with the same names ending in _ES (BLUESKY_HANDLE_ES, ...). Until a
-   face has its secrets on a network, @qalaburlreview posts its languages there. A post sent from either face is
-   not posted again.
+   the secrets above, es/pt to @qaurlreview with the same names ending in _ES (BLUESKY_HANDLE_ES, ...). Each run
+   logs every account in and gives it to the face whose handle it logs in as, whichever set holds it (#2332): the
+   Threads token is @qaurlreview's, so en/de/fr/it skip Threads until @qalaburlreview has an account there. Until
+   @qaurlreview has an account on a network, @qalaburlreview posts its languages there. A post sent from either
+   face is not posted again.
 
    Every post goes into the ledger assets/social/open-social.json (scripts/social-ledger.js) as sent or failed. A
    failed post is tried again on the next run while its slot is within reach. Before posting, each run reads the
@@ -316,7 +318,7 @@ async function run(network, client, list, book, { live, now, gate }) {
     return counts;
   }
   if (!todo.length) return counts;
-  const profile = await client.login();
+  const profile = client.profile || await client.login();
   const recent = await client.recent();
   const record = (post, entry) => ledger.record(book, post.batch + "/" + post.slug, Object.assign({ channel: network, profile, checked: new Date().toISOString() }, entry));
   for (const post of todo) {
@@ -365,12 +367,31 @@ async function main() {
   const now = Date.now();
   let broken = false;
   for (const network of only ? [only] : Object.keys(NETWORKS)) {
-    const clients = Object.keys(FACES).map((face) => ({ face, client: NETWORKS[network](faceRoute.faceEnv(face)) }));
+    const clients = [];
+    for (const set of Object.keys(FACES)) {
+      const client = NETWORKS[network](faceRoute.faceEnv(set));
+      if (!live) { if (client.ready || set === faceRoute.DEFAULT) clients.push({ face: set, client }); continue; }
+      if (!client.ready) continue;
+      try {
+        client.profile = await client.login();
+      } catch (error) {
+        broken = true;
+        console.log(network + ": " + error.message);
+        continue;
+      }
+      const face = faceRoute.accountFace(client.profile);
+      if (!face || clients.some((c) => c.face === face)) {
+        broken = true;
+        console.log(network + ": " + client.profile + (face ? " is held by two sets of secrets; the first posts" : " is no face's account (scripts/brand-kit/faces.js), skipped"));
+        continue;
+      }
+      clients.push({ face, client });
+    }
+    if (live && !clients.length) { console.log(network + ": no account connected, skipped"); continue; }
     const connected = new Set(clients.filter((c) => c.client.ready).map((c) => c.face));
     const all = batches.flatMap((name) => posts(name, ROOT, network));
     for (const { face, client } of clients) {
-      const label = network + (face === faceRoute.DEFAULT ? "" : " @" + FACES[face].handle);
-      if (live && !client.ready) { console.log(label + ": no secrets, skipped"); continue; }
+      const label = network + " @" + FACES[face].handle;
       const list = all.filter((post) => faceRoute.postFace(post.batch, post.slug, post.cap, ROUTES[network].slot, connected) === face);
       if (!live && !list.length) continue;
       try {
