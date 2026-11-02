@@ -3267,12 +3267,84 @@ test.describe("domain health", () => {
     const restore = fakeNetwork({ [URL_]: { status: 200, headers: STRONG_HEADERS, body: HTML } });
     const asked = [];
     try {
-      const report = await core.reviewTarget(URL_, { browse: async () => ({ ok: false }), webrisk: async (url) => { asked.push(url); return { ok: true, url, threats: [] }; } });
+      const report = await core.reviewTarget(URL_, {
+        browse: async () => ({ ok: false }),
+        webrisk: async (url) => { asked.push(url); return { ok: true, url, threats: [] }; },
+        places: async () => { throw new Error("a site that is not local is not looked up on Google Maps"); }
+      });
       assert.deepEqual(asked, [URL_]);
       assert.equal(verdict(report.insights, "sec-safebrowsing"), "pass");
+      assert.equal(verdict(report.insights, "local-profile"), "missing");
+      assert.ok(!report.cases.some((row) => row.id === "SEO-05"));
     } finally {
       restore();
     }
+  });
+
+  test("a local business is checked against its Google Business Profile, and only the place ID is kept (#2067)", async () => {
+    const ld = { "@context": "https://schema.org", "@type": "HardwareStore", name: "Example Garden Tools", telephone: "+1 415 555 0100", address: { "@type": "PostalAddress", streetAddress: "12 Garden Way", addressLocality: "Springfield" } };
+    const html = HTML.replace("</head>", "<script type=\"application/ld+json\">" + JSON.stringify(ld) + "</script></head>");
+    const restore = fakeNetwork({ [URL_]: { status: 200, headers: STRONG_HEADERS, body: html } });
+    const asked = [];
+    try {
+      const report = await core.reviewTarget(URL_, {
+        browse: async () => ({ ok: false }),
+        places: async (request) => {
+          asked.push(request);
+          return { ok: true, places: [{ id: "ChIJgarden42", displayName: { text: "Example Garden Tools" }, formattedAddress: "12 Garden Way, Springfield, IL 62704, USA", nationalPhoneNumber: "(415) 555-0100", websiteUri: "https://shop.example.com/old-store", businessStatus: "OPERATIONAL" }] };
+        }
+      });
+      assert.deepEqual(asked, [{ textQuery: "Example Garden Tools, 12 Garden Way, Springfield", languageCode: "en" }]);
+      const local = (key) => report.insights.findings.find((item) => item.key === key);
+      assert.equal(local("local-profile").verdict, "pass");
+      assert.match(local("local-profile").evidence, /maps\/place\/\?q=place_id:ChIJgarden42/);
+      assert.deepEqual([local("local-website").verdict, local("local-website").severity, local("local-website").area], ["fail", "high", "SEO"]);
+      assert.match(local("local-website").evidence, /get 404 instead of a page of shop\.example\.com/);
+      assert.equal(local("local-utm").verdict, "risk");
+      assert.equal(local("local-nap").verdict, "pass");
+      const seo05 = report.cases.find((row) => row.id === "SEO-05");
+      assert.ok(seo05, "the Business Profile case is proposed");
+      assert.deepEqual([seo05.layer, seo05.verdict, seo05.severity], ["SEO", "fail", "high"], "the broken profile link backs the case");
+      const kept = JSON.stringify(report);
+      for (const text of ["62704", "old-store", "(415) 555-0100"]) assert.ok(!kept.includes(text), "the report kept the profile's " + text);
+    } finally {
+      restore();
+    }
+  });
+
+  test("Business Profile findings follow what the lookup found (#2067)", () => {
+    const run = (local) => analyzeHtmlPages([{ url: URL_, html: HTML }], { local });
+    const find = (result, key) => result.findings.find((item) => item.key === key);
+    const base = { ok: true, query: "Example, Springfield", placeId: "ChIJx", by: "website", status: "OPERATIONAL", website: { present: true, http: false, utm: true, sameSite: true, reach: { status: 200, hops: 0, sameSite: true } }, mismatch: {} };
+    const good = run(base);
+    assert.deepEqual(["local-profile", "local-website", "local-nap"].map((key) => verdict(good, key)), ["pass", "pass", "pass"]);
+    assert.equal(verdict(good, "local-utm"), "missing");
+
+    assert.deepEqual(["verdict", "severity"].map((field) => find(run(Object.assign({}, base, { status: "CLOSED_PERMANENTLY" })), "local-status")[field]), ["fail", "high"]);
+    assert.equal(find(run(Object.assign({}, base, { status: "CLOSED_TEMPORARILY" })), "local-status").severity, "medium");
+
+    const off = run(Object.assign({}, base, { website: Object.assign({}, base.website, { utm: false, reach: { status: 200, hops: 3, sameSite: true } }), mismatch: { phone: ["+1 415 555 0100"], hours: [1, 0] } }));
+    assert.equal(find(off, "local-website").title, "The Google Business Profile's link takes 3 redirects");
+    assert.equal(find(off, "local-utm").severity, "low");
+    assert.deepEqual([find(off, "local-nap").severity, find(off, "local-nap").evidence], ["low", "The profile differs from the site in the phone (+1 415 555 0100 on the site)."], "a different phone may be a call-tracking number");
+    assert.equal(find(run(Object.assign({}, base, { mismatch: { address: "12 Garden Way", phone: ["+1 415 555 0100"] } })), "local-nap").severity, "medium");
+    assert.equal(find(off, "local-hours").evidence, "The LocalBusiness hours on the site and the Business Profile disagree on Monday and Sunday.");
+    assert.equal(find(run(Object.assign({}, base, { mismatch: { name: "Example" } })), "local-nap").severity, "low");
+
+    const elsewhere = run(Object.assign({}, base, { website: Object.assign({}, base.website, { reach: { status: 200, hops: 1, sameSite: false } }) }));
+    assert.equal(find(elsewhere, "local-website").evidence, "The profile's website link redirects away from shop.example.com.");
+    assert.equal(find(run(Object.assign({}, base, { by: "phone", website: { present: false } })), "local-website").title, "The Google Business Profile has no website link");
+
+    const none = run({ ok: true, query: "Example, Springfield", placeId: "", candidates: 2 });
+    assert.deepEqual([find(none, "local-profile").verdict, find(none, "local-profile").evidence], ["person", "Google Maps was searched for \"Example, Springfield\". 2 places came back, and none links to shop.example.com or lists the site's phone."]);
+    assert.ok(!run(null).findings.some((item) => /^local-/.test(item.key)));
+  });
+
+  test("LocalBusiness subtypes need a name and an address, like LocalBusiness (#2067)", () => {
+    const html = HTML.replace("</head>", "<script type=\"application/ld+json\">{\"@type\":\"Dentist\",\"name\":\"Example Dental\"}</script></head>");
+    const result = analyzeHtmlPages([{ url: URL_, html }]);
+    assert.equal(verdict(result, "seo-schema-props"), "risk");
+    assert.match(result.findings.find((item) => item.key === "seo-schema-props").evidence, /Dentist lacks address/);
   });
 });
 
