@@ -334,7 +334,8 @@ async function judge(segment, cc, r, facts, used, log) {
     out = await ai(
           `You pick the best published address for a first cold email about website quality (accessibility, SEO, visibility in AI search, security, performance) to a ${segment} in ${COUNTRY[cc]}. `
           + "University: the web, marketing, communications or accessibility team, or a dean or head of computing; TVET or bootcamp: the director or admissions; agency: the founder, the director or the general inbox; startup: a founder, hello@ or the general inbox. "
-          + "Use only an address from the list. Set fits to false when the site is not really this kind of organisation in this country, or is closed. "
+          + "Use only an address from the list. Set fits to false when the site is not really this kind of organisation in this country, or is closed, "
+          + "and for a university when the list only has admissions, postgraduate, branch-campus, rector's office or citizen-service inboxes. "
           + "trigger: a recent fact from the page that makes the email timely (new site, accessibility statement, funding, new programme, hiring QA), under 15 words, or empty. "
           + 'Reply with JSON only: {"fits": true, "email": "...", "contact_name": "", "contact_title": "", "language": "es|pt|en|fr|it", "dean": false, "trigger": ""}. dean is true when the address belongs to a dean or head of computing.',
           JSON.stringify({ org: r.org, host: r.host, title: facts.title, description: facts.description, text: facts.text, emails: facts.emails.slice(0, 12) }),
@@ -358,7 +359,7 @@ async function judge(segment, cc, r, facts, used, log) {
 }
 
 // One prospect per slot's country: sites are fetched five at a time, at most MAX_CHECKS per segment.
-const MAX_CHECKS = 60;
+const MAX_CHECKS = 80;
 async function pick(segment, pool, slots, used, log) {
   const picked = [];
   let checked = 0;
