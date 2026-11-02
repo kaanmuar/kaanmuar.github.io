@@ -31,9 +31,33 @@ function cleanCandidates(list) {
     key: text(p && p.key, 140), product: text(p && p.product, 20), impact: Math.max(1, Math.min(5, Math.round(Number(p && p.impact) || 1))),
     level: ["alert", "warn", "good", "info"].includes(p && p.level) ? p.level : "info", title: text(p && p.title, 120),
     evidence: (Array.isArray(p && p.evidence) ? p.evidence : []).map((e) => text(e, 240)).filter(Boolean).slice(0, 4),
-    source: "rules", action: core.SAFE_ACTIONS.includes(p && p.action) ? p.action : null,
-    jobs: Array.isArray(p && p.jobs) ? p.jobs.filter((j) => /^[A-Za-z][A-Za-z0-9]{2,60}$/.test(j)).slice(0, 6) : null, tab: text(p && p.tab, 20) || null, link: /^https:\/\//.test((p && p.link) || "") ? text(p.link, 200) : null
+    source: "rules", action: core.SAFE_ACTIONS.includes(p && p.action) ? p.action : null, click: core.CLICK_ACTIONS.includes(p && p.click) ? p.click : null,
+    jobs: Array.isArray(p && p.jobs) ? p.jobs.filter((j) => /^[A-Za-z][A-Za-z0-9]{2,60}$/.test(j)).slice(0, 6) : null,
+    workflows: Array.isArray(p && p.workflows) ? p.workflows.map((w) => text(w, 120)).filter(Boolean).slice(0, 6) : null,
+    tab: text(p && p.tab, 20) || null, link: /^https:\/\//.test((p && p.link) || "") ? text(p.link, 200) : null
   })).filter((p) => p.key && p.title);
+}
+
+// A proposal as the cards and the apps get it: with its buttons (core.proposalButtons).
+function withButtons(p) {
+  return Object.assign({}, p, { buttons: core.proposalButtons(p) });
+}
+
+/* A push's Run button carries only its ref, so the run behind it waits in jarvis_proposal_runs/<key> for 2 days
+   (#1977). saveRun keeps it when the push goes out; savedRun reads it back for notify-act. */
+async function saveRun(db, p, now) {
+  const run = core.proposalRun(p);
+  if (!p || !p.key || !run) return null;
+  const row = { key: text(p.key, 140), run, at: new Date(now).toISOString(), until: new Date(now + 2 * DAY).toISOString() };
+  await db.collection("jarvis_proposal_runs").doc(docId(p.key)).set(row);
+  return row;
+}
+
+async function savedRun(db, key, now) {
+  const snap = await db.collection("jarvis_proposal_runs").doc(docId(key)).get();
+  const row = snap.exists ? snap.data() : null;
+  if (!row || row.key !== key || !(row.until > new Date(now).toISOString())) throw new Error("That button has expired; open Jarvis to run it.");
+  return row.run;
 }
 
 async function saved(db) {
@@ -268,4 +292,4 @@ function weeklyMail({ hist, proposals, aiText }) {
   };
 }
 
-module.exports = { HIDE_DAYS, WEEK_ROWS, docId, cleanCandidates, saved, mark, savedBrief, markBrief, parseJson, rankPrompt, mergeRanked, rank, mailLines, weekWindows, weekSum, pointValues, ga4Weeks, history, strategyPrompt, weeklyMail };
+module.exports = { HIDE_DAYS, WEEK_ROWS, docId, cleanCandidates, withButtons, saveRun, savedRun, saved, mark, savedBrief, markBrief, parseJson, rankPrompt, mergeRanked, rank, mailLines, weekWindows, weekSum, pointValues, ga4Weeks, history, strategyPrompt, weeklyMail };
