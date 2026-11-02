@@ -29,6 +29,7 @@ const LINKS = [
 const esc = (value) => String(value === null || value === undefined ? '' : value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = (n) => (typeof n === 'number' ? n.toLocaleString('en-US') : esc(n));
 const ago = (ms) => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? s + 's' : s < 3600 ? Math.round(s / 60) + 'm' : Math.round(s / 3600) + 'h'; };
+const spent = (ms) => { const n = Number(ms) || 0, m = Math.round(n / 60000); return n < 60000 ? Math.round(n / 1000) + ' s' : m < 60 ? m + ' min' : Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : ''); };
 const when = (value) => { const d = window.JarvisCore.toDate(value); return d ? d.toLocaleString('en-US', { timeZone: 'America/Bogota', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''; };
 
 // --- charts (SVG and HTML, HUD colors) -------------------------------------------------------------------------
@@ -343,7 +344,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'calls'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'calls'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -418,6 +419,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                     links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10) } : null
                 } : null,
                 engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`) } : null,
+                signedInPeople: e.people && e.people.ok ? e.people.totals : null,
                 waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
             }
         };
@@ -497,6 +499,36 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const log = table([['When', (r) => esc(when(r.at))], ['Action', (r) => esc(ACTION_LABELS[r.action] || r.action)], ['How', (r) => `<span class="jv-chip">${r.mode === 'auto' ? 'on its own' : 'clicked'}</span>`], ['Result', (r) => `<span class="jv-chip ${r.status === 'done' ? 'c-fast' : r.status === 'failed' ? 'c-slow' : 'c-average'}">${esc(r.status)}</span>`], ['Target', (r) => esc(r.target)], ['Detail', (r) => esc(r.detail)]], rows.slice(0, 30), 'Nothing yet.');
         return panel('systems-actions', `Jarvis actions${a.settings && a.settings.auto === false ? ' (automatic runs off)' : ''}`, `<p>${usage}</p>${waiting}${buttons}${log}`,
             { wide: true, data: rows, note: 'Every hour Jarvis runs the safe actions within these caps; anything over a cap or outside the rules waits for Run now. Caps and the switch are in ⚙ Settings.' });
+    }
+
+    // URL Review > Signed-in people (#1976): who signed in, what they ran, whether they came back and for how long.
+    const openPeople = new Set();
+    function peoplePanel() {
+        const g = S.external.people;
+        if (!g || !g.ok) return panel('review-people', 'Signed-in people', waiting('people', 'Reading the signed-in people…'), { wide: true });
+        const keep = (p) => S.mail === 'all' || (S.mail === 'test' ? p.test : !p.test);
+        const list = (g.people || []).filter(keep);
+        const t = (S.mail === 'all' ? g.allTotals : S.mail === 'test' ? g.testTotals : g.totals) || {};
+        const head = stats([
+            { label: 'People', value: t.people || 0 }, { label: 'Seen in range', value: t.active || 0 }, { label: 'New in range', value: t.new || 0 },
+            { label: 'Came back', value: t.returning || 0 }, { label: 'Visits in range', value: t.visits || 0 }, { label: 'Time on site', value: spent(t.activeMs) },
+            { label: 'Average visit', value: spent(t.avgVisitMs) }, { label: 'Runs in range', value: t.runs || 0 }
+        ]);
+        const row = (p) => `<details class="jv-person" data-person="${esc(p.email)}"${openPeople.has(p.email) ? ' open' : ''}><summary>
+            <span class="jv-person-who">${p.picture ? `<img src="${esc(p.picture)}" alt="" width="28" height="28" loading="lazy" referrerpolicy="no-referrer">` : `<i>${esc((p.name || p.email).charAt(0).toUpperCase())}</i>`}<span><b>${esc(p.name || p.email)}</b>${p.name ? `<small>${esc(p.email)}</small>` : ''}</span>${p.test ? '<span class="jv-chip c-average">test</span>' : ''}</span>
+            <span><small>Last seen</small>${esc(when(p.lastSeenAt))}</span>
+            <span><small>Visits</small>${fmt(p.visits)}${p.returns ? ` · back ${fmt(p.returns)}×` : ''}${p.days > 1 ? ` · ${fmt(p.days)} days` : ''}</span>
+            <span><small>Time on site</small>${esc(spent(p.activeMs))}</span>
+            <span><small>Runs</small>${fmt(p.runs)}${p.paid ? ` · ${fmt(p.paid)} paid` : ''}</span></summary>
+            <div class="jv-person-body"><p class="jv-note">Signed up ${esc(when(p.firstAt))} · last sign-in ${esc(when(p.lastSignInAt))} · ${esc((p.providers || []).join(', ') || 'email')} · ${fmt(p.views)} page views · average visit ${esc(spent(p.avgVisitMs))}</p>
+            ${table([['When', (u) => esc(when(u.at))], ['URL', (u) => esc(u.url.replace(/^https?:\/\//, ''))], ['Status', (u) => `<span class="jv-chip${u.paid ? ' c-fast' : ''}">${esc(u.paid ? 'paid' : u.status || '…')}</span>`]], p.urls, 'No runs yet.')}
+            ${table([['Visit', (v) => esc(when(v.startedAt))], ['Time', (v) => esc(spent(v.activeMs))], ['Views', (v) => fmt(v.views)], ['Pages', (v) => esc(v.pages.join(', '))]], p.recent, 'No visits recorded since ' + g.since + '.')}</div></details>`;
+        const body = head + (list.length ? `<div class="jv-people">${list.map(row).join('')}</div>` : `<p class="jv-empty">${S.mail === 'test' ? 'No test accounts have signed in.' : 'Nobody has signed in yet.'}</p>`) + (g.more ? `<p class="jv-more">+${fmt(g.more)} more in the export</p>` : '');
+        return panel('review-people', `Signed-in people · ${fmt(list.length)}`, body, {
+            wide: true,
+            data: list.map((p) => ({ email: p.email, name: p.name, test: p.test, firstAt: p.firstAt, lastSeenAt: p.lastSeenAt, visits: p.visits, returns: p.returns, days: p.days, views: p.views, minutes: Math.round(p.activeMs / 60000), runs: p.runs, paid: p.paid, urls: p.urls.map((u) => u.url).join(' ') })),
+            note: `Visits and time on the URL Review pages are recorded for signed-in people only, since ${esc(g.since)}. Time counts while the tab is visible; a visit ends after 30 minutes without activity. The Real / Tests / All switch applies here.`
+        });
     }
 
     function listPanel(key, id, title, list, opts) {
@@ -1399,6 +1431,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const r = s.review;
         const h = e.health;
         out.review = kpis(r.kpis) + `<div class="jv-grid">${briefPanel('review')}${goalsPanel('review')}
+            ${peoplePanel()}
             ${panel('review-funnel', 'Funnel', funnel(r.funnel), { data: r.funnel })}
             ${panel('review-trend', 'Opens and reviews per day', area(r.series.labels, [{ name: 'Opens', values: r.series.values, color: COLORS.cyan }, { name: 'Reviews', values: r.reviewSeries.values, color: COLORS.green }]), { wide: true, data: r.series.labels.map((d, k) => ({ day: d, opens: r.series.values[k], reviews: r.reviewSeries.values[k] })) })}
             ${panel('review-heat', 'When they open it', heat(r.heatmap, r.peak), { wide: true })}
@@ -2230,6 +2263,10 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     // --- events ---------------------------------------------------------------------------------------------
 
+    root.addEventListener('toggle', (event) => {
+        const d = event.target;
+        if (d.dataset && d.dataset.person) { if (d.open) openPeople.add(d.dataset.person); else openPeople.delete(d.dataset.person); }
+    }, true);
     root.addEventListener('click', (event) => {
         if (event.target.matches('[data-sheet-root]')) { closeSheet(); return; }
         const t = event.target.closest('button, a, li[data-hit], li[data-brief]');

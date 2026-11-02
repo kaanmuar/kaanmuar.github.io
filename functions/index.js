@@ -3304,6 +3304,7 @@ async function readBrowserStream(body, log, onStart) {
 }
 
 const reviewAuth = require("./url-review-auth");
+const reviewVisits = require("./url-review-visits");
 const reviewPhrase = require("./url-review-phrase");
 const reviewOAuth = require("./url-review-oauth");
 // Each OAuth provider registers exactly this address as its redirect URI.
@@ -4010,6 +4011,20 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     const mail = customerMail.reportMail(copy, { lang: link.lang, attached: !!pdf, why: ownerMail.claimWhy(link.lang, link.host) });
     await sendReportMail(id, () => sendAskerMail(email, mail, "", "url-review-owner-claim", pdf ? [pdf] : []), !!pdf);
     res.status(200).send(ownerMail.ownerPage(link.lang, "claimed", Object.assign({}, link, { email })));
+    return;
+  }
+  if (req.method === "POST" && pathName.endsWith("/visit")) {
+    if (!REVIEW_ORIGINS.has(String(req.get("origin") || ""))) {
+      res.status(403).json({ error: "This page cannot note a visit." });
+      return;
+    }
+    let result = { ok: true };
+    try {
+      result = await reviewVisits.note(reviewAuth.firestoreStore(getFirestore()), req.body || {});
+    } catch (error) {
+      console.error("URL review visit note failed:", error);
+    }
+    res.status(result.ok ? 204 : 401).send("");
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/opened") !== -1) {
@@ -5403,7 +5418,7 @@ async function jarvisSnapshot(days) {
   const now = Date.now();
   const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now, days }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync", "calls", "engagement"], days),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync", "calls", "engagement", "people"], days),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
