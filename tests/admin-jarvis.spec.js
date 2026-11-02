@@ -44,14 +44,8 @@ const EXTERNAL = {
   ga4: { ok: true, groups: [{ group: 'cv', sessions: 40, users: 30, views: 90, engagement: 55, duration: 70, priorSessions: 20, priorUsers: 15 }], countries: [{ label: 'Colombia', value: 25, prior: 10 }], sources: [], daily: [] },
   cloudflare: { ok: false, error: 'The Cloudflare token needs Zone > Analytics > Read.' },
   settings: { ok: true, goals: [{ product: 'cv', metric: 'visits', period: 'week', target: 300 }], thresholds: {}, mail: { daily: true, gemini: true, watch: true, weekly: true }, updatedAt: '2026-10-24T12:00:00Z' },
-  actions: { ok: true, settings: { auto: true, caps: { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2 }, countdownHours: 2 }, used: { 'rerun-held': 3, 'resend-notices': 0, 'publish-hub': 2 }, pending: { held: 4, clean: 1, notices: 2 }, noticeHours: false, noticesLive: true,
-    countdowns: {
-      pending: [{ id: 'aaaa1111bbbb2222cccc3333', action: 'rerun-ci', label: 'Re-run failed CI jobs', target: 'Buffer batch', kind: 'post', kindLabel: 'public post', status: 'waiting', by: 'jarvis', confidence: null, why: 'CI "Buffer batch" on main is failure.', runsAt: '2026-10-26T13:00:00.000Z', hold: '' },
-        { id: 'dddd4444eeee5555ffff6666', action: 'ai-fix', label: 'Run a job again', target: 'run-job:sendOwnerNotices', kind: 'email', kindLabel: 'third-party email', status: 'waiting', by: 'gemini', confidence: 0.92, why: 'Its last run failed.', runsAt: '2026-10-26T15:00:00.000Z', hold: '' }],
-      recent: [{ id: '999988887777666655554444', action: 'merge-pr', label: 'Merge a green PR', target: '#2003', kind: 'code', status: 'done', result: 'Merged #2003 at abc1234.' }]
-    },
+  actions: { ok: true, settings: { auto: true, caps: { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2 } }, used: { 'rerun-held': 3, 'resend-notices': 0, 'publish-hub': 2 }, pending: { held: 4, clean: 1, notices: 2 }, noticeHours: false, noticesLive: true,
     actions: [{ action: 'rerun-held', mode: 'auto', status: 'done', target: 'shop.example', detail: 'Sent to the asker.', at: '2026-10-25T15:05:00Z' }, { action: 'publish-hub', mode: 'auto', status: 'waiting', count: 1, target: '', detail: "Over today's cap of 2.", at: '2026-10-25T16:05:00Z' }, { action: 'run-job', mode: 'click', status: 'done', target: 'sweepReviews', detail: 'Started.', at: '2026-10-25T17:00:00Z' }] },
-  countdown: { ok: true, message: 'Cancelled: run a job again.' },
   proposals: { ok: true, gemini: true, at: '2026-10-25T12:00:00Z', hidden: 1, proposals: [
     { rank: 1, key: 'job', title: 'Fix the failing job', impact: 5, level: 'alert', effort: 'hours', why: 'The sweep feeds the hub.', evidence: ['Job sweepReviews failed: quota.'], source: 'gemini+rules', action: null, jobs: ['sweepReviews'], tab: 'systems', link: null },
     { rank: 2, key: 'review:held', title: 'Re-run the held reviews', impact: 3, level: 'warn', evidence: ['4 re-runs are held on the desk.'], source: 'gemini+rules', action: 'rerun-held', tab: 'systems', link: null },
@@ -75,8 +69,6 @@ const EXTERNAL = {
   'share-draft': { ok: true, id: 'new1', kind: 'image', draft: { lang: 'en', kind: 'tip', title: 'Check SSL', alt: 'A card', linkedin: 'LinkedIn draft', x: 'X draft', facebook: 'Facebook draft', instagram: 'Instagram draft' }, note: '' },
   'share-queue': { ok: true, id: 'new1', note: 'Queued. The hub page goes live first.' },
   'social-post-now': { ok: true, started: ['Buffer', 'Facebook Page'], note: 'Started Buffer and Facebook Page.' },
-  studio: { ok: true, sources: ['compare', 'evergreen'], skits: [{ id: 'friday-release', takes: ['en', 'es'] }], takes: 'skit-takes', runs: [{ name: 'Studio tips evergreen render', event: 'workflow_dispatch', status: 'completed', conclusion: 'success', at: '2026-10-25T08:00:00Z', url: 'https://github.com/' }] },
-  'studio-render': { ok: true, note: 'Rendering skit friday-release. The review links land in a PR and on #1981 when it is done.' },
   outreach: { ok: true, needs: ['Instantly: put the API key in Secret Manager as INSTANTLY_API_KEY.'],
     pipeline: { ok: true, queued: 40, swept: 12, left: 28, bySegment: [{ label: 'tvet', value: 10 }, { label: 'university', value: 10 }], reviews: 12, thisWeek: 12, results: [{ label: 'reviewed', value: 11 }], segments: [], avgScore: 64, withLiveReport: 6, reviewedWithLiveReport: 5, daily: [{ date: '2026-10-24', reviews: 12 }] },
     instantly: { ok: false, error: 'INSTANTLY_API_KEY is not set.' },
@@ -179,7 +171,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
@@ -310,23 +302,6 @@ test.describe('admin statistics (Jarvis)', () => {
     await post.click();
     await expect.poll(() => calls.filter((c) => c.op === 'social-post-now').length).toBe(1);
     await expect(page.locator('.jv-toast')).toContainText('Started Buffer and Facebook Page');
-  });
-
-  test('Studio renders lists sources and skits with their takes, and Render dispatches through the function (#1981)', async ({ page }) => {
-    const calls = await openStats(page, '#stats/hub/30');
-    const studio = page.locator('[data-view="hub"] .jv-panel[data-panel-id="hub-studio"]');
-    await expect(studio).toContainText('Studio tips evergreen render');
-    await expect(studio.locator('[data-studio-field="name"] option')).toHaveText(['Pick one', 'compare', 'evergreen']);
-    await expect(studio.locator('[data-act="studio-render"]')).toBeDisabled();
-    await studio.locator('[data-studio-field="kind"]').selectOption('skit');
-    await expect(studio.locator('[data-studio-field="name"] option')).toHaveText(['Pick one', 'friday-release (en, es)']);
-    await expect(studio.locator('[data-studio-field="mode"] option')).toHaveText(['Render', 'Captions only']);
-    await studio.locator('[data-studio-field="name"]').selectOption('friday-release');
-    await studio.locator('[data-studio-field="langs"]').fill('en');
-    await studio.locator('[data-studio-field="ticket"]').fill('1981');
-    await studio.locator('[data-act="studio-render"]').click();
-    await expect.poll(() => calls.filter((c) => c.op === 'studio-render').map((c) => [c.body.kind, c.body.name, c.body.mode, c.body.langs, c.body.ticket])).toEqual([['skit', 'friday-release', 'render', 'en', '1981']]);
-    await expect(page.locator('.jv-toast')).toContainText('Rendering skit friday-release');
   });
 
   test('Share a post uploads the media, shows the Gemini drafts to edit, and queues the edited posts (#1420)', async ({ page }) => {
@@ -529,7 +504,7 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(save.body.settings.goals).toEqual([{ product: 'cv', metric: 'visits', period: 'week', target: 300 }, { product: 'review', metric: 'paid', period: 'month', target: 12 }]);
     expect(save.body.settings.thresholds.pendingRatings).toBe(25);
     expect(save.body.settings.mail).toMatchObject({ daily: true, gemini: false, watch: true, weekly: true, messages: true, ratings: false, ownerReplies: false });
-    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2, 'run-job': 6, 'rerun-ci': 4, 'pause-outreach': 2, 'refresh-data': 4, 'rerun-reviews': 2, 'ai-fix': 3, 'resume-outreach': 1, 'merge-pr': 3 }, confidence: 0.8, countdownHours: 2 });
+    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5 }, confidence: 0.8 });
     expect(save.body.settings.searchQueries).toEqual(['qa review', 'qa review', 'carlos qa']);
     await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(1);
 
@@ -596,37 +571,6 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await panel.locator('[data-run-action="publish-hub"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => c.body.action)).toEqual(['publish-hub']);
-    expect(errors).toEqual([]);
-  });
-
-  test('Systems lists the countdowns: Do it now asks first, Cancel goes straight through the countdown op (#1977)', async ({ page }) => {
-    const errors = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    const calls = await openStats(page, '#stats/systems/30');
-    const panel = page.locator('[data-panel-id="systems-actions"]');
-    await expect(panel).toContainText('On the countdown (2 h)');
-    const rows = panel.locator('.jv-countdown');
-    await expect(rows).toHaveCount(2);
-    await expect(rows.first()).toContainText('Re-run failed CI jobs: Buffer batch');
-    await expect(rows.first()).toContainText('public post');
-    await expect(rows.nth(1)).toContainText('Gemini 0.92');
-    await expect(panel).toContainText('Ended in the last day (1)');
-    await expect(panel.locator('.jv-note').last()).toContainText('Refunds and deletes always wait for your click');
-    await rows.first().screenshot({ path: 'test-results/jarvis-countdown.png' });
-
-    let asked = '';
-    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.dismiss(); });
-    await rows.first().locator('[data-countdown-act="now"]').click();
-    await expect.poll(() => asked).toContain('do it now: re-run failed ci jobs (Buffer batch)');
-    expect(calls.some((c) => c.op === 'countdown')).toBe(false);
-
-    await rows.nth(1).locator('[data-countdown-act="cancel"]').click();
-    await expect.poll(() => calls.filter((c) => c.op === 'countdown').map((c) => [c.body.id, c.body.act])).toEqual([['dddd4444eeee5555ffff6666', 'cancel']]);
-    await expect(page.locator('.jv-toast')).toContainText('Cancelled: run a job again.');
-
-    page.once('dialog', (dialog) => dialog.accept());
-    await rows.first().locator('[data-countdown-act="now"]').click();
-    await expect.poll(() => calls.filter((c) => c.op === 'countdown').map((c) => c.body.act)).toEqual(['cancel', 'now']);
     expect(errors).toEqual([]);
   });
 
