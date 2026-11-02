@@ -91,12 +91,21 @@ function payloadOf(id, doc, rows, viewer) {
     id: multi.docId(id),
     at: String(doc.createdAt || ""),
     from: "peers",
-    peers: { sector: String(doc.sector || ""), place: String(doc.place || ""), viewer },
+    peers: { sector: String(doc.sector || ""), place: String(doc.place || ""), phrase: phrases(doc.phrase), viewer },
     paid: true,
     locked: [],
     columns,
     summary: multi.summaryOf(columns)
   };
+}
+
+// The group's name in each reader's language, such as "hotels in Bogotá, Colombia" or "airlines worldwide".
+function phrases(value) {
+  const out = {};
+  Object.keys(value && typeof value === "object" ? value : {}).forEach((lang) => {
+    if (/^[a-z]{2}$/.test(lang) && typeof value[lang] === "string") out[lang] = value[lang].slice(0, 160);
+  });
+  return out;
 }
 
 function viewerOf(doc, given) {

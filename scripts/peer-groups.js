@@ -3,8 +3,9 @@
      node scripts/peer-groups.js build --dir <outreach folder> [--groups 50] [--dry]
      node scripts/peer-groups.js send  --dir <outreach folder> [--dry]
      node scripts/peer-groups.js status --dir <outreach folder>
-   build  picks sector and place pairs not used yet (SECTORS x PLACES), asks Workers AI for the official sites of up to
-          six competitors there, opens each site, keeps the real ones with an address they publish, and queues every
+   build  walks scripts/peer-sectors.json: ~230 sectors, each at the scopes where it competes (city, region, country,
+          continent, global, or cross: the country's leaders next to the world's). For each unused sector, scope and
+          place it asks Workers AI for the official sites of up to ten competitors and the country each one is from, opens each site, keeps the real ones with an address they publish, and queues every
           kept host for the nightly sweep (scripts/sweep-outreach.js). Rows go to prospects/peer-groups.csv.
    send   for every group whose hosts the sweep has reviewed (all of them, or at least PEERS_MIN after WAIT_DAYS),
           saves url_review_peer_groups/<id> with one token per host, writes each peer's own comparison link, rank and
@@ -24,42 +25,31 @@ const PEERS_MAX = 6;
 const WAIT_DAYS = 4;
 const PARALLEL = 4;
 const FILE = "prospects/peer-groups.csv";
-const HEADER = ["group", "sector", "place", "cc", "language", "host", "org", "email", "contact_name", "source_url", "queued", "review_id", "peer_doc", "rank", "peer_count", "score", "sector_label", "comparison_url", "status", "uploaded"];
+const HEADER = ["group", "sector", "scope", "place", "phrase", "cc", "language", "host", "org", "email", "contact_name", "source_url", "queued", "review_id", "peer_doc", "rank", "peer_count", "score", "sector_label", "group_phrase", "comparison_url", "status", "uploaded"];
 // The sending domain's Worker (qalabreview/src/routes.js) forwards /<lang>/peers/<id>/<token> to the comparison.
 const SHORT = "https://qalabreview.com";
 
-// scope "country": too few of them in one city, so the group is national.
-const SECTORS = [
-  { key: "university", scope: "city", en: "universities", es: "universidades", pt: "universidades", fr: "universités", it: "università", de: "Hochschulen" },
-  { key: "hotel", scope: "city", en: "hotels", es: "hoteles", pt: "hotéis", fr: "hôtels", it: "hotel", de: "Hotels" },
-  { key: "online-store", scope: "country", en: "online stores", es: "tiendas online", pt: "lojas online", fr: "boutiques en ligne", it: "negozi online", de: "Onlineshops" },
-  { key: "supermarket", scope: "country", en: "supermarket chains", es: "cadenas de supermercados", pt: "redes de supermercados", fr: "chaînes de supermarchés", it: "catene di supermercati", de: "Supermarktketten" },
-  { key: "car-dealer", scope: "city", en: "car dealerships", es: "concesionarios de autos", pt: "concessionárias de carros", fr: "concessionnaires automobiles", it: "concessionari auto", de: "Autohäuser" },
-  { key: "motorcycle-dealer", scope: "city", en: "motorcycle dealerships", es: "concesionarios de motos", pt: "concessionárias de motos", fr: "concessionnaires moto", it: "concessionari moto", de: "Motorradhändler" },
-  { key: "yacht-broker", scope: "country", en: "yacht and boat dealers", es: "vendedores de yates y barcos", pt: "vendedores de iates e barcos", fr: "vendeurs de yachts et bateaux", it: "venditori di yacht e barche", de: "Yacht- und Boothändler" },
-  { key: "aircraft-dealer", scope: "country", en: "aircraft sellers", es: "vendedores de aeronaves", pt: "vendedores de aeronaves", fr: "vendeurs d'avions", it: "venditori di aerei", de: "Flugzeughändler" },
-  { key: "bicycle-shop", scope: "city", en: "bicycle shops", es: "tiendas de bicicletas", pt: "lojas de bicicletas", fr: "magasins de vélos", it: "negozi di biciclette", de: "Fahrradläden" },
-  { key: "truck-dealer", scope: "country", en: "truck dealers", es: "concesionarios de camiones", pt: "concessionárias de caminhões", fr: "concessionnaires de camions", it: "concessionari di camion", de: "Lkw-Händler" },
-  { key: "pet-store", scope: "city", en: "pet stores", es: "tiendas de mascotas", pt: "pet shops", fr: "animaleries", it: "negozi di animali", de: "Zoohandlungen" },
-  { key: "hospital", scope: "city", en: "hospitals", es: "hospitales", pt: "hospitais", fr: "hôpitaux", it: "ospedali", de: "Krankenhäuser" },
-  { key: "clinic", scope: "city", en: "private clinics", es: "clínicas privadas", pt: "clínicas privadas", fr: "cliniques privées", it: "cliniche private", de: "Privatkliniken" },
-  { key: "dental-clinic", scope: "city", en: "dental clinics", es: "clínicas dentales", pt: "clínicas dentárias", fr: "cabinets dentaires", it: "studi dentistici", de: "Zahnkliniken" },
-  { key: "real-estate", scope: "city", en: "real estate agencies", es: "inmobiliarias", pt: "imobiliárias", fr: "agences immobilières", it: "agenzie immobiliari", de: "Immobilienmakler" },
-  { key: "private-school", scope: "city", en: "private schools", es: "colegios privados", pt: "escolas particulares", fr: "écoles privées", it: "scuole private", de: "Privatschulen" }
-];
-const PLACES = [
-  ["co", "Bogotá", "Colombia", "es"], ["co", "Medellín", "Colombia", "es"], ["mx", "Ciudad de México", "México", "es"], ["mx", "Monterrey", "México", "es"],
-  ["pe", "Lima", "Perú", "es"], ["cl", "Santiago", "Chile", "es"], ["ar", "Buenos Aires", "Argentina", "es"], ["ec", "Quito", "Ecuador", "es"],
-  ["es", "Madrid", "España", "es"], ["es", "Barcelona", "España", "es"], ["br", "São Paulo", "Brasil", "pt"], ["br", "Rio de Janeiro", "Brasil", "pt"],
-  ["pt", "Lisboa", "Portugal", "pt"], ["pt", "Porto", "Portugal", "pt"], ["us", "Miami", "United States", "en"], ["us", "Austin", "United States", "en"],
-  ["us", "Chicago", "United States", "en"], ["ca", "Toronto", "Canada", "en"], ["gb", "London", "United Kingdom", "en"], ["gb", "Manchester", "United Kingdom", "en"],
-  ["ie", "Dublin", "Ireland", "en"], ["au", "Sydney", "Australia", "en"], ["au", "Melbourne", "Australia", "en"], ["nz", "Auckland", "New Zealand", "en"],
-  ["za", "Cape Town", "South Africa", "en"], ["in", "Bengaluru", "India", "en"], ["sg", "Singapore", "Singapore", "en"], ["ae", "Dubai", "United Arab Emirates", "en"],
-  ["ph", "Manila", "Philippines", "en"], ["ng", "Lagos", "Nigeria", "en"], ["ke", "Nairobi", "Kenya", "en"], ["fr", "Paris", "France", "fr"],
-  ["fr", "Lyon", "France", "fr"], ["be", "Bruxelles", "Belgique", "fr"], ["ca", "Montréal", "Canada", "fr"], ["ma", "Casablanca", "Maroc", "fr"],
-  ["it", "Milano", "Italia", "it"], ["it", "Roma", "Italia", "it"], ["de", "Berlin", "Deutschland", "de"], ["de", "München", "Deutschland", "de"],
-  ["at", "Wien", "Österreich", "de"], ["ch", "Zürich", "Schweiz", "de"]
-].map(([cc, city, country, language]) => ({ cc, city, country, language }));
+const TAXONOMY = require("./peer-sectors.json");
+const SECTORS = TAXONOMY.sectors.map((sector) => Object.assign({}, sector, { scopes: TAXONOMY.presets[sector.preset] || [sector.preset] }));
+const LANG_OF = Object.assign(Object.fromEntries(["co", "mx", "pe", "cl", "ar", "ec", "uy", "py", "bo", "cr", "pa", "do", "gt", "es", "ve", "hn", "sv", "ni", "cu", "pr"].map((cc) => [cc, "es"])),
+  { br: "pt", pt: "pt", ao: "pt", mz: "pt", fr: "fr", be: "fr", ma: "fr", sn: "fr", ci: "fr", tn: "fr", dz: "fr", it: "it", de: "de", at: "de", ch: "de" });
+const PLACES = {
+  city: TAXONOMY.places.city.map(([cc, city, country]) => ({ cc, name: city + ", " + country, id: cc + "-" + city })),
+  region: TAXONOMY.places.region.map(([cc, region, country]) => ({ cc, name: region + ", " + country, id: cc + "-" + region })),
+  country: TAXONOMY.places.country.map(([cc, country]) => ({ cc, name: country, id: cc })),
+  continent: TAXONOMY.places.continent.map((name) => ({ cc: "", name, id: name })),
+  global: [{ cc: "", name: "the world", id: "world" }]
+};
+PLACES.cross = PLACES.country;
+const langOf = (cc) => LANG_OF[cc] || "en";
+
+// The English phrase a group is named by; emails and the page get it translated (labels()).
+function phraseOf(sector, scope, place) {
+  if (scope === "global") return sector.en + " worldwide";
+  if (scope === "continent") return sector.en + " across " + place.name;
+  if (scope === "cross") return sector.en + " in " + place.name + " and worldwide";
+  return sector.en + " in " + place.name;
+}
 
 let DIR = "";
 let DRY = false;
@@ -67,8 +57,30 @@ const read = (rel) => { try { return fs.readFileSync(path.join(DIR, rel), "utf8"
 const sheet = () => { const c = parseCsv(read(FILE)); if (!c.header.length) c.header = HEADER; return c; };
 const save = (c) => { if (!DRY) fs.writeFileSync(path.join(DIR, FILE), toCsv(c.header, c.rows, c.eol)); };
 const groupsOf = (rows) => rows.reduce((m, r) => m.set(r.group, (m.get(r.group) || []).concat(r)), new Map());
-const labelOf = (key, lang) => { const s = SECTORS.find((x) => x.key === key); return (s && (s[lang] || s.en)) || key; };
-const placeOf = (sector, p) => (sector.scope === "country" ? p.country : p.city + ", " + p.country);
+const sectorOf = (key) => SECTORS.find((x) => x.key === key);
+
+// Translations of sector labels and group phrases, written once by Workers AI and kept in the outreach folder.
+const LABELS = "prospects/peer-labels.json";
+async function labels(texts, lang) {
+  if (lang === "en") return Object.fromEntries(texts.map((t) => [t, t]));
+  let cache = {};
+  try { cache = JSON.parse(read(LABELS) || "{}"); } catch { cache = {}; }
+  const missing = [...new Set(texts.filter((t) => !cache[lang + "|" + t]))];
+  if (missing.length) {
+    const out = await ai("You translate short business phrases for a B2B email. Answer only with JSON.",
+      `Translate each English phrase to the language with code "${lang}", keeping proper names of places as they are written locally and using the natural plural. JSON: {"items":[{"en":"...","text":"..."}]}\n` + missing.map((t) => JSON.stringify(t)).join("\n"), { max: 1200 });
+    for (const item of out.items || []) if (item && missing.includes(item.en) && item.text) cache[lang + "|" + item.en] = String(item.text).slice(0, 160);
+    if (!DRY) fs.writeFileSync(path.join(DIR, LABELS), JSON.stringify(cache, null, 1) + "\n");
+  }
+  return Object.fromEntries(texts.map((t) => [t, cache[lang + "|" + t] || t]));
+}
+
+async function labelOf(key, lang) {
+  const sector = sectorOf(key);
+  if (!sector) return key;
+  if (lang === "en" || sector[lang]) return sector[lang] || sector.en;
+  return (await labels([sector.en], lang))[sector.en];
+}
 const day = () => new Date().toISOString().slice(0, 10);
 
 // Hosts and addresses outreach already holds, so a peer group never writes twice to one inbox.
@@ -84,30 +96,37 @@ function used() {
 
 const gcd = (a, b) => (b ? gcd(b, a % b) : a);
 
-// Sector and place pairs in a fixed walk, so each run takes the next ones no group has used.
+// Sector, scope and place triples in a fixed walk: every sector before any repeats, its scopes in turn, and places
+// stepped so neighbouring sectors land in different parts of the world.
 function pairs(taken) {
   const out = [];
-  const all = SECTORS.length * PLACES.length;
-  const lap = all / gcd(SECTORS.length, PLACES.length);
-  for (let i = 0; i < all; i += 1) {
+  const rounds = Math.max(...Object.values(PLACES).map((list) => list.length)) * 6;
+  for (let i = 0; i < SECTORS.length * rounds; i += 1) {
     const sector = SECTORS[i % SECTORS.length];
-    const place = PLACES[(i * 5 + Math.floor(i / lap)) % PLACES.length];
-    const key = sector.key + "|" + (sector.scope === "country" ? place.cc : place.cc + "-" + place.city);
-    if (!taken.has(key)) { taken.add(key); out.push({ sector, place, key }); }
+    const lap = Math.floor(i / SECTORS.length);
+    const scope = sector.scopes[(lap + (i % SECTORS.length)) % sector.scopes.length];
+    const list = PLACES[scope];
+    const place = list[(i * 7 + lap) % list.length];
+    const key = sector.key + "|" + scope + "|" + place.id;
+    if (!taken.has(key)) { taken.add(key); out.push({ sector, scope, place, key }); }
   }
   return out;
 }
 
-async function groupFor(sector, place, skip, log) {
-  const where = placeOf(sector, place);
+async function groupFor(sector, scope, place, skip, log) {
+  const where = phraseOf(sector, scope, place);
+  const ask = scope === "cross"
+    ? `List 5 leading ${sector.en} in ${place.name} and 5 leading ${sector.en} worldwide`
+    : `List up to 10 well-known ${where} that compete with each other`;
   const named = await ai("You list real organisations and their official website domains. Answer only with JSON.",
-    `List up to 10 well-known ${sector.en} in ${where} that compete with each other, each with the domain of its own official website (not a directory, marketplace, social network or booking platform). JSON: {"sites":[{"org":"...","host":"example.com"}]}`, { max: 700 });
+    `${ask}, each with the domain of its own official website (not a directory, marketplace, social network, booking platform or government body) and the two-letter ISO code of the country it is based in. Prefer independent organisations over brands of one group. JSON: {"sites":[{"org":"...","host":"example.com","cc":"us"}]}`, { max: 900 });
+  const ccOf = new Map((named.sites || []).map((s) => [bare(String(s.host || "").toLowerCase()), String(s.cc || "").toLowerCase()]));
   const hosts = [...new Set((named.sites || []).map((s) => bare(String(s.host || "").toLowerCase())).filter((h) => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(h) && !skip.has(h)))].slice(0, 10);
   const facts = (await Promise.all(hosts.map((host) => siteFacts(host).catch(() => null))))
     .filter(Boolean).map((f) => Object.assign(f, { host: bare(new URL(f.url).host) }));
   if (facts.length < PEERS_MIN + 1) return log(`  ${sector.key} ${where}: ${facts.length} sites opened of ${hosts.length} named, skipped`), [];
   const judged = await ai("You check websites for a B2B email about website quality. Answer only with JSON.",
-    `Each site below was named as one of the ${sector.en} in ${where}. Keep only the official site of an organisation that is one of the ${sector.en} in ${where} (drop directories, marketplaces, news, government and duplicates of one brand). For each kept site pick the best published address for a first email about the website (marketing, communications, web, or a general contact; never privacy, jobs or support), or "" if none fits.\n` +
+    `Each site below was named as one of the ${where}. Keep only the official site of an organisation that is one of the ${where} (drop directories, marketplaces, news, government bodies and sister brands of one group). For each kept site pick the best published address for a first email about the website (marketing, communications, web, or a general contact; never privacy, jobs or support), or "" if none fits.\n` +
     facts.map((f) => JSON.stringify({ host: f.host, title: f.title, description: f.description.slice(0, 200), emails: f.emails.map((e) => e.email).slice(0, 12) })).join("\n") +
     `\nJSON: {"sites":[{"host":"...","org":"short brand name","email":"","contact_name":""}]}`, { max: 900 });
   const byHost = new Map(facts.map((f) => [f.host, f]));
@@ -117,7 +136,8 @@ async function groupFor(sector, place, skip, log) {
     if (!f || kept.some((k) => k.host === f.host)) continue;
     const email = String(s.email || "").toLowerCase();
     const found = f.emails.find((e) => e.email === email);
-    kept.push({ host: f.host, org: String(s.org || f.title).slice(0, 60), email: found && !skip.has(email) ? email : "", contact_name: String(s.contact_name || "").slice(0, 60), source_url: found ? found.url : "" });
+    const cc = place.cc || (/^[a-z]{2}$/.test(ccOf.get(f.host) || "") ? ccOf.get(f.host) : (f.host.match(/\.([a-z]{2})$/) || [])[1] || "us");
+    kept.push({ host: f.host, cc, language: langOf(cc), org: String(s.org || f.title).slice(0, 60), email: found && !skip.has(email) ? email : "", contact_name: String(s.contact_name || "").slice(0, 60), source_url: found ? found.url : "" });
   }
   const group = kept.slice(0, PEERS_MAX);
   if (group.length < PEERS_MIN + 1 || group.filter((k) => k.email).length < PEERS_MIN) {
@@ -131,6 +151,7 @@ async function groupFor(sector, place, skip, log) {
 async function build(want, log) {
   const c = sheet();
   const taken = new Set(c.rows.map((r) => r.group.split(":")[0]));
+  for (const h of HEADER) if (!c.header.includes(h)) c.header.push(h);
   const skip = used();
   const fresh = [];
   let made = 0;
@@ -138,10 +159,10 @@ async function build(want, log) {
   // A few pairs at a time: most of the wait is sites that are slow to answer.
   const worker = async () => {
     while (made < want && todo.length) {
-      const { sector, place, key } = todo.shift();
+      const { sector, scope, place, key } = todo.shift();
       let group = [];
       try {
-        group = await groupFor(sector, place, skip, log);
+        group = await groupFor(sector, scope, place, skip, log);
       } catch (error) {
         if (error.fatal) throw error;
         log(`  ${key}: ${String(error.message || error).split("\n")[0]}`);
@@ -153,7 +174,7 @@ async function build(want, log) {
       for (const g of group) {
         skip.add(g.host);
         if (g.email) skip.add(g.email);
-        fresh.push(Object.assign({ group: id, sector: sector.key, place: placeOf(sector, place), cc: place.cc, language: place.language, queued: day(), status: "queued" }, g));
+        fresh.push(Object.assign({ group: id, sector: sector.key, scope, place: place.name, phrase: phraseOf(sector, scope, place), queued: day(), status: "queued" }, g));
       }
     }
   };
@@ -181,6 +202,7 @@ async function reviewOf(store, host) {
 
 async function send(log) {
   const c = sheet();
+  for (const h of HEADER) if (!c.header.includes(h)) c.header.push(h);
   const store = db();
   let opened = 0;
   for (const [id, rows] of groupsOf(c.rows)) {
@@ -198,13 +220,17 @@ async function send(log) {
     }
     const tokens = {};
     done.forEach((r) => { r.token = crypto.randomBytes(12).toString("hex"); tokens[r.token] = r.host; });
-    const doc = { sector: labelOf(done[0].sector, done[0].language), place: done[0].place, cc: done[0].cc, lang: done[0].language,
+    const english = done[0].phrase || ((sectorOf(done[0].sector) || { en: done[0].sector }).en + " in " + done[0].place);
+    const phrase = { en: english };
+    for (const lang of [...new Set(done.map((r) => r.language))]) phrase[lang] = (await labels([english], lang))[english];
+    const doc = { sector: (sectorOf(done[0].sector) || { en: done[0].sector }).en, place: done[0].place, scope: done[0].scope || "", phrase,
       hosts: done.map((r) => r.host), ids: done.map((r) => r.review_id), tokens, createdAt: new Date().toISOString() };
     const ref = { id: crypto.randomBytes(10).toString("hex") };
     if (!DRY) await store.collection("url_review_peer_groups").doc(ref.id).set(doc);
     const ranked = done.slice().sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0));
     for (const r of done) {
-      Object.assign(r, { peer_doc: ref.id, rank: String(ranked.indexOf(r) + 1), peer_count: String(done.length), status: "ready", sector_label: labelOf(r.sector, r.language),
+      Object.assign(r, { peer_doc: ref.id, rank: String(ranked.indexOf(r) + 1), peer_count: String(done.length), status: "ready",
+        sector_label: await labelOf(r.sector, r.language), group_phrase: phrase[r.language] || english,
         comparison_url: SHORT + "/" + r.language + "/peers/" + ref.id + "/" + r.token });
       delete r.token;
     }
@@ -240,4 +266,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch((error) => { console.error(error.message || error); process.exit(1); });
 
-module.exports = { SECTORS, PLACES, pairs, placeOf };
+module.exports = { SECTORS, PLACES, pairs, phraseOf, langOf };

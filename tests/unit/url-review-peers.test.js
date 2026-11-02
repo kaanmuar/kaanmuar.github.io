@@ -47,7 +47,9 @@ test("the reader's column keeps its security details; the other peers' are left 
   assert.equal(typeof other.report.insights.score.areas.Security.score, "number");
   assert.equal(made.paid, true);
   assert.equal(made.from, "peers");
-  assert.deepEqual(made.peers, { sector: "hotels", place: "Cartagena, Colombia", viewer: "two.co" });
+  assert.deepEqual(made.peers, { sector: "hotels", place: "Cartagena, Colombia", phrase: {}, viewer: "two.co" });
+  const named = peers.payloadOf("abc123", Object.assign({}, doc, { phrase: { en: "hotels in Cartagena", es: "hoteles de Cartagena", bad: 1, "<x>": "y" } }), rows, "two.co");
+  assert.deepEqual(named.peers.phrase, { en: "hotels in Cartagena", es: "hoteles de Cartagena" });
 });
 
 test("every column shows its findings in the open, but only the top case whole", () => {
