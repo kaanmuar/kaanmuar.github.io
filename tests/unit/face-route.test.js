@@ -99,3 +99,11 @@ test("post numbers read each Facebook Page with its own face's token", () => {
   assert.deepEqual(metrics.pageEntries(entries, "es").map((e) => e.id), ["3"]);
   assert.equal(route.pageProfile("es"), "Facebook Page (qaurlreview)");
 });
+
+test("an account belongs to the face whose handle it logs in as, whichever secrets hold it", () => {
+  assert.equal(route.accountFace("qalaburlreview.bsky.social"), "en");
+  assert.equal(route.accountFace("qalaburlreview@mastodon.social"), "en");
+  assert.equal(route.accountFace("threads.net/@qaurlreview"), "es");
+  assert.equal(route.accountFace("instagram.com/qaurlreview"), "es");
+  assert.equal(route.accountFace("instagram.com/someone"), null);
+});
