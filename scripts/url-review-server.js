@@ -548,6 +548,23 @@ const server = http.createServer(async (req, res) => {
     if (!access.ok) {
       let priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] };
       try { priced = core.priceForReport(found.frameworks || [], core.toolsForCharge((found.report && found.report.tools) || []), core.creditFor({ addons })); } catch (error) { priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] }; }
+      if (offers.reopenFree(found, Date.now())) {
+        const preview = core.previewReport(found.report);
+        sendJson(res, 200, {
+          report: addons.indexOf("fixlist") !== -1 && found.report.insights ? Object.assign(preview, { insights: found.report.insights }) : preview,
+          frameworks: found.frameworks || [],
+          paid: false,
+          free: false,
+          addons,
+          reopenUntil: offers.reopenFreeUntil(found),
+          priceUsd: priced.usd,
+          creditUsd: priced.creditUsd || 0,
+          tools: priced.tools || [],
+          id: found.id,
+          host: found.report.host
+        }, origin, found.deviceId || deviceHint);
+        return;
+      }
       sendJson(res, 402, Object.assign({
         paymentRequired: true,
         priceUsd: priced.usd,
@@ -593,7 +610,7 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 402, {
       paymentRequired: true,
       priceUsd: core.PRICE_USD,
-      error: "Reopening a report asks for payment. A card payment is not connected on this page."
+      error: "After 7 days, reopening a report asks for payment. A card payment is not connected on this page."
     }, origin, deviceHint);
     return;
   }

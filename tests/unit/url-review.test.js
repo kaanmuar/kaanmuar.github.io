@@ -1579,11 +1579,12 @@ test.describe("return price", () => {
     assert.throws(() => core.chargedUsd(Object.assign({}, base, { priceUsd: 16.15, listUsd: 18 })), /does not match/);
   });
 
-  test("a paid reopen sends a preview with the hidden part of each line replaced, and no fix-kit files", () => {
+  test("a paid reopen sends a preview with the top case whole as a sample, the hidden part of every other line replaced, and no fix-kit files", () => {
     const secret = "send max-age=31536000 with includeSubDomains on every response";
+    const top = { id: "FN-02", title: "The start page has a title that names the shop", why: "The title was empty. Give the start page a title of 10 to 60 characters.", path: "/", selectors: ["title"], check: { kind: "title", path: "/" }, msg: { title: { id: "x" } }, steps: ["open"] };
     const report = {
       id: "ab12",
-      cases: [{ id: "SE-01", title: "Strict-Transport-Security is sent on the start page", why: "The header was missing. " + secret, steps: ["open"] }],
+      cases: [top, { id: "SE-01", title: "Strict-Transport-Security is sent on the start page", why: "The header was missing. " + secret, steps: ["open"], check: { kind: "header" }, selectors: ["html"] }],
       insights: {
         score: { overall: 63 },
         findings: [{ title: "HSTS", evidence: "Missing on 7 pages. " + secret, fix: "Add it. " + secret }],
@@ -1599,10 +1600,13 @@ test.describe("return price", () => {
     assert.equal(preview.insights.score.overall, 63);
     assert.match(preview.insights.findings[0].evidence, /^Missing on 7 pages\. /);
     assert.equal(preview.insights.findings[0].evidence.length, report.insights.findings[0].evidence.length);
-    assert.equal(preview.cases[0].steps, undefined);
+    assert.deepEqual(preview.cases[0], Object.assign({}, top, { sample: true }));
+    assert.match(preview.cases[1].why, /^The header was missing\. \u2060/);
+    assert.deepEqual([preview.cases[1].sample, preview.cases[1].steps, preview.cases[1].check, preview.cases[1].selectors], [undefined, undefined, undefined, undefined]);
     assert.deepEqual(preview.insights.fixkit.headers, [{ name: "HSTS", missing: true }]);
     assert.equal(preview.insights.fixkit.jsonLd, true);
-    assert.ok(report.cases[0].steps, "the stored report is not changed");
+    assert.ok(report.cases[1].steps, "the stored report is not changed");
+    assert.equal(report.cases[0].sample, undefined, "the stored report is not changed");
   });
 
   test("an unpaid preview keeps each finding's title message, so translated pages show the title, but no evidence or fix message (#1367)", () => {
@@ -1969,7 +1973,8 @@ test("the intake takes the current terms and the ones just before, and records w
   const now = core.validateIntake(body(core.TERMS_VERSION));
   assert.deepEqual(now.errors, []);
   assert.equal(now.value.termsVersion, core.TERMS_VERSION);
-  assert.equal(core.validateIntake(body("2026-10-26")).value.termsVersion, "2026-10-26");
+  assert.equal(core.validateIntake(body("2026-11-01")).value.termsVersion, "2026-11-01");
+  assert.ok(core.validateIntake(body("2026-10-26")).errors.some((e) => e.field === "terms"));
   assert.ok(core.validateIntake(body("2026-09-01")).errors.some((e) => e.field === "terms"));
 });
 
@@ -3509,7 +3514,9 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.match(es.line(byHand.msg.why, byHand.why), /^La página de inicio no envía cache-control\. Una persona lo confirma/);
     assert.equal(plain.msg, undefined);
     assert.equal(edited.msg, undefined);
-    assert.equal(core.previewReport({ cases: rt }).cases[0].msg, undefined);
+    const previewed = core.previewReport({ cases: rt }).cases;
+    assert.deepEqual(previewed[0].msg, rt[0].msg, "the sample case keeps its messages, so a translated page shows it in full");
+    assert.deepEqual(previewed.slice(1).map((item) => item.msg), [undefined, undefined, undefined]);
   });
 
   test("the privacy case looks for the link the review found, not the word privacy in its address (#1954)", () => {
@@ -3600,9 +3607,18 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.equal(report.statement.includes(secret), true, "the stored report is not changed");
   });
 
-  test("the preview keeps the priority and drops the selectors and checks", () => {
-    const preview = core.previewReport({ cases: [{ id: "MB-01", title: "Layout holds", why: "Wider. Pushed out.", priority: "P2", risk: 30, pages: ["/"], selectors: ["table.prices"], check: { kind: "viewport" } }] });
-    assert.deepEqual([preview.cases[0].priority, preview.cases[0].risk, preview.cases[0].selectors, preview.cases[0].check], ["P2", 30, undefined, undefined]);
+  test("the preview keeps the priority and drops the selectors and checks, except on the sample case", () => {
+    const item = { id: "MB-01", title: "Layout holds", why: "Wider. Pushed out.", priority: "P2", risk: 30, pages: ["/"], selectors: ["table.prices"], check: { kind: "viewport" } };
+    const preview = core.previewReport({ cases: [Object.assign({}, item, { id: "MB-00", priority: "P1" }), item] });
+    assert.deepEqual([preview.cases[1].priority, preview.cases[1].risk, preview.cases[1].selectors, preview.cases[1].check], ["P2", 30, undefined, undefined]);
+    assert.deepEqual([preview.cases[0].sample, preview.cases[0].selectors, preview.cases[0].check], [true, ["table.prices"], { kind: "viewport" }]);
+  });
+
+  test("a comparison column's preview keeps no case whole", () => {
+    const preview = core.previewReport({ cases: [{ id: "SE-01", title: "Strict-Transport-Security is sent on the start page", why: "The header was missing. Send it with a long max-age.", check: { kind: "header" } }] }, { sample: false });
+    assert.equal(preview.cases[0].sample, undefined);
+    assert.equal(preview.cases[0].check, undefined);
+    assert.ok(preview.cases[0].why.includes("\u2060"));
   });
 
   test("the preview leaves out the asker's comparison", () => {
