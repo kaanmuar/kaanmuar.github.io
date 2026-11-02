@@ -264,7 +264,7 @@ function emailsIn(html, host) {
   return [...found];
 }
 
-const visible = (html) => html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;|&amp;/g, " ").replace(/\s+/g, " ").trim();
+const visible = (html) => html.replace(/<script\b[\s\S]*?<\/script[^>]*>|<style\b[\s\S]*?<\/style[^>]*>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;|&amp;/g, " ").replace(/\s+/g, " ").trim();
 
 async function siteFacts(host) {
   const home = await page("https://" + host + "/") || await page("https://www." + bare(host) + "/");
