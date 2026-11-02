@@ -9,8 +9,9 @@
    platform   real function failures (5xx, crash, timeout), executions, Gemini calls, Firestore reads and writes
    outreach   the outreach plan's pipeline, Instantly campaigns, plan progress and sending domain (jarvis-outreach.js)
    mailbox    ImprovMX: mail forwarded, bounced and refused per alias, SMTP sends, the daily canary (mail-health.js)
+   pagespeed  the daily PageSpeed routine: every page's scores, its runs and its PRs (jarvis-pagespeed.js)
 
-   index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers} and caches each source in
+   index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers, github} and caches each source in
    jarvis_cache through TTL. */
 
 const ORIGIN = "https://carlosandmunoz.com";
@@ -23,12 +24,13 @@ const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/se
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, mailbox: 10 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE, calls: 5 * MINUTE, engagement: 2 * MINUTE };
+const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, mailbox: 10 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE, calls: 5 * MINUTE, engagement: 2 * MINUTE, pagespeed: 10 * MINUTE };
 const { SEARCH_QUERIES } = require("./jarvis-core");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisEngagement = require("./jarvis-engagement");
 const jarvisSocial = require("./jarvis-social");
+const jarvisPageSpeed = require("./jarvis-pagespeed");
 const mailHealth = require("./mail-health");
 const booking = require("./booking");
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
@@ -581,7 +583,7 @@ async function platform(ctx) {
   return out;
 }
 
-const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, mailbox: mailHealth.mailbox, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource, calls: booking.callsSource, engagement: jarvisEngagement.source };
+const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, mailbox: mailHealth.mailbox, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource, calls: booking.callsSource, engagement: jarvisEngagement.source, pagespeed: jarvisPageSpeed.source };
 
 async function run(name, ctx) {
   const source = SOURCES[name];

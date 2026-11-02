@@ -1,0 +1,176 @@
+# .github/workflows/pagespeed-daily.yml
+# Daily (#1978): PageSpeed, mobile and desktop, on every page in sitemap.xml and sitemap-social.xml. Pages under 90 get
+# the safe fixes (scripts/pagespeed/fixes.js) on one branch and Gemini's edits on another; each branch is scored with
+# local Lighthouse against main. The run lands in data/pagespeed (Jarvis > Systems > Page health) and Jarvis opens a PR
+# per branch (op pagespeed-pr): a safe branch that scored up merges on a 2-hour countdown once CI passes, anything else
+# waits in Proposals. Fix branches and the data commit push with LIVE_REPORTS_DEPLOY_KEY. Schedule: functions/ops-schedule.js.
+
+name: PageSpeed daily
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Check only the first N pages (empty: all)'
+        required: false
+        default: ''
+
+concurrency:
+  group: pagespeed-daily
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Run PageSpeed on every page
+        env:
+          PAGESPEED_KEY: ${{ secrets.PAGESPEED_KEY }}
+          LIMIT: ${{ inputs.limit }}
+        run: node scripts/pagespeed-daily.js check --out "$RUNNER_TEMP/check.json" --concurrency 12 ${LIMIT:+--limit "$LIMIT"}
+      - name: Keep the results
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pagespeed-check
+          path: ${{ runner.temp }}/check.json
+          retention-days: 7
+
+  fix:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        kind: [safe, ai]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Get the check
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: pagespeed-check
+          path: ${{ runner.temp }}/check
+      - name: Install sharp, Lighthouse and the generated-page builders' packages
+        run: |
+          sharp=$(node -p "(require('./package-lock.json').packages['node_modules/sharp'] || {}).version || 'latest'")
+          read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
+          npm install -s --no-save --prefix "$RUNNER_TEMP/deps" "sharp@$sharp" lighthouse@13 chrome-launcher@1 "${deps[@]}"
+          echo "NODE_PATH=$RUNNER_TEMP/deps/node_modules" >> "$GITHUB_ENV"
+          echo "LH_PREFIX=$RUNNER_TEMP/deps" >> "$GITHUB_ENV"
+      - name: Make the ${{ matrix.kind }} fixes
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: node scripts/pagespeed-daily.js ${{ matrix.kind }} --check "$RUNNER_TEMP/check/check.json" --report "$RUNNER_TEMP/${{ matrix.kind }}.json"
+      - name: Let the builders write their pages again
+        run: scripts/regen-generated.sh
+      - name: Score main and the fixes with Lighthouse
+        run: |
+          git worktree add -q --detach "$RUNNER_TEMP/base" HEAD
+          node scripts/pagespeed-daily.js measure --check "$RUNNER_TEMP/check/check.json" --report "$RUNNER_TEMP/${{ matrix.kind }}.json" \
+            --base "$RUNNER_TEMP/base" --branch "pagespeed/${{ matrix.kind }}-$(date -u +%F)"
+      - name: Push the fix branch
+        env:
+          REPORT: ${{ runner.temp }}/${{ matrix.kind }}.json
+        run: |
+          if [ "$(jq '[.files[]? | select(startswith("data/") | not)] | length' "$REPORT")" = 0 ]; then
+            jq 'del(.branch)' "$REPORT" > "$REPORT.tmp" && mv "$REPORT.tmp" "$REPORT"
+            echo "Nothing to change."; exit 0
+          fi
+          branch=$(jq -r .branch "$REPORT")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git switch -q -c "$branch"
+          git add -A
+          git commit -q -m "PageSpeed: ${{ matrix.kind }} fixes from the daily run ($(date -u +%F))" -m "$(jq -r '.verdict.reason' "$REPORT")"
+          if ! git push -q -f origin "$branch"; then
+            jq 'del(.branch) | .error = "The branch could not be pushed."' "$REPORT" > "$REPORT.tmp" && mv "$REPORT.tmp" "$REPORT"
+            exit 1
+          fi
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pagespeed-${{ matrix.kind }}
+          path: ${{ runner.temp }}/${{ matrix.kind }}.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+  record:
+    needs: [check, fix]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Get the reports
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: pagespeed-*
+          path: ${{ runner.temp }}/r
+          merge-multiple: true
+      - name: Record the run
+        env:
+          R: ${{ runner.temp }}/r
+          CHECK_RESULT: ${{ needs.check.result }}
+        run: |
+          args=()
+          for k in check safe ai; do [ -f "$R/$k.json" ] && args+=("--$k" "$R/$k.json"); done
+          [ "$CHECK_RESULT" = success ] || args+=(--error "The PageSpeed check ended with $CHECK_RESULT.")
+          node scripts/pagespeed-daily.js record "${args[@]}"
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add data/pagespeed/latest.json data/pagespeed/runs.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -q -m "PageSpeed daily: $(date -u +%F) [skip ci]"
+          for attempt in 1 2 3 4 5; do
+            git push origin HEAD:main && break
+            if [ "$attempt" = 5 ]; then echo "::error::main kept moving; the PageSpeed data was not pushed."; exit 1; fi
+            sleep $((attempt * 5))
+            DATA=$(git rev-parse HEAD)
+            git fetch -q --depth=1 origin main
+            git reset -q --hard FETCH_HEAD
+            git cherry-pick -X theirs "$DATA" || exit 1
+          done
+      - name: Ask Jarvis to open the PRs
+        env:
+          R: ${{ runner.temp }}/r
+        run: |
+          for k in safe ai; do
+            b=$(jq -r '.branch // empty' "$R/$k.json" 2>/dev/null || true)
+            [ -n "$b" ] || continue
+            curl -sS --fail-with-body -X POST -H 'Content-Type: application/json' -d "{\"op\":\"pagespeed-pr\",\"branch\":\"$b\"}" \
+              https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis || echo "::warning::Jarvis did not open the PR for $b; its hourly watch will."
+            echo
+          done

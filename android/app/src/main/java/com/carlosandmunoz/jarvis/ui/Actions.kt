@@ -28,7 +28,8 @@ import com.carlosandmunoz.jarvis.data.str
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" to "Re-send failed notices", "publish-hub" to "Publish the hub", "run-job" to "Run a job again", "rerun-ci" to "Re-run failed CI jobs")
+val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" to "Re-send failed notices", "publish-hub" to "Publish the hub", "run-job" to "Run a job again", "rerun-ci" to "Re-run failed CI jobs",
+    "pagespeed-merge" to "Merge PageSpeed fixes", "pagespeed-close" to "Close PageSpeed fixes", "pagespeed-run" to "Start the PageSpeed run")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
 
 /** One action waiting for a yes: what it does, in words, and the call. Shown by [ConfirmAction]. */
@@ -47,20 +48,27 @@ fun ConfirmAction(pending: PendingAction?, close: () -> Unit) {
 }
 
 /** Runs one action through the jarvis function's action-run op, which logs it to jarvis_actions. */
-fun runAction(vm: JarvisViewModel, action: String, job: String? = null, proposal: String? = null, workflow: String? = null) {
+fun runAction(vm: JarvisViewModel, action: String, job: String? = null, proposal: String? = null, workflow: String? = null, pr: Int? = null) {
     val extra = buildMap {
         put("action", JsonPrimitive(action))
         job?.let { put("job", JsonPrimitive(it)) }
         proposal?.let { put("proposal", JsonPrimitive(it)) }
         workflow?.let { put("workflow", JsonPrimitive(it)) }
+        pr?.let { put("pr", JsonPrimitive(it)) }
     }
-    vm.act("action:$action:${job ?: workflow ?: ""}", "action-run", extra) { out ->
+    vm.act(actionKey(action, job ?: workflow ?: pr?.toString()), "action-run", extra) { out ->
+        if (action.startsWith("pagespeed-")) return@act out.str("note") ?: "Done."
         (ACTION_LABELS[action] ?: action) + ": " + (out.str("ran")?.let { "$it started" } ?: (fmt(out.num("done")) + " done")) +
             (out.num("failed")?.takeIf { it > 0 }?.let { ", ${fmt(it)} failed" } ?: "") + (out.num("left")?.takeIf { it > 0 }?.let { ", ${fmt(it)} left" } ?: "") + "."
     }
 }
 
-fun askFor(action: String, job: String?, pending: JsonObject?): String = when (action) {
+fun actionKey(action: String, target: String?) = "action:$action:${target ?: ""}"
+
+/** The PR number of a PageSpeed proposal or briefing line ("pagespeed:pr:<n>"), else null. */
+fun pageSpeedPr(key: String?): Int? = key?.let { Regex("^pagespeed:pr:(\\d+)$").find(it)?.groupValues?.get(1)?.toIntOrNull() }
+
+fun askFor(action: String, job: String?, pending: JsonObject?, pr: Int? = null): String = when (action) {
     "rerun-held" -> {
         val held = pending.num("held")
         val clean = pending.num("clean") ?: 0.0
@@ -68,6 +76,9 @@ fun askFor(action: String, job: String?, pending: JsonObject?): String = when (a
     }
     "resend-notices" -> "re-send the failed owner notices (Monday-Saturday 08:00-19:00, inside today's notice budget)"
     "publish-hub" -> "publish the Social hub (run refreshSocialHubStats)"
+    "pagespeed-merge" -> "merge PageSpeed fixes #$pr into main now (it goes to production)"
+    "pagespeed-close" -> "close PageSpeed fixes #$pr without merging"
+    "pagespeed-run" -> "start the daily PageSpeed run now (about two hours)"
     else -> "run ${job ?: "the job"} again"
 }
 
@@ -111,6 +122,17 @@ fun ProposalActions(p: JsonObject, vm: JarvisViewModel, ask: (PendingAction) -> 
         p.str("action")?.let { action -> TextButton(onClick = { ask(PendingAction(askFor(action, null, null)) { runAction(vm, action, proposal = key) }) }) { Text("Run now: " + (ACTION_LABELS[action] ?: action).lowercase(), fontSize = 12.sp) } }
         (p["jobs"] as? kotlinx.serialization.json.JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }?.forEach { job ->
             TextButton(onClick = { ask(PendingAction(askFor("run-job", job, null)) { runAction(vm, "run-job", job, key) }) }) { Text("Run $job again", fontSize = 12.sp) }
+        }
+        pageSpeedPr(key)?.let { pr -> PageSpeedButtons(pr, vm, key, ask) }
+    }
+}
+
+/** Merge and Close on a PageSpeed PR (#1978), from Proposals and Systems. */
+@Composable
+fun PageSpeedButtons(pr: Int, vm: JarvisViewModel, proposal: String?, ask: (PendingAction) -> Unit) {
+    Row {
+        listOf("pagespeed-merge" to "Merge #$pr", "pagespeed-close" to "Close #$pr").forEach { (action, label) ->
+            TextButton(onClick = { ask(PendingAction(askFor(action, null, null, pr)) { runAction(vm, action, proposal = proposal ?: "pagespeed:pr:$pr", pr = pr) }) }) { Text(label, fontSize = 12.sp) }
         }
     }
 }

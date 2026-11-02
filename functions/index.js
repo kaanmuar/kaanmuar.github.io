@@ -5020,6 +5020,16 @@ async function pushOwner(msg) {
 const jarvisSocial = require("./jarvis-social");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisEngagement = require("./jarvis-engagement");
+const jarvisPageSpeed = require("./jarvis-pagespeed");
+
+// The daily PageSpeed routine's PRs (#1978): pushes go to the alerts kind, outcomes to the actions log.
+async function pageSpeedDeps(by) {
+  const db = getFirestore();
+  return {
+    fetchImpl: fetch, db, now: Date.now(), by, token: await githubApp.token(), push: pushOwner,
+    log: (entry) => jarvisActions.log(db, Object.assign({ by }, entry), Date.now()).catch(() => null)
+  };
+}
 
 function engagementDeps() {
   return {
@@ -5114,6 +5124,11 @@ async function jarvisNotifyAct(body, by) {
   if (type === "engagement") {
     const out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), { key: id, decision: act, text: body.text }, by);
     return { message: out.message };
+  }
+  if (type === "countdown") return jarvisPageSpeed.countdownAct(await pageSpeedDeps(by), id, act);
+  if (type === "pagespeed") {
+    const deps = Object.assign(await pageSpeedDeps(by), { pr: Number(id) });
+    return act === "merge" ? jarvisPageSpeed.merge(deps) : jarvisPageSpeed.close(deps);
   }
   await jarvisSocialDecide(id, act, now);
   return { message: act === "approved" ? "Added to the hub queue." : "Skipped." };
@@ -5283,7 +5298,7 @@ async function jarvisSource(name, days) {
   } catch (error) { paypal = null; }
   return jarvisCached(name, days, () => jarvisSources.run(name, {
     fetch, env: process.env, db: getFirestore(), now: Date.now(), days, settings, thresholds: jarvisCore.thresholds(settings.thresholds),
-    paypal, tls: jarvis.tlsDaysLeft, listUsers: jarvisUsers
+    paypal, tls: jarvis.tlsDaysLeft, listUsers: jarvisUsers, github: () => githubApp.token()
   }));
 }
 const JARVIS_REPORTS = { site: (period) => sendPeriodReport(period), review: (period) => sendReviewPeriodReport(period) };
@@ -5329,7 +5344,7 @@ async function jarvisDaily({ force }) {
   const now = Date.now();
   const [{ products }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "money", "email", "social", "safety", "platform", "search", "outreach"], 1),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "ga4", "money", "email", "social", "safety", "platform", "search", "outreach"], 1),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const items = jarvisCore.briefing({ products, external, thresholds: settings.thresholds, goals: goalRows });
@@ -5402,7 +5417,7 @@ async function jarvisSnapshot(days) {
   const now = Date.now();
   const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now, days }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync", "calls", "engagement"], days),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "marketing", "marketing-sync", "calls", "engagement"], days),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
@@ -5486,6 +5501,19 @@ async function jarvisClickAction(body, by) {
       return { action, done: 1, ran: ran.ran };
     } catch (error) {
       await note({ action, status: "failed", target: job, detail: error.message || String(error) });
+      throw error;
+    }
+  }
+  if (action === "pagespeed-merge" || action === "pagespeed-close" || action === "pagespeed-run") {
+    const deps = Object.assign(await pageSpeedDeps(by), { pr: Number(body.pr) });
+    const target = action === "pagespeed-run" ? "pagespeed-daily.yml" : "#" + deps.pr;
+    try {
+      if (action !== "pagespeed-run" && !deps.pr) throw new Error("Which PR?");
+      const out = await jarvisPageSpeed[{ "pagespeed-merge": "merge", "pagespeed-close": "close", "pagespeed-run": "run" }[action]](deps);
+      if (action === "pagespeed-run") await note({ action, status: "done", target, detail: out.message });
+      return { action, done: 1, ran: target, note: out.message };
+    } catch (error) {
+      await note({ action, status: "failed", target, detail: error.message || String(error) });
       throw error;
     }
   }
@@ -5639,7 +5667,8 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
   const watch = await jarvisWatchRun();
   const notices = await jarvisNoticesRun().catch((error) => "notices failed: " + String(error.message || error).slice(0, 120));
   const social = await jarvisSocialRun().catch((error) => "social failed: " + String(error.message || error).slice(0, 120));
-  return watch + "; " + acts + "; " + notices + "; " + social;
+  const pagespeed = await jarvisPageSpeed.tick(await pageSpeedDeps("jarvis")).catch((error) => "pagespeed failed: " + String(error.message || error).slice(0, 120));
+  return watch + "; " + acts + "; " + notices + "; " + social + "; " + pagespeed;
 });
 
 // Every 30 minutes (#1988): read our field's posts, plan likes, reposts and follows, and push reply drafts for approval.
@@ -5790,6 +5819,16 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
   if ((req.body || {}).op === "app-release") {
     try { res.json(await jarvisPush.releasePush(fetch, getFirestore(), getMessaging(), { token: await githubApp.token(), now: Date.now() })); }
     catch (error) { res.status(502).json({ error: error.message }); }
+    return;
+  }
+  // The PageSpeed workflows (#1978) need no sign-in: Jarvis reads the branch, the run and the PR from GitHub itself.
+  if ((req.body || {}).op === "pagespeed-pr" || (req.body || {}).op === "pagespeed-merged") {
+    try {
+      const deps = await pageSpeedDeps("jarvis");
+      res.json(Object.assign({ ok: true }, req.body.op === "pagespeed-pr"
+        ? await jarvisPageSpeed.openPr({ fetchImpl: fetch, token: deps.token, branch: req.body.branch })
+        : await jarvisPageSpeed.merged(deps, { pr: req.body.pr, run: req.body.run })));
+    } catch (error) { res.status(400).json({ ok: false, error: String(error.message || error).slice(0, 300) }); }
     return;
   }
   // A browser notification's button (#1671): the service worker holds no sign-in, so the push signed each button.

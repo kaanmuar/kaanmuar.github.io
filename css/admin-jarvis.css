@@ -250,6 +250,8 @@
 .jv-feed time { color: var(--dim); font-size: 0.72rem; }
 .jv-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .jv-table-wrap { overflow-x: auto; }
+.jv-more-pages { margin-top: 0.5rem; }
+.jv-more-pages summary { cursor: pointer; color: var(--muted); font-size: 0.82rem; }
 .jv-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
 .jv-table th { text-align: left; font: 600 0.64rem ui-monospace, Menlo, monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); padding: 0.35rem 0.4rem; }
 .jv-table td { padding: 0.35rem 0.4rem; border-bottom: 1px dashed rgba(56, 225, 255, 0.1); vertical-align: top; }
