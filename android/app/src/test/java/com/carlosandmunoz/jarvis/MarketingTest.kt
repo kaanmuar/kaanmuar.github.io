@@ -31,6 +31,13 @@ class MarketingTest {
         assertNull(Marketing.openWeek(emptyList(), null))
     }
 
+    @Test fun onlyUploadedAndDroppedLeadsCountAsDone() {
+        assertTrue(Marketing.leadDone(json("""{"uploaded":"2026-10-26"}""")))
+        assertTrue(Marketing.leadDone(json("""{"dropped":true}""")))
+        assertFalse(Marketing.leadDone(json("""{"approved":true,"uploaded":""}""")))
+        assertFalse(Marketing.leadDone(json("""{"ask":"no contact name"}""")))
+    }
+
     @Test fun waitingOnlyCountsPendingCommandsForThatKey() {
         assertTrue(Marketing.waiting(sync, "approve", "ana@uni.edu"))
         assertFalse(Marketing.waiting(sync, "approve", "leo@uni.edu"))
