@@ -746,6 +746,22 @@ test("outreach: the week starts Monday in Bogota and the pipeline counts only ou
   assert.equal(p.withLiveReport, 1);
   assert.equal(p.reviewedWithLiveReport, 1);
   assert.deepEqual(p.daily, [{ date: "2026-10-24", reviews: 1 }]);
+  assert.equal(p.priorReviews, 1);
+  const capped = Array.from({ length: 3000 }, () => ({ createdAt: daysAgo(1).toISOString(), status: "complete", sweep: { host: "x.example", outreach: true } }));
+  assert.equal(outreachSrc.pipelineRows(queue, {}, capped, [], { now: NOW.getTime(), days: 7 }).priorReviews, null);
+});
+
+test("Social hub: views and interactions in range carry the period before, and lead with hub + post views", () => {
+  const w = core.windowFor("7", NOW);
+  const ev = (name, n) => ({ name, site: "hub", createdAt: daysAgo(n).toISOString() });
+  const rows = [ev("hub_view", 1), ev("post_view", 1), ev("post_view", 2), ev("hub_share", 1), { name: "visit", site: "cv", kind: "visit", createdAt: daysAgo(1).toISOString() }];
+  const prior = [ev("hub_view", 9), ev("hub_copy", 9)];
+  const hub = core.summarizeHub({ totals: { gaViews: 40 } }, rows, w, prior);
+  assert.deepEqual(hub.kpis.map((k) => [k.label, k.value, k.prior, k.delta]), [
+    ["Hub + post views", 3, 1, "+200%"], ["Hub views", 1, 1, "0%"], ["Post views", 2, 0, "new"], ["Interactions", 1, 1, "0%"], ["GA4 views", 40, undefined, ""]
+  ]);
+  assert.equal(hub.series.values.reduce((a, b) => a + b, 0), 3);
+  assert.equal(core.summarizeHub(null, rows, w).kpis[0].delta, "");
 });
 
 test("outreach: Instantly numbers become rates, campaign states and mailbox warm-up", () => {
@@ -762,6 +778,9 @@ test("outreach: Instantly numbers become rates, campaign states and mailbox warm
   assert.deepEqual(x.accounts[0], { email: "carlos@qalabreview.com", status: "active", warmup: "on", score: 62, dailyLimit: 30, error: "" });
   assert.equal(x.accounts[1].status, "error");
   assert.equal(x.accounts[1].error, "Permanent OAuth failure: AADSTS50076: you must use multi-factor authentication.");
+  assert.equal(x.prior, null);
+  const y = outreachSrc.instantlyRows([], { emails_sent_count: 200 }, [], [], { emails_sent_count: 100, contacted_count: 50, reply_count_unique: 2 });
+  assert.deepEqual([y.sent, y.prior.sent, y.prior.rates.reply], [200, 100, 4]);
 });
 
 test("outreach: the plan knows the day, phase, next milestone and sorted deadlines", () => {
@@ -842,6 +861,8 @@ test("qalabreview.com links: visits, reviews and payments per prospect, paid cre
   assert.deepEqual(x.byCampaign, [{ label: "outreach", value: 2 }, { label: "qr", value: 1 }]);
   assert.deepEqual(x.prospects, [{ host: "upb.edu.co", visits: 2, reviews: 1, paid: 1, usd: 12, last: at(2) }]);
   assert.equal(x.reviewRate, 33.3);
+  assert.deepEqual(outreachSrc.linkPrior(opens, reviews, ctx), { visits: 1, reviews: 0, paid: 0, usd: 0, reviewRate: 0, payRate: 0 });
+  assert.equal(outreachSrc.linkPrior(Array.from({ length: 10000 }, () => opens[0]), reviews, ctx), null);
   assert.equal(outreachSrc.linkTags("?utm_source=youtube"), null);
 });
 

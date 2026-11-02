@@ -169,8 +169,11 @@ fun Kpi(label: String, value: String, delta: String? = null, dir: Int = 0, alert
 /** KPIs in two columns, from the {label, value, delta, dir, alert} objects jarvis-core builds. */
 @Composable
 fun KpiGrid(kpis: List<JsonObject>) {
-    KpiPairs(kpis.map { k -> KpiData(k.str("label") ?: "", k.prim("value").text(), k.str("delta"), k.num("dir")?.toInt() ?: 0, k.prim("alert")?.content == "true") })
+    KpiPairs(kpis.map(::kpiOf))
 }
+
+/** A KPI the snapshot built (label, value, delta, dir, alert). */
+fun kpiOf(k: JsonObject) = KpiData(k.str("label") ?: "", k.prim("value").text(), k.str("delta"), k.num("dir")?.toInt() ?: 0, k.prim("alert")?.content == "true")
 
 data class KpiData(val label: String, val value: String, val delta: String? = null, val dir: Int = 0, val alert: Boolean = false)
 

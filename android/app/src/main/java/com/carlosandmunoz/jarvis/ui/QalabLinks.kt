@@ -53,13 +53,14 @@ fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {
     val live = links.bool("live") == true
     Panel("qalabreview.com links") {
         StatusRow(if (live) "good" else "alert", if (live) "Worker live" else "Worker not live", if (live) "Short links forward to the Live Reports." else "robots.txt answered ${fmt(links.num("workerStatus"))}. Deploy the Worker in qalabreview/.", url = links.str("base"))
+        val was = links.obj("prior")
         KpiPairs(listOf(
-            KpiData("Visits", fmt(links.num("visits"))),
-            KpiData("Free reviews", fmt(links.num("reviews"))),
-            KpiData("Visit → review", fmt(links.num("reviewRate")) + "%"),
-            KpiData("Paid unlocks", fmt(links.num("paid"))),
-            KpiData("Review → paid", fmt(links.num("payRate")) + "%"),
-            KpiData("Revenue", fmt(links.num("usd")) + " USD"),
+            kpiVs("Visits", links.num("visits"), was.num("visits")),
+            kpiVs("Free reviews", links.num("reviews"), was.num("reviews")),
+            kpiVs("Visit → review", links.num("reviewRate"), was.num("reviewRate")) { fmt(it) + "%" },
+            kpiVs("Paid unlocks", links.num("paid"), was.num("paid")),
+            kpiVs("Review → paid", links.num("payRate"), was.num("payRate")) { fmt(it) + "%" },
+            kpiVs("Revenue", links.num("usd"), was.num("usd")) { fmt(it) + " USD" },
         ))
     }
     val campaigns = links.pairs("byCampaign")
