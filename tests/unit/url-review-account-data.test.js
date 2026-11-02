@@ -26,6 +26,8 @@ async function seeded() {
   await store.set("url_review_captures", "c1", { reportId: "run1", kind: "copy" });
   await store.set("url_review_captures", "c2", { reportId: "other", kind: "copy" });
   await store.set("url_review_stops", "run1", { at: "2026-10-01T00:00:00Z" });
+  await store.set("url_review_visits", "v1", { email: EMAIL, startedAt: "2026-10-21T10:00:00Z", activeMs: 60000, pages: ["qa-review.html"] });
+  await store.set("url_review_visits", "v2", { email: "bo@example.com", startedAt: "2026-10-21T10:00:00Z" });
   return store;
 }
 
@@ -40,6 +42,7 @@ test("the export holds every row under the address and no secret", async () => {
   assert.equal(data.freeAccount.note, "friend");
   assert.deepEqual(data.captures.map((row) => row.id), ["c1"]);
   assert.deepEqual(data.stops.map((row) => row.id), ["run1"]);
+  assert.deepEqual(data.visits.map((row) => row.id), ["v1"]);
   const text = JSON.stringify(data);
   assert.doesNotMatch(text, /deviceHash|codeHash|tokenHash/);
   assert.doesNotMatch(text, /"tok"|s{64}/);
@@ -76,7 +79,7 @@ test("deleting the account removes its rows, keeps payments without the report, 
   const credit = await store.get("url_reviews", "credit1");
   assert.equal(credit.ip, undefined);
   assert.equal(credit.priceUsd, 9.5);
-  for (const col of ["url_review_sessions", "url_review_sign_ins", "url_review_alerts", "url_review_stop_links", "url_review_failures", "url_review_coupons"]) {
+  for (const col of ["url_review_sessions", "url_review_sign_ins", "url_review_alerts", "url_review_stop_links", "url_review_failures", "url_review_coupons", "url_review_visits"]) {
     assert.deepEqual(await store.where(col, "email", EMAIL), [], col);
   }
   assert.deepEqual((await store.where("url_review_notes", "email", EMAIL)).map((row) => row.status), ["follow-stop"]);

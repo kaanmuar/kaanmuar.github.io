@@ -185,7 +185,10 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
         KpiGrid(p.objs("kpis"))
         p.obj("anomaly")?.let { a -> Text("Unusual last day: ${fmt(a.num("last"))} against an average of ${fmt(a.num("mean"))} (z ${a.num("z")})", color = J.amber, fontSize = 12.sp) }
     }
-    if (product == "review") TopList("Funnel", p.pairs("funnel"), 4)
+    if (product == "review") {
+        PeoplePanel(s)
+        TopList("Funnel", p.pairs("funnel"), 4)
+    }
 
     val series = p.obj("series")
     Panel(if (product == "inbox") "Messages per day" else if (product == "review") "Opens per day" else "Visits per day") {

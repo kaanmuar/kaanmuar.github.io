@@ -562,6 +562,8 @@
         const gh = ext.github;
         if (gh && gh.ok) {
             (gh.ci || []).filter((run) => run.conclusion && !['success', 'skipped', 'cancelled', 'neutral'].includes(run.conclusion)).forEach((run) => add('alert', 'systems', `CI "${run.name}" on main is ${run.conclusion}.`, 'ci:' + run.name));
+            const waiting = gh.needsAgent || [];
+            if (waiting.length) add('alert', 'systems', `${plural(waiting.length, 'URL review bug waits', 'URL review bugs wait')} for the daily fix agent, held back to stay inside the Cursor plan: ${waiting.slice(0, 5).map((bug) => '#' + bug.number).join(', ')}.`, 'github:needs-agent');
             if (gh.openBugs) add('info', 'systems', `${plural(gh.openBugs, 'open bug', 'open bugs')}; most in ${((gh.bugAreas || [])[0] || {}).label || 'none'}. ${plural((gh.merged || {}).total || 0, 'PR', 'PRs')} merged this week.`, 'github:bugs');
         }
         const speed = ext.speed;
@@ -828,6 +830,10 @@
             fact('Workflow', tail); fact('Result', run.conclusion); fact('Commit', run.sha); fact('Finished', run.at);
             link('Open the run on GitHub', run.url || BRIEF_LINKS.github);
             act('rerun-ci', 'Re-run the failed jobs', { workflow: tail });
+        } else if (k === 'github:needs-agent') {
+            const waiting = (ext.github || {}).needsAgent || [];
+            fact('Waiting for an agent', waiting.length);
+            waiting.slice(0, 8).forEach((bug) => link('#' + bug.number + ' ' + bug.title, bug.url));
         } else if (k === 'review:failures') {
             const f = health.failures || {};
             fact('Failed runs', f.total);

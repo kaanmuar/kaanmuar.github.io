@@ -181,6 +181,7 @@ async function github(fetchImpl, token, { now }) {
     ci: Object.values(byWorkflow),
     openBugs: bugs.total_count || 0,
     bugAreas: top(areas),
+    needsAgent: (bugs.items || []).filter((issue) => (issue.labels || []).some((label) => label.name === "needs-agent")).map((issue) => ({ number: issue.number, title: issue.title, url: issue.html_url })),
     merged: { total: merged.total_count || 0, items: (merged.items || []).slice(0, 10).map((pr) => ({ number: pr.number, title: pr.title, url: pr.html_url, at: pr.closed_at })) },
     recent: (recent || []).map((issue) => ({ number: issue.number, title: issue.title, url: issue.html_url, state: issue.state, pr: !!issue.pull_request, at: issue.created_at }))
   };
@@ -655,6 +656,7 @@ function askSnapshot(snap, days) {
       safety: ok(e.safety) && e.safety.checks ? e.safety.checks.map((c) => c.level + ": " + c.name + " " + c.detail) : null,
       platform: ok(e.platform) ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
       outreach: outreachAsk(e.outreach, s.outreachVisits),
+      signedInPeople: ok(e.people) ? e.people.totals : null,
       waiting: core.connections(e).filter((c) => c.needs.length).map((c) => c.name + ": " + c.needs.join(" "))
     }
   };
