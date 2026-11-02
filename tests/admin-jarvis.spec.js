@@ -393,7 +393,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(mk.locator('[data-panel-id="marketing-countries"]')).toContainText('CO');
     await expect(mk.locator('[data-panel-id="marketing-notes"]')).toContainText('paid-once');
     await expect(mk.locator('[data-panel-id="marketing-domain"]')).toContainText('p=none');
-    await expect(mk.locator('.jv-briefing')).toContainText('Instantly trial ends in 6 days');
+    await expect(mk.locator('.jv-briefing')).toHaveCount(0);
 
     const activate = mk.locator('[data-mk-campaign="activate"]');
     await expect(mk.locator('[data-mk-campaign="pause"]')).toHaveCount(1);
