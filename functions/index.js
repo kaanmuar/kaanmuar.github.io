@@ -1674,6 +1674,7 @@ const reviewPass = require("./url-review-pass");
 const reviewCompare = require("./url-review-compare");
 const compareMail = require("./url-review-compare-mail");
 const reviewMulti = require("./url-review-multi");
+const reviewPeers = require("./url-review-peers");
 const reviewMarket = require("./url-review-market");
 const ownerNotice = require("./url-review-owner-notice");
 const ownerMail = require("./url-review-owner-mail");
@@ -3657,6 +3658,29 @@ async function savedComparisons(db, email) {
   }
 }
 
+// A peer group's comparison (#2363), opened with no account from the link its outreach email carries.
+async function openPeerGroup(req, res) {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Use POST." });
+    return;
+  }
+  const body = req.body || {};
+  const db = getFirestore();
+  const id = reviewMulti.docId(body.id);
+  const snap = id ? await db.collection(reviewPeers.COLLECTION).doc(id).get() : null;
+  const doc = snap && snap.exists ? snap.data() || {} : null;
+  const viewer = doc ? reviewPeers.viewerOf(doc, body.t) : "";
+  if (!doc || !viewer) {
+    res.status(404).json({ error: "This comparison link is not valid.", code: "comparisonNotSaved" });
+    return;
+  }
+  const ids = (doc.ids || []).map((value) => reviewCompare.cleanId(value)).filter(Boolean);
+  const snaps = ids.length ? await db.getAll(...ids.map((value) => db.collection("url_reviews").doc(value))) : [];
+  const rows = {};
+  snaps.forEach((row) => { if (row.exists) rows[row.id] = row.data(); });
+  res.status(200).json(reviewPeers.payloadOf(id, doc, rows, viewer));
+}
+
 // A many-URL comparison: saved from the account page or the review page, opened, deleted, and printed to PDF.
 async function reviewComparison(req, res, pathName, db, email) {
   const body = req.body || {};
@@ -3738,6 +3762,15 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     } catch (error) {
       console.error("Review sign-in failed:", error);
       if (!res.headersSent) res.status(500).json({ error: "Sign-in failed. Try again in a moment." });
+    }
+    return;
+  }
+  if (pathName.endsWith("/peers/open")) {
+    try {
+      await openPeerGroup(req, res);
+    } catch (error) {
+      console.error("Peer comparison failed:", error);
+      if (!res.headersSent) res.status(500).json({ error: "The comparison did not load. Try again in a moment." });
     }
     return;
   }

@@ -528,4 +528,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch((error) => { console.error(error.message); process.exit(1); });
 
-module.exports = { emailsIn, openWeeks, bare, slotsFor, foundOn };
+module.exports = { emailsIn, openWeeks, bare, slotsFor, foundOn, siteFacts, ai };

@@ -4529,6 +4529,7 @@ module.exports = {
   verifyPayPalWebhook,
   paypalCapture, paypalCredentials, paypalAccessToken,
   previewReport,
+  frostText,
   priceForCredentials,
   priceForPass,
   priceForPassExtras,
