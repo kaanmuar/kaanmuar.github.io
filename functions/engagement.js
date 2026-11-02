@@ -251,6 +251,22 @@ function decide(post, ai, conf, used, now, followed) {
   return { verdict: Object.values(actions).some((x) => x.status === "planned" || x.status === "waiting") ? "engage" : "watch", skip: "", actions };
 }
 
+/** A post kept on "watch" whose score now clears an action threshold is decided again, so posts that start to trend after we first saw them still get acted on. */
+function rises(doc, post, conf, now) {
+  if (!doc || doc.verdict !== "watch" || doc.skip || !(NETWORKS[post.network] || {}).acts) return false;
+  if (doc.decidedAgainAt && Date.parse(doc.decidedAgainAt) > now - REPLY_TTL) return false;
+  return (post.score || 0) >= Math.min(conf.thresholds.like, conf.thresholds.reply);
+}
+
+/** Gemini's earlier read of a stored post, without a draft: a new draft needs a new read. */
+function storedAi(doc) {
+  if (!doc || doc.worth === null || doc.worth === undefined) return null;
+  return { about: doc.about || "", lang: doc.lang || "", sentiment: doc.sentiment || "neutral", worth: doc.worth, why: doc.why || "", asksForTool: doc.asksForTool === true, reply: "" };
+}
+
+/** A risen post goes back to Gemini only if it never had a read, or the read said a reply was worth it. */
+const askAgain = (doc, conf) => doc.worth === null || doc.worth === undefined || doc.worth >= conf.worth;
+
 /** Posts worth a Gemini read this run: new, on a network we act on, not guarded, best first. */
 function forAi(posts, conf, now) {
   if (conf.paused) return [];
@@ -277,25 +293,26 @@ function postDoc(post, ai, decision, now) {
 const bogotaDay = (ms) => new Date(ms - 5 * HOUR).toISOString().slice(0, 10);
 const safeKey = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 40) || "other";
 
-/** Counters a run adds to engagement_daily/<day>, as plain numbers (index.js turns them into increments). */
-function rollup(read, docs, run) {
+/** Counters a run adds to engagement_daily/<day>, as plain numbers (index.js turns them into increments). Posts decided again count only their new actions. */
+function rollup(read, docs, run, again) {
   const out = { runs: 1, runErrors: run && run.errors ? run.errors : 0, n: {}, topic: {}, lang: {}, tag: {}, skip: {}, verdict: {} };
   const bump = (map, k, n) => { map[k] = (map[k] || 0) + (n === undefined ? 1 : n); };
   const net = (k) => { out.n[k] = out.n[k] || {}; return out.n[k]; };
   Object.entries(read || {}).forEach(([k, n]) => bump(net(k), "read", n));
+  const acts = (d) => Object.entries(d.actions || {}).forEach(([act, x]) => {
+    if (x.status === "planned" || x.status === "waiting") bump(net(d.network), act === "reply" ? "drafted" : act);
+    else if (x.status === "capped") bump(out.skip, "cap_" + act);
+  });
   (docs || []).forEach((d) => {
-    const n = net(d.network);
-    bump(n, "candidates");
+    bump(net(d.network), "candidates");
     bump(out.verdict, d.verdict);
     if (d.topic) bump(out.topic, safeKey(d.topic));
     if (d.lang) bump(out.lang, safeKey(d.lang));
     (d.words || []).slice(0, 4).forEach((w) => bump(out.tag, safeKey(w)));
     if (d.skip) bump(out.skip, d.skip);
-    Object.entries(d.actions || {}).forEach(([act, x]) => {
-      if (x.status === "planned" || x.status === "waiting") bump(n, act === "reply" ? "drafted" : act);
-      else if (x.status === "capped") bump(out.skip, "cap_" + act);
-    });
+    acts(d);
   });
+  (again || []).forEach(acts);
   return out;
 }
 
@@ -443,5 +460,5 @@ function decideReply(doc, decision, text, by, now) {
 
 module.exports = {
   NETWORKS, TOPICS, LANGS, ACTIONS, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, FUNNEL,
-  settings, settingsPatch, keyOf, relevance, trend, score, guard, aiPrompt, parseAi, decide, forAi, postDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay
+  settings, settingsPatch, keyOf, relevance, trend, score, guard, aiPrompt, parseAi, decide, rises, storedAi, askAgain, forAi, postDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay
 };
