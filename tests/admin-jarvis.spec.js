@@ -198,7 +198,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['rows', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls', 'device']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['rows', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'proposals', 'brief-marks', 'calls', 'device']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
     expect(calls.every((c) => c.body.device?.kind === 'desktop' && c.body.device.app === 'web')).toBe(true);
 
@@ -601,7 +601,7 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(save.body.settings.goals).toEqual([{ product: 'cv', metric: 'visits', period: 'week', target: 300 }, { product: 'review', metric: 'paid', period: 'month', target: 12 }]);
     expect(save.body.settings.thresholds.pendingRatings).toBe(25);
     expect(save.body.settings.mail).toMatchObject({ daily: true, gemini: false, watch: true, weekly: true, messages: true, ratings: false, ownerReplies: false });
-    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3 }, confidence: 0.8, countdownHours: 2 });
+    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2 }, confidence: 0.8, countdownHours: 2 });
     expect(save.body.settings.searchQueries).toEqual(['qa review', 'qa review', 'carlos qa']);
     await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(1);
 
@@ -705,6 +705,50 @@ test.describe('admin statistics (Jarvis)', () => {
     await line.click();
     const sheet = page.locator('.jv-sheet-box');
     await expect(sheet.locator('[data-sheet="action"][data-action="pagespeed-close"]')).toHaveAttribute('data-pr', '2042');
+    expect(errors).toEqual([]);
+  });
+
+  test('Systems lists every email address by domain with its state, the mail records and who fixes what (#2338)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const row = (address, system, kind, state, detail, extra) => Object.assign({ address, domain: address.split('@')[1], system, kind, forwards: [], aliasOf: '', state, detail, fix: null }, extra);
+    const gmail = ['kaanmuar@gmail.com'];
+    const addresses = {
+      ok: true, graph: false, errors: [],
+      needs: ['Microsoft 365: register a read-only Graph app (User.Read.All, application) and put MS_GRAPH_TENANT_ID, MS_GRAPH_CLIENT_ID and MS_GRAPH_CLIENT_SECRET in Secret Manager.'],
+      counts: { addresses: 7, ok: 4, warn: 2, error: 2, paused: 0 },
+      domains: [
+        { domain: 'carlosandmunoz.com', systems: ['ImprovMX', 'SendGrid'], ok: true, checks: [{ name: 'MX', ok: true, detail: '10 mx1.improvmx.com.' }, { name: 'SPF', ok: true, detail: 'v=spf1 ...' }, { name: 'DKIM', ok: true, detail: 's1, s2, dkimprovmx1 and dkimprovmx2 are published.' }, { name: 'DMARC', ok: true, detail: 'p=quarantine' }] },
+        { domain: 'qalabreview.com', systems: ['Microsoft 365', 'Instantly'], ok: true, checks: [{ name: 'MX', ok: true, detail: '' }, { name: 'SPF', ok: true, detail: '' }, { name: 'DKIM', ok: true, detail: '' }, { name: 'DMARC', ok: true, detail: 'p=quarantine' }] }
+      ],
+      rows: [
+        row('canary@carlosandmunoz.com', 'ImprovMX', 'alias', 'error', 'Missing from ImprovMX: the daily round trip cannot come back.', { forwards: gmail.concat('webhook'), fix: { by: 'jarvis', action: 'restore-alias' } }),
+        row('hello@carlosandmunoz.com', 'ImprovMX', 'alias', 'ok', '2 mails in the last day, 2 forwarded.', { forwards: gmail }),
+        row('qa@carlosandmunoz.com', 'ImprovMX', 'alias', 'ok', 'No mail in the last day.', { forwards: gmail.concat('webhook') }),
+        row('notices@carlosandmunoz.com', 'ImprovMX', 'smtp login', 'ok', 'Sends through smtp.improvmx.com.'),
+        row('qa@carlosandmunoz.com', 'SendGrid', 'sender', 'ok', 'Site and review mail goes out from this address; replies reach its ImprovMX alias.'),
+        row('carlos@qalabreview.com', 'Microsoft 365', 'mailbox', 'warn', 'Known from Instantly; Jarvis reads Microsoft 365 once the Graph app is connected.', { fix: { by: 'carlos', action: 'Connect Graph', link: 'https://entra.microsoft.com/' } }),
+        row('hello@qalabreview.com', 'Microsoft 365', 'mailbox', 'warn', 'Known from Instantly; Jarvis reads Microsoft 365 once the Graph app is connected.', { fix: { by: 'carlos', action: 'Connect Graph', link: 'https://entra.microsoft.com/' } }),
+        row('carlos@qalabreview.com', 'Instantly', 'sending mailbox', 'ok', 'warm-up on, score 100.'),
+        row('hello@qalabreview.com', 'Instantly', 'sending mailbox', 'error', 'Permanent OAuth failure: AADSTS50076 Due to a configuration change made by your administrator, you must use multi-factor authentication.', { fix: { by: 'carlos', action: 'Reconnect', link: 'https://app.instantly.ai/app/accounts' } })
+      ],
+      issues: [
+        { key: 'improvmx:missing:canary@carlosandmunoz.com', level: 'alert', by: 'jarvis', action: 'restore-alias', system: 'ImprovMX', address: 'canary@carlosandmunoz.com', problem: 'missing', text: 'canary@carlosandmunoz.com is missing from ImprovMX; Jarvis restores it.', push: true },
+        { key: 'instantly:reconnect:hello@qalabreview.com', level: 'alert', by: 'carlos', action: 'Reconnect', link: 'https://app.instantly.ai/app/accounts', system: 'Instantly', address: 'hello@qalabreview.com', problem: 'reconnect', text: 'Reconnect hello@qalabreview.com in Instantly: Permanent OAuth failure: AADSTS50076', push: true }
+      ]
+    };
+    await page.setViewportSize({ width: 1400, height: 1000 });
+    await openStats(page, '#stats/systems/30', { addresses });
+    const panel = page.locator('[data-panel-id="systems-addresses"]');
+    await expect(panel).toContainText('Email addresses (7)');
+    await expect(panel.locator('.jv-addr-domain')).toHaveText(['carlosandmunoz.com', 'qalabreview.com']);
+    await expect(panel).toContainText('Jarvis fixes it');
+    await expect(panel.locator('a[href="https://app.instantly.ai/app/accounts"]')).toHaveText('Reconnect →');
+    await expect(panel.locator('.jv-needs')).toContainText('MS_GRAPH_TENANT_ID');
+    await expect(panel).toContainText('kaanmuar@gmail.com, webhook');
+    await expect(panel.locator('[data-panel-export="csv"]')).toHaveCount(1);
+    await expect(page.locator('#stats-pane')).toContainText('canary@carlosandmunoz.com is missing from ImprovMX; Jarvis restores it.');
+    await panel.screenshot({ path: 'test-results/jarvis-addresses.png' });
     expect(errors).toEqual([]);
   });
 

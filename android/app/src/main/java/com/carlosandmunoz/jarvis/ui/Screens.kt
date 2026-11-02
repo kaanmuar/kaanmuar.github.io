@@ -711,6 +711,7 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
     JarvisActions(s, vm)
     SignInCodes(snap.objs("mailCodes"))
     MailHealth(snap.ext("mailbox"))
+    EmailAddresses(snap.ext("addresses"))
     Panel("Connections") {
         snap.objs("connections").forEach { c -> StatusRow(c.str("state"), c.str("name") ?: "", listOfNotNull(c.str("state"), c.str("detail")?.takeIf { it.isNotBlank() }, c.arr("needs").takeIf { it.isNotEmpty() }?.joinToString(" ") { it.text() }).filter { it.isNotBlank() }.joinToString(" · ")) }
     }

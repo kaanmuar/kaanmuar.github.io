@@ -13,7 +13,8 @@ const SITE_TOKEN = ["REVIEW_VERIFY_KEY"];
 const PAY = ["STRIPE_SECRET_KEY", "PAYPAL_CLIENT_SECRET", "PAYPAL_SANDBOX_CLIENT_SECRET"];
 const GEMINI = ["GEMINI_API_KEY"];
 // jarvisExternal and the jarvis-sources table: GitHub, speed, money, social, safety, search, outreach and mailbox.
-const JARVIS_SOURCES = [...GITHUB, "PAGESPEED_KEY", "CRUX_KEY", "WEBRISK_KEY", "BRAVE_SEARCH_KEY", "YOUTUBE_KEY", "INSTANTLY_API_KEY", "IMPROVMX_API_KEY", ...PAY];
+const GRAPH = ["MS_GRAPH_TENANT_ID", "MS_GRAPH_CLIENT_ID", "MS_GRAPH_CLIENT_SECRET"];
+const JARVIS_SOURCES = [...GITHUB, "PAGESPEED_KEY", "CRUX_KEY", "WEBRISK_KEY", "BRAVE_SEARCH_KEY", "YOUTUBE_KEY", "INSTANTLY_API_KEY", "IMPROVMX_API_KEY", ...GRAPH, ...PAY];
 const CLOUDFLARE = ["CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ANALYTICS_TOKEN"];
 
 const list = (...groups) => [...new Set(groups.flat())];
