@@ -63,6 +63,15 @@
   ],
   "auto-2026-10-24/03-u-nibo-com-br": [
    {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mze46fewpe25",
+    "at": "2026-11-02T19:55:54.772Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mze46fewpe25",
+    "checked": "2026-11-02T19:55:57.140Z"
+   },
+   {
     "channel": "instagram",
     "profile": "instagram.com/qaurlreview",
     "id": "18148621366573520",
@@ -273,6 +282,15 @@
    }
   ],
   "compare-2026-11/08-quiz-metros": [
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18096376547237371",
+    "at": "2026-11-02T19:55:59.776Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4021744793302186469",
+    "checked": "2026-11-02T19:56:10.061Z"
+   },
    {
     "channel": "instagram",
     "profile": "instagram.com/qaurlreview",
