@@ -499,11 +499,11 @@ async function bookingConnectUrl() {
   return { url: booking.authUrl(clientId, BOOKING_REDIRECT, state) };
 }
 
-function bookingPage(res, text) {
+function bookingPage(res, text, hash, label) {
   const safe = String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]));
   res.status(200).set("Content-Type", "text/html; charset=utf-8").send("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Calls · Jarvis</title>" +
     "<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b1d22;font-family:Arial,Helvetica,sans-serif;color:#e6f4f5}main{max-width:440px;margin:16px;text-align:center}a{color:#5fd4dc}</style></head>" +
-    "<body><main><p>" + safe + "</p><p><a href=\"https://carlosandmunoz.com/admin.html#stats\">Back to Jarvis</a></p></main></body></html>");
+    "<body><main><p>" + safe + "</p><p><a href=\"https://carlosandmunoz.com/admin.html" + (hash || "#stats") + "\">" + (label || "Back to Jarvis") + "</a></p></main></body></html>");
 }
 
 async function bookingCallback(req, res) {
@@ -567,7 +567,14 @@ async function bookCall(body, req) {
 }
 
 exports.booking = functions.runWith({ maxInstances: 5, secrets: SECRETS.booking }).https.onRequest(async (req, res) => {
-  if (req.method === "GET" && /\/callback\/?$/.test(req.path)) { await bookingCallback(req, res); return; }
+  if (req.method === "GET" && /\/callback\/?$/.test(req.path)) {
+    // Connect YouTube and Connect Mastodon (#1990) come back here too: the Google OAuth client allows this one redirect.
+    const engaged = await require("./engagement-act").connectCallback(engagementDeps(), req.query, BOOKING_REDIRECT, bookingKeys())
+      .catch((error) => ({ ok: false, message: clip(error.message, 240) }));
+    if (engaged) { bookingPage(res, engaged.message, "#stats/engagement/7", "Back to Engagement"); return; }
+    await bookingCallback(req, res);
+    return;
+  }
   const origin = String(req.get("origin") || "");
   const allowed = CV_ORIGINS.has(origin);
   res.set("Access-Control-Allow-Origin", allowed ? origin : "https://carlosandmunoz.com");
@@ -5073,7 +5080,7 @@ const jarvisEngagement = require("./jarvis-engagement");
 
 function engagementDeps() {
   return {
-    db: getFirestore(), fetch, env: process.env, now: Date.now(), inc: (n) => FieldValue.increment(n), push: pushOwner,
+    db: getFirestore(), fetch, env: process.env, now: Date.now(), inc: (n) => FieldValue.increment(n), push: pushOwner, keys: bookingKeys(),
     mail: (m) => sendOwnerEmail({ subject: m.subject, intro: m.intro, rows: m.rows, body: m.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL.replace(/#.*/, "#stats/engagement/7"), buttonLabel: "Open Engagement" })
   };
 }
@@ -5598,7 +5605,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-report": (b) => String(b.period || "daily") + " engagement report" };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-connect": (b) => (b.disconnect ? "disconnect " : "connect ") + String(b.network || "").slice(0, 20), "engagement-report": (b) => String(b.period || "daily") + " engagement report" };
 
 async function jarvisWatchRun() {
   const db = getFirestore();
@@ -5976,6 +5983,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     }
     else if (op === "engagement-decide") out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), body, operator);
     else if (op === "engagement-settings") out = await jarvisEngagement.saveSettings(getFirestore(), body.settings || body, operator, now);
+    else if (op === "engagement-connect") out = await jarvisEngagement.connect(Object.assign(engagementDeps(), { now }), body, BOOKING_REDIRECT);
     else if (op === "engagement-report") out = await jarvisEngagement.sendReport(Object.assign(engagementDeps(), { now }), ["daily", "weekly", "monthly"].includes(body.period) ? body.period : "daily");
     else if (jarvisSources.SOURCES[op]) out = await jarvisSource(op, days);
     else if (op === "send-report") {
