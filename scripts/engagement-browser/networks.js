@@ -241,8 +241,9 @@ const tiktok = {
   async signedIn(page) {
     if (await visible(page.locator('[data-e2e="top-login-button"]'), 6000)) return "";
     const me = page.locator('a[data-e2e="nav-profile"]');
-    if (!(await visible(me, 10000))) return "";
-    return "@" + String(await me.first().getAttribute("href")).replace(/^\/@/, "").split(/[/?]/)[0];
+    if (!(await visible(me, 10000)) || await has(page.locator('[data-e2e="top-login-button"]'))) return "";
+    const handle = String(await me.first().getAttribute("href")).replace(/^.*\/@/, "").split(/[/?]/)[0];
+    return handle ? "@" + handle : "";
   },
   // TikTok's search page loads its results as JSON; the agent keeps what the page itself asked for.
   async read(page, q) {
