@@ -498,7 +498,7 @@ async function ask(fetchImpl, env, question, snapshot, opts) {
   const code = langCode(o.lang);
   const how = o.spoken
     ? "Answer in at most four short spoken sentences: plain text, no markdown, no lists, numbers said the way a person would say them."
-    : "Answer in at most six sentences from these numbers.";
+    : core.askHint(o.device) || "Answer in at most six sentences from these numbers.";
   const language = code === "en" ? "" : " Answer in " + languageName(code) + ".";
   const text = await gemini(fetchImpl, env, "Question: " + q + "\n\n" + how + language + " If the numbers cannot answer it, say which number is missing.\n\n" + snapshotText(snapshot), 800);
   return { text, lang: code };

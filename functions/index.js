@@ -5054,6 +5054,7 @@ const cube = require("./cube");
 const jarvisNotify = require("./jarvis-notify");
 const jarvisMailPush = require("./jarvis-mail-push");
 const jarvisWebPush = require("./jarvis-webpush");
+const jarvisDevice = require("./jarvis-device");
 
 // A push failure is logged and never stops the owner email it mirrors.
 async function pushOwner(msg) {
@@ -6171,8 +6172,11 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
   const env = process.env;
   const appAskSnapshot = async () => jarvis.askSnapshot(await jarvisCached("snapshot", days, () => jarvisSnapshot(days)), days);
   try {
+    // #2068: the app and the page send their screen with every call; these ops keep its row in Settings › Devices.
+    if (["snapshot", "ask", "device"].includes(op) && !body.gone) await jarvisDevice.seen(getFirestore(), body.device, operator, now).catch(() => null);
     let out;
-    if (op === "health") out = await jarvisCached(op, days, () => jarvis.health(getFirestore(), { days, now }));
+    if (op === "device") out = body.gone ? await jarvisDevice.forget(getFirestore(), body.device) : { devices: await jarvisDevice.list(getFirestore(), now, body.device) };
+    else if (op === "health") out = await jarvisCached(op, days, () => jarvis.health(getFirestore(), { days, now }));
     else if (op === "jobs") out = await jarvisCached(op, 0, async () => ({ ok: true, jobs: await jarvis.jobs(fetch) }));
     else if (op === "github") out = await jarvisCached(op, 0, async () => jarvis.github(fetch, await githubApp.token(), { now }));
     else if (op === "ga4") out = await jarvisCached(op, days, () => jarvis.ga4(fetch, { days }));
@@ -6180,7 +6184,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "speed") out = await jarvisCached(op, 0, () => jarvis.speed(urlReview, env));
     else if (op === "uptime") out = await jarvisCached(op, 0, () => jarvis.uptime(fetch, { now }));
     else if (op === "brief") out = await jarvis.brief(fetch, env, body.snapshot || await appAskSnapshot());
-    else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot || await appAskSnapshot(), { lang: body.lang, spoken: body.spoken === true });
+    else if (op === "ask") out = await jarvis.ask(fetch, env, body.question, body.snapshot || await appAskSnapshot(), { lang: body.lang, spoken: body.spoken === true, device: body.device });
     else if (op === "speak") out = await jarvis.speak(fetch, body.text, body.lang, { voice: body.voice, rate: body.rate });
     else if (op === "run-job") out = await jarvis.runJob(fetch, body.job);
     else if (op === "settings") out = await jarvis.readSettings(getFirestore());
@@ -6223,7 +6227,8 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     }
     else if (op === "web-push-key") out = { publicKey: (await jarvisWebPush.keys(getFirestore(), require("web-push"))).publicKey };
     else if (op === "review") out = await jarvisReview.enqueue(getFirestore(), body, operator, now);
-    else if (op === "snapshot") out = Object.assign(await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days))), { mailCodes: await mailCodeRows().catch(() => []) });
+    else if (op === "snapshot") out = Object.assign(await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days))), { mailCodes: await mailCodeRows().catch(() => []),
+      devices: await jarvisDevice.list(getFirestore(), now, body.device).catch(() => []) });
     else if (op === "mail-codes") out = { codes: await mailCodeRows() };
     else if (op === "calendar-connect") out = await bookingConnectUrl();
     else if (op === "brief-mark") out = await jarvisProposals.markBrief(getFirestore(), body, operator, now);

@@ -177,8 +177,9 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls', 'device']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
+    expect(calls.every((c) => c.body.device?.kind === 'desktop' && c.body.device.app === 'web')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
     await tabs.filter({ hasText: 'CV' }).first().click();
@@ -440,7 +441,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(leads.locator('[data-mk-cmd="lead-drop"][data-email="leo@uni2.edu.co"]')).toHaveCount(1);
     await expect(mk.locator('[data-panel-id="marketing-jobs"]')).toContainText('W1 leads ready');
     await expect(mk.locator('[data-panel-id="marketing-kpis"]')).toContainText('setup week');
-    const cmds = () => calls.filter((c) => c.op === 'marketing-command').map(({ body: { op, days, ...rest } }) => rest);
+    const cmds = () => calls.filter((c) => c.op === 'marketing-command').map(({ body: { op, days, device, ...rest } }) => rest);
 
     page.once('dialog', (dialog) => dialog.dismiss());
     await leads.locator('[data-mk-cmd="approve"][data-email="ana@uni.edu.co"]').click();
