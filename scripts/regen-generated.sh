@@ -8,6 +8,7 @@
 # language pages, and they copy the head build-critical-css.js writes into qa-review.html. A builder not on this branch
 # yet is skipped.
 # The social hub rebuilds offline, from committed sources only; the daily Live Reports job pulls YouTube and the admin edits.
+# Pull requests do not commit the hub's generated files (#2242), so after every hub merge this is what commits them.
 # A push that loses the race is not rebased: the rebuild is redone on the new tip, so generated files never conflict.
 # The body is one function so bash has read all of it before git reset rewrites this file.
 set -euo pipefail
@@ -44,16 +45,7 @@ main() {
 	build() {
 		case "$1" in
 		*.py) python3 "$1" ;;
-		scripts/build-social-hub.js)
-			# New thumbnails need sharp, which is in package-lock.json but not installed on a bare runner.
-			if [ -n "${GITHUB_ACTIONS:-}" ] && ! node -e 'require("sharp")' 2>/dev/null; then
-				local version
-				version=$(node -p "(require('./package-lock.json').packages['node_modules/sharp'] || {}).version || 'latest'")
-				npm install -s --no-save --prefix "$RUNNER_TEMP/sharp" "sharp@$version" >/dev/null
-				export NODE_PATH="$RUNNER_TEMP/sharp/node_modules${NODE_PATH:+:$NODE_PATH}"
-			fi
-			node "$1" --offline
-			;;
+		scripts/build-social-hub.js) scripts/social-hub-build.sh ;;
 		*) node "$1" ;;
 		esac
 	}

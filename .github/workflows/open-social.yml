@@ -64,6 +64,11 @@ jobs:
         if: steps.ready.outputs.ok == 'true'
         with:
           node-version: '22'
+      - name: Wait for a hub rebuild or Pages deploy on main
+        if: steps.ready.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/hub-wait.sh
       - name: Post what is due
         id: post
         if: steps.ready.outputs.ok == 'true'

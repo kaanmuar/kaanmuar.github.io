@@ -22,7 +22,7 @@ test("counts each failed check once per sweep site in the week before the run da
   assert.deepEqual(r.issues.map((i) => [i.id, i.share]), [["a11y-labels.title", 100], ["sec-hsts.title", 50], ["ax-title.link-name", 25]]);
 });
 
-test("the post names no swept site and links to the review page", () => {
+test("the post names no swept site and links to the sample report", () => {
   const r = roundup.roundup(week(40), "2026-11-02");
   const p = roundup.proposal(r);
   assert.match(p.id, admin.PROPOSAL_ID);
@@ -32,7 +32,8 @@ test("the post names no swept site and links to the review page", () => {
   assert.match(p.summary, /40 public websites in 3 countries/);
   assert.match(p.summary, /among each site's top issues/);
   assert.ok(!/site\d+\.example|Example Company/.test(p.summary + p.title));
-  assert.match(p.url, /^https:\/\/carlosandmunoz\.com\/qa-review\.html\?/);
+  assert.equal(p.url, "https://carlosandmunoz.com/qa-review.html?sample=1&week=2026-11-02");
+  assert.match(p.summary, /See one full case and its fix in our sample report:\nhttps:\/\/carlosandmunoz\.com\/qa-review\.html\?sample=1&week=2026-11-02\n/);
 });
 
 test("assertNeutral stops a host or a whole-word site name, not a common word inside a label", () => {

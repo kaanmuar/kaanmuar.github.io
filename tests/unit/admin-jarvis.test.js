@@ -258,20 +258,54 @@ test("admin mounts Jarvis in the stats pane and the endpoint stays owner-only", 
 
 // --- #1299: goals, thresholds, daily briefing, watch ------------------------------------------------------------
 
+// Applies where, orderBy, limit and select (dotted paths too) to data.rows the way Firestore does; doc().set merges.
 function fakeDb(data) {
   const writes = [];
   const selects = {};
-  const pick = (row, fields) => (fields ? fields.reduce((out, f) => (f in row ? Object.assign(out, { [f]: row[f] }) : out), {}) : row);
-  const query = (name, filters, fields) => ({
-    where: (field, op, value) => query(name, filters.concat([[field, op, value]]), fields),
-    limit: () => query(name, filters, fields),
-    select: (...picked) => { selects[name] = picked; return query(name, filters, picked); },
+  const ms = (v) => (v && typeof v.toDate === "function" ? v.toDate().getTime() : v instanceof Date ? v.getTime() : typeof v === "string" && /^\d{4}-/.test(v) ? Date.parse(v) : v);
+  const pass = (row, [field, op, value]) => {
+    const a = ms(row[field]), b = ms(value);
+    if (a === undefined) return false;
+    return op === ">=" ? a >= b : op === ">" ? a > b : op === "<" ? a < b : op === "==" ? a === b : true;
+  };
+  const pick = (row, fields) => {
+    if (!fields) return row;
+    const out = {};
+    fields.forEach((f) => {
+      const [head, ...rest] = f.split(".");
+      if (!(head in row)) return;
+      if (!rest.length) { out[head] = row[head]; return; }
+      const inner = row[head];
+      if (inner && typeof inner === "object" && rest[0] in inner) out[head] = Object.assign(out[head] || {}, { [rest[0]]: inner[rest[0]] });
+    });
+    return out;
+  };
+  const merge = (a, b) => {
+    const out = Object.assign({}, a);
+    Object.keys(b).forEach((k) => { out[k] = b[k] && typeof b[k] === "object" && !Array.isArray(b[k]) && !(b[k] instanceof Date) && a && a[k] && typeof a[k] === "object" ? merge(a[k], b[k]) : b[k]; });
+    return out;
+  };
+  const query = (name, filters, fields, order, cap) => ({
+    where: (field, op, value) => query(name, filters.concat([[field, op, value]]), fields, order, cap),
+    orderBy: (field, dir) => query(name, filters, fields, [field, dir], cap),
+    limit: (n) => query(name, filters, fields, order, n),
+    select: (...picked) => { selects[name] = picked; return query(name, filters, picked, order, cap); },
     count: () => ({ get: async () => ({ data: () => ({ count: (data.counts || {})[name + JSON.stringify(filters.map((f) => f[0] + f[1] + (f[2] instanceof Date ? "date" : typeof f[2] === "string" && /^\d{4}-/.test(f[2]) ? "iso" : f[2])))] ?? 0 }) }) }),
     aggregate: () => ({ get: async () => ({ data: () => ({ usd: data.usd || 0 }) }) }),
-    get: async () => ({ docs: ((data.rows || {})[name] || []).map((row, i) => ({ id: row.id || name + i, data: () => pick(row, fields) })) }),
+    get: async () => {
+      let rows = ((data.rows || {})[name] || []).map((row, i) => Object.assign({ __id: row.id || name + i }, row)).filter((row) => filters.every((f) => pass(row, f)));
+      if (order) rows = rows.filter((row) => row[order[0]] !== undefined).sort((x, y) => (ms(x[order[0]]) - ms(y[order[0]])) * (order[1] === "desc" ? -1 : 1));
+      if (cap) rows = rows.slice(0, cap);
+      return { docs: rows.map((row) => { const { __id, ...rest } = row; return { id: __id, data: () => pick(rest, fields) }; }) };
+    },
     doc: (id) => ({
       get: async () => ({ exists: !!(data.docs || {})[name + "/" + id], data: () => (data.docs || {})[name + "/" + id] }),
-      set: async (value) => { writes.push({ path: name + "/" + id, value }); (data.docs = data.docs || {})[name + "/" + id] = value; }
+      set: async (value, opts) => {
+        const path = name + "/" + id;
+        writes.push({ path, value });
+        data.docs = data.docs || {};
+        data.docs[path] = opts && opts.merge ? merge(data.docs[path] || {}, value) : value;
+      }
     })
   });
   return { collection: (name) => query(name, []), writes, selects };

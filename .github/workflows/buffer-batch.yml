@@ -10,9 +10,11 @@
 # Page keeps its times. Buffer's daily call budget moves a few hundred a day, so a nightly run resumes the sync
 # until nothing is left. Mode delete-unmatched deletes the scheduled
 # posts dated after now that match no batch post (not on the hub), then re-seeds; a dry run only lists them.
+# Mode delete-duplicates deletes the later copies of a batch post scheduled twice on one profile, keeping the first
+# one created, then re-seeds; a dry run only lists them (#2160).
 # Mode requeue deletes the queued posts listed in posts (batch/slug, comma-separated) on one channel and creates
 # them again from the batch's captions.json at the same time, for a caption fixed after queueing (#1191).
-# A queue that finds Buffer's daily limit spent lists its batch under retry in the ledger and passes (#1188). The
+# A queue that finds Buffer's daily limit spent, or the batch not on the site after 60 minutes (#2160), lists its batch under retry in the ledger and passes (#1188). The
 # nightly run, before the sync and whatever pauses the sync, queues those batches again; mode retry does it by hand.
 # Mode media lists the scheduled posts by batch, channel and where their media lives (site, release, or a copy
 # uploaded into Buffer), and changes nothing. Mode remedia points the scheduled posts of the batches in batch
@@ -29,7 +31,7 @@ on:
       mode:
         description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, re-queue the batches a spent limit stopped, delete scheduled posts not on the hub, delete and requeue listed posts, list where scheduled posts take their media from, or point Buffer-held copies at re-rendered media'
         type: choice
-        options: [queue, seed, check, sync, retry, delete-unmatched, requeue, media, remedia]
+        options: [queue, seed, check, sync, retry, delete-unmatched, delete-duplicates, requeue, media, remedia]
         default: queue
       batch:
         description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10 (queue; remedia takes batch,batch)'
@@ -75,6 +77,8 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
+      - name: Wait for a hub rebuild or Pages deploy on main
+        run: scripts/hub-wait.sh
       - name: Queue the batches a spent Buffer limit stopped
         if: ${{ github.event_name == 'schedule' || env.MODE == 'retry' }}
         env:
@@ -125,6 +129,13 @@ jobs:
         run: |
           set -o pipefail
           if [ "$DRY_RUN" = "true" ]; then node scripts/buffer-queue.js --delete-unmatched --dry-run; else node scripts/buffer-queue.js --delete-unmatched && node scripts/buffer-queue.js --seed; fi | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Delete the later copies of a post scheduled twice
+        if: ${{ env.MODE == 'delete-duplicates' }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          set -o pipefail
+          if [ "$DRY_RUN" = "true" ]; then node scripts/buffer-queue.js --delete-duplicates --dry-run; else node scripts/buffer-queue.js --delete-duplicates && node scripts/buffer-queue.js --seed; fi | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Requeue posts with fixed captions
         if: ${{ env.MODE == 'requeue' }}
         env:

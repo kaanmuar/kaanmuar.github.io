@@ -11,6 +11,8 @@
        their media lives (site, release, or a copy uploaded into Buffer); changes nothing
      BUFFER_API_KEY=... node scripts/buffer-queue.js --delete-unmatched [--dry-run]   delete the scheduled posts
        dated after now that match no batch post and that the ledger does not know (not on the hub)
+     BUFFER_API_KEY=... node scripts/buffer-queue.js --delete-duplicates [--dry-run]   delete the later copies of a
+       batch post scheduled twice on one profile, keeping the first one created
      BUFFER_API_KEY=... node scripts/buffer-queue.js --requeue <batch/slug,...> [--channel youtube] [--dry-run]
        delete those queued posts and create them again from captions.json at the same time
 
@@ -284,6 +286,41 @@ async function deleteUnmatched(dry) {
   if (failed) process.exit(1);
 }
 
+// The later copies --delete-duplicates removes: two queue runs of one batch schedule a post twice on a profile, and
+// Buffer refuses the copy on text networks but not on TikTok or YouTube (#2160). The first one created stays; a
+// Buffer id starts with its creation time in hex. Only scheduled posts due more than 30 minutes from now are picked.
+function duplicateScheduled(index, items, now) {
+  const groups = new Map();
+  for (const item of items) {
+    const due = Date.parse(item.node.dueAt || "");
+    if (item.node.status !== "scheduled" || isNaN(due) || due <= now + 30 * 60e3) continue;
+    const name = matchPost(index, item.node, item.slot);
+    if (!name) continue;
+    const key = name + " " + item.profile;
+    groups.set(key, (groups.get(key) || []).concat(item));
+  }
+  return [...groups.values()].filter((group) => group.length > 1)
+    .flatMap((group) => group.sort((a, b) => a.node.id.localeCompare(b.node.id)).slice(1));
+}
+
+async function deleteDuplicates(dry) {
+  const copies = duplicateScheduled(batchIndex(), await bufferPosts(["scheduled"]), Date.now());
+  console.log(copies.length + " scheduled Buffer posts copy an earlier one" + (dry ? " (dry run, nothing deleted):" : ":"));
+  let failed = 0;
+  for (const item of copies) {
+    if (dry) { console.log("  would delete " + item.node.id + " " + describe(item)); continue; }
+    try {
+      const r = (await gql("mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }", { input: { id: item.node.id } })).deletePost;
+      if (r.id) console.log("  deleted " + r.id + " " + describe(item));
+      else { failed += 1; console.log("  failed " + item.node.id + " " + describe(item) + " - " + (r.message || r.__typename)); }
+    } catch (error) {
+      failed += 1;
+      console.log("  failed " + item.node.id + " " + describe(item) + " - " + error.message);
+    }
+  }
+  if (failed) process.exit(1);
+}
+
 // The ledger entries --requeue replaces: queued on the channel with a Buffer id, and not due within 30 minutes.
 function requeueTargets(book, posts, channel, now) {
   return posts.map((post) => {
@@ -423,6 +460,10 @@ async function main() {
     if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
     return deleteUnmatched(Boolean(opts["dry-run"]));
   }
+  if (opts["delete-duplicates"]) {
+    if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
+    return deleteDuplicates(Boolean(opts["dry-run"]));
+  }
   if (opts.pending) {
     ledger.retries(ledger.read(ledger.BUFFER)).forEach((batch) => console.log(batch));
     return;
@@ -448,7 +489,7 @@ async function main() {
       return leaveForTonight(book, batch, error.message);
     }
     const first = base + "/feed/" + slugs[0] + ".jpg";
-    if (!(await waitFor(first, 60))) throw new Error("The site never served " + first);
+    if (!(await waitFor(first, 60))) return leaveForTonight(book, batch, "The site did not serve " + first + " within 60 minutes.");
     try {
       await settle(book);
     } catch (error) {
@@ -509,8 +550,9 @@ async function main() {
   if (failed) process.exit(1);
 }
 
-/* A spent daily limit frees up hours later, so the batch is listed in the ledger's retry and the run passes: the
-   nightly buffer-batch.yml run queues it again, skipping what the ledger already has (#1188). */
+/* A spent daily limit frees up hours later, and a site that has not served the batch yet is waiting on its Pages
+   deploy (#2160), so the batch is listed in the ledger's retry and the run passes: the nightly buffer-batch.yml run
+   queues it again, skipping what the ledger already has (#1188). */
 function leaveForTonight(book, batch, why) {
   ledger.write(ledger.BUFFER, ledger.markRetry(book, batch, why, new Date().toISOString()));
   console.log("::warning::" + batch + " is not fully queued: " + why + " The nightly Buffer batch run (03:37 UTC) queues the rest.");
@@ -518,4 +560,4 @@ function leaveForTonight(book, batch, why) {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { batchIndex, matchPost, staleScheduled, inputsFor, gql, requeueTargets, mediaHost, SLOT };
+module.exports = { batchIndex, matchPost, staleScheduled, duplicateScheduled, inputsFor, gql, requeueTargets, mediaHost, SLOT };

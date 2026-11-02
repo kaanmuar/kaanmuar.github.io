@@ -299,7 +299,7 @@
         };
     }
 
-    function summarizeInbox(messages, ratings, window, priorWindow, keep) {
+    function summarizeInbox(messages, ratings, window, priorWindow, keep, pendingCount) {
         const inside = (row, w) => { const when = toDate(row.createdAt); return when && when >= w.start && when <= w.end; };
         const pass = (row) => (keep ? keep(row.email) : true);
         const m = messages.filter((row) => pass(row) && inside(row, window));
@@ -312,7 +312,7 @@
         const rated = r.filter((row) => Number(row.rating) > 0);
         const avg = rated.length ? Math.round((rated.reduce((s, row) => s + Number(row.rating), 0) / rated.length) * 10) / 10 : null;
         const unanswered = m.filter((row) => row.status !== 'rejected' && !row.response && !row.respondedAt).length;
-        const pending = ratings.filter((row) => pass(row) && (row.status || 'pending') === 'pending').length;
+        const pending = pendingCount !== undefined ? pendingCount : ratings.filter((row) => pass(row) && (row.status || 'pending') === 'pending').length;
         const all = m.map((row) => Object.assign({ createdAt: row.createdAt }, { kind: 'message' })).concat(r.map((row) => ({ createdAt: row.createdAt, kind: 'rating' })));
         return {
             key: 'inbox',
@@ -676,7 +676,7 @@
             const g = pf.gemini || {};
             if (g.requests >= 10 && g.errorRate >= th.geminiErrorPct) add('warn', 'systems', `${g.errorRate}% of Gemini calls failed this week (${g.requests - g.ok} of ${g.requests}), most in ${((g.failedMethods || [])[0] || {}).label || 'unknown'}.`, 'platform:gemini');
             const fs = pf.firestore || {};
-            if (fs.readsFreePct >= th.firestoreFreePct) add('warn', 'systems', `Firestore used ${fs.readsFreePct}% of the free daily reads (${fs.reads}).`, 'platform:reads');
+            if (fs.readsFreePct >= th.firestoreFreePct) add('warn', 'systems', `Firestore used ${fs.readsFreePct}% of today's free reads (${fs.reads} since midnight Pacific).`, 'platform:reads');
         }
         CONNECTIONS.forEach((c) => {
             const x = ext[c.key];
@@ -969,7 +969,7 @@
             const f = pf.functions || {}, g = pf.gemini || {}, fs = pf.firestore || {};
             if (k === 'platform:failures') { fact('Failed runs (24 h)', f.failures); fact('Failure rate', f.failureRate !== undefined ? f.failureRate + '%' : null); (f.byFunction || []).slice(0, 4).forEach((r) => fact(r.label, r.value)); link('Function logs', BRIEF_LINKS.firebase); }
             if (k === 'platform:gemini') { fact('Calls', g.requests); fact('Error rate', g.errorRate + '%'); (g.failedMethods || []).slice(0, 4).forEach((r) => fact(r.label, r.value)); }
-            if (k === 'platform:reads') { fact('Reads today', fs.reads); fact('Share of the free quota', fs.readsFreePct + '%'); }
+            if (k === 'platform:reads') { fact('Reads since midnight Pacific', fs.reads); fact('Share of the free quota', fs.readsFreePct + '%'); }
         } else if (k.startsWith('goal:')) {
             const g = (s.goals || []).find((r) => 'goal:' + r.key === k) || {};
             fact('Goal', g.label); fact('Now', g.value); fact('Target', g.target); fact('Time gone', g.elapsed !== undefined ? g.elapsed + '%' : null); fact('Pace', g.projected);

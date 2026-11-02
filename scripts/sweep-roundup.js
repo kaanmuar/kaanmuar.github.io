@@ -21,8 +21,8 @@ const IMAGES = "assets/social/sweep-roundup";
 const MIN_SITES = 30;
 const TOP = 3;
 const KEEP = 6;
-// #2114: the sample's top case stays weak until it ships; until then posts link to the review page.
-const SAMPLE_READY = false;
+// #2171: posts link to the sample report (its top case is a ranked P1 failure since #2114); false links the plain review page.
+const SAMPLE_READY = true;
 
 const LABELS = {
   "a11y-labels.title": "Form fields without a label",
