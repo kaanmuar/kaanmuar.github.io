@@ -421,6 +421,17 @@
     "checked": "2026-11-01T16:49:51.984Z"
    }
   ],
+  "tips-2026-10/07-nosniff": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzdtvuvpsw24",
+    "at": "2026-11-02T17:27:59.248Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzdtvuvpsw24",
+    "checked": "2026-11-02T17:28:02.873Z"
+   }
+  ],
   "tips-horror-headers-2026-10/01-missing-csp": [
    {
     "channel": "bluesky",
