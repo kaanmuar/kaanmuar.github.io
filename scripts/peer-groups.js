@@ -136,7 +136,7 @@ async function groupFor(sector, scope, place, skip, log) {
     if (!f || kept.some((k) => k.host === f.host)) continue;
     const email = String(s.email || "").toLowerCase();
     const found = f.emails.find((e) => e.email === email);
-    const cc = place.cc || (/^[a-z]{2}$/.test(ccOf.get(f.host) || "") ? ccOf.get(f.host) : (f.host.match(/\.([a-z]{2})$/) || [])[1] || "us");
+    const cc = scope !== "cross" && place.cc ? place.cc : (/^[a-z]{2}$/.test(ccOf.get(f.host) || "") ? ccOf.get(f.host) : (f.host.match(/\.([a-z]{2})$/) || [])[1] || "us");
     kept.push({ host: f.host, cc, language: langOf(cc), org: String(s.org || f.title).slice(0, 60), email: found && !skip.has(email) ? email : "", contact_name: String(s.contact_name || "").slice(0, 60), source_url: found ? found.url : "" });
   }
   const group = kept.slice(0, PEERS_MAX);
