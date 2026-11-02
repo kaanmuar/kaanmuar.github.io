@@ -22,6 +22,7 @@ const { db } = require("./sweep-outreach");
 const PEERS_MIN = 2;
 const PEERS_MAX = 6;
 const WAIT_DAYS = 4;
+const PARALLEL = 4;
 const FILE = "prospects/peer-groups.csv";
 const HEADER = ["group", "sector", "place", "cc", "language", "host", "org", "email", "contact_name", "source_url", "queued", "review_id", "peer_doc", "rank", "peer_count", "score", "sector_label", "comparison_url", "status", "uploaded"];
 // The sending domain's Worker (qalabreview/src/routes.js) forwards /<lang>/peers/<id>/<token> to the comparison.
@@ -100,13 +101,10 @@ function pairs(taken) {
 async function groupFor(sector, place, skip, log) {
   const where = placeOf(sector, place);
   const named = await ai("You list real organisations and their official website domains. Answer only with JSON.",
-    `List up to 8 well-known ${sector.en} in ${where} that compete with each other, each with the domain of its own official website (not a directory, marketplace, social network or booking platform). JSON: {"sites":[{"org":"...","host":"example.com"}]}`, { max: 700 });
-  const hosts = [...new Set((named.sites || []).map((s) => bare(String(s.host || "").toLowerCase())).filter((h) => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(h) && !skip.has(h)))].slice(0, 8);
-  const facts = [];
-  for (const host of hosts) {
-    const f = await siteFacts(host);
-    if (f) facts.push(Object.assign(f, { host: bare(new URL(f.url).host) }));
-  }
+    `List up to 10 well-known ${sector.en} in ${where} that compete with each other, each with the domain of its own official website (not a directory, marketplace, social network or booking platform). JSON: {"sites":[{"org":"...","host":"example.com"}]}`, { max: 700 });
+  const hosts = [...new Set((named.sites || []).map((s) => bare(String(s.host || "").toLowerCase())).filter((h) => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(h) && !skip.has(h)))].slice(0, 10);
+  const facts = (await Promise.all(hosts.map((host) => siteFacts(host).catch(() => null))))
+    .filter(Boolean).map((f) => Object.assign(f, { host: bare(new URL(f.url).host) }));
   if (facts.length < PEERS_MIN + 1) return log(`  ${sector.key} ${where}: ${facts.length} sites opened of ${hosts.length} named, skipped`), [];
   const judged = await ai("You check websites for a B2B email about website quality. Answer only with JSON.",
     `Each site below was named as one of the ${sector.en} in ${where}. Keep only the official site of an organisation that is one of the ${sector.en} in ${where} (drop directories, marketplaces, news, government and duplicates of one brand). For each kept site pick the best published address for a first email about the website (marketing, communications, web, or a general contact; never privacy, jobs or support), or "" if none fits.\n` +
@@ -136,29 +134,36 @@ async function build(want, log) {
   const skip = used();
   const fresh = [];
   let made = 0;
-  for (const { sector, place, key } of pairs(taken)) {
-    if (made >= want) break;
-    let group = [];
-    try {
-      group = await groupFor(sector, place, skip, log);
-    } catch (error) {
-      if (error.fatal) throw error;
-      log(`  ${key}: ${String(error.message || error).split("\n")[0]}`);
+  const todo = pairs(taken);
+  // A few pairs at a time: most of the wait is sites that are slow to answer.
+  const worker = async () => {
+    while (made < want && todo.length) {
+      const { sector, place, key } = todo.shift();
+      let group = [];
+      try {
+        group = await groupFor(sector, place, skip, log);
+      } catch (error) {
+        if (error.fatal) throw error;
+        log(`  ${key}: ${String(error.message || error).split("\n")[0]}`);
+      }
+      group = group.filter((g) => !skip.has(g.host));
+      if (group.length < PEERS_MIN + 1 || made >= want) continue;
+      made += 1;
+      const id = key + ":" + crypto.randomBytes(3).toString("hex");
+      for (const g of group) {
+        skip.add(g.host);
+        if (g.email) skip.add(g.email);
+        fresh.push(Object.assign({ group: id, sector: sector.key, place: placeOf(sector, place), cc: place.cc, language: place.language, queued: day(), status: "queued" }, g));
+      }
     }
-    if (!group.length) continue;
-    made += 1;
-    const id = key + ":" + crypto.randomBytes(3).toString("hex");
-    for (const g of group) {
-      skip.add(g.host);
-      if (g.email) skip.add(g.email);
-      fresh.push(Object.assign({ group: id, sector: sector.key, place: placeOf(sector, place), cc: place.cc, language: place.language, queued: day(), status: "queued" }, g));
-    }
-  }
+  };
+  await Promise.all(Array.from({ length: PARALLEL }, worker));
   c.rows = c.rows.concat(fresh.map((r) => Object.fromEntries(c.header.map((k) => [k, r[k] || ""]))));
   save(c);
-  if (fresh.length && !DRY) {
+  const waiting = c.rows.filter((r) => r.status === "queued");
+  if (waiting.length && !DRY) {
     const queue = path.join(DIR, "prospects", "peer-sweep.csv");
-    fs.writeFileSync(queue, toCsv(["host", "cc", "sector"], fresh.map((r) => ({ host: r.host, cc: r.cc, sector: r.sector }))));
+    fs.writeFileSync(queue, toCsv(["host", "cc", "sector"], waiting.map((r) => ({ host: r.host, cc: r.cc, sector: r.sector }))));
     log(execFileSync("node", [path.join(__dirname, "sweep-outreach.js"), "add", queue], { encoding: "utf8" }).trim());
   }
   return `${made} peer groups built (${fresh.length} sites, ${fresh.filter((r) => r.email).length} with an address), queued for the sweep`;
