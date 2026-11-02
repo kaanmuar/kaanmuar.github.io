@@ -5,7 +5,7 @@
    collections, Cloud Scheduler, GitHub, GA4, Cloudflare, PageSpeed/CrUX, uptime, Gemini, and the owner actions.
    The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { collection, query, where, orderBy, limit, getDocs, getDoc, doc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { createBrowserPush, productOf } from "./admin-jarvis-push.js";
+import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2068";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -333,11 +333,50 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (added > 0) { compute(); render(); pulse(added); }
     }
 
+    // --- this browser's screen (#2068): sent with every call, like the app's ----------------------------------
+    let deviceModel = '';
+    let deviceKey = '';
+    if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) navigator.userAgentData.getHighEntropyValues(['model']).then((v) => { deviceModel = v.model || ''; }).catch(() => null);
+
+    function deviceId() {
+        try {
+            let id = localStorage.getItem('jv-device-id');
+            if (!id) { id = crypto.randomUUID(); localStorage.setItem('jv-device-id', id); }
+            return id;
+        } catch (error) { return ''; }
+    }
+
+    function device() {
+        const mq = (q) => !!(window.matchMedia && window.matchMedia(q).matches);
+        const segs = (axis) => [2, 3].find((n) => mq(`(${axis}-viewport-segments: ${n})`)) || 1;
+        const d = C.browserDevice({ ua: navigator.userAgent, model: deviceModel, mobile: navigator.userAgentData ? navigator.userAgentData.mobile : undefined,
+            width: window.innerWidth, height: window.innerHeight, screenW: screen.width, screenH: screen.height, touch: navigator.maxTouchPoints > 0, coarse: mq('(pointer: coarse)'),
+            posture: navigator.devicePosture ? navigator.devicePosture.type : '', segments: { across: segs('horizontal'), down: segs('vertical') }, name: browserName(navigator.userAgent, deviceModel) });
+        return d && Object.assign(d, { id: deviceId() });
+    }
+
+    /** Marks the page with its kind for CSS, and tells the server when the kind or the fold changes. */
+    async function reportDevice() {
+        const d = device();
+        if (!d) return;
+        root.dataset.device = d.kind;
+        root.dataset.posture = d.posture || '';
+        const key = d.kind + ':' + (d.posture || '');
+        if (key === deviceKey || !auth.currentUser) return;
+        deviceKey = key;
+        const out = await call('device').catch(() => null);
+        if (out && out.ok) { S.devices = out.devices || []; paintDevices(); }
+    }
+
+    let resized = 0;
+    window.addEventListener('resize', () => { clearTimeout(resized); resized = setTimeout(reportDevice, 1500); });
+    if (navigator.devicePosture) navigator.devicePosture.addEventListener('change', reportDevice);
+
     async function call(op, extra) {
         const user = auth.currentUser;
         if (!user) throw new Error('Sign in first.');
         const token = await user.getIdToken();
-        const res = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(Object.assign({ op, days: S.range === 'all' ? 365 : Number(S.range) }, extra || {})) });
+        const res = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(Object.assign({ op, days: S.range === 'all' ? 365 : Number(S.range), device: device() }, extra || {})) });
         const data = await res.json().catch(() => ({ ok: false, error: 'No answer (' + res.status + ')' }));
         if (!res.ok && data.ok !== false) data.ok = false;
         return data;
@@ -1701,6 +1740,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         S.loading = false;
         if (all !== false) loadExternal().then(() => loadProposals());
         if (!S.marksAt) { S.marksAt = Date.now(); loadMarks(); }
+        reportDevice();
     }
 
     // The rules answer at once; Gemini then ranks them on the server, which also drops the Done and Dismissed ones.
@@ -2221,6 +2261,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
               <div class="jv-actions"><button type="button" class="jv-btn" data-act="daily-now">Send today's briefing now</button><button type="button" class="jv-btn" data-act="weekly-now">Send the weekly strategy now</button><button type="button" class="jv-btn" data-act="digest-now">Send the evening digest now</button></div></section>
             <section data-bp-section></section>
             <section data-voice-section>${voiceSection()}</section>
+            <section data-devices-section>${devicesSection()}</section>
             <section><h4>Actions</h4>
               <label class="jv-check"><input type="checkbox" name="a-auto"${d.actions.auto ? ' checked' : ''}> Let Jarvis run the safe actions on its own every hour, within these daily caps</label>
               <div class="jv-th-grid">${Object.keys(ACTION_CAPS).map((k) => `<label class="jv-field">${esc(ACTION_LABELS[k].replace(/^./, (c) => c.toUpperCase()))} per day<input type="number" name="a-cap-${k}" min="0" max="100" step="1" value="${esc(d.actions.caps[k])}"></label>`).join('')}</div>
@@ -2235,6 +2276,18 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             <footer><span class="jv-note">${S.settings && S.settings.updatedAt ? 'Saved ' + esc(when(S.settings.updatedAt)) : 'Using the defaults'}</span><button type="button" class="jv-btn" data-settings-close>Cancel</button><button type="submit" class="jv-btn is-primary">Save</button></footer>`;
         bp.paint($('[data-bp-section]'));
     }
+
+    /** #2068: this browser as Jarvis reads it, and every phone and browser seen in the last 30 days, as in the app's Settings. */
+    function devicesSection() {
+        const d = device();
+        const rows = (S.devices || []).map((r) => `<li${r.mine ? ' class="is-mine"' : ''}><strong>${esc(r.name || 'Unknown device')}${r.mine ? ' (this one)' : ''}</strong>
+            <span class="jv-note">${esc(r.label)} · ${r.app === 'web' ? 'browser' : 'app'} · ${esc(when(r.seenAt))}</span></li>`).join('');
+        return `<h4>Devices</h4><p class="jv-note">This browser: ${esc(d ? C.deviceLabel(d) : 'unknown')}.</p>
+            ${rows ? `<ul class="jv-devices">${rows}</ul>` : '<p class="jv-note">No device has checked in yet.</p>'}
+            <p class="jv-note">Phones and browsers signed in during the last 30 days. Ask keeps answers short on phone-sized screens and goes longer on large ones.</p>`;
+    }
+
+    function paintDevices() { const node = $('[data-devices-section]'); if (node) node.innerHTML = devicesSection(); }
 
     /** #1674: kept in this browser, like the app keeps its own; applies at once, without Save. */
     function voiceSection() {
