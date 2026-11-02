@@ -21,9 +21,13 @@ class Api(context: Context, private val http: OkHttpClient, private val auth: Au
 
     class Saved(val json: JsonObject, val at: Long)
 
+    /** The screen in front (#2068): sent with every call, so the server knows the device and Ask fits its answer to it. */
+    @Volatile var device: JsonObject? = null
+
     suspend fun call(op: String, days: Int, extra: Map<String, JsonElement> = emptyMap()): JsonObject {
         val body = buildJsonObject {
             put("op", op); put("days", days)
+            device?.let { put("device", it) }
             extra.forEach { (k, v) -> put(k, v) }
         }.toString()
         var out = send(body, auth.token())

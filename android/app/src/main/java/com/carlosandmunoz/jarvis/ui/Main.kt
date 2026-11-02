@@ -35,6 +35,18 @@ import com.carlosandmunoz.jarvis.home.NumbersWidgetReceiver
 import com.carlosandmunoz.jarvis.home.StatusWidgetReceiver
 import com.carlosandmunoz.jarvis.push.Push
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.unit.Dp
+import com.carlosandmunoz.jarvis.device.Device
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -136,6 +148,8 @@ import com.carlosandmunoz.jarvis.UiState
 import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
+import com.carlosandmunoz.jarvis.data.objs
+import com.carlosandmunoz.jarvis.data.str
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -146,8 +160,9 @@ fun SignInScreen(s: UiState, vm: JarvisViewModel) {
     var email by rememberSaveable { mutableStateOf(s.email ?: "") }
     var password by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
+    OffTheFold {
     Box(Modifier.fillMaxSize().imePadding().padding(20.dp), contentAlignment = Alignment.Center) {
-    Column(Modifier.fillMaxWidth().reveal().glass().padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.cardWidth().fillMaxWidth().reveal().glass().padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Reactor(100.0, "JARVIS", 120.dp)
         Spacer(Modifier.height(24.dp))
         if (s.pendingCode == null) {
@@ -170,11 +185,12 @@ fun SignInScreen(s: UiState, vm: JarvisViewModel) {
         s.authError?.let { Spacer(Modifier.height(8.dp)); Text(it, color = J.pink) }
     }
     }
+    }
 }
 
 @Composable
-fun LockScreen(unlock: () -> Unit) {
-    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+fun LockScreen(unlock: () -> Unit) = OffTheFold {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Reactor(100.0, "LOCKED", 120.dp)
         Spacer(Modifier.height(12.dp))
         Icon(Icons.Filled.Lock, null, tint = J.cyan)
@@ -185,14 +201,20 @@ fun LockScreen(unlock: () -> Unit) {
     }
 }
 
+@Composable
+private fun Modifier.sides() = windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+
 private val ICONS: Map<Tab, ImageVector> = mapOf(Tab.Overview to Icons.Filled.Dashboard, Tab.Products to Icons.Filled.Widgets, Tab.Business to Icons.Filled.AttachMoney, Tab.Traffic to Icons.Filled.Public, Tab.Systems to Icons.Filled.Dns)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, openTab: String?, tabOpened: () -> Unit, setLock: (Boolean) -> Unit) {
+    val form = LocalForm.current
     var tab by rememberSaveable { mutableStateOf(Tab.Overview) }
     var product by rememberSaveable { mutableStateOf("review") }
     var page by rememberSaveable { mutableStateOf("") }
+    var askOpen by rememberSaveable(form.askBeside, form.askOpen) { mutableStateOf(form.askOpen) }
+    LaunchedEffect(form.askBeside) { if (form.askBeside && page == "ask") { page = ""; askOpen = true } }
     val snack = remember { SnackbarHostState() }
     LaunchedEffect(s.toast) { s.toast?.let { snack.showSnackbar(it); vm.toastShown() } }
     LaunchedEffect(openTab) {
@@ -230,39 +252,69 @@ fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, openTab: String
                             }
                         },
                         actions = {
-                            IconButton(onClick = { page = "ask" }, modifier = Modifier.tilt()) { Icon(Icons.Filled.Forum, "Ask Jarvis", tint = J.cyan) }
+                            if (!form.tabletop) IconButton(onClick = { if (form.askBeside) askOpen = !askOpen else page = "ask" }, modifier = Modifier.tilt()) {
+                                Icon(Icons.Filled.Forum, if (form.askBeside && askOpen) "Close Ask" else "Ask Jarvis", tint = J.cyan)
+                            }
                             IconButton(onClick = { page = "settings" }, modifier = Modifier.tilt()) { Icon(Icons.Filled.Settings, "Settings", tint = J.muted) }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                         modifier = Modifier.topFade()
                     )
                 },
-                bottomBar = { Dock(tab) { tab = it } }
+                bottomBar = { if (!form.rail) Dock(tab) { tab = it } }
             ) { pad ->
-                PullToRefreshBox(isRefreshing = s.loading, onRefresh = vm::refresh, modifier = Modifier.padding(pad).fillMaxSize()) {
-                    AnimatedContent(tab, transitionSpec = {
-                        val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
-                        (fadeIn(tween(300)) + slideInHorizontally(tween(450, easing = FastOutSlowInEasing)) { dir * it / 5 } + scaleIn(tween(450), 0.96f)) togetherWith
-                            (fadeOut(tween(200)) + slideOutHorizontally(tween(450, easing = FastOutSlowInEasing)) { -dir * it / 6 } + scaleOut(tween(450), 0.97f))
-                    }, label = "tab") { shownTab ->
-                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                            Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                RANGES.forEach { (d, label) -> GlassChip(label, s.days == d) { vm.setDays(d) } }
-                            }
-                            s.error?.let { e -> Panel("Could not refresh") { Text(e, color = J.amber, fontSize = 13.sp); if (s.snapshot != null) Muted("Showing the last saved numbers.") } }
-                            if (s.snapshot == null && s.loading) Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) { Reactor(null, "LOADING"); Spacer(Modifier.height(12.dp)); Muted("Jarvis is gathering every number. The first load takes up to a minute.") }
-                            }
-                            if (s.snapshot != null) when (shownTab) {
-                                Tab.Overview -> OverviewScreen(s, vm) { target -> Tab.entries.firstOrNull { it.name.equals(target, ignoreCase = true) }?.let { tab = it } ?: run { product = target; tab = Tab.Products } }
-                                Tab.Products -> ProductsScreen(s, vm, product) { product = it }
-                                Tab.Business -> BusinessScreen(s, vm)
-                                Tab.Traffic -> TrafficScreen(s)
-                                Tab.Systems -> SystemsScreen(s, vm)
-                            }
-                            Spacer(Modifier.height(24.dp))
+                val tabs = @Composable { m: Modifier ->
+                    Tabs(s, vm, tab, product, m, { product = it }) { target -> Tab.entries.firstOrNull { it.name.equals(target, ignoreCase = true) }?.let { tab = it } ?: run { product = target; tab = Tab.Products } }
+                }
+                val hinge = form.hinge
+                // Tabletop: the tabs on the upper half, Ask and the orb on the lower half, nothing on the fold.
+                if (form.tabletop && hinge != null) Column(Modifier.fillMaxSize()) {
+                    Row(Modifier.fillMaxWidth().height(hinge.top.dp).padding(top = pad.calculateTopPadding()).sides()) {
+                        Rail(tab) { tab = it }
+                        tabs(Modifier.weight(1f))
+                    }
+                    Spacer(Modifier.height((hinge.bottom - hinge.top).dp))
+                    AskBody(s, vm, Modifier.weight(1f).fillMaxWidth().sides().navigationBarsPadding(), orb = true)
+                } else Row(Modifier.padding(pad).fillMaxSize().sides()) {
+                    if (form.rail) Rail(tab) { tab = it }
+                    tabs(Modifier.weight(1f))
+                    AnimatedVisibility(form.askBeside && askOpen) { AskPane(s, vm, form.askWidthDp.dp) { askOpen = false } }
+                }
+            }
+        }
+    }
+}
+
+/** The picked tab's panels, flowed into as many columns as its width holds. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, modifier: Modifier, pickProduct: (String) -> Unit, open: (String) -> Unit) {
+    PullToRefreshBox(isRefreshing = s.loading, onRefresh = vm::refresh, modifier = modifier.fillMaxSize()) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val columns = Device.columns(maxWidth.value.toInt())
+            AnimatedContent(tab, transitionSpec = {
+                val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
+                (fadeIn(tween(300)) + slideInHorizontally(tween(450, easing = FastOutSlowInEasing)) { dir * it / 5 } + scaleIn(tween(450), 0.96f)) togetherWith
+                    (fadeOut(tween(200)) + slideOutHorizontally(tween(450, easing = FastOutSlowInEasing)) { -dir * it / 6 } + scaleOut(tween(450), 0.97f))
+            }, label = "tab") { shownTab ->
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                    Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        RANGES.forEach { (d, label) -> GlassChip(label, s.days == d) { vm.setDays(d) } }
+                    }
+                    s.error?.let { e -> Panel("Could not refresh") { Text(e, color = J.amber, fontSize = 13.sp); if (s.snapshot != null) Muted("Showing the last saved numbers.") } }
+                    if (s.snapshot == null && s.loading) Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) { Reactor(null, "LOADING"); Spacer(Modifier.height(12.dp)); Muted("Jarvis is gathering every number. The first load takes up to a minute.") }
+                    }
+                    if (s.snapshot != null) Masonry(columns, Modifier.fillMaxWidth()) {
+                        when (shownTab) {
+                            Tab.Overview -> OverviewScreen(s, vm, open)
+                            Tab.Products -> ProductsScreen(s, vm, product, pickProduct)
+                            Tab.Business -> BusinessScreen(s, vm)
+                            Tab.Traffic -> TrafficScreen(s)
+                            Tab.Systems -> SystemsScreen(s, vm)
                         }
                     }
+                    Spacer(Modifier.height(24.dp))
                 }
             }
         }
@@ -288,25 +340,86 @@ private fun Dock(tab: Tab, pick: (Tab) -> Unit) {
                 val lift by animateFloatAsState(if (on) 1f else 0f, spring(0.5f, Spring.StiffnessLow), label = "lift")
                 Column(Modifier.weight(1f).fillMaxSize().clickable(remember { MutableInteractionSource() }, null) { pick(t) }.graphicsLayer { translationY = -3.dp.toPx() * lift; scaleX = 1f + 0.12f * lift; scaleY = 1f + 0.12f * lift },
                     verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(ICONS.getValue(t), null, tint = if (on) J.cyan else J.muted, modifier = Modifier.size(22.dp))
-                    Text(t.label, fontSize = 10.sp, fontFamily = Mono, color = if (on) J.text else J.dim)
+                    TabMark(t, on)
                 }
             }
         }
     }
 }
 
+/** The dock stood on its side, for wide windows and tabletop; the plate slides down to the picked tab. */
+@Composable
+private fun Rail(tab: Tab, pick: (Tab) -> Unit) {
+    val n = Tab.entries.size
+    val at by animateFloatAsState(tab.ordinal.toFloat(), spring(0.7f, Spring.StiffnessMediumLow), label = "rail")
+    Box(Modifier.padding(start = 10.dp, end = 4.dp, top = 4.dp, bottom = 12.dp).width(76.dp).heightIn(max = (n * 68).dp).fillMaxHeight().glass(radius = 20.dp, brackets = false, glow = 1.4f)) {
+        Box(Modifier.fillMaxSize().drawBehind {
+            val h = size.height / n; val pad = 6.dp.toPx()
+            val y = at * h + pad
+            drawRoundRect(Brush.horizontalGradient(listOf(J.cyan.copy(alpha = 0.28f), J.cyan.copy(alpha = 0.06f))), Offset(pad, y), Size(size.width - 2 * pad, h - 2 * pad), CornerRadius(14.dp.toPx()))
+            drawRoundRect(J.cyan.copy(alpha = 0.7f), Offset(pad, y), Size(size.width - 2 * pad, h - 2 * pad), CornerRadius(14.dp.toPx()), style = Stroke(1.dp.toPx()))
+            drawRoundRect(J.cyan, Offset(pad, y + (h - 2 * pad) / 2 - 12.dp.toPx()), Size(2.dp.toPx(), 24.dp.toPx()), CornerRadius(2f))
+        })
+        Column(Modifier.fillMaxSize()) {
+            Tab.entries.forEach { t ->
+                val on = t == tab
+                val lift by animateFloatAsState(if (on) 1f else 0f, spring(0.5f, Spring.StiffnessLow), label = "lift")
+                Column(Modifier.weight(1f).fillMaxWidth().clickable(remember { MutableInteractionSource() }, null) { pick(t) }.graphicsLayer { translationX = 3.dp.toPx() * lift; scaleX = 1f + 0.12f * lift; scaleY = 1f + 0.12f * lift },
+                    verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    TabMark(t, on)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TabMark(t: Tab, on: Boolean) {
+    Icon(ICONS.getValue(t), null, tint = if (on) J.cyan else J.muted, modifier = Modifier.size(22.dp))
+    Text(t.label, fontSize = 10.sp, fontFamily = Mono, color = if (on) J.text else J.dim)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AskScreen(s: UiState, vm: JarvisViewModel, back: () -> Unit) {
-    var q by rememberSaveable { mutableStateOf("") }
-    val list = rememberLazyListState()
-    LaunchedEffect(s.chat.size, s.chat.lastOrNull()?.answer) { if (s.chat.isNotEmpty()) list.animateScrollToItem(s.chat.size - 1) }
     Scaffold(containerColor = Color.Transparent, topBar = {
         TopAppBar(modifier = Modifier.topFade(), title = { Text("Ask Jarvis") }, navigationIcon = { IconButton(onClick = back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent))
-    }) { pad ->
-        Column(Modifier.padding(pad).fillMaxSize().imePadding()) {
+    }) { pad -> AskBody(s, vm, Modifier.padding(pad).fillMaxSize()) }
+}
+
+/** Ask beside the tabs on wide screens; right of the fold when the window has one. */
+@Composable
+private fun AskPane(s: UiState, vm: JarvisViewModel, width: Dp, close: () -> Unit) {
+    Column(Modifier.width(width).fillMaxHeight().padding(start = 4.dp, end = 10.dp, bottom = 10.dp).glass(radius = 18.dp, brackets = false)) {
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("ASK JARVIS", color = J.cyan, fontFamily = Mono, fontSize = 12.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            IconButton(onClick = close) { Icon(Icons.Filled.Close, "Close Ask", tint = J.muted) }
+        }
+        AskBody(s, vm, Modifier.weight(1f).fillMaxWidth())
+    }
+}
+
+/** The chat and its input. [orb] puts a large voice orb beside them, for tabletop: tap it and talk. */
+@Composable
+private fun AskBody(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifier, orb: Boolean = false) {
+    var q by rememberSaveable { mutableStateOf("") }
+    val list = rememberLazyListState()
+    LaunchedEffect(s.chat.size, s.chat.lastOrNull()?.answer) { if (s.chat.isNotEmpty()) list.animateScrollToItem(s.chat.size - 1) }
+    val context = LocalContext.current
+    val mic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted) vm.listen() }
+    val listen = {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) vm.listen()
+        else mic.launch(Manifest.permission.RECORD_AUDIO)
+    }
+    Row(modifier.imePadding()) {
+        if (orb) Column(Modifier.width(168.dp).fillMaxHeight().clickable(remember { MutableInteractionSource() }, null) { if (s.heard.listening) vm.stopListening() else { vm.heardShown(); listen() } },
+            verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+            VoiceOrb(s.heard.level, s.heard.listening || s.speaking != null, 120.dp)
+            Spacer(Modifier.height(6.dp))
+            Text(if (s.heard.listening) "LISTENING" else if (s.speaking != null) "SPEAKING" else "TAP TO ASK", color = J.muted, fontFamily = Mono, fontSize = 10.sp, letterSpacing = 2.sp)
+        }
+        Column(Modifier.weight(1f).fillMaxHeight()) {
             LazyColumn(Modifier.weight(1f), state = list) {
                 if (s.chat.isEmpty()) item {
                     Panel("Try") {
@@ -329,12 +442,6 @@ fun AskScreen(s: UiState, vm: JarvisViewModel, back: () -> Unit) {
                 }
             }
             HorizontalDivider(color = J.line)
-            val context = LocalContext.current
-            val mic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted) vm.listen() }
-            val listen = {
-                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) vm.listen()
-                else mic.launch(Manifest.permission.RECORD_AUDIO)
-            }
             s.heard.error?.let { Text(it, color = J.amber, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
             AnimatedContent(s.heard.listening, label = "input") { listening ->
                 if (listening) Row(Modifier.padding(8.dp).fillMaxWidth().glass(radius = 14.dp, brackets = false).padding(horizontal = 10.dp, vertical = 6.dp),
@@ -367,7 +474,10 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
         TopAppBar(modifier = Modifier.topFade(), title = { Text("Settings") }, navigationIcon = { IconButton(onClick = back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent))
     }) { pad ->
-        Column(Modifier.padding(pad).verticalScroll(rememberScrollState())) {
+        BoxWithConstraints(Modifier.padding(pad).fillMaxSize().sides()) {
+        val columns = Device.columns(maxWidth.value.toInt())
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+        Masonry(columns, Modifier.fillMaxWidth()) {
             Panel("Account") {
                 KeyRow("Signed in as", s.email ?: "—")
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -497,8 +607,28 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 KeyRow("Web dashboard", "open", url = "https://carlosandmunoz.com/admin.html#stats/overview/${s.days}")
                 KeyRow("Releases", "open", url = "https://github.com/kaanmuar/kaanmuar.github.io/releases")
             }
-            Spacer(Modifier.width(1.dp).height(24.dp))
+            Devices(s)
         }
+        Spacer(Modifier.width(1.dp).height(24.dp))
+        }
+        }
+    }
+}
+
+/** This device as Jarvis reads it, and every phone and browser signed in during the last 30 days (#2068). */
+@Composable
+private fun Devices(s: UiState) {
+    val form = LocalForm.current
+    Panel("Devices") {
+        KeyRow("This device", form.name.ifBlank { "—" })
+        Muted(form.label)
+        (s.devices ?: s.snapshot.objs("devices")).forEach { d ->
+            val seen = d.str("seenAt")?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
+            val title = (d.str("name") ?: "Unknown device") + if (d.bool("mine") == true) " (this one)" else ""
+            StatusRow(if (d.bool("mine") == true) "good" else null, title,
+                listOfNotNull(d.str("label"), if (d.str("app") == "web") "browser" else "app", seen?.let { DateUtils.getRelativeTimeSpanString(it).toString() }).joinToString(" · "))
+        }
+        Muted("Wide screens get the side rail, two columns and Ask beside the tabs. Half folded on a table, the numbers sit on the upper half and Ask on the lower. Ask keeps answers short on phone-sized screens.")
     }
 }
 
