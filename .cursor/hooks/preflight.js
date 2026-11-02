@@ -15,7 +15,6 @@ const { execFileSync, spawn } = require("child_process");
 
 const HOME = os.homedir();
 const STATE = process.env.PREFLIGHT_STATE || path.join(HOME, ".cursor", "preflight");
-const USAGE = process.env.PREFLIGHT_USAGE || path.join(HOME, "Library/Application Support/Cursor/AgentStores/cursor_agent_stores/u452212433/files/cursor-usage");
 const ROOT = path.resolve(__dirname, "..", "..");
 const R = "repos/kaanmuar/kaanmuar.github.io";
 // Transcripts hold messages and tool calls but not tool results, so 200 KB is about 100k tokens of context.
@@ -40,10 +39,8 @@ const sh = (cmd, args, opts = {}) => execFileSync(cmd, args, { cwd: ROOT, encodi
 const convState = (id) => readJson(file(`${id}.json`), {});
 const saveConv = (id, s) => writeJson(file(`${id}.json`), s);
 
-function planPercent() {
-  const q = readJson(path.join(USAGE, "quota-cache.json"), null);
-  return q?.data?.individualUsage?.plan?.totalPercentUsed ?? null;
-}
+const plan = require(path.join(ROOT, "scripts", "cursor-plan.js"));
+const planPercent = () => plan.planPercent(plan.readCache(), Date.now());
 
 function budgetLine() {
   const pct = planPercent();
@@ -92,7 +89,7 @@ function writeHandoff(input) {
 
 // Scripted requests: short, exact phrasings that need a script, not a model. Prefix "agent:" to skip.
 const HANDLERS = [
-  [/^(quota|usage|budget)\??$/i, () => sh("python3", [path.join(USAGE, "quota.py")]).split("\n").pop()],
+  [/^(quota|usage|budget)\??$/i, () => plan.quotaLine(plan.readCache(), Date.now())],
   [/^move #?(\d+) to (backlog|next|design|dev|qa|stg|prod|done)$/i, (m) => {
     const item = sh("scripts/gh-budget.sh", ["--item", m[1]]);
     sh("scripts/gh-budget.sh", ["project", "item-edit", "--id", item, "--project-id", "PVT_kwDOFLbZIM4BokiS", "--field-id", "PVTSSF_lADOFLbZIM4BokiSzhnEBTE", "--single-select-option-id", COLUMNS[m[2].toLowerCase()]]);

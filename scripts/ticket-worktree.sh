@@ -23,7 +23,15 @@ else
 fi
 
 # functions/.env is gitignored; without it a deploy from the worktree ships every function without its keys (#1739).
-for deps in node_modules functions/node_modules functions/.env functions/.secret.local; do
+for deps in node_modules functions/.env functions/.secret.local; do
 	[ -e "$main/$deps" ] && [ ! -e "$dir/$deps" ] && ln -s "$main/$deps" "$dir/$deps"
 done
+# An empty functions/node_modules in the main checkout leaves firebase-tools without firebase-functions (#2031).
+if [ ! -e "$dir/functions/node_modules" ]; then
+	if [ -n "$(ls -A "$main/functions/node_modules" 2>/dev/null)" ]; then
+		ln -s "$main/functions/node_modules" "$dir/functions/node_modules"
+	else
+		npm ci --prefix "$dir/functions" --no-audit --no-fund >&2
+	fi
+fi
 echo "$dir"

@@ -209,6 +209,8 @@ async function queueProspects(db, body, now) {
 const WEEK = /^W\d{1,2}$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const JOBS = ["prospects", "leads", "replies"];
+// Same list as EDITABLE in scripts/marketing-leads-autopilot.js.
+const LEAD_EDITABLE = ["first_name", "last_name", "title", "top_finding", "best_point", "peer_1", "peer_2", "regulation_line", "course_or_programme", "month", "one_line_from_lecture_kit"];
 const STALE = 20 * 60 * 1000;
 const arr = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
 const str = (v, max) => String(v == null ? "" : v).slice(0, max);
@@ -269,6 +271,21 @@ function commandOf(body) {
     const value = str(b.value, 200).trim().toLowerCase();
     if (!EMAIL.test(value) && !DOMAIN.test(value)) throw new Error("Give an email address or a domain.");
     return { action, args: { value, reason: str(b.reason, 120).trim() || "added from Jarvis" }, label: "Do not contact " + value };
+  }
+  if (action === "lead-set" || action === "lead-drop" || action === "allow-personal") {
+    needWeek();
+    const email = str(b.email, 200).trim().toLowerCase();
+    if (!EMAIL.test(email)) throw new Error("That is not a lead's email.");
+    if (action === "allow-personal") return { action, args: { week, email }, label: "Allow the personal address " + email + " (" + week + ")" };
+    if (action === "lead-drop") {
+      const on = b.on !== false;
+      return { action, args: { week, email, on }, label: (on ? "Drop " : "Bring back ") + email + " (" + week + ")" };
+    }
+    const field = str(b.field, 40);
+    const value = str(b.value, 300).trim();
+    if (!LEAD_EDITABLE.includes(field)) throw new Error("That field cannot be set from Jarvis.");
+    if (!value) throw new Error("Write the value first.");
+    return { action, args: { week, email, field, value }, label: "Set " + field + " for " + email + " (" + week + ")" };
   }
   if (action === "run") {
     const job = str(b.job, 20);
