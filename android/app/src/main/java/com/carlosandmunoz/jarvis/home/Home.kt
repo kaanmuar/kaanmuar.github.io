@@ -234,7 +234,7 @@ object Home {
             if (sy != null) add(Line("Replies", if (replies > 0) "$replies to answer" else "none waiting", if (replies > 0) "alert" else "good"))
             if (li.isNotEmpty()) add(Line("LinkedIn", "$liSent / ${li.size} sent", if (liSent < li.size) "warn" else "good"))
             if (mail != null) add(Line("Sent", "${fmt(mail.num("sent"), 0)} · ${fmt(mail.num("replies"), 0)} replies · ${fmt(mail.num("meetings"), 0)} meetings", "info"))
-            if (sy != null) add(Line("Mac sync", rel(sy.str("at"), now) ?: "never", if (sy.bool("stale") == true) "alert" else "good"))
+            if (sy != null) add(Line("Outreach sync", rel(sy.str("at"), now) ?: "never", if (sy.bool("stale") == true) "alert" else "good"))
         }
         return MarketingCard(headline, lines)
     }

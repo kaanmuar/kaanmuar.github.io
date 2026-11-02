@@ -448,7 +448,7 @@ async function main() {
       return leaveForTonight(book, batch, error.message);
     }
     const first = base + "/feed/" + slugs[0] + ".jpg";
-    if (!(await waitFor(first, 20))) throw new Error("The site never served " + first);
+    if (!(await waitFor(first, 60))) throw new Error("The site never served " + first);
     try {
       await settle(book);
     } catch (error) {

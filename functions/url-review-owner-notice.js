@@ -26,6 +26,21 @@ function criticalSecurity(report) {
     .some((item) => item && item.area === "Security" && item.verdict === "fail" && item.severity === "critical");
 }
 
+// The Google Maps finding (#2067) a notice to a local business opens with (#2119): the worst one, as a key of the
+// mail's local copy, or "" when the review found none.
+const LOCAL_ORDER = ["local-status", "local-website", "local-hours", "local-nap", "local-utm", "local-profile"];
+const SEVERITY = { critical: 4, high: 3, medium: 2, low: 1 };
+function localLead(report) {
+  const found = ((report && report.insights && report.insights.findings) || [])
+    .filter((f) => f && LOCAL_ORDER.includes(f.key) && (f.verdict === "fail" || f.verdict === "risk" || f.verdict === "person"));
+  if (!found.length) return "";
+  const rank = (f) => (f.verdict === "fail" ? 100 : 0) + (SEVERITY[f.severity] || 0) * 10 - LOCAL_ORDER.indexOf(f.key);
+  const worst = found.sort((a, b) => rank(b) - rank(a))[0];
+  const name = worst.key.slice("local-".length);
+  if (name === "status" || name === "website") return name + "_" + (worst.verdict === "fail" ? "fail" : name === "website" && worst.severity === "low" ? "low" : "risk");
+  return name;
+}
+
 function domainOf(host) {
   return core.registrable(publish.bare(host));
 }
@@ -122,6 +137,7 @@ function noticeRow(record, usable, now) {
     sourceUrl: top.url,
     candidates,
     critical: criticalSecurity(report),
+    local: localLead(report),
     lang: noticeLang(report),
     reviewedAt: report.fetchedAt ? String(report.fetchedAt)
       : new Date(record.createdAt && record.createdAt.toDate ? record.createdAt.toDate() : (now || Date.now())).toISOString(),
@@ -154,4 +170,4 @@ function sendBlock(notice, ctx) {
   return "";
 }
 
-module.exports = { LANGS, QUIET_MS, SOURCE_POINTS, criticalSecurity, domainOf, rankContacts, pickContact, noticeLang, due, heldBack, usableContacts, skipReason, noticeRow, addressed, liveCard, sendBlock };
+module.exports = { LANGS, QUIET_MS, SOURCE_POINTS, criticalSecurity, localLead, domainOf, rankContacts, pickContact, noticeLang, due, heldBack, usableContacts, skipReason, noticeRow, addressed, liveCard, sendBlock };

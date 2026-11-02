@@ -41,8 +41,9 @@ function spark(values, color) {
     return `<svg class="jv-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,${h} ${pts.join(' ')} ${w},${h}" fill="${color}" fill-opacity="0.12" stroke="none"></polyline><polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.6"></polyline></svg>`;
 }
 
-function area(labels, series) {
+function area(labels, series, opts) {
     if (!labels || !labels.length) return '<p class="jv-empty">No days in this range.</p>';
+    const fill = !(opts && opts.fill === false);
     const w = 760, h = 220, pad = 30;
     const peakValue = Math.max(1, ...series.flatMap((s) => s.values));
     const raw = peakValue / 4;
@@ -56,8 +57,8 @@ function area(labels, series) {
     const ticks = labels.map((label, i) => (i % step === 0 || i === labels.length - 1) ? `<text x="${x(i)}" y="${h - 8}" text-anchor="middle" class="jv-axis">${esc(label.slice(5))}</text>` : '').join('');
     const paths = series.map((s, k) => {
         const line = s.values.map((n, i) => `${x(i).toFixed(1)},${y(n).toFixed(1)}`).join(' ');
-        return `<defs><linearGradient id="jvg${k}${s.color.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.color}" stop-opacity="0.35"></stop><stop offset="1" stop-color="${s.color}" stop-opacity="0"></stop></linearGradient></defs>
-            <polygon points="${x(0)},${h - pad} ${line} ${x(s.values.length - 1)},${h - pad}" fill="url(#jvg${k}${s.color.slice(1)})"></polygon>
+        return (fill ? `<defs><linearGradient id="jvg${k}${s.color.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.color}" stop-opacity="0.35"></stop><stop offset="1" stop-color="${s.color}" stop-opacity="0"></stop></linearGradient></defs>
+            <polygon points="${x(0)},${h - pad} ${line} ${x(s.values.length - 1)},${h - pad}" fill="url(#jvg${k}${s.color.slice(1)})"></polygon>` : '') + `
             <polyline points="${line}" fill="none" stroke="${s.color}" stroke-width="2.2" class="jv-glow"></polyline>${labels.length < 3 ? s.values.map((n, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(n).toFixed(1)}" r="4" fill="${s.color}"></circle>`).join('') : ''}`;
     }).join('');
     const legend = series.map((s) => `<span><i style="background:${s.color}"></i>${esc(s.name)} ${fmt(s.values.reduce((a, b) => a + b, 0))}</span>`).join('');
@@ -84,8 +85,8 @@ function ring(pct, label, color, size) {
 }
 
 function funnel(steps) {
-    const top = Math.max(1, steps[0] ? steps[0].value : 1);
-    return `<div class="jv-funnel">${steps.map((s, i) => `<div class="jv-funnel-step" style="--w:${Math.max(6, (s.value / top) * 100)}%"><span>${esc(s.label)}</span><strong>${fmt(s.value)}</strong>${i ? `<small>${steps[i - 1].value ? Math.round((s.value / steps[i - 1].value) * 100) : 0}% of previous</small>` : ''}</div>`).join('')}</div>`;
+    const top = Math.max(1, ...steps.map((s) => s.value));
+    return `<div class="jv-funnel">${steps.map((s, i) => `<div class="jv-funnel-step" style="--w:${Math.max(6, (s.value / top) * 100)}%"><span>${esc(s.label)}</span><strong>${fmt(s.value)}</strong>${i && s.value <= steps[i - 1].value ? `<small>${steps[i - 1].value ? Math.round((s.value / steps[i - 1].value) * 100) : 0}% of previous</small>` : ''}</div>`).join('')}</div>`;
 }
 
 function heat(grid, peakText) {
@@ -145,6 +146,27 @@ function countdown(items) {
     return `<div class="jv-countdown">${items.map((c) => `<div class="jv-count${c.days !== null && c.days >= 0 && c.days <= 7 ? ' is-soon' : ''}${c.days !== null && c.days < 0 ? ' is-past' : ''}"><strong>${c.days === null ? '—' : c.days === 0 ? 'today' : c.days < 0 ? 'done' : fmt(c.days)}</strong><small>${c.days > 0 ? (c.days === 1 ? 'day' : 'days') : '&nbsp;'}</small><span>${esc(c.label)}</span><em>${esc(c.date || '')}</em></div>`).join('')}</div>`;
 }
 
+// #2139: tiles per connection, job and CI workflow, grouped, each lit by its level.
+function matrix(tiles) {
+    if (!tiles.length) return '<p class="jv-empty">No connections, jobs or CI runs read yet.</p>';
+    return Array.from(new Set(tiles.map((t) => t.group))).map((g) => {
+        const list = tiles.filter((t) => t.group === g);
+        return `<div class="jv-mx-group"><h4 class="jv-sub">${esc(g)} <small>${list.filter((t) => t.level === 'good').length} of ${list.length} good</small></h4><div class="jv-mx">${list.map((t) => `<span class="jv-mx-tile lv-${esc(t.level)}" title="${esc(t.name)}: ${esc(t.detail)}"><i></i>${esc(t.name)}</span>`).join('')}</div></div>`;
+    }).join('');
+}
+
+// #2139: one cell per Bogota day; a day without checks stays dark instead of reading as up.
+function strip(u) {
+    const cell = (d) => `<i class="${d.pct === null ? 'is-none' : d.pct >= 99.5 ? 'is-up' : d.pct >= 95 ? 'is-dip' : 'is-down'}" title="${esc(d.date)}: ${d.pct === null ? 'no checks' : d.pct + '%'}"></i>`;
+    const head = u.pct === null ? 'No checks recorded yet.' : `${u.pct}% of checks answered since ${esc(u.since)}.`;
+    return `<p class="jv-note">${head} Jarvis pings the five product pages every hour and keeps one tally per day.</p><div class="jv-strip" role="img" aria-label="Uptime per day, last 90 days: ${esc(head)}">${u.days.map(cell).join('')}</div><div class="jv-strip-ends"><span>${esc((u.days[0] || {}).date || '')}</span><span>today</span></div>`;
+}
+
+function noData(list) {
+    if (!list.length) return '';
+    return `<div class="jv-nodata" role="group" aria-label="No data yet"><span class="jv-eyebrow">No data yet</span>${list.map((x) => `<button type="button" class="jv-chip" data-nodata="${esc(x.why)}" title="${esc(x.why)}">${esc(x.title)}</button>`).join('')}</div>`;
+}
+
 // --- the tool ------------------------------------------------------------------------------------------------
 
 export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, upload = () => Promise.reject(new Error("Uploads need the admin page.")) }) {
@@ -154,7 +176,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
         rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', egDrafts: {}, egAll: false, alerts: [], reports: [],
         external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, truncated: false,
-        panels: new Map(), voice: null, listening: false, timers: []
+        panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review'
     };
     readHash();
 
@@ -416,7 +438,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             reviewTotal: S.counts.reviewTotal === null ? undefined : S.counts.reviewTotal,
             prior: S.counts.priorOpens === null || S.counts.priorOpens === undefined ? null : { opens: S.counts.priorOpens, reviews: S.counts.priorReviews }
         }, w);
-        sum.hub = C.summarizeHub(S.hub, S.rows.events, w);
+        sum.hub = C.summarizeHub(S.hub, S.rows.events, w, S.rows.prior);
         S.summaries = sum;
         S.briefState = { products: sum, external: S.external, thresholds: (S.settings || {}).thresholds, goals: S.goals };
         const split = C.openBrief(C.briefing(S.briefState), S.marks);
@@ -493,8 +515,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         $$('.jv-panel[data-panel-id]').forEach((sec) => fold(sec.dataset.panelId, shut));
     }
 
+    // A panel whose whole body is one "nothing here" line joins the view's No data yet chips instead (#2139).
+    const EMPTY_BODY = /^\s*<p class="jv-empty">([^<]*)<\/p>\s*$/;
+    // DOMParser reads the text without running or loading anything in it.
+    const plainText = (html) => new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
     function panel(id, title, body, opts) {
         const o = opts || {};
+        const empty = !o.keep && EMPTY_BODY.exec(body);
+        if (empty) { S.empties.push({ title: plainText(title), why: plainText(empty[1]) }); return ''; }
         if (o.data) S.panels.set(id, { title, rows: o.data, product: S.product });
         const tools = o.data ? `<span class="jv-panel-tools"><button type="button" data-panel-export="csv" data-panel="${id}" title="CSV">CSV</button><button type="button" data-panel-export="json" data-panel="${id}" title="JSON">JSON</button><button type="button" data-panel-export="png" data-panel="${id}" title="PNG">PNG</button></span>` : '';
         return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}"><header>${foldHead(id, title)}${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
@@ -836,8 +864,12 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         ]);
         const social = socialVisits();
         const pp = okMoney ? mo.paypal || {} : {};
+        const W = S.wide;
+        const steps = W.funnel ? W.funnel.map((x) => ({ label: x.value === null ? x.label + ' (source down)' : x.label, value: x.value || 0 })) : null;
         return head + `<div class="jv-grid">${briefPanel('business')}
             ${callsPanel()}
+            ${panel('business-mix', 'Revenue by product', okMoney ? pie(W.revenue, { unit: 'USD', empty: 'No sales in this range.' }) : waiting('money', 'Reading payments…'), { data: W.revenue })}
+            ${panel('business-funnel', 'Outreach funnel', steps ? funnel(steps) : waiting('outreach', 'Reading the outreach pipeline…'), { data: W.funnel, note: steps ? 'Reviewed by the nightly sweep in range, emailed through Instantly, replied, and paid through a qalabreview.com link. Instantly counts every contact it emailed, so Notified can pass Reviewed.' : '' })}
             ${panel('business-revenue', 'Revenue per day (USD)', okMoney ? (mo.daily.length ? area(mo.daily.map((d) => d.date), [{ name: 'USD', values: mo.daily.map((d) => d.usd), color: COLORS.green }]) : '<p class="jv-empty">No sales in this range.</p>') + bars(mo.byProvider, { color: COLORS.green, empty: 'No sales by provider yet.' }) : waiting('money', 'Reading payments…'), { wide: true, data: okMoney ? mo.daily : null, note: okMoney ? `Test payments are left out. ${fmt(mo.revenue.paidRuns)} paid review runs used credits bought earlier.` : '' })}
             ${panel('business-paypal', 'PayPal and Stripe', okMoney ? `<ul class="jv-facts"><li>Open PayPal disputes: <b>${pp.disputesOpen === null || pp.disputesOpen === undefined ? '—' : fmt(pp.disputesOpen)}</b></li>${pp.transactions ? `<li>PayPal in range: ${fmt(pp.transactions.count)} payments, ${fmt(pp.transactions.grossUsd)} USD gross, ${fmt(pp.transactions.feesUsd)} USD fees, <b>${fmt(pp.transactions.netUsd)} USD net</b></li>` : ''}<li>Refunded in range: <b>${fmt(mo.refundsUsd)} USD</b></li><li>Stripe: ${esc(mo.stripe.mode === 'live' ? 'live' : mo.stripe.mode === 'test' ? 'test key only, checkout uses PayPal' : 'not set up')}</li></ul>${needList(mo)}` : waiting('money', 'Asking PayPal…'))}
             ${panel('business-email', 'Email delivery (SendGrid)', okMail ? kpis([
@@ -1042,6 +1074,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         return a.error ? `${esc(a.email)}<br><span class="jv-note">${esc(a.error)}</span> <a href="https://app.instantly.ai/app/accounts" target="_blank" rel="noopener">Reconnect →</a>` : esc(a.email);
     }
 
+    // A KPI with its change against the period before. The All range has no period before, as on the other tabs.
+    function vsBefore(label, value, prior, opts) {
+        const o = opts || {};
+        const k = C.kpi(label, value, (S.window || {}).prior && prior !== null && prior !== undefined ? prior : undefined, o.alert === undefined ? undefined : { alert: o.alert });
+        return o.shown ? Object.assign(k, { value: o.shown(value), prior: k.prior === undefined ? undefined : o.shown(k.prior) }) : k;
+    }
+
     function outreachView() {
         const ou = S.external.outreach;
         if (!ou || !ou.ok) return `<div class="jv-grid">${approvalsPanel()}${briefPanel('outreach')}${panel('outreach-wait', 'Outreach', waiting('outreach', 'Reading the outreach pipeline, Instantly and the plan…'))}</div>`;
@@ -1054,15 +1093,18 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const visits = C.outreachVisits(S.rows.events);
         const weekly = (plan && plan.weekly) || {};
         const warm = mail && mail.accounts.length ? Math.min(...mail.accounts.map((a) => (a.score === null ? 0 : a.score))) : null;
+        const was = mail && mail.prior ? mail.prior : null;
+        const linked = ou.links && ou.links.ok ? ou.links : null;
+        const paid = (l) => l.paid + ' · ' + l.usd + ' USD';
         const head = kpis([
             { label: 'Prospects queued', value: pipe ? pipe.queued : '—' },
-            { label: 'Reviewed in range', value: pipe ? pipe.reviews : '—' },
+            pipe ? vsBefore('Reviewed in range', pipe.reviews, pipe.priorReviews) : { label: 'Reviewed in range', value: '—' },
             { label: 'With a Live Report', value: pipe ? pipe.withLiveReport : '—' },
-            { label: 'Emails sent', value: mail ? mail.sent : '—' },
-            { label: 'Reply rate', value: mail && mail.contacted ? mail.rates.reply + '%' : '—', alert: mail && mail.contacted >= 50 && mail.rates.reply < (weekly.replyPct || 0) },
-            { label: 'Interested', value: mail ? mail.interested : '—' },
+            mail ? vsBefore('Emails sent', mail.sent, was && was.sent) : { label: 'Emails sent', value: '—' },
+            mail && mail.contacted ? vsBefore('Reply rate', mail.rates.reply, was && was.contacted ? was.rates.reply : null, { shown: (n) => n + '%', alert: mail.contacted >= 50 && mail.rates.reply < (weekly.replyPct || 0) }) : { label: 'Reply rate', value: '—' },
+            mail ? vsBefore('Interested', mail.interested, was && was.interested) : { label: 'Interested', value: '—' },
             { label: 'Lowest warm-up', value: warm === null ? '—' : warm, alert: warm !== null && warm < th.outreachWarmup },
-            { label: 'Paid from qalabreview.com', value: ou.links && ou.links.ok ? ou.links.paid + ' · ' + ou.links.usd + ' USD' : '—', alert: !!(ou.links && ou.links.ok && !ou.links.live) }
+            linked ? Object.assign(vsBefore('Paid from qalabreview.com', linked.paid, linked.prior && linked.prior.paid, { alert: !linked.live }), { value: paid(linked) }, linked.prior ? { prior: paid(linked.prior) } : {}) : { label: 'Paid from qalabreview.com', value: '—' }
         ]);
         const chip = (ok, text) => `<span class="jv-chip ${ok ? 'c-fast' : 'c-slow'}">${esc(text)}</span>`;
         const days = (n) => (n === 0 ? 'today' : n > 0 ? 'in ' + n + (n === 1 ? ' day' : ' days') : Math.abs(n) + ' days ago');
@@ -1090,7 +1132,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const links = ou.links && ou.links.ok ? ou.links : null;
         const copyBtn = (url) => `<button class="jv-btn" type="button" data-copy-link="${esc(url)}">Copy</button>`;
         const linksBody = links ? `<p>${chip(links.live, links.live ? 'Worker live' : 'Worker not live')} <a href="${esc(links.base)}" target="_blank" rel="noopener">${esc(links.base.replace(/^https:\/\//, ''))} →</a></p>`
-            + kpis([{ label: 'Visits', value: links.visits }, { label: 'Free reviews', value: links.reviews }, { label: 'Visit → review', value: links.reviewRate + '%' }, { label: 'Paid unlocks', value: links.paid }, { label: 'Review → paid', value: links.payRate + '%' }, { label: 'Revenue', value: links.usd + ' USD' }])
+            + kpis([['Visits', 'visits'], ['Free reviews', 'reviews'], ['Visit → review', 'reviewRate', (n) => n + '%'], ['Paid unlocks', 'paid'], ['Review → paid', 'payRate', (n) => n + '%'], ['Revenue', 'usd', (n) => n + ' USD']]
+                .map(([label, key, shown]) => vsBefore(label, links[key], links.prior ? links.prior[key] : null, { shown })))
             + bars(links.byCampaign, { color: COLORS.green, empty: 'No visits from qalabreview.com links in this range yet.' })
             + table([['Prospect', (p) => `<a href="${esc(links.base + '/' + p.host)}" target="_blank" rel="noopener">${esc(p.host)}</a>`], ['Visits', (p) => fmt(p.visits)], ['Reviews', (p) => fmt(p.reviews)], ['Paid', (p) => fmt(p.paid)], ['USD', (p) => fmt(p.usd)], ['Last visit', (p) => esc(p.last ? p.last.slice(0, 10) : '—')]], links.prospects, 'No prospect has opened a link yet.')
             + `<div class="jv-inline"><input id="jv-ql-host" type="text" placeholder="prospect.edu" aria-label="Prospect domain"><select id="jv-ql-lang" aria-label="Language">${['en', 'es', 'pt', 'de', 'fr', 'it'].map((l) => `<option>${l}</option>`).join('')}</select><button class="jv-btn" type="button" data-ql-build>Make and copy link</button> <a id="jv-ql-out" target="_blank" rel="noopener"></a></div>`
@@ -1185,9 +1228,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const head = countdown(counts) + kpis([
             { label: 'Marketing visits', value: socialTotal + outVisits.total },
             { label: 'Social posts', value: so ? so.sent : '—', alert: so && so.failed > 0 },
-            { label: 'Hub + post views', value: (hub.totals.hubViews || 0) + (hub.totals.postViews || 0) },
+            (hub.kpis || [])[0] || { label: 'Hub + post views', value: '—' },
             { label: 'YouTube views', value: so && so.youtube && so.youtube.views !== null && so.youtube.views !== undefined ? so.youtube.views : '—' },
-            { label: 'Prospects reviewed', value: pipe ? pipe.reviews : '—' },
+            pipe ? vsBefore('Prospects reviewed', pipe.reviews, pipe.priorReviews) : { label: 'Prospects reviewed', value: '—' },
             { label: 'Cold emails sent', value: mail ? mail.sent : '—' },
             { label: 'Replies', value: mail ? mail.replies : '—' },
             { label: 'Meetings', value: mail ? mail.meetings : '—' },
@@ -1268,7 +1311,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
           </div>`;
 
         const sy = e['marketing-sync'] && e['marketing-sync'].ok ? e['marketing-sync'] : null;
-        const syWait = wait('marketing-sync', 'Reading the Mac sync…');
+        const syWait = wait('marketing-sync', 'Reading the outreach sync…');
         const cmds = sy ? sy.commands.items : [];
         const pendingFor = (action, key) => cmds.some((c) => c.status === 'pending' && c.action === action && c.label.includes(key));
         const cmdBtn = (label, data, opts) => `<button type="button" class="jv-btn small${(opts && opts.cls) || ''}" data-mk-cmd="${esc(data.action)}" ${Object.entries(data).filter(([k]) => k !== 'action').map(([k, v]) => `data-${k}="${esc(v)}"`).join(' ')}${opts && opts.disabled ? ' disabled' : ''}>${esc(label)}</button>`;
@@ -1288,13 +1331,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             return `<div class="jv-actions">${out.join('')}</div>`;
         };
         const leadAct = (r) => r.uploaded ? `<span class="jv-chip c-fast">uploaded ${esc(r.uploaded)}</span>`
-            : cmds.some((c) => c.status === 'pending' && c.label.includes(r.email)) ? '<span class="jv-chip c-average">waiting for the Mac</span>'
+            : cmds.some((c) => c.status === 'pending' && c.label.includes(r.email)) ? '<span class="jv-chip c-average">waiting for the sync</span>'
             : r.dropped ? '<span class="jv-chip">dropped</span> ' + cmdBtn('Bring back', { action: 'lead-drop', week: r.week, email: r.email, on: 'no' })
             : r.approved ? cmdBtn('Unapprove', { action: 'approve', week: r.week, email: r.email, on: 'no' })
             : r.ask ? `<span class="jv-chip c-slow">needs you</span> <span class="jv-note">${esc(r.ask)}</span>${leadFix(r)}`
             : r.missing ? `<span class="jv-chip c-average" title="${esc(r.missing)}">Jarvis</span> <span class="jv-note">${esc(r.wait || 'Jarvis is on it.')}</span>${leadFix(r)}`
             : cmdBtn('Approve', { action: 'approve', week: r.week, email: r.email, on: 'yes' });
-        const leadsBody = !sy ? syWait : !lw.length ? '<p class="jv-empty">No leads files on the Mac yet; the Monday leads job writes them.</p>'
+        const leadsBody = !sy ? syWait : !lw.length ? '<p class="jv-empty">No leads files yet; the weekday leads job writes them.</p>'
             : `<div class="jv-chips">${lw.map((w) => `<button type="button" class="jv-btn small" aria-pressed="${week && w.week === week.week}" data-mk-week="${esc(w.week)}">${esc(w.week)} · ${w.uploaded}/${w.total}</button>`).join(' ')}</div>`
             + stats([{ label: 'Leads', value: week.total }, { label: 'Complete', value: week.complete }, { label: 'Missing something', value: week.missing }, { label: 'Needs you', value: week.ask || 0, alert: week.ask > 0 }, { label: 'Approved', value: week.approved }, { label: 'Uploaded', value: week.uploaded }, { label: 'Ready to upload', value: week.ready }])
             + `<div class="jv-actions">${cmdBtn(`Approve every complete lead in ${week.week}`, { action: 'approve-week', week: week.week }, { disabled: week.complete <= week.approved + week.uploaded })}${cmdBtn(`Upload ${week.ready} approved to Instantly`, { action: 'upload', week: week.week }, { cls: ' is-primary', disabled: !week.ready || pendingFor('upload', week.week) })}</div>`
@@ -1319,16 +1362,16 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                 ['Since', sentWhat], ['', sentAct]], sent.rows, `No cold email has gone out yet${camps && camps.firstStart ? '; the first goes out ' + esc(camps.firstStart) : ''}.`);
         const li = sy ? sy.linkedin : null;
         const liSent = li ? li.items.filter((p) => p.sent).length : 0;
-        const linkedinBody = !sy ? syWait : !li.items.length ? '<p class="jv-empty">No LinkedIn list yet; the Mac writes one each working day from 07:00, with up to 15 prospects never listed before.</p>'
+        const linkedinBody = !sy ? syWait : !li.items.length ? '<p class="jv-empty">No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before.</p>'
             : `<div class="jv-rings">${ring(pct(liSent, li.items.length), liSent + ' of ' + li.items.length + ' sent', COLORS.cyan, 92)}</div><ul class="jv-facts">${li.items.map((p) => `<li><span class="jv-chip ${p.sent ? 'c-fast' : ''}">${p.sent ? 'sent' : 'to send'}</span> <strong>${esc(p.name)}</strong>, ${esc(p.title)} <span class="jv-note">(${esc(p.org)}, ${esc(p.cc)})</span>
-                ${p.profile ? `<a class="jv-btn small" href="${esc(p.profile)}" target="_blank" rel="noopener">Profile</a>` : ''}${pendingFor('linkedin', p.name) ? '<span class="jv-chip c-average">waiting for the Mac</span>' : cmdBtn(p.sent ? 'Not sent' : 'Mark sent', { action: 'linkedin', date: li.date, name: p.name, sent: p.sent ? 'no' : 'yes' })}</li>`).join('')}</ul>`;
+                ${p.profile ? `<a class="jv-btn small" href="${esc(p.profile)}" target="_blank" rel="noopener">Profile</a>` : ''}${pendingFor('linkedin', p.name) ? '<span class="jv-chip c-average">waiting for the sync</span>' : cmdBtn(p.sent ? 'Not sent' : 'Mark sent', { action: 'linkedin', date: li.date, name: p.name, sent: p.sent ? 'no' : 'yes' })}</li>`).join('')}</ul>`;
         const dncBody = !sy ? syWait : stats([{ label: 'Never contact', value: sy.dnc.length }]) + (sy.dnc.length ? table([['Address or domain', (d) => esc(d.value)], ['Added', (d) => esc(d.at)], ['Why', (d) => `<span class="jv-note">${esc(d.reason)}</span>`]], sy.dnc.slice(-12).reverse()) : '<p class="jv-empty">Nobody has asked to stop yet.</p>')
             + `<form class="jv-inline" data-mk-dnc><input name="addr" data-mk-field="dnc" data-keep="mk-dnc" value="${esc(f.dnc || '')}" placeholder="email or domain" aria-label="Address or domain to never contact"><input name="reason" data-mk-field="dncWhy" data-keep="mk-dnc-why" value="${esc(f.dncWhy || '')}" placeholder="why (optional)" aria-label="Why"><button type="submit" class="jv-btn danger">Add and block</button></form>`;
         const jobsBody = !sy ? syWait : table([['Job', (j) => `<strong>${esc(j.mode)}</strong>`], ['Last run', (j) => (j.at ? esc(when(j.at)) : 'never')], ['Result', (j) => (j.failed ? '<span class="jv-chip c-slow">failed</span> ' : '') + `<span class="jv-note">${esc(j.notify || '')}</span>` + (j.tail.length ? `<details><summary>log</summary><pre class="jv-pre">${esc(j.tail.join('\n'))}</pre></details>` : '')],
-            ['', (j) => (pendingFor('run', j.mode) ? '<span class="jv-chip c-average">waiting for the Mac</span>' : cmdBtn('Run now', { action: 'run', job: j.mode }, { disabled: sy.running }))]], sy.jobs)
+            ['', (j) => (pendingFor('run', j.mode) ? '<span class="jv-chip c-average">waiting for the sync</span>' : cmdBtn('Run now', { action: 'run', job: j.mode }, { disabled: sy.running }))]], sy.jobs)
             + (sy.paused.length ? `<p class="jv-note">Paused for public holidays: ${sy.paused.map((p) => esc(p.name)).join(', ')}.</p>` : '');
-        const syncBody = !sy ? syWait : `${stats([{ label: 'Last sync', value: sy.at ? when(sy.at) : 'never', alert: sy.stale }, { label: 'Waiting for the Mac', value: sy.commands.pending, alert: sy.stale && sy.commands.pending > 0 }, { label: 'Agent run', value: sy.running ? 'running' : 'idle' }])}`
-            + (cmds.length ? table([['Command', (c) => esc(c.label)], ['Asked', (c) => esc(when(c.createdAt))], ['Status', (c) => `<span class="jv-chip ${c.status === 'done' ? 'c-fast' : c.status === 'failed' ? 'c-slow' : 'c-average'}">${esc(c.status)}</span>`], ['Result', (c) => `<span class="jv-note">${esc(c.result)}</span>`]], cmds.slice(0, 10)) : '<p class="jv-empty">No commands sent to the Mac yet.</p>');
+        const syncBody = !sy ? syWait : `${stats([{ label: 'Last sync', value: sy.at ? when(sy.at) : 'never', alert: sy.stale }, { label: 'Waiting for the sync', value: sy.commands.pending, alert: sy.stale && sy.commands.pending > 0 }, { label: 'Job', value: sy.running ? 'running' : 'idle' }])}`
+            + (cmds.length ? table([['Command', (c) => esc(c.label)], ['Asked', (c) => esc(when(c.createdAt))], ['Status', (c) => `<span class="jv-chip ${c.status === 'done' ? 'c-fast' : c.status === 'failed' ? 'c-slow' : 'c-average'}">${esc(c.status)}</span>`], ['Result', (c) => `<span class="jv-note">${esc(c.result)}</span>`]], cmds.slice(0, 10)) : '<p class="jv-empty">No commands sent yet.</p>');
         const kpiRows = sy ? sy.kpis : [];
         const kpiCols = ['new_prospects', 'emails_sent', 'linkedin_requests', 'positive_replies', 'calls', 'paid_reviews', 'revenue_usd'];
         const kpiBody = !sy ? syWait : kpiRows.length ? table([['Week', (r) => esc(r.week_start)]].concat(kpiCols.map((k) => [k.replace(/_/g, ' '), (r) => esc(r[k] || '—')])).concat([['Notes', (r) => `<span class="jv-note">${esc(r.notes || '')}</span>`]]), kpiRows.slice().reverse()) : '<p class="jv-empty">The weekly KPI tracker is empty.</p>';
@@ -1339,11 +1382,11 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             { label: 'Replies to answer', value: sy ? repliesTodo.length : '—', alert: repliesTodo.length > 0 },
             { label: 'LinkedIn sent today', value: li ? liSent + ' / ' + li.items.length : '—' },
             { label: 'Do not contact', value: sy ? sy.dnc.length : '—' },
-            { label: 'Mac synced', value: sy && sy.at ? when(sy.at) : '—', alert: !!(sy && sy.stale) }
+            { label: 'Outreach synced', value: sy && sy.at ? when(sy.at) : '—', alert: !!(sy && sy.stale) }
         ]) + `<div class="jv-grid">
-            ${panel('marketing-sync', 'Mac sync', syncBody, { data: cmds, note: 'The Mac uploads the outreach folder every 5 minutes and then runs what you asked here. Replies and blocks go to Instantly at once.' })}
-            ${panel('marketing-jobs', 'Outreach jobs on the Mac', jobsBody, { data: sy && sy.jobs })}
-            ${panel('marketing-leads', `Leads to approve${week ? ' · ' + esc(week.week) : ''}`, leadsBody, { wide: true, data: weekRows, note: 'Every hour Jarvis translates top findings, re-runs the review of a site with no Live Report (twice at most) and approves complete leads. Rows marked "needs you" are the ones it cannot settle: use their buttons. Upload stays with you: the Mac sends the approved rows to their Instantly campaigns.' })}
+            ${panel('marketing-sync', 'Outreach sync', syncBody, { data: cmds, note: 'The qa-lab-outreach Action runs what you ask here within a few minutes, and uploads the outreach folder after each job and every 3 hours. Replies and blocks go to Instantly at once.' })}
+            ${panel('marketing-jobs', 'Outreach jobs', jobsBody, { data: sy && sy.jobs })}
+            ${panel('marketing-leads', `Leads to approve${week ? ' · ' + esc(week.week) : ''}`, leadsBody, { wide: true, data: weekRows, note: 'With each outreach sync (at most once an hour) Jarvis translates top findings, re-runs the review of a site with no Live Report (twice at most) and approves complete leads. Rows marked "needs you" are the ones it cannot settle: use their buttons. Upload stays with you: the Mac sends the approved rows to their Instantly campaigns.' })}
             ${panel('marketing-replies', `Replies${repliesTodo.length ? ' · ' + repliesTodo.length + ' to answer' : ''}`, repliesBody, { wide: true, data: sy && sy.replies.map((r) => ({ at: r.at, from: r.from, campaign: r.campaign, category: r.category, sent: r.sent })) })}
             ${panel('marketing-sent', `Cold emails sent${sent ? ' · ' + fmt(sent.total) : ''}`, sentBody, { wide: true, data: sent && sent.rows.map((r) => ({ at: r.at, to: r.to, name: r.name, org: r.org, campaign: r.campaign, step: r.step, kind: r.kind, from: r.from, subject: r.subject, opened: r.opened, replied: r.replied, bounced: r.bounced, unsubscribed: r.unsubscribed, resent: r.resent.map((x) => x.to + ' ' + x.at).join('; ') })), note: 'Send again forwards the same email, with its original text, from the mailbox that sent it: to the same address when it may have got lost, or to another contact at the organisation. Nobody on Do not contact can be picked.' })}
             ${panel('marketing-linkedin', `LinkedIn${li && li.date ? ' · ' + esc(li.date) : ''}`, linkedinBody, { data: li && li.items.map((p) => ({ name: p.name, org: p.org, cc: p.cc, sent: p.sent })) })}
@@ -1549,7 +1592,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         upload: (d) => `upload ${d.week}'s approved leads to their Instantly campaigns (they start getting emails on the campaign's start date once it is active)`,
         linkedin: (d) => `mark the LinkedIn request to ${d.name} as ${d.sent === 'no' ? 'not sent' : 'sent'}`,
         dnc: (d) => `never contact ${d.value} again and block it in Instantly`,
-        run: (d) => `run the ${d.job} job on the Mac now (an agent run can take an hour)`,
+        run: (d) => `run the ${d.job} job now (it can take half an hour)`,
         'lead-set': (d) => `set ${d.field} for ${d.email} to "${d.value}"`,
         'lead-drop': (d) => (d.on === 'no' ? `bring ${d.email} back to the leads` : `drop ${d.email}: it is never approved or uploaded`),
         'allow-personal': (d) => `allow the personal address ${d.email} for outreach`
@@ -1558,7 +1601,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     async function mkCommand(body, ask) {
         if (!confirmRun(ask)) return null;
         const out = await call('marketing-command', body).catch((error) => ({ ok: false, error: error.message }));
-        toast(out.ok ? (out.sent ? `Sent to ${out.sent.to}.` : `${out.label}: the Mac does it on its next sync (within 5 minutes)${out.blocked ? '; blocked in Instantly now' : ''}.`) : 'Not done: ' + out.error, 7000);
+        toast(out.ok ? (out.sent ? `Sent to ${out.sent.to}.` : `${out.label}: ${out.syncing ? 'the outreach Action does it in a few minutes' : 'the outreach Action does it on its next sync, within 3 hours'}${out.blocked ? '; blocked in Instantly now' : ''}.`) : 'Not done: ' + out.error, 7000);
         loadExternal(['marketing-sync']);
         return out;
     }
@@ -1598,6 +1641,106 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (out && out.ok) delete S.mkDrafts[id]; else t.disabled = false;
     }
 
+    // #2139: the command deck. The hologram only shows on wide screens (CSS); holoSync() runs it while it is in view.
+    function commandDeck(W) {
+        const d = (key) => (W.deck.find((k) => k.key === key) || {}).value;
+        return `<div class="jv-command"><div class="jv-holo" aria-hidden="true"><canvas data-holo></canvas><div class="jv-holo-read"><b>${fmt(d('readiness'))}</b><small>ready</small><b>${fmt(d('visits'))}</b><small>visits</small></div></div>${kpis(W.deck)}</div>`;
+    }
+
+    function trendPanel(W) {
+        const t = W.trend;
+        return panel('overview-trend', 'Every product per day', area(t.labels, t.series.map((x, k) => ({ name: x.name, values: x.values, color: SLICES[k % SLICES.length] })), { fill: false }),
+            { wide: true, data: t.labels.map((day, k) => Object.assign({ day }, ...t.series.map((x) => ({ [x.key]: x.values[k] })))), note: 'Visits for the sites, opens for URL Review, messages for the inbox, events for the hub.' });
+    }
+
+    // Products as list-detail on wide screens; narrow screens keep the tiles (CSS swaps them).
+    function productsPanel(W) {
+        const list = W.products;
+        if (!list.length) return '';
+        const pick = list.find((p) => p.key === S.pick) || list[0];
+        const alertsOf = (key) => S.brief.filter((b) => inTab(b, key) && (b.level === 'alert' || b.level === 'warn')).length;
+        const row = (p) => { const k = p.kpis[0]; const n = alertsOf(p.key); return `<button type="button" class="jv-ld-row" data-pick="${p.key}" aria-pressed="${p.key === pick.key}"><span class="jv-ld-name">${esc(p.name)}${n ? ` <b class="jv-badge">${n}</b>` : ''}</span><strong>${k ? fmt(k.value) : '—'}</strong><small>${k ? esc(k.label) : 'no data yet'}</small>${spark(p.series.values, n ? COLORS.amber : COLORS.cyan)}</button>`; };
+        const lead = pick.kpis[0];
+        const detail = `<div class="jv-ld-detail"><div class="jv-ld-head"><h3>${esc(pick.name)}</h3><button type="button" class="jv-btn small" data-go="${pick.key}">Open ${esc(pick.name)} →</button></div>
+            ${pick.kpis.length ? kpis(pick.kpis) : '<p class="jv-note">No numbers for this product yet.</p>'}
+            ${pick.series.labels.length ? area(pick.series.labels, [{ name: lead ? lead.label : 'Per day', values: pick.series.values, color: COLORS.cyan }]) : '<p class="jv-note">No daily series for this product in range.</p>'}</div>`;
+        return panel('overview-products', 'Products', `<div class="jv-ld-body"><nav class="jv-ld-list" aria-label="Products">${list.map(row).join('')}</nav>${detail}</div>`, { wide: true, keep: true });
+    }
+
+    const holo = { node: null, raf: 0, seen: true, io: null };
+    const stillMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+    // A wireframe globe with a reactor core, turning on its axis; t is milliseconds, so frames line up across re-renders.
+    function holoDraw(c, t) {
+        const g = c.getContext && c.getContext('2d');
+        if (!g) return;
+        const w = c.width, h = c.height, cx = w / 2, cy = h / 2, r = Math.min(w, h) * 0.34;
+        const ay = t * 0.00032, tilt = 0.38, ca = Math.cos(ay), sa = Math.sin(ay), ct = Math.cos(tilt), st = Math.sin(tilt);
+        const P = (lat, lon) => {
+            const x0 = Math.cos(lat) * Math.cos(lon), y0 = Math.sin(lat), z0 = Math.cos(lat) * Math.sin(lon);
+            const x1 = x0 * ca + z0 * sa, z1 = -x0 * sa + z0 * ca;
+            const y2 = y0 * ct - z1 * st, z2 = y0 * st + z1 * ct;
+            const s = 1 / (1.6 - z2 * 0.35);
+            return [cx + x1 * r * s * 1.6, cy - y2 * r * s * 1.6, z2];
+        };
+        g.clearRect(0, 0, w, h);
+        const glow = g.createRadialGradient(cx, cy, 0, cx, cy, r * 1.25);
+        glow.addColorStop(0, 'rgba(56,225,255,0.22)'); glow.addColorStop(0.55, 'rgba(56,225,255,0.06)'); glow.addColorStop(1, 'rgba(56,225,255,0)');
+        g.fillStyle = glow; g.fillRect(0, 0, w, h);
+        g.lineWidth = Math.max(1, w / 260);
+        const seg = (a, b) => { const z = (a[2] + b[2]) / 2; g.strokeStyle = `rgba(56,225,255,${(0.18 + 0.62 * (z + 1) / 2).toFixed(3)})`; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); };
+        const N = 40;
+        for (let k = -2; k <= 2; k += 1) { const lat = (k * Math.PI) / 6; for (let i = 0; i < N; i += 1) seg(P(lat, (i / N) * 2 * Math.PI), P(lat, ((i + 1) / N) * 2 * Math.PI)); }
+        for (let m = 0; m < 8; m += 1) { const lon = (m * Math.PI) / 4; for (let i = 0; i < N / 2; i += 1) seg(P(-Math.PI / 2 + (i / (N / 2)) * Math.PI, lon), P(-Math.PI / 2 + ((i + 1) / (N / 2)) * Math.PI, lon)); }
+        g.strokeStyle = 'rgba(169,139,255,0.55)';
+        g.beginPath(); g.ellipse(cx, cy, r * 1.32, r * 0.36, -0.32, 0, Math.PI * 2); g.stroke();
+        const spin = t * 0.0011;
+        g.lineWidth = Math.max(2, w / 110); g.lineCap = 'round';
+        [[0.34, 'rgba(56,225,255,0.85)', 1], [0.24, 'rgba(255,181,71,0.75)', -1.6]].forEach(([k, color, dir]) => {
+            g.strokeStyle = color;
+            for (let i = 0; i < 3; i += 1) { g.beginPath(); g.arc(cx, cy, r * k, spin * dir + (i * 2 * Math.PI) / 3, spin * dir + (i * 2 * Math.PI) / 3 + 1.4); g.stroke(); }
+        });
+        const core = g.createRadialGradient(cx, cy, 0, cx, cy, r * 0.16);
+        core.addColorStop(0, 'rgba(255,255,255,0.95)'); core.addColorStop(0.4, 'rgba(56,225,255,0.8)'); core.addColorStop(1, 'rgba(56,225,255,0)');
+        g.fillStyle = core; g.beginPath(); g.arc(cx, cy, r * 0.16, 0, Math.PI * 2); g.fill();
+    }
+
+    function holoLoop(t) {
+        holo.raf = 0;
+        if (!holo.node || !holo.node.isConnected) return;
+        holoDraw(holo.node, t);
+        holoRun();
+    }
+
+    // Draws only while the canvas is shown, on screen and the tab is visible; one still frame under reduced motion.
+    function holoRun() {
+        const n = holo.node;
+        const shown = !!(n && n.isConnected && n.offsetParent !== null);
+        if (!shown || !holo.seen || document.hidden || stillMotion()) {
+            if (holo.raf) cancelAnimationFrame(holo.raf);
+            holo.raf = 0;
+            if (shown && stillMotion()) holoDraw(n, 0);
+            return;
+        }
+        const px = Math.round(n.clientWidth * Math.min(2, window.devicePixelRatio || 1));
+        if (px && n.width !== px) { n.width = n.height = px; holoDraw(n, performance.now()); }
+        if (!holo.raf) holo.raf = requestAnimationFrame(holoLoop);
+    }
+
+    function holoSync() {
+        const n = root.querySelector('canvas[data-holo]');
+        if (n === holo.node) { holoRun(); return; }
+        if (holo.io) holo.io.disconnect();
+        holo.node = n;
+        holo.seen = true;
+        if (!n) { holoRun(); return; }
+        n.width = n.height = Math.round((n.clientWidth || 200) * Math.min(2, window.devicePixelRatio || 1));
+        holoDraw(n, performance.now());
+        if ('IntersectionObserver' in window) { holo.io = new IntersectionObserver((seen) => { holo.seen = seen.some((x) => x.isIntersecting); holoRun(); }); holo.io.observe(n); }
+        holoRun();
+    }
+    document.addEventListener('visibilitychange', holoRun);
+
     function views() {
         const s = S.summaries;
         const e = S.external;
@@ -1610,7 +1753,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             if (visits) { main = visits; series = visits.series.values; }
             else if (p.key === 'traffic' && e.ga4 && e.ga4.ok) { const n = e.ga4.groups.reduce((a, g) => a + g.sessions, 0); const b = e.ga4.groups.reduce((a, g) => a + g.priorSessions, 0); const d = C.delta(n, b); main = { label: 'GA4 sessions', value: n, delta: d.text, dir: d.dir }; series = e.ga4.daily.map((x) => x.sessions); }
             if (p.key === 'systems') { const r = C.readiness(e); main = { label: 'Readiness', value: r === null ? '—' : r + '%' }; }
-            if (p.key === 'outreach' && e.outreach && e.outreach.pipeline && e.outreach.pipeline.ok) { main = { label: 'Prospects reviewed', value: e.outreach.pipeline.reviews }; series = e.outreach.pipeline.daily.map((x) => x.reviews); }
+            if (p.key === 'outreach' && e.outreach && e.outreach.pipeline && e.outreach.pipeline.ok) { main = vsBefore('Prospects reviewed', e.outreach.pipeline.reviews, e.outreach.pipeline.priorReviews); series = e.outreach.pipeline.daily.map((x) => x.reviews); }
             if (p.key === 'marketing') { main = { label: 'Marketing visits', value: socialVisits().reduce((n, r) => n + r.value, 0) + C.outreachVisits(S.rows.events).total }; series = e.social && e.social.ok ? e.social.daily.map((x) => x.posts) : []; }
             if (p.key === 'business' && e.money && e.money.ok) { const d = C.delta(e.money.revenue.usd, e.money.prior.usd); main = { label: 'Revenue (USD)', value: e.money.revenue.usd, delta: d.text, dir: d.dir }; series = e.money.daily.map((x) => x.usd); }
             const alerts = S.brief.filter((b) => inTab(b, p.key) && (b.level === 'alert' || b.level === 'warn')).length;
@@ -1621,19 +1764,25 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             S.rows.opens.slice(0, 20).map((r) => ({ at: r.createdAt, text: `URL Review: open from ${C.openSource(r)}` })),
             S.rows.reviews.slice(0, 20).map((r) => ({ at: r.createdAt, text: `URL Review: ${r.paid ? 'paid ' : ''}review of ${esc(String(r.requestedUrl || r.url || '').replace(/^https?:\/\//, '').slice(0, 50))} (${r.status || '…'})` }))
         ).filter((x) => C.toDate(x.at)).sort((a, b) => C.toDate(b.at) - C.toDate(a.at)).slice(0, 18);
-        out.overview = `<div class="jv-tiles">${tiles}</div><div class="jv-grid">${briefPanel('overview')}${proposalsPanel()}${goalsPanel('overview')}
+        const W = C.wide({ products: s, external: e, briefing: S.brief });
+        S.wide = W;
+        const take = () => { const list = S.empties; S.empties = []; return noData(list); };
+        S.empties = [];
+        out.overview = commandDeck(W) + `<div class="jv-tiles">${tiles}</div><div class="jv-grid">${productsPanel(W)}${trendPanel(W)}${briefPanel('overview')}${proposalsPanel()}${goalsPanel('overview')}
             ${panel('overview-feed', 'Live feed', feed.length ? `<ul class="jv-feed">${feed.map((f) => `<li><time>${when(f.at)}</time><span>${esc(f.text)}</span></li>`).join('')}</ul>` : '<p class="jv-empty">No events yet.</p>', { tall: true, data: feed.map((f) => ({ at: (C.toDate(f.at) || new Date()).toISOString(), event: f.text })) })}
             ${panel('overview-rings', 'Systems at a glance', `<div class="jv-rings">${ring(C.readiness(e), 'ready')}${(e.speed && e.speed.pages ? e.speed.pages : []).map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 84)).join('')}</div>`)}
             ${panel('overview-mix', 'Visits by product', bars(['cv', 'studio', 'lab'].map((k) => ({ label: (C.PRODUCTS.find((p) => p.key === k) || {}).name, value: s[k].totals.visits })).concat([{ label: 'URL Review (opens)', value: s.review.totals.opens }]), { color: COLORS.violet }), { data: ['cv', 'studio', 'lab'].map((k) => ({ product: k, visits: s[k].totals.visits, clicks: s[k].totals.clicks, exports: s[k].totals.exports, runs: s[k].totals.runs })) })}
         </div>${S.truncated ? `<p class="jv-note">This range holds more than ${fmt(EVENT_CAP)} site events; breakdowns cover the newest ${fmt(EVENT_CAP)}.</p>` : ''}`;
+        out.overview += take();
 
         const i = s.inbox;
         out.inbox = kpis(i.kpis) + `<div class="jv-grid">${briefPanel('inbox')}${goalsPanel('inbox')}
             ${panel('inbox-trend', 'Messages and ratings per day', area(i.series.labels, [{ name: 'Messages', values: i.series.values, color: COLORS.cyan }, { name: 'Ratings', values: i.ratingSeries.values, color: COLORS.amber }]), { wide: true, data: i.series.labels.map((d, k) => ({ day: d, messages: i.series.values[k], ratings: i.ratingSeries.values[k] })) })}
             ${listPanel('inbox', 'topics', 'Message topics', i.lists.topics)}${listPanel('inbox', 'stars', 'Rating mix', i.lists.stars, { color: COLORS.amber })}${listPanel('inbox', 'status', 'Rating status', i.lists.status, { color: COLORS.green })}
         </div><p class="jv-note">The Real / Tests / All switch applies to the inbox. Open the Messages and CV Ratings tabs to answer.</p>`;
+        out.inbox += take();
 
-        ['cv', 'studio', 'lab'].forEach((key) => { out[key] = siteView(key); });
+        ['cv', 'studio', 'lab'].forEach((key) => { out[key] = siteView(key) + take(); });
 
         const r = s.review;
         const h = e.health;
@@ -1657,26 +1806,35 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                 <button type="button" class="jv-btn" data-report="review:daily">Send the daily report</button><button type="button" class="jv-btn" data-report="review:weekly">Send the weekly report</button></div>
                 <form class="jv-inline" data-unlist><input name="host" data-keep="unlist" placeholder="host to unlist, e.g. example.com" aria-label="Host to unlist"><button type="submit" class="jv-btn danger">Unlist</button></form>`)}
         </div>${r.truncated ? `<p class="jv-note">Breakdowns cover the newest ${fmt(ROW_CAP)} opens and reviews; the totals are exact server counts.</p>` : ''}`;
+        out.review += take();
 
         const hub = s.hub;
         out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${sharePanel()}${socialQueuePanel()}${socialRunsPanel()}${socialProposalsPanel()}
-            ${panel('hub-trend', 'Hub and post events per day', area(hub.series.labels, [{ name: 'Events', values: hub.series.values, color: COLORS.violet }]), { wide: true, data: hub.series.labels.map((d, k) => ({ day: d, events: hub.series.values[k] })) })}
+            ${panel('hub-trend', 'Hub and post views per day', area(hub.series.labels, [{ name: 'Views', values: hub.series.values, color: COLORS.violet }]), { wide: true, data: hub.series.labels.map((d, k) => ({ day: d, views: hub.series.values[k] })) })}
             ${listPanel('hub', 'posts', 'Top posts (score)', hub.lists.posts)}${listPanel('hub', 'sources', 'GA4 sources', hub.lists.sources, { color: COLORS.amber })}
             ${listPanel('hub', 'networks', 'Shares by network', hub.lists.networks, { color: COLORS.green })}${listPanel('hub', 'events', 'Events in range', hub.lists.events, { color: COLORS.violet })}${listPanel('hub', 'langs', 'Hub pages by language', hub.lists.langs)}
             ${speedCard('hub')}
             ${panel('hub-actions', 'Actions', `<p class="jv-note">Stats updated ${hub.updatedAt ? esc(when(hub.updatedAt)) : 'never'}${hub.ga && hub.ga.ok === false ? ' · GA4: ' + esc(hub.ga.error || 'failed') : ''}.</p><div class="jv-actions"><button type="button" class="jv-btn" data-run="refreshSocialHubStats">Refresh hub stats now</button><button type="button" class="jv-btn" data-run="dispatchFacebookQueue">Dispatch the Facebook queue</button><a class="jv-btn" href="qa-review-social.html" target="_blank" rel="noopener">Open the hub</a></div>`)}
         </div>`;
+        out.hub += take();
 
-        out.business = businessView();
-        out.outreach = outreachView();
-        out.marketing = marketingView();
-        out.engagement = engagementView();
+        out.business = businessView() + take();
+        out.outreach = outreachView() + take();
+        out.marketing = marketingView() + take();
+        out.engagement = engagementView() + take();
 
         const ga = e.ga4;
         const cf = e.cloudflare;
         const gaBody = ga && ga.ok ? table([['Content group', (g) => esc(g.group)], ['Sessions', (g) => `${fmt(g.sessions)} <em class="${C.delta(g.sessions, g.priorSessions).dir > 0 ? 'up' : 'down'}">${esc(C.delta(g.sessions, g.priorSessions).text)}</em>`], ['Users', (g) => fmt(g.users)], ['Views', (g) => fmt(g.views)], ['Engaged', (g) => g.engagement + '%'], ['Avg session', (g) => g.duration + 's']], ga.groups) : `<p class="jv-empty">${S.pending.ga4 ? 'Reading GA4…' : esc((ga && ga.error) || 'Not loaded.')}</p>`;
         const sv = C.siteVisits(s);
+        const mix = W.traffic;
+        const cmp = mix.compare;
+        const cmpBody = area(cmp.labels, cmp.series.map((x, k) => ({ name: x.name, values: x.values, color: [COLORS.green, COLORS.cyan, COLORS.violet][['site', 'ga4', 'cloudflare'].indexOf(x.key)] || SLICES[k] })), { fill: false })
+            + `<ul class="jv-facts">${cmp.totals.map((t) => `<li>${esc(t.label)}: <b>${t.value === null ? '—' : fmt(t.value)}</b>${t.why ? ` <span class="jv-note">${esc(t.why)}</span>` : ''}</li>`).join('')}</ul>`;
         out.traffic = `<div class="jv-grid">${briefPanel('traffic')}
+            ${panel('traffic-compare', 'Site counter, GA4 and Cloudflare per day', cmpBody, { wide: true, keep: true, data: cmp.labels.map((d, k) => Object.assign({ day: d }, ...cmp.series.map((x) => ({ [x.key]: x.values[k] })))), note: 'The site counts every visit; GA4 only visitors who allow analytics; Cloudflare counts page views at the edge, bots it lets through included.' })}
+            ${panel('traffic-when', 'When visitors come, every site', mix.total ? heat(mix.heatmap, mix.peak) : '<p class="jv-empty">No visits in this range.</p>', { wide: true })}
+            ${panel('traffic-mix', 'Where visits come from', pie(mix.sources, { unit: 'visits', empty: 'No visits in this range.' }), { data: mix.sources })}
             ${sv ? panel('traffic-site', 'Site visits, with or without analytics consent', kpis([sv].concat(sv.parts)) + area(sv.series.labels, [{ name: 'Visits', values: sv.series.values, color: COLORS.green }]), { wide: true, data: sv.series.labels.map((d, i) => ({ day: d, visits: sv.series.values[i] })), note: 'Counted by the site itself: CV, Studio and Lab visits and URL Review opens. Test browsers are left out.' }) : ''}
             ${panel('traffic-groups', 'GA4 by content group', gaBody, { wide: true, data: ga && ga.groups, note: 'Property 495572902. Since 19 Oct 2026 GA4 only counts visitors who allow analytics, so it reads far below Site visits; compare GA4 with itself, not with the weeks before.' })}
             ${ga && ga.ok ? panel('traffic-daily', 'GA4 sessions and users per day', area(ga.daily.map((d) => d.date), [{ name: 'Sessions', values: ga.daily.map((d) => d.sessions), color: COLORS.cyan }, { name: 'Users', values: ga.daily.map((d) => d.users), color: COLORS.amber }]), { wide: true, data: ga.daily }) : ''}
@@ -1688,12 +1846,16 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${cf && cf.ok && cf.threatCountries && cf.threatCountries.length ? listPanel('traffic', 'cf-threats', 'Cloudflare: threats by country', cf.threatCountries, { color: COLORS.pink }) : ''}
             ${panel('traffic-cloudflare', 'Cloudflare edge', cf && cf.ok ? kpis([{ label: 'Requests', value: cf.requests }, { label: 'Page views', value: cf.pageViews }, { label: 'Uniques', value: cf.uniques }, { label: 'Cached', value: cf.cacheRatio + '%' }, { label: 'Threats', value: cf.threats, alert: cf.threats > 0 }, { label: 'Data', value: (cf.bytes / 1048576).toFixed(1) + ' MB' }]) + area(cf.daily.map((d) => d.date), [{ name: 'Requests', values: cf.daily.map((d) => d.requests), color: COLORS.violet }]) : `<p class="jv-empty">${S.pending.cloudflare ? 'Asking Cloudflare…' : esc((cf && cf.error) || 'Not loaded.')}</p>`, { wide: true, data: cf && cf.daily })}
         </div>`;
+        out.traffic += take();
 
         const jobs = e.jobs && e.jobs.jobs ? e.jobs.jobs : [];
         const gh = e.github;
         const up = e.uptime;
         const sp = e.speed;
+        const tiles90 = C.statusMatrix(e, S.pending);
         out.systems = `<div class="jv-grid">${briefPanel('systems')}
+            ${panel('systems-matrix', 'Status matrix', matrix(tiles90), { wide: true, keep: true, data: tiles90 })}
+            ${panel('systems-uptime90', 'Uptime, last 90 days', strip(W.uptime), { wide: true, keep: true, data: W.uptime.days })}
             ${actionsPanel()}${codesPanel()}${mailboxPanel()}${connectionsPanel()}${safetyPanel()}${platformPanel()}
             ${panel('systems-ready', 'Readiness', `<div class="jv-rings">${ring(C.readiness(e), 'ready', null, 120)}</div><p class="jv-note">Share of checks that pass: scheduled jobs, CI on main, uptime and PageSpeed within your limits (⚙ Settings).</p>`)}
             ${panel('systems-uptime', 'Uptime', up && up.ok ? table([['Page', (p) => `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a>`], ['Status', (p) => `<span class="jv-chip ${p.ok ? 'c-fast' : 'c-slow'}">${esc(p.status || 'down')}</span>`], ['Time', (p) => fmt(p.ms) + ' ms'], ['Size', (p) => p.bytes ? Math.round(p.bytes / 1024) + ' KB' : '']], up.pages) + `<p class="jv-note">TLS certificate: ${up.tlsDaysLeft === null ? 'unknown' : esc(up.tlsDaysLeft) + ' days left'}.</p>` : `<p class="jv-empty">${S.pending.uptime ? 'Pinging…' : esc((up && up.error) || 'Not loaded.')}</p>`, { data: up && up.pages })}
@@ -1708,6 +1870,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${h ? panel('systems-queue', 'Review pipeline', kpis([{ label: 'Failed runs', value: (h.failures || {}).total || 0, alert: ((h.failures || {}).total || 0) > 0 }, { label: 'Re-runs held', value: (h.reruns || {}).held || 0, alert: ((h.reruns || {}).held || 0) > 0 }, { label: 'Alerts', value: (h.alerts || {}).total || 0 }, { label: 'Owner notices', value: (h.notices || {}).total || 0 }, { label: 'Rival pages', value: (h.rivals || {}).total || 0 }, { label: 'Coupon uses', value: (h.coupons || {}).uses || 0 }, { label: 'Captures', value: (h.captures || {}).total || 0 }]) + bars((h.failures || {}).hosts, { color: COLORS.pink, empty: 'No failing hosts.' }), { wide: true, data: [h.failures, h.reruns, h.notices, h.coupons, h.captures] }) : ''}
             ${panel('systems-links', 'Consoles', `<div class="jv-actions">${LINKS.map(([label, url]) => `<a class="jv-btn" href="${esc(url)}" target="_blank" rel="noopener">${esc(label.replace(/^Open (the )?/, ''))}</a>`).join('')}</div>`, { wide: true })}
         </div>`;
+        out.systems += take();
         return out;
     }
 
@@ -1760,6 +1923,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         $$('[data-mail]').forEach((b) => b.classList.toggle('on', b.dataset.mail === S.mail));
         $('[data-print-range]').textContent = (RANGES.find(([v]) => v === S.range) || [])[1] || '';
         $('[data-print-at]').textContent = new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' });
+        holoSync();
     }
 
     function pulse(n) {
@@ -2540,6 +2704,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.hit !== undefined) { choose(Number(t.dataset.hit)); return; }
         if (t.dataset.brief !== undefined) { openSheet(t.dataset.brief); return; }
         if (t.dataset.briefHidden !== undefined) { S.showHidden = !S.showHidden; render(); return; }
+        if (t.dataset.pick) { S.pick = t.dataset.pick; render(); const again = $(`[data-pick="${CSS.escape(S.pick)}"]`); if (again) again.focus(); return; }
+        if (t.dataset.nodata !== undefined) { toast(t.textContent + ': ' + t.dataset.nodata, 5000); return; }
         if (t.dataset.sheet !== undefined) { sheetAct(t); return; }
         if (t.dataset.settingsClose !== undefined) { closeSettings(); return; }
         if (t.dataset.voicePreview !== undefined) { const lang = voicePrefs().speak === 'es' ? 'es' : 'en'; speak(C.VOICE_SAMPLE[lang], lang); return; }
@@ -2739,6 +2905,10 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         run,
         destroy() {
             S.timers.forEach(clearInterval);
+            if (holo.raf) cancelAnimationFrame(holo.raf);
+            if (holo.io) holo.io.disconnect();
+            holo.node = null;
+            document.removeEventListener('visibilitychange', holoRun);
             document.removeEventListener('keydown', onKey);
             const icon = document.querySelector('link[data-jv-icon]');
             if (icon) icon.remove();

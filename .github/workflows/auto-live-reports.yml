@@ -68,6 +68,7 @@ jobs:
     # A 40 s scene clip draws about 1,200 frames; a 16-review day renders for about an hour.
     timeout-minutes: 180
     permissions:
+      actions: write
       contents: write
       pages: write
     env:
@@ -201,7 +202,7 @@ jobs:
             scripts/social-hub/guard-hub-lang.sh HEAD~1
             git diff --cached --quiet || git commit -q --amend --no-edit
           done
-          gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true
+          gh workflow run pages.yml --ref main -R "${{ github.repository }}" || echo "::warning::Pages was not dispatched; the next push to main deploys this batch."
           echo "pushed=1" >> "$GITHUB_OUTPUT"
 
       - name: Release the clips

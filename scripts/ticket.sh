@@ -111,14 +111,14 @@ log)
 	case "${1:?start|end}" in
 	start) echo "$now,,${2:?n},${3:-},${CURSOR_CONVERSATION_ID:-chat}," >>"$LOG" ;;
 	end)
-		python3 - "$LOG" "${2:?n}" "$now" <<'PY'
+		python3 - "$LOG" "${2:?n}" "$now" "${CURSOR_CONVERSATION_ID:-chat}" <<'PY'
 import csv, sys
-path, ticket, now = sys.argv[1:]
+path, ticket, now, chat = sys.argv[1:]
 rows = list(csv.reader(open(path)))
-for row in reversed(rows):
-    if len(row) > 2 and row[2] == ticket and not row[1]:
-        row[1] = now
-        break
+open_rows = [r for r in reversed(rows) if len(r) > 2 and r[2] == ticket and not r[1]]
+mine = [r for r in open_rows if len(r) > 4 and r[4] == chat]
+if mine or open_rows:
+    (mine or open_rows)[0][1] = now
 csv.writer(open(path, "w", newline="")).writerows(rows)
 PY
 		;;

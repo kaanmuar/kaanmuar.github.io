@@ -4,20 +4,35 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
+import kotlin.math.roundToInt
 import com.carlosandmunoz.jarvis.JarvisApp
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
@@ -230,3 +245,45 @@ fun PageSpeedButtons(pr: Int, vm: JarvisViewModel, proposal: String?, ask: (Pend
         }
     }
 }
+
+/** Settings › Jarvis actions (#2145): the on-its-own switch, the daily caps and the Gemini confidence, as in Admin › Statistics › Settings. */
+@Composable
+fun ActionSettings(actions: JsonObject?, save: (JsonObject) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) { Text("Run the safe actions on their own"); Muted("Every hour, within the daily caps below. Your own taps are not capped.") }
+        Switch(actions.bool("auto") ?: true, { save(actions.with("auto", JsonPrimitive(it))) })
+    }
+    AUTO_CAPS.forEach { k ->
+        val cap = actions.obj("caps").num(k)?.toInt() ?: return@forEach
+        CapRow((ACTION_LABELS[k] ?: k) + " per day", cap) { n -> save(actions.with("caps", actions.obj("caps").with(k, JsonPrimitive(n)))) }
+    }
+    val saved = actions.num("confidence")?.toFloat() ?: 0.8f
+    var confidence by remember(saved) { mutableFloatStateOf(saved) }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text("Gemini confidence needed to act alone", Modifier.weight(1f))
+        Muted("%.2f".format(Locale.ROOT, confidence))
+    }
+    Slider(confidence, { confidence = (it * 20).roundToInt() / 20f }, onValueChangeFinished = { if (confidence != saved) save(actions.with("confidence", JsonPrimitive((confidence * 100).roundToInt() / 100.0))) },
+        valueRange = 0.5f..1f, steps = 9, colors = SliderDefaults.colors(thumbColor = J.cyan, activeTrackColor = J.cyan, inactiveTrackColor = J.line))
+    Muted("Gemini's picks under this become proposals for you.")
+}
+
+// Saved when the field loses focus or on Done, so a half-typed number is never sent.
+@Composable
+private fun CapRow(label: String, value: Int, save: (Int) -> Unit) {
+    var text by remember(value) { mutableStateOf(value.toString()) }
+    val focus = LocalFocusManager.current
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(label, Modifier.weight(1f))
+        OutlinedTextField(text, { t -> text = t.filter(Char::isDigit).take(3) }, singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
+            modifier = Modifier.width(76.dp).onFocusChanged { f ->
+                if (f.isFocused) return@onFocusChanged
+                val n = text.toIntOrNull()?.coerceIn(0, 100)
+                text = (n ?: value).toString()
+                if (n != null && n != value) save(n)
+            })
+    }
+}
+
+private fun JsonObject?.with(key: String, value: JsonElement) = JsonObject((this ?: JsonObject(emptyMap())) + (key to value))

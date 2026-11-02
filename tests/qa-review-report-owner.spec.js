@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const auth = require('../functions/url-review-auth');
 const core = require('../functions/url-review-core');
 const offers = require('../functions/url-review-offers');
-const sample = require('../assets/qa-review-sample.json');
+const sample = { frameworks: require('../functions/url-review-core').FRAMEWORKS, report: require('./unit/fixtures/review-carlosandmunoz.json') };
 
 const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 const ID = 'ab12cd34ef56';

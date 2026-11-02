@@ -116,8 +116,12 @@ test.describe('An unpaid report is blurred in every section, and its files cut w
     const json = JSON.parse(await exported(page, 'download-json'));
     const item = json.report.cases.find((one) => one.id === caseId);
     expect(item.title).toBe(shown + ' …');
-    const longest = JSON.stringify(json.report).match(/"[^"]{200,}"/g) || [];
-    expect(longest.filter((text) => text.split(/\s+/).length >= 4 && !/ …"$/.test(text))).toEqual([]);
+    const strings = [];
+    (function walk(value) {
+      if (typeof value === 'string') strings.push(value);
+      else if (value && typeof value === 'object') Object.values(value).forEach(walk);
+    })(json.report);
+    expect(strings.filter((text) => text.length >= 200 && text.split(/\s+/).length >= 4 && !/ …$/.test(text))).toEqual([]);
 
     const text = await exported(page, 'download-text');
     expect(text).toContain(caseId + ' [' + item.layer + '] ' + shown + ' … — ');

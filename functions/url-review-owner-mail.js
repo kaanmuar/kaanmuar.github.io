@@ -18,6 +18,17 @@ const COPY = {
     title: "A public review of {host} is on Live Reports",
     lead: "{host} was reviewed with QA-lab URL Review on {date}, and the scores were published on Live Reports. We never say who asked for a review. This is what the public page shows:",
     critical: "The review found a critical security issue. The report says what to fix first.",
+    local: {
+      status_fail: "Google Maps shows {host} as permanently closed, so people searching for it are told it no longer exists.",
+      status_risk: "Google Maps shows {host} as temporarily closed, so people searching for it may think it is not open.",
+      website_fail: "The website link on the Google Maps profile of {host} leads to a page that does not load.",
+      website_risk: "The website link on the Google Maps profile of {host} is missing or does not lead to {host}.",
+      website_low: "The website link on the Google Maps profile of {host} goes through redirects or plain http before it reaches the site.",
+      hours: "The opening hours on {host} differ from the ones its Google Maps profile shows.",
+      nap: "The address, phone or name on {host} differs from its Google Maps profile.",
+      utm: "Visits from the Google Maps profile of {host} are counted as search or direct traffic, because its website link has no campaign (UTM) tags.",
+      profile: "We found no Google Maps profile that links to {host} or lists its phone, so people searching on Maps may not find it."
+    },
     claim: "Claim the report",
     claimNote: "The report shows the six scores and what to fix first, with the details blurred. It is sent free to an address at {domain}, which shows the mailbox is yours.",
     unlist: "Remove {host} from Live Reports",
@@ -65,6 +76,17 @@ const COPY = {
     title: "Hay una revisión pública de {host} en Live Reports",
     lead: "{host} se revisó con QA-lab URL Review el {date} y los puntajes se publicaron en Live Reports. Nunca decimos quién pidió una revisión. Esto es lo que muestra la página pública:",
     critical: "La revisión encontró un problema de seguridad crítico. El informe dice qué arreglar primero.",
+    local: {
+      status_fail: "Google Maps muestra {host} como cerrado permanentemente, así que a quien lo busca le dice que ya no existe.",
+      status_risk: "Google Maps muestra {host} como cerrado temporalmente, así que quien lo busca puede pensar que no está abierto.",
+      website_fail: "El enlace al sitio web del perfil de Google Maps de {host} lleva a una página que no carga.",
+      website_risk: "El perfil de Google Maps de {host} no tiene enlace al sitio web, o el enlace no lleva a {host}.",
+      website_low: "El enlace al sitio web del perfil de Google Maps de {host} pasa por redirecciones o por http antes de llegar al sitio.",
+      hours: "El horario que muestra {host} es distinto del que muestra su perfil de Google Maps.",
+      nap: "La dirección, el teléfono o el nombre en {host} no coinciden con su perfil de Google Maps.",
+      utm: "Las visitas desde el perfil de Google Maps de {host} se cuentan como búsqueda o tráfico directo, porque el enlace no lleva etiquetas de campaña (UTM).",
+      profile: "No encontramos un perfil de Google Maps que enlace a {host} o muestre su teléfono, así que quien busca en Maps puede no encontrarlo."
+    },
     claim: "Pedir el informe",
     claimNote: "El informe muestra los seis puntajes y qué arreglar primero, con los detalles difuminados. Se envía gratis a una dirección de {domain}, lo que demuestra que el buzón es tuyo.",
     unlist: "Retirar {host} de Live Reports",
@@ -112,6 +134,17 @@ const COPY = {
     title: "Há uma revisão pública de {host} no Live Reports",
     lead: "{host} foi revisado com o QA-lab URL Review em {date}, e as notas foram publicadas no Live Reports. Nunca dizemos quem pediu uma revisão. Isto é o que a página pública mostra:",
     critical: "A revisão encontrou um problema de segurança crítico. O relatório diz o que corrigir primeiro.",
+    local: {
+      status_fail: "O Google Maps mostra {host} como fechado permanentemente, então quem o procura vê que ele não existe mais.",
+      status_risk: "O Google Maps mostra {host} como fechado temporariamente, então quem o procura pode achar que não está aberto.",
+      website_fail: "O link do site no perfil do Google Maps de {host} leva a uma página que não carrega.",
+      website_risk: "O perfil do Google Maps de {host} não tem link para o site, ou o link não leva a {host}.",
+      website_low: "O link do site no perfil do Google Maps de {host} passa por redirecionamentos ou por http antes de chegar ao site.",
+      hours: "O horário de funcionamento em {host} é diferente do que o perfil do Google Maps mostra.",
+      nap: "O endereço, o telefone ou o nome em {host} não batem com o perfil do Google Maps.",
+      utm: "As visitas vindas do perfil do Google Maps de {host} contam como busca ou tráfego direto, porque o link não tem tags de campanha (UTM).",
+      profile: "Não encontramos um perfil do Google Maps que leve a {host} ou mostre o telefone, então quem procura no Maps pode não encontrá-lo."
+    },
     claim: "Pedir o relatório",
     claimNote: "O relatório mostra as seis notas e o que corrigir primeiro, com os detalhes desfocados. Ele é enviado de graça para um endereço de {domain}, o que mostra que a caixa de e-mail é sua.",
     unlist: "Retirar {host} do Live Reports",
@@ -159,6 +192,17 @@ const COPY = {
     title: "Eine öffentliche Prüfung von {host} steht auf Live Reports",
     lead: "{host} wurde am {date} mit QA-lab URL Review geprüft, und die Werte wurden auf Live Reports veröffentlicht. Wer eine Prüfung angefordert hat, sagen wir nie. Das zeigt die öffentliche Seite:",
     critical: "Die Prüfung hat ein kritisches Sicherheitsproblem gefunden. Der Bericht sagt, was zuerst zu beheben ist.",
+    local: {
+      status_fail: "Google Maps zeigt {host} als dauerhaft geschlossen, wer danach sucht, liest also, dass es nicht mehr existiert.",
+      status_risk: "Google Maps zeigt {host} als vorübergehend geschlossen, wer danach sucht, hält es also womöglich für nicht geöffnet.",
+      website_fail: "Der Website-Link im Google-Maps-Profil von {host} führt zu einer Seite, die nicht lädt.",
+      website_risk: "Das Google-Maps-Profil von {host} hat keinen Website-Link, oder der Link führt nicht zu {host}.",
+      website_low: "Der Website-Link im Google-Maps-Profil von {host} läuft über Weiterleitungen oder unverschlüsseltes http, bevor er die Website erreicht.",
+      hours: "Die Öffnungszeiten auf {host} weichen von denen im Google-Maps-Profil ab.",
+      nap: "Adresse, Telefonnummer oder Name auf {host} stimmen nicht mit dem Google-Maps-Profil überein.",
+      utm: "Besuche über das Google-Maps-Profil von {host} zählen als Suche oder direkter Zugriff, weil der Website-Link keine Kampagnen-Tags (UTM) hat.",
+      profile: "Wir haben kein Google-Maps-Profil gefunden, das auf {host} verlinkt oder die Telefonnummer nennt, wer auf Maps sucht, findet es also womöglich nicht."
+    },
     claim: "Bericht anfordern",
     claimNote: "Der Bericht zeigt die sechs Werte und was zuerst zu beheben ist, mit unscharfen Details. Er geht kostenlos an eine Adresse bei {domain}; das zeigt, dass das Postfach Ihnen gehört.",
     unlist: "{host} von Live Reports entfernen",
@@ -206,6 +250,17 @@ const COPY = {
     title: "Une revue publique de {host} est sur Live Reports",
     lead: "{host} a été revu avec QA-lab URL Review le {date}, et les scores ont été publiés sur Live Reports. Nous ne disons jamais qui a demandé une revue. Voici ce que montre la page publique :",
     critical: "La revue a trouvé un problème de sécurité critique. Le rapport indique ce qu'il faut corriger d'abord.",
+    local: {
+      status_fail: "Google Maps indique {host} comme définitivement fermé : ceux qui le cherchent lisent qu'il n'existe plus.",
+      status_risk: "Google Maps indique {host} comme temporairement fermé : ceux qui le cherchent peuvent croire qu'il n'est pas ouvert.",
+      website_fail: "Le lien vers le site dans la fiche Google Maps de {host} mène à une page qui ne se charge pas.",
+      website_risk: "La fiche Google Maps de {host} n'a pas de lien vers le site, ou ce lien ne mène pas à {host}.",
+      website_low: "Le lien vers le site dans la fiche Google Maps de {host} passe par des redirections ou par http avant d'arriver sur le site.",
+      hours: "Les horaires affichés sur {host} diffèrent de ceux de sa fiche Google Maps.",
+      nap: "L'adresse, le téléphone ou le nom sur {host} ne correspondent pas à sa fiche Google Maps.",
+      utm: "Les visites venant de la fiche Google Maps de {host} sont comptées comme recherche ou accès direct, car le lien n'a pas de balises de campagne (UTM).",
+      profile: "Nous n'avons trouvé aucune fiche Google Maps qui renvoie vers {host} ou affiche son téléphone : sur Maps, on risque de ne pas le trouver."
+    },
     claim: "Demander le rapport",
     claimNote: "Le rapport montre les six scores et ce qu'il faut corriger d'abord, avec les détails floutés. Il est envoyé gratuitement à une adresse en {domain}, ce qui montre que la boîte vous appartient.",
     unlist: "Retirer {host} de Live Reports",
@@ -253,6 +308,17 @@ const COPY = {
     title: "Una revisione pubblica di {host} è su Live Reports",
     lead: "{host} è stato revisionato con QA-lab URL Review il {date}, e i punteggi sono stati pubblicati su Live Reports. Non diciamo mai chi ha chiesto una revisione. Ecco cosa mostra la pagina pubblica:",
     critical: "La revisione ha trovato un problema di sicurezza critico. Il report dice cosa correggere per primo.",
+    local: {
+      status_fail: "Google Maps mostra {host} come chiuso definitivamente, quindi chi lo cerca legge che non esiste più.",
+      status_risk: "Google Maps mostra {host} come chiuso temporaneamente, quindi chi lo cerca può pensare che non sia aperto.",
+      website_fail: "Il link al sito nella scheda Google Maps di {host} porta a una pagina che non si carica.",
+      website_risk: "La scheda Google Maps di {host} non ha il link al sito, oppure il link non porta a {host}.",
+      website_low: "Il link al sito nella scheda Google Maps di {host} passa per reindirizzamenti o per http prima di arrivare al sito.",
+      hours: "Gli orari indicati su {host} sono diversi da quelli della sua scheda Google Maps.",
+      nap: "Indirizzo, telefono o nome su {host} non corrispondono alla sua scheda Google Maps.",
+      utm: "Le visite dalla scheda Google Maps di {host} vengono contate come ricerca o traffico diretto, perché il link non ha tag di campagna (UTM).",
+      profile: "Non abbiamo trovato una scheda Google Maps che rimandi a {host} o ne mostri il telefono, quindi chi cerca su Maps potrebbe non trovarlo."
+    },
     claim: "Chiedi il report",
     claimNote: "Il report mostra i sei punteggi e cosa correggere per primo, con i dettagli sfocati. Viene inviato gratis a un indirizzo di {domain}, e questo dimostra che la casella è tua.",
     unlist: "Togli {host} da Live Reports",
@@ -430,6 +496,7 @@ function noticeMail(notice, card, links, score) {
   const callUrl = booking.bookUrl("intro", notice.lang, { host: notice.host, from: "owner-notice" });
   const inner = header(fill(t.title, vars)) +
     "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:22px 24px 22px;\">" +
+    (notice.local && t.local[notice.local] ? para(fill(t.local[notice.local], vars), "font-size:16px;line-height:24px;color:" + TEXT.strong + ";font-weight:bold;") : "") +
     para(fill(t.lead, vars)) +
     healthBlock(t, notice.host, facts) +
     (notice.critical ? para(t.critical, "font-size:15px;line-height:23px;color:" + TEXT.critical + ";font-weight:bold;") : "") +
@@ -441,6 +508,7 @@ function noticeMail(notice, card, links, score) {
     "</td></tr>";
   const text = [
     fill(t.title, vars), "",
+    notice.local && t.local[notice.local] ? fill(t.local[notice.local], vars) + "\n" : "",
     fill(t.lead, vars), "",
     healthText(t, notice.host, facts), "",
     notice.critical ? t.critical : "",

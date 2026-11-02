@@ -330,10 +330,26 @@
         };
     }
 
-    function summarizeHub(stats, rows, window) {
+    // Social hub: views and interactions in the range from hub_/post_ site_events, so each has a period before.
+    // socialHubStats/latest keeps the running totals, the GA4 views and the post ranking.
+    function summarizeHub(stats, rows, window, priorRows) {
         const s = stats || {};
         const totals = s.totals || {};
         const hubRows = (rows || []).filter(isHubEvent);
+        const isView = (row) => row.name === 'hub_view' || row.name === 'post_view';
+        const tally = (list) => {
+            const t = { views: 0, hubViews: 0, postViews: 0, interactions: 0 };
+            list.forEach((row) => {
+                if (row.name === 'hub_view') t.hubViews += 1;
+                else if (row.name === 'post_view') t.postViews += 1;
+                else t.interactions += 1;
+            });
+            t.views = t.hubViews + t.postViews;
+            return t;
+        };
+        const now = tally(hubRows);
+        const was = priorRows ? tally(priorRows.filter(isHubEvent)) : null;
+        const prior = (key) => (was ? was[key] : undefined);
         const names = {};
         hubRows.forEach((row) => bump(names, row.name));
         const posts = (s.posts || []).slice().sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -342,14 +358,16 @@
             updatedAt: s.updatedAt || '',
             ga: s.ga || null,
             totals,
+            range: now,
+            prior: was,
             kpis: [
-                kpi('Hub views', totals.hubViews || 0),
-                kpi('Post views', totals.postViews || 0),
-                kpi('Post views, 7 days', totals.postViews7 || 0),
-                kpi('GA4 views', totals.gaViews || 0),
-                kpi('Interactions', totals.interactions || 0)
+                kpi('Hub + post views', now.views, prior('views')),
+                kpi('Hub views', now.hubViews, prior('hubViews')),
+                kpi('Post views', now.postViews, prior('postViews')),
+                kpi('Interactions', now.interactions, prior('interactions')),
+                kpi('GA4 views', totals.gaViews || 0)
             ],
-            series: dailySeries(hubRows, window.start, window.end),
+            series: dailySeries(hubRows, window.start, window.end, isView),
             lists: {
                 posts: posts.slice(0, 15).map((p) => ({ label: p.id, value: p.score || p.views || 0 })),
                 sources: (s.sources || []).slice(0, 15).map((row) => ({ label: [row.source, row.medium, row.campaign].filter(Boolean).join(' / '), value: row.sessions || 0 })),
@@ -1113,7 +1131,184 @@
         return cleanDevice({ kind, posture, width: o.width, height: o.height, name: o.name, model: o.model, app: 'web' });
     }
 
-    const api = { DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, proposalRules, pageSpeedPr, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
+    // --- #2139: the wide-screen deck and charts. The app reads the same numbers from the snapshot's `wide` field. ---
+
+    const TREND = [['cv', 'CV'], ['studio', 'QA Studio'], ['lab', 'QA Lab'], ['review', 'URL Review'], ['inbox', 'Inbox'], ['hub', 'Social hub']];
+    const PURPOSES = { review: 'Review run', report: 'Full report', pass: 'Review pass', fixlist: 'Fix list', cases: 'Test cases', 'new-run': 'New run', credentials: 'Signed-in run', alerts: 'Alerts', credit: 'Credits' };
+    const ok = (x) => !!(x && x.ok !== false);
+    const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+    function uptimeNow(up) {
+        const pages = ok(up) && Array.isArray(up.pages) ? up.pages : [];
+        return pages.length ? Math.round((pages.filter((p) => p.ok).length / pages.length) * 100) : null;
+    }
+
+    // Readiness, revenue, visits, alerts and uptime: the strip across the top of Overview.
+    function deck(products, external, brief) {
+        const e = external || {};
+        const r = readiness(e);
+        const mo = ok(e.money) && e.money.revenue ? e.money : null;
+        const sv = siteVisits(products);
+        const list = Array.isArray(brief) ? brief : [];
+        const alerts = list.filter((b) => b.level === 'alert').length;
+        const warns = list.filter((b) => b.level === 'warn').length;
+        const strip = uptimeStrip(e.uptime && e.uptime.history);
+        const now = uptimeNow(e.uptime);
+        const money = mo ? delta(mo.revenue.usd, mo.prior && mo.prior.usd) : { text: '', dir: 0 };
+        return [
+            { key: 'readiness', label: 'Readiness', value: r === null ? '—' : r + '%', raw: r, alert: r !== null && r < THRESHOLDS.readinessMin.value },
+            { key: 'revenue', label: 'Revenue', value: mo ? '$' + (Math.round(num(mo.revenue.usd) * 100) / 100).toLocaleString('en-US') : '—', raw: mo ? num(mo.revenue.usd) : null, delta: money.text, dir: money.dir },
+            { key: 'visits', label: 'Site visits', value: sv ? sv.value : '—', raw: sv ? sv.value : null, delta: sv ? sv.delta : '', dir: sv ? sv.dir : 0 },
+            { key: 'alerts', label: 'Alerts', value: alerts, raw: alerts, delta: warns ? warns + (warns === 1 ? ' warning' : ' warnings') : '', dir: 0, alert: alerts > 0 },
+            { key: 'uptime', label: strip.pct === null ? 'Uptime now' : 'Uptime, 90 days', value: strip.pct !== null ? strip.pct + '%' : now === null ? '—' : now + '%', raw: strip.pct !== null ? strip.pct : now, delta: strip.pct !== null && now !== null ? 'now ' + now + '%' : '', dir: 0, alert: now !== null && now < 100 }
+        ];
+    }
+
+    // One daily line per product over shared dates; products without a series are left out.
+    function trend(products) {
+        const p = products || {};
+        const rows = TREND.filter(([key]) => p[key] && p[key].series && p[key].series.labels && p[key].series.labels.length);
+        const labels = rows.reduce((best, [key]) => (p[key].series.labels.length > best.length ? p[key].series.labels : best), []);
+        return {
+            labels,
+            series: rows.map(([key, name]) => {
+                const s = p[key].series;
+                return { key, name, values: labels.map((day) => { const i = s.labels.indexOf(day); return i === -1 ? 0 : num(s.values[i]); }) };
+            })
+        };
+    }
+
+    // Visits across the CV, Studio and Lab sites and URL Review opens: when they come and where from.
+    function trafficMix(products) {
+        const p = products || {};
+        const grid = WEEKDAYS.map(() => new Array(24).fill(0));
+        const sources = {};
+        ['cv', 'studio', 'lab', 'review'].forEach((key) => {
+            const x = p[key];
+            if (!x) return;
+            (Array.isArray(x.heatmap) ? x.heatmap : []).forEach((row, d) => (row || []).forEach((n, h) => { if (grid[d] && h < 24) grid[d][h] += num(n); }));
+            ((x.lists && x.lists.sources) || []).forEach((r) => bump(sources, String(r.label).replace(/\s*\(tagged link\)$/, ''), num(r.value)));
+        });
+        const total = grid.reduce((s, row) => s + row.reduce((a, b) => a + b, 0), 0);
+        return { heatmap: grid, peak: peak(grid), total, sources: topList(sources, 12) };
+    }
+
+    // The site's own counter against GA4 sessions and Cloudflare page views, day by day.
+    function trafficCompare(products, external) {
+        const e = external || {};
+        const sv = siteVisits(products);
+        const ga = ok(e.ga4) && Array.isArray(e.ga4.daily) ? e.ga4.daily : [];
+        const cf = ok(e.cloudflare) && Array.isArray(e.cloudflare.daily) ? e.cloudflare.daily : [];
+        const site = sv ? sv.series : { labels: [], values: [] };
+        const labels = Array.from(new Set(site.labels.concat(ga.map((r) => r.date), cf.map((r) => r.date)).filter(Boolean))).sort();
+        const by = (rows, key) => { const m = {}; rows.forEach((r) => { m[r.date] = num(r[key]); }); return labels.map((d) => m[d] || 0); };
+        const siteBy = {};
+        site.labels.forEach((d, i) => { siteBy[d] = num(site.values[i]); });
+        const series = [
+            { key: 'site', name: 'Site counter', values: labels.map((d) => siteBy[d] || 0), on: !!sv },
+            { key: 'ga4', name: 'GA4 sessions', values: by(ga, 'sessions'), on: ga.length > 0 },
+            { key: 'cloudflare', name: 'Cloudflare page views', values: by(cf, 'pageViews'), on: cf.length > 0 }
+        ];
+        const why = { site: 'No site events in range.', ga4: (e.ga4 && e.ga4.error) || 'GA4 is not loaded.', cloudflare: (e.cloudflare && e.cloudflare.error) || 'Cloudflare is not loaded.' };
+        return {
+            labels,
+            series: series.filter((s) => s.on).map(({ key, name, values }) => ({ key, name, values })),
+            totals: series.map((s) => ({ key: s.key, label: s.name, value: s.on ? s.values.reduce((a, b) => a + b, 0) : null, why: s.on ? '' : why[s.key] }))
+        };
+    }
+
+    function revenueByProduct(money) {
+        if (!ok(money) || !Array.isArray(money.byPurpose)) return [];
+        return money.byPurpose.filter((r) => num(r.value) > 0).map((r) => ({ label: PURPOSES[r.label] || r.label, value: Math.round(num(r.value) * 100) / 100 }));
+    }
+
+    // Reviewed by the sweep, emailed through Instantly, replied, paid through a qalabreview.com link.
+    function outreachFunnel(external) {
+        const ou = (external || {}).outreach;
+        if (!ok(ou)) return null;
+        const pipe = ok(ou.pipeline) && ou.pipeline ? ou.pipeline : null;
+        const mail = ok(ou.instantly) && ou.instantly ? ou.instantly : null;
+        const links = ok(ou.links) && ou.links ? ou.links : null;
+        if (!pipe && !mail && !links) return null;
+        return [
+            { key: 'reviewed', label: 'Reviewed', value: pipe ? num(pipe.reviews) : null },
+            { key: 'notified', label: 'Notified', value: mail ? num(mail.contacted) : null },
+            { key: 'replied', label: 'Replied', value: mail ? num(mail.replies) : null },
+            { key: 'paid', label: 'Paid', value: links ? num(links.paid) : null }
+        ];
+    }
+
+    // One tile per connection, scheduled job and CI workflow: good, warn, alert or off.
+    function statusMatrix(external, pending) {
+        const e = external || {};
+        const conn = connections(e, pending).map((c) => ({ group: 'Connections', name: c.name.replace(/\s*\(.*\)$/, ''), level: { live: 'good', partial: 'warn', down: 'alert' }[c.state] || 'off', detail: c.detail || c.state }));
+        // Scheduler only knows the trigger fired; the job's own last run (health.jobs) says whether it worked.
+        const runs = new Map((ok(e.health) && Array.isArray(e.health.jobs) ? e.health.jobs : []).map((j) => [j.job, j]));
+        const jobs = (ok(e.jobs) && Array.isArray(e.jobs.jobs) ? e.jobs.jobs : []).map((j) => {
+            const run = runs.get(j.name);
+            runs.delete(j.name);
+            const failed = !j.ok || (run && run.ok === false);
+            return { group: 'Jobs', name: j.name, level: failed ? 'alert' : j.state === 'PAUSED' ? 'warn' : 'good', detail: failed ? (run && run.ok === false ? run.error : j.error) || 'failed' : j.state === 'PAUSED' ? 'paused' : j.note || 'ok' };
+        }).concat([...runs.values()].map((run) => ({ group: 'Jobs', name: run.job, level: run.ok === false ? 'alert' : 'good', detail: run.ok === false ? run.error || 'failed' : 'ok' })));
+        const ci = (ok(e.github) && Array.isArray(e.github.ci) ? e.github.ci : []).map((c) => ({ group: 'CI', name: c.name, level: ['success', 'skipped', 'neutral'].includes(c.conclusion) ? 'good' : !c.conclusion ? 'off' : c.conclusion === 'cancelled' ? 'warn' : 'alert', detail: c.conclusion || 'running' }));
+        return conn.concat(jobs, ci);
+    }
+
+    // The last 90 Bogota days of the hourly uptime checks (jarvis_uptime); a day without checks is null, not 100.
+    function uptimeStrip(history, now) {
+        const rows = Array.isArray(history) ? history : [];
+        const by = {};
+        rows.forEach((r) => { if (r && r.date && num(r.checks) > 0) by[r.date] = r; });
+        const end = now || new Date();
+        const days = dayKeys(new Date(end.getTime() - 89 * DAY), end).slice(-90);
+        let checks = 0, up = 0;
+        const out = days.map((date) => {
+            const r = by[date];
+            if (!r) return { date, pct: null };
+            checks += num(r.checks);
+            up += num(r.up);
+            return { date, pct: Math.round((num(r.up) / num(r.checks)) * 1000) / 10 };
+        });
+        const since = out.find((d) => d.pct !== null);
+        return { days: out, pct: checks ? Math.round((up / checks) * 1000) / 10 : null, since: since ? since.date : null };
+    }
+
+    // The Products list: each product's lead number and daily series, for the list-detail view and the tiles.
+    function productList(products, external) {
+        const p = products || {};
+        const e = external || {};
+        const out = PRODUCTS.filter((x) => ['inbox', 'cv', 'studio', 'lab', 'review', 'hub'].includes(x.key) && p[x.key]).map((x) => {
+            const s = p[x.key];
+            return { key: x.key, name: x.name, kpis: (s.kpis || []).slice(0, 6), series: s.series || { labels: [], values: [] } };
+        });
+        const ou = ok(e.outreach) ? e.outreach : null;
+        const pipe = ou && ok(ou.pipeline) && ou.pipeline ? ou.pipeline : null;
+        const mail = ou && ok(ou.instantly) && ou.instantly ? ou.instantly : null;
+        out.push({ key: 'outreach', name: 'Outreach', kpis: [pipe && kpi('Reviewed', num(pipe.reviews)), pipe && kpi('Queued', num(pipe.queued)), mail && kpi('Emails sent', num(mail.sent)), mail && kpi('Replies', num(mail.replies))].filter(Boolean),
+            series: pipe ? { labels: (pipe.daily || []).map((d) => d.date), values: (pipe.daily || []).map((d) => num(d.reviews)) } : { labels: [], values: [] } });
+        const so = ok(e.social) && e.social.daily ? e.social : null;
+        out.push({ key: 'marketing', name: 'Marketing', kpis: [so && kpi('Social posts', num(so.sent)), so && kpi('Failed', num(so.failed), undefined, { alert: num(so.failed) > 0 })].filter(Boolean),
+            series: so ? { labels: so.daily.map((d) => d.date), values: so.daily.map((d) => num(d.posts)) } : { labels: [], values: [] } });
+        const eg = ok(e.engagement) && Array.isArray(e.engagement.daily) ? e.engagement : null;
+        const t = (eg && eg.report && eg.report.totals) || {};
+        out.push({ key: 'engagement', name: 'Engagement', kpis: eg ? [kpi('Posts read', num(t.read)), kpi('Candidates', num(t.candidates)), kpi('Replies drafted', num(t.drafted))] : [],
+            series: eg ? { labels: eg.daily.map((d) => d.day), values: eg.daily.map((d) => num(d.read)) } : { labels: [], values: [] } });
+        return out;
+    }
+
+    // Everything above in one object: the snapshot carries it for the app, the web builds it from the same inputs.
+    function wide(state) {
+        const s = state || {};
+        const traffic = trafficMix(s.products);
+        return {
+            deck: deck(s.products, s.external, s.briefing), trend: trend(s.products), products: productList(s.products, s.external),
+            traffic: { heatmap: traffic.heatmap, peak: traffic.peak, total: traffic.total, sources: traffic.sources, compare: trafficCompare(s.products, s.external) },
+            revenue: revenueByProduct((s.external || {}).money), funnel: outreachFunnel(s.external),
+            matrix: statusMatrix(s.external), uptime: uptimeStrip(((s.external || {}).uptime || {}).history, s.now)
+        };
+    }
+
+    const api = { TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, proposalRules, pageSpeedPr, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

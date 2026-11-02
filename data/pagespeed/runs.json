@@ -1,0 +1,126 @@
+{
+ "runs": [
+  {
+   "at": "2026-11-02T09:34:34.841Z",
+   "run": {
+    "id": 41412402517,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/41412402517"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 3,
+   "scored": 3,
+   "failed": 0,
+   "below": 3,
+   "avg": {
+    "mobile": 69,
+    "desktop": 71
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-02",
+    "files": [
+     "assets/profile-280.jpg",
+     "index.html",
+     "qa-review-de.html",
+     "qa-review-es.html",
+     "qa-review-fr.html",
+     "qa-review-it.html",
+     "qa-review-pt.html",
+     "qa-review.html",
+     "simulador.html",
+     "data/pagespeed/compressed.json"
+    ],
+    "fixes": [
+     {
+      "page": "qa-review.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "simulador.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "index.html",
+      "kind": "lazy",
+      "detail": "Lazy-loaded 4 images or frames that start below 1.5 screens on phone and desktop."
+     },
+     {
+      "page": "assets/profile-280.jpg",
+      "kind": "image",
+      "detail": "Compressed assets/profile-280.jpg from 21 KB to 11 KB."
+     }
+    ],
+    "pages": [
+     {
+      "file": "qa-review.html",
+      "mobile": {
+       "before": 32,
+       "after": 31,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 63,
+       "after": 63,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review.html"
+     },
+     {
+      "file": "simulador.html",
+      "mobile": {
+       "before": 66,
+       "after": 65,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 86,
+       "after": 86,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/simulador.html"
+     },
+     {
+      "file": "index.html",
+      "mobile": {
+       "before": 72,
+       "after": 72,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 96,
+       "after": 96,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   },
+   "ai": {
+    "branch": null,
+    "files": [],
+    "fixes": [],
+    "pages": [],
+    "verdict": {
+     "up": false,
+     "reason": "Nothing to change.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  }
+ ]
+}

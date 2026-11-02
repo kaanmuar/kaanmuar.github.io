@@ -127,6 +127,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -291,7 +292,9 @@ fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, openTab: String
 private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, modifier: Modifier, pickProduct: (String) -> Unit, open: (String) -> Unit) {
     PullToRefreshBox(isRefreshing = s.loading, onRefresh = vm::refresh, modifier = modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val columns = Device.columns(maxWidth.value.toInt())
+            val width = maxWidth.value.toInt()
+            val columns = Device.columns(width, Device.dense(LocalForm.current))
+            CompositionLocalProvider(LocalDense provides (columns == 3 && width < 1100), LocalColumns provides columns) {
             AnimatedContent(tab, transitionSpec = {
                 val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
                 (fadeIn(tween(300)) + slideInHorizontally(tween(450, easing = FastOutSlowInEasing)) { dir * it / 5 } + scaleIn(tween(450), 0.96f)) togetherWith
@@ -316,6 +319,7 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                     }
                     Spacer(Modifier.height(24.dp))
                 }
+            }
             }
         }
     }
@@ -470,6 +474,8 @@ private fun openAssistantSettings(context: android.content.Context) {
 fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (Boolean) -> Unit, back: () -> Unit) {
     val settings = s.snapshot.obj("settings")
     var mail by remember(settings) { mutableStateOf(MAIL_LABELS.keys.associateWith { settings.obj("mail").bool(it) ?: false }) }
+    var actions by remember(settings) { mutableStateOf(settings.obj("actions")) }
+    fun save(base: JsonObject) = vm.market("settings", "settings-save", mapOf("settings" to edited(base, mail, actions))) { "Saved." }
     Scaffold(containerColor = Color.Transparent, topBar = {
         TopAppBar(modifier = Modifier.topFade(), title = { Text("Settings") }, navigationIcon = { IconButton(onClick = back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent))
@@ -493,18 +499,19 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                         Text(label, Modifier.weight(1f))
                         Switch(mail[k] == true, { on ->
                             mail = mail + (k to on)
-                            vm.act("settings", "settings-save", mapOf("settings" to withMail(settings, mail))) { "Saved." }
+                            save(settings)
                         })
                     }
                 }
                 Muted("Goals, thresholds and search queries are edited in Admin › Statistics on the web.")
             }
             if (settings != null) Panel("Jarvis actions") {
-                val hours = settings.obj("actions").num("countdownHours") ?: Countdowns.HOURS
+                ActionSettings(actions) { actions = it; save(settings) }
+                val hours = actions.num("countdownHours") ?: Countdowns.HOURS
                 Muted("How long a risky action Jarvis starts by itself waits for Do it now or Cancel: mail to third parties, posts off schedule, merges and deploys, resuming outreach.")
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     COUNTDOWN_CHOICES.forEach { h ->
-                        TextButton(onClick = { vm.market("settings", "settings-save", mapOf("settings" to withCountdown(settings, h))) { "Countdown: ${Countdowns.hoursText(h)}." } }, enabled = "settings" !in s.running) {
+                        TextButton(onClick = { actions = withCountdown(actions, h); save(settings) }, enabled = "settings" !in s.running) {
                             Text(Countdowns.hoursText(h), color = if (h == hours) J.cyan else J.muted, fontSize = 13.sp)
                         }
                     }
@@ -632,14 +639,15 @@ private fun Devices(s: UiState) {
     }
 }
 
-// Merged into the saved switches, so the ones the app does not show (the weekly strategy) keep their value.
-private fun withMail(settings: JsonObject, mail: Map<String, Boolean>): JsonObject =
-    JsonObject(settings + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })))
+// Merged into the saved settings, so what the app does not show (the weekly strategy switch, goals, thresholds) keeps its value.
+private fun edited(settings: JsonObject, mail: Map<String, Boolean>, actions: JsonObject?): JsonObject =
+    JsonObject(settings + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })) +
+        (actions?.let { mapOf("actions" to it) } ?: emptyMap()))
 
 private val COUNTDOWN_CHOICES = listOf(0.5, 1.0, 2.0, 4.0, 8.0)
 
-private fun withCountdown(settings: JsonObject, hours: Double): JsonObject =
-    JsonObject(settings + ("actions" to JsonObject((settings.obj("actions") ?: JsonObject(emptyMap())) + ("countdownHours" to JsonPrimitive(hours)))))
+private fun withCountdown(actions: JsonObject?, hours: Double): JsonObject =
+    JsonObject((actions ?: JsonObject(emptyMap())) + ("countdownHours" to JsonPrimitive(hours)))
 
 // The owner emails Jarvis also pushes (#1672), as in Admin › Statistics › Settings.
 private val MAIL_LABELS = linkedMapOf(
