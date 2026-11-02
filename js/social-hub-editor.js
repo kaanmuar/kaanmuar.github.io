@@ -56,16 +56,17 @@ export function createHubEditor(deps) {
 
     async function pull() {
         $('hub-admin-status').textContent = 'Loading the hub…';
-        const [feedJson, captionsJson, editsJson, proposalsJson, bufferJson, facebookJson, openJson] = await Promise.all([
+        const [feedJson, captionsJson, editsJson, proposalsJson, roundupsJson, bufferJson, facebookJson, openJson] = await Promise.all([
             fetchJson('assets/social/feed.json', { posts: [], asOf: '' }),
             fetchJson('assets/social/captions.json', {}),
             fetchJson('assets/social/edits.json', null),
             fetchJson('assets/social/proposals.json', null),
+            fetchJson('assets/social/sweep-roundups.json', null),
             fetchJson('assets/social/buffer.json', null),
             fetchJson('assets/social/facebook.json', null),
             fetchJson('assets/social/open-social.json', null)
         ]);
-        proposals.load(proposalsJson);
+        proposals.load(Admin.mergeProposals(proposalsJson, roundupsJson));
         feed = feedJson;
         ledgers = [bufferJson, facebookJson, openJson];
         captions = captionsJson;

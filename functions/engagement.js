@@ -23,11 +23,12 @@ const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const ACTIONS = ["like", "repost", "follow", "reply"];
 
 // acts: the network takes likes, reposts, follows and replies (through its API, or the Mac's browser when browser).
+// only: the actions it has when not all four (YouTube has no repost; a follow is a subscribe there).
 // limit: the longest reply it takes. scale: how much engagement an hour counts as trending there.
 const NETWORKS = {
-  bluesky: { name: "Bluesky", acts: true, limit: 300, scale: 20, weight: 1 },
-  mastodon: { name: "Mastodon", acts: true, limit: 500, scale: 10, weight: 1 },
-  youtube: { name: "YouTube", acts: true, limit: 500, scale: 200, weight: 0.9 },
+  bluesky: { name: "Bluesky", acts: true, api: true, limit: 300, scale: 20, weight: 1 },
+  mastodon: { name: "Mastodon", acts: true, api: true, limit: 500, scale: 10, weight: 1 },
+  youtube: { name: "YouTube", acts: true, api: true, only: ["like", "follow", "reply"], limit: 500, scale: 200, weight: 0.9 },
   x: { name: "X", acts: true, browser: true, limit: 280, scale: 40, weight: 1 },
   linkedin: { name: "LinkedIn", acts: true, browser: true, limit: 1200, scale: 15, weight: 1.2 },
   facebook: { name: "Facebook", acts: true, browser: true, limit: 1000, scale: 20, weight: 0.8 },
@@ -60,8 +61,11 @@ const HASHTAG_SPAM = 8;
 // Vendors whose own posts we never answer under; edited in Jarvis > Engagement > Settings.
 const COMPETITORS = ["semrush", "ahrefs", "moz", "screamingfrog", "screaming frog", "sitebulb", "seranking", "se ranking", "browserstack", "lambdatest", "saucelabs", "sauce labs", "accessibe", "userway", "siteimprove", "audioeye", "gtmetrix", "pingdom", "debugbear", "contentsquare", "hotjar", "conductor", "brightedge"];
 
+// live: planned likes, reposts and follows are carried out; off (the default, a dry run) marks them "dry" instead.
+// Approved replies go out either way: Carlos approved each one.
 const DEFAULTS = {
   paused: false,
+  live: false,
   caps: { reply: 15, like: 60, repost: 15, follow: 15 },
   thresholds: { like: 1.5, repost: 3, follow: 3.5, reply: 2 },
   worth: 0.6,
@@ -84,6 +88,8 @@ function settings(doc) {
   const between = (v, lo, hi, fb) => (Number.isFinite(Number(v)) ? Math.min(hi, Math.max(lo, Number(v))) : fb);
   return {
     paused: d.paused === true,
+    live: d.live === true,
+    liveAt: clip(d.liveAt, 30),
     caps: Object.fromEntries(ACTIONS.map((a) => [a, Math.round(between(capsIn[a], 0, 500, DEFAULTS.caps[a]))])),
     thresholds: Object.fromEntries(ACTIONS.map((a) => [a, between(thIn[a], 0, 1000, DEFAULTS.thresholds[a])])),
     worth: between(d.worth, 0, 1, DEFAULTS.worth),
@@ -102,6 +108,7 @@ function settingsPatch(current, body) {
   const next = Object.assign({}, current);
   let changed = false;
   if (typeof b.paused === "boolean") { next.paused = b.paused; changed = true; }
+  if (typeof b.live === "boolean") { next.live = b.live; changed = true; }
   ["caps", "thresholds"].forEach((k) => { if (b[k] && typeof b[k] === "object") { next[k] = Object.assign({}, current[k], b[k]); changed = true; } });
   ["worth", "maxAgeHours", "perRun"].forEach((k) => { if (b[k] !== undefined) { next[k] = b[k]; changed = true; } });
   ["competitors", "own"].forEach((k) => {
@@ -233,7 +240,7 @@ function decide(post, ai, conf, used, now, followed) {
   if (a && (a.political || a.argument || a.promo || a.sentiment === "angry")) return { verdict: "skip", skip: a.political ? "political" : a.argument ? "argument" : a.promo ? "promo" : "angry", actions: {} };
   const actions = {};
   const plan = (action, ok, extra) => {
-    if (!ok) return;
+    if (!ok || (net.only && !net.only.includes(action))) return;
     if (conf.paused) actions[action] = { status: "paused" };
     else if (capped(used, post.network, action, conf)) actions[action] = { status: "capped" };
     else { take(used, post.network, action); actions[action] = Object.assign({ status: "planned" }, extra || {}); }
@@ -325,6 +332,8 @@ const sumInto = (into, from) => {
 };
 
 const FUNNEL = ["drafted", "approved", "edited", "dismissed", "expired", "posted", "failed"];
+// What the poster did with the planned likes, reposts and follows: done, done in a dry run, or failed.
+const CARRIED = ["like_done", "repost_done", "follow_done", "like_dry", "repost_dry", "follow_dry", "act_failed"];
 const pairs = (map, n) => Object.entries(map || {}).sort((a, b) => b[1] - a[1]).slice(0, n || 12).map(([label, value]) => ({ label, value }));
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : null);
 
@@ -336,7 +345,7 @@ function report(period, days, priorDays, top, now) {
   (priorDays || []).forEach((d) => sumInto(prior, d));
   const totals = (s) => {
     const t = { read: 0, candidates: 0, like: 0, repost: 0, follow: 0 };
-    FUNNEL.forEach((k) => { t[k] = 0; });
+    FUNNEL.concat(CARRIED).forEach((k) => { t[k] = 0; });
     Object.values(s.n || {}).forEach((n) => Object.keys(t).forEach((k) => { t[k] += n[k] || 0; }));
     return t;
   };
@@ -345,7 +354,7 @@ function report(period, days, priorDays, top, now) {
   const networks = Object.keys(NETWORKS).filter((k) => sum.n && sum.n[k]).map((k) => {
     const n = sum.n[k];
     const row = { network: k, name: NETWORKS[k].name, read: n.read || 0, candidates: n.candidates || 0, like: n.like || 0, repost: n.repost || 0, follow: n.follow || 0 };
-    FUNNEL.forEach((f) => { row[f] = n[f] || 0; });
+    FUNNEL.concat(CARRIED).forEach((f) => { row[f] = n[f] || 0; });
     return row;
   });
   const decided = t.approved + t.edited + t.dismissed;
@@ -369,6 +378,9 @@ function report(period, days, priorDays, top, now) {
 
 const PERIOD_NAME = { daily: "Daily", weekly: "Weekly", monthly: "Monthly" };
 const signed = (d) => (d === null || d === undefined ? "" : " (" + (d > 0 ? "+" : "") + d + "%)");
+const doneLine = (t) => t.like_done + " likes, " + t.repost_done + " reposts, " + t.follow_done + " follows"
+  + (t.like_dry + t.repost_dry + t.follow_dry ? "; dry run: " + t.like_dry + " likes, " + t.repost_dry + " reposts, " + t.follow_dry + " follows" : "")
+  + (t.act_failed ? "; " + t.act_failed + " failed" : "");
 
 /** The owner email for a report: rows for the numbers, body for the lists. */
 function reportMail(r) {
@@ -382,6 +394,7 @@ function reportMail(r) {
     { label: "Likes planned", value: t.like + signed(r.delta.like) },
     { label: "Reposts planned", value: t.repost + signed(r.delta.repost) },
     { label: "Follows planned", value: t.follow + signed(r.delta.follow) },
+    { label: "Done", value: doneLine(t) },
     { heading: "Replies" },
     { label: "Drafted", value: t.drafted + signed(r.delta.drafted) },
     { label: "Approved", value: t.approved + " (" + t.edited + " edited)" },
@@ -393,7 +406,7 @@ function reportMail(r) {
   ];
   const list = (title, items, fmt) => (items.length ? [title + ":", ...items.map(fmt), ""] : []);
   const body = [
-    ...list("By network", r.networks, (n) => "- " + n.name + ": " + n.read + " read, " + n.candidates + " in field, " + n.like + " likes, " + n.repost + " reposts, " + n.follow + " follows, " + n.drafted + " replies drafted, " + n.posted + " posted"),
+    ...list("By network", r.networks, (n) => "- " + n.name + ": " + n.read + " read, " + n.candidates + " in field, " + n.like + " likes, " + n.repost + " reposts, " + n.follow + " follows planned (done: " + doneLine(n) + "), " + n.drafted + " replies drafted, " + n.posted + " posted"),
     ...list("Topics", r.topics, (x) => "- " + x.label + ": " + x.value),
     ...list("Trending keywords", r.tags.slice(0, 12), (x) => "- " + x.label.replace(/_/g, " ") + ": " + x.value),
     ...list("Languages", r.langs, (x) => "- " + x.label + ": " + x.value),
@@ -403,7 +416,7 @@ function reportMail(r) {
   ].join("\n");
   return {
     subject: PERIOD_NAME[r.period] + " social engagement · " + window + " · " + t.candidates + " posts, " + t.drafted + " replies drafted",
-    intro: PERIOD_NAME[r.period] + " engagement report, " + window + ". Likes, reposts and follows are planned within the daily caps; replies wait for you in Jarvis.",
+    intro: PERIOD_NAME[r.period] + " engagement report, " + window + ". Likes, reposts and follows are planned within the daily caps and carried out on the networks that are connected and live; replies wait for you in Jarvis.",
     rows, body
   };
 }
@@ -414,7 +427,7 @@ function reportPush(r) {
   return {
     kind: "engagement",
     title: PERIOD_NAME[r.period] + " engagement: " + t.candidates + " posts in our field",
-    body: t.like + " likes, " + t.repost + " reposts, " + t.follow + " follows planned; " + t.drafted + " replies drafted, " + (t.approved + t.edited) + " approved, " + t.expired + " expired.",
+    body: t.like + " likes, " + t.repost + " reposts, " + t.follow + " follows planned; done: " + doneLine(t) + ". " + t.drafted + " replies drafted, " + (t.approved + t.edited) + " approved, " + t.posted + " posted, " + t.expired + " expired.",
     lines: r.topics.slice(0, 3).map((x) => x.label + ": " + x.value).concat(r.posts.slice(0, 2).map((p) => "Top: " + clip(p.title, 80))),
     tab: "products:engagement",
     tag: "jarvis-engagement-" + r.period,
@@ -459,6 +472,6 @@ function decideReply(doc, decision, text, by, now) {
 }
 
 module.exports = {
-  NETWORKS, TOPICS, LANGS, ACTIONS, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, FUNNEL,
+  NETWORKS, TOPICS, LANGS, ACTIONS, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, FUNNEL, CARRIED,
   settings, settingsPatch, keyOf, relevance, trend, score, guard, aiPrompt, parseAi, decide, rises, storedAi, askAgain, forAi, postDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay
 };
