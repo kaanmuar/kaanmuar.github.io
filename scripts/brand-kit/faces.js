@@ -59,10 +59,10 @@ const FACES = {
     name: "QA-lab URL Review · ES/PT",
     other: "en",
     env: "_ES",
-    // A new account starts at 3 a day. Until live, the calendar plans es/pt in @qalaburlreview's 5 a day, as
-    // before the split; set it once the face's accounts are connected.
+    // A new account starts at 3 a day. Live since its first accounts (Threads, Instagram) connected (Carlos, 2026-11-02);
+    // a face that is not live plans its languages in @qalaburlreview's 5 a day.
     cadence: 3,
-    live: false,
+    live: true,
     // Cyan to amber, so the two faces never share an avatar.
     hue: -150,
     site: "qaurlreview.html",
