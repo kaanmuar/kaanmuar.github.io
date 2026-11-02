@@ -132,7 +132,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   ```
 - [ ] Upload Profile picture: `media/faces-2026-11/en/facebook/avatar-720.jpg`
 - [ ] Upload Cover photo; phones show only the outlined middle: `media/faces-2026-11/en/facebook/cover-1640x624.jpg`
-- [ ] Access: Add the Page to the Meta app "QA-lab Page Publisher" and connect it in Buffer (#2310).
+- [ ] Access: Add the Page to the Meta app "QA-lab Page Publisher", then pipe a user token of that app: pbpaste | FACE=en FACEBOOK_PAGE_ID=<Page id> node scripts/meta-token.js page. It sets FACEBOOK_PAGE_TOKEN, and scripts/facebook-queue.js posts (#2310).
 
 ## dev.to: existing account, https://dev.to/qalaburlreview
 
@@ -154,7 +154,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   https://carlosandmunoz.com/qa-review.html?utm_source=devto&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   ```
 - [ ] Upload Profile image (dev.to has no banner): `media/faces-2026-11/en/devto/avatar-1000.jpg`
-- [ ] Access: Settings > Extensions > DEV Community API Keys: make a key for #2310.
+- [ ] Access: Settings > Extensions > DEV Community API Keys: make a key for the dev.to poster (#2326).
 
 ## Bluesky: existing account, https://bsky.app/profile/qalaburlreview.bsky.social
 
@@ -169,7 +169,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   ```
 - [ ] Upload Avatar: `media/faces-2026-11/en/bluesky/avatar-1000.jpg`
 - [ ] Upload Banner; the avatar covers the lower left: `media/faces-2026-11/en/bluesky/banner-3000x1000.jpg`
-- [ ] Access: Settings > Privacy and security > App passwords: make one for #2310.
+- [ ] Access: Settings > Privacy and security > App passwords: make one and set the repo secrets BLUESKY_HANDLE (qalaburlreview.bsky.social) and BLUESKY_APP_PASSWORD (#2310).
 
 ## Mastodon: existing account, https://mastodon.social/@qalaburlreview
 
@@ -190,7 +190,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   - Email: qalaburlreview@carlosandmunoz.com
 - [ ] Upload Avatar (rounded square): `media/faces-2026-11/en/mastodon/avatar-400.jpg`
 - [ ] Upload Header; the avatar covers the lower left: `media/faces-2026-11/en/mastodon/header-1500x500.jpg`
-- [ ] Access: Preferences > Development > New application with write:statuses and write:media: give the token to #2310.
+- [ ] Access: Preferences > Development > New application with write:statuses, write:media, read:accounts and read:statuses: set the repo secrets MASTODON_URL (https://mastodon.social) and MASTODON_TOKEN (#2310).
 
 ## Instagram: new account, https://www.instagram.com/qalaburlreview/
 
@@ -218,7 +218,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
 - [ ] Upload Highlight cover: Skits: `media/faces-2026-11/en/instagram/highlight-skits.jpg`
 - [ ] Upload Highlight cover: Live runs: `media/faces-2026-11/en/instagram/highlight-runs.jpg`
 - [ ] Upload Highlight cover: How it works: `media/faces-2026-11/en/instagram/highlight-guide.jpg`
-- [ ] Access: Connect the account in Buffer through the linked Facebook Page (#2310).
+- [ ] Access: Nothing in Buffer: once linked to the face's Facebook Page, FACE=en node scripts/meta-token.js page also sets INSTAGRAM_USER_ID, and scripts/open-social-queue.js posts (#2310).
 
 ## Threads: new account, https://www.threads.com/@qalaburlreview
 
@@ -232,7 +232,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   https://carlosandmunoz.com/qa-review.html?utm_source=threads&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   ```
 - [ ] Upload Profile picture (Threads can import it from Instagram): `media/faces-2026-11/en/threads/avatar-1080.jpg`
-- [ ] Access: Connect the profile in Buffer (#2310).
+- [ ] Access: Nothing in Buffer: a Threads user token of the app (User Token Generator) through pbpaste | FACE=en node scripts/meta-token.js threads sets THREADS_TOKEN, and scripts/open-social-queue.js posts (#2310).
 
 ## LinkedIn: existing account, https://www.linkedin.com/company/qalab-url-review
 

@@ -6,7 +6,7 @@
 
    { version: 1,
      posts: { "<batch>/<slug>": [{ channel: "linkedin", profile: "linkedin (QA-lab)", id: "<Buffer post or Graph post id>",
-       at: "<due time, or sent time once sent>", result: "queued" | "sent" | "failed", error, url, checked: "<ISO>",
+       at: "<due time, or sent time once sent>", result: "queued" | "sent" | "failed" | "moved", error, url, checked: "<ISO>",
        slot: "<the calendar time a queued post waits to be moved to (social-calendar.js --sync)>" }] },
      retry: { "<batch>": { since: "<ISO>", error } } }
 
@@ -23,7 +23,8 @@ const ROOT = path.resolve(__dirname, "..");
 const BUFFER = "assets/social/buffer.json";
 const FACEBOOK = "assets/social/facebook.json";
 const OPEN_SOCIAL = "assets/social/open-social.json";
-const FINAL = new Set(["sent", "failed"]);
+// moved: taken off this profile and queued on the other face's (scripts/face-route.js, #2310).
+const FINAL = new Set(["sent", "failed", "moved"]);
 const FIELDS = ["channel", "profile", "id", "at", "result", "error", "url", "checked", "slot"];
 
 function empty() {

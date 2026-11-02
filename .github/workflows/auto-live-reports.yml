@@ -236,6 +236,8 @@ jobs:
         env:
           FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
           FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+          FACEBOOK_PAGE_ID_ES: ${{ secrets.FACEBOOK_PAGE_ID_ES }}
+          FACEBOOK_PAGE_TOKEN_ES: ${{ secrets.FACEBOOK_PAGE_TOKEN_ES }}
         run: |
           if [ -z "$FACEBOOK_PAGE_ID" ] || [ -z "$FACEBOOK_PAGE_TOKEN" ]; then
             echo "::warning::Add the FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN secrets. Batch ${{ steps.reports.outputs.batch }} was not posted to Facebook; run scripts/facebook-queue.js --batch ${{ steps.reports.outputs.batch }} once they are set."

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/* One social calendar across every batch (#1039): five posts a day per network, one per content lane (#1037).
+/* One social calendar across every batch (#1039): five posts a day per network, one per content lane (#1037); each
+   live brand face plans its own days at its cadence (#2310, scripts/brand-kit/faces.js).
 
      node scripts/social-calendar.js [--from 2026-10-26]                 print the plan, change nothing
      node scripts/social-calendar.js --write [--from ...] [--batch B]    rewrite calendar.csv and the captions' dates
@@ -32,6 +33,8 @@ const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
 const { titleKey } = require("./build-social-hub");
+const faceRoute = require("./face-route");
+const { FACES } = require("./brand-kit/faces");
 
 const ROOT = path.resolve(__dirname, "..");
 const POSTS = "media/social-posts";
@@ -137,7 +140,7 @@ function load(root = ROOT) {
       const id = batch + "/" + slug;
       const entries = (books.buffer.posts[id] || []).concat(books.facebook.posts[id] || []);
       const queued = entries.filter((e) => e.result === "queued");
-      posts.push({ id, batch, slug, kind, lane: LANES[kind], date: c.date, hold: !!c.hold, pin: !!c.pin, rows: rows[slug] || [],
+      posts.push({ id, batch, slug, kind, lane: LANES[kind], face: faceFor(faceRoute.postLang(batch, slug, c, "x", root)), date: c.date, hold: !!c.hold, pin: !!c.pin, rows: rows[slug] || [],
         sent: entries.some((e) => e.result === "sent") || (!!c.youtubeTitle && clips.has(titleKey(c.youtubeTitle))),
         queued: queued.length > 0,
         queuedDay: queued.map((e) => Date.parse(e.at)).filter((at) => !isNaN(at)).map(bogotaDay).sort()[0] || null,
@@ -160,9 +163,36 @@ const isTop = (post) => post.batch.startsWith("auto-") && /^01-/.test(post.slug)
 const rotation = (post) => Math.max(0, ROTATION.indexOf(post.slug.split("/")[0]));
 const firstDay = (post) => post.rows.filter((r) => NETWORKS.includes(r.channel)).map((r) => r.date).sort()[0] || post.date;
 
-// Days from --from on, each with five lanes. Returns { moves, held, days }: moves carry the post, its new day and
-// the lane it was slotted in; held are hub-only posts of --batch that move to the top post's day.
-function plan(posts, { from, batch, moveQueued = false } = {}) {
+/* Each face plans its own days (#2310): its posts, its lanes, at most its cadence a day (faces.js). A face that is not
+   live yet plans in the default face's days, as before the split. Returns { moves, held, days }: moves carry the
+   post, its new day and the lane it was slotted in; held are hub-only posts of --batch that move to the top post's
+   day; days are keyed <face>|<day> once more than one face plans. */
+function plan(posts, opts = {}) {
+  const groups = new Map();
+  posts.forEach((post) => { const face = post.face || faceRoute.DEFAULT; groups.set(face, (groups.get(face) || []).concat(post)); });
+  const moves = [];
+  const days = new Map();
+  groups.forEach((list, face) => {
+    const r = planOne(list, opts, FACES[face].cadence);
+    moves.push(...r.moves);
+    r.days.forEach((lanes, day) => days.set(groups.size > 1 ? face + "|" + day : day, lanes));
+  });
+  const held = [];
+  if (opts.batch) {
+    const top = moves.find((m) => m.post.batch === opts.batch && isTop(m.post));
+    if (top) posts.filter((post) => post.batch === opts.batch && post.hold && post.date !== top.day).forEach((post) => held.push({ post, day: top.day }));
+  }
+  return { moves, held, days };
+}
+
+// The face whose days a post is planned in: its language's face once that face is live.
+function faceFor(lang) {
+  const face = faceRoute.faceOf(lang);
+  return FACES[face].live ? face : faceRoute.DEFAULT;
+}
+
+// One face's days from --from on, each with five lanes and at most cadence posts.
+function planOne(posts, { from, batch, moveQueued = false } = {}, cadence = 5) {
   const days = new Map();
   const take = (day, lane, post) => {
     if (!days.has(day)) days.set(day, {});
@@ -192,23 +222,20 @@ function plan(posts, { from, batch, moveQueued = false } = {}) {
 
   const moves = [];
   const put = (day, lane, post) => { take(day, lane, post); moves.push({ post, day, lane, hub: keepsHub(post.batch, post.date, day) ? post.date : day }); };
+  const full = (day) => Object.keys(days.get(day) || {}).length >= cadence;
   // The day's top Live Report: the first free lane 1 slot on or after its own day.
   tops.forEach((post) => {
     let day = firstDay(post) > from ? firstDay(post) : from;
-    while (!free(day, 1)) day = addDays(day, 1);
+    while (!free(day, 1) || full(day)) day = addDays(day, 1);
     put(day, 1, post);
   });
+  // Under five a day, the lane that goes first moves on one a day, so no lane waits behind the others.
   for (let day = from; Object.values(queue).some((q) => q.length); day = addDays(day, 1)) {
-    [2, 3, 4, 5].forEach((lane) => { if (free(day, lane) && queue[lane] && queue[lane].length) put(day, lane, queue[lane].shift()); });
-    BORROWED.forEach((lane) => { if (free(day, lane) && queue[1] && queue[1].length) put(day, lane, queue[1].shift()); });
+    const first = dayNumber(day) % 4;
+    [2, 3, 4, 5].slice(first).concat([2, 3, 4, 5].slice(0, first)).forEach((lane) => { if (free(day, lane) && !full(day) && queue[lane] && queue[lane].length) put(day, lane, queue[lane].shift()); });
+    BORROWED.forEach((lane) => { if (free(day, lane) && !full(day) && queue[1] && queue[1].length) put(day, lane, queue[1].shift()); });
   }
-
-  const held = [];
-  if (batch) {
-    const top = moves.find((m) => m.post.batch === batch && isTop(m.post));
-    if (top) posts.filter((post) => post.batch === batch && post.hold && post.date !== top.day).forEach((post) => held.push({ post, day: top.day }));
-  }
-  return { moves, held, days };
+  return { moves, days };
 }
 
 // A moved post's rows: the five networks at their lane's slot that day, any other channel on the same day at its

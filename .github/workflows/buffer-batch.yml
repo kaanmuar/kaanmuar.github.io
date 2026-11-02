@@ -16,6 +16,8 @@
 # them again from the batch's captions.json at the same time, for a caption fixed after queueing (#1191).
 # A queue that finds Buffer's daily limit spent, or the batch not on the site after 60 minutes (#2160), lists its batch under retry in the ledger and passes (#1188). The
 # nightly run, before the sync and whatever pauses the sync, queues those batches again; mode retry does it by hand.
+# Mode reroute, and every nightly run before the sync, moves the scheduled @qalaburlreview posts whose language has
+# its own face's channel now (es/pt once @qaurlreview is connected) to that channel at the same time, 150 a run (#2310).
 # Mode media lists the scheduled posts by batch, channel and where their media lives (site, release, or a copy
 # uploaded into Buffer), and changes nothing. Mode remedia points the scheduled posts of the batches in batch
 # (comma-separated) that hold Buffer's own copy of their media at the re-rendered file on the site or the batch's
@@ -29,9 +31,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, re-queue the batches a spent limit stopped, delete scheduled posts not on the hub, delete and requeue listed posts, list where scheduled posts take their media from, or point Buffer-held copies at re-rendered media'
+        description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, re-queue the batches a spent limit stopped, move es/pt posts to the face that now has a channel, delete scheduled posts not on the hub, delete and requeue listed posts, list where scheduled posts take their media from, or point Buffer-held copies at re-rendered media'
         type: choice
-        options: [queue, seed, check, sync, retry, delete-unmatched, delete-duplicates, requeue, media, remedia]
+        options: [queue, seed, check, sync, retry, reroute, delete-unmatched, delete-duplicates, requeue, media, remedia]
         default: queue
       batch:
         description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10 (queue; remedia takes batch,batch)'
@@ -94,6 +96,14 @@ jobs:
             CLIP_BASE="$clip" node scripts/buffer-queue.js --batch "$b" "$@" | tee -a "$GITHUB_STEP_SUMMARY" || failed="$failed $b"
           done
           if [ -n "$failed" ]; then echo "::error::Not fully queued:$failed"; exit 1; fi
+      - name: Move posts to the face that posts their language
+        if: ${{ !cancelled() && (github.event_name == 'schedule' || env.MODE == 'reroute') }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          set -o pipefail
+          if [ "$DRY_RUN" = "true" ]; then set -- --dry-run; else set --; fi
+          node scripts/buffer-queue.js --reroute "$@" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Move queued posts to their calendar slots
         if: ${{ !cancelled() && env.MODE == 'sync' }}
         env:

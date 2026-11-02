@@ -138,7 +138,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Upload Profile picture: `media/faces-2026-11/es/facebook/avatar-720.jpg`
 - [ ] Upload Cover photo; phones show only the outlined middle: `media/faces-2026-11/es/facebook/cover-1640x624.jpg`
-- [ ] Access: Add the Page to the Meta app "QA-lab Page Publisher" and connect it in Buffer (#2310).
+- [ ] Access: Add the Page to the Meta app "QA-lab Page Publisher", then pipe a user token of that app: pbpaste | FACE=es FACEBOOK_PAGE_ID=<Page id> node scripts/meta-token.js page. It sets FACEBOOK_PAGE_TOKEN_ES, and scripts/facebook-queue.js posts (#2310).
 
 ## dev.to: new account, https://dev.to/qaurlreview
 
@@ -160,7 +160,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   https://carlosandmunoz.com/qa-review-es.html?utm_source=devto&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   ```
 - [ ] Upload Profile image (dev.to has no banner): `media/faces-2026-11/es/devto/avatar-1000.jpg`
-- [ ] Access: Settings > Extensions > DEV Community API Keys: make a key for #2310.
+- [ ] Access: Settings > Extensions > DEV Community API Keys: make a key for the dev.to poster (#2326).
 
 ## Bluesky: new account, https://bsky.app/profile/qaurlreview.bsky.social
 
@@ -175,7 +175,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Upload Avatar: `media/faces-2026-11/es/bluesky/avatar-1000.jpg`
 - [ ] Upload Banner; the avatar covers the lower left: `media/faces-2026-11/es/bluesky/banner-3000x1000.jpg`
-- [ ] Access: Settings > Privacy and security > App passwords: make one for #2310.
+- [ ] Access: Settings > Privacy and security > App passwords: make one and set the repo secrets BLUESKY_HANDLE_ES (qaurlreview.bsky.social) and BLUESKY_APP_PASSWORD_ES (#2310).
 
 ## Mastodon: new account, https://mastodon.social/@qaurlreview
 
@@ -196,7 +196,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   - EN · DE · FR · IT: https://mastodon.social/@qalaburlreview
 - [ ] Upload Avatar (rounded square): `media/faces-2026-11/es/mastodon/avatar-400.jpg`
 - [ ] Upload Header; the avatar covers the lower left: `media/faces-2026-11/es/mastodon/header-1500x500.jpg`
-- [ ] Access: Preferences > Development > New application with write:statuses and write:media: give the token to #2310.
+- [ ] Access: Preferences > Development > New application with write:statuses, write:media, read:accounts and read:statuses: set the repo secrets MASTODON_URL_ES (https://mastodon.social) and MASTODON_TOKEN_ES (#2310).
 
 ## Instagram: existing account, https://www.instagram.com/qaurlreview/
 
@@ -225,7 +225,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
 - [ ] Upload Highlight cover: Sketches: `media/faces-2026-11/es/instagram/highlight-skits.jpg`
 - [ ] Upload Highlight cover: En directo: `media/faces-2026-11/es/instagram/highlight-runs.jpg`
 - [ ] Upload Highlight cover: Cómo funciona: `media/faces-2026-11/es/instagram/highlight-guide.jpg`
-- [ ] Access: Connect the account in Buffer through the linked Facebook Page (#2310).
+- [ ] Access: Nothing in Buffer: once linked to the face's Facebook Page, FACE=es node scripts/meta-token.js page also sets INSTAGRAM_USER_ID_ES, and scripts/open-social-queue.js posts (#2310).
 
 ## Threads: existing account, https://www.threads.com/@qaurlreview
 
@@ -239,7 +239,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   https://carlosandmunoz.com/qa-review-es.html?utm_source=threads&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   ```
 - [ ] Upload Profile picture (Threads can import it from Instagram): `media/faces-2026-11/es/threads/avatar-1080.jpg`
-- [ ] Access: Connect the profile in Buffer (#2310).
+- [ ] Access: Nothing in Buffer: a Threads user token of the app (User Token Generator) through pbpaste | FACE=es node scripts/meta-token.js threads sets THREADS_TOKEN_ES, and scripts/open-social-queue.js posts (#2310).
 
 ## LinkedIn: new account, https://www.linkedin.com/company/qaurlreview
 

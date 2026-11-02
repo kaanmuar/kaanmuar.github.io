@@ -13,6 +13,11 @@
    than MISSED_MS old is left alone, so connecting a network does not flood it with the backlog. A network whose
    secrets are missing is skipped.
 
+   Each post goes to the face of its language (scripts/face-route.js, #2310): en/de/fr/it to @qalaburlreview with
+   the secrets above, es/pt to @qaurlreview with the same names ending in _ES (BLUESKY_HANDLE_ES, ...). Until a
+   face has its secrets on a network, @qalaburlreview posts its languages there. A post sent from either face is
+   not posted again.
+
    Every post goes into the ledger assets/social/open-social.json (scripts/social-ledger.js) as sent or failed. A
    failed post is tried again on the next run while its slot is within reach. Before posting, each run reads the
    account's latest posts and skips a post one of them already links to, so a ledger that never reached main does
@@ -30,6 +35,8 @@ const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
 const { createGate, withHubLink } = require("./hub-gate");
+const faceRoute = require("./face-route");
+const { FACES } = require("./brand-kit/faces");
 
 const ROOT = path.resolve(__dirname, "..");
 const SITE = process.env.SITE || "https://carlosandmunoz.com";
@@ -358,16 +365,22 @@ async function main() {
   const now = Date.now();
   let broken = false;
   for (const network of only ? [only] : Object.keys(NETWORKS)) {
-    const client = NETWORKS[network]();
-    if (live && !client.ready) { console.log(network + ": no secrets, skipped"); continue; }
-    try {
-      const list = batches.flatMap((name) => posts(name, ROOT, network));
-      const c = await run(network, client, list, book, { live, now, gate });
-      console.log(network + ": " + c.posted + " posted, " + c.already + " already on the account, " + c.held + " held, " + c.failed + " failed, " + c.waiting + " due for a later run");
-      if (c.failed) broken = true;
-    } catch (error) {
-      broken = true;
-      console.log(network + ": " + error.message);
+    const clients = Object.keys(FACES).map((face) => ({ face, client: NETWORKS[network](faceRoute.faceEnv(face)) }));
+    const connected = new Set(clients.filter((c) => c.client.ready).map((c) => c.face));
+    const all = batches.flatMap((name) => posts(name, ROOT, network));
+    for (const { face, client } of clients) {
+      const label = network + (face === faceRoute.DEFAULT ? "" : " @" + FACES[face].handle);
+      if (live && !client.ready) { console.log(label + ": no secrets, skipped"); continue; }
+      const list = all.filter((post) => faceRoute.postFace(post.batch, post.slug, post.cap, ROUTES[network].slot, connected) === face);
+      if (!live && !list.length) continue;
+      try {
+        const c = await run(network, client, list, book, { live, now, gate });
+        console.log(label + ": " + c.posted + " posted, " + c.already + " already on the account, " + c.held + " held, " + c.failed + " failed, " + c.waiting + " due for a later run");
+        if (c.failed) broken = true;
+      } catch (error) {
+        broken = true;
+        console.log(label + ": " + error.message);
+      }
     }
   }
   if (live && JSON.stringify(book) !== before) ledger.write(ledger.OPEN_SOCIAL, book);

@@ -21,6 +21,10 @@ const FACES = {
     lang: "en",
     name: "QA-lab URL Review",
     other: "es",
+    // Suffix of this face's secrets (scripts/face-route.js) and its posts a day per network (scripts/social-calendar.js).
+    env: "",
+    cadence: 5,
+    live: true,
     // Rotates the cyan Fusion look; 0 keeps the look the live accounts already have.
     hue: 0,
     site: "qa-review.html",
@@ -52,6 +56,11 @@ const FACES = {
     lang: "es",
     name: "QA-lab URL Review · ES/PT",
     other: "en",
+    env: "_ES",
+    // A new account starts at 3 a day. Until live, the calendar plans es/pt in @qalaburlreview's 5 a day, as
+    // before the split; set it once the face's accounts are connected.
+    cadence: 3,
+    live: false,
     // Cyan to amber, so the two faces never share an avatar.
     hue: -150,
     site: "qa-review-es.html",
@@ -151,7 +160,7 @@ const NETWORKS = [
       "A Page has no login of its own: create it from your Facebook profile at facebook.com/pages/create, then set the username {handle} and {email} as the Page email.",
       "Link the face's Instagram to this Page (Page settings > Linked accounts); Buffer only publishes to Instagram through a linked Page."
     ],
-    access: "Add the Page to the Meta app \"QA-lab Page Publisher\" and connect it in Buffer (#2310)."
+    access: "Add the Page to the Meta app \"QA-lab Page Publisher\", then pipe a user token of that app: pbpaste | FACE={face} FACEBOOK_PAGE_ID=<Page id> node scripts/meta-token.js page. It sets FACEBOOK_PAGE_TOKEN{env}, and scripts/facebook-queue.js posts (#2310)."
   },
   {
     id: "devto", name: "dev.to",
@@ -161,7 +170,7 @@ const NETWORKS = [
     fields: [["Name", "name"], ["Username", "handle"], ["Bio (200)", "bio"], ["Website", "site"]],
     images: [{ file: "avatar-1000.jpg", w: 1000, h: 1000, kind: "avatar", circle: true, where: "Profile image (dev.to has no banner)" }],
     steps: ["Sign up at dev.to/enter with email: {email}, username {handle}."],
-    access: "Settings > Extensions > DEV Community API Keys: make a key for #2310."
+    access: "Settings > Extensions > DEV Community API Keys: make a key for the dev.to poster (#2326)."
   },
   {
     id: "bluesky", name: "Bluesky",
@@ -174,7 +183,7 @@ const NETWORKS = [
       { file: "banner-3000x1000.jpg", w: 1500, h: 500, scale: 2, kind: "header", fx: { subject: [0.95, 0], zoom: 1.5 }, where: "Banner; the avatar covers the lower left" }
     ],
     steps: ["Create account on bsky.app with {email} and the handle {handle}."],
-    access: "Settings > Privacy and security > App passwords: make one for #2310."
+    access: "Settings > Privacy and security > App passwords: make one and set the repo secrets BLUESKY_HANDLE{env} ({handle}.bsky.social) and BLUESKY_APP_PASSWORD{env} (#2310)."
   },
   {
     id: "mastodon", name: "Mastodon",
@@ -190,7 +199,7 @@ const NETWORKS = [
       "Sign up at mastodon.social/auth/sign_up with {email} and the username {handle}, then confirm the email.",
       "Preferences > Public profile > Verification: the face landing page (#2311) will carry rel=\"me\" so the website field shows as verified."
     ],
-    access: "Preferences > Development > New application with write:statuses and write:media: give the token to #2310."
+    access: "Preferences > Development > New application with write:statuses, write:media, read:accounts and read:statuses: set the repo secrets MASTODON_URL{env} (https://mastodon.social) and MASTODON_TOKEN{env} (#2310)."
   },
   {
     id: "instagram", name: "Instagram",
@@ -206,7 +215,7 @@ const NETWORKS = [
       "Sign up at instagram.com/accounts/emailsignup with {email} and the username {handle}; add it to the same Accounts Center so one app switches between faces.",
       "Settings > Account type and tools > Switch to professional account (Business), then link the face's Facebook Page."
     ],
-    access: "Connect the account in Buffer through the linked Facebook Page (#2310)."
+    access: "Nothing in Buffer: once linked to the face's Facebook Page, FACE={face} node scripts/meta-token.js page also sets INSTAGRAM_USER_ID{env}, and scripts/open-social-queue.js posts (#2310)."
   },
   {
     id: "threads", name: "Threads",
@@ -216,7 +225,7 @@ const NETWORKS = [
     fields: [["Bio (150)", "bio"], ["Link", "site"]],
     images: [{ file: "avatar-1080.jpg", w: 1080, h: 1080, kind: "avatar", circle: true, where: "Profile picture (Threads can import it from Instagram)" }],
     steps: ["Threads has no sign-up of its own: open the Threads app, log in with the face's Instagram (@{handle}) and keep its handle."],
-    access: "Connect the profile in Buffer (#2310)."
+    access: "Nothing in Buffer: a Threads user token of the app (User Token Generator) through pbpaste | FACE={face} node scripts/meta-token.js threads sets THREADS_TOKEN{env}, and scripts/open-social-queue.js posts (#2310)."
   },
   {
     id: "linkedin", name: "LinkedIn",

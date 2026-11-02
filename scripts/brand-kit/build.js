@@ -99,7 +99,7 @@ function account(n) {
     fields: n.fields.map(([label, key]) => ({ label, value: value(key, label) })),
     images: FACE_KIT.filter((i) => i.network === n.name).map((i) => ({ where: i.where, file: path.relative(ROOT, filePath(i)) })),
     steps: (n.exists[FACE.id] ? n.steps.slice(1) : n.steps).map((s) => s.replace(/\{email\}/g, "`" + FACE.email + "`").replace(/\{handle\}/g, "`" + value("handle") + "`")),
-    access: n.access
+    access: n.access.replace(/\{env\}/g, FACE.env).replace(/\{face\}/g, FACE.id).replace(/\{handle\}/g, FACE.handle)
   };
 }
 
