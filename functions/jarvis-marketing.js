@@ -195,6 +195,15 @@ async function campaignAct(ctx, body) {
   return { id, name: String(after.name || ""), status: CAMPAIGN_STATUS[String(after.status)] || "status " + after.status };
 }
 
+// #1977: pause or resume one sending mailbox; its warm-up keeps its own switch.
+async function mailboxAct(ctx, email, action) {
+  needKey(ctx);
+  if (!EMAIL.test(String(email || ""))) throw new Error("That is not a mailbox address.");
+  if (action !== "pause" && action !== "resume") throw new Error("Pause or resume only.");
+  await instantly(ctx, "accounts/" + encodeURIComponent(email) + "/" + action, { method: "POST", body: "{}" });
+  return { email, action };
+}
+
 async function block(ctx, body) {
   needKey(ctx);
   const value = String((body && body.value) || "").trim().toLowerCase();
@@ -385,6 +394,6 @@ async function command(ctx, db, body) {
 }
 
 module.exports = {
-  marketing, campaignRows, prospectRows, noteRows, parseName, windowOf, campaignAct, block, prospectLines, queueProspects,
+  marketing, campaignRows, prospectRows, noteRows, parseName, windowOf, campaignAct, mailboxAct, block, prospectLines, queueProspects,
   syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, TTL: 10 * 60 * 1000
 };
