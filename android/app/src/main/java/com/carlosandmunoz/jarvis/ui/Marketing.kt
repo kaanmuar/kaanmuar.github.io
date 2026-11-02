@@ -63,6 +63,9 @@ object Marketing {
     fun waiting(sync: JsonObject?, action: String, key: String) =
         sync.obj("commands").objs("items").any { it.str("status") == "pending" && (action.isEmpty() || it.str("action") == action) && it.str("label").orEmpty().contains(key) }
 
+    /** The day's LinkedIn list as (still to send, already sent); sent people fold away (#2336). */
+    fun linkedinSplit(sync: JsonObject?) = sync.obj("linkedin").objs("items").partition { it.bool("sent") != true }
+
     fun repliesToAnswer(sync: JsonObject?) = sync.objs("replies").filter { it.str("sent").isNullOrEmpty() && !it.str("draft").isNullOrEmpty() }
 
     data class Countdown(val label: String, val date: String, val days: Long)
@@ -204,7 +207,9 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
             val uri = LocalUriHandler.current
             GlowBar(liSent.toFloat() / liItems.size)
             Muted("$liSent of ${liItems.size} requests sent")
-            liItems.forEach { p ->
+            val (toSend, sentRows) = Marketing.linkedinSplit(sy)
+            var sentOpen by rememberSaveable { mutableStateOf(false) }
+            val row: @Composable (JsonObject) -> Unit = { p ->
                 val name = p.str("name").orEmpty()
                 val sent = p.bool("sent") == true
                 Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -215,9 +220,18 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
                     p.str("profile")?.takeIf { it.startsWith("https://") }?.let { url -> TextButton({ uri.openUri(url) }) { Text("Profile", color = J.cyan, fontSize = 13.sp) } }
                     if (Marketing.waiting(sy, "linkedin", name)) Text("waiting", color = J.amber, fontSize = 12.sp)
                     else TextButton({ ask("mark the LinkedIn request to $name as " + if (sent) "not sent" else "sent") { command("mk:li:$name", mapOf("action" to "linkedin", "date" to li.str("date").orEmpty(), "name" to name, "sent" to !sent)) } }, enabled = "mk:li:$name" !in s.running) {
-                        Text(if (sent) "Sent ✓" else "Mark sent", color = if (sent) J.green else J.cyan, fontSize = 13.sp)
+                        Text(if (sent) "Not sent" else "Mark sent", color = if (sent) J.muted else J.cyan, fontSize = 13.sp)
                     }
                 }
+            }
+            if (toSend.isEmpty()) Muted("All ${liItems.size} sent. The next list comes the next working day at 07:00 Bogotá time.")
+            toSend.forEach { row(it) }
+            if (sentRows.isNotEmpty()) {
+                val today = li.str("date") == LocalDate.now().toString()
+                TextButton({ sentOpen = !sentOpen }) {
+                    Text((if (sentOpen) "▾ " else "▸ ") + "Sent" + (if (today) " today" else "") + " · ${sentRows.size}", color = J.green, fontSize = 13.sp)
+                }
+                if (sentOpen) sentRows.forEach { row(it) }
             }
         }
 
