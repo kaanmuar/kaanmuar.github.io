@@ -48,6 +48,7 @@ const JOBS = [
   { job: "open-social.yml", host: "github", cron: "13,43 * * * *", gap: 6, what: "Post the slots that have come to Bluesky and Mastodon" },
   { job: "facebook-page.yml", host: "github", cron: "7 16 * * *", gap: 24, what: "Schedule the Facebook queue (started by dispatchFacebookQueue; this slot is the backup)" },
   { job: "field-sweep.yml", host: "github", cron: "23 13 * * *", gap: 50, what: "Propose standout items from the field for the social hub (the owner approves them in admin)" },
+  { job: "sweep-roundup.yml", host: "github", cron: "29 14 * * 1", gap: 8 * 24, what: "Draft the weekly neutral sweep round-up post (the owner approves it in Jarvis or admin)" },
   { job: "sweep-seeds.yml", host: "github", cron: "0 9 16 * *", gap: 32 * 24, what: "Rebuild the country-sweep seeds from the CrUX top lists" },
   { job: "domain-index.yml", host: "github", cron: "0 10 16 * *", gap: 32 * 24, what: "Rebuild the URL Review host suggestions from the CrUX and Tranco lists" }
 ];

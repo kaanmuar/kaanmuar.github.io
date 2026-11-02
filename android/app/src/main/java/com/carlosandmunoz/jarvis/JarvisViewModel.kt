@@ -59,6 +59,7 @@ data class UiState(
     val proposals: List<JsonObject>? = null,
     val runs: List<JsonObject>? = null,
     val shares: List<JsonObject>? = null,
+    val devices: List<JsonObject>? = null,
     val studio: JsonObject? = null,
 )
 
@@ -102,6 +103,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         _state.value = UiState(email = auth.email, push = _state.value.push, ongoing = _state.value.ongoing)
         viewModelScope.launch {
             runCatching { Push.forget(jarvis) }
+            runCatching { api.call("device", 1, mapOf("gone" to JsonPrimitive(true))) }
             auth.signOut()
             api.forget()
             Home.stop(jarvis)
@@ -261,6 +263,21 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Connect YouTube or Mastodon for the engagement poster (#1990): the network's sign-in opens in the browser. */
+    fun connectEngagement(network: String, open: (String) -> Unit) {
+        if (fixture != null) { say("Connect is off with a fixture."); return }
+        val key = "eg:connect:$network"
+        _state.update { it.copy(running = it.running + key) }
+        viewModelScope.launch {
+            runCatching { api.call("engagement-connect", _state.value.days, mapOf("network" to JsonPrimitive(network))) }
+                .onSuccess { out ->
+                    _state.update { it.copy(running = it.running - key) }
+                    out.str("url")?.let(open) ?: say(out.str("error") ?: "No sign-in link came back.")
+                }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
+        }
+    }
+
     /** Connect Google Calendar for book.html (#1971): Google's consent page opens in the browser. */
     fun connectCalendar(open: (String) -> Unit) {
         if (fixture != null) { say("Connect is off with a fixture."); return }
@@ -272,6 +289,14 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
                     out.str("url")?.let(open) ?: say(out.str("error") ?: "Google sent no sign-in link.")
                 }
                 .onFailure { e -> fail(e) { it.copy(running = it.running - "calendar", toast = e.message ?: "Failed.") } }
+        }
+    }
+
+    /** The screen changed (folded, opened, tabletop, DeX): the server keeps this device's row and answers with the list Settings shows. */
+    fun reportDevice() {
+        if (fixture != null || !auth.signedIn) return
+        viewModelScope.launch {
+            runCatching { api.call("device", _state.value.days) }.onSuccess { out -> _state.update { it.copy(devices = out.objs("devices")) } }
         }
     }
 

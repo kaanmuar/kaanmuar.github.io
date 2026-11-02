@@ -24,9 +24,10 @@ function keyBytes(b64) {
     return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 }
 
-function browserName(ua) {
-    const b = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
-    const os = /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'PC';
+/** "Chrome on Mac"; on a phone the model when the browser tells it (#2068): "Chrome on SM-F966U". */
+export function browserName(ua, model) {
+    const b = /SamsungBrowser\//.test(ua) ? 'Samsung Internet' : /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+    const os = model ? model : /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'PC';
     return b + ' on ' + os;
 }
 
