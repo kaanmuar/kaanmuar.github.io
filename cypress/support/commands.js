@@ -27,14 +27,14 @@ Cypress.Commands.add('visitAdmin', () => {
 });
 
 Cypress.Commands.add('loginAdmin', () => {
-  const email = Cypress.env('ADMIN_EMAIL') || 'kaanmuar@gmail.com';
-  const password = Cypress.env('ADMIN_PASSWORD');
-  if (!password) {
-    throw new Error('Set Cypress env ADMIN_PASSWORD to run authenticated admin tests.');
-  }
-  cy.visit('/admin.html');
-  cy.get('#email').type(email);
-  cy.get('#password').type(password, { log: false });
+  cy.env(['ADMIN_EMAIL', 'ADMIN_PASSWORD'], { timeout: 10000 }).then(({ ADMIN_EMAIL, ADMIN_PASSWORD }) => {
+    if (!ADMIN_PASSWORD) {
+      throw new Error('Set Cypress env ADMIN_PASSWORD to run authenticated admin tests.');
+    }
+    cy.visit('/admin.html');
+    cy.get('#email').type(ADMIN_EMAIL || 'kaanmuar@gmail.com');
+    cy.get('#password').type(ADMIN_PASSWORD, { log: false });
+  });
   cy.get('#login-form button[type="submit"]').click();
   cy.get('#login-title').should('have.text', 'Authenticator');
   cy.get('#dashboard').should('not.be.visible');
