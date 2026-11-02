@@ -152,6 +152,18 @@ async function campaignAct(ctx, body) {
   return { id, name: String(after.name || ""), status: CAMPAIGN_STATUS[String(after.status)] || "status " + after.status };
 }
 
+// Every active campaign paused (#1977): Jarvis's hold while a mailbox, its warm-up or a sending-domain record fails.
+async function pauseActive(ctx) {
+  needKey(ctx);
+  const list = await instantly(ctx, "campaigns?limit=100");
+  const paused = [];
+  for (const c of (list.items || []).filter((row) => row.status === 1 && ID.test(String(row.id || "")))) {
+    await instantly(ctx, "campaigns/" + c.id + "/pause", { method: "POST", body: "{}" });
+    paused.push({ id: String(c.id), name: String(c.name || "") });
+  }
+  return { paused };
+}
+
 async function block(ctx, body) {
   needKey(ctx);
   const value = String((body && body.value) || "").trim().toLowerCase();
@@ -297,6 +309,6 @@ async function command(ctx, db, body) {
 }
 
 module.exports = {
-  marketing, campaignRows, prospectRows, noteRows, parseName, windowOf, campaignAct, block, prospectLines, queueProspects,
+  marketing, campaignRows, prospectRows, noteRows, parseName, windowOf, campaignAct, pauseActive, block, prospectLines, queueProspects,
   syncRows, syncSource, commandOf, sendReply, command, TTL: 10 * 60 * 1000
 };

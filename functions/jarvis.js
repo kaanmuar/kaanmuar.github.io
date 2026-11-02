@@ -187,7 +187,8 @@ async function github(fetchImpl, token, { now }) {
 }
 
 // The newest failed run of a workflow on main gets its failed jobs re-run; the token needs Actions: write.
-async function rerunCi(fetchImpl, token, workflow) {
+// opts.once leaves a run that was already re-run (already: "re-run once").
+async function rerunCi(fetchImpl, token, workflow, opts) {
   if (!token) throw new Error("No GitHub token is set.");
   const name = String(workflow || "").slice(0, 120);
   const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
@@ -195,6 +196,7 @@ async function rerunCi(fetchImpl, token, workflow) {
   const run = (runs.workflow_runs || []).find((r) => r.name === name && r.conclusion !== "cancelled");
   if (!run) throw new Error("No finished run of " + name + " on main.");
   if (["success", "skipped", "neutral"].includes(run.conclusion)) return { workflow: name, run: run.id, url: run.html_url, already: run.conclusion };
+  if (opts && opts.once && Number(run.run_attempt) > 1) return { workflow: name, run: run.id, url: run.html_url, already: "re-run once" };
   const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs/" + run.id + "/rerun-failed-jobs", { method: "POST", headers, signal: AbortSignal.timeout(15000) });
   if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); the GitHub token needs Actions: write.");
   if (!res.ok) throw new Error("GitHub " + res.status + " on the re-run.");

@@ -5455,7 +5455,25 @@ function jarvisActionOps(settings, now) {
       const at = snap && snap.exists ? Date.parse(snap.data().updatedAt || "") : NaN;
       return !Number.isFinite(at) || now - at > th.hubStaleDays * 864e5;
     },
-    publishHub: () => jarvis.runJob(fetch, "refreshSocialHubStats")
+    publishHub: () => jarvis.runJob(fetch, "refreshSocialHubStats"),
+    runJob: (name) => jarvis.runJob(fetch, name),
+    rerunCi: async (workflow) => jarvis.rerunCi(fetch, await githubApp.token(), workflow, { once: true }),
+    pauseOutreach: async (reason) => {
+      const out = await jarvisMarketing.pauseActive({ fetch, env: process.env, now });
+      if (out.paused.length) {
+        const db = getFirestore();
+        await db.collection("jarvis_watch").doc("outreach-pause").set({ paused: out.paused, reason: String(reason || "").slice(0, 300), at: new Date(now).toISOString(), by: "jarvis" });
+        await Promise.all([1, 7, 30, 90, 365].flatMap((d) => ["marketing-" + d, "outreach-" + d]).map((id) => db.collection("jarvis_cache").doc(id).delete().catch(() => null)));
+      }
+      return out;
+    },
+    dropCache: async (source) => {
+      const cache = getFirestore().collection("jarvis_cache");
+      await Promise.all([0, 1, 7, 30, 90, 365].flatMap((d) => [source + "-" + d, "snapshot-" + d]).map((id) => cache.doc(id).delete().catch(() => null)));
+      return { dropped: source };
+    },
+    fixes: reviewFailures.FIXES,
+    gemini: process.env.GEMINI_API_KEY ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null
   };
 }
 
@@ -5463,9 +5481,15 @@ async function jarvisAutoActions() {
   const db = getFirestore();
   const settings = await jarvis.readSettings(db);
   const now = Date.now();
-  const result = await jarvisActions.autoRun({ db, now, settings, ops: jarvisActionOps(settings, now) });
-  const msg = jarvisActions.pushMessage(result);
-  if (msg) await jarvisPush.send(getMessaging(), db, await jarvisPush.targets(db, "alerts"), msg).catch((error) => console.error("Jarvis action push failed:", error));
+  const external = await jarvisExternal(["health", "jobs", "github", "uptime", "safety", "platform", "outreach", "mailbox"], 1).catch(() => null);
+  const items = external ? jarvisCore.briefing({ products: {}, external, thresholds: settings.thresholds }) : null;
+  const mail = external && external.outreach && external.outreach.ok && external.outreach.instantly && external.outreach.instantly.ok ? external.outreach.instantly : null;
+  const ops = Object.assign(jarvisActionOps(settings, now), { sending: !!mail && (mail.status || []).some((s) => s.label === "active" && s.value > 0) });
+  const result = await jarvisActions.autoRun({ db, now, settings, ops, items, external });
+  const phones = await jarvisPush.targets(db, "alerts");
+  for (const msg of [jarvisActions.pushMessage(result), jarvisActions.checkMessage(result)].filter(Boolean)) {
+    await jarvisPush.send(getMessaging(), db, phones, msg).catch((error) => console.error("Jarvis action push failed:", error));
+  }
   return jarvisActions.summary(result);
 }
 

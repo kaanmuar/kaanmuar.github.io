@@ -28,8 +28,10 @@ import com.carlosandmunoz.jarvis.data.str
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" to "Re-send failed notices", "publish-hub" to "Publish the hub", "run-job" to "Run a job again", "rerun-ci" to "Re-run failed CI jobs")
-private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
+val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" to "Re-send failed notices", "publish-hub" to "Publish the hub", "run-job" to "Run a job again", "rerun-ci" to "Re-run failed CI jobs",
+    "pause-outreach" to "Pause outreach", "refresh-data" to "Refresh stale data", "rerun-reviews" to "Re-run reviews a fix covers", "ai-fix" to "Fixes picked by Gemini", "check" to "Check a fix")
+private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub", "run-job", "rerun-ci", "pause-outreach", "refresh-data", "rerun-reviews", "ai-fix")
+private val RUN_NOW = listOf("rerun-held", "resend-notices", "publish-hub")
 
 /** One action waiting for a yes: what it does, in words, and the call. Shown by [ConfirmAction]. */
 data class PendingAction(val ask: String, val run: () -> Unit)
@@ -92,8 +94,9 @@ fun JarvisActions(s: UiState, vm: JarvisViewModel) {
         val p = v.obj("pending")
         Muted("Held re-runs: ${fmt(p.num("held"))} (${fmt(p.num("clean"))} clean) · failed notices: ${fmt(p.num("notices"))}" +
             (if (v.bool("noticesLive") != true) " · notices off" else if (v.bool("noticeHours") != true) " · outside notice hours" else ""))
+        Muted("On its own: failed jobs and workflows once a day, outreach paused while a mailbox, warm-up or domain record fails, stale sources, reviews a new fix covers, and Gemini's fixes at ${fmt(v.obj("settings").num("confidence") ?: 0.8, 2)} confidence or more. Each fix is checked 45 minutes later.")
         Row(verticalAlignment = Alignment.CenterVertically) {
-            CAPS.forEach { k -> TextButton(onClick = { confirm = PendingAction(askFor(k, null, p)) { runAction(vm, k) } }, enabled = "action:$k:" !in s.running) { Text(ACTION_LABELS[k]!!.substringBefore(' '), fontSize = 12.sp) } }
+            RUN_NOW.forEach { k -> TextButton(onClick = { confirm = PendingAction(askFor(k, null, p)) { runAction(vm, k) } }, enabled = "action:$k:" !in s.running) { Text(ACTION_LABELS[k]!!.substringBefore(' '), fontSize = 12.sp) } }
         }
         v.objs("actions").take(15).forEach { r ->
             val level = when (r.str("status")) { "done" -> "good"; "failed" -> "alert"; else -> "warn" }
