@@ -38,8 +38,6 @@ val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" 
     "resume-outreach" to "Resume outreach mailboxes", "retry-social" to "Retry failed social posts", "ai-ask" to "Ask the AI what to fix", "ai-fix" to "Run fixes the AI picked",
     "pagespeed-merge" to "Merge PageSpeed fixes", "pagespeed-close" to "Close PageSpeed fixes", "pagespeed-run" to "Start the PageSpeed run", "merge-pr" to "Merge a green PR")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
-/** Every action with a daily cap, for the used-today rows (#1977). */
-private val AUTO_CAPS = CAPS + listOf("rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix", "retry-social", "resume-outreach", "merge-pr")
 
 /** The countdown (#1977): risky actions Jarvis queued, which run when their time ends unless cancelled. */
 object Countdowns {
@@ -60,6 +58,31 @@ object Countdowns {
         r.str("hold")?.takeIf { it.isNotBlank() },
         r.str("why")?.takeIf { it.isNotBlank() }
     ).joinToString(" · ")
+}
+
+/** jarvis_settings/main.actions (#2145), as in Admin › Statistics › Settings; the server clamps the same ranges (cleanSettings). */
+object ActionSettings {
+    val CAPS = listOf("rerun-held", "resend-notices", "publish-hub", "rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix", "retry-social", "resume-outreach", "merge-pr")
+    const val CONFIDENCE = 0.8
+    const val MAX_CAP = 100
+
+    /** A typed cap, or null while the field is empty. */
+    fun cap(text: String): Int? = text.toIntOrNull()?.coerceIn(0, MAX_CAP)
+
+    /** Gemini's bar to act alone, in steps of 0.05 from 0.5 to 1. */
+    fun confidence(v: Double): Double = (Math.round(v * 20) / 20.0).coerceIn(0.5, 1.0)
+
+    /** The saved settings with these actions keys changed; the other keys, and the caps not given, keep their value. */
+    fun with(settings: JsonObject, auto: Boolean? = null, caps: Map<String, Int> = emptyMap(), confidence: Double? = null, countdownHours: Double? = null): JsonObject {
+        val old = settings.obj("actions") ?: JsonObject(emptyMap())
+        val patch = buildMap<String, JsonElement> {
+            auto?.let { put("auto", JsonPrimitive(it)) }
+            if (caps.isNotEmpty()) put("caps", JsonObject((old.obj("caps") ?: JsonObject(emptyMap())) + caps.mapValues { JsonPrimitive(it.value) }))
+            confidence?.let { put("confidence", JsonPrimitive(confidence(it))) }
+            countdownHours?.let { put("countdownHours", JsonPrimitive(it)) }
+        }
+        return JsonObject(settings + ("actions" to JsonObject(old + patch)))
+    }
 }
 
 /** Do it now or Cancel on one countdown, through the jarvis "countdown" op. */
@@ -148,7 +171,7 @@ fun JarvisActions(s: UiState, vm: JarvisViewModel) {
         }
         if (v == null) { Muted(error ?: "Reading the actions log…"); return@Panel }
         val caps = v.obj("settings").obj("caps")
-        AUTO_CAPS.forEach { k -> KeyRow(ACTION_LABELS[k] ?: k, fmt(v.obj("used").num(k)) + " of " + fmt(caps.num(k)) + " today", if ((v.obj("used").num(k) ?: 0.0) >= (caps.num(k) ?: 0.0)) J.amber else J.text) }
+        ActionSettings.CAPS.forEach { k -> KeyRow(ACTION_LABELS[k] ?: k, fmt(v.obj("used").num(k)) + " of " + fmt(caps.num(k)) + " today", if ((v.obj("used").num(k) ?: 0.0) >= (caps.num(k) ?: 0.0)) J.amber else J.text) }
         Muted("The AI acts alone at confidence " + "%.2f".format(java.util.Locale.ROOT, v.obj("settings").num("confidence") ?: 0.8) + " or more; other picks become proposals.")
         Muted("Risky ones wait ${Countdowns.hoursText(hours)} on the countdown, at any hour: mail to third parties, posts off schedule, merging a green PR or deploying, resuming outreach. At night, mail and posts then wait for 08:00-21:00 Bogotá. Refunds and deletes always wait for your tap.")
         val p = v.obj("pending")

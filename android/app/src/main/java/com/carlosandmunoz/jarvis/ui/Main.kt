@@ -500,11 +500,43 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 Muted("Goals, thresholds and search queries are edited in Admin › Statistics on the web.")
             }
             if (settings != null) Panel("Jarvis actions") {
-                val hours = settings.obj("actions").num("countdownHours") ?: Countdowns.HOURS
+                val actions = settings.obj("actions")
+                val hours = actions.num("countdownHours") ?: Countdowns.HOURS
+                val saving = "settings" in s.running
+                val save = { next: JsonObject, done: String -> vm.market("settings", "settings-save", mapOf("settings" to next)) { done } }
+                val caps = remember(actions) { ActionSettings.CAPS.associateWith { k -> mutableStateOf(actions.obj("caps").num(k)?.toInt()?.toString() ?: "") } }
+                var confidence by remember(actions) { mutableFloatStateOf((actions.num("confidence") ?: ActionSettings.CONFIDENCE).toFloat()) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) { Text("Run the safe actions on its own"); Muted("Every hour, within the daily caps below.") }
+                    Switch(actions.bool("auto") != false, { on -> save(ActionSettings.with(settings, auto = on), if (on) "Jarvis acts on its own." else "Jarvis waits for you.") }, enabled = !saving)
+                }
+                Text("Daily caps")
+                ActionSettings.CAPS.forEach { k ->
+                    val v = caps.getValue(k)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(ACTION_LABELS[k] ?: k, Modifier.weight(1f), fontSize = 14.sp)
+                        OutlinedTextField(v.value, { v.value = it.filter(Char::isDigit).take(3) }, singleLine = true, textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.width(76.dp))
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("AI confidence needed to act alone", Modifier.weight(1f))
+                    Muted("%.2f".format(java.util.Locale.ROOT, confidence))
+                }
+                Slider(confidence, { confidence = it }, valueRange = 0.5f..1f, steps = 9,
+                    colors = SliderDefaults.colors(thumbColor = J.cyan, activeTrackColor = J.cyan, inactiveTrackColor = J.line))
+                Row {
+                    ActionButton("Save caps and confidence", saving) {
+                        val typed = caps.mapNotNull { (k, v) -> ActionSettings.cap(v.value)?.let { k to it } }.toMap()
+                        save(ActionSettings.with(settings, caps = typed, confidence = confidence.toDouble()), "Caps and confidence saved.")
+                    }
+                }
+                Muted("Held re-runs go out on their own only when clean (a complete report with a score). Owner notices keep Monday-Saturday 08:00-19:00 Bogotá, three tries and the daily notice budget, even when you tap.")
+                Text("Countdown")
                 Muted("How long a risky action Jarvis starts by itself waits for Do it now or Cancel: mail to third parties, posts off schedule, merges and deploys, resuming outreach.")
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     COUNTDOWN_CHOICES.forEach { h ->
-                        TextButton(onClick = { vm.market("settings", "settings-save", mapOf("settings" to withCountdown(settings, h))) { "Countdown: ${Countdowns.hoursText(h)}." } }, enabled = "settings" !in s.running) {
+                        TextButton(onClick = { save(ActionSettings.with(settings, countdownHours = h), "Countdown: ${Countdowns.hoursText(h)}.") }, enabled = !saving) {
                             Text(Countdowns.hoursText(h), color = if (h == hours) J.cyan else J.muted, fontSize = 13.sp)
                         }
                     }
@@ -637,9 +669,6 @@ private fun withMail(settings: JsonObject, mail: Map<String, Boolean>): JsonObje
     JsonObject(settings + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })))
 
 private val COUNTDOWN_CHOICES = listOf(0.5, 1.0, 2.0, 4.0, 8.0)
-
-private fun withCountdown(settings: JsonObject, hours: Double): JsonObject =
-    JsonObject(settings + ("actions" to JsonObject((settings.obj("actions") ?: JsonObject(emptyMap())) + ("countdownHours" to JsonPrimitive(hours)))))
 
 // The owner emails Jarvis also pushes (#1672), as in Admin › Statistics › Settings.
 private val MAIL_LABELS = linkedMapOf(
