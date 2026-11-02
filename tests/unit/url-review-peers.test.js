@@ -21,9 +21,20 @@ test("a token opens its own site's column, and an unknown token opens none", () 
   assert.equal(peers.viewerOf(doc, "constructor"), "");
 });
 
+test("each reader's copy puts their own site first, so the benchmark's 'you' lines are about them", () => {
+  const forOne = peers.payloadOf("abc123", doc, rows, "one.co");
+  const forTwo = peers.payloadOf("abc123", doc, rows, "two.co");
+  assert.deepEqual(forOne.columns.map((c) => c.host), ["one.co", "two.co"]);
+  assert.deepEqual(forTwo.columns.map((c) => c.host), ["two.co", "one.co"]);
+  assert.ok(forTwo.columns[0].own && !forTwo.columns[1].own);
+  const three = Object.assign({}, doc, { hosts: ["a.co", "b.co", "c.co"], ids: ["aa11", "bb22", "cc33"] });
+  const all = { aa11: { report: report("a.co", 50) }, bb22: { report: report("b.co", 70) }, cc33: { report: report("c.co", 60) } };
+  assert.deepEqual(peers.payloadOf("x", three, all, "c.co").columns.map((c) => c.host), ["c.co", "a.co", "b.co"]);
+});
+
 test("the reader's column keeps its security details; the other peers' are left out but their score stays", () => {
   const made = peers.payloadOf("abc123", doc, rows, "two.co");
-  const [other, own] = made.columns;
+  const [own, other] = made.columns;
   assert.equal(own.own, true);
   assert.equal(other.own, false);
   assert.ok(own.report.insights.security);
