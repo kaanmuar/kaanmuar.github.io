@@ -150,3 +150,41 @@ test("the sync writes each working day's LinkedIn list once, from 07:00, never a
   assert.equal(sync.linkedinDay(dir, at(1, 9), run), "");
   assert.deepEqual(calls, [["tools/linkedin-day.py", "2026-11-02"]]);
 });
+
+const SENT = "11111111-2222-3333-4444-555555555555";
+
+test("sent emails (#2017): every cold email with what the lead did since, newest first", () => {
+  const out = mk.sentRows([
+    { id: SENT, ue_type: 1, timestamp_email: "2026-11-02T14:00:00Z", lead: "Ana@Uni.edu", eaccount: "hello@qalabreview.com", subject: "Your site", campaign_id: "c1", step: 1 },
+    { id: "x2", ue_type: 3, timestamp_email: "2026-11-03T14:00:00Z", to_address_email_list: "b@agency.io", eaccount: "hello@qalabreview.com", subject: "Fwd" },
+    { id: "x3", ue_type: 2, timestamp_email: "2026-11-04T14:00:00Z", lead: "ana@uni.edu" }
+  ], [{ email: "ana@uni.edu", first_name: "Ana", last_name: "Pérez", company_name: "Uni", email_open_count: 2, status: -1 }], [{ id: "c1", name: "W1 B-es Americas" }], { [SENT]: [{ to: "c@uni.edu", at: "2026-11-03T10:00:00Z" }] });
+  assert.equal(out.total, 2);
+  assert.deepEqual(out.rows.map((r) => r.id), ["x2", SENT]);
+  const a = out.rows[1];
+  assert.deepEqual([a.to, a.name, a.org, a.campaign, a.step, a.kind, a.opened, a.bounced, a.resent.length], ["ana@uni.edu", "Ana Pérez", "Uni", "W1 B-es Americas", 1, "campaign", 2, true, 1]);
+  assert.deepEqual([out.rows[0].kind, out.rows[0].org], ["resend", "agency.io"]);
+  assert.deepEqual([out.opened, out.bounced], [1, 1]);
+});
+
+test("sent emails (#2017): resend forwards the original from its mailbox, never to do-not-contact", async () => {
+  const calls = [];
+  const saved = {};
+  const fetch = async (url, init) => {
+    calls.push([url.replace(/^.*\/v2\//, ""), init && init.body ? JSON.parse(init.body) : null]);
+    return json(/emails\/1111/.test(url) ? { id: SENT, ue_type: 1, lead: "ana@uni.edu", eaccount: "hello@qalabreview.com", subject: "Your site" } : {});
+  };
+  const db = { collection: () => ({ doc: (id) => ({
+    get: async () => (id === "marketing_sync" ? { exists: true, data: () => ({ dnc: { items: [{ value: "blocked.edu" }] } }) } : { exists: false }),
+    set: async (doc) => Object.assign(saved, doc)
+  }) }) };
+  const ctx = { fetch, env: { INSTANTLY_API_KEY: "k" }, now: NOW };
+  const out = await mk.resend(ctx, db, { id: SENT });
+  assert.deepEqual([out.to, out.same, out.from], ["ana@uni.edu", true, "hello@qalabreview.com"]);
+  const fwd = calls.find((c) => c[0] === "emails/forward")[1];
+  assert.deepEqual([fwd.reply_to_uuid, fwd.eaccount, fwd.to_address_email_list, fwd.subject, fwd.include_original_body], [SENT, "hello@qalabreview.com", "ana@uni.edu", "Your site", true]);
+  assert.equal(saved[SENT][0].to, "ana@uni.edu");
+  assert.equal((await mk.resend(ctx, db, { id: SENT, to: "Dean@Uni.edu" })).same, false);
+  await assert.rejects(mk.resend(ctx, db, { id: SENT, to: "x@blocked.edu" }), /do-not-contact/);
+  await assert.rejects(mk.resend(ctx, db, { id: "nope" }), /sent email's id/);
+});

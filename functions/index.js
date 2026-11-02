@@ -4420,7 +4420,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     res.status(402).json({
       paymentRequired: true,
       priceUsd: urlReview.PRICE_USD,
-      error: "Reopening a report asks for payment. A card payment is not connected on this page."
+      error: "After 7 days, reopening a report asks for payment. A card payment is not connected on this page."
     });
     return;
   }
@@ -4507,6 +4507,23 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       const addons = data.addons || [];
       // A bought fix list opens the findings to the owner; the cases stay in the frosted preview.
       const fixList = addons.indexOf("fixlist") !== -1 && data.report ? { insights: data.report.insights || null } : {};
+      if (data.report && reviewOffers.reopenFree(data, Date.now())) {
+        const preview = urlReview.previewReport(data.report);
+        res.status(200).json(Object.assign({
+          report: fixList.insights ? Object.assign(preview, { insights: fixList.insights }) : preview,
+          frameworks: data.frameworks || [],
+          paid: false,
+          free: false,
+          addons,
+          reopenUntil: reviewOffers.reopenFreeUntil(data),
+          priceUsd: deal.usd,
+          creditUsd: priced.creditUsd || 0,
+          tools: priced.tools || [],
+          id,
+          host: data.report.host
+        }, dealFields(deal)));
+        return;
+      }
       res.status(402).json(Object.assign({
         paymentRequired: true,
         priceUsd: deal.usd,
@@ -4834,7 +4851,9 @@ async function runReview(req, res, placeOf) {
     await mailReviewedSites(ip, record);
     if (record.report && record.report.compare) await mailComparison(compareMail.runNotice(record));
     writeLine({ type: "log", text: "Report saved. Emailing a copy to " + intake.value.email + "." });
-    writeLine({ type: "done", report, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
+    // The page only blurs an unpaid report, so the stream carries the frosted copy; the asker keeps their own comparison.
+    const shown = record.paid === true ? report : Object.assign(urlReview.previewReport(report), report.compare ? { compare: report.compare } : {});
+    writeLine({ type: "done", report: shown, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
     try {
       await mailReportToAsker(record);
     } catch (error) {
@@ -5606,7 +5625,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-report": (b) => String(b.period || "daily") + " engagement report" };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-report": (b) => String(b.period || "daily") + " engagement report" };
 
 async function jarvisWatchRun() {
   const db = getFirestore();
@@ -5981,11 +6000,11 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       if (decided.error) throw new Error(decided.error);
       out = decided;
     }
-    else if (op === "marketing-campaign" || op === "marketing-block" || op === "marketing-queue" || op === "marketing-command") {
+    else if (op === "marketing-campaign" || op === "marketing-block" || op === "marketing-queue" || op === "marketing-command" || op === "marketing-resend") {
       const db = getFirestore();
       const ctx = { fetch, env, now };
       out = op === "marketing-campaign" ? await jarvisMarketing.campaignAct(ctx, body) : op === "marketing-block" ? await jarvisMarketing.block(ctx, body)
-        : op === "marketing-command" ? await jarvisMarketing.command(ctx, db, body) : await jarvisMarketing.queueProspects(db, body, now);
+        : op === "marketing-command" ? await jarvisMarketing.command(ctx, db, body) : op === "marketing-resend" ? await jarvisMarketing.resend(ctx, db, body) : await jarvisMarketing.queueProspects(db, body, now);
       await Promise.all([1, 7, 30, 90, 365].flatMap((d) => ["marketing-" + d, "outreach-" + d, "marketing-sync-" + d]).map((id) => db.collection("jarvis_cache").doc(id).delete().catch(() => null)));
     }
     else if (op === "engagement-decide") out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), body, operator);

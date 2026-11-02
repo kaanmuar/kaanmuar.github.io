@@ -1,5 +1,5 @@
 {
- "since": "2026-10-27T10:46:38.281Z",
+ "since": "2026-11-02T03:03:28.160Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -58,13 +58,21 @@
   "diamondsinternational.mt": "2026-10-27",
   "megaxh.com": "2026-10-27",
   "vs:looksharpstore.co.nz": "2026-10-27",
-  "vs:trygghansa.se": "2026-10-27"
+  "vs:trygghansa.se": "2026-10-27",
+  "edeq.com.co": "2026-11-02",
+  "eep.com.co": "2026-11-02",
+  "efigas.com.co": "2026-11-02",
+  "epa.gov.co": "2026-11-02",
+  "augsburger-allgemeine.de": "2026-11-02",
+  "mercadolibre.com.ec": "2026-11-02",
+  "vs:voicertool.com": "2026-11-02",
+  "vs:unn.edu.ng": "2026-11-02"
  },
  "recent": [
-  "ax-button-name",
-  "ax-aria-required-children",
-  "sec-http",
-  "sec-tls",
-  "sec-http"
+  "seo-title-missing",
+  "a11y-labels",
+  "geo-crawlers",
+  "ax-color-contrast",
+  "sec-hsts"
  ]
 }
