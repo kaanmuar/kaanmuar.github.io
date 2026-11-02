@@ -20,6 +20,14 @@
                    the warm-up threshold; after RESUME_PASSES healthy hourly checks resume-outreach goes on the countdown,
                    which trouble coming back cancels
    retry-social    failed social posts are posted again after the countdown
+
+   #2338, from the addresses source (jarvis-addresses.js), each at most once per occurrence of a problem:
+   enable-warmup   an Instantly mailbox with warm-up off gets it turned on, before the pause loop, so it is healed
+                   rather than paused
+   restore-alias   a missing required ImprovMX alias (canary, postmaster, abuse) is added back
+                   what Jarvis cannot fix (a mailbox to reconnect, DNS, a blocked Microsoft 365 user, a failed fix) is
+                   pushed once per occurrence; jarvis_watch/addresses keeps which, so a problem that clears and comes
+                   back pushes again
    merge-pr        an open PR labelled jarvis-merge, green and mergeable, squash-merged after the countdown
    ai-ask, ai-fix  open alerts no rule handles go to Gemini once per alert set and day, AI_CALLS a day; it may only pick
                    from AI_CATALOG, and a pick runs alone at confidence >= settings.confidence (the risky ones after the
@@ -32,14 +40,15 @@
 
 const crypto = require("crypto");
 const core = require("./jarvis-core");
+const addresses = require("./jarvis-addresses");
 
 const SAFE = core.SAFE_ACTIONS;
-const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3 };
+const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2 };
 const LABELS = {
   "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again", "rerun-ci": "Re-run failed CI jobs",
   "rating-decide": "Decide ratings", "brief-mark": "Snooze or dismiss a briefing line", "rerun-job": "Re-run a failed job", "refresh-stale": "Refresh stale data", "rerun-reviews": "Re-run reviews after a fix",
   "pause-outreach": "Pause an outreach mailbox", "resume-outreach": "Resume outreach mailboxes", "retry-social": "Retry failed social posts", "ai-ask": "Ask the AI what to fix", "ai-fix": "Run a fix the AI picked",
-  "merge-pr": "Merge a green PR",
+  "merge-pr": "Merge a green PR", "enable-warmup": "Turn mailbox warm-up back on", "restore-alias": "Restore a missing alias",
   "pagespeed-merge": "Merge PageSpeed fixes", "pagespeed-close": "Close PageSpeed fixes", "pagespeed-run": "Start the PageSpeed run"
 };
 const NOTICE_TRIES = 3;
@@ -196,6 +205,8 @@ async function recent(db, limit) {
      reviewFix()       -> { fixAt, ref, lastRun } the newest FIXES row and rerunReviewFailures' last start
      outreach()        -> { domain, failing: [check], warmupMin, mailboxes: [{ email, status, warmup, score, error }], pauses: [{ email, reason, passes }] }
      pauseMailbox(e)   -> pause a mailbox in Instantly;  setPause(email, row | null) -> save or clear Jarvis's pause
+     addresses()       -> the addresses source;  addressState() / setAddressState(row) -> jarvis_watch/addresses
+     enableWarmup(emails), restoreAlias(alias) -> the two fixes;  push(msg) -> a push to the alerts devices
      socialFailed()    -> failed social posts in range
      mergeCandidates() -> [{ number, sha, title, url }] open PRs labelled jarvis-merge, green and mergeable
      alerts()          -> [{ key, level, text }] open briefing and watch lines;  catalog() -> { jobs, workflows }
@@ -274,14 +285,17 @@ async function autoRun({ db, now, settings, ops }) {
       const row = await log(db, { action, mode: "auto", status: "done", target, detail: (res && res.detail) || detail }, now);
       rows.push(row);
       out.done.push(row);
+      return row;
     } catch (error) {
-      rows.push(await log(db, { action, mode: "auto", status: "failed", target, detail: error.message || String(error) }, now));
+      const row = await log(db, { action, mode: "auto", status: "failed", target, detail: error.message || String(error) }, now);
+      rows.push(row);
+      return row;
     }
   };
   const once = async (action, target, detail, run) => {
-    if (await seen(db, action, target)) return;
+    if (await seen(db, action, target)) return null;
     if (left(action) <= 0) return wait(action, 1, "Over today's cap of " + cfg.caps[action] + ".");
-    await attempt(action, target, detail, run);
+    return attempt(action, target, detail, run);
   };
   // A job or run that mails third parties, posts or deploys goes on the countdown instead, once per target.
   const onceOrLater = async (action, target, detail, risk, payload, run) => {
@@ -317,10 +331,38 @@ async function autoRun({ db, now, settings, ops }) {
     }
   }
 
+  const healed = new Set();
+  if (ops.addresses && ops.addressState && ops.setAddressState) {
+    const a = await ops.addresses();
+    if (a && a.ok) {
+      handled.add("addresses:");
+      const issues = a.issues || [];
+      const open = addresses.openProblems(issues, ((await ops.addressState()) || {}).open, now);
+      const failed = [];
+      for (const i of issues.filter((x) => x.by === "jarvis")) {
+        const run = i.action === "enable-warmup" && ops.enableWarmup ? () => ops.enableWarmup([i.address])
+          : i.action === "restore-alias" && ops.restoreAlias ? () => ops.restoreAlias(i.address.split("@")[0]) : null;
+        if (!run) continue;
+        const res = await once(i.action, i.address + " @ " + open[i.key].since, i.text, run);
+        if (res && res.status === "done" && i.action === "enable-warmup") healed.add(i.address);
+        if (res && res.status === "failed") failed.push(addresses.failedFix(i, res.detail));
+      }
+      const fresh = addresses.toPush(issues.concat(failed), open);
+      if (fresh.length && ops.push) {
+        let sent = true;
+        for (const msg of addresses.pushMessages(fresh)) await ops.push(msg).catch(() => { sent = false; });
+        if (sent) fresh.forEach((i) => { open[i.key].pushedAt = new Date(now).toISOString(); });
+      }
+      await ops.setAddressState({ open: addresses.openList(open), at: new Date(now).toISOString() });
+    }
+  }
+
   if (ops.outreach && ops.pauseMailbox && ops.setPause) {
     const o = await ops.outreach();
     if (o) {
       handled.add("outreach:mailbox:").add("outreach:warmup").add("outreach:dns:");
+      // A mailbox whose warm-up Jarvis just turned on is not paused for it.
+      o.mailboxes = (o.mailboxes || []).map((m) => (healed.has(String(m.email).toLowerCase()) ? Object.assign({}, m, { warmup: "on" }) : m));
       const pauses = new Map((o.pauses || []).map((p) => [p.email, p]));
       for (const m of o.mailboxes || []) {
         const why = mailboxProblem(m, o);

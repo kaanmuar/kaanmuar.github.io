@@ -29,6 +29,18 @@ function voiced(batch, root = ROOT) {
   return voicedCache.get(key);
 }
 
+// The captions.json key a text slot posts; its translations sit in cap.i18n[lang][key] (#2346).
+const TEXT_KEY = { x: "x", linkedin: "linkedin", facebook: "facebook", instagram: "instagram", "instagram-story": "title" };
+
+// A caption's own language: textLang for a post written in it, else its lang once the hub has translated this
+// caption into it. The text captions are English otherwise, whatever language the clip speaks.
+function textLang(cap, key) {
+  if (!cap) return "en";
+  if (cap.textLang) return cap.textLang;
+  const l = cap.lang;
+  return l && l !== "en" && cap.i18n && cap.i18n[l] && cap.i18n[l][key] ? l : "en";
+}
+
 // slot is the calendar channel: x, linkedin, facebook, tiktok, youtube, instagram, instagram-story.
 function postLang(batch, slug, cap, slot, root = ROOT) {
   const [own, topic] = String(slug).split("/");
@@ -36,8 +48,21 @@ function postLang(batch, slug, cap, slot, root = ROOT) {
   if (CLIPS.has(slot)) {
     const clip = voiced(batch, root)[slug];
     if (clip && clip.lang) return clip.lang;
+    return (cap && cap.lang) || "en";
   }
-  return (cap && cap.lang) || "en";
+  return textLang(cap, TEXT_KEY[slot] || "x");
+}
+
+// The caption a face posts: the translation in the post's language when that is one of the face's languages, and
+// the English caption when the post only falls back to this face.
+function captionLang(cap, key, face) {
+  const l = textLang(cap, key);
+  return cap.textLang || FACES[face].langs.includes(l) ? l : "en";
+}
+
+function captionFor(cap, key, face) {
+  const l = captionLang(cap, key, face);
+  return cap.textLang || l === "en" ? cap[key] : cap.i18n[l][key];
 }
 
 // The face that posts in this language on a network where the faces in connected have an account.
@@ -85,4 +110,4 @@ function accountFace(who) {
 // The Facebook ledger profile of a face's Page.
 const pageProfile = (face) => "Facebook Page" + (face === DEFAULT ? "" : " (" + FACES[face].handle + ")");
 
-module.exports = { DEFAULT, SECRETS, pageProfile, accountFace, faceOf, postLang, route, postFace, faceEnv, channelFace, voiced };
+module.exports = { DEFAULT, SECRETS, TEXT_KEY, textLang, captionLang, captionFor, pageProfile, accountFace, faceOf, postLang, route, postFace, faceEnv, channelFace, voiced };

@@ -394,7 +394,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'calls'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'calls'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -457,6 +457,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                 money: e.money && e.money.ok ? { revenue: e.money.revenue, prior: e.money.prior, refundsUsd: e.money.refundsUsd, disputesOpen: e.money.paypal && e.money.paypal.disputesOpen } : null,
                 email: e.email && e.email.ok ? { totals: e.email.totals, rates: e.email.rates } : null,
                 mailbox: e.mailbox && e.mailbox.ok ? { totals: e.mailbox.totals, smtp: e.mailbox.smtp, canary: e.mailbox.canary && e.mailbox.canary.state, problems: (e.mailbox.problems || []).slice(0, 5).map((m) => `${m.alias}@ ${m.outcome}: ${m.reason}`) } : null,
+                addresses: e.addresses && e.addresses.ok ? { counts: e.addresses.counts, issues: (e.addresses.issues || []).slice(0, 8).map((i) => i.text + (i.by === 'jarvis' ? ' (Jarvis fixes it)' : '')) } : null,
                 search: e.search && e.search.ok ? { brave: e.search.brave && e.search.brave.queries, console: e.search.console && e.search.console.ok ? { clicks: e.search.console.clicks, impressions: e.search.console.impressions, position: e.search.console.position, queries: (e.search.console.queries || []).slice(0, 8) } : null } : null,
                 social: e.social && e.social.ok ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views } : null,
                 safety: e.safety && e.safety.ok ? e.safety.checks.map((c) => `${c.level}: ${c.name} ${c.detail}`) : null,
@@ -518,7 +519,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}"><header>${foldHead(id, title)}${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
     }
 
-    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR' };
+    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias' };
     // Owner emails that also arrive as Jarvis pushes (#1672): off, they wait for the evening digest.
     const MOVED_MAIL = {
         messages: "New CV messages", ratings: "New CV feedback", siteDaily: "Daily CV site report (07:15)", siteQuarter: "Quarter-hour CV site report",
@@ -526,7 +527,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         comparisons: "Comparison saved", reviewEvents: "URL review events (runs, payments, captures; refunds, disputes and unmatched payments always email)",
         ops: "Ops: jobs missed or failed", ownerReplies: "Owner replies", ownerRemind: "Owner replies still waiting (09:00)"
     };
-    const ACTION_CAPS = { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3 };
+    const ACTION_CAPS = { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2 };
     const COUNTDOWN_HOURS = 2;
     const hoursText = (h) => (h >= 1 ? `${h} h` : `${Math.round(h * 60)} min`);
 
@@ -779,6 +780,37 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         ], b.problems) : ''), {
             wide: true, data: b.aliases,
             note: `${b.aliasCount} aliases. Mail refused to addresses that are not aliases is expected: there is no catch-all. SMTP sends today: ${fmt(smtp.today || 0)}${smtp.dayLimit ? ' of ' + fmt(smtp.dayLimit) : ''}.${b.partial ? ' Only the newest 1,000 deliveries in range were read.' : ''}`
+        });
+    }
+
+    // Every email address we own (#2338), by domain: its state, where it forwards and who fixes it.
+    const ADDRESS_STATE = { ok: 'c-fast', warn: 'c-average', paused: 'c-average', error: 'c-slow' };
+
+    function addressFix(r) {
+        if (!r.fix) return '';
+        if (r.fix.by === 'jarvis') return '<span class="jv-chip c-fast">Jarvis fixes it</span>';
+        return r.fix.link ? `<a href="${esc(r.fix.link)}" target="_blank" rel="noopener noreferrer">${esc(r.fix.action)} →</a>` : esc(r.fix.action);
+    }
+
+    function addressesPanel() {
+        const a = S.external.addresses;
+        if (!a || !a.ok) return panel('systems-addresses', 'Email addresses', waiting('addresses', 'Reading ImprovMX, Microsoft 365, Instantly and SendGrid…'), { wide: true });
+        const c = a.counts || {};
+        const auth = (a.domains || []).map((d) => `<p class="jv-note"><b>${esc(d.domain)}</b> (${esc((d.systems || []).join(', '))}) ${(d.checks || []).map((k) => `<span class="jv-chip ${k.ok ? 'c-fast' : 'c-slow'}" title="${esc(k.detail)}">${esc(k.name)}</span>`).join('')}</p>`).join('');
+        const groups = [];
+        (a.rows || []).forEach((r) => { const g = groups[groups.length - 1]; if (g && g.domain === r.domain) g.rows.push(r); else groups.push({ domain: r.domain, rows: [r] }); });
+        const cols = [
+            ['Address', (r) => `${esc(r.address)}<br><span class="jv-note">${esc(r.kind)}</span>`], ['System', (r) => esc(r.system)],
+            ['State', (r) => `<span class="jv-chip ${ADDRESS_STATE[r.state] || ''}">${esc(r.state)}</span>`],
+            ['Forwards to', (r) => esc(r.aliasOf ? 'alias of ' + r.aliasOf : (r.forwards || []).join(', '))], ['Detail', (r) => esc(r.detail)], ['Fix', addressFix]
+        ];
+        return panel('systems-addresses', `Email addresses (${fmt(c.addresses || 0)})`, kpis([
+            { label: 'Addresses', value: c.addresses || 0 }, { label: 'OK', value: c.ok || 0 }, { label: 'Warnings', value: c.warn || 0, alert: c.warn > 0 },
+            { label: 'Errors', value: c.error || 0, alert: c.error > 0 }, { label: 'Paused', value: c.paused || 0 }
+        ]) + auth + needList(a) + groups.map((g) => `<h4 class="jv-addr-domain">${esc(g.domain)}</h4>` + table(cols, g.rows)).join(''), {
+            wide: true,
+            data: (a.rows || []).map((r) => ({ address: r.address, domain: r.domain, system: r.system, kind: r.kind, state: r.state, forwards: (r.forwards || []).join('; '), aliasOf: r.aliasOf, detail: r.detail, fixBy: r.fix ? r.fix.by : '', fix: r.fix ? r.fix.action : '', link: (r.fix && r.fix.link) || '' })),
+            note: 'One row per address and system. Jarvis turns Instantly warm-up back on and restores the canary, postmaster and abuse aliases on its own; what it cannot fix it pushes to you once.' + ((a.errors || []).length ? ' Not read: ' + esc(a.errors.join('; ')) + '.' : '')
         });
     }
 
@@ -1925,7 +1957,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         out.systems = `<div class="jv-grid">${briefPanel('systems')}
             ${panel('systems-matrix', 'Status matrix', matrix(tiles90), { wide: true, keep: true, data: tiles90 })}
             ${panel('systems-uptime90', 'Uptime, last 90 days', strip(W.uptime), { wide: true, keep: true, data: W.uptime.days })}
-            ${actionsPanel()}${codesPanel()}${mailboxPanel()}${connectionsPanel()}${safetyPanel()}${platformPanel()}
+            ${actionsPanel()}${codesPanel()}${mailboxPanel()}${addressesPanel()}${connectionsPanel()}${safetyPanel()}${platformPanel()}
             ${panel('systems-ready', 'Readiness', `<div class="jv-rings">${ring(C.readiness(e), 'ready', null, 120)}</div><p class="jv-note">Share of checks that pass: scheduled jobs, CI on main, uptime and PageSpeed within your limits (⚙ Settings).</p>`)}
             ${panel('systems-uptime', 'Uptime', up && up.ok ? table([['Page', (p) => `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a>`], ['Status', (p) => `<span class="jv-chip ${p.ok ? 'c-fast' : 'c-slow'}">${esc(p.status || 'down')}</span>`], ['Time', (p) => fmt(p.ms) + ' ms'], ['Size', (p) => p.bytes ? Math.round(p.bytes / 1024) + ' KB' : '']], up.pages) + `<p class="jv-note">TLS certificate: ${up.tlsDaysLeft === null ? 'unknown' : esc(up.tlsDaysLeft) + ' days left'}.</p>` : `<p class="jv-empty">${S.pending.uptime ? 'Pinging…' : esc((up && up.error) || 'Not loaded.')}</p>`, { data: up && up.pages })}
             ${panel('systems-speed', 'PageSpeed (mobile) and CrUX', sp && sp.ok ? `<div class="jv-rings">${sp.pages.map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 90)).join('')}</div>${sp.crux && sp.crux.ok && sp.crux.phone ? `<p class="jv-note">CrUX phone LCP p75 over ${sp.crux.phone.weeks || ''} weeks: ${spark(sp.crux.phone.lcp || [], COLORS.amber)}</p>` : ''}` : `<p class="jv-empty">${S.pending.speed ? 'Running PageSpeed on five pages (up to 90 s)…' : esc((sp && sp.error) || 'Not loaded.')}</p>`, { wide: true, data: sp && sp.pages && sp.pages.map((p) => ({ page: p.name, score: p.score, lcp: p.lab && p.lab.lcp, tbt: p.lab && p.lab.tbt, cls: p.lab && p.lab.cls, error: p.error })) })}
@@ -2584,7 +2616,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             <section><h4>Actions</h4>
               <label class="jv-check"><input type="checkbox" name="a-auto"${d.actions.auto ? ' checked' : ''}> Let Jarvis run the safe actions on its own every hour, within these daily caps</label>
               <div class="jv-th-grid">${Object.keys(ACTION_CAPS).map((k) => `<label class="jv-field">${esc(ACTION_LABELS[k].replace(/^./, (c) => c.toUpperCase()))} per day<input type="number" name="a-cap-${k}" min="0" max="100" step="1" value="${esc(d.actions.caps[k])}"></label>`).join('')}<label class="jv-field">AI confidence needed to act alone<input type="number" name="a-confidence" min="0.5" max="1" step="0.05" value="${esc(d.actions.confidence)}"></label><label class="jv-field">Countdown before a risky action, hours (0.25-24)<input type="number" name="a-countdown" min="0.25" max="24" step="0.25" value="${esc(d.actions.countdownHours)}"></label></div>
-              <p class="jv-note">Held re-runs go out on their own only when clean (a complete report with a score). Owner notices keep Monday-Saturday 08:00-19:00 Bogotá, three tries and the daily notice budget, even when you click. Failed jobs and CI runs are re-run once; outreach mailboxes are paused when their DNS, warm-up or score fails. The AI only picks from Jarvis's own actions; picks under the confidence become proposals.</p></section>
+              <p class="jv-note">Held re-runs go out on their own only when clean (a complete report with a score). Owner notices keep Monday-Saturday 08:00-19:00 Bogotá, three tries and the daily notice budget, even when you click. Failed jobs and CI runs are re-run once; outreach mailboxes are paused when their DNS, warm-up or score fails; warm-up that is off is turned back on first, and a missing canary, postmaster or abuse alias is restored. The AI only picks from Jarvis's own actions; picks under the confidence become proposals.</p></section>
             <section><h4>Goals</h4><div class="jv-goal-list">${d.goals.map(goalEditor).join('') || '<p class="jv-note">No goals yet. Add one: a product, what to count, the period, and the target.</p>'}</div>
               <div class="jv-actions"><button type="button" class="jv-btn" data-goal-add>Add a goal</button></div>
               <p class="jv-note">Goals count every row on the server (tests included) over the current Bogotá day, week (from Monday) or month.</p></section>
