@@ -116,6 +116,11 @@ jobs:
           done
           echo "::warning::$url did not answer 200 in 20 minutes; the queue scripts wait and the hub gate may hold the posts."
 
+      - name: Wait for a hub rebuild or Pages deploy on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/hub-wait.sh
+
       - name: Queue the post in Buffer
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}

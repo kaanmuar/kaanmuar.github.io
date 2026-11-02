@@ -212,6 +212,12 @@ jobs:
           gh release create "$BATCH" media/social-posts/$BATCH/clip/*.mp4 --target main --latest=false \
             --title "Requested reviews $BATCH" --notes "TikTok and YouTube clips for the $BATCH Live Reports. Posted through Buffer."
 
+      - name: Wait for a hub rebuild or Pages deploy on main
+        if: ${{ !inputs.dry_run && steps.commit.outputs.pushed == '1' && steps.reports.outputs.social != '0' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/hub-wait.sh
+
       - name: Queue the posts in Buffer
         if: ${{ !inputs.dry_run && steps.commit.outputs.pushed == '1' && steps.reports.outputs.social != '0' }}
         env:

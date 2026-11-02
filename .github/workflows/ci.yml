@@ -3,6 +3,7 @@
 # Cypress and Robot fail their job when a case fails. Load and the native catalogs report but do not block a merge.
 # The Cypress catalog runs on pushes to main and manual runs, not on pull requests.
 # The Safari and iPhone catalog needs a macOS runner, so it lives in catalog-apple.yml (#2273).
+# Pull requests leave the generated social hub files to the bots (#2242): the jobs that read the hub build it first.
 
 name: E2E and Visual Tests
 
@@ -26,15 +27,23 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
+      # A pull request checks out its merge commit, whose first parent is main.
+      - name: The pull request leaves the generated social hub files to the bots
+        if: github.event_name == 'pull_request'
+        run: git diff --name-only HEAD^1 HEAD | node scripts/social-hub-outputs.js --guard
       - name: Install the critical CSS builder
         run: |
           read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
           npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}"
           echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
+      - name: Build the social hub from its sources
+        run: scripts/social-hub-build.sh
       - name: URL review scoring, journeys, pricing, guards, and generated scripts
         run: npm run test:review
       - name: style.css matches input.css
@@ -43,8 +52,6 @@ jobs:
         run: node scripts/build-critical-css.js --check
       - name: Review language pages match their builder
         run: python3 scripts/build-review-langs.py --check
-      - name: Social hub pages match their builder
-        run: node scripts/build-social-hub.js --check
       - name: CSP script hashes match the pages' inline scripts
         run: node scripts/build-csp-hashes.js --check
       - name: Jarvis rules in functions match the admin page
@@ -74,6 +81,8 @@ jobs:
         run: npm ci
         env:
           CYPRESS_INSTALL_BINARY: 0
+      - name: Build the social hub from its sources
+        run: scripts/social-hub-build.sh
       - name: Read the Playwright version
         id: pw-version
         run: echo "version=$(node -p "require('./node_modules/playwright/package.json').version")" >> "$GITHUB_OUTPUT"
