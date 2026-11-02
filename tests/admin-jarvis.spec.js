@@ -95,7 +95,8 @@ const EXTERNAL = {
     leads: { weeks: [{ week: 'W1', total: 3, complete: 2, missing: 1, approved: 1, uploaded: 0, ready: 1 }],
       rows: [{ week: 'W1', email: 'ana@uni.edu.co', first_name: 'Ana', last_name: 'Pérez', title: 'CIO', org: 'Uni Norte', host: 'uni.edu.co', cc: 'co', campaign: 'W1 B-es Americas', score: '71', top_finding_en: 'No alt text', missing: '', approved: false, uploaded: '', live_report_url: 'https://qa-lab.co/r/uni' },
         { week: 'W1', email: 'leo@uni2.edu.co', first_name: 'Leo', org: 'Uni Sur', host: 'uni2.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: 'report (not published yet)', approved: false, uploaded: '' },
-        { week: 'W1', email: 'eva@uni3.edu.co', first_name: 'Eva', org: 'Uni Este', host: 'uni3.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: '', approved: true, uploaded: '' }] },
+        { week: 'W1', email: 'eva@uni3.edu.co', first_name: 'Eva', org: 'Uni Este', host: 'uni3.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: '', approved: true, uploaded: '' },
+        { week: 'W1', email: 'sol@uni4.edu.co', first_name: 'Sol', org: 'Uni Oeste', host: 'uni4.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: '', approved: true, uploaded: '2026-10-20' }] },
     replies: [{ id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', at: '2026-10-25T12:00:00Z', from: 'dean@uni.edu.co', to: 'carlos@mail.qa-lab.co', subject: 'Re: Su sitio', campaign: 'W1 B-es Americas', text: 'Nos interesa', category: 'interested', summary: 'Wants the walkthrough', lang: 'es', draft: 'Hola, gracias', sent: '' }],
     linkedin: { date: '2026-10-26', items: [{ name: 'Ana Pérez', title: 'CIO', org: 'Uni Norte (UN)', cc: 'CO', sent: false, profile: 'https://www.linkedin.com/in/ana', lines: [] },
       { name: 'Bea Gómez', title: 'CEO', org: 'Agencia Sur', cc: 'AR', sent: true, profile: 'https://www.linkedin.com/in/bea', lines: [] }] },
@@ -493,6 +494,12 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(leads).toContainText('Jarvis is on it.');
     await expect(leads.locator('[data-mk-rereview="uni2.edu.co"]')).toHaveCount(1);
     await expect(leads.locator('[data-mk-cmd="lead-drop"][data-email="leo@uni2.edu.co"]')).toHaveCount(1);
+    await expect(leads).toContainText('Uni Este');
+    await expect(leads).not.toContainText('Uni Oeste');
+    await leads.locator('[data-mk-done="on"]').click();
+    await expect(leads).toContainText('Uni Oeste');
+    await leads.locator('[data-mk-done="off"]').click();
+    await expect(leads).not.toContainText('Uni Oeste');
     await expect(mk.locator('[data-panel-id="marketing-jobs"]')).toContainText('W1 leads ready');
     await expect(mk.locator('[data-panel-id="marketing-kpis"]')).toContainText('setup week');
     const cmds = () => calls.filter((c) => c.op === 'marketing-command').map(({ body: { op, days, device, ...rest } }) => rest);

@@ -66,7 +66,7 @@ jobs:
             [ -n "$expires" ] || continue
             left=$(( ($(date -d "$expires" +%s) - $(date +%s)) / 86400 ))
             if [ "$left" -le 10 ]; then
-              echo "::warning::The $face face's Threads token runs out in $left days ($expires). Renew it with: FACE=$face node scripts/meta-token.js renew-threads"
+              echo "::warning::The Threads token stored with FACE=$face runs out in $left days ($expires). Renew it with: FACE=$face node scripts/meta-token.js renew-threads"
             fi
           done
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

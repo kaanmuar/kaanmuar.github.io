@@ -50,7 +50,7 @@ const postFace = (batch, slug, cap, slot, connected, root = ROOT) => route(postL
 
 // The account secrets a face holds under its suffix; anything else in the environment is shared.
 const SECRETS = ["BLUESKY_HANDLE", "BLUESKY_APP_PASSWORD", "BLUESKY_SERVICE", "MASTODON_URL", "MASTODON_TOKEN",
-  "THREADS_TOKEN", "INSTAGRAM_USER_ID", "FACEBOOK_PAGE_ID", "FACEBOOK_PAGE_TOKEN"];
+  "THREADS_TOKEN", "INSTAGRAM_USER_ID", "FACEBOOK_PAGE_ID", "FACEBOOK_PAGE_TOKEN", "DEVTO_API_KEY"];
 
 // A face's view of the environment: its own secrets under their plain names, never another face's.
 function faceEnv(face, env = process.env) {
@@ -76,7 +76,13 @@ function channelFace(channel) {
   }) || null;
 }
 
+// The face whose handle an account logs in as ("qalaburlreview.bsky.social", "threads.net/@qaurlreview"), or null.
+function accountFace(who) {
+  const parts = String(who || "").toLowerCase().split(/[^a-z0-9_]+/);
+  return IDS.find((id) => parts.includes(FACES[id].handle)) || null;
+}
+
 // The Facebook ledger profile of a face's Page.
 const pageProfile = (face) => "Facebook Page" + (face === DEFAULT ? "" : " (" + FACES[face].handle + ")");
 
-module.exports = { DEFAULT, SECRETS, pageProfile, faceOf, postLang, route, postFace, faceEnv, channelFace, voiced };
+module.exports = { DEFAULT, SECRETS, pageProfile, accountFace, faceOf, postLang, route, postFace, faceEnv, channelFace, voiced };

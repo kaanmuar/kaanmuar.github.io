@@ -56,6 +56,9 @@ object Marketing {
     /** The week the tab opens on: the latest one with leads still to upload, else the latest. */
     fun openWeek(weeks: List<Week>, picked: String?): Week? = weeks.firstOrNull { it.week == picked } ?: weeks.lastOrNull { it.uploaded < it.total } ?: weeks.lastOrNull()
 
+    /** Uploaded or dropped: the leads panel hides these until "Show done". Approved rows still need the upload, so they stay. */
+    fun leadDone(r: JsonObject) = !r.str("uploaded").isNullOrEmpty() || r.bool("dropped") == true
+
     /** True while a command for this key (an email, a week, a name or a job) waits for the outreach sync. */
     fun waiting(sync: JsonObject?, action: String, key: String) =
         sync.obj("commands").objs("items").any { it.str("status") == "pending" && (action.isEmpty() || it.str("action") == action) && it.str("label").orEmpty().contains(key) }
@@ -181,7 +184,14 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
                     ask("upload ${week.week}'s ${week.ready} approved leads to their Instantly campaigns") { command("mk:upload", mapOf("action" to "upload", "week" to week.week)) }
                 }
             }
-            sy.obj("leads").objs("rows").filter { it.str("week") == week.week }.sortedBy { leadOrder(it) }.forEach { r -> Lead(r, sy, s, vm, ::ask, ::command) }
+            var showDone by rememberSaveable { mutableStateOf(false) }
+            val rows = sy.obj("leads").objs("rows").filter { it.str("week") == week.week }.sortedBy { leadOrder(it) }
+            val done = rows.count { Marketing.leadDone(it) }
+            rows.filter { showDone || !Marketing.leadDone(it) }.forEach { r -> Lead(r, sy, s, vm, ::ask, ::command) }
+            if (done > 0) {
+                if (done == rows.size && !showDone) Muted("Every lead in this week is uploaded or dropped.")
+                TextButton({ showDone = !showDone }) { Text("${if (showDone) "Hide" else "Show"} $done done (uploaded or dropped)", fontSize = 13.sp) }
+            }
             Muted("With each outreach sync (at most once an hour) Jarvis translates top findings, re-runs the review of a site with no Live Report (twice at most) and approves complete leads. \"Needs you\" rows are the ones it cannot settle. Upload stays with you.")
         }
 

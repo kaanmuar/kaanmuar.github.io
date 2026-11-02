@@ -5,6 +5,7 @@
 const findingsCopy = require("./url-review-findings-copy");
 const fusion = require("./url-review-fusion");
 const booking = require("./booking");
+const mailFace = require("./mail-face");
 
 const { FUSION, TEXT, ON_NIGHT } = fusion;
 const SITE = "https://carlosandmunoz.com";
@@ -366,8 +367,8 @@ function pageUrl(lang, params, file) {
   return url.toString();
 }
 
-function deeperUrl(t, host, reportId) {
-  return "mailto:" + DEEPER + "?subject=" + encodeURIComponent(fill(t.deeperSubject, { host })) +
+function deeperUrl(t, host, reportId, to) {
+  return "mailto:" + (to || DEEPER) + "?subject=" + encodeURIComponent(fill(t.deeperSubject, { host })) +
     (reportId ? "&body=" + encodeURIComponent("Report " + reportId + "\n\n") : "");
 }
 
@@ -455,18 +456,30 @@ function bookLink(lang, host, reportId, from) {
   return booking.bookUrl(reportId ? "walkthrough" : "intro", lang, { host, report: reportId, from });
 }
 
-function deeperBlock(t, host, reportId, lang, from) {
+// face: the brand face the mail goes out as (mail-face.js), whose address takes the "write to" mail in place of qa@.
+const deeperCta = (t, face) => (face ? t.deeperCta.replace(DEEPER, face.email) : t.deeperCta);
+
+function deeperBlock(t, host, reportId, lang, from, face) {
   return "<tr><td style=\"padding:0 0 16px;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + FUSION.night + "\" style=\"" + fusion.PANEL + "border-radius:16px;\">" +
     "<tr><td style=\"padding:26px 28px;font-family:Arial,Helvetica,sans-serif;\">" +
     "<p style=\"margin:0 0 12px;" + fusion.SERIF + "font-size:24px;line-height:29px;color:#ffffff;\">" + esc(t.deeper) + "</p>" +
     t.deeperLines.map((line) => "<p style=\"margin:0 0 8px;font-size:15px;line-height:22px;color:" + ON_NIGHT.soft + ";\"><span style=\"color:" + FUSION.cyan + ";\">&rarr;</span>&nbsp; " + esc(line) + "</p>").join("") +
-    "<p style=\"margin:16px 0 0;\"><a href=\"" + esc(deeperUrl(t, host, reportId)) + "\" style=\"display:inline-block;background:" + FUSION.cyan + ";color:" + FUSION.night + ";text-decoration:none;font-size:15px;font-weight:bold;line-height:20px;padding:12px 20px;border-radius:999px;\">" + esc(t.deeperCta) + "</a>" +
+    "<p style=\"margin:16px 0 0;\"><a href=\"" + esc(deeperUrl(t, host, reportId, face && face.email)) + "\" style=\"display:inline-block;background:" + FUSION.cyan + ";color:" + FUSION.night + ";text-decoration:none;font-size:15px;font-weight:bold;line-height:20px;padding:12px 20px;border-radius:999px;\">" + esc(deeperCta(t, face)) + "</a>" +
     "<a href=\"" + esc(bookLink(lang, host, reportId, from)) + "\" style=\"display:inline-block;background:transparent;color:#ffffff;border:1px solid " + FUSION.cyan + ";text-decoration:none;font-size:15px;font-weight:bold;line-height:20px;padding:11px 20px;border-radius:999px;margin:10px 0 0 8px;\">" + esc(t.book) + "</a></p>" +
     "</td></tr></table></td></tr>";
 }
 
 function link(href, label) {
   return "<a href=\"" + esc(href) + "\" style=\"color:" + TEXT.link + ";\">" + esc(label) + "</a>";
+}
+
+// The sign-off: a face signs with its name, its language's page and its social hub.
+function brandHtml(face) {
+  return face ? link(face.page, face.name) + " &middot; " + link(face.hubUrl, "@" + face.handle) : link(SITE + "/qa-review.html", "QA-lab URL Review");
+}
+
+function brandText(face) {
+  return face ? face.name + " · " + face.page + "\n@" + face.handle + " · " + face.hubUrl : "QA-lab URL Review · " + SITE + "/qa-review.html";
 }
 
 // `kept` is the retention date and `live` adds the Live Reports line; both belong to the report mail only.
@@ -476,7 +489,7 @@ function footerHtml(t, why, opts) {
     (o.live ? esc(t.live).replace(DEEPER, link("mailto:" + DEEPER, DEEPER)) + "<br>" : "") +
     (o.kept ? esc(fill(t.kept, { date: o.kept })) + " &middot; " : "") +
     (o.stopUrl ? link(o.stopUrl, t.stop) + " &middot; " : "") +
-    link(ACCOUNT_URL, t.account) + " &middot; " + link(SITE + "/qa-review.html", "QA-lab URL Review") + "<br>" +
+    link(ACCOUNT_URL, t.account) + " &middot; " + brandHtml(o.face) + "<br>" +
     esc(fill(t.controller, { postal: POSTAL })) + " " + link(LEGAL_URL, t.legal);
 }
 
@@ -488,7 +501,7 @@ function footerText(t, why, opts) {
     o.kept ? fill(t.kept, { date: o.kept }) : "",
     o.stopUrl ? t.stop + ": " + o.stopUrl : "",
     t.account + ": " + ACCOUNT_URL,
-    "QA-lab URL Review · " + SITE + "/qa-review.html",
+    brandText(o.face),
     fill(t.controller, { postal: POSTAL }) + " " + t.legal + ": " + LEGAL_URL
   ].filter(Boolean).join("\n");
 }
@@ -696,11 +709,11 @@ function reportMail(record, options) {
     (opts.attached ? "<p style=\"margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:" + TEXT.link + ";font-weight:bold;\">&#128206; " + esc(attached) + "</p>" : "") +
     "</td></tr>" +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
-    deeperBlock(t, facts.host, facts.id, lang, "report");
+    deeperBlock(t, facts.host, facts.id, lang, "report", opts.face);
   const findingLines = facts.findings.map((item) => "- [" + (t.areas[item.area] || item.area) + " · " + (p.sev[item.severity] || item.severity) + "] " + item.shown + (item.hidden ? " …" : "") +
     (item.fix ? "\n  " + FIX_LABEL[lang] + ": " + item.fix : ""));
   const why = opts.why || fill(t.why, { host: facts.host });
-  const foot = { stopUrl: opts.stopUrl, kept: dateOf(record && record.retainUntil), live: true };
+  const foot = { stopUrl: opts.stopUrl, kept: dateOf(record && record.retainUntil), live: true, face: opts.face };
   const text = [
     story.title,
     facts.score ? (Number(facts.score.overall) || 0) + " " + t.outOf + " (" + (facts.score.grade || "") + ")" : "",
@@ -718,7 +731,7 @@ function reportMail(record, options) {
     "",
     t.deeper,
     t.deeperLines.join("\n"),
-    t.deeperCta,
+    deeperCta(t, opts.face),
     t.book + ": " + bookLink(lang, facts.host, facts.id, "report"),
     "",
     footerText(t, why, foot)
@@ -908,7 +921,7 @@ function reportPdf(record, options) {
     (findings ? "<div class=\"sec\"><h2>" + esc(p.findings) + "</h2>" + (open ? "" : "<p class=\"note\">" + esc(p.note) + "</p>") + findings + "</div>" : "") +
     (caseRows ? "<div class=\"sec\"><h2>" + esc(p.cases) + "</h2><div class=\"cases\">" + caseRows + "</div>" + (moreCases ? "<p class=\"more\">" + esc(fill(p.moreCases, { n: moreCases })) + "</p>" : "") + "</div>" : "") +
     "<div class=\"cta\"><h3>" + esc(t.deeper) + "</h3>" + t.deeperLines.map((line) => "<p>→ " + esc(line) + "</p>").join("") +
-    "<div class=\"btns\"><a class=\"btn p\" href=\"" + esc(openUrl) + "\">" + esc(open ? t.openFull : p.unlock) + "</a><a class=\"btn s\" href=\"" + esc(deeperUrl(t, facts.host, facts.id)) + "\">" + esc(t.deeperCta) + "</a><a class=\"btn s\" href=\"" + esc(bookLink(lang, facts.host, facts.id, "report-pdf")) + "\">" + esc(t.book) + "</a></div></div>" +
+    "<div class=\"btns\"><a class=\"btn p\" href=\"" + esc(openUrl) + "\">" + esc(open ? t.openFull : p.unlock) + "</a><a class=\"btn s\" href=\"" + esc(deeperUrl(t, facts.host, facts.id, opts.face && opts.face.email)) + "\">" + esc(deeperCta(t, opts.face)) + "</a><a class=\"btn s\" href=\"" + esc(bookLink(lang, facts.host, facts.id, "report-pdf")) + "\">" + esc(t.book) + "</a></div></div>" +
     "</div></body></html>";
   const slug = facts.host.replace(/[^a-z0-9.-]/gi, "-").replace(/-+/g, "-").slice(0, 60);
   return { html, filename: "qa-lab-" + slug + "-" + (open ? p.fileOpen : p.file) + ".pdf" };
@@ -918,6 +931,7 @@ function noteMail(note, options) {
   const opts = options || {};
   const lang = langOf(note && note.lang);
   const t = COPY[lang];
+  const face = mailFace.faceOf(note && note.lang);
   const host = (note && note.host) || "your site";
   const openUrl = pageUrl(lang, { report: note && note.reportId, coupon: opts.coupon, utm_campaign: "note-" + ((note && note.kind) || "return") });
   const anotherUrl = pageUrl(lang, { coupon: opts.coupon, utm_campaign: "note-another" });
@@ -928,7 +942,7 @@ function noteMail(note, options) {
     "<p style=\"margin:4px 0 0;font-size:13px;line-height:19px;color:" + TEXT.muted + ";\">" + esc(t.openNote) + "</p>" +
     "</td></tr>" +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
-    deeperBlock(t, host, note && note.reportId, lang, "note");
+    deeperBlock(t, host, note && note.reportId, lang, "note", face);
   const text = [
     note && note.title,
     "",
@@ -939,16 +953,16 @@ function noteMail(note, options) {
     "",
     t.deeper,
     t.deeperLines.join("\n"),
-    t.deeperCta,
+    deeperCta(t, face),
     t.book + ": " + bookLink(lang, note && note.host, note && note.reportId, "note"),
     "",
-    footerText(t, fill(t.why, { host }), { stopUrl: opts.stopUrl })
+    footerText(t, fill(t.why, { host }), { stopUrl: opts.stopUrl, face })
   ].filter((line, index, all) => line !== "" || all[index - 1] !== "").join("\n");
   return {
     lang,
     subject: String((note && note.subject) || "QA-lab URL Review").slice(0, 140),
     text: text.slice(0, 16000),
-    html: shell(lang, (note && note.title) || "", inner, footerHtml(t, fill(t.why, { host }), { stopUrl: opts.stopUrl }))
+    html: shell(lang, (note && note.title) || "", inner, footerHtml(t, fill(t.why, { host }), { stopUrl: opts.stopUrl, face }))
   };
 }
 
@@ -1239,4 +1253,4 @@ function stopPage(lang, state, email) {
     "<body><main>" + body + "</main></body></html>";
 }
 
-module.exports = { SITE, POSTAL, LANGS, AREAS, langOf, esc, fill, button, shell, scoreColor, scoreFill, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, sharedOpenMail, receiptMail, stopPage, pageUrl };
+module.exports = { SITE, POSTAL, LANGS, AREAS, langOf, esc, fill, button, shell, brandHtml, brandText, scoreColor, scoreFill, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, sharedOpenMail, receiptMail, stopPage, pageUrl };

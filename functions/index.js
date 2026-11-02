@@ -1677,6 +1677,7 @@ const reviewMulti = require("./url-review-multi");
 const reviewMarket = require("./url-review-market");
 const ownerNotice = require("./url-review-owner-notice");
 const ownerMail = require("./url-review-owner-mail");
+const mailFace = require("./mail-face");
 const accountData = require("./url-review-account-data");
 const ownerProofs = require("./url-review-owner-proof");
 
@@ -1720,10 +1721,24 @@ async function stopLinkFor(email, lang) {
 async function sendAskerMail(email, mail, stopUrl, category, attachments, replyTo) {
   const from = prepareMail();
   if (!from) return false;
-  await sgMail.send(Object.assign({
+  await sgMail.send(askerMessage(email, mail, stopUrl, category, attachments, { from, replyTo: replyTo || REVIEW_ALERT_TO }));
+  return true;
+}
+
+// Owner notices, the reports owners claim and the notes go out as the brand face of their language (#2312), through
+// mailRetry while SendGrid's shared IPs can be blocklisted (#2314).
+async function sendFaceMail(lang, email, mail, stopUrl, category, attachments, replyTo) {
+  const from = prepareMail();
+  if (!from) return false;
+  await mailRetry.send(sgMail, getFirestore(), askerMessage(email, mail, stopUrl, category, attachments, mailFace.envelope(lang, from, replyTo, REVIEW_ALERT_TO)));
+  return true;
+}
+
+function askerMessage(email, mail, stopUrl, category, attachments, sender) {
+  return Object.assign({
     to: email,
-    from: from,
-    replyTo: replyTo || REVIEW_ALERT_TO,
+    from: sender.from,
+    replyTo: sender.replyTo,
     subject: mail.subject,
     text: mail.text,
     html: mail.html,
@@ -1734,8 +1749,7 @@ async function sendAskerMail(email, mail, stopUrl, category, attachments, replyT
       "List-Unsubscribe": "<" + stopUrl + ">",
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"
     }
-  } : {}, attachments && attachments.length ? { attachments } : {}));
-  return true;
+  } : {}, attachments && attachments.length ? { attachments } : {});
 }
 
 // The browser function prints the HTML with no script and no network; the answer is the PDF in base64.
@@ -1781,11 +1795,11 @@ async function storePdf(base64, filename) {
   return "https://firebasestorage.googleapis.com/v0/b/" + PDF_BUCKET + "/o/" + encodeURIComponent(file.name) + "?alt=media&token=" + token;
 }
 
-async function reportPdfFor(record) {
+async function reportPdfFor(record, options) {
   if (!process.env.BROWSER_KEY) return null;
   let page = null;
   try {
-    page = customerMail.reportPdf(record);
+    page = customerMail.reportPdf(record, options);
   } catch (error) {
     console.error("Report PDF failed:", error && error.message);
     return null;
@@ -1976,7 +1990,7 @@ async function sendOwnerNotice(queued, email, shared) {
     stop: link + "stop",
     live: customerMail.pageUrl(notice.lang, { live: card.id, utm_campaign: "owner-notice" })
   };
-  const sent = await sendAskerMail(notice.email, ownerMail.noticeMail(notice, card, links, score), links.stop, "url-review-owner-notice", null, ownerReplyTo(token));
+  const sent = await sendFaceMail(notice.lang, notice.email, ownerMail.noticeMail(notice, card, links, score), links.stop, "url-review-owner-notice", null, ownerReplyTo(token));
   return sent ? { card, notice } : { error: "SendGrid is not configured, so nothing was sent." };
 }
 
@@ -2005,7 +2019,7 @@ async function sendReviewNotes() {
     try {
       const stopUrl = await stopLinkFor(note.email, note.lang);
       const coupon = await mintReturnCoupon(note);
-      const sent = await sendAskerMail(note.email, customerMail.noteMail(note, { stopUrl, coupon }), stopUrl, "url-review-note");
+      const sent = await sendFaceMail(note.lang, note.email, customerMail.noteMail(note, { stopUrl, coupon }), stopUrl, "url-review-note");
       if (sent) {
         await db.collection("url_review_notes").add({
           status: "follow-note",
@@ -2483,10 +2497,10 @@ exports.opsWatchdog = scheduled(withMailAndGithub, "opsWatchdog", () => opsWatch
 const ownerReplies = require("./url-review-owner-replies");
 const OWNER_REPLIES_URL = process.env.OWNER_REPLIES_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/ownerReplies";
 
-// Until the reply subdomain's MX points at SendGrid Inbound Parse, owners reply to the alert inbox.
+// Until the reply subdomain's MX points at SendGrid Inbound Parse, owners reply to the notice's face address.
 function ownerReplyTo(token) {
   const domain = process.env.OWNER_REPLY_DOMAIN || "";
-  return domain && token ? "reply+" + token + "@" + domain : REVIEW_ALERT_TO;
+  return domain && token ? "reply+" + token + "@" + domain : "";
 }
 
 // Plain text of an HTML-only reply, for reading: no tag survives, and no angle bracket is decoded back.
@@ -4101,9 +4115,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     };
     await db.collection("url_reviews").doc(id).set(copy);
     await ref.update({ claims: FieldValue.increment(1), claimedAt: at });
-    const pdf = await reportPdfFor(copy);
-    const mail = customerMail.reportMail(copy, { lang: link.lang, attached: !!pdf, why: ownerMail.claimWhy(link.lang, link.host) });
-    await sendReportMail(id, () => sendAskerMail(email, mail, "", "url-review-owner-claim", pdf ? [pdf] : []), !!pdf);
+    const face = mailFace.faceOf(link.lang);
+    const pdf = await reportPdfFor(copy, { face });
+    const mail = customerMail.reportMail(copy, { lang: link.lang, attached: !!pdf, why: ownerMail.claimWhy(link.lang, link.host), face });
+    await sendReportMail(id, () => sendFaceMail(link.lang, email, mail, "", "url-review-owner-claim", pdf ? [pdf] : []), !!pdf);
     res.status(200).send(ownerMail.ownerPage(link.lang, "claimed", Object.assign({}, link, { email })));
     return;
   }
@@ -6175,7 +6190,7 @@ exports.mailCanary = scheduled(functions.runWith({ timeoutSeconds: 60, memory: "
 
 // ImprovMX posts each mail to qa@ and the per-channel aliases here as JSON (#1898). A code or a checked confirm
 // link is kept for a day and pushed to Jarvis once; a retry of the same mail finds its row and pushes nothing.
-// Other mail to qa@ that matches an owner notice goes into the owner-replies queue (#1899).
+// Other mail to qa@ or a face address that matches an owner notice goes into the owner-replies queue (#1899, #2312).
 // The daily canary to canary@ only marks its round trip back (#1900).
 exports.mailInbound = functions.runWith({ timeoutSeconds: 60, memory: "256MB", maxInstances: 5, secrets: SECRETS.mailInbound }).https.onRequest(async (req, res) => {
   res.set("X-Robots-Tag", "noindex");
@@ -6196,7 +6211,7 @@ exports.mailInbound = functions.runWith({ timeoutSeconds: 60, memory: "256MB", m
       return;
     }
     const row = mailInbound.codeOf(mail);
-    if (!row && mail.alias === "qa" && !mailInbound.fromUs(mail.fromEmail)) {
+    if (!row && (mail.alias === "qa" || mailFace.isFaceAlias(mail.alias)) && !mailInbound.fromUs(mail.fromEmail)) {
       const out = await takeOwnerReply(mailInbound.replyMail(req.body), mailInbound.replyAuth(req.body.headers), true);
       res.status(200).send(out.outcome === "taken" ? "owner reply " + out.id : out.outcome === "seen" ? "seen" : "no code, " + out.outcome);
       return;
