@@ -295,6 +295,7 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
     val warm = if (accounts.isEmpty()) null else accounts.minOf { it.num("score") ?: 0.0 }
     val contacted = mail.num("contacted") ?: 0.0
     val rates = mail.obj("rates")
+    var confirm by remember { mutableStateOf<PendingAction?>(null) }
 
     Panel("Outreach") {
         KpiPairs(listOf(
@@ -371,10 +372,17 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
             KpiData("Bounced", fmt(mail.num("bounced")), alert = (mail.num("sent") ?: 0.0) >= 20 && (rates.num("bounce") ?: 0.0) >= bounceAt),
             KpiData("Unsubscribed", fmt(mail.num("unsubscribed")))
         ))
-        val camps = mail.objs("byCampaign")
-        if (camps.isEmpty()) Muted("No campaign has sent yet.")
-        camps.forEach { c -> StatusRow("info", c.str("name") ?: "", "${fmt(c.num("sent"))} sent · ${fmt(c.num("opened"))} opened · ${fmt(c.num("replies"))} replies · ${fmt(c.num("bounced"))} bounced") }
+        val rows = snap.ext("marketing").obj("campaigns")?.takeIf { it.isOk() }
+        if (rows != null) {
+            CampaignRows(rows, s, vm) { text, run -> confirm = PendingAction(text, run) }
+            Muted("Activate starts a campaign on its start date and sending window; nothing goes out to a campaign with no leads. Pause stops it at once.")
+        } else {
+            val camps = mail.objs("byCampaign")
+            if (camps.isEmpty()) Muted("No campaign has sent yet.")
+            camps.forEach { c -> StatusRow("info", c.str("name") ?: "", "${fmt(c.num("sent"))} sent · ${fmt(c.num("opened"))} opened · ${fmt(c.num("replies"))} replies · ${fmt(c.num("bounced"))} bounced") }
+        }
     }
+    ConfirmAction(confirm) { confirm = null }
 
     if (mail != null) Panel("Mailboxes and warm-up") {
         if (accounts.isEmpty()) Muted("No mailboxes connected.")
@@ -382,6 +390,7 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
             val score = a.num("score")
             val good = a.str("status") == "active" && a.str("warmup") == "on" && (score == null || score >= warmNeed)
             StatusRow(if (good) "good" else "warn", a.str("email") ?: "", listOfNotNull(a.str("status"), "warm-up " + (a.str("warmup") ?: "—"), score?.let { "score " + fmt(it) }, a.num("dailyLimit")?.let { "limit " + fmt(it) + "/day" }).joinToString(" · "))
+            a.str("error")?.takeIf { it.isNotEmpty() }?.let { StatusRow("alert", "Reconnect in Instantly", it, url = "https://app.instantly.ai/app/accounts") }
         }
     }
 

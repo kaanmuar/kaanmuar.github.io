@@ -753,12 +753,15 @@ test("outreach: Instantly numbers become rates, campaign states and mailbox warm
     [{ status: 0 }, { status: 0 }, { status: 1 }],
     { emails_sent_count: 200, contacted_count: 100, open_count_unique: 50, reply_count_unique: 8, reply_count_automatic_unique: 2, total_interested: 3, bounced_count: 10 },
     [{ campaign_name: "TVET wave 1", emails_sent_count: 200, open_count_unique: 50, reply_count_unique: 8, bounced_count: 10 }, { campaign_name: "Draft", emails_sent_count: 0 }],
-    [{ email: "carlos@qalabreview.com", status: 1, warmup_status: 1, stat_warmup_score: 62, daily_limit: 30 }]
+    [{ email: "carlos@qalabreview.com", status: 1, warmup_status: 1, stat_warmup_score: 62, daily_limit: 30 },
+      { email: "hello@qalabreview.com", status: -1, warmup_status: 1, stat_warmup_score: 100, daily_limit: 10, status_message: { e_message: "Permanent OAuth failure: AADSTS50076: you must use multi-factor authentication. Trace ID: c32b Correlation ID: 5c1d" } }]
   );
   assert.deepEqual(x.status, [{ label: "draft", value: 2 }, { label: "active", value: 1 }]);
   assert.deepEqual(x.rates, { open: 50, reply: 8, positive: 3, bounce: 5 });
   assert.equal(x.byCampaign.length, 1);
-  assert.deepEqual(x.accounts[0], { email: "carlos@qalabreview.com", status: "active", warmup: "on", score: 62, dailyLimit: 30 });
+  assert.deepEqual(x.accounts[0], { email: "carlos@qalabreview.com", status: "active", warmup: "on", score: 62, dailyLimit: 30, error: "" });
+  assert.equal(x.accounts[1].status, "error");
+  assert.equal(x.accounts[1].error, "Permanent OAuth failure: AADSTS50076: you must use multi-factor authentication.");
 });
 
 test("outreach: the plan knows the day, phase, next milestone and sorted deadlines", () => {
