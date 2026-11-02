@@ -5164,6 +5164,14 @@ async function jarvisNotifyAct(body, by) {
     return { message: "Started " + jobs.join(", ") + "." };
   }
   if (type === "proposal") {
+    if (act === "run" || act === "close") {
+      const run = await jarvisProposals.savedRun(db, id, now);
+      if (act === "close" && run.action !== "pagespeed-merge") throw new Error("Only a PageSpeed PR closes from here.");
+      const out = await jarvisClickAction(Object.assign({}, run, act === "close" ? { action: "pagespeed-close" } : {}, { proposal: id }), by);
+      if (out.note) return { message: out.note };
+      const said = String(out.ran ? out.ran + (out.action === "run-job" ? " started" : "") : (out.done || 0) + " done").replace(/\.$/, "");
+      return { message: run.label + ": " + said + (out.failed ? ", " + out.failed + " failed" : "") + "." };
+    }
     await jarvisProposals.mark(db, { key: id, status: act }, by, now);
     return { message: act === "done" ? "Marked done." : "Dismissed." };
   }
@@ -5416,7 +5424,9 @@ async function jarvisDaily({ force }) {
   const actionLines = jarvisActions.briefLines(await jarvisActions.recent(db, 200), now);
   if (actionLines.length) mail.body = (actionLines.join("\n") + "\n\n" + mail.body).slice(0, 12000);
   const sent = settings.mail.daily || force ? await sendOwnerEmail({ subject: mail.subject, intro: mail.intro, rows: mail.rows, body: mail.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL, buttonLabel: "Open Jarvis" }) : false;
-  const push = await jarvisPush.send(getMessaging(), db, phones, jarvisPush.briefingMessage({ items, aiText, dateLabel, top: ranked && ranked.proposals && ranked.proposals[0] })).catch((error) => ({ error: String(error.message || error).slice(0, 200) }));
+  const top = ranked && ranked.proposals && ranked.proposals[0];
+  if (top) await jarvisProposals.saveRun(db, top, now).catch((error) => console.error("Jarvis proposal run not saved:", error));
+  const push = await jarvisPush.send(getMessaging(), db, phones, jarvisPush.briefingMessage({ items, aiText, dateLabel, top })).catch((error) => ({ error: String(error.message || error).slice(0, 200) }));
   return { sent: sent !== false, push, items: items.length, goals: goalRows.length, gemini: !!aiText, proposals: proposalLines.length };
 }
 
@@ -5424,10 +5434,11 @@ async function jarvisDaily({ force }) {
 async function jarvisRanked({ state, items, days, candidates, snapshot, useGemini }) {
   const list = (candidates || jarvisCore.proposalRules(state, items)).concat(await jarvisAiProposals(Date.now()));
   const snap = snapshot || jarvis.askSnapshot(Object.assign({}, state, { briefing: items || [] }), days);
-  return jarvisProposals.rank({
+  const out = await jarvisProposals.rank({
     candidates: list, snapshot: snap, savedRows: await jarvisProposals.saved(getFirestore()), now: Date.now(),
     gemini: useGemini ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null
   });
+  return Object.assign({}, out, { proposals: (out.proposals || []).map(jarvisProposals.withButtons) });
 }
 
 const JARVIS_OPS = ["health", "jobs", "github", "uptime", "speed", "ga4", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach"];
@@ -5478,7 +5489,8 @@ async function jarvisSnapshot(days) {
   ]);
   const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
   const briefing = jarvisCore.briefing(state).map((b) => Object.assign({ detail: jarvisCore.briefDetail(b, state) }, b));
-  const proposals = jarvisCore.openProposals(jarvisCore.proposalRules({ products, external, thresholds: settings.thresholds, goals: goalRows }, briefing), await jarvisProposals.saved(db)).slice(0, 5);
+  const candidates = jarvisCore.proposalRules({ products, external, thresholds: settings.thresholds, goals: goalRows }, briefing).concat(await jarvisAiProposals(now));
+  const proposals = jarvisCore.openProposals(candidates, await jarvisProposals.saved(db)).slice(0, 5).map(jarvisProposals.withButtons);
   const countdowns = await jarvisCountdown.view(db, now);
   return { window, products, external, outreachVisits, goals: goalRows, briefing, proposals, countdowns, readiness: jarvisCore.readiness(external), connections: jarvisCore.connections(external), settings, thresholds: jarvisCore.thresholds(settings.thresholds) };
 }
@@ -5662,7 +5674,9 @@ async function jarvisAiProposals(now) {
   return snap ? snap.docs.map((doc) => doc.data()).map((p) => ({
     key: p.key, product: "systems", impact: 3, level: "warn", title: p.title, source: "gemini",
     evidence: [p.why, "Jarvis's AI, confidence " + p.confidence + "; not run: " + p.reason + "."].filter(Boolean),
-    action: null, jobs: p.action === "run-job" && p.args && p.args.job ? [p.args.job] : null, tab: "systems", link: null
+    action: p.action === "publish-hub" ? "publish-hub" : null,
+    jobs: p.action === "run-job" && p.args && p.args.job ? [p.args.job] : null,
+    workflows: p.action === "rerun-ci" && p.args && p.args.workflow ? [p.args.workflow] : null, tab: "systems", link: null
   })) : [];
 }
 
@@ -5719,16 +5733,30 @@ async function jarvisClickAction(body, by) {
   const settings = await jarvis.readSettings(db);
   const act = jarvisActionOps(settings, now);
   const note = (entry) => jarvisActions.log(db, Object.assign({ mode: "click", by, proposal }, entry), Date.now());
+  // A proposal's button sends jobs or workflows as a list (#1977); one failure stops nothing, but all failing throws.
+  const each = async (targets, run) => {
+    const ran = [];
+    let failed = 0, last = null;
+    for (const target of targets) {
+      try { ran.push(await run(target)); } catch (error) {
+        failed += 1;
+        last = error;
+        await note({ action, status: "failed", target, detail: error.message || String(error) });
+      }
+    }
+    if (!ran.length && last) throw last;
+    return { ran, failed };
+  };
+  const list = (many, one) => (Array.isArray(many) ? many : [one]).map((v) => String(v || "").slice(0, 120)).filter(Boolean).slice(0, 6);
   if (action === "run-job" || action === "publish-hub") {
-    const job = action === "publish-hub" ? "refreshSocialHubStats" : String(body.job || "");
-    try {
+    const jobs = action === "publish-hub" ? ["refreshSocialHubStats"] : list(body.jobs, body.job);
+    if (!jobs.length) throw new Error("Which job?");
+    const out = await each(jobs, async (job) => {
       const ran = await jarvis.runJob(fetch, job);
       await note({ action, status: "done", target: ran.ran, detail: "Started." });
-      return { action, done: 1, ran: ran.ran };
-    } catch (error) {
-      await note({ action, status: "failed", target: job, detail: error.message || String(error) });
-      throw error;
-    }
+      return ran.ran;
+    });
+    return { action, done: out.ran.length, failed: out.failed, ran: out.ran.join(", ") };
   }
   if (action === "pagespeed-merge" || action === "pagespeed-close" || action === "pagespeed-run") {
     const deps = Object.assign(await pageSpeedDeps(by), { pr: Number(body.pr) });
@@ -5744,15 +5772,16 @@ async function jarvisClickAction(body, by) {
     }
   }
   if (action === "rerun-ci") {
-    const workflow = String(body.workflow || "").slice(0, 120);
-    try {
-      const out = await jarvis.rerunCi(fetch, await githubApp.token(), workflow);
-      await note({ action, status: "done", target: workflow, detail: out.already ? "Already " + out.already + "." : "Re-running run " + out.run + "." });
-      return { action, done: out.already ? 0 : 1, ran: workflow, url: out.url, already: out.already || null };
-    } catch (error) {
-      await note({ action, status: "failed", target: workflow, detail: error.message || String(error) });
-      throw error;
-    }
+    const workflows = list(body.workflows, body.workflow);
+    if (!workflows.length) throw new Error("Which workflow?");
+    const token = await githubApp.token();
+    const out = await each(workflows, async (workflow) => {
+      const res = await jarvis.rerunCi(fetch, token, workflow);
+      await note({ action, status: "done", target: workflow, detail: res.already ? "Already " + res.already + "." : "Re-running run " + res.run + "." });
+      return Object.assign({ workflow }, res);
+    });
+    const one = out.ran.length === 1 ? out.ran[0] : null;
+    return { action, done: out.ran.filter((r) => !r.already).length, failed: out.failed, ran: out.ran.map((r) => r.workflow).join(", "), url: one ? one.url : null, already: one ? one.already || null : null };
   }
   if (action === "rerun-held") {
     const held = await act.held();

@@ -16,7 +16,7 @@ const ACTS = {
   "owner-reply": ["resend", "stop", "unlist", "done"],
   "rerun-held": ["send-all", "drop-all"],
   ops: ["rerun"],
-  proposal: ["done", "dismissed"],
+  proposal: ["run", "close", "done", "dismissed"],
   notice: ["send", "skip"],
   social: ["approved", "dismissed"],
   engagement: ["approve", "edit", "dismiss"],

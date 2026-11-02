@@ -530,7 +530,7 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
-  test('Overview ranks proposals with evidence, and Done hides one through the function', async ({ page }) => {
+  test('Overview ranks proposals with evidence and each kind\'s buttons: Run goes through action-run, Done hides one (#1977)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page);
@@ -541,15 +541,21 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(panel.locator('.jv-prop').first()).toContainText('impact 5/5');
     await expect(panel.locator('.jv-prop').first()).toContainText('Job sweepReviews failed: quota.');
     await expect(panel.locator('.jv-prop').nth(1)).toContainText('Jarvis runs this on its own');
-    await expect(panel.locator('.jv-prop').first().locator('[data-run-action="run-job"]')).toHaveText('Run sweepReviews again');
+    const buttons = (i) => panel.locator('.jv-prop').nth(i).locator('.jv-prop-acts button, .jv-prop-acts a');
+    await expect(buttons(0)).toHaveText(['Run sweepReviews again', 'Open Systems →', 'Dismiss']);
+    await expect(buttons(1)).toHaveText(['Send held re-runs', 'Open Systems →', 'Dismiss']);
+    await expect(buttons(2)).toHaveText(['Done', 'Dismiss']);
     await expect(panel.locator('.jv-prop').nth(2)).toContainText('from Gemini');
     await expect(panel).toContainText('1 hidden as done or dismissed');
     const ask = calls.find((c) => c.op === 'proposals');
     expect(ask.body.candidates.some((p) => p.key === 'job' && p.evidence.length)).toBe(true);
     expect(ask.body.snapshot.products).toBeTruthy();
+    page.once('dialog', (dialog) => dialog.accept());
+    await panel.locator('[data-prop-run="job"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => [c.body.action, c.body.jobs, c.body.proposal])).toEqual([['run-job', ['sweepReviews'], 'job']]);
 
-    await panel.locator('[data-proposal="done"][data-key="review:held"]').click();
-    await expect.poll(() => calls.filter((c) => c.op === 'proposal-mark').map((c) => [c.body.key, c.body.status])).toEqual([['review:held', 'done']]);
+    await panel.locator('[data-proposal="done"][data-key="ai:price-test"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'proposal-mark').map((c) => [c.body.key, c.body.status])).toEqual([['ai:price-test', 'done']]);
     await expect(panel.locator('.jv-prop')).toHaveCount(2);
     await expect(panel).toContainText('2 hidden as done or dismissed');
     expect(errors).toEqual([]);

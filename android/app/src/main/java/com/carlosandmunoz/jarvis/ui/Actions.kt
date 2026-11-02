@@ -1,6 +1,8 @@
 package com.carlosandmunoz.jarvis.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -14,17 +16,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.sp
 import com.carlosandmunoz.jarvis.JarvisApp
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
 import com.carlosandmunoz.jarvis.data.ago
+import com.carlosandmunoz.jarvis.data.arr
 import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.fmt
 import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -161,16 +166,58 @@ fun JarvisActions(s: UiState, vm: JarvisViewModel) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ProposalActions(p: JsonObject, vm: JarvisViewModel, ask: (PendingAction) -> Unit) {
+fun ProposalActions(p: JsonObject, vm: JarvisViewModel, ask: (PendingAction) -> Unit, open: (String) -> Unit, mark: (String) -> Unit) {
+    val uri = LocalUriHandler.current
     val key = p.str("key")
-    Column {
-        p.str("action")?.let { action -> TextButton(onClick = { ask(PendingAction(askFor(action, null, null)) { runAction(vm, action, proposal = key) }) }) { Text("Run now: " + (ACTION_LABELS[action] ?: action).lowercase(), fontSize = 12.sp) } }
-        p.str("click")?.let { action -> TextButton(onClick = { ask(PendingAction(askFor(action, null, null)) { runAction(vm, action, proposal = key) }) }) { Text(ACTION_LABELS[action] ?: action, fontSize = 12.sp) } }
-        (p["jobs"] as? kotlinx.serialization.json.JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }?.forEach { job ->
-            TextButton(onClick = { ask(PendingAction(askFor("run-job", job, null)) { runAction(vm, "run-job", job, key) }) }) { Text("Run $job again", fontSize = 12.sp) }
+    FlowRow {
+        ProposalButtons.of(p).forEach { b ->
+            val label = b.str("label")!!
+            val pr = b.num("pr")?.toInt()
+            when (b.str("act")) {
+                "run", "close" -> TextButton(onClick = {
+                    ask(PendingAction(ProposalButtons.ask(b)) { if (pr != null) runAction(vm, b.str("action")!!, proposal = key, pr = pr) else runProposal(vm, b, key) })
+                }) { Text(label, fontSize = 12.sp) }
+                "open" -> {
+                    val link = b.str("link")
+                    val tab = b.str("tab")?.takeIf { it in CHIPS.toMap() || it in TABS }
+                    if (link != null || tab != null) TextButton(onClick = { if (link != null) runCatching { uri.openUri(link) } else open(tab!!) }) { Text(label, fontSize = 12.sp) }
+                }
+                "dismissed" -> TextButton(onClick = { mark("dismissed") }) { Text(label, fontSize = 12.sp, color = J.muted) }
+                else -> TextButton(onClick = { mark("done") }) { Text(label, fontSize = 12.sp) }
+            }
         }
-        pageSpeedPr(key)?.let { pr -> PageSpeedButtons(pr, vm, key, ask) }
+    }
+}
+
+/** A proposal's buttons (#1977) as the server built them (core.proposalButtons): its run, Open, then Dismiss, or Done without a run. */
+object ProposalButtons {
+    private val FALLBACK = listOf(JsonObject(mapOf("act" to JsonPrimitive("done"), "label" to JsonPrimitive("Done"))), JsonObject(mapOf("act" to JsonPrimitive("dismissed"), "label" to JsonPrimitive("Dismiss"))))
+
+    fun of(p: JsonObject): List<JsonObject> = p.objs("buttons").filter { it.str("act") != null && it.str("label") != null }.take(3).ifEmpty { FALLBACK }
+
+    /** What the confirm dialog asks before a run: the actions' own words, else the label and its jobs or workflows. */
+    fun ask(b: JsonObject): String {
+        val action = b.str("action") ?: ""
+        val list = (b.arr("jobs").ifEmpty { b.arr("workflows") }).mapNotNull { (it as? JsonPrimitive)?.content }
+        if (action != "run-job" && action != "rerun-ci") return askFor(action, null, null, b.num("pr")?.toInt())
+        return (b.str("label") ?: action).replaceFirstChar { it.lowercase() } + if (list.size > 1) " (" + list.joinToString(", ") + ")" else ""
+    }
+
+    fun extra(b: JsonObject, proposal: String?): Map<String, JsonElement> = buildMap {
+        put("action", JsonPrimitive(b.str("action") ?: ""))
+        proposal?.let { put("proposal", JsonPrimitive(it)) }
+        b["jobs"]?.let { put("jobs", it) }
+        b["workflows"]?.let { put("workflows", it) }
+    }
+}
+
+/** A proposal's run button through the action-run op, with its jobs or workflows; a tap runs it at once. */
+fun runProposal(vm: JarvisViewModel, b: JsonObject, proposal: String?) {
+    vm.act("proposal-run:$proposal", "action-run", ProposalButtons.extra(b, proposal)) { out ->
+        (b.str("label") ?: "Done") + ": " + (out.str("ran")?.trimEnd('.') ?: (fmt(out.num("done")) + " done")) +
+            (out.num("failed")?.takeIf { it > 0 }?.let { ", ${fmt(it)} failed" } ?: "") + "."
     }
 }
 

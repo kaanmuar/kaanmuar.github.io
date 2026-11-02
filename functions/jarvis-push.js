@@ -7,6 +7,7 @@
  */
 const crypto = require("crypto");
 const webPush = require("./jarvis-webpush");
+const core = require("./jarvis-core");
 
 // Kinds that only make sense on the phone: app updates and reviews started from a shared link.
 const PHONE_ONLY = new Set(["update", "review"]);
@@ -77,7 +78,8 @@ function alertMessage(fresh) {
   };
 }
 
-/** top is the best-ranked proposal; Done and Dismiss on the push mark it (#1670). */
+/** top is the best-ranked proposal; its kind's buttons (core.proposalButtons, #1977) go on the push: run and Done or
+    Dismiss through notify-act, Open on the device with its tab or link. */
 function briefingMessage({ items, aiText, dateLabel, top }) {
   const alerts = items.filter((r) => r.level === "alert").length;
   const warns = items.filter((r) => r.level === "warn").length;
@@ -95,7 +97,7 @@ function briefingMessage({ items, aiText, dateLabel, top }) {
     tab: "overview",
     tag: "jarvis-briefing",
     ref: key ? "proposal:" + key : "",
-    actions: key ? [{ act: "done", label: "Done" }, { act: "dismissed", label: "Dismiss" }] : []
+    actions: key ? core.proposalButtons(top).map((b) => (b.act === "open" ? Object.assign({ act: "open", label: b.label }, b.link ? { url: b.link } : { tab: b.tab }) : { act: b.act, label: b.label })) : []
   };
 }
 
