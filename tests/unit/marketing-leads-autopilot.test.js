@@ -55,7 +55,7 @@ test("leads autopilot: one pass translates, queues one re-run per host, approves
   const added = [];
   const db = { collection: (name) => ({ add: async (doc) => { added.push([name, doc]); return { id: "r" + added.length }; } }) };
   const fetch = async (url) => ({ ok: true, json: async () => (/live-reports/.test(url) ? { reports: [] } : [[["falta texto alternativo", "x"]]]) });
-  const deps = { parseCsv: sync.parseCsv, toCsv: sync.toCsv, leadFiles: sync.leadFiles, tool: () => { throw new Error("no rebuild expected"); }, fetch, db, now: NOW };
+  const deps = { parseCsv: sync.parseCsv, toCsv: sync.toCsv, leadFiles: sync.leadFiles, tool: () => { throw new Error("no rebuild expected"); }, fetch, db, now: NOW, lookup: async () => ({}) };
   const notes = await auto.run(dir, state, deps);
   assert.deepEqual(notes, ["W1: 1 translated, 1 reviews re-run, 2 approved"]);
   assert.equal(added.length, 1);
@@ -75,6 +75,23 @@ test("leads autopilot: one pass translates, queues one re-run per host, approves
   const ana = snap.rows.find((r) => r.email === "ana@udg.mx");
   assert.match(ana.wait, /re-run 1 of 2/);
   assert.equal(snap.rows.find((r) => r.email === "no@agency.ie").dropped, true);
+});
+
+test("leads autopilot: queues three re-runs a pass, on www. when the bare host does not resolve", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "leads-"));
+  const state = fs.mkdtempSync(path.join(os.tmpdir(), "state-"));
+  fs.mkdirSync(path.join(dir, "prospects"));
+  const hosts = ["sena.edu.co", "udg.mx", "iteso.mx", "upb.edu.co", "platzi.com"];
+  fs.writeFileSync(path.join(dir, "prospects", "week1-leads.csv"), "email,host,language,missing,approved,uploaded\n"
+    + hosts.map((h) => `a@${h},${h},es,report (not published yet),,\n`).join(""));
+  const added = [];
+  const db = { collection: () => ({ add: async (doc) => { added.push(doc); return {}; } }) };
+  const lookup = async (host) => { if (host === "sena.edu.co") throw Object.assign(new Error("ENOTFOUND"), { code: "ENOTFOUND" }); return {}; };
+  const deps = { parseCsv: sync.parseCsv, toCsv: sync.toCsv, leadFiles: sync.leadFiles, tool: () => "", fetch: async () => ({ ok: true, json: async () => ({ reports: [] }) }), db, now: NOW, lookup };
+  assert.deepEqual(await auto.run(dir, state, deps), ["W1: 0 translated, 3 reviews re-run, 0 approved"]);
+  assert.deepEqual(added.map((doc) => doc.url), ["https://www.sena.edu.co/", "https://udg.mx/", "https://iteso.mx/"]);
+  assert.deepEqual(await auto.run(dir, state, Object.assign({}, deps, { now: NOW + 61 * 60000 })), ["W1: 0 translated, 2 reviews re-run, 0 approved"]);
+  assert.deepEqual(added.slice(3).map((doc) => doc.url), ["https://upb.edu.co/", "https://platzi.com/"]);
 });
 
 test("leads autopilot: Carlos's buttons set a field, allow a personal address and drop a lead on the Mac", () => {
