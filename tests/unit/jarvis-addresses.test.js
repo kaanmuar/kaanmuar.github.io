@@ -155,9 +155,9 @@ test("source: with the Graph app set, Microsoft 365 users are read with client c
   assert.deepEqual(out.needs, []);
   assert.equal(out.graph, true);
   assert.deepEqual(out.rows.filter((r) => r.system === "Microsoft 365").map((r) => r.address), ["carlos@qalabreview.com", "qa@qalabreview.com"]);
-  const token = calls.find(([url]) => url.includes("login.microsoftonline.com"));
+  const token = calls.find(([url]) => new URL(url).hostname === "login.microsoftonline.com");
   assert.match(token[2], /grant_type=client_credentials/);
-  assert.match(calls.find(([url]) => url.includes("graph.microsoft.com"))[0], /\$select=displayName,userPrincipalName,mail,proxyAddresses,accountEnabled,assignedLicenses/);
+  assert.match(calls.find(([url]) => new URL(url).hostname === "graph.microsoft.com")[0], /\$select=displayName,userPrincipalName,mail,proxyAddresses,accountEnabled,assignedLicenses/);
 });
 
 test("the Graph secrets stay out of the declared secrets: a missing one would break the deploy", () => {
