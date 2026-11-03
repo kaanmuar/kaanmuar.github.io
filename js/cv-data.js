@@ -144,7 +144,7 @@
                 },
                 experiences: [
                     {
-                        title: 'Founder & Lead Engineer', company: 'QA Lab · carlosandmunoz.com', logo: 'favicon.svg', dates: '2025 - Present', featured: true,
+                        title: 'Founder & Lead Engineer', company: 'QA Lab · carlosandmunoz.com', logo: 'assets/qa-review-mark.svg', dates: '2025 - Present', featured: true,
                         badge: { en: 'Featured · My own product', es: 'Destacado · Mi propio producto', pt: 'Destaque · Meu próprio produto', de: 'Highlight · Mein eigenes Produkt', fr: 'À la une · Mon propre produit', it: 'In evidenza · Il mio prodotto' },
                         summary: {
                             en: 'Designed, built and run the platform end to end, using AI coding assistants (Cursor, Claude) to speed up implementation. I own the architecture, specifications, code review, testing and releases.',
