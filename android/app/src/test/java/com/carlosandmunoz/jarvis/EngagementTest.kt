@@ -64,6 +64,23 @@ class EngagementTest {
         assertTrue(!Engagement.APP_PASSWORD.matches("my real password"))
     }
 
+    @Test fun theFilterKeepsReportRepliesOrTheOthers() {
+        val invite = json("""{"campaign":"report-reply","report":{"host":"upb.edu.co","name":"UPB","score":64,"shown":false,"match":"domain","format":"card"}}""")
+        val field = json("""{"campaign":""}""")
+        assertTrue(Engagement.isReport(invite) && !Engagement.isReport(field))
+        assertEquals(listOf(invite, field), listOf(invite, field).filter { Engagement.keep(it, "all") })
+        assertEquals(listOf(invite), listOf(invite, field).filter { Engagement.keep(it, "report") })
+        assertEquals(listOf(field), listOf(invite, field).filter { Engagement.keep(it, "field") })
+    }
+
+    @Test fun aReportReplySaysWhichReportItInvitesTo() {
+        assertEquals("Invites to the UPB report (upb.edu.co) · scores 64 (not named in the reply) · found by domain · card",
+            Engagement.reportLine(json("""{"campaign":"report-reply","report":{"host":"upb.edu.co","name":"UPB","score":64,"shown":false,"match":"domain","format":"card"}}""")))
+        assertEquals("Invites to the acme.io report (acme.io) · scores 91 · found by name · link",
+            Engagement.reportLine(json("""{"campaign":"report-reply","report":{"host":"acme.io","name":"","score":91,"shown":true,"match":"name","format":"link"}}""")))
+        assertEquals(null, Engagement.reportLine(json("""{"campaign":"","report":null}""")))
+    }
+
     @Test fun engagementIsAProductsChipSoItsPushesOpenIt() {
         assertTrue(CHIPS.any { it.first == "engagement" })
     }

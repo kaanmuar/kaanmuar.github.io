@@ -355,7 +355,63 @@ function rollup(searched, docs) {
   return out;
 }
 
+const PARENT = 2465;
+const cell = (v) => String(v == null ? "" : v).replace(/\|/g, "/").replace(/\s+/g, " ").trim();
+const usd = (n) => (Number(n) || 0).toFixed(2) + " USD";
+
+/**
+ * The weekly results ticket (#2471): what the report replies did in the week. r is the weekly engagement report
+ * (functions/jarvis-engagement.js buildReport, r.invites), social the link results (functions/jarvis-outreach.js
+ * socialResults). Null when the week had no report reply and no click on one.
+ */
+function resultsIssue(r, social) {
+  const iv = r.invites || {};
+  const s = social || { visits: 0, reviews: 0, paid: 0, usd: 0, networks: [], posts: [] };
+  if (!iv.matched && !iv.drafted && !iv.posted && !s.visits && !s.reviews && !s.paid) return null;
+  const approved = (iv.approved || 0) + (iv.edited || 0);
+  const name = (k) => (E.NETWORKS[k] || {}).name || k;
+  const matched = Object.fromEntries((iv.networks || []).map((x) => [x.label, x.value]));
+  const nets = Array.from(new Set(Object.keys(matched).concat(s.networks.map((n) => n.network))));
+  const byNet = Object.fromEntries(s.networks.map((n) => [n.network, n]));
+  const lines = [
+    "**Kind:** Results",
+    "**Area:** engagement",
+    "Parent: #" + PARENT,
+    "",
+    "Report replies (#" + PARENT + ") from " + r.from + " to " + r.to + " (Bogotá): posts naming a site we reviewed, answered with a link to its report. Opened by engagementWeeklyReport; Jarvis > Engagement and Outreach show the same numbers live.",
+    "",
+    "## Funnel",
+    "| Step | Count |",
+    "| --- | --- |",
+    "| Sites looked for | " + (iv.searched || 0) + " |",
+    "| Posts naming a reviewed site | " + (iv.matched || 0) + " |",
+    "| Invites drafted | " + (iv.drafted || 0) + " |",
+    "| Approved | " + approved + " (" + (iv.edited || 0) + " edited, " + (iv.dismissed || 0) + " dismissed) |",
+    "| Posted | " + (iv.posted || 0) + " |",
+    "| Clicks on the report link | " + s.visits + " |",
+    "| Free runs from those clicks | " + s.reviews + " |",
+    "| Paid unlocks | " + s.paid + " (" + usd(s.usd) + ") |",
+    "",
+    "## Per network",
+    "| Network | Posts found | Clicks | Runs | Paid | Revenue |",
+    "| --- | --- | --- | --- | --- | --- |",
+    ...nets.map((k) => { const n = byNet[k] || { visits: 0, reviews: 0, paid: 0, usd: 0 }; return "| " + name(k) + " | " + (matched[k] || 0) + " | " + n.visits + " | " + n.reviews + " | " + n.paid + " | " + usd(n.usd) + " |"; })
+  ];
+  if (s.posts.length) {
+    lines.push("", "## Per post", "| Post | Site | Clicks | Runs | Paid | Revenue | Our reply |", "| --- | --- | --- | --- | --- | --- | --- |",
+      ...s.posts.slice(0, 25).map((p) => "| " + (p.url ? "[" + cell(p.name + ": " + (p.title || p.author || p.ref).slice(0, 70)) + "](" + p.url + ")" : cell(p.name + " " + p.ref)) + " | " + cell(p.host) + " | " + p.visits + " | " + p.reviews + " | " + p.paid + " | " + usd(p.usd) + " | " + (p.replyUrl ? "[" + cell(p.status || "posted") + "](" + p.replyUrl + ")" : cell(p.status || "—")) + " |"));
+  }
+  if ((iv.skips || []).length) lines.push("", "Left alone: " + iv.skips.map((x) => x.label.replace(/_/g, " ") + " " + x.value).join(", ") + ".");
+  lines.push("", "Close this ticket once read; anything to change goes in its own ticket under #" + PARENT + ".");
+  return {
+    title: "Results: report replies " + r.from + " to " + r.to + " · " + (iv.posted || 0) + " posted, " + s.visits + " clicks, " + s.reviews + " runs, " + s.paid + " paid",
+    body: lines.join("\n"),
+    labels: ["area:engagement"],
+    parent: PARENT
+  };
+}
+
 module.exports = {
-  CAMPAIGN, ANSWERED, CODES, CARD_NETS, SHOW_SCORE, SITE_GAP, PER_RUN, LONG_LINK, MAX_AGE_HOURS, WEAK, LOOSE, LOOSE_PER_RUN, LOOSE_WORTH,
-  targets, pick, queries, matchOf, siteOf, looseQueries, looseOf, shortOf, nicheOf, shown, linkFor, prompt, parse, fill, decide, doc, rollup, bare, answeredHosts
+  CAMPAIGN, ANSWERED, CODES, CARD_NETS, SHOW_SCORE, SITE_GAP, PER_RUN, LONG_LINK, MAX_AGE_HOURS, WEAK, LOOSE, LOOSE_PER_RUN, LOOSE_WORTH, PARENT,
+  targets, pick, queries, matchOf, siteOf, looseQueries, looseOf, shortOf, nicheOf, shown, linkFor, prompt, parse, fill, decide, doc, rollup, bare, answeredHosts, resultsIssue
 };

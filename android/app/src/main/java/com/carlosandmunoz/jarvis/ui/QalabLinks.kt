@@ -66,6 +66,7 @@ fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {
     val campaigns = links.pairs("byCampaign")
     if (campaigns.isEmpty()) Panel("Visits by link") { Muted("No visits from qalabreview.com links in this range yet.") }
     else TopList("Visits by link", campaigns)
+    ReportReplyLinks(links.obj("social"))
     Panel("Prospects who opened their link") {
         val prospects = links.objs("prospects")
         if (prospects.isEmpty()) Muted("No prospect has opened a link yet.")
@@ -98,5 +99,31 @@ fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {
             }
         }
         links.objs("funnel").forEach { f -> StatusRow(null, f.str("label") ?: "", "Funnel ticket", url = f.str("url")) }
+    }
+}
+
+private fun count(n: Double?, one: String) = "${fmt(n ?: 0.0)} $one" + if ((n ?: 0.0) == 1.0) "" else "s"
+
+/** "12 clicks · 1 run · 1 paid · 19 USD". */
+fun linkCounts(x: JsonObject?): String = "${count(x.num("visits"), "click")} · ${count(x.num("reviews"), "run")} · ${fmt(x.num("paid") ?: 0.0)} paid · ${fmt(x.num("usd") ?: 0.0)} USD"
+
+/** Report replies (#2465, #2471): clicks, runs and payments per network and per post, as on the web Outreach tab. */
+@Composable
+private fun ReportReplyLinks(social: JsonObject?) {
+    if (social == null) return
+    Panel("Report replies: clicks, runs and payments") {
+        KpiPairs(listOf(
+            KpiData("Clicks", fmt(social.num("visits"))), KpiData("Free runs", fmt(social.num("reviews"))),
+            KpiData("Paid unlocks", fmt(social.num("paid"))), KpiData("Revenue", fmt(social.num("usd")) + " USD")
+        ))
+        val nets = social.objs("networks")
+        if (nets.isEmpty()) Muted("No click on a report reply in this range yet.")
+        nets.forEach { n -> StatusRow(if ((n.num("paid") ?: 0.0) > 0) "good" else "info", "Report replies on ${n.str("name").orEmpty()}", linkCounts(n) + " · " + n.str("campaign").orEmpty()) }
+        social.objs("posts").take(15).forEach { p ->
+            val title = (p.str("title")?.ifEmpty { null } ?: p.str("author")?.ifEmpty { null } ?: p.str("ref").orEmpty()).take(80)
+            StatusRow(if ((p.num("paid") ?: 0.0) > 0) "good" else null, "${p.str("name").orEmpty()}: $title",
+                listOfNotNull(p.str("host")?.ifEmpty { null }, linkCounts(p), p.str("status")?.ifEmpty { null }?.let { "reply $it" }).joinToString(" · "),
+                url = (p.str("replyUrl") ?: p.str("url"))?.takeIf { it.startsWith("https://") })
+        }
     }
 }

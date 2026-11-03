@@ -131,6 +131,7 @@
 .jv-chip.c-fast { border-color: rgba(61, 255, 168, 0.55); color: var(--green); }
 .jv-chip.c-average { border-color: rgba(255, 181, 71, 0.55); color: var(--amber); }
 .jv-chip.c-slow { border-color: rgba(255, 77, 141, 0.6); color: var(--pink); }
+.jv-chip.c-report { border-color: rgba(169, 139, 255, 0.65); background: rgba(169, 139, 255, 0.14); color: var(--violet); }
 .jv-ci { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 
 /* Marketing tab (#1722): pies, the 90-day timeline, countdowns, plan comparisons and the command deck. */

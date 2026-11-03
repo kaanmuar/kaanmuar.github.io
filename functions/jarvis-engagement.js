@@ -6,11 +6,12 @@
  *   engagement_daily/<YYYY-MM-DD>      counters per Bogotá day (read, candidates, actions, the reply funnel, topics)
  *   engagement_runs/<ISO>              one per scout run
  *   engagement_reports/<period>-<day>  the daily, weekly and monthly reports as sent
+ *   engagement_issues/<day>            the weekly report-reply results ticket opened for the week ending that day (#2471)
  *   jarvis_settings/engagement         pause, live (or a dry run), caps, thresholds, competitors, own handles
  *   engagement_private/*               the accounts the poster acts as (functions/engagement-act.js)
  *
  * deps: { db, fetch, env, now, inc (n => FieldValue.increment(n)), push (msg => Promise), mail (msg => Promise),
- *         keys ({ clientId, secret }: the Google OAuth client YouTube refreshes through) }
+ *         keys ({ clientId, secret }: the Google OAuth client YouTube refreshes through), openIssue (resultsTicket only) }
  */
 const E = require("./engagement");
 const Sources = require("./engagement-sources");
@@ -461,6 +462,33 @@ async function sendReport(deps, period) {
   return { period, from: r.from, to: r.to, sent: sent !== false, subject: mail.subject };
 }
 
+/**
+ * The weekly results ticket for the report replies (#2471), once per week: deps.openIssue({ title, body, labels, parent })
+ * files it on the board and answers { number, html_url }; deps.social reads the link results (jarvis-outreach socialResults).
+ */
+async function resultsTicket(deps) {
+  const { db, now } = deps;
+  const r = await buildReport(db, "weekly", now);
+  const social = await (deps.social || require("./jarvis-outreach").socialResults)({ db, now, days: 7 });
+  const issue = R.resultsIssue(r, social);
+  if (!issue) return { opened: false, note: "no report reply and no click on one from " + r.from + " to " + r.to };
+  const ref = db.collection("engagement_issues").doc(r.to);
+  try {
+    await ref.create({ at: new Date(now).toISOString(), from: r.from, to: r.to, title: issue.title, issue: null });
+  } catch (error) {
+    if (error.code === 6) return { opened: false, note: "the ticket for the week to " + r.to + " is already open" };
+    throw error;
+  }
+  try {
+    const out = await deps.openIssue(issue);
+    await ref.update({ issue: out.number, url: out.html_url });
+    return { opened: true, number: out.number, url: out.html_url, note: "opened #" + out.number };
+  } catch (error) {
+    await ref.delete().catch(() => null);
+    throw error;
+  }
+}
+
 /** Approve, edit or dismiss a waiting reply. */
 async function decide(deps, body, by) {
   const { db, now, inc } = deps;
@@ -604,4 +632,4 @@ async function source(ctx) {
   };
 }
 
-module.exports = { scout, takeIn, reportSites, reportPass, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
+module.exports = { scout, takeIn, reportSites, reportPass, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, resultsTicket, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };

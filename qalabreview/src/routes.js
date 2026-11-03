@@ -62,9 +62,10 @@ export async function route(url, { acceptLanguage = "", findReport = async () =>
   }
 
   // A reply under a social post that names a site we reviewed (#2465); the post ref tells Jarvis which reply it was.
+  // The ref goes before the host, whose length varies, so the 120 characters a visit keeps hold it (#2471).
   if (first === "r" && (rest.length === 2 || rest.length === 3) && SOCIAL[rest[0]] && HOST.test(bare(rest[1])) && (rest.length === 2 || /^[a-z0-9]{4,12}$/.test(rest[2]))) {
     const site = bare(rest[1]);
-    const tags = Object.assign({ utm_campaign: "social-reply-" + SOCIAL[rest[0]], utm_content: site, utm_medium: "social" }, rest[2] ? { utm_term: rest[2] } : {});
+    const tags = Object.assign({ utm_campaign: "social-reply-" + SOCIAL[rest[0]] }, rest[2] ? { utm_term: rest[2] } : {}, { utm_content: site, utm_medium: "social" });
     const card = await findReport(site).catch(() => null);
     return { status: 302, location: landing(lang, tags, card && card.id ? { live: card.id } : { url: site }) };
   }

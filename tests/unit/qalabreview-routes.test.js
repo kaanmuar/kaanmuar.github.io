@@ -63,7 +63,9 @@ test("a report reply's link opens the site's Live Report, tagged by network, sit
   const { route } = await load();
   const findReport = async (host) => (host === "upb.edu.co" ? { id: "upb" } : null);
   const out = await route(at("/es/r/bsky/www.upb.edu.co/a1b2c3"), { findReport });
-  assert.ok(out.location.startsWith("https://carlosandmunoz.com/qa-review-es.html?utm_source=qalabreview&utm_campaign=social-reply-bluesky&utm_content=upb.edu.co&utm_medium=social&utm_term=a1b2c3"));
+  assert.ok(out.location.startsWith("https://carlosandmunoz.com/qa-review-es.html?utm_source=qalabreview&utm_campaign=social-reply-bluesky&utm_term=a1b2c3&utm_content=upb.edu.co&utm_medium=social"));
+  const long = await route(at("/es/r/mast/universidad-pontificia-bolivariana.edu.co/a1b2c3"), { findReport });
+  assert.equal(params("https://x.test/" + new URL(long.location).search.slice(0, 120)).get("utm_term"), "a1b2c3");
   assert.equal(params(out.location).get("live"), "upb");
   assert.equal(params((await route(at("/r/yt/other.com"), { findReport })).location).get("url"), "other.com");
   assert.equal(params((await route(at("/r/myspace/upb.edu.co/a1b2c3"), { findReport })).location).get("utm_campaign"), "unknown-path");
