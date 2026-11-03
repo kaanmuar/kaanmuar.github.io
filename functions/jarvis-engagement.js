@@ -161,7 +161,7 @@ async function takeIn(deps, conf, posts, read, errors) {
  * waits for Carlos. A comment stays unread until Gemini answers for it, so a failing read is tried again next run.
  */
 async function followChains(deps, conf) {
-  const { db, now, env, inc } = deps;
+  const { db } = deps;
   const out = { checked: 0, chained: 0, liked: 0, drafted: 0, pushed: 0, aiError: "", errors: {} };
   if (conf.paused) return out;
   const chains = await Act.pendingChains(deps);
@@ -171,8 +171,16 @@ async function followChains(deps, conf) {
   };
   const inbox = await Act.pendingInbox(deps, handled).catch((error) => ({ found: [], checked: 0, errors: { inbox: String(error.message || error).slice(0, 200) } }));
   Object.assign(out, { checked: chains.checked + inbox.checked, errors: Object.assign({}, chains.errors, inbox.errors) });
+  return takeChains(deps, conf, chains.found.concat(inbox.found), out);
+}
+
+/** Comments found ([{ parent, comments }]) into chain posts: read by Gemini, a like planned, an answer drafted and pushed. */
+async function takeChains(deps, conf, found, into) {
+  const { db, now, env, inc } = deps;
+  const out = into || { checked: 0, chained: 0, liked: 0, drafted: 0, pushed: 0, aiError: "", errors: {} };
+  if (conf.paused) return out;
   const byKey = new Map();
-  chains.found.concat(inbox.found).forEach(({ parent, comments }) => comments.forEach((c) => {
+  found.forEach(({ parent, comments }) => comments.forEach((c) => {
     const key = E.keyOf(c.network, c.id);
     if (!byKey.has(key)) byKey.set(key, Object.assign({ key, parent }, c));
   }));
@@ -572,4 +580,4 @@ async function source(ctx) {
   };
 }
 
-module.exports = { scout, takeIn, reportPass, shortLink, followChains, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
+module.exports = { scout, takeIn, reportPass, shortLink, followChains, takeChains, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };

@@ -2,7 +2,8 @@
    actions.countdownHours (2 by default) before they run. Each one pushes "Doing X in 2 h" with Do it now and
    Cancel, then a push when it starts and one with the result; the web and the app list the pending ones.
 
-   kinds      email     third-party email: held re-runs to their askers, owner notices, the jobs that mail people
+   kinds      email     third-party email: held re-runs to their askers, owner notices, the jobs that mail people,
+                        launching a draft outreach campaign
               post      public posts off schedule: retrying failed social posts, a failed posting job or workflow re-run
               code      code reaching production: merging a green PR (labelled jarvis-merge, or a safe PageSpeed PR),
                         the Pages and app workflows
@@ -45,7 +46,7 @@ function inner(row) {
 }
 
 function kindOf(action, target) {
-  if (action === "rerun-held" || action === "resend-notices") return "email";
+  if (action === "rerun-held" || action === "resend-notices" || action === "launch-campaign") return "email";
   if (JOB_ACTIONS.includes(action)) return MAIL_JOBS.includes(target) ? "email" : "post";
   if (action === "rerun-ci") return /^pages$|jarvis android/i.test(String(target)) ? "code" : "post";
   if (action === "retry-social") return "post";
@@ -137,7 +138,7 @@ async function queue(db, entry, { now, hours }) {
 }
 
 /* Runs a row's action. ops as in jarvis-actions autoRun, plus retrySocial() -> { note },
-   resumeMailboxes(emails) -> { resumed: [email], left: [email: why] }, mergePr(number, sha) -> { merged, sha } and
+   resumeMailboxes(emails) -> { resumed: [email], left: [email: why] }, launchCampaigns(ids) -> { launched: [name], left: [name: why] }, mergePr(number, sha) -> { merged, sha } and
    pagespeedMerge(number, sha) -> { message }. Returns { count, detail }; throws when it did nothing. */
 async function execute(row, ops, now) {
   const A = actions();
@@ -185,6 +186,11 @@ async function execute(row, ops, now) {
     const res = await ops.resumeMailboxes(p.emails || []);
     if (!res.resumed.length) throw new Error("Nothing resumed" + (res.left.length ? ": " + res.left.join("; ") : "") + ".");
     return { count: res.resumed.length, detail: "Resumed " + res.resumed.join(", ") + (res.left.length ? "; left: " + res.left.join("; ") : "") + "." };
+  }
+  if (action === "launch-campaign") {
+    const res = await ops.launchCampaigns((p.items || []).map((i) => i.id));
+    if (!res.launched.length) throw new Error("Nothing launched" + (res.left.length ? ": " + res.left.join("; ") : "") + ".");
+    return { count: res.launched.length, detail: "Launched " + res.launched.join(", ") + (res.left.length ? "; left: " + res.left.join("; ") : "") + "." };
   }
   if (action === "merge-pr" && p.pagespeed) { const res = await ops.pagespeedMerge(p.number, p.sha); return { count: 1, detail: res.message }; }
   if (action === "merge-pr") { const res = await ops.mergePr(p.number, p.sha); return { count: 1, detail: "Merged #" + p.number + " at " + String(res.sha || p.sha || "").slice(0, 7) + "." }; }

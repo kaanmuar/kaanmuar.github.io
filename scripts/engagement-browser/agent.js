@@ -24,7 +24,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 const PROJECT = "carlosm-interactive-cv";
 const ENDPOINT = "https://us-central1-" + PROJECT + ".cloudfunctions.net/jarvis";
 const LABEL = "com.kaanmuar.engagementbrowser";
@@ -40,6 +40,7 @@ const HOURS = [7, 22];
 const MAX_ACTIONS = 10;
 const RUN_MS = 25 * 60 * 1000;
 const HOLD_MS = 12 * 3600000;
+const INBOX_MS = 3600000;
 
 const { NETWORKS, Refused, pause } = require("./networks");
 
@@ -144,6 +145,10 @@ async function check(nets, read) {
         const posts = await NETWORKS[k].read(page, NETWORKS[k].queries[0]).catch((error) => ({ error: error.message }));
         line += posts.error ? "; read failed: " + posts.error : "; read " + posts.length + " posts for \"" + NETWORKS[k].queries[0] + "\"";
         if (posts.error || !posts.length) line += " (screenshot " + await shot(page, k) + ")";
+        if (NETWORKS[k].inbox) {
+          const got = await NETWORKS[k].inbox(page).catch((error) => ({ error: error.message }));
+          line += got.error ? "; notifications failed: " + got.error : "; " + got.length + " replies and mentions of us (" + got.filter((x) => !x.liked).length + " not liked)";
+        }
       }
       console.log(line);
     }
@@ -164,7 +169,13 @@ async function importCookies(file) {
 async function act(page, task) {
   const net = NETWORKS[task.network];
   if (!net || !net[task.action]) return { ok: false, error: NETWORKS[task.network] ? net.name + " takes no " + task.action + " here." : "Unknown network." };
-  try { return Object.assign({ ok: true }, await net[task.action](page, task)); }
+  try {
+    if (task.action === "reply" && net.replied) {
+      const had = await net.replied(page, task);
+      if (had) return { ok: false, already: true, url: had.url || "" };
+    }
+    return Object.assign({ ok: true }, await net[task.action](page, task));
+  }
   catch (error) {
     const file = await shot(page, task.network + "-" + task.action);
     return { ok: false, retry: error instanceof Refused, error: String(error.message || error).slice(0, 180), shot: file };
@@ -186,7 +197,7 @@ async function run(opts) {
   c.blocked = Object.fromEntries(Object.entries(c.blocked || {}).filter(([, until]) => Date.parse(until) > now));
   const slot = Math.floor(now / 1800000);
   const { ctx, page } = await launch(true);
-  const seen = { posts: [], errors: {}, signedIn: {}, accounts: {} };
+  const seen = { posts: [], comments: [], errors: {}, signedIn: {}, accounts: {} };
   try {
     const nets = pickNets(opts.only).sort(() => Math.random() - 0.5);
     for (const [i, k] of nets.entries()) {
@@ -207,10 +218,23 @@ async function run(opts) {
         seen.errors[k] = String(error.message || error).slice(0, 180);
         log(net.name + ": " + seen.errors[k] + " (" + await shot(page, k) + ")");
       }
+      if (net.inbox && !c.blocked[k] && now - Date.parse((c.inboxAt || {})[k] || 0) > INBOX_MS) {
+        await pause(3000, 9000);
+        try {
+          const got = await net.inbox(page);
+          seen.comments.push(...got);
+          c.inboxAt = Object.assign({}, c.inboxAt, { [k]: new Date().toISOString() });
+          log(net.name + ": " + got.length + " replies and mentions of us in the notifications");
+        } catch (error) {
+          if (error instanceof Refused) c.blocked[k] = new Date(Date.now() + HOLD_MS).toISOString();
+          log(net.name + " notifications: " + String(error.message || error).slice(0, 180));
+        }
+      }
       await pause(3000, 9000);
     }
     const took = await api("engagement-mac-ingest", Object.assign({}, seen, { blocked: c.blocked, agent: VERSION }));
-    log("Jarvis took " + took.read + " posts: " + took.fresh + " new, " + took.engaged + " to engage, " + took.drafted + " replies drafted" + (took.aiError ? "; Gemini: " + took.aiError : ""));
+    log("Jarvis took " + took.read + " posts: " + took.fresh + " new, " + took.engaged + " to engage, " + took.drafted + " replies drafted" + (took.aiError ? "; Gemini: " + took.aiError : "")
+      + (took.chained ? "; " + took.chained + " new comments on our posts and replies" : ""));
 
     const ready = Object.keys(seen.signedIn).filter((k) => seen.signedIn[k] && !c.blocked[k]);
     const q = await api("engagement-mac-queue", { networks: ready });
@@ -221,12 +245,12 @@ async function run(opts) {
       if (c.blocked[t.network]) { await api("engagement-mac-result", { key: t.key, action: t.action, ok: false, retry: true, error: "Held after a check." }); continue; }
       const r = await act(page, t);
       if (r.retry) c.blocked[t.network] = new Date(Date.now() + HOLD_MS).toISOString();
-      await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", retry: !!r.retry, error: r.error || "" }).catch((error) => log(error.message));
-      log(NETWORKS[t.network].name + " " + t.action + " " + t.url + ": " + (r.ok ? "done" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
+      await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, error: r.error || "" }).catch((error) => log(error.message));
+      log(NETWORKS[t.network].name + " " + t.action + " " + t.url + ": " + (r.ok ? "done" + (r.reaction ? " (" + r.reaction + ")" : "") : r.already ? "we had already replied (" + r.url + "), not sent" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
       await pause(25000, 70000);
     }
   } finally {
-    writeConfig(Object.assign(readConfig(), { blocked: c.blocked, lastRun: new Date().toISOString() }));
+    writeConfig(Object.assign(readConfig(), { blocked: c.blocked, inboxAt: c.inboxAt || {}, lastRun: new Date().toISOString() }));
     await ctx.close().catch(() => null);
     clearTimeout(timer);
     fs.rmSync(LOCK, { recursive: true, force: true });

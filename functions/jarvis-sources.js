@@ -351,12 +351,22 @@ async function search(ctx) {
 
 // --- social ----------------------------------------------------------------------------------------------------
 
+// Facebook post numbers are read each morning by scripts/social-metrics.js in auto-live-reports.yml, which holds the
+// Page tokens as repo secrets; its pages entry says which Page was skipped or refused, and why.
+function facebookNeeds(metrics) {
+  return Object.entries((metrics && metrics.pages) || {}).map(([profile, page]) => {
+    if (page.skipped) return profile + ": the daily social numbers skipped it (" + page.skipped + " repo secret). Steps are at the top of scripts/meta-token.js.";
+    if (page.asked && page.answered < page.asked) return profile + ": the Graph API answered " + (page.answered || 0) + " of " + page.asked + " sent posts in the daily social numbers" + (page.error ? ": " + String(page.error).slice(0, 200) : ".");
+    return "";
+  }).filter(Boolean);
+}
+
 async function social(ctx) {
   const since = ctx.now - ctx.days * DAY;
   const ledger = async (name) => {
     try { return await getJson(ctx.fetch, ORIGIN + "/assets/social/" + name + ".json?t=" + Math.floor(ctx.now / HOUR), {}, name + " ledger"); } catch (error) { return null; }
   };
-  const [buffer, facebook, open, youtube] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("youtube")]);
+  const [buffer, facebook, open, youtube, metrics] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("youtube"), ledger("metrics")]);
   const channels = {};
   const results = {};
   const daily = {};
@@ -393,7 +403,7 @@ async function social(ctx) {
       views = videos.reduce((s, v) => s + (v.views || 0), 0);
     } catch (error) { needs.push("YouTube: " + clean(error)); }
   } else if (!key) needs.push("YouTube: set YOUTUBE_KEY (an API key limited to the YouTube Data API v3) in Secret Manager.");
-  if (!(ctx.env || {}).FACEBOOK_PAGE_TOKEN) needs.push("Facebook: copy FACEBOOK_PAGE_TOKEN from the GitHub secrets into functions/.env so Jarvis can read post reach.");
+  needs.push(...facebookNeeds(metrics));
   const failed = Object.keys(results).filter((k) => /:failed$/.test(k)).reduce((s, k) => s + results[k], 0);
   return {
     ok: !!(buffer || facebook),

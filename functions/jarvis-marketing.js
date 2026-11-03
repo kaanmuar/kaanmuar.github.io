@@ -2,13 +2,17 @@
    and GA4 sources.
 
    campaigns  every Instantly campaign with its id, week, sequence, language, region, start date, sending window and
-              stats, so the tab can pause or activate one, plus the mix by language, region, sequence and status
+              stats, so the tab can pause or activate one, plus the mix by language, region, sequence and status. Leads
+              are counted from the leads list (#2475): Instantly's analytics leaves out campaigns with no activity yet
    sent       every cold email Instantly sent, with what the lead did since and the resends from Jarvis
    prospects  the sweep list (url_review_sweep/outreach) by country and segment
    notes      follow-up notes to askers (url_review_notes): sent and stopped per day, by kind and scene
 
    And the owner actions behind the tab's buttons: pause or activate a campaign, send a cold email again, block an address or domain in
-   Instantly, and append prospects to the sweep list the way scripts/sweep-outreach.js does. */
+   Instantly, and append prospects to the sweep list the way scripts/sweep-outreach.js does.
+
+   launchReady and launch (#2475) are Jarvis's launch-campaign action: a draft campaign with leads, steps, a mailbox and a
+   start date at most LAUNCH_DAYS away was made after the week's campaigns were activated and would never send. */
 
 const sweep = require("./url-review-sweep");
 
@@ -20,6 +24,8 @@ const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL = /^[^\s@]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
 const DOMAIN = /^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i;
 const QUEUE_MAX = 200;
+const LEAD_PAGES = 30;
+const LAUNCH_DAYS = 7;
 
 const clean = (error) => String((error && error.message) || error || "failed").slice(0, 200);
 const toMs = (v) => (v && typeof v.toDate === "function" ? v.toDate().getTime() : Date.parse(v || "") || 0);
@@ -41,7 +47,8 @@ function windowOf(schedule) {
   return [span, s.timing ? s.timing.from + "-" + s.timing.to : "", s.timezone || ""].filter(Boolean).join(" ");
 }
 
-function campaignRows(campaigns, analytics, now) {
+// counts: { campaignId: leads } from leadCounts; a campaign missing from both it and the analytics has none.
+function campaignRows(campaigns, analytics, now, counts) {
   const stats = {};
   (analytics || []).forEach((a) => { if (a && a.campaign_id) stats[a.campaign_id] = a; });
   const rows = (campaigns || []).map((c) => {
@@ -53,7 +60,8 @@ function campaignRows(campaigns, analytics, now) {
       window: windowOf(schedule),
       dailyLimit: Number(c.daily_limit) || 0,
       steps: ((c.sequences || [])[0] || {}).steps ? c.sequences[0].steps.length : 0,
-      leads: Number(a.leads_count) || 0,
+      mailboxes: (c.email_list || []).length,
+      leads: Math.max(Number((counts || {})[c.id]) || 0, Number(a.leads_count) || 0),
       contacted: Number(a.contacted_count) || 0,
       sent: Number(a.emails_sent_count) || 0,
       opened: Number(a.open_count_unique || a.open_count) || 0,
@@ -151,14 +159,58 @@ async function instantly(ctx, path, init) {
 
 const needKey = (ctx) => { if (!(ctx.env || {}).INSTANTLY_API_KEY) throw new Error("INSTANTLY_API_KEY is not set in Secret Manager."); };
 
+// { campaignId: leads } over the whole leads list, LEAD_PAGES pages of 100 at most.
+async function leadCounts(ctx) {
+  const counts = {};
+  let after = "";
+  for (let page = 0; page < LEAD_PAGES; page++) {
+    const res = await instantly(ctx, "leads/list", { method: "POST", body: JSON.stringify(Object.assign({ limit: 100 }, after ? { starting_after: after } : {})) });
+    const items = res.items || [];
+    items.forEach((l) => { if (l && l.campaign) counts[l.campaign] = (counts[l.campaign] || 0) + 1; });
+    after = items.length ? String(res.next_starting_after || "") : "";
+    if (!after) break;
+  }
+  return counts;
+}
+
+async function campaignList(ctx) {
+  const [list, analytics, counts] = await Promise.all([
+    instantly(ctx, "campaigns?limit=100"), instantly(ctx, "campaigns/analytics").catch(() => []), leadCounts(ctx).catch(() => null)
+  ]);
+  return campaignRows(list.items, Array.isArray(analytics) ? analytics : analytics.items, ctx.now, counts);
+}
+
+const ready = (r, now) => r.status === "draft" && r.leads > 0 && r.steps > 0 && r.mailboxes > 0 && r.start && Date.parse(r.start + "T00:00:00Z") - now <= LAUNCH_DAYS * DAY;
+
+// The draft campaigns Jarvis may launch: [{ id, name, start, leads }].
+async function launchReady(ctx) {
+  needKey(ctx);
+  return (await campaignList(ctx)).rows.filter((r) => ready(r, ctx.now)).map((r) => ({ id: r.id, name: r.name, start: r.start, leads: r.leads }));
+}
+
+// Activates the ids still ready; the rest come back with why.
+async function launch(ctx, ids) {
+  needKey(ctx);
+  const rows = (await campaignList(ctx)).rows;
+  const launched = [];
+  const left = [];
+  for (const id of ids) {
+    const r = rows.find((x) => x.id === id);
+    const why = !r ? "gone from Instantly" : r.status !== "draft" ? "already " + r.status : !ready(r, ctx.now) ? "no longer ready (" + r.leads + " leads, " + r.steps + " steps, start " + (r.start || "none") + ")" : "";
+    if (why) { left.push((r ? r.name : id) + ": " + why); continue; }
+    const after = await campaignAct(ctx, { id, action: "activate" });
+    if (after.status === "active") launched.push(after.name); else left.push(after.name + ": Instantly says " + after.status);
+  }
+  return { launched, left };
+}
+
 async function marketing(ctx) {
   const out = { ok: true, needs: [], days: ctx.days };
   const part = async (name, run) => { try { out[name] = Object.assign({ ok: true }, await run()); } catch (error) { out[name] = { ok: false, error: clean(error) }; } };
   await Promise.all([
     part("campaigns", async () => {
       needKey(ctx);
-      const [list, analytics] = await Promise.all([instantly(ctx, "campaigns?limit=100"), instantly(ctx, "campaigns/analytics").catch(() => [])]);
-      return campaignRows(list.items, Array.isArray(analytics) ? analytics : analytics.items, ctx.now);
+      return campaignList(ctx);
     }),
     part("sent", async () => {
       needKey(ctx);
@@ -408,6 +460,6 @@ async function command(ctx, db, body) {
 }
 
 module.exports = {
-  marketing, campaignRows, prospectRows, noteRows, parseName, windowOf, campaignAct, mailboxAct, block, prospectLines, queueProspects,
+  marketing, campaignRows, leadCounts, launchReady, launch, LAUNCH_DAYS, prospectRows, noteRows, parseName, windowOf, campaignAct, mailboxAct, block, prospectLines, queueProspects,
   syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, TTL: 10 * 60 * 1000
 };
