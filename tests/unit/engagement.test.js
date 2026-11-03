@@ -397,3 +397,11 @@ test("Bluesky posts keep their conversation's root; reports count answers not se
   assert.equal(rows.find((x) => x.label === "Comments on our replies").value, "3");
   assert.equal(rows.find((x) => x.label === "Already answered, not sent again").value, "2");
 });
+
+test("a comment that names our site is still answered; one by our own account is left alone (#2447)", () => {
+  const conf = E.settings({});
+  const ai = { lang: "en", sentiment: "positive", worth: 0.9, like: true, reply: "Yes, the review is free." };
+  const c = post({ network: "bluesky", id: "at://eve/c1", text: "Is carlosandmunoz.com really free?", author: { handle: "eve.bsky.social" } });
+  assert.equal(E.chainDecide(c, ai, conf, NOW).verdict, "engage");
+  assert.equal(E.chainDecide(Object.assign({}, c, { author: { handle: "qalaburlreview.bsky.social" } }), ai, conf, NOW).skip, "own");
+});
