@@ -1,0 +1,229 @@
+{
+ "at": "2026-11-02T09:02:18.330Z",
+ "run": {
+  "id": 41412402517,
+  "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/41412402517"
+ },
+ "threshold": 90,
+ "pages": [
+  {
+   "url": "https://carlosandmunoz.com/",
+   "file": "index.html",
+   "sitemap": "sitemap.xml",
+   "mobile": {
+    "score": 87,
+    "lcp": 2803,
+    "tbt": 67,
+    "cls": 0,
+    "fcp": 2803
+   },
+   "desktop": {
+    "score": 89,
+    "lcp": 1848,
+    "tbt": 96,
+    "cls": 0.013,
+    "fcp": 729
+   },
+   "fails": [
+    "render-blocking-insight",
+    "image-delivery-insight",
+    "cache-insight",
+    "unused-javascript",
+    "unused-css-rules",
+    "unminified-css",
+    "unminified-javascript",
+    "legacy-javascript-insight",
+    "duplicated-javascript-insight",
+    "forced-reflow-insight",
+    "network-dependency-tree-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/simulador.html",
+   "file": "simulador.html",
+   "sitemap": "sitemap.xml",
+   "mobile": {
+    "score": 68,
+    "lcp": 6489,
+    "tbt": 19,
+    "cls": 0,
+    "fcp": 2828
+   },
+   "desktop": {
+    "score": 80,
+    "lcp": 1530,
+    "tbt": 79,
+    "cls": 0.269,
+    "fcp": 297
+   },
+   "fails": [
+    "render-blocking-insight",
+    "cache-insight",
+    "unused-javascript",
+    "unminified-css",
+    "unminified-javascript",
+    "legacy-javascript-insight",
+    "duplicated-javascript-insight",
+    "forced-reflow-insight",
+    "mainthread-work-breakdown",
+    "network-dependency-tree-insight",
+    "cls-culprits-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/qa-review.html",
+   "file": "qa-review.html",
+   "sitemap": "sitemap.xml",
+   "mobile": {
+    "score": 52,
+    "lcp": 5355,
+    "tbt": 1336,
+    "cls": 0.035,
+    "fcp": 1051
+   },
+   "desktop": {
+    "score": 45,
+    "lcp": 1191,
+    "tbt": 1202,
+    "cls": 0.422,
+    "fcp": 281
+   },
+   "fails": [
+    "render-blocking-insight",
+    "lcp-discovery-insight",
+    "cache-insight",
+    "unused-javascript",
+    "unused-css-rules",
+    "unminified-css",
+    "unminified-javascript",
+    "legacy-javascript-insight",
+    "duplicated-javascript-insight",
+    "forced-reflow-insight",
+    "mainthread-work-breakdown",
+    "network-dependency-tree-insight"
+   ]
+  }
+ ],
+ "cache": [
+  {
+   "url": "https://carlosm-interactive-cv.firebaseapp.com/__/auth/iframe.js",
+   "ttlMs": 1800000,
+   "wastedBytes": 82502,
+   "pages": 1
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/qa-review.js?v=20261128f",
+   "ttlMs": 14400000,
+   "wastedBytes": 38283,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/cv-data.js?v=20261105t",
+   "ttlMs": 14400000,
+   "wastedBytes": 36417,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/cv-app.js?v=20261105v",
+   "ttlMs": 14400000,
+   "wastedBytes": 34185,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/qa-review-report-copy.js?v=20261128e",
+   "ttlMs": 14400000,
+   "wastedBytes": 33593,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/qa-review-scripts.js?v=20261110a",
+   "ttlMs": 14400000,
+   "wastedBytes": 21823,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/qa-review-live.js?v=20261109b",
+   "ttlMs": 14400000,
+   "wastedBytes": 17132,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/qa-review-ask.js?v=20261109a",
+   "ttlMs": 14400000,
+   "wastedBytes": 16641,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/assets/profile-280.jpg?v=20261024",
+   "ttlMs": 14400000,
+   "wastedBytes": 15260,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/css/cv.css?v=20261105t",
+   "ttlMs": 14400000,
+   "wastedBytes": 12633,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/qa-review-multi.js?v=20261128c",
+   "ttlMs": 14400000,
+   "wastedBytes": 10649,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/qa-review-compare-copy.js?v=20261106a",
+   "ttlMs": 14400000,
+   "wastedBytes": 10552,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/site-i18n.js?v=20261104a",
+   "ttlMs": 14400000,
+   "wastedBytes": 4887,
+   "pages": 4
+  },
+  {
+   "url": "https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092",
+   "ttlMs": 86400000,
+   "wastedBytes": 4246,
+   "pages": 4
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/site-look.js",
+   "ttlMs": 14400000,
+   "wastedBytes": 4015,
+   "pages": 4
+  },
+  {
+   "url": "https://carlosandmunoz.com/style.css",
+   "ttlMs": 14400000,
+   "wastedBytes": 4908,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/assets/wire/ring.mp4",
+   "ttlMs": 14400000,
+   "wastedBytes": 9655,
+   "pages": 1
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/site-glossary.js?v=20261102a",
+   "ttlMs": 14400000,
+   "wastedBytes": 4430,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/site-tour.js?v=20261104a",
+   "ttlMs": 14400000,
+   "wastedBytes": 3989,
+   "pages": 2
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/site-analytics.js?v=20261030a",
+   "ttlMs": 14400000,
+   "wastedBytes": 2640,
+   "pages": 2
+  }
+ ]
+}

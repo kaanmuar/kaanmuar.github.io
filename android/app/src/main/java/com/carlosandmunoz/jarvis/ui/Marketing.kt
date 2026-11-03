@@ -44,7 +44,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-/** Jarvis > Marketing in the app (#1729): the web tab's numbers and buttons, including the Mac sync's leads, replies and LinkedIn (#1730). */
+/** Jarvis > Marketing in the app (#1729): the web tab's numbers and buttons, including the outreach sync's leads, replies and LinkedIn (#1730). */
 object Marketing {
     data class Week(val week: String, val total: Int, val complete: Int, val missing: Int, val approved: Int, val uploaded: Int, val ready: Int)
 
@@ -56,9 +56,15 @@ object Marketing {
     /** The week the tab opens on: the latest one with leads still to upload, else the latest. */
     fun openWeek(weeks: List<Week>, picked: String?): Week? = weeks.firstOrNull { it.week == picked } ?: weeks.lastOrNull { it.uploaded < it.total } ?: weeks.lastOrNull()
 
-    /** True while a command for this key (an email, a week, a name or a job) waits for the Mac. */
+    /** Uploaded or dropped: the leads panel hides these until "Show done". Approved rows still need the upload, so they stay. */
+    fun leadDone(r: JsonObject) = !r.str("uploaded").isNullOrEmpty() || r.bool("dropped") == true
+
+    /** True while a command for this key (an email, a week, a name or a job) waits for the outreach sync. */
     fun waiting(sync: JsonObject?, action: String, key: String) =
         sync.obj("commands").objs("items").any { it.str("status") == "pending" && (action.isEmpty() || it.str("action") == action) && it.str("label").orEmpty().contains(key) }
+
+    /** The day's LinkedIn list as (still to send, already sent); sent people fold away (#2336). */
+    fun linkedinSplit(sync: JsonObject?) = sync.obj("linkedin").objs("items").partition { it.bool("sent") != true }
 
     fun repliesToAnswer(sync: JsonObject?) = sync.objs("replies").filter { it.str("sent").isNullOrEmpty() && !it.str("draft").isNullOrEmpty() }
 
@@ -99,7 +105,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
     val email = ext.obj("email")?.takeIf { it.isOk() }
     var confirm by remember { mutableStateOf<PendingAction?>(null) }
     fun ask(text: String, run: () -> Unit) { confirm = PendingAction(text, run) }
-    fun command(key: String, extra: Map<String, Any>, done: (JsonObject) -> String = { out -> (out.str("label") ?: "Queued") + ": the Mac does it on its next sync." }) =
+    fun command(key: String, extra: Map<String, Any>, done: (JsonObject) -> String = { out -> (out.str("label") ?: "Queued") + if (out.bool("syncing") == true) ": the outreach Action does it in a few minutes." else ": the outreach Action does it on its next sync, within 3 hours." }) =
         vm.market(key, "marketing-command", extra.mapValues { (_, v) -> json(v) }, done)
 
     val weeks = Marketing.weeks(sy)
@@ -118,8 +124,9 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
     Panel("Marketing") {
         KpiPairs(listOf(
             KpiData("Social posts", fmt(so.num("sent")), alert = (so.num("failed") ?: 0.0) > 0),
+            snap.obj("products").obj("hub").objs("kpis").firstOrNull()?.let(::kpiOf) ?: KpiData("Hub + post views", "—"),
             KpiData("YouTube views", fmt(so.obj("youtube").num("views"))),
-            KpiData("Prospects reviewed", fmt(pipe.num("reviews"))),
+            kpiVs("Prospects reviewed", pipe.num("reviews"), pipe.num("priorReviews")),
             KpiData("Cold emails sent", fmt(mail.num("sent"))),
             KpiData("Replies", fmt(mail.num("replies"))),
             KpiData("Meetings", fmt(mail.num("meetings"))),
@@ -130,7 +137,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
             KpiData("Ready to upload", if (weeks.isEmpty()) "—" else weeks.sumOf { it.ready }.toString()),
             KpiData("Replies to answer", if (sy == null) "—" else todo.size.toString(), alert = todo.isNotEmpty()),
             KpiData("LinkedIn today", if (sy == null) "—" else "$liSent / ${liItems.size}"),
-            KpiData("Mac synced", ago(sy.str("at")) ?: "—", alert = sy?.bool("stale") == true)
+            KpiData("Outreach synced", ago(sy.str("at")) ?: "—", alert = sy?.bool("stale") == true)
         ))
     }
 
@@ -147,23 +154,23 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
         }
     }
 
-    // --- The Mac sync (#1730)
-    Panel("Mac sync") {
-        if (sy == null) { Muted(ext.obj("marketing-sync").str("error") ?: "Pull down to read the Mac's outreach folder."); return@Panel }
+    // --- The outreach sync (#1730, #1980)
+    Panel("Outreach sync") {
+        if (sy == null) { Muted(ext.obj("marketing-sync").str("error") ?: "Pull down to read the outreach folder."); return@Panel }
         KeyRow("Last sync", ago(sy.str("at")) ?: "never", if (sy.bool("stale") == true) J.pink else J.green)
-        KeyRow("Waiting for the Mac", fmt(sy.obj("commands").num("pending")))
-        KeyRow("Agent run", if (sy.bool("running") == true) "running" else "idle", if (sy.bool("running") == true) J.amber else J.muted)
+        KeyRow("Waiting for the sync", fmt(sy.obj("commands").num("pending")))
+        KeyRow("Job", if (sy.bool("running") == true) "running" else "idle", if (sy.bool("running") == true) J.amber else J.muted)
         sy.obj("commands").objs("items").take(6).forEach { c ->
             StatusRow(when (c.str("status")) { "done" -> "good"; "failed" -> "alert"; else -> "warn" }, c.str("label").orEmpty(), listOfNotNull(c.str("status"), ago(c.str("createdAt")), c.str("result")?.takeIf { it.isNotEmpty() }).joinToString(" · "))
         }
-        Muted("The Mac uploads the outreach folder every 5 minutes, then runs what you asked here. Replies and blocks go to Instantly at once.")
+        Muted("The qa-lab-outreach Action runs what you ask here within a few minutes, and uploads the outreach folder after each job and every 3 hours. Replies and blocks go to Instantly at once.")
     }
 
     if (sy != null) {
         var picked by rememberSaveable { mutableStateOf<String?>(null) }
         val week = Marketing.openWeek(weeks, picked)
         Panel("Leads to approve" + (week?.let { " · ${it.week}" } ?: "")) {
-            if (week == null) { Muted("No leads files on the Mac yet; the Monday leads job writes them."); return@Panel }
+            if (week == null) { Muted("No leads files yet; the weekday leads job writes them."); return@Panel }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 weeks.forEach { w -> GlassChip("${w.week} · ${w.uploaded}/${w.total}", w.week == week.week) { picked = w.week } }
             }
@@ -177,8 +184,15 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
                     ask("upload ${week.week}'s ${week.ready} approved leads to their Instantly campaigns") { command("mk:upload", mapOf("action" to "upload", "week" to week.week)) }
                 }
             }
-            sy.obj("leads").objs("rows").filter { it.str("week") == week.week }.sortedBy { leadOrder(it) }.forEach { r -> Lead(r, sy, s, vm, ::ask, ::command) }
-            Muted("Every hour Jarvis translates top findings, re-runs the review of a site with no Live Report (twice at most) and approves complete leads. \"Needs you\" rows are the ones it cannot settle. Upload stays with you.")
+            var showDone by rememberSaveable { mutableStateOf(false) }
+            val rows = sy.obj("leads").objs("rows").filter { it.str("week") == week.week }.sortedBy { leadOrder(it) }
+            val done = rows.count { Marketing.leadDone(it) }
+            rows.filter { showDone || !Marketing.leadDone(it) }.forEach { r -> Lead(r, sy, s, vm, ::ask, ::command) }
+            if (done > 0) {
+                if (done == rows.size && !showDone) Muted("Every lead in this week is uploaded or dropped.")
+                TextButton({ showDone = !showDone }) { Text("${if (showDone) "Hide" else "Show"} $done done (uploaded or dropped)", fontSize = 13.sp) }
+            }
+            Muted("With each outreach sync (at most once an hour) Jarvis translates top findings, re-runs the review of a site with no Live Report (twice at most) and approves complete leads. \"Needs you\" rows are the ones it cannot settle. Upload stays with you.")
         }
 
         Panel("Replies" + if (todo.isNotEmpty()) " · ${todo.size} to answer" else "") {
@@ -189,11 +203,13 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
         }
 
         Panel("LinkedIn" + (li.str("date")?.takeIf { it.isNotEmpty() }?.let { " · $it" } ?: "")) {
-            if (liItems.isEmpty()) { Muted("No LinkedIn list yet; the Mac writes one each working day from 07:00, with up to 15 prospects never listed before."); return@Panel }
+            if (liItems.isEmpty()) { Muted("No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before."); return@Panel }
             val uri = LocalUriHandler.current
             GlowBar(liSent.toFloat() / liItems.size)
             Muted("$liSent of ${liItems.size} requests sent")
-            liItems.forEach { p ->
+            val (toSend, sentRows) = Marketing.linkedinSplit(sy)
+            var sentOpen by rememberSaveable { mutableStateOf(false) }
+            val row: @Composable (JsonObject) -> Unit = { p ->
                 val name = p.str("name").orEmpty()
                 val sent = p.bool("sent") == true
                 Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -204,13 +220,22 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
                     p.str("profile")?.takeIf { it.startsWith("https://") }?.let { url -> TextButton({ uri.openUri(url) }) { Text("Profile", color = J.cyan, fontSize = 13.sp) } }
                     if (Marketing.waiting(sy, "linkedin", name)) Text("waiting", color = J.amber, fontSize = 12.sp)
                     else TextButton({ ask("mark the LinkedIn request to $name as " + if (sent) "not sent" else "sent") { command("mk:li:$name", mapOf("action" to "linkedin", "date" to li.str("date").orEmpty(), "name" to name, "sent" to !sent)) } }, enabled = "mk:li:$name" !in s.running) {
-                        Text(if (sent) "Sent ✓" else "Mark sent", color = if (sent) J.green else J.cyan, fontSize = 13.sp)
+                        Text(if (sent) "Not sent" else "Mark sent", color = if (sent) J.muted else J.cyan, fontSize = 13.sp)
                     }
                 }
             }
+            if (toSend.isEmpty()) Muted("All ${liItems.size} sent. The next list comes the next working day at 07:00 Bogotá time.")
+            toSend.forEach { row(it) }
+            if (sentRows.isNotEmpty()) {
+                val today = li.str("date") == LocalDate.now().toString()
+                TextButton({ sentOpen = !sentOpen }) {
+                    Text((if (sentOpen) "▾ " else "▸ ") + "Sent" + (if (today) " today" else "") + " · ${sentRows.size}", color = J.green, fontSize = 13.sp)
+                }
+                if (sentOpen) sentRows.forEach { row(it) }
+            }
         }
 
-        Panel("Outreach jobs on the Mac") {
+        Panel("Outreach jobs") {
             sy.objs("jobs").forEach { j ->
                 val mode = j.str("mode").orEmpty()
                 Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -219,7 +244,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
                         Muted(listOfNotNull(ago(j.str("at")) ?: "never", j.str("notify")?.takeIf { it.isNotEmpty() }).joinToString(" · "))
                     }
                     if (Marketing.waiting(sy, "run", mode)) Text("waiting", color = J.amber, fontSize = 12.sp)
-                    else TextButton({ ask("run the $mode job on the Mac now (an agent run can take an hour)") { command("mk:run:$mode", mapOf("action" to "run", "job" to mode)) } }, enabled = sy.bool("running") != true) { Text("Run now", color = J.cyan, fontSize = 13.sp) }
+                    else TextButton({ ask("run the $mode job now (it can take half an hour)") { command("mk:run:$mode", mapOf("action" to "run", "job" to mode)) } }, enabled = sy.bool("running") != true) { Text("Run now", color = J.cyan, fontSize = 13.sp) }
                 }
             }
             sy.objs("paused").takeIf { it.isNotEmpty() }?.let { p -> Muted("Paused for public holidays: " + p.joinToString(", ") { it.str("name").orEmpty() }) }
@@ -325,7 +350,7 @@ private fun Lead(r: JsonObject, sy: JsonObject, s: UiState, vm: JarvisViewModel,
     val uploaded = r.str("uploaded").orEmpty()
     val why = r.str("ask").orEmpty()
     val busy = "mk:lead:$email" in s.running
-    val queued: (JsonObject) -> String = { out -> (out.str("label") ?: "Queued") + ": the Mac does it on its next sync." }
+    val queued: (JsonObject) -> String = { out -> (out.str("label") ?: "Queued") + if (out.bool("syncing") == true) ": the outreach Action does it in a few minutes." else ": the outreach Action does it on its next sync, within 3 hours." }
     var editing by remember(email) { mutableStateOf<String?>(null) }
     Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {

@@ -96,6 +96,15 @@ test("the briefing ranks alerts first and readiness counts every check", () => {
   assert.equal(core.readiness({}), null);
 });
 
+test("an empty briefing names down connections and low readiness instead of all clear (#2266)", () => {
+  const conns = [{ state: "live" }, { state: "down" }, { state: "partial" }, { state: "off" }, { state: "loading" }];
+  assert.equal(core.systemsNote(conns, 71, 80), "2 connections need a look");
+  assert.equal(core.systemsNote([{ state: "down" }], 95, 80), "1 connection needs a look");
+  assert.equal(core.systemsNote([{ state: "live" }, { state: "off" }], 71, 80), "Readiness below 80%");
+  assert.equal(core.systemsNote([{ state: "live" }], 92, 80), "");
+  assert.equal(core.systemsNote([], null, 80), "");
+});
+
 test("URL review bugs the daily fix held back for the Cursor plan are an alert that lists them (#1982)", () => {
   const needsAgent = [{ number: 330, title: "BE: bot walls", url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/330" }, { number: 1176, title: "BE: TLS", url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/1176" }];
   const external = { github: { ok: true, ci: [], openBugs: 2, bugAreas: [], merged: { total: 0 }, needsAgent } };
@@ -249,20 +258,54 @@ test("admin mounts Jarvis in the stats pane and the endpoint stays owner-only", 
 
 // --- #1299: goals, thresholds, daily briefing, watch ------------------------------------------------------------
 
+// Applies where, orderBy, limit and select (dotted paths too) to data.rows the way Firestore does; doc().set merges.
 function fakeDb(data) {
   const writes = [];
   const selects = {};
-  const pick = (row, fields) => (fields ? fields.reduce((out, f) => (f in row ? Object.assign(out, { [f]: row[f] }) : out), {}) : row);
-  const query = (name, filters, fields) => ({
-    where: (field, op, value) => query(name, filters.concat([[field, op, value]]), fields),
-    limit: () => query(name, filters, fields),
-    select: (...picked) => { selects[name] = picked; return query(name, filters, picked); },
+  const ms = (v) => (v && typeof v.toDate === "function" ? v.toDate().getTime() : v instanceof Date ? v.getTime() : typeof v === "string" && /^\d{4}-/.test(v) ? Date.parse(v) : v);
+  const pass = (row, [field, op, value]) => {
+    const a = ms(row[field]), b = ms(value);
+    if (a === undefined) return false;
+    return op === ">=" ? a >= b : op === ">" ? a > b : op === "<" ? a < b : op === "==" ? a === b : true;
+  };
+  const pick = (row, fields) => {
+    if (!fields) return row;
+    const out = {};
+    fields.forEach((f) => {
+      const [head, ...rest] = f.split(".");
+      if (!(head in row)) return;
+      if (!rest.length) { out[head] = row[head]; return; }
+      const inner = row[head];
+      if (inner && typeof inner === "object" && rest[0] in inner) out[head] = Object.assign(out[head] || {}, { [rest[0]]: inner[rest[0]] });
+    });
+    return out;
+  };
+  const merge = (a, b) => {
+    const out = Object.assign({}, a);
+    Object.keys(b).forEach((k) => { out[k] = b[k] && typeof b[k] === "object" && !Array.isArray(b[k]) && !(b[k] instanceof Date) && a && a[k] && typeof a[k] === "object" ? merge(a[k], b[k]) : b[k]; });
+    return out;
+  };
+  const query = (name, filters, fields, order, cap) => ({
+    where: (field, op, value) => query(name, filters.concat([[field, op, value]]), fields, order, cap),
+    orderBy: (field, dir) => query(name, filters, fields, [field, dir], cap),
+    limit: (n) => query(name, filters, fields, order, n),
+    select: (...picked) => { selects[name] = picked; return query(name, filters, picked, order, cap); },
     count: () => ({ get: async () => ({ data: () => ({ count: (data.counts || {})[name + JSON.stringify(filters.map((f) => f[0] + f[1] + (f[2] instanceof Date ? "date" : typeof f[2] === "string" && /^\d{4}-/.test(f[2]) ? "iso" : f[2])))] ?? 0 }) }) }),
     aggregate: () => ({ get: async () => ({ data: () => ({ usd: data.usd || 0 }) }) }),
-    get: async () => ({ docs: ((data.rows || {})[name] || []).map((row, i) => ({ id: row.id || name + i, data: () => pick(row, fields) })) }),
+    get: async () => {
+      let rows = ((data.rows || {})[name] || []).map((row, i) => Object.assign({ __id: row.id || name + i }, row)).filter((row) => filters.every((f) => pass(row, f)));
+      if (order) rows = rows.filter((row) => row[order[0]] !== undefined).sort((x, y) => (ms(x[order[0]]) - ms(y[order[0]])) * (order[1] === "desc" ? -1 : 1));
+      if (cap) rows = rows.slice(0, cap);
+      return { docs: rows.map((row) => { const { __id, ...rest } = row; return { id: __id, data: () => pick(rest, fields) }; }) };
+    },
     doc: (id) => ({
       get: async () => ({ exists: !!(data.docs || {})[name + "/" + id], data: () => (data.docs || {})[name + "/" + id] }),
-      set: async (value) => { writes.push({ path: name + "/" + id, value }); (data.docs = data.docs || {})[name + "/" + id] = value; }
+      set: async (value, opts) => {
+        const path = name + "/" + id;
+        writes.push({ path, value });
+        data.docs = data.docs || {};
+        data.docs[path] = opts && opts.merge ? merge(data.docs[path] || {}, value) : value;
+      }
     })
   });
   return { collection: (name) => query(name, []), writes, selects };
@@ -746,6 +789,22 @@ test("outreach: the week starts Monday in Bogota and the pipeline counts only ou
   assert.equal(p.withLiveReport, 1);
   assert.equal(p.reviewedWithLiveReport, 1);
   assert.deepEqual(p.daily, [{ date: "2026-10-24", reviews: 1 }]);
+  assert.equal(p.priorReviews, 1);
+  const capped = Array.from({ length: 3000 }, () => ({ createdAt: daysAgo(1).toISOString(), status: "complete", sweep: { host: "x.example", outreach: true } }));
+  assert.equal(outreachSrc.pipelineRows(queue, {}, capped, [], { now: NOW.getTime(), days: 7 }).priorReviews, null);
+});
+
+test("Social hub: views and interactions in range carry the period before, and lead with hub + post views", () => {
+  const w = core.windowFor("7", NOW);
+  const ev = (name, n) => ({ name, site: "hub", createdAt: daysAgo(n).toISOString() });
+  const rows = [ev("hub_view", 1), ev("post_view", 1), ev("post_view", 2), ev("hub_share", 1), { name: "visit", site: "cv", kind: "visit", createdAt: daysAgo(1).toISOString() }];
+  const prior = [ev("hub_view", 9), ev("hub_copy", 9)];
+  const hub = core.summarizeHub({ totals: { gaViews: 40 } }, rows, w, prior);
+  assert.deepEqual(hub.kpis.map((k) => [k.label, k.value, k.prior, k.delta]), [
+    ["Hub + post views", 3, 1, "+200%"], ["Hub views", 1, 1, "0%"], ["Post views", 2, 0, "new"], ["Interactions", 1, 1, "0%"], ["GA4 views", 40, undefined, ""]
+  ]);
+  assert.equal(hub.series.values.reduce((a, b) => a + b, 0), 3);
+  assert.equal(core.summarizeHub(null, rows, w).kpis[0].delta, "");
 });
 
 test("outreach: Instantly numbers become rates, campaign states and mailbox warm-up", () => {
@@ -762,6 +821,9 @@ test("outreach: Instantly numbers become rates, campaign states and mailbox warm
   assert.deepEqual(x.accounts[0], { email: "carlos@qalabreview.com", status: "active", warmup: "on", score: 62, dailyLimit: 30, error: "" });
   assert.equal(x.accounts[1].status, "error");
   assert.equal(x.accounts[1].error, "Permanent OAuth failure: AADSTS50076: you must use multi-factor authentication.");
+  assert.equal(x.prior, null);
+  const y = outreachSrc.instantlyRows([], { emails_sent_count: 200 }, [], [], { emails_sent_count: 100, contacted_count: 50, reply_count_unique: 2 });
+  assert.deepEqual([y.sent, y.prior.sent, y.prior.rates.reply], [200, 100, 4]);
 });
 
 test("outreach: the plan knows the day, phase, next milestone and sorted deadlines", () => {
@@ -842,6 +904,8 @@ test("qalabreview.com links: visits, reviews and payments per prospect, paid cre
   assert.deepEqual(x.byCampaign, [{ label: "outreach", value: 2 }, { label: "qr", value: 1 }]);
   assert.deepEqual(x.prospects, [{ host: "upb.edu.co", visits: 2, reviews: 1, paid: 1, usd: 12, last: at(2) }]);
   assert.equal(x.reviewRate, 33.3);
+  assert.deepEqual(outreachSrc.linkPrior(opens, reviews, ctx), { visits: 1, reviews: 0, paid: 0, usd: 0, reviewRate: 0, payRate: 0 });
+  assert.equal(outreachSrc.linkPrior(Array.from({ length: 10000 }, () => opens[0]), reviews, ctx), null);
   assert.equal(outreachSrc.linkTags("?utm_source=youtube"), null);
 });
 
@@ -1089,11 +1153,24 @@ test("the approvals list shows pending notices newest first, with the review lin
     { domain: "c.com", status: "pending", createdAt: "2026-10-25T11:00:00Z", lastError: "Not public yet." }
   ], (n) => "https://site/" + n.lang + "?report=" + n.reviewId);
   assert.deepEqual(rows.map((r) => r.domain), ["c.com", "a.com"]);
-  assert.deepEqual(rows[1].candidates, [{ email: "x@a.com", sources: ["footer"], url: "", onDomain: true }]);
+  assert.deepEqual(rows[1].candidates, [{ email: "x@a.com", sources: ["footer"], url: "", onDomain: true, stopped: false }]);
   assert.equal(rows[1].report, "https://site/es?report=r1");
   assert.equal(rows[0].report, "");
   assert.equal(rows[0].host, "c.com");
   assert.equal(rows[0].lastError, "Not public yet.");
+});
+
+test("the approvals list puts ready notices first and those without a Live Report last, with their badges", () => {
+  const index = { reports: [{ id: "u-a", host: "a.com" }, { id: "u-d", host: "d.com" }] };
+  const rows = notify.noticeRows([
+    { domain: "a.com", status: "pending", host: "a.com", email: "x@a.com", candidates: [{ email: "x@a.com" }, { email: "y@a.com" }], createdAt: "2026-10-25T09:00:00Z" },
+    { domain: "b.com", status: "pending", host: "b.com", email: "x@b.com", createdAt: "2026-10-25T12:00:00Z", tries: 2, lastError: "Not public yet." },
+    { domain: "c.com", status: "pending", host: "c.com", email: "x@c.com", createdAt: "2026-10-25T11:00:00Z" },
+    { domain: "d.com", status: "pending", host: "d.com", email: "x@d.com", createdAt: "2026-10-25T10:00:00Z" }
+  ], null, { index, unlisted: ["c.com"], stopped: new Set(["y@a.com"]) });
+  assert.deepEqual(rows.map((r) => r.domain + ":" + r.state), ["d.com:ready", "a.com:ready", "c.com:unlisted", "b.com:waiting"]);
+  assert.deepEqual(rows[1].candidates.map((c) => c.email + (c.stopped ? " stopped" : "")), ["x@a.com", "y@a.com stopped"]);
+  assert.equal(rows[3].tries, 2);
 });
 
 const social = require("../../functions/jarvis-social.js");

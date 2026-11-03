@@ -8,6 +8,7 @@ import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
+import com.carlosandmunoz.jarvis.data.strings
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.Ongoing
 import com.carlosandmunoz.jarvis.push.Push
@@ -253,7 +254,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /** A Marketing button (#1729): like act, then the snapshot is read again so the screen shows the command waiting for the Mac. */
+    /** A Marketing button (#1729): like act, then the snapshot is read again so the screen shows the command waiting for the outreach sync. */
     fun market(key: String, op: String, extra: Map<String, JsonElement>, done: (JsonObject) -> String) {
         _state.update { it.copy(running = it.running + key) }
         viewModelScope.launch {
@@ -352,19 +353,24 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     /** Studio (#1981): starts studio-render.yml; the PR with clip links follows when the render is done. */
     fun startRender(request: Map<String, String>) = act("studio-render", "studio-render", request.mapValues { JsonPrimitive(it.value) }) { out -> loadSocial(); out.str("note") ?: "Started." }
 
-    fun decideNotice(domain: String, send: Boolean, email: String) {
+    /** Send (one email to each address in emails) or Drop a pending owner notice. */
+    fun decideNotice(domain: String, send: Boolean, emails: List<String>) {
         val key = "notice:$domain"
         _state.update { it.copy(running = it.running + key) }
         viewModelScope.launch {
             runCatching {
-                if (fixture != null) JsonObject(mapOf("email" to JsonPrimitive(email)))
-                else api.call("notice-decide", _state.value.days, mapOf("domain" to JsonPrimitive(domain), "send" to JsonPrimitive(send), "email" to JsonPrimitive(email)))
+                val picked = JsonArray(emails.map { JsonPrimitive(it) })
+                if (fixture != null) JsonObject(mapOf("emails" to picked))
+                else api.call("notice-decide", _state.value.days, mapOf("domain" to JsonPrimitive(domain), "send" to JsonPrimitive(send), "email" to picked))
             }
                 .onSuccess { out ->
+                    val sentTo = out["emails"].strings().ifEmpty { listOfNotNull(out.str("email")) }.ifEmpty { emails }
+                    val failed = out.objs("failed").map { it.str("email") + " (" + it.str("error") + ")" }
                     _state.update { s ->
                         val left = s.notices?.let { n -> JsonObject(n + ("notices" to JsonArray(n.objs("notices").filter { it.str("domain") != domain }))) }
                         s.copy(running = s.running - key, notices = left, noticeErrors = s.noticeErrors - domain,
-                            toast = if (send) "Sent to " + (out.str("email") ?: email) + "." else "Dropped $domain.")
+                            toast = if (!send) "Dropped $domain." else "Sent to " + sentTo.joinToString(", ") + "." +
+                                if (failed.isEmpty()) "" else " Not sent to " + failed.joinToString(", ") + ".")
                     }
                 }
                 .onFailure { e -> fail(e) { it.copy(running = it.running - key, noticeErrors = it.noticeErrors + (domain to (e.message ?: "Failed.")), toast = e.message ?: "Failed.") } }

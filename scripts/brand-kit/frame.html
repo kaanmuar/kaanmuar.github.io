@@ -30,11 +30,25 @@
   .x .shade { background: linear-gradient(90deg, rgba(7, 17, 22, .9) 0%, rgba(7, 17, 22, .78) 36%, rgba(7, 17, 22, .2) 58%, rgba(7, 17, 22, 0) 70%); }
   .x .copy { position: absolute; left: 96px; top: 84px; display: flex; flex-direction: column; gap: 26px; --u: 64px; --title: 66px; --small: 21px; }
   .x .url { position: absolute; right: 64px; bottom: 74px; --small: 22px; }
+  .x .side { position: absolute; right: 64px; bottom: 74px; display: flex; flex-direction: column; align-items: flex-end; gap: 16px; --small: 22px; }
+  .x .side .url { position: static; }
+
+  /* A face's languages (#2307). */
+  .langs { display: inline-block; padding: .45em .9em; border: 1.5px solid rgba(126, 246, 251, .55); border-radius: 999px; background: rgba(7, 17, 22, .55); font: 600 var(--small)/1 Inter, sans-serif; letter-spacing: .04em; color: var(--pearl); white-space: nowrap; }
+
+  /* Reddit, Facebook and LinkedIn covers: the copy is centred in the area every screen shows (--sx..--sh). */
+  .strip .shade { background: radial-gradient(closest-side at var(--cx) 50%, rgba(7, 17, 22, .86), rgba(7, 17, 22, .6) 70%, rgba(7, 17, 22, .25)); }
+  .strip .copy { position: absolute; left: var(--sx); top: var(--sy); width: var(--sw); height: var(--sh); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--u) * .3); text-align: center; }
+  .strip h1 { --title: calc(var(--u) * .95); }
+  .strip.row .copy { flex-direction: row; gap: calc(var(--u) * .6); text-align: left; }
+  .strip.row .stack { display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u) * .22); }
+  .strip.row h1 { --title: calc(var(--u) * .68); }
 
   /* YouTube 2560x1440: TVs show it all, desktops a 2560x423 band, phones the 1546x423 middle (x 507-2053, y 508-932). */
   .yt .shade { background: radial-gradient(60% 34% at 50% 50%, rgba(7, 17, 22, 0), rgba(7, 17, 22, .45)), linear-gradient(90deg, rgba(7, 17, 22, .5) 0%, rgba(7, 17, 22, .86) 22%, rgba(7, 17, 22, .8) 48%, rgba(7, 17, 22, .1) 64%, rgba(7, 17, 22, .1) 80%, rgba(7, 17, 22, .5) 100%); }
   .yt .copy { position: absolute; left: 580px; top: 540px; height: 360px; display: flex; flex-direction: column; justify-content: center; gap: 24px; --u: 70px; --title: 78px; --small: 23px; }
   .yt .row { display: flex; gap: 34px; align-items: center; }
+  .yt.face .copy { gap: 20px; }
 
   /* Instagram highlight 1080x1920: the app shows the middle as a circle. */
   .hl .shade { background: radial-gradient(closest-side at 50% 50%, rgba(7, 17, 22, .1), rgba(7, 17, 22, .55) 70%, rgba(7, 17, 22, .8)); }
@@ -64,17 +78,29 @@ function headline(lines) {
 }
 function brand() { return '<div class="brand"><img src="' + MARK + '" alt=""><div><b>QA-lab</b><small>URL REVIEW</small></div></div>'; }
 
-// spec: { kind, w, h, bg (data URI of a Fusion still), mark (data URI), theme: { icon, accent } }
+// spec: { kind, w, h, bg (data URI of a Fusion still), mark (data URI), theme: { icon, accent },
+//         copy (a face's lines, areas, url and langs; the shared copy without), hue (degrees the face rotates the look), safe }
 window.paint = function (spec) {
   const c = document.getElementById("c");
-  c.className = { header: "x", youtube: "yt", highlight: "hl", watermark: "clear" }[spec.kind] || "";
+  const copy = spec.copy || COPY;
+  const langs = copy.langs ? '<span class="langs">' + esc(copy.langs) + "</span>" : "";
+  c.className = ({ header: "x", youtube: "yt", highlight: "hl", watermark: "clear", strip: "strip" }[spec.kind] || "") + (spec.copy ? " face" : "");
   c.style.width = spec.w + "px";
   c.style.height = spec.h + "px";
+  c.style.filter = spec.hue ? "hue-rotate(" + spec.hue + "deg)" : "";
   const bg = spec.bg ? '<img class="bg" src="' + spec.bg + '" alt=""><div class="shade"></div>' : "";
   let html = "";
   if (spec.kind === "avatar" || spec.kind === "watermark") html = '<img class="mark" src="' + spec.mark + '" alt="">';
-  if (spec.kind === "header") html = bg + '<div class="copy">' + brand() + headline(COPY.lines) + '<div class="areas">' + esc(COPY.areas) + '</div></div><div class="url">' + esc(COPY.url) + "</div>";
-  if (spec.kind === "youtube") html = bg + '<div class="copy">' + brand() + headline(COPY.lines) + '<div class="row"><span class="areas">' + esc(COPY.areas) + '</span><span class="url">' + esc(COPY.url) + "</span></div></div>";
+  if (spec.kind === "header") html = bg + '<div class="copy">' + brand() + headline(copy.lines) + '<div class="areas">' + esc(copy.areas) + "</div></div>" + (langs ? '<div class="side">' + langs + '<div class="url">' + esc(copy.url) + "</div></div>" : '<div class="url">' + esc(copy.url) + "</div>");
+  if (spec.kind === "youtube") html = bg + '<div class="copy">' + brand() + headline(copy.lines) + (langs ? '<div class="areas">' + esc(copy.areas) + '</div><div class="row">' + langs : '<div class="row"><span class="areas">' + esc(copy.areas) + "</span>") + '<span class="url">' + esc(copy.url) + "</span></div></div>";
+  if (spec.kind === "strip") {
+    const [sx, sy, sw, sh] = spec.safe || [0, 0, spec.w, spec.h];
+    const row = sw / sh > 3;
+    if (row) c.classList.add("row");
+    const u = row ? sh * .3 : Math.min(sh * .15, sw * .085);
+    Object.entries({ "--sx": sx + "px", "--sy": sy + "px", "--sw": sw + "px", "--sh": sh + "px", "--cx": (sx + sw / 2) / spec.w * 100 + "%", "--u": u + "px", "--small": u * (row ? .26 : .3) + "px" }).forEach(([k, v]) => c.style.setProperty(k, v));
+    html = bg + '<div class="copy">' + brand() + (row ? '<div class="stack">' + headline(copy.lines) + langs + "</div>" : headline(copy.lines) + langs) + "</div>";
+  }
   if (spec.kind === "highlight") {
     c.style.setProperty("--accent", spec.theme.accent);
     html = bg + '<div class="disc"><svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round">' + ICONS[spec.theme.icon] + "</svg></div>";

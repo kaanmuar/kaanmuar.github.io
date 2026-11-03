@@ -37,6 +37,7 @@ media/url-review-demos/
 media/social-posts/*/story/
 media/social-posts/*/clip/
 media/social-posts/*/cover/
+media/social-posts/*/voiced/
 media/buffer-upload/
 # Gemini takes and product screen recordings for scripts/skits-studio
 media/skits/
@@ -57,3 +58,5 @@ _site/
 # Pre-flight Worker build output (#1970)
 workers/preflight/.cloudflare/
 workers/preflight/dist/
+workers/outreach-cron/.cloudflare/
+workers/outreach-cron/dist/

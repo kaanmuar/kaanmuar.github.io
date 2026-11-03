@@ -33,6 +33,8 @@ import com.carlosandmunoz.jarvis.ui.MainScreen
 import com.carlosandmunoz.jarvis.ui.SignInScreen
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.push.Push
+import com.carlosandmunoz.jarvis.update.WhatsNew
+import com.carlosandmunoz.jarvis.update.WhatsNewDialog
 import kotlinx.serialization.json.JsonPrimitive
 
 class MainActivity : FragmentActivity() {
@@ -42,6 +44,7 @@ class MainActivity : FragmentActivity() {
     private var lockOn by mutableStateOf(true)
     private var openTab by mutableStateOf<String?>(null)
     private var pendingAction by mutableStateOf<String?>(null)
+    private var whatsNew by mutableStateOf<List<String>?>(null)
     private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,6 +53,7 @@ class MainActivity : FragmentActivity() {
         lockOn = vault.flag("lock", true) && canLock()
         openTab = tabOf(intent)
         pendingAction = intent.getStringExtra(Home.EXTRA_ACTION)
+        whatsNew = if (savedInstanceState == null) WhatsNew.take(this) else savedInstanceState.getStringArrayList(WHATS_NEW)
         setContent {
             JarvisTheme {
                 Backdrop {
@@ -63,9 +67,15 @@ class MainActivity : FragmentActivity() {
                         locked -> LockScreen(::prompt)
                         else -> MainScreen(s, vm, lockOn, openTab, { openTab = null }) { on -> lockOn = on && canLock(); vault.setFlag("lock", lockOn) }
                     }
+                    if (!locked) whatsNew?.let { WhatsNewDialog(it) { whatsNew = null } }
                 }
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        whatsNew?.let { outState.putStringArrayList(WHATS_NEW, ArrayList(it)) }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -121,6 +131,7 @@ class MainActivity : FragmentActivity() {
 
     companion object {
         private const val LOCK_AFTER_MS = 60_000L
+        private const val WHATS_NEW = "whatsNew"
         private var leftAt = 0L
     }
 }

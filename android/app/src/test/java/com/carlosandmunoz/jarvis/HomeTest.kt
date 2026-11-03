@@ -11,6 +11,21 @@ import org.junit.Test
 class HomeTest {
     private fun json(s: String) = JSON.parseToJsonElement(s) as JsonObject
 
+    @Test fun emptyBriefingNamesDownConnectionsAndLowReadiness() {
+        val down = Home.status(json("""{"readiness":71,"briefing":[],"thresholds":{"readinessMin":80},
+            "connections":[{"state":"live"},{"state":"down"},{"state":"partial"},{"state":"off"}]}"""))
+        assertEquals("2 connections need a look", down.headline)
+        assertEquals("warn", down.level)
+        val low = Home.status(json("""{"readiness":71,"briefing":[],"thresholds":{"readinessMin":80},"connections":[{"state":"live"}]}"""))
+        assertEquals("Readiness below 80%", low.headline)
+        val clear = Home.status(json("""{"readiness":92,"briefing":[],"thresholds":{"readinessMin":80},"connections":[{"state":"live"}]}"""))
+        assertEquals("All clear", clear.headline)
+        assertEquals("good", clear.level)
+        val alert = Home.status(json("""{"readiness":71,"briefing":[{"level":"alert"}],"connections":[{"state":"down"}]}"""))
+        assertEquals("1 alert", alert.headline)
+        assertEquals("alert", alert.level)
+    }
+
     @Test fun listsNoticesThenPicksThenProposals() {
         val snap = json("""{"proposals":[{"key":"studio:swing","title":"Find why QA Studio visits fell","level":"warn","tab":"studio"},
             {"key":"ci","title":"Fix the failing deploy","level":"alert","tab":"systems"},{"key":"untitled"}]}""")

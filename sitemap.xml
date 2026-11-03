@@ -170,6 +170,24 @@
     <xhtml:link rel="alternate" hreflang="it" href="https://carlosandmunoz.com/qa-review-social-it.html"/>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/qalaburlreview.html</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qalaburlreview.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://carlosandmunoz.com/qalaburlreview.html"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://carlosandmunoz.com/qaurlreview.html"/>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/qaurlreview.html</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qalaburlreview.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://carlosandmunoz.com/qalaburlreview.html"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://carlosandmunoz.com/qaurlreview.html"/>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/qa-review-guide.html</loc>
     <lastmod>2026-10-22</lastmod>
     <changefreq>monthly</changefreq>

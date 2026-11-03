@@ -79,15 +79,25 @@ object Push {
         runCatching { FirebaseMessaging.getInstance().deleteToken() }
     }
 
-    /** A button a push asks for (#1670); input makes it an inline reply. */
-    data class Button(val act: String, val label: String, val input: String?)
+    /** A button a push asks for (#1670); input makes it an inline reply, and act "open" opens its tab or url on the phone (#1977). */
+    data class Button(val act: String, val label: String, val input: String?, val tab: String? = null, val url: String? = null)
 
     fun buttons(data: Map<String, String>): List<Button> = runCatching {
         (JSON.parseToJsonElement(data["actions"] ?: "[]") as JsonArray).filterIsInstance<JsonObject>().mapNotNull { o ->
             val act = o.str("act") ?: return@mapNotNull null
-            Button(act, o.str("label") ?: act, o.str("input"))
+            Button(act, o.str("label") ?: act, o.str("input"), o.str("tab"), o.str("url"))
         }.take(3)
     }.getOrDefault(emptyList())
+
+    private fun openIntent(context: Context, link: String?, tab: String?): Intent =
+        if (link != null) Intent(Intent.ACTION_VIEW, Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        else Intent(context, MainActivity::class.java).putExtra(EXTRA_TAB, tab ?: "overview").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+
+    private fun openAction(context: Context, data: Map<String, String>, button: Button): NotificationCompat.Action {
+        val intent = openIntent(context, button.url?.takeIf { it.startsWith("https://") }, button.tab)
+        val pi = PendingIntent.getActivity(context, (tagOf(data) + "open").hashCode(), intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        return NotificationCompat.Action.Builder(0, button.label, pi).build()
+    }
 
     private fun allowed(context: Context) =
         Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
@@ -102,7 +112,7 @@ object Push {
         val body = data["body"] ?: ""
         val lines = runCatching { (JSON.parseToJsonElement(data["lines"] ?: "[]") as JsonArray).map { (it as JsonPrimitive).content } }.getOrDefault(emptyList())
         val n = builder(context, data, body, lines).setSilent(data["quiet"] == "1")
-        if (!data["ref"].isNullOrEmpty()) buttons(data).forEach { n.addAction(NotifyActions.action(context, data, it)) }
+        if (!data["ref"].isNullOrEmpty()) buttons(data).forEach { n.addAction(if (it.act == "open") openAction(context, data, it) else NotifyActions.action(context, data, it)) }
         data["code"]?.takeIf { kindOf(data) == CODES && it.isNotBlank() }?.let { n.addAction(CodeCopy.action(context, it, tagOf(data))).setTimeoutAfter(15 * 60 * 1000L) }
         NotificationManagerCompat.from(context).notify(tagOf(data), 1, n.build())
     }
@@ -120,9 +130,7 @@ object Push {
     private fun builder(context: Context, data: Map<String, String>, body: String, lines: List<String>): NotificationCompat.Builder {
         val kind = kindOf(data)
         val tag = tagOf(data)
-        val link = data["url"]?.takeIf { it.startsWith("https://") }
-        val open = if (link != null) Intent(Intent.ACTION_VIEW, Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            else Intent(context, MainActivity::class.java).putExtra(EXTRA_TAB, data["tab"] ?: "overview").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val open = openIntent(context, data["url"]?.takeIf { it.startsWith("https://") }, data["tab"])
         val style = if (lines.size > 1) NotificationCompat.InboxStyle().also { s -> lines.forEach(s::addLine) }.setSummaryText(body.take(60)) else NotificationCompat.BigTextStyle().bigText(body)
         return NotificationCompat.Builder(context, kind)
             .setSmallIcon(R.drawable.ic_stat_jarvis)

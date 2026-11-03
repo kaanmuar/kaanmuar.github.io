@@ -3370,8 +3370,10 @@ async function reviewTarget(rawUrl, hooks) {
       }
     }
   }
+  // Only the crawl counts: PageSpeed and CrUX may wait past the deadline after every page was read (#2016).
+  const timedOut = !stopped && pages.length < chosen.pages && Date.now() >= deadline;
   if (stopped) note("Stopped. The report keeps the " + pages.length + " page" + (pages.length === 1 ? "" : "s") + " analyzed before the stop.");
-  else if (pages.length < chosen.pages && Date.now() >= deadline) note("The time budget ended with " + pages.length + " page" + (pages.length === 1 ? "" : "s") + " saved. This review was capped at " + chosen.pages + ".");
+  else if (timedOut) note("The time budget ended with " + pages.length + " page" + (pages.length === 1 ? "" : "s") + " saved. This review was capped at " + chosen.pages + ".");
   else note("Analyzed " + pages.length + " page" + (pages.length === 1 ? "" : "s") + ". Writing the proposed cases now.");
   const techMap = new Map();
   pages.forEach((page) => {
@@ -3456,7 +3458,7 @@ async function reviewTarget(rawUrl, hooks) {
       alerts,
       technologies: technologiesFound,
       homeText: homeText(first.body),
-      limits: { maxPages: chosen.pages, maxDepth: chosen.depth, pagesRead: pages.length, timedOut: Date.now() >= deadline }
+      limits: { maxPages: chosen.pages, maxDepth: chosen.depth, pagesRead: pages.length, timedOut }
     });
     note("Scored " + analysis.findings.length + " checks: " + analysis.score.totals.fail + " fail, " + analysis.score.totals.risk + " at risk, " + analysis.score.totals.pass + " pass. Health " + analysis.score.overall + "/100.");
   } catch (error) {
@@ -3506,7 +3508,7 @@ async function reviewTarget(rawUrl, hooks) {
       pagesFoundPartial: found.partial,
       robotsBlocked,
       robotsNote,
-      timedOut: Date.now() >= deadline,
+      timedOut,
       pageLang: acceptLanguage,
       section: prefix,
       passive
@@ -3676,6 +3678,19 @@ function storable(value, fixed, at, depth) {
   return !at && !depth ? fitDocument(out, fixed) : out;
 }
 
+// The Local check's findings (#2067) in a few bytes, so Jarvis can count them without reading every report (#2118).
+// Keys and verdicts only: nothing from the Business Profile is kept (Maps Platform terms).
+function localSummary(report) {
+  const findings = (report && report.insights && Array.isArray(report.insights.findings)) ? report.insights.findings : [];
+  const local = findings.filter((f) => f && /^local-/.test(f.key || ""));
+  if (!local.length) return null;
+  const profile = local.find((f) => f.key === "local-profile");
+  return {
+    profile: !!profile && profile.verdict === "pass",
+    issues: local.filter((f) => f.verdict === "fail" || f.verdict === "risk" || f.verdict === "person").map((f) => ({ key: f.key, verdict: f.verdict, severity: f.severity || "" }))
+  };
+}
+
 function intakeRecord(value, report, meta) {
   const now = Date.now();
   const fixed = [];
@@ -3719,6 +3734,7 @@ function intakeRecord(value, report, meta) {
     compareWith: value.compareWith || "",
     query: value.query || "",
     referrerHost: value.referrerHost || "",
+    local: localSummary(report),
     report: kept
   };
 }
@@ -4573,6 +4589,7 @@ module.exports = {
   verifyPayPalWebhook,
   paypalCapture, paypalCredentials, paypalAccessToken,
   previewReport,
+  frostText,
   priceForCredentials,
   priceForPass,
   priceForPassExtras,
@@ -4633,6 +4650,7 @@ module.exports = {
   journeys,
   toolsForPage,
   intakeRecord,
+  localSummary,
   storable,
   analyzeHtml: inspect,
   challengeOf,

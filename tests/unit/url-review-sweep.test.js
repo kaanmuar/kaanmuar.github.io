@@ -194,7 +194,18 @@ test("outreach prospects go before the lap, in list order, up to the nightly sha
   assert.deepEqual([state.days[day].outreach, sweep.doneOn(state, day)], [2, 3], "skips do not use the share; outreach counts in the cap");
   state.days[day].outreach = sweep.OUTREACH_PER_DAY;
   assert.equal(sweep.nextOutreach(Object.assign(state, { outreachAt: 0 }), list, day), null, "tonight's share is used");
-  assert.ok(sweep.OUTREACH_PER_DAY < sweep.PER_DAY, "the lap keeps part of the cap");
+  assert.equal(sweep.nextOutreach(Object.assign({}, state, { outreachAt: 0 }), list, day, sweep.OUTREACH_PER_DAY + 1).target.host, "www.eafit.edu.co", "the lane's budget sets the cap");
+});
+
+test("the outreach lane starts where the shared sweep stopped and reports over both documents (#2363)", () => {
+  assert.equal(sweep.laneStart(undefined, { outreachAt: 244, lap: ["co"] }).outreachAt, 244);
+  assert.equal(sweep.laneStart({ outreachAt: 0 }, { outreachAt: 244 }).outreachAt, 0, "the lane's own cursor wins once set");
+  const view = sweep.outreachView({ outreachAt: 244, days: { "2026-11-01": { outreach: 40, done: 90 } } }, { outreachAt: 260, days: { "2026-11-01": { outreach: 2 }, "2026-11-02": { outreach: 16 } } });
+  assert.deepEqual(view, { outreachAt: 260, days: { "2026-11-01": { outreach: 42 }, "2026-11-02": { outreach: 16 } } });
+  assert.equal(sweep.outreachView({ outreachAt: 12 }, null).outreachAt, 12, "before the lane's first tick");
+  const ops = require("../../functions/ops-schedule");
+  assert.equal(ops.cron("outreachSweep"), "*/15 * * * *", "around the clock");
+  assert.equal(ops.budget("outreachPerDay", {}), 96 * sweep.PER_TICK);
 });
 
 test("an outreach review is named as such, survives a failed run, and never becomes a social post (#1280)", () => {

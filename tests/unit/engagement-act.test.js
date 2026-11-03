@@ -222,5 +222,5 @@ test("approving through Jarvis posts the reply and says where; a dry run still p
   assert.equal(out.message, "Posted on Mastodon.");
   await db.collection("engagement_posts").doc("x_aaaaaaaaaaaaaaaaaaaa").set({ network: "x", id: "1", seenAt: ago(1), author: {}, actions: { reply: { status: "waiting", draft: "Short and useful.", expiresAt: new Date(NOW + HOUR).toISOString() } } });
   const x = await J.decide(deps(db, net), { key: "x_aaaaaaaaaaaaaaaaaaaa", decision: "approve" }, "carlos");
-  assert.match(x.message, /Mac's browser agent/);
+  assert.match(x.message, /Mac's browser agent posts it on X on its next run/);
 });

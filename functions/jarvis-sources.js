@@ -9,9 +9,12 @@
    platform   real function failures (5xx, crash, timeout), executions, Gemini calls, Firestore reads and writes
    outreach   the outreach plan's pipeline, Instantly campaigns, plan progress and sending domain (jarvis-outreach.js)
    mailbox    ImprovMX: mail forwarded, bounced and refused per alias, SMTP sends, the daily canary (mail-health.js)
+   addresses  every email address we own across ImprovMX, Microsoft 365, Instantly and SendGrid, its state and fix (jarvis-addresses.js)
    people     signed-in URL Review people, their runs, visits and time on the review pages (jarvis-people.js)
+   pagespeed  the daily PageSpeed routine: every page's scores, its runs and its PRs (jarvis-pagespeed.js)
+   local      the Google Maps Local check across URL reviews and the Places calls per day (jarvis-local.js)
 
-   index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers} and caches each source in
+   index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers, github} and caches each source in
    jarvis_cache through TTL. */
 
 const ORIGIN = "https://carlosandmunoz.com";
@@ -24,18 +27,34 @@ const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/se
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, mailbox: 10 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE, calls: 5 * MINUTE, people: 5 * MINUTE, engagement: 2 * MINUTE };
+const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, mailbox: 10 * MINUTE, addresses: 10 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE, calls: 5 * MINUTE, people: 5 * MINUTE, engagement: 2 * MINUTE, local: 10 * MINUTE, pagespeed: 10 * MINUTE };
 const { SEARCH_QUERIES } = require("./jarvis-core");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisEngagement = require("./jarvis-engagement");
 const jarvisPeople = require("./jarvis-people");
+const jarvisLocal = require("./jarvis-local");
 const jarvisSocial = require("./jarvis-social");
+const jarvisPageSpeed = require("./jarvis-pagespeed");
 const mailHealth = require("./mail-health");
+const jarvisAddresses = require("./jarvis-addresses");
 const booking = require("./booking");
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
 
 const isoDay = (ms) => new Date(ms).toISOString().slice(0, 10);
+
+// Firestore's free daily quota resets at midnight Pacific time; this is that midnight for the day holding `now`.
+function pacificDayStart(now) {
+  const offset = (at) => {
+    const p = {};
+    new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+      .formatToParts(new Date(at)).forEach((x) => { p[x.type] = Number(x.value); });
+    return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - (at - (at % 1000));
+  };
+  const local = new Date(now + offset(now));
+  const midnight = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate());
+  return midnight - offset(midnight - offset(now));
+}
 const clean = (error) => String((error && error.message) || error || "failed").slice(0, 200);
 const round = (n, places) => { const f = Math.pow(10, places || 0); return Math.round((Number(n) || 0) * f) / f; };
 
@@ -563,9 +582,10 @@ async function platform(ctx) {
     }),
     part("firestore", async () => {
       const kinds = { reads: "read_count", writes: "write_count", deletes: "delete_count" };
-      const usage = {};
+      const start = pacificDayStart(end);
+      const usage = { since: new Date(start).toISOString() };
       await Promise.all(Object.keys(kinds).map(async (k) => {
-        const rows = await monitoring(ctx, token, 'metric.type="firestore.googleapis.com/document/' + kinds[k] + '"', { start: day, end });
+        const rows = await monitoring(ctx, token, 'metric.type="firestore.googleapis.com/document/' + kinds[k] + '"', { start, end });
         usage[k] = rows.reduce((s, r) => s + r.value, 0);
       }));
       Object.keys(FIRESTORE_FREE).forEach((k) => { usage[k + "FreePct"] = round((usage[k] / FIRESTORE_FREE[k]) * 100, 1); });
@@ -583,7 +603,7 @@ async function platform(ctx) {
   return out;
 }
 
-const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, mailbox: mailHealth.mailbox, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource, calls: booking.callsSource, engagement: jarvisEngagement.source, people: jarvisPeople.source };
+const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, mailbox: mailHealth.mailbox, addresses: jarvisAddresses.source, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource, calls: booking.callsSource, engagement: jarvisEngagement.source, people: jarvisPeople.source, pagespeed: jarvisPageSpeed.source, local: jarvisLocal.source };
 
 async function run(name, ctx) {
   const source = SOURCES[name];
@@ -595,4 +615,4 @@ async function run(name, ctx) {
   }
 }
 
-module.exports = { costs, SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, monitoring, realFailures, hostOf };
+module.exports = { costs, SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, pacificDayStart, monitoring, realFailures, hostOf };

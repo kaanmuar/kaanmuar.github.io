@@ -299,7 +299,7 @@
         };
     }
 
-    function summarizeInbox(messages, ratings, window, priorWindow, keep) {
+    function summarizeInbox(messages, ratings, window, priorWindow, keep, pendingCount) {
         const inside = (row, w) => { const when = toDate(row.createdAt); return when && when >= w.start && when <= w.end; };
         const pass = (row) => (keep ? keep(row.email) : true);
         const m = messages.filter((row) => pass(row) && inside(row, window));
@@ -312,7 +312,7 @@
         const rated = r.filter((row) => Number(row.rating) > 0);
         const avg = rated.length ? Math.round((rated.reduce((s, row) => s + Number(row.rating), 0) / rated.length) * 10) / 10 : null;
         const unanswered = m.filter((row) => row.status !== 'rejected' && !row.response && !row.respondedAt).length;
-        const pending = ratings.filter((row) => pass(row) && (row.status || 'pending') === 'pending').length;
+        const pending = pendingCount !== undefined ? pendingCount : ratings.filter((row) => pass(row) && (row.status || 'pending') === 'pending').length;
         const all = m.map((row) => Object.assign({ createdAt: row.createdAt }, { kind: 'message' })).concat(r.map((row) => ({ createdAt: row.createdAt, kind: 'rating' })));
         return {
             key: 'inbox',
@@ -330,10 +330,26 @@
         };
     }
 
-    function summarizeHub(stats, rows, window) {
+    // Social hub: views and interactions in the range from hub_/post_ site_events, so each has a period before.
+    // socialHubStats/latest keeps the running totals, the GA4 views and the post ranking.
+    function summarizeHub(stats, rows, window, priorRows) {
         const s = stats || {};
         const totals = s.totals || {};
         const hubRows = (rows || []).filter(isHubEvent);
+        const isView = (row) => row.name === 'hub_view' || row.name === 'post_view';
+        const tally = (list) => {
+            const t = { views: 0, hubViews: 0, postViews: 0, interactions: 0 };
+            list.forEach((row) => {
+                if (row.name === 'hub_view') t.hubViews += 1;
+                else if (row.name === 'post_view') t.postViews += 1;
+                else t.interactions += 1;
+            });
+            t.views = t.hubViews + t.postViews;
+            return t;
+        };
+        const now = tally(hubRows);
+        const was = priorRows ? tally(priorRows.filter(isHubEvent)) : null;
+        const prior = (key) => (was ? was[key] : undefined);
         const names = {};
         hubRows.forEach((row) => bump(names, row.name));
         const posts = (s.posts || []).slice().sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -342,14 +358,16 @@
             updatedAt: s.updatedAt || '',
             ga: s.ga || null,
             totals,
+            range: now,
+            prior: was,
             kpis: [
-                kpi('Hub views', totals.hubViews || 0),
-                kpi('Post views', totals.postViews || 0),
-                kpi('Post views, 7 days', totals.postViews7 || 0),
-                kpi('GA4 views', totals.gaViews || 0),
-                kpi('Interactions', totals.interactions || 0)
+                kpi('Hub + post views', now.views, prior('views')),
+                kpi('Hub views', now.hubViews, prior('hubViews')),
+                kpi('Post views', now.postViews, prior('postViews')),
+                kpi('Interactions', now.interactions, prior('interactions')),
+                kpi('GA4 views', totals.gaViews || 0)
             ],
-            series: dailySeries(hubRows, window.start, window.end),
+            series: dailySeries(hubRows, window.start, window.end, isView),
             lists: {
                 posts: posts.slice(0, 15).map((p) => ({ label: p.id, value: p.score || p.views || 0 })),
                 sources: (s.sources || []).slice(0, 15).map((row) => ({ label: [row.source, row.medium, row.campaign].filter(Boolean).join(' / '), value: row.sessions || 0 })),
@@ -398,7 +416,9 @@
         { key: 'uptime', name: 'Uptime and TLS' }, { key: 'money', name: 'Payments (paid reviews, PayPal, Stripe)' }, { key: 'email', name: 'SendGrid' },
         { key: 'search', name: 'Search (Brave, Search Console)' }, { key: 'social', name: 'Social (ledgers, YouTube, Facebook)' },
         { key: 'safety', name: 'Safety (Web Risk, DNS, domain, TLS)' }, { key: 'platform', name: 'Google Cloud (Monitoring, Logging, Auth)' },
-        { key: 'outreach', name: 'Outreach (sweep prospects, Instantly, 90-day plan)' }, { key: 'mailbox', name: 'ImprovMX (mail forwarding)' }
+        { key: 'outreach', name: 'Outreach (sweep prospects, Instantly, 90-day plan)' }, { key: 'mailbox', name: 'ImprovMX (mail forwarding)' },
+        { key: 'addresses', name: 'Email addresses (ImprovMX, Microsoft 365, Instantly, SendGrid)' },
+        { key: 'pagespeed', name: 'Daily PageSpeed run (every page, its PRs)' }
     ];
 
     function connections(external, pending) {
@@ -570,6 +590,19 @@
             if (page.ok && page.score < th.speedWarn) add('warn', page.product, `${page.name} scores ${page.score} on mobile PageSpeed.`, 'speed:' + page.product);
             else if (page.ok && page.score >= th.speedGood) add('good', page.product, `${page.name} scores ${page.score} on mobile PageSpeed.`, 'speed:' + page.product);
         });
+        const ps = ext.pagespeed;
+        if (ps && ps.ok && !ps.empty) {
+            if (ps.stale) add('alert', 'systems', `The daily PageSpeed run has not finished in over a day${ps.lastError ? ': ' + ps.lastError : ''}.`, 'pagespeed:run');
+            else if (ps.lastStatus === 'failed') add('warn', 'systems', `The last daily PageSpeed run failed: ${ps.lastError || 'no detail'}.`, 'pagespeed:run');
+            (ps.prs || []).filter((pr) => pr.open).forEach((pr) => {
+                if (pr.stage === 'proposal') add('warn', 'systems', `PageSpeed fixes #${pr.number} wait for you: ${pr.reason || pr.title}`, 'pagespeed:pr:' + pr.number);
+                else if (pr.stage === 'countdown') add('info', 'systems', `PageSpeed fixes #${pr.number} merge themselves at ${pr.dueAt ? new Date(pr.dueAt).toLocaleTimeString('en-GB', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }) + ' Bogotá' : 'the end of the countdown'} unless you cancel.`, 'pagespeed:countdown:' + pr.number);
+            });
+            const c = ps.counts || {};
+            if (c.under50) add('warn', 'systems', `${plural(c.under50, 'page scores', 'pages score')} under 50 on PageSpeed, of ${c.scored} measured.`, 'pagespeed:slow');
+            else if (c.below) add('info', 'systems', `${plural(c.below, 'page scores', 'pages score')} under ${ps.threshold || 90} on PageSpeed, of ${c.scored} measured.`, 'pagespeed:below');
+            else if (c.scored) add('good', 'systems', `All ${c.scored} measured pages score ${ps.threshold || 90} or more on PageSpeed.`, 'pagespeed:good');
+        }
         const up = ext.uptime;
         if (up && up.ok) {
             (up.pages || []).forEach((page) => {
@@ -644,7 +677,7 @@
             const g = pf.gemini || {};
             if (g.requests >= 10 && g.errorRate >= th.geminiErrorPct) add('warn', 'systems', `${g.errorRate}% of Gemini calls failed this week (${g.requests - g.ok} of ${g.requests}), most in ${((g.failedMethods || [])[0] || {}).label || 'unknown'}.`, 'platform:gemini');
             const fs = pf.firestore || {};
-            if (fs.readsFreePct >= th.firestoreFreePct) add('warn', 'systems', `Firestore used ${fs.readsFreePct}% of the free daily reads (${fs.reads}).`, 'platform:reads');
+            if (fs.readsFreePct >= th.firestoreFreePct) add('warn', 'systems', `Firestore used ${fs.readsFreePct}% of today's free reads (${fs.reads} since midnight Pacific).`, 'platform:reads');
         }
         CONNECTIONS.forEach((c) => {
             const x = ext[c.key];
@@ -682,6 +715,20 @@
                 else if (links.visits > 0) add('info', 'outreach', `${plural(links.visits, 'visit', 'visits')} and ${plural(links.reviews, 'free review', 'free reviews')} came from qalabreview.com links.`, 'outreach:links-visits');
             }
         }
+        // Email addresses (#2338): a line only for what the outreach and mailbox sources do not already say.
+        const ad = ext.addresses;
+        if (ad && ad.ok) {
+            const outBoxes = new Set(((ou && ou.ok && ou.instantly && ou.instantly.accounts) || []).map((a) => String(a.email).toLowerCase()));
+            const outDns = new Set(((ou && ou.ok && ou.mail && ou.mail.checks) || []).filter((c) => !c.ok).map((c) => ou.mail.domain + ':' + c.name));
+            const siteDns = new Set(((ext.safety && ext.safety.ok && ext.safety.checks) || []).filter((c) => c.level === 'alert' || c.level === 'warn').map((c) => c.name));
+            const bouncing = new Set(((box && box.ok && box.problems) || []).map((m) => m.alias));
+            (ad.issues || []).forEach((i) => {
+                if (i.system === 'Instantly' && outBoxes.has(i.address)) return;
+                if (i.system === 'DNS' && (outDns.has(i.address + ':' + i.check) || ((ad.domains || []).some((d) => d.site && d.domain === i.address) && siteDns.has(i.check)))) return;
+                if (i.problem === 'bounce' && bouncing.has(i.address.split('@')[0])) return;
+                add(i.level, 'systems', i.text, 'addresses:' + i.key);
+            });
+        }
         const waiting = CONNECTIONS.reduce((n, c) => n + (((ext[c.key] || {}).needs) || []).length, 0);
         if (waiting) add('info', 'systems', `${plural(waiting, 'connection waits', 'connections wait')} for a one-time grant; see Systems > Connections.`, 'connections:needs');
         (state.goals || []).forEach((g) => {
@@ -700,7 +747,7 @@
         { prefix: 'tls', impact: 5, title: 'Renew the TLS certificate', tab: 'systems' },
         { prefix: 'money:disputes', impact: 5, title: 'Answer the open PayPal disputes before PayPal decides them', link: 'https://www.paypal.com/resolutioncenter' },
         { prefix: 'email:blocklist', impact: 5, title: 'Get the sending IP off the blocklist', link: 'https://app.sendgrid.com/' },
-        { prefix: 'outreach:bounce', impact: 5, title: 'Pause outreach and clean the prospect list', tab: 'outreach' },
+        { prefix: 'outreach:bounce', impact: 5, title: 'Pause outreach and clean the prospect list', click: 'pause-outreach', tab: 'outreach' },
         { prefix: 'outreach:links-down', impact: 5, title: 'Deploy the qalabreview.com short-link Worker', tab: 'outreach' },
         { prefix: 'email:spam', impact: 4, title: 'Find which emails were reported as spam and fix the list or the copy', link: 'https://app.sendgrid.com/' },
         { prefix: 'safety:', impact: 4, group: true, title: (n) => `Fix ${n === 1 ? 'the failing safety check' : n + ' failing safety checks'}`, tab: 'systems' },
@@ -711,21 +758,29 @@
         { prefix: 'inbox:unanswered', impact: 4, title: 'Answer the messages that are waiting', tab: 'inbox' },
         { prefix: 'review:conversion', impact: 4, title: 'Make the URL Review page turn more opens into reviews', tab: 'review' },
         { prefix: 'money:none', impact: 4, title: 'Find out why sales stopped', tab: 'business' },
-        { prefix: 'outreach:warmup', impact: 4, title: 'Hold the campaigns until the mailboxes are warm', tab: 'outreach' },
-        { prefix: 'outreach:dns:', impact: 4, group: true, title: 'Fix the sending domain records', tab: 'outreach' },
+        { prefix: 'outreach:warmup', impact: 4, title: 'Hold the campaigns until the mailboxes are warm', click: 'pause-outreach', tab: 'outreach' },
+        { prefix: 'outreach:dns:', impact: 4, group: true, title: 'Fix the sending domain records', click: 'pause-outreach', tab: 'outreach' },
+        { prefix: 'addresses:instantly:reconnect:', impact: 4, group: true, title: 'Reconnect the mailboxes in Instantly', link: 'https://app.instantly.ai/app/accounts' },
+        { prefix: 'addresses:dns:', impact: 4, group: true, title: 'Fix the mail records on our domains', tab: 'systems' },
+        { prefix: 'addresses:m365:', impact: 3, group: true, title: 'Fix the Microsoft 365 mailboxes', link: 'https://admin.microsoft.com/#/users' },
+        { prefix: 'addresses:improvmx:', impact: 3, group: true, title: 'Fix the ImprovMX aliases', tab: 'systems' },
+        { prefix: 'addresses:sendgrid:', impact: 3, title: 'Add an ImprovMX alias for the SendGrid sender', link: 'https://app.improvmx.com/' },
         { prefix: 'review:held', impact: 3, title: 'Re-run the held reviews', action: 'rerun-held', tab: 'systems' },
         { prefix: 'notices:failed', impact: 3, title: 'Re-send the owner notices that failed', action: 'resend-notices', tab: 'review' },
         { prefix: 'hub:stale', impact: 3, title: 'Publish the Social hub', action: 'publish-hub', tab: 'hub' },
         { prefix: 'money:refunds', impact: 3, title: 'Read why customers asked for refunds', tab: 'business' },
         { prefix: 'email:bad', impact: 3, title: 'Clean the addresses that bounce or block', link: 'https://app.sendgrid.com/' },
         { prefix: 'speed:', impact: 3, levels: ['warn'], title: (i) => `Speed up ${(PRODUCTS.find((p) => p.key === i.product) || {}).name || i.product} on mobile`, tab: 'systems' },
+        { prefix: 'pagespeed:run', impact: 3, title: 'Get the daily PageSpeed run working again', tab: 'systems' },
+        { prefix: 'pagespeed:pr:', impact: 3, title: (i) => 'Merge or close PageSpeed fixes #' + i.key.split(':')[2], tab: 'systems' },
+        { prefix: 'pagespeed:slow', impact: 3, title: 'Speed up the pages that score under 50 on PageSpeed', tab: 'systems' },
         { prefix: 'slow:', impact: 3, group: true, title: 'Find why the pages answer slowly', tab: 'systems' },
         { prefix: 'platform:failures', impact: 3, title: 'Fix the function that fails most', tab: 'systems' },
         { prefix: 'platform:gemini', impact: 3, title: 'Fix the failing Gemini calls', tab: 'systems' },
         { prefix: 'platform:reads', impact: 3, title: 'Cut Firestore reads before the free quota runs out', tab: 'systems' },
-        { prefix: 'social:failed', impact: 3, title: 'Re-post the social posts that failed', tab: 'hub' },
+        { prefix: 'social:failed', impact: 3, title: 'Re-post the social posts that failed', click: 'retry-social', tab: 'hub' },
         { prefix: 'outreach:queue', impact: 3, title: 'Add the next outreach prospect list', tab: 'outreach' },
-        { prefix: 'outreach:mailbox:', impact: 3, group: true, title: 'Turn the outreach mailboxes and warm-up back on', tab: 'outreach' },
+        { prefix: 'outreach:mailbox:', impact: 3, group: true, title: 'Turn the outreach mailboxes and warm-up back on', click: 'resume-outreach', tab: 'outreach' },
         { prefix: 'outreach:deadline:', impact: 3, levels: ['warn'], group: true, title: 'Get ready for the outreach deadline', tab: 'outreach' },
         { prefix: 'goal:', impact: 3, levels: ['warn'], title: (i) => 'Catch up on the goal: ' + i.text.replace(/^Goal behind: /, '').split(' is at ')[0], tab: 'overview' },
         { prefix: 'inbox:pending', impact: 2, title: 'Approve or reject the waiting ratings', tab: 'inbox' },
@@ -742,6 +797,8 @@
         { prefix: 'review:swing', impact: 2, levels: ['warn'], title: 'Find why URL Review opens fell', tab: 'review' }
     ];
     const SAFE_ACTIONS = ['rerun-held', 'resend-notices', 'publish-hub'];
+    // Actions a proposal offers as a button that only run on a click (#1977).
+    const CLICK_ACTIONS = ['retry-social', 'resume-outreach', 'pause-outreach'];
 
     function proposalRules(state, briefed) {
         const items = (briefed || briefing(state)).slice();
@@ -752,9 +809,10 @@
             const rule = PROPOSAL_RULES.find((r) => item.key === r.prefix || item.key.startsWith(r.prefix));
             if (!rule || (rule.levels ? !rule.levels.includes(item.level) : !['alert', 'warn'].includes(item.level) && !['search:brave', 'connections:needs', 'social:none', 'outreach:pace'].includes(rule.prefix))) return;
             const key = rule.group ? rule.prefix.replace(/:$/, '') : item.key;
-            const row = out.get(key) || { key, product: item.product, impact: rule.impact, level: item.level, evidence: [], source: 'rules', action: rule.action || null, tab: rule.tab || null, link: rule.link || null, rule };
+            const row = out.get(key) || { key, product: item.product, impact: rule.impact, level: item.level, evidence: [], source: 'rules', action: rule.action || null, click: rule.click || null, tab: rule.tab || null, link: rule.link || null, rule };
             row.evidence.push(item.text);
             if (/^(job|scheduler):/.test(item.key)) (row.jobs = row.jobs || []).push(item.key.slice(item.key.indexOf(':') + 1));
+            if (item.key.startsWith('ci:')) (row.workflows = row.workflows || []).push(item.key.slice(3));
             if (item.level === 'alert') row.level = 'alert';
             row.item = row.item || item;
             out.set(key, row);
@@ -764,8 +822,44 @@
             const t = row.rule.title;
             const title = typeof t === 'function' ? t(row.rule.group ? row.evidence.length : row.item) : t;
             const impact = Math.min(5, row.impact + (row.level === 'alert' && row.impact < 5 ? 1 : 0));
-            return { key: row.key, product: row.product, impact, level: row.level, title, evidence: row.evidence.slice(0, 4), source: 'rules', action: row.action, jobs: row.jobs ? Array.from(new Set(row.jobs)).slice(0, 6) : null, tab: row.tab, link: row.link };
+            return { key: row.key, product: row.product, impact, level: row.level, title, evidence: row.evidence.slice(0, 4), source: 'rules', action: row.action, click: row.click,
+                jobs: row.jobs ? Array.from(new Set(row.jobs)).slice(0, 6) : null, workflows: row.workflows ? Array.from(new Set(row.workflows)).slice(0, 6) : null, tab: row.tab, link: row.link };
         }).sort((a, b) => b.impact - a.impact || rank[a.level] - rank[b.level]);
+    }
+
+    const RUN_LABELS = {
+        'rerun-held': 'Send held re-runs', 'resend-notices': 'Re-send failed notices', 'publish-hub': 'Publish the hub',
+        'retry-social': 'Retry failed posts', 'resume-outreach': 'Resume mailboxes', 'pause-outreach': 'Pause outreach'
+    };
+
+    const pageSpeedPr = (key) => Number((/^pagespeed:pr:(\d+)$/.exec(key || '') || [])[1]) || 0;
+
+    /* What a proposal's run button does (#1977), or null: { action, label, jobs?, workflows?, pr? } for the jarvis
+       action-run op. A PageSpeed PR merges; otherwise its own action, then its click, then its failed jobs or workflows. */
+    function proposalRun(p) {
+        if (!p) return null;
+        const pr = pageSpeedPr(p.key);
+        if (pr) return { action: 'pagespeed-merge', pr, label: `Merge #${pr}` };
+        const many = (list, one, n) => (list.length === 1 ? one(list[0]) : n(list.length));
+        if (SAFE_ACTIONS.includes(p.action) || CLICK_ACTIONS.includes(p.click)) {
+            const action = SAFE_ACTIONS.includes(p.action) ? p.action : p.click;
+            return { action, label: RUN_LABELS[action] };
+        }
+        if (p.jobs && p.jobs.length) return { action: 'run-job', jobs: p.jobs.slice(0, 6), label: many(p.jobs, (j) => `Run ${j} again`, (n) => `Run ${n} jobs again`) };
+        if (p.workflows && p.workflows.length) return { action: 'rerun-ci', workflows: p.workflows.slice(0, 6), label: many(p.workflows, (w) => `Re-run ${w}`, (n) => `Re-run ${n} workflows`) };
+        return null;
+    }
+
+    /* A proposal's buttons on its card and its push (#1977), at most 3: its run, then Open, then Dismiss; Done only
+       when there is nothing to run. A PageSpeed PR gets Close in Open's place. act is run, close, open, done or
+       dismissed; open carries tab or link. */
+    function proposalButtons(p) {
+        const run = proposalRun(p);
+        if (run && run.action === 'pagespeed-merge') return [Object.assign({ act: 'run' }, run), { act: 'close', action: 'pagespeed-close', pr: run.pr, label: `Close #${run.pr}` }, { act: 'dismissed', label: 'Dismiss' }];
+        const tab = p && p.tab && p.tab !== 'overview' ? p.tab : null;
+        const open = p && p.link ? { act: 'open', label: 'Open ↗', link: p.link }
+            : tab ? { act: 'open', label: 'Open ' + ((PRODUCTS.find((x) => x.key === tab) || {}).name || tab), tab } : null;
+        return [run && Object.assign({ act: 'run' }, run), open, run ? null : { act: 'done', label: 'Done' }, { act: 'dismissed', label: 'Dismiss' }].filter(Boolean).slice(0, 3);
     }
 
     // Done hides a proposal for a week, Dismiss for a month; a saved state is { key, status, until }.
@@ -864,6 +958,26 @@
             const page = (((k.startsWith('speed:') ? ext.speed : ext.uptime) || {}).pages || []).find((r) => r.product === item.product) || {};
             fact('Page', page.name); fact('Status', page.status); fact('Answer time', page.ms !== undefined ? page.ms + ' ms' : null); fact('Mobile score', page.score); fact('Error', page.error);
             link('Open the page', page.url); link('Cloudflare', BRIEF_LINKS.cloudflare);
+        } else if (k.startsWith('pagespeed:')) {
+            const ps = ext.pagespeed || {};
+            const n = /^pagespeed:(pr|countdown):/.test(k) ? Number(k.split(':')[2]) : 0;
+            const pr = (ps.prs || []).find((r) => r.number === n);
+            if (pr) {
+                fact('PR', '#' + pr.number + ' ' + pr.title); fact('Fixes', pr.kind === 'ai' ? "Gemini's" : 'Safe'); fact('Stage', pr.stage); fact('Why', pr.reason); fact('Merges at', pr.dueAt);
+                link('Open the PR on GitHub', pr.url);
+                if (pr.open) { act('pagespeed-merge', 'Merge #' + n, { pr: n }); act('pagespeed-close', 'Close #' + n, { pr: n }); }
+            } else {
+                const c = ps.counts || {}, last = (ps.runs || [])[0] || {}, avg = last.avg || {};
+                fact('Pages', c.pages); fact('Measured', c.scored); fact('Under ' + (ps.threshold || 90), c.below); fact('Under 50', c.under50);
+                fact('Average', avg.mobile !== undefined ? 'mobile ' + avg.mobile + ', desktop ' + avg.desktop : null);
+                fact('Last run', last.at); fact('Result', last.status); fact('Error', last.error);
+                const score = (p, m) => (Number.isFinite((p[m] || {}).score) ? p[m].score : null);
+                const low = (p) => Math.min(...['mobile', 'desktop'].map((m) => (score(p, m) === null ? 101 : score(p, m))));
+                (ps.pages || []).filter((p) => low(p) < 101).sort((a, b) => low(a) - low(b)).slice(0, 5).forEach((p) => fact(p.file || p.url, 'mobile ' + (score(p, 'mobile') === null ? '—' : score(p, 'mobile')) + ', desktop ' + (score(p, 'desktop') === null ? '—' : score(p, 'desktop'))));
+                link('Last run on GitHub', last.run && last.run.url);
+                link('The daily workflow', 'https://github.com/kaanmuar/kaanmuar.github.io/actions/workflows/pagespeed-daily.yml');
+                if (k === 'pagespeed:run') act('pagespeed-run', 'Start the PageSpeed run now');
+            }
         } else if (k === 'tls') {
             fact('Days left', (ext.uptime || {}).tlsDaysLeft);
         } else if (k.startsWith('money:')) {
@@ -875,7 +989,7 @@
             const f = pf.functions || {}, g = pf.gemini || {}, fs = pf.firestore || {};
             if (k === 'platform:failures') { fact('Failed runs (24 h)', f.failures); fact('Failure rate', f.failureRate !== undefined ? f.failureRate + '%' : null); (f.byFunction || []).slice(0, 4).forEach((r) => fact(r.label, r.value)); link('Function logs', BRIEF_LINKS.firebase); }
             if (k === 'platform:gemini') { fact('Calls', g.requests); fact('Error rate', g.errorRate + '%'); (g.failedMethods || []).slice(0, 4).forEach((r) => fact(r.label, r.value)); }
-            if (k === 'platform:reads') { fact('Reads today', fs.reads); fact('Share of the free quota', fs.readsFreePct + '%'); }
+            if (k === 'platform:reads') { fact('Reads since midnight Pacific', fs.reads); fact('Share of the free quota', fs.readsFreePct + '%'); }
         } else if (k.startsWith('goal:')) {
             const g = (s.goals || []).find((r) => 'goal:' + r.key === k) || {};
             fact('Goal', g.label); fact('Now', g.value); fact('Target', g.target); fact('Time gone', g.elapsed !== undefined ? g.elapsed + '%' : null); fact('Pace', g.projected);
@@ -891,6 +1005,14 @@
         return out;
     }
 
+    // What the headline names once the briefing is empty, so it never reads all clear beside a down connection or low readiness.
+    function systemsNote(conns, ready, readinessMin) {
+        const off = (conns || []).filter((c) => c.state === 'down' || c.state === 'partial').length;
+        if (off) return off + (off > 1 ? ' connections need' : ' connection needs') + ' a look';
+        if (typeof ready === 'number' && ready < readinessMin) return 'Readiness below ' + readinessMin + '%';
+        return '';
+    }
+
     // Share of checks that pass, for the reactor ring: jobs, CI, uptime, speed, failures.
     function readiness(external) {
         const checks = [];
@@ -900,6 +1022,7 @@
         if (e.github && e.github.ci) e.github.ci.forEach((run) => { if (run.conclusion !== 'cancelled') checks.push(['success', 'skipped', 'neutral'].includes(run.conclusion)); });
         if (e.uptime && e.uptime.pages) e.uptime.pages.forEach((page) => checks.push(!!page.ok && page.ms <= 3000));
         if (e.speed && e.speed.pages) e.speed.pages.forEach((page) => { if (page.ok) checks.push(page.score >= 50); });
+        if (e.pagespeed && e.pagespeed.ok && !e.pagespeed.empty) checks.push(!e.pagespeed.stale && e.pagespeed.lastStatus !== 'failed');
         if (e.safety && e.safety.checks) e.safety.checks.forEach((c) => { if (c.level !== 'info') checks.push(c.ok); });
         if (!checks.length) return null;
         return Math.round((checks.filter(Boolean).length / checks.length) * 100);
@@ -1036,7 +1159,184 @@
         return cleanDevice({ kind, posture, width: o.width, height: o.height, name: o.name, model: o.model, app: 'web' });
     }
 
-    const api = { DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, proposalRules, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, csv, parseCommand, windowFor };
+    // --- #2139: the wide-screen deck and charts. The app reads the same numbers from the snapshot's `wide` field. ---
+
+    const TREND = [['cv', 'CV'], ['studio', 'QA Studio'], ['lab', 'QA Lab'], ['review', 'URL Review'], ['inbox', 'Inbox'], ['hub', 'Social hub']];
+    const PURPOSES = { review: 'Review run', report: 'Full report', pass: 'Review pass', fixlist: 'Fix list', cases: 'Test cases', 'new-run': 'New run', credentials: 'Signed-in run', alerts: 'Alerts', credit: 'Credits' };
+    const ok = (x) => !!(x && x.ok !== false);
+    const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+    function uptimeNow(up) {
+        const pages = ok(up) && Array.isArray(up.pages) ? up.pages : [];
+        return pages.length ? Math.round((pages.filter((p) => p.ok).length / pages.length) * 100) : null;
+    }
+
+    // Readiness, revenue, visits, alerts and uptime: the strip across the top of Overview.
+    function deck(products, external, brief) {
+        const e = external || {};
+        const r = readiness(e);
+        const mo = ok(e.money) && e.money.revenue ? e.money : null;
+        const sv = siteVisits(products);
+        const list = Array.isArray(brief) ? brief : [];
+        const alerts = list.filter((b) => b.level === 'alert').length;
+        const warns = list.filter((b) => b.level === 'warn').length;
+        const strip = uptimeStrip(e.uptime && e.uptime.history);
+        const now = uptimeNow(e.uptime);
+        const money = mo ? delta(mo.revenue.usd, mo.prior && mo.prior.usd) : { text: '', dir: 0 };
+        return [
+            { key: 'readiness', label: 'Readiness', value: r === null ? '—' : r + '%', raw: r, alert: r !== null && r < THRESHOLDS.readinessMin.value },
+            { key: 'revenue', label: 'Revenue', value: mo ? '$' + (Math.round(num(mo.revenue.usd) * 100) / 100).toLocaleString('en-US') : '—', raw: mo ? num(mo.revenue.usd) : null, delta: money.text, dir: money.dir },
+            { key: 'visits', label: 'Site visits', value: sv ? sv.value : '—', raw: sv ? sv.value : null, delta: sv ? sv.delta : '', dir: sv ? sv.dir : 0 },
+            { key: 'alerts', label: 'Alerts', value: alerts, raw: alerts, delta: warns ? warns + (warns === 1 ? ' warning' : ' warnings') : '', dir: 0, alert: alerts > 0 },
+            { key: 'uptime', label: strip.pct === null ? 'Uptime now' : 'Uptime, 90 days', value: strip.pct !== null ? strip.pct + '%' : now === null ? '—' : now + '%', raw: strip.pct !== null ? strip.pct : now, delta: strip.pct !== null && now !== null ? 'now ' + now + '%' : '', dir: 0, alert: now !== null && now < 100 }
+        ];
+    }
+
+    // One daily line per product over shared dates; products without a series are left out.
+    function trend(products) {
+        const p = products || {};
+        const rows = TREND.filter(([key]) => p[key] && p[key].series && p[key].series.labels && p[key].series.labels.length);
+        const labels = rows.reduce((best, [key]) => (p[key].series.labels.length > best.length ? p[key].series.labels : best), []);
+        return {
+            labels,
+            series: rows.map(([key, name]) => {
+                const s = p[key].series;
+                return { key, name, values: labels.map((day) => { const i = s.labels.indexOf(day); return i === -1 ? 0 : num(s.values[i]); }) };
+            })
+        };
+    }
+
+    // Visits across the CV, Studio and Lab sites and URL Review opens: when they come and where from.
+    function trafficMix(products) {
+        const p = products || {};
+        const grid = WEEKDAYS.map(() => new Array(24).fill(0));
+        const sources = {};
+        ['cv', 'studio', 'lab', 'review'].forEach((key) => {
+            const x = p[key];
+            if (!x) return;
+            (Array.isArray(x.heatmap) ? x.heatmap : []).forEach((row, d) => (row || []).forEach((n, h) => { if (grid[d] && h < 24) grid[d][h] += num(n); }));
+            ((x.lists && x.lists.sources) || []).forEach((r) => bump(sources, String(r.label).replace(/\s*\(tagged link\)$/, ''), num(r.value)));
+        });
+        const total = grid.reduce((s, row) => s + row.reduce((a, b) => a + b, 0), 0);
+        return { heatmap: grid, peak: peak(grid), total, sources: topList(sources, 12) };
+    }
+
+    // The site's own counter against GA4 sessions and Cloudflare page views, day by day.
+    function trafficCompare(products, external) {
+        const e = external || {};
+        const sv = siteVisits(products);
+        const ga = ok(e.ga4) && Array.isArray(e.ga4.daily) ? e.ga4.daily : [];
+        const cf = ok(e.cloudflare) && Array.isArray(e.cloudflare.daily) ? e.cloudflare.daily : [];
+        const site = sv ? sv.series : { labels: [], values: [] };
+        const labels = Array.from(new Set(site.labels.concat(ga.map((r) => r.date), cf.map((r) => r.date)).filter(Boolean))).sort();
+        const by = (rows, key) => { const m = {}; rows.forEach((r) => { m[r.date] = num(r[key]); }); return labels.map((d) => m[d] || 0); };
+        const siteBy = {};
+        site.labels.forEach((d, i) => { siteBy[d] = num(site.values[i]); });
+        const series = [
+            { key: 'site', name: 'Site counter', values: labels.map((d) => siteBy[d] || 0), on: !!sv },
+            { key: 'ga4', name: 'GA4 sessions', values: by(ga, 'sessions'), on: ga.length > 0 },
+            { key: 'cloudflare', name: 'Cloudflare page views', values: by(cf, 'pageViews'), on: cf.length > 0 }
+        ];
+        const why = { site: 'No site events in range.', ga4: (e.ga4 && e.ga4.error) || 'GA4 is not loaded.', cloudflare: (e.cloudflare && e.cloudflare.error) || 'Cloudflare is not loaded.' };
+        return {
+            labels,
+            series: series.filter((s) => s.on).map(({ key, name, values }) => ({ key, name, values })),
+            totals: series.map((s) => ({ key: s.key, label: s.name, value: s.on ? s.values.reduce((a, b) => a + b, 0) : null, why: s.on ? '' : why[s.key] }))
+        };
+    }
+
+    function revenueByProduct(money) {
+        if (!ok(money) || !Array.isArray(money.byPurpose)) return [];
+        return money.byPurpose.filter((r) => num(r.value) > 0).map((r) => ({ label: PURPOSES[r.label] || r.label, value: Math.round(num(r.value) * 100) / 100 }));
+    }
+
+    // Reviewed by the sweep, emailed through Instantly, replied, paid through a qalabreview.com link.
+    function outreachFunnel(external) {
+        const ou = (external || {}).outreach;
+        if (!ok(ou)) return null;
+        const pipe = ok(ou.pipeline) && ou.pipeline ? ou.pipeline : null;
+        const mail = ok(ou.instantly) && ou.instantly ? ou.instantly : null;
+        const links = ok(ou.links) && ou.links ? ou.links : null;
+        if (!pipe && !mail && !links) return null;
+        return [
+            { key: 'reviewed', label: 'Reviewed', value: pipe ? num(pipe.reviews) : null },
+            { key: 'notified', label: 'Notified', value: mail ? num(mail.contacted) : null },
+            { key: 'replied', label: 'Replied', value: mail ? num(mail.replies) : null },
+            { key: 'paid', label: 'Paid', value: links ? num(links.paid) : null }
+        ];
+    }
+
+    // One tile per connection, scheduled job and CI workflow: good, warn, alert or off.
+    function statusMatrix(external, pending) {
+        const e = external || {};
+        const conn = connections(e, pending).map((c) => ({ group: 'Connections', name: c.name.replace(/\s*\(.*\)$/, ''), level: { live: 'good', partial: 'warn', down: 'alert' }[c.state] || 'off', detail: c.detail || c.state }));
+        // Scheduler only knows the trigger fired; the job's own last run (health.jobs) says whether it worked.
+        const runs = new Map((ok(e.health) && Array.isArray(e.health.jobs) ? e.health.jobs : []).map((j) => [j.job, j]));
+        const jobs = (ok(e.jobs) && Array.isArray(e.jobs.jobs) ? e.jobs.jobs : []).map((j) => {
+            const run = runs.get(j.name);
+            runs.delete(j.name);
+            const failed = !j.ok || (run && run.ok === false);
+            return { group: 'Jobs', name: j.name, level: failed ? 'alert' : j.state === 'PAUSED' ? 'warn' : 'good', detail: failed ? (run && run.ok === false ? run.error : j.error) || 'failed' : j.state === 'PAUSED' ? 'paused' : j.note || 'ok' };
+        }).concat([...runs.values()].map((run) => ({ group: 'Jobs', name: run.job, level: run.ok === false ? 'alert' : 'good', detail: run.ok === false ? run.error || 'failed' : 'ok' })));
+        const ci = (ok(e.github) && Array.isArray(e.github.ci) ? e.github.ci : []).map((c) => ({ group: 'CI', name: c.name, level: ['success', 'skipped', 'neutral'].includes(c.conclusion) ? 'good' : !c.conclusion ? 'off' : c.conclusion === 'cancelled' ? 'warn' : 'alert', detail: c.conclusion || 'running' }));
+        return conn.concat(jobs, ci);
+    }
+
+    // The last 90 Bogota days of the hourly uptime checks (jarvis_uptime); a day without checks is null, not 100.
+    function uptimeStrip(history, now) {
+        const rows = Array.isArray(history) ? history : [];
+        const by = {};
+        rows.forEach((r) => { if (r && r.date && num(r.checks) > 0) by[r.date] = r; });
+        const end = now || new Date();
+        const days = dayKeys(new Date(end.getTime() - 89 * DAY), end).slice(-90);
+        let checks = 0, up = 0;
+        const out = days.map((date) => {
+            const r = by[date];
+            if (!r) return { date, pct: null };
+            checks += num(r.checks);
+            up += num(r.up);
+            return { date, pct: Math.round((num(r.up) / num(r.checks)) * 1000) / 10 };
+        });
+        const since = out.find((d) => d.pct !== null);
+        return { days: out, pct: checks ? Math.round((up / checks) * 1000) / 10 : null, since: since ? since.date : null };
+    }
+
+    // The Products list: each product's lead number and daily series, for the list-detail view and the tiles.
+    function productList(products, external) {
+        const p = products || {};
+        const e = external || {};
+        const out = PRODUCTS.filter((x) => ['inbox', 'cv', 'studio', 'lab', 'review', 'hub'].includes(x.key) && p[x.key]).map((x) => {
+            const s = p[x.key];
+            return { key: x.key, name: x.name, kpis: (s.kpis || []).slice(0, 6), series: s.series || { labels: [], values: [] } };
+        });
+        const ou = ok(e.outreach) ? e.outreach : null;
+        const pipe = ou && ok(ou.pipeline) && ou.pipeline ? ou.pipeline : null;
+        const mail = ou && ok(ou.instantly) && ou.instantly ? ou.instantly : null;
+        out.push({ key: 'outreach', name: 'Outreach', kpis: [pipe && kpi('Reviewed', num(pipe.reviews)), pipe && kpi('Queued', num(pipe.queued)), mail && kpi('Emails sent', num(mail.sent)), mail && kpi('Replies', num(mail.replies))].filter(Boolean),
+            series: pipe ? { labels: (pipe.daily || []).map((d) => d.date), values: (pipe.daily || []).map((d) => num(d.reviews)) } : { labels: [], values: [] } });
+        const so = ok(e.social) && e.social.daily ? e.social : null;
+        out.push({ key: 'marketing', name: 'Marketing', kpis: [so && kpi('Social posts', num(so.sent)), so && kpi('Failed', num(so.failed), undefined, { alert: num(so.failed) > 0 })].filter(Boolean),
+            series: so ? { labels: so.daily.map((d) => d.date), values: so.daily.map((d) => num(d.posts)) } : { labels: [], values: [] } });
+        const eg = ok(e.engagement) && Array.isArray(e.engagement.daily) ? e.engagement : null;
+        const t = (eg && eg.report && eg.report.totals) || {};
+        out.push({ key: 'engagement', name: 'Engagement', kpis: eg ? [kpi('Posts read', num(t.read)), kpi('Candidates', num(t.candidates)), kpi('Replies drafted', num(t.drafted))] : [],
+            series: eg ? { labels: eg.daily.map((d) => d.day), values: eg.daily.map((d) => num(d.read)) } : { labels: [], values: [] } });
+        return out;
+    }
+
+    // Everything above in one object: the snapshot carries it for the app, the web builds it from the same inputs.
+    function wide(state) {
+        const s = state || {};
+        const traffic = trafficMix(s.products);
+        return {
+            deck: deck(s.products, s.external, s.briefing), trend: trend(s.products), products: productList(s.products, s.external),
+            traffic: { heatmap: traffic.heatmap, peak: traffic.peak, total: traffic.total, sources: traffic.sources, compare: trafficCompare(s.products, s.external) },
+            revenue: revenueByProduct((s.external || {}).money), funnel: outreachFunnel(s.external),
+            matrix: statusMatrix(s.external), uptime: uptimeStrip(((s.external || {}).uptime || {}).history, s.now)
+        };
+    }
+
+    const api = { TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, proposalRules, pageSpeedPr, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

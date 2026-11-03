@@ -72,6 +72,9 @@ test("the payload keeps two buttons, signs the plain ones and leaves Reply unsig
   const reply = JSON.parse(webPush.payload({ kind: "inbox", title: "t", body: "b", ref: "message:a", actions: [{ act: "reply", label: "Reply", input: "Your reply" }] }, "k", NOW));
   assert.deepEqual(reply.actions, [{ act: "reply", label: "Reply", input: "Your reply" }]);
   assert.deepEqual(JSON.parse(webPush.payload({ kind: "desk", title: "t", body: "b", actions: [{ act: "x", label: "X" }] }, "k", NOW)).actions, []);
+  const open = JSON.parse(webPush.payload({ kind: "briefing", title: "t", body: "b", ref: "proposal:job", actions: [
+    { act: "open", label: "Open Systems", tab: "systems" }, { act: "open", label: "Open ↗", url: "javascript:alert(1)" }] }, "k", NOW));
+  assert.deepEqual(open.actions, [{ act: "open", label: "Open Systems", tab: "systems" }, { act: "open", label: "Open ↗", tab: "overview" }], "Open is unsigned and only opens https links");
 });
 
 test("subscriptions are checked before they are stored", () => {

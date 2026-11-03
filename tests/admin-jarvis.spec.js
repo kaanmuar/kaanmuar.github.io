@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
 // Firestore is an in-memory stub seeded from window.__data (collection name → rows), and the
-// owner-only /jarvis function is answered by page.route, so the whole Statistics tab runs offline.
+// owner-only /jarvis function is answered by page.route (its rows op from the same seed), so the whole Statistics tab runs offline.
 const FIREBASE = 'https://www.gstatic.com/firebasejs/10.14.1/';
 const STUBS = {
   'firebase-app.js': 'export function initializeApp() { return {}; }',
@@ -44,8 +44,14 @@ const EXTERNAL = {
   ga4: { ok: true, groups: [{ group: 'cv', sessions: 40, users: 30, views: 90, engagement: 55, duration: 70, priorSessions: 20, priorUsers: 15 }], countries: [{ label: 'Colombia', value: 25, prior: 10 }], sources: [], daily: [] },
   cloudflare: { ok: false, error: 'The Cloudflare token needs Zone > Analytics > Read.' },
   settings: { ok: true, goals: [{ product: 'cv', metric: 'visits', period: 'week', target: 300 }], thresholds: {}, mail: { daily: true, gemini: true, watch: true, weekly: true }, updatedAt: '2026-10-24T12:00:00Z' },
-  actions: { ok: true, settings: { auto: true, caps: { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2 } }, used: { 'rerun-held': 3, 'resend-notices': 0, 'publish-hub': 2 }, pending: { held: 4, clean: 1, notices: 2 }, noticeHours: false, noticesLive: true,
+  actions: { ok: true, settings: { auto: true, caps: { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2 }, countdownHours: 2 }, used: { 'rerun-held': 3, 'resend-notices': 0, 'publish-hub': 2 }, pending: { held: 4, clean: 1, notices: 2 }, noticeHours: false, noticesLive: true,
+    countdowns: {
+      pending: [{ id: 'aaaa1111bbbb2222cccc3333', action: 'rerun-ci', label: 'Re-run failed CI jobs', target: 'Buffer batch #41', kind: 'post', kindLabel: 'public post', status: 'waiting', by: 'jarvis', confidence: null, why: 'Re-running the failed jobs on main.', runsAt: '2026-10-26T13:00:00.000Z', hold: '' },
+        { id: 'dddd4444eeee5555ffff6666', action: 'ai-fix', label: 'Run a fix the AI picked', target: 'run-job sendOwnerNotices', kind: 'email', kindLabel: 'third-party email', status: 'waiting', by: 'gemini', confidence: 0.92, why: 'Its last run failed.', runsAt: '2026-10-26T15:00:00.000Z', hold: '' }],
+      recent: [{ id: '999988887777666655554444', action: 'merge-pr', label: 'Merge PageSpeed fixes #2210', target: '#2210', kind: 'code', status: 'done', result: 'Merging #2210; Jarvis pushes the result.' }]
+    },
     actions: [{ action: 'rerun-held', mode: 'auto', status: 'done', target: 'shop.example', detail: 'Sent to the asker.', at: '2026-10-25T15:05:00Z' }, { action: 'publish-hub', mode: 'auto', status: 'waiting', count: 1, target: '', detail: "Over today's cap of 2.", at: '2026-10-25T16:05:00Z' }, { action: 'run-job', mode: 'click', status: 'done', target: 'sweepReviews', detail: 'Started.', at: '2026-10-25T17:00:00Z' }] },
+  countdown: { ok: true, message: 'Cancelled: run a fix the AI picked.' },
   proposals: { ok: true, gemini: true, at: '2026-10-25T12:00:00Z', hidden: 1, proposals: [
     { rank: 1, key: 'job', title: 'Fix the failing job', impact: 5, level: 'alert', effort: 'hours', why: 'The sweep feeds the hub.', evidence: ['Job sweepReviews failed: quota.'], source: 'gemini+rules', action: null, jobs: ['sweepReviews'], tab: 'systems', link: null },
     { rank: 2, key: 'review:held', title: 'Re-run the held reviews', impact: 3, level: 'warn', evidence: ['4 re-runs are held on the desk.'], source: 'gemini+rules', action: 'rerun-held', tab: 'systems', link: null },
@@ -69,8 +75,6 @@ const EXTERNAL = {
   'share-draft': { ok: true, id: 'new1', kind: 'image', draft: { lang: 'en', kind: 'tip', title: 'Check SSL', alt: 'A card', linkedin: 'LinkedIn draft', x: 'X draft', facebook: 'Facebook draft', instagram: 'Instagram draft' }, note: '' },
   'share-queue': { ok: true, id: 'new1', note: 'Queued. The hub page goes live first.' },
   'social-post-now': { ok: true, started: ['Buffer', 'Facebook Page'], note: 'Started Buffer and Facebook Page.' },
-  studio: { ok: true, sources: ['compare', 'evergreen'], skits: [{ id: 'friday-release', takes: ['en', 'es'] }], takes: 'skit-takes', runs: [{ name: 'Studio tips evergreen render', event: 'workflow_dispatch', status: 'completed', conclusion: 'success', at: '2026-10-25T08:00:00Z', url: 'https://github.com/' }] },
-  'studio-render': { ok: true, note: 'Rendering skit friday-release. The review links land in a PR and on #1981 when it is done.' },
   outreach: { ok: true, needs: ['Instantly: put the API key in Secret Manager as INSTANTLY_API_KEY.'],
     pipeline: { ok: true, queued: 40, swept: 12, left: 28, bySegment: [{ label: 'tvet', value: 10 }, { label: 'university', value: 10 }], reviews: 12, thisWeek: 12, results: [{ label: 'reviewed', value: 11 }], segments: [], avgScore: 64, withLiveReport: 6, reviewedWithLiveReport: 5, daily: [{ date: '2026-10-24', reviews: 12 }] },
     instantly: { ok: false, error: 'INSTANTLY_API_KEY is not set.' },
@@ -91,14 +95,24 @@ const EXTERNAL = {
     leads: { weeks: [{ week: 'W1', total: 3, complete: 2, missing: 1, approved: 1, uploaded: 0, ready: 1 }],
       rows: [{ week: 'W1', email: 'ana@uni.edu.co', first_name: 'Ana', last_name: 'Pérez', title: 'CIO', org: 'Uni Norte', host: 'uni.edu.co', cc: 'co', campaign: 'W1 B-es Americas', score: '71', top_finding_en: 'No alt text', missing: '', approved: false, uploaded: '', live_report_url: 'https://qa-lab.co/r/uni' },
         { week: 'W1', email: 'leo@uni2.edu.co', first_name: 'Leo', org: 'Uni Sur', host: 'uni2.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: 'report (not published yet)', approved: false, uploaded: '' },
-        { week: 'W1', email: 'eva@uni3.edu.co', first_name: 'Eva', org: 'Uni Este', host: 'uni3.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: '', approved: true, uploaded: '' }] },
+        { week: 'W1', email: 'eva@uni3.edu.co', first_name: 'Eva', org: 'Uni Este', host: 'uni3.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: '', approved: true, uploaded: '' },
+        { week: 'W1', email: 'sol@uni4.edu.co', first_name: 'Sol', org: 'Uni Oeste', host: 'uni4.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: '', approved: true, uploaded: '2026-10-20' }] },
     replies: [{ id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', at: '2026-10-25T12:00:00Z', from: 'dean@uni.edu.co', to: 'carlos@mail.qa-lab.co', subject: 'Re: Su sitio', campaign: 'W1 B-es Americas', text: 'Nos interesa', category: 'interested', summary: 'Wants the walkthrough', lang: 'es', draft: 'Hola, gracias', sent: '' }],
-    linkedin: { date: '2026-10-26', items: [{ name: 'Ana Pérez', title: 'CIO', org: 'Uni Norte (UN)', cc: 'CO', sent: false, profile: 'https://www.linkedin.com/in/ana', lines: [] }] },
+    linkedin: { date: '2026-10-26', items: [{ name: 'Ana Pérez', title: 'CIO', org: 'Uni Norte (UN)', cc: 'CO', sent: false, profile: 'https://www.linkedin.com/in/ana', lines: [] },
+      { name: 'Bea Gómez', title: 'CEO', org: 'Agencia Sur', cc: 'AR', sent: true, profile: 'https://www.linkedin.com/in/bea', lines: [] }] },
     dnc: [], jobs: [{ mode: 'leads', at: '2026-10-26T12:00:00Z', notify: 'W1 leads ready: 2 complete', failed: false, tail: ['done'] }], paused: [], kpis: [{ week_start: '2026-10-26', notes: 'setup week' }],
     commands: { pending: 0, items: [] } },
   'marketing-command': { ok: true, queued: 'c1', action: 'approve', label: 'Approve ana@uni.edu.co (W1)' },
   engagement: require('./fixtures/jarvis-engagement.json'),
   'engagement-decide': { ok: true, message: 'Edited and approved.' },
+  local: { ok: true, since: '2026-11-02', more: 0,
+    totals: { reviews: 9, local: 2, profiles: 1, noProfile: 1, withIssues: 2, failing: 0, outreach: 1, calls: 4, errors: 1, callsToday: 2 },
+    issues: [{ key: 'local-hours', count: 1, fail: 0 }, { key: 'local-profile', count: 1, fail: 0 }],
+    lastError: { at: '2026-11-01T12:00:00.000Z', error: 'status 429' },
+    sites: [
+      { id: 'a', host: 'speed-plumbing.com', at: '2026-11-01T15:00:00.000Z', source: 'sweep', outreach: true, profile: true, worst: 'risk', issues: [{ key: 'local-hours', verdict: 'risk', severity: 'medium' }] },
+      { id: 'b', host: 'bakery.example', at: '2026-11-01T14:00:00.000Z', source: '', outreach: false, profile: false, worst: 'risk', issues: [{ key: 'local-profile', verdict: 'risk', severity: 'low' }] }
+    ] },
   people: { ok: true, since: '2026-11-01', more: 0,
     totals: { people: 2, active: 2, new: 1, returning: 1, visits: 3, activeMs: 1260000, avgVisitMs: 420000, runs: 2 },
     testTotals: { people: 1, active: 1, new: 1, returning: 0, visits: 1, activeMs: 5000, avgVisitMs: 5000, runs: 0 },
@@ -113,7 +127,16 @@ const EXTERNAL = {
       { email: 'playwright@example.com', name: '', picture: '', providers: ['email'], test: true, firstAt: '2026-10-31T09:00:00.000Z', lastSignInAt: '2026-10-31T09:00:00.000Z', lastSeenAt: '2026-10-31T09:00:00.000Z',
         visits: 1, returns: 0, days: 1, views: 1, activeMs: 5000, avgVisitMs: 5000, runs: 0, paid: 0, urls: [], recent: [] }
     ] },
-  'engagement-connect': { ok: true, network: 'bluesky', account: 'qalaburlreview.bsky.social', message: 'Bluesky is connected as @qalaburlreview.bsky.social.' }
+  'engagement-connect': { ok: true, network: 'bluesky', account: 'qalaburlreview.bsky.social', message: 'Bluesky is connected as @qalaburlreview.bsky.social.' },
+  notices: { ok: true, auto: true, tries: 3, notices: [
+    { domain: 'acme.co', host: 'acme.co', email: 'info@acme.co', state: 'ready', critical: true, lang: 'es', tries: 0, createdAt: '2026-10-25T09:00:00Z', lastError: '', report: 'https://qalabreview.com/es?report=r1',
+      candidates: [{ email: 'info@acme.co', sources: ['footer'], url: '', onDomain: true, stopped: false }, { email: 'ventas@acme.co', sources: ['contact page'], url: '', onDomain: true, stopped: false }, { email: 'old@acme.co', sources: ['rdap'], url: '', onDomain: false, stopped: true }] },
+    { domain: 'gone.org', host: 'gone.org', email: 'web@gone.org', state: 'unlisted', critical: false, lang: 'en', tries: 0, createdAt: '2026-10-25T11:00:00Z', lastError: '', report: '',
+      candidates: [{ email: 'web@gone.org', sources: ['schema'], url: '', onDomain: true, stopped: false }] },
+    { domain: 'later.edu', host: 'later.edu', email: 'web@later.edu', state: 'waiting', critical: false, lang: 'pt', tries: 2, createdAt: '2026-10-25T12:00:00Z', lastError: 'later.edu is not on Live Reports yet. Send it after the daily publish lands.', report: '',
+      candidates: [{ email: 'web@later.edu', sources: ['footer'], url: '', onDomain: true, stopped: false }, { email: 'reitoria@later.edu', sources: ['web search'], url: '', onDomain: false, stopped: false }] }
+  ] },
+  'notice-decide': { ok: true, status: 'sent', email: 'info@acme.co', emails: ['info@acme.co', 'ventas@acme.co'], failed: [] }
 };
 
 function seed() {
@@ -138,9 +161,10 @@ function seed() {
   };
 }
 
-async function openStats(page, hash) {
+async function openStats(page, hash, extra) {
   const calls = [];
-  await page.addInitScript((data) => { window.__data = data; }, seed());
+  const data = seed();
+  await page.addInitScript((rows) => { window.__data = rows; }, data);
   for (const [file, body] of Object.entries(STUBS)) {
     await page.route(FIREBASE + file, (route) => route.fulfill({ contentType: 'text/javascript', body }));
   }
@@ -151,7 +175,8 @@ async function openStats(page, hash) {
     calls.push({ op: body.op, auth: request.headers().authorization, body });
     if (body.op === 'brief-mark') return route.fulfill({ json: { op: body.op, ok: true, key: body.key, status: body.status, until: new Date(Date.now() + 864e5).toISOString() }, headers: { 'Access-Control-Allow-Origin': '*' } });
     if (body.op === 'settings-save') return route.fulfill({ json: Object.assign({ op: body.op, ok: true, updatedAt: new Date().toISOString() }, body.settings), headers: { 'Access-Control-Allow-Origin': '*' } });
-    const answer = EXTERNAL[body.op] || (body.op === 'brief' || body.op === 'ask' ? { ok: true, text: 'Jarvis says the CV is up. Next: answer the inbox.' } : { ok: true, ran: body.job });
+    if (body.op === 'rows') return route.fulfill({ json: { op: body.op, ok: true, from: body.from, events: data.site_events, opens: data.url_review_opens, reviews: data.url_reviews, alerts: data.url_review_alerts }, headers: { 'Access-Control-Allow-Origin': '*' } });
+    const answer = (extra || {})[body.op] || EXTERNAL[body.op] || (body.op === 'brief' || body.op === 'ask' ? { ok: true, text: 'Jarvis says the CV is up. Next: answer the inbox.' } : { ok: true, ran: body.job });
     return route.fulfill({ json: Object.assign({ op: body.op }, answer), headers: { 'Access-Control-Allow-Origin': '*' } });
   });
   await page.goto('/admin.html' + (hash || ''));
@@ -174,7 +199,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls', 'device']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['rows', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'proposals', 'brief-marks', 'calls', 'device']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
     expect(calls.every((c) => c.body.device?.kind === 'desktop' && c.body.device.app === 'web')).toBe(true);
 
@@ -308,23 +333,6 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('.jv-toast')).toContainText('Started Buffer and Facebook Page');
   });
 
-  test('Studio renders lists sources and skits with their takes, and Render dispatches through the function (#1981)', async ({ page }) => {
-    const calls = await openStats(page, '#stats/hub/30');
-    const studio = page.locator('[data-view="hub"] .jv-panel[data-panel-id="hub-studio"]');
-    await expect(studio).toContainText('Studio tips evergreen render');
-    await expect(studio.locator('[data-studio-field="name"] option')).toHaveText(['Pick one', 'compare', 'evergreen']);
-    await expect(studio.locator('[data-act="studio-render"]')).toBeDisabled();
-    await studio.locator('[data-studio-field="kind"]').selectOption('skit');
-    await expect(studio.locator('[data-studio-field="name"] option')).toHaveText(['Pick one', 'friday-release (en, es)']);
-    await expect(studio.locator('[data-studio-field="mode"] option')).toHaveText(['Render', 'Captions only']);
-    await studio.locator('[data-studio-field="name"]').selectOption('friday-release');
-    await studio.locator('[data-studio-field="langs"]').fill('en');
-    await studio.locator('[data-studio-field="ticket"]').fill('1981');
-    await studio.locator('[data-act="studio-render"]').click();
-    await expect.poll(() => calls.filter((c) => c.op === 'studio-render').map((c) => [c.body.kind, c.body.name, c.body.mode, c.body.langs, c.body.ticket])).toEqual([['skit', 'friday-release', 'render', 'en', '1981']]);
-    await expect(page.locator('.jv-toast')).toContainText('Rendering skit friday-release');
-  });
-
   test('Share a post uploads the media, shows the Gemini drafts to edit, and queues the edited posts (#1420)', async ({ page }) => {
     const calls = await openStats(page, '#stats/hub/30');
     const share = page.locator('.jv-panel[data-panel-id="hub-share"]').first();
@@ -346,6 +354,21 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect.poll(() => calls.filter((c) => c.op === 'share-queue').map((c) => [c.body.id, c.body.draft.x])).toEqual([['new1', 'Edited X post']]);
     await expect(page.locator('.jv-toast')).toContainText('Queued.');
     await expect(share.locator('[data-share-caption]')).toHaveValue('');
+  });
+
+  test('URL Review shows the Google Maps Local check across reviews and its Places calls (#2118)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.setViewportSize({ width: 1280, height: 1000 });
+    await openStats(page, '#stats/review/30');
+    const local = page.locator('[data-view="review"] [data-panel-id="review-local"]');
+    await expect(local).toContainText('Google Maps: local businesses · 2');
+    await expect(local.locator('.jv-stats')).toContainText('Places errors');
+    await expect(local).toContainText('speed-plumbing.com');
+    await expect(local).toContainText('Opening hours');
+    await expect(local).toContainText('No profile found');
+    await expect(local).toContainText('status 429');
+    expect(errors).toEqual([]);
   });
 
   test('URL Review lists the signed-in people, their runs, returns and time, and the switch keeps tests apart (#1976)', async ({ page }) => {
@@ -471,6 +494,12 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(leads).toContainText('Jarvis is on it.');
     await expect(leads.locator('[data-mk-rereview="uni2.edu.co"]')).toHaveCount(1);
     await expect(leads.locator('[data-mk-cmd="lead-drop"][data-email="leo@uni2.edu.co"]')).toHaveCount(1);
+    await expect(leads).toContainText('Uni Este');
+    await expect(leads).not.toContainText('Uni Oeste');
+    await leads.locator('[data-mk-done="on"]').click();
+    await expect(leads).toContainText('Uni Oeste');
+    await leads.locator('[data-mk-done="off"]').click();
+    await expect(leads).not.toContainText('Uni Oeste');
     await expect(mk.locator('[data-panel-id="marketing-jobs"]')).toContainText('W1 leads ready');
     await expect(mk.locator('[data-panel-id="marketing-kpis"]')).toContainText('setup week');
     const cmds = () => calls.filter((c) => c.op === 'marketing-command').map(({ body: { op, days, device, ...rest } }) => rest);
@@ -485,8 +514,13 @@ test.describe('admin statistics (Jarvis)', () => {
     await leads.locator('[data-mk-cmd="upload"]').click();
     await expect.poll(() => cmds().map((c) => c.action)).toEqual(['approve', 'upload']);
 
+    const li = mk.locator('[data-panel-id="marketing-linkedin"]');
+    await expect(li.locator('[data-li-todo]')).toContainText('Ana Pérez');
+    await expect(li.locator('[data-li-todo]')).not.toContainText('Bea Gómez');
+    await expect(li.locator('details.jv-li-sent summary')).toHaveText('Sent · 1');
+    await expect(li.locator('details.jv-li-sent')).not.toHaveAttribute('open', '');
     page.once('dialog', (dialog) => dialog.accept());
-    await mk.locator('[data-panel-id="marketing-linkedin"] [data-mk-cmd="linkedin"]').click();
+    await li.locator('[data-li-todo] [data-mk-cmd="linkedin"]').click();
     await expect.poll(() => cmds().slice(-1)).toEqual([{ action: 'linkedin', date: '2026-10-26', name: 'Ana Pérez', sent: true }]);
 
     const draft = mk.locator('[data-mk-draft="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"]');
@@ -502,6 +536,36 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await mk.locator('[data-mk-dnc] button').click();
     await expect.poll(() => cmds().slice(-1).map((c) => [c.action, c.value])).toEqual([['dnc', 'stop@uni.edu.co']]);
+    expect(errors).toEqual([]);
+  });
+
+  test('Approvals list ready notices first with a badge for each kind, and one Send goes to every address picked (#1975)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/outreach/30');
+    const list = page.locator('[data-panel-id="outreach-approvals"] .jv-approval');
+    await expect(list.locator('.jv-prop-title strong')).toHaveText(['acme.co', 'gone.org', 'later.edu']);
+    const [acme, gone, later] = [list.nth(0), list.nth(1), list.nth(2)];
+    for (const text of ['ready to send', 'critical security', 'ES']) await expect(acme.locator('.jv-approval-badges')).toContainText(text);
+    await expect(gone.locator('.jv-approval-badges')).toContainText('off Live Reports');
+    await expect(later.locator('.jv-approval-badges')).toContainText('waiting for Live Report');
+    await expect(later.locator('.jv-approval-badges')).toContainText('last try failed · 2/3 auto tries');
+    await expect(gone.locator('[data-notice-send]')).toBeDisabled();
+    await expect(later.locator('[data-notice-send]')).toBeDisabled();
+    await expect(later).toContainText('Send opens once its Live Report is public.');
+
+    await expect(acme.locator('input[value="info@acme.co"]')).toBeChecked();
+    await expect(acme.locator('input[value="ventas@acme.co"]')).not.toBeChecked();
+    await expect(acme.locator('input[value="old@acme.co"]')).toBeDisabled();
+    await acme.locator('[data-notice-all]').check();
+    await expect(acme.locator('input[value="ventas@acme.co"]')).toBeChecked();
+    await expect(acme.locator('[data-notice-send]')).toHaveText('Send to 2');
+    let asked = '';
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await acme.locator('[data-notice-send]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'notice-decide').map((c) => [c.body.domain, c.body.send, c.body.email])).toEqual([['acme.co', true, ['info@acme.co', 'ventas@acme.co']]]);
+    expect(asked).toContain('Each address gets its own email.');
+    await expect(list).toHaveCount(2);
     expect(errors).toEqual([]);
   });
 
@@ -543,7 +607,7 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(save.body.settings.goals).toEqual([{ product: 'cv', metric: 'visits', period: 'week', target: 300 }, { product: 'review', metric: 'paid', period: 'month', target: 12 }]);
     expect(save.body.settings.thresholds.pendingRatings).toBe(25);
     expect(save.body.settings.mail).toMatchObject({ daily: true, gemini: false, watch: true, weekly: true, messages: true, ratings: false, ownerReplies: false });
-    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2 } });
+    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2 }, confidence: 0.8, countdownHours: 2 });
     expect(save.body.settings.searchQueries).toEqual(['qa review', 'qa review', 'carlos qa']);
     await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(1);
 
@@ -563,7 +627,7 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
-  test('Overview ranks proposals with evidence, and Done hides one through the function', async ({ page }) => {
+  test('Overview ranks proposals with evidence and each kind\'s buttons: Run goes through action-run, Done hides one (#1977)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page);
@@ -574,15 +638,21 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(panel.locator('.jv-prop').first()).toContainText('impact 5/5');
     await expect(panel.locator('.jv-prop').first()).toContainText('Job sweepReviews failed: quota.');
     await expect(panel.locator('.jv-prop').nth(1)).toContainText('Jarvis runs this on its own');
-    await expect(panel.locator('.jv-prop').first().locator('[data-run-action="run-job"]')).toHaveText('Run sweepReviews again');
+    const buttons = (i) => panel.locator('.jv-prop').nth(i).locator('.jv-prop-acts button, .jv-prop-acts a');
+    await expect(buttons(0)).toHaveText(['Run sweepReviews again', 'Open Systems →', 'Dismiss']);
+    await expect(buttons(1)).toHaveText(['Send held re-runs', 'Open Systems →', 'Dismiss']);
+    await expect(buttons(2)).toHaveText(['Done', 'Dismiss']);
     await expect(panel.locator('.jv-prop').nth(2)).toContainText('from Gemini');
     await expect(panel).toContainText('1 hidden as done or dismissed');
     const ask = calls.find((c) => c.op === 'proposals');
     expect(ask.body.candidates.some((p) => p.key === 'job' && p.evidence.length)).toBe(true);
     expect(ask.body.snapshot.products).toBeTruthy();
+    page.once('dialog', (dialog) => dialog.accept());
+    await panel.locator('[data-prop-run="job"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => [c.body.action, c.body.jobs, c.body.proposal])).toEqual([['run-job', ['sweepReviews'], 'job']]);
 
-    await panel.locator('[data-proposal="done"][data-key="review:held"]').click();
-    await expect.poll(() => calls.filter((c) => c.op === 'proposal-mark').map((c) => [c.body.key, c.body.status])).toEqual([['review:held', 'done']]);
+    await panel.locator('[data-proposal="done"][data-key="ai:price-test"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'proposal-mark').map((c) => [c.body.key, c.body.status])).toEqual([['ai:price-test', 'done']]);
     await expect(panel.locator('.jv-prop')).toHaveCount(2);
     await expect(panel).toContainText('2 hidden as done or dismissed');
     expect(errors).toEqual([]);
@@ -610,6 +680,112 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await panel.locator('[data-run-action="publish-hub"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => c.body.action)).toEqual(['publish-hub']);
+    expect(errors).toEqual([]);
+  });
+
+  test('Systems shows every page worst first and the PageSpeed PRs; Merge asks first and goes through action-run (#1978)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const fixture = require('./fixtures/jarvis-pagespeed.json');
+    const calls = await openStats(page, '#stats/systems/30', { pagespeed: fixture, 'action-run': { ok: true, done: 1, ran: '#2042', note: 'Merging #2042; Jarvis pushes the result.' } });
+    const health = page.locator('[data-panel-id="systems-pages"]');
+    await expect(health).toContainText('Page health: every page (45)');
+    await expect(health.locator('tbody tr').first()).toContainText('/qa-review.html');
+    await expect(health.locator('details summary')).toHaveText('Show the other 5 pages');
+    await health.scrollIntoViewIfNeeded();
+    await health.screenshot({ path: 'test-results/jarvis-page-health.png' });
+    const routine = page.locator('[data-panel-id="systems-pagespeed"]');
+    await expect(routine).toContainText('merges on a countdown');
+    await expect(routine).toContainText('waits in Proposals');
+    await expect(routine).toContainText('Short cache lifetimes');
+    await routine.screenshot({ path: 'test-results/jarvis-pagespeed-routine.png' });
+
+    let asked = '';
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await routine.locator('[data-ps-act="pagespeed-merge"][data-pr="2042"]').click();
+    await expect.poll(() => asked).toContain('merge PageSpeed fixes #2042 into main now');
+    await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => [c.body.action, c.body.pr])).toEqual([['pagespeed-merge', 2042]]);
+
+    await page.locator('[data-go="overview"]').first().click();
+    const line = page.locator('[data-view="overview"] .jv-brief li[data-brief="pagespeed:pr:2042"]');
+    await line.click();
+    const sheet = page.locator('.jv-sheet-box');
+    await expect(sheet.locator('[data-sheet="action"][data-action="pagespeed-close"]')).toHaveAttribute('data-pr', '2042');
+    expect(errors).toEqual([]);
+  });
+
+  test('Systems lists every email address by domain with its state, the mail records and who fixes what (#2338)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const row = (address, system, kind, state, detail, extra) => Object.assign({ address, domain: address.split('@')[1], system, kind, forwards: [], aliasOf: '', state, detail, fix: null }, extra);
+    const gmail = ['kaanmuar@gmail.com'];
+    const addresses = {
+      ok: true, graph: false, errors: [],
+      needs: ['Microsoft 365: register a read-only Graph app (User.Read.All, application) and put MS_GRAPH_TENANT_ID, MS_GRAPH_CLIENT_ID and MS_GRAPH_CLIENT_SECRET in Secret Manager.'],
+      counts: { addresses: 7, ok: 4, warn: 2, error: 2, paused: 0 },
+      domains: [
+        { domain: 'carlosandmunoz.com', systems: ['ImprovMX', 'SendGrid'], ok: true, checks: [{ name: 'MX', ok: true, detail: '10 mx1.improvmx.com.' }, { name: 'SPF', ok: true, detail: 'v=spf1 ...' }, { name: 'DKIM', ok: true, detail: 's1, s2, dkimprovmx1 and dkimprovmx2 are published.' }, { name: 'DMARC', ok: true, detail: 'p=quarantine' }] },
+        { domain: 'qalabreview.com', systems: ['Microsoft 365', 'Instantly'], ok: true, checks: [{ name: 'MX', ok: true, detail: '' }, { name: 'SPF', ok: true, detail: '' }, { name: 'DKIM', ok: true, detail: '' }, { name: 'DMARC', ok: true, detail: 'p=quarantine' }] }
+      ],
+      rows: [
+        row('canary@carlosandmunoz.com', 'ImprovMX', 'alias', 'error', 'Missing from ImprovMX: the daily round trip cannot come back.', { forwards: gmail.concat('webhook'), fix: { by: 'jarvis', action: 'restore-alias' } }),
+        row('hello@carlosandmunoz.com', 'ImprovMX', 'alias', 'ok', '2 mails in the last day, 2 forwarded.', { forwards: gmail }),
+        row('qa@carlosandmunoz.com', 'ImprovMX', 'alias', 'ok', 'No mail in the last day.', { forwards: gmail.concat('webhook') }),
+        row('notices@carlosandmunoz.com', 'ImprovMX', 'smtp login', 'ok', 'Sends through smtp.improvmx.com.'),
+        row('qa@carlosandmunoz.com', 'SendGrid', 'sender', 'ok', 'Site and review mail goes out from this address; replies reach its ImprovMX alias.'),
+        row('carlos@qalabreview.com', 'Microsoft 365', 'mailbox', 'warn', 'Known from Instantly; Jarvis reads Microsoft 365 once the Graph app is connected.', { fix: { by: 'carlos', action: 'Connect Graph', link: 'https://entra.microsoft.com/' } }),
+        row('hello@qalabreview.com', 'Microsoft 365', 'mailbox', 'warn', 'Known from Instantly; Jarvis reads Microsoft 365 once the Graph app is connected.', { fix: { by: 'carlos', action: 'Connect Graph', link: 'https://entra.microsoft.com/' } }),
+        row('carlos@qalabreview.com', 'Instantly', 'sending mailbox', 'ok', 'warm-up on, score 100.'),
+        row('hello@qalabreview.com', 'Instantly', 'sending mailbox', 'error', 'Permanent OAuth failure: AADSTS50076 Due to a configuration change made by your administrator, you must use multi-factor authentication.', { fix: { by: 'carlos', action: 'Reconnect', link: 'https://app.instantly.ai/app/accounts' } })
+      ],
+      issues: [
+        { key: 'improvmx:missing:canary@carlosandmunoz.com', level: 'alert', by: 'jarvis', action: 'restore-alias', system: 'ImprovMX', address: 'canary@carlosandmunoz.com', problem: 'missing', text: 'canary@carlosandmunoz.com is missing from ImprovMX; Jarvis restores it.', push: true },
+        { key: 'instantly:reconnect:hello@qalabreview.com', level: 'alert', by: 'carlos', action: 'Reconnect', link: 'https://app.instantly.ai/app/accounts', system: 'Instantly', address: 'hello@qalabreview.com', problem: 'reconnect', text: 'Reconnect hello@qalabreview.com in Instantly: Permanent OAuth failure: AADSTS50076', push: true }
+      ]
+    };
+    await page.setViewportSize({ width: 1400, height: 1000 });
+    await openStats(page, '#stats/systems/30', { addresses });
+    const panel = page.locator('[data-panel-id="systems-addresses"]');
+    await expect(panel).toContainText('Email addresses (7)');
+    await expect(panel.locator('.jv-addr-domain')).toHaveText(['carlosandmunoz.com', 'qalabreview.com']);
+    await expect(panel).toContainText('Jarvis fixes it');
+    await expect(panel.locator('a[href="https://app.instantly.ai/app/accounts"]')).toHaveText('Reconnect →');
+    await expect(panel.locator('.jv-needs')).toContainText('MS_GRAPH_TENANT_ID');
+    await expect(panel).toContainText('kaanmuar@gmail.com, webhook');
+    await expect(panel.locator('[data-panel-export="csv"]')).toHaveCount(1);
+    await expect(page.locator('#stats-pane')).toContainText('canary@carlosandmunoz.com is missing from ImprovMX; Jarvis restores it.');
+    await panel.screenshot({ path: 'test-results/jarvis-addresses.png' });
+    expect(errors).toEqual([]);
+  });
+
+  test('Systems lists the countdowns: Do it now asks first, Cancel goes straight through the countdown op (#1977)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/systems/30');
+    const panel = page.locator('[data-panel-id="systems-actions"]');
+    await expect(panel).toContainText('On the countdown (2 h)');
+    const rows = panel.locator('.jv-countdown');
+    await expect(rows).toHaveCount(2);
+    await expect(rows.first()).toContainText('Re-run failed CI jobs: Buffer batch #41');
+    await expect(rows.first()).toContainText('public post');
+    await expect(rows.nth(1)).toContainText('Gemini 0.92');
+    await expect(panel).toContainText('Ended in the last day (1)');
+    await expect(panel.locator('.jv-note').last()).toContainText('Refunds and deletes always wait for your click');
+    await rows.first().screenshot({ path: 'test-results/jarvis-countdown.png' });
+
+    let asked = '';
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.dismiss(); });
+    await rows.first().locator('[data-countdown-act="now"]').click();
+    await expect.poll(() => asked).toContain('do it now: re-run failed CI jobs (Buffer batch #41)');
+    expect(calls.some((c) => c.op === 'countdown')).toBe(false);
+
+    await rows.nth(1).locator('[data-countdown-act="cancel"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'countdown').map((c) => [c.body.id, c.body.act])).toEqual([['dddd4444eeee5555ffff6666', 'cancel']]);
+    await expect(page.locator('.jv-toast')).toContainText('Cancelled: run a fix the AI picked.');
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await rows.first().locator('[data-countdown-act="now"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'countdown').map((c) => c.body.act)).toEqual(['cancel', 'now']);
     expect(errors).toEqual([]);
   });
 

@@ -78,3 +78,14 @@ test("the failure bug follows the bug format and says how to re-run", () => {
   assert.match(body, /## What happened[\s\S]*## Fix/);
   assert.match(body, /gh workflow run studio-render\.yml -f kind=skit -f name=friday-release -f mode=render -f langs=en/);
 });
+
+test("a refused translator's bug says how to translate by agent, not to fix code", () => {
+  const j = s.job({ kind: "tips", name: "evergreen", batch: "evergreen-2026-11" });
+  const body = s.bugBody(j, "1981", "translation failed; nothing was rendered (STRICT_TRANSLATE)", "");
+  assert.match(body, /^\*\*Kind:\*\* Bug\n\*\*Area:\*\* social\n\*\*Found while:\*\* #1981\n\*\*Where it stands:\*\*/);
+  assert.match(body, /build\.js --source evergreen --batch evergreen-2026-11 --export-strings/);
+  assert.match(body, /translate\.py media\/social-posts\/evergreen-2026-11 --seed/);
+  assert.match(body, /Sie and vous/);
+  assert.match(body, /gh workflow run studio-render\.yml -f kind=tips -f name=evergreen -f mode=render -f batch=evergreen-2026-11/);
+  assert.doesNotMatch(body, /Pre-flight plan/);
+});

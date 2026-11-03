@@ -26,6 +26,10 @@ jobs:
       JARVIS_VERSION_CODE: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # History and tags, without old file contents, for the What's new lines.
+          fetch-depth: 0
+          filter: blob:none
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
@@ -35,9 +39,17 @@ jobs:
       - name: Unit tests and debug build
         run: ./gradlew --console=plain testDebugUnitTest assembleDebug
 
+      - name: What's new
+        if: github.event_name != 'pull_request'
+        working-directory: .
+        run: |
+          mkdir -p "$RUNNER_TEMP/whats-new"
+          node scripts/jarvis-whats-new.js "$GITHUB_SHA" | tee "$RUNNER_TEMP/whats-new/whats-new.txt"
+
       - name: Signed release
         if: github.event_name != 'pull_request'
         env:
+          JARVIS_WHATS_NEW_DIR: ${{ runner.temp }}/whats-new
           KEYSTORE_B64: ${{ secrets.JARVIS_KEYSTORE_BASE64 }}
           JARVIS_KEYSTORE_PASSWORD: ${{ secrets.JARVIS_KEYSTORE_PASSWORD }}
           JARVIS_KEY_ALIAS: ${{ secrets.JARVIS_KEY_ALIAS }}
@@ -58,9 +70,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           v="1.0.${JARVIS_VERSION_CODE}"
+          new="$RUNNER_TEMP/whats-new/whats-new.txt"
+          {
+            if [ -s "$new" ]; then echo "What's new:"; sed 's/^/- /' "$new"; echo; fi
+            echo "First install: open this page on the phone, download jarvis-$v.apk, allow installs from the browser if asked. After that the app updates itself. Wear OS watch: install jarvis-watch-$v.apk with \`adb install\` over Wi-Fi debugging. Built from ${GITHUB_SHA::7}."
+          } > "$RUNNER_TEMP/notes.md"
           gh release create "jarvis-android-v$v" "$RUNNER_TEMP/jarvis-$v.apk" "$RUNNER_TEMP/jarvis-watch-$v.apk" --target "$GITHUB_SHA" --latest=false \
-            --title "Jarvis for Android $v" \
-            --notes "First install: open this page on the phone, download jarvis-$v.apk, allow installs from the browser if asked. After that the app updates itself. Wear OS watch: install jarvis-watch-$v.apk with \`adb install\` over Wi-Fi debugging. Built from ${GITHUB_SHA::7}."
+            --title "Jarvis for Android $v" --notes-file "$RUNNER_TEMP/notes.md"
 
       # The function reads the release from GitHub itself and pushes each version once, so no secret is needed.
       - name: Tell the phones to update

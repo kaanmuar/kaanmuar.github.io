@@ -33,6 +33,7 @@ const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const MODEL = "gemini-flash-latest";
 const core = require("./jarvis-core");
 const actions = require("./jarvis-actions");
+const dayRows = require("./jarvis-days");
 const ADMIN_URL = ORIGIN + "/admin.html#stats/overview/1";
 
 function rangeDays(value) {
@@ -75,7 +76,8 @@ function causeLabel(row) {
 // --- health: server-only Firestore collections -------------------------------------------------------------
 
 async function health(db, { days, now }) {
-  const since = new Date(now - rangeDays(days) * DAY).toISOString();
+  const from = now - rangeDays(days) * DAY;
+  const since = new Date(from).toISOString();
   const read = async (name, field) => {
     try {
       const snap = await db.collection(name).where(field, ">=", since).limit(2000).get();
@@ -84,16 +86,13 @@ async function health(db, { days, now }) {
       return [];
     }
   };
-  const [runs, failures, reruns, alerts, notices, rivals, coupons, captures] = await Promise.all([
+  const [runs, logged, reruns, coupons] = await Promise.all([
     db.collection("ops_runs").get().then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()))).catch(() => []),
-    read("url_review_failures", "at"),
+    dayRows.rows(db, ["failures", "alerts", "notices", "rivals", "captures"], { from, now }).catch(() => ({})),
     read("url_review_reruns", "at"),
-    read("url_review_alerts", "at"),
-    read("url_review_owner_notices", "createdAt"),
-    read("url_review_rivals", "createdAt"),
-    read("url_review_coupons", "createdAt"),
-    read("url_review_captures", "at")
+    read("url_review_coupons", "createdAt")
   ]);
+  const { failures = [], alerts = [], notices = [], rivals = [], captures = [] } = logged;
   const causes = {}, failedHosts = {}, rerunStatus = {}, alertKinds = {}, noticeStatus = {}, captureKinds = {};
   failures.forEach((row) => { count(causes, causeLabel(row)); count(failedHosts, row.host); });
   reruns.forEach((row) => count(rerunStatus, row.status));
@@ -200,6 +199,29 @@ async function rerunCi(fetchImpl, token, workflow) {
   if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); the GitHub token needs Actions: write.");
   if (!res.ok) throw new Error("GitHub " + res.status + " on the re-run.");
   return { workflow: name, run: run.id, url: run.html_url };
+}
+
+// #1977: the newest finished run per workflow and branch in the last day, kept when it failed.
+async function failedRuns(fetchImpl, token, { now }) {
+  if (!token) return [];
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  const runs = await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs?status=completed&per_page=100&created=" + encodeURIComponent(">=" + isoDay(now - DAY)), { headers, signal: AbortSignal.timeout(15000) }), "GitHub");
+  const newest = new Map();
+  (runs.workflow_runs || []).forEach((r) => {
+    const key = r.name + " " + r.head_branch;
+    if (r.conclusion !== "cancelled" && !newest.has(key)) newest.set(key, r);
+  });
+  return Array.from(newest.values()).filter((r) => ["failure", "timed_out"].includes(r.conclusion))
+    .map((r) => ({ id: r.id, name: r.name, branch: r.head_branch, attempt: r.run_attempt || 1, url: r.html_url }));
+}
+
+async function rerunRun(fetchImpl, token, id) {
+  if (!token) throw new Error("No GitHub token is set.");
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs/" + Number(id) + "/rerun-failed-jobs", { method: "POST", headers, signal: AbortSignal.timeout(15000) });
+  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); the GitHub token needs Actions: write.");
+  if (!res.ok) throw new Error("GitHub " + res.status + " on the re-run.");
+  return { run: Number(id) };
 }
 
 // --- briefing rows (#1695) ------------------------------------------------------------------------------------
@@ -393,6 +415,25 @@ async function uptime(fetchImpl, { now, tls }) {
   }));
   const daysLeft = await (tls || tlsDaysLeft)("carlosandmunoz.com", now);
   return { ok: true, pages, tlsDaysLeft: daysLeft };
+}
+
+// The hourly watch counts each page check per Bogota day in jarvis_uptime (#2139), for the 90-day strip.
+function uptimeTally(up, now) {
+  const pages = (up && up.ok !== false && Array.isArray(up.pages)) ? up.pages : [];
+  return { date: core.zoneParts(new Date(now)).day, checks: pages.length, up: pages.filter((p) => p.ok).length };
+}
+
+async function uptimeLog(db, up, now, increment) {
+  const t = uptimeTally(up, now);
+  if (!t.checks) return t;
+  await db.collection("jarvis_uptime").doc(t.date).set({ date: t.date, checks: increment(t.checks), up: increment(t.up), at: new Date(now).toISOString() }, { merge: true });
+  return t;
+}
+
+async function uptimeHistory(db, now) {
+  const from = core.zoneParts(new Date(now - 90 * DAY)).day;
+  const snap = await db.collection("jarvis_uptime").where("date", ">=", from).limit(120).get();
+  return snap.docs.map((d) => d.data()).map((r) => ({ date: r.date, checks: Number(r.checks) || 0, up: Number(r.up) || 0 })).sort((a, b) => (a.date < b.date ? -1 : 1));
 }
 
 // --- brief / ask: Gemini --------------------------------------------------------------------------------------
@@ -593,8 +634,20 @@ async function goals(db, settings, { now, sum }) {
 
 // --- daily briefing: the last 24 hours against the 24 before, with the same rules as the page --------------------
 
-// A whole review document holds the report (hundreds of KB); a week of them overran the function's 512 MB (#1579).
-const REVIEW_FIELDS = ["createdAt", "paid", "test", "priceUsd", "status", "score", "requestedUrl", "url", "frameworks", "query", "referrerHost"];
+// Pending ratings outside the range only add to the pending count: a count() probe, and a re-read when it moves.
+async function pendingRatings(db, now) {
+  const pending = db.collection("ratings").where("status", "==", "pending");
+  const ref = db.collection("jarvis_cache").doc("pending-ratings");
+  const [total, saved] = await Promise.all([
+    pending.count().get().then((snap) => snap.data().count),
+    ref.get().then((snap) => (snap.exists ? snap.data() : null)).catch(() => null)
+  ]);
+  if (saved && saved.total === total && now - Date.parse(saved.at) < 6 * 60 * MINUTE) return saved.kept;
+  const snap = await pending.select("email").get();
+  const kept = snap.docs.filter((doc) => !core.isTestEmail((doc.data() || {}).email)).length;
+  await ref.set({ total, kept, at: new Date(now).toISOString() }).catch(() => null);
+  return kept;
+}
 
 async function dailyProducts(db, { now, days = 1 }) {
   const end = new Date(now);
@@ -602,25 +655,25 @@ async function dailyProducts(db, { now, days = 1 }) {
   const priorStart = new Date(now - 2 * days * DAY);
   const window = { start, end, days, prior: { start: priorStart, end: start } };
   const rows = async (q) => (await q.limit(20000).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
-  const since = (name, iso) => db.collection(name).where("createdAt", ">=", iso ? priorStart.toISOString() : priorStart);
-  const [events, opens, reviews, messages, ratings, pending, hubSnap] = await Promise.all([
-    rows(since("site_events")), rows(since("url_review_opens")), rows(since("url_reviews", true).select(...REVIEW_FIELDS)),
+  const since = (name) => db.collection(name).where("createdAt", ">=", priorStart);
+  const [{ events, opens, reviews }, messages, ratings, pending, hubSnap] = await Promise.all([
+    dayRows.rows(db, ["events", "opens", "reviews"], { from: priorStart.getTime(), now }),
     rows(since("messages")), rows(since("ratings")),
-    rows(db.collection("ratings").where("status", "==", "pending")),
+    pendingRatings(db, now),
     db.collection("socialHubStats").doc("latest").get().catch(() => null)
   ]);
   const inside = (row) => { const when = core.toDate(row.createdAt); return !!when && when >= start; };
   const now1 = events.filter(inside);
   const was = events.filter((row) => !inside(row));
-  const seen = new Set(ratings.map((row) => row.id));
-  const allRatings = ratings.concat(pending.filter((row) => !seen.has(row.id)));
+  const keep = (email) => !core.isTestEmail(email);
+  const pendingCount = pending + ratings.filter((row) => !row.status && keep(row.email)).length;
   const products = {
-    inbox: core.summarizeInbox(messages, allRatings, window, window.prior, (email) => !core.isTestEmail(email)),
+    inbox: core.summarizeInbox(messages, ratings, window, window.prior, keep, pendingCount),
     cv: core.summarizeSite("cv", now1, was, window),
     studio: core.summarizeSite("studio", now1, was, window),
     lab: core.summarizeSite("lab", now1, was, window),
     review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window),
-    hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window)
+    hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window, was)
   };
   return { window, products, outreachVisits: core.outreachVisits(now1) };
 }
@@ -651,6 +704,7 @@ function askSnapshot(snap, days) {
       money: ok(e.money) ? { revenue: e.money.revenue, prior: e.money.prior, refundsUsd: e.money.refundsUsd, disputesOpen: e.money.paypal && e.money.paypal.disputesOpen } : null,
       email: ok(e.email) ? { totals: e.email.totals, rates: e.email.rates } : null,
       mailbox: ok(e.mailbox) ? { totals: e.mailbox.totals, smtp: e.mailbox.smtp, canary: e.mailbox.canary && e.mailbox.canary.state, problems: (e.mailbox.problems || []).slice(0, 5).map((m) => m.alias + "@ " + m.outcome + ": " + m.reason) } : null,
+      addresses: ok(e.addresses) ? { counts: e.addresses.counts, issues: (e.addresses.issues || []).slice(0, 8).map((i) => i.text + (i.by === "jarvis" ? " (Jarvis fixes it)" : "")) } : null,
       search: ok(e.search) ? { brave: e.search.brave && e.search.brave.queries, console: e.search.console && e.search.console.ok ? { clicks: e.search.console.clicks, impressions: e.search.console.impressions, position: e.search.console.position, queries: (e.search.console.queries || []).slice(0, 8) } : null } : null,
       social: ok(e.social) ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views } : null,
       safety: ok(e.safety) && e.safety.checks ? e.safety.checks.map((c) => c.level + ": " + c.name + " " + c.detail) : null,
@@ -658,6 +712,7 @@ function askSnapshot(snap, days) {
       outreach: outreachAsk(e.outreach, s.outreachVisits),
       engagement: engagementAsk(e.engagement),
       signedInPeople: ok(e.people) ? e.people.totals : null,
+      googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
       waiting: core.connections(e).filter((c) => c.needs.length).map((c) => c.name + ": " + c.needs.join(" "))
     }
   };
@@ -728,5 +783,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, briefItems, decideRatings, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };

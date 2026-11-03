@@ -143,6 +143,26 @@ test("a notice waits for a live card and no stop or unlist", () => {
   assert.match(notice.sendBlock(Object.assign({}, pending, { status: "sent" }), { card }), /not waiting/);
 });
 
+test("one Send can go to several addresses, each once, and falls back to the notice's own", () => {
+  const row = { email: "info@acme.co" };
+  assert.deepEqual(notice.pickedEmails(row, [" Info@Acme.co", "x@acme.co", "info@acme.co", ""]), ["info@acme.co", "x@acme.co"]);
+  assert.deepEqual(notice.pickedEmails(row, "x@acme.co"), ["x@acme.co"]);
+  assert.deepEqual(notice.pickedEmails(row, []), ["info@acme.co"]);
+  assert.deepEqual(notice.pickedEmails(row, ""), ["info@acme.co"]);
+});
+
+test("approvals mark a notice ready, waiting for its Live Report, unlisted or stopped", () => {
+  const row = { host: "acme.co", domain: "acme.co", email: "a@acme.co", candidates: [{ email: "a@acme.co" }, { email: "b@acme.co" }] };
+  const index = { reports: [{ id: "u-acme-co", host: "acme.co" }] };
+  assert.equal(notice.readiness(row, { index }), "ready");
+  assert.equal(notice.readiness(row, { index: { reports: [] } }), "waiting");
+  assert.equal(notice.readiness(row, { index: null }), "");
+  assert.equal(notice.readiness(row, { index, unlisted: ["acme.co"] }), "unlisted");
+  assert.equal(notice.readiness(row, { index, stopped: new Set(["@acme.co"]) }), "stopped");
+  assert.equal(notice.readiness(row, { index, stopped: new Set(["a@acme.co"]) }), "ready", "one address left");
+  assert.equal(notice.readiness(row, { index, stopped: new Set(["a@acme.co", "b@acme.co"]) }), "stopped");
+});
+
 test("the second look reads unread contact pages, linked GitHub profiles and web search, on time", async () => {
   const report = { host: "acme.co", finalUrl: "https://acme.co/", pages: [{ path: "/" }, { path: "/contact" }], contacts: { found: [], profiles: ["acmeco"], paths: ["/la-compania/quienes-somos"] } };
   assert.equal(search.pathsToTry(report)[0], "/la-compania/quienes-somos");

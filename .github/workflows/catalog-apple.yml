@@ -1,0 +1,63 @@
+# .github/workflows/catalog-apple.yml
+# The Safari and iPhone catalog needs a macOS runner and about 50 minutes. GitHub runs only a few macOS jobs at once,
+# so on every pull request it queued for hours and held E2E and Visual Tests open (#2273). It reports and does not block a merge:
+# nightly, on manual runs, and on pushes to main that touch the catalog itself. Only the newest run is kept.
+
+name: Apple catalog
+
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'selenium/**'
+      - 'appium/**'
+      - 'tests/native/**'
+      - 'scripts/run-appium.js'
+      - 'scripts/targets.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/catalog-apple.yml'
+
+concurrency:
+  group: catalog-apple
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  catalog-apple:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0
+      - name: Selenium catalog on Safari
+        run: TARGET_BROWSER=safari npm run test:selenium
+        continue-on-error: true
+      - name: Appium catalog on the first iPhone simulator
+        run: |
+          export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+          DEVICE=$(node -e "const {listTargets}=require('./scripts/targets'); const phone=(listTargets().devices||[]).find(d=>d.platform==='ios'&&/iPhone/.test(d.name)); if(!phone){console.error('no iPhone simulator'); process.exit(1)}; process.stdout.write(JSON.stringify(phone));")
+          APPIUM_DEVICE="$DEVICE" APPIUM_DEVICE_LABEL="$(node -e 'const d=JSON.parse(process.argv[1]); process.stdout.write(d.label)' "$DEVICE")" npm run test:appium
+        continue-on-error: true
+      - name: Upload Apple results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: apple-catalog-results
+          path: |
+            appium-results
+            runner-results

@@ -3,6 +3,7 @@
 //   POST /triage {prompt, model, class}  -> {class, plan[], files[{ref,why}], tickets[{ref,title}], rules[]}
 //   POST /index  {items:[{id, text, meta:{kind, ref, title}}]}  (up to 50 per call)
 //   POST /delete {ids:[...]}
+//   POST /complete {system, prompt, json, max_tokens}  -> {text} or {json}  (the outreach runs of #1980)
 // Bearer TOKEN on every call.
 const EMBED = "@cf/baai/bge-m3";
 const LLM = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
@@ -59,6 +60,20 @@ async function index(env, { items = [] }) {
   return { upserted: items.length };
 }
 
+async function complete(env, { system = "", prompt = "", json: asJson = false, max_tokens = 800 }) {
+  const res = await env.AI.run(LLM, {
+    max_tokens: Math.min(Number(max_tokens) || 800, 2500),
+    ...(asJson ? { response_format: { type: "json_object" } } : {}),
+    messages: [
+      ...(system ? [{ role: "system", content: String(system).slice(0, 6000) }] : []),
+      { role: "user", content: String(prompt).slice(0, 16000) },
+    ],
+  });
+  const out = res.response;
+  if (!asJson) return { text: typeof out === "string" ? out : JSON.stringify(out) };
+  return { json: typeof out === "string" ? JSON.parse(out) : out };
+}
+
 export default {
   async fetch(request, env) {
     if (request.method !== "POST") return json({ ok: true, service: "preflight" });
@@ -69,8 +84,11 @@ export default {
       if (pathname === "/triage") return json(await triage(env, body));
       if (pathname === "/index") return json(await index(env, body));
       if (pathname === "/delete") return json(await env.VEC.deleteByIds((body.ids || []).slice(0, 100)));
+      if (pathname === "/complete") return json(await complete(env, body));
     } catch (e) {
       console.error(pathname, e);
+      // Only the Workers Free plan stops at 10,000 neurons a day; the account is on Workers Paid (#2290).
+      if (/\b4006\b|daily free allocation/.test(String(e && e.message))) return json({ error: "quota", detail: "Workers AI refused the call for the free daily allocation: check that the Cloudflare account is still on Workers Paid (#2290)." }, 429);
       return json({ error: "failed" }, 500);
     }
     return json({ error: "not found" }, 404);
