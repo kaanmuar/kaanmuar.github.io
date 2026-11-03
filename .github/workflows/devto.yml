@@ -19,6 +19,10 @@ concurrency:
   group: devto
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   post:
     runs-on: ubuntu-latest

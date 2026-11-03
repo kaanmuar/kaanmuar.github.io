@@ -299,7 +299,7 @@ async function brave(ctx, queries) {
     try {
       const data = await getJson(ctx.fetch, "https://api.search.brave.com/res/v1/web/search?count=20&q=" + encodeURIComponent(q), { headers: { "X-Subscription-Token": key, Accept: "application/json" } }, "Brave");
       const results = ((data.web || {}).results || []);
-      const at = results.findIndex((r) => hostOf(r.url).endsWith(DOMAIN));
+      const at = results.findIndex((r) => { const host = hostOf(r.url); return host === DOMAIN || host.endsWith("." + DOMAIN); });
       rows.push({ query: q, position: at >= 0 ? at + 1 : null, url: at >= 0 ? results[at].url : "", leader: results[0] ? hostOf(results[0].url) : "" });
     } catch (error) {
       rows.push({ query: q, position: null, error: clean(error) });

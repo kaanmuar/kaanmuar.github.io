@@ -2415,7 +2415,7 @@
 
             _offerSharedDownload() {
                 const kind = (new URLSearchParams(window.location.search).get('download') || '').toLowerCase();
-                const run = {
+                const runs = {
                     pdf: () => this._exportAsPDF_jsPDF(),
                     jpg: () => this._exportAsJPG(),
                     jpeg: () => this._exportAsJPG(),
@@ -2424,8 +2424,9 @@
                     txt: () => this._exportAsText(),
                     text: () => this._exportAsText(),
                     json: () => this._exportAsJSON()
-                }[kind];
-                if (!run) return;
+                };
+                if (!Object.prototype.hasOwnProperty.call(runs, kind)) return;
+                const run = runs[kind];
                 this._trackEvent('export_cv', 'Export', 'link:' + kind);
                 run();
             },
@@ -3827,7 +3828,7 @@
             },
 
             _cleanLiveText(value, max) {
-                return String(value ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
+                return String(value ?? '').replace(/<[^>]*>/g, '').replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
             },
 
             _roleFromLive(role, fileExperiences) {

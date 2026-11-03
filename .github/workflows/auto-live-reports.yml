@@ -36,6 +36,9 @@ concurrency:
   group: auto-live-reports
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   gate:
     runs-on: ubuntu-latest
