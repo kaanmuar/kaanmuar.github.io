@@ -141,6 +141,17 @@
     "checked": "2026-10-28T15:25:56.600Z"
    }
   ],
+  "auto-2026-11-02/01-u-edeq-com-co": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzgfolaevo2u",
+    "at": "2026-11-03T17:51:20.646Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzgfolaevo2u",
+    "checked": "2026-11-03T17:51:22.819Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "bluesky",
@@ -319,6 +330,17 @@
     "checked": "2026-11-03T02:15:55.797Z"
    }
   ],
+  "compare-2026-11/09-metros": [
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "17933023116162224",
+    "at": "2026-11-03T17:51:25.172Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/p/DfSdbt0F9O2/",
+    "checked": "2026-11-03T17:51:36.915Z"
+   }
+  ],
   "digest-2026-10-30/01-this-week": [
    {
     "channel": "bluesky",
@@ -337,6 +359,17 @@
     "result": "sent",
     "url": "https://mastodon.social/@qalaburlreview/117533143596297710",
     "checked": "2026-10-31T02:24:06.151Z"
+   }
+  ],
+  "promo-social-hub-2026-10/01-one-page-en": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzgfoiyr7m26",
+    "at": "2026-11-03T17:51:18.301Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzgfoiyr7m26",
+    "checked": "2026-11-03T17:51:20.646Z"
    }
   ],
   "series-dia-de-muertos-2026-11/01-ofrenda": [
