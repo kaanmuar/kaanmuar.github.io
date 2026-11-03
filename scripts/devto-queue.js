@@ -228,7 +228,7 @@ async function run(face, client, list, book, { live, now, gate }) {
       if (bogotaDay(at) === today) room -= 1;
       continue;
     }
-    const at = new Date().toISOString();
+    const at = new Date(now).toISOString();
     const hub = await gate(a.batch, a.slug, { date: a.date }, at);
     const body = payload(a);
     if (!live) {
