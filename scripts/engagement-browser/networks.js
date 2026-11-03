@@ -133,8 +133,9 @@ const x = {
     await this.post(page, task);
     await scroll(page, 1);
     const href = await evaluate(page, `
-      return Array.from(document.querySelectorAll('article[data-testid="tweet"] a[href*="/status/"] time')).map((t) => t.closest('a').getAttribute('href'))
-        .find((h) => h.toLowerCase().startsWith('/' + arg.me + '/status/') && !h.includes('/status/' + arg.id)) || '';`, { me: this.account, id: task.id });
+      const hrefs = Array.from(document.querySelectorAll('article[data-testid="tweet"] a[href*="/status/"] time')).map((t) => t.closest('a').getAttribute('href'));
+      const at = hrefs.findIndex((h) => h.includes('/status/' + arg.id));
+      return hrefs.slice(at + 1).find((h) => h.toLowerCase().startsWith('/' + arg.me + '/status/')) || '';`, { me: this.account, id: task.id });
     return href ? { url: "https://x.com" + href.split("?")[0] } : null;
   },
   // Replies and mentions of us, as the notifications page loads them: { ...post, liked, on } with on our post's id.
@@ -226,8 +227,9 @@ const threads = {
     await this.post(page, task);
     await scroll(page, 1);
     const href = await evaluate(page, `
-      return Array.from(document.querySelectorAll('div[data-pressable-container="true"] a[href*="/post/"] time')).map((t) => t.closest('a').getAttribute('href'))
-        .find((h) => h.toLowerCase().startsWith('/@' + arg.me + '/post/') && !h.includes('/post/' + arg.id)) || '';`, { me: this.account, id: task.id });
+      const hrefs = Array.from(document.querySelectorAll('div[data-pressable-container="true"] a[href*="/post/"] time')).map((t) => t.closest('a').getAttribute('href'));
+      const at = hrefs.findIndex((h) => h.includes('/post/' + arg.id));
+      return hrefs.slice(at + 1).find((h) => h.toLowerCase().startsWith('/@' + arg.me + '/post/')) || '';`, { me: this.account, id: task.id });
     return href ? { url: "https://www.threads.com" + href.split("?")[0] } : null;
   },
   async reply(page, task) {

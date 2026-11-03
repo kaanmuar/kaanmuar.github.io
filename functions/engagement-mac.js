@@ -4,12 +4,17 @@
  * and answer through, so scripts/engagement-browser/agent.js drives a real Chrome on the Mac, signed in once in its
  * own profile, every 30 minutes. It talks to the jarvis function with these ops, signed with the token it paired:
  *
- *   engagement-mac-ingest  { posts, errors, signedIn, accounts, agent }  posts it read; scored, read by Gemini and
- *                                                                        planned like the scout's own
+ *   engagement-mac-ingest  { posts, comments, errors, signedIn, accounts, agent }  posts it read; scored, read by
+ *                                                                        Gemini and planned like the scout's own;
+ *                                                                        comments: replies and mentions of us from a
+ *                                                                        network's notifications (#2424), liked and
+ *                                                                        answered like the API networks' (#2447)
  *   engagement-mac-queue   { networks }                                  planned likes, reposts, follows and approved
  *                                                                        replies for the networks signed in; a
  *                                                                        LinkedIn like names its reaction
- *   engagement-mac-result  { key, action, ok, url, reaction, error, retry }  what came of one task
+ *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already }  what came of one task;
+ *                                                                        already: the post had our earlier reply
+ *                                                                        (url), so none was sent
  *
  *   engagement_private/mac  { tokenHash, pairedAt, at, read, errors, signedIn, accounts, agent, blocked }
  *
@@ -75,12 +80,18 @@ async function ingest(deps, body) {
   const errors = netMap(b.errors, (v) => clip(v, 200));
   const conf = await J.readSettings(db);
   const r = await J.takeIn(deps, conf, posts, read, errors);
+  const comments = (Array.isArray(b.comments) ? b.comments : []).slice(0, MAX_POSTS).map((c) => {
+    const p = cleanPost(c);
+    return p && Object.assign(p, { liked: c.liked === true, answered: c.answered === true, on: clip(c.on, 300), ours: clip(c.ours, 500) });
+  }).filter(Boolean);
+  const found = comments.map((c) => ({ parent: { key: "", own: true, network: c.network, id: c.on, thread: c.on || c.id, text: "", score: 0, actions: { reply: { draft: c.ours } } }, comments: [c] }));
+  const chains = found.length ? await J.takeChains(deps, conf, found).catch((error) => ({ chained: 0, aiError: String(error.message || error).slice(0, 200) })) : { chained: 0, aiError: "" };
   await macRef(db).set({
     at: new Date(now).toISOString(), read, errors, signedIn: netMap(b.signedIn, (v) => v === true), accounts: netMap(b.accounts, (v) => clip(v, 120)),
     blocked: netMap(b.blocked, (v) => clip(v, 30)), agent: clip(b.agent, 40), fresh: r.fresh, engaged: r.engaged, drafted: r.drafted
   }, { merge: true });
   await J.clearCache(db);
-  return { ok: true, read: posts.length, fresh: r.fresh, engaged: r.engaged, drafted: r.drafted, aiError: r.aiError };
+  return { ok: true, read: posts.length, fresh: r.fresh, engaged: r.engaged, drafted: r.drafted, aiError: r.aiError || chains.aiError || "", chained: chains.chained || 0 };
 }
 
 const leased = (x, now) => x && x.leasedAt && Date.parse(x.leasedAt) > now - LEASE;
@@ -168,7 +179,11 @@ async function result(deps, body) {
   if (action === "reply") {
     if (cur.status !== "approved") return { ok: true, status: cur.status || "", note: "Already " + (cur.status || "gone") + "." };
     const tries = (cur.tries || 0) + (b.retry ? 0 : 1);
-    if (b.ok) {
+    if (b.already) {
+      status = "replied";
+      await ref.update({ [k + "status"]: status, [k + "at"]: at, [k + "url"]: clip(b.url, 500), [k + "error"]: "We had already replied there, so this one was not sent.", [k + "leasedAt"]: "", [k + "by"]: "mac", updatedAt: at });
+      await count("already");
+    } else if (b.ok) {
       status = "posted";
       await ref.update({ [k + "status"]: status, [k + "postedAt"]: at, [k + "url"]: clip(b.url, 500), [k + "tries"]: tries, [k + "error"]: "", [k + "leasedAt"]: "", [k + "by"]: "mac", updatedAt: at });
       await count("posted");
