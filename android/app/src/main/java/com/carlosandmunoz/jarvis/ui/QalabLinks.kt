@@ -102,8 +102,10 @@ fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {
     }
 }
 
-/** "12 clicks · 3 runs · 1 paid · 19 USD". */
-fun linkCounts(x: JsonObject?): String = "${fmt(x.num("visits"))} clicks · ${fmt(x.num("reviews"))} runs · ${fmt(x.num("paid"))} paid · ${fmt(x.num("usd"))} USD"
+private fun count(n: Double?, one: String) = "${fmt(n ?: 0.0)} $one" + if ((n ?: 0.0) == 1.0) "" else "s"
+
+/** "12 clicks · 1 run · 1 paid · 19 USD". */
+fun linkCounts(x: JsonObject?): String = "${count(x.num("visits"), "click")} · ${count(x.num("reviews"), "run")} · ${fmt(x.num("paid") ?: 0.0)} paid · ${fmt(x.num("usd") ?: 0.0)} USD"
 
 /** Report replies (#2465, #2471): clicks, runs and payments per network and per post, as on the web Outreach tab. */
 @Composable

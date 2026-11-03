@@ -19,6 +19,7 @@ class QalabLinksTest {
     fun aReportReplyRowCountsClicksRunsAndPayments() {
         val row = JSON.parseToJsonElement("""{"visits":12,"reviews":3,"paid":1,"usd":19}""") as JsonObject
         assertEquals("12 clicks · 3 runs · 1 paid · 19 USD", linkCounts(row))
+        assertEquals("1 click · 1 run · 0 paid · 0 USD", linkCounts(JSON.parseToJsonElement("""{"visits":1,"reviews":1,"paid":0,"usd":0}""") as JsonObject))
     }
 
     @Test

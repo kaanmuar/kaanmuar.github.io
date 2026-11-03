@@ -1250,7 +1250,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             : `<p class="jv-empty">${esc((ou.links && ou.links.error) || 'Not loaded.')}</p>`;
         return head + `<div class="jv-grid">${approvalsPanel()}${briefPanel('outreach')}
             ${panel('outreach-links', 'qalabreview.com links: visits, reviews and revenue', linksBody, { wide: true, data: links ? links.prospects : [] })}
-            ${panel('outreach-report-replies', 'Report replies: clicks, runs and payments', socialBody, { wide: true, data: soc, note: 'Replies under posts that name a site we reviewed link to its report through qalabreview.com/r/<network>/<site>/<post ref>, tagged utm_campaign social-reply-<network> and utm_term <post ref>. A payment counts for the reply whose link started the run it unlocked. The drafts and their approval are on the Engagement tab.' })}
+            ${panel('outreach-report-replies', 'Report replies: clicks, runs and payments', socialBody, { wide: true, data: soc, note: 'Replies under posts that name a site we reviewed link to its report through a qalabreview.com/r/ link tagged with the network (utm_campaign social-reply-bluesky, for example) and the post (utm_term). A payment counts for the reply whose link started the run it unlocked. The drafts and their approval are on the Engagement tab.' })}
             ${panel('outreach-plan', '90-day plan', planBody)}
             ${panel('outreach-funnel', 'Weekly funnel against the plan', funnelBody, { data: funnel })}
             ${plan ? panel('outreach-targets', '90-day targets', targets, { data: plan.targets }) : ''}
