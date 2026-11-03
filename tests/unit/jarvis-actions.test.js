@@ -190,6 +190,29 @@ test("failed CI is re-run once, only on main or a Jarvis branch and only on its 
   assert.deepEqual(calls.reruns, [1, 4, 5, 6]);
 });
 
+test("a push run on main that main has moved past starts again on main, and a scheduled one is re-run as before", async () => {
+  const db = fakeDb();
+  const dispatched = [];
+  const { ops, calls } = autoOps({
+    failedCi: async () => [
+      { id: 11, name: "Pages", branch: "main", attempt: 1, sha: "old", event: "workflow_dispatch", path: ".github/workflows/pages.yml" },
+      { id: 12, name: "Tests", branch: "main", attempt: 1, sha: "new", event: "push", path: ".github/workflows/tests.yml" },
+      { id: 13, name: "Bluesky and Mastodon", branch: "main", attempt: 1, sha: "old", event: "schedule", path: ".github/workflows/open-social.yml" }
+    ],
+    mainSha: async () => "new",
+    dispatch: async (p) => { dispatched.push(p); }
+  });
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
+  assert.deepEqual(calls.reruns, [12]);
+  const pages = out.queued.find((r) => r.target === "Pages #11");
+  assert.equal(pages.payload.workflow, ".github/workflows/pages.yml");
+  assert.match(pages.why, /moved past the commit that failed/);
+  assert.ok(out.queued.some((r) => r.target === "Bluesky and Mastodon #13" && !r.payload.workflow), "a risky scheduled run keeps its re-run");
+  const res = await countdown.execute(pages, ops, MONDAY_10);
+  assert.deepEqual(dispatched, [".github/workflows/pages.yml"]);
+  assert.match(res.detail, /^Started Pages on main's newest commit/);
+});
+
 test("every branch the PageSpeed routine creates is one Jarvis re-runs CI on", () => {
   for (const kind of ["safe", "ai"]) {
     const branch = "pagespeed/" + kind + "-2026-11-02";

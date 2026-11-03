@@ -144,6 +144,7 @@ async function execute(row, ops, now) {
   const { action, target } = inner(row);
   const p = row.payload || {};
   if (JOB_ACTIONS.includes(action)) { await ops.runJob(target); return { count: 1, detail: "Started " + target + "." }; }
+  if (action === "rerun-ci" && p.workflow) { await ops.dispatch(p.workflow); return { count: 1, detail: "Started " + (p.name || p.workflow) + " on main's newest commit." }; }
   if (action === "rerun-ci" && p.run) { await ops.rerunRun(p.run); return { count: 1, detail: "Re-running the failed jobs of run " + p.run + "." }; }
   if (action === "rerun-ci") {
     const res = await ops.rerunCi(target);
