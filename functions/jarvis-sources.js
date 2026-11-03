@@ -3,7 +3,7 @@
 
    money      paid URL reviews (Firestore url_reviews), PayPal disputes and transactions, Stripe mode
    email      SendGrid delivery, bounces, blocks, spam reports and opens
-   search     Brave rankings for the brand queries, Search Console clicks and queries
+   search     Brave rankings for the brand queries, Search Console clicks and queries, Brave index coverage (jarvis-index.js)
    social     posts per network from the published ledgers, YouTube views
    safety     Web Risk, SPF, DKIM, DMARC, MX, CAA, domain expiry (RDAP), TLS
    platform   real function failures (5xx, crash, timeout), executions, Gemini calls, Firestore reads and writes
@@ -38,6 +38,7 @@ const jarvisSocial = require("./jarvis-social");
 const jarvisPageSpeed = require("./jarvis-pagespeed");
 const mailHealth = require("./mail-health");
 const jarvisAddresses = require("./jarvis-addresses");
+const jarvisIndex = require("./jarvis-index");
 const booking = require("./booking");
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
 
@@ -345,8 +346,8 @@ async function searchConsole(ctx) {
 
 async function search(ctx) {
   const queries = ((ctx.settings || {}).searchQueries || []).length ? ctx.settings.searchQueries : SEARCH_QUERIES;
-  const [ranks, gsc] = await Promise.all([brave(ctx, queries.slice(0, 8)), searchConsole(ctx)]);
-  return { ok: true, brave: ranks, console: gsc, needs: gsc.need ? [gsc.need] : [] };
+  const [ranks, gsc, index] = await Promise.all([brave(ctx, queries.slice(0, 8)), searchConsole(ctx), jarvisIndex.read(ctx).catch((error) => ({ ok: false, error: clean(error) }))]);
+  return { ok: true, brave: ranks, console: gsc, index, needs: gsc.need ? [gsc.need] : [] };
 }
 
 // --- social ----------------------------------------------------------------------------------------------------

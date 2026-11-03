@@ -1782,6 +1782,20 @@ async function printHtml(html, max) {
   }
 }
 
+// A non-review job for reviewBrowser (kind "brave-submit"), answered as JSON within its 120 s timeout.
+async function browserJob(job) {
+  const key = process.env.BROWSER_KEY;
+  if (!key) throw new Error("BROWSER_KEY is not set.");
+  const res = await fetch(BROWSER_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-review-key": key },
+    body: JSON.stringify(job),
+    signal: AbortSignal.timeout(125000)
+  });
+  if (!res.ok) throw new Error("reviewBrowser answered " + res.status);
+  return res.json();
+}
+
 // A PDF too large to send back, kept under comparison-pdfs/ (deleted after a day by the bucket's lifecycle rule)
 // and fetched by its download-token link, which is unguessable and needs no signing.
 async function storePdf(base64, filename) {
@@ -5198,6 +5212,7 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
     const browserJob = require("./url-review-browser");
     const result = job.kind === "pdf"
       ? await browserJob.printPdf(job.html)
+      : job.kind === "brave-submit" ? await browserJob.submitBrave(job.urls)
       : await browserJob.browse(job, stream ? (text) => line({ type: "log", text }) : null, stream ? (start) => line({ type: "start", start }) : null);
     if (stream) {
       line({ type: "done", result });
@@ -5218,6 +5233,7 @@ const jarvis = require("./jarvis");
 const jarvisCore = require("./jarvis-core");
 const jarvisSum = (field) => AggregateField.sum(field);
 const jarvisSources = require("./jarvis-sources");
+const jarvisIndex = require("./jarvis-index");
 const jarvisDays = require("./jarvis-days");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
@@ -6168,6 +6184,30 @@ async function jarvisNoticesRun() {
 }
 
 // Every hour: the safe actions first (jarvis-actions.js), then the alert watch and the outreach notices push.
+// #2480: Brave index coverage daily, and the Monday push of the missing pages (functions/jarvis-index.js).
+exports.jarvisIndexCheck = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB", secrets: SECRETS.jarvisIndex }), "jarvisIndexCheck", async () => {
+  const out = await jarvisIndex.check({ fetch, env: process.env, db: getFirestore(), now: Date.now() });
+  if (!out.ok) throw new Error(out.error);
+  return `${out.indexed} of ${out.total} sitemap pages indexed on Brave`;
+});
+
+exports.jarvisIndexPush = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "256MB", secrets: SECRETS.jarvisIndex }), "jarvisIndexPush", async () => {
+  const db = getFirestore();
+  const now = Date.now();
+  const missing = await jarvisIndex.gaps({ fetch, db, now });
+  if (!missing) throw new Error("No Brave index check in the last 2 days; see jarvisIndexCheck.");
+  if (!missing.length) return "Nothing missing from Brave's index.";
+  const target = "search index @ " + new Date(now).toISOString().slice(0, 10);
+  try {
+    const res = await jarvisIndex.push({ fetch, env: process.env, db, now, browse: browserJob }, missing);
+    await jarvisActions.log(db, { action: "index-submit", mode: "auto", status: "done", target, detail: res.detail }, now);
+    return res.detail;
+  } catch (error) {
+    await jarvisActions.log(db, { action: "index-submit", mode: "auto", status: "failed", target, detail: error.message || String(error) }, now);
+    throw error;
+  }
+});
+
 exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.jarvisWatch }), "jarvisWatch", async () => {
   const up = await jarvisUptimeRun().catch((error) => "uptime log failed: " + String(error.message || error).slice(0, 120));
   let acts;

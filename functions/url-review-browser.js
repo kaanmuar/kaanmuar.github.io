@@ -1394,6 +1394,44 @@ async function printPdf(html) {
   }
 }
 
+// job.kind "brave-submit": our own pages typed one at a time into Brave Search's re-fetch form, the only way Brave
+// takes a URL (no API, no sitemap upload). The form's proof-of-work runs in the page as for any visitor.
+const BRAVE_SUBMIT = "https://search.brave.com/submit-url";
+const BRAVE_OURS = /^https:\/\/carlosandmunoz\.com\/[^\s]*$/;
+const BRAVE_BATCH = 8;
+const BRAVE_DONE = /thank you for your submission/i;
+
+async function submitBrave(urls, budgetMs = BUDGET_MAX_MS - 10000) {
+  const list = (Array.isArray(urls) ? urls : []).filter((u) => typeof u === "string" && BRAVE_OURS.test(u)).slice(0, BRAVE_BATCH);
+  const started = Date.now();
+  const results = [];
+  if (!list.length) return { ok: true, results };
+  const browser = await launch();
+  try {
+    const page = await browser.newPage();
+    await page.setUserAgent((await browser.userAgent()).replace(/HeadlessChrome/g, "Chrome"));
+    for (const url of list) {
+      if (Date.now() - started > budgetMs - 15000) { results.push({ url, ok: false, text: "Out of time; sent again next week." }); continue; }
+      try {
+        // The page polls /api/feedback, so it never goes network-idle.
+        await page.goto(BRAVE_SUBMIT, { waitUntil: "domcontentloaded", timeout: NAV_MS });
+        await page.waitForSelector("#url", { timeout: 10000 });
+        await page.type("#url", url);
+        await page.waitForSelector('button[name="captcha-button"]:not([disabled])', { timeout: 10000 });
+        await page.click('button[name="captcha-button"]');
+        await page.waitForFunction((re) => new RegExp(re, "i").test((document.querySelector("form") || document.body).innerText), { timeout: 30000 }, BRAVE_DONE.source);
+        results.push({ url, ok: true, text: "Thank you for your submission." });
+      } catch (error) {
+        const said = await page.evaluate(() => ((document.querySelector("form") || document.body).innerText || "").replace(/\s+/g, " ").slice(0, 160)).catch(() => "");
+        results.push({ url, ok: false, text: said || String((error && error.message) || error).slice(0, 160) });
+      }
+    }
+    return { ok: true, results };
+  } finally {
+    await browser.close().catch(() => {});
+  }
+}
+
 // A recovery read (job.html) only needs the document. Once that document is still refused,
 // axe-core, screenshots and the phone visit cannot become the review.
 function stopForRefusal(job, docStatus) {
@@ -1874,4 +1912,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, backForward, imageRows, open, tagCut, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, launcherFacts, cookiesOf, CHATS, CHAT_LAUNCHER, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, publicAddress, privateAddress, guard, proxyArgs, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, backForward, imageRows, open, tagCut, talk, printPdf, submitBrave, BRAVE_BATCH, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, launcherFacts, cookiesOf, CHATS, CHAT_LAUNCHER, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, publicAddress, privateAddress, guard, proxyArgs, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };

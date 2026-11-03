@@ -33,6 +33,8 @@
    launch-campaign #2475: an Instantly campaign still a draft with leads, steps, a mailbox and a start date at most
                    LAUNCH_DAYS away (jarvis-marketing.js launchReady) is activated after the countdown, one countdown per
                    campaign and start date, so one Carlos cancels stays a draft
+   index-submit    logged by the Monday jarvisIndexPush job (#2480): the sitemap pages missing from Brave's index sent to
+                   IndexNow and Brave's Submit URL form (jarvis-index.js)
    ai-ask, ai-fix  open alerts no rule handles go to Gemini once per alert set and day, AI_CALLS a day; it may only pick
                    from AI_CATALOG, and a pick runs alone at confidence >= settings.confidence (the risky ones after the
                    countdown); the rest become proposals
@@ -52,7 +54,7 @@ const LABELS = {
   "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again", "rerun-ci": "Re-run failed CI jobs",
   "rating-decide": "Decide ratings", "brief-mark": "Snooze or dismiss a briefing line", "rerun-job": "Re-run a failed job", "refresh-stale": "Refresh stale data", "rerun-reviews": "Re-run reviews after a fix",
   "pause-outreach": "Pause an outreach mailbox", "resume-outreach": "Resume outreach mailboxes", "retry-social": "Retry failed social posts", "ai-ask": "Ask the AI what to fix", "ai-fix": "Run a fix the AI picked",
-  "merge-pr": "Merge a green PR", "enable-warmup": "Turn mailbox warm-up back on", "restore-alias": "Restore a missing alias", "launch-campaign": "Launch a draft campaign",
+  "merge-pr": "Merge a green PR", "index-submit": "Send missing pages to search engines", "enable-warmup": "Turn mailbox warm-up back on", "restore-alias": "Restore a missing alias", "launch-campaign": "Launch a draft campaign",
   "pagespeed-merge": "Merge PageSpeed fixes", "pagespeed-close": "Close PageSpeed fixes", "pagespeed-run": "Start the PageSpeed run"
 };
 const NOTICE_TRIES = 3;

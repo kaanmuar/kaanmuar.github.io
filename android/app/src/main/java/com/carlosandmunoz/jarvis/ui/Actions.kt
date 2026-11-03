@@ -52,7 +52,7 @@ val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" 
     "rerun-job" to "Re-run failed jobs", "refresh-stale" to "Refresh stale data", "rerun-reviews" to "Re-run reviews after a fix", "pause-outreach" to "Pause an outreach mailbox",
     "resume-outreach" to "Resume outreach mailboxes", "retry-social" to "Retry failed social posts", "ai-ask" to "Ask the AI what to fix", "ai-fix" to "Run fixes the AI picked",
     "pagespeed-merge" to "Merge PageSpeed fixes", "pagespeed-close" to "Close PageSpeed fixes", "pagespeed-run" to "Start the PageSpeed run", "merge-pr" to "Merge a green PR",
-    "enable-warmup" to "Turn mailbox warm-up back on", "restore-alias" to "Restore a missing alias", "launch-campaign" to "Launch a draft campaign")
+    "enable-warmup" to "Turn mailbox warm-up back on", "restore-alias" to "Restore a missing alias", "launch-campaign" to "Launch a draft campaign", "index-submit" to "Send missing pages to search engines")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
 /** Every action with a daily cap, for the used-today rows (#1977). */
 private val AUTO_CAPS = CAPS + listOf("rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix", "retry-social", "resume-outreach", "merge-pr", "enable-warmup", "restore-alias", "launch-campaign")

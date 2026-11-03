@@ -23,6 +23,8 @@ const JOBS = [
   { job: "emailDailyReviewReport", cron: "20 7 * * *", gap: 26, what: "Daily URL review report" },
   { job: "emailWeeklySiteReport", cron: "30 7 * * 1", gap: 7 * 24 + 2, what: "Weekly site report" },
   { job: "emailWeeklyReviewReport", cron: "35 7 * * 1", gap: 7 * 24 + 2, what: "Weekly URL review report" },
+  { job: "jarvisIndexCheck", cron: "20 7 * * *", gap: 26, what: "Brave site: search against both sitemaps: how many pages Brave has indexed and which are missing, for Jarvis's panel and briefing (one Brave call; pages 2-5 weekly)" },
+  { job: "jarvisIndexPush", cron: "0 9 * * 1", gap: 7 * 24 + 2, what: "Send the sitemap pages missing from Brave's index to IndexNow (all of them) and to Brave's Submit URL form through the review browser (up to 24, main pages first, none again within 28 days)" },
   { job: "jarvisDailyBriefing", cron: "40 7 * * *", gap: 26, what: "Jarvis daily briefing: the last 24 hours, goals and alerts, pushed; by email only with its switch on (Admin > Statistics > Settings)" },
   { job: "jarvisWeeklyStrategy", cron: "0 19 * * 0", gap: 7 * 24 + 2, what: "Jarvis weekly strategy to the owner: four weeks side by side, the proposals and Gemini's plan for next week (Admin > Statistics > Settings)" },
   { job: "jarvisWatch", cron: "5 * * * *", gap: 2, what: "Jarvis safe actions within daily caps (clean held re-runs, failed owner notices in Ley 2300 hours, a stale hub), then the watch: mail an alert-level threshold crossing (uptime, TLS, jobs, failed runs, mail bounced or refused, a lost mail canary), once a day per issue, and one push for new outreach notices" },
