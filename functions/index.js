@@ -42,6 +42,7 @@ function keepUntil() {
 const siteReport = require("./site-report-mail");
 const ownerLayout = require("./owner-mail");
 const ops = require("./ops-schedule");
+const systemReview = require("./system-review");
 const githubApp = require("./github-app");
 
 // Runs a scheduled job and leaves its outcome in ops_runs/<job> for opsWatchdog. A job may return a
@@ -49,6 +50,8 @@ const githubApp = require("./github-app");
 async function track(job, run) {
   const ref = getFirestore().collection("ops_runs").doc(job);
   const startedAt = new Date().toISOString();
+  // A run killed for memory or time never reaches the catch, so its start is what tells opsWatchdog it crashed.
+  await ref.set({ job, startedAt }, { merge: true }).catch((write) => console.error("ops_runs/" + job + " start was not written:", write));
   try {
     const note = await run();
     await ref.set({ job, startedAt, endedAt: new Date().toISOString(), ok: true, note: typeof note === "string" ? note : "", error: "" });
@@ -2496,6 +2499,10 @@ async function opsWatchdog() {
       problems.push({ job: row.job, why: "could not be checked: " + error.message });
     }
   }
+  const review = await systemReview.run({ fetch, token, now })
+    .catch((error) => ({ problems: [], rows: [{ label: "System review", value: "could not run: " + String(error.message || error).slice(0, 160) }] }));
+  const jobProblems = problems.length;
+  problems.push(...review.problems.filter((p) => !problems.some((q) => q.job === p.job)));
   const monday = new Date(now).getUTCDay() === 1;
   if (!problems.length && !monday) return "all " + ops.JOBS.length + " jobs on time";
   const weekAgo = new Date(now - 7 * 864e5).toISOString();
@@ -2512,12 +2519,14 @@ async function opsWatchdog() {
     { label: "Owner notices, 7 days", value: notices.data().count + " sent (cap " + ops.budget("ownerNoticesPerDay", process.env) + "/day" + (process.env.OWNER_NOTICES_LIVE === "1" ? "" : ", off") + ")" },
     { label: "Failure re-runs, 7 days", value: String(reruns.data().count) },
     { label: "Owner replies, 7 days", value: replies.data().count + " in, " + waiting.data().count + " waiting for a decision" }
-  ]);
-  await pushOwner(jarvisMailPush.opsMessage(problems, ops.JOBS.filter((row) => row.host !== "github").map((row) => row.job)));
+  ], review.rows);
+  await pushOwner(jarvisMailPush.opsMessage(problems, ops.JOBS.filter((row) => row.host !== "github").map((row) => row.job), jobProblems));
   if (!problems.length || await mailOn("ops")) await sendOwnerEmail({
     to: REVIEW_ALERT_TO,
-    subject: problems.length ? "Ops: " + problems.length + " scheduled job" + (problems.length === 1 ? "" : "s") + " missed or failed" : "Ops: weekly digest, every job on time",
-    intro: problems.length ? "These jobs failed or went quiet for longer than their schedule allows." : "Every scheduled job ran on time last week.",
+    subject: problems.length ? "Ops: " + problems.length + " problem" + (problems.length === 1 ? "" : "s") + " need a look" : "Ops: weekly digest, every job on time",
+    intro: problems.length ? [jobProblems ? jobProblems + " scheduled job" + (jobProblems === 1 ? "" : "s") + " failed or went quiet for longer than the schedule allows." : "",
+      problems.length > jobProblems ? "The system review found " + (problems.length - jobProblems) + " more, each with its fix: workflows failing on main, read from their logs, and security alerts." : ""].filter(Boolean).join(" ")
+      : "Every scheduled job ran on time last week.",
     rows,
     respondUrl: "https://console.cloud.google.com/logs/query?project=carlosm-interactive-cv",
     buttonLabel: "Open the logs"
@@ -5752,6 +5761,8 @@ function jarvisAutoOps(settings, now, th) {
     overdueJobs: async () => ops.overdue(await jarvisOpsRuns(), now).filter((o) => !/^failed/.test(o.why)),
     failedCi: async () => jarvis.failedRuns(fetch, await gh(), { now }),
     rerunRun: async (id) => jarvis.rerunRun(fetch, await gh(), id),
+    mainSha: async () => jarvis.mainSha(fetch, await gh()),
+    dispatch: async (workflow) => jarvis.dispatchMain(fetch, await gh(), workflow),
     rerunCi: async (workflow) => jarvis.rerunCi(fetch, await gh(), workflow),
     reviewFix: async () => {
       const fix = reviewFailures.FIXES.slice().sort((a, b) => String(b.at).localeCompare(String(a.at)))[0];
@@ -6337,7 +6348,8 @@ exports.mailInbound = functions.runWith({ timeoutSeconds: 60, memory: "256MB", m
   }
 });
 
-exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxInstances: 3, secrets: SECRETS.jarvis }).https.onRequest(async (req, res) => {
+// A v1 instance serves one request at a time, and the admin page opens with several in parallel.
+exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxInstances: 10, secrets: SECRETS.jarvis }).https.onRequest(async (req, res) => {
   res.set("Access-Control-Allow-Origin", reviewOrigin(req));
   res.set("Vary", "Origin");
   res.set("Access-Control-Allow-Methods", "POST, OPTIONS");

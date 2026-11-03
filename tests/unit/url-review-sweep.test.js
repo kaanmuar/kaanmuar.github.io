@@ -255,6 +255,18 @@ test("the ops table names every job once and flags failed, quiet and never-run j
   assert.deepEqual(ops.overdue({}, now, new Date(now - 1800000).toISOString()).map((p) => p.job), []);
 });
 
+test("a job that started and never finished is flagged as crashed once it is past every timeout", () => {
+  const now = Date.parse("2026-11-02T13:00:00Z");
+  const fresh = new Date(now - 3600000).toISOString();
+  const runs = Object.fromEntries(ops.JOBS.filter((r) => r.host !== "github").map((r) => [r.job, { startedAt: fresh, endedAt: fresh, ok: true }]));
+  runs.emailMonthlyReviewReport = { startedAt: "2026-11-01T12:50:04Z", endedAt: "", ok: undefined };
+  runs.emailDailySiteReport = { startedAt: new Date(now - 10 * 60000).toISOString(), endedAt: fresh, ok: true };
+  const problems = ops.overdue(runs, now, "2026-09-01T00:00:00Z");
+  assert.deepEqual(problems.map((p) => p.job), ["emailMonthlyReviewReport"]);
+  assert.match(problems[0].why, /^started 2026-11-01T12:50:04Z and never finished: it crashed/);
+  assert.ok(ops.CRASH_AFTER > 1800 * 1000, "longer than rerunReviewFailures' 1800 s timeout");
+});
+
 test("the Live Reports batch starts after the night's last sweep tick", () => {
   const hour = (cron) => Number(cron.split(" ")[1]);
   const lastSweepHour = Number(ops.cron("sweepReviews").split(" ")[1].split("-")[1]);

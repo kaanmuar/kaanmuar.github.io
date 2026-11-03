@@ -40,7 +40,7 @@ const JOBS = [
   { job: "emailQuarterSiteReport", cron: "*/15 * * * *", gap: 1, what: "Quarter-hour site report, only when something happened" },
   { job: "emailQuarterReviewReport", cron: "*/15 * * * *", gap: 1, what: "Quarter-hour review report, only when something happened" },
   { job: "exportFirestoreWeekly", cron: "0 8 * * 0", gap: 7 * 24 + 2, what: "Firestore backup" },
-  { job: "opsWatchdog", cron: "10 8 * * *", gap: 26, what: "Flag missed or failed jobs; Monday digest of budgets" },
+  { job: "opsWatchdog", cron: "10 8 * * *", gap: 26, what: "Flag missed, failed or crashed jobs, and the system review (#2409): workflows failing on main with the cause from their logs and its fix, security alerts, stale PRs; Monday digest of budgets" },
   { job: "remindOwnerReplies", cron: "0 9 * * 1-6", gap: 50, what: "List owner replies still waiting for a decision, by email only with its switch on; the evening digest lists them too" },
   { job: "sendReviewNotes", cron: "0 10 * * 1-6", gap: 50, what: "Follow-up notes to askers (REVIEW_NOTES_LIVE=1)" },
   { job: "sendOwnerNotices", cron: "0 11 * * 1-6", gap: 50, what: "Owner notices for sites now on Live Reports (OWNER_NOTICES_LIVE=1)" },
@@ -83,12 +83,19 @@ function budget(name, env) {
   return set > 0 ? set : row.value;
 }
 
-// runs: { job: { endedAt, ok, error } }. since: when the ledger started, so a new job is not "missed".
+// Longer than any job's timeout (rerunReviewFailures, 1800 s), so a start this old with no end is a run that crashed.
+const CRASH_AFTER = 45 * 60000;
+
+// runs: { job: { startedAt, endedAt, ok, error } }. since: when the ledger started, so a new job is not "missed".
 function overdue(runs, now, since) {
   const out = [];
   JOBS.filter((row) => row.host !== "github").forEach((row) => {
     const run = (runs || {})[row.job];
     const limit = row.gap * H;
+    if (run && run.startedAt && (!run.endedAt || run.startedAt > run.endedAt) && now - Date.parse(run.startedAt) > CRASH_AFTER) {
+      out.push({ job: row.job, why: "started " + run.startedAt + " and never finished: it crashed (out of memory or past its timeout) before it could record" });
+      return;
+    }
     if (!run || !run.endedAt) {
       if (now - Date.parse(since || new Date(now).toISOString()) > limit) out.push({ job: row.job, why: "no run recorded" });
       return;
@@ -99,4 +106,4 @@ function overdue(runs, now, since) {
   return out;
 }
 
-module.exports = { TIME_ZONE, JOBS, BUDGETS, job, cron, budget, overdue };
+module.exports = { TIME_ZONE, JOBS, BUDGETS, CRASH_AFTER, job, cron, budget, overdue };
