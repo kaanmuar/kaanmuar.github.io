@@ -143,6 +143,37 @@ test("a LinkedIn like is the reaction that fits the post, and the result keeps t
   assert.equal(db.data.get("engagement_posts/x_ffffffffffffffffffff").actions.like.reaction, undefined, "an unknown reaction is not stored");
 });
 
+test("a reply the Mac finds already answered by us is not sent, and counts as already answered (#2424)", async () => {
+  const db = await seeded(true);
+  const q = await M.queue(deps(db), { networks: ["linkedin"] });
+  assert.equal(q.tasks[0].id, "urn:li:activity:3", "the Mac gets the post id to find our earlier reply");
+  const r = await M.result(deps(db), { key: "linkedin_cccccccccccccccccccc", action: "reply", ok: false, already: true, url: "https://www.linkedin.com/feed/update/urn:li:activity:3" });
+  assert.equal(r.status, "replied");
+  const doc = db.data.get("engagement_posts/linkedin_cccccccccccccccccccc");
+  assert.equal(doc.actions.reply.status, "replied");
+  assert.equal(doc.actions.reply.url, "https://www.linkedin.com/feed/update/urn:li:activity:3");
+  assert.equal(doc.actions.reply.leasedAt, "");
+  assert.equal(db.data.get("engagement_daily/" + E.bogotaDay(NOW)).n.linkedin.already, 1);
+  assert.equal((await M.queue(deps(db), {})).tasks.filter((t) => t.action === "reply").length, 0, "it is not handed out again");
+});
+
+test("replies and mentions of us the Mac read in the notifications become chain posts, once each (#2424)", async () => {
+  const db = await paired();
+  await db.collection("jarvis_settings").doc("engagement").set({ live: true });
+  const reply = Object.assign(tweet("50", "@qalaburlreview Does your WCAG audit check focus order?", 3), { liked: false, on: "40", ours: "We audit with real screen readers." });
+  const liked = Object.assign(tweet("51", "@qalaburlreview thanks for the accessibility tips", 1), { liked: true, on: "41" });
+  const out = await M.ingest(deps(db), { posts: [], comments: [reply, liked, Object.assign(tweet("52", "x"), { url: "javascript:alert(1)" })], signedIn: { x: true } });
+  assert.equal(out.chained, 2, "a comment with a non-https link is dropped");
+  const doc = db.data.get("engagement_posts/" + E.keyOf("x", "50"));
+  assert.equal(doc.chain.on, "post");
+  assert.equal(doc.chain.ours, "We audit with real screen readers.");
+  assert.equal(doc.thread, "40");
+  assert.equal(doc.actions.like.status, "planned", "the Mac likes it on its next run");
+  assert.equal(doc.actions.reply.status, "waiting", "the answer waits for Carlos");
+  assert.ok(!(db.data.get("engagement_posts/" + E.keyOf("x", "51")).actions.like), "one we already liked is not liked again");
+  assert.equal((await M.ingest(deps(db), { posts: [], comments: [reply], signedIn: { x: true } })).chained, 0, "a comment already taken in is not read again");
+});
+
 test("a paused engagement hands the Mac nothing", async () => {
   const db = await seeded(true);
   await db.collection("jarvis_settings").doc("engagement").set({ live: true, paused: true });

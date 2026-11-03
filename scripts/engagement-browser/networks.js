@@ -5,6 +5,8 @@
  * query) => posts in the scout's shape (functions/engagement-mac.js cleans them), and the actions it takes, each
  * act(page, task) => { url } or a throw. A Refused throw means the network refused us for now (signed out, a
  * check, a limit): the task stays queued and the agent leaves that network alone for a day.
+ * replied(page, task) => { url } of our earlier reply on the post, or null, runs before every reply (#2424);
+ * inbox(page), where a network has it, => replies and mentions of us, as posts with liked and on (our post's id).
  *
  * The selectors are the networks' own accessibility labels and test ids where they have them; when a network
  * changes its page, `agent.js check --read` shows which reader came back empty and saves a screenshot.
@@ -126,6 +128,43 @@ const x = {
     await click(await need(page.locator('[data-testid$="-follow"]'), "Follow"));
     return {};
   },
+  // Our earlier reply under the post: a tweet in the conversation whose permalink is ours.
+  async replied(page, task) {
+    await this.post(page, task);
+    await scroll(page, 1);
+    const href = await evaluate(page, `
+      const hrefs = Array.from(document.querySelectorAll('article[data-testid="tweet"] a[href*="/status/"] time')).map((t) => t.closest('a').getAttribute('href'));
+      const at = hrefs.findIndex((h) => h.includes('/status/' + arg.id));
+      return hrefs.slice(at + 1).find((h) => h.toLowerCase().startsWith('/' + arg.me + '/status/')) || '';`, { me: this.account, id: task.id });
+    return href ? { url: "https://x.com" + href.split("?")[0] } : null;
+  },
+  // Replies and mentions of us, as the notifications page loads them: { ...post, liked, on } with on our post's id.
+  async inbox(page) {
+    const found = [];
+    const on = async (r) => {
+      if (!/\/i\/api\/graphql\/[^/]+\/NotificationsTimeline/.test(r.url())) return;
+      const j = await r.json().catch(() => null);
+      const tl = (((((((j || {}).data || {}).viewer_v2 || {}).user_results || {}).result || {}).notification_timeline || {}).timeline || {}).instructions || [];
+      tl.forEach((ins) => (ins.entries || []).forEach((e) => {
+        const t = ((((e.content || {}).itemContent || {}).tweet_results || {}).result) || null;
+        if (t) found.push(t.tweet || t);
+      }));
+    };
+    page.on("response", on);
+    try { await go(page, this, "https://x.com/notifications/mentions"); await pause(4000, 6000); await scroll(page, 1); } finally { page.off("response", on); }
+    const me = this.account;
+    return found.map((t) => {
+      const who = ((((t.core || {}).user_results || {}).result || {}).core) || {};
+      const l = t.legacy || {};
+      if (!t.rest_id || !who.screen_name || who.screen_name.toLowerCase() === me) return null;
+      return {
+        network: "x", id: t.rest_id, url: "https://x.com/" + who.screen_name + "/status/" + t.rest_id, author: { handle: who.screen_name, name: who.name || who.screen_name },
+        text: l.full_text || "", lang: l.lang || "", createdAt: l.created_at ? new Date(l.created_at).toISOString() : "", isReply: !!l.in_reply_to_status_id_str,
+        metrics: { likes: l.favorite_count || 0, replies: l.reply_count || 0, reposts: l.retweet_count || 0, views: 0 },
+        liked: l.favorited === true, on: String(l.in_reply_to_screen_name || "").toLowerCase() === me ? l.in_reply_to_status_id_str || "" : ""
+      };
+    }).filter(Boolean);
+  },
   async reply(page, task) {
     const art = await this.post(page, task);
     await click(art.locator('[data-testid="reply"]').first());
@@ -183,6 +222,16 @@ const threads = {
     await click(await need(page.getByRole("button", { name: /^(Follow|Seguir)$/ }), "Follow"));
     return {};
   },
+  // The page has several /@ours nav links; only a post's own time link counts.
+  async replied(page, task) {
+    await this.post(page, task);
+    await scroll(page, 1);
+    const href = await evaluate(page, `
+      const hrefs = Array.from(document.querySelectorAll('div[data-pressable-container="true"] a[href*="/post/"] time')).map((t) => t.closest('a').getAttribute('href'));
+      const at = hrefs.findIndex((h) => h.includes('/post/' + arg.id));
+      return hrefs.slice(at + 1).find((h) => h.toLowerCase().startsWith('/@' + arg.me + '/post/')) || '';`, { me: this.account, id: task.id });
+    return href ? { url: "https://www.threads.com" + href.split("?")[0] } : null;
+  },
   async reply(page, task) {
     const main = await this.post(page, task);
     await click(button(main, SAYS.reply).first());
@@ -239,6 +288,14 @@ const instagram = {
     await click(await need(header.getByRole("button", { name: /^(Follow|Seguir)$/ }), "Follow"));
     return {};
   },
+  // The post's first comments arrive in the page's own JSON; ours is one whose user is our account.
+  async replied(page, task) {
+    await go(page, this, task.url);
+    const mine = await evaluate(page, `
+      const re = new RegExp('"user":\\\\{[^{}]*"username":"' + arg.me + '"');
+      return Array.from(document.querySelectorAll('script[type="application/json"]')).some((s) => s.textContent.includes('comments__connection') && re.test(s.textContent));`, { me: this.account });
+    return mine ? { url: task.url } : null;
+  },
   async reply(page, task) {
     await go(page, this, task.url);
     const box = await need(page.locator('textarea[aria-label^="Add a comment"], textarea[aria-label^="Añade un comentario"]'), "The comment box");
@@ -291,6 +348,23 @@ const tiktok = {
     if (!/^\s*follow\s*$/i.test(await btn.innerText().catch(() => ""))) return {};
     await click(btn);
     return {};
+  },
+  // The comments the video page loads when its comment panel opens; ours is one by our account.
+  async replied(page, task) {
+    const comments = [];
+    const on = async (r) => {
+      if (!r.url().includes("/api/comment/list/")) return;
+      const j = await r.json().catch(() => null);
+      if (j && Array.isArray(j.comments)) comments.push(...j.comments);
+    };
+    page.on("response", on);
+    try {
+      await go(page, this, task.url);
+      const icon = page.locator('[data-e2e="comment-icon"]');
+      if (await has(icon)) await click(icon.first());
+      await pause(3000, 5000);
+    } finally { page.off("response", on); }
+    return comments.some((c) => String((c.user || {}).unique_id || "").toLowerCase() === this.account) ? { url: task.url } : null;
   },
   async reply(page, task) {
     await go(page, this, task.url);
@@ -403,6 +477,12 @@ const linkedin = {
     if (none.test((await btn.getAttribute("aria-label")) || "")) throw new Error("LinkedIn did not take the " + reaction + " reaction.");
     return { reaction };
   },
+  // A comment component on the post whose author link is our company page.
+  async replied(page, task) {
+    const main = await this.post(page, task);
+    const mine = main.locator('[componentkey^="CommentComponentReference_urn:li:comment:("]').filter({ has: page.locator('a[href*="/company/qalab-url-review/"], a[href*="/company/' + PAGES.linkedin + '/"]') });
+    return (await has(mine)) ? { url: task.url } : null;
+  },
   async reply(page, task) {
     const main = await this.post(page, task);
     await this.asPage(page, main);
@@ -470,6 +550,13 @@ const facebook = {
     if (await visible(page.locator('[aria-label="Remove Like"], [aria-label="Quitar Me gusta"]'), 6000)) return {};
     await click(await need(page.locator('[aria-label="Like"][role="button"], [aria-label="Me gusta"][role="button"]'), "Like"));
     return {};
+  },
+  // Comments are articles labelled with their author's name; ours carry the page's name.
+  async replied(page, task) {
+    await go(page, this, task.url);
+    const mine = page.locator(["Comentario de", "Respuesta de", "Comment by", "Reply by"].map((w) => 'div[role="article"][aria-label^="' + w + ' QA-lab"]').join(", "));
+    if (!(await visible(mine, 6000))) return null;
+    return { url: (await mine.first().locator('a[href*="comment_id="]').first().getAttribute("href", { timeout: 3000 }).catch(() => "")) || task.url };
   },
   async reply(page, task) {
     await go(page, this, task.url);
