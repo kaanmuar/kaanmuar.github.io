@@ -53,3 +53,19 @@ test("the agent's prompt asks for code only, on a branch the script can find", (
   assert.match(prompt, /Pre-flight \(#1970\): a normal ticket\.$/);
   assert.doesNotMatch(prompt, /gh pr|gh issue|--watch/);
 });
+
+test("the cloud run starts an agent only on a known plan under 70% (#2419)", () => {
+  const now = Date.parse("2026-11-03T12:30:00Z");
+  const cache = (planPct, at) => ({ planPct, cycleEnd: "2026-11-20T00:00:00Z", at: Date.parse(at) });
+  assert.equal(fix.planAllows(cache(40, "2026-11-03T08:00:00Z"), now), true);
+  assert.equal(fix.planAllows(cache(70, "2026-11-03T08:00:00Z"), now), false);
+  assert.equal(fix.planAllows(cache(40, "2026-10-31T08:00:00Z"), now), false, "older than two days");
+  assert.equal(fix.planAllows(null, now), false, "the Mac never uploaded one");
+});
+
+test("the Mac uploads only the plan fields the cloud run reads (#2419)", () => {
+  const { quotaPayload } = require("../../scripts/fix-review-failures-sync.js");
+  const full = { planPct: 41, cycleEnd: "2026-11-20T00:00:00Z", at: 1793700000, odUsed: 1234, odLimit: 5000, team: "QA lab" };
+  assert.deepEqual(JSON.parse(quotaPayload(full)), { planPct: 41, cycleEnd: "2026-11-20T00:00:00Z", at: 1793700000 });
+  assert.equal(quotaPayload(null), null);
+});

@@ -3,6 +3,7 @@
 //   session  sessionStart: budget line and open worktrees
 //   prompt   beforeSubmitPrompt: answers scripted requests itself, blocks once at half context or for an
 //            expensive model on a small task over 70% of the plan, and starts the context pack in the background
+//            (and, hourly, scripts/fix-review-failures-sync.js)
 //   tool     postToolUse: hands the agent the context pack once per turn
 //   stop     stop: writes the handoff once the chat passes half its context
 //   pack     (background) builds the pack: local rule hints, referenced tickets, the Cloudflare brain
@@ -145,11 +146,24 @@ function worktreeLocks(id, report) {
   return lost;
 }
 
+// Feeds the cloud daily fix from the Mac (#2419): its Cursor plan and work-log rows, at most once an hour.
+function syncDailyFix() {
+  const stamp = file("fix-review-sync.json");
+  try { if (Date.now() - fs.statSync(stamp).mtimeMs < 3600000) return; } catch {}
+  try {
+    fs.utimesSync(stamp, new Date(), new Date());
+  } catch {
+    fs.writeFileSync(stamp, "{}");
+  }
+  spawn(process.execPath, [path.join(ROOT, "scripts", "fix-review-failures-sync.js")], { cwd: ROOT, detached: true, stdio: "ignore" }).unref();
+}
+
 function onPrompt(input) {
   const prompt = String(input.prompt || "").trim();
   const id = input.conversation_id || "none";
   const s = convState(id);
   worktreeLocks(id, false);
+  try { syncDailyFix(); } catch {}
   if (/^agent:/i.test(prompt)) return out({ continue: true });
 
   if (prompt.length <= 60) {
