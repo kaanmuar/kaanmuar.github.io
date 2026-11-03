@@ -651,6 +651,35 @@ test("brave: our place counts only our own domain, and a failed search does not 
   assert.equal((await sources.brave({ fetch, env: {} }, ["x"])).ok, false);
 });
 
+test("brave: past page one it pages to the top 100 once a week per search, and reuses that place in between", async () => {
+  const asked = [];
+  const page = (offset, ours) => Array.from({ length: 20 }, (_, i) => ({ url: ours === i ? "https://carlosandmunoz.com/review" : `https://rival${offset}-${i}.example/` }));
+  const fetch = async (url) => {
+    const u = new URL(url);
+    const offset = Number(u.searchParams.get("offset"));
+    asked.push(u.searchParams.get("q") + "@" + offset);
+    if (u.searchParams.get("q") === "deep") return json({ web: { results: page(offset, offset === 2 ? 4 : -1) }, query: { more_results_available: true } });
+    return json({ web: { results: page(offset, -1) }, query: { more_results_available: offset < 1 } });
+  };
+  let saved = null;
+  const db = { collection: () => ({ doc: () => ({ get: async () => ({ exists: !!saved, data: () => saved }), set: async (v) => { saved = v; } }) }) };
+  const now = Date.parse("2026-11-03T12:00:00Z");
+  const first = await sources.brave({ fetch, db, now, env: { BRAVE_SEARCH_KEY: "k" } }, ["deep", "short"]);
+  assert.equal(first.depth, 100);
+  assert.equal(first.queries[0].position, 45);
+  assert.equal(first.queries[0].url, "https://carlosandmunoz.com/review");
+  assert.equal(first.queries[1].position, null);
+  assert.deepEqual(asked, ["deep@0", "deep@1", "deep@2", "short@0", "short@1"]);
+  asked.length = 0;
+  const next = await sources.brave({ fetch, db, now: now + 3 * 86400000, env: { BRAVE_SEARCH_KEY: "k" } }, ["deep", "short", "new"]);
+  assert.equal(next.queries[0].position, 45);
+  assert.equal(next.queries[0].checkedAt, "2026-11-03T12:00:00.000Z");
+  assert.deepEqual(asked, ["deep@0", "short@0", "new@0", "new@1"]);
+  asked.length = 0;
+  await sources.brave({ fetch, db, now: now + 8 * 86400000, env: { BRAVE_SEARCH_KEY: "k" } }, ["deep"]);
+  assert.deepEqual(asked, ["deep@0", "deep@1", "deep@2"]);
+});
+
 test("platform: real failures come from the log lines, not from every non-2xx", async () => {
   const fetch = async () => json({ entries: [
     { timestamp: "2026-10-25T14:00:00Z", resource: { labels: { function_name: "reviewUrl" } }, textPayload: "Function execution took 540001 ms, finished with status: 'timeout'" },
