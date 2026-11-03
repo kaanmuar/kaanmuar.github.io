@@ -26,7 +26,7 @@ const REPLY_TTL = 6 * HOUR;
 // Someone answering us waits longer than a stranger's post: a day for Carlos to approve the answer.
 const CHAIN_TTL = DAY;
 // Comments we can like: through the API, or the Mac's browser for X (#2424); YouTube has no comment likes.
-const CHAIN_LIKES = ["bluesky", "mastodon", "x"];
+const CHAIN_LIKES = ["bluesky", "mastodon", "x", "threads", "instagram", "tiktok", "linkedin", "facebook"];
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const ACTIONS = ["like", "repost", "follow", "reply"];
 
