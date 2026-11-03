@@ -260,8 +260,8 @@ async function shortLink(fetchImpl, link) {
 }
 
 /**
- * Report replies (#2465): this slot's Live Reports are looked for on the networks, and each post that names one is
- * read by Gemini, decided (functions/engagement-reports.js), stored with campaign "report-reply", counted under
+ * Report replies (#2465): this slot's Live Reports are looked for on the networks, and each post that names one, or
+ * fits its niche or a problem its report found (#2468), is read by Gemini, decided (functions/engagement-reports.js), stored with campaign "report-reply", counted under
  * engagement_daily report, and its invite pushed to Carlos.
  */
 async function reportPass(deps, conf, creds) {
@@ -277,15 +277,16 @@ async function reportPass(deps, conf, creds) {
   out.searched = sites.length;
   if (!sites.length) return out;
   const m = creds && creds.mastodon;
-  const found = await Sources.search({ fetch: deps.fetch, now, env: Object.assign({}, withAccounts(env, creds), m && m.token ? { MASTODON_SEARCH_URL: m.base, MASTODON_SEARCH_TOKEN: m.token } : {}) }, sites.flatMap(R.queries));
+  const loose = R.looseQueries(sites);
+  const found = await Sources.search({ fetch: deps.fetch, now, env: Object.assign({}, withAccounts(env, creds), m && m.token ? { MASTODON_SEARCH_URL: m.base, MASTODON_SEARCH_TOKEN: m.token } : {}) }, sites.flatMap(R.queries).concat(loose.map((l) => l.q)));
   out.errors = found.errors;
   out.read = Object.values(found.read).reduce((a, b) => a + b, 0);
 
   const byKey = new Map();
   found.posts.forEach((p) => {
-    const hit = R.siteOf(p, sites);
+    const hit = R.siteOf(p, sites) || R.looseOf(p, loose);
     const key = E.keyOf(p.network, p.id);
-    if (hit && !byKey.has(key)) byKey.set(key, Object.assign({ key, target: hit.target, match: hit.match }, p, E.score(p, now)));
+    if (hit && !byKey.has(key)) byKey.set(key, Object.assign({ key, target: hit.target, match: hit.match, problem: hit.problem || "" }, p, E.score(p, now)));
   });
   const posts = Array.from(byKey.values());
   const known = posts.length ? await db.getAll(...posts.map((p) => db.collection("engagement_posts").doc(p.key))) : [];
@@ -366,7 +367,7 @@ const actNote = (r) => {
 const reportNote = (x) => {
   if (!x) return "";
   const errs = Object.entries(x.errors || {}).map(([k, v]) => k + ": " + v).concat(x.error ? [x.error] : []).concat(x.aiError ? ["Gemini: " + x.aiError] : []);
-  return (x.searched ? "; report replies: " + x.searched + " sites looked for, " + x.matched + " posts name them, " + x.drafted + " invites drafted" : "") + (errs.length ? "; report replies: " + errs.join("; ") : "");
+  return (x.searched ? "; report replies: " + x.searched + " sites looked for, " + x.matched + " posts about them or their niche, " + x.drafted + " invites drafted" : "") + (errs.length ? "; report replies: " + errs.join("; ") : "");
 };
 const chainNote = (c) => {
   if (!c) return "";
