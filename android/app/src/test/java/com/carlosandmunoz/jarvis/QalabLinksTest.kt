@@ -1,6 +1,9 @@
 package com.carlosandmunoz.jarvis
 
+import com.carlosandmunoz.jarvis.data.JSON
+import com.carlosandmunoz.jarvis.ui.linkCounts
 import com.carlosandmunoz.jarvis.ui.qalabLink
+import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -10,6 +13,12 @@ class QalabLinksTest {
     fun aProspectLinkMatchesTheWorkerRoute() {
         assertEquals("https://qalabreview.com/es/upb.edu.co", qalabLink(" https://www.UPB.edu.co/admisiones ", "es"))
         assertEquals("https://qalabreview.com/en/acme.io", qalabLink("acme.io", "ja"))
+    }
+
+    @Test
+    fun aReportReplyRowCountsClicksRunsAndPayments() {
+        val row = JSON.parseToJsonElement("""{"visits":12,"reviews":3,"paid":1,"usd":19}""") as JsonObject
+        assertEquals("12 clicks · 3 runs · 1 paid · 19 USD", linkCounts(row))
     }
 
     @Test

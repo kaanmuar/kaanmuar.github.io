@@ -181,7 +181,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const api = endpoint || ENDPOINT;
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
-        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, alerts: [], reports: [],
+        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, egOnly: 'all', alerts: [], reports: [],
         external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0,
         panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review'
     };
@@ -475,9 +475,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                     instantly: e.outreach.instantly && e.outreach.instantly.ok ? { campaigns: e.outreach.instantly.status, sent: e.outreach.instantly.sent, rates: e.outreach.instantly.rates, replies: e.outreach.instantly.replies, interested: e.outreach.instantly.interested, meetings: e.outreach.instantly.meetings, warmup: (e.outreach.instantly.accounts || []).map((a) => a.score) } : null,
                     plan: e.outreach.plan && e.outreach.plan.ok !== false ? { day: e.outreach.plan.day, length: e.outreach.plan.length, phase: e.outreach.plan.phase, next: e.outreach.plan.next, weekly: e.outreach.plan.weekly, targets: e.outreach.plan.targets } : null,
                     visits: C.outreachVisits(S.rows.events).total,
-                    links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10) } : null
+                    links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10), reportReplies: e.outreach.links.social ? { visits: e.outreach.links.social.visits, reviews: e.outreach.links.social.reviews, paid: e.outreach.links.social.paid, usd: e.outreach.links.social.usd, networks: e.outreach.links.social.networks, topPosts: e.outreach.links.social.posts.slice(0, 10) } : null } : null
                 } : null,
-                engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`) } : null,
+                engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`), reportReplies: Object.assign({ waiting: e.engagement.waiting.filter((d) => d.campaign === 'report-reply').length }, e.engagement.report.invites) } : null,
                 signedInPeople: e.people && e.people.ok ? e.people.totals : null,
                 googleMapsLocal: e.local && e.local.ok && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
                 waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
@@ -1241,8 +1241,16 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             + table([['Channel', (c) => esc(c.label)], ['Link', (c) => `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url.replace(/^https:\/\//, ''))}</a>`], ['', (c) => copyBtn(c.url)]], links.channels)
             + `<p class="jv-note">Funnel work: ${links.funnel.map((f) => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.label)}</a>`).join(' · ')}</p>`
             : `<p class="jv-empty">${esc((ou.links && ou.links.error) || 'Not loaded.')}</p>`;
+        const soc = links && links.social ? links.social : null;
+        const counts = [['Clicks', (x) => fmt(x.visits)], ['Runs', (x) => fmt(x.reviews)], ['Paid', (x) => fmt(x.paid)], ['USD', (x) => fmt(x.usd)]];
+        const socialBody = soc ? stats([{ label: 'Clicks', value: soc.visits }, { label: 'Free runs', value: soc.reviews }, { label: 'Paid unlocks', value: soc.paid }, { label: 'Revenue (USD)', value: soc.usd }])
+            + table([['Campaign', (n) => `<strong>Report replies on ${esc(n.name)}</strong><br><span class="jv-note">${esc(n.campaign)}</span>`]].concat(counts), soc.networks, 'No click on a report reply in this range yet.')
+            + table([['Post', (p) => (p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}: ${esc((p.title || p.author || p.ref).slice(0, 90))}</a>` : `${esc(p.name)} · ${esc(p.ref)}`) + `<br><span class="jv-note">${esc(p.host || '')}${p.lang ? ' · ' + esc(p.lang) : ''}</span>`]].concat(counts,
+                [['Our reply', (p) => (p.replyUrl ? `<a href="${esc(p.replyUrl)}" target="_blank" rel="noopener">${esc(p.status || 'posted')} ↗</a>` : esc(p.status || '—'))]]), soc.posts, 'No click carries a post ref yet.')
+            : `<p class="jv-empty">${esc((ou.links && ou.links.error) || 'Not loaded.')}</p>`;
         return head + `<div class="jv-grid">${approvalsPanel()}${briefPanel('outreach')}
             ${panel('outreach-links', 'qalabreview.com links: visits, reviews and revenue', linksBody, { wide: true, data: links ? links.prospects : [] })}
+            ${panel('outreach-report-replies', 'Report replies: clicks, runs and payments', socialBody, { wide: true, data: soc, note: 'Replies under posts that name a site we reviewed link to its report through qalabreview.com/r/<network>/<site>/<post ref>, tagged utm_campaign social-reply-<network> and utm_term <post ref>. A payment counts for the reply whose link started the run it unlocked. The drafts and their approval are on the Engagement tab.' })}
             ${panel('outreach-plan', '90-day plan', planBody)}
             ${panel('outreach-funnel', 'Weekly funnel against the plan', funnelBody, { data: funnel })}
             ${plan ? panel('outreach-targets', '90-day targets', targets, { data: plan.targets }) : ''}
@@ -1556,6 +1564,17 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const EG_STATUS_CHIP = { planned: 'c-average', waiting: 'c-average', approved: 'c-average', done: 'c-fast', posted: 'c-fast', dry: '', capped: 'c-slow', paused: '', dismissed: '', expired: 'c-slow', missed: 'c-slow', failed: 'c-slow', replied: '' };
     const egChips = (d) => Object.entries(d.actions || {}).map(([a, x]) => `<span class="jv-chip ${EG_STATUS_CHIP[x.status] || ''}">${esc(a)}: ${esc(x.status)}</span>`).join(' ')
         + (d.skip ? ` <span class="jv-chip c-slow">left alone: ${esc(d.skip)}</span>` : d.verdict === 'trend' ? ' <span class="jv-chip">trend only</span>' : '');
+    // Report replies (#2465, #2471): invites under posts that name a site we reviewed.
+    const egIsReport = (d) => d.campaign === 'report-reply';
+    const EG_ONLY = [['all', 'All'], ['report', 'Report replies'], ['field', 'Other replies']];
+    const egKeep = (d) => S.egOnly === 'all' || (S.egOnly === 'report') === egIsReport(d);
+    const egReportChip = (d) => (egIsReport(d) ? ` <span class="jv-chip c-report" title="An invite to the free report we ran on ${esc((d.report || {}).host || 'the site')}">Report reply</span>` : '');
+    const egReportLine = (d) => {
+        const x = d.report;
+        if (!egIsReport(d) || !x) return '';
+        return `<p class="jv-prop-why">Invites to the <strong>${esc(x.name || x.host)}</strong> report (${esc(x.host)}) · scores ${fmt(x.score)}${x.shown ? '' : ' (not named in the reply)'} · found by ${esc(x.match || '?')} · ${esc(x.format || 'link')}${x.link ? ` · <a href="${esc(x.link)}" target="_blank" rel="noopener">report link ↗</a>` : ''}</p>`;
+    };
+    const egFilter = (list) => `<div class="jv-actions"><div class="jv-seg" role="group" aria-label="Which replies">${EG_ONLY.map(([k, label]) => `<button type="button" data-eg-only="${k}" class="${S.egOnly === k ? 'on' : ''}" aria-pressed="${S.egOnly === k}">${label} · ${fmt(list.filter((d) => k === 'all' || (k === 'report') === egIsReport(d)).length)}</button>`).join('')}</div></div>`;
 
     function engagementView() {
         const g = S.external.engagement;
@@ -1565,18 +1584,19 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const net = (k) => (g.networks.find((n) => n.network === k) || {}).name || k;
         const who = (d) => (d.author || {}).name || (d.author || {}).handle || '';
         const meta = (d) => [who(d), `♥ ${fmt((d.metrics || {}).likes || 0)}`, `↩ ${fmt((d.metrics || {}).replies || 0)}`, `⟳ ${fmt((d.metrics || {}).reposts || 0)}`, (d.metrics || {}).views ? `▶ ${fmt(d.metrics.views)}` : '', `score ${d.score}`, when(d.createdAt)].filter(Boolean).join(' · ');
-        const head = (d) => `<p class="jv-prop-title"><strong>${esc(egHeadline(d))}</strong> <span class="jv-chip">${esc(net(d.network))}</span>${d.topic ? ` <span class="jv-chip">${esc(d.topic)}</span>` : ''} <span class="jv-chip">${esc(d.lang || '?')}</span></p>
-            <p class="jv-prop-why">${esc(meta(d))}</p>${d.about ? `<p class="jv-prop-why">${esc(d.about)}${d.why ? ' · ' + esc(d.why) : ''}</p>` : ''}`;
+        const head = (d) => `<p class="jv-prop-title"><strong>${esc(egHeadline(d))}</strong>${egReportChip(d)} <span class="jv-chip">${esc(net(d.network))}</span>${d.topic ? ` <span class="jv-chip">${esc(d.topic)}</span>` : ''} <span class="jv-chip">${esc(d.lang || '?')}</span></p>
+            <p class="jv-prop-why">${esc(meta(d))}</p>${d.about ? `<p class="jv-prop-why">${esc(d.about)}${d.why ? ' · ' + esc(d.why) : ''}</p>` : ''}${egReportLine(d)}`;
         const draftOf = (d) => (S.egDrafts[d.key] !== undefined ? S.egDrafts[d.key] : d.actions.reply.draft);
-        const shown = S.egAll ? g.waiting : g.waiting.slice(0, EG_SHOWN);
-        const more = g.waiting.length > EG_SHOWN ? `<div class="jv-actions"><button type="button" class="jv-btn" data-eg-all="${S.egAll ? 'off' : 'on'}">${S.egAll ? 'Show fewer' : `Show all ${g.waiting.length}`}</button></div>` : '';
-        const waitingBody = g.waiting.length ? `<ol class="jv-props">${shown.map((d) => `<li class="jv-prop lv-info"><span class="jv-prop-rank">${esc(String(Math.round(d.score)))}</span><div class="jv-prop-body">${head(d)}
+        const waitingList = g.waiting.filter(egKeep);
+        const shown = S.egAll ? waitingList : waitingList.slice(0, EG_SHOWN);
+        const more = waitingList.length > EG_SHOWN ? `<div class="jv-actions"><button type="button" class="jv-btn" data-eg-all="${S.egAll ? 'off' : 'on'}">${S.egAll ? 'Show fewer' : `Show all ${waitingList.length}`}</button></div>` : '';
+        const waitingBody = egFilter(g.waiting) + (waitingList.length ? `<ol class="jv-props">${shown.map((d) => `<li class="jv-prop lv-info"><span class="jv-prop-rank">${esc(String(Math.round(d.score)))}</span><div class="jv-prop-body">${head(d)}
             ${d.chain ? `<p class="jv-prop-why">${esc(who(d))} commented on our ${d.chain.on === 'post' ? 'post' : 'reply'}${d.chain.ours ? `: “${esc(d.chain.ours)}”` : ''}</p>` : ''}
             <details><summary>${d.chain ? 'Show the comment' : 'Show the post'}</summary><pre class="jv-pre">${esc(d.text)}</pre></details>
             <textarea rows="3" class="jv-eg-draft" data-keep="eg-${esc(d.key)}" data-eg-draft="${esc(d.key)}" maxlength="${EG_NETWORK_LIMIT[d.network] || 300}" aria-label="Reply to ${esc(who(d))}">${esc(draftOf(d))}</textarea>
             <div class="jv-prop-acts"><button type="button" data-eg-decide="approve" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Approve</button><button type="button" data-eg-decide="dismiss" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Dismiss</button>${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">Open the post ↗</a>` : ''}
             <span class="jv-note">${fmt(draftOf(d).length)} / ${fmt(EG_NETWORK_LIMIT[d.network] || 300)} · expires ${esc(when(d.actions.reply.expiresAt))}</span></div></div></li>`).join('')}</ol>${more}`
-            : `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : 'No reply is waiting. Drafts arrive here and on your phone as the scout finds posts worth answering.'}</p>`;
+            : `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : g.waiting.length ? 'None of the waiting replies is of this kind.' : 'No reply is waiting. Drafts arrive here and on your phone as the scout finds posts worth answering.'}</p>`);
         const last = g.lastRun;
         const readTotal = (run) => Object.values((run && run.read) || {}).reduce((a, b) => a + b, 0);
         const statusBody = stats([
@@ -1600,11 +1620,19 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ['Last run', (n) => fmt(n.lastRead)], ['In field', (n) => fmt(n.row ? n.row.candidates : 0)],
             ['Today', (n) => (EG_NETWORK_LIMIT[n.network] ? ['like', 'repost', 'follow', 'reply'].map((a) => `${a} ${used(n.network, a)}/${(g.caps || {})[a]}`).join(' · ') : '—')],
             ['Acting', (n) => `<span class="jv-note">${esc(n.acts)}</span>`]], g.networks);
-        const postsBody = table([['Post', (d) => `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 110))}</a><br><span class="jv-note">${esc(net(d.network))} · ${esc(meta(d))}</span>${d.about ? `<br><span class="jv-note">${esc(d.about)}</span>` : ''}`],
-            ['Topic', (d) => esc(d.topic)], ['Trend', (d) => fmt(d.trend)], ['Plan', egChips]], g.posts, 'No posts from our field in this range yet.');
+        const posts = g.posts.filter(egKeep);
+        const postsBody = egFilter(g.posts) + table([['Post', (d) => `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 110))}</a>${egReportChip(d)}<br><span class="jv-note">${esc(net(d.network))} · ${esc(meta(d))}</span>${d.about ? `<br><span class="jv-note">${esc(d.about)}</span>` : ''}${d.report ? `<br><span class="jv-note">Names ${esc(d.report.host)}, scores ${fmt(d.report.score)}</span>` : ''}`],
+            ['Topic', (d) => esc(d.topic)], ['Trend', (d) => fmt(d.trend)], ['Plan', egChips]], posts, S.egOnly === 'all' ? 'No posts from our field in this range yet.' : 'No post of this kind in this range.');
         const replyChip = (r) => `<span class="jv-chip ${EG_STATUS_CHIP[r.status] || ''}">${esc(r.status)}${r.edited ? ', edited' : ''}</span>`;
-        const approvedBody = g.approved.length ? `<ul class="jv-facts">${g.approved.map((d) => `<li>${replyChip(d.actions.reply)} <strong>${esc(net(d.network))}</strong> · <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 80))}</a>${d.actions.reply.url ? ` · <a href="${esc(d.actions.reply.url)}" target="_blank" rel="noopener">Our reply ↗</a>` : ''}<br><span class="jv-note">${esc(d.actions.reply.draft)}</span>${d.actions.reply.error ? `<br><span class="jv-note">${esc(d.actions.reply.error)}</span>` : ''}</li>`).join('')}</ul>`
-            : '<p class="jv-empty">Nothing approved yet.</p>';
+        const approved = g.approved.filter(egKeep);
+        const approvedBody = egFilter(g.approved) + (approved.length ? `<ul class="jv-facts">${approved.map((d) => `<li>${replyChip(d.actions.reply)}${egReportChip(d)} <strong>${esc(net(d.network))}</strong> · <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 80))}</a>${d.actions.reply.url ? ` · <a href="${esc(d.actions.reply.url)}" target="_blank" rel="noopener">Our reply ↗</a>` : ''}<br><span class="jv-note">${esc(d.actions.reply.draft)}</span>${d.actions.reply.error ? `<br><span class="jv-note">${esc(d.actions.reply.error)}</span>` : ''}</li>`).join('')}</ul>`
+            : `<p class="jv-empty">${g.approved.length ? 'No approved reply of this kind.' : 'Nothing approved yet.'}</p>`);
+        const iv = r.invites || { searched: 0, matched: 0, drafted: 0, approved: 0, edited: 0, dismissed: 0, posted: 0, skips: [], networks: [] };
+        const ivSteps = [{ label: 'Posts naming a reviewed site', value: iv.matched }, { label: 'Invites drafted', value: iv.drafted }, { label: 'Approved', value: iv.approved + iv.edited }, { label: 'Posted', value: iv.posted }];
+        const invitesBody = funnel(ivSteps) + stats([{ label: 'Sites looked for', value: iv.searched }, { label: 'Waiting now', value: g.waiting.filter(egIsReport).length }, { label: 'Dismissed', value: iv.dismissed }, { label: 'Edited', value: iv.edited }])
+            + bars(iv.networks.map((x) => ({ label: net(x.label), value: x.value })), { color: COLORS.amber, empty: 'No post named a reviewed site in this range.' })
+            + (iv.skips.length ? `<p class="jv-note">Left alone: ${iv.skips.map((x) => esc(x.label.replace(/_/g, ' ')) + ' ' + fmt(x.value)).join(' · ')}</p>` : '')
+            + `<div class="jv-actions"><button type="button" class="jv-btn" data-eg-only="${S.egOnly === 'report' ? 'all' : 'report'}">${S.egOnly === 'report' ? 'Show every reply' : 'Show only report replies'}</button><a class="jv-btn" href="#stats/outreach/${esc(S.range)}">Clicks, runs and payments →</a></div>`;
         const done = (t.like_done || 0) + (t.repost_done || 0) + (t.follow_done || 0);
         const dry = (t.like_dry || 0) + (t.repost_dry || 0) + (t.follow_dry || 0);
         const daily = g.daily || [];
@@ -1631,6 +1659,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${panel('engagement-networks', 'Networks', netBody, { wide: true, data: g.networks.map((n) => ({ network: n.name, reads: n.reads, lastRead: n.lastRead, error: n.error, acting: n.acts })) })}
             ${panel('engagement-daily', 'Per day', area(daily.map((d) => d.day), [{ name: 'In field', values: daily.map((d) => d.candidates), color: COLORS.cyan }, { name: 'Likes', values: daily.map((d) => d.like), color: COLORS.green }, { name: g.live ? 'Done' : 'Done (dry run)', values: daily.map((d) => (g.live ? d.done : d.dry) || 0), color: COLORS.pink }, { name: 'Replies drafted', values: daily.map((d) => d.drafted), color: COLORS.amber }, { name: 'Approved', values: daily.map((d) => d.approved), color: COLORS.violet }]), { wide: true, data: daily })}
             ${panel('engagement-posts', `Top posts in our field · ${fmt(g.posts.length)}`, postsBody, { wide: true, data: g.posts.map((d) => ({ network: d.network, url: d.url, author: who(d), title: d.title || d.text, about: d.about, topic: d.topic, lang: d.lang, score: d.score, trend: d.trend, likes: d.metrics.likes, replies: d.metrics.replies, reposts: d.metrics.reposts, verdict: d.verdict, skip: d.skip })) })}
+            ${panel('engagement-invites', 'Report replies', invitesBody, { data: Object.assign({}, iv, { steps: ivSteps }), note: 'Each scout run looks for posts that name a site from the public Live Reports and drafts an invite to its free report in the post\'s language, at most one per site every 30 days and none where the owner had our mail. They wait above with a Report reply badge; the Outreach tab shows the clicks, runs and payments per network and per post, and every Sunday a results ticket goes on the board.' })}
             ${panel('engagement-funnel', 'Reply funnel', funnel(funnelSteps) + stats([{ label: 'Dismissed', value: t.dismissed }, { label: 'Expired', value: t.expired, alert: t.drafted > 4 && t.expired / t.drafted > 0.5 }, { label: 'Edited', value: t.edited }, { label: 'Avg time to decide', value: r.avgDecideMin === null ? '—' : r.avgDecideMin + ' min' }]), { data: funnelSteps })}
             ${panel('engagement-topics', 'Topics', pie(r.topics, { unit: 'posts', empty: 'No posts in this range.' }), { data: r.topics })}
             ${panel('engagement-langs', 'Languages', pie(r.langs, { unit: 'posts', empty: 'No posts in this range.' }), { data: r.langs })}
@@ -2873,6 +2902,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.egPause) { egSettings({ paused: t.dataset.egPause === 'on' }, t.dataset.egPause === 'on' ? 'pause every engagement action, draft and push' : 'resume engagement'); return; }
         if (t.dataset.egReport) { egReport(t.dataset.egReport); return; }
         if (t.dataset.egAll) { S.egAll = t.dataset.egAll === 'on'; render(); return; }
+        if (t.dataset.egOnly) { S.egOnly = t.dataset.egOnly; render(); return; }
         if (t.dataset.egLive) { egSettings({ live: t.dataset.egLive === 'on' }, t.dataset.egLive === 'on' ? 'go live: planned likes, reposts and follows go out on the connected networks, within the daily caps' : 'go back to a dry run, where planned actions are only logged'); return; }
         if (t.dataset.egConnect) { egConnect({ network: t.dataset.egConnect }); return; }
         if (t.dataset.egDisconnect) { egConnect({ network: t.dataset.egDisconnect, disconnect: true }, `disconnect ${t.dataset.egDisconnect}, so nothing goes out there`); return; }

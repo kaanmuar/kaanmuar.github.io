@@ -1410,18 +1410,23 @@ async function github(path, body, token) {
   return data;
 }
 
-async function openFailureBug(bug, token) {
-  const issue = await github("/repos/" + BUG_REPO + "/issues", { title: bug.title, body: bug.body, labels: ["bug", "area:be"] }, token);
+// Opens an issue in Backlog on the board, as a sub-issue of parent.
+async function openBoardIssue({ title, body, labels, parent }, token) {
+  const issue = await github("/repos/" + BUG_REPO + "/issues", { title, body, labels }, token);
   const boardToken = await githubApp.token("board");
   const board = github("/graphql", { query: "mutation($p:ID!,$c:ID!){addProjectV2ItemById(input:{projectId:$p,contentId:$c}){item{id}}}", variables: { p: BOARD.project, c: issue.node_id } }, boardToken)
     .then((added) => github("/graphql", {
       query: "mutation($p:ID!,$i:ID!,$f:ID!,$o:String!){updateProjectV2ItemFieldValue(input:{projectId:$p,itemId:$i,fieldId:$f,value:{singleSelectOptionId:$o}}){projectV2Item{id}}}",
       variables: { p: BOARD.project, i: added.data.addProjectV2ItemById.item.id, f: BOARD.status, o: BOARD.backlog }
     }, boardToken));
-  const parent = github("/repos/" + BUG_REPO + "/issues/" + BUG_TICKET + "/sub_issues", { sub_issue_id: issue.id }, token);
-  (await Promise.allSettled([board, parent])).filter((step) => step.status === "rejected")
-    .forEach((step) => console.error("Failure bug #" + issue.number + " was opened, but not filed on the board or under #" + BUG_TICKET + ":", step.reason));
+  const under = github("/repos/" + BUG_REPO + "/issues/" + parent + "/sub_issues", { sub_issue_id: issue.id }, token);
+  (await Promise.allSettled([board, under])).filter((step) => step.status === "rejected")
+    .forEach((step) => console.error("#" + issue.number + " was opened, but not filed on the board or under #" + parent + ":", step.reason));
   return issue;
+}
+
+function openFailureBug(bug, token) {
+  return openBoardIssue({ title: bug.title, body: bug.body, labels: ["bug", "area:be"], parent: BUG_TICKET }, token);
 }
 
 async function fileReviewFailureBugs() {
@@ -6239,7 +6244,14 @@ const engagementReport = (period) => async () => {
   return out.subject;
 };
 exports.engagementDailyReport = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB", secrets: SECRETS.engagement }), "engagementDailyReport", engagementReport("daily"));
-exports.engagementWeeklyReport = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB", secrets: SECRETS.engagement }), "engagementWeeklyReport", engagementReport("weekly"));
+// Sunday's weekly report also files the report replies' results ticket on the board (#2471).
+exports.engagementWeeklyReport = scheduled(functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: SECRETS.engagementWeekly }), "engagementWeeklyReport", async () => {
+  const subject = await engagementReport("weekly")();
+  const token = await githubApp.token();
+  if (!token) return subject + "; no GitHub token is set, so no results ticket";
+  const ticket = await jarvisEngagement.resultsTicket(Object.assign(engagementDeps(), { openIssue: (issue) => openBoardIssue(issue, token) }));
+  return subject + "; results ticket: " + ticket.note;
+});
 exports.engagementMonthlyReport = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB", secrets: SECRETS.engagement }), "engagementMonthlyReport", engagementReport("monthly"));
 
 const tiktokWatch = require("./tiktok-business-watch");

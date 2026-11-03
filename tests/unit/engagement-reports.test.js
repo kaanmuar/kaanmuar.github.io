@@ -182,3 +182,45 @@ test("a report pass looks for this slot's sites, drafts the invite with its link
   const again = await J.reportPass(Object.assign({}, deps, { now: NOW + 3600000 }), conf, {});
   assert.equal(again.searched, 2, "upb.edu.co was answered this month, gov.uk was emailed");
 });
+
+// --- The weekly results ticket (#2471) -----------------------------------------------------------------------
+
+const social = {
+  visits: 12, reviews: 3, paid: 1, usd: 19,
+  networks: [{ network: "bluesky", name: "Bluesky", campaign: "social-reply-bluesky", visits: 12, reviews: 3, paid: 1, usd: 19 }],
+  posts: [{ network: "bluesky", name: "Bluesky", ref: "a1b2c3", host: "upb.edu.co", visits: 9, reviews: 3, paid: 1, usd: 19, url: "https://bsky.app/p/1", title: "UPB | new site", status: "posted", replyUrl: "https://bsky.app/p/2" }]
+};
+const week = { from: "2026-10-26", to: "2026-11-01", invites: { searched: 28, matched: 6, drafted: 4, approved: 2, edited: 1, dismissed: 1, posted: 3, skips: [{ label: "not_site", value: 2 }], networks: [{ label: "bluesky", value: 4 }, { label: "mastodon", value: 2 }] } };
+
+test("the weekly results ticket sums the invites and the clicks, runs and payments per network and per post", () => {
+  const issue = R.resultsIssue(week, social);
+  assert.equal(issue.title, "Results: report replies 2026-10-26 to 2026-11-01 · 3 posted, 12 clicks, 3 runs, 1 paid");
+  assert.equal(issue.parent, 2465);
+  assert.deepEqual(issue.labels, ["area:engagement"]);
+  assert.match(issue.body, /^\*\*Kind:\*\* Results\n\*\*Area:\*\* engagement\nParent: #2465/);
+  assert.match(issue.body, /\| Approved \| 3 \(1 edited, 1 dismissed\) \|/);
+  assert.match(issue.body, /\| Bluesky \| 4 \| 12 \| 3 \| 1 \| 19\.00 USD \|/);
+  assert.match(issue.body, /\| Mastodon \| 2 \| 0 \| 0 \| 0 \| 0\.00 USD \|/);
+  assert.match(issue.body, /\| \[Bluesky: UPB \/ new site\]\(https:\/\/bsky\.app\/p\/1\) \| upb\.edu\.co \| 9 \| 3 \| 1 \| 19\.00 USD \| \[posted\]\(https:\/\/bsky\.app\/p\/2\) \|/);
+  assert.match(issue.body, /Left alone: not site 2\./);
+  assert.equal(R.resultsIssue({ from: "a", to: "b", invites: { searched: 30, matched: 0 } }, { visits: 0, reviews: 0, paid: 0, usd: 0, networks: [], posts: [] }), null, "a week with nothing found and no click opens no ticket");
+});
+
+test("the results ticket is opened once a week, and again when opening it failed", async () => {
+  const db = fakeDb();
+  const day = E.bogotaDay(NOW);
+  db.data.set("engagement_daily/" + day, { report: { searched: 4, matched: 2, drafted: 1, posted: 1, net: { bluesky: 2 } } });
+  const opened = [];
+  let fail = true;
+  const deps = { db, now: NOW, social: async (ctx) => { assert.equal(ctx.days, 7); return social; }, openIssue: async (issue) => { if (fail) throw new Error("GitHub 502"); opened.push(issue); return { number: 2600, html_url: "https://github.com/x/2600" }; } };
+  await assert.rejects(J.resultsTicket(deps), /GitHub 502/);
+  assert.equal(db.data.has("engagement_issues/" + day), false, "a failed open frees the week");
+  fail = false;
+  const out = await J.resultsTicket(deps);
+  assert.deepEqual([out.opened, out.number], [true, 2600]);
+  assert.match(opened[0].body, /\| Bluesky \| 2 \| 12 \| 3 \| 1 \| 19\.00 USD \|/);
+  assert.equal(db.data.get("engagement_issues/" + day).issue, 2600);
+  const again = await J.resultsTicket(deps);
+  assert.equal(again.opened, false);
+  assert.equal(opened.length, 1);
+});

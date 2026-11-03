@@ -53,6 +53,8 @@ const BY_FUNCTION = {
   // the reports go by mail. The poster (#1990) refreshes the YouTube channel's token through the calendar's OAuth
   // client; the Bluesky and Mastodon accounts are connected in Jarvis and kept in Firestore (engagement_private).
   engagement: list(MAIL, GEMINI, ["YOUTUBE_KEY", "GOOGLE_CALENDAR_CLIENT_SECRET"]),
+  // The weekly report also opens the report replies' results ticket on the board (#2471).
+  engagementWeekly: list(MAIL, GEMINI, GITHUB, ["YOUTUBE_KEY", "GOOGLE_CALENDAR_CLIENT_SECRET"]),
   // An approved YouTube comment goes out from the jarvis function at once, so it refreshes the same token.
   jarvis: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ["GOOGLE_CALENDAR_CLIENT_SECRET"])
 };

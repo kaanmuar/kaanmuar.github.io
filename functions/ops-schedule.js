@@ -35,7 +35,7 @@ const JOBS = [
   { job: "jarvisEveningDigest", cron: "0 20 * * *", gap: 26, what: "Jarvis evening digest: what Jarvis pushed in the last 24 hours, what still waits for a decision and what ran, in place of the emails that moved to pushes (skipped on an empty day)" },
   { job: "engagementScout", cron: "*/30 * * * *", gap: 2, what: "Social engagement scout (#1988): read our field's posts on Mastodon, Bluesky, YouTube, Hacker News, DEV and Lobsters, score them, plan likes, reposts and follows within the daily caps, and push reply drafts for approval (Jarvis > Engagement)" },
   { job: "engagementDailyReport", cron: "30 20 * * *", gap: 26, what: "Social engagement daily report: posts read, actions planned, the reply funnel, topics and top posts, by mail and push" },
-  { job: "engagementWeeklyReport", cron: "40 20 * * 0", gap: 7 * 24 + 2, what: "Social engagement weekly report, against the week before" },
+  { job: "engagementWeeklyReport", cron: "40 20 * * 0", gap: 7 * 24 + 2, what: "Social engagement weekly report, against the week before, and the report replies' results ticket on the board (#2471)" },
   { job: "engagementMonthlyReport", cron: "10 8 1 * *", gap: 31 * 24 + 2, what: "Social engagement monthly report for the month before, against the one before it" },
   { job: "emailMonthlySiteReport", cron: "45 7 1 * *", gap: 31 * 24 + 2, what: "Monthly site report" },
   { job: "emailMonthlyReviewReport", cron: "50 7 1 * *", gap: 31 * 24 + 2, what: "Monthly URL review report" },

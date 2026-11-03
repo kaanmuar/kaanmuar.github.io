@@ -22,6 +22,7 @@ function fakeDb() {
       path, id: path.split("/").pop(),
       get: async () => snap(path),
       set: async (v, o) => { data.set(path, o && o.merge ? merge(get(path) || {}, v) : merge({}, v)); },
+      create: async (v) => { if (data.has(path)) throw Object.assign(new Error("ALREADY_EXISTS: " + path), { code: 6 }); data.set(path, merge({}, v)); },
       update: async (v) => { const cur = JSON.parse(JSON.stringify(get(path) || {})); Object.entries(v).forEach(([k, x]) => setPath(cur, k, x)); data.set(path, cur); },
       delete: async () => { data.delete(path); }
     };
