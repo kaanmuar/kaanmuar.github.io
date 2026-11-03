@@ -490,7 +490,6 @@
       el.setAttribute("role", "group");
       el.setAttribute("aria-roledescription", "slide");
       el.style.setProperty("--h", HUES[r.sector] || 186);
-      el.innerHTML = cardHtml(r);
       ring.appendChild(el);
       cards.set(r.id, el);
     });
@@ -553,9 +552,10 @@
     const target = keepId || before;
     const at = state.list.findIndex((r) => r.id === target);
     state.active = at >= 0 ? at : 0;
+    const listed = new Set(state.list);
     state.all.forEach((r) => {
       const el = cards.get(r.id);
-      const shown = state.list.includes(r);
+      const shown = listed.has(r);
       if (el.hidden === shown) lastD.delete(r.id);
       el.hidden = !shown;
       if (!shown) el.classList.remove("is-active");
@@ -587,14 +587,15 @@
     const n = state.list.length;
     state.list.forEach((r, i) => {
       const el = cards.get(r.id);
-      const btn = el.querySelector(".lc-open");
       const d = wrap(i - state.active + state.drag, n);
       const ad = Math.abs(d);
       const front = ad < 0.5;
+      const far = !state.flat && ad > state.vis + 1;
+      if (!far && !el.firstChild) el.innerHTML = cardHtml(r);
       el.classList.toggle("is-active", front);
       el.setAttribute("aria-label", t("slide", { i: i + 1, n, name: r.name }));
       el.setAttribute("aria-hidden", state.flat || front ? "false" : "true");
-      btn.tabIndex = state.flat || front ? 0 : -1;
+      if (el.firstChild) el.querySelector(".lc-open").tabIndex = state.flat || front ? 0 : -1;
       if (state.flat) {
         el.classList.remove("is-far");
         el.style.transform = "";
@@ -605,8 +606,7 @@
       const prev = lastD.get(r.id);
       const jump = prev == null || Math.abs(prev - d) > 1.5;
       lastD.set(r.id, d);
-      // A thousand 3D-placed cards stall a phone or a CI runner; the ones behind the ring leave rendering.
-      const far = ad > state.vis + 1;
+      // A thousand 3D-placed cards stall a phone or a CI runner; the ones behind the ring leave rendering and are built on first view.
       el.classList.toggle("is-far", far);
       if (far) return;
       el.style.transition = jump || state.dragging ? "none" : "";
@@ -1153,7 +1153,7 @@
     buildShell();
     paintEmpty();
     if (!state.all.length) return;
-    state.all.forEach((r) => { cards.get(r.id).innerHTML = cardHtml(r); });
+    state.all.forEach((r) => { const el = cards.get(r.id); if (el.firstChild) el.innerHTML = cardHtml(r); });
     renderFilters();
     layout();
     announce();
