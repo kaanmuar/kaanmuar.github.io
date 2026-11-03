@@ -178,12 +178,16 @@ function liveCard(index, host) {
   return ((index && index.reports) || []).find((card) => card && publish.bare(card.host) === target) || null;
 }
 
-// Why a queued notice cannot go out now, or "" when it can.
+// Why a queued notice cannot go out now, or "" when it can. ctx.answered: host => when we answered a post about it with
+// its report (functions/engagement-reports.js answeredHosts), so its owner hears from us once a month at most (#2470).
 function sendBlock(notice, ctx) {
   const opts = ctx || {};
   if (!notice || (notice.status !== "pending" && notice.status !== "sending")) return "That notice is not waiting to be sent.";
   const stopped = opts.stopped || new Set();
   if (stopped.has(notice.email) || stopped.has("@" + notice.domain)) return "This address or domain asked for no notices.";
+  const answered = opts.answered || new Map();
+  const hit = [publish.bare(notice.host), notice.domain].find((host) => host && answered.has(host));
+  if (hit) return "We answered a post about " + hit + " with its report on " + String(answered.get(hit)).slice(0, 10) + ". The notice waits 30 days from then.";
   if (publish.heldReason({ status: "complete", report: { host: notice.host } }, opts.unlisted || []) === "unlisted") return notice.host + " is already off Live Reports.";
   if (!opts.card) return notice.host + " is not on Live Reports yet. Send it after the daily publish lands.";
   return "";

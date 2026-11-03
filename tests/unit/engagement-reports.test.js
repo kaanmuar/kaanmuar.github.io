@@ -251,3 +251,27 @@ test("a report pass looks for this slot's sites, drafts the invite with its link
   const again = await J.reportPass(Object.assign({}, deps, { now: NOW + 3600000 }), conf, {});
   assert.equal(again.searched, 2, "upb.edu.co was answered this month, gov.uk was emailed");
 });
+
+test("report replies (#2470): answeredHosts names sites with a report reply waiting, approved or posted in the last 30 days", async () => {
+  const day = (n) => new Date(NOW - n * 86400000).toISOString();
+  const docs = [
+    { campaign: "report-reply", report: { host: "upb.edu.co" }, seenAt: day(3), actions: { reply: { status: "waiting" } } },
+    { campaign: "report-reply", report: { host: "upb.edu.co" }, seenAt: day(20), actions: { reply: { status: "posted", postedAt: day(1) } } },
+    { campaign: "report-reply", report: { host: "gov.uk" }, seenAt: day(40), actions: { reply: { status: "approved", decidedAt: day(29) } } },
+    { campaign: "report-reply", report: { host: "old.com" }, seenAt: day(31), actions: { reply: { status: "posted", postedAt: day(31) } } },
+    { campaign: "report-reply", report: { host: "skip.com" }, seenAt: day(2), actions: {} },
+    { campaign: "report-reply", report: { host: "gone.com" }, seenAt: day(2), actions: { reply: { status: "dropped" } } },
+    { campaign: "report-reply", report: { host: "seen.com" }, seenAt: day(2), actions: { reply: { status: "replied" } } }
+  ];
+  const asked = [];
+  const db = { collection: (name) => ({ where: (field, op, hosts) => ({ limit: () => ({ get: async () => {
+    asked.push([name, field, op, hosts]);
+    return { docs: docs.filter((d) => hosts.includes(d.report.host)).map((d) => ({ data: () => d })) };
+  } }) }) }) };
+  const hosts = ["https://www.upb.edu.co/", "gov.uk", "old.com", "skip.com", "gone.com", "seen.com", "upb.edu.co", ""];
+  const out = await R.answeredHosts(db, hosts, NOW);
+  assert.deepEqual([...out], [["upb.edu.co", day(1)], ["gov.uk", day(29)]]);
+  assert.deepEqual(asked, [["engagement_posts", "report.host", "in", ["upb.edu.co", "gov.uk", "old.com", "skip.com", "gone.com", "seen.com"]]]);
+  assert.deepEqual([...(await R.answeredHosts(db, hosts, NOW, R.ANSWERED.concat("replied"))).keys()], ["upb.edu.co", "gov.uk", "seen.com"]);
+  assert.equal((await R.answeredHosts(db, [], NOW)).size, 0);
+});

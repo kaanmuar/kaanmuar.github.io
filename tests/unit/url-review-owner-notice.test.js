@@ -143,6 +143,15 @@ test("a notice waits for a live card and no stop or unlist", () => {
   assert.match(notice.sendBlock(Object.assign({}, pending, { status: "sent" }), { card }), /not waiting/);
 });
 
+test("a notice waits 30 days after we answered a post about the site with its report (#2470)", () => {
+  const card = { id: "u-acme-co", host: "acme.co" };
+  const pending = { status: "pending", host: "www.shop.acme.co", domain: "acme.co", email: "info@acme.co" };
+  assert.equal(notice.sendBlock(pending, { card, answered: new Map([["other.co", "2026-11-01T10:00:00Z"]]) }), "");
+  assert.equal(notice.sendBlock(pending, { card, answered: new Map([["shop.acme.co", "2026-11-01T10:00:00Z"]]) }),
+    "We answered a post about shop.acme.co with its report on 2026-11-01. The notice waits 30 days from then.");
+  assert.match(notice.sendBlock(pending, { card, answered: new Map([["acme.co", "2026-10-20T10:00:00Z"]]) }), /about acme\.co .* on 2026-10-20/);
+});
+
 test("one Send can go to several addresses, each once, and falls back to the notice's own", () => {
   const row = { email: "info@acme.co" };
   assert.deepEqual(notice.pickedEmails(row, [" Info@Acme.co", "x@acme.co", "info@acme.co", ""]), ["info@acme.co", "x@acme.co"]);
