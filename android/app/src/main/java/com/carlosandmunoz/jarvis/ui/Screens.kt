@@ -555,6 +555,14 @@ fun BusinessScreen(s: UiState, vm: JarvisViewModel) {
         }
         search.obj("brave").objs("queries").forEach { q -> KeyRow(q.str("query") ?: "", q.num("position")?.let { "#" + it.toInt() } ?: "not in top 20", if (q.num("position") != null) J.green else J.muted, q.str("url")) }
     }
+    search.obj("index")?.takeIf { it.bool("ok") == true }?.let { ix ->
+        Panel("Search index (Brave)") {
+            KpiPairs(listOf(KpiData("Pages indexed", fmt(ix.num("indexed"))), KpiData("Sitemap pages", fmt(ix.num("total"))), KpiData("Missing", fmt(ix.num("missing")))))
+            ix.str("zeroSince")?.let { Muted("None indexed since " + it.take(10) + ".") }
+            ix.at("mainMissing").strings().forEach { u -> KeyRow(u.removePrefix("https://carlosandmunoz.com").ifEmpty { "/" }, "missing", J.muted, u) }
+            Muted(ix.str("pushedAt")?.let { at -> "Last sent " + at.take(10) + ": Brave took " + fmt(ix.obj("pushed").num("brave")) + "." } ?: "Not sent yet: Jarvis sends the missing pages on its next weekly pass.")
+        }
+    }
     search.obj("console")?.let { c -> TopList("Google queries", c.objs("queries").map { (it.str("query") ?: "") to (it.num("clicks") ?: 0.0) }) }
 
     val social = snap.ext("social")

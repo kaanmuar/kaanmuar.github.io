@@ -1782,6 +1782,20 @@ async function printHtml(html, max) {
   }
 }
 
+// A non-review job for reviewBrowser (kind "brave-submit"), answered as JSON within its 120 s timeout.
+async function browserJob(job) {
+  const key = process.env.BROWSER_KEY;
+  if (!key) throw new Error("BROWSER_KEY is not set.");
+  const res = await fetch(BROWSER_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-review-key": key },
+    body: JSON.stringify(job),
+    signal: AbortSignal.timeout(125000)
+  });
+  if (!res.ok) throw new Error("reviewBrowser answered " + res.status);
+  return res.json();
+}
+
 // A PDF too large to send back, kept under comparison-pdfs/ (deleted after a day by the bucket's lifecycle rule)
 // and fetched by its download-token link, which is unguessable and needs no signing.
 async function storePdf(base64, filename) {
@@ -5198,6 +5212,7 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
     const browserJob = require("./url-review-browser");
     const result = job.kind === "pdf"
       ? await browserJob.printPdf(job.html)
+      : job.kind === "brave-submit" ? await browserJob.submitBrave(job.urls)
       : await browserJob.browse(job, stream ? (text) => line({ type: "log", text }) : null, stream ? (start) => line({ type: "start", start }) : null);
     if (stream) {
       line({ type: "done", result });
@@ -5218,6 +5233,7 @@ const jarvis = require("./jarvis");
 const jarvisCore = require("./jarvis-core");
 const jarvisSum = (field) => AggregateField.sum(field);
 const jarvisSources = require("./jarvis-sources");
+const jarvisIndex = require("./jarvis-index");
 const jarvisDays = require("./jarvis-days");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
@@ -5789,6 +5805,8 @@ function jarvisAutoOps(settings, now, th) {
     pauseMailbox: (email) => jarvisMarketing.mailboxAct(ctx, email, "pause"),
     setPause: (email, row) => row ? db.collection("jarvis_outreach_pauses").doc(email).set(row) : db.collection("jarvis_outreach_pauses").doc(email).delete(),
     launchReady: process.env.INSTANTLY_API_KEY ? () => jarvisMarketing.launchReady(ctx) : null,
+    indexGaps: () => jarvisIndex.gaps(ctx),
+    indexPush: (missing) => jarvisIndex.push(Object.assign({}, ctx, { browse: browserJob }), missing),
     socialFailed: async () => {
       const social = (await jarvisExternal(["social"], 1)).social || {};
       return social.ok ? Number(social.failed) || 0 : 0;

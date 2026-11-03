@@ -33,6 +33,8 @@
    launch-campaign #2475: an Instantly campaign still a draft with leads, steps, a mailbox and a start date at most
                    LAUNCH_DAYS away (jarvis-marketing.js launchReady) is activated after the countdown, one countdown per
                    campaign and start date, so one Carlos cancels stays a draft
+   index-submit    #2480: once a week, the sitemap pages missing from Brave's index go to IndexNow and Brave's Submit
+                   URL form (jarvis-index.js)
    ai-ask, ai-fix  open alerts no rule handles go to Gemini once per alert set and day, AI_CALLS a day; it may only pick
                    from AI_CATALOG, and a pick runs alone at confidence >= settings.confidence (the risky ones after the
                    countdown); the rest become proposals
@@ -47,12 +49,12 @@ const core = require("./jarvis-core");
 const addresses = require("./jarvis-addresses");
 
 const SAFE = core.SAFE_ACTIONS;
-const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10 };
+const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10, "index-submit": 1 };
 const LABELS = {
   "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again", "rerun-ci": "Re-run failed CI jobs",
   "rating-decide": "Decide ratings", "brief-mark": "Snooze or dismiss a briefing line", "rerun-job": "Re-run a failed job", "refresh-stale": "Refresh stale data", "rerun-reviews": "Re-run reviews after a fix",
   "pause-outreach": "Pause an outreach mailbox", "resume-outreach": "Resume outreach mailboxes", "retry-social": "Retry failed social posts", "ai-ask": "Ask the AI what to fix", "ai-fix": "Run a fix the AI picked",
-  "merge-pr": "Merge a green PR", "enable-warmup": "Turn mailbox warm-up back on", "restore-alias": "Restore a missing alias", "launch-campaign": "Launch a draft campaign",
+  "merge-pr": "Merge a green PR", "index-submit": "Send missing pages to search engines", "enable-warmup": "Turn mailbox warm-up back on", "restore-alias": "Restore a missing alias", "launch-campaign": "Launch a draft campaign",
   "pagespeed-merge": "Merge PageSpeed fixes", "pagespeed-close": "Close PageSpeed fixes", "pagespeed-run": "Start the PageSpeed run"
 };
 const NOTICE_TRIES = 3;
@@ -433,6 +435,17 @@ async function autoRun({ db, now, settings, ops }) {
     for (const c of drafts.filter((d) => !inLaunch.has(d.id))) {
       await later({ action: "launch-campaign", target: c.name, part: c.id + "@" + c.start, payload: { items: [{ id: c.id, name: c.name }] },
         why: "A draft with " + plural(c.leads, "lead") + " that starts " + c.start + "; nothing sends until it is active.", onCancel: "activate it in Jarvis > Marketing" });
+    }
+  }
+
+  if (ops.indexGaps && ops.indexPush) {
+    handled.add("search:index");
+    const d = new Date(day + "T00:00:00Z");
+    const week = new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * DAY).toISOString().slice(0, 10);
+    const target = "search index @ week of " + week;
+    if (!(await seen(db, "index-submit", target))) {
+      const missing = await ops.indexGaps().catch(() => null);
+      if (missing && missing.length) await once("index-submit", target, missing.length + " sitemap pages are missing from Brave's index.", () => ops.indexPush(missing));
     }
   }
 
