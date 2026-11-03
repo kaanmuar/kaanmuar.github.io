@@ -1,6 +1,6 @@
 # Carlos A. Muñoz: interactive CV, free QA tools, and QA-lab URL Review
 
-> carlosandmunoz.com is the site of Carlos A. Muñoz Ardila, a senior QA architect and IT project manager with over 18 years of experience, based in Medellín, Colombia. It holds his interactive CV, a free QA regression lab, a free SDLC studio, and QA-lab URL Review, which analyzes one public https address, scores its SEO, AI-search visibility, analytics, security, accessibility, and performance, and proposes test cases written for 20 frameworks.
+> carlosandmunoz.com is the site of Carlos A. Muñoz Ardila, a senior QA architect and IT project manager with over 18 years of experience, based in Medellín, Colombia, and since 2025 the founder and lead engineer of QA Lab, the AI-assisted QA platform this site runs. It holds his interactive CV, a free QA regression lab, a free SDLC studio, and QA-lab URL Review, which analyzes one public https address, scores its SEO, AI-search visibility, analytics, security, accessibility, and performance, and proposes test cases written for 20 frameworks.
 
 Full text for answer engines, in one file: https://carlosandmunoz.com/llms-full.txt
 

@@ -75,6 +75,7 @@
             footer_privacy: 'Privacy and disclaimers',
             footer_accessibility: 'Accessibility',
             roles: [
+                'Founder & Lead Engineer',
                 'Senior QA & Program Consultant',
                 'Senior Technical Project Manager & Consultant',
                 'Sr. Project Manager & QA Engineer',
@@ -111,6 +112,7 @@
             footer_privacy: 'Privacidad y avisos legales',
             footer_accessibility: 'Accesibilidad',
             roles: [
+                'Fundador e ingeniero principal',
                 'Consultor Senior de QA y Programas',
                 'Gerente Senior de Proyectos Técnicos y Consultor',
                 'Gerente Senior de Proyectos e Ingeniero de QA',
@@ -147,6 +149,7 @@
             footer_privacy: 'Privacidade e avisos legais',
             footer_accessibility: 'Acessibilidade',
             roles: [
+                'Fundador e engenheiro líder',
                 'Consultor Sênior de QA e Programas',
                 'Gerente Sênior de Projetos Técnicos e Consultor',
                 'Gerente Sênior de Projetos e Engenheiro de QA',
@@ -183,6 +186,7 @@
             footer_privacy: 'Datenschutz und Hinweise',
             footer_accessibility: 'Barrierefreiheit',
             roles: [
+                'Gründer & Lead Engineer',
                 'Senior QA- und Programmberater',
                 'Senior Technical Project Manager und Berater',
                 'Senior Projektmanager und QA-Ingenieur',
@@ -219,6 +223,7 @@
             footer_privacy: 'Confidentialité et mentions',
             footer_accessibility: 'Accessibilité',
             roles: [
+                'Fondateur et ingénieur principal',
                 'Consultant senior QA et programmes',
                 'Chef de projet technique senior et consultant',
                 'Chef de projet senior et ingénieur QA',
@@ -255,6 +260,7 @@
             footer_privacy: 'Privacy e avvertenze',
             footer_accessibility: 'Accessibilità',
             roles: [
+                'Fondatore e Lead Engineer',
                 'Consulente senior QA e programmi',
                 'Senior Technical Project Manager e consulente',
                 'Senior Project Manager e ingegnere QA',
@@ -409,6 +415,7 @@
     };
 
     const PRINT_COMPANIES = {
+        'QA Lab · carlosandmunoz.com': 'https://carlosandmunoz.com',
         'Team International': 'https://www.teaminternational.com',
         'RockStar Coders Agency': 'https://www.rockstarcoders.com',
         'Globant': 'https://www.globant.com',
@@ -1081,18 +1088,37 @@
                 return `<a class="company-link" href="${this._esc(href)}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
             },
 
+            _splitDetailLabel(detail) {
+                const m = /^([^:]{2,70}):\s(.+)$/s.exec(String(detail || ''));
+                return m ? { label: m[1], text: m[2] } : null;
+            },
+
             _createExperienceEntry(exp, index) {
                 const bodyId = `experience-body-${index}`;
                 const headerId = `experience-header-${index}`;
                 const title = typeof exp.title === 'string' ? exp.title : ((exp.title && exp.title.en) || '');
-                const detailsHtml = (exp.details.en || []).map((detail, i) => `<li data-translate-key="exp_${index}_detail_${i}">${this._esc(detail)}</li>`).join('');
+                const detailsHtml = (exp.details.en || []).map((detail, i) => {
+                    const parts = exp.featured ? this._splitDetailLabel(detail) : null;
+                    if (!parts) return `<li data-translate-key="exp_${index}_detail_${i}">${this._esc(detail)}</li>`;
+                    return `<li><strong class="exp-detail-label" data-translate-key="exp_${index}_detail_${i}_label">${this._esc(parts.label)}</strong> <span data-translate-key="exp_${index}_detail_${i}">${this._esc(parts.text)}</span></li>`;
+                }).join('');
+                const summaryText = exp.summary && exp.summary.en
+                    ? exp.summary.en
+                    : `${(exp.details.en && exp.details.en[0] ? exp.details.en[0] : title).substring(0, 100)}...`;
+                const badgeHtml = exp.featured && exp.badge && exp.badge.en
+                    ? `<p class="experience-badge" data-translate-key="exp_${index}_badge">${this._esc(exp.badge.en)}</p>`
+                    : '';
+                const highlightsHtml = exp.featured && Array.isArray(exp.highlights) && exp.highlights.length
+                    ? `<ul class="experience-highlights">${exp.highlights.map((h, i) => `<li><strong>${this._esc(h.value)}</strong><span data-translate-key="exp_${index}_highlight_${i}">${this._esc((h.label && h.label.en) || '')}</span></li>`).join('')}</ul>`
+                    : '';
                 const techTagsHtml = (exp.techUsed || []).map(techName => {
                     const skill = Object.values(this.data.skills).flat().find(s => s.name === techName);
                     if (!skill) return '';
                     return `<div class="exp-tech-tag"><img src="${skill.icon}" alt="" data-hide-broken><span>${skill.name}</span></div>`;
                 }).join('');
                 return `
-                    <div class="experience-item text-sm py-2 animate-on-scroll" data-tech='${JSON.stringify(exp.techUsed)}' id="experience-${index}">
+                    <div class="experience-item${exp.featured ? ' experience-item--featured' : ''} text-sm py-2 animate-on-scroll" data-tech='${JSON.stringify(exp.techUsed)}' id="experience-${index}">
+                        ${badgeHtml}
                         <div class="experience-heading p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
                             <button class="accordion-header w-full flex justify-between items-start gap-2" id="${headerId}" aria-expanded="false" aria-controls="${bodyId}" data-company="${this._esc(exp.company)}">
                                 <h4 class="text-base font-bold flex-grow text-left min-w-0" data-translate-key="exp_${index}_title">${this._esc(title)}</h4>
@@ -1101,7 +1127,8 @@
                             </button>
                             <p class="text-sm italic company-line">${this._companyMarkup(exp)}</p>
                         </div>
-                        <p class="experience-summary" data-translate-key="exp_${index}_summary">${this._esc((exp.details.en && exp.details.en[0] ? exp.details.en[0] : title).substring(0, 100))}...</p>
+                        <p class="experience-summary" data-translate-key="exp_${index}_summary">${this._esc(summaryText)}</p>
+                        ${highlightsHtml}
                         <div class="experience-body mt-2" id="${bodyId}" role="region" aria-labelledby="${headerId}">
                             <ul class="list-disc list-inside space-y-1 pl-4">${detailsHtml}</ul>
                             <div class="experience-tech-tags">${techTagsHtml}</div>
@@ -1472,10 +1499,10 @@
             _getSkillsForCompetency(competencyLabel) {
                 const competencyMap = {
                     'Project Mgmt': ['Agile', 'Kanban', 'Scrum', 'Strategic Planning', 'Risk Management', 'Stakeholder Mgmt', 'Jira', 'TestRail', 'MS Project'],
-                    'QA & Automation': ['Selenium', 'Cypress', 'Playwright', 'WebdriverIO', 'Protractor', 'Appium', 'Expresso', 'Robot Framework', 'Cucumber', 'JMeter', 'Katalon'],
+                    'QA & Automation': ['Selenium', 'Cypress', 'Playwright', 'WebdriverIO', 'Protractor', 'Appium', 'Expresso', 'Robot Framework', 'Cucumber', 'JMeter', 'Katalon', 'CodeceptJS', 'Selenide', 'Behave', 'Reqnroll', 'Vitest', 'Maestro', 'k6', 'Gatling', 'axe-core', 'Lighthouse'],
                     'Leadership': ['Stakeholder Mgmt', 'Strategic Planning'],
-                    'DevOps Strategy': ['Jenkins', 'Docker', 'GitHub', 'AWS', 'Azure DevOps', 'GCP'],
-                    'Cloud Platforms': ['AWS', 'Azure DevOps', 'GCP', 'Docker'],
+                    'DevOps Strategy': ['Jenkins', 'Docker', 'GitHub', 'AWS', 'Azure DevOps', 'GCP', 'GitHub Actions', 'GitHub Pages', 'Super-Linter', 'Qodana', 'Gradle'],
+                    'Cloud Platforms': ['AWS', 'Azure DevOps', 'GCP', 'Docker', 'Firebase', 'Firestore', 'Cloud Functions', 'Google Cloud Run', 'Cloud Build', 'Cloudflare Workers'],
                     'Stakeholder Mgmt': ['Stakeholder Mgmt'],
                     'Agile': ['Agile', 'Scrum', 'Kanban'],
                     'Scrum': ['Scrum', 'Jira'],
@@ -1483,7 +1510,7 @@
                     'CMMI': ['CMMI', 'ISO Standards'],
                     'ISO Standards': ['ISO Standards', 'CISA', 'CISM', 'CISSP'],
                     'Risk Mgmt': ['Risk Management', 'Owasp', 'Strategic Planning', 'CMMI', 'ISO Standards'],
-                    'AI Expertise': ['Cursor', 'Claude', 'GitHub Copilot', 'ChatGPT', 'Custom personalizations']
+                    'AI Expertise': ['Cursor', 'Claude', 'GitHub Copilot', 'ChatGPT', 'Custom personalizations', 'Gemini API', 'AI-assisted development', 'Prompt & context engineering']
                 };
                 return competencyMap[competencyLabel] || [];
             },
@@ -1493,13 +1520,13 @@
                 if (live && Array.isArray(live.skills) && live.skills.length) return live.skills;
                 const map = {
                     pm: ['MS Project', 'Strategic Planning', 'Risk Management', 'TestRail', 'Stakeholder Mgmt'],
-                    qa: ['Selenium', 'Cypress', 'Playwright', 'WebdriverIO', 'Protractor', 'Appium', 'Expresso', 'Robot Framework', 'Cucumber', 'JMeter', 'Katalon'],
+                    qa: ['Selenium', 'Cypress', 'Playwright', 'WebdriverIO', 'Protractor', 'Appium', 'Expresso', 'Robot Framework', 'Cucumber', 'JMeter', 'Katalon', 'CodeceptJS', 'Selenide', 'Behave', 'Reqnroll', 'Vitest', 'Maestro', 'k6', 'Gatling', 'axe-core', 'Lighthouse'],
                     lead: ['Stakeholder Mgmt', 'Strategic Planning'],
-                    devops: ['Jenkins', 'Docker', 'GitHub', 'AWS', 'Azure DevOps', 'GCP'],
-                    cloud: ['AWS', 'Azure DevOps', 'GCP', 'Docker'],
+                    devops: ['Jenkins', 'Docker', 'GitHub', 'AWS', 'Azure DevOps', 'GCP', 'GitHub Actions', 'GitHub Pages', 'Super-Linter', 'Qodana', 'Gradle'],
+                    cloud: ['AWS', 'Azure DevOps', 'GCP', 'Docker', 'Firebase', 'Firestore', 'Cloud Functions', 'Google Cloud Run', 'Cloud Build', 'Cloudflare Workers'],
                     strategy: ['Strategic Planning', 'Risk Management', 'CMMI', 'ISO Standards'],
                     relations: ['Stakeholder Mgmt'],
-                    ai: ['Cursor', 'Claude', 'GitHub Copilot', 'ChatGPT', 'Custom personalizations']
+                    ai: ['Cursor', 'Claude', 'GitHub Copilot', 'ChatGPT', 'Custom personalizations', 'Gemini API', 'AI-assisted development', 'Prompt & context engineering']
                 };
                 return map[topicId] || this._skillsForTopic(topicId);
             },
@@ -1699,10 +1726,17 @@
                     Object.keys(this.data.translations).forEach(lang => {
                         if (!this.data.translations[lang] || !exp.details[lang]) return;
                         const englishTitle = typeof exp.title === 'string' ? exp.title : ((exp.title && exp.title.en) || '');
-                        this.data.translations[lang][`exp_${expIdx}_title`] = this.data.translations[lang][`role_${expIdx}`] || englishTitle;
-                        this.data.translations[lang][`exp_${expIdx}_summary`] = exp.details[lang][0].substring(0, 100) + '...';
+                        const roleIdx = ((PRINT_COPY.en && PRINT_COPY.en.roles) || []).indexOf(englishTitle);
+                        this.data.translations[lang][`exp_${expIdx}_title`] = (roleIdx >= 0 && this.data.translations[lang][`role_${roleIdx}`]) || englishTitle;
+                        this.data.translations[lang][`exp_${expIdx}_summary`] = (exp.summary && exp.summary[lang]) || (exp.details[lang][0].substring(0, 100) + '...');
+                        if (exp.badge && exp.badge[lang]) this.data.translations[lang][`exp_${expIdx}_badge`] = exp.badge[lang];
+                        (exp.highlights || []).forEach((h, i) => {
+                            if (h.label && h.label[lang]) this.data.translations[lang][`exp_${expIdx}_highlight_${i}`] = h.label[lang];
+                        });
                         exp.details[lang].forEach((detail, i) => {
-                            this.data.translations[lang][`exp_${expIdx}_detail_${i}`] = detail;
+                            const parts = exp.featured ? this._splitDetailLabel(detail) : null;
+                            this.data.translations[lang][`exp_${expIdx}_detail_${i}`] = parts ? parts.text : detail;
+                            if (parts) this.data.translations[lang][`exp_${expIdx}_detail_${i}_label`] = parts.label;
                         });
                     });
                 });
@@ -1818,7 +1852,10 @@
                 if (!this._isNativeLang(this.state.lang)) {
                     title = titleTexts.find((text) => text !== englishTitle) || title;
                 }
-                if (!title) title = (this._t() || {})[`role_${index}`] || englishTitle;
+                if (!title) {
+                    const roleIdx = ((PRINT_COPY.en && PRINT_COPY.en.roles) || []).indexOf(englishTitle);
+                    title = (roleIdx >= 0 && (this._t() || {})[`role_${roleIdx}`]) || englishTitle;
+                }
                 const detailsSource = (exp.details && (exp.details[lang] || exp.details.en)) || [];
                 const details = detailsSource.map((detail, i) => this._s(`exp_${index}_detail_${i}`, detail));
                 return { title, company: exp.company, dates: this._exportDate(index, exp.dates), details, techUsed: exp.techUsed || [] };
@@ -3747,11 +3784,16 @@
 
             _roleFromLive(role, fileExperiences) {
                 const source = Number.isInteger(role.source) ? role.source : -1;
-                const base = source >= 0 && fileExperiences[source]
-                    ? JSON.parse(JSON.stringify(fileExperiences[source]))
-                    : { title: '', company: '', dates: '', logo: 'assets/icons/briefcase.svg', techUsed: [], details: {} };
-                const title = this._cleanLiveText(role.title, 140);
                 const company = this._cleanLiveText(role.company, 140);
+                const bySource = source >= 0 ? fileExperiences[source] : null;
+                const sourceExp = bySource && bySource.company === company
+                    ? bySource
+                    : (fileExperiences.find((exp) => exp.company === company) || bySource);
+                const base = sourceExp
+                    ? JSON.parse(JSON.stringify(sourceExp))
+                    : { title: '', company: '', dates: '', logo: 'assets/icons/briefcase.svg', techUsed: [], details: {} };
+                const sourceIdx = sourceExp ? fileExperiences.indexOf(sourceExp) : -1;
+                const title = this._cleanLiveText(role.title, 140);
                 const dates = this._cleanLiveText(role.dates, 80);
                 if (!title || !company || !dates) return null;
                 base.title = title;
@@ -3761,7 +3803,7 @@
                 if (!Array.isArray(base.techUsed)) base.techUsed = [];
                 if (!base.details) base.details = {};
                 const bullets = role.bullets || {};
-                const fileDetails = (source >= 0 && fileExperiences[source] && fileExperiences[source].details) || {};
+                const fileDetails = (sourceExp && sourceExp.details) || {};
                 const cleanLines = (list, max) => (Array.isArray(list) ? list : []).map((line) => this._cleanLiveText(line, 400)).filter(Boolean).slice(0, max);
                 const liveEnglish = cleanLines(bullets.en, 8);
                 const fileEnglish = cleanLines(fileDetails.en, 8);
@@ -3783,7 +3825,7 @@
                 ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
                     if (!base.details[lang] || !base.details[lang].length) base.details[lang] = english.slice();
                 });
-                base.liveSource = source;
+                base.liveSource = sourceIdx;
                 base.liveHidden = role.hidden === true;
                 base.onTimeline = role.onTimeline !== false;
                 return base;

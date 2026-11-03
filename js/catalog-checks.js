@@ -909,10 +909,10 @@
       return '9 characters blocked; 10 with a real email enabled send';
     },
     'FN-38': async function () {
-      var team = document.querySelector('#experience-0 .company-link');
+      var team = document.querySelector('#experience-1 .company-link');
       assert(team && team.getAttribute('href') === 'https://www.teaminternational.com', 'current company link');
       assert(team.getAttribute('target') === '_blank' && /noopener/.test(team.getAttribute('rel') || ''), 'company link is not a new tab');
-      var header = document.getElementById('experience-header-0');
+      var header = document.getElementById('experience-header-1');
       var before = header.getAttribute('aria-expanded');
       team.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
       assert(header.getAttribute('aria-expanded') === before, 'company click toggled the job');
@@ -926,7 +926,7 @@
         assert([].slice.call(document.querySelectorAll('.company-name')).some(function (node) { return node.textContent.indexOf(name) !== -1; }), name + ' should stay plain');
       });
       var data = JSON.parse(document.getElementById('person-structured-data').textContent);
-      assert(data.worksFor && data.worksFor.url === 'https://www.teaminternational.com', 'worksFor');
+      assert([].concat(data.worksFor || []).some(function (org) { return org.url === 'https://www.teaminternational.com'; }), 'worksFor');
       assert(data.affiliation.some(function (org) { return org.url === 'https://zaga.co'; }), 'Zaga missing from structured data');
       var xml = await textOf('sitemap.xml');
       assert(xml.indexOf('zaga.co') === -1 && xml.indexOf('globant.com') === -1, 'sitemap listed a company');
