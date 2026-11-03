@@ -15,5 +15,8 @@
     "mailparser": "^3.14.1",
     "puppeteer-core": "^25.16.0",
     "web-push": "^3.6.7"
+  },
+  "overrides": {
+    "glob": "^14.0.3"
   }
 }
