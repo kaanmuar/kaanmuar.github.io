@@ -6,11 +6,15 @@
  * act(page, task) => { url } or a throw. A Refused throw means the network refused us for now (signed out, a
  * check, a limit): the task stays queued and the agent leaves that network alone for a day.
  * replied(page, task) => { url } of our earlier reply on the post, or null, runs before every reply (#2424);
- * inbox(page), where a network has it, => replies and mentions of us, as posts with liked and on (our post's id).
+ * inbox(page) => comments on our posts and replies to ours, as posts with liked, answered, on (our post's id) and ours
+ * (its text); inbox-map.js reads each network's notifications JSON (#2452). A comment task (task.chain) runs
+ * likeComment or replyComment where the network has them; on X and Threads a comment is a post, so like and reply serve.
  *
  * The selectors are the networks' own accessibility labels and test ids where they have them; when a network
  * changes its page, `agent.js check --read` shows which reader came back empty and saves a screenshot.
  */
+
+const Inbox = require("./inbox-map");
 
 class Refused extends Error {}
 
@@ -48,8 +52,10 @@ async function click(loc) {
   await pause(1200, 2500);
 }
 
-async function type(page, loc, text) {
+// end: the box already holds the name of the person answered, so the text goes after it.
+async function type(page, loc, text, end) {
   await click(loc);
+  if (end) await page.keyboard.press("Meta+ArrowDown");
   for (const part of String(text).match(/.{1,12}/gsu) || []) {
     await page.keyboard.type(part, { delay: rand(35, 85) });
     await pause(80, 400);
@@ -64,6 +70,25 @@ const need = async (loc, what) => { if (!(await visible(loc))) throw new Error(w
 // In-page helper source: "1,234", "1.2K", "3M" and aria-labels like "57 Likes. Like" as numbers.
 const NUM = "const num = (s) => { const m = String(s || '').replace(/,/g, '').match(/([\\d.]+)\\s*([KkMm])?/); if (!m) return 0; const v = parseFloat(m[1]) * ({ k: 1e3, m: 1e6 }[(m[2] || '').toLowerCase()] || 1); return Number.isFinite(v) ? Math.round(v) : 0; };";
 const evaluate = (page, body, arg) => page.evaluate(new Function("arg", NUM + body), arg);
+
+// A comment task's comment: find (in-page source returning the comment's own box, given arg) marks it, so the like and
+// the reply stay inside that comment and never touch the post or another comment.
+async function commentBox(page, find, arg) {
+  for (let i = 0; i < 6; i += 1) {
+    const ok = await evaluate(page, `document.querySelectorAll('[data-qalab-comment]').forEach((e) => e.removeAttribute('data-qalab-comment'));
+      const box = (() => {` + find + `})(); if (box) box.setAttribute('data-qalab-comment', '1'); return !!box;`, arg);
+    if (ok) return page.locator("[data-qalab-comment]").first();
+    await pause(1500, 2500);
+  }
+  throw new Error("The comment was not on the page.");
+}
+
+// The reply box keeps our text until it sends.
+async function sent(box, draft) {
+  await pause(3000, 5000);
+  const left = await box.innerText({ timeout: 2000 }).catch(() => "");
+  if (left.includes(String(draft).slice(0, 20))) throw new Error("The reply did not send.");
+}
 
 // On LinkedIn and Facebook the agent acts as our page, never as the person signed in (Carlos, #1991).
 const PAGES = { linkedin: "146731408", facebook: "qalaburlreview" };
@@ -265,6 +290,20 @@ const threads = {
     await click(await need(dialog.getByRole("button", { name: /^(Post|Publicar)$/ }), "Post"));
     await dialog.first().waitFor({ state: "hidden", timeout: 15000 }).catch(() => { throw new Error("The reply did not send."); });
     return { url: task.url };
+  },
+  // The Replies tab of the activity page: its first rows come in the page's own JSON, the next ones from its GraphQL.
+  async inbox(page) {
+    const got = [];
+    const on = async (r) => {
+      if (!/\/(api\/graphql|graphql\/query)/.test(r.url())) return;
+      const t = await r.text().catch(() => "");
+      if (t.includes("XTHNotificationFeedRow")) try { got.push(JSON.parse(t)); } catch (error) { /* not JSON */ }
+    };
+    page.on("response", on);
+    try { await go(page, this, "https://www.threads.com/activity/replies"); await pause(3000, 5000); await scroll(page, 1); } finally { page.off("response", on); }
+    const embedded = await page.evaluate(() => Array.from(document.querySelectorAll('script[type="application/json"]')).map((s) => s.textContent).filter((t) => t.includes("XTHNotificationFeedRow")));
+    embedded.forEach((t) => { try { got.push(JSON.parse(t)); } catch (error) { /* not JSON */ } });
+    return Inbox.threads(got, this.account);
   }
 };
 
@@ -328,6 +367,35 @@ const instagram = {
     await click(await need(page.getByRole("button", { name: /^(Post|Publicar)$/ }), "Post"));
     await pause(3000, 5000);
     if ((await box.inputValue().catch(() => "")).trim()) throw new Error("The comment did not send.");
+    return { url: task.url };
+  },
+  async inbox(page) {
+    if (!page.url().startsWith("https://www.instagram.com/")) await go(page, this, this.home);
+    const j = await page.evaluate(() => fetch("/api/v1/news/inbox/", { headers: { "x-ig-app-id": "936619743392459" }, credentials: "include" }).then((r) => (r.ok ? r.json() : null), () => null).catch(() => null));
+    if (!j) throw new Error("Instagram's activity feed did not answer.");
+    return Inbox.instagram(j, this.account);
+  },
+  // A comment's own link (/p/<code>/c/<id>/) opens the post with that comment; its row holds the small heart.
+  async comment(page, task) {
+    await go(page, this, task.url);
+    return commentBox(page, `const a = document.querySelector('a[href*="/c/' + arg.id + '/"]'); let b = a;
+      while (b && !b.querySelector('svg[height="16"]')) b = b.parentElement; return b;`, { id: task.id });
+  },
+  async likeComment(page, task) {
+    const box = await this.comment(page, task);
+    if (await has(box.locator(icon(SAYS.unlike, '[height="16"]')))) return {};
+    await click(await need(button(box, SAYS.like, '[height="16"]'), "The comment's like"));
+    if (!(await visible(box.locator(icon(SAYS.unlike, '[height="16"]')), 6000))) throw new Error("The like did not stick.");
+    return {};
+  },
+  async replyComment(page, task) {
+    const box = await this.comment(page, task);
+    await click(await need(box.getByRole("button", { name: /^(Reply|Responder)$/ }).or(box.getByText(/^(Reply|Responder)$/)), "The comment's Reply"));
+    const input = await need(page.locator('textarea[aria-label^="Add a comment"], textarea[aria-label^="Añade un comentario"]'), "The comment box");
+    await type(page, input, task.draft, true);
+    await click(await need(page.getByRole("button", { name: /^(Post|Publicar)$/ }), "Post"));
+    await pause(3000, 5000);
+    if ((await input.inputValue().catch(() => "")).includes(String(task.draft).slice(0, 20))) throw new Error("The reply did not send.");
     return { url: task.url };
   }
 };
@@ -399,12 +467,59 @@ const tiktok = {
     await click(await need(page.locator('[data-e2e="comment-post"]'), "Post"));
     await pause(3000, 5000);
     return { url: task.url };
+  },
+  // The activity panel loads its notices as JSON: all activity first, then the Comments tab. Its tabs count as
+  // hidden to Playwright while the panel slides in, so they get a plain DOM click.
+  async inbox(page) {
+    const got = [];
+    const on = async (r) => {
+      if (!r.url().includes("/api/notice/multi/")) return;
+      const j = await r.json().catch(() => null);
+      if (j) got.push(j);
+    };
+    page.on("response", on);
+    try {
+      if (!page.url().startsWith("https://www.tiktok.com/")) await go(page, this, this.home);
+      await click(await need(page.locator('[data-e2e="nav-activity"]'), "Activity"));
+      await pause(2500, 4000);
+      await page.locator('button[data-e2e="comments"]').first().dispatchEvent("click").catch(() => null);
+      await pause(3000, 5000);
+    } finally { page.off("response", on); }
+    return got.flatMap((j) => Inbox.tiktok(j, this.account)).filter((c, i, all) => all.findIndex((d) => d.id === c.id) === i);
+  },
+  // The video's comment panel; the comment is the one whose text starts as the task's does.
+  async comment(page, task) {
+    await go(page, this, task.url);
+    const open = page.locator('[data-e2e="comment-icon"]');
+    if (await has(open)) await click(open.first());
+    await pause(2000, 3500);
+    return commentBox(page, `const norm = (s) => String(s || '').replace(/\\s+/g, ' ').trim(); const want = norm(arg.text).slice(0, 30);
+      const t = want && Array.from(document.querySelectorAll('[data-e2e^="comment-level"]')).find((e) => norm(e.innerText).startsWith(want));
+      let b = t; while (b && !b.querySelector('[data-key-interaction="comment_like"]')) b = b.parentElement; return b || null;`, { text: task.text });
+  },
+  async likeComment(page, task) {
+    const box = await this.comment(page, task);
+    const btn = await need(box.locator('[data-key-interaction="comment_like"][role="button"]'), "The comment's like");
+    if ((await btn.getAttribute("aria-pressed")) === "true") return {};
+    await click(btn);
+    if ((await btn.getAttribute("aria-pressed")) !== "true") throw new Error("The like did not stick.");
+    return {};
+  },
+  async replyComment(page, task) {
+    const box = await this.comment(page, task);
+    await click(await need(box.locator('[data-e2e="comment-reply-1"]'), "The comment's Reply"));
+    const input = await need(page.locator('[data-e2e="comment-input"] [contenteditable="true"]').last(), "The reply box");
+    await type(page, input, task.draft, true);
+    await click(await need(page.locator('[data-e2e="comment-post"]').last(), "Post"));
+    await sent(input, task.draft);
+    return { url: task.url };
   }
 };
 
 // LinkedIn's search page renders server-driven markup with no post ids in it, so the agent reads through the
 // signed-in session's own Voyager API. The query id is LinkedIn's; when it rotates, `check linkedin --read` fails here.
 const LI_SEARCH = "voyagerSearchDashClusters.ef3d0937fb65bd7812e32e5a85028e79";
+const LI_NOTICES = "voyagerOrganizationDashNotificationCards.1752a459d1c9560beeca963a0d1e5fde";
 const LI_API = "const csrf = (document.cookie.match(/JSESSIONID=\"?([^\";]+)/) || [])[1] || ''; const api = (path) => fetch(path, { credentials: 'include', headers: { 'csrf-token': csrf, accept: 'application/vnd.linkedin.normalized+json+2.1', 'x-restli-protocol-version': '2.0.0' } });";
 // LinkedIn sometimes renders without its data-view-name hooks, so the agent goes by accessibility labels.
 const LI_LIKE = 'button[aria-label^="Estado del botón de reacción"], button[aria-label^="Reaction button state"]';
@@ -517,8 +632,64 @@ const linkedin = {
     await click(await need(main.locator("button:not([aria-label])").filter({ hasText: /^\s*(Comentar|Comment|Publicar|Post)\s*$/ }), "Post"));
     await pause(3000, 5000);
     return { url: task.url };
+  },
+  // The page's notifications (the admin view's own query): comments on our posts and replies to our comments.
+  async inbox(page) {
+    if (!page.url().startsWith("https://www.linkedin.com/")) await go(page, this, this.home);
+    const out = await evaluate(page, LI_API + `
+      const vars = '(count:20,organization:urn%3Ali%3Afsd_company%3A' + arg.company + ',secondaryPaginationStart:0,start:0,types:List())';
+      return api('/voyager/api/graphql?includeWebMetadata=true&variables=' + vars + '&queryId=' + arg.id).then(async (r) => (r.ok ? { json: await r.json() } : { error: 'LinkedIn notifications answered ' + r.status }), (e) => ({ error: 'LinkedIn notifications failed: ' + e.message }));`,
+    { company: PAGES.linkedin, id: LI_NOTICES });
+    if (out.error) throw new Error(out.error);
+    return Inbox.linkedin(out.json, PAGES.linkedin);
+  },
+  // The comment's link carries actorCompanyId, so the post opens acting as the page; the comment is its replaceableComment.
+  async comment(page, task) {
+    await go(page, this, task.url);
+    const box = page.locator('[componentkey="replaceableComment_' + task.id + '"]');
+    if (!(await visible(box, 20000))) throw new Error("LinkedIn did not show the comment.");
+    if (!(await visible(page.locator('[aria-label*="como QA-lab" i], [aria-label*="as QA-lab" i], [placeholder*="QA-lab" i]').or(page.getByText(/(Comentar como|Comment as) QA-lab/i)), 6000))) throw new Error("LinkedIn is not acting as the QA-lab page here.");
+    return box.first();
+  },
+  async likeComment(page, task) {
+    const box = await this.comment(page, task);
+    const btn = await need(box.locator('[data-view-name="comment-reaction-button"]'), "The comment's like");
+    const liked = async () => !(await has(btn.locator('svg[id*="outline"]')));
+    if (await liked()) return {};
+    await click(btn);
+    if (!(await liked())) throw new Error("LinkedIn did not take the like.");
+    return {};
+  },
+  async replyComment(page, task) {
+    const box = await this.comment(page, task);
+    await click(await need(box.locator('button[data-view-name="comment-reply"]'), "The comment's Reply"));
+    const form = page.locator("div").filter({ has: page.locator('button[data-view-name="comment-reply-post"]') }).filter({ has: page.locator('[contenteditable="true"]') }).last();
+    const input = await need(form.locator('[contenteditable="true"]'), "The reply box");
+    await type(page, input, task.draft, true);
+    await click(await need(form.locator('button[data-view-name="comment-reply-post"]'), "Reply"));
+    await sent(input, task.draft);
+    return { url: task.url };
   }
 };
+
+// A Facebook comment is the innermost article holding a link whose last comment id is the comment's (a reply's links
+// carry its parent's comment_id too). FB_READ reads the marked one: its own text and like, a reply by our page under
+// it, and the post's text.
+const FB_OPEN = 4;
+const FB_FIND = `const own = (a) => Array.from(a.querySelectorAll('a[href*="comment_id="]')).some((l) => { try { const u = new URL(l.href); return (u.searchParams.get('reply_comment_id') || u.searchParams.get('comment_id')) === arg.id; } catch (e) { return false; } });
+  const all = Array.from(document.querySelectorAll('div[role="article"]')).filter(own);
+  return all.filter((a) => !all.some((b) => b !== a && a.contains(b))).pop() || null;`;
+const FB_READ = `const box = document.querySelector('[data-qalab-comment]');
+  const nested = Array.from(box.querySelectorAll('div[role="article"]'));
+  const mine = (e) => !nested.some((a) => a.contains(e));
+  const text = Array.from(box.querySelectorAll('div[dir="auto"]')).filter(mine).filter((d) => !d.querySelector('div[dir="auto"]')).map((d) => d.innerText.trim()).filter(Boolean).join('\\n');
+  const liked = Array.from(box.querySelectorAll('[aria-label="Quitar Me gusta"], [aria-label="Remove Like"]')).some(mine);
+  let up = box.parentElement;
+  for (let i = 0; i < 3 && up && !(up.querySelectorAll('div[role="article"]').length > 1 && up.querySelector('div[role="article"]') === box); i += 1) up = up.parentElement;
+  const thread = up && up.querySelector('div[role="article"]') === box ? Array.from(up.querySelectorAll('div[role="article"]')) : nested;
+  const answered = thread.some((a) => a !== box && /^(Respuesta de|Reply by) QA-lab/i.test(a.getAttribute('aria-label') || ''));
+  const msg = document.querySelector('[data-ad-rendering-role="story_message"], [data-ad-preview="message"], [data-ad-comet-preview="message"]');
+  return { text, liked, answered, mine: /^(Comentario de|Respuesta de|Comment by|Reply by) QA-lab/i.test(box.getAttribute('aria-label') || ''), ours: msg ? msg.innerText.trim() : '' };`;
 
 const facebook = {
   name: "Facebook", home: "https://www.facebook.com/", queries: GENERAL,
@@ -590,6 +761,61 @@ const facebook = {
     await type(page, box, task.draft);
     await page.keyboard.press("Enter");
     await pause(3000, 5000);
+    return { url: task.url };
+  },
+  // The notifications name the commenter but not what was said, so each unread one in the last week is opened (which
+  // marks it read, so the next hour skips it), at most FB_OPEN a run.
+  async inbox(page) {
+    const got = [];
+    const on = async (r) => {
+      if (!r.url().includes("/api/graphql")) return;
+      const t = await r.text().catch(() => "");
+      if (t.includes("notif_type")) t.split("\n").forEach((l) => { try { got.push(JSON.parse(l)); } catch (error) { /* not JSON */ } });
+    };
+    page.on("response", on);
+    try { await go(page, this, "https://www.facebook.com/notifications"); await pause(3000, 5000); } finally { page.off("response", on); }
+    if (!(await this.asPage(page))) throw new Refused("Facebook is not acting as the " + PAGES.facebook + " page.");
+    const embedded = await page.evaluate(() => Array.from(document.querySelectorAll('script[type="application/json"]')).map((s) => s.textContent).filter((t) => t.includes("notifications_page")));
+    embedded.forEach((t) => { try { got.push(JSON.parse(t)); } catch (error) { /* not JSON */ } });
+    const since = Date.now() / 1000 - 7 * 86400;
+    const out = [];
+    for (const n of Inbox.facebook(got).filter((x) => !x.read && x.at > since).slice(0, FB_OPEN)) {
+      try {
+        const c = await this.readComment(page, n);
+        if (c) out.push(c);
+      } catch (error) { if (error instanceof Refused) throw error; }
+    }
+    return out;
+  },
+  async readComment(page, n) {
+    await go(page, this, n.url);
+    await commentBox(page, FB_FIND, { id: n.id });
+    const r = await evaluate(page, FB_READ);
+    if (!r.text || r.mine) return null;
+    return {
+      network: "facebook", id: n.id, url: Inbox.fbClean(n.url), author: n.author, text: r.text, createdAt: n.at ? new Date(n.at * 1000).toISOString() : "", isReply: true,
+      metrics: { likes: 0, replies: 0, reposts: 0, views: 0 }, liked: r.liked, answered: r.answered, on: n.on, ours: r.ours
+    };
+  },
+  async comment(page, task) {
+    await go(page, this, task.url);
+    if (!(await this.asPage(page))) throw new Refused("Facebook is not acting as the " + PAGES.facebook + " page.");
+    return commentBox(page, FB_FIND, { id: task.id });
+  },
+  async likeComment(page, task) {
+    const box = await this.comment(page, task);
+    if ((await evaluate(page, FB_READ)).liked) return {};
+    await click(await need(box.locator('[role="button"][aria-label="Me gusta"], [role="button"][aria-label="Like"]'), "The comment's like"));
+    if (!(await evaluate(page, FB_READ)).liked) throw new Error("The like did not stick.");
+    return {};
+  },
+  async replyComment(page, task) {
+    const box = await this.comment(page, task);
+    await click(await need(box.locator('[role="button"]').filter({ hasText: /^(Responder|Reply)$/ }), "The comment's Reply"));
+    const input = await need(page.locator('[contenteditable="true"][role="textbox"][aria-label^="Responde a "], [contenteditable="true"][role="textbox"][aria-label^="Reply to "]').last(), "The reply box");
+    await type(page, input, task.draft, true);
+    await page.keyboard.press("Enter");
+    await sent(input, task.draft);
     return { url: task.url };
   }
 };

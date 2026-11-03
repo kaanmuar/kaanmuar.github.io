@@ -193,6 +193,25 @@ test("a comment whose post text we could not read pushes no empty We said line (
   assert.ok(!push.lines.some((l) => /^We said/.test(l)));
 });
 
+test("a comment on our LinkedIn post becomes a chain post with a like the Mac does as a comment task, quoting our post (#2452)", async () => {
+  const db = await paired();
+  await db.collection("jarvis_settings").doc("engagement").set({ live: true });
+  const urn = "urn:li:comment:(activity:7523410117875273728,7523455839509348352)";
+  const comment = { network: "linkedin", id: urn, url: "https://www.linkedin.com/feed/update/urn:li:activity:7523410117875273728?dashCommentUrn=x&actorCompanyId=146731408",
+    author: { handle: "", name: "Ana Pérez" }, text: "Do website issues affect the enquiries businesses receive?", createdAt: ago(2), isReply: true,
+    liked: false, answered: false, on: "urn:li:activity:7523410117875273728", ours: "Medellín 85, Bogotá 79." };
+  const out = await M.ingest(deps(db), { posts: [], comments: [comment], signedIn: { linkedin: true } });
+  assert.equal(out.chained, 1);
+  const key = E.keyOf("linkedin", urn);
+  const doc = db.data.get("engagement_posts/" + key);
+  assert.equal(doc.chain.ours, "Medellín 85, Bogotá 79.");
+  assert.equal(doc.actions.like.status, "planned", "LinkedIn comments take likes now");
+  const task = (await M.queue(deps(db), {})).tasks.find((t) => t.key === key && t.action === "like");
+  assert.equal(task.chain, true);
+  assert.equal(task.text, comment.text);
+  assert.equal(task.reaction, "", "a comment gets a plain like, not a post's reaction");
+});
+
 test("a paused engagement hands the Mac nothing", async () => {
   const db = await seeded(true);
   await db.collection("jarvis_settings").doc("engagement").set({ live: true, paused: true });
