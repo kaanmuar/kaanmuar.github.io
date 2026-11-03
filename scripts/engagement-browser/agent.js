@@ -24,7 +24,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
-const VERSION = "1.1.0";
+const VERSION = "1.2.0";
 const PROJECT = "carlosm-interactive-cv";
 const ENDPOINT = "https://us-central1-" + PROJECT + ".cloudfunctions.net/jarvis";
 const LABEL = "com.kaanmuar.engagementbrowser";
@@ -147,7 +147,7 @@ async function check(nets, read) {
         if (posts.error || !posts.length) line += " (screenshot " + await shot(page, k) + ")";
         if (NETWORKS[k].inbox) {
           const got = await NETWORKS[k].inbox(page).catch((error) => ({ error: error.message }));
-          line += got.error ? "; notifications failed: " + got.error : "; " + got.length + " replies and mentions of us (" + got.filter((x) => !x.liked).length + " not liked, " + got.filter((x) => x.on && x.ours).length + " of " + got.filter((x) => x.on).length + " on our posts quote what we said)";
+          line += got.error ? "; notifications failed: " + got.error : "; " + got.length + " comments and replies to us (" + got.filter((x) => !x.liked).length + " not liked, " + got.filter((x) => x.on && x.ours).length + " of " + got.filter((x) => x.on).length + " on our posts quote what we said)";
         }
       }
       console.log(line);
@@ -174,15 +174,18 @@ function cardFile(task) {
   return file;
 }
 
+// A comment task (#2452) runs the network's likeComment or replyComment; where a comment is a post (X, Threads) the
+// post's own action and already-replied check serve. A comment's answered state came with it from the notifications.
 async function act(page, task) {
   const net = NETWORKS[task.network];
-  if (!net || !net[task.action]) return { ok: false, error: NETWORKS[task.network] ? net.name + " takes no " + task.action + " here." : "Unknown network." };
+  const fn = task.chain && net && net[task.action + "Comment"] ? task.action + "Comment" : task.action;
+  if (!net || !net[fn]) return { ok: false, error: NETWORKS[task.network] ? net.name + " takes no " + task.action + " here." : "Unknown network." };
   try {
-    if (task.action === "reply" && net.replied) {
+    if (fn === "reply" && net.replied) {
       const had = await net.replied(page, task);
       if (had) return { ok: false, already: true, url: had.url || "" };
     }
-    return Object.assign({ ok: true }, await net[task.action](page, task));
+    return Object.assign({ ok: true }, await net[fn](page, task));
   }
   catch (error) {
     const file = await shot(page, task.network + "-" + task.action);
@@ -232,7 +235,7 @@ async function run(opts) {
           const got = await net.inbox(page);
           seen.comments.push(...got);
           c.inboxAt = Object.assign({}, c.inboxAt, { [k]: new Date().toISOString() });
-          log(net.name + ": " + got.length + " replies and mentions of us in the notifications");
+          log(net.name + ": " + got.length + " comments and replies to us in the notifications");
         } catch (error) {
           if (error instanceof Refused) c.blocked[k] = new Date(Date.now() + HOLD_MS).toISOString();
           log(net.name + " notifications: " + String(error.message || error).slice(0, 180));
@@ -272,7 +275,7 @@ async function run(opts) {
 
 function install() {
   fs.mkdirSync(APP, { recursive: true });
-  ["agent.js", "networks.js"].forEach((f) => fs.copyFileSync(path.join(__dirname, f), path.join(APP, f)));
+  ["agent.js", "networks.js", "inbox-map.js"].forEach((f) => fs.copyFileSync(path.join(__dirname, f), path.join(APP, f)));
   const pw = (() => { try { return require("playwright/package.json").version; } catch (error) { return "1.63.0"; } })();
   fs.writeFileSync(path.join(APP, "package.json"), JSON.stringify({ name: "engagement-browser", private: true, dependencies: { "playwright-core": pw } }, null, 2));
   execFileSync("npm", ["install", "--omit=dev", "--no-audit", "--no-fund", "--silent"], { cwd: APP, stdio: "inherit" });

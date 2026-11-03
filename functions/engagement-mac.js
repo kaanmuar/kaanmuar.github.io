@@ -142,7 +142,8 @@ async function queue(deps, body) {
     tasks.push(Object.assign({
       key: t.key, network: t.doc.network, action: t.action, id: t.doc.id, url: t.doc.url, author: { handle: (t.doc.author || {}).handle || "", id: (t.doc.author || {}).id || "" },
       draft: t.action === "reply" ? r.draft || "" : "", lang: t.action === "reply" ? r.lang || t.doc.lang || "" : "",
-      reaction: t.action === "like" && t.doc.network === "linkedin" ? reaction(t.doc) : ""
+      reaction: t.action === "like" && t.doc.network === "linkedin" && !t.doc.chain ? reaction(t.doc) : "",
+      chain: !!t.doc.chain, text: t.doc.chain ? clip(t.doc.text, 300) : ""
     }, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {}));
   };
   for (const t of replies) await take(t);
