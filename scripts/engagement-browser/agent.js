@@ -147,7 +147,7 @@ async function check(nets, read) {
         if (posts.error || !posts.length) line += " (screenshot " + await shot(page, k) + ")";
         if (NETWORKS[k].inbox) {
           const got = await NETWORKS[k].inbox(page).catch((error) => ({ error: error.message }));
-          line += got.error ? "; notifications failed: " + got.error : "; " + got.length + " replies and mentions of us (" + got.filter((x) => !x.liked).length + " not liked)";
+          line += got.error ? "; notifications failed: " + got.error : "; " + got.length + " replies and mentions of us (" + got.filter((x) => !x.liked).length + " not liked, " + got.filter((x) => x.on && x.ours).length + " of " + got.filter((x) => x.on).length + " on our posts quote what we said)";
         }
       }
       console.log(line);
