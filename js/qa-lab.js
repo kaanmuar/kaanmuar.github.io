@@ -1624,10 +1624,10 @@
       how: 'Team International, Zagalabs, and Prodigious open the live sites in a new tab. The click does not expand the job. Bitgray, MCHC, and S&G stay plain text. The sitemap lists no company host.',
       async run({ cv }) {
         const doc = cv.document;
-        const team = doc.querySelector('#experience-0 .company-link');
+        const team = doc.querySelector('#experience-1 .company-link');
         assert(team && team.getAttribute('href') === 'https://www.teaminternational.com', 'current company link');
         assert(team.getAttribute('target') === '_blank' && /noopener/.test(team.getAttribute('rel') || ''), 'company link is not a new tab');
-        const header = doc.getElementById('experience-header-0');
+        const header = doc.getElementById('experience-header-1');
         const before = header.getAttribute('aria-expanded');
         team.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
         assert(header.getAttribute('aria-expanded') === before, 'company click toggled the job');
@@ -1641,7 +1641,7 @@
           assert([...doc.querySelectorAll('.company-name')].some((node) => node.textContent.includes(name)), name + ' should stay plain');
         });
         const data = JSON.parse(doc.getElementById('person-structured-data').textContent);
-        assert(data.worksFor && data.worksFor.url === 'https://www.teaminternational.com', 'worksFor');
+        assert([].concat(data.worksFor || []).some(function (org) { return org.url === 'https://www.teaminternational.com'; }), 'worksFor');
         assert(data.affiliation.some((org) => org.url === 'https://zaga.co'), 'Zaga missing from structured data');
         const xml = await fetchText('sitemap.xml');
         assert(xml.indexOf('zaga.co') === -1 && xml.indexOf('globant.com') === -1, 'sitemap listed a company');
