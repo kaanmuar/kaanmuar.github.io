@@ -13,11 +13,19 @@
  * network a GAP apart; in a dry run (settings.live off) they turn "dry" instead. A plan older than the window, or on
  * a network that is not connected by then, turns "missed". Approved replies go out at once on approval and are
  * retried on the next runs, MAX_TRIES in all. A pause stops all of it.
+ *
+ * Before a reply goes out, the network is asked whether our account already answered that post (#2421); if it did,
+ * the reply turns "replied" with a link to ours and is not sent. pendingChains reads the comments under the replies
+ * we posted in the last CHAIN_DAYS, each reply at most once per CHAIN_EVERY, for jarvis-engagement to like and answer.
  */
 const crypto = require("crypto");
 const E = require("./engagement");
+const Sources = require("./engagement-sources");
 
 const HOUR = 3600000;
+const CHAIN_DAYS = 7;
+const CHAIN_EVERY = HOUR;
+const CHAIN_PER_RUN = 10;
 const ACT_WINDOW = 6 * HOUR;
 const PER_RUN = 20;
 const GAP = 1500;
@@ -76,8 +84,17 @@ async function blueskyClient(cred, f, now) {
   };
   const subject = async (d) => (d.cid ? { uri: d.id, cid: d.cid } : post(d).then((p) => ({ uri: p.uri, cid: p.cid })));
   const link = (uri) => "https://bsky.app/profile/" + s.handle + "/post/" + String(uri || "").split("/").pop();
+  const replies = async (uri, depth) => ((await call(f, service + "/xrpc/app.bsky.feed.getPostThread?depth=" + depth + "&parentHeight=0&uri=" + encodeURIComponent(uri), { headers: auth })).thread || {}).replies || [];
+  const below = (t) => (t.replies || []).filter((x) => x && x.post);
+  const ours = (x) => ((x.post || {}).author || {}).did === s.did;
   return {
     account: s.handle,
+    replied: async (d) => {
+      const mine = (await replies(d.id, 1)).filter((x) => x && x.post).find(ours);
+      return mine ? { uri: mine.post.uri, url: link(mine.post.uri) } : null;
+    },
+    under: async (r) => (await replies(r.uri, 2)).filter((x) => x && x.post && !ours(x))
+      .map((x) => Object.assign(Sources.blueskyPost(x.post), { liked: !!(x.post.viewer || {}).like, answered: below(x).some(ours) })),
     like: async (d) => ({ uri: (await create("app.bsky.feed.like", { subject: await subject(d) })).uri }),
     repost: async (d) => ({ uri: (await create("app.bsky.feed.repost", { subject: await subject(d) })).uri }),
     follow: async (d) => {
@@ -89,7 +106,7 @@ async function blueskyClient(cred, f, now) {
       const parent = { uri: p.uri, cid: p.cid };
       const root = ((p.record || {}).reply || {}).root || parent;
       const out = await create("app.bsky.feed.post", { text, langs: lang ? [lang] : undefined, reply: { root, parent } });
-      return { uri: out.uri, url: link(out.uri) };
+      return { id: out.uri, uri: out.uri, url: link(out.uri) };
     }
   };
 }
@@ -98,15 +115,33 @@ async function mastodonClient(cred, f) {
   const base = String(cred.base).replace(/\/+$/, "");
   const auth = { Authorization: "Bearer " + cred.token };
   // The scout reads posts from every server; ours finds its own copy (and the author's account id) by the post's URI.
+  const found = new Map();
   const status = async (d) => {
-    const got = await call(f, base + "/api/v2/search?type=statuses&resolve=true&limit=1&q=" + encodeURIComponent(d.id || d.url), { headers: auth });
+    const q = d.id || d.url;
+    if (found.has(q)) return found.get(q);
+    const got = await call(f, base + "/api/v2/search?type=statuses&resolve=true&limit=1&q=" + encodeURIComponent(q), { headers: auth });
     const st = (got.statuses || [])[0];
     if (!st) throw new ActError(base.replace(/^https:\/\//, "") + " could not find the post.");
+    found.set(q, st);
     return st;
   };
   const on = (path) => async (d) => { const st = await status(d); await call(f, base + "/api/v1/statuses/" + st.id + path, { method: "POST", headers: auth }); return { url: st.url || "" }; };
+  // Statuses as our server sees them: acct is the bare username for our own account, and favourited is ours.
+  const context = async (id) => (await call(f, base + "/api/v1/statuses/" + id + "/context", { headers: auth })).descendants || [];
+  const ours = (x) => (x.account || {}).acct === cred.acct;
   return {
     account: cred.acct || "",
+    replied: async (d) => {
+      const st = await status(d);
+      const mine = (await context(st.id)).find((x) => x.in_reply_to_id === st.id && ours(x));
+      return mine ? { uri: mine.uri || "", url: mine.url || "" } : null;
+    },
+    under: async (r) => {
+      const id = r.id || (await status({ id: r.uri, url: r.url })).id;
+      const all = await context(id);
+      return all.filter((x) => x.in_reply_to_id === id && !ours(x) && !(x.account || {}).bot)
+        .map((x) => Object.assign(Sources.mastodonPost(x), { liked: x.favourited === true, answered: all.some((y) => y.in_reply_to_id === x.id && ours(y)) }));
+    },
     like: on("/favourite"),
     repost: on("/reblog"),
     follow: async (d) => { const st = await status(d); await call(f, base + "/api/v1/accounts/" + st.account.id + "/follow", { method: "POST", headers: auth }); return {}; },
@@ -115,7 +150,7 @@ async function mastodonClient(cred, f) {
       const mention = "@" + st.account.acct;
       const body = text.toLowerCase().includes(mention.toLowerCase()) ? text : mention + " " + text;
       const out = await call(f, base + "/api/v1/statuses", { headers: Object.assign({ "Idempotency-Key": "engage-" + d.key }, auth), json: { status: body, in_reply_to_id: st.id, language: lang || undefined, visibility: "public" } });
-      return { uri: out.uri || "", url: out.url || "" };
+      return { id: String(out.id || ""), uri: out.uri || "", url: out.url || "" };
     }
   };
 }
@@ -125,8 +160,38 @@ async function youtubeClient(cred, f, now, keys) {
   const tok = await call(f, GOOGLE_TOKEN, { form: { client_id: keys.clientId, client_secret: keys.secret, refresh_token: cred.refresh, grant_type: "refresh_token" } })
     .catch((error) => { throw new ActError("YouTube sign-in: " + error.message + ". Connect YouTube again in Jarvis.", true); });
   const auth = { Authorization: "Bearer " + tok.access_token };
+  const watch = (video, comment) => "https://www.youtube.com/watch?v=" + encodeURIComponent(video) + (comment ? "&lc=" + encodeURIComponent(comment) : "");
+  const ours = (sn) => ((sn || {}).authorChannelId || {}).value === cred.channelId;
+  // Answers inside a comment thread are flat on YouTube, oldest first: who answered whom is told by time alone.
+  const answers = async (thread) => (await call(f, YT + "comments?part=snippet&maxResults=100&textFormat=plainText&parentId=" + encodeURIComponent(thread), { headers: auth })).items || [];
+  const after = (c, at) => String((c.snippet || {}).publishedAt || "") > String(at || "");
   return {
     account: cred.channel || "",
+    replied: async (d) => {
+      if (d.parentId) {
+        const mine = (await answers(d.parentId)).find((c) => ours(c.snippet) && after(c, d.createdAt));
+        return mine ? { url: watch(d.videoId, mine.id) } : null;
+      }
+      const got = await call(f, YT + "commentThreads?part=snippet&maxResults=100&order=time&textFormat=plainText&videoId=" + encodeURIComponent(d.id), { headers: auth });
+      const mine = (got.items || []).find((t) => ours(((t.snippet || {}).topLevelComment || {}).snippet));
+      return mine ? { url: watch(d.id, mine.id) } : null;
+    },
+    under: async (r, doc) => {
+      const thread = doc.parentId || r.id || (String(r.url || "").match(/[?&]lc=([^&#]+)/) || [])[1];
+      if (!thread) return [];
+      const video = doc.videoId || doc.id;
+      const all = await answers(decodeURIComponent(thread));
+      return all.filter((c) => !ours(c.snippet) && after(c, r.postedAt)).map((c) => {
+        const sn = c.snippet || {};
+        return {
+          network: "youtube", id: c.id, url: watch(video, c.id), parentId: decodeURIComponent(thread), videoId: video,
+          author: { handle: sn.authorDisplayName || "", name: sn.authorDisplayName || "", id: (sn.authorChannelId || {}).value || "", followers: 0 },
+          text: sn.textOriginal || sn.textDisplay || "", lang: "", createdAt: sn.publishedAt || "", isReply: true,
+          metrics: { likes: Number(sn.likeCount) || 0, replies: 0, reposts: 0, views: 0 }, tags: [],
+          liked: false, answered: all.some((y) => ours(y.snippet) && after(y, sn.publishedAt))
+        };
+      });
+    },
     like: async (d) => { await call(f, YT + "videos/rate?rating=like&id=" + encodeURIComponent(d.id), { method: "POST", headers: auth }); return {}; },
     follow: async (d) => {
       if (!(d.author || {}).id) throw new ActError("The video has no channel id.");
@@ -135,8 +200,12 @@ async function youtubeClient(cred, f, now, keys) {
       return {};
     },
     reply: async (d, text) => {
+      if (d.parentId) {
+        const out = await call(f, YT + "comments?part=snippet", { headers: auth, json: { snippet: { parentId: d.parentId, textOriginal: text } } });
+        return { id: out.id || "", url: watch(d.videoId, out.id || "") };
+      }
       const out = await call(f, YT + "commentThreads?part=snippet", { headers: auth, json: { snippet: { videoId: d.id, topLevelComment: { snippet: { textOriginal: text } } } } });
-      return { url: "https://www.youtube.com/watch?v=" + encodeURIComponent(d.id) + "&lc=" + encodeURIComponent(out.id || "") };
+      return { id: out.id || "", url: watch(d.id, out.id || "") };
     }
   };
 }
@@ -271,14 +340,21 @@ async function noteError(db, network, message, now) {
   await privateRef(db, network).set({ error: clip(message, 200), errorAt: new Date(now).toISOString() }, { merge: true }).catch(() => null);
 }
 
-/** One approved reply out. Returns { status, url, error }. */
+/** One approved reply out, unless our account already answered there. Returns { status, url, error }. */
 async function sendReply(deps, c, task) {
   const r = task.doc.actions.reply;
   const tries = (r.tries || 0) + 1;
   const at = new Date(deps.now).toISOString();
+  const d = Object.assign({ key: task.key }, task.doc);
   try {
-    const out = await c.reply(Object.assign({ key: task.key }, task.doc), r.draft, r.lang || task.doc.lang);
-    await task.ref.update({ "actions.reply.status": "posted", "actions.reply.postedAt": at, "actions.reply.url": out.url || "", "actions.reply.uri": out.uri || "", "actions.reply.tries": tries, "actions.reply.error": "", updatedAt: at });
+    const had = await c.replied(d);
+    if (had) {
+      await task.ref.update({ "actions.reply.status": "replied", "actions.reply.at": at, "actions.reply.url": had.url || "", "actions.reply.uri": had.uri || "", "actions.reply.error": "We had already replied there, so this one was not sent.", updatedAt: at });
+      await count(deps, task.doc.network, "already");
+      return { status: "replied", url: had.url || "" };
+    }
+    const out = await c.reply(d, r.draft, r.lang || task.doc.lang);
+    await task.ref.update({ "actions.reply.status": "posted", "actions.reply.postedAt": at, "actions.reply.url": out.url || "", "actions.reply.uri": out.uri || "", "actions.reply.id": out.id || "", "actions.reply.tries": tries, "actions.reply.error": "", updatedAt: at });
     await count(deps, task.doc.network, "posted");
     return { status: "posted", url: out.url || "" };
   } catch (error) {
@@ -319,7 +395,7 @@ async function mark(deps, task, status, error) {
 async function carryOut(deps, conf) {
   const { db, now } = deps;
   const sleep = deps.sleep || ((ms) => new Promise((r) => setTimeout(r, ms)));
-  const out = Object.fromEntries(API.map((k) => [k, { done: 0, dry: 0, missed: 0, failed: 0, posted: 0, error: "" }]));
+  const out = Object.fromEntries(API.map((k) => [k, { done: 0, dry: 0, missed: 0, failed: 0, posted: 0, already: 0, error: "" }]));
   if (conf.paused) return out;
   const docs = (snap) => snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() })).filter((t) => API.includes(t.doc.network));
   const planned = (await Promise.all(CARRIED.map((a) => db.collection("engagement_posts").where("actions." + a + ".status", "==", "planned").limit(300).get().then((s) => docs(s).map((t) => Object.assign(t, { action: a }))))))
@@ -344,6 +420,7 @@ async function carryOut(deps, conf) {
     for (const t of waiting) {
       const r = await sendReply(deps, got.c, t);
       if (r.status === "posted") tally.posted += 1;
+      else if (r.status === "replied") tally.already += 1;
       else if (r.status === "failed") tally.failed += 1;
       if (r.fatal) { tally.error = r.error; break; }
       sent += 1;
@@ -376,7 +453,43 @@ async function replyNow(deps, key) {
   return sendReply(deps, got.c, { key, ref, doc });
 }
 
+/**
+ * The comments under our posted replies that we have not both liked and answered, for the chain pass in
+ * jarvis-engagement. Returns { found: [{ parent: { key, ...doc }, comments }], checked, errors: { network: message } };
+ * each comment is a post in the scout's shape with liked and answered as our account sees them.
+ */
+async function pendingChains(deps) {
+  const { db, now } = deps;
+  const at = new Date(now).toISOString();
+  const since = new Date(now - CHAIN_DAYS * 24 * HOUR).toISOString();
+  const recheck = new Date(now - CHAIN_EVERY).toISOString();
+  const snap = await db.collection("engagement_posts").where("actions.reply.status", "==", "posted").limit(300).get();
+  const posted = snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() }))
+    .filter((t) => API.includes(t.doc.network) && String(t.doc.actions.reply.postedAt || "") >= since && String(t.doc.chainAt || "") < recheck)
+    .sort((a, b) => String(b.doc.actions.reply.postedAt).localeCompare(String(a.doc.actions.reply.postedAt)));
+  const out = { found: [], checked: 0, errors: {} };
+  if (!posted.length) return out;
+  const creds = await readCreds(db);
+  for (const network of API) {
+    const mine = posted.filter((t) => t.doc.network === network).slice(0, CHAIN_PER_RUN);
+    if (!creds[network] || !mine.length) continue;
+    const got = await client(deps, network, creds[network]);
+    if (got.error) { out.errors[network] = got.error; continue; }
+    for (const t of mine) {
+      try {
+        const comments = (await got.c.under(t.doc.actions.reply, t.doc)).filter((c) => c && c.id && !(c.liked && c.answered));
+        await t.ref.update({ chainAt: at });
+        out.checked += 1;
+        if (comments.length) out.found.push({ parent: Object.assign({ key: t.key }, t.doc), comments });
+      } catch (error) {
+        if (error.fatal) { out.errors[network] = error.message; break; }
+      }
+    }
+  }
+  return out;
+}
+
 module.exports = {
-  ACT_WINDOW, PER_RUN, MAX_TRIES, MASTODON_SCOPES, YT_SCOPE, API, ActError,
-  carryOut, replyNow, connections, saveBluesky, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call
+  ACT_WINDOW, PER_RUN, MAX_TRIES, MASTODON_SCOPES, YT_SCOPE, API, ActError, CHAIN_DAYS, CHAIN_PER_RUN,
+  carryOut, replyNow, pendingChains, connections, saveBluesky, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call
 };

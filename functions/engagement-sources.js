@@ -1,7 +1,7 @@
 "use strict";
 /*
  * Where the engagement scout reads (#1988). Each reader returns posts in one shape:
- *   { network, id, cid?, url, author: { handle, name, id, followers }, title?, text, lang, createdAt, isReply,
+ *   { network, id, cid?, thread?, url, author: { handle, name, id, followers }, title?, text, lang, createdAt, isReply,
  *     metrics: { likes, replies, reposts, views }, tags }
  * A reader without its key is skipped, and a failing one never stops the others. Queries rotate with the
  * half-hour slot so each run asks a little and the day covers every query.
@@ -59,7 +59,7 @@ function blueskyPost(p) {
   const r = p.record || {};
   const rkey = String(p.uri || "").split("/").pop();
   return {
-    network: "bluesky", id: p.uri, cid: p.cid, url: "https://bsky.app/profile/" + (a.handle || a.did) + "/post/" + rkey,
+    network: "bluesky", id: p.uri, cid: p.cid, thread: ((r.reply || {}).root || {}).uri || p.uri, url: "https://bsky.app/profile/" + (a.handle || a.did) + "/post/" + rkey,
     author: { handle: a.handle || "", name: a.displayName || a.handle || "", id: a.did || "", followers: 0 },
     text: String(r.text || ""), lang: (r.langs || [])[0] || "", createdAt: r.createdAt || p.indexedAt || "", isReply: !!r.reply,
     metrics: { likes: num(p.likeCount), replies: num(p.replyCount), reposts: num(p.repostCount) + num(p.quoteCount), views: 0 },

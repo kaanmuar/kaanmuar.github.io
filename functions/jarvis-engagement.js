@@ -19,6 +19,7 @@ const Act = require("./engagement-act");
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const STALE = 75 * 60 * 1000;
 const PUSH_PER_RUN = 5;
+const CHAIN_AI = 20;
 const DAY = 24 * 3600000;
 const CACHE_DAYS = [1, 7, 30, 90, 365];
 
@@ -67,6 +68,12 @@ async function followed(db, now) {
   return new Set(snap.docs.map((d) => d.data()).filter((d) => d.seenAt >= since).map((d) => d.network + ":" + String((d.author || {}).handle || "").toLowerCase()));
 }
 
+/** Conversations we already answered or have an answer waiting or approved in, as E.threadKey. */
+async function repliedThreads(db) {
+  const snap = await db.collection("engagement_posts").where("actions.reply.status", "in", ["waiting", "approved", "posted", "replied"]).limit(2000).get();
+  return new Set(snap.docs.map((d) => E.threadKey(d.data())));
+}
+
 /** Today's planned actions per network, for the caps. */
 function usedToday(daily) {
   const used = {};
@@ -112,9 +119,11 @@ async function takeIn(deps, conf, posts, read, errors) {
   const dailySnap = await dailyRef.get();
   const used = usedToday(dailySnap.exists ? dailySnap.data() : null);
   const follows = await followed(db, now).catch(() => new Set());
+  const replied = await repliedThreads(db);
   const plan = (p, read) => {
-    const d = E.decide(p, read, conf, used, now, follows);
+    const d = E.decide(p, read, conf, used, now, follows, replied);
     if (d.actions.follow && d.actions.follow.status === "planned") follows.add(p.network + ":" + String((p.author || {}).handle || "").toLowerCase());
+    if (d.actions.reply && d.actions.reply.status === "waiting") replied.add(E.threadKey(p));
     return Object.assign({ key: p.key }, E.postDoc(p, read, d, now));
   };
   const docs = fresh.map((p) => plan(p, ai[p.key]));
@@ -145,6 +154,50 @@ async function takeIn(deps, conf, posts, read, errors) {
   };
 }
 
+/**
+ * Comment chains (#2421): comments under the replies we posted that we have not liked or answered. Gemini reads each
+ * with our reply and the post; a like is planned (carried out on the next runs like the scout's own) and an answer
+ * waits for Carlos. A comment stays unread until Gemini answers for it, so a failing read is tried again next run.
+ */
+async function followChains(deps, conf) {
+  const { db, now, env, inc } = deps;
+  const out = { checked: 0, chained: 0, liked: 0, drafted: 0, pushed: 0, aiError: "", errors: {} };
+  if (conf.paused) return out;
+  const got = await Act.pendingChains(deps);
+  Object.assign(out, { checked: got.checked, errors: got.errors });
+  const byKey = new Map();
+  got.found.forEach(({ parent, comments }) => comments.forEach((c) => {
+    const key = E.keyOf(c.network, c.id);
+    if (!byKey.has(key)) byKey.set(key, Object.assign({ key, parent }, c));
+  }));
+  const all = Array.from(byKey.values());
+  const known = all.length ? await db.getAll(...all.map((c) => db.collection("engagement_posts").doc(c.key))) : [];
+  const fresh = all.filter((c, i) => !known[i].exists || E.reopens(known[i].data())).slice(0, CHAIN_AI);
+  if (!fresh.length) return out;
+  if (!env.GEMINI_API_KEY) return Object.assign(out, { aiError: "GEMINI_API_KEY is not set, so comments on our replies wait unread." });
+  let ai;
+  try { ai = E.parseAi(await geminiJson(deps.fetch, env, E.chainPrompt(fresh)), fresh); } catch (error) { return Object.assign(out, { aiError: String(error.message || error).slice(0, 200) }); }
+
+  const docs = fresh.filter((c) => ai[c.key]).map((c) => Object.assign({ key: c.key }, E.chainDoc(c, c.parent, E.chainDecide(c, ai[c.key], conf, now), ai[c.key], now)));
+  if (!docs.length) return out;
+  const batch = db.batch();
+  docs.forEach((d) => batch.set(db.collection("engagement_posts").doc(d.key), d));
+  await batch.commit();
+  const n = {};
+  docs.forEach((d) => {
+    const x = n[d.network] = n[d.network] || {};
+    x.chained = (x.chained || 0) + 1;
+    if ((d.actions.like || {}).status === "planned") { x.like = (x.like || 0) + 1; out.liked += 1; }
+    if ((d.actions.reply || {}).status === "waiting") { x.drafted = (x.drafted || 0) + 1; out.drafted += 1; }
+  });
+  out.chained = docs.length;
+  await db.collection("engagement_daily").doc(E.bogotaDay(now)).set(Object.assign({ day: E.bogotaDay(now) }, increments({ n }, inc)), { merge: true });
+  if (deps.push) {
+    for (const d of docs.filter((x) => (x.actions.reply || {}).status === "waiting").slice(0, PUSH_PER_RUN)) { await deps.push(E.replyPush(d)).catch(() => null); out.pushed += 1; }
+  }
+  return out;
+}
+
 /** One scout run. Returns the run document. */
 async function scout(deps) {
   const { db, now, env } = deps;
@@ -158,12 +211,15 @@ async function scout(deps) {
   let actError = "";
   try { acted = await Act.carryOut(deps, conf); } catch (error) { actError = String(error.message || error).slice(0, 200); }
   const sum = (k) => Object.values(acted).reduce((a, x) => a + (x[k] || 0), 0);
+  let chains;
+  try { chains = await followChains(deps, conf); } catch (error) { chains = { chained: 0, liked: 0, drafted: 0, pushed: 0, aiError: String(error.message || error).slice(0, 200), errors: {} }; }
 
   const run = {
     at: new Date(now).toISOString(), ms: Date.now() - started, paused: conf.paused, live: conf.live, read: read.read, errors: read.errors, skipped: read.skipped,
     candidates: took.candidates, fresh: took.fresh, updated: took.updated, risen: took.risen, asked: took.asked, aiError: took.aiError,
     engaged: took.engaged, drafted: took.drafted, pushed: took.pushed, expired,
-    done: sum("done"), dry: sum("dry"), missed: sum("missed"), posted: sum("posted"), actFailed: sum("failed"), acted, actError
+    done: sum("done"), dry: sum("dry"), missed: sum("missed"), posted: sum("posted"), already: sum("already"), actFailed: sum("failed"), acted, actError,
+    chains: { checked: chains.checked || 0, chained: chains.chained, liked: chains.liked, drafted: chains.drafted, pushed: chains.pushed, aiError: chains.aiError, errors: chains.errors }
   };
   await db.collection("engagement_runs").doc(run.at).set(run);
   await clearCache(db);
@@ -173,7 +229,14 @@ async function scout(deps) {
 const actNote = (r) => {
   const errs = Object.entries(r.acted || {}).filter(([, x]) => x.error).map(([k, x]) => k + ": " + x.error);
   return (r.done || r.posted ? "; done " + (r.done || 0) + ", replies posted " + (r.posted || 0) : "") + (r.dry ? "; dry run " + r.dry : "")
-    + (r.actFailed ? "; " + r.actFailed + " actions failed" : "") + (errs.length ? "; poster: " + errs.join("; ") : "") + (r.actError ? "; poster: " + r.actError : "");
+    + (r.actFailed ? "; " + r.actFailed + " actions failed" : "") + (errs.length ? "; poster: " + errs.join("; ") : "") + (r.actError ? "; poster: " + r.actError : "")
+    + (r.already ? "; " + r.already + " replies not sent, we had already answered" : "") + chainNote(r.chains);
+};
+const chainNote = (c) => {
+  if (!c) return "";
+  const errs = Object.entries(c.errors || {}).map(([k, v]) => k + ": " + v);
+  return (c.chained ? "; " + c.chained + " new comments on our replies (" + c.liked + " to like, " + c.drafted + " answers drafted)" : "")
+    + (c.aiError ? "; comment chains: " + c.aiError : "") + (errs.length ? "; comment chains: " + errs.join("; ") : "");
 };
 const runNote = (r) => Object.values(r.read).reduce((a, b) => a + b, 0) + " read, " + r.fresh + " new in field, " + r.engaged + " to engage, " + r.drafted + " replies drafted"
   + actNote(r) + (Object.keys(r.errors).length ? "; failed: " + Object.keys(r.errors).join(", ") : "") + (r.aiError ? "; Gemini: " + r.aiError : "") + (r.paused ? "; paused" : "");
@@ -202,7 +265,7 @@ async function topPosts(db, fromDay, toDay, limit) {
   const from = new Date(Date.parse(fromDay + "T05:00:00Z")).toISOString();
   const to = new Date(Date.parse(toDay + "T05:00:00Z") + DAY).toISOString();
   const snap = await db.collection("engagement_posts").where("seenAt", ">=", from).where("seenAt", "<", to).orderBy("seenAt", "desc").limit(1500).get();
-  return snap.docs.map((d) => Object.assign({ key: d.id }, d.data())).filter((d) => d.verdict !== "skip").sort((a, b) => b.score - a.score).slice(0, limit || 15);
+  return snap.docs.map((d) => Object.assign({ key: d.id }, d.data())).filter((d) => d.verdict !== "skip" && !d.chain).sort((a, b) => b.score - a.score).slice(0, limit || 15);
 }
 
 /** The window a report covers: daily is today, weekly the last 7 days, monthly the calendar month before. */
@@ -262,6 +325,7 @@ async function decide(deps, body, by) {
   const sent = await Act.replyNow(deps, key).catch((error) => ({ status: "approved", error: error.message }));
   await clearCache(db);
   if (sent.status === "posted") return { key, status: "posted", url: sent.url || "", message: "Posted on " + name + "." };
+  if (sent.status === "replied") return { key, status: "replied", url: sent.url || "", message: "Not posted: we had already replied there on " + name + "." };
   if (sent.status === "failed") return { key, status: "failed", message: "Not posted on " + name + ": " + sent.error };
   return { key, status: "approved", message: said + "; " + name + " did not take it yet (" + (sent.error || "not sent") + "), so the next scout run tries again." };
 }
@@ -300,7 +364,7 @@ const AGENT = "node scripts/engagement-browser/agent.js";
 const brief = (d) => ({
   key: d.key, network: d.network, url: d.url, author: d.author || {}, title: d.title || "", text: String(d.text || "").slice(0, 600), lang: d.lang, topic: d.topic, words: d.words || [],
   score: d.score, trend: d.trend, metrics: d.metrics || {}, about: d.about || "", why: d.why || "", sentiment: d.sentiment || "", worth: d.worth, verdict: d.verdict, skip: d.skip || "",
-  actions: d.actions || {}, seenAt: d.seenAt, createdAt: d.createdAt
+  actions: d.actions || {}, seenAt: d.seenAt, createdAt: d.createdAt, chain: d.chain || null
 });
 
 /** What Jarvis > Engagement and the app show for the selected range. */
@@ -313,7 +377,7 @@ async function source(ctx) {
     readSettings(db),
     db.collection("engagement_runs").orderBy("at", "desc").limit(12).get(),
     db.collection("engagement_posts").where("actions.reply.status", "==", "waiting").limit(60).get(),
-    db.collection("engagement_posts").where("actions.reply.status", "in", ["approved", "posted", "failed"]).limit(90).get(),
+    db.collection("engagement_posts").where("actions.reply.status", "in", ["approved", "posted", "failed", "replied"]).limit(90).get(),
     dailies(db, range),
     dailies(db, dayList(E.bogotaDay(now - range.length * DAY), range.length)),
     topPosts(db, range[0], range[range.length - 1], 40),
@@ -380,4 +444,4 @@ async function source(ctx) {
   };
 }
 
-module.exports = { scout, takeIn, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
+module.exports = { scout, takeIn, followChains, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
