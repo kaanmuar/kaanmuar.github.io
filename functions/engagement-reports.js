@@ -14,7 +14,8 @@
  *           social-reply-<network>, utm_content <host>, utm_term <post ref>; TinyURL when it runs past LONG_LINK
  *   score   named from SHOW_SCORE up; under it the invite points at the weakest area and names no number
  *   format  "card" where the network takes an image in a reply (CARD_NETS), else "link"
- *   once    one reply per site per SITE_GAP across all networks, and none to a site whose owner had our mail in it
+ *   once    one reply per site per SITE_GAP across all networks, and none to a site whose owner had our mail in it;
+ *           the other way round, owner notices and cold-email uploads skip a site answered in it (answeredHosts, #2470)
  *
  * Posts that do not name the site (#2468) are looked for in the site's language, at most LOOSE_PER_RUN searches a run:
  *   problem  the site's short brand from its host (dian for dian.gov.co) with a complaint about an area its report
@@ -36,6 +37,7 @@ const PER_RUN = 4;
 const MAX_AGE_HOURS = 7 * 24;
 const LONG_LINK = 60;
 const CAMPAIGN = "report-reply";
+const ANSWERED = ["waiting", "approved", "posted"];
 const SHORT = "https://qalabreview.com/";
 const CODES = { bluesky: "bsky", mastodon: "mast", youtube: "yt", x: "x", linkedin: "li", facebook: "fb", instagram: "ig", threads: "th", tiktok: "tt" };
 const CARD_NETS = ["bluesky", "mastodon", "x"];
@@ -318,6 +320,27 @@ function doc(post, ai, target, match, decision, link, now) {
   });
 }
 
+/**
+ * Hosts answered with a report reply in the gap, as host => when (the latest of seen, approved and posted), checked
+ * 30 at a time. statuses defaults to ANSWERED. Owner notices and cold-email uploads wait out the gap for these (#2470).
+ */
+async function answeredHosts(db, hosts, now, statuses) {
+  const since = new Date(now - SITE_GAP).toISOString();
+  const want = statuses || ANSWERED;
+  const list = [...new Set((hosts || []).map(bare).filter((h) => h.includes(".")))];
+  const out = new Map();
+  for (let i = 0; i < list.length; i += 30) {
+    const snap = await db.collection("engagement_posts").where("report.host", "in", list.slice(i, i + 30)).limit(300).get();
+    snap.docs.map((d) => d.data()).forEach((d) => {
+      const r = (d.actions || {}).reply || {};
+      const at = [d.seenAt, r.decidedAt, r.postedAt].map((v) => String(v || "")).sort().pop();
+      if (d.campaign !== CAMPAIGN || !want.includes(r.status) || at < since) return;
+      if (!(out.get(d.report.host) >= at)) out.set(d.report.host, at);
+    });
+  }
+  return out;
+}
+
 /** Counters a report pass adds to engagement_daily/<day> under report, besides the scout's own per-network ones; by counts posts per match. */
 function rollup(searched, docs) {
   const out = { searched, matched: 0, drafted: 0, skip: {}, net: {}, by: {} };
@@ -333,6 +356,6 @@ function rollup(searched, docs) {
 }
 
 module.exports = {
-  CAMPAIGN, CODES, CARD_NETS, SHOW_SCORE, SITE_GAP, PER_RUN, LONG_LINK, MAX_AGE_HOURS, WEAK, LOOSE, LOOSE_PER_RUN, LOOSE_WORTH,
-  targets, pick, queries, matchOf, siteOf, looseQueries, looseOf, shortOf, nicheOf, shown, linkFor, prompt, parse, fill, decide, doc, rollup, bare
+  CAMPAIGN, ANSWERED, CODES, CARD_NETS, SHOW_SCORE, SITE_GAP, PER_RUN, LONG_LINK, MAX_AGE_HOURS, WEAK, LOOSE, LOOSE_PER_RUN, LOOSE_WORTH,
+  targets, pick, queries, matchOf, siteOf, looseQueries, looseOf, shortOf, nicheOf, shown, linkFor, prompt, parse, fill, decide, doc, rollup, bare, answeredHosts
 };

@@ -223,15 +223,9 @@ async function liveTargets(deps) {
   return liveCache.list;
 }
 
-/** Hosts answered with a report reply in the gap (waiting, approved or out), checked 30 at a time. */
+/** Hosts answered with a report reply in the gap (waiting, approved or out), or already replied to in that conversation. */
 async function repliedSites(db, hosts, now) {
-  const since = new Date(now - R.SITE_GAP).toISOString();
-  const out = new Set();
-  for (let i = 0; i < hosts.length; i += 30) {
-    const snap = await db.collection("engagement_posts").where("report.host", "in", hosts.slice(i, i + 30)).limit(300).get();
-    snap.docs.map((d) => d.data()).filter((d) => d.seenAt >= since && ["waiting", "approved", "posted", "replied"].includes(((d.actions || {}).reply || {}).status)).forEach((d) => out.add(d.report.host));
-  }
-  return out;
+  return new Set((await R.answeredHosts(db, hosts, now, R.ANSWERED.concat("replied"))).keys());
 }
 
 /** Hosts whose owner had our mail in the gap: owner notices, and leads uploaded to the cold-email campaigns. */
