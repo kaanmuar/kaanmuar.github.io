@@ -8810,5 +8810,11 @@
     "checked": "2026-11-02T06:21:14.764Z"
    }
   ]
+ },
+ "retry": {
+  "auto-2026-11-03": {
+   "since": "2026-11-03T12:46:24.179Z",
+   "error": "The site did not serve https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/01-u-portal-upb-edu-co.jpg within 60 minutes."
+  }
  }
 }
