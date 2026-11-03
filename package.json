@@ -43,7 +43,7 @@
     "@cypress/webpack-preprocessor": "^6.0.4",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/cli": "^4.3.3",
-    "@types/node": "^24.2.1",
+    "@types/node": "^26.6.6",
     "@wdio/appium-service": "^10.1.0",
     "@wdio/cli": "^10.1.0",
     "@wdio/junit-reporter": "^10.1.0",
