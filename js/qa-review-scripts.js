@@ -2599,7 +2599,7 @@ namespace QaLab
 
   function headerFiles(headers, hosting) {
     const list = headers || [];
-    const quoted = (value) => String(value).replace(/"/g, "\\\"");
+    const quoted = (value) => String(value).replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
     const json = (wrap) => JSON.stringify(wrap(list.map((item) => ({ key: item.name, value: item.value }))), null, 2) + "\n";
     const files = [
       { host: "Netlify", path: "fix-kit/headers/netlify-or-cloudflare-pages/_headers", content: "/*\n" + list.map((item) => "  " + item.name + ": " + item.value).join("\n") + "\n" },
