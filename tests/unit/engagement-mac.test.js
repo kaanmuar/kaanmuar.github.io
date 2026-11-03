@@ -115,6 +115,34 @@ test("live, the queue leases each task once, and the results move the plan and t
   await assert.rejects(M.result(deps(db), { key: "x_aaaaaaaaaaaaaaaaaaaa", action: "delete", ok: true }), /not a task/);
 });
 
+test("a LinkedIn like is the reaction that fits the post, and the result keeps the one LinkedIn took (#2444)", async () => {
+  const r = (text, extra) => M.reaction(Object.assign({ text }, extra));
+  assert.equal(r("Excited to announce we just launched our Playwright course 🎉"), "celebrate");
+  assert.equal(r("Estamos orgullosos: lanzamos la nueva guía de accesibilidad"), "celebrate");
+  assert.equal(r("Burnout is real in QA teams. Six months of flaky tests broke me."), "support");
+  assert.equal(r("Grateful to everyone who joined our WCAG meetup ❤️"), "love");
+  assert.equal(r("5 tips to debug INP: a step-by-step guide"), "insightful");
+  assert.equal(r("When the test passes locally but fails in CI 😂"), "funny");
+  assert.equal(r("Core web vitals report for this week."), "like");
+  assert.equal(r("x".repeat(600), { relevance: 2 }), "insightful", "a long post in our field");
+  assert.equal(r("This guide is wrong and dangerous.", { sentiment: "negative" }), "like", "no Insightful on a post we disagree with");
+  assert.ok(["fixes", "launch the browser"].every((t) => r(t) === "like"), "a technical launch is no celebration");
+
+  const db = await paired();
+  await db.collection("jarvis_settings").doc("engagement").set({ live: true });
+  const post = (key, d) => db.collection("engagement_posts").doc(key).set(Object.assign({ seenAt: ago(1), score: 5, lang: "en", url: "https://www.linkedin.com/feed/update/urn:li:activity:9/", author: { handle: "ana" }, actions: { like: { status: "planned" } } }, d));
+  await post("linkedin_eeeeeeeeeeeeeeeeeeee", { network: "linkedin", id: "urn:li:activity:9", text: "Thrilled to share that I am now ISTQB certified!" });
+  await post("x_ffffffffffffffffffff", { network: "x", id: "9", text: "Thrilled to share that I am now ISTQB certified!" });
+  const q = await M.queue(deps(db), {});
+  const by = Object.fromEntries(q.tasks.map((t) => [t.network, t.reaction]));
+  assert.deepEqual(by, { linkedin: "celebrate", x: "" }, "only LinkedIn has the reactions menu");
+
+  await M.result(deps(db), { key: "linkedin_eeeeeeeeeeeeeeeeeeee", action: "like", ok: true, reaction: "celebrate" });
+  assert.equal(db.data.get("engagement_posts/linkedin_eeeeeeeeeeeeeeeeeeee").actions.like.reaction, "celebrate");
+  await M.result(deps(db), { key: "x_ffffffffffffffffffff", action: "like", ok: true, reaction: "<b>" });
+  assert.equal(db.data.get("engagement_posts/x_ffffffffffffffffffff").actions.like.reaction, undefined, "an unknown reaction is not stored");
+});
+
 test("a paused engagement hands the Mac nothing", async () => {
   const db = await seeded(true);
   await db.collection("jarvis_settings").doc("engagement").set({ live: true, paused: true });

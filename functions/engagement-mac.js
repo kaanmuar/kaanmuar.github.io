@@ -7,8 +7,9 @@
  *   engagement-mac-ingest  { posts, errors, signedIn, accounts, agent }  posts it read; scored, read by Gemini and
  *                                                                        planned like the scout's own
  *   engagement-mac-queue   { networks }                                  planned likes, reposts, follows and approved
- *                                                                        replies for the networks signed in
- *   engagement-mac-result  { key, action, ok, url, error, retry }         what came of one task
+ *                                                                        replies for the networks signed in; a
+ *                                                                        LinkedIn like names its reaction
+ *   engagement-mac-result  { key, action, ok, url, reaction, error, retry }  what came of one task
  *
  *   engagement_private/mac  { tokenHash, pairedAt, at, read, errors, signedIn, accounts, agent, blocked }
  *
@@ -84,6 +85,26 @@ async function ingest(deps, body) {
 
 const leased = (x, now) => x && x.leasedAt && Date.parse(x.leasedAt) > now - LEASE;
 
+// LinkedIn's reactions, in its menu's order. A like there is whichever one fits the post; the rest stay a thumbs-up.
+const REACTIONS = ["like", "celebrate", "support", "love", "insightful", "funny"];
+const REACTS = [
+  ["funny", /😂|🤣|😆|\b(lol|lmao|haha\w*|jaja\w*|kkkk\w*|meme)\b/i],
+  ["celebrate", /🎉|🥳|🚀|🏆|\b(excited|thrilled|proud|happy|pleased) to (announce|share)|\b(announc\w*|(just|finally|we('ve| have)?) (launched|shipped|released|won)|milestone|anniversary|award\w*|certified|certification|promoted|new (role|job|position)|lanz\w*|anunci\w*|orgullos\w*|celebr\w*|lançam\w*|conquist\w*|certificad\w*)\b/iu],
+  ["support", /\b(struggl\w*|burn ?out|burned out|rejected|tough (week|year|time)|hard (week|year|time)|open to work|opentowork|looking for (a )?(new )?(role|job|position|opportunit\w*)|busco (empleo|trabajo)|procuro emprego|difícil|frustra\w*)\b/iu],
+  ["love", /❤|💙|💜|🙏|\b(grateful|gratitude|thank you all|thankful|agradecid\w*|gratitud|obrigad\w*|gracias a todos)\b/iu],
+  ["insightful", /\b(how to|tips?|guide|checklist|lessons?( learned)?|mistakes|step[- ]by[- ]step|best practices|deep dive|explained|here'?s (how|why)|cómo|consejos|guía|errores|lecciones|dicas|como fazer|passo a passo|boas práticas)\b/iu]
+];
+
+/** The LinkedIn reaction that fits a stored post: funny, celebrate, support or love by what it says, insightful for a long or how-to post in our field, else like. */
+function reaction(doc) {
+  const d = doc || {};
+  const text = [d.title, d.text].join("\n");
+  if (d.sentiment === "negative" || d.sentiment === "angry") return /\b(struggl|burn ?out|open to work|opentowork)/i.test(text) ? "support" : "like";
+  const hit = REACTS.find(([, re]) => re.test(text));
+  if (hit) return hit[0];
+  return String(d.text || "").length >= 600 && (d.relevance || 0) >= 2 ? "insightful" : "like";
+}
+
 /** The Mac's work for this run: approved replies first, then planned likes, reposts and follows, best first. */
 async function queue(deps, body) {
   const { db, now, inc } = deps;
@@ -105,7 +126,8 @@ async function queue(deps, body) {
     const r = t.doc.actions.reply || {};
     tasks.push({
       key: t.key, network: t.doc.network, action: t.action, id: t.doc.id, url: t.doc.url, author: { handle: (t.doc.author || {}).handle || "", id: (t.doc.author || {}).id || "" },
-      draft: t.action === "reply" ? r.draft || "" : "", lang: t.action === "reply" ? r.lang || t.doc.lang || "" : ""
+      draft: t.action === "reply" ? r.draft || "" : "", lang: t.action === "reply" ? r.lang || t.doc.lang || "" : "",
+      reaction: t.action === "like" && t.doc.network === "linkedin" ? reaction(t.doc) : ""
     });
   };
   for (const t of replies) await take(t);
@@ -159,7 +181,8 @@ async function result(deps, body) {
     if (cur.status !== "planned") return { ok: true, status: cur.status || "", note: "Already " + (cur.status || "gone") + "." };
     if (b.ok) {
       status = "done";
-      await ref.update({ [k + "status"]: status, [k + "at"]: at, [k + "url"]: clip(b.url, 500), [k + "leasedAt"]: "", [k + "by"]: "mac", updatedAt: at });
+      await ref.update(Object.assign({ [k + "status"]: status, [k + "at"]: at, [k + "url"]: clip(b.url, 500), [k + "leasedAt"]: "", [k + "by"]: "mac", updatedAt: at },
+        action === "like" && REACTIONS.includes(b.reaction) ? { [k + "reaction"]: b.reaction } : {}));
       await count(action + "_done");
     } else if (b.retry) {
       status = "planned";
@@ -184,4 +207,4 @@ async function handle(deps, body, token) {
   return op(deps, body);
 }
 
-module.exports = { BROWSER, LEASE, PER_NETWORK, MacError, hash, verify, cleanPost, ingest, queue, result, handle };
+module.exports = { BROWSER, LEASE, PER_NETWORK, REACTIONS, MacError, hash, verify, cleanPost, reaction, ingest, queue, result, handle };

@@ -221,8 +221,8 @@ async function run(opts) {
       if (c.blocked[t.network]) { await api("engagement-mac-result", { key: t.key, action: t.action, ok: false, retry: true, error: "Held after a check." }); continue; }
       const r = await act(page, t);
       if (r.retry) c.blocked[t.network] = new Date(Date.now() + HOLD_MS).toISOString();
-      await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", retry: !!r.retry, error: r.error || "" }).catch((error) => log(error.message));
-      log(NETWORKS[t.network].name + " " + t.action + " " + t.url + ": " + (r.ok ? "done" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
+      await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, error: r.error || "" }).catch((error) => log(error.message));
+      log(NETWORKS[t.network].name + " " + t.action + " " + t.url + ": " + (r.ok ? "done" + (r.reaction ? " (" + r.reaction + ")" : "") : r.error + (r.shot ? " (" + r.shot + ")" : "")));
       await pause(25000, 70000);
     }
   } finally {

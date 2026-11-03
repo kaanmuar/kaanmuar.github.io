@@ -310,6 +310,13 @@ const LI_API = "const csrf = (document.cookie.match(/JSESSIONID=\"?([^\";]+)/) |
 // LinkedIn sometimes renders without its data-view-name hooks, so the agent goes by accessibility labels.
 const LI_LIKE = 'button[aria-label^="Estado del botón de reacción"], button[aria-label^="Reaction button state"]';
 const LI_PAGE = 'input[type="radio"][aria-label*="QA-lab" i], [role="radio"][aria-label*="QA-lab" i]';
+// The reactions menu opens on hovering the reaction button. Its buttons are labelled with the reaction's name, in the
+// Spanish our account uses (Recomendar, Celebrar, Apoyar, Encantar, Interesar, Hacer gracia) or in English.
+const LI_REACT = {
+  celebrate: ["Celebrate", "Celebrar"], support: ["Support", "Apoyar"], love: ["Love", "Encantar"],
+  insightful: ["Insightful", "Interesar"], funny: ["Funny", "Hacer gracia"]
+};
+const liReact = (names) => new RegExp("(^|\\s)(" + names.join("|") + ")$", "i");
 
 const linkedin = {
   name: "LinkedIn", home: "https://www.linkedin.com/feed/", queries: GENERAL,
@@ -373,15 +380,28 @@ const linkedin = {
     if (!(await visible(main.locator(LI_LIKE), 20000))) throw new Error("LinkedIn did not show the post.");
     return main;
   },
+  // task.reaction (functions/engagement-mac.js) picks Celebrate, Support, Love, Insightful or Funny from the menu;
+  // when the menu does not open or does not name it, the post gets a plain Like.
   async like(page, task) {
     const main = await this.post(page, task);
     await this.asPage(page, main);
     const btn = await need(main.locator(LI_LIKE), "Like");
     const none = /ninguna reacci|no reaction/i;
     if (!none.test((await btn.getAttribute("aria-label")) || "")) return {};
-    await click(btn);
-    if (none.test((await btn.getAttribute("aria-label")) || "")) throw new Error("LinkedIn did not take the like.");
-    return {};
+    let reaction = "like";
+    if (LI_REACT[task.reaction]) {
+      await btn.scrollIntoViewIfNeeded().catch(() => null);
+      await pause(400, 1000);
+      await btn.hover({ timeout: 10000 });
+      const pick = page.getByRole("button", { name: liReact(LI_REACT[task.reaction]) });
+      if (await visible(pick, 5000)) {
+        await click(pick.first());
+        reaction = task.reaction;
+      }
+    }
+    if (reaction === "like") await click(btn);
+    if (none.test((await btn.getAttribute("aria-label")) || "")) throw new Error("LinkedIn did not take the " + reaction + " reaction.");
+    return { reaction };
   },
   async reply(page, task) {
     const main = await this.post(page, task);
