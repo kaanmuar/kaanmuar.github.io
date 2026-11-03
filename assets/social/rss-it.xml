@@ -243,7 +243,9 @@ La tua ipotesi: Fai la tua ipotesi. La risposta, con tutti e sei i punteggi per 
 
 Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=quiz-metros
 
-#WebQuality #Playwright #AI #QA #Quiz #QAlab</description>
+#WebQuality #Playwright #AI #QA #Quiz #QAlab
+
+https://www.youtube.com/shorts/W0bJ6Z-CK1o</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/08-quiz-metros.jpg" length="250768" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/08-quiz-metros.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -260,9 +262,28 @@ Controllalo oggi: Apri i PDF e i link di lingua della tua home page, richiedi la
 
 Tutti i Live Reports di ottobre: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=series-dia-de-muertos-2026-11&amp;utm_content=epitaphs#live-reports
 
-#DiaDeMuertos #Playwright #AI #QA #BrokenLinks #QAlab</description>
+#DiaDeMuertos #Playwright #AI #QA #BrokenLinks #QAlab
+
+https://www.youtube.com/shorts/gJe34piPj4U</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/series-dia-de-muertos-2026-11/feed/02-epitaphs.jpg" length="254455" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/series-dia-de-muertos-2026-11/feed/02-epitaphs.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Ogni input ha bisogno di un nome.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/08-input-names-it.html</link>
+      <guid isPermaLink="false">tips-2026-10/08-input-names-it</guid>
+      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Consiglio</category>
+      <category>A11y</category>
+      <description>Un placeholder sparisce appena qualcuno digita, e gli screen reader potrebbero non annunciarlo. Una vera label resta.
+
+Provalo oggi: Scorri con Tab il tuo form di contatto con uno screen reader attivo. Ogni campo dovrebbe dire cos’è.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=input-names
+
+#Accessibility #a11y #WCAG #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg" length="209043" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>Inizia la tua CSP in Report-Only.</title>
@@ -280,23 +301,6 @@ Come funziona la review di una pagina pubblica, passo dopo passo: https://carlos
 #WebSecurity #CSP #AppSec #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" length="219690" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Scrivi l’elenco dei test prima del codice dei test.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-it.html</link>
-      <guid isPermaLink="false">tips-2026-10/16-list-first-it</guid>
-      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consiglio</category>
-      <category>QA</category>
-      <description>Scegliere un framework è la seconda domanda. La prima è cosa fa questa pagina e cosa ci proverebbe una persona reale.
-
-Provalo oggi: Prima del prossimo sprint di automazione, scrivi dieci casi in linguaggio semplice. Poi scegli lo strumento.
-
-Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
-
-#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>davibank.com: 58. La lacuna: TLS.</title>
@@ -407,7 +411,9 @@ Lezione: Entrambi costruiscono le pagine con un design system pubblico. Riutiliz
 
 Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=govuk-usagov
 
-#WebQuality #SoftwareTesting #DevOps #QA #GovTech #QAlab</description>
+#WebQuality #SoftwareTesting #DevOps #QA #GovTech #QAlab
+
+https://www.youtube.com/shorts/Plp1Uxk_P1w</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/07-govuk-usagov.jpg" length="247979" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/07-govuk-usagov.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -779,9 +785,28 @@ Controllalo oggi: Apri ogni link della tua home page. Correggi o rimuovi ognuno 
 
 Tutti i Live Reports di ottobre: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=series-dia-de-muertos-2026-11&amp;utm_content=ofrenda#live-reports
 
-#DiaDeMuertos #AI #SoftwareTesting #QA #BrokenLinks #QAlab</description>
+#DiaDeMuertos #AI #SoftwareTesting #QA #BrokenLinks #QAlab
+
+https://www.youtube.com/shorts/kemr6NimxJU</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/series-dia-de-muertos-2026-11/feed/01-ofrenda.jpg" length="251982" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/series-dia-de-muertos-2026-11/feed/01-ofrenda.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Tagga i link delle campagne sempre allo stesso modo.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/06-utm-it.html</link>
+      <guid isPermaLink="false">tips-2026-10/06-utm-it</guid>
+      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Consiglio</category>
+      <category>Analytics</category>
+      <description>LinkedIn, linkedin e Linked-In diventano tre sorgenti diverse nei tuoi report. Scegli una grafia e mantienila.
+
+Provalo oggi: Crea un foglio condiviso con le sorgenti e i mezzi ammessi. Linkalo in ogni brief di campagna.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=utm
+
+#Analytics #GA4 #UTM #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg" length="216164" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>Consenso vuol dire anche prima.</title>
@@ -799,23 +824,6 @@ Come funziona la review di una pagina pubblica, passo dopo passo: https://carlos
 #Analytics #Privacy #ConsentMode #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg" length="218528" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>La tua card di condivisione è una prima impressione.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-it.html</link>
-      <guid isPermaLink="false">tips-2026-10/14-share-card-it</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consiglio</category>
-      <category>SEO</category>
-      <description>Senza og:image e og:title, ogni link al tuo sito appare come un riquadro grigio in chat e feed.
-
-Provalo oggi: Incolla il tuo link in una chat privata con te stesso. Quello che le persone vedono lì è la tua vera prima impressione.
-
-Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=share-card
-
-#SEO #OpenGraph #Marketing #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" length="222020" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

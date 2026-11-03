@@ -1,5 +1,5 @@
 {
- "since": "2026-11-02T03:03:28.160Z",
+ "since": "2026-11-03T11:00:47.066Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -66,13 +66,24 @@
   "augsburger-allgemeine.de": "2026-11-02",
   "mercadolibre.com.ec": "2026-11-02",
   "vs:voicertool.com": "2026-11-02",
-  "vs:unn.edu.ng": "2026-11-02"
+  "vs:unn.edu.ng": "2026-11-02",
+  "portal.upb.edu.co": "2026-11-03",
+  "iteso.mx": "2026-11-03",
+  "sp.senai.br": "2026-11-03",
+  "platzi.com": "2026-11-03",
+  "hneu.edu.ua": "2026-11-03",
+  "vitibet.com": "2026-11-03",
+  "webjuice.ie": "2026-11-03",
+  "daniladigital.com.ar": "2026-11-03",
+  "udg.mx": "2026-11-03",
+  "vs:kabinedasnovinhas.com": "2026-11-03",
+  "vs:vivastreet.ie": "2026-11-03"
  },
  "recent": [
-  "seo-title-missing",
-  "a11y-labels",
-  "geo-crawlers",
+  "seo-description-missing",
+  "sec-hsts",
   "ax-color-contrast",
-  "sec-hsts"
+  "a11y-alt",
+  "a11y-labels"
  ]
 }

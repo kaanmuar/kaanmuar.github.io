@@ -36,12 +36,20 @@
   "machine": true
  },
  "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security, Accessibility, Performance.": "⟦1⟧ è in testa in SEO e GEO; ⟦2⟧ in Analytics, Sicurezza, Accessibilità e Prestazioni.",
+ "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO, Analytics, Accessibility, Performance.": {
+  "text": "⟦1⟧ lead in SEO, sicurezza; ⟦2⟧ lead in GEO, analisi, accessibilità, prestazioni.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO; ⟦3⟧ leads in Analytics, Accessibility, Performance.": {
   "text": "⟦1⟧ lead in SEO, sicurezza; ⟦2⟧ lead in GEO; ⟦3⟧ leader in analisi, accessibilità, prestazioni.",
   "machine": true
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Analytics, Security, Accessibility, Performance. ⟦3⟧ leads in none of the six areas.": {
   "text": "⟦1⟧ lead nel SEO; ⟦2⟧ leader in GEO, analisi, sicurezza, accessibilità, prestazioni. ⟦3⟧ è leader in nessuna delle sei aree.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Analytics; ⟦3⟧ leads in Security, Accessibility, Performance.": {
+  "text": "⟦1⟧ lead nel SEO; ⟦2⟧ lead in GEO, Analytics; ⟦3⟧ leader in sicurezza, accessibilità, prestazioni.",
   "machine": true
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Accessibility, Performance.": "⟦1⟧ è in testa nella SEO; ⟦2⟧ in GEO e Sicurezza; ⟦3⟧ in Analytics, Accessibilità e Prestazioni.",
@@ -307,6 +315,10 @@
   "text": "Analisi automatizzate delle pagine pubbliche il ⟦1⟧ novembre ⟦2⟧ di ⟦3⟧, ⟦4⟧, ⟦5⟧, ⟦6⟧, concorrenti naturali trovati sul web aperto dallo screening rivale di QA-lab URL Review.",
   "machine": true
  },
+ "Automated analyses of public pages on ⟦1⟧ Nov ⟦2⟧ of ⟦3⟧, ⟦4⟧, ⟦5⟧, natural competitors found on the open web by QA-lab URL Review's rival sweep.": {
+  "text": "Analisi automatizzate delle pagine pubbliche il ⟦1⟧ ⟦2⟧ novembre del ⟦3⟧, ⟦4⟧, ⟦5⟧, concorrenti naturali trovati sul web aperto dallo sweep rivale di QA-lab URL Review.",
+  "machine": true
+ },
  "Automated analyses of public pages on ⟦1⟧ Nov ⟦2⟧ of ⟦3⟧, ⟦4⟧, natural competitors found on the open web by QA-lab URL Review's rival sweep.": {
   "text": "Analisi automatizzate delle pagine pubbliche il ⟦1⟧ ⟦2⟧ novembre del ⟦3⟧, ⟦4⟧, concorrenti naturali trovati sul web aperto dal rivale di QA-lab URL Review.",
   "machine": true
@@ -377,6 +389,10 @@
  },
  "But ⟦1⟧ AI answer or search crawlers are blocked.": "Ma ⟦1⟧ crawler di ricerca o di risposte AI sono bloccati.",
  "But ⟦1⟧ and ⟦2⟧ both serve the site, each names itself canonical, and the sitemap lists only the bare host.": "Ma ⟦1⟧ e ⟦2⟧ servono entrambi il sito, ognuno si dichiara canonical e la sitemap elenca solo l’host senza prefisso.",
+ "But ⟦1⟧ and ⟦2⟧ must only directly contain ⟦3⟧, ⟦4⟧ or ⟦5⟧ elements.": {
+  "text": "Ma ⟦1⟧ e ⟦2⟧ devono contenere direttamente solo ⟦3⟧, ⟦4⟧ o ⟦5⟧ elementi.",
+  "machine": true
+ },
  "But ⟦1⟧ disallows bingbot from the whole site, and Bing's index also feeds Copilot.": "Ma ⟦1⟧ blocca bingbot su tutto il sito, e l’indice di Bing alimenta anche Copilot.",
  "But ⟦1⟧ disallows ChatGPT-User, the agent that opens a page when a person asks ChatGPT about it.": "Ma ⟦1⟧ blocca ChatGPT-User, l’agent che apre una pagina quando qualcuno chiede a ChatGPT di parlarne.",
  "But ⟦1⟧ disallows OAI-SearchBot and nine other AI search agents, so their answers can't cite it.": "Ma ⟦1⟧ blocca OAI-SearchBot e altri nove agent di ricerca AI, quindi le loro risposte non possono citarlo.",
@@ -404,6 +420,10 @@
  "But ⟦1⟧ pages analyzed have no ⟦2⟧, the home page included.": "Ma ⟦1⟧ pagine analizzate non hanno ⟦2⟧, home page inclusa.",
  "But ⟦1⟧ pages analyzed use a positive tabindex, which pulls one element ahead of everything else in keyboard order.": "Ma ⟦1⟧ pagine analizzate usano un tabindex positivo, che porta un elemento davanti a tutto il resto nell’ordine da tastiera.",
  "But ⟦1⟧ pages configure two GA4 properties, G-R2FPS06ZSD and G-N4639JFT8D, so numbers split unless both teams know.": "Ma ⟦1⟧ pagine configurano due proprietà GA4, G-R2FPS06ZSD e G-N4639JFT8D, quindi i numeri si dividono se entrambi i team non lo sanno.",
+ "But ⟦1⟧ pages have no meta description.": {
+  "text": "Ma ⟦1⟧ pagine non hanno meta descrizione.",
+  "machine": true
+ },
  "But ⟦1⟧ pages have no title.": "Ma ⟦1⟧ pagine non hanno un titolo.",
  "But ⟦1⟧ points crawlers to ⟦2⟧ and that address returns ⟦3⟧.": "Ma ⟦1⟧ indirizza i crawler a ⟦2⟧ e quell’indirizzo restituisce ⟦3⟧.",
  "But ⟦1⟧ points crawlers to ⟦2⟧ which timed out, and plain http answers ⟦3⟧.": "Ma ⟦1⟧ indirizza i crawler a ⟦2⟧, che è andato in timeout, e l’http semplice risponde ⟦3⟧.",
@@ -452,6 +472,10 @@
  "But every page analyzed loads its two logo images over ⟦1⟧ so browsers must upgrade or block them.": "Ma ogni pagina analizzata carica le due immagini del logo via ⟦1⟧, quindi i browser devono aggiornarle o bloccarle.",
  "But every page analyzed ships over ⟦1⟧ KB of HTML, and the home page is ⟦2⟧ MB before compression, ahead of any image.": "Ma ogni pagina analizzata invia oltre ⟦1⟧ KB di HTML, e la home page pesa ⟦2⟧ MB prima della compressione, prima ancora delle immagini.",
  "But every page analyzed still loads UA-⟦1⟧-⟦2⟧, and Universal Analytics stopped processing data by July ⟦3⟧.": "Ma ogni pagina analizzata carica ancora UA-⟦1⟧-⟦2⟧, e Universal Analytics ha smesso di elaborare dati entro luglio ⟦3⟧.",
+ "But form elements must have labels.": {
+  "text": "Ma gli elementi del modulo devono avere etichette.",
+  "machine": true
+ },
  "But framing is limited only by X-Frame-Options:": "Ma il framing è limitato solo da X-Frame-Options:",
  "But Google Tag Manager loads and no consent tool or Consent Mode default appears in the HTML.": "Ma Google Tag Manager si carica e nell’HTML non compare nessuno strumento di consenso né un default di Consent Mode.",
  "But home page links carry tabindex values like ⟦1⟧ and ⟦2⟧, so keyboard users move in an order that skips around.": "Ma i link della home page hanno valori tabindex come ⟦1⟧ e ⟦2⟧, quindi chi usa la tastiera si muove in un ordine che salta qua e là.",
@@ -1179,6 +1203,10 @@
  "Keep INP under ⟦1⟧ ms.": "Tieni l’INP sotto i ⟦1⟧ ms.",
  "Keep one GA4 property per site, loaded once, ideally through Tag Manager, and retire the old ID.": "Tieni una proprietà GA4 per sito, caricata una volta, idealmente tramite Tag Manager, e dismetti il vecchio ID.",
  "Keep one GA4 property per site.": "Tieni una proprietà GA4 per sito.",
+ "Keep only li elements directly inside ul and ol.": {
+  "text": "Mantieni solo gli elementi li direttamente all'interno di ul e ol.",
+  "machine": true
+ },
  "Keep port ⟦1⟧ alive just to send a ⟦2⟧ to https.": "Tieni attiva la porta ⟦1⟧ solo per inviare un ⟦2⟧ verso https.",
  "Keep titles near ⟦1⟧ characters and move the mission into the description.": "Tieni i titoli intorno ai ⟦1⟧ caratteri e sposta la missione nella description.",
  "Keep titles near ⟦1⟧ characters: key words first, site name last, and trim long names in the CMS.": "Tieni i titoli intorno ai ⟦1⟧ caratteri: parole chiave prima, nome del sito in fondo, e accorcia i nomi lunghi nel CMS.",
@@ -1358,6 +1386,14 @@
  "One attribute fixes every page.": "Un attributo sistema ogni pagina.",
  "One attribute makes it usable by voice.": "Un attributo lo rende usabile con la voce.",
  "One attribute per page.": "Un attributo per pagina.",
+ "One automated analysis of public pages on ⟦1⟧ Nov ⟦2⟧, one of the most visited sites in its country, from QA-lab URL Review's country sweep.": {
+  "text": "Un'analisi automatizzata delle pagine pubbliche del ⟦1⟧ novembre ⟦2⟧, uno dei siti più visitati nel suo paese, dall'analisi dei paesi di QA-lab URL Review.",
+  "machine": true
+ },
+ "One automated analysis of public pages on ⟦1⟧ Nov ⟦2⟧, requested through QA-lab URL Review.": {
+  "text": "Un'analisi automatizzata delle pagine pubbliche il ⟦1⟧ novembre ⟦2⟧, richiesta tramite QA-lab URL Review.",
+  "machine": true
+ },
  "One automated analysis of public pages on ⟦1⟧ Oct ⟦2⟧, one of the most visited sites in its country, from QA-lab URL Review's country sweep.": "Un’analisi automatica di pagine pubbliche: ⟦1⟧ ott. ⟦2⟧, uno dei siti più visitati del suo paese, dallo sweep per paese di QA-lab URL Review.",
  "One automated analysis of public pages on ⟦1⟧ Oct ⟦2⟧, requested through QA-lab URL Review.": "Un’analisi automatica di pagine pubbliche: ⟦1⟧ ott. ⟦2⟧, richiesta tramite QA-lab URL Review.",
  "One automated analysis of public pages on ⟦1⟧ Oct ⟦2⟧.": "Un’analisi automatica di pagine pubbliche: ⟦1⟧ ott. ⟦2⟧.",
@@ -1681,6 +1717,10 @@
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.": "Invia Strict-Transport-Security con un max-age di almeno un anno, così i browser non tornano mai su http in chiaro.",
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try…": "Invia Strict-Transport-Security con un max-age di almeno un anno, così i browser non tornano…",
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never…": "Invia Strict-Transport-Security con un max-age di almeno un anno, così i browser non…",
+ "Send Strict-Transport-Security with a max-age of at least a year, so browsers…": {
+  "text": "Invia Strict-Transport-Security con un'età massima di almeno un anno, quindi i browser...",
+  "machine": true
+ },
  "Send Strict-Transport-Security with a max-age of at least a year, so…": {
   "text": "Invia Strict-Transport-Security con un'età massima di almeno un anno, quindi...",
   "machine": true
@@ -1689,6 +1729,10 @@
  "Send X-Content-Type-Options: nosniff on every response.": "Invia X-Content-Type-Options: nosniff su ogni risposta.",
  "Send X-Content-Type-Options: nosniff, and X-Frame-Options:": "Invia X-Content-Type-Options: nosniff e X-Frame-Options:",
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧, ⟦8⟧ page analyzed, ⟦9⟧ Oct ⟦10⟧.": "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Sicurezza ⟦4⟧, A11y ⟦5⟧, Velocità ⟦6⟧. ⟦7⟧, ⟦8⟧ pagina analizzata, ⟦9⟧ ott. ⟦10⟧.",
+ "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧, ⟦8⟧ pages analyzed, ⟦9⟧ Nov ⟦10⟧.": {
+  "text": "SEO ⟦1⟧, GEO ⟦2⟧, Analisi ⟦3⟧, Sicurezza ⟦4⟧, A11y ⟦5⟧, Velocità ⟦6⟧. ⟦7⟧, ⟦8⟧ pagine analizzate, ⟦9⟧ novembre ⟦10⟧.",
+  "machine": true
+ },
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧, ⟦8⟧ pages analyzed, ⟦9⟧ Oct ⟦10⟧.": "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Sicurezza ⟦4⟧, A11y ⟦5⟧, Velocità ⟦6⟧. ⟦7⟧, ⟦8⟧ pagine analizzate, ⟦9⟧ ott. ⟦10⟧.",
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧.basketball, ⟦8⟧ pages analyzed, ⟦9⟧ Oct ⟦10⟧.": "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Sicurezza ⟦4⟧, A11y ⟦5⟧, Velocità ⟦6⟧. ⟦7⟧.basketball, ⟦8⟧ pagine analizzate, ⟦9⟧ ott. ⟦10⟧.",
  "SEO ⟦1⟧.": "SEO ⟦1⟧.",
@@ -1817,8 +1861,16 @@
  "The gap: hreflang.": "La lacuna: hreflang.",
  "The gap: its WebSite JSON-LD has no name, the property search uses for the site name in results.": "La lacuna: il suo WebSite JSON-LD non ha name, la proprietà che la ricerca usa per il nome del sito nei risultati.",
  "The gap: link names.": "La lacuna: i nomi dei link.",
+ "The gap: list markup.": {
+  "text": "Il divario: markup dell'elenco.",
+  "machine": true
+ },
  "The gap: measurement.": {
   "text": "Il divario: misurazione.",
+  "machine": true
+ },
+ "The gap: meta descriptions.": {
+  "text": "Il divario: le meta descrizioni.",
   "machine": true
  },
  "The gap: no page analyzed carries JSON-LD naming who runs the site.": "La lacuna: nessuna pagina analizzata ha JSON-LD che dica chi gestisce il sito.",

@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updatedAt": "2026-11-02T04:11:11.795Z",
+ "updatedAt": "2026-11-03T11:37:29.470Z",
  "posts": {
   "auto-2026-10-21/01-u-teaminternational-com": {
    "linkedin": {
@@ -65,7 +65,7 @@
    },
    "tiktok": {
     "impressions": 173,
-    "views": 206,
+    "views": 208,
     "likes": 8,
     "comments": 2
    },
@@ -123,7 +123,7 @@
     "comments": 2
    },
    "tiktok": {
-    "impressions": 94,
+    "impressions": 95,
     "views": 104,
     "likes": 4
    },
@@ -170,7 +170,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 3,
+    "views": 2,
     "likes": 2
    }
   },
@@ -189,7 +189,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 3,
+    "views": 2,
     "likes": 2
    }
   },
@@ -199,8 +199,8 @@
     "likes": 3
    },
    "tiktok": {
-    "impressions": 114,
-    "views": 132,
+    "impressions": 115,
+    "views": 133,
     "likes": 6,
     "comments": 2
    },
@@ -238,8 +238,8 @@
     "comments": 2
    },
    "tiktok": {
-    "impressions": 108,
-    "views": 124,
+    "impressions": 111,
+    "views": 130,
     "likes": 6,
     "comments": 2
    },
@@ -267,8 +267,46 @@
     "impressions": 3
    },
    "youtube": {
-    "views": 4,
+    "views": 3,
     "likes": 3
+   }
+  },
+  "auto-2026-10-26/01-u-hubspot-com": {
+   "linkedin": {
+    "impressions": 6,
+    "likes": 3
+   },
+   "tiktok": {
+    "impressions": 88,
+    "views": 98,
+    "likes": 4,
+    "comments": 2
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 13,
+    "likes": 2
+   }
+  },
+  "auto-2026-10-27/01-u-ciedi-edu-co": {
+   "linkedin": {
+    "impressions": 6,
+    "likes": 3
+   },
+   "tiktok": {
+    "impressions": 133,
+    "views": 150,
+    "likes": 5,
+    "comments": 2
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 8,
+    "likes": 2
    }
   },
   "compare-2026-11/01-quiz-berlin-vienna": {
@@ -296,7 +334,7 @@
     "likes": 3
    },
    "tiktok": {
-    "impressions": 122,
+    "impressions": 179,
     "views": 210,
     "likes": 6,
     "comments": 2
@@ -305,7 +343,111 @@
     "impressions": 2
    },
    "youtube": {
-    "views": 4,
+    "views": 3,
+    "likes": 1
+   }
+  },
+  "compare-2026-11/03-three-universities": {
+   "linkedin": {
+    "impressions": 7,
+    "likes": 3
+   },
+   "tiktok": {
+    "impressions": 88,
+    "views": 107,
+    "likes": 4,
+    "comments": 4
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 5,
+    "likes": 2
+   }
+  },
+  "compare-2026-11/04-quiz-banks": {
+   "linkedin": {
+    "impressions": 1,
+    "likes": 3
+   },
+   "tiktok": {
+    "impressions": 77,
+    "views": 80,
+    "likes": 3
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
+    "views": 1,
+    "likes": 2
+   }
+  },
+  "compare-2026-11/05-banks": {
+   "linkedin": {
+    "impressions": 6,
+    "likes": 3
+   },
+   "tiktok": {
+    "impressions": 94,
+    "views": 103,
+    "likes": 5
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 12,
+    "likes": 1
+   }
+  },
+  "compare-2026-11/06-quiz-govuk-usagov": {
+   "linkedin": {
+    "impressions": 5,
+    "likes": 3
+   },
+   "tiktok": {
+    "impressions": 92,
+    "views": 101,
+    "likes": 3
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 1,
+    "likes": 1
+   }
+  },
+  "compare-2026-11/07-govuk-usagov": {
+   "linkedin": {
+    "impressions": 8,
+    "likes": 3
+   },
+   "tiktok": {
+    "views": 88,
+    "likes": 2
+   },
+   "youtube": {
+    "views": 4
+   }
+  },
+  "digest-2026-10-30/01-this-week": {
+   "linkedin": {
+    "impressions": 3,
+    "likes": 1
+   },
+   "tiktok": {
+    "impressions": 87,
+    "views": 98,
+    "likes": 5
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 10,
     "likes": 1
    }
   },
@@ -324,12 +466,46 @@
   "launch-2026-10/en/first-read": {
    "youtube": {
     "likes": 1
+   },
+   "tiktok": {
+    "impressions": 108,
+    "views": 119,
+    "likes": 3
+   }
+  },
+  "launch-2026-10/en/frameworks": {
+   "tiktok": {
+    "impressions": 149,
+    "views": 165,
+    "likes": 6
+   },
+   "youtube": {
+    "views": 2,
+    "likes": 1
+   }
+  },
+  "launch-2026-10/en/inherited": {
+   "tiktok": {
+    "impressions": 96,
+    "views": 114,
+    "likes": 2
+   }
+  },
+  "launch-2026-10/en/layers": {
+   "youtube": {
+    "views": 1,
+    "likes": 1
    }
   },
   "launch-2026-10/en/release": {
    "youtube": {
     "views": 28,
     "likes": 1
+   },
+   "tiktok": {
+    "impressions": 88,
+    "views": 100,
+    "likes": 3
    }
   },
   "launch-2026-10/en/security": {
@@ -342,6 +518,15 @@
    "youtube": {
     "views": 11,
     "likes": 1
+   },
+   "linkedin": {
+    "impressions": 4,
+    "likes": 1
+   },
+   "tiktok": {
+    "impressions": 100,
+    "views": 109,
+    "likes": 2
    }
   },
   "promo-social-hub-2026-10/01-one-page-en": {
@@ -351,7 +536,7 @@
    },
    "tiktok": {
     "impressions": 165,
-    "views": 184,
+    "views": 185,
     "likes": 7,
     "comments": 2
    },
@@ -364,6 +549,20 @@
     "likes": 2
    }
   },
+  "series-dia-de-muertos-2026-11/01-ofrenda": {
+   "linkedin": {
+    "impressions": 1,
+    "likes": 3
+   },
+   "tiktok": {
+    "views": 100,
+    "likes": 3
+   },
+   "youtube": {
+    "views": 4,
+    "likes": 1
+   }
+  },
   "tips-2026-10/01-img-size": {
    "linkedin": {
     "impressions": 3,
@@ -371,6 +570,15 @@
    },
    "x": {
     "impressions": 1,
+    "likes": 1
+   },
+   "tiktok": {
+    "impressions": 134,
+    "views": 178,
+    "likes": 7
+   },
+   "youtube": {
+    "views": 13,
     "likes": 1
    }
   },
@@ -383,7 +591,7 @@
     "impressions": 3
    },
    "youtube": {
-    "views": 4,
+    "views": 3,
     "likes": 2
    }
   },
@@ -413,22 +621,118 @@
     "likes": 2
    }
   },
+  "tips-2026-10/05-contrast": {
+   "linkedin": {
+    "impressions": 2,
+    "likes": 3
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 13,
+    "likes": 1
+   }
+  },
+  "tips-2026-10/06-utm": {
+   "linkedin": {
+    "impressions": 1,
+    "likes": 3
+   },
+   "tiktok": {
+    "views": 97,
+    "likes": 2
+   },
+   "youtube": {
+    "views": 33
+   }
+  },
   "tips-horror-headers-2026-10/01-missing-csp": {
    "linkedin": {
     "impressions": 13,
     "likes": 3
    },
    "tiktok": {
-    "impressions": 146,
-    "views": 171,
+    "impressions": 165,
+    "views": 172,
     "likes": 5
    },
    "x": {
     "impressions": 1
    },
    "youtube": {
-    "views": 21,
+    "views": 23,
     "likes": 2
+   }
+  },
+  "tips-horror-headers-2026-10/02-zombie-redirects": {
+   "linkedin": {
+    "impressions": 12,
+    "likes": 3
+   },
+   "tiktok": {
+    "impressions": 224,
+    "views": 253,
+    "likes": 6
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 3,
+    "likes": 1
+   }
+  },
+  "tips-horror-headers-2026-10/03-haunted-404": {
+   "linkedin": {
+    "impressions": 5,
+    "likes": 3
+   },
+   "tiktok": {
+    "impressions": 100,
+    "views": 119,
+    "likes": 3
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 4,
+    "likes": 1
+   }
+  },
+  "tips-horror-headers-2026-10/04-cursed-alt": {
+   "linkedin": {
+    "impressions": 8,
+    "likes": 3
+   },
+   "tiktok": {
+    "impressions": 105,
+    "views": 116,
+    "likes": 4
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 18,
+    "likes": 1
+   }
+  },
+  "tips-horror-headers-2026-10/05-poltergeist-cls": {
+   "linkedin": {
+    "impressions": 4,
+    "likes": 3
+   },
+   "tiktok": {
+    "views": 150,
+    "likes": 4
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
+    "views": 21
    }
   }
  }
