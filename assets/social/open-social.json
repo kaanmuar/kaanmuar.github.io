@@ -21,6 +21,17 @@
     "checked": "2026-11-01T16:49:53.981Z"
    }
   ],
+  "auto-2026-10-22/06-u-cognizant-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzgxsvdb242n",
+    "at": "2026-11-03T23:15:53.226Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzgxsvdb242n",
+    "checked": "2026-11-03T23:15:54.973Z"
+   }
+  ],
   "auto-2026-10-23/03-u-monsterenergy-com": [
    {
     "channel": "bluesky",
@@ -332,6 +343,15 @@
   ],
   "compare-2026-11/09-metros": [
    {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18081414257732874",
+    "at": "2026-11-03T23:15:57.137Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4022570207709442167",
+    "checked": "2026-11-03T23:16:06.903Z"
+   },
+   {
     "channel": "instagram",
     "profile": "instagram.com/qaurlreview",
     "id": "17933023116162224",
@@ -559,6 +579,17 @@
     "result": "sent",
     "url": "https://www.threads.com/@qaurlreview/post/DfQFFwxATBq",
     "checked": "2026-11-02T19:40:26.671Z"
+   }
+  ],
+  "tips-2026-10/08-input-names": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzgxstpuzx27",
+    "at": "2026-11-03T23:15:51.205Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzgxstpuzx27",
+    "checked": "2026-11-03T23:15:53.226Z"
    }
   ],
   "tips-horror-headers-2026-10/01-missing-csp": [
