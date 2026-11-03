@@ -55,7 +55,7 @@ val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" 
     "enable-warmup" to "Turn mailbox warm-up back on", "restore-alias" to "Restore a missing alias", "launch-campaign" to "Launch a draft campaign", "index-submit" to "Send missing pages to search engines")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
 /** Every action with a daily cap, for the used-today rows (#1977). */
-private val AUTO_CAPS = CAPS + listOf("rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix", "retry-social", "resume-outreach", "merge-pr", "enable-warmup", "restore-alias", "launch-campaign", "index-submit")
+private val AUTO_CAPS = CAPS + listOf("rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix", "retry-social", "resume-outreach", "merge-pr", "enable-warmup", "restore-alias", "launch-campaign")
 
 /** The countdown (#1977): risky actions Jarvis queued, which run when their time ends unless cancelled. */
 object Countdowns {

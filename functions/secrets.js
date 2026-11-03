@@ -38,6 +38,8 @@ const BY_FUNCTION = {
   jarvisMail: list(MAIL, JARVIS_SOURCES, GEMINI),
   jarvisWatch: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI),
   jarvisCountdowns: list(MAIL, JARVIS_SOURCES, BROWSER),
+  // jarvisIndexCheck and jarvisIndexPush (#2480): Brave's site: search, and Brave's form through the review browser.
+  jarvisIndex: list(["BRAVE_SEARCH_KEY"], BROWSER),
   // A Gmail app password for the inbox qa@carlosandmunoz.com forwards to (functions/tiktok-business-watch.js).
   tiktokBusinessWatch: list(MAIL, GITHUB, ["QA_MAIL_APP_PASSWORD"]),
   // functions/mailbox-graduate.js (#2382): Instantly accounts and campaigns, then a mail and a comment on #2379.

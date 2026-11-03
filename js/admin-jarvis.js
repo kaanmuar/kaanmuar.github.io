@@ -535,7 +535,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         comparisons: "Comparison saved", reviewEvents: "URL review events (runs, payments, captures; refunds, disputes and unmatched payments always email)",
         ops: "Ops: jobs missed or failed", ownerReplies: "Owner replies", ownerRemind: "Owner replies still waiting (09:00)"
     };
-    const ACTION_CAPS = { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2, 'launch-campaign': 10, 'index-submit': 1 };
+    const ACTION_CAPS = { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2, 'launch-campaign': 10 };
     const COUNTDOWN_HOURS = 2;
     const hoursText = (h) => (h >= 1 ? `${h} h` : `${Math.round(h * 60)} min`);
 

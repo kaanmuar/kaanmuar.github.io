@@ -346,7 +346,7 @@ async function searchConsole(ctx) {
 
 async function search(ctx) {
   const queries = ((ctx.settings || {}).searchQueries || []).length ? ctx.settings.searchQueries : SEARCH_QUERIES;
-  const [ranks, gsc, index] = await Promise.all([brave(ctx, queries.slice(0, 8)), searchConsole(ctx), jarvisIndex.check(ctx).catch((error) => ({ ok: false, error: clean(error) }))]);
+  const [ranks, gsc, index] = await Promise.all([brave(ctx, queries.slice(0, 8)), searchConsole(ctx), jarvisIndex.read(ctx).catch((error) => ({ ok: false, error: clean(error) }))]);
   return { ok: true, brave: ranks, console: gsc, index, needs: gsc.need ? [gsc.need] : [] };
 }
 

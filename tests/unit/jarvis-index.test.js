@@ -1,9 +1,11 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const index = require("../../functions/jarvis-index");
-const actions = require("../../functions/jarvis-actions");
+const fs = require("fs");
+const path = require("path");
+const ops = require("../../functions/ops-schedule");
+const secrets = require("../../functions/secrets");
 const core = require("../../js/admin-jarvis-core.js");
-const { fakeDb } = require("./fake-jarvis-db");
 
 const NOW = Date.parse("2026-11-03T15:00:00Z");
 const DAY = 86400000;
@@ -75,21 +77,26 @@ test("index: push sends every missing page to IndexNow, up to the weekly cap to 
   assert.ok(second.includes("https://carlosandmunoz.com/s/29.html"));
 });
 
-test("index: the hourly pass sends the missing pages once a week, and not at all when nothing is missing", async () => {
-  const db = fakeDb();
-  let pushes = 0;
-  let missing = [{ url: MAIN[0], main: true }];
-  const ops = { held: async () => [], hubStale: async () => false, failedNotices: async () => [], noticeBudget: async () => 0,
-    indexGaps: async () => missing, indexPush: async (list) => { pushes++; return { detail: list.length + " sent" }; } };
-  const monday = Date.parse("2026-11-02T15:00:00Z");
-  await actions.autoRun({ db, now: monday, settings: {}, ops });
-  await actions.autoRun({ db, now: monday + 3 * DAY, settings: {}, ops });
-  assert.equal(pushes, 1);
-  await actions.autoRun({ db, now: monday + 7 * DAY, settings: {}, ops });
-  assert.equal(pushes, 2);
-  missing = [];
-  await actions.autoRun({ db, now: monday + 14 * DAY, settings: {}, ops });
-  assert.equal(pushes, 2);
+test("index: the check runs daily and the push on Mondays as scheduled jobs the watchdog sees, and the panel reads the last check without Brave", async () => {
+  assert.equal(ops.cron("jarvisIndexCheck"), "20 7 * * *");
+  assert.equal(ops.cron("jarvisIndexPush"), "0 9 * * 1");
+  assert.equal(ops.job("jarvisIndexPush").gap, 7 * 24 + 2);
+  const src = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  assert.match(src, /exports\.jarvisIndexCheck = scheduled\(/);
+  assert.match(src, /exports\.jarvisIndexPush = scheduled\(/);
+  assert.ok(secrets.jarvisIndex.includes("BRAVE_SEARCH_KEY") && secrets.jarvisIndex.includes("BROWSER_KEY"));
+  const db = docs();
+  assert.equal((await index.read({ db })).ok, false);
+  const calls = [];
+  await index.check({ fetch: web([], calls), db, env: { BRAVE_SEARCH_KEY: "k" }, now: NOW });
+  calls.length = 0;
+  const seen = await index.read({ db });
+  assert.equal(seen.indexed, 0);
+  assert.equal(seen.total, 4);
+  assert.deepEqual(seen.mainMissing, MAIN);
+  assert.deepEqual(calls, []);
+  assert.equal((await index.gaps({ fetch: web([]), db, now: NOW + DAY })).length, 4);
+  assert.equal(await index.gaps({ fetch: web([]), db, now: NOW + 3 * DAY }), null, "a stale check sends nothing");
 });
 
 test("index: the briefing warns while Brave has none of our pages and says when Jarvis last sent them", () => {

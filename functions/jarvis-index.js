@@ -1,11 +1,14 @@
 /* Search index coverage (#2480): which of our sitemap pages Brave has indexed, and the weekly push for the rest.
 
-   check(ctx)  Brave's site: search against both live sitemaps. Page one daily (one call); pages 2-5 only weekly, and
-               only once page one is full. Kept in jarvis_cache/brave-index with zeroSince, the day Brave last had none.
+   check(ctx)  Brave's site: search against both live sitemaps (the daily jarvisIndexCheck job). Page one each day (one
+               call); pages 2-5 only weekly, and only once page one is full. Kept in jarvis_cache/brave-index with
+               zeroSince, the day Brave last had none.
+   read(ctx)   that last check for the search source, without a Brave call.
    gaps(ctx)   the sitemap pages missing from the last check (no Brave call), main sitemap first.
    push(ctx)   every missing page to IndexNow (Bing, Yandex, Seznam, Naver) in one call, and up to BRAVE_WEEK of them
                through Brave's Submit URL form (reviewBrowser "brave-submit"), none sent to Brave again within
-               RESEND_DAYS. Kept in jarvis_cache/index-push. jarvis-actions.js runs it once a week (index-submit).
+               RESEND_DAYS (the Monday jarvisIndexPush job). Kept in jarvis_cache/index-push.
+   Both are rows in ops-schedule.js, so opsWatchdog reports a missed run and Jarvis re-runs a failed one.
 
    ctx = { fetch, env, db, now, browse(job) -> reviewBrowser's answer } */
 
@@ -97,21 +100,23 @@ async function check(ctx) {
   }
   const urls = first.urls.length >= PAGE ? first.urls.concat(deep) : first.urls;
   const cov = coverage(pages, urls);
-  const zeroSince = cov.indexed ? null : saved.zeroSince || new Date(now).toISOString();
-  const at = new Date(now).toISOString();
-  await save(ctx, "brave-index", { at, urls: first.urls, deepUrls: deep, deepAt, zeroSince, indexed: cov.indexed, total: cov.total });
-  const pushed = await state(ctx, "index-push");
-  return {
-    ok: true,
-    at,
-    total: cov.total,
-    indexed: cov.indexed,
-    missing: cov.missing.length,
-    mainMissing: cov.missing.filter((p) => p.main).map((p) => p.url),
-    zeroSince,
-    pushedAt: pushed.at || null,
-    pushed: pushed.last || null
+  const row = {
+    at: new Date(now).toISOString(), urls: first.urls, deepUrls: deep, deepAt, zeroSince: cov.indexed ? null : saved.zeroSince || new Date(now).toISOString(),
+    indexed: cov.indexed, total: cov.total, missing: cov.missing.length, mainMissing: cov.missing.filter((p) => p.main).map((p) => p.url)
   };
+  await save(ctx, "brave-index", row);
+  return view(row, await state(ctx, "index-push"));
+}
+
+function view(saved, pushed) {
+  return { ok: true, at: saved.at, total: saved.total, indexed: saved.indexed, missing: saved.missing, mainMissing: saved.mainMissing || [], zeroSince: saved.zeroSince || null, pushedAt: pushed.at || null, pushed: pushed.last || null };
+}
+
+// The last check for the panel and the briefing, without a Brave call.
+async function read(ctx) {
+  const saved = await state(ctx, "brave-index");
+  if (!saved.at || saved.total === undefined) return { ok: false, error: "Not checked yet: jarvisIndexCheck runs daily." };
+  return view(saved, await state(ctx, "index-push"));
 }
 
 async function gaps(ctx) {
@@ -166,4 +171,4 @@ async function push(ctx, missing) {
   return { detail: list.length + " pages missing from Brave's index. " + notes.join("; ") + "." };
 }
 
-module.exports = { check, gaps, push, pageKey, coverage, sitemapPages, BRAVE_WEEK, RESEND_DAYS };
+module.exports = { check, read, gaps, push, pageKey, coverage, sitemapPages, BRAVE_WEEK, RESEND_DAYS };
