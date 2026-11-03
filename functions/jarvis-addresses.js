@@ -87,12 +87,12 @@ function improvmxRows(aliases, credentials, box, domain) {
     const alias = lower(a.alias);
     const t = tally.get(alias);
     const bad = problems.filter((p) => p.alias === alias);
-    const base = { address: alias + "@" + d, system: "ImprovMX", kind: "alias", forwards: forwardsOf(a.forward), recent: t ? { mails: t.mails, forwarded: t.forwarded, bounced: t.bounced, refused: t.refused, last: t.last } : null };
+    const base = { address: alias + "@" + d, system: "ImprovMX", kind: "alias", forwards: forwardsOf(a.forward), recent: t ? { mails: t.mails, forwarded: t.forwarded, bounced: t.bounced, refused: t.refused, spam: t.spam || 0, last: t.last } : null };
     if (bad.length) {
       const what = bad.every((p) => p.outcome === "refused") ? "refused" : "bounced";
       return row(Object.assign(base, { state: "error", problem: "bounce", detail: plural(bad.length, "mail") + " " + what + " in the last day: " + clip(bad[0].reason || bad[0].code || "no detail", 140), fix: { by: "carlos", action: "Check the forward", link: LINKS.improvmx } }));
     }
-    return row(Object.assign(base, { detail: t ? plural(t.mails, "mail") + " in the last day, " + t.forwarded + " forwarded." : "No mail in the last day." }));
+    return row(Object.assign(base, { detail: t ? plural(t.mails, "mail") + " in the last day, " + t.forwarded + " forwarded" + (t.spam ? ", " + t.spam + " spam blocked" : "") + "." : "No mail in the last day." }));
   });
   const inbox = inboxOf(aliases);
   const hook = !!hookOf(aliases);
