@@ -356,8 +356,10 @@ async function search(ctx) {
 function facebookNeeds(metrics) {
   return Object.entries((metrics && metrics.pages) || {}).map(([profile, page]) => {
     if (page.skipped) return profile + ": the daily social numbers skipped it (" + page.skipped + " repo secret). Steps are at the top of scripts/meta-token.js.";
-    if (page.asked && page.answered < page.asked) return profile + ": the Graph API answered " + (page.answered || 0) + " of " + page.asked + " sent posts in the daily social numbers" + (page.error ? ": " + String(page.error).slice(0, 200) : ".");
-    return "";
+    const said = [];
+    if (page.asked && page.answered < page.asked) said.push("the Graph API answered " + (page.answered || 0) + " of " + page.asked + " sent posts in the daily social numbers" + (page.error ? " (" + String(page.error).slice(0, 200) + ")" : ""));
+    if (page.asked && page.insights === 0) said.push("no post came back with views, so the Page token lacks read_insights");
+    return said.length ? profile + ": " + said.join("; ") + ". A new token with read_insights and pages_read_user_content fixes it; steps are at the top of scripts/meta-token.js." : "";
   }).filter(Boolean);
 }
 

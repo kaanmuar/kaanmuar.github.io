@@ -13,26 +13,15 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
-      - name: Ask the Graph API about the token and sent posts
+      - name: Run the new facebookNumbers read-only
         env:
           FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
         run: |
           node -e '
-          const T = process.env.FACEBOOK_PAGE_TOKEN, G = "https://graph.facebook.com/v23.0";
-          if (!T) { console.log("FACEBOOK_PAGE_TOKEN is empty"); process.exit(0); }
-          const get = async (p, q = {}) => { const r = await fetch(G + "/" + p + "?" + new URLSearchParams({ access_token: T, ...q })); const j = await r.json().catch(() => ({})); return { status: r.status, j }; };
-          const show = (label, r) => console.log(label, r.status, JSON.stringify(r.j.error ? { message: r.j.error.message, code: r.j.error.code, sub: r.j.error.error_subcode, type: r.j.error.type } : r.j).slice(0, 400));
-          (async () => {
-            const d = await get("debug_token", { input_token: T });
-            const x = d.j.data || {};
-            console.log("debug_token", d.status, JSON.stringify({ valid: x.is_valid, type: x.type, expires_at: x.expires_at, scopes: x.scopes, profile: x.profile_id, error: x.error && x.error.message }));
-            show("me", await get("me", { fields: "id,name" }));
-            const book = require("./assets/social/facebook.json");
-            const sent = Object.values(book.posts).flat().filter((e) => e.result === "sent" && e.id).slice(-3);
-            for (const e of sent) {
-              console.log("== " + e.id);
-              show("  fields", await get(e.id, { fields: "shares,likes.summary(true).limit(0)" }));
-              for (const m of ["post_media_view", "post_total_media_view_unique", "post_reactions_by_type_total", "post_clicks", "post_video_views", "post_impressions_unique"]) show("  lifetime " + m, await get(e.id + "/insights", { metric: m, period: "lifetime" }));
-              show("  batch", await get(e.id + "/insights", { metric: "post_media_view,post_reactions_by_type_total,post_video_views" }));
-            }
-          })();'
+          const m = require("./scripts/social-metrics"), q = require("./scripts/social-ledger");
+          const entries = m.sentEntries(q.read(q.FACEBOOK), ["facebook"]);
+          const report = {};
+          m.facebookNumbers(entries, process.env.FACEBOOK_PAGE_TOKEN, fetch, report).then((found) => {
+            console.log("REPORT " + JSON.stringify(report).slice(0, 400));
+            console.log("WITH_NUMBERS " + found.filter((f) => Object.keys(f.numbers).length).length);
+          });'

@@ -762,9 +762,10 @@ test("social: Facebook needs come from the daily metrics' word on each Page, not
   const run = (metrics) => sources.social({ fetch: async (url) => (/metrics\.json/.test(url) && metrics ? json(metrics) : json({}, 404)), env: {}, now: NOW.getTime(), days: 30 });
   assert.deepEqual((await run({ posts: {}, pages: { "Facebook Page": { asked: 3, answered: 3 } } })).needs.filter((n) => /Facebook/.test(n)), []);
   assert.deepEqual((await run(null)).needs.filter((n) => /Facebook/.test(n)), []);
-  const needs = (await run({ posts: {}, pages: { "Facebook Page": { asked: 41, answered: 0, error: "Graph 400: (#10) pages_read_engagement" }, "Facebook Page ES": { skipped: "no FACEBOOK_PAGE_TOKEN_ES" } } })).needs;
+  assert.deepEqual((await run({ posts: {}, pages: { "Facebook Page": { asked: 3, answered: 3, insights: 3 } } })).needs.filter((n) => /Facebook/.test(n)), []);
+  const needs = (await run({ posts: {}, pages: { "Facebook Page": { asked: 41, answered: 0, insights: 0, error: "Graph 400: (#10) pages_read_user_content" }, "Facebook Page ES": { skipped: "no FACEBOOK_PAGE_TOKEN_ES" } } })).needs;
   assert.deepEqual(needs.filter((n) => /Facebook/.test(n)), [
-    "Facebook Page: the Graph API answered 0 of 41 sent posts in the daily social numbers: Graph 400: (#10) pages_read_engagement",
+    "Facebook Page: the Graph API answered 0 of 41 sent posts in the daily social numbers (Graph 400: (#10) pages_read_user_content); no post came back with views, so the Page token lacks read_insights. A new token with read_insights and pages_read_user_content fixes it; steps are at the top of scripts/meta-token.js.",
     "Facebook Page ES: the daily social numbers skipped it (no FACEBOOK_PAGE_TOKEN_ES repo secret). Steps are at the top of scripts/meta-token.js."
   ]);
   assert.ok(needs.every((n) => !/functions\/\.env/.test(n)));
