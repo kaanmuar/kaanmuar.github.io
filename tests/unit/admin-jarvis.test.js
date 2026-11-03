@@ -1282,6 +1282,53 @@ test("marketing (#1722): campaigns read their week, sequence, language, region, 
   assert.deepEqual(out.byStatus.find((r) => r.label === "completed"), { label: "completed", value: 1 });
 });
 
+// Instantly answers leads/list a page at a time and campaigns/analytics only for campaigns with activity.
+function instantlyFake(campaigns, leads, acted) {
+  return async (url, init) => {
+    const path = url.replace("https://api.instantly.ai/api/v2/", "");
+    let body = {};
+    if (path === "campaigns?limit=100") body = { items: campaigns };
+    else if (path === "campaigns/analytics") body = [];
+    else if (path === "leads/list") {
+      const after = JSON.parse(init.body).starting_after;
+      const from = after ? Number(after) : 0;
+      body = { items: leads.slice(from, from + 100), next_starting_after: from + 100 < leads.length ? String(from + 100) : undefined };
+    } else if (/\/activate$/.test(path)) {
+      const id = path.split("/")[1];
+      acted.push(id);
+      campaigns.find((c) => c.id === id).status = 1;
+    } else if (/^campaigns\/[^/]+$/.test(path)) body = campaigns.find((c) => c.id === path.split("/")[1]);
+    return { ok: true, json: async () => body };
+  };
+}
+
+test("marketing (#2475): leads come from the leads list, and Jarvis launches only drafts with leads, steps, a mailbox and a start within a week", async () => {
+  const id = (n) => n + "0000000-0000-4000-8000-000000000000";
+  const camp = (n, name, status, start, extra) => Object.assign({ id: id(n), name, status, campaign_schedule: { start_date: start, schedules: [] }, sequences: [{ steps: [1, 2, 3] }], email_list: ["carlos@qalabreview.com"] }, extra || {});
+  const campaigns = [
+    camp(1, "W1 F-es Americas", 0, "2026-11-01"),
+    camp(2, "W1 D-en Europe", 0, "2026-11-01"),
+    camp(3, "W1 A-en US", 1, "2026-11-01"),
+    camp(4, "W2 A-en US", 0, "2026-11-20"),
+    camp(5, "W1 F-en US", 0, "2026-11-01", { email_list: [] }),
+    camp(6, "W1 E-en US", 0, "2026-11-01", { sequences: [] })
+  ];
+  const leads = [];
+  for (let i = 0; i < 150; i++) leads.push({ campaign: id(1) });
+  [3, 4, 5, 6].forEach((n) => leads.push({ campaign: id(n) }));
+  const acted = [];
+  const ctx = { fetch: instantlyFake(campaigns, leads, acted), env: { INSTANTLY_API_KEY: "k" }, now: NOW.getTime() };
+  const counts = await marketingSrc.leadCounts(ctx);
+  assert.equal(counts[id(1)], 150, "every page is counted");
+  const rows = marketingSrc.campaignRows(campaigns, [], ctx.now, counts).rows;
+  assert.deepEqual(rows.map((r) => [r.name, r.leads]).filter((r) => r[1]), [["W1 A-en US", 1], ["W1 E-en US", 1], ["W1 F-en US", 1], ["W1 F-es Americas", 150], ["W2 A-en US", 1]]);
+  assert.deepEqual((await marketingSrc.launchReady(ctx)).map((r) => [r.name, r.leads]), [["W1 F-es Americas", 150]]);
+  const res = await marketingSrc.launch(ctx, [id(1), id(2), id(3)]);
+  assert.deepEqual(acted, [id(1)]);
+  assert.deepEqual(res.launched, ["W1 F-es Americas"]);
+  assert.deepEqual(res.left, ["W1 D-en Europe: no longer ready (0 leads, 3 steps, start 2026-11-01)", "W1 A-en US: already active"]);
+});
+
 test("marketing (#1722): follow-up notes count sent and stopped per day, and prospects split by country and segment", () => {
   const notes = marketingSrc.noteRows([
     { status: "follow-note", email: "A@x.com", kind: "return", scene: "free", createdAt: daysAgo(1).toISOString() },
