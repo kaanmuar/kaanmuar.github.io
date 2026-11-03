@@ -287,6 +287,7 @@
             print_studio_name: 'SDLC studio',
             print_studio_pitch: 'Want to sit in on a software project? Open it and follow one feature from the planning board until the team has tested it and it is ready to ship.',
             print_current_role: 'Current role',
+            print_current_roles: 'Current roles',
             print_now: 'Current',
             print_certs_title: 'Certifications',
             print_stack: 'Stack',
@@ -309,6 +310,7 @@
             print_studio_name: 'Estudio SDLC',
             print_studio_pitch: '¿Quieres sentarte en un proyecto de software? Ábrelo y sigue una funcionalidad desde el tablero de planificación hasta que el equipo la ha probado y está lista para salir.',
             print_current_role: 'Rol actual',
+            print_current_roles: 'Roles actuales',
             print_now: 'Actual',
             print_certs_title: 'Certificaciones',
             print_stack: 'Stack',
@@ -331,6 +333,7 @@
             print_studio_name: 'Estúdio SDLC',
             print_studio_pitch: 'Quer acompanhar um projeto de software? Abra e siga uma funcionalidade do quadro de planejamento até o time tê-la testado e ela estar pronta para ir ao ar.',
             print_current_role: 'Função atual',
+            print_current_roles: 'Funções atuais',
             print_now: 'Atual',
             print_certs_title: 'Certificações',
             print_stack: 'Stack',
@@ -353,6 +356,7 @@
             print_studio_name: 'SDLC-Studio',
             print_studio_pitch: 'Möchtest du bei einem Softwareprojekt dabei sein? Öffne es und verfolge ein Feature vom Planungsboard, bis das Team es getestet hat und es bereit zum Ausliefern ist.',
             print_current_role: 'Aktuelle Rolle',
+            print_current_roles: 'Aktuelle Rollen',
             print_now: 'Aktuell',
             print_certs_title: 'Zertifizierungen',
             print_stack: 'Stack',
@@ -375,6 +379,7 @@
             print_studio_name: 'Studio SDLC',
             print_studio_pitch: 'Envie d’assister à un projet logiciel ? Ouvrez-le et suivez une fonctionnalité du tableau de planification jusqu’à ce que l’équipe l’ait testée et qu’elle soit prête à partir.',
             print_current_role: 'Poste actuel',
+            print_current_roles: 'Postes actuels',
             print_now: 'Actuel',
             print_certs_title: 'Certifications',
             print_stack: 'Stack',
@@ -397,6 +402,7 @@
             print_studio_name: 'Studio SDLC',
             print_studio_pitch: 'Vuoi assistere a un progetto software? Aprilo e segui una funzionalità dalla bacheca di pianificazione fino a quando il team l’ha testata ed è pronta per uscire.',
             print_current_role: 'Ruolo attuale',
+            print_current_roles: 'Ruoli attuali',
             print_now: 'Attuale',
             print_certs_title: 'Certificazioni',
             print_stack: 'Stack',
@@ -1857,8 +1863,18 @@
                     title = (roleIdx >= 0 && (this._t() || {})[`role_${roleIdx}`]) || englishTitle;
                 }
                 const detailsSource = (exp.details && (exp.details[lang] || exp.details.en)) || [];
-                const details = detailsSource.map((detail, i) => this._s(`exp_${index}_detail_${i}`, detail));
-                return { title, company: exp.company, dates: this._exportDate(index, exp.dates), details, techUsed: exp.techUsed || [] };
+                const details = detailsSource.map((detail, i) => {
+                    const parts = exp.featured ? this._splitDetailLabel(detail) : null;
+                    if (!parts) return this._s(`exp_${index}_detail_${i}`, detail);
+                    return `${this._s(`exp_${index}_detail_${i}_label`, parts.label)}: ${this._s(`exp_${index}_detail_${i}`, parts.text)}`;
+                });
+                const summary = exp.featured && exp.summary
+                    ? this._s(`exp_${index}_summary`, exp.summary[lang] || exp.summary.en || '')
+                    : '';
+                const highlights = exp.featured && Array.isArray(exp.highlights)
+                    ? exp.highlights.map((h, i) => `${h.value} ${this._s(`exp_${index}_highlight_${i}`, (h.label && (h.label[lang] || h.label.en)) || '')}`.trim())
+                    : [];
+                return { title, company: exp.company, dates: this._exportDate(index, exp.dates), summary, highlights, details, techUsed: exp.techUsed || [] };
             },
 
             translatePage(lang) {
@@ -3271,30 +3287,60 @@
                     .cv-print .stack { margin: 3px 0 0; font-size: 8.5pt; line-height: 1.35; color: #4a5560; }
                     .cv-print .stack span { color: #0d6e76; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 7.5pt; margin-right: 4px; }
                     .cv-print .edu { margin-bottom: 2px; }
+                    .cv-print .job-summary { margin: 2px 0 4px; font-size: 10pt; font-style: italic; color: #4a5560; }
+                    .cv-print .job-highlights { margin: 0 0 5px; font-size: 9pt; font-weight: 600; color: #0d6e76; }
+                    .cv-print .job { display: flow-root; }
+                    .cv-print .job.job-split { margin-bottom: 0; }
+                    .cv-print .job.job-cont { margin-top: 0; }
                 `;
             },
 
-            _jobPrintBlock(exp, index, current) {
+            _exportRoleGroups() {
+                const roles = (this.data.experiences || []).map((exp, index) => ({ exp, index }));
+                let current = roles.filter(({ exp }) => /present\s*$/i.test(String(exp.dates || '')));
+                if (!current.length && roles.length) current = [roles[0]];
+                const past = roles.filter((role) => !current.includes(role));
+                const heading = current.length > 1
+                    ? this._s('print_current_roles', 'Current roles')
+                    : this._s('print_current_role', 'Current role');
+                return { current, past, heading };
+            },
+
+            _jobPrintBlocks(exp, index, current) {
                 const item = this._experienceExport(exp, index);
-                const bullets = item.details.map((line) => `<li>${this._escPrint(line)}</li>`).join('');
+                const li = (line) => {
+                    const parts = exp.featured ? this._splitDetailLabel(line) : null;
+                    return parts
+                        ? `<li><strong>${this._escPrint(parts.label)}:</strong> ${this._escPrint(parts.text)}</li>`
+                        : `<li>${this._escPrint(line)}</li>`;
+                };
                 const tech = (item.techUsed || []).join(', ');
+                const stack = tech ? `<p class="stack"><span>${this._escPrint(this._s('print_stack', 'Stack'))}</span> ${this._escPrint(tech)}</p>` : '';
                 const badge = current ? `<span class="now">${this._escPrint(this._s('print_now', 'Current'))}</span>` : '';
-                return `
-                    <article class="job${current ? ' current' : ''}">
+                const cls = `job${current ? ' current' : ''}`;
+                const head = `
                         <div class="job-row">
                             <h3>${badge}${this._escPrint(item.title)}</h3>
                             <p class="dates">${this._escPrint(item.dates)}</p>
                         </div>
                         <p class="company">${this._companyHtml(item.company)}</p>
-                        <ul>${bullets}</ul>
-                        ${tech ? `<p class="stack"><span>${this._escPrint(this._s('print_stack', 'Stack'))}</span> ${this._escPrint(tech)}</p>` : ''}
-                    </article>
-                `;
+                        ${item.summary ? `<p class="job-summary">${this._escPrint(item.summary)}</p>` : ''}
+                        ${item.highlights.length ? `<p class="job-highlights">${item.highlights.map((h) => this._escPrint(h)).join(' · ')}</p>` : ''}`;
+                if (item.details.length <= 3) {
+                    return [`<article class="${cls}">${head}<ul>${item.details.map(li).join('')}</ul>${stack}</article>`];
+                }
+                const rest = item.details.slice(1);
+                return [
+                    `<article class="${cls} job-split">${head}<ul>${li(item.details[0])}</ul></article>`,
+                    ...rest.map((line, i) => {
+                        const last = i === rest.length - 1;
+                        return `<article class="${cls} job-cont${last ? '' : ' job-split'}"><ul>${li(line)}</ul>${last ? stack : ''}</article>`;
+                    })
+                ];
             },
 
             _recruiterBlocks() {
                 const blocks = [];
-                const experiences = this.data.experiences || [];
                 blocks.push(`
                     <header class="mast">
                         <h1>Carlos A. Muñoz</h1>
@@ -3311,9 +3357,10 @@
                     const names = this.data.skills[key].map((skill) => skill.name).join(', ');
                     blocks.push(`<p class="skill"><strong>${this._escPrint(this._s('print_cat_' + key, key))}.</strong> ${this._escPrint(names)}</p>`);
                 });
-                if (experiences[0]) {
-                    blocks.push(`<h2>${this._escPrint(this._s('print_current_role', 'Current role'))}</h2>`);
-                    blocks.push(this._jobPrintBlock(experiences[0], 0, true));
+                const roles = this._exportRoleGroups();
+                if (roles.current.length) {
+                    blocks.push(`<h2>${this._escPrint(roles.heading)}</h2>`);
+                    roles.current.forEach(({ exp, index }) => blocks.push(...this._jobPrintBlocks(exp, index, true)));
                 }
                 blocks.push(`<h2>${this._escPrint(this._s('print_certs_title', 'Certifications'))}</h2>`);
                 this._certEntries().forEach((item) => {
@@ -3323,9 +3370,7 @@
                 blocks.push(`<h2>${this._escPrint(this._s('languages_title', 'Languages'))}</h2>`);
                 blocks.push(`<p>${this._escPrint(this._s('lang_name_es'))}, ${this._escPrint(this._s('lang_native'))} · ${this._escPrint(this._s('lang_name_en'))}, ${this._escPrint(this._s('lang_fluent'))} (C2) · ${this._escPrint(this._s('lang_name_pt'))}, ${this._escPrint(this._s('lang_fluent'))} · ${this._escPrint(this._s('lang_others'))}, ${this._escPrint(this._s('lang_basic'))}</p>`);
                 blocks.push(`<h2>${this._escPrint(this._s('print_experience_short', 'Experience'))}</h2>`);
-                experiences.slice(1).forEach((exp, offset) => {
-                    blocks.push(this._jobPrintBlock(exp, offset + 1, false));
-                });
+                roles.past.forEach(({ exp, index }) => blocks.push(...this._jobPrintBlocks(exp, index, false)));
                 blocks.push(`<h2>${this._escPrint(this._s('print_education_short', 'Education'))}</h2>`);
                 this._educationEntries().forEach((item) => {
                     blocks.push(`<p class="edu"><strong>${this._escPrint(item.degree)}</strong> · ${this._escPrint(item.school)}</p>`);
@@ -3409,12 +3454,13 @@
             },
 
             _recruiterWordHtml() {
-                const experiences = this.data.experiences || [];
+                const roles = this._exportRoleGroups();
                 const job = (exp, index) => {
                     const item = this._experienceExport(exp, index);
                     const href = PRINT_COMPANIES[item.company];
                     const company = href ? `<a href="${this._escPrint(href)}">${this._escPrint(item.company)}</a>` : this._escPrint(item.company);
-                    return `<h3>${this._escPrint(item.title)}</h3><p><strong>${company}</strong> | ${this._escPrint(item.dates)}</p><ul>${item.details.map((line) => `<li>${this._escPrint(line)}</li>`).join('')}</ul><p><strong>${this._escPrint(this._s('print_stack', 'Stack'))}:</strong> ${this._escPrint(item.techUsed.join(', '))}</p>`;
+                    const intro = `${item.summary ? `<p><em>${this._escPrint(item.summary)}</em></p>` : ''}${item.highlights.length ? `<p><strong>${item.highlights.map((h) => this._escPrint(h)).join(' · ')}</strong></p>` : ''}`;
+                    return `<h3>${this._escPrint(item.title)}</h3><p><strong>${company}</strong> | ${this._escPrint(item.dates)}</p>${intro}<ul>${item.details.map((line) => { const parts = exp.featured ? this._splitDetailLabel(line) : null; return parts ? `<li><strong>${this._escPrint(parts.label)}:</strong> ${this._escPrint(parts.text)}</li>` : `<li>${this._escPrint(line)}</li>`; }).join('')}</ul><p><strong>${this._escPrint(this._s('print_stack', 'Stack'))}:</strong> ${this._escPrint(item.techUsed.join(', '))}</p>`;
                 };
                 return `
                     <h1>Carlos A. Muñoz</h1>
@@ -3426,13 +3472,13 @@
                     <p><a href="https://carlosandmunoz.com/simulador.html">${this._escPrint(this._s('print_studio_name', 'SDLC studio'))}</a> — ${this._escPrint(this._s('print_studio_pitch'))}</p>
                     <h2>${this._escPrint(this._s('print_skills', 'Skills'))}</h2>
                     ${Object.keys(this.data.skills || {}).map((key) => `<p><strong>${this._escPrint(this._s('print_cat_' + key, key))}:</strong> ${this._escPrint(this.data.skills[key].map((skill) => skill.name).join(', '))}</p>`).join('')}
-                    ${experiences[0] ? `<h2>${this._escPrint(this._s('print_current_role', 'Current role'))}</h2>${job(experiences[0], 0)}` : ''}
+                    ${roles.current.length ? `<h2>${this._escPrint(roles.heading)}</h2>${roles.current.map(({ exp, index }) => job(exp, index)).join('<hr>')}` : ''}
                     <h2>${this._escPrint(this._s('print_certs_title', 'Certifications'))}</h2>
                     ${this._certEntries().map((item) => `<p><strong>${this._escPrint(String(item.label || '').replace(/:\s*$/, ''))}</strong> ${this._escPrint(item.value)}</p>`).join('')}
                     <h2>${this._escPrint(this._s('languages_title', 'Languages'))}</h2>
                     <p>${this._escPrint(this._s('lang_name_es'))}, ${this._escPrint(this._s('lang_native'))} · ${this._escPrint(this._s('lang_name_en'))}, ${this._escPrint(this._s('lang_fluent'))} (C2) · ${this._escPrint(this._s('lang_name_pt'))}, ${this._escPrint(this._s('lang_fluent'))} · ${this._escPrint(this._s('lang_others'))}, ${this._escPrint(this._s('lang_basic'))}</p>
                     <h2>${this._escPrint(this._s('print_experience_short', 'Experience'))}</h2>
-                    ${experiences.slice(1).map((exp, offset) => job(exp, offset + 1)).join('<hr>')}
+                    ${roles.past.map(({ exp, index }) => job(exp, index)).join('<hr>')}
                     <h2>${this._escPrint(this._s('print_education_short', 'Education'))}</h2>
                     ${this._educationEntries().map((item) => `<p><strong>${this._escPrint(item.degree)}</strong> — ${this._escPrint(item.school)}</p>`).join('')}
                     <h2>${this._escPrint(this._s('print_summary_short', 'Summary'))}</h2>
@@ -3441,13 +3487,15 @@
             },
 
             _recruiterText() {
-                const experiences = this.data.experiences || [];
+                const roles = this._exportRoleGroups();
                 const lines = [];
                 const job = (exp, index) => {
                     const item = this._experienceExport(exp, index);
                     const href = PRINT_COMPANIES[item.company];
                     lines.push(`${item.title}`);
                     lines.push(`${item.company}${href ? ' (' + href + ')' : ''} | ${item.dates}`);
+                    if (item.summary) lines.push(item.summary);
+                    if (item.highlights.length) lines.push(item.highlights.join(' · '));
                     item.details.forEach((line) => lines.push('- ' + line));
                     lines.push(`${this._s('print_stack', 'Stack')}: ${item.techUsed.join(', ')}`);
                     lines.push('');
@@ -3466,9 +3514,9 @@
                     lines.push(`${this._s('print_cat_' + key, key)}: ${this.data.skills[key].map((skill) => skill.name).join(', ')}`);
                 });
                 lines.push('');
-                if (experiences[0]) {
-                    lines.push(`## ${this._s('print_current_role', 'Current role')} ##`);
-                    job(experiences[0], 0);
+                if (roles.current.length) {
+                    lines.push(`## ${roles.heading} ##`);
+                    roles.current.forEach(({ exp, index }) => job(exp, index));
                 }
                 lines.push(`## ${this._s('print_certs_title', 'Certifications')} ##`);
                 this._certEntries().forEach((item) => lines.push(`- ${String(item.label || '').replace(/:\s*$/, '')} ${item.value}`));
@@ -3478,7 +3526,7 @@
                 lines.push('');
                 lines.push(`## ${this._s('print_experience_short', 'Experience')} ##`);
                 lines.push('');
-                experiences.slice(1).forEach((exp, offset) => job(exp, offset + 1));
+                roles.past.forEach(({ exp, index }) => job(exp, index));
                 lines.push(`## ${this._s('print_education_short', 'Education')} ##`);
                 this._educationEntries().forEach((item) => lines.push(`- ${item.degree} — ${item.school}`));
                 lines.push('');
