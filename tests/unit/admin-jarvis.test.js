@@ -758,6 +758,18 @@ test("social: posts scheduled for later are counted apart, not listed as recent"
   assert.deepEqual(out.scheduled, { count: 2, next: at(-1) });
 });
 
+test("social: Facebook needs come from the daily metrics' word on each Page, not from a token in Jarvis", async () => {
+  const run = (metrics) => sources.social({ fetch: async (url) => (/metrics\.json/.test(url) && metrics ? json(metrics) : json({}, 404)), env: {}, now: NOW.getTime(), days: 30 });
+  assert.deepEqual((await run({ posts: {}, pages: { "Facebook Page": { asked: 3, answered: 3 } } })).needs.filter((n) => /Facebook/.test(n)), []);
+  assert.deepEqual((await run(null)).needs.filter((n) => /Facebook/.test(n)), []);
+  const needs = (await run({ posts: {}, pages: { "Facebook Page": { asked: 41, answered: 0, error: "Graph 400: (#10) pages_read_engagement" }, "Facebook Page ES": { skipped: "no FACEBOOK_PAGE_TOKEN_ES" } } })).needs;
+  assert.deepEqual(needs.filter((n) => /Facebook/.test(n)), [
+    "Facebook Page: the Graph API answered 0 of 41 sent posts in the daily social numbers: Graph 400: (#10) pages_read_engagement",
+    "Facebook Page ES: the daily social numbers skipped it (no FACEBOOK_PAGE_TOKEN_ES repo secret). Steps are at the top of scripts/meta-token.js."
+  ]);
+  assert.ok(needs.every((n) => !/functions\/\.env/.test(n)));
+});
+
 test("a source that does not answer gets a briefing line, and test payments stay out of revenue", () => {
   const rows = core.briefing({ external: { cloudflare: { ok: false, error: "Cloudflare 401: no answer" } } });
   assert.equal(rows.find((r) => r.key === "connections:down:cloudflare").text, "Cloudflare did not answer: Cloudflare 401: no answer");
