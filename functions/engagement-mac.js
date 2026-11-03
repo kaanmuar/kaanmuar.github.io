@@ -4,8 +4,14 @@
  * and answer through, so scripts/engagement-browser/agent.js drives a real Chrome on the Mac, signed in once in its
  * own profile, every 30 minutes. It talks to the jarvis function with these ops, signed with the token it paired:
  *
- *   engagement-mac-ingest  { posts, comments, errors, signedIn, accounts, agent }  posts it read; scored, read by
- *                                                                        Gemini and planned like the scout's own;
+ *   engagement-mac-sites   {}                                            this slot's report-reply site queries (#2467):
+ *                                                                        the Live Reports the cloud looks for on
+ *                                                                        Bluesky, Mastodon and YouTube
+ *   engagement-mac-ingest  { posts, reports, comments, errors, signedIn, accounts, agent }  posts it read; scored,
+ *                                                                        read by Gemini and planned like the scout's
+ *                                                                        own; reports: posts read for a site query,
+ *                                                                        each with its query, through the report pass
+ *                                                                        (functions/engagement-reports.js);
  *                                                                        comments: replies and mentions of us from a
  *                                                                        network's notifications (#2424), liked and
  *                                                                        answered like the API networks' (#2447)
@@ -26,6 +32,7 @@
 const crypto = require("crypto");
 const E = require("./engagement");
 const J = require("./jarvis-engagement");
+const R = require("./engagement-reports");
 const Act = require("./engagement-act");
 
 const BROWSER = Object.keys(E.NETWORKS).filter((k) => E.NETWORKS[k].browser);
@@ -70,16 +77,32 @@ function cleanPost(p) {
 
 const netMap = (obj, fn) => Object.fromEntries(BROWSER.filter((k) => obj && obj[k] !== undefined).map((k) => [k, fn(obj[k])]));
 
-/** Posts the Mac read: the same scoring, Gemini read and plan as the scout's, and the agent's heartbeat. */
+/** This slot's site queries, the same sites the cloud's report pass looks for. */
+async function sites(deps) {
+  const conf = await J.readSettings(deps.db);
+  if (conf.paused) return { ok: true, paused: true, queries: [] };
+  const look = await J.reportSites(deps);
+  return { ok: true, paused: false, queries: look.sites.flatMap(R.queries) };
+}
+
+/** Posts the Mac read: the same scoring, Gemini read and plan as the scout's, site posts through the report pass, and the agent's heartbeat. */
 async function ingest(deps, body) {
   const { db, now } = deps;
   const b = body || {};
   const posts = (Array.isArray(b.posts) ? b.posts : []).slice(0, MAX_POSTS).map(cleanPost).filter(Boolean);
   const read = Object.fromEntries(BROWSER.map((k) => [k, 0]).filter(([k]) => (b.signedIn || {})[k]));
   posts.forEach((p) => { read[p.network] = (read[p.network] || 0) + 1; });
+  const sitePosts = (Array.isArray(b.reports) ? b.reports : []).slice(0, MAX_POSTS).map((x) => {
+    const p = cleanPost(x);
+    return p && Object.assign(p, { query: clip(x.query, 80) });
+  }).filter((p) => p && p.query);
+  const siteRead = {};
+  sitePosts.forEach((p) => { siteRead[p.network] = (siteRead[p.network] || 0) + 1; });
   const errors = netMap(b.errors, (v) => clip(v, 200));
   const conf = await J.readSettings(db);
   const r = await J.takeIn(deps, conf, posts, read, errors);
+  const rep = await J.macReports(deps, conf, sitePosts, siteRead).catch((error) => ({ matched: 0, drafted: 0, aiError: String(error.message || error).slice(0, 200) }));
+  Object.entries(siteRead).forEach(([k, n]) => { read[k] = (read[k] || 0) + n; });
   const comments = (Array.isArray(b.comments) ? b.comments : []).slice(0, MAX_POSTS).map((c) => {
     const p = cleanPost(c);
     return p && Object.assign(p, { liked: c.liked === true, answered: c.answered === true, on: clip(c.on, 300), ours: clip(c.ours, 500) });
@@ -88,10 +111,14 @@ async function ingest(deps, body) {
   const chains = found.length ? await J.takeChains(deps, conf, found).catch((error) => ({ chained: 0, aiError: String(error.message || error).slice(0, 200) })) : { chained: 0, aiError: "" };
   await macRef(db).set({
     at: new Date(now).toISOString(), read, errors, signedIn: netMap(b.signedIn, (v) => v === true), accounts: netMap(b.accounts, (v) => clip(v, 120)),
-    blocked: netMap(b.blocked, (v) => clip(v, 30)), agent: clip(b.agent, 40), fresh: r.fresh, engaged: r.engaged, drafted: r.drafted
+    blocked: netMap(b.blocked, (v) => clip(v, 30)), agent: clip(b.agent, 40), fresh: r.fresh, engaged: r.engaged, drafted: r.drafted,
+    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }
   }, { merge: true });
   await J.clearCache(db);
-  return { ok: true, read: posts.length, fresh: r.fresh, engaged: r.engaged, drafted: r.drafted, aiError: r.aiError || chains.aiError || "", chained: chains.chained || 0 };
+  return {
+    ok: true, read: posts.length, fresh: r.fresh, engaged: r.engaged, drafted: r.drafted, aiError: r.aiError || rep.aiError || chains.aiError || "", chained: chains.chained || 0,
+    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }
+  };
 }
 
 const leased = (x, now) => x && x.leasedAt && Date.parse(x.leasedAt) > now - LEASE;
@@ -213,7 +240,7 @@ async function result(deps, body) {
   return { ok: true, key, action, status };
 }
 
-const OPS = { "engagement-mac-ingest": ingest, "engagement-mac-queue": queue, "engagement-mac-result": result };
+const OPS = { "engagement-mac-sites": sites, "engagement-mac-ingest": ingest, "engagement-mac-queue": queue, "engagement-mac-result": result };
 
 /** The jarvis function's entry for the Mac: checks the token, then runs the op. */
 async function handle(deps, body, token) {
@@ -223,4 +250,4 @@ async function handle(deps, body, token) {
   return op(deps, body);
 }
 
-module.exports = { BROWSER, LEASE, PER_NETWORK, REACTIONS, MacError, hash, verify, cleanPost, reaction, ingest, queue, result, handle };
+module.exports = { BROWSER, LEASE, PER_NETWORK, REACTIONS, MacError, hash, verify, cleanPost, reaction, sites, ingest, queue, result, handle };

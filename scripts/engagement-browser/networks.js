@@ -278,7 +278,8 @@ const instagram = {
       .then((r) => (r.ok ? r.text() : "")).then((t) => (t.match(/"username":"([^"]+)"/) || [])[1] || "", () => ""));
     return me ? "@" + me : "Instagram";
   },
-  // The posts Instagram's own keyword search page loads through its GraphQL calls.
+  // The posts Instagram's own keyword search page loads through its GraphQL calls. A one-word query is a hashtag;
+  // a domain or a name with spaces (a reviewed site, #2467) is searched as typed.
   async read(page, tag) {
     if (!page.url().startsWith("https://www.instagram.com/")) await go(page, this, this.home);
     const found = new Map();
@@ -292,7 +293,7 @@ const instagram = {
       walk(await r.json().catch(() => null));
     };
     page.on("response", on);
-    try { await go(page, this, "https://www.instagram.com/explore/search/keyword/?q=" + enc("#" + tag)); await pause(4000, 6000); await scroll(page, 2); } finally { page.off("response", on); }
+    try { await go(page, this, "https://www.instagram.com/explore/search/keyword/?q=" + enc(/^[\p{L}\p{N}_]+$/u.test(tag) ? "#" + tag : tag)); await pause(4000, 6000); await scroll(page, 2); } finally { page.off("response", on); }
     return Array.from(found.values()).map((m) => ({
       network: "instagram", id: String(m.pk || m.id || m.code), url: "https://www.instagram.com/p/" + m.code + "/",
       author: { handle: m.user.username, name: m.user.full_name || m.user.username, id: String(m.user.pk || m.user.id || "") },
