@@ -166,6 +166,14 @@ async function importCookies(file) {
 
 // --- run ---------------------------------------------------------------------------------------------------------------
 
+/** A report reply's card (#2466) as a PNG file the reply box can take, or "" when it has none. */
+function cardFile(task) {
+  if (!task.card || !task.card.png) return "";
+  const file = path.join(os.tmpdir(), "qalab-report-card-" + task.key + ".png");
+  fs.writeFileSync(file, Buffer.from(task.card.png, "base64"));
+  return file;
+}
+
 async function act(page, task) {
   const net = NETWORKS[task.network];
   if (!net || !net[task.action]) return { ok: false, error: NETWORKS[task.network] ? net.name + " takes no " + task.action + " here." : "Unknown network." };
@@ -243,10 +251,13 @@ async function run(opts) {
     log("Queue: " + q.tasks.length + " tasks" + (q.live ? "" : " (dry run: only approved replies)") + (q.dry ? ", " + q.dry + " logged as dry" : "") + (q.missed ? ", " + q.missed + " missed" : ""));
     for (const t of tasks) {
       if (c.blocked[t.network]) { await api("engagement-mac-result", { key: t.key, action: t.action, ok: false, retry: true, error: "Held after a check." }); continue; }
-      const r = await act(page, t);
+      const card = cardFile(t);
+      const r = await act(page, card ? Object.assign({}, t, { cardFile: card, alt: t.card.alt }) : t);
+      if (card) fs.rmSync(card, { force: true });
+      if (t.card || t.cardError) Object.assign(r, { card: r.card || "text", cardError: r.cardError || t.cardError || "" });
       if (r.retry) c.blocked[t.network] = new Date(Date.now() + HOLD_MS).toISOString();
-      await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, error: r.error || "" }).catch((error) => log(error.message));
-      log(NETWORKS[t.network].name + " " + t.action + " " + t.url + ": " + (r.ok ? "done" + (r.reaction ? " (" + r.reaction + ")" : "") : r.already ? "we had already replied (" + r.url + "), not sent" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
+      await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, error: r.error || "", card: r.card || "", cardError: r.cardError || "" }).catch((error) => log(error.message));
+      log(NETWORKS[t.network].name + " " + t.action + " " + t.url + ": " + (r.ok ? "done" + (r.reaction ? " (" + r.reaction + ")" : "") + (r.card ? ", card " + r.card + (r.cardError ? " (" + r.cardError + ")" : "") : "") : r.already ? "we had already replied (" + r.url + "), not sent" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
       await pause(25000, 70000);
     }
   } finally {
