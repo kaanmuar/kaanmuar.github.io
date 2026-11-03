@@ -3,6 +3,8 @@
 # posts what is due. A network whose secrets are missing is skipped: BLUESKY_HANDLE and BLUESKY_APP_PASSWORD,
 # MASTODON_URL and MASTODON_TOKEN, THREADS_TOKEN, INSTAGRAM_USER_ID and FACEBOOK_PAGE_TOKEN. es/pt posts go to the
 # @qaurlreview face once its secrets, the same names ending in _ES, are set (scripts/face-route.js, #2310).
+# The repo variable MASTODON_PAUSED=true blanks both Mastodon tokens, so a suspended account is skipped instead of
+# failing every run (#2322); delete the variable once the account is back.
 # The run updates the ledger, assets/social/open-social.json, and pushes it to main with the LIVE_REPORTS_DEPLOY_KEY
 # write deploy key, like the Facebook Page queue.
 name: Bluesky, Mastodon, Threads and Instagram
@@ -38,14 +40,14 @@ jobs:
       BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
       BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
       MASTODON_URL: ${{ secrets.MASTODON_URL }}
-      MASTODON_TOKEN: ${{ secrets.MASTODON_TOKEN }}
+      MASTODON_TOKEN: ${{ vars.MASTODON_PAUSED != 'true' && secrets.MASTODON_TOKEN || '' }}
       THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
       INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
       FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
       BLUESKY_HANDLE_ES: ${{ secrets.BLUESKY_HANDLE_ES }}
       BLUESKY_APP_PASSWORD_ES: ${{ secrets.BLUESKY_APP_PASSWORD_ES }}
       MASTODON_URL_ES: ${{ secrets.MASTODON_URL_ES }}
-      MASTODON_TOKEN_ES: ${{ secrets.MASTODON_TOKEN_ES }}
+      MASTODON_TOKEN_ES: ${{ vars.MASTODON_PAUSED != 'true' && secrets.MASTODON_TOKEN_ES || '' }}
       THREADS_TOKEN_ES: ${{ secrets.THREADS_TOKEN_ES }}
       INSTAGRAM_USER_ID_ES: ${{ secrets.INSTAGRAM_USER_ID_ES }}
       FACEBOOK_PAGE_TOKEN_ES: ${{ secrets.FACEBOOK_PAGE_TOKEN_ES }}
