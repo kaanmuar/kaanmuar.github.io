@@ -29,14 +29,18 @@ test.describe('Live reports', () => {
     await expect(cards.first()).toBeVisible();
     expect(await cards.count()).toBeGreaterThanOrEqual(10);
     const count = page.locator('.live-count');
-    await expect(count).toContainText(/^1 \/ \d+/);
+    await expect(count).toContainText(/^\d+ \/ \d+/);
+    // The ring turns by itself every few seconds; a slow runner saw it turn between two steps.
+    await page.locator('.live-play').click();
+    await expect(page.locator('.live-play')).toHaveAttribute('aria-label', 'Play rotation');
+    const start = Number((await count.textContent()).split('/')[0]);
     await page.locator('.live-next').click();
-    await expect(count).toContainText(/^2 \//);
+    await expect(count).toContainText(new RegExp(`^${start + 1} /`));
     await page.locator('.live-stage').focus();
     await page.keyboard.press('ArrowRight');
-    await expect(count).toContainText(/^3 \//);
+    await expect(count).toContainText(new RegExp(`^${start + 2} /`));
     await page.locator('.live-prev').click();
-    await expect(count).toContainText(/^2 \//);
+    await expect(count).toContainText(new RegExp(`^${start + 1} /`));
     await expect(page.locator('.live-card.is-active')).toHaveCount(1);
     await expect(page.locator('.live-status')).toContainText(/out of 100/);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
