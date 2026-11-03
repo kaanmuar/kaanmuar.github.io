@@ -26,7 +26,13 @@
  * of LOOSE_WORTH or more; a niche invite offers the site as one of its kind we reviewed, never as the post's subject.
  *
  * Each stored post carries campaign "report-reply" and report { host, id, name, score, shown, weakest, match, problem,
- * niche, query, format, link }; match is domain, name, problem or niche.
+ * niche, query, format, link }; match is domain, name, problem, niche or rerun.
+ *
+ * Re-runs (#2469): when a site's Live Report score moves RERUN_MIN or more from the one a posted reply went out with,
+ * or crosses SHOW_SCORE, a follow-up with the new card goes under each reply we posted on a card network in the last
+ * BACK_DAYS (match "rerun", report { was, rerunOf }), waiting for Carlos like every reply; it is the one exception to
+ * SITE_GAP. A site with no such reply to go back to is looked for again for new posts, once. The original reply keeps
+ * report.rerun { score, key, at }, so each new score goes back once.
  */
 const E = require("./engagement");
 
@@ -43,6 +49,10 @@ const CODES = { bluesky: "bsky", mastodon: "mast", youtube: "yt", x: "x", linked
 const CARD_NETS = ["bluesky", "mastodon", "x"];
 // Names that say nothing on their own; those sites are searched by domain only.
 const GENERIC = /^(home|inicio|accueil|startseite|welcome|bienvenid[oa]s?|index|news|noticias|blog|shop|store|tienda|loja|portal|site|web)$/i;
+
+const RERUN_MIN = 3;
+const BACK_DAYS = 90;
+const RERUN_PER_RUN = 4;
 
 const WEAK = 70;
 const LOOSE_PER_RUN = 4;
@@ -341,6 +351,77 @@ async function answeredHosts(db, hosts, now, statuses) {
   return out;
 }
 
+// --- Re-runs (#2469) ----------------------------------------------------------------------------------------------
+
+/** The score a posted reply last told the site about: its re-run's, else its own. */
+const toldScore = (doc) => Number((((doc || {}).report || {}).rerun || {}).score ?? ((doc || {}).report || {}).score);
+
+/** Whether a score moved enough to go back: RERUN_MIN or more, or across SHOW_SCORE. */
+const moved = (was, now) => Number.isFinite(was) && Number.isFinite(now) && (Math.abs(now - was) >= RERUN_MIN || (was >= SHOW_SCORE) !== (now >= SHOW_SCORE));
+
+/**
+ * Posted report replies ([{ key, doc }]) whose site's score moved since, as [{ key, doc, target, was, back }]: back
+ * when a follow-up can go under the reply (a card network, and our reply's address is known). Re-run replies are
+ * never gone back to themselves; their original carries the score they told.
+ */
+function reruns(posted, list, now) {
+  const byHost = new Map((list || []).map((t) => [t.host, t]));
+  const since = new Date(now - BACK_DAYS * DAY).toISOString();
+  return (posted || []).filter(({ doc }) => doc && doc.campaign === CAMPAIGN && doc.report && doc.report.match !== "rerun"
+    && ((doc.actions || {}).reply || {}).status === "posted" && String(doc.actions.reply.postedAt || "") >= since)
+    .map(({ key, doc }) => ({ key, doc, target: byHost.get(bare(doc.report.host)), was: toldScore(doc) }))
+    .filter((x) => x.target && moved(x.was, x.target.score))
+    .map((x) => Object.assign(x, { back: CARD_NETS.includes(x.doc.network) && !!replyId(x.doc) }));
+}
+
+/** Where our posted reply lives, as the poster reads a post's id: the Bluesky or Mastodon URI, or the X status id. */
+function replyId(doc) {
+  const r = ((doc || {}).actions || {}).reply || {};
+  if (doc.network === "x") return (String(r.url || "").match(/\/status\/(\d+)/) || [])[1] || "";
+  return String(r.uri || "");
+}
+
+const RERUN_COPY = {
+  en: { ran: "We re-ran our free review of {name}", now: ": it now scores {score}/100.", up: " and its score went up.", look: "The updated report has a few findings worth a look on {area}: {link}", here: "Here is the updated report: {link}" },
+  es: { ran: "Volvimos a pasar nuestra revisión gratuita de {name}", now: ": ahora obtiene {score}/100.", up: " y su puntuación subió.", look: "El informe actualizado tiene algunos hallazgos que vale la pena revisar en {area}: {link}", here: "Aquí tienes el informe actualizado: {link}" },
+  pt: { ran: "Refizemos nossa revisão gratuita de {name}", now: ": agora tem {score}/100.", up: " e a pontuação subiu.", look: "O relatório atualizado tem alguns achados que valem a pena ver em {area}: {link}", here: "Aqui está o relatório atualizado: {link}" },
+  de: { ran: "Wir haben unsere kostenlose Prüfung von {name} wiederholt", now: ": jetzt {score}/100.", up: ", und der Wert ist gestiegen.", look: "Der aktualisierte Bericht hat einige Befunde zu {area}, die einen Blick wert sind: {link}", here: "Hier ist der aktualisierte Bericht: {link}" },
+  fr: { ran: "Nous avons relancé notre audit gratuit de {name}", now: " : il obtient maintenant {score}/100.", up: " et son score a progressé.", look: "Le rapport mis à jour relève quelques points à examiner côté {area} : {link}", here: "Voici le rapport mis à jour : {link}" },
+  it: { ran: "Abbiamo rifatto la nostra revisione gratuita di {name}", now: ": ora ottiene {score}/100.", up: " e il punteggio è salito.", look: "Il report aggiornato ha alcuni risultati da guardare su {area}: {link}", here: "Ecco il report aggiornato: {link}" }
+};
+
+let areaCopy;
+/** An area's name in a language, as the owner mail and the card name it. */
+function areaName(area, lang) {
+  areaCopy = areaCopy || require("./url-review-owner-mail").COPY;
+  return (((areaCopy[lang] || areaCopy.en).health || {}).areas || {})[area] || area;
+}
+
+/** The follow-up under our reply: the new score from SHOW_SCORE up, else whether it rose and the weakest area, never a number. */
+function rerunText(t, was, lang, link, network) {
+  const c = RERUN_COPY[lang] || RERUN_COPY.en;
+  const name = t.name || t.host;
+  const area = t.weakest ? areaName(t.weakest, RERUN_COPY[lang] ? lang : "en") : "";
+  const text = shown(t) ? c.ran + c.now.replace("{score}", t.score) + " " + c.here
+    : c.ran + (t.score > was ? c.up : ".") + " " + (area ? c.look.replace("{area}", area) : c.here);
+  return fill(text.replace("{name}", name), link, network);
+}
+
+/** The engagement_posts document for a follow-up under our posted reply (orig: { key, doc }), with the new report. */
+function rerunDoc(orig, target, was, draft, lang, link, now) {
+  const d = orig.doc;
+  const r = (d.actions || {}).reply || {};
+  const post = { network: d.network, id: replyId(d), thread: d.thread || d.id, url: r.url, author: d.author, text: r.draft, lang, createdAt: r.postedAt, isReply: true, topic: "Reports", topics: ["Reports"] };
+  const decision = { verdict: "engage", skip: "", actions: { reply: { status: "waiting", kind: CAMPAIGN, draft, lang, expiresAt: new Date(now + E.REPLY_TTL).toISOString() } } };
+  return Object.assign(E.postDoc(post, { lang }, decision, now), {
+    campaign: CAMPAIGN,
+    report: {
+      host: target.host, id: target.id, name: target.name, score: target.score, shown: shown(target), weakest: target.weakest, match: "rerun",
+      was, rerunOf: orig.key, problem: "", niche: "", query: "", format: "card", link
+    }
+  });
+}
+
 /** Counters a report pass adds to engagement_daily/<day> under report, besides the scout's own per-network ones; by counts posts per match. */
 function rollup(searched, docs) {
   const out = { searched, matched: 0, drafted: 0, skip: {}, net: {}, by: {} };
@@ -413,5 +494,7 @@ function resultsIssue(r, social) {
 
 module.exports = {
   CAMPAIGN, ANSWERED, CODES, CARD_NETS, SHOW_SCORE, SITE_GAP, PER_RUN, LONG_LINK, MAX_AGE_HOURS, WEAK, LOOSE, LOOSE_PER_RUN, LOOSE_WORTH, PARENT,
-  targets, pick, queries, matchOf, siteOf, looseQueries, looseOf, shortOf, nicheOf, shown, linkFor, prompt, parse, fill, decide, doc, rollup, bare, answeredHosts, resultsIssue
+  RERUN_MIN, BACK_DAYS, RERUN_PER_RUN, RERUN_COPY,
+  targets, pick, queries, matchOf, siteOf, looseQueries, looseOf, shortOf, nicheOf, shown, linkFor, prompt, parse, fill, decide, doc, rollup, bare, answeredHosts, resultsIssue,
+  toldScore, moved, reruns, replyId, rerunText, rerunDoc
 };

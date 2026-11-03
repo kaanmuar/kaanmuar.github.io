@@ -254,26 +254,31 @@ async function shortLink(fetchImpl, link) {
   return /^https:\/\/tinyurl\.com\/\S+$/.test(text) ? text : link;
 }
 
-/** This slot's sites to look for, skipping those answered or emailed in the gap: { sites, recent, contacted }. */
-async function reportSites(deps) {
+/**
+ * This slot's sites to look for, skipping those answered or emailed in the gap: { sites, recent, contacted }. again:
+ * sites whose score a re-run moved (rerunPass), looked for first and past the gap, unless their owner had our mail.
+ */
+async function reportSites(deps, again) {
   const { db, now } = deps;
   const all = await liveTargets(deps);
-  const ahead = R.pick(all, Math.floor(now / Sources.SLOT), null, R.PER_RUN * 3);
-  const hosts = ahead.map((t) => t.host);
+  const first = again || [];
+  const ahead = R.pick(all, Math.floor(now / Sources.SLOT), null, R.PER_RUN * 3).filter((t) => !first.some((a) => a.host === t.host));
+  const hosts = first.concat(ahead).map((t) => t.host);
   const [recent, contacted] = await Promise.all([repliedSites(db, hosts, now), contactedSites(db, hosts, now)]);
-  return { sites: R.pick(ahead, 0, new Set([...recent, ...contacted.keys()]), R.PER_RUN), recent, contacted };
+  first.forEach((t) => recent.delete(t.host));
+  return { sites: first.filter((t) => !contacted.has(t.host)).concat(R.pick(ahead, 0, new Set([...recent, ...contacted.keys()]), R.PER_RUN)), recent, contacted };
 }
 
 /**
  * Report replies (#2465): this slot's Live Reports are looked for on the networks, and each post that names one, or
  * fits its niche or a problem its report found (#2468), is read by Gemini, decided (functions/engagement-reports.js), stored with campaign "report-reply", counted under
- * engagement_daily report, and its invite pushed to Carlos.
+ * engagement_daily report, and its invite pushed to Carlos. again: as reportSites.
  */
-async function reportPass(deps, conf, creds) {
+async function reportPass(deps, conf, creds, again) {
   const { now, env } = deps;
   const out = { searched: 0, read: 0, matched: 0, drafted: 0, pushed: 0, aiError: "", errors: {} };
   if (conf.paused) return out;
-  const look = await reportSites(deps);
+  const look = await reportSites(deps, again);
   out.searched = look.sites.length;
   if (!look.sites.length) return out;
   const m = creds && creds.mastodon;
@@ -350,6 +355,63 @@ async function takeReports(deps, conf, look, found) {
   return out;
 }
 
+/**
+ * Re-runs (#2469): posted report replies whose site's Live Report score moved since get a follow-up with the new card
+ * under our reply, waiting for Carlos, within the daily reply caps and R.RERUN_PER_RUN. Sites with no reply to go back
+ * under come back as again, for reportPass to look for new posts once. Sites whose owner had our mail wait.
+ */
+async function rerunPass(deps, conf) {
+  const { db, now, inc } = deps;
+  const out = { changed: 0, drafted: 0, pushed: 0, again: [] };
+  if (conf.paused) return out;
+  const all = await liveTargets(deps);
+  const snap = await db.collection("engagement_posts").where("actions.reply.status", "==", "posted").limit(2000).get();
+  const moved = R.reruns(snap.docs.map((d) => ({ key: d.id, doc: d.data() })), all, now);
+  out.changed = moved.length;
+  if (!moved.length) return out;
+  const contacted = await contactedSites(db, [...new Set(moved.map((x) => x.target.host))], now);
+  const day = E.bogotaDay(now);
+  const dailyRef = db.collection("engagement_daily").doc(day);
+  const dailySnap = await dailyRef.get();
+  const used = usedToday(dailySnap.exists ? dailySnap.data() : null);
+  const at = new Date(now).toISOString();
+  const open = moved.filter((m) => !contacted.has(m.target.host));
+  const docs = [];
+  const marks = [];
+  const drafted = new Set();
+  for (const x of open.filter((m) => m.back)) {
+    const net = E.NETWORKS[x.doc.network] || {};
+    const n = ((used[x.doc.network] || {}).reply) || 0;
+    const own = (net.caps || {}).reply;
+    if (docs.length >= R.RERUN_PER_RUN || n >= Math.min(conf.caps.reply, own === undefined ? Infinity : own)) continue;
+    used[x.doc.network] = Object.assign({}, used[x.doc.network], { reply: n + 1 });
+    const r = x.doc.actions.reply;
+    const lang = E.LANGS.includes(r.lang || x.doc.lang) ? r.lang || x.doc.lang : "en";
+    const key = E.keyOf(x.doc.network, "rerun:" + x.key + ":" + x.target.score);
+    const link = await shortLink(deps.fetch, R.linkFor(x.target, x.doc.network, lang, key));
+    docs.push(Object.assign({ key }, R.rerunDoc(x, x.target, x.was, R.rerunText(x.target, x.was, lang, link, x.doc.network), lang, link, now)));
+    marks.push({ key: x.key, rerun: { score: x.target.score, key, at } });
+    drafted.add(x.target.host);
+  }
+  const backHosts = new Set(open.filter((m) => m.back).map((m) => m.target.host));
+  const seen = new Set();
+  out.again = open.filter((x) => !backHosts.has(x.target.host) && !seen.has(x.target.host) && seen.add(x.target.host)).map((x) => x.target).slice(0, R.RERUN_PER_RUN);
+  const searched = new Set(out.again.map((t) => t.host));
+  open.filter((x) => !x.back && (drafted.has(x.target.host) || searched.has(x.target.host))).forEach((x) => marks.push({ key: x.key, rerun: { score: x.target.score, key: "", at } }));
+  if (!docs.length && !marks.length) return out;
+  const batch = db.batch();
+  docs.forEach((d) => batch.set(db.collection("engagement_posts").doc(d.key), d));
+  marks.forEach((m) => batch.update(db.collection("engagement_posts").doc(m.key), { "report.rerun": m.rerun, updatedAt: at }));
+  await batch.commit();
+  out.drafted = docs.length;
+  if (docs.length) {
+    const { n } = E.rollup({}, [], {}, docs);
+    await dailyRef.set(Object.assign({ day }, increments({ n, report: { drafted: docs.length, reruns: docs.length } }, inc)), { merge: true });
+  }
+  if (deps.push) for (const d of docs.slice(0, PUSH_PER_RUN)) { await deps.push(E.replyPush(d)).catch(() => null); out.pushed += 1; }
+  return out;
+}
+
 /** One scout run. Returns the run document. */
 async function scout(deps) {
   const { db, now, env } = deps;
@@ -359,8 +421,10 @@ async function scout(deps) {
   const creds = await Act.readCreds(db).catch(() => ({}));
   const read = await Sources.readAll({ fetch: deps.fetch, env: withAccounts(env, creds), now });
   const took = await takeIn(deps, conf, read.posts, read.read, read.errors);
+  let reruns;
+  try { reruns = await rerunPass(deps, conf); } catch (error) { reruns = { changed: 0, drafted: 0, pushed: 0, again: [], error: String(error.message || error).slice(0, 200) }; }
   let reports;
-  try { reports = await reportPass(deps, conf, creds); } catch (error) { reports = { searched: 0, matched: 0, drafted: 0, pushed: 0, aiError: "", errors: {}, error: String(error.message || error).slice(0, 200) }; }
+  try { reports = await reportPass(deps, conf, creds, reruns.again); } catch (error) { reports = { searched: 0, matched: 0, drafted: 0, pushed: 0, aiError: "", errors: {}, error: String(error.message || error).slice(0, 200) }; }
 
   let acted = {};
   let actError = "";
@@ -375,6 +439,7 @@ async function scout(deps) {
     engaged: took.engaged, drafted: took.drafted, pushed: took.pushed, expired,
     done: sum("done"), dry: sum("dry"), missed: sum("missed"), posted: sum("posted"), already: sum("already"), actFailed: sum("failed"), acted, actError,
     reports: { searched: reports.searched, read: reports.read || 0, matched: reports.matched, drafted: reports.drafted, pushed: reports.pushed, aiError: reports.aiError, errors: reports.errors, error: reports.error || "" },
+    reruns: { changed: reruns.changed, drafted: reruns.drafted, pushed: reruns.pushed, again: reruns.again.map((t) => t.host), error: reruns.error || "" },
     chains: { checked: chains.checked || 0, chained: chains.chained, liked: chains.liked, drafted: chains.drafted, pushed: chains.pushed, aiError: chains.aiError, errors: chains.errors }
   };
   await db.collection("engagement_runs").doc(run.at).set(run);
@@ -386,7 +451,12 @@ const actNote = (r) => {
   const errs = Object.entries(r.acted || {}).filter(([, x]) => x.error).map(([k, x]) => k + ": " + x.error);
   return (r.done || r.posted ? "; done " + (r.done || 0) + ", replies posted " + (r.posted || 0) : "") + (r.dry ? "; dry run " + r.dry : "")
     + (r.actFailed ? "; " + r.actFailed + " actions failed" : "") + (errs.length ? "; poster: " + errs.join("; ") : "") + (r.actError ? "; poster: " + r.actError : "")
-    + (r.already ? "; " + r.already + " replies not sent, we had already answered" : "") + reportNote(r.reports) + chainNote(r.chains);
+    + (r.already ? "; " + r.already + " replies not sent, we had already answered" : "") + reportNote(r.reports) + rerunNote(r.reruns, r.reports) + chainNote(r.chains);
+};
+const rerunNote = (x, reports) => {
+  if (!x) return "";
+  return (x.drafted ? "; " + x.drafted + " follow-ups with a re-run's new score drafted" : "") + ((x.again || []).length ? "; looked again for posts on " + x.again.join(", ") : "")
+    + (x.error && x.error !== (reports || {}).error ? "; re-runs: " + x.error : "");
 };
 const reportNote = (x) => {
   if (!x) return "";
@@ -632,4 +702,4 @@ async function source(ctx) {
   };
 }
 
-module.exports = { scout, takeIn, reportSites, reportPass, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, resultsTicket, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
+module.exports = { scout, takeIn, reportSites, reportPass, rerunPass, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, resultsTicket, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };

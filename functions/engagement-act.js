@@ -205,8 +205,10 @@ async function mastodonClient(cred, f) {
     follow: async (d) => { const st = await status(d); await call(f, base + "/api/v1/accounts/" + st.account.id + "/follow", { method: "POST", headers: auth }); return {}; },
     reply: async (d, text, lang, card) => {
       const st = await status(d);
-      const mention = "@" + st.account.acct;
-      const body = text.toLowerCase().includes(mention.toLowerCase()) ? text : mention + " " + text;
+      // Under our own reply (a re-run's follow-up, #2469) the person to name is the one we answered.
+      const to = ours(st) ? String((d.author || {}).handle || "").replace(/^@/, "") : st.account.acct;
+      const mention = to ? "@" + to : "";
+      const body = !mention || text.toLowerCase().includes(mention.toLowerCase()) ? text : mention + " " + text;
       let media;
       let cardError = "";
       if (card) {
