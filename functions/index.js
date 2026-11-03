@@ -5788,6 +5788,7 @@ function jarvisAutoOps(settings, now, th) {
     restoreAlias: (alias) => jarvisAddresses.restoreAlias(ctx, alias).finally(dropAddresses),
     pauseMailbox: (email) => jarvisMarketing.mailboxAct(ctx, email, "pause"),
     setPause: (email, row) => row ? db.collection("jarvis_outreach_pauses").doc(email).set(row) : db.collection("jarvis_outreach_pauses").doc(email).delete(),
+    launchReady: process.env.INSTANTLY_API_KEY ? () => jarvisMarketing.launchReady(ctx) : null,
     socialFailed: async () => {
       const social = (await jarvisExternal(["social"], 1)).social || {};
       return social.ok ? Number(social.failed) || 0 : 0;
@@ -5823,6 +5824,7 @@ function jarvisAutoOps(settings, now, th) {
       }
       return { resumed, left };
     },
+    launchCampaigns: (ids) => jarvisMarketing.launch(ctx, ids),
     push: async (msg) => jarvisPush.send(getMessaging(), db, await jarvisPush.targets(db, "alerts"), msg)
   });
   return out;

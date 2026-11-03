@@ -30,6 +30,9 @@
                    pushed once per occurrence; jarvis_watch/addresses keeps which, so a problem that clears and comes
                    back pushes again
    merge-pr        an open PR labelled jarvis-merge, green and mergeable, squash-merged after the countdown
+   launch-campaign #2475: an Instantly campaign still a draft with leads, steps, a mailbox and a start date at most
+                   LAUNCH_DAYS away (jarvis-marketing.js launchReady) is activated after the countdown, one countdown per
+                   campaign and start date, so one Carlos cancels stays a draft
    ai-ask, ai-fix  open alerts no rule handles go to Gemini once per alert set and day, AI_CALLS a day; it may only pick
                    from AI_CATALOG, and a pick runs alone at confidence >= settings.confidence (the risky ones after the
                    countdown); the rest become proposals
@@ -44,12 +47,12 @@ const core = require("./jarvis-core");
 const addresses = require("./jarvis-addresses");
 
 const SAFE = core.SAFE_ACTIONS;
-const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2 };
+const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10 };
 const LABELS = {
   "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again", "rerun-ci": "Re-run failed CI jobs",
   "rating-decide": "Decide ratings", "brief-mark": "Snooze or dismiss a briefing line", "rerun-job": "Re-run a failed job", "refresh-stale": "Refresh stale data", "rerun-reviews": "Re-run reviews after a fix",
   "pause-outreach": "Pause an outreach mailbox", "resume-outreach": "Resume outreach mailboxes", "retry-social": "Retry failed social posts", "ai-ask": "Ask the AI what to fix", "ai-fix": "Run a fix the AI picked",
-  "merge-pr": "Merge a green PR", "enable-warmup": "Turn mailbox warm-up back on", "restore-alias": "Restore a missing alias",
+  "merge-pr": "Merge a green PR", "enable-warmup": "Turn mailbox warm-up back on", "restore-alias": "Restore a missing alias", "launch-campaign": "Launch a draft campaign",
   "pagespeed-merge": "Merge PageSpeed fixes", "pagespeed-close": "Close PageSpeed fixes", "pagespeed-run": "Start the PageSpeed run"
 };
 const NOTICE_TRIES = 3;
@@ -211,6 +214,7 @@ async function recent(db, limit) {
      enableWarmup(emails), restoreAlias(alias) -> the two fixes;  push(msg) -> a push to the alerts devices
      socialFailed()    -> failed social posts in range
      mergeCandidates() -> [{ number, sha, title, url }] open PRs labelled jarvis-merge, green and mergeable
+     launchReady()     -> [{ id, name, start, leads }] draft campaigns ready to send
      alerts()          -> [{ key, level, text }] open briefing and watch lines;  catalog() -> { jobs, workflows }
      ask(prompt)       -> Gemini's text;  saveProposals([pick]) -> keep the picks Jarvis did not run as proposals }
    Returns { done: [rows], queued: [countdowns], waiting: [{ action, count, reason }] }; every action and every wait
@@ -416,6 +420,19 @@ async function autoRun({ db, now, settings, ops }) {
     const failed = await ops.socialFailed();
     if (failed && !pending.some((r) => r.action === "retry-social" && isOpen(r))) {
       await later({ action: "retry-social", target: plural(failed, "failed social post"), part: day + "#" + failed, why: "Buffer re-queues the failed posts when the posting workflows run again." });
+    }
+  }
+
+  if (ops.launchReady) {
+    let drafts = [];
+    try { drafts = await ops.launchReady(); } catch (error) {
+      const detail = "Instantly: " + text(error.message || error, 200);
+      if (!rows.some((r) => r.action === "launch-campaign" && r.status === "failed" && r.detail === detail)) rows.push(await log(db, { action: "launch-campaign", mode: "auto", status: "failed", target: "draft campaigns", detail }, now));
+    }
+    const inLaunch = busy("launch-campaign");
+    for (const c of drafts.filter((d) => !inLaunch.has(d.id))) {
+      await later({ action: "launch-campaign", target: c.name, part: c.id + "@" + c.start, payload: { items: [{ id: c.id, name: c.name }] },
+        why: "A draft with " + plural(c.leads, "lead") + " that starts " + c.start + "; nothing sends until it is active.", onCancel: "activate it in Jarvis > Marketing" });
     }
   }
 
