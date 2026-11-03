@@ -98,7 +98,7 @@ const EXTERNAL = {
         { week: 'W1', email: 'eva@uni3.edu.co', first_name: 'Eva', org: 'Uni Este', host: 'uni3.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: '', approved: true, uploaded: '' },
         { week: 'W1', email: 'sol@uni4.edu.co', first_name: 'Sol', org: 'Uni Oeste', host: 'uni4.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: '', approved: true, uploaded: '2026-10-20' }] },
     replies: [{ id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', at: '2026-10-25T12:00:00Z', from: 'dean@uni.edu.co', to: 'carlos@mail.qa-lab.co', subject: 'Re: Su sitio', campaign: 'W1 B-es Americas', text: 'Nos interesa', category: 'interested', summary: 'Wants the walkthrough', lang: 'es', draft: 'Hola, gracias', sent: '' }],
-    linkedin: { date: '2026-10-26', items: [{ name: 'Ana Pérez', title: 'CIO', org: 'Uni Norte (UN)', cc: 'CO', sent: false, profile: 'https://www.linkedin.com/in/ana', lines: [] },
+    linkedin: { date: '2026-10-26', items: [{ name: 'Ana Pérez', title: 'CIO', org: 'Uni Norte (UN)', cc: 'CO', sent: false, profile: 'https://www.linkedin.com/in/ana', lines: ['Profile: https://www.linkedin.com/in/ana', 'Check first: confirm the role.', 'Note: Hola Ana, vi el sitio de Uni Norte.'] },
       { name: 'Bea Gómez', title: 'CEO', org: 'Agencia Sur', cc: 'AR', sent: true, profile: 'https://www.linkedin.com/in/bea', lines: [] }] },
     dnc: [], jobs: [{ mode: 'leads', at: '2026-10-26T12:00:00Z', notify: 'W1 leads ready: 2 complete', failed: false, tail: ['done'] }], paused: [], kpis: [{ week_start: '2026-10-26', notes: 'setup week' }],
     commands: { pending: 0, items: [] } },
@@ -519,9 +519,15 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(li.locator('[data-li-todo]')).not.toContainText('Bea Gómez');
     await expect(li.locator('details.jv-li-sent summary')).toHaveText('Sent · 1');
     await expect(li.locator('details.jv-li-sent')).not.toHaveAttribute('open', '');
-    page.once('dialog', (dialog) => dialog.accept());
-    await li.locator('[data-li-todo] [data-mk-cmd="linkedin"]').click();
+    await expect(li.locator('[data-li-todo]')).toContainText('Note: Hola Ana, vi el sitio de Uni Norte.');
+    await expect(li.locator('[data-li-todo]')).toContainText('Check first: confirm the role.');
+    await page.evaluate(() => {
+        window.open = (url) => { window.__opened = url; return null; };
+        Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (text) => { window.__copied = text; } } });
+    });
+    await li.locator('[data-li-todo] [data-li-send]').click();
     await expect.poll(() => cmds().slice(-1)).toEqual([{ action: 'linkedin', date: '2026-10-26', name: 'Ana Pérez', sent: true }]);
+    expect(await page.evaluate(() => [window.__opened, window.__copied])).toEqual(['https://www.linkedin.com/in/ana', 'Hola Ana, vi el sitio de Uni Norte.']);
 
     const draft = mk.locator('[data-mk-draft="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"]');
     await expect(draft).toHaveValue('Hola, gracias');

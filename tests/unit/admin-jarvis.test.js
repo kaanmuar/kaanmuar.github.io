@@ -1369,3 +1369,12 @@ test("marketing (#1722): queued prospects append once, take the form's country a
   assert.deepEqual(docs["url_review_sweep/outreach"].hosts.map((h) => h.host), ["uni.edu.co", "new.edu.co"]);
   await assert.rejects(marketingSrc.queueProspects(db, { hosts: "nothing here" }, NOW.getTime()), /Nothing to add/);
 });
+
+test("the LinkedIn Send button copies the note line of the day's list (#2479)", () => {
+  assert.equal(core.linkedinLine({ lines: ["Profile: [https://www.linkedin.com/in/ana](https://www.linkedin.com/in/ana)", "Note: Hola Ana, vi el sitio de la UPB."] }, "Note"), "Hola Ana, vi el sitio de la UPB.");
+  assert.equal(core.linkedinLine({ lines: ["note:   Hi Leo"] }, "Note"), "Hi Leo");
+  assert.equal(core.linkedinLine({ lines: ["Profile: https://www.linkedin.com/in/leo"] }, "Note"), "");
+  assert.equal(core.linkedinLine({}, "Note"), "");
+  assert.equal(core.linkedinLine(null, "Note"), "");
+  assert.equal(core.linkedinLine({ lines: ["Check first: confirm the role.", "Note: Hi"] }, "Check first"), "confirm the role.");
+});

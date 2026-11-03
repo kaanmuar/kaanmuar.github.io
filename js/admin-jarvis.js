@@ -1457,8 +1457,16 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const liSent = li ? li.items.filter((p) => p.sent).length : 0;
         const linkedinBody = !sy ? syWait : !li.items.length ? '<p class="jv-empty">No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before.</p>'
             : (() => {
-                const liRow = (p) => `<li><span class="jv-chip ${p.sent ? 'c-fast' : ''}">${p.sent ? 'sent' : 'to send'}</span> <strong>${esc(p.name)}</strong>, ${esc(p.title)} <span class="jv-note">(${esc(p.org)}, ${esc(p.cc)})</span>
-                ${p.profile ? `<a class="jv-btn small" href="${esc(p.profile)}" target="_blank" rel="noopener">Profile</a>` : ''}${pendingFor('linkedin', p.name) ? '<span class="jv-chip c-average">waiting for the sync</span>' : cmdBtn(p.sent ? 'Not sent' : 'Mark sent', { action: 'linkedin', date: li.date, name: p.name, sent: p.sent ? 'no' : 'yes' })}</li>`;
+                const liRow = (p) => {
+                    const note = C.linkedinLine(p, 'Note');
+                    const check = C.linkedinLine(p, 'Check first');
+                    const send = !p.sent && p.profile;
+                    const act = pendingFor('linkedin', p.name) ? '<span class="jv-chip c-average">waiting for the sync</span>'
+                        : send ? `<button type="button" class="jv-btn small is-primary" data-li-send="${esc(p.profile)}" data-date="${esc(li.date)}" data-name="${esc(p.name)}" data-note="${esc(note)}">Send</button>`
+                        : cmdBtn(p.sent ? 'Not sent' : 'Mark sent', { action: 'linkedin', date: li.date, name: p.name, sent: p.sent ? 'no' : 'yes' });
+                    return `<li><span class="jv-chip ${p.sent ? 'c-fast' : ''}">${p.sent ? 'sent' : 'to send'}</span> <strong>${esc(p.name)}</strong>, ${esc(p.title)} <span class="jv-note">(${esc(p.org)}, ${esc(p.cc)})</span>
+                ${!p.sent && check ? `<br><span class="jv-chip c-average">Check first: ${esc(check)}</span>` : ''}${!p.sent && note ? `<br><span class="jv-note">Note: ${esc(note)}</span>` : ''}${!p.sent && (check || note) ? '<br>' : ''}${p.profile && !send ? `<a class="jv-btn small" href="${esc(p.profile)}" target="_blank" rel="noopener">Profile</a>` : ''}${act}</li>`;
+                };
                 const toSend = li.items.filter((p) => !p.sent);
                 const sentRows = li.items.filter((p) => p.sent);
                 return `<div class="jv-rings">${ring(pct(liSent, li.items.length), liSent + ' of ' + li.items.length + ' sent', COLORS.cyan, 92)}</div>`
@@ -1721,6 +1729,20 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         t.disabled = true;
         const out = await mkCommand(body, MK_ASK[d.mkCmd] ? MK_ASK[d.mkCmd](d) : d.mkCmd);
         if (!out || !out.ok) t.disabled = false;
+    }
+
+    // LinkedIn has no invitation API and company pages cannot connect, so Carlos clicks Connect himself (#2479).
+    // The clipboard write and window.open run before any await, while the click still counts as a user gesture.
+    async function liSend(t) {
+        const { liSend: url, date, name, note } = t.dataset;
+        const copied = note && navigator.clipboard ? navigator.clipboard.writeText(note).then(() => true, () => false) : Promise.resolve(false);
+        window.open(url, '_blank', 'noopener');
+        t.disabled = true;
+        const [ok, out] = await Promise.all([copied, call('marketing-command', { action: 'linkedin', date, name, sent: true }).catch((error) => ({ ok: false, error: error.message }))]);
+        const how = ok ? 'Note copied: on LinkedIn click Connect, Add a note, paste and Send.' : note ? 'Copy failed; the note is under the name. On LinkedIn click Connect, Add a note and Send.' : 'On LinkedIn click Connect and Send.';
+        toast(out.ok ? `${how} ${name} is marked sent.` : `${how} Not marked sent: ${out.error}`, 10000);
+        if (!out.ok) t.disabled = false;
+        loadExternal(['marketing-sync']);
     }
 
     async function leadReview(t) {
@@ -2830,6 +2852,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.socialDecide) { decideSocial(t.dataset.key, t.dataset.socialDecide); return; }
         if (t.dataset.mkCampaign) { campaignAct(t); return; }
         if (t.dataset.mkResend) { resendAct(t); return; }
+        if (t.dataset.liSend) { liSend(t); return; }
         if (t.dataset.mkCmd) { mkCmdClick(t); return; }
         if (t.dataset.mkRereview) { leadReview(t); return; }
         if (t.dataset.mkReply) { mkReply(t); return; }

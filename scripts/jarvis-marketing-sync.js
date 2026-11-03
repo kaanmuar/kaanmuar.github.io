@@ -141,7 +141,7 @@ function linkedin(dir) {
     if (!last || !/^- /.test(line)) return;
     const url = /https:\/\/(www\.)?linkedin\.com\/[^\s)\]]+/.exec(line);
     if (url && !last.profile) last.profile = url[0];
-    if (last.lines.length < 4) last.lines.push(line.slice(2).slice(0, 300));
+    if (last.lines.length < 8) last.lines.push(line.slice(2).slice(0, 300));
   });
   return { date, items: items.slice(0, 80) };
 }
