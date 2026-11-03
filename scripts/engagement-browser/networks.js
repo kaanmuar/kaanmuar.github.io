@@ -310,11 +310,11 @@ const LI_API = "const csrf = (document.cookie.match(/JSESSIONID=\"?([^\";]+)/) |
 // LinkedIn sometimes renders without its data-view-name hooks, so the agent goes by accessibility labels.
 const LI_LIKE = 'button[aria-label^="Estado del botón de reacción"], button[aria-label^="Reaction button state"]';
 const LI_PAGE = 'input[type="radio"][aria-label*="QA-lab" i], [role="radio"][aria-label*="QA-lab" i]';
-// The reactions menu opens on hovering the reaction button. Its buttons end in the reaction's name ("React Celebrate",
-// "Celebrar"), in English or the Spanish our account uses.
+// The reactions menu opens on hovering the reaction button. Its buttons are labelled with the reaction's name, in the
+// Spanish our account uses (Recomendar, Celebrar, Apoyar, Encantar, Interesar, Hacer gracia) or in English.
 const LI_REACT = {
-  celebrate: ["Celebrate", "Celebrar"], support: ["Support", "Apoyar"], love: ["Love", "Encantar", "Me encanta"],
-  insightful: ["Insightful", "Interesante"], funny: ["Funny", "Divertido", "Hacer gracia", "Me hace gracia"]
+  celebrate: ["Celebrate", "Celebrar"], support: ["Support", "Apoyar"], love: ["Love", "Encantar"],
+  insightful: ["Insightful", "Interesar"], funny: ["Funny", "Hacer gracia"]
 };
 const liReact = (names) => new RegExp("(^|\\s)(" + names.join("|") + ")$", "i");
 
