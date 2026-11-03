@@ -12,6 +12,11 @@ export const CHANNELS = {
   sig: "signature", card: "business-card"
 };
 
+// Network codes in a report reply's link (#2465): /<lang>/r/<code>/<host>/<post ref>. The value goes in utm_campaign.
+export const SOCIAL = {
+  bsky: "bluesky", mast: "mastodon", yt: "youtube", x: "x", li: "linkedin", fb: "facebook", ig: "instagram", th: "threads", tt: "tiktok"
+};
+
 const HOST = /^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 
 export function page(lang) {
@@ -54,6 +59,14 @@ export async function route(url, { acceptLanguage = "", findReport = async () =>
   // A peer group's comparison (#2363): /<lang>/peers/<group id>/<the reader's token>, both lowercase hex.
   if (first === "peers" && rest.length === 2 && rest.every((p) => /^[a-f0-9]{8,40}$/.test(p))) {
     return { status: 302, location: landing(lang, { utm_campaign: "outreach-peers", utm_medium: "email" }, { peers: rest[0], t: rest[1] }) };
+  }
+
+  // A reply under a social post that names a site we reviewed (#2465); the post ref tells Jarvis which reply it was.
+  if (first === "r" && (rest.length === 2 || rest.length === 3) && SOCIAL[rest[0]] && HOST.test(bare(rest[1])) && (rest.length === 2 || /^[a-z0-9]{4,12}$/.test(rest[2]))) {
+    const site = bare(rest[1]);
+    const tags = Object.assign({ utm_campaign: "social-reply-" + SOCIAL[rest[0]], utm_content: site, utm_medium: "social" }, rest[2] ? { utm_term: rest[2] } : {});
+    const card = await findReport(site).catch(() => null);
+    return { status: 302, location: landing(lang, tags, card && card.id ? { live: card.id } : { url: site }) };
   }
 
   const host = bare(first);

@@ -6189,7 +6189,7 @@ async function jarvisUptimeRun() {
 exports.jarvisCountdowns = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.jarvisCountdowns }), "jarvisCountdowns", jarvisCountdownRun);
 
 // Every 30 minutes (#1988): read our field's posts, plan likes, reposts and follows, and push reply drafts for approval.
-exports.engagementScout = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.engagement }), "engagementScout",
+exports.engagementScout = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.engagement }), "engagementScout",
   async () => jarvisEngagement.runNote(await jarvisEngagement.scout(engagementDeps())));
 const engagementReport = (period) => async () => {
   const out = await jarvisEngagement.sendReport(engagementDeps(), period);

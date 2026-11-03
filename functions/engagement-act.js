@@ -404,6 +404,7 @@ async function sendReply(deps, c, task) {
     const out = await c.reply(d, r.draft, r.lang || task.doc.lang);
     await task.ref.update({ "actions.reply.status": "posted", "actions.reply.postedAt": at, "actions.reply.url": out.url || "", "actions.reply.uri": out.uri || "", "actions.reply.id": out.id || "", "actions.reply.tries": tries, "actions.reply.error": "", updatedAt: at });
     await count(deps, task.doc.network, "posted");
+    if (task.doc.campaign === "report-reply") await deps.db.collection("engagement_daily").doc(E.bogotaDay(deps.now)).set({ report: { posted: deps.inc(1) } }, { merge: true });
     return { status: "posted", url: out.url || "" };
   } catch (error) {
     const last = !error.fatal && tries >= MAX_TRIES;

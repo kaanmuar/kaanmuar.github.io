@@ -242,7 +242,7 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.equal(day.runs, 1);
   assert.equal(day.n.mastodon.drafted, 1);
   assert.equal(day.skip.competitor, 1);
-  assert.match(J.runNote(run), /2 new in field, 1 to engage, 1 replies drafted; dry run 3; failed: /);
+  assert.match(J.runNote(run), /2 new in field, 1 to engage, 1 replies drafted; dry run 3; report replies: The Live Reports index answered 503; failed: /);
   assert.equal(day.n.mastodon.like_dry, 1, "a dry run logs the like it would have done");
 
   const again = await J.scout(Object.assign({}, deps, { now: NOW + 60000 }));
