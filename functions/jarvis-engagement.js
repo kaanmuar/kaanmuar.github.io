@@ -253,29 +253,58 @@ async function shortLink(fetchImpl, link) {
   return /^https:\/\/tinyurl\.com\/\S+$/.test(text) ? text : link;
 }
 
+/** This slot's sites to look for, skipping those answered or emailed in the gap: { sites, recent, contacted }. */
+async function reportSites(deps) {
+  const { db, now } = deps;
+  const all = await liveTargets(deps);
+  const ahead = R.pick(all, Math.floor(now / Sources.SLOT), null, R.PER_RUN * 3);
+  const hosts = ahead.map((t) => t.host);
+  const [recent, contacted] = await Promise.all([repliedSites(db, hosts, now), contactedSites(db, hosts, now)]);
+  return { sites: R.pick(ahead, 0, new Set([...recent, ...contacted.keys()]), R.PER_RUN), recent, contacted };
+}
+
 /**
  * Report replies (#2465): this slot's Live Reports are looked for on the networks, and each post that names one, or
  * fits its niche or a problem its report found (#2468), is read by Gemini, decided (functions/engagement-reports.js), stored with campaign "report-reply", counted under
  * engagement_daily report, and its invite pushed to Carlos.
  */
 async function reportPass(deps, conf, creds) {
-  const { db, now, env, inc } = deps;
+  const { now, env } = deps;
   const out = { searched: 0, read: 0, matched: 0, drafted: 0, pushed: 0, aiError: "", errors: {} };
   if (conf.paused) return out;
-  const all = await liveTargets(deps);
-  const slot = Math.floor(now / Sources.SLOT);
-  const ahead = R.pick(all, slot, null, R.PER_RUN * 3);
-  const hosts = ahead.map((t) => t.host);
-  const [recent, contacted] = await Promise.all([repliedSites(db, hosts, now), contactedSites(db, hosts, now)]);
-  const sites = R.pick(ahead, 0, new Set([...recent, ...contacted.keys()]), R.PER_RUN);
-  out.searched = sites.length;
-  if (!sites.length) return out;
+  const look = await reportSites(deps);
+  out.searched = look.sites.length;
+  if (!look.sites.length) return out;
   const m = creds && creds.mastodon;
-  const loose = R.looseQueries(sites);
-  const found = await Sources.search({ fetch: deps.fetch, now, env: Object.assign({}, withAccounts(env, creds), m && m.token ? { MASTODON_SEARCH_URL: m.base, MASTODON_SEARCH_TOKEN: m.token } : {}) }, sites.flatMap(R.queries).concat(loose.map((l) => l.q)));
+  const loose = R.looseQueries(look.sites);
+  const found = await Sources.search({ fetch: deps.fetch, now, env: Object.assign({}, withAccounts(env, creds), m && m.token ? { MASTODON_SEARCH_URL: m.base, MASTODON_SEARCH_TOKEN: m.token } : {}) }, look.sites.flatMap(R.queries).concat(loose.map((l) => l.q)));
   out.errors = found.errors;
   out.read = Object.values(found.read).reduce((a, b) => a + b, 0);
+  return Object.assign(out, await takeReports(deps, conf, Object.assign({ searched: look.sites.length, loose }, look), found));
+}
 
+/**
+ * The Mac's posts for site queries (#2467, functions/engagement-mac.js): the Live Reports those queries name, with the
+ * sites answered or emailed in the gap held back by R.decide, then the report pass's read, decide and store.
+ * read: posts read per network. searched stays 0, since the cloud's pass counts this slot's sites.
+ */
+async function macReports(deps, conf, posts, read) {
+  const out = { matched: 0, drafted: 0, pushed: 0, aiError: "" };
+  if (conf.paused || !posts.length) return out;
+  const want = new Set(posts.map((p) => String(p.query || "").toLowerCase()).filter(Boolean));
+  const sites = (await liveTargets(deps)).filter((t) => R.queries(t).some((q) => want.has(q.toLowerCase()))).slice(0, R.PER_RUN * 3);
+  if (!sites.length) return out;
+  const hosts = sites.map((t) => t.host);
+  const [recent, contacted] = await Promise.all([repliedSites(deps.db, hosts, deps.now), contactedSites(deps.db, hosts, deps.now)]);
+  return Object.assign(out, await takeReports(deps, conf, { sites, recent, contacted, searched: 0 }, { posts, read: read || {}, errors: {} }));
+}
+
+/** Posts found for sites (found: { posts, read, errors }), the sites' look ({ sites, loose, recent, contacted, searched }) into report-reply posts. */
+async function takeReports(deps, conf, look, found) {
+  const { db, now, env, inc } = deps;
+  const { sites, recent, contacted } = look;
+  const loose = look.loose || [];
+  const out = { matched: 0, drafted: 0, pushed: 0, aiError: "" };
   const byKey = new Map();
   found.posts.forEach((p) => {
     const hit = R.siteOf(p, sites) || R.looseOf(p, loose);
@@ -313,7 +342,7 @@ async function reportPass(deps, conf, creds) {
   const counters = E.rollup(found.read, docs, { errors: Object.keys(found.errors).length });
   delete counters.runs;
   delete counters.runErrors;
-  await dailyRef.set(Object.assign({ day }, increments(Object.assign(counters, { report: R.rollup(sites.length, docs) }), inc)), { merge: true });
+  await dailyRef.set(Object.assign({ day }, increments(Object.assign(counters, { report: R.rollup(look.searched, docs) }), inc)), { merge: true });
   const waiting = docs.filter((d) => (d.actions.reply || {}).status === "waiting");
   Object.assign(out, { matched: docs.length, drafted: waiting.length });
   if (deps.push) for (const d of waiting.slice(0, PUSH_PER_RUN)) { await deps.push(E.replyPush(d)).catch(() => null); out.pushed += 1; }
@@ -575,4 +604,4 @@ async function source(ctx) {
   };
 }
 
-module.exports = { scout, takeIn, reportPass, shortLink, followChains, takeChains, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
+module.exports = { scout, takeIn, reportSites, reportPass, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };

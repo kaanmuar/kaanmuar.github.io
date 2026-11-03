@@ -193,6 +193,47 @@ test("a comment whose post text we could not read pushes no empty We said line (
   assert.ok(!push.lines.some((l) => /^We said/.test(l)));
 });
 
+function reportFetch() {
+  const index = { reports: [
+    { id: "upb", name: "UPB", host: "www.upb.edu.co", overall: 58, areas: { SEO: 70, Accessibility: 41 } },
+    { id: "banco", name: "Bancolombia", host: "www.bancolombia.com", overall: 84, areas: { SEO: 90, Security: 77 } }
+  ] };
+  return async (url, opts) => {
+    const json = (body) => ({ ok: true, status: 200, json: async () => body });
+    if (url.includes("live-reports/index.json")) return json(index);
+    if (url.includes("tinyurl.com")) return { ok: false, status: 503, text: async () => "" };
+    const items = JSON.parse(JSON.parse(opts.body).contents[0].parts[0].text.split("\n").pop());
+    return json({ candidates: [{ content: { parts: [{ text: JSON.stringify(items.map((p) => ({ id: p.id, aboutSite: true, about: "enrolment", lang: "es", sentiment: "positive", worth: 0.9,
+      reply: "¡Felicidades! Hicimos una revisión gratuita de " + p.site.name + " con hallazgos sobre " + p.site.weakest + ": {link}" }))) }] } }] });
+  };
+}
+
+test("the Mac gets this slot's reviewed-site queries, and the posts naming a site come back as report-reply invites (#2467)", async () => {
+  const db = await paired();
+  const d = deps(db, { fetch: reportFetch() });
+  const s = await M.handle(d, { op: "engagement-mac-sites" }, TOKEN);
+  assert.deepEqual(s.queries.sort(), ["Bancolombia", "bancolombia.com", "upb.edu.co"], "the domain, and the name when it says something");
+
+  const hit = Object.assign(tweet("70", "Me matriculé en upb.edu.co, qué buena la web nueva", 4), { lang: "es", query: "upb.edu.co" });
+  const miss = Object.assign(tweet("71", "Un post sin nada que ver", 4), { query: "upb.edu.co" });
+  const out = await M.ingest(d, { posts: [], reports: [hit, miss, Object.assign(tweet("72", "upb.edu.co"), { query: "" })], signedIn: { x: true } });
+  assert.deepEqual(out.reports, { read: 2, matched: 1, drafted: 1 }, "a post with no query is not a site post");
+  const doc = db.data.get("engagement_posts/" + E.keyOf("x", "70"));
+  assert.equal(doc.campaign, "report-reply");
+  assert.equal(doc.report.host, "upb.edu.co");
+  assert.equal(doc.actions.reply.status, "waiting");
+  assert.match(doc.actions.reply.draft, /https:\/\/qalabreview\.com\/es\/r\/x\/upb\.edu\.co\/[a-f0-9]{6}$/);
+  const day = db.data.get("engagement_daily/" + E.bogotaDay(NOW));
+  assert.equal(day.report.drafted, 1);
+  assert.ok(!day.report.searched, "the cloud's pass counts this slot's sites");
+  assert.equal(day.n.x.read, 2);
+  assert.deepEqual(db.data.get("engagement_private/mac").read, { x: 2 }, "site searches count in what the Mac read");
+
+  const again = Object.assign(tweet("73", "Otra vez upb.edu.co", 4), { lang: "es", query: "upb.edu.co" });
+  assert.equal((await M.ingest(d, { posts: [], reports: [again], signedIn: { x: true } })).reports.drafted, 0, "one invite per site per 30 days");
+  assert.deepEqual((await M.handle(d, { op: "engagement-mac-sites" }, TOKEN)).queries.sort(), ["Bancolombia", "bancolombia.com"], "a site we just invited is not searched again");
+});
+
 test("a comment on our LinkedIn post becomes a chain post with a like the Mac does as a comment task, quoting our post (#2452)", async () => {
   const db = await paired();
   await db.collection("jarvis_settings").doc("engagement").set({ live: true });

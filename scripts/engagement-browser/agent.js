@@ -3,8 +3,10 @@
 /*
  * The Mac's browser agent for engagement on X, LinkedIn, Facebook, Instagram, Threads and TikTok (#1991).
  * Every 30 minutes from 7:00 to 22:00 (Bogotá) launchd starts a real Chrome, minimized, in the agent's own profile,
- * signed in once as our accounts. Each run reads one search per network, sends the posts to Jarvis (which scores
- * them, asks Gemini and plans like the cloud scout), then carries out what Jarvis queued: replies Carlos approved,
+ * signed in once as our accounts. Each run reads one topic search and one reviewed-site search (#2467: a domain or
+ * name from this slot's Live Reports, engagement-mac-sites) per network, sends the posts to Jarvis (which scores
+ * them, asks Gemini and plans like the cloud scout; site posts get a report-reply invite), then carries out what
+ * Jarvis queued: replies Carlos approved,
  * and in a live run the planned likes, reposts and follows, a human pace apart. Jarvis > Engagement shows what it
  * read, did and needs; functions/engagement-mac.js is the other end.
  *
@@ -24,7 +26,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
-const VERSION = "1.2.0";
+const VERSION = "1.3.0";
 const PROJECT = "carlosm-interactive-cv";
 const ENDPOINT = "https://us-central1-" + PROJECT + ".cloudfunctions.net/jarvis";
 const LABEL = "com.kaanmuar.engagementbrowser";
@@ -207,8 +209,9 @@ async function run(opts) {
   const now = Date.now();
   c.blocked = Object.fromEntries(Object.entries(c.blocked || {}).filter(([, until]) => Date.parse(until) > now));
   const slot = Math.floor(now / 1800000);
+  const sites = await api("engagement-mac-sites").then((r) => r.queries || [], (error) => { log(error.message); return []; });
   const { ctx, page } = await launch(true);
-  const seen = { posts: [], comments: [], errors: {}, signedIn: {}, accounts: {} };
+  const seen = { posts: [], reports: [], comments: [], errors: {}, signedIn: {}, accounts: {} };
   try {
     const nets = pickNets(opts.only).sort(() => Math.random() - 0.5);
     for (const [i, k] of nets.entries()) {
@@ -229,6 +232,18 @@ async function run(opts) {
         seen.errors[k] = String(error.message || error).slice(0, 180);
         log(net.name + ": " + seen.errors[k] + " (" + await shot(page, k) + ")");
       }
+      if (sites.length && !c.blocked[k]) {
+        const sq = sites[(slot + i) % sites.length];
+        await pause(3000, 9000);
+        try {
+          const posts = await net.read(page, sq);
+          seen.reports.push(...posts.map((p) => Object.assign(p, { query: sq })));
+          log(net.name + ": read " + posts.length + " for the reviewed site \"" + sq + "\"");
+        } catch (error) {
+          if (error instanceof Refused) c.blocked[k] = new Date(Date.now() + HOLD_MS).toISOString();
+          log(net.name + " site search: " + String(error.message || error).slice(0, 180));
+        }
+      }
       if (net.inbox && !c.blocked[k] && now - Date.parse((c.inboxAt || {})[k] || 0) > INBOX_MS) {
         await pause(3000, 9000);
         try {
@@ -245,7 +260,8 @@ async function run(opts) {
     }
     const took = await api("engagement-mac-ingest", Object.assign({}, seen, { blocked: c.blocked, agent: VERSION }));
     log("Jarvis took " + took.read + " posts: " + took.fresh + " new, " + took.engaged + " to engage, " + took.drafted + " replies drafted" + (took.aiError ? "; Gemini: " + took.aiError : "")
-      + (took.chained ? "; " + took.chained + " new comments on our posts and replies" : ""));
+      + (took.chained ? "; " + took.chained + " new comments on our posts and replies" : "")
+      + (took.reports && took.reports.read ? "; reviewed sites: " + took.reports.read + " read, " + took.reports.matched + " name one, " + took.reports.drafted + " invites drafted" : ""));
 
     const ready = Object.keys(seen.signedIn).filter((k) => seen.signedIn[k] && !c.blocked[k]);
     const q = await api("engagement-mac-queue", { networks: ready });
