@@ -217,3 +217,14 @@ test("sent emails (#2017): resend forwards the original from its mailbox, never 
   await assert.rejects(mk.resend(ctx, db, { id: SENT, to: "x@blocked.edu" }), /do-not-contact/);
   await assert.rejects(mk.resend(ctx, db, { id: "nope" }), /sent email's id/);
 });
+
+test("marketing sync (#2479): the LinkedIn note survives a Check first line above it", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mk-li-"));
+  fs.mkdirSync(path.join(dir, "linkedin"));
+  fs.writeFileSync(path.join(dir, "linkedin", "2026-11-03.md"), "# LinkedIn, 2026-11-03\n\n## [ ] Miles Pines, Founder & CEO (Theo, US)\n\n"
+    + "- Profile: [https://www.linkedin.com/in/milespines](https://www.linkedin.com/in/milespines)\n- Live Report: not yet (https://x/?live=u-theo-site)\n"
+    + "- Trigger: YC F26\n- Check first: confirm the person is still in this role.\n- Note: Hi Miles, we reviewed theo.site. Happy to send it.\n- DM after accept: Thanks for connecting, Miles.\n");
+  const [p] = sync.linkedin(dir).items;
+  assert.equal(p.lines.length, 6);
+  assert.equal(p.lines[4], "Note: Hi Miles, we reviewed theo.site. Happy to send it.");
+});
