@@ -250,3 +250,20 @@ test("marketing sync (#2479): the LinkedIn note survives a Check first line abov
   assert.equal(p.lines.length, 6);
   assert.equal(p.lines[4], "Note: Hi Miles, we reviewed theo.site. Happy to send it.");
 });
+
+test("marketing sync (#2519): when the Action's commit fails, the folder edits it applied are queued again", async () => {
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "applied-")), "applied.txt");
+  const cmd = (id, action) => ({ action, ref: { id } });
+  sync.noteApplied(file, cmd("a", "lead-set"), { status: "done" });
+  sync.noteApplied(file, cmd("b", "replied"), { status: "done" });
+  sync.noteApplied(file, cmd("c", "lead-drop"), { status: "failed" });
+  sync.noteApplied(file, cmd("d", "run"), { status: "done" });
+  sync.noteApplied("", cmd("e", "approve"), { status: "done" });
+  sync.noteApplied(file, cmd("a", "lead-set"), { status: "done" });
+  assert.equal(fs.readFileSync(file, "utf8"), "a\nb\na\n");
+  const updates = [];
+  const db = { collection: (name) => ({ doc: (id) => ({ update: async (u) => { updates.push([name, id, u.status, u.doneAt]); } }) }) };
+  assert.equal(await sync.requeue(db, file), 2);
+  assert.deepEqual(updates, [["jarvis_commands", "a", "pending", ""], ["jarvis_commands", "b", "pending", ""]]);
+  assert.equal(await sync.requeue(db, file + ".missing"), 0);
+});

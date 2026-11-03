@@ -6,6 +6,7 @@
         day, do-not-contact, each job's last run, the campaigns paused for holidays and the weekly KPIs.
 
      node scripts/jarvis-marketing-sync.js --dir <outreach folder> [--state <outreach-weekly folder>] [--dry]
+     node scripts/jarvis-marketing-sync.js --requeue <JARVIS_APPLIED file>   # the Action's commit failed: run them again
 
    While an agent run holds <state>/lock, commands that edit the folder wait for the next sync.
    The folder's rows stay out of this repo; only the owner-only Firestore document and the jarvis function see them.
@@ -27,6 +28,9 @@ const REPLY_DAYS = 14;
 const LEAD_FIELDS = ["campaign", "email", "org", "host", "cc", "language", "sequence", "first_name", "last_name", "title", "score",
   "top_finding", "top_finding_en", "missing", "live_report_url", "report_read"];
 const EDITS = new Set(["approve", "approve-week", "upload", "linkedin", "dnc", "run", "lead-set", "lead-drop", "allow-personal"]);
+// Commands whose only record is the folder, safe to run twice (uploads skip leads already in Instantly): when the
+// Action's commit cannot reach main they are queued again (#2519).
+const SAVES = new Set([...EDITS, "replied"].filter((a) => a !== "run"));
 
 // --- CSV: quoted fields may hold commas, quotes and line breaks; the newline style of the file is kept. -----------
 function parseCsv(text) {
@@ -328,6 +332,18 @@ function runCommand(cmd, dir, state, now, ctx) {
   }
 }
 
+// JARVIS_APPLIED names the file the Action reads back if its commit fails.
+function noteApplied(file, cmd, out) {
+  if (file && out && out.status === "done" && SAVES.has(cmd.action)) fs.appendFileSync(file, cmd.ref.id + "\n");
+}
+
+async function requeue(db, file) {
+  const ids = [...new Set(read(file, "").split("\n").map((l) => l.trim()).filter(Boolean))];
+  await Promise.all(ids.map((id) => db.collection("jarvis_commands").doc(id)
+    .update({ status: "pending", doneAt: "", result: "The outreach folder could not be saved; queued again." })));
+  return ids.length;
+}
+
 function firestore() {
   const fnRequire = Module.createRequire(path.join(FN, "index.js"));
   const { Firestore } = fnRequire("@google-cloud/firestore");
@@ -340,6 +356,10 @@ function firestore() {
 
 async function main(argv) {
   const arg = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : ""; };
+  if (arg("--requeue")) {
+    console.log((await requeue(firestore(), arg("--requeue"))) + " commands queued again");
+    return;
+  }
   const dir = arg("--dir");
   if (!dir || !fs.existsSync(dir)) throw new Error("Usage: node scripts/jarvis-marketing-sync.js --dir <outreach folder> [--state <folder>] [--dry]");
   const state = arg("--state") || path.join(os.homedir(), "Library", "Application Support", "QALab", "outreach-weekly");
@@ -359,6 +379,7 @@ async function main(argv) {
     const out = runCommand(c, dir, state, Date.now(), { answered });
     if (!out) { waiting++; continue; }
     await c.ref.update(out);
+    noteApplied(process.env.JARVIS_APPLIED, c, out);
     ran++;
     console.log(c.action, out.status, out.result);
   }
@@ -382,4 +403,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch((error) => { console.error(error.message); process.exit(1); });
 
-module.exports = { parseCsv, toCsv, leadFiles, leads, replies, linkedin, linkedinHeading, linkedinDay, dnc, jobs, kpis, snapshot, runCommand, HANDLERS };
+module.exports = { parseCsv, toCsv, leadFiles, leads, replies, linkedin, linkedinHeading, linkedinDay, dnc, jobs, kpis, snapshot, runCommand, HANDLERS, SAVES, noteApplied, requeue };
