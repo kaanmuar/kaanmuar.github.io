@@ -29,6 +29,10 @@ concurrency:
   group: facebook-page
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   queue:
     runs-on: ubuntu-latest

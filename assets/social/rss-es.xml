@@ -480,23 +480,6 @@ https://www.youtube.com/shorts/gJe34piPj4U</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/series-dia-de-muertos-2026-11/feed/02-epitaphs.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Cada campo necesita un nombre.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/08-input-names-es.html</link>
-      <guid isPermaLink="false">tips-2026-10/08-input-names-es</guid>
-      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consejo</category>
-      <category>A11y</category>
-      <description>Un placeholder desaparece en cuanto alguien escribe, y puede que los lectores de pantalla no lo anuncien. Una etiqueta real se queda.
-
-Prueba esto hoy: Recorre con Tab tu formulario de contacto con un lector de pantalla activado. Cada campo debería decir qué es.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=input-names
-
-#Accessibility #a11y #WCAG #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg" length="209043" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>Empieza tu CSP en Report-Only.</title>
       <link>https://carlosandmunoz.com/social/tips-2026-10/15-csp-report-only-es.html</link>
       <guid isPermaLink="false">tips-2026-10/15-csp-report-only-es</guid>
@@ -512,6 +495,23 @@ Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosa
 #WebSecurity #CSP #AppSec #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" length="219690" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Escribe la lista de pruebas antes del código de pruebas.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-es.html</link>
+      <guid isPermaLink="false">tips-2026-10/16-list-first-es</guid>
+      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Consejo</category>
+      <category>QA</category>
+      <description>Elegir un framework es la segunda pregunta. Lo primero es qué hace esta página y qué intentaría hacer en ella una persona real.
+
+Prueba esto hoy: Antes de tu próximo sprint de automatización, escribe diez casos en lenguaje llano. Después elige la herramienta.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
+
+#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>davibank.com: 58. El punto débil: TLS.</title>

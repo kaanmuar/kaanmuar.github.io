@@ -212,7 +212,26 @@ async function failedRuns(fetchImpl, token, { now }) {
     if (r.conclusion !== "cancelled" && !newest.has(key)) newest.set(key, r);
   });
   return Array.from(newest.values()).filter((r) => ["failure", "timed_out"].includes(r.conclusion))
-    .map((r) => ({ id: r.id, name: r.name, branch: r.head_branch, attempt: r.run_attempt || 1, url: r.html_url }));
+    .map((r) => ({ id: r.id, name: r.name, branch: r.head_branch, attempt: r.run_attempt || 1, url: r.html_url, sha: r.head_sha || "", event: r.event || "", path: r.path || "" }));
+}
+
+async function mainSha(fetchImpl, token) {
+  if (!token) return "";
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  return (await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/commits/main", { headers, signal: AbortSignal.timeout(15000) }), "GitHub")).sha || "";
+}
+
+// A run that failed on an old commit fails again when re-run, so a workflow main has moved past starts afresh on main.
+async function dispatchMain(fetchImpl, token, workflowPath) {
+  if (!token) throw new Error("No GitHub token is set.");
+  const file = String(workflowPath || "").split("/").pop();
+  if (!/^[\w.-]+\.ya?ml$/.test(file)) throw new Error("No workflow file to start: " + String(workflowPath).slice(0, 80));
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json" };
+  const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/workflows/" + file + "/dispatches", { method: "POST", headers, body: JSON.stringify({ ref: "main" }), signal: AbortSignal.timeout(15000) });
+  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused to start " + file + " (" + res.status + "); the GitHub token needs Actions: write.");
+  if (res.status === 422) throw new Error(file + " cannot be started by hand (it has no workflow_dispatch).");
+  if (!res.ok) throw new Error("GitHub " + res.status + " starting " + file + ".");
+  return { workflow: file };
 }
 
 async function rerunRun(fetchImpl, token, id) {
@@ -783,5 +802,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
