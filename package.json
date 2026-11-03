@@ -55,7 +55,7 @@
     "axe-core": "^4.14.0",
     "codeceptjs": "^4.2.2",
     "css-select": "^5.2.2",
-    "css-what": "^6.2.2",
+    "css-what": "^8.0.0",
     "cypress": "^16.2.1",
     "cypress-axe": "^1.7.0",
     "cypress-mochawesome-reporter": "^5.0.0",
