@@ -648,7 +648,7 @@ const linkedin = {
     await go(page, this, task.url);
     const box = page.locator('[componentkey="replaceableComment_' + task.id + '"]');
     if (!(await visible(box, 20000))) throw new Error("LinkedIn did not show the comment.");
-    if (!(await visible(page.locator('[aria-label*="como QA-lab" i], [aria-label*="as QA-lab" i], [placeholder*="QA-lab" i]').or(page.getByText(/(Comentar como|Comment as) QA-lab/i)), 6000))) throw new Error("LinkedIn is not acting as the QA-lab page here.");
+    if (!(await page.locator('[data-placeholder*="como QA-lab" i], [data-placeholder*="as QA-lab" i]').first().waitFor({ state: "attached", timeout: 8000 }).then(() => true, () => false))) throw new Error("LinkedIn is not acting as the QA-lab page here.");
     return box.first();
   },
   async likeComment(page, task) {
