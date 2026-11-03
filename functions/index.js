@@ -6217,6 +6217,29 @@ async function tiktokBusinessRun() {
 
 exports.tiktokBusinessWatch = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB", secrets: SECRETS.tiktokBusinessWatch }), "tiktokBusinessWatch", tiktokBusinessRun);
 
+const mailboxGraduate = require("./mailbox-graduate");
+
+// Daily from 24 Nov (#2382): the warmed-up secondary-domain mailboxes join the open Instantly campaigns.
+async function mailboxGraduateRun() {
+  const ref = getFirestore().collection("jarvis_watch").doc("mailbox_graduate");
+  const out = await mailboxGraduate.run({
+    fetch,
+    key: process.env.INSTANTLY_API_KEY,
+    state: (await ref.get()).data() || {},
+    notify: async (r) => {
+      await pushOwner(r.push);
+      await sendOwnerEmail(r.mail).catch((error) => console.error("Mailbox graduation mail failed:", error));
+      const token = await githubApp.token();
+      if (token) await github("/repos/" + BUG_REPO + "/issues/" + mailboxGraduate.TICKET + "/comments", { body: r.comment }, token)
+        .catch((error) => console.error("Mailbox graduation comment failed:", error));
+    }
+  });
+  await ref.set(out.state);
+  return out.note;
+}
+
+exports.mailboxGraduate = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB", secrets: SECRETS.mailboxGraduate }), "mailboxGraduate", mailboxGraduateRun);
+
 const mailInbound = require("./mail-inbound");
 const mailCodes = () => getFirestore().collection("jarvis_mail_codes");
 
