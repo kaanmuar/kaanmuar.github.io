@@ -40,6 +40,8 @@ const BY_FUNCTION = {
   jarvisCountdowns: list(MAIL, JARVIS_SOURCES, BROWSER),
   // A Gmail app password for the inbox qa@carlosandmunoz.com forwards to (functions/tiktok-business-watch.js).
   tiktokBusinessWatch: list(MAIL, GITHUB, ["QA_MAIL_APP_PASSWORD"]),
+  // functions/mailbox-graduate.js (#2382): Instantly accounts and campaigns, then a mail and a comment on #2379.
+  mailboxGraduate: list(MAIL, GITHUB, ["INSTANTLY_API_KEY"]),
   // The key in the webhook URL each ImprovMX alias posts to (functions/mail-inbound.js); an owner reply to qa@
   // mails the operator like ownerReplies does (#1899).
   mailInbound: list(MAIL, ["MAIL_WEBHOOK_KEY"]),
