@@ -219,9 +219,38 @@ const x = {
     const art = await this.post(page, task);
     await click(art.locator('[data-testid="reply"]').first());
     await type(page, await need(page.locator('[data-testid="tweetTextarea_0"]'), "The reply box"), task.draft);
+    const card = task.cardFile ? await this.attach(page, task) : null;
     await click(await need(page.locator('[data-testid="tweetButton"]'), "Reply"));
     await page.locator('[data-testid="tweetTextarea_0"]').first().waitFor({ state: "hidden", timeout: 15000 }).catch(() => { throw new Error("The reply did not send."); });
-    return { url: task.url };
+    return Object.assign({ url: task.url }, card ? { card: card.ok ? "attached" : "text", cardError: card.error || "" } : {});
+  },
+  // The report card (#2466) through the reply box's file input, with its alt text when X offers the description
+  // editor. Anything that goes wrong takes the image off again, so the reply goes as text with its link.
+  async attach(page, task) {
+    const box = page.locator('[role="dialog"]:has([data-testid="tweetTextarea_0"])');
+    const scope = (await has(box)) ? box.first() : page;
+    const media = scope.locator('[data-testid="attachments"]');
+    try {
+      await scope.locator('input[data-testid="fileInput"]').first().setInputFiles(task.cardFile, { timeout: 10000 });
+      if (!(await visible(media, 20000))) throw new Error("X did not take the image.");
+      let alt = false;
+      const describe = scope.getByRole("link", { name: /^(Add description|Agregar descripción|Añadir descripción)$/i })
+        .or(scope.getByRole("button", { name: /^(Add description|Agregar descripción|Añadir descripción)$/i }));
+      if (task.alt && await visible(describe, 4000)) {
+        await click(describe.first());
+        const input = page.locator('textarea[name="altTextInput"], [data-testid="altTextInput"] textarea, [data-testid="altTextInput"]');
+        if (await visible(input, 6000)) {
+          await input.first().fill(task.alt.slice(0, 1000));
+          await click(page.locator('[data-testid="endEditingButton"]').or(page.getByRole("button", { name: /^(Save|Guardar|Done|Listo)$/ })).first());
+          alt = true;
+        }
+      }
+      await pause(800, 1600);
+      return { ok: true, error: alt ? "" : "X offered no description editor, so the card went without alt text." };
+    } catch (error) {
+      await media.locator('[aria-label="Remove media"], [aria-label="Quitar contenido multimedia"], [aria-label="Eliminar contenido multimedia"]').first().click({ timeout: 3000 }).catch(() => null);
+      return { ok: false, error: String(error.message || error).slice(0, 160) };
+    }
   }
 };
 

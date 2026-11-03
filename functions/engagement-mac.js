@@ -11,10 +11,13 @@
  *                                                                        answered like the API networks' (#2447)
  *   engagement-mac-queue   { networks }                                  planned likes, reposts, follows and approved
  *                                                                        replies for the networks signed in; a
- *                                                                        LinkedIn like names its reaction
- *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already }  what came of one task;
- *                                                                        already: the post had our earlier reply
- *                                                                        (url), so none was sent
+ *                                                                        LinkedIn like names its reaction; a report
+ *                                                                        reply on X brings its card (#2466) as
+ *                                                                        { png: base64, type, alt }
+ *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already, card, cardError }  what came
+ *                                                                        of one task; already: the post had our
+ *                                                                        earlier reply (url), so none was sent;
+ *                                                                        card: "attached" or "text"
  *
  *   engagement_private/mac  { tokenHash, pairedAt, at, read, errors, signedIn, accounts, agent, blocked }
  *
@@ -135,12 +138,13 @@ async function queue(deps, body) {
     per[t.doc.network] = (per[t.doc.network] || 0) + 1;
     await t.ref.update({ ["actions." + t.action + ".leasedAt"]: at, updatedAt: at });
     const r = t.doc.actions.reply || {};
-    tasks.push({
+    const card = t.action === "reply" ? await Act.drawCard(deps, t.doc) : {};
+    tasks.push(Object.assign({
       key: t.key, network: t.doc.network, action: t.action, id: t.doc.id, url: t.doc.url, author: { handle: (t.doc.author || {}).handle || "", id: (t.doc.author || {}).id || "" },
       draft: t.action === "reply" ? r.draft || "" : "", lang: t.action === "reply" ? r.lang || t.doc.lang || "" : "",
       reaction: t.action === "like" && t.doc.network === "linkedin" && !t.doc.chain ? reaction(t.doc) : "",
       chain: !!t.doc.chain, text: t.doc.chain ? clip(t.doc.text, 300) : ""
-    });
+    }, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {}));
   };
   for (const t of replies) await take(t);
   let dry = 0;
@@ -186,7 +190,8 @@ async function result(deps, body) {
       await count("already");
     } else if (b.ok) {
       status = "posted";
-      await ref.update({ [k + "status"]: status, [k + "postedAt"]: at, [k + "url"]: clip(b.url, 500), [k + "tries"]: tries, [k + "error"]: "", [k + "leasedAt"]: "", [k + "by"]: "mac", updatedAt: at });
+      await ref.update(Object.assign({ [k + "status"]: status, [k + "postedAt"]: at, [k + "url"]: clip(b.url, 500), [k + "tries"]: tries, [k + "error"]: "", [k + "leasedAt"]: "", [k + "by"]: "mac", updatedAt: at },
+        Act.cardFields(doc, b.card === "attached", b.cardError)));
       await count("posted");
       if (doc.campaign === "report-reply") await db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ report: { posted: inc(1) } }, { merge: true });
     } else {
