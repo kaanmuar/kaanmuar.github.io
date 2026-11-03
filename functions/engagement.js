@@ -9,6 +9,10 @@
  * (push with Approve, Edit, Dismiss) and expires after REPLY_TTL. Phase 1 (#1989) plans; the APIs (#1990) and the
  * Mac's browser (#1991) carry the plan out.
  *
+ * Conversations (#2421): a post keeps its thread (the conversation's root), and no reply is drafted in a thread we
+ * already answered or have an answer waiting in. Comments left under our posted replies come back as chain posts:
+ * a like when we have not liked them, and an answer for Carlos when they ask or add something.
+ *
  *   score     = weight x (1 + relevance) x (1 + trend) x freshness
  *   relevance  distinct topic keywords the post names, at most 6
  *   trend      log2(1 + velocity / (scale / 10)), velocity = (likes + 2 replies + 3 reposts + views / 100) / hours^0.8
@@ -19,6 +23,10 @@ const crypto = require("crypto");
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
 const REPLY_TTL = 6 * HOUR;
+// Someone answering us waits longer than a stranger's post: a day for Carlos to approve the answer.
+const CHAIN_TTL = DAY;
+// Comments a network lets us like through its API; YouTube has no comment likes.
+const CHAIN_LIKES = ["bluesky", "mastodon"];
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const ACTIONS = ["like", "repost", "follow", "reply"];
 
@@ -124,6 +132,8 @@ function settingsPatch(current, body) {
 }
 
 const keyOf = (network, id) => network + "_" + crypto.createHash("sha1").update(String(id)).digest("hex").slice(0, 20);
+/** The conversation a post belongs to, as "network:root id"; posts stored before #2421 have no thread and stand alone. */
+const threadKey = (p) => p.network + ":" + String(p.thread || p.id || "");
 
 /** Topic keyword hits: the topic named most, every topic named, and the keywords. */
 function relevance(text) {
@@ -185,9 +195,33 @@ function aiPrompt(items) {
     "You help Carlos & Munoz (carlosandmunoz.com), a small consultancy for QA and test automation, SEO and GEO, web accessibility, web performance, analytics and web security, take part in conversations on social networks.",
     "For each post below, return one JSON object in a JSON array, same order, with exactly these keys:",
     '{"id": same id, "about": what the post is about in at most 20 English words, "lang": the post\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when the thread is a fight or a pile-on, "asksForTool": true only when the post asks for a tool, service or audit, "promo": true when the post advertises the author\'s own product, service, course or tool, "worth": 0 to 1, how much a short expert reply from us would add to this conversation, "why": at most 15 English words, "reply": the reply, or "" when worth is under 0.6 or the post is political, angry, an argument or promo}',
-    "Reply rules: write in the post's language (en, es, pt, de, fr or it; otherwise reply \"\"). Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Open with the substance, not with praise. Add one concrete insight, tip, caveat or question that the post did not already say, about the post's own subject; never steer the conversation toward our services or other areas. Address people as tú in Spanish, você in Portuguese, tu in Italian, Sie in German and vous in French.",
-    "Never: a link or a website address unless asksForTool is true (then at most one mention of carlosandmunoz.com), a sales pitch, hashtags, more than one emoji, em dashes, flattery like \"Great post!\" or \"impressive\", made-up numbers or studies, claims about work we did, or anything about the author's person. Stay under maxReply characters.",
+    "Reply rules: write in the post's language (en, es, pt, de, fr or it; otherwise reply \"\"). Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Open with the substance, not with praise. Add one concrete insight, tip, caveat or question that the post did not already say, about the post's own subject; never steer the conversation toward our services or other areas. " + REGISTER,
+    NEVER,
     "Posts:",
+    JSON.stringify(list)
+  ].join("\n");
+}
+
+const REGISTER = "Address people as tú in Spanish, você in Portuguese, tu in Italian, Sie in German and vous in French.";
+const NEVER = "Never: a link or a website address unless asksForTool is true (then at most one mention of carlosandmunoz.com), a sales pitch, hashtags, more than one emoji, em dashes, flattery like \"Great post!\" or \"impressive\", made-up numbers or studies, claims about work we did, or anything about the author's person. Stay under maxReply characters.";
+
+/** The Gemini prompt for comments left under our replies: items carry parent, the stored post we replied on. */
+function chainPrompt(items) {
+  const list = items.map((c) => {
+    const p = c.parent || {};
+    return {
+      id: c.key, network: (NETWORKS[c.network] || {}).name || c.network, lang: lang2(c.lang) || "?", author: clip((c.author || {}).name || (c.author || {}).handle, 60),
+      post: clip((p.chain || {}).post || p.title || p.text, 400), ours: clip(((p.actions || {}).reply || {}).draft, 500), comment: clip(c.text, 900), maxReply: (NETWORKS[c.network] || {}).limit || 300
+    };
+  });
+  return [
+    "You help Carlos & Munoz (carlosandmunoz.com), a small consultancy for QA and test automation, SEO and GEO, web accessibility, web performance, analytics and web security, take part in conversations on social networks.",
+    "Each item below is a comment someone left under one of our replies: post is what we replied to, ours is our reply, comment is theirs.",
+    "For each comment, return one JSON object in a JSON array, same order, with exactly these keys:",
+    '{"id": same id, "lang": the comment\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when it picks a fight or piles on, "asksForTool": true only when it asks for a tool, service or audit, "promo": true when it advertises the author\'s own product, service, course or tool, or is spam, "like": true when a like is a fitting thank-you (false for hostile, spam or off-topic comments), "worth": 0 to 1, how much an answer from us is owed or would help, "why": at most 15 English words, "reply": the answer, or "" when the comment needs none (thanks or plain agreement get a like only) or it is political, angry, an argument or promo}',
+    "Reply rules: write in the comment's language (en, es, pt, de, fr or it; otherwise reply \"\"). Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Answer what they asked or said, without repeating our reply; when they correct us and are right, say so plainly. " + REGISTER,
+    NEVER,
+    "Comments:",
     JSON.stringify(list)
   ].join("\n");
 }
@@ -213,7 +247,7 @@ function parseAi(text, items) {
     out[r.id] = {
       about: clip(r.about, 200), lang: lang2(r.lang) || lang2(p.lang), sentiment: ["positive", "neutral", "negative", "angry"].includes(r.sentiment) ? r.sentiment : "neutral",
       political: r.political === true, argument: r.argument === true, promo: r.promo === true, asksForTool: ask, worth: Math.min(1, Math.max(0, Number(r.worth) || 0)), why: clip(r.why, 160),
-      reply: reply.length >= 12 ? reply : ""
+      reply: reply.length >= 12 ? reply : "", like: r.like !== false
     };
   });
   return out;
@@ -233,15 +267,16 @@ function take(used, network, action) {
 /**
  * What to do with one new post. Returns { verdict, skip, actions }: verdict "engage" (at least one action),
  * "watch" (in the field, nothing to do), "trend" (a network we only read) or "skip" (skip says why).
- * Each action is { status } with planned, waiting (a reply for Carlos), capped or paused.
+ * Each action is { status } with planned, waiting (a reply for Carlos), capped, paused, or replied (replied holds the
+ * threadKeys we already answered or have an answer waiting in).
  */
-function decide(post, ai, conf, used, now, followed) {
+function decide(post, ai, conf, used, now, followed, replied) {
   const net = NETWORKS[post.network] || {};
   if (!net.acts) return { verdict: "trend", skip: "", actions: {} };
   const why = guard(post, conf, now);
   if (why) return { verdict: "skip", skip: why, actions: {} };
   const a = ai || null;
-  if (a && (a.political || a.argument || a.promo || a.sentiment === "angry")) return { verdict: "skip", skip: a.political ? "political" : a.argument ? "argument" : a.promo ? "promo" : "angry", actions: {} };
+  if (flagged(a)) return { verdict: "skip", skip: flagged(a), actions: {} };
   const actions = {};
   const plan = (action, ok, extra) => {
     if (!ok || (net.only && !net.only.includes(action))) return;
@@ -256,11 +291,42 @@ function decide(post, ai, conf, used, now, followed) {
   plan("follow", s >= conf.thresholds.follow && handle && !(followed && followed.has(post.network + ":" + handle)));
   const lang = (a && a.lang) || lang2(post.lang);
   if (a && a.reply && a.worth >= conf.worth && s >= conf.thresholds.reply && LANGS.includes(lang)) {
-    plan("reply", true, { draft: a.reply, lang, expiresAt: new Date(now + REPLY_TTL).toISOString() });
-    if (actions.reply && actions.reply.status === "planned") actions.reply.status = "waiting";
+    if (replied && replied.has(threadKey(post))) actions.reply = { status: "replied", error: "We already replied in this conversation." };
+    else {
+      plan("reply", true, { draft: a.reply, lang, expiresAt: new Date(now + REPLY_TTL).toISOString() });
+      if (actions.reply && actions.reply.status === "planned") actions.reply.status = "waiting";
+    }
   }
   return { verdict: Object.values(actions).some((x) => x.status === "planned" || x.status === "waiting") ? "engage" : "watch", skip: "", actions };
 }
+
+/** Why Gemini's read rules out engaging (political, an argument, promo, angry), or "". */
+function flagged(a) {
+  if (!a) return "";
+  return a.political ? "political" : a.argument ? "argument" : a.promo ? "promo" : a.sentiment === "angry" ? "angry" : "";
+}
+
+/**
+ * What to do with a comment left under one of our replies ({ ...post, liked, answered } from the network): a like
+ * when we have not liked it, and an answer for Carlos when it asks or adds something and we have not answered it.
+ * Same shape as decide; the like counts toward the day but is not capped, since the comment is addressed to us.
+ */
+function chainDecide(comment, ai, conf, now) {
+  const why = guard(Object.assign({}, comment, { createdAt: new Date(now).toISOString() }), conf, now) || flagged(ai);
+  if (why) return { verdict: "skip", skip: why, actions: {} };
+  const a = ai || {};
+  const status = (s) => (conf.paused ? "paused" : s);
+  const actions = {};
+  if (!comment.liked && CHAIN_LIKES.includes(comment.network) && a.like !== false) actions.like = { status: status("planned") };
+  const lang = a.lang || lang2(comment.lang);
+  if (!comment.answered && a.reply && a.worth >= conf.worth && LANGS.includes(lang)) {
+    actions.reply = { status: status("waiting"), draft: a.reply, lang, expiresAt: new Date(now + CHAIN_TTL).toISOString() };
+  }
+  return { verdict: Object.values(actions).some((x) => x.status === "planned" || x.status === "waiting") ? "engage" : "watch", skip: "", actions };
+}
+
+/** A stored post the chain pass may take over: one the scout read on its own and never drafted an answer for. */
+const reopens = (doc) => !doc.chain && !["waiting", "approved", "posted", "failed", "dismissed"].includes(((doc.actions || {}).reply || {}).status);
 
 /** A post kept on "watch" whose score now clears an action threshold is decided again, so posts that start to trend after we first saw them still get acted on. */
 function rises(doc, post, conf, now) {
@@ -289,7 +355,7 @@ function forAi(posts, conf, now) {
 function postDoc(post, ai, decision, now) {
   const a = ai || {};
   return {
-    network: post.network, id: clip(post.id, 300), url: clip(post.url, 500), cid: clip(post.cid, 120),
+    network: post.network, id: clip(post.id, 300), thread: clip(post.thread || post.id, 300), url: clip(post.url, 500), cid: clip(post.cid, 120),
     author: { handle: clip((post.author || {}).handle, 120), name: clip((post.author || {}).name, 120), id: clip((post.author || {}).id, 200), followers: num((post.author || {}).followers) },
     title: clip(post.title, 300), text: clip(post.text, 1200), lang: a.lang || lang2(post.lang), createdAt: clip(post.createdAt, 30), isReply: post.isReply === true,
     metrics: { likes: num((post.metrics || {}).likes), replies: num((post.metrics || {}).replies), reposts: num((post.metrics || {}).reposts), views: num((post.metrics || {}).views) },
@@ -299,6 +365,23 @@ function postDoc(post, ai, decision, now) {
     verdict: decision.verdict, skip: decision.skip, actions: decision.actions,
     seenAt: new Date(now).toISOString(), updatedAt: new Date(now).toISOString(), day: bogotaDay(now)
   };
+}
+
+/**
+ * The document for a comment under our reply on parent (a stored post with its key): in parent's thread and topic,
+ * with chain { parent, root, depth, ours, post }. YouTube comments keep parentId (the comment thread) and videoId.
+ */
+function chainDoc(comment, parent, decision, ai, now) {
+  const up = parent.chain || {};
+  const post = Object.assign({}, comment, {
+    title: "", thread: parent.thread || parent.id, topic: parent.topic || "", topics: parent.topics || [], words: parent.words || [],
+    relevance: parent.relevance || 0, trend: 0, score: parent.score || 0
+  });
+  const doc = Object.assign(postDoc(post, ai, decision, now), {
+    chain: { parent: parent.key, root: up.root || parent.key, depth: (up.depth || 0) + 1, ours: clip(((parent.actions || {}).reply || {}).draft, 500), post: clip(up.post || parent.title || parent.text, 400) }
+  });
+  if (comment.parentId) Object.assign(doc, { parentId: clip(comment.parentId, 120), videoId: clip(comment.videoId, 40) });
+  return doc;
 }
 
 const bogotaDay = (ms) => new Date(ms - 5 * HOUR).toISOString().slice(0, 10);
@@ -313,6 +396,7 @@ function rollup(read, docs, run, again) {
   const acts = (d) => Object.entries(d.actions || {}).forEach(([act, x]) => {
     if (x.status === "planned" || x.status === "waiting") bump(net(d.network), act === "reply" ? "drafted" : act);
     else if (x.status === "capped") bump(out.skip, "cap_" + act);
+    else if (x.status === "replied") bump(net(d.network), "already");
   });
   (docs || []).forEach((d) => {
     bump(net(d.network), "candidates");
@@ -338,6 +422,8 @@ const sumInto = (into, from) => {
 const FUNNEL = ["drafted", "approved", "edited", "dismissed", "expired", "posted", "failed"];
 // What the poster did with the planned likes, reposts and follows: done, done in a dry run, or failed.
 const CARRIED = ["like_done", "repost_done", "follow_done", "like_dry", "repost_dry", "follow_dry", "act_failed"];
+// Conversations (#2421): replies not drafted or not sent because we had already answered, and comments found under our replies.
+const THREADS = ["already", "chained"];
 const pairs = (map, n) => Object.entries(map || {}).sort((a, b) => b[1] - a[1]).slice(0, n || 12).map(([label, value]) => ({ label, value }));
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : null);
 
@@ -349,7 +435,7 @@ function report(period, days, priorDays, top, now) {
   (priorDays || []).forEach((d) => sumInto(prior, d));
   const totals = (s) => {
     const t = { read: 0, candidates: 0, like: 0, repost: 0, follow: 0 };
-    FUNNEL.concat(CARRIED).forEach((k) => { t[k] = 0; });
+    FUNNEL.concat(CARRIED, THREADS).forEach((k) => { t[k] = 0; });
     Object.values(s.n || {}).forEach((n) => Object.keys(t).forEach((k) => { t[k] += n[k] || 0; }));
     return t;
   };
@@ -358,7 +444,7 @@ function report(period, days, priorDays, top, now) {
   const networks = Object.keys(NETWORKS).filter((k) => sum.n && sum.n[k]).map((k) => {
     const n = sum.n[k];
     const row = { network: k, name: NETWORKS[k].name, read: n.read || 0, candidates: n.candidates || 0, like: n.like || 0, repost: n.repost || 0, follow: n.follow || 0 };
-    FUNNEL.concat(CARRIED).forEach((f) => { row[f] = n[f] || 0; });
+    FUNNEL.concat(CARRIED, THREADS).forEach((f) => { row[f] = n[f] || 0; });
     return row;
   });
   const decided = t.approved + t.edited + t.dismissed;
@@ -405,6 +491,8 @@ function reportMail(r) {
     { label: "Dismissed", value: String(t.dismissed) },
     { label: "Expired unanswered", value: String(t.expired) },
     { label: "Posted", value: String(t.posted) + (t.failed ? " (" + t.failed + " failed)" : "") },
+    { label: "Already answered, not sent again", value: String(t.already) },
+    { label: "Comments on our replies", value: String(t.chained) },
     { label: "Approval rate", value: r.approvalRate === null ? "—" : r.approvalRate + "%" },
     { label: "Average time to decide", value: r.avgDecideMin === null ? "—" : r.avgDecideMin + " min" }
   ];
@@ -442,11 +530,13 @@ function reportPush(r) {
 /** A reply draft waiting for Carlos: Approve, Edit (typed inline) or Dismiss. */
 function replyPush(doc) {
   const r = (doc.actions || {}).reply || {};
+  const name = (NETWORKS[doc.network] || {}).name || doc.network;
+  const who = clip((doc.author || {}).name || (doc.author || {}).handle, 60);
   return {
     kind: "engagement",
-    title: "Reply on " + ((NETWORKS[doc.network] || {}).name || doc.network) + "? " + clip(doc.about || doc.title || doc.text, 90),
+    title: doc.chain ? "Answer " + who + " on " + name + "? " + clip(doc.text, 90) : "Reply on " + name + "? " + clip(doc.about || doc.title || doc.text, 90),
     body: clip(r.draft, 220),
-    lines: [clip((doc.author || {}).name || (doc.author || {}).handle, 60) + ": " + clip(doc.title || doc.text, 140), "Score " + doc.score + " · " + (doc.topic || "") + " · " + (r.lang || doc.lang || "")],
+    lines: (doc.chain ? ["We said: " + clip(doc.chain.ours, 140)] : []).concat([who + ": " + clip(doc.title || doc.text, 140), "Score " + doc.score + " · " + (doc.topic || "") + " · " + (r.lang || doc.lang || "")]),
     tab: "products:engagement",
     tag: "jarvis-engage-" + doc.key,
     url: /^https:\/\//.test(doc.url || "") ? doc.url : "",
@@ -476,6 +566,7 @@ function decideReply(doc, decision, text, by, now) {
 }
 
 module.exports = {
-  NETWORKS, TOPICS, LANGS, ACTIONS, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, FUNNEL, CARRIED,
-  settings, settingsPatch, keyOf, relevance, trend, score, guard, aiPrompt, parseAi, decide, rises, storedAi, askAgain, forAi, postDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay
+  NETWORKS, TOPICS, LANGS, ACTIONS, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
+  settings, settingsPatch, keyOf, threadKey, relevance, trend, score, guard, aiPrompt, chainPrompt, parseAi, decide, chainDecide, reopens, rises, storedAi, askAgain, forAi,
+  postDoc, chainDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay
 };

@@ -259,7 +259,10 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
         }
         Muted(listOfNotNull(Engagement.author(p).ifEmpty { null }, p.str("topic"), p.str("lang")).joinToString(" · ") + " · " + Engagement.metrics(p))
         p.str("about")?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 13.sp) }
-        TextButton({ open = !open }) { Text(if (open) "Hide the post" else "Show the post", color = J.cyan, fontSize = 12.sp) }
+        val ours = p.obj("chain").str("ours")
+        if (ours != null) Text("${Engagement.author(p)} commented on our reply: “$ours”", color = J.muted, fontSize = 12.sp)
+        val what = if (ours != null) "comment" else "post"
+        TextButton({ open = !open }) { Text(if (open) "Hide the $what" else "Show the $what", color = J.cyan, fontSize = 12.sp) }
         if (open) Text(p.str("text").orEmpty(), color = J.muted, fontSize = 12.sp)
         OutlinedTextField(text, { text = it.take(limit) }, label = { Text("Reply · ${text.length}/$limit") }, minLines = 3, modifier = Modifier.fillMaxWidth())
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
