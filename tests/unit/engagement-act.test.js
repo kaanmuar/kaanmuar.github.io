@@ -24,6 +24,8 @@ function networks(fail) {
     if (fail && url.includes(fail)) return reply(401, { error: "The access token is invalid" });
     if (url.endsWith("com.atproto.server.createSession")) return body.password === "abcd-efgh-ijkl-mnop" ? reply(200, { accessJwt: "jwt", did: "did:plc:us", handle: "qalaburlreview.bsky.social" }) : reply(401, { message: "Invalid identifier or password" });
     if (url.includes("app.bsky.feed.getPostThread")) return reply(200, { thread: { post: {}, replies: [] } });
+    if (url.includes("app.bsky.notification.listNotifications")) return reply(200, { notifications: [] });
+    if (url.includes("/api/v1/notifications")) return reply(200, []);
     if (/\/api\/v1\/statuses\/\w+\/context$/.test(url)) return reply(200, { ancestors: [], descendants: [] });
     if (url.includes("youtube/v3/comments?") && !o.body) return reply(200, { items: [] });
     if (url.includes("youtube/v3/commentThreads") && !o.body) return reply(200, { items: [] });
@@ -335,7 +337,7 @@ test("comments under our replies get a like when we have not liked them, and an 
   assert.equal(c1.actions.like.status, "planned");
   assert.equal(c1.actions.reply.status, "waiting");
   assert.equal(c1.actions.reply.expiresAt, new Date(NOW + E.CHAIN_TTL).toISOString());
-  assert.deepEqual(c1.chain, { parent: "bluesky_p", root: "bluesky_p", depth: 1, ours: "We run axe in the Playwright job.", post: "Axe in CI?" });
+  assert.deepEqual(c1.chain, { parent: "bluesky_p", root: "bluesky_p", depth: 1, on: "reply", ours: "We run axe in the Playwright job.", post: "Axe in CI?" });
   assert.equal(c1.thread, "at://did:plc:ana/app.bsky.feed.post/p1");
   assert.equal(c1.cid, "cid-c1", "the like needs no extra lookup");
   const c2 = doc("bluesky", "at://did:plc:cy/app.bsky.feed.post/c2");
@@ -394,4 +396,85 @@ test("comment chains wait while paused, and stay unread when Gemini fails so the
   assert.equal(Array.from(db.data.keys()).filter((k) => k.startsWith("engagement_posts/") && db.data.get(k).chain).length, 0);
   const again = await J.followChains(Object.assign({}, d, { now: NOW + 2 * HOUR }), E.settings({}));
   assert.equal(again.chained, 4);
+});
+
+// --- Comments on our own posts and clips (#2447) ---------------------------------------------------------------
+
+/** Notifications on the three networks: one new comment each, plus ones the inbox leaves out. */
+function inboxNetworks() {
+  const net = networks();
+  const gemini = [];
+  const fetch = async (url, o) => {
+    const json = (data) => ({ ok: true, status: 200, text: async () => JSON.stringify(data), json: async () => data });
+    if (url.includes("listNotifications")) {
+      return json({ notifications: [
+        { reason: "reply", uri: "at://did:plc:eve/app.bsky.feed.post/n1", author: { did: "did:plc:eve" }, indexedAt: ago(1), record: { reply: { parent: { uri: "at://did:plc:us/app.bsky.feed.post/own1" } } } },
+        { reason: "like", uri: "at://did:plc:eve/app.bsky.feed.like/l1", author: { did: "did:plc:eve" }, indexedAt: ago(1) },
+        { reason: "reply", uri: "at://did:plc:eve/app.bsky.feed.post/old", author: { did: "did:plc:eve" }, indexedAt: ago(24 * 9) }
+      ] });
+    }
+    if (url.includes("getPosts?uris=" + encodeURIComponent("at://did:plc:eve/app.bsky.feed.post/n1"))) {
+      return json({ posts: [{ uri: "at://did:plc:eve/app.bsky.feed.post/n1", cid: "cid-n1", author: { did: "did:plc:eve", handle: "eve.bsky.social" }, record: { text: "Does the LCP tip work on Shopify?", createdAt: ago(1), reply: { root: { uri: "at://did:plc:us/app.bsky.feed.post/own1" } } }, viewer: {} }] });
+    }
+    if (url.includes("getPosts?uris=" + encodeURIComponent("at://did:plc:us/app.bsky.feed.post/own1"))) return json({ posts: [{ uri: "at://did:plc:us/app.bsky.feed.post/own1", author: { did: "did:plc:us" }, record: { text: "LCP in 60 seconds" } }] });
+    if (url.includes("/api/v1/notifications")) {
+      return json([{ created_at: ago(1), account: { acct: "eve@m.s" }, status: { id: "90", uri: "https://m.s/users/eve/statuses/90", url: "https://m.s/@eve/90", content: "<p>Thanks for the free review!</p>", language: "en", created_at: ago(1), in_reply_to_id: "70", favourited: false, account: { acct: "eve@m.s", display_name: "Eve" } } }]);
+    }
+    if (url.endsWith("/api/v1/statuses/70")) return json({ uri: "https://mastodon.social/users/qalaburlreview/statuses/70", content: "<p>Our free URL review</p>", account: { acct: "qalaburlreview" } });
+    if (url.includes("allThreadsRelatedToChannelId=UCf")) {
+      const thread = (id, channel, text) => ({ id, snippet: { videoId: "ourvid", totalReplyCount: 0, topLevelComment: { snippet: { authorChannelId: { value: channel }, authorDisplayName: "Eve", textOriginal: text, publishedAt: ago(1) } } } });
+      return json({ items: [thread("UgyOwn", "UCeve", "How do you measure INP?"), thread("UgyUs", "UCf", "Pinned: links below")] });
+    }
+    if (url.includes("youtube/v3/videos?part=snippet&id=ourvid")) return json({ items: [{ snippet: { title: "INP in 60 seconds" } }] });
+    if (url.includes("youtube/v3/comments?part=snippet") && (o || {}).body) { net.calls.push({ url, body: JSON.parse(o.body) }); return json({ id: "UgyOwn.us" }); }
+    if (url.includes("generativelanguage")) {
+      const items = JSON.parse(JSON.parse(o.body).contents[0].parts[0].text.split("\n").pop());
+      gemini.push(items);
+      return json({ candidates: [{ content: { parts: [{ text: JSON.stringify(items.map((c) => ({ id: c.id, lang: "en", sentiment: "positive", like: true, worth: /\?/.test(c.comment) ? 0.9 : 0.1, reply: /\?/.test(c.comment) ? "Yes, measure it in the field with CrUX." : "" }))) }] } }] });
+    }
+    return net.fetch(url, o);
+  };
+  return { fetch, calls: net.calls, gemini };
+}
+
+test("comments on our own posts and clips come from each network's notifications, once, with what we wrote", async () => {
+  const db = fakeDb();
+  await seed(db);
+  const net = inboxNetworks();
+  const pushed = [];
+  const d = deps(db, net, { env: { GEMINI_API_KEY: "k" }, push: async (m) => { pushed.push(m); } });
+  const out = await J.followChains(d, E.settings({}));
+  assert.deepEqual(out.errors, {});
+  assert.equal(out.chained, 3, "likes, notifications older than 7 days and our own comments are left out");
+  const doc = (network, id) => db.data.get("engagement_posts/" + E.keyOf(network, id));
+
+  const b = doc("bluesky", "at://did:plc:eve/app.bsky.feed.post/n1");
+  assert.equal(b.chain.on, "post");
+  assert.equal(b.chain.ours, "LCP in 60 seconds");
+  assert.equal(b.actions.like.status, "planned");
+  assert.equal(b.actions.reply.status, "waiting");
+  assert.equal(b.thread, "at://did:plc:us/app.bsky.feed.post/own1");
+
+  const m = doc("mastodon", "https://m.s/users/eve/statuses/90");
+  assert.equal(m.chain.ours, "Our free URL review");
+  assert.equal(m.actions.like.status, "planned");
+  assert.equal(m.actions.reply, undefined, "a thank-you gets a like only");
+
+  const y = doc("youtube", "UgyOwn");
+  assert.equal(y.chain.ours, "INP in 60 seconds");
+  assert.equal(y.parentId, "UgyOwn");
+  assert.equal(y.videoId, "ourvid");
+  assert.equal(y.actions.reply.status, "waiting");
+  assert.equal(net.gemini[0][0].on, "our post");
+
+  assert.equal(pushed.length, 2);
+  assert.equal((await J.followChains(d, E.settings({}))).checked, 0, "each inbox is read at most once an hour");
+  const later = await J.followChains(Object.assign({}, d, { now: NOW + 2 * HOUR }), E.settings({}));
+  assert.equal(later.chained, 0);
+  assert.equal(later.checked, 0, "comments already taken in are not looked at again");
+  assert.equal(net.gemini.length, 1);
+
+  const yKey = E.keyOf("youtube", "UgyOwn");
+  assert.equal((await J.decide(Object.assign({}, d, { now: NOW + 3 * HOUR }), { key: yKey, decision: "approve" }, "carlos")).status, "posted");
+  assert.deepEqual(net.calls.find((c) => c.url.includes("youtube/v3/comments?part=snippet") && c.body).body.snippet, { parentId: "UgyOwn", textOriginal: "Yes, measure it in the field with CrUX." }, "the answer goes into the comment's thread on our video");
 });

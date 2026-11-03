@@ -596,6 +596,7 @@
       el.setAttribute("aria-hidden", state.flat || front ? "false" : "true");
       btn.tabIndex = state.flat || front ? 0 : -1;
       if (state.flat) {
+        el.classList.remove("is-far");
         el.style.transform = "";
         el.style.opacity = "";
         el.style.visibility = "";
@@ -604,6 +605,10 @@
       const prev = lastD.get(r.id);
       const jump = prev == null || Math.abs(prev - d) > 1.5;
       lastD.set(r.id, d);
+      // A thousand 3D-placed cards stall a phone or a CI runner; the ones behind the ring leave rendering.
+      const far = ad > state.vis + 1;
+      el.classList.toggle("is-far", far);
+      if (far) return;
       el.style.transition = jump || state.dragging ? "none" : "";
       el.style.transform = "rotateY(" + (d * state.step).toFixed(2) + "deg) translateZ(" + state.R + "px)";
       const shown = ad <= state.vis;

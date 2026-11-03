@@ -95,6 +95,24 @@ async function blueskyClient(cred, f, now) {
     },
     under: async (r) => (await replies(r.uri, 2)).filter((x) => x && x.post && !ours(x))
       .map((x) => Object.assign(Sources.blueskyPost(x.post), { liked: !!(x.post.viewer || {}).like, answered: below(x).some(ours) })),
+    inbox: async (since) => {
+      const got = await call(f, service + "/xrpc/app.bsky.notification.listNotifications?limit=50&reasons=reply&reasons=mention&reasons=quote", { headers: auth });
+      const notes = (got.notifications || []).filter((n) => ["reply", "mention", "quote"].includes(n.reason) && (n.author || {}).did !== s.did && String(n.indexedAt || "") >= since);
+      const seen = {};
+      for (let i = 0; i < notes.length; i += 25) {
+        const got2 = await call(f, service + "/xrpc/app.bsky.feed.getPosts?" + notes.slice(i, i + 25).map((n) => "uris=" + encodeURIComponent(n.uri)).join("&"), { headers: auth });
+        (got2.posts || []).forEach((p) => { seen[p.uri] = p; });
+      }
+      return notes.filter((n) => seen[n.uri]).map((n) => Object.assign(Sources.blueskyPost(seen[n.uri]), {
+        liked: !!(seen[n.uri].viewer || {}).like, on: (((n.record || {}).reply || {}).parent || {}).uri || (((n.record || {}).embed || {}).record || {}).uri || ""
+      }));
+    },
+    detail: async (c) => {
+      const had = (await replies(c.id, 1)).filter((x) => x && x.post).some(ours);
+      if (!c.on) return { answered: had, ours: "" };
+      const p = ((await call(f, service + "/xrpc/app.bsky.feed.getPosts?uris=" + encodeURIComponent(c.on), { headers: auth })).posts || [])[0];
+      return { answered: had, ours: p && ((p.author || {}).did === s.did) ? String((p.record || {}).text || "") : "", ourId: c.on };
+    },
     like: async (d) => ({ uri: (await create("app.bsky.feed.like", { subject: await subject(d) })).uri }),
     repost: async (d) => ({ uri: (await create("app.bsky.feed.repost", { subject: await subject(d) })).uri }),
     follow: async (d) => {
@@ -141,6 +159,17 @@ async function mastodonClient(cred, f) {
       const all = await context(id);
       return all.filter((x) => x.in_reply_to_id === id && !ours(x) && !(x.account || {}).bot)
         .map((x) => Object.assign(Sources.mastodonPost(x), { liked: x.favourited === true, answered: all.some((y) => y.in_reply_to_id === x.id && ours(y)) }));
+    },
+    inbox: async (since) => {
+      const got = await call(f, base + "/api/v1/notifications?types%5B%5D=mention&limit=40", { headers: auth });
+      return (Array.isArray(got) ? got : []).filter((n) => n.status && !(n.account || {}).bot && !ours(n.status) && String(n.created_at || "") >= since)
+        .map((n) => Object.assign(Sources.mastodonPost(n.status), { liked: n.status.favourited === true, on: String(n.status.in_reply_to_id || "") }));
+    },
+    detail: async (c) => {
+      const had = (await context(c.localId)).some((y) => y.in_reply_to_id === c.localId && ours(y));
+      if (!c.on) return { answered: had, ours: "" };
+      const p = await call(f, base + "/api/v1/statuses/" + encodeURIComponent(c.on), { headers: auth }).catch(() => null);
+      return { answered: had, ours: p && ours(p) ? Sources.plain(p.content) : "", ourId: p ? p.uri || "" : "" };
     },
     like: on("/favourite"),
     repost: on("/reblog"),
@@ -191,6 +220,25 @@ async function youtubeClient(cred, f, now, keys) {
           liked: false, answered: all.some((y) => ours(y.snippet) && after(y, sn.publishedAt))
         };
       });
+    },
+    // Comments on our own videos: each thread's top comment, answered inside its thread.
+    inbox: async (since) => {
+      const got = await call(f, YT + "commentThreads?part=snippet&order=time&maxResults=50&textFormat=plainText&allThreadsRelatedToChannelId=" + encodeURIComponent(cred.channelId), { headers: auth });
+      return (got.items || []).map((t) => {
+        const sn = ((t.snippet || {}).topLevelComment || {}).snippet || {};
+        const video = (t.snippet || {}).videoId || sn.videoId || "";
+        return {
+          network: "youtube", id: t.id, url: watch(video, t.id), parentId: t.id, videoId: video, on: video,
+          author: { handle: sn.authorDisplayName || "", name: sn.authorDisplayName || "", id: (sn.authorChannelId || {}).value || "", followers: 0 },
+          text: sn.textOriginal || sn.textDisplay || "", lang: "", createdAt: sn.publishedAt || "", isReply: true,
+          metrics: { likes: Number(sn.likeCount) || 0, replies: Number((t.snippet || {}).totalReplyCount) || 0, reposts: 0, views: 0 }, tags: [], liked: false
+        };
+      }).filter((c) => c.videoId && !ours({ authorChannelId: { value: c.author.id } }) && c.createdAt >= since);
+    },
+    detail: async (c) => {
+      const had = (await answers(c.parentId)).some((y) => ours(y.snippet));
+      const v = (((await call(f, YT + "videos?part=snippet&id=" + encodeURIComponent(c.videoId), { headers: auth })).items) || [])[0];
+      return { answered: had, ours: v ? (v.snippet || {}).title || "" : "", ourId: c.videoId };
     },
     like: async (d) => { await call(f, YT + "videos/rate?rating=like&id=" + encodeURIComponent(d.id), { method: "POST", headers: auth }); return {}; },
     follow: async (d) => {
@@ -489,7 +537,46 @@ async function pendingChains(deps) {
   return out;
 }
 
+/**
+ * Comments on our own posts and clips (#2447): each network's notifications (Bluesky replies, mentions and quotes,
+ * Mastodon mentions, YouTube comment threads on our channel), read at most once per CHAIN_EVERY. handled(keys)
+ * answers the keys already stored, which are not looked at again. Same { found, checked, errors } as pendingChains;
+ * each found parent is our post ({ own: true }), with what we wrote as the reply's draft.
+ */
+async function pendingInbox(deps, handled) {
+  const { db, now } = deps;
+  const at = new Date(now).toISOString();
+  const since = new Date(now - CHAIN_DAYS * 24 * HOUR).toISOString();
+  const stateRef = privateRef(db, "inbox");
+  const state = ((await stateRef.get()).data() || {}).at || {};
+  const out = { found: [], checked: 0, errors: {} };
+  const due = API.filter((k) => String(state[k] || "") < new Date(now - CHAIN_EVERY).toISOString());
+  if (!due.length) return out;
+  const creds = await readCreds(db);
+  for (const network of due) {
+    if (!creds[network]) continue;
+    const got = await client(deps, network, creds[network]);
+    if (got.error) { out.errors[network] = got.error; continue; }
+    try {
+      const items = (await got.c.inbox(since)).filter((c) => c && c.id);
+      const skip = await handled(items.map((c) => E.keyOf(network, c.id)));
+      for (const c of items.filter((x) => !skip.has(E.keyOf(network, x.id))).slice(0, CHAIN_PER_RUN)) {
+        const d = await got.c.detail(c);
+        out.checked += 1;
+        if (c.liked && d.answered) continue;
+        const parent = { key: "", own: true, network, id: d.ourId || c.on || "", thread: c.thread || c.id, text: "", score: 0, actions: { reply: { draft: d.ours } } };
+        out.found.push({ parent, comments: [Object.assign({}, c, { answered: d.answered })] });
+      }
+      state[network] = at;
+    } catch (error) {
+      out.errors[network] = error.message;
+    }
+  }
+  await stateRef.set({ at: state }, { merge: true });
+  return out;
+}
+
 module.exports = {
   ACT_WINDOW, PER_RUN, MAX_TRIES, MASTODON_SCOPES, YT_SCOPE, API, ActError, CHAIN_DAYS, CHAIN_PER_RUN,
-  carryOut, replyNow, pendingChains, connections, saveBluesky, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call
+  carryOut, replyNow, pendingChains, pendingInbox, connections, saveBluesky, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call
 };

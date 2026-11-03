@@ -205,18 +205,19 @@ function aiPrompt(items) {
 const REGISTER = "Address people as tú in Spanish, você in Portuguese, tu in Italian, Sie in German and vous in French.";
 const NEVER = "Never: a link or a website address unless asksForTool is true (then at most one mention of carlosandmunoz.com), a sales pitch, hashtags, more than one emoji, em dashes, flattery like \"Great post!\" or \"impressive\", made-up numbers or studies, claims about work we did, or anything about the author's person. Stay under maxReply characters.";
 
-/** The Gemini prompt for comments left under our replies: items carry parent, the stored post we replied on. */
+/** The Gemini prompt for comments on our replies and posts: items carry parent, the stored post we replied on, or our own post ({ own: true }). */
 function chainPrompt(items) {
   const list = items.map((c) => {
     const p = c.parent || {};
     return {
       id: c.key, network: (NETWORKS[c.network] || {}).name || c.network, lang: lang2(c.lang) || "?", author: clip((c.author || {}).name || (c.author || {}).handle, 60),
-      post: clip((p.chain || {}).post || p.title || p.text, 400), ours: clip(((p.actions || {}).reply || {}).draft, 500), comment: clip(c.text, 900), maxReply: (NETWORKS[c.network] || {}).limit || 300
+      on: p.own ? "our post" : "our reply", post: clip((p.chain || {}).post || p.title || p.text, 400), ours: clip(((p.actions || {}).reply || {}).draft, 500),
+      comment: clip(c.text, 900), maxReply: (NETWORKS[c.network] || {}).limit || 300
     };
   });
   return [
     "You help Carlos & Munoz (carlosandmunoz.com), a small consultancy for QA and test automation, SEO and GEO, web accessibility, web performance, analytics and web security, take part in conversations on social networks.",
-    "Each item below is a comment someone left under one of our replies: post is what we replied to, ours is our reply, comment is theirs.",
+    "Each item below is a comment someone left on one of our posts or replies (on says which): ours is what we wrote (it may be empty when we could not read it), post is what we were replying to (empty on our own posts), comment is theirs.",
     "For each comment, return one JSON object in a JSON array, same order, with exactly these keys:",
     '{"id": same id, "lang": the comment\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when it picks a fight or piles on, "asksForTool": true only when it asks for a tool, service or audit, "promo": true when it advertises the author\'s own product, service, course or tool, or is spam, "like": true when a like is a fitting thank-you (false for hostile, spam or off-topic comments), "worth": 0 to 1, how much an answer from us is owed or would help, "why": at most 15 English words, "reply": the answer, or "" when the comment needs none (thanks or plain agreement get a like only) or it is political, angry, an argument or promo}',
     "Reply rules: write in the comment's language (en, es, pt, de, fr or it; otherwise reply \"\"). Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Answer what they asked or said, without repeating our reply; when they correct us and are right, say so plainly. " + REGISTER,
@@ -312,7 +313,10 @@ function flagged(a) {
  * Same shape as decide; the like counts toward the day but is not capped, since the comment is addressed to us.
  */
 function chainDecide(comment, ai, conf, now) {
-  const why = guard(Object.assign({}, comment, { createdAt: new Date(now).toISOString() }), conf, now) || flagged(ai);
+  const at = new Date(now).toISOString();
+  const g = guard(Object.assign({}, comment, { createdAt: at }), conf, now);
+  // Someone naming our site is still answered; only comments by our own accounts are left alone.
+  const why = (g === "own" && !guard(Object.assign({}, comment, { title: "", text: "", createdAt: at }), conf, now) ? "" : g) || flagged(ai);
   if (why) return { verdict: "skip", skip: why, actions: {} };
   const a = ai || {};
   const status = (s) => (conf.paused ? "paused" : s);
@@ -378,7 +382,10 @@ function chainDoc(comment, parent, decision, ai, now) {
     relevance: parent.relevance || 0, trend: 0, score: parent.score || 0
   });
   const doc = Object.assign(postDoc(post, ai, decision, now), {
-    chain: { parent: parent.key, root: up.root || parent.key, depth: (up.depth || 0) + 1, ours: clip(((parent.actions || {}).reply || {}).draft, 500), post: clip(up.post || parent.title || parent.text, 400) }
+    chain: {
+      parent: parent.key, root: up.root || parent.key, depth: (up.depth || 0) + 1, on: parent.own ? "post" : "reply",
+      ours: clip(((parent.actions || {}).reply || {}).draft, 500), post: clip(up.post || parent.title || parent.text, 400)
+    }
   });
   if (comment.parentId) Object.assign(doc, { parentId: clip(comment.parentId, 120), videoId: clip(comment.videoId, 40) });
   return doc;
