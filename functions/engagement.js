@@ -469,8 +469,14 @@ function report(period, days, priorDays, top, now) {
     approvalRate: pct(t.approved + t.edited, decided), editRate: pct(t.edited, t.approved + t.edited), expiredRate: pct(t.expired, t.drafted),
     avgDecideMin: sum.decided ? Math.round((sum.decideMs || 0) / sum.decided / 60000) : null,
     networks, topics: pairs(sum.topic), langs: pairs(sum.lang), tags: pairs(sum.tag, 20), skips: pairs(sum.skip), verdicts: pairs(sum.verdict),
-    posts, authors: pairs(authors, 10)
+    posts, authors: pairs(authors, 10), invites: invitesOf(sum.report)
   };
+}
+
+/** Report replies (#2465, functions/engagement-reports.js) summed over the window. */
+function invitesOf(r) {
+  const x = r || {};
+  return { searched: x.searched || 0, matched: x.matched || 0, drafted: x.drafted || 0, approved: x.approved || 0, edited: x.edited || 0, dismissed: x.dismissed || 0, posted: x.posted || 0, skips: pairs(x.skip, 6), networks: pairs(x.net, 9) };
 }
 
 const PERIOD_NAME = { daily: "Daily", weekly: "Weekly", monthly: "Monthly" };
@@ -503,6 +509,13 @@ function reportMail(r) {
     { label: "Approval rate", value: r.approvalRate === null ? "—" : r.approvalRate + "%" },
     { label: "Average time to decide", value: r.avgDecideMin === null ? "—" : r.avgDecideMin + " min" }
   ];
+  const iv = r.invites || {};
+  if (iv.searched || iv.matched) {
+    rows.push({ heading: "Report replies" }, { label: "Sites looked for", value: String(iv.searched) },
+      { label: "Posts naming a reviewed site", value: iv.matched + (iv.skips.length ? " (left alone: " + iv.skips.map((x) => x.label.replace(/_/g, " ") + " " + x.value).join(", ") + ")" : "") },
+      { label: "Invites drafted", value: String(iv.drafted) }, { label: "Approved", value: (iv.approved + iv.edited) + " (" + iv.edited + " edited), " + iv.dismissed + " dismissed" },
+      { label: "Posted", value: String(iv.posted) });
+  }
   const list = (title, items, fmt) => (items.length ? [title + ":", ...items.map(fmt), ""] : []);
   const body = [
     ...list("By network", r.networks, (n) => "- " + n.name + ": " + n.read + " read, " + n.candidates + " in field, " + n.like + " likes, " + n.repost + " reposts, " + n.follow + " follows planned (done: " + doneLine(n) + "), " + n.drafted + " replies drafted, " + n.posted + " posted"),
@@ -526,7 +539,8 @@ function reportPush(r) {
   return {
     kind: "engagement",
     title: PERIOD_NAME[r.period] + " engagement: " + t.candidates + " posts in our field",
-    body: t.like + " likes, " + t.repost + " reposts, " + t.follow + " follows planned; done: " + doneLine(t) + ". " + t.drafted + " replies drafted, " + (t.approved + t.edited) + " approved, " + t.posted + " posted, " + t.expired + " expired.",
+    body: t.like + " likes, " + t.repost + " reposts, " + t.follow + " follows planned; done: " + doneLine(t) + ". " + t.drafted + " replies drafted, " + (t.approved + t.edited) + " approved, " + t.posted + " posted, " + t.expired + " expired."
+      + ((r.invites || {}).drafted ? " Report invites: " + r.invites.drafted + " drafted, " + r.invites.posted + " posted." : ""),
     lines: r.topics.slice(0, 3).map((x) => x.label + ": " + x.value).concat(r.posts.slice(0, 2).map((p) => "Top: " + clip(p.title, 80))),
     tab: "products:engagement",
     tag: "jarvis-engagement-" + r.period,
@@ -539,11 +553,15 @@ function replyPush(doc) {
   const r = (doc.actions || {}).reply || {};
   const name = (NETWORKS[doc.network] || {}).name || doc.network;
   const who = clip((doc.author || {}).name || (doc.author || {}).handle, 60);
+  const rep = doc.report;
   return {
     kind: "engagement",
-    title: doc.chain ? "Answer " + who + " on " + name + "? " + clip(doc.text, 90) : "Reply on " + name + "? " + clip(doc.about || doc.title || doc.text, 90),
+    title: doc.chain ? "Answer " + who + " on " + name + "? " + clip(doc.text, 90)
+      : rep ? "Invite to the " + (rep.name || rep.host) + " report on " + name + "? " + clip(doc.about || doc.title || doc.text, 70)
+        : "Reply on " + name + "? " + clip(doc.about || doc.title || doc.text, 90),
     body: clip(r.draft, 220),
-    lines: (doc.chain ? ["We said: " + clip(doc.chain.ours, 140)] : []).concat([who + ": " + clip(doc.title || doc.text, 140), "Score " + doc.score + " · " + (doc.topic || "") + " · " + (r.lang || doc.lang || "")]),
+    lines: (doc.chain ? ["We said: " + clip(doc.chain.ours, 140)] : []).concat([who + ": " + clip(doc.title || doc.text, 140)],
+      rep ? ["Report: " + rep.host + " scores " + rep.score + (rep.shown ? "" : " (not named)") + " · names it by " + rep.match + " · " + (r.lang || doc.lang || "")] : ["Score " + doc.score + " · " + (doc.topic || "") + " · " + (r.lang || doc.lang || "")]),
     tab: "products:engagement",
     tag: "jarvis-engage-" + doc.key,
     url: /^https:\/\//.test(doc.url || "") ? doc.url : "",

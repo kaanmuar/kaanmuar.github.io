@@ -15,6 +15,7 @@
 const E = require("./engagement");
 const Sources = require("./engagement-sources");
 const Act = require("./engagement-act");
+const R = require("./engagement-reports");
 
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const STALE = 75 * 60 * 1000;
@@ -211,14 +212,130 @@ async function takeChains(deps, conf, found, into) {
   return out;
 }
 
+const LIVE_INDEX = "https://carlosandmunoz.com/assets/live-reports/index.json";
+let liveCache = { at: 0, list: [] };
+
+async function liveTargets(deps) {
+  if (liveCache.list.length && deps.now - liveCache.at < 3600000) return liveCache.list;
+  const res = await deps.fetch(LIVE_INDEX, { signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error("The Live Reports index answered " + res.status);
+  liveCache = { at: deps.now, list: R.targets(await res.json()) };
+  return liveCache.list;
+}
+
+/** Hosts answered with a report reply in the gap (waiting, approved or out), checked 30 at a time. */
+async function repliedSites(db, hosts, now) {
+  const since = new Date(now - R.SITE_GAP).toISOString();
+  const out = new Set();
+  for (let i = 0; i < hosts.length; i += 30) {
+    const snap = await db.collection("engagement_posts").where("report.host", "in", hosts.slice(i, i + 30)).limit(300).get();
+    snap.docs.map((d) => d.data()).filter((d) => d.seenAt >= since && ["waiting", "approved", "posted", "replied"].includes(((d.actions || {}).reply || {}).status)).forEach((d) => out.add(d.report.host));
+  }
+  return out;
+}
+
+/** Hosts whose owner had our mail in the gap: owner notices, and leads uploaded to the cold-email campaigns. */
+async function contactedSites(db, hosts, now) {
+  const since = new Date(now - R.SITE_GAP).toISOString();
+  const want = new Set(hosts);
+  const out = new Map();
+  for (let i = 0; i < hosts.length; i += 30) {
+    const snap = await db.collection("url_review_owner_notice_log").where("host", "in", hosts.slice(i, i + 30)).limit(300).get().catch(() => ({ docs: [] }));
+    snap.docs.map((d) => d.data()).filter((d) => String(d.sentAt || "") >= since).forEach((d) => out.set(R.bare(d.host), "owner notice"));
+  }
+  const sync = await db.collection("jarvis_settings").doc("marketing_sync").get().catch(() => null);
+  const rows = (sync && sync.exists && ((sync.data().leads || {}).rows)) || [];
+  rows.filter((r) => want.has(R.bare(r.host)) && String(r.uploaded || "") >= since.slice(0, 10)).forEach((r) => out.set(R.bare(r.host), "cold email"));
+  const dnc = (sync && sync.exists && ((sync.data().dnc || {}).items)) || [];
+  dnc.forEach((x) => { const v = R.bare(String(x.value || "").replace(/^.*@/, "")); if (want.has(v)) out.set(v, "do not contact"); });
+  return out;
+}
+
+/** A link past R.LONG_LINK through TinyURL; the long one when TinyURL does not answer. */
+async function shortLink(fetchImpl, link) {
+  if (link.length <= R.LONG_LINK) return link;
+  const res = await fetchImpl("https://tinyurl.com/api-create.php?url=" + encodeURIComponent(link), { signal: AbortSignal.timeout(8000) }).catch(() => null);
+  const text = res && res.ok ? String(await res.text()).trim() : "";
+  return /^https:\/\/tinyurl\.com\/\S+$/.test(text) ? text : link;
+}
+
+/**
+ * Report replies (#2465): this slot's Live Reports are looked for on the networks, and each post that names one is
+ * read by Gemini, decided (functions/engagement-reports.js), stored with campaign "report-reply", counted under
+ * engagement_daily report, and its invite pushed to Carlos.
+ */
+async function reportPass(deps, conf, creds) {
+  const { db, now, env, inc } = deps;
+  const out = { searched: 0, read: 0, matched: 0, drafted: 0, pushed: 0, aiError: "", errors: {} };
+  if (conf.paused) return out;
+  const all = await liveTargets(deps);
+  const slot = Math.floor(now / Sources.SLOT);
+  const ahead = R.pick(all, slot, null, R.PER_RUN * 3);
+  const hosts = ahead.map((t) => t.host);
+  const [recent, contacted] = await Promise.all([repliedSites(db, hosts, now), contactedSites(db, hosts, now)]);
+  const sites = R.pick(ahead, 0, new Set([...recent, ...contacted.keys()]), R.PER_RUN);
+  out.searched = sites.length;
+  if (!sites.length) return out;
+  const m = creds && creds.mastodon;
+  const found = await Sources.search({ fetch: deps.fetch, now, env: Object.assign({}, withAccounts(env, creds), m && m.token ? { MASTODON_SEARCH_URL: m.base, MASTODON_SEARCH_TOKEN: m.token } : {}) }, sites.flatMap(R.queries));
+  out.errors = found.errors;
+  out.read = Object.values(found.read).reduce((a, b) => a + b, 0);
+
+  const byKey = new Map();
+  found.posts.forEach((p) => {
+    const hit = R.siteOf(p, sites);
+    const key = E.keyOf(p.network, p.id);
+    if (hit && !byKey.has(key)) byKey.set(key, Object.assign({ key, target: hit.target, match: hit.match }, p, E.score(p, now)));
+  });
+  const posts = Array.from(byKey.values());
+  const known = posts.length ? await db.getAll(...posts.map((p) => db.collection("engagement_posts").doc(p.key))) : [];
+  const fresh = posts.filter((p, i) => !known[i].exists).slice(0, conf.perRun);
+  if (!fresh.length) return out;
+
+  let ai = {};
+  const ask = fresh.filter((p) => !E.guard(p, Object.assign({}, conf, { maxAgeHours: Math.max(conf.maxAgeHours, R.MAX_AGE_HOURS) }), now));
+  if (ask.length && env.GEMINI_API_KEY) {
+    try { ai = R.parse(await geminiJson(deps.fetch, env, R.prompt(ask)), ask); } catch (error) { out.aiError = String(error.message || error).slice(0, 200); }
+  }
+  const links = {};
+  for (const p of fresh) {
+    const a = ai[p.key];
+    if (a && a.reply) links[p.key] = await shortLink(deps.fetch, R.linkFor(p.target, p.network, a.lang || String(p.lang || "").slice(0, 2), p.key));
+  }
+  const day = E.bogotaDay(now);
+  const dailyRef = db.collection("engagement_daily").doc(day);
+  const dailySnap = await dailyRef.get();
+  const ctx = { recent, contacted, replied: await repliedThreads(db), links };
+  const used = usedToday(dailySnap.exists ? dailySnap.data() : null);
+  const docs = fresh.map((p) => {
+    const d = R.decide(p, ai[p.key], p.target, conf, used, now, ctx);
+    if (d.actions.reply && d.actions.reply.status === "waiting") ctx.replied.add(E.threadKey(p));
+    return Object.assign({ key: p.key }, R.doc(p, ai[p.key], p.target, p.match, d, links[p.key], now));
+  });
+  const batch = db.batch();
+  docs.forEach((d) => batch.set(db.collection("engagement_posts").doc(d.key), d));
+  await batch.commit();
+  const counters = E.rollup(found.read, docs, { errors: Object.keys(found.errors).length });
+  delete counters.runs;
+  delete counters.runErrors;
+  await dailyRef.set(Object.assign({ day }, increments(Object.assign(counters, { report: R.rollup(sites.length, docs) }), inc)), { merge: true });
+  const waiting = docs.filter((d) => (d.actions.reply || {}).status === "waiting");
+  Object.assign(out, { matched: docs.length, drafted: waiting.length });
+  if (deps.push) for (const d of waiting.slice(0, PUSH_PER_RUN)) { await deps.push(E.replyPush(d)).catch(() => null); out.pushed += 1; }
+  return out;
+}
+
 /** One scout run. Returns the run document. */
 async function scout(deps) {
   const { db, now, env } = deps;
   const started = Date.now();
   const conf = await readSettings(db);
   const expired = await expire(deps).catch(() => 0);
-  const read = await Sources.readAll({ fetch: deps.fetch, env: withAccounts(env, await Act.readCreds(db).catch(() => ({}))), now });
+  const creds = await Act.readCreds(db).catch(() => ({}));
+  const read = await Sources.readAll({ fetch: deps.fetch, env: withAccounts(env, creds), now });
   const took = await takeIn(deps, conf, read.posts, read.read, read.errors);
+  let reports;
+  try { reports = await reportPass(deps, conf, creds); } catch (error) { reports = { searched: 0, matched: 0, drafted: 0, pushed: 0, aiError: "", errors: {}, error: String(error.message || error).slice(0, 200) }; }
 
   let acted = {};
   let actError = "";
@@ -232,6 +349,7 @@ async function scout(deps) {
     candidates: took.candidates, fresh: took.fresh, updated: took.updated, risen: took.risen, asked: took.asked, aiError: took.aiError,
     engaged: took.engaged, drafted: took.drafted, pushed: took.pushed, expired,
     done: sum("done"), dry: sum("dry"), missed: sum("missed"), posted: sum("posted"), already: sum("already"), actFailed: sum("failed"), acted, actError,
+    reports: { searched: reports.searched, read: reports.read || 0, matched: reports.matched, drafted: reports.drafted, pushed: reports.pushed, aiError: reports.aiError, errors: reports.errors, error: reports.error || "" },
     chains: { checked: chains.checked || 0, chained: chains.chained, liked: chains.liked, drafted: chains.drafted, pushed: chains.pushed, aiError: chains.aiError, errors: chains.errors }
   };
   await db.collection("engagement_runs").doc(run.at).set(run);
@@ -243,7 +361,12 @@ const actNote = (r) => {
   const errs = Object.entries(r.acted || {}).filter(([, x]) => x.error).map(([k, x]) => k + ": " + x.error);
   return (r.done || r.posted ? "; done " + (r.done || 0) + ", replies posted " + (r.posted || 0) : "") + (r.dry ? "; dry run " + r.dry : "")
     + (r.actFailed ? "; " + r.actFailed + " actions failed" : "") + (errs.length ? "; poster: " + errs.join("; ") : "") + (r.actError ? "; poster: " + r.actError : "")
-    + (r.already ? "; " + r.already + " replies not sent, we had already answered" : "") + chainNote(r.chains);
+    + (r.already ? "; " + r.already + " replies not sent, we had already answered" : "") + reportNote(r.reports) + chainNote(r.chains);
+};
+const reportNote = (x) => {
+  if (!x) return "";
+  const errs = Object.entries(x.errors || {}).map(([k, v]) => k + ": " + v).concat(x.error ? [x.error] : []).concat(x.aiError ? ["Gemini: " + x.aiError] : []);
+  return (x.searched ? "; report replies: " + x.searched + " sites looked for, " + x.matched + " posts name them, " + x.drafted + " invites drafted" : "") + (errs.length ? "; report replies: " + errs.join("; ") : "");
 };
 const chainNote = (c) => {
   if (!c) return "";
@@ -326,9 +449,9 @@ async function decide(deps, body, by) {
     const doc = snap.data();
     const d = E.decideReply(doc, String(body.decision || ""), body.text, String(by || ""), now);
     tx.update(ref, { "actions.reply": d.reply, updatedAt: new Date(now).toISOString() });
-    return { network: doc.network, d };
+    return { network: doc.network, invite: doc.campaign === R.CAMPAIGN, d };
   });
-  await db.collection("engagement_daily").doc(E.bogotaDay(now)).set(increments({ n: { [out.network]: { [out.d.counter]: 1 } }, decided: 1, decideMs: out.d.waited }, inc), { merge: true });
+  await db.collection("engagement_daily").doc(E.bogotaDay(now)).set(increments(Object.assign({ n: { [out.network]: { [out.d.counter]: 1 } }, decided: 1, decideMs: out.d.waited }, out.invite ? { report: { [out.d.counter]: 1 } } : {}), inc), { merge: true });
   const net = E.NETWORKS[out.network] || {};
   const name = net.name || out.network;
   if (out.d.counter === "dismissed") { await clearCache(db); return { key, status: "dismissed", message: "Dismissed." }; }
@@ -377,7 +500,7 @@ const AGENT = "node scripts/engagement-browser/agent.js";
 const brief = (d) => ({
   key: d.key, network: d.network, url: d.url, author: d.author || {}, title: d.title || "", text: String(d.text || "").slice(0, 600), lang: d.lang, topic: d.topic, words: d.words || [],
   score: d.score, trend: d.trend, metrics: d.metrics || {}, about: d.about || "", why: d.why || "", sentiment: d.sentiment || "", worth: d.worth, verdict: d.verdict, skip: d.skip || "",
-  actions: d.actions || {}, seenAt: d.seenAt, createdAt: d.createdAt, chain: d.chain || null
+  actions: d.actions || {}, seenAt: d.seenAt, createdAt: d.createdAt, chain: d.chain || null, campaign: d.campaign || "", report: d.report || null
 });
 
 /** What Jarvis > Engagement and the app show for the selected range. */
@@ -457,4 +580,4 @@ async function source(ctx) {
   };
 }
 
-module.exports = { scout, takeIn, followChains, takeChains, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
+module.exports = { scout, takeIn, reportPass, shortLink, followChains, takeChains, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
