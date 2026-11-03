@@ -30,10 +30,9 @@ jobs:
             const book = require("./assets/social/facebook.json");
             const sent = Object.values(book.posts).flat().filter((e) => e.result === "sent" && e.id).slice(-3);
             for (const e of sent) {
-              show("post " + e.id, await get(e.id, { fields: "comments.summary(true).limit(0),reactions.summary(true).limit(0)" }));
-              show("  plain " + e.id, await get(e.id, { fields: "id,created_time,is_published" }));
-              const photo = e.id.split("_")[1];
-              show("  photo " + photo, await get(photo, { fields: "id,page_story_id,reactions.summary(true).limit(0),comments.summary(true).limit(0)" }));
-              for (const m of ["post_media_view", "post_impressions", "post_impressions_unique", "post_video_views"]) show("  insight " + m, await get(e.id + "/insights", { metric: m }));
+              console.log("== " + e.id);
+              show("  fields", await get(e.id, { fields: "shares,likes.summary(true).limit(0)" }));
+              for (const m of ["post_media_view", "post_total_media_view_unique", "post_reactions_by_type_total", "post_clicks", "post_video_views", "post_impressions_unique"]) show("  lifetime " + m, await get(e.id + "/insights", { metric: m, period: "lifetime" }));
+              show("  batch", await get(e.id + "/insights", { metric: "post_media_view,post_reactions_by_type_total,post_video_views" }));
             }
           })();'
