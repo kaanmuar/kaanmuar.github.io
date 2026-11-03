@@ -8,7 +8,9 @@
    A network without its key, or one that fails, keeps the numbers of the last run, so a bad morning blanks nothing.
    scripts/build-social-hub.js writes them into the feed; auto-live-reports.yml runs this before it every day.
 
-   { version: 1, updatedAt: "<ISO>", posts: { "<batch>/<slug>": { "<network>": { impressions, views, likes, comments } } } } */
+   { version: 1, updatedAt: "<ISO>", posts: { "<batch>/<slug>": { "<network>": { impressions, views, likes, comments } } },
+     pages: { "<Facebook Page profile>": { asked, answered, error } or { skipped: "no FACEBOOK_PAGE_TOKEN..." } } }
+   pages is this run's word from each Facebook Page; Jarvis reads it to say why a Page has no numbers (#2460). */
 
 const fs = require("fs");
 const path = require("path");
@@ -90,16 +92,20 @@ async function graphJson(request, url) {
 }
 
 // Meta retired post_impressions for post_media_view (views of the post); whichever this Page still answers is kept.
-async function facebookNumbers(entries, token, request) {
+// report gets how many posts were asked and answered, and the first refusal, so a Page that answers nothing says why.
+async function facebookNumbers(entries, token, request, report = {}) {
   const found = [];
+  Object.assign(report, { asked: entries.length, answered: 0 });
   for (const entry of entries) {
     const qs = (params) => new URLSearchParams(Object.assign({ access_token: token }, params)).toString();
     let base;
     try {
       base = await graphJson(request, GRAPH + "/" + entry.id + "?" + qs({ fields: "comments.summary(true).limit(0),reactions.summary(true).limit(0)" }));
     } catch (error) {
+      if (!report.error) report.error = error.message;
       continue;
     }
+    report.answered += 1;
     const insight = async (metric) => {
       try {
         const json = await graphJson(request, GRAPH + "/" + entry.id + "/insights?" + qs({ metric }));
@@ -118,7 +124,7 @@ async function facebookNumbers(entries, token, request) {
 }
 
 // Fresh numbers replace a network's old ones; networks not asked this run keep theirs.
-function merge(previous, found, updatedAt) {
+function merge(previous, found, updatedAt, pages) {
   const posts = JSON.parse(JSON.stringify(previous.posts || {}));
   found.forEach(({ post, channel, numbers }) => {
     posts[post] = posts[post] || {};
@@ -127,7 +133,7 @@ function merge(previous, found, updatedAt) {
     if (!Object.keys(posts[post]).length) delete posts[post];
   });
   const sorted = Object.fromEntries(Object.keys(posts).sort().map((key) => [key, posts[key]]));
-  return { version: 1, updatedAt, posts: sorted };
+  return Object.assign({ version: 1, updatedAt, posts: sorted }, pages ? { pages } : {});
 }
 
 // A face's Facebook entries, read with its own Page token (#2327); entries from before the faces have no profile of
@@ -148,15 +154,23 @@ async function main() {
     }
   } else notes.push("Buffer skipped: no BUFFER_API_KEY");
   const facebook = sentEntries(queues.read(queues.FACEBOOK), ["facebook"]);
+  const pages = {};
   for (const face of Object.keys(FACES)) {
     const token = faceRoute.faceEnv(face).FACEBOOK_PAGE_TOKEN;
     const profile = faceRoute.pageProfile(face);
     const entries = pageEntries(facebook, face);
-    if (!token) { if (face === faceRoute.DEFAULT || entries.length) notes.push(profile + " skipped: no FACEBOOK_PAGE_TOKEN" + FACES[face].env); continue; }
-    found.push(...await facebookNumbers(entries, token, fetch));
-    notes.push(profile + ": " + entries.length + " sent posts asked");
+    if (!token) {
+      if (face === faceRoute.DEFAULT || entries.length) {
+        pages[profile] = { skipped: "no FACEBOOK_PAGE_TOKEN" + FACES[face].env };
+        notes.push(profile + " skipped: " + pages[profile].skipped);
+      }
+      continue;
+    }
+    pages[profile] = {};
+    found.push(...await facebookNumbers(entries, token, fetch, pages[profile]));
+    notes.push(profile + ": " + pages[profile].answered + " of " + entries.length + " sent posts answered" + (pages[profile].error ? "; first refusal: " + pages[profile].error : ""));
   }
-  const next = merge(read(), found, new Date().toISOString());
+  const next = merge(read(), found, new Date().toISOString(), pages);
   fs.mkdirSync(path.dirname(path.join(ROOT, OUT)), { recursive: true });
   fs.writeFileSync(path.join(ROOT, OUT), JSON.stringify(next, null, 1) + "\n");
   console.log(notes.join("\n") + "\n" + Object.keys(next.posts).length + " posts with numbers in " + OUT);

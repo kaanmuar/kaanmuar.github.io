@@ -46,6 +46,20 @@ test("Facebook takes reactions and comments from the post, and views from whiche
   assert.ok(urls.every((url) => url.includes("access_token=tok")));
 });
 
+test("a Page that refuses a post reports how many it answered and its first refusal", async () => {
+  const request = async (url) => {
+    const json = url.includes("/gone?") ? { error: { message: "(#100) Object does not exist" } } : url.includes("/insights?") ? { data: [] } : { reactions: { summary: { total_count: 2 } } };
+    return { ok: !json.error, status: json.error ? 400 : 200, json: async () => json };
+  };
+  const report = {};
+  const found = await metrics.facebookNumbers([{ post: "a/1", channel: "facebook", id: "gone" }, { post: "a/2", channel: "facebook", id: "p_2" }], "tok", request, report);
+  assert.deepEqual(found.map((entry) => entry.post), ["a/2"]);
+  assert.equal(report.asked, 2);
+  assert.equal(report.answered, 1);
+  assert.match(report.error, /Object does not exist/);
+  assert.deepEqual(metrics.merge({ posts: {} }, [], "t", { "Facebook Page": report }).pages, { "Facebook Page": report });
+});
+
 test("fresh numbers replace a network's old ones and leave networks not asked this run alone", () => {
   const previous = { posts: { "a/1": { x: { views: 1 }, facebook: { likes: 4 } }, "a/2": { x: { views: 9 } } } };
   const next = metrics.merge(previous, [{ post: "a/1", channel: "x", numbers: { views: 5 } }, { post: "a/2", channel: "x", numbers: {} }, { post: "a/0", channel: "tiktok", numbers: { likes: 2 } }], "2026-10-26T00:00:00.000Z");
