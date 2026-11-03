@@ -644,7 +644,7 @@
         if (search && search.ok && search.brave && search.brave.ok) {
             const asked = search.brave.queries.filter((q) => !q.error);
             const missing = asked.filter((q) => q.position === null);
-            if (missing.length) add('info', 'business', `Not in Brave's top 20 for ${missing.length} of ${asked.length} searches, such as "${missing[0].query}".`, 'search:brave');
+            if (missing.length) add('info', 'business', `Not in Brave's top ${search.brave.depth || 20} for ${missing.length} of ${asked.length} searches, such as "${missing[0].query}".`, 'search:brave');
         }
         const index = search && search.ok && search.index;
         if (index && index.ok && index.total && index.missing) {
@@ -794,7 +794,7 @@
         { prefix: 'connections:down:', impact: 2, group: true, title: (n) => `Reconnect ${n === 1 ? 'the source that did not answer' : n + ' sources that did not answer'}`, tab: 'systems' },
         { prefix: 'connections:needs', impact: 2, title: 'Grant the connections that wait for a one-time step', tab: 'systems' },
         { prefix: 'search:index', impact: 3, title: 'Get the missing pages into Brave\'s index: link to them from pages Brave already has', tab: 'business' },
-        { prefix: 'search:brave', impact: 2, title: 'Write for the searches where we are not in the top 20', tab: 'business' },
+        { prefix: 'search:brave', impact: 2, title: 'Write for the searches where we are not in the top 100', tab: 'business' },
         { prefix: 'social:none', impact: 2, title: 'Schedule social posts', tab: 'hub' },
         { prefix: 'outreach:pace', impact: 2, title: 'Review more outreach prospects this week', tab: 'outreach' },
         { prefix: 'ga4:swing', impact: 2, levels: ['warn'], title: 'Find why GA4 sessions fell', tab: 'traffic' },

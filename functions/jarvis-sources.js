@@ -292,21 +292,60 @@ function hostOf(url) {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch (error) { return ""; }
 }
 
+// Brave answers 20 results a call, up to offset 4. Page one is asked daily; offsets 1-4 only weekly per search,
+// since a search we are not in spends all five calls of the ~1,000 a month the URL reviews share.
+const BRAVE_PAGE = 20;
+const BRAVE_DEPTH = 100;
+const BRAVE_DEEP_EVERY = 7 * DAY;
+
 async function brave(ctx, queries) {
   const key = (ctx.env || {}).BRAVE_SEARCH_KEY;
   if (!key) return { ok: false, error: "BRAVE_SEARCH_KEY is not set." };
+  const now = ctx.now || Date.now();
+  const ask = (q, page) => getJson(ctx.fetch, `https://api.search.brave.com/res/v1/web/search?count=${BRAVE_PAGE}&offset=${page}&q=` + encodeURIComponent(q), { headers: { "X-Subscription-Token": key, Accept: "application/json" } }, "Brave");
+  const ours = (results) => results.findIndex((r) => { const host = hostOf(r.url); return host === DOMAIN || host.endsWith("." + DOMAIN); });
+  const ref = ctx.db ? ctx.db.collection("jarvis_cache").doc("brave-deep") : null;
+  const snap = ref ? await ref.get().catch(() => null) : null;
+  const deep = (snap && snap.exists && snap.data().rows) || {};
+  const checked = {};
   const rows = [];
   for (const q of queries) {
+    let data;
     try {
-      const data = await getJson(ctx.fetch, "https://api.search.brave.com/res/v1/web/search?count=20&q=" + encodeURIComponent(q), { headers: { "X-Subscription-Token": key, Accept: "application/json" } }, "Brave");
-      const results = ((data.web || {}).results || []);
-      const at = results.findIndex((r) => { const host = hostOf(r.url); return host === DOMAIN || host.endsWith("." + DOMAIN); });
-      rows.push({ query: q, position: at >= 0 ? at + 1 : null, url: at >= 0 ? results[at].url : "", leader: results[0] ? hostOf(results[0].url) : "" });
+      data = await ask(q, 0);
     } catch (error) {
       rows.push({ query: q, position: null, error: clean(error) });
+      continue;
     }
+    const results = (data.web || {}).results || [];
+    const at = ours(results);
+    const row = { query: q, position: at >= 0 ? at + 1 : null, url: at >= 0 ? results[at].url : "", leader: results[0] ? hostOf(results[0].url) : "" };
+    if (row.position === null && results.length) {
+      const saved = deep[q];
+      if (saved && now - Date.parse(saved.at) < BRAVE_DEEP_EVERY) {
+        Object.assign(row, { position: saved.position, url: saved.url, checkedAt: saved.at });
+      } else {
+        try {
+          let seen = results.length;
+          for (let page = 1; page < BRAVE_DEPTH / BRAVE_PAGE && row.position === null && (data.query || {}).more_results_available !== false; page++) {
+            data = await ask(q, page);
+            const more = (data.web || {}).results || [];
+            const found = ours(more);
+            if (found >= 0) Object.assign(row, { position: seen + found + 1, url: more[found].url });
+            if (!more.length) break;
+            seen += more.length;
+          }
+          checked[q] = { position: row.position, url: row.url, at: new Date(now).toISOString() };
+          row.checkedAt = checked[q].at;
+        } catch (error) {
+          row.deepError = clean(error);
+        }
+      }
+    }
+    rows.push(row);
   }
-  return { ok: true, queries: rows };
+  if (ref && Object.keys(checked).length) await ref.set({ rows: Object.assign({}, deep, checked) }).catch(() => null);
+  return { ok: true, depth: BRAVE_DEPTH, queries: rows };
 }
 
 async function searchConsole(ctx) {

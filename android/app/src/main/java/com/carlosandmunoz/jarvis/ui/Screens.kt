@@ -553,7 +553,8 @@ fun BusinessScreen(s: UiState, vm: JarvisViewModel) {
             if (c.bool("ok") == true) KpiPairs(listOf(KpiData("Google clicks", fmt(c.num("clicks"))), KpiData("Impressions", fmt(c.num("impressions"))), KpiData("CTR", pct(c.num("ctr"))), KpiData("Avg position", fmt(c.num("position")))))
             else Muted("Search Console: " + (c.str("error") ?: c.str("need") ?: "off"))
         }
-        search.obj("brave").objs("queries").forEach { q -> KeyRow(q.str("query") ?: "", q.num("position")?.let { "#" + it.toInt() } ?: "not in top 20", if (q.num("position") != null) J.green else J.muted, q.str("url")) }
+        val braveDepth = search.obj("brave").num("depth")?.toInt() ?: 20
+        search.obj("brave").objs("queries").forEach { q -> KeyRow(q.str("query") ?: "", q.num("position")?.let { "#" + it.toInt() } ?: "not in top $braveDepth", if (q.num("position") != null) J.green else J.muted, q.str("url")) }
     }
     search.obj("index")?.takeIf { it.bool("ok") == true }?.let { ix ->
         Panel("Search index (Brave)") {
