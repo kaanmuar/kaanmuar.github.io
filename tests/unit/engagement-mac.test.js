@@ -174,6 +174,25 @@ test("replies and mentions of us the Mac read in the notifications become chain 
   assert.equal((await M.ingest(deps(db), { posts: [], comments: [reply], signedIn: { x: true } })).chained, 0, "a comment already taken in is not read again");
 });
 
+test("the X inbox reads what we said from any timeline nesting: a reply after its @mentions, a long post from note_tweet (#2452)", () => {
+  const { xTexts } = require("../../scripts/engagement-browser/networks.js");
+  const tweet = (id, legacy, extra) => ({ tweet_results: { result: Object.assign({ __typename: "Tweet", rest_id: id, legacy }, extra) } });
+  const page = { data: { user: { result: { timeline: { timeline: { instructions: [{ entries: [
+    { content: { itemContent: tweet("40", { full_text: "@ana_qa @bo We audit with real screen readers.", display_text_range: [12, 46] }) } },
+    { content: { items: [{ item: { itemContent: { tweet_results: { result: { __typename: "TweetWithVisibilityResults", tweet: { rest_id: "41", legacy: { full_text: "Focus order first 🎯" } } } } } } }] } },
+    { content: { itemContent: tweet("42", { full_text: "Short cut…" }, { note_tweet: { note_tweet_results: { result: { text: "The whole long post." } } } }) } },
+    { content: { itemContent: tweet("43", { full_text: "@ana_qa ", display_text_range: [8, 8] }) } }
+  ] }] } } } } } };
+  assert.deepEqual(xTexts(page), { 40: "We audit with real screen readers.", 41: "Focus order first 🎯", 42: "The whole long post." });
+  assert.deepEqual(xTexts(null), {});
+});
+
+test("a comment whose post text we could not read pushes no empty We said line (#2452)", () => {
+  const push = E.replyPush({ key: "x_" + "a".repeat(20), network: "x", url: "https://x.com/ana/status/50", text: "Does it check focus order?", author: { handle: "ana" }, score: 1,
+    chain: { on: "post", ours: "" }, actions: { reply: { status: "waiting", draft: "Yes, first." } } });
+  assert.ok(!push.lines.some((l) => /^We said/.test(l)));
+});
+
 test("a paused engagement hands the Mac nothing", async () => {
   const db = await seeded(true);
   await db.collection("jarvis_settings").doc("engagement").set({ live: true, paused: true });

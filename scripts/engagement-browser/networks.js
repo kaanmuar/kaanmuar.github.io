@@ -75,6 +75,21 @@ const icon = (names, extra) => names.flatMap((n) => ['svg[aria-label="' + n + '"
 const button = (scope, names, extra) => scope.locator('[role="button"], button').filter({ has: scope.page().locator(icon(names, extra)) });
 const words = (names) => new RegExp("^(" + names.join("|") + ")$");
 
+/** Every tweet in an X GraphQL response, wherever its timeline nests it, as { id: text }. A reply's text starts after its @mentions; a long post's is in note_tweet. */
+function xTexts(j, into = {}) {
+  if (!j || typeof j !== "object") return into;
+  const t = j.tweet_results && j.tweet_results.result;
+  if (t) {
+    const w = t.tweet || t;
+    const l = w.legacy || {};
+    const long = ((((w.note_tweet || {}).note_tweet_results || {}).result || {}).text) || "";
+    const text = long || Array.from(String(l.full_text || "")).slice((l.display_text_range || [0])[0]).join("");
+    if (w.rest_id && text.trim()) into[w.rest_id] = text.trim();
+  }
+  (Array.isArray(j) ? j : Object.values(j)).forEach((v) => xTexts(v, into));
+  return into;
+}
+
 const GENERAL = ["web accessibility", "WCAG", "core web vitals", "technical SEO", "Playwright testing", "test automation", "AI Overviews SEO", "web performance", "GA4", "software testing", "a11y", "Google Search Console", "QA engineer", "Lighthouse performance"];
 
 const x = {
@@ -138,12 +153,15 @@ const x = {
       return hrefs.slice(at + 1).find((h) => h.toLowerCase().startsWith('/' + arg.me + '/status/')) || '';`, { me: this.account, id: task.id });
     return href ? { url: "https://x.com" + href.split("?")[0] } : null;
   },
-  // Replies and mentions of us, as the notifications page loads them: { ...post, liked, on } with on our post's id.
+  // Replies and mentions of us, as the notifications page loads them: { ...post, liked, on, ours } with on our post's id
+  // and ours its text. The notifications rarely carry our post, so its text comes from our replies tab.
   async inbox(page) {
     const found = [];
+    const texts = {};
     const on = async (r) => {
       if (!/\/i\/api\/graphql\/[^/]+\/NotificationsTimeline/.test(r.url())) return;
       const j = await r.json().catch(() => null);
+      xTexts(j, texts);
       const tl = (((((((j || {}).data || {}).viewer_v2 || {}).user_results || {}).result || {}).notification_timeline || {}).timeline || {}).instructions || [];
       tl.forEach((ins) => (ins.entries || []).forEach((e) => {
         const t = ((((e.content || {}).itemContent || {}).tweet_results || {}).result) || null;
@@ -153,7 +171,7 @@ const x = {
     page.on("response", on);
     try { await go(page, this, "https://x.com/notifications/mentions"); await pause(4000, 6000); await scroll(page, 1); } finally { page.off("response", on); }
     const me = this.account;
-    return found.map((t) => {
+    const got = found.filter((t, i) => found.findIndex((u) => u.rest_id === t.rest_id) === i).map((t) => {
       const who = ((((t.core || {}).user_results || {}).result || {}).core) || {};
       const l = t.legacy || {};
       if (!t.rest_id || !who.screen_name || who.screen_name.toLowerCase() === me) return null;
@@ -164,6 +182,13 @@ const x = {
         liked: l.favorited === true, on: String(l.in_reply_to_screen_name || "").toLowerCase() === me ? l.in_reply_to_status_id_str || "" : ""
       };
     }).filter(Boolean);
+    if (got.some((c) => c.on && !texts[c.on])) {
+      const mine = async (r) => { if (/\/i\/api\/graphql\/[^/]+\/(UserRepliesTimeline|UserTweetsAndReplies)\b/.test(r.url())) xTexts(await r.json().catch(() => null), texts); };
+      page.on("response", mine);
+      try { await go(page, this, "https://x.com/" + me + "/with_replies"); await pause(3000, 5000); await scroll(page, 1); } catch (error) { if (error instanceof Refused) throw error; } finally { page.off("response", mine); }
+    }
+    got.forEach((c) => { c.ours = (c.on && texts[c.on]) || ""; });
+    return got;
   },
   async reply(page, task) {
     const art = await this.post(page, task);
@@ -569,4 +594,4 @@ const facebook = {
   }
 };
 
-module.exports = { NETWORKS: { x, linkedin, facebook, instagram, threads, tiktok }, Refused, checked, pause, rand, sleep };
+module.exports = { NETWORKS: { x, linkedin, facebook, instagram, threads, tiktok }, Refused, checked, pause, rand, sleep, xTexts };

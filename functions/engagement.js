@@ -560,7 +560,7 @@ function replyPush(doc) {
       : rep ? "Invite to the " + (rep.name || rep.host) + " report on " + name + "? " + clip(doc.about || doc.title || doc.text, 70)
         : "Reply on " + name + "? " + clip(doc.about || doc.title || doc.text, 90),
     body: clip(r.draft, 220),
-    lines: (doc.chain ? ["We said: " + clip(doc.chain.ours, 140)] : []).concat([who + ": " + clip(doc.title || doc.text, 140)],
+    lines: (doc.chain && doc.chain.ours ? ["We said: " + clip(doc.chain.ours, 140)] : []).concat([who + ": " + clip(doc.title || doc.text, 140)],
       rep ? ["Report: " + rep.host + " scores " + rep.score + (rep.shown ? "" : " (not named)") + " · names it by " + rep.match + " · " + (r.lang || doc.lang || "")] : ["Score " + doc.score + " · " + (doc.topic || "") + " · " + (r.lang || doc.lang || "")]),
     tab: "products:engagement",
     tag: "jarvis-engage-" + doc.key,
