@@ -155,18 +155,23 @@ async function takeIn(deps, conf, posts, read, errors) {
 }
 
 /**
- * Comment chains (#2421): comments under the replies we posted that we have not liked or answered. Gemini reads each
- * with our reply and the post; a like is planned (carried out on the next runs like the scout's own) and an answer
+ * Comment chains (#2421): comments under the replies we posted, and on our own posts and clips (#2447), that we have
+ * not liked or answered. Gemini reads each with what we wrote; a like is planned (carried out on the next runs like the scout's own) and an answer
  * waits for Carlos. A comment stays unread until Gemini answers for it, so a failing read is tried again next run.
  */
 async function followChains(deps, conf) {
   const { db, now, env, inc } = deps;
   const out = { checked: 0, chained: 0, liked: 0, drafted: 0, pushed: 0, aiError: "", errors: {} };
   if (conf.paused) return out;
-  const got = await Act.pendingChains(deps);
-  Object.assign(out, { checked: got.checked, errors: got.errors });
+  const chains = await Act.pendingChains(deps);
+  const handled = async (keys) => {
+    const snaps = keys.length ? await db.getAll(...keys.map((k) => db.collection("engagement_posts").doc(k))) : [];
+    return new Set(keys.filter((k, i) => snaps[i].exists && !E.reopens(snaps[i].data())));
+  };
+  const inbox = await Act.pendingInbox(deps, handled).catch((error) => ({ found: [], checked: 0, errors: { inbox: String(error.message || error).slice(0, 200) } }));
+  Object.assign(out, { checked: chains.checked + inbox.checked, errors: Object.assign({}, chains.errors, inbox.errors) });
   const byKey = new Map();
-  got.found.forEach(({ parent, comments }) => comments.forEach((c) => {
+  chains.found.concat(inbox.found).forEach(({ parent, comments }) => comments.forEach((c) => {
     const key = E.keyOf(c.network, c.id);
     if (!byKey.has(key)) byKey.set(key, Object.assign({ key, parent }, c));
   }));
