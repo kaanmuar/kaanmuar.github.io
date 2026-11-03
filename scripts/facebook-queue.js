@@ -28,7 +28,7 @@
 
    The Page token never expires, but changing the Facebook password or removing the "QA-lab Page Publisher"
    app (1097031042944706) revokes it. To renew it, generate a user token in Graph API Explorer on that app
-   with pages_manage_posts and pages_read_engagement, copy the app secret from App settings > Basic, then:
+   with pages_manage_posts, pages_read_engagement, read_insights and pages_read_user_content, copy the app secret from App settings > Basic, then:
 
      FACEBOOK_USER_TOKEN=... FACEBOOK_APP_SECRET=... FACEBOOK_PAGE_ID=... node scripts/facebook-queue.js --renew
 
