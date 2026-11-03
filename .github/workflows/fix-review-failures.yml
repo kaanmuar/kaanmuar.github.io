@@ -1,0 +1,100 @@
+name: Daily fix of failed URL reviews
+# The daily fix of the bugs the check of failed URL reviews files (#320, #1982), off Carlos's Mac since #2419: scripts/fix-review-failures.js
+# at 12:30 UTC (07:30 Bogotá), after fileReviewFailureBugs (12:05 UTC). Scheduled runs only act while the repo variable FIX_REVIEW_CLOUD
+# is "on"; unset it to hand the run back to the launchd job (scripts/fix-review-failures.sh install). Run it by hand with dry_run to see
+# the triage and the plan check without changing anything.
+# Secrets:
+#   FIX_REVIEW_TOKEN        fine-grained token of kaanmuar for this repo (contents, pull requests, issues: read and write). Its pushes
+#                           start CI, which the built-in token's do not.
+#   CURSOR_API_KEY          for cursor-agent
+#   QA_LAB_APP_ID, QA_LAB_APP_PEM   the qa-lab-agents app (client ID, private key), for board moves (scripts/gh-app-token.js)
+#   FIREBASE_SERVICE_ACCOUNT        key of a service account that may deploy the review functions
+#   FUNCTIONS_ENV, FUNCTIONS_SECRET_LOCAL   functions/.env and functions/.secret.local
+#   PREFLIGHT_TOKEN         the pre-flight brain, for the agent's context pack
+# Variables: CURSOR_QUOTA_CACHE, the Cursor plan the Mac uploads (scripts/fix-review-failures-sync.js); a missing or stale one holds the
+# agent back. The run's work-log rows go to the artifact fix-review-work-log, which the same script adds to work-log.csv.
+on:
+  schedule:
+    - cron: "30 12 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Print the triage and the plan check, change nothing
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fix-review-failures
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    if: github.event_name != 'schedule' || vars.FIX_REVIEW_CLOUD == 'on'
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    env:
+      GH_TOKEN: ${{ secrets.FIX_REVIEW_TOKEN }}
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          token: ${{ secrets.FIX_REVIEW_TOKEN }}
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: Credentials and state
+        env:
+          QUOTA: ${{ vars.CURSOR_QUOTA_CACHE }}
+          APP_ID: ${{ secrets.QA_LAB_APP_ID }}
+          APP_PEM: ${{ secrets.QA_LAB_APP_PEM }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FUNCTIONS_ENV: ${{ secrets.FUNCTIONS_ENV }}
+          FUNCTIONS_SECRET_LOCAL: ${{ secrets.FUNCTIONS_SECRET_LOCAL }}
+          PREFLIGHT_TOKEN: ${{ secrets.PREFLIGHT_TOKEN }}
+        run: |
+          umask 077
+          [ -n "$GH_TOKEN" ] || { echo "::error::Add the FIX_REVIEW_TOKEN secret."; exit 1; }
+          git config user.name "Daily fix agent"
+          git config user.email "kaanmuar@users.noreply.github.com"
+          [ -z "$QUOTA" ] || printf '%s' "$QUOTA" >"$RUNNER_TEMP/cursor-quota.json"
+          mkdir -p "$RUNNER_TEMP/usage" "$RUNNER_TEMP/main/functions" ~/.config/qa-lab ~/.cursor/preflight
+          touch "$RUNNER_TEMP/usage/work-log.csv"
+          {
+            echo "CURSOR_QUOTA_CACHE=$RUNNER_TEMP/cursor-quota.json"
+            echo "PREFLIGHT_USAGE=$RUNNER_TEMP/usage"
+            echo "MAIN_CHECKOUT=$RUNNER_TEMP/main"
+          } >>"$GITHUB_ENV"
+          if [ -n "$APP_ID" ] && [ -n "$APP_PEM" ]; then
+            printf '{"client_id":"%s"}' "$APP_ID" >~/.config/qa-lab/app.json
+            printf '%s\n' "$APP_PEM" >~/.config/qa-lab/app.pem
+          else echo "::warning::Add QA_LAB_APP_ID and QA_LAB_APP_PEM: board moves fall back to FIX_REVIEW_TOKEN, which cannot reach the org board."; fi
+          if [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            printf '%s' "$FIREBASE_SERVICE_ACCOUNT" >"$RUNNER_TEMP/firebase-sa.json"
+            echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-sa.json" >>"$GITHUB_ENV"
+          else echo "::warning::Add FIREBASE_SERVICE_ACCOUNT: a merged fix cannot be deployed, so its bug stays open."; fi
+          [ -z "$FUNCTIONS_ENV" ] || printf '%s\n' "$FUNCTIONS_ENV" >"$RUNNER_TEMP/main/functions/.env"
+          [ -z "$FUNCTIONS_SECRET_LOCAL" ] || printf '%s\n' "$FUNCTIONS_SECRET_LOCAL" >"$RUNNER_TEMP/main/functions/.secret.local"
+          [ -z "$PREFLIGHT_TOKEN" ] || printf '{"url":"https://preflight.carlosandmunoz.com","token":"%s"}' "$PREFLIGHT_TOKEN" >~/.cursor/preflight/config.json
+      - name: Cursor CLI
+        if: env.DRY_RUN != 'true'
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          [ -n "$CURSOR_API_KEY" ] || { echo "::error::Add the CURSOR_API_KEY secret."; exit 1; }
+          curl -fsS https://cursor.com/install | bash
+          echo "$HOME/.local/bin" >>"$GITHUB_PATH"
+      - name: Daily fix
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: node scripts/fix-review-failures.js ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
+      - name: Work-log rows
+        if: always() && env.DRY_RUN != 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fix-review-work-log
+          path: ${{ runner.temp }}/usage/work-log.csv
+          retention-days: 30
