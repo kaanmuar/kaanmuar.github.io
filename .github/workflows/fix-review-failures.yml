@@ -12,7 +12,8 @@ name: Daily fix of failed URL reviews
 #   FUNCTIONS_ENV, FUNCTIONS_SECRET_LOCAL   functions/.env and functions/.secret.local
 #   PREFLIGHT_TOKEN         the pre-flight brain, for the agent's context pack
 # Variables: CURSOR_QUOTA_CACHE, the Cursor plan the Mac uploads (scripts/fix-review-failures-sync.js); a missing or stale one holds the
-# agent back. The run's work-log rows go to the artifact fix-review-work-log, which the same script adds to work-log.csv.
+# agent back. FIX_REVIEW_OD_FLOOR, the on-demand credit in dollars that must be left for an agent at 70% of the plan or more (default 20).
+# The run's work-log rows go to the artifact fix-review-work-log, which the same script adds to work-log.csv.
 on:
   schedule:
     - cron: "30 12 * * *"
@@ -90,6 +91,7 @@ jobs:
       - name: Daily fix
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          FIX_REVIEW_OD_FLOOR: ${{ vars.FIX_REVIEW_OD_FLOOR }}
         run: node scripts/fix-review-failures.js ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
       - name: Work-log rows
         if: always() && env.DRY_RUN != 'true'

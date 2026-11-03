@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // What the cloud daily fix (#2419, .github/workflows/fix-review-failures.yml) needs from the Mac, done whenever the Mac is awake.
 // The pre-flight hook starts it in the background at most once an hour.
-//   1. Uploads the Cursor Quota app's plan (planPct, cycleEnd, at only) to the repo variable CURSOR_QUOTA_CACHE: the run holds the
-//      agent back when that copy is missing or more than two days old.
+//   1. Uploads the Cursor Quota app's plan (planPct, cycleEnd, at, and odEnabled and odRemaining in cents for runs past 70%, #2481;
+//      nothing else) to the repo variable CURSOR_QUOTA_CACHE: the run holds the agent back when that copy is missing or more than two days old.
 //   2. Appends the work-log rows of the runs it has not seen (artifact fix-review-work-log) to work-log.csv.
 //   node scripts/fix-review-failures-sync.js
 const fs = require("fs");
@@ -19,7 +19,7 @@ const ARTIFACT = "fix-review-work-log";
 const STATE = path.join(process.env.PREFLIGHT_STATE || path.join(os.homedir(), ".cursor", "preflight"), "fix-review-sync.json");
 
 const gh = (args, opts) => execFileSync("gh", args, Object.assign({ cwd: ROOT, encoding: "utf8", timeout: 30000, stdio: ["ignore", "pipe", "pipe"] }, opts));
-const quotaPayload = (cache) => cache && JSON.stringify({ planPct: cache.planPct, cycleEnd: cache.cycleEnd, at: cache.at });
+const quotaPayload = (cache) => cache && JSON.stringify({ planPct: cache.planPct, cycleEnd: cache.cycleEnd, at: cache.at, odEnabled: cache.odEnabled, odRemaining: cache.odRemaining });
 
 function uploadQuota() {
   const value = quotaPayload(cursorPlan.readCache());
