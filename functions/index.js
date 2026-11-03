@@ -1685,6 +1685,7 @@ const reviewMulti = require("./url-review-multi");
 const reviewPeers = require("./url-review-peers");
 const reviewMarket = require("./url-review-market");
 const ownerNotice = require("./url-review-owner-notice");
+const engagementReports = require("./engagement-reports");
 const ownerMail = require("./url-review-owner-mail");
 const mailFace = require("./mail-face");
 const accountData = require("./url-review-account-data");
@@ -1983,14 +1984,15 @@ async function sendOwnerNotice(queued, email, shared) {
   if (!notice) return { error: "That address is not one of the contacts found for this site." };
   const memo = shared || {};
   const once = (key, load) => memo[key] || (memo[key] = load());
-  const [unlisted, stopped, index, reviewSnap] = await Promise.all([
+  const [unlisted, stopped, index, reviewSnap, answered] = await Promise.all([
     once("unlisted", unlistedHosts),
     ownerStops([notice.email], notice.domain),
     once("index", liveReportIndex),
-    once("review", () => getFirestore().collection("url_reviews").doc(notice.reviewId || "-").get())
+    once("review", () => getFirestore().collection("url_reviews").doc(notice.reviewId || "-").get()),
+    once("answered", () => engagementReports.answeredHosts(getFirestore(), [notice.host, notice.domain], Date.now()))
   ]);
   const card = ownerNotice.liveCard(index, notice.host);
-  const blocked = ownerNotice.sendBlock(notice, { stopped, unlisted, card });
+  const blocked = ownerNotice.sendBlock(notice, { stopped, unlisted, card, answered });
   if (blocked) return { error: blocked };
   const review = reviewSnap.exists ? reviewSnap.data() : null;
   const score = review && review.report && review.report.insights ? review.report.insights.score : null;
