@@ -223,15 +223,9 @@ async function liveTargets(deps) {
   return liveCache.list;
 }
 
-/** Hosts answered with a report reply in the gap (waiting, approved or out), checked 30 at a time. */
+/** Hosts answered with a report reply in the gap (waiting, approved or out), or already replied to in that conversation. */
 async function repliedSites(db, hosts, now) {
-  const since = new Date(now - R.SITE_GAP).toISOString();
-  const out = new Set();
-  for (let i = 0; i < hosts.length; i += 30) {
-    const snap = await db.collection("engagement_posts").where("report.host", "in", hosts.slice(i, i + 30)).limit(300).get();
-    snap.docs.map((d) => d.data()).filter((d) => d.seenAt >= since && ["waiting", "approved", "posted", "replied"].includes(((d.actions || {}).reply || {}).status)).forEach((d) => out.add(d.report.host));
-  }
-  return out;
+  return new Set((await R.answeredHosts(db, hosts, now, R.ANSWERED.concat("replied"))).keys());
 }
 
 /** Hosts whose owner had our mail in the gap: owner notices, and leads uploaded to the cold-email campaigns. */
@@ -270,8 +264,8 @@ async function reportSites(deps) {
 }
 
 /**
- * Report replies (#2465): this slot's Live Reports are looked for on the networks, and each post that names one is
- * read by Gemini, decided (functions/engagement-reports.js), stored with campaign "report-reply", counted under
+ * Report replies (#2465): this slot's Live Reports are looked for on the networks, and each post that names one, or
+ * fits its niche or a problem its report found (#2468), is read by Gemini, decided (functions/engagement-reports.js), stored with campaign "report-reply", counted under
  * engagement_daily report, and its invite pushed to Carlos.
  */
 async function reportPass(deps, conf, creds) {
@@ -282,10 +276,11 @@ async function reportPass(deps, conf, creds) {
   out.searched = look.sites.length;
   if (!look.sites.length) return out;
   const m = creds && creds.mastodon;
-  const found = await Sources.search({ fetch: deps.fetch, now, env: Object.assign({}, withAccounts(env, creds), m && m.token ? { MASTODON_SEARCH_URL: m.base, MASTODON_SEARCH_TOKEN: m.token } : {}) }, look.sites.flatMap(R.queries));
+  const loose = R.looseQueries(look.sites);
+  const found = await Sources.search({ fetch: deps.fetch, now, env: Object.assign({}, withAccounts(env, creds), m && m.token ? { MASTODON_SEARCH_URL: m.base, MASTODON_SEARCH_TOKEN: m.token } : {}) }, look.sites.flatMap(R.queries).concat(loose.map((l) => l.q)));
   out.errors = found.errors;
   out.read = Object.values(found.read).reduce((a, b) => a + b, 0);
-  return Object.assign(out, await takeReports(deps, conf, Object.assign({ searched: look.sites.length }, look), found));
+  return Object.assign(out, await takeReports(deps, conf, Object.assign({ searched: look.sites.length, loose }, look), found));
 }
 
 /**
@@ -304,16 +299,17 @@ async function macReports(deps, conf, posts, read) {
   return Object.assign(out, await takeReports(deps, conf, { sites, recent, contacted, searched: 0 }, { posts, read: read || {}, errors: {} }));
 }
 
-/** Posts found for sites (found: { posts, read, errors }), the sites' look ({ sites, recent, contacted, searched }) into report-reply posts. */
+/** Posts found for sites (found: { posts, read, errors }), the sites' look ({ sites, loose, recent, contacted, searched }) into report-reply posts. */
 async function takeReports(deps, conf, look, found) {
   const { db, now, env, inc } = deps;
   const { sites, recent, contacted } = look;
+  const loose = look.loose || [];
   const out = { matched: 0, drafted: 0, pushed: 0, aiError: "" };
   const byKey = new Map();
   found.posts.forEach((p) => {
-    const hit = R.siteOf(p, sites);
+    const hit = R.siteOf(p, sites) || R.looseOf(p, loose);
     const key = E.keyOf(p.network, p.id);
-    if (hit && !byKey.has(key)) byKey.set(key, Object.assign({ key, target: hit.target, match: hit.match }, p, E.score(p, now)));
+    if (hit && !byKey.has(key)) byKey.set(key, Object.assign({ key, target: hit.target, match: hit.match, problem: hit.problem || "" }, p, E.score(p, now)));
   });
   const posts = Array.from(byKey.values());
   const known = posts.length ? await db.getAll(...posts.map((p) => db.collection("engagement_posts").doc(p.key))) : [];
@@ -394,7 +390,7 @@ const actNote = (r) => {
 const reportNote = (x) => {
   if (!x) return "";
   const errs = Object.entries(x.errors || {}).map(([k, v]) => k + ": " + v).concat(x.error ? [x.error] : []).concat(x.aiError ? ["Gemini: " + x.aiError] : []);
-  return (x.searched ? "; report replies: " + x.searched + " sites looked for, " + x.matched + " posts name them, " + x.drafted + " invites drafted" : "") + (errs.length ? "; report replies: " + errs.join("; ") : "");
+  return (x.searched ? "; report replies: " + x.searched + " sites looked for, " + x.matched + " posts about them or their niche, " + x.drafted + " invites drafted" : "") + (errs.length ? "; report replies: " + errs.join("; ") : "");
 };
 const chainNote = (c) => {
   if (!c) return "";
