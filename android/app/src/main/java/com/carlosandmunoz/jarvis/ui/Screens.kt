@@ -671,7 +671,7 @@ fun MailHealth(box: JsonObject?) {
         KpiPairs(listOf(
             KpiData("Mails in", fmt(t.num("mails"))), KpiData("Forwarded", fmt(t.num("forwarded"))),
             KpiData("Bounced", fmt(t.num("bounced")), alert = (t.num("bounced") ?: 0.0) > 0), KpiData("Refused (aliases)", fmt(t.num("refused")), alert = (t.num("refused") ?: 0.0) > 0),
-            KpiData("No such address", fmt(t.num("unknown"))), KpiData("SMTP this month", fmt(month) + (limit?.let { " / " + fmt(it) } ?: ""), alert = limit != null && month >= limit * 0.8)
+            KpiData("Spam blocked", fmt(t.num("spam") ?: 0.0)), KpiData("No such address", fmt(t.num("unknown"))), KpiData("SMTP this month", fmt(month) + (limit?.let { " / " + fmt(it) } ?: ""), alert = limit != null && month >= limit * 0.8)
         ))
         val state = c.str("state") ?: "never"
         val history = c.objs("history").joinToString("") { if (it.num("seconds") == null) "✗" else "✓" }

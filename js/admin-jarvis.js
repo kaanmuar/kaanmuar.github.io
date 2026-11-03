@@ -768,7 +768,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         return panel('systems-mailbox', `Mail forwarding (ImprovMX), last ${b.days === 1 ? 'day' : b.days + ' days'}`, kpis([
             { label: 'Mails in', value: t.mails || 0 }, { label: 'Forwarded', value: t.forwarded || 0 },
             { label: 'Bounced', value: t.bounced || 0, alert: t.bounced > 0 }, { label: 'Refused (aliases)', value: t.refused || 0, alert: t.refused > 0 },
-            { label: 'Refused (no such address)', value: t.unknown || 0 },
+            { label: 'Spam blocked', value: t.spam || 0 }, { label: 'Refused (no such address)', value: t.unknown || 0 },
             { label: 'SMTP sends this month', value: smtp.monthLimit ? `${fmt(smtp.month)} / ${fmt(smtp.monthLimit)}` : smtp.month || 0, alert: smtp.monthLimit && smtp.month >= smtp.monthLimit * 0.8 }
         ]) + canary + table([
             ['Alias', (r) => esc(r.alias + '@')], ['Mails', (r) => fmt(r.mails)], ['Forwarded', (r) => fmt(r.forwarded)],
