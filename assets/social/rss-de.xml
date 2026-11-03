@@ -269,23 +269,6 @@ https://www.youtube.com/shorts/gJe34piPj4U</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/series-dia-de-muertos-2026-11/feed/02-epitaphs.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Jedes Eingabefeld braucht einen Namen.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/08-input-names-de.html</link>
-      <guid isPermaLink="false">tips-2026-10/08-input-names-de</guid>
-      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tipp</category>
-      <category>A11y</category>
-      <description>Ein Placeholder verschwindet, sobald jemand tippt, und Screenreader sagen ihn womöglich nicht an. Ein echtes Label bleibt.
-
-Probieren Sie es heute: Tabben Sie mit eingeschaltetem Screenreader durch Ihr Kontaktformular. Jedes Feld sollte sagen, was es ist.
-
-So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=input-names
-
-#Accessibility #a11y #WCAG #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg" length="209043" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>Starten Sie Ihre CSP im Report-Only-Modus.</title>
       <link>https://carlosandmunoz.com/social/tips-2026-10/15-csp-report-only-de.html</link>
       <guid isPermaLink="false">tips-2026-10/15-csp-report-only-de</guid>
@@ -301,6 +284,23 @@ So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https:/
 #WebSecurity #CSP #AppSec #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" length="219690" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Schreiben Sie die Testliste vor dem Testcode.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/16-list-first-de</guid>
+      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>QA</category>
+      <description>Die Wahl eines Frameworks ist die zweite Frage. Die erste ist, was diese Seite tut und was ein echter Mensch darauf ausprobieren würde.
+
+Probieren Sie es heute: Schreiben Sie vor Ihrem nächsten Automatisierungssprint zehn Fälle in Klartext. Dann wählen Sie das Tool.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
+
+#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>davibank.com: 58. Die Lücke: TLS.</title>
@@ -756,6 +756,23 @@ https://github.com/zhtyyx/codex-seo</description>
       <media:content url="https://opengraph.githubassets.com/1/zhtyyx/codex-seo" medium="image"/>
     </item>
     <item>
+      <title>Sechs Sprachen. Wählen Sie Ihre.</title>
+      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/16-six-languages-de.html</link>
+      <guid isPermaLink="false">promo-social-hub-2026-10/16-six-languages-de</guid>
+      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Produkt</category>
+      <category>Social</category>
+      <description>Der Hub hat eine Seite auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch. Filtern Sie den Feed nach der Sprache eines Beitrags.
+
+Probieren Sie es aus: Wechseln Sie die Sprache der Seite mit den Flaggen oben.
+
+Alle Beiträge an einem Ort: https://carlosandmunoz.com/qa-review-social-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=six-languages-de
+
+#Localization #SoftwareTesting #OpenSource #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/16-six-languages-de.jpg" length="213236" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/16-six-languages-de.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Eine Ofrenda für die Links, die gestorben sind.</title>
       <link>https://carlosandmunoz.com/social/series-dia-de-muertos-2026-11/01-ofrenda-de.html</link>
       <guid isPermaLink="false">series-dia-de-muertos-2026-11/01-ofrenda-de</guid>
@@ -775,23 +792,6 @@ https://www.youtube.com/shorts/kemr6NimxJU</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/series-dia-de-muertos-2026-11/feed/01-ofrenda.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Taggen Sie Kampagnenlinks jedes Mal gleich.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/06-utm-de.html</link>
-      <guid isPermaLink="false">tips-2026-10/06-utm-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tipp</category>
-      <category>Analytics</category>
-      <description>LinkedIn, linkedin und Linked-In werden in Ihren Reports zu drei Quellen. Wählen Sie eine Schreibweise und bleiben Sie dabei.
-
-Probieren Sie es heute: Legen Sie eine gemeinsame Tabelle mit den erlaubten Sources und Mediums an. Verlinken Sie es in jedem Kampagnen-Briefing.
-
-So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=utm
-
-#Analytics #GA4 #UTM #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg" length="216164" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>Einwilligung heißt auch: vorher.</title>
       <link>https://carlosandmunoz.com/social/tips-2026-10/13-consent-before-de.html</link>
       <guid isPermaLink="false">tips-2026-10/13-consent-before-de</guid>
@@ -809,22 +809,21 @@ So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https:/
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>lenovo.com: 67. Die Lücke: die https-Weiterleitung.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-22/09-u-lenovo-com-de.html</link>
-      <guid isPermaLink="false">auto-2026-10-22/09-u-lenovo-com-de</guid>
-      <pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch einfaches http liefert die Website ohne Weiterleitung aus.
+      <title>Ihre Share-Karte ist ein erster Eindruck.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/14-share-card-de</guid>
+      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>SEO</category>
+      <description>Ohne og:image und og:title erscheint jeder Link zu Ihrer Website in Chats und Feeds als graue Box.
 
-Die Lektion für jedes Team: Leiten Sie jede http-Anfrage mit einem dauerhaften 301 auf https um und ergänzen Sie dann HSTS.
+Probieren Sie es heute: Fügen Sie Ihren Link in einen privaten Chat mit sich selbst ein. Was Menschen dort sehen, ist Ihr eigentlicher erster Eindruck.
 
-Eine automatisierte Analyse öffentlicher Seiten am 21. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-lenovo-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-lenovo-com
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=share-card
 
-#WebSecurity #HTTPS #Redirects #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/09-u-lenovo-com.jpg" length="236469" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/09-u-lenovo-com.jpg" medium="image" type="image/jpeg"/>
+#SEO #OpenGraph #Marketing #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" length="222020" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

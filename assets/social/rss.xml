@@ -512,23 +512,6 @@ Review your site before you ship: https://carlosandmunoz.com/qa-review.html?utm_
       <media:content url="https://carlosandmunoz.com/media/social-posts/skits-friday-release/feed/01-friday-release-en.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Every input needs a name.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/08-input-names.html</link>
-      <guid isPermaLink="false">tips-2026-10/08-input-names</guid>
-      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tip</category>
-      <category>A11y</category>
-      <description>A placeholder disappears as soon as someone types, and screen readers may not announce it. A real label stays.
-
-Try this today: Tab through your contact form with a screen reader on. Each field should say what it is.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=input-names
-
-#Accessibility #a11y #WCAG #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg" length="209043" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/08-input-names.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>Start your CSP in Report-Only.</title>
       <link>https://carlosandmunoz.com/social/tips-2026-10/15-csp-report-only.html</link>
       <guid isPermaLink="false">tips-2026-10/15-csp-report-only</guid>
@@ -544,6 +527,23 @@ How a public-page review works, step by step: https://carlosandmunoz.com/qa-revi
 #WebSecurity #CSP #AppSec #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" length="219690" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Write the test list before the test code.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first.html</link>
+      <guid isPermaLink="false">tips-2026-10/16-list-first</guid>
+      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tip</category>
+      <category>QA</category>
+      <description>Picking a framework is the second question. The first is what this page does and what a real person would try on it.
+
+Try this today: Before your next automation sprint, write ten cases in plain language. Then choose the tool.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
+
+#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>davibank.com: 58. The gap: TLS.</title>
