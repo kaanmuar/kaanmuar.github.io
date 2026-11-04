@@ -9797,5 +9797,11 @@
     "checked": "2026-11-02T06:21:14.764Z"
    }
   ]
+ },
+ "retry": {
+  "auto-2026-11-04": {
+   "since": "2026-11-04T16:17:30.452Z",
+   "error": "The site did not serve https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg within 60 minutes."
+  }
  }
 }
