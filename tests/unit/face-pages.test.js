@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
 
-const { FACES, NETWORKS, SITE, accounts } = require("../../scripts/brand-kit/faces");
+const { FACES, NETWORKS, CHANNELS, SITE, accounts } = require("../../scripts/brand-kit/faces");
 const pages = require("../../scripts/build-face-pages");
 const hub = require("../../scripts/build-social-hub");
 
@@ -45,7 +45,7 @@ test("a face page carries rel=\"me\" to its Mastodon profile only once the accou
   assert.ok(mastodon.exists.en, "@qalaburlreview has a Mastodon account");
 });
 
-test("the guide footer, the review facts, llms.txt and the hub list every account of both faces and no other", () => {
+test("the guide footer, the review facts, llms.txt and the hub list every account of both faces, the Live Reports channels, and no other", () => {
   const sources = {
     "qa-review-guide.html footer": read("qa-review-guide.html").split("<footer>")[1].split("</footer>")[0],
     "qa-review.html Elsewhere": read("qa-review.html").split("<dt>Elsewhere</dt>")[1].split("</dl>")[0],
@@ -55,7 +55,7 @@ test("the guide footer, the review facts, llms.txt and the hub list every accoun
   };
   for (const [name, html] of Object.entries(sources)) {
     const links = hrefs(html).filter((url) => !url.startsWith(SITE));
-    assert.deepEqual([...new Set(links)].sort(), [...existing].sort(), name);
+    assert.deepEqual([...new Set(links)].sort(), existing.concat(CHANNELS.map((c) => c.url)).sort(), name);
     if (!name.endsWith("sameAs")) for (const face of faces) assert.ok(html.includes(face.site), name + " links " + face.site);
   }
 });

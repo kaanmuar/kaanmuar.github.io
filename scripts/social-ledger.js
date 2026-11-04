@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-/* What Buffer, the Facebook Page, Bluesky, Mastodon and dev.to took for each post, so the Social hub pane in
+/* What Buffer, the Facebook Page, Bluesky, Mastodon, dev.to and Telegram took for each post, so the Social hub pane in
    admin.html shows confirmations instead of calendar slots. scripts/buffer-queue.js writes assets/social/buffer.json,
    scripts/facebook-queue.js writes assets/social/facebook.json, scripts/open-social-queue.js writes
-   assets/social/open-social.json, scripts/devto-queue.js writes assets/social/devto.json, and the workflows that
-   run them commit them (scripts/commit-social-ledgers.sh).
+   assets/social/open-social.json, scripts/devto-queue.js writes assets/social/devto.json, scripts/telegram-live.js
+   writes assets/social/telegram.json (one channel post per Live Reports batch, under live/<date>), and the workflows
+   that run them commit them (scripts/commit-social-ledgers.sh). Reddit's app posts on its own and keeps no ledger.
 
    { version: 1,
      posts: { "<batch>/<slug>": [{ channel: "linkedin", profile: "linkedin (QA-lab)", id: "<Buffer post or Graph post id>",
