@@ -50,7 +50,7 @@ test.describe('Live reports app page', () => {
     await page.locator('.lv-host a').click();
     expect(await page.evaluate(() => __tg.opened.pop())).toBe('https://www.gov.uk/');
     await page.locator('[data-act="native"]').click();
-    expect(await page.evaluate(() => __tg.opened.pop())).toMatch(/^https:\/\/t\.me\/share\/url\?url=/);
+    expect(await page.evaluate(() => __tg.opened.pop())).toMatch(/^https:\/\/t\.me\/share\/url\?url=https%3A%2F%2Ft\.me%2Fqalab_live_bot%2Flive%3Fstartapp%3Dgovuk&/);
     await page.locator('[data-act="own"]').click();
     expect(await page.evaluate(() => __tg.opened.pop())).toBe('https://carlosandmunoz.com/qa-review-es.html?utm_source=telegram&utm_medium=app&utm_campaign=live-reports#intake');
 
