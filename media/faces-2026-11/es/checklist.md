@@ -45,11 +45,13 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   
   English, Deutsch, Français, Italiano: @qalaburlreview
   ```
-- [ ] Links:
+- [ ] Links (14):
   - Website: https://carlosandmunoz.com/qaurlreview.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - Social hub: https://carlosandmunoz.com/qa-review-social-es.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - Português: https://carlosandmunoz.com/qa-review-pt.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - EN · DE · FR · IT: https://www.youtube.com/@qalaburlreview
+  - Informes en vivo en Telegram: https://t.me/qalab_live
+  - r/QALabLiveReports: https://www.reddit.com/r/QALabLiveReports/
 - [ ] Contact email:
   ```text
   qaurlreview@carlosandmunoz.com
@@ -94,6 +96,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   - Social hub: https://carlosandmunoz.com/qa-review-social-es.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - Português: https://carlosandmunoz.com/qa-review-pt.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - EN · DE · FR · IT: https://www.reddit.com/user/qalaburlreview/
+  - r/QALabLiveReports: https://www.reddit.com/r/QALabLiveReports/
 - [ ] Upload Avatar: `media/faces-2026-11/es/reddit/avatar-256.png`
 - [ ] Upload Banner; the copy stays in the middle third: `media/faces-2026-11/es/reddit/banner-1920x384.jpg`
 - [ ] Access: None: Reddit posts stay manual.
@@ -201,6 +204,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
 ## Instagram: existing account, https://www.instagram.com/qaurlreview/
 
 - [ ] Log in and check the account email is `qaurlreview@carlosandmunoz.com`; change it in the account settings if not.
+- [ ] New for the live account (#2568): add Informes en vivo en Telegram (https://t.me/qalab_live) to Links (5), after the links it already has.
 - [ ] Settings > Account type and tools > Switch to professional account (Business), then link the face's Facebook Page.
 - [ ] Name:
   ```text
@@ -215,6 +219,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   - Social hub: https://carlosandmunoz.com/qa-review-social-es.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - Português: https://carlosandmunoz.com/qa-review-pt.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
   - EN · DE · FR · IT: https://www.instagram.com/qalaburlreview/
+  - Informes en vivo en Telegram: https://t.me/qalab_live (new: add it to the live account)
 - [ ] Highlight names:
   ```text
   Informes en vivo, Consejos, Sketches, En directo, Cómo funciona

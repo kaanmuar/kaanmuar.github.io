@@ -70,6 +70,29 @@ test("profile links in the kits point at the face pages", () => {
   }
 });
 
+test("the YouTube, Reddit and Instagram kits list the Telegram channel and the subreddit after the face's links, within each list's limit", () => {
+  for (const face of faces) {
+    const kit = JSON.parse(read("media/faces-2026-11/" + face.id + "/kit.json"));
+    const checklist = read("media/faces-2026-11/" + face.id + "/checklist.md");
+    for (const network of ["YouTube", "Reddit", "Instagram"]) {
+      const account = kit.face.accounts.find((a) => a.network === network);
+      const field = account.fields.find((f) => /links/i.test(f.label));
+      const max = Number(field.label.match(/\((\d+)\)/)[1]);
+      const name = face.id + " " + network + " " + field.label;
+      const own = field.value.filter(([, url]) => !CHANNELS.some((c) => c.url === url));
+      const listed = CHANNELS.filter((c) => field.value.some(([label, url]) => url === c.url && label === c.label[face.id]));
+      assert.ok(field.value.length <= max, name + ": " + field.value.length + " links");
+      assert.deepEqual(field.value.slice(0, own.length), own, name + ": the channels come after the face's links");
+      assert.equal(listed.length, Math.min(CHANNELS.length, max - own.length), name + ": " + listed.map((c) => c.net));
+      if (listed.length < CHANNELS.length) assert.ok(listed.every((c) => c.app === network) || !CHANNELS.some((c) => c.app === network), name + " keeps the channel on its own app");
+      for (const c of listed) {
+        assert.ok(checklist.includes(c.label[face.id] + ": " + c.url), name + " checklist lists " + c.url);
+        if (account.state === "exists") assert.ok(checklist.includes(c.label[face.id] + ": " + c.url + " (new: add it to the live account)"), name + " checklist marks " + c.url + " as new");
+      }
+    }
+  }
+});
+
 test("the sitemap lists both face pages as language alternates", () => {
   const xml = read("sitemap.xml");
   for (const face of faces) {

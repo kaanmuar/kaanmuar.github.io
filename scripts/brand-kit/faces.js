@@ -110,7 +110,7 @@ const NETWORKS = [
     exists: { en: true, es: false },
     profile: (h) => "https://www.youtube.com/@" + h,
     mention: (h) => "@" + h,
-    fields: [["Name", "name"], ["Handle", "handle"], ["Description (1000)", "long"], ["Links", "links"], ["Contact email", "email"]],
+    fields: [["Name", "name"], ["Handle", "handle"], ["Description (1000)", "long"], ["Links (14)", "links"], ["Contact email", "email"]],
     images: [
       { file: "avatar-800.jpg", w: 800, h: 800, kind: "avatar", circle: true, where: "Picture" },
       { file: "banner-2560x1440.jpg", w: 2560, h: 1440, kind: "youtube", fx: { subject: [0.4, 0.02], zoom: 2.6 }, safe: [507, 508, 1546, 423], where: "Banner image; phones show only the outlined middle" },
@@ -253,10 +253,11 @@ const ordered = () => ORDER.map((id) => NETWORKS.find((n) => n.id === id));
 const accounts = (face) => ordered().filter((n) => n.exists[face.id]).map((n) => ({ net: n.id, name: n.label || n.name, url: n.profile(face.handle) }));
 
 // The brand's own Live Reports channels (#2549), in every language, so they belong to neither face: a Telegram
-// channel with the @qalab_live_bot Mini App, and a subreddit with the Devvit app. Listed after both faces' accounts.
+// channel with the @qalab_live_bot Mini App, and a subreddit with the Devvit app. Listed after both faces' accounts,
+// and after a face's own links in the kits' link lists, under label[face].
 const CHANNELS = [
-  { net: "telegram", name: "Telegram", app: "Telegram", mention: "@qalab_live", url: "https://t.me/qalab_live" },
-  { net: "subreddit", name: "r/QALabLiveReports", app: "Reddit", mention: "r/QALabLiveReports", url: "https://www.reddit.com/r/QALabLiveReports/" }
+  { net: "telegram", name: "Telegram", app: "Telegram", mention: "@qalab_live", url: "https://t.me/qalab_live", label: { en: "Live Reports on Telegram", es: "Informes en vivo en Telegram" } },
+  { net: "subreddit", name: "r/QALabLiveReports", app: "Reddit", mention: "r/QALabLiveReports", url: "https://www.reddit.com/r/QALabLiveReports/", label: { en: "r/QALabLiveReports", es: "r/QALabLiveReports" } }
 ];
 
 module.exports = { SITE, LIMITS, FACES, NETWORKS, ORDER, CHANNELS, ordered, accounts, utm };
