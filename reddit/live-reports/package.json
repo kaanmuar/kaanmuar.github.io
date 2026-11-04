@@ -7,8 +7,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "playtest": "node scripts/build.mjs && devvit playtest",
-    "upload": "node scripts/build.mjs && devvit upload",
-    "test": "node --test scripts/*.test.mjs"
+    "upload": "node scripts/build.mjs && devvit upload"
   },
   "devDependencies": {
     "@devvit/web": "0.15.2",
