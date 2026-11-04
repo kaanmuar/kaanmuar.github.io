@@ -249,6 +249,21 @@ jobs:
           fi
           node scripts/facebook-queue.js --batch "${{ steps.reports.outputs.batch }}"
 
+      - name: Post the batch to the Telegram channel
+        # One post per batch whose report links open in the Mini App (live.html, #2549).
+        if: ${{ !cancelled() && steps.commit.outcome == 'success' && steps.commit.outputs.pushed == '1' }}
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL: ${{ vars.TELEGRAM_CHANNEL }}
+          TELEGRAM_APP: ${{ vars.TELEGRAM_APP }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHANNEL" ]; then
+            echo "::warning::Add the TELEGRAM_BOT_TOKEN secret and the TELEGRAM_CHANNEL variable. Batch ${{ steps.reports.outputs.batch }} was not posted to Telegram."
+            exit 0
+          fi
+          node scripts/telegram-live.js post
+
       - name: Commit the Buffer and Facebook ledgers
         if: ${{ !cancelled() && !inputs.dry_run && steps.commit.outcome == 'success' }}
         run: scripts/commit-social-ledgers.sh "${{ steps.reports.outputs.batch || 'check' }}"

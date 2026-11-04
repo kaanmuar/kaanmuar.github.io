@@ -1,0 +1,62 @@
+# Uploads the Reddit app (reddit/live-reports, #2549) with the day's Live Reports data after each batch, and installs
+# that version on the subreddit. Reddit does not let the app fetch carlosandmunoz.com, so every version carries its
+# own copy of assets/live-reports; the app's daily task then posts the new batch and pins it.
+# Needs the DEVVIT_TOKEN secret (the contents of ~/.devvit/token after `npx devvit login`) and the REDDIT_SUBREDDIT
+# variable. Uploads without review work while the subreddit has fewer than 200 members; past that, use devvit publish.
+name: Reddit live reports app
+
+on:
+  workflow_run:
+    workflows: ['Live reports from user reviews']
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: '50 15 * * *' # backup, before the app's 16:20 UTC post
+  workflow_dispatch:
+
+concurrency:
+  group: reddit-live
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    env:
+      DEVVIT_TOKEN: ${{ secrets.DEVVIT_TOKEN }}
+      REDDIT_SUBREDDIT: ${{ vars.REDDIT_SUBREDDIT }}
+    steps:
+      - name: Check the Reddit settings
+        id: ready
+        run: |
+          if [ -z "$DEVVIT_TOKEN" ] || [ -z "$REDDIT_SUBREDDIT" ]; then
+            echo "::warning::Add the DEVVIT_TOKEN secret and the REDDIT_SUBREDDIT variable; the Reddit app keeps its last data."
+            echo "go=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.ready.outputs.go == '1'
+        with:
+          ref: main
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.ready.outputs.go == '1'
+        with:
+          node-version: '24'
+
+      - name: Build and upload
+        if: steps.ready.outputs.go == '1'
+        working-directory: reddit/live-reports
+        run: |
+          mkdir -p ~/.devvit && printf '%s' "$DEVVIT_TOKEN" > ~/.devvit/token && chmod 600 ~/.devvit/token
+          npm ci --no-audit --no-fund
+          node scripts/build.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+          # A dated version, so a manual upload in between never collides with the daily one.
+          npx devvit upload --version "1.$(date -u +%Y%m%d).$(date -u +%H%M)"
+          npx devvit install "$REDDIT_SUBREDDIT" qalab-live-reports@latest

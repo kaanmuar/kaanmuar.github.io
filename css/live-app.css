@@ -1,0 +1,38 @@
+/* live.html: the Live reports ring on its own page, for Telegram, Reddit, and iframes (#2549). */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; background: #071116; color: #e8f3f4; }
+body.lapp { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+.lapp .eyebrow { margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.lapp .live { min-height: 100vh; min-height: 100dvh; border-top: 0; display: flex; flex-direction: column; justify-content: center;
+  padding: max(28px, env(safe-area-inset-top)) 0 max(14px, env(safe-area-inset-bottom)); }
+.lapp .live-inner { width: 100%; }
+
+.lapp-filters { margin: 0 0 8px; }
+.lapp-filters > summary { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 6px 14px; border: 1px solid var(--lv-line); border-radius: 999px;
+  color: var(--lv-cyan); font-size: 13px; font-weight: 700; cursor: pointer; list-style: none; user-select: none; }
+.lapp-filters > summary::-webkit-details-marker { display: none; }
+.lapp-filters > summary::after { content: ""; width: 7px; height: 7px; border: solid currentColor; border-width: 0 2px 2px 0; transform: translateY(-2px) rotate(45deg); transition: transform .2s; }
+.lapp-filters[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
+.lapp-filters[open] > summary { margin-bottom: 12px; }
+
+.lapp-foot { display: flex; justify-content: center; gap: 10px; margin-top: 10px; font-size: 12.5px; color: var(--lv-muted); }
+.lapp-foot a { color: var(--lv-muted); text-decoration: none; }
+.lapp-foot a[data-lapp-own] { color: var(--lv-cyan); font-weight: 700; }
+.lapp-foot a:hover { text-decoration: underline; }
+
+@media (max-width: 760px) {
+  .lapp .live { justify-content: flex-start; padding-top: max(14px, env(safe-area-inset-top)); }
+  .lapp .eyebrow, .lapp .live-lede { display: none; }
+  .lapp .live-head { align-items: center; }
+  .lapp .live-title { font-size: 1.6rem; margin-bottom: 8px; }
+  .lapp .live-title em { display: inline; }
+  .lapp-filters > summary { min-height: 32px; padding: 4px 12px; }
+  .lapp .live-stage:not(.is-flat) { height: calc(var(--ch) + 60px); }
+  .lapp .live-hint { margin-top: 8px; }
+}
+@media (min-width: 1100px) {
+  .lapp-filters > summary { display: none; }
+}
+@media (max-height: 560px) and (min-width: 761px) {
+  .lapp .live-lede { display: none; }
+}
