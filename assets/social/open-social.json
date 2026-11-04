@@ -163,6 +163,17 @@
     "checked": "2026-11-03T17:51:22.819Z"
    }
   ],
+  "auto-2026-11-03/01-u-portal-upb-edu-co": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzj5xnznzy2u",
+    "at": "2026-11-04T20:11:15.053Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzj5xnznzy2u",
+    "checked": "2026-11-04T20:11:16.984Z"
+   }
+  ],
   "auto-2026-11-03/03-u-sp-senai-br": [
    {
     "channel": "instagram-story",
@@ -172,6 +183,15 @@
     "result": "sent",
     "url": "https://www.instagram.com/stories/qaurlreview/4023162695637755481",
     "checked": "2026-11-04T18:53:17.350Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18416891212085862",
+    "at": "2026-11-04T20:11:18.141Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/p/DfVSPMvDbWA/",
+    "checked": "2026-11-04T20:11:29.382Z"
    }
   ],
   "auto-2026-11-03/09-u-udg-mx": [
@@ -183,6 +203,15 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzizkh2ap62i",
     "checked": "2026-11-04T18:52:18.694Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18069393416786403",
+    "at": "2026-11-04T20:11:29.603Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4023202145364689093",
+    "checked": "2026-11-04T20:11:40.121Z"
    },
    {
     "channel": "instagram",
