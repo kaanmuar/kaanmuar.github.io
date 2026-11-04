@@ -15,8 +15,12 @@
         { key: 'review', name: 'URL Review', short: 'URL' },
         { key: 'hub', name: 'Social hub', short: 'HUB' },
         { key: 'business', name: 'Business', short: 'BIZ' },
+        { key: 'outreach', name: 'Outreach', short: 'OUT' },
+        { key: 'marketing', name: 'Marketing', short: 'MKT' },
+        { key: 'engagement', name: 'Engagement', short: 'ENG' },
         { key: 'traffic', name: 'Traffic', short: 'WEB' },
-        { key: 'systems', name: 'Systems', short: 'SYS' }
+        { key: 'systems', name: 'Systems', short: 'SYS' },
+        { key: 'github', name: 'GitHub', short: 'GH' }
     ];
     const ACTION_LABELS = {
         share_cv: 'Share', open_simulator: 'Open studio', open_qa_lab: 'Open lab', open_contact_widget: 'Contact',
@@ -240,7 +244,7 @@
         const reviews = data.reviews || [];
         const clicks = (data.events || []).filter((row) => row.site === 'review' && !isHubEvent(row) && row.kind !== 'visit' && row.kind !== 'view');
         const prior = data.prior || null;
-        const paid = reviews.filter((row) => row.paid === true);
+        const paid = reviews.filter((row) => row.paid === true && row.test !== true);
         const usd = Math.round(paid.reduce((sum, row) => sum + (Number(row.priceUsd) || 0), 0) * 100) / 100;
         const complete = reviews.filter((row) => row.status === 'complete').length;
         const scores = reviews.map((row) => Number(row.score)).filter((n) => Number.isFinite(n) && n > 0);
@@ -296,7 +300,7 @@
         };
     }
 
-    function summarizeInbox(messages, ratings, window, priorWindow, keep) {
+    function summarizeInbox(messages, ratings, window, priorWindow, keep, pendingCount) {
         const inside = (row, w) => { const when = toDate(row.createdAt); return when && when >= w.start && when <= w.end; };
         const pass = (row) => (keep ? keep(row.email) : true);
         const m = messages.filter((row) => pass(row) && inside(row, window));
@@ -309,7 +313,7 @@
         const rated = r.filter((row) => Number(row.rating) > 0);
         const avg = rated.length ? Math.round((rated.reduce((s, row) => s + Number(row.rating), 0) / rated.length) * 10) / 10 : null;
         const unanswered = m.filter((row) => row.status !== 'rejected' && !row.response && !row.respondedAt).length;
-        const pending = ratings.filter((row) => pass(row) && (row.status || 'pending') === 'pending').length;
+        const pending = pendingCount !== undefined ? pendingCount : ratings.filter((row) => pass(row) && (row.status || 'pending') === 'pending').length;
         const all = m.map((row) => Object.assign({ createdAt: row.createdAt }, { kind: 'message' })).concat(r.map((row) => ({ createdAt: row.createdAt, kind: 'rating' })));
         return {
             key: 'inbox',
@@ -327,10 +331,26 @@
         };
     }
 
-    function summarizeHub(stats, rows, window) {
+    // Social hub: views and interactions in the range from hub_/post_ site_events, so each has a period before.
+    // socialHubStats/latest keeps the running totals, the GA4 views and the post ranking.
+    function summarizeHub(stats, rows, window, priorRows) {
         const s = stats || {};
         const totals = s.totals || {};
         const hubRows = (rows || []).filter(isHubEvent);
+        const isView = (row) => row.name === 'hub_view' || row.name === 'post_view';
+        const tally = (list) => {
+            const t = { views: 0, hubViews: 0, postViews: 0, interactions: 0 };
+            list.forEach((row) => {
+                if (row.name === 'hub_view') t.hubViews += 1;
+                else if (row.name === 'post_view') t.postViews += 1;
+                else t.interactions += 1;
+            });
+            t.views = t.hubViews + t.postViews;
+            return t;
+        };
+        const now = tally(hubRows);
+        const was = priorRows ? tally(priorRows.filter(isHubEvent)) : null;
+        const prior = (key) => (was ? was[key] : undefined);
         const names = {};
         hubRows.forEach((row) => bump(names, row.name));
         const posts = (s.posts || []).slice().sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -339,14 +359,16 @@
             updatedAt: s.updatedAt || '',
             ga: s.ga || null,
             totals,
+            range: now,
+            prior: was,
             kpis: [
-                kpi('Hub views', totals.hubViews || 0),
-                kpi('Post views', totals.postViews || 0),
-                kpi('Post views, 7 days', totals.postViews7 || 0),
-                kpi('GA4 views', totals.gaViews || 0),
-                kpi('Interactions', totals.interactions || 0)
+                kpi('Hub + post views', now.views, prior('views')),
+                kpi('Hub views', now.hubViews, prior('hubViews')),
+                kpi('Post views', now.postViews, prior('postViews')),
+                kpi('Interactions', now.interactions, prior('interactions')),
+                kpi('GA4 views', totals.gaViews || 0)
             ],
-            series: dailySeries(hubRows, window.start, window.end),
+            series: dailySeries(hubRows, window.start, window.end, isView),
             lists: {
                 posts: posts.slice(0, 15).map((p) => ({ label: p.id, value: p.score || p.views || 0 })),
                 sources: (s.sources || []).slice(0, 15).map((row) => ({ label: [row.source, row.medium, row.campaign].filter(Boolean).join(' / '), value: row.sessions || 0 })),
@@ -379,7 +401,10 @@
         fnFailures: { value: 10, label: 'Real function failures in 24 hours: warn at', min: 1, max: 100000 },
         geminiErrorPct: { value: 50, label: 'Failed Gemini calls in 7 days: warn at (%)', min: 1, max: 100 },
         domainDays: { value: 30, label: 'Domain days left: alert below', min: 1, max: 365 },
-        firestoreFreePct: { value: 80, label: 'Firestore free daily reads used: warn at (%)', min: 1, max: 1000 }
+        firestoreFreePct: { value: 80, label: 'Firestore free daily reads used: warn at (%)', min: 1, max: 1000 },
+        outreachBouncePct: { value: 3, label: 'Outreach emails bounced: alert at (%)', min: 0.5, max: 50 },
+        outreachWarmup: { value: 80, label: 'Mailbox warm-up score needed before campaigns send', min: 0, max: 100 },
+        outreachDeadlineDays: { value: 14, label: 'Outreach deadlines: remind this many days ahead', min: 1, max: 90 }
     };
 
     // What Jarvis ranks on Brave when the owner has not set searches in Settings.
@@ -391,7 +416,11 @@
         { key: 'ga4', name: 'Google Analytics 4' }, { key: 'cloudflare', name: 'Cloudflare' }, { key: 'speed', name: 'PageSpeed and CrUX' },
         { key: 'uptime', name: 'Uptime and TLS' }, { key: 'money', name: 'Payments (paid reviews, PayPal, Stripe)' }, { key: 'email', name: 'SendGrid' },
         { key: 'search', name: 'Search (Brave, Search Console)' }, { key: 'social', name: 'Social (ledgers, YouTube, Facebook)' },
-        { key: 'safety', name: 'Safety (Web Risk, DNS, domain, TLS)' }, { key: 'platform', name: 'Google Cloud (Monitoring, Logging, Auth)' }
+        { key: 'safety', name: 'Safety (Web Risk, DNS, domain, TLS)' }, { key: 'platform', name: 'Google Cloud (Monitoring, Logging, Auth)' },
+        { key: 'outreach', name: 'Outreach (sweep prospects, Instantly, 90-day plan)' }, { key: 'mailbox', name: 'ImprovMX (mail forwarding)' },
+        { key: 'addresses', name: 'Email addresses (ImprovMX, Microsoft 365, Instantly, SendGrid)' },
+        { key: 'pagespeed', name: 'Daily PageSpeed run (every page, its PRs)' },
+        { key: 'github-work', name: 'GitHub work (repos, CI, PRs, board, security)' }
     ];
 
     function connections(external, pending) {
@@ -402,6 +431,22 @@
             const state = pending && pending[c.key] && !x ? 'loading' : !x ? 'off' : x.ok === false ? 'down' : needs.length ? 'partial' : 'live';
             return { key: c.key, name: c.name, state, detail: x && x.ok === false ? String(x.error || 'failed') : '', needs, at: x && x.cachedAt };
         });
+    }
+
+    // Visits and review opens that came from outreach links (utm_source=outreach), by utm_campaign.
+    function outreachVisits(rows) {
+        const by = {};
+        let total = 0;
+        (rows || []).forEach((row) => {
+            let params;
+            try { params = new URLSearchParams(String((row && row.query) || '')); } catch (error) { return; }
+            if ((params.get('utm_source') || '').toLowerCase() !== 'outreach') return;
+            if (row.kind && row.kind !== 'visit') return;
+            total += 1;
+            const c = params.get('utm_campaign') || 'no campaign';
+            by[c] = (by[c] || 0) + 1;
+        });
+        return { total, campaigns: Object.keys(by).map((label) => ({ label, value: by[label] })).sort((a, b) => b.value - a.value) };
     }
 
     function thresholds(saved) {
@@ -463,6 +508,67 @@
         return { key: goalKey(goal), product: goal.product, metric: goal.metric, period: goal.period, target: goal.target, label: goalLabel(goal), value: v, pct, expected: Math.round(expected * 10) / 10, projected, elapsed: Math.round(elapsed * 100), status };
     }
 
+    // Visits the site records itself (CV, Studio and Lab visits, URL Review opens), with or without analytics consent.
+    // GA4 only sees visitors who allow analytics, so this is the traffic number that does not drop with consent.
+    function siteVisits(products) {
+        const p = products || {};
+        const parts = [['cv', 'CV'], ['studio', 'QA Studio'], ['lab', 'QA Lab'], ['review', 'URL Review']]
+            .filter(([key]) => p[key] && p[key].kpis && p[key].kpis[0])
+            .map(([key, name]) => ({ key, name, value: Number(p[key].kpis[0].value) || 0, prior: p[key].kpis[0].prior, series: p[key].series || { labels: [], values: [] } }));
+        if (!parts.length) return null;
+        const value = parts.reduce((sum, row) => sum + row.value, 0);
+        const hasPrior = parts.every((row) => row.prior !== undefined && row.prior !== null);
+        const prior = hasPrior ? parts.reduce((sum, row) => sum + (Number(row.prior) || 0), 0) : undefined;
+        const labels = parts.reduce((best, row) => (row.series.labels.length > best.length ? row.series.labels : best), []);
+        const values = labels.map((day) => parts.reduce((sum, row) => {
+            const i = row.series.labels.indexOf(day);
+            return sum + (i === -1 ? 0 : Number(row.series.values[i]) || 0);
+        }, 0));
+        return Object.assign(kpi('Site visits', value, prior), {
+            parts: parts.map((row) => kpi(row.name, row.value, row.prior === null ? undefined : row.prior, { key: row.key })),
+            series: { labels, values }
+        });
+    }
+
+    const GH_BOT = /\[bot\]$|^dependabot|^github-actions|^renovate/i;
+    const GH_CODE = ['code', 'test', 'config'];
+    const GH_GRADES = ['A', 'B', 'C', 'D', 'F'];
+    const ghGrade = (v) => (v >= 90 ? 'A' : v >= 80 ? 'B' : v >= 70 ? 'C' : v >= 60 ? 'D' : 'F');
+
+    /* What the GitHub briefing lines and the hourly pass (functions/jarvis-actions.js) act on, from the github-work
+       source (#2526). mainBroken: main's newest failed push commit whose failure is not flaky (it failed again after a
+       re-run, or Gemini says code, test or config), unless the source names it itself in ci.mainBroken. */
+    function githubTargets(g) {
+        const x = g || {};
+        const prs = ((x.prs || {}).items || []).filter((pr) => pr && pr.number && pr.state !== 'draft');
+        const ci = x.ci || {};
+        const board = x.board || {};
+        const worktrees = (x.branches || {}).worktrees || [];
+        const held = new Set(worktrees.filter((w) => w.alive).map((w) => w.branch));
+        let mainBroken = Array.isArray(ci.mainBroken) ? ci.mainBroken : ci.mainBroken ? [ci.mainBroken] : null;
+        if (!mainBroken) {
+            const red = (ci.failing || []).filter((r) => r.branch === 'main' && r.sha && r.event === 'push' && (r.attempt > 1 || (r.diag && GH_CODE.includes(r.diag.category))))
+                .sort((a, b) => String(b.at).localeCompare(String(a.at)));
+            const sha = red.length ? red[0].sha : '';
+            const same = red.filter((r) => r.sha === sha);
+            mainBroken = sha ? [{ sha, url: same[0].url, why: same.map((r) => r.name + (r.diag ? ' (' + r.diag.cause + ')' : ' failed again after a re-run')).join('; ').slice(0, 300) }] : [];
+        }
+        return {
+            drift: (board.drift || []).filter((d) => d && d.number && d.should),
+            orphans: prs.filter((pr) => !pr.ticket && !pr.bot && !GH_BOT.test(pr.author || '')),
+            behind: prs.filter((pr) => pr.state === 'behind'),
+            conflicts: prs.filter((pr) => pr.state === 'dirty'),
+            green: prs.filter((pr) => pr.state === 'clean' && pr.checks === 'pass'),
+            stale: prs.filter((pr) => Number(pr.updatedH) >= 72),
+            aging: (board.aging || []).filter((a) => a && ['Dev', 'QA', 'Stg'].includes(a.column) && a.days > 7),
+            merged: ((x.branches || {}).merged || []).filter((b) => b && b.name && !['main', 'master'].includes(b.name) && !held.has(b.name)),
+            worktrees: worktrees.filter((w) => w && w.path && w.prState === 'merged' && !w.alive && w.dirty === false).map((w) => Object.assign({ dir: String(w.path).split('/').pop() }, w)),
+            mainBroken: mainBroken.filter((m) => m && m.sha),
+            flaky: ((ci.flaky || {}).workflows || []).filter((w) => w && w.name && w.runs >= 5 && w.pct >= 10),
+            diag: (ci.failing || []).filter((r) => r && r.id && r.diag && GH_CODE.includes(r.diag.category))
+        };
+    }
+
     // The instant briefing: rules over the summaries, most urgent first. Levels: alert, warn, good, info.
     function briefing(state) {
         const out = [];
@@ -516,13 +622,71 @@
         const gh = ext.github;
         if (gh && gh.ok) {
             (gh.ci || []).filter((run) => run.conclusion && !['success', 'skipped', 'cancelled', 'neutral'].includes(run.conclusion)).forEach((run) => add('alert', 'systems', `CI "${run.name}" on main is ${run.conclusion}.`, 'ci:' + run.name));
+            const waiting = gh.needsAgent || [];
+            if (waiting.length) add('alert', 'systems', `${plural(waiting.length, 'URL review bug waits', 'URL review bugs wait')} for the daily fix agent, held back to stay inside the Cursor plan: ${waiting.slice(0, 5).map((bug) => '#' + bug.number).join(', ')}.`, 'github:needs-agent');
             if (gh.openBugs) add('info', 'systems', `${plural(gh.openBugs, 'open bug', 'open bugs')}; most in ${((gh.bugAreas || [])[0] || {}).label || 'none'}. ${plural((gh.merged || {}).total || 0, 'PR', 'PRs')} merged this week.`, 'github:bugs');
+        }
+        // #2526: the GitHub tab's lines; per-item kinds stop at 8 lines each.
+        const gw = ext['github-work'];
+        if (gw && gw.ok !== false) {
+            const t = githubTargets(gw);
+            const few = (list) => list.slice(0, 8);
+            const title = (pr) => String(pr.title || '').slice(0, 90);
+            t.mainBroken.forEach((m) => add('alert', 'github', `Main went red after ${String(m.sha).slice(0, 7)}${m.title ? ' (' + String(m.title).slice(0, 80) + ')' : ''}: ${m.why || 'CI failed'}.`, 'gh:main-broken:' + m.sha));
+            few(t.flaky).forEach((w) => add('warn', 'github', `CI "${w.name}" is flaky: ${w.pct}% of its ${w.runs} runs passed only on a re-run.`, 'gh:flaky:' + w.name));
+            few(t.diag).forEach((r) => add('warn', 'github', `"${r.name}" failed on ${r.branch}: ${String(r.diag.cause).replace(/\.$/, '')}. A fix agent prompt is ready.`, 'gh:diag:' + r.id));
+            few(t.conflicts).forEach((pr) => add('warn', 'github', `PR #${pr.number} has merge conflicts: ${title(pr)}.`, 'gh:pr-conflict:' + pr.number));
+            few(t.stale).forEach((pr) => add('warn', 'github', `PR #${pr.number} has had no update in ${Math.floor(pr.updatedH / 24)} days: ${title(pr)}.`, 'gh:pr-stale:' + pr.number));
+            few(t.orphans).forEach((pr) => add('warn', 'github', `PR #${pr.number} names no ticket: ${title(pr)}.`, 'gh:orphan-pr:' + pr.number));
+            few(t.drift).forEach((d) => add('warn', 'github', `#${d.number} is in ${d.column || 'no column'} but should be in ${d.should}${d.why ? ': ' + d.why : ''}.`, 'gh:drift:' + d.number));
+            few(t.aging).forEach((a) => add('warn', 'github', `#${a.number} has sat in ${a.column} for ${plural(a.days, 'day', 'days')}: ${title(a)}.`, 'gh:aging:' + a.number));
+            const b = gw.board || {};
+            const limit = b.wipLimit || 15;
+            if (b.wip > limit) add('warn', 'github', `${b.wip} tickets are in progress, over the WIP limit of ${limit}.`, 'gh:wip');
+            few(t.green).forEach((pr) => add('info', 'github', `PR #${pr.number} is green and mergeable: ${title(pr)}.`, 'gh:pr-green:' + pr.number));
+            few(t.behind).forEach((pr) => add('info', 'github', `PR #${pr.number} is behind main: ${title(pr)}.`, 'gh:pr-behind:' + pr.number));
+            if (t.merged.length) add('info', 'github', `${t.merged.length} merged ${t.merged.length === 1 ? 'branch is' : 'branches are'} still on GitHub, such as ${t.merged[0].name}.`, 'gh:branch-merged');
+            few(t.worktrees).forEach((w) => add('info', 'github', `Worktree ${w.dir} (${w.branch}) is merged and clean, and no chat holds it.`, 'gh:worktree-merged:' + w.dir));
+            const sec = gw.security || {};
+            const dep = sec.dependabot || {};
+            const severe = (Number(dep.critical) || 0) + (Number(dep.high) || 0);
+            if (dep.ok !== false && severe) add('alert', 'github', `${plural(severe, 'critical or high Dependabot alert is', 'critical or high Dependabot alerts are')} open.`, 'gh:security:dependabot');
+            const scan = sec.codeScanning || {};
+            const scanSevere = (scan.items || []).filter((i) => /critical|high/i.test(String(i.severity || i.security_severity_level || ''))).length;
+            if (scan.ok !== false && scanSevere) add('alert', 'github', `${plural(scanSevere, 'critical or high code scanning alert is', 'critical or high code scanning alerts are')} open.`, 'gh:security:code-scanning');
+            const secrets = sec.secrets || {};
+            if (secrets.ok !== false && secrets.open > 0) add('alert', 'github', `${plural(secrets.open, 'leaked secret is', 'leaked secrets are')} open in secret scanning.`, 'gh:security:secrets');
+            const gq = ((gw.budget || {}).kaanmuar || {}).graphql;
+            if (gq && gq.limit > 0) {
+                const leftPct = Math.round(((gq.limit - gq.used) / gq.limit) * 100);
+                if (leftPct < 20) add(leftPct < 5 ? 'alert' : 'warn', 'github', `Only ${leftPct}% of kaanmuar's GitHub GraphQL budget is left this hour (${gq.used} of ${gq.limit} used).`, 'gh:budget');
+            }
+            (gw.needs || []).slice(0, 6).forEach((n) => add('warn', 'github', String(n).slice(0, 220), 'gh:needs:' + String(n).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60)));
+            if (!gw.local || gw.local.ageMin > 30) add('warn', 'github', gw.local ? `The Mac uploader has not reported for ${gw.local.ageMin} minutes; worktrees and usage are stale.` : 'The Mac uploader has never reported; install it with scripts/github-local-report.js so Jarvis sees worktrees and usage.', 'gh:needs:uploader');
+            (gw.repos || []).filter((r) => r && r.ci && ['failure', 'timed_out', 'startup_failure'].includes(r.ci.conclusion) && !/kaanmuar\.github\.io$/.test(r.name)).slice(0, 6)
+                .forEach((r) => add('warn', 'github', `CI in ${r.name} is ${r.ci.conclusion} on ${r.defaultBranch || 'its default branch'}.`, 'gh:repo-red:' + r.name));
+            const now = ((gw.score || {}).overall || {});
+            const before = (gw.history || []).filter((h) => typeof h.score === 'number').slice(-2)[0];
+            if (now.grade && before && GH_GRADES.indexOf(now.grade) > GH_GRADES.indexOf(ghGrade(before.score))) add('info', 'github', `The GitHub score fell to ${now.grade} (${now.value}) from ${ghGrade(before.score)} (${before.score}) on ${before.day}.`, 'gh:score');
         }
         const speed = ext.speed;
         if (speed && speed.ok) (speed.pages || []).forEach((page) => {
             if (page.ok && page.score < th.speedWarn) add('warn', page.product, `${page.name} scores ${page.score} on mobile PageSpeed.`, 'speed:' + page.product);
             else if (page.ok && page.score >= th.speedGood) add('good', page.product, `${page.name} scores ${page.score} on mobile PageSpeed.`, 'speed:' + page.product);
         });
+        const ps = ext.pagespeed;
+        if (ps && ps.ok && !ps.empty) {
+            if (ps.stale) add('alert', 'systems', `The daily PageSpeed run has not finished in over a day${ps.lastError ? ': ' + ps.lastError : ''}.`, 'pagespeed:run');
+            else if (ps.lastStatus === 'failed') add('warn', 'systems', `The last daily PageSpeed run failed: ${ps.lastError || 'no detail'}.`, 'pagespeed:run');
+            (ps.prs || []).filter((pr) => pr.open).forEach((pr) => {
+                if (pr.stage === 'proposal') add('warn', 'systems', `PageSpeed fixes #${pr.number} wait for you: ${pr.reason || pr.title}`, 'pagespeed:pr:' + pr.number);
+                else if (pr.stage === 'countdown') add('info', 'systems', `PageSpeed fixes #${pr.number} merge themselves at ${pr.dueAt ? new Date(pr.dueAt).toLocaleTimeString('en-GB', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }) + ' Bogotá' : 'the end of the countdown'} unless you cancel.`, 'pagespeed:countdown:' + pr.number);
+            });
+            const c = ps.counts || {};
+            if (c.under50) add('warn', 'systems', `${plural(c.under50, 'page scores', 'pages score')} under 50 on PageSpeed, of ${c.scored} measured.`, 'pagespeed:slow');
+            else if (c.below) add('info', 'systems', `${plural(c.below, 'page scores', 'pages score')} under ${ps.threshold || 90} on PageSpeed, of ${c.scored} measured.`, 'pagespeed:below');
+            else if (c.scored) add('good', 'systems', `All ${c.scored} measured pages score ${ps.threshold || 90} or more on PageSpeed.`, 'pagespeed:good');
+        }
         const up = ext.uptime;
         if (up && up.ok) {
             (up.pages || []).forEach((page) => {
@@ -536,7 +700,12 @@
             const sessions = (ga.groups || []).reduce((s, g) => s + g.sessions, 0);
             const prior = (ga.groups || []).reduce((s, g) => s + g.priorSessions, 0);
             const d = delta(sessions, prior);
-            if (d.pct !== null && Math.abs(d.pct) >= th.sessionsSwingPct && Math.max(sessions, prior) >= 20) add(d.pct > 0 ? 'good' : 'warn', 'traffic', `GA4 sessions ${d.pct > 0 ? 'rose' : 'fell'} ${Math.abs(d.pct)}% (${sessions} vs ${prior}).`, 'ga4:swing');
+            const site = siteVisits(p);
+            const siteHeld = site && site.pct !== null && site.pct > -th.sessionsSwingPct;
+            if (d.pct !== null && Math.abs(d.pct) >= th.sessionsSwingPct && Math.max(sessions, prior) >= 20) {
+                if (d.pct < 0 && siteHeld) add('info', 'traffic', `GA4 sessions fell ${Math.abs(d.pct)}% (${sessions} vs ${prior}) while the site's own visit count moved ${site.delta} (${site.value} vs ${site.prior}). GA4 only counts visitors who allow analytics.`, 'ga4:swing');
+                else add(d.pct > 0 ? 'good' : 'warn', 'traffic', `GA4 sessions ${d.pct > 0 ? 'rose' : 'fell'} ${Math.abs(d.pct)}% (${sessions} vs ${prior}).`, 'ga4:swing');
+            }
         }
         const money = ext.money;
         if (money && money.ok) {
@@ -548,6 +717,8 @@
             if (money.paypal && money.paypal.disputesOpen > 0) add('alert', 'business', `${plural(money.paypal.disputesOpen, 'PayPal dispute is', 'PayPal disputes are')} open.`, 'money:disputes');
         }
         const mail = ext.email;
+        const listed = (mail && mail.ok && mail.blocklisted) || [];
+        if (listed.length) add('alert', 'business', `${plural(listed.reduce((n, l) => n + l.value, 0), 'email was', 'emails were')} refused because the sending IP is on ${listed.map((l) => l.label).join(', ')}.`, 'email:blocklist');
         if (mail && mail.ok && mail.totals && mail.totals.processed >= 10) {
             const m = mail.totals;
             if (m.spam_reports > 0) add('alert', 'business', `${plural(m.spam_reports, 'email was', 'emails were')} reported as spam in range.`, 'email:spam');
@@ -557,7 +728,13 @@
         if (search && search.ok && search.brave && search.brave.ok) {
             const asked = search.brave.queries.filter((q) => !q.error);
             const missing = asked.filter((q) => q.position === null);
-            if (missing.length) add('info', 'business', `Not in Brave's top 20 for ${missing.length} of ${asked.length} searches, such as "${missing[0].query}".`, 'search:brave');
+            if (missing.length) add('info', 'business', `Not in Brave's top ${search.brave.depth || 20} for ${missing.length} of ${asked.length} searches, such as "${missing[0].query}".`, 'search:brave');
+        }
+        const index = search && search.ok && search.index;
+        if (index && index.ok && index.total && index.missing) {
+            const pushed = index.pushedAt ? ` Jarvis last sent the missing ones on ${index.pushedAt.slice(0, 10)}.` : ' Jarvis sends the missing ones to Brave and IndexNow weekly.';
+            if (!index.indexed) add('warn', 'business', `Brave has none of our ${index.total} sitemap pages indexed${index.zeroSince ? ` (none since ${index.zeroSince.slice(0, 10)})` : ''}.${pushed}`, 'search:index');
+            else add('info', 'business', `Brave has ${index.indexed} of our ${index.total} sitemap pages indexed.${pushed}`, 'search:index');
         }
         if (search && search.console && search.console.ok && search.console.impressions) add('info', 'business', `Google search: ${plural(search.console.clicks, 'click', 'clicks')} from ${search.console.impressions} impressions, average position ${search.console.position}.`, 'search:console');
         const social = ext.social;
@@ -567,6 +744,22 @@
         }
         const safety = ext.safety;
         if (safety && safety.ok) (safety.checks || []).filter((c) => c.level === 'alert' || c.level === 'warn').forEach((c) => add(c.level, 'systems', `${c.name}: ${c.detail}`, 'safety:' + c.key));
+        const box = ext.mailbox;
+        if (box && box.ok) {
+            const byAlias = {};
+            (box.problems || []).forEach((m) => { (byAlias[m.alias] = byAlias[m.alias] || []).push(m); });
+            Object.keys(byAlias).forEach((alias) => {
+                const rows = byAlias[alias];
+                const refused = rows.filter((m) => m.outcome === 'refused').length;
+                const what = refused === rows.length ? 'refused' : refused ? 'bounced or refused' : 'bounced';
+                add('alert', 'systems', `${plural(rows.length, 'mail to ' + alias + '@ was', 'mails to ' + alias + '@ were')} ${what} by ImprovMX in range: ${rows[0].reason || rows[0].code || 'no detail'}.`, 'mailbox:' + alias + ':' + rows[0].id);
+            });
+            const c = box.canary || {};
+            if (c.state === 'lost') add('alert', 'systems', 'The daily mail round trip to canary@ did not come back through ImprovMX and the webhook within 30 minutes.', 'mailbox:canary:' + c.sentAt);
+            else if (c.state === 'stale') add('warn', 'systems', 'The daily mail round trip (mailCanary) has not run in over a day.', 'mailbox:canary-stale');
+            const smtp = box.smtp || {};
+            if (smtp.monthLimit && smtp.month >= smtp.monthLimit * 0.8) add(smtp.month >= smtp.monthLimit ? 'alert' : 'warn', 'systems', `ImprovMX SMTP: ${smtp.month} of ${smtp.monthLimit} sends used this month.`, 'mailbox:smtp');
+        }
         const pf = ext.platform;
         if (pf && pf.ok) {
             const f = pf.functions || {};
@@ -574,7 +767,57 @@
             const g = pf.gemini || {};
             if (g.requests >= 10 && g.errorRate >= th.geminiErrorPct) add('warn', 'systems', `${g.errorRate}% of Gemini calls failed this week (${g.requests - g.ok} of ${g.requests}), most in ${((g.failedMethods || [])[0] || {}).label || 'unknown'}.`, 'platform:gemini');
             const fs = pf.firestore || {};
-            if (fs.readsFreePct >= th.firestoreFreePct) add('warn', 'systems', `Firestore used ${fs.readsFreePct}% of the free daily reads (${fs.reads}).`, 'platform:reads');
+            if (fs.readsFreePct >= th.firestoreFreePct) add('warn', 'systems', `Firestore used ${fs.readsFreePct}% of today's free reads (${fs.reads} since midnight Pacific).`, 'platform:reads');
+        }
+        CONNECTIONS.forEach((c) => {
+            const x = ext[c.key];
+            if (x && x.ok === false) add('warn', 'systems', `${c.name} did not answer: ${String(x.error || 'failed').slice(0, 140)}`, 'connections:down:' + c.key);
+        });
+        const ou = ext.outreach;
+        if (ou && ou.ok) {
+            const plan = ou.plan && ou.plan.ok !== false ? ou.plan : null;
+            const pipe = ou.pipeline && ou.pipeline.ok ? ou.pipeline : null;
+            const mail = ou.instantly && ou.instantly.ok ? ou.instantly : null;
+            if (plan) {
+                (plan.deadlines || []).filter((d) => d.daysLeft >= 0 && d.daysLeft <= th.outreachDeadlineDays).forEach((d) => add(d.daysLeft <= 7 ? 'warn' : 'info', 'outreach', `${d.label} in ${plural(d.daysLeft, 'day', 'days')} (${d.date}).`, 'outreach:deadline:' + d.date));
+                if (plan.next && plan.next.daysLeft >= 0 && plan.next.daysLeft <= 7) add('info', 'outreach', `Outreach milestone in ${plural(plan.next.daysLeft, 'day', 'days')} (${plan.next.date}): ${plan.next.label}.`, 'outreach:milestone');
+            }
+            if (pipe) {
+                const weekly = plan && plan.weekly && plan.weekly.prospects;
+                if (plan && plan.day > 0 && pipe.left === 0) add('warn', 'outreach', 'The outreach prospect queue is empty; add the next list with scripts/sweep-outreach.js.', 'outreach:queue');
+                else if (plan && plan.day > 7 && weekly && pipe.thisWeek < weekly / 2) add('info', 'outreach', `${pipe.thisWeek} of ${weekly} outreach prospects reviewed this week.`, 'outreach:pace');
+            }
+            if (mail) {
+                if (mail.sent >= 20 && mail.rates.bounce >= th.outreachBouncePct) add('alert', 'outreach', `${mail.rates.bounce}% of outreach emails bounced (${mail.bounced} of ${mail.sent}); pause and clean the list.`, 'outreach:bounce');
+                const replies = mail.replies - (mail.autoReplies || 0);
+                if (replies > 0) add('info', 'outreach', `${plural(replies, 'outreach reply', 'outreach replies')} in range, ${mail.interested} interested.`, 'outreach:replies');
+                (mail.accounts || []).filter((a) => a.status !== 'active' || a.warmup !== 'on').forEach((a) => add('warn', 'outreach', `Mailbox ${a.email} is ${a.status}, warm-up ${a.warmup}${a.error ? ': ' + a.error.slice(0, 140) + ' Reconnect it in Instantly' : ''}.`, 'outreach:mailbox:' + a.email));
+                const active = (mail.status || []).some((s) => s.label === 'active' && s.value > 0);
+                const cold = (mail.accounts || []).filter((a) => a.score !== null && a.score < th.outreachWarmup);
+                if (active && cold.length) add('warn', 'outreach', `Campaigns are sending while ${plural(cold.length, 'mailbox has', 'mailboxes have')} a warm-up score under ${th.outreachWarmup}.`, 'outreach:warmup');
+            }
+            if (ou.mail && ou.mail.checks) ou.mail.checks.filter((c) => !c.ok).forEach((c) => add('warn', 'outreach', `${ou.mail.domain} ${c.name}: ${c.detail}`, 'outreach:dns:' + c.name));
+            const links = ou.links && ou.links.ok ? ou.links : null;
+            if (links) {
+                const sending = mail && (mail.status || []).some((s) => s.label === 'active' && s.value > 0);
+                if (!links.live) add(sending ? 'alert' : 'warn', 'outreach', `qalabreview.com short links are not live (robots.txt answered ${links.workerStatus || 'nothing'}); emails${sending ? '' : ' about to go out'} link to them. Deploy the Worker in qalabreview/.`, 'outreach:links-down');
+                if (links.paid > 0) add('info', 'outreach', `${plural(links.paid, 'paid unlock', 'paid unlocks')} (${links.usd} USD) came from qalabreview.com links.`, 'outreach:links-paid');
+                else if (links.visits > 0) add('info', 'outreach', `${plural(links.visits, 'visit', 'visits')} and ${plural(links.reviews, 'free review', 'free reviews')} came from qalabreview.com links.`, 'outreach:links-visits');
+            }
+        }
+        // Email addresses (#2338): a line only for what the outreach and mailbox sources do not already say.
+        const ad = ext.addresses;
+        if (ad && ad.ok) {
+            const outBoxes = new Set(((ou && ou.ok && ou.instantly && ou.instantly.accounts) || []).map((a) => String(a.email).toLowerCase()));
+            const outDns = new Set(((ou && ou.ok && ou.mail && ou.mail.checks) || []).filter((c) => !c.ok).map((c) => ou.mail.domain + ':' + c.name));
+            const siteDns = new Set(((ext.safety && ext.safety.ok && ext.safety.checks) || []).filter((c) => c.level === 'alert' || c.level === 'warn').map((c) => c.name));
+            const bouncing = new Set(((box && box.ok && box.problems) || []).map((m) => m.alias));
+            (ad.issues || []).forEach((i) => {
+                if (i.system === 'Instantly' && outBoxes.has(i.address)) return;
+                if (i.system === 'DNS' && (outDns.has(i.address + ':' + i.check) || ((ad.domains || []).some((d) => d.site && d.domain === i.address) && siteDns.has(i.check)))) return;
+                if (i.problem === 'bounce' && bouncing.has(i.address.split('@')[0])) return;
+                add(i.level, 'systems', i.text, 'addresses:' + i.key);
+            });
         }
         const waiting = CONNECTIONS.reduce((n, c) => n + (((ext[c.key] || {}).needs) || []).length, 0);
         if (waiting) add('info', 'systems', `${plural(waiting, 'connection waits', 'connections wait')} for a one-time grant; see Systems > Connections.`, 'connections:needs');
@@ -587,6 +830,334 @@
         return out.sort((a, b) => rank[a.level] - rank[b.level]);
     }
 
+    // Proposals: what to do next, from the briefing lines. Impact 5 means money, customers or the site at risk today, 1 a nice-to-have.
+    // A rule matches a briefing key by prefix; grouped rules fold every match into one proposal. action names the safe action #1337 may run.
+    const PROPOSAL_RULES = [
+        { prefix: 'uptime:', impact: 5, title: (i) => `Bring ${(PRODUCTS.find((p) => p.key === i.product) || {}).name || i.product} back up`, tab: 'systems' },
+        { prefix: 'tls', impact: 5, title: 'Renew the TLS certificate', tab: 'systems' },
+        { prefix: 'money:disputes', impact: 5, title: 'Answer the open PayPal disputes before PayPal decides them', link: 'https://www.paypal.com/resolutioncenter' },
+        { prefix: 'email:blocklist', impact: 5, title: 'Get the sending IP off the blocklist', link: 'https://app.sendgrid.com/' },
+        { prefix: 'outreach:bounce', impact: 5, title: 'Pause outreach and clean the prospect list', click: 'pause-outreach', tab: 'outreach' },
+        { prefix: 'outreach:links-down', impact: 5, title: 'Deploy the qalabreview.com short-link Worker', tab: 'outreach' },
+        { prefix: 'email:spam', impact: 4, title: 'Find which emails were reported as spam and fix the list or the copy', link: 'https://app.sendgrid.com/' },
+        { prefix: 'safety:', impact: 4, group: true, title: (n) => `Fix ${n === 1 ? 'the failing safety check' : n + ' failing safety checks'}`, tab: 'systems' },
+        { prefix: 'job:', impact: 4, group: true, title: (n) => `Fix ${n === 1 ? 'the failing job' : n + ' failing jobs'}`, tab: 'systems' },
+        { prefix: 'scheduler:', impact: 4, group: true, title: (n) => `Fix ${n === 1 ? 'the scheduler job that failed' : n + ' scheduler jobs that failed'}`, tab: 'systems' },
+        { prefix: 'ci:', impact: 4, group: true, title: 'Get CI on main green again', link: 'https://github.com/kaanmuar/kaanmuar.github.io/actions' },
+        { prefix: 'review:failures', impact: 4, title: 'Fix the top cause of failed URL review runs', tab: 'systems' },
+        { prefix: 'inbox:unanswered', impact: 4, title: 'Answer the messages that are waiting', tab: 'inbox' },
+        { prefix: 'review:conversion', impact: 4, title: 'Make the URL Review page turn more opens into reviews', tab: 'review' },
+        { prefix: 'money:none', impact: 4, title: 'Find out why sales stopped', tab: 'business' },
+        { prefix: 'outreach:warmup', impact: 4, title: 'Hold the campaigns until the mailboxes are warm', click: 'pause-outreach', tab: 'outreach' },
+        { prefix: 'outreach:dns:', impact: 4, group: true, title: 'Fix the sending domain records', click: 'pause-outreach', tab: 'outreach' },
+        { prefix: 'addresses:instantly:reconnect:', impact: 4, group: true, title: 'Reconnect the mailboxes in Instantly', link: 'https://app.instantly.ai/app/accounts' },
+        { prefix: 'addresses:dns:', impact: 4, group: true, title: 'Fix the mail records on our domains', tab: 'systems' },
+        { prefix: 'addresses:m365:', impact: 3, group: true, title: 'Fix the Microsoft 365 mailboxes', link: 'https://admin.microsoft.com/#/users' },
+        { prefix: 'addresses:improvmx:', impact: 3, group: true, title: 'Fix the ImprovMX aliases', tab: 'systems' },
+        { prefix: 'addresses:sendgrid:', impact: 3, title: 'Add an ImprovMX alias for the SendGrid sender', link: 'https://app.improvmx.com/' },
+        { prefix: 'review:held', impact: 3, title: 'Re-run the held reviews', action: 'rerun-held', tab: 'systems' },
+        { prefix: 'notices:failed', impact: 3, title: 'Re-send the owner notices that failed', action: 'resend-notices', tab: 'review' },
+        { prefix: 'hub:stale', impact: 3, title: 'Publish the Social hub', action: 'publish-hub', tab: 'hub' },
+        { prefix: 'money:refunds', impact: 3, title: 'Read why customers asked for refunds', tab: 'business' },
+        { prefix: 'email:bad', impact: 3, title: 'Clean the addresses that bounce or block', link: 'https://app.sendgrid.com/' },
+        { prefix: 'speed:', impact: 3, levels: ['warn'], title: (i) => `Speed up ${(PRODUCTS.find((p) => p.key === i.product) || {}).name || i.product} on mobile`, tab: 'systems' },
+        { prefix: 'pagespeed:run', impact: 3, title: 'Get the daily PageSpeed run working again', tab: 'systems' },
+        { prefix: 'pagespeed:pr:', impact: 3, title: (i) => 'Merge or close PageSpeed fixes #' + i.key.split(':')[2], tab: 'systems' },
+        { prefix: 'pagespeed:slow', impact: 3, title: 'Speed up the pages that score under 50 on PageSpeed', tab: 'systems' },
+        { prefix: 'slow:', impact: 3, group: true, title: 'Find why the pages answer slowly', tab: 'systems' },
+        { prefix: 'platform:failures', impact: 3, title: 'Fix the function that fails most', tab: 'systems' },
+        { prefix: 'platform:gemini', impact: 3, title: 'Fix the failing Gemini calls', tab: 'systems' },
+        { prefix: 'platform:reads', impact: 3, title: 'Cut Firestore reads before the free quota runs out', tab: 'systems' },
+        { prefix: 'social:failed', impact: 3, title: 'Re-post the social posts that failed', click: 'retry-social', tab: 'hub' },
+        { prefix: 'outreach:queue', impact: 3, title: 'Add the next outreach prospect list', tab: 'outreach' },
+        { prefix: 'outreach:mailbox:', impact: 3, group: true, title: 'Turn the outreach mailboxes and warm-up back on', click: 'resume-outreach', tab: 'outreach' },
+        { prefix: 'outreach:deadline:', impact: 3, levels: ['warn'], group: true, title: 'Get ready for the outreach deadline', tab: 'outreach' },
+        { prefix: 'goal:', impact: 3, levels: ['warn'], title: (i) => 'Catch up on the goal: ' + i.text.replace(/^Goal behind: /, '').split(' is at ')[0], tab: 'overview' },
+        { prefix: 'inbox:pending', impact: 2, title: 'Approve or reject the waiting ratings', tab: 'inbox' },
+        { prefix: 'hub:ga', impact: 2, title: 'Reconnect GA4 for the Social hub stats', tab: 'hub' },
+        { prefix: 'connections:down:', impact: 2, group: true, title: (n) => `Reconnect ${n === 1 ? 'the source that did not answer' : n + ' sources that did not answer'}`, tab: 'systems' },
+        { prefix: 'connections:needs', impact: 2, title: 'Grant the connections that wait for a one-time step', tab: 'systems' },
+        { prefix: 'search:index', impact: 3, title: 'Get the missing pages into Brave\'s index: link to them from pages Brave already has', tab: 'business' },
+        { prefix: 'search:brave', impact: 2, title: 'Write for the searches where we are not in the top 100', tab: 'business' },
+        { prefix: 'social:none', impact: 2, title: 'Schedule social posts', tab: 'hub' },
+        { prefix: 'outreach:pace', impact: 2, title: 'Review more outreach prospects this week', tab: 'outreach' },
+        { prefix: 'ga4:swing', impact: 2, levels: ['warn'], title: 'Find why GA4 sessions fell', tab: 'traffic' },
+        { prefix: 'cv:swing', impact: 2, levels: ['warn'], title: 'Find why CV visits fell', tab: 'cv' },
+        { prefix: 'studio:swing', impact: 2, levels: ['warn'], title: 'Find why QA Studio visits fell', tab: 'studio' },
+        { prefix: 'lab:swing', impact: 2, levels: ['warn'], title: 'Find why QA Lab visits fell', tab: 'lab' },
+        { prefix: 'review:swing', impact: 2, levels: ['warn'], title: 'Find why URL Review opens fell', tab: 'review' },
+        // #2526: the GitHub tab. A click runs a gh-* action through action-run or github-act; the key's tail is its target.
+        { prefix: 'gh:main-broken:', impact: 5, title: (i) => `Get main green: revert ${i.key.split(':')[2].slice(0, 7)} or fix forward`, click: 'gh-revert', tab: 'github' },
+        { prefix: 'gh:security:', impact: 5, group: true, title: 'Fix the open GitHub security alerts', tab: 'github', link: 'https://github.com/kaanmuar/kaanmuar.github.io/security' },
+        { prefix: 'gh:budget', impact: 4, title: 'Slow GitHub GraphQL use before the hourly budget runs out', tab: 'github' },
+        { prefix: 'gh:diag:', impact: 4, title: (i) => 'Launch a fix agent for ' + ((/^"([^"]+)"/.exec(i.text) || [])[1] || 'the failed run'), click: 'gh-agent', tab: 'github' },
+        { prefix: 'gh:needs:', impact: 3, title: (i) => i.text.slice(0, 110), tab: 'github' },
+        { prefix: 'gh:pr-conflict:', impact: 3, title: (i) => 'Resolve the merge conflicts in PR #' + i.key.split(':')[2], click: 'gh-agent', tab: 'github' },
+        { prefix: 'gh:flaky:', impact: 3, title: (i) => 'Steady the flaky workflow ' + i.key.slice(9), tab: 'github' },
+        { prefix: 'gh:pr-green:', impact: 3, levels: ['info'], title: (i) => 'Merge the green PR #' + i.key.split(':')[2], click: 'gh-merge-pr', tab: 'github' },
+        { prefix: 'gh:drift:', impact: 3, group: true, title: (n) => `Sync ${n === 1 ? 'the board item in the wrong column' : n + ' board items in the wrong column'}`, click: 'gh-board-sync', tab: 'github' },
+        { prefix: 'gh:orphan-pr:', impact: 2, group: true, title: (n) => `File tickets for ${n === 1 ? 'the PR' : n + ' PRs'} that name none`, click: 'gh-orphan-ticket', tab: 'github' },
+        { prefix: 'gh:pr-behind:', impact: 2, levels: ['info'], group: true, title: (n) => `Update ${n === 1 ? 'the PR' : n + ' PRs'} behind main`, click: 'gh-update-pr', tab: 'github' },
+        { prefix: 'gh:pr-stale:', impact: 2, group: true, title: (n) => `Finish or close ${n === 1 ? 'the stale PR' : n + ' stale PRs'}`, tab: 'github' },
+        { prefix: 'gh:aging:', impact: 2, group: true, title: (n) => `Move ${n === 1 ? 'the ticket' : n + ' tickets'} sitting in Dev, QA or Stg`, tab: 'github' },
+        { prefix: 'gh:wip', impact: 2, title: 'Finish work in progress before starting more', tab: 'github' },
+        { prefix: 'gh:repo-red:', impact: 2, group: true, title: 'Get CI green in the other repositories', tab: 'github' },
+        { prefix: 'gh:score', impact: 2, levels: ['info'], title: 'Find why the GitHub score dropped', tab: 'github' },
+        { prefix: 'gh:branch-merged', impact: 1, levels: ['info'], title: 'Delete the merged branches', click: 'gh-delete-branch', tab: 'github' },
+        { prefix: 'gh:worktree-merged:', impact: 1, levels: ['info'], group: true, title: 'Remove the merged worktrees', click: 'gh-remove-worktree', tab: 'github' }
+    ];
+    const SAFE_ACTIONS = ['rerun-held', 'resend-notices', 'publish-hub'];
+    // Actions a proposal offers as a button that only run on a click (#1977); gh-* (#2526) through action-run.
+    const CLICK_ACTIONS = ['retry-social', 'resume-outreach', 'pause-outreach', 'gh-board-sync', 'gh-orphan-ticket', 'gh-update-pr', 'gh-merge-pr', 'gh-revert', 'gh-delete-branch', 'gh-close-issue', 'gh-remove-worktree', 'gh-agent'];
+
+    function proposalRules(state, briefed) {
+        const items = (briefed || briefing(state)).slice();
+        const notices = ((state.external || {}).health || {}).notices;
+        if (notices && notices.failed > 0) items.push({ level: 'warn', product: 'review', text: `${notices.failed} owner ${notices.failed === 1 ? 'notice' : 'notices'} failed to send and wait on the desk.`, key: 'notices:failed' });
+        const out = new Map();
+        items.forEach((item) => {
+            const rule = PROPOSAL_RULES.find((r) => item.key === r.prefix || item.key.startsWith(r.prefix));
+            if (!rule || (rule.levels ? !rule.levels.includes(item.level) : !['alert', 'warn'].includes(item.level) && !['search:brave', 'connections:needs', 'social:none', 'outreach:pace'].includes(rule.prefix))) return;
+            const key = rule.group ? rule.prefix.replace(/:$/, '') : item.key;
+            const row = out.get(key) || { key, product: item.product, impact: rule.impact, level: item.level, evidence: [], source: 'rules', action: rule.action || null, click: rule.click || null, tab: rule.tab || null, link: rule.link || null, rule };
+            row.evidence.push(item.text);
+            if (/^(job|scheduler):/.test(item.key)) (row.jobs = row.jobs || []).push(item.key.slice(item.key.indexOf(':') + 1));
+            if (item.key.startsWith('ci:')) (row.workflows = row.workflows || []).push(item.key.slice(3));
+            if (item.key.startsWith('gh:flaky:')) (row.workflows = row.workflows || []).push(item.key.slice(9));
+            if (item.level === 'alert') row.level = 'alert';
+            row.item = row.item || item;
+            out.set(key, row);
+        });
+        const rank = { alert: 0, warn: 1, good: 2, info: 3 };
+        return Array.from(out.values()).map((row) => {
+            const t = row.rule.title;
+            const title = typeof t === 'function' ? t(row.rule.group ? row.evidence.length : row.item) : t;
+            const impact = Math.min(5, row.impact + (row.level === 'alert' && row.impact < 5 ? 1 : 0));
+            return { key: row.key, product: row.product, impact, level: row.level, title, evidence: row.evidence.slice(0, 4), source: 'rules', action: row.action, click: row.click,
+                jobs: row.jobs ? Array.from(new Set(row.jobs)).slice(0, 6) : null, workflows: row.workflows ? Array.from(new Set(row.workflows)).slice(0, 6) : null, tab: row.tab, link: row.link };
+        }).sort((a, b) => b.impact - a.impact || rank[a.level] - rank[b.level]);
+    }
+
+    const RUN_LABELS = {
+        'rerun-held': 'Send held re-runs', 'resend-notices': 'Re-send failed notices', 'publish-hub': 'Publish the hub',
+        'retry-social': 'Retry failed posts', 'resume-outreach': 'Resume mailboxes', 'pause-outreach': 'Pause outreach',
+        'gh-board-sync': 'Sync the board', 'gh-orphan-ticket': 'File the tickets', 'gh-update-pr': 'Update with main', 'gh-merge-pr': 'Merge', 'gh-revert': 'Open a revert PR',
+        'gh-delete-branch': 'Delete the branches', 'gh-close-issue': 'Close the issue', 'gh-remove-worktree': 'Remove the worktrees', 'gh-agent': 'Launch a fix agent'
+    };
+
+    const pageSpeedPr = (key) => Number((/^pagespeed:pr:(\d+)$/.exec(key || '') || [])[1]) || 0;
+    // A gh:* key's target: gh:pr-green:12 -> "12", gh:main-broken:<sha> -> the sha; a grouped key has none.
+    const ghTarget = (key) => String(key || '').split(':').slice(2).join(':');
+
+    /* What a proposal's run button does (#1977), or null: { action, label, jobs?, workflows?, pr? } for the jarvis
+       action-run op. A PageSpeed PR merges; otherwise its own action, then its click, then its failed jobs or workflows. */
+    function proposalRun(p) {
+        if (!p) return null;
+        const pr = pageSpeedPr(p.key);
+        if (pr) return { action: 'pagespeed-merge', pr, label: `Merge #${pr}` };
+        const many = (list, one, n) => (list.length === 1 ? one(list[0]) : n(list.length));
+        if (/^gh-/.test(p.click || '') && CLICK_ACTIONS.includes(p.click)) {
+            const target = ghTarget(p.key);
+            return Object.assign({ action: p.click, key: p.key, label: RUN_LABELS[p.click] + (p.click === 'gh-merge-pr' && target ? ' #' + target : '') }, target ? { target } : {});
+        }
+        if (SAFE_ACTIONS.includes(p.action) || CLICK_ACTIONS.includes(p.click)) {
+            const action = SAFE_ACTIONS.includes(p.action) ? p.action : p.click;
+            return { action, label: RUN_LABELS[action] };
+        }
+        if (p.jobs && p.jobs.length) return { action: 'run-job', jobs: p.jobs.slice(0, 6), label: many(p.jobs, (j) => `Run ${j} again`, (n) => `Run ${n} jobs again`) };
+        if (p.workflows && p.workflows.length) return { action: 'rerun-ci', workflows: p.workflows.slice(0, 6), label: many(p.workflows, (w) => `Re-run ${w}`, (n) => `Re-run ${n} workflows`) };
+        return null;
+    }
+
+    /* A proposal's buttons on its card and its push (#1977), at most 3: its run, then Open, then Dismiss; Done only
+       when there is nothing to run. A PageSpeed PR gets Close in Open's place. act is run, close, open, done or
+       dismissed; open carries tab or link. */
+    function proposalButtons(p) {
+        const run = proposalRun(p);
+        if (run && run.action === 'pagespeed-merge') return [Object.assign({ act: 'run' }, run), { act: 'close', action: 'pagespeed-close', pr: run.pr, label: `Close #${run.pr}` }, { act: 'dismissed', label: 'Dismiss' }];
+        const tab = p && p.tab && p.tab !== 'overview' ? p.tab : null;
+        const open = p && p.link ? { act: 'open', label: 'Open ↗', link: p.link }
+            : tab ? { act: 'open', label: 'Open ' + ((PRODUCTS.find((x) => x.key === tab) || {}).name || tab), tab } : null;
+        return [run && Object.assign({ act: 'run' }, run), open, run ? null : { act: 'done', label: 'Done' }, { act: 'dismissed', label: 'Dismiss' }].filter(Boolean).slice(0, 3);
+    }
+
+    // Done hides a proposal for a week, Dismiss for a month; a saved state is { key, status, until }.
+    function openProposals(list, saved, now) {
+        const at = (now || new Date()).getTime();
+        const hidden = new Set((saved || []).filter((s) => (s.status === 'done' || s.status === 'dismissed') && Date.parse(s.until) > at).map((s) => s.key));
+        return (list || []).filter((p) => !hidden.has(p.key));
+    }
+
+    // Snooze hides a briefing line for a day or a week, Dismiss for a month; a saved state is { key, status, until }.
+    const BRIEF_HIDE_DAYS = { snoozed: 1, week: 7, dismissed: 30 };
+    function openBrief(items, saved, now) {
+        const at = (now || new Date()).getTime();
+        const hidden = new Set((saved || []).filter((s) => BRIEF_HIDE_DAYS[s.status] && Date.parse(s.until) > at).map((s) => s.key));
+        return { open: (items || []).filter((b) => !hidden.has(b.key)), hidden: (items || []).filter((b) => hidden.has(b.key)) };
+    }
+
+    const BRIEF_LINKS = {
+        github: 'https://github.com/kaanmuar/kaanmuar.github.io/actions', sendgrid: 'https://app.sendgrid.com/suppressions/blocks', spamcop: 'https://www.spamcop.net/bl.shtml',
+        paypal: 'https://www.paypal.com/resolutioncenter', ga4: 'https://analytics.google.com/analytics/web/#/p495572902/reports/intelligenthome',
+        admin: 'https://carlosandmunoz.com/admin.html', cloudflare: 'https://dash.cloudflare.com/', firebase: 'https://console.firebase.google.com/project/carlosm-interactive-cv/functions'
+    };
+
+    /* What a briefing line opens: a title and tab from PROPOSAL_RULES, the numbers behind it, links, the actions the jarvis
+       function can run (action-run ids), and list: 'ratings' | 'messages' when the sheet loads rows through brief-items. */
+    function briefDetail(item, state) {
+        const k = (item && item.key) || '';
+        const s = state || {};
+        const ext = s.external || {};
+        const p = s.products || {};
+        const tail = k.slice(k.indexOf(':') + 1);
+        const rule = PROPOSAL_RULES.find((r) => k === r.prefix || k.startsWith(r.prefix));
+        const t = rule && rule.title;
+        const facts = [], links = [], actions = [];
+        const fact = (label, value) => { if (value !== null && value !== undefined && value !== '') facts.push({ label, value: String(value) }); };
+        const link = (label, url) => { if (url) links.push({ label, url }); };
+        const act = (id, label, extra) => actions.push(Object.assign({ id, label }, extra || {}));
+        const name = (key) => (PRODUCTS.find((r) => r.key === key) || {}).name || key;
+        const out = { title: (typeof t === 'function' ? t(rule.group ? 1 : item) : t) || item.text, tab: (rule && rule.tab) || (item.product !== 'overview' ? item.product : null), facts, links, actions, list: null };
+        const health = ext.health || {};
+        const mail = ext.email || {};
+        const pf = ext.platform || {};
+        if (k.startsWith('ci:')) {
+            const run = ((ext.github || {}).ci || []).find((r) => r.name === tail) || {};
+            fact('Workflow', tail); fact('Result', run.conclusion); fact('Commit', run.sha); fact('Finished', run.at);
+            link('Open the run on GitHub', run.url || BRIEF_LINKS.github);
+            act('rerun-ci', 'Re-run the failed jobs', { workflow: tail });
+        } else if (k === 'github:needs-agent') {
+            const waiting = (ext.github || {}).needsAgent || [];
+            fact('Waiting for an agent', waiting.length);
+            waiting.slice(0, 8).forEach((bug) => link('#' + bug.number + ' ' + bug.title, bug.url));
+        } else if (k.startsWith('gh:')) {
+            const gw = ext['github-work'] || {};
+            const target = ghTarget(k);
+            const n = Number(target);
+            const pr = ((gw.prs || {}).items || []).find((r) => r.number === n);
+            const run = ((gw.ci || {}).failing || []).find((r) => String(r.id) === target);
+            const ticket = ((gw.board || {}).drift || []).concat((gw.board || {}).aging || []).find((r) => r.number === n);
+            if (pr) {
+                fact('PR', '#' + pr.number + ' ' + pr.title); fact('Author', pr.author); fact('Branch', pr.branch); fact('State', pr.state); fact('Checks', pr.checks);
+                fact('Updated', pr.updatedH !== undefined ? Math.round(pr.updatedH) + ' h ago' : null); fact('Ticket', pr.ticket ? '#' + pr.ticket : 'none');
+                link('Open the PR on GitHub', pr.url);
+            }
+            if (run) {
+                fact('Workflow', run.name); fact('Branch', run.branch); fact('Attempt', run.attempt); fact('Commit', run.sha);
+                if (run.diag) { fact('Cause', run.diag.cause); fact('Category', run.diag.category); fact('Fix', run.diag.fix); fact('Confidence', run.diag.confidence); }
+                link('Open the run on GitHub', run.url);
+            }
+            if (ticket) { fact('Ticket', '#' + ticket.number + ' ' + ticket.title); fact('Column', ticket.column); fact('Should be', ticket.should); fact('Why', ticket.why); fact('Days', ticket.days); link('Open on GitHub', ticket.url); }
+            if (k === 'gh:wip') { fact('In progress', (gw.board || {}).wip); fact('WIP limit', (gw.board || {}).wipLimit || 15); }
+            if (k === 'gh:budget') { const gq = ((gw.budget || {}).kaanmuar || {}).graphql || {}; fact('GraphQL used', gq.used); fact('Limit', gq.limit); fact('Resets', gq.resetAt); }
+            if (k === 'gh:branch-merged') githubTargets(gw).merged.slice(0, 8).forEach((b) => fact(b.name, (b.pr ? 'PR #' + b.pr + ', ' : '') + (b.days || 0) + (b.days === 1 ? ' day' : ' days') + ' ago'));
+            if (k.startsWith('gh:security:')) link('Security on GitHub', 'https://github.com/kaanmuar/kaanmuar.github.io/security');
+            const rule2 = rule && rule.click;
+            if (rule2 && !actions.some((a) => a.id === rule2)) act(rule2, RUN_LABELS[rule2], Object.assign({ key: k }, target ? { target } : {}));
+            if (k.startsWith('gh:flaky:')) act('rerun-ci', 'Re-run the failed jobs', { workflow: target });
+            link('Board', 'https://github.com/orgs/carlosandmunoz-hq/projects/1');
+        } else if (k === 'review:failures') {
+            const f = health.failures || {};
+            fact('Failed runs', f.total);
+            (f.causes || []).slice(0, 5).forEach((c) => fact(c.label, c.value));
+            (f.hosts || []).slice(0, 3).forEach((h) => fact('Site: ' + h.label, h.value));
+            (f.latest || []).slice(0, 3).forEach((r) => fact('Latest: ' + r.host, r.cause));
+        } else if (k === 'review:held') {
+            fact('Held re-runs', (health.reruns || {}).held); fact('Re-runs in range', (health.reruns || {}).total);
+            act('rerun-held', 'Send the held re-runs');
+        } else if (k.startsWith('job:')) {
+            const job = (health.jobs || []).find((j) => j.job === tail) || {};
+            fact('Job', tail); fact('Started', job.startedAt); fact('Ended', job.endedAt); fact('Error', job.error || job.note);
+            link('Function logs', BRIEF_LINKS.firebase);
+            act('run-job', 'Run ' + tail + ' again', { job: tail });
+        } else if (k.startsWith('scheduler:')) {
+            const job = ((ext.jobs || {}).jobs || []).find((j) => j.name === tail) || {};
+            fact('Job', tail); fact('Schedule', job.schedule && job.schedule + (job.timeZone ? ' (' + job.timeZone + ')' : '')); fact('Last attempt', job.lastAttempt); fact('Next run', job.nextRun); fact('Error', job.error);
+            act('run-job', 'Run ' + tail + ' again', { job: tail });
+        } else if (k === 'email:blocklist') {
+            (mail.blocklisted || []).forEach((l) => fact('Refused by ' + l.label, l.value));
+            ((mail.suppressions || {}).blocks || []).filter((r) => /list|spamcop|spamhaus|barracuda/i.test(r.reason)).slice(0, 3).forEach((r) => fact('Blocked at ' + r.domain, r.reason));
+            link('SendGrid blocks', BRIEF_LINKS.sendgrid); link('SpamCop lookup', BRIEF_LINKS.spamcop);
+        } else if (/^email:(spam|bad)$/.test(k)) {
+            const m = mail.totals || {};
+            fact('Processed', m.processed); fact('Bounces', m.bounces); fact('Blocks', m.blocks); fact('Spam reports', m.spam_reports); fact('Bad rate', (mail.rates || {}).bad !== undefined ? mail.rates.bad + '%' : null);
+            link('SendGrid suppressions', BRIEF_LINKS.sendgrid);
+        } else if (k === 'inbox:unanswered' || k === 'inbox:pending') {
+            const i = (p.inbox || {}).totals || {};
+            fact('Messages in range', i.messages); fact('No answer yet', i.unanswered); fact('Ratings waiting', i.pending); fact('Average rating', i.avg);
+            out.list = k === 'inbox:pending' ? 'ratings' : 'messages';
+            link('Open the admin inbox', BRIEF_LINKS.admin);
+        } else if (k === 'ga4:swing') {
+            const groups = (ext.ga4 || {}).groups || [];
+            fact('Sessions', groups.reduce((n, g) => n + g.sessions, 0)); fact('Period before', groups.reduce((n, g) => n + g.priorSessions, 0));
+            groups.slice().sort((a, b) => (a.sessions - a.priorSessions) - (b.sessions - b.priorSessions)).slice(0, 4).forEach((g) => fact(g.group, g.sessions + ' vs ' + g.priorSessions));
+            ((ext.ga4 || {}).sources || []).slice(0, 3).forEach((r) => fact('Source: ' + r.label, r.value + ' vs ' + r.prior));
+            link('Open GA4', BRIEF_LINKS.ga4);
+        } else if (/^(cv|studio|lab|review):(swing|anomaly|source)$/.test(k)) {
+            const sum = p[item.product] || {};
+            const kpi = (sum.kpis || [])[0] || {};
+            fact(kpi.label, kpi.value); fact('Period before', kpi.prior);
+            if (sum.anomaly) fact('Today vs daily average', sum.anomaly.last + ' vs ' + sum.anomaly.mean);
+            ((sum.lists || {}).sources || []).slice(0, 4).forEach((r) => fact('Source: ' + r.label, r.value));
+        } else if (/^(uptime|slow|speed):/.test(k)) {
+            const page = (((k.startsWith('speed:') ? ext.speed : ext.uptime) || {}).pages || []).find((r) => r.product === item.product) || {};
+            fact('Page', page.name); fact('Status', page.status); fact('Answer time', page.ms !== undefined ? page.ms + ' ms' : null); fact('Mobile score', page.score); fact('Error', page.error);
+            link('Open the page', page.url); link('Cloudflare', BRIEF_LINKS.cloudflare);
+        } else if (k.startsWith('pagespeed:')) {
+            const ps = ext.pagespeed || {};
+            const n = /^pagespeed:(pr|countdown):/.test(k) ? Number(k.split(':')[2]) : 0;
+            const pr = (ps.prs || []).find((r) => r.number === n);
+            if (pr) {
+                fact('PR', '#' + pr.number + ' ' + pr.title); fact('Fixes', pr.kind === 'ai' ? "Gemini's" : 'Safe'); fact('Stage', pr.stage); fact('Why', pr.reason); fact('Merges at', pr.dueAt);
+                link('Open the PR on GitHub', pr.url);
+                if (pr.open) { act('pagespeed-merge', 'Merge #' + n, { pr: n }); act('pagespeed-close', 'Close #' + n, { pr: n }); }
+            } else {
+                const c = ps.counts || {}, last = (ps.runs || [])[0] || {}, avg = last.avg || {};
+                fact('Pages', c.pages); fact('Measured', c.scored); fact('Under ' + (ps.threshold || 90), c.below); fact('Under 50', c.under50);
+                fact('Average', avg.mobile !== undefined ? 'mobile ' + avg.mobile + ', desktop ' + avg.desktop : null);
+                fact('Last run', last.at); fact('Result', last.status); fact('Error', last.error);
+                const score = (p, m) => (Number.isFinite((p[m] || {}).score) ? p[m].score : null);
+                const low = (p) => Math.min(...['mobile', 'desktop'].map((m) => (score(p, m) === null ? 101 : score(p, m))));
+                (ps.pages || []).filter((p) => low(p) < 101).sort((a, b) => low(a) - low(b)).slice(0, 5).forEach((p) => fact(p.file || p.url, 'mobile ' + (score(p, 'mobile') === null ? '—' : score(p, 'mobile')) + ', desktop ' + (score(p, 'desktop') === null ? '—' : score(p, 'desktop'))));
+                link('Last run on GitHub', last.run && last.run.url);
+                link('The daily workflow', 'https://github.com/kaanmuar/kaanmuar.github.io/actions/workflows/pagespeed-daily.yml');
+                if (k === 'pagespeed:run') act('pagespeed-run', 'Start the PageSpeed run now');
+            }
+        } else if (k === 'tls') {
+            fact('Days left', (ext.uptime || {}).tlsDaysLeft);
+        } else if (k.startsWith('money:')) {
+            const m = ext.money || {};
+            fact('Revenue', (m.revenue || {}).usd !== undefined ? m.revenue.usd + ' USD' : null); fact('Sales', (m.revenue || {}).count); fact('Period before', (m.prior || {}).usd !== undefined ? m.prior.usd + ' USD' : null);
+            fact('Refunded', m.refundsUsd ? m.refundsUsd + ' USD' : null); fact('Open disputes', (m.paypal || {}).disputesOpen);
+            if (k === 'money:disputes') link('PayPal resolution center', BRIEF_LINKS.paypal);
+        } else if (k.startsWith('platform:')) {
+            const f = pf.functions || {}, g = pf.gemini || {}, fs = pf.firestore || {};
+            if (k === 'platform:failures') { fact('Failed runs (24 h)', f.failures); fact('Failure rate', f.failureRate !== undefined ? f.failureRate + '%' : null); (f.byFunction || []).slice(0, 4).forEach((r) => fact(r.label, r.value)); link('Function logs', BRIEF_LINKS.firebase); }
+            if (k === 'platform:gemini') { fact('Calls', g.requests); fact('Error rate', g.errorRate + '%'); (g.failedMethods || []).slice(0, 4).forEach((r) => fact(r.label, r.value)); }
+            if (k === 'platform:reads') { fact('Reads since midnight Pacific', fs.reads); fact('Share of the free quota', fs.readsFreePct + '%'); }
+        } else if (k.startsWith('goal:')) {
+            const g = (s.goals || []).find((r) => 'goal:' + r.key === k) || {};
+            fact('Goal', g.label); fact('Now', g.value); fact('Target', g.target); fact('Time gone', g.elapsed !== undefined ? g.elapsed + '%' : null); fact('Pace', g.projected);
+        } else if (k === 'hub:stale' || k === 'hub:ga') {
+            fact('Updated', (p.hub || {}).updatedAt);
+            if (k === 'hub:stale') act('publish-hub', 'Publish the Social hub');
+        } else if (k.startsWith('safety:')) {
+            const c = ((ext.safety || {}).checks || []).find((r) => 'safety:' + r.key === k) || {};
+            fact('Check', c.name); fact('Detail', c.detail);
+        }
+        if (rule && rule.link) link('Open ↗', rule.link);
+        if (rule && rule.action && !actions.some((a) => a.id === rule.action)) act(rule.action, rule.title);
+        return out;
+    }
+
+    // What the headline names once the briefing is empty, so it never reads all clear beside a down connection or low readiness.
+    function systemsNote(conns, ready, readinessMin) {
+        const off = (conns || []).filter((c) => c.state === 'down' || c.state === 'partial').length;
+        if (off) return off + (off > 1 ? ' connections need' : ' connection needs') + ' a look';
+        if (typeof ready === 'number' && ready < readinessMin) return 'Readiness below ' + readinessMin + '%';
+        return '';
+    }
+
     // Share of checks that pass, for the reactor ring: jobs, CI, uptime, speed, failures.
     function readiness(external) {
         const checks = [];
@@ -596,7 +1167,10 @@
         if (e.github && e.github.ci) e.github.ci.forEach((run) => { if (run.conclusion !== 'cancelled') checks.push(['success', 'skipped', 'neutral'].includes(run.conclusion)); });
         if (e.uptime && e.uptime.pages) e.uptime.pages.forEach((page) => checks.push(!!page.ok && page.ms <= 3000));
         if (e.speed && e.speed.pages) e.speed.pages.forEach((page) => { if (page.ok) checks.push(page.score >= 50); });
+        if (e.pagespeed && e.pagespeed.ok && !e.pagespeed.empty) checks.push(!e.pagespeed.stale && e.pagespeed.lastStatus !== 'failed');
         if (e.safety && e.safety.checks) e.safety.checks.forEach((c) => { if (c.level !== 'info') checks.push(c.ok); });
+        const ghScore = e['github-work'] && e['github-work'].score && e['github-work'].score.overall;
+        if (ghScore && typeof ghScore.value === 'number') checks.push(ghScore.value >= 70);
         if (!checks.length) return null;
         return Math.round((checks.filter(Boolean).length / checks.length) * 100);
     }
@@ -634,7 +1208,7 @@
             ['overview', /\b(overview|home|summary|everything)\b/], ['inbox', /\b(inbox|messages?|ratings?)\b/],
             ['review', /\b(url review|review|reviews|qa-?lab url)\b/], ['studio', /\b(studio|simulator|simulador)\b/],
             ['lab', /\b(lab|regression)\b/], ['cv', /\b(cv|resume|résumé)\b/], ['hub', /\b(hub|social)\b/],
-            ['traffic', /\b(traffic|ga4|analytics|cloudflare)\b/], ['systems', /\b(systems?|health|ops|jobs|ci|speed|uptime)\b/]
+            ['traffic', /\b(traffic|ga4|analytics|cloudflare)\b/], ['github', /\b(github|pull requests?|prs|board|branches|worktrees?)\b/], ['systems', /\b(systems?|health|ops|jobs|ci|speed|uptime)\b/]
         ];
         if (/\b(show|open|go to|switch to|display)\b/.test(t) || t.split(/\s+/).length <= 3) {
             const hit = aliases.find(([, re]) => re.test(t));
@@ -651,7 +1225,279 @@
         return { start, end, days, prior: { start: new Date(start.getTime() - days * DAY), end: start } };
     }
 
-    const api = { THRESHOLDS, thresholds, CONNECTIONS, connections, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, briefing, readiness, csv, parseCommand, windowFor };
+    /** #1674: the jarvis function's voice catalog; the first of each language is its default. */
+    const VOICES = [
+        { name: 'en-GB-Chirp3-HD-Orus', lang: 'en', label: 'Orus, British' },
+        { name: 'en-US-Chirp3-HD-Charon', lang: 'en', label: 'Charon, American' },
+        { name: 'es-US-Chirp3-HD-Algenib', lang: 'es', label: 'Algenib, Latin American' },
+        { name: 'es-ES-Chirp3-HD-Charon', lang: 'es', label: 'Charon, Spain' }
+    ];
+    const VOICE_RATE = { min: 0.75, max: 1.25, step: 0.05, default: 0.95 };
+    const VOICE_SAMPLE = { en: 'Good evening, Carlos. All systems are running, and two things need you today.', es: 'Buenas noches, Carlos. Todos los sistemas funcionan, y hoy hay dos cosas que te esperan.' };
+
+    /** Saved voice choices made safe: lang is "en", "es" or null (follow the browser), voices belong to their language, rate is in range. */
+    function voicePrefs(saved, browserLang) {
+        const s = saved && typeof saved === 'object' ? saved : {};
+        const lang = s.lang === 'en' || s.lang === 'es' ? s.lang : null;
+        const pick = (code) => (VOICES.find((v) => v.name === s[code] && v.lang === code) || VOICES.find((v) => v.lang === code)).name;
+        const rate = Number(s.rate);
+        return { lang, speak: lang || String(browserLang || 'en').slice(0, 2).toLowerCase(), en: pick('en'), es: pick('es'),
+            rate: Number.isFinite(rate) && rate > 0 ? Math.min(VOICE_RATE.max, Math.max(VOICE_RATE.min, rate)) : VOICE_RATE.default };
+    }
+
+    /** #2068: what Jarvis runs on. The Android app (device/Device.kt) sends the same kinds and postures. */
+    const DEVICE_KINDS = { phone: 'Phone', 'foldable-folded': 'Foldable, folded', 'foldable-open': 'Foldable, open', tablet: 'Tablet', desktop: 'Desktop' };
+    const POSTURES = { flat: 'flat', tabletop: 'tabletop', book: 'half open like a book' };
+    const FOLD_MODEL = /SM-F9\d\d|Fold|OnePlus Open|CPH2551/i;
+
+    /** A device as the app or the browser reports it, made safe to store; null when the kind is unknown. */
+    function cleanDevice(d) {
+        if (!d || typeof d !== 'object' || !Object.prototype.hasOwnProperty.call(DEVICE_KINDS, d.kind)) return null;
+        const size = (n) => { const v = Math.round(Number(n)); return Number.isFinite(v) && v > 0 && v < 10000 ? v : null; };
+        const text = (s, n) => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, n) || null;
+        return {
+            kind: d.kind, posture: Object.prototype.hasOwnProperty.call(POSTURES, d.posture) ? d.posture : null,
+            width: size(d.width), height: size(d.height), name: text(d.name, 80), model: text(d.model, 40),
+            app: d.app === 'android' ? 'android' : 'web', dex: d.dex === true, windowed: d.windowed === true
+        };
+    }
+
+    /** "Foldable, open · tabletop · 832×750 dp", as both Settings show it. */
+    function deviceLabel(d) {
+        const c = cleanDevice(d);
+        if (!c) return 'Unknown device';
+        return [DEVICE_KINDS[c.kind], c.posture && c.posture !== 'flat' ? POSTURES[c.posture] : null, c.dex ? 'Samsung DeX' : c.windowed ? 'in a window' : null,
+            c.width && c.height ? c.width + '×' + c.height + (c.app === 'android' ? ' dp' : ' px') : null].filter(Boolean).join(' · ');
+    }
+
+    /** How long an Ask answer should be for the screen it lands on; '' when the device is unknown. */
+    function askHint(d) {
+        const c = cleanDevice(d);
+        if (!c) return '';
+        if (c.posture === 'tabletop') return 'The reader has a foldable half-folded on a table and reads the lower half: answer in at most four short sentences, the key number first.';
+        if (c.kind === 'phone' || c.kind === 'foldable-folded' || (c.width && c.width < 600)) return 'The reader is on a phone-sized screen: answer in at most four short sentences, the key number first.';
+        return 'The reader has a large screen (' + DEVICE_KINDS[c.kind].toLowerCase() + '): answer in up to eight sentences, with a short list when it helps compare numbers.';
+    }
+
+    /**
+     * The browser's kind from what it reports: o.ua, o.model and o.mobile (Client Hints), the window (width, height) and screen
+     * (screenW, screenH), touch and a coarse pointer, and the fold: o.posture ('folded' or 'continuous', Device Posture API)
+     * and o.segments ({ across, down }, viewport segments).
+     */
+    function browserDevice(o) {
+        const ua = String(o.ua || '');
+        const seg = o.segments || {};
+        const short = Math.min(Number(o.screenW) || 0, Number(o.screenH) || 0);
+        const split = seg.across > 1 || seg.down > 1 || o.posture === 'folded';
+        const foldable = split || FOLD_MODEL.test(String(o.model || '')) || FOLD_MODEL.test(ua);
+        const tabletUa = /iPad|Tablet/.test(ua) || (/Android/.test(ua) && !/Mobile/.test(ua)) || (/Macintosh/.test(ua) && o.touch === true);
+        const phoneUa = o.mobile === true || /Android.+Mobile|iPhone|iPod/.test(ua);
+        let kind = 'desktop';
+        let posture = null;
+        if (foldable && (split || short >= 600)) {
+            kind = 'foldable-open';
+            if (seg.down > 1) posture = 'tabletop';
+            else if (seg.across > 1) posture = o.posture === 'folded' ? 'book' : 'flat';
+            else if (o.posture === 'folded') posture = Number(o.width) > Number(o.height) ? 'tabletop' : 'book';
+            else posture = 'flat';
+        } else if (foldable) kind = 'foldable-folded';
+        else if (phoneUa) kind = 'phone';
+        else if (tabletUa || (o.touch === true && o.coarse === true)) kind = short >= 600 ? 'tablet' : 'phone';
+        return cleanDevice({ kind, posture, width: o.width, height: o.height, name: o.name, model: o.model, app: 'web' });
+    }
+
+    // --- #2139: the wide-screen deck and charts. The app reads the same numbers from the snapshot's `wide` field. ---
+
+    const TREND = [['cv', 'CV'], ['studio', 'QA Studio'], ['lab', 'QA Lab'], ['review', 'URL Review'], ['inbox', 'Inbox'], ['hub', 'Social hub']];
+    const PURPOSES = { review: 'Review run', report: 'Full report', pass: 'Review pass', fixlist: 'Fix list', cases: 'Test cases', 'new-run': 'New run', credentials: 'Signed-in run', alerts: 'Alerts', credit: 'Credits' };
+    const ok = (x) => !!(x && x.ok !== false);
+    const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+    function uptimeNow(up) {
+        const pages = ok(up) && Array.isArray(up.pages) ? up.pages : [];
+        return pages.length ? Math.round((pages.filter((p) => p.ok).length / pages.length) * 100) : null;
+    }
+
+    // Readiness, revenue, visits, alerts and uptime: the strip across the top of Overview.
+    function deck(products, external, brief) {
+        const e = external || {};
+        const r = readiness(e);
+        const mo = ok(e.money) && e.money.revenue ? e.money : null;
+        const sv = siteVisits(products);
+        const list = Array.isArray(brief) ? brief : [];
+        const alerts = list.filter((b) => b.level === 'alert').length;
+        const warns = list.filter((b) => b.level === 'warn').length;
+        const strip = uptimeStrip(e.uptime && e.uptime.history);
+        const now = uptimeNow(e.uptime);
+        const money = mo ? delta(mo.revenue.usd, mo.prior && mo.prior.usd) : { text: '', dir: 0 };
+        return [
+            { key: 'readiness', label: 'Readiness', value: r === null ? '—' : r + '%', raw: r, alert: r !== null && r < THRESHOLDS.readinessMin.value },
+            { key: 'revenue', label: 'Revenue', value: mo ? '$' + (Math.round(num(mo.revenue.usd) * 100) / 100).toLocaleString('en-US') : '—', raw: mo ? num(mo.revenue.usd) : null, delta: money.text, dir: money.dir },
+            { key: 'visits', label: 'Site visits', value: sv ? sv.value : '—', raw: sv ? sv.value : null, delta: sv ? sv.delta : '', dir: sv ? sv.dir : 0 },
+            { key: 'alerts', label: 'Alerts', value: alerts, raw: alerts, delta: warns ? warns + (warns === 1 ? ' warning' : ' warnings') : '', dir: 0, alert: alerts > 0 },
+            { key: 'uptime', label: strip.pct === null ? 'Uptime now' : 'Uptime, 90 days', value: strip.pct !== null ? strip.pct + '%' : now === null ? '—' : now + '%', raw: strip.pct !== null ? strip.pct : now, delta: strip.pct !== null && now !== null ? 'now ' + now + '%' : '', dir: 0, alert: now !== null && now < 100 }
+        ];
+    }
+
+    // One daily line per product over shared dates; products without a series are left out.
+    function trend(products) {
+        const p = products || {};
+        const rows = TREND.filter(([key]) => p[key] && p[key].series && p[key].series.labels && p[key].series.labels.length);
+        const labels = rows.reduce((best, [key]) => (p[key].series.labels.length > best.length ? p[key].series.labels : best), []);
+        return {
+            labels,
+            series: rows.map(([key, name]) => {
+                const s = p[key].series;
+                return { key, name, values: labels.map((day) => { const i = s.labels.indexOf(day); return i === -1 ? 0 : num(s.values[i]); }) };
+            })
+        };
+    }
+
+    // Visits across the CV, Studio and Lab sites and URL Review opens: when they come and where from.
+    function trafficMix(products) {
+        const p = products || {};
+        const grid = WEEKDAYS.map(() => new Array(24).fill(0));
+        const sources = {};
+        ['cv', 'studio', 'lab', 'review'].forEach((key) => {
+            const x = p[key];
+            if (!x) return;
+            (Array.isArray(x.heatmap) ? x.heatmap : []).forEach((row, d) => (row || []).forEach((n, h) => { if (grid[d] && h < 24) grid[d][h] += num(n); }));
+            ((x.lists && x.lists.sources) || []).forEach((r) => bump(sources, String(r.label).replace(/\s*\(tagged link\)$/, ''), num(r.value)));
+        });
+        const total = grid.reduce((s, row) => s + row.reduce((a, b) => a + b, 0), 0);
+        return { heatmap: grid, peak: peak(grid), total, sources: topList(sources, 12) };
+    }
+
+    // The site's own counter against GA4 sessions and Cloudflare page views, day by day.
+    function trafficCompare(products, external) {
+        const e = external || {};
+        const sv = siteVisits(products);
+        const ga = ok(e.ga4) && Array.isArray(e.ga4.daily) ? e.ga4.daily : [];
+        const cf = ok(e.cloudflare) && Array.isArray(e.cloudflare.daily) ? e.cloudflare.daily : [];
+        const site = sv ? sv.series : { labels: [], values: [] };
+        const labels = Array.from(new Set(site.labels.concat(ga.map((r) => r.date), cf.map((r) => r.date)).filter(Boolean))).sort();
+        const by = (rows, key) => { const m = {}; rows.forEach((r) => { m[r.date] = num(r[key]); }); return labels.map((d) => m[d] || 0); };
+        const siteBy = {};
+        site.labels.forEach((d, i) => { siteBy[d] = num(site.values[i]); });
+        const series = [
+            { key: 'site', name: 'Site counter', values: labels.map((d) => siteBy[d] || 0), on: !!sv },
+            { key: 'ga4', name: 'GA4 sessions', values: by(ga, 'sessions'), on: ga.length > 0 },
+            { key: 'cloudflare', name: 'Cloudflare page views', values: by(cf, 'pageViews'), on: cf.length > 0 }
+        ];
+        const why = { site: 'No site events in range.', ga4: (e.ga4 && e.ga4.error) || 'GA4 is not loaded.', cloudflare: (e.cloudflare && e.cloudflare.error) || 'Cloudflare is not loaded.' };
+        return {
+            labels,
+            series: series.filter((s) => s.on).map(({ key, name, values }) => ({ key, name, values })),
+            totals: series.map((s) => ({ key: s.key, label: s.name, value: s.on ? s.values.reduce((a, b) => a + b, 0) : null, why: s.on ? '' : why[s.key] }))
+        };
+    }
+
+    function revenueByProduct(money) {
+        if (!ok(money) || !Array.isArray(money.byPurpose)) return [];
+        return money.byPurpose.filter((r) => num(r.value) > 0).map((r) => ({ label: PURPOSES[r.label] || r.label, value: Math.round(num(r.value) * 100) / 100 }));
+    }
+
+    // Reviewed by the sweep, emailed through Instantly, replied, paid through a qalabreview.com link.
+    function outreachFunnel(external) {
+        const ou = (external || {}).outreach;
+        if (!ok(ou)) return null;
+        const pipe = ok(ou.pipeline) && ou.pipeline ? ou.pipeline : null;
+        const mail = ok(ou.instantly) && ou.instantly ? ou.instantly : null;
+        const links = ok(ou.links) && ou.links ? ou.links : null;
+        if (!pipe && !mail && !links) return null;
+        return [
+            { key: 'reviewed', label: 'Reviewed', value: pipe ? num(pipe.reviews) : null },
+            { key: 'notified', label: 'Notified', value: mail ? num(mail.contacted) : null },
+            { key: 'replied', label: 'Replied', value: mail ? num(mail.replies) : null },
+            { key: 'paid', label: 'Paid', value: links ? num(links.paid) : null }
+        ];
+    }
+
+    // One tile per connection, scheduled job and CI workflow: good, warn, alert or off.
+    function statusMatrix(external, pending) {
+        const e = external || {};
+        const conn = connections(e, pending).map((c) => ({ group: 'Connections', name: c.name.replace(/\s*\(.*\)$/, ''), level: { live: 'good', partial: 'warn', down: 'alert' }[c.state] || 'off', detail: c.detail || c.state }));
+        // Scheduler only knows the trigger fired; the job's own last run (health.jobs) says whether it worked.
+        const runs = new Map((ok(e.health) && Array.isArray(e.health.jobs) ? e.health.jobs : []).map((j) => [j.job, j]));
+        const jobs = (ok(e.jobs) && Array.isArray(e.jobs.jobs) ? e.jobs.jobs : []).map((j) => {
+            const run = runs.get(j.name);
+            runs.delete(j.name);
+            const failed = !j.ok || (run && run.ok === false);
+            return { group: 'Jobs', name: j.name, level: failed ? 'alert' : j.state === 'PAUSED' ? 'warn' : 'good', detail: failed ? (run && run.ok === false ? run.error : j.error) || 'failed' : j.state === 'PAUSED' ? 'paused' : j.note || 'ok' };
+        }).concat([...runs.values()].map((run) => ({ group: 'Jobs', name: run.job, level: run.ok === false ? 'alert' : 'good', detail: run.ok === false ? run.error || 'failed' : 'ok' })));
+        const ci = (ok(e.github) && Array.isArray(e.github.ci) ? e.github.ci : []).map((c) => ({ group: 'CI', name: c.name, level: ['success', 'skipped', 'neutral'].includes(c.conclusion) ? 'good' : !c.conclusion ? 'off' : c.conclusion === 'cancelled' ? 'warn' : 'alert', detail: c.conclusion || 'running' }));
+        return conn.concat(jobs, ci);
+    }
+
+    // The last 90 Bogota days of the hourly uptime checks (jarvis_uptime); a day without checks is null, not 100.
+    function uptimeStrip(history, now) {
+        const rows = Array.isArray(history) ? history : [];
+        const by = {};
+        rows.forEach((r) => { if (r && r.date && num(r.checks) > 0) by[r.date] = r; });
+        const end = now || new Date();
+        const days = dayKeys(new Date(end.getTime() - 89 * DAY), end).slice(-90);
+        let checks = 0, up = 0;
+        const out = days.map((date) => {
+            const r = by[date];
+            if (!r) return { date, pct: null };
+            checks += num(r.checks);
+            up += num(r.up);
+            return { date, pct: Math.round((num(r.up) / num(r.checks)) * 1000) / 10 };
+        });
+        const since = out.find((d) => d.pct !== null);
+        return { days: out, pct: checks ? Math.round((up / checks) * 1000) / 10 : null, since: since ? since.date : null };
+    }
+
+    // The Products list: each product's lead number and daily series, for the list-detail view and the tiles.
+    function productList(products, external) {
+        const p = products || {};
+        const e = external || {};
+        const out = PRODUCTS.filter((x) => ['inbox', 'cv', 'studio', 'lab', 'review', 'hub'].includes(x.key) && p[x.key]).map((x) => {
+            const s = p[x.key];
+            return { key: x.key, name: x.name, kpis: (s.kpis || []).slice(0, 6), series: s.series || { labels: [], values: [] } };
+        });
+        const ou = ok(e.outreach) ? e.outreach : null;
+        const pipe = ou && ok(ou.pipeline) && ou.pipeline ? ou.pipeline : null;
+        const mail = ou && ok(ou.instantly) && ou.instantly ? ou.instantly : null;
+        out.push({ key: 'outreach', name: 'Outreach', kpis: [pipe && kpi('Reviewed', num(pipe.reviews)), pipe && kpi('Queued', num(pipe.queued)), mail && kpi('Emails sent', num(mail.sent)), mail && kpi('Replies', num(mail.replies))].filter(Boolean),
+            series: pipe ? { labels: (pipe.daily || []).map((d) => d.date), values: (pipe.daily || []).map((d) => num(d.reviews)) } : { labels: [], values: [] } });
+        const so = ok(e.social) && e.social.daily ? e.social : null;
+        out.push({ key: 'marketing', name: 'Marketing', kpis: [so && kpi('Social posts', num(so.sent)), so && kpi('Failed', num(so.failed), undefined, { alert: num(so.failed) > 0 })].filter(Boolean),
+            series: so ? { labels: so.daily.map((d) => d.date), values: so.daily.map((d) => num(d.posts)) } : { labels: [], values: [] } });
+        const eg = ok(e.engagement) && Array.isArray(e.engagement.daily) ? e.engagement : null;
+        const t = (eg && eg.report && eg.report.totals) || {};
+        out.push({ key: 'engagement', name: 'Engagement', kpis: eg ? [kpi('Posts read', num(t.read)), kpi('Candidates', num(t.candidates)), kpi('Replies drafted', num(t.drafted))] : [],
+            series: eg ? { labels: eg.daily.map((d) => d.day), values: eg.daily.map((d) => num(d.read)) } : { labels: [], values: [] } });
+        const gw = ok(e['github-work']) ? e['github-work'] : null;
+        const sc = gw && gw.score && gw.score.overall;
+        const hist = gw && Array.isArray(gw.history) ? gw.history.filter((d) => d && d.score !== null && d.score !== undefined) : [];
+        const rate = gw && gw.ci && gw.ci.passRate !== null && gw.ci.passRate !== undefined ? num(gw.ci.passRate) : null;
+        out.push({ key: 'github', name: 'GitHub', kpis: gw ? [sc && kpi('Score', (num(sc.value) + ' ' + (sc.grade || '')).trim(), undefined, { raw: num(sc.value) }), rate !== null && kpi('CI pass rate', rate + '%', undefined, { raw: rate }),
+            gw.prs && kpi('Open PRs', num(gw.prs.open)), gw.issues && kpi('Open bugs', num(gw.issues.openBugs))].filter(Boolean) : [],
+            series: { labels: hist.map((d) => d.day), values: hist.map((d) => num(d.score)) } });
+        return out;
+    }
+
+    // Everything above in one object: the snapshot carries it for the app, the web builds it from the same inputs.
+    function wide(state) {
+        const s = state || {};
+        const traffic = trafficMix(s.products);
+        return {
+            deck: deck(s.products, s.external, s.briefing), trend: trend(s.products), products: productList(s.products, s.external),
+            traffic: { heatmap: traffic.heatmap, peak: traffic.peak, total: traffic.total, sources: traffic.sources, compare: trafficCompare(s.products, s.external) },
+            revenue: revenueByProduct((s.external || {}).money), funnel: outreachFunnel(s.external),
+            matrix: statusMatrix(s.external), uptime: uptimeStrip(((s.external || {}).uptime || {}).history, s.now)
+        };
+    }
+
+    // The day's LinkedIn list labels each line under a person: "- Note: ...", "- Check first: ..." (#2479).
+    function linkedinLine(person, label) {
+        const head = label.toLowerCase() + ':';
+        const line = ((person && person.lines) || []).map((l) => String(l).trim()).find((l) => l.toLowerCase().startsWith(head));
+        return line ? line.slice(head.length).trim() : '';
+    }
+
+    const api = { linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

@@ -139,7 +139,7 @@
     }
 
     function record(kind, name, label) {
-        if (root.top !== root.self || navigator.webdriver) return;
+        if (root.top !== root.self || navigator.webdriver || /HeadlessChrome|Cypress|Electron\//.test(navigator.userAgent)) return;
         const host = root.location.hostname;
         if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') return;
         const visitCode = kind === 'visit' ? readCvRef() : '';

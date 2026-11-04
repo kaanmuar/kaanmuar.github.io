@@ -32,6 +32,28 @@
         return firebaseReady;
     }
 
+    // Test browsers load the CV all day; their Firestore reads alone ran past the free quota, so they get the CV from the file.
+    // Cypress's default Electron browser leaves navigator.webdriver false.
+    const AUTOMATED = navigator.webdriver === true || /HeadlessChrome|Cypress|Electron\//.test(navigator.userAgent);
+
+    // Cloudflare's always-pass test key on local hosts; the live widget only accepts carlosandmunoz.com.
+    const TURNSTILE_SITEKEY = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? '1x00000000000000000000AA' : '0x4AAAAAAFoMHSvmRtt1Z3Lz';
+    let turnstileReady = null;
+    function turnstile() {
+        if (!turnstileReady) {
+            turnstileReady = new Promise((resolve, reject) => {
+                if (window.turnstile) return resolve(window.turnstile);
+                const script = document.createElement('script');
+                script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+                script.async = true;
+                script.onload = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error('Turnstile did not start')));
+                script.onerror = () => reject(new Error('Turnstile did not load'));
+                document.head.appendChild(script);
+            }).catch((error) => { turnstileReady = null; throw error; });
+        }
+        return turnstileReady;
+    }
+
     const PRINT_COPY = {
         en: {
             print_confidential: 'Confidential',
@@ -46,11 +68,14 @@
             footer_studio: 'SDLC studio — Jira, Linear, Backlog, Xray, and the automation sprint',
             footer_review: 'URL Review — scores a public site for SEO, AI search, analytics, security, accessibility, and speed',
             review_cta: 'Score your site with URL Review',
+            book_cta: 'Schedule a call with me',
+            book_contact: 'Schedule a call',
             footer_capabilities: 'Readable in English, Spanish, Portuguese, German, French, and Italian. Includes a guided tour, light and dark themes, eight competency filters, a skills toolkit, a career timeline, print, and downloads as PDF, JPG, Word, JSON, and plain text.',
             footer_pdf: 'Download PDF',
             footer_privacy: 'Privacy and disclaimers',
             footer_accessibility: 'Accessibility',
             roles: [
+                'Founder & Lead Engineer',
                 'Senior QA & Program Consultant',
                 'Senior Technical Project Manager & Consultant',
                 'Sr. Project Manager & QA Engineer',
@@ -80,11 +105,14 @@
             footer_studio: 'Estudio SDLC — Jira, Linear, Backlog, Xray y el sprint de automatización',
             footer_review: 'URL Review — califica un sitio público en SEO, búsqueda con IA, analítica, seguridad, accesibilidad y velocidad',
             review_cta: 'Califica tu sitio con URL Review',
+            book_cta: 'Agenda una llamada conmigo',
+            book_contact: 'Agendar una llamada',
             footer_capabilities: 'Se lee en inglés, español, portugués, alemán, francés e italiano. Incluye un recorrido guiado, temas claro y oscuro, ocho filtros de competencias, un toolkit, una línea de tiempo, impresión y descargas en PDF, JPG, Word, JSON y texto plano.',
             footer_pdf: 'Descargar PDF',
             footer_privacy: 'Privacidad y avisos legales',
             footer_accessibility: 'Accesibilidad',
             roles: [
+                'Fundador e ingeniero principal',
                 'Consultor Senior de QA y Programas',
                 'Gerente Senior de Proyectos Técnicos y Consultor',
                 'Gerente Senior de Proyectos e Ingeniero de QA',
@@ -114,11 +142,14 @@
             footer_studio: 'Estúdio SDLC — Jira, Linear, Backlog, Xray e o sprint de automação',
             footer_review: 'URL Review — avalia um site público em SEO, busca com IA, analytics, segurança, acessibilidade e velocidade',
             review_cta: 'Avalie seu site com o URL Review',
+            book_cta: 'Agende uma conversa comigo',
+            book_contact: 'Agendar uma conversa',
             footer_capabilities: 'Leitura em inglês, espanhol, português, alemão, francês e italiano. Inclui um tour guiado, temas claro e escuro, oito filtros de competências, um toolkit, uma linha do tempo, impressão e downloads em PDF, JPG, Word, JSON e texto simples.',
             footer_pdf: 'Baixar PDF',
             footer_privacy: 'Privacidade e avisos legais',
             footer_accessibility: 'Acessibilidade',
             roles: [
+                'Fundador e engenheiro líder',
                 'Consultor Sênior de QA e Programas',
                 'Gerente Sênior de Projetos Técnicos e Consultor',
                 'Gerente Sênior de Projetos e Engenheiro de QA',
@@ -148,11 +179,14 @@
             footer_studio: 'SDLC-Studio — Jira, Linear, Backlog, Xray und der Automatisierungs-Sprint',
             footer_review: 'URL Review — bewertet eine öffentliche Website nach SEO, KI-Suche, Analytics, Sicherheit, Barrierefreiheit und Tempo',
             review_cta: 'Bewerten Sie Ihre Website mit URL Review',
+            book_cta: 'Vereinbaren Sie ein Gespräch mit mir',
+            book_contact: 'Gespräch vereinbaren',
             footer_capabilities: 'Lesbar auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch. Enthält eine Führung, helles und dunkles Design, acht Kompetenzfilter, ein Toolkit, eine Zeitachse, Druck und Downloads als PDF, JPG, Word, JSON und Klartext.',
             footer_pdf: 'PDF herunterladen',
             footer_privacy: 'Datenschutz und Hinweise',
             footer_accessibility: 'Barrierefreiheit',
             roles: [
+                'Gründer & Lead Engineer',
                 'Senior QA- und Programmberater',
                 'Senior Technical Project Manager und Berater',
                 'Senior Projektmanager und QA-Ingenieur',
@@ -182,11 +216,14 @@
             footer_studio: 'Studio SDLC — Jira, Linear, Backlog, Xray et le sprint d’automatisation',
             footer_review: 'URL Review — note un site public en SEO, recherche IA, analytics, sécurité, accessibilité et vitesse',
             review_cta: 'Notez votre site avec URL Review',
+            book_cta: 'Planifiez un appel avec moi',
+            book_contact: 'Planifier un appel',
             footer_capabilities: 'Lisible en anglais, espagnol, portugais, allemand, français et italien. Comprend une visite guidée, les thèmes clair et sombre, huit filtres de compétences, une boîte à outils, une chronologie, l\'impression et des téléchargements PDF, JPG, Word, JSON et texte brut.',
             footer_pdf: 'Télécharger le PDF',
             footer_privacy: 'Confidentialité et mentions',
             footer_accessibility: 'Accessibilité',
             roles: [
+                'Fondateur et ingénieur principal',
                 'Consultant senior QA et programmes',
                 'Chef de projet technique senior et consultant',
                 'Chef de projet senior et ingénieur QA',
@@ -216,11 +253,14 @@
             footer_studio: 'Studio SDLC — Jira, Linear, Backlog, Xray e lo sprint di automazione',
             footer_review: 'URL Review — valuta un sito pubblico per SEO, ricerca con IA, analytics, sicurezza, accessibilità e velocità',
             review_cta: 'Valuta il tuo sito con URL Review',
+            book_cta: 'Prenota una chiamata con me',
+            book_contact: 'Prenota una chiamata',
             footer_capabilities: 'Leggibile in inglese, spagnolo, portoghese, tedesco, francese e italiano. Include un tour guidato, temi chiaro e scuro, otto filtri delle competenze, un toolkit, una linea del tempo, stampa e download in PDF, JPG, Word, JSON e testo semplice.',
             footer_pdf: 'Scarica il PDF',
             footer_privacy: 'Privacy e avvertenze',
             footer_accessibility: 'Accessibilità',
             roles: [
+                'Fondatore e Lead Engineer',
                 'Consulente senior QA e programmi',
                 'Senior Technical Project Manager e consulente',
                 'Senior Project Manager e ingegnere QA',
@@ -247,6 +287,7 @@
             print_studio_name: 'SDLC studio',
             print_studio_pitch: 'Want to sit in on a software project? Open it and follow one feature from the planning board until the team has tested it and it is ready to ship.',
             print_current_role: 'Current role',
+            print_current_roles: 'Current roles',
             print_now: 'Current',
             print_certs_title: 'Certifications',
             print_stack: 'Stack',
@@ -269,6 +310,7 @@
             print_studio_name: 'Estudio SDLC',
             print_studio_pitch: '¿Quieres sentarte en un proyecto de software? Ábrelo y sigue una funcionalidad desde el tablero de planificación hasta que el equipo la ha probado y está lista para salir.',
             print_current_role: 'Rol actual',
+            print_current_roles: 'Roles actuales',
             print_now: 'Actual',
             print_certs_title: 'Certificaciones',
             print_stack: 'Stack',
@@ -291,6 +333,7 @@
             print_studio_name: 'Estúdio SDLC',
             print_studio_pitch: 'Quer acompanhar um projeto de software? Abra e siga uma funcionalidade do quadro de planejamento até o time tê-la testado e ela estar pronta para ir ao ar.',
             print_current_role: 'Função atual',
+            print_current_roles: 'Funções atuais',
             print_now: 'Atual',
             print_certs_title: 'Certificações',
             print_stack: 'Stack',
@@ -313,6 +356,7 @@
             print_studio_name: 'SDLC-Studio',
             print_studio_pitch: 'Möchtest du bei einem Softwareprojekt dabei sein? Öffne es und verfolge ein Feature vom Planungsboard, bis das Team es getestet hat und es bereit zum Ausliefern ist.',
             print_current_role: 'Aktuelle Rolle',
+            print_current_roles: 'Aktuelle Rollen',
             print_now: 'Aktuell',
             print_certs_title: 'Zertifizierungen',
             print_stack: 'Stack',
@@ -335,6 +379,7 @@
             print_studio_name: 'Studio SDLC',
             print_studio_pitch: 'Envie d’assister à un projet logiciel ? Ouvrez-le et suivez une fonctionnalité du tableau de planification jusqu’à ce que l’équipe l’ait testée et qu’elle soit prête à partir.',
             print_current_role: 'Poste actuel',
+            print_current_roles: 'Postes actuels',
             print_now: 'Actuel',
             print_certs_title: 'Certifications',
             print_stack: 'Stack',
@@ -357,6 +402,7 @@
             print_studio_name: 'Studio SDLC',
             print_studio_pitch: 'Vuoi assistere a un progetto software? Aprilo e segui una funzionalità dalla bacheca di pianificazione fino a quando il team l’ha testata ed è pronta per uscire.',
             print_current_role: 'Ruolo attuale',
+            print_current_roles: 'Ruoli attuali',
             print_now: 'Attuale',
             print_certs_title: 'Certificazioni',
             print_stack: 'Stack',
@@ -375,6 +421,7 @@
     };
 
     const PRINT_COMPANIES = {
+        'QA Lab · carlosandmunoz.com': 'https://carlosandmunoz.com',
         'Team International': 'https://www.teaminternational.com',
         'RockStar Coders Agency': 'https://www.rockstarcoders.com',
         'Globant': 'https://www.globant.com',
@@ -403,8 +450,7 @@
                 hasAutoOpenedRating: false,
                 // **NEW**: A set to hold the emails of blocked senders
                 blockList: new Set(),
-                captchaRequired: false,
-                captchaIds: { message: '', rating: '' },
+                formChecks: { ids: {}, langs: {}, tokens: {}, waiters: {} },
                 // --- NEW STATE ---
                 chartIndex: 0,
                 chartPaused: false,
@@ -924,7 +970,7 @@
 
             _noteCvAccess() {
                 try {
-                    if (window.top !== window.self || navigator.webdriver) return;
+                    if (window.top !== window.self || AUTOMATED) return;
                     if (sessionStorage.getItem('cv-access-noted') === '1') return;
                     sessionStorage.setItem('cv-access-noted', '1');
                 } catch (e) {
@@ -1023,7 +1069,7 @@
                 const starIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`;
                 return `
                     <div role="button" tabindex="0" class="tech-tag" data-skill-name="${skill.name}" aria-pressed="false">
-                        <img src="${skill.icon}" class="tech-icon" alt="" onerror="this.style.display='none';">
+                        <img src="${skill.icon}" class="tech-icon" alt="" data-hide-broken>
                         <span>${skill.name}</span>
                         <div class="stars" aria-label="${skill.stars} out of 5 stars. ${skill.years} experience.">
                             <span class="mr-2 text-xs text-gray-500">${skill.years}</span>
@@ -1043,23 +1089,42 @@
             _companyMarkup(exp) {
                 const name = exp.company || '';
                 const href = PRINT_COMPANIES[name];
-                const inner = `<img src="${this._esc(exp.logo)}" class="company-logo" alt="" onerror="this.style.display='none'"><span>${this._esc(name)}</span>`;
+                const inner = `<img src="${this._esc(exp.logo)}" class="company-logo" alt="" data-hide-broken><span>${this._esc(name)}</span>`;
                 if (!href) return `<span class="company-name">${inner}</span>`;
                 return `<a class="company-link" href="${this._esc(href)}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
+            },
+
+            _splitDetailLabel(detail) {
+                const m = /^([^:]{2,70}):\s(.+)$/s.exec(String(detail || ''));
+                return m ? { label: m[1], text: m[2] } : null;
             },
 
             _createExperienceEntry(exp, index) {
                 const bodyId = `experience-body-${index}`;
                 const headerId = `experience-header-${index}`;
                 const title = typeof exp.title === 'string' ? exp.title : ((exp.title && exp.title.en) || '');
-                const detailsHtml = (exp.details.en || []).map((detail, i) => `<li data-translate-key="exp_${index}_detail_${i}">${this._esc(detail)}</li>`).join('');
+                const detailsHtml = (exp.details.en || []).map((detail, i) => {
+                    const parts = exp.featured ? this._splitDetailLabel(detail) : null;
+                    if (!parts) return `<li data-translate-key="exp_${index}_detail_${i}">${this._esc(detail)}</li>`;
+                    return `<li><strong class="exp-detail-label" data-translate-key="exp_${index}_detail_${i}_label">${this._esc(parts.label)}</strong> <span data-translate-key="exp_${index}_detail_${i}">${this._esc(parts.text)}</span></li>`;
+                }).join('');
+                const summaryText = exp.summary && exp.summary.en
+                    ? exp.summary.en
+                    : `${(exp.details.en && exp.details.en[0] ? exp.details.en[0] : title).substring(0, 100)}...`;
+                const badgeHtml = exp.featured && exp.badge && exp.badge.en
+                    ? `<p class="experience-badge" data-translate-key="exp_${index}_badge">${this._esc(exp.badge.en)}</p>`
+                    : '';
+                const highlightsHtml = exp.featured && Array.isArray(exp.highlights) && exp.highlights.length
+                    ? `<ul class="experience-highlights">${exp.highlights.map((h, i) => `<li><strong>${this._esc(h.value)}</strong><span data-translate-key="exp_${index}_highlight_${i}">${this._esc((h.label && h.label.en) || '')}</span></li>`).join('')}</ul>`
+                    : '';
                 const techTagsHtml = (exp.techUsed || []).map(techName => {
                     const skill = Object.values(this.data.skills).flat().find(s => s.name === techName);
                     if (!skill) return '';
-                    return `<div class="exp-tech-tag"><img src="${skill.icon}" alt="" onerror="this.style.display='none';"><span>${skill.name}</span></div>`;
+                    return `<div class="exp-tech-tag"><img src="${skill.icon}" alt="" data-hide-broken><span>${skill.name}</span></div>`;
                 }).join('');
                 return `
-                    <div class="experience-item text-sm py-2 animate-on-scroll" data-tech='${JSON.stringify(exp.techUsed)}' id="experience-${index}">
+                    <div class="experience-item${exp.featured ? ' experience-item--featured' : ''} text-sm py-2 animate-on-scroll" data-tech='${JSON.stringify(exp.techUsed)}' id="experience-${index}">
+                        ${badgeHtml}
                         <div class="experience-heading p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
                             <button class="accordion-header w-full flex justify-between items-start gap-2" id="${headerId}" aria-expanded="false" aria-controls="${bodyId}" data-company="${this._esc(exp.company)}">
                                 <h4 class="text-base font-bold flex-grow text-left min-w-0" data-translate-key="exp_${index}_title">${this._esc(title)}</h4>
@@ -1068,7 +1133,8 @@
                             </button>
                             <p class="text-sm italic company-line">${this._companyMarkup(exp)}</p>
                         </div>
-                        <p class="experience-summary" data-translate-key="exp_${index}_summary">${this._esc((exp.details.en && exp.details.en[0] ? exp.details.en[0] : title).substring(0, 100))}...</p>
+                        <p class="experience-summary" data-translate-key="exp_${index}_summary">${this._esc(summaryText)}</p>
+                        ${highlightsHtml}
                         <div class="experience-body mt-2" id="${bodyId}" role="region" aria-labelledby="${headerId}">
                             <ul class="list-disc list-inside space-y-1 pl-4">${detailsHtml}</ul>
                             <div class="experience-tech-tags">${techTagsHtml}</div>
@@ -1402,7 +1468,7 @@
                     if (exp.liveHidden || exp.onTimeline === false) return;
                     const techIcons = exp.techUsed.slice(0, 7).map(techName => {
                         const skill = Object.values(this.data.skills).flat().find(s => s.name === techName);
-                        return skill ? `<img src="${skill.icon}" alt="${skill.name}" title="${skill.name}" onerror="this.style.display='none'">` : '';
+                        return skill ? `<img src="${skill.icon}" alt="${skill.name}" title="${skill.name}" data-hide-broken>` : '';
                     }).join('');
                     content += `
                         <div class="timeline-item block p-2 rounded-md" data-tech='${JSON.stringify(exp.techUsed)}' id="timeline-exp-${index}">
@@ -1439,10 +1505,10 @@
             _getSkillsForCompetency(competencyLabel) {
                 const competencyMap = {
                     'Project Mgmt': ['Agile', 'Kanban', 'Scrum', 'Strategic Planning', 'Risk Management', 'Stakeholder Mgmt', 'Jira', 'TestRail', 'MS Project'],
-                    'QA & Automation': ['Selenium', 'Cypress', 'Playwright', 'WebdriverIO', 'Protractor', 'Appium', 'Expresso', 'Robot Framework', 'Cucumber', 'JMeter', 'Katalon'],
+                    'QA & Automation': ['Selenium', 'Cypress', 'Playwright', 'WebdriverIO', 'Protractor', 'Appium', 'Expresso', 'Robot Framework', 'Cucumber', 'JMeter', 'Katalon', 'CodeceptJS', 'Selenide', 'Behave', 'Reqnroll', 'Vitest', 'Maestro', 'k6', 'Gatling', 'axe-core', 'Lighthouse'],
                     'Leadership': ['Stakeholder Mgmt', 'Strategic Planning'],
-                    'DevOps Strategy': ['Jenkins', 'Docker', 'GitHub', 'AWS', 'Azure DevOps', 'GCP'],
-                    'Cloud Platforms': ['AWS', 'Azure DevOps', 'GCP', 'Docker'],
+                    'DevOps Strategy': ['Jenkins', 'Docker', 'GitHub', 'AWS', 'Azure DevOps', 'GCP', 'GitHub Actions', 'GitHub Pages', 'Super-Linter', 'Qodana', 'Gradle'],
+                    'Cloud Platforms': ['AWS', 'Azure DevOps', 'GCP', 'Docker', 'Firebase', 'Firestore', 'Cloud Functions', 'Google Cloud Run', 'Cloud Build', 'Cloudflare Workers'],
                     'Stakeholder Mgmt': ['Stakeholder Mgmt'],
                     'Agile': ['Agile', 'Scrum', 'Kanban'],
                     'Scrum': ['Scrum', 'Jira'],
@@ -1450,7 +1516,7 @@
                     'CMMI': ['CMMI', 'ISO Standards'],
                     'ISO Standards': ['ISO Standards', 'CISA', 'CISM', 'CISSP'],
                     'Risk Mgmt': ['Risk Management', 'Owasp', 'Strategic Planning', 'CMMI', 'ISO Standards'],
-                    'AI Expertise': ['Cursor', 'Claude', 'GitHub Copilot', 'ChatGPT', 'Custom personalizations']
+                    'AI Expertise': ['Cursor', 'Claude', 'GitHub Copilot', 'ChatGPT', 'Custom personalizations', 'Gemini API', 'AI-assisted development', 'Prompt & context engineering']
                 };
                 return competencyMap[competencyLabel] || [];
             },
@@ -1460,13 +1526,13 @@
                 if (live && Array.isArray(live.skills) && live.skills.length) return live.skills;
                 const map = {
                     pm: ['MS Project', 'Strategic Planning', 'Risk Management', 'TestRail', 'Stakeholder Mgmt'],
-                    qa: ['Selenium', 'Cypress', 'Playwright', 'WebdriverIO', 'Protractor', 'Appium', 'Expresso', 'Robot Framework', 'Cucumber', 'JMeter', 'Katalon'],
+                    qa: ['Selenium', 'Cypress', 'Playwright', 'WebdriverIO', 'Protractor', 'Appium', 'Expresso', 'Robot Framework', 'Cucumber', 'JMeter', 'Katalon', 'CodeceptJS', 'Selenide', 'Behave', 'Reqnroll', 'Vitest', 'Maestro', 'k6', 'Gatling', 'axe-core', 'Lighthouse'],
                     lead: ['Stakeholder Mgmt', 'Strategic Planning'],
-                    devops: ['Jenkins', 'Docker', 'GitHub', 'AWS', 'Azure DevOps', 'GCP'],
-                    cloud: ['AWS', 'Azure DevOps', 'GCP', 'Docker'],
+                    devops: ['Jenkins', 'Docker', 'GitHub', 'AWS', 'Azure DevOps', 'GCP', 'GitHub Actions', 'GitHub Pages', 'Super-Linter', 'Qodana', 'Gradle'],
+                    cloud: ['AWS', 'Azure DevOps', 'GCP', 'Docker', 'Firebase', 'Firestore', 'Cloud Functions', 'Google Cloud Run', 'Cloud Build', 'Cloudflare Workers'],
                     strategy: ['Strategic Planning', 'Risk Management', 'CMMI', 'ISO Standards'],
                     relations: ['Stakeholder Mgmt'],
-                    ai: ['Cursor', 'Claude', 'GitHub Copilot', 'ChatGPT', 'Custom personalizations']
+                    ai: ['Cursor', 'Claude', 'GitHub Copilot', 'ChatGPT', 'Custom personalizations', 'Gemini API', 'AI-assisted development', 'Prompt & context engineering']
                 };
                 return map[topicId] || this._skillsForTopic(topicId);
             },
@@ -1666,10 +1732,17 @@
                     Object.keys(this.data.translations).forEach(lang => {
                         if (!this.data.translations[lang] || !exp.details[lang]) return;
                         const englishTitle = typeof exp.title === 'string' ? exp.title : ((exp.title && exp.title.en) || '');
-                        this.data.translations[lang][`exp_${expIdx}_title`] = this.data.translations[lang][`role_${expIdx}`] || englishTitle;
-                        this.data.translations[lang][`exp_${expIdx}_summary`] = exp.details[lang][0].substring(0, 100) + '...';
+                        const roleIdx = ((PRINT_COPY.en && PRINT_COPY.en.roles) || []).indexOf(englishTitle);
+                        this.data.translations[lang][`exp_${expIdx}_title`] = (roleIdx >= 0 && this.data.translations[lang][`role_${roleIdx}`]) || englishTitle;
+                        this.data.translations[lang][`exp_${expIdx}_summary`] = (exp.summary && exp.summary[lang]) || (exp.details[lang][0].substring(0, 100) + '...');
+                        if (exp.badge && exp.badge[lang]) this.data.translations[lang][`exp_${expIdx}_badge`] = exp.badge[lang];
+                        (exp.highlights || []).forEach((h, i) => {
+                            if (h.label && h.label[lang]) this.data.translations[lang][`exp_${expIdx}_highlight_${i}`] = h.label[lang];
+                        });
                         exp.details[lang].forEach((detail, i) => {
-                            this.data.translations[lang][`exp_${expIdx}_detail_${i}`] = detail;
+                            const parts = exp.featured ? this._splitDetailLabel(detail) : null;
+                            this.data.translations[lang][`exp_${expIdx}_detail_${i}`] = parts ? parts.text : detail;
+                            if (parts) this.data.translations[lang][`exp_${expIdx}_detail_${i}_label`] = parts.label;
                         });
                     });
                 });
@@ -1785,10 +1858,23 @@
                 if (!this._isNativeLang(this.state.lang)) {
                     title = titleTexts.find((text) => text !== englishTitle) || title;
                 }
-                if (!title) title = (this._t() || {})[`role_${index}`] || englishTitle;
+                if (!title) {
+                    const roleIdx = ((PRINT_COPY.en && PRINT_COPY.en.roles) || []).indexOf(englishTitle);
+                    title = (roleIdx >= 0 && (this._t() || {})[`role_${roleIdx}`]) || englishTitle;
+                }
                 const detailsSource = (exp.details && (exp.details[lang] || exp.details.en)) || [];
-                const details = detailsSource.map((detail, i) => this._s(`exp_${index}_detail_${i}`, detail));
-                return { title, company: exp.company, dates: this._exportDate(index, exp.dates), details, techUsed: exp.techUsed || [] };
+                const details = detailsSource.map((detail, i) => {
+                    const parts = exp.featured ? this._splitDetailLabel(detail) : null;
+                    if (!parts) return this._s(`exp_${index}_detail_${i}`, detail);
+                    return `${this._s(`exp_${index}_detail_${i}_label`, parts.label)}: ${this._s(`exp_${index}_detail_${i}`, parts.text)}`;
+                });
+                const summary = exp.featured && exp.summary
+                    ? this._s(`exp_${index}_summary`, exp.summary[lang] || exp.summary.en || '')
+                    : '';
+                const highlights = exp.featured && Array.isArray(exp.highlights)
+                    ? exp.highlights.map((h, i) => `${h.value} ${this._s(`exp_${index}_highlight_${i}`, (h.label && (h.label[lang] || h.label.en)) || '')}`.trim())
+                    : [];
+                return { title, company: exp.company, dates: this._exportDate(index, exp.dates), summary, highlights, details, techUsed: exp.techUsed || [] };
             },
 
             translatePage(lang) {
@@ -1797,6 +1883,7 @@
                 const isNative = !machine && !!(window.SiteI18n ? SiteI18n.isNative(requested) : this.data.translations[requested]);
                 this.state.lang = requested;
                 this.state.dictLang = isNative ? requested : 'en';
+                if (Object.keys(this.state.formChecks.ids).length) this._renderFormChecks();
                 const translation = this._t();
                 if (!translation) return;
 
@@ -2328,7 +2415,7 @@
 
             _offerSharedDownload() {
                 const kind = (new URLSearchParams(window.location.search).get('download') || '').toLowerCase();
-                const run = {
+                const runs = {
                     pdf: () => this._exportAsPDF_jsPDF(),
                     jpg: () => this._exportAsJPG(),
                     jpeg: () => this._exportAsJPG(),
@@ -2337,8 +2424,9 @@
                     txt: () => this._exportAsText(),
                     text: () => this._exportAsText(),
                     json: () => this._exportAsJSON()
-                }[kind];
-                if (!run) return;
+                };
+                if (!Object.prototype.hasOwnProperty.call(runs, kind)) return;
+                const run = runs[kind];
                 this._trackEvent('export_cv', 'Export', 'link:' + kind);
                 run();
             },
@@ -2462,6 +2550,7 @@
                 const container = this.DOMElements.testimonialsContainer;
                 const avgRatingEl = document.getElementById('average-rating-display');
                 if (!container || !avgRatingEl) return;
+                if (AUTOMATED) { container.parentElement.style.display = 'none'; return; }
 
                 // Query the new 'testimonials' collection, ordered by creation date
                 firebase().then((fb) => fb.onSnapshot(fb.query(fb.collection(fb.db, "testimonials"), fb.orderBy("createdAt", "desc")), (snapshot) => {
@@ -2543,10 +2632,6 @@
 
                 messageForm.addEventListener('input', () => this._updateMessageButtonState());
                 ratingForm.addEventListener('input', () => this._updateRatingButtonState());
-                const messageRefresh = document.getElementById('message-captcha-refresh');
-                const ratingRefresh = document.getElementById('rating-captcha-refresh');
-                if (messageRefresh) messageRefresh.addEventListener('click', () => this._loadFormChallenge('message'));
-                if (ratingRefresh) ratingRefresh.addEventListener('click', () => this._loadFormChallenge('rating'));
 
                 fileUpload.addEventListener('change', () => this._handleFileAttachment());
 
@@ -2560,6 +2645,7 @@
             _openContactWidget() {
                 this.DOMElements.contactWidget.classList.add('visible');
                 this.DOMElements.contactWidget.setAttribute('aria-hidden', 'false');
+                this._renderFormChecks();
             },
 
             _closeContactWidget() {
@@ -2659,7 +2745,7 @@
                 const isTopicValid = messageTopic.value.trim() !== '';
                 const isMessageValid = senderMessage.value.trim().length >= 10;
 
-                sendMessageBtn.disabled = !(isNameValid && isEmailValid && isTopicValid && isMessageValid && this._captchaReady('message'));
+                sendMessageBtn.disabled = !(isNameValid && isEmailValid && isTopicValid && isMessageValid);
             },
 
             _updateRatingButtonState() {
@@ -2668,104 +2754,107 @@
                 const isEmailValid = /^\S+@\S+\.\S+$/.test(raterEmail.value.trim());
                 const isRatingValid = parseInt(ratingValue.value, 10) > 0;
 
-                sendRatingBtn.disabled = !(isNameValid && isEmailValid && isRatingValid && this._captchaReady('rating'));
+                sendRatingBtn.disabled = !(isNameValid && isEmailValid && isRatingValid);
             },
 
-            _captchaReady(kind) {
-                if (!this.state.captchaRequired) return true;
-                const input = document.getElementById(kind + '-captcha-answer');
-                return !!input && input.value.trim().length === 5;
+            _turnstileLanguage() {
+                const lang = String(this.state.lang || 'en').slice(0, 2);
+                if (lang === 'pt') return 'pt-br';
+                return ['en', 'es', 'de', 'fr', 'it'].includes(lang) ? lang : 'auto';
             },
 
-            _watchFormCaptcha() {
-                firebase().then((fb) => fb.onSnapshot(fb.doc(fb.db, 'abuse', 'forms'), (snap) => {
-                    const data = snap.exists() ? snap.data() : null;
-                    const until = data && data.until && typeof data.until.toMillis === 'function' ? data.until.toMillis() : 0;
-                    const on = !!(data && data.captcha === true && until > Date.now());
-                    if (on === this.state.captchaRequired) return;
-                    this.state.captchaRequired = on;
-                    this._syncFormCaptcha();
-                }, () => {
-                    this.state.captchaRequired = false;
-                })).catch(() => {
-                    this.state.captchaRequired = false;
+            async _renderFormChecks() {
+                let api;
+                try {
+                    api = await turnstile();
+                } catch (error) {
+                    console.warn('Bot check did not load', error && error.message);
+                    return;
+                }
+                const checks = this.state.formChecks;
+                const language = this._turnstileLanguage();
+                const theme = document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light';
+                ['message', 'rating'].forEach((kind) => {
+                    const box = document.getElementById(kind + '-turnstile');
+                    if (!box) return;
+                    if (checks.ids[kind] != null) {
+                        if (checks.langs[kind] === language) return;
+                        api.remove(checks.ids[kind]);
+                    }
+                    checks.tokens[kind] = '';
+                    checks.langs[kind] = language;
+                    checks.ids[kind] = api.render(box, {
+                        sitekey: TURNSTILE_SITEKEY,
+                        action: kind,
+                        language,
+                        theme,
+                        size: 'flexible',
+                        appearance: 'interaction-only',
+                        callback: (token) => this._setFormCheckToken(kind, token),
+                        'expired-callback': () => this._setFormCheckToken(kind, ''),
+                        'error-callback': () => this._setFormCheckToken(kind, ''),
+                        'before-interactive-callback': () => this._toggleFormCheckRoom(true),
+                        'after-interactive-callback': () => this._toggleFormCheckRoom(false)
+                    });
                 });
             },
 
-            _syncFormCaptcha() {
-                const on = !!this.state.captchaRequired;
+            _toggleFormCheckRoom(on) {
                 const widget = document.getElementById('contact-widget');
                 if (widget) widget.classList.toggle('captcha-on', on);
-                ['message', 'rating'].forEach((kind) => {
-                    const box = document.getElementById(kind + '-captcha');
-                    if (box) box.hidden = !on;
-                    if (on && box) box.scrollIntoView({ block: 'nearest' });
-                    if (on) this._loadFormChallenge(kind);
-                });
-                this._updateMessageButtonState();
-                this._updateRatingButtonState();
             },
 
-            async _loadFormChallenge(kind) {
-                const image = document.getElementById(kind + '-captcha-image');
-                const input = document.getElementById(kind + '-captcha-answer');
-                const error = document.getElementById(kind + '-captcha-error');
-                if (!image) return;
-                if (input) input.value = '';
-                if (error) error.style.display = 'none';
-                try {
-                    const fb = await firebase();
-                    const ask = fb.httpsCallable(fb.functions, 'getFormChallenge');
-                    const result = await ask({});
-                    if (!result.data || !result.data.required) {
-                        this.state.captchaRequired = false;
-                        const widget = document.getElementById('contact-widget');
-                        if (widget) widget.classList.remove('captcha-on');
-                        ['message', 'rating'].forEach((name) => {
-                            const box = document.getElementById(name + '-captcha');
-                            if (box) box.hidden = true;
-                        });
-                        this._updateMessageButtonState();
-                        this._updateRatingButtonState();
-                        return;
-                    }
-                    this.state.captchaIds[kind] = result.data.id;
-                    image.src = result.data.image;
-                } catch (error) {
-                    console.warn('Form check was not ready', error && error.code ? error.code : error);
+            _setFormCheckToken(kind, token) {
+                const checks = this.state.formChecks;
+                checks.tokens[kind] = token || '';
+                if (token && checks.waiters[kind]) {
+                    checks.waiters[kind](token);
+                    checks.waiters[kind] = null;
                 }
-                this._updateMessageButtonState();
-                this._updateRatingButtonState();
+            },
+
+            // A visitor who must click the check gets half a minute before Send reports it unfinished.
+            _formCheckToken(kind) {
+                const checks = this.state.formChecks;
+                if (checks.tokens[kind]) return Promise.resolve(checks.tokens[kind]);
+                this._renderFormChecks();
+                return new Promise((resolve) => {
+                    const timer = setTimeout(() => { checks.waiters[kind] = null; resolve(''); }, 30000);
+                    checks.waiters[kind] = (token) => { clearTimeout(timer); resolve(token); };
+                });
+            },
+
+            _resetFormCheck(kind) {
+                const checks = this.state.formChecks;
+                checks.tokens[kind] = '';
+                if (window.turnstile && checks.ids[kind] != null) window.turnstile.reset(checks.ids[kind]);
+            },
+
+            _formCheckFailed(kind) {
+                const err = document.getElementById(kind + '-captcha-error');
+                if (err) {
+                    err.textContent = this._t().captcha_error || 'The bot check did not pass. Wait for it to finish, then send again.';
+                    err.style.display = 'block';
+                }
+                const failed = new Error('captcha');
+                failed.captcha = true;
+                return failed;
             },
 
             async _storeForm(kind, payload) {
+                const err = document.getElementById(kind + '-captcha-error');
+                if (err) err.style.display = 'none';
+                const token = await this._formCheckToken(kind);
+                if (!token) throw this._formCheckFailed(kind);
                 const fb = await firebase();
-                if (!this.state.captchaRequired) {
-                    await fb.addDoc(fb.collection(fb.db, kind === 'message' ? 'messages' : 'ratings'), payload);
-                    return;
-                }
-                const answer = document.getElementById(kind + '-captcha-answer').value;
                 const send = fb.httpsCallable(fb.functions, 'submitGuardedForm');
                 try {
-                    await send(Object.assign({
-                        kind,
-                        challengeId: this.state.captchaIds[kind],
-                        answer
-                    }, payload, { createdAt: null }));
+                    await send(Object.assign({}, payload, { kind, token }));
                 } catch (error) {
-                    const code = String(error && error.code || '');
-                    if (code.indexOf('invalid-argument') !== -1) {
-                        const err = document.getElementById(kind + '-captcha-error');
-                        if (err) {
-                            err.textContent = this._t().captcha_error || 'Those characters did not match. Try the new set.';
-                            err.style.display = 'block';
-                        }
-                        await this._loadFormChallenge(kind);
-                        const mismatch = new Error('captcha');
-                        mismatch.captcha = true;
-                        throw mismatch;
-                    }
+                    if (String(error && error.code || '').indexOf('permission-denied') !== -1) throw this._formCheckFailed(kind);
                     throw error;
+                } finally {
+                    this._resetFormCheck(kind);
                 }
             },
 
@@ -2832,9 +2921,7 @@
                         email,
                         topic: messageTopic.value,
                         message: senderMessage.value.trim(),
-                        fileURL,
-                        status: 'inbox',
-                        createdAt: fb.serverTimestamp()
+                        fileURL
                     });
 
                     // This corrected line uses the available 'messageTopic' variable.
@@ -2871,15 +2958,11 @@
                 this._setButtonSendingState(sendRatingBtn, true);
 
                 try {
-                    const fb = await firebase();
                     await this._storeForm('rating', {
                         name: raterName.value.trim(),
                         email,
                         rating: parseInt(ratingValue.value, 10),
-                        comment: raterComment.value.trim(),
-                        status: 'pending',
-                        isAnonymous: false,
-                        createdAt: fb.serverTimestamp()
+                        comment: raterComment.value.trim()
                     });
 
                     this._trackEvent('submit_rating', 'Form Submission', `Rating: ${ratingValue.value} Stars`);
@@ -3205,30 +3288,60 @@
                     .cv-print .stack { margin: 3px 0 0; font-size: 8.5pt; line-height: 1.35; color: #4a5560; }
                     .cv-print .stack span { color: #0d6e76; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 7.5pt; margin-right: 4px; }
                     .cv-print .edu { margin-bottom: 2px; }
+                    .cv-print .job-summary { margin: 2px 0 4px; font-size: 10pt; font-style: italic; color: #4a5560; }
+                    .cv-print .job-highlights { margin: 0 0 5px; font-size: 9pt; font-weight: 600; color: #0d6e76; }
+                    .cv-print .job { display: flow-root; }
+                    .cv-print .job.job-split { margin-bottom: 0; }
+                    .cv-print .job.job-cont { margin-top: 0; }
                 `;
             },
 
-            _jobPrintBlock(exp, index, current) {
+            _exportRoleGroups() {
+                const roles = (this.data.experiences || []).map((exp, index) => ({ exp, index }));
+                let current = roles.filter(({ exp }) => /present\s*$/i.test(String(exp.dates || '')));
+                if (!current.length && roles.length) current = [roles[0]];
+                const past = roles.filter((role) => !current.includes(role));
+                const heading = current.length > 1
+                    ? this._s('print_current_roles', 'Current roles')
+                    : this._s('print_current_role', 'Current role');
+                return { current, past, heading };
+            },
+
+            _jobPrintBlocks(exp, index, current) {
                 const item = this._experienceExport(exp, index);
-                const bullets = item.details.map((line) => `<li>${this._escPrint(line)}</li>`).join('');
+                const li = (line) => {
+                    const parts = exp.featured ? this._splitDetailLabel(line) : null;
+                    return parts
+                        ? `<li><strong>${this._escPrint(parts.label)}:</strong> ${this._escPrint(parts.text)}</li>`
+                        : `<li>${this._escPrint(line)}</li>`;
+                };
                 const tech = (item.techUsed || []).join(', ');
+                const stack = tech ? `<p class="stack"><span>${this._escPrint(this._s('print_stack', 'Stack'))}</span> ${this._escPrint(tech)}</p>` : '';
                 const badge = current ? `<span class="now">${this._escPrint(this._s('print_now', 'Current'))}</span>` : '';
-                return `
-                    <article class="job${current ? ' current' : ''}">
+                const cls = `job${current ? ' current' : ''}`;
+                const head = `
                         <div class="job-row">
                             <h3>${badge}${this._escPrint(item.title)}</h3>
                             <p class="dates">${this._escPrint(item.dates)}</p>
                         </div>
                         <p class="company">${this._companyHtml(item.company)}</p>
-                        <ul>${bullets}</ul>
-                        ${tech ? `<p class="stack"><span>${this._escPrint(this._s('print_stack', 'Stack'))}</span> ${this._escPrint(tech)}</p>` : ''}
-                    </article>
-                `;
+                        ${item.summary ? `<p class="job-summary">${this._escPrint(item.summary)}</p>` : ''}
+                        ${item.highlights.length ? `<p class="job-highlights">${item.highlights.map((h) => this._escPrint(h)).join(' · ')}</p>` : ''}`;
+                if (item.details.length <= 3) {
+                    return [`<article class="${cls}">${head}<ul>${item.details.map(li).join('')}</ul>${stack}</article>`];
+                }
+                const rest = item.details.slice(1);
+                return [
+                    `<article class="${cls} job-split">${head}<ul>${li(item.details[0])}</ul></article>`,
+                    ...rest.map((line, i) => {
+                        const last = i === rest.length - 1;
+                        return `<article class="${cls} job-cont${last ? '' : ' job-split'}"><ul>${li(line)}</ul>${last ? stack : ''}</article>`;
+                    })
+                ];
             },
 
             _recruiterBlocks() {
                 const blocks = [];
-                const experiences = this.data.experiences || [];
                 blocks.push(`
                     <header class="mast">
                         <h1>Carlos A. Muñoz</h1>
@@ -3245,9 +3358,10 @@
                     const names = this.data.skills[key].map((skill) => skill.name).join(', ');
                     blocks.push(`<p class="skill"><strong>${this._escPrint(this._s('print_cat_' + key, key))}.</strong> ${this._escPrint(names)}</p>`);
                 });
-                if (experiences[0]) {
-                    blocks.push(`<h2>${this._escPrint(this._s('print_current_role', 'Current role'))}</h2>`);
-                    blocks.push(this._jobPrintBlock(experiences[0], 0, true));
+                const roles = this._exportRoleGroups();
+                if (roles.current.length) {
+                    blocks.push(`<h2>${this._escPrint(roles.heading)}</h2>`);
+                    roles.current.forEach(({ exp, index }) => blocks.push(...this._jobPrintBlocks(exp, index, true)));
                 }
                 blocks.push(`<h2>${this._escPrint(this._s('print_certs_title', 'Certifications'))}</h2>`);
                 this._certEntries().forEach((item) => {
@@ -3257,9 +3371,7 @@
                 blocks.push(`<h2>${this._escPrint(this._s('languages_title', 'Languages'))}</h2>`);
                 blocks.push(`<p>${this._escPrint(this._s('lang_name_es'))}, ${this._escPrint(this._s('lang_native'))} · ${this._escPrint(this._s('lang_name_en'))}, ${this._escPrint(this._s('lang_fluent'))} (C2) · ${this._escPrint(this._s('lang_name_pt'))}, ${this._escPrint(this._s('lang_fluent'))} · ${this._escPrint(this._s('lang_others'))}, ${this._escPrint(this._s('lang_basic'))}</p>`);
                 blocks.push(`<h2>${this._escPrint(this._s('print_experience_short', 'Experience'))}</h2>`);
-                experiences.slice(1).forEach((exp, offset) => {
-                    blocks.push(this._jobPrintBlock(exp, offset + 1, false));
-                });
+                roles.past.forEach(({ exp, index }) => blocks.push(...this._jobPrintBlocks(exp, index, false)));
                 blocks.push(`<h2>${this._escPrint(this._s('print_education_short', 'Education'))}</h2>`);
                 this._educationEntries().forEach((item) => {
                     blocks.push(`<p class="edu"><strong>${this._escPrint(item.degree)}</strong> · ${this._escPrint(item.school)}</p>`);
@@ -3343,12 +3455,13 @@
             },
 
             _recruiterWordHtml() {
-                const experiences = this.data.experiences || [];
+                const roles = this._exportRoleGroups();
                 const job = (exp, index) => {
                     const item = this._experienceExport(exp, index);
                     const href = PRINT_COMPANIES[item.company];
                     const company = href ? `<a href="${this._escPrint(href)}">${this._escPrint(item.company)}</a>` : this._escPrint(item.company);
-                    return `<h3>${this._escPrint(item.title)}</h3><p><strong>${company}</strong> | ${this._escPrint(item.dates)}</p><ul>${item.details.map((line) => `<li>${this._escPrint(line)}</li>`).join('')}</ul><p><strong>${this._escPrint(this._s('print_stack', 'Stack'))}:</strong> ${this._escPrint(item.techUsed.join(', '))}</p>`;
+                    const intro = `${item.summary ? `<p><em>${this._escPrint(item.summary)}</em></p>` : ''}${item.highlights.length ? `<p><strong>${item.highlights.map((h) => this._escPrint(h)).join(' · ')}</strong></p>` : ''}`;
+                    return `<h3>${this._escPrint(item.title)}</h3><p><strong>${company}</strong> | ${this._escPrint(item.dates)}</p>${intro}<ul>${item.details.map((line) => { const parts = exp.featured ? this._splitDetailLabel(line) : null; return parts ? `<li><strong>${this._escPrint(parts.label)}:</strong> ${this._escPrint(parts.text)}</li>` : `<li>${this._escPrint(line)}</li>`; }).join('')}</ul><p><strong>${this._escPrint(this._s('print_stack', 'Stack'))}:</strong> ${this._escPrint(item.techUsed.join(', '))}</p>`;
                 };
                 return `
                     <h1>Carlos A. Muñoz</h1>
@@ -3360,13 +3473,13 @@
                     <p><a href="https://carlosandmunoz.com/simulador.html">${this._escPrint(this._s('print_studio_name', 'SDLC studio'))}</a> — ${this._escPrint(this._s('print_studio_pitch'))}</p>
                     <h2>${this._escPrint(this._s('print_skills', 'Skills'))}</h2>
                     ${Object.keys(this.data.skills || {}).map((key) => `<p><strong>${this._escPrint(this._s('print_cat_' + key, key))}:</strong> ${this._escPrint(this.data.skills[key].map((skill) => skill.name).join(', '))}</p>`).join('')}
-                    ${experiences[0] ? `<h2>${this._escPrint(this._s('print_current_role', 'Current role'))}</h2>${job(experiences[0], 0)}` : ''}
+                    ${roles.current.length ? `<h2>${this._escPrint(roles.heading)}</h2>${roles.current.map(({ exp, index }) => job(exp, index)).join('<hr>')}` : ''}
                     <h2>${this._escPrint(this._s('print_certs_title', 'Certifications'))}</h2>
                     ${this._certEntries().map((item) => `<p><strong>${this._escPrint(String(item.label || '').replace(/:\s*$/, ''))}</strong> ${this._escPrint(item.value)}</p>`).join('')}
                     <h2>${this._escPrint(this._s('languages_title', 'Languages'))}</h2>
                     <p>${this._escPrint(this._s('lang_name_es'))}, ${this._escPrint(this._s('lang_native'))} · ${this._escPrint(this._s('lang_name_en'))}, ${this._escPrint(this._s('lang_fluent'))} (C2) · ${this._escPrint(this._s('lang_name_pt'))}, ${this._escPrint(this._s('lang_fluent'))} · ${this._escPrint(this._s('lang_others'))}, ${this._escPrint(this._s('lang_basic'))}</p>
                     <h2>${this._escPrint(this._s('print_experience_short', 'Experience'))}</h2>
-                    ${experiences.slice(1).map((exp, offset) => job(exp, offset + 1)).join('<hr>')}
+                    ${roles.past.map(({ exp, index }) => job(exp, index)).join('<hr>')}
                     <h2>${this._escPrint(this._s('print_education_short', 'Education'))}</h2>
                     ${this._educationEntries().map((item) => `<p><strong>${this._escPrint(item.degree)}</strong> — ${this._escPrint(item.school)}</p>`).join('')}
                     <h2>${this._escPrint(this._s('print_summary_short', 'Summary'))}</h2>
@@ -3375,13 +3488,15 @@
             },
 
             _recruiterText() {
-                const experiences = this.data.experiences || [];
+                const roles = this._exportRoleGroups();
                 const lines = [];
                 const job = (exp, index) => {
                     const item = this._experienceExport(exp, index);
                     const href = PRINT_COMPANIES[item.company];
                     lines.push(`${item.title}`);
                     lines.push(`${item.company}${href ? ' (' + href + ')' : ''} | ${item.dates}`);
+                    if (item.summary) lines.push(item.summary);
+                    if (item.highlights.length) lines.push(item.highlights.join(' · '));
                     item.details.forEach((line) => lines.push('- ' + line));
                     lines.push(`${this._s('print_stack', 'Stack')}: ${item.techUsed.join(', ')}`);
                     lines.push('');
@@ -3400,9 +3515,9 @@
                     lines.push(`${this._s('print_cat_' + key, key)}: ${this.data.skills[key].map((skill) => skill.name).join(', ')}`);
                 });
                 lines.push('');
-                if (experiences[0]) {
-                    lines.push(`## ${this._s('print_current_role', 'Current role')} ##`);
-                    job(experiences[0], 0);
+                if (roles.current.length) {
+                    lines.push(`## ${roles.heading} ##`);
+                    roles.current.forEach(({ exp, index }) => job(exp, index));
                 }
                 lines.push(`## ${this._s('print_certs_title', 'Certifications')} ##`);
                 this._certEntries().forEach((item) => lines.push(`- ${String(item.label || '').replace(/:\s*$/, '')} ${item.value}`));
@@ -3412,7 +3527,7 @@
                 lines.push('');
                 lines.push(`## ${this._s('print_experience_short', 'Experience')} ##`);
                 lines.push('');
-                experiences.slice(1).forEach((exp, offset) => job(exp, offset + 1));
+                roles.past.forEach(({ exp, index }) => job(exp, index));
                 lines.push(`## ${this._s('print_education_short', 'Education')} ##`);
                 this._educationEntries().forEach((item) => lines.push(`- ${item.degree} — ${item.school}`));
                 lines.push('');
@@ -3713,16 +3828,21 @@
             },
 
             _cleanLiveText(value, max) {
-                return String(value ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
+                return String(value ?? '').replace(/<[^>]*>/g, '').replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
             },
 
             _roleFromLive(role, fileExperiences) {
                 const source = Number.isInteger(role.source) ? role.source : -1;
-                const base = source >= 0 && fileExperiences[source]
-                    ? JSON.parse(JSON.stringify(fileExperiences[source]))
-                    : { title: '', company: '', dates: '', logo: 'assets/icons/briefcase.svg', techUsed: [], details: {} };
-                const title = this._cleanLiveText(role.title, 140);
                 const company = this._cleanLiveText(role.company, 140);
+                const bySource = source >= 0 ? fileExperiences[source] : null;
+                const sourceExp = bySource && bySource.company === company
+                    ? bySource
+                    : (fileExperiences.find((exp) => exp.company === company) || bySource);
+                const base = sourceExp
+                    ? JSON.parse(JSON.stringify(sourceExp))
+                    : { title: '', company: '', dates: '', logo: 'assets/icons/briefcase.svg', techUsed: [], details: {} };
+                const sourceIdx = sourceExp ? fileExperiences.indexOf(sourceExp) : -1;
+                const title = this._cleanLiveText(role.title, 140);
                 const dates = this._cleanLiveText(role.dates, 80);
                 if (!title || !company || !dates) return null;
                 base.title = title;
@@ -3732,7 +3852,7 @@
                 if (!Array.isArray(base.techUsed)) base.techUsed = [];
                 if (!base.details) base.details = {};
                 const bullets = role.bullets || {};
-                const fileDetails = (source >= 0 && fileExperiences[source] && fileExperiences[source].details) || {};
+                const fileDetails = (sourceExp && sourceExp.details) || {};
                 const cleanLines = (list, max) => (Array.isArray(list) ? list : []).map((line) => this._cleanLiveText(line, 400)).filter(Boolean).slice(0, max);
                 const liveEnglish = cleanLines(bullets.en, 8);
                 const fileEnglish = cleanLines(fileDetails.en, 8);
@@ -3754,7 +3874,7 @@
                 ['en', 'es', 'pt', 'de', 'fr', 'it'].forEach((lang) => {
                     if (!base.details[lang] || !base.details[lang].length) base.details[lang] = english.slice();
                 });
-                base.liveSource = source;
+                base.liveSource = sourceIdx;
                 base.liveHidden = role.hidden === true;
                 base.onTimeline = role.onTimeline !== false;
                 return base;
@@ -4165,6 +4285,7 @@
                     }
                     return;
                 }
+                if (AUTOMATED) return;
                 try {
                     const fb = await firebase();
                     const snap = await fb.getDoc(fb.doc(fb.db, 'cvContent', 'live'));
@@ -4194,7 +4315,6 @@
                 this._initScrollAnimations();
                 this._initUrlHighlighting();
                 this._initContactWidget();
-                this._watchFormCaptcha();
                 this._initScrollTrigger();
                 this._noteCvAccess();
 
@@ -4904,6 +5024,12 @@
 
         CarlosMunozCV.init();
     }
+
+    // An onerror attribute would need 'unsafe-inline' in script-src, so broken icons hide from here.
+    document.addEventListener('error', (event) => {
+        const img = event.target;
+        if (img instanceof HTMLImageElement && img.hasAttribute('data-hide-broken')) img.style.display = 'none';
+    }, true);
 
     try {
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

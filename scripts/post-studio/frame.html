@@ -17,26 +17,25 @@
   #c { position: relative; overflow: hidden; background: var(--ink); }
   #c.transparent { background: transparent; }
 
-  .bg, .bg img, .shade, .glow, .grain, .grid { position: absolute; inset: 0; }
-  .bg img { width: 100%; height: 100%; object-fit: cover; filter: saturate(1.15) contrast(1.05); }
-  .shade { background: linear-gradient(180deg, rgba(5, 12, 15, .25) 0%, rgba(5, 12, 15, .62) 38%, rgba(5, 12, 15, .9) 70%, #050c0f 100%); }
+  .bg, .bg img, .shade, .glow, .grain { position: absolute; inset: 0; }
+  .bg img { width: 100%; height: 100%; object-fit: cover; }
+  .shade { background: linear-gradient(180deg, rgba(5, 12, 15, .3) 0%, rgba(5, 12, 15, .6) 32%, rgba(5, 12, 15, .82) 62%, rgba(5, 12, 15, .9) 100%); }
   .glow { background: radial-gradient(60% 40% at 85% 8%, rgba(77, 179, 187, .28), transparent 70%), radial-gradient(50% 35% at 0% 100%, rgba(226, 196, 138, .16), transparent 70%); }
-  .grid { background-image: linear-gradient(rgba(126, 246, 251, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(126, 246, 251, .05) 1px, transparent 1px); background-size: 60px 60px; -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 45%, transparent 100%); }
   .grain { opacity: .09; mix-blend-mode: overlay; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
 
   .stack { position: absolute; inset: 0; display: flex; flex-direction: column; padding: var(--pad); gap: var(--gap); }
   .top { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex: none; }
   .brand { display: flex; align-items: center; gap: 16px; }
-  .brand svg { width: var(--mark); height: var(--mark); flex: none; filter: drop-shadow(0 6px 18px rgba(77, 179, 187, .35)); }
+  .brand img { width: var(--mark); height: var(--mark); flex: none; filter: drop-shadow(0 6px 18px rgba(77, 179, 187, .35)); }
   .brand b { display: block; font-weight: 700; font-size: var(--brand); letter-spacing: .14em; text-transform: uppercase; }
   .brand small { display: block; margin-top: 4px; color: var(--muted); font-size: calc(var(--brand) * .82); letter-spacing: .04em; }
   .chip { display: inline-flex; align-items: center; gap: 10px; border: 1.5px solid var(--line); background: rgba(10, 30, 36, .55); border-radius: 999px; padding: .45em 1em; font-size: var(--chip); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--cyan-hi); backdrop-filter: blur(10px); white-space: nowrap; }
   .chip i { width: .55em; height: .55em; border-radius: 50%; background: var(--gold); box-shadow: 0 0 14px var(--gold); }
 
-  .title { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: var(--title); line-height: .98; letter-spacing: -0.025em; text-wrap: balance; }
+  .title { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: var(--title); line-height: .98; letter-spacing: -0.025em; text-wrap: balance; text-shadow: 0 4px 30px rgba(5, 12, 15, .7); }
   .title span { display: block; }
   .title em { font-style: italic; background: linear-gradient(92deg, var(--cyan-hi) 0%, #b8f3ea 45%, var(--gold) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .06em; }
-  .sub { margin: 0; font-size: var(--sub); line-height: 1.38; color: #cfe0e3; max-width: 30em; text-wrap: pretty; }
+  .sub { margin: 0; font-size: var(--sub); line-height: 1.38; color: #cfe0e3; max-width: 30em; text-wrap: pretty; text-shadow: 0 2px 16px rgba(5, 12, 15, .85); }
 
   .visual { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: calc(var(--gap) * .7); }
   .glass { background: linear-gradient(160deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .02)); border: 1.5px solid rgba(126, 246, 251, .2); border-radius: var(--r); backdrop-filter: blur(16px); box-shadow: 0 30px 80px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .08); }
@@ -127,7 +126,7 @@
 
   .center { align-items: center; justify-content: center; text-align: center; }
   .center .sub { margin: 0 auto; }
-  .bigmark svg { width: 190px; height: 190px; filter: drop-shadow(0 18px 60px rgba(77, 179, 187, .55)); }
+  .bigmark img { width: 190px; height: 190px; filter: drop-shadow(0 18px 60px rgba(77, 179, 187, .55)); }
   .fine { font-size: var(--small); color: var(--muted); max-width: 34em; line-height: 1.45; margin: 0 auto; }
 
   .capwrap { display: flex; justify-content: center; padding: 10px 40px; }
@@ -148,7 +147,7 @@
 <body>
 <div id="c"></div>
 <script>
-const MARK = '<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#102226"/><rect x="1.5" y="1.5" width="61" height="61" rx="14.5" fill="none" stroke="#4db3bb" stroke-width="1.6"/><path d="M32 11 L15 45 L32 38 Z" fill="#4db3bb" fill-opacity=".28" stroke="#7ef6fb" stroke-width="1.35" stroke-linejoin="round"/><path d="M32 11 L49 45 L32 38 Z" fill="#e2c48a" fill-opacity=".42" stroke="#e2c48a" stroke-width="1.35" stroke-linejoin="round"/><path d="M15 45 L49 45 L32 53 Z" fill="#4db3bb" fill-opacity=".16" stroke="#7ef6fb" stroke-width="1.2" stroke-linejoin="round"/><path d="M32 11 L32 53" fill="none" stroke="#e9fdff" stroke-width="1.15" stroke-linecap="round"/><g fill="#e9fdff"><circle cx="18" cy="49" r="1.35"/><circle cx="46" cy="49" r="1.15"/></g><circle cx="40" cy="28" r="1.5" fill="#fff6e4"/></svg>';
+const MARK = '<img src="../../designs/3d/icon/qa-review-mark-fusion.svg" alt="">';
 const ARROW = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12M11 5l5 5-5 5"/></svg>';
 const LOCK = '<svg class="lock" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="9" width="12" height="9" rx="2"/><path d="M7 9V6a3 3 0 0 1 6 0v3"/></svg>';
 const SIZES = { portrait: [1080, 1350], landscape: [1600, 900], story: [1080, 1920], slide: [1080, 1350], video: [1080, 1920] };
@@ -162,8 +161,11 @@ function line(text) {
   return em ? "<span><em>" + esc(em[1]) + "</em></span>" : "<span>" + esc(raw) + "</span>";
 }
 function title(lines, cls) { return '<h1 class="title ' + (cls || "") + '">' + lines.map(line).join("") + "</h1>"; }
-function backdrop(art) {
-  return '<div class="bg"><img src="../../media/qa-review-stage/qa-email-' + esc(art) + '.jpg" alt=""></div><div class="shade"></div><div class="glow"></div><div class="grid"></div><div class="grain"></div>';
+// Each post's art picks one of three Fusion moments (scripts/fusion/stage.js), so a run of posts varies.
+const MOMENT = { prism: "a", layers: "a", portal: "a", field: "b", path: "b", nodes: "c", streams: "c" };
+const STAGE = { portrait: "portrait", slide: "portrait", story: "story", video: "story", landscape: "landscape" };
+function backdrop(s) {
+  return '<div class="bg"><img src="../../media/fusion-stage/' + (STAGE[s.size] || "portrait") + "-" + (MOMENT[s.art] || "a") + '.jpg" alt=""></div><div class="shade"></div><div class="glow"></div><div class="grain"></div>';
 }
 function brand(ui) { return '<div class="brand">' + MARK + "<div><b>QA-lab URL Review</b>" + (ui.by ? "<small>" + esc(ui.by) + "</small>" : "") + "</div></div>"; }
 function topBar(s, extra) { return '<header class="top">' + brand(s.ui) + (extra || '<span class="chip"><i></i>' + esc(s.copy.kicker) + "</span>") + "</header>"; }
@@ -201,22 +203,22 @@ function still(s) {
   const swipe = s.swipe ? '<span class="swipe">' + esc(s.ui.swipe) + ARROW + "</span>" : null;
   const showBullets = s.layout !== "layers" || s.size !== "landscape";
   if (s.size === "landscape") {
-    return backdrop(s.art) + '<div class="stack">' + topBar(s) + '<div class="copy">' + title(c.title) + '<p class="sub">' + esc(c.sub) + "</p>" + (showBullets ? bullets(c.bullets) : "") + '</div><div class="visual">' + visual(s) + "</div>" + foot(s) + "</div>";
+    return backdrop(s) + '<div class="stack">' + topBar(s) + '<div class="copy">' + title(c.title) + '<p class="sub">' + esc(c.sub) + "</p>" + (showBullets ? bullets(c.bullets) : "") + '</div><div class="visual">' + visual(s) + "</div>" + foot(s) + "</div>";
   }
   const sub = s.layout === "tiles" ? "" : '<p class="sub">' + esc(c.sub) + "</p>";
-  return backdrop(s.art) + '<div class="stack">' + topBar(s, swipe ? '<span class="chip"><i></i>' + esc(c.kicker) + "</span>" : null) + '<div class="copy">' + title(c.title) + sub + '</div><div class="visual">' + visual(s) + "</div>" + (s.layout === "layers" ? "" : bullets(c.bullets)) + foot(s, swipe) + "</div>";
+  return backdrop(s) + '<div class="stack">' + topBar(s, swipe ? '<span class="chip"><i></i>' + esc(c.kicker) + "</span>" : null) + '<div class="copy">' + title(c.title) + sub + '</div><div class="visual">' + visual(s) + "</div>" + (s.layout === "layers" ? "" : bullets(c.bullets)) + foot(s, swipe) + "</div>";
 }
 
 function hook(s) {
-  return backdrop(s.art) + '<div class="stack center" style="padding:120px 80px">' + topBar(s, " ") + '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:44px;align-items:center"><span class="chip"><i></i>' + esc(s.copy.kicker) + "</span>" + title(s.copy.title) + '<p class="sub" style="max-width:24em">' + esc(s.copy.hook) + "</p></div></div>";
+  return backdrop(s) + '<div class="stack center" style="padding:120px 80px">' + topBar(s, " ") + '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:44px;align-items:center"><span class="chip"><i></i>' + esc(s.copy.kicker) + "</span>" + title(s.copy.title) + '<p class="sub" style="max-width:24em">' + esc(s.copy.hook) + "</p></div></div>";
 }
 
 function vframe(s) {
-  return backdrop(s.art) + '<div class="stack"><div class="vtop">' + topBar(s) + title(s.copy.title) + '</div><div class="vbottom"><span class="included">' + esc(s.ui.included) + '</span><span class="cta">' + esc(s.ui.cta) + ARROW + '</span><span class="domain">carlosandmunoz.com/qa-review</span></div></div>';
+  return backdrop(s) + '<div class="stack"><div class="vtop">' + topBar(s) + title(s.copy.title) + '</div><div class="vbottom"><span class="included">' + esc(s.ui.included) + '</span><span class="cta">' + esc(s.ui.cta) + ARROW + '</span><span class="domain">carlosandmunoz.com/qa-review</span></div></div>';
 }
 
 function endcard(s) {
-  return backdrop(s.art) + '<div class="stack center" style="gap:46px">' +
+  return backdrop(s) + '<div class="stack center" style="gap:46px">' +
     '<div class="bigmark">' + MARK + "</div>" + title(s.ui.endTitle) +
     '<span class="included">' + esc(s.ui.included) + "</span>" +
     (s.ui.price ? '<p class="fine">' + esc(s.ui.price) + "</p>" : "") +
@@ -239,7 +241,7 @@ function itemSlide(s) {
   } else {
     body = '<div class="pair">' + it.pair.map((l) => '<div><h2 class="layer-name">' + esc(l[2]) + '</h2><div class="case glass"><span class="id">' + esc(l[0]) + '</span><span class="t">' + esc(l[1]) + '</span><span class="l">' + esc(s.ui.cases) + "</span></div></div>").join("") + "</div>";
   }
-  return backdrop(s.art) + '<div class="stack">' + head + '<div class="visual" style="justify-content:center;gap:40px">' + body + "</div>" + foot(s, '<span class="swipe">' + esc(s.ui.swipe) + ARROW + "</span>") + "</div>";
+  return backdrop(s) + '<div class="stack">' + head + '<div class="visual" style="justify-content:center;gap:40px">' + body + "</div>" + foot(s, '<span class="swipe">' + esc(s.ui.swipe) + ARROW + "</span>") + "</div>";
 }
 
 function caption(s) { return '<div class="capwrap"><div class="cap">' + esc(s.text) + "</div></div>"; }

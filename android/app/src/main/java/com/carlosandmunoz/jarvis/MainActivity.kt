@@ -1,0 +1,137 @@
+package com.carlosandmunoz.jarvis
+
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.os.Build
+import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.setContent
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
+import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
+import androidx.biometric.BiometricPrompt
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.carlosandmunoz.jarvis.ui.Backdrop
+import com.carlosandmunoz.jarvis.ui.JarvisTheme
+import com.carlosandmunoz.jarvis.ui.LocalForm
+import com.carlosandmunoz.jarvis.ui.LockScreen
+import kotlinx.coroutines.delay
+import com.carlosandmunoz.jarvis.ui.MainScreen
+import com.carlosandmunoz.jarvis.ui.SignInScreen
+import com.carlosandmunoz.jarvis.home.Home
+import com.carlosandmunoz.jarvis.push.Push
+import com.carlosandmunoz.jarvis.update.WhatsNew
+import com.carlosandmunoz.jarvis.update.WhatsNewDialog
+import kotlinx.serialization.json.JsonPrimitive
+
+class MainActivity : FragmentActivity() {
+    private val vm: JarvisViewModel by viewModels()
+    private val vault get() = (application as JarvisApp).vault
+    private var locked by mutableStateOf(false)
+    private var lockOn by mutableStateOf(true)
+    private var openTab by mutableStateOf<String?>(null)
+    private var pendingAction by mutableStateOf<String?>(null)
+    private var whatsNew by mutableStateOf<List<String>?>(null)
+    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge(SystemBarStyle.dark(Color.TRANSPARENT), SystemBarStyle.dark(Color.TRANSPARENT))
+        lockOn = vault.flag("lock", true) && canLock()
+        openTab = tabOf(intent)
+        pendingAction = intent.getStringExtra(Home.EXTRA_ACTION)
+        whatsNew = if (savedInstanceState == null) WhatsNew.take(this) else savedInstanceState.getStringArrayList(WHATS_NEW)
+        setContent {
+            JarvisTheme {
+                Backdrop {
+                    val s by vm.state.collectAsStateWithLifecycle()
+                    val form = LocalForm.current
+                    LaunchedEffect(s.signedIn) { if (s.signedIn) askForNotifications() }
+                    LaunchedEffect(s.signedIn, form.kind, form.posture, form.dex, form.windowed) { delay(1500); if (s.signedIn) vm.reportDevice() }
+                    LaunchedEffect(s.signedIn, locked, pendingAction) { if (s.signedIn && !locked) pendingAction?.let { pendingAction = null; run(it) } }
+                    when {
+                        !s.signedIn -> SignInScreen(s, vm)
+                        locked -> LockScreen(::prompt)
+                        else -> MainScreen(s, vm, lockOn, openTab, { openTab = null }) { on -> lockOn = on && canLock(); vault.setFlag("lock", lockOn) }
+                    }
+                    if (!locked) whatsNew?.let { WhatsNewDialog(it) { whatsNew = null } }
+                }
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        whatsNew?.let { outState.putStringArrayList(WHATS_NEW, ArrayList(it)) }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        tabOf(intent)?.let { openTab = it }
+        intent.getStringExtra(Home.EXTRA_ACTION)?.let { pendingAction = it }
+    }
+
+    /** Pushes and widgets pass the tab as an extra; the watch opens jarvis://open/<tab>. */
+    private fun tabOf(intent: Intent): String? =
+        intent.getStringExtra(Push.EXTRA_TAB) ?: intent.data?.takeIf { it.scheme == "jarvis" }?.lastPathSegment ?: intent.data?.let { "overview" }
+
+    /** Shortcut actions: "brief" asks Gemini for today's briefing, "sweep" starts the sweepReviews job. */
+    private fun run(action: String) {
+        when (action) {
+            "brief" -> vm.brief()
+            "sweep" -> vm.act("job:sweepReviews", "run-job", mapOf("job" to JsonPrimitive("sweepReviews"))) { "Started Sweep reviews." }
+        }
+    }
+
+    /** Android 13+ asks once; afterwards the switch lives in Android's app settings, linked from Settings. */
+    private fun askForNotifications() {
+        if (Build.VERSION.SDK_INT < 33 || vault.flag("push.asked", false)) return
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        vault.setFlag("push.asked", true)
+        askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (lockOn && vm.state.value.signedIn && System.currentTimeMillis() - leftAt > LOCK_AFTER_MS) {
+            locked = true
+            prompt()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations && !locked) leftAt = System.currentTimeMillis()
+    }
+
+    private fun canLock() = BiometricManager.from(this).canAuthenticate(BIOMETRIC_WEAK or DEVICE_CREDENTIAL) == BiometricManager.BIOMETRIC_SUCCESS
+
+    private fun prompt() {
+        val info = BiometricPrompt.PromptInfo.Builder().setTitle("Unlock Jarvis").setAllowedAuthenticators(BIOMETRIC_WEAK or DEVICE_CREDENTIAL).build()
+        BiometricPrompt(this, ContextCompat.getMainExecutor(this), object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                locked = false
+                leftAt = System.currentTimeMillis()
+            }
+        }).authenticate(info)
+    }
+
+    companion object {
+        private const val LOCK_AFTER_MS = 60_000L
+        private const val WHATS_NEW = "whatsNew"
+        private var leftAt = 0L
+    }
+}

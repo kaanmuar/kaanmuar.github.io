@@ -1,7 +1,8 @@
 const { test, expect } = require('@playwright/test');
 const auth = require('../functions/url-review-auth');
 const core = require('../functions/url-review-core');
-const sample = require('../assets/qa-review-sample.json');
+const offers = require('../functions/url-review-offers');
+const sample = { frameworks: require('../functions/url-review-core').FRAMEWORKS, report: require('./unit/fixtures/review-carlosandmunoz.json') };
 
 const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 const ID = 'ab12cd34ef56';
@@ -15,10 +16,10 @@ async function signIn(store, email, deviceKey) {
 }
 
 // The page talks to a stub that answers with the real access rule, so the browser sees what the server decides.
-async function open(page, who, report) {
+async function open(page, who, report, extra) {
   const store = auth.memoryStore();
   const people = { ana: await signIn(store, 'ana@example.com', ANA), ben: await signIn(store, 'ben@example.com', BEN) };
-  const row = { email: 'ana@example.com', paid: true, frameworks: sample.frameworks, report: Object.assign({}, report || sample.report, { id: ID }) };
+  const row = Object.assign({ email: 'ana@example.com', paid: true, frameworks: sample.frameworks, report: Object.assign({}, report || sample.report, { id: ID }) }, extra);
   const asked = [];
   const me = people[who];
   await page.addInitScript(({ version, me }) => {
@@ -48,6 +49,10 @@ async function open(page, who, report) {
       asked.push({ id: body.id, session: !!body.session });
       const access = await auth.reportAccess(store, body, row, false);
       if (access.ok) return json(200, { report: row.report, frameworks: row.frameworks, paid: true });
+      if (access.status === 402 && offers.reopenFree(row, Date.now())) {
+        return json(200, { report: core.previewReport(row.report), frameworks: row.frameworks, paid: false, free: false, addons: [], reopenUntil: offers.reopenFreeUntil(row), priceUsd: 19, creditUsd: 0, tools: [], id: ID, host: row.report.host });
+      }
+      if (access.status === 402) return json(402, { paymentRequired: true, priceUsd: 19, creditUsd: 0, frameworks: row.frameworks, tools: [], id: ID, host: row.report.host, addons: [], preview: core.previewReport(row.report) });
       return json(access.status, { error: access.error, signIn: true, locked: true, id: ID, host: row.report.host, frameworks: row.frameworks, preview: core.previewReport(row.report) });
     }
     if (path === '/review' && req.method() === 'GET') return json(401, { error: 'Sign in with the account that ran this report to read it in full.', signIn: true, locked: true });
@@ -92,6 +97,38 @@ test.describe('A paid report opens only for the account that ran it', () => {
     await expect(card.locator('tr', { hasText: 'After Reject' })).toContainText('No cookie · 1 request');
     await expect(card.locator('tr', { hasText: 'Launcher on a phone' })).toContainText('Hidden on the phone');
     await expect(page.locator('.exec-cols')).not.toContainText('chat launcher');
+  });
+
+  test('the pages without an analytics tag show the first eight and open the rest with Show all (#1692)', async ({ page }) => {
+    const untagged = Array.from({ length: 12 }, (_, i) => '/no-tag-' + i);
+    const analytics = Object.assign({}, sample.report.insights.analytics, { untagged });
+    await open(page, 'ana', Object.assign({}, sample.report, { insights: Object.assign({}, sample.report.insights, { analytics }) }));
+    const note = page.locator('#analytics .meta-line', { hasText: 'Pages without a tag' });
+    await expect(note.locator('.list-more')).toHaveText('Show all 12');
+    expect(await note.innerText()).toContain('/no-tag-7');
+    expect(await note.innerText()).not.toContain('/no-tag-8');
+    await note.locator('.list-more').click();
+    await expect(note).toContainText('/no-tag-11');
+    await expect(note.locator('.list-more')).toHaveText('Show fewer');
+  });
+
+  test('within 7 days the owner reopens an unpaid report under the frost, with its sample case, and no payment dialog', async ({ page }) => {
+    const ran = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    await open(page, 'ana', null, { paid: false, createdAt: ran });
+    await expect(page.locator('#form-status')).toContainText('Opening it again is free until ' + offers.reopenFreeUntil({ createdAt: ran }).slice(0, 10));
+    await expect(page.locator('body')).toHaveClass(/preview-copy/);
+    await expect(page.locator('#pay')).toBeHidden();
+    await expect(page.locator('#cases .case-sample')).toHaveCount(1);
+    await expect(page.locator('#cases .case-sample .case-fade')).toHaveCount(0);
+    await expect(page.locator('#cases .case-sample pre.case-script')).toHaveCount(1);
+    expect(await page.locator('#cases .case:not(.case-sample) .case-fade').count()).toBeGreaterThan(0);
+  });
+
+  test('after 7 days the owner reopening an unpaid report is asked to pay', async ({ page }) => {
+    await open(page, 'ana', null, { paid: false, createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString() });
+    await expect(page.locator('#pay')).toBeVisible();
+    await expect(page.locator('#form-status')).toContainText('The 7 days of free reopening have ended');
+    await expect(page.locator('body')).not.toHaveClass(/paid-copy/);
   });
 
   test('an emailed link opened signed out shows the blurred preview and asks to sign in', async ({ page }) => {

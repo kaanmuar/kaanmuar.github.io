@@ -1,0 +1,13 @@
+{
+  "name": "qa-lab-cube-runner",
+  "private": true,
+  "description": "Runs a URL review's proposed cases against the reviewed site (#1935)",
+  "main": "run.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@playwright/test": "1.63.0",
+    "firebase-admin": "^14.5.0"
+  }
+}

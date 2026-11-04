@@ -5,7 +5,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 const Glossary = require("../../js/site-glossary.js");
 
-const FILES = ["qa-review-report-copy", "qa-review-compare-copy", "qa-review-multi", "qa-review-pay-copy", "qa-review-findings-copy", "qa-review-account-copy"];
+const FILES = ["qa-review-report-copy", "qa-review-compare-copy", "qa-review-multi", "qa-review-benchmark", "qa-review-pay-copy", "qa-review-findings-copy", "qa-review-account-copy"];
 const LANGS = ["es", "pt", "de", "fr", "it"];
 // The glossary fixes machine translation; these catch the regional forms a person writing by hand slips into.
 const REGIONAL = {
@@ -43,6 +43,23 @@ for (const file of FILES) {
     }
   });
 }
+
+test("the scripts ZIP README copy has every English key and slot, follows the glossary and the regional forms (#1401)", () => {
+  const book = require("../../js/qa-review-scripts.js").README_COPY;
+  const slots = (text) => (text.match(/\{\w+\}/g) || []).sort().join(",");
+  const en = strings(book.en, "", {});
+  for (const lang of LANGS) {
+    const all = strings(book[lang], "", {});
+    for (const [key, text] of Object.entries(en)) {
+      assert.ok(key in all, "README_COPY " + lang + " is missing " + key);
+      assert.equal(slots(all[key]), slots(text), "README_COPY " + lang + "." + key + " slots");
+    }
+    for (const [key, text] of Object.entries(all)) {
+      assert.deepEqual(Glossary.check(text, lang), [], "README_COPY " + lang + "." + key + ": " + text);
+      for (const pattern of REGIONAL[lang] || []) assert.ok(!pattern.test(text), "README_COPY " + lang + "." + key + " matches " + pattern + ": " + text);
+    }
+  }
+});
 
 test("the report copy has every English key, with the same slots, in each language (#1209)", () => {
   const copy = copyOf("qa-review-report-copy");
@@ -88,6 +105,40 @@ test("a finding message renders in the page language and falls back to the Engli
   assert.equal(load("en").line(message, english(message)), english(message));
   assert.equal(load("fr").line({ id: "no-such-line" }, "English"), "English");
   assert.equal(load("it").line(undefined, "English"), "English");
+});
+
+test("each review page loads only its own findings dictionary, which renders like the full copy (#1769)", () => {
+  const { EN, say } = require("../../functions/url-review-findings-en.js");
+  const run = (file, lang) => {
+    const sandbox = { window: {}, document: { documentElement: { lang } } };
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../js/" + file), "utf8"), sandbox);
+    return sandbox.window.QAReviewFindingsCopy;
+  };
+  for (const lang of ["en", ...LANGS]) {
+    const page = fs.readFileSync(path.join(__dirname, "../../qa-review" + (lang === "en" ? "" : "-" + lang) + ".html"), "utf8");
+    assert.deepEqual(page.match(/js\/qa-review-findings-copy[^"?]*/g), ["js/qa-review-findings-copy." + lang + ".js"], "qa-review " + lang);
+    const full = run("qa-review-findings-copy.js", lang);
+    const one = run("qa-review-findings-copy." + lang + ".js", lang);
+    assert.equal(one.translated, full.translated, lang);
+    for (const id of Object.keys(EN)) assert.equal(one.line(say(id, { n: 2 }), "x"), full.line(say(id, { n: 2 }), "x"), lang + " " + id);
+  }
+});
+
+test("axe-core titles keep axe's English and read in the page language (#1589)", () => {
+  const { EN } = require("../../functions/url-review-findings-en.js");
+  assert.equal(EN["ax-title.button-name"], "Buttons must have discernible text");
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review-findings-copy.js"), "utf8");
+  const sandbox = { window: {}, document: { documentElement: { lang: "es" } } };
+  vm.runInNewContext(source, sandbox);
+  assert.equal(sandbox.window.QAReviewFindingsCopy.line({ id: "ax-title.button-name" }, "x"), "Los botones deben tener un texto reconocible");
+});
+
+test("the comparison visuals have no English left in the report renderer (#1588)", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review.js"), "utf8");
+  const body = source.slice(source.indexOf("function paintVisuals"), source.indexOf("const cc = window.QAReviewCompareCopy"));
+  for (const english of ["Practices worth implementing", "Response time across", "Public marks", "Technology groups", "proposed cases", '"Present"', '"Missing"', "Send HSTS"]) {
+    assert.ok(!body.includes(english), "paintVisuals still writes " + english);
+  }
 });
 
 test("health warnings and Fix first read in the page language, also from a saved report's English (#1355)", () => {

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/* One social calendar across every batch (#1039): five posts a day per network, one per content lane (#1037).
+/* One social calendar across every batch (#1039): five posts a day per network, one per content lane (#1037); each
+   live brand face plans its own days at its cadence (#2310, scripts/brand-kit/faces.js).
 
      node scripts/social-calendar.js [--from 2026-10-26]                 print the plan, change nothing
      node scripts/social-calendar.js --write [--from ...] [--batch B]    rewrite calendar.csv and the captions' dates
@@ -9,9 +10,10 @@
        the Page app may not edit scheduled posts (Graph error #10), and Carlos keeps those (#1109).
      BUFFER_API_KEY=... node scripts/social-calendar.js --sync [--dry-run] [--windows N]
        move the posts Buffer holds to their calendar slots (editPost with the whole post, as Buffer validates it),
-       never queueing or deleting any, and record each new time in the ledger. Buffer allows 100 calls in 15
-       minutes and 250 or 500 a day per account, so each window makes at most WINDOW_CALLS and the next one waits,
-       and it stops while DAILY_RESERVE of the day's calls is left; whatever is left is moved by running it again
+       never queueing or deleting any, and record each new time in the ledger. Buffer's Essentials plan allows 450
+       calls in 15 minutes, 1,800 a day and 3,000 per unlocked channel in 30 days (#1947), shared by every job on
+       the key, so each window makes at most WINDOW_CALLS and the next one waits, and it stops while DAILY_RESERVE
+       of the day's calls or MONTHLY_RESERVE of the 30 days' is left; whatever is left is moved by running it again
        (the buffer-batch workflow does every night). --write --move-queued marks each post it moves with its new
        slot in the Buffer ledger until then. --dry-run lists the moves and re-saves one post per channel at its
        current time, as every run does first, so a payload Buffer rejects shows up before anything moves.
@@ -31,6 +33,8 @@ const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
 const { titleKey } = require("./build-social-hub");
+const faceRoute = require("./face-route");
+const { FACES } = require("./brand-kit/faces");
 
 const ROOT = path.resolve(__dirname, "..");
 const POSTS = "media/social-posts";
@@ -44,8 +48,9 @@ const BUFFER_API = "https://api.buffer.com";
 const EDIT_AHEAD = 30 * 60e3;
 const PACE = 400;
 const WINDOW = 15 * 60e3;
-const WINDOW_CALLS = 95;
+const WINDOW_CALLS = 400;
 const DAILY_RESERVE = 0.4;
+const MONTHLY_RESERVE = 0.4;
 
 const minutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const hhmm = (min) => String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0");
@@ -135,7 +140,7 @@ function load(root = ROOT) {
       const id = batch + "/" + slug;
       const entries = (books.buffer.posts[id] || []).concat(books.facebook.posts[id] || []);
       const queued = entries.filter((e) => e.result === "queued");
-      posts.push({ id, batch, slug, kind, lane: LANES[kind], date: c.date, hold: !!c.hold, pin: !!c.pin, rows: rows[slug] || [],
+      posts.push({ id, batch, slug, kind, lane: LANES[kind], face: faceFor(faceRoute.postLang(batch, slug, c, "x", root)), date: c.date, hold: !!c.hold, pin: !!c.pin, rows: rows[slug] || [],
         sent: entries.some((e) => e.result === "sent") || (!!c.youtubeTitle && clips.has(titleKey(c.youtubeTitle))),
         queued: queued.length > 0,
         queuedDay: queued.map((e) => Date.parse(e.at)).filter((at) => !isNaN(at)).map(bogotaDay).sort()[0] || null,
@@ -158,9 +163,36 @@ const isTop = (post) => post.batch.startsWith("auto-") && /^01-/.test(post.slug)
 const rotation = (post) => Math.max(0, ROTATION.indexOf(post.slug.split("/")[0]));
 const firstDay = (post) => post.rows.filter((r) => NETWORKS.includes(r.channel)).map((r) => r.date).sort()[0] || post.date;
 
-// Days from --from on, each with five lanes. Returns { moves, held, days }: moves carry the post, its new day and
-// the lane it was slotted in; held are hub-only posts of --batch that move to the top post's day.
-function plan(posts, { from, batch, moveQueued = false } = {}) {
+/* Each face plans its own days (#2310): its posts, its lanes, at most its cadence a day (faces.js). A face that is not
+   live yet plans in the default face's days, as before the split. Returns { moves, held, days }: moves carry the
+   post, its new day and the lane it was slotted in; held are hub-only posts of --batch that move to the top post's
+   day; days are keyed <face>|<day> once more than one face plans. */
+function plan(posts, opts = {}) {
+  const groups = new Map();
+  posts.forEach((post) => { const face = post.face || faceRoute.DEFAULT; groups.set(face, (groups.get(face) || []).concat(post)); });
+  const moves = [];
+  const days = new Map();
+  groups.forEach((list, face) => {
+    const r = planOne(list, opts, FACES[face].cadence);
+    moves.push(...r.moves);
+    r.days.forEach((lanes, day) => days.set(groups.size > 1 ? face + "|" + day : day, lanes));
+  });
+  const held = [];
+  if (opts.batch) {
+    const top = moves.find((m) => m.post.batch === opts.batch && isTop(m.post));
+    if (top) posts.filter((post) => post.batch === opts.batch && post.hold && post.date !== top.day).forEach((post) => held.push({ post, day: top.day }));
+  }
+  return { moves, held, days };
+}
+
+// The face whose days a post is planned in: its language's face once that face is live.
+function faceFor(lang) {
+  const face = faceRoute.faceOf(lang);
+  return FACES[face].live ? face : faceRoute.DEFAULT;
+}
+
+// One face's days from --from on, each with five lanes and at most cadence posts.
+function planOne(posts, { from, batch, moveQueued = false } = {}, cadence = 5) {
   const days = new Map();
   const take = (day, lane, post) => {
     if (!days.has(day)) days.set(day, {});
@@ -190,23 +222,20 @@ function plan(posts, { from, batch, moveQueued = false } = {}) {
 
   const moves = [];
   const put = (day, lane, post) => { take(day, lane, post); moves.push({ post, day, lane, hub: keepsHub(post.batch, post.date, day) ? post.date : day }); };
+  const full = (day) => Object.keys(days.get(day) || {}).length >= cadence;
   // The day's top Live Report: the first free lane 1 slot on or after its own day.
   tops.forEach((post) => {
     let day = firstDay(post) > from ? firstDay(post) : from;
-    while (!free(day, 1)) day = addDays(day, 1);
+    while (!free(day, 1) || full(day)) day = addDays(day, 1);
     put(day, 1, post);
   });
+  // Under five a day, the lane that goes first moves on one a day, so no lane waits behind the others.
   for (let day = from; Object.values(queue).some((q) => q.length); day = addDays(day, 1)) {
-    [2, 3, 4, 5].forEach((lane) => { if (free(day, lane) && queue[lane] && queue[lane].length) put(day, lane, queue[lane].shift()); });
-    BORROWED.forEach((lane) => { if (free(day, lane) && queue[1] && queue[1].length) put(day, lane, queue[1].shift()); });
+    const first = dayNumber(day) % 4;
+    [2, 3, 4, 5].slice(first).concat([2, 3, 4, 5].slice(0, first)).forEach((lane) => { if (free(day, lane) && !full(day) && queue[lane] && queue[lane].length) put(day, lane, queue[lane].shift()); });
+    BORROWED.forEach((lane) => { if (free(day, lane) && !full(day) && queue[1] && queue[1].length) put(day, lane, queue[1].shift()); });
   }
-
-  const held = [];
-  if (batch) {
-    const top = moves.find((m) => m.post.batch === batch && isTop(m.post));
-    if (top) posts.filter((post) => post.batch === batch && post.hold && post.date !== top.day).forEach((post) => held.push({ post, day: top.day }));
-  }
-  return { moves, held, days };
+  return { moves, days };
 }
 
 // A moved post's rows: the five networks at their lane's slot that day, any other channel on the same day at its
@@ -369,20 +398,28 @@ function editInput(post, dueAt) {
   return input;
 }
 
-// What is left of Buffer's daily calls, from the RateLimit headers of the last response (one policy per window).
+// What is left of Buffer's daily and 30-day calls, from the RateLimit headers of the last response (one policy per
+// window, matched by its length, as the policy names change with the plan).
 const daily = { left: null, quota: null, reset: null };
+const monthly = { left: null, quota: null, reset: null };
 
 function readLimits(headers) {
   const split = (name) => (headers.get(name) || "").split(/,\s*(?=")/).filter(Boolean);
-  const policy = split("ratelimit-policy").find((p) => /;\s*w=86400\b/.test(p));
-  if (!policy) return;
-  const name = policy.match(/"([^"]+)"/)[1];
-  const status = split("ratelimit").find((s) => s.includes('"' + name + '"'));
-  if (!status) return;
-  daily.quota = Number(policy.match(/q=(\d+)/)[1]);
-  daily.left = Number(status.match(/r=(\d+)/)[1]);
-  daily.reset = Number(status.match(/t=(\d+)/)[1]);
+  const read = (into, seconds) => {
+    const policy = split("ratelimit-policy").find((p) => new RegExp(";\\s*w=" + seconds + "\\b").test(p));
+    if (!policy) return;
+    const name = policy.match(/"([^"]+)"/)[1];
+    const status = split("ratelimit").find((s) => s.includes('"' + name + '"'));
+    if (!status) return;
+    into.quota = Number(policy.match(/q=(\d+)/)[1]);
+    into.left = Number(status.match(/r=(\d+)/)[1]);
+    into.reset = Number(status.match(/t=(\d+)/)[1]);
+  };
+  read(daily, 86400);
+  read(monthly, 30 * 86400);
 }
+
+const waitText = (seconds) => (seconds >= 2 * 86400 ? Math.ceil(seconds / 86400) + " days" : Math.ceil(seconds / 3600) + " h");
 
 async function bufferGql(query, variables) {
   const res = await fetch(BUFFER_API, {
@@ -406,8 +443,8 @@ const rateLimited = (error) => !!error.window || /\b429\b|RATE_LIMIT|rate limit/
 /* Calls go through one budget: at most WINDOW_CALLS a window, then it waits for the next window, or stops after the
    last one. A 429 on the 15-minute window ends the window early. The daily and 30-day windows are shared with the
    Live Reports queue and every other job on the key, so it stops once the day's calls left fall to DAILY_RESERVE
-   of the quota, or on a 429 for either; the next run picks up the rest. */
-function budget({ windows, perWindow = WINDOW_CALLS, gql, sleep, now, limits = daily }) {
+   of the quota or the 30 days' to MONTHLY_RESERVE, or on a 429 for either; the next run picks up the rest. */
+function budget({ windows, perWindow = WINDOW_CALLS, gql, sleep, now, limits = daily, month = monthly }) {
   let calls = 0;
   let left = windows;
   let start = now();
@@ -426,7 +463,10 @@ function budget({ windows, perWindow = WINDOW_CALLS, gql, sleep, now, limits = d
     for (;;) {
       if (call.stopped) return null;
       if (limits.left != null && limits.left <= Math.ceil(limits.quota * DAILY_RESERVE)) {
-        return stop(limits.left + " of Buffer's " + limits.quota + " daily calls left, kept for the other jobs; the oldest frees up in " + Math.ceil(limits.reset / 3600) + " h");
+        return stop(limits.left + " of Buffer's " + limits.quota + " daily calls left, kept for the other jobs; the oldest frees up in " + waitText(limits.reset));
+      }
+      if (month.left != null && month.left <= Math.ceil(month.quota * MONTHLY_RESERVE)) {
+        return stop(month.left + " of Buffer's " + month.quota + " calls for 30 days left, kept for the other jobs; the oldest frees up in " + waitText(month.reset));
       }
       if (calls >= perWindow && !(await next())) return null;
       calls += 1;
@@ -434,7 +474,7 @@ function budget({ windows, perWindow = WINDOW_CALLS, gql, sleep, now, limits = d
         return await gql(query, variables);
       } catch (error) {
         if (!rateLimited(error)) throw error;
-        if (error.window && error.window !== "15m") return stop("Buffer's " + error.window + " limit is spent; retry in " + Math.ceil((error.retryAfter || 0) / 3600) + " h");
+        if (error.window && error.window !== "15m") return stop("Buffer's " + error.window + " limit is spent; retry in " + waitText(error.retryAfter || 0));
         console.log("rate limited after " + calls + " calls this window");
         calls = perWindow;
       }
@@ -463,7 +503,7 @@ async function scheduledPosts(call) {
 
 const EDIT = "mutation($input: EditPostInput!) { editPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }";
 
-async function sync({ dryRun, windows = 1, perWindow, limits, root = ROOT, gql = bufferGql, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = Date.now, pace = PACE } = {}) {
+async function sync({ dryRun, windows = 1, perWindow, limits, month, root = ROOT, gql = bufferGql, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = Date.now, pace = PACE } = {}) {
   const list = targets(root, now());
   const counts = {};
   list.forEach((t) => { counts[t.channel] = (counts[t.channel] || 0) + 1; });
@@ -471,7 +511,7 @@ async function sync({ dryRun, windows = 1, perWindow, limits, root = ROOT, gql =
   list.forEach((t) => console.log("  " + t.channel.padEnd(8) + " " + t.id + "  " + t.from + " -> " + t.to));
   const result = { list, moved: {}, failed: 0, left: list.length, checked: {} };
   if (!list.length) return result;
-  const call = budget({ windows: dryRun ? 1 : windows, perWindow, gql, sleep, now, limits });
+  const call = budget({ windows: dryRun ? 1 : windows, perWindow, gql, sleep, now, limits, month });
   const held = await scheduledPosts(call);
   if (!held) { result.stopped = call.stopped || "ran out of calls reading Buffer's posts"; console.log(result.stopped + "; run --sync again"); return result; }
 
@@ -602,4 +642,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { NETWORKS, WINDOWS, LANES, WINDOW_CALLS, slotTime, kindOf, launchCalendar, load, plan, rowsFor, hubDay, write, reconcile, summary, targets, mark, editInput, daily, readLimits, sync, hubLate };
+module.exports = { NETWORKS, WINDOWS, LANES, WINDOW_CALLS, slotTime, kindOf, launchCalendar, load, plan, rowsFor, hubDay, write, reconcile, summary, targets, mark, editInput, daily, monthly, readLimits, waitText, sync, hubLate, budget, bufferGql, scheduledPosts, EDIT, EDIT_AHEAD };

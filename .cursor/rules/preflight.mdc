@@ -1,0 +1,14 @@
+---
+description: Pre-flight gatekeeper pack and token-saving habits
+alwaysApply: true
+---
+# Pre-flight (#1970)
+`.cursor/hooks/preflight.js` runs before every turn. It answers short scripted requests itself, writes a handoff once a chat passes half its context, and hands you a pack after your first tool call: the task size, the rules that apply, likely files from the repo index, and related tickets. Read the named rules, and check the named files before searching wider. Treat its draft plan as a starting point: the rules here win. Automations run `node .cursor/hooks/preflight.js plan "<prompt>"` first.
+
+## Save tokens
+Every tool call re-reads the whole chat; cache reads are most of the bill.
+- One chat per ticket. After a PR merges, or past half the context, stop and give the handoff (ticket, PR, what is left) for a new chat.
+- Prefer `gh`, `curl`, APIs and repo scripts over clicking through a browser or app. Send unavoidable clicking, wide codebase searches and CI investigations to a subagent and keep only its summary.
+- Keep tool output small: `rg` and `tail` over whole files, viewport screenshots, `scripts/ci-wait.sh` over repeated polls.
+- Don't re-verify what is already confirmed.
+- Generated media and build output go in `.gitignore`, since `git status` is attached to every chat.

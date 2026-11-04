@@ -5,6 +5,12 @@
   const COPY = {
     es: {
       "list.more": " y {n} más",
+      "case.retest": "Volver a probar en {where}: {title}",
+      "case.byHand": "Revisar a mano en {where}: {title}",
+      "case.retest.why": " El caso falla mientras el problema siga presente.",
+      "case.byHand.why": " Una persona lo confirma, porque un script no puede juzgarlo solo.",
+      "case.expected": " Esperado tras la corrección: {fix}",
+      "case.sentence": "{text}.",
       "list.and": " y ",
       "list.or": " o ",
       pathNote: "{path} ({note})",
@@ -184,6 +190,59 @@
       "seo-schema.fix": "Agrega JSON-LD de Organization o Person, WebSite y BreadcrumbList. El kit de correcciones tiene un borrador.",
       "seo-schema.pass.title": "Los datos estructurados se analizan bien y tienen las propiedades esperadas",
       "seo-schema.pass.evidence": "Tipos: {list}.",
+      "local-profile.title": "Ningún Perfil de Empresa de Google enlaza a este sitio",
+      "local-profile.evidence_one": "Se buscó \"{query}\" en Google Maps. Apareció {n} lugar, y no enlaza a {host} ni muestra el teléfono del sitio.",
+      "local-profile.evidence_other": "Se buscó \"{query}\" en Google Maps. Aparecieron {n} lugares, y ninguno enlaza a {host} ni muestra el teléfono del sitio.",
+      "local-profile.fix": "Reclama la empresa en business.google.com, pon {host} en el campo de sitio web del perfil y usa el mismo teléfono que el sitio.",
+      "local-profile.pass.title": "La empresa tiene un Perfil de Empresa de Google",
+      "local-profile.pass.website": "Enlaza a {host}: {link}.",
+      "local-profile.pass.phone": "Muestra el teléfono del sitio: {link}.",
+      "local-status.closed.title": "Google Maps muestra la empresa como cerrada permanentemente",
+      "local-status.closed.evidence": "El Perfil de Empresa en {link} figura como cerrado permanentemente mientras {host} sigue en línea. Maps muestra esa etiqueta a todos los que encuentran la empresa allí.",
+      "local-status.closed.fix": "Si la empresa está abierta, márcala como abierta en el administrador del Perfil de Empresa. Si se mudó, cambia la dirección del perfil en lugar de dejarlo cerrado.",
+      "local-status.paused.title": "Google Maps muestra la empresa como cerrada temporalmente",
+      "local-status.paused.evidence": "El Perfil de Empresa en {link} figura como cerrado temporalmente.",
+      "local-status.paused.fix": "Vuelve a abrirlo en el administrador del Perfil de Empresa en cuanto la empresa vuelva a atender clientes.",
+      "local-website.none.title": "El Perfil de Empresa de Google no tiene enlace al sitio web",
+      "local-website.none.evidence": "Google Maps encontró la empresa por el teléfono del sitio, pero el perfil no tiene sitio web, así que Maps no envía visitas a {host}.",
+      "local-website.none.fix": "Agrega {host} como sitio web en el administrador del Perfil de Empresa.",
+      "local-website.other.title": "El Perfil de Empresa de Google enlaza a otro sitio",
+      "local-website.other.evidence": "Google Maps encontró la empresa por el teléfono del sitio, pero su enlace web lleva fuera de {host}.",
+      "local-website.away.evidence": "El enlace web del perfil redirige fuera de {host}.",
+      "local-website.other.fix": "Cambia el sitio web del perfil a {host} en el administrador del Perfil de Empresa.",
+      "local-website.broken.title": "El enlace web del Perfil de Empresa de Google lleva a un error",
+      "local-website.broken.evidence": "Quien toca Sitio web en Google Maps recibe {status} en lugar de una página de {host}.",
+      "local-website.unread.evidence": "No se pudo leer el enlace web del perfil ({error}).",
+      "local-website.broken.fix": "Apunta el campo de sitio web del perfil a una página activa de {host}, o redirige la dirección antigua a una.",
+      "local-website.http.title": "El Perfil de Empresa de Google enlaza con http sin cifrar",
+      "local-website.http.evidence": "El enlace web del perfil empieza por http://, así que cada visita desde Maps empieza con una redirección a https.",
+      "local-website.hops.title_one": "El enlace del Perfil de Empresa de Google pasa por {n} redirección",
+      "local-website.hops.title_other": "El enlace del Perfil de Empresa de Google pasa por {n} redirecciones",
+      "local-website.hops.evidence": "Cada redirección suma un viaje de ida y vuelta antes de que la página empiece a cargar en el teléfono.",
+      "local-website.direct.fix": "Usa la dirección https final de la página como sitio web del perfil.",
+      "local-website.pass.title": "El enlace del Perfil de Empresa de Google abre una página de este sitio",
+      "local-website.pass.evidence": "Su enlace web respondió {status} en {host}.",
+      "local-utm.title": "Las visitas desde Google Maps no se distinguen en la analítica",
+      "local-utm.evidence": "El enlace web del perfil no tiene etiquetas UTM, así que la analítica cuenta un toque en Sitio web de Maps como una búsqueda normal de Google o una visita directa.",
+      "local-utm.fix": "Agrega utm_source=google&utm_medium=organic&utm_campaign=business-profile al enlace web del perfil.",
+      "local-nap.title": "El sitio y su Perfil de Empresa de Google no coinciden",
+      "local-nap.evidence": "El perfil difiere del sitio en {list}.",
+      "local-nap.phone": "el teléfono ({phones} en el sitio)",
+      "local-nap.address": "la dirección ({street} en el sitio)",
+      "local-nap.name": "el nombre de la empresa ({name} en el sitio)",
+      "local-nap.fix": "Usa el mismo nombre, teléfono y dirección en todas partes: corrige el perfil en el administrador del Perfil de Empresa, o el pie de página y los datos LocalBusiness del sitio, lo que esté desactualizado. Si el perfil muestra a propósito un número de seguimiento de llamadas, agrega el número del sitio como teléfono adicional.",
+      "local-nap.pass.title": "El sitio y su Perfil de Empresa de Google coinciden",
+      "local-nap.pass.evidence": "Lo que el sitio dice de la empresa coincide con el perfil.",
+      "local-hours.title": "El horario del sitio difiere del de Google Maps",
+      "local-hours.evidence": "El horario LocalBusiness del sitio y el Perfil de Empresa no coinciden el {days}.",
+      "local-hours.fix": "Corrige el que esté desactualizado. Maps muestra su horario arriba en cada búsqueda de la empresa, así que la gente confía en ese.",
+      "day.0": "domingo",
+      "day.1": "lunes",
+      "day.2": "martes",
+      "day.3": "miércoles",
+      "day.4": "jueves",
+      "day.5": "viernes",
+      "day.6": "sábado",
 
       "seo-social.httpsImage": "una og:image con https",
       "seo-social.title": "A las tarjetas para compartir les falta {list}",
@@ -716,6 +775,21 @@
       "ax-fix.aria-hidden-focus": "Quita los elementos enfocables de los contenedores con aria-hidden, o quita aria-hidden.",
       "ax-fix.duplicate-id-aria": "Dale un id único a cada elemento al que apunta ARIA.",
       "ax-fix.nested-interactive": "No pongas enlaces ni botones dentro de otros enlaces o botones.",
+      "ax-title.color-contrast": "Los elementos deben cumplir el contraste de color mínimo",
+      "ax-title.button-name": "Los botones deben tener un texto reconocible",
+      "ax-title.link-name": "Los enlaces deben tener un texto reconocible",
+      "ax-title.image-alt": "Las imágenes deben tener texto alternativo",
+      "ax-title.role-img-alt": "Los elementos [role=\"img\"] y [role=\"image\"] deben tener texto alternativo",
+      "ax-title.label": "Los elementos de formulario deben tener etiquetas",
+      "ax-title.label-content-name-mismatch": "El texto visible de un elemento debe formar parte de su nombre accesible",
+      "ax-title.target-size": "Cada área táctil debe medir 24 px o dejar espacio suficiente alrededor",
+      "ax-title.heading-order": "Los niveles de encabezado deben avanzar de uno en uno",
+      "ax-title.list": "<ul> y <ol> solo deben contener directamente elementos <li>, <script> o <template>",
+      "ax-title.listitem": "Los elementos <li> deben estar dentro de un <ul> o <ol>",
+      "ax-title.scrollable-region-focusable": "Las áreas con desplazamiento deben poder usarse con el teclado",
+      "ax-title.aria-hidden-focus": "Un elemento oculto con ARIA no debe poder enfocarse ni contener elementos enfocables",
+      "ax-title.duplicate-id-aria": "Los id usados en ARIA y en las etiquetas deben ser únicos",
+      "ax-title.nested-interactive": "Los controles interactivos no deben estar anidados",
       "a11y.elements_one": "{n} elemento",
       "a11y.elements_other": "{n} elementos",
       "a11y.renderedPages_one": "{n} página renderizada",
@@ -1003,6 +1077,12 @@
     },
     pt: {
       "list.more": " e mais {n}",
+      "case.retest": "Testar de novo em {where}: {title}",
+      "case.byHand": "Verificar manualmente em {where}: {title}",
+      "case.retest.why": " O caso falha enquanto o problema continuar presente.",
+      "case.byHand.why": " Uma pessoa confirma, porque um script não consegue julgar isso sozinho.",
+      "case.expected": " Esperado após a correção: {fix}",
+      "case.sentence": "{text}.",
       "list.and": " e ",
       "list.or": " ou ",
       pathNote: "{path} ({note})",
@@ -1182,6 +1262,59 @@
       "seo-schema.fix": "Adicione JSON-LD de Organization ou Person, WebSite e BreadcrumbList. O kit de correções tem um rascunho.",
       "seo-schema.pass.title": "Os dados estruturados são interpretados e têm as propriedades esperadas",
       "seo-schema.pass.evidence": "Tipos: {list}.",
+      "local-profile.title": "Nenhum Perfil da Empresa no Google aponta para este site",
+      "local-profile.evidence_one": "O Google Maps foi pesquisado por \"{query}\". Veio {n} lugar, e ele não aponta para {host} nem mostra o telefone do site.",
+      "local-profile.evidence_other": "O Google Maps foi pesquisado por \"{query}\". Vieram {n} lugares, e nenhum aponta para {host} nem mostra o telefone do site.",
+      "local-profile.fix": "Reivindique a empresa em business.google.com, coloque {host} no campo de site do perfil e use o mesmo telefone do site.",
+      "local-profile.pass.title": "A empresa tem um Perfil da Empresa no Google",
+      "local-profile.pass.website": "Ele aponta para {host}: {link}.",
+      "local-profile.pass.phone": "Ele mostra o telefone do site: {link}.",
+      "local-status.closed.title": "O Google Maps mostra a empresa como fechada permanentemente",
+      "local-status.closed.evidence": "O Perfil da Empresa em {link} está marcado como fechado permanentemente enquanto {host} continua no ar. O Maps mostra esse rótulo a todos que encontram a empresa lá.",
+      "local-status.closed.fix": "Se a empresa está aberta, marque-a como aberta no gerenciador do Perfil da Empresa. Se ela mudou de endereço, altere o endereço do perfil em vez de deixá-lo fechado.",
+      "local-status.paused.title": "O Google Maps mostra a empresa como fechada temporariamente",
+      "local-status.paused.evidence": "O Perfil da Empresa em {link} está marcado como fechado temporariamente.",
+      "local-status.paused.fix": "Reabra-o no gerenciador do Perfil da Empresa assim que a empresa voltar a atender clientes.",
+      "local-website.none.title": "O Perfil da Empresa no Google não tem link para o site",
+      "local-website.none.evidence": "O Google Maps encontrou a empresa pelo telefone do site, mas o perfil não tem site, então o Maps não envia visitas para {host}.",
+      "local-website.none.fix": "Adicione {host} como site no gerenciador do Perfil da Empresa.",
+      "local-website.other.title": "O Perfil da Empresa no Google aponta para outro site",
+      "local-website.other.evidence": "O Google Maps encontrou a empresa pelo telefone do site, mas o link do site leva para fora de {host}.",
+      "local-website.away.evidence": "O link do site no perfil redireciona para fora de {host}.",
+      "local-website.other.fix": "Mude o site do perfil para {host} no gerenciador do Perfil da Empresa.",
+      "local-website.broken.title": "O link do site no Perfil da Empresa no Google leva a um erro",
+      "local-website.broken.evidence": "Quem toca em Site no Google Maps recebe {status} em vez de uma página de {host}.",
+      "local-website.unread.evidence": "Não foi possível ler o link do site no perfil ({error}).",
+      "local-website.broken.fix": "Aponte o campo de site do perfil para uma página ativa de {host}, ou redirecione o endereço antigo para uma.",
+      "local-website.http.title": "O Perfil da Empresa no Google aponta para http sem criptografia",
+      "local-website.http.evidence": "O link do site no perfil começa com http://, então cada visita vinda do Maps começa com um redirecionamento para https.",
+      "local-website.hops.title_one": "O link do Perfil da Empresa no Google passa por {n} redirecionamento",
+      "local-website.hops.title_other": "O link do Perfil da Empresa no Google passa por {n} redirecionamentos",
+      "local-website.hops.evidence": "Cada redirecionamento soma uma ida e volta antes de a página começar a carregar no celular.",
+      "local-website.direct.fix": "Use o endereço https final da página como site do perfil.",
+      "local-website.pass.title": "O link do Perfil da Empresa no Google abre uma página deste site",
+      "local-website.pass.evidence": "O link do site respondeu {status} em {host}.",
+      "local-utm.title": "As visitas vindas do Google Maps não se distinguem no analytics",
+      "local-utm.evidence": "O link do site no perfil não tem tags UTM, então o analytics conta um toque em Site no Maps como uma busca comum no Google ou uma visita direta.",
+      "local-utm.fix": "Adicione utm_source=google&utm_medium=organic&utm_campaign=business-profile ao link do site no perfil.",
+      "local-nap.title": "O site e o Perfil da Empresa no Google não batem",
+      "local-nap.evidence": "O perfil difere do site em {list}.",
+      "local-nap.phone": "o telefone ({phones} no site)",
+      "local-nap.address": "o endereço ({street} no site)",
+      "local-nap.name": "o nome da empresa ({name} no site)",
+      "local-nap.fix": "Use o mesmo nome, telefone e endereço em todo lugar: corrija o perfil no gerenciador do Perfil da Empresa, ou o rodapé e os dados LocalBusiness do site, o que estiver desatualizado. Se o perfil mostra de propósito um número de rastreamento de chamadas, adicione o número do site como telefone adicional.",
+      "local-nap.pass.title": "O site e o Perfil da Empresa no Google batem",
+      "local-nap.pass.evidence": "O que o site diz sobre a empresa bate com o perfil.",
+      "local-hours.title": "O horário do site difere do Google Maps",
+      "local-hours.evidence": "O horário LocalBusiness do site e o Perfil da Empresa não batem em {days}.",
+      "local-hours.fix": "Corrija o que estiver desatualizado. O Maps mostra o horário no topo de cada busca pela empresa, então é nele que as pessoas confiam.",
+      "day.0": "domingo",
+      "day.1": "segunda-feira",
+      "day.2": "terça-feira",
+      "day.3": "quarta-feira",
+      "day.4": "quinta-feira",
+      "day.5": "sexta-feira",
+      "day.6": "sábado",
 
       "seo-social.httpsImage": "uma og:image com https",
       "seo-social.title": "Faltam nos cards de compartilhamento: {list}",
@@ -1714,6 +1847,21 @@
       "ax-fix.aria-hidden-focus": "Tire os elementos focáveis dos contêineres com aria-hidden, ou remova o aria-hidden.",
       "ax-fix.duplicate-id-aria": "Dê um id único a cada elemento para o qual o ARIA aponta.",
       "ax-fix.nested-interactive": "Não coloque links ou botões dentro de outros links ou botões.",
+      "ax-title.color-contrast": "Os elementos devem atingir o contraste de cor mínimo",
+      "ax-title.button-name": "Os botões devem ter um texto identificável",
+      "ax-title.link-name": "Os links devem ter um texto identificável",
+      "ax-title.image-alt": "As imagens devem ter texto alternativo",
+      "ax-title.role-img-alt": "Elementos [role=\"img\"] e [role=\"image\"] devem ter texto alternativo",
+      "ax-title.label": "Os elementos de formulário devem ter rótulos",
+      "ax-title.label-content-name-mismatch": "O texto visível de um elemento deve fazer parte do seu nome acessível",
+      "ax-title.target-size": "Cada área de toque deve ter 24 px ou deixar espaço suficiente ao redor",
+      "ax-title.heading-order": "Os níveis de título devem avançar de um em um",
+      "ax-title.list": "<ul> e <ol> devem conter diretamente apenas elementos <li>, <script> ou <template>",
+      "ax-title.listitem": "Os elementos <li> devem estar dentro de um <ul> ou <ol>",
+      "ax-title.scrollable-region-focusable": "Áreas com rolagem devem ser acessíveis pelo teclado",
+      "ax-title.aria-hidden-focus": "Um elemento oculto por ARIA não deve receber foco nem conter elementos focáveis",
+      "ax-title.duplicate-id-aria": "Os ids usados em ARIA e nos rótulos devem ser únicos",
+      "ax-title.nested-interactive": "Controles interativos não devem ficar aninhados",
       "a11y.elements_one": "{n} elemento",
       "a11y.elements_other": "{n} elementos",
       "a11y.renderedPages_one": "{n} página renderizada",
@@ -2001,6 +2149,12 @@
     },
     de: {
       "list.more": " und {n} weitere",
+      "case.retest": "Erneut testen auf {where}: {title}",
+      "case.byHand": "Von Hand prüfen auf {where}: {title}",
+      "case.retest.why": " Der Fall schlägt fehl, solange das Problem besteht.",
+      "case.byHand.why": " Eine Person bestätigt es, weil ein Skript das nicht allein beurteilen kann.",
+      "case.expected": " Erwartet nach der Korrektur: {fix}",
+      "case.sentence": "{text}.",
       "list.and": " und ",
       "list.or": " oder ",
       pathNote: "{path} ({note})",
@@ -2180,6 +2334,59 @@
       "seo-schema.fix": "Ergänzen Sie JSON-LD für Organization oder Person, WebSite und BreadcrumbList. Das Fix-Kit enthält einen Entwurf.",
       "seo-schema.pass.title": "Die strukturierten Daten lassen sich auslesen und haben die erwarteten Eigenschaften",
       "seo-schema.pass.evidence": "Typen: {list}.",
+      "local-profile.title": "Kein Google-Unternehmensprofil verlinkt auf diese Website",
+      "local-profile.evidence_one": "Google Maps wurde nach \"{query}\" durchsucht. {n} Ort kam zurück, und er verlinkt weder auf {host} noch nennt er die Telefonnummer der Website.",
+      "local-profile.evidence_other": "Google Maps wurde nach \"{query}\" durchsucht. {n} Orte kamen zurück, und keiner verlinkt auf {host} oder nennt die Telefonnummer der Website.",
+      "local-profile.fix": "Beanspruchen Sie das Unternehmen auf business.google.com, tragen Sie {host} als Website des Profils ein und nennen Sie dieselbe Telefonnummer wie auf der Website.",
+      "local-profile.pass.title": "Das Unternehmen hat ein Google-Unternehmensprofil",
+      "local-profile.pass.website": "Es verlinkt auf {host}: {link}.",
+      "local-profile.pass.phone": "Es nennt die Telefonnummer der Website: {link}.",
+      "local-status.closed.title": "Google Maps zeigt das Unternehmen als dauerhaft geschlossen",
+      "local-status.closed.evidence": "Das Unternehmensprofil unter {link} ist als dauerhaft geschlossen markiert, während {host} weiter online ist. Maps zeigt diesen Hinweis allen, die das Unternehmen dort finden.",
+      "local-status.closed.fix": "Wenn das Unternehmen geöffnet ist, markieren Sie es im Unternehmensprofil-Manager als geöffnet. Ist es umgezogen, ändern Sie die Adresse des Profils, statt es geschlossen zu lassen.",
+      "local-status.paused.title": "Google Maps zeigt das Unternehmen als vorübergehend geschlossen",
+      "local-status.paused.evidence": "Das Unternehmensprofil unter {link} ist als vorübergehend geschlossen markiert.",
+      "local-status.paused.fix": "Öffnen Sie es im Unternehmensprofil-Manager wieder, sobald das Unternehmen wieder Kunden empfängt.",
+      "local-website.none.title": "Das Google-Unternehmensprofil hat keinen Website-Link",
+      "local-website.none.evidence": "Google Maps fand das Unternehmen über die Telefonnummer der Website, aber das Profil nennt keine Website, also schickt Maps keine Besucher zu {host}.",
+      "local-website.none.fix": "Tragen Sie {host} im Unternehmensprofil-Manager als Website ein.",
+      "local-website.other.title": "Das Google-Unternehmensprofil verlinkt auf eine andere Website",
+      "local-website.other.evidence": "Google Maps fand das Unternehmen über die Telefonnummer der Website, aber sein Website-Link führt weg von {host}.",
+      "local-website.away.evidence": "Der Website-Link des Profils leitet weg von {host} weiter.",
+      "local-website.other.fix": "Ändern Sie die Website des Profils im Unternehmensprofil-Manager auf {host}.",
+      "local-website.broken.title": "Der Website-Link im Google-Unternehmensprofil führt zu einem Fehler",
+      "local-website.broken.evidence": "Wer in Google Maps auf Website tippt, bekommt {status} statt einer Seite von {host}.",
+      "local-website.unread.evidence": "Der Website-Link des Profils ließ sich nicht lesen ({error}).",
+      "local-website.broken.fix": "Lassen Sie das Website-Feld des Profils auf eine erreichbare Seite von {host} zeigen, oder leiten Sie die alte Adresse auf eine weiter.",
+      "local-website.http.title": "Das Google-Unternehmensprofil verlinkt auf unverschlüsseltes http",
+      "local-website.http.evidence": "Der Website-Link des Profils beginnt mit http://, also beginnt jeder Besuch aus Maps mit einer Weiterleitung auf https.",
+      "local-website.hops.title_one": "Der Link des Google-Unternehmensprofils läuft über {n} Weiterleitung",
+      "local-website.hops.title_other": "Der Link des Google-Unternehmensprofils läuft über {n} Weiterleitungen",
+      "local-website.hops.evidence": "Jede Weiterleitung kostet einen Umlauf, bevor die Seite am Handy zu laden beginnt.",
+      "local-website.direct.fix": "Tragen Sie die endgültige https-Adresse der Seite als Website des Profils ein.",
+      "local-website.pass.title": "Der Link des Google-Unternehmensprofils öffnet eine Seite dieser Website",
+      "local-website.pass.evidence": "Sein Website-Link antwortete mit {status} auf {host}.",
+      "local-utm.title": "Besuche aus Google Maps lassen sich in der Analyse nicht unterscheiden",
+      "local-utm.evidence": "Der Website-Link des Profils hat keine UTM-Tags, also zählt die Analyse einen Tipp auf Website in Maps als gewöhnliche Google-Suche oder als direkten Besuch.",
+      "local-utm.fix": "Ergänzen Sie den Website-Link des Profils um utm_source=google&utm_medium=organic&utm_campaign=business-profile.",
+      "local-nap.title": "Die Website und ihr Google-Unternehmensprofil widersprechen sich",
+      "local-nap.evidence": "Das Profil weicht von der Website ab bei {list}.",
+      "local-nap.phone": "der Telefonnummer ({phones} auf der Website)",
+      "local-nap.address": "der Adresse ({street} auf der Website)",
+      "local-nap.name": "dem Firmennamen ({name} auf der Website)",
+      "local-nap.fix": "Verwenden Sie überall denselben Namen, dieselbe Telefonnummer und Adresse: Korrigieren Sie das Profil im Unternehmensprofil-Manager oder die Fußzeile und die LocalBusiness-Daten der Website, je nachdem, was veraltet ist. Zeigt das Profil bewusst eine Tracking-Rufnummer, tragen Sie die Nummer der Website als zusätzliche Telefonnummer ein.",
+      "local-nap.pass.title": "Die Website und ihr Google-Unternehmensprofil stimmen überein",
+      "local-nap.pass.evidence": "Was die Website über das Unternehmen sagt, stimmt mit dem Profil überein.",
+      "local-hours.title": "Die Öffnungszeiten auf der Website weichen von Google Maps ab",
+      "local-hours.evidence": "Die LocalBusiness-Öffnungszeiten der Website und das Unternehmensprofil weichen ab am {days}.",
+      "local-hours.fix": "Korrigieren Sie, was veraltet ist. Maps zeigt seine Öffnungszeiten oben bei jeder Suche nach dem Unternehmen, darauf verlassen sich die Leute.",
+      "day.0": "Sonntag",
+      "day.1": "Montag",
+      "day.2": "Dienstag",
+      "day.3": "Mittwoch",
+      "day.4": "Donnerstag",
+      "day.5": "Freitag",
+      "day.6": "Samstag",
 
       "seo-social.httpsImage": "ein og:image mit https",
       "seo-social.title": "In den Teilen-Karten fehlt: {list}",
@@ -2712,6 +2919,21 @@
       "ax-fix.aria-hidden-focus": "Entfernen Sie fokussierbare Elemente aus Containern mit aria-hidden, oder entfernen Sie aria-hidden.",
       "ax-fix.duplicate-id-aria": "Geben Sie jedem Element, auf das ARIA verweist, eine eindeutige id.",
       "ax-fix.nested-interactive": "Setzen Sie keine Links oder Schaltflächen in andere Links oder Schaltflächen.",
+      "ax-title.color-contrast": "Elemente müssen die Mindestwerte für Farbkontrast erfüllen",
+      "ax-title.button-name": "Schaltflächen brauchen einen erkennbaren Text",
+      "ax-title.link-name": "Links brauchen einen erkennbaren Text",
+      "ax-title.image-alt": "Bilder brauchen einen Alternativtext",
+      "ax-title.role-img-alt": "Elemente mit [role=\"img\"] und [role=\"image\"] brauchen einen Alternativtext",
+      "ax-title.label": "Formularelemente brauchen Beschriftungen",
+      "ax-title.label-content-name-mismatch": "Der sichtbare Text eines Elements muss Teil seines zugänglichen Namens sein",
+      "ax-title.target-size": "Jede Touch-Fläche muss 24 px groß sein oder genug Abstand lassen",
+      "ax-title.heading-order": "Überschriftenebenen sollten nur um eine Stufe steigen",
+      "ax-title.list": "<ul> und <ol> dürfen direkt nur <li>, <script> oder <template> enthalten",
+      "ax-title.listitem": "<li>-Elemente müssen in einem <ul> oder <ol> stehen",
+      "ax-title.scrollable-region-focusable": "Scrollbare Bereiche müssen per Tastatur erreichbar sein",
+      "ax-title.aria-hidden-focus": "Per ARIA verborgene Elemente dürfen nicht fokussierbar sein oder fokussierbare Elemente enthalten",
+      "ax-title.duplicate-id-aria": "IDs, auf die ARIA und Labels verweisen, müssen eindeutig sein",
+      "ax-title.nested-interactive": "Interaktive Bedienelemente dürfen nicht verschachtelt sein",
       "a11y.elements_one": "{n} Element",
       "a11y.elements_other": "{n} Elemente",
       "a11y.renderedPages_one": "{n} gerenderte Seite",
@@ -2999,6 +3221,12 @@
     },
     fr: {
       "list.more": " et {n} de plus",
+      "case.retest": "Retester sur {where} : {title}",
+      "case.byHand": "Vérifier à la main sur {where} : {title}",
+      "case.retest.why": " Le cas échoue tant que le problème est présent.",
+      "case.byHand.why": " Une personne le confirme, car un script ne peut pas en juger seul.",
+      "case.expected": " Attendu après la correction : {fix}",
+      "case.sentence": "{text}.",
       "list.and": " et ",
       "list.or": " ou ",
       pathNote: "{path} ({note})",
@@ -3178,6 +3406,59 @@
       "seo-schema.fix": "Ajoutez du JSON-LD Organization ou Person, WebSite et BreadcrumbList. Le kit de correctifs contient un brouillon.",
       "seo-schema.pass.title": "Les données structurées se lisent et ont les propriétés attendues",
       "seo-schema.pass.evidence": "Types : {list}.",
+      "local-profile.title": "Aucune fiche d’établissement Google ne renvoie vers ce site",
+      "local-profile.evidence_one": "Google Maps a été interrogé sur « {query} ». {n} lieu est sorti, et il ne renvoie pas vers {host} ni n’affiche le téléphone du site.",
+      "local-profile.evidence_other": "Google Maps a été interrogé sur « {query} ». {n} lieux sont sortis, et aucun ne renvoie vers {host} ni n’affiche le téléphone du site.",
+      "local-profile.fix": "Revendiquez l’établissement sur business.google.com, indiquez {host} dans le champ site web de la fiche et affichez le même téléphone que sur le site.",
+      "local-profile.pass.title": "L’établissement a une fiche d’établissement Google",
+      "local-profile.pass.website": "Elle renvoie vers {host} : {link}.",
+      "local-profile.pass.phone": "Elle affiche le téléphone du site : {link}.",
+      "local-status.closed.title": "Google Maps affiche l’établissement comme définitivement fermé",
+      "local-status.closed.evidence": "La fiche d’établissement {link} est marquée définitivement fermée alors que {host} est toujours en ligne. Maps montre cette mention à tous ceux qui y trouvent l’établissement.",
+      "local-status.closed.fix": "Si l’établissement est ouvert, marquez-le ouvert dans le gestionnaire de fiches. S’il a déménagé, changez l’adresse de la fiche au lieu de la laisser fermée.",
+      "local-status.paused.title": "Google Maps affiche l’établissement comme temporairement fermé",
+      "local-status.paused.evidence": "La fiche d’établissement {link} est marquée temporairement fermée.",
+      "local-status.paused.fix": "Rouvrez-la dans le gestionnaire de fiches dès que l’établissement reçoit à nouveau des clients.",
+      "local-website.none.title": "La fiche d’établissement Google n’a pas de lien vers le site",
+      "local-website.none.evidence": "Google Maps a trouvé l’établissement par le téléphone du site, mais la fiche n’a pas de site web : Maps n’envoie donc aucun visiteur vers {host}.",
+      "local-website.none.fix": "Ajoutez {host} comme site web dans le gestionnaire de fiches.",
+      "local-website.other.title": "La fiche d’établissement Google renvoie vers un autre site",
+      "local-website.other.evidence": "Google Maps a trouvé l’établissement par le téléphone du site, mais son lien site web mène hors de {host}.",
+      "local-website.away.evidence": "Le lien site web de la fiche redirige hors de {host}.",
+      "local-website.other.fix": "Remplacez le site web de la fiche par {host} dans le gestionnaire de fiches.",
+      "local-website.broken.title": "Le lien site web de la fiche d’établissement Google mène à une erreur",
+      "local-website.broken.evidence": "Qui touche Site web dans Google Maps obtient {status} au lieu d’une page de {host}.",
+      "local-website.unread.evidence": "Le lien site web de la fiche n’a pas pu être lu ({error}).",
+      "local-website.broken.fix": "Faites pointer le champ site web de la fiche vers une page active de {host}, ou redirigez l’ancienne adresse vers l’une d’elles.",
+      "local-website.http.title": "La fiche d’établissement Google renvoie vers du http non chiffré",
+      "local-website.http.evidence": "Le lien site web de la fiche commence par http:// : chaque visite depuis Maps commence donc par une redirection vers https.",
+      "local-website.hops.title_one": "Le lien de la fiche d’établissement Google passe par {n} redirection",
+      "local-website.hops.title_other": "Le lien de la fiche d’établissement Google passe par {n} redirections",
+      "local-website.hops.evidence": "Chaque redirection ajoute un aller-retour avant que la page ne commence à charger sur le téléphone.",
+      "local-website.direct.fix": "Indiquez l’adresse https finale de la page comme site web de la fiche.",
+      "local-website.pass.title": "Le lien de la fiche d’établissement Google ouvre une page de ce site",
+      "local-website.pass.evidence": "Son lien site web a répondu {status} sur {host}.",
+      "local-utm.title": "Les visites venues de Google Maps ne se distinguent pas dans l’analytics",
+      "local-utm.evidence": "Le lien site web de la fiche n’a pas de balises UTM : l’analytics compte donc un appui sur Site web dans Maps comme une recherche Google ordinaire ou une visite directe.",
+      "local-utm.fix": "Ajoutez utm_source=google&utm_medium=organic&utm_campaign=business-profile au lien site web de la fiche.",
+      "local-nap.title": "Le site et sa fiche d’établissement Google ne concordent pas",
+      "local-nap.evidence": "La fiche diffère du site par {list}.",
+      "local-nap.phone": "le téléphone ({phones} sur le site)",
+      "local-nap.address": "l’adresse ({street} sur le site)",
+      "local-nap.name": "le nom de l’établissement ({name} sur le site)",
+      "local-nap.fix": "Utilisez partout le même nom, le même téléphone et la même adresse : corrigez la fiche dans le gestionnaire de fiches, ou le pied de page et les données LocalBusiness du site, selon ce qui n’est plus à jour. Si la fiche affiche volontairement un numéro de suivi d’appels, ajoutez le numéro du site comme téléphone supplémentaire.",
+      "local-nap.pass.title": "Le site et sa fiche d’établissement Google concordent",
+      "local-nap.pass.evidence": "Ce que le site dit de l’établissement concorde avec la fiche.",
+      "local-hours.title": "Les horaires du site diffèrent de Google Maps",
+      "local-hours.evidence": "Les horaires LocalBusiness du site et la fiche d’établissement diffèrent le {days}.",
+      "local-hours.fix": "Corrigez ce qui n’est plus à jour. Maps affiche ses horaires en tête de chaque recherche sur l’établissement, et c’est à eux que les gens se fient.",
+      "day.0": "dimanche",
+      "day.1": "lundi",
+      "day.2": "mardi",
+      "day.3": "mercredi",
+      "day.4": "jeudi",
+      "day.5": "vendredi",
+      "day.6": "samedi",
 
       "seo-social.httpsImage": "une og:image en https",
       "seo-social.title": "Il manque aux cartes de partage : {list}",
@@ -3710,6 +3991,21 @@
       "ax-fix.aria-hidden-focus": "Retirez les éléments focalisables des conteneurs aria-hidden, ou supprimez aria-hidden.",
       "ax-fix.duplicate-id-aria": "Donnez un id unique à chaque élément ciblé par ARIA.",
       "ax-fix.nested-interactive": "Ne placez pas de liens ou de boutons dans d’autres liens ou boutons.",
+      "ax-title.color-contrast": "Les éléments doivent respecter le contraste de couleur minimal",
+      "ax-title.button-name": "Les boutons doivent avoir un texte identifiable",
+      "ax-title.link-name": "Les liens doivent avoir un texte identifiable",
+      "ax-title.image-alt": "Les images doivent avoir un texte alternatif",
+      "ax-title.role-img-alt": "Les éléments [role=\"img\"] et [role=\"image\"] doivent avoir un texte alternatif",
+      "ax-title.label": "Les éléments de formulaire doivent avoir une étiquette",
+      "ax-title.label-content-name-mismatch": "Le texte visible d’un élément doit faire partie de son nom accessible",
+      "ax-title.target-size": "Chaque zone tactile doit mesurer 24 px ou laisser assez d’espace autour",
+      "ax-title.heading-order": "Les niveaux de titre ne doivent augmenter que d’un cran à la fois",
+      "ax-title.list": "<ul> et <ol> ne doivent contenir directement que des éléments <li>, <script> ou <template>",
+      "ax-title.listitem": "Les éléments <li> doivent se trouver dans un <ul> ou un <ol>",
+      "ax-title.scrollable-region-focusable": "Les zones défilantes doivent être accessibles au clavier",
+      "ax-title.aria-hidden-focus": "Un élément masqué par ARIA ne doit pas recevoir le focus ni contenir d’éléments focalisables",
+      "ax-title.duplicate-id-aria": "Les id utilisés par ARIA et les étiquettes doivent être uniques",
+      "ax-title.nested-interactive": "Les commandes interactives ne doivent pas être imbriquées",
       "a11y.elements_one": "{n} élément",
       "a11y.elements_other": "{n} éléments",
       "a11y.renderedPages_one": "{n} page rendue",
@@ -3997,6 +4293,12 @@
     },
     it: {
       "list.more": " e altri {n}",
+      "case.retest": "Ritestare su {where}: {title}",
+      "case.byHand": "Verificare a mano su {where}: {title}",
+      "case.retest.why": " Il caso fallisce finché il problema è presente.",
+      "case.byHand.why": " Una persona lo conferma, perché uno script non può giudicarlo da solo.",
+      "case.expected": " Atteso dopo la correzione: {fix}",
+      "case.sentence": "{text}.",
       "list.and": " e ",
       "list.or": " o ",
       pathNote: "{path} ({note})",
@@ -4176,6 +4478,59 @@
       "seo-schema.fix": "Aggiungi JSON-LD di Organization o Person, WebSite e BreadcrumbList. Il kit di correzioni contiene una bozza.",
       "seo-schema.pass.title": "I dati strutturati si interpretano e hanno le proprietà previste",
       "seo-schema.pass.evidence": "Tipi: {list}.",
+      "local-profile.title": "Nessun Profilo dell’attività su Google rimanda a questo sito",
+      "local-profile.evidence_one": "Su Google Maps è stato cercato \"{query}\". È uscito {n} luogo, e non rimanda a {host} né mostra il telefono del sito.",
+      "local-profile.evidence_other": "Su Google Maps è stato cercato \"{query}\". Sono usciti {n} luoghi, e nessuno rimanda a {host} né mostra il telefono del sito.",
+      "local-profile.fix": "Rivendica l’attività su business.google.com, metti {host} nel campo sito web del profilo e usa lo stesso telefono del sito.",
+      "local-profile.pass.title": "L’attività ha un Profilo dell’attività su Google",
+      "local-profile.pass.website": "Rimanda a {host}: {link}.",
+      "local-profile.pass.phone": "Mostra il telefono del sito: {link}.",
+      "local-status.closed.title": "Google Maps mostra l’attività come chiusa definitivamente",
+      "local-status.closed.evidence": "Il Profilo dell’attività su {link} risulta chiuso definitivamente mentre {host} è ancora online. Maps mostra questa etichetta a chiunque trovi l’attività lì.",
+      "local-status.closed.fix": "Se l’attività è aperta, segnalala come aperta nel gestore del Profilo dell’attività. Se si è trasferita, cambia l’indirizzo del profilo invece di lasciarlo chiuso.",
+      "local-status.paused.title": "Google Maps mostra l’attività come chiusa temporaneamente",
+      "local-status.paused.evidence": "Il Profilo dell’attività su {link} risulta chiuso temporaneamente.",
+      "local-status.paused.fix": "Riaprilo nel gestore del Profilo dell’attività appena l’attività torna a ricevere clienti.",
+      "local-website.none.title": "Il Profilo dell’attività su Google non ha un link al sito",
+      "local-website.none.evidence": "Google Maps ha trovato l’attività dal telefono del sito, ma il profilo non ha un sito web, quindi Maps non manda visite a {host}.",
+      "local-website.none.fix": "Aggiungi {host} come sito web nel gestore del Profilo dell’attività.",
+      "local-website.other.title": "Il Profilo dell’attività su Google rimanda a un altro sito",
+      "local-website.other.evidence": "Google Maps ha trovato l’attività dal telefono del sito, ma il suo link al sito porta fuori da {host}.",
+      "local-website.away.evidence": "Il link al sito del profilo reindirizza fuori da {host}.",
+      "local-website.other.fix": "Cambia il sito web del profilo in {host} nel gestore del Profilo dell’attività.",
+      "local-website.broken.title": "Il link al sito del Profilo dell’attività su Google porta a un errore",
+      "local-website.broken.evidence": "Chi tocca Sito web su Google Maps riceve {status} invece di una pagina di {host}.",
+      "local-website.unread.evidence": "Non è stato possibile leggere il link al sito del profilo ({error}).",
+      "local-website.broken.fix": "Fai puntare il campo sito web del profilo a una pagina attiva di {host}, o reindirizza il vecchio indirizzo a una di esse.",
+      "local-website.http.title": "Il Profilo dell’attività su Google rimanda a http non cifrato",
+      "local-website.http.evidence": "Il link al sito del profilo inizia con http://, quindi ogni visita da Maps comincia con un reindirizzamento a https.",
+      "local-website.hops.title_one": "Il link del Profilo dell’attività su Google passa per {n} reindirizzamento",
+      "local-website.hops.title_other": "Il link del Profilo dell’attività su Google passa per {n} reindirizzamenti",
+      "local-website.hops.evidence": "Ogni reindirizzamento aggiunge un andata e ritorno prima che la pagina inizi a caricarsi sul telefono.",
+      "local-website.direct.fix": "Usa l’indirizzo https finale della pagina come sito web del profilo.",
+      "local-website.pass.title": "Il link del Profilo dell’attività su Google apre una pagina di questo sito",
+      "local-website.pass.evidence": "Il suo link al sito ha risposto {status} su {host}.",
+      "local-utm.title": "Le visite da Google Maps non si distinguono negli analytics",
+      "local-utm.evidence": "Il link al sito del profilo non ha tag UTM, quindi gli analytics contano un tocco su Sito web in Maps come una normale ricerca Google o una visita diretta.",
+      "local-utm.fix": "Aggiungi utm_source=google&utm_medium=organic&utm_campaign=business-profile al link al sito del profilo.",
+      "local-nap.title": "Il sito e il suo Profilo dell’attività su Google non coincidono",
+      "local-nap.evidence": "Il profilo differisce dal sito per {list}.",
+      "local-nap.phone": "il telefono ({phones} sul sito)",
+      "local-nap.address": "l’indirizzo ({street} sul sito)",
+      "local-nap.name": "il nome dell’attività ({name} sul sito)",
+      "local-nap.fix": "Usa ovunque lo stesso nome, telefono e indirizzo: correggi il profilo nel gestore del Profilo dell’attività, oppure il footer e i dati LocalBusiness del sito, a seconda di cosa non è aggiornato. Se il profilo mostra di proposito un numero di monitoraggio delle chiamate, aggiungi il numero del sito come telefono aggiuntivo.",
+      "local-nap.pass.title": "Il sito e il suo Profilo dell’attività su Google coincidono",
+      "local-nap.pass.evidence": "Quello che il sito dice dell’attività coincide con il profilo.",
+      "local-hours.title": "Gli orari del sito differiscono da Google Maps",
+      "local-hours.evidence": "Gli orari LocalBusiness del sito e il Profilo dell’attività non coincidono il {days}.",
+      "local-hours.fix": "Correggi quello non aggiornato. Maps mostra i suoi orari in cima a ogni ricerca dell’attività, ed è a quelli che la gente si affida.",
+      "day.0": "domenica",
+      "day.1": "lunedì",
+      "day.2": "martedì",
+      "day.3": "mercoledì",
+      "day.4": "giovedì",
+      "day.5": "venerdì",
+      "day.6": "sabato",
 
       "seo-social.httpsImage": "una og:image in https",
       "seo-social.title": "Alle schede di condivisione manca: {list}",
@@ -4708,6 +5063,21 @@
       "ax-fix.aria-hidden-focus": "Togli gli elementi attivabili dai contenitori aria-hidden, o rimuovi aria-hidden.",
       "ax-fix.duplicate-id-aria": "Dai un id univoco a ogni elemento a cui punta ARIA.",
       "ax-fix.nested-interactive": "Non mettere link o pulsanti dentro altri link o pulsanti.",
+      "ax-title.color-contrast": "Gli elementi devono rispettare il contrasto cromatico minimo",
+      "ax-title.button-name": "I pulsanti devono avere un testo riconoscibile",
+      "ax-title.link-name": "I link devono avere un testo riconoscibile",
+      "ax-title.image-alt": "Le immagini devono avere un testo alternativo",
+      "ax-title.role-img-alt": "Gli elementi [role=\"img\"] e [role=\"image\"] devono avere un testo alternativo",
+      "ax-title.label": "I campi dei moduli devono avere un’etichetta",
+      "ax-title.label-content-name-mismatch": "Il testo visibile di un elemento deve far parte del suo nome accessibile",
+      "ax-title.target-size": "Ogni area di tocco deve misurare 24 px o lasciare abbastanza spazio intorno",
+      "ax-title.heading-order": "I livelli dei titoli dovrebbero salire di un livello alla volta",
+      "ax-title.list": "<ul> e <ol> devono contenere direttamente solo elementi <li>, <script> o <template>",
+      "ax-title.listitem": "Gli elementi <li> devono stare dentro un <ul> o un <ol>",
+      "ax-title.scrollable-region-focusable": "Le aree scorrevoli devono essere raggiungibili da tastiera",
+      "ax-title.aria-hidden-focus": "Un elemento nascosto con ARIA non deve ricevere il focus né contenere elementi focalizzabili",
+      "ax-title.duplicate-id-aria": "Gli id usati da ARIA e dalle etichette devono essere unici",
+      "ax-title.nested-interactive": "I controlli interattivi non devono essere annidati",
       "a11y.elements_one": "{n} elemento",
       "a11y.elements_other": "{n} elementi",
       "a11y.renderedPages_one": "{n} pagina renderizzata",
@@ -4995,9 +5365,6 @@
     }
   };
 
-  const code = String(document.documentElement.lang || "en").slice(0, 2).toLowerCase();
-  const book = COPY[code] || null;
-
   function pick(lines, id, vars) {
     if (vars && typeof vars.n === "number") {
       const form = lines[id + (vars.n === 1 ? "_one" : "_other")];
@@ -5034,13 +5401,6 @@
     return missing ? null : out;
   }
 
-  // line(item.msg && item.msg.title, item.title): the page-language line, or the server's English.
-  function line(message, fallback) {
-    if (!book || !message) return fallback;
-    const text = render(book, message);
-    return text === null ? fallback : text;
-  }
-
   // Reports saved before the server sent warningMsgs carry only the English warnings; these read them back.
   const SAID = [
     [/^The site's bot protection refused the plain request; the page was analyzed in headless Chrome\./, () => ({ id: "warn.browserRead" })],
@@ -5070,30 +5430,46 @@
     return list;
   }
 
-  // The health warnings in the page language, from the server's messages or the English text; null when a line is missing.
-  function warnings(messages, english) {
-    if (!book) return null;
-    const list = Array.isArray(messages) && messages.length ? messages : readWarnings(english);
-    if (!list) return null;
-    const lines = list.map((message) => render(book, message));
-    return lines.some((text) => text === null) ? null : lines.join(" ");
-  }
-
   const KEEP_CASE = /^(Google|Consent|Lighthouse|Analytics)(?![\p{L}\p{N}])/u;
 
-  // "Fix first: <title>." for the top-ranked finding; the title starts lowercase like the English, except in German,
-  // after a slot such as {name}, and on product terms.
-  function fixFirst(item) {
-    const said = item && item.msg && item.msg.title;
-    if (!book || !said || typeof said !== "object") return null;
-    let title = render(book, said);
-    if (title === null) return null;
-    const template = String(pick(book, said.id, said.vars) || "");
-    if (code !== "de" && !/^\{/.test(template) && /^\p{Lu}[\p{Ll}’']*(?![\p{L}\p{N}-])/u.test(title) && !KEEP_CASE.test(title)) {
-      title = title.charAt(0).toLowerCase() + title.slice(1);
+  function forLang(lang) {
+    const code = String(lang || "en").slice(0, 2).toLowerCase();
+    const book = COPY[code] || null;
+
+    // line(item.msg && item.msg.title, item.title): the line in this language, or the server's English.
+    function line(message, fallback) {
+      if (!book || !message) return fallback;
+      const text = render(book, message);
+      return text === null ? fallback : text;
     }
-    return render(book, { id: "fixFirst", vars: { title } });
+
+    // The health warnings in this language, from the server's messages or the English text; null when a line is missing.
+    function warnings(messages, english) {
+      if (!book) return null;
+      const list = Array.isArray(messages) && messages.length ? messages : readWarnings(english);
+      if (!list) return null;
+      const lines = list.map((message) => render(book, message));
+      return lines.some((text) => text === null) ? null : lines.join(" ");
+    }
+
+    // "Fix first: <title>." for the top-ranked finding; the title starts lowercase like the English, except in German,
+    // after a slot such as {name}, and on product terms.
+    function fixFirst(item) {
+      const said = item && item.msg && item.msg.title;
+      if (!book || !said || typeof said !== "object") return null;
+      let title = render(book, said);
+      if (title === null) return null;
+      const template = String(pick(book, said.id, said.vars) || "");
+      if (code !== "de" && !/^\{/.test(template) && /^\p{Lu}[\p{Ll}’']*(?![\p{L}\p{N}-])/u.test(title) && !KEEP_CASE.test(title)) {
+        title = title.charAt(0).toLowerCase() + title.slice(1);
+      }
+      return render(book, { id: "fixFirst", vars: { title } });
+    }
+
+    return { lang: code, translated: !!book, line: line, render: render, warnings: warnings, fixFirst: fixFirst };
   }
 
-  window.QAReviewFindingsCopy = { lang: code, translated: !!book, line: line, render: render, warnings: warnings, fixFirst: fixFirst };
+  // functions/url-review-findings-copy.js is this file, copied by scripts/build-findings-copy.js.
+  if (typeof module === "object" && module.exports) module.exports = { COPY, forLang };
+  else window.QAReviewFindingsCopy = forLang(document.documentElement.lang);
 })();

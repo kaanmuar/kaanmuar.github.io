@@ -406,7 +406,7 @@ Feature: CV regression lab catalog
     Then the check passes
 
   @SEC-09 @Security
-  Scenario: SEC-09 Sitemap hreflang lists every language and omits admin
+  Scenario: SEC-09 Sitemap lists no ?lang= hreflang and omits admin
     Given the page "index.html" is open on a desktop screen
     When the catalog check "SEC-09" runs
     Then the check passes

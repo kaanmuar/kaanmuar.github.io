@@ -13,6 +13,7 @@
   // A review analyzes a site; it never "reads" it. Spanish is Latin American (tú), Portuguese is Brazilian (você).
   const T = {
     en: {
+      book: "Book a 15-min call about it",
       eyebrow: "Live reports", title: "Real sites. Real reviews.", titleEm: "Open any of them.",
       lede: "<b>{n} public sites</b>, analyzed by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Turn the ring, filter by sector or country, and open a report. Reviews people request are added in a daily batch. View and share only.",
       hub: "Back to Social", prev: "Previous report", next: "Next report", pause: "Pause rotation", play: "Play rotation", open: "Open report",
@@ -35,11 +36,12 @@
       brand: "QA-lab · Live report", gradeWord: "Grade", average: "Series average {n}", areaLine: "{fail} fail · {risk} at risk · {pass} pass",
       botsAllowed: "Answer bots allowed", botsBlocked: "Answer bots blocked", trainingOut: "Training bots opted out", none0: "none",
       published: "published", notFound: "not found", noJs: "HTML without JavaScript", almostEmpty: "almost empty", words: "{n} words", schema: "Structured data",
-      notAvailable: "not available", lhMobile: "Lighthouse, mobile", p75: "75th pct.", good: "good", needsWork: "needs work", poor: "poor",
+      notAvailable: "not available", lhMobile: "Lighthouse, mobile", p75: "75th pct.", good: "good", needsWork: "needs work", poor: "poor", effort_minutes: "minutes", effort_hours: "hours", effort_days: "days",
       realVisitors: "Real visitors", noField: "not enough Chrome data", labTiming: "Lab LCP · TBT", pass: "pass", risk: "at risk", fail: "fail",
       filterBy: "Filter by {group}", shareLine: "{name} scored {score}/100 ({grade}) in a QA-lab URL Review live report"
     },
     es: {
+      book: "Agenda una llamada de 15 min sobre esto",
       eyebrow: "Informes en vivo", title: "Sitios reales. Análisis reales.", titleEm: "Abre el informe que quieras.",
       lede: "<b>{n} sitios públicos</b>, analizados con la misma revisión que cualquiera puede ejecutar: portales de gobierno, medios de noticias, bancos, universidades, proyectos de código abierto y sistemas de transporte. Recorre el carrusel, filtra por sector o país y abre un informe. Las revisiones que la gente solicita se suman en un lote diario. Solo para ver y compartir.",
       hub: "Volver a Social", prev: "Informe anterior", next: "Informe siguiente", pause: "Pausar el carrusel", play: "Reanudar el carrusel", open: "Abrir informe",
@@ -62,11 +64,12 @@
       brand: "QA-lab · Informe en vivo", gradeWord: "Nota", average: "Promedio de la serie: {n}", areaLine: "{fail} fallan · {risk} en riesgo · {pass} pasan",
       botsAllowed: "Bots de respuesta permitidos", botsBlocked: "Bots de respuesta bloqueados", trainingOut: "Bots de entrenamiento excluidos", none0: "ninguno",
       published: "publicado", notFound: "no encontrado", noJs: "HTML sin JavaScript", almostEmpty: "casi vacío", words: "{n} palabras", schema: "Datos estructurados",
-      notAvailable: "no disponible", lhMobile: "Lighthouse, móvil", p75: "percentil 75", good: "bueno", needsWork: "mejorable", poor: "deficiente",
+      notAvailable: "no disponible", lhMobile: "Lighthouse, móvil", p75: "percentil 75", good: "bueno", needsWork: "mejorable", poor: "deficiente", effort_minutes: "minutos", effort_hours: "horas", effort_days: "días",
       realVisitors: "Visitantes reales", noField: "no hay suficientes datos de Chrome", labTiming: "LCP · TBT de laboratorio", pass: "pasa", risk: "en riesgo", fail: "falla",
       filterBy: "Filtrar por {group}", shareLine: "{name} obtuvo {score}/100 ({grade}) en un informe en vivo de QA-lab URL Review"
     },
     pt: {
+      book: "Agende uma conversa de 15 min sobre isto",
       eyebrow: "Relatórios ao vivo", title: "Sites reais. Análises reais.", titleEm: "Abra o relatório que quiser.",
       lede: "<b>{n} sites públicos</b>, analisados pela mesma revisão que qualquer pessoa pode executar: portais de governo, veículos de imprensa, bancos, universidades, projetos de código aberto e sistemas de transporte. Percorra o carrossel, filtre por setor ou país e abra um relatório. As revisões que as pessoas solicitam entram em um lote diário. Só para ver e compartilhar.",
       hub: "Voltar ao Social", prev: "Relatório anterior", next: "Próximo relatório", pause: "Pausar o carrossel", play: "Retomar o carrossel", open: "Abrir relatório",
@@ -89,11 +92,12 @@
       brand: "QA-lab · Relatório ao vivo", gradeWord: "Nota", average: "Média da série: {n}", areaLine: "{fail} falham · {risk} em risco · {pass} passam",
       botsAllowed: "Bots de resposta permitidos", botsBlocked: "Bots de resposta bloqueados", trainingOut: "Bots de treinamento excluídos", none0: "nenhum",
       published: "publicado", notFound: "não encontrado", noJs: "HTML sem JavaScript", almostEmpty: "quase vazio", words: "{n} palavras", schema: "Dados estruturados",
-      notAvailable: "indisponível", lhMobile: "Lighthouse, celular", p75: "percentil 75", good: "bom", needsWork: "precisa melhorar", poor: "ruim",
+      notAvailable: "indisponível", lhMobile: "Lighthouse, celular", p75: "percentil 75", good: "bom", needsWork: "precisa melhorar", poor: "ruim", effort_minutes: "minutos", effort_hours: "horas", effort_days: "dias",
       realVisitors: "Visitantes reais", noField: "dados do Chrome insuficientes", labTiming: "LCP · TBT de laboratório", pass: "passa", risk: "em risco", fail: "falha",
       filterBy: "Filtrar por {group}", shareLine: "{name} fez {score}/100 ({grade}) em um relatório ao vivo do QA-lab URL Review"
     },
     de: {
+      book: "15-Minuten-Gespräch dazu buchen",
       eyebrow: "Live-Berichte", title: "Echte Websites. Echte Prüfungen.", titleEm: "Öffnen Sie jeden Bericht.",
       lede: "<b>{n} öffentliche Websites</b>, analysiert mit derselben Prüfung, die jeder starten kann: Regierungsportale, Redaktionen, Banken, Universitäten, Open-Source-Projekte und Verkehrsbetriebe. Blättern Sie durch das Karussell, filtern Sie nach Branche oder Land und öffnen Sie einen Bericht. Von Nutzern angefragte Prüfungen kommen täglich gesammelt hinzu. Nur ansehen und teilen.",
       hub: "Zurück zu Social", prev: "Vorheriger Bericht", next: "Nächster Bericht", pause: "Karussell anhalten", play: "Karussell fortsetzen", open: "Bericht öffnen",
@@ -116,11 +120,12 @@
       brand: "QA-lab · Live-Bericht", gradeWord: "Note", average: "Serienschnitt {n}", areaLine: "{fail} durchgefallen · {risk} gefährdet · {pass} bestanden",
       botsAllowed: "Antwort-Bots erlaubt", botsBlocked: "Antwort-Bots gesperrt", trainingOut: "Trainings-Bots ausgeschlossen", none0: "keine",
       published: "veröffentlicht", notFound: "nicht gefunden", noJs: "HTML ohne JavaScript", almostEmpty: "fast leer", words: "{n} Wörter", schema: "Strukturierte Daten",
-      notAvailable: "nicht verfügbar", lhMobile: "Lighthouse, mobil", p75: "75. Perzentil", good: "gut", needsWork: "verbesserungswürdig", poor: "schlecht",
+      notAvailable: "nicht verfügbar", lhMobile: "Lighthouse, mobil", p75: "75. Perzentil", good: "gut", needsWork: "verbesserungswürdig", poor: "schlecht", effort_minutes: "Minuten", effort_hours: "Stunden", effort_days: "Tage",
       realVisitors: "Echte Besucher", noField: "zu wenige Chrome-Daten", labTiming: "Labor-LCP · TBT", pass: "bestanden", risk: "gefährdet", fail: "durchgefallen",
       filterBy: "Nach {group} filtern", shareLine: "{name} erreicht {score}/100 ({grade}) in einem Live-Bericht von QA-lab URL Review"
     },
     fr: {
+      book: "Réserver un appel de 15 min à ce sujet",
       eyebrow: "Rapports en direct", title: "De vrais sites. De vraies analyses.", titleEm: "Ouvrez le rapport de votre choix.",
       lede: "<b>{n} sites publics</b>, analysés par le même outil que chacun peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Parcourez le carrousel, filtrez par secteur ou pays, puis ouvrez un rapport. Les analyses demandées par les visiteurs s’ajoutent chaque jour, par lot. Consultation et partage uniquement.",
       hub: "Retour à Social", prev: "Rapport précédent", next: "Rapport suivant", pause: "Mettre le carrousel en pause", play: "Relancer le carrousel", open: "Ouvrir le rapport",
@@ -143,11 +148,12 @@
       brand: "QA-lab · Rapport en direct", gradeWord: "Note", average: "Moyenne de la série : {n}", areaLine: "{fail} en échec · {risk} à risque · {pass} réussis",
       botsAllowed: "Robots de réponse autorisés", botsBlocked: "Robots de réponse bloqués", trainingOut: "Robots d’entraînement exclus", none0: "aucun",
       published: "publié", notFound: "introuvable", noJs: "HTML sans JavaScript", almostEmpty: "presque vide", words: "{n} mots", schema: "Données structurées",
-      notAvailable: "indisponible", lhMobile: "Lighthouse, mobile", p75: "75e centile", good: "bon", needsWork: "à améliorer", poor: "mauvais",
+      notAvailable: "indisponible", lhMobile: "Lighthouse, mobile", p75: "75e centile", good: "bon", needsWork: "à améliorer", poor: "mauvais", effort_minutes: "minutes", effort_hours: "heures", effort_days: "jours",
       realVisitors: "Visiteurs réels", noField: "pas assez de données Chrome", labTiming: "LCP · TBT en labo", pass: "réussi", risk: "à risque", fail: "en échec",
       filterBy: "Filtrer par {group}", shareLine: "{name} obtient {score}/100 ({grade}) dans un rapport en direct de QA-lab URL Review"
     },
     it: {
+      book: "Prenota una chiamata di 15 minuti su questo",
       eyebrow: "Report dal vivo", title: "Siti veri. Analisi vere.", titleEm: "Apri il report che vuoi.",
       lede: "<b>{n} siti pubblici</b>, analizzati con la stessa revisione che chiunque può avviare: portali pubblici, redazioni, banche, università, progetti open source e trasporti. Scorri il carosello, filtra per settore o paese e apri un report. Le revisioni richieste dagli utenti si aggiungono ogni giorno, in un unico lotto. Solo visualizzazione e condivisione.",
       hub: "Torna a Social", prev: "Report precedente", next: "Report successivo", pause: "Metti in pausa il carosello", play: "Riprendi il carosello", open: "Apri il report",
@@ -170,7 +176,7 @@
       brand: "QA-lab · Report dal vivo", gradeWord: "Voto", average: "Media della serie: {n}", areaLine: "{fail} falliti · {risk} a rischio · {pass} superati",
       botsAllowed: "Bot di risposta ammessi", botsBlocked: "Bot di risposta bloccati", trainingOut: "Bot di addestramento esclusi", none0: "nessuno",
       published: "pubblicato", notFound: "non trovato", noJs: "HTML senza JavaScript", almostEmpty: "quasi vuoto", words: "{n} parole", schema: "Dati strutturati",
-      notAvailable: "non disponibile", lhMobile: "Lighthouse, mobile", p75: "75° percentile", good: "buono", needsWork: "da migliorare", poor: "scarso",
+      notAvailable: "non disponibile", lhMobile: "Lighthouse, mobile", p75: "75° percentile", good: "buono", needsWork: "da migliorare", poor: "scarso", effort_minutes: "minuti", effort_hours: "ore", effort_days: "giorni",
       realVisitors: "Visitatori reali", noField: "dati Chrome insufficienti", labTiming: "LCP · TBT di laboratorio", pass: "superato", risk: "a rischio", fail: "fallito",
       filterBy: "Filtra per {group}", shareLine: "{name} ottiene {score}/100 ({grade}) in un report dal vivo di QA-lab URL Review"
     }
@@ -333,6 +339,18 @@
     return text;
   }
   function nt() { return state.lang === "en" ? "" : ' translate="no"'; }
+  // Finding text in the page language when the card carries its message, clipped to the length the builder gives the English.
+  function said(f, part, max) {
+    const fc = window.QAReviewFindingsCopy;
+    const english = f[part] || "";
+    if (!fc || !fc.translated || fc.lang !== state.lang || !f.msg || !f.msg[part]) return english;
+    const text = fc.line(f.msg[part], "").replace(/\s+/g, " ").trim();
+    if (!text) return english;
+    return text.length > max ? text.slice(0, max - 1).replace(/\s+\S*$/, "") + "…" : text;
+  }
+  function effortName(effort) {
+    return T.en["effort_" + effort] ? t("effort_" + effort) : effort;
+  }
   function areaName(area, short) {
     const book = AREA_T[state.lang];
     if (!book) return short ? SHORT[area] : area;
@@ -472,7 +490,6 @@
       el.setAttribute("role", "group");
       el.setAttribute("aria-roledescription", "slide");
       el.style.setProperty("--h", HUES[r.sector] || 186);
-      el.innerHTML = cardHtml(r);
       ring.appendChild(el);
       cards.set(r.id, el);
     });
@@ -535,9 +552,10 @@
     const target = keepId || before;
     const at = state.list.findIndex((r) => r.id === target);
     state.active = at >= 0 ? at : 0;
+    const listed = new Set(state.list);
     state.all.forEach((r) => {
       const el = cards.get(r.id);
-      const shown = state.list.includes(r);
+      const shown = listed.has(r);
       if (el.hidden === shown) lastD.delete(r.id);
       el.hidden = !shown;
       if (!shown) el.classList.remove("is-active");
@@ -569,15 +587,17 @@
     const n = state.list.length;
     state.list.forEach((r, i) => {
       const el = cards.get(r.id);
-      const btn = el.querySelector(".lc-open");
       const d = wrap(i - state.active + state.drag, n);
       const ad = Math.abs(d);
       const front = ad < 0.5;
+      const far = !state.flat && ad > state.vis + 1;
+      if (!far && !el.firstChild) el.innerHTML = cardHtml(r);
       el.classList.toggle("is-active", front);
       el.setAttribute("aria-label", t("slide", { i: i + 1, n, name: r.name }));
       el.setAttribute("aria-hidden", state.flat || front ? "false" : "true");
-      btn.tabIndex = state.flat || front ? 0 : -1;
+      if (el.firstChild) el.querySelector(".lc-open").tabIndex = state.flat || front ? 0 : -1;
       if (state.flat) {
+        el.classList.remove("is-far");
         el.style.transform = "";
         el.style.opacity = "";
         el.style.visibility = "";
@@ -586,6 +606,9 @@
       const prev = lastD.get(r.id);
       const jump = prev == null || Math.abs(prev - d) > 1.5;
       lastD.set(r.id, d);
+      // A thousand 3D-placed cards stall a phone or a CI runner; the ones behind the ring leave rendering and are built on first view.
+      el.classList.toggle("is-far", far);
+      if (far) return;
       el.style.transition = jump || state.dragging ? "none" : "";
       el.style.transform = "rotateY(" + (d * state.step).toFixed(2) + "deg) translateZ(" + state.R + "px)";
       const shown = ad <= state.vis;
@@ -782,7 +805,7 @@
     viewer.setAttribute("aria-modal", "true");
     viewer.setAttribute("aria-labelledby", "lv-name");
     viewer.innerHTML = '<div class="lv-panel" tabindex="-1"><div class="lv-mark" aria-hidden="true"></div>' +
-      '<header class="lv-bar"><div class="lv-brand"><img src="assets/qa-review-mark.svg?v=20261013c" alt="" width="28" height="28"><span class="lv-brand-text"></span></div><div class="lv-actions"></div></header>' +
+      '<header class="lv-bar"><div class="lv-brand"><img src="assets/qa-review-mark.svg?v=20261027a" alt="" width="28" height="28"><span class="lv-brand-text"></span></div><div class="lv-actions"></div></header>' +
       '<div class="lv-body"></div></div>';
     document.body.appendChild(viewer);
     vbody = viewer.querySelector(".lv-body");
@@ -934,7 +957,11 @@
       return '<button class="lv-btn icon" type="button" data-act="net" data-net="' + net + '" aria-label="' + esc(t("shareOn", { net: name })) + '" title="' + esc(t("shareOn", { net: name })) + '">' + ICONS[net] + "</button>";
     }).join("");
     const hub = state.hub ? '<a class="lv-btn" data-act="hub" href="' + hubUrl() + '"' + nt() + ">" + ICONS.prev + "<span>" + esc(t("hub")) + "</span></a>" : "";
-    actions.innerHTML = hub + native + nets +
+    const open = state.all.find((r) => r.id === state.openId);
+    const query = new URLSearchParams({ type: "intro", lang: state.lang, utm_source: "live-reports", utm_campaign: "live-report" });
+    if (open && open.host) query.set("host", open.host);
+    const book = '<a class="lv-btn" data-act="book" href="book.html?' + esc(query.toString()) + '"' + nt() + "><span>" + esc(t("book")) + "</span></a>";
+    actions.innerHTML = hub + native + nets + book +
       '<button class="lv-btn" type="button" data-act="copy"' + nt() + ">" + ICONS.link + "<span>" + esc(t("copy")) + "</span></button>" +
       '<button class="lv-btn icon close" type="button" data-act="close" aria-label="' + esc(t("close")) + '">' + ICONS.close + "</button>";
   }
@@ -1026,9 +1053,9 @@
         (mean ? '<s style="left:' + mean + '%" title="' + esc(t("average", { n: mean })) + '"></s>' : "") + "</i><small>" + esc(t("areaLine", { fail: s.fail, risk: s.risk, pass: s.pass })) + "</small></div>";
     }).join("");
 
-    const fix = (d.fix || []).map((f) => '<li><strong><span class="lv-sev sev-' + esc(f.severity) + '"' + nt() + ">" + esc(sevName(f.severity)) + '</span><span class="lv-area-tag"' + nt() + ">" + esc(areaName(f.area)) + "</span>" + esc(f.title) + "</strong>" +
-      (f.evidence ? "<p>" + esc(f.evidence) + "</p>" : "") + (f.fix ? '<p class="fix">' + esc(f.fix) + (f.effort ? " <small>· " + esc(f.effort) + "</small>" : "") + "</p>" : "") + "</li>").join("");
-    const works = (d.works || []).map((w) => "<li><span>" + esc(w.title) + "<small" + nt() + ">" + esc(areaName(w.area)) + "</small></span></li>").join("");
+    const fix = (d.fix || []).map((f) => '<li><strong><span class="lv-sev sev-' + esc(f.severity) + '"' + nt() + ">" + esc(sevName(f.severity)) + '</span><span class="lv-area-tag"' + nt() + ">" + esc(areaName(f.area)) + "</span>" + esc(said(f, "title", 140)) + "</strong>" +
+      (f.evidence ? "<p>" + esc(said(f, "evidence", 260)) + "</p>" : "") + (f.fix ? '<p class="fix">' + esc(said(f, "fix", 220)) + (f.effort ? " <small" + nt() + ">· " + esc(effortName(f.effort)) + "</small>" : "") + "</p>" : "") + "</li>").join("");
+    const works = (d.works || []).map((w) => "<li><span>" + esc(said(w, "title", 120)) + "<small" + nt() + ">" + esc(areaName(w.area)) + "</small></span></li>").join("");
 
     const g = d.geo || {};
     const blocked = g.answersBlocked || [];
@@ -1126,7 +1153,7 @@
     buildShell();
     paintEmpty();
     if (!state.all.length) return;
-    state.all.forEach((r) => { cards.get(r.id).innerHTML = cardHtml(r); });
+    state.all.forEach((r) => { const el = cards.get(r.id); if (el.firstChild) el.innerHTML = cardHtml(r); });
     renderFilters();
     layout();
     announce();

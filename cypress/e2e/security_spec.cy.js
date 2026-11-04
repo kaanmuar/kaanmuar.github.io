@@ -14,7 +14,7 @@ describe('Security and SEO', () => {
       expect(xml).to.include('carlosandmunoz.com/');
       expect(xml).to.include('simulador.html');
       expect(xml).to.include('qa-lab.html');
-      expect(xml).to.include('qa-lab.html?lang=es');
+      expect(xml).not.to.include('?lang=');
       expect(xml).not.to.include('admin.html');
       expect(xml).not.to.include('globant.com');
       expect(xml).not.to.include('zaga.co');
@@ -89,15 +89,12 @@ describe('Security and SEO', () => {
     });
   });
 
-  it('lists every hreflang and omits admin from the sitemap', () => {
+  it('lists no ?lang= hreflang and omits admin from the sitemap', () => {
     cy.request('/sitemap.xml').its('body').then((xml) => {
       expect(xml).to.not.include('admin.html');
-      ['https://carlosandmunoz.com/', 'https://carlosandmunoz.com/simulador.html', 'https://carlosandmunoz.com/qa-lab.html'].forEach((loc) => {
-        ['en', 'es', 'pt', 'de', 'fr', 'it', 'x-default'].forEach((code) => {
-          expect(xml).to.include('hreflang="' + code + '"');
-        });
-        expect(xml).to.include('hreflang="es" href="' + loc + '?lang=es"');
-        expect(xml).to.include('hreflang="it" href="' + loc + '?lang=it"');
+      expect(xml).to.not.include('?lang=');
+      ['en', 'es', 'pt', 'de', 'fr', 'it', 'x-default'].forEach((code) => {
+        expect(xml).to.include('hreflang="' + code + '" href="https://carlosandmunoz.com/qa-review');
       });
     });
   });

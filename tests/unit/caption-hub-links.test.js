@@ -47,7 +47,8 @@ test("buffer-queue tags each channel's caption with its own network and leaves t
   const text = (service) => inputsFor({ id: "c", service }, at.slug, cap, "https://site/media", "https://clips", {}, at.batch).map(({ slot, input }) => [slot, input.text]);
   const source = (t) => (t.match(/utm_source=([a-z]+)&utm_medium=social&utm_campaign=auto-2026-10-23$/) || [])[1];
   assert.equal(source(text("twitter")[0][1]), "x");
-  ["threads", "bluesky", "mastodon", "linkedin", "facebook", "tiktok", "youtube"].forEach((service) => assert.equal(source(text(service)[0][1]), service, service));
+  ["threads", "linkedin", "facebook", "tiktok", "youtube"].forEach((service) => assert.equal(source(text(service)[0][1]), service, service));
+  ["bluesky", "mastodon"].forEach((service) => assert.deepEqual(text(service), [], service + " is posted by open-social-queue.js"));
   const ig = text("instagram");
   assert.equal(source(ig[0][1]), "instagram");
   assert.deepEqual(ig[1], ["instagram-story", "Story"]);

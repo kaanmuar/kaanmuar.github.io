@@ -3,26 +3,60 @@
 
    money      paid URL reviews (Firestore url_reviews), PayPal disputes and transactions, Stripe mode
    email      SendGrid delivery, bounces, blocks, spam reports and opens
-   search     Brave rankings for the brand queries, Search Console clicks and queries
+   search     Brave rankings for the brand queries, Search Console clicks and queries, Brave index coverage (jarvis-index.js)
    social     posts per network from the published ledgers, YouTube views
    safety     Web Risk, SPF, DKIM, DMARC, MX, CAA, domain expiry (RDAP), TLS
    platform   real function failures (5xx, crash, timeout), executions, Gemini calls, Firestore reads and writes
+   outreach   the outreach plan's pipeline, Instantly campaigns, plan progress and sending domain (jarvis-outreach.js)
+   mailbox    ImprovMX: mail forwarded, bounced and refused per alias, SMTP sends, the daily canary (mail-health.js)
+   addresses  every email address we own across ImprovMX, Microsoft 365, Instantly and SendGrid, its state and fix (jarvis-addresses.js)
+   people     signed-in URL Review people, their runs, visits and time on the review pages (jarvis-people.js)
+   pagespeed  the daily PageSpeed routine: every page's scores, its runs and its PRs (jarvis-pagespeed.js)
+   local      the Google Maps Local check across URL reviews and the Places calls per day (jarvis-local.js)
 
-   index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers} and caches each source in
+   index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers, github} and caches each source in
    jarvis_cache through TTL. */
 
 const ORIGIN = "https://carlosandmunoz.com";
 const DOMAIN = "carlosandmunoz.com";
 const PROJECT = "carlosm-interactive-cv";
+const BILLING_DATASET = "jarvis_billing";
+const BLOCKLISTS = /\b(spamcop|spamhaus|barracuda|sorbs|uceprotect|spamrats|mailspike)\b/i;
+const LISTED = /\b(?:black|block) ?list(?:ed)?\b|\bRBL\b|\bDNSBL\b/i;
 const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/";
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE };
+const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, mailbox: 10 * MINUTE, addresses: 10 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE, calls: 5 * MINUTE, people: 5 * MINUTE, engagement: 2 * MINUTE, local: 10 * MINUTE, pagespeed: 10 * MINUTE, "github-work": 10 * MINUTE };
 const { SEARCH_QUERIES } = require("./jarvis-core");
+const jarvisOutreach = require("./jarvis-outreach");
+const jarvisMarketing = require("./jarvis-marketing");
+const jarvisEngagement = require("./jarvis-engagement");
+const jarvisPeople = require("./jarvis-people");
+const jarvisLocal = require("./jarvis-local");
+const jarvisSocial = require("./jarvis-social");
+const jarvisPageSpeed = require("./jarvis-pagespeed");
+const mailHealth = require("./mail-health");
+const jarvisAddresses = require("./jarvis-addresses");
+const jarvisIndex = require("./jarvis-index");
+const jarvisGithub = require("./jarvis-github");
+const booking = require("./booking");
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
 
 const isoDay = (ms) => new Date(ms).toISOString().slice(0, 10);
+
+// Firestore's free daily quota resets at midnight Pacific time; this is that midnight for the day holding `now`.
+function pacificDayStart(now) {
+  const offset = (at) => {
+    const p = {};
+    new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+      .formatToParts(new Date(at)).forEach((x) => { p[x.type] = Number(x.value); });
+    return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - (at - (at % 1000));
+  };
+  const local = new Date(now + offset(now));
+  const midnight = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate());
+  return midnight - offset(midnight - offset(now));
+}
 const clean = (error) => String((error && error.message) || error || "failed").slice(0, 200);
 const round = (n, places) => { const f = Math.pow(10, places || 0); return Math.round((Number(n) || 0) * f) / f; };
 
@@ -63,6 +97,10 @@ async function serviceAccount(fetchImpl) {
 
 // --- money -----------------------------------------------------------------------------------------------------
 
+// Rows saved before payments recorded `test` and `provider` still carry the Stripe session or PayPal capture.
+const isTestPayment = (row) => row.test === true || row.paypalMode === "sandbox" || /^cs_test_/.test(String(row.sessionId || ""));
+const providerOf = (row) => row.provider || (/^cs_/.test(String(row.sessionId || "")) ? "stripe" : row.captureId ? "paypal" : "not recorded");
+
 function moneyRows(rows, { start, priorStart }) {
   // A paid review run carries no price; the money sits on the purchase or credit row it used.
   const now = { usd: 0, count: 0, runs: 0 };
@@ -72,7 +110,7 @@ function moneyRows(rows, { start, priorStart }) {
   const daily = {};
   let refunds = 0;
   rows.forEach((row) => {
-    if (row.test === true || !row.paid) return;
+    if (isTestPayment(row) || !row.paid) return;
     const at = Date.parse(row.createdAt || "");
     if (!Number.isFinite(at) || at < priorStart) return;
     const usd = Number(row.priceUsd) || 0;
@@ -84,7 +122,7 @@ function moneyRows(rows, { start, priorStart }) {
     bucket.usd += usd;
     bucket.count += 1;
     if (at < start) return;
-    tally(providers, row.provider || "unknown", usd);
+    tally(providers, providerOf(row), usd);
     tally(purposes, row.purpose || (String(row.id || "").startsWith("credit-") || /credit/.test(row.status || "") ? "credit" : "review"), usd);
     tally(daily, isoDay(at), usd);
     refunds += Number(row.refundedUsd) || (/refunded/.test(row.status || "") ? usd : 0);
@@ -97,6 +135,59 @@ function moneyRows(rows, { start, priorStart }) {
     byPurpose: listOf(purposes),
     daily: Object.keys(daily).sort().map((date) => ({ date, usd: round(daily[date], 2) }))
   };
+}
+
+// Transaction search is a separate grant. Confirmed captures and orders already carry the fee breakdown.
+function paypalMoney(capture) {
+  const breakdown = (capture && capture.seller_receivable_breakdown) || {};
+  const amount = breakdown.gross_amount || (capture && capture.amount) || {};
+  const gross = Number(amount.value);
+  const fee = Math.abs(Number((breakdown.paypal_fee || {}).value) || 0);
+  const net = Number((breakdown.net_amount || {}).value);
+  if (String(amount.currency_code || "USD") !== "USD" || !Number.isFinite(gross) || gross <= 0) return null;
+  return { gross, fee, net: Number.isFinite(net) ? net : gross - fee };
+}
+
+function paypalBookIds(rows, start, end) {
+  const captures = [];
+  const orders = [];
+  (rows || []).forEach((row) => {
+    if (isTestPayment(row) || (providerOf(row) !== "paypal" && row.method !== "paypal")) return;
+    const at = Date.parse(row.createdAt || "");
+    if (!Number.isFinite(at) || at < start || at > end) return;
+    const capture = String(row.captureId || "");
+    const order = String(row.sessionId || "");
+    if (/^[A-Z0-9]{10,22}$/.test(capture)) { if (captures.indexOf(capture) === -1) captures.push(capture); }
+    else if (/^[A-Z0-9]{10,22}$/.test(order) && orders.indexOf(order) === -1) orders.push(order);
+  });
+  return { captures: captures.slice(0, 40), orders: orders.slice(0, 40) };
+}
+
+async function paypalFeesFromPayments(ctx, rows, { start, end }) {
+  const ids = paypalBookIds(rows, start, end);
+  const empty = { count: 0, grossUsd: 0, feesUsd: 0, netUsd: 0, source: "payments" };
+  if (!ctx.paypal || (!ids.captures.length && !ids.orders.length)) return empty;
+  let token;
+  try { token = await ctx.paypal.token(); } catch (error) { return null; }
+  const host = "https://" + ctx.paypal.host;
+  const auth = { headers: { Authorization: "Bearer " + token } };
+  let gross = 0, fees = 0, count = 0, denied = false;
+  const load = async (url, read) => {
+    try {
+      const fee = paypalMoney(read(await getJson(ctx.fetch, url, auth, "PayPal payment")));
+      if (!fee) return;
+      gross += fee.gross;
+      fees += fee.fee;
+      count += 1;
+    } catch (error) { if (error.status === 403) denied = true; }
+  };
+  for (const id of ids.captures) await load(host + "/v2/payments/captures/" + id, (body) => body);
+  for (const id of ids.orders) await load(host + "/v2/checkout/orders/" + id, (body) => {
+    const unit = ((body && body.purchase_units) || [])[0] || {};
+    return (((unit.payments || {}).captures) || [])[0] || null;
+  });
+  if (denied && count === 0) return null;
+  return { count, grossUsd: round(gross, 2), feesUsd: round(fees, 2), netUsd: round(gross - fees, 2), source: "payments" };
 }
 
 async function paypalPart(ctx, { start, end }) {
@@ -136,9 +227,18 @@ async function money(ctx) {
   const days = ctx.days;
   const start = ctx.now - days * DAY;
   const priorStart = ctx.now - 2 * days * DAY;
-  const snap = await ctx.db.collection("url_reviews").where("paid", "==", true).where("createdAt", ">=", new Date(priorStart).toISOString()).limit(3000).get();
-  const out = Object.assign({ ok: true, days }, moneyRows(snap.docs.map((d) => Object.assign({ id: d.id }, d.data())), { start, priorStart }));
+  const snap = await ctx.db.collection("url_reviews").where("paid", "==", true).where("createdAt", ">=", new Date(priorStart).toISOString())
+    .select("createdAt", "paid", "priceUsd", "provider", "purpose", "refundedUsd", "status", "test", "paypalMode", "sessionId", "captureId", "method").limit(3000).get();
+  const rows = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+  const out = Object.assign({ ok: true, days }, moneyRows(rows, { start, priorStart }));
   out.paypal = await paypalPart(ctx, { start, end: ctx.now });
+  if (!out.paypal.transactions && out.paypal.needs.length) {
+    const fromPayments = await paypalFeesFromPayments(ctx, rows, { start, end: ctx.now });
+    if (fromPayments) {
+      out.paypal.transactions = fromPayments;
+      out.paypal.needs = [];
+    }
+  }
   const stripe = String((ctx.env || {}).STRIPE_SECRET_KEY || "");
   out.stripe = { mode: /^(sk|rk)_live_/.test(stripe) ? "live" : /^(sk|rk)_test_/.test(stripe) ? "test" : "none" };
   out.needs = out.paypal.needs.slice();
@@ -169,6 +269,12 @@ async function email(ctx) {
     } catch (error) { return null; }
   };
   const [bounces, blocks, spam] = await Promise.all([suppressed("bounces"), suppressed("blocks"), suppressed("spam_reports")]);
+  const lists = {};
+  (blocks || []).concat(bounces || []).forEach((r) => {
+    const named = BLOCKLISTS.exec(r.reason);
+    if (named) tally(lists, named[1].toLowerCase());
+    else if (LISTED.test(r.reason)) tally(lists, "unnamed blocklist");
+  });
   return {
     ok: true,
     days: ctx.days,
@@ -176,6 +282,7 @@ async function email(ctx) {
     rates: { delivered: pct(totals.delivered, totals.processed), bad: pct(totals.bounces + totals.blocks + totals.spam_reports, totals.processed), opened: pct(totals.unique_opens, totals.delivered), clicked: pct(totals.unique_clicks, totals.delivered) },
     daily,
     suppressions: { bounces, blocks, spam },
+    blocklisted: listOf(lists),
     needs: []
   };
 }
@@ -186,21 +293,60 @@ function hostOf(url) {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch (error) { return ""; }
 }
 
+// Brave answers 20 results a call, up to offset 4. Page one is asked daily; offsets 1-4 only weekly per search,
+// since a search we are not in spends all five calls of the ~1,000 a month the URL reviews share.
+const BRAVE_PAGE = 20;
+const BRAVE_DEPTH = 100;
+const BRAVE_DEEP_EVERY = 7 * DAY;
+
 async function brave(ctx, queries) {
   const key = (ctx.env || {}).BRAVE_SEARCH_KEY;
   if (!key) return { ok: false, error: "BRAVE_SEARCH_KEY is not set." };
+  const now = ctx.now || Date.now();
+  const ask = (q, page) => getJson(ctx.fetch, `https://api.search.brave.com/res/v1/web/search?count=${BRAVE_PAGE}&offset=${page}&q=` + encodeURIComponent(q), { headers: { "X-Subscription-Token": key, Accept: "application/json" } }, "Brave");
+  const ours = (results) => results.findIndex((r) => { const host = hostOf(r.url); return host === DOMAIN || host.endsWith("." + DOMAIN); });
+  const ref = ctx.db ? ctx.db.collection("jarvis_cache").doc("brave-deep") : null;
+  const snap = ref ? await ref.get().catch(() => null) : null;
+  const deep = (snap && snap.exists && snap.data().rows) || {};
+  const checked = {};
   const rows = [];
   for (const q of queries) {
+    let data;
     try {
-      const data = await getJson(ctx.fetch, "https://api.search.brave.com/res/v1/web/search?count=20&q=" + encodeURIComponent(q), { headers: { "X-Subscription-Token": key, Accept: "application/json" } }, "Brave");
-      const results = ((data.web || {}).results || []);
-      const at = results.findIndex((r) => hostOf(r.url).endsWith(DOMAIN));
-      rows.push({ query: q, position: at >= 0 ? at + 1 : null, url: at >= 0 ? results[at].url : "", leader: results[0] ? hostOf(results[0].url) : "" });
+      data = await ask(q, 0);
     } catch (error) {
       rows.push({ query: q, position: null, error: clean(error) });
+      continue;
     }
+    const results = (data.web || {}).results || [];
+    const at = ours(results);
+    const row = { query: q, position: at >= 0 ? at + 1 : null, url: at >= 0 ? results[at].url : "", leader: results[0] ? hostOf(results[0].url) : "" };
+    if (row.position === null && results.length) {
+      const saved = deep[q];
+      if (saved && now - Date.parse(saved.at) < BRAVE_DEEP_EVERY) {
+        Object.assign(row, { position: saved.position, url: saved.url, checkedAt: saved.at });
+      } else {
+        try {
+          let seen = results.length;
+          for (let page = 1; page < BRAVE_DEPTH / BRAVE_PAGE && row.position === null && (data.query || {}).more_results_available !== false; page++) {
+            data = await ask(q, page);
+            const more = (data.web || {}).results || [];
+            const found = ours(more);
+            if (found >= 0) Object.assign(row, { position: seen + found + 1, url: more[found].url });
+            if (!more.length) break;
+            seen += more.length;
+          }
+          checked[q] = { position: row.position, url: row.url, at: new Date(now).toISOString() };
+          row.checkedAt = checked[q].at;
+        } catch (error) {
+          row.deepError = clean(error);
+        }
+      }
+    }
+    rows.push(row);
   }
-  return { ok: true, queries: rows };
+  if (ref && Object.keys(checked).length) await ref.set({ rows: Object.assign({}, deep, checked) }).catch(() => null);
+  return { ok: true, depth: BRAVE_DEPTH, queries: rows };
 }
 
 async function searchConsole(ctx) {
@@ -227,6 +373,9 @@ async function searchConsole(ctx) {
       pages: (byPage.rows || []).map((r) => ({ page: r.keys[0].replace(ORIGIN, "") || "/", clicks: r.clicks, impressions: r.impressions }))
     };
   } catch (error) {
+    if (error.status === 403 && /SERVICE_DISABLED|has not been used|is disabled/i.test(error.name + " " + error.message)) {
+      return { ok: false, error: "The Search Console API is turned off for this project.", need: "Search Console: in the Cloud console open APIs & Services > Library > Google Search Console API and click Enable (or run: gcloud services enable searchconsole.googleapis.com)." };
+    }
     if (error.status === 403 || error.status === 401) {
       const sa = await serviceAccount(ctx.fetch);
       return { ok: false, error: "No access to " + site + ".", need: "Search Console: Settings > Users and permissions > Add user " + (sa || "the functions service account") + " with Restricted permission for " + site + "." };
@@ -237,27 +386,45 @@ async function searchConsole(ctx) {
 
 async function search(ctx) {
   const queries = ((ctx.settings || {}).searchQueries || []).length ? ctx.settings.searchQueries : SEARCH_QUERIES;
-  const [ranks, gsc] = await Promise.all([brave(ctx, queries.slice(0, 8)), searchConsole(ctx)]);
-  return { ok: true, brave: ranks, console: gsc, needs: gsc.need ? [gsc.need] : [] };
+  const [ranks, gsc, index] = await Promise.all([brave(ctx, queries.slice(0, 8)), searchConsole(ctx), jarvisIndex.read(ctx).catch((error) => ({ ok: false, error: clean(error) }))]);
+  return { ok: true, brave: ranks, console: gsc, index, needs: gsc.need ? [gsc.need] : [] };
 }
 
 // --- social ----------------------------------------------------------------------------------------------------
+
+// Facebook post numbers are read each morning by scripts/social-metrics.js in auto-live-reports.yml, which holds the
+// Page tokens as repo secrets; its pages entry says which Page was skipped or refused, and why.
+function facebookNeeds(metrics) {
+  return Object.entries((metrics && metrics.pages) || {}).map(([profile, page]) => {
+    if (page.skipped) return profile + ": the daily social numbers skipped it (" + page.skipped + " repo secret). Steps are at the top of scripts/meta-token.js.";
+    const said = [];
+    if (page.asked && page.answered < page.asked) said.push("the Graph API answered " + (page.answered || 0) + " of " + page.asked + " sent posts in the daily social numbers" + (page.error ? " (" + String(page.error).slice(0, 200) + ")" : ""));
+    if (page.asked && page.insights === 0) said.push("no post came back with views, so the Page token lacks read_insights");
+    return said.length ? profile + ": " + said.join("; ") + ". A new token with read_insights and pages_read_user_content fixes it; steps are at the top of scripts/meta-token.js." : "";
+  }).filter(Boolean);
+}
 
 async function social(ctx) {
   const since = ctx.now - ctx.days * DAY;
   const ledger = async (name) => {
     try { return await getJson(ctx.fetch, ORIGIN + "/assets/social/" + name + ".json?t=" + Math.floor(ctx.now / HOUR), {}, name + " ledger"); } catch (error) { return null; }
   };
-  const [buffer, facebook, youtube] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("youtube")]);
+  const [buffer, facebook, open, youtube, metrics] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("youtube"), ledger("metrics")]);
   const channels = {};
   const results = {};
   const daily = {};
   const latest = [];
-  [buffer, facebook].forEach((book) => {
+  const scheduled = { count: 0, next: "" };
+  [buffer, facebook, open].forEach((book) => {
     Object.keys((book && book.posts) || {}).forEach((post) => {
       (book.posts[post] || []).forEach((row) => {
         const at = Date.parse(row.at || "");
         if (!Number.isFinite(at) || at < since) return;
+        if (at > ctx.now) {
+          scheduled.count += 1;
+          if (!scheduled.next || at < Date.parse(scheduled.next)) scheduled.next = row.at;
+          return;
+        }
         const key = (row.channel || "other") + ":" + (row.result || "unknown");
         tally(results, key);
         if (row.result === "sent") { tally(channels, row.channel || "other"); tally(daily, isoDay(at)); }
@@ -278,8 +445,8 @@ async function social(ctx) {
       videos.forEach((v) => { const s = stats[v.id] || {}; v.views = Number(s.viewCount) || 0; v.likes = Number(s.likeCount) || 0; v.comments = Number(s.commentCount) || 0; });
       views = videos.reduce((s, v) => s + (v.views || 0), 0);
     } catch (error) { needs.push("YouTube: " + clean(error)); }
-  } else if (!key) needs.push("YouTube: set YOUTUBE_KEY (an API key limited to the YouTube Data API v3) in functions/.env.");
-  if (!(ctx.env || {}).FACEBOOK_PAGE_TOKEN) needs.push("Facebook: copy FACEBOOK_PAGE_TOKEN from the GitHub secrets into functions/.env so Jarvis can read post reach.");
+  } else if (!key) needs.push("YouTube: set YOUTUBE_KEY (an API key limited to the YouTube Data API v3) in Secret Manager.");
+  needs.push(...facebookNeeds(metrics));
   const failed = Object.keys(results).filter((k) => /:failed$/.test(k)).reduce((s, k) => s + results[k], 0);
   return {
     ok: !!(buffer || facebook),
@@ -291,6 +458,8 @@ async function social(ctx) {
     results: listOf(results, 24),
     daily: Object.keys(daily).sort().map((date) => ({ date, posts: daily[date] })),
     latest: latest.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 15),
+    scheduled,
+    queue: jarvisSocial.byChannel([buffer, facebook, open], ctx.now, since),
     youtube: { videos: videos.sort((a, b) => (b.views || 0) - (a.views || 0) || Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 10), views },
     needs
   };
@@ -406,6 +575,33 @@ async function realFailures(ctx, token, start) {
   return { total: (data.entries || []).length, capped: !!data.nextPageToken, byFunction: listOf(byFunction), kinds: listOf(kinds), latest };
 }
 
+// Cloud Billing's standard usage cost export (Billing > Billing export) writes gcp_billing_export_v1_* into jarvis_billing.
+async function costs(ctx, token) {
+  const auth = { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } };
+  const bq = "https://bigquery.googleapis.com/bigquery/v2/projects/" + PROJECT;
+  let tables;
+  try {
+    tables = await getJson(ctx.fetch, bq + "/datasets/" + BILLING_DATASET + "/tables", auth, "BigQuery");
+  } catch (error) {
+    if (error.status === 404) return { need: "Costs: in the Cloud console open Billing > Billing export and turn on the standard usage cost export to BigQuery (dataset " + BILLING_DATASET + " in " + PROJECT + ")." };
+    throw error;
+  }
+  const table = ((tables.tables || []).map((t) => t.tableReference.tableId).filter((id) => /^gcp_billing_export_v1_/.test(id)).sort()[0]) || "";
+  if (!table) return { pending: true, note: "The billing export is on; Google writes the first rows within a day." };
+  const days = Math.min(Math.max(Number(ctx.days) || 30, 1), 90);
+  const query = "SELECT service.description AS service, currency, ROUND(SUM(cost) + SUM(IFNULL((SELECT SUM(c.amount) FROM UNNEST(credits) c), 0)), 2) AS net, ROUND(SUM(cost), 2) AS gross " +
+    "FROM `" + PROJECT + "." + BILLING_DATASET + "." + table + "` WHERE usage_start_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL " + days + " DAY) GROUP BY service, currency ORDER BY gross DESC LIMIT 15";
+  const data = await getJson(ctx.fetch, bq + "/queries", Object.assign({ method: "POST", body: JSON.stringify({ query, useLegacySql: false, timeoutMs: 20000 }) }, auth), "BigQuery");
+  const rows = (data.rows || []).map((r) => ({ label: r.f[0].v || "other", currency: r.f[1].v, net: Number(r.f[2].v) || 0, gross: Number(r.f[3].v) || 0 }));
+  return {
+    days,
+    currency: (rows[0] || {}).currency || "",
+    net: round(rows.reduce((s, r) => s + r.net, 0), 2),
+    gross: round(rows.reduce((s, r) => s + r.gross, 0), 2),
+    byService: rows.map((r) => ({ label: r.label, value: r.net }))
+  };
+}
+
 async function platform(ctx) {
   const needs = [];
   const out = { ok: true, needs };
@@ -439,14 +635,16 @@ async function platform(ctx) {
     }),
     part("firestore", async () => {
       const kinds = { reads: "read_count", writes: "write_count", deletes: "delete_count" };
-      const usage = {};
+      const start = pacificDayStart(end);
+      const usage = { since: new Date(start).toISOString() };
       await Promise.all(Object.keys(kinds).map(async (k) => {
-        const rows = await monitoring(ctx, token, 'metric.type="firestore.googleapis.com/document/' + kinds[k] + '"', { start: day, end });
+        const rows = await monitoring(ctx, token, 'metric.type="firestore.googleapis.com/document/' + kinds[k] + '"', { start, end });
         usage[k] = rows.reduce((s, r) => s + r.value, 0);
       }));
       Object.keys(FIRESTORE_FREE).forEach((k) => { usage[k + "FreePct"] = round((usage[k] / FIRESTORE_FREE[k]) * 100, 1); });
       return usage;
     }),
+    part("costs", async () => costs(ctx, token)),
     part("users", async () => {
       if (!ctx.listUsers) return null;
       const users = await ctx.listUsers();
@@ -454,11 +652,11 @@ async function platform(ctx) {
       return { total: users.length, newInRange: users.filter((u) => Date.parse(u.created || 0) >= since).length, activeInRange: users.filter((u) => Date.parse(u.lastSignIn || 0) >= since).length };
     })
   ]);
-  needs.push("Costs: in the Cloud console open Billing > Billing export and turn on the detailed usage cost export to BigQuery (dataset jarvis_billing in " + PROJECT + "), so Jarvis can show spend and cost per review.");
+  if (out.costs && out.costs.need) needs.push(out.costs.need);
   return out;
 }
 
-const SOURCES = { money, email, search, social, safety, platform };
+const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, mailbox: mailHealth.mailbox, addresses: jarvisAddresses.source, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource, calls: booking.callsSource, engagement: jarvisEngagement.source, people: jarvisPeople.source, pagespeed: jarvisPageSpeed.source, local: jarvisLocal.source, "github-work": jarvisGithub.source };
 
 async function run(name, ctx) {
   const source = SOURCES[name];
@@ -470,4 +668,4 @@ async function run(name, ctx) {
   }
 }
 
-module.exports = { SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, monitoring, realFailures, hostOf };
+module.exports = { costs, SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, pacificDayStart, monitoring, realFailures, hostOf };

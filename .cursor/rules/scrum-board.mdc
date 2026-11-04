@@ -4,39 +4,17 @@ alwaysApply: true
 ---
 
 # GitHub Scrum board
+Board: Project 1 "QA-lab URL Review" (https://github.com/orgs/carlosandmunoz-hq/projects/1), repo `kaanmuar/kaanmuar.github.io`. Columns: Backlog, Next, Design, Dev, QA, Stg, Prod, Done.
+Use `scripts/ticket.sh` for every board chore; its header lists the commands (`new`, `bug`, `design`, `move`, `child`, `done`, `log`).
 
-Board: GitHub Project 1 "QA-lab URL Review" (org `carlosandmunoz-hq` in the QA-lab enterprise, https://github.com/orgs/carlosandmunoz-hq/projects/1, id `PVT_kwDOFLbZIM4BokiS`), repo `kaanmuar/kaanmuar.github.io`.
-Status field `PVTSSF_lADOFLbZIM4BokiSzhnEBTE`: Backlog `3f4ac4fe`, Next `dc8fb26d`, Design `a8250664`, Dev `698df321`, QA `71ce1b86`, Stg `727e0727`, Prod `060490af`, Done `bebf6b88`.
-
-## Every piece of work has a ticket
-- Before starting, find the ticket for the request. If there is none, create it (`kind:request` + one `area:*` label), add it to the board, and move it to Design or Dev.
-- Move the ticket through the columns as the work moves, and reference it in the PR body.
-
-## Everything found during development is logged and tied to that ticket
-- Each bug, regression, incongruence (copy vs behaviour, page vs page, main vs production), or process slip found while working gets its own issue, even if it is fixed in the same PR.
-- Label `bug` + `area:*`. Title like the others: `BE: A null MX record was read as missing mail setup`.
-- Body: `**Kind:** Bug`, `**Area:**`, `**Found while:** #<ticket>`, `**Where it stands:**`, then `## What happened` and `## Fix`.
-- Link it as a sub-issue of the ticket being developed. Fixed: close it with "Fixed in #<PR>" and set Done. Not fixed: leave it open in Backlog.
+- **Every piece of work has a ticket.** Find it, or `scripts/ticket.sh new "<title>" <area> dev` (`kind:request` + one `area:*`). Move it as the work moves; reference it in the PR body.
+- **Everything found while developing is its own issue** tied to the ticket: each bug, regression, incongruence (copy vs behaviour, page vs page, main vs production) or process slip, even if fixed in the same PR. `scripts/ticket.sh bug <ticket> "BE: A null MX record was read as missing mail setup" <area> "<what happened>" "<fix>" [fixed-pr]` writes the standard body, links it as a sub-issue, and closes it Done with the PR or leaves it in Backlog.
 - A PR that fixes a URL review failure cause class adds a row to `FIXES` in `functions/url-review-failures.js` (cause, merge time, PR), so the failed runs it covers are re-run.
-
-## Design deliverables are logged in the Design phase of the same ticket
-- Templates, layouts, images, logos, icons, share images, social posts, motion, copy and visual changes, and later updates or improvements to any of them each get an issue titled `Design: ...` with label `area:design`.
-- Link it as a sub-issue of the original ticket, set Status to Design while it is being made, and Done when it ships. In the body, list the decisions and the file paths, and link the live page.
+- **Design deliverables** (templates, layouts, images, logos, icons, share images, social posts, motion, copy and visual changes, and later updates to any of them) each get `scripts/ticket.sh design <ticket> "Design: ..." "<decisions, file paths, live link>"`; set Done when it ships.
 
 ## GitHub API budget
-Every chat runs `gh` as kaanmuar, so all of them share one GraphQL budget of 5,000 points an hour (#892). `gh issue`, `gh pr`, `gh pr checks` and `gh project` spend it; `gh api repos/...` and `gh run` use REST, which has its own 5,000.
-- Create, read, label, comment on and close issues, and link sub-issues, through REST (below).
-- Watch CI through REST: `gh run list --commit <sha> --json databaseId -q '.[].databaseId'`, then `gh run watch <id> -i 30 --exit-status` for each. Never `gh pr checks --watch`.
-- Open and merge PRs through REST: `gh api $R/pulls -f title=... -f head=<branch> -f base=main -f body=...`, `gh api -X PUT $R/pulls/<n>/merge -f merge_method=squash`.
-- Only board moves need GraphQL. Run them through `scripts/gh-budget.sh`, which runs them as the qa-lab-agents app (10,000 points an hour, `scripts/gh-app-token.js`) and falls back to kaanmuar, then the bot.
-
-## Commands
-```bash
-R=repos/kaanmuar/kaanmuar.github.io
-n=$(gh api $R/issues -f title="..." -f body="..." -f 'labels[]=bug' -f 'labels[]=area:be' -q .number)
-item=$(scripts/gh-budget.sh api graphql -f query='mutation($p:ID!,$c:ID!){addProjectV2ItemById(input:{projectId:$p,contentId:$c}){item{id}}}' \
- -f p=PVT_kwDOFLbZIM4BokiS -f c=$(gh api $R/issues/$n -q .node_id) -q .data.addProjectV2ItemById.item.id)
-scripts/gh-budget.sh project item-edit --id "$item" --project-id PVT_kwDOFLbZIM4BokiS --field-id PVTSSF_lADOFLbZIM4BokiSzhnEBTE --single-select-option-id bebf6b88
-gh api $R/issues/<ticket>/sub_issues -F sub_issue_id=$(gh api $R/issues/<child> -q .id)
-gh api $R/issues/<child>/comments -f body="Fixed in #<PR>." >/dev/null && gh api -X PATCH $R/issues/<child> -f state=closed -f state_reason=completed >/dev/null
-```
+All chats share kaanmuar's 5,000 GraphQL points an hour (#892); `gh issue`, `gh pr`, `gh pr checks` and `gh project` spend it.
+- Issues, comments, labels, sub-issues: REST (`gh api repos/...`), as `scripts/ticket.sh` does.
+- CI: `scripts/ci-wait.sh <sha|pr>` (one blocking REST watch per run, prints only failed steps). Never `gh pr checks --watch`.
+- PRs: `gh api repos/kaanmuar/kaanmuar.github.io/pulls -f title=... -f head=<branch> -f base=main -f body=...`; merge with `gh api -X PUT .../pulls/<n>/merge -f merge_method=squash`.
+- Board moves only through `scripts/gh-budget.sh` (qa-lab-agents app first), which `scripts/ticket.sh` uses.

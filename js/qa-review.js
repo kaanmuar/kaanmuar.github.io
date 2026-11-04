@@ -2,8 +2,9 @@
   const TERMS_KEY = "qa-review-terms";
   const DEVICE_KEY = "qa-review-device";
   const SHOWN_KEY = "qa-review-shown";
+  const REOPEN_FREE_MS = 7 * 24 * 60 * 60 * 1000;
   const SAMPLE_URL = "assets/qa-review-sample.json";
-  const TERMS_VERSION = "2026-10-24";
+  const TERMS_VERSION = "2026-11-02";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
   const PAGE_CENTS = { 20: 0, 40: 500, 60: 900, 80: 1200, 100: 1500 };
@@ -143,11 +144,13 @@
   }
 
   // The terms are asked for when an address is sent or someone signs in; what asked goes on once they are accepted.
-  function askTerms(then, host) {
+  // hosts: the address about to be reviewed, or every competitor of a comparison.
+  function askTerms(then, hosts) {
     afterTerms = then;
     const waiting = document.getElementById("gate-waiting");
-    waiting.hidden = !host;
-    waiting.textContent = host ? waiting.dataset.text.replace("{host}", host.replace(/^https?:\/\//i, "")) : "";
+    const list = [].concat(hosts || []).filter(Boolean).map((host) => host.replace(/^https?:\/\//i, ""));
+    waiting.hidden = !list.length;
+    waiting.textContent = list.length > 1 ? rc.t("gateMany", { hosts: list.join(", ") }) : list.length ? waiting.dataset.text.replace("{host}", list[0]) : "";
     gateReturn = document.activeElement;
     behindGate = [...document.body.children].filter((el) => el !== gate && !el.inert && !el.matches("script, .cookie-note"));
     behindGate.forEach((el) => { el.inert = true; });
@@ -373,6 +376,12 @@
     syncLegal();
     syncSection();
   });
+  // Outreach links on qalabreview.com open the free review with the prospect's site already typed in.
+  const prefill = String(new URLSearchParams(location.search).get("url") || "").trim().replace(/^https?:\/\//i, "");
+  if (/^[a-z0-9.-]+\.[a-z]{2,}(\/[\w./-]*)?$/i.test(prefill) && !urlInput.value) {
+    urlInput.value = prefill;
+    urlInput.dispatchEvent(new Event("input"));
+  }
 
   document.getElementById("theme-toggle").addEventListener("click", () => {
     if (window.SiteTheme && SiteTheme.toggle) SiteTheme.toggle();
@@ -557,7 +566,8 @@
     }[ch]));
   }
 
-  function appendLog(text) {
+  // host: the competitor a line belongs to when several run at once; their lines skip the single progress bar.
+  function appendLog(text, host) {
     const list = document.getElementById("run-log");
     // Like a terminal: keep following new lines unless the reader has scrolled up.
     const following = list.scrollHeight - list.scrollTop - list.clientHeight < 32;
@@ -570,14 +580,28 @@
       item.setAttribute("translate", "no");
     }
     item.appendChild(time);
+    if (host) {
+      const site = document.createElement("b");
+      site.className = "log-host";
+      site.setAttribute("translate", "no");
+      site.textContent = host + " ";
+      item.appendChild(site);
+    }
     item.appendChild(document.createTextNode(shown));
     list.appendChild(item);
     if (following) list.scrollTop = list.scrollHeight;
-    if (window.ReviewProgress) ReviewProgress.line(text);
+    if (window.ReviewProgress && !host) ReviewProgress.line(text);
   }
 
   function seenBefore(id) {
     return (sessionStorage.getItem(SHOWN_KEY) || "").split(",").filter(Boolean).indexOf(id) !== -1;
+  }
+
+  // Same rule as reopenFree in functions/url-review-offers.js: the blurred copy opens again at no charge for 7 days.
+  function reopenFree(payload) {
+    const until = Date.parse(payload.reopenUntil || "");
+    const ran = Date.parse((payload.report && payload.report.fetchedAt) || "");
+    return until > Date.now() || Date.now() - ran < REOPEN_FREE_MS;
   }
 
   function remember(id) {
@@ -587,7 +611,7 @@
   }
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer";
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample";
   // A bought fix list opens the scores and findings; the cases, signals and fix kit stay blurred.
   const FIX_OPEN = "#exec, #health, #fix-first, #browser-pass, #previews, #geo, #analytics, #seo, #site-graph, #security, #findings";
 
@@ -755,7 +779,18 @@
     const mentions = report.mentions || [];
     list.innerHTML = mentions.length
       ? mentions.map((item) => "<li><span class=\"mention-tone\">" + esc(item.tone || "Mention") + "</span> <a href=\"" + esc(item.href) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + esc(item.title) + "</a></li>").join("")
-      : "<li>No public write-up was retrieved on this pass.</li>";
+      : "<li class=\"muted\">No public write-up was retrieved on this pass.</li>";
+  }
+
+  // The walkthrough call (#1971): book.html with this report, in the page language.
+  function paintCall(report, sample) {
+    const box = document.getElementById("report-call");
+    if (!box) return;
+    box.hidden = Boolean(sample) || !report || !report.id;
+    if (box.hidden) return;
+    const query = new URLSearchParams({ type: "walkthrough", lang: String(document.documentElement.lang || "en").slice(0, 2), review: report.id, utm_source: "qa-review", utm_campaign: "report" });
+    if (report.host) query.set("host", report.host);
+    document.getElementById("report-call-link").href = "book.html?" + query.toString();
   }
 
   function paintCredential(payload) {
@@ -781,22 +816,22 @@
     const headers = obs.headers || {};
     const sig = obs.signals || {};
     const maxMs = Math.max.apply(null, pages.map((page) => page.ms || 0).concat([1]));
-    const times = pages.slice(0, 10).map((page) => {
+    const times = pages.slice(0, slotRoot ? pages.length : 10).map((page) => {
       const width = Math.max(4, Math.round(((page.ms || 0) / maxMs) * 100));
       const label = String(page.path || "/").slice(0, 28);
       return '<div class="meter"><span>' + esc(label) + '</span><div class="track"><i style="width:' + width + '%"></i></div><span>' + esc(page.ms || 0) + " ms</span></div>";
-    }).join("") || '<p class="muted">No page timing was saved.</p>';
+    }).join("") || '<p class="muted">' + esc(rc.t("visNoTimes")) + "</p>";
     const checks = [
-      ["HTTPS", true],
-      ["HSTS", !!headers.hsts],
-      ["CSP", !!headers.csp],
-      ["nosniff", !!headers.nosniff],
-      ["Frame policy", (!!headers.frame && !/allow-from/i.test(headers.frame)) || /frame-ancestors/i.test(headers.csp || "")],
-      ["Referrer", !!headers.referrer],
-      ["Language", !!obs.lang],
-      ["Viewport", !!sig.viewport]
+      ["https", "HTTPS", true],
+      ["hsts", "HSTS", !!headers.hsts],
+      ["csp", "CSP", !!headers.csp],
+      ["nosniff", "nosniff", !!headers.nosniff],
+      ["frame", rc.t("markFrame"), (!!headers.frame && !/allow-from/i.test(headers.frame)) || /frame-ancestors/i.test(headers.csp || "")],
+      ["referrer", rc.t("markReferrer"), !!headers.referrer],
+      ["lang", rc.t("markLang"), !!obs.lang],
+      ["viewport", "Viewport", !!sig.viewport]
     ];
-    const ticks = checks.map(([label, on]) => '<div class="tick ' + (on ? "on" : "off") + '"><b>' + (on ? "Present" : "Missing") + "</b>" + esc(label) + "</div>").join("");
+    const ticks = checks.map(([mark, label, on]) => '<div class="tick ' + (on ? "on" : "off") + '" data-mark="' + mark + '"><b>' + esc(rc.t(on ? "visPresent" : "visMissing")) + "</b>" + esc(label) + "</div>").join("");
     const groups = {};
     (report.technologies || []).forEach((item) => {
       const name = item.group || "Other";
@@ -805,36 +840,39 @@
     const groupEntries = Object.entries(groups);
     const groupMax = Math.max.apply(null, groupEntries.map((pair) => pair[1]).concat([1]));
     const groupBars = groupEntries.length ? groupEntries.map(([name, count]) =>
-      '<div class="meter"><span>' + esc(name) + '</span><div class="track"><i style="width:' + Math.round(count / groupMax * 100) + '%"></i></div><span>' + count + "</span></div>"
-    ).join("") : '<p class="muted">No technology group was named.</p>';
+      '<div class="meter"><span>' + esc(rc.word("techGroup", name, name)) + '</span><div class="track"><i style="width:' + Math.round(count / groupMax * 100) + '%"></i></div><span>' + count + "</span></div>"
+    ).join("") : '<p class="muted">' + esc(rc.t("visNoTech")) + "</p>";
     const ranked = ((report.insights && report.insights.findings) || []).filter((item) => item.rank && item.fix).slice(0, 3).map((item) => [said(item, "title"), said(item, "fix"), true]);
     const advice = ranked.slice();
-    if (!ranked.length && !headers.hsts) advice.push(["Send HSTS", "Put Strict-Transport-Security on the host with a max-age of at least six months so the next visit stays on https."]);
-    if (!ranked.length && !headers.csp) advice.push(["Add a content security policy", "Name the script sources and frame-ancestors, then tighten the policy from what a real browser reports."]);
-    if (!ranked.length && (obs.missingAlt || 0) > 0) advice.push(["Name the images", obs.missingAlt + " images had no alt. Informative images need a description. Decorative images need an empty alt."]);
-    if (!ranked.length && !obs.lang) advice.push(["Declare the language", "Set lang on the html element to the language a person reads on the page."]);
-    if (!ranked.length && (obs.scripts || 0) > 12) advice.push(["Budget the scripts", obs.scripts + " external scripts were referenced. Defer the ones that are not needed for the first view."]);
-    if (!ranked.length && (obs.ms || 0) > 800) advice.push(["Watch the first response", "This document took " + obs.ms + " ms. Keep that path under a budget you can re-check."]);
-    if (!advice.length) advice.push(["Keep the proposal separate from a run", "These cases are a plan. Run them later in a browser you control, with accounts the owner issued."]);
-    advice.push(["This is a snapshot", "The review does not certify that the site is safe, fast, or compliant."]);
-    const adviceHtml = advice.slice(0, 4).map(([title, body, finding]) => "<article><strong>" + esc(title) + "</strong><span>" + (finding ? fadeText(body, paid) : esc(body)) + "</span></article>").join("");
+    const tip = (key, vars) => [rc.t(key), rc.t(key + "Body", vars), false, key];
+    if (!ranked.length && !headers.hsts) advice.push(tip("adHsts"));
+    if (!ranked.length && !headers.csp) advice.push(tip("adCsp"));
+    if (!ranked.length && (obs.missingAlt || 0) > 0) advice.push(tip("adAlt", { n: obs.missingAlt }));
+    if (!ranked.length && !obs.lang) advice.push(tip("adLang"));
+    if (!ranked.length && (obs.scripts || 0) > 12) advice.push(tip("adScripts", { n: obs.scripts }));
+    if (!ranked.length && (obs.ms || 0) > 800) advice.push(tip("adFirst", { ms: obs.ms }));
+    if (!advice.length) advice.push(tip("adPlan"));
+    advice.push(tip("adSnap"));
+    const adviceHtml = advice.slice(0, slotRoot ? advice.length : 4).map(([title, body, finding, key]) => "<article" + (key === "adSnap" ? ' data-advice="snapshot"' : "") + "><strong>" + esc(title) + "</strong><span>" + (finding ? fadeText(body, paid) : esc(body)) + "</span></article>").join("");
     slot("report-visuals").innerHTML =
-      '<article class="card"><h2>Response time across the pages analyzed</h2><p class="muted">Milliseconds, in the order the pages were opened. One review, not a history of earlier days.</p>' + times + "</article>" +
-      '<article class="card"><h2>Public marks on the first response</h2><div class="ticks">' + ticks + "</div></article>" +
-      '<article class="card"><h2>Technology groups in this review</h2>' + groupBars + "</article>" +
-      '<article class="card"><h2>Practices worth implementing</h2><div class="advice">' + adviceHtml + "</div></article>";
-    const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString() : "";
+      '<article class="card" data-card="speed"><h2>' + esc(rc.t("visTimes")) + '</h2><p class="muted" data-note>' + esc(rc.t("visTimesNote")) + "</p>" + times + "</article>" +
+      '<article class="card" data-card="marks"><h2>' + esc(rc.t("visMarks")) + '</h2><div class="ticks">' + ticks + "</div></article>" +
+      '<article class="card" data-card="tech"><h2>' + esc(rc.t("visTech")) + "</h2>" + groupBars + "</article>" +
+      '<article class="card" data-card="practices"><h2>' + esc(rc.t("visAdvice")) + '</h2><div class="advice">' + adviceHtml + "</div></article>";
+    const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString(rc.lang) : "";
     slot("report-cover").innerHTML =
-      '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261013c" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || "Report") + '</h2><p class="muted">' + esc(when) + "</p>" +
+      '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261027a" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || rc.t("dashTitle")) + '</h2><p class="muted">' + esc(when) + "</p>" +
       (report.signature ? '<p class="sign-line">' + esc(report.signature.mark) + "</p>" : "") + "</div>" +
-      '<div><p class="report-kicker">' + ((report.counts && report.counts.cases) || 0) + ' proposed cases</p><p>' + esc(report.statement || "") + "</p></div>";
+      '<div><p class="report-kicker">' + esc(rc.t("coverCases", { n: (report.counts && report.counts.cases) || 0 })) + "</p><p>" + esc(report.statement || "") + "</p></div>";
     if (!slotRoot) document.getElementById("print-mark").textContent = "";
   }
 
   const cc = window.QAReviewCompareCopy;
   const rc = window.QAReviewReportCopy;
   const fc = window.QAReviewFindingsCopy || { translated: false, line: (message, fallback) => fallback };
-  const said = (item, part) => fc.line(item.msg && item.msg[part], item[part]);
+  // Reports saved before axe titles carried an id are read by the finding key.
+  const axeTitle = (item) => /^ax-/.test(item.key || "") ? { id: "ax-title." + item.key.slice(3) } : null;
+  const said = (item, part) => fc.line((item.msg && item.msg[part]) || (part === "title" ? axeTitle(item) : null), item[part]);
   // A title still in the server's English is marked so the browser can translate it.
   const titleLang = (item) => said(item, "title") === item.title ? ' translate="yes" lang="en"' : "";
   const VERDICT_LABEL = { fail: cc.verdict("fail"), risk: cc.verdict("risk"), pass: cc.verdict("pass"), person: cc.verdict("person") };
@@ -851,6 +889,28 @@
     return at ? at.querySelector('[data-slot="' + id + '"]') : document.getElementById(id);
   }
 
+  // A list longer than its cap shows the first items, then a button that opens the rest in place. Print keeps the cap.
+  // A note in a comparison column stops at two, so a large site's column stays as short as the others.
+  function moreList(items, sep, cap) {
+    const max = cap || 6;
+    const shown = items.slice(0, max).map(esc).join(sep);
+    if (items.length <= max) return shown;
+    return shown + '<span class="list-rest" hidden>' + sep + items.slice(max).map(esc).join(sep) + '</span><span class="list-dots"> …</span> ' +
+      '<button type="button" class="list-more no-print" aria-expanded="false" data-n="' + items.length + '">' + esc(rc.t("listAll", { n: items.length })) + "</button>";
+  }
+  function listLine(key, items, cap) {
+    return esc(rc.t(key, { list: "{list}" })).replace("{list}", () => moreList(items, ", ", slotRoot ? 2 : cap));
+  }
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest && event.target.closest(".list-more");
+    if (!button) return;
+    const open = button.getAttribute("aria-expanded") !== "true";
+    button.setAttribute("aria-expanded", String(open));
+    button.parentElement.querySelectorAll(":scope > .list-rest").forEach((rest) => { rest.hidden = !open; });
+    button.parentElement.querySelectorAll(":scope > .list-dots").forEach((dots) => { dots.hidden = open; });
+    button.textContent = open ? rc.t("listFewer") : rc.t("listAll", { n: button.dataset.n });
+  });
+
   function inSlot(root, paint) {
     const before = { root: slotRoot, current };
     slotRoot = root;
@@ -861,12 +921,6 @@
       slotRoot = before.root;
       current = before.current;
     }
-  }
-
-  function filterOf() {
-    if (!slotRoot) return findingFilter;
-    if (!slotRoot.findingFilter) slotRoot.findingFilter = { area: "All", verdict: "open" };
-    return slotRoot.findingFilter;
   }
 
   function foundCount(limits) {
@@ -889,7 +943,7 @@
   }
 
   function verdictBadge(verdict, severity) {
-    if (!verdict) return '<span class="badge">Proposed</span>';
+    if (!verdict) return '<span class="badge">' + esc(rc.t("caseProposed")) + "</span>";
     return '<span class="badge v-' + esc(verdict) + '">' + esc(VERDICT_LABEL[verdict] || verdict) + "</span>" +
       (severity && severity !== "info" ? '<span class="badge">' + esc(severity) + "</span>" : "");
   }
@@ -926,12 +980,12 @@
       '<div class="ring" role="img" aria-label="' + esc(rc.t("ring", { n: value, g: score.grade || gradeOf(value) })) + '">' +
       '<svg viewBox="0 0 196 196"><circle class="ring-track" cx="98" cy="98" r="80"></circle><circle class="ring-value" cx="98" cy="98" r="80" stroke="' + scoreColor(value) + '" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + (circumference * (1 - value / 100)).toFixed(1) + '"></circle></svg>' +
       "<b>" + value + "<small>" + esc(rc.t("grade", { g: score.grade || gradeOf(value) })) + "</small></b></div>" +
-      '<div><p class="health-summary">' + esc(healthSummary(ins)) + "</p>" +
+      '<div><p class="health-summary">' + esc(healthSummary(ins)).replace(/\.(?=[^\s.])/g, ".<wbr>") + "</p>" +
       '<div class="verdict-chips">' + ["fail", "risk", "pass", "person"].map((key) =>
         '<span class="vchip v-' + key + '"><b>' + (totals[key] || 0) + "</b>" + esc(VERDICT_LABEL[key]) + "</span>").join("") + "</div>" +
       '<div class="verdict-chips" aria-label="' + esc(rc.t("sevAria")) + '">' + ["critical", "high", "medium", "low"].map((key) =>
         '<span class="vchip s-' + ((score.severities || {})[key] ? key : "low") + '"><b>' + ((score.severities || {})[key] || 0) + "</b>" + esc(cc.severity(key)) + "</span>").join("") + "</div>" +
-      '<p class="meta-line">' + esc(rc.t("measured", { person: VERDICT_LABEL.person })) + "</p></div></div>" +
+      '<p class="meta-line" data-note>' + esc(rc.t("measured", { person: VERDICT_LABEL.person })) + "</p></div></div>" +
       '<div class="areas">' + Object.keys(AREA_NOTE).map((name) => {
         const area = areas[name] || { score: 0, grade: "F", fail: 0, risk: 0, pass: 0 };
         const past = current && current.report && current.report.history && current.report.history.areas && current.report.history.areas[name];
@@ -942,12 +996,9 @@
       }).join("") + "</div></article>";
     slot("health").querySelectorAll(".area").forEach((button) => {
       button.addEventListener("click", () => {
+        // The comparison filters the findings of every column at once (js/qa-review-multi.js).
         if (column) {
-          inSlot(column, () => {
-            Object.assign(filterOf(), { area: button.getAttribute("data-area"), verdict: "all" });
-            paintFindings(column.payload.report.insights, !!column.payload.paid);
-          });
-          slot("findings", column).scrollIntoView({ behavior: "smooth", block: "start" });
+          slot("findings", column).dispatchEvent(new CustomEvent("findingfilter", { bubbles: true, detail: { area: button.getAttribute("data-area"), verdict: "all" } }));
           return;
         }
         findingFilter = { area: button.getAttribute("data-area"), verdict: "all" };
@@ -1309,6 +1360,14 @@
       return;
     }
     if (pricing) return;
+    // The request form sits behind the report, so an empty Name takes the account's name, or its email, and a
+    // name still missing is said here before the report closes.
+    const name = document.getElementById("name");
+    if (!name.value.trim() && window.ReviewAuth && ReviewAuth.signedIn()) name.value = ReviewAuth.who().name || ReviewAuth.who().email;
+    if (clientErrors().some((item) => item.field === "name")) {
+      error.textContent = rc.t("compareName");
+      return;
+    }
     const stored = savedCompare();
     const kept = stored && stored.id === report.id ? stored : null;
     const limits = report.limits || {};
@@ -1343,17 +1402,6 @@
     reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
   }
 
-  // Each competitor is its own review against the same base report; the next one starts once the
-  // last has ended, so the submit handler has let go of the run.
-  function nextCompare(compare) {
-    const queue = compare.queue || [];
-    if (!queue.length) return false;
-    compareTarget = Object.assign({}, compare, { url: queue[0], queue: queue.slice(1), paid: false });
-    try { sessionStorage.setItem(COMPARE_KEY, JSON.stringify(compareTarget)); } catch (storageError) { /* only a payment round trip needs it */ }
-    setTimeout(() => reviewForm.dispatchEvent(new Event("submit", { cancelable: true })), 0);
-    return true;
-  }
-
   function compareDone(compare, tail) {
     const failed = compare.failed || [];
     const host = (compare.report && compare.report.host) || rc.t("yourSite");
@@ -1362,7 +1410,9 @@
 
   // compare.done: the competitor reviews that finished. Two or more open with the report as one
   // comparison, so every competitor is side by side and not only the last one.
-  async function openCompared(compare) {
+  // The base report is drawn again behind the comparison and stays in the address, so closing the comparison
+  // goes back to it and not to the competitor that finished last. reasons: why each failed competitor stopped.
+  async function openCompared(compare, reasons) {
     const ids = [compare.id].concat(compare.done || []);
     if (ids.length < 3 || !window.QAReviewMulti) return;
     const id = await QAReviewMulti.save(ids, "review", null);
@@ -1370,8 +1420,9 @@
       setStatus(compareDone(compare, rc.t("stCompareOpen", { host: (compare.report && compare.report.host) || rc.t("yourSite") })), true);
       return;
     }
-    history.pushState(null, "", location.pathname + "?comparison=" + encodeURIComponent(id));
-    QAReviewMulti.load(id);
+    history.pushState(null, "", location.pathname + "?report=" + encodeURIComponent(compare.id) + "&comparison=" + encodeURIComponent(id));
+    await reopenFixList(compare.id);
+    QAReviewMulti.load(id, { failed: (compare.failed || []).map((host) => ({ host, note: (reasons || {})[host] || "" })) });
   }
 
   function compareStep(compare) {
@@ -1563,20 +1614,172 @@
 
   function showComparing(compare) {
     const own = (compare.report && compare.report.host) || "your site";
-    const left = (compare.queue || []).length;
-    document.getElementById("compare-run-text").textContent = "Comparing " + own + " with " + compare.url + compareStep(compare) + ".";
-    document.getElementById("compare-running-text").textContent = "The comparison with " + compare.url + compareStep(compare) + " is running. Stop keeps the pages already checked" +
-      (left ? " and does not start the other " + (left === 1 ? "competitor" : left + " competitors") : "") + ".";
-    document.getElementById("compare-run").hidden = false;
+    const many = (compare.queue || []).length + 1;
+    document.getElementById("compare-run-text").textContent = many > 1
+      ? "Comparing " + own + " with " + many + " competitors, up to " + COMPARE_AT_ONCE + " at a time."
+      : "Comparing " + own + " with " + compare.url + compareStep(compare) + ".";
+    document.getElementById("compare-running-text").textContent = many > 1
+      ? "The comparison with " + many + " competitors is running. Stop keeps the pages already checked and does not start the ones still waiting."
+      : "The comparison with " + compare.url + compareStep(compare) + " is running. Stop keeps the pages already checked.";
+    const run = document.getElementById("compare-run");
+    run.hidden = false;
     document.getElementById("compare-running").hidden = false;
     document.getElementById("compare-stop").disabled = true;
     lockCompare(true);
+    // The report closes onto the top of the page, so the progress is brought into view and read out.
+    run.tabIndex = -1;
+    run.scrollIntoView({ block: "center" });
+    run.focus({ preventScroll: true });
   }
 
   function hideComparing() {
     document.getElementById("compare-run").hidden = true;
     document.getElementById("compare-running").hidden = true;
+    document.getElementById("compare-run-text").textContent = "";
+    document.getElementById("compare-running-text").textContent = "";
+    paintCompareRows(null);
     lockCompare(false);
+  }
+
+  const COMPARE_AT_ONCE = 3;
+  const ROW_STATE = { waiting: "Waiting", running: "Running", done: "Ready", stopped: "Stopped", failed: "Did not finish", payment: "Waits on payment" };
+  let comparePool = null;
+
+  function paintCompareRows(pool) {
+    let list = document.getElementById("compare-rows");
+    if (!list && !pool) return;
+    if (!list) {
+      list = document.createElement("ol");
+      list.id = "compare-rows";
+      list.className = "compare-rows";
+      list.setAttribute("aria-live", "polite");
+      document.getElementById("compare-run").after(list);
+    }
+    list.hidden = !pool;
+    if (!pool) return;
+    list.innerHTML = pool.rows.map((row) => '<li data-state="' + row.state + '"><b translate="no">' + esc(row.url) + "</b> <span>" + esc(ROW_STATE[row.state]) + (row.note ? " · " + esc(row.note) : "") + "</span></li>").join("");
+    const ready = pool.rows.filter((row) => row.state === "done").length;
+    document.getElementById("compare-running-text").textContent = "The comparison is running: " + ready + " of " + pool.rows.length + " competitors ready. Stop keeps the pages already checked and does not start the ones still waiting.";
+  }
+
+  // The competitors of one comparison run side by side, up to three at a time, each its own review of the
+  // same base report. When all have ended, the finished ones open with the report as one comparison.
+  async function runComparePool(compare, confirmed) {
+    const rows = [compare.url].concat(compare.queue || []).map((url) => ({ url, state: "waiting", runId: "", note: "", payload: null }));
+    const pool = { rows, stopping: false, payment: null, signIn: null };
+    comparePool = pool;
+    activeRun = "compare";
+    showComparing(compare);
+    paintCompareRows(pool);
+    reviewBtn.disabled = true;
+    stopBtn.disabled = false;
+    document.getElementById("compare-stop").disabled = false;
+    const runLog = document.getElementById("run-log");
+    runLog.innerHTML = "";
+    runLog.classList.add("is-live");
+    if (window.ReviewProgress) ReviewProgress.reset();
+    setStatus("Reviewing " + rows.length + " competitors, up to " + COMPARE_AT_ONCE + " at a time.", false);
+    let next = 0;
+    const worker = async () => {
+      while (next < rows.length && !pool.stopping && !pool.payment && !pool.signIn) await runCompareRow(compare, pool, rows[next++]);
+    };
+    try {
+      await Promise.all(Array.from({ length: Math.min(COMPARE_AT_ONCE, rows.length) }, worker));
+    } finally {
+      runLog.classList.remove("is-live");
+      activeRun = "";
+      comparePool = null;
+      hideComparing();
+      reviewBtn.disabled = !signedIn();
+      stopBtn.disabled = true;
+    }
+    endComparePool(compare, pool, confirmed);
+  }
+
+  async function runCompareRow(compare, pool, row) {
+    row.runId = hexId();
+    row.state = "running";
+    paintCompareRows(pool);
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_start", "URL Review", "compare");
+    fetch(endpoint() + "/place", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ runId: row.runId })
+    }).catch(() => {});
+    try {
+      const res = await fetch(runEndpoint() + "/review", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: reviewBody(compare, row.url, row.runId)
+      });
+      const payload = await readStream(res, row.url);
+      if (!payload || !payload.report) throw new Error("The review ended without a report.");
+      payload.reasonCode = "compare";
+      row.payload = payload;
+      row.state = payload.report.status === "stopped" ? "stopped" : "done";
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_done", "URL Review", payload.report.host);
+    } catch (error) {
+      if (error.body && error.body.signIn) {
+        pool.signIn = pool.signIn || error;
+        row.state = "waiting";
+      } else if (error.paymentRequired && error.body && error.body.purpose === "new-run") {
+        pool.payment = pool.payment || error.body;
+        row.state = "payment";
+      } else {
+        const field = (error.fields || []).find((item) => item.field === "url");
+        row.state = "failed";
+        row.note = ((field && field.message) || error.message || "The review failed.").replace(/([^.!?])\s*$/, "$1.");
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", row.note);
+      }
+    }
+    paintCompareRows(pool);
+  }
+
+  function endComparePool(compare, pool, confirmed) {
+    const rows = pool.rows;
+    const ran = Object.assign({}, compare, {
+      done: (compare.done || []).concat(rows.filter((row) => row.state === "done").map((row) => row.payload.report.id)),
+      failed: (compare.failed || []).concat(rows.filter((row) => row.state === "failed").map((row) => row.url))
+    });
+    const pending = rows.filter((row) => row.state === "waiting" || row.state === "payment").map((row) => row.url);
+    const last = rows.filter((row) => row.payload).pop();
+    // Two or more finished open as one comparison over the base report; one alone is drawn as its pair.
+    if (last && ran.done.length < 2) {
+      layer = "All";
+      render(last.payload);
+      loadStanding();
+      dash.scrollTop = 0;
+    }
+    if (pool.signIn) {
+      ReviewAuth.expire(pool.signIn.message);
+      ReviewAuth.focus();
+      setStatus(pool.signIn.message, true);
+      return;
+    }
+    if (pool.payment && pending.length) {
+      // The ones already finished are kept in done and open with the rest once those are paid and run.
+      const rest = Object.assign({}, ran, { url: pending[0], queue: pending.slice(1), total: pending.length, paid: false });
+      try { sessionStorage.setItem(COMPARE_KEY, JSON.stringify(rest)); } catch (storageError) { /* only a payment round trip needs it */ }
+      const due = Object.assign({}, pool.payment, { compareWith: compare.id, competitors: confirmed ? pending.length : 1 });
+      if (confirmed) location.href = payQuery("new-run", due);
+      else openRunPay(due);
+      setStatus("The comparison waits on payment: 9 USD for each competitor still to run.", true);
+      return;
+    }
+    try { sessionStorage.removeItem(COMPARE_KEY); } catch (storageError) { /* nothing was kept */ }
+    const notStarted = pool.stopping && pending.length ? " Stopped: " + pending.join(", ") + (pending.length === 1 ? " was" : " were") + " not started." : "";
+    if (ran.done.length) {
+      setStatus(compareDone(ran, notStarted), !!ran.failed.length);
+      openCompared(ran, Object.fromEntries(rows.filter((row) => row.state === "failed").map((row) => [row.url, row.note])));
+      return;
+    }
+    const why = rows.filter((row) => row.note).map((row) => row.url + ": " + row.note).join(" ");
+    if (!last && reopenCompare(Object.assign({}, compare, { url: rows[0].url, queue: rows.slice(1).map((row) => row.url) }), "None of the competitor reviews finished. " + why)) {
+      setStatus("The comparison did not finish. Your report is open again.", true);
+      return;
+    }
+    setStatus(compareDone(ran, notStarted), true);
   }
 
   function lockCompare(locked) {
@@ -1628,7 +1831,7 @@
     const letter = score.grade || gradeOf(value);
     host.innerHTML =
       historyBlock(report.history) +
-      '<div class="exec-head"><span class="grade grade-' + esc(letter) + '">' + esc(letter) + "</span><p>" + esc(healthSummary(ins) || rc.t("outOf", { n: value })) + "</p></div>" +
+      '<div class="exec-head"><span class="grade grade-' + esc(letter) + '">' + esc(letter) + "</span><p>" + esc(healthSummary(ins) || rc.t("outOf", { n: value })).replace(/\.(?=[^\s.])/g, ".<wbr>") + "</p></div>" +
       '<p class="meta-line">' + esc(rc.t("sevLine", { critical: sev.critical || 0, high: sev.high || 0, medium: sev.medium || 0, low: sev.low || 0 })) + " · " +
       esc(rc.t(found ? "readOf" : "read", { n: read, found: found })) + (report.browser && report.browser.ok ? " · " + esc(rc.t("headless")) : "") + "</p>" +
       '<div class="exec-cols"><div><h3>' + esc(rc.t("risks")) + "</h3>" + list(risks) + "</div><div><h3>" + esc(rc.t("quick")) + "</h3>" + list(quick) + "</div><div><h3>" + esc(rc.t("solid")) + "</h3>" +
@@ -1651,9 +1854,9 @@
   }
 
   function paintFixFirst(ins, paid) {
-    const top = (ins.findings || []).filter((item) => item.rank).slice(0, 10);
+    const top = (ins.findings || []).filter((item) => item.rank).slice(0, slotRoot ? undefined : 10);
     slot("fix-first").innerHTML = top.length
-      ? '<p class="muted">' + esc(rc.t("fixIntro")) + '</p><ol class="fix-list">' + top.map((item) =>
+      ? '<p class="muted" data-note>' + esc(rc.t("fixIntro")) + '</p><ol class="fix-list">' + top.map((item) =>
         '<li><span class="fix-rank">' + item.rank + "</span><div>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span>" +
         "<strong>" + esc(said(item, "title")) + "</strong>" +
         '<p class="meta-line">' + fadeText(said(item, "evidence"), paid) + "</p>" +
@@ -1784,9 +1987,9 @@
     const names = [];
     (before.vendors || []).concat(after ? after.vendors || [] : []).forEach((row) => { if (names.indexOf(row.name) === -1) names.push(row.name); });
     const find = (rows, name) => (rows || []).find((row) => row.name === name);
-    const cookieList = (rows) => (rows || []).length ? rows.slice(0, 6).map((row) => row.name + (row.third ? " (" + row.domain + ")" : "")).join(", ") + (rows.length > 6 ? " …" : "") : rc.t("none");
+    const cookieList = (rows) => (rows || []).length ? moreList(rows.map((row) => row.name + (row.third ? " (" + row.domain + ")" : "")), ", ") : esc(rc.t("none"));
     const consentRows = names.map((name) => "<tr><td><strong>" + esc(name) + "</strong></td><td>" + esc(cell(find(before.vendors, name))) + "</td><td>" + (after ? esc(cell(find(after.vendors, name))) : "—") + "</td></tr>").join("") +
-      "<tr><td><strong>" + esc(rc.t("trackingCookies")) + '</strong></td><td class="notranslate" translate="no">' + esc(cookieList(before.cookies)) + '</td><td class="notranslate" translate="no">' + (after ? esc(cookieList(after.cookies)) + (after.kept ? " · " + esc(rc.t("keptBefore", { n: after.kept })) : "") : "—") + "</td></tr>" +
+      "<tr><td><strong>" + esc(rc.t("trackingCookies")) + '</strong></td><td class="notranslate" translate="no">' + cookieList(before.cookies) + '</td><td class="notranslate" translate="no">' + (after ? cookieList(after.cookies) + (after.kept ? " · " + esc(rc.t("keptBefore", { n: after.kept })) : "") : "—") + "</td></tr>" +
       (watch.before ? [
         [rc.t("fingerprinting"), (row) => printers(row).join(", ") || rc.t("none")],
         [rc.t("sessionRecording"), (row) => (row.recorders || []).map((rr) => rr.sent ? rr.name : rc.t("loadedOnly", { name: rr.name })).join(" · ") || rc.t("none")],
@@ -1797,14 +2000,14 @@
         esc(after ? rc.t("bannerRejected", { label: consent.rejectLabel }) : consent.banner === "Sourcepoint" ? rc.t("bannerFrame") : rc.t("bannerNoReject"))
       : esc(rc.t("noBannerFirst"));
     const order = { critical: 4, serious: 3, moderate: 2, minor: 1 };
-    const axeRows = [...rules.values()].sort((x, y) => (order[y.impact] - order[x.impact]) || (y.nodes - x.nodes)).slice(0, 10).map((rule) =>
-      "<tr><td>" + esc(rule.help) + ' <a class="notranslate" translate="no" href="' + esc(rule.helpUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(rule.id) + "</a></td><td>" + esc(rc.word("impact", rule.impact)) + "</td><td>" + rule.nodes + "</td><td>" + rule.pages + "</td></tr>").join("");
+    const axeRows = [...rules.values()].sort((x, y) => (order[y.impact] - order[x.impact]) || (y.nodes - x.nodes)).slice(0, slotRoot ? undefined : 10).map((rule) =>
+      '<tr data-impact="' + esc(rule.impact) + '"><td>' + esc(rule.help) + ' <a class="notranslate" translate="no" href="' + esc(rule.helpUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(rule.id) + "</a></td><td>" + esc(rc.word("impact", rule.impact)) + "</td><td>" + rule.nodes + "</td><td>" + rule.pages + "</td></tr>").join("");
     const gauge = gaugeHtml;
     const gauges = start.status ? '<div class="gauges">' +
       gauge("Largest Contentful Paint", vit.lcp || 0, 2500, 4000, 6000, ((vit.lcp || 0) / 1000).toFixed(1) + " s") +
       gauge("Cumulative Layout Shift", vit.cls || 0, 0.1, 0.25, 0.5, String(vit.cls || 0)) +
       gauge("Total Blocking Time", vit.tbt || 0, 200, 600, 1200, (vit.tbt || 0) + " ms") +
-      '</div><p class="meta-line">' + esc(rc.t("labNote")) + "</p>" : "";
+      '</div><p class="meta-line" data-note>' + esc(rc.t("labNote")) + "</p>" : "";
     const shots = b.shots || {};
     const shotCount = ["desktop", "tablet", "mobile"].filter((key) => shots[key]).length;
     const chatCard = chatHtml(report.insights && report.insights.chat) + talkHtml(talk);
@@ -1815,11 +2018,11 @@
         (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="' + esc(rc.t("altDesktop")) + '" loading="lazy"><figcaption>' + esc(rc.t("capDesktop")) + "</figcaption></figure>" : "<div></div>") +
         (shots.tablet ? '<figure><img src="' + esc(shots.tablet) + '" alt="' + esc(rc.t("altTablet")) + '" loading="lazy"><figcaption>' + esc(rc.t("capTablet")) + "</figcaption></figure>" : "") +
         (shots.mobile ? '<figure><img src="' + esc(shots.mobile) + '" alt="' + esc(rc.t("altPhone")) + '" loading="lazy"><figcaption>' + esc(rc.t("capPhone")) + "</figcaption></figure>" : "") + "</div>" : "") +
-      '<div class="split"><article class="card"><h3>' + esc(rc.t("trackingTitle")) + '</h3><p class="muted">' + bannerLine + " " + esc(rc.t("pingsNote")) + "</p>" +
+      '<div class="split"><article class="card" data-part="tracking"><h3>' + esc(rc.t("trackingTitle")) + '</h3><p class="muted">' + bannerLine + ' <span data-note>' + esc(rc.t("pingsNote")) + "</span></p>" +
       '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thTool")) + "</th><th>" + esc(rc.t("tileBefore")) + "</th><th>" + esc(rc.t("tileAfter")) + "</th></tr></thead><tbody>" + consentRows + "</tbody></table></article>" +
-      '<article class="card"><h3>' + esc(rc.t("textTitle")) + '</h3><p class="muted">' + esc(rc.t("textNote")) + "</p>" +
+      '<article class="card" data-part="text"><h3>' + esc(rc.t("textTitle")) + '</h3><p class="muted" data-note>' + esc(rc.t("textNote")) + "</p>" +
       '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thPage")) + "</th><th>" + esc(rc.t("thInHtml")) + "</th><th>" + esc(rc.t("thWords")) + "</th></tr></thead><tbody>" + textRows.map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + (row.share == null ? "—" : row.share + "%") + "</td><td>" + (row.words || 0) + "</td></tr>").join("") + "</tbody></table></article></div>" + chatCard +
-      '<article class="card" style="margin-top:12px"><h3>' + esc(rc.t("axeTitle")) + "</h3>" + (axePages.length
+      '<article class="card" data-part="axe" style="margin-top:12px"><h3>' + esc(rc.t("axeTitle")) + "</h3>" + (axePages.length
         ? (axeRows ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thRule")) + "</th><th>" + esc(rc.t("thImpact")) + "</th><th>" + esc(rc.t("thElements")) + "</th><th>" + esc(rc.t("thPages")) + "</th></tr></thead><tbody>" + axeRows + "</tbody></table>" : '<p class="muted">' + esc(rc.t("axeClean", { n: axePages.length })) + "</p>") +
           '<p class="meta-line notranslate" translate="no">' + esc(axePages.map((page) => page.path).join(" · ")) + "</p>"
         : '<p class="muted">' + esc(rc.t("axeTimeout")) + "</p>") + "</article>" +
@@ -1884,9 +2087,9 @@
     const bots = roles.map(([role, label]) => {
       const list = (geo.crawlers || []).filter((bot) => bot.role === role);
       if (!list.length) return "";
-      return '<p class="bot-group">' + esc(label) + "</p>" + list.map((bot) =>
-        '<div class="bot' + (bot.allowed ? "" : " no") + '"><i aria-hidden="true">' + (bot.allowed ? "✓" : "✕") + '</i><div><span class="notranslate" translate="no">' + esc(bot.token) + "</span> — " + esc(bot.product) +
-        "<small>" + esc(bot.allowed ? (bot.blockedPages ? rc.t("botClosed", { n: bot.blockedPages }) : rc.t("botAllowed")) : bot.rule ? rc.t("botBlockedBy", { rule: bot.rule }) : rc.t("botBlocked")) + "</small></div></div>").join("");
+      return '<div class="bot-role" data-role="' + role + '"><p class="bot-group">' + esc(label) + "</p>" + list.map((bot) =>
+        '<div class="bot' + (bot.allowed ? "" : " no") + '"><i aria-hidden="true">' + (bot.allowed ? "✓" : "✕") + '</i><div><span class="notranslate" translate="no">' + esc(bot.token) + '</span><span class="bot-product"> — ' + esc(bot.product) + "</span>" +
+        "<small>" + esc(bot.allowed ? (bot.blockedPages ? rc.t("botClosed", { n: bot.blockedPages }) : rc.t("botAllowed")) : bot.rule ? rc.t("botBlockedBy", { rule: bot.rule }) : rc.t("botBlocked")) + "</small></div></div>").join("") + "</div>";
     }).join("");
     const llms = geo.llms || {};
     const entity = geo.entity;
@@ -1898,11 +2101,11 @@
     ];
     const outlineHtml = (view.outline || []).length ? '<ul class="ai-outline">' + view.outline.map((item) => '<li class="l' + item.level + '">H' + item.level + " · " + esc(item.text) + "</li>").join("") + "</ul>" : '<p class="muted">' + esc(rc.t("noHeadings")) + "</p>";
     slot("geo").innerHTML =
-      '<div class="checks-grid" style="margin-bottom:12px">' + facts.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" +
-      '<div class="split"><article class="card"><h3>' + esc(rc.t("aiTextTitle")) + '</h3><p class="muted">' + esc(rc.t(view.appShell ? "aiTextShell" : "aiTextNote")) + "</p>" +
+      '<div class="checks-grid" data-part="facts" style="margin-bottom:12px">' + facts.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" +
+      '<div class="split"><article class="card"><div data-part="excerpt"><h3>' + esc(rc.t("aiTextTitle")) + '</h3><p class="muted" data-note>' + esc(rc.t(view.appShell ? "aiTextShell" : "aiTextNote")) + "</p>" +
       '<div class="ai-view notranslate" translate="no">' + esc(view.text || rc.t("noReadable")) + (view.chars > (view.text || "").length ? " …" : "") + "</div>" +
-      '<p class="meta-line">' + esc(rc.t("wordsChars", { words: view.words || 0, chars: view.chars || 0 })) + "</p><h3>" + esc(rc.t("headingsTitle")) + "</h3>" + outlineHtml + "</article>" +
-      '<article class="card"><h3>' + esc(rc.t("whoTitle")) + '</h3><p class="muted">' + esc(rc.t(geo.robotsFound ? "robotsFound" : "robotsNone")) + "</p>" + bots + "</article></div>";
+      '<p class="meta-line">' + esc(rc.t("wordsChars", { words: view.words || 0, chars: view.chars || 0 })) + '</p></div><div data-part="headings"><h3>' + esc(rc.t("headingsTitle")) + "</h3>" + outlineHtml + "</div></article>" +
+      '<article class="card" data-part="crawlers"><h3>' + esc(rc.t("whoTitle")) + '</h3><p class="muted" data-note>' + esc(rc.t(geo.robotsFound ? "robotsFound" : "robotsNone")) + "</p>" + bots + "</article></div>";
   }
 
   function paintAnalytics(ins) {
@@ -1922,7 +2125,7 @@
       '<div class="check-tile ' + (a.consentMode ? ((a.consentMode.analytics === "denied" || regions.length) && a.consentMode.v2 ? "pass" : "risk") : "unknown") + '"><b>Consent Mode</b>' + esc(mode) + "</div>" +
       '<div class="check-tile ' + (a.utm ? (a.utm.kept ? "pass" : "fail") : "unknown") + '"><b>' + esc(rc.t("tileUtm")) + "</b>" + esc(utm) + "</div></div>" +
       '<article class="card">' + (rows ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thTool")) + "</th><th>" + esc(rc.t("thIds")) + "</th><th>" + esc(rc.t("thPagesWith")) + "</th></tr></thead><tbody>" + rows + "</tbody></table>" : '<p class="muted">' + esc(rc.t("noTags")) + "</p>") +
-      ((a.untagged || []).length ? '<p class="meta-line">' + esc(rc.t("untagged", { list: a.untagged.slice(0, 8).join(", ") })) + "</p>" : "") + "</article>";
+      ((a.untagged || []).length ? '<p class="meta-line">' + listLine("untagged", a.untagged, 8) + "</p>" : "") + "</article>";
   }
 
   function paintSeo(ins) {
@@ -1932,15 +2135,15 @@
     const blocked = rows.filter((row) => !row.indexable);
     const dup = (seo.duplicates && seo.duplicates.titles) || [];
     slot("seo").innerHTML =
-      '<div class="stat-row"><div class="stat"><b>' + (seo.indexable || 0) + " / " + rows.length + "</b><span>" + esc(rc.t("statIndexable")) + "</span></div>" +
+      '<div class="stat-row"><div class="stat"><b>' + (rows.length ? (seo.indexable || 0) + " / " + rows.length : "—") + "</b><span>" + esc(rc.t("statIndexable")) + "</span></div>" +
       '<div class="stat"><b>' + (map.found ? map.count : "—") + "</b><span>" + esc(rc.t("statSitemap")) + "</span></div>" +
       '<div class="stat"><b>' + (map.found ? (map.notListed || []).length : "—") + "</b><span>" + esc(rc.t("statNotListed")) + "</span></div>" +
       '<div class="stat"><b>' + dup.length + "</b><span>" + esc(rc.t("statShared")) + "</span></div></div>" +
       '<article class="card">' + (blocked.length
         ? '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thNotIndexable")) + "</th><th>" + esc(rc.t("thWhy")) + "</th></tr></thead><tbody>" + blocked.slice(0, 30).map((row) => '<tr><td class="notranslate" translate="no">' + esc(row.path) + "</td><td>" + esc(fc.line(row.reasonMsg, row.reason)) + "</td></tr>").join("") + "</tbody></table>"
-        : '<p class="muted">' + esc(rc.t("allIndexable")) + "</p>") +
-      ((map.listedNotIndexable || []).length ? '<p class="meta-line">' + esc(rc.t("listedNotIndexable", { list: map.listedNotIndexable.slice(0, 6).join(", ") })) + "</p>" : "") +
-      ((map.notLinked || []).length ? '<p class="meta-line">' + esc(rc.t("notLinked", { list: map.notLinked.slice(0, 6).join(", ") + (map.notLinked.length > 6 ? " …" : "") })) + "</p>" : "") +
+        : '<p class="muted">' + esc(rc.t(rows.length ? "allIndexable" : "noneIndexChecked")) + "</p>") +
+      ((map.listedNotIndexable || []).length ? '<p class="meta-line">' + listLine("listedNotIndexable", map.listedNotIndexable) + "</p>" : "") +
+      ((map.notLinked || []).length ? '<p class="meta-line">' + listLine("notLinked", map.notLinked) + "</p>" : "") +
       ((seo.schemaTypes || []).length ? '<p class="meta-line">' + esc(rc.t("schemaTypes", { list: seo.schemaTypes.join(", ") })) + "</p>" : "") + "</article>";
   }
 
@@ -2022,22 +2225,73 @@
     const sec = ins.security || {};
     const domain = sec.domain;
     const domainMark = "\u0000";
-    slot("security").innerHTML = '<div class="checks-grid">' + (sec.headers || []).map((item) =>
-      '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(item.person ? VERDICT_LABEL.person : rc.word("secState", item.state)) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
-      (sec.tls ? '<p class="meta-line">' + esc(rc.t("tls", { date: sec.tls.validTo, days: rc.t("days", { n: sec.tls.daysLeft }) }) + (sec.tls.issuer ? rc.t("tlsIssuer", { issuer: sec.tls.issuer }) : "")) + ".</p>" : "") +
+    const meta = (sec.tls ? '<p class="meta-line">' + esc(rc.t("tls", { date: sec.tls.validTo, days: rc.t("days", { n: sec.tls.daysLeft }) }) + (sec.tls.issuer ? rc.t("tlsIssuer", { issuer: sec.tls.issuer }) : "")) + ".</p>" : "") +
       (domain ? '<p class="meta-line">' + esc(rc.t("domainLine", {
         domain: domainMark,
         registrar: domain.registrar ? rc.t("domainWith", { registrar: domain.registrar }) : "",
         until: domain.expires ? rc.t("domainUntil", { date: domain.expires, days: rc.t("days", { n: domain.daysLeft }) }) : "",
         lock: domain.locked == null ? "" : rc.t(domain.locked ? "domainLocked" : "domainUnlocked")
       })).replace(domainMark, () => '<span class="notranslate" translate="no">' + esc(domain.domain) + "</span>") + "</p>" : "") +
-      (sec.bimi ? '<p class="meta-line">' + esc(rc.t(sec.bimi.record ? "bimiOn" : sec.bimi.eligible ? "bimiOffEligible" : "bimiOff") + " " + rc.t("notScored")) + "</p>" : "") +
-      securityMatrix(sec.pages || []);
+      (sec.bimi ? '<p class="meta-line">' + esc(rc.t(sec.bimi.record ? "bimiOn" : sec.bimi.eligible ? "bimiOffEligible" : "bimiOff") + " " + rc.t("notScored")) + "</p>" : "");
+    if (slotRoot) {
+      slot("security").innerHTML = (sec.headers || []).length || (sec.pages || []).length || meta ? securityColumn(sec, meta) : "";
+      return;
+    }
+    slot("security").innerHTML = '<div class="checks-grid">' + (sec.headers || []).map((item) =>
+      '<div class="check-tile ' + esc(item.state) + '"><b>' + esc(item.person ? VERDICT_LABEL.person : rc.word("secState", item.state)) + '</b><span class="notranslate" translate="no">' + esc(item.label) + "</span></div>").join("") + "</div>" +
+      meta + securityMatrix(sec.pages || []);
+  }
+
+  function headerCols() {
+    return [["hsts", "HSTS"], ["csp", "CSP"], ["frame", rc.t("colFraming")], ["nosniff", "nosniff"], ["referrer", rc.t("colReferrer")], ["permissions", rc.t("colPermissions")]];
+  }
+
+  // The checks in the order the review writes them, so a check one site lacks keeps its row in that column.
+  const CHECK_ORDER = ["HTTPS redirect", "HSTS", "Content-Security-Policy", "Frame protection", "X-Content-Type-Options", "Referrer-Policy", "Permissions-Policy", "Cross-Origin-Opener-Policy",
+    "TLS certificate", "security.txt", "SPF", "DMARC", "CAA", "Safe Browsing", "Domain expiry", "MTA-STS", "TLS-RPT", "Front-end libraries", "Privacy notice", "Imprint", "Accessibility statement"];
+  // The header checks the coverage rows at the top of a comparison column already show, page by page.
+  const COVERED_CHECKS = ["HSTS", "Content-Security-Policy", "Frame protection", "X-Content-Type-Options", "Referrer-Policy", "Permissions-Policy"];
+  const CHECK_MARK = { pass: "✓", risk: "!", fail: "✗", unknown: "–" };
+
+  // A comparison column: how many pages send each header, the pages that drop one the start page sends, then every
+  // check, each in the same rows and order for every site so they read across the columns.
+  function securityColumn(sec, meta) {
+    const rows = sec.pages || [];
+    const n = rows.length;
+    const start = rows[0] || {};
+    const cols = headerCols();
+    const unknown = rc.word("secState", "unknown");
+    const line = (key, label, state, text, share) => '<li class="' + state + '" data-header="' + key + '"' + (share == null ? "" : ' style="--cov:' + share + '%"') +
+      "><span>" + esc(label) + '</span><b title="' + esc(text) + '">' + esc(text) + "</b></li>";
+    const cover = cols.map(([key, label]) => {
+      if (!n) return line(key, label, "unknown", unknown);
+      const k = rows.filter((row) => row[key]).length;
+      const [state, text] = k === n ? ["pass", "✓ " + rc.t("covAll", { n })] : !k ? ["fail", "✗ " + rc.t("covNone")]
+        : k === 1 && start[key] ? ["risk", "✗ " + rc.t("covStart")] : ["risk", "✗ " + rc.t("covSome", { k, n })];
+      return line(key, label, state, text, Math.round(k / n * 100));
+    }).join("");
+    const loose = rows.reduce((sum, row) => sum + (row.looseCookies || 0), 0);
+    const [jarState, jarText] = !n ? ["unknown", unknown] : loose ? ["risk", "✗ " + rc.t("withoutSecure", { n: loose })]
+      : rows.some((row) => row.cookies) ? ["pass", "✓ " + rc.t("covSecure")] : ["unknown", rc.t("covNoCookies")];
+    const differ = rows.slice(1).map((row) => ({ row, miss: cols.filter(([key]) => start[key] && !row[key]).map(([, label]) => label) }))
+      .filter((page) => page.miss.length).sort((a, b) => b.miss.length - a.miss.length);
+    const item = ({ row, miss }) => '<li title="' + esc(row.path) + '"><span class="notranslate" translate="no">' + esc(String(row.path).replace(/[?#].*$/, "")) + "</span><small>" + esc(miss.join(" · ")) + "</small></li>";
+    const diff = n < 2 ? "<div></div>" : !differ.length ? '<p class="sec-diff">' + esc(rc.t(cols.some(([key]) => start[key]) ? "diffNone" : "diffNoStart")) + "</p>"
+      : '<div class="sec-diff"><h4>' + esc(rc.t("diffTitle")) + "</h4><ol>" + differ.map(item).join("") + "</ol></div>";
+    const tiles = new Map((sec.headers || []).map((tile) => [tile.label, tile]));
+    const checks = CHECK_ORDER.concat([...tiles.keys()].filter((label) => !CHECK_ORDER.includes(label))).filter((label) => !COVERED_CHECKS.includes(label)).map((label) => {
+      const tile = tiles.get(label) || { state: "unknown" };
+      const word = tile.person ? VERDICT_LABEL.person : rc.word("secState", tile.state);
+      return '<li class="' + esc(tile.state) + '" data-check="' + esc(label.toLowerCase().replace(/[^a-z0-9]+/g, "-")) + '"><span class="notranslate" translate="no" title="' + esc(label) + '">' + esc(label) +
+        '</span><b role="img" aria-label="' + esc(word) + '" title="' + esc(word) + '">' + (tile.person ? "?" : CHECK_MARK[tile.state] || "–") + "</b></li>";
+    }).join("");
+    return '<div class="sec-cover"><h3>' + esc(rc.t("matrixTitle")) + '</h3><p class="muted" data-note>' + esc(rc.t("matrixNote")) + '</p><ul class="sec-cov">' + cover +
+      line("cookies", rc.t("thCookies"), jarState, jarText) + "</ul></div>" + diff + '<ul class="sec-checks">' + checks + '</ul><div class="sec-meta">' + meta + "</div>";
   }
 
   function securityMatrix(rows) {
     if (rows.length < 2) return "";
-    const cols = [["hsts", "HSTS"], ["csp", "CSP"], ["frame", rc.t("colFraming")], ["nosniff", "nosniff"], ["referrer", rc.t("colReferrer")], ["permissions", rc.t("colPermissions")]];
+    const cols = headerCols();
     const mark = (on) => on ? '<td class="ok" aria-label="' + esc(rc.t("sent")) + '">✓</td>' : '<td class="no" aria-label="' + esc(rc.t("missing")) + '">✗</td>';
     return "<h3>" + esc(rc.t("matrixTitle")) + '</h3><p class="muted">' + esc(rc.t("matrixNote")) + "</p>" +
       '<div class="table-scroll"><table class="mini-table sec-matrix"><thead><tr><th>' + esc(rc.t("thPage")) + "</th>" + cols.map(([, label]) => "<th>" + esc(label) + "</th>").join("") + "<th>" + esc(rc.t("thCookies")) + "</th></tr></thead><tbody>" +
@@ -2045,13 +2299,32 @@
         "<td>" + (row.cookies ? row.cookies + (row.looseCookies ? ", " + esc(rc.t("withoutSecure", { n: row.looseCookies })) : "") : "—") + "</td></tr>").join("") + "</tbody></table></div>";
   }
 
+  const VERDICT_RANK = { fail: 0, risk: 1, person: 2, pass: 3 };
+  const SEVERITY_RANK = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+
+  // A comparison column lists every finding under its area, in the order of the health card, worst first;
+  // the comparison's one filter bar hides what it leaves out, so all columns filter together.
+  function paintFindingGroups(ins, paid) {
+    const rank = (table, key) => (key in table ? table[key] : 9);
+    const all = (ins.findings || []).slice().sort((a, b) => rank(VERDICT_RANK, a.verdict) - rank(VERDICT_RANK, b.verdict) || rank(SEVERITY_RANK, a.severity) - rank(SEVERITY_RANK, b.severity));
+    slot("findings").innerHTML = Object.keys(AREA_NOTE).map((name) => {
+      const items = all.filter((item) => item.area === name);
+      return '<section class="finding-group is-folded" data-group="' + esc(name) + '"><h3 class="group-head"><button type="button" class="group-toggle" aria-expanded="false"><span>' + esc(cc.area(name)) + '</span> <span class="group-count">' + items.length + "</span></button></h3>" +
+        items.map((item) => '<details class="finding" data-verdict="' + esc(item.verdict || "") + '" data-severity="' + esc(item.severity || "") + '"><summary><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) +
+          "<strong>" + esc(said(item, "title")) + "</strong></summary><p class=\"muted\">" + fadeText(said(item, "evidence"), paid) + "</p>" +
+          (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
+          ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + moreList(item.pages, " · ") + "</p>" : "") +
+          ((item.cases || []).length ? '<p class="meta-line">' + esc(rc.t("testCases", { list: item.cases.join(", ") })) + "</p>" : "") + "</details>").join("") + "</section>";
+    }).join("");
+  }
+
   function paintFindings(ins, paid) {
+    if (slotRoot) return paintFindingGroups(ins, paid);
     const all = ins.findings || [];
     const areas = ["All"].concat(Object.keys(AREA_NOTE));
     const verdicts = [["open", rc.t("fOpen")], ["all", rc.t("fAll")], ["fail", VERDICT_LABEL.fail], ["risk", VERDICT_LABEL.risk], ["pass", VERDICT_LABEL.pass], ["person", VERDICT_LABEL.person]];
     const bar = slot("finding-filters");
-    const filter = filterOf();
-    const column = slotRoot;
+    const filter = findingFilter;
     bar.innerHTML = areas.map((name) => '<button type="button" data-area="' + esc(name) + '"' + (filter.area === name ? ' class="on"' : "") + ">" + esc(name === "All" ? rc.t("allAreas") : cc.area(name)) + "</button>").join("") +
       '<span style="width:12px;display:inline-block"></span>' +
       verdicts.map(([key, label]) => '<button type="button" data-verdict="' + key + '"' + (filter.verdict === key ? ' class="on"' : "") + ">" + esc(label) + "</button>").join("");
@@ -2060,7 +2333,7 @@
       if (!button) return;
       if (button.hasAttribute("data-area")) filter.area = button.getAttribute("data-area");
       if (button.hasAttribute("data-verdict")) filter.verdict = button.getAttribute("data-verdict");
-      inSlot(column, () => paintFindings(ins, paid));
+      paintFindings(ins, paid);
     };
     const shown = all.filter((item) => (filter.area === "All" || item.area === filter.area) &&
       (filter.verdict === "all" || (filter.verdict === "open" ? (item.verdict === "fail" || item.verdict === "risk") : item.verdict === filter.verdict)));
@@ -2068,7 +2341,7 @@
       '<div class="finding"><div><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span></div>" +
       "<strong>" + esc(said(item, "title")) + "</strong><p class=\"muted\">" + fadeText(said(item, "evidence"), paid) + "</p>" +
       (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
-      ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + esc(item.pages.slice(0, 6).join(" · ")) + (item.pages.length > 6 ? " …" : "") + "</p>" : "") +
+      ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + moreList(item.pages, " · ") + "</p>" : "") +
       ((item.cases || []).length ? '<p class="meta-line">' + esc(rc.t("testCases", { list: item.cases.join(", ") })) + "</p>" : "") +
       (!slotRoot && window.QAReviewAsk && QAReviewAsk.cardLink ? QAReviewAsk.cardLink(item.id) : "") + "</div>").join("")
       : '<p class="muted">' + esc(rc.t("noMatch")) + "</p>";
@@ -2085,28 +2358,32 @@
   function paintFixKit(ins, paid) {
     const kit = ins.fixkit || {};
     const missing = (kit.headers || []).filter((item) => item.missing);
-    const items = [
-      [rc.t("kitHeaders"), missing.length ? rc.t("kitHeadersMissing", { n: missing.length, hosting: kit.hosting || rc.t("hostingDefault") }) : rc.t("kitHeadersAll")],
-      ["Content-Security-Policy", rc.t("kitCsp", { n: ((kit.csp || "").match(/https:\/\//g) || []).length })],
-      [rc.t("kitSchema"), rc.t(kit.jsonLd ? "kitSchemaDraft" : "kitSchemaHas")],
-      ["llms.txt", rc.t(kit.llmsTxt ? "kitLlmsDraft" : "kitLlmsHas")],
-      ["security.txt", rc.t(kit.securityTxt ? "kitSecDraft" : "kitSecHas")],
-      [rc.t("kitDns"), (kit.dns || []).length ? rc.t("kitDnsAdd", { n: kit.dns.length, list: kit.dns.map(dnsLabel).join(", ") }) : rc.t("kitDnsNone")],
-      ["GitHub Actions", rc.t("kitActionsBody")]
-    ];
-    if (kit.mtaSts) items.splice(-1, 0, [rc.t("kitMta"), rc.t("kitMtaBody")]);
-    if ((kit.libraries || []).length) items.splice(-1, 0, [rc.t("kitLibs"), kit.libraries.map((row) => row.ended ? rc.t("libEnded", { lib: row.name + " " + row.version }) : row.name + " " + row.version + " → " + row.fixed).join(", ") + "."]);
     const outlines = [kit.privacyNotice ? "privacy" : "", kit.imprint ? "imprint" : "", kit.accessibilityStatement ? "accessibility" : ""].filter(Boolean).map((key) => rc.word("legal", key));
     const listed = outlines.join(", ").replace(/, ([^,]*)$/, (match, last) => " " + rc.t("and") + " " + last);
-    if (outlines.length) items.splice(-1, 0, [rc.t("kitLegal"), rc.t("kitLegalBody", { list: listed })]);
-    if (kit.chatSnippet) items.splice(-1, 0, [rc.t("kitChat"), rc.t("kitChatBody")]);
+    // A comparison column keeps a tile for every file, so the tiles of the columns line up. A locked column's
+    // kit leaves out the optional files, so it cannot say they are not needed.
+    const optional = (kind, title, body, none) => body ? [kind, title, body] : slotRoot ? [kind, title, rc.t(paid ? none : "kitLocked"), true] : null;
+    const items = [
+      ["headers", rc.t("kitHeaders"), missing.length ? rc.t("kitHeadersMissing", { n: missing.length, hosting: kit.hosting || rc.t("hostingDefault") }) : rc.t("kitHeadersAll")],
+      ["csp", "Content-Security-Policy", rc.t("kitCsp", { n: ((kit.csp || "").match(/https:\/\//g) || []).length })],
+      ["jsonld", rc.t("kitSchema"), rc.t(kit.jsonLd ? "kitSchemaDraft" : "kitSchemaHas")],
+      ["llms", "llms.txt", rc.t(kit.llmsTxt ? "kitLlmsDraft" : "kitLlmsHas")],
+      ["securitytxt", "security.txt", rc.t(kit.securityTxt ? "kitSecDraft" : "kitSecHas")],
+      ["dns", rc.t("kitDns"), (kit.dns || []).length ? rc.t("kitDnsAdd", { n: kit.dns.length, list: kit.dns.map(dnsLabel).join(", ") }) : rc.t("kitDnsNone")],
+      optional("mtasts", rc.t("kitMta"), kit.mtaSts ? rc.t("kitMtaBody") : "", "kitNotNeeded"),
+      optional("libs", rc.t("kitLibs"), (kit.libraries || []).length ? kit.libraries.map((row) => row.ended ? rc.t("libEnded", { lib: row.name + " " + row.version }) : row.name + " " + row.version + " → " + row.fixed).join(", ") + "." : "", "kitNoLibs"),
+      optional("legal", rc.t("kitLegal"), outlines.length ? rc.t("kitLegalBody", { list: listed }) : "", "kitNotNeeded"),
+      optional("chat", rc.t("kitChat"), kit.chatSnippet ? rc.t("kitChatBody") : "", "kitNotNeeded"),
+      ["actions", "GitHub Actions", rc.t("kitActionsBody")]
+    ].filter(Boolean);
     const peek = "Content-Security-Policy-Report-Only: " + (kit.csp || "");
     const folderMark = "\u0000";
     const hostingMark = "\u0001";
     slot("fixkit").innerHTML =
-      "<p>" + esc(rc.t("kitIntro", { folder: folderMark }) + (kit.hosting ? " " + rc.t("kitHosting", { hosting: hostingMark }) : ""))
-        .replace(folderMark, () => '<span class="notranslate" translate="no">fix-kit/</span>').replace(hostingMark, () => "<strong>" + esc(kit.hosting) + "</strong>") + "</p>" +
-      '<div class="fixkit-list">' + items.map(([title, body]) => "<article><strong>" + esc(title) + "</strong><span class=\"muted\">" + esc(body) + "</span></article>").join("") + "</div>" +
+      "<p><span data-note>" + esc(rc.t("kitIntro", { folder: folderMark })).replace(folderMark, () => '<span class="notranslate" translate="no">fix-kit/</span>') + "</span>" +
+        (kit.hosting ? " " + esc(rc.t("kitHosting", { hosting: hostingMark })).replace(hostingMark, () => "<strong>" + esc(kit.hosting) + "</strong>") : "") + "</p>" +
+      '<div class="fixkit-list">' + items.map(([kind, title, body, none]) => '<article data-kit="' + kind + '"' + (none ? ' class="is-none"' : "") + "><strong>" + esc(title) + "</strong><span class=\"muted\"" +
+        (slotRoot ? ' title="' + esc(body) + '"' : "") + ">" + esc(body) + "</span></article>").join("") + "</div>" +
       '<div class="code-peek notranslate" translate="no">' + fadeText(peek, paid) + "</div>";
   }
 
@@ -2225,29 +2502,34 @@
   const reportRoot = document.getElementById("report");
   if (reportRoot) new MutationObserver(() => fadeSections(reportRoot)).observe(reportRoot, { childList: true, subtree: true });
 
+  // Older reports were saved without counts, so the figures fall back to the lists themselves.
+  function pagesCount(report) {
+    return (report.counts && report.counts.pages) || (report.limits && report.limits.pagesRead) || (report.pages || []).length;
+  }
+
   function paintFacts(report) {
-    const counts = report.counts || { pages: 0, technologies: 0, cases: 0, byLayer: {} };
+    const counts = report.counts || { byLayer: {} };
     const score = report.insights && report.insights.score;
     slot("kpis").innerHTML = (score ? [
       [score.overall + "/100", rc.t("kpiHealth")],
       [score.totals.fail, rc.t("kpiFail")],
       [score.totals.risk, rc.t("kpiRisk")],
-      [counts.pages, rc.t("kpiPages")]
+      [pagesCount(report), rc.t("kpiPages")]
     ] : [
-      [counts.pages, rc.t("kpiPages")],
-      [counts.technologies, rc.t("kpiTech")],
-      [counts.cases, rc.t("kpiCases")],
+      [pagesCount(report), rc.t("kpiPages")],
+      [counts.technologies || (report.technologies || []).length, rc.t("kpiTech")],
+      [counts.cases || (report.cases || []).length, rc.t("kpiCases")],
       [(report.observed && report.observed.ms) + " ms", rc.t("kpiFirst")]
     ]).map(([value, label]) => "<div class=\"kpi\"><b>" + esc(value) + "</b><span>" + esc(label) + "</span></div>").join("");
     const layers = Object.entries(counts.byLayer || {});
     const max = Math.max.apply(null, layers.map((pair) => pair[1]).concat([1]));
     slot("layers").innerHTML = layers.length ? layers.map(([name, count]) =>
-      '<div class="bar-row"><span>' + esc(name) + '</span><div class="bar"><i style="width:' + Math.round(count / max * 100) + '%"></i></div><span>' + count + "</span></div>"
+      '<div class="bar-row"><span>' + esc(layerName(name)) + '</span><div class="bar"><i style="width:' + Math.round(count / max * 100) + '%"></i></div><span>' + count + "</span></div>"
     ).join("") : '<p class="muted">No layer counts were saved.</p>';
     const tech = slot("tech");
     const technologies = report.technologies || [];
     tech.innerHTML = technologies.length
-      ? technologies.map((item) => '<span class="pill"><b>' + esc(item.name) + "</b> " + esc(item.group) + "</span>").join("")
+      ? technologies.map((item) => '<span class="pill"><b>' + esc(item.name) + "</b> " + esc(rc.word("techGroup", item.group, item.group)) + "</span>").join("")
       : '<span class="muted">No known technology marker was found in the HTML or headers.</span>';
     const obs = report.observed || {};
     const limits = report.limits || {};
@@ -2277,12 +2559,67 @@
     return layers;
   }
 
-  function paintColumnCases(report, paid) {
+  function layerName(name) {
+    return rc.word("caseLayer", name, name);
+  }
+
+  // The layers of the cases of every report, in CASE_LAYERS order and then by name, so every column of a
+  // comparison lists the same groups in the same order.
+  function caseGroups(reports) {
+    const seen = new Set();
+    reports.forEach((report) => ((report && report.cases) || []).forEach((item) => { if (item && item.layer) seen.add(item.layer); }));
+    return CASE_LAYERS.filter((name) => seen.has(name)).concat([...seen].filter((name) => CASE_LAYERS.indexOf(name) === -1).sort());
+  }
+
+  const CASE_RANK = {
+    priority: { P1: 0, P2: 1, P3: 2 },
+    verdict: { fail: 0, risk: 1, person: 2, pass: 3 },
+    severity: { critical: 0, high: 1, medium: 2, low: 3, info: 4 }
+  };
+  function byCaseRank(a, b) {
+    for (const key of ["priority", "verdict", "severity"]) {
+      const diff = (CASE_RANK[key][a[key]] ?? 9) - (CASE_RANK[key][b[key]] ?? 9);
+      if (diff) return diff;
+    }
+    return (a.n || 0) - (b.n || 0);
+  }
+
+  // Selectors and addresses in the evidence: a URL, a token opening with . or #, or one holding > [ or :nth-.
+  const CODE_TOKEN = /^(>|https?:\/\/\S+|[.#][A-Za-z_]\S*|\S*[\w)\]](>|\[)\S*|\S*:nth-\S*)$/;
+  function codeText(text) {
+    return String(text).split(/(\s+)/).map((part) => (CODE_TOKEN.test(part) ? "<code>" + esc(part) + "</code>" : esc(part))).join("");
+  }
+
+  function columnCase(item, paid) {
+    const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '">' + esc(item.priority) + "</span>" : "";
+    const why = String(fc.line(item.msg && item.msg.why, item.why) || "");
+    return '<li class="case" data-id="' + esc(item.id) + '"><div class="cases-chips">' + prio + '<span class="id">' + esc(item.id) + '</span><span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : esc(rc.t("caseProposed"))) + "</span></div>" +
+      "<strong>" + fadeText(fc.line(item.msg && item.msg.title, item.title), paid) + "</strong>" +
+      (why ? '<p class="muted cases-why">' + (paid ? codeText(why) : fadeText(why, false)) + "</p>" +
+        (why.length > 110 ? '<button class="cases-more no-print" type="button" aria-expanded="false">' + esc(rc.t("caseMore")) + "</button>" : "") : "") + "</li>";
+  }
+
+  // A comparison column: a line of counts, then the cases folded into one group per layer, in the order that
+  // every column shares, so a layer a site has no case in still holds its place.
+  function paintColumnCases(report, paid, groups) {
     const cases = report.cases || [];
-    slot("cases").innerHTML = cases.map((item) => {
-      const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '">' + esc(item.priority) + "</span>" : "";
-      return '<article class="case"><div>' + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div><strong>" + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + "</p></article>";
-    }).join("") || '<p class="muted">No proposed case was saved.</p>';
+    const box = slot("cases");
+    if (!cases.length) {
+      box.innerHTML = '<p class="muted">No proposed case was saved.</p>';
+      return;
+    }
+    const count = (key, value) => cases.filter((item) => item[key] === value).length;
+    const prios = ["P1", "P2", "P3"].filter((level) => count("priority", level)).map((level) =>
+      '<span class="cases-tally"><span class="prio prio-' + level + '">' + level + "</span> " + count("priority", level) + "</span>");
+    const verdicts = ["fail", "risk"].filter((verdict) => count("verdict", verdict)).map((verdict) =>
+      '<span class="cases-tally"><span class="badge v-' + verdict + '">' + esc(VERDICT_LABEL[verdict]) + "</span>" + count("verdict", verdict) + "</span>");
+    box.innerHTML = '<p class="cases-sum"><span class="cases-total"><b>' + cases.length + "</b> " + esc(rc.t("kpiCases")) + "</span>" + prios.concat(verdicts).join("") + "</p>" +
+      (groups || caseGroups([report])).map((name) => {
+        const items = cases.filter((item) => item.layer === name).sort(byCaseRank);
+        return '<section class="cases-group' + (items.length ? "" : " is-none") + '" data-group="' + esc(name) + '"><h3><button class="cases-toggle" type="button" aria-expanded="false"' + (items.length ? "" : " disabled") + '>' +
+          '<span class="cases-name">' + esc(layerName(name)) + '</span><span class="cases-n">' + items.length + "</span></button></h3>" +
+          (items.length ? '<ol class="cases-list" hidden>' + items.map((item) => columnCase(item, paid)).join("") + "</ol>" : "") + "</section>";
+      }).join("");
   }
 
   // One column of the many-URL comparison: every section of one report, drawn by the painters above.
@@ -2296,7 +2633,7 @@
       paintFacts(report);
       paintAlarm(report, paid);
       paintMentions(report);
-      paintColumnCases(report, paid);
+      paintColumnCases(report, paid, payload.caseGroups);
     });
     (root.cells ? root.cells() : [root]).forEach((cell) => {
       if (!paid) fadeSections(cell, true);
@@ -2304,13 +2641,13 @@
     });
   }
 
-  window.QAReviewSections = { paint: paintColumn, esc, scoreColor, gradeOf };
+  window.QAReviewSections = { paint: paintColumn, caseGroups, esc, scoreColor, gradeOf };
 
   function render(payload) {
     const report = payload.report;
     if (!report) return;
     const sample = !!payload.sample;
-    if (!sample && !payload.paid && !report.preview && seenBefore(report.id) && liveId !== report.id) {
+    if (!sample && !payload.paid && !report.preview && seenBefore(report.id) && liveId !== report.id && !reopenFree(payload)) {
       openPay({ id: report.id, priceUsd: reportUsd(payload), frameworks: payload.frameworks || [], addons: payload.addons || [] });
       return;
     }
@@ -2327,7 +2664,7 @@
     sampleNote.hidden = !sample;
     if (sample) {
       const when = new Date(report.fetchedAt);
-      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way an unpaid report is: the opening of each line is readable and the rest stays blurred in every section. Close it to read the disclaimers and review your own address.";
+      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way an unpaid report is: the top case is shown in full as a sample; the opening of every other line is readable and the rest stays blurred in every section. Close it to read the disclaimers and review your own address.";
     }
     dash.classList.add("open");
     document.body.style.overflow = "hidden";
@@ -2345,9 +2682,10 @@
     paintAlarm(report, paid || alertsOpen(report.id));
     paintMentions(report);
     paintCredential(payload);
+    paintCall(report, sample);
     const names = ["All"].concat(layers.map((pair) => pair[0]));
     document.getElementById("layer-filters").innerHTML = names.map((name) =>
-      '<button type="button" data-layer="' + esc(name) + '"' + (name === layer ? ' class="on"' : "") + ">" + esc(name) + "</button>"
+      '<button type="button" data-layer="' + esc(name) + '"' + (name === layer ? ' class="on"' : "") + ">" + esc(name === "All" ? name : layerName(name)) + "</button>"
     ).join("");
     document.getElementById("layer-filters").onclick = (event) => {
       const button = event.target.closest("button");
@@ -2363,7 +2701,7 @@
       : "";
     document.getElementById("case-note").textContent = (paid
       ? shown.length + " cases for the selected frameworks. The full wording is open because this copy is paid."
-      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The opening of each line stays visible, here and in every section. The rest stays blurred until the report is paid.") + ranked;
+      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The top case is shown in full as a sample. The opening of every other line stays visible, here and in every section. The rest stays blurred until the report is paid.") + ranked;
     const extras = [];
     (report.cases || []).forEach((item) => {
       (item.also || []).forEach((name) => {
@@ -2380,19 +2718,61 @@
         : "";
     }
     paintTools(report);
+    // Cases are stored best-first, so an unpaid report shows the first one in full; a server preview marks the one it kept whole.
+    const top = paid ? null : (report.cases || [])[0];
+    const sampleCase = top && (!report.preview || top.sample) ? top : null;
     document.getElementById("cases").innerHTML = shown.map((item) => {
       const extra = (item.also || []).filter(Boolean);
       const tools = item.fw.filter((fw) => picked.has(fw)).map(fwName).concat(extra.map(fwName)).join("");
       const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '" title="Risk ' + esc(item.risk) + ' of 100">' + esc(item.priority) + "</span>" : "";
       const where = (item.pages || []).length > 1 ? '<p class="muted case-pages">Pages: ' + esc(item.pages.slice(0, 6).join(", ") + (item.pages.length > 6 ? " and " + (item.pages.length - 6) + " more" : "")) + "</p>" : "";
-      return '<article class="case"><div>' + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(item.layer) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : "Proposed") + "</span></div><strong>" + fadeText(item.title, paid) + '</strong><p class="muted">' + fadeText(item.why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
+      const head = "<div>" + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(layerName(item.layer)) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : esc(rc.t("caseProposed"))) + "</span></div>";
+      const title = fc.line(item.msg && item.msg.title, item.title);
+      const why = fc.line(item.msg && item.msg.why, item.why);
+      if (item === sampleCase) {
+        return '<article class="case case-sample">' + head + '<p class="case-sample-label">' + esc(rc.t("caseSample")) + "</p><strong>" + esc(title) + "</strong>" +
+          sampleBody(report, item, why, payload.frameworks || selectedFrameworks()) + where + '<p class="muted fw-line">' + tools + "</p></article>";
+      }
+      return '<article class="case">' + head + "<strong>" + fadeText(title, paid) + '</strong><p class="muted">' + fadeText(why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
     }).join("") || '<p class="muted">No proposed case matches this filter.</p>';
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
     protectNames(dash);
   }
 
-  async function readStream(res) {
+  function reviewBody(compare, url, runId) {
+    return JSON.stringify(Object.assign(ReviewAuth.proof(), {
+      termsAccepted: true,
+      termsVersion: TERMS_VERSION,
+      name: document.getElementById("name").value,
+      email: document.getElementById("email").value,
+      reasonCode: compare ? "compare" : reasonCode(),
+      reason: reasonBox.value,
+      clientName: document.getElementById("client-name").value,
+      clientEmail: document.getElementById("client-email").value,
+      clientUrl: document.getElementById("client-url").value,
+      url,
+      compareWith: compare ? compare.id : "",
+      frameworks: compare ? compare.frameworks : selectedFrameworks(),
+      tools: compare ? compare.tools : selectedTools(),
+      pages: compare ? compare.pages : selectedPages(),
+      depth: compare ? compare.depth : selectedDepth(),
+      pageLang: selectedPageLang(),
+      section: document.getElementById("stay-section").checked === true,
+      deviceId: deviceId(),
+      runId: runId,
+      openedAt: openedAt,
+      company: (document.getElementById("hp-note") || { value: "" }).value,
+      lang: document.documentElement.lang || "en",
+      coupon: window.ReviewDeal ? ReviewDeal.code() : "",
+      followUp: document.getElementById("follow-up").checked === true,
+      unlisted: document.getElementById("no-publish").checked === true,
+      landing: window.QaConsent && QaConsent.landing ? QaConsent.landing() : null,
+      testKey: testKey()
+    }));
+  }
+
+  async function readStream(res, host) {
     const type = res.headers.get("content-type") || "";
     if (type.indexOf("application/json") !== -1 || !res.ok) {
       const body = await res.json();
@@ -2415,7 +2795,7 @@
       parts.forEach((part) => {
         if (!part.trim()) return;
         const msg = JSON.parse(part);
-        if (msg.type === "log") appendLog(msg.text);
+        if (msg.type === "log") appendLog(msg.text, host);
         if (msg.type === "error") throw new Error(msg.error || rc.t("stFailed"));
         if (msg.type === "done") donePayload = msg;
       });
@@ -2427,7 +2807,7 @@
     event.preventDefault();
     if (activeRun) return;
     if (!termsOk) {
-      askTerms(() => reviewForm.dispatchEvent(new Event("submit", { cancelable: true })), compareTarget ? compareTarget.url : urlInput.value.trim());
+      askTerms(() => reviewForm.dispatchEvent(new Event("submit", { cancelable: true })), compareTarget ? [compareTarget.url].concat(compareTarget.queue || []) : urlInput.value.trim());
       return;
     }
     if (!signedIn()) {
@@ -2444,7 +2824,8 @@
     const errors = compare ? clientErrors().filter((item) => item.field === "name") : clientErrors();
     markFields(errors);
     if (errors.length) {
-      setStatus(errors[0].message, true);
+      if (compare) compareTarget = compare;
+      if (!compare || !reopenCompare(compare, rc.t("compareName"))) setStatus(errors[0].message, true);
       return;
     }
     let confirmed = !!(compare && compare.confirmed);
@@ -2457,6 +2838,10 @@
       }
       confirmed = answer === true;
       if (activeRun) return;
+    }
+    if (compare && (compare.queue || []).length) {
+      await runComparePool(compare, confirmed);
+      return;
     }
     const runId = hexId();
     activeRun = runId;
@@ -2481,35 +2866,7 @@
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(Object.assign(ReviewAuth.proof(), {
-          termsAccepted: true,
-          termsVersion: TERMS_VERSION,
-          name: document.getElementById("name").value,
-          email: document.getElementById("email").value,
-          reasonCode: compare ? "compare" : reasonCode(),
-          reason: reasonBox.value,
-          clientName: document.getElementById("client-name").value,
-          clientEmail: document.getElementById("client-email").value,
-          clientUrl: document.getElementById("client-url").value,
-          url: compare ? compare.url : urlInput.value,
-          compareWith: compare ? compare.id : "",
-          frameworks: compare ? compare.frameworks : selectedFrameworks(),
-          tools: compare ? compare.tools : selectedTools(),
-          pages: compare ? compare.pages : selectedPages(),
-          depth: compare ? compare.depth : selectedDepth(),
-          pageLang: selectedPageLang(),
-          section: document.getElementById("stay-section").checked === true,
-          deviceId: deviceId(),
-          runId: runId,
-          openedAt: openedAt,
-          company: (document.getElementById("hp-note") || { value: "" }).value,
-          lang: document.documentElement.lang || "en",
-          coupon: window.ReviewDeal ? ReviewDeal.code() : "",
-          followUp: document.getElementById("follow-up").checked === true,
-          unlisted: document.getElementById("no-publish").checked === true,
-          landing: window.QaConsent && QaConsent.landing ? QaConsent.landing() : null,
-          testKey: testKey()
-        }))
+        body: reviewBody(compare, compare ? compare.url : urlInput.value, runId)
       });
       stopBtn.disabled = false;
       document.getElementById("compare-stop").disabled = false;
@@ -2530,14 +2887,11 @@
       if (window.ReviewProgress) ReviewProgress.finish(stopped ? "stopped" : "ready");
       setStatus(stopped ? rc.t("stStopped") : rc.t("stReady"), false);
       dash.scrollTop = 0;
-      if (compare && (compare.total || 1) > 1) {
-        const left = (compare.queue || []).length;
-        const ran = Object.assign({}, compare, { done: (compare.done || []).concat(stopped ? [] : [payload.report.id]) });
-        if (!stopped && nextCompare(ran)) setStatus(rc.t("stCompareNext", { url: compare.url, next: compare.queue[0] }), false);
-        else {
-          setStatus(compareDone(ran, stopped && left ? rc.t("stCompareLeft", { n: left }) : ""), false);
-          openCompared(ran);
-        }
+      // The last competitor of a comparison paid for partway: it opens with the ones that finished before.
+      if (compare && (compare.done || []).length) {
+        const ran = Object.assign({}, compare, { done: compare.done.concat(stopped ? [] : [payload.report.id]) });
+        setStatus(compareDone(ran, ""), false);
+        openCompared(ran);
       }
     } catch (error) {
       const rivalField = compare && (error.fields || []).find((item) => item.field === "url");
@@ -2563,14 +2917,10 @@
       } else {
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", error.message || "");
         const reason = (rivalField && rivalField.message) || error.message || rc.t("stFailed");
-        if (compare && (compare.queue || []).length) {
-          const failed = (compare.failed || []).concat(compare.url);
-          setStatus(rc.t("stFailedNext", { url: compare.url, reason: reason.replace(/([^.!?])\s*$/, "$1."), next: compare.queue[0] }), true);
-          nextCompare(Object.assign({}, compare, { failed }));
-        } else if (compare && (compare.total || 1) > 1) {
+        if (compare && (compare.done || []).length) {
           const ran = Object.assign({}, compare, { failed: (compare.failed || []).concat(compare.url) });
           setStatus(compareDone(ran, ""), true);
-          openCompared(ran);
+          openCompared(ran, { [compare.url]: reason.replace(/([^.!?])\s*$/, "$1.") });
         } else if (compare && reopenCompare(compare, rc.t("stFailedRetry", { url: compare.url, reason: reason.replace(/([^.!?])\s*$/, "$1.") }))) {
           setStatus(rc.t("stCompareBack", { url: compare.url }), true);
         } else {
@@ -2592,14 +2942,17 @@
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_stop", "URL Review", "stop");
     appendLog("Stop requested.");
     setStatus(rc.t("stStopping"), false);
+    if (comparePool) comparePool.stopping = true;
+    const runIds = comparePool ? comparePool.rows.filter((row) => row.state === "running").map((row) => row.runId) : [activeRun];
     try {
-      const res = await fetch(endpoint() + "/stop", {
+      const answers = await Promise.all(runIds.map((runId) => fetch(endpoint() + "/stop", {
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(Object.assign(ReviewAuth.proof(), { runId: activeRun }))
-      });
-      if (!res.ok) {
+        body: JSON.stringify(Object.assign(ReviewAuth.proof(), { runId }))
+      })));
+      const res = answers.find((answer) => !answer.ok);
+      if (res) {
         const body = await res.json().catch(() => ({}));
         setStatus(body.error || rc.t("stStopRefused"), true);
         stopBtn.disabled = false;
@@ -3201,7 +3554,7 @@
         "Log"
       ];
       (report.log || []).forEach((line) => lines.push((line.at || "") + " " + clip(line.text)));
-      lines.push("", "Pages: " + report.counts.pages, "Technologies: " + (report.technologies || []).map((item) => item.name).join(", "), "", "Proposed cases");
+      lines.push("", "Pages: " + pagesCount(report), "Technologies: " + (report.technologies || []).map((item) => item.name).join(", "), "", "Proposed cases");
       (report.cases || []).forEach((item) => {
         lines.push(item.id + " [" + item.layer + "] " + clip(item.title) + " — " + clip(item.why));
       });
@@ -3492,6 +3845,8 @@
         if (!res.ok) throw new Error(body.error || rc.t("stNotFound"));
         render(body);
         showSharedCompare(body);
+        const until = new Date(body.reopenUntil || "");
+        if (!body.paid && !isNaN(until)) setStatus(rc.t("stReopenFree", { host: body.host || (body.report && body.report.host) || rc.t("thisSite"), date: until.toISOString().slice(0, 10) }), false);
       } catch (error) {
         setStatus(error.message, true);
       }
@@ -3530,6 +3885,16 @@
     const cut = text.indexOf(". ");
     if (cut === -1) return { step: text, expected: "The page still matches this proposed case." };
     return { step: text.slice(0, cut + 1), expected: text.slice(cut + 2) };
+  }
+
+  // The sample case of an unpaid report: its step, what is expected, and the script for the first chosen framework.
+  function sampleBody(report, item, why, frameworks) {
+    const parts = splitWhy(why);
+    let scripts = [];
+    try { scripts = window.QAReviewScripts ? QAReviewScripts.snippets(report, item, frameworks) : []; } catch (error) { scripts = []; }
+    const one = scripts[0] && scripts[0].code ? scripts[0] : null;
+    return '<dl class="case-split"><dt>' + esc(rc.t("caseStep")) + "</dt><dd>" + esc(parts.step) + "</dd><dt>" + esc(rc.t("caseExpected")) + "</dt><dd>" + esc(parts.expected) + "</dd></dl>" +
+      (one ? '<p class="case-script-fw">' + esc(one.framework) + '</p><pre class="case-script"><code>' + esc(one.code) + "</code></pre>" : "");
   }
 
   function pickedCases(report, layers) {
@@ -3574,7 +3939,12 @@
     const id = report.id || "report";
     if (kind === "scripts") {
       if (!window.QAReviewScripts) return;
-      const pack = QAReviewScripts.bundle(report, pickedCases(report, layers), chosenFrameworks());
+      const words = rc.english ? null : {
+        lang: document.documentElement.lang,
+        summary: report.insights ? healthSummary(report.insights) : "",
+        line: said
+      };
+      const pack = QAReviewScripts.bundle(report, pickedCases(report, layers), chosenFrameworks(), words);
       download("qa-lab-scripts-" + id + ".zip", QAReviewScripts.zip(pack.files, "qa-lab-" + id), "application/zip");
       return;
     }
@@ -3651,7 +4021,7 @@
     const counts = layerCounts(current && current.report);
     const host = document.getElementById("case-layers");
     const names = CASE_LAYERS.filter((name) => counts[name]);
-    host.innerHTML = names.map((name) => '<label><span><input type="checkbox" name="case-layer" value="' + esc(name) + '" checked> ' + esc(name) + '</span><small>' + counts[name] + "</small></label>").join("");
+    host.innerHTML = names.map((name) => '<label><span><input type="checkbox" name="case-layer" value="' + esc(name) + '" checked> ' + esc(layerName(name)) + '</span><small>' + counts[name] + "</small></label>").join("");
     const all = document.getElementById("case-select-all");
     all.checked = names.length > 0;
     all.disabled = !names.length;
@@ -3847,13 +4217,13 @@
   let wireAt = 0;
   function wireMarkup(items, clipStart) {
     return items.map((item, index) =>
-      '<a class="wire-item" href="' + esc(item.href) + '" target="_blank" rel="noopener noreferrer"><video class="wire-art" muted loop playsinline autoplay preload="auto" src="' + esc(WIRE_CLIPS[(clipStart + index) % WIRE_CLIPS.length]) + '"></video><span><strong>' + esc(item.title) + "</strong><small>" + esc(item.meta) + "</small></span></a>"
+      '<a class="wire-item" href="' + esc(item.href) + '"' + (item.lang ? ' lang="' + item.lang + '" translate="no"' : "") + ' target="_blank" rel="noopener noreferrer"><video class="wire-art" muted loop playsinline autoplay preload="auto" src="' + esc(WIRE_CLIPS[(clipStart + index) % WIRE_CLIPS.length]) + '"></video><span><strong>' + esc(item.title) + "</strong><small>" + esc(item.meta) + "</small></span></a>"
     ).join("");
   }
   let wireKey = "";
   function paintWireRows() {
     const rows = wire.querySelectorAll(".wire-row");
-    const waiting = [{ href: "qa-review.html", title: "The wire is waiting for headlines.", meta: "This pass did not retrieve a headline." }];
+    const waiting = [{ href: location.pathname.split("/").pop() || "qa-review.html", title: rc.t("wireWaiting"), meta: rc.t("wireNone"), lang: rc.english ? "" : rc.lang }];
     const source = wireItems.length ? wireItems : waiting;
     const key = source.map((item) => item.href + "|" + item.title).join("\n") + "@" + wire.clientWidth;
     if (key === wireKey) return;

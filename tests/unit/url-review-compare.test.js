@@ -9,6 +9,7 @@ const assert = require("node:assert/strict");
 const path = require("node:path");
 
 const compare = require("../../functions/url-review-compare");
+const multi = require("../../functions/url-review-multi");
 const core = require("../../functions/url-review-core");
 const offers = require("../../functions/url-review-offers");
 
@@ -320,9 +321,10 @@ test("saved reviews of one account are compared with the first one, and only whe
     row("ff06", rival, { email: "bob@example.com" })
   ];
   const shut = new Set(["dd04"]);
-  const made = compare.savedComparison(records, "ana@example.com", ["aa01", "bb02", "cc03", "dd04", "ee05", "ff06"], (item) => !shut.has(item.id));
+  const made = compare.savedComparison(records, "ana@example.com", ["aa01", "bb02", "cc03", "dd04", "ee05", "ff06", "gg07"], (item) => !shut.has(item.id));
   assert.deepEqual(made.base, { id: "aa01", host: own.host, at: records[0].createdAt });
-  assert.equal(made.list.length, compare.SAVED_MAX - 1, "the base and four others at most");
+  assert.equal(compare.SAVED_MAX, multi.MULTI_MAX, "the account compares as many sites as a comparison holds (#1431)");
+  assert.equal(made.list.length, compare.SAVED_MAX - 1, "the base and five others at most");
   assert.deepEqual(made.list[0].compare, compare.compareSites(Object.assign({}, own, { id: "aa01" }), rival));
   assert.equal(made.list[1].stopped, true);
   assert.equal(made.list[2].locked, true);

@@ -2,6 +2,7 @@ node_modules
 __pycache__/
 .worktrees/
 functions/.env
+functions/.secret.local
 *.jdk/
 .DS_Store
 cypress/screenshots/
@@ -36,6 +37,7 @@ media/url-review-demos/
 media/social-posts/*/story/
 media/social-posts/*/clip/
 media/social-posts/*/cover/
+media/social-posts/*/voiced/
 media/buffer-upload/
 # Gemini takes and product screen recordings for scripts/skits-studio
 media/skits/
@@ -43,3 +45,21 @@ media/skits/
 # Owner notice run outcomes carry owners' email addresses
 owner-notices-*.csv
 scripts/trending-tags.json
+.shots/
+firebase-debug.log
+
+# Private notes; Pages would publish them
+PubSap/
+
+# cf build output and dev state for the qalabreview.com Worker (#1866)
+qalabreview/.cloudflare/
+_site/
+
+# Pre-flight Worker build output (#1970)
+workers/preflight/.cloudflare/
+workers/preflight/dist/
+workers/outreach-cron/.cloudflare/
+workers/outreach-cron/dist/
+
+# Mini report card previews (#2466): node scripts/report-card-preview.js
+media/report-cards/

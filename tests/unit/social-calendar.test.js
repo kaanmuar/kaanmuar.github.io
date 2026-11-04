@@ -223,7 +223,7 @@ test("sync moves Buffer posts in windows of calls, records each move, skips what
   }
 });
 
-test("a post waiting for the sync keeps its calendar slot, and the sync stops while the day's reserve of Buffer calls is left", async () => {
+test("a post waiting for the sync keeps its calendar slot, and the sync stops while the day's or the 30 days' reserve of Buffer calls is left", async () => {
   const root = fixture();
   const now = Date.parse("2026-12-31T12:00:00Z");
   const file = path.join(root, "assets/social/buffer.json");
@@ -245,7 +245,10 @@ test("a post waiting for the sync keeps its calendar slot, and the sync stops wh
     ["ratelimit-policy", '"100-in-15min"; q=100; w=900'], ["ratelimit-policy", '"500-in-1day"; q=500; w=86400'], ["ratelimit-policy", '"15000-in-30days"; q=15000; w=2592000']
   ]));
   assert.deepEqual(cal.daily, { left: 212, quota: 500, reset: 40000 }, "the daily window, matched by its length");
+  assert.deepEqual(cal.monthly, { left: 14000, quota: 15000, reset: 696980 }, "and the 30-day one");
   Object.assign(cal.daily, { left: null, quota: null, reset: null });
+  Object.assign(cal.monthly, { left: null, quota: null, reset: null });
+  assert.deepEqual([cal.waitText(3600), cal.waitText(40000), cal.waitText(696980)], ["1 h", "12 h", "9 days"]);
 
   const post = { id: "l1", status: "scheduled", dueAt: "2027-01-05T14:00:00.000Z", text: "A", channelService: "linkedin", assets: [], metadata: null };
   const edits = [];
@@ -262,6 +265,13 @@ test("a post waiting for the sync keeps its calendar slot, and the sync stops wh
   try {
     const reserve = await cal.sync(Object.assign({ gql: ok, limits: { left: 100, quota: 250, reset: 7200 } }, opts));
     assert.match(reserve.stopped, /100 of Buffer's 250 daily calls left/);
+    const month = await cal.sync(Object.assign({ gql: ok, month: { left: 4800, quota: 12000, reset: 864000 } }, opts));
+    assert.match(month.stopped, /4800 of Buffer's 12000 calls for 30 days left, kept for the other jobs; the oldest frees up in 10 days/);
+    const roomy = cal.budget({ windows: 1, gql: async () => ({}), sleep: async () => {}, now: () => now, limits: { left: 1000, quota: 1800, reset: 1 }, month: { left: 4801, quota: 12000, reset: 1 } });
+    assert.deepEqual([await roomy("query { a }"), roomy.stopped], [{}, null], "above both reserves it calls");
+    const monthSpent = await cal.sync(Object.assign({ gql: gql(() => { throw Object.assign(new Error("Buffer 429"), { window: "30d", retryAfter: 5 * 86400 }); }) }, opts));
+    assert.match(monthSpent.stopped, /30d limit is spent; retry in 5 days/);
+    edits.length = 0;
     const spent = await cal.sync(Object.assign({ gql: gql(() => { throw Object.assign(new Error("Buffer 429"), { window: "24h", retryAfter: 3600 }); }) }, opts));
     assert.match(spent.stopped, /24h limit is spent/);
     assert.deepEqual([edits, spent.left, book().slot], [["l1"], 1, "2027-01-01T14:15:00.000Z"], "nothing moved, and it still waits");
@@ -342,13 +352,14 @@ test("the launch set's calendar becomes one post per language in the common layo
   const { posts } = cal.load(root);
   assert.deepEqual(posts.map((p) => p.id + " " + p.lane + " " + p.date).sort(), langs.map((lang) => "launch-2026-10/" + lang + "/a11y 5 2026-10-26"));
   const { moves } = cal.plan(posts, { from: "2026-10-26" });
+  // es/pt plan in @qaurlreview's own days (faces.js live), so es takes its first free lane 5.
   assert.deepEqual(moves.map((m) => m.day + " " + m.lane + " " + m.post.slug), [
-    "2026-10-27 5 es/a11y", "2026-10-28 5 pt/a11y", "2026-10-29 5 de/a11y", "2026-10-30 5 fr/a11y", "2026-10-31 5 it/a11y"
+    "2026-10-27 5 de/a11y", "2026-10-28 5 fr/a11y", "2026-10-29 5 it/a11y", "2026-10-26 5 es/a11y", "2026-10-27 5 pt/a11y"
   ], "the English post went out on YouTube and keeps its day's lane 5");
   assert.deepEqual(cal.write({ moves, held: [] }, root), ["launch-2026-10"]);
   assert.ok(!fs.existsSync(path.join(dir, "captions.json")), "the launch set keeps its captions per post");
   const csv = fs.readFileSync(path.join(dir, "calendar.csv"), "utf8");
-  assert.match(csv, new RegExp("^2026-10-31," + cal.slotTime("2026-10-31", "linkedin", 5) + ",linkedin,it/a11y,a\\.jpg$", "m"));
+  assert.match(csv, new RegExp("^2026-10-29," + cal.slotTime("2026-10-29", "linkedin", 5) + ",linkedin,it/a11y,a\\.jpg$", "m"));
   assert.match(csv, /^2026-10-26,08:30,linkedin,en\/a11y,/m);
 
   fs.writeFileSync(path.join(dir, "es", "a11y-captions.json"), JSON.stringify({ youtubeTitle: "Tu sitio, revisado. #Shorts" }));

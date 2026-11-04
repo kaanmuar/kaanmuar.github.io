@@ -1,0 +1,10 @@
+---
+description: Media that needs Carlos's review is named in the reply, so the phone shows it in the chat
+alwaysApply: true
+---
+# Media for review goes in the reply
+Carlos reviews from the CursorQuota phone app, which shows images, video and audio inside the message that names them (#1660). A file only in tool output, or only on the desktop, does not reach him.
+
+- When a video, clip, image, screenshot, render or audio file needs his review, name each file by its absolute path in your reply, as a markdown link or in backticks: `![home](/Users/Apple/.../home.png)`, `[clip](</path with spaces/clip.mp4>)`.
+- Write the file before the reply that names it. Use formats a phone plays: .mp4 (H.264 and AAC), .webm or .mov; .mp3, .wav or .m4a; .png, .jpg, .gif or .webp.
+- Don't ask him to open the desktop to look.

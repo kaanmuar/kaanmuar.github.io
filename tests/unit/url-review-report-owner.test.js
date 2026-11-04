@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const auth = require("../../functions/url-review-auth");
 const customerMail = require("../../functions/url-review-customer-mail");
+const offers = require("../../functions/url-review-offers");
 const sample = require("../../assets/qa-review-sample.json");
 
 const ANA_DESKTOP = "a".repeat(64);
@@ -73,6 +74,24 @@ test("the owner of an unpaid report is offered payment; a run with no account op
   assert.equal((await auth.reportAccess(store, ana, run({ email: "" }), false)).status, 403);
   assert.equal((await auth.reportAccess(store, ana, run({ report: null }), false)).status, 404);
   assert.equal((await auth.reportAccess(store, ana, run({ report: { id: "ab12cd34", preview: true } }), false)).status, 404);
+});
+
+test("the owner reopens an unpaid report at no charge for 7 days after the run, then is asked to pay", () => {
+  const ran = run({ paid: false, createdAt: "2026-11-01T10:00:00.000Z" });
+  assert.equal(offers.REOPEN_FREE_DAYS, 7);
+  assert.equal(offers.reopenFreeUntil(ran), "2026-11-08T10:00:00.000Z");
+  assert.equal(offers.reopenFree(ran, Date.parse("2026-11-01T10:00:00.000Z")), true);
+  assert.equal(offers.reopenFree(ran, Date.parse("2026-11-08T09:59:59.000Z")), true);
+  assert.equal(offers.reopenFree(ran, Date.parse("2026-11-08T10:00:00.000Z")), false);
+  assert.equal(offers.reopenFree(ran, "2026-12-01T00:00:00.000Z"), false);
+  assert.equal(offers.reopenFreeUntil({ createdAt: { toDate: () => new Date("2026-11-01T10:00:00.000Z") } }), "2026-11-08T10:00:00.000Z");
+});
+
+test("a run with no readable start date has no free reopen", () => {
+  for (const record of [null, {}, { createdAt: "" }, { createdAt: "not a date" }]) {
+    assert.equal(offers.reopenFreeUntil(record), "");
+    assert.equal(offers.reopenFree(record, Date.parse("2026-11-02T00:00:00.000Z")), false);
+  }
 });
 
 test("the link in the report email carries only the report id, so opened signed out it lands on the blurred view", async () => {

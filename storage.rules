@@ -28,6 +28,14 @@ service firebase.storage {
       allow update, delete: if isOwner();
     }
 
+    // Share to post (#1420): the owner's photo or video, picked up by the jarvis function and the social-inbox workflow.
+    match /social-inbox/{fileName} {
+      allow get, delete: if isOwner();
+      allow create: if isOwner()
+        && request.resource.size < 300 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)|video/(mp4|quicktime|webm)');
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

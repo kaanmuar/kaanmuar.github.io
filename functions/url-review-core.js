@@ -17,12 +17,14 @@ const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
 const caseRank = require("./url-review-cases");
 const chatTalk = require("./url-review-chat-talk");
 const ownerProofs = require("./url-review-owner-proof");
+const localProfile = require("./url-review-local");
 const { registrable, registryDomain } = require("./url-review-suffix");
+const { ipBlocked } = require("./url-review-ip");
 const { siteLabel } = caseRank;
 
-const TERMS_VERSION = "2026-10-24";
+const TERMS_VERSION = "2026-11-02";
 // A page loaded before a terms change still sends the version before it.
-const PREVIOUS_TERMS_VERSION = "2026-10-23";
+const PREVIOUS_TERMS_VERSION = "2026-11-01";
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 const EXTRA_FRAMEWORK_USD = 5;
@@ -226,43 +228,6 @@ const TECH = [
   ["jsDelivr", "CDN", /cdn\.jsdelivr\.net/i],
   ["unpkg", "CDN", /unpkg\.com/i]
 ];
-
-function ipv4ToInt(ip) {
-  const parts = String(ip).split(".");
-  if (parts.length !== 4) return null;
-  const nums = parts.map((part) => Number(part));
-  if (nums.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return null;
-  return (((nums[0] * 16777216) + (nums[1] * 65536) + (nums[2] * 256) + nums[3]) >>> 0);
-}
-
-function inRange(ip, start, end) {
-  const n = ipv4ToInt(ip);
-  if (n == null) return false;
-  return n >= ipv4ToInt(start) && n <= ipv4ToInt(end);
-}
-
-function ipBlocked(raw) {
-  let ip = String(raw || "").toLowerCase().replace(/^\[|\]$/g, "");
-  if (ip.startsWith("::ffff:")) ip = ip.slice(7);
-  if (net.isIP(ip) === 4) {
-    return inRange(ip, "0.0.0.0", "0.255.255.255")
-      || inRange(ip, "10.0.0.0", "10.255.255.255")
-      || inRange(ip, "100.64.0.0", "100.127.255.255")
-      || inRange(ip, "127.0.0.0", "127.255.255.255")
-      || inRange(ip, "169.254.0.0", "169.254.255.255")
-      || inRange(ip, "172.16.0.0", "172.31.255.255")
-      || inRange(ip, "192.0.2.0", "192.0.2.255")
-      || inRange(ip, "192.168.0.0", "192.168.255.255")
-      || inRange(ip, "198.51.100.0", "198.51.100.255")
-      || inRange(ip, "203.0.113.0", "203.0.113.255")
-      || inRange(ip, "224.0.0.0", "255.255.255.255");
-  }
-  if (net.isIP(ip) !== 6) return true;
-  if (ip === "::1" || ip === "::") return true;
-  if (ip.startsWith("fc") || ip.startsWith("fd")) return true;
-  if (ip.startsWith("fe8") || ip.startsWith("fe9") || ip.startsWith("fea") || ip.startsWith("feb")) return true;
-  return false;
-}
 
 function hostBlocked(hostname) {
   const host = String(hostname || "").replace(/\.$/, "").toLowerCase();
@@ -975,7 +940,7 @@ async function assertPublic(hostname) {
   records.forEach((record) => {
     if (ipBlocked(record.address)) throw new Error("That host points at a private address.");
   });
-  return records[0].address;
+  return (records.find((record) => record.family === 4) || records[0]).address;
 }
 
 // Inflates at most MAX_BYTES * 5; past that it keeps the start of the input, so a huge file still yields its first part.
@@ -1029,6 +994,22 @@ function serverLeaf(hostname, pinned) {
   });
 }
 
+// Must answer asynchronously: answered in the same tick, a connect error (an IPv6 address on an IPv4-only runner)
+// reaches the socket before the request listens for it and ends the process instead of rejecting.
+function pinnedLookup(pinned) {
+  return (hostname, options, callback) => {
+    if (typeof options === "function") {
+      callback = options;
+      options = {};
+    }
+    const family = net.isIP(pinned);
+    process.nextTick(() => {
+      if (options && options.all) callback(null, [{ address: pinned, family }]);
+      else callback(null, pinned, family);
+    });
+  };
+}
+
 async function issuerBytes(raw) {
   const target = new URL(raw);
   if (!/^https?:$/.test(target.protocol) || target.username || target.password || (target.port && !["80", "443"].includes(target.port))) throw new Error("The AIA address is not a plain public URL.");
@@ -1045,15 +1026,7 @@ async function issuerBytes(raw) {
       method: "GET",
       timeout: ISSUER_TIMEOUT_MS,
       headers: { "user-agent": USER_AGENT, connection: "close" },
-      lookup: (hostname, options, callback) => {
-        if (typeof options === "function") {
-          callback = options;
-          options = {};
-        }
-        const family = net.isIP(pinned);
-        if (options && options.all) callback(null, [{ address: pinned, family }]);
-        else callback(null, pinned, family);
-      }
+      lookup: pinnedLookup(pinned)
     }, (res) => {
       if (res.statusCode !== 200) {
         req.destroy();
@@ -1141,15 +1114,7 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
         connection: "close"
       }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
       ca: chain ? tls.rootCertificates.concat(chain.pem) : undefined,
-      lookup: (hostname, options, callback) => {
-        if (typeof options === "function") {
-          callback = options;
-          options = {};
-        }
-        const family = net.isIP(pinned);
-        if (options && options.all) callback(null, [{ address: pinned, family }]);
-        else callback(null, pinned, family);
-      }
+      lookup: pinnedLookup(pinned)
     }, (res) => {
       const chunks = [];
       let size = 0;
@@ -1223,6 +1188,11 @@ function httpsUpgrade(next, upgrades) {
 
 const httpOnly = (href, tried) => new Error("The site redirected to " + clean(href, 160) + ", an http:// address" + (tried ? ", and the same address over https gave no page" : "") + ". The review only follows https.");
 
+// An https copy that refuses the review, shows a bot check, or is slow did serve https: it is read like any other first page,
+// so headless Chrome still gets its turn. Only a failed connection or another error status counts as no page over https.
+const upgradeRefused = (res, url) => [401, 403, 429].includes(res.status) || !!challengeOf(url, res.headers, res.body);
+const upgradeSlow = (error) => !!error && (error.code === "HEADERS_TOO_LARGE" || /took too long/.test(error.message || ""));
+
 async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage) {
   let current = normalizeUrl(raw);
   const started = Date.now();
@@ -1248,11 +1218,11 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage)
       try {
         res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage);
       } catch (error) {
-        if (upgraded && !(error && error.code === "STOPPED")) throw httpOnly(upgraded, true);
+        if (upgraded && !(error && error.code === "STOPPED") && !upgradeSlow(error)) throw httpOnly(upgraded, true);
         if (error && typeof error === "object" && !error.url) error.url = current.toString();
         throw error;
       }
-      if (upgraded && res.status >= 400) throw httpOnly(upgraded, true);
+      if (upgraded && res.status >= 400 && !upgradeRefused(res, current.toString())) throw httpOnly(upgraded, true);
       const location = res.headers.location;
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
         if (onPulse) onPulse("The page redirected. Following the next public https address.");
@@ -1743,7 +1713,9 @@ function schemaScan(html) {
     if (!types.length) return;
     keepEmails(node, types);
     const sameAs = node.sameAs ? (Array.isArray(node.sameAs) ? node.sameAs : [node.sameAs]).filter((item) => typeof item === "string").slice(0, 12).map((item) => clean(item, 200)) : [];
-    result.items.push({ types: types.slice(0, 4), props: Object.keys(node).filter((key) => key.charAt(0) !== "@").slice(0, 40), sameAs });
+    const item = { types: types.slice(0, 4), props: Object.keys(node).filter((key) => key.charAt(0) !== "@").slice(0, 40), sameAs };
+    if (types.some(localProfile.isLocalType)) item.local = localProfile.facts(node);
+    result.items.push(item);
   };
   blocks.slice(0, 12).forEach((block) => {
     const text = block.replace(/^<script\b[^>]*>/i, "").replace(/<\/script>$/i, "").trim();
@@ -1801,6 +1773,17 @@ function inspect(html, headers, pageUrl) {
     else if (/^\s*mailto:/i.test(href)) addMail(mailOf(href));
   });
   (markup.match(/data-cfemail=["'][0-9a-f]+["']/gi) || []).forEach((hit) => addMail(mailOf(cfEmail(hit.slice(14, -1)))));
+  const phones = [];
+  collect(markup, "a").forEach((tag) => {
+    const href = decode(attr(tag, "href"));
+    if (!/^\s*tel:/i.test(href)) return;
+    let phone = href.replace(/^\s*tel:/i, "");
+    try { phone = decodeURIComponent(phone); } catch (error) { /* a stray % stays as written */ }
+    phone = clean(phone, 40);
+    if (phone.replace(/\D/g, "").length >= 7 && phones.indexOf(phone) === -1 && phones.length < 5) phones.push(phone);
+  });
+  const mapsLinks = collect(markup, "a").map((tag) => attr(tag, "href")).concat(collect(markup, "iframe").map((tag) => attr(tag, "src")))
+    .filter((href) => /^https?:\/\/(?:(?:www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+\/|maps\.app\.goo\.gl\/|goo\.gl\/maps\/|g\.page\/)/i.test(href)).length;
   const scripts = collect(html, "script").map((tag) => attr(tag, "src")).filter(Boolean);
   const styles = collect(html, "link").filter((tag) => attr(tag, "rel").toLowerCase().includes("stylesheet")).length;
   const generator = collect(html, "meta").map((tag) => attr(tag, "name").toLowerCase() === "generator" ? attr(tag, "content") : "").find(Boolean) || "";
@@ -1967,6 +1950,7 @@ function inspect(html, headers, pageUrl) {
     analytics: analyticsScan(html),
     socialLinks,
     mailtos,
+    local: { phones, maps: mapsLinks },
     textEmails: emailsInText(text, 5),
     legal: legalLinks(anchors, pageUrl),
     libraries,
@@ -2094,6 +2078,12 @@ function journeys(pages, dom) {
     .map((row) => ({ path: start, selector: row.link.selector, text: row.link.text, target: row.link.target, h1: heading(row.page), where: row.link.where }));
 }
 
+// A privacy link is often named for the page, not the word: "Privacy and disclaimers" can point to /legal.html.
+function privacyCheck(link, path) {
+  const tail = link && link.href ? String(link.href).split(/[?#]/)[0].replace(/\/+$/, "").split("/").pop().replace(/["\\]/g, "") : "";
+  return tail ? { check: { kind: "count", path, selector: "a[href*=\"" + tail + "\" i]", op: "gte", n: 1 } } : {};
+}
+
 function propose(pages, robotsBlocked, limits, dom) {
   const cases = [];
   const home = pages[0];
@@ -2217,7 +2207,7 @@ function propose(pages, robotsBlocked, limits, dom) {
   if (sriHosts.length) addCase(cases, { id: "SEC-14", layer: "Security", title: "Scripts from other hosts on " + here + " carry an integrity hash", why: "Scripts from " + sriHosts.slice(0, 4).join(", ") + " load on " + here + " without an integrity attribute. A changed file on one of those hosts would run on " + host + " unchecked. The case would assert integrity and crossorigin on each pinned script.", fw: browser, keys: ["sec-sri"], verdict: "risk", severity: "low" });
   const formHosts = (face.resources && face.resources.forms) || [];
   if (formHosts.length) addCase(cases, { id: "SEC-15", layer: "Security", title: "Forms on " + here + " post only to hosts the owner names", why: "A form on " + here + " posts to " + formHosts.slice(0, 3).join(", ") + ", not to " + host + ". The case would check that the host is the owner's processor, uses https, and is named in the privacy notice. Nothing is submitted.", fw: browser });
-  addCase(cases, { id: "PR-01", layer: "Privacy", title: "A privacy notice is linked from " + here, why: (legal.privacy ? here + " links \"" + (legal.privacy.text || legal.privacy.href) + "\"." : sig.privacyLink ? "The HTML of " + here + " mentions a privacy or legal destination, but no link to a privacy notice was found." : "No privacy or legal wording was found on " + here + ".") + " Confirm the link in a browser before treating it as found.", fw: browser });
+  addCase(cases, { id: "PR-01", layer: "Privacy", title: "A privacy notice is linked from " + here, why: (legal.privacy ? here + " links \"" + (legal.privacy.text || legal.privacy.href) + "\"." : sig.privacyLink ? "The HTML of " + here + " mentions a privacy or legal destination, but no link to a privacy notice was found." : "No privacy or legal wording was found on " + here + ".") + " Confirm the link in a browser before treating it as found.", fw: browser, ...privacyCheck(legal.privacy, startPath) });
   if (legal.imprint || germanSpeaking(face.lang, face.textLang, home.url)) addCase(cases, { id: "PR-04", layer: "Privacy", title: "An imprint on " + host + " names who runs the site", why: (legal.imprint ? here + " links \"" + (legal.imprint.text || legal.imprint.href) + "\"." : here + " links no imprint.") + " German-speaking sites must name the provider, an address and a contact (§ 5 DDG in Germany, § 5 ECG in Austria). The case would open the imprint from every template.", fw: browser });
   addCase(cases, { id: "PR-02", layer: "Privacy", title: "Third-party scripts on " + here + " are named before they run", why: (sig.thirdParty || []).length + " other hosts were referenced by script src on " + here + ((sig.thirdParty || []).length ? " (" + sig.thirdParty.slice(0, 4).join(", ") + ")." : ".") + " A privacy case would load the page with tags blocked and then with consent.", fw: browser });
   if (tracked) addCase(cases, { id: "PR-03", layer: "Privacy", title: "A consent notice on " + here + " appears before tags or cookies", why: (sig.consent ? "Cookie or consent wording was found on " + here + "." : "No cookie or consent wording was found on " + here + ".") + " The case would assert the notice before analytics storage is written.", fw: browser });
@@ -2311,6 +2301,17 @@ function domainCases(cases, extras) {
   const at = cases.reduce((last, item, index) => /^SEC-/.test(item.id) ? index + 1 : last, cases.length);
   return cases.slice(0, at).concat(more.map((item) => Object.assign({ status: "proposed", fw: BROWSER_FW }, item)), cases.slice(at))
     .map((item, index) => Object.assign(item, { n: index + 1 }));
+}
+
+function localCase(cases, extras, host) {
+  const local = extras && extras.local;
+  if (!local) return cases;
+  const why = local.placeId
+    ? "Google Maps has a Business Profile that " + (local.by === "website" ? "links to " + host : "lists the site's phone") + " (" + localProfile.mapsLink(local.placeId) + "). People tap its website link, phone and hours before they ever open the site. The case would open the profile, follow its website link to a 200 page on " + host + ", and compare its name, phone, address and hours with the site's footer and LocalBusiness data."
+    : "The site describes a local business, and a Google Maps search for \"" + local.query + "\" found no profile that links to " + host + " or lists its phone. The case would confirm the business has a claimed profile whose website field is " + host + ".";
+  const item = { id: "SEO-05", layer: "SEO", title: "The Google Business Profile links to a working page of " + host + " and matches the site", why, status: "proposed", fw: BROWSER_FW };
+  const at = cases.reduce((last, one, index) => /^SEO-/.test(one.id) ? index + 1 : last, cases.length);
+  return cases.slice(0, at).concat(item, cases.slice(at)).map((one, index) => Object.assign(one, { n: index + 1 }));
 }
 
 function pagePath(pageUrl) {
@@ -2798,6 +2799,71 @@ function tcpOpen(address, port, ms) {
   });
 }
 
+const ICON_MAX_BYTES = 64 * 1024;
+const ICON_TYPES = /^image\/(png|x-icon|vnd\.microsoft\.icon|svg\+xml|jpeg|gif|webp)$/;
+
+function iconType(type, body) {
+  if (ICON_TYPES.test(type)) return type;
+  if (body.length > 4 && body[0] === 0 && body[1] === 0 && body[2] === 1 && body[3] === 0) return "image/x-icon";
+  if (body.length > 8 && body.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
+  return "";
+}
+
+function readIcon(target, pinned) {
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: target.hostname,
+      port: 443,
+      path: target.pathname + target.search,
+      method: "GET",
+      timeout: 5000,
+      headers: { "user-agent": USER_AGENT, accept: "image/*", connection: "close" },
+      lookup: pinnedLookup(pinned)
+    }, (res) => {
+      const chunks = [];
+      let size = 0;
+      res.on("data", (chunk) => {
+        size += chunk.length;
+        if (size > ICON_MAX_BYTES) req.destroy(new Error("The icon is too large."));
+        else chunks.push(chunk);
+      });
+      res.on("end", () => resolve({
+        status: res.statusCode,
+        type: String(res.headers["content-type"] || "").split(";")[0].trim().toLowerCase(),
+        location: res.headers.location || "",
+        encoded: !!res.headers["content-encoding"] && res.headers["content-encoding"] !== "identity",
+        body: Buffer.concat(chunks)
+      }));
+      res.on("error", reject);
+    });
+    const deadline = setTimeout(() => req.destroy(new Error("The icon took too long.")), 6000);
+    req.on("close", () => clearTimeout(deadline));
+    req.on("timeout", () => req.destroy(new Error("The icon took too long.")));
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+// A site's icon as a data URL, for the comparison PDF, which is printed with every outside request blocked.
+// Read from a public https address only; "" when it cannot be read as a small image.
+async function iconData(raw) {
+  try {
+    let current = normalizeUrl(raw);
+    for (let hop = 0; hop <= 3; hop += 1) {
+      const res = await readIcon(current, await assertPublic(current.hostname));
+      if ([301, 302, 303, 307, 308].includes(res.status) && res.location) {
+        current = normalizeUrl(new URL(res.location, current).toString());
+        continue;
+      }
+      const type = res.status === 200 && !res.encoded && res.body.length ? iconType(res.type, res.body) : "";
+      return type ? "data:" + type + ";base64," + res.body.toString("base64") : "";
+    }
+  } catch (error) {
+    return "";
+  }
+  return "";
+}
+
 // The same address the plain read was pinned to; `open` is null when the host could not be checked at all.
 async function tcpCheck(raw, ms) {
   try {
@@ -2824,12 +2890,12 @@ async function probeRead(raw) {
       try {
         res = await requestOnce(current, pinned, null, true);
       } catch (error) {
-        if (upgraded) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
+        if (upgraded && !upgradeSlow(error)) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
         throw error;
       }
       const location = header(res.headers, "location");
       hops.push({ url: clean(current.toString(), 300), status: res.status, location: clean(location, 300) });
-      if (upgraded && res.status >= 400) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
+      if (upgraded && res.status >= 400 && !upgradeRefused(res, current.toString())) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
         const next = new URL(location, current);
         upgraded = next.protocol === "http:" ? httpsUpgrade(next, upgrades) : "";
@@ -2920,6 +2986,7 @@ function ownerContacts(pages, extras) {
 async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups) {
   const say = typeof note === "function" ? note : () => {};
   const checkRisk = lookups && typeof lookups.webrisk === "function" ? lookups.webrisk : null;
+  const findPlaces = lookups && typeof lookups.places === "function" ? lookups.places : null;
   const done = (promise, line) => promise.then((value) => { say(line(value)); return value; });
   const origin = new URL(first.url);
   const allowed = (path) => !robotsGroups.length || robotsAllows(path, robotsGroups);
@@ -2937,7 +3004,15 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   const sitemapJob = lookups && lookups.sitemap ? lookups.sitemap : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
   say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registryDomain(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
   say(tls && tls.validTo ? "The TLS certificate from " + (tls.issuer || "an unnamed issuer") + " is valid until " + tls.validTo + " (" + tls.daysLeft + " days left)." : "The TLS certificate did not give an expiry date.");
-  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing] = await Promise.all([
+  const reach = (url) => {
+    const target = new URL(url);
+    if (target.hostname === origin.hostname && !allowed(pagePath(target.toString()))) return Promise.reject(new Error("robots.txt disallows that address"));
+    return fetchPublic(target.toString(), halt, null, false, acceptLanguage);
+  };
+  const localJob = findPlaces && lookups.inspect
+    ? withTimeout(localProfile.lookup(lookups.inspect, origin.hostname, { places: findPlaces, reach }), 25000, null).catch(() => null)
+    : Promise.resolve(null);
+  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local] = await Promise.all([
     done(sitemapJob, (map) => map.urls && map.urls.length
       ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
       : "No sitemap with URLs was found (status " + (map.status || "none") + ")."),
@@ -2972,10 +3047,18 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
       ? done(Promise.resolve().then(() => checkRisk(first.url)).catch((error) => ({ ok: false, error: clean((error && error.message) || "", 120) })), (res) => !res || !res.ok
         ? "Google's Safe Browsing lists could not be read" + (res && res.error ? " (" + res.error + ")" : "") + "."
         : res.threats.length ? "Google's Safe Browsing lists flag the site: " + res.threats.join(", ") + "." : "Google's Safe Browsing lists do not flag the site.")
-      : Promise.resolve(null)
+      : Promise.resolve(null),
+    localJob.then((res) => {
+      if (!res) return null;
+      if (!res.ok) say("Google Maps did not answer the Business Profile search (" + res.error + ").");
+      else if (!res.placeId) say("Google Maps was searched for \"" + res.query + "\": " + res.candidates + " place" + (res.candidates === 1 ? "" : "s") + " came back, and none links to " + origin.hostname + " or lists its phone.");
+      else say("Google Maps has a Business Profile that " + (res.by === "website" ? "links to " + origin.hostname : "lists the site's phone") + " (place ID " + res.placeId + ")" +
+        (res.website.reach ? res.website.reach.error ? "; its website link could not be read (" + res.website.reach.error + ")" : "; its website link answered " + res.website.reach.status + (res.website.reach.hops ? " after " + res.website.reach.hops + " redirect" + (res.website.reach.hops === 1 ? "" : "s") : "") : "") + ".");
+      return res;
+    })
   ]);
   const trim = (item) => item ? { status: item.status, html: !!item.html, body: String(item.body || "").slice(0, 20000) } : null;
-  return { sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null };
+  return { sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null };
 }
 
 async function reviewTarget(rawUrl, hooks) {
@@ -3124,7 +3207,7 @@ async function reviewTarget(rawUrl, hooks) {
   const keep = (url) => !prefix || underSection(url, prefix);
   const homeInspect = inspect(first.body, first.headers, first.url);
   const sitemapPromise = stopped ? Promise.resolve({ status: 0, urls: [] }) : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
-  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
+  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, places: controls.places, inspect: homeInspect, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
   const canBrowse = !stopped && !readInBrowser && typeof controls.browse === "function";
   const browsePaths = (homeInspect.links || []).filter((url) => keep(url) && pagePath(url) !== pagePath(first.url) && !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
   if (canBrowse) note("Opening the start page in a headless browser alongside the analysis" + (browsePaths.length ? ", then " + browsePaths.map(pagePath).join(" and ") : "") + ".");
@@ -3287,8 +3370,10 @@ async function reviewTarget(rawUrl, hooks) {
       }
     }
   }
+  // Only the crawl counts: PageSpeed and CrUX may wait past the deadline after every page was read (#2016).
+  const timedOut = !stopped && pages.length < chosen.pages && Date.now() >= deadline;
   if (stopped) note("Stopped. The report keeps the " + pages.length + " page" + (pages.length === 1 ? "" : "s") + " analyzed before the stop.");
-  else if (pages.length < chosen.pages && Date.now() >= deadline) note("The time budget ended with " + pages.length + " page" + (pages.length === 1 ? "" : "s") + " saved. This review was capped at " + chosen.pages + ".");
+  else if (timedOut) note("The time budget ended with " + pages.length + " page" + (pages.length === 1 ? "" : "s") + " saved. This review was capped at " + chosen.pages + ".");
   else note("Analyzed " + pages.length + " page" + (pages.length === 1 ? "" : "s") + ". Writing the proposed cases now.");
   const techMap = new Map();
   pages.forEach((page) => {
@@ -3335,7 +3420,7 @@ async function reviewTarget(rawUrl, hooks) {
     const count = (kind) => out.rows.filter((row) => row.kind === kind).length;
     note("Checked " + out.checked + " of " + out.found + " external links: " + count("broken") + " broken, " + count("moved") + " moved, " + count("blocked") + " blocked for this reader" + (out.httpCount ? ", " + out.httpCount + " on plain http, not requested" : "") + ".");
   }
-  cases = domainCases(cases, extras);
+  cases = localCase(domainCases(cases, extras), extras, origin.hostname);
   const found = pagesFound(pages, startQueue, await sitemapPromise, first.url, prefix);
   found.count = Math.max(found.count, pages.length);
   note(found.count + (found.partial ? "+" : "") + " page" + (found.count === 1 ? " was" : "s were") + " found on " + origin.hostname + " in the links of the pages analyzed and the sitemap. " + pages.length + " of them were analyzed.");
@@ -3373,7 +3458,7 @@ async function reviewTarget(rawUrl, hooks) {
       alerts,
       technologies: technologiesFound,
       homeText: homeText(first.body),
-      limits: { maxPages: chosen.pages, maxDepth: chosen.depth, pagesRead: pages.length, timedOut: Date.now() >= deadline }
+      limits: { maxPages: chosen.pages, maxDepth: chosen.depth, pagesRead: pages.length, timedOut }
     });
     note("Scored " + analysis.findings.length + " checks: " + analysis.score.totals.fail + " fail, " + analysis.score.totals.risk + " at risk, " + analysis.score.totals.pass + " pass. Health " + analysis.score.overall + "/100.");
   } catch (error) {
@@ -3423,7 +3508,7 @@ async function reviewTarget(rawUrl, hooks) {
       pagesFoundPartial: found.partial,
       robotsBlocked,
       robotsNote,
-      timedOut: Date.now() >= deadline,
+      timedOut,
       pageLang: acceptLanguage,
       section: prefix,
       passive
@@ -3500,8 +3585,57 @@ function stoppedReport(rawUrl, lines, host, scope) {
   };
 }
 
+// Firestore refuses a map key that is empty or named like __x__, an array directly inside an array, and a field nested past
+// 20 maps and arrays ("Property report contains an invalid nested entity"). Page data can carry any of them, so they are rewritten.
+const STORE_DEPTH = 20;
+
+function storable(value, fixed, at, depth) {
+  const level = depth || 1;
+  const path = at || "report";
+  const plain = (item) => Array.isArray(item) || (!!item && typeof item === "object" && Object.getPrototypeOf(item) === Object.prototype);
+  if (!plain(value)) return value;
+  const inner = (item, where) => {
+    if (!plain(item)) return item;
+    if (level >= STORE_DEPTH) {
+      fixed.push(where + " (past " + STORE_DEPTH + " levels, kept as JSON)");
+      return JSON.stringify(item);
+    }
+    if (Array.isArray(value) && Array.isArray(item)) {
+      fixed.push(where + " (an array in an array, kept as { items })");
+      return storable({ items: item }, fixed, where, level + 1);
+    }
+    return storable(item, fixed, where, level + 1);
+  };
+  if (Array.isArray(value)) return value.map((item, index) => inner(item, path + "." + index));
+  const out = {};
+  Object.keys(value).forEach((key) => {
+    let name = key;
+    if (!name) name = "(empty)";
+    else if (/^__.*__$/.test(name)) name = name.slice(1);
+    if (name !== key) fixed.push(path + "." + JSON.stringify(key) + " (renamed " + JSON.stringify(name) + ")");
+    out[name] = inner(value[key], path + "." + name);
+  });
+  return out;
+}
+
+// The Local check's findings (#2067) in a few bytes, so Jarvis can count them without reading every report (#2118).
+// Keys and verdicts only: nothing from the Business Profile is kept (Maps Platform terms).
+function localSummary(report) {
+  const findings = (report && report.insights && Array.isArray(report.insights.findings)) ? report.insights.findings : [];
+  const local = findings.filter((f) => f && /^local-/.test(f.key || ""));
+  if (!local.length) return null;
+  const profile = local.find((f) => f.key === "local-profile");
+  return {
+    profile: !!profile && profile.verdict === "pass",
+    issues: local.filter((f) => f.verdict === "fail" || f.verdict === "risk" || f.verdict === "person").map((f) => ({ key: f.key, verdict: f.verdict, severity: f.severity || "" }))
+  };
+}
+
 function intakeRecord(value, report, meta) {
   const now = Date.now();
+  const fixed = [];
+  const kept = storable(report, fixed);
+  if (fixed.length) console.warn("URL review report " + report.id + " had fields Firestore refuses: " + fixed.slice(0, 20).join("; "));
   return {
     id: report.id,
     createdAt: new Date(now).toISOString(),
@@ -3540,7 +3674,8 @@ function intakeRecord(value, report, meta) {
     compareWith: value.compareWith || "",
     query: value.query || "",
     referrerHost: value.referrerHost || "",
-    report
+    local: localSummary(report),
+    report: kept
   };
 }
 
@@ -4300,11 +4435,15 @@ function frostAll(value) {
 
 // The page blurs a free report with CSS, so a paid reopen sends only this copy:
 // the readable opening of every line in every section, filler for the rest, and no fix-kit files.
-function previewReport(report) {
+// The top case stays whole, with what its script needs, as the sample the page shows in full; a comparison column passes { sample: false }.
+function previewReport(report, options) {
   const copy = JSON.parse(JSON.stringify(report || {}));
-  (copy.cases || []).forEach((item) => {
+  const cases = copy.cases || [];
+  const top = options && options.sample === false ? null : cases.shift();
+  cases.forEach((item) => {
     item.title = frostText(item.title);
     item.why = frostText(item.why);
+    delete item.msg;
     ["steps", "expected", "script", "scripts", "data", "selectors", "check"].forEach((key) => { delete item[key]; });
   });
   (copy.alerts || []).forEach((item) => {
@@ -4312,11 +4451,12 @@ function previewReport(report) {
     item.detail = frostText(item.detail);
   });
   const ins = copy.insights || {};
-  // The template values would carry what the frost hides, so the preview reads the frosted English.
+  // Evidence and fix values would carry what the frost hides, so those read the frosted English; titles stay whole.
   (ins.findings || []).forEach((item) => {
     item.evidence = frostText(item.evidence);
     item.fix = frostText(item.fix);
-    delete item.msg;
+    if (item.msg && item.msg.title) item.msg = { title: item.msg.title };
+    else delete item.msg;
   });
   ((ins.seo && ins.seo.indexability) || []).forEach((row) => { delete row.reasonMsg; });
   if (ins.fixkit) {
@@ -4334,11 +4474,13 @@ function previewReport(report) {
   // The comparison names the asker's own site and its open problems, so a shared link must not carry it.
   delete copy.compare;
   const frosted = frostAll(copy);
+  if (top) frosted.cases.unshift(Object.assign(top, { sample: true }));
   frosted.preview = true;
   return frosted;
 }
 
 module.exports = {
+  privacyCheck,
   outboundLink,
   outboundKind,
   checkOutbound,
@@ -4355,6 +4497,7 @@ module.exports = {
   cruxHistory,
   summarizeCruxHistory,
   webRisk,
+  placesSearch: localProfile.placesSearch,
   domainFacts,
   readRdap,
   mtaStsPolicy,
@@ -4386,6 +4529,7 @@ module.exports = {
   verifyPayPalWebhook,
   paypalCapture, paypalCredentials, paypalAccessToken,
   previewReport,
+  frostText,
   priceForCredentials,
   priceForPass,
   priceForPassExtras,
@@ -4446,6 +4590,8 @@ module.exports = {
   journeys,
   toolsForPage,
   intakeRecord,
+  localSummary,
+  storable,
   analyzeHtml: inspect,
   challengeOf,
   dnsFacts,
@@ -4459,5 +4605,8 @@ module.exports = {
   sitemapPaths,
   sitePaths,
   ipBlocked,
-  hostBlocked
+  hostBlocked,
+  iconData,
+  assertPublic,
+  pinnedLookup
 };

@@ -1,0 +1,38 @@
+{
+  "name": "QA-lab URL Review",
+  "short_name": "URL Review",
+  "description": "Bring one public address. QA-lab URL Review shows what tracks visitors before consent, what fails WCAG 2.2 AA, which security headers are missing, and how search and AI answer engines read the page.",
+  "id": "/qa-review.html",
+  "start_url": "/qa-review.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#071116",
+  "theme_color": "#071116",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/assets/qa-review-mark-full.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/qa-review-app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/qa-review-app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/qa-review-app-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

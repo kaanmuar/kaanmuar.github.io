@@ -1,0 +1,186 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-edeq-com-co": {
+   "lang": "it",
+   "strings": {
+    "title.0": "edeq.com.co: 62.",
+    "title.1": "*The gap: link names.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But links must have discernible text.",
+    "action": "Give every link text that says where it goes. An icon alone needs an aria-label.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 27 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "edeq.com.co · 88 pages analyzed · 27 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But links must have discernible text.\n\nLesson: Give every link text that says where it goes. An icon alone needs an aria-label.\n\nOne automated analysis of public pages on 27 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-edeq-com-co&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-edeq-com-co\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#Accessibility #OpenSource #JavaScript #QA #A11y #WebDev #TechTips #WebDevelopment #InclusiveDesign #Testing #DigitalAccessibility #QAlab"
+   }
+  },
+  "u-eep-com-co": {
+   "lang": "en",
+   "strings": {
+    "title.0": "eep.com.co: 33.",
+    "title.1": "*The gap: HSTS.*",
+    "body": "12 pages are kept out of search on purpose, and AI answer and search crawlers may read the start page. But HSTS is not sent.",
+    "action": "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 27 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "eep.com.co · 100 pages analyzed · 27 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "12 pages are kept out of search on purpose, and AI answer and search crawlers may read the start page. But HSTS is not sent.\n\nLesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.\n\nOne automated analysis of public pages on 27 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-eep-com-co&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-eep-com-co\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#WebSecurity #SoftwareTesting #CyberSecurity #QA #HSTS #HTTPS #TechTips #WebDevelopment #OWASP #QAEngineer #DevSecOps #QAlab"
+   }
+  },
+  "u-efigas-com-co": {
+   "lang": "es",
+   "strings": {
+    "title.0": "efigas.com.co: 54.",
+    "title.1": "*The gap: text contrast.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.",
+    "action": "Keep body text at a 4.5:1 contrast ratio or more against its background.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 27 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "efigas.com.co · 41 pages analyzed · 27 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.\n\nLesson: Keep body text at a 4.5:1 contrast ratio or more against its background.\n\nOne automated analysis of public pages on 27 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-efigas-com-co&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-efigas-com-co\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#Accessibility #DevOps #AI #QA #Contrast #A11y #Coding #Programming #UXDesign #SDET #SoftwareTesting #QAlab"
+   }
+  },
+  "u-epa-gov-co": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "epa.gov.co: 74.",
+    "title.1": "*The gap: AI crawler access.*",
+    "body": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 1 AI answer or search crawler is blocked.",
+    "action": "Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 27 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "epa.gov.co · 100 pages analyzed · 27 Oct 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 1 AI answer or search crawler is blocked.\n\nLesson: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.\n\nOne automated analysis of public pages on 27 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-epa-gov-co&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-epa-gov-co\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#GEO #SEO #DevOps #QA #AISearch #RobotsTxt #Coding #Programming #AIOverviews #DigitalMarketing #SDET #QAlab"
+   }
+  },
+  "u-augsburger-allgemeine-de": {
+   "lang": "de",
+   "strings": {
+    "title.0": "Scored 55 of 100.",
+    "title.1": "*The gap: form labels.*",
+    "body": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 38 form controls have no label.",
+    "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 28 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "augsburger-allgemeine.de · 20 pages analyzed · 28 Oct 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 38 form controls have no label.\n\nLesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.\n\nOne automated analysis of public pages on 28 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-augsburger-allgemeine-de&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-augsburger-allgemeine-de\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Accessibility #SoftwareTesting #DevOps #QA #Forms #A11y #TechTips #WebDevelopment #WCAG #TestAutomation #InclusiveDesign #QAlab"
+   }
+  },
+  "u-mercadolibre-com-ec": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "mercadolibre.com.ec: 44.",
+    "title.1": "*The gap: page titles.*",
+    "body": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 2 pages have no title.",
+    "action": "Give every page a unique title of about 60 characters: the page first, the site second.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 28 Oct 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "mercadolibre.com.ec · 20 pages analyzed · 28 Oct 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 2 pages have no title.\n\nLesson: Give every page a unique title of about 60 characters: the page first, the site second.\n\nOne automated analysis of public pages on 28 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-mercadolibre-com-ec&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-mercadolibre-com-ec\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#SEO #DevOps #QA #Titles #SERP #TechTips #WebDevelopment #GoogleSearch #Testing #SearchConsole #QAEngineer #QAlab"
+   }
+  },
+  "vs-voicertool-com": {
+   "lang": "it",
+   "strings": {
+    "live": "u-voicertool-com",
+    "title.0": "4 natural competitors.",
+    "title.1": "*toolstory.ai leads: 85.*",
+    "body": "ttsmp3.com leads in SEO; toolstory.ai leads in GEO, Analytics, Security, Accessibility, Performance. voicertool.com leads in none of the six areas.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 1 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "voicertool.com",
+    "visual.rows.1.0": "toolstory.ai",
+    "visual.rows.2.0": "speechgen.io",
+    "visual.rows.3.0": "ttsmp3.com",
+    "visual.note": "Natural competitors found on the open web · 1 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "ttsmp3.com leads in SEO; toolstory.ai leads in GEO, Analytics, Security, Accessibility, Performance. voicertool.com leads in none of the six areas.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 1 Nov 2026 of voicertool.com, toolstory.ai, speechgen.io, ttsmp3.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-voicertool-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-voicertool-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #DevOps #SoftwareTesting #QA #WebPerf #Coding #Programming #DigitalMarketing #CoreWebVitals #QualityAssurance #GoogleSearch #QAlab"
+   }
+  },
+  "vs-unn-edu-ng": {
+   "lang": "en",
+   "strings": {
+    "live": "u-unn-edu-ng",
+    "title.0": "unn.edu.ng vs uniport.edu.ng.",
+    "title.1": "*unn.edu.ng leads: 55.*",
+    "body": "uniport.edu.ng leads in SEO, Analytics, Performance; unn.edu.ng leads in GEO, Security, Accessibility.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 1 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "unn.edu.ng",
+    "visual.rows.1.0": "uniport.edu.ng",
+    "visual.note": "Natural competitors found on the open web · 1 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "uniport.edu.ng leads in SEO, Analytics, Performance; unn.edu.ng leads in GEO, Security, Accessibility.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 1 Nov 2026 of unn.edu.ng, uniport.edu.ng, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-unn-edu-ng&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-unn-edu-ng\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #DevOps #SoftwareTesting #QA #WebPerf #Coding #Programming #TechnicalSEO #Testing #SEOTips #Lighthouse #QAlab"
+   }
+  }
+ }
+}

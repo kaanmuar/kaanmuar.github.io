@@ -29,6 +29,10 @@ concurrency:
   group: facebook-page
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   queue:
     runs-on: ubuntu-latest
@@ -36,13 +40,20 @@ jobs:
     env:
       FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
       FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+      FACEBOOK_PAGE_ID_ES: ${{ secrets.FACEBOOK_PAGE_ID_ES }}
+      FACEBOOK_PAGE_TOKEN_ES: ${{ secrets.FACEBOOK_PAGE_TOKEN_ES }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
+      - name: Wait for a hub rebuild or Pages deploy on main
+        if: ${{ !inputs.check_only }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/hub-wait.sh
       - name: Schedule the slots now within reach
         id: queue
         if: ${{ !inputs.check_only && !inputs.reslot }}

@@ -1,0 +1,1076 @@
+{
+ "ok": true,
+ "at": "2026-11-01T08:40:00Z",
+ "threshold": 90,
+ "stale": false,
+ "lastStatus": "ok",
+ "lastError": "",
+ "counts": {
+  "pages": 45,
+  "scored": 45,
+  "below": 23,
+  "under50": 1
+ },
+ "avg": {
+  "mobile": 84,
+  "desktop": 94
+ },
+ "pages": [
+  {
+   "url": "https://carlosandmunoz.com/qa-review.html",
+   "file": "qa-review.html",
+   "sitemap": "sitemap.xml",
+   "mobile": {
+    "score": 45,
+    "lcp": 3850,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 53,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "render-blocking-insight",
+    "image-delivery-insight",
+    "lcp-discovery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/qa-lab.html",
+   "file": "qa-lab.html",
+   "sitemap": "sitemap.xml",
+   "mobile": {
+    "score": 78,
+    "lcp": 2860,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "error": "PageSpeed timed out."
+   },
+   "fails": [
+    "render-blocking-insight",
+    "cache-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/",
+   "file": "index.html",
+   "sitemap": "sitemap.xml",
+   "mobile": {
+    "score": 85,
+    "lcp": 2650,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 91,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "render-blocking-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-01-tip-0.html",
+   "file": "social/posts/2026-10-01-tip-0.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 80,
+    "lcp": 2800,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 92,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-02-tip-1.html",
+   "file": "social/posts/2026-10-02-tip-1.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 81,
+    "lcp": 2770,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 93,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-03-tip-2.html",
+   "file": "social/posts/2026-10-03-tip-2.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 82,
+    "lcp": 2740,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 94,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-04-tip-3.html",
+   "file": "social/posts/2026-10-04-tip-3.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 83,
+    "lcp": 2710,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 95,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-05-tip-4.html",
+   "file": "social/posts/2026-10-05-tip-4.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 84,
+    "lcp": 2680,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 96,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-06-tip-5.html",
+   "file": "social/posts/2026-10-06-tip-5.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 85,
+    "lcp": 2650,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 97,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-07-tip-6.html",
+   "file": "social/posts/2026-10-07-tip-6.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 86,
+    "lcp": 2620,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 98,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-08-tip-7.html",
+   "file": "social/posts/2026-10-08-tip-7.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 87,
+    "lcp": 2590,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 99,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-09-tip-8.html",
+   "file": "social/posts/2026-10-09-tip-8.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 88,
+    "lcp": 2560,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 92,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-10-tip-9.html",
+   "file": "social/posts/2026-10-10-tip-9.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 89,
+    "lcp": 2530,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 93,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-11-tip-10.html",
+   "file": "social/posts/2026-10-11-tip-10.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 90,
+    "lcp": 2500,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 94,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-12-tip-11.html",
+   "file": "social/posts/2026-10-12-tip-11.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 91,
+    "lcp": 2470,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 95,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-13-tip-12.html",
+   "file": "social/posts/2026-10-13-tip-12.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 92,
+    "lcp": 2440,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 96,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-14-tip-13.html",
+   "file": "social/posts/2026-10-14-tip-13.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 93,
+    "lcp": 2410,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 97,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-15-tip-14.html",
+   "file": "social/posts/2026-10-15-tip-14.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 94,
+    "lcp": 2380,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 98,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-16-tip-15.html",
+   "file": "social/posts/2026-10-16-tip-15.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 95,
+    "lcp": 2350,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 99,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-17-tip-16.html",
+   "file": "social/posts/2026-10-17-tip-16.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 96,
+    "lcp": 2320,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 92,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-18-tip-17.html",
+   "file": "social/posts/2026-10-18-tip-17.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 97,
+    "lcp": 2290,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 93,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-19-tip-18.html",
+   "file": "social/posts/2026-10-19-tip-18.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 98,
+    "lcp": 2260,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 94,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-20-tip-19.html",
+   "file": "social/posts/2026-10-20-tip-19.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 99,
+    "lcp": 2230,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 95,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-21-tip-20.html",
+   "file": "social/posts/2026-10-21-tip-20.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 80,
+    "lcp": 2800,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 96,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-22-tip-21.html",
+   "file": "social/posts/2026-10-22-tip-21.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 81,
+    "lcp": 2770,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 97,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-23-tip-22.html",
+   "file": "social/posts/2026-10-23-tip-22.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 82,
+    "lcp": 2740,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 98,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-24-tip-23.html",
+   "file": "social/posts/2026-10-24-tip-23.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 83,
+    "lcp": 2710,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 99,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-25-tip-24.html",
+   "file": "social/posts/2026-10-25-tip-24.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 84,
+    "lcp": 2680,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 92,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-26-tip-25.html",
+   "file": "social/posts/2026-10-26-tip-25.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 85,
+    "lcp": 2650,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 93,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-27-tip-26.html",
+   "file": "social/posts/2026-10-27-tip-26.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 86,
+    "lcp": 2620,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 94,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-28-tip-27.html",
+   "file": "social/posts/2026-10-28-tip-27.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 87,
+    "lcp": 2590,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 95,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-01-tip-28.html",
+   "file": "social/posts/2026-10-01-tip-28.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 88,
+    "lcp": 2560,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 96,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-02-tip-29.html",
+   "file": "social/posts/2026-10-02-tip-29.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 89,
+    "lcp": 2530,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 97,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": [
+    "image-delivery-insight"
+   ]
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-03-tip-30.html",
+   "file": "social/posts/2026-10-03-tip-30.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 90,
+    "lcp": 2500,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 98,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-04-tip-31.html",
+   "file": "social/posts/2026-10-04-tip-31.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 91,
+    "lcp": 2470,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 99,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-05-tip-32.html",
+   "file": "social/posts/2026-10-05-tip-32.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 92,
+    "lcp": 2440,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 92,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-06-tip-33.html",
+   "file": "social/posts/2026-10-06-tip-33.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 93,
+    "lcp": 2410,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 93,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-07-tip-34.html",
+   "file": "social/posts/2026-10-07-tip-34.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 94,
+    "lcp": 2380,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 94,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-08-tip-35.html",
+   "file": "social/posts/2026-10-08-tip-35.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 95,
+    "lcp": 2350,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 95,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-09-tip-36.html",
+   "file": "social/posts/2026-10-09-tip-36.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 96,
+    "lcp": 2320,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 96,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-10-tip-37.html",
+   "file": "social/posts/2026-10-10-tip-37.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 97,
+    "lcp": 2290,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 97,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-11-tip-38.html",
+   "file": "social/posts/2026-10-11-tip-38.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 98,
+    "lcp": 2260,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 98,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/social/posts/2026-10-12-tip-39.html",
+   "file": "social/posts/2026-10-12-tip-39.html",
+   "sitemap": "sitemap-social.xml",
+   "mobile": {
+    "score": 99,
+    "lcp": 2230,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 99,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/qa-studio.html",
+   "file": "qa-studio.html",
+   "sitemap": "sitemap.xml",
+   "mobile": {
+    "score": 94,
+    "lcp": 2380,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 99,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  },
+  {
+   "url": "https://carlosandmunoz.com/privacy.html",
+   "file": "privacy.html",
+   "sitemap": "sitemap.xml",
+   "mobile": {
+    "score": 97,
+    "lcp": 2290,
+    "tbt": 150,
+    "cls": 0.02,
+    "fcp": 1400
+   },
+   "desktop": {
+    "score": 100,
+    "lcp": 1600,
+    "tbt": 20,
+    "cls": 0.01,
+    "fcp": 600
+   },
+   "fails": []
+  }
+ ],
+ "cache": [
+  {
+   "url": "https://carlosandmunoz.com/css/style.css",
+   "ttlMs": 600000,
+   "wastedBytes": 48000,
+   "pages": 45
+  },
+  {
+   "url": "https://carlosandmunoz.com/js/main.js",
+   "ttlMs": 600000,
+   "wastedBytes": 21000,
+   "pages": 45
+  }
+ ],
+ "runs": [
+  {
+   "at": "2026-11-01T08:40:00Z",
+   "status": "ok",
+   "error": "",
+   "run": {
+    "id": 9,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions"
+   },
+   "pages": 45,
+   "scored": 44,
+   "below": 22,
+   "avg": {
+    "mobile": 84,
+    "desktop": 94
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-01",
+    "fixes": 3,
+    "pages": 1,
+    "verdict": {
+     "up": true,
+     "reason": "Rose on index.html (mobile 85 → 91); nothing fell more than 2."
+    },
+    "note": "",
+    "error": ""
+   },
+   "ai": {
+    "branch": "pagespeed/ai-2026-11-01",
+    "fixes": 2,
+    "pages": 1,
+    "verdict": {
+     "up": false,
+     "reason": "Score fell on qa-lab.html (desktop 88 → 85)."
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
+   "at": "2026-10-31T08:35:00Z",
+   "status": "failed",
+   "error": "The PageSpeed check ended with failure.",
+   "run": {
+    "id": 8,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions"
+   },
+   "pages": 45,
+   "scored": 0,
+   "below": 0,
+   "avg": {
+    "mobile": null,
+    "desktop": null
+   },
+   "safe": null,
+   "ai": null
+  }
+ ],
+ "prs": [
+  {
+   "number": 2041,
+   "url": "https://github.com/kaanmuar/kaanmuar.github.io/pull/2041",
+   "title": "PageSpeed: safe fixes on 1 page (2026-11-01)",
+   "kind": "safe",
+   "branch": "pagespeed/safe-2026-11-01",
+   "open": true,
+   "stage": "countdown",
+   "dueAt": "2026-11-01T17:50:00Z",
+   "reason": "Rose on index.html (mobile 85 → 91); nothing fell more than 2.",
+   "at": "2026-11-01T08:40:00Z"
+  },
+  {
+   "number": 2042,
+   "url": "https://github.com/kaanmuar/kaanmuar.github.io/pull/2042",
+   "title": "PageSpeed: Gemini's fixes on 2 pages (2026-11-01)",
+   "kind": "ai",
+   "branch": "pagespeed/ai-2026-11-01",
+   "open": true,
+   "stage": "proposal",
+   "dueAt": null,
+   "reason": "Gemini's edits always wait for you. Score fell on qa-lab.html (desktop 88 → 85).",
+   "at": "2026-11-01T08:40:00Z"
+  },
+  {
+   "number": 2030,
+   "url": "https://github.com/kaanmuar/kaanmuar.github.io/pull/2030",
+   "title": "PageSpeed: safe fixes on 3 pages (2026-10-31)",
+   "kind": "safe",
+   "branch": "pagespeed/safe-2026-10-31",
+   "open": false,
+   "stage": "merged",
+   "dueAt": null,
+   "reason": "",
+   "at": "2026-10-31T08:41:00Z"
+  }
+ ],
+ "needs": []
+}

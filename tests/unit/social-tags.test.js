@@ -8,7 +8,7 @@ const { execFileSync } = require("child_process");
 const FILE = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "tags-")), "trending.json");
 const today = new Date().toISOString().slice(0, 10);
 fs.writeFileSync(FILE, JSON.stringify({ date: today, tags: [
-  { tag: "CyberSecurity", topic: "Security", score: 3 }, { tag: "AIAgents", topic: "AI", score: 2 }, { tag: "Docker", topic: "Stack", score: 9 }
+  { tag: "ZeroTrustWeek", topic: "Security", score: 3 }, { tag: "AIAgents", topic: "AI", score: 2 }, { tag: "Docker", topic: "Stack", score: 9 }
 ] }));
 process.env.TRENDING_TAGS = FILE;
 
@@ -37,7 +37,7 @@ test("the post's own main tag leads, and Instagram keeps to five", () => {
 
 test("a trending tag on the post's topic is used; one outside our topics never is", () => {
   const all = Object.keys(LIMITS).flatMap((n) => tagsFor(hsts, n, "en"));
-  assert.ok(all.includes("#CyberSecurity"));
+  assert.ok(all.includes("#ZeroTrustWeek"));
   assert.ok(!all.includes("#Docker"));
 });
 
@@ -62,10 +62,10 @@ test("a review clip's TikTok caption calls to action in the clip's language", ()
 
 test("trending tags older than three days are ignored", () => {
   const stale = path.join(path.dirname(FILE), "stale.json");
-  fs.writeFileSync(stale, JSON.stringify({ date: "2020-01-01", tags: [{ tag: "CyberSecurity", topic: "Security", score: 3 }] }));
+  fs.writeFileSync(stale, JSON.stringify({ date: "2020-01-01", tags: [{ tag: "StaleTrendOnly", topic: "Security", score: 3 }] }));
   const out = execFileSync(process.execPath, ["-e", "console.log(JSON.stringify(require('./scripts/social-tags.js').tagsFor(" + JSON.stringify(hsts) + ", 'tiktok', 'en')))"],
     { cwd: path.resolve(__dirname, "../.."), env: Object.assign({}, process.env, { TRENDING_TAGS: stale }), encoding: "utf8" });
-  assert.ok(!JSON.parse(out).includes("#CyberSecurity"));
+  assert.ok(!JSON.parse(out).includes("#StaleTrendOnly"));
 });
 
 test("trends only count when they are about our field and not about sensitive news", () => {

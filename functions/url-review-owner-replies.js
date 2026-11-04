@@ -13,7 +13,12 @@
    redirect   "write to the new person in charge": waits; the decision page offers every address in the reply,
               the one it points to first, and sends the notice to the one picked
    interested thanks, a price, a call: waits for a personal answer
-   other      anything else: waits */
+   other      anything else: waits
+
+   Owners who write to qa@ instead reach the same flow through ImprovMX's mailInbound webhook (#1899), which
+   keeps only mail that matches a notice. */
+
+const crypto = require("crypto");
 
 const OPERATORS = ["kaanmuar@gmail.com", "qa@carlosandmunoz.com"];
 const OWN_DOMAINS = ["carlosandmunoz.com"];
@@ -218,4 +223,16 @@ function summary(reply, decision) {
   return (reply.domain || reply.from) + " " + KIND_LABELS[reply.kind] + target;
 }
 
-module.exports = { OPERATORS, KIND_LABELS, ownWords, unforward, read, plan, summary, addressOf, resendChoices };
+/** The Message-ID line of a raw header block, as SendGrid Inbound Parse posts it. */
+function messageIdOf(headers) {
+  return ((String(headers || "").match(/^message-id:[ \t]*(.+)$/im) || [])[1] || "").trim();
+}
+
+/* One row per mail (#1899): a reply that reaches both reply+<token>@ and qa@, or is posted again on a retry,
+   gets the same id in either path. "" when the mail has no Message-ID. */
+function replyId(messageId) {
+  const key = String(messageId || "").trim().replace(/^<|>$/g, "");
+  return key ? crypto.createHash("sha256").update(key).digest("hex").slice(0, 32) : "";
+}
+
+module.exports = { OPERATORS, KIND_LABELS, ownWords, unforward, read, plan, summary, addressOf, resendChoices, messageIdOf, replyId };

@@ -1,0 +1,102 @@
+# Posts each rendered social batch to Bluesky, Mastodon, Threads and Instagram as its slots come
+# (scripts/open-social-queue.js, #1621, #526). None of them can schedule a post, so this runs every 30 minutes and
+# posts what is due. A network whose secrets are missing is skipped: BLUESKY_HANDLE and BLUESKY_APP_PASSWORD,
+# MASTODON_URL and MASTODON_TOKEN, THREADS_TOKEN, INSTAGRAM_USER_ID and FACEBOOK_PAGE_TOKEN. es/pt posts go to the
+# @qaurlreview face once its secrets, the same names ending in _ES, are set (scripts/face-route.js, #2310).
+# The repo variable MASTODON_PAUSED=true blanks both Mastodon tokens, so a suspended account is skipped instead of
+# failing every run (#2322); delete the variable once the account is back.
+# The run updates the ledger, assets/social/open-social.json, and pushes it to main with the LIVE_REPORTS_DEPLOY_KEY
+# write deploy key, like the Facebook Page queue.
+name: Bluesky, Mastodon, Threads and Instagram
+
+on:
+  schedule:
+    - cron: '13,43 * * * *'
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Network'
+        type: choice
+        options: ['all', 'bluesky', 'mastodon', 'threads', 'instagram', 'instagram-story']
+        default: 'all'
+      dry_run:
+        description: 'List what is due, post nothing'
+        type: boolean
+        default: false
+
+concurrency:
+  group: open-social
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+      BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+      MASTODON_URL: ${{ secrets.MASTODON_URL }}
+      MASTODON_TOKEN: ${{ vars.MASTODON_PAUSED != 'true' && secrets.MASTODON_TOKEN || '' }}
+      THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+      INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
+      FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+      BLUESKY_HANDLE_ES: ${{ secrets.BLUESKY_HANDLE_ES }}
+      BLUESKY_APP_PASSWORD_ES: ${{ secrets.BLUESKY_APP_PASSWORD_ES }}
+      MASTODON_URL_ES: ${{ secrets.MASTODON_URL_ES }}
+      MASTODON_TOKEN_ES: ${{ vars.MASTODON_PAUSED != 'true' && secrets.MASTODON_TOKEN_ES || '' }}
+      THREADS_TOKEN_ES: ${{ secrets.THREADS_TOKEN_ES }}
+      INSTAGRAM_USER_ID_ES: ${{ secrets.INSTAGRAM_USER_ID_ES }}
+      FACEBOOK_PAGE_TOKEN_ES: ${{ secrets.FACEBOOK_PAGE_TOKEN_ES }}
+      NETWORK: ${{ inputs.network != 'all' && inputs.network || '' }}
+    steps:
+      - name: Check a network is connected
+        id: ready
+        run: |
+          if [ -n "$BLUESKY_APP_PASSWORD$MASTODON_TOKEN$THREADS_TOKEN$INSTAGRAM_USER_ID$BLUESKY_APP_PASSWORD_ES$MASTODON_TOKEN_ES$THREADS_TOKEN_ES$INSTAGRAM_USER_ID_ES" ] || [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No network secrets yet, so nothing is posted (see scripts/open-social-queue.js)."
+          fi
+      - name: Warn before a Threads token runs out
+        if: ${{ vars.THREADS_TOKEN_EXPIRES != '' || vars.THREADS_TOKEN_EXPIRES_ES != '' }}
+        env:
+          EXPIRES_EN: ${{ vars.THREADS_TOKEN_EXPIRES }}
+          EXPIRES_ES: ${{ vars.THREADS_TOKEN_EXPIRES_ES }}
+        run: |
+          for face in en es; do
+            var="EXPIRES_${face^^}"; expires="${!var}"
+            [ -n "$expires" ] || continue
+            left=$(( ($(date -d "$expires" +%s) - $(date +%s)) / 86400 ))
+            if [ "$left" -le 10 ]; then
+              echo "::warning::The Threads token stored with FACE=$face runs out in $left days ($expires). Renew it with: FACE=$face node scripts/meta-token.js renew-threads"
+            fi
+          done
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.ready.outputs.ok == 'true'
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.ready.outputs.ok == 'true'
+        with:
+          node-version: '22'
+      - name: Wait for a hub rebuild or Pages deploy on main
+        if: steps.ready.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/hub-wait.sh
+      - name: Post what is due
+        id: post
+        if: steps.ready.outputs.ok == 'true'
+        run: node scripts/open-social-queue.js ${NETWORK:+--network "$NETWORK"} ${{ inputs.dry_run && '--dry-run' || '' }}
+      - name: Commit the ledger
+        if: ${{ !cancelled() && !inputs.dry_run && steps.post.outcome != 'skipped' }}
+        run: |
+          if git status --porcelain assets/social/open-social.json | grep -q .; then
+            scripts/commit-social-ledgers.sh "Bluesky, Mastodon, Threads and Instagram"
+          else
+            echo "Nothing went out."
+          fi

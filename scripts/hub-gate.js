@@ -34,7 +34,7 @@ function withHubLink(text, { batch, slug, network }) {
     if (size(next + "…" + tail) > max) break;
     kept = next;
   }
-  return kept + "…" + tail;
+  return kept.replace(/…$/u, "") + "…" + tail;
 }
 
 // calendar.csv and the hub both count days on Bogotá wall-clock time (UTC-5, no daylight saving).

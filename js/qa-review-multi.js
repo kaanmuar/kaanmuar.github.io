@@ -1,5 +1,5 @@
 /* The many-URL comparison report: qa-review.html?comparison=<id> opens a comparison saved by the account,
-   with a summary table on top and then every section of the review report, one column per URL. Each column
+   with the benchmark (js/qa-review-benchmark.js) and a summary table on top and then every section of the review report, one column per URL. Each column
    is drawn by the report's own painters (QAReviewSections in js/qa-review.js). A report the account has not
    paid comes under the frost, and Print and Download PDF open once every report in it is paid. */
 (function () {
@@ -13,10 +13,12 @@
       locked_one: "{n} report in this comparison is not paid. Its wording stays blurred, and Print and Download PDF open once it is paid.",
       locked_other: "{n} reports in this comparison are not paid. Their wording stays blurred, and Print and Download PDF open once they are paid.",
       summary: "Side by side", indicator: "Indicator", wins: "Indicators won", leadNote: "Shaded cells lead their line. Scores come from automated reviews, a starting point and not a verdict.",
-      missing: "This review was deleted after the comparison was saved.", opening: "Opening the comparison…",
+      yours: "Your site", peersNote: "An automated public review of {n} sites: {sector}{place}. Your column shows everything we found on your site; the other sites' security details are left out, as yours are left out of their copies.", peersLink: "This comparison link is not valid. Ask us for a new one by replying to our email.", missing: "This review was deleted after the comparison was saved.", opening: "Opening the comparison…",
+      failedRuns: "Not in this comparison, because their review did not finish:",
       signIn: "Sign in with the account that saved this comparison to open it.", failed: "The comparison did not open. Try again in a moment.",
       saving: "Saving the comparison…", saveFailed: "The comparison was not saved. Try again in a moment.",
-      nothing: "Nothing here for this site.",
+      nothing: "Nothing here for this site.", more: "…and {n} more, in the report on the page.", showAll: "Show all {n}", showFewer: "Show fewer",
+      seoBlocked: "Pages not indexable, by reason", seoCanonical: "Canonical to another page",
       sections: {
         cover: "Cover and key figures", exec: "One-page summary", health: "Health score", fix: "Fix first", browser: "In a real browser",
         previews: "How it looks in Google and when shared", geo: "What AI sees", analytics: "Analytics and consent", seo: "Search visibility",
@@ -33,10 +35,12 @@
       locked_one: "{n} informe de esta comparación no está pagado. Su texto sigue difuminado, e Imprimir y Descargar PDF se abren cuando se pague.",
       locked_other: "{n} informes de esta comparación no están pagados. Su texto sigue difuminado, e Imprimir y Descargar PDF se abren cuando se paguen.",
       summary: "Lado a lado", indicator: "Indicador", wins: "Indicadores ganados", leadNote: "Las celdas sombreadas encabezan su línea. Las puntuaciones salen de revisiones automáticas: un punto de partida, no un veredicto.",
-      missing: "Esta revisión se eliminó después de guardar la comparación.", opening: "Abriendo la comparación…",
+      yours: "Tu sitio", peersNote: "Una revisión pública automatizada de {n} sitios: {sector}{place}. Tu columna muestra todo lo que encontramos en tu sitio; los detalles de seguridad de los demás sitios no aparecen, igual que los tuyos no aparecen en sus copias.", peersLink: "Este enlace de comparación no es válido. Responde a nuestro correo y te enviamos uno nuevo.", missing: "Esta revisión se eliminó después de guardar la comparación.", opening: "Abriendo la comparación…",
+      failedRuns: "No están en esta comparación porque su revisión no terminó:",
       signIn: "Inicia sesión con la cuenta que guardó esta comparación para abrirla.", failed: "La comparación no se abrió. Inténtalo de nuevo en un momento.",
       saving: "Guardando la comparación…", saveFailed: "La comparación no se guardó. Inténtalo de nuevo en un momento.",
-      nothing: "Nada aquí para este sitio.",
+      nothing: "Nada aquí para este sitio.", more: "…y {n} más, en el informe de la página.", showAll: "Mostrar los {n}", showFewer: "Mostrar menos",
+      seoBlocked: "Páginas no indexables, por motivo", seoCanonical: "Canonical hacia otra página",
       sections: {
         cover: "Portada y cifras clave", exec: "Resumen en una página", health: "Puntuación de salud", fix: "Corregir primero", browser: "En un navegador real",
         previews: "Cómo se ve en Google y al compartirse", geo: "Lo que ve la IA", analytics: "Analítica y consentimiento", seo: "Visibilidad en buscadores",
@@ -53,10 +57,12 @@
       locked_one: "{n} relatório desta comparação não está pago. O texto continua desfocado, e Imprimir e Baixar PDF abrem quando for pago.",
       locked_other: "{n} relatórios desta comparação não estão pagos. O texto continua desfocado, e Imprimir e Baixar PDF abrem quando forem pagos.",
       summary: "Lado a lado", indicator: "Indicador", wins: "Indicadores ganhos", leadNote: "As células sombreadas lideram a sua linha. As pontuações vêm de revisões automáticas: um ponto de partida, não um veredicto.",
-      missing: "Esta revisão foi apagada depois que a comparação foi salva.", opening: "Abrindo a comparação…",
+      yours: "Seu site", peersNote: "Uma revisão pública automatizada de {n} sites: {sector}{place}. Sua coluna mostra tudo o que encontramos no seu site; os detalhes de segurança dos outros sites ficam de fora, assim como os seus ficam de fora das cópias deles.", peersLink: "Este link de comparação não é válido. Responda ao nosso email e enviamos um novo.", missing: "Esta revisão foi apagada depois que a comparação foi salva.", opening: "Abrindo a comparação…",
+      failedRuns: "Não estão nesta comparação porque a revisão não terminou:",
       signIn: "Entre com a conta que salvou esta comparação para abri-la.", failed: "A comparação não abriu. Tente de novo em instantes.",
       saving: "Salvando a comparação…", saveFailed: "A comparação não foi salva. Tente de novo em instantes.",
-      nothing: "Nada aqui para este site.",
+      nothing: "Nada aqui para este site.", more: "…e mais {n}, no relatório da página.", showAll: "Mostrar todos os {n}", showFewer: "Mostrar menos",
+      seoBlocked: "Páginas não indexáveis, por motivo", seoCanonical: "Canonical para outra página",
       sections: {
         cover: "Capa e números principais", exec: "Resumo em uma página", health: "Pontuação de saúde", fix: "Corrigir primeiro", browser: "Em um navegador real",
         previews: "Como aparece no Google e ao compartilhar", geo: "O que a IA vê", analytics: "Analytics e consentimento", seo: "Visibilidade nas pesquisas",
@@ -73,10 +79,12 @@
       locked_one: "{n} Bericht in diesem Vergleich ist nicht bezahlt. Sein Text bleibt unscharf, und Drucken und PDF herunterladen öffnen sich, sobald er bezahlt ist.",
       locked_other: "{n} Berichte in diesem Vergleich sind nicht bezahlt. Ihr Text bleibt unscharf, und Drucken und PDF herunterladen öffnen sich, sobald sie bezahlt sind.",
       summary: "Nebeneinander", indicator: "Kennzahl", wins: "Gewonnene Kennzahlen", leadNote: "Schattierte Zellen führen ihre Zeile an. Die Werte stammen aus automatischen Prüfungen: ein Ausgangspunkt, kein Urteil.",
-      missing: "Diese Prüfung wurde gelöscht, nachdem der Vergleich gespeichert wurde.", opening: "Der Vergleich wird geöffnet…",
+      yours: "Ihre Website", peersNote: "Eine automatisierte öffentliche Prüfung von {n} Websites: {sector}{place}. Ihre Spalte zeigt alles, was wir auf Ihrer Website gefunden haben; die Sicherheitsdetails der anderen Websites sind ausgelassen, so wie Ihre in deren Kopien fehlen.", peersLink: "Dieser Vergleichslink ist nicht gültig. Antworten Sie auf unsere E-Mail, dann senden wir einen neuen.", missing: "Diese Prüfung wurde gelöscht, nachdem der Vergleich gespeichert wurde.", opening: "Der Vergleich wird geöffnet…",
+      failedRuns: "Nicht in diesem Vergleich, weil ihre Prüfung nicht fertig wurde:",
       signIn: "Melden Sie sich mit dem Konto an, das diesen Vergleich gespeichert hat, um ihn zu öffnen.", failed: "Der Vergleich wurde nicht geöffnet. Versuchen Sie es gleich noch einmal.",
       saving: "Der Vergleich wird gespeichert…", saveFailed: "Der Vergleich wurde nicht gespeichert. Versuchen Sie es gleich noch einmal.",
-      nothing: "Für diese Website nichts.",
+      nothing: "Für diese Website nichts.", more: "…und {n} weitere, im Bericht auf der Seite.", showAll: "Alle {n} zeigen", showFewer: "Weniger zeigen",
+      seoBlocked: "Nicht indexierbare Seiten, nach Grund", seoCanonical: "Canonical auf eine andere Seite",
       sections: {
         cover: "Deckblatt und Kennzahlen", exec: "Zusammenfassung auf einer Seite", health: "Gesundheitswert", fix: "Zuerst beheben", browser: "In einem echten Browser",
         previews: "So sieht es bei Google und beim Teilen aus", geo: "Was KI sieht", analytics: "Analytics und Einwilligung", seo: "Sichtbarkeit in der Suche",
@@ -93,10 +101,12 @@
       locked_one: "{n} rapport de cette comparaison n'est pas payé. Son texte reste flouté, et Imprimer et Télécharger le PDF s'ouvrent une fois qu'il est payé.",
       locked_other: "{n} rapports de cette comparaison ne sont pas payés. Leur texte reste flouté, et Imprimer et Télécharger le PDF s'ouvrent une fois qu'ils sont payés.",
       summary: "Côte à côte", indicator: "Indicateur", wins: "Indicateurs gagnés", leadNote: "Les cellules ombrées mènent leur ligne. Les scores viennent de revues automatiques : un point de départ, pas un verdict.",
-      missing: "Cette revue a été supprimée après l'enregistrement de la comparaison.", opening: "Ouverture de la comparaison…",
+      yours: "Votre site", peersNote: "Une revue publique automatisée de {n} sites : {sector}{place}. Votre colonne montre tout ce que nous avons trouvé sur votre site ; les détails de sécurité des autres sites sont omis, comme les vôtres le sont dans leurs copies.", peersLink: "Ce lien de comparaison n'est pas valide. Répondez à notre e-mail et nous vous en enverrons un nouveau.", missing: "Cette revue a été supprimée après l'enregistrement de la comparaison.", opening: "Ouverture de la comparaison…",
+      failedRuns: "Absents de cette comparaison, car leur analyse n’a pas abouti :",
       signIn: "Connectez-vous avec le compte qui a enregistré cette comparaison pour l'ouvrir.", failed: "La comparaison ne s'est pas ouverte. Réessayez dans un instant.",
       saving: "Enregistrement de la comparaison…", saveFailed: "La comparaison n'a pas été enregistrée. Réessayez dans un instant.",
-      nothing: "Rien ici pour ce site.",
+      nothing: "Rien ici pour ce site.", more: "…et {n} de plus, dans le rapport en ligne.", showAll: "Afficher les {n}", showFewer: "Afficher moins",
+      seoBlocked: "Pages non indexables, par motif", seoCanonical: "Canonical vers une autre page",
       sections: {
         cover: "Couverture et chiffres clés", exec: "Résumé en une page", health: "Score de santé", fix: "À corriger d'abord", browser: "Dans un vrai navigateur",
         previews: "L'aperçu dans Google et en partage", geo: "Ce que voit l'IA", analytics: "Analytics et consentement", seo: "Visibilité dans la recherche",
@@ -113,10 +123,12 @@
       locked_one: "{n} report di questo confronto non è pagato. Il testo resta sfocato, e Stampa e Scarica PDF si aprono quando è pagato.",
       locked_other: "{n} report di questo confronto non sono pagati. Il testo resta sfocato, e Stampa e Scarica PDF si aprono quando sono pagati.",
       summary: "Fianco a fianco", indicator: "Indicatore", wins: "Indicatori vinti", leadNote: "Le celle ombreggiate guidano la loro riga. I punteggi vengono da revisioni automatiche: un punto di partenza, non un verdetto.",
-      missing: "Questa revisione è stata eliminata dopo aver salvato il confronto.", opening: "Apertura del confronto…",
+      yours: "Il tuo sito", peersNote: "Una revisione pubblica automatizzata di {n} siti: {sector}{place}. La tua colonna mostra tutto ciò che abbiamo trovato sul tuo sito; i dettagli di sicurezza degli altri siti sono omessi, come i tuoi lo sono nelle loro copie.", peersLink: "Questo link di confronto non è valido. Rispondi alla nostra email e te ne mandiamo uno nuovo.", missing: "Questa revisione è stata eliminata dopo aver salvato il confronto.", opening: "Apertura del confronto…",
+      failedRuns: "Non sono in questo confronto perché la revisione non è terminata:",
       signIn: "Accedi con l'account che ha salvato questo confronto per aprirlo.", failed: "Il confronto non si è aperto. Riprova tra un momento.",
       saving: "Salvataggio del confronto…", saveFailed: "Il confronto non è stato salvato. Riprova tra un momento.",
-      nothing: "Niente qui per questo sito.",
+      nothing: "Niente qui per questo sito.", more: "…e altri {n}, nel report sulla pagina.", showAll: "Mostra tutti i {n}", showFewer: "Mostra meno",
+      seoBlocked: "Pagine non indicizzabili, per motivo", seoCanonical: "Canonical verso un'altra pagina",
       sections: {
         cover: "Copertina e cifre chiave", exec: "Riepilogo in una pagina", health: "Punteggio di salute", fix: "Da correggere prima", browser: "In un browser reale",
         previews: "Come appare su Google e quando è condiviso", geo: "Cosa vede l'IA", analytics: "Analytics e consenso", seo: "Visibilità nella ricerca",
@@ -141,13 +153,13 @@
     ["seo", '<div data-slot="seo"></div>'],
     ["graph", '<article class="card" data-slot="site-graph"></article>'],
     ["security", '<article class="card" data-slot="security"></article>'],
-    ["findings", '<div class="filters no-print" data-slot="finding-filters"></div><article class="card" data-slot="findings"></article>'],
+    ["findings", '<article class="card" data-slot="findings"></article>'],
     ["fixkit", '<article class="card" data-slot="fixkit"></article>'],
     ["glance", '<div class="visuals" data-slot="report-visuals"></div>'],
     ["layers", '<article class="card"><div data-slot="layers"></div></article>'],
     ["tech", '<article class="card"><div class="pills" data-slot="tech"></div></article>'],
     ["alarm", '<section class="alarm" data-slot="alarm"><p class="alarm-note" data-slot="alarm-note"></p><ol class="alarm-list" data-slot="alarm-list"></ol></section>'],
-    ["mentions", '<section class="mentions"><ol data-slot="mentions"></ol></section>'],
+    ["mentions", '<article class="card"><section class="mentions"><ol data-slot="mentions"></ol></section></article>'],
     ["observed", '<article class="card" data-slot="observed"></article>'],
     ["pages", '<article class="card"><p class="muted" data-slot="pages-found" hidden></p><table class="page-table"><thead><tr><th>Path</th><th>Status</th><th>ms</th><th>Title</th></tr></thead><tbody data-slot="pages"></tbody></table></article>'],
     ["log", '<article class="card"><ol class="log" data-slot="report-log"></ol></article>'],
@@ -199,11 +211,16 @@
     overlay.setAttribute("aria-labelledby", "multi-title");
     overlay.innerHTML = '<div class="dash-modal multi-modal">' +
       '<div class="dash-modal-head multi-head"><div><p class="report-kicker" translate="no">' + esc(t("kicker")) + '</p><h2 id="multi-title" translate="no"></h2><p class="muted" id="multi-when" translate="no"></p></div>' +
-      '<div class="multi-actions no-print" translate="no"><button class="btn" type="button" id="multi-print"></button><button class="btn btn-ghost" type="button" id="multi-pdf"></button><button class="btn btn-ghost" type="button" id="multi-close">' + esc(t("close")) + "</button></div></div>" +
+      '<div class="multi-actions no-print" translate="no"><button class="btn btn-primary" type="button" id="multi-print"></button><button class="btn btn-ghost" type="button" id="multi-pdf"></button><button class="btn btn-ghost" type="button" id="multi-close">' + esc(t("close")) + "</button></div></div>" +
       '<p id="multi-status" role="status" class="no-print" translate="no"></p><div id="multi-locked" class="multi-locked no-print" translate="no" hidden></div>' +
+      '<div id="multi-failed" class="multi-locked multi-failed no-print" role="note" translate="no" hidden></div>' +
       '<div id="multi-body"></div></div>';
     document.body.appendChild(overlay);
     overlay.querySelector("#multi-close").addEventListener("click", close);
+    overlay.querySelector("#multi-body").addEventListener("click", fold);
+    overlay.querySelector("#multi-body").addEventListener("click", pickFindings);
+    overlay.querySelector("#multi-body").addEventListener("click", showAll);
+    overlay.querySelector("#multi-body").addEventListener("findingfilter", pickArea);
     overlay.querySelector("#multi-print").addEventListener("click", () => (made && made.paid ? print() : pay()));
     overlay.querySelector("#multi-pdf").addEventListener("click", () => (made && made.paid ? download() : pay()));
     overlay.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); });
@@ -246,17 +263,23 @@
     return String(row.key === "cls" ? Math.round(raw * 1000) / 1000 : raw);
   }
 
-  function summaryHtml(data) {
+  // Every list of sites after the benchmark's ranking keeps its order, by health score.
+  function orderOf(data) {
+    return window.QAReviewBenchmark && QAReviewBenchmark.order ? QAReviewBenchmark.order(data) : data.columns.map((col, index) => index);
+  }
+
+  function summaryHtml(data, order) {
     const S = window.QAReviewSections;
     const cols = data.columns;
-    const head = "<tr><th scope=\"col\">" + esc(t("indicator")) + "</th>" + cols.map((col) => '<th scope="col" translate="no">' + esc(col.host) + "</th>").join("") + "</tr>";
+    const head = "<tr><th scope=\"col\">" + esc(t("indicator")) + "</th>" + order.map((index) => columnHead(cols[index], index)).join("") + "</tr>";
     const rows = data.summary.rows.map((row) => "<tr><th scope=\"row\">" + esc(label(row)) + (row.better === "low" && cc ? ' <small class="muted">' + esc(cc.t("lower")) + "</small>" : "") + "</th>" +
-      row.values.map((raw, index) => {
+      order.map((index) => {
+        const raw = row.values[index];
         const lead = row.leads.length === 1 && row.leads[0] === index;
         const shown = row.kind === "score" && raw != null ? '<b style="color:' + S.scoreColor(raw) + '">' + esc(raw) + "</b>" : esc(value(row, raw));
         return "<td" + (lead ? ' class="lead"' : "") + ">" + shown + "</td>";
       }).join("") + "</tr>").join("");
-    const wins = "<tr class=\"multi-wins\"><th scope=\"row\">" + esc(t("wins")) + "</th>" + data.summary.wins.map((n) => "<td>" + n + "</td>").join("") + "</tr>";
+    const wins = "<tr class=\"multi-wins\"><th scope=\"row\">" + esc(t("wins")) + "</th>" + order.map((index) => "<td>" + data.summary.wins[index] + "</td>").join("") + "</tr>";
     return '<section class="multi-summary"><h2 translate="no">' + esc(t("summary")) + '</h2><div class="multi-scroll"><table class="compare-table multi-table">' +
       "<thead>" + head + "</thead><tbody>" + rows + wins + "</tbody></table></div><p class=\"meta-line\" translate=\"no\">" + esc(t("leadNote")) + "</p></section>";
   }
@@ -277,57 +300,527 @@
     };
   }
 
+  const siteColor = (index) => (window.QAReviewBenchmark && QAReviewBenchmark.color ? QAReviewBenchmark.color(index) : "var(--own)");
+
+  // The findings of every column answer one filter bar, so the columns always show the same kind of check.
+  const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
+  const VERDICTS = ["open", "all", "fail", "risk", "pass", "person"];
+  let filter = { area: "All", verdict: "open" };
+
+  function filterLabel(kind, key) {
+    const rc = window.QAReviewReportCopy;
+    if (kind === "area") return key === "All" ? rc.t("allAreas") : cc ? cc.area(key) : key;
+    if (key === "open" || key === "all") return rc.t(key === "open" ? "fOpen" : "fAll");
+    return cc ? cc.verdict(key) : key;
+  }
+
+  function filtersHtml() {
+    if (!window.QAReviewReportCopy) return "";
+    const chip = (kind, key) => '<button type="button" data-' + kind + '="' + key + '">' + esc(filterLabel(kind, key)) + "</button>";
+    return '<div class="filters multi-filters no-print" role="toolbar" aria-label="' + esc(book.sections.findings || COPY.en.sections.findings) + '" translate="no">' +
+      ["All"].concat(AREAS).map((key) => chip("area", key)).join("") + '<span class="multi-filter-gap" aria-hidden="true"></span>' + VERDICTS.map((key) => chip("verdict", key)).join("") +
+      '</div><p class="meta-line multi-filter-say" translate="no"></p>';
+  }
+
+  function shows(item) {
+    const verdict = item.getAttribute("data-verdict");
+    return filter.verdict === "all" || (filter.verdict === "open" ? verdict === "fail" || verdict === "risk" : verdict === filter.verdict);
+  }
+
+  function applyFilter(sec) {
+    if (!sec) return;
+    sec.querySelectorAll(".multi-filters button").forEach((button) => {
+      const on = button.getAttribute("data-area") === filter.area || button.getAttribute("data-verdict") === filter.verdict;
+      button.classList.toggle("on", on);
+      button.setAttribute("aria-pressed", String(on));
+    });
+    const say = sec.querySelector(".multi-filter-say");
+    if (say) say.textContent = filterLabel("area", filter.area) + " · " + filterLabel("verdict", filter.verdict);
+    sec.querySelectorAll(".finding-group").forEach((group) => {
+      let count = 0;
+      group.querySelectorAll(".finding").forEach((item) => {
+        item.hidden = !shows(item);
+        if (!item.hidden) count += 1;
+      });
+      group.hidden = filter.area !== "All" && group.getAttribute("data-group") !== filter.area;
+      group.classList.toggle("is-none", !count);
+      group.querySelector(".group-count").textContent = count;
+    });
+    capFindings(sec);
+  }
+
   function bodyHtml(data) {
     const n = data.columns.length;
-    const hosts = '<div class="multi-row multi-hosts" style="--cols:' + n + '">' + data.columns.map((col) =>
-      '<div class="multi-cell"><p class="multi-host" translate="no">' + esc(col.host) + "</p>" +
-      (col.missing ? "" : '<p class="meta-line" translate="no">' + esc(col.at ? new Date(col.at).toLocaleDateString(code) : "") + (col.paid ? "" : ' · <a class="no-print" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>") + "</p>") + "</div>").join("") + "</div>";
-    return summaryHtml(data) + '<div class="multi-scroll multi-grid">' + hosts + SECTIONS.map(([key, cell]) =>
-      '<section class="multi-sec" data-sec="' + key + '"><h2 translate="no">' + esc(book.sections[key] || COPY.en.sections[key]) + '</h2><div class="multi-row" style="--cols:' + n + '">' +
-      data.columns.map((col, index) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '">' + (col.missing ? '<p class="muted">' + esc(t("missing")) + "</p>" : cell) + "</div>").join("") +
-      "</div></section>").join("") + "</div>";
+    const rc = window.QAReviewReportCopy;
+    const order = orderOf(data);
+    const columns = order.map((index) => [data.columns[index], index]);
+    const hosts = '<div class="multi-hosts-bar"><div class="multi-row multi-hosts">' + columns.map(([col, index]) =>
+      '<div class="multi-cell" style="--site:' + siteColor(index) + '"><p class="multi-host" translate="no" title="' + esc(col.host) + '">' + hostHtml(col.host) + "</p>" +
+      (col.missing ? "" : '<p class="meta-line" translate="no">' + esc(col.at ? new Date(col.at).toLocaleDateString(code) : "") + (col.paid ? "" : ' · <a class="no-print" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>") + "</p>") + "</div>").join("") + "</div></div>";
+    const foldAll = rc ? '<div class="fold-bar no-print"><button class="btn btn-ghost" type="button" id="multi-fold-all" aria-expanded="true" translate="no">' + esc(rc.t("collapseAll")) + "</button></div>" : "";
+    const bench = window.QAReviewBenchmark ? QAReviewBenchmark.html(data) : "";
+    return bench + summaryHtml(data, order) + '<div class="multi-sheet" style="--cols:' + n + '">' + foldAll + hosts + '<div class="multi-scroll multi-grid">' + SECTIONS.map(([key, cell]) => {
+      const title = esc(book.sections[key] || COPY.en.sections[key]);
+      const bar = key === "cases" && rc ? '<div class="cases-bar no-print"><button class="btn btn-ghost cases-all" type="button" aria-expanded="false" translate="no">' + esc(rc.t("expandAll")) + "</button></div>" : "";
+      return '<section class="multi-sec" data-sec="' + key + '"><h2 translate="no"><button class="fold-toggle" type="button" id="multi-toggle-' + key + '" aria-expanded="true" aria-controls="multi-row-' + key + '"><span>' + title +
+        '</span><span class="fold-icon" aria-hidden="true"></span></button></h2>' + bar + (key === "findings" ? filtersHtml() : "") + '<div class="multi-row fold-panel" id="multi-row-' + key + '" role="region" aria-labelledby="multi-toggle-' + key + '">' +
+        columns.map(([col, index]) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '" data-host="' + esc(bareHost(col.host)) + '" style="--site:' + siteColor(index) + '">' +
+          (col.missing ? '<p class="muted">' + esc(t("missing")) + "</p>" : cell) + "</div>").join("") +
+        "</div></section>";
+    }).join("") + "</div></div>";
+  }
+
+  // Only sentences, maybe in plain wrappers. Inside a card they must be the muted line a painter leaves when it
+  // has nothing to show, so a card of real text keeps its box.
+  function sentencesOnly(el, card) {
+    return [...el.children].filter((kid) => !kid.hidden && kid.textContent.trim()).every((kid) =>
+      card && kid.classList.contains("muted") ? true
+        : kid.tagName === "P" ? !card
+          : /^(DIV|SECTION|OL|UL)$/.test(kid.tagName) && sentencesOnly(kid, card));
   }
 
   // A cell the painters left empty or hidden says so, and a section empty for every site is left out.
+  // A cell holding only sentences is drawn as a note box at its own height, not stretched to its neighbours'.
   function settle(grid) {
     grid.querySelectorAll(".multi-sec").forEach((sec) => {
       let filled = 0;
       sec.querySelectorAll(".multi-cell").forEach((cell) => {
-        const shown = [...cell.children].some((child) => !child.hidden && child.textContent.trim());
-        if (shown) filled += 1;
-        else cell.insertAdjacentHTML("beforeend", '<p class="muted" translate="no">' + esc(t("nothing")) + "</p>");
+        const shown = [...cell.children].filter((child) => !child.hidden && child.textContent.trim());
+        if (shown.length) {
+          filled += 1;
+          if (shown.every((child) => child.matches(".card") ? child.querySelector(".muted") && sentencesOnly(child, true) : sentencesOnly(child, false))) cell.classList.add("is-note");
+          return;
+        }
+        [...cell.children].forEach((child) => { child.hidden = true; });
+        cell.classList.add("is-empty");
+        cell.insertAdjacentHTML("beforeend", '<p class="multi-empty" translate="no">' + esc(t("nothing")) + "</p>");
       });
       sec.hidden = !filled;
     });
+  }
+
+  // A security check no site was read for leaves every column, so the rows stay the same in all of them.
+  function pruneChecks(grid) {
+    const rows = [...grid.querySelectorAll('.multi-sec[data-sec="security"] [data-check]')];
+    const read = new Set(rows.filter((row) => !row.classList.contains("unknown")).map((row) => row.dataset.check));
+    rows.forEach((row) => { if (!read.has(row.dataset.check)) row.remove(); });
+  }
+
+  // The path and title of a page are cut short in a column, so each keeps its full text as a tooltip. Status and
+  // time are tinted as on the site map: amber for a redirect or over 1.8 s, red for an error.
+  function pageRows(grid) {
+    grid.querySelectorAll('[data-slot="pages"] > tr').forEach((row) => {
+      const [path, status, ms, title] = row.cells;
+      if (!title) return;
+      row.dataset.path = path.title = path.textContent;
+      title.title = title.textContent;
+      const answer = Number(status.textContent);
+      if (answer !== 200) status.classList.add(answer >= 300 && answer < 400 ? "is-warn" : "is-bad");
+      if (Number(ms.textContent) > 1800) ms.classList.add("is-slow");
+    });
+    grid.querySelectorAll('[data-slot="pages-found"]').forEach((note) => { note.innerHTML = esc(note.textContent).replace(/\.(?=\S)/g, ".<wbr>"); });
+  }
+
+  // A long list shows its first rows on screen with a button that shows the rest in place, and in print stops
+  // with a line counting the rest, so one long column does not leave the others blank for pages: [lists, rows on
+  // screen, rows in print]. Fix first stops sooner, each finding being a box of its own, and a browser-pass row
+  // stacks its cells, so a few of them already fill a narrow column.
+  const LIST_CAPS = [
+    ['[data-slot="pages"], [data-slot="report-log"], .ai-outline', 12, 12],
+    ['[data-slot="fix-first"] > .fix-list', 5, 5],
+    ['.multi-sec[data-sec="browser"] [data-part] tbody', 3, 6],
+    [".multi-seo-pages", 5, 5],
+    [".sec-diff ol", 6, 6],
+    ['[data-card="practices"] .advice', 4, 4],
+    ['[data-card="speed"]', 10, 10]
+  ];
+  const PRINT_CASES = 3;
+  function capLists(grid) {
+    LIST_CAPS.forEach(([selector, max, printMax]) => grid.querySelectorAll(selector).forEach((list) => {
+      const rows = [...list.children].filter((row) => !row.hidden && (/^(LI|TR|ARTICLE)$/.test(row.tagName) || row.classList.contains("meter")));
+      const table = list.tagName === "TBODY" ? list.closest("table") : null;
+      if (rows.length > printMax) {
+        rows.slice(printMax).forEach((row) => row.classList.add("print-cut"));
+        const text = esc(t("more", { n: rows.length - printMax }));
+        list.insertAdjacentHTML("beforeend", table ? '<tr class="print-more"><td colspan="' + (table.querySelectorAll("thead th").length || 4) + '">' + text + "</td></tr>"
+          : /^(UL|OL)$/.test(list.tagName) ? '<li class="print-more">' + text + "</li>" : '<p class="print-more">' + text + "</p>");
+      }
+      if (rows.length <= max) return;
+      const rest = rows.slice(max);
+      rest.forEach((row) => row.classList.add("screen-cut"));
+      const button = showButton(t("showAll", { n: rows.length }));
+      button.rows = rest;
+      button.dataset.n = rows.length;
+      if (table) (table.parentElement.classList.contains("table-scroll") ? table.parentElement : table).after(button);
+      else if (list.hasAttribute("data-card")) list.appendChild(button);
+      else list.after(button);
+    }));
+    grid.querySelectorAll(".cases-list").forEach((list) => {
+      const rows = [...list.children];
+      if (rows.length <= PRINT_CASES) return;
+      rows.slice(PRINT_CASES).forEach((row) => row.classList.add("print-cut"));
+      list.insertAdjacentHTML("beforeend", '<li class="print-more">' + esc(t("more", { n: rows.length - PRINT_CASES })) + "</li>");
+    });
+  }
+
+  function showButton(text) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "multi-show no-print";
+    button.setAttribute("aria-expanded", "false");
+    button.textContent = text;
+    return button;
+  }
+
+  // A text box (what AI reads, a fix-kit file) keeps one height in every column; one that holds more gets a
+  // button that opens it in place. It is measured once its section is drawn and open.
+  function clampBoxes(grid) {
+    grid.querySelectorAll('.multi-sec:not(.is-folded) :is(.ai-view, .code-peek):not(.is-clamped)').forEach((box) => {
+      if (!box.clientHeight || box.scrollHeight <= box.clientHeight + 4) return;
+      box.classList.add("is-clamped");
+      const button = showButton(QAReviewReportCopy.t("caseMore"));
+      button.box = box;
+      if (box.classList.contains("code-peek")) {
+        const wrap = document.createElement("div");
+        wrap.className = "multi-peek";
+        box.replaceWith(wrap);
+        wrap.append(box, button);
+      } else box.after(button);
+    });
+  }
+
+  function showAll(event) {
+    const button = event.target.closest(".multi-show");
+    if (!button) return;
+    const open = button.getAttribute("aria-expanded") !== "true";
+    button.setAttribute("aria-expanded", String(open));
+    if (button.box) {
+      button.box.classList.toggle("is-all", open);
+      button.textContent = QAReviewReportCopy.t(open ? "caseLess" : "caseMore");
+      return;
+    }
+    (button.rows || []).forEach((row) => row.classList.toggle("screen-cut", !open));
+    button.textContent = open ? t("showFewer") : t("showAll", { n: button.dataset.n });
+  }
+
+  // A browser-pass table in a column stacks each row: its first cell on a line of its own, the rest side by side
+  // under their column's heading, so no word is split to fit a column a few letters wide.
+  function stackTables(grid) {
+    grid.querySelectorAll('.multi-sec[data-sec="browser"] [data-part] table').forEach((table) => {
+      const heads = [...table.querySelectorAll("thead th")].map((th) => th.textContent.trim());
+      table.classList.add("multi-stack");
+      table.querySelectorAll("tbody tr").forEach((row) => [...row.children].forEach((cell, index) => {
+        if (index && heads[index]) cell.setAttribute("data-th", heads[index]);
+      }));
+    });
+  }
+
+  // What AI sees: the text and its headings get a box each, like the crawlers. A crawler is a chip whose product and
+  // verdict are in its tooltip, and each role counts the crawlers it lets in and keeps out.
+  function boxGeo(grid) {
+    grid.querySelectorAll('.multi-sec[data-sec="geo"] .split > .card > [data-part]').forEach((part) => part.classList.add("card"));
+    grid.querySelectorAll('.multi-sec[data-sec="geo"] .bot-role').forEach((role) => {
+      const bots = [...role.querySelectorAll(".bot")];
+      bots.forEach((bot) => { bot.title = bot.querySelector("span").textContent + bot.querySelector(".bot-product").textContent + " · " + bot.querySelector("small").textContent; });
+      const out = bots.filter((bot) => bot.classList.contains("no")).length;
+      role.querySelector(".bot-group").insertAdjacentHTML("beforeend", '<span class="bot-tally" aria-hidden="true">✓ ' + (bots.length - out) + " ✕ " + out + "</span>");
+    });
+  }
+
+  // A note every column words the same (data-note, the intro of a section) shows once under the section's title;
+  // a note one site words its own way stays in each column. A paragraph a shared sentence leaves empty keeps its
+  // place, since it can hold a row of a subgrid.
+  function shareNotes(grid) {
+    grid.querySelectorAll(".multi-sec").forEach((sec) => {
+      const cells = [...sec.querySelectorAll(".multi-cell")].filter((cell) => !cell.matches(".is-empty, .is-note"));
+      if (cells.length < 2) return;
+      const notes = cells.map((cell) => [...cell.querySelectorAll("[data-note]")]);
+      const said = [...new Set(notes[0].map((note) => note.textContent.trim()))].filter((text) => notes.every((list) => list.some((note) => note.textContent.trim() === text)));
+      if (!said.length) return;
+      notes.flat().filter((note) => said.includes(note.textContent.trim())).forEach((note) => note.classList.add("is-shared"));
+      sec.querySelector(":scope > h2").insertAdjacentHTML("afterend", said.map((text) => '<p class="multi-note">' + esc(text) + "</p>").join(""));
+    });
+  }
+
+  // A fix-kit file no site needs is left out of every column; the rest keep one row each (css/qa-review-multi.css).
+  function levelKit(grid) {
+    const row = grid.querySelector('.multi-sec[data-sec="fixkit"] .multi-row');
+    if (!row) return;
+    const tiles = [...row.querySelectorAll("[data-kit]")];
+    const kinds = [...new Set(tiles.map((tile) => tile.dataset.kit))].filter((kind) => {
+      const same = tiles.filter((tile) => tile.dataset.kit === kind);
+      if (!same.every((tile) => tile.classList.contains("is-none"))) return true;
+      same.forEach((tile) => tile.remove());
+      return false;
+    });
+    row.style.setProperty("--kit-rows", String(kinds.length + 2));
+  }
+
+  // The reason a page cannot be indexed, from the server's English line: unpaid reports come without reasonMsg.
+  function seoReason(row) {
+    const why = String(row.reason || "");
+    const status = why.match(/^Status (\d+)/);
+    if (status) return { key: "status-" + status[1], msg: { id: "reason.status", vars: { status: status[1] } }, en: "Status " + status[1] };
+    if (/^Canonical points to /.test(why)) return { key: "canonical", label: t("seoCanonical") };
+    if (why === "noindex") return { key: "noindex", label: "noindex" };
+    if (/^Blocked for Googlebot/.test(why)) return { key: "googlebot", msg: { id: "reason.googlebot" }, en: why };
+    const bot = why.match(/^(.+) bot check$/);
+    if (bot) return { key: "bot-" + bot[1], msg: { id: "reason.botCheck", vars: { vendor: bot[1] } }, en: why };
+    return { key: "unread", msg: { id: "reason.notRead" }, en: "Not read" };
+  }
+
+  // Search visibility in a column: its figures, then the pages that cannot be indexed summed by reason and listed
+  // one of each reason first, then the notes, each in its own box. data-part names the boxes in the same order in
+  // every column.
+  function tidySeo(grid, data) {
+    const fc = window.QAReviewFindingsCopy || { line: (message, fallback) => fallback };
+    grid.querySelectorAll('.multi-sec[data-sec="seo"] .multi-cell').forEach((cell) => {
+      const col = data.columns[Number(cell.dataset.col)];
+      const slot = cell.querySelector('[data-slot="seo"]');
+      const stats = slot && slot.querySelector(":scope > .stat-row");
+      const card = slot && slot.querySelector(":scope > .card");
+      if (!col || col.missing || !stats || !card) return;
+      stats.dataset.part = "stats";
+      card.dataset.part = "unindexable";
+      const notes = [...card.querySelectorAll(":scope > .meta-line")];
+      if (notes.length) {
+        const box = document.createElement("article");
+        box.className = "card multi-seo-notes";
+        box.dataset.part = "notes";
+        notes.forEach((note) => box.appendChild(note));
+        card.after(box);
+      }
+      const all = (((col.report || {}).insights || {}).seo || {}).indexability || [];
+      const blocked = all.filter((row) => !row.indexable).map((row) => Object.assign({ why: seoReason(row) }, row));
+      const lone = card.querySelector(":scope > .muted");
+      if (lone) lone.title = lone.textContent;
+      if (!blocked.length) return;
+      const groups = new Map();
+      blocked.forEach((row) => {
+        if (!groups.has(row.why.key)) groups.set(row.why.key, { why: row.why, rows: [] });
+        groups.get(row.why.key).rows.push(row);
+      });
+      const ranked = [...groups.values()].sort((a, b) => b.rows.length - a.rows.length);
+      const firsts = ranked.map((group) => group.rows[0]);
+      const shown = firsts.concat(blocked.filter((row) => !firsts.includes(row)));
+      const label = (why) => why.label || fc.line(why.msg, why.en);
+      card.innerHTML = '<h3 class="multi-seo-head" translate="no">' + esc(t("seoBlocked")) + "</h3>" +
+        '<ul class="multi-seo-reasons" translate="no">' + ranked.map((group) => "<li><span>" + esc(label(group.why)) + "</span> <b>" + group.rows.length + "</b></li>").join("") + "</ul>" +
+        '<ul class="multi-seo-pages">' + shown.map((row) => {
+          const why = fc.line(row.reasonMsg, row.reason);
+          return '<li><span class="notranslate" translate="no" title="' + esc(row.path) + '">' + esc(row.path) + '</span><small title="' + esc(why) + '">' + esc(why) + "</small></li>";
+        }).join("") + "</ul>";
+    });
+  }
+
+  // Each area prints its first findings under the filter, opened, so every area of every site gets a share of the page.
+  const PRINT_GROUP_ROWS = 3;
+  function capFindings(sec) {
+    sec.querySelectorAll(".finding-group .print-more").forEach((line) => line.remove());
+    sec.querySelectorAll(".finding-group").forEach((group) => {
+      const shown = [...group.querySelectorAll(".finding")].filter((item) => {
+        item.classList.remove("print-cut");
+        return !item.hidden;
+      });
+      if (shown.length <= PRINT_GROUP_ROWS) return;
+      shown.slice(PRINT_GROUP_ROWS).forEach((item) => item.classList.add("print-cut"));
+      group.insertAdjacentHTML("beforeend", '<p class="print-more">' + esc(t("more", { n: shown.length - PRINT_GROUP_ROWS })) + "</p>");
+    });
+  }
+
+  function setFold(sec, open) {
+    sec.querySelector(".multi-row").hidden = !open;
+    sec.querySelector(".fold-toggle").setAttribute("aria-expanded", String(open));
+    sec.classList.toggle("is-folded", !open);
+    if (open) clampBoxes(sec);
+  }
+
+  function paintFoldAll(body) {
+    const all = body.querySelector("#multi-fold-all");
+    if (!all) return;
+    const anyOpen = [...body.querySelectorAll(".multi-sec:not([hidden]) .multi-row")].some((row) => !row.hidden);
+    all.textContent = QAReviewReportCopy.t(anyOpen ? "collapseAll" : "expandAll");
+    all.setAttribute("aria-expanded", String(anyOpen));
+  }
+
+  // A group of cases opens or closes in every column at once, so the groups under it stay level.
+  function setCaseGroup(sec, name, open) {
+    sec.querySelectorAll('.cases-group[data-group="' + CSS.escape(name) + '"]').forEach((group) => {
+      const list = group.querySelector(".cases-list");
+      if (!list) return;
+      list.hidden = !open;
+      group.classList.toggle("is-open", open);
+      group.querySelector(".cases-toggle").setAttribute("aria-expanded", String(open));
+    });
+  }
+
+  function foldCases(event) {
+    const sec = event.target.closest('.multi-sec[data-sec="cases"]');
+    const toggle = sec && event.target.closest(".cases-toggle");
+    const all = sec && event.target.closest(".cases-all");
+    const more = sec && event.target.closest(".cases-more");
+    if (toggle) {
+      const group = toggle.closest(".cases-group");
+      setCaseGroup(sec, group.dataset.group, !group.classList.contains("is-open"));
+    } else if (all) {
+      const open = all.getAttribute("aria-expanded") !== "true";
+      new Set([...sec.querySelectorAll(".cases-group")].map((group) => group.dataset.group)).forEach((name) => setCaseGroup(sec, name, open));
+    } else if (more) {
+      const open = more.getAttribute("aria-expanded") !== "true";
+      more.closest(".case").classList.toggle("is-open", open);
+      more.setAttribute("aria-expanded", String(open));
+      more.textContent = QAReviewReportCopy.t(open ? "caseLess" : "caseMore");
+      return true;
+    } else return false;
+    const button = sec.querySelector(".cases-all");
+    if (button) {
+      const anyOpen = !!sec.querySelector(".cases-group.is-open");
+      button.textContent = QAReviewReportCopy.t(anyOpen ? "collapseAll" : "expandAll");
+      button.setAttribute("aria-expanded", String(anyOpen));
+    }
+    return true;
+  }
+
+  // One toggle per section opens or closes it for every site at once, so the columns stay level.
+  function fold(event) {
+    if (foldCases(event)) return;
+    const body = event.currentTarget;
+    const toggle = event.target.closest(".multi-sec > h2 .fold-toggle");
+    const all = event.target.closest("#multi-fold-all");
+    if (toggle) {
+      const sec = toggle.closest(".multi-sec");
+      setFold(sec, sec.querySelector(".multi-row").hidden);
+    } else if (all) {
+      const open = all.getAttribute("aria-expanded") !== "true";
+      body.querySelectorAll(".multi-sec").forEach((sec) => setFold(sec, open));
+    } else return;
+    paintFoldAll(body);
+  }
+
+  // An area folds or opens in every column at once, so the areas below it stay in step.
+  function pickFindings(event) {
+    const sec = event.target.closest('.multi-sec[data-sec="findings"]');
+    const chip = event.target.closest(".multi-filters button");
+    const toggle = event.target.closest(".group-toggle");
+    if (!sec || (!chip && !toggle)) return;
+    if (chip) {
+      if (chip.hasAttribute("data-area")) filter.area = chip.getAttribute("data-area");
+      if (chip.hasAttribute("data-verdict")) filter.verdict = chip.getAttribute("data-verdict");
+      applyFilter(sec);
+      return;
+    }
+    setFindingGroup(sec, toggle.closest(".finding-group").getAttribute("data-group"), toggle.getAttribute("aria-expanded") !== "true");
+  }
+
+  function setFindingGroup(sec, name, open) {
+    sec.querySelectorAll('.finding-group[data-group="' + CSS.escape(name) + '"]').forEach((group) => {
+      group.classList.toggle("is-folded", !open);
+      group.querySelector(".group-toggle").setAttribute("aria-expanded", String(open));
+    });
+  }
+
+  // An area of a column's health card shows that area's findings, every verdict, in every column, opened.
+  function pickArea(event) {
+    const sec = event.target.closest('.multi-sec[data-sec="findings"]');
+    if (!sec) return;
+    filter = Object.assign({}, filter, event.detail);
+    applyFilter(sec);
+    if (filter.area !== "All") setFindingGroup(sec, filter.area, true);
+    setFold(sec, true);
+    paintFoldAll(event.currentTarget);
+    sec.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // A site in the title: its logo, with a letter under it that shows when there is no logo or it fails to load,
+  // then its name, and its address when the name is more than the address.
+  function bareHost(host) {
+    return String(host || "").replace(/^www\./i, "");
+  }
+
+  // An address breaks after a dot of its name, and a name too long for the line inside its first part; the end of
+  // the name keeps its public suffix (.com.co) on the same line.
+  function hostHtml(host) {
+    const bare = bareHost(host);
+    const suffix = (bare.match(/(\.(com|org|net|edu|gov|gob|ac|co|or|ne))?\.[a-z]{2,}$/i) || [""])[0];
+    const name = bare.slice(0, bare.length - suffix.length);
+    const cut = name.length - Math.min(8, name.length - name.lastIndexOf(".") - 1);
+    return esc(name.slice(0, cut)).replace(/\./g, ".<wbr>") + '<span class="multi-host-end">' + esc(name.slice(cut) + suffix) + "</span>";
+  }
+
+  // The host without www. and its public suffix, so a column is as wide as the site's name, not its address.
+  function shortHost(host) {
+    return bareHost(host).replace(/(\.(com|org|net|edu|gov|gob|ac|co|or|ne))?\.[a-z]{2,}$/i, "") || bareHost(host);
+  }
+
+  function siteMark(col, index) {
+    const letter = ((col.name || bareHost(col.host)).match(/[\p{L}\p{N}]/u) || ["?"])[0].toUpperCase();
+    const logo = col.icon ? '<img class="multi-logo" src="' + esc(col.icon) + '" alt="" referrerpolicy="no-referrer" decoding="async" data-logo="' + index + '">' : "";
+    return logo + "<span>" + esc(letter) + "</span>";
+  }
+
+  function columnHead(col, index) {
+    return '<th scope="col" translate="no" title="' + esc(bareHost(col.host)) + '" style="--site:' + siteColor(index) + '"><span class="multi-col"><span class="multi-col-mark" aria-hidden="true">' + siteMark(col, index) +
+      '</span><span class="multi-col-name">' + esc(col.name || shortHost(col.host)) + "</span>" + (col.own ? '<span class="multi-col-own">' + esc(t("yours")) + "</span>" : "") + "</span></th>";
+  }
+
+  // Each "vs" stays with the site after it, so a wrapped row never starts or ends on a lone "vs".
+  function siteBadge(col, index) {
+    const name = col.name || bareHost(col.host);
+    return '<span class="multi-site" style="--site:' + siteColor(index) + '">' + (index ? '<span class="multi-vs">' + esc(t("vs")) + "</span>" : "") +
+      '<span class="multi-badge"><span class="multi-mark" aria-hidden="true">' + siteMark(col, index) + "</span>" +
+      '<span class="multi-site-name">' + (col.name ? esc(name) : hostHtml(col.host)) + "</span>" + (col.name ? "<small>" + hostHtml(col.host) + "</small>" : "") + "</span></span>";
   }
 
   function paint(data) {
     made = data;
     const root = shell();
     const S = window.QAReviewSections;
-    const hosts = data.columns.map((col) => col.host);
-    root.querySelector("#multi-title").textContent = hosts.join(" " + t("vs") + " ");
+    const title = root.querySelector("#multi-title");
+    title.innerHTML = data.columns.map(siteBadge).join("");
+    title.setAttribute("aria-label", data.columns.map((col) => col.name || bareHost(col.host)).join(" " + t("vs") + " "));
     root.querySelector("#multi-when").textContent = data.at ? t("saved", { date: new Date(data.at).toLocaleDateString(code) }) : "";
     const printBtn = root.querySelector("#multi-print");
     const pdfBtn = root.querySelector("#multi-pdf");
     printBtn.textContent = data.paid ? t("print") : "🔒 " + t("unlockToPrint");
     pdfBtn.textContent = data.paid ? t("pdf") : "🔒 " + t("pdf");
+    pdfBtn.hidden = !!data.peers;
+    root.querySelector("#multi-close").hidden = !!data.peers;
     const locked = root.querySelector("#multi-locked");
-    locked.hidden = data.paid;
-    locked.innerHTML = data.paid ? "" : "<p>" + esc(t("locked", { n: data.locked.length })) + "</p><p>" +
+    locked.hidden = data.paid && !data.peers;
+    const phrase = data.peers && data.peers.phrase ? data.peers.phrase[code] || data.peers.phrase.en || "" : "";
+    locked.innerHTML = data.peers ? "<p>" + esc(t("peersNote", { n: data.columns.length, sector: phrase || data.peers.sector, place: phrase || !data.peers.place ? "" : ", " + data.peers.place })) + "</p>" : data.paid ? "" : "<p>" + esc(t("locked", { n: data.locked.length })) + "</p><p>" +
       data.locked.map((col) => '<a class="btn btn-ghost" href="' + esc(payHref(col)) + '">' + esc(t("unlock", { site: col.host })) + "</a>").join(" ") + "</p>";
     const body = root.querySelector("#multi-body");
+    filter = { area: "All", verdict: "open" };
     body.innerHTML = bodyHtml(data);
+    root.querySelectorAll("img.multi-logo").forEach((img) => img.addEventListener("error", () => img.remove(), { once: true }));
     const grid = body.querySelector(".multi-grid");
+    const caseGroups = S.caseGroups(data.columns.map((col) => col.report));
+    const caseRow = grid.querySelector('.multi-sec[data-sec="cases"] .multi-row');
+    caseRow.style.setProperty("--case-rows", caseGroups.length + 1);
+    caseRow.style.setProperty("--case-rows-print", caseGroups.length + 2);
     data.columns.forEach((col, index) => {
       if (col.missing) return;
       try {
-        S.paint({ report: col.report, paid: col.paid, frameworks: col.frameworks || [] }, columnRoot(grid, index, null));
+        S.paint({ report: col.report, paid: col.paid, frameworks: col.frameworks || [], caseGroups }, columnRoot(grid, index, null));
       } catch (error) {
         console.error("A comparison column did not draw:", error);
       }
     });
+    grid.querySelectorAll(".report-cover h2").forEach((heading) => { heading.innerHTML = esc(heading.textContent).replace(/\./g, ".<wbr>"); });
+    boxGeo(grid);
+    pruneChecks(grid);
+    tidySeo(grid, data);
+    pageRows(grid);
     settle(grid);
+    shareNotes(grid);
+    levelKit(grid);
+    stackTables(grid);
+    capLists(grid);
+    applyFilter(grid.querySelector('.multi-sec[data-sec="findings"]'));
+    requestAnimationFrame(() => clampBoxes(grid));
+    const bar = body.querySelector(".multi-hosts-bar");
+    grid.addEventListener("scroll", () => { bar.scrollLeft = grid.scrollLeft; }, { passive: true });
     say("");
   }
 
@@ -336,8 +829,18 @@
     document.body.style.overflow = "hidden";
   }
 
-  async function load(id) {
+  // extra.failed: the competitors of the run that just ended that did not finish, with why, so the comparison
+  // says who was asked for and is missing.
+  function paintFailed(failed) {
+    const box = shell().querySelector("#multi-failed");
+    box.hidden = !failed.length;
+    box.innerHTML = failed.length ? "<p>" + esc(t("failedRuns")) + "</p><ul>" + failed.map((row) =>
+      '<li><b translate="no">' + esc(row.host) + "</b>" + (row.note ? " · " + esc(row.note) : "") + "</li>").join("") + "</ul>" : "";
+  }
+
+  async function load(id, extra) {
     open();
+    paintFailed((extra && extra.failed) || []);
     say(t("opening"));
     if (!window.ReviewAuth || !ReviewAuth.signedIn()) {
       say(t("signIn"), true);
@@ -361,17 +864,44 @@
     }
   }
 
-  function print() {
+  // Print is on paper, so it drops dark mode as the PDF does, and gives it back after.
+  // The site look paints its colours from the theme, so the theme changes through SiteTheme, without saving it.
+  let darkBeforePrint = false;
+  function setDark(on) {
+    if (window.SiteTheme) SiteTheme.apply(on, false);
+    else document.documentElement.classList.toggle("dark-mode", on);
+  }
+  function startPrint() {
     document.body.classList.add("printing-multi");
+    if (!document.documentElement.classList.contains("dark-mode")) return;
+    darkBeforePrint = true;
+    setDark(false);
+  }
+
+  function print() {
+    startPrint();
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_multi_print", "URL Review", "print");
     window.print();
   }
 
   // The browser's own print command prints an open, paid comparison too; an unpaid one stays out of print.
+  // Print opens the findings it shows and closes them again after.
+  let openedForPrint = [];
   window.addEventListener("beforeprint", () => {
-    if (overlay && overlay.classList.contains("open") && made && made.paid) document.body.classList.add("printing-multi");
+    if (!overlay || !overlay.classList.contains("open") || !made || !made.paid) return;
+    startPrint();
+    overlay.querySelectorAll("details.finding:not([open])").forEach((item) => {
+      item.open = true;
+      openedForPrint.push(item);
+    });
   });
-  window.addEventListener("afterprint", () => document.body.classList.remove("printing-multi"));
+  window.addEventListener("afterprint", () => {
+    document.body.classList.remove("printing-multi");
+    if (darkBeforePrint) setDark(true);
+    darkBeforePrint = false;
+    openedForPrint.forEach((item) => { item.open = false; });
+    openedForPrint = [];
+  });
 
   // The PDF is printed on the server from the comparison as drawn here, with the page's styles inlined.
   function snapshot() {
@@ -379,11 +909,35 @@
       try { return [...sheet.cssRules].map((rule) => rule.cssText).join("\n"); } catch (error) { return ""; }
     }).join("\n");
     const copy = overlay.querySelector(".multi-modal").cloneNode(true);
+    copy.querySelectorAll(".multi-sec > h2 .fold-toggle").forEach((toggle) => toggle.replaceWith(toggle.firstChild));
+    copy.querySelectorAll(".group-toggle").forEach((toggle) => toggle.replaceWith(...toggle.childNodes));
+    copy.querySelectorAll("details.finding").forEach((item) => { item.open = true; });
+    copy.querySelectorAll(".multi-row[hidden], .cases-list[hidden]").forEach((row) => { row.hidden = false; });
+    copy.querySelectorAll(".cases-toggle").forEach((toggle) => toggle.replaceWith(...toggle.childNodes));
+    copy.querySelectorAll(".screen-cut").forEach((row) => row.classList.remove("screen-cut"));
+    copy.querySelectorAll(".is-clamped, .is-all").forEach((box) => box.classList.remove("is-clamped", "is-all"));
+    copy.querySelectorAll(".multi-peek").forEach((wrap) => wrap.replaceWith(...wrap.childNodes));
+    copy.querySelectorAll(".list-rest").forEach((rest) => { rest.hidden = true; });
+    copy.querySelectorAll(".list-dots").forEach((dots) => { dots.hidden = false; });
+    // An area score tile is a button on the page, and buttons do not print.
+    copy.querySelectorAll("button.area").forEach((tile) => {
+      const box = document.createElement("div");
+      box.className = tile.className;
+      box.setAttribute("data-area", tile.getAttribute("data-area"));
+      box.innerHTML = tile.innerHTML;
+      tile.replaceWith(box);
+    });
     copy.querySelectorAll(".no-print, script, button").forEach((node) => node.remove());
-    copy.querySelectorAll("img").forEach((img) => img.remove());
-    const theme = [...document.documentElement.attributes].filter((attr) => attr.name !== "style").map((attr) => " " + attr.name + '="' + esc(attr.value) + '"').join("");
-    return "<!doctype html><html" + theme + '><head><meta charset="utf-8"><title>' + esc(document.getElementById("multi-title").textContent) + "</title><style>" + css.replace(/<\/style/gi, "<\\/style") +
-      "</style></head><body class=\"" + esc(document.body.className) + ' printing-multi multi-pdf"><div class="dash-overlay multi-overlay open">' + copy.outerHTML + "</div></body></html>";
+    copy.querySelectorAll("img").forEach((img) => {
+      if (!img.matches("img.multi-logo")) return img.remove();
+      const mark = document.createElement("img");
+      mark.className = "multi-logo";
+      mark.setAttribute("data-logo", img.getAttribute("data-logo"));
+      img.replaceWith(mark);
+    });
+    const theme = [...document.documentElement.attributes].filter((attr) => attr.name !== "style").map((attr) => " " + attr.name + '="' + esc(attr.name === "class" ? attr.value.replace(/\bdark-mode\b/g, "").trim() : attr.value) + '"').join("");
+    return "<!doctype html><html" + theme + '><head><meta charset="utf-8"><title>' + esc(made.columns.map((col) => col.host).join(" " + t("vs") + " ")) + "</title><style>" + css.replace(/<\/style/gi, "<\\/style") +
+      "</style></head><body class=\"" + esc(document.body.className) + ' printing-multi multi-pdf"><div class="dash-overlay multi-overlay open" id="multi-overlay">' + copy.outerHTML + "</div></body></html>";
   }
 
   async function download() {
@@ -393,18 +947,19 @@
     try {
       const response = await post("/account/comparison/pdf", { id: made.id, html: snapshot() });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.pdf) {
+      const stored = /^https:\/\/firebasestorage\.googleapis\.com\//.test(data.url || "");
+      if (!response.ok || (!data.pdf && !stored)) {
         say(QAReviewReportCopy.error(data, t("pdfFailed")), true);
         return;
       }
-      const bytes = Uint8Array.from(atob(data.pdf), (ch) => ch.charCodeAt(0));
+      // A large PDF comes as a link to the stored file, which is sent as an attachment under its own name.
       const link = document.createElement("a");
-      link.href = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+      link.href = stored ? data.url : URL.createObjectURL(new Blob([Uint8Array.from(atob(data.pdf), (ch) => ch.charCodeAt(0))], { type: "application/pdf" }));
       link.download = data.filename || "qa-review-comparison.pdf";
       document.body.appendChild(link);
       link.click();
       link.remove();
-      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      if (!stored) setTimeout(() => URL.revokeObjectURL(link.href), 1000);
       say(t("pdfDone"));
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_multi_pdf", "URL Review", "pdf");
     } catch (error) {
@@ -449,10 +1004,35 @@
     load(id);
   });
 
-  window.QAReviewMulti = { t, save, load };
+  // A peer group's link from an outreach email (#2363): no account, and the token names the reader's own site.
+  async function loadPeers(id, token) {
+    open();
+    paintFailed([]);
+    say(t("opening"));
+    try {
+      const response = await fetch(endpoint() + "/peers/open", {
+        method: "POST", cache: "no-store", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, t: token })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.error) {
+        say(response.status === 404 ? t("peersLink") : QAReviewReportCopy.error(data, t("failed")), true);
+        return;
+      }
+      paint(data);
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_peers_open", "URL Review", String(data.columns.length));
+    } catch (error) {
+      say(t("failed"), true);
+    }
+  }
 
-  const asked = new URLSearchParams(location.search).get("comparison");
-  if (asked) {
+  window.QAReviewMulti = { t, save, load, loadPeers };
+
+  const query = new URLSearchParams(location.search);
+  const peers = query.get("peers");
+  if (peers) loadPeers(String(peers).replace(/[^A-Za-z0-9]/g, "").slice(0, 40), String(query.get("t") || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 40));
+
+  const asked = query.get("comparison");
+  if (asked && !peers) {
     const start = () => load(String(asked).replace(/[^A-Za-z0-9]/g, "").slice(0, 40));
     if (window.ReviewAuth && ReviewAuth.onChange) {
       let done = false;

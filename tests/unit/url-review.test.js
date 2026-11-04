@@ -1579,11 +1579,12 @@ test.describe("return price", () => {
     assert.throws(() => core.chargedUsd(Object.assign({}, base, { priceUsd: 16.15, listUsd: 18 })), /does not match/);
   });
 
-  test("a paid reopen sends a preview with the hidden part of each line replaced, and no fix-kit files", () => {
+  test("a paid reopen sends a preview with the top case whole as a sample, the hidden part of every other line replaced, and no fix-kit files", () => {
     const secret = "send max-age=31536000 with includeSubDomains on every response";
+    const top = { id: "FN-02", title: "The start page has a title that names the shop", why: "The title was empty. Give the start page a title of 10 to 60 characters.", path: "/", selectors: ["title"], check: { kind: "title", path: "/" }, msg: { title: { id: "x" } }, steps: ["open"] };
     const report = {
       id: "ab12",
-      cases: [{ id: "SE-01", title: "Strict-Transport-Security is sent on the start page", why: "The header was missing. " + secret, steps: ["open"] }],
+      cases: [top, { id: "SE-01", title: "Strict-Transport-Security is sent on the start page", why: "The header was missing. " + secret, steps: ["open"], check: { kind: "header" }, selectors: ["html"] }],
       insights: {
         score: { overall: 63 },
         findings: [{ title: "HSTS", evidence: "Missing on 7 pages. " + secret, fix: "Add it. " + secret }],
@@ -1599,10 +1600,25 @@ test.describe("return price", () => {
     assert.equal(preview.insights.score.overall, 63);
     assert.match(preview.insights.findings[0].evidence, /^Missing on 7 pages\. /);
     assert.equal(preview.insights.findings[0].evidence.length, report.insights.findings[0].evidence.length);
-    assert.equal(preview.cases[0].steps, undefined);
+    assert.deepEqual(preview.cases[0], Object.assign({}, top, { sample: true }));
+    assert.match(preview.cases[1].why, /^The header was missing\. \u2060/);
+    assert.deepEqual([preview.cases[1].sample, preview.cases[1].steps, preview.cases[1].check, preview.cases[1].selectors], [undefined, undefined, undefined, undefined]);
     assert.deepEqual(preview.insights.fixkit.headers, [{ name: "HSTS", missing: true }]);
     assert.equal(preview.insights.fixkit.jsonLd, true);
-    assert.ok(report.cases[0].steps, "the stored report is not changed");
+    assert.ok(report.cases[1].steps, "the stored report is not changed");
+    assert.equal(report.cases[0].sample, undefined, "the stored report is not changed");
+  });
+
+  test("an unpaid preview keeps each finding's title message, so translated pages show the title, but no evidence or fix message (#1367)", () => {
+    const secret = "/admin-hidden-path";
+    const title = { id: "seo-broken-links.title", vars: { n: 2 } };
+    const preview = core.previewReport({ insights: { findings: [
+      { title: "2 internal links lead to an error", evidence: "Broken: " + secret, fix: "Fix " + secret, msg: { title, evidence: { id: "listDot", vars: { list: secret } }, fix: { id: "x", vars: { path: secret } } } },
+      { title: "No message", evidence: "e", fix: "f" }
+    ] } });
+    assert.deepEqual(preview.insights.findings[0].msg, { title });
+    assert.equal(preview.insights.findings[1].msg, undefined);
+    assert.ok(!JSON.stringify(preview).includes(secret));
   });
 
   test("the peso quote and the PayPal capture accept a discounted price, and nothing under the floor", () => {
@@ -1699,6 +1715,59 @@ test.describe("address guards", () => {
     assert.equal(core.hostBlocked("example.com"), false);
   });
 
+  test("benchmark, IETF, reserved and IPv4-carrying IPv6 addresses are refused by both guards", () => {
+    const browser = require("../../functions/url-review-browser");
+    ["192.0.0.8", "198.18.0.1", "198.19.255.255", "240.0.0.1", "::ffff:169.254.169.254", "::ffff:a9fe:a9fe", "64:ff9b::a9fe:a9fe", "2002:a9fe:a9fe::1", "ff02::1", "::7f00:1"].forEach((ip) => {
+      assert.equal(core.ipBlocked(ip), true, ip);
+      assert.equal(browser.blockedHost("https://" + (ip.includes(":") ? "[" + ip + "]" : ip) + "/"), true, ip);
+    });
+    ["8.8.8.8", "198.20.0.1", "::ffff:8.8.8.8", "2606:4700:4700::1111"].forEach((ip) => {
+      assert.equal(core.ipBlocked(ip), false, ip);
+      assert.equal(browser.blockedHost("https://" + (ip.includes(":") ? "[" + ip + "]" : ip) + "/"), false, ip);
+    });
+  });
+
+  test("the browser refuses a host whose lookup fails or returns any internal address", async () => {
+    const browser = require("../../functions/url-review-browser");
+    const fake = (table) => async (name) => { if (!table[name]) throw new Error("ENOTFOUND"); return table[name]; };
+    const lookup = fake({ "mixed.test": [{ address: "93.184.215.14", family: 4 }, { address: "169.254.169.254", family: 4 }], "ok.test": [{ address: "93.184.215.14", family: 4 }], "empty.test": [] });
+    assert.equal(await browser.publicAddress("gone.test", lookup), "");
+    assert.equal(await browser.publicAddress("empty.test", lookup), "");
+    assert.equal(await browser.publicAddress("mixed.test", lookup), "");
+    assert.equal(await browser.publicAddress("metadata.google.internal", lookup), "");
+    assert.equal(await browser.publicAddress("[::1]", lookup), "");
+    assert.equal(await browser.publicAddress("ok.test", lookup), "93.184.215.14");
+    const dns = require("dns").promises;
+    const real = dns.lookup;
+    dns.lookup = async () => { throw new Error("ESERVFAIL"); };
+    try { assert.equal(await browser.privateAddress("fails-" + Date.now() + ".test"), true); } finally { dns.lookup = real; }
+  });
+
+  test("Chromium is sent through the pinning proxy, which refuses internal and unresolved hosts", async () => {
+    const browser = require("../../functions/url-review-browser");
+    const http = require("node:http");
+    const args = browser.proxyArgs(4321);
+    assert.ok(args.includes("--proxy-server=http://127.0.0.1:4321") && args.includes("--proxy-bypass-list=<-loopback>"));
+    const proxy = await browser.guard(async (name) => {
+      if (name === "rebind.test") return [{ address: "169.254.169.254", family: 4 }];
+      throw new Error("ENOTFOUND");
+    });
+    const tunnel = (path) => new Promise((resolve, reject) => {
+      http.request({ host: "127.0.0.1", port: proxy.port, method: "CONNECT", path }).on("connect", (res, sock) => { sock.destroy(); resolve(res.statusCode); }).on("error", reject).end();
+    });
+    const plain = (url) => new Promise((resolve, reject) => {
+      http.get({ host: "127.0.0.1", port: proxy.port, path: url }, (res) => { res.resume(); resolve(res.statusCode); }).on("error", reject);
+    });
+    try {
+      assert.equal(await tunnel("rebind.test:443"), 403);
+      assert.equal(await tunnel("gone.test:443"), 403);
+      assert.equal(await tunnel("127.0.0.1:443"), 403);
+      assert.equal(await tunnel("[::ffff:169.254.169.254]:80"), 403);
+      assert.equal(await plain("http://rebind.test/latest/meta-data/"), 403);
+      assert.equal(await plain("http://localhost:8080/"), 403);
+    } finally { proxy.close(); }
+  });
+
   test("the mailbox must share the site's registrable domain", () => {
     assert.equal(core.mailboxMatchesHost("qa@shop.example.co.uk", "www.shop.example.co.uk"), true);
     assert.equal(core.mailboxMatchesHost("someone@gmail.com", "example.com"), false);
@@ -1792,6 +1861,8 @@ test.describe("publishing user reviews to Live Reports", () => {
     assert.equal(publish.heldReason(record("acme.de", { status: "stopped" }), []), "not-complete");
     assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 1 } }), []), "too-few-pages");
     assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 5, timedOut: true } }), []), "timed-out");
+    assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 5, maxPages: 20, timedOut: true } }), []), "timed-out");
+    assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 20, maxPages: 20, timedOut: true } }), []), "");
     assert.equal(publish.heldReason(record("acme.de", {}, { pages: [{ status: 403 }] }), []), "start-page-blocked");
     assert.equal(publish.heldReason(record("acme.de", {}, { pages: [{ status: 200, challenge: "cloudflare" }] }), []), "start-page-blocked");
     const shell = report("acme.de");
@@ -1839,6 +1910,22 @@ test.describe("publishing user reviews to Live Reports", () => {
     assert.equal(reports[0].report.limits.pagesRead, 6);
   });
 
+  test("findings keep their messages, so the Live Report reads in the page language, with addresses hidden (#1386)", () => {
+    const live = require("../../scripts/build-live-reports");
+    const msg = { title: { id: "sec-hsts.title", vars: {} }, evidence: { id: "listDot", vars: { list: { items: ["mailto:owner@site.com"], more: 0 } } } };
+    const rep = report("acme.de");
+    rep.insights.findings[0].msg = msg;
+    const { reports } = publish.selectPublishable([record("acme.de", { report: rep })], []);
+    const finding = reports[0].report.insights.findings[0];
+    assert.deepEqual(finding.msg, msg);
+    assert.deepEqual(live.msgOf(finding, ["title", "evidence", "fix"]), {
+      title: { id: "sec-hsts.title", vars: {} },
+      evidence: { id: "listDot", vars: { list: { items: ["[address hidden]"], more: 0 } } }
+    });
+    assert.equal(live.msgOf(Object.assign({}, finding, { evidence: "" }), ["evidence"]), undefined);
+    assert.equal(live.msgOf({ title: "x" }, ["title"]), undefined);
+  });
+
   test("one review per host, the newest, oldest host first", () => {
     const { reports, held } = publish.selectPublishable([
       record("b.de", { createdAt: "2026-10-21T09:00:00Z" }),
@@ -1851,15 +1938,36 @@ test.describe("publishing user reviews to Live Reports", () => {
   });
 });
 
-test("functions/.env.example lists every key the functions read", () => {
+test("functions/.env.example or functions/secrets.js lists every key the functions read", () => {
   const dir = path.join(__dirname, "../../functions");
   const listed = new Set(fs.readFileSync(path.join(dir, ".env.example"), "utf8").match(/^[A-Z0-9_]+(?==)/gm));
+  const secrets = new Set(require("../../functions/secrets").ALL);
   const runtime = new Set(["GCLOUD_PROJECT", "GCP_PROJECT"]);
   const read = new Set();
   fs.readdirSync(dir).filter((name) => name.endsWith(".js")).forEach((name) => {
     for (const m of fs.readFileSync(path.join(dir, name), "utf8").matchAll(/process\.env\.([A-Z0-9_]+)/g)) read.add(m[1]);
   });
-  assert.deepEqual([...read].filter((key) => !listed.has(key) && !runtime.has(key)).sort(), []);
+  assert.deepEqual([...read].filter((key) => !listed.has(key) && !secrets.has(key) && !runtime.has(key)).sort(), []);
+});
+
+test("a Secret Manager secret is never also a functions/.env.example line, and every one is read", () => {
+  const dir = path.join(__dirname, "../../functions");
+  const example = fs.readFileSync(path.join(dir, ".env.example"), "utf8");
+  const code = fs.readdirSync(dir).filter((name) => name.endsWith(".js") && name !== "secrets.js").map((name) => fs.readFileSync(path.join(dir, name), "utf8")).join("\n");
+  const all = require("../../functions/secrets").ALL;
+  assert.deepEqual(all.filter((name) => new RegExp("^" + name + "=", "m").test(example)), [], "Firebase refuses to deploy a secret that is also an env var");
+  assert.deepEqual(all.filter((name) => !new RegExp("\\." + name + "\\b").test(code)), [], "bound but never read");
+});
+
+test("every function binds its secrets through functions/secrets.js", () => {
+  const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  const secrets = require("../../functions/secrets");
+  const used = Array.from(index.matchAll(/secrets: ([^,}\n]+)/g)).map((m) => m[1].trim());
+  assert.ok(used.length >= 15);
+  for (const ref of used) {
+    const key = (ref.match(/^SECRETS\.(\w+)$/) || [])[1];
+    assert.ok(key && Array.isArray(secrets[key]), "bind " + ref + " through a list in functions/secrets.js");
+  }
 });
 
 test("the intake takes the current terms and the ones just before, and records which", () => {
@@ -1867,7 +1975,8 @@ test("the intake takes the current terms and the ones just before, and records w
   const now = core.validateIntake(body(core.TERMS_VERSION));
   assert.deepEqual(now.errors, []);
   assert.equal(now.value.termsVersion, core.TERMS_VERSION);
-  assert.equal(core.validateIntake(body("2026-10-23")).value.termsVersion, "2026-10-23");
+  assert.equal(core.validateIntake(body("2026-11-01")).value.termsVersion, "2026-11-01");
+  assert.ok(core.validateIntake(body("2026-10-26")).errors.some((e) => e.field === "terms"));
   assert.ok(core.validateIntake(body("2026-09-01")).errors.some((e) => e.field === "terms"));
 });
 
@@ -1893,6 +2002,41 @@ test("the optional don't-publish box rides from the form to the stored record an
   assert.equal(require("../../functions/url-review-failures").failureRecord(Object.assign({ kind: "failed", runId: "a1" }, value)).intake.unlisted, true);
 });
 
+test("a finished report is stored without the shapes Firestore refuses, and the rest is kept as it was", () => {
+  // Firestore counts the report's own map as level 1 and refuses a 21st level of maps and arrays.
+  const levels = (value) => Array.isArray(value) || (value && typeof value === "object" && !(value instanceof Date))
+    ? 1 + Math.max(0, ...Object.values(value).map(levels)) : 0;
+  const tower = (n) => (n ? { k: tower(n - 1) } : "leaf");
+  const at = new Date("2026-10-27T07:33:01Z");
+  const report = {
+    id: "r1",
+    at,
+    browser: { scripts: { "": 120, "cdn.example.com": 40 }, globals: { __NEXT_DATA__: { page: "/" } } },
+    points: [[1, 2], [3, 4]],
+    deep: tower(25),
+    fine: { list: [1, "two", { three: 3 }], nothing: null, at }
+  };
+  const fixed = [];
+  const kept = core.storable(report, fixed);
+  assert.deepEqual(kept.browser.scripts, { "(empty)": 120, "cdn.example.com": 40 });
+  assert.deepEqual(kept.browser.globals, { _NEXT_DATA__: { page: "/" } });
+  assert.deepEqual(kept.points, [{ items: [1, 2] }, { items: [3, 4] }]);
+  assert.ok(levels(kept) <= 20);
+  assert.equal(typeof kept.deep.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k.k, "string");
+  assert.deepEqual(kept.fine, report.fine);
+  assert.equal(kept.at, at);
+  assert.equal(report.browser.scripts[""], 120);
+  assert.deepEqual(fixed.slice(0, 3), [
+    "report.browser.scripts.\"\" (renamed \"(empty)\")",
+    "report.browser.globals.\"__NEXT_DATA__\" (renamed \"_NEXT_DATA__\")",
+    "report.points.0 (an array in an array, kept as { items })"
+  ]);
+  assert.match(fixed[fixed.length - 1], /^report\.deep(\.k){19} \(past 20 levels, kept as JSON\)$/);
+  const record = core.intakeRecord(core.validateIntake({ termsAccepted: true, termsVersion: core.TERMS_VERSION, name: "Ana Ruiz", email: "ana@example.org", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://example.org/" }).value, report, {});
+  assert.deepEqual(record.report.points, kept.points);
+  assert.deepEqual(core.storable(record.report, []), record.report);
+});
+
 const failures = require("../../functions/url-review-failures");
 // The failure tests are written against the fixes up to #365; a later fix to a cause they use would re-run their example failures.
 failures.FIXES.splice(failures.FIXES.findIndex((fix) => fix.ref === "#365") + 1);
@@ -1915,6 +2059,8 @@ test("failure causes are classed from the review's own messages", () => {
     ["certificate has expired", "tls"],
     ["connect ECONNREFUSED 1.2.3.4:443", "connection"],
     ["Value for argument \"data\" is not a valid Firestore document. Cannot use \"undefined\" as a Firestore value (found in field \"report.cases.`28`.path\").", "save"],
+    ["3 INVALID_ARGUMENT: Property report contains an invalid nested entity.", "save"],
+    ["3 INVALID_ARGUMENT: field name '__NEXT_DATA__' is reserved.", "save"],
     ["Cannot read properties of undefined (reading 'x')", "unknown"]
   ];
   cases.forEach(([message, id]) => assert.equal(failures.causeOf(message).id, id, message));
@@ -2105,6 +2251,37 @@ test("an http:// redirect is read over https first, as Chrome does, and fails as
   assert.equal((await core.probeRead("https://loop.example.com/")).httpRedirect, "http://loop.example.com/");
   const port = await core.fetchPublic("https://port.example.com/").then(() => null, (caught) => caught);
   assert.equal(port.message, "The site redirected to http://port.example.com:8080/, an http:// address. The review only follows https.");
+});
+
+test("an https copy of an http:// redirect that refuses the review or is slow is read like any first page, so headless Chrome gets its turn (#1552)", async (t) => {
+  t.after(fakeNetwork({
+    "https://uni.example.com/": { status: 301, headers: { location: "http://uni.example.com/inicio" } },
+    "https://uni.example.com/inicio": { status: 403, headers: { "content-type": "text/html" }, body: "<html><body>Captcha Page</body></html>" },
+    "https://cf.example.com/": { status: 302, headers: { location: "http://cf.example.com/home" } },
+    "https://cf.example.com/home": { status: 503, headers: { "content-type": "text/html", "cf-mitigated": "challenge" }, body: "<html><body>Just a moment</body></html>" },
+    "https://slow.example.com/": { status: 301, headers: { location: "http://slow.example.com/start" } },
+    "https://slow.example.com/start": { timeout: true },
+    "https://gone.example.com/": { status: 301, headers: { location: "http://gone.example.com/old" } },
+    "https://gone.example.com/old": { status: 500 }
+  }));
+  const refused = await core.fetchPublic("https://uni.example.com/");
+  assert.deepEqual([refused.status, refused.url], [403, "https://uni.example.com/inicio"]);
+  const probe = await core.probeRead("https://uni.example.com/");
+  assert.deepEqual([probe.status, probe.httpRedirect], [403, undefined]);
+  assert.notEqual(failures.diagnose({ cause: { id: "http-redirect" } }, { dns: {}, plain: probe }).now, "http-redirect");
+  assert.equal(failures.probeNeedsBrowser(probe), true);
+
+  assert.equal((await core.fetchPublic("https://cf.example.com/")).status, 503);
+  assert.equal((await core.probeRead("https://cf.example.com/")).httpRedirect, undefined);
+
+  const slow = await core.fetchPublic("https://slow.example.com/").then(() => null, (caught) => caught);
+  assert.match(slow.message, /took too long/);
+  assert.equal(slow.url, "https://slow.example.com/start");
+  assert.equal((await core.probeRead("https://slow.example.com/")).httpRedirect, undefined);
+
+  const gone = await core.fetchPublic("https://gone.example.com/").then(() => null, (caught) => caught);
+  assert.equal(failures.causeOf(gone.message).id, "http-redirect");
+  assert.equal((await core.probeRead("https://gone.example.com/")).httpRedirect, "http://gone.example.com/old");
 });
 
 test("the connection check tells a port that opens from one that refuses", async () => {
@@ -2372,7 +2549,7 @@ test("later runs of a class with an open bug are commented on that bug once (#11
   assert.deepEqual([note.key, note.issue, note.runs, note.lastAt], ["bot-protection-319", 330, 3, "2026-10-25T11:30:00Z"]);
   assert.deepEqual(note.ids, ["x9", latest.id, later.id]);
   assert.deepEqual(note.hosts, ["hoka.com", "ag.org", "casio.com"]);
-  assert.match(note.body, /^3 more URL review runs failed with the cause class `bot-protection` since this bug was last updated \(2026-10-21\), on 3 sites: hoka\.com, ag\.org, casio\.com\.\n\n- 2026-10-25 11:30 UTC, failed re-run `x9` of 1 failure on hoka\.com: /);
+  assert.match(note.body, /^3 more URL review runs failed with the cause class `bot-protection` since this bug was last updated \(2026-10-21\), on 3 sites: hoka\.com, ag\.org, casio\.com\.\n\n\*\*Triage:\*\* none of these runs is clearly the site's own state, so the daily fix starts an agent for them\.\n<!-- review-triage \{"runs":3,"ours":3,"site":\{\}\} -->\n\n- 2026-10-25 11:30 UTC, failed re-run `x9` of 1 failure on hoka\.com: /);
   assert.match(note.body, /- 2026-10-23 10:00 UTC, failed run `f-2026-10-23T10:00:00Z` on casio\.com: .* Now: The plain read is refused/);
   assert.match(note.body, /### Probe of the latest failure \(hoka\.com\)\n- DNS: 1 addresses/);
   assert.match(note.body, /### Last log lines of `f-2026-10-23T10:00:00Z`\n```\nReading https:\/\/casio\.com\/\?…\n```/);
@@ -2392,6 +2569,39 @@ test("later runs of a class with an open bug are commented on that bug once (#11
   assert.deepEqual(failures.bugPlan([listed], [], [])[0].ids, [listed.id]);
 });
 
+test("each filed run is triaged as the site's own state or ours, and the issue carries a marker the daily fix reads (#1982)", () => {
+  const dns = { addresses: ["1.2.3.4"] };
+  const filed = (at, cause, message, probe, extra) => failedAt(at, Object.assign({
+    id: "f-" + cause + "-" + at,
+    host: cause + ".example.com",
+    cause: { id: cause },
+    error: { message },
+    diagnosis: { cause, cleared: false, rerun: false, nowLabel: "Still failing" },
+    probe,
+    lines: []
+  }, extra || {}));
+  const wall = filed("2026-10-28T10:00:00Z", "bot-protection", "The site's bot protection refused the review (status 403).",
+    { dns, plain: { hops: [], status: 403, challenge: "Akamai" }, browser: { ok: true, untagged: true, docStatus: 403, challenge: "Akamai" } });
+  const plainOnly = filed("2026-10-28T11:00:00Z", "bot-protection", "The site's bot protection refused the review (status 403).",
+    { dns, plain: { hops: [], status: 403, challenge: "Cloudflare" } });
+  const expired = filed("2026-10-28T10:00:00Z", "tls", "certificate has expired", { dns, plain: { hops: [], error: "certificate has expired", code: "CERT_HAS_EXPIRED" } });
+  const wrongName = filed("2026-10-28T11:00:00Z", "tls", "Hostname/IP does not match certificate's altnames", { dns, plain: { hops: [], error: "x", code: "ERR_TLS_CERT_ALTNAME_INVALID" } });
+  const noIntermediate = filed("2026-10-28T12:00:00Z", "tls", "unable to verify the first certificate", { dns, plain: { hops: [], error: "unable to verify the first certificate", code: "UNABLE_TO_VERIFY_LEAF_SIGNATURE" } });
+  const originDown = filed("2026-10-28T10:00:00Z", "status", "The URL returned status 522.", { dns, plain: { hops: [], status: 522, html: true } });
+  const wallRerun = { id: "x7", status: "failed", at: "2026-10-28T13:00:00Z", host: "walled.example.com", failureIds: [], error: { message: "The site's bot protection refused the review (status 403, an Imperva bot check), in the plain request and in headless Chrome." }, cause: { id: "bot-protection" }, lines: [] };
+
+  const bugs = failures.bugPlan([wall, plainOnly, expired, wrongName, noIntermediate, originDown], [wallRerun], []);
+  const byKey = Object.fromEntries(bugs.map((bug) => [bug.key, bug]));
+  const marker = (body) => JSON.parse(body.match(/<!-- review-triage (\{.*?\}) -->/)[1]);
+
+  assert.deepEqual(marker(byKey["bot-protection-319"].body), { runs: 3, ours: 1, site: { "bot-wall": 2 } });
+  assert.match(byKey["bot-protection-319"].body, /\*\*Triage:\*\* 2 of these 3 runs are the site's own state \(2 runs behind a bot wall that refuses headless Chrome too\)\. The daily fix starts an agent for the other 1\./);
+  assert.match(byKey["bot-protection-319"].body, /on bot-protection\.example\.com: .* Site's own state: behind a bot wall that refuses headless Chrome too\./);
+  assert.deepEqual(marker(byKey.tls.body), { runs: 3, ours: 1, site: { cert: 2 } });
+  assert.deepEqual(marker(byKey.status.body), { runs: 1, ours: 0, site: { "5xx": 1 } });
+  assert.match(byKey.status.body, /\*\*Triage:\*\* every run here is the site's own state \(1 run answering every client with a 5xx\), so the daily fix comments without starting an agent\./);
+});
+
 test("a re-run of a failure that kept no frameworks reviews with the form's default", () => {
   const fromAlert = failedAt("2026-10-22T10:00:00Z", { options: { pages: 0, depth: 0, frameworks: [] } });
   assert.deepEqual(failures.rerunPlan([fromAlert], [], 8).runs[0].options, { pages: 0, depth: 0, frameworks: ["Playwright"] });
@@ -2407,6 +2617,16 @@ test("the review desk lists re-runs with their report summary and log", () => {
   assert.match(row.why, /^The site took too long\. Cleared/);
   assert.match(desk.PAGE, /id="reruns"/);
   assert.match(desk.PAGE, /\/desk\/rerun/);
+});
+
+test("both desk pages sign in through the modular Firebase build, which has the authenticator step (#2111)", () => {
+  const desk = require("../../functions/url-review-desk");
+  for (const page of [desk.PAGE, desk.FAILURES_PAGE]) {
+    assert.doesNotMatch(page, /-compat\.js/);
+    assert.match(page, /firebase-auth\.js/);
+    assert.match(page, /getMultiFactorResolver\(desk\.auth, error\)/);
+    assert.match(page, /desk\.fa\.TotpMultiFactorGenerator/);
+  }
 });
 
 test("the review reports carry a failure section with causes, sites, re-runs, open bugs and the trend", () => {
@@ -3064,12 +3284,84 @@ test.describe("domain health", () => {
     const restore = fakeNetwork({ [URL_]: { status: 200, headers: STRONG_HEADERS, body: HTML } });
     const asked = [];
     try {
-      const report = await core.reviewTarget(URL_, { browse: async () => ({ ok: false }), webrisk: async (url) => { asked.push(url); return { ok: true, url, threats: [] }; } });
+      const report = await core.reviewTarget(URL_, {
+        browse: async () => ({ ok: false }),
+        webrisk: async (url) => { asked.push(url); return { ok: true, url, threats: [] }; },
+        places: async () => { throw new Error("a site that is not local is not looked up on Google Maps"); }
+      });
       assert.deepEqual(asked, [URL_]);
       assert.equal(verdict(report.insights, "sec-safebrowsing"), "pass");
+      assert.equal(verdict(report.insights, "local-profile"), "missing");
+      assert.ok(!report.cases.some((row) => row.id === "SEO-05"));
     } finally {
       restore();
     }
+  });
+
+  test("a local business is checked against its Google Business Profile, and only the place ID is kept (#2067)", async () => {
+    const ld = { "@context": "https://schema.org", "@type": "HardwareStore", name: "Example Garden Tools", telephone: "+1 415 555 0100", address: { "@type": "PostalAddress", streetAddress: "12 Garden Way", addressLocality: "Springfield" } };
+    const html = HTML.replace("</head>", "<script type=\"application/ld+json\">" + JSON.stringify(ld) + "</script></head>");
+    const restore = fakeNetwork({ [URL_]: { status: 200, headers: STRONG_HEADERS, body: html } });
+    const asked = [];
+    try {
+      const report = await core.reviewTarget(URL_, {
+        browse: async () => ({ ok: false }),
+        places: async (request) => {
+          asked.push(request);
+          return { ok: true, places: [{ id: "ChIJgarden42", displayName: { text: "Example Garden Tools" }, formattedAddress: "12 Garden Way, Springfield, IL 62704, USA", nationalPhoneNumber: "(415) 555-0100", websiteUri: "https://shop.example.com/old-store", businessStatus: "OPERATIONAL" }] };
+        }
+      });
+      assert.deepEqual(asked, [{ textQuery: "Example Garden Tools, 12 Garden Way, Springfield", languageCode: "en" }]);
+      const local = (key) => report.insights.findings.find((item) => item.key === key);
+      assert.equal(local("local-profile").verdict, "pass");
+      assert.match(local("local-profile").evidence, /maps\/place\/\?q=place_id:ChIJgarden42/);
+      assert.deepEqual([local("local-website").verdict, local("local-website").severity, local("local-website").area], ["fail", "high", "SEO"]);
+      assert.match(local("local-website").evidence, /get 404 instead of a page of shop\.example\.com/);
+      assert.equal(local("local-utm").verdict, "risk");
+      assert.equal(local("local-nap").verdict, "pass");
+      const seo05 = report.cases.find((row) => row.id === "SEO-05");
+      assert.ok(seo05, "the Business Profile case is proposed");
+      assert.deepEqual([seo05.layer, seo05.verdict, seo05.severity], ["SEO", "fail", "high"], "the broken profile link backs the case");
+      const kept = JSON.stringify(report);
+      for (const text of ["62704", "old-store", "(415) 555-0100"]) assert.ok(!kept.includes(text), "the report kept the profile's " + text);
+    } finally {
+      restore();
+    }
+  });
+
+  test("Business Profile findings follow what the lookup found (#2067)", () => {
+    const run = (local) => analyzeHtmlPages([{ url: URL_, html: HTML }], { local });
+    const find = (result, key) => result.findings.find((item) => item.key === key);
+    const base = { ok: true, query: "Example, Springfield", placeId: "ChIJx", by: "website", status: "OPERATIONAL", website: { present: true, http: false, utm: true, sameSite: true, reach: { status: 200, hops: 0, sameSite: true } }, mismatch: {} };
+    const good = run(base);
+    assert.deepEqual(["local-profile", "local-website", "local-nap"].map((key) => verdict(good, key)), ["pass", "pass", "pass"]);
+    assert.equal(verdict(good, "local-utm"), "missing");
+
+    assert.deepEqual(["verdict", "severity"].map((field) => find(run(Object.assign({}, base, { status: "CLOSED_PERMANENTLY" })), "local-status")[field]), ["fail", "high"]);
+    assert.equal(find(run(Object.assign({}, base, { status: "CLOSED_TEMPORARILY" })), "local-status").severity, "medium");
+
+    const off = run(Object.assign({}, base, { website: Object.assign({}, base.website, { utm: false, reach: { status: 200, hops: 3, sameSite: true } }), mismatch: { phone: ["+1 415 555 0100"], hours: [1, 0] } }));
+    assert.equal(find(off, "local-website").title, "The Google Business Profile's link takes 3 redirects");
+    assert.equal(find(off, "local-utm").severity, "low");
+    assert.deepEqual([find(off, "local-nap").severity, find(off, "local-nap").evidence], ["low", "The profile differs from the site in the phone (+1 415 555 0100 on the site)."], "a different phone may be a call-tracking number");
+    assert.equal(find(run(Object.assign({}, base, { mismatch: { address: "12 Garden Way", phone: ["+1 415 555 0100"] } })), "local-nap").severity, "medium");
+    assert.equal(find(off, "local-hours").evidence, "The LocalBusiness hours on the site and the Business Profile disagree on Monday and Sunday.");
+    assert.equal(find(run(Object.assign({}, base, { mismatch: { name: "Example" } })), "local-nap").severity, "low");
+
+    const elsewhere = run(Object.assign({}, base, { website: Object.assign({}, base.website, { reach: { status: 200, hops: 1, sameSite: false } }) }));
+    assert.equal(find(elsewhere, "local-website").evidence, "The profile's website link redirects away from shop.example.com.");
+    assert.equal(find(run(Object.assign({}, base, { by: "phone", website: { present: false } })), "local-website").title, "The Google Business Profile has no website link");
+
+    const none = run({ ok: true, query: "Example, Springfield", placeId: "", candidates: 2 });
+    assert.deepEqual([find(none, "local-profile").verdict, find(none, "local-profile").evidence], ["person", "Google Maps was searched for \"Example, Springfield\". 2 places came back, and none links to shop.example.com or lists the site's phone."]);
+    assert.ok(!run(null).findings.some((item) => /^local-/.test(item.key)));
+  });
+
+  test("LocalBusiness subtypes need a name and an address, like LocalBusiness (#2067)", () => {
+    const html = HTML.replace("</head>", "<script type=\"application/ld+json\">{\"@type\":\"Dentist\",\"name\":\"Example Dental\"}</script></head>");
+    const result = analyzeHtmlPages([{ url: URL_, html }]);
+    assert.equal(verdict(result, "seo-schema-props"), "risk");
+    assert.match(result.findings.find((item) => item.key === "seo-schema-props").evidence, /Dentist lacks address/);
   });
 });
 
@@ -3279,6 +3571,45 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.deepEqual(holes, []);
   });
 
+  test("a retest case built from a finding carries its title and why as messages, in English the same text (#1406)", () => {
+    const { english } = require("../../functions/url-review-findings-en");
+    const es = require("../../functions/url-review-findings-copy").forLang("es");
+    const cache = { title: { id: "pf-cache.title", vars: {} }, evidence: { id: "pf-cache.evidence", vars: {} }, fix: { id: "pf-cache.fix", vars: {} } };
+    const findings = [
+      { id: "F-01", key: "pf-cache", area: "Performance", verdict: "risk", severity: "medium", rank: 1, pages: ["/", "/a", "/b"],
+        title: english(cache.title), evidence: english(cache.evidence), fix: english(cache.fix), msg: cache },
+      { id: "F-02", key: "pf-cache", area: "Performance", verdict: "person", severity: "low", rank: 2,
+        title: english(cache.title), evidence: english(cache.title), msg: { title: cache.title, evidence: cache.title } },
+      { id: "F-03", key: "pf-cache", area: "Performance", verdict: "risk", severity: "low", rank: 3, title: "No message", evidence: "Plain." },
+      { id: "F-04", key: "pf-cache", area: "Performance", verdict: "risk", severity: "low", rank: 4, title: english(cache.title), evidence: "Edited by hand", fix: "x", msg: cache }
+    ];
+    const rt = caseRank.refine([], { findings, origin: "https://shop.example.com" }).filter((item) => /^RT-/.test(item.id));
+    assert.equal(rt.length, 4);
+    const [many, byHand, plain, edited] = ["F-01", "F-02", "F-03", "F-04"].map((id) => rt.find((item) => item.finding === id));
+    for (const item of [many, byHand]) {
+      assert.ok(item.msg, item.id + " has no msg");
+      assert.equal(english(item.msg.title), item.title);
+      assert.equal(english(item.msg.why), item.why);
+    }
+    assert.equal(many.title, "Retest on shop.example.com, shop.example.com/a and 1 more: The start page sends no cache-control");
+    assert.equal(es.line(many.msg.title, many.title), "Volver a probar en shop.example.com, shop.example.com/a y 1 más: La página de inicio no envía cache-control");
+    assert.match(es.line(many.msg.why, many.why), /\. Esperado tras la corrección: .+\. El caso falla mientras el problema siga presente\.$/);
+    assert.equal(byHand.why, "The start page sends no cache-control. A person confirms it, because a script cannot judge it alone.");
+    assert.match(es.line(byHand.msg.why, byHand.why), /^La página de inicio no envía cache-control\. Una persona lo confirma/);
+    assert.equal(plain.msg, undefined);
+    assert.equal(edited.msg, undefined);
+    const previewed = core.previewReport({ cases: rt }).cases;
+    assert.deepEqual(previewed[0].msg, rt[0].msg, "the sample case keeps its messages, so a translated page shows it in full");
+    assert.deepEqual(previewed.slice(1).map((item) => item.msg), [undefined, undefined, undefined]);
+  });
+
+  test("the privacy case looks for the link the review found, not the word privacy in its address (#1954)", () => {
+    assert.deepEqual(core.privacyCheck({ text: "Privacy and disclaimers", href: "qa-review-legal.html" }, "/"), { check: { kind: "count", path: "/", selector: "a[href*=\"qa-review-legal.html\" i]", op: "gte", n: 1 } });
+    assert.equal(core.privacyCheck({ href: "https://shop.example.com/legal/privacy/?tab=1#top" }, "/").check.selector, "a[href*=\"privacy\" i]");
+    assert.deepEqual(core.privacyCheck(undefined, "/"), {});
+    assert.deepEqual(core.privacyCheck({ text: "Privacy" }, "/"), {});
+  });
+
   test("a case's own check and path drive its script", () => {
     const report = { finalUrl: "https://shop.example.com/", host: "shop.example.com", pages: [{ path: "/", status: 200 }], cases: [
       { id: "A11Y-07", layer: "Accessibility", title: "Pinch zoom is allowed", why: "Blocked. Expected none.", fw: ["Playwright"], path: "/login", check: { kind: "count", path: "/login", selector: "meta[name=\"viewport\"][content*=\"user-scalable=no\" i]", op: "eq", n: 0 } },
@@ -3292,6 +3623,55 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.doesNotMatch(text, /test\.fixme\("A11Y-07/);
   });
 
+  test("the top-ranked axe, cookie and consent cases get a script in every browser framework, not a skipped stub (#2183)", () => {
+    const browserFw = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "Reqnroll", "Jest", "Vitest", "Mocha"];
+    const pages = ["/", "/products", "/view_cart"];
+    const report = { finalUrl: "https://shop.example.com/", host: "shop.example.com", pages: pages.map((path) => ({ path, status: 200 })), cases: [
+      { id: "FN-05", layer: "Functional", title: "Buttons have an accessible name", why: "8 buttons. axe-core 4.14.0 found 4 elements breaking button-name (critical) on shop.example.com.", fw: browserFw, path: "/", pages },
+      { id: "A11Y-04", layer: "Accessibility", title: "Text contrast holds up", why: "Contrast is measured by axe-core. Focus needs a person.", fw: browserFw, path: "/", pages },
+      { id: "AXE-01", layer: "Accessibility", title: "Links must have discernible text", why: "axe-core 4.14.0 found 2 elements breaking link-name (serious) on shop.example.com. The case reruns axe-core with only the link-name rule on each of those pages and expects no violation.", fw: browserFw, path: "/", pages: ["/"] },
+      { id: "SEC-06", layer: "Security", title: "Cookies are Secure and HttpOnly", why: "1 cookie was set. 1 was missing Secure or HttpOnly (csrftoken).", fw: browserFw, path: "/", pages },
+      { id: "PR-03", layer: "Privacy", title: "A consent notice appears before tags", why: "No consent wording was found. Google Ads fired before any choice.", fw: browserFw }
+    ] };
+    const ctx = { startPath: "/", paths: pages };
+    const kinds = report.cases.map((item) => scripts.checkFor(item, ctx));
+    assert.deepEqual(kinds.map((check) => check.kind), ["axe", "axe", "axe", "setCookies", "trackers"]);
+    assert.deepEqual(kinds.slice(0, 3).map((check) => check.rules), [["button-name"], ["color-contrast"], ["link-name"]]);
+    assert.deepEqual(kinds[0].paths, pages);
+    assert.deepEqual(kinds[3].paths, pages);
+    const stub = /test\.fixme|it\.skip|test\.skip|xScenario|@Disabled|enabled = false|pytest\.mark\.skip|\[Tags\]\s+manual|, skip: |@manual|A person runs this case/;
+    const marks = { "FN-05": /button-name/, "A11Y-04": /color-contrast/, "AXE-01": /link-name/, "SEC-06": /secure|Secure/, "PR-03": /doubleclick|tracker/ };
+    report.cases.forEach((item) => {
+      const out = scripts.snippets(report, item, browserFw);
+      assert.equal(out.length, browserFw.length, item.id);
+      out.forEach(({ framework, code }) => {
+        assert.doesNotMatch(code, stub, item.id + " in " + framework);
+        assert.match(code, marks[item.id], item.id + " in " + framework);
+      });
+    });
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "qa-review-top-"));
+    try {
+      const broken = scripts.bundle(report, report.cases, browserFw).files
+        .filter((file) => /\.(m?js|ts|py)$/.test(file.path))
+        .map((file) => ({ file: file.path, error: syntaxError(file.path, file.content, dir) }))
+        .filter((row) => row.error);
+      assert.deepEqual(broken, []);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("an axe rule no case covers becomes an AXE case that reruns that rule on its pages (#2183)", () => {
+    const browser = { ok: true, axe: { ran: true, version: "4.14.0", pages: [
+      { path: "/", violations: [{ id: "link-name", impact: "serious", help: "Links must have discernible text", nodes: 2, targets: [".carousel-left"] }] },
+      { path: "/shop", violations: [{ id: "link-name", impact: "serious", help: "Links must have discernible text", nodes: 1, targets: [".carousel-right"] }] }
+    ] } };
+    const out = caseRank.refine([{ id: "FN-01", layer: "Functional", title: "x", why: "y", fw: ["Playwright"] }], { browser, origin: "https://shop.example.com" });
+    const axe = out.find((item) => item.id === "AXE-01");
+    assert.deepEqual(axe.check, { kind: "axe", paths: ["/", "/shop"], rules: ["link-name"] });
+    assert.deepEqual(scripts.checkFor(axe, { startPath: "/", paths: ["/"] }), axe.check);
+  });
+
   test("the fix kit does not tell a site Cloudflare already fronts to put Cloudflare in front", () => {
     const readme = (technologies) => {
       const report = { url: "https://example.com/", cases: [], technologies, insights: { fixkit: { hosting: "GitHub Pages", headers: [{ name: "X-Frame-Options", value: "DENY" }] } } };
@@ -3301,6 +3681,36 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.match(proxied, /Transform Rule/);
     assert.doesNotMatch(proxied, /Put a CDN|in front and use/);
     assert.match(readme([]), /Put a CDN such as Cloudflare in front/);
+  });
+
+  test("the scripts ZIP READMEs read in the page language, and stay the same in English (#1401)", () => {
+    const report = { url: "https://example.com/", finalUrl: "https://example.com/", host: "example.com", cases: [{ id: "A11Y-01", layer: "Accessibility", title: "Images", why: "Missing.", fw: ["Playwright"] }], insights: {
+      summary: "example.com scores 61 out of 100 (C).",
+      score: { overall: 61, grade: "C" },
+      findings: [{ rank: 1, area: "Accessibility", severity: "high", effort: "minutes", title: "100 images have no alt attribute", evidence: "Seen on /.", fix: "Add alt text.", msg: { title: { id: "x" }, evidence: { id: "y" }, fix: { id: "z" } } }],
+      fixkit: { hosting: "Netlify", headers: [{ name: "X-Frame-Options", value: "DENY" }] }
+    } };
+    const read = (words) => {
+      const files = scripts.bundle(report, report.cases, ["Playwright"], words).files;
+      return [files.find((file) => file.path === "README.md").content, files.find((file) => file.path === "fix-kit/README.md").content];
+    };
+    const [main, kit] = read();
+    assert.deepEqual(read({ lang: "en" }), [main, kit]);
+    assert.match(main, /\nAutomation scripts proposed from a public analysis of https:\/\/example\.com\.\n/);
+    assert.match(main, /\n## What is inside\n\n- Playwright: 1 case\(s\)\n/);
+    assert.ok(kit.startsWith("# Fix kit for https://example.com\n\nHealth 61/100 (C). example.com scores 61 out of 100 (C).\n\nThese files were written from a public analysis."), kit);
+    assert.match(kit, /\n## Fix first\n\n1\. \*\*100 images have no alt attribute\*\* \(Accessibility, high, minutes\)\n   Seen on \/\.\n   Fix: Add alt text\.\n/);
+    assert.match(kit, /\nThe site looks hosted on Netlify, so that header file is listed first\.\n$/);
+
+    const es = { title: "100 imágenes no tienen atributo alt", evidence: "Visto en /.", fix: "Agrega texto alternativo." };
+    const [mainEs, kitEs] = read({ lang: "es-419", summary: "example.com obtiene 61 de 100 (C).", line: (item, part) => es[part] });
+    assert.match(mainEs, /\nScripts de automatización propuestos a partir de un análisis público de https:\/\/example\.com\.\n/);
+    assert.match(mainEs, /\n## Qué incluye\n\n- Playwright: 1 caso\(s\)\n/);
+    assert.match(mainEs, /npx playwright/);
+    assert.ok(kitEs.startsWith("# Kit de arreglos para https://example.com\n\nPuntuación de salud 61/100 (C). example.com obtiene 61 de 100 (C).\n"), kitEs);
+    assert.match(kitEs, /\n## Arreglar primero\n\n1\. \*\*100 imágenes no tienen atributo alt\*\* \(Accesibilidad, alta, minutos\)\n   Visto en \/\.\n   Corrección: Agrega texto alternativo\.\n/);
+    assert.match(kitEs, /\n## Archivos\n\n- `/);
+    assert.match(kitEs, /El sitio parece alojado en Netlify/);
   });
 
   test("the preview frosts every section, and leaves ids, addresses, dates and short labels as they are", () => {
@@ -3330,9 +3740,18 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.equal(report.statement.includes(secret), true, "the stored report is not changed");
   });
 
-  test("the preview keeps the priority and drops the selectors and checks", () => {
-    const preview = core.previewReport({ cases: [{ id: "MB-01", title: "Layout holds", why: "Wider. Pushed out.", priority: "P2", risk: 30, pages: ["/"], selectors: ["table.prices"], check: { kind: "viewport" } }] });
-    assert.deepEqual([preview.cases[0].priority, preview.cases[0].risk, preview.cases[0].selectors, preview.cases[0].check], ["P2", 30, undefined, undefined]);
+  test("the preview keeps the priority and drops the selectors and checks, except on the sample case", () => {
+    const item = { id: "MB-01", title: "Layout holds", why: "Wider. Pushed out.", priority: "P2", risk: 30, pages: ["/"], selectors: ["table.prices"], check: { kind: "viewport" } };
+    const preview = core.previewReport({ cases: [Object.assign({}, item, { id: "MB-00", priority: "P1" }), item] });
+    assert.deepEqual([preview.cases[1].priority, preview.cases[1].risk, preview.cases[1].selectors, preview.cases[1].check], ["P2", 30, undefined, undefined]);
+    assert.deepEqual([preview.cases[0].sample, preview.cases[0].selectors, preview.cases[0].check], [true, ["table.prices"], { kind: "viewport" }]);
+  });
+
+  test("a comparison column's preview keeps no case whole", () => {
+    const preview = core.previewReport({ cases: [{ id: "SE-01", title: "Strict-Transport-Security is sent on the start page", why: "The header was missing. Send it with a long max-age.", check: { kind: "header" } }] }, { sample: false });
+    assert.equal(preview.cases[0].sample, undefined);
+    assert.equal(preview.cases[0].check, undefined);
+    assert.ok(preview.cases[0].why.includes("\u2060"));
   });
 
   test("the preview leaves out the asker's comparison", () => {

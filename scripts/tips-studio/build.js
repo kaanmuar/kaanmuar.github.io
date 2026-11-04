@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Renders the daily tips series: a feed card, a story, and a 12 s clip per tip, plus captions,
+/* Renders the daily tips series: a feed card, a story, and a 30 to 45 s clip per tip, plus captions,
    a seeded random daily schedule, and Buffer CSVs.
    node scripts/tips-studio/build.js [--tips hsts,contrast] [--skip-video] [--start 2026-10-26]
      [--batch tips-2026-10] [--seed 7] [--every 1] [--per-day 2] [--after 0] [--schedule-only]
@@ -12,13 +12,20 @@
    node scripts/tips-studio/build.js --source runs --start 2026-10-28 --every 4
      renders the real-run scorecards from runs.js, in their listed order, one every 4 days.
    --source runs-100 loads runs-100.js the same way; its batch defaults to the module name.
-   Every clip speaks its title and action in a neural voice (edge-tts) over the launch reels' bed
-   (media/url-review-demos/bed.wav).
+   A clip is a run of narrated scenes (#1619): the hook (title), why it matters (body), the visual (tip.say or the
+   visual's note), a related fact (tip.more, or one read off a scorecard), the fix (action) and the end card. Each
+   line is spoken on its own in a neural voice (edge-tts) over the launch reels' bed (media/url-review-demos/bed.wav),
+   and its scene lasts as long as the line.
+   Each post shows the official marks of what it covers (#1917): a reviewed site's own icon, its home page scrolling on a
+   phone, its benchmark among the Live Reports and a six-area radar; each competitor's icon and a score race; or the
+   marks of the products a tip names. The end card lists the networks we post on.
    Clips take six languages in turn (en, es, pt, de, fr, it; woman, then man), starting --lang-offset N
    along that cycle: the card, voice, and TikTok/YouTube captions are all in the clip's language.
    A render exports the strings and runs translate.py first (--no-translate skips it); a clip still
-   untranslated speaks English, and a clip that comes out silent stops the build.
-   To translate by hand or by agent instead, fill <batch>/i18n.json in translate.py's format:
+   untranslated speaks English, and a clip that comes out silent stops the build. A translation in the wrong
+   register (usted, du) stops it too, except in CI, where that clip goes out in English.
+   To translate by hand or by agent instead, fill <batch>/i18n.json in translate.py's format, then rebuild its
+   cache with translate.py <batch> --seed so a later render does not send every string back to the translator:
      node scripts/tips-studio/build.js --source runs-100 --export-strings
      node scripts/tips-studio/build.js --source runs-100 --rotate [--shard 0/2] [--resume]
    Captions take their hashtags from scripts/social-tags.js; every run first refreshes the day's trending
@@ -30,26 +37,57 @@
    A source names its social hub kind with studio.KIND or tip.kind (trick, news, advice, compare, myth, quiz, term,
    skit, series); a quiz sets tip.answer to the id of the tip that reveals it, tip.steps and tip.term are optional.
    --rotate writes voiced/<slug>.mp4 and voiced/<slug>.json (language, speech, TikTok and YouTube copy)
-   for clips already queued, and leaves the stills, calendar, and Buffer CSVs alone. */
+   for clips already queued, and leaves the stills, calendar, and Buffer CSVs alone.
+   With STRICT_TRANSLATE set, a translator that refuses stops the build with exit 75 before anything is drawn, so no
+   clip goes out in English (studio-render.js sets it and hands the strings to an agent). */
 
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 require("../playwright-sandbox");
 const { chromium } = require("playwright");
+const brands = require("./brands");
+const assets = require("./site-assets");
 const ROOT = path.resolve(__dirname, "../..");
 const FFMPEG = fs.existsSync("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg";
 const FFPROBE = FFMPEG.replace(/ffmpeg$/, "ffprobe");
 // Microsoft neural voices through edge-tts (pip install edge-tts): warm and upbeat, never the Piper ones.
-const EDGE_TTS = process.env.EDGE_TTS || "/tmp/review-tts/bin/edge-tts";
+// macOS clears /tmp, so the studio's virtualenv lives under ~/.local/share; EDGE_TTS or one on the PATH also works.
+const TTS_HOME = path.join(require("os").homedir(), ".local/share/review-tts");
+const TTS_INSTALL = "python3 -m venv " + TTS_HOME + " && " + TTS_HOME + "/bin/pip install edge-tts";
+const EDGE_TTS = process.env.EDGE_TTS || [path.join(TTS_HOME, "bin/edge-tts"), "/tmp/review-tts/bin/edge-tts", "edge-tts"]
+  .find((bin) => spawnSync(bin, ["--version"]).status === 0) || path.join(TTS_HOME, "bin/edge-tts");
+// Single-language voices only: a Multilingual one guesses the language of every request, and a clip sends one per
+// scene, so a French clip switched to English on a line of hosts. Spanish speaks in a LATAM voice.
 const VOICES = [
-  ["en-w", "en-US-AvaMultilingualNeural"], ["en-m", "en-US-AndrewMultilingualNeural"],
-  ["es-w", "es-ES-XimenaNeural"], ["es-m", "es-ES-AlvaroNeural"],
-  ["pt-w", "pt-BR-ThalitaMultilingualNeural"], ["pt-m", "pt-BR-AntonioNeural"],
-  ["de-w", "de-DE-SeraphinaMultilingualNeural"], ["de-m", "de-DE-FlorianMultilingualNeural"],
-  ["fr-w", "fr-FR-VivienneMultilingualNeural"], ["fr-m", "fr-FR-RemyMultilingualNeural"],
-  ["it-w", "it-IT-IsabellaNeural"], ["it-m", "it-IT-GiuseppeMultilingualNeural"]
+  ["en-w", "en-US-AvaNeural"], ["en-m", "en-US-AndrewNeural"],
+  ["es-w", "es-MX-DaliaNeural"], ["es-m", "es-MX-JorgeNeural"],
+  ["pt-w", "pt-BR-FranciscaNeural"], ["pt-m", "pt-BR-AntonioNeural"],
+  ["de-w", "de-DE-KatjaNeural"], ["de-m", "de-DE-ConradNeural"],
+  ["fr-w", "fr-FR-DeniseNeural"], ["fr-m", "fr-FR-HenriNeural"],
+  ["it-w", "it-IT-IsabellaNeural"], ["it-m", "it-IT-DiegoNeural"]
 ].map(([file, voice]) => ({ file, voice, lang: file.slice(0, 2) }));
+// How a voice reads an English term it says wrong as written, so a LATAM voice says "deploy" the English way. Only the
+// voice gets these; card text stays as written. The es-MX voices already say most tech words right (release,
+// JavaScript, Search Console, header names), so list a term only when its respelling is heard as the English word
+// more often. Longer terms first, since each matches a whole word, case aside.
+const SAY_AS = {
+  es: [
+    ["Report-Only", "Report Ounli"], ["robots.txt", "róbots punto te equis te"], ["llms.txt", "ele ele eme ese punto te equis te"],
+    ["QA-lab", "kiu ei lab"], ["Consent Mode", "Cónsent Moud"], ["Safe Browsing", "Séif Bráusin"], ["Open Graph", "Óupen Graf"],
+    ["smoke tests", "smóuk tests"], ["smoke test", "smóuk test"], ["lazy-load", "léisi lóud"], ["lazy load", "léisi lóud"],
+    ["Lighthouse", "Láit Jáus"], ["Analytics", "Anályticks"], ["Googlebot", "Gúgol bot"], ["GitHub", "Git Hub"],
+    ["Playwright", "Pléirait"], ["Stripe", "Straip"], ["deployments", "diplóiments"], ["deployed", "deplóid"],
+    ["deploys", "deplóis"], ["deploy", "deplói"], ["snippets", "snípets"], ["sitemaps", "sáitmaps"], ["sitemap", "sáitmap"],
+    ["headers", "jéders"], ["header", "jéder"], ["plugins", "plóguins"], ["screenshots", "scrínshots"],
+    ["screenshot", "scrínshot"], ["browser", "bráuser"], ["crawlers", "królers"], ["crawler", "króler"]
+  ]
+};
+const SAY_AS_RE = Object.fromEntries(Object.entries(SAY_AS).map(([lang, pairs]) =>
+  [lang, pairs.map(([term, said]) => [new RegExp("(^|[^\\p{L}\\d])" + term.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&") + "(?![\\p{L}\\d])", "giu"), said])]));
+function sayAs(lang, text) {
+  return (SAY_AS_RE[lang] || []).reduce((out, [re, said]) => out.replace(re, (m, before) => before + said), text);
+}
 // The bed is git-ignored: a worktree from scripts/ticket-worktree.sh borrows the main checkout's, and a fresh
 // clone downloads it from the studio-assets release the way auto-live-reports.yml does.
 const BED_REL = "media/url-review-demos/bed.wav";
@@ -65,8 +103,22 @@ let BED;
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const LOCALES = { en: "en-US", es: "es-ES", pt: "pt-BR", de: "de-DE", fr: "fr-FR", it: "it-IT" };
 const UI_EN = { tryThis: "Try this", tip: "Tip", guided: "Guided tour", never: "Never runs your tests",
-  end: "Let your page do the talking.", endNote: "How a public-page review works, step by step." };
+  end: "Let your page do the talking.", endNote: "How a public-page review works, step by step.",
+  why: "Why it matters", more: "Did you know?", strongest: "Strongest area", weakest: "Weakest area" };
+// Card labels of the logo and chart scenes, written here in every clip language rather than sent to the translator.
+const UI_MARKS = {
+  en: { bench: "Better than {pct} of {n} sites we reviewed", benchTop: "Top score of {n} sites we reviewed", reviewed: "Reviewed", follow: "Follow" },
+  es: { bench: "Mejor que el {pct} de {n} sitios que analizamos", benchTop: "La mejor puntuación de {n} sitios que analizamos", reviewed: "Analizado", follow: "Síguenos" },
+  pt: { bench: "Melhor que {pct} de {n} sites que analisamos", benchTop: "A maior nota entre {n} sites que analisamos", reviewed: "Analisado", follow: "Siga-nos" },
+  de: { bench: "Besser als {pct} von {n} geprüften Websites", benchTop: "Bestwert unter {n} geprüften Websites", reviewed: "Geprüft", follow: "Folgen Sie uns" },
+  fr: { bench: "Mieux que {pct} des {n} sites analysés", benchTop: "Meilleur score sur {n} sites analysés", reviewed: "Analysé", follow: "Suivez-nous" },
+  it: { bench: "Meglio del {pct} di {n} siti analizzati", benchTop: "Il punteggio più alto su {n} siti analizzati", reviewed: "Analizzato", follow: "Seguici" }
+};
 const VOICE_AT = 0.7;
+// Scene order and the shortest each may run, in seconds; a longer line stretches its scene.
+const SCENES = { hook: 3, why: 3.5, look: 5, more: 3.5, fix: 4, end: 3.4 };
+const LEAD = 0.45;
+const TAIL = 0.7;
 
 function args() {
   const out = {};
@@ -94,7 +146,6 @@ const START = opts.start || "2026-10-26";
 const SEED = Number(opts.seed || 7);
 const PICK = opts.tips ? String(opts.tips).split(",") : null;
 const FPS = 30;
-const SECONDS = 12;
 const GUIDE_HOST = "carlosandmunoz.com/qa-review-guide.html";
 
 const WINDOWS = {
@@ -188,26 +239,84 @@ function voiceFor(index, tip) {
   return VOICES.find((v) => v.file === lang + "-" + (Math.floor(turn / LANGS.length) % 2 ? "m" : "w"));
 }
 function translated(tip, lang, i18n) { return lang === "en" || tip.lang === lang || !!(i18n.clips[tip.id] && i18n.ui[lang]); }
-function uiFor(lang, i18n) { return Object.assign({}, lang === "en" ? {} : i18n.ui[lang], (studio.UI || {})[lang], { locale: LOCALES[lang] }); }
+function uiFor(lang, i18n) { return Object.assign({}, UI_MARKS[lang], lang === "en" ? {} : i18n.ui[lang], (studio.UI || {})[lang], { locale: LOCALES[lang] }); }
+
+// The official marks a post shows (scripts/tips-studio/brands.js, site-assets.js): the reviewed site's icon, its
+// home page on a phone and its benchmark, every competitor's icon, or the marks of the products a tip names.
+const EXTRAS = new Map();
+async function extrasFor(tip, browser) {
+  if (EXTRAS.has(tip.id)) return EXTRAS.get(tip.id);
+  const v = tip.visual || {};
+  const host = tip.host || (v.type === "scores" && v.note ? v.note.split(" · ")[0].trim() : "");
+  const x = { nets: brands.networks(), handle: brands.HANDLE };
+  if (v.type === "matrix") {
+    x.logos = {};
+    for (const row of v.rows) x.logos[row[0]] = await assets.siteKind(row[0]) ? "" : await assets.siteLogo(row[0]);
+  } else if (/^[\w.-]+\.[a-z]{2,}$/i.test(host)) {
+    x.host = assets.bare(host);
+    x.sensitive = await assets.siteKind(host);
+    x.logo = x.sensitive ? "" : await assets.siteLogo(host);
+    const shot = browser && !x.sensitive ? await assets.siteShot(browser, host) : "";
+    if (shot) x.shot = "file://" + shot;
+    x.bench = assets.bench(host, v.overall);
+  } else x.brands = brands.brandsIn(tip);
+  EXTRAS.set(tip.id, x);
+  return x;
+}
 function hostFor(tip) { return studio.hostFor ? studio.hostFor(tip) : GUIDE_HOST; }
 function loadI18n() {
   const file = path.join(OUT, "i18n.json");
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : { ui: {}, clips: {} };
 }
 
-// A clip whose translation is missing speaks English in the same voice slot rather than go out muted.
+// A clip whose translation is missing speaks English in the same voice slot rather than go out muted, and a
+// translated clip never voices an English line: one missing its title, body or action goes out in English as a
+// whole, and an untranslated fact, note or area name drops out of the voice-over.
+const SAID = /^(title|body|action|more|say|visual\.note|visual\.areas)(\.|$)/;
+const MUST_SAY = /^(title|body|action)(\.|$)/;
+function untranslated(tip, tr) {
+  return Object.entries(strings(tip, "", {})).filter(([at, text]) => SAID.test(at) && !(at in tr) && /[a-z]{3}/.test(text)).map(([at]) => at);
+}
 function localize(tip, index, total, i18n) {
   let voice = voiceFor(index, tip);
-  if (!translated(tip, voice.lang, i18n)) voice = VOICES.find((v) => v.file === "en-" + voice.file.slice(3));
-  const tr = voice.lang === "en" || tip.lang ? {} : i18n.clips[tip.id] || {};
+  let tr = voice.lang === "en" || tip.lang ? {} : i18n.clips[tip.id] || {};
+  let unsaid = voice.lang === "en" || tip.lang ? [] : untranslated(tip, tr);
+  if (!translated(tip, voice.lang, i18n) || unsaid.some((at) => MUST_SAY.test(at))) {
+    voice = VOICES.find((v) => v.file === "en-" + voice.file.slice(3));
+    tr = {};
+    unsaid = [];
+  }
   const local = Object.assign(JSON.parse(JSON.stringify(tip)), { lang: voice.lang });
   const cat = Object.assign({}, studio.CATS[tip.cat]);
   Object.keys(tr).forEach((at) => { if (at === "cat.label") cat.label = tr[at]; else if (!at.startsWith("cap.")) setPath(local, at, tr[at]); });
   const cap = studio.captions(local, index, total);
   const ui = uiFor(voice.lang, i18n);
-  return { tip: local, cat, ui, voice, lang: voice.lang,
-    speech: studio.plainTitle(local) + " " + local.action,
+  const voiced = JSON.parse(JSON.stringify(local));
+  unsaid.forEach((at) => setPath(voiced, at, ""));
+  const lines = narration(voiced, ui);
+  local.more = lines.fact;
+  delete lines.fact;
+  return { tip: local, cat, ui, voice, lang: voice.lang, lines,
+    speech: Object.values(lines).filter(Boolean).join(" "),
     tiktok: cap.tiktok, youtubeTitle: cap.youtubeTitle, youtube: withTags(tr["cap.youtube"], cap.youtube) };
+}
+
+// What each scene says. A UI word missing in the clip's language drops out rather than be spoken in English.
+function narration(tip, ui) {
+  const say = (key) => ui[key] || (tip.lang === "en" ? UI_EN[key] : "");
+  const v = tip.visual || {};
+  const fact = tip.more || related(v, say);
+  return { hook: studio.plainTitle(tip), why: tip.body || "", look: tip.say || (v.note || "").replace(/ · /g, ", "),
+    more: fact ? [say("more"), fact].filter(Boolean).join(" ") : "", fix: tip.action || "", end: say("end"), fact };
+}
+
+// A scorecard's own related fact: its strongest and weakest area. A comparison's title already names its leader.
+function related(v, say) {
+  if (v.type !== "scores" || !say("strongest") || !say("weakest") || v.areas.some((a) => !a[0])) return "";
+  const areas = v.areas.filter((a) => typeof a[1] === "number").sort((a, b) => b[1] - a[1]);
+  const hi = areas[0];
+  const lo = areas[areas.length - 1];
+  return hi && hi[1] !== lo[1] ? say("strongest") + ": " + hi[0] + ", " + hi[1] + ". " + say("weakest") + ": " + lo[0] + ", " + lo[1] + "." : "";
 }
 
 // The translated description ends with the English tag line; the clip's language gets its own tags.
@@ -241,44 +350,80 @@ function speak(voice, text, file) {
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const run = spawnSync(EDGE_TTS, ["--voice", voice.voice, "--rate=+6%", "--pitch=+2Hz", "--text", text, "--write-media", file], { encoding: "utf8" });
     if (run.status === 0 && seconds(file) > 0.5) return seconds(file);
+    if (run.error || /ModuleNotFoundError|No module named/.test(run.stderr)) break;
     spawnSync("sleep", [String(3 + attempt * 5)]);
   }
+  if (spawnSync(EDGE_TTS, ["--version"]).status !== 0) throw new Error("edge-tts does not run at " + EDGE_TTS + "; install it with: " + TTS_INSTALL);
   throw new Error("voice failed for " + voice.file);
 }
 
-async function renderStill(page, tip, fmt, index, total, file, ui) {
+async function renderStill(page, tip, fmt, index, total, file, ui, cat, extras) {
   const size = fmt === "feed" ? { width: 1080, height: 1350 } : { width: 1080, height: 1920 };
   await page.setViewportSize(size);
-  await page.evaluate(([t, c, f, i, n, h, u]) => window.paint(t, c, f, i, n, h, u), [tip, studio.CATS[tip.cat], fmt, index, total, hostFor(tip), ui || {}]);
+  await page.evaluate(([t, c, f, i, n, h, u, x]) => window.paint(t, c, f, i, n, h, u, x), [tip, cat || studio.CATS[tip.cat], fmt, index, total, hostFor(tip), ui || {}, extras || {}]);
   await page.waitForTimeout(150);
   await page.locator("#c").screenshot({ path: file, type: "jpeg", quality: 92 });
 }
 
-async function renderClip(page, tip, index, total, file, cover, said) {
-  said = said || { tip, cat: studio.CATS[tip.cat], ui: {}, voice: VOICES[index % 2], speech: studio.plainTitle(tip) + " " + tip.action };
-  await page.setViewportSize({ width: 1080, height: 1920 });
-  await page.evaluate(([t, c, i, n, h, u]) => window.paint(t, c, "clip", i, n, h, u), [said.tip, said.cat, index, total, hostFor(tip), said.ui]);
-  const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "tip-"));
-  const wav = path.join(tmp, "voice.mp3");
-  const length = Math.max(SECONDS, VOICE_AT + speak(said.voice, said.speech, wav) + 0.9);
-  const at = Math.round(VOICE_AT * 1000);
-  const frames = FPS * SECONDS;
-  for (let f = 0; f < frames; f += 1) {
-    await page.evaluate((s) => window.seek(s), f / FPS);
-    await page.locator("#c").screenshot({ path: path.join(tmp, String(f).padStart(4, "0") + ".jpg"), type: "jpeg", quality: 90 });
+// Each line is voiced first, so every scene knows how long it runs before a frame is drawn.
+function timeline(said, tmp) {
+  const scenes = [];
+  let at = 0;
+  for (const id of Object.keys(SCENES)) {
+    const text = said.lines[id];
+    if (id === "more" && !text) continue;
+    const audio = text ? path.join(tmp, id + ".mp3") : null;
+    const voiceDur = text ? speak(said.voice, sayAs(said.lang, text), audio) : 0;
+    const lead = id === "hook" ? VOICE_AT : LEAD;
+    const dur = Math.max(SCENES[id], text ? lead + voiceDur + TAIL : 0);
+    scenes.push({ id, start: at, dur, voiceAt: at + lead, voiceDur, audio });
+    at += dur;
   }
-  fs.copyFileSync(path.join(tmp, String(Math.round(FPS * 7.5)).padStart(4, "0") + ".jpg"), cover);
-  // Buffer previews and TikTok's default cover use the first frame, so it shows the finished card.
-  fs.copyFileSync(cover, path.join(tmp, "0000.jpg"));
-  // Same bed level, fades and loudness as the launch reels in post-studio; a long line holds the end card.
-  const run = spawnSync(FFMPEG, ["-y", "-loglevel", "error", "-framerate", String(FPS), "-i", path.join(tmp, "%04d.jpg"),
-    "-i", wav, "-stream_loop", "-1", "-i", BED, "-filter_complex",
-    "[0:v]tpad=stop_mode=clone:stop_duration=" + (length - SECONDS).toFixed(3) + "[v];" +
-    "[1:a]aformat=sample_rates=48000:channel_layouts=stereo,adelay=" + at + "|" + at + ",apad[va];" +
-    "[2:a]aformat=sample_rates=48000:channel_layouts=stereo,volume=0.16,afade=t=in:d=1.2,afade=t=out:st=" + (length - 1.6).toFixed(3) + ":d=1.6[ba];" +
-    "[va][ba]amix=inputs=2:duration=first:normalize=0,atrim=0:" + length.toFixed(3) + ",loudnorm=I=-15:TP=-1.5:LRA=11,aresample=48000[a]",
-    "-map", "[v]", "-map", "[a]", "-t", length.toFixed(3),
-    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "128k", file]);
+  return { scenes, length: at };
+}
+
+// A clip runs about 1,300 frames, so each worker page paints the clip and draws every WORKERS-th frame.
+const WORKERS = Math.max(1, Math.min(Number(process.env.CLIP_WORKERS) || require("os").cpus().length, 4));
+async function framePages(browser, page) {
+  const pages = [page];
+  while (pages.length < WORKERS) {
+    const extra = await browser.newPage({ deviceScaleFactor: 1 });
+    await extra.goto("file://" + path.join(__dirname, "frame.html"));
+    pages.push(extra);
+  }
+  return Promise.all(pages.map(async (p) => ({ page: p, cdp: await p.context().newCDPSession(p) })));
+}
+
+async function renderClip(workers, tip, index, total, file, cover, said, extras) {
+  const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "tip-"));
+  const { scenes, length } = timeline(said, tmp);
+  const frames = Math.ceil(length * FPS);
+  const size = { width: 1080, height: 1920 };
+  await Promise.all(workers.map(async ({ page, cdp }, k) => {
+    await page.setViewportSize(size);
+    await page.evaluate(([t, c, i, n, h, u, s, x]) => window.paintClip(t, c, i, n, h, u, s, x),
+      [said.tip, said.cat, index, total, hostFor(tip), said.ui, scenes.map(({ audio, ...s }) => s), extras || {}]);
+    for (let f = k; f < frames; f += workers.length) {
+      await page.evaluate((s) => window.seek(s), f / FPS);
+      const shot = await cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 90, clip: Object.assign({ x: 0, y: 0, scale: 1 }, size) });
+      fs.writeFileSync(path.join(tmp, String(f).padStart(5, "0") + ".jpg"), Buffer.from(shot.data, "base64"));
+    }
+  }));
+  const page = workers[0].page;
+  // Buffer previews and TikTok's default cover use the first frame, so it shows the finished story card.
+  await renderStill(page, said.tip, "story", index, total, cover, said.ui, said.cat, extras);
+  fs.copyFileSync(cover, path.join(tmp, "00000.jpg"));
+  // Same bed level, fades and loudness as the launch reels in post-studio.
+  const voiced = scenes.filter((s) => s.audio);
+  const delay = (s) => Math.round(s.voiceAt * 1000);
+  const run = spawnSync(FFMPEG, ["-y", "-loglevel", "error", "-framerate", String(FPS), "-i", path.join(tmp, "%05d.jpg")]
+    .concat(...voiced.map((s) => ["-i", s.audio]), ["-stream_loop", "-1", "-i", BED, "-filter_complex",
+    voiced.map((s, i) => "[" + (i + 1) + ":a]aformat=sample_rates=48000:channel_layouts=stereo,adelay=" + delay(s) + "|" + delay(s) + ",apad[v" + i + "];").join("") +
+    "[" + (voiced.length + 1) + ":a]aformat=sample_rates=48000:channel_layouts=stereo,volume=0.16,afade=t=in:d=1.2,afade=t=out:st=" + (length - 1.6).toFixed(3) + ":d=1.6[ba];" +
+    voiced.map((s, i) => "[v" + i + "]").join("") + "[ba]amix=inputs=" + (voiced.length + 1) + ":duration=first:normalize=0,atrim=0:" + length.toFixed(3) +
+    ",loudnorm=I=-15:TP=-1.5:LRA=11,aresample=48000[a]",
+    "-map", "0:v", "-map", "[a]", "-t", length.toFixed(3),
+    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "128k", file]), { encoding: "utf8" });
   fs.rmSync(tmp, { recursive: true, force: true });
   if (run.status !== 0) throw new Error("ffmpeg failed for " + tip.id + ": " + run.stderr);
   const peak = parseFloat((spawnSync(FFMPEG, ["-hide_banner", "-i", file, "-af", "volumedetect", "-vn", "-f", "null", "-"], { encoding: "utf8" }).stderr.match(/max_volume: (-?[\d.]+) dB/) || [])[1]);
@@ -327,6 +472,7 @@ function rewriteCaptions(all, networks) {
   const page = await browser.newPage({ deviceScaleFactor: 1 });
   await page.goto("file://" + path.join(__dirname, "frame.html"));
   await page.evaluate(() => document.fonts.ready);
+  const workers = opts.rotate || !(opts["skip-video"] || opts["schedule-only"]) ? await framePages(browser, page) : null;
 
   if (opts.rotate) {
     const i18n = loadI18n();
@@ -338,7 +484,7 @@ function rewriteCaptions(all, networks) {
       if (opts.resume && fs.existsSync(file.replace(/\.mp4$/, ".json"))) continue;
       if (!translated(tip, voiceFor(index, tip).lang, i18n)) { console.log("untranslated", slug); continue; }
       const said = localize(tip, index, total, i18n);
-      await renderClip(page, tip, index, total, file, path.join(OUT, "voiced", "cover", slug + ".jpg"), said);
+      await renderClip(workers, tip, index, total, file, path.join(OUT, "voiced", "cover", slug + ".jpg"), said, await extrasFor(tip, browser));
       fs.writeFileSync(file.replace(/\.mp4$/, ".json"), JSON.stringify({ slug, lang: said.lang, voice: said.voice.file,
         speech: said.speech, tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube }, null, 1));
       console.log("voiced", slug, said.voice.file);
@@ -349,7 +495,10 @@ function rewriteCaptions(all, networks) {
 
   if (!opts["skip-video"] && !opts["schedule-only"] && !opts["no-translate"]) {
     exportStrings(all);
-    const run = spawnSync(process.env.PYTHON || "python3", [path.join(__dirname, "translate.py"), OUT], { stdio: "inherit" });
+    const args = [path.join(__dirname, "translate.py"), OUT].concat(process.env.CI ? ["--drop-slips"] : []);
+    const run = spawnSync(process.env.PYTHON || "python3", args, { stdio: "inherit" });
+    if (run.status === 3) { console.error("translations speak in the wrong register; nothing was rendered"); process.exit(1); }
+    if (run.status !== 0 && process.env.STRICT_TRANSLATE) { console.error("translation failed; nothing was rendered (STRICT_TRANSLATE)"); process.exit(75); }
     if (run.status !== 0) console.warn("translation failed; untranslated clips speak English");
   }
   const i18n = loadI18n();
@@ -357,10 +506,11 @@ function rewriteCaptions(all, networks) {
     const index = all.indexOf(tip);
     const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
     const ui = tip.lang ? uiFor(tip.lang, i18n) : studio.UI ? uiFor("en", i18n) : {};
-    await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"), ui);
-    await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"), ui);
+    const extras = await extrasFor(tip, opts["skip-video"] ? null : browser);
+    await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"), ui, null, extras);
+    await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"), ui, null, extras);
     const said = localize(tip, index, total, i18n);
-    if (!opts["skip-video"]) await renderClip(page, tip, index, total, path.join(OUT, "clip", slug + ".mp4"), path.join(OUT, "cover", slug + ".jpg"), said);
+    if (!opts["skip-video"]) await renderClip(workers, tip, index, total, path.join(OUT, "clip", slug + ".mp4"), path.join(OUT, "cover", slug + ".jpg"), said, extras);
     console.log("rendered", slug, said.voice.file);
   }
   await browser.close();
@@ -375,10 +525,12 @@ function rewriteCaptions(all, networks) {
     const said = localize(tip, index, total, i18n);
     if (said.lang !== "en" && studio.OWN_LINE && said.tiktok.includes(studio.OWN_LINE.en)) throw new Error(slug + ": the " + said.lang + " TikTok caption carries the English call to action");
     const cap = Object.assign(studio.captions(tip, index, total), { tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube });
+    // The networks restrict adult and gambling sites, so a post about one is held even if its source let it through.
+    const held = tip.hold || !!(EXTRAS.get(tip.id) || {}).sensitive;
     captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip), alt: tip.alt || altText(tip), lang: said.lang, voice: said.voice.file },
-      tip.lang ? { textLang: tip.lang } : {}, tip.hold ? { hold: true } : {}, tip.pin ? { pin: true } : {}, hubFields(tip, slugOf), cap);
+      tip.lang ? { textLang: tip.lang } : {}, held ? { hold: true } : {}, tip.pin ? { pin: true } : {}, hubFields(tip, slugOf), cap);
     const windows = studio.WINDOWS || WINDOWS;
-    for (const channel of tip.hold ? [] : Object.keys(windows)) {
+    for (const channel of held ? [] : Object.keys(windows)) {
       const video = ["tiktok", "youtube"].includes(channel);
       rows.push({ date, time: (tip.times || {})[channel] || randomTime(windows[channel], rand, slot), channel, slug,
         asset: video ? "clip/" + slug + ".mp4" : channel === "instagram-story" ? "story/" + slug + ".jpg" : "feed/" + slug + ".jpg",

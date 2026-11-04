@@ -1,0 +1,64 @@
+Text,Image URL,Tags,Posting Time
+"hubspot.com: 55. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+carlosandmunoz.com/qa-review?live=u-hubspot-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-hubspot-com
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/01-u-hubspot-com.jpg","","2026-10-27 08:35"
+"thekeyinmobiliaria.com: 51. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so…
+
+carlosandmunoz.com/qa-review?live=u-thekeyinmobiliaria-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-thekeyinmobiliaria-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/02-u-thekeyinmobiliaria-com.jpg","","2026-10-28 13:25"
+"millanenlinea.com: 49. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers…
+
+carlosandmunoz.com/qa-review?live=u-millanenlinea-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-millanenlinea-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/03-u-millanenlinea-com.jpg","","2026-10-29 11:35"
+"cng.edu: 52. The gap: ARIA roles.
+
+Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.
+
+carlosandmunoz.com/qa-review?live=u-cng-edu&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-cng-edu
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/04-u-cng-edu.jpg","","2026-10-30 09:50"
+"montesofia.com: 45. The gap: framing.
+
+Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot…
+
+carlosandmunoz.com/qa-review?live=u-montesofia-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-montesofia-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/05-u-montesofia-com.jpg","","2026-10-31 16:55"
+"montessori.edu.co: 67. The gap: alt text.
+
+Describe what each image shows in its alt attribute, and use alt="""" on purely…
+
+carlosandmunoz.com/qa-review?live=u-montessori-edu-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-montessori-edu-co","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/06-u-montessori-edu-co.jpg","","2026-11-01 16:05"
+"cgb.edu.co: 55. The gap: framing.
+
+Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your…
+
+carlosandmunoz.com/qa-review?live=u-cgb-edu-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-cgb-edu-co","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/07-u-cgb-edu-co.jpg","","2026-11-02 15:30"
+"movichhotels.com: 68. The gap: measurement.
+
+Hold every tag until consent, or set Google Consent Mode v2 defaults to denied before…
+
+carlosandmunoz.com/qa-review?live=u-movichhotels-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-movichhotels-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/08-u-movichhotels-com.jpg","","2026-11-03 11:15"
+"Scored 31 of 100. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen…
+
+carlosandmunoz.com/qa-review?live=u-hotelestequendama-com-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-hotelestequendama-com-co","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/09-u-hotelestequendama-com-co.jpg","","2026-11-04 14:10"
+"zizonline.com: 70. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+carlosandmunoz.com/qa-review?live=u-zizonline-com&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-zizonline-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/10-u-zizonline-com.jpg","","2026-11-05 14:25"
+"tamiltvserial.com: 81. The gap: button names.
+
+Give every button text or an aria-label, so a screen reader can announce it.
+
+carlosandmunoz.com/qa-review?live=u-tamiltvserial-com&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-tamiltvserial-com
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/11-u-tamiltvserial-com.jpg","","2026-11-06 16:10"
+"taknai.com vs sawstory.com. A tie at the top: 73.
+
+Benchmark against the sites your visitors compare you with, not against a perfect score…
+
+carlosandmunoz.com/qa-review?live=u-taknai-com&utm_source=x&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-taknai-com","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/12-vs-taknai-com.jpg","","2026-11-07 13:00"

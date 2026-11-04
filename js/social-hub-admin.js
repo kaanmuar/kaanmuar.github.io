@@ -12,8 +12,14 @@
 })(typeof self !== "undefined" ? self : this, function () {
   const NETS = ["linkedin", "x", "instagram", "facebook", "tiktok", "youtube"];
   const LANGS = ["en", "es", "pt", "de", "fr", "it"];
-  // Calendar channels in the order a post goes out. Facebook goes through the Graph API, the rest through Buffer.
-  const CHANNELS = [["linkedin", "LinkedIn"], ["x", "X"], ["instagram", "Instagram"], ["instagram-story", "Story"], ["facebook", "Facebook"], ["youtube", "YouTube"], ["tiktok", "TikTok"]];
+  // Calendar channels in the order a post goes out. Facebook goes through the Graph API, Bluesky, Mastodon, Threads
+  // and Instagram straight to their APIs (scripts/open-social-queue.js), the rest through Buffer.
+  const CHANNELS = [["linkedin", "LinkedIn"], ["x", "X"], ["bluesky", "Bluesky"], ["mastodon", "Mastodon"], ["threads", "Threads"], ["instagram", "Instagram"], ["instagram-story", "Story"], ["facebook", "Facebook"], ["youtube", "YouTube"], ["tiktok", "TikTok"]];
+  // The networks open-social-queue.js posts to, which leaves a slot it missed by more than 12 hours. Bluesky,
+  // Mastodon and Threads have no calendar slot of their own: they post the X caption at the x slot.
+  const DIRECT = { bluesky: "Bluesky API", mastodon: "Mastodon API", threads: "Threads API", instagram: "Instagram API", "instagram-story": "Instagram API" };
+  const AT_X = ["bluesky", "mastodon", "threads"];
+  const DIRECT_MISSED_MS = 12 * 3600000;
   const DAY = /^\d{4}-\d{2}-\d{2}$/;
   const HTTPS = /^https:\/\/[^\s<>"'`]+$/;
   const REPO_IMAGE = /^(assets|media)\/[\w/.-]+\.(jpe?g|png|webp)$/i;
@@ -156,8 +162,8 @@
     return slots;
   }
 
-  // A post's entries in the Buffer and Facebook Page ledgers (assets/social/buffer.json and facebook.json,
-  // written by scripts/social-ledger.js).
+  // A post's entries in the Buffer, Facebook Page and Bluesky/Mastodon ledgers (assets/social/buffer.json,
+  // facebook.json and open-social.json, written by scripts/social-ledger.js).
   function ledgerEntries(ledgers, id) {
     return (ledgers || []).flatMap((ledger) => (ledger && ledger.posts && Array.isArray(ledger.posts[id]) ? ledger.posts[id] : []));
   }
@@ -168,10 +174,11 @@
   // ahead; later Facebook slots wait for a later run.
   function channels(slots, youtube, now, entries) {
     return CHANNELS.map(([net, name]) => {
-      const slot = (slots && slots[net]) || "";
-      const via = net === "facebook" ? "Facebook Page" : "Buffer";
+      let slot = (slots && slots[AT_X.includes(net) ? "x" : net]) || "";
+      if (DIRECT[net] && slot && new Date(slot).getTime() <= now - DIRECT_MISSED_MS) slot = "";
+      const via = net === "facebook" ? "Facebook Page" : DIRECT[net] || "Buffer";
       const time = slot ? new Date(slot).getTime() : 0;
-      const mine = (entries || []).filter((entry) => entry.channel === net);
+      const mine = (entries || []).filter((entry) => entry.channel === net && entry.result !== "moved");
       const failed = mine.filter((entry) => entry.result === "failed");
       const at = mine.map((entry) => entry.at || "").filter(Boolean).sort()[0] || slot;
       const error = failed.map((entry) => entry.error).filter(Boolean).join("; ");
@@ -228,9 +235,18 @@
     return (Array.isArray(proposals) ? proposals : []).filter((proposal) => proposal && PROPOSAL_ID.test(proposal.id || "") && !decided[proposal.id] && !shared.has(canonUrl(proposal.url)));
   }
 
-  // The hand-added item a proposal starts as. The credit line keeps the source, author and date with it.
+  // One proposals book from the field sweep's and the weekly sweep round-up's (scripts/sweep-roundup.js); a missing book counts as empty.
+  function mergeProposals(...books) {
+    const seen = new Set();
+    const proposals = books.flatMap((book) => (book && Array.isArray(book.proposals)) ? book.proposals : [])
+      .filter((p) => p && !seen.has(p.id) && seen.add(p.id));
+    const built = books.map((book) => (book && book.built) || "").sort().pop() || "";
+    return { built, proposals };
+  }
+
+  // The hand-added item a proposal starts as. The credit line keeps the source, author and date with it; our own posts have none.
   function proposalDraft(proposal, today) {
-    const credit = "Via " + [proposal.source, proposal.author && "by " + proposal.author, proposal.date].filter(Boolean).join(", ") + ".";
+    const credit = proposal.own ? "" : "Via " + [proposal.source, proposal.author && "by " + proposal.author, proposal.date].filter(Boolean).join(", ") + ".";
     return {
       title: text(proposal.title, TITLE_MAX),
       url: HTTPS.test(proposal.url || "") ? proposal.url : "",
@@ -242,5 +258,5 @@
     };
   }
 
-  return { NETS, LANGS, CHANNELS, PROPOSAL_ID, canonUrl, pendingProposals, proposalDraft, empty, clean, cleanItem, same, apply, itemPost, remote, imageOk, videoId, slug, newId, batchOf, parseCalendar, ledgerEntries, channels, statusLabel };
+  return { NETS, LANGS, CHANNELS, PROPOSAL_ID, canonUrl, pendingProposals, mergeProposals, proposalDraft, empty, clean, cleanItem, same, apply, itemPost, remote, imageOk, videoId, slug, newId, batchOf, parseCalendar, ledgerEntries, channels, statusLabel };
 });

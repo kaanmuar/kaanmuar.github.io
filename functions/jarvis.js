@@ -25,13 +25,15 @@ const PAGES = [
 ];
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
-const TTL = { health: MINUTE, jobs: MINUTE, github: 5 * MINUTE, ga4: 15 * MINUTE, cloudflare: 15 * MINUTE, speed: 6 * 60 * MINUTE, uptime: 5 * MINUTE };
+const TTL = { health: MINUTE, jobs: MINUTE, github: 5 * MINUTE, ga4: 15 * MINUTE, cloudflare: 15 * MINUTE, speed: 6 * 60 * MINUTE, uptime: 5 * MINUTE, snapshot: 5 * MINUTE };
 const SCHEDULER = "https://cloudscheduler.googleapis.com/v1/projects/" + PROJECT + "/locations/us-central1/jobs";
 const JOB_PREFIX = "firebase-schedule-";
 const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const MODEL = "gemini-flash-latest";
 const core = require("./jarvis-core");
+const actions = require("./jarvis-actions");
+const dayRows = require("./jarvis-days");
 const ADMIN_URL = ORIGIN + "/admin.html#stats/overview/1";
 
 function rangeDays(value) {
@@ -74,7 +76,8 @@ function causeLabel(row) {
 // --- health: server-only Firestore collections -------------------------------------------------------------
 
 async function health(db, { days, now }) {
-  const since = new Date(now - rangeDays(days) * DAY).toISOString();
+  const from = now - rangeDays(days) * DAY;
+  const since = new Date(from).toISOString();
   const read = async (name, field) => {
     try {
       const snap = await db.collection(name).where(field, ">=", since).limit(2000).get();
@@ -83,16 +86,13 @@ async function health(db, { days, now }) {
       return [];
     }
   };
-  const [runs, failures, reruns, alerts, notices, rivals, coupons, captures] = await Promise.all([
+  const [runs, logged, reruns, coupons] = await Promise.all([
     db.collection("ops_runs").get().then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()))).catch(() => []),
-    read("url_review_failures", "at"),
+    dayRows.rows(db, ["failures", "alerts", "notices", "rivals", "captures"], { from, now }).catch(() => ({})),
     read("url_review_reruns", "at"),
-    read("url_review_alerts", "at"),
-    read("url_review_owner_notices", "createdAt"),
-    read("url_review_rivals", "createdAt"),
-    read("url_review_coupons", "createdAt"),
-    read("url_review_captures", "at")
+    read("url_review_coupons", "createdAt")
   ]);
+  const { failures = [], alerts = [], notices = [], rivals = [], captures = [] } = logged;
   const causes = {}, failedHosts = {}, rerunStatus = {}, alertKinds = {}, noticeStatus = {}, captureKinds = {};
   failures.forEach((row) => { count(causes, causeLabel(row)); count(failedHosts, row.host); });
   reruns.forEach((row) => count(rerunStatus, row.status));
@@ -106,7 +106,7 @@ async function health(db, { days, now }) {
     failures: { total: failures.length, causes: top(causes), hosts: top(failedHosts, 8), latest: failures.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8).map((row) => ({ at: row.at, host: row.host, cause: causeLabel(row), message: String((row.error && row.error.message) || "").slice(0, 140) })) },
     reruns: { total: reruns.length, status: top(rerunStatus), held: reruns.filter((row) => row.status === "held").length },
     alerts: { total: alerts.length, kinds: top(alertKinds), latest: alerts.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8).map((row) => ({ at: row.at, kind: row.kind, title: String(row.title || "").slice(0, 120), url: row.url || "" })) },
-    notices: { total: notices.length, status: top(noticeStatus) },
+    notices: { total: notices.length, status: top(noticeStatus), failed: notices.filter((row) => row.status === "pending" && row.lastError && !row.unlistedAt).length },
     rivals: { total: rivals.length },
     coupons: { total: coupons.length, uses: couponUses },
     captures: { total: captures.length, kinds: top(captureKinds) }
@@ -153,7 +153,7 @@ async function runJob(fetchImpl, name) {
 // --- github ---------------------------------------------------------------------------------------------------
 
 async function github(fetchImpl, token, { now }) {
-  if (!token) return { ok: false, error: "GITHUB_BUGS_TOKEN is not set." };
+  if (!token) return { ok: false, error: "No GitHub token is set." };
   const get = async (path) => readJson(await fetchImpl("https://api.github.com/" + path, {
     headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" },
     signal: AbortSignal.timeout(15000)
@@ -180,9 +180,106 @@ async function github(fetchImpl, token, { now }) {
     ci: Object.values(byWorkflow),
     openBugs: bugs.total_count || 0,
     bugAreas: top(areas),
+    needsAgent: (bugs.items || []).filter((issue) => (issue.labels || []).some((label) => label.name === "needs-agent")).map((issue) => ({ number: issue.number, title: issue.title, url: issue.html_url })),
     merged: { total: merged.total_count || 0, items: (merged.items || []).slice(0, 10).map((pr) => ({ number: pr.number, title: pr.title, url: pr.html_url, at: pr.closed_at })) },
     recent: (recent || []).map((issue) => ({ number: issue.number, title: issue.title, url: issue.html_url, state: issue.state, pr: !!issue.pull_request, at: issue.created_at }))
   };
+}
+
+// The newest failed run of a workflow on main gets its failed jobs re-run; the token needs Actions: write.
+async function rerunCi(fetchImpl, token, workflow) {
+  if (!token) throw new Error("No GitHub token is set.");
+  const name = String(workflow || "").slice(0, 120);
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  const runs = await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs?branch=main&status=completed&per_page=50", { headers, signal: AbortSignal.timeout(15000) }), "GitHub");
+  const run = (runs.workflow_runs || []).find((r) => r.name === name && r.conclusion !== "cancelled");
+  if (!run) throw new Error("No finished run of " + name + " on main.");
+  if (["success", "skipped", "neutral"].includes(run.conclusion)) return { workflow: name, run: run.id, url: run.html_url, already: run.conclusion };
+  const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs/" + run.id + "/rerun-failed-jobs", { method: "POST", headers, signal: AbortSignal.timeout(15000) });
+  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); the GitHub token needs Actions: write.");
+  if (!res.ok) throw new Error("GitHub " + res.status + " on the re-run.");
+  return { workflow: name, run: run.id, url: run.html_url };
+}
+
+// #1977: the newest finished run per workflow and branch in the last day, kept when it failed.
+async function failedRuns(fetchImpl, token, { now }) {
+  if (!token) return [];
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  const runs = await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs?status=completed&per_page=100&created=" + encodeURIComponent(">=" + isoDay(now - DAY)), { headers, signal: AbortSignal.timeout(15000) }), "GitHub");
+  const newest = new Map();
+  (runs.workflow_runs || []).forEach((r) => {
+    const key = r.name + " " + r.head_branch;
+    if (r.conclusion !== "cancelled" && !newest.has(key)) newest.set(key, r);
+  });
+  return Array.from(newest.values()).filter((r) => ["failure", "timed_out"].includes(r.conclusion))
+    .map((r) => ({ id: r.id, name: r.name, branch: r.head_branch, attempt: r.run_attempt || 1, url: r.html_url, sha: r.head_sha || "", event: r.event || "", path: r.path || "" }));
+}
+
+async function mainSha(fetchImpl, token) {
+  if (!token) return "";
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  return (await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/commits/main", { headers, signal: AbortSignal.timeout(15000) }), "GitHub")).sha || "";
+}
+
+// A run that failed on an old commit fails again when re-run, so a workflow main has moved past starts afresh on main.
+async function dispatchMain(fetchImpl, token, workflowPath) {
+  if (!token) throw new Error("No GitHub token is set.");
+  const file = String(workflowPath || "").split("/").pop();
+  if (!/^[\w.-]+\.ya?ml$/.test(file)) throw new Error("No workflow file to start: " + String(workflowPath).slice(0, 80));
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json" };
+  const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/workflows/" + file + "/dispatches", { method: "POST", headers, body: JSON.stringify({ ref: "main" }), signal: AbortSignal.timeout(15000) });
+  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused to start " + file + " (" + res.status + "); the GitHub token needs Actions: write.");
+  if (res.status === 422) throw new Error(file + " cannot be started by hand (it has no workflow_dispatch).");
+  if (!res.ok) throw new Error("GitHub " + res.status + " starting " + file + ".");
+  return { workflow: file };
+}
+
+async function rerunRun(fetchImpl, token, id) {
+  if (!token) throw new Error("No GitHub token is set.");
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs/" + Number(id) + "/rerun-failed-jobs", { method: "POST", headers, signal: AbortSignal.timeout(15000) });
+  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); the GitHub token needs Actions: write.");
+  if (!res.ok) throw new Error("GitHub " + res.status + " on the re-run.");
+  return { run: Number(id) };
+}
+
+// --- briefing rows (#1695) ------------------------------------------------------------------------------------
+
+// The rows a briefing sheet lists: pending ratings, or the messages in range with no answer, test senders left out.
+async function briefItems(db, { list, days, now }) {
+  const at = (v) => { const d = core.toDate(v); return d ? d.toISOString() : ""; };
+  if (list === "ratings") {
+    const snap = await db.collection("ratings").where("status", "==", "pending").limit(300).get();
+    const rows = snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())).filter((r) => !core.isTestEmail(r.email));
+    return { list, total: rows.length, rows: rows.sort((a, b) => at(b.createdAt).localeCompare(at(a.createdAt))).slice(0, 50)
+      .map((r) => ({ id: r.id, name: String(r.name || "").slice(0, 120), rating: Number(r.rating) || 0, text: String(r.comment || "").slice(0, 600), at: at(r.createdAt) })) };
+  }
+  if (list === "messages") {
+    const snap = await db.collection("messages").where("createdAt", ">=", new Date(now - rangeDays(days) * DAY)).limit(2000).get();
+    const rows = snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())).filter((m) => m.status !== "rejected" && !m.response && !m.respondedAt && !core.isTestEmail(m.email));
+    return { list, total: rows.length, rows: rows.sort((a, b) => at(b.createdAt).localeCompare(at(a.createdAt))).slice(0, 50)
+      .map((m) => ({ id: m.id, name: String(m.name || "").slice(0, 120), email: String(m.email || "").slice(0, 160), topic: String(m.topic || "").slice(0, 120), text: String(m.message || "").slice(0, 600), at: at(m.createdAt) })) };
+  }
+  throw new Error("Unknown list.");
+}
+
+const RATING_DECISIONS = { approved: { status: "approved", isAnonymous: false }, "approved-anon": { status: "approved", isAnonymous: true }, rejected: { status: "rejected" } };
+
+// Approve, approve without the name, or reject pending ratings, as Admin > CV Ratings does; at most 50 per call.
+async function decideRatings(db, { ids, decision }) {
+  const change = RATING_DECISIONS[decision];
+  if (!change) throw new Error("Approve or reject the rating.");
+  const list = (Array.isArray(ids) ? ids : [ids]).map((id) => String(id || "")).filter((id) => /^[\w-]{1,64}$/.test(id)).slice(0, 50);
+  if (!list.length) throw new Error("Which rating?");
+  let done = 0;
+  for (const id of list) {
+    const ref = db.collection("ratings").doc(id);
+    const snap = await ref.get();
+    if (!snap.exists || (snap.data().status || "pending") !== "pending") continue;
+    await ref.update(change);
+    done += 1;
+  }
+  return { decision, done, skipped: list.length - done };
 }
 
 // --- ga4 ------------------------------------------------------------------------------------------------------
@@ -339,6 +436,25 @@ async function uptime(fetchImpl, { now, tls }) {
   return { ok: true, pages, tlsDaysLeft: daysLeft };
 }
 
+// The hourly watch counts each page check per Bogota day in jarvis_uptime (#2139), for the 90-day strip.
+function uptimeTally(up, now) {
+  const pages = (up && up.ok !== false && Array.isArray(up.pages)) ? up.pages : [];
+  return { date: core.zoneParts(new Date(now)).day, checks: pages.length, up: pages.filter((p) => p.ok).length };
+}
+
+async function uptimeLog(db, up, now, increment) {
+  const t = uptimeTally(up, now);
+  if (!t.checks) return t;
+  await db.collection("jarvis_uptime").doc(t.date).set({ date: t.date, checks: increment(t.checks), up: increment(t.up), at: new Date(now).toISOString() }, { merge: true });
+  return t;
+}
+
+async function uptimeHistory(db, now) {
+  const from = core.zoneParts(new Date(now - 90 * DAY)).day;
+  const snap = await db.collection("jarvis_uptime").where("date", ">=", from).limit(120).get();
+  return snap.docs.map((d) => d.data()).map((r) => ({ date: r.date, checks: Number(r.checks) || 0, up: Number(r.up) || 0 })).sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
 // --- brief / ask: Gemini --------------------------------------------------------------------------------------
 
 const VOICE = "You are Jarvis, the analyst for Carlos's sites: the CV (carlosandmunoz.com), QA Studio (a test-sprint simulator), "
@@ -376,11 +492,88 @@ async function brief(fetchImpl, env, snapshot) {
   return { text };
 }
 
-async function ask(fetchImpl, env, question, snapshot) {
+// --- voice (#1418): answers in the phone's language, spoken with a Cloud Text-to-Speech voice ----------------------
+
+const TTS = "https://texttospeech.googleapis.com/v1/text:synthesize";
+const VOICE_LOCALE = { en: "en-US", es: "es-ES", pt: "pt-BR", de: "de-DE", fr: "fr-FR", it: "it-IT" };
+const VOICE_NAME = "Chirp3-HD-Charon";
+/** #1674: the voices the app and the web offer; the first of each language is its default. */
+const VOICES = [
+  { name: "en-GB-Chirp3-HD-Orus", lang: "en", label: "Orus, British" },
+  { name: "en-US-Chirp3-HD-Charon", lang: "en", label: "Charon, American" },
+  { name: "es-US-Chirp3-HD-Algenib", lang: "es", label: "Algenib, Latin American" },
+  { name: "es-ES-Chirp3-HD-Charon", lang: "es", label: "Charon, Spain" }
+];
+const VOICE_RATE = { min: 0.75, max: 1.25, default: 0.95 };
+
+/** The catalog voice asked for when it speaks the answer's language, else that language's default, else Charon. */
+function voiceFor(code, asked) {
+  const pick = VOICES.find((v) => v.name === asked && v.lang === code) || VOICES.find((v) => v.lang === code);
+  if (pick) return { languageCode: pick.name.slice(0, 5), name: pick.name };
+  const locale = VOICE_LOCALE[code] || code;
+  return { languageCode: locale, name: locale + "-" + VOICE_NAME };
+}
+
+function voiceRate(rate) {
+  const r = Number(rate);
+  return Number.isFinite(r) && r > 0 ? Math.min(VOICE_RATE.max, Math.max(VOICE_RATE.min, r)) : VOICE_RATE.default;
+}
+
+function langCode(lang) {
+  const code = String(lang || "").toLowerCase().split(/[-_]/)[0];
+  return /^[a-z]{2,3}$/.test(code) ? code : "en";
+}
+
+function languageName(code) {
+  try { return new Intl.DisplayNames(["en"], { type: "language" }).of(code) || "English"; } catch (error) { return "English"; }
+}
+
+async function ask(fetchImpl, env, question, snapshot, opts) {
   const q = String(question || "").trim().slice(0, 500);
   if (!q) throw new Error("Ask a question.");
-  const text = await gemini(fetchImpl, env, "Question: " + q + "\n\nAnswer in at most six sentences from these numbers. If they cannot answer it, say which number is missing.\n\n" + snapshotText(snapshot), 800);
-  return { text };
+  const o = opts || {};
+  const code = langCode(o.lang);
+  const how = o.spoken
+    ? "Answer in at most four short spoken sentences: plain text, no markdown, no lists, numbers said the way a person would say them."
+    : core.askHint(o.device) || "Answer in at most six sentences from these numbers.";
+  const language = code === "en" ? "" : " Answer in " + languageName(code) + ".";
+  const text = await gemini(fetchImpl, env, "Question: " + q + "\n\n" + how + language + " If the numbers cannot answer it, say which number is missing.\n\n" + snapshotText(snapshot), 800);
+  return { text, lang: code };
+}
+
+/** Markdown and list marks read badly aloud. */
+function speakable(text) {
+  return String(text || "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^[\s>*#-]+/gm, "")
+    .replace(/[*_`#]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 2400);
+}
+
+async function speak(fetchImpl, text, lang, opts) {
+  const input = speakable(text);
+  if (!input) throw new Error("Nothing to say.");
+  const o = opts || {};
+  const code = langCode(lang);
+  const voice = voiceFor(code, o.voice);
+  const rate = voiceRate(o.rate);
+  const bearer = await googleToken(fetchImpl, "https://www.googleapis.com/auth/cloud-platform");
+  const call = (v, audioConfig) => fetchImpl(TTS, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + bearer, "Content-Type": "application/json" },
+    body: JSON.stringify({ input: { text: input }, voice: v, audioConfig: Object.assign({ audioEncoding: "MP3" }, audioConfig) }),
+    signal: AbortSignal.timeout(30000)
+  });
+  let used = voice.name;
+  let res = await call(voice, { speakingRate: rate });
+  if (!res.ok) res = await call(voice, {});
+  if (!res.ok) { used = null; res = await call({ languageCode: voice.languageCode, ssmlGender: "MALE" }, {}); }
+  const data = await readJson(res, "Text-to-Speech");
+  if (!data.audioContent) throw new Error("Text-to-Speech sent no audio.");
+  return { audio: data.audioContent, format: "mp3", lang: code, voice: used, rate };
 }
 
 function briefingMail(snapshot, text) {
@@ -396,14 +589,19 @@ function briefingMail(snapshot, text) {
 
 // --- settings: goals, thresholds, mail switches (jarvis_settings/main) -----------------------------------------
 
-const MAIL_DEFAULTS = { daily: true, gemini: true, watch: true };
+// The emails Jarvis also pushes are off by default and wait for the evening digest (#1672); a switch brings one back.
+const MOVED_MAIL = ["messages", "ratings", "siteDaily", "siteQuarter", "reviewDaily", "reviewQuarter", "reruns", "reviewOpened", "comparisons", "reviewEvents", "ops", "ownerReplies", "ownerRemind"];
+const MAIL_DEFAULTS = Object.assign({ daily: false, gemini: true, watch: false, weekly: true, digest: true }, Object.fromEntries(MOVED_MAIL.map((key) => [key, false])));
+// Settings saved before the digest kept daily and watch on; those two read as the new defaults until saved again.
+const MAIL_VERSION = 2;
 
 function normalizeSettings(data) {
   const d = data || {};
   const mail = Object.assign({}, MAIL_DEFAULTS);
-  Object.keys(MAIL_DEFAULTS).forEach((key) => { if (d.mail && typeof d.mail[key] === "boolean") mail[key] = d.mail[key]; });
+  const kept = d.mailVersion === MAIL_VERSION ? Object.keys(MAIL_DEFAULTS) : Object.keys(MAIL_DEFAULTS).filter((key) => key !== "daily" && key !== "watch");
+  kept.forEach((key) => { if (d.mail && typeof d.mail[key] === "boolean") mail[key] = d.mail[key]; });
   const searchQueries = Array.from(new Set((Array.isArray(d.searchQueries) ? d.searchQueries : []).map((q) => String(q || "").replace(/\s+/g, " ").trim().slice(0, 80)).filter(Boolean))).slice(0, 8);
-  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, searchQueries, updatedAt: String(d.updatedAt || "") };
+  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, mailVersion: MAIL_VERSION, searchQueries, actions: actions.cleanSettings(d.actions), updatedAt: String(d.updatedAt || "") };
 }
 
 async function readSettings(db) {
@@ -412,8 +610,8 @@ async function readSettings(db) {
 }
 
 async function saveSettings(db, input, by) {
-  const clean = normalizeSettings(input);
-  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, searchQueries: clean.searchQueries, updatedAt: new Date().toISOString(), by: String(by || "") };
+  const clean = normalizeSettings(Object.assign({}, input, { mailVersion: MAIL_VERSION }));
+  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, mailVersion: MAIL_VERSION, searchQueries: clean.searchQueries, actions: clean.actions, updatedAt: new Date().toISOString(), by: String(by || "") };
   await db.collection("jarvis_settings").doc("main").set(doc);
   return normalizeSettings(doc);
 }
@@ -455,33 +653,139 @@ async function goals(db, settings, { now, sum }) {
 
 // --- daily briefing: the last 24 hours against the 24 before, with the same rules as the page --------------------
 
-async function dailyProducts(db, { now }) {
+// Pending ratings outside the range only add to the pending count: a count() probe, and a re-read when it moves.
+async function pendingRatings(db, now) {
+  const pending = db.collection("ratings").where("status", "==", "pending");
+  const ref = db.collection("jarvis_cache").doc("pending-ratings");
+  const [total, saved] = await Promise.all([
+    pending.count().get().then((snap) => snap.data().count),
+    ref.get().then((snap) => (snap.exists ? snap.data() : null)).catch(() => null)
+  ]);
+  if (saved && saved.total === total && now - Date.parse(saved.at) < 6 * 60 * MINUTE) return saved.kept;
+  const snap = await pending.select("email").get();
+  const kept = snap.docs.filter((doc) => !core.isTestEmail((doc.data() || {}).email)).length;
+  await ref.set({ total, kept, at: new Date(now).toISOString() }).catch(() => null);
+  return kept;
+}
+
+async function dailyProducts(db, { now, days = 1 }) {
   const end = new Date(now);
-  const start = new Date(now - DAY);
-  const priorStart = new Date(now - 2 * DAY);
-  const window = { start, end, days: 1, prior: { start: priorStart, end: start } };
+  const start = new Date(now - days * DAY);
+  const priorStart = new Date(now - 2 * days * DAY);
+  const window = { start, end, days, prior: { start: priorStart, end: start } };
   const rows = async (q) => (await q.limit(20000).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
-  const since = (name, iso) => db.collection(name).where("createdAt", ">=", iso ? priorStart.toISOString() : priorStart);
-  const [events, opens, reviews, messages, ratings, pending, hubSnap] = await Promise.all([
-    rows(since("site_events")), rows(since("url_review_opens")), rows(since("url_reviews", true)),
+  const since = (name) => db.collection(name).where("createdAt", ">=", priorStart);
+  const [{ events, opens, reviews }, messages, ratings, pending, hubSnap] = await Promise.all([
+    dayRows.rows(db, ["events", "opens", "reviews"], { from: priorStart.getTime(), now }),
     rows(since("messages")), rows(since("ratings")),
-    rows(db.collection("ratings").where("status", "==", "pending")),
+    pendingRatings(db, now),
     db.collection("socialHubStats").doc("latest").get().catch(() => null)
   ]);
   const inside = (row) => { const when = core.toDate(row.createdAt); return !!when && when >= start; };
   const now1 = events.filter(inside);
   const was = events.filter((row) => !inside(row));
-  const seen = new Set(ratings.map((row) => row.id));
-  const allRatings = ratings.concat(pending.filter((row) => !seen.has(row.id)));
+  const keep = (email) => !core.isTestEmail(email);
+  const pendingCount = pending + ratings.filter((row) => !row.status && keep(row.email)).length;
   const products = {
-    inbox: core.summarizeInbox(messages, allRatings, window, window.prior, (email) => !core.isTestEmail(email)),
+    inbox: core.summarizeInbox(messages, ratings, window, window.prior, keep, pendingCount),
     cv: core.summarizeSite("cv", now1, was, window),
     studio: core.summarizeSite("studio", now1, was, window),
     lab: core.summarizeSite("lab", now1, was, window),
     review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window),
-    hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window)
+    hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window, was)
   };
-  return { window, products };
+  return { window, products, outreachVisits: core.outreachVisits(now1) };
+}
+
+// The page's snapshot() for Gemini and the briefing mail, built from the server snapshot the Android app reads.
+function askSnapshot(snap, days) {
+  const s = snap || {};
+  const e = s.external || {};
+  const products = Object.keys(s.products || {}).reduce((out, key) => {
+    const p = s.products[key] || {};
+    out[key] = { name: (core.PRODUCTS.find((row) => row.key === key) || {}).name || key, kpis: (p.kpis || []).map((k) => ({ label: k.label, value: k.value, delta: k.delta })),
+      top: Object.keys(p.lists || {}).reduce((m, list) => { m[list] = (p.lists[list] || []).slice(0, 5); return m; }, {}) };
+    return out;
+  }, {});
+  const ok = (x) => x && x.ok !== false;
+  return {
+    range: days === 1 ? "last 24 hours" : "last " + days + " days", generatedAt: new Date().toISOString(), products,
+    briefing: (s.briefing || []).map((b) => "[" + b.level + "] " + b.text),
+    external: {
+      readiness: core.readiness(e),
+      jobs: e.jobs && e.jobs.jobs ? e.jobs.jobs.map((j) => ({ name: j.name, ok: j.ok, last: j.lastAttempt })) : null,
+      ci: e.github && e.github.ci, openBugs: e.github && e.github.openBugs, merged: e.github && e.github.merged && e.github.merged.total,
+      failures: e.health && e.health.failures && { total: e.health.failures.total, causes: e.health.failures.causes },
+      speed: e.speed && e.speed.pages && e.speed.pages.map((x) => ({ page: x.name, score: x.score })),
+      uptime: e.uptime && e.uptime.pages && e.uptime.pages.map((x) => ({ page: x.name, status: x.status, ms: x.ms })),
+      ga4: e.ga4 && e.ga4.groups,
+      cloudflare: ok(e.cloudflare) ? { requests: e.cloudflare.requests, threats: e.cloudflare.threats, cacheRatio: e.cloudflare.cacheRatio, statuses: e.cloudflare.statuses, paths: (e.cloudflare.paths || []).slice(0, 8) } : null,
+      money: ok(e.money) ? { revenue: e.money.revenue, prior: e.money.prior, refundsUsd: e.money.refundsUsd, disputesOpen: e.money.paypal && e.money.paypal.disputesOpen } : null,
+      email: ok(e.email) ? { totals: e.email.totals, rates: e.email.rates } : null,
+      mailbox: ok(e.mailbox) ? { totals: e.mailbox.totals, smtp: e.mailbox.smtp, canary: e.mailbox.canary && e.mailbox.canary.state, problems: (e.mailbox.problems || []).slice(0, 5).map((m) => m.alias + "@ " + m.outcome + ": " + m.reason) } : null,
+      addresses: ok(e.addresses) ? { counts: e.addresses.counts, issues: (e.addresses.issues || []).slice(0, 8).map((i) => i.text + (i.by === "jarvis" ? " (Jarvis fixes it)" : "")) } : null,
+      search: ok(e.search) ? { brave: e.search.brave && e.search.brave.queries, console: e.search.console && e.search.console.ok ? { clicks: e.search.console.clicks, impressions: e.search.console.impressions, position: e.search.console.position, queries: (e.search.console.queries || []).slice(0, 8) } : null } : null,
+      social: ok(e.social) ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views } : null,
+      safety: ok(e.safety) && e.safety.checks ? e.safety.checks.map((c) => c.level + ": " + c.name + " " + c.detail) : null,
+      platform: ok(e.platform) ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
+      outreach: outreachAsk(e.outreach, s.outreachVisits),
+      engagement: engagementAsk(e.engagement),
+      signedInPeople: ok(e.people) ? e.people.totals : null,
+      googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
+      github: githubAsk(e["github-work"]),
+      waiting: core.connections(e).filter((c) => c.needs.length).map((c) => c.name + ": " + c.needs.join(" "))
+    }
+  };
+}
+
+// The github-work source (#2526) in a few hundred tokens, so Ask can answer GitHub questions; retro reads it too.
+function githubAsk(g) {
+  if (!g || g.ok === false) return null;
+  const ci = g.ci || {};
+  const prs = g.prs || {};
+  const sec = g.security || {};
+  const pick = (o, keys) => (o ? keys.reduce((m, k) => { if (o[k] !== undefined) m[k] = o[k]; return m; }, {}) : null);
+  return {
+    score: g.score && { overall: g.score.overall, areas: Object.keys(g.score.areas || {}).reduce((m, k) => { m[k] = g.score.areas[k].grade + " " + g.score.areas[k].value; return m; }, {}) },
+    dora: g.dora, streaks: pick(g.streaks, ["greenMainDays", "mergeDays", "xp", "level"]),
+    ci: pick(ci, ["passRate", "runs", "failed", "minutes", "queueMedS", "durMedS"]),
+    flaky: ci.flaky && { pct: ci.flaky.pct, workflows: (ci.flaky.workflows || []).slice(0, 5) },
+    failing: (ci.failing || []).slice(0, 5).map((r) => ({ workflow: r.name, branch: r.branch, at: r.at, attempt: r.attempt, cause: r.diag ? r.diag.cause : null, category: r.diag ? r.diag.category : null })),
+    prs: pick(prs, ["open", "draft", "mergeReady", "conflicts", "behind", "red", "stale", "orphan", "leadMedH", "leadP90H", "merged"]),
+    board: g.board && { columns: (g.board.columns || []).map((c) => c.name + " " + c.count), wip: g.board.wip, wipLimit: g.board.wipLimit, cycleMedD: g.board.cycleMedD, drift: (g.board.drift || []).length },
+    issues: pick(g.issues, ["open", "openBugs", "opened", "closed"]),
+    security: { dependabot: pick(sec.dependabot, ["open", "critical", "high"]), codeScanning: pick(sec.codeScanning, ["open"]), secrets: pick(sec.secrets, ["open"]) },
+    budget: g.budget && g.budget.kaanmuar ? { graphql: g.budget.kaanmuar.graphql, core: g.budget.kaanmuar.core } : null,
+    branches: pick(g.branches, ["total", "stale"]), needs: (g.needs || []).slice(0, 5), retro: g.ai && g.ai.retro ? String(g.ai.retro.text || "").slice(0, 600) : null
+  };
+}
+
+// Same shape as the page's snapshot().external.engagement.
+function engagementAsk(g) {
+  if (!g || !g.ok || !g.report) return null;
+  return {
+    paused: g.paused, live: g.live, accounts: (g.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })),
+    totals: g.report.totals, approvalRate: g.report.approvalRate, topics: g.report.topics, tags: (g.report.tags || []).slice(0, 10), networks: g.report.networks,
+    waiting: (g.waiting || []).length, topPosts: (g.posts || []).slice(0, 5).map((d) => d.network + ": " + (d.title || String(d.text || "").slice(0, 100)) + " (score " + d.score + ")"),
+    reportReplies: Object.assign({ waiting: (g.waiting || []).filter((d) => d.campaign === "report-reply").length }, g.report.invites)
+  };
+}
+
+// Same shape as the page's snapshot().external.outreach.
+function outreachAsk(ou, visits) {
+  if (!ou || !ou.ok) return null;
+  const pipe = ou.pipeline && ou.pipeline.ok ? ou.pipeline : null;
+  const mail = ou.instantly && ou.instantly.ok ? ou.instantly : null;
+  const plan = ou.plan && ou.plan.ok !== false ? ou.plan : null;
+  const links = ou.links && ou.links.ok ? ou.links : null;
+  return {
+    pipeline: pipe ? { queued: pipe.queued, swept: pipe.swept, reviews: pipe.reviews, thisWeek: pipe.thisWeek, withLiveReport: pipe.withLiveReport, bySegment: pipe.bySegment } : null,
+    instantly: mail ? { campaigns: mail.status, sent: mail.sent, rates: mail.rates, replies: mail.replies, interested: mail.interested, meetings: mail.meetings, warmup: (mail.accounts || []).map((a) => a.score) } : null,
+    plan: plan ? { day: plan.day, length: plan.length, phase: plan.phase, next: plan.next, weekly: plan.weekly, targets: plan.targets } : null,
+    visits: visits ? visits.total : 0,
+    links: links ? { live: links.live, visits: links.visits, reviews: links.reviews, paid: links.paid, usd: links.usd, byCampaign: links.byCampaign, topProspects: (links.prospects || []).slice(0, 10),
+      reportReplies: links.social ? { visits: links.social.visits, reviews: links.social.reviews, paid: links.social.paid, usd: links.social.usd, networks: links.social.networks, topPosts: (links.social.posts || []).slice(0, 10) } : null } : null
+  };
 }
 
 function compact(products) {
@@ -523,5 +827,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, causeLabel, health, jobs, jobName, runJob, github, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, briefingMail, top,
-  normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday };
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+  MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };

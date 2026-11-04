@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const customerMail = require("../../functions/url-review-customer-mail.js");
-const { summarizePeriod, reportRows, reportSubject } = require("../../functions/url-review-mail.js");
+const { summarizePeriod, reportRows, reportSubject, slimReview } = require("../../functions/url-review-mail.js");
 const { ownerMail, ownerRows } = require("../../functions/owner-mail.js");
 const report = require("./fixtures/review-wordpress.json");
 
@@ -9,7 +9,7 @@ const record = { id: "r7Kq2mWx9", email: "ana@example.com", lang: "en", createdA
 
 test("the report mail labels each finding with its severity and states the date and the fail and risk counts", () => {
   const mail = customerMail.reportMail(record, {});
-  assert.match(mail.html, /Analytics &middot; <\/span><span [^>]*color:#b91c1c;">high<\/span>/);
+  assert.match(mail.html, /Analytics &middot; <\/span><span [^>]*color:#b3412f;">high<\/span>/);
   assert.match(mail.html, /Analyzed on 2026-10-19 &middot; 20 pages analyzed &middot; 77 proposed test cases/);
   assert.match(mail.html, />0 fail now<\/span>.*>26 at risk<\/span>/);
   assert.match(mail.text, /^- \[Analytics · high\] Tracking starts on/m);
@@ -25,6 +25,33 @@ test("an open report mail and PDF carry the fix of each finding, and a blurred o
   assert.ok(!customerMail.reportMail(record, {}).html.includes(customerMail.esc(fix)));
   assert.ok(!customerMail.reportPdf(record).html.includes(customerMail.esc(fix)));
   assert.match(customerMail.reportMail(Object.assign({}, open, { lang: "de" }), {}).html, /So beheben Sie es:<\/b>/);
+});
+
+test("the report mail and PDF write findings in the reader's language, and frost the translated line when unpaid (#1393)", () => {
+  const copy = JSON.parse(JSON.stringify(report));
+  const top = copy.insights.findings.find((item) => item.rank === 1);
+  top.msg = {
+    title: { id: "a11y-alt.title", vars: { n: 100 } },
+    evidence: { id: "a11y.on", vars: { pages: { items: ["/", "/showcase/", "/plugins/", "/themes/"], more: 6 } } },
+    fix: { id: "ax-fix.image-alt", vars: {} }
+  };
+  const es = require("../../functions/url-review-findings-copy.js").forLang("es");
+  const title = es.line(top.msg.title, "");
+  const fix = es.line(top.msg.fix, "");
+  assert.equal(title, "100 imágenes no tienen atributo alt");
+  const paid = Object.assign({}, record, { report: copy, paid: true, lang: "es" });
+  const mail = customerMail.reportMail(paid, {});
+  assert.ok(mail.html.includes(customerMail.esc(title)) && mail.html.includes(customerMail.esc(fix)));
+  assert.ok(mail.text.includes(title) && mail.text.includes(fix));
+  assert.ok(!mail.html.includes(customerMail.esc(top.title)) && !mail.html.includes(customerMail.esc(top.fix)));
+  const pdf = customerMail.reportPdf(paid).html;
+  assert.ok(pdf.includes(customerMail.esc(title)) && pdf.includes(customerMail.esc(es.line(top.msg.evidence, ""))) && pdf.includes(customerMail.esc(fix)));
+  const unpaid = Object.assign({}, record, { report: copy, lang: "es" });
+  const cut = customerMail.reportMail(unpaid, {});
+  assert.ok(cut.html.includes(customerMail.esc(customerMail.frost(title).shown)));
+  assert.ok(!cut.html.includes(customerMail.esc(title)) && !cut.html.includes(customerMail.esc(top.title)));
+  assert.ok(!customerMail.reportPdf(unpaid).html.includes(customerMail.esc(title)));
+  assert.equal(customerMail.reportMail(Object.assign({}, paid, { lang: "en" }), {}).html, customerMail.reportMail(Object.assign({}, record, { paid: true }), {}).html);
 });
 
 test("a review without a score does not promise six scores", () => {
@@ -158,9 +185,19 @@ test("the period report leads with volume and money, puts deltas inline, and dro
   assert.equal(reportSubject("Daily", "22 Oct 2026", summarizePeriod([], [rows[0]], [], []), 0), "Daily URL review — 22 Oct 2026 · 1 review");
 });
 
+test("a slimmed review row keeps everything the period summary reads and drops the rest of the report", () => {
+  const full = Object.assign({}, record, { status: "complete", requestedUrl: "", report: Object.assign({}, report, { finalUrl: "https://x.co/", alerts: [{ a: 1 }, { a: 2 }] }) });
+  const slim = slimReview(full);
+  assert.deepEqual(summarizePeriod([], [slim], [], []), summarizePeriod([], [full], [], []));
+  assert.ok(JSON.stringify(slim).length < JSON.stringify(full).length / 10);
+  assert.equal(slim.report.alerts.length, 2);
+  assert.equal(slimReview({ status: "checkout-open" }).status, "checkout-open");
+});
+
 test("the owner mail renders section headings and its eyebrow", () => {
   const mail = ownerMail({ intro: "Report", eyebrow: "QA-lab URL Review", rows: [{ heading: "Money" }, { label: "Revenue", value: "9 USD" }, { heading: "Empty" }, { label: "Nothing", value: "" }] });
-  assert.match(mail.html, />QA-lab URL Review<\/p>/);
+  assert.match(mail.html, />QA-lab URL Review<\/td>/);
+  assert.match(mail.html, /<img src="https:\/\/carlosandmunoz\.com\/assets\/qa-review-logo\.png" width="48" height="48" alt="QA-lab URL Review"/);
   assert.match(mail.html, />Money<\/td>/);
   assert.doesNotMatch(mail.html, />Empty</);
   assert.equal(mail.text, "Report\n\nMONEY\nRevenue: 9 USD\n\n");

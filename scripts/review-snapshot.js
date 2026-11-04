@@ -5,11 +5,13 @@
  *
  * Reports go to previews/insights-test/<name>-current.json. The browser pass
  * runs when CHROME_PATH is set, and PageSpeed Insights when PAGESPEED_KEY is
- * set in the environment or in functions/.env.
+ * set in the environment or in functions/.secret.local.
  *
- *   node scripts/review-snapshot.js --sample https://carlosandmunoz.com/
+ *   CHROME_PATH=... node scripts/review-snapshot.js --sample https://automationexercise.com/
  *
- * writes the public sample that qa-review.html opens before the disclaimers.
+ * writes the public sample that qa-review.html opens before the disclaimers. It
+ * needs the browser pass (CHROME_PATH and functions/node_modules), and the page
+ * copy names the sample's host in every language (scripts/review_langs_copy.py).
  */
 const fs = require("fs");
 const path = require("path");
@@ -19,9 +21,9 @@ const ROOT = path.join(__dirname, "..");
 const OUT = path.join(ROOT, "previews", "insights-test");
 const SAMPLE = path.join(ROOT, "assets", "qa-review-sample.json");
 
-function loadEnvFile() {
+function loadEnvFile(name) {
   let text = "";
-  try { text = fs.readFileSync(path.join(ROOT, "functions", ".env"), "utf8"); } catch (error) { return; }
+  try { text = fs.readFileSync(path.join(ROOT, "functions", name), "utf8"); } catch (error) { return; }
   text.split("\n").forEach((line) => {
     const trimmed = line.trim();
     const eq = trimmed.indexOf("=");
@@ -39,7 +41,8 @@ function summary(name, report) {
 }
 
 async function main() {
-  loadEnvFile();
+  loadEnvFile(".env");
+  loadEnvFile(".secret.local");
   const args = process.argv.slice(2);
   if (args[0] === "--sample") {
     if (!args[1]) {
@@ -50,8 +53,13 @@ async function main() {
       browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
-      webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined
+      webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+      places: process.env.PLACES_KEY ? (request) => core.placesSearch(request, process.env.PLACES_KEY) : undefined
     });
+    if (!report.browser || !report.browser.ok) {
+      console.error("The sample needs the browser pass (" + ((report.browser && report.browser.error) || "set CHROME_PATH") + "). Nothing was written.");
+      process.exit(1);
+    }
     fs.writeFileSync(SAMPLE, JSON.stringify({ frameworks: core.FRAMEWORKS, report }) + "\n");
     console.log(summary("sample", report) + " -> " + path.relative(ROOT, SAMPLE));
     return;
@@ -72,7 +80,8 @@ async function main() {
         browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
         pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
         crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
-        webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined
+        webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+        places: process.env.PLACES_KEY ? (request) => core.placesSearch(request, process.env.PLACES_KEY) : undefined
       });
       fs.writeFileSync(path.join(OUT, target.name + "-current.json"), JSON.stringify(report, null, 1));
       console.log(summary(target.name, report) + " in " + Math.round((Date.now() - started) / 1000) + " s");

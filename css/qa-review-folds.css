@@ -6,6 +6,9 @@
 .alarm .fold-icon { border-color: currentColor; }
 .fold-toggle[aria-expanded="false"] .fold-icon { transform: rotate(-45deg); margin-bottom: 0; }
 .fold-panel[hidden] { display: none !important; }
+.list-more { all: unset; cursor: pointer; color: var(--cyan); font-weight: 600; white-space: nowrap; }
+.list-more:hover { text-decoration: underline; }
+.list-more:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 4px; }
 .case-print .script-name { margin: 10px 0 4px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #0d6e76; }
 .case-print pre { margin: 0 0 8px; padding: 8px 10px; border: 1px solid #d5dce3; border-radius: 6px; font: 10px/1.45 "Fira Code", ui-monospace, monospace; white-space: pre-wrap; word-break: break-word; }
 
@@ -15,7 +18,8 @@
 
 @media print {
     .fold-panel[hidden] { display: block !important; }
-    .fold-icon, .fold-bar { display: none !important; }
+    .fold-icon, .fold-bar, .list-more, .list-rest { display: none !important; }
+    .list-dots, .list-dots[hidden] { display: inline !important; }
     .case-print article:has(pre) { break-inside: auto; }
     .case-print pre { break-inside: avoid; }
 }

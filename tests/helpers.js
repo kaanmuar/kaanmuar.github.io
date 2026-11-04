@@ -50,7 +50,8 @@ async function forceGlancePair(page, index = 0) {
 
 async function runAxe(page, { exclude = [], include = '', contrast = false } = {}) {
   const axePath = require.resolve('axe-core/axe.min.js');
-  await page.addScriptTag({ path: axePath });
+  // addScriptTag inlines the file, which the pages' script-src refuses; evaluate is not bound by the CSP.
+  await page.evaluate(fs.readFileSync(axePath, 'utf8'));
   return page.evaluate(async ({ excludeSelectors, include, contrast }) => {
     const context = {};
     if (include) context.include = [[include]];

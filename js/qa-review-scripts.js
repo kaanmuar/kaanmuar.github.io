@@ -9,7 +9,7 @@
   const LOAD_TOOLS = ["JMeter", "Gatling", "k6"];
   const MISSING_PATH = "/qa-lab-missing-page-404";
   const PHONE = { width: 390, height: 844 };
-  const TABLET = { width: 820, height: 1180 };
+  const TABLET = { width: 768, height: 1024 };
 
   function oneLine(value) {
     return String(value == null ? "" : value).replace(/\s+/g, " ").trim();
@@ -73,6 +73,25 @@
   }
 
   const AI_BLOCK = "^user-agent:\\s*(?:OAI-SearchBot|ChatGPT-User|PerplexityBot|Perplexity-User|Claude-SearchBot|Claude-User|\\*)\\s*$(?:\\s*^user-agent:[^\\n]*$)*\\s*^disallow:\\s*/\\s*$";
+  const MAX_AXE_PAGES = 6;
+  const MAX_COOKIE_PAGES = 12;
+  const TRACKER_WAIT_MS = 5000;
+
+  function pathsOf(item, at, max) {
+    const all = [at];
+    (item.pages || []).forEach((path) => { if (typeof path === "string" && path && all.indexOf(path) === -1) all.push(path); });
+    return all.slice(0, max);
+  }
+
+  // Cases the review backs with axe-core: an AXE-xx case names its rule; FN-05 and A11Y-04 assert one rule each.
+  function axeRule(item) {
+    const named = /breaking ([a-z0-9-]+) \(|with only the ([a-z0-9-]+) rule/.exec(String(item.why || ""));
+    return named ? named[1] || named[2] : "";
+  }
+
+  function axeCheck(item, at, rules) {
+    return { kind: "axe", paths: pathsOf(item, at, MAX_AXE_PAGES), rules };
+  }
 
   function checkFor(item, ctx) {
     const at = item.path || ctx.startPath;
@@ -126,11 +145,48 @@
       case "LD-01": return { kind: "load", path: at, profile: "baseline" };
       case "LD-02": return { kind: "load", path: at, profile: "ramp" };
       case "LD-03": return { kind: "load", path: at, profile: "spike" };
-      default: return { kind: "manual" };
+      case "FN-05": return axeCheck(item, at, ["button-name"]);
+      case "A11Y-04": return axeCheck(item, at, ["color-contrast"]);
+      case "SEC-06": return { kind: "setCookies", paths: pathsOf(item, at, MAX_COOKIE_PAGES) };
+      case "PR-03": return { kind: "trackers", path: at, wait: TRACKER_WAIT_MS };
+      default:
+        if (/^AXE-\d+$/.test(item.id) && axeRule(item)) return axeCheck(item, at, [axeRule(item)]);
+        return { kind: "manual" };
     }
   }
 
-  const BROWSER_KINDS = ["status", "title", "count", "attr", "statusAll", "titleAll", "metaLength", "headers", "headerNoDigits", "httpsRedirect", "notFound", "robotsSitemap", "text", "budget", "viewport", "linksResolve", "journey"];
+  const BROWSER_KINDS = ["status", "title", "count", "attr", "statusAll", "titleAll", "metaLength", "headers", "headerNoDigits", "httpsRedirect", "notFound", "robotsSitemap", "text", "budget", "viewport", "linksResolve", "journey", "axe", "setCookies", "trackers"];
+
+  const AXE_URL = "https://cdn.jsdelivr.net/npm/axe-core@4.14.0/axe.min.js";
+  // The same names and hosts the review's browser pass counts, so a script fails on what the report saw.
+  const SESSION_COOKIE = "sess|sid$|^sid|auth|token|login|jwt|csrf";
+  const TRACKER_HOSTS = ["google-analytics\\.com", "analytics\\.google\\.com", "doubleclick\\.net", "googleadservices\\.com", "googlesyndication\\.com", "googletagservices\\.com", "facebook\\.com", "facebook\\.net",
+    "px\\.ads\\.linkedin\\.com", "snap\\.licdn\\.com", "analytics\\.tiktok\\.com", "clarity\\.ms", "bat\\.bing\\.com", "hotjar\\.com", "hotjar\\.io", "ads-twitter\\.com", "analytics\\.twitter\\.com", "ct\\.pinterest\\.com",
+    "alb\\.reddit\\.com", "tr\\.snapchat\\.com", "mc\\.yandex\\.(?:ru|com)", "criteo\\.(?:com|net)", "taboola\\.com", "outbrain\\.com", "quantserve\\.com", "hs-analytics\\.net", "track\\.hubspot\\.com", "hsadspixel\\.net",
+    "api\\.segment\\.io", "api-js\\.mixpanel\\.com", "api2?\\.amplitude\\.com", "heapanalytics\\.com", "fullstory\\.com", "mouseflow\\.com", "smartlook\\.(?:com|cloud)", "logrocket\\.(?:io|com)", "lr-ingest\\.(?:io|com)",
+    "inspectlet\\.com", "luckyorange\\.(?:com|net)", "contentsquare\\.(?:net|com)", "omtrdc\\.net", "demdex\\.net", "siteimproveanalytics\\.(?:com|io)"];
+  const TRACKING_COOKIE = "^(_ga|_gid|_gat|_gcl_|_fbp|_fbc|_uet|_clck|_clsk|_hj|_tt_|_ttp|_pin_|_scid|_rdt_|_ym|li_|_mkto_trk|hubspotutk|__hs|ajs_|mp_|amp_|_derived_epik|_parsely|s_cc$|s_sq$|AMCV_|nmstat$|siteimproveses$)";
+  // In-page probes take the window and one argument and resolve to a list of problems. An empty list passes.
+  const AXE_PROBE = "(win, rules) => win.axe.run(win.document, { runOnly: { type: \"rule\", values: rules }, resultTypes: [\"violations\"] }).then((result) => result.violations.map((rule) => rule.id + \": \" + rule.nodes.slice(0, 5).map((node) => node.target.join(\" \")).join(\", \")))";
+  const TRACKERS_PROBE = "(win, wait) => new Promise((resolve) => setTimeout(resolve, wait)).then(() => {" +
+    " const hosts = /(^|\\.)(" + TRACKER_HOSTS.join("|") + ")$/;" +
+    " const names = /" + TRACKING_COOKIE + "/i;" +
+    " const requested = win.performance.getEntriesByType(\"resource\").map((entry) => { try { return new URL(entry.name).hostname; } catch (error) { return \"\"; } }).filter((host) => hosts.test(host));" +
+    " const cookies = win.document.cookie.split(\";\").map((part) => part.split(\"=\")[0].trim()).filter((name) => names.test(name));" +
+    " return [...new Set(requested)].map((host) => \"request to \" + host).concat(cookies.map((name) => \"cookie \" + name)); })";
+  // A Set-Cookie line that lacks Secure, or lacks HttpOnly on a session-like name, as the review's cookie finding reads it.
+  const LOOSE_JS = "(line) => !/;\\s*secure\\s*(;|$)/i.test(line) || (/" + SESSION_COOKIE + "/i.test(line.split(\"=\")[0].trim()) && !/;\\s*httponly\\s*(;|$)/i.test(line))";
+  const SECURE_RE = ";\\s*secure\\s*(;|$)";
+  const HTTPONLY_RE = ";\\s*httponly\\s*(;|$)";
+
+  // The probe as a page function, for runners that pass a function and its argument to the page.
+  function pageProbe(probe) {
+    return probe.replace(/^\(win, (\w+)\) =>/, "($1) =>").replace(/\bwin\./g, "window.");
+  }
+
+  function asyncScript(probe) {
+    return "const done = arguments[arguments.length - 1]; Promise.resolve((" + probe + ")(window, arguments[0])).then(done, (error) => done([String(error)]));";
+  }
 
   function supports(framework, check) {
     if (framework === "Appium" || framework === "Maestro") return check.kind === "viewport";
@@ -214,6 +270,17 @@
         go(check.path);
         body.push("const hrefs = await page.$$eval(\"a[href]\", (links) => links.map((link) => (link as HTMLAnchorElement).href.split(\"#\")[0]));", "const same = [...new Set(hrefs.filter((href) => href.startsWith(BASE)))].slice(0, " + check.max + ");", "for (const href of same) {", "  const res = await request.get(href);", "  expect.soft(res.status(), href).toBeLessThan(400);", "}");
         break;
+      case "axe":
+        body.push("const axe = await (await fetch(" + q(AXE_URL) + ")).text();", "for (const path of " + JSON.stringify(check.paths) + ") {", "  await page.goto(BASE + path);", "  await page.evaluate(axe);",
+          "  expect.soft(await page.evaluate(" + pageProbe(AXE_PROBE) + ", " + JSON.stringify(check.rules) + "), path).toEqual([]);", "}");
+        break;
+      case "setCookies":
+        body.push("for (const path of " + JSON.stringify(check.paths) + ") {", "  const res = await request.get(BASE + path);", "  const cookies = res.headersArray().filter((header) => header.name.toLowerCase() === \"set-cookie\").map((header) => header.value);",
+          "  expect.soft(cookies.filter(" + LOOSE_JS + ").map((line) => line.split(\"=\")[0].trim()), path).toEqual([]);", "}");
+        break;
+      case "trackers":
+        go(check.path); body.push("expect(await page.evaluate(" + pageProbe(TRACKERS_PROBE) + ", " + check.wait + ")).toEqual([]);");
+        break;
       default:
         break;
     }
@@ -285,6 +352,17 @@
         go(check.path);
         body.push("cy.document().then((doc) => {", "  const hrefs = [...doc.querySelectorAll(\"a[href]\")].map((link) => link.href.split(\"#\")[0]);", "  [...new Set(hrefs.filter((href) => href.startsWith(BASE)))].slice(0, " + check.max + ").forEach((href) => {", "    cy.request({ url: href, failOnStatusCode: false }).its(\"status\").should(\"be.lessThan\", 400);", "  });", "});");
         break;
+      case "axe":
+        body.push("cy.request(" + q(AXE_URL) + ").its(\"body\").then((axe) => {", "  " + JSON.stringify(check.paths) + ".forEach((path) => {", "    cy.visit(BASE + path);",
+          "    cy.window().then({ timeout: 30000 }, (win) => { win.eval(axe); return (" + AXE_PROBE + ")(win, " + JSON.stringify(check.rules) + "); })", "      .then((problems) => expect(problems, path).to.deep.equal([]));", "  });", "});");
+        break;
+      case "setCookies":
+        body.push(JSON.stringify(check.paths) + ".forEach((path) => {", "  cy.request({ url: BASE + path, failOnStatusCode: false }).then((res) => {", "    const cookies = [].concat(res.headers[\"set-cookie\"] || []);",
+          "    expect(cookies.filter(" + LOOSE_JS + ").map((line) => line.split(\"=\")[0].trim()), path).to.deep.equal([]);", "  });", "});");
+        break;
+      case "trackers":
+        go(check.path); body.push("cy.window().then({ timeout: 30000 }, (win) => (" + TRACKERS_PROBE + ")(win, " + check.wait + "))", "  .then((problems) => expect(problems).to.deep.equal([]));");
+        break;
       default:
         break;
     }
@@ -300,7 +378,7 @@
     if (check.kind === "manual") {
       return "@pytest.mark.skip(reason=\"A person runs this case with access the owner provides.\")\ndef " + pyName(item) + "():\n" + doc + "\n";
     }
-    const browser = ["title", "titleAll", "count", "attr", "metaLength", "viewport", "linksResolve", "journey"].indexOf(check.kind) !== -1;
+    const browser = ["title", "titleAll", "count", "attr", "metaLength", "viewport", "linksResolve", "journey", "axe", "trackers"].indexOf(check.kind) !== -1;
     const body = [];
     const go = (path) => body.push("driver.get(BASE + " + q(path) + ")");
     switch (check.kind) {
@@ -360,6 +438,17 @@
         go(check.path);
         body.push("hrefs = sorted({(a.get_attribute(\"href\") or \"\").split(\"#\")[0] for a in driver.find_elements(By.CSS_SELECTOR, \"a[href]\")})", "for href in [h for h in hrefs if h.startswith(BASE)][:" + check.max + "]:", "    assert requests.get(href, timeout=30).status_code < 400, href");
         break;
+      case "axe":
+        body.push("axe = requests.get(" + q(AXE_URL) + ", timeout=30).text", "problems = []", "for path in " + JSON.stringify(check.paths) + ":", "    driver.get(BASE + path)", "    driver.execute_script(axe)",
+          "    problems += [path + \" \" + problem for problem in driver.execute_async_script(" + q(asyncScript(AXE_PROBE)) + ", " + JSON.stringify(check.rules) + ")]", "assert not problems, problems");
+        break;
+      case "setCookies":
+        body.push("loose = []", "for path in " + JSON.stringify(check.paths) + ":", "    for line in requests.get(BASE + path, timeout=30).raw.headers.getlist(\"Set-Cookie\"):", "        name = line.split(\"=\")[0].strip()",
+          "        if not re.search(r\"" + SECURE_RE + "\", line, re.I) or (re.search(r\"" + SESSION_COOKIE + "\", name, re.I) and not re.search(r\"" + HTTPONLY_RE + "\", line, re.I)):", "            loose.append(path + \" \" + name)", "assert not loose, loose");
+        break;
+      case "trackers":
+        go(check.path); body.push("problems = driver.execute_async_script(" + q(asyncScript(TRACKERS_PROBE)) + ", " + check.wait + ")", "assert not problems, problems");
+        break;
       default:
         break;
     }
@@ -368,6 +457,10 @@
 
   function robotText(value) {
     return oneLine(value).replace(/\\/g, "/").replace(/\$\{/g, "\\${").replace(/@\{/g, "\\@{").replace(/&\{/g, "\\&{");
+  }
+
+  function robotCode(value) {
+    return String(value).replace(/\\/g, "\\\\").replace(/\$\{/g, "\\${").replace(/@\{/g, "\\@{").replace(/&\{/g, "\\&{").replace(/%\{/g, "\\%{").replace(/ {2,}/g, " ");
   }
 
   function robot(item, check, parts) {
@@ -434,6 +527,21 @@
         break;
       case "linksResolve":
         open(check.path); lines.push("    ${hrefs}=    Execute Javascript    return [...new Set([...document.querySelectorAll('a[href]')].map(a => a.href.split('#')[0]).filter(h => h.startsWith('${BASE}')))].slice(0, " + check.max + ")", "    FOR    ${href}    IN    @{hrefs}", "        ${resp}=    GET    ${href}    expected_status=any", "        Should Be True    ${resp.status_code} < 400    ${href}", "    END"); close();
+        break;
+      case "axe":
+        lines.push("    ${axe}=    GET    " + AXE_URL, "    ${rules}=    Create List    " + check.rules.join("    "));
+        open(check.paths[0]);
+        lines.push("    Set Selenium Timeout    30 seconds", "    FOR    ${path}    IN    " + check.paths.join("    "), "        Go To    ${BASE}${path}", "        Execute Javascript    ${axe.text}",
+          "        ${problems}=    Execute Async Javascript    " + robotCode(asyncScript(AXE_PROBE)) + "    ARGUMENTS    ${rules}", "        Should Be Empty    ${problems}    ${path}: ${problems}", "    END");
+        close();
+        break;
+      case "setCookies":
+        lines.push("    FOR    ${path}    IN    " + check.paths.join("    "), "        ${resp}=    GET    ${BASE}${path}    expected_status=any",
+          "        ${loose}=    Evaluate    [line.split('=')[0].strip() for line in $resp.raw.headers.getlist('Set-Cookie') if not re.search(r'" + robotCode(SECURE_RE) + "', line, re.I) or (re.search(r'" + robotCode(SESSION_COOKIE) + "', line.split('=')[0], re.I) and not re.search(r'" + robotCode(HTTPONLY_RE) + "', line, re.I))]    modules=re",
+          "        Should Be Empty    ${loose}    ${path}: ${loose}", "    END");
+        break;
+      case "trackers":
+        open(check.path); lines.push("    Set Selenium Timeout    30 seconds", "    ${problems}=    Execute Async Javascript    " + robotCode(asyncScript(TRACKERS_PROBE)) + "    ARGUMENTS    ${" + check.wait + "}", "    Should Be Empty    ${problems}    ${problems}"); close();
         break;
       default:
         break;
@@ -505,6 +613,17 @@
         go(check.path);
         body.push("const hrefs = await browser.execute((base, max) => [...new Set([...document.querySelectorAll(\"a[href]\")].map((link) => link.href.split(\"#\")[0]).filter((href) => href.startsWith(base)))].slice(0, max), BASE, " + check.max + ");", "for (const href of hrefs) {", "  const res = await fetch(href);", "  expect(res.status).toBeLessThan(400);", "}");
         break;
+      case "axe":
+        body.push("const axe = await (await fetch(" + q(AXE_URL) + ")).text();", "const problems = [];", "for (const path of " + JSON.stringify(check.paths) + ") {", "  await browser.url(BASE + path);", "  await browser.execute(axe);",
+          "  problems.push(...(await browser.execute(" + pageProbe(AXE_PROBE) + ", " + JSON.stringify(check.rules) + ")).map((problem) => path + \" \" + problem));", "}", "expect(problems).toEqual([]);");
+        break;
+      case "setCookies":
+        body.push("const loose = [];", "for (const path of " + JSON.stringify(check.paths) + ") {", "  const res = await fetch(BASE + path);",
+          "  loose.push(...res.headers.getSetCookie().filter(" + LOOSE_JS + ").map((line) => path + \" \" + line.split(\"=\")[0].trim()));", "}", "expect(loose).toEqual([]);");
+        break;
+      case "trackers":
+        go(check.path); body.push("expect(await browser.execute(" + pageProbe(TRACKERS_PROBE) + ", " + check.wait + ")).toEqual([]);");
+        break;
       default:
         break;
     }
@@ -554,7 +673,8 @@
     noMatch: (a, re) => "expect(" + a + ").not.toMatch(" + re + ");",
     oneOf: (list, a) => "expect(" + list + ").toContain(" + a + ");",
     truthy: (a) => "expect(" + a + ").toBeTruthy();",
-    filled: (a) => "expect(" + a + ").not.toBe(\"\");"
+    filled: (a) => "expect(" + a + ").not.toBe(\"\");",
+    none: (a) => "expect(" + a + ").toEqual([]);"
   };
 
   const ASSERT = {
@@ -566,7 +686,8 @@
     noMatch: (a, re) => "assert.doesNotMatch(" + a + ", " + re + ");",
     oneOf: (list, a) => "assert.ok(" + list + ".includes(" + a + "), String(" + a + "));",
     truthy: (a, why) => "assert.ok(" + a + (why ? ", " + why : "") + ");",
-    filled: (a, why) => "assert.notEqual(" + a + ", \"\"" + (why ? ", " + why : "") + ");"
+    filled: (a, why) => "assert.notEqual(" + a + ", \"\"" + (why ? ", " + why : "") + ");",
+    none: (a) => "assert.deepEqual(" + a + ", []);"
   };
 
   const PAGE_DOM = {
@@ -575,6 +696,7 @@
     title: "(await page.title()).trim()",
     attr: (selector, attr) => "((await page.locator(" + q(selector) + ").first().getAttribute(" + q(attr) + ")) || \"\").trim()",
     run: (fn, arg) => "await page.evaluate(" + fn + (arg ? ", " + arg : "") + ")",
+    inject: (source) => "await page.evaluate(" + source + ");",
     size: (width, height) => "await page.setViewportSize({ width: " + width + ", height: " + height + " });",
     click: (selector) => "await page.locator(" + q(selector) + ").first().click();",
     waitPath: (target) => "await page.waitForURL((url) => url.pathname === " + q(target) + ");"
@@ -586,6 +708,7 @@
     title: "(await I.grabTitle()).trim()",
     attr: (selector, attr) => "((await I.grabAttributeFrom(" + q(selector) + ", " + q(attr) + ")) || \"\").trim()",
     run: (fn, arg) => "await I.executeScript(" + fn + (arg ? ", " + arg : "") + ")",
+    inject: (source) => "await I.executeScript(" + source + ");",
     size: (width, height) => "await I.resizeWindow(" + width + ", " + height + ");",
     click: (selector) => "await I.click(" + q(selector) + ");",
     waitPath: (target) => "await I.waitForFunction((path) => location.pathname === path, [" + q(target) + "], 15);"
@@ -651,6 +774,17 @@
         go(check.path);
         body.push("const hrefs = " + D.run(LINKS_JS, "{ base: BASE, max: " + check.max + " }") + ";", "for (const href of hrefs) {", "  const res = await fetch(href);", "  " + A.lt("res.status", 400, "href"), "}");
         break;
+      case "axe":
+        body.push("const axe = await (await fetch(" + q(AXE_URL) + ")).text();", "const problems = [];", "for (const path of " + JSON.stringify(check.paths) + ") {", "  " + D.go("path"), "  " + D.inject("axe"),
+          "  problems.push(...(" + D.run(pageProbe(AXE_PROBE), JSON.stringify(check.rules)) + ").map((problem) => path + \" \" + problem));", "}", A.none("problems"));
+        break;
+      case "setCookies":
+        body.push("const loose = [];", "for (const path of " + JSON.stringify(check.paths) + ") {", "  const res = await fetch(BASE + path);",
+          "  loose.push(...res.headers.getSetCookie().filter(" + LOOSE_JS + ").map((line) => path + \" \" + line.split(\"=\")[0].trim()));", "}", A.none("loose"));
+        break;
+      case "trackers":
+        go(check.path); body.push("const problems = " + D.run(pageProbe(TRACKERS_PROBE), String(check.wait)) + ";", A.none("problems"));
+        break;
       default:
         break;
     }
@@ -679,6 +813,8 @@
     title: "Objects.toString(title(), \"\").trim()",
     attr: (selector, attr) => "Objects.toString($(" + q(selector) + ").getAttribute(" + q(attr) + "), \"\").trim()",
     run: (script, arg) => "executeJavaScript(" + q(script) + (arg ? ", " + arg : "") + ")",
+    runAsync: (script, arg) => "executeAsyncJavaScript(" + q(script) + ", " + arg + ")",
+    inject: (source) => "executeJavaScript(" + source + ");",
     size: (width, height) => "WebDriverRunner.getWebDriver().manage().window().setSize(new Dimension(" + width + ", " + height + "));",
     reload: "refresh();",
     click: (selector) => "$(" + q(selector) + ").click();"
@@ -690,6 +826,8 @@
     title: "Objects.toString(driver.getTitle(), \"\").trim()",
     attr: (selector, attr) => "Objects.toString(driver.findElement(By.cssSelector(" + q(selector) + ")).getAttribute(" + q(attr) + "), \"\").trim()",
     run: (script, arg) => "((JavascriptExecutor) driver).executeScript(" + q(script) + (arg ? ", " + arg : "") + ")",
+    runAsync: (script, arg) => "((JavascriptExecutor) driver).executeAsyncScript(" + q(script) + ", " + arg + ")",
+    inject: (source) => "((JavascriptExecutor) driver).executeScript(" + source + ");",
     size: (width, height) => "driver.manage().window().setSize(new Dimension(" + width + ", " + height + "));",
     reload: "driver.navigate().refresh();",
     click: (selector) => "driver.findElement(By.cssSelector(" + q(selector) + ")).click();"
@@ -761,6 +899,18 @@
       case "linksResolve":
         go(check.path);
         body.push("List<?> hrefs = (List<?>) " + D.run(linksScript(check.max), "BASE") + ";", "for (Object href : hrefs) {", "  " + ok("get(String.valueOf(href)).statusCode() < 400", "String.valueOf(href)"), "}");
+        break;
+      case "axe":
+        body.push("String axe = new String(get(" + q(AXE_URL) + ").body(), StandardCharsets.UTF_8);", "List<String> problems = new ArrayList<>();", "for (String path : List.of(" + check.paths.map(q).join(", ") + ")) {", "  " + D.go("path"), "  " + D.inject("axe"),
+          "  for (Object problem : (List<?>) " + D.runAsync(asyncScript(AXE_PROBE), "List.of(" + check.rules.map(q).join(", ") + ")") + ") problems.add(path + \" \" + problem);", "}", ok("problems.isEmpty()", "String.valueOf(problems)"));
+        break;
+      case "setCookies":
+        body.push("List<String> loose = new ArrayList<>();", "for (String path : List.of(" + check.paths.map(q).join(", ") + ")) {", "  for (String line : get(BASE + path).headers().allValues(\"set-cookie\")) {", "    String cookie = line.split(\"=\", 2)[0].trim();",
+          "    boolean secure = Pattern.compile(" + q(SECURE_RE) + ", Pattern.CASE_INSENSITIVE).matcher(line).find();", "    boolean httpOnly = Pattern.compile(" + q(HTTPONLY_RE) + ", Pattern.CASE_INSENSITIVE).matcher(line).find();",
+          "    if (!secure || (!httpOnly && Pattern.compile(" + q(SESSION_COOKIE) + ", Pattern.CASE_INSENSITIVE).matcher(cookie).find())) loose.add(path + \" \" + cookie);", "  }", "}", ok("loose.isEmpty()", "String.valueOf(loose)"));
+        break;
+      case "trackers":
+        go(check.path); body.push("List<?> problems = (List<?>) " + D.runAsync(asyncScript(TRACKERS_PROBE), String(check.wait)) + ";", ok("problems.isEmpty()", "String.valueOf(problems)"));
         break;
       default:
         break;
@@ -861,6 +1011,17 @@
         go(rb(check.path));
         body.push("hrefs = @browser.execute_script(" + rb(linksScript(check.max)) + ", BASE)", "hrefs.each do |href|", "  expect(http_get(href).code.to_i).to be < 400", "end");
         break;
+      case "axe":
+        body.push("axe = http_get(" + rb(AXE_URL) + ").body.to_s", "problems = []", "[" + check.paths.map(rb).join(", ") + "].each do |path|", "  @browser.goto(BASE + path)", "  @browser.execute_script(axe)",
+          "  problems += @browser.driver.execute_async_script(" + rb(asyncScript(AXE_PROBE)) + ", [" + check.rules.map(rb).join(", ") + "]).map { |problem| \"#{path} #{problem}\" }", "end", "expect(problems).to be_empty");
+        break;
+      case "setCookies":
+        body.push("loose = []", "[" + check.paths.map(rb).join(", ") + "].each do |path|", "  (http_get(BASE + path).get_fields(\"set-cookie\") || []).each do |line|", "    name = line.split(\"=\", 2).first.to_s.strip",
+          "    loose << \"#{path} #{name}\" if line !~ /" + SECURE_RE + "/i || (name =~ /" + SESSION_COOKIE + "/i && line !~ /" + HTTPONLY_RE + "/i)", "  end", "end", "expect(loose).to be_empty");
+        break;
+      case "trackers":
+        go(rb(check.path)); body.push("expect(@browser.driver.execute_async_script(" + rb(asyncScript(TRACKERS_PROBE)) + ", " + check.wait + ")).to be_empty");
+        break;
       default:
         break;
     }
@@ -951,6 +1112,15 @@
       case "linksResolve":
         open(check.path); steps.push("Then the first " + check.max + " same-host links on the page resolve");
         break;
+      case "axe":
+        steps.push("Then axe-core finds no " + gq(check.rules.join(", ")) + " violation on these paths:", ...table(check.paths));
+        break;
+      case "setCookies":
+        steps.push("Then cookies set by these paths are Secure, and HttpOnly when they carry a session:", ...table(check.paths));
+        break;
+      case "trackers":
+        open(check.path); steps.push("Then no tracker request or tracking cookie appears in the first " + Math.round(check.wait / 1000) + " seconds");
+        break;
       default:
         return scenario(item, ["@manual", "@ignore"], ["Given this case is run by a person with access the owner provides"], notes);
     }
@@ -1016,7 +1186,14 @@
       .replace(/__LINE__/g, () => line)
       .replace(/__BASE__/g, () => q(ctx.base))
       .replace(/__HOST__/g, () => q(ctx.host))
-      .replace(/__MISSING__/g, () => q(MISSING_PATH));
+      .replace(/__MISSING__/g, () => q(MISSING_PATH))
+      .replace(/__AXE_URL__/g, () => q(AXE_URL))
+      .replace(/__AXE_PAGE__/g, () => pageProbe(AXE_PROBE))
+      .replace(/__TRACKERS_PAGE__/g, () => pageProbe(TRACKERS_PROBE))
+      .replace(/__LOOSE__/g, () => LOOSE_JS)
+      .replace(/__AXE_SCRIPT__/g, () => q(asyncScript(AXE_PROBE)))
+      .replace(/__TRACKERS_SCRIPT__/g, () => q(asyncScript(TRACKERS_PROBE)))
+      .replace(/__SESSION__/g, () => q(SESSION_COOKIE));
   }
 
   const CUCUMBER_STEPS = String.raw`// __LINE__
@@ -1154,6 +1331,30 @@ Then(/^"([^"]*)" answers within (\d+) ms and under (\d+) bytes$/, async function
   assert.ok(Date.now() - started < Number(ms), "slower than " + ms + " ms");
   assert.ok(body.byteLength < Number(bytes), body.byteLength + " bytes");
 });
+
+Then(/^axe-core finds no "([^"]*)" violation on these paths:$/, async function (rules, table) {
+  const axe = await (await fetch(__AXE_URL__)).text();
+  const problems = [];
+  for (const row of table.hashes()) {
+    await this.page.goto(BASE + row.path);
+    await this.page.evaluate(axe);
+    problems.push(...(await this.page.evaluate(__AXE_PAGE__, rules.split(/,\s*/))).map((problem) => row.path + " " + problem));
+  }
+  assert.deepEqual(problems, []);
+});
+
+Then(/^cookies set by these paths are Secure, and HttpOnly when they carry a session:$/, async function (table) {
+  const loose = [];
+  for (const row of table.hashes()) {
+    const res = await fetch(BASE + row.path);
+    loose.push(...res.headers.getSetCookie().filter(__LOOSE__).map((line) => row.path + " " + line.split("=")[0].trim()));
+  }
+  assert.deepEqual(loose, []);
+});
+
+Then(/^no tracker request or tracking cookie appears in the first (\d+) seconds$/, async function (seconds) {
+  assert.deepEqual(await this.page.evaluate(__TRACKERS_PAGE__, Number(seconds) * 1000), []);
+});
 `;
 
   const BEHAVE_STEPS = String.raw`# __LINE__
@@ -1171,6 +1372,10 @@ use_step_matcher("re")
 BASE = __BASE__
 HOST = __HOST__
 MISSING = __MISSING__
+AXE_URL = __AXE_URL__
+AXE_SCRIPT = __AXE_SCRIPT__
+TRACKERS_SCRIPT = __TRACKERS_SCRIPT__
+SESSION_COOKIE = __SESSION__
 
 
 def driver(context):
@@ -1324,6 +1529,34 @@ def budget(context, path, ms, size):
     assert res.status_code < 400, res.status_code
     assert elapsed_ms < int(ms), f"{elapsed_ms:.0f} ms"
     assert len(res.content) < int(size), f"{len(res.content)} bytes"
+
+
+@step(r'axe-core finds no "(?P<rules>[^"]*)" violation on these paths:')
+def axe_clean(context, rules):
+    axe = requests.get(AXE_URL, timeout=30).text
+    problems = []
+    for row in context.table:
+        driver(context).get(BASE + row["path"])
+        driver(context).execute_script(axe)
+        problems += [row["path"] + " " + problem for problem in driver(context).execute_async_script(AXE_SCRIPT, re.split(r",\s*", rules))]
+    assert not problems, problems
+
+
+@step(r"cookies set by these paths are Secure, and HttpOnly when they carry a session:")
+def cookies_flagged(context):
+    loose = []
+    for row in context.table:
+        for line in requests.get(BASE + row["path"], timeout=30).raw.headers.getlist("Set-Cookie"):
+            name = line.split("=")[0].strip()
+            if not re.search(r";\s*secure\s*(;|$)", line, re.I) or (re.search(SESSION_COOKIE, name, re.I) and not re.search(r";\s*httponly\s*(;|$)", line, re.I)):
+                loose.append(row["path"] + " " + name)
+    assert not loose, loose
+
+
+@step(r"no tracker request or tracking cookie appears in the first (?P<seconds>\d+) seconds")
+def no_trackers(context, seconds):
+    problems = driver(context).execute_async_script(TRACKERS_SCRIPT, int(seconds) * 1000)
+    assert not problems, problems
 `;
 
   const BEHAVE_ENVIRONMENT = String.raw`# __LINE__
@@ -1359,6 +1592,10 @@ namespace QaLab
         const string BaseUrl = __BASE__;
         const string Host = __HOST__;
         const string Missing = __MISSING__;
+        const string AxeUrl = __AXE_URL__;
+        const string AxeScript = __AXE_SCRIPT__;
+        const string TrackersScript = __TRACKERS_SCRIPT__;
+        const string SessionCookie = __SESSION__;
         static readonly HttpClient Http = new HttpClient(new HttpClientHandler { AllowAutoRedirect = true }) { Timeout = TimeSpan.FromSeconds(30) };
         static readonly HttpClient Raw = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(30) };
         static IWebDriver driver;
@@ -1378,6 +1615,8 @@ namespace QaLab
         }
 
         static object Run(string script, params object[] args) => ((IJavaScriptExecutor)Driver).ExecuteScript(script, args);
+
+        static object RunAsync(string script, params object[] args) => ((IJavaScriptExecutor)Driver).ExecuteAsyncScript(script, args);
 
         static HttpResponseMessage Get(string url) => Http.GetAsync(url).GetAwaiter().GetResult();
 
@@ -1522,6 +1761,45 @@ namespace QaLab
             Assert.That((int)res.StatusCode, Is.LessThan(400));
             Assert.That(watch.ElapsedMilliseconds, Is.LessThan(ms));
             Assert.That(body.Length, Is.LessThan(bytes));
+        }
+
+        [StepDefinition(@"^axe-core finds no ""([^""]*)"" violation on these paths:$")]
+        public void AxeClean(string rules, DataTable table)
+        {
+            var axe = Http.GetStringAsync(AxeUrl).GetAwaiter().GetResult();
+            var problems = new List<string>();
+            foreach (var row in table.Rows)
+            {
+                Driver.Navigate().GoToUrl(BaseUrl + row["path"]);
+                Run(axe);
+                foreach (var problem in (IReadOnlyCollection<object>)RunAsync(AxeScript, new object[] { Regex.Split(rules, @",\s*") })) problems.Add(row["path"] + " " + problem);
+            }
+            Assert.That(problems, Is.Empty, string.Join("; ", problems));
+        }
+
+        [StepDefinition(@"^cookies set by these paths are Secure, and HttpOnly when they carry a session:$")]
+        public void CookiesFlagged(DataTable table)
+        {
+            var loose = new List<string>();
+            foreach (var row in table.Rows)
+            {
+                if (!Get(BaseUrl + row["path"]).Headers.TryGetValues("Set-Cookie", out var lines)) continue;
+                foreach (var line in lines)
+                {
+                    var name = line.Split('=')[0].Trim();
+                    var secure = Regex.IsMatch(line, @";\s*secure\s*(;|$)", RegexOptions.IgnoreCase);
+                    var httpOnly = Regex.IsMatch(line, @";\s*httponly\s*(;|$)", RegexOptions.IgnoreCase);
+                    if (!secure || (!httpOnly && Regex.IsMatch(name, SessionCookie, RegexOptions.IgnoreCase))) loose.Add(row["path"] + " " + name);
+                }
+            }
+            Assert.That(loose, Is.Empty, string.Join("; ", loose));
+        }
+
+        [StepDefinition(@"^no tracker request or tracking cookie appears in the first (\d+) seconds$")]
+        public void NoTrackers(int seconds)
+        {
+            var problems = (IReadOnlyCollection<object>)RunAsync(TrackersScript, seconds * 1000);
+            Assert.That(problems, Is.Empty, string.Join("; ", problems));
         }
     }
 }
@@ -1919,6 +2197,7 @@ namespace QaLab
       "import java.net.http.HttpResponse;",
       "import java.nio.charset.StandardCharsets;",
       "import java.time.Duration;",
+      "import java.util.ArrayList;",
       "import java.util.List;",
       "import java.util.Objects;",
       "import java.util.regex.Pattern;"
@@ -2025,20 +2304,166 @@ namespace QaLab
     k6: "k6/qa-lab.js"
   };
 
-  function readme(ctx, sign, used, counts) {
+  // The two READMEs in the reader's language. Commands, file names, code and the generated files stay English.
+  const README_COPY = {
+    en: {
+      intro: "Automation scripts proposed from a public analysis of {base}.",
+      signature: "Signature: {mark}",
+      disclaimer: "These scripts were written from what the public page showed. They were not run by QA-lab. Review each selector, budget, and path before you trust a result. Skipped tests are cases that need a person, or an account the owner issues.",
+      inside: "What is inside",
+      cases: "{fw}: {n} case(s)",
+      howToRun: "How to run",
+      kitTitle: "Fix kit for {base}",
+      health: "Health {score}.",
+      notScored: "not scored",
+      kitNote: "These files were written from a public analysis. Review each value before you deploy it. Nothing here was applied to the site.",
+      fixFirst: "Fix first",
+      fix: "Fix: {fix}",
+      files: "Files",
+      ghProxied: "GitHub Pages cannot send custom headers, but this review also saw Cloudflare in front of the site. Add each header there with a Response Header Transform Rule (or a Worker). A `_headers` file only works on Cloudflare Pages or Netlify.",
+      ghPages: "GitHub Pages cannot send custom headers. Put a CDN such as Cloudflare in front and set the headers there, or move to a host that sends headers. The `_headers` file works on Cloudflare Pages and Netlify.",
+      hosted: "The site looks hosted on {host}, so that header file is listed first.",
+      areas: {},
+      severity: {},
+      effort: {}
+    },
+    es: {
+      intro: "Scripts de automatización propuestos a partir de un análisis público de {base}.",
+      signature: "Firma: {mark}",
+      disclaimer: "Estos scripts se escribieron a partir de lo que mostró la página pública. QA-lab no los ejecutó. Revisa cada selector, presupuesto y ruta antes de confiar en un resultado. Las pruebas omitidas son casos que necesitan a una persona o una cuenta que emite el propietario.",
+      inside: "Qué incluye",
+      cases: "{fw}: {n} caso(s)",
+      howToRun: "Cómo ejecutarlos",
+      kitTitle: "Kit de arreglos para {base}",
+      health: "Puntuación de salud {score}.",
+      notScored: "sin puntuación",
+      kitNote: "Estos archivos se escribieron a partir de un análisis público. Revisa cada valor antes de desplegarlo. No se aplicó nada al sitio.",
+      fixFirst: "Arreglar primero",
+      fix: "Corrección: {fix}",
+      files: "Archivos",
+      ghProxied: "GitHub Pages no puede enviar encabezados propios, pero esta revisión también vio Cloudflare delante del sitio. Agrega cada encabezado allí con una Response Header Transform Rule (o un Worker). Un archivo `_headers` solo funciona en Cloudflare Pages o Netlify.",
+      ghPages: "GitHub Pages no puede enviar encabezados propios. Pon una CDN como Cloudflare delante y configura allí los encabezados, o cámbiate a un hosting que envíe encabezados. El archivo `_headers` funciona en Cloudflare Pages y Netlify.",
+      hosted: "El sitio parece alojado en {host}, así que ese archivo de encabezados aparece primero.",
+      areas: { Analytics: "Analítica", Security: "Seguridad", Accessibility: "Accesibilidad", Performance: "Rendimiento" },
+      severity: { critical: "crítica", high: "alta", medium: "media", low: "baja", info: "informativa" },
+      effort: { minutes: "minutos", hours: "horas", days: "días" }
+    },
+    pt: {
+      intro: "Scripts de automação propostos a partir de uma análise pública de {base}.",
+      signature: "Assinatura: {mark}",
+      disclaimer: "Estes scripts foram escritos a partir do que a página pública mostrou. O QA-lab não os executou. Revise cada seletor, orçamento e caminho antes de confiar em um resultado. Testes pulados são casos que precisam de uma pessoa ou de uma conta que o proprietário emite.",
+      inside: "O que tem dentro",
+      cases: "{fw}: {n} caso(s)",
+      howToRun: "Como executar",
+      kitTitle: "Kit de correções para {base}",
+      health: "Pontuação de saúde {score}.",
+      notScored: "sem pontuação",
+      kitNote: "Estes arquivos foram escritos a partir de uma análise pública. Revise cada valor antes de publicar. Nada aqui foi aplicado ao site.",
+      fixFirst: "Corrigir primeiro",
+      fix: "Correção: {fix}",
+      files: "Arquivos",
+      ghProxied: "O GitHub Pages não consegue enviar cabeçalhos próprios, mas esta revisão também viu o Cloudflare na frente do site. Adicione cada cabeçalho lá com uma Response Header Transform Rule (ou um Worker). Um arquivo `_headers` só funciona no Cloudflare Pages ou no Netlify.",
+      ghPages: "O GitHub Pages não consegue enviar cabeçalhos próprios. Coloque uma CDN como o Cloudflare na frente e defina os cabeçalhos lá, ou mude para uma hospedagem que envie cabeçalhos. O arquivo `_headers` funciona no Cloudflare Pages e no Netlify.",
+      hosted: "O site parece hospedado em {host}, então esse arquivo de cabeçalhos aparece primeiro.",
+      areas: { Security: "Segurança", Accessibility: "Acessibilidade", Performance: "Desempenho" },
+      severity: { critical: "crítica", high: "alta", medium: "média", low: "baixa", info: "informativa" },
+      effort: { minutes: "minutos", hours: "horas", days: "dias" }
+    },
+    de: {
+      intro: "Automatisierungsskripte, vorgeschlagen aus einer öffentlichen Analyse von {base}.",
+      signature: "Signatur: {mark}",
+      disclaimer: "Diese Skripte wurden aus dem geschrieben, was die öffentliche Seite zeigte. QA-lab hat sie nicht ausgeführt. Prüfen Sie jeden Selektor, jedes Budget und jeden Pfad, bevor Sie einem Ergebnis vertrauen. Übersprungene Tests sind Fälle, die eine Person brauchen oder ein Konto, das der Inhaber vergibt.",
+      inside: "Was enthalten ist",
+      cases: "{fw}: {n} Fall/Fälle",
+      howToRun: "So führen Sie sie aus",
+      kitTitle: "Behebungs-Kit für {base}",
+      health: "Gesundheitswert {score}.",
+      notScored: "nicht bewertet",
+      kitNote: "Diese Dateien wurden aus einer öffentlichen Analyse geschrieben. Prüfen Sie jeden Wert, bevor Sie ihn ausrollen. Nichts davon wurde auf die Website angewendet.",
+      fixFirst: "Zuerst beheben",
+      fix: "Korrektur: {fix}",
+      files: "Dateien",
+      ghProxied: "GitHub Pages kann keine eigenen Header senden, aber diese Prüfung hat auch Cloudflare vor der Website gesehen. Setzen Sie jeden Header dort mit einer Response Header Transform Rule (oder einem Worker). Eine `_headers`-Datei funktioniert nur auf Cloudflare Pages oder Netlify.",
+      ghPages: "GitHub Pages kann keine eigenen Header senden. Schalten Sie ein CDN wie Cloudflare davor und setzen Sie die Header dort, oder wechseln Sie zu einem Hoster, der Header sendet. Die `_headers`-Datei funktioniert auf Cloudflare Pages und Netlify.",
+      hosted: "Die Website scheint bei {host} gehostet zu sein, daher steht diese Header-Datei zuerst.",
+      areas: { Security: "Sicherheit", Accessibility: "Barrierefreiheit" },
+      severity: { critical: "kritisch", high: "hoch", medium: "mittel", low: "niedrig", info: "informativ" },
+      effort: { minutes: "Minuten", hours: "Stunden", days: "Tage" }
+    },
+    fr: {
+      intro: "Scripts d’automatisation proposés à partir d’une analyse publique de {base}.",
+      signature: "Signature : {mark}",
+      disclaimer: "Ces scripts ont été écrits à partir de ce que montrait la page publique. QA-lab ne les a pas exécutés. Vérifiez chaque sélecteur, budget et chemin avant de vous fier à un résultat. Les tests ignorés sont des cas qui demandent une personne, ou un compte que le propriétaire délivre.",
+      inside: "Contenu",
+      cases: "{fw} : {n} cas",
+      howToRun: "Comment les lancer",
+      kitTitle: "Kit de correction pour {base}",
+      health: "Score de santé {score}.",
+      notScored: "sans score",
+      kitNote: "Ces fichiers ont été écrits à partir d’une analyse publique. Vérifiez chaque valeur avant de la déployer. Rien n’a été appliqué au site.",
+      fixFirst: "À corriger d’abord",
+      fix: "Correction : {fix}",
+      files: "Fichiers",
+      ghProxied: "GitHub Pages ne peut pas envoyer d’en-têtes personnalisés, mais cette analyse a aussi vu Cloudflare devant le site. Ajoutez-y chaque en-tête avec une Response Header Transform Rule (ou un Worker). Un fichier `_headers` ne fonctionne que sur Cloudflare Pages ou Netlify.",
+      ghPages: "GitHub Pages ne peut pas envoyer d’en-têtes personnalisés. Placez un CDN comme Cloudflare devant et définissez-y les en-têtes, ou passez à un hébergeur qui envoie des en-têtes. Le fichier `_headers` fonctionne sur Cloudflare Pages et Netlify.",
+      hosted: "Le site semble hébergé sur {host}, donc ce fichier d’en-têtes est listé en premier.",
+      areas: { Security: "Sécurité", Accessibility: "Accessibilité" },
+      severity: { critical: "critique", high: "élevée", medium: "moyenne", low: "faible", info: "informative" },
+      effort: { minutes: "minutes", hours: "heures", days: "jours" }
+    },
+    it: {
+      intro: "Script di automazione proposti a partire da un’analisi pubblica di {base}.",
+      signature: "Firma: {mark}",
+      disclaimer: "Questi script sono stati scritti a partire da ciò che mostrava la pagina pubblica. QA-lab non li ha eseguiti. Controlla ogni selettore, budget e percorso prima di fidarti di un risultato. I test saltati sono casi che richiedono una persona, o un account rilasciato dal proprietario.",
+      inside: "Cosa contiene",
+      cases: "{fw}: {n} caso/i",
+      howToRun: "Come eseguirli",
+      kitTitle: "Kit di correzione per {base}",
+      health: "Punteggio di salute {score}.",
+      notScored: "senza punteggio",
+      kitNote: "Questi file sono stati scritti a partire da un’analisi pubblica. Controlla ogni valore prima di pubblicarlo. Niente è stato applicato al sito.",
+      fixFirst: "Da sistemare prima",
+      fix: "Correzione: {fix}",
+      files: "File",
+      ghProxied: "GitHub Pages non può inviare header personalizzati, ma questa revisione ha visto anche Cloudflare davanti al sito. Aggiungi lì ogni header con una Response Header Transform Rule (o un Worker). Un file `_headers` funziona solo su Cloudflare Pages o Netlify.",
+      ghPages: "GitHub Pages non può inviare header personalizzati. Metti davanti una CDN come Cloudflare e imposta lì gli header, oppure passa a un hosting che invia header. Il file `_headers` funziona su Cloudflare Pages e Netlify.",
+      hosted: "Il sito sembra ospitato su {host}, quindi quel file di header è elencato per primo.",
+      areas: { Security: "Sicurezza", Accessibility: "Accessibilità", Performance: "Prestazioni" },
+      severity: { critical: "critica", high: "alta", medium: "media", low: "bassa", info: "informativa" },
+      effort: { minutes: "minuti", hours: "ore", days: "giorni" }
+    }
+  };
+
+  function said(book, key, vars) {
+    return String(book[key]).replace(/\{(\w+)\}/g, (match, name) => (vars && vars[name] != null ? String(vars[name]) : match));
+  }
+
+  // words: { lang, summary, line(item, part) } from the review page; English and the report's own text by default.
+  function wordsFor(report, words) {
+    const given = words || {};
+    const lang = String(given.lang || "en").slice(0, 2).toLowerCase();
+    return {
+      book: README_COPY[lang] || README_COPY.en,
+      summary: given.summary != null ? given.summary : ((report.insights && report.insights.summary) || ""),
+      line: typeof given.line === "function" ? given.line : (item, part) => item[part]
+    };
+  }
+
+  function readme(ctx, sign, used, counts, words) {
+    const book = words.book;
     const lines = [
       "# " + ctx.label,
       "",
-      "Automation scripts proposed from a public analysis of " + ctx.base + ".",
-      sign && sign.mark ? "Signature: " + sign.mark + (sign.sha256 ? " · SHA-256 " + sign.sha256 : "") : "",
+      said(book, "intro", { base: ctx.base }),
+      sign && sign.mark ? said(book, "signature", { mark: sign.mark }) + (sign.sha256 ? " · SHA-256 " + sign.sha256 : "") : "",
       "",
-      "These scripts were written from what the public page showed. They were not run by QA-lab. Review each selector, budget, and path before you trust a result. Skipped tests are cases that need a person, or an account the owner issues.",
+      book.disclaimer,
       "",
-      "## What is inside",
+      "## " + book.inside,
       ""
     ];
-    used.forEach((fw) => lines.push("- " + fw + ": " + counts[fw] + " case(s)"));
-    lines.push("", "## How to run", "");
+    used.forEach((fw) => lines.push("- " + said(book, "cases", { fw, n: counts[fw] })));
+    lines.push("", "## " + book.howToRun, "");
     const how = {
       Playwright: ["npm init -y && npm i -D @playwright/test", "npx playwright install chromium", "npx playwright test playwright/qa-lab.spec.ts"],
       Cypress: ["npm init -y && npm i -D cypress", "npx cypress run --spec cypress/e2e/qa-lab.cy.js"],
@@ -2069,8 +2494,9 @@ namespace QaLab
     return lines.filter((line, index, all) => !(line === "" && all[index - 1] === "")).join("\n");
   }
 
-  function bundle(report, cases, chosen) {
+  function bundle(report, cases, chosen, options) {
     const ctx = context(report);
+    const words = wordsFor(report, options);
     const sign = report.signature || {};
     const blocks = {};
     const counts = {};
@@ -2113,10 +2539,10 @@ namespace QaLab
     gatlingFiles.forEach((file) => files.push(file));
     if (k6Entries.length) files.push({ path: FILES.k6, content: k6Script(k6Entries, ctx, sign) });
     const used = ORDER.filter((fw) => counts[fw]);
-    files.unshift({ path: "README.md", content: readme(ctx, sign, used, counts) });
+    files.unshift({ path: "README.md", content: readme(ctx, sign, used, counts, words) });
     const flow = workflow(used, ctx);
     if (flow) files.push({ path: ".github/workflows/qa-lab.yml", content: flow });
-    fixKitFiles(report, ctx).forEach((file) => files.push(file));
+    fixKitFiles(report, ctx, words).forEach((file) => files.push(file));
     return { files, frameworks: used };
   }
 
@@ -2173,7 +2599,7 @@ namespace QaLab
 
   function headerFiles(headers, hosting) {
     const list = headers || [];
-    const quoted = (value) => String(value).replace(/"/g, "\\\"");
+    const quoted = (value) => String(value).replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
     const json = (wrap) => JSON.stringify(wrap(list.map((item) => ({ key: item.name, value: item.value }))), null, 2) + "\n";
     const files = [
       { host: "Netlify", path: "fix-kit/headers/netlify-or-cloudflare-pages/_headers", content: "/*\n" + list.map((item) => "  " + item.name + ": " + item.value).join("\n") + "\n" },
@@ -2187,7 +2613,8 @@ namespace QaLab
     return files.map((file) => ({ path: file.path, content: file.content }));
   }
 
-  function fixKitFiles(report, ctx) {
+  function fixKitFiles(report, ctx, words) {
+    const book = words.book;
     const ins = report && report.insights;
     const kit = ins && ins.fixkit;
     if (!kit) return [];
@@ -2206,27 +2633,28 @@ namespace QaLab
     const top = (ins.findings || []).filter((item) => item.rank).slice(0, 15);
     const score = ins.score || {};
     const lines = [
-      "# Fix kit for " + ctx.base,
+      "# " + said(book, "kitTitle", { base: ctx.base }),
       "",
-      "Health " + (score.overall != null ? score.overall + "/100 (" + score.grade + ")" : "not scored") + ". " + (ins.summary || ""),
+      said(book, "health", { score: score.overall != null ? score.overall + "/100 (" + score.grade + ")" : book.notScored }) + " " + words.summary,
       "",
-      "These files were written from a public analysis. Review each value before you deploy it. Nothing here was applied to the site.",
+      book.kitNote,
       "",
-      "## Fix first",
+      "## " + book.fixFirst,
       ""
     ];
     top.forEach((item) => {
-      lines.push(item.rank + ". **" + item.title + "** (" + item.area + ", " + item.severity + ", " + item.effort + ")");
-      lines.push("   " + item.evidence);
-      if (item.fix) lines.push("   Fix: " + item.fix);
+      const facts = [book.areas[item.area] || item.area, book.severity[item.severity] || item.severity, book.effort[item.effort] || item.effort];
+      lines.push(item.rank + ". **" + words.line(item, "title") + "** (" + facts.join(", ") + ")");
+      lines.push("   " + words.line(item, "evidence"));
+      if (item.fix) lines.push("   " + said(book, "fix", { fix: words.line(item, "fix") }));
       lines.push("");
     });
-    lines.push("## Files", "");
+    lines.push("## " + book.files, "");
     files.forEach((file) => lines.push("- `" + file.path.replace(/^fix-kit\//, "") + "`"));
     const proxied = (report.technologies || []).some((row) => /cloudflare/i.test(row.name || ""));
-    if (kit.hosting === "GitHub Pages" && proxied) lines.push("", "GitHub Pages cannot send custom headers, but this review also saw Cloudflare in front of the site. Add each header there with a Response Header Transform Rule (or a Worker). A `_headers` file only works on Cloudflare Pages or Netlify.");
-    else if (kit.hosting === "GitHub Pages") lines.push("", "GitHub Pages cannot send custom headers. Put a CDN such as Cloudflare in front and set the headers there, or move to a host that sends headers. The `_headers` file works on Cloudflare Pages and Netlify.");
-    else if (kit.hosting) lines.push("", "The site looks hosted on " + kit.hosting + ", so that header file is listed first.");
+    if (kit.hosting === "GitHub Pages" && proxied) lines.push("", book.ghProxied);
+    else if (kit.hosting === "GitHub Pages") lines.push("", book.ghPages);
+    else if (kit.hosting) lines.push("", said(book, "hosted", { host: kit.hosting }));
     files.unshift({ path: "fix-kit/README.md", content: lines.join("\n") + "\n" });
     return files;
   }
@@ -2307,7 +2735,7 @@ namespace QaLab
     return new Blob(locals.concat(centrals, [end.buffer]), { type: "application/zip" });
   }
 
-  const api = { snippets, bundle, zip, checkFor, context, headerFiles };
+  const api = { snippets, bundle, zip, checkFor, context, headerFiles, README_COPY };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.QAReviewScripts = api;
 })(typeof window !== "undefined" ? window : globalThis);

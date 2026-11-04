@@ -10,11 +10,19 @@
 # Page keeps its times. Buffer's daily call budget moves a few hundred a day, so a nightly run resumes the sync
 # until nothing is left. Mode delete-unmatched deletes the scheduled
 # posts dated after now that match no batch post (not on the hub), then re-seeds; a dry run only lists them.
+# Mode delete-duplicates deletes the later copies of a batch post scheduled twice on one profile, keeping the first
+# one created, then re-seeds; a dry run only lists them (#2160).
 # Mode requeue deletes the queued posts listed in posts (batch/slug, comma-separated) on one channel and creates
 # them again from the batch's captions.json at the same time, for a caption fixed after queueing (#1191).
-# A queue that finds Buffer's daily limit spent lists its batch under retry in the ledger and passes (#1188). The
+# A queue that finds Buffer's daily limit spent, or the batch not on the site after 60 minutes (#2160), lists its batch under retry in the ledger and passes (#1188). The
 # nightly run, before the sync and whatever pauses the sync, queues those batches again; mode retry does it by hand.
-# Every mode but a dry run commits the ledger (scripts/commit-social-ledgers.sh).
+# Mode reroute, and every nightly run before the sync, moves the scheduled @qalaburlreview posts whose language has
+# its own face's channel now (es/pt once @qaurlreview is connected) to that channel at the same time, 150 a run (#2310).
+# Mode media lists the scheduled posts by batch, channel and where their media lives (site, release, or a copy
+# uploaded into Buffer), and changes nothing. Mode remedia points the scheduled posts of the batches in batch
+# (comma-separated) that hold Buffer's own copy of their media at the re-rendered file on the site or the batch's
+# release, editing them in place (scripts/buffer-remedia.js); a dry run lists them.
+# Every mode but a dry run, media and remedia commits the ledger (scripts/commit-social-ledgers.sh).
 name: Buffer batch queue
 
 on:
@@ -23,12 +31,12 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, re-queue the batches a spent limit stopped, delete scheduled posts not on the hub, or delete and requeue listed posts'
+        description: 'queue a batch, seed the ledger from Buffer, check queued posts, sync queued posts to the calendar, re-queue the batches a spent limit stopped, move es/pt posts to the face that now has a channel, delete scheduled posts not on the hub, delete and requeue listed posts, list where scheduled posts take their media from, or point Buffer-held copies at re-rendered media'
         type: choice
-        options: [queue, seed, check, sync, retry, delete-unmatched, requeue]
+        options: [queue, seed, check, sync, retry, reroute, delete-unmatched, delete-duplicates, requeue, media, remedia]
         default: queue
       batch:
-        description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10 (queue only)'
+        description: 'Batch folder under media/social-posts, e.g. promo-social-hub-2026-10 (queue; remedia takes batch,batch)'
         required: false
       dry_run:
         description: 'List what would be queued or deleted, change nothing'
@@ -42,7 +50,7 @@ on:
         required: false
         default: 'youtube'
       windows:
-        description: 'sync only: 15-minute windows of Buffer calls before it stops (about 115 calls each)'
+        description: 'sync and remedia: 15-minute windows of Buffer calls before it stops (up to 400 calls each)'
         required: false
         default: '1'
 
@@ -53,7 +61,7 @@ concurrency:
 jobs:
   queue:
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ (inputs.mode || 'sync') == 'sync' && 110 || 30 }}
+    timeout-minutes: ${{ ((inputs.mode || 'sync') == 'sync' || inputs.mode == 'remedia') && 110 || 30 }}
     permissions:
       contents: read
     env:
@@ -64,13 +72,15 @@ jobs:
       WINDOWS: ${{ inputs.windows || '4' }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
+      - name: Wait for a hub rebuild or Pages deploy on main
+        run: scripts/hub-wait.sh
       - name: Queue the batches a spent Buffer limit stopped
         if: ${{ github.event_name == 'schedule' || env.MODE == 'retry' }}
         env:
@@ -86,6 +96,14 @@ jobs:
             CLIP_BASE="$clip" node scripts/buffer-queue.js --batch "$b" "$@" | tee -a "$GITHUB_STEP_SUMMARY" || failed="$failed $b"
           done
           if [ -n "$failed" ]; then echo "::error::Not fully queued:$failed"; exit 1; fi
+      - name: Move posts to the face that posts their language
+        if: ${{ !cancelled() && (github.event_name == 'schedule' || env.MODE == 'reroute') }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          set -o pipefail
+          if [ "$DRY_RUN" = "true" ]; then set -- --dry-run; else set --; fi
+          node scripts/buffer-queue.js --reroute "$@" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Move queued posts to their calendar slots
         if: ${{ !cancelled() && env.MODE == 'sync' }}
         env:
@@ -108,7 +126,7 @@ jobs:
           node scripts/buffer-queue.js "--$MODE" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Keep the sent posts that match no hub post
         if: ${{ env.MODE == 'seed' && !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: unmatched-sent
           path: ${{ runner.temp }}/unmatched-sent.json
@@ -121,6 +139,13 @@ jobs:
         run: |
           set -o pipefail
           if [ "$DRY_RUN" = "true" ]; then node scripts/buffer-queue.js --delete-unmatched --dry-run; else node scripts/buffer-queue.js --delete-unmatched && node scripts/buffer-queue.js --seed; fi | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Delete the later copies of a post scheduled twice
+        if: ${{ env.MODE == 'delete-duplicates' }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          set -o pipefail
+          if [ "$DRY_RUN" = "true" ]; then node scripts/buffer-queue.js --delete-duplicates --dry-run; else node scripts/buffer-queue.js --delete-duplicates && node scripts/buffer-queue.js --seed; fi | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Requeue posts with fixed captions
         if: ${{ env.MODE == 'requeue' }}
         env:
@@ -144,6 +169,23 @@ jobs:
             echo "::warning::No $BATCH release, so TikTok and YouTube are skipped."
           fi
           if [ "$DRY_RUN" = "true" ]; then node scripts/buffer-queue.js --batch "$BATCH" --dry-run; else node scripts/buffer-queue.js --batch "$BATCH"; fi
+      - name: List where scheduled posts take their media from
+        if: ${{ env.MODE == 'media' }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          set -o pipefail
+          node scripts/buffer-queue.js --media | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Point Buffer-held copies at the re-rendered media
+        if: ${{ env.MODE == 'remedia' }}
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          set -o pipefail
+          if ! [[ "$BATCH" =~ ^[a-z0-9,-]+$ ]]; then echo "::error::batch takes batch,batch"; exit 1; fi
+          if ! [[ "$WINDOWS" =~ ^[1-6]$ ]]; then echo "::error::windows is 1 to 6"; exit 1; fi
+          if [ "$DRY_RUN" = "true" ]; then set -- --dry-run; else set -- --windows "$WINDOWS"; fi
+          node scripts/buffer-remedia.js --batches "$BATCH" "$@" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Commit the Buffer ledger
-        if: ${{ !cancelled() && !inputs.dry_run }}
+        if: ${{ !cancelled() && !inputs.dry_run && env.MODE != 'media' && env.MODE != 'remedia' }}
         run: scripts/commit-social-ledgers.sh "Buffer $MODE ${BATCH:-all}"

@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 """Translate the strings build.js --export-strings wrote, one language per clip.
 
-   python3 scripts/tips-studio/translate.py media/social-posts/<batch>
+   python3 scripts/tips-studio/translate.py media/social-posts/<batch> [--seed] [--drop-slips]
 
 Reads <batch>/i18n-src.json and writes <batch>/i18n.json. URLs, hashtags, @handles, line breaks, the brand and
 product names and the category labels are kept, each *...* span keeps its emphasis, and each fragment starts in
-the case the English starts. Finished strings are cached in i18n.json, so a rerun only asks for what changed."""
+the case the English starts. Finished strings are cached in i18n.json, so a rerun only asks for what changed; the
+cache is also rebuilt from the batch's committed translations, so strings filled by hand are not asked again.
+--seed only rebuilds the cache, with no translator: run it after filling i18n.json by hand or by agent.
+The recurring caption labels come from GLOSSARY. A translated line that speaks to the viewer in the other register
+(usted instead of tú, du instead of Sie) stops the run with exit 3; --drop-slips sends those clips out in English."""
 import json
+import os
 import re
+import subprocess
 import sys
 import time
 import urllib.parse
@@ -19,8 +25,43 @@ NAMES = ["QA-lab URL Review", "QA-lab", "Live Reports", "carlosandmunoz.com"]
 KEEP = re.compile(r"(https?://\S+|#\w+|(?<!\w)@\w+|\n| · |" + "|".join(re.escape(n) + r"\S*" for n in NAMES) + ")")
 LABEL = re.compile(r"QA|SEO|GEO|A11y")
 STAR = re.compile(r"(\*[^*\n]+\*)")
+TAGS = re.compile(r"\n+#\w+(?: #\w+)*\s*$")
 HOST = re.compile(r"\b(?:[a-z0-9-]+\.)+[a-z]{2,6}\b", re.I)
 URL = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&dt=t&tl="
+
+# The labels the captions repeat, as the batches already say them; only the text after a label goes to the translator.
+GLOSSARY = {
+    "Lesson:": {"es": "Lección:", "pt": "Lição:", "de": "Lektion:", "fr": "Leçon\u00a0:", "it": "Lezione:"},
+    "The gap:": {"es": "La brecha:", "pt": "A lacuna:", "de": "Die Lücke:", "fr": "L'écart\u00a0:", "it": "Il divario:"},
+    "Did you know?": {"es": "¿Lo sabías?", "pt": "Você sabia?", "de": "Schon gewusst?", "fr": "Le saviez-vous\u00a0?", "it": "Lo sapevi?"},
+    "Myth:": {"es": "Mito:", "pt": "Mito:", "de": "Mythos:", "fr": "Mythe\u00a0:", "it": "Mito:"},
+    "Check it:": {"es": "Compruébalo:", "pt": "Confira:", "de": "Prüfen Sie es:", "fr": "Vérifiez\u00a0:", "it": "Verifica:"},
+    "Check it today:": {"es": "Compruébalo hoy:", "pt": "Confira hoje:", "de": "Prüfen Sie es heute:", "fr": "Vérifiez aujourd'hui\u00a0:", "it": "Verifica oggi:"},
+    "Try it now:": {"es": "Pruébalo ya:", "pt": "Teste agora:", "de": "Jetzt testen:", "fr": "Essayez maintenant\u00a0:", "it": "Provalo ora:"},
+    "Try this:": {"es": "Prueba esto:", "pt": "Experimente isto:", "de": "Probieren Sie es aus:", "fr": "Essayez ceci\u00a0:", "it": "Prova questo:"},
+    "Your guess:": {"es": "Tu apuesta:", "pt": "Seu palpite:", "de": "Ihr Tipp:", "fr": "Votre pronostic\u00a0:", "it": "La tua ipotesi:"},
+    "Spot it:": {"es": "Detéctalo:", "pt": "Confira:", "de": "Erkennen Sie es:", "fr": "Repérez-le\u00a0:", "it": "Trovalo:"},
+    "Guide:": {"es": "Guía:", "pt": "Guia:", "de": "Leitfaden:", "fr": "Guide\u00a0:", "it": "Guida:"},
+    # A run of the review, never a race: on its own the translator says Carrera, Corrida, Course, Corsa or Lauf.
+    "Real run": {"es": "Análisis real", "pt": "Análise real", "de": "Echte Prüfung", "fr": "Analyse réelle", "it": "Analisi reale"},
+    "Real runs": {"es": "Análisis reales", "pt": "Análises reais", "de": "Echte Prüfungen", "fr": "Analyses réelles", "it": "Analisi reali"},
+}
+
+# The register each language speaks to the viewer in: tú, você and tu, but Sie and vous. These are the forms of the
+# other register that the translator slips into. A Spanish or Italian formal imperative reads like a subjunctive,
+# so one after que, cuando or the like is left alone.
+WRONG_REGISTER = {
+    "es": r"\b(?:usted(?:es)?|haga|abra|revise|solicite|intente|compruebe|busque|pruebe|ejecute|añada|agregue|elimine|"
+          r"corrija|redirija|verifique|consulte|mire|envíe|configure|active|desactive|cambie|mantenga|ponga|pida|siga|"
+          r"elija|escriba|evite|recuerde|mida|cargue|descargue|instale|actualice|empiece|comience|utilice|use|quite|"
+          r"sustituya|reemplace|incluya|hágalo|compruébelo|asegúrese|ábralo|ábrala|pruébelo|revíselo|fíjese|úselo|úsela)\b",
+    "pt": r"\b(?:tu|teu|tua|teus|tuas|contigo|o senhor|a senhora)\b",
+    "it": r"(?i:\b(?:verifichi|apra|faccia|si assicuri|provi a|controlli (?:il|la|lo|le|i|gli|se|che))\b)|(?<=[^.!?:\n] )(?:Lei|Suo|Sua|Suoi|Sue)\b",
+    "de": r"\b(?:du|dein\w*|dich|dir)\b",
+    "fr": r"\b(?:tu|toi|ton|ta|tes|te)\b|\bt'",
+}
+WRONG_REGISTER = {lang: re.compile(rule, 0 if lang == "it" else re.I) for lang, rule in WRONG_REGISTER.items()}
+SUBORDINATE = re.compile(r"\b(?:que|cuando|aunque|si|hasta|mientras|donde|quizá|quizás|ojalá|che|se|perché|quando|affinché)\s+(?:\S+\s+){0,2}$", re.I)
 
 
 def gtx(text, lang):
@@ -78,11 +119,44 @@ def tidy(src, out, lang):
     return keep_case(src, keep_hosts(src, out), lang)
 
 
+def label(piece):
+    """The glossary label a fragment starts with, and the rest of it."""
+    for name in GLOSSARY:
+        if piece == name or piece.startswith(name + " "):
+            return name, piece[len(name):].strip()
+    return None, piece
+
+
+def register(text, lang, english=""):
+    """The words of a translation that speak to the viewer in the other register. With the English, a Spanish
+    "your" said as su or sus with no tu or tus beside it counts too."""
+    rule = WRONG_REGISTER.get(lang)
+    if not rule:
+        return []
+    text = KEEP.sub(" ", text)
+    words = [m.group(0) for m in rule.finditer(text) if not SUBORDINATE.search(text[: m.start()])]
+    if lang == "es" and re.search(r"\byour\b", english, re.I) and not re.search(r"\btus?\b", text, re.I):
+        words += re.findall(r"\b[Ss]us?\b", text)
+    return words
+
+
 def fill(texts, lang, cache):
-    """Translate every uncached fragment of these strings, one request per ~4,000 characters."""
+    """Translate every uncached fragment of these strings, one request per ~4,000 characters. A fragment that starts
+    with a glossary label sends only the rest."""
     if lang == "en":
         return
-    todo = list(dict.fromkeys(p for t in texts for p in pieces(t) if lang + "\x00" + p not in cache))
+    # A label said on its own takes the glossary's wording over anything the cache learned before it was listed.
+    for p in (p for t in texts for p in pieces(t) if p in GLOSSARY):
+        cache[lang + "\x00" + p] = GLOSSARY[p][lang]
+    asked = {}
+    for p in dict.fromkeys(p for t in texts for p in pieces(t) if lang + "\x00" + p not in cache):
+        name, rest = label(p)
+        if name and not rest:
+            cache[lang + "\x00" + p] = GLOSSARY[name][lang]
+        else:
+            asked[p] = (name, rest)
+    done = {}
+    todo = list(dict.fromkeys(rest for _, rest in asked.values()))
     while todo:
         batch, size = [], 0
         while todo and size + len(todo[0]) < 4000:
@@ -94,7 +168,9 @@ def fill(texts, lang, cache):
         if len(lines) != len(batch):
             lines = [gtx(p, lang) for p in batch]
         for src, out in zip(batch, lines):
-            cache[lang + "\x00" + src] = tidy(src, out.strip(), lang)
+            done[src] = tidy(src, out.strip(), lang)
+    for p, (name, rest) in asked.items():
+        cache[lang + "\x00" + p] = GLOSSARY[name][lang] + " " + done[rest] if name else done[rest]
 
 
 def translate(text, lang, cache):
@@ -114,16 +190,113 @@ def translate(text, lang, cache):
     return "".join(out)
 
 
+def parts(text):
+    """(emphasised, [text, kept, text, ...]) for each span, the shape both pieces() and translate() walk."""
+    return [(star, KEEP.split(span)) for star, span in spans(text)]
+
+
+def pair(src, out):
+    """(English fragment, translated fragment) pairs of one finished string, or none when the two don't line up
+    span for span and kept token for kept token. A caption's translation leaves out the tag line, which build.js
+    puts back with the clip's own tags."""
+    if TAGS.search(src) and not TAGS.search(out):
+        src = TAGS.sub("", src)
+    a, b = parts(src), parts(out)
+    if [(s, len(p), p[1::2]) for s, p in a] != [(s, len(p), p[1::2]) for s, p in b]:
+        return []
+    return [(x.strip(), y.strip()) for (_, p), (_, q) in zip(a, b) for x, y in zip(p[::2], q[::2]) if wanted(x) and y.strip()]
+
+
+def history(out_dir):
+    """(i18n-src.json, i18n.json) of each commit that changed the batch's translations, oldest first, then the
+    working copy. build.js rewrites i18n-src.json before each run, so only a pair from the same commit tells which
+    English a translation was made from."""
+    def show(rev, name):
+        res = subprocess.run(["git", "show", rev + ":./" + name], cwd=out_dir, capture_output=True, text=True)
+        return json.loads(res.stdout) if res.returncode == 0 else None
+    log = subprocess.run(["git", "log", "--reverse", "--format=%H", "--", "i18n.json"], cwd=out_dir, capture_output=True, text=True)
+    for rev in log.stdout.split() if log.returncode == 0 else []:
+        yield show(rev, "i18n-src.json"), show(rev, "i18n.json")
+    read = lambda name: json.loads((out_dir / name).read_text()) if (out_dir / name).exists() else None
+    yield read("i18n-src.json"), read("i18n.json")
+
+
+def seed(versions):
+    """A cache rebuilt from finished translations. A translation is paired with the English beside it only in the
+    version where it first appears or changes, so one left behind by a later English edit is not learned as the
+    translation of the new English, and that string goes back to the translator."""
+    cache, last = {}, {}
+
+    def learn(at, english, text, lang):
+        if english is None or last.get(at) == text:
+            return
+        last[at] = text
+        for en, out in pair(english, text):
+            cache[lang + "\x00" + en] = out
+
+    for src, done in versions:
+        if not src or not done:
+            continue
+        cache.update(done.get("cache") or {})
+        for lang, ui in (done.get("ui") or {}).items():
+            for key, text in ui.items():
+                learn(("ui", lang, key), src.get("ui", {}).get(key), text, lang)
+        for slug, strings in (done.get("clips") or {}).items():
+            clip = src.get("clips", {}).get(slug)
+            for key, text in strings.items() if clip else []:
+                learn((slug, key), clip["strings"].get(key), text, clip["lang"])
+    return cache
+
+
+def slips(src, done):
+    """(where, words, text) of each translated line in the other register, except the lines listed in registerOk."""
+    ok = set(done.get("registerOk") or [])
+    lines = [("ui." + lang + "." + key, lang, text, src["ui"].get(key, "")) for lang, ui in (done.get("ui") or {}).items()
+             for key, text in ui.items()]
+    lines += [(slug + "." + key, src["clips"][slug]["lang"], text, src["clips"][slug]["strings"].get(key, ""))
+              for slug, strings in (done.get("clips") or {}).items() if slug in src["clips"] for key, text in strings.items()]
+    return [(at, words, text) for at, lang, text, english in lines if text not in ok
+            for words in [register(text, lang, english)] if words]
+
+
+def check(src, done, drop=False):
+    """Report the lines in the other register and exit 3. With drop, the clips and UI languages they belong to are
+    taken out of the translations instead, so those clips go out in English, and the run goes on."""
+    found = slips(src, done)
+    warn = "::warning::" if drop and os.environ.get("GITHUB_ACTIONS") else ""
+    for at, words, text in found:
+        print(warn + "register", at, ", ".join(words), "|", text.replace("\n", " ")[:160], file=sys.stderr)
+    if found and drop:
+        for at, _, _ in found:
+            if at.startswith("ui."):
+                done["ui"].pop(at.split(".")[1], None)
+            else:
+                done["clips"].pop(at.split(".")[0], None)
+        print(warn + "those clips go out in English", file=sys.stderr)
+        return True
+    if found:
+        print("Fix these in i18n.json's cache and rerun, or list a line that is right as written in registerOk.", file=sys.stderr)
+        sys.exit(3)
+    return False
+
+
 def main():
     out_dir = Path(sys.argv[1])
     src = json.loads((out_dir / "i18n-src.json").read_text())
     dest = out_dir / "i18n.json"
     done = json.loads(dest.read_text()) if dest.exists() else {}
     cache = {}
-    for key, value in done.get("cache", {}).items():
+    for key, value in {**seed(history(out_dir)), **(done.get("cache") or {})}.items():
         lang, text = key.split("\x00", 1)
         cache[key] = tidy(text, value, lang)
+    if "--seed" in sys.argv:
+        dest.write_text(json.dumps({**done, "cache": cache}, ensure_ascii=False, indent=1))
+        print("seeded", len(cache), "fragments")
+        check(src, done)
+        return
     result = {"ui": {}, "clips": {}, "cache": cache}
+    if done.get("registerOk"):
+        result["registerOk"] = done["registerOk"]
     for lang in sorted({clip["lang"] for clip in src["clips"].values()}):
         fill(src["ui"].values(), lang, cache)
         result["ui"][lang] = {k: translate(v, lang, cache) for k, v in src["ui"].items()}
@@ -133,6 +306,8 @@ def main():
         dest.write_text(json.dumps(result, ensure_ascii=False, indent=1))
         print("translated", slug, clip["lang"])
     dest.write_text(json.dumps(result, ensure_ascii=False, indent=1))
+    if check(src, result, "--drop-slips" in sys.argv):
+        dest.write_text(json.dumps(result, ensure_ascii=False, indent=1))
 
 
 if __name__ == "__main__":

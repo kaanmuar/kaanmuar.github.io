@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
+const sample = { frameworks: require('../functions/url-review-core').FRAMEWORKS, report: require('./unit/fixtures/review-carlosandmunoz.json') };
 const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 
 async function prime(page, lang) {
@@ -23,6 +24,23 @@ test.describe('Review page language', () => {
     await page.goto('/qa-review.html?live=abc#top');
     await expect(page).toHaveURL(/\/qa-review-es\.html\?live=abc#top$/);
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+  });
+
+  test('the header, the empty news strip and the competitor note read in Spanish on the Spanish page (#1409, #1410)', async ({ page }) => {
+    await prime(page, 'es');
+    await page.goto('/qa-review-es.html');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+    const top = page.locator('header.topbar');
+    for (const name of ['Laboratorio de regresión', 'Tus revisiones', 'Cómo funciona esta revisión']) {
+      await expect(top.getByText(name, { exact: true })).toHaveAttribute('translate', 'no');
+    }
+    await expect(page.locator('#langToggle')).toHaveAttribute('aria-label', 'Idioma');
+    await expect(page.locator('#theme-toggle')).toHaveAttribute('aria-label', 'Cambiar el modo oscuro');
+    const waiting = page.locator('.wire-item').first();
+    await expect(waiting).toContainText('La cinta de noticias espera titulares.');
+    await expect(waiting).toHaveAttribute('lang', 'es');
+    await expect(waiting).toHaveAttribute('href', 'qa-review-es.html');
+    await expect(page.locator('#compare-note')).toContainText('se revisan hasta tres a la vez');
   });
 
   test('an English choice stays on the English page', async ({ page }) => {
@@ -159,6 +177,108 @@ test.describe('Review page language', () => {
     await expect(page.locator('#dash-title')).not.toHaveAttribute('translate', 'no');
   });
 
+  test('a retest case built from a finding reads in the page language (#1406)', async ({ page }) => {
+    await prime(page, 'es');
+    const cache = { title: { id: 'pf-cache.title', vars: {} }, evidence: { id: 'pf-cache.evidence', vars: {} }, fix: { id: 'pf-cache.fix', vars: {} } };
+    const rt = {
+      id: 'RT-01', status: 'proposed', layer: 'Performance', verdict: 'risk', severity: 'high', priority: 'P1', risk: 90, fw: ['Playwright'], pages: ['/'],
+      title: 'Retest on example.com: The start page sends no cache-control',
+      why: 'Browsers and CDNs guess how long to keep it. The case fails while the finding is still true.',
+      msg: { title: { id: 'case.retest', vars: { where: 'example.com', title: cache.title } }, why: { items: [cache.evidence, { id: 'case.retest.why', vars: {} }], sep: '' } }
+    };
+    const report = Object.assign({}, sample.report, { id: 'rt12cd34ef56', cases: [rt].concat(sample.report.cases) });
+    await page.route('http://127.0.0.1:8768/**', (route) => {
+      const req = route.request();
+      const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
+      const path = new URL(req.url()).pathname;
+      const body = path === '/review/open' ? { report, frameworks: sample.frameworks, paid: true } : path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] };
+      return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(body) });
+    });
+    await page.goto('/qa-review-es.html?report=rt12cd34ef56');
+    const card = page.locator('#cases .case').filter({ hasText: 'RT-01' });
+    await expect(card).toContainText('Volver a probar en example.com: La página de inicio no envía cache-control');
+    await expect(card).toContainText('El caso falla mientras el problema siga presente.');
+    await expect(card).not.toContainText('Retest on');
+  });
+
+  test('the case layers and the Proposed tag read in the page language (#1647)', async ({ page }) => {
+    await prime(page, 'de');
+    const report = Object.assign({}, sample.report, { id: 'lc12cd34ef56' });
+    await page.route('http://127.0.0.1:8768/**', (route) => {
+      const req = route.request();
+      const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
+      const path = new URL(req.url()).pathname;
+      const body = path === '/review/open' ? { report, frameworks: sample.frameworks, paid: true } : path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] };
+      return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(body) });
+    });
+    await page.goto('/qa-review-de.html?report=lc12cd34ef56');
+    const cases = page.locator('#cases');
+    await expect(cases.locator('.case').first()).toBeVisible({ timeout: 20000 });
+    await expect(cases).toContainText('Barrierefreiheit');
+    await expect(cases).toContainText('Datenschutz');
+    await expect(cases.locator('.tag', { hasText: 'Vorgeschlagen' }).first()).toBeVisible();
+    await expect(cases).not.toContainText('Proposed');
+    await expect(cases).not.toContainText('Accessibility');
+    const filters = page.locator('#layer-filters button');
+    await expect(filters.and(page.locator('[data-layer="Security"]'))).toHaveText('Sicherheit');
+    await expect(page.locator('#layer-filters')).not.toContainText('Privacy');
+  });
+
+  test('the public marks of At a glance keep every label inside its tile at 1024px, in German too (#1641)', async ({ page }) => {
+    const report = Object.assign({}, sample.report, { id: 'tk12cd34ef56' });
+    await page.route('http://127.0.0.1:8768/**', (route) => {
+      const req = route.request();
+      const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
+      const path = new URL(req.url()).pathname;
+      const body = path === '/review/open' ? { report, frameworks: sample.frameworks, paid: true } : path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] };
+      return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(body) });
+    });
+    await page.setViewportSize({ width: 1024, height: 900 });
+    for (const [lang, file] of [['en', 'qa-review.html'], ['de', 'qa-review-de.html']]) {
+      await prime(page, lang);
+      await page.goto('/' + file + '?report=tk12cd34ef56');
+      const ticks = page.locator('#report-visuals .tick');
+      await expect(ticks.first()).toBeAttached({ timeout: 20000 });
+      const spill = await ticks.evaluateAll((list) => list.flatMap((tick) => {
+        const box = tick.getBoundingClientRect();
+        return [...tick.querySelectorAll('*')].filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.width && (r.right > box.right - 1 || el.scrollWidth > el.clientWidth + 1);
+        }).map((el) => el.textContent.trim());
+      }));
+      expect(spill, lang).toEqual([]);
+    }
+  });
+
+  test('the charts and practices read in the page language, axe titles of saved reports included (#1588)', async ({ page }) => {
+    await prime(page, 'es');
+    const axe = {
+      key: 'ax-button-name', area: 'Accessibility', verdict: 'fail', severity: 'medium', rank: 1, effort: 'minutes',
+      title: 'Buttons must have discernible text', evidence: 'axe-core 4.14.0 found 1 element on /.', fix: 'Give each icon button visible text or an aria-label.',
+      msg: { fix: { id: 'ax-fix.button-name', vars: {} } }
+    };
+    const insights = Object.assign({}, sample.report.insights, { findings: [axe].concat((sample.report.insights && sample.report.insights.findings) || []) });
+    const report = Object.assign({}, sample.report, { id: 'vz12cd34ef56', insights });
+    await page.route('http://127.0.0.1:8768/**', (route) => {
+      const req = route.request();
+      const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
+      const path = new URL(req.url()).pathname;
+      const body = path === '/review/open' ? { report, frameworks: sample.frameworks, paid: true } : path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] };
+      return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(body) });
+    });
+    await page.goto('/qa-review-es.html?report=vz12cd34ef56');
+    const visuals = page.locator('#report-visuals');
+    await expect(visuals).toContainText('Prácticas que vale la pena implementar', { useInnerText: false });
+    await expect(visuals).toContainText('Los botones deben tener un texto reconocible', { useInnerText: false });
+    await expect(visuals).toContainText('Señales públicas en la primera respuesta', { useInnerText: false });
+    await expect(visuals).not.toContainText('Practices worth implementing', { useInnerText: false });
+    await expect(visuals).not.toContainText('Buttons must have', { useInnerText: false });
+  });
+
   test('the hero stats are written in the page language', async ({ page }) => {
     await prime(page, 'fr');
     await page.goto('/qa-review-fr.html');
@@ -167,4 +287,19 @@ test.describe('Review page language', () => {
     await expect(labels.first()).toHaveAttribute('translate', 'no');
     await expect(page.locator('.live-jump')).toHaveText('Voir les rapports en direct de vrais sites ↓');
   });
+
+  for (const [code, own] of [['es', /\b(el|la|los|las|que|para|con|una|del)\b/g], ['de', /\b(der|die|das|und|ist|für|mit|ein|eine|nicht)\b/g]]) {
+    test(`the ${code} page body is written in its language before any script runs`, async ({ browser }) => {
+      const context = await browser.newContext({ javaScriptEnabled: false });
+      const page = await context.newPage();
+      await page.goto(`/qa-review-${code}.html`);
+      const text = await page.locator('body').innerText();
+      const english = (text.match(/\b(the|and|of|to|is|are|for|with|your|you|this|that|from)\b/g) || []).length;
+      const local = (text.match(own) || []).length;
+      expect(local).toBeGreaterThan(40);
+      expect(english * 10).toBeLessThan(local);
+      await expect(page.locator('#review-app summary h2').first()).toHaveAttribute('translate', 'no');
+      await context.close();
+    });
+  }
 });

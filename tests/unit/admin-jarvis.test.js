@@ -96,6 +96,47 @@ test("the briefing ranks alerts first and readiness counts every check", () => {
   assert.equal(core.readiness({}), null);
 });
 
+test("an empty briefing names down connections and low readiness instead of all clear (#2266)", () => {
+  const conns = [{ state: "live" }, { state: "down" }, { state: "partial" }, { state: "off" }, { state: "loading" }];
+  assert.equal(core.systemsNote(conns, 71, 80), "2 connections need a look");
+  assert.equal(core.systemsNote([{ state: "down" }], 95, 80), "1 connection needs a look");
+  assert.equal(core.systemsNote([{ state: "live" }, { state: "off" }], 71, 80), "Readiness below 80%");
+  assert.equal(core.systemsNote([{ state: "live" }], 92, 80), "");
+  assert.equal(core.systemsNote([], null, 80), "");
+});
+
+test("URL review bugs the daily fix held back for the Cursor plan are an alert that lists them (#1982)", () => {
+  const needsAgent = [{ number: 330, title: "BE: bot walls", url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/330" }, { number: 1176, title: "BE: TLS", url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/1176" }];
+  const external = { github: { ok: true, ci: [], openBugs: 2, bugAreas: [], merged: { total: 0 }, needsAgent } };
+  const item = core.briefing({ products: {}, external }).find((row) => row.key === "github:needs-agent");
+  assert.equal(item.level, "alert");
+  assert.equal(item.text, "2 URL review bugs wait for the daily fix agent, held back to stay inside the Cursor plan: #330, #1176.");
+  const detail = core.briefDetail(item, { external });
+  assert.deepEqual(detail.facts, [{ label: "Waiting for an agent", value: "2" }]);
+  assert.deepEqual(detail.links.map((row) => row.url), needsAgent.map((row) => row.url));
+  assert.equal(core.briefing({ products: {}, external: { github: Object.assign({}, external.github, { needsAgent: [] }) } }).some((row) => row.key === "github:needs-agent"), false);
+});
+
+test("site visits add CV, Studio, Lab and URL Review, and a GA4 drop they do not share is consent, not an outage", () => {
+  const product = (value, prior, values) => ({ kpis: [{ value, prior }], totals: { visits: value }, lists: {}, series: { labels: ["2026-10-25", "2026-10-26"], values } });
+  const products = { cv: product(40, 50, [10, 30]), lab: product(5, 5, [5, 0]), review: product(60, 50, [20, 40]) };
+  const visits = core.siteVisits(products);
+  assert.equal(visits.label, "Site visits");
+  assert.equal(visits.value, 105);
+  assert.equal(visits.prior, 105);
+  assert.deepEqual(visits.series.values, [35, 70]);
+  assert.deepEqual(visits.parts.map((row) => row.label), ["CV", "QA Lab", "URL Review"]);
+  assert.equal(core.siteVisits({}), null);
+
+  const ga4 = { ok: true, groups: [{ sessions: 39, priorSessions: 5518 }] };
+  const held = core.briefing({ products, external: { ga4 } }).find((row) => row.key === "ga4:swing");
+  assert.equal(held.level, "info");
+  assert.match(held.text, /only counts visitors who allow analytics/);
+  const fell = core.briefing({ products: { cv: product(4, 50, [1, 3]) }, external: { ga4 } }).find((row) => row.key === "ga4:swing");
+  assert.equal(fell.level, "warn");
+  assert.equal(core.briefing({ external: { ga4 } }).find((row) => row.key === "ga4:swing").level, "warn");
+});
+
 test("voice and command-bar phrases map to actions", () => {
   assert.deepEqual(core.parseCommand("Jarvis, show URL review"), { type: "go", product: "review" });
   assert.deepEqual(core.parseCommand("simulator"), { type: "go", product: "studio" });
@@ -217,20 +258,57 @@ test("admin mounts Jarvis in the stats pane and the endpoint stays owner-only", 
 
 // --- #1299: goals, thresholds, daily briefing, watch ------------------------------------------------------------
 
+// Applies where, orderBy, limit and select (dotted paths too) to data.rows the way Firestore does; doc().set merges.
 function fakeDb(data) {
   const writes = [];
-  const query = (name, filters) => ({
-    where: (field, op, value) => query(name, filters.concat([[field, op, value]])),
-    limit: () => query(name, filters),
+  const selects = {};
+  const ms = (v) => (v && typeof v.toDate === "function" ? v.toDate().getTime() : v instanceof Date ? v.getTime() : typeof v === "string" && /^\d{4}-/.test(v) ? Date.parse(v) : v);
+  const pass = (row, [field, op, value]) => {
+    const a = ms(row[field]), b = ms(value);
+    if (a === undefined) return false;
+    return op === ">=" ? a >= b : op === ">" ? a > b : op === "<" ? a < b : op === "==" ? a === b : true;
+  };
+  const pick = (row, fields) => {
+    if (!fields) return row;
+    const out = {};
+    fields.forEach((f) => {
+      const [head, ...rest] = f.split(".");
+      if (!(head in row)) return;
+      if (!rest.length) { out[head] = row[head]; return; }
+      const inner = row[head];
+      if (inner && typeof inner === "object" && rest[0] in inner) out[head] = Object.assign(out[head] || {}, { [rest[0]]: inner[rest[0]] });
+    });
+    return out;
+  };
+  const merge = (a, b) => {
+    const out = Object.assign({}, a);
+    Object.keys(b).forEach((k) => { out[k] = b[k] && typeof b[k] === "object" && !Array.isArray(b[k]) && !(b[k] instanceof Date) && a && a[k] && typeof a[k] === "object" ? merge(a[k], b[k]) : b[k]; });
+    return out;
+  };
+  const query = (name, filters, fields, order, cap) => ({
+    where: (field, op, value) => query(name, filters.concat([[field, op, value]]), fields, order, cap),
+    orderBy: (field, dir) => query(name, filters, fields, [field, dir], cap),
+    limit: (n) => query(name, filters, fields, order, n),
+    select: (...picked) => { selects[name] = picked; return query(name, filters, picked, order, cap); },
     count: () => ({ get: async () => ({ data: () => ({ count: (data.counts || {})[name + JSON.stringify(filters.map((f) => f[0] + f[1] + (f[2] instanceof Date ? "date" : typeof f[2] === "string" && /^\d{4}-/.test(f[2]) ? "iso" : f[2])))] ?? 0 }) }) }),
     aggregate: () => ({ get: async () => ({ data: () => ({ usd: data.usd || 0 }) }) }),
-    get: async () => ({ docs: ((data.rows || {})[name] || []).map((row, i) => ({ id: row.id || name + i, data: () => row })) }),
+    get: async () => {
+      let rows = ((data.rows || {})[name] || []).map((row, i) => Object.assign({ __id: row.id || name + i }, row)).filter((row) => filters.every((f) => pass(row, f)));
+      if (order) rows = rows.filter((row) => row[order[0]] !== undefined).sort((x, y) => (ms(x[order[0]]) - ms(y[order[0]])) * (order[1] === "desc" ? -1 : 1));
+      if (cap) rows = rows.slice(0, cap);
+      return { docs: rows.map((row) => { const { __id, ...rest } = row; return { id: __id, data: () => pick(rest, fields) }; }) };
+    },
     doc: (id) => ({
       get: async () => ({ exists: !!(data.docs || {})[name + "/" + id], data: () => (data.docs || {})[name + "/" + id] }),
-      set: async (value) => { writes.push({ path: name + "/" + id, value }); (data.docs = data.docs || {})[name + "/" + id] = value; }
+      set: async (value, opts) => {
+        const path = name + "/" + id;
+        writes.push({ path, value });
+        data.docs = data.docs || {};
+        data.docs[path] = opts && opts.merge ? merge(data.docs[path] || {}, value) : value;
+      }
     })
   });
-  return { collection: (name) => query(name, []), writes };
+  return { collection: (name) => query(name, []), writes, selects };
 }
 
 test("thresholds clamp to their range and drive the briefing", () => {
@@ -297,13 +375,14 @@ test("server: GitHub skips cancelled runs, Cloudflare prefers the analytics toke
 test("server: settings are cleaned on save and read back with defaults", async () => {
   const db = fakeDb({});
   const empty = await jarvis.readSettings(db);
-  assert.deepEqual(empty.mail, { daily: true, gemini: true, watch: true });
+  assert.deepEqual(empty.mail, jarvis.MAIL_DEFAULTS);
   assert.equal(empty.thresholds.tlsDays, 21);
   const saved = await jarvis.saveSettings(db, { goals: [{ product: "review", metric: "paid", period: "week", target: 10 }, { product: "x" }], thresholds: { tlsDays: 30, uptimeMs: "abc" }, mail: { daily: false, gemini: "yes" } }, "kaanmuar@gmail.com");
   assert.equal(saved.goals.length, 1);
   assert.equal(saved.thresholds.tlsDays, 30);
   assert.equal(saved.thresholds.uptimeMs, 3000);
-  assert.deepEqual(saved.mail, { daily: false, gemini: true, watch: true });
+  assert.deepEqual(saved.mail, Object.assign({}, jarvis.MAIL_DEFAULTS, { daily: false }));
+  assert.equal(jarvis.normalizeSettings(db.writes[0].value).mail.daily, false);
   assert.equal(db.writes[0].path, "jarvis_settings/main");
   assert.equal(db.writes[0].value.by, "kaanmuar@gmail.com");
 });
@@ -347,6 +426,65 @@ test("server: the daily briefing reads the last 24 hours, drops test emails and 
   assert.match(mail.body, /^Quiet day\. Next: answer the inbox\.\n\nWARN {2}1 message/);
 });
 
+test("server: the snapshot reads only the summary fields of a review, not its report (#1579)", async () => {
+  const now = Date.parse("2026-10-25T12:40:00Z");
+  const iso = new Date(now - 3600000).toISOString();
+  const db = fakeDb({ rows: { url_reviews: [
+    { createdAt: iso, paid: true, test: false, priceUsd: 19, status: "complete", score: 80, requestedUrl: "https://shop.example/", frameworks: ["WordPress"], query: "utm_source=tiktok", report: "x".repeat(300000) }
+  ] } });
+  const { products } = await jarvis.dailyProducts(db, { now, days: 7 });
+  assert.ok(db.selects.url_reviews && !db.selects.url_reviews.includes("report"));
+  assert.deepEqual([products.review.totals.usd, products.review.totals.complete, products.review.totals.avgScore], [19, 1, 80]);
+  assert.deepEqual(products.review.lists.hosts[0].label, "shop.example");
+  assert.match(products.review.lists.reviewSources[0].label, /^tiktok/);
+});
+
+test("server: the app snapshot widens the window to the range it asks for", async () => {
+  const now = Date.parse("2026-10-25T12:40:00Z");
+  const ts = (h) => ({ toDate: () => new Date(now - h * 3600000) });
+  const db = fakeDb({ rows: { site_events: [{ site: "cv", kind: "visit", createdAt: ts(2) }, { site: "cv", kind: "visit", createdAt: ts(30) }, { site: "cv", kind: "visit", createdAt: ts(200) }] } });
+  const { window, products } = await jarvis.dailyProducts(db, { now, days: 7 });
+  assert.equal(window.days, 7);
+  assert.equal(products.cv.totals.visits, 2);
+  assert.equal(products.cv.kpis[0].prior, 1);
+});
+
+test("server: Ask from the app gets the page's compact snapshot", () => {
+  const snap = { products: { cv: { kpis: [{ label: "Visits", value: 4, prior: 2, delta: "+100%" }], lists: { sources: [1, 2, 3, 4, 5, 6, 7].map((n) => ({ label: "s" + n, value: n })) } } },
+    briefing: [{ level: "warn", text: "1 message waits." }], external: { money: { ok: true, revenue: { usd: 9 } }, safety: { ok: false, error: "x" } } };
+  const out = jarvis.askSnapshot(snap, 7);
+  assert.equal(out.range, "last 7 days");
+  assert.deepEqual(out.products.cv.kpis, [{ label: "Visits", value: 4, delta: "+100%" }]);
+  assert.equal(out.products.cv.name, "CV");
+  assert.equal(out.products.cv.top.sources.length, 5);
+  assert.deepEqual(out.briefing, ["[warn] 1 message waits."]);
+  assert.equal(out.external.money.revenue.usd, 9);
+  assert.equal(out.external.safety, null);
+  assert.equal(out.external.outreach, null);
+});
+
+test("server: the app snapshot carries outreach visits and Ask gets the page's outreach block", async () => {
+  const now = Date.parse("2026-10-25T12:40:00Z");
+  const ts = (h) => ({ toDate: () => new Date(now - h * 3600000) });
+  const db = fakeDb({ rows: { site_events: [
+    { site: "review", kind: "visit", query: "?utm_source=outreach&utm_campaign=unis", createdAt: ts(2) },
+    { site: "review", kind: "visit", query: "?utm_source=Outreach&utm_campaign=unis", createdAt: ts(3) },
+    { site: "review", kind: "visit", query: "?utm_source=outreach", createdAt: ts(4) },
+    { site: "review", kind: "visit", query: "?utm_source=outreach&utm_campaign=old", createdAt: ts(200) },
+    { site: "cv", kind: "visit", query: "?utm_source=linkedin", createdAt: ts(2) }
+  ] } });
+  const { outreachVisits } = await jarvis.dailyProducts(db, { now, days: 7 });
+  assert.deepEqual(outreachVisits, { total: 3, campaigns: [{ label: "unis", value: 2 }, { label: "no campaign", value: 1 }] });
+  const outreach = { ok: true, pipeline: { ok: true, queued: 40, swept: 12, reviews: 9, thisWeek: 5, withLiveReport: 3, bySegment: [{ label: "university", value: 30 }], daily: [] },
+    instantly: { ok: true, status: [{ label: "active", value: 1 }], sent: 80, rates: { open: 40, reply: 5, positive: 2, bounce: 1 }, replies: 4, interested: 2, meetings: 1, accounts: [{ email: "a@x.co", score: 92 }, { email: "b@x.co", score: null }] },
+    plan: { ok: false } };
+  const out = jarvis.askSnapshot({ external: { outreach }, outreachVisits }, 7).external.outreach;
+  assert.deepEqual(out.pipeline, { queued: 40, swept: 12, reviews: 9, thisWeek: 5, withLiveReport: 3, bySegment: [{ label: "university", value: 30 }] });
+  assert.deepEqual(out.instantly.warmup, [92, null]);
+  assert.equal(out.plan, null);
+  assert.equal(out.visits, 3);
+});
+
 test("server: the watch mails alerts only, once a day per issue", async () => {
   const external = { uptime: { ok: true, pages: [{ product: "cv", name: "CV", ok: false, status: 503 }, { product: "lab", name: "QA Lab", ok: true, ms: 9000 }], tlsDaysLeft: 50 } };
   const items = jarvis.watchItems(external, {});
@@ -372,6 +510,17 @@ test("server: Jarvis rules in functions are a byte copy of the admin page's", ()
   ["settings", "settings-save", "goals", "daily-now"].forEach((op) => assert.match(index, new RegExp('op === "' + op + '"')));
 });
 
+test("jarvisExternal has a loader for every op the snapshot, briefing and watch ask it for (#1837)", () => {
+  const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  const start = index.indexOf("async function jarvisExternal");
+  const loaders = index.slice(start, index.indexOf("const out = {}", start));
+  const known = new Set([...loaders.matchAll(/^\s+"?([\w-]+)"?: \(\) =>/gm)].map((m) => m[1]).concat(Object.keys(sources.SOURCES)));
+  const asked = [...index.matchAll(/jarvisExternal\(\[([^\]]+)\]/g)].concat([...index.matchAll(/const JARVIS_OPS = \[([^\]]+)\]/g)])
+    .flatMap((m) => m[1].match(/"[\w-]+"/g).map((s) => s.slice(1, -1)));
+  assert.ok(asked.includes("cloudflare"));
+  assert.deepEqual(asked.filter((op) => !known.has(op)), []);
+});
+
 const sources = require("../../functions/jarvis-sources.js");
 
 test("money: sales, credit runs, refunds and test rows each land in the right place", () => {
@@ -389,6 +538,77 @@ test("money: sales, credit runs, refunds and test rows each land in the right pl
   assert.deepEqual(out.prior, { usd: 9, count: 1, paidRuns: 0 });
   assert.equal(out.refundsUsd, 19);
   assert.deepEqual(out.byProvider, [{ label: "paypal", value: 28 }]);
+});
+
+test("money: a refused Transaction search still sums fees from confirmed PayPal payments", async () => {
+  const calls = [];
+  const fetch = async (url) => {
+    calls.push(url);
+    if (/disputes/.test(url)) return json({ items: [{ status: "RESOLVED" }, { status: "OPEN" }] });
+    if (/reporting\/transactions/.test(url)) return json({ name: "NOT_AUTHORIZED", message: "Authorization failed due to insufficient permissions." }, 403);
+    if (/captures\/CAP123456789012345/.test(url)) return json({ seller_receivable_breakdown: { gross_amount: { currency_code: "USD", value: "16.15" }, paypal_fee: { currency_code: "USD", value: "0.82" }, net_amount: { currency_code: "USD", value: "15.33" } } });
+    if (/orders\/ORD123456789012345/.test(url)) return json({ purchase_units: [{ payments: { captures: [{ seller_receivable_breakdown: { gross_amount: { currency_code: "USD", value: "9.00" }, paypal_fee: { currency_code: "USD", value: "0.61" }, net_amount: { currency_code: "USD", value: "8.39" } } }] } }] });
+    throw new Error("unexpected " + url);
+  };
+  const rows = [
+    { id: "a", createdAt: daysAgo(1).toISOString(), paid: true, priceUsd: 16.15, captureId: "CAP123456789012345" },
+    { id: "b", createdAt: daysAgo(2).toISOString(), paid: true, priceUsd: 9, method: "paypal", sessionId: "ORD123456789012345" },
+    { id: "dup", createdAt: daysAgo(2).toISOString(), paid: true, priceUsd: 16.15, provider: "paypal", captureId: "CAP123456789012345" },
+    { id: "test", createdAt: daysAgo(1).toISOString(), paid: true, priceUsd: 9, provider: "paypal", captureId: "SANDBOXCAPTURE00001", paypalMode: "sandbox" },
+    { id: "other", createdAt: daysAgo(1).toISOString(), paid: true, priceUsd: 3, provider: "stripe", captureId: "SHOULDNOTFETCH00001" }
+  ];
+  const docsOf = (list) => ({ docs: list.map((row) => ({ id: row.id, data: () => row })) });
+  let selected = null;
+  const db = { collection() { return { where() { return this; }, select(...fields) { selected = fields; return this; }, limit() { return this; }, get: async () => docsOf(rows) }; } };
+  const paypal = { host: "api-m.paypal.com", token: async () => "token" };
+  const out = await sources.money({ fetch, env: { STRIPE_SECRET_KEY: "sk_test_x" }, db, now: NOW.getTime(), days: 7, paypal });
+  // A url_reviews document carries the whole report (about 1.3 MB), so a week of them overflows the function (#1740).
+  assert.ok(selected && selected.includes("captureId") && selected.includes("sessionId") && selected.includes("method"));
+  assert.equal(out.paypal.disputesOpen, 1);
+  assert.deepEqual(out.paypal.transactions, { count: 2, grossUsd: 25.15, feesUsd: 1.43, netUsd: 23.72, source: "payments" });
+  assert.deepEqual(out.needs, []);
+  assert.equal(calls.some((url) => /SANDBOX|SHOULDNOT/.test(url)), false);
+  const quiet = await sources.money({
+    fetch: async (url) => /reporting\/transactions/.test(url) ? json({ name: "NOT_AUTHORIZED", message: "no" }, 403) : json({ items: [] }),
+    env: {}, db: { collection() { return { where() { return this; }, select() { return this; }, limit() { return this; }, get: async () => docsOf([]) }; } }, now: NOW.getTime(), days: 7, paypal
+  });
+  assert.deepEqual(quiet.paypal.transactions, { count: 0, grossUsd: 0, feesUsd: 0, netUsd: 0, source: "payments" });
+  assert.deepEqual(quiet.needs, []);
+  const blocked = await sources.money({
+    fetch: async (url) => {
+      if (/reporting\/transactions/.test(url) || /captures\//.test(url)) return json({ name: "NOT_AUTHORIZED", message: "no" }, 403);
+      return json({ items: [] });
+    },
+    env: {}, db, now: NOW.getTime(), days: 7, paypal
+  });
+  assert.equal(blocked.paypal.transactions, null);
+  assert.equal(blocked.needs.length, 1);
+});
+
+test("money: rows saved before test and provider were recorded are read from the session and capture", () => {
+  const start = daysAgo(7).getTime();
+  const at = (n) => daysAgo(n).toISOString();
+  const out = sources.moneyRows([
+    { id: "stripe-test", createdAt: at(1), paid: true, priceUsd: 19, status: "run-credit", sessionId: "cs_test_a1iwBdIduHvq" },
+    { id: "paypal-sandbox", createdAt: at(1), paid: true, priceUsd: 9, paypalMode: "sandbox", captureId: "7AB12345CD678901E" },
+    { id: "stripe-live", createdAt: at(2), paid: true, priceUsd: 15, sessionId: "cs_live_b2jxCe" },
+    { id: "paypal-live", createdAt: at(2), paid: true, priceUsd: 9, captureId: "8BC23456DE789012F" }
+  ], { start, priorStart: daysAgo(14).getTime() });
+  assert.deepEqual(out.revenue, { usd: 24, count: 2, avgUsd: 12, paidRuns: 0 });
+  assert.deepEqual(out.byProvider, [{ label: "stripe", value: 15 }, { label: "paypal", value: 9 }]);
+});
+
+test("search console: a disabled API asks to enable it, a 403 without it asks to add the service account", async () => {
+  const ctx = (answer) => ({ now: NOW.getTime(), days: 28, fetch: async (url) => {
+    if (/token\?scopes=/.test(url)) return json({ access_token: "t" });
+    if (/service-accounts\/default\/email$/.test(url)) return json("fn@carlosm-interactive-cv.iam.gserviceaccount.com");
+    return answer;
+  } });
+  const disabled = await sources.searchConsole(ctx(json({ error: { code: 403, status: "PERMISSION_DENIED", message: "Google Search Console API has not been used in project 976558418058 before or it is disabled." } }, 403)));
+  assert.match(disabled.error, /API is turned off/);
+  assert.match(disabled.need, /searchconsole\.googleapis\.com/);
+  const denied = await sources.searchConsole(ctx(json({ error: { code: 403, status: "PERMISSION_DENIED", message: "User does not have sufficient permission for site 'sc-domain:carlosandmunoz.com'." } }, 403)));
+  assert.match(denied.need, /Add user .* with Restricted permission/);
 });
 
 test("safety: DNS, DMARC, domain and TLS checks read their records and rank alerts first", async () => {
@@ -429,6 +649,35 @@ test("brave: our place counts only our own domain, and a failed search does not 
   assert.equal(out.queries[1].position, null);
   assert.ok(out.queries[1].error);
   assert.equal((await sources.brave({ fetch, env: {} }, ["x"])).ok, false);
+});
+
+test("brave: past page one it pages to the top 100 once a week per search, and reuses that place in between", async () => {
+  const asked = [];
+  const page = (offset, ours) => Array.from({ length: 20 }, (_, i) => ({ url: ours === i ? "https://carlosandmunoz.com/review" : `https://rival${offset}-${i}.example/` }));
+  const fetch = async (url) => {
+    const u = new URL(url);
+    const offset = Number(u.searchParams.get("offset"));
+    asked.push(u.searchParams.get("q") + "@" + offset);
+    if (u.searchParams.get("q") === "deep") return json({ web: { results: page(offset, offset === 2 ? 4 : -1) }, query: { more_results_available: true } });
+    return json({ web: { results: page(offset, -1) }, query: { more_results_available: offset < 1 } });
+  };
+  let saved = null;
+  const db = { collection: () => ({ doc: () => ({ get: async () => ({ exists: !!saved, data: () => saved }), set: async (v) => { saved = v; } }) }) };
+  const now = Date.parse("2026-11-03T12:00:00Z");
+  const first = await sources.brave({ fetch, db, now, env: { BRAVE_SEARCH_KEY: "k" } }, ["deep", "short"]);
+  assert.equal(first.depth, 100);
+  assert.equal(first.queries[0].position, 45);
+  assert.equal(first.queries[0].url, "https://carlosandmunoz.com/review");
+  assert.equal(first.queries[1].position, null);
+  assert.deepEqual(asked, ["deep@0", "deep@1", "deep@2", "short@0", "short@1"]);
+  asked.length = 0;
+  const next = await sources.brave({ fetch, db, now: now + 3 * 86400000, env: { BRAVE_SEARCH_KEY: "k" } }, ["deep", "short", "new"]);
+  assert.equal(next.queries[0].position, 45);
+  assert.equal(next.queries[0].checkedAt, "2026-11-03T12:00:00.000Z");
+  assert.deepEqual(asked, ["deep@0", "short@0", "new@0", "new@1"]);
+  asked.length = 0;
+  await sources.brave({ fetch, db, now: now + 8 * 86400000, env: { BRAVE_SEARCH_KEY: "k" } }, ["deep"]);
+  assert.deepEqual(asked, ["deep@0", "deep@1", "deep@2"]);
 });
 
 test("platform: real failures come from the log lines, not from every non-2xx", async () => {
@@ -491,6 +740,699 @@ test("admin.html loads the Jarvis files with a version that changes with their c
   const want = require("crypto").createHash("sha1").update(Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))))).digest("hex").slice(0, 10);
   const html = fs.readFileSync(path.join(root, "admin.html"), "utf8");
   const seen = Array.from(html.matchAll(/admin-jarvis(?:-core)?\.(?:css|js)\?v=([^"]+)"/g)).map((m) => m[1]);
-  assert.equal(seen.length, 4);
-  assert.deepEqual(Array.from(new Set(seen)), [want], "set ?v=" + want + " on the Jarvis links in admin.html");
+  assert.equal(seen.length, 5);
+  assert.deepEqual(Array.from(new Set(seen)), [want], "set ?v=" + want + " on the Jarvis links in admin.html, then run node scripts/build-csp-hashes.js (the module import is an inline script)");
+});
+
+test("costs: asks for the export, waits for its first rows, then sums net spend by service", async () => {
+  const missing = await sources.costs({ fetch: async () => json({ error: { message: "Not found: Dataset" } }, 404), days: 30 }, "t");
+  assert.match(missing.need, /standard usage cost export/);
+  const empty = await sources.costs({ fetch: async () => json({ tables: [] }), days: 30 }, "t");
+  assert.equal(empty.pending, true);
+  let sent = "";
+  const fetch = async (url, init) => {
+    if (/\/tables$/.test(url)) return json({ tables: [{ tableReference: { tableId: "gcp_billing_export_v1_01CFD3" } }] });
+    sent = JSON.parse(init.body).query;
+    return json({ rows: [{ f: [{ v: "Cloud Functions" }, { v: "USD" }, { v: "1.25" }, { v: "3.5" }] }, { f: [{ v: "Gemini API" }, { v: "USD" }, { v: "0" }, { v: "0.4" }] }] });
+  };
+  const out = await sources.costs({ fetch, days: 400 }, "t");
+  assert.match(sent, /jarvis_billing\.gcp_billing_export_v1_01CFD3/);
+  assert.match(sent, /INTERVAL 90 DAY/);
+  assert.deepEqual(out, { days: 90, currency: "USD", net: 1.25, gross: 3.9, byService: [{ label: "Cloud Functions", value: 1.25 }, { label: "Gemini API", value: 0 }] });
+});
+
+test("email: refusals that name a blocklist are counted by list", async () => {
+  const fetch = async (url) => {
+    if (/suppression\/blocks/.test(url)) return json([
+      { email: "a@x.org", reason: "551 5.7.1 Your IP is black listed by SpamCop.org", created: 1761400000 },
+      { email: "b@y.org", reason: "554 rejected: listed on a DNSBL", created: 1761400000 },
+      { email: "c@z.org", reason: "550 mailbox full", created: 1761400000 }
+    ]);
+    if (/suppression/.test(url)) return json([]);
+    return json([]);
+  };
+  const out = await sources.email({ fetch, env: { SENDGRID_API_KEY: "k" }, now: NOW.getTime(), days: 7 });
+  assert.deepEqual(out.blocklisted, [{ label: "spamcop", value: 1 }, { label: "unnamed blocklist", value: 1 }]);
+  const rows = core.briefing({ external: { email: Object.assign(out, { totals: { processed: 0, bounces: 0, blocks: 3, spam_reports: 0 }, rates: { bad: 0 } }) } });
+  assert.equal(rows.find((r) => r.key === "email:blocklist").text, "2 emails were refused because the sending IP is on spamcop, unnamed blocklist.");
+});
+
+test("social: posts scheduled for later are counted apart, not listed as recent", async () => {
+  const at = (n) => daysAgo(n).toISOString();
+  const buffer = { posts: { p1: [{ channel: "x", result: "sent", at: at(1) }, { channel: "x", result: "queued", at: at(-3) }, { channel: "tiktok", result: "queued", at: at(-1) }] } };
+  const fetch = async (url) => (/buffer\.json/.test(url) ? json(buffer) : json({}, 404));
+  const out = await sources.social({ fetch, env: {}, now: NOW.getTime(), days: 30 });
+  assert.equal(out.sent, 1);
+  assert.equal(out.latest.length, 1);
+  assert.deepEqual(out.scheduled, { count: 2, next: at(-1) });
+});
+
+test("social: Facebook needs come from the daily metrics' word on each Page, not from a token in Jarvis", async () => {
+  const run = (metrics) => sources.social({ fetch: async (url) => (/metrics\.json/.test(url) && metrics ? json(metrics) : json({}, 404)), env: {}, now: NOW.getTime(), days: 30 });
+  assert.deepEqual((await run({ posts: {}, pages: { "Facebook Page": { asked: 3, answered: 3 } } })).needs.filter((n) => /Facebook/.test(n)), []);
+  assert.deepEqual((await run(null)).needs.filter((n) => /Facebook/.test(n)), []);
+  assert.deepEqual((await run({ posts: {}, pages: { "Facebook Page": { asked: 3, answered: 3, insights: 3 } } })).needs.filter((n) => /Facebook/.test(n)), []);
+  const needs = (await run({ posts: {}, pages: { "Facebook Page": { asked: 41, answered: 0, insights: 0, error: "Graph 400: (#10) pages_read_user_content" }, "Facebook Page ES": { skipped: "no FACEBOOK_PAGE_TOKEN_ES" } } })).needs;
+  assert.deepEqual(needs.filter((n) => /Facebook/.test(n)), [
+    "Facebook Page: the Graph API answered 0 of 41 sent posts in the daily social numbers (Graph 400: (#10) pages_read_user_content); no post came back with views, so the Page token lacks read_insights. A new token with read_insights and pages_read_user_content fixes it; steps are at the top of scripts/meta-token.js.",
+    "Facebook Page ES: the daily social numbers skipped it (no FACEBOOK_PAGE_TOKEN_ES repo secret). Steps are at the top of scripts/meta-token.js."
+  ]);
+  assert.ok(needs.every((n) => !/functions\/\.env/.test(n)));
+});
+
+test("a source that does not answer gets a briefing line, and test payments stay out of revenue", () => {
+  const rows = core.briefing({ external: { cloudflare: { ok: false, error: "Cloudflare 401: no answer" } } });
+  assert.equal(rows.find((r) => r.key === "connections:down:cloudflare").text, "Cloudflare did not answer: Cloudflare 401: no answer");
+  const sum = core.summarizeReview({ reviews: [{ paid: true, priceUsd: 19, createdAt: daysAgo(1) }, { paid: true, priceUsd: 15.2, test: true, createdAt: daysAgo(1) }] }, core.windowFor(30, NOW));
+  assert.equal(sum.totals.usd, 19);
+  assert.equal(sum.totals.paid, 1);
+});
+
+const outreachSrc = require("../../functions/jarvis-outreach.js");
+const outreachPlan = require("../../scripts/jarvis-outreach-plan.js");
+
+test("outreach: the week starts Monday in Bogota and the pipeline counts only outreach sweep reviews", () => {
+  assert.equal(new Date(outreachSrc.weekStart(NOW.getTime())).toISOString(), "2026-10-19T05:00:00.000Z");
+  const queue = { hosts: [{ host: "uni.edu.co", sector: "university" }, { host: "tvet.example", sector: "tvet" }, { host: "agency.example", sector: "agency" }] };
+  const reviews = [
+    { createdAt: daysAgo(1).toISOString(), status: "complete", score: 70, sweep: { host: "uni.edu.co", outreach: true, sector: "university" } },
+    { createdAt: daysAgo(2).toISOString(), status: "failed", sweep: { host: "tvet.example", outreach: true, sector: "tvet" } },
+    { createdAt: daysAgo(10).toISOString(), status: "complete", score: 90, sweep: { host: "agency.example", outreach: true, sector: "agency" } },
+    { createdAt: daysAgo(1).toISOString(), status: "complete", score: 50, sweep: { host: "other.example" } }
+  ];
+  const p = outreachSrc.pipelineRows(queue, { outreachAt: 2, days: { "2026-10-24": { outreach: 1 }, "2026-10-01": { outreach: 9 } } }, reviews, ["www.uni.edu.co"], { now: NOW.getTime(), days: 7 });
+  assert.equal(p.queued, 3);
+  assert.equal(p.swept, 2);
+  assert.equal(p.left, 1);
+  assert.equal(p.reviews, 2);
+  assert.equal(p.thisWeek, 2);
+  assert.deepEqual(p.results, [{ label: "failed", value: 1 }, { label: "reviewed", value: 1 }]);
+  assert.equal(p.avgScore, 70);
+  assert.equal(p.withLiveReport, 1);
+  assert.equal(p.reviewedWithLiveReport, 1);
+  assert.deepEqual(p.daily, [{ date: "2026-10-24", reviews: 1 }]);
+  assert.equal(p.priorReviews, 1);
+  const capped = Array.from({ length: 3000 }, () => ({ createdAt: daysAgo(1).toISOString(), status: "complete", sweep: { host: "x.example", outreach: true } }));
+  assert.equal(outreachSrc.pipelineRows(queue, {}, capped, [], { now: NOW.getTime(), days: 7 }).priorReviews, null);
+});
+
+test("Social hub: views and interactions in range carry the period before, and lead with hub + post views", () => {
+  const w = core.windowFor("7", NOW);
+  const ev = (name, n) => ({ name, site: "hub", createdAt: daysAgo(n).toISOString() });
+  const rows = [ev("hub_view", 1), ev("post_view", 1), ev("post_view", 2), ev("hub_share", 1), { name: "visit", site: "cv", kind: "visit", createdAt: daysAgo(1).toISOString() }];
+  const prior = [ev("hub_view", 9), ev("hub_copy", 9)];
+  const hub = core.summarizeHub({ totals: { gaViews: 40 } }, rows, w, prior);
+  assert.deepEqual(hub.kpis.map((k) => [k.label, k.value, k.prior, k.delta]), [
+    ["Hub + post views", 3, 1, "+200%"], ["Hub views", 1, 1, "0%"], ["Post views", 2, 0, "new"], ["Interactions", 1, 1, "0%"], ["GA4 views", 40, undefined, ""]
+  ]);
+  assert.equal(hub.series.values.reduce((a, b) => a + b, 0), 3);
+  assert.equal(core.summarizeHub(null, rows, w).kpis[0].delta, "");
+});
+
+test("outreach: Instantly numbers become rates, campaign states and mailbox warm-up", () => {
+  const x = outreachSrc.instantlyRows(
+    [{ status: 0 }, { status: 0 }, { status: 1 }],
+    { emails_sent_count: 200, contacted_count: 100, open_count_unique: 50, reply_count_unique: 8, reply_count_automatic_unique: 2, total_interested: 3, bounced_count: 10 },
+    [{ campaign_name: "TVET wave 1", emails_sent_count: 200, open_count_unique: 50, reply_count_unique: 8, bounced_count: 10 }, { campaign_name: "Draft", emails_sent_count: 0 }],
+    [{ email: "carlos@qalabreview.com", status: 1, warmup_status: 1, stat_warmup_score: 62, daily_limit: 30 },
+      { email: "hello@qalabreview.com", status: -1, warmup_status: 1, stat_warmup_score: 100, daily_limit: 10, status_message: { e_message: "Permanent OAuth failure: AADSTS50076: you must use multi-factor authentication. Trace ID: c32b Correlation ID: 5c1d" } }]
+  );
+  assert.deepEqual(x.status, [{ label: "draft", value: 2 }, { label: "active", value: 1 }]);
+  assert.deepEqual(x.rates, { open: 50, reply: 8, positive: 3, bounce: 5 });
+  assert.equal(x.byCampaign.length, 1);
+  assert.deepEqual(x.accounts[0], { email: "carlos@qalabreview.com", status: "active", warmup: "on", score: 62, dailyLimit: 30, error: "" });
+  assert.equal(x.accounts[1].status, "error");
+  assert.equal(x.accounts[1].error, "Permanent OAuth failure: AADSTS50076: you must use multi-factor authentication.");
+  assert.equal(x.prior, null);
+  const y = outreachSrc.instantlyRows([], { emails_sent_count: 200 }, [], [], { emails_sent_count: 100, contacted_count: 50, reply_count_unique: 2 });
+  assert.deepEqual([y.sent, y.prior.sent, y.prior.rates.reply], [200, 100, 4]);
+});
+
+test("outreach: the plan knows the day, phase, next milestone and sorted deadlines", () => {
+  const plan = {
+    start: "2026-10-20", end: "2027-01-17",
+    phases: [{ name: "Set up", start: "2026-10-20", end: "2026-11-02" }, { name: "Test", start: "2026-11-03", end: "2026-11-30" }],
+    milestones: [{ date: "2026-10-22", label: "Domain ready" }, { date: "2026-10-30", label: "First wave" }],
+    deadlines: [{ date: "2027-10-25", label: "Domain renewal" }, { date: "2026-10-31", label: "Instantly trial ends" }]
+  };
+  const now = outreachSrc.planNow(plan, NOW.getTime());
+  assert.equal(now.day, 6);
+  assert.equal(now.length, 90);
+  assert.equal(now.phase.name, "Set up");
+  assert.deepEqual(now.next, { date: "2026-10-30", label: "First wave", daysLeft: 5 });
+  assert.equal(now.milestones[0].past, true);
+  assert.equal(now.deadlines[0].label, "Instantly trial ends");
+  assert.equal(outreachSrc.planNow(null, NOW.getTime()), null);
+});
+
+test("outreach: the plan script folds the weekly KPI tracker into target actuals", () => {
+  const rows = outreachPlan.parseCsv("week,paid_reviews,backlinks,emails_sent\n2026-10-26,2,1,40\n2026-11-02,3,\"2\",60\n");
+  const track = outreachPlan.tracker(rows);
+  const doc = outreachPlan.build({ start: "2026-10-26", end: "2027-01-24", targets: [{ key: "unlocks", label: "Paid unlocks", target: 30 }, { key: "links", label: "Backlinks", target: 15 }, { key: "talks", label: "Talks", target: 6 }] }, track);
+  assert.deepEqual(doc.targets.map((t) => t.actual), [5, 3, null]);
+  assert.equal(doc.tracker.emailsSent, 100);
+});
+
+test("outreach: visits from outreach links are counted by campaign", () => {
+  const v = core.outreachVisits([
+    { kind: "visit", query: "?utm_source=outreach&utm_campaign=tvet-1" },
+    { kind: "visit", query: "?utm_source=Outreach&utm_campaign=tvet-1" },
+    { query: "?utm_source=outreach" },
+    { kind: "click", query: "?utm_source=outreach" },
+    { kind: "visit", query: "?utm_source=linkedin" }
+  ]);
+  assert.equal(v.total, 3);
+  assert.deepEqual(v.campaigns, [{ label: "tvet-1", value: 2 }, { label: "no campaign", value: 1 }]);
+});
+
+test("outreach briefing: close deadlines, bounces, replies, cold mailboxes and DNS gaps", () => {
+  const th = core.thresholds();
+  const ext = { outreach: { ok: true, needs: [],
+    plan: { day: 10, deadlines: [{ date: "2026-10-30", label: "Instantly trial ends", daysLeft: 5 }, { date: "2026-11-05", label: "M365 trial ends", daysLeft: 11 }, { date: "2027-10-25", label: "Renewal", daysLeft: 365 }], next: { date: "2026-10-28", label: "First wave", daysLeft: 3 }, weekly: { prospects: 40 } },
+    pipeline: { ok: true, left: 0, thisWeek: 4 },
+    instantly: { ok: true, sent: 100, bounced: 6, replies: 5, autoReplies: 1, interested: 2, rates: { bounce: 6 }, status: [{ label: "active", value: 1 }], accounts: [{ email: "a@q.com", status: "active", warmup: "on", score: 40 }] },
+    mail: { domain: "qalabreview.com", checks: [{ name: "DMARC", ok: false, detail: "p=none (monitor only)" }, { name: "SPF", ok: true, detail: "" }] } } };
+  const items = core.briefing({ external: ext, thresholds: th, now: NOW, products: {} }).filter((i) => i.product === "outreach");
+  const byKey = Object.fromEntries(items.map((i) => [i.key, i.level]));
+  assert.equal(byKey["outreach:deadline:2026-10-30"], "warn");
+  assert.equal(byKey["outreach:deadline:2026-11-05"], "info");
+  assert.equal(byKey["outreach:deadline:2027-10-25"], undefined);
+  assert.equal(byKey["outreach:milestone"], "info");
+  assert.equal(byKey["outreach:queue"], "warn");
+  assert.equal(byKey["outreach:bounce"], "alert");
+  assert.equal(byKey["outreach:replies"], "info");
+  assert.equal(byKey["outreach:warmup"], "warn");
+  assert.equal(byKey["outreach:dns:DMARC"], "warn");
+  assert.equal(byKey["outreach:dns:SPF"], undefined);
+});
+
+test("qalabreview.com links: visits, reviews and payments per prospect, paid credited through the review it unlocked", () => {
+  const ctx = { now: NOW.getTime(), days: 7 };
+  const at = (h) => new Date(NOW.getTime() - h * 3600 * 1000).toISOString();
+  const q = (campaign, host) => "?utm_source=qalabreview&utm_campaign=" + campaign + (host ? "&utm_content=" + host : "") + "&utm_medium=email";
+  const opens = [
+    { query: q("outreach", "upb.edu.co"), createdAt: at(2) }, { query: q("outreach", "upb.edu.co"), createdAt: at(30) },
+    { query: q("qr"), createdAt: at(5) }, { query: "?utm_source=outreach", createdAt: at(1) }, { query: q("outreach", "old.edu"), createdAt: at(24 * 9) }
+  ];
+  const reviews = [
+    { id: "r1", query: q("outreach", "upb.edu.co"), email: "a@upb.edu.co", status: "complete", createdAt: at(2) },
+    { id: "p1", status: "paid-report", paid: true, reportId: "r1", email: "a@upb.edu.co", priceUsd: 12, createdAt: at(1) },
+    { id: "p2", status: "paid-report", paid: true, refunded: true, reportId: "r1", priceUsd: 12, createdAt: at(1) },
+    { id: "r2", query: q("outreach-new", "acme.io"), status: "complete", test: true, createdAt: at(3) },
+    { id: "p3", status: "paid-report", paid: true, reportId: "elsewhere", priceUsd: 9, createdAt: at(1) }
+  ];
+  const x = outreachSrc.linkRows(opens, reviews, ctx);
+  assert.deepEqual([x.visits, x.reviews, x.paid, x.usd], [3, 1, 1, 12]);
+  assert.deepEqual(x.byCampaign, [{ label: "Outreach email", value: 2, campaign: "outreach" }, { label: "QR code", value: 1, campaign: "qr" }]);
+  assert.deepEqual(x.prospects, [{ host: "upb.edu.co", visits: 2, reviews: 1, paid: 1, usd: 12, last: at(2) }]);
+  assert.equal(x.reviewRate, 33.3);
+  assert.deepEqual(outreachSrc.linkPrior(opens, reviews, ctx), { visits: 1, reviews: 0, paid: 0, usd: 0, reviewRate: 0, payRate: 0 });
+  assert.equal(outreachSrc.linkPrior(Array.from({ length: 10000 }, () => opens[0]), reviews, ctx), null);
+  assert.equal(outreachSrc.linkTags("?utm_source=youtube"), null);
+  assert.deepEqual(x.social, { visits: 0, reviews: 0, paid: 0, usd: 0, networks: [], posts: [] });
+});
+
+test("report replies (#2471): named campaigns, and clicks, runs and payments per network and per post", () => {
+  const ctx = { now: NOW.getTime(), days: 7 };
+  const at = (h) => new Date(NOW.getTime() - h * 3600 * 1000).toISOString();
+  const q = (net, term, host) => "?utm_source=qalabreview&utm_campaign=social-reply-" + net + (term ? "&utm_term=" + term : "") + "&utm_content=" + host + "&utm_medium=social";
+  const opens = [
+    { query: q("bluesky", "a1b2c3", "upb.edu.co"), createdAt: at(2) }, { query: q("bluesky", "a1b2c3", "upb.edu.co"), createdAt: at(3) },
+    { query: q("mastodon", "", "acme.io"), createdAt: at(4) }, { query: q("bluesky", "no!", "upb.edu.co"), createdAt: at(5) }
+  ];
+  const reviews = [
+    { id: "r1", query: q("bluesky", "a1b2c3", "upb.edu.co"), email: "a@upb.edu.co", status: "complete", createdAt: at(2) },
+    { id: "p1", status: "paid-report", paid: true, reportId: "r1", email: "a@upb.edu.co", priceUsd: 19, createdAt: at(1) }
+  ];
+  const x = outreachSrc.linkRows(opens, reviews, ctx);
+  assert.deepEqual(x.byCampaign.map((c) => c.label), ["Report replies on Bluesky", "Report replies on Mastodon"]);
+  assert.deepEqual([x.social.visits, x.social.reviews, x.social.paid, x.social.usd], [4, 1, 1, 19]);
+  assert.deepEqual(x.social.networks.map((n) => [n.name, n.campaign, n.visits, n.reviews, n.paid, n.usd]), [["Bluesky", "social-reply-bluesky", 3, 1, 1, 19], ["Mastodon", "social-reply-mastodon", 1, 0, 0, 0]]);
+  assert.deepEqual(x.social.posts, [{ network: "bluesky", name: "Bluesky", ref: "a1b2c3", host: "upb.edu.co", visits: 2, reviews: 1, paid: 1, usd: 19 }]);
+  const joined = outreachSrc.socialPosts(x.social.posts, [
+    { key: "bluesky_a1b2c3d4e5f60718293a", network: "bluesky", url: "https://bsky.app/profile/ana/post/1", author: { handle: "ana" }, text: "UPB's new site https://upb.edu.co", report: { host: "upb.edu.co" }, actions: { reply: { status: "posted", url: "https://bsky.app/profile/us/post/2", lang: "es" } } },
+    { key: "mastodon_a1b2c3000000000000", network: "mastodon", url: "https://m.s/1" }
+  ]);
+  assert.deepEqual([joined[0].url, joined[0].title, joined[0].status, joined[0].replyUrl, joined[0].lang], ["https://bsky.app/profile/ana/post/1", "UPB's new site", "posted", "https://bsky.app/profile/us/post/2", "es"]);
+  assert.equal(outreachSrc.postRef("bluesky_a1b2c3d4e5f60718293a"), "a1b2c3");
+  assert.equal(outreachSrc.campaignName("social-reply-x"), "Report replies on X");
+  assert.equal(outreachSrc.campaignName("brand-new"), "brand-new");
+});
+
+test("qalabreview.com briefing: a dead Worker alerts once campaigns send, and link revenue is reported", () => {
+  const th = core.thresholds();
+  const brief = (links, active) => Object.fromEntries(core.briefing({ thresholds: th, now: NOW, products: {}, external: { outreach: { ok: true, needs: [], links: Object.assign({ ok: true }, links),
+    instantly: { ok: true, sent: 0, replies: 0, interested: 0, rates: {}, accounts: [], status: [{ label: active ? "active" : "draft", value: 1 }] } } } })
+    .filter((i) => i.product === "outreach").map((i) => [i.key, i.level]));
+  assert.equal(brief({ live: false, workerStatus: 301, visits: 0, paid: 0 }, false)["outreach:links-down"], "warn");
+  assert.equal(brief({ live: false, workerStatus: 301, visits: 0, paid: 0 }, true)["outreach:links-down"], "alert");
+  const ok = brief({ live: true, visits: 4, reviews: 1, paid: 1, usd: 12 }, true);
+  assert.equal(ok["outreach:links-down"], undefined);
+  assert.equal(ok["outreach:links-paid"], "info");
+});
+
+const parity = require("../../scripts/check-jarvis-parity.js");
+
+test("parity: a web Jarvis change needs an android/ change or 'no app change' in the PR body", () => {
+  assert.equal(parity.check(["functions/url-review.js", "admin.html"], "").ok, true);
+  assert.equal(parity.check(["js/admin-jarvis.js"], "").ok, false);
+  assert.equal(parity.check(["functions/jarvis-sources.js", "css/admin-jarvis.css"], "Fixes #1").ok, false);
+  assert.equal(parity.check(["js/admin-jarvis-core.js", "android/app/src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"], "").ok, true);
+  assert.deepEqual(parity.check(["functions/jarvis.js"], "No app change: the app reads it through snapshot."), { ok: true, web: ["functions/jarvis.js"], optOut: true });
+  assert.equal(parity.check(["functions/jarvis.js"], "no app change:").ok, false);
+});
+
+const push = require("../../functions/jarvis-push.js");
+
+function pushDb() {
+  const docs = {};
+  const col = { doc: (id) => ({ set: async (row, o) => { docs[id] = Object.assign(o && o.merge ? docs[id] || {} : {}, row); }, delete: async () => { delete docs[id]; } }),
+    get: async () => ({ docs: Object.keys(docs).map((id) => ({ id, data: () => docs[id] })) }) };
+  return { docs, collection: () => col };
+}
+
+test("push: phones register with their kinds, and each kind reaches only the phones that keep it on", async () => {
+  const db = pushDb();
+  const a = "a".repeat(40), b = "b".repeat(40);
+  await push.register(db, { token: a, name: "Pixel" }, "owner", Date.parse("2026-10-25T12:00:00Z"));
+  await push.register(db, { token: b, kinds: { briefing: false } }, "owner", Date.parse("2026-10-25T12:00:00Z"));
+  assert.deepEqual((await push.list(db)).find((d) => d.token === b).kinds, { alerts: true, briefing: false, money: true, reviews: true, outreach: true, inbox: true, desk: true, social: true, codes: true, engagement: true });
+  assert.deepEqual(await push.targets(db, "briefing"), [a]);
+  assert.deepEqual((await push.targets(db, "alerts")).sort(), [a, b]);
+  await assert.rejects(push.register(db, { token: "short" }, "owner", 0), /not a device token/);
+  await push.unregister(db, b);
+  assert.deepEqual(await push.targets(db, "test"), [a]);
+});
+
+test("push: alert and briefing messages, and dead tokens are dropped after a send", async () => {
+  const m = push.alertMessage([{ text: "CV is down (503)." }, { text: "TLS expires in 5 days." }]);
+  assert.equal(m.title, "Jarvis alerts: 2");
+  assert.equal(m.body, "CV is down (503). (+1 more)");
+  assert.equal(m.tab, "systems");
+  const b = push.briefingMessage({ items: [{ level: "alert", text: "x" }, { level: "warn", text: "y" }, { level: "info", text: "z" }], aiText: "\nQuiet day overall.\nMore.", dateLabel: "Sun, Oct 25" });
+  assert.equal(b.title, "Jarvis briefing, Sun, Oct 25: 1 alert, 1 warning");
+  assert.equal(b.body, "Quiet day overall.");
+  assert.deepEqual(b.lines, ["x", "y"]);
+  assert.match(push.briefingMessage({ items: [], aiText: "", dateLabel: "Mon" }).title, /All clear$/);
+
+  const db = pushDb();
+  const ok = "o".repeat(40), dead = "d".repeat(40);
+  await push.register(db, { token: ok }, "owner", 0);
+  await push.register(db, { token: dead }, "owner", 0);
+  let seen;
+  const messaging = { sendEachForMulticast: async (msg) => { seen = msg; return { successCount: 1, failureCount: 1, responses: [{ success: true }, { success: false, error: { code: "messaging/registration-token-not-registered" } }] }; } };
+  const out = await push.send(messaging, db, [ok, dead], m);
+  assert.deepEqual(out, { sent: 1, failed: 1, removed: 1 });
+  assert.equal(seen.android.priority, "high");
+  assert.equal(seen.data.kind, "alerts");
+  assert.deepEqual(JSON.parse(seen.data.lines), ["CV is down (503).", "TLS expires in 5 days."]);
+  assert.deepEqual(await push.targets(db, "alerts"), [ok]);
+  assert.deepEqual(await push.send(messaging, db, [], m), { sent: 0, failed: 0, removed: 0 });
+});
+
+test("app release push: the newest Jarvis APK release from GitHub is pushed to every phone once", async () => {
+  const releases = [
+    { tag_name: "jarvis-android-v1.0.35", html_url: "https://gh/35" },
+    { tag_name: "jarvis-android-v1.0.120", html_url: "https://gh/120" },
+    { tag_name: "jarvis-android-v1.0.200", draft: true },
+    { tag_name: "live-reports-2026-10-26" }
+  ];
+  assert.deepEqual(push.newestRelease(releases), { code: 120, name: "1.0.120", url: "https://gh/120" });
+  assert.equal(push.newestRelease([]), null);
+
+  const devices = pushDb();
+  const tok = "p".repeat(40);
+  await push.register(devices, { token: tok, kinds: { alerts: false, briefing: false } }, "owner", 0);
+  let cache = {};
+  const db = {
+    collection: (name) => name === "jarvis_cache" ? { doc: () => "ref" } : devices.collection(name),
+    runTransaction: async (fn) => fn({ get: async () => ({ data: () => cache.row }), set: (ref, row) => { cache.row = row; } })
+  };
+  let calls = 0, auth;
+  const fetchFn = async (url, opts) => { calls++; auth = opts.headers.authorization; return { ok: true, json: async () => releases }; };
+  let seen;
+  const messaging = { sendEachForMulticast: async (msg) => { seen = msg; return { successCount: 1, failureCount: 0, responses: [{ success: true }] }; } };
+  const now = Date.parse("2026-10-26T15:00:00Z");
+
+  assert.deepEqual(await push.releasePush(fetchFn, db, messaging, { token: "t", now }), { pushed: true, version: "1.0.120", sent: 1, failed: 0, removed: 0 });
+  assert.equal(auth, "Bearer t");
+  assert.deepEqual(seen.tokens, [tok]);
+  assert.equal(seen.data.kind, "update");
+  assert.equal(seen.android.ttl, 24 * 3600 * 1000);
+  assert.deepEqual(cache.row, { code: 120, name: "1.0.120", at: "2026-10-26T15:00:00.000Z" });
+  assert.deepEqual(await push.releasePush(fetchFn, db, messaging, { now }), { pushed: false, version: "1.0.120", reason: "Already pushed." });
+  assert.equal(calls, 2);
+  await assert.rejects(push.releasePush(async () => ({ ok: false, status: 403 }), db, messaging, { now }), /answered 403/);
+});
+
+const review = require("../../functions/jarvis-review.js");
+
+test("share-to-review: the shared text becomes a clean URL and a queued owner review", async () => {
+  assert.equal(review.cleanUrl("Look at this https://example.com/pricing?x=1). Nice"), "https://example.com/pricing?x=1");
+  assert.equal(review.cleanUrl("example.org"), "https://example.org/");
+  assert.throws(() => review.cleanUrl("just words"), /web address/);
+  assert.equal(review.cleanLang("pt-BR"), "pt");
+  assert.equal(review.cleanLang("nl"), "en");
+  const added = [];
+  const db = { collection: (name) => ({ add: async (row) => { added.push([name, row]); return { id: "r1" }; } }) };
+  const out = await review.enqueue(db, { url: "https://shop.example.com", lang: "es", token: "tok" }, "owner@example.com", NOW.getTime());
+  assert.deepEqual(out, { id: "r1", url: "https://shop.example.com/", lang: "es", host: "shop.example.com" });
+  assert.equal(added[0][0], "jarvis_reviews");
+  assert.equal(added[0][1].status, "queued");
+  assert.equal(review.intake(added[0][1]).email, "owner@example.com");
+});
+
+test("share-to-review: the done push names the score and the failing checks, and opens the report", () => {
+  const report = { host: "shop.example.com", limits: { pagesRead: 12 }, insights: { score: { overall: 71, grade: "C", totals: { fail: 2, risk: 1, pass: 30 } },
+    findings: [{ verdict: "fail", title: "No HTTPS redirect" }, { verdict: "pass", title: "Has a title" }, { verdict: "risk", title: "Slow LCP" }] } };
+  const m = review.doneMessage(report, "https://carlosandmunoz.com/qa-review.html?report=abc");
+  assert.equal(m.title, "Review done: shop.example.com scored 71 (C)");
+  assert.match(m.body, /^12 pages read: 2 failing, 1 at risk, 30 passing/);
+  assert.deepEqual(m.lines, ["No HTTPS redirect", "Slow LCP"]);
+  assert.equal(m.url, "https://carlosandmunoz.com/qa-review.html?report=abc");
+  assert.equal(review.failedMessage("https://x.example.com/", "Timed out").title, "Review failed: x.example.com");
+});
+
+test("voice: spoken asks answer in the phone's language, plain text for speech", async () => {
+  let prompt = "";
+  const fetchImpl = async (url, init) => { prompt = JSON.parse(init.body).contents[0].parts[0].text; return json({ candidates: [{ content: { parts: [{ text: "Vas bien." }] } }] }); };
+  const out = await jarvis.ask(fetchImpl, { GEMINI_API_KEY: "k" }, "¿Cómo va?", { a: 1 }, { lang: "es-ES", spoken: true });
+  assert.deepEqual(out, { text: "Vas bien.", lang: "es" });
+  assert.match(prompt, /Answer in Spanish\./);
+  assert.match(prompt, /spoken sentences/);
+  await jarvis.ask(fetchImpl, { GEMINI_API_KEY: "k" }, "How is it going?", {});
+  assert.doesNotMatch(prompt, /Answer in [A-Z]/);
+  assert.equal(jarvis.langCode("pt_BR"), "pt");
+  assert.equal(jarvis.langCode("??"), "en");
+});
+
+test("voice: speak strips markdown, uses the language's default voice, and falls back to any male voice", async () => {
+  assert.equal(jarvis.speakable("**Revenue** is up.\n- 3 sales\n# Next: [post](https://x.y)"), "Revenue is up. 3 sales Next: post");
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    if (/metadata/.test(url)) return json({ access_token: "t" });
+    const body = JSON.parse(init.body);
+    calls.push([body.voice, body.audioConfig.speakingRate]);
+    return body.voice.name ? json({ error: { message: "no such voice" } }, 400) : json({ audioContent: "QUJD" });
+  };
+  const out = await jarvis.speak(fetchImpl, "*Hola*", "es");
+  assert.deepEqual(out, { audio: "QUJD", format: "mp3", lang: "es", voice: null, rate: 0.95 });
+  const latam = { languageCode: "es-US", name: "es-US-Chirp3-HD-Algenib" };
+  assert.deepEqual(calls, [[latam, 0.95], [latam, undefined], [{ languageCode: "es-US", ssmlGender: "MALE" }, undefined]]);
+  await assert.rejects(jarvis.speak(fetchImpl, "  ", "en"), /Nothing to say/);
+});
+
+test("voice: a picked voice is used only for its own language, and the speed is clamped (#1674)", async () => {
+  assert.deepEqual(jarvis.voiceFor("en"), { languageCode: "en-GB", name: "en-GB-Chirp3-HD-Orus" });
+  assert.deepEqual(jarvis.voiceFor("en", "en-US-Chirp3-HD-Charon"), { languageCode: "en-US", name: "en-US-Chirp3-HD-Charon" });
+  assert.deepEqual(jarvis.voiceFor("es", "en-US-Chirp3-HD-Charon"), { languageCode: "es-US", name: "es-US-Chirp3-HD-Algenib" });
+  assert.deepEqual(jarvis.voiceFor("de", "made-up"), { languageCode: "de-DE", name: "de-DE-Chirp3-HD-Charon" });
+  assert.equal(jarvis.voiceRate(3), 1.25);
+  assert.equal(jarvis.voiceRate(0.5), 0.75);
+  assert.equal(jarvis.voiceRate("x"), 0.95);
+  let sent;
+  const fetchImpl = async (url, init) => (/metadata/.test(url) ? json({ access_token: "t" }) : (sent = JSON.parse(init.body), json({ audioContent: "QUJD" })));
+  const out = await jarvis.speak(fetchImpl, "Hello", "en-GB", { voice: "en-US-Chirp3-HD-Charon", rate: 1.1 });
+  assert.equal(sent.voice.name, "en-US-Chirp3-HD-Charon");
+  assert.equal(sent.audioConfig.speakingRate, 1.1);
+  assert.equal(out.voice, "en-US-Chirp3-HD-Charon");
+});
+
+test("voice: the web offers the server's voices, and saved choices are made safe (#1674)", () => {
+  assert.deepEqual(core.VOICES, jarvis.VOICES);
+  assert.deepEqual(core.VOICE_RATE.default, 0.95);
+  assert.deepEqual(core.voicePrefs({}, "es-CO"), { lang: null, speak: "es", en: "en-GB-Chirp3-HD-Orus", es: "es-US-Chirp3-HD-Algenib", rate: 0.95 });
+  const p = core.voicePrefs({ lang: "en", en: "en-US-Chirp3-HD-Charon", es: "en-GB-Chirp3-HD-Orus", rate: 9 }, "es-CO");
+  assert.equal(p.speak, "en");
+  assert.equal(p.en, "en-US-Chirp3-HD-Charon");
+  assert.equal(p.es, "es-US-Chirp3-HD-Algenib");
+  assert.equal(p.rate, 1.25);
+  assert.equal(core.voicePrefs({ lang: "fr" }, "pt-BR").speak, "pt");
+});
+
+const notify = require("../../functions/jarvis-notify.js");
+
+test("a live payment pushes amount, what and who; test and free ones stay quiet", () => {
+  const note = { name: "Ana", email: "ana@shop.com", url: "https://www.shop.com/" };
+  const msg = notify.paymentMessage("paid", { id: "r1", priceUsd: 19, via: "webhook" }, note);
+  assert.equal(msg.kind, "money");
+  assert.equal(msg.title, "$19 · Report paid · shop.com");
+  assert.equal(msg.body, "Ana · ana@shop.com");
+  assert.equal(msg.tab, "business");
+  assert.equal(notify.paymentMessage("run-paid", { priceUsd: 4.5, competitors: 3 }, {}).lines[1], "3 competitor runs");
+  assert.equal(notify.paymentMessage("paid", { priceUsd: 19, test: true }, note), null);
+  assert.equal(notify.paymentMessage("paid", { priceUsd: 0 }, note), null);
+  assert.equal(notify.paymentMessage("report", { priceUsd: 19 }, note), null);
+});
+
+test("only customer reviews push, with who, plan and the score", () => {
+  const report = { host: "shop.com", limits: { pagesRead: 12 }, insights: { score: { overall: 81, grade: "B", totals: { fail: 2, risk: 3, pass: 30 } }, findings: [{ verdict: "fail", title: "No HTTPS redirect" }] } };
+  const msg = notify.reviewMessage("report", { id: "x", report, name: "Ana", free: true });
+  assert.equal(msg.kind, "reviews");
+  assert.equal(msg.title, "New review: shop.com scored 81 (B)");
+  assert.equal(msg.body, "Ana · free. 12 pages read: 2 failing, 3 at risk, 30 passing.");
+  assert.deepEqual(msg.lines, ["No HTTPS redirect"]);
+  assert.match(notify.reviewMessage("stopped", { report, passId: "p" }).title, /^Review stopped early/);
+  for (const row of [{ report, source: "sweep" }, { report, source: "jarvis" }, { report, test: true }]) assert.equal(notify.reviewMessage("report", row), null);
+  assert.equal(notify.reviewMessage("failed", { report }), null);
+});
+
+test("outreach notices push what is new, at most once an hour", () => {
+  const now = Date.parse("2026-10-25T15:00:00Z");
+  const pending = [
+    { status: "pending", host: "a.com", email: "x@a.com", createdAt: "2026-10-25T14:30:00Z", critical: true },
+    { status: "pending", host: "b.com", email: "y@b.com", createdAt: "2026-10-25T12:00:00Z" }
+  ];
+  assert.equal(notify.noticesDue(pending, "", now).length, 2);
+  assert.deepEqual(notify.noticesDue(pending, "2026-10-25T13:00:00Z", now).map((n) => n.host), ["a.com"]);
+  assert.deepEqual(notify.noticesDue(pending, "2026-10-25T14:10:00Z", now), []);
+  const msg = notify.noticesMessage([pending[0]], 2);
+  assert.equal(msg.title, "2 outreach notices waiting for you");
+  assert.equal(msg.body, "1 new: a.com. 1 critical security finding. Send or drop each one.");
+  assert.deepEqual(msg.lines, ["a.com → x@a.com · critical"]);
+});
+
+test("phones keep the new push kinds on unless turned off", () => {
+  assert.deepEqual(push.cleanKinds({ money: false }), { alerts: true, briefing: true, money: false, reviews: true, outreach: true, inbox: true, desk: true, social: true, codes: true, engagement: true });
+});
+
+test("the approvals list shows pending notices newest first, with the review link", () => {
+  const rows = notify.noticeRows([
+    { domain: "a.com", status: "pending", host: "a.com", email: "x@a.com", candidates: [{ email: "x@a.com", sources: ["footer"], onDomain: true, extra: 1 }], reviewId: "r1", lang: "es", createdAt: "2026-10-25T10:00:00Z" },
+    { domain: "b.com", status: "sent", createdAt: "2026-10-25T12:00:00Z" },
+    { domain: "c.com", status: "pending", createdAt: "2026-10-25T11:00:00Z", lastError: "Not public yet." }
+  ], (n) => "https://site/" + n.lang + "?report=" + n.reviewId);
+  assert.deepEqual(rows.map((r) => r.domain), ["c.com", "a.com"]);
+  assert.deepEqual(rows[1].candidates, [{ email: "x@a.com", sources: ["footer"], url: "", onDomain: true, stopped: false }]);
+  assert.equal(rows[1].report, "https://site/es?report=r1");
+  assert.equal(rows[0].report, "");
+  assert.equal(rows[0].host, "c.com");
+  assert.equal(rows[0].lastError, "Not public yet.");
+});
+
+test("the approvals list puts ready notices first and those without a Live Report last, with their badges", () => {
+  const index = { reports: [{ id: "u-a", host: "a.com" }, { id: "u-d", host: "d.com" }] };
+  const rows = notify.noticeRows([
+    { domain: "a.com", status: "pending", host: "a.com", email: "x@a.com", candidates: [{ email: "x@a.com" }, { email: "y@a.com" }], createdAt: "2026-10-25T09:00:00Z" },
+    { domain: "b.com", status: "pending", host: "b.com", email: "x@b.com", createdAt: "2026-10-25T12:00:00Z", tries: 2, lastError: "Not public yet." },
+    { domain: "c.com", status: "pending", host: "c.com", email: "x@c.com", createdAt: "2026-10-25T11:00:00Z" },
+    { domain: "d.com", status: "pending", host: "d.com", email: "x@d.com", createdAt: "2026-10-25T10:00:00Z" }
+  ], null, { index, unlisted: ["c.com"], stopped: new Set(["y@a.com"]) });
+  assert.deepEqual(rows.map((r) => r.domain + ":" + r.state), ["d.com:ready", "a.com:ready", "c.com:unlisted", "b.com:waiting"]);
+  assert.deepEqual(rows[1].candidates.map((c) => c.email + (c.stopped ? " stopped" : "")), ["x@a.com", "y@a.com stopped"]);
+  assert.equal(rows[3].tries, 2);
+});
+
+const social = require("../../functions/jarvis-social.js");
+
+test("server: the social hub rules in functions are a byte copy of the hub page's", () => {
+  assert.equal(fs.readFileSync(path.join(__dirname, "../../js/social-hub-admin.js"), "utf8"), fs.readFileSync(path.join(__dirname, "../../functions/social-hub-admin.js"), "utf8"));
+});
+
+test("social: each channel shows what is next, what went out last and what failed", () => {
+  const now = Date.parse("2026-10-25T15:00:00Z");
+  const buffer = { posts: {
+    "b/one": [{ channel: "linkedin", at: "2026-10-26T15:00:00Z", result: "queued" }, { channel: "x", at: "2026-10-24T15:00:00Z", result: "sent", url: "https://x.com/1" }],
+    "b/two": [{ channel: "linkedin", at: "2026-10-25T18:00:00Z", result: "queued" }, { channel: "x", at: "2026-10-23T15:00:00Z", result: "failed" }, { channel: "nope", at: "2026-10-26T15:00:00Z" }]
+  } };
+  const open = { posts: { "b/one": [{ channel: "bluesky", at: "2026-10-24T15:01:00Z", result: "sent", url: "https://bsky.app/profile/q/post/1" }, { channel: "mastodon", at: "2026-10-24T15:02:00Z", result: "failed" }] } };
+  const rows = social.byChannel([buffer, null, open], now, now - 7 * 86400000);
+  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "bluesky", "mastodon", "threads", "instagram", "instagram-story", "facebook", "youtube", "tiktok"]);
+  assert.deepEqual(rows[0].next.map((n) => n.post), ["b/two", "b/one"]);
+  assert.equal(rows[0].scheduled, 2);
+  assert.deepEqual([rows[1].sent, rows[1].failed, rows[1].last.url], [1, 1, "https://x.com/1"]);
+  assert.deepEqual([rows[2].sent, rows[2].last.url, rows[3].failed], [1, "https://bsky.app/profile/q/post/1", 1]);
+});
+
+test("social: Jarvis can start the Bluesky and Mastodon poster with the Buffer and Page ones", () => {
+  assert.deepEqual(social.WORKFLOWS.map((w) => w.file), ["buffer-batch.yml", "facebook-page.yml", "open-social.yml"]);
+  social.WORKFLOWS.forEach((w) => assert.ok(fs.existsSync(path.join(__dirname, "../../.github/workflows", w.file)), w.file));
+});
+
+test("social: approving a proposal adds the hub item and the decision; dismissing only records it", () => {
+  const p = { id: "abcdef123456", title: "Playwright 2.0 ships", url: "https://blog.example/pw2", source: "Example", author: "Ana", date: "2026-10-20", topic: "testing", lang: "en", summary: "Big release.", score: 9 };
+  const other = { id: "bbbbbb123456", title: "Older", url: "https://blog.example/old", score: 3 };
+  const live = social.state({ json: JSON.stringify({ version: 1, edits: {}, items: [] }) });
+  assert.deepEqual(social.pending([other, p], live).map((x) => x.id), [p.id, other.id]);
+  const next = social.decide(live, p, "approved", "2026-10-25");
+  assert.equal(next.decisions[p.id], "approved");
+  assert.equal(next.items.length, 1);
+  assert.equal(next.items[0].id, "pick/playwright-2-0-ships");
+  assert.equal(next.items[0].url, p.url);
+  assert.deepEqual(social.pending([other, p], next).map((x) => x.id), [other.id]);
+  const dropped = social.decide(next, other, "dismissed", "2026-10-25");
+  assert.equal(dropped.items.length, 1);
+  assert.equal(dropped.decisions[other.id], "dismissed");
+  assert.throws(() => social.decide(live, { id: "bad" }, "approved", "2026-10-25"), /no longer/);
+  assert.throws(() => social.decide(live, p, "maybe", "2026-10-25"), /approved or dismissed/);
+  assert.equal(social.state({ json: "{not json" }).items.length, 0);
+});
+
+test("rerunCi re-runs the failed jobs of the newest failed run on main, and says when the token cannot (#1695)", async () => {
+  const calls = [];
+  const runs = { workflow_runs: [{ id: 9, name: "Buffer batch queue", conclusion: "failure", html_url: "https://github.com/r/9" }, { id: 7, name: "Deploy", conclusion: "success", html_url: "https://github.com/r/7" }] };
+  const fetchOk = async (url, opts) => { calls.push([url, (opts || {}).method || "GET"]); return /rerun-failed-jobs/.test(url) ? json({}, 201) : json(runs); };
+  const out = await jarvis.rerunCi(fetchOk, "t", "Buffer batch queue");
+  assert.equal(out.run, 9);
+  assert.match(calls[1][0], /actions\/runs\/9\/rerun-failed-jobs$/);
+  assert.equal(calls[1][1], "POST");
+  assert.equal((await jarvis.rerunCi(fetchOk, "t", "Deploy")).already, "success");
+  await assert.rejects(() => jarvis.rerunCi(fetchOk, "t", "Nope"), /No finished run/);
+  const fetchNo = async (url) => (/rerun-failed-jobs/.test(url) ? json({ message: "Resource not accessible" }, 403) : json(runs));
+  await assert.rejects(() => jarvis.rerunCi(fetchNo, "t", "Buffer batch queue"), /Actions: write/);
+  await assert.rejects(() => jarvis.rerunCi(fetchOk, "", "Deploy"), /No GitHub token/);
+});
+
+test("decideRatings approves or rejects pending ratings only, and briefItems lists them without test senders", async () => {
+  const store = { r1: { status: "pending", name: "Ana", email: "ana@real.co", rating: 5, comment: "Great", createdAt: daysAgo(1) }, r2: { status: "approved", email: "b@real.co" }, r3: { status: "pending", email: "qa@example.com", rating: 1, createdAt: daysAgo(2) } };
+  const db = { collection: () => ({
+    doc: (id) => ({ get: async () => ({ exists: !!store[id], data: () => store[id] }), update: async (change) => { Object.assign(store[id], change); } }),
+    where: () => ({ limit: () => ({ get: async () => ({ docs: Object.keys(store).filter((id) => store[id].status === "pending").map((id) => ({ id, data: () => store[id] })) }) }) })
+  }) };
+  const listed = await jarvis.briefItems(db, { list: "ratings", days: 7, now: NOW.getTime() });
+  assert.deepEqual(listed.rows.map((r) => r.id), ["r1"]);
+  assert.equal(listed.rows[0].text, "Great");
+  const out = await jarvis.decideRatings(db, { ids: ["r1", "r2", "../bad"], decision: "approved-anon" });
+  assert.deepEqual([out.done, out.skipped], [1, 1]);
+  assert.deepEqual([store.r1.status, store.r1.isAnonymous], ["approved", true]);
+  assert.equal(store.r2.isAnonymous, undefined, "an approved rating is left alone");
+  await assert.rejects(() => jarvis.decideRatings(db, { ids: ["r3"], decision: "maybe" }), /Approve or reject/);
+});
+
+const marketingSrc = require("../../functions/jarvis-marketing.js");
+
+test("marketing (#1722): campaigns read their week, sequence, language, region, window and the first send day", () => {
+  assert.deepEqual(marketingSrc.parseName("W1 E-pt Brazil"), { week: "W1", sequence: "E", lang: "pt", region: "Brazil" });
+  assert.deepEqual(marketingSrc.parseName("Newsletter"), { week: "", sequence: "", lang: "", region: "" });
+  assert.equal(marketingSrc.windowOf({ schedules: [{ timing: { from: "08:00", to: "10:30" }, days: { 0: false, 2: true, 3: true, 4: true }, timezone: "America/Bogota" }] }), "Tue-Thu 08:00-10:30 America/Bogota");
+  assert.equal(marketingSrc.windowOf({ schedules: [{ days: { 1: true, 3: true } }] }), "Mon, Wed");
+  const sched = (start) => ({ start_date: start, schedules: [] });
+  const out = marketingSrc.campaignRows([
+    { id: "a", name: "W1 B-es Americas", status: 0, campaign_schedule: sched("2026-11-10"), sequences: [{ steps: [1, 2, 3] }] },
+    { id: "b", name: "W1 E-pt Brazil", status: 1, campaign_schedule: sched("2026-11-03") },
+    { id: "c", name: "W0 A-en UK", status: 3, campaign_schedule: sched("2026-10-01") }
+  ], [{ campaign_id: "b", leads_count: 5, emails_sent_count: 9, reply_count_unique: 2 }], NOW.getTime());
+  assert.equal(out.firstStart, "2026-11-03");
+  assert.equal(out.leads, 5);
+  assert.equal(out.steps, 3);
+  assert.deepEqual(out.rows.find((r) => r.id === "b") && [out.rows.find((r) => r.id === "b").status, out.rows.find((r) => r.id === "b").sent, out.rows.find((r) => r.id === "b").replies], ["active", 9, 2]);
+  assert.deepEqual(out.byLang.map((r) => r.label).sort(), ["en", "es", "pt"]);
+  assert.deepEqual(out.byStatus.find((r) => r.label === "completed"), { label: "completed", value: 1 });
+});
+
+// Instantly answers leads/list a page at a time and campaigns/analytics only for campaigns with activity.
+function instantlyFake(campaigns, leads, acted) {
+  return async (url, init) => {
+    const path = url.replace("https://api.instantly.ai/api/v2/", "");
+    let body = {};
+    if (path === "campaigns?limit=100") body = { items: campaigns };
+    else if (path === "campaigns/analytics") body = [];
+    else if (path === "leads/list") {
+      const after = JSON.parse(init.body).starting_after;
+      const from = after ? Number(after) : 0;
+      body = { items: leads.slice(from, from + 100), next_starting_after: from + 100 < leads.length ? String(from + 100) : undefined };
+    } else if (/\/activate$/.test(path)) {
+      const id = path.split("/")[1];
+      acted.push(id);
+      campaigns.find((c) => c.id === id).status = 1;
+    } else if (/^campaigns\/[^/]+$/.test(path)) body = campaigns.find((c) => c.id === path.split("/")[1]);
+    return { ok: true, json: async () => body };
+  };
+}
+
+test("marketing (#2475): leads come from the leads list, and Jarvis launches only drafts with leads, steps, a mailbox and a start within a week", async () => {
+  const id = (n) => n + "0000000-0000-4000-8000-000000000000";
+  const camp = (n, name, status, start, extra) => Object.assign({ id: id(n), name, status, campaign_schedule: { start_date: start, schedules: [] }, sequences: [{ steps: [1, 2, 3] }], email_list: ["carlos@qalabreview.com"] }, extra || {});
+  const campaigns = [
+    camp(1, "W1 F-es Americas", 0, "2026-11-01"),
+    camp(2, "W1 D-en Europe", 0, "2026-11-01"),
+    camp(3, "W1 A-en US", 1, "2026-11-01"),
+    camp(4, "W2 A-en US", 0, "2026-11-20"),
+    camp(5, "W1 F-en US", 0, "2026-11-01", { email_list: [] }),
+    camp(6, "W1 E-en US", 0, "2026-11-01", { sequences: [] })
+  ];
+  const leads = [];
+  for (let i = 0; i < 150; i++) leads.push({ campaign: id(1) });
+  [3, 4, 5, 6].forEach((n) => leads.push({ campaign: id(n) }));
+  const acted = [];
+  const ctx = { fetch: instantlyFake(campaigns, leads, acted), env: { INSTANTLY_API_KEY: "k" }, now: NOW.getTime() };
+  const counts = await marketingSrc.leadCounts(ctx);
+  assert.equal(counts[id(1)], 150, "every page is counted");
+  const rows = marketingSrc.campaignRows(campaigns, [], ctx.now, counts).rows;
+  assert.deepEqual(rows.map((r) => [r.name, r.leads]).filter((r) => r[1]), [["W1 A-en US", 1], ["W1 E-en US", 1], ["W1 F-en US", 1], ["W1 F-es Americas", 150], ["W2 A-en US", 1]]);
+  assert.deepEqual((await marketingSrc.launchReady(ctx)).map((r) => [r.name, r.leads]), [["W1 F-es Americas", 150]]);
+  const res = await marketingSrc.launch(ctx, [id(1), id(2), id(3)]);
+  assert.deepEqual(acted, [id(1)]);
+  assert.deepEqual(res.launched, ["W1 F-es Americas"]);
+  assert.deepEqual(res.left, ["W1 D-en Europe: no longer ready (0 leads, 3 steps, start 2026-11-01)", "W1 A-en US: already active"]);
+});
+
+test("marketing (#1722): follow-up notes count sent and stopped per day, and prospects split by country and segment", () => {
+  const notes = marketingSrc.noteRows([
+    { status: "follow-note", email: "A@x.com", kind: "return", scene: "free", createdAt: daysAgo(1).toISOString() },
+    { status: "follow-note", email: "a@x.com", kind: "return", scene: "paid", createdAt: daysAgo(2).toISOString() },
+    { status: "follow-stop", email: "b@x.com", createdAt: daysAgo(1).toISOString() },
+    { status: "follow-note", email: "c@x.com", kind: "old", createdAt: daysAgo(40).toISOString() }
+  ], { now: NOW.getTime(), days: 7 });
+  assert.deepEqual([notes.sent, notes.stopped, notes.people], [2, 1, 1]);
+  assert.equal(notes.daily.reduce((n, d) => n + d.sent, 0), 2);
+  assert.deepEqual(notes.byKind, [{ label: "return", value: 2 }]);
+  const pros = marketingSrc.prospectRows({ hosts: [{ host: "a.co", cc: "co", sector: "university" }, { host: "b.co", cc: "co", sector: "tvet" }, { host: "c.mx", cc: "mx" }] });
+  assert.deepEqual(pros.byCountry, [{ label: "CO", value: 2 }, { label: "MX", value: 1 }]);
+  assert.equal(pros.bySegment.find((r) => r.label === "other").value, 1);
+});
+
+test("marketing (#1722): pause or activate checks the id and action, and block takes only an email or a domain", async () => {
+  const calls = [];
+  const ctx = { env: { INSTANTLY_API_KEY: "k" }, now: NOW.getTime(), fetch: async (url, init) => { calls.push([init.method || "GET", url.replace("https://api.instantly.ai/api/v2/", ""), init.body]); return json(/\/campaigns\/[^/]+$/.test(url) ? { name: "W1 B-es Americas", status: 1 } : {}); } };
+  const id = "11111111-2222-3333-4444-555555555555";
+  assert.deepEqual(await marketingSrc.campaignAct(ctx, { id, action: "activate" }), { id, name: "W1 B-es Americas", status: "active" });
+  assert.deepEqual(calls.map((c) => c.slice(0, 2)), [["POST", "campaigns/" + id + "/activate"], ["GET", "campaigns/" + id]]);
+  await assert.rejects(marketingSrc.campaignAct(ctx, { id: "../accounts", action: "pause" }), /campaign id/);
+  await assert.rejects(marketingSrc.campaignAct(ctx, { id, action: "delete" }), /Pause or activate/);
+  await assert.rejects(marketingSrc.campaignAct({ env: {} }, { id, action: "pause" }), /INSTANTLY_API_KEY/);
+  assert.deepEqual(await marketingSrc.block(ctx, { value: " No@Example.edu " }), { blocked: "no@example.edu" });
+  assert.equal(JSON.parse(calls[calls.length - 1][2]).bl_value, "no@example.edu");
+  await assert.rejects(marketingSrc.block(ctx, { value: "not an address" }), /email address or a domain/);
+});
+
+test("marketing (#1722): queued prospects append once, take the form's country and segment, and skip what the sweep refuses", async () => {
+  const parsed = marketingSrc.prospectLines("https://www.Uni.edu.co/admisiones, co, University\nshop.example.mx\ncasino.example.com, co\nlocalhost", { cc: "mx", sector: "startup" });
+  assert.deepEqual(parsed.hosts, [{ host: "www.uni.edu.co", cc: "co", sector: "university" }, { host: "shop.example.mx", cc: "mx", sector: "startup" }]);
+  assert.deepEqual(parsed.skipped.map((s) => s.why), ["blocked", "no host"]);
+  const docs = { "url_review_sweep/outreach": { hosts: [{ host: "uni.edu.co", cc: "co", sector: "university" }] } };
+  const db = { collection: (name) => ({ doc: (id) => ({ path: name + "/" + id }) }), runTransaction: async (fn) => fn({ get: async (ref) => ({ data: () => docs[ref.path] }), set: (ref, value) => { docs[ref.path] = value; } }) };
+  const out = await marketingSrc.queueProspects(db, { hosts: "uni.edu.co, co\nnew.edu.co", cc: "co", sector: "tvet" }, NOW.getTime());
+  assert.deepEqual([out.added, out.already], [1, 1]);
+  assert.deepEqual(docs["url_review_sweep/outreach"].hosts.map((h) => h.host), ["uni.edu.co", "new.edu.co"]);
+  await assert.rejects(marketingSrc.queueProspects(db, { hosts: "nothing here" }, NOW.getTime()), /Nothing to add/);
+});
+
+test("the LinkedIn Send button copies the note line of the day's list (#2479)", () => {
+  assert.equal(core.linkedinLine({ lines: ["Profile: [https://www.linkedin.com/in/ana](https://www.linkedin.com/in/ana)", "Note: Hola Ana, vi el sitio de la UPB."] }, "Note"), "Hola Ana, vi el sitio de la UPB.");
+  assert.equal(core.linkedinLine({ lines: ["note:   Hi Leo"] }, "Note"), "Hi Leo");
+  assert.equal(core.linkedinLine({ lines: ["Profile: https://www.linkedin.com/in/leo"] }, "Note"), "");
+  assert.equal(core.linkedinLine({}, "Note"), "");
+  assert.equal(core.linkedinLine(null, "Note"), "");
+  assert.equal(core.linkedinLine({ lines: ["Check first: confirm the role.", "Note: Hi"] }, "Check first"), "confirm the role.");
 });

@@ -34,7 +34,7 @@ const STUBS = {
     export async function deleteDoc() {}
     export async function addDoc() { return { id: 'new' }; }
     export function serverTimestamp() { return { serverTimestamp: true }; }`,
-  'firebase-storage.js': 'export function getStorage() { return {}; } export function ref() { return {}; } export async function uploadString() {} export async function getDownloadURL() { return ""; }'
+  'firebase-storage.js': 'export function getStorage() { return {}; } export function ref() { return {}; } export async function uploadString() {} export async function uploadBytes() {} export async function getDownloadURL() { return ""; }'
 };
 
 const FEED = {
@@ -82,6 +82,7 @@ async function openHub(page, saved) {
   await page.route('**/assets/social/captions.json', (route) => route.fulfill({ json: CAPTIONS }));
   await page.route('**/assets/social/edits.json', (route) => route.fulfill({ status: 404, body: '' }));
   await page.route('**/assets/social/proposals.json', (route) => route.fulfill({ json: PROPOSALS }));
+  await page.route('**/assets/social/sweep-roundups.json', (route) => route.fulfill({ status: 404, body: '' }));
   for (const [name, json] of Object.entries(LEDGERS)) {
     await page.route(`**/assets/social/${name}.json`, (route) => (json ? route.fulfill({ json }) : route.fulfill({ status: 404, body: '' })));
   }

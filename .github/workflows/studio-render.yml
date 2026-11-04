@@ -1,0 +1,149 @@
+# .github/workflows/studio-render.yml
+# Clip and skit renders without a Cursor chat (#1981). scripts/studio-render.js plans, renders, checks every clip is
+# heard, uploads the clips to a release, and opens a studio/ PR with review links on the ticket; merging that PR makes
+# the clips live and queues the batch in Buffer. A render that fails opens a bug under its ticket with the pre-flight plan.
+# Started by gh workflow run studio-render.yml -f kind=tips -f name=<source> ..., by the Render action in Jarvis
+# (op studio-render), by the owner's "/render tips <source> --start YYYY-MM-DD" comment on an issue, or by a merge that
+# adds a tips-studio source or a skit. Skit takes come from the skit-takes release as <skit>-<lang>.mp4.
+# Secrets: LIVE_REPORTS_DEPLOY_KEY pushes the studio/ branch (a deploy-key push starts its checks), PREFLIGHT_TOKEN.
+name: Studio render
+run-name: Studio ${{ inputs.kind || github.event_name }} ${{ inputs.name || '' }} ${{ inputs.mode || '' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: 'tips (a scripts/tips-studio source) or skit (scripts/skits-studio/skits.js)'
+        type: choice
+        options: [tips, skit]
+        default: tips
+      name:
+        description: 'Source or skit id, e.g. evergreen or friday-release'
+        required: true
+      mode:
+        description: 'render the batch, rotate (re-voice queued clips for review), or captions (rewrite captions only)'
+        type: choice
+        options: [render, rotate, captions]
+        default: render
+      batch:
+        description: 'Batch folder under media/social-posts (default: the source or skit default)'
+        required: false
+      start:
+        description: 'First day, YYYY-MM-DD (default: the batch first day, or tomorrow)'
+        required: false
+      tips:
+        description: 'tips only: post ids, comma-separated'
+        required: false
+      langs:
+        description: 'skit only: languages, e.g. en,es'
+        required: false
+      networks:
+        description: 'captions only: networks to rewrite (default linkedin,x,facebook,instagram)'
+        required: false
+      ticket:
+        description: 'Issue that gets the review links'
+        required: false
+  issue_comment:
+    types: [created]
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/tips-studio/*.js'
+      - 'scripts/skits-studio/skits.js'
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+concurrency:
+  group: studio-render-${{ github.event_name == 'pull_request' && 'publish' || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: >-
+      (github.event_name == 'workflow_dispatch' || github.event_name == 'push') ||
+      (github.event_name == 'issue_comment' && github.event.comment.user.login == 'kaanmuar' && startsWith(github.event.comment.body, '/render'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    outputs:
+      jobs: ${{ steps.plan.outputs.jobs }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - id: plan
+        run: node scripts/studio-render.js plan
+
+  render:
+    needs: plan
+    if: needs.plan.outputs.jobs != '[]' && needs.plan.outputs.jobs != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        job: ${{ fromJSON(needs.plan.outputs.jobs) }}
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      JOB: ${{ toJSON(matrix.job) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Install the renderer
+        # sharp writes the social hub thumbnails, as in auto-live-reports.yml.
+        run: |
+          locked() { node -p "require('./package-lock.json').packages['node_modules/$1'].version"; }
+          npm install --no-save --ignore-scripts playwright@"$(locked playwright)" sharp@"$(locked sharp)"
+          npx playwright install --with-deps chromium
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install -q edge-tts
+          echo "EDGE_TTS=$(command -v edge-tts)" >> "$GITHUB_ENV"
+          gh release download studio-assets -p bed.wav -D media/url-review-demos
+      - name: Render
+        run: node scripts/studio-render.js render "$JOB"
+      - name: Deliver for review
+        run: node scripts/studio-render.js deliver "$JOB"
+      - name: Log the failure as a bug
+        if: failure()
+        env:
+          PREFLIGHT_TOKEN: ${{ secrets.PREFLIGHT_TOKEN }}
+        run: node scripts/studio-render.js failed "$JOB"
+
+  publish:
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged && startsWith(github.event.pull_request.head.ref, 'studio/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write
+      issues: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - run: node scripts/studio-render.js publish

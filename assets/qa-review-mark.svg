@@ -1,13 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="QA-lab URL Review">
-  <rect width="64" height="64" rx="16" fill="#102226"/>
-  <rect x="1.5" y="1.5" width="61" height="61" rx="14.5" fill="none" stroke="#4db3bb" stroke-width="1.6"/>
-  <path d="M32 11 L15 45 L32 38 Z" fill="#4db3bb" fill-opacity=".28" stroke="#7ef6fb" stroke-width="1.35" stroke-linejoin="round"/>
-  <path d="M32 11 L49 45 L32 38 Z" fill="#e2c48a" fill-opacity=".42" stroke="#e2c48a" stroke-width="1.35" stroke-linejoin="round"/>
-  <path d="M15 45 L49 45 L32 53 Z" fill="#4db3bb" fill-opacity=".16" stroke="#7ef6fb" stroke-width="1.2" stroke-linejoin="round"/>
-  <path d="M32 11 L32 53" fill="none" stroke="#e9fdff" stroke-width="1.15" stroke-linecap="round"/>
-  <g fill="#e9fdff">
-    <circle cx="18" cy="49" r="1.35"/>
-    <circle cx="46" cy="49" r="1.15"/>
-  </g>
-  <circle cx="40" cy="28" r="1.5" fill="#fff6e4"/>
+	<defs>
+		<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#132c31"/><stop offset="1" stop-color="#071116"/></linearGradient>
+		<radialGradient id="glow" cx="14" cy="10" r="40" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4db3bb" stop-opacity=".5"/><stop offset="1" stop-color="#4db3bb" stop-opacity="0"/></radialGradient>
+		<clipPath id="tile"><rect width="64" height="64" rx="15"/></clipPath>
+	</defs>
+	<g clip-path="url(#tile)">
+		<rect width="64" height="64" fill="url(#bg)"/>
+		<rect width="64" height="64" fill="url(#glow)"/>
+		<path d="M0 29 L21 31 L21 32.6 L0 31.6 Z" fill="#e9fdff" fill-opacity=".85"/>
+		<path d="M42 33 L64 29 L64 36 Z" fill="#4db3bb"/>
+		<path d="M42 33 L64 36 L64 43 Z" fill="#6fe3b1"/>
+		<path d="M42 33 L64 43 L64 50 Z" fill="#e2c48a"/>
+		<path d="M30 10 L14 42 L30 50 Z" fill="#4db3bb" fill-opacity=".6"/>
+		<path d="M30 10 L30 50 L46 42 Z" fill="#e2c48a" fill-opacity=".62"/>
+		<path d="M30 10 L14 42 L30 50 L46 42 Z" fill="none" stroke="#7ef6fb" stroke-width="2" stroke-linejoin="round"/>
+		<path d="M30 10 L30 50" stroke="#e9fdff" stroke-width="1.8" stroke-linecap="round"/>
+		<circle cx="30" cy="10" r="2.4" fill="#ffffff"/>
+	</g>
+	<rect x="1" y="1" width="62" height="62" rx="14" fill="none" stroke="#4db3bb" stroke-width="1.6"/>
 </svg>

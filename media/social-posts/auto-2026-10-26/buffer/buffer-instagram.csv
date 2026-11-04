@@ -1,0 +1,145 @@
+Text,Image URL,Tags,Posting Time
+"hubspot.com: 55. The gap: text contrast.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+Lesson: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 25 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #QA #Contrast #A11y #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/01-u-hubspot-com.jpg","","2026-10-27 15:45"
+"thekeyinmobiliaria.com: 51. The gap: HSTS.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+Lesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 25 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #QA #HSTS #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/02-u-thekeyinmobiliaria-com.jpg","","2026-10-28 12:45"
+"millanenlinea.com: 49. The gap: form labels.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 2526 form controls have no label.
+
+Lesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 25 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #QA #Forms #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/03-u-millanenlinea-com.jpg","","2026-10-29 14:35"
+"cng.edu: 52. The gap: ARIA roles.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But certain ARIA roles must be contained by particular parents.
+
+Lesson: Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.
+
+One automated analysis of public pages on 25 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #QA #ARIA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/04-u-cng-edu.jpg","","2026-10-30 12:05"
+"montesofia.com: 45. The gap: framing.
+
+Every external link that was checked answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+Lesson: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 25 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #QA #Clickjacking #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/05-u-montesofia-com.jpg","","2026-10-31 15:10"
+"montessori.edu.co: 67. The gap: alt text.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 177 images have no alt attribute.
+
+Lesson: Describe what each image shows in its alt attribute, and use alt="""" on purely decorative ones.
+
+One automated analysis of public pages on 25 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #CSS #QA #A11y #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/06-u-montessori-edu-co.jpg","","2026-11-01 12:10"
+"cgb.edu.co: 55. The gap: framing.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+Lesson: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 25 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #QA #Clickjacking #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/07-u-cgb-edu-co.jpg","","2026-11-02 13:55"
+"movichhotels.com: 68. The gap: measurement.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But tracking starts before the visitor chooses.
+
+Lesson: Hold every tag until consent, or set Google Consent Mode v2 defaults to denied before any tag loads. Block third-party embeds until the visitor agrees.
+
+One automated analysis of public pages on 26 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Analytics #CSS #QA #WebDev #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/08-u-movichhotels-com.jpg","","2026-11-03 11:55"
+"Scored 31 of 100. The gap: form labels.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 1987 form controls have no label.
+
+Lesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 26 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #QA #Forms #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/09-u-hotelestequendama-com-co.jpg","","2026-11-04 11:20"
+"zizonline.com: 70. The gap: HSTS.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+Lesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 26 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #QA #HSTS #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/10-u-zizonline-com.jpg","","2026-11-05 11:45"
+"tamiltvserial.com: 81. The gap: button names.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.
+
+Lesson: Give every button text or an aria-label, so a screen reader can announce it.
+
+One automated analysis of public pages on 26 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Programming #QA #A11y #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/11-u-tamiltvserial-com.jpg","","2026-11-06 17:30"
+"taknai.com vs sawstory.com. A tie at the top: 73.
+
+taknai.com leads in SEO, GEO, Analytics, Security; sawstory.com leads in Accessibility, Performance.
+
+Lesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 26 Oct 2026 of taknai.com, sawstory.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #WebPerformance #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/12-vs-taknai-com.jpg","","2026-11-07 15:55"

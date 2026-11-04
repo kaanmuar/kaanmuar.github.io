@@ -4,9 +4,11 @@
 #   scripts/regen-generated.sh --push   # in the Regenerate workflow: rebuild on the tip of main, commit, push
 # Two PRs that each passed CI can together leave generated pages stale on main (#968), so the workflow runs this on
 # every push to main. A builder runs only when its check fails, so dates such as the social hub's as-of day do not churn.
-# Order matters: build-llms-full.py also writes the review language pages, and they copy the head build-critical-css.js
-# writes into qa-review.html. A builder not on this branch yet is skipped.
+# Order matters: build-critical-css.js inlines style.css into the pages, build-llms-full.py also writes the review
+# language pages, and they copy the head build-critical-css.js writes into qa-review.html. A builder not on this branch
+# yet is skipped.
 # The social hub rebuilds offline, from committed sources only; the daily Live Reports job pulls YouTube and the admin edits.
+# Pull requests do not commit the hub's generated files (#2242), so after every hub merge this is what commits them.
 # A push that loses the race is not rebased: the rebuild is redone on the new tip, so generated files never conflict.
 # The body is one function so bash has read all of it before git reset rewrites this file.
 set -euo pipefail
@@ -15,10 +17,14 @@ main() {
 	local builders=(
 		scripts/build-catalog-suites.js
 		scripts/build-legal-html.js
+		scripts/build-style-css.js
 		scripts/build-critical-css.js
 		scripts/build-llms-full.py
 		scripts/build-review-langs.py
+		scripts/build-findings-copy.js
+		scripts/build-face-pages.js
 		scripts/build-social-hub.js
+		scripts/build-csp-hashes.js
 	)
 	local rebuilt=()
 	export PYTHONDONTWRITEBYTECODE=1
@@ -40,16 +46,7 @@ main() {
 	build() {
 		case "$1" in
 		*.py) python3 "$1" ;;
-		scripts/build-social-hub.js)
-			# New thumbnails need sharp, which is in package-lock.json but not installed on a bare runner.
-			if [ -n "${GITHUB_ACTIONS:-}" ] && ! node -e 'require("sharp")' 2>/dev/null; then
-				local version
-				version=$(node -p "(require('./package-lock.json').packages['node_modules/sharp'] || {}).version || 'latest'")
-				npm install -s --no-save --prefix "$RUNNER_TEMP/sharp" "sharp@$version" >/dev/null
-				export NODE_PATH="$RUNNER_TEMP/sharp/node_modules${NODE_PATH:+:$NODE_PATH}"
-			fi
-			node "$1" --offline
-			;;
+		scripts/build-social-hub.js) scripts/social-hub-build.sh ;;
 		*) node "$1" ;;
 		esac
 	}
@@ -84,6 +81,11 @@ main() {
 		regen
 		[ ${#rebuilt[@]} -gt 0 ] && echo "Rebuilt: ${rebuilt[*]}" || echo "Every generated file matches its builder."
 		return 0
+	fi
+
+	if [ -z "${GITHUB_ACTIONS:-}" ]; then
+		echo "--push runs only in GitHub Actions: it fetches main with --depth=1, which makes a local clone shallow, and resets this checkout to it. Run without --push to rebuild here." >&2
+		return 1
 	fi
 
 	git config user.name "github-actions[bot]"

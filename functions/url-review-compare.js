@@ -211,7 +211,8 @@ function comparisonsOf(rows, baseId, email) {
 // Saved reviews of one account side by side: the first id is the base, and each other one is compared with it
 // from the reports already stored, with no new run. A report that does not open in full for the account
 // is named but not compared, so a comparison never shows what its report would keep under the frost.
-const SAVED_MAX = 5;
+// The base and five others, as many sites as a comparison holds (url-review-multi.js MULTI_MAX).
+const SAVED_MAX = 6;
 
 function savedComparison(records, email, ids, isOpen) {
   const address = String(email || "").trim().toLowerCase();

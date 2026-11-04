@@ -1,10 +1,16 @@
 # Name of the workflow
 name: Lint Code Base
 
-# Run this workflow on every push and pull request
+# Run this workflow on pushes to main and on pull requests. A branch push already gets the pull_request run, and a
+# second push run only held a runner that E2E was queued for (#2426).
 on:
   push:
+    branches: [main]
   pull_request:
+
+concurrency:
+  group: lint-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint:
@@ -18,13 +24,13 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Fetch all history so changed-file linting can diff against the previous commit
           fetch-depth: 0
 
       - name: Run Super-Linter
-        uses: github/super-linter@v6
+        uses: github/super-linter@b807e99ddd37e444d189cfd2c2ca1274d8ae8ef1 # v7
         env:
           # v6 fatals unless this exact name is true or false. The old
           # VALIDATE_ALL_CODE_BASE spelling was ignored, so every run aborted.
@@ -40,8 +46,14 @@ jobs:
           VALIDATE_GOOGLE_JAVA_FORMAT: false
           VALIDATE_HTML: false
           VALIDATE_JAVA: false
+          # Jarvis Android: Compose functions are PascalCase, which ktlint's default rules reject; Gradle builds the code instead.
+          VALIDATE_KOTLIN: false
+          FILTER_REGEX_EXCLUDE: android/gradlew.*
           VALIDATE_JAVASCRIPT_ES: false
           VALIDATE_JAVASCRIPT_STANDARD: false
+          # The cf CLI only reads cloudflare.config.ts (#1866); TypeScript Standard ran out of heap on it.
+          VALIDATE_TYPESCRIPT_ES: false
+          VALIDATE_TYPESCRIPT_STANDARD: false
           VALIDATE_JSCPD: false
           VALIDATE_MARKDOWN: false
           VALIDATE_NATURAL_LANGUAGE: false
@@ -52,3 +64,17 @@ jobs:
           VALIDATE_PYTHON_MYPY: false
           VALIDATE_PYTHON_PYLINT: false
           VALIDATE_PYTHON_RUFF: false
+          # v7 turns on Prettier and pyink, and the site was never formatted with either.
+          VALIDATE_PYTHON_PYINK: false
+          VALIDATE_CSS_PRETTIER: false
+          VALIDATE_GRAPHQL_PRETTIER: false
+          VALIDATE_HTML_PRETTIER: false
+          VALIDATE_JAVASCRIPT_PRETTIER: false
+          VALIDATE_JSON_PRETTIER: false
+          VALIDATE_JSONC_PRETTIER: false
+          VALIDATE_JSX_PRETTIER: false
+          VALIDATE_MARKDOWN_PRETTIER: false
+          VALIDATE_TSX_PRETTIER: false
+          VALIDATE_TYPESCRIPT_PRETTIER: false
+          VALIDATE_VUE_PRETTIER: false
+          VALIDATE_YAML_PRETTIER: false

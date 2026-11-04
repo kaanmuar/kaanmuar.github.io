@@ -1,0 +1,659 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
+package com.carlosandmunoz.jarvis.ui
+
+import android.Manifest
+import android.app.role.RoleManager
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.StopCircle
+import androidx.core.content.ContextCompat
+import android.text.format.DateUtils
+import androidx.core.app.NotificationManagerCompat
+import androidx.compose.ui.platform.LocalContext
+import android.os.Build
+import com.carlosandmunoz.jarvis.home.GoalsWidgetReceiver
+import com.carlosandmunoz.jarvis.home.AlertsWidgetReceiver
+import com.carlosandmunoz.jarvis.home.AskWidgetReceiver
+import com.carlosandmunoz.jarvis.home.MoneyWidgetReceiver
+import com.carlosandmunoz.jarvis.home.HealthWidgetReceiver
+import com.carlosandmunoz.jarvis.home.SocialWidgetReceiver
+import com.carlosandmunoz.jarvis.home.NextWidgetReceiver
+import com.carlosandmunoz.jarvis.home.MarketingWidgetReceiver
+import com.carlosandmunoz.jarvis.home.PipelineWidgetReceiver
+import com.carlosandmunoz.jarvis.home.TrafficWidgetReceiver
+import com.carlosandmunoz.jarvis.home.PickWidgetReceiver
+import com.carlosandmunoz.jarvis.PickConfigActivity
+import com.carlosandmunoz.jarvis.home.NeedsWidgetReceiver
+import com.carlosandmunoz.jarvis.home.Home
+import com.carlosandmunoz.jarvis.home.NumbersWidgetReceiver
+import com.carlosandmunoz.jarvis.home.StatusWidgetReceiver
+import com.carlosandmunoz.jarvis.push.Push
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.unit.Dp
+import com.carlosandmunoz.jarvis.device.Device
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import com.carlosandmunoz.jarvis.voice.Voice
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.carlosandmunoz.jarvis.BuildConfig
+import com.carlosandmunoz.jarvis.JarvisViewModel
+import com.carlosandmunoz.jarvis.Tab
+import com.carlosandmunoz.jarvis.UiState
+import com.carlosandmunoz.jarvis.data.bool
+import com.carlosandmunoz.jarvis.data.num
+import com.carlosandmunoz.jarvis.data.obj
+import com.carlosandmunoz.jarvis.data.objs
+import com.carlosandmunoz.jarvis.data.str
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+
+val RANGES = listOf(1 to "24h", 7 to "7d", 30 to "30d", 90 to "90d", 365 to "1y")
+
+@Composable
+fun SignInScreen(s: UiState, vm: JarvisViewModel) {
+    var email by rememberSaveable { mutableStateOf(s.email ?: "") }
+    var password by remember { mutableStateOf("") }
+    var code by remember { mutableStateOf("") }
+    OffTheFold {
+    Box(Modifier.fillMaxSize().imePadding().padding(20.dp), contentAlignment = Alignment.Center) {
+    Column(Modifier.cardWidth().fillMaxWidth().reveal().glass().padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Reactor(100.0, "JARVIS", 120.dp)
+        Spacer(Modifier.height(24.dp))
+        if (s.pendingCode == null) {
+            Text("Sign in with the owner account", color = J.muted)
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(email, { email = it }, label = { Text("Email") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(password, { password = it }, label = { Text("Password") }, singleLine = true, visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = { vm.signIn(email, password) }, enabled = !s.busy && email.isNotBlank() && password.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text(if (s.busy) "Signing in…" else "Sign in") }
+        } else {
+            Text("Code from ${s.pendingCode.factor}", color = J.muted)
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(code, { if (it.length <= 6) code = it.filter(Char::isDigit) }, label = { Text("6-digit code") }, singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword), modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = { vm.submitCode(code) }, enabled = !s.busy && code.length == 6, modifier = Modifier.fillMaxWidth()) { Text(if (s.busy) "Checking…" else "Verify") }
+            TextButton(onClick = vm::cancelCode) { Text("Start again") }
+        }
+        s.authError?.let { Spacer(Modifier.height(8.dp)); Text(it, color = J.pink) }
+    }
+    }
+    }
+}
+
+@Composable
+fun LockScreen(unlock: () -> Unit) = OffTheFold {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Reactor(100.0, "LOCKED", 120.dp)
+        Spacer(Modifier.height(12.dp))
+        Icon(Icons.Filled.Lock, null, tint = J.cyan)
+        Spacer(Modifier.height(12.dp))
+        Text("Jarvis is locked")
+        Spacer(Modifier.height(12.dp))
+        Button(onClick = unlock) { Text("Unlock") }
+    }
+}
+
+@Composable
+private fun Modifier.sides() = windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+
+private val ICONS: Map<Tab, ImageVector> = mapOf(Tab.Overview to Icons.Filled.Dashboard, Tab.Products to Icons.Filled.Widgets, Tab.Business to Icons.Filled.AttachMoney, Tab.Traffic to Icons.Filled.Public, Tab.Systems to Icons.Filled.Dns)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, openTab: String?, tabOpened: () -> Unit, setLock: (Boolean) -> Unit) {
+    val form = LocalForm.current
+    var tab by rememberSaveable { mutableStateOf(Tab.Overview) }
+    var product by rememberSaveable { mutableStateOf("review") }
+    var page by rememberSaveable { mutableStateOf("") }
+    var askOpen by rememberSaveable(form.askBeside, form.askOpen) { mutableStateOf(form.askOpen) }
+    LaunchedEffect(form.askBeside) { if (form.askBeside && page == "ask") { page = ""; askOpen = true } }
+    val snack = remember { SnackbarHostState() }
+    LaunchedEffect(s.toast) { s.toast?.let { snack.showSnackbar(it); vm.toastShown() } }
+    LaunchedEffect(openTab) {
+        openTab?.let { target ->
+            val (name, chip) = target.split(':', limit = 2).let { it[0] to it.getOrNull(1) }
+            Tab.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }?.let { tab = it; page = "" }
+            chip?.takeIf { c -> CHIPS.any { it.first == c } }?.let { product = it }
+            tabOpened()
+        }
+    }
+    if (page.isNotEmpty()) BackHandler { page = "" }
+
+    AnimatedContent(page, transitionSpec = {
+        val forward = targetState.isNotEmpty()
+        (fadeIn(tween(320)) + slideInHorizontally(tween(420, easing = FastOutSlowInEasing)) { if (forward) it / 3 else -it / 3 } + scaleIn(tween(420), 0.94f)) togetherWith
+            (fadeOut(tween(220)) + slideOutHorizontally(tween(420, easing = FastOutSlowInEasing)) { if (forward) -it / 4 else it / 4 } + scaleOut(tween(420), 0.96f))
+    }, label = "page") { shown ->
+        when (shown) {
+            "ask" -> AskScreen(s, vm) { page = "" }
+            "settings" -> SettingsScreen(s, vm, lockOn, setLock) { page = "" }
+            else -> Scaffold(
+                containerColor = Color.Transparent,
+                snackbarHost = { SnackbarHost(snack) },
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Column {
+                                Text("JARVIS", fontFamily = Mono, letterSpacing = 5.sp, color = J.cyan, fontWeight = FontWeight.Bold,
+                                    style = LocalTextStyle.current.copy(shadow = Shadow(J.cyan, blurRadius = 18f)))
+                                Text(when {
+                                    s.loading -> "Updating…"
+                                    s.savedAt > 0 -> (if (s.error != null) "Offline · " else "") + "updated " + DateUtils.getRelativeTimeSpanString(s.savedAt)
+                                    else -> "No data yet"
+                                }, fontSize = 11.sp, fontFamily = Mono, color = if (s.error != null) J.amber else J.muted)
+                            }
+                        },
+                        actions = {
+                            if (!form.tabletop) IconButton(onClick = { if (form.askBeside) askOpen = !askOpen else page = "ask" }, modifier = Modifier.tilt()) {
+                                Icon(Icons.Filled.Forum, if (form.askBeside && askOpen) "Close Ask" else "Ask Jarvis", tint = J.cyan)
+                            }
+                            IconButton(onClick = { page = "settings" }, modifier = Modifier.tilt()) { Icon(Icons.Filled.Settings, "Settings", tint = J.muted) }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                        modifier = Modifier.topFade()
+                    )
+                },
+                bottomBar = { if (!form.rail) Dock(tab) { tab = it } }
+            ) { pad ->
+                val tabs = @Composable { m: Modifier ->
+                    Tabs(s, vm, tab, product, m, { product = it }) { target -> Tab.entries.firstOrNull { it.name.equals(target, ignoreCase = true) }?.let { tab = it } ?: run { product = target; tab = Tab.Products } }
+                }
+                val hinge = form.hinge
+                // Tabletop: the tabs on the upper half, Ask and the orb on the lower half, nothing on the fold.
+                if (form.tabletop && hinge != null) Column(Modifier.fillMaxSize()) {
+                    Row(Modifier.fillMaxWidth().height(hinge.top.dp).padding(top = pad.calculateTopPadding()).sides()) {
+                        Rail(tab) { tab = it }
+                        tabs(Modifier.weight(1f))
+                    }
+                    Spacer(Modifier.height((hinge.bottom - hinge.top).dp))
+                    AskBody(s, vm, Modifier.weight(1f).fillMaxWidth().sides().navigationBarsPadding(), orb = true)
+                } else Row(Modifier.padding(pad).fillMaxSize().sides()) {
+                    if (form.rail) Rail(tab) { tab = it }
+                    tabs(Modifier.weight(1f))
+                    AnimatedVisibility(form.askBeside && askOpen) { AskPane(s, vm, form.askWidthDp.dp) { askOpen = false } }
+                }
+            }
+        }
+    }
+}
+
+/** The picked tab's panels, flowed into as many columns as its width holds. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, modifier: Modifier, pickProduct: (String) -> Unit, open: (String) -> Unit) {
+    PullToRefreshBox(isRefreshing = s.loading, onRefresh = vm::refresh, modifier = modifier.fillMaxSize()) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val width = maxWidth.value.toInt()
+            val columns = Device.columns(width, Device.dense(LocalForm.current))
+            CompositionLocalProvider(LocalDense provides (columns == 3 && width < 1100), LocalColumns provides columns) {
+            AnimatedContent(tab, transitionSpec = {
+                val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
+                (fadeIn(tween(300)) + slideInHorizontally(tween(450, easing = FastOutSlowInEasing)) { dir * it / 5 } + scaleIn(tween(450), 0.96f)) togetherWith
+                    (fadeOut(tween(200)) + slideOutHorizontally(tween(450, easing = FastOutSlowInEasing)) { -dir * it / 6 } + scaleOut(tween(450), 0.97f))
+            }, label = "tab") { shownTab ->
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                    Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        RANGES.forEach { (d, label) -> GlassChip(label, s.days == d) { vm.setDays(d) } }
+                    }
+                    s.error?.let { e -> Panel("Could not refresh") { Text(e, color = J.amber, fontSize = 13.sp); if (s.snapshot != null) Muted("Showing the last saved numbers.") } }
+                    if (s.snapshot == null && s.loading) Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) { Reactor(null, "LOADING"); Spacer(Modifier.height(12.dp)); Muted("Jarvis is gathering every number. The first load takes up to a minute.") }
+                    }
+                    if (s.snapshot != null) Masonry(columns, Modifier.fillMaxWidth()) {
+                        when (shownTab) {
+                            Tab.Overview -> OverviewScreen(s, vm, open)
+                            Tab.Products -> ProductsScreen(s, vm, product, pickProduct)
+                            Tab.Business -> BusinessScreen(s, vm)
+                            Tab.Traffic -> TrafficScreen(s)
+                            Tab.Systems -> SystemsScreen(s, vm)
+                        }
+                    }
+                    Spacer(Modifier.height(24.dp))
+                }
+            }
+            }
+        }
+    }
+}
+
+/** Floating glass dock; a lit plate slides under the picked tab. */
+@Composable
+private fun Dock(tab: Tab, pick: (Tab) -> Unit) {
+    val n = Tab.entries.size
+    val at by animateFloatAsState(tab.ordinal.toFloat(), spring(0.7f, Spring.StiffnessMediumLow), label = "dock")
+    Box(Modifier.navigationBarsPadding().padding(horizontal = 14.dp, vertical = 10.dp).fillMaxWidth().height(64.dp).glass(radius = 20.dp, brackets = false, glow = 1.4f)) {
+        Box(Modifier.fillMaxSize().drawBehind {
+            val w = size.width / n; val pad = 6.dp.toPx()
+            val x = at * w + pad
+            drawRoundRect(Brush.verticalGradient(listOf(J.cyan.copy(alpha = 0.28f), J.cyan.copy(alpha = 0.06f))), Offset(x, pad), Size(w - 2 * pad, size.height - 2 * pad), CornerRadius(14.dp.toPx()))
+            drawRoundRect(J.cyan.copy(alpha = 0.7f), Offset(x, pad), Size(w - 2 * pad, size.height - 2 * pad), CornerRadius(14.dp.toPx()), style = Stroke(1.dp.toPx()))
+            drawRoundRect(J.cyan, Offset(x + (w - 2 * pad) / 2 - 12.dp.toPx(), pad), Size(24.dp.toPx(), 2.dp.toPx()), CornerRadius(2f))
+        })
+        Row(Modifier.fillMaxSize()) {
+            Tab.entries.forEach { t ->
+                val on = t == tab
+                val lift by animateFloatAsState(if (on) 1f else 0f, spring(0.5f, Spring.StiffnessLow), label = "lift")
+                Column(Modifier.weight(1f).fillMaxSize().clickable(remember { MutableInteractionSource() }, null) { pick(t) }.graphicsLayer { translationY = -3.dp.toPx() * lift; scaleX = 1f + 0.12f * lift; scaleY = 1f + 0.12f * lift },
+                    verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    TabMark(t, on)
+                }
+            }
+        }
+    }
+}
+
+/** The dock stood on its side, for wide windows and tabletop; the plate slides down to the picked tab. */
+@Composable
+private fun Rail(tab: Tab, pick: (Tab) -> Unit) {
+    val n = Tab.entries.size
+    val at by animateFloatAsState(tab.ordinal.toFloat(), spring(0.7f, Spring.StiffnessMediumLow), label = "rail")
+    Box(Modifier.padding(start = 10.dp, end = 4.dp, top = 4.dp, bottom = 12.dp).width(76.dp).heightIn(max = (n * 68).dp).fillMaxHeight().glass(radius = 20.dp, brackets = false, glow = 1.4f)) {
+        Box(Modifier.fillMaxSize().drawBehind {
+            val h = size.height / n; val pad = 6.dp.toPx()
+            val y = at * h + pad
+            drawRoundRect(Brush.horizontalGradient(listOf(J.cyan.copy(alpha = 0.28f), J.cyan.copy(alpha = 0.06f))), Offset(pad, y), Size(size.width - 2 * pad, h - 2 * pad), CornerRadius(14.dp.toPx()))
+            drawRoundRect(J.cyan.copy(alpha = 0.7f), Offset(pad, y), Size(size.width - 2 * pad, h - 2 * pad), CornerRadius(14.dp.toPx()), style = Stroke(1.dp.toPx()))
+            drawRoundRect(J.cyan, Offset(pad, y + (h - 2 * pad) / 2 - 12.dp.toPx()), Size(2.dp.toPx(), 24.dp.toPx()), CornerRadius(2f))
+        })
+        Column(Modifier.fillMaxSize()) {
+            Tab.entries.forEach { t ->
+                val on = t == tab
+                val lift by animateFloatAsState(if (on) 1f else 0f, spring(0.5f, Spring.StiffnessLow), label = "lift")
+                Column(Modifier.weight(1f).fillMaxWidth().clickable(remember { MutableInteractionSource() }, null) { pick(t) }.graphicsLayer { translationX = 3.dp.toPx() * lift; scaleX = 1f + 0.12f * lift; scaleY = 1f + 0.12f * lift },
+                    verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    TabMark(t, on)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TabMark(t: Tab, on: Boolean) {
+    Icon(ICONS.getValue(t), null, tint = if (on) J.cyan else J.muted, modifier = Modifier.size(22.dp))
+    Text(t.label, fontSize = 10.sp, fontFamily = Mono, color = if (on) J.text else J.dim)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AskScreen(s: UiState, vm: JarvisViewModel, back: () -> Unit) {
+    Scaffold(containerColor = Color.Transparent, topBar = {
+        TopAppBar(modifier = Modifier.topFade(), title = { Text("Ask Jarvis") }, navigationIcon = { IconButton(onClick = back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent))
+    }) { pad -> AskBody(s, vm, Modifier.padding(pad).fillMaxSize()) }
+}
+
+/** Ask beside the tabs on wide screens; right of the fold when the window has one. */
+@Composable
+private fun AskPane(s: UiState, vm: JarvisViewModel, width: Dp, close: () -> Unit) {
+    Column(Modifier.width(width).fillMaxHeight().padding(start = 4.dp, end = 10.dp, bottom = 10.dp).glass(radius = 18.dp, brackets = false)) {
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("ASK JARVIS", color = J.cyan, fontFamily = Mono, fontSize = 12.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            IconButton(onClick = close) { Icon(Icons.Filled.Close, "Close Ask", tint = J.muted) }
+        }
+        AskBody(s, vm, Modifier.weight(1f).fillMaxWidth())
+    }
+}
+
+/** The chat and its input. [orb] puts a large voice orb beside them, for tabletop: tap it and talk. */
+@Composable
+private fun AskBody(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifier, orb: Boolean = false) {
+    var q by rememberSaveable { mutableStateOf("") }
+    val list = rememberLazyListState()
+    LaunchedEffect(s.chat.size, s.chat.lastOrNull()?.answer) { if (s.chat.isNotEmpty()) list.animateScrollToItem(s.chat.size - 1) }
+    val context = LocalContext.current
+    val mic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted) vm.listen() }
+    val listen = {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) vm.listen()
+        else mic.launch(Manifest.permission.RECORD_AUDIO)
+    }
+    Row(modifier.imePadding()) {
+        if (orb) Column(Modifier.width(168.dp).fillMaxHeight().clickable(remember { MutableInteractionSource() }, null) { if (s.heard.listening) vm.stopListening() else { vm.heardShown(); listen() } },
+            verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+            VoiceOrb(s.heard.level, s.heard.listening || s.speaking != null, 120.dp)
+            Spacer(Modifier.height(6.dp))
+            Text(if (s.heard.listening) "LISTENING" else if (s.speaking != null) "SPEAKING" else "TAP TO ASK", color = J.muted, fontFamily = Mono, fontSize = 10.sp, letterSpacing = 2.sp)
+        }
+        Column(Modifier.weight(1f).fillMaxHeight()) {
+            LazyColumn(Modifier.weight(1f), state = list) {
+                if (s.chat.isEmpty()) item {
+                    Panel("Try") {
+                        listOf("What needs my attention today?", "How did URL Review revenue move against last period?", "Which page is slowest and why?", "Where do CV visitors come from?", "Is anything failing in the pipeline?")
+                            .forEach { sample -> TextButton(onClick = { vm.ask(sample) }) { Text(sample) } }
+                    }
+                }
+                items(s.chat) { c ->
+                    Column(Modifier.fillMaxWidth().padding(12.dp)) {
+                        Text(c.question, color = J.cyan, modifier = Modifier.reveal().glass(brackets = false, radius = 10.dp).padding(12.dp))
+                        Spacer(Modifier.height(6.dp))
+                        if (c.answer == null) Muted("Thinking…") else Row(verticalAlignment = Alignment.Top) {
+                            Text(c.answer, color = if (c.error) J.pink else J.text, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                            if (!c.error) IconButton(onClick = { vm.speak(c.answer) }) {
+                                Icon(if (s.speaking == c.answer) Icons.Filled.StopCircle else Icons.AutoMirrored.Filled.VolumeUp, if (s.speaking == c.answer) "Stop" else "Read aloud",
+                                    tint = if (s.speaking == c.answer) J.cyan else J.muted)
+                            }
+                        }
+                    }
+                }
+            }
+            HorizontalDivider(color = J.line)
+            s.heard.error?.let { Text(it, color = J.amber, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
+            AnimatedContent(s.heard.listening, label = "input") { listening ->
+                if (listening) Row(Modifier.padding(8.dp).fillMaxWidth().glass(radius = 14.dp, brackets = false).padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    VoiceOrb(s.heard.level, true, 52.dp)
+                    Spacer(Modifier.width(10.dp))
+                    Text(s.heard.partial.ifEmpty { "Listening…" }, color = if (s.heard.partial.isEmpty()) J.muted else J.text, fontSize = 15.sp, modifier = Modifier.weight(1f), maxLines = 3)
+                    TextButton(onClick = vm::stopListening) { Text("Stop", color = J.cyan) }
+                } else Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(q, { q = it }, placeholder = { Text("Ask about the ${RANGES.toMap()[s.days]} numbers") }, modifier = Modifier.weight(1f), maxLines = 4)
+                    if (q.isBlank()) IconButton(onClick = { vm.heardShown(); listen() }) { Icon(Icons.Filled.Mic, "Ask by voice", tint = J.cyan) }
+                    else IconButton(onClick = { vm.ask(q); q = "" }) { Icon(Icons.AutoMirrored.Filled.Send, "Ask") }
+                }
+            }
+        }
+    }
+}
+
+private fun openAssistantSettings(context: android.content.Context) {
+    val tries = listOf(Intent(Settings.ACTION_VOICE_INPUT_SETTINGS), Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS), Intent(Settings.ACTION_SETTINGS))
+    tries.firstOrNull { runCatching { context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (Boolean) -> Unit, back: () -> Unit) {
+    val settings = s.snapshot.obj("settings")
+    var mail by remember(settings) { mutableStateOf(MAIL_LABELS.keys.associateWith { settings.obj("mail").bool(it) ?: false }) }
+    var actions by remember(settings) { mutableStateOf(settings.obj("actions")) }
+    fun save(base: JsonObject) = vm.market("settings", "settings-save", mapOf("settings" to edited(base, mail, actions))) { "Saved." }
+    Scaffold(containerColor = Color.Transparent, topBar = {
+        TopAppBar(modifier = Modifier.topFade(), title = { Text("Settings") }, navigationIcon = { IconButton(onClick = back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent))
+    }) { pad ->
+        BoxWithConstraints(Modifier.padding(pad).fillMaxSize().sides()) {
+        val columns = Device.columns(maxWidth.value.toInt())
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+        Masonry(columns, Modifier.fillMaxWidth()) {
+            Panel("Account") {
+                KeyRow("Signed in as", s.email ?: "—")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) { Text("Lock with fingerprint or screen lock"); Muted("Asked when you open Jarvis after a minute away.") }
+                    Switch(lockOn, setLock)
+                }
+                TextButton(onClick = vm::signOut) { Text("Sign out", color = J.pink) }
+            }
+            if (settings != null) Panel("Jarvis mail") {
+                Muted("Everything below also arrives as a push. Off, it waits for the evening digest.")
+                MAIL_LABELS.forEach { (k, label) ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(label, Modifier.weight(1f))
+                        Switch(mail[k] == true, { on ->
+                            mail = mail + (k to on)
+                            save(settings)
+                        })
+                    }
+                }
+                Muted("Goals, thresholds and search queries are edited in Admin › Statistics on the web.")
+            }
+            if (settings != null) Panel("Jarvis actions") {
+                ActionSettings(actions) { actions = it; save(settings) }
+                val hours = actions.num("countdownHours") ?: Countdowns.HOURS
+                Muted("How long a risky action Jarvis starts by itself waits for Do it now or Cancel: mail to third parties, posts off schedule, merges and deploys, resuming outreach.")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    COUNTDOWN_CHOICES.forEach { h ->
+                        TextButton(onClick = { actions = withCountdown(actions, h); save(settings) }, enabled = "settings" !in s.running) {
+                            Text(Countdowns.hoursText(h), color = if (h == hours) J.cyan else J.muted, fontSize = 13.sp)
+                        }
+                    }
+                }
+            }
+            Panel("Push notifications") {
+                val context = LocalContext.current
+                val allowed = NotificationManagerCompat.from(context).areNotificationsEnabled()
+                if (!allowed) Text("Notifications are off for Jarvis on this phone.", color = J.amber, fontSize = 13.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) { Text("Live status"); Muted("Readiness as a ring in the status bar, what needs you and today's money. Updates silently on each refresh.") }
+                    Switch(s.ongoing, vm::setOngoing)
+                }
+                mapOf(
+                    Push.ALERTS to ("Alerts" to "A threshold crossing from the hourly watch, at any hour."),
+                    Push.BRIEFING to ("Daily briefing" to "The 07:40 briefing, next to the email."),
+                    Push.MONEY to ("Payments" to "Each live PayPal payment, with the amount and who paid."),
+                    Push.REVIEWS to ("New reviews" to "A customer's review finished, with its score."),
+                    Push.OUTREACH to ("Outreach approvals" to "Owner notices waiting to be sent, at most hourly."),
+                    Push.INBOX to ("Inbox" to "CV messages, CV feedback and site owners' replies."),
+                    Push.DESK to ("Review desk" to "Runs as they go, held re-runs, comparisons and runs that need you."),
+                    Push.SOCIAL to ("Social posts" to "Each post Jarvis proposes, with Post and Skip."),
+                    Push.CODES to ("Sign-in codes" to "Codes and confirm links mailed to qa@ and the channel addresses, with Copy."),
+                    Push.ENGAGEMENT to ("Social engagement" to "Reply drafts with Approve, Edit and Dismiss, and the engagement reports."),
+                )
+                    .forEach { (kind, text) ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) { Text(text.first); Muted(text.second) }
+                            Switch(s.push[kind] != false, { vm.setPush(kind, it) })
+                        }
+                    }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ActionButton("Send a test", "test-push" in s.running) { vm.testPush() }
+                    ActionButton("Sound and style", false) {
+                        context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
+                    }
+                }
+                Muted("Email and push are separate: the mail switches above do not silence the phone.")
+            }
+            Panel("Voice") {
+                val context = LocalContext.current
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) { Text("Speak answers"); Muted("Questions you ask by voice are answered aloud.") }
+                    Switch(s.speak, vm::setSpeak)
+                }
+                val phone = java.util.Locale.getDefault().getDisplayLanguage(java.util.Locale.ENGLISH)
+                Text("Language")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GlassChip("Phone ($phone)", s.voiceLang == null) { vm.setVoiceLang(null) }
+                    GlassChip("English", s.voiceLang == "en") { vm.setVoiceLang("en") }
+                    GlassChip("Español", s.voiceLang == "es") { vm.setVoiceLang("es") }
+                }
+                listOf("en" to "English voice", "es" to "Spanish voice").forEach { (lang, title) ->
+                    Text(title)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Voice.VOICES.filter { it.lang == lang }.forEach { o -> GlassChip(o.label, s.voices[lang] == o.name) { vm.setVoice(o) } }
+                    }
+                }
+                var rate by remember(s.rate) { mutableFloatStateOf(s.rate) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Speed", Modifier.weight(1f))
+                    Muted("%.2f×".format(java.util.Locale.ROOT, rate))
+                }
+                Slider(rate, { rate = it }, onValueChangeFinished = { vm.setRate(rate) }, valueRange = Voice.RATE_MIN..Voice.RATE_MAX, steps = 9,
+                    colors = SliderDefaults.colors(thumbColor = J.cyan, activeTrackColor = J.cyan, inactiveTrackColor = J.line))
+                Row { ActionButton(if (s.speaking in Voice.SAMPLE.values) "Playing…" else "Preview", false) { vm.preview() } }
+                Muted("Tap a voice to hear it. Jarvis listens and answers in the language above; other languages keep the standard Google voice.")
+                val held = Build.VERSION.SDK_INT >= 29 && context.getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_ASSISTANT)
+                Row { ActionButton(if (held) "Assistant settings" else "Use Jarvis as the phone's assistant", false) { openAssistantSettings(context) } }
+                Muted(if (held) "Jarvis is the phone's assistant: long-press the power or home button and ask."
+                    else "Pick Jarvis under Digital assistant app; then long-press the power or home button and ask. \"Hey Google, open Jarvis\" works either way.")
+            }
+            Panel("Home screen") {
+                val context = LocalContext.current
+                val pinnable = Home.canPin(context)
+                if (pinnable) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ActionButton("Status", false) { Home.pin(context, StatusWidgetReceiver::class.java) }
+                    ActionButton("Numbers", false) { Home.pin(context, NumbersWidgetReceiver::class.java) }
+                    ActionButton("Goals", false) { Home.pin(context, GoalsWidgetReceiver::class.java) }
+                    ActionButton("Needs you", false) { Home.pin(context, NeedsWidgetReceiver::class.java) }
+                    ActionButton("Alerts", false) { Home.pin(context, AlertsWidgetReceiver::class.java) }
+                    ActionButton("Ask bar", false) { Home.pin(context, AskWidgetReceiver::class.java) }
+                    ActionButton("Money", false) { Home.pin(context, MoneyWidgetReceiver::class.java) }
+                    ActionButton("Site health", false) { Home.pin(context, HealthWidgetReceiver::class.java) }
+                    ActionButton("Social queue", false) { Home.pin(context, SocialWidgetReceiver::class.java) }
+                    ActionButton("Next up", false) { Home.pin(context, NextWidgetReceiver::class.java) }
+                    ActionButton("Pipeline", false) { Home.pin(context, PipelineWidgetReceiver::class.java) }
+                    ActionButton("Marketing", false) { Home.pin(context, MarketingWidgetReceiver::class.java) }
+                    ActionButton("Traffic", false) { Home.pin(context, TrafficWidgetReceiver::class.java) }
+                    ActionButton("Pick a number", false) { Home.pin(context, PickWidgetReceiver::class.java, Intent(context, PickConfigActivity::class.java)) }
+                }
+                if (Build.VERSION.SDK_INT >= 33) Row { ActionButton("Add the quick-settings tile", false) { Home.addTile(context) } }
+                Muted(if (pinnable) "Widgets refresh every half hour and whenever the app or a push brings new numbers. Long-press the app icon for shortcuts; share a link to Jarvis to review it."
+                    else "Add Jarvis widgets from your launcher's widget list. Long-press the app icon for shortcuts; share a link to Jarvis to review it.")
+            }
+            Panel("About") {
+                KeyRow("Version", BuildConfig.VERSION_NAME)
+                Row { ActionButton("Check for updates", "update" in s.running) { vm.checkUpdate() } }
+                Muted("Jarvis updates itself: it checks every six hours and as soon as a new release is published.")
+                KeyRow("Web dashboard", "open", url = "https://carlosandmunoz.com/admin.html#stats/overview/${s.days}")
+                KeyRow("Releases", "open", url = "https://github.com/kaanmuar/kaanmuar.github.io/releases")
+            }
+            Devices(s)
+        }
+        Spacer(Modifier.width(1.dp).height(24.dp))
+        }
+        }
+    }
+}
+
+/** This device as Jarvis reads it, and every phone and browser signed in during the last 30 days (#2068). */
+@Composable
+private fun Devices(s: UiState) {
+    val form = LocalForm.current
+    Panel("Devices") {
+        KeyRow("This device", form.name.ifBlank { "—" })
+        Muted(form.label)
+        (s.devices ?: s.snapshot.objs("devices")).forEach { d ->
+            val seen = d.str("seenAt")?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
+            val title = (d.str("name") ?: "Unknown device") + if (d.bool("mine") == true) " (this one)" else ""
+            StatusRow(if (d.bool("mine") == true) "good" else null, title,
+                listOfNotNull(d.str("label"), if (d.str("app") == "web") "browser" else "app", seen?.let { DateUtils.getRelativeTimeSpanString(it).toString() }).joinToString(" · "))
+        }
+        Muted("Wide screens get the side rail, two columns and Ask beside the tabs. Half folded on a table, the numbers sit on the upper half and Ask on the lower. Ask keeps answers short on phone-sized screens.")
+    }
+}
+
+// Merged into the saved settings, so what the app does not show (the weekly strategy switch, goals, thresholds) keeps its value.
+private fun edited(settings: JsonObject, mail: Map<String, Boolean>, actions: JsonObject?): JsonObject =
+    JsonObject(settings + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })) +
+        (actions?.let { mapOf("actions" to it) } ?: emptyMap()))
+
+private val COUNTDOWN_CHOICES = listOf(0.5, 1.0, 2.0, 4.0, 8.0)
+
+private fun withCountdown(actions: JsonObject?, hours: Double): JsonObject =
+    JsonObject((actions ?: JsonObject(emptyMap())) + ("countdownHours" to JsonPrimitive(hours)))
+
+// The owner emails Jarvis also pushes (#1672), as in Admin › Statistics › Settings.
+private val MAIL_LABELS = linkedMapOf(
+    "digest" to "Evening digest email (20:00)", "daily" to "Daily briefing email (07:40)", "gemini" to "Gemini summary in the daily email", "watch" to "Alert email",
+    "messages" to "New CV messages", "ratings" to "New CV feedback", "siteDaily" to "Daily CV site report", "siteQuarter" to "Quarter-hour CV site report",
+    "reviewDaily" to "Daily URL review report", "reviewQuarter" to "Quarter-hour URL review report", "reruns" to "Held URL review re-runs",
+    "reviewOpened" to "URL Review was opened", "comparisons" to "Comparison saved", "reviewEvents" to "URL review events (refunds and disputes always email)",
+    "ops" to "Ops: jobs missed or failed", "ownerReplies" to "Owner replies", "ownerRemind" to "Owner replies still waiting"
+)

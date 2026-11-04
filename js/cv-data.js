@@ -5,84 +5,238 @@
                 skills: {
                     pm: [
                         { name: 'Agile', stars: 5, years: '10+ Yrs', icon: 'assets/icons/agile.svg' },
-                        { name: 'Kanban', stars: 5, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/trello/0079BF' },
-                        { name: 'Scrum', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/jira/0052CC' },
+                        { name: 'Kanban', stars: 5, years: '8+ Yrs', icon: 'assets/icons/skills/trello.svg' },
+                        { name: 'Scrum', stars: 5, years: '10+ Yrs', icon: 'assets/icons/skills/jira.svg' },
                         { name: 'Strategic Planning', years: '10+ Yrs', stars: 5, icon: 'assets/icons/strategy.svg' },
                         { name: 'Risk Management', years: '10+ Yrs', stars: 5, icon: 'assets/icons/risk.svg' },
                         { name: 'Stakeholder Mgmt', years: '10+ Yrs', stars: 5, icon: 'assets/icons/stakeholders.svg' },
-                        { name: 'Jira', stars: 5, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/jira/0052CC' },
-                        { name: 'TestRail', stars: 4, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/testrail/78C644' },
+                        { name: 'Jira', stars: 5, years: '15+ Yrs', icon: 'assets/icons/skills/jira.svg' },
+                        { name: 'TestRail', stars: 4, years: '15+ Yrs', icon: 'assets/icons/skills/testrail.svg' },
                         { name: 'Testlio', stars: 3, years: '5+ Yrs', icon: 'assets/icons/mobile.svg' },
                         { name: 'MS Project', stars: 4, years: '10+ Yrs', icon: 'assets/icons/calendar.svg' },
                         { name: 'CMMI', stars: 3, years: '15+ Yrs', icon: 'assets/icons/process.svg' },
-                        { name: 'ISO Standards', stars: 4, years: '15+ Yrs', icon: 'assets/icons/standards.svg' }
+                        { name: 'ISO Standards', stars: 4, years: '15+ Yrs', icon: 'assets/icons/standards.svg' },
+                        { name: 'GitHub Projects', stars: 5, years: '1+ Yrs', icon: 'assets/icons/skills/github.svg' }
                     ],
                     qa: [
-                        { name: 'Selenium', stars: 5, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/selenium/43B02A' },
-                        { name: 'Cypress', stars: 5, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/cypress/17202C' },
+                        { name: 'Selenium', stars: 5, years: '6+ Yrs', icon: 'assets/icons/skills/selenium.svg' },
+                        { name: 'Cypress', stars: 5, years: '6+ Yrs', icon: 'assets/icons/skills/cypress.svg' },
                         { name: 'Playwright', stars: 4, years: '6+ Yrs', icon: 'assets/icons/playwright.svg' },
-                        { name: 'WebdriverIO', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/webdriverio/EA5906' },
-                        { name: 'Protractor', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/protractor/E23237' },
-                        { name: 'Appium', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/appium/F15367' },
-                        { name: 'Expresso', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/android/3DDC84' },
-                        { name: 'Robot Framework', years: '6+ Yrs', stars: 4, icon: 'https://cdn.simpleicons.org/robotframework/000000' },
-                        { name: 'Cucumber', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/cucumber/23D96C' },
+                        { name: 'WebdriverIO', stars: 4, years: '5+ Yrs', icon: 'assets/icons/skills/webdriverio.svg' },
+                        { name: 'Protractor', stars: 3, years: '4+ Yrs', icon: 'assets/icons/skills/protractor.svg' },
+                        { name: 'Appium', stars: 4, years: '6+ Yrs', icon: 'assets/icons/skills/appium.svg' },
+                        { name: 'Expresso', stars: 3, years: '3+ Yrs', icon: 'assets/icons/skills/android.svg' },
+                        { name: 'Robot Framework', years: '6+ Yrs', stars: 4, icon: 'assets/icons/skills/robotframework.svg' },
+                        { name: 'Cucumber', stars: 4, years: '6+ Yrs', icon: 'assets/icons/skills/cucumber.svg' },
                         { name: 'Gauge', stars: 3, years: '3+ Yrs', icon: 'assets/icons/gauge.svg' },
                         { name: 'Karate DSL', stars: 4, years: '4+ Yrs', icon: 'assets/icons/karate.svg' },
-                        { name: 'JMeter', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/apachejmeter/D22128' },
-                        { name: 'Katalon', stars: 4, years: '6+ Yrs', icon: 'assets/icons/puzzle.svg' }
+                        { name: 'JMeter', stars: 4, years: '8+ Yrs', icon: 'assets/icons/skills/apachejmeter.svg' },
+                        { name: 'Katalon', stars: 4, years: '6+ Yrs', icon: 'assets/icons/puzzle.svg' },
+                        { name: 'CodeceptJS', stars: 4, years: '1+ Yrs', icon: 'assets/icons/testing.svg' },
+                        { name: 'Selenide', stars: 4, years: '1+ Yrs', icon: 'assets/icons/skills/openjdk.svg' },
+                        { name: 'Behave', stars: 4, years: '1+ Yrs', icon: 'assets/icons/skills/python.svg' },
+                        { name: 'Reqnroll', stars: 4, years: '1+ Yrs', icon: 'assets/icons/csharp.svg' },
+                        { name: 'Vitest', stars: 4, years: '1+ Yrs', icon: 'assets/icons/testing.svg' },
+                        { name: 'Maestro', stars: 4, years: '1+ Yrs', icon: 'assets/icons/mobile.svg' },
+                        { name: 'k6', stars: 4, years: '1+ Yrs', icon: 'assets/icons/skills/grafana.svg' },
+                        { name: 'Gatling', stars: 4, years: '1+ Yrs', icon: 'assets/icons/gauge.svg' },
+                        { name: 'axe-core', stars: 5, years: '1+ Yrs', icon: 'assets/icons/standards.svg' },
+                        { name: 'Lighthouse', stars: 4, years: '1+ Yrs', icon: 'assets/icons/gauge.svg' }
                     ],
                     lang: [
-                        { name: 'Python', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/python/3776AB' },
-                        { name: 'Java', stars: 5, years: '15+ Yrs', icon: 'https://cdn.simpleicons.org/openjdk/437291' },
-                        { name: 'JavaScript', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/javascript/F7DF1E' },
-                        { name: 'TypeScript', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/typescript/3178C6' },
-                        { name: 'Ruby on Rails', stars: 3, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/rubyonrails/CC0000' },
+                        { name: 'Python', stars: 5, years: '10+ Yrs', icon: 'assets/icons/skills/python.svg' },
+                        { name: 'Java', stars: 5, years: '15+ Yrs', icon: 'assets/icons/skills/openjdk.svg' },
+                        { name: 'JavaScript', stars: 5, years: '10+ Yrs', icon: 'assets/icons/skills/javascript.svg' },
+                        { name: 'TypeScript', stars: 4, years: '4+ Yrs', icon: 'assets/icons/skills/typescript.svg' },
+                        { name: 'Ruby on Rails', stars: 3, years: '4+ Yrs', icon: 'assets/icons/skills/rubyonrails.svg' },
                         { name: 'TestNG', stars: 5, years: '10+ Yrs', icon: 'assets/icons/testing.svg' },
-                        { name: 'Jasmin', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/jasmine/8A4182' },
-                        { name: 'Jest', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/jest/C21325' },
-                        { name: 'Mocha', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/mocha/8D6748' },
-                        { name: 'Chai', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/chai/A30707' },
-                        { name: 'Watir', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/ruby/CC342D' },
-                        { name: 'Watin', stars: 3, years: '3+ Yrs', icon: 'assets/icons/csharp.svg' }
+                        { name: 'Jasmin', stars: 4, years: '5+ Yrs', icon: 'assets/icons/skills/jasmine.svg' },
+                        { name: 'Jest', stars: 4, years: '4+ Yrs', icon: 'assets/icons/skills/jest.svg' },
+                        { name: 'Mocha', stars: 4, years: '5+ Yrs', icon: 'assets/icons/skills/mocha.svg' },
+                        { name: 'Chai', stars: 4, years: '5+ Yrs', icon: 'assets/icons/skills/chai.svg' },
+                        { name: 'Watir', stars: 3, years: '3+ Yrs', icon: 'assets/icons/skills/ruby.svg' },
+                        { name: 'Watin', stars: 3, years: '3+ Yrs', icon: 'assets/icons/csharp.svg' },
+                        { name: 'HTML5', stars: 5, years: '10+ Yrs', icon: 'assets/icons/globe.svg' },
+                        { name: 'CSS3', stars: 4, years: '10+ Yrs', icon: 'assets/icons/globe.svg' },
+                        { name: 'Tailwind CSS', stars: 4, years: '1+ Yrs', icon: 'assets/icons/globe.svg' },
+                        { name: 'Node.js', stars: 4, years: '4+ Yrs', icon: 'assets/icons/skills/javascript.svg' },
+                        { name: 'Vite', stars: 3, years: '1+ Yrs', icon: 'assets/icons/skills/javascript.svg' },
+                        { name: 'D3.js', stars: 3, years: '1+ Yrs', icon: 'assets/icons/skills/javascript.svg' },
+                        { name: 'Three.js', stars: 3, years: '1+ Yrs', icon: 'assets/icons/skills/javascript.svg' },
+                        { name: 'jsPDF', stars: 3, years: '1+ Yrs', icon: 'assets/icons/skills/javascript.svg' },
+                        { name: 'html2canvas', stars: 3, years: '1+ Yrs', icon: 'assets/icons/skills/javascript.svg' },
+                        { name: 'Puppeteer', stars: 4, years: '1+ Yrs', icon: 'assets/icons/testing.svg' },
+                        { name: 'Kotlin', stars: 3, years: '1+ Yrs', icon: 'assets/icons/skills/android.svg' },
+                        { name: 'Jetpack Compose', stars: 3, years: '1+ Yrs', icon: 'assets/icons/skills/android.svg' },
+                        { name: 'C#', stars: 3, years: '3+ Yrs', icon: 'assets/icons/csharp.svg' },
+                        { name: 'Ruby', stars: 3, years: '4+ Yrs', icon: 'assets/icons/skills/ruby.svg' },
+                        { name: 'Bash', stars: 4, years: '10+ Yrs', icon: 'assets/icons/terminal.svg' }
                     ],
                     cloud: [
                         { name: 'AWS', stars: 5, years: '8+ Yrs', icon: 'assets/icons/amazonaws.svg' },
                         { name: 'Azure DevOps', stars: 4, years: '5+ Yrs', icon: 'assets/icons/azuredevops.svg' },
-                        { name: 'GCP', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/googlecloud/4285F4' },
-                        { name: 'Jenkins', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/jenkins/D24939' },
-                        { name: 'Docker', stars: 4, years: '6+ Yrs', icon: 'https://cdn.simpleicons.org/docker/2496ED' },
-                        { name: 'GitHub', stars: 5, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/github/181717' },
+                        { name: 'GCP', stars: 4, years: '4+ Yrs', icon: 'assets/icons/skills/googlecloud.svg' },
+                        { name: 'Jenkins', stars: 5, years: '10+ Yrs', icon: 'assets/icons/skills/jenkins.svg' },
+                        { name: 'Docker', stars: 4, years: '6+ Yrs', icon: 'assets/icons/skills/docker.svg' },
+                        { name: 'GitHub', stars: 5, years: '10+ Yrs', icon: 'assets/icons/skills/github.svg' },
+                        { name: 'GitHub Actions', stars: 5, years: '4+ Yrs', icon: 'assets/icons/skills/github.svg' },
+                        { name: 'GitHub Pages', stars: 4, years: '4+ Yrs', icon: 'assets/icons/skills/github.svg' },
+                        { name: 'Firebase', stars: 4, years: '1+ Yrs', icon: 'assets/icons/database.svg' },
+                        { name: 'Firestore', stars: 4, years: '1+ Yrs', icon: 'assets/icons/database.svg' },
+                        { name: 'Cloud Functions', stars: 4, years: '1+ Yrs', icon: 'assets/icons/skills/googlecloud.svg' },
+                        { name: 'Google Cloud Run', stars: 4, years: '1+ Yrs', icon: 'assets/icons/skills/googlecloud.svg' },
+                        { name: 'Cloud Build', stars: 3, years: '1+ Yrs', icon: 'assets/icons/skills/googlecloud.svg' },
+                        { name: 'Cloudflare Workers', stars: 3, years: '1+ Yrs', icon: 'assets/icons/api.svg' },
+                        { name: 'Cloudflare Turnstile', stars: 3, years: '1+ Yrs', icon: 'assets/icons/shield.svg' },
+                        { name: 'Gradle', stars: 3, years: '3+ Yrs', icon: 'assets/icons/process.svg' },
+                        { name: 'Super-Linter', stars: 4, years: '1+ Yrs', icon: 'assets/icons/standards.svg' },
+                        { name: 'Qodana', stars: 3, years: '1+ Yrs', icon: 'assets/icons/standards.svg' }
                     ],
                     analytics: [
-                        { name: 'Datadog', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/datadog/632CA6' },
-                        { name: 'Grafana', stars: 4, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/grafana/F46800' },
-                        { name: 'New Relic', stars: 4, years: '4+ Yrs', icon: 'https://cdn.simpleicons.org/newrelic/14B78D' },
-                        { name: 'Splunk', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/splunk/000000' },
-                        { name: 'Owasp', stars: 4, years: '8+ Yrs', icon: 'https://cdn.simpleicons.org/owasp/000000' },
-                        { name: 'W3C', stars: 5, years: '10+ Yrs', icon: 'assets/icons/globe.svg' }
+                        { name: 'Datadog', stars: 4, years: '4+ Yrs', icon: 'assets/icons/skills/datadog.svg' },
+                        { name: 'Grafana', stars: 4, years: '5+ Yrs', icon: 'assets/icons/skills/grafana.svg' },
+                        { name: 'New Relic', stars: 4, years: '4+ Yrs', icon: 'assets/icons/skills/newrelic.svg' },
+                        { name: 'Splunk', stars: 3, years: '3+ Yrs', icon: 'assets/icons/skills/splunk.svg' },
+                        { name: 'Owasp', stars: 4, years: '8+ Yrs', icon: 'assets/icons/skills/owasp.svg' },
+                        { name: 'W3C', stars: 5, years: '10+ Yrs', icon: 'assets/icons/globe.svg' },
+                        { name: 'PageSpeed Insights', stars: 5, years: '4+ Yrs', icon: 'assets/icons/gauge.svg' },
+                        { name: 'CrUX', stars: 4, years: '1+ Yrs', icon: 'assets/icons/gauge.svg' },
+                        { name: 'Google Web Risk', stars: 3, years: '1+ Yrs', icon: 'assets/icons/shield.svg' }
                     ],
                     platform: [
                         { name: 'Salesforce', stars: 4, years: '6+ Yrs', icon: 'assets/icons/salesforce.svg' },
                         { name: 'MS Dynamics', stars: 3, years: '4+ Yrs', icon: 'assets/icons/building.svg' },
-                        { name: 'SAP', stars: 3, years: '5+ Yrs', icon: 'https://cdn.simpleicons.org/sap/008FD3' },
-                        { name: 'Zoho CRM', stars: 3, years: '3+ Yrs', icon: 'https://cdn.simpleicons.org/zoho/E42525' }
+                        { name: 'SAP', stars: 3, years: '5+ Yrs', icon: 'assets/icons/skills/sap.svg' },
+                        { name: 'Zoho CRM', stars: 3, years: '3+ Yrs', icon: 'assets/icons/skills/zoho.svg' },
+                        { name: 'Android', stars: 4, years: '6+ Yrs', icon: 'assets/icons/skills/android.svg' },
+                        { name: 'Wear OS', stars: 3, years: '1+ Yrs', icon: 'assets/icons/mobile.svg' },
+                        { name: 'Stripe', stars: 3, years: '1+ Yrs', icon: 'assets/icons/building.svg' },
+                        { name: 'PayPal', stars: 3, years: '1+ Yrs', icon: 'assets/icons/building.svg' },
+                        { name: 'Mercado Pago', stars: 3, years: '1+ Yrs', icon: 'assets/icons/building.svg' },
+                        { name: 'Wompi', stars: 3, years: '1+ Yrs', icon: 'assets/icons/building.svg' },
+                        { name: 'Buffer', stars: 3, years: '1+ Yrs', icon: 'assets/icons/calendar.svg' },
+                        { name: 'Meta Graph API', stars: 3, years: '1+ Yrs', icon: 'assets/icons/api.svg' },
+                        { name: 'Bluesky', stars: 3, years: '1+ Yrs', icon: 'assets/icons/globe.svg' },
+                        { name: 'Mastodon', stars: 3, years: '1+ Yrs', icon: 'assets/icons/globe.svg' }
                     ],
                     system: [
                         { name: 'Middleware', stars: 4, years: '8+ Yrs', icon: 'assets/icons/api.svg'},
                         { name: 'Toad', stars: 4, years: '10+ Yrs', icon: 'assets/icons/database.svg'},
-                        { name: 'Eclipse', stars: 4, years: '10+ Yrs', icon: 'https://cdn.simpleicons.org/eclipseide/2C2255'},
-                        { name: 'Cygwin', stars: 3, years: '10+ Yrs', icon: 'assets/icons/terminal.svg'}
+                        { name: 'Eclipse', stars: 4, years: '10+ Yrs', icon: 'assets/icons/skills/eclipseide.svg'},
+                        { name: 'Cygwin', stars: 3, years: '10+ Yrs', icon: 'assets/icons/terminal.svg'},
+                        { name: 'Google Places API', stars: 3, years: '1+ Yrs', icon: 'assets/icons/api.svg' },
+                        { name: 'Google Calendar API', stars: 3, years: '1+ Yrs', icon: 'assets/icons/calendar.svg' },
+                        { name: 'SendGrid', stars: 3, years: '1+ Yrs', icon: 'assets/icons/api.svg' },
+                        { name: 'Web Push', stars: 3, years: '1+ Yrs', icon: 'assets/icons/mobile.svg' },
+                        { name: 'Text-to-Speech', stars: 3, years: '1+ Yrs', icon: 'assets/icons/api.svg' },
+                        { name: 'FFmpeg', stars: 3, years: '1+ Yrs', icon: 'assets/icons/terminal.svg' }
                     ],
                     ai: [
                         { name: 'Cursor', stars: 5, years: '1 Yr', icon: 'assets/icons/puzzle.svg' },
                         { name: 'Claude', stars: 5, years: '1 Yr', icon: 'assets/icons/brain.svg' },
                         { name: 'GitHub Copilot', stars: 4, years: '1 Yr', icon: 'assets/icons/puzzle.svg' },
                         { name: 'ChatGPT', stars: 5, years: '1 Yr', icon: 'assets/icons/brain.svg' },
-                        { name: 'Custom personalizations', stars: 4, years: '1 Yr', icon: 'assets/icons/strategy.svg' }
+                        { name: 'Custom personalizations', stars: 4, years: '1 Yr', icon: 'assets/icons/strategy.svg' },
+                        { name: 'Gemini API', stars: 4, years: '1+ Yrs', icon: 'assets/icons/brain.svg' },
+                        { name: 'AI-assisted development', stars: 5, years: '1+ Yrs', icon: 'assets/icons/puzzle.svg' },
+                        { name: 'Prompt & context engineering', stars: 5, years: '1+ Yrs', icon: 'assets/icons/strategy.svg' }
                     ]
                 },
                 experiences: [
+                    {
+                        title: 'Founder & Lead Engineer', company: 'QA Lab · carlosandmunoz.com', logo: 'assets/qa-review-mark.svg', dates: '2025 - Present', featured: true,
+                        badge: { en: 'Featured · My own product', es: 'Destacado · Mi propio producto', pt: 'Destaque · Meu próprio produto', de: 'Highlight · Mein eigenes Produkt', fr: 'À la une · Mon propre produit', it: 'In evidenza · Il mio prodotto' },
+                        summary: {
+                            en: 'Designed, built and run the platform end to end, using AI coding assistants (Cursor, Claude) to speed up implementation. I own the architecture, specifications, code review, testing and releases.',
+                            es: 'Diseñé, construí y opero la plataforma de principio a fin, con asistentes de programación con IA (Cursor, Claude) para acelerar la implementación. Soy responsable de la arquitectura, las especificaciones, la revisión de código, las pruebas y las versiones.',
+                            pt: 'Projetei, desenvolvi e opero a plataforma de ponta a ponta, usando assistentes de programação com IA (Cursor, Claude) para acelerar a implementação. Sou responsável pela arquitetura, pelas especificações, pela revisão de código, pelos testes e pelos releases.',
+                            de: 'Ich habe die Plattform durchgängig konzipiert, entwickelt und betreibe sie; KI-Coding-Assistenten (Cursor, Claude) setze ich ein, um die Umsetzung zu beschleunigen. Architektur, Spezifikationen, Code-Reviews, Tests und Releases liegen in meiner Verantwortung.',
+                            fr: 'J\'ai conçu, développé et j\'exploite la plateforme de bout en bout, en m\'appuyant sur des assistants de code IA (Cursor, Claude) pour accélérer l\'implémentation. Je suis responsable de l\'architecture, des spécifications, de la revue de code, des tests et des mises en production.',
+                            it: 'Ho progettato, sviluppato e gestisco la piattaforma end-to-end, utilizzando assistenti di programmazione basati sull\'IA (Cursor, Claude) per accelerare l\'implementazione. Sono responsabile di architettura, specifiche, code review, test e rilasci.'
+                        },
+                        highlights: [
+                            { value: '575+', label: { en: 'merged pull requests', es: 'pull requests fusionadas', pt: 'pull requests mergeados', de: 'gemergte Pull Requests', fr: 'pull requests fusionnées', it: 'pull request integrate' } },
+                            { value: '1,700+', label: { en: 'tracked tickets', es: 'tickets gestionados', pt: 'tickets acompanhados', de: 'erfasste Tickets', fr: 'tickets suivis', it: 'ticket tracciati' } },
+                            { value: '82', label: { en: 'tools and technologies', es: 'herramientas y tecnologías', pt: 'ferramentas e tecnologias', de: 'Tools und Technologien', fr: 'outils et technologies', it: 'strumenti e tecnologie' } },
+                            { value: '20', label: { en: 'test frameworks', es: 'frameworks de pruebas', pt: 'frameworks de teste', de: 'Test-Frameworks', fr: 'frameworks de test', it: 'framework di test' } },
+                            { value: '6', label: { en: 'languages', es: 'idiomas', pt: 'idiomas', de: 'Sprachen', fr: 'langues', it: 'lingue' } }
+                        ],
+                        details: {
+                            en: [
+                                'How I work: I lead the engineering end to end and use AI coding assistants (Cursor, Claude) as part of my toolchain to move faster. I write the specs and acceptance criteria, design the architecture, review and test every change, and decide what ships. Up to 19 AI-assisted workstreams run in parallel, each isolated in its own git worktree.',
+                                'Delivery: 575+ merged pull requests and 1,700+ tickets on a GitHub Projects Scrum board (Backlog, Next, Design, Dev, QA, Staging, Prod, Done). Every bug, regression and process slip found during development is logged as its own linked issue.',
+                                'Engineering workflow and guardrails: Project rules and coding standards that every AI-assisted change must follow, a pre-flight hook that sizes each task and loads the relevant files and past tickets, a shared GitHub API budget, and a per-ticket usage and cost log that keeps tooling spend down.',
+                                'Interactive CV: This site. Six native languages plus machine translation, competency and skill filters, a D3 skills radar, a guided tour, PDF, JPG, Word, JSON and text export, ten switchable visual themes, a Firestore contact form with ratings and testimonials, and SEO with JSON-LD.',
+                                'QA-lab URL Review (paid SaaS): Scores any website for SEO, AI search, analytics, security, accessibility (axe-core), speed (PageSpeed, CrUX), mail setup (MX, SPF, DMARC), certificate, domain registration, Safe Browsing and Google Business Profile. A headless Chrome pass on Cloud Functions flags tracking that starts before cookie consent. It writes risk-ranked test cases and scripts for 20 frameworks in six languages, compares competitors and tests chatbots for prompt injection. Sign-in with Google, Microsoft, GitHub, Yahoo, X or an email code; payments through Stripe, PayPal, Mercado Pago and Wompi.',
+                                'Regression lab: The same test cases in 20 frameworks across JavaScript, TypeScript, Python, Java, C# and Ruby, runnable live in the browser against the production site, plus a Dockerized Playwright runner on Google Cloud Run.',
+                                'SDLC studio: A four-agent sprint simulation (Ticket Steward, Test Designer, Automation Engineer, Release Verifier) on Jira, Azure DevOps, Monday.com, Trello, Linear, Asana or MS Project boards, with Zephyr Scale, Xray and TestRail views and a downloadable sprint report.',
+                                'Admin and Jarvis assistant: A Firebase-authenticated admin panel with a real-time inbox, CV editor and theme publishing, and an operations assistant with Android phone and Wear OS apps (Kotlin, Jetpack Compose), web push, mail triage, bookings through Google Calendar and Gemini AI.',
+                                'Marketing automation: A social hub that writes, renders (FFmpeg, text-to-speech) and schedules posts and video clips in six languages to Facebook, Instagram, Threads, Bluesky and Mastodon.',
+                                'CI/CD and operations: 31 GitHub Actions workflows covering GitHub Pages deploys, linting (Super-Linter, Qodana), Android emulator tests, daily PageSpeed and field sweeps, and auto-published live reports, plus Cloudflare Workers with Turnstile bot protection.'
+                            ],
+                            es: [
+                                'Cómo trabajo: Lidero la ingeniería de principio a fin y uso asistentes de programación con IA (Cursor, Claude) como parte de mis herramientas para avanzar más rápido. Redacto las especificaciones y los criterios de aceptación, diseño la arquitectura, reviso y pruebo cada cambio y decido qué se publica. Hasta 19 líneas de trabajo asistidas por IA avanzan en paralelo, cada una aislada en su propio git worktree.',
+                                'Entrega: 575+ pull requests fusionadas y 1.700+ tickets en un tablero Scrum de GitHub Projects (Backlog, Next, Design, Dev, QA, Staging, Prod, Done). Registro cada bug, regresión o fallo de proceso detectado durante el desarrollo como una incidencia propia y vinculada.',
+                                'Flujo de ingeniería y salvaguardas: Reglas de proyecto y estándares de código que todo cambio asistido por IA debe cumplir, un hook de pre-flight que dimensiona cada tarea y carga los archivos y tickets anteriores relevantes, un presupuesto compartido para la API de GitHub y un registro de uso y costes por ticket que mantiene bajo control el gasto en herramientas.',
+                                'CV interactivo: Este sitio. Seis idiomas nativos más traducción automática, filtros por competencias y habilidades, un radar de habilidades en D3, una visita guiada, exportación a PDF, JPG, Word, JSON y texto, diez temas visuales intercambiables, un formulario de contacto en Firestore con valoraciones y testimonios, y SEO con JSON-LD.',
+                                'QA-lab URL Review (SaaS de pago): Evalúa cualquier sitio web en SEO, búsqueda con IA, analítica, seguridad, accesibilidad (axe-core), velocidad (PageSpeed, CrUX), configuración de correo (MX, SPF, DMARC), certificado, registro de dominio, Safe Browsing y Google Business Profile. Una pasada con Chrome headless en Cloud Functions detecta el rastreo que se activa antes del consentimiento de cookies. Genera casos de prueba priorizados por riesgo y scripts para 20 frameworks en seis lenguajes, compara competidores y prueba chatbots frente a la inyección de prompts. Inicio de sesión con Google, Microsoft, GitHub, Yahoo, X o un código por correo; pagos mediante Stripe, PayPal, Mercado Pago y Wompi.',
+                                'Laboratorio de regresión: Los mismos casos de prueba en 20 frameworks con JavaScript, TypeScript, Python, Java, C# y Ruby, ejecutables en vivo desde el navegador contra el sitio de producción, además de un runner de Playwright dockerizado en Google Cloud Run.',
+                                'Estudio SDLC: Una simulación de sprint con cuatro agentes (Ticket Steward, Test Designer, Automation Engineer, Release Verifier) sobre tableros de Jira, Azure DevOps, Monday.com, Trello, Linear, Asana o MS Project, con vistas de Zephyr Scale, Xray y TestRail y un informe de sprint descargable.',
+                                'Panel de administración y asistente Jarvis: Un panel de administración autenticado con Firebase, con bandeja de entrada en tiempo real, editor del CV y publicación de temas, y un asistente de operaciones con apps para teléfono Android y Wear OS (Kotlin, Jetpack Compose), notificaciones web push, clasificación de correo, reservas a través de Google Calendar e IA de Gemini.',
+                                'Automatización de marketing: Un hub social que redacta, renderiza (FFmpeg, texto a voz) y programa publicaciones y clips de vídeo en seis idiomas para Facebook, Instagram, Threads, Bluesky y Mastodon.',
+                                'CI/CD y operaciones: 31 workflows de GitHub Actions que cubren despliegues en GitHub Pages, linting (Super-Linter, Qodana), pruebas en emulador de Android, barridos diarios de PageSpeed y datos de campo, e informes en vivo publicados automáticamente, además de Cloudflare Workers con protección antibots Turnstile.'
+                            ],
+                            pt: [
+                                'Como trabalho: Lidero a engenharia de ponta a ponta e uso assistentes de programação com IA (Cursor, Claude) como parte do meu conjunto de ferramentas para ganhar velocidade. Escrevo as especificações e os critérios de aceite, projeto a arquitetura, reviso e testo cada mudança e decido o que vai para produção. Até 19 frentes de trabalho assistidas por IA rodam em paralelo, cada uma isolada em seu próprio git worktree.',
+                                'Entregas: 575+ pull requests mergeados e 1.700+ tickets em um quadro Scrum no GitHub Projects (Backlog, Next, Design, Dev, QA, Staging, Prod, Done). Registro cada bug, regressão e falha de processo encontrado durante o desenvolvimento como uma issue própria e vinculada.',
+                                'Fluxo de engenharia e salvaguardas: Regras de projeto e padrões de código que toda mudança assistida por IA precisa seguir, um hook de pre-flight que dimensiona cada tarefa e carrega os arquivos e tickets anteriores relevantes, um orçamento compartilhado da API do GitHub e um registro de uso e custo por ticket que mantém baixos os gastos com ferramentas.',
+                                'CV interativo: Este site. Seis idiomas nativos mais tradução automática, filtros de competências e habilidades, um radar de habilidades em D3, um tour guiado, exportação em PDF, JPG, Word, JSON e texto, dez temas visuais alternáveis, um formulário de contato no Firestore com avaliações e depoimentos, e SEO com JSON-LD.',
+                                'QA-lab URL Review (SaaS pago): Avalia qualquer site em SEO, busca por IA, analytics, segurança, acessibilidade (axe-core), velocidade (PageSpeed, CrUX), configuração de e-mail (MX, SPF, DMARC), certificado, registro de domínio, Safe Browsing e Google Business Profile. Uma varredura com Chrome headless no Cloud Functions identifica rastreamento que começa antes do consentimento de cookies. Gera casos de teste priorizados por risco e scripts para 20 frameworks em seis linguagens, compara concorrentes e testa chatbots contra prompt injection. Login com Google, Microsoft, GitHub, Yahoo, X ou código por e-mail; pagamentos via Stripe, PayPal, Mercado Pago e Wompi.',
+                                'Laboratório de regressão: Os mesmos casos de teste em 20 frameworks em JavaScript, TypeScript, Python, Java, C# e Ruby, executáveis ao vivo no navegador contra o site em produção, além de um runner Playwright em Docker no Google Cloud Run.',
+                                'Estúdio SDLC: Uma simulação de sprint com quatro agentes (Ticket Steward, Test Designer, Automation Engineer, Release Verifier) em quadros do Jira, Azure DevOps, Monday.com, Trello, Linear, Asana ou MS Project, com visões do Zephyr Scale, Xray e TestRail e um relatório de sprint para download.',
+                                'Admin e assistente Jarvis: Um painel administrativo com autenticação Firebase, caixa de entrada em tempo real, editor de CV e publicação de temas, e um assistente de operações com apps para celular Android e Wear OS (Kotlin, Jetpack Compose), web push, triagem de e-mails, agendamentos pelo Google Calendar e IA do Gemini.',
+                                'Automação de marketing: Um hub social que escreve, renderiza (FFmpeg, texto para fala) e agenda posts e clipes de vídeo em seis idiomas para Facebook, Instagram, Threads, Bluesky e Mastodon.',
+                                'CI/CD e operações: 31 workflows do GitHub Actions cobrindo deploys no GitHub Pages, linting (Super-Linter, Qodana), testes em emulador Android, varreduras diárias de PageSpeed e dados de campo e relatórios ao vivo publicados automaticamente, além de Cloudflare Workers com proteção contra bots via Turnstile.'
+                            ],
+                            de: [
+                                'Arbeitsweise: Ich verantworte das Engineering von Anfang bis Ende und nutze KI-Coding-Assistenten (Cursor, Claude) als Teil meiner Toolchain, um schneller voranzukommen. Ich schreibe Spezifikationen und Akzeptanzkriterien, entwerfe die Architektur, prüfe und teste jede Änderung und entscheide, was ausgeliefert wird. Bis zu 19 KI-gestützte Arbeitsstränge laufen parallel, jeder isoliert in einem eigenen Git-Worktree.',
+                                'Umsetzung: 575+ gemergte Pull Requests und 1.700+ Tickets auf einem Scrum-Board in GitHub Projects (Backlog, Next, Design, Dev, QA, Staging, Prod, Done). Jeden Bug, jede Regression und jede Prozessabweichung aus der Entwicklung erfasse ich als eigenes, verknüpftes Issue.',
+                                'Engineering-Workflow und Leitplanken: Projektregeln und Coding-Standards, die jede KI-gestützte Änderung einhalten muss, ein Pre-Flight-Hook, der jede Aufgabe einschätzt und die relevanten Dateien und früheren Tickets lädt, ein gemeinsames GitHub-API-Budget sowie ein Nutzungs- und Kostenprotokoll pro Ticket, das die Tooling-Kosten niedrig hält.',
+                                'Interaktiver Lebenslauf: Diese Website. Sechs muttersprachlich gepflegte Sprachen plus maschinelle Übersetzung, Filter nach Kompetenzen und Skills, ein D3-Skill-Radar, eine geführte Tour, Export als PDF, JPG, Word, JSON und Text, zehn umschaltbare visuelle Themes, ein Firestore-Kontaktformular mit Bewertungen und Referenzen sowie SEO mit JSON-LD.',
+                                'QA-lab URL Review (kostenpflichtiges SaaS): Bewertet jede Website in den Bereichen SEO, KI-Suche, Analytics, Sicherheit, Barrierefreiheit (axe-core), Geschwindigkeit (PageSpeed, CrUX), E-Mail-Konfiguration (MX, SPF, DMARC), Zertifikat, Domainregistrierung, Safe Browsing und Google Business Profile. Ein Headless-Chrome-Durchlauf auf Cloud Functions erkennt Tracking, das vor der Cookie-Einwilligung startet. Erstellt risikopriorisierte Testfälle und Skripte für 20 Frameworks in sechs Programmiersprachen, vergleicht Wettbewerber und testet Chatbots auf Prompt Injection. Anmeldung über Google, Microsoft, GitHub, Yahoo, X oder E-Mail-Code; Zahlungen über Stripe, PayPal, Mercado Pago und Wompi.',
+                                'Regressionslabor: Dieselben Testfälle in 20 Frameworks für JavaScript, TypeScript, Python, Java, C# und Ruby, live im Browser gegen die Produktivseite ausführbar, dazu ein Docker-basierter Playwright-Runner auf Google Cloud Run.',
+                                'SDLC-Studio: Eine Sprint-Simulation mit vier Agenten (Ticket Steward, Test Designer, Automation Engineer, Release Verifier) auf Boards in Jira, Azure DevOps, Monday.com, Trello, Linear, Asana oder MS Project, mit Ansichten für Zephyr Scale, Xray und TestRail und einem herunterladbaren Sprint-Bericht.',
+                                'Admin-Bereich und Jarvis-Assistent: Ein per Firebase authentifiziertes Admin-Panel mit Echtzeit-Posteingang, CV-Editor und Theme-Veröffentlichung sowie ein Operations-Assistent mit Apps für Android-Smartphone und Wear OS (Kotlin, Jetpack Compose), Web-Push, E-Mail-Triage, Terminbuchungen über Google Calendar und Gemini-KI.',
+                                'Marketing-Automatisierung: Ein Social-Media-Hub, der Beiträge und Videoclips in sechs Sprachen erstellt, rendert (FFmpeg, Text-to-Speech) und für Facebook, Instagram, Threads, Bluesky und Mastodon einplant.',
+                                'CI/CD und Betrieb: 31 GitHub-Actions-Workflows für Deployments auf GitHub Pages, Linting (Super-Linter, Qodana), Android-Emulator-Tests, tägliche PageSpeed- und Felddaten-Scans und automatisch veröffentlichte Live-Berichte, dazu Cloudflare Workers mit Bot-Schutz durch Turnstile.'
+                            ],
+                            fr: [
+                                'Ma façon de travailler: Je pilote l\'ingénierie de bout en bout et j\'intègre des assistants de code IA (Cursor, Claude) à ma chaîne d\'outils pour aller plus vite. Je rédige les spécifications et les critères d\'acceptation, je conçois l\'architecture, je relis et teste chaque modification et je décide de ce qui part en production. Jusqu\'à 19 chantiers assistés par IA avancent en parallèle, chacun isolé dans son propre git worktree.',
+                                'Livraison: 575+ pull requests fusionnées et 1 700+ tickets sur un tableau Scrum GitHub Projects (Backlog, Next, Design, Dev, QA, Staging, Prod, Done). Je consigne chaque bug, régression ou écart de processus détecté pendant le développement dans une issue dédiée et liée.',
+                                'Workflow d\'ingénierie et garde-fous: Des règles de projet et des standards de code que chaque modification assistée par IA doit respecter, un hook de pre-flight qui dimensionne chaque tâche et charge les fichiers et tickets antérieurs pertinents, un budget partagé pour l\'API GitHub et un journal d\'usage et de coûts par ticket qui maîtrise les dépenses d\'outillage.',
+                                'CV interactif: Ce site. Six langues natives plus la traduction automatique, des filtres par compétences, un radar de compétences en D3, une visite guidée, l\'export en PDF, JPG, Word, JSON et texte, dix thèmes visuels interchangeables, un formulaire de contact Firestore avec notes et témoignages, et un SEO avec JSON-LD.',
+                                'QA-lab URL Review (SaaS payant): Évalue n\'importe quel site web sur le SEO, la recherche IA, l\'analytics, la sécurité, l\'accessibilité (axe-core), la vitesse (PageSpeed, CrUX), la configuration e-mail (MX, SPF, DMARC), le certificat, l\'enregistrement du domaine, Safe Browsing et Google Business Profile. Un passage Chrome headless sur Cloud Functions repère le tracking déclenché avant le consentement aux cookies. Il génère des cas de test classés par risque et des scripts pour 20 frameworks dans six langages, compare les concurrents et teste la résistance des chatbots à l\'injection de prompts. Connexion via Google, Microsoft, GitHub, Yahoo, X ou un code par e-mail; paiements via Stripe, PayPal, Mercado Pago et Wompi.',
+                                'Laboratoire de régression: Les mêmes cas de test dans 20 frameworks en JavaScript, TypeScript, Python, Java, C# et Ruby, exécutables en direct dans le navigateur sur le site de production, ainsi qu\'un runner Playwright conteneurisé avec Docker sur Google Cloud Run.',
+                                'Studio SDLC: Une simulation de sprint à quatre agents (Ticket Steward, Test Designer, Automation Engineer, Release Verifier) sur des tableaux Jira, Azure DevOps, Monday.com, Trello, Linear, Asana ou MS Project, avec des vues Zephyr Scale, Xray et TestRail et un rapport de sprint téléchargeable.',
+                                'Administration et assistant Jarvis: Un panneau d\'administration authentifié par Firebase avec boîte de réception en temps réel, éditeur de CV et publication de thèmes, ainsi qu\'un assistant opérationnel avec des applications pour téléphone Android et Wear OS (Kotlin, Jetpack Compose), notifications web push, tri des e-mails, réservations via Google Calendar et IA Gemini.',
+                                'Automatisation marketing: Un hub social qui rédige, génère (FFmpeg, synthèse vocale) et programme des publications et des clips vidéo en six langues pour Facebook, Instagram, Threads, Bluesky et Mastodon.',
+                                'CI/CD et exploitation: 31 workflows GitHub Actions couvrant les déploiements GitHub Pages, le linting (Super-Linter, Qodana), les tests sur émulateur Android, des analyses quotidiennes PageSpeed et de données terrain, et des rapports en direct publiés automatiquement, ainsi que des Cloudflare Workers protégés contre les bots par Turnstile.'
+                            ],
+                            it: [
+                                'Come lavoro: Guido l\'ingegneria end-to-end e uso assistenti di programmazione basati sull\'IA (Cursor, Claude) come parte della mia toolchain per procedere più rapidamente. Scrivo le specifiche e i criteri di accettazione, progetto l\'architettura, revisiono e testo ogni modifica e decido cosa va in produzione. Fino a 19 flussi di lavoro assistiti dall\'IA procedono in parallelo, ciascuno isolato nel proprio git worktree.',
+                                'Delivery: 575+ pull request integrate e 1.700+ ticket su una board Scrum di GitHub Projects (Backlog, Next, Design, Dev, QA, Staging, Prod, Done). Registro ogni bug, regressione e scostamento di processo emerso durante lo sviluppo come issue dedicata e collegata.',
+                                'Workflow di ingegneria e salvaguardie: Regole di progetto e standard di codice che ogni modifica assistita dall\'IA deve rispettare, un hook di pre-flight che dimensiona ogni attività e carica i file e i ticket precedenti pertinenti, un budget condiviso per le API di GitHub e un registro di utilizzo e costi per ticket che tiene bassa la spesa per gli strumenti.',
+                                'CV interattivo: Questo sito. Sei lingue native più traduzione automatica, filtri per competenze e skill, un radar delle competenze in D3, un tour guidato, esportazione in PDF, JPG, Word, JSON e testo, dieci temi visivi selezionabili, un modulo di contatto su Firestore con valutazioni e testimonianze, e SEO con JSON-LD.',
+                                'QA-lab URL Review (SaaS a pagamento): Valuta qualsiasi sito web per SEO, ricerca IA, analytics, sicurezza, accessibilità (axe-core), velocità (PageSpeed, CrUX), configurazione email (MX, SPF, DMARC), certificato, registrazione del dominio, Safe Browsing e Google Business Profile. Un passaggio con Chrome headless su Cloud Functions segnala il tracciamento che parte prima del consenso ai cookie. Genera casi di test ordinati per rischio e script per 20 framework in sei linguaggi, confronta i concorrenti e testa i chatbot contro la prompt injection. Accesso con Google, Microsoft, GitHub, Yahoo, X o codice via email; pagamenti tramite Stripe, PayPal, Mercado Pago e Wompi.',
+                                'Laboratorio di regressione: Gli stessi casi di test in 20 framework tra JavaScript, TypeScript, Python, Java, C# e Ruby, eseguibili dal vivo nel browser sul sito di produzione, più un runner Playwright containerizzato con Docker su Google Cloud Run.',
+                                'Studio SDLC: Una simulazione di sprint con quattro agenti (Ticket Steward, Test Designer, Automation Engineer, Release Verifier) su board Jira, Azure DevOps, Monday.com, Trello, Linear, Asana o MS Project, con viste Zephyr Scale, Xray e TestRail e un report di sprint scaricabile.',
+                                'Admin e assistente Jarvis: Un pannello di amministrazione con autenticazione Firebase, inbox in tempo reale, editor del CV e pubblicazione dei temi, e un assistente operativo con app per smartphone Android e Wear OS (Kotlin, Jetpack Compose), web push, smistamento della posta, prenotazioni tramite Google Calendar e IA Gemini.',
+                                'Automazione del marketing: Un hub social che scrive, renderizza (FFmpeg, sintesi vocale) e pianifica post e clip video in sei lingue su Facebook, Instagram, Threads, Bluesky e Mastodon.',
+                                'CI/CD e operazioni: 31 workflow di GitHub Actions per deploy su GitHub Pages, linting (Super-Linter, Qodana), test su emulatore Android, scansioni giornaliere PageSpeed e dei dati di campo e report live pubblicati automaticamente, oltre a Cloudflare Workers con protezione anti-bot Turnstile.'
+                            ]
+                        },
+                        techUsed: ['Cursor', 'Claude', 'Gemini API', 'AI-assisted development', 'Prompt & context engineering', 'Agile', 'Scrum', 'Kanban', 'GitHub Projects', 'HTML5', 'CSS3', 'JavaScript', 'TypeScript', 'Tailwind CSS', 'D3.js', 'Three.js', 'jsPDF', 'html2canvas', 'Vite', 'Node.js', 'Firebase', 'Firestore', 'Cloud Functions', 'Google Cloud Run', 'Cloud Build', 'Docker', 'Cloudflare Workers', 'Cloudflare Turnstile', 'Puppeteer', 'Android', 'Kotlin', 'Jetpack Compose', 'Wear OS', 'Gradle', 'Playwright', 'Cypress', 'Selenium', 'WebdriverIO', 'CodeceptJS', 'Robot Framework', 'Selenide', 'TestNG', 'Watir', 'Cucumber', 'Behave', 'Reqnroll', 'Jest', 'Vitest', 'Mocha', 'Appium', 'Maestro', 'k6', 'JMeter', 'Gatling', 'axe-core', 'Lighthouse', 'Python', 'Java', 'C#', 'Ruby', 'Bash', 'GitHub Actions', 'GitHub Pages', 'Super-Linter', 'Qodana', 'PageSpeed Insights', 'CrUX', 'Google Places API', 'Google Web Risk', 'Google Calendar API', 'Text-to-Speech', 'SendGrid', 'Web Push', 'Stripe', 'PayPal', 'Mercado Pago', 'Wompi', 'Buffer', 'Meta Graph API', 'Bluesky', 'Mastodon', 'FFmpeg']
+                    },
                     {
                         title: 'Senior QA & Program Consultant', company: 'Team International', logo: 'assets/logos/team-international.png', dates: 'Jan 2021 - Present',
                         details: {
@@ -570,7 +724,7 @@
                         techUsed: ['Stakeholder Mgmt', 'Agile', 'Kanban', 'Scrum', 'Jira']
                     },
                     {
-                        title: 'Business Tender Specialist - LATAM', company: 'Intel Corporation', logo: 'https://cdn.simpleicons.org/intel/0071C5', dates: 'Mar 2011 - Dec 2011',
+                        title: 'Business Tender Specialist - LATAM', company: 'Intel Corporation', logo: 'assets/icons/skills/intel.svg', dates: 'Mar 2011 - Dec 2011',
                         details: {
                             en: [
                                 'Provided technical assessment and advice to government, B2B, and corporate customers on Intel product acquisitions.',
@@ -666,7 +820,7 @@
                         techUsed: ['Strategic Planning', 'Agile', 'Kanban', 'Scrum', 'Jira']
                     },
                     {
-                        title: 'Partner Product Manager - NOLA', company: 'McAfee', logo: 'https://cdn.simpleicons.org/mcafee/C01818', dates: 'Nov 2009 - Aug 2010',
+                        title: 'Partner Product Manager - NOLA', company: 'McAfee', logo: 'assets/icons/skills/mcafee.svg', dates: 'Nov 2009 - Aug 2010',
                         details: {
                             en: [
                                 'Served as both a Business Development Manager and a technical implementation leader for the North of Latin America region.',
@@ -793,7 +947,7 @@
                         lang_basic: "Basic",
                         lang_others: "Others",
                         summary_title: "Professional Summary",
-                        summary_text: "A Senior IT Project Manager and QA Architect with over 18 years of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos.",
+                        summary_text: "A Senior IT Project Manager and QA Architect with over 18 years of experience delivering high-quality, complex software solutions for global technology leaders. Expert in strategic planning, stakeholder management, and leading cross-functional teams to meet project goals. Proven ability to architect and implement robust QA automation frameworks (Selenium, Cypress, Kotlin), ensuring exceptional product quality and efficiency for clients like Autodesk, AT&T, and Sophos. Founder and lead engineer of QA Lab (carlosandmunoz.com) since 2025: a paid website review service, a 20-framework regression lab and this interactive CV, built with AI-assisted engineering and shipped through 575+ merged pull requests.",
                         summary_detail_1: "Throughout my career, I have championed a holistic approach to quality, embedding QA processes into every stage of the SDLC. As a QA Architect, I specialize in designing scalable, maintainable, and efficient automation frameworks from the ground up, tailored to the specific needs of the product and technology stack. My expertise extends to selecting the optimal tools, establishing best practices, and creating CI/CD integrations that provide rapid, reliable feedback to development teams, significantly reducing regression cycles and accelerating time-to-market.",
                         summary_detail_2: "As a Project Manager and Leader, I excel at building and mentoring high-performing, cross-cultural teams. I have a proven track record of managing multi-million dollar project portfolios, mitigating risks, and aligning technical execution with executive-level business strategy. My leadership philosophy is centered on clear communication, empowerment, and fostering a collaborative environment where every team member is motivated to contribute their best work. My C2 English proficiency and multilingual abilities allow me to seamlessly manage global teams and stakeholders.",
                         toolkit_title: "Technical & Management Toolkit",
@@ -873,9 +1027,7 @@
                         form_label_attachment: "Attachment (Optional)",
                         form_button_attach: "Attach File",
                         form_button_send: "Send Message",
-                        captcha_label: "Type the characters",
-                        captcha_refresh: "New characters",
-                        captcha_error: "Those characters did not match. Try the new set.",
+                        captcha_error: "The bot check did not pass. Wait for it to finish, then send again.",
                         form_label_rating: "Overall Rating",
                         form_label_comments: "Comments (Optional)",
                         form_button_submit_rating: "Submit Rating",
@@ -972,7 +1124,7 @@
                         page_title: "Carlos Muñoz Ardila | QA Architect, contract and advisory",
                         meta_description: "Carlos Muñoz Ardila, senior QA architect with over 18 years, builds a full QA path as a contractor, advisor, or mentor. Plus a free QA lab and SDLC studio.",
                         json_job_title: "Senior IT Project Manager, QA Architect & QA Leader",
-                        json_description: "A Senior IT Project Manager and QA Architect with over 18 years of experience delivering high-quality, complex software solutions for global technology leaders. Expert in IT project management, QA automation, DevOps strategy, cloud platforms, and leading cross-functional teams. Available for contract, freelance, advisory, and mentoring, and to build a full QA path: strategy, automation, CI, and the team. This interactive CV adds competency filters, print and downloads, a free QA regression lab, and a free SDLC studio."
+                        json_description: "A Senior IT Project Manager and QA Architect with over 18 years of experience delivering high-quality, complex software solutions for global technology leaders. Expert in IT project management, QA automation, DevOps strategy, cloud platforms, and leading cross-functional teams. Available for contract, freelance, advisory, and mentoring, and to build a full QA path: strategy, automation, CI, and the team. This interactive CV adds competency filters, print and downloads, a free QA regression lab, and a free SDLC studio. Founder and lead engineer of QA Lab (carlosandmunoz.com) since 2025: a paid website review service, a 20-framework regression lab and this interactive CV, built with AI-assisted engineering and shipped through 575+ merged pull requests."
                     },
                     es: {
                         job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA",
@@ -995,7 +1147,7 @@
                         lang_basic: "Básico",
                         lang_others: "Otros",
                         summary_title: "Resumen Profesional",
-                        summary_text: "Un Gerente de Proyectos de TI Senior y Arquitecto de QA con más de 18 años de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de partes interesadas y liderazgo de equipos multifuncionales para cumplir los objetivos del proyecto. Capacidad demostrada para diseñar e implementar marcos sólidos de automatización de QA (Selenium, Cypress, Kotlin), garantizando una calidad de producto y eficiencia excepcionales para clientes como Autodesk, AT&T y Sophos.",
+                        summary_text: "Un Gerente de Proyectos de TI Senior y Arquitecto de QA con más de 18 años de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de partes interesadas y liderazgo de equipos multifuncionales para cumplir los objetivos del proyecto. Capacidad demostrada para diseñar e implementar marcos sólidos de automatización de QA (Selenium, Cypress, Kotlin), garantizando una calidad de producto y eficiencia excepcionales para clientes como Autodesk, AT&T y Sophos. Fundador e ingeniero principal de QA Lab (carlosandmunoz.com) desde 2025: un servicio de pago de revisión de sitios web, un laboratorio de regresión con 20 frameworks y este CV interactivo, construidos con ingeniería asistida por IA y entregados en más de 575 pull requests fusionados.",
                         summary_detail_1: "A lo largo de mi carrera, he defendido un enfoque holístico de la calidad, integrando los procesos de QA en cada etapa del SDLC. Como Arquitecto de QA, me especializo en diseñar marcos de automatización escalables, mantenibles y eficientes desde cero, adaptados a las necesidades específicas del producto y la pila tecnológica. Mi experiencia se extiende a la selección de las herramientas óptimas, el establecimiento de mejores prácticas y la creación de integraciones de CI/CD que proporcionan retroalimentación rápida y fiable a los equipos de desarrollo, reduciendo significativamente los ciclos de regresión y acelerando el tiempo de comercialización.",
                         summary_detail_2: "Como Gerente de Proyectos y Líder, sobresalgo en la creación y mentoría de equipos multiculturales de alto rendimiento. Tengo un historial probado en la gestión de carteras de proyectos multimillonarios, la mitigación de riesgos y la alineación de la ejecución técnica con la estrategia empresarial a nivel ejecutivo. Mi filosofía de liderazgo se centra en la comunicación clara, el empoderamiento y el fomento de un entorno de colaboración donde cada miembro del equipo está motivado para contribuir con su mejor trabajo. Mi dominio del inglés C2 y mis habilidades multilingües me permiten gestionar sin problemas equipos y partes interesadas globales.",
                         toolkit_title: "Herramientas Técnicas y de Gestión",
@@ -1075,9 +1227,7 @@
                         form_label_attachment: "Adjunto (Opcional)",
                         form_button_attach: "Adjuntar archivo",
                         form_button_send: "Enviar Mensaje",
-                        captcha_label: "Escribe los caracteres",
-                        captcha_refresh: "Nuevos caracteres",
-                        captcha_error: "Esos caracteres no coinciden. Prueba el nuevo grupo.",
+                        captcha_error: "La verificación antibots no pasó. Espera a que termine y vuelve a enviar.",
                         form_label_rating: "Calificación General",
                         form_label_comments: "Comentarios (Opcional)",
                         form_button_submit_rating: "Enviar Calificación",
@@ -1174,7 +1324,7 @@
                         page_title: "Carlos Muñoz Ardila | Arquitecto QA, contrato y asesoría",
                         meta_description: "Carlos A. Muñoz, arquitecto QA sénior con más de 18 años, construye un camino de QA completo como contratista, asesor o mentor. Con laboratorio QA gratuito.",
                         json_job_title: "Gerente Senior de Proyectos de TI, Arquitecto y Líder de QA",
-                        json_description: "Un Gerente de Proyectos de TI y Arquitecto de QA con más de 18 años de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de stakeholders y liderazgo de equipos multifuncionales. Disponible para contrato, freelance, asesoría y mentoría, y para construir un camino de QA completo: estrategia, automatización, CI y el equipo. Este CV interactivo añade filtros de competencias, impresión y descargas, un laboratorio de regresión QA gratuito y un estudio SDLC gratuito."
+                        json_description: "Un Gerente de Proyectos de TI y Arquitecto de QA con más de 18 años de experiencia entregando soluciones de software complejas y de alta calidad para líderes tecnológicos globales. Experto en planificación estratégica, gestión de stakeholders y liderazgo de equipos multifuncionales. Disponible para contrato, freelance, asesoría y mentoría, y para construir un camino de QA completo: estrategia, automatización, CI y el equipo. Este CV interactivo añade filtros de competencias, impresión y descargas, un laboratorio de regresión QA gratuito y un estudio SDLC gratuito. Fundador e ingeniero principal de QA Lab (carlosandmunoz.com) desde 2025: un servicio de pago de revisión de sitios web, un laboratorio de regresión con 20 frameworks y este CV interactivo, construidos con ingeniería asistida por IA y entregados en más de 575 pull requests fusionados."
 
                     },
                     pt: {
@@ -1198,7 +1348,7 @@
                         lang_basic: "Básico",
                         lang_others: "Outros",
                         summary_title: "Resumo Profissional",
-                        summary_text: "Um Gerente de Projetos de TI Sênior e Arquiteto de QA com mais de 18 anos de experiência na entrega de soluções de software complexas e de alta qualidade para líderes de tecnologia globais. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais para atingir as metas do projeto. Habilidade comprovada para arquitetar e implementar robustos frameworks de automação de QA (Selenium, Cypress, Kotlin), garantindo qualidade de produto e eficiência excepcionais para clientes como Autodesk, AT&T e Sophos.",
+                        summary_text: "Um Gerente de Projetos de TI Sênior e Arquiteto de QA com mais de 18 anos de experiência na entrega de soluções de software complexas e de alta qualidade para líderes de tecnologia globais. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais para atingir as metas do projeto. Habilidade comprovada para arquitetar e implementar robustos frameworks de automação de QA (Selenium, Cypress, Kotlin), garantindo qualidade de produto e eficiência excepcionais para clientes como Autodesk, AT&T e Sophos. Fundador e engenheiro líder do QA Lab (carlosandmunoz.com) desde 2025: um serviço pago de revisão de sites, um laboratório de regressão com 20 frameworks e este CV interativo, construídos com engenharia assistida por IA e entregues em mais de 575 pull requests integrados.",
                         summary_detail_1: "Ao longo da minha carreira, defendi uma abordagem holística da qualidade, incorporando processos de QA em todas as fases do SDLC. Como Arquiteto de QA, especializo-me em projetar frameworks de automação escaláveis, de fácil manutenção e eficientes a partir do zero, adaptados às necessidades específicas do produto e da pilha tecnológica. Minha experiência abrange a seleção das ferramentas ideais, o estabelecimento de melhores práticas e a criação de integrações de CI/CD que fornecem feedback rápido и confiável às equipes de desenvolvimento, reduzindo significativamente os ciclos de regressão e acelerando o tempo de lançamento no mercado.",
                         summary_detail_2: "Como Gerente de Projetos e Líder, destaco-me na formação e mentoria de equipes multiculturais de alto desempenho. Tenho um histórico comprovado na gestão de portfólios de projetos multimilionários, na mitigação de riscos e no alinhamento da execução técnica com a estratégia de negócios de nível executivo. Minha filosofia de liderança está centrada na comunicação clara, no empoderamento e na promoção de um ambiente colaborativo onde cada membro da equipe se sinta motivado a contribuir com o seu melhor trabalho. Minha proficiência em inglês C2 e minhas habilidades multilíngues permitem-me gerenciar equipes e stakeholders globais sem problemas.",
                         toolkit_title: "Ferramentas Técnicas e de Gestão",
@@ -1278,9 +1428,7 @@
                         form_label_attachment: "Anexo (Opcional)",
                         form_button_attach: "Anexar Arquivo",
                         form_button_send: "Enviar Mensagem",
-                        captcha_label: "Digite os caracteres",
-                        captcha_refresh: "Novos caracteres",
-                        captcha_error: "Esses caracteres não conferem. Tente o novo grupo.",
+                        captcha_error: "A verificação antibots não passou. Espere ela terminar e envie de novo.",
                         form_label_rating: "Avaliação Geral",
                         form_label_comments: "Comentários (Opcional)",
                         form_button_submit_rating: "Enviar Avaliação",
@@ -1377,7 +1525,7 @@
                         page_title: "Carlos Muñoz Ardila | Arquiteto QA, contrato e consultoria",
                         meta_description: "Carlos A. Muñoz, arquiteto de QA sênior com mais de 18 anos, constrói um caminho de QA completo como contratado, consultor ou mentor. Com laboratório QA grátis.",
                         json_job_title: "Gerente Sênior de Projetos de TI, Arquiteto e Líder de QA",
-                        json_description: "Um Gerente Sênior de Projetos de TI e Arquiteto de QA com mais de 18 anos de experiência na entrega de soluções de software complexas e de alta qualidade para líderes de tecnologia globais. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais. Disponível para contrato, freelance, consultoria e mentoria, e para construir um caminho completo de QA. Este CV interativo acrescenta filtros de competências, impressão e downloads, um laboratório de regressão de QA gratuito e um estúdio SDLC gratuito."
+                        json_description: "Um Gerente Sênior de Projetos de TI e Arquiteto de QA com mais de 18 anos de experiência na entrega de soluções de software complexas e de alta qualidade para líderes de tecnologia globais. Especialista em planejamento estratégico, gerenciamento de stakeholders e liderança de equipes multifuncionais. Disponível para contrato, freelance, consultoria e mentoria, e para construir um caminho completo de QA. Este CV interativo acrescenta filtros de competências, impressão e downloads, um laboratório de regressão de QA gratuito e um estúdio SDLC gratuito. Fundador e engenheiro líder do QA Lab (carlosandmunoz.com) desde 2025: um serviço pago de revisão de sites, um laboratório de regressão com 20 frameworks e este CV interativo, construídos com engenharia assistida por IA e entregues em mais de 575 pull requests integrados."
                     },
                     de: {
                         job_title: "Senior IT-Projektmanager, QA-Architekt & QA-Leiter",
@@ -1400,7 +1548,7 @@
                         lang_basic: "Grundkenntnisse",
                         lang_others: "Andere",
                         summary_title: "Berufliches Profil",
-                        summary_text: "Ein leitender IT-Projektmanager und QA-Architekt mit über 18 Jahren Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte für strategische Planung, Stakeholder-Management und die Führung funktionsübergreifender Teams zur Erreichung von Projektzielen. Nachgewiesene Fähigkeit, robuste QA-Automatisierungs-Frameworks (Selenium, Cypress, Kotlin) zu entwerfen und zu implementieren, um außergewöhnliche Produktqualität und Effizienz für Kunden wie Autodesk, AT&T und Sophos zu gewährleisten.",
+                        summary_text: "Ein leitender IT-Projektmanager und QA-Architekt mit über 18 Jahren Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte für strategische Planung, Stakeholder-Management und die Führung funktionsübergreifender Teams zur Erreichung von Projektzielen. Nachgewiesene Fähigkeit, robuste QA-Automatisierungs-Frameworks (Selenium, Cypress, Kotlin) zu entwerfen und zu implementieren, um außergewöhnliche Produktqualität und Effizienz für Kunden wie Autodesk, AT&T und Sophos zu gewährleisten. Seit 2025 Gründer und Lead Engineer von QA Lab (carlosandmunoz.com): ein kostenpflichtiger Website-Review-Service, ein Regressionslabor mit 20 Frameworks und dieser interaktive Lebenslauf, entwickelt mit KI-gestütztem Engineering und über mehr als 575 gemergte Pull Requests ausgeliefert.",
                         summary_detail_1: "Während meiner gesamten Karriere habe ich einen ganzheitlichen Qualitätsansatz verfolgt und QA-Prozesse in jede Phase des SDLC integriert. Als QA-Architekt bin ich auf die Konzeption von skalierbaren, wartbaren und effizienten Automatisierungs-Frameworks von Grund auf spezialisiert, die auf die spezifischen Bedürfnisse des Produkts und des Technologie-Stacks zugeschnitten sind. Meine Expertise erstreckt sich auf die Auswahl der optimalen Werkzeuge, die Etablierung von Best Practices und die Erstellung von CI/CD-Integrationen, die den Entwicklungsteams schnelles und zuverlässiges Feedback liefern, was die Regressionszyklen erheblich verkürzt und die Markteinführungszeit beschleunigt.",
                         summary_detail_2: "Als Projektmanager und Führungskraft zeichne ich mich durch den Aufbau und das Mentoring von leistungsstarken, interkulturellen Teams aus. Ich habe eine nachgewiesene Erfolgsbilanz in der Verwaltung von Multimillionen-Dollar-Projektportfolios, der Risikominderung und der Abstimmung der technischen Ausführung mit der Geschäftsstrategie auf Führungsebene. Meine Führungsphilosophie konzentriert sich auf klare Kommunikation, Befähigung und die Förderung eines kollaborativen Umfelds, in dem jedes Teammitglied motiviert ist, seine beste Arbeit zu leisten. Meine C2-Englischkenntnisse und meine Mehrsprachigkeit ermöglichen es mir, globale Teams und Stakeholder nahtlos zu managen.",
                         toolkit_title: "Technisches & Management-Toolkit",
@@ -1480,9 +1628,7 @@
                         form_label_attachment: "Anhang (Optional)",
                         form_button_attach: "Datei anhängen",
                         form_button_send: "Nachricht senden",
-                        captcha_label: "Zeichen eingeben",
-                        captcha_refresh: "Neue Zeichen",
-                        captcha_error: "Diese Zeichen stimmen nicht. Versuche die neue Folge.",
+                        captcha_error: "Die Bot-Prüfung ist nicht durchgegangen. Warte, bis sie fertig ist, und sende erneut.",
                         form_label_rating: "Gesamtbewertung",
                         form_label_comments: "Kommentare (Optional)",
                         form_button_submit_rating: "Bewertung abgeben",
@@ -1579,7 +1725,7 @@
                         page_title: "Carlos Muñoz Ardila | QA-Architekt, Vertrag und Beratung",
                         meta_description: "Carlos A. Muñoz, Senior-QA-Architekt mit über 18 Jahren, baut einen vollständigen QA-Weg als Auftragnehmer, Berater oder Mentor. Plus kostenloses QA-Labor.",
                         json_job_title: "Senior IT-Projektmanager, QA-Architekt & QA-Leiter",
-                        json_description: "Ein Senior IT-Projektmanager und QA-Architekt mit über 18 Jahren Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte für strategische Planung, Stakeholder-Management und die Führung funktionsübergreifender Teams. Verfügbar für Vertrag, Freelance, Beratung und Mentoring und für den Aufbau eines vollständigen QA-Wegs. Dieser interaktive Lebenslauf ergänzt Kompetenzfilter, Druck und Downloads, ein kostenloses QA-Regressionslabor und ein kostenloses SDLC-Studio."
+                        json_description: "Ein Senior IT-Projektmanager und QA-Architekt mit über 18 Jahren Erfahrung in der Bereitstellung hochwertiger, komplexer Softwarelösungen für weltweit führende Technologieunternehmen. Experte für strategische Planung, Stakeholder-Management und die Führung funktionsübergreifender Teams. Verfügbar für Vertrag, Freelance, Beratung und Mentoring und für den Aufbau eines vollständigen QA-Wegs. Dieser interaktive Lebenslauf ergänzt Kompetenzfilter, Druck und Downloads, ein kostenloses QA-Regressionslabor und ein kostenloses SDLC-Studio. Seit 2025 Gründer und Lead Engineer von QA Lab (carlosandmunoz.com): ein kostenpflichtiger Website-Review-Service, ein Regressionslabor mit 20 Frameworks und dieser interaktive Lebenslauf, entwickelt mit KI-gestütztem Engineering und über mehr als 575 gemergte Pull Requests ausgeliefert."
                     },
                     fr: {
                         job_title: "Chef de Projet IT Senior, Architecte et Leader QA",
@@ -1602,7 +1748,7 @@
                         lang_basic: "Basique",
                         lang_others: "Autres",
                         summary_title: "Résumé Professionnel",
-                        summary_text: "Un Chef de Projet Informatique Senior et Architecte QA avec plus de 18 ans d'expérience dans la fourniture de solutions logicielles complexes et de haute qualité pour des leaders technologiques mondiaux. Expert en planification stratégique, en gestion des parties prenantes et en direction d'équipes interfonctionnelles pour atteindre les objectifs des projets. Capacité prouvée à concevoir et mettre en œuvre des cadres d'automatisation QA robustes (Selenium, Cypress, Kotlin), assurant une qualité de produit et une efficacité exceptionnelles pour des clients comme Autodesk, AT&T et Sophos.",
+                        summary_text: "Un Chef de Projet Informatique Senior et Architecte QA avec plus de 18 ans d'expérience dans la fourniture de solutions logicielles complexes et de haute qualité pour des leaders technologiques mondiaux. Expert en planification stratégique, en gestion des parties prenantes et en direction d'équipes interfonctionnelles pour atteindre les objectifs des projets. Capacité prouvée à concevoir et mettre en œuvre des cadres d'automatisation QA robustes (Selenium, Cypress, Kotlin), assurant une qualité de produit et une efficacité exceptionnelles pour des clients comme Autodesk, AT&T et Sophos. Fondateur et ingénieur principal de QA Lab (carlosandmunoz.com) depuis 2025 : un service payant d'audit de sites web, un laboratoire de régression couvrant 20 frameworks et ce CV interactif, conçus avec une ingénierie assistée par l'IA et livrés à travers plus de 575 pull requests fusionnées.",
                         summary_detail_1: "Tout au long de ma carrière, j'ai promu une approche holistique de la qualité, en intégrant les processus d'assurance qualité à chaque étape du cycle de vie du développement logiciel (SDLC). En tant qu'architecte QA, je me spécialise dans la conception de cadres d'automatisation évolutifs, maintenables et efficaces à partir de zéro, adaptés aux besoins spécifiques du produit et de la pile technologique. Mon expertise s'étend à la sélection des outils optimaux, à l'établissement des meilleures pratiques et à la création d'intégrations CI/CD qui fournissent un retour d'information rapide et fiable aux équipes de développement, réduisant considérablement les cycles de régression et accélérant la mise sur le marché.",
                         summary_detail_2: "En tant que chef de projet et leader, j'excelle dans la constitution et le mentorat d'équipes multiculturelles très performantes. J'ai une expérience avérée dans la gestion de portefeuilles de projets de plusieurs millions de dollars, l'atténuation des risques et l'alignement de l'exécution technique sur la stratégie commerciale au niveau de la direction. Ma philosophie de leadership est centrée sur une communication claire, l'autonomisation et la promotion d'un environnement collaboratif où chaque membre de l'équipe est motivé à donner le meilleur de lui-même. Ma maîtrise de l'anglais au niveau C2 et mes compétences multilingues me permettent de gérer en toute transparence des équipes et des parties prenantes mondiales.",
                         toolkit_title: "Boîte à Outils Technique & de Gestion",
@@ -1682,9 +1828,7 @@
                         form_label_attachment: "Pièce Jointe (Optionnel)",
                         form_button_attach: "Joindre un Fichier",
                         form_button_send: "Envoyer le Message",
-                        captcha_label: "Saisissez les caractères",
-                        captcha_refresh: "Nouveaux caractères",
-                        captcha_error: "Ces caractères ne correspondent pas. Essayez la nouvelle série.",
+                        captcha_error: "La vérification anti-robot n’a pas abouti. Attendez la fin, puis renvoyez.",
                         form_label_rating: "Évaluation Globale",
                         form_label_comments: "Commentaires (Optionnel)",
                         form_button_submit_rating: "Soumettre l'Évaluation",
@@ -1781,7 +1925,7 @@
                         page_title: "Carlos Muñoz Ardila | Architecte QA, contrat et conseil",
                         meta_description: "Carlos A. Muñoz, architecte QA senior avec plus de 18 ans, construit un parcours QA complet comme contractuel, conseiller ou mentor. Avec un labo QA gratuit.",
                         json_job_title: "Chef de Projet IT Senior, Architecte et Leader QA",
-                        json_description: "Un Chef de Projet IT Senior et Architecte QA avec plus de 18 ans d'expérience dans la livraison de solutions logicielles de haute qualité et complexes pour des leaders technologiques mondiaux. Expert en planification stratégique, gestion des parties prenantes et direction d'équipes interfonctionnelles. Disponible en contrat, en freelance, en conseil et en mentorat, et pour construire un parcours QA complet. Ce CV interactif ajoute des filtres de compétences, l'impression et les téléchargements, un laboratoire de régression QA gratuit et un studio SDLC gratuit."
+                        json_description: "Un Chef de Projet IT Senior et Architecte QA avec plus de 18 ans d'expérience dans la livraison de solutions logicielles de haute qualité et complexes pour des leaders technologiques mondiaux. Expert en planification stratégique, gestion des parties prenantes et direction d'équipes interfonctionnelles. Disponible en contrat, en freelance, en conseil et en mentorat, et pour construire un parcours QA complet. Ce CV interactif ajoute des filtres de compétences, l'impression et les téléchargements, un laboratoire de régression QA gratuit et un studio SDLC gratuit. Fondateur et ingénieur principal de QA Lab (carlosandmunoz.com) depuis 2025 : un service payant d'audit de sites web, un laboratoire de régression couvrant 20 frameworks et ce CV interactif, conçus avec une ingénierie assistée par l'IA et livrés à travers plus de 575 pull requests fusionnées."
                     },
                     it: {
                         job_title: "Manager Senior di Progetti IT, Architetto e Leader QA",
@@ -1804,7 +1948,7 @@
                         lang_basic: "Base",
                         lang_others: "Altro",
                         summary_title: "Riepilogo Professionale",
-                        summary_text: "Un Senior IT Project Manager e Architetto QA con oltre 18 anni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali per raggiungere gli obiettivi di progetto. Comprovata capacità di progettare e implementare robusti framework di automazione QA (Selenium, Cypress, Kotlin), garantendo una qualità del prodotto e un'efficienza eccezionali per clienti come Autodesk, AT&T e Sophos.",
+                        summary_text: "Un Senior IT Project Manager e Architetto QA con oltre 18 anni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali per raggiungere gli obiettivi di progetto. Comprovata capacità di progettare e implementare robusti framework di automazione QA (Selenium, Cypress, Kotlin), garantendo una qualità del prodotto e un'efficienza eccezionali per clienti come Autodesk, AT&T e Sophos. Fondatore e Lead Engineer di QA Lab (carlosandmunoz.com) dal 2025: un servizio a pagamento di revisione di siti web, un laboratorio di regressione con 20 framework e questo CV interattivo, realizzati con ingegneria assistita dall'IA e rilasciati attraverso oltre 575 pull request integrate.",
                         summary_detail_1: "Nel corso della mia carriera, ho promosso un approccio olistico alla qualità, integrando i processi di QA in ogni fase del SDLC. In qualità di Architetto QA, sono specializzato nella progettazione di framework di automazione scalabili, manutenibili ed efficienti da zero, adattati alle esigenze specifiche del prodotto e dello stack tecnologico. La mia esperienza si estende alla selezione degli strumenti ottimali, alla definizione delle migliori pratiche e alla creazione di integrazioni CI/CD che forniscono un feedback rapido e affidabile ai team di sviluppo, riducendo significativamente i cicli di regressione e accelerando il time-to-market.",
                         summary_detail_2: "In qualità di Project Manager e Leader, eccello nella creazione e nel mentoring di team multiculturali ad alte prestazioni. Ho una comprovata esperienza nella gestione di portafogli di progetti multimilionari, nella mitigazione dei rischi e nell'allineamento dell'esecuzione tecnica con la strategia aziendale a livello esecutivo. La mia filosofia di leadership è incentrata su una comunicazione chiara, sull'empowerment e sulla promozione di un ambiente collaborativo in cui ogni membro del team è motivato a contribuire con il proprio miglior lavoro. La mia padronanza dell'inglese a livello C2 e le mie capacità multilingue mi consentono di gestire senza problemi team e stakeholder globali.",
                         toolkit_title: "Toolkit Tecnico e Gestionale",
@@ -1884,9 +2028,7 @@
                         form_label_attachment: "Allegato (Opzionale)",
                         form_button_attach: "Allega File",
                         form_button_send: "Invia Messaggio",
-                        captcha_label: "Scrivi i caratteri",
-                        captcha_refresh: "Nuovi caratteri",
-                        captcha_error: "Quei caratteri non coincidono. Prova la nuova serie.",
+                        captcha_error: "Il controllo anti-bot non è passato. Attendi che finisca, poi invia di nuovo.",
                         form_label_rating: "Valutazione Complessiva",
                         form_label_comments: "Commenti (Opzionale)",
                         form_button_submit_rating: "Invia Valutazione",
@@ -1983,7 +2125,7 @@
                         page_title: "Carlos Muñoz Ardila | Architetto QA, contratto e consulenza",
                         meta_description: "Carlos A. Muñoz, architetto QA senior con oltre 18 anni, costruisce un percorso QA completo come contractor, consulente o mentor. Con laboratorio QA gratuito.",
                         json_job_title: "Manager Senior di Progetti IT, Architetto e Leader QA",
-                        json_description: "Un Senior IT Project Manager e Architetto QA con oltre 18 anni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali. Disponibile per contratto, freelance, consulenza e mentoring, e per costruire un percorso QA completo. Questo CV interattivo aggiunge filtri delle competenze, stampa e download, un laboratorio di regressione QA gratuito e uno studio SDLC gratuito."
+                        json_description: "Un Senior IT Project Manager e Architetto QA con oltre 18 anni di esperienza nella fornitura di soluzioni software complesse e di alta qualità per leader tecnologici globali. Esperto nella pianificazione strategica, nella gestione degli stakeholder e nella guida di team interfunzionali. Disponibile per contratto, freelance, consulenza e mentoring, e per costruire un percorso QA completo. Questo CV interattivo aggiunge filtri delle competenze, stampa e download, un laboratorio di regressione QA gratuito e uno studio SDLC gratuito. Fondatore e Lead Engineer di QA Lab (carlosandmunoz.com) dal 2025: un servizio a pagamento di revisione di siti web, un laboratorio di regressione con 20 framework e questo CV interattivo, realizzati con ingegneria assistita dall'IA e rilasciati attraverso oltre 575 pull request integrate."
                     },
                 },
   };

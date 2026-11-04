@@ -4,8 +4,12 @@
    Nothing here names the asker. */
 
 const base = require("./url-review-customer-mail");
+const fusion = require("./url-review-fusion");
+const booking = require("./booking");
+const mailFace = require("./mail-face");
 
-const { SITE, POSTAL, AREAS, esc, fill, button, shell } = base;
+const { SITE, POSTAL, AREAS, esc, fill, button, shell, brandHtml, brandText } = base;
+const { FUSION, TEXT, ON_NIGHT } = fusion;
 const DEEPER = "qa@carlosandmunoz.com";
 
 const COPY = {
@@ -15,11 +19,23 @@ const COPY = {
     title: "A public review of {host} is on Live Reports",
     lead: "{host} was reviewed with QA-lab URL Review on {date}, and the scores were published on Live Reports. We never say who asked for a review. This is what the public page shows:",
     critical: "The review found a critical security issue. The report says what to fix first.",
+    local: {
+      status_fail: "Google Maps shows {host} as permanently closed, so people searching for it are told it no longer exists.",
+      status_risk: "Google Maps shows {host} as temporarily closed, so people searching for it may think it is not open.",
+      website_fail: "The website link on the Google Maps profile of {host} leads to a page that does not load.",
+      website_risk: "The website link on the Google Maps profile of {host} is missing or does not lead to {host}.",
+      website_low: "The website link on the Google Maps profile of {host} goes through redirects or plain http before it reaches the site.",
+      hours: "The opening hours on {host} differ from the ones its Google Maps profile shows.",
+      nap: "The address, phone or name on {host} differs from its Google Maps profile.",
+      utm: "Visits from the Google Maps profile of {host} are counted as search or direct traffic, because its website link has no campaign (UTM) tags.",
+      profile: "We found no Google Maps profile that links to {host} or lists its phone, so people searching on Maps may not find it."
+    },
     claim: "Claim the report",
     claimNote: "The report shows the six scores and what to fix first, with the details blurred. It is sent free to an address at {domain}, which shows the mailbox is yours.",
     unlist: "Remove {host} from Live Reports",
     unlistNote: "It leaves the public page with the next daily update, and later reviews of {host} are not published either.",
     view: "See the public page",
+    call: "Questions about the scores? Book a 15-min call with Carlos",
     source: { "security.txt": "the site's security.txt", schema: "the site's structured data", llms: "the site's llms.txt", rdap: "the domain's registration record (RDAP)", dmarc: "the domain's DMARC record", soa: "the domain's DNS records", search: "public web search results for {domain}", page: "{url}" },
     why: "You get this single notice because {email} is public: we found it in {source}. We send at most one per domain every six months, and we never fill in contact forms.",
     forwardWhy: "You get this notice because someone at {domain}, replying to our first notice, asked us to send it to {email}.",
@@ -61,11 +77,23 @@ const COPY = {
     title: "Hay una revisión pública de {host} en Live Reports",
     lead: "{host} se revisó con QA-lab URL Review el {date} y los puntajes se publicaron en Live Reports. Nunca decimos quién pidió una revisión. Esto es lo que muestra la página pública:",
     critical: "La revisión encontró un problema de seguridad crítico. El informe dice qué arreglar primero.",
+    local: {
+      status_fail: "Google Maps muestra {host} como cerrado permanentemente, así que a quien lo busca le dice que ya no existe.",
+      status_risk: "Google Maps muestra {host} como cerrado temporalmente, así que quien lo busca puede pensar que no está abierto.",
+      website_fail: "El enlace al sitio web del perfil de Google Maps de {host} lleva a una página que no carga.",
+      website_risk: "El perfil de Google Maps de {host} no tiene enlace al sitio web, o el enlace no lleva a {host}.",
+      website_low: "El enlace al sitio web del perfil de Google Maps de {host} pasa por redirecciones o por http antes de llegar al sitio.",
+      hours: "El horario que muestra {host} es distinto del que muestra su perfil de Google Maps.",
+      nap: "La dirección, el teléfono o el nombre en {host} no coinciden con su perfil de Google Maps.",
+      utm: "Las visitas desde el perfil de Google Maps de {host} se cuentan como búsqueda o tráfico directo, porque el enlace no lleva etiquetas de campaña (UTM).",
+      profile: "No encontramos un perfil de Google Maps que enlace a {host} o muestre su teléfono, así que quien busca en Maps puede no encontrarlo."
+    },
     claim: "Pedir el informe",
     claimNote: "El informe muestra los seis puntajes y qué arreglar primero, con los detalles difuminados. Se envía gratis a una dirección de {domain}, lo que demuestra que el buzón es tuyo.",
     unlist: "Retirar {host} de Live Reports",
     unlistNote: "Sale de la página pública con la siguiente actualización diaria, y las revisiones futuras de {host} tampoco se publican.",
     view: "Ver la página pública",
+    call: "¿Dudas sobre los puntajes? Agenda una llamada de 15 min con Carlos",
     source: { "security.txt": "el security.txt del sitio", schema: "los datos estructurados del sitio", llms: "el llms.txt del sitio", rdap: "el registro del dominio (RDAP)", dmarc: "el registro DMARC del dominio", soa: "los registros DNS del dominio", search: "resultados públicos de búsqueda web para {domain}", page: "{url}" },
     why: "Recibes este único aviso porque {email} es público: lo encontramos en {source}. Enviamos como máximo uno por dominio cada seis meses y nunca llenamos formularios de contacto.",
     forwardWhy: "Recibes este aviso porque alguien de {domain}, al responder nuestro primer aviso, nos pidió enviarlo a {email}.",
@@ -107,11 +135,23 @@ const COPY = {
     title: "Há uma revisão pública de {host} no Live Reports",
     lead: "{host} foi revisado com o QA-lab URL Review em {date}, e as notas foram publicadas no Live Reports. Nunca dizemos quem pediu uma revisão. Isto é o que a página pública mostra:",
     critical: "A revisão encontrou um problema de segurança crítico. O relatório diz o que corrigir primeiro.",
+    local: {
+      status_fail: "O Google Maps mostra {host} como fechado permanentemente, então quem o procura vê que ele não existe mais.",
+      status_risk: "O Google Maps mostra {host} como fechado temporariamente, então quem o procura pode achar que não está aberto.",
+      website_fail: "O link do site no perfil do Google Maps de {host} leva a uma página que não carrega.",
+      website_risk: "O perfil do Google Maps de {host} não tem link para o site, ou o link não leva a {host}.",
+      website_low: "O link do site no perfil do Google Maps de {host} passa por redirecionamentos ou por http antes de chegar ao site.",
+      hours: "O horário de funcionamento em {host} é diferente do que o perfil do Google Maps mostra.",
+      nap: "O endereço, o telefone ou o nome em {host} não batem com o perfil do Google Maps.",
+      utm: "As visitas vindas do perfil do Google Maps de {host} contam como busca ou tráfego direto, porque o link não tem tags de campanha (UTM).",
+      profile: "Não encontramos um perfil do Google Maps que leve a {host} ou mostre o telefone, então quem procura no Maps pode não encontrá-lo."
+    },
     claim: "Pedir o relatório",
     claimNote: "O relatório mostra as seis notas e o que corrigir primeiro, com os detalhes desfocados. Ele é enviado de graça para um endereço de {domain}, o que mostra que a caixa de e-mail é sua.",
     unlist: "Retirar {host} do Live Reports",
     unlistNote: "Ele sai da página pública na próxima atualização diária, e as próximas revisões de {host} também não são publicadas.",
     view: "Ver a página pública",
+    call: "Dúvidas sobre as notas? Agende uma conversa de 15 min com o Carlos",
     source: { "security.txt": "o security.txt do site", schema: "os dados estruturados do site", llms: "o llms.txt do site", rdap: "o registro do domínio (RDAP)", dmarc: "o registro DMARC do domínio", soa: "os registros DNS do domínio", search: "resultados públicos de busca na web para {domain}", page: "{url}" },
     why: "Você recebe este único aviso porque {email} é público: nós o encontramos em {source}. Enviamos no máximo um por domínio a cada seis meses e nunca preenchemos formulários de contato.",
     forwardWhy: "Você recebe este aviso porque alguém de {domain}, ao responder nosso primeiro aviso, pediu que o enviássemos para {email}.",
@@ -153,11 +193,23 @@ const COPY = {
     title: "Eine öffentliche Prüfung von {host} steht auf Live Reports",
     lead: "{host} wurde am {date} mit QA-lab URL Review geprüft, und die Werte wurden auf Live Reports veröffentlicht. Wer eine Prüfung angefordert hat, sagen wir nie. Das zeigt die öffentliche Seite:",
     critical: "Die Prüfung hat ein kritisches Sicherheitsproblem gefunden. Der Bericht sagt, was zuerst zu beheben ist.",
+    local: {
+      status_fail: "Google Maps zeigt {host} als dauerhaft geschlossen, wer danach sucht, liest also, dass es nicht mehr existiert.",
+      status_risk: "Google Maps zeigt {host} als vorübergehend geschlossen, wer danach sucht, hält es also womöglich für nicht geöffnet.",
+      website_fail: "Der Website-Link im Google-Maps-Profil von {host} führt zu einer Seite, die nicht lädt.",
+      website_risk: "Das Google-Maps-Profil von {host} hat keinen Website-Link, oder der Link führt nicht zu {host}.",
+      website_low: "Der Website-Link im Google-Maps-Profil von {host} läuft über Weiterleitungen oder unverschlüsseltes http, bevor er die Website erreicht.",
+      hours: "Die Öffnungszeiten auf {host} weichen von denen im Google-Maps-Profil ab.",
+      nap: "Adresse, Telefonnummer oder Name auf {host} stimmen nicht mit dem Google-Maps-Profil überein.",
+      utm: "Besuche über das Google-Maps-Profil von {host} zählen als Suche oder direkter Zugriff, weil der Website-Link keine Kampagnen-Tags (UTM) hat.",
+      profile: "Wir haben kein Google-Maps-Profil gefunden, das auf {host} verlinkt oder die Telefonnummer nennt, wer auf Maps sucht, findet es also womöglich nicht."
+    },
     claim: "Bericht anfordern",
     claimNote: "Der Bericht zeigt die sechs Werte und was zuerst zu beheben ist, mit unscharfen Details. Er geht kostenlos an eine Adresse bei {domain}; das zeigt, dass das Postfach Ihnen gehört.",
     unlist: "{host} von Live Reports entfernen",
     unlistNote: "Die Seite verschwindet mit dem nächsten täglichen Update, und spätere Prüfungen von {host} werden auch nicht veröffentlicht.",
     view: "Öffentliche Seite ansehen",
+    call: "Fragen zu den Werten? Buchen Sie ein 15-Minuten-Gespräch mit Carlos",
     source: { "security.txt": "der security.txt der Website", schema: "den strukturierten Daten der Website", llms: "der llms.txt der Website", rdap: "dem Registrierungseintrag der Domain (RDAP)", dmarc: "dem DMARC-Eintrag der Domain", soa: "den DNS-Einträgen der Domain", search: "öffentlichen Websuchergebnissen zu {domain}", page: "{url}" },
     why: "Sie erhalten diesen einen Hinweis, weil {email} öffentlich ist: Wir haben die Adresse in {source} gefunden. Wir senden höchstens einen pro Domain alle sechs Monate und füllen nie Kontaktformulare aus.",
     forwardWhy: "Sie erhalten diesen Hinweis, weil jemand von {domain} in einer Antwort auf unseren ersten Hinweis gebeten hat, ihn an {email} zu senden.",
@@ -199,11 +251,23 @@ const COPY = {
     title: "Une revue publique de {host} est sur Live Reports",
     lead: "{host} a été revu avec QA-lab URL Review le {date}, et les scores ont été publiés sur Live Reports. Nous ne disons jamais qui a demandé une revue. Voici ce que montre la page publique :",
     critical: "La revue a trouvé un problème de sécurité critique. Le rapport indique ce qu'il faut corriger d'abord.",
+    local: {
+      status_fail: "Google Maps indique {host} comme définitivement fermé : ceux qui le cherchent lisent qu'il n'existe plus.",
+      status_risk: "Google Maps indique {host} comme temporairement fermé : ceux qui le cherchent peuvent croire qu'il n'est pas ouvert.",
+      website_fail: "Le lien vers le site dans la fiche Google Maps de {host} mène à une page qui ne se charge pas.",
+      website_risk: "La fiche Google Maps de {host} n'a pas de lien vers le site, ou ce lien ne mène pas à {host}.",
+      website_low: "Le lien vers le site dans la fiche Google Maps de {host} passe par des redirections ou par http avant d'arriver sur le site.",
+      hours: "Les horaires affichés sur {host} diffèrent de ceux de sa fiche Google Maps.",
+      nap: "L'adresse, le téléphone ou le nom sur {host} ne correspondent pas à sa fiche Google Maps.",
+      utm: "Les visites venant de la fiche Google Maps de {host} sont comptées comme recherche ou accès direct, car le lien n'a pas de balises de campagne (UTM).",
+      profile: "Nous n'avons trouvé aucune fiche Google Maps qui renvoie vers {host} ou affiche son téléphone : sur Maps, on risque de ne pas le trouver."
+    },
     claim: "Demander le rapport",
     claimNote: "Le rapport montre les six scores et ce qu'il faut corriger d'abord, avec les détails floutés. Il est envoyé gratuitement à une adresse en {domain}, ce qui montre que la boîte vous appartient.",
     unlist: "Retirer {host} de Live Reports",
     unlistNote: "La page publique disparaît à la prochaine mise à jour quotidienne, et les revues suivantes de {host} ne sont pas publiées non plus.",
     view: "Voir la page publique",
+    call: "Des questions sur les scores ? Réservez un appel de 15 min avec Carlos",
     source: { "security.txt": "le security.txt du site", schema: "les données structurées du site", llms: "le llms.txt du site", rdap: "la fiche d'enregistrement du domaine (RDAP)", dmarc: "l'enregistrement DMARC du domaine", soa: "les enregistrements DNS du domaine", search: "les résultats publics de recherche web pour {domain}", page: "{url}" },
     why: "Vous recevez cet avis unique parce que {email} est public : nous l'avons trouvé dans {source}. Nous en envoyons au plus un par domaine tous les six mois, et nous ne remplissons jamais de formulaire de contact.",
     forwardWhy: "Vous recevez cet avis parce qu'une personne de {domain}, en répondant à notre premier avis, nous a demandé de l'envoyer à {email}.",
@@ -245,11 +309,23 @@ const COPY = {
     title: "Una revisione pubblica di {host} è su Live Reports",
     lead: "{host} è stato revisionato con QA-lab URL Review il {date}, e i punteggi sono stati pubblicati su Live Reports. Non diciamo mai chi ha chiesto una revisione. Ecco cosa mostra la pagina pubblica:",
     critical: "La revisione ha trovato un problema di sicurezza critico. Il report dice cosa correggere per primo.",
+    local: {
+      status_fail: "Google Maps mostra {host} come chiuso definitivamente, quindi chi lo cerca legge che non esiste più.",
+      status_risk: "Google Maps mostra {host} come chiuso temporaneamente, quindi chi lo cerca può pensare che non sia aperto.",
+      website_fail: "Il link al sito nella scheda Google Maps di {host} porta a una pagina che non si carica.",
+      website_risk: "La scheda Google Maps di {host} non ha il link al sito, oppure il link non porta a {host}.",
+      website_low: "Il link al sito nella scheda Google Maps di {host} passa per reindirizzamenti o per http prima di arrivare al sito.",
+      hours: "Gli orari indicati su {host} sono diversi da quelli della sua scheda Google Maps.",
+      nap: "Indirizzo, telefono o nome su {host} non corrispondono alla sua scheda Google Maps.",
+      utm: "Le visite dalla scheda Google Maps di {host} vengono contate come ricerca o traffico diretto, perché il link non ha tag di campagna (UTM).",
+      profile: "Non abbiamo trovato una scheda Google Maps che rimandi a {host} o ne mostri il telefono, quindi chi cerca su Maps potrebbe non trovarlo."
+    },
     claim: "Chiedi il report",
     claimNote: "Il report mostra i sei punteggi e cosa correggere per primo, con i dettagli sfocati. Viene inviato gratis a un indirizzo di {domain}, e questo dimostra che la casella è tua.",
     unlist: "Togli {host} da Live Reports",
     unlistNote: "Esce dalla pagina pubblica con il prossimo aggiornamento giornaliero, e le revisioni successive di {host} non vengono pubblicate.",
     view: "Vedi la pagina pubblica",
+    call: "Domande sui punteggi? Prenota una chiamata di 15 minuti con Carlos",
     source: { "security.txt": "il security.txt del sito", schema: "i dati strutturati del sito", llms: "il llms.txt del sito", rdap: "la registrazione del dominio (RDAP)", dmarc: "il record DMARC del dominio", soa: "i record DNS del dominio", search: "i risultati pubblici di ricerca web per {domain}", page: "{url}" },
     why: "Ricevi questo unico avviso perché {email} è pubblico: l'abbiamo trovato in {source}. Ne inviamo al massimo uno per dominio ogni sei mesi e non compiliamo mai moduli di contatto.",
     forwardWhy: "Ricevi questo avviso perché qualcuno di {domain}, rispondendo al nostro primo avviso, ci ha chiesto di inviarlo a {email}.",
@@ -287,10 +363,11 @@ const COPY = {
   }
 };
 
-const GRADE_COLOR = { A: "#5fb88a", B: "#7fb08a", C: "#c9a86a", D: "#e0896a", F: "#e8796b" };
-const PANEL = "#171412";
-const CARD = "#1f1b18";
-const LINE = "#3a332e";
+const GRADE_COLOR = { A: FUSION.mint, B: FUSION.teal, C: FUSION.gold, D: FUSION.coral, F: "#e8796b" };
+const PANEL = FUSION.night;
+const CARD = FUSION.ink;
+const LINE = "#21434a";
+const QUIET = ON_NIGHT.meta;
 
 function copyFor(lang) {
   return COPY[base.langOf(lang)];
@@ -327,8 +404,9 @@ function healthFacts(score, card) {
   };
 }
 
-function chip(text, color) {
-  return "<span style=\"display:inline-block;margin:0 6px 6px 0;padding:3px 10px;border:1px solid " + color + ";border-radius:999px;font-size:12px;line-height:18px;color:" + color + ";\">" + text + "</span>";
+function chip(text, color, filled) {
+  const fill = filled ? "background-color:" + color + ";color:" + PANEL + ";" : "color:" + color + ";";
+  return "<span style=\"display:inline-block;margin:0 6px 6px 0;padding:3px 10px;border:1px solid " + color + ";border-radius:999px;font-size:12px;line-height:18px;" + fill + "\">" + text + "</span>";
 }
 
 function healthBlock(t, host, facts) {
@@ -336,11 +414,11 @@ function healthBlock(t, host, facts) {
   const totals = facts.totals;
   const summary = totals ? fill(h.summary, { host, overall: facts.overall, grade: facts.grade, fail: totals.fail, risk: totals.risk, pass: totals.pass }) : "";
   const chips = totals
-    ? chip("<b>" + totals.fail + "</b> " + esc(h.fail), "#f0897b") + chip("<b>" + totals.risk + "</b> " + esc(h.risk), "#e3b866") + chip("<b>" + totals.pass + "</b> " + esc(h.pass), "#6fcf97") +
-      (totals.person ? chip("<b>" + totals.person + "</b> " + esc(h.person), "#b8b0a8") : "")
+    ? chip("<b>" + totals.fail + "</b> " + esc(h.fail), FUSION.coral) + chip("<b>" + totals.risk + "</b> " + esc(h.risk), FUSION.gold) + chip("<b>" + totals.pass + "</b> " + esc(h.pass), FUSION.mint) +
+      (totals.person ? chip("<b>" + totals.person + "</b> " + esc(h.person), QUIET) : "")
     : "";
   const sev = facts.severities
-    ? ["critical", "high", "medium", "low"].map((key) => chip("<b>" + (facts.severities[key] || 0) + "</b> " + esc(h[key]), { critical: "#b8b0a8", high: "#f0897b", medium: "#e3b866", low: "#b8b0a8" }[key])).join("")
+    ? ["critical", "high", "medium", "low"].map((key) => chip("<b>" + (facts.severities[key] || 0) + "</b> " + esc(h[key]), { critical: FUSION.coral, high: FUSION.coral, medium: FUSION.gold, low: QUIET }[key], key === "critical")).join("")
     : "";
   const areaCard = (area) => {
     const row = facts.areas[area];
@@ -348,28 +426,28 @@ function healthBlock(t, host, facts) {
     const counts = row.fail == null ? "" : fill(h.counts, { fail: row.fail, risk: row.risk, pass: row.pass }) + " — ";
     return "<td width=\"50%\" valign=\"top\" style=\"padding:5px;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + CARD + "\" style=\"background:" + CARD + ";border:1px solid " + LINE + ";border-radius:12px;\"><tr><td style=\"padding:12px 14px;font-family:Arial,Helvetica,sans-serif;\">" +
       "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>" +
-      "<td style=\"font-size:15px;color:#f5f0eb;\"><b style=\"font-size:20px;\">" + row.score + "</b> " + esc(h.areas[area] || area) + "</td>" +
-      "<td align=\"right\"><span style=\"display:inline-block;min-width:22px;text-align:center;padding:3px 6px;border-radius:6px;background:" + (GRADE_COLOR[row.grade] || GRADE_COLOR.F) + ";color:#ffffff;font-size:13px;font-weight:bold;\">" + esc(row.grade) + "</span></td>" +
+      "<td style=\"font-size:15px;color:" + FUSION.pearl + ";\"><b style=\"font-size:20px;\">" + row.score + "</b> " + esc(h.areas[area] || area) + "</td>" +
+      "<td align=\"right\"><span style=\"display:inline-block;min-width:22px;text-align:center;padding:3px 6px;border-radius:6px;background:" + (GRADE_COLOR[row.grade] || GRADE_COLOR.F) + ";color:" + FUSION.night + ";font-size:13px;font-weight:bold;\">" + esc(row.grade) + "</span></td>" +
       "</tr></table>" +
-      "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:8px 0;background:#0f2a3a;border-radius:4px;\"><tr>" +
-      (row.score > 0 ? "<td width=\"" + Math.min(100, row.score) + "%\" style=\"height:6px;line-height:6px;font-size:0;background:" + barColor(row.score) + ";border-radius:4px;\">&nbsp;</td>" : "") +
+      "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + FUSION.night + "\" style=\"margin:8px 0;background:" + FUSION.night + ";border-radius:4px;\"><tr>" +
+      (row.score > 0 ? "<td width=\"" + Math.min(100, row.score) + "%\" bgcolor=\"" + barColor(row.score) + "\" style=\"height:6px;line-height:6px;font-size:0;background:" + barColor(row.score) + ";border-radius:4px;\">&nbsp;</td>" : "") +
       (row.score < 100 ? "<td style=\"height:6px;line-height:6px;font-size:0;\">&nbsp;</td>" : "") +
       "</tr></table>" +
-      "<p style=\"margin:0;font-size:12px;line-height:17px;color:#b8b0a8;\">" + esc(counts + h.about[area]) + "</p>" +
+      "<p style=\"margin:0;font-size:12px;line-height:17px;color:" + QUIET + ";\">" + esc(counts + h.about[area]) + "</p>" +
       "</td></tr></table></td>";
   };
   const shown = AREAS.filter((area) => facts.areas[area]);
   const grid = shown.filter((area, i) => i % 2 === 0).map((area, i) => "<tr>" + areaCard(area) + areaCard(shown[i * 2 + 1]) + "</tr>").join("");
-  return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + PANEL + "\" style=\"background:" + PANEL + ";border-radius:14px;margin:0 0 18px;\"><tr><td style=\"padding:18px 14px 12px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 6px 12px;font-family:Georgia,serif;font-size:19px;font-weight:bold;color:#f5f0eb;\">" + esc(h.title) + "</p>" +
+  return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"" + PANEL + "\" style=\"" + fusion.PANEL + "border-radius:14px;margin:0 0 18px;\"><tr><td style=\"padding:18px 14px 12px;font-family:Arial,Helvetica,sans-serif;\">" +
+    "<p style=\"margin:0 6px 12px;" + fusion.SERIF + "font-size:22px;line-height:26px;color:" + FUSION.pearl + ";\">" + esc(h.title) + "</p>" +
     "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>" +
     "<td width=\"112\" valign=\"top\" align=\"center\" style=\"padding:0 6px;\"><div style=\"width:96px;height:96px;border-radius:96px;border:8px solid " + barColor(facts.overall) + ";text-align:center;\">" +
-    "<p style=\"margin:18px 0 0;font-family:Georgia,serif;font-size:38px;line-height:40px;font-weight:bold;color:#f5f0eb;\">" + facts.overall + "</p>" +
-    "<p style=\"margin:2px 0 0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#b8b0a8;\">" + esc(h.grade) + " " + esc(facts.grade) + "</p></div></td>" +
+    "<p style=\"margin:18px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:38px;line-height:40px;font-weight:bold;color:#ffffff;\">" + facts.overall + "</p>" +
+    "<p style=\"margin:2px 0 0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:" + QUIET + ";\">" + esc(h.grade) + " " + esc(facts.grade) + "</p></div></td>" +
     "<td valign=\"top\" style=\"padding:0 6px;\">" +
-    (summary ? "<p style=\"margin:0 0 10px;font-size:15px;line-height:22px;color:#f5f0eb;\">" + esc(summary) + "</p>" : "") +
+    (summary ? "<p style=\"margin:0 0 10px;font-size:15px;line-height:22px;color:" + FUSION.pearl + ";\">" + esc(summary) + "</p>" : "") +
     (chips ? "<div>" + chips + "</div>" : "") + (sev ? "<div>" + sev + "</div>" : "") +
-    "<p style=\"margin:4px 0 0;font-size:12px;line-height:17px;color:#b8b0a8;\">" + esc(h.measured) + "</p>" +
+    "<p style=\"margin:4px 0 0;font-size:12px;line-height:17px;color:" + QUIET + ";\">" + esc(h.measured) + "</p>" +
     "</td></tr></table>" +
     "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-top:12px;\">" + grid + "</table>" +
     "</td></tr></table>";
@@ -387,14 +465,11 @@ function healthText(t, host, facts) {
 }
 
 function header(title) {
-  return "<tr><td bgcolor=\"#0f172a\" style=\"background:#0f172a;background-image:linear-gradient(135deg,#0f172a 0%,#0e7490 100%);border-radius:16px 16px 0 0;padding:30px 28px 24px;font-family:Arial,Helvetica,sans-serif;\">" +
-    "<p style=\"margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7dd3fc;\">QA-lab URL Review</p>" +
-    "<p style=\"margin:0;font-size:24px;line-height:30px;color:#ffffff;font-weight:bold;\">" + esc(title) + "</p>" +
-    "</td></tr>";
+  return fusion.band("QA-lab URL Review", esc(title), "", { size: 26 });
 }
 
 function para(text, style) {
-  return "<p style=\"margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;" + (style || "font-size:15px;line-height:23px;color:#334155;") + "\">" + esc(text) + "</p>";
+  return "<p style=\"margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;" + (style || "font-size:15px;line-height:23px;color:" + TEXT.body + ";") + "\">" + esc(text) + "</p>";
 }
 
 function sourceText(t, notice) {
@@ -407,41 +482,47 @@ function whyText(t, notice) {
   return fill(t.why, { email: notice.email, source: sourceText(t, notice) });
 }
 
-function footer(t, notice, stopUrl) {
+function footer(t, notice, stopUrl, face) {
   return esc(whyText(t, notice)) + "<br>" +
-    "<a href=\"" + esc(stopUrl) + "\" style=\"color:#0e7490;\">" + esc(t.stop) + "</a><br>" +
-    "<a href=\"" + SITE + "/qa-review.html\" style=\"color:#0e7490;\">QA-lab URL Review</a> &middot; " + esc(POSTAL);
+    "<a href=\"" + esc(stopUrl) + "\" style=\"color:" + TEXT.link + ";\">" + esc(t.stop) + "</a><br>" +
+    brandHtml(face) + " &middot; " + esc(POSTAL);
 }
 
 // notice: the url_review_owner_notices row, addressed. card: the Live Report card.
 // links: { claim, unlist, stop, live }. score: the review's insights.score, when the record is still there.
 function noticeMail(notice, card, links, score) {
   const t = copyFor(notice.lang);
+  const face = mailFace.faceOf(notice.lang);
   const vars = { host: notice.host, domain: notice.domain, date: String(card.read || notice.reviewedAt || "").slice(0, 10) };
   const facts = healthFacts(score, card);
+  const callUrl = booking.bookUrl("intro", notice.lang, { host: notice.host, from: "owner-notice" });
   const inner = header(fill(t.title, vars)) +
     "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:22px 24px 22px;\">" +
+    (notice.local && t.local[notice.local] ? para(fill(t.local[notice.local], vars), "font-size:16px;line-height:24px;color:" + TEXT.strong + ";font-weight:bold;") : "") +
     para(fill(t.lead, vars)) +
     healthBlock(t, notice.host, facts) +
-    (notice.critical ? para(t.critical, "font-size:15px;line-height:23px;color:#7f1d1d;font-weight:bold;") : "") +
+    (notice.critical ? para(t.critical, "font-size:15px;line-height:23px;color:" + TEXT.critical + ";font-weight:bold;") : "") +
     button(links.claim, t.claim, true) + button(links.unlist, fill(t.unlist, vars), false) +
-    para(fill(t.claimNote, vars), "font-size:13px;line-height:19px;color:#64748b;margin:6px 0 8px;") +
-    para(fill(t.unlistNote, vars), "font-size:13px;line-height:19px;color:#64748b;margin:0 0 12px;") +
-    "<p style=\"margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;\"><a href=\"" + esc(links.live) + "\" style=\"color:#0e7490;\">" + esc(t.view) + "</a></p>" +
+    para(fill(t.claimNote, vars), "font-size:13px;line-height:19px;color:" + TEXT.muted + ";margin:6px 0 8px;") +
+    para(fill(t.unlistNote, vars), "font-size:13px;line-height:19px;color:" + TEXT.muted + ";margin:0 0 12px;") +
+    "<p style=\"margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;\"><a href=\"" + esc(links.live) + "\" style=\"color:" + TEXT.link + ";\">" + esc(t.view) + "</a></p>" +
+    "<p style=\"margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;\"><a href=\"" + esc(callUrl) + "\" style=\"color:" + TEXT.link + ";\">" + esc(t.call) + "</a></p>" +
     "</td></tr>";
   const text = [
     fill(t.title, vars), "",
+    notice.local && t.local[notice.local] ? fill(t.local[notice.local], vars) + "\n" : "",
     fill(t.lead, vars), "",
     healthText(t, notice.host, facts), "",
     notice.critical ? t.critical : "",
     t.claim + ": " + links.claim, fill(t.claimNote, vars), "",
     fill(t.unlist, vars) + ": " + links.unlist, fill(t.unlistNote, vars), "",
-    t.view + ": " + links.live, "",
+    t.view + ": " + links.live,
+    t.call + ": " + callUrl, "",
     whyText(t, notice),
     t.stop + ": " + links.stop,
-    "QA-lab URL Review · " + POSTAL
+    (face ? brandText(face) + "\n" : "QA-lab URL Review · ") + POSTAL
   ].filter((line, i, all) => line !== "" || all[i - 1] !== "").join("\n");
-  return { lang: base.langOf(notice.lang), subject: fill(t.subject, vars), text, html: shell(base.langOf(notice.lang), t.preheader, inner, footer(t, notice, links.stop)) };
+  return { lang: base.langOf(notice.lang), subject: fill(t.subject, vars), text, html: shell(base.langOf(notice.lang), t.preheader, inner, footer(t, notice, links.stop, face)) };
 }
 
 // The footer line of the blurred report mail when an owner claimed it.
@@ -449,12 +530,12 @@ function claimWhy(lang, host) {
   return fill(copyFor(lang).claimWhy, { host });
 }
 
-const PAGE_STYLE = "body{margin:0;min-height:100vh;display:grid;place-items:center;background:#e8eef4;font-family:Arial,Helvetica,sans-serif;color:#0f172a}" +
-  "main{background:#fff;border-radius:16px;padding:32px;max-width:460px;margin:16px;text-align:center}h1{font-size:22px;line-height:1.3;font-weight:normal}" +
-  "p{color:#334155;line-height:1.5}label{display:block;text-align:left;font-size:14px;margin:0 0 6px}" +
-  "input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #9cc7d3;border-radius:10px;font-size:16px;margin:0 0 14px}" +
-  "button{background:#0e7490;color:#fff;border:0;border-radius:10px;padding:13px 22px;font-size:15px;font-weight:bold;cursor:pointer}" +
-  ".error{color:#b91c1c}a{color:#0e7490}";
+const PAGE_STYLE = "body{margin:0;min-height:100vh;display:grid;place-items:center;background:" + fusion.PAGE_BG + ";font-family:Arial,Helvetica,sans-serif;color:" + TEXT.strong + "}" +
+  "main{background:#fff;border-radius:16px;border-top:4px solid " + FUSION.teal + ";padding:32px;max-width:460px;margin:16px;text-align:center}h1{font-size:22px;line-height:1.3;font-weight:normal}" +
+  "p{color:" + TEXT.body + ";line-height:1.5}label{display:block;text-align:left;font-size:14px;margin:0 0 6px}" +
+  "input{box-sizing:border-box;width:100%;padding:12px;border:1px solid " + FUSION.teal + ";border-radius:10px;font-size:16px;margin:0 0 14px}" +
+  "button{background:" + FUSION.teal + ";color:" + FUSION.night + ";border:0;border-radius:999px;padding:13px 22px;font-size:15px;font-weight:bold;cursor:pointer}" +
+  ".error{color:" + TEXT.fail + "}a{color:" + TEXT.link + "}";
 
 // state: claim, claimed, claim-limit, unlist, unlisted, stop, stopped, gone.
 // link: the url_review_owner_links row, plus email (claimed) or wrong (a rejected claim address).

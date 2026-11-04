@@ -133,7 +133,7 @@
    "visual.areas.5.0": "Velocidad",
    "visual.note": "idmji.org · 20 páginas analizadas · 24 de octubre de 2026",
    "cat.label": "Carrera real · solicitado",
-   "cap.youtube": "Cada página tiene un título, y los rastreadores de búsqueda y respuestas de IA pueden leer la página de inicio. Pero 20 controles de formulario no tienen etiqueta.\n\nLección: Asigne a cada entrada una etiqueta visible vinculada con for e id. Los lectores de pantalla lo anuncian y el objetivo de toque aumenta.\n\nUn análisis automatizado de páginas públicas el 24 de octubre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.\n\nInforme completo: https://carlosandmunoz.com/qa-review.html?live=u-idmji-org&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-idmji-org\n\nRevise su propio sitio: https://carlosandmunoz.com/qa-review.html\n\nRevisiones solicitadas · QA-lab URL Review\n\n#Accessibility #Playwright #SoftwareTesting #QA #Forms #A11y #WebDevelopment #Coding #UXDesign #SDET #QualityAssurance #QAlab"
+   "cap.youtube": "Cada página tiene un título, y los rastreadores de búsqueda y respuestas de IA pueden leer la página de inicio. Pero 20 controles de formulario no tienen etiqueta.\n\nLección: Asigne a cada entrada una etiqueta visible vinculada con for e id. Los lectores de pantalla lo anuncian y el objetivo de toque aumenta.\n\nUn análisis automatizado de páginas públicas el 24 de octubre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.\n\nInforme completo: https://carlosandmunoz.com/qa-review.html?live=u-idmji-org&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-idmji-org\n\nRevisa tu propio sitio: https://carlosandmunoz.com/qa-review.html\n\nRevisiones solicitadas · QA-lab URL Review\n\n#Accessibility #Playwright #SoftwareTesting #QA #Forms #A11y #WebDevelopment #Coding #UXDesign #SDET #QualityAssurance #QAlab"
   },
   "vs-subastasventura-com": {
    "live": "u-subastasventura-com",
@@ -291,7 +291,7 @@
   "es\u0000One automated analysis of public pages on 24 Oct 2026, requested through": "Un análisis automatizado de páginas públicas el 24 de octubre de 2026, solicitado a través de",
   "es\u0000A starting point, not a verdict.": "Un punto de partida, no un veredicto.",
   "es\u0000Full report:": "Informe completo:",
-  "es\u0000Review your own site:": "Revise su propio sitio:",
+  "es\u0000Review your own site:": "Revisa tu propio sitio:",
   "es\u0000Requested reviews": "Revisiones solicitadas",
   "pt\u0000u-subastasventura-com": "u-subastasventura-com",
   "pt\u00003 natural competitors.": "3 concorrentes naturais.",
@@ -330,6 +330,33 @@
   "de\u0000natural competitors": "natürliche Konkurrenten",
   "de\u0000Lesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.": "Lektion: Vergleichen Sie Ihre Leistung mit den Websites, mit denen Ihre Besucher Sie vergleichen, nicht mit einem perfekten Ergebnis: Die Lücke, die Sie kostet, ist die, die ein Mitbewerber bereits geschlossen hat.",
   "de\u0000Automated analyses of public pages on 24 Oct 2026 of kemik.gt, max.com.gt, xiaomistore.com.gt, natural competitors found on the open web by": "Automatisierte Analysen öffentlicher Seiten am 24. Oktober 2026 von kemik.gt, max.com.gt, xiaomistore.com.gt und natürlichen Konkurrenten im offenen Web von",
-  "de\u0000rival sweep. A starting point, not a verdict.": "Rivalen-Sweep. Ein Ausgangspunkt, kein Urteil."
+  "de\u0000rival sweep. A starting point, not a verdict.": "Rivalen-Sweep. Ein Ausgangspunkt, kein Urteil.",
+  "en\u0000Try this": "Try this",
+  "en\u0000Tip": "Tip",
+  "en\u0000Guided tour": "Guided tour",
+  "en\u0000Never runs your tests": "Never runs your tests",
+  "en\u0000Let your page do the talking.": "Let your page do the talking.",
+  "en\u0000How a public-page review works, step by step.": "How a public-page review works, step by step.",
+  "en\u0000supresencia.com: 57.": "supresencia.com: 57.",
+  "en\u0000The gap: broken links.": "The gap: broken links.",
+  "en\u0000Every page has a title, and AI answer and search crawlers may read the start page. But 1 internal link leads to an error.": "Every page has a title, and AI answer and search crawlers may read the start page. But 1 internal link leads to an error.",
+  "en\u0000Check your own links after each release, and fix or redirect every one that answers 404.": "Check your own links after each release, and fix or redirect every one that answers 404.",
+  "en\u0000Requested review": "Requested review",
+  "en\u0000Lesson": "Lesson",
+  "en\u0000Analyzed on 24 Oct 2026": "Analyzed on 24 Oct 2026",
+  "en\u0000Analytics": "Analytics",
+  "en\u0000Security": "Security",
+  "en\u0000Speed": "Speed",
+  "en\u0000supresencia.com": "supresencia.com",
+  "en\u000070 pages analyzed": "70 pages analyzed",
+  "en\u000024 Oct 2026": "24 Oct 2026",
+  "en\u0000Real run": "Real run",
+  "en\u0000requested": "requested",
+  "en\u0000Lesson: Check your own links after each release, and fix or redirect every one that answers 404.": "Lesson: Check your own links after each release, and fix or redirect every one that answers 404.",
+  "en\u0000One automated analysis of public pages on 24 Oct 2026, requested through": "One automated analysis of public pages on 24 Oct 2026, requested through",
+  "en\u0000A starting point, not a verdict.": "A starting point, not a verdict.",
+  "en\u0000Full report:": "Full report:",
+  "en\u0000Review your own site:": "Review your own site:",
+  "en\u0000Requested reviews": "Requested reviews"
  }
 }

@@ -17,8 +17,9 @@ const phraser = require("../functions/url-review-phrase");
 const accountData = require("../functions/url-review-account-data");
 const oauth = require("../functions/url-review-oauth");
 
-function loadEnvFile() {
-  const file = path.join(__dirname, "..", "functions", ".env");
+// Keys deployed through Secret Manager are kept locally in functions/.secret.local, as the emulator reads them.
+function loadEnvFile(name) {
+  const file = path.join(__dirname, "..", "functions", name);
   let text = "";
   try { text = fs.readFileSync(file, "utf8"); } catch (error) { return; }
   text.split("\n").forEach((line) => {
@@ -30,7 +31,8 @@ function loadEnvFile() {
     if (!process.env[key]) process.env[key] = trimmed.slice(eq + 1).trim();
   });
 }
-loadEnvFile();
+loadEnvFile(".env");
+loadEnvFile(".secret.local");
 
 function paymentKeys() {
   return {
@@ -546,6 +548,23 @@ const server = http.createServer(async (req, res) => {
     if (!access.ok) {
       let priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] };
       try { priced = core.priceForReport(found.frameworks || [], core.toolsForCharge((found.report && found.report.tools) || []), core.creditFor({ addons })); } catch (error) { priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] }; }
+      if (offers.reopenFree(found, Date.now())) {
+        const preview = core.previewReport(found.report);
+        sendJson(res, 200, {
+          report: addons.indexOf("fixlist") !== -1 && found.report.insights ? Object.assign(preview, { insights: found.report.insights }) : preview,
+          frameworks: found.frameworks || [],
+          paid: false,
+          free: false,
+          addons,
+          reopenUntil: offers.reopenFreeUntil(found),
+          priceUsd: priced.usd,
+          creditUsd: priced.creditUsd || 0,
+          tools: priced.tools || [],
+          id: found.id,
+          host: found.report.host
+        }, origin, found.deviceId || deviceHint);
+        return;
+      }
       sendJson(res, 402, Object.assign({
         paymentRequired: true,
         priceUsd: priced.usd,
@@ -591,7 +610,7 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 402, {
       paymentRequired: true,
       priceUsd: core.PRICE_USD,
-      error: "Reopening a report asks for payment. A card payment is not connected on this page."
+      error: "After 7 days, reopening a report asks for payment. A card payment is not connected on this page."
     }, origin, deviceHint);
     return;
   }
@@ -1042,7 +1061,8 @@ const server = http.createServer(async (req, res) => {
       browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
-      webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined
+      webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+      places: process.env.PLACES_KEY ? (request) => core.placesSearch(request, process.env.PLACES_KEY) : undefined
     });
     const record = core.intakeRecord(intake.value, report, {
       ip: identity.ip,
@@ -1062,7 +1082,8 @@ const server = http.createServer(async (req, res) => {
     if (history) report.history = history;
     if (base) report.compare = compare.compareSites(base.report, report);
     writeRecord(record);
-    line(res, { type: "done", report, frameworks: record.frameworks, paid: record.paid === true, priceUsd: record.priceUsd });
+    const shown = record.paid === true ? report : Object.assign(core.previewReport(report), report.compare ? { compare: report.compare } : {});
+    line(res, { type: "done", report: shown, frameworks: record.frameworks, paid: record.paid === true, priceUsd: record.priceUsd });
     res.end();
   } catch (error) {
     noteReview("failed", {

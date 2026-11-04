@@ -2,11 +2,13 @@
  * Inlines each page's critical CSS and loads its stylesheets without blocking the first paint (#1028).
  * A rule is critical when one of its selectors matches the page's own HTML; hover, focus and other states, and the
  * theme and look classes the head scripts put on <html>, are left out of the match. Each local stylesheet in <head>
- * becomes <style data-critical> + <link rel="preload" onload> + <noscript><link>; remote ones (Google Fonts) get the
- * last two. Preload fetches at high priority, so the full CSS usually lands before the deferred scripts paint what the
- * static HTML does not have. The builder first undoes its own output, so the page keeps one plain <link> per
- * stylesheet as its source.
- * The review language pages copy qa-review.html's head; build-social-hub.js calls inline() on the hub pages.
+ * becomes <style data-critical> + <link rel="preload"> + <link media="print" data-async-css> + <noscript><link>; remote
+ * ones (Google Fonts) get the last three, and js/async-css.js switches each to all media once it has loaded (an onload
+ * attribute would need 'unsafe-inline' in script-src). Preload fetches at high priority, so the full CSS usually lands
+ * before the deferred scripts paint what the static HTML does not have. The builder first undoes its own output, so
+ * the page keeps one plain <link> per stylesheet as its source.
+ * The review language pages copy qa-review.html's head; build-social-hub.js and build-face-pages.js call inline() on
+ * the pages they write.
  *
  *   node scripts/build-critical-css.js          rewrites the pages
  *   node scripts/build-critical-css.js --check  exits 1 when a page no longer matches its CSS
@@ -21,7 +23,7 @@ const PAGES = [
   "index.html", "404.html", "accessibility.html", "admin.html", "qa-lab.html", "simulador.html",
   "qa-review.html", "qa-review-pay.html", "qa-review-account.html", "qa-review-guide.html", "qa-review-legal.html"
 ];
-const ASYNC = "as=\"style\" onload=\"this.onload=null;this.rel='stylesheet'\"";
+const ASYNC_JS = "js/async-css.js";
 const STATE_PSEUDOS = new Set([
   "hover", "focus", "focus-visible", "focus-within", "active", "visited", "link", "any-link", "target", "checked",
   "indeterminate", "disabled", "enabled", "invalid", "valid", "required", "optional", "placeholder-shown", "autofill",
@@ -33,7 +35,16 @@ const STATE_CLASSES = new Set(["dark-mode", "is-visible"]);
 function undo(html) {
   return html
     .replace(/[ \t]*<style data-critical="[^"]*">[\s\S]*?<\/style>\r?\n?/g, "")
+    .replace(/[ \t]*<script src="[^"]*async-css\.js[^"]*" async><\/script>\r?\n?/g, "")
+    .replace(/<link rel="preload" href="[^"]*"[^>]*? as="style">\s*<link\b[^>]*\sdata-async-css>\s*<noscript>(<link\b[^>]*>)<\/noscript>/g, "$1")
     .replace(/<link\b[^>]*?\s(?:media="print" onload="this\.media='all'"|as="style" onload="this\.onload=null;this\.rel='stylesheet'")[^>]*>\s*<noscript>(<link\b[^>]*>)<\/noscript>/g, "$1");
+}
+
+/** The async-css.js URL as the page refers to its scripts, with a content hash so a change reaches cached pages. */
+function asyncScript(head, page) {
+  const version = require("crypto").createHash("sha256").update(fs.readFileSync(path.join(ROOT, ASYNC_JS))).digest("hex").slice(0, 10);
+  const src = /\ssrc="\/js\//.test(head) || path.dirname(page) !== "." ? "/" + ASYNC_JS : ASYNC_JS;
+  return `<script src="${src}?v=${version}" async></script>`;
 }
 
 function deps() {
@@ -159,6 +170,7 @@ function inline(html, page, lib = deps()) {
   const matches = matcher(source, lib);
   let out = "";
   let at = 0;
+  let pad = "";
   for (const m of head.matchAll(/^([ \t]*)<link\b([^>]*)>/gim)) {
     const attrs = m[2];
     if (!/\brel=["']stylesheet["']/i.test(attrs) || /\bmedia=/i.test(attrs)) continue;
@@ -166,8 +178,9 @@ function inline(html, page, lib = deps()) {
     if (skip.some(([a, b]) => start >= a && start < b)) continue;
     const href = (attrs.match(/\bhref=["']([^"']+)["']/i) || [])[1];
     if (!href) continue;
-    const pad = m[1];
-    const plain = `<link rel="stylesheet" href="${href}">`;
+    pad = m[1];
+    const sri = ["integrity", "crossorigin"].map((name) => (attrs.match(new RegExp(`\\s${name}=["'][^"']*["']`, "i")) || [""])[0]).join("");
+    const plain = `<link rel="stylesheet" href="${href}"${sri}>`;
     const lines = [];
     if (!/^(https?:)?\/\//i.test(href)) {
       const file = localFile(href, page);
@@ -175,11 +188,12 @@ function inline(html, page, lib = deps()) {
       const css = critical(fs.readFileSync(file, "utf8"), matches, lib);
       if (css) lines.push(`<style data-critical="${href}">${css}</style>`);
     }
-    lines.push(`<link rel="preload" href="${href}" ${ASYNC}>`, `<noscript>${plain}</noscript>`);
+    lines.push(`<link rel="preload" href="${href}"${sri} as="style">`, `<link rel="stylesheet" href="${href}"${sri} media="print" data-async-css>`, `<noscript>${plain}</noscript>`);
     out += source.slice(at, start) + lines.join("\n" + pad);
     at = start + m[0].length - m[1].length;
   }
-  return out + source.slice(at);
+  if (!at) return source;
+  return out + "\n" + pad + asyncScript(head, page) + source.slice(at);
 }
 
 function main() {

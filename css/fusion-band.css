@@ -1,0 +1,24 @@
+/* Fusion header band (#1791): the Fusion canvas behind a review page's top heading. The band is night in both themes,
+   so the heading inside it takes the dark tokens; the gradient shows until the canvas fades in, and stays without WebGL2. */
+.fx-band {
+    --bg: #071116; --panel: #102226; --card: #102226; --line: rgba(159, 214, 220, .24); --edge: rgba(126, 246, 251, .22);
+    --text: #e8f3f4; --muted: #a9bec2; --cyan: #7ef6fb; --on-cyan: #071116; --green: #6fe3b1; --amber: #e2c48a; --red: #f39a8b;
+    position: relative; isolation: isolate; color: var(--text); color-scheme: dark;
+}
+.fx-bg {
+    position: absolute; z-index: -1; top: var(--fx-top, -32px); bottom: var(--fx-bottom, -32px); left: calc(50% - 50vw); width: 100vw;
+    overflow: hidden; pointer-events: none; border-bottom: 1px solid rgba(159, 214, 220, .16);
+    background: radial-gradient(34% 72% at 80% 46%, rgba(77, 179, 187, .3), transparent 70%), radial-gradient(26% 50% at 94% 8%, rgba(185, 168, 255, .16), transparent 70%), radial-gradient(40% 40% at 76% 100%, rgba(226, 196, 138, .12), transparent 70%), #071116;
+}
+.fx-page { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(50% 60% at 82% 40%, rgba(77, 179, 187, .26), transparent 70%), radial-gradient(40% 50% at 10% 100%, rgba(226, 196, 138, .1), transparent 70%), #071116; }
+.fx-bg > .fx, .fx-page > .fx { position: absolute; inset: 0; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
+.fx-bg.fx-on > .fx, .fx-page.fx-on > .fx { opacity: 1; }
+.fx-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(7, 17, 22, .9) 0%, rgba(7, 17, 22, .74) max(320px, 36%), rgba(7, 17, 22, 0) max(700px, 66%)); }
+.fx-band .pill.primary, .fx-band .btn-primary { border-color: transparent; background: linear-gradient(180deg, #b7f3f1 0%, #3ec4c8 34%, #14939b 100%); color: #04262a; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .82), 0 8px 18px rgba(13, 110, 118, .35); }
+html:has(.fx-bg) body { overflow-x: clip; }
+@media (max-width: 800px) {
+    .fx-bg::after { background: linear-gradient(180deg, rgba(7, 17, 22, .3) 0%, rgba(7, 17, 22, .82) 62%); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .fx-bg > .fx, .fx-page > .fx { transition: none; }
+}

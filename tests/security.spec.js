@@ -20,8 +20,8 @@ test.describe('Security and SEO', () => {
     expect(xml).toContain('carlosandmunoz.com/');
         expect(xml).toContain('simulador.html');
         expect(xml).toContain('qa-lab.html');
-        expect(xml).toContain('qa-lab.html?lang=es');
-        expect(xml).toContain('qa-lab.html?lang=it');
+        expect(xml).not.toContain('?lang=');
+        expect(xml).toContain('qa-review-es.html');
         expect(xml).not.toContain('admin.html');
         expect(xml).not.toContain('globant.com');
         expect(xml).not.toContain('zaga.co');
@@ -112,15 +112,12 @@ test.describe('Security and SEO', () => {
     }
   });
 
-  test('sitemap hreflang lists every language and omits admin', async ({ request }) => {
+  test('sitemap lists no ?lang= hreflang and omits admin', async ({ request }) => {
     const xml = await (await request.get('/sitemap.xml')).text();
     expect(xml).not.toContain('admin.html');
-    for (const loc of ['https://carlosandmunoz.com/', 'https://carlosandmunoz.com/simulador.html', 'https://carlosandmunoz.com/qa-lab.html']) {
-      for (const code of ['en', 'es', 'pt', 'de', 'fr', 'it', 'x-default']) {
-        expect(xml).toContain('hreflang="' + code + '"');
-      }
-      expect(xml).toContain('hreflang="es" href="' + loc + '?lang=es"');
-      expect(xml).toContain('hreflang="it" href="' + loc + '?lang=it"');
+    expect(xml).not.toContain('?lang=');
+    for (const code of ['en', 'es', 'pt', 'de', 'fr', 'it', 'x-default']) {
+      expect(xml).toContain('hreflang="' + code + '" href="https://carlosandmunoz.com/qa-review');
     }
   });
 });

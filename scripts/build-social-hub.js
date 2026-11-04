@@ -17,7 +17,8 @@
    assets/social/thumbs/*.webp and the six pages. Share cards come from scripts/build-share-images.js social. Posts still to come follow the posted ones
    and stay out of the JSON-LD until their day. They are marked Scheduled when the Buffer or Facebook ledger
    (assets/social/buffer.json, facebook.json) has them queued or sent, Planned when nothing has queued them yet,
-   and carry no tag when captions.json holds them for the hub alone. */
+   and carry no tag when captions.json holds them for the hub alone. Each card lists the networks the ledgers have
+   it on, and the numbers scripts/social-metrics.js wrote to assets/social/metrics.json, for the hub's sort. */
 
 const fs = require("fs");
 const path = require("path");
@@ -25,8 +26,12 @@ const { execFileSync } = require("child_process");
 const card = require("../js/social-hub-card");
 const admin = require("../js/social-hub-admin");
 const critical = require("./build-critical-css");
+const cspHashes = require("./build-csp-hashes");
 const queues = require("./social-ledger");
-const { PROFILES, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
+const metrics = require("./social-metrics");
+const { FACE_PROFILES, PROFILES, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
+const { ORDER } = require("./brand-kit/faces");
+const i18n = require("./social-hub/i18n");
 
 const ROOT = path.resolve(__dirname, "..");
 const SITE = card.SITE;
@@ -40,7 +45,7 @@ const PRERENDER = 24;
 const TEXT_MAX = 1200;
 const LAUNCH = "launch-2026-10";
 const ORG = SITE + "qa-review.html#organization";
-const SHARE_VERSION = "20261024";
+const SHARE_VERSION = "20261027";
 const RSS_MAX = 50;
 // Post kinds in the order the filter chips list them; a batch's captions.json names its kind (scripts/tips-studio/build.js).
 const KINDS = Object.keys(COPY.en.kind);
@@ -167,11 +172,26 @@ function isTracked(file) {
   }
 }
 
-// The same topic written in other languages: the launch set and promo batches (<batch>/<NN>-<topic>-<lang>).
+// The same topic written in other languages: the launch set, promo batches and skits (<batch>/<NN>-<topic>-<lang>).
 function groupOf(post) {
   if (post.batch === LAUNCH) return LAUNCH + "/" + post.id.split("/").pop();
-  const match = post.kind === "launch" && post.id.match(/^([^/]+)\/\d+-(.+)-([a-z]{2})$/);
+  const match = (post.kind === "launch" || post.kind === "skit") && post.id.match(/^([^/]+)\/\d+-(.+)-([a-z]{2})$/);
   return match && match[3] === post.lang ? match[1] + "/" + match[2] : null;
+}
+
+// Picks added by hand in the Social hub pane are English; the phrasebooks hold their sentences
+// (translate-captions.js --picks), so each one gets the languages whose book covers all of it.
+function translatePicks(posts, books = Object.fromEntries(i18n.LANGS.map((lang) => [lang, i18n.readBook(lang)]))) {
+  return posts.map((post) => {
+    if (post.kind !== "pick" || post.lang !== "en") return post;
+    const langs = {};
+    i18n.LANGS.forEach((lang) => {
+      const say = (text) => (text ? i18n.translate(text, books[lang] || {}) : "");
+      const t = { title: say(post.title), text: say(post.text), linkedin: say(post.captions.linkedin), facebook: say(post.captions.facebook) };
+      if (Object.values(t).every((value) => value != null)) langs[lang] = Object.assign(t, { alt: t.title });
+    });
+    return Object.keys(langs).length ? Object.assign({}, post, { i18n: langs }) : post;
+  });
 }
 
 // A post with translated captions (scripts/social-hub/translate-captions.js) gets a variant per language,
@@ -184,23 +204,27 @@ function expand(posts) {
       base: post.id,
       lang,
       title: cleanTitle(t.title || post.title),
-      text: t.linkedin || t.facebook || post.text,
+      text: t.text || t.linkedin || t.facebook || post.text,
       alt: t.alt || post.alt,
       steps: Array.isArray(t.steps) && t.steps.length ? t.steps.map(String) : null,
       captions: Object.assign({}, post.captions, Object.fromEntries(TEXT_NETS.filter((net) => t[net]).map((net) => [net, t[net]])))
     }))));
 }
 
-// One card per post on each language's page: the post in that language, else in English, else as written.
+// One card per post on each language's page: the post in that language. The English page falls back to
+// the post as written; a localized page leaves out posts not yet in its language, such as a new pick the
+// translator refused. A skit is spoken in its take's language, so a page with no take in its language
+// leaves the skit out.
 function forLang(posts, lang) {
   const best = new Map();
   const fit = (post) => (post.lang === lang ? 2 : post.lang === "en" ? 1 : 0);
   posts.forEach((post) => {
+    if (post.kind === "skit" && post.lang !== lang) return;
     const key = post.group || post.id;
     const held = best.get(key);
     if (!held || fit(post) > fit(held)) best.set(key, post);
   });
-  return posts.filter((post) => best.get(post.group || post.id) === post);
+  return posts.filter((post) => best.get(post.group || post.id) === post && (lang === "en" || post.lang === lang));
 }
 
 // A quiz names its answer post; each language's quiz points at the answer in the same language when there is one.
@@ -214,7 +238,7 @@ function pairQuizzes(posts) {
 }
 
 // Post ids a network has taken: queued or sent in either ledger. A translated variant counts through its base post.
-function queuedIds(books = [queues.read(queues.BUFFER), queues.read(queues.FACEBOOK)]) {
+function queuedIds(books = [queues.read(queues.BUFFER), queues.read(queues.FACEBOOK), queues.read(queues.OPEN_SOCIAL)]) {
   const ids = new Set();
   books.forEach((book) => Object.entries(book.posts).forEach(([id, list]) => {
     if (list.some((entry) => entry.result === "queued" || entry.result === "sent")) ids.add(id);
@@ -222,11 +246,31 @@ function queuedIds(books = [queues.read(queues.BUFFER), queues.read(queues.FACEB
   return ids;
 }
 
+// The networks that queued or sent each post, for the hub's network filter.
+function networkIds(books = [queues.read(queues.BUFFER), queues.read(queues.FACEBOOK)]) {
+  const nets = new Map();
+  books.forEach((book) => Object.entries(book.posts).forEach(([id, list]) => list.forEach((entry) => {
+    if (!entry.channel || (entry.result !== "queued" && entry.result !== "sent")) return;
+    if (!nets.has(id)) nets.set(id, new Set());
+    nets.get(id).add(entry.channel);
+  })));
+  return nets;
+}
+
+// A post's networks in the order the Follow row lists them; a post with a clip on the channel is on YouTube.
+function postNets(post, nets) {
+  const set = new Set(nets.get(post.base || post.id) || []);
+  if (post.youtube) set.add("youtube");
+  return [...set].sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99) || a.localeCompare(b));
+}
+
 function collect() {
   const files = tracked();
   const queued = queuedIds();
+  const nets = networkIds();
+  const numbers = metrics.read().posts;
   const edits = admin.clean(exists(EDITS) ? readJson(EDITS) : null);
-  const posts = expand(admin.apply(batchPosts(files, liveIds()).concat(launchPosts(files)), edits, isTracked));
+  const posts = expand(translatePicks(admin.apply(batchPosts(files, liveIds()).concat(launchPosts(files)), edits, isTracked)));
   const ledger = exists(LEDGER) ? readJson(LEDGER) : { videos: {} };
   const byTitle = new Map();
   Object.entries(ledger.videos).forEach(([id, video]) => {
@@ -242,6 +286,8 @@ function collect() {
     post.text = body(post);
     post.group = groupOf(post) || post.base || (post.i18n && Object.keys(post.i18n).length ? post.id : null);
     post.queued = queued.has(post.base || post.id);
+    post.nets = postNets(post, nets);
+    post.stats = numbers[post.base || post.id] || null;
     delete post.i18n;
   });
   // A view of any language's page ranks the whole post.
@@ -349,6 +395,7 @@ function feedJson(posts, asOf) {
     id: post.id, kind: post.kind, date: post.date, lang: post.lang, clipLang: post.clipLang, cat: post.cat, title: post.title,
     text: post.text.length > TEXT_MAX ? post.text.slice(0, TEXT_MAX).replace(/\s+\S*$/, "") + "…" : post.text,
     image: post.image, thumb: post.thumb, alt: post.alt, youtube: post.youtube, report: post.report, trend: post.trend,
+    nets: post.nets && post.nets.length ? post.nets : undefined, stats: post.stats || undefined,
     queued: post.date >= asOf && post.queued ? true : undefined, held: post.date >= asOf && post.held ? true : undefined
   }));
   return JSON.stringify({ version: 1, asOf, count: cards.length, posts: cards }) + "\n";
@@ -430,7 +477,7 @@ function jsonLd(lang, shown, total, copy) {
         "@id": ORG,
         name: "QA-lab URL Review",
         url: SITE + "qa-review.html",
-        logo: SITE + "assets/qa-review-mark.svg",
+        logo: SITE + "assets/qa-review-mark-full.svg",
         sameAs: PROFILES.map((profile) => profile.url)
       },
       {
@@ -457,7 +504,7 @@ function version(file) {
   return require("crypto").createHash("sha1").update(read(file)).digest("hex").slice(0, 10);
 }
 
-const CSP = "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com; frame-src https://www.youtube-nocookie.com; form-action 'self';";
+const CSP = "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://www.gstatic.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.google.com https://www.googletagmanager.com https://*.googleapis.com https://cloudflareinsights.com; frame-src https://www.youtube-nocookie.com; form-action 'self';";
 
 function page(lang, posts, asOf) {
   const copy = COPY[lang];
@@ -476,11 +523,18 @@ function page(lang, posts, asOf) {
   const langLinks = Object.entries(LANGS).map(([code, info]) =>
     "<a href=\"" + card.pageFor(code) + "\" hreflang=\"" + code + "\" lang=\"" + code + "\"" + (code === lang ? " aria-current=\"page\"" : "") + ">"
     + "<img src=\"https://hatscripts.github.io/circle-flags/flags/" + info.flag + ".svg\" alt=\"\" width=\"18\" height=\"18\">" + esc(info.native) + "</a>").join("");
-  const follow = PROFILES.map((profile) => "<a class=\"hub-follow-" + profile.net + "\" href=\"" + profile.url + "\" rel=\"me noopener\" data-net=\"" + profile.net + "\">" + esc(profile.name) + "</a>").join("");
-  const kinds = ["all"].concat(visible.some((post) => post.trend) ? ["trending"] : [], KINDS.filter((kind) => visible.some((post) => post.kind === kind)), ["video"]).map((kind) =>
+  const follow = FACE_PROFILES.slice().sort((a, b) => b.langs.includes(lang) - a.langs.includes(lang)).map((face) =>
+    "<p class=\"hub-face\"><a class=\"hub-face-page\" href=\"" + face.page + "\" translate=\"no\">@" + face.handle + " <small>" + face.langs.map((code) => code.toUpperCase()).join(" · ") + "</small></a>"
+    + face.profiles.map((profile) => "<a class=\"hub-follow-" + profile.net + "\" href=\"" + profile.url + "\" rel=\"me noopener\" data-net=\"" + profile.net + "\">" + esc(profile.name) + "</a>").join("") + "</p>").join("");
+  const kinds = ["all"].concat(visible.some((post) => post.trend) ? ["trending"] : [], KINDS.filter((kind) => visible.some((post) => post.kind === kind))).map((kind) =>
     "<button type=\"button\" class=\"hub-chip\" data-kind=\"" + kind + "\" aria-pressed=\"" + (kind === "all") + "\">" + esc(copy.kinds[kind]) + "</button>").join("");
-  const langOptions = "<option value=\"all\">" + esc(copy.allLangs) + "</option>" + Object.entries(LANGS).map(([code, info]) => "<option value=\"" + code + "\">" + esc(info.native) + "</option>").join("");
-  const topicOptions = "<option value=\"all\">" + esc(copy.allTopics) + "</option>" + topics(visible).map((cat) => "<option value=\"" + esc(cat) + "\">" + esc(card.topic({ cat }, copy)) + "</option>").join("");
+  const option = (value, label) => "<option value=\"" + esc(value) + "\">" + esc(label) + "</option>";
+  const langOptions = option("all", copy.allLangs) + Object.entries(LANGS).map(([code, info]) => option(code, info.native)).join("");
+  const topicOptions = option("all", copy.allTopics) + topics(visible).map((cat) => option(cat, card.topic({ cat }, copy))).join("");
+  const sortOptions = card.SORTS.map((key) => option(key, copy.sorts[key])).join("");
+  const mediaOptions = ["all", "image", "video"].map((key) => option(key, copy.medias[key])).join("");
+  const netOptions = option("all", copy.allNets) + PROFILES.filter((profile, i) => PROFILES.findIndex((other) => other.net === profile.net) === i && visible.some((post) => (post.nets || []).includes(profile.net))).map((profile) => option(profile.net, profile.name)).join("");
+  const rangeOptions = ["all", "7", "30", "90", "custom"].map((key) => option(key, copy.ranges[key])).join("");
   const hubCopy = Object.assign({}, copy, { captions: CAPTIONS, lang, asOf });
   const json = (value) => JSON.stringify(value, null, 1).replace(/</g, "\\u003c");
   return `<!DOCTYPE html>
@@ -489,14 +543,19 @@ function page(lang, posts, asOf) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="${CSP}">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>${esc(copy.title)}</title>
     <meta name="description" content="${esc(copy.description)}">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-    <meta name="theme-color" content="#0d6e76">
+    <meta name="theme-color" content="#071116" data-fixed>
     <link rel="canonical" href="${url}">
 ${alternates}
-    <link rel="icon" href="assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" href="assets/qa-review-mark.svg?v=20261027a" type="image/svg+xml">
+    <link rel="icon" href="assets/qa-review-icon-32.png?v=20261027a" sizes="32x32" type="image/png">
+    <link rel="icon" href="assets/qa-review-icon-16.png?v=20261027a" sizes="16x16" type="image/png">
+    <link rel="icon" href="assets/qa-review-favicon.ico?v=20261027a" sizes="48x48">
+    <link rel="apple-touch-icon" href="assets/qa-review-apple-touch-icon.png?v=20261027a">
+    <link rel="manifest" href="qa-review.webmanifest?v=20261027a">
     <link rel="alternate" type="application/json" href="${SITE}${OUT}/feed${sfx}.json" title="QA-lab URL Review social feed">
     <link rel="alternate" type="application/rss+xml" href="${SITE}${OUT}/rss${sfx}.xml" title="QA-lab URL Review · Social (RSS)">
     <meta property="og:type" content="website">
@@ -521,18 +580,20 @@ ${ogAlt}
 ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, copy))}
     </script>
     <script src="js/site-analytics.js?v=20261030a" defer></script>
-    <script src="js/qa-review-consent.js?v=20261028p" defer></script>
+    <script src="js/qa-review-consent.js?v=20261101a" defer></script>
+    <script src="js/qa-review-visit.js?v=20261101a" defer></script>
     <script src="js/site-theme.js"></script>
     <script>SiteTheme.boot();</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/site-look.css?v=${version("css/site-look.css")}">
     <link rel="stylesheet" href="css/social-hub.css?v=${version("css/social-hub.css")}">
+    <link rel="stylesheet" href="css/fusion-band.css?v=${version("css/fusion-band.css")}">
 </head>
 <body>
 <a class="skip-link" href="#main">${esc(copy.skip)}</a>
 <header class="topbar">
-    <div class="brand"><a href="qa-review${sfx}.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
+    <div class="brand"><a href="qa-review${sfx}.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
     <nav class="actions" aria-label="QA-lab URL Review">
         <a class="btn btn-ghost" href="qa-review${sfx}.html">${esc(copy.nav.review)}</a>
         <a class="btn btn-ghost" href="qa-review${sfx}.html#live-reports">${esc(copy.nav.live)}</a>
@@ -540,7 +601,8 @@ ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, 
     </nav>
 </header>
 <main id="main" class="hub" tabindex="-1">
-    <section class="hub-hero">
+    <section class="hub-hero fx-band">
+        <div class="fx-bg" data-fx data-fx-mode="2" data-fx-place="band" aria-hidden="true"><canvas class="fx"></canvas></div>
         <p class="hub-eyebrow" translate="no">QA-lab URL Review · Social</p>
         <h1>${esc(copy.h1)}</h1>
         <p class="hub-lead">${esc(copy.lead)}</p>
@@ -550,8 +612,14 @@ ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, 
     <section class="hub-tools" aria-label="${esc(copy.search)}">
         <div class="hub-chips" role="group" aria-label="${esc(copy.kinds.all)}">${kinds}</div>
         <div class="hub-selects">
+            <div class="hub-field hub-sort"><label for="hub-sort">${esc(copy.sort)}</label><select id="hub-sort">${sortOptions}</select><button class="hub-dir" id="hub-dir" type="button" aria-label="${esc(copy.sortDir + ": " + copy.dirs.date[0])}" data-dir="desc">${esc(copy.dirs.date[0])}</button></div>
+            <label class="hub-field"><span>${esc(copy.media)}</span><select id="hub-media">${mediaOptions}</select></label>
+            <label class="hub-field"><span>${esc(copy.network)}</span><select id="hub-net">${netOptions}</select></label>
+            <label class="hub-field"><span>${esc(copy.range)}</span><select id="hub-range">${rangeOptions}</select></label>
+            <span class="hub-dates" id="hub-dates" hidden><label class="hub-field"><span>${esc(copy.from)}</span><input id="hub-from" type="date"></label><label class="hub-field"><span>${esc(copy.to)}</span><input id="hub-to" type="date"></label></span>
             <label class="hub-field"><span>${esc(copy.clipLang)}</span><select id="hub-lang">${langOptions}</select></label>
             <label class="hub-field"><span>${esc(copy.topic)}</span><select id="hub-topic">${topicOptions}</select></label>
+            <label class="hub-check"><input id="hub-report" type="checkbox"><span>${esc(copy.withReport)}</span></label>
         </div>
         <label class="hub-field hub-search"><span class="sr-only">${esc(copy.search)}</span><input id="hub-q" type="search" placeholder="${esc(copy.search)}" autocomplete="off"></label>
         <p class="hub-count" id="hub-count" aria-live="polite">${esc(copy.count.replace("{n}", visible.length))}</p>
@@ -562,11 +630,12 @@ ${shown.map((post) => "        " + card.cardHtml(post, copy, lang)).join("\n")}
     <div class="hub-empty" id="hub-empty" hidden><p>${esc(copy.empty)}</p><button class="btn btn-ghost" id="hub-clear" type="button">${esc(copy.clear)}</button></div>
     <p class="hub-more-wrap"><button class="btn btn-primary" id="hub-more" type="button"${visible.length > PRERENDER ? "" : " hidden"}>${esc(copy.loadMore)}</button></p>
 </main>
-<footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="qa-review-legal.html?lang=${lang}">Legal</a> · <a href="accessibility.html?lang=${lang}">${esc(copy.accessibility)}</a> · <a href="${OUT}/rss${sfx}.xml">RSS</a> · <a href="${OUT}/feed${sfx}.json">JSON feed</a></p></footer>
+<footer class="hub-footer"><p>${esc(copy.footer)}</p><p><a href="qa-review-legal.html?lang=${lang}">${esc(copy.legal)}</a> · <a href="accessibility.html?lang=${lang}">${esc(copy.accessibility)}</a> · <a href="${OUT}/rss${sfx}.xml">RSS</a> · <a href="${OUT}/feed${sfx}.json">${esc(copy.jsonFeed)}</a></p></footer>
 <dialog class="hub-dialog" id="hub-dialog" aria-label="${esc(copy.share)}"><form method="dialog"><button class="hub-close" value="close" aria-label="${esc(copy.close)}">×</button></form><div id="hub-dialog-body"></div></dialog>
 <script>window.SocialHubCopy = ${JSON.stringify(hubCopy).replace(/</g, "\\u003c")};</script>
 <script src="js/social-hub-card.js?v=${version("js/social-hub-card.js")}" defer></script>
 <script src="js/social-hub.js?v=${version("js/social-hub.js")}" defer></script>
+<script type="module" src="js/fusion/boot.js?v=${version("js/fusion/boot.js")}"></script>
 </body>
 </html>
 `;
@@ -603,7 +672,7 @@ ${admin.remote(post.image)
     <language>${lang}</language>
     <lastBuildDate>${rfc822(asOf)}</lastBuildDate>
     <atom:link href="${SITE}${OUT}/rss${sfx}.xml" rel="self" type="application/rss+xml"/>
-    <image><url>${SITE}apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>${SITE}${card.pageFor(lang)}</link></image>
+    <image><url>${SITE}assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>${SITE}${card.pageFor(lang)}</link></image>
 ${items.join("\n")}
   </channel>
 </rss>
@@ -693,7 +762,7 @@ function postPage(post, siblings, related, asOf, answer, question) {
     "@context": "https://schema.org",
     "@graph": [
       Object.assign(posting(post, true, answerOut ? answer : null), { mainEntityOfPage: url, isPartOf: { "@type": "CollectionPage", "@id": hub + "#page", url: hub } }),
-      { "@type": "Organization", "@id": ORG, name: "QA-lab URL Review", url: SITE + "qa-review.html", logo: SITE + "assets/qa-review-mark.svg", sameAs: PROFILES.map((profile) => profile.url) },
+      { "@type": "Organization", "@id": ORG, name: "QA-lab URL Review", url: SITE + "qa-review.html", logo: SITE + "assets/qa-review-mark-full.svg", sameAs: PROFILES.map((profile) => profile.url) },
       { "@type": "BreadcrumbList", itemListElement: [
         { "@type": "ListItem", position: 1, name: "QA-lab URL Review", item: SITE + "qa-review" + sfx + ".html" },
         { "@type": "ListItem", position: 2, name: "Social", item: hub },
@@ -711,10 +780,14 @@ function postPage(post, siblings, related, asOf, answer, question) {
     <title>${esc(title)}</title>
     <meta name="description" content="${esc(description)}">
     <meta name="robots" content="${upcoming ? "noindex, follow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"}">
-    <meta name="theme-color" content="#0d6e76">
+    <meta name="theme-color" content="#071116" data-fixed>
     <link rel="canonical" href="${url}">
-${alternates}    <link rel="icon" href="/assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+${alternates}    <link rel="icon" href="/assets/qa-review-mark.svg?v=20261027a" type="image/svg+xml">
+    <link rel="icon" href="/assets/qa-review-icon-32.png?v=20261027a" sizes="32x32" type="image/png">
+    <link rel="icon" href="/assets/qa-review-icon-16.png?v=20261027a" sizes="16x16" type="image/png">
+    <link rel="icon" href="/assets/qa-review-favicon.ico?v=20261027a" sizes="48x48">
+    <link rel="apple-touch-icon" href="/assets/qa-review-apple-touch-icon.png?v=20261027a">
+    <link rel="manifest" href="/qa-review.webmanifest?v=20261027a">
     <link rel="alternate" type="application/rss+xml" href="${SITE}${OUT}/rss${sfx}.xml" title="QA-lab URL Review · Social (RSS)">
     <meta property="og:type" content="article">
     <meta property="og:site_name" content="QA-lab URL Review">
@@ -747,7 +820,7 @@ ${json(graph)}
 </head>
 <body>
 <header class="topbar">
-    <div class="brand"><a href="/qa-review${sfx}.html"><img class="logo" src="/assets/qa-review-mark.svg?v=20261013c" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
+    <div class="brand"><a href="/qa-review${sfx}.html"><img class="logo" src="/assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
     <nav class="actions" aria-label="QA-lab URL Review">
         <a class="btn btn-ghost" href="/qa-review${sfx}.html">${esc(copy.nav.review)}</a>
         <a class="btn btn-ghost" href="/qa-review-social${sfx}.html">${esc(copy.allPosts)}</a>
@@ -817,7 +890,7 @@ function outputs(posts, asOf) {
   });
   Object.assign(files, postPages(posts, asOf));
   Object.keys(files).filter((file) => file.endsWith(".html")).forEach((file) => {
-    files[file] = critical.inline(files[file], file);
+    files[file] = cspHashes.apply(critical.inline(files[file], file));
   });
   return files;
 }
@@ -879,4 +952,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { KINDS, mergeFeed, titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, expand, forLang, pairQuizzes, unspoiled, queuedIds, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };
+module.exports = { KINDS, mergeFeed, titleKey, scoreKey, cleanTitle, csvRows, thumbFor, batchPosts, launchPosts, translatePicks, expand, forLang, pairQuizzes, unspoiled, queuedIds, networkIds, postNets, collect, liveEdits, feedJson, page, postPage, postPages, rss, sitemap, outputs };

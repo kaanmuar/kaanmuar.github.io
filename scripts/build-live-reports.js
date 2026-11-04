@@ -418,6 +418,25 @@ function analyzedWording(text) {
     .replace(/\b([aA]|[oO]ne|The) public read\b/g, "$1 public analysis");
 }
 
+function scrubValues(value) {
+  if (typeof value === "string") return value.replace(/mailto:/gi, "").replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[address hidden]");
+  if (Array.isArray(value)) return value.map(scrubValues);
+  if (value && typeof value === "object") {
+    const out = {};
+    Object.keys(value).forEach((key) => { out[key] = scrubValues(value[key]); });
+    return out;
+  }
+  return value;
+}
+
+// The finding's messages, so the viewer can write them in the page language; their values hide what scrub() hides.
+function msgOf(finding, parts) {
+  if (!finding.msg) return undefined;
+  const out = {};
+  parts.forEach((part) => { if (finding.msg[part] && finding[part]) out[part] = scrubValues(finding.msg[part]); });
+  return Object.keys(out).length ? out : undefined;
+}
+
 function scrub(text, max) {
   let value = analyzedWording(String(text || ""))
     .replace(/mailto:/gi, "")
@@ -523,7 +542,7 @@ function pickWorks(ins) {
     if (picked.length >= 8) break;
     if (!picked.includes(f)) picked.push(f);
   }
-  return picked.slice(0, 8).map((f) => ({ area: f.area, title: scrub(f.title, 120) }));
+  return picked.slice(0, 8).map((f) => ({ area: f.area, title: scrub(f.title, 120), msg: msgOf(f, ["title"]) }));
 }
 
 function build(run, series) {
@@ -573,7 +592,7 @@ function build(run, series) {
     .filter((f) => f.verdict === "fail" || f.verdict === "risk")
     .sort((a, b) => (a.rank || 999) - (b.rank || 999))
     .slice(0, 6)
-    .map((f) => ({ area: f.area, verdict: f.verdict, severity: f.severity, title: scrub(f.title, 140), evidence: scrub(f.evidence, 260), fix: scrub(f.fix, 220), effort: f.effort || "" }));
+    .map((f) => ({ area: f.area, verdict: f.verdict, severity: f.severity, title: scrub(f.title, 140), evidence: scrub(f.evidence, 260), fix: scrub(f.fix, 220), effort: f.effort || "", msg: msgOf(f, ["title", "evidence", "fix"]) }));
 
   const card = {
     id: run.id,
@@ -736,4 +755,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { AREAS, REGIONS, REPORTS, RUN_FILES, loadRuns, build, existingItems, writeAll, scrub };
+module.exports = { AREAS, REGIONS, REPORTS, RUN_FILES, loadRuns, build, existingItems, writeAll, scrub, msgOf };

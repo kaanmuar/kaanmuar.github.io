@@ -37,6 +37,12 @@ test("a 429 on the daily window fails at once as spent", async () => {
   assert.strictEqual(calls.length, 1);
 });
 
+test("a 429 on the 30-day window fails at once as spent, its wait in days", async () => {
+  const { calls, request } = replies([...limited("30d"), 5 * 86400]);
+  await assert.rejects(gql("query { ok }", {}, { request, sleep: async () => assert.fail("no wait") }), (error) => error.spent && /30d limit is spent; it frees up in 5 days/.test(error.message));
+  assert.strictEqual(calls.length, 1);
+});
+
 test("other errors are not retried", async () => {
   const { calls, request } = replies([400, { errors: [{ message: "bad", extensions: { code: "BAD_USER_INPUT" } }] }]);
   await assert.rejects(gql("query { ok }", {}, { request }), (error) => error.code === "BAD_USER_INPUT" && !error.spent);
