@@ -479,3 +479,60 @@
 @container jv (max-width: 560px) { .jv-ld-body { grid-template-columns: 1fr; } .jv-ld-detail { border-left: 0; padding-left: 0; } }
 @media (horizontal-viewport-segments: 2) { .jv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: max(0.75rem, calc(env(viewport-segment-left 1 0, 0px) - env(viewport-segment-right 0 0, 0px))); } }
 @media print { .jv-holo, .jv-nodata { display: none !important; } }
+
+/* GitHub tab (#2526): grades, the board as a process map, DORA levels, PR states, XP. */
+.jv-gh-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem; align-items: center; margin-bottom: 0.9rem; padding: 0.7rem 0.9rem; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+.jv-grades { display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; justify-content: space-around; }
+.jv-grade { display: inline-flex; flex-direction: column; align-items: center; gap: 0.05rem; cursor: help; }
+.jv-grade small { font: 0.64rem ui-monospace, Menlo, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.jv-grade-letter { font: 800 30px ui-monospace, Menlo, monospace; }
+.jv-grade[data-grade="D"] svg, .jv-grade[data-grade="F"] svg { filter: drop-shadow(0 0 7px rgba(255, 77, 141, 0.45)); }
+.jv-pm { overflow-x: auto; margin-bottom: 0.4rem; }
+.jv-pm svg { display: block; width: 100%; min-width: 640px; height: auto; }
+.jv-pm-node rect { fill: rgba(56, 225, 255, 0.08); stroke: var(--line-hi); stroke-width: 1.2; }
+.jv-pm-node.is-empty rect { fill: rgba(93, 122, 140, 0.08); stroke: var(--line); }
+.jv-pm-node.is-over rect { fill: rgba(255, 181, 71, 0.16); stroke: var(--amber); stroke-width: 2.2; filter: drop-shadow(0 0 8px rgba(255, 181, 71, 0.6)); }
+.jv-pm-name { fill: var(--muted); font: 600 11px ui-monospace, Menlo, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+.jv-pm-n { fill: var(--text); font: 700 22px ui-monospace, Menlo, monospace; }
+.jv-pm-node.is-over .jv-pm-n { fill: var(--amber); }
+.jv-pm-age { fill: var(--dim); font: 10px ui-monospace, Menlo, monospace; }
+.jv-pm-flow { fill: none; stroke: var(--cyan); stroke-opacity: 0.75; stroke-linecap: round; }
+.jv-pm-flow.is-back { stroke: var(--amber); stroke-dasharray: 6 4; }
+.jv-pm-idle { stroke: rgba(93, 122, 140, 0.55); stroke-width: 1.2; stroke-dasharray: 3 4; }
+.jv-pm-count { fill: var(--text); font: 600 10px ui-monospace, Menlo, monospace; paint-order: stroke; stroke: var(--bg); stroke-width: 3px; }
+.jv-chip.lv-elite { border-color: rgba(61, 255, 168, 0.55); color: var(--green); }
+.jv-chip.lv-high { border-color: var(--line-hi); color: var(--cyan); }
+.jv-chip.lv-medium { border-color: rgba(255, 181, 71, 0.55); color: var(--amber); }
+.jv-chip.lv-low { border-color: rgba(255, 77, 141, 0.6); color: var(--pink); }
+.jv-chip.c-draft { border-style: dashed; color: var(--dim); }
+.jv-dora { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.9rem; align-items: center; }
+.jv-dora-level { display: grid; place-items: center; min-width: 96px; padding: 0.7rem 0.6rem; border: 1px solid var(--line-hi); border-radius: 14px; text-align: center; }
+.jv-dora-level small { font: 0.62rem ui-monospace, Menlo, monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.jv-dora-level strong { font: 800 1.35rem ui-monospace, Menlo, monospace; text-transform: uppercase; color: var(--cyan); }
+.jv-dora-level.lv-elite { border-color: var(--green); box-shadow: 0 0 18px rgba(61, 255, 168, 0.3); }
+.jv-dora-level.lv-elite strong { color: var(--green); }
+.jv-dora-level.lv-medium { border-color: var(--amber); }
+.jv-dora-level.lv-medium strong { color: var(--amber); }
+.jv-dora-level.lv-low { border-color: var(--pink); }
+.jv-dora-level.lv-low strong { color: var(--pink); }
+.jv-dora ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; }
+.jv-dora li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 0.5rem; align-items: center; font-size: 0.8rem; padding: 0.25rem 0; border-bottom: 1px dashed var(--line); }
+.jv-dora li b { font-family: ui-monospace, Menlo, monospace; }
+.jv-gh-level { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.6rem; align-items: center; font-size: 0.85rem; margin: 0.4rem 0; }
+.jv-gh-level small { color: var(--dim); }
+.jv-gh-xp { height: 10px; border-radius: 6px; background: rgba(93, 122, 140, 0.22); overflow: hidden; }
+.jv-gh-xp i { display: block; height: 100%; background: linear-gradient(90deg, var(--violet), var(--cyan)); box-shadow: 0 0 10px var(--cyan); }
+.jv-gh-needs { font-size: 0.92rem; }
+.jv-gh-sparks { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; }
+.jv-gh-sparks div { display: grid; border: 1px solid var(--line); border-radius: 10px; padding: 0.4rem 0.55rem 0.2rem; }
+.jv-gh-sparks span { font: 0.64rem ui-monospace, Menlo, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.jv-gh-sparks b { font: 700 1.05rem ui-monospace, Menlo, monospace; }
+.jv-meter.is-low i { background: var(--pink); }
+.jv-gh-add, .jv-gh-del { font-family: ui-monospace, Menlo, monospace; }
+.jv-gh-add { color: var(--green); }
+.jv-gh-del { color: var(--pink); }
+.jv-gh-repos { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.6rem; }
+.jv-gh-repo { display: grid; gap: 0.3rem; min-width: 0; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 12px; background: rgba(56, 225, 255, 0.04); font-size: 0.8rem; }
+.jv-gh-repo strong { overflow-wrap: anywhere; }
+.jv-gh-repo small { color: var(--dim); }
+@container jv (max-width: 599px) { .jv-gh-head { grid-template-columns: 1fr; justify-items: center; } .jv-dora { grid-template-columns: 1fr; } }

@@ -19,7 +19,8 @@
         { key: 'marketing', name: 'Marketing', short: 'MKT' },
         { key: 'engagement', name: 'Engagement', short: 'ENG' },
         { key: 'traffic', name: 'Traffic', short: 'WEB' },
-        { key: 'systems', name: 'Systems', short: 'SYS' }
+        { key: 'systems', name: 'Systems', short: 'SYS' },
+        { key: 'github', name: 'GitHub', short: 'GH' }
     ];
     const ACTION_LABELS = {
         share_cv: 'Share', open_simulator: 'Open studio', open_qa_lab: 'Open lab', open_contact_widget: 'Contact',
@@ -418,7 +419,8 @@
         { key: 'safety', name: 'Safety (Web Risk, DNS, domain, TLS)' }, { key: 'platform', name: 'Google Cloud (Monitoring, Logging, Auth)' },
         { key: 'outreach', name: 'Outreach (sweep prospects, Instantly, 90-day plan)' }, { key: 'mailbox', name: 'ImprovMX (mail forwarding)' },
         { key: 'addresses', name: 'Email addresses (ImprovMX, Microsoft 365, Instantly, SendGrid)' },
-        { key: 'pagespeed', name: 'Daily PageSpeed run (every page, its PRs)' }
+        { key: 'pagespeed', name: 'Daily PageSpeed run (every page, its PRs)' },
+        { key: 'github-work', name: 'GitHub work (repos, CI, PRs, board, security)' }
     ];
 
     function connections(external, pending) {
@@ -528,6 +530,45 @@
         });
     }
 
+    const GH_BOT = /\[bot\]$|^dependabot|^github-actions|^renovate/i;
+    const GH_CODE = ['code', 'test', 'config'];
+    const GH_GRADES = ['A', 'B', 'C', 'D', 'F'];
+    const ghGrade = (v) => (v >= 90 ? 'A' : v >= 80 ? 'B' : v >= 70 ? 'C' : v >= 60 ? 'D' : 'F');
+
+    /* What the GitHub briefing lines and the hourly pass (functions/jarvis-actions.js) act on, from the github-work
+       source (#2526). mainBroken: main's newest failed push commit whose failure is not flaky (it failed again after a
+       re-run, or Gemini says code, test or config), unless the source names it itself in ci.mainBroken. */
+    function githubTargets(g) {
+        const x = g || {};
+        const prs = ((x.prs || {}).items || []).filter((pr) => pr && pr.number && pr.state !== 'draft');
+        const ci = x.ci || {};
+        const board = x.board || {};
+        const worktrees = (x.branches || {}).worktrees || [];
+        const held = new Set(worktrees.filter((w) => w.alive).map((w) => w.branch));
+        let mainBroken = Array.isArray(ci.mainBroken) ? ci.mainBroken : ci.mainBroken ? [ci.mainBroken] : null;
+        if (!mainBroken) {
+            const red = (ci.failing || []).filter((r) => r.branch === 'main' && r.sha && r.event === 'push' && (r.attempt > 1 || (r.diag && GH_CODE.includes(r.diag.category))))
+                .sort((a, b) => String(b.at).localeCompare(String(a.at)));
+            const sha = red.length ? red[0].sha : '';
+            const same = red.filter((r) => r.sha === sha);
+            mainBroken = sha ? [{ sha, url: same[0].url, why: same.map((r) => r.name + (r.diag ? ' (' + r.diag.cause + ')' : ' failed again after a re-run')).join('; ').slice(0, 300) }] : [];
+        }
+        return {
+            drift: (board.drift || []).filter((d) => d && d.number && d.should),
+            orphans: prs.filter((pr) => !pr.ticket && !pr.bot && !GH_BOT.test(pr.author || '')),
+            behind: prs.filter((pr) => pr.state === 'behind'),
+            conflicts: prs.filter((pr) => pr.state === 'dirty'),
+            green: prs.filter((pr) => pr.state === 'clean' && pr.checks === 'pass'),
+            stale: prs.filter((pr) => Number(pr.updatedH) >= 72),
+            aging: (board.aging || []).filter((a) => a && ['Dev', 'QA', 'Stg'].includes(a.column) && a.days > 7),
+            merged: ((x.branches || {}).merged || []).filter((b) => b && b.name && !['main', 'master'].includes(b.name) && !held.has(b.name)),
+            worktrees: worktrees.filter((w) => w && w.path && w.prState === 'merged' && !w.alive && w.dirty === false).map((w) => Object.assign({ dir: String(w.path).split('/').pop() }, w)),
+            mainBroken: mainBroken.filter((m) => m && m.sha),
+            flaky: ((ci.flaky || {}).workflows || []).filter((w) => w && w.name && w.runs >= 5 && w.pct >= 10),
+            diag: (ci.failing || []).filter((r) => r && r.id && r.diag && GH_CODE.includes(r.diag.category))
+        };
+    }
+
     // The instant briefing: rules over the summaries, most urgent first. Levels: alert, warn, good, info.
     function briefing(state) {
         const out = [];
@@ -584,6 +625,49 @@
             const waiting = gh.needsAgent || [];
             if (waiting.length) add('alert', 'systems', `${plural(waiting.length, 'URL review bug waits', 'URL review bugs wait')} for the daily fix agent, held back to stay inside the Cursor plan: ${waiting.slice(0, 5).map((bug) => '#' + bug.number).join(', ')}.`, 'github:needs-agent');
             if (gh.openBugs) add('info', 'systems', `${plural(gh.openBugs, 'open bug', 'open bugs')}; most in ${((gh.bugAreas || [])[0] || {}).label || 'none'}. ${plural((gh.merged || {}).total || 0, 'PR', 'PRs')} merged this week.`, 'github:bugs');
+        }
+        // #2526: the GitHub tab's lines; per-item kinds stop at 8 lines each.
+        const gw = ext['github-work'];
+        if (gw && gw.ok !== false) {
+            const t = githubTargets(gw);
+            const few = (list) => list.slice(0, 8);
+            const title = (pr) => String(pr.title || '').slice(0, 90);
+            t.mainBroken.forEach((m) => add('alert', 'github', `Main went red after ${String(m.sha).slice(0, 7)}${m.title ? ' (' + String(m.title).slice(0, 80) + ')' : ''}: ${m.why || 'CI failed'}.`, 'gh:main-broken:' + m.sha));
+            few(t.flaky).forEach((w) => add('warn', 'github', `CI "${w.name}" is flaky: ${w.pct}% of its ${w.runs} runs passed only on a re-run.`, 'gh:flaky:' + w.name));
+            few(t.diag).forEach((r) => add('warn', 'github', `"${r.name}" failed on ${r.branch}: ${String(r.diag.cause).replace(/\.$/, '')}. A fix agent prompt is ready.`, 'gh:diag:' + r.id));
+            few(t.conflicts).forEach((pr) => add('warn', 'github', `PR #${pr.number} has merge conflicts: ${title(pr)}.`, 'gh:pr-conflict:' + pr.number));
+            few(t.stale).forEach((pr) => add('warn', 'github', `PR #${pr.number} has had no update in ${Math.floor(pr.updatedH / 24)} days: ${title(pr)}.`, 'gh:pr-stale:' + pr.number));
+            few(t.orphans).forEach((pr) => add('warn', 'github', `PR #${pr.number} names no ticket: ${title(pr)}.`, 'gh:orphan-pr:' + pr.number));
+            few(t.drift).forEach((d) => add('warn', 'github', `#${d.number} is in ${d.column || 'no column'} but should be in ${d.should}${d.why ? ': ' + d.why : ''}.`, 'gh:drift:' + d.number));
+            few(t.aging).forEach((a) => add('warn', 'github', `#${a.number} has sat in ${a.column} for ${plural(a.days, 'day', 'days')}: ${title(a)}.`, 'gh:aging:' + a.number));
+            const b = gw.board || {};
+            const limit = b.wipLimit || 15;
+            if (b.wip > limit) add('warn', 'github', `${b.wip} tickets are in progress, over the WIP limit of ${limit}.`, 'gh:wip');
+            few(t.green).forEach((pr) => add('info', 'github', `PR #${pr.number} is green and mergeable: ${title(pr)}.`, 'gh:pr-green:' + pr.number));
+            few(t.behind).forEach((pr) => add('info', 'github', `PR #${pr.number} is behind main: ${title(pr)}.`, 'gh:pr-behind:' + pr.number));
+            if (t.merged.length) add('info', 'github', `${t.merged.length} merged ${t.merged.length === 1 ? 'branch is' : 'branches are'} still on GitHub, such as ${t.merged[0].name}.`, 'gh:branch-merged');
+            few(t.worktrees).forEach((w) => add('info', 'github', `Worktree ${w.dir} (${w.branch}) is merged and clean, and no chat holds it.`, 'gh:worktree-merged:' + w.dir));
+            const sec = gw.security || {};
+            const dep = sec.dependabot || {};
+            const severe = (Number(dep.critical) || 0) + (Number(dep.high) || 0);
+            if (dep.ok !== false && severe) add('alert', 'github', `${plural(severe, 'critical or high Dependabot alert is', 'critical or high Dependabot alerts are')} open.`, 'gh:security:dependabot');
+            const scan = sec.codeScanning || {};
+            const scanSevere = (scan.items || []).filter((i) => /critical|high/i.test(String(i.severity || i.security_severity_level || ''))).length;
+            if (scan.ok !== false && scanSevere) add('alert', 'github', `${plural(scanSevere, 'critical or high code scanning alert is', 'critical or high code scanning alerts are')} open.`, 'gh:security:code-scanning');
+            const secrets = sec.secrets || {};
+            if (secrets.ok !== false && secrets.open > 0) add('alert', 'github', `${plural(secrets.open, 'leaked secret is', 'leaked secrets are')} open in secret scanning.`, 'gh:security:secrets');
+            const gq = ((gw.budget || {}).kaanmuar || {}).graphql;
+            if (gq && gq.limit > 0) {
+                const leftPct = Math.round(((gq.limit - gq.used) / gq.limit) * 100);
+                if (leftPct < 20) add(leftPct < 5 ? 'alert' : 'warn', 'github', `Only ${leftPct}% of kaanmuar's GitHub GraphQL budget is left this hour (${gq.used} of ${gq.limit} used).`, 'gh:budget');
+            }
+            (gw.needs || []).slice(0, 6).forEach((n) => add('warn', 'github', String(n).slice(0, 220), 'gh:needs:' + String(n).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60)));
+            if (!gw.local || gw.local.ageMin > 30) add('warn', 'github', gw.local ? `The Mac uploader has not reported for ${gw.local.ageMin} minutes; worktrees and usage are stale.` : 'The Mac uploader has never reported; install it with scripts/github-local-report.js so Jarvis sees worktrees and usage.', 'gh:needs:uploader');
+            (gw.repos || []).filter((r) => r && r.ci && ['failure', 'timed_out', 'startup_failure'].includes(r.ci.conclusion) && !/kaanmuar\.github\.io$/.test(r.name)).slice(0, 6)
+                .forEach((r) => add('warn', 'github', `CI in ${r.name} is ${r.ci.conclusion} on ${r.defaultBranch || 'its default branch'}.`, 'gh:repo-red:' + r.name));
+            const now = ((gw.score || {}).overall || {});
+            const before = (gw.history || []).filter((h) => typeof h.score === 'number').slice(-2)[0];
+            if (now.grade && before && GH_GRADES.indexOf(now.grade) > GH_GRADES.indexOf(ghGrade(before.score))) add('info', 'github', `The GitHub score fell to ${now.grade} (${now.value}) from ${ghGrade(before.score)} (${before.score}) on ${before.day}.`, 'gh:score');
         }
         const speed = ext.speed;
         if (speed && speed.ok) (speed.pages || []).forEach((page) => {
@@ -801,11 +885,30 @@
         { prefix: 'cv:swing', impact: 2, levels: ['warn'], title: 'Find why CV visits fell', tab: 'cv' },
         { prefix: 'studio:swing', impact: 2, levels: ['warn'], title: 'Find why QA Studio visits fell', tab: 'studio' },
         { prefix: 'lab:swing', impact: 2, levels: ['warn'], title: 'Find why QA Lab visits fell', tab: 'lab' },
-        { prefix: 'review:swing', impact: 2, levels: ['warn'], title: 'Find why URL Review opens fell', tab: 'review' }
+        { prefix: 'review:swing', impact: 2, levels: ['warn'], title: 'Find why URL Review opens fell', tab: 'review' },
+        // #2526: the GitHub tab. A click runs a gh-* action through action-run or github-act; the key's tail is its target.
+        { prefix: 'gh:main-broken:', impact: 5, title: (i) => `Get main green: revert ${i.key.split(':')[2].slice(0, 7)} or fix forward`, click: 'gh-revert', tab: 'github' },
+        { prefix: 'gh:security:', impact: 5, group: true, title: 'Fix the open GitHub security alerts', tab: 'github', link: 'https://github.com/kaanmuar/kaanmuar.github.io/security' },
+        { prefix: 'gh:budget', impact: 4, title: 'Slow GitHub GraphQL use before the hourly budget runs out', tab: 'github' },
+        { prefix: 'gh:diag:', impact: 4, title: (i) => 'Launch a fix agent for ' + ((/^"([^"]+)"/.exec(i.text) || [])[1] || 'the failed run'), click: 'gh-agent', tab: 'github' },
+        { prefix: 'gh:needs:', impact: 3, title: (i) => i.text.slice(0, 110), tab: 'github' },
+        { prefix: 'gh:pr-conflict:', impact: 3, title: (i) => 'Resolve the merge conflicts in PR #' + i.key.split(':')[2], click: 'gh-agent', tab: 'github' },
+        { prefix: 'gh:flaky:', impact: 3, title: (i) => 'Steady the flaky workflow ' + i.key.slice(9), tab: 'github' },
+        { prefix: 'gh:pr-green:', impact: 3, levels: ['info'], title: (i) => 'Merge the green PR #' + i.key.split(':')[2], click: 'gh-merge-pr', tab: 'github' },
+        { prefix: 'gh:drift:', impact: 3, group: true, title: (n) => `Sync ${n === 1 ? 'the board item in the wrong column' : n + ' board items in the wrong column'}`, click: 'gh-board-sync', tab: 'github' },
+        { prefix: 'gh:orphan-pr:', impact: 2, group: true, title: (n) => `File tickets for ${n === 1 ? 'the PR' : n + ' PRs'} that name none`, click: 'gh-orphan-ticket', tab: 'github' },
+        { prefix: 'gh:pr-behind:', impact: 2, levels: ['info'], group: true, title: (n) => `Update ${n === 1 ? 'the PR' : n + ' PRs'} behind main`, click: 'gh-update-pr', tab: 'github' },
+        { prefix: 'gh:pr-stale:', impact: 2, group: true, title: (n) => `Finish or close ${n === 1 ? 'the stale PR' : n + ' stale PRs'}`, tab: 'github' },
+        { prefix: 'gh:aging:', impact: 2, group: true, title: (n) => `Move ${n === 1 ? 'the ticket' : n + ' tickets'} sitting in Dev, QA or Stg`, tab: 'github' },
+        { prefix: 'gh:wip', impact: 2, title: 'Finish work in progress before starting more', tab: 'github' },
+        { prefix: 'gh:repo-red:', impact: 2, group: true, title: 'Get CI green in the other repositories', tab: 'github' },
+        { prefix: 'gh:score', impact: 2, levels: ['info'], title: 'Find why the GitHub score dropped', tab: 'github' },
+        { prefix: 'gh:branch-merged', impact: 1, levels: ['info'], title: 'Delete the merged branches', click: 'gh-delete-branch', tab: 'github' },
+        { prefix: 'gh:worktree-merged:', impact: 1, levels: ['info'], group: true, title: 'Remove the merged worktrees', click: 'gh-remove-worktree', tab: 'github' }
     ];
     const SAFE_ACTIONS = ['rerun-held', 'resend-notices', 'publish-hub'];
-    // Actions a proposal offers as a button that only run on a click (#1977).
-    const CLICK_ACTIONS = ['retry-social', 'resume-outreach', 'pause-outreach'];
+    // Actions a proposal offers as a button that only run on a click (#1977); gh-* (#2526) through action-run.
+    const CLICK_ACTIONS = ['retry-social', 'resume-outreach', 'pause-outreach', 'gh-board-sync', 'gh-orphan-ticket', 'gh-update-pr', 'gh-merge-pr', 'gh-revert', 'gh-delete-branch', 'gh-close-issue', 'gh-remove-worktree', 'gh-agent'];
 
     function proposalRules(state, briefed) {
         const items = (briefed || briefing(state)).slice();
@@ -820,6 +923,7 @@
             row.evidence.push(item.text);
             if (/^(job|scheduler):/.test(item.key)) (row.jobs = row.jobs || []).push(item.key.slice(item.key.indexOf(':') + 1));
             if (item.key.startsWith('ci:')) (row.workflows = row.workflows || []).push(item.key.slice(3));
+            if (item.key.startsWith('gh:flaky:')) (row.workflows = row.workflows || []).push(item.key.slice(9));
             if (item.level === 'alert') row.level = 'alert';
             row.item = row.item || item;
             out.set(key, row);
@@ -836,10 +940,14 @@
 
     const RUN_LABELS = {
         'rerun-held': 'Send held re-runs', 'resend-notices': 'Re-send failed notices', 'publish-hub': 'Publish the hub',
-        'retry-social': 'Retry failed posts', 'resume-outreach': 'Resume mailboxes', 'pause-outreach': 'Pause outreach'
+        'retry-social': 'Retry failed posts', 'resume-outreach': 'Resume mailboxes', 'pause-outreach': 'Pause outreach',
+        'gh-board-sync': 'Sync the board', 'gh-orphan-ticket': 'File the tickets', 'gh-update-pr': 'Update with main', 'gh-merge-pr': 'Merge', 'gh-revert': 'Open a revert PR',
+        'gh-delete-branch': 'Delete the branches', 'gh-close-issue': 'Close the issue', 'gh-remove-worktree': 'Remove the worktrees', 'gh-agent': 'Launch a fix agent'
     };
 
     const pageSpeedPr = (key) => Number((/^pagespeed:pr:(\d+)$/.exec(key || '') || [])[1]) || 0;
+    // A gh:* key's target: gh:pr-green:12 -> "12", gh:main-broken:<sha> -> the sha; a grouped key has none.
+    const ghTarget = (key) => String(key || '').split(':').slice(2).join(':');
 
     /* What a proposal's run button does (#1977), or null: { action, label, jobs?, workflows?, pr? } for the jarvis
        action-run op. A PageSpeed PR merges; otherwise its own action, then its click, then its failed jobs or workflows. */
@@ -848,6 +956,10 @@
         const pr = pageSpeedPr(p.key);
         if (pr) return { action: 'pagespeed-merge', pr, label: `Merge #${pr}` };
         const many = (list, one, n) => (list.length === 1 ? one(list[0]) : n(list.length));
+        if (/^gh-/.test(p.click || '') && CLICK_ACTIONS.includes(p.click)) {
+            const target = ghTarget(p.key);
+            return Object.assign({ action: p.click, key: p.key, label: RUN_LABELS[p.click] + (p.click === 'gh-merge-pr' && target ? ' #' + target : '') }, target ? { target } : {});
+        }
         if (SAFE_ACTIONS.includes(p.action) || CLICK_ACTIONS.includes(p.click)) {
             const action = SAFE_ACTIONS.includes(p.action) ? p.action : p.click;
             return { action, label: RUN_LABELS[action] };
@@ -918,6 +1030,32 @@
             const waiting = (ext.github || {}).needsAgent || [];
             fact('Waiting for an agent', waiting.length);
             waiting.slice(0, 8).forEach((bug) => link('#' + bug.number + ' ' + bug.title, bug.url));
+        } else if (k.startsWith('gh:')) {
+            const gw = ext['github-work'] || {};
+            const target = ghTarget(k);
+            const n = Number(target);
+            const pr = ((gw.prs || {}).items || []).find((r) => r.number === n);
+            const run = ((gw.ci || {}).failing || []).find((r) => String(r.id) === target);
+            const ticket = ((gw.board || {}).drift || []).concat((gw.board || {}).aging || []).find((r) => r.number === n);
+            if (pr) {
+                fact('PR', '#' + pr.number + ' ' + pr.title); fact('Author', pr.author); fact('Branch', pr.branch); fact('State', pr.state); fact('Checks', pr.checks);
+                fact('Updated', pr.updatedH !== undefined ? Math.round(pr.updatedH) + ' h ago' : null); fact('Ticket', pr.ticket ? '#' + pr.ticket : 'none');
+                link('Open the PR on GitHub', pr.url);
+            }
+            if (run) {
+                fact('Workflow', run.name); fact('Branch', run.branch); fact('Attempt', run.attempt); fact('Commit', run.sha);
+                if (run.diag) { fact('Cause', run.diag.cause); fact('Category', run.diag.category); fact('Fix', run.diag.fix); fact('Confidence', run.diag.confidence); }
+                link('Open the run on GitHub', run.url);
+            }
+            if (ticket) { fact('Ticket', '#' + ticket.number + ' ' + ticket.title); fact('Column', ticket.column); fact('Should be', ticket.should); fact('Why', ticket.why); fact('Days', ticket.days); link('Open on GitHub', ticket.url); }
+            if (k === 'gh:wip') { fact('In progress', (gw.board || {}).wip); fact('WIP limit', (gw.board || {}).wipLimit || 15); }
+            if (k === 'gh:budget') { const gq = ((gw.budget || {}).kaanmuar || {}).graphql || {}; fact('GraphQL used', gq.used); fact('Limit', gq.limit); fact('Resets', gq.resetAt); }
+            if (k === 'gh:branch-merged') githubTargets(gw).merged.slice(0, 8).forEach((b) => fact(b.name, (b.pr ? 'PR #' + b.pr + ', ' : '') + (b.days || 0) + (b.days === 1 ? ' day' : ' days') + ' ago'));
+            if (k.startsWith('gh:security:')) link('Security on GitHub', 'https://github.com/kaanmuar/kaanmuar.github.io/security');
+            const rule2 = rule && rule.click;
+            if (rule2 && !actions.some((a) => a.id === rule2)) act(rule2, RUN_LABELS[rule2], Object.assign({ key: k }, target ? { target } : {}));
+            if (k.startsWith('gh:flaky:')) act('rerun-ci', 'Re-run the failed jobs', { workflow: target });
+            link('Board', 'https://github.com/orgs/carlosandmunoz-hq/projects/1');
         } else if (k === 'review:failures') {
             const f = health.failures || {};
             fact('Failed runs', f.total);
@@ -1031,6 +1169,8 @@
         if (e.speed && e.speed.pages) e.speed.pages.forEach((page) => { if (page.ok) checks.push(page.score >= 50); });
         if (e.pagespeed && e.pagespeed.ok && !e.pagespeed.empty) checks.push(!e.pagespeed.stale && e.pagespeed.lastStatus !== 'failed');
         if (e.safety && e.safety.checks) e.safety.checks.forEach((c) => { if (c.level !== 'info') checks.push(c.ok); });
+        const ghScore = e['github-work'] && e['github-work'].score && e['github-work'].score.overall;
+        if (ghScore && typeof ghScore.value === 'number') checks.push(ghScore.value >= 70);
         if (!checks.length) return null;
         return Math.round((checks.filter(Boolean).length / checks.length) * 100);
     }
@@ -1068,7 +1208,7 @@
             ['overview', /\b(overview|home|summary|everything)\b/], ['inbox', /\b(inbox|messages?|ratings?)\b/],
             ['review', /\b(url review|review|reviews|qa-?lab url)\b/], ['studio', /\b(studio|simulator|simulador)\b/],
             ['lab', /\b(lab|regression)\b/], ['cv', /\b(cv|resume|résumé)\b/], ['hub', /\b(hub|social)\b/],
-            ['traffic', /\b(traffic|ga4|analytics|cloudflare)\b/], ['systems', /\b(systems?|health|ops|jobs|ci|speed|uptime)\b/]
+            ['traffic', /\b(traffic|ga4|analytics|cloudflare)\b/], ['github', /\b(github|pull requests?|prs|board|branches|worktrees?)\b/], ['systems', /\b(systems?|health|ops|jobs|ci|speed|uptime)\b/]
         ];
         if (/\b(show|open|go to|switch to|display)\b/.test(t) || t.split(/\s+/).length <= 3) {
             const hit = aliases.find(([, re]) => re.test(t));
@@ -1328,6 +1468,13 @@
         const t = (eg && eg.report && eg.report.totals) || {};
         out.push({ key: 'engagement', name: 'Engagement', kpis: eg ? [kpi('Posts read', num(t.read)), kpi('Candidates', num(t.candidates)), kpi('Replies drafted', num(t.drafted))] : [],
             series: eg ? { labels: eg.daily.map((d) => d.day), values: eg.daily.map((d) => num(d.read)) } : { labels: [], values: [] } });
+        const gw = ok(e['github-work']) ? e['github-work'] : null;
+        const sc = gw && gw.score && gw.score.overall;
+        const hist = gw && Array.isArray(gw.history) ? gw.history.filter((d) => d && d.score !== null && d.score !== undefined) : [];
+        const rate = gw && gw.ci && gw.ci.passRate !== null && gw.ci.passRate !== undefined ? num(gw.ci.passRate) : null;
+        out.push({ key: 'github', name: 'GitHub', kpis: gw ? [sc && kpi('Score', (num(sc.value) + ' ' + (sc.grade || '')).trim(), undefined, { raw: num(sc.value) }), rate !== null && kpi('CI pass rate', rate + '%', undefined, { raw: rate }),
+            gw.prs && kpi('Open PRs', num(gw.prs.open)), gw.issues && kpi('Open bugs', num(gw.issues.openBugs))].filter(Boolean) : [],
+            series: { labels: hist.map((d) => d.day), values: hist.map((d) => num(d.score)) } });
         return out;
     }
 
@@ -1350,7 +1497,7 @@
         return line ? line.slice(head.length).trim() : '';
     }
 
-    const api = { linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, proposalRules, pageSpeedPr, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor };
+    const api = { linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);
