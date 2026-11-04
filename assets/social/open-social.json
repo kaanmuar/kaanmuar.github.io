@@ -343,6 +343,15 @@
   ],
   "compare-2026-11/09-metros": [
    {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzhf44hxp727",
+    "at": "2026-11-04T03:13:40.956Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzhf44hxp727",
+    "checked": "2026-11-04T03:13:42.980Z"
+   },
+   {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
     "id": "18081414257732874",
@@ -359,6 +368,15 @@
     "result": "sent",
     "url": "https://www.instagram.com/p/DfSdbt0F9O2/",
     "checked": "2026-11-03T17:51:36.915Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18347107264282719",
+    "at": "2026-11-04T03:13:43.769Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DfTdyNolqo5",
+    "checked": "2026-11-04T03:13:54.859Z"
    }
   ],
   "digest-2026-10-30/01-this-week": [
