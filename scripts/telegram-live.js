@@ -9,7 +9,7 @@
                                                                         one channel post for the reports analyzed since the last one
      TELEGRAM_BOT_TOKEN=... node scripts/telegram-live.js chats        chats and channels the bot was added to (to find a channel id)
 
-   TELEGRAM_APP is the Mini App's direct link from BotFather's /newapp, such as https://t.me/QALabLiveBot/live; a report
+   TELEGRAM_APP is the Mini App's direct link from BotFather's /newapp, https://t.me/qalab_live_bot/live; a report
    opens in the app as <TELEGRAM_APP>?startapp=<report id>. Without it, links open live.html in the browser.
    A bot cannot create a channel or a Mini App direct link: both are made once in the Telegram app (BotFather).
    Channels only take URL buttons (web_app buttons work in private chats), so the post links the direct link.
