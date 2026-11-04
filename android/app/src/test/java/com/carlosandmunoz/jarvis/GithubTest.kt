@@ -106,5 +106,30 @@ class GithubTest {
         assertEquals("remove the merged worktree on the Mac (the uploader does it, never forced)", askFor("gh-remove-worktree", null, null))
     }
 
+    @Test fun oneColumnFoldedTwoUnfolded() {
+        assertEquals(1, Github.columnsFor(344))
+        assertEquals(1, Github.columnsFor(412))
+        assertEquals(2, Github.columnsFor(600))
+        assertEquals(2, Github.columnsFor(884))
+        assertEquals(3, Github.columnsFor(1280))
+    }
+
+    @Test fun theProcessMapFitsAcrossAnUnfoldedScreenAndScrollsOnTheCover() {
+        assertFalse(Github.mapFits(300))
+        assertFalse(Github.mapFits(380))
+        assertTrue(Github.mapFits(550))
+        assertTrue(Github.mapFits(800))
+    }
+
+    @Test fun ringsSitInOneRowWhenTheyFitElseInEvenRows() {
+        assertEquals(10 to 84, Github.ringGrid(1000))
+        assertEquals(10 to 65, Github.ringGrid(740))
+        assertEquals(5 to 84, Github.ringGrid(550))
+        val (per, size) = Github.ringGrid(300)
+        assertEquals(4, per)
+        assertEquals(67, size)
+        assertEquals(1 to 60, Github.ringGrid(40, 3))
+    }
+
     private fun JsonObject.str() = (this["key"] as kotlinx.serialization.json.JsonPrimitive).content
 }

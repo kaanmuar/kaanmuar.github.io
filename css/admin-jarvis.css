@@ -536,3 +536,79 @@
 .jv-gh-repo strong { overflow-wrap: anywhere; }
 .jv-gh-repo small { color: var(--dim); }
 @container jv (max-width: 599px) { .jv-gh-head { grid-template-columns: 1fr; justify-items: center; } .jv-dora { grid-template-columns: 1fr; } }
+
+/* GitHub tab on a foldable (#2526): the cover screen is ~344-412px wide, the inner one ~673-884px and near square.
+   Panels are their own containers so a table or the map reads the width it actually gets, also inside a half-width column. */
+.jv-view[data-view="github"] .jv-panel { container: jvgh / inline-size; }
+.jv-gh-ref { display: inline-block; max-width: 18rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.jv-pm-list { display: none; list-style: none; margin: 0 0 0.5rem; padding: 0; gap: 0.85rem; }
+.jv-pm-step { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 0.6rem; padding: 0.45rem 0.7rem; border: 1px solid var(--line-hi); border-radius: 12px; background: rgba(56, 225, 255, 0.08); }
+.jv-pm-step:not(:last-child)::after { content: "↓"; position: absolute; left: 50%; bottom: -0.85rem; transform: translateX(-50%); font-size: 0.75rem; line-height: 0.85rem; color: var(--dim); }
+.jv-pm-step.is-empty { border-color: var(--line); background: rgba(93, 122, 140, 0.08); }
+.jv-pm-step.is-over { border-color: var(--amber); background: rgba(255, 181, 71, 0.14); box-shadow: 0 0 10px rgba(255, 181, 71, 0.35); }
+.jv-pm-step b { font: 600 0.72rem ui-monospace, Menlo, monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.jv-pm-step small { grid-row: 2; font: 0.7rem ui-monospace, Menlo, monospace; color: var(--dim); }
+.jv-pm-step strong { grid-column: 2; grid-row: 1 / span 2; align-self: center; font: 700 1.4rem ui-monospace, Menlo, monospace; color: var(--text); }
+.jv-pm-step.is-over strong { color: var(--amber); }
+.jv-pm-moves { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.2rem 0.7rem; margin-top: 0.2rem; font: 0.72rem ui-monospace, Menlo, monospace; color: var(--cyan); }
+.jv-pm-moves .is-back { color: var(--amber); }
+@container jvgh (max-width: 479px) {
+    .jv-pm svg { display: none; }
+    .jv-pm-list { display: grid; }
+}
+@container jvgh (min-width: 480px) { .jv-pm { overflow-x: visible; } .jv-pm svg { min-width: 0; } }
+@container jvgh (min-width: 480px) and (max-width: 819px) {
+    .jv-pm-name { font-size: 18px; letter-spacing: 0; }
+    .jv-pm-n { font-size: 32px; }
+    .jv-pm-age { font-size: 15px; }
+    .jv-pm-count { font-size: 15px; }
+}
+@container jvgh (min-width: 600px) {
+    .jv-view[data-view="github"] .jv-table tr > :first-child { position: sticky; left: 0; z-index: 1; background: linear-gradient(var(--panel), var(--panel)), var(--bg); }
+}
+@container jvgh (max-width: 599px) {
+    .jv-view[data-view="github"] .jv-table-wrap { overflow-x: visible; }
+    .jv-view[data-view="github"] .jv-table, .jv-view[data-view="github"] .jv-table tbody, .jv-view[data-view="github"] .jv-table tr, .jv-view[data-view="github"] .jv-table td { display: block; }
+    .jv-view[data-view="github"] .jv-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .jv-view[data-view="github"] .jv-table tr { margin-bottom: 0.5rem; padding: 0.2rem 0.6rem; border: 1px solid var(--line); border-radius: 12px; background: rgba(56, 225, 255, 0.03); }
+    .jv-view[data-view="github"] .jv-table td { position: relative; min-height: 1.9rem; padding: 0.35rem 0 0.35rem 6.4rem; overflow-wrap: anywhere; }
+    .jv-view[data-view="github"] .jv-table tr td:last-child { border-bottom: 0; }
+    .jv-view[data-view="github"] .jv-table td::before { content: attr(data-label); position: absolute; left: 0; top: 0.45rem; width: 5.9rem; font: 600 0.6rem ui-monospace, Menlo, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .jv-view[data-view="github"] .jv-table td[data-label=""] { padding-left: 0; }
+    .jv-view[data-view="github"] .jv-table td[data-label=""]::before { content: none; }
+    .jv-view[data-view="github"] .jv-gh-ref { max-width: 100%; }
+}
+.jv-view[data-view="github"] .jv-grade svg { max-width: 100%; height: auto; }
+@container jv (max-width: 1099px) {
+    .jv-view[data-view="github"] .jv-grades { justify-content: center; gap: 0.5rem 0; }
+    .jv-view[data-view="github"] .jv-grades .jv-grade { box-sizing: border-box; flex: 0 0 20%; min-width: 0; padding: 0 0.15rem; }
+    .jv-view[data-view="github"] .jv-grades .jv-grade svg { width: 84px; }
+}
+@container jv (min-width: 540px) and (max-width: 1040px) { .jv-view[data-view="github"] .jv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container jv (max-width: 539px) { .jv-view[data-view="github"] .jv-grid { grid-template-columns: minmax(0, 1fr); } }
+@container jv (max-width: 899px) {
+    .jv-view[data-view="github"] .jv-btn { min-height: 44px; justify-content: center; }
+    .jv-view[data-view="github"] .jv-actions { gap: 0.5rem; }
+    .jv-view[data-view="github"] .jv-prop-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.9rem; }
+    .jv-view[data-view="github"] .jv-prop-acts > :is(a, button) { display: inline-flex; align-items: center; min-height: 44px; }
+}
+@container jv (max-width: 459px) {
+    .jv-view[data-view="github"] .jv-gh-head { padding: 0.6rem 0.4rem; gap: 0.6rem; }
+    .jv-view[data-view="github"] .jv-gh-head > .jv-grade svg { width: 104px; }
+    .jv-view[data-view="github"] .jv-grade-letter { font-size: 34px; }
+    .jv-view[data-view="github"] .jv-grade small { font-size: 0.56rem; letter-spacing: 0.04em; text-align: center; line-height: 1.15; }
+    .jv-view[data-view="github"] .jv-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; }
+    .jv-view[data-view="github"] .jv-kpi { padding: 0.55rem 0.65rem; }
+    .jv-view[data-view="github"] .jv-kpi strong { font-size: 1.3rem; }
+    .jv-view[data-view="github"] .jv-dora li { grid-template-columns: minmax(0, 1fr) auto; }
+    .jv-view[data-view="github"] .jv-dora li .jv-chip { grid-column: 2; }
+    .jv-view[data-view="github"] .jv-gh-repos { grid-template-columns: minmax(0, 1fr); }
+    .jv-view[data-view="github"] .jv-gh-level { grid-template-columns: auto minmax(0, 1fr); }
+    .jv-view[data-view="github"] .jv-gh-level small { grid-column: 1 / -1; }
+}
+@media (pointer: coarse) { .jv-view[data-view="github"] .jv-btn { min-height: 44px; justify-content: center; } }
+@media (horizontal-viewport-segments: 2) {
+    .jv-view[data-view="github"] .jv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .jv-view[data-view="github"] .jv-panel.is-wide { grid-column: auto; }
+    .jv-view[data-view="github"] .jv-gh-head, .jv-view[data-view="github"] .jv-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: max(0.75rem, calc(env(viewport-segment-left 1 0, 0px) - env(viewport-segment-right 0 0, 0px))); justify-items: center; }
+}

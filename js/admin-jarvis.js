@@ -102,7 +102,7 @@ function kpis(list) {
 
 function table(cols, rows, empty) {
     if (!rows || !rows.length) return `<p class="jv-empty">${esc(empty || 'Nothing yet.')}</p>`;
-    return `<div class="jv-table-wrap"><table class="jv-table"><thead><tr>${cols.map((c) => `<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${cols.map((c) => `<td>${c[1](row)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    return `<div class="jv-table-wrap"><table class="jv-table"><thead><tr>${cols.map((c) => `<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${cols.map((c) => `<td data-label="${esc(c[0])}">${c[1](row)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 
 const SLICES = [COLORS.cyan, COLORS.violet, COLORS.amber, COLORS.green, COLORS.pink, '#7aa2ff', '#ff8f5a', COLORS.dim];
@@ -221,7 +221,10 @@ function processMap(board, flow) {
             <text x="${(x(i) + nw / 2).toFixed(1)}" y="${y0 + 20}" text-anchor="middle" class="jv-pm-name">${esc(c.name)}</text><text x="${(x(i) + nw / 2).toFixed(1)}" y="${y0 + 49}" text-anchor="middle" class="jv-pm-n">${fmt(c.count)}</text><text x="${(x(i) + nw / 2).toFixed(1)}" y="${y0 + 67}" text-anchor="middle" class="jv-pm-age">${age === null ? '—' : 'med ' + fmt(age) + ' d'}</text></g>`;
     }).join('');
     const label = cols.map((c) => `${c.name} ${c.count}`).join(', ');
-    return `<div class="jv-pm"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Board flow: ${esc(label)}${over ? `. WIP ${fmt(board.wip)} is over its limit of ${fmt(board.wipLimit)}` : ''}"><defs>${marker('fwd', COLORS.cyan)}${marker('back', COLORS.amber)}${marker('idle', COLORS.dim)}</defs>${idle}${arrows}${nodes}</svg></div>`;
+    // The same flow stacked top to bottom, shown instead of the map when its panel is phone-narrow.
+    const outs = (i) => moves.filter((f) => at(f.from) === i).sort((p, q) => at(p.to) - at(q.to)).map((f) => `<span${at(f.to) < i ? ' class="is-back"' : ''}>${at(f.to) < i ? '↩' : '→'} ${esc(f.to)} ${fmt(f.count)}</span>`).join('');
+    const steps = cols.map((c, i) => `<li class="jv-pm-step${over && WIP_COLS.includes(c.name) ? ' is-over' : ''}${c.count ? '' : ' is-empty'}" data-col="${esc(c.name)}"><b>${esc(c.name)}</b><small>${c.ageMedD === null || c.ageMedD === undefined ? '—' : 'med ' + fmt(c.ageMedD) + ' d'}</small><strong>${fmt(c.count)}</strong>${outs(i) ? `<span class="jv-pm-moves">${outs(i)}</span>` : ''}</li>`).join('');
+    return `<div class="jv-pm"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Board flow: ${esc(label)}${over ? `. WIP ${fmt(board.wip)} is over its limit of ${fmt(board.wipLimit)}` : ''}"><defs>${marker('fwd', COLORS.cyan)}${marker('back', COLORS.amber)}${marker('idle', COLORS.dim)}</defs>${idle}${arrows}${nodes}</svg><ol class="jv-pm-list" aria-label="Board flow">${steps}</ol></div>`;
 }
 
 // --- the tool ------------------------------------------------------------------------------------------------
@@ -1625,6 +1628,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const ghConf = (c) => (c === null || c === undefined ? '' : Math.round(c <= 1 ? c * 100 : c) + '%');
     const ghIssue = (n, text) => (n ? `<a href="${GH_REPO}/issues/${encodeURIComponent(n)}" target="_blank" rel="noopener">${esc(text || '#' + n)}</a>` : '—');
     const ghLink = (url, text) => (url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text));
+    const ghRef = (name) => `<code class="jv-gh-ref" title="${esc(name)}">${esc(name)}</code>`;
     const ghCountdown = () => hoursText((((S.external.actions || {}).settings) || {}).countdownHours || COUNTDOWN_HOURS);
     const ghBtn = (label, action, target, args, opts) => `<button type="button" class="jv-btn small${(opts && opts.cls) || ''}" data-gh-act="${esc(action)}" data-target="${esc(target)}" data-gh-args="${esc(JSON.stringify(args || {}))}"${opts && opts.disabled ? ' disabled' : ''}>${esc(label)}</button>`;
     const ghWork = () => S.external['github-work'] || {};
@@ -1695,7 +1699,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const diagCell = (r) => (r.diag ? `<strong>${esc(r.diag.cause)}</strong><br>${r.diag.category ? `<span class="jv-chip c-average">${esc(r.diag.category)}</span>` : ''}${r.diag.confidence !== null && r.diag.confidence !== undefined ? `<span class="jv-chip">confidence ${esc(ghConf(r.diag.confidence))}</span>` : ''}${r.diag.fix ? `<br><span class="jv-note">Fix: ${esc(r.diag.fix)}</span>` : ''}` : '<span class="jv-note">Not diagnosed yet.</span>');
         const failBody = ci ? table([
             ['Run', (r) => `${ghLink(r.url, r.name)}<br><span class="jv-note">#${esc(r.id)}${r.event ? ' · ' + esc(r.event) : ''}${r.sha ? ' · ' + esc(String(r.sha).slice(0, 7)) : ''}</span>`],
-            ['Branch', (r) => `<code>${esc(r.branch)}</code>${r.pr ? `<br>PR ${ghLink(GH_REPO + '/pull/' + r.pr, '#' + r.pr)}` : ''}`],
+            ['Branch', (r) => `${ghRef(r.branch)}${r.pr ? `<br>PR ${ghLink(GH_REPO + '/pull/' + r.pr, '#' + r.pr)}` : ''}`],
             ['Attempt', (r) => fmt(r.attempt || 1)], ['Age', (r) => esc(ghAgo(r.at))], ['Diagnosis', diagCell],
             ['', (r) => `<div class="jv-actions"><button type="button" class="jv-btn small" data-gh-rerun="${esc(r.id)}">Re-run</button><button type="button" class="jv-btn small" data-gh-diagnose="${esc(r.id)}"${S.pending['gh-diag:' + r.id] ? ' disabled' : ''}>${S.pending['gh-diag:' + r.id] ? 'Diagnosing…' : r.diag ? 'Diagnose again' : 'Diagnose'}</button><button type="button" class="jv-btn small is-primary" data-gh-agent="${esc(r.id)}">Launch a Cursor fix agent</button></div>`]
         ], failing, 'No failing runs. CI is green.') : off(g.ci);
@@ -1708,7 +1712,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         ].filter(Boolean).join('');
         const prBody = prs ? stats([{ label: 'Open', value: prs.open }, { label: 'Draft', value: prs.draft }, { label: 'Ready to merge', value: prs.mergeReady }, { label: 'Conflicts', value: prs.conflicts, alert: prs.conflicts > 0 }, { label: 'Behind main', value: prs.behind }, { label: 'Red checks', value: prs.red, alert: prs.red > 0 }, { label: 'Stale', value: prs.stale, alert: prs.stale > 0 }, { label: 'No ticket', value: prs.orphan, alert: prs.orphan > 0 }, { label: 'Lead time (median)', value: ghHours(prs.leadMedH) }, { label: 'Lead time (p90)', value: ghHours(prs.leadP90H) }])
             + table([
-                ['PR', (p) => `${ghLink(p.url, '#' + p.number)} <strong>${esc(p.title)}</strong><br><span class="jv-note">${esc(p.author || '')}${p.branch ? ' · ' + esc(p.branch) : ''}${(p.labels || []).length ? ' · ' + p.labels.map(esc).join(', ') : ''}</span>`],
+                ['PR', (p) => `${ghLink(p.url, '#' + p.number)} <strong>${esc(p.title)}</strong><br><span class="jv-note">${esc(p.author || '')}${p.branch ? ' · ' + ghRef(p.branch) : ''}${(p.labels || []).length ? ' · ' + p.labels.map(esc).join(', ') : ''}</span>`],
                 ['State', (p) => `<span class="jv-chip ${GH_STATE[p.state] || ''}">${esc(p.state)}</span>`], ['Checks', (p) => `<span class="jv-chip ${GH_CHECKS[p.checks] || ''}">${esc(p.checks || '—')}</span>`],
                 ['Age', (p) => `${esc(ghHours(p.ageH))}${p.updatedH > 72 ? `<br><span class="jv-note">quiet ${esc(ghHours(p.updatedH))}</span>` : ''}`], ['Ticket', (p) => ghIssue(p.ticket)],
                 ['Size', (p) => `<span class="jv-gh-add">+${fmt(p.additions || 0)}</span> <span class="jv-gh-del">−${fmt(p.deletions || 0)}</span>`], ['', (p) => `<div class="jv-actions">${prBtns(p)}</div>`]
@@ -1728,12 +1732,12 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const merged = br ? br.merged || [] : [];
         const trees = br ? br.worktrees || [] : [];
         const branchBody = br ? stats([{ label: 'Branches', value: br.total }, { label: 'Stale', value: br.stale, alert: br.stale > 0 }, { label: 'Merged, not deleted', value: merged.length, alert: merged.length > 0 }, { label: 'Worktrees', value: trees.length }])
-            + table([['Branch', (b) => `<code>${esc(b.name)}</code>`], ['PR', (b) => (b.pr ? ghLink(GH_REPO + '/pull/' + b.pr, '#' + b.pr) : '—')], ['Merged', (b) => fmt(b.days) + ' d ago']], merged.slice(0, 20), 'No merged branches left behind.')
+            + table([['Branch', (b) => ghRef(b.name)], ['PR', (b) => (b.pr ? ghLink(GH_REPO + '/pull/' + b.pr, '#' + b.pr) : '—')], ['Merged', (b) => fmt(b.days) + ' d ago']], merged.slice(0, 20), 'No merged branches left behind.')
             + (merged.length > 20 ? `<p class="jv-more">+${merged.length - 20} more in the export</p>` : '')
             + (merged.length ? `<div class="jv-actions">${ghBtn('Delete merged branches', 'gh-delete-branch', plural(merged.length, 'merged branch', 'merged branches'), { branches: merged.map((b) => b.name) }, { cls: ' danger' })}</div>` : '') : off(g.branches);
-        const aheadBody = br ? table([['Branch', (b) => `<code>${esc(b.name)}</code>`], ['Ahead', (b) => fmt(b.ahead)], ['Behind', (b) => `<span class="jv-chip ${b.behind > 50 ? 'c-slow' : b.behind > 10 ? 'c-average' : ''}">${fmt(b.behind)}</span>`], ['Last commit', (b) => fmt(b.days) + ' d'], ['PR', (b) => (b.pr ? ghLink(GH_REPO + '/pull/' + b.pr, '#' + b.pr) : '<span class="jv-note">none</span>')]], br.ahead || [], 'No open branches ahead of main.') : off(g.branches);
+        const aheadBody = br ? table([['Branch', (b) => ghRef(b.name)], ['Ahead', (b) => fmt(b.ahead)], ['Behind', (b) => `<span class="jv-chip ${b.behind > 50 ? 'c-slow' : b.behind > 10 ? 'c-average' : ''}">${fmt(b.behind)}</span>`], ['Last commit', (b) => fmt(b.days) + ' d'], ['PR', (b) => (b.pr ? ghLink(GH_REPO + '/pull/' + b.pr, '#' + b.pr) : '<span class="jv-note">none</span>')]], br.ahead || [], 'No open branches ahead of main.') : off(g.branches);
         const treeBody = br ? table([
-            ['Worktree', (w) => `<code>${esc(w.branch)}</code><br><span class="jv-note">${esc(String(w.path || '').split('/').slice(-2).join('/'))}</span>`], ['Ticket', (w) => ghIssue(w.ticket)],
+            ['Worktree', (w) => `${ghRef(w.branch)}<br><span class="jv-note">${esc(String(w.path || '').split('/').slice(-2).join('/'))}</span>`], ['Ticket', (w) => ghIssue(w.ticket)],
             ['Chat', (w) => `<span class="jv-chip ${w.alive ? 'c-fast' : ''}">${w.alive ? 'alive' : 'dead'}</span>`], ['PR', (w) => (w.pr ? `${ghLink(GH_REPO + '/pull/' + w.pr, '#' + w.pr)} <span class="jv-chip ${w.prState === 'merged' ? 'c-fast' : w.prState === 'closed' ? '' : 'c-average'}">${esc(w.prState || 'open')}</span>` : '—')],
             ['Files', (w) => (w.dirty ? '<span class="jv-chip c-average">uncommitted</span>' : '<span class="jv-note">clean</span>')],
             ['', (w) => (w.prState === 'merged' && !w.alive ? (w.dirty ? '<span class="jv-note">Has uncommitted files: remove it by hand.</span>' : ghBtn('Remove', 'gh-remove-worktree', String(w.path || w.branch).split('/').pop(), { path: w.path, branch: w.branch })) : '')]

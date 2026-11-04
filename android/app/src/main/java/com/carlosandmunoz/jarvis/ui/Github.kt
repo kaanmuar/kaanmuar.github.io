@@ -2,15 +2,25 @@ package com.carlosandmunoz.jarvis.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
@@ -25,6 +35,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,6 +65,27 @@ object Github {
     val COLUMNS = listOf("Backlog", "Next", "Design", "Dev", "QA", "Stg", "Prod", "Done")
     val WIP = setOf("Dev", "QA", "Stg")
     const val PROMPT_MAX = 600
+
+    /** Panel columns for the width the tab gets: one on a folded cover screen, two on an unfolded inner screen (~600-880 dp less the rail). */
+    fun columnsFor(widthDp: Int): Int = when { widthDp >= 1100 -> 3; widthDp >= 560 -> 2; else -> 1 }
+
+    const val STAGE_MIN_DP = 50
+    const val ARROW_DP = 16
+
+    /** Whether every board column fits across [contentDp] without scrolling. */
+    fun mapFits(contentDp: Int, stages: Int = COLUMNS.size): Boolean = contentDp >= stages * STAGE_MIN_DP + (stages - 1) * ARROW_DP
+
+    const val RING_MIN_DP = 60
+    const val RING_MAX_DP = 84
+    const val RING_GAP_DP = 10
+
+    /** Rings per row and their size in [contentDp]: all in one row when they fit, else rows as even as they can be (5 and 5, not 7 and 3). */
+    fun ringGrid(contentDp: Int, count: Int = 10): Pair<Int, Int> {
+        val fit = (count downTo 1).firstOrNull { (contentDp - (it - 1) * RING_GAP_DP) / it >= RING_MIN_DP } ?: 1
+        val rows = (count + fit - 1) / fit
+        val per = (count + rows - 1) / rows
+        return per to ((contentDp - (per - 1) * RING_GAP_DP) / per).coerceIn(RING_MIN_DP, RING_MAX_DP)
+    }
 
     fun grade(v: Double?): String = when { v == null -> "—"; v >= 90 -> "A"; v >= 80 -> "B"; v >= 70 -> "C"; v >= 60 -> "D"; else -> "F" }
 
@@ -152,8 +185,24 @@ object Github {
 
 private data class AgentDraft(val key: String, val title: String, val prompt: String, val branch: String? = null, val pr: Int? = null)
 
+/** One block across the parent's columns that flows its own panels by the width it gets, so folding or unfolding just recomposes. */
 @Composable
 fun GithubScreen(s: UiState, vm: JarvisViewModel) {
+    BoxWithConstraints(Modifier.layoutId(WIDE).fillMaxWidth()) {
+        Masonry(Github.columnsFor(maxWidth.value.toInt()), Modifier.fillMaxWidth()) { GithubPanels(s, vm) }
+    }
+}
+
+private val TAP = Modifier.heightIn(min = 48.dp)
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun Buttons(content: @Composable FlowRowScope.() -> Unit) = FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), content = content)
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
+    val span = Modifier.layoutId(WIDE)
     val snap = s.snapshot
     val raw = snap.obj("external").obj("github-work")
     val gh = raw?.takeIf { it.isOk() }
@@ -171,7 +220,7 @@ fun GithubScreen(s: UiState, vm: JarvisViewModel) {
 
     // Human steps first: permissions, installs, the uploader.
     val needs = gh?.get("needs").strings().filter { it.isNotBlank() }
-    if (raw == null || gh == null || needs.isNotEmpty()) Panel("Needs you") {
+    if (raw == null || gh == null || needs.isNotEmpty()) Panel("Needs you", span) {
         if (gh == null) Muted(raw?.str("error") ?: "Pull down to read GitHub.")
         needs.forEach { Text("• $it", color = J.amber, fontSize = 13.sp) }
         gh.obj("access").objs("missing").take(5).forEach { KeyRow(it.str("repo").orEmpty(), it.str("why").orEmpty(), J.amber) }
@@ -201,17 +250,46 @@ fun GithubScreen(s: UiState, vm: JarvisViewModel) {
     val dora = gh.obj("dora")
     val streaks = gh.obj("streaks")
 
-    Panel("GitHub health" + (score.obj("overall").str("grade")?.let { " · $it" } ?: "")) {
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Ring(score.obj("overall").num("value"), "OVERALL " + (score.obj("overall").str("grade") ?: Github.grade(score.obj("overall").num("value"))))
-            listOf("ci", "prs", "board", "issues", "branches", "deploys", "security", "budget", "agents").forEach { k ->
-                val a = areas.obj(k) ?: return@forEach
-                Ring(a.num("value"), k.uppercase() + " " + (a.str("grade") ?: Github.grade(a.num("value"))), 72)
+    Panel("GitHub health" + (score.obj("overall").str("grade")?.let { " · $it" } ?: ""), span) {
+        val rings = listOf("overall" to score.obj("overall")) + listOf("ci", "prs", "board", "issues", "branches", "deploys", "security", "budget", "agents").mapNotNull { k -> areas.obj(k)?.let { k to it } }
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val (per, size) = Github.ringGrid(maxWidth.value.toInt(), rings.size)
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Github.RING_GAP_DP.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp), maxItemsInEachRow = per) {
+                rings.forEach { (k, a) ->
+                    Column(Modifier.width(size.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Ring(a.num("value"), a.str("grade") ?: Github.grade(a.num("value")), size)
+                        Text(k.uppercase(), fontFamily = Mono, fontSize = 9.sp, letterSpacing = 1.sp, color = J.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
             }
         }
         areas?.entries?.mapNotNull { (k, v) -> (v as? JsonObject)?.takeIf { (it.str("grade") ?: Github.grade(it.num("value"))) !in setOf("A", "B") }?.let { k to it } }
             ?.forEach { (k, a) -> StatusRow(Github.tone(a.str("grade") ?: Github.grade(a.num("value"))), "$k · ${a.str("grade") ?: Github.grade(a.num("value"))}", a.str("why")) }
         Muted("Repos: " + gh.obj("access")?.get("repos").strings().joinToString(", ").ifEmpty { "—" } + " · read " + (ago(gh.str("at")) ?: "—"))
+    }
+
+    // Every column across when it fits; on a cover screen a row that scrolls and stops on a column.
+    val stages = Github.stages(board, gh.objs("flow"))
+    if (stages.isNotEmpty()) Panel("Process map", span) {
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            if (Github.mapFits(maxWidth.value.toInt(), stages.size)) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                stages.forEachIndexed { i, st ->
+                    if (i > 0) StageArrow(st, Modifier.width(Github.ARROW_DP.dp))
+                    StageChip(st, Modifier.weight(1f), tight = true)
+                }
+            } else {
+                val row = rememberLazyListState()
+                LazyRow(state = row, flingBehavior = rememberSnapFlingBehavior(row, SnapPosition.Start), verticalAlignment = Alignment.CenterVertically) {
+                    itemsIndexed(stages) { i, st ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (i > 0) StageArrow(st, Modifier.width(24.dp))
+                            StageChip(st)
+                        }
+                    }
+                }
+            }
+        }
+        Muted("Count and median age per column; arrows are the moves in the range." + if (stages.any { it.over }) " WIP is over the limit." else "")
     }
 
     Panel("GitHub") {
@@ -229,20 +307,6 @@ fun GithubScreen(s: UiState, vm: JarvisViewModel) {
         val badges = streaks?.get("badges").strings()
         Muted(listOfNotNull(streaks.num("greenMainDays")?.let { "${fmt(it)} green days on main" }, streaks.num("mergeDays")?.let { "${fmt(it)} days merging in a row" }).joinToString(" · ") +
             if (badges.isNotEmpty()) " · " + badges.joinToString(" · ") else "")
-    }
-
-    val stages = Github.stages(board, gh.objs("flow"))
-    if (stages.isNotEmpty()) Panel("Process map") {
-        Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            stages.forEachIndexed { i, st ->
-                if (i > 0) Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("→", color = if (st.into > 0) J.cyan else J.dim, fontSize = 16.sp)
-                    Text(if (st.into > 0) st.into.toString() else "", color = J.dim, fontFamily = Mono, fontSize = 10.sp)
-                }
-                StageChip(st)
-            }
-        }
-        Muted("Count and median age per column; arrows are the moves in the range." + if (stages.any { it.over }) " WIP is over the limit." else "")
     }
 
     if (dora != null) Panel("DORA" + (dora.str("level")?.let { " · $it" } ?: "")) {
@@ -272,15 +336,15 @@ fun GithubScreen(s: UiState, vm: JarvisViewModel) {
             val id = r.num("id")?.toLong()?.toString() ?: r.str("id").orEmpty()
             val name = r.str("name").orEmpty()
             val diag = r.obj("diag")
-            StatusRow("alert", name + " · " + (r.str("branch") ?: "main"), listOfNotNull(ago(r.str("at")), r.num("attempt")?.takeIf { it > 1 }?.let { "attempt ${it.toInt()}" }, r.num("pr")?.let { "PR #${it.toInt()}" }, r.str("event")).joinToString(" · "), r.str("url"))
+            GhRow("alert", name, listOfNotNull(ago(r.str("at")), r.num("attempt")?.takeIf { it > 1 }?.let { "attempt ${it.toInt()}" }, r.num("pr")?.let { "PR #${it.toInt()}" }, r.str("event")).joinToString(" · "), r.str("url"), r.str("branch") ?: "main")
             diag?.let { d ->
                 Text("Gemini: " + d.str("cause").orEmpty() + (d.str("category")?.let { " ($it)" } ?: "") + (d.num("confidence")?.let { " · ${fmt(it, 2)}" } ?: ""), color = J.amber, fontSize = 12.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 d.str("fix")?.takeIf { it.isNotBlank() }?.let { Muted("Fix: $it", maxLines = 3) }
             }
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton({ ask("re-run the failed jobs of \"$name\"") { runAction(vm, "rerun-ci", workflow = name) } }, enabled = actionKey("rerun-ci", name) !in s.running) { Text("Re-run", color = J.cyan, fontSize = 13.sp) }
-                TextButton({ diagnose(id) }, enabled = !running("diagnose", id)) { Text(if (diag == null) "Diagnose" else "Diagnose again", color = J.cyan, fontSize = 13.sp) }
-                TextButton({ agent = AgentDraft("run:$id", "Fix the failing $name run", Github.runPrompt(r), r.str("branch"), r.num("pr")?.toInt()) }, enabled = !running("agent", "run:$id")) { Text("Launch fix agent", color = J.amber, fontSize = 13.sp) }
+            Buttons {
+                TextButton({ ask("re-run the failed jobs of \"$name\"") { runAction(vm, "rerun-ci", workflow = name) } }, TAP, enabled = actionKey("rerun-ci", name) !in s.running) { Text("Re-run", color = J.cyan, fontSize = 13.sp) }
+                TextButton({ diagnose(id) }, TAP, enabled = !running("diagnose", id)) { Text(if (diag == null) "Diagnose" else "Diagnose again", color = J.cyan, fontSize = 13.sp) }
+                TextButton({ agent = AgentDraft("run:$id", "Fix the failing $name run", Github.runPrompt(r), r.str("branch"), r.num("pr")?.toInt()) }, TAP, enabled = !running("agent", "run:$id")) { Text("Launch fix agent", color = J.amber, fontSize = 13.sp) }
             }
         }
     }
@@ -295,12 +359,12 @@ fun GithubScreen(s: UiState, vm: JarvisViewModel) {
         prs.objs("items").take(20).forEach { pr ->
             val n = pr.num("number")?.toInt() ?: return@forEach
             val (label, level) = Github.prState(pr.str("state"), pr.str("checks"))
-            StatusRow(level, "#$n ${pr.str("title").orEmpty()}", listOfNotNull(label, "checks " + (pr.str("checks") ?: "—"), pr.str("author"), pr.num("ageH")?.let { "${fmt(it / 24)} d old" },
-                pr.str("ticket")?.let { "#$it" } ?: "no ticket", "+${fmt(pr.num("additions"))} −${fmt(pr.num("deletions"))}").joinToString(" · "), pr.str("url"))
-            if (Github.canUpdate(pr) || Github.canMerge(pr) || Github.hasConflicts(pr)) Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (Github.canUpdate(pr)) TextButton({ ghAct("gh-update-pr", "$n", JsonPrimitive(n), askFor("gh-update-pr", null, null, n)) }, enabled = !running("gh-update-pr", "$n")) { Text("Update", color = J.cyan, fontSize = 13.sp) }
-                if (Github.canMerge(pr)) TextButton({ ghAct("gh-merge-pr", "$n", JsonPrimitive(n), askFor("gh-merge-pr", null, null, n)) }, enabled = !running("gh-merge-pr", "$n")) { Text("Merge", color = J.green, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
-                if (Github.hasConflicts(pr)) TextButton({ agent = AgentDraft("pr:$n", "Resolve the conflicts of #$n", Github.conflictPrompt(pr), pr.str("branch"), n) }, enabled = !running("agent", "pr:$n")) { Text("Fix conflicts (agent)", color = J.amber, fontSize = 13.sp) }
+            GhRow(level, "#$n ${pr.str("title").orEmpty()}", listOfNotNull(label, "checks " + (pr.str("checks") ?: "—"), pr.str("author"), pr.num("ageH")?.let { "${fmt(it / 24)} d old" },
+                pr.str("ticket")?.let { "#$it" } ?: "no ticket", "+${fmt(pr.num("additions"))} −${fmt(pr.num("deletions"))}").joinToString(" · "), pr.str("url"), pr.str("branch"))
+            if (Github.canUpdate(pr) || Github.canMerge(pr) || Github.hasConflicts(pr)) Buttons {
+                if (Github.canUpdate(pr)) TextButton({ ghAct("gh-update-pr", "$n", JsonPrimitive(n), askFor("gh-update-pr", null, null, n)) }, TAP, enabled = !running("gh-update-pr", "$n")) { Text("Update", color = J.cyan, fontSize = 13.sp) }
+                if (Github.canMerge(pr)) TextButton({ ghAct("gh-merge-pr", "$n", JsonPrimitive(n), askFor("gh-merge-pr", null, null, n)) }, TAP, enabled = !running("gh-merge-pr", "$n")) { Text("Merge", color = J.green, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+                if (Github.hasConflicts(pr)) TextButton({ agent = AgentDraft("pr:$n", "Resolve the conflicts of #$n", Github.conflictPrompt(pr), pr.str("branch"), n) }, TAP, enabled = !running("agent", "pr:$n")) { Text("Fix conflicts (agent)", color = J.amber, fontSize = 13.sp) }
             }
         }
         val daily = prs.objs("daily")
@@ -465,24 +529,47 @@ fun GithubScreen(s: UiState, vm: JarvisViewModel) {
         }
     }
 
-    Deck(s, vm, { agent = it }, ::ask) { ghAct("gh-board-sync", "all", JsonPrimitive("all"), askFor("gh-board-sync", null, null)) }
+    Deck(s, vm, span, { agent = it }, ::ask) { ghAct("gh-board-sync", "all", JsonPrimitive("all"), askFor("gh-board-sync", null, null)) }
     Needs(raw)
     ConfirmAction(confirm) { confirm = null }
     AgentDialog(agent, vm) { agent = null }
 }
 
 @Composable
-private fun StageChip(st: Github.Stage) {
+private fun StageChip(st: Github.Stage, modifier: Modifier = Modifier, tight: Boolean = false) {
     val edge = when { st.over -> J.pink; st.count > 0 -> J.cyan; else -> J.line }
     Column(
-        Modifier.clip(RoundedCornerShape(10.dp)).background(edge.copy(alpha = 0.10f))
+        modifier.clip(RoundedCornerShape(10.dp)).background(edge.copy(alpha = 0.10f))
             .border(1.dp, edge.copy(alpha = if (st.over) 0.9f else 0.5f), RoundedCornerShape(10.dp))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(horizontal = if (tight) 3.dp else 10.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(st.name.uppercase(), fontFamily = Mono, fontSize = 10.sp, color = J.muted)
-        Text(st.count.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = if (st.over) J.pink else J.text)
-        Text(st.ageMedD?.let { fmt(it) + " d" } ?: "—", fontFamily = Mono, fontSize = 10.sp, color = J.dim)
+        Text(st.name.uppercase(), fontFamily = Mono, fontSize = 10.sp, color = J.muted, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
+        Text(st.count.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = if (st.over) J.pink else J.text, maxLines = 1)
+        Text(st.ageMedD?.let { fmt(it) + " d" } ?: "—", fontFamily = Mono, fontSize = 10.sp, color = J.dim, maxLines = 1, softWrap = false)
+    }
+}
+
+@Composable
+private fun StageArrow(st: Github.Stage, modifier: Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("→", color = if (st.into > 0) J.cyan else J.dim, fontSize = 16.sp)
+        Text(if (st.into > 0) st.into.toString() else "", color = J.dim, fontFamily = Mono, fontSize = 10.sp, maxLines = 1, softWrap = false)
+    }
+}
+
+/** A status row whose long title and branch stop at an ellipsis instead of pushing the panel taller. */
+@Composable
+private fun GhRow(level: String?, title: String, detail: String?, url: String?, ref: String? = null) {
+    val uri = LocalUriHandler.current
+    Row(Modifier.fillMaxWidth().let { if (url != null) it.clickable { runCatching { uri.openUri(url) } } else it }, verticalAlignment = Alignment.Top) {
+        Box(Modifier.padding(top = 4.dp)) { Dot(J.level(level)) }
+        Spacer(Modifier.width(8.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, fontSize = 14.sp, color = if (url != null) J.cyan else J.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            if (!ref.isNullOrBlank()) Text(ref, fontFamily = Mono, fontSize = 11.sp, color = J.amber, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (!detail.isNullOrBlank()) Text(detail, fontSize = 12.sp, color = J.muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
     }
 }
 
@@ -530,9 +617,10 @@ private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, close: () -> Unit) 
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Deck(s: UiState, vm: JarvisViewModel, launch: (AgentDraft) -> Unit, ask: (String, () -> Unit) -> Unit, sync: () -> Unit) {
-    Panel("Command deck") {
+private fun Deck(s: UiState, vm: JarvisViewModel, modifier: Modifier, launch: (AgentDraft) -> Unit, ask: (String, () -> Unit) -> Unit, sync: () -> Unit) {
+    Panel("Command deck", modifier) {
         var task by rememberSaveable { mutableStateOf("") }
         var branch by rememberSaveable { mutableStateOf("") }
         OutlinedTextField(task, { task = it }, label = { Text("Task for a Cursor agent") }, minLines = 2, modifier = Modifier.fillMaxWidth())
@@ -543,7 +631,7 @@ private fun Deck(s: UiState, vm: JarvisViewModel, launch: (AgentDraft) -> Unit, 
                 if (task.isNotBlank()) { launch(AgentDraft("deck", "From the deck", task.trim(), branch.ifBlank { null })); task = "" }
             }
         }
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Buttons {
             ActionButton("Sync the board", "gh:gh-board-sync:all" in s.running, sync)
             ActionButton("Re-run failed main CI", actionKey("rerun-ci", null) in s.running) { ask("re-run the failed CI jobs on main") { runAction(vm, "rerun-ci") } }
             ActionButton("Refresh", s.loading) { vm.refresh() }

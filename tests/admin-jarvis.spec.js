@@ -594,6 +594,41 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  for (const [width, height, folded] of [[360, 780, true], [720, 860, false]]) {
+    test(`GitHub fits a foldable ${folded ? 'folded' : 'unfolded'} at ${width}px: no sideways scroll, the map and the tables reflow (#2526)`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await openStats(page, '#stats/github/30');
+      const gh = page.locator('[data-view="github"]');
+      await expect(gh.locator('.jv-grade')).toHaveCount(10);
+      for (const id of ['github-needs', 'github-flow', 'github-failing', 'github-prs', 'github-worktrees']) await expect(gh.locator(`[data-panel-id="${id}"]`)).toBeVisible();
+      await expect(gh.locator('.jv-grid > .jv-panel').first()).toHaveAttribute('data-panel-id', 'github-needs');
+      const layout = await page.evaluate(() => {
+        const view = document.querySelector('[data-view="github"]');
+        const box = (el) => el.getBoundingClientRect();
+        const kpis = Array.from(view.querySelectorAll('.jv-gh-head + .jv-kpis .jv-kpi')).map((k) => Math.round(box(k).top));
+        const pm = view.querySelector('.jv-pm');
+        return {
+          scrollingTables: Array.from(view.querySelectorAll('.jv-table-wrap')).filter((t) => t.scrollWidth > t.clientWidth + 1).map((t) => t.closest('.jv-panel').dataset.panelId),
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+          outside: Array.from(view.querySelectorAll('.jv-grade, .jv-kpi, .jv-panel, .jv-btn')).filter((el) => box(el).width && box(el).right > window.innerWidth + 1).length,
+          columns: getComputedStyle(view.querySelector('.jv-grid')).gridTemplateColumns.split(' ').length,
+          kpisInFirstRow: kpis.filter((top) => top === kpis[0]).length,
+          map: getComputedStyle(pm.querySelector('svg')).display !== 'none',
+          list: getComputedStyle(pm.querySelector('.jv-pm-list')).display !== 'none',
+          mapScrolls: pm.scrollWidth > pm.clientWidth + 1,
+          cards: getComputedStyle(view.querySelector('[data-panel-id="github-prs"] td')).display === 'block',
+          shortestButton: Math.min(...Array.from(view.querySelectorAll('.jv-panel .jv-btn')).filter((b) => box(b).width).map((b) => box(b).height))
+        };
+      });
+      expect(layout.overflow).toBeLessThanOrEqual(1);
+      expect(layout).toMatchObject({ outside: 0, mapScrolls: false, scrollingTables: [], cards: true });
+      expect(layout.shortestButton).toBeGreaterThanOrEqual(44);
+      if (folded) expect(layout).toMatchObject({ columns: 1, kpisInFirstRow: 2, map: false, list: true });
+      else expect(layout).toMatchObject({ columns: 2, map: true, list: false });
+      await page.screenshot({ path: `/tmp/2526/web-fold-${width}.png`, fullPage: true });
+    });
+  }
+
   test('Marketing approves leads, uploads, ticks LinkedIn and answers replies through the Mac sync after confirming (#1730)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
