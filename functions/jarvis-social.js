@@ -69,4 +69,36 @@ function decide(live, proposal, decision, today) {
   return Admin.clean(next);
 }
 
-module.exports = { WORKFLOWS, LIVE_CHANNELS, byChannel, state, pending, decide };
+const TELEGRAM_SETUP = "Add the TELEGRAM_BOT_TOKEN repo secret and the TELEGRAM_CHANNEL repo variable (@qalab_live); scripts/social-metrics.js reads the count each morning in auto-live-reports.yml.";
+
+/**
+ * The Telegram channel's members from the metrics ledger (#2570): the count now, its change since the range began
+ * (against the last daily point on or before the range start, else the oldest point), the points in the range, and a
+ * need line when there is no count or the last run skipped or failed.
+ */
+function telegramMembers(metrics, since) {
+  const t = metrics && metrics.channels && metrics.channels.telegram;
+  if (!t || !Number.isFinite(Number(t.members))) {
+    const why = t && t.error ? "the Bot API refused it (" + String(t.error).slice(0, 200) + "). The bot must be an admin of the channel." : t && t.skipped ? "the daily social numbers skipped it (" + t.skipped + "). " + TELEGRAM_SETUP : "the daily social numbers have no member count for the channel yet. " + TELEGRAM_SETUP;
+    return { members: null, change: null, need: "Telegram members: " + why };
+  }
+  const history = (Array.isArray(t.history) ? t.history : []).filter((p) => p && typeof p.date === "string" && Number.isFinite(Number(p.members)))
+    .map((p) => ({ date: p.date, members: Number(p.members) })).sort((a, b) => a.date.localeCompare(b.date));
+  const start = new Date(since).toISOString().slice(0, 10);
+  const before = history.filter((p) => p.date <= start);
+  const from = before.length ? before[before.length - 1] : history[0];
+  const latest = history[history.length - 1];
+  const members = Number(t.members);
+  const stale = t.error ? "the last run failed (" + String(t.error).slice(0, 200) + "). The bot must be an admin of the channel." : t.skipped ? "the last run skipped it (" + t.skipped + "). " + TELEGRAM_SETUP : "";
+  return {
+    channel: t.chat || "",
+    members,
+    at: t.at || "",
+    change: from && latest && from.date < latest.date ? members - from.members : null,
+    from: from && latest && from.date < latest.date ? from : null,
+    history: history.filter((p) => p.date >= start),
+    need: stale ? "Telegram members: showing the count from " + String(t.at || "").slice(0, 10) + " because " + stale : ""
+  };
+}
+
+module.exports = { WORKFLOWS, LIVE_CHANNELS, byChannel, state, pending, decide, telegramMembers };
