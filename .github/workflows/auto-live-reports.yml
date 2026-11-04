@@ -269,6 +269,21 @@ jobs:
           fi
           node scripts/telegram-live.js post
 
+      - name: Edit the channel posts of withdrawn reports
+        # Rebuilds the last 60 days of channel posts from the reports just pushed (#2564).
+        if: ${{ !cancelled() && steps.commit.outcome == 'success' && steps.commit.outputs.pushed == '1' }}
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL: ${{ vars.TELEGRAM_CHANNEL }}
+          TELEGRAM_APP: ${{ vars.TELEGRAM_APP }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHANNEL" ]; then
+            echo "::warning::Add the TELEGRAM_BOT_TOKEN secret and the TELEGRAM_CHANNEL variable. The Telegram channel posts were not scrubbed."
+            exit 0
+          fi
+          node scripts/telegram-live.js scrub
+
       - name: Commit the Buffer and Facebook ledgers
         if: ${{ !cancelled() && !inputs.dry_run && steps.commit.outcome == 'success' }}
         run: scripts/commit-social-ledgers.sh "${{ steps.reports.outputs.batch || 'check' }}"
