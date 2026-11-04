@@ -1,6 +1,7 @@
 "use strict";
 /*
- * Jarvis social hub (#1420): the queue per channel from the Buffer, Facebook and open-social (Bluesky, Mastodon, Threads, Instagram) ledgers, the field-sweep
+ * Jarvis social hub (#1420): the queue per channel from the Buffer, Facebook, open-social (Bluesky, Mastodon, Threads, Instagram)
+ * and Telegram ledgers (the @qalab_live channel post of each Live Reports batch, #2549), the field-sweep
  * proposals still waiting for a decision, approving or dismissing one in socialHub/live the way the hub
  * editor does, and starting the posting workflows now instead of at their nightly slot.
  */
@@ -9,13 +10,19 @@ const Admin = require("./social-hub-admin");
 const WORKFLOWS = [
   { file: "buffer-batch.yml", name: "Buffer", inputs: { mode: "retry" } },
   { file: "facebook-page.yml", name: "Facebook Page" },
-  { file: "open-social.yml", name: "Bluesky, Mastodon, Threads and Instagram" }
+  { file: "open-social.yml", name: "Bluesky, Mastodon, Threads and Instagram" },
+  // The Reddit app's upload after each batch (#2549); the app posts in r/QALabLiveReports on its own daily task, which
+  // writes no ledger, so this run is what Jarvis shows for Reddit. Post now leaves it alone: watch only.
+  { file: "reddit-live.yml", name: "Reddit app (r/QALabLiveReports)", watch: true }
 ];
+
+// Channels that post once per Live Reports batch rather than per post, after the calendar channels.
+const LIVE_CHANNELS = [["telegram", "Telegram"]];
 
 /** Every channel in calendar order, with what is scheduled next, what went out last and what failed in the window. */
 function byChannel(books, now, since) {
   const rows = {};
-  Admin.CHANNELS.forEach(([key, name]) => { rows[key] = { channel: key, name, scheduled: 0, sent: 0, failed: 0, next: [], last: null }; });
+  Admin.CHANNELS.concat(LIVE_CHANNELS).forEach(([key, name]) => { rows[key] = { channel: key, name, scheduled: 0, sent: 0, failed: 0, next: [], last: null }; });
   books.forEach((book) => {
     Object.keys((book && book.posts) || {}).forEach((post) => {
       (book.posts[post] || []).forEach((r) => {
@@ -62,4 +69,4 @@ function decide(live, proposal, decision, today) {
   return Admin.clean(next);
 }
 
-module.exports = { WORKFLOWS, byChannel, state, pending, decide };
+module.exports = { WORKFLOWS, LIVE_CHANNELS, byChannel, state, pending, decide };

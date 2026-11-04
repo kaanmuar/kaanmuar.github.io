@@ -252,4 +252,11 @@ const ORDER = ["youtube", "tiktok", "instagram", "threads", "linkedin", "x", "fa
 const ordered = () => ORDER.map((id) => NETWORKS.find((n) => n.id === id));
 const accounts = (face) => ordered().filter((n) => n.exists[face.id]).map((n) => ({ net: n.id, name: n.label || n.name, url: n.profile(face.handle) }));
 
-module.exports = { SITE, LIMITS, FACES, NETWORKS, ORDER, ordered, accounts, utm };
+// The brand's own Live Reports channels (#2549), in every language, so they belong to neither face: a Telegram
+// channel with the @qalab_live_bot Mini App, and a subreddit with the Devvit app. Listed after both faces' accounts.
+const CHANNELS = [
+  { net: "telegram", name: "Telegram", app: "Telegram", mention: "@qalab_live", url: "https://t.me/qalab_live" },
+  { net: "subreddit", name: "r/QALabLiveReports", app: "Reddit", mention: "r/QALabLiveReports", url: "https://www.reddit.com/r/QALabLiveReports/" }
+];
+
+module.exports = { SITE, LIMITS, FACES, NETWORKS, ORDER, CHANNELS, ordered, accounts, utm };

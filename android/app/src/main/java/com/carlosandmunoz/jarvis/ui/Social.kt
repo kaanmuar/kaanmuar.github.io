@@ -66,8 +66,9 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     }
     val queue = s.snapshot.obj("external").obj("social").objs("queue")
     Panel("Queue by channel") {
-        if (queue.isEmpty()) Muted("Pull down to read the Buffer and Facebook ledgers.")
+        if (queue.isEmpty()) Muted("Pull down to read the social ledgers.")
         queue.forEach { c -> Channel(c) }
+        if (queue.isNotEmpty()) Muted("Telegram is the @qalab_live post of each Live Reports batch.")
     }
 
     var confirm by remember { mutableStateOf(false) }
@@ -88,7 +89,7 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
                 }
             }
         }
-        Muted("Post now runs the Buffer queue (batches a spent daily limit held back) and the Facebook Page queue instead of waiting for tonight.")
+        Muted("Post now runs the Buffer queue (batches a spent daily limit held back) and the Facebook Page queue instead of waiting for tonight. The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task.")
         ActionButton("Post now", "post-now" in s.running) { confirm = true }
     }
     if (confirm) AlertDialog(

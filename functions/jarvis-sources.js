@@ -409,13 +409,13 @@ async function social(ctx) {
   const ledger = async (name) => {
     try { return await getJson(ctx.fetch, ORIGIN + "/assets/social/" + name + ".json?t=" + Math.floor(ctx.now / HOUR), {}, name + " ledger"); } catch (error) { return null; }
   };
-  const [buffer, facebook, open, youtube, metrics] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("youtube"), ledger("metrics")]);
+  const [buffer, facebook, open, telegram, youtube, metrics] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("telegram"), ledger("youtube"), ledger("metrics")]);
   const channels = {};
   const results = {};
   const daily = {};
   const latest = [];
   const scheduled = { count: 0, next: "" };
-  [buffer, facebook, open].forEach((book) => {
+  [buffer, facebook, open, telegram].forEach((book) => {
     Object.keys((book && book.posts) || {}).forEach((post) => {
       (book.posts[post] || []).forEach((row) => {
         const at = Date.parse(row.at || "");
@@ -459,7 +459,7 @@ async function social(ctx) {
     daily: Object.keys(daily).sort().map((date) => ({ date, posts: daily[date] })),
     latest: latest.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 15),
     scheduled,
-    queue: jarvisSocial.byChannel([buffer, facebook, open], ctx.now, since),
+    queue: jarvisSocial.byChannel([buffer, facebook, open, telegram], ctx.now, since),
     youtube: { videos: videos.sort((a, b) => (b.views || 0) - (a.views || 0) || Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 10), views },
     needs
   };

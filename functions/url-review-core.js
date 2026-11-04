@@ -22,9 +22,9 @@ const { registrable, registryDomain } = require("./url-review-suffix");
 const { ipBlocked } = require("./url-review-ip");
 const { siteLabel } = caseRank;
 
-const TERMS_VERSION = "2026-11-02";
+const TERMS_VERSION = "2026-11-04";
 // A page loaded before a terms change still sends the version before it.
-const PREVIOUS_TERMS_VERSION = "2026-11-01";
+const PREVIOUS_TERMS_VERSION = "2026-11-02";
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 const EXTRA_FRAMEWORK_USD = 5;
@@ -1725,7 +1725,7 @@ function schemaScan(html) {
   return result;
 }
 
-const SOCIAL_HOSTS = /(^|\.)(linkedin\.com|twitter\.com|x\.com|facebook\.com|instagram\.com|github\.com|youtube\.com|tiktok\.com|threads\.net|bsky\.app|pinterest\.com|behance\.net|dribbble\.com|medium\.com|mastodon\.social|wa\.me|whatsapp\.com)$/i;
+const SOCIAL_HOSTS = /(^|\.)(linkedin\.com|twitter\.com|x\.com|facebook\.com|instagram\.com|github\.com|youtube\.com|tiktok\.com|threads\.net|bsky\.app|pinterest\.com|behance\.net|dribbble\.com|medium\.com|mastodon\.social|reddit\.com|t\.me|telegram\.me|wa\.me|whatsapp\.com)$/i;
 
 function inspect(html, headers, pageUrl) {
   const title = textOf(html, "title");
