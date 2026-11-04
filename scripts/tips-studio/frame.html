@@ -360,6 +360,9 @@
   .end .follow small { font-size: 28px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
   .end .nets { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
   .end .nets .bmark { --ls: 64px; }
+  .end .chans { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 36px; font-family: "Fira Code", monospace; font-size: 28px; color: var(--text); }
+  .end .chans span { display: flex; align-items: center; gap: 12px; }
+  .end .chans .bmark { --ls: 40px; }
   @keyframes logoIn { from { transform: rotateY(-200deg) scale(.4); } to { transform: none; } }
 </style>
 </head>
@@ -623,7 +626,8 @@ window.paintClip = function (tip, cat, index, total, guideHost, lang, scenes, ex
     '<div class="rig" style="' + L + '">' + scenes.filter((s) => body[s.id]).map((s) => scene(s, body[s.id](s))).join("") + "</div>" +
     '<div class="end a" style="animation-delay:' + sec(end.start) + '">' + MARK + "<h2>" + (ui.end ? esc(ui.end) : 'Let your page<br><em style="font-style:italic">do the talking.</em>') + "</h2><p>" + esc(ui.endNote) + '</p><span class="url">' + esc(guideHost) + "</span>" +
       (X.logo && ui.reviewed ? '<span class="reviewed">' + logo(X.logo) + esc(ui.reviewed) + " · " + esc(X.host) + "</span>" : "") +
-      ((X.nets || []).length && ui.follow ? '<div class="follow"><small>' + esc(ui.follow) + " " + esc(X.handle || "") + '</small><div class="nets">' + X.nets.map((b) => bmark(b)).join("") + "</div></div>" : "") + "</div>";
+      ((X.nets || []).length && ui.follow ? '<div class="follow"><small>' + esc(ui.follow) + '</small><div class="nets">' + X.nets.map((b) => bmark(b)).join("") + "</div>" +
+        (X.nets.some((b) => b.channel) ? '<div class="chans">' + X.nets.filter((b) => b.channel).map((b) => "<span>" + bmark(b) + esc(b.channel) + "</span>").join("") + "</div>" : "") + "</div>" : "") + "</div>";
   const shot = c.querySelector(".phone img");
   const ready = shot ? shot.decode().catch(() => {}).then(() => { shot.style.setProperty("--scroll", Math.min(0, shot.parentElement.clientHeight - shot.offsetHeight) + "px"); }) : Promise.resolve();
   return Promise.all([document.fonts.ready, ready, smallLogos(c)]).then(() => {

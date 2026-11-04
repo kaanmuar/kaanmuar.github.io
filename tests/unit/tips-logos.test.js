@@ -20,6 +20,7 @@ test("every network on the end card has its mark in designs/brand-logos", () => 
     assert.match(svg, /viewBox="0 0 24 24"/, n.slug);
     assert.strictEqual((svg.match(/<path /g) || []).length, 1, n.slug);
   });
+  assert.deepStrictEqual(nets.filter((n) => n.channel).map((n) => [n.slug, n.channel]), [["telegram", "@qalab_live"], ["reddit", "r/QALabLiveReports"]]);
 });
 
 test("the site's sharpest icon is tried first, then the conventional paths", () => {
