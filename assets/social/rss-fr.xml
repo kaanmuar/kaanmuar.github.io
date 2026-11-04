@@ -181,6 +181,23 @@ Comment se déroule la revue d’une page publique, étape par étape : https://
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>La recherche IA lit votre HTML, pas votre app.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-fr.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first-fr</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Conseil</category>
+      <category>GEO</category>
+      <description>Beaucoup de moteurs de réponse n’exécutent pas JavaScript. Si vos informations clés n’apparaissent qu’après le chargement des scripts, elles risquent de n’être jamais lues ni citées.
+
+À essayer aujourd’hui : Affichez le code source de votre page d’accueil. Peut-on voir ce que vous vendez et pour qui, sans exécuter de scripts ?
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>movichhotels.com: 68. L'écart : la mesure.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-26/08-u-movichhotels-com-fr.html</link>
       <guid isPermaLink="false">auto-2026-10-26/08-u-movichhotels-com-fr</guid>
@@ -260,6 +277,23 @@ Comment se déroule la revue d’une page publique, étape par étape : https://
 https://www.youtube.com/shorts/qCLqRoX8JQM</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/09-metros.jpg" length="245170" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/09-metros.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Suivez-le à votre façon.</title>
+      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/21-follow-fr.html</link>
+      <guid isPermaLink="false">promo-social-hub-2026-10/21-follow-fr</guid>
+      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Produit</category>
+      <category>Social</category>
+      <description>Lisez le hub dans n'importe quel lecteur RSS, avec un flux par langue, ou suivez-nous sur YouTube, TikTok, LinkedIn, X et Facebook.
+
+Essayez: Ajoutez le flux RSS du hub à votre lecteur.
+
+Toutes les publications, au même endroit: https://carlosandmunoz.com/qa-review-social-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=follow-fr
+
+#RSS #OpenSource #SoftwareTesting #QA #SocialMedia #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/21-follow-fr.jpg" length="189922" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/21-follow-fr.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>OIT : sûr et rapide, mais aucun balisage d’entité.</title>
@@ -443,6 +477,23 @@ Comment se déroule la revue d’une page publique, étape par étape : https://
 #WebSecurity #CSP #AppSec #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" length="219690" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Écrivez la liste des tests avant le code des tests.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-fr.html</link>
+      <guid isPermaLink="false">tips-2026-10/16-list-first-fr</guid>
+      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Conseil</category>
+      <category>QA</category>
+      <description>Choisir un framework, c’est la deuxième question. La première, c’est ce que fait cette page et ce qu’une vraie personne y essaierait.
+
+À essayer aujourd’hui : Avant votre prochain sprint d’automatisation, écrivez dix cas en langage clair. Ensuite, choisissez l’outil.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
+
+#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>davibank.com: 58. Le point faible : TLS.</title>
@@ -812,48 +863,6 @@ Via GitHub, par Noblereachdata, 2026-10-28.
 
 https://github.com/Noblereachdata/resocket-pixeljury</description>
       <media:content url="https://opengraph.githubassets.com/1/Noblereachdata/resocket-pixeljury" medium="image"/>
-    </item>
-    <item>
-      <title>Noblereachdata/resocket-pixeljury : CLI de QA visuelle pour les frontends créés par IA, qui affiche les pages, détecte les problèmes de design et d’accessibilité, et rédige des prompts de correction prêts pour les agents.</title>
-      <link>https://carlosandmunoz.com/social/pick/noblereachdata-resocket-pixeljury-visual-qa-cli-for-ai-built-fr.html</link>
-      <guid isPermaLink="false">pick/noblereachdata-resocket-pixeljury-visual-qa-cli-for-ai-built-fr</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Coup de cœur</category>
-      <category>Testing</category>
-      <description>CLI de QA visuelle pour les frontends créés par IA, qui affiche les pages, détecte les problèmes de design et d’accessibilité, et rédige des prompts de correction prêts pour les agents.
-
-Via GitHub, par Noblereachdata, 2026-10-28.
-
-https://github.com/Noblereachdata/resocket-pixeljury</description>
-      <media:content url="https://opengraph.githubassets.com/1/Noblereachdata/resocket-pixeljury" medium="image"/>
-    </item>
-    <item>
-      <title>Mise à jour du guide sur le spam, contrôles pour les restaurants et revenus d’AI Mode – SEO Pulse via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/spam-guide-update-restaurant-controls-ai-mode-revenue-seo-pu-fr.html</link>
-      <guid isPermaLink="false">pick/spam-guide-update-restaurant-controls-ai-mode-revenue-seo-pu-fr</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Coup de cœur</category>
-      <category>SEO</category>
-      <description>Le guide sur le spam de Google ajoute des conseils d’indexation pour les pages conçues pour le partage. D’autres mises à jour concernent les contrôles de commande des restaurants, les dates des rapports et les revenus d’AI Mode. L’article Mise à jour du guide sur le spam, contrôles pour les restaurants et revenus d’AI Mode – SEO Pulse a d’abord été publié sur Search Engine Journal .
-
-Via Search Engine Journal, par Matt G. Southern, 2026-10-31.
-
-https://www.searchenginejournal.com/seo-pulse-spam-guide-restaurant-controls-ai-mode-revenue/595031/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/seo-pulse-spam-guide-restaurant-controls-featured.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Soutenir un contrôle commun de l’entraînement de l’IA pour les sites web</title>
-      <link>https://carlosandmunoz.com/social/pick/supporting-a-shared-ai-training-control-for-websites-2-fr.html</link>
-      <guid isPermaLink="false">pick/supporting-a-shared-ai-training-control-for-websites-2-fr</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Coup de cœur</category>
-      <category>SEO</category>
-      <description>Aujourd’hui, nous annonçons notre intention de prendre en charge un contrôle commun de l’entraînement de l’IA dans robots.txt. Cela aidera les sites web à exprimer leurs préférences en matière d’entraînement de l’IA auprès de plusieurs fournisseurs d’IA en une seule étape, et s’appuie sur les travaux du groupe de travail AIPREF de l’Internet Engineering Task Force (IETF). Cela s’inscrit dans notre longue tradition consistant à offrir aux propriétaires de sites web des contrôles clairs, notamment via…
-
-Via Google Search Central, 2026-10-30.
-
-https://developers.google.com/search/blog/2026/10/ai-training-control</description>
-      <media:content url="https://developers.google.com/static/search/blog/images/social-share-blog.png" medium="image"/>
     </item>
   </channel>
 </rss>

@@ -181,6 +181,23 @@ So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https:/
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>KI-Suche liest Ihr HTML, nicht Ihre App.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first-de</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>GEO</category>
+      <description>Viele Answer Engines führen kein JavaScript aus. Erscheinen Ihre wichtigsten Fakten erst nach dem Laden der Skripte, werden sie womöglich nie gelesen oder zitiert.
+
+Probieren Sie es heute: Sehen Sie sich den Quelltext Ihrer Startseite an. Findet man ohne Skripte, was Sie verkaufen und für wen?
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>movichhotels.com: 68. Die Lücke: Messung.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-26/08-u-movichhotels-com-de.html</link>
       <guid isPermaLink="false">auto-2026-10-26/08-u-movichhotels-com-de</guid>
@@ -460,6 +477,23 @@ So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https:/
 #WebSecurity #CSP #AppSec #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" length="219690" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Schreiben Sie die Testliste vor dem Testcode.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/16-list-first-de</guid>
+      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>QA</category>
+      <description>Die Wahl eines Frameworks ist die zweite Frage. Die erste ist, was diese Seite tut und was ein echter Mensch darauf ausprobieren würde.
+
+Probieren Sie es heute: Schreiben Sie vor Ihrem nächsten Automatisierungssprint zehn Fälle in Klartext. Dann wählen Sie das Tool.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
+
+#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>davibank.com: 58. Die Lücke: TLS.</title>
@@ -829,34 +863,6 @@ Via GitHub, von Noblereachdata, 2026-10-28.
 
 https://github.com/Noblereachdata/resocket-pixeljury</description>
       <media:content url="https://opengraph.githubassets.com/1/Noblereachdata/resocket-pixeljury" medium="image"/>
-    </item>
-    <item>
-      <title>Noblereachdata/resocket-pixeljury: Visual-QA-CLI für KI-gebaute Frontends, die Seiten rendert, Design- und Barrierefreiheitsprobleme findet und agententaugliche Fix-Prompts schreibt.</title>
-      <link>https://carlosandmunoz.com/social/pick/noblereachdata-resocket-pixeljury-visual-qa-cli-for-ai-built-de.html</link>
-      <guid isPermaLink="false">pick/noblereachdata-resocket-pixeljury-visual-qa-cli-for-ai-built-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Testing</category>
-      <description>Visual-QA-CLI für KI-gebaute Frontends, die Seiten rendert, Design- und Barrierefreiheitsprobleme findet und agententaugliche Fix-Prompts schreibt.
-
-Via GitHub, von Noblereachdata, 2026-10-28.
-
-https://github.com/Noblereachdata/resocket-pixeljury</description>
-      <media:content url="https://opengraph.githubassets.com/1/Noblereachdata/resocket-pixeljury" medium="image"/>
-    </item>
-    <item>
-      <title>Spam-Leitfaden-Update, Restaurant-Optionen &amp; AI-Mode-Umsatz – SEO Pulse via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/spam-guide-update-restaurant-controls-ai-mode-revenue-seo-pu-de.html</link>
-      <guid isPermaLink="false">pick/spam-guide-update-restaurant-controls-ai-mode-revenue-seo-pu-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>Googles Spam-Leitfaden ergänzt Indexierungshinweise für Seiten, die zum Teilen gedacht sind. Weitere Updates betreffen Bestelloptionen für Restaurants, Berichtsdaten und Umsätze über AI Mode. Der Beitrag Spam-Leitfaden-Update, Restaurant-Optionen &amp; AI-Mode-Umsatz – SEO Pulse erschien zuerst auf Search Engine Journal .
-
-Via Search Engine Journal, von Matt G. Southern, 2026-10-31.
-
-https://www.searchenginejournal.com/seo-pulse-spam-guide-restaurant-controls-ai-mode-revenue/595031/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/seo-pulse-spam-guide-restaurant-controls-featured.jpg" medium="image"/>
     </item>
   </channel>
 </rss>
