@@ -6117,7 +6117,7 @@ async function jarvisClickAction(body, by) {
   throw new Error("Unknown action.");
 }
 
-// #2526: what jarvis-github-fix.js needs; CURSOR_API_KEY comes from functions/.env (see secrets.js).
+// #2526: what jarvis-github-fix.js needs.
 function jarvisGithubCtx(now) {
   return {
     fetch, env: process.env, db: getFirestore(), now, github: (scope) => githubApp.token(scope || "repo"),
