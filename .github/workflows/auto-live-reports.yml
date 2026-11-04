@@ -182,7 +182,7 @@ jobs:
           if node scripts/social-hub/translate-captions.js --picks --machine; then node scripts/build-social-hub.js --offline
           else echo "::warning::Google's translator refused; new picks keep the languages the phrasebooks cover."; fi
           # Hub pages can bring Tailwind classes style.css lacks; this commit skips CI, so nothing else would catch it (#2552).
-          node scripts/build-style-css.js && node scripts/build-critical-css.js
+          node scripts/build-style-css.js && node scripts/build-critical-css.js || echo "::warning::style.css was not rebuilt; run node scripts/build-style-css.js and build-critical-css.js on main (#2552)."
           git add -u -- style.css '*.html'
           git add assets/social qa-review-social*.html sitemap-social.xml social scripts/social-hub/phrases
           # This commit skips CI, so a hub page in the wrong language would fail every PR after it.
@@ -205,7 +205,7 @@ jobs:
             git cherry-pick -X theirs "$DATA"
             python3 scripts/build-llms-full.py
             node scripts/build-social-hub.js --offline
-            node scripts/build-style-css.js && node scripts/build-critical-css.js
+            node scripts/build-style-css.js && node scripts/build-critical-css.js || echo "::warning::style.css was not rebuilt; run node scripts/build-style-css.js and build-critical-css.js on main (#2552)."
             git add -u -- style.css '*.html'
             git add llms.txt llms-full.txt qa-review*.html assets/social sitemap-social.xml social
             scripts/social-hub/guard-hub-lang.sh HEAD~1
