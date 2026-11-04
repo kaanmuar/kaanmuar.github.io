@@ -14,6 +14,7 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 const { minifyPages } = require("./minify-pages");
 const csp = require("./build-csp-hashes");
+const hub = require("./social-hub-outputs");
 
 const ROOT = path.join(__dirname, "..");
 const OUT = path.resolve(ROOT, process.argv[2] || "_site");
@@ -39,31 +40,70 @@ function wanted(file) {
   return true;
 }
 
-const files = execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8", maxBuffer: 64 << 20 })
-  .split("\0")
-  .filter((file) => file && wanted(file) && fs.existsSync(path.join(ROOT, file)));
-
-fs.rmSync(OUT, { recursive: true, force: true });
-let bytes = 0;
-for (const file of files) {
-  const dest = path.join(OUT, file);
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.copyFileSync(path.join(ROOT, file), dest);
-  bytes += fs.statSync(dest).size;
+/* The hub is rebuilt in the worktree before this runs, and a pull request does not commit those files (#2242).
+   The rebuilt index is a tracked file, so it is copied with links to the new pages; those pages are untracked and
+   would otherwise be missing from the artifact, and every one of those links would be broken. */
+function withHub(tracked, extras) {
+  const have = new Set(tracked);
+  const out = tracked.slice();
+  for (const file of extras) {
+    if (file && !have.has(file) && hub.isOutput(file) && wanted(file)) {
+      have.add(file);
+      out.push(file);
+    }
+  }
+  return out;
 }
-fs.writeFileSync(path.join(OUT, ".nojekyll"), "");
 
-// A page committed with stale script hashes would have its inline scripts refused; CI flags it, the artifact is rehashed.
-const rehashed = files.filter((file) => file.endsWith(".html")).filter((file) => {
-  const dest = path.join(OUT, file);
-  const html = fs.readFileSync(dest, "utf8");
-  const next = csp.apply(html);
-  if (next !== html) fs.writeFileSync(dest, next);
-  return next !== html;
-});
-if (rehashed.length) console.warn(`CSP script hashes were stale in ${rehashed.join(", ")}; run node scripts/build-csp-hashes.js`);
+function diskHubFiles() {
+  const out = [];
+  const walk = (dir, prefix) => {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const rel = prefix + "/" + entry.name;
+      if (entry.isDirectory()) walk(path.join(dir, entry.name), rel);
+      else if (hub.isOutput(rel)) out.push(rel);
+    }
+  };
+  walk(path.join(ROOT, "social"), "social");
+  walk(path.join(ROOT, "assets", "social"), "assets/social");
+  for (const name of fs.readdirSync(ROOT)) {
+    if (hub.isOutput(name)) out.push(name);
+  }
+  return out;
+}
 
-console.log(`${path.relative(ROOT, OUT) || "."}: ${files.length} files, ${(bytes / 1048576).toFixed(1)} MB`);
+function publish() {
+  const tracked = execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8", maxBuffer: 64 << 20 })
+    .split("\0")
+    .filter((file) => file && wanted(file) && fs.existsSync(path.join(ROOT, file)));
+  const files = withHub(tracked, diskHubFiles());
 
-const minified = minifyPages(OUT);
-console.log(`js/: ${minified.files} files minified, ${(minified.before / 1024).toFixed(0)} KB to ${(minified.after / 1024).toFixed(0)} KB`);
+  fs.rmSync(OUT, { recursive: true, force: true });
+  let bytes = 0;
+  for (const file of files) {
+    const dest = path.join(OUT, file);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(path.join(ROOT, file), dest);
+    bytes += fs.statSync(dest).size;
+  }
+  fs.writeFileSync(path.join(OUT, ".nojekyll"), "");
+
+  // A page committed with stale script hashes would have its inline scripts refused; CI flags it, the artifact is rehashed.
+  const rehashed = files.filter((file) => file.endsWith(".html")).filter((file) => {
+    const dest = path.join(OUT, file);
+    const html = fs.readFileSync(dest, "utf8");
+    const next = csp.apply(html);
+    if (next !== html) fs.writeFileSync(dest, next);
+    return next !== html;
+  });
+  if (rehashed.length) console.warn(`CSP script hashes were stale in ${rehashed.join(", ")}; run node scripts/build-csp-hashes.js`);
+
+  console.log(`${path.relative(ROOT, OUT) || "."}: ${files.length} files, ${(bytes / 1048576).toFixed(1)} MB`);
+
+  const minified = minifyPages(OUT);
+  console.log(`js/: ${minified.files} files minified, ${(minified.before / 1024).toFixed(0)} KB to ${(minified.after / 1024).toFixed(0)} KB`);
+}
+
+if (require.main === module) publish();
+else module.exports = { withHub, wanted };
