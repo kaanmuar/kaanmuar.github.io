@@ -645,6 +645,46 @@
     "checked": "2026-11-04T16:07:33.291Z"
    }
   ],
+  "auto-2026-11-04/01-u-selia-co": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122103650061532027",
+    "at": "2026-11-05T22:13:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T17:01:36.370Z"
+   }
+  ],
+  "auto-2026-11-04/02-u-treinta-co": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122103650355532027",
+    "at": "2026-11-05T18:01:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T17:01:57.948Z"
+   }
+  ],
+  "auto-2026-11-04/08-u-itsrever-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122103650415532027",
+    "at": "2026-11-05T19:24:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T17:02:00.982Z"
+   }
+  ],
+  "auto-2026-11-04/14-u-ciqa-edu-mx": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122103650475532027",
+    "at": "2026-11-07T21:30:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T17:02:03.642Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "facebook",
@@ -653,7 +693,7 @@
     "at": "2026-11-03T22:57:00.000Z",
     "result": "sent",
     "url": "https://www.facebook.com/photo.php?fbid=122094924723532027&set=a.122093419455532027&type=3",
-    "checked": "2026-11-04T16:07:33.270Z"
+    "checked": "2026-11-04T17:01:33.194Z"
    }
   ],
   "compare-2026-11/02-berlin-vienna": [
@@ -739,7 +779,7 @@
     "at": "2026-11-03T22:57:00.000Z",
     "result": "sent",
     "url": "https://www.facebook.com/photo.php?fbid=122094970383532027&set=a.122093419455532027&type=3",
-    "checked": "2026-11-04T16:07:33.270Z"
+    "checked": "2026-11-04T17:01:33.194Z"
    }
   ],
   "compare-2026-11/10-quiz-cities": [
@@ -1463,7 +1503,7 @@
     "at": "2026-11-03T22:57:00.000Z",
     "result": "sent",
     "url": "https://www.facebook.com/photo.php?fbid=122094915153532027&set=a.122093419455532027&type=3",
-    "checked": "2026-11-04T16:07:33.270Z"
+    "checked": "2026-11-04T17:01:33.194Z"
    }
   ],
   "runs-3/02-policiaco": [
@@ -1728,7 +1768,7 @@
     "at": "2026-11-03T22:50:00.000Z",
     "result": "sent",
     "url": "https://www.facebook.com/photo.php?fbid=122093302269532027&set=a.122093419455532027&type=3",
-    "checked": "2026-11-04T16:07:33.270Z"
+    "checked": "2026-11-04T17:01:33.194Z"
    }
   ],
   "tips-2026-10/19-measure-action": [
