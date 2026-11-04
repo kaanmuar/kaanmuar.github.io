@@ -221,17 +221,17 @@ describe('Interactive CV', () => {
     });
 
     it('opens company sites without expanding the job', () => {
-      cy.get('#experience-0 .company-link')
+      cy.get('#experience-1 .company-link')
         .should('have.attr', 'href', 'https://www.teaminternational.com')
         .and('have.attr', 'target', '_blank')
         .and('have.attr', 'rel')
         .and('match', /noopener/);
-      cy.get('#experience-header-0').should('have.attr', 'aria-expanded', 'false');
-      cy.get('#experience-0 .company-link').then(($link) => {
+      cy.get('#experience-header-1').should('have.attr', 'aria-expanded', 'false');
+      cy.get('#experience-1 .company-link').then(($link) => {
         $link[0].addEventListener('click', (event) => event.preventDefault(), { capture: true });
         $link[0].dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
       });
-      cy.get('#experience-header-0').should('have.attr', 'aria-expanded', 'false');
+      cy.get('#experience-header-1').should('have.attr', 'aria-expanded', 'false');
       cy.contains('.company-link', 'Zagalabs').should('have.attr', 'href', 'https://zaga.co');
       cy.contains('.company-link', 'Prodigious').should('have.attr', 'href', 'https://publicisproduction.com');
       cy.contains('.company-name', 'Bitgray').should('be.visible');

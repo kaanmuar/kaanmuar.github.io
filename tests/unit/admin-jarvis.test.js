@@ -96,6 +96,15 @@ test("the briefing ranks alerts first and readiness counts every check", () => {
   assert.equal(core.readiness({}), null);
 });
 
+test("an empty briefing names down connections and low readiness instead of all clear (#2266)", () => {
+  const conns = [{ state: "live" }, { state: "down" }, { state: "partial" }, { state: "off" }, { state: "loading" }];
+  assert.equal(core.systemsNote(conns, 71, 80), "2 connections need a look");
+  assert.equal(core.systemsNote([{ state: "down" }], 95, 80), "1 connection needs a look");
+  assert.equal(core.systemsNote([{ state: "live" }, { state: "off" }], 71, 80), "Readiness below 80%");
+  assert.equal(core.systemsNote([{ state: "live" }], 92, 80), "");
+  assert.equal(core.systemsNote([], null, 80), "");
+});
+
 test("URL review bugs the daily fix held back for the Cursor plan are an alert that lists them (#1982)", () => {
   const needsAgent = [{ number: 330, title: "BE: bot walls", url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/330" }, { number: 1176, title: "BE: TLS", url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/1176" }];
   const external = { github: { ok: true, ci: [], openBugs: 2, bugAreas: [], merged: { total: 0 }, needsAgent } };
@@ -642,6 +651,35 @@ test("brave: our place counts only our own domain, and a failed search does not 
   assert.equal((await sources.brave({ fetch, env: {} }, ["x"])).ok, false);
 });
 
+test("brave: past page one it pages to the top 100 once a week per search, and reuses that place in between", async () => {
+  const asked = [];
+  const page = (offset, ours) => Array.from({ length: 20 }, (_, i) => ({ url: ours === i ? "https://carlosandmunoz.com/review" : `https://rival${offset}-${i}.example/` }));
+  const fetch = async (url) => {
+    const u = new URL(url);
+    const offset = Number(u.searchParams.get("offset"));
+    asked.push(u.searchParams.get("q") + "@" + offset);
+    if (u.searchParams.get("q") === "deep") return json({ web: { results: page(offset, offset === 2 ? 4 : -1) }, query: { more_results_available: true } });
+    return json({ web: { results: page(offset, -1) }, query: { more_results_available: offset < 1 } });
+  };
+  let saved = null;
+  const db = { collection: () => ({ doc: () => ({ get: async () => ({ exists: !!saved, data: () => saved }), set: async (v) => { saved = v; } }) }) };
+  const now = Date.parse("2026-11-03T12:00:00Z");
+  const first = await sources.brave({ fetch, db, now, env: { BRAVE_SEARCH_KEY: "k" } }, ["deep", "short"]);
+  assert.equal(first.depth, 100);
+  assert.equal(first.queries[0].position, 45);
+  assert.equal(first.queries[0].url, "https://carlosandmunoz.com/review");
+  assert.equal(first.queries[1].position, null);
+  assert.deepEqual(asked, ["deep@0", "deep@1", "deep@2", "short@0", "short@1"]);
+  asked.length = 0;
+  const next = await sources.brave({ fetch, db, now: now + 3 * 86400000, env: { BRAVE_SEARCH_KEY: "k" } }, ["deep", "short", "new"]);
+  assert.equal(next.queries[0].position, 45);
+  assert.equal(next.queries[0].checkedAt, "2026-11-03T12:00:00.000Z");
+  assert.deepEqual(asked, ["deep@0", "short@0", "new@0", "new@1"]);
+  asked.length = 0;
+  await sources.brave({ fetch, db, now: now + 8 * 86400000, env: { BRAVE_SEARCH_KEY: "k" } }, ["deep"]);
+  assert.deepEqual(asked, ["deep@0", "deep@1", "deep@2"]);
+});
+
 test("platform: real failures come from the log lines, not from every non-2xx", async () => {
   const fetch = async () => json({ entries: [
     { timestamp: "2026-10-25T14:00:00Z", resource: { labels: { function_name: "reviewUrl" } }, textPayload: "Function execution took 540001 ms, finished with status: 'timeout'" },
@@ -747,6 +785,19 @@ test("social: posts scheduled for later are counted apart, not listed as recent"
   assert.equal(out.sent, 1);
   assert.equal(out.latest.length, 1);
   assert.deepEqual(out.scheduled, { count: 2, next: at(-1) });
+});
+
+test("social: Facebook needs come from the daily metrics' word on each Page, not from a token in Jarvis", async () => {
+  const run = (metrics) => sources.social({ fetch: async (url) => (/metrics\.json/.test(url) && metrics ? json(metrics) : json({}, 404)), env: {}, now: NOW.getTime(), days: 30 });
+  assert.deepEqual((await run({ posts: {}, pages: { "Facebook Page": { asked: 3, answered: 3 } } })).needs.filter((n) => /Facebook/.test(n)), []);
+  assert.deepEqual((await run(null)).needs.filter((n) => /Facebook/.test(n)), []);
+  assert.deepEqual((await run({ posts: {}, pages: { "Facebook Page": { asked: 3, answered: 3, insights: 3 } } })).needs.filter((n) => /Facebook/.test(n)), []);
+  const needs = (await run({ posts: {}, pages: { "Facebook Page": { asked: 41, answered: 0, insights: 0, error: "Graph 400: (#10) pages_read_user_content" }, "Facebook Page ES": { skipped: "no FACEBOOK_PAGE_TOKEN_ES" } } })).needs;
+  assert.deepEqual(needs.filter((n) => /Facebook/.test(n)), [
+    "Facebook Page: the Graph API answered 0 of 41 sent posts in the daily social numbers (Graph 400: (#10) pages_read_user_content); no post came back with views, so the Page token lacks read_insights. A new token with read_insights and pages_read_user_content fixes it; steps are at the top of scripts/meta-token.js.",
+    "Facebook Page ES: the daily social numbers skipped it (no FACEBOOK_PAGE_TOKEN_ES repo secret). Steps are at the top of scripts/meta-token.js."
+  ]);
+  assert.ok(needs.every((n) => !/functions\/\.env/.test(n)));
 });
 
 test("a source that does not answer gets a briefing line, and test payments stay out of revenue", () => {
@@ -892,12 +943,40 @@ test("qalabreview.com links: visits, reviews and payments per prospect, paid cre
   ];
   const x = outreachSrc.linkRows(opens, reviews, ctx);
   assert.deepEqual([x.visits, x.reviews, x.paid, x.usd], [3, 1, 1, 12]);
-  assert.deepEqual(x.byCampaign, [{ label: "outreach", value: 2 }, { label: "qr", value: 1 }]);
+  assert.deepEqual(x.byCampaign, [{ label: "Outreach email", value: 2, campaign: "outreach" }, { label: "QR code", value: 1, campaign: "qr" }]);
   assert.deepEqual(x.prospects, [{ host: "upb.edu.co", visits: 2, reviews: 1, paid: 1, usd: 12, last: at(2) }]);
   assert.equal(x.reviewRate, 33.3);
   assert.deepEqual(outreachSrc.linkPrior(opens, reviews, ctx), { visits: 1, reviews: 0, paid: 0, usd: 0, reviewRate: 0, payRate: 0 });
   assert.equal(outreachSrc.linkPrior(Array.from({ length: 10000 }, () => opens[0]), reviews, ctx), null);
   assert.equal(outreachSrc.linkTags("?utm_source=youtube"), null);
+  assert.deepEqual(x.social, { visits: 0, reviews: 0, paid: 0, usd: 0, networks: [], posts: [] });
+});
+
+test("report replies (#2471): named campaigns, and clicks, runs and payments per network and per post", () => {
+  const ctx = { now: NOW.getTime(), days: 7 };
+  const at = (h) => new Date(NOW.getTime() - h * 3600 * 1000).toISOString();
+  const q = (net, term, host) => "?utm_source=qalabreview&utm_campaign=social-reply-" + net + (term ? "&utm_term=" + term : "") + "&utm_content=" + host + "&utm_medium=social";
+  const opens = [
+    { query: q("bluesky", "a1b2c3", "upb.edu.co"), createdAt: at(2) }, { query: q("bluesky", "a1b2c3", "upb.edu.co"), createdAt: at(3) },
+    { query: q("mastodon", "", "acme.io"), createdAt: at(4) }, { query: q("bluesky", "no!", "upb.edu.co"), createdAt: at(5) }
+  ];
+  const reviews = [
+    { id: "r1", query: q("bluesky", "a1b2c3", "upb.edu.co"), email: "a@upb.edu.co", status: "complete", createdAt: at(2) },
+    { id: "p1", status: "paid-report", paid: true, reportId: "r1", email: "a@upb.edu.co", priceUsd: 19, createdAt: at(1) }
+  ];
+  const x = outreachSrc.linkRows(opens, reviews, ctx);
+  assert.deepEqual(x.byCampaign.map((c) => c.label), ["Report replies on Bluesky", "Report replies on Mastodon"]);
+  assert.deepEqual([x.social.visits, x.social.reviews, x.social.paid, x.social.usd], [4, 1, 1, 19]);
+  assert.deepEqual(x.social.networks.map((n) => [n.name, n.campaign, n.visits, n.reviews, n.paid, n.usd]), [["Bluesky", "social-reply-bluesky", 3, 1, 1, 19], ["Mastodon", "social-reply-mastodon", 1, 0, 0, 0]]);
+  assert.deepEqual(x.social.posts, [{ network: "bluesky", name: "Bluesky", ref: "a1b2c3", host: "upb.edu.co", visits: 2, reviews: 1, paid: 1, usd: 19 }]);
+  const joined = outreachSrc.socialPosts(x.social.posts, [
+    { key: "bluesky_a1b2c3d4e5f60718293a", network: "bluesky", url: "https://bsky.app/profile/ana/post/1", author: { handle: "ana" }, text: "UPB's new site https://upb.edu.co", report: { host: "upb.edu.co" }, actions: { reply: { status: "posted", url: "https://bsky.app/profile/us/post/2", lang: "es" } } },
+    { key: "mastodon_a1b2c3000000000000", network: "mastodon", url: "https://m.s/1" }
+  ]);
+  assert.deepEqual([joined[0].url, joined[0].title, joined[0].status, joined[0].replyUrl, joined[0].lang], ["https://bsky.app/profile/ana/post/1", "UPB's new site", "posted", "https://bsky.app/profile/us/post/2", "es"]);
+  assert.equal(outreachSrc.postRef("bluesky_a1b2c3d4e5f60718293a"), "a1b2c3");
+  assert.equal(outreachSrc.campaignName("social-reply-x"), "Report replies on X");
+  assert.equal(outreachSrc.campaignName("brand-new"), "brand-new");
 });
 
 test("qalabreview.com briefing: a dead Worker alerts once campaigns send, and link revenue is reported", () => {
@@ -1335,6 +1414,53 @@ test("marketing (#1722): campaigns read their week, sequence, language, region, 
   assert.deepEqual(out.byStatus.find((r) => r.label === "completed"), { label: "completed", value: 1 });
 });
 
+// Instantly answers leads/list a page at a time and campaigns/analytics only for campaigns with activity.
+function instantlyFake(campaigns, leads, acted) {
+  return async (url, init) => {
+    const path = url.replace("https://api.instantly.ai/api/v2/", "");
+    let body = {};
+    if (path === "campaigns?limit=100") body = { items: campaigns };
+    else if (path === "campaigns/analytics") body = [];
+    else if (path === "leads/list") {
+      const after = JSON.parse(init.body).starting_after;
+      const from = after ? Number(after) : 0;
+      body = { items: leads.slice(from, from + 100), next_starting_after: from + 100 < leads.length ? String(from + 100) : undefined };
+    } else if (/\/activate$/.test(path)) {
+      const id = path.split("/")[1];
+      acted.push(id);
+      campaigns.find((c) => c.id === id).status = 1;
+    } else if (/^campaigns\/[^/]+$/.test(path)) body = campaigns.find((c) => c.id === path.split("/")[1]);
+    return { ok: true, json: async () => body };
+  };
+}
+
+test("marketing (#2475): leads come from the leads list, and Jarvis launches only drafts with leads, steps, a mailbox and a start within a week", async () => {
+  const id = (n) => n + "0000000-0000-4000-8000-000000000000";
+  const camp = (n, name, status, start, extra) => Object.assign({ id: id(n), name, status, campaign_schedule: { start_date: start, schedules: [] }, sequences: [{ steps: [1, 2, 3] }], email_list: ["carlos@qalabreview.com"] }, extra || {});
+  const campaigns = [
+    camp(1, "W1 F-es Americas", 0, "2026-11-01"),
+    camp(2, "W1 D-en Europe", 0, "2026-11-01"),
+    camp(3, "W1 A-en US", 1, "2026-11-01"),
+    camp(4, "W2 A-en US", 0, "2026-11-20"),
+    camp(5, "W1 F-en US", 0, "2026-11-01", { email_list: [] }),
+    camp(6, "W1 E-en US", 0, "2026-11-01", { sequences: [] })
+  ];
+  const leads = [];
+  for (let i = 0; i < 150; i++) leads.push({ campaign: id(1) });
+  [3, 4, 5, 6].forEach((n) => leads.push({ campaign: id(n) }));
+  const acted = [];
+  const ctx = { fetch: instantlyFake(campaigns, leads, acted), env: { INSTANTLY_API_KEY: "k" }, now: NOW.getTime() };
+  const counts = await marketingSrc.leadCounts(ctx);
+  assert.equal(counts[id(1)], 150, "every page is counted");
+  const rows = marketingSrc.campaignRows(campaigns, [], ctx.now, counts).rows;
+  assert.deepEqual(rows.map((r) => [r.name, r.leads]).filter((r) => r[1]), [["W1 A-en US", 1], ["W1 E-en US", 1], ["W1 F-en US", 1], ["W1 F-es Americas", 150], ["W2 A-en US", 1]]);
+  assert.deepEqual((await marketingSrc.launchReady(ctx)).map((r) => [r.name, r.leads]), [["W1 F-es Americas", 150]]);
+  const res = await marketingSrc.launch(ctx, [id(1), id(2), id(3)]);
+  assert.deepEqual(acted, [id(1)]);
+  assert.deepEqual(res.launched, ["W1 F-es Americas"]);
+  assert.deepEqual(res.left, ["W1 D-en Europe: no longer ready (0 leads, 3 steps, start 2026-11-01)", "W1 A-en US: already active"]);
+});
+
 test("marketing (#1722): follow-up notes count sent and stopped per day, and prospects split by country and segment", () => {
   const notes = marketingSrc.noteRows([
     { status: "follow-note", email: "A@x.com", kind: "return", scene: "free", createdAt: daysAgo(1).toISOString() },
@@ -1374,4 +1500,13 @@ test("marketing (#1722): queued prospects append once, take the form's country a
   assert.deepEqual([out.added, out.already], [1, 1]);
   assert.deepEqual(docs["url_review_sweep/outreach"].hosts.map((h) => h.host), ["uni.edu.co", "new.edu.co"]);
   await assert.rejects(marketingSrc.queueProspects(db, { hosts: "nothing here" }, NOW.getTime()), /Nothing to add/);
+});
+
+test("the LinkedIn Send button copies the note line of the day's list (#2479)", () => {
+  assert.equal(core.linkedinLine({ lines: ["Profile: [https://www.linkedin.com/in/ana](https://www.linkedin.com/in/ana)", "Note: Hola Ana, vi el sitio de la UPB."] }, "Note"), "Hola Ana, vi el sitio de la UPB.");
+  assert.equal(core.linkedinLine({ lines: ["note:   Hi Leo"] }, "Note"), "Hi Leo");
+  assert.equal(core.linkedinLine({ lines: ["Profile: https://www.linkedin.com/in/leo"] }, "Note"), "");
+  assert.equal(core.linkedinLine({}, "Note"), "");
+  assert.equal(core.linkedinLine(null, "Note"), "");
+  assert.equal(core.linkedinLine({ lines: ["Check first: confirm the role.", "Note: Hi"] }, "Check first"), "confirm the role.");
 });

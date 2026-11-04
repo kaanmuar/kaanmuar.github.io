@@ -87,6 +87,8 @@ export default {
       if (pathname === "/complete") return json(await complete(env, body));
     } catch (e) {
       console.error(pathname, e);
+      // Only the Workers Free plan stops at 10,000 neurons a day; the account is on Workers Paid (#2290).
+      if (/\b4006\b|daily free allocation/.test(String(e && e.message))) return json({ error: "quota", detail: "Workers AI refused the call for the free daily allocation: check that the Cloudflare account is still on Workers Paid (#2290)." }, 429);
       return json({ error: "failed" }, 500);
     }
     return json({ error: "not found" }, 404);

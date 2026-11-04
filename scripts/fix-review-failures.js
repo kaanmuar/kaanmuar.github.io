@@ -1,11 +1,15 @@
 #!/usr/bin/env node
-// The daily fix of the bugs the check of failed URL reviews files (#320), scripts first (#1982). scripts/fix-review-failures.sh runs it
-// at 07:30 in a clean clone of main, after fileReviewFailureBugs (07:05) has filed and commented the day's runs.
+// The daily fix of the bugs the check of failed URL reviews files (#320), scripts first (#1982). .github/workflows/fix-review-failures.yml
+// runs it at 12:30 UTC on a clean checkout of main, after fileReviewFailureBugs (12:05 UTC) has filed and commented the day's runs (#2419).
 //   1. A bug with an open PR, or no new runs since the last daily fix comment, is skipped.
 //   2. A bug whose new runs the filer's triage marks as all the site's own state gets a comment and stays in Backlog.
-//   3. The rest go to one Cursor agent (Auto), which only writes the fix and opens the PR. Over 70% of the Cursor plan, or when Cursor
-//      refuses the run, they get the `needs-agent` label instead, which Jarvis raises as an alert, and wait for the next morning.
+//   3. The rest go to one Cursor agent (Auto), which only writes the fix and opens the PR. At 70% of the Cursor plan or more, the agent
+//      spends on-demand credit, so it runs only while on-demand is on with at least $20 left (the repo variable FIX_REVIEW_OD_FLOOR, in
+//      dollars, overrides the $20; #2481). Short of that, with the plan unknown, or when Cursor refuses the run, they get the `needs-agent`
+//      label instead, which Jarvis raises as an alert, and wait for the next morning. The runner reads the plan from the
+//      CURSOR_QUOTA_CACHE variable the Mac uploads (scripts/fix-review-failures-sync.js).
 //   4. For each PR the agent opened, this script waits for CI, merges, deploys the review functions and closes the bug.
+//      A PR it could not merge or deploy fails the run.
 //   node scripts/fix-review-failures.js [--dry-run]    --dry-run prints the triage and changes nothing
 // Issues and PRs go through REST; only board moves use GraphQL, via scripts/ticket.sh.
 const fs = require("fs");
@@ -25,6 +29,7 @@ const MARK = "<!-- daily-fix -->";
 const TRIAGE = /<!-- review-triage (\{.*?\}) -->/;
 const LABEL = "needs-agent";
 const PLAN_LIMIT = 70;
+const OD_FLOOR = 20;
 const MODEL = "auto";
 const REFUSED = /ActionRequiredError|usage is off|balance is used up/i;
 const DEPLOY = ["reviewUrl", "reviewBrowser", "diagnoseReviewFailures", "rerunReviewFailures", "fileReviewFailureBugs"].map((name) => "functions:" + name).join(",");
@@ -64,10 +69,26 @@ function siteComment(result, today) {
     + ". The bug stays in Backlog; no agent ran.\n\n" + MARK;
 }
 
-// A cache from an ended billing cycle, or older than two days, is unknown: the agent starts, and a refused run is held back after all.
+const odFloor = (value) => String(value || "").trim() !== "" && Number(value) >= 0 ? Number(value) : OD_FLOOR;
+
+// A cache from an ended billing cycle, or older than two days, is unknown, and an unknown plan holds the agent back: the runner can't see the plan.
+// From PLAN_LIMIT on, every run is billed on demand; the cache holds odRemaining in cents and the floor is in dollars.
+function planCheck(cache, now, floor = OD_FLOOR) {
+  const pct = cursorPlan.planPercent(cache, now);
+  if (pct == null) return { ok: false, line: cursorPlan.quotaLine(cache, now) };
+  const plan = "Cursor plan " + pct.toFixed(0) + "% used";
+  if (pct < PLAN_LIMIT) return { ok: true, line: plan };
+  if (cache.odEnabled !== true) return { ok: false, line: plan + ", on-demand off" };
+  if (typeof cache.odRemaining !== "number") return { ok: false, line: plan + ", on-demand credit left unknown" };
+  const left = cache.odRemaining / 100;
+  const ok = left >= floor;
+  return { ok, line: plan + ", $" + left.toFixed(2) + " on-demand credit left, " + (ok ? "at or over" : "under") + " the $" + floor + " floor" };
+}
+const planAllows = (cache, now, floor) => planCheck(cache, now, floor).ok;
+
 function agentPrompt(queue, pack) {
   return [
-    "You run unattended on the owner's Mac for the daily fix of failed URL reviews (#320, #1982). Nobody will answer questions: decide, act, and finish. The repo is kaanmuar/kaanmuar.github.io and this checkout is a clean `main`.",
+    "You run unattended on a GitHub Actions runner for the daily fix of failed URL reviews (#320, #1982). Nobody will answer questions: decide, act, and finish. The repo is kaanmuar/kaanmuar.github.io and this checkout is a clean `main`.",
     "A script already triaged the open failure bugs and commented on the ones that are only the site's own state. After you, it waits for CI, merges, deploys the review functions, closes the bug, moves the board and writes the work log. Your part is the code.",
     "",
     "Bugs whose newest runs may be ours to fix:",
@@ -89,7 +110,7 @@ function agentPrompt(queue, pack) {
 
 function ciPrompt(bug, pr, failed) {
   return [
-    "You run unattended on the owner's Mac for the daily fix of failed URL reviews (#320, #1982). CI failed on PR #" + pr.number + " (branch `" + pr.head + "`), the fix for bug #" + bug.number + ".",
+    "You run unattended on a GitHub Actions runner for the daily fix of failed URL reviews (#320, #1982). CI failed on PR #" + pr.number + " (branch `" + pr.head + "`), the fix for bug #" + bug.number + ".",
     "Check out that branch, fix what failed, run `npm ci` and `npm run test:review`, and push to the same branch. Do not merge, deploy or close anything. What failed:",
     "```", failed.slice(-6000), "```"
   ].join("\n");
@@ -148,16 +169,22 @@ function deploy() {
   run("npx", ["-y", "firebase-tools", "deploy", "--only", DEPLOY], { timeout: 30 * 60000 });
 }
 
-function ship(item, pr, budgetOk) {
+function ciFailComment(pr, budget, out) {
+  const why = budget.ok ? "still fails on #" + pr.number + " after one retry" : "fails on #" + pr.number + " and the retry agent was held back (" + budget.line + ")";
+  return "Daily fix: CI " + why + ", so it is left open for a person.\n\n```\n" + out.slice(-3000) + "\n```";
+}
+
+function ship(item, pr, budget) {
   const n = item.bug.number;
   try { run("scripts/ticket.sh", ["move", String(n), "dev"]); } catch (error) { console.log("#" + n + ": not moved to Dev: " + error.message); }
   let ci = ciWait(pr.number);
-  if (!ci.ok && budgetOk()) {
+  const check = ci.ok ? null : budget();
+  if (check && check.ok) {
     agent(ciPrompt(item.bug, pr, ci.out));
     ci = ciWait(pr.number);
   }
   if (!ci.ok) {
-    const body = "Daily fix: CI still fails on #" + pr.number + " after one retry, so it is left open for a person.\n\n```\n" + ci.out.slice(-3000) + "\n```";
+    const body = ciFailComment(pr, check, ci.out);
     comment(pr.number, body);
     comment(n, body);
     return "PR #" + pr.number + " left open: CI fails";
@@ -181,13 +208,25 @@ function ship(item, pr, budgetOk) {
   return "fixed in #" + pr.number + ", merged and deployed";
 }
 
+// The job summary of the workflow run; a PR left unmerged or undeployed fails the run.
+function report(lines) {
+  lines.forEach((line) => console.log(line));
+  if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.map((line) => "- " + line).join("\n") + "\n");
+  if (lines.some((line) => /not merged|deploy failed/.test(line))) process.exitCode = 1;
+}
+
 function main() {
   const dry = process.argv.includes("--dry-run");
   const today = new Date().toISOString().slice(0, 10);
   const prs = openPrs();
   const plan = openBugs().map((bug) => Object.assign({ bug }, triage(bug, commentsOf(bug.number), prs)));
-  plan.forEach((row) => console.log("#" + row.bug.number + " " + row.action + ": " + row.why));
-  if (dry) return;
+  const floor = odFloor(process.env.FIX_REVIEW_OD_FLOOR);
+  const budget = () => planCheck(cursorPlan.readCache(), Date.now(), floor);
+  report(plan.length ? plan.map((row) => "#" + row.bug.number + " " + row.action + ": " + row.why) : ["No open review-failure bugs."]);
+  if (dry) {
+    const check = budget();
+    return report(["Dry run: the Cursor plan " + (check.ok ? "allows" : "holds back") + " an agent (" + check.line + ")."]);
+  }
 
   for (const row of plan.filter((item) => item.action === "site")) {
     const start = new Date();
@@ -197,16 +236,13 @@ function main() {
   }
 
   const queue = plan.filter((item) => item.action === "agent");
-  if (!queue.length) return console.log("No bug needs an agent today.");
-  const budgetOk = () => {
-    const pct = cursorPlan.planPercent(cursorPlan.readCache(), Date.now());
-    return pct == null || pct < PLAN_LIMIT;
-  };
+  if (!queue.length) return report(["No bug needs an agent today."]);
   const defer = (why) => {
     queue.forEach((row) => label(row.bug, true));
-    console.log("Agent held back (" + why + "): " + queue.map((row) => "#" + row.bug.number).join(", ") + " labelled " + LABEL + ".");
+    report(["Agent held back (" + why + "): " + queue.map((row) => "#" + row.bug.number).join(", ") + " labelled " + LABEL + "."]);
   };
-  if (!budgetOk()) return defer("the Cursor plan is past " + PLAN_LIMIT + "%");
+  const check = budget();
+  if (!check.ok) return defer(check.line);
 
   const start = new Date();
   const prompt = agentPrompt(queue, "");
@@ -216,11 +252,11 @@ function main() {
   for (const row of queue) {
     label(row.bug, false);
     const pr = after.find((item) => new RegExp("^[\\w-]+/" + row.bug.number + "-").test(item.head));
-    const note = pr ? ship(row, pr, budgetOk) : "no PR; see the agent's comment";
-    console.log("#" + row.bug.number + ": " + note);
+    const note = pr ? ship(row, pr, budget) : "no PR; see the agent's comment";
+    report(["#" + row.bug.number + ": " + note]);
     logRow(start, row.bug.number, row.bug.title, "daily-fix-agent", note);
   }
 }
 
 if (require.main === module) main();
-module.exports = { triage, siteComment, agentPrompt, MARK };
+module.exports = { triage, siteComment, agentPrompt, planCheck, planAllows, odFloor, ciFailComment, MARK, USAGE };

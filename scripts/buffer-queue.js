@@ -11,6 +11,8 @@
        their media lives (site, release, or a copy uploaded into Buffer); changes nothing
      BUFFER_API_KEY=... node scripts/buffer-queue.js --delete-unmatched [--dry-run]   delete the scheduled posts
        dated after now that match no batch post and that the ledger does not know (not on the hub)
+     BUFFER_API_KEY=... node scripts/buffer-queue.js --delete-duplicates [--dry-run]   delete the later copies of a
+       batch post scheduled twice on one profile, keeping the first one created
      BUFFER_API_KEY=... node scripts/buffer-queue.js --requeue <batch/slug,...> [--channel youtube] [--dry-run]
        delete those queued posts and create them again from captions.json at the same time
 
@@ -24,12 +26,21 @@
    Hub first (scripts/hub-gate.js): a post whose hub page does not answer 200, or whose slot is before its day
    on the hub, is not queued and goes into the ledger as failed with the reason. Every caption ends with its hub
    post's address, tagged utm_source=<network>&utm_medium=social&utm_campaign=<batch>.
-   Exits 1 when any post failed, after trying all of them; the log names each one. */
+   Exits 1 when any post failed, after trying all of them; the log names each one.
+
+   Faces (scripts/face-route.js, #2310): each channel belongs to the face whose handle, name or LinkedIn slug it
+   carries, and a post goes only to the face of its language, or to @qalaburlreview while the other face has no
+   channel on that network (a paused one still counts). A post queued or sent on any profile of a network is not
+   queued there again. A channel that names no face takes nothing.
+     BUFFER_API_KEY=... node scripts/buffer-queue.js --reroute [--max 150] [--dry-run]   create each scheduled
+       @qalaburlreview post whose language now has its own face's channel on that channel, at the same time, then
+       delete the first; the ledger marks it moved */
 
 const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
 const { createGate, withHubLink } = require("./hub-gate");
+const faceRoute = require("./face-route");
 
 const ROOT = path.resolve(__dirname, "..");
 const API = "https://api.buffer.com";
@@ -102,10 +113,15 @@ async function channels(paused) {
   const out = [];
   for (const org of orgs) {
     const data = await gql("query($o: OrganizationId!) { channels(input: { organizationId: $o }) { id name service isQueuePaused } }", { o: org.id });
-    out.push(...data.channels.filter((c) => paused || !c.isQueuePaused).map((c) => Object.assign({ org: org.id }, c)));
+    out.push(...data.channels.filter((c) => paused || !c.isQueuePaused).map((c) => Object.assign({ org: org.id, face: faceRoute.channelFace(c) }, c)));
   }
   return out;
 }
+
+// The faces with a channel of this service, paused or not.
+const facesOn = (list, service) => new Set(list.filter((c) => c.service === service && c.face).map((c) => c.face));
+// Queued or sent on any profile of the network: either face has it.
+const onNetwork = (book, name, slot) => (book.posts[name] || []).some((e) => e.channel === slot && (e.result === "queued" || e.result === "sent"));
 
 const SLOT = { linkedin: "linkedin", facebook: "facebook", instagram: "instagram", twitter: "x", threads: "x", bluesky: "x", mastodon: "x", tiktok: "tiktok", youtube: "youtube" };
 const NETS = ["linkedin", "x", "facebook", "instagram", "tiktok", "youtube"];
@@ -284,6 +300,41 @@ async function deleteUnmatched(dry) {
   if (failed) process.exit(1);
 }
 
+// The later copies --delete-duplicates removes: two queue runs of one batch schedule a post twice on a profile, and
+// Buffer refuses the copy on text networks but not on TikTok or YouTube (#2160). The first one created stays; a
+// Buffer id starts with its creation time in hex. Only scheduled posts due more than 30 minutes from now are picked.
+function duplicateScheduled(index, items, now) {
+  const groups = new Map();
+  for (const item of items) {
+    const due = Date.parse(item.node.dueAt || "");
+    if (item.node.status !== "scheduled" || isNaN(due) || due <= now + 30 * 60e3) continue;
+    const name = matchPost(index, item.node, item.slot);
+    if (!name) continue;
+    const key = name + " " + item.profile;
+    groups.set(key, (groups.get(key) || []).concat(item));
+  }
+  return [...groups.values()].filter((group) => group.length > 1)
+    .flatMap((group) => group.sort((a, b) => a.node.id.localeCompare(b.node.id)).slice(1));
+}
+
+async function deleteDuplicates(dry) {
+  const copies = duplicateScheduled(batchIndex(), await bufferPosts(["scheduled"]), Date.now());
+  console.log(copies.length + " scheduled Buffer posts copy an earlier one" + (dry ? " (dry run, nothing deleted):" : ":"));
+  let failed = 0;
+  for (const item of copies) {
+    if (dry) { console.log("  would delete " + item.node.id + " " + describe(item)); continue; }
+    try {
+      const r = (await gql("mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }", { input: { id: item.node.id } })).deletePost;
+      if (r.id) console.log("  deleted " + r.id + " " + describe(item));
+      else { failed += 1; console.log("  failed " + item.node.id + " " + describe(item) + " - " + (r.message || r.__typename)); }
+    } catch (error) {
+      failed += 1;
+      console.log("  failed " + item.node.id + " " + describe(item) + " - " + error.message);
+    }
+  }
+  if (failed) process.exit(1);
+}
+
 // The ledger entries --requeue replaces: queued on the channel with a Buffer id, and not due within 30 minutes.
 function requeueTargets(book, posts, channel, now) {
   return posts.map((post) => {
@@ -347,6 +398,96 @@ async function requeue(posts, channel, dry) {
   if (failed) process.exit(1);
 }
 
+// A batch post's captions.json entry; the launch set's posts carry their language in the name.
+function captionOf(batch, slug, root = ROOT) {
+  const file = path.join(root, "media/social-posts", batch, "captions.json");
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8"))[slug] || null : null;
+}
+
+/* The scheduled @qalaburlreview posts --reroute moves: matched to a batch post whose language routes to another
+   face that now has a channel of the service, and due more than 30 minutes from now. Moves only ever leave the
+   default face, so pausing a face's channel never sends its posts back. */
+function rerouteTargets(index, items, book, list, now, root = ROOT) {
+  const caps = new Map();
+  const out = [];
+  for (const item of items) {
+    const { node, slot } = item;
+    const due = Date.parse(node.dueAt || "");
+    if (item.face !== faceRoute.DEFAULT || node.status !== "scheduled" || isNaN(due) || due <= now + 30 * 60e3) continue;
+    const name = matchPost(index, node, slot, takenBy(book, item));
+    if (!name) continue;
+    const [batch, ...rest] = name.split("/");
+    const slug = rest.join("/");
+    if (!caps.has(batch + "/" + slug)) caps.set(batch + "/" + slug, captionOf(batch, slug, root));
+    const face = faceRoute.postFace(batch, slug, caps.get(batch + "/" + slug), slot, facesOn(list, item.service), root);
+    if (face === item.face) continue;
+    const to = list.find((c) => c.service === item.service && c.face === face && !c.isQueuePaused);
+    if (to) out.push({ item, name, to, profile: to.service + (to.name ? " (" + to.name + ")" : "") });
+  }
+  return out;
+}
+
+// Creates the copy before deleting the original, so a failed delete leaves a post twice rather than nowhere; the
+// next run only deletes, since the ledger has the copy.
+// The caption the new face posts in its own language (#2346), or null to keep the queued text.
+function translated(name, slot, face, service, root = ROOT) {
+  const key = faceRoute.TEXT_KEY[slot];
+  const cut = name.indexOf("/");
+  const batch = name.slice(0, cut);
+  const slug = name.slice(cut + 1);
+  const file = path.join(root, "media", "social-posts", batch, "captions.json");
+  const cap = key && fs.existsSync(file) && JSON.parse(fs.readFileSync(file, "utf8"))[slug];
+  if (!cap || faceRoute.captionFor(cap, key, face) === cap[key]) return null;
+  const text = faceRoute.captionFor(cap, key, face);
+  return slot === "instagram-story" ? text : withHubLink(text, { batch, slug, network: service === "twitter" ? "x" : service });
+}
+
+async function reroute(dry, max) {
+  const { scheduledPosts, editInput } = require("./social-calendar");
+  const book = ledger.read(ledger.BUFFER);
+  const list = await channels(true);
+  const byId = new Map(list.map((c) => [c.id, c]));
+  const scheduled = await scheduledPosts((query, variables) => gql(query, variables));
+  const items = [...scheduled.values()].map((node) => {
+    const channel = byId.get(node.channelId);
+    const slot = channel && SLOT[channel.service];
+    return slot && { node, slot, service: channel.service, face: channel.face, profile: channel.service + (channel.name ? " (" + channel.name + ")" : "") };
+  }).filter(Boolean);
+  const moves = rerouteTargets(batchIndex(), items, book, list, Date.now());
+  console.log(moves.length + " scheduled posts belong to the other face" + (moves.length > max ? "; moving the first " + max : "") + (dry ? " (dry run, nothing moved):" : ":"));
+  let moved = 0;
+  let failed = 0;
+  for (const { item, name, to, profile } of moves.slice(0, max)) {
+    const label = name + " " + item.node.dueAt + " " + item.profile + " -> " + profile;
+    if (dry) { console.log("  would move " + label); continue; }
+    const checked = new Date().toISOString();
+    try {
+      const copy = ledger.find(book, name, item.slot, profile);
+      if (!(copy && copy.id && copy.result === "queued")) {
+        const input = Object.assign(editInput(item.node, item.node.dueAt), { channelId: to.id });
+        delete input.id;
+        const text = translated(name, item.slot, to.face, item.service);
+        if (text) input.text = text;
+        const r = (await gql("mutation($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }", { input })).createPost;
+        if (!r.post) throw new Error("create: " + r.message);
+        ledger.record(book, name, { channel: item.slot, profile, id: r.post.id, at: r.post.dueAt || item.node.dueAt, result: "queued", checked });
+      }
+      const del = (await gql("mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }", { input: { id: item.node.id } })).deletePost;
+      if (!del.id) throw new Error("delete " + item.node.id + ": " + (del.message || del.__typename));
+      ledger.record(book, name, { channel: item.slot, profile: item.profile, id: item.node.id, at: item.node.dueAt, result: "moved", error: "Moved to " + profile, checked });
+      moved += 1;
+      console.log("  moved " + label);
+    } catch (error) {
+      failed += 1;
+      console.log("  failed " + label + " - " + error.message);
+      if (error.spent) break;
+    }
+  }
+  if (!dry) ledger.write(ledger.BUFFER, book);
+  console.log(moved + " moved, " + failed + " failed");
+  if (failed) process.exit(1);
+}
+
 async function waitFor(url, minutes) {
   const until = Date.now() + minutes * 60e3;
   while (Date.now() < until) {
@@ -376,19 +517,20 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
   const video = () => ({ video: { url: clipBase + "/" + slug + ".mp4", metadata: { thumbnailOffset: 0 } } });
   const soon = new Date(Date.now() + 20 * 60e3).toISOString();
   const linked = (text) => withHubLink(text, { batch, slug, network: channel.service === "twitter" ? "x" : channel.service });
+  const own = (key) => faceRoute.captionFor(cap, key, channel.face || faceRoute.DEFAULT);
   const post = (slot, text, assets, metadata) => {
     const at = when[slug + "|" + slot];
     return { slot, input: Object.assign({ channelId: channel.id, schedulingType: "automatic", text, assets },
       at ? { mode: "customScheduled", dueAt: at > soon ? at : soon } : { mode: "addToQueue" }, metadata ? { metadata } : {}) };
   };
   switch (channel.service) {
-    case "linkedin": return [post("linkedin", linked(cap.linkedin), [image("feed")])];
-    case "facebook": return [post("facebook", linked(cap.facebook), [image("feed")], { facebook: { type: "post" } })];
+    case "linkedin": return [post("linkedin", linked(own("linkedin")), [image("feed")])];
+    case "facebook": return [post("facebook", linked(own("facebook")), [image("feed")], { facebook: { type: "post" } })];
     case "instagram": return [
-      post("instagram", linked(cap.instagram), [image("feed")], { instagram: { type: "post", shouldShareToFeed: true } }),
-      post("instagram-story", cap.title, [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
+      post("instagram", linked(own("instagram")), [image("feed")], { instagram: { type: "post", shouldShareToFeed: true } }),
+      post("instagram-story", own("title"), [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
     ];
-    case "twitter": case "threads": return [post("x", linked(cap.x), [image("feed")])];
+    case "twitter": case "threads": return [post("x", linked(own("x")), [image("feed")])];
     case "tiktok": return clipBase ? [post("tiktok", linked(cap.tiktok), [video()])] : [];
     case "youtube": return clipBase ? [post("youtube", linked(cap.youtube), [video()], { youtube: { title: cap.youtubeTitle, categoryId: "28" } })] : [];
     default: return [];
@@ -419,9 +561,19 @@ async function main() {
     if (!opts["dry-run"] && !process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
     return requeue(posts, String(opts.channel || "youtube"), Boolean(opts["dry-run"]));
   }
+  if (opts.reroute) {
+    if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
+    const max = Number(opts.max || 150);
+    if (!(max > 0)) throw new Error("--max takes a number of posts");
+    return reroute(Boolean(opts["dry-run"]), max);
+  }
   if (opts["delete-unmatched"]) {
     if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
     return deleteUnmatched(Boolean(opts["dry-run"]));
+  }
+  if (opts["delete-duplicates"]) {
+    if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
+    return deleteDuplicates(Boolean(opts["dry-run"]));
   }
   if (opts.pending) {
     ledger.retries(ledger.read(ledger.BUFFER)).forEach((batch) => console.log(batch));
@@ -439,16 +591,16 @@ async function main() {
   if (!opts["dry-run"] && !process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
 
   const book = ledger.read(ledger.BUFFER);
-  let list = [{ id: "dry", service: "linkedin" }, { id: "dry", service: "instagram" }, { id: "dry", service: "youtube" }];
+  let all = [{ id: "dry", service: "linkedin", face: "en" }, { id: "dry", service: "instagram", face: "en" }, { id: "dry", service: "youtube", face: "en" }];
   if (!opts["dry-run"]) {
     try {
-      list = await channels();
+      all = await channels(true);
     } catch (error) {
       if (!error.spent) throw error;
       return leaveForTonight(book, batch, error.message);
     }
     const first = base + "/feed/" + slugs[0] + ".jpg";
-    if (!(await waitFor(first, 60))) throw new Error("The site never served " + first);
+    if (!(await waitFor(first, 60))) return leaveForTonight(book, batch, "The site did not serve " + first + " within 60 minutes.");
     try {
       await settle(book);
     } catch (error) {
@@ -456,6 +608,8 @@ async function main() {
       return leaveForTonight(book, batch, error.message);
     }
   }
+  all.filter((c) => !c.face).forEach((c) => console.log("::warning::Buffer channel " + c.service + " (" + c.name + ") names no face in scripts/brand-kit/faces.js, so it takes nothing"));
+  const list = all.filter((c) => c.face && !c.isQueuePaused);
   const gate = createGate();
   let failed = 0;
   let queued = 0;
@@ -464,10 +618,10 @@ async function main() {
   posts: for (const slug of slugs) {
     for (const channel of list) {
       for (const { slot, input } of inputsFor(channel, slug, captions[slug], base, clipBase, when, batch)) {
+        if (faceRoute.postFace(batch, slug, captions[slug], slot, facesOn(all, channel.service)) !== channel.face) continue;
         const profile = channel.service + (channel.name ? " (" + channel.name + ")" : "");
         const label = slug + " → " + profile;
-        const known = ledger.find(book, batch + "/" + slug, slot, profile);
-        if (known && (known.result === "queued" || known.result === "sent")) { already += 1; continue; }
+        if (onNetwork(book, batch + "/" + slug, slot)) { already += 1; continue; }
         const hub = await gate(batch, slug, captions[slug], input.dueAt || new Date().toISOString());
         if (opts["dry-run"]) { console.log("dry-run", label, hub.why ? "HELD: " + hub.why : "hub ok", JSON.stringify(input).slice(0, 160), "…", String(input.text || "").split("\n").pop()); continue; }
         const entry = { channel: slot, profile, at: input.dueAt, checked: new Date().toISOString() };
@@ -509,8 +663,9 @@ async function main() {
   if (failed) process.exit(1);
 }
 
-/* A spent daily limit frees up hours later, so the batch is listed in the ledger's retry and the run passes: the
-   nightly buffer-batch.yml run queues it again, skipping what the ledger already has (#1188). */
+/* A spent daily limit frees up hours later, and a site that has not served the batch yet is waiting on its Pages
+   deploy (#2160), so the batch is listed in the ledger's retry and the run passes: the nightly buffer-batch.yml run
+   queues it again, skipping what the ledger already has (#1188). */
 function leaveForTonight(book, batch, why) {
   ledger.write(ledger.BUFFER, ledger.markRetry(book, batch, why, new Date().toISOString()));
   console.log("::warning::" + batch + " is not fully queued: " + why + " The nightly Buffer batch run (03:37 UTC) queues the rest.");
@@ -518,4 +673,4 @@ function leaveForTonight(book, batch, why) {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { batchIndex, matchPost, staleScheduled, inputsFor, gql, requeueTargets, mediaHost, SLOT };
+module.exports = { batchIndex, matchPost, staleScheduled, duplicateScheduled, inputsFor, gql, requeueTargets, rerouteTargets, translated, facesOn, onNetwork, mediaHost, SLOT };

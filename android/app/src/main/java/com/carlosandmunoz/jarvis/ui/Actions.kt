@@ -51,10 +51,15 @@ import kotlinx.serialization.json.JsonPrimitive
 val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" to "Re-send failed notices", "publish-hub" to "Publish the hub", "run-job" to "Run a job again", "rerun-ci" to "Re-run failed CI jobs",
     "rerun-job" to "Re-run failed jobs", "refresh-stale" to "Refresh stale data", "rerun-reviews" to "Re-run reviews after a fix", "pause-outreach" to "Pause an outreach mailbox",
     "resume-outreach" to "Resume outreach mailboxes", "retry-social" to "Retry failed social posts", "ai-ask" to "Ask the AI what to fix", "ai-fix" to "Run fixes the AI picked",
-    "pagespeed-merge" to "Merge PageSpeed fixes", "pagespeed-close" to "Close PageSpeed fixes", "pagespeed-run" to "Start the PageSpeed run", "merge-pr" to "Merge a green PR")
+    "pagespeed-merge" to "Merge PageSpeed fixes", "pagespeed-close" to "Close PageSpeed fixes", "pagespeed-run" to "Start the PageSpeed run", "merge-pr" to "Merge a green PR",
+    "enable-warmup" to "Turn mailbox warm-up back on", "restore-alias" to "Restore a missing alias", "launch-campaign" to "Launch a draft campaign", "index-submit" to "Send missing pages to search engines",
+    "gh-board-sync" to "Sync the board", "gh-orphan-ticket" to "File a ticket for the PR", "gh-update-pr" to "Update the PR with main", "gh-merge-pr" to "Merge the green PR",
+    "gh-revert" to "Open a revert PR", "gh-delete-branch" to "Delete merged branches", "gh-close-issue" to "Close the issue", "gh-remove-worktree" to "Remove the merged worktree",
+    "gh-agent" to "Launch a Cursor fix agent")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
-/** Every action with a daily cap, for the used-today rows (#1977). */
-private val AUTO_CAPS = CAPS + listOf("rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix", "retry-social", "resume-outreach", "merge-pr")
+/** Every action with a daily cap, for the used-today rows (#1977); the GitHub ones (#2526) show once the server caps them. */
+private val AUTO_CAPS = CAPS + listOf("rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix", "retry-social", "resume-outreach", "merge-pr", "enable-warmup", "restore-alias", "launch-campaign",
+    "gh-board-sync", "gh-orphan-ticket", "gh-update-pr", "gh-merge-pr", "gh-delete-branch", "gh-remove-worktree")
 
 /** The countdown (#1977): risky actions Jarvis queued, which run when their time ends unless cancelled. */
 object Countdowns {
@@ -135,6 +140,15 @@ fun askFor(action: String, job: String?, pending: JsonObject?, pr: Int? = null):
     "pagespeed-merge" -> "merge PageSpeed fixes #$pr into main now (it goes to production)"
     "pagespeed-close" -> "close PageSpeed fixes #$pr without merging"
     "pagespeed-run" -> "start the daily PageSpeed run now (about two hours)"
+    "gh-board-sync" -> "move the drifted tickets on the Scrum board to the column their PRs say"
+    "gh-orphan-ticket" -> "file a ticket for PR #$pr and link it in a comment on the PR"
+    "gh-update-pr" -> "update PR #$pr with main (merge main into its branch)"
+    "gh-merge-pr" -> "squash-merge PR #$pr into main now (it goes to production)"
+    "gh-revert" -> "open a revert PR for the merge that broke main" + (job?.let { " ($it)" } ?: "")
+    "gh-delete-branch" -> if (job != null) "delete the merged branch $job" else "delete the merged branches"
+    "gh-close-issue" -> "close issue #$pr"
+    "gh-remove-worktree" -> "remove the merged worktree ${job ?: ""} on the Mac (the uploader does it, never forced)".replace("  ", " ")
+    "gh-agent" -> "launch a Cursor cloud agent to fix it (it opens a PR)"
     else -> "run ${job ?: "the job"} again"
 }
 
@@ -167,7 +181,7 @@ fun JarvisActions(s: UiState, vm: JarvisViewModel) {
         }
         if (v == null) { Muted(error ?: "Reading the actions log…"); return@Panel }
         val caps = v.obj("settings").obj("caps")
-        AUTO_CAPS.forEach { k -> KeyRow(ACTION_LABELS[k] ?: k, fmt(v.obj("used").num(k)) + " of " + fmt(caps.num(k)) + " today", if ((v.obj("used").num(k) ?: 0.0) >= (caps.num(k) ?: 0.0)) J.amber else J.text) }
+        AUTO_CAPS.filter { !it.startsWith("gh-") || caps.num(it) != null }.forEach { k -> KeyRow(ACTION_LABELS[k] ?: k, fmt(v.obj("used").num(k)) + " of " + fmt(caps.num(k)) + " today", if ((v.obj("used").num(k) ?: 0.0) >= (caps.num(k) ?: 0.0)) J.amber else J.text) }
         Muted("The AI acts alone at confidence " + "%.2f".format(java.util.Locale.ROOT, v.obj("settings").num("confidence") ?: 0.8) + " or more; other picks become proposals.")
         Muted("Risky ones wait ${Countdowns.hoursText(hours)} on the countdown, at any hour: mail to third parties, posts off schedule, merging a green PR or deploying, resuming outreach. At night, mail and posts then wait for 08:00-21:00 Bogotá. Refunds and deletes always wait for your tap.")
         val p = v.obj("pending")

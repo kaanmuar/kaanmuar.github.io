@@ -1,0 +1,8 @@
+# Built by scripts/build-social-hub.js and committed only by the bots (#2242, scripts/social-hub-outputs.js).
+sitemap-social.xml linguist-generated
+qa-review-social*.html linguist-generated
+social/** linguist-generated
+assets/social/feed*.json linguist-generated
+assets/social/captions*.json linguist-generated
+assets/social/rss*.xml linguist-generated
+assets/social/thumbs/** linguist-generated

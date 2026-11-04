@@ -64,8 +64,8 @@ import kotlinx.serialization.json.JsonPrimitive
 
 val PRODUCTS = listOf("inbox" to "Inbox", "cv" to "CV", "studio" to "QA Studio", "lab" to "QA Lab", "review" to "URL Review", "hub" to "Social hub")
 
-/** Products-tab chips: the site products plus Outreach, Marketing and Engagement, which the snapshot keeps under external. */
-val CHIPS = PRODUCTS + ("outreach" to "Outreach") + ("marketing" to "Marketing") + ("engagement" to "Engagement")
+/** Products-tab chips: the site products plus Outreach, Marketing, Engagement and GitHub (#2526), which the snapshot keeps under external. */
+val CHIPS = PRODUCTS + ("outreach" to "Outreach") + ("marketing" to "Marketing") + ("engagement" to "Engagement") + ("github" to "GitHub")
 
 private fun humanize(key: String) = key.replace(Regex("([a-z])([A-Z])"), "$1 $2").replaceFirstChar { it.uppercase() }
 
@@ -88,7 +88,7 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             val st = snap?.let { Home.status(it) } ?: Home.Status(null, 0, 0)
             Text(st.headline, fontSize = 20.sp, fontWeight = FontWeight.SemiBold,
-                color = if (st.alerts > 0) J.pink else if (st.warns > 0) J.amber else J.green)
+                color = when (st.level) { "alert" -> J.pink; "warn" -> J.amber; else -> J.green })
             val down = snap.objs("connections").filter { it.str("state") != "live" }
             Muted(if (down.isEmpty()) "Every connection is live" else down.joinToString { (it.str("name") ?: "") + " " + (it.str("state") ?: "") }, maxLines = if (roomy) 2 else Int.MAX_VALUE)
             if (roomy) { Spacer(Modifier.height(4.dp)); DeckStrip(deck) }
@@ -244,6 +244,7 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
     if (product == "outreach") { OutreachScreen(s, vm); return }
     if (product == "marketing") { MarketingScreen(s, vm); return }
     if (product == "engagement") { EngagementScreen(s, vm); return }
+    if (product == "github") { GithubScreen(s, vm); return }
     if (product == "hub") SocialHub(s, vm)
     val snap = s.snapshot
     val p = snap.obj("products").obj(product)
@@ -255,6 +256,7 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
     }
     if (product == "review") {
         PeoplePanel(s)
+        LocalPanel(s)
         TopList("Funnel", p.pairs("funnel"), 4)
     }
 
@@ -552,7 +554,16 @@ fun BusinessScreen(s: UiState, vm: JarvisViewModel) {
             if (c.bool("ok") == true) KpiPairs(listOf(KpiData("Google clicks", fmt(c.num("clicks"))), KpiData("Impressions", fmt(c.num("impressions"))), KpiData("CTR", pct(c.num("ctr"))), KpiData("Avg position", fmt(c.num("position")))))
             else Muted("Search Console: " + (c.str("error") ?: c.str("need") ?: "off"))
         }
-        search.obj("brave").objs("queries").forEach { q -> KeyRow(q.str("query") ?: "", q.num("position")?.let { "#" + it.toInt() } ?: "not in top 20", if (q.num("position") != null) J.green else J.muted, q.str("url")) }
+        val braveDepth = search.obj("brave").num("depth")?.toInt() ?: 20
+        search.obj("brave").objs("queries").forEach { q -> KeyRow(q.str("query") ?: "", q.num("position")?.let { "#" + it.toInt() } ?: "not in top $braveDepth", if (q.num("position") != null) J.green else J.muted, q.str("url")) }
+    }
+    search.obj("index")?.takeIf { it.bool("ok") == true }?.let { ix ->
+        Panel("Search index (Brave)") {
+            KpiPairs(listOf(KpiData("Pages indexed", fmt(ix.num("indexed"))), KpiData("Sitemap pages", fmt(ix.num("total"))), KpiData("Missing", fmt(ix.num("missing")))))
+            ix.str("zeroSince")?.let { Muted("None indexed since " + it.take(10) + ".") }
+            ix.at("mainMissing").strings().forEach { u -> KeyRow(u.removePrefix("https://carlosandmunoz.com").ifEmpty { "/" }, "missing", J.muted, u) }
+            Muted(ix.str("pushedAt")?.let { at -> "Last sent " + at.take(10) + ": Brave took " + fmt(ix.obj("pushed").num("brave")) + "." } ?: "Not sent yet: Jarvis sends the missing pages on its next weekly pass.")
+        }
     }
     search.obj("console")?.let { c -> TopList("Google queries", c.objs("queries").map { (it.str("query") ?: "") to (it.num("clicks") ?: 0.0) }) }
 
@@ -670,7 +681,7 @@ fun MailHealth(box: JsonObject?) {
         KpiPairs(listOf(
             KpiData("Mails in", fmt(t.num("mails"))), KpiData("Forwarded", fmt(t.num("forwarded"))),
             KpiData("Bounced", fmt(t.num("bounced")), alert = (t.num("bounced") ?: 0.0) > 0), KpiData("Refused (aliases)", fmt(t.num("refused")), alert = (t.num("refused") ?: 0.0) > 0),
-            KpiData("No such address", fmt(t.num("unknown"))), KpiData("SMTP this month", fmt(month) + (limit?.let { " / " + fmt(it) } ?: ""), alert = limit != null && month >= limit * 0.8)
+            KpiData("Spam blocked", fmt(t.num("spam") ?: 0.0)), KpiData("No such address", fmt(t.num("unknown"))), KpiData("SMTP this month", fmt(month) + (limit?.let { " / " + fmt(it) } ?: ""), alert = limit != null && month >= limit * 0.8)
         ))
         val state = c.str("state") ?: "never"
         val history = c.objs("history").joinToString("") { if (it.num("seconds") == null) "✗" else "✓" }
@@ -710,6 +721,7 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
     JarvisActions(s, vm)
     SignInCodes(snap.objs("mailCodes"))
     MailHealth(snap.ext("mailbox"))
+    EmailAddresses(snap.ext("addresses"))
     Panel("Connections") {
         snap.objs("connections").forEach { c -> StatusRow(c.str("state"), c.str("name") ?: "", listOfNotNull(c.str("state"), c.str("detail")?.takeIf { it.isNotBlank() }, c.arr("needs").takeIf { it.isNotEmpty() }?.joinToString(" ") { it.text() }).filter { it.isNotBlank() }.joinToString(" · ")) }
     }

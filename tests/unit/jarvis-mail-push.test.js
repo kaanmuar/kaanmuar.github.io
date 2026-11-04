@@ -76,6 +76,9 @@ test("backup and ops failures go to alerts, ops only when a job failed", () => {
   const o = mailPush.opsMessage([{ job: "sweepReviews", why: "no successful run" }, { job: "buffer-sync", why: "last success 2026-10-20" }], ["sweepReviews", "buffer-sync"]);
   assert.equal(o.title, "2 scheduled jobs missed or failed");
   assert.equal(o.ref, "ops:sweepReviews,buffer-sync");
+  const mixed = mailPush.opsMessage([{ job: "sweepReviews", why: "x" }, { job: "Secret scanning", why: "1 new leaked secret" }], ["sweepReviews"], 1);
+  assert.equal(mixed.title, "2 problems need a look");
+  assert.equal(mailPush.opsMessage([{ job: "sweepReviews", why: "x" }], ["sweepReviews"], 1).title, "1 scheduled job missed or failed");
 });
 
 test("send passes ref and quiet, and a quiet push goes at normal priority", async () => {

@@ -6,8 +6,9 @@
 const base = require("./url-review-customer-mail");
 const fusion = require("./url-review-fusion");
 const booking = require("./booking");
+const mailFace = require("./mail-face");
 
-const { SITE, POSTAL, AREAS, esc, fill, button, shell } = base;
+const { SITE, POSTAL, AREAS, esc, fill, button, shell, brandHtml, brandText } = base;
 const { FUSION, TEXT, ON_NIGHT } = fusion;
 const DEEPER = "qa@carlosandmunoz.com";
 
@@ -481,16 +482,17 @@ function whyText(t, notice) {
   return fill(t.why, { email: notice.email, source: sourceText(t, notice) });
 }
 
-function footer(t, notice, stopUrl) {
+function footer(t, notice, stopUrl, face) {
   return esc(whyText(t, notice)) + "<br>" +
     "<a href=\"" + esc(stopUrl) + "\" style=\"color:" + TEXT.link + ";\">" + esc(t.stop) + "</a><br>" +
-    "<a href=\"" + SITE + "/qa-review.html\" style=\"color:" + TEXT.link + ";\">QA-lab URL Review</a> &middot; " + esc(POSTAL);
+    brandHtml(face) + " &middot; " + esc(POSTAL);
 }
 
 // notice: the url_review_owner_notices row, addressed. card: the Live Report card.
 // links: { claim, unlist, stop, live }. score: the review's insights.score, when the record is still there.
 function noticeMail(notice, card, links, score) {
   const t = copyFor(notice.lang);
+  const face = mailFace.faceOf(notice.lang);
   const vars = { host: notice.host, domain: notice.domain, date: String(card.read || notice.reviewedAt || "").slice(0, 10) };
   const facts = healthFacts(score, card);
   const callUrl = booking.bookUrl("intro", notice.lang, { host: notice.host, from: "owner-notice" });
@@ -518,9 +520,9 @@ function noticeMail(notice, card, links, score) {
     t.call + ": " + callUrl, "",
     whyText(t, notice),
     t.stop + ": " + links.stop,
-    "QA-lab URL Review · " + POSTAL
+    (face ? brandText(face) + "\n" : "QA-lab URL Review · ") + POSTAL
   ].filter((line, i, all) => line !== "" || all[i - 1] !== "").join("\n");
-  return { lang: base.langOf(notice.lang), subject: fill(t.subject, vars), text, html: shell(base.langOf(notice.lang), t.preheader, inner, footer(t, notice, links.stop)) };
+  return { lang: base.langOf(notice.lang), subject: fill(t.subject, vars), text, html: shell(base.langOf(notice.lang), t.preheader, inner, footer(t, notice, links.stop, face)) };
 }
 
 // The footer line of the blurred report mail when an owner claimed it.

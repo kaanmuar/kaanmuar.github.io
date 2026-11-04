@@ -3,6 +3,8 @@
 # functions, scripts, tests and designs are never published. Pull requests build and check only.
 # The deploy job runs only when Settings > Pages > Source is GitHub Actions (build_type workflow), or when the
 # repo variable PAGES_FROM_ACTIONS is 'true'; while the source is the legacy branch build it is skipped.
+# Pull requests leave the generated social hub files to the bots (#2242), so the build rebuilds the hub from its
+# sources first: a merge publishes its hub without waiting for the regen commit.
 
 name: Pages
 
@@ -30,11 +32,13 @@ jobs:
       build_type: ${{ steps.source.outputs.build_type }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
+      - name: Build the social hub from its sources
+        run: scripts/social-hub-build.sh
       - name: Build the site from the allowlist
         run: node scripts/build-pages.js _site
       - name: No forbidden paths, every local link resolves

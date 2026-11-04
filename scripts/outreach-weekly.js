@@ -66,19 +66,33 @@ const utcDay = (offset = 0) => new Date(Date.now() + offset * 86400000).toISOStr
 const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
 
 // --- Workers AI ---------------------------------------------------------------------------------------------------
+// A used-up daily allocation, or AI_DOWN calls in a row that fail, stops the job instead of judging every site blind.
+const AI_DOWN = 3;
+let aiFailures = 0;
+const fatal = (message) => Object.assign(new Error(message), { fatal: true });
+
 async function ai(system, prompt, { json = true, max = 800 } = {}) {
   const token = process.env.PREFLIGHT_TOKEN || CFG.token;
-  if (!token) throw new Error("PREFLIGHT_TOKEN is not set.");
+  if (!token) throw fatal("PREFLIGHT_TOKEN is not set.");
   for (let tries = 1; ; tries += 1) {
     const res = await fetch(AI_URL + "/complete", {
       method: "POST", headers: { authorization: "Bearer " + token, "content-type": "application/json" },
       body: JSON.stringify({ system, prompt, json, max_tokens: max }), signal: AbortSignal.timeout(120000)
     }).catch(() => ({ ok: false, status: 0 }));
     if (res.ok) {
+      aiFailures = 0;
       const out = await res.json();
       return json ? out.json || {} : String(out.text || "");
     }
-    if (tries >= 3) throw new Error("Workers AI failed (" + res.status + ").");
+    if (res.status === 429) {
+      const body = await res.json().catch(() => ({}));
+      throw fatal(body.detail || "Workers AI refused the call (429).");
+    }
+    if (tries >= 3) {
+      aiFailures += 1;
+      if (aiFailures >= AI_DOWN) throw fatal(`Workers AI failed ${AI_DOWN} calls in a row (${res.status}).`);
+      throw new Error("Workers AI failed (" + res.status + ").");
+    }
     await new Promise((r) => setTimeout(r, tries * 5000));
   }
 }
@@ -150,6 +164,7 @@ async function replies(log) {
           { max: 900 }
         );
       } catch (error) {
+        if (error.fatal) throw error;
         log(`could not sort ${from}: ${error.message}`);
         continue;
       }
@@ -228,7 +243,7 @@ async function leadsJob(log) {
     let filled = 0;
     for (const r of c.rows.filter((x) => !x.uploaded && x.missing)) {
       const before = { ...r };
-      try { filled += await fillLead(r); } catch (error) { log(`${r.email}: ${error.message}`); }
+      try { filled += await fillLead(r); } catch (error) { if (error.fatal) throw error; log(`${r.email}: ${error.message}`); }
       if (DRY) Object.keys(r).filter((k) => r[k] !== before[k]).forEach((k) => log(`  ${r.org} (${r.language}) ${k}: ${before[k]} -> ${r[k]}`));
     }
     saveCsv(rel, c);
@@ -346,6 +361,7 @@ async function judge(segment, cc, r, facts, used, log) {
       { max: 300 }
     );
   } catch (error) {
+    if (error.fatal) throw error;
     log(`${r.host}: ${error.message}`);
     return null;
   }
@@ -447,7 +463,7 @@ async function prospects(log) {
     picked = picked.concat(await pick("university", pools.university, slotsFor(countries, want - picked.length), used, log));
   }
   for (const segment of Object.keys(pools)) left[segment] = pools[segment].filter((r) => !used.has(bare(r.host))).length;
-  let total = 0;
+  let total = [`prospects/week${n}-education.csv`, `prospects/week${n}-agencies-startups.csv`].reduce((k, rel) => k + csvOf(rel).rows.length, 0);
   if (picked.length) {
     total = append(`prospects/week${n}-education.csv`, PROSPECT_HEADER, picked.filter((r) => r.segment === "university" || r.segment === "tvet"))
       + append(`prospects/week${n}-agencies-startups.csv`, PROSPECT_HEADER, picked.filter((r) => r.segment === "agency" || r.segment === "startup"));
@@ -466,7 +482,7 @@ async function prospects(log) {
     for (let w = Math.max(1, Number(n) - 3); w <= Number(n); w += 1) {
       for (const f of [`week${w}-education.csv`, `week${w}-agencies-startups.csv`]) csvOf("prospects/" + f).rows.forEach((r) => r.country && recent.add(r.country));
     }
-    drafts = await seasonal(week, [...recent], log).catch((error) => { log("seasonal: " + error.message); return []; });
+    drafts = await seasonal(week, [...recent], log).catch((error) => { if (error.fatal) throw error; log("seasonal: " + error.message); return []; });
   }
   const bySegment = SEGMENTS.map((s) => [s, picked.filter((r) => r.segment === s).length]).filter(([, k]) => k).map(([s, k]) => `${k} ${s}`);
   const low = SEGMENTS.filter((s) => s in left && left[s] < PER_SEGMENT * 5).map((s) => `${s} ${left[s]}`);
@@ -512,4 +528,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch((error) => { console.error(error.message); process.exit(1); });
 
-module.exports = { emailsIn, openWeeks, bare, slotsFor, foundOn };
+module.exports = { emailsIn, openWeeks, bare, slotsFor, foundOn, siteFacts, ai };

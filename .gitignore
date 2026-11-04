@@ -58,3 +58,8 @@ _site/
 # Pre-flight Worker build output (#1970)
 workers/preflight/.cloudflare/
 workers/preflight/dist/
+workers/outreach-cron/.cloudflare/
+workers/outreach-cron/dist/
+
+# Mini report card previews (#2466): node scripts/report-card-preview.js
+media/report-cards/

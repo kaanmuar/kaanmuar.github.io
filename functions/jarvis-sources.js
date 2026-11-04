@@ -3,14 +3,16 @@
 
    money      paid URL reviews (Firestore url_reviews), PayPal disputes and transactions, Stripe mode
    email      SendGrid delivery, bounces, blocks, spam reports and opens
-   search     Brave rankings for the brand queries, Search Console clicks and queries
+   search     Brave rankings for the brand queries, Search Console clicks and queries, Brave index coverage (jarvis-index.js)
    social     posts per network from the published ledgers, YouTube views
    safety     Web Risk, SPF, DKIM, DMARC, MX, CAA, domain expiry (RDAP), TLS
    platform   real function failures (5xx, crash, timeout), executions, Gemini calls, Firestore reads and writes
    outreach   the outreach plan's pipeline, Instantly campaigns, plan progress and sending domain (jarvis-outreach.js)
    mailbox    ImprovMX: mail forwarded, bounced and refused per alias, SMTP sends, the daily canary (mail-health.js)
+   addresses  every email address we own across ImprovMX, Microsoft 365, Instantly and SendGrid, its state and fix (jarvis-addresses.js)
    people     signed-in URL Review people, their runs, visits and time on the review pages (jarvis-people.js)
    pagespeed  the daily PageSpeed routine: every page's scores, its runs and its PRs (jarvis-pagespeed.js)
+   local      the Google Maps Local check across URL reviews and the Places calls per day (jarvis-local.js)
 
    index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers, github} and caches each source in
    jarvis_cache through TTL. */
@@ -25,15 +27,19 @@ const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/se
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, mailbox: 10 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE, calls: 5 * MINUTE, people: 5 * MINUTE, engagement: 2 * MINUTE, pagespeed: 10 * MINUTE };
+const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, mailbox: 10 * MINUTE, addresses: 10 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE, calls: 5 * MINUTE, people: 5 * MINUTE, engagement: 2 * MINUTE, local: 10 * MINUTE, pagespeed: 10 * MINUTE, "github-work": 10 * MINUTE };
 const { SEARCH_QUERIES } = require("./jarvis-core");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisEngagement = require("./jarvis-engagement");
 const jarvisPeople = require("./jarvis-people");
+const jarvisLocal = require("./jarvis-local");
 const jarvisSocial = require("./jarvis-social");
 const jarvisPageSpeed = require("./jarvis-pagespeed");
 const mailHealth = require("./mail-health");
+const jarvisAddresses = require("./jarvis-addresses");
+const jarvisIndex = require("./jarvis-index");
+const jarvisGithub = require("./jarvis-github");
 const booking = require("./booking");
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
 
@@ -287,21 +293,60 @@ function hostOf(url) {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch (error) { return ""; }
 }
 
+// Brave answers 20 results a call, up to offset 4. Page one is asked daily; offsets 1-4 only weekly per search,
+// since a search we are not in spends all five calls of the ~1,000 a month the URL reviews share.
+const BRAVE_PAGE = 20;
+const BRAVE_DEPTH = 100;
+const BRAVE_DEEP_EVERY = 7 * DAY;
+
 async function brave(ctx, queries) {
   const key = (ctx.env || {}).BRAVE_SEARCH_KEY;
   if (!key) return { ok: false, error: "BRAVE_SEARCH_KEY is not set." };
+  const now = ctx.now || Date.now();
+  const ask = (q, page) => getJson(ctx.fetch, `https://api.search.brave.com/res/v1/web/search?count=${BRAVE_PAGE}&offset=${page}&q=` + encodeURIComponent(q), { headers: { "X-Subscription-Token": key, Accept: "application/json" } }, "Brave");
+  const ours = (results) => results.findIndex((r) => { const host = hostOf(r.url); return host === DOMAIN || host.endsWith("." + DOMAIN); });
+  const ref = ctx.db ? ctx.db.collection("jarvis_cache").doc("brave-deep") : null;
+  const snap = ref ? await ref.get().catch(() => null) : null;
+  const deep = (snap && snap.exists && snap.data().rows) || {};
+  const checked = {};
   const rows = [];
   for (const q of queries) {
+    let data;
     try {
-      const data = await getJson(ctx.fetch, "https://api.search.brave.com/res/v1/web/search?count=20&q=" + encodeURIComponent(q), { headers: { "X-Subscription-Token": key, Accept: "application/json" } }, "Brave");
-      const results = ((data.web || {}).results || []);
-      const at = results.findIndex((r) => hostOf(r.url).endsWith(DOMAIN));
-      rows.push({ query: q, position: at >= 0 ? at + 1 : null, url: at >= 0 ? results[at].url : "", leader: results[0] ? hostOf(results[0].url) : "" });
+      data = await ask(q, 0);
     } catch (error) {
       rows.push({ query: q, position: null, error: clean(error) });
+      continue;
     }
+    const results = (data.web || {}).results || [];
+    const at = ours(results);
+    const row = { query: q, position: at >= 0 ? at + 1 : null, url: at >= 0 ? results[at].url : "", leader: results[0] ? hostOf(results[0].url) : "" };
+    if (row.position === null && results.length) {
+      const saved = deep[q];
+      if (saved && now - Date.parse(saved.at) < BRAVE_DEEP_EVERY) {
+        Object.assign(row, { position: saved.position, url: saved.url, checkedAt: saved.at });
+      } else {
+        try {
+          let seen = results.length;
+          for (let page = 1; page < BRAVE_DEPTH / BRAVE_PAGE && row.position === null && (data.query || {}).more_results_available !== false; page++) {
+            data = await ask(q, page);
+            const more = (data.web || {}).results || [];
+            const found = ours(more);
+            if (found >= 0) Object.assign(row, { position: seen + found + 1, url: more[found].url });
+            if (!more.length) break;
+            seen += more.length;
+          }
+          checked[q] = { position: row.position, url: row.url, at: new Date(now).toISOString() };
+          row.checkedAt = checked[q].at;
+        } catch (error) {
+          row.deepError = clean(error);
+        }
+      }
+    }
+    rows.push(row);
   }
-  return { ok: true, queries: rows };
+  if (ref && Object.keys(checked).length) await ref.set({ rows: Object.assign({}, deep, checked) }).catch(() => null);
+  return { ok: true, depth: BRAVE_DEPTH, queries: rows };
 }
 
 async function searchConsole(ctx) {
@@ -341,18 +386,30 @@ async function searchConsole(ctx) {
 
 async function search(ctx) {
   const queries = ((ctx.settings || {}).searchQueries || []).length ? ctx.settings.searchQueries : SEARCH_QUERIES;
-  const [ranks, gsc] = await Promise.all([brave(ctx, queries.slice(0, 8)), searchConsole(ctx)]);
-  return { ok: true, brave: ranks, console: gsc, needs: gsc.need ? [gsc.need] : [] };
+  const [ranks, gsc, index] = await Promise.all([brave(ctx, queries.slice(0, 8)), searchConsole(ctx), jarvisIndex.read(ctx).catch((error) => ({ ok: false, error: clean(error) }))]);
+  return { ok: true, brave: ranks, console: gsc, index, needs: gsc.need ? [gsc.need] : [] };
 }
 
 // --- social ----------------------------------------------------------------------------------------------------
+
+// Facebook post numbers are read each morning by scripts/social-metrics.js in auto-live-reports.yml, which holds the
+// Page tokens as repo secrets; its pages entry says which Page was skipped or refused, and why.
+function facebookNeeds(metrics) {
+  return Object.entries((metrics && metrics.pages) || {}).map(([profile, page]) => {
+    if (page.skipped) return profile + ": the daily social numbers skipped it (" + page.skipped + " repo secret). Steps are at the top of scripts/meta-token.js.";
+    const said = [];
+    if (page.asked && page.answered < page.asked) said.push("the Graph API answered " + (page.answered || 0) + " of " + page.asked + " sent posts in the daily social numbers" + (page.error ? " (" + String(page.error).slice(0, 200) + ")" : ""));
+    if (page.asked && page.insights === 0) said.push("no post came back with views, so the Page token lacks read_insights");
+    return said.length ? profile + ": " + said.join("; ") + ". A new token with read_insights and pages_read_user_content fixes it; steps are at the top of scripts/meta-token.js." : "";
+  }).filter(Boolean);
+}
 
 async function social(ctx) {
   const since = ctx.now - ctx.days * DAY;
   const ledger = async (name) => {
     try { return await getJson(ctx.fetch, ORIGIN + "/assets/social/" + name + ".json?t=" + Math.floor(ctx.now / HOUR), {}, name + " ledger"); } catch (error) { return null; }
   };
-  const [buffer, facebook, open, youtube] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("youtube")]);
+  const [buffer, facebook, open, youtube, metrics] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("youtube"), ledger("metrics")]);
   const channels = {};
   const results = {};
   const daily = {};
@@ -389,7 +446,7 @@ async function social(ctx) {
       views = videos.reduce((s, v) => s + (v.views || 0), 0);
     } catch (error) { needs.push("YouTube: " + clean(error)); }
   } else if (!key) needs.push("YouTube: set YOUTUBE_KEY (an API key limited to the YouTube Data API v3) in Secret Manager.");
-  if (!(ctx.env || {}).FACEBOOK_PAGE_TOKEN) needs.push("Facebook: copy FACEBOOK_PAGE_TOKEN from the GitHub secrets into functions/.env so Jarvis can read post reach.");
+  needs.push(...facebookNeeds(metrics));
   const failed = Object.keys(results).filter((k) => /:failed$/.test(k)).reduce((s, k) => s + results[k], 0);
   return {
     ok: !!(buffer || facebook),
@@ -599,7 +656,7 @@ async function platform(ctx) {
   return out;
 }
 
-const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, mailbox: mailHealth.mailbox, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource, calls: booking.callsSource, engagement: jarvisEngagement.source, people: jarvisPeople.source, pagespeed: jarvisPageSpeed.source };
+const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, mailbox: mailHealth.mailbox, addresses: jarvisAddresses.source, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource, calls: booking.callsSource, engagement: jarvisEngagement.source, people: jarvisPeople.source, pagespeed: jarvisPageSpeed.source, local: jarvisLocal.source, "github-work": jarvisGithub.source };
 
 async function run(name, ctx) {
   const source = SOURCES[name];

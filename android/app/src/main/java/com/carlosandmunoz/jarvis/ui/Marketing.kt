@@ -1,5 +1,8 @@
 package com.carlosandmunoz.jarvis.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,6 +41,7 @@ import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.pairs
+import com.carlosandmunoz.jarvis.data.strings
 import com.carlosandmunoz.jarvis.data.str
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -56,9 +61,19 @@ object Marketing {
     /** The week the tab opens on: the latest one with leads still to upload, else the latest. */
     fun openWeek(weeks: List<Week>, picked: String?): Week? = weeks.firstOrNull { it.week == picked } ?: weeks.lastOrNull { it.uploaded < it.total } ?: weeks.lastOrNull()
 
+    /** Uploaded or dropped: the leads panel hides these until "Show done". Approved rows still need the upload, so they stay. */
+    fun leadDone(r: JsonObject) = !r.str("uploaded").isNullOrEmpty() || r.bool("dropped") == true
+
     /** True while a command for this key (an email, a week, a name or a job) waits for the outreach sync. */
     fun waiting(sync: JsonObject?, action: String, key: String) =
         sync.obj("commands").objs("items").any { it.str("status") == "pending" && (action.isEmpty() || it.str("action") == action) && it.str("label").orEmpty().contains(key) }
+
+    /** The day's LinkedIn list as (still to send, already sent); sent people fold away (#2336). */
+    fun linkedinSplit(sync: JsonObject?) = sync.obj("linkedin").objs("items").partition { it.bool("sent") != true }
+
+    /** A labelled line under the person in the day's list, like "- Note: ..." (Send copies it) or "- Check first: ..." (#2479). */
+    fun linkedinLine(p: JsonObject?, label: String): String =
+        p?.get("lines").strings().map { it.trim() }.firstOrNull { it.startsWith("$label:", ignoreCase = true) }?.drop(label.length + 1)?.trim().orEmpty()
 
     fun repliesToAnswer(sync: JsonObject?) = sync.objs("replies").filter { it.str("sent").isNullOrEmpty() && !it.str("draft").isNullOrEmpty() }
 
@@ -78,6 +93,10 @@ object Marketing {
     }
 
     fun inDays(n: Long) = when (n) { 0L -> "today"; 1L -> "tomorrow"; else -> "in $n days" }
+}
+
+private fun copyNote(context: Context, text: String) {
+    (context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText("LinkedIn note", text))
 }
 
 @Composable
@@ -178,7 +197,14 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
                     ask("upload ${week.week}'s ${week.ready} approved leads to their Instantly campaigns") { command("mk:upload", mapOf("action" to "upload", "week" to week.week)) }
                 }
             }
-            sy.obj("leads").objs("rows").filter { it.str("week") == week.week }.sortedBy { leadOrder(it) }.forEach { r -> Lead(r, sy, s, vm, ::ask, ::command) }
+            var showDone by rememberSaveable { mutableStateOf(false) }
+            val rows = sy.obj("leads").objs("rows").filter { it.str("week") == week.week }.sortedBy { leadOrder(it) }
+            val done = rows.count { Marketing.leadDone(it) }
+            rows.filter { showDone || !Marketing.leadDone(it) }.forEach { r -> Lead(r, sy, s, vm, ::ask, ::command) }
+            if (done > 0) {
+                if (done == rows.size && !showDone) Muted("Every lead in this week is uploaded or dropped.")
+                TextButton({ showDone = !showDone }) { Text("${if (showDone) "Hide" else "Show"} $done done (uploaded or dropped)", fontSize = 13.sp) }
+            }
             Muted("With each outreach sync (at most once an hour) Jarvis translates top findings, re-runs the review of a site with no Live Report (twice at most) and approves complete leads. \"Needs you\" rows are the ones it cannot settle. Upload stays with you.")
         }
 
@@ -192,22 +218,46 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
         Panel("LinkedIn" + (li.str("date")?.takeIf { it.isNotEmpty() }?.let { " · $it" } ?: "")) {
             if (liItems.isEmpty()) { Muted("No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before."); return@Panel }
             val uri = LocalUriHandler.current
+            val context = LocalContext.current
             GlowBar(liSent.toFloat() / liItems.size)
             Muted("$liSent of ${liItems.size} requests sent")
-            liItems.forEach { p ->
+            val (toSend, sentRows) = Marketing.linkedinSplit(sy)
+            var sentOpen by rememberSaveable { mutableStateOf(false) }
+            val row: @Composable (JsonObject) -> Unit = { p ->
                 val name = p.str("name").orEmpty()
                 val sent = p.bool("sent") == true
+                val profile = p.str("profile")?.takeIf { it.startsWith("https://") }
+                val note = Marketing.linkedinLine(p, "Note")
+                val check = Marketing.linkedinLine(p, "Check first")
                 Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(name, fontWeight = FontWeight.Medium, fontSize = 14.sp)
                         Muted(listOfNotNull(p.str("title"), p.str("org"), p.str("cc")).joinToString(" · "))
+                        if (!sent && check.isNotEmpty()) Text("Check first: $check", color = J.amber, fontSize = 12.sp)
+                        if (!sent && note.isNotEmpty()) Muted("Note: $note")
                     }
-                    p.str("profile")?.takeIf { it.startsWith("https://") }?.let { url -> TextButton({ uri.openUri(url) }) { Text("Profile", color = J.cyan, fontSize = 13.sp) } }
+                    if (sent) profile?.let { url -> TextButton({ uri.openUri(url) }) { Text("Profile", color = J.cyan, fontSize = 13.sp) } }
                     if (Marketing.waiting(sy, "linkedin", name)) Text("waiting", color = J.amber, fontSize = 12.sp)
+                    else if (!sent && profile != null) TextButton({
+                        if (note.isNotEmpty()) copyNote(context, note)
+                        uri.openUri(profile)
+                        command("mk:li:$name", mapOf("action" to "linkedin", "date" to li.str("date").orEmpty(), "name" to name, "sent" to true)) {
+                            (if (note.isNotEmpty()) "Note copied: on LinkedIn tap Connect, Add a note, paste and Send." else "On LinkedIn tap Connect and Send.") + " $name is marked sent."
+                        }
+                    }, enabled = "mk:li:$name" !in s.running) { Text("Send", color = J.cyan, fontWeight = FontWeight.Medium, fontSize = 13.sp) }
                     else TextButton({ ask("mark the LinkedIn request to $name as " + if (sent) "not sent" else "sent") { command("mk:li:$name", mapOf("action" to "linkedin", "date" to li.str("date").orEmpty(), "name" to name, "sent" to !sent)) } }, enabled = "mk:li:$name" !in s.running) {
-                        Text(if (sent) "Sent ✓" else "Mark sent", color = if (sent) J.green else J.cyan, fontSize = 13.sp)
+                        Text(if (sent) "Not sent" else "Mark sent", color = if (sent) J.muted else J.cyan, fontSize = 13.sp)
                     }
                 }
+            }
+            if (toSend.isEmpty()) Muted("All ${liItems.size} sent. The next list comes the next working day at 07:00 Bogotá time.")
+            toSend.forEach { row(it) }
+            if (sentRows.isNotEmpty()) {
+                val today = li.str("date") == LocalDate.now().toString()
+                TextButton({ sentOpen = !sentOpen }) {
+                    Text((if (sentOpen) "▾ " else "▸ ") + "Sent" + (if (today) " today" else "") + " · ${sentRows.size}", color = J.green, fontSize = 13.sp)
+                }
+                if (sentOpen) sentRows.forEach { row(it) }
             }
         }
 

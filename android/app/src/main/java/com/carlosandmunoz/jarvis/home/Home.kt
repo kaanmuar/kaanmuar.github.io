@@ -45,8 +45,19 @@ object Home {
     const val EXTRA_ACTION = "jarvis.action"
     private const val WORK = "jarvis-home"
 
-    data class Status(val readiness: Double?, val alerts: Int, val warns: Int) {
-        val headline get() = if (alerts + warns == 0) "All clear" else listOfNotNull(alerts.takeIf { it > 0 }?.let { plural(it, "alert") }, warns.takeIf { it > 0 }?.let { plural(it, "warning") }).joinToString(" · ")
+    /** [note] is JarvisCore.systemsNote: down connections or low readiness, named once the briefing is empty (#2266). */
+    data class Status(val readiness: Double?, val alerts: Int, val warns: Int, val note: String = "") {
+        val headline get() = if (alerts + warns == 0) note.ifEmpty { "All clear" } else listOfNotNull(alerts.takeIf { it > 0 }?.let { plural(it, "alert") }, warns.takeIf { it > 0 }?.let { plural(it, "warning") }).joinToString(" · ")
+        val level get() = if (alerts > 0) "alert" else if (warns > 0 || note.isNotEmpty()) "warn" else "good"
+    }
+
+    fun systemsNote(states: List<String?>, readiness: Double?, readinessMin: Double?): String {
+        val off = states.count { it == "down" || it == "partial" }
+        return when {
+            off > 0 -> off.toString() + (if (off > 1) " connections need" else " connection needs") + " a look"
+            readiness != null && readinessMin != null && readiness < readinessMin -> "Readiness below ${readinessMin.toInt()}%"
+            else -> ""
+        }
     }
 
     data class Cell(val label: String, val value: String, val delta: String?, val dir: Int, val series: List<Double>, val note: String? = null)
@@ -70,7 +81,9 @@ object Home {
 
     fun status(snap: JsonObject): Status {
         val brief = snap.objs("briefing")
-        return Status(snap.num("readiness"), brief.count { it.str("level") == "alert" }, brief.count { it.str("level") == "warn" })
+        val ready = snap.num("readiness")
+        return Status(ready, brief.count { it.str("level") == "alert" }, brief.count { it.str("level") == "warn" },
+            systemsNote(snap.objs("connections").map { it.str("state") }, ready, snap.obj("thresholds").num("readinessMin") ?: 80.0))
     }
 
     fun numbers(snap: JsonObject): List<Cell> {
@@ -293,8 +306,8 @@ object Home {
         }
         return when (key) {
             "sales" -> Pick("Sales", money.at("revenue").num("count")?.let { fmt(it, 0) } ?: "—", "24 h", "info", "business")
-            "readiness" -> Pick("Readiness", st.readiness?.let { fmt(it, 0) + "%" } ?: "—", st.headline, if (st.alerts > 0) "alert" else if (st.warns > 0) "warn" else "good", "overview")
-            "alerts" -> Pick("Alerts", (st.alerts + st.warns).toString(), st.headline, if (st.alerts > 0) "alert" else if (st.warns > 0) "warn" else "good", "overview")
+            "readiness" -> Pick("Readiness", st.readiness?.let { fmt(it, 0) + "%" } ?: "—", st.headline, st.level, "overview")
+            "alerts" -> Pick("Alerts", (st.alerts + st.warns).toString(), st.headline, st.level, "overview")
             "needs" -> Pick("Waiting for you", needs.toString(), "notices and picks", if (needs > 0) "warn" else "good", "products:outreach")
             "reviews" -> product("review", "Reviews")
             "cv" -> product("cv", "CV visits")

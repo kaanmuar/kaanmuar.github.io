@@ -352,13 +352,14 @@ test("the launch set's calendar becomes one post per language in the common layo
   const { posts } = cal.load(root);
   assert.deepEqual(posts.map((p) => p.id + " " + p.lane + " " + p.date).sort(), langs.map((lang) => "launch-2026-10/" + lang + "/a11y 5 2026-10-26"));
   const { moves } = cal.plan(posts, { from: "2026-10-26" });
+  // es/pt plan in @qaurlreview's own days (faces.js live), so es takes its first free lane 5.
   assert.deepEqual(moves.map((m) => m.day + " " + m.lane + " " + m.post.slug), [
-    "2026-10-27 5 es/a11y", "2026-10-28 5 pt/a11y", "2026-10-29 5 de/a11y", "2026-10-30 5 fr/a11y", "2026-10-31 5 it/a11y"
+    "2026-10-27 5 de/a11y", "2026-10-28 5 fr/a11y", "2026-10-29 5 it/a11y", "2026-10-26 5 es/a11y", "2026-10-27 5 pt/a11y"
   ], "the English post went out on YouTube and keeps its day's lane 5");
   assert.deepEqual(cal.write({ moves, held: [] }, root), ["launch-2026-10"]);
   assert.ok(!fs.existsSync(path.join(dir, "captions.json")), "the launch set keeps its captions per post");
   const csv = fs.readFileSync(path.join(dir, "calendar.csv"), "utf8");
-  assert.match(csv, new RegExp("^2026-10-31," + cal.slotTime("2026-10-31", "linkedin", 5) + ",linkedin,it/a11y,a\\.jpg$", "m"));
+  assert.match(csv, new RegExp("^2026-10-29," + cal.slotTime("2026-10-29", "linkedin", 5) + ",linkedin,it/a11y,a\\.jpg$", "m"));
   assert.match(csv, /^2026-10-26,08:30,linkedin,en\/a11y,/m);
 
   fs.writeFileSync(path.join(dir, "es", "a11y-captions.json"), JSON.stringify({ youtubeTitle: "Tu sitio, revisado. #Shorts" }));

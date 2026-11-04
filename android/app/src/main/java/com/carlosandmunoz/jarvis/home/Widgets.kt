@@ -100,7 +100,7 @@ private fun StatusBody(saved: Pair<JsonObject, Long>?) {
     val size = LocalSize.current
     val wide = size.width > 200.dp
     val dial = if (wide) min(size.height.value - 44, 110f).dp else min(size.width.value - 28, size.height.value - 82).coerceAtLeast(48f).dp
-    val headColor = if (st.alerts > 0) Art.PINK else if (st.warns > 0) Art.AMBER else Art.GREEN
+    val headColor = when (st.level) { "alert" -> Art.PINK; "warn" -> Art.AMBER; else -> Art.GREEN }
     Glass(open, "Jarvis") {
         val reactor = @Composable { Image(ImageProvider(Art.reactor(context.px(dial), st.readiness, "READY")), "Readiness", GlanceModifier.size(dial)) }
         val words = @Composable {
@@ -242,7 +242,7 @@ private fun AlertsBody(saved: Pair<JsonObject, Long>?) {
     val fits = ((LocalSize.current.height.value - 64) / 32).toInt().coerceIn(1, 7)
     val shown = shown(alerts.size, fits)
     Glass(open, "Alerts") {
-        Text(st.headline, style = TextStyle(color = color(if (st.alerts > 0) Art.PINK else if (st.warns > 0) Art.AMBER else Art.GREEN), fontSize = 13.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+        Text(st.headline, style = TextStyle(color = color(when (st.level) { "alert" -> Art.PINK; "warn" -> Art.AMBER; else -> Art.GREEN }), fontSize = 13.sp, fontWeight = FontWeight.Bold), maxLines = 1)
         Spacer(GlanceModifier.height(2.dp))
         Split(alerts.withIndex().toList(), fits) { (i, a) ->
             val tap = Home.open(context, a.tab).setData(Uri.parse("jarvis://open/" + a.tab + "/alert/" + i))

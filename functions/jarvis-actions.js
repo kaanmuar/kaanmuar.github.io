@@ -14,17 +14,40 @@
    rerun-ci        a failed GitHub Actions run on main or a Jarvis branch (JARVIS_BRANCH: jarvis/..., and #1978's
                    pagespeed/safe-<day> and pagespeed/ai-<day>) gets its failed jobs re-run once (attempt 1 only);
                    a failed PR run on one is closed and reopened instead, once per main commit, since a re-run tests
-                   the old merge (#2245); other chats' branches and PRs are left alone
+                   the old merge (#2245). A push or manual run on main that main has since moved past starts again on
+                   main's newest commit instead (#2409). Other chats' branches and PRs are left alone.
    refresh-stale   a scheduled job overdue by its gap is started once a day
    rerun-reviews   rerunReviewFailures starts when a FIXES row is newer than its last run
    pause-outreach  an active mailbox is paused while its domain's DNS fails, its warm-up is off or its score is under
                    the warm-up threshold; after RESUME_PASSES healthy hourly checks resume-outreach goes on the countdown,
                    which trouble coming back cancels
    retry-social    failed social posts are posted again after the countdown
+
+   #2338, from the addresses source (jarvis-addresses.js), each at most once per occurrence of a problem:
+   enable-warmup   an Instantly mailbox with warm-up off gets it turned on, before the pause loop, so it is healed
+                   rather than paused
+   restore-alias   a missing required ImprovMX alias (canary, postmaster, abuse) is added back
+                   what Jarvis cannot fix (a mailbox to reconnect, DNS, a blocked Microsoft 365 user, a failed fix) is
+                   pushed once per occurrence; jarvis_watch/addresses keeps which, so a problem that clears and comes
+                   back pushes again
    merge-pr        an open PR labelled jarvis-merge, green and mergeable, squash-merged after the countdown
+   launch-campaign #2475: an Instantly campaign still a draft with leads, steps, a mailbox and a start date at most
+                   LAUNCH_DAYS away (jarvis-marketing.js launchReady) is activated after the countdown, one countdown per
+                   campaign and start date, so one Carlos cancels stays a draft
+   index-submit    logged by the Monday jarvisIndexPush job (#2480): the sitemap pages missing from Brave's index sent to
+                   IndexNow and Brave's Submit URL form (jarvis-index.js)
    ai-ask, ai-fix  open alerts no rule handles go to Gemini once per alert set and day, AI_CALLS a day; it may only pick
                    from AI_CATALOG, and a pick runs alone at confidence >= settings.confidence (the risky ones after the
                    countdown); the rest become proposals
+   #2526, from the github-work source (core.githubTargets, the same lists the briefing reads; jarvis-github-fix.js does them):
+   gh-board-sync      a board item in the wrong column moves to the one it should be in, once per item and column
+   gh-orphan-ticket   a PR that names no ticket gets one filed (kind:request, in Dev) and named on the PR, once per PR
+   gh-update-pr       PRs behind main that are green and idle for a day get main merged in, after the countdown
+   gh-revert          main went red after its HEAD commit: a revert PR, after the countdown
+   gh-delete-branch   merged branches without a live worktree are deleted, after the countdown
+   gh-remove-worktree a merged, clean worktree no chat holds is queued for the Mac uploader, after the countdown
+   gh-merge-pr, gh-close-issue  on a click or a Gemini pick only; PRs labelled jarvis-merge merge through merge-pr
+   gh-agent           a Cursor cloud agent; never on its own, every launch is Carlos's click
    Jobs and workflows that mail third parties, post in public or deploy (RISKY_JOBS, RISKY_CI) run on their own only
    after the countdown (jarvis-countdown.js), which Carlos can cancel or run at once.
 
@@ -33,16 +56,26 @@
 
 const crypto = require("crypto");
 const core = require("./jarvis-core");
+const addresses = require("./jarvis-addresses");
 
 const SAFE = core.SAFE_ACTIONS;
-const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3 };
+const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
+  "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5 };
 const LABELS = {
   "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again", "rerun-ci": "Re-run failed CI jobs",
   "rating-decide": "Decide ratings", "brief-mark": "Snooze or dismiss a briefing line", "rerun-job": "Re-run a failed job", "refresh-stale": "Refresh stale data", "rerun-reviews": "Re-run reviews after a fix",
   "pause-outreach": "Pause an outreach mailbox", "resume-outreach": "Resume outreach mailboxes", "retry-social": "Retry failed social posts", "ai-ask": "Ask the AI what to fix", "ai-fix": "Run a fix the AI picked",
-  "merge-pr": "Merge a green PR",
-  "pagespeed-merge": "Merge PageSpeed fixes", "pagespeed-close": "Close PageSpeed fixes", "pagespeed-run": "Start the PageSpeed run"
+  "merge-pr": "Merge a green PR", "index-submit": "Send missing pages to search engines", "enable-warmup": "Turn mailbox warm-up back on", "restore-alias": "Restore a missing alias", "launch-campaign": "Launch a draft campaign",
+  "pagespeed-merge": "Merge PageSpeed fixes", "pagespeed-close": "Close PageSpeed fixes", "pagespeed-run": "Start the PageSpeed run",
+  "gh-board-sync": "Sync the board", "gh-orphan-ticket": "File a ticket for the PR", "gh-update-pr": "Update the PR with main", "gh-merge-pr": "Merge the green PR",
+  "gh-revert": "Open a revert PR", "gh-delete-branch": "Delete merged branches", "gh-close-issue": "Close the issue", "gh-remove-worktree": "Remove the merged worktree",
+  "gh-agent": "Launch a Cursor fix agent", "gh-diagnose": "Diagnose a failed run"
 };
+const GH_ACTIONS = ["gh-board-sync", "gh-orphan-ticket", "gh-update-pr", "gh-merge-pr", "gh-revert", "gh-delete-branch", "gh-close-issue", "gh-remove-worktree", "gh-agent"];
+const GH_RISKY = ["gh-update-pr", "gh-merge-pr", "gh-revert", "gh-delete-branch", "gh-close-issue", "gh-remove-worktree"];
+// A Gemini pick's GitHub action: the catalog().github list its argument must be in, and the argument's name.
+const GH_PICKS = { "gh-board-sync": ["drift", "number"], "gh-orphan-ticket": ["orphans", "pr"], "gh-update-pr": ["behind", "pr"], "gh-merge-pr": ["green", "pr"],
+  "gh-revert": ["mainBroken", "sha"], "gh-delete-branch": ["merged", "branch"], "gh-remove-worktree": ["worktrees", "path"] };
 const NOTICE_TRIES = 3;
 const NOTICE_HOURS = { from: 8, to: 19 };
 const CONFIDENCE = 0.8;
@@ -55,7 +88,14 @@ const JARVIS_BRANCH = /^(jarvis|pagespeed)\//;
 const AI_CATALOG = {
   "run-job": "start a scheduled job again; args { \"job\": one of jobs }",
   "rerun-ci": "re-run the failed jobs of a GitHub Actions workflow; args { \"workflow\": one of workflows }",
-  "publish-hub": "refresh the Social hub stats; args {}"
+  "publish-hub": "refresh the Social hub stats; args {}",
+  "gh-board-sync": "move a drifted board item to the column it should be in; args { \"number\": one of github.drift }",
+  "gh-orphan-ticket": "file a ticket for a PR that names none and link it on the PR; args { \"pr\": one of github.orphans }",
+  "gh-update-pr": "merge main into a PR branch that is behind; args { \"pr\": one of github.behind }",
+  "gh-merge-pr": "squash-merge a green, mergeable PR; args { \"pr\": one of github.green }",
+  "gh-revert": "open a revert PR for the main commit that turned CI red; args { \"sha\": one of github.mainBroken }",
+  "gh-delete-branch": "delete a merged branch; args { \"branch\": one of github.merged }",
+  "gh-remove-worktree": "remove a merged local worktree through the Mac uploader; args { \"path\": one of github.worktrees }"
 };
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -77,7 +117,7 @@ function cleanSettings(saved) {
 }
 
 // Jobs and workflows that mail third parties, post in public or deploy: on their own only after a countdown.
-const risky = (action, target) => (["run-job", "rerun-job", "refresh-stale"].includes(action) && RISKY_JOBS.includes(target)) || (action === "rerun-ci" && RISKY_CI.test(target));
+const risky = (action, target) => (["run-job", "rerun-job", "refresh-stale"].includes(action) && RISKY_JOBS.includes(target)) || (action === "rerun-ci" && RISKY_CI.test(target)) || GH_RISKY.includes(action);
 
 // Why a mailbox should not send, or "" when it may: its domain's DNS, an error, warm-up off or a score under the threshold.
 function mailboxProblem(m, o) {
@@ -104,7 +144,7 @@ function aiPrompt(alerts, catalog) {
   return [
     "Open alerts no rule fixed. For each one you can fix with exactly one catalog action, pick it; skip the rest.",
     "Catalog (action: what it does): " + JSON.stringify(AI_CATALOG),
-    "jobs: " + JSON.stringify(catalog.jobs || []) + "; workflows: " + JSON.stringify(catalog.workflows || []),
+    "jobs: " + JSON.stringify(catalog.jobs || []) + "; workflows: " + JSON.stringify(catalog.workflows || []) + (catalog.github ? "; github: " + JSON.stringify(catalog.github) : ""),
     "Alerts: " + JSON.stringify(alerts.map((a) => ({ key: a.key, level: a.level, text: text(a.text, 240) }))),
     "Answer only a JSON array, at most 6 rows: [{\"key\": alert key, \"action\": catalog action or \"none\", \"args\": {}, \"confidence\": 0-1, \"title\": what Carlos should do if not this action (under 100 characters), \"why\": one sentence}]."
   ].join("\n");
@@ -125,8 +165,11 @@ function pickOk(p, catalog) {
   if (!AI_CATALOG[p.action]) return false;
   if (p.action === "run-job") return (catalog.jobs || []).includes(p.args.job);
   if (p.action === "rerun-ci") return (catalog.workflows || []).includes(p.args.workflow);
+  if (GH_PICKS[p.action]) return ghArg(p) !== "" && (((catalog.github || {})[GH_PICKS[p.action][0]]) || []).map(String).includes(ghArg(p));
   return true;
 }
+
+const ghArg = (p) => (GH_PICKS[p.action] && p.args && p.args[GH_PICKS[p.action][1]] !== undefined ? String(p.args[GH_PICKS[p.action][1]]) : "");
 
 // A held re-run Jarvis may send without Carlos: the report finished, it has a score, and there is someone to send it to.
 function cleanRerun(doc) {
@@ -191,17 +234,22 @@ async function recent(db, limit) {
      runJob(job)       -> start a scheduled job
      failedJobs()      -> [{ job, endedAt, error }] scheduled jobs whose last run failed in the last day
      overdueJobs()     -> [{ job, why }] scheduled jobs past their gap that did not fail
-     failedCi()        -> [{ id, name, branch, attempt, url, pr?, main? }] the newest run per workflow and branch, failed
+     failedCi()        -> [{ id, name, branch, attempt, url, sha, event, path, pr?, main? }] the newest run per workflow and branch, failed
      rerunRun(id)      -> re-run a run's failed jobs
      refreshPr(n)      -> { refreshed } or { skipped }: close and reopen a PR unless it conflicts with main
+     mainSha()         -> main's newest commit;  dispatch(path) -> start a workflow on main
      rerunCi(workflow) -> re-run a workflow's newest failed run on main
      reviewFix()       -> { fixAt, ref, lastRun } the newest FIXES row and rerunReviewFailures' last start
      outreach()        -> { domain, failing: [check], warmupMin, mailboxes: [{ email, status, warmup, score, error }], pauses: [{ email, reason, passes }] }
      pauseMailbox(e)   -> pause a mailbox in Instantly;  setPause(email, row | null) -> save or clear Jarvis's pause
+     addresses()       -> the addresses source;  addressState() / setAddressState(row) -> jarvis_watch/addresses
+     enableWarmup(emails), restoreAlias(alias) -> the two fixes;  push(msg) -> a push to the alerts devices
      socialFailed()    -> failed social posts in range
      mergeCandidates() -> [{ number, sha, title, url }] open PRs labelled jarvis-merge, green and mergeable
+     launchReady()     -> [{ id, name, start, leads }] draft campaigns ready to send
      alerts()          -> [{ key, level, text }] open briefing and watch lines;  catalog() -> { jobs, workflows }
-     ask(prompt)       -> Gemini's text;  saveProposals([pick]) -> keep the picks Jarvis did not run as proposals }
+     ask(prompt)       -> Gemini's text;  saveProposals([pick]) -> keep the picks Jarvis did not run as proposals
+     githubWork()      -> the github-work source (#2526);  githubAct(action, args) -> { detail, count? }, throws when it did nothing }
    Returns { done: [rows], queued: [countdowns], waiting: [{ action, count, reason }] }; every action and every wait
    is logged. */
 async function autoRun({ db, now, settings, ops }) {
@@ -276,14 +324,17 @@ async function autoRun({ db, now, settings, ops }) {
       const row = await log(db, { action, mode: "auto", status: "done", target, detail: (res && res.detail) || detail }, now);
       rows.push(row);
       out.done.push(row);
+      return row;
     } catch (error) {
-      rows.push(await log(db, { action, mode: "auto", status: "failed", target, detail: error.message || String(error) }, now));
+      const row = await log(db, { action, mode: "auto", status: "failed", target, detail: error.message || String(error) }, now);
+      rows.push(row);
+      return row;
     }
   };
   const once = async (action, target, detail, run) => {
-    if (await seen(db, action, target)) return;
+    if (await seen(db, action, target)) return null;
     if (left(action) <= 0) return wait(action, 1, "Over today's cap of " + cfg.caps[action] + ".");
-    await attempt(action, target, detail, run);
+    return attempt(action, target, detail, run);
   };
   // A job or run that mails third parties, posts or deploys goes on the countdown instead, once per target.
   const onceOrLater = async (action, target, detail, risk, payload, run) => {
@@ -306,7 +357,9 @@ async function autoRun({ db, now, settings, ops }) {
     }
   }
   if (ops.failedCi && ops.rerunRun) {
-    for (const run of await ops.failedCi()) {
+    const failed = await ops.failedCi();
+    const head = failed.some((r) => r.branch === "main") && ops.mainSha && ops.dispatch ? await ops.mainSha().catch(() => "") : "";
+    for (const run of failed) {
       handled.add("ci:" + run.name);
       if (run.attempt > 1 || (run.branch !== "main" && !JARVIS_BRANCH.test(run.branch || ""))) continue;
       if (run.pr) {
@@ -319,6 +372,10 @@ async function autoRun({ db, now, settings, ops }) {
         await onceOrLater("rerun-ci", "#" + run.pr + " " + run.name + " @ main " + run.main, "#" + run.pr + " failed " + run.name + "; closing and reopening it for a fresh merge with main " + run.main + ".", risky("rerun-ci", run.name), { pr: run.pr, name: run.name }, refresh);
         continue;
       }
+      if (head && run.branch === "main" && run.sha && run.sha !== head && run.path && ["push", "workflow_dispatch"].includes(run.event)) {
+        await onceOrLater("rerun-ci", run.name + " #" + run.id, "Main has moved past the commit that failed, so it starts again on main's newest commit.", risky("rerun-ci", run.name), { run: run.id, name: run.name, workflow: run.path }, () => ops.dispatch(run.path));
+        continue;
+      }
       await onceOrLater("rerun-ci", run.name + " #" + run.id, "Re-running the failed jobs on " + run.branch + ".", risky("rerun-ci", run.name), { run: run.id, name: run.name }, () => ops.rerunRun(run.id));
     }
   }
@@ -329,10 +386,38 @@ async function autoRun({ db, now, settings, ops }) {
     }
   }
 
+  const healed = new Set();
+  if (ops.addresses && ops.addressState && ops.setAddressState) {
+    const a = await ops.addresses();
+    if (a && a.ok) {
+      handled.add("addresses:");
+      const issues = a.issues || [];
+      const open = addresses.openProblems(issues, ((await ops.addressState()) || {}).open, now);
+      const failed = [];
+      for (const i of issues.filter((x) => x.by === "jarvis")) {
+        const run = i.action === "enable-warmup" && ops.enableWarmup ? () => ops.enableWarmup([i.address])
+          : i.action === "restore-alias" && ops.restoreAlias ? () => ops.restoreAlias(i.address.split("@")[0]) : null;
+        if (!run) continue;
+        const res = await once(i.action, i.address + " @ " + open[i.key].since, i.text, run);
+        if (res && res.status === "done" && i.action === "enable-warmup") healed.add(i.address);
+        if (res && res.status === "failed") failed.push(addresses.failedFix(i, res.detail));
+      }
+      const fresh = addresses.toPush(issues.concat(failed), open);
+      if (fresh.length && ops.push) {
+        let sent = true;
+        for (const msg of addresses.pushMessages(fresh)) await ops.push(msg).catch(() => { sent = false; });
+        if (sent) fresh.forEach((i) => { open[i.key].pushedAt = new Date(now).toISOString(); });
+      }
+      await ops.setAddressState({ open: addresses.openList(open), at: new Date(now).toISOString() });
+    }
+  }
+
   if (ops.outreach && ops.pauseMailbox && ops.setPause) {
     const o = await ops.outreach();
     if (o) {
       handled.add("outreach:mailbox:").add("outreach:warmup").add("outreach:dns:");
+      // A mailbox whose warm-up Jarvis just turned on is not paused for it.
+      o.mailboxes = (o.mailboxes || []).map((m) => (healed.has(String(m.email).toLowerCase()) ? Object.assign({}, m, { warmup: "on" }) : m));
       const pauses = new Map((o.pauses || []).map((p) => [p.email, p]));
       for (const m of o.mailboxes || []) {
         const why = mailboxProblem(m, o);
@@ -381,6 +466,19 @@ async function autoRun({ db, now, settings, ops }) {
     }
   }
 
+  if (ops.launchReady) {
+    let drafts = [];
+    try { drafts = await ops.launchReady(); } catch (error) {
+      const detail = "Instantly: " + text(error.message || error, 200);
+      if (!rows.some((r) => r.action === "launch-campaign" && r.status === "failed" && r.detail === detail)) rows.push(await log(db, { action: "launch-campaign", mode: "auto", status: "failed", target: "draft campaigns", detail }, now));
+    }
+    const inLaunch = busy("launch-campaign");
+    for (const c of drafts.filter((d) => !inLaunch.has(d.id))) {
+      await later({ action: "launch-campaign", target: c.name, part: c.id + "@" + c.start, payload: { items: [{ id: c.id, name: c.name }] },
+        why: "A draft with " + plural(c.leads, "lead") + " that starts " + c.start + "; nothing sends until it is active.", onCancel: "activate it in Jarvis > Marketing" });
+    }
+  }
+
   if (ops.mergeCandidates) {
     let prs = [];
     try { prs = await ops.mergeCandidates(); } catch (error) {
@@ -390,6 +488,41 @@ async function autoRun({ db, now, settings, ops }) {
     for (const pr of prs) {
       await later({ action: "merge-pr", target: "#" + pr.number, part: pr.sha, payload: { number: pr.number, sha: pr.sha, url: pr.url }, why: text(pr.title, 200) + " (green, labelled jarvis-merge).",
         onCancel: "remove the label or merge it yourself" });
+    }
+  }
+
+  if (ops.githubWork && ops.githubAct) {
+    let g = null;
+    try { g = await ops.githubWork(); } catch (error) { g = null; }
+    if (g && g.ok !== false) {
+      const t = core.githubTargets(g);
+      ["gh:drift:", "gh:orphan-pr:", "gh:pr-behind:", "gh:pr-green:", "gh:main-broken:", "gh:branch-merged", "gh:worktree-merged:"].forEach((h) => handled.add(h));
+      for (const d of t.drift) {
+        await once("gh-board-sync", "#" + d.number + " to " + d.should, text(d.why, 200) || "In " + d.column + ", should be in " + d.should + ".",
+          () => ops.githubAct("gh-board-sync", { number: d.number, should: d.should, item: d.item }));
+      }
+      for (const pr of t.orphans) {
+        await once("gh-orphan-ticket", "PR #" + pr.number, "\"" + text(pr.title, 120) + "\" names no ticket.", () => ops.githubAct("gh-orphan-ticket", { pr: pr.number }));
+      }
+      // Only green PRs idle for a day: a chat still pushing to the branch would have its next push refused.
+      const idle = t.behind.filter((pr) => pr.checks === "pass" && Number(pr.updatedH) >= 24).slice(0, left("gh-update-pr"));
+      if (idle.length) {
+        const numbers = idle.map((pr) => pr.number).sort((a, b) => a - b);
+        await later({ action: "gh-update-pr", target: names(numbers.map((n) => "#" + n)), count: numbers.length, part: numbers.join(",") + "@" + day, payload: { numbers },
+          why: plural(numbers.length, "green PR") + " behind main, idle for a day.", onCancel: "update them from Jarvis > GitHub" });
+      }
+      for (const m of t.mainBroken) {
+        await later({ action: "gh-revert", target: String(m.sha).slice(0, 7), part: m.sha, payload: { sha: m.sha, why: m.why },
+          why: "Main went red after " + String(m.sha).slice(0, 7) + (m.title ? " (" + text(m.title, 120) + ")" : "") + ": " + text(m.why, 160) + ".", onCancel: "fix it forward or revert it yourself" });
+      }
+      if (t.merged.length) {
+        const branches = t.merged.map((b) => b.name).sort().slice(0, 30);
+        await later({ action: "gh-delete-branch", target: branches.length + " merged branch" + (branches.length === 1 ? "" : "es"), part: crypto.createHash("sha1").update(branches.join(",")).digest("hex").slice(0, 12),
+          payload: { branches }, why: "Merged and left behind: " + names(branches) + "." });
+      }
+      for (const w of t.worktrees) {
+        await later({ action: "gh-remove-worktree", target: w.dir, part: w.path, payload: { path: w.path }, why: w.branch + " is merged, clean and no chat holds it." });
+      }
     }
   }
 
@@ -412,14 +545,15 @@ async function autoRun({ db, now, settings, ops }) {
         for (const p of picks || []) {
           const runnable = pickOk(p, catalog);
           if (runnable && p.confidence >= cfg.confidence && left("ai-fix") > 0) {
-            const arg = p.args.job || p.args.workflow || "";
+            const arg = p.args.job || p.args.workflow || ghArg(p);
             const what = p.action + (arg ? " " + arg : "");
             if (risky(p.action, arg)) {
               await later({ action: "ai-fix", target: what, key: p.key, part: what, payload: { action: p.action, target: arg }, why: "For " + p.key + ": " + p.why, by: "gemini", confidence: p.confidence });
               continue;
             }
             await attempt("ai-fix", what, "For " + p.key + ": " + p.why + " (confidence " + p.confidence + ").", () =>
-              p.action === "run-job" ? ops.runJob(p.args.job) : p.action === "rerun-ci" ? ops.rerunCi(p.args.workflow) : ops.publishHub());
+              p.action === "run-job" ? ops.runJob(p.args.job) : p.action === "rerun-ci" ? ops.rerunCi(p.args.workflow)
+                : GH_PICKS[p.action] ? ops.githubAct(p.action, { target: arg }) : ops.publishHub());
           } else if (p.title || runnable) {
             keep.push(Object.assign({}, p, { runnable, reason: !runnable ? "not in the catalog" : p.confidence < cfg.confidence ? "confidence " + p.confidence + " under " + cfg.confidence : "over today's cap" }));
           }
@@ -445,8 +579,10 @@ function summary(result) {
 function pushMessage(result) {
   const done = (result && result.done) || [];
   if (!done.length) return null;
+  const github = done.every((row) => /^gh-/.test(row.action));
   return {
-    kind: "alerts", title: "Jarvis acted: " + done.length + " action" + (done.length === 1 ? "" : "s"), tab: "systems", tag: "jarvis-actions",
+    kind: "alerts", tab: github ? "github" : "systems", tag: "jarvis-actions",
+    title: github ? "Jarvis fixed: " + (done.length === 1 ? LABELS[done[0].action].toLowerCase() : done.length + " GitHub issues") : "Jarvis acted: " + done.length + " action" + (done.length === 1 ? "" : "s"),
     body: (LABELS[done[0].action] + ": " + done[0].target + ". " + done[0].detail).slice(0, 180) + (done.length > 1 ? " (+" + (done.length - 1) + " more)" : ""),
     lines: done.slice(0, 6).map((row) => (LABELS[row.action] + ": " + row.target).slice(0, 120))
   };
@@ -468,4 +604,4 @@ function briefLines(rows, now) {
   return lines;
 }
 
-module.exports = { SAFE, CAPS, LABELS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, COUNTDOWN_HOURS, AI_CALLS, AI_CATALOG, RESUME_PASSES, JARVIS_BRANCH, RISKY_JOBS, RISKY_CI, risky, cleanSettings, cleanRerun, noticeHours, mailboxProblem, pauseTargets, aiPrompt, parsePicks, pickOk, usedToday, todayRows, log, seen, recent, autoRun, summary, pushMessage, briefLines };
+module.exports = { SAFE, CAPS, LABELS, GH_ACTIONS, GH_RISKY, GH_PICKS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, COUNTDOWN_HOURS, AI_CALLS, AI_CATALOG, RESUME_PASSES, JARVIS_BRANCH, RISKY_JOBS, RISKY_CI, risky, cleanSettings, cleanRerun, noticeHours, mailboxProblem, pauseTargets, aiPrompt, parsePicks, pickOk, usedToday, todayRows, log, seen, recent, autoRun, summary, pushMessage, briefLines };

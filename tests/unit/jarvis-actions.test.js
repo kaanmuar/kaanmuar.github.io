@@ -32,7 +32,8 @@ function fakeOps(over) {
   return { ops, calls };
 }
 
-const DEFAULT_CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3 };
+const DEFAULT_CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
+  "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5 };
 
 test("settings: actions are on with the default caps and confidence 0.8 unless saved otherwise, caps stay within 0-100 and confidence within 0.5-1", () => {
   assert.deepEqual(actions.cleanSettings(), { auto: true, caps: DEFAULT_CAPS, confidence: 0.8, countdownHours: 2 });
@@ -224,6 +225,29 @@ test("a PR that conflicts with main is logged as failed, not closed (#2245)", as
   const row = db.added.find((r) => r.action === "rerun-ci");
   assert.equal(row.status, "failed");
   assert.match(row.detail, /#303 was not reopened: conflicts/);
+});
+
+test("a push run on main that main has moved past starts again on main, and a scheduled one is re-run as before", async () => {
+  const db = fakeDb();
+  const dispatched = [];
+  const { ops, calls } = autoOps({
+    failedCi: async () => [
+      { id: 11, name: "Pages", branch: "main", attempt: 1, sha: "old", event: "workflow_dispatch", path: ".github/workflows/pages.yml" },
+      { id: 12, name: "Tests", branch: "main", attempt: 1, sha: "new", event: "push", path: ".github/workflows/tests.yml" },
+      { id: 13, name: "Bluesky and Mastodon", branch: "main", attempt: 1, sha: "old", event: "schedule", path: ".github/workflows/open-social.yml" }
+    ],
+    mainSha: async () => "new",
+    dispatch: async (p) => { dispatched.push(p); }
+  });
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
+  assert.deepEqual(calls.reruns, [12]);
+  const pages = out.queued.find((r) => r.target === "Pages #11");
+  assert.equal(pages.payload.workflow, ".github/workflows/pages.yml");
+  assert.match(pages.why, /moved past the commit that failed/);
+  assert.ok(out.queued.some((r) => r.target === "Bluesky and Mastodon #13" && !r.payload.workflow), "a risky scheduled run keeps its re-run");
+  const res = await countdown.execute(pages, ops, MONDAY_10);
+  assert.deepEqual(dispatched, [".github/workflows/pages.yml"]);
+  assert.match(res.detail, /^Started Pages on main's newest commit/);
 });
 
 test("every branch the PageSpeed routine creates is one Jarvis re-runs CI on", () => {

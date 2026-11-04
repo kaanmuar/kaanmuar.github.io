@@ -155,8 +155,16 @@ fun BriefSheet(item: JsonObject, s: UiState, vm: JarvisViewModel, open: (String)
                         val pr = a.num("pr")?.toInt()
                         val runKey = actionKey(id, job ?: workflow ?: pr?.toString())
                         ActionButton(a.str("label") ?: id, runKey in s.running) {
-                            val ask = if (id == "rerun-ci") rerunCiAsk(workflow) else askFor(id, job, null, pr)
-                            confirm = PendingAction(ask) { runAction(vm, id, job, key, workflow, pr) }
+                            val prompt = a.str("prompt")?.takeIf { id == "gh-agent" && it.isNotBlank() }
+                            val ask = if (id == "rerun-ci") rerunCiAsk(workflow) else askFor(id, job, null, pr) + (prompt?.let { " with this prompt:\n\n" + Github.clip(it) } ?: "")
+                            confirm = PendingAction(ask) {
+                                if (prompt == null) runAction(vm, id, job, key, workflow, pr)
+                                else vm.market(runKey, "github-agent", buildMap {
+                                    put("prompt", JsonPrimitive(prompt))
+                                    a.str("branch")?.let { put("branch", JsonPrimitive(it)) }
+                                    pr?.let { put("pr", JsonPrimitive(it)) }
+                                }) { out -> "Cursor agent launched" + (out.str("url")?.let { ": $it" } ?: ".") }
+                            }
                         }
                     }
                     val tabName = tab?.let { t -> CHIPS.toMap()[t] ?: TABS[t] }

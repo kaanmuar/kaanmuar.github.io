@@ -31,10 +31,33 @@ class MarketingTest {
         assertNull(Marketing.openWeek(emptyList(), null))
     }
 
+    @Test fun onlyUploadedAndDroppedLeadsCountAsDone() {
+        assertTrue(Marketing.leadDone(json("""{"uploaded":"2026-10-26"}""")))
+        assertTrue(Marketing.leadDone(json("""{"dropped":true}""")))
+        assertFalse(Marketing.leadDone(json("""{"approved":true,"uploaded":""}""")))
+        assertFalse(Marketing.leadDone(json("""{"ask":"no contact name"}""")))
+    }
+
     @Test fun waitingOnlyCountsPendingCommandsForThatKey() {
         assertTrue(Marketing.waiting(sync, "approve", "ana@uni.edu"))
         assertFalse(Marketing.waiting(sync, "approve", "leo@uni.edu"))
         assertFalse(Marketing.waiting(sync, "upload", "W1"))
+    }
+
+    @Test fun linkedinSplitsStillToSendFromSent() {
+        val (toSend, sent) = Marketing.linkedinSplit(sync)
+        assertEquals(listOf("Leo", "Eva"), toSend.map { it["name"].toString().trim('"') })
+        assertEquals(listOf("Ana"), sent.map { it["name"].toString().trim('"') })
+        assertEquals(Pair(emptyList<JsonObject>(), emptyList<JsonObject>()), Marketing.linkedinSplit(null))
+    }
+
+    @Test fun linkedinLineReadsTheLabelledLineOfTheList() {
+        assertEquals("Hola Ana, vi el sitio.", Marketing.linkedinLine(json("""{"lines":["Profile: https://www.linkedin.com/in/ana","Note: Hola Ana, vi el sitio."]}"""), "Note"))
+        assertEquals("Hi Leo", Marketing.linkedinLine(json("""{"lines":["note:   Hi Leo"]}"""), "Note"))
+        assertEquals("", Marketing.linkedinLine(json("""{"lines":["Profile: https://www.linkedin.com/in/leo"]}"""), "Note"))
+        assertEquals("", Marketing.linkedinLine(json("""{"name":"Eva"}"""), "Note"))
+        assertEquals("", Marketing.linkedinLine(null, "Note"))
+        assertEquals("confirm the role.", Marketing.linkedinLine(json("""{"lines":["Check first: confirm the role.","Note: Hi"]}"""), "Check first"))
     }
 
     @Test fun repliesToAnswerHaveADraftAndNoAnswer() {

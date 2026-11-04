@@ -18,7 +18,7 @@ test("mail health: a mail is counted once across its Gmail and webhook entries",
     entry("a-1", "qa@carlosandmunoz.com", "kaanmuar@gmail.com", ["queued", "delivered"]),
     entry("a-2", "QA@carlosandmunoz.com", HOOK, ["queued", "delivered"])
   ], ["qa", "tiktok"]);
-  assert.deepEqual(out.totals, { mails: 1, forwarded: 1, bounced: 0, refused: 0, unknown: 0, queued: 0 });
+  assert.deepEqual(out.totals, { mails: 1, forwarded: 1, bounced: 0, refused: 0, spam: 0, unknown: 0, queued: 0 });
   assert.equal(out.aliases.length, 1);
   assert.equal(out.aliases[0].alias, "qa");
   assert.equal(out.aliases[0].forwarded, 1);
@@ -48,6 +48,24 @@ test("mail health: refusals to addresses that are not aliases are only counted",
   assert.equal(out.problems[0].alias, "qa");
   assert.match(out.problems[0].reason, /SPAM/);
   assert.equal(out.problems[0].code, 550);
+});
+
+test("mail health: a refusal of a blocklisted sender is spam blocked, not a broken alias (#2364)", () => {
+  const listed = (id, sender) => entry(id, "qa@carlosandmunoz.com", null, ["refused"], {
+    sender: { email: sender },
+    events: [{ status: "refused", code: 551, message: "5.7.1 Your domain virtualtechteams.com is listed on Spamhaus Blocklist (DBL)", created_at: "2026-10-27T20:00:00Z" }]
+  });
+  const out = health.tally([listed("s-1", "anna.jones@virtualtechteams.com"), listed("o-1", "bounces+123@em42.carlosandmunoz.com")], ["qa"]);
+  assert.equal(out.totals.spam, 1);
+  assert.equal(out.totals.refused, 1);
+  assert.equal(out.aliases[0].spam, 1);
+  assert.equal(out.problems.length, 1, "our own mail refused for a blocklist is still a problem (mail-retry.js)");
+  assert.equal(out.problems[0].from, "em42.carlosandmunoz.com");
+  const addresses = require("../../functions/jarvis-addresses");
+  const spamOnly = health.tally([listed("s-1", "anna.jones@virtualtechteams.com")], ["qa"]);
+  const qa = addresses.improvmxRows([{ alias: "qa", forward: "kaanmuar@gmail.com" }], [], spamOnly).find((r) => r.address === "qa@carlosandmunoz.com");
+  assert.equal(qa.state, "ok");
+  assert.match(qa.detail, /1 spam blocked/);
 });
 
 test("mail health: the canary goes out, comes back once, and is lost or stale when it does not", () => {

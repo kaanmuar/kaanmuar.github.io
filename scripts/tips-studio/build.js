@@ -84,7 +84,7 @@ const SAY_AS = {
   ]
 };
 const SAY_AS_RE = Object.fromEntries(Object.entries(SAY_AS).map(([lang, pairs]) =>
-  [lang, pairs.map(([term, said]) => [new RegExp("(^|[^\\p{L}\\d])" + term.replace(/[.+]/g, "\\$&") + "(?![\\p{L}\\d])", "giu"), said])]));
+  [lang, pairs.map(([term, said]) => [new RegExp("(^|[^\\p{L}\\d])" + term.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&") + "(?![\\p{L}\\d])", "giu"), said])]));
 function sayAs(lang, text) {
   return (SAY_AS_RE[lang] || []).reduce((out, [re, said]) => out.replace(re, (m, before) => before + said), text);
 }

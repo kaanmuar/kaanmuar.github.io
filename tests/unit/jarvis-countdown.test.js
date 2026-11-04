@@ -35,9 +35,10 @@ function ops(over) {
 
 const queue = (db, entry, now) => countdown.queue(db, entry, { now: now || MONDAY_10, hours: 2 });
 
-test("each risky action has its kind: email, post, code, outreach; anything else is money and has no action", () => {
+test("each risky action has its kind: email, post, code, outreach, repo; anything else is money and has no action", () => {
   assert.equal(countdown.kindOf("rerun-held"), "email");
   assert.equal(countdown.kindOf("resend-notices"), "email");
+  assert.equal(countdown.kindOf("launch-campaign"), "email");
   assert.equal(countdown.kindOf("run-job", "sendOwnerNotices"), "email");
   assert.equal(countdown.kindOf("run-job", "dispatchFacebookQueue"), "post");
   assert.equal(countdown.kindOf("rerun-ci", "Buffer batch"), "post");
@@ -48,8 +49,12 @@ test("each risky action has its kind: email, post, code, outreach; anything else
   assert.equal(countdown.kindOf("refresh-stale", "ensureLiveReportsBatch"), "post");
   assert.equal(countdown.kindOf("retry-social"), "post");
   assert.equal(countdown.kindOf("resume-outreach"), "outreach");
+  assert.equal(countdown.kindOf("gh-revert"), "code");
+  assert.equal(countdown.kindOf("gh-merge-pr"), "code");
+  assert.equal(countdown.kindOf("gh-delete-branch"), "repo");
+  assert.equal(countdown.kindOf("gh-remove-worktree"), "repo");
   assert.equal(countdown.kindOf("payout"), "money");
-  assert.deepEqual(Object.keys(countdown.KINDS), ["email", "post", "code", "outreach", "money"]);
+  assert.deepEqual(Object.keys(countdown.KINDS), ["email", "post", "code", "outreach", "repo", "money"]);
 });
 
 test("a countdown is queued once a day per action and target, due after the set hours", async () => {
@@ -264,6 +269,35 @@ test("a green PR labelled jarvis-merge is merged after the countdown, at the com
   await actions.autoRun({ db: db2, now: MONDAY_10, settings: {}, ops: broken.ops, items: null, external: null });
   await actions.autoRun({ db: db2, now: MONDAY_10 + H, settings: {}, ops: broken.ops, items: null, external: null });
   assert.equal(db2.added.filter((r) => r.action === "merge-pr" && r.status === "failed").length, 1, "a GitHub error is logged once a day");
+});
+
+test("a draft campaign with leads is launched after the countdown, one per campaign; one Carlos cancelled stays a draft", async () => {
+  const db = fakeDb();
+  const launched = [];
+  const drafts = [{ id: "c1", name: "W1 F-es Americas", start: "2026-11-10", leads: 3 }, { id: "c2", name: "W1 F-en US", start: "2026-11-10", leads: 1 }];
+  const { ops: o } = ops({
+    launchReady: async () => drafts,
+    launchCampaigns: async (ids) => { launched.push(...ids); return { launched: ids.map((id) => drafts.find((d) => d.id === id).name), left: [] }; }
+  });
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops: o });
+  assert.deepEqual(out.queued.map((r) => [r.action, r.target, r.kind]), [["launch-campaign", "W1 F-es Americas", "email"], ["launch-campaign", "W1 F-en US", "email"]]);
+  assert.match(out.queued[0].why, /A draft with 3 leads that starts 2026-11-10/);
+  assert.equal(out.queued[0].label, "Launch a draft campaign");
+  assert.equal((await actions.autoRun({ db, now: MONDAY_10 + H / 2, settings: {}, ops: o })).queued.length, 0, "a waiting launch is not queued twice");
+  await countdown.cancel(db, out.queued[1].id, { now: MONDAY_10 + H, by: "carlos@x.co" });
+  const later = await actions.autoRun({ db, now: MONDAY_10 + H, settings: {}, ops: o });
+  assert.equal(later.queued.length, 0);
+  assert.match(later.waiting[0].reason, /W1 F-en US: you cancelled its countdown; activate it in Jarvis > Marketing/);
+  await countdown.runDue({ db, now: MONDAY_10 + 2 * H, ops: o });
+  assert.deepEqual(launched, ["c1"]);
+  assert.equal(db.doc("jarvis_countdowns", out.queued[0].id).result, "Launched W1 F-es Americas.");
+
+  const none = ops({ launchCampaigns: async () => ({ launched: [], left: ["W1 F-es Americas: already active"] }) });
+  const db2 = fakeDb();
+  const { row } = await queue(db2, { action: "launch-campaign", target: "W1 F-es Americas", payload: { items: [{ id: "c1" }] } });
+  await countdown.runDue({ db: db2, now: MONDAY_10 + 2 * H, ops: none.ops });
+  assert.equal(db2.doc("jarvis_countdowns", row.id).status, "failed");
+  assert.match(db2.doc("jarvis_countdowns", row.id).result, /Nothing launched: W1 F-es Americas: already active/);
 });
 
 test("a failed run is pushed and logged as failed; one stuck running is closed; money has no action", async () => {
