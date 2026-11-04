@@ -1286,6 +1286,19 @@ test("social: Telegram members show the count now and the change since the range
   assert.match(failed.need, /showing the count from 2026-11-03 because the last run failed \(Telegram 403: bot is not a member\)/);
 });
 
+test("social: subreddit members come from the Reddit ledger like Telegram's, with a need line when missing or old", () => {
+  const since = Date.parse("2026-10-28T12:00:00Z");
+  const now = Date.parse("2026-11-04T18:00:00Z");
+  const history = [{ date: "2026-10-27", members: 9 }, { date: "2026-11-04", members: 12 }];
+  const rd = social.redditMembers({ posts: {}, members: { chat: "r/QALabLiveReports", members: 12, at: "2026-11-04T16:20:04.000Z", history } }, since, now);
+  assert.deepEqual([rd.channel, rd.members, rd.change, rd.from, rd.need], ["r/QALabLiveReports", 12, 3, { date: "2026-10-27", members: 9 }, ""]);
+  assert.match(social.redditMembers({ posts: {} }, since, now).need, /^Reddit members: the Reddit ledger has no member count yet\. .*reddit-live\.yml/);
+  assert.equal(social.redditMembers(null, since, now).members, null);
+  const old = social.redditMembers({ posts: {}, members: { members: 12, at: "2026-11-01T16:20:04.000Z", history } }, since, now);
+  assert.equal(old.members, 12);
+  assert.match(old.need, /showing the count from 2026-11-01, more than two days old/);
+});
+
 test("social: Jarvis can start the Bluesky and Mastodon poster with the Buffer and Page ones, and watches the Reddit app", () => {
   assert.deepEqual(social.WORKFLOWS.map((w) => w.file), ["buffer-batch.yml", "facebook-page.yml", "open-social.yml", "reddit-live.yml"]);
   assert.deepEqual(social.WORKFLOWS.filter((w) => !w.watch).map((w) => w.file), ["buffer-batch.yml", "facebook-page.yml", "open-social.yml"]);

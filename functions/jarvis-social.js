@@ -83,6 +83,13 @@ function telegramMembers(metrics, since) {
     const why = t && t.error ? "the Bot API refused it (" + String(t.error).slice(0, 200) + "). The bot must be an admin of the channel." : t && t.skipped ? "the daily social numbers skipped it (" + t.skipped + "). " + TELEGRAM_SETUP : "the daily social numbers have no member count for the channel yet. " + TELEGRAM_SETUP;
     return { members: null, change: null, need: "Telegram members: " + why };
   }
+  const stale = t.error ? "the last run failed (" + String(t.error).slice(0, 200) + "). The bot must be an admin of the channel." : t.skipped ? "the last run skipped it (" + t.skipped + "). " + TELEGRAM_SETUP : "";
+  return Object.assign(inRange(t, since), { need: stale ? "Telegram members: showing the count from " + String(t.at || "").slice(0, 10) + " because " + stale : "" });
+}
+
+// A { chat, members, at, history } count: the change since the range began, against the last daily point on or before
+// the range start, else the oldest point.
+function inRange(t, since) {
   const history = (Array.isArray(t.history) ? t.history : []).filter((p) => p && typeof p.date === "string" && Number.isFinite(Number(p.members)))
     .map((p) => ({ date: p.date, members: Number(p.members) })).sort((a, b) => a.date.localeCompare(b.date));
   const start = new Date(since).toISOString().slice(0, 10);
@@ -90,16 +97,25 @@ function telegramMembers(metrics, since) {
   const from = before.length ? before[before.length - 1] : history[0];
   const latest = history[history.length - 1];
   const members = Number(t.members);
-  const stale = t.error ? "the last run failed (" + String(t.error).slice(0, 200) + "). The bot must be an admin of the channel." : t.skipped ? "the last run skipped it (" + t.skipped + "). " + TELEGRAM_SETUP : "";
   return {
     channel: t.chat || "",
     members,
     at: t.at || "",
     change: from && latest && from.date < latest.date ? members - from.members : null,
     from: from && latest && from.date < latest.date ? from : null,
-    history: history.filter((p) => p.date >= start),
-    need: stale ? "Telegram members: showing the count from " + String(t.at || "").slice(0, 10) + " because " + stale : ""
+    history: history.filter((p) => p.date >= start)
   };
 }
 
-module.exports = { WORKFLOWS, LIVE_CHANNELS, byChannel, state, pending, decide, telegramMembers };
+const REDDIT_SETUP = "The Reddit app (reddit/live-reports) logs the count on its 16:20 UTC daily task, and the ledger job in reddit-live.yml reads it with the DEVVIT_TOKEN secret into assets/social/reddit.json.";
+const REDDIT_STALE_MS = 2 * 24 * 3600000;
+
+/** The subreddit's members from the Reddit ledger's members (#2571), in the same shape as telegramMembers. */
+function redditMembers(book, since, now) {
+  const r = book && book.members;
+  if (!r || !Number.isFinite(Number(r.members))) return { members: null, change: null, need: "Reddit members: the Reddit ledger has no member count yet. " + REDDIT_SETUP };
+  const old = Number.isFinite(now) && Date.parse(r.at || "") < now - REDDIT_STALE_MS;
+  return Object.assign(inRange(r, since), { need: old ? "Reddit members: showing the count from " + String(r.at || "").slice(0, 10) + ", more than two days old. " + REDDIT_SETUP : "" });
+}
+
+module.exports = { WORKFLOWS, LIVE_CHANNELS, byChannel, state, pending, decide, telegramMembers, redditMembers };
