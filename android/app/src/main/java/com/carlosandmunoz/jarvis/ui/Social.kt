@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
 import com.carlosandmunoz.jarvis.data.ago
+import com.carlosandmunoz.jarvis.data.fmt
 import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
@@ -64,11 +65,14 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
             }
         }
     }
-    val queue = s.snapshot.obj("external").obj("social").objs("queue")
+    val social = s.snapshot.obj("external").obj("social")
+    val queue = social.objs("queue")
+    val tg = social.obj("telegram")
     Panel("Queue by channel") {
         if (queue.isEmpty()) Muted("Pull down to read the social ledgers.")
-        queue.forEach { c -> Channel(c) }
-        if (queue.isNotEmpty()) Muted("Telegram is the @qalab_live post of each Live Reports batch.")
+        queue.forEach { c -> Channel(c, if (c.str("channel") == "telegram") Telegram.members(tg) else null) }
+        if (queue.isNotEmpty()) Muted("Telegram is the @qalab_live post of each Live Reports batch; its members are read each morning, and the change counts from the last daily count on or before the range start.")
+        tg.str("need")?.takeIf { it.isNotBlank() }?.let { Text("Needs: $it", color = J.amber, fontSize = 12.sp) }
     }
 
     var confirm by remember { mutableStateOf(false) }
@@ -112,8 +116,21 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     }
 }
 
+/** The Telegram channel's members from the social snapshot (#2570), as the web hub's Telegram row shows them. */
+object Telegram {
+    data class Members(val text: String, val change: Int?)
+
+    fun members(t: JsonObject?): Members? {
+        val now = t.num("members") ?: return null
+        val change = t.num("change")?.toInt()
+        val since = t.obj("from").str("date")
+        val text = fmt(now) + " members" + if (change != null && since != null) " · " + (if (change > 0) "+" else "") + change + " since " + since else ""
+        return Members(text, change)
+    }
+}
+
 @Composable
-private fun Channel(c: JsonObject) {
+private fun Channel(c: JsonObject, members: Telegram.Members? = null) {
     val next = c.objs("next")
     val failed = c.num("failed")?.toInt() ?: 0
     Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.Top) {
@@ -129,6 +146,7 @@ private fun Channel(c: JsonObject) {
             val sent = c.num("sent")?.toInt() ?: 0
             Text("$sent sent" + (if (failed > 0) " · $failed failed" else "") + (c.obj("last")?.str("at")?.let { " · last " + (ago(it) ?: "").lowercase() } ?: ""),
                 color = if (failed > 0) J.amber else J.muted, fontSize = 11.sp)
+            members?.let { m -> Text(m.text, color = when { (m.change ?: 0) > 0 -> J.green; (m.change ?: 0) < 0 -> J.pink; else -> J.muted }, fontSize = 11.sp) }
         }
     }
 }

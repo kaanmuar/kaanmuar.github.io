@@ -1034,11 +1034,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const so = S.external.social;
         if (!so || !so.queue) return panel('hub-queue', 'Queue by channel', so && so.ok === false ? `<p class="jv-empty">${esc(so.error || 'Not loaded.')}</p>` : waiting('social', 'Reading the social ledgers…'), { wide: true });
         const next = (c) => (c.next.length ? c.next.map((n) => `<span class="jv-chip">${esc(when(n.at))}</span> ${esc(n.post.split('/').pop())}`).join('<br>') : '<span class="jv-note">nothing scheduled</span>');
+        const tg = so.telegram || {};
+        const members = (c) => (c.channel === 'telegram' && typeof tg.members === 'number' ? `<br><span class="jv-note">${fmt(tg.members)} members${typeof tg.change === 'number' ? ` · <span class="jv-chip ${tg.change > 0 ? 'c-fast' : tg.change < 0 ? 'c-slow' : ''}">${tg.change > 0 ? '+' : ''}${fmt(tg.change)}</span> since ${esc(tg.from.date)}` : ''}</span>` : '');
+        const tgNeed = tg.need ? `<ul class="jv-needs"><li>${esc(tg.need)}</li></ul>` : '';
         return panel('hub-queue', 'Queue by channel', table([
-            ['Channel', (c) => `<strong>${esc(c.name)}</strong>`], ['Scheduled', (c) => fmt(c.scheduled)], ['Next', next],
+            ['Channel', (c) => `<strong>${esc(c.name)}</strong>${members(c)}`], ['Scheduled', (c) => fmt(c.scheduled)], ['Next', next],
             ['Sent', (c) => fmt(c.sent)], ['Failed', (c) => (c.failed ? `<span class="jv-chip c-slow">${fmt(c.failed)}</span>` : '0')],
             ['Last out', (c) => (c.last ? (c.last.url ? `<a href="${esc(c.last.url)}" target="_blank" rel="noopener">${esc(when(c.last.at))}</a>` : esc(when(c.last.at))) : '—')]
-        ], so.queue), { wide: true, data: so.queue.map((c) => ({ channel: c.name, scheduled: c.scheduled, next: c.next.map((n) => n.at + ' ' + n.post).join(' | '), sent: c.sent, failed: c.failed, last: c.last ? c.last.at : '' })), note: 'Sent and failed count the selected range. Instagram stays empty while that channel is paused in Buffer. Telegram is the @qalab_live post of each Live Reports batch.' });
+        ], so.queue) + tgNeed, { wide: true, data: so.queue.map((c) => Object.assign({ channel: c.name, scheduled: c.scheduled, next: c.next.map((n) => n.at + ' ' + n.post).join(' | '), sent: c.sent, failed: c.failed, last: c.last ? c.last.at : '' }, c.channel === 'telegram' ? { members: tg.members, change: tg.change } : {})), note: 'Sent and failed count the selected range. Instagram stays empty while that channel is paused in Buffer. Telegram is the @qalab_live post of each Live Reports batch; its members are read each morning, and the change counts from the last daily count on or before the range start.' });
     }
 
     function socialRunsPanel() {

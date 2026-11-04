@@ -1266,6 +1266,24 @@ test("social: each channel shows what is next, what went out last and what faile
   assert.deepEqual([rows[10].name, rows[10].sent, rows[10].last.post], ["Telegram", 1, "live/2026-10-24"]);
 });
 
+test("social: Telegram members show the count now and the change since the range began, or a need line", () => {
+  const since = Date.parse("2026-10-28T12:00:00Z");
+  const history = [{ date: "2026-10-20", members: 10 }, { date: "2026-10-27", members: 14 }, { date: "2026-10-30", members: 18 }, { date: "2026-11-04", members: 25 }];
+  const tg = social.telegramMembers({ channels: { telegram: { chat: "@qalab_live", members: 25, at: "2026-11-04T15:00:00Z", history } } }, since);
+  assert.deepEqual([tg.members, tg.change, tg.from, tg.need], [25, 11, { date: "2026-10-27", members: 14 }, ""]);
+  assert.deepEqual(tg.history.map((p) => p.date), ["2026-10-30", "2026-11-04"]);
+  const young = social.telegramMembers({ channels: { telegram: { members: 25, history: history.slice(2) } } }, since);
+  assert.deepEqual([young.change, young.from.date], [7, "2026-10-30"]);
+  const first = social.telegramMembers({ channels: { telegram: { members: 25, history: history.slice(3) } } }, since);
+  assert.deepEqual([first.change, first.from], [null, null]);
+  assert.match(social.telegramMembers({ posts: {} }, since).need, /^Telegram members: .*no member count.*TELEGRAM_BOT_TOKEN repo secret and the TELEGRAM_CHANNEL repo variable/);
+  assert.match(social.telegramMembers(null, since).need, /no member count/);
+  assert.match(social.telegramMembers({ channels: { telegram: { skipped: "no TELEGRAM_BOT_TOKEN secret", history: [] } } }, since).need, /skipped it \(no TELEGRAM_BOT_TOKEN secret\)/);
+  const failed = social.telegramMembers({ channels: { telegram: { members: 25, at: "2026-11-03T15:00:00Z", error: "Telegram 403: bot is not a member", history } } }, since);
+  assert.equal(failed.members, 25);
+  assert.match(failed.need, /showing the count from 2026-11-03 because the last run failed \(Telegram 403: bot is not a member\)/);
+});
+
 test("social: Jarvis can start the Bluesky and Mastodon poster with the Buffer and Page ones, and watches the Reddit app", () => {
   assert.deepEqual(social.WORKFLOWS.map((w) => w.file), ["buffer-batch.yml", "facebook-page.yml", "open-social.yml", "reddit-live.yml"]);
   assert.deepEqual(social.WORKFLOWS.filter((w) => !w.watch).map((w) => w.file), ["buffer-batch.yml", "facebook-page.yml", "open-social.yml"]);
