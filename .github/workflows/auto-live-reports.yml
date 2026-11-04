@@ -181,6 +181,9 @@ jobs:
           # sentences go through Google's translator, then the hub is rebuilt with them (#1893).
           if node scripts/social-hub/translate-captions.js --picks --machine; then node scripts/build-social-hub.js --offline
           else echo "::warning::Google's translator refused; new picks keep the languages the phrasebooks cover."; fi
+          # Hub pages can bring Tailwind classes style.css lacks; this commit skips CI, so nothing else would catch it (#2552).
+          node scripts/build-style-css.js && node scripts/build-critical-css.js || echo "::warning::style.css was not rebuilt; run node scripts/build-style-css.js and build-critical-css.js on main (#2552)."
+          git add -u -- style.css '*.html'
           git add assets/social qa-review-social*.html sitemap-social.xml social scripts/social-hub/phrases
           # This commit skips CI, so a hub page in the wrong language would fail every PR after it.
           scripts/social-hub/guard-hub-lang.sh
@@ -202,6 +205,8 @@ jobs:
             git cherry-pick -X theirs "$DATA"
             python3 scripts/build-llms-full.py
             node scripts/build-social-hub.js --offline
+            node scripts/build-style-css.js && node scripts/build-critical-css.js || echo "::warning::style.css was not rebuilt; run node scripts/build-style-css.js and build-critical-css.js on main (#2552)."
+            git add -u -- style.css '*.html'
             git add llms.txt llms-full.txt qa-review*.html assets/social sitemap-social.xml social
             scripts/social-hub/guard-hub-lang.sh HEAD~1
             git diff --cached --quiet || git commit -q --amend --no-edit
@@ -248,6 +253,21 @@ jobs:
             exit 0
           fi
           node scripts/facebook-queue.js --batch "${{ steps.reports.outputs.batch }}"
+
+      - name: Post the batch to the Telegram channel
+        # One post per batch whose report links open in the Mini App (live.html, #2549).
+        if: ${{ !cancelled() && steps.commit.outcome == 'success' && steps.commit.outputs.pushed == '1' }}
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL: ${{ vars.TELEGRAM_CHANNEL }}
+          TELEGRAM_APP: ${{ vars.TELEGRAM_APP }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHANNEL" ]; then
+            echo "::warning::Add the TELEGRAM_BOT_TOKEN secret and the TELEGRAM_CHANNEL variable. Batch ${{ steps.reports.outputs.batch }} was not posted to Telegram."
+            exit 0
+          fi
+          node scripts/telegram-live.js post
 
       - name: Commit the Buffer and Facebook ledgers
         if: ${{ !cancelled() && !inputs.dry_run && steps.commit.outcome == 'success' }}

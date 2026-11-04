@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Commits the Buffer, Facebook Page, Bluesky and Mastodon, and dev.to ledgers (scripts/social-ledger.js) straight to main
+# Commits the Buffer, Facebook Page, Bluesky and Mastodon, dev.to, and Telegram ledgers (scripts/social-ledger.js) straight to main
 # with [skip ci].
 #   scripts/commit-social-ledgers.sh "<what ran>"
 # The Live Reports, Facebook Page, Bluesky and Mastodon, and dev.to workflows write them, so a push that loses the race is retried on
@@ -22,7 +22,7 @@ main() {
 		echo "Runs only in GitHub Actions: it commits to main as the bot, fetches main with --depth=1, which makes a local clone shallow, and resets this checkout to it." >&2
 		return 1
 	fi
-	for file in assets/social/buffer.json assets/social/facebook.json assets/social/open-social.json assets/social/devto.json; do
+	for file in assets/social/buffer.json assets/social/facebook.json assets/social/open-social.json assets/social/devto.json assets/social/telegram.json; do
 		[ -f "$file" ] && files+=("$file")
 	done
 	[ ${#files[@]} -gt 0 ] || {

@@ -4,7 +4,8 @@
   const section = document.getElementById("live-reports");
   if (!section) return;
 
-  const BASE = "assets/live-reports/";
+  // live.html and the Reddit app (reddit/live-reports) mount the same section and may read the data elsewhere.
+  const BASE = section.dataset.liveBase || "assets/live-reports/";
   const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
   const SHORT = { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Security", Accessibility: "A11y", Performance: "Speed" };
   const HUES = { government: 186, health: 160, media: 18, banking: 42, fintech: 280, transit: 140, opensource: 205, devdocs: 225, science: 255, highered: 330, education: 300, humanitarian: 0, international: 196, culture: 32, knowledge: 172, retail: 50, telecom: 268, energy: 58, travel: 120, airline: 210, insurance: 152, infrastructure: 24, standards: 240, sports: 100, apps: 12, rights: 350, environment: 88 };
