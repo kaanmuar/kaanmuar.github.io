@@ -137,9 +137,9 @@ test("replyId: the same mail gets the same row id through ImprovMX and SendGrid,
   assert.equal(replies.replyId(""), "");
 });
 
-test("wiring: qa@ mail that is not a code goes to the owner-replies flow, matched notices only", () => {
+test("wiring: qa@ and face-address mail that is not a code goes to the owner-replies flow, matched notices only", () => {
   const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
-  assert.match(index, /!row && mail\.alias === "qa" && !mailInbound\.fromUs\(mail\.fromEmail\)\) \{\n\s+const out = await takeOwnerReply\(mailInbound\.replyMail\(req\.body\), mailInbound\.replyAuth\(req\.body\.headers\), true\)/);
+  assert.match(index, /!row && \(mail\.alias === "qa" \|\| mailFace\.isFaceAlias\(mail\.alias\)\) && !mailInbound\.fromUs\(mail\.fromEmail\)\) \{\n\s+const out = await takeOwnerReply\(mailInbound\.replyMail\(req\.body\), mailInbound\.replyAuth\(req\.body\.headers\), true\)/);
   assert.match(index, /if \(matchedOnly && ownerReplies\.OPERATORS\.includes\(reply\.from\)\)/);
   assert.match(index, /if \(matchedOnly && !ref && !link\) return/);
   assert.match(index, /const id = ownerReplies\.replyId\(mail\.messageId\) \|\| crypto\.randomBytes/);

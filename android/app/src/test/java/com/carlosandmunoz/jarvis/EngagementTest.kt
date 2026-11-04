@@ -46,6 +46,41 @@ class EngagementTest {
         assertEquals("Lighthouse 13 is out", Engagement.headline(json("""{"title":"Lighthouse 13 is out","text":"https://x.dev long body"}""")))
     }
 
+    @Test fun doneCountsTheCarriedOutLikesRepostsAndFollows() {
+        val t = json("""{"like_done":4,"repost_done":1,"follow_done":2,"like_dry":9,"act_failed":3}""")
+        assertEquals(7.0, Engagement.carried(t, "done"), 0.0)
+        assertEquals(9.0, Engagement.carried(t, "dry"), 0.0)
+        assertEquals(0.0, Engagement.carried(null, "done"), 0.0)
+    }
+
+    @Test fun anAccountRowSaysAsWhomTheBotFlagAndTheLastError() {
+        assertEquals("connected as qalaburlreview · bot flag on", Engagement.account(json("""{"connected":true,"account":"qalaburlreview","bot":true,"error":""}""")))
+        assertEquals("not connected", Engagement.account(json("""{"connected":false,"account":""}""")))
+        assertEquals("connected as QA-lab URL Review · last error: 401", Engagement.account(json("""{"connected":true,"account":"QA-lab URL Review","error":"401"}""")))
+    }
+
+    @Test fun onlyAnAppPasswordEnablesConnectBluesky() {
+        assertTrue(Engagement.APP_PASSWORD.matches("abcd-efgh-ijkl-mnop"))
+        assertTrue(!Engagement.APP_PASSWORD.matches("my real password"))
+    }
+
+    @Test fun theFilterKeepsReportRepliesOrTheOthers() {
+        val invite = json("""{"campaign":"report-reply","report":{"host":"upb.edu.co","name":"UPB","score":64,"shown":false,"match":"domain","format":"card"}}""")
+        val field = json("""{"campaign":""}""")
+        assertTrue(Engagement.isReport(invite) && !Engagement.isReport(field))
+        assertEquals(listOf(invite, field), listOf(invite, field).filter { Engagement.keep(it, "all") })
+        assertEquals(listOf(invite), listOf(invite, field).filter { Engagement.keep(it, "report") })
+        assertEquals(listOf(field), listOf(invite, field).filter { Engagement.keep(it, "field") })
+    }
+
+    @Test fun aReportReplySaysWhichReportItInvitesTo() {
+        assertEquals("Invites to the UPB report (upb.edu.co) · scores 64 (not named in the reply) · found by domain · card",
+            Engagement.reportLine(json("""{"campaign":"report-reply","report":{"host":"upb.edu.co","name":"UPB","score":64,"shown":false,"match":"domain","format":"card"}}""")))
+        assertEquals("Invites to the acme.io report (acme.io) · scores 91 · found by name · link",
+            Engagement.reportLine(json("""{"campaign":"report-reply","report":{"host":"acme.io","name":"","score":91,"shown":true,"match":"name","format":"link"}}""")))
+        assertEquals(null, Engagement.reportLine(json("""{"campaign":"","report":null}""")))
+    }
+
     @Test fun engagementIsAProductsChipSoItsPushesOpenIt() {
         assertTrue(CHIPS.any { it.first == "engagement" })
     }

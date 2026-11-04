@@ -1,0 +1,62 @@
+Text,Image URL,Tags,Posting Time
+"portal.upb.edu.co: 72. The gap: form labels.
+
+Give every input a visible label tied to it with for and id.
+
+carlosandmunoz.com/qa-review?live=u-portal-upb-edu-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-portal-upb-edu-co
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/01-u-portal-upb-edu-co.jpg","","2026-11-04 08:35"
+"iteso.mx: 47. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+carlosandmunoz.com/qa-review?live=u-iteso-mx&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-iteso-mx
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/02-u-iteso-mx.jpg","","2026-11-05 13:25"
+"sp.senai.br: 60. The gap: link names.
+
+Give every link text that says where it goes. An icon alone needs an aria-label.
+
+carlosandmunoz.com/qa-review?live=u-sp-senai-br&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-sp-senai-br
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/03-u-sp-senai-br.jpg","","2026-11-06 11:35"
+"platzi.com: 66. The gap: list markup.
+
+Keep only li elements directly inside ul and ol.
+
+https://carlosandmunoz.com/qa-review.html?live=u-platzi-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-platzi-com
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/04-u-platzi-com.jpg","","2026-11-07 09:50"
+"hneu.edu.ua: 52. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap…
+
+carlosandmunoz.com/qa-review?live=u-hneu-edu-ua&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-hneu-edu-ua","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/05-u-hneu-edu-ua.jpg","","2026-11-08 16:55"
+"vitibet.com: 59. The gap: alt text.
+
+Describe what each image shows in its alt attribute, and use alt="""" on purely decorative ones.
+
+carlosandmunoz.com/qa-review?live=u-vitibet-com&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-vitibet-com
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/06-u-vitibet-com.jpg","","2026-11-09 16:05"
+"webjuice.ie: 92. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+carlosandmunoz.com/qa-review?live=u-webjuice-ie&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-webjuice-ie
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/07-u-webjuice-ie.jpg","","2026-11-10 15:30"
+"daniladigital.com.ar: 70. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers…
+
+carlosandmunoz.com/qa-review?live=u-daniladigital-com-ar&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-daniladigital-com-ar","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/08-u-daniladigital-com-ar.jpg","","2026-11-11 11:15"
+"udg.mx: 75. The gap: meta descriptions.
+
+Write a description of about 150 characters for each key page, so you choose the snippet, not the crawler.
+
+carlosandmunoz.com/qa-review?live=u-udg-mx&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-udg-mx","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/09-u-udg-mx.jpg","","2026-11-12 14:10"
+"3 natural competitors. capetinhas.blog leads: 81.
+
+Benchmark against the sites your visitors compare you with, not…
+
+carlosandmunoz.com/qa-review?live=u-kabinedasnovinhas-com&utm_source=x&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-kabinedasnovinhas-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/10-vs-kabinedasnovinhas-com.jpg","","2026-11-13 14:25"
+"2 natural competitors. vivastreet.ie leads: 74.
+
+Benchmark against the sites your visitors compare you with, not against a perfect…
+
+carlosandmunoz.com/qa-review?live=u-vivastreet-ie&utm_source=x&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-vivastreet-ie","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/11-vs-vivastreet-ie.jpg","","2026-11-14 16:10"

@@ -1,24 +1,19 @@
 #!/usr/bin/env bash
-# Commits the Buffer, Facebook Page, and Bluesky and Mastodon ledgers (scripts/social-ledger.js) straight to main
+# Commits the Buffer, Facebook Page, Bluesky and Mastodon, and dev.to ledgers (scripts/social-ledger.js) straight to main
 # with [skip ci].
 #   scripts/commit-social-ledgers.sh "<what ran>"
-# The Live Reports, Facebook Page and Bluesky and Mastodon workflows write them, so a push that loses the race is retried on
+# The Live Reports, Facebook Page, Bluesky and Mastodon, and dev.to workflows write them, so a push that loses the race is retried on
 # the new main with each ledger merged entry by entry, not overwritten.
-# The social hub pages show chips read from the ledgers, so they are rebuilt and committed with them, or every PR
-# fails the hub check in CI.
+# The social hub pages show chips read from the ledgers, so they are rebuilt and committed with them. Pull requests
+# leave those generated files to these commits and the regen commits (#2242).
 # The body is in functions so bash has read all of it before git reset rewrites this file.
 set -euo pipefail
 
 stage() {
-	# build-social-hub.js inlines critical CSS with packages a bare runner does not have (#1089).
-	if [ -n "${GITHUB_ACTIONS:-}" ] && [ -f scripts/build-critical-css.js ] && ! node -e 'require("postcss")' 2>/dev/null; then
-		local deps
-		read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
-		npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}" >/dev/null
-		export NODE_PATH="$RUNNER_TEMP/critical-css/node_modules${NODE_PATH:+:$NODE_PATH}"
-	fi
-	node scripts/build-social-hub.js --offline
-	git add "${files[@]}" assets/social qa-review-social*.html sitemap-social.xml
+	scripts/social-hub-build.sh
+	# The commit skips CI, so a hub page in the wrong language would fail every PR after it.
+	scripts/social-hub/guard-hub-lang.sh
+	git add "${files[@]}" assets/social qa-review-social*.html sitemap-social.xml social
 }
 
 main() {
@@ -27,7 +22,7 @@ main() {
 		echo "Runs only in GitHub Actions: it commits to main as the bot, fetches main with --depth=1, which makes a local clone shallow, and resets this checkout to it." >&2
 		return 1
 	fi
-	for file in assets/social/buffer.json assets/social/facebook.json assets/social/open-social.json; do
+	for file in assets/social/buffer.json assets/social/facebook.json assets/social/open-social.json assets/social/devto.json; do
 		[ -f "$file" ] && files+=("$file")
 	done
 	[ ${#files[@]} -gt 0 ] || {

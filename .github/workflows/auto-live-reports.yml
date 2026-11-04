@@ -36,6 +36,9 @@ concurrency:
   group: auto-live-reports
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   gate:
     runs-on: ubuntu-latest
@@ -68,6 +71,7 @@ jobs:
     # A 40 s scene clip draws about 1,200 frames; a 16-review day renders for about an hour.
     timeout-minutes: 180
     permissions:
+      actions: write
       contents: write
       pages: write
     env:
@@ -87,7 +91,7 @@ jobs:
         with:
           ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
 
@@ -155,6 +159,7 @@ jobs:
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
           FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+          FACEBOOK_PAGE_TOKEN_ES: ${{ secrets.FACEBOOK_PAGE_TOKEN_ES }}
         run: node scripts/social-metrics.js | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Commit and publish the site
@@ -177,6 +182,8 @@ jobs:
           if node scripts/social-hub/translate-captions.js --picks --machine; then node scripts/build-social-hub.js --offline
           else echo "::warning::Google's translator refused; new picks keep the languages the phrasebooks cover."; fi
           git add assets/social qa-review-social*.html sitemap-social.xml social scripts/social-hub/phrases
+          # This commit skips CI, so a hub page in the wrong language would fail every PR after it.
+          scripts/social-hub/guard-hub-lang.sh
           if git diff --cached --quiet; then echo "pushed=0" >> "$GITHUB_OUTPUT"; exit 0; fi
           git commit -q -m "Live reports: ${{ steps.reports.outputs.cards }} reviews, ${{ steps.reports.outputs.social }} posts ($BATCH) [skip ci]"
           # PRs merged during the render move main. The checkout is shallow, so the data commit is
@@ -196,9 +203,10 @@ jobs:
             python3 scripts/build-llms-full.py
             node scripts/build-social-hub.js --offline
             git add llms.txt llms-full.txt qa-review*.html assets/social sitemap-social.xml social
+            scripts/social-hub/guard-hub-lang.sh HEAD~1
             git diff --cached --quiet || git commit -q --amend --no-edit
           done
-          gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true
+          gh workflow run pages.yml --ref main -R "${{ github.repository }}" || echo "::warning::Pages was not dispatched; the next push to main deploys this batch."
           echo "pushed=1" >> "$GITHUB_OUTPUT"
 
       - name: Release the clips
@@ -207,6 +215,12 @@ jobs:
           BATCH="${{ steps.reports.outputs.batch }}"
           gh release create "$BATCH" media/social-posts/$BATCH/clip/*.mp4 --target main --latest=false \
             --title "Requested reviews $BATCH" --notes "TikTok and YouTube clips for the $BATCH Live Reports. Posted through Buffer."
+
+      - name: Wait for a hub rebuild or Pages deploy on main
+        if: ${{ !inputs.dry_run && steps.commit.outputs.pushed == '1' && steps.reports.outputs.social != '0' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/hub-wait.sh
 
       - name: Queue the posts in Buffer
         if: ${{ !inputs.dry_run && steps.commit.outputs.pushed == '1' && steps.reports.outputs.social != '0' }}
@@ -226,6 +240,8 @@ jobs:
         env:
           FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
           FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+          FACEBOOK_PAGE_ID_ES: ${{ secrets.FACEBOOK_PAGE_ID_ES }}
+          FACEBOOK_PAGE_TOKEN_ES: ${{ secrets.FACEBOOK_PAGE_TOKEN_ES }}
         run: |
           if [ -z "$FACEBOOK_PAGE_ID" ] || [ -z "$FACEBOOK_PAGE_TOKEN" ]; then
             echo "::warning::Add the FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN secrets. Batch ${{ steps.reports.outputs.batch }} was not posted to Facebook; run scripts/facebook-queue.js --batch ${{ steps.reports.outputs.batch }} once they are set."

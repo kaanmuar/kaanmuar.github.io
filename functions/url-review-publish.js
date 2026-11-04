@@ -34,8 +34,10 @@ function heldReason(record, unlisted) {
   if (!score || typeof score.overall !== "number" || !score.areas) return "no-score";
   if ((report.insights.findings || []).some((f) => f.key === "sec-safebrowsing" && f.verdict === "fail")) return "safe-browsing-flagged";
   const limits = report.limits || {};
-  if (limits.timedOut) return "timed-out";
-  if ((limits.pagesRead || (report.pages || []).length) < MIN_PAGES) return "too-few-pages";
+  const read = limits.pagesRead || (report.pages || []).length;
+  // Reviews before #2016 set timedOut when PageSpeed ran past the deadline, even with every page read.
+  if (limits.timedOut && !(limits.maxPages && read >= limits.maxPages)) return "timed-out";
+  if (read < MIN_PAGES) return "too-few-pages";
   const start = (report.pages || [])[0] || {};
   if (start.challenge || start.error || !(start.status >= 200 && start.status < 300)) return "start-page-blocked";
   const shell = (report.insights.findings || []).find((f) => f.key === "geo-js-only" && f.verdict === "fail");

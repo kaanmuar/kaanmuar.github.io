@@ -7,9 +7,11 @@
  * runs when CHROME_PATH is set, and PageSpeed Insights when PAGESPEED_KEY is
  * set in the environment or in functions/.secret.local.
  *
- *   node scripts/review-snapshot.js --sample https://carlosandmunoz.com/
+ *   CHROME_PATH=... node scripts/review-snapshot.js --sample https://automationexercise.com/
  *
- * writes the public sample that qa-review.html opens before the disclaimers.
+ * writes the public sample that qa-review.html opens before the disclaimers. It
+ * needs the browser pass (CHROME_PATH and functions/node_modules), and the page
+ * copy names the sample's host in every language (scripts/review_langs_copy.py).
  */
 const fs = require("fs");
 const path = require("path");
@@ -54,6 +56,10 @@ async function main() {
       webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined,
       places: process.env.PLACES_KEY ? (request) => core.placesSearch(request, process.env.PLACES_KEY) : undefined
     });
+    if (!report.browser || !report.browser.ok) {
+      console.error("The sample needs the browser pass (" + ((report.browser && report.browser.error) || "set CHROME_PATH") + "). Nothing was written.");
+      process.exit(1);
+    }
     fs.writeFileSync(SAMPLE, JSON.stringify({ frameworks: core.FRAMEWORKS, report }) + "\n");
     console.log(summary("sample", report) + " -> " + path.relative(ROOT, SAMPLE));
     return;

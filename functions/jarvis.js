@@ -33,6 +33,7 @@ const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const MODEL = "gemini-flash-latest";
 const core = require("./jarvis-core");
 const actions = require("./jarvis-actions");
+const dayRows = require("./jarvis-days");
 const ADMIN_URL = ORIGIN + "/admin.html#stats/overview/1";
 
 function rangeDays(value) {
@@ -75,7 +76,8 @@ function causeLabel(row) {
 // --- health: server-only Firestore collections -------------------------------------------------------------
 
 async function health(db, { days, now }) {
-  const since = new Date(now - rangeDays(days) * DAY).toISOString();
+  const from = now - rangeDays(days) * DAY;
+  const since = new Date(from).toISOString();
   const read = async (name, field) => {
     try {
       const snap = await db.collection(name).where(field, ">=", since).limit(2000).get();
@@ -84,16 +86,13 @@ async function health(db, { days, now }) {
       return [];
     }
   };
-  const [runs, failures, reruns, alerts, notices, rivals, coupons, captures] = await Promise.all([
+  const [runs, logged, reruns, coupons] = await Promise.all([
     db.collection("ops_runs").get().then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()))).catch(() => []),
-    read("url_review_failures", "at"),
+    dayRows.rows(db, ["failures", "alerts", "notices", "rivals", "captures"], { from, now }).catch(() => ({})),
     read("url_review_reruns", "at"),
-    read("url_review_alerts", "at"),
-    read("url_review_owner_notices", "createdAt"),
-    read("url_review_rivals", "createdAt"),
-    read("url_review_coupons", "createdAt"),
-    read("url_review_captures", "at")
+    read("url_review_coupons", "createdAt")
   ]);
+  const { failures = [], alerts = [], notices = [], rivals = [], captures = [] } = logged;
   const causes = {}, failedHosts = {}, rerunStatus = {}, alertKinds = {}, noticeStatus = {}, captureKinds = {};
   failures.forEach((row) => { count(causes, causeLabel(row)); count(failedHosts, row.host); });
   reruns.forEach((row) => count(rerunStatus, row.status));
@@ -200,6 +199,48 @@ async function rerunCi(fetchImpl, token, workflow) {
   if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); the GitHub token needs Actions: write.");
   if (!res.ok) throw new Error("GitHub " + res.status + " on the re-run.");
   return { workflow: name, run: run.id, url: run.html_url };
+}
+
+// #1977: the newest finished run per workflow and branch in the last day, kept when it failed.
+async function failedRuns(fetchImpl, token, { now }) {
+  if (!token) return [];
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  const runs = await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs?status=completed&per_page=100&created=" + encodeURIComponent(">=" + isoDay(now - DAY)), { headers, signal: AbortSignal.timeout(15000) }), "GitHub");
+  const newest = new Map();
+  (runs.workflow_runs || []).forEach((r) => {
+    const key = r.name + " " + r.head_branch;
+    if (r.conclusion !== "cancelled" && !newest.has(key)) newest.set(key, r);
+  });
+  return Array.from(newest.values()).filter((r) => ["failure", "timed_out"].includes(r.conclusion))
+    .map((r) => ({ id: r.id, name: r.name, branch: r.head_branch, attempt: r.run_attempt || 1, url: r.html_url, sha: r.head_sha || "", event: r.event || "", path: r.path || "" }));
+}
+
+async function mainSha(fetchImpl, token) {
+  if (!token) return "";
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  return (await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/commits/main", { headers, signal: AbortSignal.timeout(15000) }), "GitHub")).sha || "";
+}
+
+// A run that failed on an old commit fails again when re-run, so a workflow main has moved past starts afresh on main.
+async function dispatchMain(fetchImpl, token, workflowPath) {
+  if (!token) throw new Error("No GitHub token is set.");
+  const file = String(workflowPath || "").split("/").pop();
+  if (!/^[\w.-]+\.ya?ml$/.test(file)) throw new Error("No workflow file to start: " + String(workflowPath).slice(0, 80));
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json" };
+  const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/workflows/" + file + "/dispatches", { method: "POST", headers, body: JSON.stringify({ ref: "main" }), signal: AbortSignal.timeout(15000) });
+  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused to start " + file + " (" + res.status + "); the GitHub token needs Actions: write.");
+  if (res.status === 422) throw new Error(file + " cannot be started by hand (it has no workflow_dispatch).");
+  if (!res.ok) throw new Error("GitHub " + res.status + " starting " + file + ".");
+  return { workflow: file };
+}
+
+async function rerunRun(fetchImpl, token, id) {
+  if (!token) throw new Error("No GitHub token is set.");
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs/" + Number(id) + "/rerun-failed-jobs", { method: "POST", headers, signal: AbortSignal.timeout(15000) });
+  if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); the GitHub token needs Actions: write.");
+  if (!res.ok) throw new Error("GitHub " + res.status + " on the re-run.");
+  return { run: Number(id) };
 }
 
 // --- briefing rows (#1695) ------------------------------------------------------------------------------------
@@ -395,6 +436,25 @@ async function uptime(fetchImpl, { now, tls }) {
   return { ok: true, pages, tlsDaysLeft: daysLeft };
 }
 
+// The hourly watch counts each page check per Bogota day in jarvis_uptime (#2139), for the 90-day strip.
+function uptimeTally(up, now) {
+  const pages = (up && up.ok !== false && Array.isArray(up.pages)) ? up.pages : [];
+  return { date: core.zoneParts(new Date(now)).day, checks: pages.length, up: pages.filter((p) => p.ok).length };
+}
+
+async function uptimeLog(db, up, now, increment) {
+  const t = uptimeTally(up, now);
+  if (!t.checks) return t;
+  await db.collection("jarvis_uptime").doc(t.date).set({ date: t.date, checks: increment(t.checks), up: increment(t.up), at: new Date(now).toISOString() }, { merge: true });
+  return t;
+}
+
+async function uptimeHistory(db, now) {
+  const from = core.zoneParts(new Date(now - 90 * DAY)).day;
+  const snap = await db.collection("jarvis_uptime").where("date", ">=", from).limit(120).get();
+  return snap.docs.map((d) => d.data()).map((r) => ({ date: r.date, checks: Number(r.checks) || 0, up: Number(r.up) || 0 })).sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
 // --- brief / ask: Gemini --------------------------------------------------------------------------------------
 
 const VOICE = "You are Jarvis, the analyst for Carlos's sites: the CV (carlosandmunoz.com), QA Studio (a test-sprint simulator), "
@@ -475,7 +535,7 @@ async function ask(fetchImpl, env, question, snapshot, opts) {
   const code = langCode(o.lang);
   const how = o.spoken
     ? "Answer in at most four short spoken sentences: plain text, no markdown, no lists, numbers said the way a person would say them."
-    : "Answer in at most six sentences from these numbers.";
+    : core.askHint(o.device) || "Answer in at most six sentences from these numbers.";
   const language = code === "en" ? "" : " Answer in " + languageName(code) + ".";
   const text = await gemini(fetchImpl, env, "Question: " + q + "\n\n" + how + language + " If the numbers cannot answer it, say which number is missing.\n\n" + snapshotText(snapshot), 800);
   return { text, lang: code };
@@ -593,8 +653,20 @@ async function goals(db, settings, { now, sum }) {
 
 // --- daily briefing: the last 24 hours against the 24 before, with the same rules as the page --------------------
 
-// A whole review document holds the report (hundreds of KB); a week of them overran the function's 512 MB (#1579).
-const REVIEW_FIELDS = ["createdAt", "paid", "test", "priceUsd", "status", "score", "requestedUrl", "url", "frameworks", "query", "referrerHost"];
+// Pending ratings outside the range only add to the pending count: a count() probe, and a re-read when it moves.
+async function pendingRatings(db, now) {
+  const pending = db.collection("ratings").where("status", "==", "pending");
+  const ref = db.collection("jarvis_cache").doc("pending-ratings");
+  const [total, saved] = await Promise.all([
+    pending.count().get().then((snap) => snap.data().count),
+    ref.get().then((snap) => (snap.exists ? snap.data() : null)).catch(() => null)
+  ]);
+  if (saved && saved.total === total && now - Date.parse(saved.at) < 6 * 60 * MINUTE) return saved.kept;
+  const snap = await pending.select("email").get();
+  const kept = snap.docs.filter((doc) => !core.isTestEmail((doc.data() || {}).email)).length;
+  await ref.set({ total, kept, at: new Date(now).toISOString() }).catch(() => null);
+  return kept;
+}
 
 async function dailyProducts(db, { now, days = 1 }) {
   const end = new Date(now);
@@ -602,25 +674,25 @@ async function dailyProducts(db, { now, days = 1 }) {
   const priorStart = new Date(now - 2 * days * DAY);
   const window = { start, end, days, prior: { start: priorStart, end: start } };
   const rows = async (q) => (await q.limit(20000).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
-  const since = (name, iso) => db.collection(name).where("createdAt", ">=", iso ? priorStart.toISOString() : priorStart);
-  const [events, opens, reviews, messages, ratings, pending, hubSnap] = await Promise.all([
-    rows(since("site_events")), rows(since("url_review_opens")), rows(since("url_reviews", true).select(...REVIEW_FIELDS)),
+  const since = (name) => db.collection(name).where("createdAt", ">=", priorStart);
+  const [{ events, opens, reviews }, messages, ratings, pending, hubSnap] = await Promise.all([
+    dayRows.rows(db, ["events", "opens", "reviews"], { from: priorStart.getTime(), now }),
     rows(since("messages")), rows(since("ratings")),
-    rows(db.collection("ratings").where("status", "==", "pending")),
+    pendingRatings(db, now),
     db.collection("socialHubStats").doc("latest").get().catch(() => null)
   ]);
   const inside = (row) => { const when = core.toDate(row.createdAt); return !!when && when >= start; };
   const now1 = events.filter(inside);
   const was = events.filter((row) => !inside(row));
-  const seen = new Set(ratings.map((row) => row.id));
-  const allRatings = ratings.concat(pending.filter((row) => !seen.has(row.id)));
+  const keep = (email) => !core.isTestEmail(email);
+  const pendingCount = pending + ratings.filter((row) => !row.status && keep(row.email)).length;
   const products = {
-    inbox: core.summarizeInbox(messages, allRatings, window, window.prior, (email) => !core.isTestEmail(email)),
+    inbox: core.summarizeInbox(messages, ratings, window, window.prior, keep, pendingCount),
     cv: core.summarizeSite("cv", now1, was, window),
     studio: core.summarizeSite("studio", now1, was, window),
     lab: core.summarizeSite("lab", now1, was, window),
     review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window),
-    hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window)
+    hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window, was)
   };
   return { window, products, outreachVisits: core.outreachVisits(now1) };
 }
@@ -651,14 +723,51 @@ function askSnapshot(snap, days) {
       money: ok(e.money) ? { revenue: e.money.revenue, prior: e.money.prior, refundsUsd: e.money.refundsUsd, disputesOpen: e.money.paypal && e.money.paypal.disputesOpen } : null,
       email: ok(e.email) ? { totals: e.email.totals, rates: e.email.rates } : null,
       mailbox: ok(e.mailbox) ? { totals: e.mailbox.totals, smtp: e.mailbox.smtp, canary: e.mailbox.canary && e.mailbox.canary.state, problems: (e.mailbox.problems || []).slice(0, 5).map((m) => m.alias + "@ " + m.outcome + ": " + m.reason) } : null,
+      addresses: ok(e.addresses) ? { counts: e.addresses.counts, issues: (e.addresses.issues || []).slice(0, 8).map((i) => i.text + (i.by === "jarvis" ? " (Jarvis fixes it)" : "")) } : null,
       search: ok(e.search) ? { brave: e.search.brave && e.search.brave.queries, console: e.search.console && e.search.console.ok ? { clicks: e.search.console.clicks, impressions: e.search.console.impressions, position: e.search.console.position, queries: (e.search.console.queries || []).slice(0, 8) } : null } : null,
       social: ok(e.social) ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views } : null,
       safety: ok(e.safety) && e.safety.checks ? e.safety.checks.map((c) => c.level + ": " + c.name + " " + c.detail) : null,
       platform: ok(e.platform) ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
       outreach: outreachAsk(e.outreach, s.outreachVisits),
+      engagement: engagementAsk(e.engagement),
       signedInPeople: ok(e.people) ? e.people.totals : null,
+      googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
+      github: githubAsk(e["github-work"]),
       waiting: core.connections(e).filter((c) => c.needs.length).map((c) => c.name + ": " + c.needs.join(" "))
     }
+  };
+}
+
+// The github-work source (#2526) in a few hundred tokens, so Ask can answer GitHub questions; retro reads it too.
+function githubAsk(g) {
+  if (!g || g.ok === false) return null;
+  const ci = g.ci || {};
+  const prs = g.prs || {};
+  const sec = g.security || {};
+  const pick = (o, keys) => (o ? keys.reduce((m, k) => { if (o[k] !== undefined) m[k] = o[k]; return m; }, {}) : null);
+  return {
+    score: g.score && { overall: g.score.overall, areas: Object.keys(g.score.areas || {}).reduce((m, k) => { m[k] = g.score.areas[k].grade + " " + g.score.areas[k].value; return m; }, {}) },
+    dora: g.dora, streaks: pick(g.streaks, ["greenMainDays", "mergeDays", "xp", "level"]),
+    ci: pick(ci, ["passRate", "runs", "failed", "minutes", "queueMedS", "durMedS"]),
+    flaky: ci.flaky && { pct: ci.flaky.pct, workflows: (ci.flaky.workflows || []).slice(0, 5) },
+    failing: (ci.failing || []).slice(0, 5).map((r) => ({ workflow: r.name, branch: r.branch, at: r.at, attempt: r.attempt, cause: r.diag ? r.diag.cause : null, category: r.diag ? r.diag.category : null })),
+    prs: pick(prs, ["open", "draft", "mergeReady", "conflicts", "behind", "red", "stale", "orphan", "leadMedH", "leadP90H", "merged"]),
+    board: g.board && { columns: (g.board.columns || []).map((c) => c.name + " " + c.count), wip: g.board.wip, wipLimit: g.board.wipLimit, cycleMedD: g.board.cycleMedD, drift: (g.board.drift || []).length },
+    issues: pick(g.issues, ["open", "openBugs", "opened", "closed"]),
+    security: { dependabot: pick(sec.dependabot, ["open", "critical", "high"]), codeScanning: pick(sec.codeScanning, ["open"]), secrets: pick(sec.secrets, ["open"]) },
+    budget: g.budget && g.budget.kaanmuar ? { graphql: g.budget.kaanmuar.graphql, core: g.budget.kaanmuar.core } : null,
+    branches: pick(g.branches, ["total", "stale"]), needs: (g.needs || []).slice(0, 5), retro: g.ai && g.ai.retro ? String(g.ai.retro.text || "").slice(0, 600) : null
+  };
+}
+
+// Same shape as the page's snapshot().external.engagement.
+function engagementAsk(g) {
+  if (!g || !g.ok || !g.report) return null;
+  return {
+    paused: g.paused, live: g.live, accounts: (g.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })),
+    totals: g.report.totals, approvalRate: g.report.approvalRate, topics: g.report.topics, tags: (g.report.tags || []).slice(0, 10), networks: g.report.networks,
+    waiting: (g.waiting || []).length, topPosts: (g.posts || []).slice(0, 5).map((d) => d.network + ": " + (d.title || String(d.text || "").slice(0, 100)) + " (score " + d.score + ")"),
+    reportReplies: Object.assign({ waiting: (g.waiting || []).filter((d) => d.campaign === "report-reply").length }, g.report.invites)
   };
 }
 
@@ -674,7 +783,8 @@ function outreachAsk(ou, visits) {
     instantly: mail ? { campaigns: mail.status, sent: mail.sent, rates: mail.rates, replies: mail.replies, interested: mail.interested, meetings: mail.meetings, warmup: (mail.accounts || []).map((a) => a.score) } : null,
     plan: plan ? { day: plan.day, length: plan.length, phase: plan.phase, next: plan.next, weekly: plan.weekly, targets: plan.targets } : null,
     visits: visits ? visits.total : 0,
-    links: links ? { live: links.live, visits: links.visits, reviews: links.reviews, paid: links.paid, usd: links.usd, byCampaign: links.byCampaign, topProspects: (links.prospects || []).slice(0, 10) } : null
+    links: links ? { live: links.live, visits: links.visits, reviews: links.reviews, paid: links.paid, usd: links.usd, byCampaign: links.byCampaign, topProspects: (links.prospects || []).slice(0, 10),
+      reportReplies: links.social ? { visits: links.social.visits, reviews: links.social.reviews, paid: links.social.paid, usd: links.social.usd, networks: links.social.networks, topPosts: (links.social.posts || []).slice(0, 10) } : null } : null
   };
 }
 
@@ -717,5 +827,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, briefItems, decideRatings, ga4, cloudflare, speed, uptime, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };

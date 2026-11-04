@@ -25,7 +25,9 @@ async function post(route, body) {
   for (let attempt = 1; ; attempt++) {
     const res = await fetch(`${URL_}${route}`, { method: "POST", headers: { authorization: `Bearer ${TOKEN}`, "content-type": "application/json" }, body: JSON.stringify(body) });
     if (res.ok) return res.json();
-    if (attempt >= 3) throw new Error(`${route} ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    const text = (await res.text()).slice(0, 200);
+    if (res.status === 429) throw Object.assign(new Error(`${route} 429: ${text}`), { quota: true });
+    if (attempt >= 3) throw new Error(`${route} ${res.status}: ${text}`);
     await new Promise((r) => setTimeout(r, 2000 * attempt));
   }
 }
@@ -120,4 +122,9 @@ async function main() {
   await send(items);
 }
 
-main().catch((e) => { console.error(e.message); process.exit(1); });
+// Workers AI's daily allocation running out is not a failure: the nightly run re-indexes the day's changed files after the reset.
+main().catch((e) => {
+  if (e.quota) { console.log(`::warning::Pre-flight index skipped, ${e.message}`); return; }
+  console.error(e.message);
+  process.exit(1);
+});

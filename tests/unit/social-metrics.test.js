@@ -33,17 +33,40 @@ test("Buffer is asked in aliased chunks, and a chunk with a deleted post is aske
   await assert.rejects(metrics.bufferNumbers([{ post: "a/1", channel: "x", id: "abc" }], async () => { throw spent; }), /limit/);
 });
 
-test("Facebook takes reactions and comments from the post, and views from whichever insight the Page still answers", async () => {
+const graphReply = (json) => ({ ok: !json.error, status: json.error ? 400 : 200, json: async () => json });
+const lifetime = (values) => ({ data: Object.entries(values).map(([name, value]) => ({ name, period: "lifetime", values: [{ value }] })) });
+
+test("Facebook takes reactions and comments from the post, and views from its lifetime insights", async () => {
   const urls = [];
   const request = async (url) => {
     urls.push(url);
-    const json = url.includes("/insights?") ? (url.includes("metric=post_media_view") ? { error: { message: "invalid metric" } } : url.includes("metric=post_impressions") ? { data: [{ values: [{ value: 410 }] }] } : { data: [] })
-      : { reactions: { summary: { total_count: 7 } }, comments: { summary: { total_count: 1 } } };
-    return { ok: !json.error, status: json.error ? 400 : 200, json: async () => json };
+    return graphReply(url.includes("/insights?") ? lifetime({ post_media_view: 410, post_video_views: 0, post_reactions_by_type_total: { like: 3 } })
+      : { reactions: { summary: { total_count: 7 } }, comments: { summary: { total_count: 1 } } });
   };
   const found = await metrics.facebookNumbers([{ post: "a/1", channel: "facebook", id: "p_1" }], "tok", request);
   assert.deepEqual(found[0].numbers, { impressions: 410, likes: 7, comments: 1 });
   assert.ok(urls.every((url) => url.includes("access_token=tok")));
+  assert.ok(urls.some((url) => url.includes("period=lifetime")));
+});
+
+test("a post whose reactions are refused still gets its views, and reactions from the insights", async () => {
+  const request = async (url) => graphReply(url.includes("/insights?") ? lifetime({ post_media_view: 52, post_reactions_by_type_total: { like: 2, love: 1 } })
+    : { error: { message: "(#10) This endpoint requires the 'pages_read_user_content' permission" } });
+  const report = {};
+  const found = await metrics.facebookNumbers([{ post: "a/1", channel: "facebook", id: "p_1" }], "tok", request, report);
+  assert.deepEqual(found[0].numbers, { impressions: 52, likes: 3 });
+  assert.deepEqual([report.asked, report.answered, report.insights], [1, 1, 1]);
+  assert.match(report.error, /pages_read_user_content/);
+});
+
+test("a Page that refuses a post reports how many it answered and had insights, and its first refusal", async () => {
+  const request = async (url) => graphReply(url.includes("/gone") ? { error: { message: "(#100) Object does not exist" } } : url.includes("/insights?") ? { data: [] } : { reactions: { summary: { total_count: 2 } } });
+  const report = {};
+  const found = await metrics.facebookNumbers([{ post: "a/1", channel: "facebook", id: "gone" }, { post: "a/2", channel: "facebook", id: "p_2" }], "tok", request, report);
+  assert.deepEqual(found.map((entry) => entry.post), ["a/2"]);
+  assert.deepEqual([report.asked, report.answered, report.insights], [2, 1, 0]);
+  assert.match(report.error, /Object does not exist/);
+  assert.deepEqual(metrics.merge({ posts: {} }, [], "t", { "Facebook Page": report }).pages, { "Facebook Page": report });
 });
 
 test("fresh numbers replace a network's old ones and leave networks not asked this run alone", () => {

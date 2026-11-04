@@ -31,10 +31,33 @@ class MarketingTest {
         assertNull(Marketing.openWeek(emptyList(), null))
     }
 
+    @Test fun onlyUploadedAndDroppedLeadsCountAsDone() {
+        assertTrue(Marketing.leadDone(json("""{"uploaded":"2026-10-26"}""")))
+        assertTrue(Marketing.leadDone(json("""{"dropped":true}""")))
+        assertFalse(Marketing.leadDone(json("""{"approved":true,"uploaded":""}""")))
+        assertFalse(Marketing.leadDone(json("""{"ask":"no contact name"}""")))
+    }
+
     @Test fun waitingOnlyCountsPendingCommandsForThatKey() {
         assertTrue(Marketing.waiting(sync, "approve", "ana@uni.edu"))
         assertFalse(Marketing.waiting(sync, "approve", "leo@uni.edu"))
         assertFalse(Marketing.waiting(sync, "upload", "W1"))
+    }
+
+    @Test fun linkedinSplitsStillToSendFromSent() {
+        val (toSend, sent) = Marketing.linkedinSplit(sync)
+        assertEquals(listOf("Leo", "Eva"), toSend.map { it["name"].toString().trim('"') })
+        assertEquals(listOf("Ana"), sent.map { it["name"].toString().trim('"') })
+        assertEquals(Pair(emptyList<JsonObject>(), emptyList<JsonObject>()), Marketing.linkedinSplit(null))
+    }
+
+    @Test fun linkedinLineReadsTheLabelledLineOfTheList() {
+        assertEquals("Hola Ana, vi el sitio.", Marketing.linkedinLine(json("""{"lines":["Profile: https://www.linkedin.com/in/ana","Note: Hola Ana, vi el sitio."]}"""), "Note"))
+        assertEquals("Hi Leo", Marketing.linkedinLine(json("""{"lines":["note:   Hi Leo"]}"""), "Note"))
+        assertEquals("", Marketing.linkedinLine(json("""{"lines":["Profile: https://www.linkedin.com/in/leo"]}"""), "Note"))
+        assertEquals("", Marketing.linkedinLine(json("""{"name":"Eva"}"""), "Note"))
+        assertEquals("", Marketing.linkedinLine(null, "Note"))
+        assertEquals("confirm the role.", Marketing.linkedinLine(json("""{"lines":["Check first: confirm the role.","Note: Hi"]}"""), "Check first"))
     }
 
     @Test fun repliesToAnswerHaveADraftAndNoAnswer() {
@@ -55,7 +78,7 @@ class MarketingTest {
             "outreach":{"ok":true,"instantly":{"ok":true,"sent":0,"replies":0,"meetings":0}}}}""")
         val card = Home.marketing(snap, now, today)
         assertEquals("First emails in 15 days", card.headline)
-        assertEquals(listOf("To upload" to "4 approved", "Replies" to "1 to answer", "LinkedIn" to "1 / 3 sent", "Sent" to "0 · 0 replies · 0 meetings", "Mac sync" to "2 min ago"),
+        assertEquals(listOf("To upload" to "4 approved", "Replies" to "1 to answer", "LinkedIn" to "1 / 3 sent", "Sent" to "0 · 0 replies · 0 meetings", "Outreach sync" to "2 min ago"),
             card.lines.map { it.label to it.value })
         assertEquals("alert", card.lines[1].level)
         val empty = Home.marketing(json("""{"external":{}}"""), now, today)

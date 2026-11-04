@@ -76,6 +76,9 @@ test("backup and ops failures go to alerts, ops only when a job failed", () => {
   const o = mailPush.opsMessage([{ job: "sweepReviews", why: "no successful run" }, { job: "buffer-sync", why: "last success 2026-10-20" }], ["sweepReviews", "buffer-sync"]);
   assert.equal(o.title, "2 scheduled jobs missed or failed");
   assert.equal(o.ref, "ops:sweepReviews,buffer-sync");
+  const mixed = mailPush.opsMessage([{ job: "sweepReviews", why: "x" }, { job: "Secret scanning", why: "1 new leaked secret" }], ["sweepReviews"], 1);
+  assert.equal(mixed.title, "2 problems need a look");
+  assert.equal(mailPush.opsMessage([{ job: "sweepReviews", why: "x" }], ["sweepReviews"], 1).title, "1 scheduled job missed or failed");
 });
 
 test("send passes ref and quiet, and a quiet push goes at normal priority", async () => {
@@ -154,6 +157,15 @@ test("the briefing push carries Done and Dismiss for the top proposal", () => {
   assert.equal(b.lines[0], "Do next: Fix the checkout copy");
   assert.deepEqual(b.actions.map((a) => a.act), ["done", "dismissed"]);
   assert.deepEqual(jarvisPush.briefingMessage({ items, aiText: "", dateLabel: "Mon" }).actions, []);
+  const job = jarvisPush.briefingMessage({ items, aiText: "", dateLabel: "Mon", top: { key: "job", title: "Fix the failing job", jobs: ["rivalSweep"], tab: "systems" } });
+  assert.deepEqual(job.actions, [{ act: "run", label: "Run rivalSweep again" }, { act: "open", label: "Open Systems", tab: "systems" }, { act: "dismissed", label: "Dismiss" }]);
+  const link = jarvisPush.briefingMessage({ items, aiText: "", dateLabel: "Mon", top: { key: "money:disputes", title: "Answer", link: "https://www.paypal.com/resolutioncenter" } });
+  assert.deepEqual(link.actions.map((a) => [a.act, a.url || ""]), [["open", "https://www.paypal.com/resolutioncenter"], ["done", ""], ["dismissed", ""]]);
+  const ps = jarvisPush.briefingMessage({ items, aiText: "", dateLabel: "Mon", top: { key: "pagespeed:pr:12", title: "Merge or close PageSpeed fixes #12", tab: "systems" } });
+  assert.deepEqual(ps.actions.map((a) => a.act), ["run", "close", "dismissed"]);
+  assert.deepEqual(mailPush.parseAct("proposal:job", "run"), { type: "proposal", id: "job", act: "run" });
+  assert.deepEqual(mailPush.parseAct("proposal:pagespeed:pr:12", "close"), { type: "proposal", id: "pagespeed:pr:12", act: "close" });
+  assert.throws(() => mailPush.parseAct("proposal:job", "open"), /no longer works/, "Open never reaches the server");
 });
 
 test("send carries the buttons as JSON, three at most", async () => {

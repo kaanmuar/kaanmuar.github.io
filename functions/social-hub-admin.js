@@ -178,7 +178,7 @@
       if (DIRECT[net] && slot && new Date(slot).getTime() <= now - DIRECT_MISSED_MS) slot = "";
       const via = net === "facebook" ? "Facebook Page" : DIRECT[net] || "Buffer";
       const time = slot ? new Date(slot).getTime() : 0;
-      const mine = (entries || []).filter((entry) => entry.channel === net);
+      const mine = (entries || []).filter((entry) => entry.channel === net && entry.result !== "moved");
       const failed = mine.filter((entry) => entry.result === "failed");
       const at = mine.map((entry) => entry.at || "").filter(Boolean).sort()[0] || slot;
       const error = failed.map((entry) => entry.error).filter(Boolean).join("; ");
@@ -235,9 +235,18 @@
     return (Array.isArray(proposals) ? proposals : []).filter((proposal) => proposal && PROPOSAL_ID.test(proposal.id || "") && !decided[proposal.id] && !shared.has(canonUrl(proposal.url)));
   }
 
-  // The hand-added item a proposal starts as. The credit line keeps the source, author and date with it.
+  // One proposals book from the field sweep's and the weekly sweep round-up's (scripts/sweep-roundup.js); a missing book counts as empty.
+  function mergeProposals(...books) {
+    const seen = new Set();
+    const proposals = books.flatMap((book) => (book && Array.isArray(book.proposals)) ? book.proposals : [])
+      .filter((p) => p && !seen.has(p.id) && seen.add(p.id));
+    const built = books.map((book) => (book && book.built) || "").sort().pop() || "";
+    return { built, proposals };
+  }
+
+  // The hand-added item a proposal starts as. The credit line keeps the source, author and date with it; our own posts have none.
   function proposalDraft(proposal, today) {
-    const credit = "Via " + [proposal.source, proposal.author && "by " + proposal.author, proposal.date].filter(Boolean).join(", ") + ".";
+    const credit = proposal.own ? "" : "Via " + [proposal.source, proposal.author && "by " + proposal.author, proposal.date].filter(Boolean).join(", ") + ".";
     return {
       title: text(proposal.title, TITLE_MAX),
       url: HTTPS.test(proposal.url || "") ? proposal.url : "",
@@ -249,5 +258,5 @@
     };
   }
 
-  return { NETS, LANGS, CHANNELS, PROPOSAL_ID, canonUrl, pendingProposals, proposalDraft, empty, clean, cleanItem, same, apply, itemPost, remote, imageOk, videoId, slug, newId, batchOf, parseCalendar, ledgerEntries, channels, statusLabel };
+  return { NETS, LANGS, CHANNELS, PROPOSAL_ID, canonUrl, pendingProposals, mergeProposals, proposalDraft, empty, clean, cleanItem, same, apply, itemPost, remote, imageOk, videoId, slug, newId, batchOf, parseCalendar, ledgerEntries, channels, statusLabel };
 });

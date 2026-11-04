@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
 // Firestore is an in-memory stub seeded from window.__data (collection name → rows), and the
-// owner-only /jarvis function is answered by page.route, so the whole Statistics tab runs offline.
+// owner-only /jarvis function is answered by page.route (its rows op from the same seed), so the whole Statistics tab runs offline.
 const FIREBASE = 'https://www.gstatic.com/firebasejs/10.14.1/';
 const STUBS = {
   'firebase-app.js': 'export function initializeApp() { return {}; }',
@@ -44,8 +44,14 @@ const EXTERNAL = {
   ga4: { ok: true, groups: [{ group: 'cv', sessions: 40, users: 30, views: 90, engagement: 55, duration: 70, priorSessions: 20, priorUsers: 15 }], countries: [{ label: 'Colombia', value: 25, prior: 10 }], sources: [], daily: [] },
   cloudflare: { ok: false, error: 'The Cloudflare token needs Zone > Analytics > Read.' },
   settings: { ok: true, goals: [{ product: 'cv', metric: 'visits', period: 'week', target: 300 }], thresholds: {}, mail: { daily: true, gemini: true, watch: true, weekly: true }, updatedAt: '2026-10-24T12:00:00Z' },
-  actions: { ok: true, settings: { auto: true, caps: { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2 } }, used: { 'rerun-held': 3, 'resend-notices': 0, 'publish-hub': 2 }, pending: { held: 4, clean: 1, notices: 2 }, noticeHours: false, noticesLive: true,
+  actions: { ok: true, settings: { auto: true, caps: { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2 }, countdownHours: 2 }, used: { 'rerun-held': 3, 'resend-notices': 0, 'publish-hub': 2 }, pending: { held: 4, clean: 1, notices: 2 }, noticeHours: false, noticesLive: true,
+    countdowns: {
+      pending: [{ id: 'aaaa1111bbbb2222cccc3333', action: 'rerun-ci', label: 'Re-run failed CI jobs', target: 'Buffer batch #41', kind: 'post', kindLabel: 'public post', status: 'waiting', by: 'jarvis', confidence: null, why: 'Re-running the failed jobs on main.', runsAt: '2026-10-26T13:00:00.000Z', hold: '' },
+        { id: 'dddd4444eeee5555ffff6666', action: 'ai-fix', label: 'Run a fix the AI picked', target: 'run-job sendOwnerNotices', kind: 'email', kindLabel: 'third-party email', status: 'waiting', by: 'gemini', confidence: 0.92, why: 'Its last run failed.', runsAt: '2026-10-26T15:00:00.000Z', hold: '' }],
+      recent: [{ id: '999988887777666655554444', action: 'merge-pr', label: 'Merge PageSpeed fixes #2210', target: '#2210', kind: 'code', status: 'done', result: 'Merging #2210; Jarvis pushes the result.' }]
+    },
     actions: [{ action: 'rerun-held', mode: 'auto', status: 'done', target: 'shop.example', detail: 'Sent to the asker.', at: '2026-10-25T15:05:00Z' }, { action: 'publish-hub', mode: 'auto', status: 'waiting', count: 1, target: '', detail: "Over today's cap of 2.", at: '2026-10-25T16:05:00Z' }, { action: 'run-job', mode: 'click', status: 'done', target: 'sweepReviews', detail: 'Started.', at: '2026-10-25T17:00:00Z' }] },
+  countdown: { ok: true, message: 'Cancelled: run a fix the AI picked.' },
   proposals: { ok: true, gemini: true, at: '2026-10-25T12:00:00Z', hidden: 1, proposals: [
     { rank: 1, key: 'job', title: 'Fix the failing job', impact: 5, level: 'alert', effort: 'hours', why: 'The sweep feeds the hub.', evidence: ['Job sweepReviews failed: quota.'], source: 'gemini+rules', action: null, jobs: ['sweepReviews'], tab: 'systems', link: null },
     { rank: 2, key: 'review:held', title: 'Re-run the held reviews', impact: 3, level: 'warn', evidence: ['4 re-runs are held on the desk.'], source: 'gemini+rules', action: 'rerun-held', tab: 'systems', link: null },
@@ -72,8 +78,6 @@ const EXTERNAL = {
   'share-draft': { ok: true, id: 'new1', kind: 'image', draft: { lang: 'en', kind: 'tip', title: 'Check SSL', alt: 'A card', linkedin: 'LinkedIn draft', x: 'X draft', facebook: 'Facebook draft', instagram: 'Instagram draft' }, note: '' },
   'share-queue': { ok: true, id: 'new1', note: 'Queued. The hub page goes live first.' },
   'social-post-now': { ok: true, started: ['Buffer', 'Facebook Page'], note: 'Started Buffer and Facebook Page.' },
-  studio: { ok: true, sources: ['compare', 'evergreen'], skits: [{ id: 'friday-release', takes: ['en', 'es'] }], takes: 'skit-takes', runs: [{ name: 'Studio tips evergreen render', event: 'workflow_dispatch', status: 'completed', conclusion: 'success', at: '2026-10-25T08:00:00Z', url: 'https://github.com/' }] },
-  'studio-render': { ok: true, note: 'Rendering skit friday-release. The review links land in a PR and on #1981 when it is done.' },
   outreach: { ok: true, needs: ['Instantly: put the API key in Secret Manager as INSTANTLY_API_KEY.'],
     pipeline: { ok: true, queued: 40, swept: 12, left: 28, bySegment: [{ label: 'tvet', value: 10 }, { label: 'university', value: 10 }], reviews: 12, thisWeek: 12, results: [{ label: 'reviewed', value: 11 }], segments: [], avgScore: 64, withLiveReport: 6, reviewedWithLiveReport: 5, daily: [{ date: '2026-10-24', reviews: 12 }] },
     instantly: { ok: false, error: 'INSTANTLY_API_KEY is not set.' },
@@ -94,14 +98,24 @@ const EXTERNAL = {
     leads: { weeks: [{ week: 'W1', total: 3, complete: 2, missing: 1, approved: 1, uploaded: 0, ready: 1 }],
       rows: [{ week: 'W1', email: 'ana@uni.edu.co', first_name: 'Ana', last_name: 'Pérez', title: 'CIO', org: 'Uni Norte', host: 'uni.edu.co', cc: 'co', campaign: 'W1 B-es Americas', score: '71', top_finding_en: 'No alt text', missing: '', approved: false, uploaded: '', live_report_url: 'https://qa-lab.co/r/uni' },
         { week: 'W1', email: 'leo@uni2.edu.co', first_name: 'Leo', org: 'Uni Sur', host: 'uni2.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: 'report (not published yet)', approved: false, uploaded: '' },
-        { week: 'W1', email: 'eva@uni3.edu.co', first_name: 'Eva', org: 'Uni Este', host: 'uni3.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: '', approved: true, uploaded: '' }] },
+        { week: 'W1', email: 'eva@uni3.edu.co', first_name: 'Eva', org: 'Uni Este', host: 'uni3.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: '', approved: true, uploaded: '' },
+        { week: 'W1', email: 'sol@uni4.edu.co', first_name: 'Sol', org: 'Uni Oeste', host: 'uni4.edu.co', cc: 'co', campaign: 'W1 B-es Americas', missing: '', approved: true, uploaded: '2026-10-20' }] },
     replies: [{ id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', at: '2026-10-25T12:00:00Z', from: 'dean@uni.edu.co', to: 'carlos@mail.qa-lab.co', subject: 'Re: Su sitio', campaign: 'W1 B-es Americas', text: 'Nos interesa', category: 'interested', summary: 'Wants the walkthrough', lang: 'es', draft: 'Hola, gracias', sent: '' }],
-    linkedin: { date: '2026-10-26', items: [{ name: 'Ana Pérez', title: 'CIO', org: 'Uni Norte (UN)', cc: 'CO', sent: false, profile: 'https://www.linkedin.com/in/ana', lines: [] }] },
+    linkedin: { date: '2026-10-26', items: [{ name: 'Ana Pérez', title: 'CIO', org: 'Uni Norte (UN)', cc: 'CO', sent: false, profile: 'https://www.linkedin.com/in/ana', lines: ['Profile: https://www.linkedin.com/in/ana', 'Check first: confirm the role.', 'Note: Hola Ana, vi el sitio de Uni Norte.'] },
+      { name: 'Bea Gómez', title: 'CEO', org: 'Agencia Sur', cc: 'AR', sent: true, profile: 'https://www.linkedin.com/in/bea', lines: [] }] },
     dnc: [], jobs: [{ mode: 'leads', at: '2026-10-26T12:00:00Z', notify: 'W1 leads ready: 2 complete', failed: false, tail: ['done'] }], paused: [], kpis: [{ week_start: '2026-10-26', notes: 'setup week' }],
     commands: { pending: 0, items: [] } },
   'marketing-command': { ok: true, queued: 'c1', action: 'approve', label: 'Approve ana@uni.edu.co (W1)' },
   engagement: require('./fixtures/jarvis-engagement.json'),
   'engagement-decide': { ok: true, message: 'Edited and approved.' },
+  local: { ok: true, since: '2026-11-02', more: 0,
+    totals: { reviews: 9, local: 2, profiles: 1, noProfile: 1, withIssues: 2, failing: 0, outreach: 1, calls: 4, errors: 1, callsToday: 2 },
+    issues: [{ key: 'local-hours', count: 1, fail: 0 }, { key: 'local-profile', count: 1, fail: 0 }],
+    lastError: { at: '2026-11-01T12:00:00.000Z', error: 'status 429' },
+    sites: [
+      { id: 'a', host: 'speed-plumbing.com', at: '2026-11-01T15:00:00.000Z', source: 'sweep', outreach: true, profile: true, worst: 'risk', issues: [{ key: 'local-hours', verdict: 'risk', severity: 'medium' }] },
+      { id: 'b', host: 'bakery.example', at: '2026-11-01T14:00:00.000Z', source: '', outreach: false, profile: false, worst: 'risk', issues: [{ key: 'local-profile', verdict: 'risk', severity: 'low' }] }
+    ] },
   people: { ok: true, since: '2026-11-01', more: 0,
     totals: { people: 2, active: 2, new: 1, returning: 1, visits: 3, activeMs: 1260000, avgVisitMs: 420000, runs: 2 },
     testTotals: { people: 1, active: 1, new: 1, returning: 0, visits: 1, activeMs: 5000, avgVisitMs: 5000, runs: 0 },
@@ -115,7 +129,64 @@ const EXTERNAL = {
         visits: 1, returns: 0, days: 1, views: 1, activeMs: 60000, avgVisitMs: 60000, runs: 0, paid: 0, urls: [], recent: [{ startedAt: '2026-10-30T09:00:00.000Z', lastAt: '2026-10-30T09:10:00.000Z', activeMs: 60000, views: 1, pages: ['qa-review.html'] }] },
       { email: 'playwright@example.com', name: '', picture: '', providers: ['email'], test: true, firstAt: '2026-10-31T09:00:00.000Z', lastSignInAt: '2026-10-31T09:00:00.000Z', lastSeenAt: '2026-10-31T09:00:00.000Z',
         visits: 1, returns: 0, days: 1, views: 1, activeMs: 5000, avgVisitMs: 5000, runs: 0, paid: 0, urls: [], recent: [] }
-    ] }
+    ] },
+  'engagement-connect': { ok: true, network: 'bluesky', account: 'qalaburlreview.bsky.social', message: 'Bluesky is connected as @qalaburlreview.bsky.social.' },
+  notices: { ok: true, auto: true, tries: 3, notices: [
+    { domain: 'acme.co', host: 'acme.co', email: 'info@acme.co', state: 'ready', critical: true, lang: 'es', tries: 0, createdAt: '2026-10-25T09:00:00Z', lastError: '', report: 'https://qalabreview.com/es?report=r1',
+      candidates: [{ email: 'info@acme.co', sources: ['footer'], url: '', onDomain: true, stopped: false }, { email: 'ventas@acme.co', sources: ['contact page'], url: '', onDomain: true, stopped: false }, { email: 'old@acme.co', sources: ['rdap'], url: '', onDomain: false, stopped: true }] },
+    { domain: 'gone.org', host: 'gone.org', email: 'web@gone.org', state: 'unlisted', critical: false, lang: 'en', tries: 0, createdAt: '2026-10-25T11:00:00Z', lastError: '', report: '',
+      candidates: [{ email: 'web@gone.org', sources: ['schema'], url: '', onDomain: true, stopped: false }] },
+    { domain: 'later.edu', host: 'later.edu', email: 'web@later.edu', state: 'waiting', critical: false, lang: 'pt', tries: 2, createdAt: '2026-10-25T12:00:00Z', lastError: 'later.edu is not on Live Reports yet. Send it after the daily publish lands.', report: '',
+      candidates: [{ email: 'web@later.edu', sources: ['footer'], url: '', onDomain: true, stopped: false }, { email: 'reitoria@later.edu', sources: ['web search'], url: '', onDomain: false, stopped: false }] }
+  ] },
+  'notice-decide': { ok: true, status: 'sent', email: 'info@acme.co', emails: ['info@acme.co', 'ventas@acme.co'], failed: [] },
+  'github-work': { ok: true, at: '2026-11-03T20:00:00Z', days: 30,
+    needs: ['Give the qa-lab-agents app Dependabot alerts: read', 'Give the qa-lab-agents app Code scanning alerts: read'],
+    access: { repos: ['kaanmuar/kaanmuar.github.io', 'kaanmuar/qa-lab-outreach'], missing: [{ repo: 'kaanmuar/jarvis-android', why: 'not in the installation' }], wanted: ['dependabot_alerts', 'security_events'] },
+    score: { overall: { value: 81, grade: 'B' }, areas: {
+      ci: { value: 72, grade: 'C', why: '2 workflows red on main' }, prs: { value: 85, grade: 'B', why: '1 PR has conflicts' }, board: { value: 64, grade: 'D', why: 'WIP 18 over the limit of 15' },
+      issues: { value: 88, grade: 'B', why: '9 open bugs' }, branches: { value: 70, grade: 'C', why: '6 merged branches not deleted' }, deploys: { value: 95, grade: 'A', why: '3 deploys a day' },
+      security: { value: 90, grade: 'A', why: 'No secrets open' }, budget: { value: 92, grade: 'A', why: '78% of GraphQL left' }, agents: { value: 58, grade: 'F', why: 'On-demand spend at 85%' } } },
+    dora: { deployFreq: { perDay: 3.2, level: 'elite' }, leadTimeH: { median: 20.5, level: 'elite' }, changeFail: { pct: 12, level: 'high' }, mttrH: { median: 6, level: 'high' }, level: 'high' },
+    streaks: { greenMainDays: 4, mergeDays: 9, xp: 1460, level: 6, nextAt: 1800, badges: ['100 PRs merged', 'Green week'] },
+    ci: { ok: true, passRate: 91, runs: 2480, failed: 223, minutes: 9100, queueMedS: 14, durMedS: 312, flaky: { pct: 4, workflows: [{ name: 'Cypress', pct: 9, runs: 140 }] },
+      workflows: [{ name: 'E2E and Visual Tests', path: '.github/workflows/e2e.yml', runs: 410, passRate: 82, durMedS: 640, mainRed: true, last: { conclusion: 'failure', at: '2026-11-03T19:10:00Z', url: 'https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/901' } },
+        { name: 'Unit tests', path: '.github/workflows/unit.yml', runs: 600, passRate: 99, durMedS: 75, mainRed: false, last: { conclusion: 'success', at: '2026-11-03T19:40:00Z', url: 'https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/905' } }],
+      failing: [{ id: 901, name: 'E2E and Visual Tests', branch: 'main', url: 'https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/901', at: '2026-11-03T19:10:00Z', attempt: 2, pr: null, sha: 'abc1234def', event: 'push',
+        diag: { cause: 'The admin snapshot moved after the tab bar grew.', category: 'test', fix: 'Update the admin visual baseline.', confidence: 0.86, action: 'gh-agent', prompt: 'Update the admin visual baseline on main after the GitHub tab was added (#2526), then push.' } },
+        { id: 902, name: 'Unit tests', branch: 'fix/2510-null-mx', url: 'https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/902', at: '2026-11-03T18:00:00Z', attempt: 1, pr: 2511, sha: 'fff0000aaa', event: 'pull_request', diag: null }],
+      daily: [{ day: '2026-11-02', runs: 2400, failed: 210, minutes: 8800 }, { day: '2026-11-03', runs: 2480, failed: 223, minutes: 9100 }] },
+    prs: { ok: true, open: 3, draft: 1, mergeReady: 1, conflicts: 1, behind: 1, red: 1, stale: 0, orphan: 1, leadMedH: 20.5, leadP90H: 70, merged: 42,
+      items: [{ number: 2520, title: 'Jarvis: GitHub tab', url: 'https://github.com/kaanmuar/kaanmuar.github.io/pull/2520', author: 'kaanmuar', branch: 'feat/2526-jarvis-github', ageH: 5, updatedH: 1, state: 'clean', checks: 'pass', ticket: 2526, additions: 900, deletions: 40, labels: ['jarvis-merge'] },
+        { number: 2511, title: 'BE: read a null MX record as no mail', url: 'https://github.com/kaanmuar/kaanmuar.github.io/pull/2511', author: 'kaanmuar', branch: 'fix/2510-null-mx', ageH: 30, updatedH: 20, state: 'dirty', checks: 'fail', ticket: 2510, additions: 30, deletions: 4, labels: [] },
+        { number: 2505, title: 'Tidy the review footer', url: 'https://github.com/kaanmuar/kaanmuar.github.io/pull/2505', author: 'kaanmuar', branch: 'chore/footer', ageH: 80, updatedH: 76, state: 'behind', checks: 'pass', ticket: null, additions: 12, deletions: 12, labels: [] }],
+      sizes: [{ label: 'XS', value: 10 }, { label: 'S', value: 20 }, { label: 'M', value: 9 }, { label: 'L', value: 3 }], daily: [{ day: '2026-11-02', opened: 5, merged: 6 }, { day: '2026-11-03', opened: 4, merged: 3 }] },
+    board: { ok: true, wip: 18, wipLimit: 15, cycleMedD: 2.5,
+      columns: [{ name: 'Backlog', count: 40, ageMedD: 20, oldest: [{ number: 1200, title: 'Old idea', days: 80, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/1200' }] }, { name: 'Next', count: 6, ageMedD: 4, oldest: [] }, { name: 'Design', count: 2, ageMedD: 3, oldest: [] },
+        { name: 'Dev', count: 9, ageMedD: 5, oldest: [] }, { name: 'QA', count: 5, ageMedD: 2, oldest: [] }, { name: 'Stg', count: 4, ageMedD: 1, oldest: [] }, { name: 'Prod', count: 3, ageMedD: 1, oldest: [] }, { name: 'Done', count: 400, ageMedD: 30, oldest: [] }],
+      throughput: [{ week: '2026-W43', done: 30 }, { week: '2026-W44', done: 41 }],
+      aging: [{ number: 2400, title: 'Stuck in QA', column: 'QA', days: 12, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2400' }],
+      drift: [{ number: 2490, title: 'Merged but still in Dev', column: 'Dev', should: 'Done', why: 'PR #2491 merged 2 days ago', url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2490' }] },
+    issues: { ok: true, open: 61, openBugs: 9, bugsByArea: [{ label: 'area:be', value: 5 }, { label: 'area:jarvis', value: 4 }], byKind: [{ label: 'kind:bug', value: 9 }, { label: 'kind:request', value: 30 }], opened: 70, closed: 64,
+      daily: [{ day: '2026-11-02', opened: 3, closed: 4 }, { day: '2026-11-03', opened: 5, closed: 2 }], subIssues: { parents: 12, done: 30, total: 40 }, oldest: [{ number: 1200, title: 'Old idea', days: 80, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/1200' }] },
+    branches: { ok: true, total: 30, stale: 4, merged: [{ name: 'fix/2480-old', pr: 2481, days: 6 }, { name: 'feat/2470-thing', pr: 2471, days: 9 }], ahead: [{ name: 'fix/2510-null-mx', ahead: 3, behind: 12, days: 1, pr: 2511 }],
+      worktrees: [{ path: '/Users/Apple/Documents/GitHub/kaanmuar.github.io/.worktrees/fix-2480-old', branch: 'fix/2480-old', ticket: 2480, chat: 'c1', alive: false, pr: 2481, prState: 'merged', dirty: false },
+        { path: '/Users/Apple/Documents/GitHub/kaanmuar.github.io/.worktrees/feat-2526-jarvis-github', branch: 'feat/2526-jarvis-github', ticket: 2526, chat: 'c2', alive: true, pr: 2520, prState: 'open', dirty: true }] },
+    deploys: { ok: true, last: [{ name: 'Deploy to Firebase', at: '2026-11-03T17:00:00Z', conclusion: 'success', url: 'https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/880', sha: 'abc1234' }],
+      daily: [{ day: '2026-11-02', ok: 3, failed: 0 }, { day: '2026-11-03', ok: 2, failed: 1 }], environments: [{ name: 'github-pages', at: '2026-11-03T17:00:00Z', state: 'success' }] },
+    security: { dependabot: { ok: false, error: 'Resource not accessible by integration', need: 'Dependabot alerts: read' }, codeScanning: { ok: false, error: 'Resource not accessible by integration', need: 'Code scanning alerts: read' }, secrets: { ok: true, open: 0, items: [] } },
+    budget: { kaanmuar: { graphql: { used: 1100, limit: 5000, resetAt: '2026-11-03T21:00:00Z' }, core: { used: 300, limit: 5000, resetAt: '2026-11-03T21:00:00Z' }, at: '2026-11-03T20:00:00Z' }, app: { core: { used: 900, limit: 5000, resetAt: '2026-11-03T21:00:00Z' } },
+      hourly: [{ hour: '2026-11-03T18:00:00Z', graphql: 900 }, { hour: '2026-11-03T19:00:00Z', graphql: 1100 }] },
+    agents: { tickets: [{ ticket: 2526, title: 'Jarvis GitHub tab', hours: 3.5, chats: 5, costUsd: 12 }], open: [{ ticket: 2526, title: 'Jarvis GitHub tab', since: '2026-11-03T18:00:00Z' }], daily: [{ day: '2026-11-03', hours: 3.5, tickets: 1 }], cost: { cycleStart: '2026-10-20', onDemandUsd: 170, limitUsd: 200 } },
+    android: { ok: true, releases: [{ tag: 'v1.8.0', at: '2026-11-01T12:00:00Z', url: 'https://github.com/kaanmuar/kaanmuar.github.io/releases/tag/v1.8.0' }], last: { conclusion: 'success', at: '2026-11-03T10:00:00Z', url: 'https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/870' }, builds: 12, failed: 1 },
+    repos: [{ name: 'kaanmuar/kaanmuar.github.io', private: false, pushedAt: '2026-11-03T19:00:00Z', openIssues: 61, openPrs: 3, defaultBranch: 'main', ci: { conclusion: 'failure', at: '2026-11-03T19:10:00Z', url: 'https://github.com/kaanmuar/kaanmuar.github.io/actions' }, security: null, language: 'JavaScript' },
+      { name: 'kaanmuar/qa-lab-outreach', private: true, pushedAt: '2026-11-02T10:00:00Z', openIssues: 2, openPrs: 0, defaultBranch: 'main', ci: { conclusion: 'success', at: '2026-11-02T10:00:00Z', url: 'https://github.com/kaanmuar/qa-lab-outreach/actions' }, security: null, language: 'Python' }],
+    local: { at: '2026-11-03T19:58:00Z', ageMin: 2 },
+    history: [{ day: '2026-11-02', passRate: 91, runs: 2400, failed: 210, merged: 6, opened: 3, closed: 4, openPrs: 4, openBugs: 8, wip: 17, score: 80 }, { day: '2026-11-03', passRate: 91, runs: 2480, failed: 223, merged: 3, opened: 5, closed: 2, openPrs: 3, openBugs: 9, wip: 18, score: 81 }],
+    ai: { diagnoses: [{ run: 901, workflow: 'E2E and Visual Tests', cause: 'The admin snapshot moved after the tab bar grew.', category: 'test', fix: 'Update the admin visual baseline.', confidence: 0.86, action: 'gh-agent', prompt: '', at: '2026-11-03T19:20:00Z' }], retro: { week: '2026-W44', text: 'CI held at 91%. Board WIP crept over the limit.', at: '2026-11-02T12:00:00Z' } },
+    flow: [{ from: 'Next', to: 'Dev', count: 14 }, { from: 'Dev', to: 'QA', count: 12 }, { from: 'QA', to: 'Dev', count: 3 }, { from: 'QA', to: 'Done', count: 6 }, { from: 'Stg', to: 'Prod', count: 8 }] },
+  'github-agent': { ok: true, url: 'https://cursor.com/agents/bc-123', id: 'bc-123' },
+  'github-act': { ok: true, message: 'Merged #2511.' }
 };
 
 function seed() {
@@ -140,9 +211,10 @@ function seed() {
   };
 }
 
-async function openStats(page, hash) {
+async function openStats(page, hash, extra) {
   const calls = [];
-  await page.addInitScript((data) => { window.__data = data; }, seed());
+  const data = seed();
+  await page.addInitScript((rows) => { window.__data = rows; }, data);
   for (const [file, body] of Object.entries(STUBS)) {
     await page.route(FIREBASE + file, (route) => route.fulfill({ contentType: 'text/javascript', body }));
   }
@@ -153,7 +225,8 @@ async function openStats(page, hash) {
     calls.push({ op: body.op, auth: request.headers().authorization, body });
     if (body.op === 'brief-mark') return route.fulfill({ json: { op: body.op, ok: true, key: body.key, status: body.status, until: new Date(Date.now() + 864e5).toISOString() }, headers: { 'Access-Control-Allow-Origin': '*' } });
     if (body.op === 'settings-save') return route.fulfill({ json: Object.assign({ op: body.op, ok: true, updatedAt: new Date().toISOString() }, body.settings), headers: { 'Access-Control-Allow-Origin': '*' } });
-    const answer = EXTERNAL[body.op] || (body.op === 'brief' || body.op === 'ask' ? { ok: true, text: 'Jarvis says the CV is up. Next: answer the inbox.' } : { ok: true, ran: body.job });
+    if (body.op === 'rows') return route.fulfill({ json: { op: body.op, ok: true, from: body.from, events: data.site_events, opens: data.url_review_opens, reviews: data.url_reviews, alerts: data.url_review_alerts }, headers: { 'Access-Control-Allow-Origin': '*' } });
+    const answer = (extra || {})[body.op] || EXTERNAL[body.op] || (body.op === 'brief' || body.op === 'ask' ? { ok: true, text: 'Jarvis says the CV is up. Next: answer the inbox.' } : { ok: true, ran: body.job });
     return route.fulfill({ json: Object.assign({ op: body.op }, answer), headers: { 'Access-Control-Allow-Origin': '*' } });
   });
   await page.goto('/admin.html' + (hash || ''));
@@ -169,15 +242,16 @@ test.describe('admin statistics (Jarvis)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page);
     const tabs = page.locator('.jv-tabs [role="tab"]');
-    await expect(tabs).toHaveCount(13);
-    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Marketing', 'Engagement', 'Traffic', 'Systems']);
+    await expect(tabs).toHaveCount(14);
+    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Marketing', 'Engagement', 'Traffic', 'Systems', 'GitHub']);
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'proposals', 'brief-marks', 'calls']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['rows', 'health', 'jobs', 'github', 'github-work', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'proposals', 'brief-marks', 'calls', 'device']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
+    expect(calls.every((c) => c.body.device?.kind === 'desktop' && c.body.device.app === 'web')).toBe(true);
 
     await expect(page.locator('[data-view="overview"]')).toContainText('CV visits this week');
     await tabs.filter({ hasText: 'CV' }).first().click();
@@ -311,23 +385,6 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('.jv-toast')).toContainText('Started Buffer and Facebook Page');
   });
 
-  test('Studio renders lists sources and skits with their takes, and Render dispatches through the function (#1981)', async ({ page }) => {
-    const calls = await openStats(page, '#stats/hub/30');
-    const studio = page.locator('[data-view="hub"] .jv-panel[data-panel-id="hub-studio"]');
-    await expect(studio).toContainText('Studio tips evergreen render');
-    await expect(studio.locator('[data-studio-field="name"] option')).toHaveText(['Pick one', 'compare', 'evergreen']);
-    await expect(studio.locator('[data-act="studio-render"]')).toBeDisabled();
-    await studio.locator('[data-studio-field="kind"]').selectOption('skit');
-    await expect(studio.locator('[data-studio-field="name"] option')).toHaveText(['Pick one', 'friday-release (en, es)']);
-    await expect(studio.locator('[data-studio-field="mode"] option')).toHaveText(['Render', 'Captions only']);
-    await studio.locator('[data-studio-field="name"]').selectOption('friday-release');
-    await studio.locator('[data-studio-field="langs"]').fill('en');
-    await studio.locator('[data-studio-field="ticket"]').fill('1981');
-    await studio.locator('[data-act="studio-render"]').click();
-    await expect.poll(() => calls.filter((c) => c.op === 'studio-render').map((c) => [c.body.kind, c.body.name, c.body.mode, c.body.langs, c.body.ticket])).toEqual([['skit', 'friday-release', 'render', 'en', '1981']]);
-    await expect(page.locator('.jv-toast')).toContainText('Rendering skit friday-release');
-  });
-
   test('Share a post uploads the media, shows the Gemini drafts to edit, and queues the edited posts (#1420)', async ({ page }) => {
     const calls = await openStats(page, '#stats/hub/30');
     const share = page.locator('.jv-panel[data-panel-id="hub-share"]').first();
@@ -349,6 +406,21 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect.poll(() => calls.filter((c) => c.op === 'share-queue').map((c) => [c.body.id, c.body.draft.x])).toEqual([['new1', 'Edited X post']]);
     await expect(page.locator('.jv-toast')).toContainText('Queued.');
     await expect(share.locator('[data-share-caption]')).toHaveValue('');
+  });
+
+  test('URL Review shows the Google Maps Local check across reviews and its Places calls (#2118)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.setViewportSize({ width: 1280, height: 1000 });
+    await openStats(page, '#stats/review/30');
+    const local = page.locator('[data-view="review"] [data-panel-id="review-local"]');
+    await expect(local).toContainText('Google Maps: local businesses · 2');
+    await expect(local.locator('.jv-stats')).toContainText('Places errors');
+    await expect(local).toContainText('speed-plumbing.com');
+    await expect(local).toContainText('Opening hours');
+    await expect(local).toContainText('No profile found');
+    await expect(local).toContainText('status 429');
+    expect(errors).toEqual([]);
   });
 
   test('URL Review lists the signed-in people, their runs, returns and time, and the switch keeps tests apart (#1976)', async ({ page }) => {
@@ -375,7 +447,7 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
-  test('Engagement shows the reply drafts, the scout and the networks, and Approve, Dismiss and Pause go through the function (#1988)', async ({ page }) => {
+  test('Engagement shows the reply drafts, the scout, the networks and the accounts, and Approve, Dismiss, Pause, Go live and Connect Bluesky go through the function (#1988, #1990)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page, '#stats/engagement/7');
@@ -384,7 +456,22 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(waiting).toContainText('Playwright and WCAG accessibility testing in CI');
     await expect(waiting.locator('[data-eg-draft]')).toHaveValue('We run axe in the same Playwright job.');
     await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('Mac browser');
-    await expect(eg).toContainText('BLUESKY_HANDLE');
+    await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('API as qalaburlreview');
+    await expect(eg).toContainText('paste an app password');
+    const accounts = eg.locator('[data-panel-id="engagement-accounts"]');
+    await expect(accounts).toContainText('connected as qalaburlreview');
+    await expect(accounts).toContainText('bot flag on');
+    await expect(accounts).toContainText('connected as QA-lab URL Review');
+    await expect(accounts.locator('[data-eg-connect="youtube"]')).toHaveText('Reconnect');
+    await expect(eg.locator('[data-panel-id="engagement-status"]')).toContainText('dry run');
+    await expect(eg.locator('[data-panel-id="engagement-approved"]')).toContainText('posted');
+    await expect(eg.locator('[data-panel-id="engagement-approved"] a', { hasText: 'Our reply' })).toHaveAttribute('href', /mastodon\.social\/@qalaburlreview\//);
+
+    await accounts.locator('[data-eg-bluesky] [name="password"]').fill('abcd-efgh-ijkl-mnop');
+    await accounts.locator('[data-eg-bluesky] button[type="submit"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'engagement-connect').map((c) => [c.body.network, c.body.handle, c.body.password]))
+      .toEqual([['bluesky', 'qalaburlreview.bsky.social', 'abcd-efgh-ijkl-mnop']]);
+    await expect(page.locator('.jv-toast')).toContainText('Bluesky is connected');
 
     page.once('dialog', (dialog) => dialog.dismiss());
     await waiting.locator('[data-eg-decide="dismiss"]').click();
@@ -399,6 +486,9 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await eg.locator('[data-eg-pause="on"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'engagement-settings').map((c) => c.body.settings)).toEqual([{ paused: true }]);
+    page.once('dialog', (dialog) => dialog.accept());
+    await eg.locator('[data-eg-live="on"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'engagement-settings').map((c) => c.body.settings)).toEqual([{ paused: true }, { live: true }]);
     expect(errors).toEqual([]);
   });
 
@@ -445,6 +535,105 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test('GitHub shows the grades, the process map, failing runs with their diagnosis, PRs and the human steps, and its fixes ask first (#2526)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/github/30', { 'github-diagnose': { ok: true, diag: { cause: 'A null MX record threw in the mail check.', category: 'code', fix: 'Guard the empty MX answer.', confidence: 0.7 } } });
+    const gh = page.locator('[data-view="github"]');
+    await expect(gh.locator('.jv-grade')).toHaveCount(10);
+    await expect(gh.locator('.jv-grade').first()).toHaveAttribute('data-grade', 'B');
+    await expect(gh.locator('.jv-grade[data-grade="F"]')).toHaveAttribute('title', /On-demand spend at 85%/);
+    await expect(page.locator('[data-tab-kpi="github"]')).toHaveText('B');
+    await expect(gh.locator('.jv-pm-node')).toHaveCount(8);
+    await expect(gh.locator('.jv-pm-node.is-over')).toHaveCount(3);
+    await expect(gh.locator('.jv-pm-node[data-col="Dev"]')).toHaveClass(/is-over/);
+    await expect(gh.locator('.jv-pm-flow.is-back')).toHaveCount(1);
+    const needs = gh.locator('[data-panel-id="github-needs"]');
+    await expect(needs).toContainText('Give the qa-lab-agents app Dependabot alerts: read');
+    await expect(needs).toContainText('kaanmuar/jarvis-android');
+    await expect(gh.locator('[data-panel-id="github-dora"]')).toContainText('elite');
+    await expect(gh.locator('.jv-nodata')).toContainText('Dependabot');
+    await expect(gh.locator('.jv-nodata')).toContainText('Code scanning');
+
+    const failing = gh.locator('[data-panel-id="github-failing"]');
+    await expect(failing).toContainText('The admin snapshot moved after the tab bar grew.');
+    await expect(failing).toContainText('confidence 86%');
+    await expect(failing).toContainText('Not diagnosed yet.');
+    const prs = gh.locator('[data-panel-id="github-prs"]');
+    await expect(prs.locator('tbody tr')).toHaveCount(3);
+    await expect(prs.locator('.jv-chip.c-slow', { hasText: 'dirty' })).toHaveCount(1);
+    await expect(gh.locator('[data-panel-id="github-worktrees"] [data-gh-act="gh-remove-worktree"]')).toHaveCount(1);
+    const agent = failing.locator('button', { hasText: 'Launch a Cursor fix agent' }).first();
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await agent.click();
+    expect(calls.some((c) => c.op === 'github-agent')).toBe(false);
+    let asked = '';
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await agent.click();
+    await expect.poll(() => calls.filter((c) => c.op === 'github-agent').map((c) => [c.body.branch, c.body.prompt])).toEqual([['main', 'Update the admin visual baseline on main after the GitHub tab was added (#2526), then push.']]);
+    expect(asked).toContain('Cursor cloud agent');
+    expect(asked).toContain('Update the admin visual baseline on main');
+
+    await failing.locator('[data-gh-diagnose="902"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'github-diagnose').map((c) => c.body.run)).toEqual([902]);
+    await expect(failing).toContainText('A null MX record threw in the mail check.');
+
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await prs.locator('[data-gh-act="gh-merge-pr"]').click();
+    expect(calls.some((c) => c.op === 'github-act')).toBe(false);
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await prs.locator('[data-gh-act="gh-merge-pr"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'github-act').map((c) => [c.body.action, c.body.pr])).toEqual([['gh-merge-pr', 2520]]);
+    expect(asked).toContain('merge PR #2520 into main now');
+    page.once('dialog', (dialog) => dialog.accept());
+    await gh.locator('[data-panel-id="github-drift"] [data-gh-act="gh-board-sync"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'github-act').map((c) => c.body.action)).toEqual(['gh-merge-pr', 'gh-board-sync']);
+    expect(calls.filter((c) => c.op === 'github-act')[1].body.items).toEqual([{ number: 2490, should: 'Done' }]);
+    page.once('dialog', (dialog) => dialog.accept());
+    await failing.locator('[data-gh-rerun="901"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => [c.body.action, c.body.workflows])).toEqual([['rerun-ci', ['E2E and Visual Tests']]]);
+
+    await gh.locator('[data-gh-ask="Why is CI red?"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'ask').map((c) => c.body.question)).toEqual(['Why is CI red?']);
+    expect(calls.find((c) => c.op === 'ask').body.snapshot.external.github.ci.passRate).toBe(91);
+    expect(errors).toEqual([]);
+  });
+
+  for (const [width, height, folded] of [[360, 780, true], [720, 860, false]]) {
+    test(`GitHub fits a foldable ${folded ? 'folded' : 'unfolded'} at ${width}px: no sideways scroll, the map and the tables reflow (#2526)`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await openStats(page, '#stats/github/30');
+      const gh = page.locator('[data-view="github"]');
+      await expect(gh.locator('.jv-grade')).toHaveCount(10);
+      for (const id of ['github-needs', 'github-flow', 'github-failing', 'github-prs', 'github-worktrees']) await expect(gh.locator(`[data-panel-id="${id}"]`)).toBeVisible();
+      await expect(gh.locator('.jv-grid > .jv-panel').first()).toHaveAttribute('data-panel-id', 'github-needs');
+      const layout = await page.evaluate(() => {
+        const view = document.querySelector('[data-view="github"]');
+        const box = (el) => el.getBoundingClientRect();
+        const kpis = Array.from(view.querySelectorAll('.jv-gh-head + .jv-kpis .jv-kpi')).map((k) => Math.round(box(k).top));
+        const pm = view.querySelector('.jv-pm');
+        return {
+          scrollingTables: Array.from(view.querySelectorAll('.jv-table-wrap')).filter((t) => t.scrollWidth > t.clientWidth + 1).map((t) => t.closest('.jv-panel').dataset.panelId),
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+          outside: Array.from(view.querySelectorAll('.jv-grade, .jv-kpi, .jv-panel, .jv-btn')).filter((el) => box(el).width && box(el).right > window.innerWidth + 1).length,
+          columns: getComputedStyle(view.querySelector('.jv-grid')).gridTemplateColumns.split(' ').length,
+          kpisInFirstRow: kpis.filter((top) => top === kpis[0]).length,
+          map: getComputedStyle(pm.querySelector('svg')).display !== 'none',
+          list: getComputedStyle(pm.querySelector('.jv-pm-list')).display !== 'none',
+          mapScrolls: pm.scrollWidth > pm.clientWidth + 1,
+          cards: getComputedStyle(view.querySelector('[data-panel-id="github-prs"] td')).display === 'block',
+          shortestButton: Math.min(...Array.from(view.querySelectorAll('.jv-panel .jv-btn')).filter((b) => box(b).width).map((b) => box(b).height))
+        };
+      });
+      expect(layout.overflow).toBeLessThanOrEqual(1);
+      expect(layout).toMatchObject({ outside: 0, mapScrolls: false, scrollingTables: [], cards: true });
+      expect(layout.shortestButton).toBeGreaterThanOrEqual(44);
+      if (folded) expect(layout).toMatchObject({ columns: 1, kpisInFirstRow: 2, map: false, list: true });
+      else expect(layout).toMatchObject({ columns: 2, map: true, list: false });
+      await page.screenshot({ path: `/tmp/2526/web-fold-${width}.png`, fullPage: true });
+    });
+  }
+
   test('Marketing approves leads, uploads, ticks LinkedIn and answers replies through the Mac sync after confirming (#1730)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
@@ -456,9 +645,15 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(leads).toContainText('Jarvis is on it.');
     await expect(leads.locator('[data-mk-rereview="uni2.edu.co"]')).toHaveCount(1);
     await expect(leads.locator('[data-mk-cmd="lead-drop"][data-email="leo@uni2.edu.co"]')).toHaveCount(1);
+    await expect(leads).toContainText('Uni Este');
+    await expect(leads).not.toContainText('Uni Oeste');
+    await leads.locator('[data-mk-done="on"]').click();
+    await expect(leads).toContainText('Uni Oeste');
+    await leads.locator('[data-mk-done="off"]').click();
+    await expect(leads).not.toContainText('Uni Oeste');
     await expect(mk.locator('[data-panel-id="marketing-jobs"]')).toContainText('W1 leads ready');
     await expect(mk.locator('[data-panel-id="marketing-kpis"]')).toContainText('setup week');
-    const cmds = () => calls.filter((c) => c.op === 'marketing-command').map(({ body: { op, days, ...rest } }) => rest);
+    const cmds = () => calls.filter((c) => c.op === 'marketing-command').map(({ body: { op, days, device, ...rest } }) => rest);
 
     page.once('dialog', (dialog) => dialog.dismiss());
     await leads.locator('[data-mk-cmd="approve"][data-email="ana@uni.edu.co"]').click();
@@ -470,9 +665,20 @@ test.describe('admin statistics (Jarvis)', () => {
     await leads.locator('[data-mk-cmd="upload"]').click();
     await expect.poll(() => cmds().map((c) => c.action)).toEqual(['approve', 'upload']);
 
-    page.once('dialog', (dialog) => dialog.accept());
-    await mk.locator('[data-panel-id="marketing-linkedin"] [data-mk-cmd="linkedin"]').click();
+    const li = mk.locator('[data-panel-id="marketing-linkedin"]');
+    await expect(li.locator('[data-li-todo]')).toContainText('Ana Pérez');
+    await expect(li.locator('[data-li-todo]')).not.toContainText('Bea Gómez');
+    await expect(li.locator('details.jv-li-sent summary')).toHaveText('Sent · 1');
+    await expect(li.locator('details.jv-li-sent')).not.toHaveAttribute('open', '');
+    await expect(li.locator('[data-li-todo]')).toContainText('Note: Hola Ana, vi el sitio de Uni Norte.');
+    await expect(li.locator('[data-li-todo]')).toContainText('Check first: confirm the role.');
+    await page.evaluate(() => {
+        window.open = (url) => { window.__opened = url; return null; };
+        Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (text) => { window.__copied = text; } } });
+    });
+    await li.locator('[data-li-todo] [data-li-send]').click();
     await expect.poll(() => cmds().slice(-1)).toEqual([{ action: 'linkedin', date: '2026-10-26', name: 'Ana Pérez', sent: true }]);
+    expect(await page.evaluate(() => [window.__opened, window.__copied])).toEqual(['https://www.linkedin.com/in/ana', 'Hola Ana, vi el sitio de Uni Norte.']);
 
     const draft = mk.locator('[data-mk-draft="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"]');
     await expect(draft).toHaveValue('Hola, gracias');
@@ -487,6 +693,36 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await mk.locator('[data-mk-dnc] button').click();
     await expect.poll(() => cmds().slice(-1).map((c) => [c.action, c.value])).toEqual([['dnc', 'stop@uni.edu.co']]);
+    expect(errors).toEqual([]);
+  });
+
+  test('Approvals list ready notices first with a badge for each kind, and one Send goes to every address picked (#1975)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/outreach/30');
+    const list = page.locator('[data-panel-id="outreach-approvals"] .jv-approval');
+    await expect(list.locator('.jv-prop-title strong')).toHaveText(['acme.co', 'gone.org', 'later.edu']);
+    const [acme, gone, later] = [list.nth(0), list.nth(1), list.nth(2)];
+    for (const text of ['ready to send', 'critical security', 'ES']) await expect(acme.locator('.jv-approval-badges')).toContainText(text);
+    await expect(gone.locator('.jv-approval-badges')).toContainText('off Live Reports');
+    await expect(later.locator('.jv-approval-badges')).toContainText('waiting for Live Report');
+    await expect(later.locator('.jv-approval-badges')).toContainText('last try failed · 2/3 auto tries');
+    await expect(gone.locator('[data-notice-send]')).toBeDisabled();
+    await expect(later.locator('[data-notice-send]')).toBeDisabled();
+    await expect(later).toContainText('Send opens once its Live Report is public.');
+
+    await expect(acme.locator('input[value="info@acme.co"]')).toBeChecked();
+    await expect(acme.locator('input[value="ventas@acme.co"]')).not.toBeChecked();
+    await expect(acme.locator('input[value="old@acme.co"]')).toBeDisabled();
+    await acme.locator('[data-notice-all]').check();
+    await expect(acme.locator('input[value="ventas@acme.co"]')).toBeChecked();
+    await expect(acme.locator('[data-notice-send]')).toHaveText('Send to 2');
+    let asked = '';
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await acme.locator('[data-notice-send]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'notice-decide').map((c) => [c.body.domain, c.body.send, c.body.email])).toEqual([['acme.co', true, ['info@acme.co', 'ventas@acme.co']]]);
+    expect(asked).toContain('Each address gets its own email.');
+    await expect(list).toHaveCount(2);
     expect(errors).toEqual([]);
   });
 
@@ -528,7 +764,7 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(save.body.settings.goals).toEqual([{ product: 'cv', metric: 'visits', period: 'week', target: 300 }, { product: 'review', metric: 'paid', period: 'month', target: 12 }]);
     expect(save.body.settings.thresholds.pendingRatings).toBe(25);
     expect(save.body.settings.mail).toMatchObject({ daily: true, gemini: false, watch: true, weekly: true, messages: true, ratings: false, ownerReplies: false });
-    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2 } });
+    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2, 'launch-campaign': 10, 'gh-board-sync': 10, 'gh-orphan-ticket': 5, 'gh-update-pr': 5, 'gh-merge-pr': 3, 'gh-revert': 1, 'gh-delete-branch': 2, 'gh-close-issue': 5, 'gh-remove-worktree': 5 }, confidence: 0.8, countdownHours: 2 });
     expect(save.body.settings.searchQueries).toEqual(['qa review', 'qa review', 'carlos qa']);
     await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(1);
 
@@ -548,7 +784,7 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
-  test('Overview ranks proposals with evidence, and Done hides one through the function', async ({ page }) => {
+  test('Overview ranks proposals with evidence and each kind\'s buttons: Run goes through action-run, Done hides one (#1977)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page);
@@ -559,15 +795,21 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(panel.locator('.jv-prop').first()).toContainText('impact 5/5');
     await expect(panel.locator('.jv-prop').first()).toContainText('Job sweepReviews failed: quota.');
     await expect(panel.locator('.jv-prop').nth(1)).toContainText('Jarvis runs this on its own');
-    await expect(panel.locator('.jv-prop').first().locator('[data-run-action="run-job"]')).toHaveText('Run sweepReviews again');
+    const buttons = (i) => panel.locator('.jv-prop').nth(i).locator('.jv-prop-acts button, .jv-prop-acts a');
+    await expect(buttons(0)).toHaveText(['Run sweepReviews again', 'Open Systems →', 'Dismiss']);
+    await expect(buttons(1)).toHaveText(['Send held re-runs', 'Open Systems →', 'Dismiss']);
+    await expect(buttons(2)).toHaveText(['Done', 'Dismiss']);
     await expect(panel.locator('.jv-prop').nth(2)).toContainText('from Gemini');
     await expect(panel).toContainText('1 hidden as done or dismissed');
     const ask = calls.find((c) => c.op === 'proposals');
     expect(ask.body.candidates.some((p) => p.key === 'job' && p.evidence.length)).toBe(true);
     expect(ask.body.snapshot.products).toBeTruthy();
+    page.once('dialog', (dialog) => dialog.accept());
+    await panel.locator('[data-prop-run="job"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => [c.body.action, c.body.jobs, c.body.proposal])).toEqual([['run-job', ['sweepReviews'], 'job']]);
 
-    await panel.locator('[data-proposal="done"][data-key="review:held"]').click();
-    await expect.poll(() => calls.filter((c) => c.op === 'proposal-mark').map((c) => [c.body.key, c.body.status])).toEqual([['review:held', 'done']]);
+    await panel.locator('[data-proposal="done"][data-key="ai:price-test"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'proposal-mark').map((c) => [c.body.key, c.body.status])).toEqual([['ai:price-test', 'done']]);
     await expect(panel.locator('.jv-prop')).toHaveCount(2);
     await expect(panel).toContainText('2 hidden as done or dismissed');
     expect(errors).toEqual([]);
@@ -595,6 +837,112 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await panel.locator('[data-run-action="publish-hub"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => c.body.action)).toEqual(['publish-hub']);
+    expect(errors).toEqual([]);
+  });
+
+  test('Systems shows every page worst first and the PageSpeed PRs; Merge asks first and goes through action-run (#1978)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const fixture = require('./fixtures/jarvis-pagespeed.json');
+    const calls = await openStats(page, '#stats/systems/30', { pagespeed: fixture, 'action-run': { ok: true, done: 1, ran: '#2042', note: 'Merging #2042; Jarvis pushes the result.' } });
+    const health = page.locator('[data-panel-id="systems-pages"]');
+    await expect(health).toContainText('Page health: every page (45)');
+    await expect(health.locator('tbody tr').first()).toContainText('/qa-review.html');
+    await expect(health.locator('details summary')).toHaveText('Show the other 5 pages');
+    await health.scrollIntoViewIfNeeded();
+    await health.screenshot({ path: 'test-results/jarvis-page-health.png' });
+    const routine = page.locator('[data-panel-id="systems-pagespeed"]');
+    await expect(routine).toContainText('merges on a countdown');
+    await expect(routine).toContainText('waits in Proposals');
+    await expect(routine).toContainText('Short cache lifetimes');
+    await routine.screenshot({ path: 'test-results/jarvis-pagespeed-routine.png' });
+
+    let asked = '';
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await routine.locator('[data-ps-act="pagespeed-merge"][data-pr="2042"]').click();
+    await expect.poll(() => asked).toContain('merge PageSpeed fixes #2042 into main now');
+    await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => [c.body.action, c.body.pr])).toEqual([['pagespeed-merge', 2042]]);
+
+    await page.locator('[data-go="overview"]').first().click();
+    const line = page.locator('[data-view="overview"] .jv-brief li[data-brief="pagespeed:pr:2042"]');
+    await line.click();
+    const sheet = page.locator('.jv-sheet-box');
+    await expect(sheet.locator('[data-sheet="action"][data-action="pagespeed-close"]')).toHaveAttribute('data-pr', '2042');
+    expect(errors).toEqual([]);
+  });
+
+  test('Systems lists every email address by domain with its state, the mail records and who fixes what (#2338)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const row = (address, system, kind, state, detail, extra) => Object.assign({ address, domain: address.split('@')[1], system, kind, forwards: [], aliasOf: '', state, detail, fix: null }, extra);
+    const gmail = ['kaanmuar@gmail.com'];
+    const addresses = {
+      ok: true, graph: false, errors: [],
+      needs: ['Microsoft 365: register a read-only Graph app (User.Read.All, application) and put MS_GRAPH_TENANT_ID, MS_GRAPH_CLIENT_ID and MS_GRAPH_CLIENT_SECRET in Secret Manager.'],
+      counts: { addresses: 7, ok: 4, warn: 2, error: 2, paused: 0 },
+      domains: [
+        { domain: 'carlosandmunoz.com', systems: ['ImprovMX', 'SendGrid'], ok: true, checks: [{ name: 'MX', ok: true, detail: '10 mx1.improvmx.com.' }, { name: 'SPF', ok: true, detail: 'v=spf1 ...' }, { name: 'DKIM', ok: true, detail: 's1, s2, dkimprovmx1 and dkimprovmx2 are published.' }, { name: 'DMARC', ok: true, detail: 'p=quarantine' }] },
+        { domain: 'qalabreview.com', systems: ['Microsoft 365', 'Instantly'], ok: true, checks: [{ name: 'MX', ok: true, detail: '' }, { name: 'SPF', ok: true, detail: '' }, { name: 'DKIM', ok: true, detail: '' }, { name: 'DMARC', ok: true, detail: 'p=quarantine' }] }
+      ],
+      rows: [
+        row('canary@carlosandmunoz.com', 'ImprovMX', 'alias', 'error', 'Missing from ImprovMX: the daily round trip cannot come back.', { forwards: gmail.concat('webhook'), fix: { by: 'jarvis', action: 'restore-alias' } }),
+        row('hello@carlosandmunoz.com', 'ImprovMX', 'alias', 'ok', '2 mails in the last day, 2 forwarded.', { forwards: gmail }),
+        row('qa@carlosandmunoz.com', 'ImprovMX', 'alias', 'ok', 'No mail in the last day.', { forwards: gmail.concat('webhook') }),
+        row('notices@carlosandmunoz.com', 'ImprovMX', 'smtp login', 'ok', 'Sends through smtp.improvmx.com.'),
+        row('qa@carlosandmunoz.com', 'SendGrid', 'sender', 'ok', 'Site and review mail goes out from this address; replies reach its ImprovMX alias.'),
+        row('carlos@qalabreview.com', 'Microsoft 365', 'mailbox', 'warn', 'Known from Instantly; Jarvis reads Microsoft 365 once the Graph app is connected.', { fix: { by: 'carlos', action: 'Connect Graph', link: 'https://entra.microsoft.com/' } }),
+        row('hello@qalabreview.com', 'Microsoft 365', 'mailbox', 'warn', 'Known from Instantly; Jarvis reads Microsoft 365 once the Graph app is connected.', { fix: { by: 'carlos', action: 'Connect Graph', link: 'https://entra.microsoft.com/' } }),
+        row('carlos@qalabreview.com', 'Instantly', 'sending mailbox', 'ok', 'warm-up on, score 100.'),
+        row('hello@qalabreview.com', 'Instantly', 'sending mailbox', 'error', 'Permanent OAuth failure: AADSTS50076 Due to a configuration change made by your administrator, you must use multi-factor authentication.', { fix: { by: 'carlos', action: 'Reconnect', link: 'https://app.instantly.ai/app/accounts' } })
+      ],
+      issues: [
+        { key: 'improvmx:missing:canary@carlosandmunoz.com', level: 'alert', by: 'jarvis', action: 'restore-alias', system: 'ImprovMX', address: 'canary@carlosandmunoz.com', problem: 'missing', text: 'canary@carlosandmunoz.com is missing from ImprovMX; Jarvis restores it.', push: true },
+        { key: 'instantly:reconnect:hello@qalabreview.com', level: 'alert', by: 'carlos', action: 'Reconnect', link: 'https://app.instantly.ai/app/accounts', system: 'Instantly', address: 'hello@qalabreview.com', problem: 'reconnect', text: 'Reconnect hello@qalabreview.com in Instantly: Permanent OAuth failure: AADSTS50076', push: true }
+      ]
+    };
+    await page.setViewportSize({ width: 1400, height: 1000 });
+    await openStats(page, '#stats/systems/30', { addresses });
+    const panel = page.locator('[data-panel-id="systems-addresses"]');
+    await expect(panel).toContainText('Email addresses (7)');
+    await expect(panel.locator('.jv-addr-domain')).toHaveText(['carlosandmunoz.com', 'qalabreview.com']);
+    await expect(panel).toContainText('Jarvis fixes it');
+    await expect(panel.locator('a[href="https://app.instantly.ai/app/accounts"]')).toHaveText('Reconnect →');
+    await expect(panel.locator('.jv-needs')).toContainText('MS_GRAPH_TENANT_ID');
+    await expect(panel).toContainText('kaanmuar@gmail.com, webhook');
+    await expect(panel.locator('[data-panel-export="csv"]')).toHaveCount(1);
+    await expect(page.locator('#stats-pane')).toContainText('canary@carlosandmunoz.com is missing from ImprovMX; Jarvis restores it.');
+    await panel.screenshot({ path: 'test-results/jarvis-addresses.png' });
+    expect(errors).toEqual([]);
+  });
+
+  test('Systems lists the countdowns: Do it now asks first, Cancel goes straight through the countdown op (#1977)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/systems/30');
+    const panel = page.locator('[data-panel-id="systems-actions"]');
+    await expect(panel).toContainText('On the countdown (2 h)');
+    const rows = panel.locator('.jv-countdown');
+    await expect(rows).toHaveCount(2);
+    await expect(rows.first()).toContainText('Re-run failed CI jobs: Buffer batch #41');
+    await expect(rows.first()).toContainText('public post');
+    await expect(rows.nth(1)).toContainText('Gemini 0.92');
+    await expect(panel).toContainText('Ended in the last day (1)');
+    await expect(panel.locator('.jv-note').last()).toContainText('Refunds and deletes always wait for your click');
+    await rows.first().screenshot({ path: 'test-results/jarvis-countdown.png' });
+
+    let asked = '';
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.dismiss(); });
+    await rows.first().locator('[data-countdown-act="now"]').click();
+    await expect.poll(() => asked).toContain('do it now: re-run failed CI jobs (Buffer batch #41)');
+    expect(calls.some((c) => c.op === 'countdown')).toBe(false);
+
+    await rows.nth(1).locator('[data-countdown-act="cancel"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'countdown').map((c) => [c.body.id, c.body.act])).toEqual([['dddd4444eeee5555ffff6666', 'cancel']]);
+    await expect(page.locator('.jv-toast')).toContainText('Cancelled: run a fix the AI picked.');
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await rows.first().locator('[data-countdown-act="now"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'countdown').map((c) => c.body.act)).toEqual(['cancel', 'now']);
     expect(errors).toEqual([]);
   });
 

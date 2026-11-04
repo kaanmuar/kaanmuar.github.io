@@ -4,7 +4,8 @@
      node scripts/sweep-outreach.js status                      # how many are queued, reviewed, and tonight's share
    The sweep reviews the list in order before the country lap, up to OUTREACH_PER_DAY a night, and keeps a cursor,
    so hosts are only ever appended; a host already on the list is skipped. Only hosts, countries and sectors are
-   stored, never a name or an email. Uses the signed-in gcloud account. */
+   stored, never a name or an email. Uses the signed-in gcloud account, or GOOGLE_APPLICATION_CREDENTIALS in the
+   outreach Action (#1980). */
 const fs = require("fs");
 const path = require("path");
 const Module = require("module");
@@ -54,6 +55,7 @@ function readProspects(file) {
 function db() {
   const fnRequire = Module.createRequire(path.join(FN, "index.js"));
   const { Firestore } = fnRequire("@google-cloud/firestore");
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) return new Firestore({ projectId: PROJECT });
   const { OAuth2Client } = fnRequire("google-auth-library");
   const fresh = () => ({ access_token: execSync("gcloud auth print-access-token", { encoding: "utf8" }).trim(), expiry_date: Date.now() + 45 * 60000 });
   const authClient = new OAuth2Client({ quotaProjectId: PROJECT });
@@ -82,12 +84,12 @@ async function main() {
   }
   if (cmd === "status") {
     const store = db();
-    const [list, state] = await Promise.all(["outreach", "state"].map((id) => store.collection("url_review_sweep").doc(id).get()));
+    const [list, state, lane] = await Promise.all(["outreach", "state", "lane"].map((id) => store.collection("url_review_sweep").doc(id).get()));
     const hosts = (list.data() || {}).hosts || [];
-    const s = state.data() || {};
+    const s = sweep.outreachView(state.data(), lane.data());
     const day = new Date().toISOString().slice(0, 10);
     const at = Math.min(Number(s.outreachAt) || 0, hosts.length);
-    console.log(hosts.length + " on the list, " + at + " taken by the sweep, " + (hosts.length - at) + " waiting; " +
+    console.log(hosts.length + " on the list, " + at + " taken by the outreach lane, " + (hosts.length - at) + " waiting; " +
       ((((s.days || {})[day] || {}).outreach) || 0) + " of " + sweep.OUTREACH_PER_DAY + " reviewed today (" + day + ")");
     return;
   }
@@ -97,4 +99,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error.message || error); process.exit(1); });
 
-module.exports = { parseCsv, prospectOf };
+module.exports = { parseCsv, prospectOf, db };

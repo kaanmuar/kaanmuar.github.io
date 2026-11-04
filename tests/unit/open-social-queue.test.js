@@ -86,7 +86,7 @@ test("run skips what the ledger or the account already has, holds what the hub l
   const counts = await q.run("bluesky", client, list, book, { live: true, now: NOW, gate: gate(["held"]) });
   assert.deepEqual({ posted: counts.posted, already: counts.already, held: counts.held, failed: counts.failed }, { posted: q.PER_RUN, already: 1, held: 1, failed: 1 });
   assert.deepEqual(client.sent.map((p) => p.key.split("/").pop()), ["boom", "p1", "p2", "p3", "p4"]);
-  assert.equal(client.sent[1].lang, "es");
+  assert.equal(client.sent[1].lang, "en");
   const get = (slug) => ledger.find(book, "auto-2026-10-25/" + slug, "bluesky", "qalab.bsky.social");
   assert.equal(get("there").result, "sent");
   assert.equal(get("there").url, "https://bsky.app/p/0");

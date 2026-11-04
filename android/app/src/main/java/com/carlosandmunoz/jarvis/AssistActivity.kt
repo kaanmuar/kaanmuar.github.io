@@ -52,6 +52,7 @@ import com.carlosandmunoz.jarvis.ui.Mono
 import com.carlosandmunoz.jarvis.ui.VoiceOrb
 import com.carlosandmunoz.jarvis.ui.glass
 import com.carlosandmunoz.jarvis.ui.reveal
+import com.carlosandmunoz.jarvis.ui.sheetFit
 import com.carlosandmunoz.jarvis.voice.Listener
 import com.carlosandmunoz.jarvis.voice.Speaker
 import com.carlosandmunoz.jarvis.voice.Voice
@@ -82,7 +83,7 @@ class AssistActivity : FragmentActivity() {
                 val speaking by speaker.speaking.collectAsState()
                 Box(Modifier.fillMaxSize().clickable(remember { MutableInteractionSource() }, null) { finish() }, contentAlignment = Alignment.BottomCenter) {
                     Column(
-                        Modifier.fillMaxWidth().navigationBarsPadding().padding(12.dp).reveal()
+                        Modifier.sheetFit().fillMaxWidth().navigationBarsPadding().padding(12.dp).reveal()
                             .background(J.bg.copy(alpha = 0.94f), RoundedCornerShape(20.dp)).glass(radius = 20.dp)
                             .clickable(remember { MutableInteractionSource() }, null) { }.padding(18.dp).animateContentSize(),
                         horizontalAlignment = Alignment.CenterHorizontally

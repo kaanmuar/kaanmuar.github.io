@@ -21,7 +21,7 @@ function byChannel(books, now, since) {
       (book.posts[post] || []).forEach((r) => {
         const at = Date.parse(r.at || "");
         const row = rows[r.channel];
-        if (!row || !Number.isFinite(at)) return;
+        if (!row || !Number.isFinite(at) || r.result === "moved") return;
         if (at > now && r.result !== "failed") {
           row.scheduled += 1;
           row.next.push({ at: r.at, post });

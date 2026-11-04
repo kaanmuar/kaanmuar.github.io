@@ -47,7 +47,7 @@ object Ongoing {
             w.alerts.takeIf { it > 0 }?.let { Home.plural(it, "alert") },
             w.warns.takeIf { it > 0 }?.let { Home.plural(it, "warning") },
             approvals?.takeIf { it > 0 }?.let { Home.plural(it, "approval") + " waiting" },
-        ).joinToString(" · ").ifEmpty { "All clear" }
+        ).joinToString(" · ").ifEmpty { w.headline }
         val money = "Today ${w.revenue} · " + Home.plural(w.sales, "sale")
         val title = (if (ready == null) "Readiness —" else "Readiness $ready%") + " · " + counts
         return Content(ready, title, w.top ?: money, listOfNotNull(w.top, money), w.alerts > 0, at)

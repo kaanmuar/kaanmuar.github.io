@@ -1,0 +1,496 @@
+{
+ "runs": [
+  {
+   "at": "2026-11-03T16:05:36.203Z",
+   "run": {
+    "id": 41642261982,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/41642261982"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 1022,
+   "scored": 1021,
+   "failed": 1,
+   "below": 722,
+   "avg": {
+    "mobile": 85,
+    "desktop": 98
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-03",
+    "files": [
+     "admin.html",
+     "assets/social/captions-de.json",
+     "assets/social/captions-es.json",
+     "assets/social/captions-fr.json",
+     "assets/social/captions-it.json",
+     "assets/social/captions-pt.json",
+     "assets/social/captions.json",
+     "assets/social/feed-de.json",
+     "assets/social/feed-es.json",
+     "assets/social/feed-fr.json",
+     "assets/social/feed-it.json",
+     "assets/social/feed-pt.json",
+     "assets/social/feed.json",
+     "assets/social/rss-de.xml",
+     "assets/social/rss-es.xml",
+     "assets/social/rss-fr.xml",
+     "assets/social/rss-it.xml",
+     "assets/social/rss-pt.xml",
+     "assets/social/rss.xml",
+     "index.html",
+     "qa-review-de.html",
+     "qa-review-es.html",
+     "qa-review-fr.html",
+     "qa-review-it.html",
+     "qa-review-pt.html",
+     "qa-review-social-de.html",
+     "qa-review-social-es.html",
+     "qa-review-social-fr.html",
+     "qa-review-social-it.html",
+     "qa-review-social-pt.html",
+     "qa-review-social.html",
+     "qa-review.html",
+     "sitemap-social.xml",
+     "social/launch-2026-10/de/a11y.html",
+     "social/launch-2026-10/de/exports.html",
+     "social/launch-2026-10/de/first-read.html",
+     "social/launch-2026-10/de/frameworks.html",
+     "social/launch-2026-10/de/inherited.html",
+     "social/launch-2026-10/de/layers.html",
+     "social/launch-2026-10/de/performance.html",
+     "social/launch-2026-10/de/release.html",
+     "social/launch-2026-10/de/security.html",
+     "social/launch-2026-10/de/talking.html",
+     "social/launch-2026-10/fr/a11y.html",
+     "social/launch-2026-10/fr/exports.html",
+     "social/launch-2026-10/fr/first-read.html",
+     "social/launch-2026-10/fr/frameworks.html",
+     "social/launch-2026-10/fr/inherited.html",
+     "social/launch-2026-10/fr/layers.html",
+     "social/launch-2026-10/fr/performance.html",
+     "social/launch-2026-10/fr/release.html",
+     "social/launch-2026-10/fr/security.html",
+     "social/launch-2026-10/fr/talking.html",
+     "social/launch-2026-10/pt/a11y.html",
+     "social/launch-2026-10/pt/exports.html",
+     "social/launch-2026-10/pt/first-read.html",
+     "social/launch-2026-10/pt/frameworks.html",
+     "social/launch-2026-10/pt/inherited.html",
+     "social/launch-2026-10/pt/layers.html",
+     "social/launch-2026-10/pt/performance.html"
+    ],
+    "fixes": [
+     {
+      "page": "qa-review-it.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-es.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-fr.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-pt.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-de.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     }
+    ],
+    "pages": [
+     {
+      "file": "qa-review-it.html",
+      "mobile": {
+       "before": 41,
+       "after": 42,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 41,
+       "after": 41,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-it.html"
+     },
+     {
+      "file": "qa-review-es.html",
+      "mobile": {
+       "before": 41,
+       "after": 41,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 56,
+       "after": 56,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-es.html"
+     },
+     {
+      "file": "qa-review-fr.html",
+      "mobile": {
+       "before": 41,
+       "after": 41,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 56,
+       "after": 56,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-fr.html"
+     },
+     {
+      "file": "qa-review.html",
+      "mobile": {
+       "before": 31,
+       "after": 31,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 57,
+       "after": 57,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review.html"
+     },
+     {
+      "file": "qa-review-pt.html",
+      "mobile": {
+       "before": 41,
+       "after": 41,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 40,
+       "after": 40,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-pt.html"
+     },
+     {
+      "file": "qa-review-de.html",
+      "mobile": {
+       "before": 26,
+       "after": 26,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 56,
+       "after": 56,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-de.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   },
+   "ai": {
+    "branch": "pagespeed/ai-2026-11-03",
+    "files": [
+     "admin.html",
+     "assets/social/captions-de.json",
+     "assets/social/captions-es.json",
+     "assets/social/captions-fr.json",
+     "assets/social/captions-it.json",
+     "assets/social/captions-pt.json",
+     "assets/social/captions.json",
+     "assets/social/feed-de.json",
+     "assets/social/feed-es.json",
+     "assets/social/feed-fr.json",
+     "assets/social/feed-it.json",
+     "assets/social/feed-pt.json",
+     "assets/social/feed.json",
+     "assets/social/rss-de.xml",
+     "assets/social/rss-es.xml",
+     "assets/social/rss-fr.xml",
+     "assets/social/rss-it.xml",
+     "assets/social/rss-pt.xml",
+     "assets/social/rss.xml",
+     "index.html",
+     "qa-review-social-de.html",
+     "qa-review-social-es.html",
+     "qa-review-social-fr.html",
+     "qa-review-social-it.html",
+     "qa-review-social-pt.html",
+     "qa-review-social.html",
+     "sitemap-social.xml",
+     "social/launch-2026-10/de/a11y.html",
+     "social/launch-2026-10/de/exports.html",
+     "social/launch-2026-10/de/first-read.html",
+     "social/launch-2026-10/de/frameworks.html",
+     "social/launch-2026-10/de/inherited.html",
+     "social/launch-2026-10/de/layers.html",
+     "social/launch-2026-10/de/performance.html",
+     "social/launch-2026-10/de/release.html",
+     "social/launch-2026-10/de/security.html",
+     "social/launch-2026-10/de/talking.html",
+     "social/launch-2026-10/fr/a11y.html",
+     "social/launch-2026-10/fr/exports.html",
+     "social/launch-2026-10/fr/first-read.html",
+     "social/launch-2026-10/fr/frameworks.html",
+     "social/launch-2026-10/fr/inherited.html",
+     "social/launch-2026-10/fr/layers.html",
+     "social/launch-2026-10/fr/performance.html",
+     "social/launch-2026-10/fr/release.html",
+     "social/launch-2026-10/fr/security.html",
+     "social/launch-2026-10/fr/talking.html",
+     "social/launch-2026-10/pt/a11y.html",
+     "social/launch-2026-10/pt/exports.html",
+     "social/launch-2026-10/pt/first-read.html",
+     "social/launch-2026-10/pt/frameworks.html",
+     "social/launch-2026-10/pt/inherited.html",
+     "social/launch-2026-10/pt/layers.html",
+     "social/launch-2026-10/pt/performance.html",
+     "social/launch-2026-10/pt/release.html",
+     "social/launch-2026-10/pt/security.html",
+     "social/launch-2026-10/pt/talking.html",
+     "social/pick/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-note-2-es.html",
+     "social/pick/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-note-es.html",
+     "social/pick/accessibility-testing-with-playwright-and-axe-core-es.html"
+    ],
+    "fixes": [],
+    "pages": [
+     {
+      "file": "simulador.html",
+      "mobile": {
+       "before": 66,
+       "after": 66,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 85,
+       "after": 87,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/simulador.html"
+     },
+     {
+      "file": "social/auto-2026-10-24/03-u-nibo-com-br.html",
+      "mobile": {
+       "before": 92,
+       "after": 92,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 96,
+       "after": 96,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-10-24/03-u-nibo-com-br.html"
+     },
+     {
+      "file": "social/auto-2026-10-25/04-u-supresencia-com-es.html",
+      "mobile": {
+       "before": 92,
+       "after": 92,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-10-25/04-u-supresencia-com-es.html"
+     },
+     {
+      "file": "social/digest-2026-10-30/01-this-week-it.html",
+      "mobile": {
+       "before": 96,
+       "after": 96,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/digest-2026-10-30/01-this-week-it.html"
+     },
+     {
+      "file": "social/auto-2026-10-26/08-u-movichhotels-com-fr.html",
+      "mobile": {
+       "before": 92,
+       "after": 92,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 99,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-10-26/08-u-movichhotels-com-fr.html"
+     },
+     {
+      "file": "social/auto-2026-10-26/07-u-cgb-edu-co-es.html",
+      "mobile": {
+       "before": 92,
+       "after": 92,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 99,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-10-26/07-u-cgb-edu-co-es.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
+   "at": "2026-11-02T09:34:34.841Z",
+   "run": {
+    "id": 41412402517,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/41412402517"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 3,
+   "scored": 3,
+   "failed": 0,
+   "below": 3,
+   "avg": {
+    "mobile": 69,
+    "desktop": 71
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-02",
+    "files": [
+     "assets/profile-280.jpg",
+     "index.html",
+     "qa-review-de.html",
+     "qa-review-es.html",
+     "qa-review-fr.html",
+     "qa-review-it.html",
+     "qa-review-pt.html",
+     "qa-review.html",
+     "simulador.html",
+     "data/pagespeed/compressed.json"
+    ],
+    "fixes": [
+     {
+      "page": "qa-review.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "simulador.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "index.html",
+      "kind": "lazy",
+      "detail": "Lazy-loaded 4 images or frames that start below 1.5 screens on phone and desktop."
+     },
+     {
+      "page": "assets/profile-280.jpg",
+      "kind": "image",
+      "detail": "Compressed assets/profile-280.jpg from 21 KB to 11 KB."
+     }
+    ],
+    "pages": [
+     {
+      "file": "qa-review.html",
+      "mobile": {
+       "before": 32,
+       "after": 31,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 63,
+       "after": 63,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review.html"
+     },
+     {
+      "file": "simulador.html",
+      "mobile": {
+       "before": 66,
+       "after": 65,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 86,
+       "after": 86,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/simulador.html"
+     },
+     {
+      "file": "index.html",
+      "mobile": {
+       "before": 72,
+       "after": 72,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 96,
+       "after": 96,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   },
+   "ai": {
+    "branch": null,
+    "files": [],
+    "fixes": [],
+    "pages": [],
+    "verdict": {
+     "up": false,
+     "reason": "Nothing to change.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  }
+ ]
+}

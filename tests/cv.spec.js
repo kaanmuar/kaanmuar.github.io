@@ -294,16 +294,16 @@ test.describe('CV desktop', () => {
   });
 
   test('company names open their sites and leave the job closed', async ({ page }) => {
-    const team = page.locator('#experience-0 .company-link');
+    const team = page.locator('#experience-1 .company-link');
     await expect(team).toHaveAttribute('href', 'https://www.teaminternational.com');
     await expect(team).toHaveAttribute('target', '_blank');
     await expect(team).toHaveAttribute('rel', /noopener/);
-    await expect(page.locator('#experience-header-0')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#experience-header-1')).toHaveAttribute('aria-expanded', 'false');
     await team.evaluate((el) => {
       el.addEventListener('click', (event) => event.preventDefault(), { capture: true });
       el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     });
-    await expect(page.locator('#experience-header-0')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#experience-header-1')).toHaveAttribute('aria-expanded', 'false');
     await expect(page.locator('.company-link', { hasText: 'Zagalabs' }).first()).toHaveAttribute('href', 'https://zaga.co');
     await expect(page.locator('.company-link', { hasText: 'Prodigious' }).first()).toHaveAttribute('href', 'https://publicisproduction.com');
     await expect(page.locator('.company-name', { hasText: 'Bitgray' }).first()).toBeVisible();

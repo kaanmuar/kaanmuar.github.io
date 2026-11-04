@@ -127,6 +127,18 @@ Object.keys(HUB.LANGS).forEach((lang) => {
   });
 });
 
+// Each brand face's landing page (scripts/build-face-pages.js): node scripts/build-share-images.js urlreview.jpg
+Object.values(require("./brand-kit/faces").FACES).forEach((face) => {
+  CARDS["assets/share/" + face.handle + ".jpg"] = fusionCard({
+    eyebrow: "@" + face.handle,
+    lines: face.copy.lines.map((line) => [line.replace(/^\*(.*)\*$/, "$1"), /^\*.*\*$/.test(line)]),
+    sub: face.copy.langs,
+    url: "carlosandmunoz.com/" + face.handle,
+    size: 76,
+    t: 9.5
+  });
+});
+
 function icon(svgFile, size, maskable) {
   const svg = svgFile.startsWith("<") ? svgFile : fs.readFileSync(path.join(ROOT, svgFile), "utf8");
   const inner = maskable

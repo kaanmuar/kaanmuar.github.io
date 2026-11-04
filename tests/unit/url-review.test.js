@@ -1861,6 +1861,8 @@ test.describe("publishing user reviews to Live Reports", () => {
     assert.equal(publish.heldReason(record("acme.de", { status: "stopped" }), []), "not-complete");
     assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 1 } }), []), "too-few-pages");
     assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 5, timedOut: true } }), []), "timed-out");
+    assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 5, maxPages: 20, timedOut: true } }), []), "timed-out");
+    assert.equal(publish.heldReason(record("acme.de", {}, { limits: { pagesRead: 20, maxPages: 20, timedOut: true } }), []), "");
     assert.equal(publish.heldReason(record("acme.de", {}, { pages: [{ status: 403 }] }), []), "start-page-blocked");
     assert.equal(publish.heldReason(record("acme.de", {}, { pages: [{ status: 200, challenge: "cloudflare" }] }), []), "start-page-blocked");
     const shell = report("acme.de");
@@ -3619,6 +3621,55 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.match(text, /user-scalable=no/);
     assert.match(text, /\/about/);
     assert.doesNotMatch(text, /test\.fixme\("A11Y-07/);
+  });
+
+  test("the top-ranked axe, cookie and consent cases get a script in every browser framework, not a skipped stub (#2183)", () => {
+    const browserFw = ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir", "Cucumber", "Behave", "Reqnroll", "Jest", "Vitest", "Mocha"];
+    const pages = ["/", "/products", "/view_cart"];
+    const report = { finalUrl: "https://shop.example.com/", host: "shop.example.com", pages: pages.map((path) => ({ path, status: 200 })), cases: [
+      { id: "FN-05", layer: "Functional", title: "Buttons have an accessible name", why: "8 buttons. axe-core 4.14.0 found 4 elements breaking button-name (critical) on shop.example.com.", fw: browserFw, path: "/", pages },
+      { id: "A11Y-04", layer: "Accessibility", title: "Text contrast holds up", why: "Contrast is measured by axe-core. Focus needs a person.", fw: browserFw, path: "/", pages },
+      { id: "AXE-01", layer: "Accessibility", title: "Links must have discernible text", why: "axe-core 4.14.0 found 2 elements breaking link-name (serious) on shop.example.com. The case reruns axe-core with only the link-name rule on each of those pages and expects no violation.", fw: browserFw, path: "/", pages: ["/"] },
+      { id: "SEC-06", layer: "Security", title: "Cookies are Secure and HttpOnly", why: "1 cookie was set. 1 was missing Secure or HttpOnly (csrftoken).", fw: browserFw, path: "/", pages },
+      { id: "PR-03", layer: "Privacy", title: "A consent notice appears before tags", why: "No consent wording was found. Google Ads fired before any choice.", fw: browserFw }
+    ] };
+    const ctx = { startPath: "/", paths: pages };
+    const kinds = report.cases.map((item) => scripts.checkFor(item, ctx));
+    assert.deepEqual(kinds.map((check) => check.kind), ["axe", "axe", "axe", "setCookies", "trackers"]);
+    assert.deepEqual(kinds.slice(0, 3).map((check) => check.rules), [["button-name"], ["color-contrast"], ["link-name"]]);
+    assert.deepEqual(kinds[0].paths, pages);
+    assert.deepEqual(kinds[3].paths, pages);
+    const stub = /test\.fixme|it\.skip|test\.skip|xScenario|@Disabled|enabled = false|pytest\.mark\.skip|\[Tags\]\s+manual|, skip: |@manual|A person runs this case/;
+    const marks = { "FN-05": /button-name/, "A11Y-04": /color-contrast/, "AXE-01": /link-name/, "SEC-06": /secure|Secure/, "PR-03": /doubleclick|tracker/ };
+    report.cases.forEach((item) => {
+      const out = scripts.snippets(report, item, browserFw);
+      assert.equal(out.length, browserFw.length, item.id);
+      out.forEach(({ framework, code }) => {
+        assert.doesNotMatch(code, stub, item.id + " in " + framework);
+        assert.match(code, marks[item.id], item.id + " in " + framework);
+      });
+    });
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "qa-review-top-"));
+    try {
+      const broken = scripts.bundle(report, report.cases, browserFw).files
+        .filter((file) => /\.(m?js|ts|py)$/.test(file.path))
+        .map((file) => ({ file: file.path, error: syntaxError(file.path, file.content, dir) }))
+        .filter((row) => row.error);
+      assert.deepEqual(broken, []);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("an axe rule no case covers becomes an AXE case that reruns that rule on its pages (#2183)", () => {
+    const browser = { ok: true, axe: { ran: true, version: "4.14.0", pages: [
+      { path: "/", violations: [{ id: "link-name", impact: "serious", help: "Links must have discernible text", nodes: 2, targets: [".carousel-left"] }] },
+      { path: "/shop", violations: [{ id: "link-name", impact: "serious", help: "Links must have discernible text", nodes: 1, targets: [".carousel-right"] }] }
+    ] } };
+    const out = caseRank.refine([{ id: "FN-01", layer: "Functional", title: "x", why: "y", fw: ["Playwright"] }], { browser, origin: "https://shop.example.com" });
+    const axe = out.find((item) => item.id === "AXE-01");
+    assert.deepEqual(axe.check, { kind: "axe", paths: ["/", "/shop"], rules: ["link-name"] });
+    assert.deepEqual(scripts.checkFor(axe, { startPath: "/", paths: ["/"] }), axe.check);
   });
 
   test("the fix kit does not tell a site Cloudflare already fronts to put Cloudflare in front", () => {

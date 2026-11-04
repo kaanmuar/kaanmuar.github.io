@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Color
 object J {
     val bg = Color(0xFF030B12)
     val panel = Color(0xB8091E2C)
+    val surface = Color(0xFF0C2433)
     val line = Color(0x3838E1FF)
     val text = Color(0xFFE6F7FF)
     val muted = Color(0xFF8FB3C7)
@@ -27,7 +28,7 @@ object J {
 }
 
 @Composable
-fun JarvisTheme(content: @Composable () -> Unit) {
+fun JarvisTheme(content: @Composable () -> Unit) = ProvideForm {
     MaterialTheme(
         colorScheme = darkColorScheme(
             primary = J.cyan, onPrimary = J.bg, secondary = J.amber, tertiary = J.violet,

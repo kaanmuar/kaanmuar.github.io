@@ -70,7 +70,13 @@ module.exports = defineConfig({
         if (browser.family === 'chromium' && launchOptions.args) launchOptions.args.push('--lang=en-US');
         return launchOptions;
       });
-      require('@cypress/grep/src/plugin')(config);
+      // CYPRESS_* variables only reach cy.env(), so the public values the specs read synchronously are exposed here; the password never is.
+      config.expose = {
+        ...config.expose,
+        CATALOG_IDS: config.env.CATALOG_IDS || process.env.CATALOG_IDS || '',
+        HAS_ADMIN_PASSWORD: Boolean(config.env.ADMIN_PASSWORD)
+      };
+      require('@cypress/grep/plugin').plugin(config);
       let serverProc;
       on('before:run', async (details) => {
         if (!(await isPortOpen(PORT))) {

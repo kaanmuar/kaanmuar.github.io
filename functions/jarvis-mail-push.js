@@ -16,10 +16,12 @@ const ACTS = {
   "owner-reply": ["resend", "stop", "unlist", "done"],
   "rerun-held": ["send-all", "drop-all"],
   ops: ["rerun"],
-  proposal: ["done", "dismissed"],
+  proposal: ["run", "close", "done", "dismissed"],
   notice: ["send", "skip"],
   social: ["approved", "dismissed"],
-  engagement: ["approve", "edit", "dismiss"]
+  engagement: ["approve", "edit", "dismiss"],
+  countdown: ["now", "cancel"],
+  pagespeed: ["merge", "close"]
 };
 const REPLY = { act: "reply", label: "Reply", input: "Your reply" };
 
@@ -188,13 +190,14 @@ function backupMessage(day, error) {
 }
 
 /** rerunnable lists the jobs Cloud Scheduler can start now; GitHub workflows get no button. */
-function opsMessage(problems, rerunnable) {
+// scheduled: how many of the problems are scheduled jobs; the rest come from the system review (#2409).
+function opsMessage(problems, rerunnable, scheduled) {
   const list = Array.isArray(problems) ? problems : [];
   if (!list.length) return null;
   const jobs = list.map((p) => p.job).filter((job) => (rerunnable || []).includes(job));
   return {
     kind: "alerts",
-    title: plural(list.length, "scheduled job") + " missed or failed",
+    title: scheduled === undefined || scheduled === list.length ? plural(list.length, "scheduled job") + " missed or failed" : plural(list.length, "problem") + " need a look",
     body: clip(list.map((p) => p.job).join(", "), 220),
     lines: list.slice(0, 6).map((p) => clip(p.job + ": " + p.why, 120)),
     tab: "systems",

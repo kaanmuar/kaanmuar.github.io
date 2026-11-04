@@ -36,12 +36,20 @@
   "machine": true
  },
  "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security, Accessibility, Performance.": "⟦1⟧ lidera em SEO e GEO; ⟦2⟧ lidera em Analytics, Segurança, Acessibilidade e Performance.",
+ "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO, Analytics, Accessibility, Performance.": {
+  "text": "⟦1⟧ lidera em SEO, Segurança; ⟦2⟧ lidera em GEO, Analytics, Acessibilidade, Desempenho.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO; ⟦3⟧ leads in Analytics, Accessibility, Performance.": {
   "text": "⟦1⟧ lidera em SEO, Segurança; ⟦2⟧ leads em GEO; ⟦3⟧ lidera em Análise, Acessibilidade, Desempenho.",
   "machine": true
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Analytics, Security, Accessibility, Performance. ⟦3⟧ leads in none of the six areas.": {
   "text": "⟦1⟧ lidera em SEO; ⟦2⟧ lidera em GEO, Analytics, Segurança, Acessibilidade, Desempenho. ⟦3⟧ lidera em nenhuma das seis áreas.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Analytics; ⟦3⟧ leads in Security, Accessibility, Performance.": {
+  "text": "⟦1⟧ lidera em SEO; ⟦2⟧ leads em GEO, Analytics; ⟦3⟧ lidera em Segurança, Acessibilidade, Desempenho.",
   "machine": true
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Accessibility, Performance.": "⟦1⟧ lidera em SEO; ⟦2⟧ lidera em GEO e Segurança; ⟦3⟧ lidera em Analytics, Acessibilidade e Performance.",
@@ -307,6 +315,10 @@
   "text": "Análises automatizadas de páginas públicas em ⟦1⟧ novembro ⟦2⟧ de ⟦3⟧, ⟦4⟧, ⟦5⟧, ⟦6⟧, concorrentes naturais encontrados na web aberta pela varredura rival do QA-lab URL Review.",
   "machine": true
  },
+ "Automated analyses of public pages on ⟦1⟧ Nov ⟦2⟧ of ⟦3⟧, ⟦4⟧, ⟦5⟧, natural competitors found on the open web by QA-lab URL Review's rival sweep.": {
+  "text": "Análises automatizadas de páginas públicas em ⟦1⟧ novembro ⟦2⟧ de ⟦3⟧, ⟦4⟧, ⟦5⟧, concorrentes naturais encontrados na web aberta pela varredura rival do QA-lab URL Review.",
+  "machine": true
+ },
  "Automated analyses of public pages on ⟦1⟧ Nov ⟦2⟧ of ⟦3⟧, ⟦4⟧, natural competitors found on the open web by QA-lab URL Review's rival sweep.": {
   "text": "Análises automatizadas de páginas públicas em ⟦1⟧ novembro ⟦2⟧ de ⟦3⟧, ⟦4⟧, concorrentes naturais encontrados na web aberta pela varredura rival do QA-lab URL Review.",
   "machine": true
@@ -371,12 +383,24 @@
  "Build the sitemap from canonical URLs: https, the www host you serve.": "Gere o sitemap a partir das URLs canonical: https, no host www que você serve.",
  "Build the sitemap from the live domain; spot-check it after a move or rebrand.": "Gere o sitemap a partir do domínio no ar; confira por amostragem após uma migração ou rebrand.",
  "Build, Green (pass); Smoke tests, Passed (pass); Title and description, Still there (pass); Share card, Image changed? (warning); Consent banner, Nothing fires before a choice? (warning).": "Build, Verde (passou); Smoke tests, Passaram (passou); Título e descrição, Ainda lá (passou); Card de compartilhamento, Imagem mudou? (alerta); Banner de consentimento, Nada dispara antes de uma escolha? (alerta).",
+ "But ⟦1⟧ ⟦2⟧ has known flaws.": {
+  "text": "Mas ⟦1⟧ ⟦2⟧ tem falhas conhecidas.",
+  "machine": true
+ },
  "But ⟦1⟧ AI answer or search crawler is blocked.": {
   "text": "Mas ⟦1⟧ A resposta da IA ​​ou o rastreador de pesquisa estão bloqueados.",
   "machine": true
  },
  "But ⟦1⟧ AI answer or search crawlers are blocked.": "Mas ⟦1⟧ crawlers de busca ou de respostas de IA estão bloqueados.",
  "But ⟦1⟧ and ⟦2⟧ both serve the site, each names itself canonical, and the sitemap lists only the bare host.": "Mas ⟦1⟧ e ⟦2⟧ servem o site, cada um se declara canonical e o sitemap lista só o host sem prefixo.",
+ "But ⟦1⟧ and ⟦2⟧ must only directly contain ⟦3⟧, ⟦4⟧ or ⟦5⟧ elements.": {
+  "text": "Mas ⟦1⟧ e ⟦2⟧ devem conter apenas elementos ⟦3⟧, ⟦4⟧ ou ⟦5⟧ diretamente.",
+  "machine": true
+ },
+ "But ⟦1⟧ cookies are sent without Secure, and ⟦2⟧ session cookie is readable by scripts.": {
+  "text": "Mas os cookies ⟦1⟧ são enviados sem segurança e o cookie de sessão ⟦2⟧ pode ser lido por scripts.",
+  "machine": true
+ },
  "But ⟦1⟧ disallows bingbot from the whole site, and Bing's index also feeds Copilot.": "Mas ⟦1⟧ bloqueia o bingbot no site inteiro, e o índice do Bing também alimenta o Copilot.",
  "But ⟦1⟧ disallows ChatGPT-User, the agent that opens a page when a person asks ChatGPT about it.": "Mas ⟦1⟧ bloqueia o ChatGPT-User, o agente que abre uma página quando alguém pergunta ao ChatGPT sobre ela.",
  "But ⟦1⟧ disallows OAI-SearchBot and nine other AI search agents, so their answers can't cite it.": "Mas ⟦1⟧ bloqueia o OAI-SearchBot e outros nove agentes de busca de IA, então as respostas deles não podem citá-lo.",
@@ -404,6 +428,10 @@
  "But ⟦1⟧ pages analyzed have no ⟦2⟧, the home page included.": "Mas ⟦1⟧ páginas analisadas não têm ⟦2⟧, incluindo a home.",
  "But ⟦1⟧ pages analyzed use a positive tabindex, which pulls one element ahead of everything else in keyboard order.": "Mas ⟦1⟧ páginas analisadas usam tabindex positivo, que puxa um elemento para a frente de todo o resto na ordem do teclado.",
  "But ⟦1⟧ pages configure two GA4 properties, G-R2FPS06ZSD and G-N4639JFT8D, so numbers split unless both teams know.": "Mas ⟦1⟧ páginas configuram duas propriedades GA4, G-R2FPS06ZSD e G-N4639JFT8D, então os números se dividem, a menos que as duas equipes saibam.",
+ "But ⟦1⟧ pages have no meta description.": {
+  "text": "Mas as páginas ⟦1⟧ não têm meta descrição.",
+  "machine": true
+ },
  "But ⟦1⟧ pages have no title.": "Mas ⟦1⟧ páginas não têm título.",
  "But ⟦1⟧ points crawlers to ⟦2⟧ and that address returns ⟦3⟧.": "Mas ⟦1⟧ aponta os crawlers para ⟦2⟧ e esse endereço retorna ⟦3⟧.",
  "But ⟦1⟧ points crawlers to ⟦2⟧ which timed out, and plain http answers ⟦3⟧.": "Mas ⟦1⟧ aponta os crawlers para ⟦2⟧, que deu timeout, e o http simples responde ⟦3⟧.",
@@ -413,6 +441,10 @@
  "But ⟦1⟧ sends crawlers to /⟦2⟧, and that address answers ⟦3⟧.": "Mas ⟦1⟧ manda os crawlers para /⟦2⟧, e esse endereço responde ⟦3⟧.",
  "But ⟦1⟧ serves the page itself with a ⟦2⟧ instead of redirecting, so a first http visit stays unencrypted.": "Mas ⟦1⟧ serve a própria página com um ⟦2⟧ em vez de redirecionar, então a primeira visita por http fica sem criptografia.",
  "But ⟦1⟧ serves the page with a ⟦2⟧ instead of redirecting, and browsers ignore HSTS sent over http.": "Mas ⟦1⟧ serve a página com um ⟦2⟧ em vez de redirecionar, e os navegadores ignoram HSTS enviado por http.",
+ "But ⟦1⟧ sitemap URLs point at another host or scheme.": {
+  "text": "Mas os URLs do mapa do site ⟦1⟧ apontam para outro host ou esquema.",
+  "machine": true
+ },
  "But ⟦1⟧ sitemap URLs use ⟦2⟧ not the ⟦3⟧ address the site serves, so every entry redirects.": "Mas ⟦1⟧ URLs do sitemap usam ⟦2⟧, não o endereço ⟦3⟧ que o site serve, então toda entrada redireciona.",
  "But ⟦1⟧ still loads for UA-⟦2⟧-⟦3⟧, and Universal Analytics stopped collecting data in ⟦4⟧.": "Mas ⟦1⟧ ainda carrega para UA-⟦2⟧-⟦3⟧, e o Universal Analytics parou de coletar dados em ⟦4⟧.",
  "But ⟦1⟧ structured data items miss a property Google expects.": "Mas ⟦1⟧ itens de dados estruturados não têm uma propriedade que o Google espera.",
@@ -452,6 +484,10 @@
  "But every page analyzed loads its two logo images over ⟦1⟧ so browsers must upgrade or block them.": "Mas toda página analisada carrega suas duas imagens de logo por ⟦1⟧, então os navegadores precisam fazer upgrade ou bloqueá-las.",
  "But every page analyzed ships over ⟦1⟧ KB of HTML, and the home page is ⟦2⟧ MB before compression, ahead of any image.": "Mas toda página analisada envia mais de ⟦1⟧ KB de HTML, e a home tem ⟦2⟧ MB antes da compressão, antes de qualquer imagem.",
  "But every page analyzed still loads UA-⟦1⟧-⟦2⟧, and Universal Analytics stopped processing data by July ⟦3⟧.": "Mas toda página analisada ainda carrega UA-⟦1⟧-⟦2⟧, e o Universal Analytics parou de processar dados em julho de ⟦3⟧.",
+ "But form elements must have labels.": {
+  "text": "Mas os elementos do formulário devem ter rótulos.",
+  "machine": true
+ },
  "But framing is limited only by X-Frame-Options:": "Mas o framing é limitado só por X-Frame-Options:",
  "But Google Tag Manager loads and no consent tool or Consent Mode default appears in the HTML.": "Mas o Google Tag Manager carrega e nenhuma ferramenta de consentimento ou padrão do Consent Mode aparece no HTML.",
  "But home page links carry tabindex values like ⟦1⟧ and ⟦2⟧, so keyboard users move in an order that skips around.": "Mas os links da home têm valores de tabindex como ⟦1⟧ e ⟦2⟧, então quem usa teclado se move numa ordem que fica pulando.",
@@ -770,6 +806,10 @@
  "Describe the ones that inform, and give decorative ones an empty alt.": "Descreva as que informam e dê às decorativas um alt vazio.",
  "Describe the ones that inform, and give decorative ones an…": "Descreva as que informam e dê às decorativas um…",
  "Describe what each image shows in its alt attribute, and use ⟦1⟧ on purely decorative ones.": "Descreva o que cada imagem mostra no atributo alt e use ⟦1⟧ nas puramente decorativas.",
+ "Describe what each image shows in its alt attribute, and use ⟦1⟧ on purely decorative…": {
+  "text": "Descreva o que cada imagem mostra em seu atributo alt e use ⟦1⟧ em fins puramente decorativos…",
+  "machine": true
+ },
  "Describe what each image shows in its alt attribute, and use ⟦1⟧ on purely…": {
   "text": "Descreva o que cada imagem mostra em seu atributo alt e use ⟦1⟧ puramente…",
   "machine": true
@@ -1179,6 +1219,10 @@
  "Keep INP under ⟦1⟧ ms.": "Mantenha o INP abaixo de ⟦1⟧ ms.",
  "Keep one GA4 property per site, loaded once, ideally through Tag Manager, and retire the old ID.": "Mantenha uma propriedade GA4 por site, carregada uma vez, de preferência via Tag Manager, e aposente o ID antigo.",
  "Keep one GA4 property per site.": "Mantenha uma propriedade GA4 por site.",
+ "Keep only li elements directly inside ul and ol.": {
+  "text": "Mantenha apenas os elementos li diretamente dentro de ul e ol.",
+  "machine": true
+ },
  "Keep port ⟦1⟧ alive just to send a ⟦2⟧ to https.": "Mantenha a porta ⟦1⟧ ativa só para enviar um ⟦2⟧ para https.",
  "Keep titles near ⟦1⟧ characters and move the mission into the description.": "Mantenha os títulos perto de ⟦1⟧ caracteres e leve a missão para a descrição.",
  "Keep titles near ⟦1⟧ characters: key words first, site name last, and trim long names in the CMS.": "Mantenha os títulos perto de ⟦1⟧ caracteres: palavras-chave primeiro, nome do site por último, e encurte nomes longos no CMS.",
@@ -1358,6 +1402,14 @@
  "One attribute fixes every page.": "Um atributo corrige todas as páginas.",
  "One attribute makes it usable by voice.": "Um atributo o torna utilizável por voz.",
  "One attribute per page.": "Um atributo por página.",
+ "One automated analysis of public pages on ⟦1⟧ Nov ⟦2⟧, one of the most visited sites in its country, from QA-lab URL Review's country sweep.": {
+  "text": "Uma análise automatizada de páginas públicas em ⟦1⟧ Nov ⟦2⟧, um dos sites mais visitados em seu país, da varredura de país do QA-lab URL Review.",
+  "machine": true
+ },
+ "One automated analysis of public pages on ⟦1⟧ Nov ⟦2⟧, requested through QA-lab URL Review.": {
+  "text": "Uma análise automatizada de páginas públicas em ⟦1⟧ novembro ⟦2⟧, solicitada através da revisão de URL do laboratório de controle de qualidade.",
+  "machine": true
+ },
  "One automated analysis of public pages on ⟦1⟧ Oct ⟦2⟧, one of the most visited sites in its country, from QA-lab URL Review's country sweep.": "Uma análise automatizada de páginas públicas em ⟦1⟧ out. ⟦2⟧, um dos sites mais visitados do seu país, da varredura por país do QA-lab URL Review.",
  "One automated analysis of public pages on ⟦1⟧ Oct ⟦2⟧, requested through QA-lab URL Review.": "Uma análise automatizada de páginas públicas em ⟦1⟧ out. ⟦2⟧, solicitada pelo QA-lab URL Review.",
  "One automated analysis of public pages on ⟦1⟧ Oct ⟦2⟧.": "Uma análise automatizada de páginas públicas em ⟦1⟧ out. ⟦2⟧.",
@@ -1679,8 +1731,16 @@
  "Send Strict-Transport-Security with a max-age of a year or more: one header.": "Envie Strict-Transport-Security com max-age de um ano ou mais: um header.",
  "Send Strict-Transport-Security with a max-age of at least a year, and point / straight at the final page.": "Envie Strict-Transport-Security com max-age de pelo menos um ano e aponte / direto para a página final.",
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.": "Envie Strict-Transport-Security com max-age de pelo menos um ano, para que os navegadores nunca mais tentem http simples.",
+ "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain…": {
+  "text": "Envie Strict-Transport-Security com idade máxima de pelo menos um ano, para que os navegadores nunca tentem simplesmente…",
+  "machine": true
+ },
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try…": "Envie Strict-Transport-Security com max-age de pelo menos um ano, para que os navegadores nunca tentem…",
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never…": "Envie Strict-Transport-Security com max-age de pelo menos um ano, para que os navegadores nunca…",
+ "Send Strict-Transport-Security with a max-age of at least a year, so browsers…": {
+  "text": "Envie Strict-Transport-Security com idade máxima de pelo menos um ano, para que os navegadores…",
+  "machine": true
+ },
  "Send Strict-Transport-Security with a max-age of at least a year, so…": {
   "text": "Envie Strict-Transport-Security com idade máxima de pelo menos um ano, então…",
   "machine": true
@@ -1689,6 +1749,10 @@
  "Send X-Content-Type-Options: nosniff on every response.": "Envie X-Content-Type-Options: nosniff em toda resposta.",
  "Send X-Content-Type-Options: nosniff, and X-Frame-Options:": "Envie X-Content-Type-Options: nosniff, e X-Frame-Options:",
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧, ⟦8⟧ page analyzed, ⟦9⟧ Oct ⟦10⟧.": "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Segurança ⟦4⟧, A11y ⟦5⟧, Velocidade ⟦6⟧. ⟦7⟧, ⟦8⟧ página analisada, ⟦9⟧ out. ⟦10⟧.",
+ "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧, ⟦8⟧ pages analyzed, ⟦9⟧ Nov ⟦10⟧.": {
+  "text": "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Segurança ⟦4⟧, A11y ⟦5⟧, Velocidade ⟦6⟧. ⟦7⟧, ⟦8⟧ páginas analisadas, ⟦9⟧ novembro ⟦10⟧.",
+  "machine": true
+ },
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧, ⟦8⟧ pages analyzed, ⟦9⟧ Oct ⟦10⟧.": "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Segurança ⟦4⟧, A11y ⟦5⟧, Velocidade ⟦6⟧. ⟦7⟧, ⟦8⟧ páginas analisadas, ⟦9⟧ out. ⟦10⟧.",
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧.basketball, ⟦8⟧ pages analyzed, ⟦9⟧ Oct ⟦10⟧.": "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Segurança ⟦4⟧, A11y ⟦5⟧, Velocidade ⟦6⟧. ⟦7⟧.basketball, ⟦8⟧ páginas analisadas, ⟦9⟧ out. ⟦10⟧.",
  "SEO ⟦1⟧.": "SEO ⟦1⟧.",
@@ -1696,6 +1760,10 @@
  "SEO Week Becomes Relevance, the Premier AI Search Conference, Returning April ⟦1⟧–⟦2⟧, ⟦3⟧, in New York City": "SEO Week vira Relevance, a principal conferência de busca com IA, e volta de ⟦1⟧ a ⟦2⟧ de abril de ⟦3⟧, em Nova York",
  "SEO Week Becomes…": "SEO Week vira…",
  "SEO Works found that organic delivered ⟦1⟧ times the traffic of AI assistants and roughly ⟦2⟧ […] The post AI Search Is Not a Distraction, It’s a Branding Channel appeared first on…": "A SEO Works descobriu que o orgânico gerou ⟦1⟧ vezes o tráfego dos assistentes de IA e cerca de ⟦2⟧ […] O post A busca com IA não é uma distração, é um canal de branding apareceu primeiro em…",
+ "Serve ⟦1⟧ from the same host as the pages it lists, and name it in ⟦2⟧.": {
+  "text": "Sirva ⟦1⟧ do mesmo host das páginas listadas e nomeie-o em ⟦2⟧.",
+  "machine": true
+ },
  "Serve a ⟦1⟧ with a Sitemap: line.": "Sirva um ⟦1⟧ com uma linha Sitemap:.",
  "Serve the full chain: leaf plus intermediates.": "Sirva a cadeia completa: certificado final mais intermediários.",
  "Served as /⟦1⟧.": "Servido como /⟦1⟧.",
@@ -1704,6 +1772,10 @@
  "Set canonicals to the exact public URL: https, your real host, no port.": "Aponte os canonicals para a URL pública exata: https, seu host real, sem porta.",
  "Set consent defaults to denied before Tag Manager loads; OneTrust then updates them.": "Defina os padrões de consentimento como denied antes de o Tag Manager carregar; depois o OneTrust os atualiza.",
  "Set HSTS max-age to at least one year (⟦1⟧) once https works everywhere.": "Defina o max-age do HSTS em pelo menos um ano (⟦1⟧) quando o https funcionar em tudo.",
+ "Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to read.": {
+  "text": "Defina Secure, HttpOnly e SameSite em todos os cookies que os scripts não precisam ler.",
+  "machine": true
+ },
  "Set security headers at the edge, not per app, so every path on the host gets the same HSTS policy.": "Defina os cabeçalhos de segurança na borda, não por app, para que todo caminho do host tenha a mesma política HSTS.",
  "Set security headers once at the edge or server, not per page template.": "Defina os cabeçalhos de segurança uma vez na borda ou no servidor, não por template de página.",
  "Set the CMS base URL to your public https address, then regenerate the sitemap.": "Defina a URL base do CMS como seu endereço https público e gere o sitemap de novo.",
@@ -1812,13 +1884,25 @@
  "The gap: alt text.": "A lacuna: texto alt.",
  "The gap: broken links.": "A lacuna: links quebrados.",
  "The gap: button names.": "A lacuna: nomes de botões.",
+ "The gap: cookie flags.": {
+  "text": "A lacuna: sinalizadores de cookies.",
+  "machine": true
+ },
  "The gap: form labels.": "A lacuna: rótulos de formulário.",
  "The gap: framing.": "A lacuna: frames.",
  "The gap: hreflang.": "A lacuna: hreflang.",
  "The gap: its WebSite JSON-LD has no name, the property search uses for the site name in results.": "A lacuna: o WebSite em JSON-LD não tem name, a propriedade que a busca usa para o nome do site nos resultados.",
  "The gap: link names.": "A lacuna: nomes de links.",
+ "The gap: list markup.": {
+  "text": "A lacuna: marcação de lista.",
+  "machine": true
+ },
  "The gap: measurement.": {
   "text": "A lacuna: medição.",
+  "machine": true
+ },
+ "The gap: meta descriptions.": {
+  "text": "A lacuna: meta descrições.",
   "machine": true
  },
  "The gap: no page analyzed carries JSON-LD naming who runs the site.": "A lacuna: nenhuma página analisada traz JSON-LD nomeando quem administra o site.",
@@ -1831,6 +1915,10 @@
   "machine": true
  },
  "The gap: the https redirect.": "A lacuna: o redirecionamento para https.",
+ "The gap: the sitemap host.": {
+  "text": "A lacuna: o host do mapa do site.",
+  "machine": true
+ },
  "The Global Fund sets no cache rules.": "O Fundo Global não define regras de cache.",
  "The Guardian front page has no h1.": "A capa do The Guardian não tem h1.",
  "The harder part is getting that information in front of the right people at the right time.": "A parte mais difícil é fazer essa informação chegar às pessoas certas no momento certo.",

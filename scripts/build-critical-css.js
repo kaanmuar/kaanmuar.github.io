@@ -7,7 +7,8 @@
  * attribute would need 'unsafe-inline' in script-src). Preload fetches at high priority, so the full CSS usually lands
  * before the deferred scripts paint what the static HTML does not have. The builder first undoes its own output, so
  * the page keeps one plain <link> per stylesheet as its source.
- * The review language pages copy qa-review.html's head; build-social-hub.js calls inline() on the hub pages.
+ * The review language pages copy qa-review.html's head; build-social-hub.js and build-face-pages.js call inline() on
+ * the pages they write.
  *
  *   node scripts/build-critical-css.js          rewrites the pages
  *   node scripts/build-critical-css.js --check  exits 1 when a page no longer matches its CSS

@@ -21,9 +21,14 @@
    address, tagged utm_source=facebook&utm_medium=social&utm_campaign=<batch>; a post the Page took before that is
    still recognised by its caption without the address.
 
+   Faces (scripts/face-route.js, #2310): es/pt posts go to @qaurlreview's Page once FACEBOOK_PAGE_ID_ES and
+   FACEBOOK_PAGE_TOKEN_ES are set (FACE=es node scripts/meta-token.js page), and to the QA-lab Page until then. When
+   they are, each run first deletes the es/pt posts the QA-lab Page still has scheduled (ledger: moved) and then
+   schedules them on the other Page. A post queued or sent on either Page is not scheduled on the other.
+
    The Page token never expires, but changing the Facebook password or removing the "QA-lab Page Publisher"
    app (1097031042944706) revokes it. To renew it, generate a user token in Graph API Explorer on that app
-   with pages_manage_posts and pages_read_engagement, copy the app secret from App settings > Basic, then:
+   with pages_manage_posts, pages_read_engagement, read_insights and pages_read_user_content, copy the app secret from App settings > Basic, then:
 
      FACEBOOK_USER_TOKEN=... FACEBOOK_APP_SECRET=... FACEBOOK_PAGE_ID=... node scripts/facebook-queue.js --renew
 
@@ -34,8 +39,13 @@ const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
 const { createGate, withHubLink } = require("./hub-gate");
+const faceRoute = require("./face-route");
+const { FACES } = require("./brand-kit/faces");
 
 const ROOT = path.resolve(__dirname, "..");
+// The Page token of the face being posted; main() sets it per face.
+let TOKEN = process.env.FACEBOOK_PAGE_TOKEN;
+const profileOf = faceRoute.pageProfile;
 const SITE = process.env.SITE || "https://carlosandmunoz.com";
 const GRAPH = "https://graph.facebook.com/" + (process.env.FACEBOOK_GRAPH_VERSION || "v23.0");
 // The Graph API only schedules between 10 minutes and 30 days ahead.
@@ -89,14 +99,14 @@ function graphError(status, json) {
 }
 
 async function graph(edge, params) {
-  const body = new URLSearchParams(Object.assign({}, params, { access_token: process.env.FACEBOOK_PAGE_TOKEN }));
+  const body = new URLSearchParams(Object.assign({}, params, { access_token: TOKEN }));
   const res = await fetch(GRAPH + "/" + edge, { method: "POST", body });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || json.error) throw graphError(res.status, json);
   return json;
 }
 
-async function graphGet(edge, params, token = process.env.FACEBOOK_PAGE_TOKEN) {
+async function graphGet(edge, params, token = TOKEN) {
   const qs = new URLSearchParams(Object.assign({}, params, token ? { access_token: token } : {}));
   const res = await fetch(GRAPH + "/" + edge + "?" + qs);
   const json = await res.json().catch(() => ({}));
@@ -105,7 +115,7 @@ async function graphGet(edge, params, token = process.env.FACEBOOK_PAGE_TOKEN) {
 }
 
 async function graphDelete(id) {
-  const res = await fetch(GRAPH + "/" + id + "?" + new URLSearchParams({ access_token: process.env.FACEBOOK_PAGE_TOKEN }), { method: "DELETE" });
+  const res = await fetch(GRAPH + "/" + id + "?" + new URLSearchParams({ access_token: TOKEN }), { method: "DELETE" });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || json.error || json.success === false) throw graphError(res.status, json);
 }
@@ -203,13 +213,13 @@ const photo = (post, caption, due) => ({
    row is now later than its Page time (scripts/facebook-reslot.js --write) is deleted and scheduled again at the row.
    The run stops at the first delete the Page refuses. A post whose re-create fails is no longer on the Page, so the
    next --all run schedules it at its row. */
-async function reslot(page, live) {
+async function reslot({ face, page, profile }, live) {
   const book = ledger.read(ledger.FACEBOOK);
   const gate = createGate();
   const moves = [];
   for (const post of allBatches().flatMap(posts)) {
     const name = post.batch + "/" + post.slug;
-    const entry = ledger.find(book, name, "facebook", "Facebook Page");
+    const entry = ledger.find(book, name, "facebook", profile);
     if (!entry || entry.result !== "queued" || !entry.id || !post.at) continue;
     const was = Date.parse(entry.at);
     if (post.at - was >= 60e3 && was > Date.now() + 60 * 60e3) moves.push({ post, name, entry });
@@ -219,7 +229,7 @@ async function reslot(page, live) {
   let failed = 0;
   for (const { post, name, entry } of moves) {
     const at = new Date(post.at).toISOString();
-    const params = photo(post, withHubLink(post.cap.facebook, { batch: post.batch, slug: post.slug, network: "facebook" }), post.at);
+    const params = photo(post, withHubLink(faceRoute.captionFor(post.cap, "facebook", face), { batch: post.batch, slug: post.slug, network: "facebook" }), post.at);
     const hub = await gate(post.batch, post.slug, post.cap, at);
     const why = hub.why ? "Hub first: " + hub.why : !(await served(params.url)) ? "image not served: " + params.url : null;
     if (!live) { console.log("  " + name + " " + entry.at + " -> " + at + (why ? " HELD: " + why : "")); continue; }
@@ -231,7 +241,7 @@ async function reslot(page, live) {
       console.log("  the Page refused to delete " + entry.id + " (" + name + "), stopping: " + error.message.split("\n")[0]);
       break;
     }
-    const record = (fields) => ledger.record(book, name, Object.assign({ channel: "facebook", profile: "Facebook Page", checked: new Date().toISOString(), at }, fields));
+    const record = (fields) => ledger.record(book, name, Object.assign({ channel: "facebook", profile, checked: new Date().toISOString(), at }, fields));
     try {
       const r = await graph(page + "/photos", params);
       moved += 1;
@@ -245,39 +255,84 @@ async function reslot(page, live) {
   }
   if (live) ledger.write(ledger.FACEBOOK, book);
   console.log(moved + " moved, " + failed + " failed");
-  if (failed) process.exit(1);
+  return failed;
+}
+
+// The default face's scheduled posts whose language another connected face now posts: deleted from this Page and
+// marked moved, so that face's run schedules them on its own Page.
+async function moveAway({ face, profile }, all, book, connected, live) {
+  if (face !== faceRoute.DEFAULT) return 0;
+  let failed = 0;
+  for (const post of all) {
+    const name = post.batch + "/" + post.slug;
+    const entry = ledger.find(book, name, "facebook", profile);
+    const to = faceRoute.postFace(post.batch, post.slug, post.cap, "facebook", connected);
+    if (to === face || !entry || entry.result !== "queued" || !entry.id || Date.parse(entry.at) <= Date.now() + 60 * 60e3) continue;
+    if (!live) { console.log("would move", name, entry.at, "to", profileOf(to)); continue; }
+    try {
+      await graphDelete(entry.id);
+      ledger.record(book, name, Object.assign({}, entry, { result: "moved", error: "Moved to " + profileOf(to), checked: new Date().toISOString() }));
+      console.log("moved", name, entry.at, "to", profileOf(to));
+    } catch (error) {
+      failed += 1;
+      console.log("the Page refused to delete " + entry.id + " (" + name + "), stopping: " + error.message.split("\n")[0]);
+      break;
+    }
+  }
+  return failed;
 }
 
 async function main() {
   const opts = args();
-  const page = process.env.FACEBOOK_PAGE_ID;
-  if (opts.renew) return renew(page);
+  if (opts.renew) return renew(process.env.FACEBOOK_PAGE_ID);
   const live = !opts["dry-run"];
-  if ((live || opts.check) && !(page && process.env.FACEBOOK_PAGE_TOKEN)) throw new Error("FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN must be set.");
-  if (opts.check) return check(page);
-  if (opts.reslot) return reslot(page, live);
+  const pages = Object.keys(FACES).map((face) => {
+    const env = faceRoute.faceEnv(face);
+    return { face, page: env.FACEBOOK_PAGE_ID, token: env.FACEBOOK_PAGE_TOKEN, profile: profileOf(face) };
+  });
+  const connected = new Set(pages.filter((p) => p.page && p.token).map((p) => p.face));
+  if ((live || opts.check) && !connected.has(faceRoute.DEFAULT)) throw new Error("FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN must be set.");
   const batch = String(opts.batch || "");
-  if (!opts.all && !/^[\w-]+$/.test(batch)) throw new Error("--batch <name> or --all is required");
-  const list = (opts.all ? allBatches() : [batch]).flatMap(posts);
-  if (!list.length) { console.log("nothing to post"); return; }
+  if (!opts.check && !opts.reslot && !opts.all && !/^[\w-]+$/.test(batch)) throw new Error("--batch <name> or --all is required");
+  let failed = 0;
+  for (const p of pages.filter((p) => connected.has(p.face) || p.face === faceRoute.DEFAULT)) {
+    TOKEN = p.token;
+    if (connected.size > 1) console.log("== " + p.profile);
+    if (opts.check) await check(p.page);
+    else if (opts.reslot) failed += await reslot(p, live);
+    else failed += await queue(p, { batch, all: !!opts.all, live, connected });
+  }
+  if (failed) process.exit(1);
+}
+
+async function queue(p, { batch, all, live, connected }) {
+  const { face, page, profile } = p;
+  const every = (all ? allBatches() : [batch]).flatMap(posts);
+  const list = every.filter((post) => faceRoute.postFace(post.batch, post.slug, post.cap, "facebook", connected) === face);
+  if (!list.length && face !== faceRoute.DEFAULT) { console.log("nothing to post"); return 0; }
+  if (!every.length) { console.log("nothing to post"); return 0; }
 
   // A batch the daily job just pushed may take a few minutes to reach the site.
-  if (live && !opts.all) {
-    const first = SITE + "/media/social-posts/" + batch + "/feed/" + list[0].slug + ".jpg";
-    console.log("Waiting up to 20 minutes for the site to serve " + first);
-    if (!(await waitFor(first, 20))) throw new Error("The site never served " + first);
+  if (live && !all) {
+    const first = SITE + "/media/social-posts/" + batch + "/feed/" + every[0].slug + ".jpg";
+    console.log("Waiting up to 60 minutes for the site to serve " + first);
+    if (!(await waitFor(first, 60))) {
+      console.log("::warning::The site did not serve " + first + " within 60 minutes. The daily Facebook Page queue (facebook-page.yml) schedules " + batch + " once it does.");
+      return 0;
+    }
   }
-  const found = live || process.env.FACEBOOK_PAGE_TOKEN ? await onPage(page) : { published: [], keys: new Map() };
+  const found = live || TOKEN ? await onPage(page) : { published: [], keys: new Map() };
   const done = found.keys;
   const book = ledger.read(ledger.FACEBOOK);
   if (live) {
-    const counts = await ledger.upgrade(book, Date.now(), (entry) => lookup(entry, found.published));
+    const counts = await ledger.upgrade(book, Date.now(), (entry) => (entry.profile === profile ? lookup(entry, found.published) : null));
     console.log("ledger: " + counts.sent + " sent, " + counts.failed + " failed, " + counts.queued + " still queued");
   }
+  let failed = await moveAway(p, every, book, connected, live);
   const horizon = Date.now() + MAX_LEAD_MS;
   const gate = createGate();
-  const record = (name, entry) => ledger.record(book, name, Object.assign({ channel: "facebook", profile: "Facebook Page", checked: new Date().toISOString() }, entry));
-  let failed = 0;
+  const record = (name, entry) => ledger.record(book, name, Object.assign({ channel: "facebook", profile, checked: new Date().toISOString() }, entry));
+  const elsewhere = (name) => (book.posts[name] || []).some((e) => e.channel === "facebook" && e.profile !== profile && (e.result === "queued" || e.result === "sent"));
   let queued = 0;
   let already = 0;
   let later = 0;
@@ -285,14 +340,15 @@ async function main() {
   let late = 0;
   for (const post of list) {
     const name = post.batch + "/" + post.slug;
-    const caption = withHubLink(post.cap.facebook, { batch: post.batch, slug: post.slug, network: "facebook" });
+    const caption = withHubLink(faceRoute.captionFor(post.cap, "facebook", face), { batch: post.batch, slug: post.slug, network: "facebook" });
     const there = done.get(key(caption)) || done.get(key(post.cap.facebook));
     if (there) {
       already += 1;
-      const known = ledger.find(book, name, "facebook", "Facebook Page");
+      const known = ledger.find(book, name, "facebook", profile);
       if (live && !(known && known.id === there.id && known.result !== "queued")) record(name, there);
       continue;
     }
+    if (elsewhere(name)) { already += 1; continue; }
     if (post.at > horizon) { later += 1; continue; }
     // The Graph API fetches the image from the site, so a batch merged minutes ago waits for its Pages deploy.
     const image = SITE + "/media/social-posts/" + post.batch + "/feed/" + post.slug + ".jpg";
@@ -326,7 +382,7 @@ async function main() {
   }
   if (live) ledger.write(ledger.FACEBOOK, book);
   console.log(queued + " scheduled, " + already + " already on the Page, " + later + " more than 29 days out, " + unserved + " not on the site yet, " + failed + " failed");
-  if (failed) process.exit(1);
+  return failed;
 }
 
 main().catch((error) => { console.error(error); process.exit(1); });

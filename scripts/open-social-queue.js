@@ -13,6 +13,13 @@
    than MISSED_MS old is left alone, so connecting a network does not flood it with the backlog. A network whose
    secrets are missing is skipped.
 
+   Each post goes to the face of its language (scripts/face-route.js, #2310): en/de/fr/it to @qalaburlreview with
+   the secrets above, es/pt to @qaurlreview with the same names ending in _ES (BLUESKY_HANDLE_ES, ...). Each run
+   logs every account in and gives it to the face whose handle it logs in as, whichever set holds it (#2332): the
+   Threads token is @qaurlreview's, so en/de/fr/it skip Threads until @qalaburlreview has an account there. Until
+   @qaurlreview has an account on a network, @qalaburlreview posts its languages there. A post sent from either
+   face is not posted again.
+
    Every post goes into the ledger assets/social/open-social.json (scripts/social-ledger.js) as sent or failed. A
    failed post is tried again on the next run while its slot is within reach. Before posting, each run reads the
    account's latest posts and skips a post one of them already links to, so a ledger that never reached main does
@@ -30,6 +37,8 @@ const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
 const { createGate, withHubLink } = require("./hub-gate");
+const faceRoute = require("./face-route");
+const { FACES } = require("./brand-kit/faces");
 
 const ROOT = path.resolve(__dirname, "..");
 const SITE = process.env.SITE || "https://carlosandmunoz.com";
@@ -97,11 +106,13 @@ function due(list, now) {
 
 const marker = (post) => "/social/" + post.batch + "/" + post.slug + ".html";
 
-// The x caption's own links are tagged utm_source=x.
-function caption(post, network) {
+// The x caption's own links are tagged utm_source=x. A face posts the caption in its own language when the hub
+// has translated it (scripts/face-route.js captionFor, #2346).
+function caption(post, network, face = faceRoute.DEFAULT) {
   const key = (ROUTES[network] || ROUTES.bluesky).caption;
   if (!key) return "";
-  const text = key === "x" ? String(post.cap.x).replace(/utm_source=x\b/g, "utm_source=" + network) : String(post.cap[key]);
+  const own = String(faceRoute.captionFor(post.cap, key, face));
+  const text = key === "x" ? own.replace(/utm_source=x\b/g, "utm_source=" + network) : own;
   return withHubLink(text, { batch: post.batch, slug: post.slug, network });
 }
 
@@ -297,19 +308,20 @@ function instagram(env = process.env, story = false) {
 
 const NETWORKS = { bluesky, mastodon, threads, instagram: (env) => instagram(env, false), "instagram-story": (env) => instagram(env, true) };
 
-async function run(network, client, list, book, { live, now, gate }) {
+async function run(network, client, list, book, { live, now, gate, face = faceRoute.DEFAULT }) {
+  const key = (ROUTES[network] || ROUTES.bluesky).caption || "x";
   const todo = due(list, now).filter((post) => !(book.posts[post.batch + "/" + post.slug] || []).some((e) => e.channel === network && e.result === "sent"));
   const counts = { posted: 0, already: 0, held: 0, failed: 0, waiting: Math.max(0, todo.length - PER_RUN) };
   if (!live) {
     for (const post of todo.slice(0, PER_RUN)) {
       const hub = await gate(post.batch, post.slug, post.cap, new Date(now).toISOString());
-      const text = caption(post, network);
-      console.log("dry-run", network, post.batch + "/" + post.slug, new Date(post.at).toISOString(), hub.why ? "HELD: " + hub.why : "hub ok", [...text].length + " chars", text.split("\n").pop());
+      const text = caption(post, network, face);
+      console.log("dry-run", "@" + FACES[face].handle, faceRoute.captionLang(post.cap, key, face), network, post.batch + "/" + post.slug, new Date(post.at).toISOString(), hub.why ? "HELD: " + hub.why : "hub ok", [...text].length + " chars", text.split("\n").pop());
     }
     return counts;
   }
   if (!todo.length) return counts;
-  const profile = await client.login();
+  const profile = client.profile || await client.login();
   const recent = await client.recent();
   const record = (post, entry) => ledger.record(book, post.batch + "/" + post.slug, Object.assign({ channel: network, profile, checked: new Date().toISOString() }, entry));
   for (const post of todo) {
@@ -331,7 +343,7 @@ async function run(network, client, list, book, { live, now, gate }) {
       continue;
     }
     try {
-      const r = await client.post({ text: caption(post, network), image: post.image, url: post.url, alt: post.cap.alt || post.cap.title || "", lang: post.cap.lang || "en", key: name });
+      const r = await client.post({ text: caption(post, network, face), image: post.image, url: post.url, alt: post.cap.alt || post.cap.title || "", lang: faceRoute.captionLang(post.cap, key, face), key: name });
       counts.posted += 1;
       console.log("posted", network, name, r.url);
       record(post, { id: r.id, url: r.url, at, result: "sent" });
@@ -358,16 +370,41 @@ async function main() {
   const now = Date.now();
   let broken = false;
   for (const network of only ? [only] : Object.keys(NETWORKS)) {
-    const client = NETWORKS[network]();
-    if (live && !client.ready) { console.log(network + ": no secrets, skipped"); continue; }
-    try {
-      const list = batches.flatMap((name) => posts(name, ROOT, network));
-      const c = await run(network, client, list, book, { live, now, gate });
-      console.log(network + ": " + c.posted + " posted, " + c.already + " already on the account, " + c.held + " held, " + c.failed + " failed, " + c.waiting + " due for a later run");
-      if (c.failed) broken = true;
-    } catch (error) {
-      broken = true;
-      console.log(network + ": " + error.message);
+    const clients = [];
+    for (const set of Object.keys(FACES)) {
+      const client = NETWORKS[network](faceRoute.faceEnv(set));
+      if (!live) { if (client.ready || set === faceRoute.DEFAULT) clients.push({ face: set, client }); continue; }
+      if (!client.ready) continue;
+      try {
+        client.profile = await client.login();
+      } catch (error) {
+        broken = true;
+        console.log(network + ": " + error.message);
+        continue;
+      }
+      const face = faceRoute.accountFace(client.profile);
+      if (!face || clients.some((c) => c.face === face)) {
+        broken = true;
+        console.log(network + ": " + client.profile + (face ? " is held by two sets of secrets; the first posts" : " is no face's account (scripts/brand-kit/faces.js), skipped"));
+        continue;
+      }
+      clients.push({ face, client });
+    }
+    if (live && !clients.length) { console.log(network + ": no account connected, skipped"); continue; }
+    const connected = new Set(clients.filter((c) => c.client.ready).map((c) => c.face));
+    const all = batches.flatMap((name) => posts(name, ROOT, network));
+    for (const { face, client } of clients) {
+      const label = network + " @" + FACES[face].handle;
+      const list = all.filter((post) => faceRoute.postFace(post.batch, post.slug, post.cap, ROUTES[network].slot, connected) === face);
+      if (!live && !list.length) continue;
+      try {
+        const c = await run(network, client, list, book, { live, now, gate, face });
+        console.log(label + ": " + c.posted + " posted, " + c.already + " already on the account, " + c.held + " held, " + c.failed + " failed, " + c.waiting + " due for a later run");
+        if (c.failed) broken = true;
+      } catch (error) {
+        broken = true;
+        console.log(label + ": " + error.message);
+      }
     }
   }
   if (live && JSON.stringify(book) !== before) ledger.write(ledger.OPEN_SOCIAL, book);

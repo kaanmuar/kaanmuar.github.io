@@ -35,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
+      actions: write
       contents: write
       pages: write
     env:
@@ -45,7 +46,7 @@ jobs:
         with:
           ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
 
@@ -76,6 +77,8 @@ jobs:
           git add "media/social-posts/$BATCH"
           git add -f "media/social-posts/$BATCH/story"
           node scripts/build-social-hub.js
+          # This commit skips CI, so a hub page in the wrong language would fail every PR after it.
+          scripts/social-hub/guard-hub-lang.sh
           git add assets/social qa-review-social*.html sitemap-social.xml social
           git commit -q -m "Social inbox: $BATCH [skip ci]"
           for attempt in 1 2 3 4 5; do
@@ -87,10 +90,11 @@ jobs:
             git reset -q --hard FETCH_HEAD
             git cherry-pick -X theirs "$DATA"
             node scripts/build-social-hub.js --offline
+            scripts/social-hub/guard-hub-lang.sh HEAD~1
             git add assets/social qa-review-social*.html sitemap-social.xml social
             git diff --cached --quiet || git commit -q --amend --no-edit
           done
-          gh api -X POST "repos/${{ github.repository }}/pages/builds" > /dev/null || true
+          gh workflow run pages.yml --ref main -R "${{ github.repository }}" || echo "::warning::Pages was not dispatched; the next push to main deploys this batch."
 
       - name: Release the clip
         if: steps.batch.outputs.video == '1'
@@ -111,6 +115,11 @@ jobs:
             sleep 30
           done
           echo "::warning::$url did not answer 200 in 20 minutes; the queue scripts wait and the hub gate may hold the posts."
+
+      - name: Wait for a hub rebuild or Pages deploy on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/hub-wait.sh
 
       - name: Queue the post in Buffer
         env:
