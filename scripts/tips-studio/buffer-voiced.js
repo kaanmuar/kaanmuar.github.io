@@ -54,7 +54,8 @@
 
   async function edit(p, c, meta, asset) {
     const input = { id: p.id, dueAt: p.dueAt, schedulingType: p.schedulingType,
-      text: p.channelId === TT ? meta.tiktok : meta.youtube,
+      // YouTube rejects < and > in a description, same as scripts/buffer-queue.js (#2532).
+      text: p.channelId === TT ? meta.tiktok : String(meta.youtube || "").replace(/[<>]/g, ""),
       assets: { video: { url: asset.video, thumbnailUrl: asset.thumb } } };
     if (p.channelId === YT) {
       const m = p.metadata || {};

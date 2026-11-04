@@ -126,6 +126,9 @@ const onNetwork = (book, name, slot) => (book.posts[name] || []).some((e) => e.c
 const SLOT = { linkedin: "linkedin", facebook: "facebook", instagram: "instagram", twitter: "x", threads: "x", bluesky: "x", mastodon: "x", tiktok: "tiktok", youtube: "youtube" };
 const NETS = ["linkedin", "x", "facebook", "instagram", "tiktok", "youtube"];
 const squash = (text) => String(text || "").replace(/\s+/g, " ").trim();
+// Buffer rejects a YouTube description that contains < or > (#2532):
+// "Invalid post: YouTube description cannot contain < or > characters".
+const youtubeDescription = (text) => (text == null ? text : String(text).replace(/[<>]/g, ""));
 
 const CALENDAR_SLOT = { linkedin: "linkedin", x: "x", facebook: "facebook", tiktok: "tiktok", youtube: "youtube", "youtube shorts": "youtube" };
 
@@ -468,6 +471,7 @@ async function reroute(dry, max) {
         delete input.id;
         const text = translated(name, item.slot, to.face, item.service);
         if (text) input.text = text;
+        if (item.slot === "youtube") input.text = youtubeDescription(input.text);
         const r = (await gql("mutation($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }", { input })).createPost;
         if (!r.post) throw new Error("create: " + r.message);
         ledger.record(book, name, { channel: item.slot, profile, id: r.post.id, at: r.post.dueAt || item.node.dueAt, result: "queued", checked });
@@ -520,7 +524,8 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
   const own = (key) => faceRoute.captionFor(cap, key, channel.face || faceRoute.DEFAULT);
   const post = (slot, text, assets, metadata) => {
     const at = when[slug + "|" + slot];
-    return { slot, input: Object.assign({ channelId: channel.id, schedulingType: "automatic", text, assets },
+    const body = slot === "youtube" ? youtubeDescription(text) : text;
+    return { slot, input: Object.assign({ channelId: channel.id, schedulingType: "automatic", text: body, assets },
       at ? { mode: "customScheduled", dueAt: at > soon ? at : soon } : { mode: "addToQueue" }, metadata ? { metadata } : {}) };
   };
   switch (channel.service) {
@@ -673,4 +678,4 @@ function leaveForTonight(book, batch, why) {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { batchIndex, matchPost, staleScheduled, duplicateScheduled, inputsFor, gql, requeueTargets, rerouteTargets, translated, facesOn, onNetwork, mediaHost, SLOT };
+module.exports = { batchIndex, matchPost, staleScheduled, duplicateScheduled, inputsFor, youtubeDescription, gql, requeueTargets, rerouteTargets, translated, facesOn, onNetwork, mediaHost, SLOT };
