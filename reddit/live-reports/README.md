@@ -10,6 +10,8 @@ An interactive post with the Live Reports ring from [carlosandmunoz.com](https:/
 
 The app makes no network requests. Each version carries its own copy of the reports (`assets/live-reports`), and a new version is uploaded after each daily batch (`.github/workflows/reddit-live.yml`). Links leave through Reddit's `navigateTo`.
 
+Each post it makes, and each daily run, writes one `qalab-ledger {...}` log line: the batch, the post id and link, and the subreddit's member count. The workflow's ledger job reads them with `devvit logs` into `assets/social/reddit.json` for Jarvis (`scripts/reddit-ledger.js`).
+
 ## Build and upload
 
 ```sh

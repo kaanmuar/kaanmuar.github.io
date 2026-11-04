@@ -1257,8 +1257,10 @@ test("social: each channel shows what is next, what went out last and what faile
   } };
   const open = { posts: { "b/one": [{ channel: "bluesky", at: "2026-10-24T15:01:00Z", result: "sent", url: "https://bsky.app/profile/q/post/1" }, { channel: "mastodon", at: "2026-10-24T15:02:00Z", result: "failed" }] } };
   const telegram = { posts: { "live/2026-10-24": [{ channel: "telegram", at: "2026-10-24T18:38:14Z", result: "sent", url: "https://t.me/qalab_live/3" }] } };
-  const rows = social.byChannel([buffer, null, open, telegram], now, now - 7 * 86400000);
-  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "bluesky", "mastodon", "threads", "instagram", "instagram-story", "facebook", "youtube", "tiktok", "telegram"]);
+  const reddit = { posts: { "live/2026-10-24": [{ channel: "reddit", at: "2026-10-24T16:20:05Z", result: "sent", url: "https://www.reddit.com/r/QALabLiveReports/comments/abc/x/" }], "live/2026-10-23": [{ channel: "reddit", at: "2026-10-23T16:20:05Z", result: "failed", error: "Removed on Reddit (moderator)" }] } };
+  const rows = social.byChannel([buffer, null, open, telegram, reddit], now, now - 7 * 86400000);
+  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "bluesky", "mastodon", "threads", "instagram", "instagram-story", "facebook", "youtube", "tiktok", "telegram", "reddit"]);
+  assert.deepEqual([rows[11].name, rows[11].sent, rows[11].failed, rows[11].last.url], ["Reddit", 1, 1, "https://www.reddit.com/r/QALabLiveReports/comments/abc/x/"]);
   assert.deepEqual(rows[0].next.map((n) => n.post), ["b/two", "b/one"]);
   assert.equal(rows[0].scheduled, 2);
   assert.deepEqual([rows[1].sent, rows[1].failed, rows[1].last.url], [1, 1, "https://x.com/1"]);

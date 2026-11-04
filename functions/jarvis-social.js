@@ -11,13 +11,14 @@ const WORKFLOWS = [
   { file: "buffer-batch.yml", name: "Buffer", inputs: { mode: "retry" } },
   { file: "facebook-page.yml", name: "Facebook Page" },
   { file: "open-social.yml", name: "Bluesky, Mastodon, Threads and Instagram" },
-  // The Reddit app's upload after each batch (#2549); the app posts in r/QALabLiveReports on its own daily task, which
-  // writes no ledger, so this run is what Jarvis shows for Reddit. Post now leaves it alone: watch only.
+  // The Reddit app's upload after each batch (#2549); the app posts in r/QALabLiveReports on its own daily task, and
+  // the same workflow's ledger job reads the app's logs into assets/social/reddit.json (#2571). Post now leaves it
+  // alone: watch only.
   { file: "reddit-live.yml", name: "Reddit app (r/QALabLiveReports)", watch: true }
 ];
 
 // Channels that post once per Live Reports batch rather than per post, after the calendar channels.
-const LIVE_CHANNELS = [["telegram", "Telegram"]];
+const LIVE_CHANNELS = [["telegram", "Telegram"], ["reddit", "Reddit"]];
 
 /** Every channel in calendar order, with what is scheduled next, what went out last and what failed in the window. */
 function byChannel(books, now, since) {
