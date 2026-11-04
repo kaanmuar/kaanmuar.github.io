@@ -9,7 +9,8 @@
    { version: 1,
      posts: { "<batch>/<slug>": [{ channel: "linkedin", profile: "linkedin (QA-lab)", id: "<Buffer post or Graph post id>",
        at: "<due time, or sent time once sent>", result: "queued" | "sent" | "failed" | "moved", error, url, checked: "<ISO>",
-       slot: "<the calendar time a queued post waits to be moved to (social-calendar.js --sync)>" }] },
+       slot: "<the calendar time a queued post waits to be moved to (social-calendar.js --sync)>",
+       hash: "<a short hash of the text Telegram has, so telegram-live.js scrub edits only changed posts>" }] },
      retry: { "<batch>": { since: "<ISO>", error } } }
 
    One entry per calendar channel and profile. Every later run looks up the queued entries whose time has passed
@@ -28,7 +29,7 @@ const OPEN_SOCIAL = "assets/social/open-social.json";
 const DEVTO = "assets/social/devto.json";
 // moved: taken off this profile and queued on the other face's (scripts/face-route.js, #2310).
 const FINAL = new Set(["sent", "failed", "moved"]);
-const FIELDS = ["channel", "profile", "id", "at", "result", "error", "url", "checked", "slot"];
+const FIELDS = ["channel", "profile", "id", "at", "result", "error", "url", "checked", "slot", "hash"];
 
 function empty() {
   return { version: 1, posts: {} };

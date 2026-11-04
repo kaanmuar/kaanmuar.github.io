@@ -20,6 +20,26 @@ npx devvit upload
 npx devvit install r/<subreddit> qalab-live-reports@latest
 ```
 
+## Subreddit sidebar
+
+Set by hand in r/QALabLiveReports; the app cannot write them.
+
+**Community description** (*Mod Tools > General settings*, at most 500 characters):
+
+```text
+Every day, QA-lab URL Review analyzes public websites for SEO, AI search (GEO), analytics, security, accessibility and speed, and posts the newest batch here. Turn the ring, filter by sector or country, and open any report. Each report is one automated analysis of public pages, a starting point, not a verdict. Site owners can ask for removal at qa@carlosandmunoz.com. Review your own site at carlosandmunoz.com.
+```
+
+**Links widget** (on the community page, *Edit widgets > Add widget > Button*, titled *Links*; button text is at most 30 characters):
+
+| Button | Link |
+| --- | --- |
+| Live Reports | https://carlosandmunoz.com/qa-review.html?utm_source=reddit&utm_medium=social&utm_campaign=live-reports#live-reports |
+| Telegram channel | https://t.me/qalab_live |
+| Follow QA-lab (EN, DE, FR, IT) | https://carlosandmunoz.com/qalaburlreview.html |
+| Sigue a QA-lab (ES, PT) | https://carlosandmunoz.com/qaurlreview.html |
+| Social hub | https://carlosandmunoz.com/qa-review-social.html |
+
 ## Privacy and terms
 
 The app stores no user data. Its Redis holds one value, the date of the last batch it posted. Reports cover public pages only, and site owners can ask to be removed at qa@carlosandmunoz.com. [Legal](https://carlosandmunoz.com/qa-review-legal.html).
