@@ -1,0 +1,16 @@
+{
+ "version": 1,
+ "posts": {
+  "live/2026-11-04": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "3",
+    "at": "2026-11-04T18:38:14.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/3",
+    "checked": "2026-11-04T18:38:14.214Z"
+   }
+  ]
+ }
+}
