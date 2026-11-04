@@ -1,7 +1,11 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const { execFileSync } = require("child_process");
 const hub = require("../../scripts/build-social-hub");
-const { isOutput, guard } = require("../../scripts/social-hub-outputs");
+const { isOutput, keep, guard, discard } = require("../../scripts/social-hub-outputs");
 
 const post = (over) => Object.assign({
   id: "auto-2026-10-22/01-u-uber-com", kind: "review", batch: "auto-2026-10-22", date: "2026-10-22", lang: "en",
@@ -37,4 +41,45 @@ test("the guard fails a change that commits hub outputs and passes one that does
     Object.assign(console, { error, log });
   }
   assert.match(errors.join("\n"), /assets\/social\/feed-es\.json[\s\S]*social\/x\/01\.html[\s\S]*--restore/);
+});
+
+test("keep drops generated hub files and leaves the pages a branch may commit", () => {
+  assert.deepEqual(keep(["index.html", "social/a.html", "assets/social/feed.json", "style.css", "sitemap-social.xml"]), ["index.html", "style.css"]);
+});
+
+test("discard puts uncommitted hub files back and leaves the other edits", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hub-discard-"));
+  const git = (...args) => execFileSync("git", args, { cwd: dir, encoding: "utf8" });
+  git("init", "-q");
+  git("config", "user.email", "test@example.com");
+  git("config", "user.name", "test");
+  fs.mkdirSync(path.join(dir, "social"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "assets", "social"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "index.html"), "<p>home</p>\n");
+  fs.writeFileSync(path.join(dir, "social", "a.html"), "<p>hub</p>\n");
+  fs.writeFileSync(path.join(dir, "assets", "social", "feed.json"), "{}\n");
+  git("add", "-A");
+  git("commit", "-q", "-m", "base");
+  fs.writeFileSync(path.join(dir, "index.html"), "<p>home edited</p>\n");
+  fs.writeFileSync(path.join(dir, "social", "a.html"), "<p>hub edited</p>\n");
+  fs.writeFileSync(path.join(dir, "social", "b.html"), "<p>new hub page</p>\n");
+  fs.writeFileSync(path.join(dir, "assets", "social", "feed.json"), "{\"n\":1}\n");
+  fs.writeFileSync(path.join(dir, "assets", "social", "captions.json"), "{}\n");
+  git("add", "assets/social/captions.json");
+  const logs = [];
+  const { log } = console;
+  console.log = (text) => logs.push(text);
+  try {
+    assert.equal(discard(dir), 4);
+  } finally {
+    console.log = log;
+  }
+  assert.equal(fs.readFileSync(path.join(dir, "social", "a.html"), "utf8"), "<p>hub</p>\n");
+  assert.equal(fs.readFileSync(path.join(dir, "assets", "social", "feed.json"), "utf8"), "{}\n");
+  assert.equal(fs.existsSync(path.join(dir, "social", "b.html")), false);
+  assert.equal(fs.existsSync(path.join(dir, "assets", "social", "captions.json")), false);
+  assert.equal(fs.readFileSync(path.join(dir, "index.html"), "utf8"), "<p>home edited</p>\n");
+  assert.equal(git("status", "--porcelain").replace(/\n$/, ""), " M index.html");
+  assert.match(logs.join("\n"), /Discarded 4 generated social hub files/);
+  fs.rmSync(dir, { recursive: true, force: true });
 });

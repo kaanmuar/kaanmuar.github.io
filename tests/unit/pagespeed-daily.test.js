@@ -143,7 +143,10 @@ test("the daily workflow runs at 06:00 UTC and the merge workflow checks CI befo
   assert.match(daily, /cron: '0 6 \* \* \*'/);
   assert.match(daily, /pagespeed-pr/);
   assert.match(merge, /for need in "Lint Code" url-review-unit playwright/);
+  assert.match(merge, /conflicts with main/);
   assert.match(merge, /pagespeed-merged/);
+  assert.match(daily, /social-hub-outputs\.js --discard/);
+  assert.ok(daily.indexOf("social-hub-outputs.js --discard") < daily.indexOf("git add -A"), "discard hub files before the commit");
   const schedule = require("../../functions/ops-schedule");
   assert.ok((schedule.JOBS || []).some((j) => j.job === "pagespeed-daily.yml" && j.cron === "0 6 * * *"));
 });

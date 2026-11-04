@@ -100,6 +100,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
           git switch -q -c "$branch"
+          # Regen rebuilt the hub so Lighthouse could score it. Those files stay out of the commit: a PR that
+          # commits them conflicts with main, and GitHub then does not run pull_request CI (#2242).
+          node scripts/social-hub-outputs.js --discard
           git add -A
           git commit -q -m "PageSpeed: ${{ matrix.kind }} fixes from the daily run ($(date -u +%F))" -m "$(jq -r '.verdict.reason' "$REPORT")"
           if ! git push -q -f origin "$branch"; then
