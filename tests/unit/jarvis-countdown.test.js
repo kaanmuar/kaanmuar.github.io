@@ -35,7 +35,7 @@ function ops(over) {
 
 const queue = (db, entry, now) => countdown.queue(db, entry, { now: now || MONDAY_10, hours: 2 });
 
-test("each risky action has its kind: email, post, code, outreach; anything else is money and has no action", () => {
+test("each risky action has its kind: email, post, code, outreach, repo; anything else is money and has no action", () => {
   assert.equal(countdown.kindOf("rerun-held"), "email");
   assert.equal(countdown.kindOf("resend-notices"), "email");
   assert.equal(countdown.kindOf("launch-campaign"), "email");
@@ -49,8 +49,12 @@ test("each risky action has its kind: email, post, code, outreach; anything else
   assert.equal(countdown.kindOf("refresh-stale", "ensureLiveReportsBatch"), "post");
   assert.equal(countdown.kindOf("retry-social"), "post");
   assert.equal(countdown.kindOf("resume-outreach"), "outreach");
+  assert.equal(countdown.kindOf("gh-revert"), "code");
+  assert.equal(countdown.kindOf("gh-merge-pr"), "code");
+  assert.equal(countdown.kindOf("gh-delete-branch"), "repo");
+  assert.equal(countdown.kindOf("gh-remove-worktree"), "repo");
   assert.equal(countdown.kindOf("payout"), "money");
-  assert.deepEqual(Object.keys(countdown.KINDS), ["email", "post", "code", "outreach", "money"]);
+  assert.deepEqual(Object.keys(countdown.KINDS), ["email", "post", "code", "outreach", "repo", "money"]);
 });
 
 test("a countdown is queued once a day per action and target, due after the set hours", async () => {

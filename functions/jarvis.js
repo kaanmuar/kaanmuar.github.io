@@ -732,8 +732,31 @@ function askSnapshot(snap, days) {
       engagement: engagementAsk(e.engagement),
       signedInPeople: ok(e.people) ? e.people.totals : null,
       googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
+      github: githubAsk(e["github-work"]),
       waiting: core.connections(e).filter((c) => c.needs.length).map((c) => c.name + ": " + c.needs.join(" "))
     }
+  };
+}
+
+// The github-work source (#2526) in a few hundred tokens, so Ask can answer GitHub questions; retro reads it too.
+function githubAsk(g) {
+  if (!g || g.ok === false) return null;
+  const ci = g.ci || {};
+  const prs = g.prs || {};
+  const sec = g.security || {};
+  const pick = (o, keys) => (o ? keys.reduce((m, k) => { if (o[k] !== undefined) m[k] = o[k]; return m; }, {}) : null);
+  return {
+    score: g.score && { overall: g.score.overall, areas: Object.keys(g.score.areas || {}).reduce((m, k) => { m[k] = g.score.areas[k].grade + " " + g.score.areas[k].value; return m; }, {}) },
+    dora: g.dora, streaks: pick(g.streaks, ["greenMainDays", "mergeDays", "xp", "level"]),
+    ci: pick(ci, ["passRate", "runs", "failed", "minutes", "queueMedS", "durMedS"]),
+    flaky: ci.flaky && { pct: ci.flaky.pct, workflows: (ci.flaky.workflows || []).slice(0, 5) },
+    failing: (ci.failing || []).slice(0, 5).map((r) => ({ workflow: r.name, branch: r.branch, at: r.at, attempt: r.attempt, cause: r.diag ? r.diag.cause : null, category: r.diag ? r.diag.category : null })),
+    prs: pick(prs, ["open", "draft", "mergeReady", "conflicts", "behind", "red", "stale", "orphan", "leadMedH", "leadP90H", "merged"]),
+    board: g.board && { columns: (g.board.columns || []).map((c) => c.name + " " + c.count), wip: g.board.wip, wipLimit: g.board.wipLimit, cycleMedD: g.board.cycleMedD, drift: (g.board.drift || []).length },
+    issues: pick(g.issues, ["open", "openBugs", "opened", "closed"]),
+    security: { dependabot: pick(sec.dependabot, ["open", "critical", "high"]), codeScanning: pick(sec.codeScanning, ["open"]), secrets: pick(sec.secrets, ["open"]) },
+    budget: g.budget && g.budget.kaanmuar ? { graphql: g.budget.kaanmuar.graphql, core: g.budget.kaanmuar.core } : null,
+    branches: pick(g.branches, ["total", "stale"]), needs: (g.needs || []).slice(0, 5), retro: g.ai && g.ai.retro ? String(g.ai.retro.text || "").slice(0, 600) : null
   };
 }
 
@@ -804,5 +827,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };

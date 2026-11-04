@@ -38,6 +38,8 @@ const BY_FUNCTION = {
   jarvisMail: list(MAIL, JARVIS_SOURCES, GEMINI),
   jarvisWatch: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI),
   jarvisCountdowns: list(MAIL, JARVIS_SOURCES, BROWSER),
+  // jarvisGithub (#2526): the app token for the day docs and the run logs, Gemini for the diagnoses and the retro.
+  jarvisGithub: list(MAIL, GITHUB, GEMINI),
   // jarvisIndexCheck and jarvisIndexPush (#2480): Brave's site: search, and Brave's form through the review browser.
   jarvisIndex: list(["BRAVE_SEARCH_KEY"], BROWSER),
   // A Gmail app password for the inbox qa@carlosandmunoz.com forwards to (functions/tiktok-business-watch.js).
@@ -56,7 +58,8 @@ const BY_FUNCTION = {
   // The weekly report also opens the report replies' results ticket on the board (#2471).
   engagementWeekly: list(MAIL, GEMINI, GITHUB, ["YOUTUBE_KEY", "GOOGLE_CALENDAR_CLIENT_SECRET"]),
   // An approved YouTube comment goes out from the jarvis function at once, so it refreshes the same token.
-  jarvis: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ["GOOGLE_CALENDAR_CLIENT_SECRET"])
+  // CURSOR_API_KEY: the github-agent op launches Cursor cloud agents (#2526).
+  jarvis: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ["GOOGLE_CALENDAR_CLIENT_SECRET", "CURSOR_API_KEY"])
 };
 
 const ALL = list(...Object.values(BY_FUNCTION));

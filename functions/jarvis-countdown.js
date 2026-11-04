@@ -8,6 +8,8 @@
               code      code reaching production: merging a green PR (labelled jarvis-merge, or a safe PageSpeed PR),
                         the Pages and app workflows
               outreach  resuming the mailboxes Jarvis paused (jarvis_outreach_pauses)
+              repo      GitHub housekeeping (#2526): updating PR branches, deleting merged branches, closing issues,
+                        removing merged worktrees through the Mac uploader; merges and reverts count as code
               money     money other than refunds; Jarvis has no such action yet
    Refunds and deletes are never queued: they wait for a click.
    A countdown starts at any hour. One that ends at night holds email and posts until Bogotá 08:00-21:00, and owner
@@ -22,7 +24,7 @@
 const crypto = require("crypto");
 const core = require("./jarvis-core");
 
-const KINDS = { email: "third-party email", post: "public post", code: "code reaching production", outreach: "resuming outreach", money: "money" };
+const KINDS = { email: "third-party email", post: "public post", code: "code reaching production", outreach: "resuming outreach", repo: "GitHub housekeeping", money: "money" };
 const DAYTIME = { from: 8, to: 21 };
 const OPEN = ["waiting", "running"];
 const MERGE_LABEL = "jarvis-merge";
@@ -50,7 +52,8 @@ function kindOf(action, target) {
   if (JOB_ACTIONS.includes(action)) return MAIL_JOBS.includes(target) ? "email" : "post";
   if (action === "rerun-ci") return /^pages$|jarvis android/i.test(String(target)) ? "code" : "post";
   if (action === "retry-social") return "post";
-  if (action === "merge-pr") return "code";
+  if (action === "merge-pr" || action === "gh-merge-pr" || action === "gh-revert") return "code";
+  if (/^gh-/.test(String(action))) return "repo";
   if (action === "resume-outreach") return "outreach";
   return "money";
 }
@@ -194,14 +197,21 @@ async function execute(row, ops, now) {
   }
   if (action === "merge-pr" && p.pagespeed) { const res = await ops.pagespeedMerge(p.number, p.sha); return { count: 1, detail: res.message }; }
   if (action === "merge-pr") { const res = await ops.mergePr(p.number, p.sha); return { count: 1, detail: "Merged #" + p.number + " at " + String(res.sha || p.sha || "").slice(0, 7) + "." }; }
+  // #2526: the payload carries the numbers, branches, sha or path; gh-remove-worktree only queues it for the Mac.
+  if (/^gh-/.test(action) && action !== "gh-agent" && ops.githubAct) {
+    const res = await ops.githubAct(action, Object.assign({}, p, { target }));
+    return { count: res.count || 1, detail: text(res.detail, 300) };
+  }
   throw new Error("Jarvis has no action for this yet; do it by hand.");
 }
+
+const tabOf = (row) => (/^gh-/.test(inner(row).action) ? "github" : "systems");
 
 function queuedMessage(row, hours) {
   const at = runsAt(row);
   const late = at > Date.parse(row.dueAt);
   return {
-    kind: "alerts", tab: "systems", tag: "jarvis-countdown-" + row.id, ref: "countdown:" + row.id,
+    kind: "alerts", tab: tabOf(row), tag: "jarvis-countdown-" + row.id, ref: "countdown:" + row.id,
     title: ("Doing " + lower(row.label) + (late ? " at " + bogotaTime(at) + " Bogotá" : " in " + hoursText(hours))).slice(0, 120),
     body: (row.target + ". " + (row.why || KINDS[row.kind] + ".")).slice(0, 220),
     lines: [KINDS[row.kind] ? "Kind: " + KINDS[row.kind] : "", row.confidence !== null ? "Gemini confidence " + row.confidence : ""].filter(Boolean),
@@ -210,11 +220,12 @@ function queuedMessage(row, hours) {
 }
 
 function startMessage(row) {
-  return { kind: "alerts", tab: "systems", tag: "jarvis-countdown-" + row.id, title: ("Doing " + lower(row.label) + " now").slice(0, 120), body: row.target.slice(0, 220) };
+  return { kind: "alerts", tab: tabOf(row), tag: "jarvis-countdown-" + row.id, title: ("Doing " + lower(row.label) + " now").slice(0, 120), body: row.target.slice(0, 220) };
 }
 
 function resultMessage(row) {
-  return { kind: "alerts", tab: "systems", tag: "jarvis-countdown-" + row.id, title: ((row.status === "done" ? "Done: " : "Failed: ") + lower(row.label)).slice(0, 120), body: (row.target + ". " + row.result).slice(0, 220) };
+  const gh = tabOf(row) === "github";
+  return { kind: "alerts", tab: tabOf(row), tag: "jarvis-countdown-" + row.id, title: ((row.status === "done" ? (gh ? "Jarvis fixed: " : "Done: ") : "Failed: ") + lower(row.label)).slice(0, 120), body: (row.target + ". " + row.result).slice(0, 220) };
 }
 
 // Moves a row from one status to the next inside a transaction; throws when it is no longer in `from`.
