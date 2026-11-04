@@ -196,23 +196,6 @@ Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosa
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>La búsqueda con IA lee tu HTML, no tu app.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-es.html</link>
-      <guid isPermaLink="false">tips-2026-10/20-html-first-es</guid>
-      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consejo</category>
-      <category>GEO</category>
-      <description>Muchos motores de respuestas no ejecutan JavaScript. Si tus datos clave solo aparecen después de cargar los scripts, puede que nunca se lean ni se citen.
-
-Prueba esto hoy: Mira el código fuente de tu portada. ¿Se ve qué vendes y para quién, sin ejecutar scripts?
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
-
-#GEO #AISearch #SEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>movichhotels.com: 68. La brecha: la medición.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-26/08-u-movichhotels-com-es.html</link>
       <guid isPermaLink="false">auto-2026-10-26/08-u-movichhotels-com-es</guid>
@@ -268,7 +251,9 @@ El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-edeq-com-c
 
 Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 
-#Accessibility #JavaScript #Programming #QA #A11y #QAlab</description>
+#Accessibility #JavaScript #Programming #QA #A11y #QAlab
+
+https://www.youtube.com/shorts/JMrC4MB1OBc</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/01-u-edeq-com-co.jpg" length="231489" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/01-u-edeq-com-co.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -285,7 +270,9 @@ Lección: Un sitio más rápido aún puede perder en el total. Arregla primero e
 
 Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=metros
 
-#WebQuality #Phishing #CyberSecurity #QA #PublicTransport #QAlab</description>
+#WebQuality #Phishing #CyberSecurity #QA #PublicTransport #QAlab
+
+https://www.youtube.com/shorts/qCLqRoX8JQM</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/09-metros.jpg" length="245170" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/09-metros.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -701,23 +688,6 @@ Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosa
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Escribe la lista de pruebas antes del código de pruebas.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-es.html</link>
-      <guid isPermaLink="false">tips-2026-10/16-list-first-es</guid>
-      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consejo</category>
-      <category>QA</category>
-      <description>Elegir un framework es la segunda pregunta. Lo primero es qué hace esta página y qué intentaría hacer en ella una persona real.
-
-Prueba esto hoy: Antes de tu próximo sprint de automatización, escribe diez casos en lenguaje llano. Después elige la herramienta.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
-
-#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>davibank.com: 58. El punto débil: TLS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/11-u-davibank-com-es.html</link>
       <guid isPermaLink="false">auto-2026-10-22/11-u-davibank-com-es</guid>
@@ -873,6 +843,35 @@ Vía DEV, por A11Y Practice, 2026-10-28.
 
 https://www.wasexamprep.com/blog/aria-selected-tab-that-lies</description>
       <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=500,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fi.ytimg.com%2Fvi%2F939KZzpMFuk%2Fmaxresdefault.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Las grandes marcas dominan la búsqueda con IA, pero dejan oportunidades para sitios más pequeños vía @sejournal, @martinibuster</title>
+      <link>https://carlosandmunoz.com/social/pick/big-brands-dominate-ai-search-but-leave-openings-for-smaller-es.html</link>
+      <guid isPermaLink="false">pick/big-brands-dominate-ai-search-but-leave-openings-for-smaller-es</guid>
+      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>GEO</category>
+      <description>Una nueva investigación identifica una posible debilidad en la visibilidad de las grandes marcas que los editores más pequeños podrían aprovechar. La entrada Las grandes marcas dominan la búsqueda con IA, pero dejan oportunidades para sitios más pequeños apareció primero en Search Engine Journal .
+
+Vía Search Engine Journal, por Roger Montti, 2026-10-31.
+
+https://www.searchenginejournal.com/big-brands-dominate-ai-search-but-leave-openings-for-smaller-sites/595397/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/travel-ai-seo-407.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Con subtítulos no siempre significa accesible</title>
+      <link>https://carlosandmunoz.com/social/pick/captioned-doesn-t-always-mean-accessible-2-es.html</link>
+      <guid isPermaLink="false">pick/captioned-doesn-t-always-mean-accessible-2-es</guid>
+      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Accessibility</category>
+      <description>Un diálogo preciso es solo una parte de los subtítulos accesibles en video. Los subtítulos de calidad también identifican a quien habla, transmiten los sonidos relevantes y ofrecen texto legible y sincronizado. Ya sea que los subtítulos provengan de una herramienta automática o de un servicio profesional, este artículo explica por qué evaluar la experiencia de visualización final es esencial para las personas que dependen de los subtítulos.
+
+Vía WebAIM, por Christopher Phillips, 2026-10-29.
+
+https://webaim.org/blog/captioned-doesnt-always-mean-accessible/</description>
+      <enclosure url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" length="96606" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
