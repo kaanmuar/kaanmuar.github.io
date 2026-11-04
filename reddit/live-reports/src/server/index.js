@@ -6,6 +6,26 @@ import summary from "../../dist/summary.json";
 
 const SITE = "https://carlosandmunoz.com/qa-review.html?utm_source=reddit&utm_medium=social&utm_campaign=live-reports#live-reports";
 const POSTED = "posted-batch";
+// One log line per batch post and per daily run, read back by reddit-live.yml through `devvit logs` into
+// assets/social/reddit.json (scripts/reddit-ledger.js, #2571). Reddit does not approve fetch to a personal domain,
+// so the app reports nothing over the network. Keep the prefix and fields in step with scripts/reddit-ledger.js.
+const LEDGER = "qalab-ledger ";
+
+async function members() {
+  try {
+    const sub = await reddit.getCurrentSubreddit();
+    return { subreddit: sub.name, subscribers: sub.numberOfSubscribers };
+  } catch (error) {
+    console.error("subreddit info failed; " + error.message);
+    return { subreddit: context.subredditName || "", subscribers: null };
+  }
+}
+
+async function ledger(post) {
+  const line = Object.assign({ kind: post ? "post" : "members", at: new Date().toISOString() }, await members());
+  if (post) Object.assign(line, { key: "live/" + summary.newest, id: post.id, url: "https://www.reddit.com" + post.permalink, posted: post.createdAt.toISOString() });
+  console.log(LEDGER + JSON.stringify(line));
+}
 
 function fallback() {
   const lines = summary.top.map((r) => `- ${r.name} (${r.host}): ${r.overall}, grade ${r.grade}`);
@@ -40,13 +60,19 @@ async function routes(url) {
       const post = await submit(evergreenTitle());
       await pin(post);
       await redis.set(POSTED, summary.newest);
+      await ledger(post);
       return {};
     }
     case "/internal/scheduler/daily": {
-      // A day without a new upload keeps the same batch: no second post for it.
-      if (!summary.newest || (await redis.get(POSTED)) === summary.newest) return {};
-      await pin(await submit(batchTitle()));
+      // A day without a new upload keeps the same batch: no second post for it, only the member count.
+      if (!summary.newest || (await redis.get(POSTED)) === summary.newest) {
+        await ledger(null);
+        return {};
+      }
+      const post = await submit(batchTitle());
+      await pin(post);
       await redis.set(POSTED, summary.newest);
+      await ledger(post);
       return {};
     }
     default:

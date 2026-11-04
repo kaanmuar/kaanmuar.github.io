@@ -1257,8 +1257,10 @@ test("social: each channel shows what is next, what went out last and what faile
   } };
   const open = { posts: { "b/one": [{ channel: "bluesky", at: "2026-10-24T15:01:00Z", result: "sent", url: "https://bsky.app/profile/q/post/1" }, { channel: "mastodon", at: "2026-10-24T15:02:00Z", result: "failed" }] } };
   const telegram = { posts: { "live/2026-10-24": [{ channel: "telegram", at: "2026-10-24T18:38:14Z", result: "sent", url: "https://t.me/qalab_live/3" }] } };
-  const rows = social.byChannel([buffer, null, open, telegram], now, now - 7 * 86400000);
-  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "bluesky", "mastodon", "threads", "instagram", "instagram-story", "facebook", "youtube", "tiktok", "telegram"]);
+  const reddit = { posts: { "live/2026-10-24": [{ channel: "reddit", at: "2026-10-24T16:20:05Z", result: "sent", url: "https://www.reddit.com/r/QALabLiveReports/comments/abc/x/" }], "live/2026-10-23": [{ channel: "reddit", at: "2026-10-23T16:20:05Z", result: "failed", error: "Removed on Reddit (moderator)" }] } };
+  const rows = social.byChannel([buffer, null, open, telegram, reddit], now, now - 7 * 86400000);
+  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "bluesky", "mastodon", "threads", "instagram", "instagram-story", "facebook", "youtube", "tiktok", "telegram", "reddit"]);
+  assert.deepEqual([rows[11].name, rows[11].sent, rows[11].failed, rows[11].last.url], ["Reddit", 1, 1, "https://www.reddit.com/r/QALabLiveReports/comments/abc/x/"]);
   assert.deepEqual(rows[0].next.map((n) => n.post), ["b/two", "b/one"]);
   assert.equal(rows[0].scheduled, 2);
   assert.deepEqual([rows[1].sent, rows[1].failed, rows[1].last.url], [1, 1, "https://x.com/1"]);
@@ -1282,6 +1284,19 @@ test("social: Telegram members show the count now and the change since the range
   const failed = social.telegramMembers({ channels: { telegram: { members: 25, at: "2026-11-03T15:00:00Z", error: "Telegram 403: bot is not a member", history } } }, since);
   assert.equal(failed.members, 25);
   assert.match(failed.need, /showing the count from 2026-11-03 because the last run failed \(Telegram 403: bot is not a member\)/);
+});
+
+test("social: subreddit members come from the Reddit ledger like Telegram's, with a need line when missing or old", () => {
+  const since = Date.parse("2026-10-28T12:00:00Z");
+  const now = Date.parse("2026-11-04T18:00:00Z");
+  const history = [{ date: "2026-10-27", members: 9 }, { date: "2026-11-04", members: 12 }];
+  const rd = social.redditMembers({ posts: {}, members: { chat: "r/QALabLiveReports", members: 12, at: "2026-11-04T16:20:04.000Z", history } }, since, now);
+  assert.deepEqual([rd.channel, rd.members, rd.change, rd.from, rd.need], ["r/QALabLiveReports", 12, 3, { date: "2026-10-27", members: 9 }, ""]);
+  assert.match(social.redditMembers({ posts: {} }, since, now).need, /^Reddit members: the Reddit ledger has no member count yet\. .*reddit-live\.yml/);
+  assert.equal(social.redditMembers(null, since, now).members, null);
+  const old = social.redditMembers({ posts: {}, members: { members: 12, at: "2026-11-01T16:20:04.000Z", history } }, since, now);
+  assert.equal(old.members, 12);
+  assert.match(old.need, /showing the count from 2026-11-01, more than two days old/);
 });
 
 test("social: Jarvis can start the Bluesky and Mastodon poster with the Buffer and Page ones, and watches the Reddit app", () => {

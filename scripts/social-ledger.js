@@ -4,14 +4,18 @@
    scripts/facebook-queue.js writes assets/social/facebook.json, scripts/open-social-queue.js writes
    assets/social/open-social.json, scripts/devto-queue.js writes assets/social/devto.json, scripts/telegram-live.js
    writes assets/social/telegram.json (one channel post per Live Reports batch, under live/<date>), and the workflows
-   that run them commit them (scripts/commit-social-ledgers.sh). Reddit's app posts on its own and keeps no ledger.
+   that run them commit them (scripts/commit-social-ledgers.sh). Reddit's app posts on its own and logs each post;
+   scripts/reddit-ledger.js reads those logs into assets/social/reddit.json, one entry per batch post under live/<date>,
+   with the subreddit's members (#2571).
 
    { version: 1,
      posts: { "<batch>/<slug>": [{ channel: "linkedin", profile: "linkedin (QA-lab)", id: "<Buffer post or Graph post id>",
        at: "<due time, or sent time once sent>", result: "queued" | "sent" | "failed" | "moved", error, url, checked: "<ISO>",
        slot: "<the calendar time a queued post waits to be moved to (social-calendar.js --sync)>",
        hash: "<a short hash of the text Telegram has, so telegram-live.js scrub edits only changed posts>" }] },
-     retry: { "<batch>": { since: "<ISO>", error } } }
+     retry: { "<batch>": { since: "<ISO>", error } },
+     members: { chat: "r/QALabLiveReports", members, at: "<ISO>", history: [{ date: "YYYY-MM-DD", members }] } }
+   members is only in a channel's own ledger (reddit.json): the count now and one point per UTC day.
 
    One entry per calendar channel and profile. Every later run looks up the queued entries whose time has passed
    and moves them to sent or failed. retry lists the batches a spent Buffer limit stopped (#1188); the nightly
@@ -55,6 +59,7 @@ function write(file, ledger) {
   const out = { version: 1, posts };
   const retry = Object.keys(ledger.retry || {}).sort();
   if (retry.length) out.retry = Object.fromEntries(retry.map((batch) => [batch, ledger.retry[batch]]));
+  if (ledger.members) out.members = ledger.members;
   fs.writeFileSync(path.resolve(ROOT, file), JSON.stringify(out, null, 1) + "\n");
 }
 
@@ -93,10 +98,31 @@ function record(ledger, post, entry) {
   return ledger;
 }
 
+const HISTORY_DAYS = 400;
+
+// One point per UTC day, the later reading of a day wins; the count is the newest reading's.
+function count(ledger, chat, members, at) {
+  const n = Math.round(Number(members));
+  if (members == null || !Number.isFinite(n) || n < 0 || !Number.isFinite(Date.parse(at || ""))) return ledger;
+  const old = ledger.members || {};
+  const date = new Date(at).toISOString().slice(0, 10);
+  const kept = (Array.isArray(old.history) ? old.history : []).filter((p) => p && p.date !== date);
+  const day = (old.history || []).find((p) => p && p.date === date);
+  const point = day && (day.at || "") > at ? day : { date, members: n, at };
+  const history = kept.concat(point).sort((a, b) => a.date.localeCompare(b.date)).slice(-HISTORY_DAYS);
+  const newest = !old.at || at >= old.at;
+  ledger.members = { chat: (newest && chat) || old.chat || chat || "", members: newest ? n : old.members, at: newest ? at : old.at, history };
+  return ledger;
+}
+
 // A batch one side took off retry comes back if the other still lists it; re-queueing it again only skips posts.
 function merge(into, from) {
   Object.entries(from.posts || {}).forEach(([post, list]) => list.forEach((entry) => record(into, post, entry)));
   if (from.retry) into.retry = Object.assign({}, into.retry, from.retry);
+  if (from.members) {
+    (from.members.history || []).forEach((p) => count(into, from.members.chat, p.members, p.at || p.date + "T00:00:00.000Z"));
+    count(into, from.members.chat, from.members.members, from.members.at);
+  }
   return into;
 }
 
@@ -148,4 +174,4 @@ if (require.main === module) {
   write(into, merge(read(into), read(from)));
 }
 
-module.exports = { BUFFER, FACEBOOK, OPEN_SOCIAL, DEVTO, empty, read, write, record, merge, find, due, upgrade, fromBuffer, fromGraph, markRetry, clearRetry, retries };
+module.exports = { BUFFER, FACEBOOK, OPEN_SOCIAL, DEVTO, empty, read, write, record, count, merge, find, due, upgrade, fromBuffer, fromGraph, markRetry, clearRetry, retries };

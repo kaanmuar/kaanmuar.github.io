@@ -67,12 +67,12 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     }
     val social = s.snapshot.obj("external").obj("social")
     val queue = social.objs("queue")
-    val tg = social.obj("telegram")
+    val counts = mapOf("telegram" to social.obj("telegram"), "reddit" to social.obj("reddit"))
     Panel("Queue by channel") {
         if (queue.isEmpty()) Muted("Pull down to read the social ledgers.")
-        queue.forEach { c -> Channel(c, if (c.str("channel") == "telegram") Telegram.members(tg) else null) }
-        if (queue.isNotEmpty()) Muted("Telegram is the @qalab_live post of each Live Reports batch; its members are read each morning, and the change counts from the last daily count on or before the range start.")
-        tg.str("need")?.takeIf { it.isNotBlank() }?.let { Text("Needs: $it", color = J.amber, fontSize = 12.sp) }
+        queue.forEach { c -> Channel(c, counts[c.str("channel")]?.let { ChannelMembers.members(it) }) }
+        if (queue.isNotEmpty()) Muted("Telegram is the @qalab_live post of each Live Reports batch; its members are read each morning. Reddit is the app's daily batch post in r/QALabLiveReports; its members are read after the 16:20 UTC post. The change counts from the last daily count on or before the range start.")
+        counts.values.forEach { m -> m.str("need")?.takeIf { it.isNotBlank() }?.let { Text("Needs: $it", color = J.amber, fontSize = 12.sp) } }
     }
 
     var confirm by remember { mutableStateOf(false) }
@@ -116,8 +116,8 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     }
 }
 
-/** The Telegram channel's members from the social snapshot (#2570), as the web hub's Telegram row shows them. */
-object Telegram {
+/** A live channel's members from the social snapshot (Telegram #2570, Reddit #2571), as the web hub's channel rows show them. */
+object ChannelMembers {
     data class Members(val text: String, val change: Int?)
 
     fun members(t: JsonObject?): Members? {
@@ -130,7 +130,7 @@ object Telegram {
 }
 
 @Composable
-private fun Channel(c: JsonObject, members: Telegram.Members? = null) {
+private fun Channel(c: JsonObject, members: ChannelMembers.Members? = null) {
     val next = c.objs("next")
     val failed = c.num("failed")?.toInt() ?: 0
     Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.Top) {
