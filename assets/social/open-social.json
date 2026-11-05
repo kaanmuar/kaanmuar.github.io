@@ -303,6 +303,15 @@
     "checked": "2026-11-05T15:48:17.411Z"
    },
    {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "17988327054080314",
+    "at": "2026-11-05T18:11:16.761Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/p/DfXpTAEjxz_/",
+    "checked": "2026-11-05T18:11:28.878Z"
+   },
+   {
     "channel": "threads",
     "profile": "threads.net/@qaurlreview",
     "id": "18131700859867602",
@@ -314,6 +323,15 @@
   ],
   "auto-2026-11-04/08-u-itsrever-com": [
    {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzlhp4n4p62n",
+    "at": "2026-11-05T18:10:44.914Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzlhp4n4p62n",
+    "checked": "2026-11-05T18:10:47.359Z"
+   },
+   {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
     "id": "18132631084666457",
@@ -321,6 +339,24 @@
     "result": "sent",
     "url": "https://www.instagram.com/stories/qaurlreview/4023775778907346315",
     "checked": "2026-11-05T15:11:21.905Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "17927420949202361",
+    "at": "2026-11-05T18:11:04.940Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/p/DfXpRejDyrf/",
+    "checked": "2026-11-05T18:11:16.761Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18286934851288132",
+    "at": "2026-11-05T18:10:50.461Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DfXpPudGeTy",
+    "checked": "2026-11-05T18:11:03.865Z"
    }
   ],
   "compare-2026-11/01-quiz-berlin-vienna": [
@@ -548,6 +584,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzizkj5fxo2n",
     "checked": "2026-11-04T18:52:20.765Z"
+   }
+  ],
+  "compare-2026-11/11-cities": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzlhp6licw22",
+    "at": "2026-11-05T18:10:47.359Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzlhp6licw22",
+    "checked": "2026-11-05T18:10:49.551Z"
    }
   ],
   "digest-2026-10-30/01-this-week": [
