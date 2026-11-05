@@ -887,25 +887,28 @@
     "channel": "tiktok",
     "profile": "tiktok (qalaburlreview)",
     "id": "6adc6dcb6887a2efc1a81fb2",
-    "at": "2026-11-05T02:49:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.765Z"
+    "at": "2026-11-05T02:50:43.838Z",
+    "result": "sent",
+    "url": "https://tiktok.com/@qalaburlreview/video/7704513964306074881",
+    "checked": "2026-11-05T11:26:10.526Z"
    },
    {
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6adc6dccbd33ce99c31294c4",
-    "at": "2026-11-05T00:11:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.765Z"
+    "at": "2026-11-05T00:11:03.403Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2118133956860105095",
+    "checked": "2026-11-05T11:26:10.526Z"
    },
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
     "id": "6adfb7133c00530d93a5de00",
-    "at": "2026-11-05T01:34:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.761Z"
+    "at": "2026-11-05T01:34:02.977Z",
+    "result": "sent",
+    "url": "https://www.youtube.com/shorts/K_RZJwnv7SQ",
+    "checked": "2026-11-05T11:26:10.526Z"
    }
   ],
   "auto-2026-10-24/05-u-roottcostore-com": [
@@ -2060,25 +2063,28 @@
     "channel": "tiktok",
     "profile": "tiktok (qalaburlreview)",
     "id": "6ae820fa64604db314412870",
-    "at": "2026-11-05T02:49:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.760Z"
+    "at": "2026-11-05T02:50:43.938Z",
+    "result": "sent",
+    "url": "https://tiktok.com/@qalaburlreview/video/7704513942550285575",
+    "checked": "2026-11-05T11:26:10.526Z"
    },
    {
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6ae820fb76279ec7eb948b9e",
-    "at": "2026-11-05T00:11:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.760Z"
+    "at": "2026-11-05T00:11:03.630Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2118133957040496843",
+    "checked": "2026-11-05T11:26:10.526Z"
    },
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
     "id": "6ae820fac60bdbcc33d8c315",
-    "at": "2026-11-05T01:34:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.760Z"
+    "at": "2026-11-05T01:34:02.928Z",
+    "result": "sent",
+    "url": "https://www.youtube.com/shorts/bBHzkx0g98Q",
+    "checked": "2026-11-05T11:26:10.526Z"
    }
   ],
   "auto-2026-11-02/03-u-efigas-com-co": [
@@ -2298,9 +2304,10 @@
     "channel": "tiktok",
     "profile": "tiktok (qalaburlreview)",
     "id": "6aeb347342259de68923dc0a",
-    "at": "2026-11-05T00:49:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-04T13:34:42.561Z"
+    "at": "2026-11-05T00:50:43.946Z",
+    "result": "sent",
+    "url": "https://tiktok.com/@qalaburlreview/video/7704482937768643858",
+    "checked": "2026-11-05T11:26:10.526Z"
    },
    {
     "channel": "x",
@@ -2314,9 +2321,10 @@
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
     "id": "6aeb347442259de68923dc3a",
-    "at": "2026-11-04T23:34:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-04T13:34:43.799Z"
+    "at": "2026-11-04T23:34:02.424Z",
+    "result": "sent",
+    "url": "https://www.youtube.com/shorts/ccemaPCYO54",
+    "checked": "2026-11-05T11:26:10.526Z"
    }
   ],
   "auto-2026-11-03/02-u-iteso-mx": [
@@ -2366,9 +2374,10 @@
     "channel": "tiktok",
     "profile": "tiktok (qalaburlreview)",
     "id": "6aeb3477ae54f9a49c8261c2",
-    "at": "2026-11-05T02:49:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-04T13:34:46.740Z"
+    "at": "2026-11-05T02:50:43.664Z",
+    "result": "sent",
+    "url": "https://tiktok.com/@qalaburlreview/video/7704513952272731400",
+    "checked": "2026-11-05T11:26:10.526Z"
    },
    {
     "channel": "x",
@@ -2382,9 +2391,10 @@
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
     "id": "6aeb347781e17bedf0e4c415",
-    "at": "2026-11-05T01:34:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-04T13:34:47.290Z"
+    "at": "2026-11-05T01:34:03.516Z",
+    "result": "sent",
+    "url": "https://www.youtube.com/shorts/2X8-C0OsxiM",
+    "checked": "2026-11-05T11:26:10.526Z"
    }
   ],
   "auto-2026-11-03/04-u-platzi-com": [
@@ -2570,9 +2580,10 @@
     "channel": "tiktok",
     "profile": "tiktok (qalaburlreview)",
     "id": "6aeb3480380a83ae53099869",
-    "at": "2026-11-04T22:48:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-04T13:34:56.127Z"
+    "at": "2026-11-04T22:49:43.950Z",
+    "result": "sent",
+    "url": "https://tiktok.com/@qalaburlreview/video/7704451867904019733",
+    "checked": "2026-11-05T11:26:10.526Z"
    },
    {
     "channel": "x",
@@ -2586,9 +2597,10 @@
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
     "id": "6aeb3481130c3480fb62393e",
-    "at": "2026-11-04T21:34:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-04T13:34:56.873Z"
+    "at": "2026-11-04T21:34:02.704Z",
+    "result": "sent",
+    "url": "https://www.youtube.com/shorts/9OSifA3hfVY",
+    "checked": "2026-11-05T11:26:10.526Z"
    }
   ],
   "auto-2026-11-03/10-vs-kabinedasnovinhas-com": [
@@ -3593,9 +3605,10 @@
     "channel": "tiktok",
     "profile": "tiktok (qalaburlreview)",
     "id": "6adf39f33759e6ed6e782885",
-    "at": "2026-11-04T22:48:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.763Z"
+    "at": "2026-11-04T22:48:43.604Z",
+    "result": "sent",
+    "url": "https://tiktok.com/@qalaburlreview/video/7704451838086548756",
+    "checked": "2026-11-05T11:26:10.526Z"
    },
    {
     "channel": "x",
@@ -3610,9 +3623,10 @@
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
     "id": "6adf39f4bed8e022f16b178a",
-    "at": "2026-11-04T21:34:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.763Z"
+    "at": "2026-11-04T21:34:02.559Z",
+    "result": "sent",
+    "url": "https://www.youtube.com/shorts/sg0qGyLji2Y",
+    "checked": "2026-11-05T11:26:10.526Z"
    }
   ],
   "compare-2026-11/11-cities": [
@@ -4495,9 +4509,10 @@
     "channel": "tiktok",
     "profile": "tiktok (qalaburlreview)",
     "id": "6add0ca08b3d437ddcd692f1",
-    "at": "2026-11-04T23:48:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.765Z"
+    "at": "2026-11-04T23:49:44.485Z",
+    "result": "sent",
+    "url": "https://tiktok.com/@qalaburlreview/video/7704467309217221889",
+    "checked": "2026-11-05T11:26:10.526Z"
    },
    {
     "channel": "x",
@@ -4512,9 +4527,10 @@
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
     "id": "6add0ca1bd33ce99c33d2dea",
-    "at": "2026-11-04T22:34:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.765Z"
+    "at": "2026-11-04T22:34:02.774Z",
+    "result": "sent",
+    "url": "https://www.youtube.com/shorts/Rv_ahMPDcIg",
+    "checked": "2026-11-05T11:26:10.526Z"
    }
   ],
   "promo-social-hub-2026-10/11-clips-pt": [
@@ -9194,17 +9210,19 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6ade58f4e4be8a4d86c2d917",
-    "at": "2026-11-04T21:35:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.764Z"
+    "at": "2026-11-04T21:35:02.508Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2118094694869594306",
+    "checked": "2026-11-05T11:26:10.526Z"
    },
    {
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
     "id": "6ad8566601d116bdef0b1949",
-    "at": "2026-11-05T00:34:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.769Z"
+    "at": "2026-11-05T00:34:02.549Z",
+    "result": "sent",
+    "url": "https://www.youtube.com/shorts/7vKljWph7R8",
+    "checked": "2026-11-05T11:26:10.526Z"
    }
   ],
   "tips-2026-10/10-keyboard": [
@@ -9797,11 +9815,5 @@
     "checked": "2026-11-02T06:21:14.764Z"
    }
   ]
- },
- "retry": {
-  "auto-2026-11-04": {
-   "since": "2026-11-04T16:17:30.452Z",
-   "error": "The site did not serve https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg within 60 minutes."
-  }
  }
 }
