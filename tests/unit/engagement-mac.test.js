@@ -260,3 +260,14 @@ test("a paused engagement hands the Mac nothing", async () => {
   assert.equal(q.paused, true);
   assert.equal(q.tasks.length, 0);
 });
+
+test("the Mac's result for an owner-tags comment is taken, so a posted comment is never queued again", async () => {
+  const T = require("../../functions/owner-tags.js");
+  const db = fakeDb();
+  const key = T.docKey("tags", "runs-100/82-metrobogota", "instagram", 0);
+  const doc = T.engagementDoc({ network: "instagram", id: "https://www.instagram.com/p/ABC/", url: "https://www.instagram.com/p/ABC/" }, "@metrodebogota ya salió", "es", { kind: "tags", post: "runs-100/82-metrobogota", part: 0, mentions: [] }, NOW);
+  await db.collection("engagement_posts").doc(key).set(Object.assign({ key }, doc));
+  const out = await M.result(deps(db), { key, action: "reply", ok: true, url: "https://www.instagram.com/p/ABC/c/1/" });
+  assert.equal(out.status, "posted");
+  assert.equal((await db.collection("engagement_posts").doc(key).get()).data().actions.reply.status, "posted");
+});

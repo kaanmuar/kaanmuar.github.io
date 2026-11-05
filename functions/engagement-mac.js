@@ -211,7 +211,7 @@ async function result(deps, body) {
   const b = body || {};
   const key = String(b.key || "");
   const action = String(b.action || "");
-  if (!/^[a-z]+_[a-f0-9]{20}$/.test(key) || !CARRIED.concat("reply", "join").includes(action)) throw new MacError("That is not a task the Mac was given.");
+  if (!/^([a-z]+_[a-f0-9]{20}|ot-[a-f0-9]{24})$/.test(key) || !CARRIED.concat("reply", "join").includes(action)) throw new MacError("That is not a task the Mac was given.");
   if (action === "join") {
     const out = await Joins.result(deps, Object.assign({}, b, { key }));
     if (!out) throw new MacError("That group is gone.", 404);
