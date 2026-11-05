@@ -50,6 +50,8 @@ const DISCOVER_PER_RUN = 30;
 const SUGGEST_PER_RUN = 8;
 const SUGGEST_MAX = 15;
 const REPLY_PER_RUN = 12;
+const LIST_ACCOUNTS = 200;
+const LIST_COMMENTS = 50;
 const TIMEOUT = 10000;
 const HTML_MAX = 1500000;
 // Mentions a comment may carry; Instagram and Threads hide comments with more.
@@ -603,6 +605,7 @@ async function account(deps, body, by) {
   if (!h || !h.network || !h.handle) throw new Error("Give a profile link, or a network and handle.");
   const status = STATUSES.includes(b.status) ? b.status : "approved";
   const scope = /^(report|city|sector|country):[\w.-]+$/.test(String(b.scope || "")) ? b.scope : "";
+  if (status === "blocked") return block(deps, h, b.why || "blocked by " + (clip(by, 40) || "jarvis"), by);
   if (status === "approved" && !scope && !(await deps.db.collection("owner_tag_accounts").doc(accountId(h.network, h.handle)).get()).exists) throw new Error("Say where it belongs: scope report:<id>, city:<city>, sector:<sector> or country:<cc>.");
   const id = await saveAccount(deps.db, { network: h.network, handle: h.handle, kind: b.kind === "owner" ? "owner" : "related", status, scopes: scope ? [scope] : [], source: clip(by, 40) || "jarvis", force: true }, deps.now);
   return { id, message: "@" + h.handle + " on " + ((E.NETWORKS[h.network] || {}).name || h.network) + " is " + status + "." };
@@ -619,16 +622,111 @@ async function learnNames(db, network, list, now) {
   }
 }
 
-/** What Jarvis tells about owner tags: the settings, the last run and the accounts by status. */
-async function status(db) {
-  const [s, last, accounts] = await Promise.all([readSettings(db), db.collection("owner_tags").doc("last").get().then((d) => d.data() || null), readAccounts(db)]);
+const LIST_ORDER = ["suggested", "approved", "rejected", "blocked"];
+const commentAt = (d) => String(((d.actions || {}).reply || {}).postedAt || ((d.actions || {}).reply || {}).decidedAt || d.seenAt || "");
+
+/**
+ * What Jarvis > Engagement and the app show about owner tags: the settings, the last run, the accounts by status and
+ * the first LIST_ACCOUNTS of them (suggested first), the newest LIST_COMMENTS comments and replies, and what was
+ * posted on each network in the last 7 days (week).
+ */
+async function status(db, now) {
+  const at = now || Date.now();
+  const [s, last, accounts, mine] = await Promise.all([readSettings(db), db.collection("owner_tags").doc("last").get().then((d) => d.data() || null), readAccounts(db),
+    db.collection("engagement_posts").where("campaign", "==", CAMPAIGN).limit(5000).get().then((q) => q.docs.map((d) => Object.assign({ key: d.id }, d.data())))]);
   const by = {};
   accounts.forEach((a) => { by[a.status] = (by[a.status] || 0) + 1; });
-  return { settings: s, last, accounts: by, waiting: accounts.filter((a) => a.status === "suggested").slice(0, 20).map((a) => ({ id: a.id, batch: a.batch, why: a.why })) };
+  const since = new Date(at - 7 * DAY).toISOString();
+  const week = {};
+  mine.filter((d) => ((d.actions || {}).reply || {}).status === "posted" && String(d.actions.reply.postedAt || "") >= since).forEach((d) => { week[d.network] = (week[d.network] || 0) + 1; });
+  const rank = (a) => LIST_ORDER.indexOf(a.status);
+  const list = accounts.slice().sort((a, b) => rank(a) - rank(b) || String(b.updatedAt || b.at || "").localeCompare(String(a.updatedAt || a.at || ""))).slice(0, LIST_ACCOUNTS)
+    .map((a) => ({ id: a.id, network: a.network, handle: a.handle, name: a.name || "", kind: a.kind, status: a.status, scopes: a.scopes || [], batch: a.batch || "", source: a.source || "", why: a.why || "", verified: a.verified === true, at: a.updatedAt || a.at || "" }));
+  const comments = mine.sort((a, b) => commentAt(b).localeCompare(commentAt(a))).slice(0, LIST_COMMENTS).map((d) => {
+    const r = (d.actions || {}).reply || {};
+    const t = d.ownerTags || {};
+    return { key: d.key, network: d.network, kind: t.kind || "tags", status: r.status || "", draft: r.draft || "", url: r.url || "", post: d.url || "", error: r.error || "", at: commentAt(d),
+      mentions: (t.mentions || []).length, report: t.report || (t.reports || [])[0] || "" };
+  });
+  return { settings: s, last, note: last ? runNote(Object.assign({ errors: [] }, last)) : "", accounts: by, waiting: accounts.filter((a) => a.status === "suggested").slice(0, 20).map((a) => ({ id: a.id, batch: a.batch, why: a.why })), list, comments, week };
+}
+
+// --- Jarvis on its own (jarvis-actions.js) ------------------------------------------------------------------------
+
+/** A handle without its network's dressing, so @metrodebogota, metrodebogota.bsky.social and metrodebogota@mastodon.social match. */
+const baseHandle = (a) => String(a.handle || "").toLowerCase().replace(/^@/, "").replace(/^channel\//, "").replace(/\.bsky\.social$/, "").replace(/@.*$/, "");
+
+/** Suggested accounts Jarvis may approve alone: their handle resolved (verified), or an approved owner uses the same handle on another network. */
+async function autoApprovable(db) {
+  const accounts = await readAccounts(db);
+  const owners = new Map();
+  accounts.filter((a) => a.kind === "owner" && a.status === "approved").forEach((a) => owners.set(baseHandle(a), a));
+  return accounts.filter((a) => a.status === "suggested").map((a) => {
+    const owner = owners.get(baseHandle(a));
+    const why = a.verified === true ? "its handle resolves" : owner && owner.network !== a.network ? "the owner is @" + owner.handle + " on " + ((E.NETWORKS[owner.network] || {}).name || owner.network) : "";
+    return why ? { id: a.id, network: a.network, handle: a.handle, batch: a.batch || "", why } : null;
+  }).filter(Boolean).sort((a, b) => a.id.localeCompare(b.id));
+}
+
+/** Approves the accounts named by id that are still suggested. */
+async function approveMany(deps, ids, by) {
+  const accounts = await readAccounts(deps.db);
+  const take = accounts.filter((a) => (ids || []).includes(a.id) && a.status === "suggested");
+  for (const a of take) await saveAccount(deps.db, Object.assign({}, a, { status: "approved", force: true, source: a.source || clip(by, 40) }), deps.now);
+  return { count: take.length, ids: take.map((a) => a.id), message: take.length + " account" + (take.length === 1 ? "" : "s") + " approved: " + take.slice(0, 5).map((a) => "@" + a.handle).join(", ") + "." };
+}
+
+// A comment under one of our tags that asks us to stop ("stop tagging", "no me etiqueten", "ya basta", "spam"), and not
+// one that only uses the word ("the bus stop", "basta con entrar").
+const STOP = new RegExp([
+  "^\\W*(?:stop|basta|para|pare|spam|unfollow)\\W*$", "\\bstop\\s+(?:tagging|mentioning|spamming|it|this|now|please)\\b", "\\bplease\\s+stop\\b", "\\b(?:spam|spammers?|spamming|unfollow(?:ed)?|unsubscribe)\\b",
+  "\\b(?:ya\\s+basta|basta\\s+ya)\\b", "\\bno\\s+(?:me|nos)\\s+(?:etiquet|mencion|marqu)", "\\b(?:dejen|deja|dejad)\\s+de\\s+(?:etiquet|mencion|molest|escrib)", "d[eé]j[ae]n?(?:me|nos)\\s+en\\s+paz",
+  "\\b(?:don'?t|do not|quit|stop)\\s+(?:tag|mention)", "\\bleave\\s+(?:me|us)\\s+alone\\b", "\\bparem?\\s+de\\s+(?:me\\s+)?(?:marcar|mencionar)", "\\bn[aã]o\\s+me\\s+marque",
+  "\\barr[eê]te[sz]?\\s+de\\s+(?:me\\s+)?(?:tag|identif|mentionn)", "\\bne\\s+me\\s+taguez", "\\bh[oö]r(?:t|en sie)?\\s+auf\\b", "\\bsmettila\\b", "\\bnon\\s+taggarmi\\b"
+].join("|"), "i");
+const isStop = (text) => STOP.test(String(text || ""));
+
+/**
+ * Comments under our owner-tags comments and replies that ask us to stop, whose author is not blocked yet:
+ * [{ id, network, handle, text, key, url }]. The account matched is the one already known on that network with the
+ * same handle (a Mastodon user@server by its user), else a new one.
+ */
+async function stopRequests(db) {
+  const [chained, accounts] = await Promise.all([
+    db.collection("engagement_posts").where("chain.parent", ">=", "ot-").where("chain.parent", "<", "ot.").limit(500).get().then((q) => q.docs.map((d) => Object.assign({ key: d.id }, d.data()))),
+    readAccounts(db)
+  ]);
+  const out = [];
+  const seen = new Set();
+  for (const d of chained.filter((x) => isStop(x.text))) {
+    const handle = clip((d.author || {}).handle, 120).replace(/^@/, "");
+    if (!handle || !d.network) continue;
+    const known = accounts.find((a) => a.network === d.network && (a.handle.toLowerCase() === handle.toLowerCase() || (d.network === "mastodon" && baseHandle(a) === handle.toLowerCase().split("@")[0])));
+    const id = known ? known.id : accountId(d.network, handle);
+    if ((known && known.status === "blocked") || seen.has(id)) continue;
+    seen.add(id);
+    out.push({ id, network: d.network, handle: known ? known.handle : handle, text: clip(d.text, 200), key: d.key, url: d.url || "" });
+  }
+  return out;
+}
+
+/** Blocks an account ({ id } or { network, handle }) and dismisses its tags and replies not posted yet. */
+async function block(deps, target, why, by) {
+  const t = target || {};
+  const id = t.id || (t.network && t.handle ? accountId(t.network, t.handle) : "");
+  const [network, ...rest] = id.split(":");
+  const handle = t.handle || rest.join(":").replace(/\|/g, "/");
+  if (!network || !handle) throw new Error("Say which account to block.");
+  await saveAccount(deps.db, { network, handle, status: "blocked", why: clip(why, 120), source: clip(by, 40) || "jarvis", force: true }, deps.now);
+  const queued = (await deps.db.collection("engagement_posts").where("campaign", "==", CAMPAIGN).limit(5000).get()).docs
+    .filter((d) => { const x = d.data(); const o = x.ownerTags || {}; return ((x.actions || {}).reply || {}).status === "approved" && ((o.mentions || []).includes(id) || o.account === id); });
+  const at = new Date(deps.now).toISOString();
+  for (const d of queued) await d.ref.update({ "actions.reply.status": "dismissed", "actions.reply.error": "@" + handle + " is blocked from owner tags.", updatedAt: at });
+  return { id, dismissed: queued.length, message: "@" + handle + " on " + ((E.NETWORKS[network] || {}).name || network) + " is blocked" + (queued.length ? "; " + queued.length + " queued comment" + (queued.length === 1 ? "" : "s") + " dismissed" : "") + "." };
 }
 
 module.exports = {
   CAMPAIGN, RELATED_MAX, COMMENTS_MAX, MENTIONS, PICKED, PER_DAY, REPLY_NETS, LATEST_NETS, REPLY_DAYS, LATEST_RETRY_DAYS,
   handleOf, mentionOf, profileOf, learnNames, socialLinksOf, scopesOf, langOf, reportsOf, ourPosts, pick, comments, replyText, engagementDoc, suggestPrompt, parseSuggestions, parseHandles, accountId, docKey,
-  run, runNote, decide, account, status, readSettings, saveSettings, latestPost
+  run, runNote, decide, account, status, readSettings, saveSettings, latestPost, autoApprovable, approveMany, isStop, stopRequests, block
 };

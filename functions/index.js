@@ -5913,6 +5913,10 @@ function jarvisAutoOps(settings, now, th) {
       return { resumed, left };
     },
     launchCampaigns: (ids) => jarvisMarketing.launch(ctx, ids),
+    ownerTagsApprovable: () => ownerTags.autoApprovable(db),
+    ownerTagsApprove: async (ids) => { const res = await ownerTags.approveMany({ db, now }, ids, "jarvis"); await jarvisEngagement.clearCache(db); return { detail: res.message, count: res.count }; },
+    ownerTagsStops: () => ownerTags.stopRequests(db),
+    ownerTagsBlock: async (s) => { const res = await ownerTags.block({ db, now }, { id: s.id, handle: s.handle }, "asked us to stop: " + s.text, "jarvis"); await jarvisEngagement.clearCache(db); return { detail: res.message }; },
     push: async (msg) => jarvisPush.send(getMessaging(), db, await jarvisPush.targets(db, "alerts"), msg)
   });
   return out;
@@ -6857,11 +6861,14 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "engagement-decide") out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), body, operator);
     else if (op === "engagement-settings") out = await jarvisEngagement.saveSettings(getFirestore(), body.settings || body, operator, now);
     else if (op === "engagement-connect") out = await jarvisEngagement.connect(Object.assign(engagementDeps(), { now }), body, BOOKING_REDIRECT);
-    else if (op === "owner-tags-run") out = await ownerTags.run(Object.assign(ownerTagsDeps(), { now }));
-    else if (op === "owner-tags-settings") out = await ownerTags.saveSettings(getFirestore(), body.settings || body, operator, now);
-    else if (op === "owner-tags-decide") out = await ownerTags.decide(Object.assign(engagementDeps(), { now }), body.report, body.decision, body.text, operator);
-    else if (op === "owner-tags-account") out = await ownerTags.account(Object.assign(engagementDeps(), { now }), body, operator);
-    else if (op === "owner-tags-status") out = await ownerTags.status(getFirestore());
+    else if (op === "owner-tags-run" || op === "owner-tags-settings" || op === "owner-tags-decide" || op === "owner-tags-account") {
+      if (op === "owner-tags-run") { const ran = await ownerTags.run(Object.assign(ownerTagsDeps(), { now })); out = Object.assign({ note: ownerTags.runNote(ran) }, ran); }
+      else if (op === "owner-tags-settings") out = await ownerTags.saveSettings(getFirestore(), body.settings || body, operator, now);
+      else if (op === "owner-tags-decide") out = await ownerTags.decide(Object.assign(engagementDeps(), { now }), body.report, body.decision, body.text, operator);
+      else out = await ownerTags.account(Object.assign(engagementDeps(), { now }), body, operator);
+      await jarvisEngagement.clearCache(getFirestore());
+    }
+    else if (op === "owner-tags-status") out = await ownerTags.status(getFirestore(), now);
     else if (op === "engagement-report") out = await jarvisEngagement.sendReport(Object.assign(engagementDeps(), { now }), ["daily", "weekly", "monthly"].includes(body.period) ? body.period : "daily");
     else if (op === "github-diagnose") {
       const res = await jarvisGithubFix.diagnose(jarvisGithubCtx(now), { run: body.run, repo: body.repo });

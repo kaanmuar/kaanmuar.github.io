@@ -996,5 +996,191 @@
    "telegram": "",
    "reddit": "2026-11-05T14:00:00.000Z"
   }
+ },
+ "ownerTags": {
+  "settings": {
+   "paused": false,
+   "live": true
+  },
+  "last": {
+   "at": "2026-11-05T15:15:00Z",
+   "live": true,
+   "paused": false,
+   "posts": 6,
+   "comments": 4,
+   "replies": 1,
+   "dry": 0,
+   "discovered": 2,
+   "owners": 5,
+   "suggested": 1,
+   "pushed": 1,
+   "capped": 0,
+   "errors": []
+  },
+  "note": "owner tags: 6 posts, 4 comments, 1 owner replies; 2 sites read, 5 owner accounts, 1 suggestion runs, 1 pushed",
+  "accounts": {
+   "suggested": 3,
+   "approved": 2,
+   "blocked": 1
+  },
+  "waiting": [
+   {
+    "id": "x:metrodebogota",
+    "batch": "metrobogota",
+    "why": "the organisation itself"
+   },
+   {
+    "id": "bluesky:movilidad.bsky.social",
+    "batch": "metrobogota",
+    "why": "city transit agency"
+   },
+   {
+    "id": "x:bogotaet",
+    "batch": "metrobogota",
+    "why": "local news"
+   }
+  ],
+  "list": [
+   {
+    "id": "x:metrodebogota",
+    "network": "x",
+    "handle": "metrodebogota",
+    "name": "Metro de Bogotá",
+    "kind": "related",
+    "status": "suggested",
+    "scopes": [
+     "report:metrobogota"
+    ],
+    "batch": "metrobogota",
+    "source": "gemini",
+    "why": "the organisation itself",
+    "verified": false,
+    "at": "2026-11-01T00:00:00Z"
+   },
+   {
+    "id": "bluesky:movilidad.bsky.social",
+    "network": "bluesky",
+    "handle": "movilidad.bsky.social",
+    "name": "Movilidad Bogotá",
+    "kind": "related",
+    "status": "suggested",
+    "scopes": [
+     "city:bogota"
+    ],
+    "batch": "metrobogota",
+    "source": "gemini",
+    "why": "city transit agency",
+    "verified": true,
+    "at": "2026-11-01T00:00:00Z"
+   },
+   {
+    "id": "x:bogotaet",
+    "network": "x",
+    "handle": "BogotaET",
+    "name": "El Tiempo Bogotá",
+    "kind": "related",
+    "status": "suggested",
+    "scopes": [
+     "city:bogota"
+    ],
+    "batch": "metrobogota",
+    "source": "gemini",
+    "why": "local news",
+    "verified": false,
+    "at": "2026-11-01T00:00:00Z"
+   },
+   {
+    "id": "bluesky:metrodebogota.bsky.social",
+    "network": "bluesky",
+    "handle": "metrodebogota.bsky.social",
+    "name": "",
+    "kind": "owner",
+    "status": "approved",
+    "scopes": [
+     "report:metrobogota"
+    ],
+    "batch": "",
+    "source": "site",
+    "why": "linked from www.metrodebogota.gov.co",
+    "verified": true,
+    "at": "2026-11-01T00:00:00Z"
+   },
+   {
+    "id": "instagram:metrodebogota",
+    "network": "instagram",
+    "handle": "metrodebogota",
+    "name": "",
+    "kind": "owner",
+    "status": "approved",
+    "scopes": [
+     "report:metrobogota"
+    ],
+    "batch": "",
+    "source": "site",
+    "why": "linked from www.metrodebogota.gov.co",
+    "verified": true,
+    "at": "2026-11-01T00:00:00Z"
+   },
+   {
+    "id": "x:gone",
+    "network": "x",
+    "handle": "gone",
+    "name": "",
+    "kind": "related",
+    "status": "blocked",
+    "scopes": [
+     "report:metrobogota"
+    ],
+    "batch": "",
+    "source": "gemini",
+    "why": "asked us to stop: please stop tagging me",
+    "verified": false,
+    "at": "2026-11-01T00:00:00Z"
+   }
+  ],
+  "comments": [
+   {
+    "key": "ot-1",
+    "network": "bluesky",
+    "kind": "tags",
+    "status": "posted",
+    "draft": "@metrodebogota.bsky.social ya salió la revisión QA pública de tu sitio: https://qalabreview.com/es/metrodebogota.gov.co cc @movilidad.bsky.social",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3xyz",
+    "post": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3abc",
+    "error": "",
+    "at": "2026-11-05T15:20:00Z",
+    "mentions": 2,
+    "report": "metrobogota"
+   },
+   {
+    "key": "ot-3",
+    "network": "mastodon",
+    "kind": "reply",
+    "status": "failed",
+    "draft": "@metrodebogota.bsky.social ya salió la revisión QA pública de tu sitio: https://qalabreview.com/es/metrodebogota.gov.co cc @movilidad.bsky.social",
+    "url": "",
+    "post": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3abc",
+    "error": "422 rate limited",
+    "at": "2026-11-05T15:17:00Z",
+    "mentions": 0,
+    "report": "metrobogota"
+   },
+   {
+    "key": "ot-2",
+    "network": "instagram",
+    "kind": "tags",
+    "status": "approved",
+    "draft": "@metrodebogota.bsky.social ya salió la revisión QA pública de tu sitio: https://qalabreview.com/es/metrodebogota.gov.co cc @movilidad.bsky.social",
+    "url": "",
+    "post": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3abc",
+    "error": "",
+    "at": "2026-11-05T15:16:00Z",
+    "mentions": 2,
+    "report": "metrobogota"
+   }
+  ],
+  "week": {
+   "bluesky": 1
+  }
  }
 }
