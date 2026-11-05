@@ -1039,13 +1039,16 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             const m = counts[c.channel];
             return m && typeof m.members === 'number' ? `<br><span class="jv-note">${fmt(m.members)} members${typeof m.change === 'number' ? ` · <span class="jv-chip ${m.change > 0 ? 'c-fast' : m.change < 0 ? 'c-slow' : ''}">${m.change > 0 ? '+' : ''}${fmt(m.change)}</span> since ${esc(m.from.date)}` : ''}</span>` : '';
         };
+        const NUMBERS = [['impressions', 'impressions'], ['views', 'views'], ['likes', 'likes'], ['comments', 'comments']];
+        const numbers = (c) => NUMBERS.filter(([k]) => c.numbers && c.numbers[k]).map(([k, label]) => `${fmt(c.numbers[k])} ${label}`).join(' · ') || '—';
         const needs = Object.values(counts).filter((m) => m.need).map((m) => `<li>${esc(m.need)}</li>`).join('');
         const memberNeeds = needs ? `<ul class="jv-needs">${needs}</ul>` : '';
         return panel('hub-queue', 'Queue by channel', table([
             ['Channel', (c) => `<strong>${esc(c.name)}</strong>${members(c)}`], ['Scheduled', (c) => fmt(c.scheduled)], ['Next', next],
             ['Sent', (c) => fmt(c.sent)], ['Failed', (c) => (c.failed ? `<span class="jv-chip c-slow">${fmt(c.failed)}</span>` : '0')],
+            ['Numbers', numbers],
             ['Last out', (c) => (c.last ? (c.last.url ? `<a href="${esc(c.last.url)}" target="_blank" rel="noopener">${esc(when(c.last.at))}</a>` : esc(when(c.last.at))) : '—')]
-        ], so.queue) + memberNeeds, { wide: true, data: so.queue.map((c) => Object.assign({ channel: c.name, scheduled: c.scheduled, next: c.next.map((n) => n.at + ' ' + n.post).join(' | '), sent: c.sent, failed: c.failed, last: c.last ? c.last.at : '' }, counts[c.channel] ? { members: counts[c.channel].members, change: counts[c.channel].change } : {})), note: 'Sent and failed count the selected range. Instagram stays empty while that channel is paused in Buffer. Telegram is the @qalab_live post of each Live Reports batch; its members are read each morning. Reddit is the app\'s daily batch post in r/QALabLiveReports; its members are read after the 16:20 UTC post. The change counts from the last daily count on or before the range start.' });
+        ], so.queue) + memberNeeds, { wide: true, data: so.queue.map((c) => Object.assign({ channel: c.name, scheduled: c.scheduled, next: c.next.map((n) => n.at + ' ' + n.post).join(' | '), sent: c.sent, failed: c.failed, last: c.last ? c.last.at : '' }, c.numbers || {}, counts[c.channel] ? { members: counts[c.channel].members, change: counts[c.channel].change } : {})), note: 'Sent and failed count the selected range; Numbers add up the posts sent in it, as the morning run read them. On Telegram likes are reactions, on Reddit the post score. Instagram stays empty while that channel is paused in Buffer. Telegram is the @qalab_live post of each Live Reports batch; its members are read each morning. Reddit is the app\'s daily batch post in r/QALabLiveReports; its members are read after the 16:20 UTC post. The change counts from the last daily count on or before the range start.' });
     }
 
     function socialRunsPanel() {

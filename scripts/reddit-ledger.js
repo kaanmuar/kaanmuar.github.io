@@ -7,11 +7,14 @@
      qalab-ledger {"kind":"post","key":"live/2026-11-04","id":"t3_abc","url":"https://www.reddit.com/r/...",
                    "posted":"<ISO>","at":"<ISO>","subreddit":"QALabLiveReports","subscribers":12}
      qalab-ledger {"kind":"members","at":"<ISO>","subreddit":"QALabLiveReports","subscribers":12}
+     qalab-ledger {"kind":"numbers","at":"<ISO>","posts":[{"id":"t3_abc","score":5,"comments":2}]}
+
+   numbers is the daily run's score and comments for each batch post of the last 30 days (#2602).
 
      npx devvit logs QALabLiveReports qalab-live-reports --since 3d --json | node scripts/reddit-ledger.js [--dry-run]
 
    Each post goes into assets/social/reddit.json (scripts/social-ledger.js) under its batch key, and the member count
-   into its members; scripts/commit-social-ledgers.sh commits it. */
+   into its members, and each post's numbers into its numbers; scripts/commit-social-ledgers.sh commits it. */
 
 const fs = require("fs");
 const ledgers = require("./social-ledger");
@@ -41,7 +44,7 @@ function parse(text) {
     if (i < 0) return;
     try {
       const rec = JSON.parse(msg.slice(i + PREFIX.length).trim());
-      if (rec && (rec.kind === "post" || rec.kind === "members") && Number.isFinite(Date.parse(rec.at || ""))) out.push(rec);
+      if (rec && (rec.kind === "post" || rec.kind === "members" || rec.kind === "numbers") && Number.isFinite(Date.parse(rec.at || ""))) out.push(rec);
     } catch (error) { /* a line cut by the log stream */ }
   });
   return out.sort((a, b) => a.at.localeCompare(b.at));
@@ -51,6 +54,12 @@ function apply(book, records, now) {
   const checked = new Date(now).toISOString();
   const keys = new Set();
   records.forEach((rec) => {
+    if (rec.kind === "numbers") {
+      (Array.isArray(rec.posts) ? rec.posts : []).forEach((p) => {
+        if (p && p.id) ledgers.numbers(book, String(p.id), { likes: p.score, comments: p.comments }, rec.at);
+      });
+      return;
+    }
     const chat = rec.subreddit ? "r/" + rec.subreddit : "";
     if (rec.kind === "post" && KEY.test(rec.key || "") && rec.id) {
       ledgers.record(book, rec.key, {
@@ -72,8 +81,9 @@ function run(text, opts) {
   const keys = apply(book, records, o.now);
   if (!o.dry && records.length) ledgers.write(o.file, book);
   const m = book.members;
+  const numbered = Object.keys(book.numbers || {}).length;
   o.log(records.length
-    ? records.length + " ledger lines from the Reddit app: " + (keys.length ? keys.length + " batch posts (" + keys.join(", ") + ")" : "no batch post") + (m ? "; " + m.chat + " has " + m.members + " members" : "") + (o.dry ? ". Dry run: " + o.file + " not written." : ".")
+    ? records.length + " ledger lines from the Reddit app: " + (keys.length ? keys.length + " batch posts (" + keys.join(", ") + ")" : "no batch post") + (m ? "; " + m.chat + " has " + m.members + " members" : "") + (numbered ? "; numbers for " + numbered + " posts" : "") + (o.dry ? ". Dry run: " + o.file + " not written." : ".")
     : "No ledger lines in the Reddit app's logs; " + o.file + " is unchanged.");
   return { records, keys, book };
 }

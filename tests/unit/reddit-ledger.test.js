@@ -85,11 +85,29 @@ test("merging two Reddit ledgers keeps both sides' posts and member points, the 
   assert.equal(a.members.history.length, 3);
 });
 
+test("the daily numbers line keeps each post's score and comments, a newer reading wins, and writing and merging keep them", () => {
+  const book = ledger.empty();
+  R.apply(book, R.parse([
+    line({ kind: "numbers", at: "2026-11-04T16:20:06.000Z", posts: [{ id: "t3_abc", score: 7, comments: 2 }, { id: "", score: 1 }, { id: "t3_neg", score: -3, comments: 0 }] }),
+    line({ kind: "numbers", at: "2026-11-03T16:20:06.000Z", posts: [{ id: "t3_abc", score: 1, comments: 0 }] })
+  ].join("\n")), NOW);
+  assert.deepEqual(book.numbers, { t3_abc: { likes: 7, comments: 2, at: "2026-11-04T16:20:06.000Z" }, t3_neg: { likes: 0, comments: 0, at: "2026-11-04T16:20:06.000Z" } });
+  const file = tmpFile();
+  ledger.write(file, book);
+  assert.deepEqual(JSON.parse(fs.readFileSync(file, "utf8")).numbers.t3_abc, { likes: 7, comments: 2, at: "2026-11-04T16:20:06.000Z" });
+  const other = ledger.empty();
+  ledger.numbers(other, "t3_abc", { likes: 9, comments: 3 }, "2026-11-05T16:20:06.000Z");
+  ledger.merge(book, other);
+  assert.equal(book.numbers.t3_abc.likes, 9);
+});
+
 test("the Devvit app logs the lines the parser reads, and the ledger job and commit script use the ledger", () => {
   const server = fs.readFileSync(path.join(ROOT, "reddit/live-reports/src/server/index.js"), "utf8");
   assert.ok(server.includes('const LEDGER = "' + R.PREFIX + '"'));
   ["kind", "key", "id", "url", "posted", "subscribers"].forEach((f) => assert.match(server, new RegExp("\\b" + f + "\\b"), f));
   assert.match(server, /numberOfSubscribers/);
+  assert.match(server, /kind: "numbers"/);
+  assert.match(server, /score: post\.score, comments: post\.numberOfComments/);
   const wf = fs.readFileSync(path.join(ROOT, ".github/workflows/reddit-live.yml"), "utf8");
   assert.match(wf, /devvit logs "\$REDDIT_SUBREDDIT" qalab-live-reports --since 3d --json/);
   assert.match(wf, /node scripts\/reddit-ledger\.js/);
