@@ -63,6 +63,7 @@ function deps(db, o) {
   const suggestions = (o && o.suggestions) || [
     { network: "x", handle: "@movilidadbog", name: "Movilidad Bogotá", why: "city transit agency", scope: "city" },
     { network: "x", handle: "BogotaET", name: "El Tiempo Bogotá", why: "local news", scope: "city" },
+    { network: "x", handle: "metrodebogota", name: "Metro de Bogotá", why: "the organisation itself", scope: "report" },
     { network: "bluesky", handle: "fake.bsky.social", name: "Made up", why: "?", scope: "report" },
     { network: "facebook", handle: "nope", name: "FB", why: "not text-mentionable", scope: "report" }
   ];
@@ -124,7 +125,8 @@ test("a dry run reads owners and suggestions, pushes them, and only counts what 
   const metroOwners = accounts.filter((a) => a.kind === "owner" && a.scopes.includes("report:metrobogota")).map((a) => a.network + ":" + a.handle);
   assert.deepEqual(metroOwners.sort(), ["bluesky:metrodebogota.bsky.social", "instagram:metrodebogota", "tiktok:metrodebogota", "x:metrodebogota", "youtube:MetrodeBogota"]);
   const suggested = accounts.filter((a) => a.status === "suggested" && a.batch === "metrobogota").map((a) => a.handle + " " + a.scopes.join());
-  assert.deepEqual(suggested.sort(), ["BogotaET city:bogota", "movilidadbog city:bogota"], "the made-up Bluesky handle and the Facebook one are dropped");
+  assert.deepEqual(suggested.sort(), ["BogotaET city:bogota", "movilidadbog city:bogota"], "the made-up Bluesky handle, the Facebook one and the owner's own are not waiting");
+  assert.equal(accounts.find((a) => a.network === "x" && a.handle === "metrodebogota").status, "approved", "Gemini naming the owner's own account leaves it approved");
   const push = pushes.find((p) => p.ref === "owner-tags:metrobogota");
   assert.deepEqual(push.actions.map((a) => a.act), ["approve", "edit", "dismiss"]);
   assert.equal((await db.collection("engagement_posts").get()).docs.length, 0);
