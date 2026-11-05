@@ -1,5 +1,8 @@
 package com.carlosandmunoz.jarvis.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +22,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -108,7 +112,14 @@ object Engagement {
             "scores ${fmt(r.num("score"))}" + if (r.bool("shown") == true) "" else " (not named in the reply)",
             "found by ${r.str("match") ?: "?"}",
             r.str("format") ?: "link"
-        ).joinToString(" · ")
+        ).joinToString(" · ") + profileLine(r)
+    }
+
+    /** The profile campaign's part (#2615): " · touch 2 of 4 (curious) · offer HI-… · approve copies it to paste by hand", or "". */
+    fun profileLine(r: JsonObject): String {
+        if (r.str("match") != "profile") return ""
+        return " · touch ${fmt(r.num("touch"))} of 4 (${r.str("tone").orEmpty()}) · offer ${r.str("offer").orEmpty()} · " +
+            if (r.bool("manual") == true) "approve copies it to paste by hand" else "posts on approval"
     }
 }
 
@@ -304,6 +315,7 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
     var text by rememberSaveable(key) { mutableStateOf(draft) }
     var open by rememberSaveable("open:$key") { mutableStateOf(false) }
     val uri = LocalUriHandler.current
+    val context = LocalContext.current
     val busy = "eg:$key" in s.running
     Column(Modifier.fillMaxWidth().padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -315,6 +327,7 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
         p.str("about")?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 13.sp) }
         Engagement.reportLine(p)?.let { Text(it, color = J.violet, fontSize = 12.sp) }
         p.obj("report").str("link")?.takeIf { it.startsWith("https://") }?.let { link -> TextButton({ uri.openUri(link) }) { Text("Open the report link", color = J.cyan, fontSize = 12.sp) } }
+        p.obj("report").str("profile")?.takeIf { it.startsWith("https://") }?.let { link -> TextButton({ uri.openUri(link) }) { Text("Open their profile", color = J.cyan, fontSize = 12.sp) } }
         val chain = p.obj("chain")
         val ours = chain.str("ours")
         if (chain != null) Text("${Engagement.author(p)} commented on our ${if (chain.str("on") == "post") "post" else "reply"}" + (ours?.takeIf { it.isNotEmpty() }?.let { ": “$it”" } ?: ""), color = J.muted, fontSize = 12.sp)
@@ -325,7 +338,11 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             ActionButton("Approve", busy) {
                 val decision = Engagement.decision(draft, text, true)
-                vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json(decision), "text" to json(text.trim()))) { out -> out.str("message") ?: "Approved." }
+                vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json(decision), "text" to json(text.trim()))) { out ->
+                    val pasted = out.str("status") == "copy" && !out.str("text").isNullOrEmpty()
+                    if (pasted) (context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText("reply", out.str("text")))
+                    (out.str("message") ?: "Approved.") + if (pasted) " The text is on your clipboard." else ""
+                }
             }
             TextButton({ ask("dismiss this reply draft") { vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json("dismiss"))) { "Dismissed." } } }, enabled = !busy) {
                 Text("Dismiss", color = J.muted, fontSize = 13.sp)

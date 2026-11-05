@@ -43,7 +43,8 @@ const PER_RUN = 4;
 const MAX_AGE_HOURS = 7 * 24;
 const LONG_LINK = 60;
 const CAMPAIGN = "report-reply";
-const ANSWERED = ["waiting", "approved", "posted"];
+// "copy" is a profile campaign message (#2615) Carlos approved to paste on a network we cannot post to.
+const ANSWERED = ["waiting", "approved", "posted", "copy"];
 const SHORT = "https://qalabreview.com/";
 const CODES = { bluesky: "bsky", mastodon: "mast", youtube: "yt", x: "x", linkedin: "li", facebook: "fb", instagram: "ig", threads: "th", tiktok: "tt" };
 const CARD_NETS = ["bluesky", "mastodon", "x"];
@@ -494,7 +495,7 @@ function resultsIssue(r, social) {
 
 module.exports = {
   CAMPAIGN, ANSWERED, CODES, CARD_NETS, SHOW_SCORE, SITE_GAP, PER_RUN, LONG_LINK, MAX_AGE_HOURS, WEAK, LOOSE, LOOSE_PER_RUN, LOOSE_WORTH, PARENT,
-  RERUN_MIN, BACK_DAYS, RERUN_PER_RUN, RERUN_COPY,
+  RERUN_MIN, BACK_DAYS, RERUN_PER_RUN, RERUN_COPY, REGISTER,
   targets, pick, queries, matchOf, siteOf, looseQueries, looseOf, shortOf, nicheOf, shown, linkFor, prompt, parse, fill, decide, doc, rollup, bare, answeredHosts, resultsIssue,
   toldScore, moved, reruns, replyId, rerunText, rerunDoc
 };

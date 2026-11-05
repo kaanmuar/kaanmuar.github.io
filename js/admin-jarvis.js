@@ -1947,7 +1947,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const text = (d.title || String(d.text || '')).replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim();
         return text.length > max ? text.slice(0, max - 1).trimEnd() + '…' : text;
     };
-    const EG_STATUS_CHIP = { planned: 'c-average', waiting: 'c-average', approved: 'c-average', done: 'c-fast', posted: 'c-fast', dry: '', capped: 'c-slow', paused: '', dismissed: '', expired: 'c-slow', missed: 'c-slow', failed: 'c-slow', replied: '' };
+    const EG_STATUS_CHIP = { planned: 'c-average', waiting: 'c-average', approved: 'c-average', done: 'c-fast', posted: 'c-fast', dry: '', capped: 'c-slow', paused: '', dismissed: '', expired: 'c-slow', missed: 'c-slow', failed: 'c-slow', replied: '', copy: 'c-fast' };
     const egChips = (d) => Object.entries(d.actions || {}).map(([a, x]) => `<span class="jv-chip ${EG_STATUS_CHIP[x.status] || ''}">${esc(a)}: ${esc(x.status)}</span>`).join(' ')
         + (d.skip ? ` <span class="jv-chip c-slow">left alone: ${esc(d.skip)}</span>` : d.verdict === 'trend' ? ' <span class="jv-chip">trend only</span>' : '');
     // Report replies (#2465, #2471): invites under posts that name a site we reviewed.
@@ -1958,7 +1958,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const egReportLine = (d) => {
         const x = d.report;
         if (!egIsReport(d) || !x) return '';
-        return `<p class="jv-prop-why">Invites to the <strong>${esc(x.name || x.host)}</strong> report (${esc(x.host)}) · scores ${fmt(x.score)}${x.shown ? '' : ' (not named in the reply)'} · found by ${esc(x.match || '?')} · ${esc(x.format || 'link')}${x.link ? ` · <a href="${esc(x.link)}" target="_blank" rel="noopener">report link ↗</a>` : ''}</p>`;
+        return `<p class="jv-prop-why">Invites to the <strong>${esc(x.name || x.host)}</strong> report (${esc(x.host)}) · scores ${fmt(x.score)}${x.shown ? '' : ' (not named in the reply)'} · found by ${esc(x.match || '?')} · ${esc(x.format || 'link')}${x.link ? ` · <a href="${esc(x.link)}" target="_blank" rel="noopener">report link ↗</a>` : ''}${x.match === 'profile' ? ` · touch ${fmt(x.touch)} of 4 (${esc(x.tone || '')}) · offer ${esc(x.offer || '')} · ${x.manual ? 'approve copies it to paste by hand' : 'posts on approval'}${x.profile ? ` · <a href="${esc(x.profile)}" target="_blank" rel="noopener">profile ↗</a>` : ''}` : ''}</p>`;
     };
     const egFilter = (list) => `<div class="jv-actions"><div class="jv-seg" role="group" aria-label="Which replies">${EG_ONLY.map(([k, label]) => `<button type="button" data-eg-only="${k}" class="${S.egOnly === k ? 'on' : ''}" aria-pressed="${S.egOnly === k}">${label} · ${fmt(list.filter((d) => k === 'all' || (k === 'report') === egIsReport(d)).length)}</button>`).join('')}</div></div>`;
 
@@ -2073,7 +2073,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         delete S.egDrafts[key];
         g.waiting = g.waiting.filter((x) => x.key !== key);
         render();
-        toast(out.message, 5000);
+        if (out.status === 'copy' && out.text && navigator.clipboard) await navigator.clipboard.writeText(out.text).catch(() => null);
+        toast(out.message + (out.status === 'copy' ? ' The text is on your clipboard.' : ''), 7000);
         loadExternal(['engagement']);
     }
 
