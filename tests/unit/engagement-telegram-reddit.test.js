@@ -124,11 +124,30 @@ test("comments under our channel's posts and replies to the bot come in once, an
   assert.equal(net.seen.length, 1);
 });
 
-test("a channel without a discussion group says so in the run's errors", async () => {
+test("a channel without a discussion group says so in the run's errors, and one linked later is found and kept", async () => {
   const db = fakeDb();
-  await db.collection("engagement_private").doc("telegram").set({ token: TOKEN, handle: "@qalab_live_bot", channel: "@qalab_live", group: null });
-  const out = await J.followChains(deps(db, telegram()), E.settings({}));
+  await db.collection("engagement_private").doc("telegram").set({ token: TOKEN, handle: "@qalab_live_bot", channel: "@qalab_live", group: null, error: "@qalab_live has no discussion group" });
+  const out = await J.followChains(deps(db, telegram({ group: false })), E.settings({}));
   assert.match(out.errors.telegram, /@qalab_live has no discussion group/);
+
+  const linked = await J.followChains(deps(db, telegram(), { now: NOW + 2 * HOUR }), E.settings({}));
+  assert.deepEqual(linked.errors, {});
+  assert.equal(linked.chained, 2);
+  const saved = db.data.get("engagement_private/telegram");
+  assert.equal(saved.group, GROUP);
+  assert.equal(saved.groupTitle, "QA-lab Live chat");
+  assert.equal(saved.error, "");
+});
+
+test("the Connect Telegram workflow's token is kept only when Telegram says it is our bot's", async () => {
+  const db = fakeDb();
+  await assert.rejects(A.connectTelegramCi(deps(db, telegram(), { env: { TELEGRAM_BOT: "other_bot" } }), { token: TOKEN }), /not @other_bot's/);
+  await assert.rejects(A.connectTelegramCi(deps(db, telegram()), { token: "987654321:AAEzyxwvutsrqponmlkjihgfedcba987654" }), /Telegram refused the token/);
+  await assert.rejects(A.connectTelegramCi(deps(db, telegram()), { token: "nope" }), /not a bot token/);
+  assert.equal(db.data.get("engagement_private/telegram"), undefined);
+  const out = await A.connectTelegramCi(deps(db, telegram()), { token: TOKEN, channel: "@someone_else" });
+  assert.match(out.message, /in “QA-lab Live chat”/);
+  assert.equal(db.data.get("engagement_private/telegram").channel, "@qalab_live", "the caller never picks the channel");
 });
 
 test("the bot reacts with a thank-you or a thumbs-up, and an approved answer goes into the comment's thread", async () => {
