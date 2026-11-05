@@ -76,7 +76,9 @@ async function call(fetchImpl, url, opts) {
     const why = (err && typeof err === "object" ? err.message || (err.errors && err.errors[0] && err.errors[0].reason) : err) || data.message || data.error_description || data.description || "";
     // A Telegram bot's token is part of its URL path.
     const where = url.replace(/[?#].*$/, "").replace(/^https:\/\//, "").replace(/\/bot[^/]+/, "/bot…");
-    throw new ActError(where + " answered " + res.status + (why ? ": " + clip(why, 160) : ""), res.status === 401 || res.status === 403 || res.status === 429);
+    // A post with comments turned off answers 403 too, but only that post is refused.
+    const postOnly = res.status === 403 && /commentsDisabled|disabled comments/i.test(JSON.stringify(err || "") + " " + why);
+    throw new ActError(where + " answered " + res.status + (why ? ": " + clip(why, 160) : ""), !postOnly && (res.status === 401 || res.status === 403 || res.status === 429));
   }
   return data;
 }
