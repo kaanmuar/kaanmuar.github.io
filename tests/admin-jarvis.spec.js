@@ -105,6 +105,9 @@ const EXTERNAL = {
   'marketing-command': { ok: true, queued: 'c1', action: 'approve', label: 'Approve ana@uni.edu.co (W1)' },
   engagement: require('./fixtures/jarvis-engagement.json'),
   'engagement-decide': { ok: true, message: 'Edited and approved.' },
+  'owner-tags-run': { ok: true, note: 'owner tags: 6 posts, 4 comments, 1 owner replies; 2 sites read, 5 owner accounts, 1 suggestion runs, 1 pushed', posts: 6, comments: 4 },
+  'owner-tags-settings': { ok: true, message: 'Owner tags are paused.' },
+  'owner-tags-account': { ok: true, message: '@metrodebogota on X is approved.' },
   local: { ok: true, since: '2026-11-02', more: 0,
     totals: { reviews: 9, local: 2, profiles: 1, noProfile: 1, withIssues: 2, failing: 0, outreach: 1, calls: 4, errors: 1, callsToday: 2 },
     issues: [{ key: 'local-hours', count: 1, fail: 0 }, { key: 'local-profile', count: 1, fail: 0 }],
@@ -494,6 +497,43 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test('Owner tags show their state, accounts by status and recent comments; Approve, Block, Add account, Pause and Run now go through the function (#2660)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/engagement/7');
+    const ot = page.locator('[data-view="engagement"] [data-panel-id="engagement-owner-tags"]');
+    await expect(ot).toContainText('Owner tags · live');
+    await expect(ot).toContainText('Suggestions waiting');
+    await expect(ot).toContainText('Posted in the last 7 days: Bluesky 1');
+    await expect(ot.locator('details[open] summary')).toHaveText('Suggested · 3');
+    await expect(ot.locator('details[open]')).toContainText('city transit agency');
+    await expect(ot.locator('details[open] a', { hasText: '@movilidad.bsky.social' })).toHaveAttribute('href', 'https://bsky.app/profile/movilidad.bsky.social');
+    await expect(ot).toContainText('422 rate limited');
+    await expect(ot.locator('a', { hasText: 'Our comment' })).toHaveAttribute('href', /bsky\.app\/profile\/qalaburlreview\.bsky\.social\/post\/3xyz/);
+    if (process.env.OWNER_TAGS_SHOT) await ot.screenshot({ path: process.env.OWNER_TAGS_SHOT });
+
+    await ot.locator('[data-ot-acct="approved"][data-handle="metrodebogota"][data-network="x"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'owner-tags-account').map((c) => [c.body.network, c.body.handle, c.body.status])).toEqual([['x', 'metrodebogota', 'approved']]);
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await ot.locator('[data-ot-acct="blocked"][data-handle="BogotaET"]').click();
+    expect(calls.filter((c) => c.op === 'owner-tags-account').length).toBe(1);
+
+    await ot.locator('[data-ot-add] [name="who"]').fill('@Movilidad_Bog');
+    await ot.locator('[data-ot-add] [name="network"]').selectOption('x');
+    await ot.locator('[data-ot-add] [name="scopeKind"]').selectOption('city');
+    await ot.locator('[data-ot-add] [name="scopeValue"]').fill('Bogotá');
+    await ot.locator('[data-ot-add] button[type="submit"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'owner-tags-account').map((c) => c.body).pop()).toMatchObject({ network: 'x', handle: 'Movilidad_Bog', scope: 'city:bogota', kind: 'related', status: 'approved' });
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await ot.locator('[data-ot-pause="on"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'owner-tags-settings').map((c) => c.body.settings)).toEqual([{ paused: true }]);
+    page.once('dialog', (dialog) => dialog.accept());
+    await ot.locator('[data-ot-run]').click();
+    await expect(page.locator('.jv-toast')).toContainText('Owner tags ran: owner tags: 6 posts');
+    expect(errors).toEqual([]);
+  });
+
   test('Marketing shows every marketing number with pies, the plan timeline and countdowns, and its buttons go through the function after confirming (#1722)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
@@ -766,7 +806,7 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(save.body.settings.goals).toEqual([{ product: 'cv', metric: 'visits', period: 'week', target: 300 }, { product: 'review', metric: 'paid', period: 'month', target: 12 }]);
     expect(save.body.settings.thresholds.pendingRatings).toBe(25);
     expect(save.body.settings.mail).toMatchObject({ daily: true, gemini: false, watch: true, weekly: true, messages: true, ratings: false, ownerReplies: false });
-    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2, 'launch-campaign': 10, 'gh-board-sync': 10, 'gh-orphan-ticket': 5, 'gh-update-pr': 5, 'gh-merge-pr': 3, 'gh-revert': 1, 'gh-delete-branch': 2, 'gh-close-issue': 5, 'gh-remove-worktree': 5 }, confidence: 0.8, countdownHours: 2 });
+    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2, 'launch-campaign': 10, 'gh-board-sync': 10, 'gh-orphan-ticket': 5, 'gh-update-pr': 5, 'gh-merge-pr': 3, 'gh-revert': 1, 'gh-delete-branch': 2, 'gh-close-issue': 5, 'gh-remove-worktree': 5, 'owner-tags-approve-verified': 20, 'owner-tags-block': 10 }, confidence: 0.8, countdownHours: 2 });
     expect(save.body.settings.searchQueries).toEqual(['qa review', 'qa review', 'carlos qa']);
     await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(1);
 

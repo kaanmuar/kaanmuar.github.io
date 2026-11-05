@@ -1975,6 +1975,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
     const OT_ORDER = ['suggested', 'approved', 'rejected', 'blocked'];
     const OT_STATUS_CHIP = { suggested: 'c-average', approved: 'c-fast', rejected: '', blocked: 'c-slow' };
+    const OT_LEVEL = { suggested: 'lv-warn', approved: 'lv-good', rejected: 'lv-info', blocked: 'lv-alert' };
+    const OT_GLYPH = { suggested: '?', approved: '✓', rejected: '–', blocked: '⊘' };
     const otState = (o) => (o.settings.paused ? 'paused' : o.settings.live ? 'live' : 'dry run');
     const otProfile = (a) => {
         const h = String(a.handle || '');
@@ -2000,7 +2002,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             + (S.otNote || o.note ? `<p class="jv-note">${S.otNote ? 'This run: ' : 'Last run: '}${esc(S.otNote || o.note)}</p>` : '')
             + (weekTotal ? `<p class="jv-note">Posted in the last 7 days: ${Object.keys(week).map((k) => `${esc(net(k))} ${fmt(week[k])}`).join(' · ')}</p>` : '');
         const acts = (a) => ['approved', 'rejected', 'blocked'].filter((s) => s !== a.status).map((s) => `<button type="button" data-ot-acct="${s}" data-network="${esc(a.network)}" data-handle="${esc(a.handle)}"${S.pending['ot:' + a.id] ? ' disabled' : ''}>${{ approved: 'Approve', rejected: 'Reject', blocked: 'Block' }[s]}</button>`).join('');
-        const row = (a) => { const url = otProfile(a); return `<li class="jv-prop lv-info"><div class="jv-prop-body"><p class="jv-prop-title"><strong>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">@${esc(a.handle)}</a>` : '@' + esc(a.handle)}</strong>${a.name ? ' ' + esc(a.name) : ''} <span class="jv-chip">${esc(net(a.network))}</span> <span class="jv-chip ${OT_STATUS_CHIP[a.status] || ''}">${esc(a.status)}</span> <span class="jv-chip">${esc(a.kind)}</span>${a.verified ? ' <span class="jv-chip c-fast">verified</span>' : ''}</p>
+        const row = (a) => { const url = otProfile(a); return `<li class="jv-prop ${OT_LEVEL[a.status] || 'lv-info'}"><span class="jv-prop-rank" aria-hidden="true">${OT_GLYPH[a.status] || '·'}</span><div class="jv-prop-body"><p class="jv-prop-title"><strong>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">@${esc(a.handle)}</a>` : '@' + esc(a.handle)}</strong>${a.name ? ' ' + esc(a.name) : ''} <span class="jv-chip">${esc(net(a.network))}</span> <span class="jv-chip ${OT_STATUS_CHIP[a.status] || ''}">${esc(a.status)}</span> <span class="jv-chip">${esc(a.kind)}</span>${a.verified ? ' <span class="jv-chip c-fast">verified</span>' : ''}</p>
             <p class="jv-prop-why">${[a.why, (a.scopes || []).join(', '), a.batch ? 'batch ' + a.batch : '', a.source ? 'from ' + a.source : ''].filter(Boolean).map(esc).join(' · ')}</p>
             <div class="jv-prop-acts">${acts(a)}</div></div></li>`; };
         const list = o.list || [];
