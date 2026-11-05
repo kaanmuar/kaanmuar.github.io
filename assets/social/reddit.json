@@ -1,0 +1,39 @@
+{
+ "version": 1,
+ "posts": {
+  "auto-2026-10-22/07-u-zipdev-com": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1xok2wl",
+    "at": "2026-11-05T14:30:29.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1xok2wl/zipdevcom_77_the_gap_form_labels/",
+    "checked": "2026-11-05T14:36:09.112Z"
+   }
+  ],
+  "auto-2026-11-04/02-u-treinta-co": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1xok2ws",
+    "at": "2026-11-05T14:30:29.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1xok2ws/treintaco_75_a_lacuna_frames/",
+    "checked": "2026-11-05T14:36:09.112Z"
+   }
+  ]
+ },
+ "members": {
+  "chat": "r/QALabLiveReports",
+  "members": 1,
+  "at": "2026-11-05T14:30:29.749Z",
+  "history": [
+   {
+    "date": "2026-11-05",
+    "members": 1,
+    "at": "2026-11-05T14:30:29.749Z"
+   }
+  ]
+ }
+}
