@@ -37,6 +37,12 @@ const API_NETS = ["bluesky", "mastodon"];
 const TONES = ["cheer", "curious", "question", "last"];
 const NETS = ["bluesky", "mastodon", "x", "linkedin", "facebook", "instagram", "threads", "youtube", "tiktok"];
 
+// The link goes untouched up to R.LONG_LINK characters, plus the space before it.
+const LINK_ROOM = R.LONG_LINK + 2;
+// The message speaks to an organisation, so the singular register of report replies (R.REGISTER) would mix forms.
+const ORG_REGISTER = "You are writing to an organisation: address it in the plural and keep that one form of address in the whole message (ustedes in Spanish, vocês in Portuguese, voi in Italian, Sie in German, vous in French).";
+
+const room = (network) => ((E.NETWORKS[network] || {}).limit || 300) - LINK_ROOM;
 const clip = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
 const lang2 = (v) => String(v || "").slice(0, 2).toLowerCase();
 
@@ -141,14 +147,14 @@ function prompt(items) {
     post: p.mode === "reply" ? clip(p.post.text, 700) : "",
     site: { name: p.target.name || p.target.host, domain: p.target.host, sector: p.target.sector, country: p.target.country, score: R.shown(p.target) ? p.target.score : null, weakest: p.target.weakest },
     offer: { percent: p.offer.percent, days: p.offer.days },
-    maxLength: ((E.NETWORKS[p.network] || {}).limit || 300) - 32
+    maxLength: room(p.network)
   }));
   return [
     "You help Carlos & Munoz (carlosandmunoz.com) tell an organisation, on its own social profile, that a free public report of its website is live: QA-lab URL Review checks a site's SEO, GEO (AI search), accessibility, performance, analytics and security.",
     "For each item return one JSON object in a JSON array, same order: {\"id\": same id, \"text\": the message, or \"\" when nothing honest and welcome can be said}.",
     "mode \"reply\" is a reply under the organisation's own post (post): open on what the post says, and return \"\" when the post is about politics, elections, war, a tragedy, a death, a crisis or a fight. mode \"copy\" is a message to the profile: start with handle.",
     TONE_RULES.cheer, TONE_RULES.curious, TONE_RULES.question, TONE_RULES.last,
-    "Rules: write in lang (en, es, pt, de, fr or it). First person plural, warm, specific, one or two short sentences. When site.score is a number you may name it as score/100; when it is null never name a score, grade or number and never call the site bad, slow, broken or unsafe. Say only what site says; no made-up findings. End with {link} exactly once. " + R.REGISTER,
+    "Rules: write in lang (en, es, pt, de, fr or it). First person plural, warm, specific, one or two short sentences. When site.score is a number you may name it as score/100; when it is null never name a score, grade or number and never call the site bad, slow, broken or unsafe. Say only what site says; no made-up findings. End with {link} exactly once. " + ORG_REGISTER,
     "Never: any other link or address (naming the site is fine), hashtags, more than one emoji, em dashes, flattery like \"Great post!\", made-up numbers, urgency or sales talk, or anything about a person.",
     "Stay under maxLength characters, {link} not counted.",
     "Items:",
@@ -156,7 +162,10 @@ function prompt(items) {
   ].join("\n");
 }
 
-/** Gemini's messages by id, cleaned like report replies: one {link}, no other links, hashtags or em dashes, no unshown score. */
+/**
+ * Gemini's messages by id, cleaned like report replies: one {link}, no other links, hashtags or em dashes, no unshown
+ * score. A message too long for its network next to the link is dropped rather than cut mid-sentence.
+ */
 function parse(text, items) {
   let rows;
   try { rows = JSON.parse(String(text || "").replace(/^```(?:json)?|```$/gm, "").trim()); } catch (error) { return {}; }
@@ -171,7 +180,8 @@ function parse(text, items) {
     msg = msg.replace(/\{link\}/g, () => (once ? "" : (once = true, "{link}"))).replace(/\s+([,.])/g, "$1").replace(/\s{2,}/g, " ").trim();
     if (msg && !once) msg += " {link}";
     if (!R.shown(p.target) && (new RegExp("\\b" + p.target.score + "\\b").test(msg) || /\b\d{1,3}\s*\/\s*100\b/.test(msg))) msg = "";
-    if (msg.replace("{link}", "").trim().length >= 12) out[r.id] = msg;
+    const body = msg.replace("{link}", "").trim().length;
+    if (body >= 12 && body <= room(p.network)) out[r.id] = msg;
   });
   return out;
 }

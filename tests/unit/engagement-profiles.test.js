@@ -74,6 +74,17 @@ test("messages keep one link, drop other links and hashtags, and never name a sc
   assert.equal(out.c, undefined);
 });
 
+test("a message that would not fit next to an untouched link is dropped, not cut mid-sentence", () => {
+  const items = [{ key: "t", network: "tiktok", target: SITE }, { key: "s", network: "tiktok", target: SITE }];
+  const out = P.parse(JSON.stringify([
+    { id: "t", text: "@clinicadonay incluimos su web adonay.cl en nuestras revisiones públicas y los invitamos a verla con calma {link}" },
+    { id: "s", text: "@clinicadonay su web adonay.cl ya tiene su revisión pública {link}" }
+  ]), items);
+  assert.equal(out.t, undefined);
+  assert.ok(out.s);
+  assert.ok(R.fill(out.s, "https://qalabreview.com/es/r/tt/adonay.cl/bd56e3/hi-c2wq9hr7", "tiktok").includes("pública https://"));
+});
+
 test("a message is a waiting report reply with match profile: a card under their post, or a manual copy for the profile", () => {
   const offer = { code: "HI-ABCD2345", percent: 50, days: 7 };
   const profile = { network: "bluesky", handle: "upb.edu.co", url: "https://bsky.app/profile/upb.edu.co" };
@@ -97,4 +108,7 @@ test("the prompt asks for the touch's tone in the site's language and keeps the 
   assert.match(text, /Touch 2, curious[^\n]*No offer/);
   assert.match(text, /"handle":"@UPBoficial"/);
   assert.match(text, /"score":null/);
+  assert.match(text, /plural[^\n]*ustedes in Spanish/);
+  assert.doesNotMatch(text, /tú in Spanish/);
+  assert.match(text, /"maxLength":218/);
 });
