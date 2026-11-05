@@ -49,7 +49,7 @@ data class UiState(
     val running: Set<String> = emptySet(),
     val push: Map<String, Boolean> = emptyMap(),
     val ongoing: Boolean = true,
-    val ongoingParts: Set<Ongoing.Part> = Ongoing.Part.ALL,
+    val ongoingParts: Set<Ongoing.Part> = Ongoing.Part.DEFAULT,
     val heard: Heard = Heard(),
     val speaking: String? = null,
     val speak: Boolean = true,

@@ -523,7 +523,7 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 val allowed = NotificationManagerCompat.from(context).areNotificationsEnabled()
                 if (!allowed) Text("Notifications are off for Jarvis on this phone.", color = J.amber, fontSize = 13.sp)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) { Text("Live status"); Muted("Readiness as a ring in the status bar, what needs you and today's money. Updates silently on each refresh and comes back if swiped away; on Android 16 it is a Live Update with a status-bar chip. Turn it off here.") }
+                    Column(Modifier.weight(1f)) { Text("Live status"); Muted("A card with readiness as a ring, connections and goals as bars, what needs you and today's money; the ring is also the status-bar icon. Updates silently on each refresh and comes back if swiped away. Turn it off here.") }
                     Switch(s.ongoing, vm::setOngoing)
                 }
                 if (s.ongoing) {
