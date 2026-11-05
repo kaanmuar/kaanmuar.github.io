@@ -128,6 +128,9 @@ function mailboxProblem(m, o) {
   return "";
 }
 
+// Why Jarvis pauses a mailbox on its own, or keeps it paused. Pausing in Instantly stops warm-up too, so a low score alone would keep it paused for good.
+const pauseProblem = (m, o) => mailboxProblem(m, Object.assign({}, o, { warmupMin: 0 }));
+
 /* What a Pause outreach click pauses (#1977): the active mailboxes Jarvis has not paused that have a problem; when
    none has one (bounces), every active mailbox on the sending domain. [{ email, why }] */
 function pauseTargets(o) {
@@ -408,7 +411,7 @@ async function autoRun({ db, now, settings, ops }) {
       o.mailboxes = (o.mailboxes || []).map((m) => (healed.has(String(m.email).toLowerCase()) ? Object.assign({}, m, { warmup: "on" }) : m));
       const pauses = new Map((o.pauses || []).map((p) => [p.email, p]));
       for (const m of o.mailboxes || []) {
-        const why = mailboxProblem(m, o);
+        const why = pauseProblem(m, o);
         if (!why || m.status !== "active" || pauses.has(m.email)) continue;
         try {
           await ops.pauseMailbox(m.email);
@@ -424,7 +427,7 @@ async function autoRun({ db, now, settings, ops }) {
       for (const p of pauses.values()) {
         const m = (o.mailboxes || []).find((x) => x.email === p.email);
         if (!m || m.status === "active") { await ops.setPause(p.email, null); continue; }
-        const passes = mailboxProblem(m, o) ? 0 : (Number(p.passes) || 0) + 1;
+        const passes = pauseProblem(m, o) ? 0 : (Number(p.passes) || 0) + 1;
         // since: when the current healthy streak began, so a streak gets one countdown and a cancelled one stays cancelled.
         const row = Object.assign({}, p, { passes }, passes === 0 && p.passes ? { since: new Date(now).toISOString() } : {});
         if (passes !== p.passes) await ops.setPause(p.email, row);
@@ -592,4 +595,4 @@ function briefLines(rows, now) {
   return lines;
 }
 
-module.exports = { SAFE, CAPS, LABELS, GH_ACTIONS, GH_RISKY, GH_PICKS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, COUNTDOWN_HOURS, AI_CALLS, AI_CATALOG, RESUME_PASSES, JARVIS_BRANCH, RISKY_JOBS, RISKY_CI, risky, cleanSettings, cleanRerun, noticeHours, mailboxProblem, pauseTargets, aiPrompt, parsePicks, pickOk, usedToday, todayRows, log, seen, recent, autoRun, summary, pushMessage, briefLines };
+module.exports = { SAFE, CAPS, LABELS, GH_ACTIONS, GH_RISKY, GH_PICKS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, COUNTDOWN_HOURS, AI_CALLS, AI_CATALOG, RESUME_PASSES, JARVIS_BRANCH, RISKY_JOBS, RISKY_CI, risky, cleanSettings, cleanRerun, noticeHours, mailboxProblem, pauseProblem, pauseTargets, aiPrompt, parsePicks, pickOk, usedToday, todayRows, log, seen, recent, autoRun, summary, pushMessage, briefLines };
