@@ -8,6 +8,8 @@
                 weekly{prospects, liveReportPct, openPct, replyPct, positivePct}, targets[{key,label,target}] }
    The tracker CSV (week_start, new_prospects, emails_sent, linkedin_requests, positive_replies, calls, paid_reviews,
    partnerships, lectures_webinars, backlinks, clips_posted, ...) adds the weeks and each target's actual so far.
+   Jarvis no longer shows that actual: functions/jarvis-targets.js counts each target live from the plan start and
+   keeps what Carlos logs in jarvis_settings/outreach-targets, which this upload leaves alone (#2649).
    Uses the gcloud login, like scripts/sweep-outreach.js. */
 
 const fs = require("fs");

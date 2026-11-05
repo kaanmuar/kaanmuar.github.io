@@ -75,6 +75,9 @@ const EXTERNAL = {
   'share-draft': { ok: true, id: 'new1', kind: 'image', draft: { lang: 'en', kind: 'tip', title: 'Check SSL', alt: 'A card', linkedin: 'LinkedIn draft', x: 'X draft', facebook: 'Facebook draft', instagram: 'Instagram draft' }, note: '' },
   'share-queue': { ok: true, id: 'new1', note: 'Queued. The hub page goes live first.' },
   'social-post-now': { ok: true, started: ['Buffer', 'Facebook Page'], note: 'Started Buffer and Facebook Page.' },
+  targets: { ok: true, start: '2026-10-20', end: '2027-01-17', day: 6, length: 90, needs: [], targets: [{ key: 'unlocks', label: 'Paid unlocks', target: 30, actual: 3, status: 'on-pace', expected: 2, perWeek: 2.3, auto: true,
+    how: 'Paid, non-refunded purchases since the plan started.', lastAt: '2026-10-21T10:00:00Z', done: null, fix: null, next: [{ label: 'Copy one-pager link', copy: 'https://qalabreview.com/pdf' }],
+    items: [{ at: '2026-10-21T10:00:00Z', text: 'Report unlock · acme.io · 9 USD', url: '', id: '', source: 'auto', n: 1 }] }] },
   outreach: { ok: true, needs: ['Instantly: put the API key in Secret Manager as INSTANTLY_API_KEY.'],
     pipeline: { ok: true, queued: 40, swept: 12, left: 28, bySegment: [{ label: 'tvet', value: 10 }, { label: 'university', value: 10 }], reviews: 12, thisWeek: 12, results: [{ label: 'reviewed', value: 11 }], segments: [], avgScore: 64, withLiveReport: 6, reviewedWithLiveReport: 5, daily: [{ date: '2026-10-24', reviews: 12 }] },
     instantly: { ok: false, error: 'INSTANTLY_API_KEY is not set.' },
@@ -249,7 +252,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['rows', 'health', 'jobs', 'github', 'github-work', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'proposals', 'brief-marks', 'calls', 'device']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['rows', 'health', 'jobs', 'github', 'github-work', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'targets', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'proposals', 'brief-marks', 'calls', 'device']));
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
     expect(calls.every((c) => c.body.device?.kind === 'desktop' && c.body.device.app === 'web')).toBe(true);
 
@@ -277,6 +280,11 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(outreach).toContainText('First wave out');
     await expect(outreach).toContainText('Instantly trial ends');
     await expect(outreach).toContainText('Paid unlocks');
+    await expect(outreach.locator('.jv-targets')).toContainText('On pace');
+    await expect(outreach.locator('.jv-targets')).toContainText('3 / 30');
+    page.once('dialog', (dialog) => dialog.accept('Acme agency'));
+    await outreach.locator('[data-tg-act="log"][data-key="unlocks"]').click();
+    await expect.poll(() => (calls.find((c) => c.op === 'outreach-target') || {}).body).toMatchObject({ action: 'log', key: 'unlocks', note: 'Acme agency' });
     await expect(outreach).toContainText('INSTANTLY_API_KEY');
     await expect(outreach).toContainText('p=none');
     await expect(outreach.locator('.jv-briefing')).toContainText('Instantly trial ends in 6 days');

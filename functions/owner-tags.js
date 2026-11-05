@@ -155,6 +155,16 @@ function reportsOf(post, live) {
 }
 
 const youtubeId = (url) => (String(url || "").match(/(?:[?&]v=|shorts\/|youtu\.be\/)([\w-]{11})/) || [])[1] || "";
+// The id each network's carrier finds a post by: Bluesky its at:// URI, YouTube the video, the Mac's agent the X status
+// id and the Threads post code (scripts/engagement-browser/networks.js), the rest their URL.
+function postIdOf(network, entry) {
+  const url = String(entry.url || "");
+  if (network === "bluesky") return entry.id || "";
+  if (network === "youtube") return youtubeId(url);
+  if (network === "x") return (url.match(/\/status\/(\d+)/) || [])[1] || "";
+  if (network === "threads") return (url.match(/\/post\/([\w-]+)/) || [])[1] || "";
+  return url;
+}
 
 /** Our sent posts about reports, one per post and network, newest first: { key, network, id, url, at, reports }. */
 function ourPosts(feed, ledgers, live) {
@@ -168,7 +178,7 @@ function ourPosts(feed, ledgers, live) {
     for (const e of entries[post.id] || []) {
       const network = e.channel === "twitter" ? "x" : e.channel;
       if (e.result !== "sent" || !e.url || !E.NETWORKS[network] || seen.has(network)) continue;
-      const id = network === "bluesky" ? e.id : network === "youtube" ? youtubeId(e.url) : e.url;
+      const id = postIdOf(network, e);
       if (!id) continue;
       seen.add(network);
       out.push({ key: post.id, network, id, url: e.url, at: e.at || post.date || "", reports });

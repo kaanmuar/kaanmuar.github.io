@@ -805,6 +805,15 @@
                 else if (links.visits > 0) add('info', 'outreach', `${plural(links.visits, 'visit', 'visits')} and ${plural(links.reviews, 'free review', 'free reviews')} came from qalabreview.com links.`, 'outreach:links-visits');
             }
         }
+        // 90-day targets (#2649): behind pace becomes a proposal; missed and quiet hand-logged ones stay lines.
+        const tg = ext.targets;
+        if (tg && tg.ok) {
+            (tg.targets || []).forEach((t) => {
+                if (t.status === 'behind') add('warn', 'outreach', `90-day target behind: ${t.label}, ${t.actual} of ${t.target} (about ${t.expected} by now); ${t.perWeek} a week from here.`, 'targets:behind:' + t.key);
+                else if (t.status === 'missed' && tg.day - tg.length <= 14) add('info', 'outreach', `90-day target missed: ${t.label}, ${t.actual} of ${t.target}.`, 'targets:missed:' + t.key);
+                else if (t.status === 'on-pace' && t.stale) add('info', 'outreach', `90-day target ${t.label}: nothing logged in 14 days; log it when one happens.`, 'targets:stale:' + t.key);
+            });
+        }
         // Email addresses (#2338): a line only for what the outreach and mailbox sources do not already say.
         const ad = ext.addresses;
         if (ad && ad.ok) {
@@ -881,6 +890,7 @@
         { prefix: 'search:brave', impact: 2, title: 'Write for the searches where we are not in the top 100', tab: 'business' },
         { prefix: 'social:none', impact: 2, title: 'Schedule social posts', tab: 'hub' },
         { prefix: 'outreach:pace', impact: 2, title: 'Review more outreach prospects this week', tab: 'outreach' },
+        { prefix: 'targets:behind:', impact: 3, group: true, title: (n) => (n === 1 ? 'Catch up on a 90-day target' : `Catch up on ${n} 90-day targets`), tab: 'outreach' },
         { prefix: 'ga4:swing', impact: 2, levels: ['warn'], title: 'Find why GA4 sessions fell', tab: 'traffic' },
         { prefix: 'cv:swing', impact: 2, levels: ['warn'], title: 'Find why CV visits fell', tab: 'cv' },
         { prefix: 'studio:swing', impact: 2, levels: ['warn'], title: 'Find why QA Studio visits fell', tab: 'studio' },

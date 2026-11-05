@@ -129,6 +129,8 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
 
     Approvals(s, vm)
 
+    TargetsPanel(s, vm)
+
     val counts = Marketing.countdowns(mk, plan, LocalDate.now())
     if (counts.isNotEmpty()) Panel("Countdowns") {
         counts.take(5).forEach { c -> KeyRow("${c.label} · ${c.date}", Marketing.inDays(c.days), if (c.days <= 7) J.pink else if (c.days <= 14) J.amber else J.cyan) }
