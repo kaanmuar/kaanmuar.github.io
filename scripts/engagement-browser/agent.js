@@ -28,7 +28,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
-const VERSION = "1.4.0";
+const VERSION = "1.5.0";
 const PROJECT = "carlosm-interactive-cv";
 const ENDPOINT = "https://us-central1-" + PROJECT + ".cloudfunctions.net/jarvis";
 const LABEL = "com.kaanmuar.engagementbrowser";
@@ -185,17 +185,26 @@ function cardFile(task) {
 
 // A comment task (#2452) runs the network's likeComment or replyComment; where a comment is a post (X, Threads) the
 // post's own action and already-replied check serve. A comment's answered state came with it from the notifications.
-// An owner-tags comment (more, #2633) skips that check: it goes under our own post, beside our earlier comment.
+// An owner-tags comment (more, #2633) skips that check: it goes under our own post, beside our earlier comment. An
+// owner reply (latest, #2638) first finds the owner's newest post since task.since on their profile (task.url).
 async function act(page, task) {
   const net = NETWORKS[task.network];
   const fn = task.chain && net && net[task.action + "Comment"] ? task.action + "Comment" : task.action;
   if (!net || !net[fn]) return { ok: false, error: NETWORKS[task.network] ? net.name + " takes no " + task.action + " here." : "Unknown network." };
+  if (task.latest && !net.latest) return { ok: false, error: net.name + " cannot find an account's latest post here." };
   try {
-    if (fn === "reply" && net.replied && !task.more) {
-      const had = await net.replied(page, task);
-      if (had) return { ok: false, already: true, url: had.url || "" };
+    let t = task;
+    let target = null;
+    if (task.latest) {
+      target = await net.latest(page, task, Date.parse(task.since) || Date.now() - 30 * 86400000);
+      if (!target) return { ok: false, none: true, error: "No post of theirs since " + String(task.since || "").slice(0, 10) + " on their profile." };
+      t = Object.assign({}, task, target);
     }
-    return Object.assign({ ok: true }, await net[fn](page, task));
+    if (fn === "reply" && net.replied && !t.more) {
+      const had = await net.replied(page, t);
+      if (had) return { ok: false, already: true, url: had.url || "", target };
+    }
+    return Object.assign({ ok: true, target }, await net[fn](page, t));
   }
   catch (error) {
     const file = await shot(page, task.network + "-" + task.action);
@@ -309,8 +318,10 @@ async function run(opts) {
       if (card) fs.rmSync(card, { force: true });
       if (t.card || t.cardError) Object.assign(r, { card: r.card || "text", cardError: r.cardError || t.cardError || "" });
       if (r.retry) c.blocked[t.network] = new Date(Date.now() + HOLD_MS).toISOString();
-      await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, members: r.members || 0, error: r.error || "", card: r.card || "", cardError: r.cardError || "" }).catch((error) => log(error.message));
-      log(NETWORKS[t.network].name + " " + t.action + " " + t.url + ": " + (r.ok && t.action === "join" ? (r.already ? "already in it" : "joined") + (r.members ? " (" + r.members + " members)" : "") : r.ok ? "done" + (r.reaction ? " (" + r.reaction + ")" : "") + (r.card ? ", card " + r.card + (r.cardError ? " (" + r.cardError + ")" : "") : "") : r.already ? "we had already replied (" + r.url + "), not sent" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
+      await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, members: r.members || 0, error: r.error || "", card: r.card || "", cardError: r.cardError || "",
+        target: r.target || null, none: !!r.none, mentions: r.mentions || [] }).catch((error) => log(error.message));
+      const linked = (r.mentions || []).length ? ", mentions " + r.mentions.filter((m) => m.linked).length + " linked of " + r.mentions.length : "";
+      log(NETWORKS[t.network].name + " " + t.action + " " + ((r.target || {}).url || t.url) + ": " + (r.ok && t.action === "join" ? (r.already ? "already in it" : "joined") + (r.members ? " (" + r.members + " members)" : "") : r.ok ? "done" + (r.reaction ? " (" + r.reaction + ")" : "") + linked + (r.card ? ", card " + r.card + (r.cardError ? " (" + r.cardError + ")" : "") : "") : r.already ? "we had already replied (" + r.url + "), not sent" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
       await pause(25000, 70000);
     }
   } finally {
