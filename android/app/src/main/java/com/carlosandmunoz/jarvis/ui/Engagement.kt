@@ -49,6 +49,8 @@ import kotlinx.serialization.json.JsonPrimitive
 object Engagement {
     val LIMIT = mapOf("bluesky" to 300, "mastodon" to 500, "youtube" to 500, "x" to 280, "linkedin" to 1200, "facebook" to 1000, "instagram" to 1000, "threads" to 500, "tiktok" to 150, "telegram" to 1000, "reddit" to 1500)
     val ACTIONS = listOf("like", "repost", "follow", "reply")
+    /** The daily caps in Settings: the four actions, and joins on Telegram and Reddit (#2614). */
+    val CAPS = ACTIONS + "join"
 
     fun limit(network: String?) = LIMIT[network] ?: 300
 
@@ -68,7 +70,15 @@ object Engagement {
 
     /** Today's use against the cap per action on one network, as "like 3/60 · reply 1/15". */
     fun usage(g: JsonObject?, network: String): String =
-        ACTIONS.joinToString(" · ") { a -> "$a ${fmt(g.obj("used").obj(network).num(a) ?: 0.0)}/${fmt(g.obj("caps").num(a))}" }
+        ACTIONS.joinToString(" · ") { a -> "$a ${fmt(g.obj("used").obj(network).num(a) ?: 0.0)}/${fmt(g.obj("caps").num(a))}" } +
+            (g.obj("joins").obj("caps").num(network)?.let { " · join ${fmt(g.obj("used").obj(network).num("join") ?: 0.0)}/${fmt(it)}" } ?: "")
+
+    /** One join from the log (#2614): "would join (dry run) · subreddit · en · 90,000 members · Testing". */
+    fun joinLine(j: JsonObject): String = listOfNotNull(
+        when (j.str("status")) { "dry" -> "would join (dry run)"; "member" -> "already in it"; else -> j.str("status") },
+        j.str("kind")?.ifEmpty { null }, j.str("lang")?.ifEmpty { null }, "${fmt(j.num("members") ?: 0.0)} members",
+        j.str("topic")?.ifEmpty { null }, j.str("error")?.ifEmpty { null }
+    ).joinToString(" · ")
 
     fun metrics(post: JsonObject): String {
         val m = post.obj("metrics")
@@ -221,6 +231,20 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
             StatusRow(if (reads == "API") "good" else if (reads.startsWith("needs")) "alert" else "info", n.str("name").orEmpty(),
                 listOfNotNull(reads, n.num("lastRead")?.takeIf { it > 0 }?.let { "${fmt(it)} read last run" }, n.str("error")?.ifEmpty { null },
                     if (Engagement.LIMIT.containsKey(net)) Engagement.usage(g, net) else null, n.str("acts")).joinToString(" · "))
+        }
+    }
+
+    g.obj("joins")?.let { joins ->
+        Panel("Joins") {
+            joins.obj("caps")?.keys?.forEach { net ->
+                KeyRow(net.replaceFirstChar { it.uppercase() }, "${fmt(g.obj("used").obj(net).num("join") ?: 0.0)} of ${fmt(joins.obj("caps").num(net))} today · ${fmt(joins.obj("found").num(net) ?: 0.0)} found to join")
+            }
+            val log = joins.objs("log")
+            if (log.isEmpty()) Muted("No join yet. The Mac finds groups with its topic searches and joins the best ones once live.")
+            log.take(15).forEach { j ->
+                StatusRow(when (j.str("status")) { "joined" -> "good"; "failed" -> "alert"; else -> "info" }, j.str("name").orEmpty(), Engagement.joinLine(j), j.str("url"))
+            }
+            Muted("One join a day for the first two weeks after the first live join, two in the third, then the daily cap in Settings.")
         }
     }
 
@@ -416,14 +440,14 @@ private fun Accounts(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Strin
                 Text("Disconnect", color = J.muted, fontSize = 13.sp)
             }
         }
-        Muted("X, LinkedIn, Facebook, Instagram, Threads and TikTok act through the Mac's browser agent (#1991). Mastodon is marked as a bot when it connects. Reddit answers under our r/QALabLiveReports posts through the Reddit app, synced every hour (#2614).")
+        Muted("X, LinkedIn, Facebook, Instagram, Threads and TikTok act through the Mac's browser agent (#1991). Mastodon is marked as a bot when it connects. Reddit answers under our r/QALabLiveReports posts through the Reddit app, synced every hour (#2614). In the field, Telegram and Reddit act as your own accounts through the same agent.")
     }
 }
 
 @Composable
 private fun Settings(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (String, () -> Unit) -> Unit) {
     val c = g.obj("settings")
-    val caps = remember(c) { Engagement.ACTIONS.associateWith { a -> mutableStateOf(fmt(c.obj("caps").num(a))) } }
+    val caps = remember(c) { Engagement.CAPS.associateWith { a -> mutableStateOf(fmt(c.obj("caps").num(a) ?: 0.0)) } }
     var competitors by rememberSaveable(c.toString()) { mutableStateOf((c?.get("competitors") as? JsonArray)?.joinToString("\n") { (it as? JsonPrimitive)?.content.orEmpty() }.orEmpty()) }
     Panel("Settings") {
         Muted("Daily caps per network")
@@ -432,6 +456,9 @@ private fun Settings(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Strin
                 val v = caps.getValue(a)
                 OutlinedTextField(v.value, { v.value = it.filter(Char::isDigit).take(3) }, label = { Text(a, fontSize = 11.sp) }, singleLine = true, modifier = Modifier.weight(1f))
             }
+        }
+        caps.getValue("join").let { v ->
+            OutlinedTextField(v.value, { v.value = it.filter(Char::isDigit).take(2) }, label = { Text("Joins a day on Telegram and Reddit (warmed up)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
         }
         OutlinedTextField(competitors, { competitors = it }, label = { Text("Competitors, never answered under") }, minLines = 3, modifier = Modifier.fillMaxWidth())
         ActionButton("Save settings", "eg:settings" in s.running) {

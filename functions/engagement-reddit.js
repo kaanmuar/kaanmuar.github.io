@@ -75,7 +75,7 @@ async function results(deps, lines) {
     const snap = await ref.get();
     const doc = snap.exists ? snap.data() : null;
     const r = ((doc || {}).actions || {}).reply || {};
-    if (!doc || doc.network !== "reddit" || r.status !== "approved") continue;
+    if (!doc || E.carrier(doc) !== "devvit" || r.status !== "approved") continue;
     if (line.kind === "replied") {
       const fields = { "actions.reply.url": /^https:\/\/www\.reddit\.com\//.test(line.url || "") ? clip(line.url, 500) : "", "actions.reply.id": T1.test(line.id || "") ? line.id : "", "actions.reply.leasedAt": "", "actions.reply.by": "reddit-app", updatedAt: at };
       if (line.already) await ref.update(Object.assign(fields, { "actions.reply.status": "replied", "actions.reply.at": at, "actions.reply.error": "We had already replied there, so this one was not sent." }));
@@ -96,7 +96,7 @@ async function results(deps, lines) {
 async function queue(deps, conf) {
   if (conf.paused) return { items: [], upload: false };
   const snap = await deps.db.collection("engagement_posts").where("actions.reply.status", "==", "approved").limit(60).get();
-  const rows = snap.docs.map((d) => ({ key: d.id, doc: d.data() })).filter((t) => t.doc.network === "reddit" && T1.test(t.doc.id)).slice(0, MAX_QUEUE);
+  const rows = snap.docs.map((d) => ({ key: d.id, doc: d.data() })).filter((t) => E.carrier(t.doc) === "devvit" && T1.test(t.doc.id)).slice(0, MAX_QUEUE);
   return {
     items: rows.map((t) => ({ key: t.key, id: t.doc.id, text: t.doc.actions.reply.draft })),
     upload: rows.some((t) => !t.doc.actions.reply.uploadedAt || deps.now - Date.parse(t.doc.actions.reply.uploadedAt) > REUPLOAD)

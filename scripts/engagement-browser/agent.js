@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 "use strict";
 /*
- * The Mac's browser agent for engagement on X, LinkedIn, Facebook, Instagram, Threads and TikTok (#1991).
+ * The Mac's browser agent for engagement on X, LinkedIn, Facebook, Instagram, Threads and TikTok (#1991), and in the
+ * field on Telegram and Reddit as Carlos's accounts (#2614): topic searches in any language every other run, the
+ * channels, groups and subreddits Jarvis names, and groups found for joins, joined within a warmed-up daily cap.
  * Every 30 minutes from 7:00 to 22:00 (Bogotá) launchd starts a real Chrome, minimized, in the agent's own profile,
  * signed in once as our accounts. Each run reads one topic search and one reviewed-site search (#2467: a domain or
  * name from this slot's Live Reports, engagement-mac-sites) per network, sends the posts to Jarvis (which scores
@@ -26,7 +28,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
-const VERSION = "1.3.0";
+const VERSION = "1.4.0";
 const PROJECT = "carlosm-interactive-cv";
 const ENDPOINT = "https://us-central1-" + PROJECT + ".cloudfunctions.net/jarvis";
 const LABEL = "com.kaanmuar.engagementbrowser";
@@ -144,9 +146,14 @@ async function check(nets, read) {
       const { who, why } = await signedIn(page, k);
       let line = NETWORKS[k].name.padEnd(10) + (who ? "signed in as " + who : "NOT ready: " + why);
       if (who && read) {
-        const posts = await NETWORKS[k].read(page, NETWORKS[k].queries[0]).catch((error) => ({ error: error.message }));
-        line += posts.error ? "; read failed: " + posts.error : "; read " + posts.length + " posts for \"" + NETWORKS[k].queries[0] + "\"";
+        const sample = NETWORKS[k].sample || NETWORKS[k].queries[0];
+        const posts = await NETWORKS[k].read(page, sample).catch((error) => ({ error: error.message }));
+        line += posts.error ? "; read failed: " + posts.error : "; read " + posts.length + " posts for \"" + sample + "\"";
         if (posts.error || !posts.length) line += " (screenshot " + await shot(page, k) + ")";
+        if (NETWORKS[k].groups) {
+          const groups = await NETWORKS[k].groups(page, "test automation").catch((error) => ({ error: error.message }));
+          line += groups.error ? "; group search failed: " + groups.error : "; " + groups.length + " groups for \"test automation\"";
+        }
         if (NETWORKS[k].inbox) {
           const got = await NETWORKS[k].inbox(page).catch((error) => ({ error: error.message }));
           line += got.error ? "; notifications failed: " + got.error : "; " + got.length + " comments and replies to us (" + got.filter((x) => !x.liked).length + " not liked, " + got.filter((x) => x.on && x.ours).length + " of " + got.filter((x) => x.on).length + " on our posts quote what we said)";
@@ -159,7 +166,7 @@ async function check(nets, read) {
 
 /** Sessions signed in elsewhere on this Mac (Playwright cookies as JSON), only for the agent's networks. */
 async function importCookies(file) {
-  const hosts = /(^|\.)(x\.com|twitter\.com|linkedin\.com|facebook\.com|instagram\.com|threads\.com|threads\.net|tiktok\.com)$/;
+  const hosts = /(^|\.)(x\.com|twitter\.com|linkedin\.com|facebook\.com|instagram\.com|threads\.com|threads\.net|tiktok\.com|reddit\.com)$/;
   const list = JSON.parse(fs.readFileSync(file, "utf8")).filter((c) => hosts.test(String(c.domain || "").replace(/^\./, "")));
   const { ctx } = await launch(true);
   try { await ctx.addCookies(list); } finally { await ctx.close(); }
@@ -209,9 +216,18 @@ async function run(opts) {
   const now = Date.now();
   c.blocked = Object.fromEntries(Object.entries(c.blocked || {}).filter(([, until]) => Date.parse(until) > now));
   const slot = Math.floor(now / 1800000);
-  const sites = await api("engagement-mac-sites").then((r) => r.queries || [], (error) => { log(error.message); return []; });
+  const plan = await api("engagement-mac-sites").catch((error) => { log(error.message); return {}; });
+  if (plan.error) log("Reviewed sites: " + plan.error);
+  const sites = plan.queries || [];
+  const topics = plan.topics || [];
+  // Every other run a network searches its topics in another language (#2614); the rest in English.
+  const topic = (net, i) => (slot % 2 && topics.length ? topics[(Math.floor(slot / 2) + i * 7) % topics.length] : { q: net.queries[(slot + i * 3) % net.queries.length], lang: "en" });
+  const place = (k, i) => {
+    const pool = ((plan.groups || {})[k] || []).map((g) => g.q).concat(NETWORKS[k].places || []);
+    return pool.length ? pool[(slot + i) % pool.length] : "";
+  };
   const { ctx, page } = await launch(true);
-  const seen = { posts: [], reports: [], comments: [], errors: {}, signedIn: {}, accounts: {} };
+  const seen = { posts: [], reports: [], comments: [], groups: [], errors: {}, signedIn: {}, accounts: {} };
   try {
     const nets = pickNets(opts.only).sort(() => Math.random() - 0.5);
     for (const [i, k] of nets.entries()) {
@@ -221,18 +237,34 @@ async function run(opts) {
       seen.signedIn[k] = !!who;
       if (!who) { seen.errors[k] = why; continue; }
       seen.accounts[k] = who;
-      const q = net.queries[(slot + i * 3) % net.queries.length];
-      try {
-        const posts = await net.read(page, q);
-        seen.posts.push(...posts);
-        log(net.name + ": read " + posts.length + " for \"" + q + "\"");
-        if (!posts.length) seen.errors[k] = "Read nothing for \"" + q + "\"; the page may have changed (agent.js check --read).";
-      } catch (error) {
-        if (error instanceof Refused) c.blocked[k] = new Date(Date.now() + HOLD_MS).toISOString();
-        seen.errors[k] = String(error.message || error).slice(0, 180);
-        log(net.name + ": " + seen.errors[k] + " (" + await shot(page, k) + ")");
+      const t = topic(net, i);
+      const reads = [net.placesOnly ? "" : t.q, net.places ? place(k, i) : ""].filter(Boolean);
+      for (const q of reads) {
+        if (c.blocked[k]) break;
+        try {
+          const posts = await net.read(page, q);
+          seen.posts.push(...posts);
+          log(net.name + ": read " + posts.length + " for \"" + q + "\"");
+          if (!posts.length && q === reads[0]) seen.errors[k] = "Read nothing for \"" + q + "\"; the page may have changed (agent.js check --read).";
+        } catch (error) {
+          if (error instanceof Refused) c.blocked[k] = new Date(Date.now() + HOLD_MS).toISOString();
+          seen.errors[k] = String(error.message || error).slice(0, 180);
+          log(net.name + ": " + seen.errors[k] + " (" + await shot(page, k) + ")");
+        }
+        if (q !== reads[reads.length - 1]) await pause(3000, 9000);
       }
-      if (sites.length && !c.blocked[k]) {
+      if (net.groups && !c.blocked[k]) {
+        await pause(3000, 9000);
+        try {
+          const groups = await net.groups(page, t.q);
+          seen.groups.push(...groups.map((g) => Object.assign({}, g, { query: t.q, lang: g.lang || t.lang })));
+          log(net.name + ": " + groups.length + " groups for \"" + t.q + "\"");
+        } catch (error) {
+          if (error instanceof Refused) c.blocked[k] = new Date(Date.now() + HOLD_MS).toISOString();
+          log(net.name + " group search: " + String(error.message || error).slice(0, 180));
+        }
+      }
+      if (sites.length && !c.blocked[k] && !net.placesOnly) {
         const sq = sites[(slot + i) % sites.length];
         await pause(3000, 9000);
         try {
@@ -261,6 +293,7 @@ async function run(opts) {
     const took = await api("engagement-mac-ingest", Object.assign({}, seen, { blocked: c.blocked, agent: VERSION }));
     log("Jarvis took " + took.read + " posts: " + took.fresh + " new, " + took.engaged + " to engage, " + took.drafted + " replies drafted" + (took.aiError ? "; Gemini: " + took.aiError : "")
       + (took.chained ? "; " + took.chained + " new comments on our posts and replies" : "")
+      + (took.groups && took.groups.groups ? "; groups: " + took.groups.groups + " in our field, " + took.groups.found + " new" : "")
       + (took.reports && took.reports.read ? "; reviewed sites: " + took.reports.read + " read, " + took.reports.matched + " name one, " + took.reports.drafted + " invites drafted" : ""));
 
     const ready = Object.keys(seen.signedIn).filter((k) => seen.signedIn[k] && !c.blocked[k]);
@@ -275,8 +308,8 @@ async function run(opts) {
       if (card) fs.rmSync(card, { force: true });
       if (t.card || t.cardError) Object.assign(r, { card: r.card || "text", cardError: r.cardError || t.cardError || "" });
       if (r.retry) c.blocked[t.network] = new Date(Date.now() + HOLD_MS).toISOString();
-      await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, error: r.error || "", card: r.card || "", cardError: r.cardError || "" }).catch((error) => log(error.message));
-      log(NETWORKS[t.network].name + " " + t.action + " " + t.url + ": " + (r.ok ? "done" + (r.reaction ? " (" + r.reaction + ")" : "") + (r.card ? ", card " + r.card + (r.cardError ? " (" + r.cardError + ")" : "") : "") : r.already ? "we had already replied (" + r.url + "), not sent" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
+      await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, members: r.members || 0, error: r.error || "", card: r.card || "", cardError: r.cardError || "" }).catch((error) => log(error.message));
+      log(NETWORKS[t.network].name + " " + t.action + " " + t.url + ": " + (r.ok && t.action === "join" ? (r.already ? "already in it" : "joined") + (r.members ? " (" + r.members + " members)" : "") : r.ok ? "done" + (r.reaction ? " (" + r.reaction + ")" : "") + (r.card ? ", card " + r.card + (r.cardError ? " (" + r.cardError + ")" : "") : "") : r.already ? "we had already replied (" + r.url + "), not sent" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
       await pause(25000, 70000);
     }
   } finally {

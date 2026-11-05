@@ -1,12 +1,15 @@
 "use strict";
 /*
  * The Mac's browser agent (#1991): X, LinkedIn, Facebook, Instagram, Threads and TikTok have no API we can search
- * and answer through, so scripts/engagement-browser/agent.js drives a real Chrome on the Mac, signed in once in its
+ * and answer through, nor do Telegram and Reddit as Carlos's accounts in the field (#2614), so scripts/engagement-browser/agent.js drives a real Chrome on the Mac, signed in once in its
  * own profile, every 30 minutes. It talks to the jarvis function with these ops, signed with the token it paired:
  *
  *   engagement-mac-sites   {}                                            this slot's report-reply site queries (#2467):
  *                                                                        the Live Reports the cloud looks for on
- *                                                                        Bluesky, Mastodon and YouTube
+ *                                                                        Bluesky, Mastodon and YouTube; topics, the
+ *                                                                        topic searches in other languages, and
+ *                                                                        groups, the Telegram channels and groups and
+ *                                                                        subreddits to read (#2614)
  *   engagement-mac-ingest  { posts, reports, comments, errors, signedIn, accounts, agent }  posts it read; scored,
  *                                                                        read by Gemini and planned like the scout's
  *                                                                        own; reports: posts read for a site query,
@@ -14,9 +17,13 @@
  *                                                                        (functions/engagement-reports.js);
  *                                                                        comments: replies and mentions of us from a
  *                                                                        network's notifications (#2424), liked and
- *                                                                        answered like the API networks' (#2447)
+ *                                                                        answered like the API networks' (#2447);
+ *                                                                        groups: Telegram and Reddit groups a topic
+ *                                                                        search found, for joins
+ *                                                                        (functions/engagement-joins.js)
  *   engagement-mac-queue   { networks }                                  planned likes, reposts, follows and approved
- *                                                                        replies for the networks signed in; a
+ *                                                                        replies for the networks signed in, and
+ *                                                                        joins within the warmed-up cap; a
  *                                                                        LinkedIn like names its reaction; a report
  *                                                                        reply on X brings its card (#2466) as
  *                                                                        { png: base64, type, alt }
@@ -37,6 +44,7 @@ const E = require("./engagement");
 const J = require("./jarvis-engagement");
 const R = require("./engagement-reports");
 const Act = require("./engagement-act");
+const Joins = require("./engagement-joins");
 
 const BROWSER = Object.keys(E.NETWORKS).filter((k) => E.NETWORKS[k].browser);
 const CARRIED = ["like", "repost", "follow"];
@@ -74,7 +82,7 @@ function cleanPost(p) {
     author: { handle: clip(a.handle, 120).replace(/^@/, ""), name: clip(a.name, 120), id: clip(a.id, 200), followers: num(a.followers) },
     title: clip(p.title, 300), text: String(p.text || "").slice(0, 1200), lang: clip(p.lang, 8), createdAt: Number.isFinite(at) ? new Date(at).toISOString() : "",
     isReply: p.isReply === true, metrics: { likes: num(m.likes), replies: num(m.replies), reposts: num(m.reposts), views: num(m.views) },
-    tags: (Array.isArray(p.tags) ? p.tags : []).map((t) => clip(t, 40)).filter(Boolean).slice(0, 10)
+    tags: (Array.isArray(p.tags) ? p.tags : []).map((t) => clip(t, 40)).filter(Boolean).slice(0, 10), via: "mac"
   };
 }
 
@@ -83,9 +91,9 @@ const netMap = (obj, fn) => Object.fromEntries(BROWSER.filter((k) => obj && obj[
 /** This slot's site queries, the same sites the cloud's report pass looks for. */
 async function sites(deps) {
   const conf = await J.readSettings(deps.db);
-  if (conf.paused) return { ok: true, paused: true, queries: [] };
-  const look = await J.reportSites(deps);
-  return { ok: true, paused: false, queries: look.sites.flatMap(R.queries) };
+  if (conf.paused) return { ok: true, paused: true, queries: [], topics: [], groups: {} };
+  const [look, groups] = await Promise.all([J.reportSites(deps).catch((error) => ({ sites: [], error: String(error.message || error).slice(0, 200) })), Joins.pool(deps.db)]);
+  return Object.assign({ ok: true, paused: false, queries: look.sites.flatMap(R.queries), topics: E.DISCOVERY, groups }, look.error ? { error: look.error } : {});
 }
 
 /** Posts the Mac read: the same scoring, Gemini read and plan as the scout's, site posts through the report pass, and the agent's heartbeat. */
@@ -112,15 +120,16 @@ async function ingest(deps, body) {
   }).filter(Boolean);
   const found = comments.map((c) => ({ parent: { key: "", own: true, network: c.network, id: c.on, thread: c.on || c.id, text: "", score: 0, actions: { reply: { draft: c.ours } } }, comments: [c] }));
   const chains = found.length ? await J.takeChains(deps, conf, found).catch((error) => ({ chained: 0, aiError: String(error.message || error).slice(0, 200) })) : { chained: 0, aiError: "" };
+  const groups = await Joins.found(deps, conf, b.groups).catch((error) => ({ found: 0, groups: 0, error: String(error.message || error).slice(0, 200) }));
   await macRef(db).set({
     at: new Date(now).toISOString(), read, errors, signedIn: netMap(b.signedIn, (v) => v === true), accounts: netMap(b.accounts, (v) => clip(v, 120)),
     blocked: netMap(b.blocked, (v) => clip(v, 30)), agent: clip(b.agent, 40), fresh: r.fresh, engaged: r.engaged, drafted: r.drafted,
-    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }
+    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups
   }, { merge: true });
   await J.clearCache(db);
   return {
     ok: true, read: posts.length, fresh: r.fresh, engaged: r.engaged, drafted: r.drafted, aiError: r.aiError || rep.aiError || chains.aiError || "", chained: chains.chained || 0,
-    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }
+    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups
   };
 }
 
@@ -152,7 +161,7 @@ async function queue(deps, body) {
   const conf = await J.readSettings(db);
   if (conf.paused) return { ok: true, paused: true, live: conf.live, tasks: [] };
   const want = (Array.isArray((body || {}).networks) ? body.networks : BROWSER).filter((k) => BROWSER.includes(k));
-  const rows = (snap) => snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() })).filter((t) => BROWSER.includes(t.doc.network));
+  const rows = (snap) => snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() })).filter((t) => E.carrier(t.doc) === "mac");
   const planned = (await Promise.all(CARRIED.map((a) => db.collection("engagement_posts").where("actions." + a + ".status", "==", "planned").limit(300).get()
     .then((s) => rows(s).map((t) => Object.assign(t, { action: a })))))).flat().sort((a, b) => (b.doc.score || 0) - (a.doc.score || 0));
   const replies = rows(await db.collection("engagement_posts").where("actions.reply.status", "==", "approved").limit(50).get()).map((t) => Object.assign(t, { action: "reply" }));
@@ -170,7 +179,7 @@ async function queue(deps, body) {
       key: t.key, network: t.doc.network, action: t.action, id: t.doc.id, url: t.doc.url, author: { handle: (t.doc.author || {}).handle || "", id: (t.doc.author || {}).id || "" },
       draft: t.action === "reply" ? r.draft || "" : "", lang: t.action === "reply" ? r.lang || t.doc.lang || "" : "",
       reaction: t.action === "like" && t.doc.network === "linkedin" && !t.doc.chain ? reaction(t.doc) : "",
-      chain: !!t.doc.chain, text: t.doc.chain ? clip(t.doc.text, 300) : ""
+      chain: !!t.doc.chain, text: t.doc.chain ? clip(t.doc.text, 300) : "", title: t.action === "repost" ? clip(t.doc.title, 300) : ""
     }, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {}));
   };
   for (const t of replies) await take(t);
@@ -187,6 +196,9 @@ async function queue(deps, body) {
       dry += 1;
     } else await take(t);
   }
+  const joins = await Joins.queue(deps, conf, want);
+  tasks.push(...joins.tasks);
+  dry += joins.dry;
   if (dry || missed) await J.clearCache(db);
   return { ok: true, paused: false, live: conf.live, tasks, dry, missed };
 }
@@ -197,11 +209,17 @@ async function result(deps, body) {
   const b = body || {};
   const key = String(b.key || "");
   const action = String(b.action || "");
-  if (!/^[a-z]+_[a-f0-9]{20}$/.test(key) || !CARRIED.concat("reply").includes(action)) throw new MacError("That is not a task the Mac was given.");
+  if (!/^[a-z]+_[a-f0-9]{20}$/.test(key) || !CARRIED.concat("reply", "join").includes(action)) throw new MacError("That is not a task the Mac was given.");
+  if (action === "join") {
+    const out = await Joins.result(deps, Object.assign({}, b, { key }));
+    if (!out) throw new MacError("That group is gone.", 404);
+    await J.clearCache(db);
+    return out;
+  }
   const ref = db.collection("engagement_posts").doc(key);
   const snap = await ref.get();
   const doc = snap.exists ? snap.data() : null;
-  if (!doc || !BROWSER.includes(doc.network)) throw new MacError("That post is gone.", 404);
+  if (!doc || E.carrier(doc) !== "mac") throw new MacError("That post is gone.", 404);
   const cur = (doc.actions || {})[action] || {};
   const k = "actions." + action + ".";
   const at = new Date(now).toISOString();

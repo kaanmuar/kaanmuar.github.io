@@ -620,7 +620,7 @@ async function carryOut(deps, conf) {
   const sleep = deps.sleep || ((ms) => new Promise((r) => setTimeout(r, ms)));
   const out = Object.fromEntries(API.map((k) => [k, { done: 0, dry: 0, missed: 0, failed: 0, posted: 0, already: 0, error: "" }]));
   if (conf.paused) return out;
-  const docs = (snap) => snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() })).filter((t) => API.includes(t.doc.network));
+  const docs = (snap) => snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() })).filter((t) => E.carrier(t.doc) === "api");
   const planned = (await Promise.all(CARRIED.map((a) => db.collection("engagement_posts").where("actions." + a + ".status", "==", "planned").limit(300).get().then((s) => docs(s).map((t) => Object.assign(t, { action: a }))))))
     .flat().sort((a, b) => (b.doc.score || 0) - (a.doc.score || 0));
   const replies = docs(await db.collection("engagement_posts").where("actions.reply.status", "==", "approved").limit(50).get());
@@ -667,7 +667,7 @@ async function replyNow(deps, key) {
   const ref = deps.db.collection("engagement_posts").doc(key);
   const snap = await ref.get();
   const doc = snap.exists ? snap.data() : null;
-  if (!doc || !E.NETWORKS[doc.network] || !E.NETWORKS[doc.network].api) return { status: "approved" };
+  if (!doc || E.carrier(doc) !== "api") return { status: "approved" };
   if (((doc.actions || {}).reply || {}).status !== "approved") return { status: ((doc.actions || {}).reply || {}).status || "" };
   const cred = (await readCreds(deps.db))[doc.network];
   if (!cred) return { status: "approved", error: E.NETWORKS[doc.network].name + " is not connected" };

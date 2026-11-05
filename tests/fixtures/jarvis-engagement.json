@@ -1,913 +1,1000 @@
 {
- "ok": true,
- "settings": {
+  "ok": true,
+  "settings": {
+    "paused": false,
+    "live": false,
+    "liveAt": "",
+    "caps": {
+      "like": 60,
+      "repost": 15,
+      "follow": 15,
+      "reply": 15,
+      "join": 2
+    },
+    "thresholds": {
+      "like": 1.5,
+      "repost": 3,
+      "follow": 3.5,
+      "reply": 2
+    },
+    "worth": 0.6,
+    "maxAgeHours": 48,
+    "perRun": 12,
+    "competitors": [
+      "semrush",
+      "ahrefs",
+      "moz",
+      "screamingfrog",
+      "screaming frog",
+      "sitebulb",
+      "seranking",
+      "se ranking",
+      "browserstack",
+      "lambdatest",
+      "saucelabs",
+      "sauce labs",
+      "accessibe",
+      "userway",
+      "siteimprove",
+      "audioeye",
+      "gtmetrix",
+      "pingdom",
+      "debugbear",
+      "contentsquare",
+      "hotjar",
+      "conductor",
+      "brightedge"
+    ],
+    "own": [
+      "carlosandmunoz",
+      "qalabreview",
+      "kaanmuar"
+    ],
+    "updatedAt": "",
+    "by": ""
+  },
   "paused": false,
   "live": false,
-  "liveAt": "",
-  "caps": {
-   "like": 60,
-   "repost": 15,
-   "follow": 15,
-   "reply": 15
-  },
-  "thresholds": {
-   "like": 1.5,
-   "repost": 3,
-   "follow": 3.5,
-   "reply": 2
-  },
-  "worth": 0.6,
-  "maxAgeHours": 48,
-  "perRun": 12,
-  "competitors": [
-   "semrush",
-   "ahrefs",
-   "moz",
-   "screamingfrog",
-   "screaming frog",
-   "sitebulb",
-   "seranking",
-   "se ranking",
-   "browserstack",
-   "lambdatest",
-   "saucelabs",
-   "sauce labs",
-   "accessibe",
-   "userway",
-   "siteimprove",
-   "audioeye",
-   "gtmetrix",
-   "pingdom",
-   "debugbear",
-   "contentsquare",
-   "hotjar",
-   "conductor",
-   "brightedge"
-  ],
-  "own": [
-   "carlosandmunoz",
-   "qalabreview",
-   "kaanmuar"
-  ],
-  "updatedAt": "",
-  "by": ""
- },
- "paused": false,
- "live": false,
- "stale": false,
- "lastRun": {
-  "at": "2026-11-02T00:30:00.000Z",
-  "ms": 74,
-  "paused": false,
-  "live": false,
-  "read": {
-   "mastodon": 13
-  },
-  "errors": {
-   "devto": "dev.to/api/articles answered 503",
-   "lobsters": "lobste.rs/hottest.json answered 503",
-   "hn": "hn.algolia.com/api/v1/search answered 503"
-  },
-  "skipped": [
-   "bluesky",
-   "youtube"
-  ],
-  "candidates": 3,
-  "fresh": 3,
-  "updated": 0,
-  "risen": 0,
-  "asked": 2,
-  "aiError": "",
-  "engaged": 2,
-  "drafted": 2,
-  "pushed": 2,
-  "expired": 0,
-  "done": 0,
-  "dry": 6,
-  "missed": 0,
-  "posted": 0,
-  "actFailed": 0,
-  "acted": {
-   "bluesky": {
-    "done": 0,
-    "dry": 0,
-    "missed": 0,
-    "failed": 0,
-    "posted": 0,
-    "error": ""
-   },
-   "mastodon": {
+  "stale": false,
+  "lastRun": {
+    "at": "2026-11-02T00:30:00.000Z",
+    "ms": 74,
+    "paused": false,
+    "live": false,
+    "read": {
+      "mastodon": 13
+    },
+    "errors": {
+      "devto": "dev.to/api/articles answered 503",
+      "lobsters": "lobste.rs/hottest.json answered 503",
+      "hn": "hn.algolia.com/api/v1/search answered 503"
+    },
+    "skipped": [
+      "bluesky",
+      "youtube"
+    ],
+    "candidates": 3,
+    "fresh": 3,
+    "updated": 0,
+    "risen": 0,
+    "asked": 2,
+    "aiError": "",
+    "engaged": 2,
+    "drafted": 2,
+    "pushed": 2,
+    "expired": 0,
     "done": 0,
     "dry": 6,
     "missed": 0,
-    "failed": 0,
     "posted": 0,
-    "error": ""
-   },
-   "youtube": {
-    "done": 0,
-    "dry": 0,
-    "missed": 0,
-    "failed": 0,
-    "posted": 0,
-    "error": ""
-   }
+    "actFailed": 0,
+    "acted": {
+      "bluesky": {
+        "done": 0,
+        "dry": 0,
+        "missed": 0,
+        "failed": 0,
+        "posted": 0,
+        "error": ""
+      },
+      "mastodon": {
+        "done": 0,
+        "dry": 6,
+        "missed": 0,
+        "failed": 0,
+        "posted": 0,
+        "error": ""
+      },
+      "youtube": {
+        "done": 0,
+        "dry": 0,
+        "missed": 0,
+        "failed": 0,
+        "posted": 0,
+        "error": ""
+      }
+    },
+    "actError": ""
   },
-  "actError": ""
- },
- "runs": [
-  {
-   "at": "2026-11-02T00:30:00.000Z",
-   "ms": 74,
-   "paused": false,
-   "live": false,
-   "read": {
-    "mastodon": 13
-   },
-   "errors": {
-    "devto": "dev.to/api/articles answered 503",
-    "lobsters": "lobste.rs/hottest.json answered 503",
-    "hn": "hn.algolia.com/api/v1/search answered 503"
-   },
-   "skipped": [
-    "bluesky",
-    "youtube"
-   ],
-   "candidates": 3,
-   "fresh": 3,
-   "updated": 0,
-   "risen": 0,
-   "asked": 2,
-   "aiError": "",
-   "engaged": 2,
-   "drafted": 2,
-   "pushed": 2,
-   "expired": 0,
-   "done": 0,
-   "dry": 6,
-   "missed": 0,
-   "posted": 0,
-   "actFailed": 0,
-   "acted": {
-    "bluesky": {
-     "done": 0,
-     "dry": 0,
-     "missed": 0,
-     "failed": 0,
-     "posted": 0,
-     "error": ""
-    },
-    "mastodon": {
-     "done": 0,
-     "dry": 6,
-     "missed": 0,
-     "failed": 0,
-     "posted": 0,
-     "error": ""
-    },
-    "youtube": {
-     "done": 0,
-     "dry": 0,
-     "missed": 0,
-     "failed": 0,
-     "posted": 0,
-     "error": ""
+  "runs": [
+    {
+      "at": "2026-11-02T00:30:00.000Z",
+      "ms": 74,
+      "paused": false,
+      "live": false,
+      "read": {
+        "mastodon": 13
+      },
+      "errors": {
+        "devto": "dev.to/api/articles answered 503",
+        "lobsters": "lobste.rs/hottest.json answered 503",
+        "hn": "hn.algolia.com/api/v1/search answered 503"
+      },
+      "skipped": [
+        "bluesky",
+        "youtube"
+      ],
+      "candidates": 3,
+      "fresh": 3,
+      "updated": 0,
+      "risen": 0,
+      "asked": 2,
+      "aiError": "",
+      "engaged": 2,
+      "drafted": 2,
+      "pushed": 2,
+      "expired": 0,
+      "done": 0,
+      "dry": 6,
+      "missed": 0,
+      "posted": 0,
+      "actFailed": 0,
+      "acted": {
+        "bluesky": {
+          "done": 0,
+          "dry": 0,
+          "missed": 0,
+          "failed": 0,
+          "posted": 0,
+          "error": ""
+        },
+        "mastodon": {
+          "done": 0,
+          "dry": 6,
+          "missed": 0,
+          "failed": 0,
+          "posted": 0,
+          "error": ""
+        },
+        "youtube": {
+          "done": 0,
+          "dry": 0,
+          "missed": 0,
+          "failed": 0,
+          "posted": 0,
+          "error": ""
+        }
+      },
+      "actError": ""
     }
-   },
-   "actError": ""
-  }
- ],
- "accounts": [
-  {
-   "network": "bluesky",
-   "name": "Bluesky",
-   "connected": false,
-   "account": "",
-   "bot": false,
-   "connectedAt": "",
-   "error": "",
-   "errorAt": "",
-   "help": "Bluesky: paste an app password in Engagement > Accounts (bsky.app > Settings > Privacy and security > App passwords)."
-  },
-  {
-   "network": "mastodon",
-   "name": "Mastodon",
-   "connected": true,
-   "account": "qalaburlreview",
-   "bot": true,
-   "connectedAt": "2026-11-01T23:00:00.000Z",
-   "error": "",
-   "errorAt": "",
-   "help": ""
-  },
-  {
-   "network": "youtube",
-   "name": "YouTube",
-   "connected": true,
-   "account": "QA-lab URL Review",
-   "bot": false,
-   "connectedAt": "2026-11-01T23:00:00.000Z",
-   "error": "",
-   "errorAt": "",
-   "help": ""
-  }
- ],
- "waiting": [
-  {
-   "key": "mastodon_04b46666bbd39bb08676",
-   "network": "mastodon",
-   "url": "https://m.s/@a/1",
-   "author": {
-    "handle": "ana1@m.s",
-    "name": "Ana 1",
-    "id": "",
-    "followers": 0
-   },
-   "title": "",
-   "text": "Playwright and WCAG accessibility testing in CI",
-   "lang": "en",
-   "topic": "Accessibility",
-   "words": [
-    "playwright",
-    "accessibility",
-    "wcag"
-   ],
-   "score": 45.18,
-   "trend": 10.46,
-   "metrics": {
-    "likes": 200,
-    "replies": 5,
-    "reposts": 200,
-    "views": 0
-   },
-   "about": "a11y in CI",
-   "why": "",
-   "sentiment": "positive",
-   "worth": 0.9,
-   "verdict": "engage",
-   "skip": "",
-   "actions": {
-    "like": {
-     "status": "dry",
-     "at": "2026-11-02T00:30:00.000Z"
+  ],
+  "accounts": [
+    {
+      "network": "bluesky",
+      "name": "Bluesky",
+      "connected": false,
+      "account": "",
+      "bot": false,
+      "connectedAt": "",
+      "error": "",
+      "errorAt": "",
+      "help": "Bluesky: paste an app password in Engagement > Accounts (bsky.app > Settings > Privacy and security > App passwords)."
     },
-    "repost": {
-     "status": "dry",
-     "at": "2026-11-02T00:30:00.000Z"
+    {
+      "network": "mastodon",
+      "name": "Mastodon",
+      "connected": true,
+      "account": "qalaburlreview",
+      "bot": true,
+      "connectedAt": "2026-11-01T23:00:00.000Z",
+      "error": "",
+      "errorAt": "",
+      "help": ""
     },
-    "follow": {
-     "status": "dry",
-     "at": "2026-11-02T00:30:00.000Z"
-    },
-    "reply": {
-     "status": "waiting",
-     "draft": "We run axe in the same Playwright job.",
-     "lang": "en",
-     "expiresAt": "2026-11-02T06:30:00.000Z"
+    {
+      "network": "youtube",
+      "name": "YouTube",
+      "connected": true,
+      "account": "QA-lab URL Review",
+      "bot": false,
+      "connectedAt": "2026-11-01T23:00:00.000Z",
+      "error": "",
+      "errorAt": "",
+      "help": ""
     }
-   },
-   "seenAt": "2026-11-02T00:30:00.000Z",
-   "createdAt": "2026-11-02T00:00:00.000Z"
-  }
- ],
- "approved": [
-  {
-   "key": "mastodon_35e12fcc1abf6586e0f7",
-   "network": "mastodon",
-   "url": "https://m.s/@a/4",
-   "author": {
-    "handle": "ana4@m.s",
-    "name": "Ana 4",
-    "id": "",
-    "followers": 0
-   },
-   "title": "",
-   "text": "Lighthouse and Core Web Vitals budgets in CI",
-   "lang": "en",
-   "topic": "Performance",
-   "words": [
-    "core web vitals",
-    "lighthouse"
-   ],
-   "score": 32.67,
-   "trend": 10.05,
-   "metrics": {
-    "likes": 150,
-    "replies": 5,
-    "reposts": 150,
-    "views": 0
-   },
-   "about": "performance budgets in CI",
-   "why": "",
-   "sentiment": "positive",
-   "worth": 0.9,
-   "verdict": "engage",
-   "skip": "",
-   "actions": {
-    "like": {
-     "status": "dry",
-     "at": "2026-11-02T00:30:00.000Z"
-    },
-    "repost": {
-     "status": "dry",
-     "at": "2026-11-02T00:30:00.000Z"
-    },
-    "follow": {
-     "status": "dry",
-     "at": "2026-11-02T00:30:00.000Z"
-    },
-    "reply": {
-     "status": "posted",
-     "draft": "We fail the build on LCP over 2.5 s in the lab run.",
-     "lang": "en",
-     "expiresAt": "2026-11-02T06:30:00.000Z",
-     "edited": false,
-     "original": "",
-     "decidedAt": "2026-11-02T00:50:00.000Z",
-     "by": "fixture",
-     "postedAt": "2026-11-02T00:50:00.000Z",
-     "url": "https://mastodon.social/@qalaburlreview/115000000000000001",
-     "uri": "https://mastodon.social/users/qalaburlreview/statuses/115000000000000001",
-     "tries": 1,
-     "error": ""
+  ],
+  "waiting": [
+    {
+      "key": "mastodon_04b46666bbd39bb08676",
+      "network": "mastodon",
+      "url": "https://m.s/@a/1",
+      "author": {
+        "handle": "ana1@m.s",
+        "name": "Ana 1",
+        "id": "",
+        "followers": 0
+      },
+      "title": "",
+      "text": "Playwright and WCAG accessibility testing in CI",
+      "lang": "en",
+      "topic": "Accessibility",
+      "words": [
+        "playwright",
+        "accessibility",
+        "wcag"
+      ],
+      "score": 45.18,
+      "trend": 10.46,
+      "metrics": {
+        "likes": 200,
+        "replies": 5,
+        "reposts": 200,
+        "views": 0
+      },
+      "about": "a11y in CI",
+      "why": "",
+      "sentiment": "positive",
+      "worth": 0.9,
+      "verdict": "engage",
+      "skip": "",
+      "actions": {
+        "like": {
+          "status": "dry",
+          "at": "2026-11-02T00:30:00.000Z"
+        },
+        "repost": {
+          "status": "dry",
+          "at": "2026-11-02T00:30:00.000Z"
+        },
+        "follow": {
+          "status": "dry",
+          "at": "2026-11-02T00:30:00.000Z"
+        },
+        "reply": {
+          "status": "waiting",
+          "draft": "We run axe in the same Playwright job.",
+          "lang": "en",
+          "expiresAt": "2026-11-02T06:30:00.000Z"
+        }
+      },
+      "seenAt": "2026-11-02T00:30:00.000Z",
+      "createdAt": "2026-11-02T00:00:00.000Z"
     }
-   },
-   "seenAt": "2026-11-02T00:30:00.000Z",
-   "createdAt": "2026-11-02T00:00:00.000Z"
-  }
- ],
- "posts": [
-  {
-   "key": "mastodon_04b46666bbd39bb08676",
-   "network": "mastodon",
-   "url": "https://m.s/@a/1",
-   "author": {
-    "handle": "ana1@m.s",
-    "name": "Ana 1",
-    "id": "",
-    "followers": 0
-   },
-   "title": "",
-   "text": "Playwright and WCAG accessibility testing in CI",
-   "lang": "en",
-   "topic": "Accessibility",
-   "words": [
-    "playwright",
-    "accessibility",
-    "wcag"
-   ],
-   "score": 45.18,
-   "trend": 10.46,
-   "metrics": {
-    "likes": 200,
-    "replies": 5,
-    "reposts": 200,
-    "views": 0
-   },
-   "about": "a11y in CI",
-   "why": "",
-   "sentiment": "positive",
-   "worth": 0.9,
-   "verdict": "engage",
-   "skip": "",
-   "actions": {
-    "like": {
-     "status": "dry",
-     "at": "2026-11-02T00:30:00.000Z"
-    },
-    "repost": {
-     "status": "dry",
-     "at": "2026-11-02T00:30:00.000Z"
-    },
-    "follow": {
-     "status": "dry",
-     "at": "2026-11-02T00:30:00.000Z"
-    },
-    "reply": {
-     "status": "waiting",
-     "draft": "We run axe in the same Playwright job.",
-     "lang": "en",
-     "expiresAt": "2026-11-02T06:30:00.000Z"
+  ],
+  "approved": [
+    {
+      "key": "mastodon_35e12fcc1abf6586e0f7",
+      "network": "mastodon",
+      "url": "https://m.s/@a/4",
+      "author": {
+        "handle": "ana4@m.s",
+        "name": "Ana 4",
+        "id": "",
+        "followers": 0
+      },
+      "title": "",
+      "text": "Lighthouse and Core Web Vitals budgets in CI",
+      "lang": "en",
+      "topic": "Performance",
+      "words": [
+        "core web vitals",
+        "lighthouse"
+      ],
+      "score": 32.67,
+      "trend": 10.05,
+      "metrics": {
+        "likes": 150,
+        "replies": 5,
+        "reposts": 150,
+        "views": 0
+      },
+      "about": "performance budgets in CI",
+      "why": "",
+      "sentiment": "positive",
+      "worth": 0.9,
+      "verdict": "engage",
+      "skip": "",
+      "actions": {
+        "like": {
+          "status": "dry",
+          "at": "2026-11-02T00:30:00.000Z"
+        },
+        "repost": {
+          "status": "dry",
+          "at": "2026-11-02T00:30:00.000Z"
+        },
+        "follow": {
+          "status": "dry",
+          "at": "2026-11-02T00:30:00.000Z"
+        },
+        "reply": {
+          "status": "posted",
+          "draft": "We fail the build on LCP over 2.5 s in the lab run.",
+          "lang": "en",
+          "expiresAt": "2026-11-02T06:30:00.000Z",
+          "edited": false,
+          "original": "",
+          "decidedAt": "2026-11-02T00:50:00.000Z",
+          "by": "fixture",
+          "postedAt": "2026-11-02T00:50:00.000Z",
+          "url": "https://mastodon.social/@qalaburlreview/115000000000000001",
+          "uri": "https://mastodon.social/users/qalaburlreview/statuses/115000000000000001",
+          "tries": 1,
+          "error": ""
+        }
+      },
+      "seenAt": "2026-11-02T00:30:00.000Z",
+      "createdAt": "2026-11-02T00:00:00.000Z"
     }
-   },
-   "seenAt": "2026-11-02T00:30:00.000Z",
-   "createdAt": "2026-11-02T00:00:00.000Z"
-  },
-  {
-   "key": "mastodon_35e12fcc1abf6586e0f7",
-   "network": "mastodon",
-   "url": "https://m.s/@a/4",
-   "author": {
-    "handle": "ana4@m.s",
-    "name": "Ana 4",
-    "id": "",
-    "followers": 0
-   },
-   "title": "",
-   "text": "Lighthouse and Core Web Vitals budgets in CI",
-   "lang": "en",
-   "topic": "Performance",
-   "words": [
-    "core web vitals",
-    "lighthouse"
-   ],
-   "score": 32.67,
-   "trend": 10.05,
-   "metrics": {
-    "likes": 150,
-    "replies": 5,
-    "reposts": 150,
-    "views": 0
-   },
-   "about": "performance budgets in CI",
-   "why": "",
-   "sentiment": "positive",
-   "worth": 0.9,
-   "verdict": "engage",
-   "skip": "",
-   "actions": {
-    "like": {
-     "status": "dry",
-     "at": "2026-11-02T00:30:00.000Z"
-    },
-    "repost": {
-     "status": "dry",
-     "at": "2026-11-02T00:30:00.000Z"
-    },
-    "follow": {
-     "status": "dry",
-     "at": "2026-11-02T00:30:00.000Z"
-    },
-    "reply": {
-     "status": "posted",
-     "draft": "We fail the build on LCP over 2.5 s in the lab run.",
-     "lang": "en",
-     "expiresAt": "2026-11-02T06:30:00.000Z",
-     "edited": false,
-     "original": "",
-     "decidedAt": "2026-11-02T00:50:00.000Z",
-     "by": "fixture",
-     "postedAt": "2026-11-02T00:50:00.000Z",
-     "url": "https://mastodon.social/@qalaburlreview/115000000000000001",
-     "uri": "https://mastodon.social/users/qalaburlreview/statuses/115000000000000001",
-     "tries": 1,
-     "error": ""
-    }
-   },
-   "seenAt": "2026-11-02T00:30:00.000Z",
-   "createdAt": "2026-11-02T00:00:00.000Z"
-  }
- ],
- "report": {
-  "period": "range",
-  "at": "2026-11-02T01:00:00.000Z",
-  "from": "2026-11-01",
-  "to": "2026-11-01",
-  "runs": 1,
-  "runErrors": 3,
-  "totals": {
-   "read": 13,
-   "candidates": 3,
-   "like": 2,
-   "repost": 2,
-   "follow": 2,
-   "drafted": 2,
-   "approved": 1,
-   "edited": 0,
-   "dismissed": 0,
-   "expired": 0,
-   "posted": 1,
-   "failed": 0,
-   "like_done": 0,
-   "repost_done": 0,
-   "follow_done": 0,
-   "like_dry": 2,
-   "repost_dry": 2,
-   "follow_dry": 2,
-   "act_failed": 0
-  },
-  "prior": {
-   "read": 0,
-   "candidates": 0,
-   "like": 0,
-   "repost": 0,
-   "follow": 0,
-   "drafted": 0,
-   "approved": 0,
-   "edited": 0,
-   "dismissed": 0,
-   "expired": 0,
-   "posted": 0,
-   "failed": 0,
-   "like_done": 0,
-   "repost_done": 0,
-   "follow_done": 0,
-   "like_dry": 0,
-   "repost_dry": 0,
-   "follow_dry": 0,
-   "act_failed": 0
-  },
-  "delta": {
-   "read": null,
-   "candidates": null,
-   "like": null,
-   "repost": null,
-   "follow": null,
-   "drafted": null,
-   "approved": null,
-   "edited": null,
-   "dismissed": null,
-   "expired": null,
-   "posted": null,
-   "failed": null,
-   "like_done": null,
-   "repost_done": null,
-   "follow_done": null,
-   "like_dry": null,
-   "repost_dry": null,
-   "follow_dry": null,
-   "act_failed": null
-  },
-  "approvalRate": 100,
-  "editRate": 0,
-  "expiredRate": 0,
-  "avgDecideMin": 20,
-  "networks": [
-   {
-    "network": "mastodon",
-    "name": "Mastodon",
-    "read": 13,
-    "candidates": 3,
-    "like": 2,
-    "repost": 2,
-    "follow": 2,
-    "drafted": 2,
-    "approved": 1,
-    "edited": 0,
-    "dismissed": 0,
-    "expired": 0,
-    "posted": 1,
-    "failed": 0,
-    "like_done": 0,
-    "repost_done": 0,
-    "follow_done": 0,
-    "like_dry": 2,
-    "repost_dry": 2,
-    "follow_dry": 2,
-    "act_failed": 0
-   }
-  ],
-  "topics": [
-   {
-    "label": "accessibility",
-    "value": 1
-   },
-   {
-    "label": "performance",
-    "value": 1
-   },
-   {
-    "label": "seo",
-    "value": 1
-   }
-  ],
-  "langs": [
-   {
-    "label": "en",
-    "value": 3
-   }
-  ],
-  "tags": [
-   {
-    "label": "playwright",
-    "value": 1
-   },
-   {
-    "label": "accessibility",
-    "value": 1
-   },
-   {
-    "label": "wcag",
-    "value": 1
-   },
-   {
-    "label": "core_web_vitals",
-    "value": 1
-   },
-   {
-    "label": "lighthouse",
-    "value": 1
-   },
-   {
-    "label": "seo",
-    "value": 1
-   }
-  ],
-  "skips": [
-   {
-    "label": "competitor",
-    "value": 1
-   }
-  ],
-  "verdicts": [
-   {
-    "label": "engage",
-    "value": 2
-   },
-   {
-    "label": "skip",
-    "value": 1
-   }
   ],
   "posts": [
-   {
-    "key": "mastodon_04b46666bbd39bb08676",
-    "network": "mastodon",
-    "url": "https://m.s/@a/1",
-    "author": "Ana 1",
-    "title": "Playwright and WCAG accessibility testing in CI",
-    "about": "a11y in CI",
-    "topic": "Accessibility",
-    "lang": "en",
-    "score": 45.18,
-    "trend": 10.46,
-    "likes": 200,
-    "replies": 5,
-    "reposts": 200,
-    "verdict": "engage",
-    "reply": "waiting"
-   },
-   {
-    "key": "mastodon_35e12fcc1abf6586e0f7",
-    "network": "mastodon",
-    "url": "https://m.s/@a/4",
-    "author": "Ana 4",
-    "title": "Lighthouse and Core Web Vitals budgets in CI",
-    "about": "performance budgets in CI",
-    "topic": "Performance",
-    "lang": "en",
-    "score": 32.67,
-    "trend": 10.05,
-    "likes": 150,
-    "replies": 5,
-    "reposts": 150,
-    "verdict": "engage",
-    "reply": "posted"
-   }
+    {
+      "key": "mastodon_04b46666bbd39bb08676",
+      "network": "mastodon",
+      "url": "https://m.s/@a/1",
+      "author": {
+        "handle": "ana1@m.s",
+        "name": "Ana 1",
+        "id": "",
+        "followers": 0
+      },
+      "title": "",
+      "text": "Playwright and WCAG accessibility testing in CI",
+      "lang": "en",
+      "topic": "Accessibility",
+      "words": [
+        "playwright",
+        "accessibility",
+        "wcag"
+      ],
+      "score": 45.18,
+      "trend": 10.46,
+      "metrics": {
+        "likes": 200,
+        "replies": 5,
+        "reposts": 200,
+        "views": 0
+      },
+      "about": "a11y in CI",
+      "why": "",
+      "sentiment": "positive",
+      "worth": 0.9,
+      "verdict": "engage",
+      "skip": "",
+      "actions": {
+        "like": {
+          "status": "dry",
+          "at": "2026-11-02T00:30:00.000Z"
+        },
+        "repost": {
+          "status": "dry",
+          "at": "2026-11-02T00:30:00.000Z"
+        },
+        "follow": {
+          "status": "dry",
+          "at": "2026-11-02T00:30:00.000Z"
+        },
+        "reply": {
+          "status": "waiting",
+          "draft": "We run axe in the same Playwright job.",
+          "lang": "en",
+          "expiresAt": "2026-11-02T06:30:00.000Z"
+        }
+      },
+      "seenAt": "2026-11-02T00:30:00.000Z",
+      "createdAt": "2026-11-02T00:00:00.000Z"
+    },
+    {
+      "key": "mastodon_35e12fcc1abf6586e0f7",
+      "network": "mastodon",
+      "url": "https://m.s/@a/4",
+      "author": {
+        "handle": "ana4@m.s",
+        "name": "Ana 4",
+        "id": "",
+        "followers": 0
+      },
+      "title": "",
+      "text": "Lighthouse and Core Web Vitals budgets in CI",
+      "lang": "en",
+      "topic": "Performance",
+      "words": [
+        "core web vitals",
+        "lighthouse"
+      ],
+      "score": 32.67,
+      "trend": 10.05,
+      "metrics": {
+        "likes": 150,
+        "replies": 5,
+        "reposts": 150,
+        "views": 0
+      },
+      "about": "performance budgets in CI",
+      "why": "",
+      "sentiment": "positive",
+      "worth": 0.9,
+      "verdict": "engage",
+      "skip": "",
+      "actions": {
+        "like": {
+          "status": "dry",
+          "at": "2026-11-02T00:30:00.000Z"
+        },
+        "repost": {
+          "status": "dry",
+          "at": "2026-11-02T00:30:00.000Z"
+        },
+        "follow": {
+          "status": "dry",
+          "at": "2026-11-02T00:30:00.000Z"
+        },
+        "reply": {
+          "status": "posted",
+          "draft": "We fail the build on LCP over 2.5 s in the lab run.",
+          "lang": "en",
+          "expiresAt": "2026-11-02T06:30:00.000Z",
+          "edited": false,
+          "original": "",
+          "decidedAt": "2026-11-02T00:50:00.000Z",
+          "by": "fixture",
+          "postedAt": "2026-11-02T00:50:00.000Z",
+          "url": "https://mastodon.social/@qalaburlreview/115000000000000001",
+          "uri": "https://mastodon.social/users/qalaburlreview/statuses/115000000000000001",
+          "tries": 1,
+          "error": ""
+        }
+      },
+      "seenAt": "2026-11-02T00:30:00.000Z",
+      "createdAt": "2026-11-02T00:00:00.000Z"
+    }
   ],
-  "authors": [
-   {
-    "label": "mastodon:ana1@m.s",
-    "value": 1
-   },
-   {
-    "label": "mastodon:ana4@m.s",
-    "value": 1
-   }
-  ]
- },
- "networks": [
-  {
-   "network": "bluesky",
-   "name": "Bluesky",
-   "reads": "needs the account",
-   "lastRead": 0,
-   "error": "",
-   "acts": "API, not connected: connect it under Accounts",
-   "row": null
+  "report": {
+    "period": "range",
+    "at": "2026-11-02T01:00:00.000Z",
+    "from": "2026-11-01",
+    "to": "2026-11-01",
+    "runs": 1,
+    "runErrors": 3,
+    "totals": {
+      "read": 13,
+      "candidates": 3,
+      "like": 2,
+      "repost": 2,
+      "follow": 2,
+      "drafted": 2,
+      "approved": 1,
+      "edited": 0,
+      "dismissed": 0,
+      "expired": 0,
+      "posted": 1,
+      "failed": 0,
+      "like_done": 0,
+      "repost_done": 0,
+      "follow_done": 0,
+      "like_dry": 2,
+      "repost_dry": 2,
+      "follow_dry": 2,
+      "act_failed": 0
+    },
+    "prior": {
+      "read": 0,
+      "candidates": 0,
+      "like": 0,
+      "repost": 0,
+      "follow": 0,
+      "drafted": 0,
+      "approved": 0,
+      "edited": 0,
+      "dismissed": 0,
+      "expired": 0,
+      "posted": 0,
+      "failed": 0,
+      "like_done": 0,
+      "repost_done": 0,
+      "follow_done": 0,
+      "like_dry": 0,
+      "repost_dry": 0,
+      "follow_dry": 0,
+      "act_failed": 0
+    },
+    "delta": {
+      "read": null,
+      "candidates": null,
+      "like": null,
+      "repost": null,
+      "follow": null,
+      "drafted": null,
+      "approved": null,
+      "edited": null,
+      "dismissed": null,
+      "expired": null,
+      "posted": null,
+      "failed": null,
+      "like_done": null,
+      "repost_done": null,
+      "follow_done": null,
+      "like_dry": null,
+      "repost_dry": null,
+      "follow_dry": null,
+      "act_failed": null
+    },
+    "approvalRate": 100,
+    "editRate": 0,
+    "expiredRate": 0,
+    "avgDecideMin": 20,
+    "networks": [
+      {
+        "network": "mastodon",
+        "name": "Mastodon",
+        "read": 13,
+        "candidates": 3,
+        "like": 2,
+        "repost": 2,
+        "follow": 2,
+        "drafted": 2,
+        "approved": 1,
+        "edited": 0,
+        "dismissed": 0,
+        "expired": 0,
+        "posted": 1,
+        "failed": 0,
+        "like_done": 0,
+        "repost_done": 0,
+        "follow_done": 0,
+        "like_dry": 2,
+        "repost_dry": 2,
+        "follow_dry": 2,
+        "act_failed": 0
+      }
+    ],
+    "topics": [
+      {
+        "label": "accessibility",
+        "value": 1
+      },
+      {
+        "label": "performance",
+        "value": 1
+      },
+      {
+        "label": "seo",
+        "value": 1
+      }
+    ],
+    "langs": [
+      {
+        "label": "en",
+        "value": 3
+      }
+    ],
+    "tags": [
+      {
+        "label": "playwright",
+        "value": 1
+      },
+      {
+        "label": "accessibility",
+        "value": 1
+      },
+      {
+        "label": "wcag",
+        "value": 1
+      },
+      {
+        "label": "core_web_vitals",
+        "value": 1
+      },
+      {
+        "label": "lighthouse",
+        "value": 1
+      },
+      {
+        "label": "seo",
+        "value": 1
+      }
+    ],
+    "skips": [
+      {
+        "label": "competitor",
+        "value": 1
+      }
+    ],
+    "verdicts": [
+      {
+        "label": "engage",
+        "value": 2
+      },
+      {
+        "label": "skip",
+        "value": 1
+      }
+    ],
+    "posts": [
+      {
+        "key": "mastodon_04b46666bbd39bb08676",
+        "network": "mastodon",
+        "url": "https://m.s/@a/1",
+        "author": "Ana 1",
+        "title": "Playwright and WCAG accessibility testing in CI",
+        "about": "a11y in CI",
+        "topic": "Accessibility",
+        "lang": "en",
+        "score": 45.18,
+        "trend": 10.46,
+        "likes": 200,
+        "replies": 5,
+        "reposts": 200,
+        "verdict": "engage",
+        "reply": "waiting"
+      },
+      {
+        "key": "mastodon_35e12fcc1abf6586e0f7",
+        "network": "mastodon",
+        "url": "https://m.s/@a/4",
+        "author": "Ana 4",
+        "title": "Lighthouse and Core Web Vitals budgets in CI",
+        "about": "performance budgets in CI",
+        "topic": "Performance",
+        "lang": "en",
+        "score": 32.67,
+        "trend": 10.05,
+        "likes": 150,
+        "replies": 5,
+        "reposts": 150,
+        "verdict": "engage",
+        "reply": "posted"
+      }
+    ],
+    "authors": [
+      {
+        "label": "mastodon:ana1@m.s",
+        "value": 1
+      },
+      {
+        "label": "mastodon:ana4@m.s",
+        "value": 1
+      }
+    ]
   },
-  {
-   "network": "mastodon",
-   "name": "Mastodon",
-   "reads": "API",
-   "lastRead": 13,
-   "error": "",
-   "acts": "API as qalaburlreview: likes, boosts, follows and replies (dry run: replies post, the rest is only logged)",
-   "row": {
-    "network": "mastodon",
-    "name": "Mastodon",
-    "read": 13,
-    "candidates": 3,
-    "like": 2,
-    "repost": 2,
-    "follow": 2,
-    "drafted": 2,
-    "approved": 1,
-    "edited": 0,
-    "dismissed": 0,
-    "expired": 0,
-    "posted": 1,
-    "failed": 0,
-    "like_done": 0,
-    "repost_done": 0,
-    "follow_done": 0,
-    "like_dry": 2,
-    "repost_dry": 2,
-    "follow_dry": 2,
-    "act_failed": 0
-   }
+  "networks": [
+    {
+      "network": "bluesky",
+      "name": "Bluesky",
+      "reads": "needs the account",
+      "lastRead": 0,
+      "error": "",
+      "acts": "API, not connected: connect it under Accounts",
+      "row": null
+    },
+    {
+      "network": "mastodon",
+      "name": "Mastodon",
+      "reads": "API",
+      "lastRead": 13,
+      "error": "",
+      "acts": "API as qalaburlreview: likes, boosts, follows and replies (dry run: replies post, the rest is only logged)",
+      "row": {
+        "network": "mastodon",
+        "name": "Mastodon",
+        "read": 13,
+        "candidates": 3,
+        "like": 2,
+        "repost": 2,
+        "follow": 2,
+        "drafted": 2,
+        "approved": 1,
+        "edited": 0,
+        "dismissed": 0,
+        "expired": 0,
+        "posted": 1,
+        "failed": 0,
+        "like_done": 0,
+        "repost_done": 0,
+        "follow_done": 0,
+        "like_dry": 2,
+        "repost_dry": 2,
+        "follow_dry": 2,
+        "act_failed": 0
+      }
+    },
+    {
+      "network": "youtube",
+      "name": "YouTube",
+      "reads": "needs a key",
+      "lastRead": 0,
+      "error": "",
+      "acts": "API as QA-lab URL Review: likes, subscribes and comments (dry run: replies post, the rest is only logged)",
+      "row": null
+    },
+    {
+      "network": "x",
+      "name": "X",
+      "reads": "Mac browser",
+      "lastRead": 0,
+      "error": "",
+      "acts": "reads and acts once the Mac browser agent ships (#1991)",
+      "row": null
+    },
+    {
+      "network": "linkedin",
+      "name": "LinkedIn",
+      "reads": "Mac browser",
+      "lastRead": 0,
+      "error": "",
+      "acts": "reads and acts once the Mac browser agent ships (#1991)",
+      "row": null
+    },
+    {
+      "network": "facebook",
+      "name": "Facebook",
+      "reads": "Mac browser",
+      "lastRead": 0,
+      "error": "",
+      "acts": "reads and acts once the Mac browser agent ships (#1991)",
+      "row": null
+    },
+    {
+      "network": "instagram",
+      "name": "Instagram",
+      "reads": "Mac browser",
+      "lastRead": 0,
+      "error": "",
+      "acts": "reads and acts once the Mac browser agent ships (#1991)",
+      "row": null
+    },
+    {
+      "network": "threads",
+      "name": "Threads",
+      "reads": "Mac browser",
+      "lastRead": 0,
+      "error": "",
+      "acts": "reads and acts once the Mac browser agent ships (#1991)",
+      "row": null
+    },
+    {
+      "network": "tiktok",
+      "name": "TikTok",
+      "reads": "Mac browser",
+      "lastRead": 0,
+      "error": "",
+      "acts": "reads and acts once the Mac browser agent ships (#1991)",
+      "row": null
+    },
+    {
+      "network": "hn",
+      "name": "Hacker News",
+      "reads": "API",
+      "lastRead": 0,
+      "error": "hn.algolia.com/api/v1/search answered 503",
+      "acts": "trends only",
+      "row": null
+    },
+    {
+      "network": "devto",
+      "name": "DEV",
+      "reads": "API",
+      "lastRead": 0,
+      "error": "dev.to/api/articles answered 503",
+      "acts": "trends only",
+      "row": null
+    },
+    {
+      "network": "lobsters",
+      "name": "Lobsters",
+      "reads": "API",
+      "lastRead": 0,
+      "error": "lobste.rs/hottest.json answered 503",
+      "acts": "trends only",
+      "row": null
+    },
+    {
+      "network": "telegram",
+      "name": "Telegram",
+      "reads": "Mac browser as user 1; bot, our posts' comments",
+      "lastRead": 14,
+      "error": "",
+      "acts": "API as @qalab_live_bot: reactions and replies under our channel's posts (dry run: replies post, the rest is only logged); Mac browser: reactions, forwards to @qalab_live, replies and joins in the field (dry run: replies post, the rest is only logged)",
+      "row": null
+    },
+    {
+      "network": "reddit",
+      "name": "Reddit",
+      "reads": "Mac browser as u/carlosandmunoz; Reddit app, our posts' comments",
+      "lastRead": 52,
+      "error": "",
+      "acts": "Reddit app: replies under our subreddit's posts; last sync 12 minutes ago; Mac browser: upvotes, crossposts, follows, comments and joins in the field (dry run: replies post, the rest is only logged)",
+      "row": null
+    }
+  ],
+  "reports": [],
+  "caps": {
+    "like": 60,
+    "repost": 15,
+    "follow": 15,
+    "reply": 15
   },
-  {
-   "network": "youtube",
-   "name": "YouTube",
-   "reads": "needs a key",
-   "lastRead": 0,
-   "error": "",
-   "acts": "API as QA-lab URL Review: likes, subscribes and comments (dry run: replies post, the rest is only logged)",
-   "row": null
+  "used": {
+    "mastodon": {
+      "like": 2,
+      "repost": 2,
+      "follow": 2,
+      "reply": 2
+    },
+    "reddit": {
+      "join": 1
+    }
   },
-  {
-   "network": "x",
-   "name": "X",
-   "reads": "Mac browser",
-   "lastRead": 0,
-   "error": "",
-   "acts": "reads and acts once the Mac browser agent ships (#1991)",
-   "row": null
-  },
-  {
-   "network": "linkedin",
-   "name": "LinkedIn",
-   "reads": "Mac browser",
-   "lastRead": 0,
-   "error": "",
-   "acts": "reads and acts once the Mac browser agent ships (#1991)",
-   "row": null
-  },
-  {
-   "network": "facebook",
-   "name": "Facebook",
-   "reads": "Mac browser",
-   "lastRead": 0,
-   "error": "",
-   "acts": "reads and acts once the Mac browser agent ships (#1991)",
-   "row": null
-  },
-  {
-   "network": "instagram",
-   "name": "Instagram",
-   "reads": "Mac browser",
-   "lastRead": 0,
-   "error": "",
-   "acts": "reads and acts once the Mac browser agent ships (#1991)",
-   "row": null
-  },
-  {
-   "network": "threads",
-   "name": "Threads",
-   "reads": "Mac browser",
-   "lastRead": 0,
-   "error": "",
-   "acts": "reads and acts once the Mac browser agent ships (#1991)",
-   "row": null
-  },
-  {
-   "network": "tiktok",
-   "name": "TikTok",
-   "reads": "Mac browser",
-   "lastRead": 0,
-   "error": "",
-   "acts": "reads and acts once the Mac browser agent ships (#1991)",
-   "row": null
-  },
-  {
-   "network": "hn",
-   "name": "Hacker News",
-   "reads": "API",
-   "lastRead": 0,
-   "error": "hn.algolia.com/api/v1/search answered 503",
-   "acts": "trends only",
-   "row": null
-  },
-  {
-   "network": "devto",
-   "name": "DEV",
-   "reads": "API",
-   "lastRead": 0,
-   "error": "dev.to/api/articles answered 503",
-   "acts": "trends only",
-   "row": null
-  },
-  {
-   "network": "lobsters",
-   "name": "Lobsters",
-   "reads": "API",
-   "lastRead": 0,
-   "error": "lobste.rs/hottest.json answered 503",
-   "acts": "trends only",
-   "row": null
+  "daily": [
+    {
+      "day": "2026-10-26",
+      "read": 0,
+      "candidates": 0,
+      "like": 0,
+      "repost": 0,
+      "follow": 0,
+      "drafted": 0,
+      "approved": 0,
+      "posted": 0,
+      "done": 0,
+      "dry": 0
+    },
+    {
+      "day": "2026-10-27",
+      "read": 0,
+      "candidates": 0,
+      "like": 0,
+      "repost": 0,
+      "follow": 0,
+      "drafted": 0,
+      "approved": 0,
+      "posted": 0,
+      "done": 0,
+      "dry": 0
+    },
+    {
+      "day": "2026-10-28",
+      "read": 0,
+      "candidates": 0,
+      "like": 0,
+      "repost": 0,
+      "follow": 0,
+      "drafted": 0,
+      "approved": 0,
+      "posted": 0,
+      "done": 0,
+      "dry": 0
+    },
+    {
+      "day": "2026-10-29",
+      "read": 0,
+      "candidates": 0,
+      "like": 0,
+      "repost": 0,
+      "follow": 0,
+      "drafted": 0,
+      "approved": 0,
+      "posted": 0,
+      "done": 0,
+      "dry": 0
+    },
+    {
+      "day": "2026-10-30",
+      "read": 0,
+      "candidates": 0,
+      "like": 0,
+      "repost": 0,
+      "follow": 0,
+      "drafted": 0,
+      "approved": 0,
+      "posted": 0,
+      "done": 0,
+      "dry": 0
+    },
+    {
+      "day": "2026-10-31",
+      "read": 0,
+      "candidates": 0,
+      "like": 0,
+      "repost": 0,
+      "follow": 0,
+      "drafted": 0,
+      "approved": 0,
+      "posted": 0,
+      "done": 0,
+      "dry": 0
+    },
+    {
+      "day": "2026-11-01",
+      "read": 13,
+      "candidates": 3,
+      "like": 2,
+      "repost": 2,
+      "follow": 2,
+      "drafted": 2,
+      "approved": 1,
+      "posted": 1,
+      "done": 0,
+      "dry": 6
+    }
+  ],
+  "needs": [
+    "YouTube: YOUTUBE_KEY is not set for the engagement scout.",
+    "Engagement: Bluesky: paste an app password in Engagement > Accounts (bsky.app > Settings > Privacy and security > App passwords)."
+  ],
+  "joins": {
+    "log": [
+      {
+        "key": "reddit_aaaaaaaaaaaaaaaaaaaa",
+        "network": "reddit",
+        "name": "r/QualityAssurance",
+        "id": "qualityassurance",
+        "url": "https://www.reddit.com/r/QualityAssurance/",
+        "kind": "subreddit",
+        "lang": "en",
+        "members": 90412,
+        "topic": "Testing",
+        "status": "joined",
+        "at": "2026-11-05T14:10:00.000Z",
+        "joinedAt": "2026-11-05T14:10:00.000Z",
+        "error": ""
+      },
+      {
+        "key": "telegram_bbbbbbbbbbbbbbbbbbbb",
+        "network": "telegram",
+        "name": "Автотесты и QA",
+        "id": "qa_automation_ru",
+        "url": "https://t.me/qa_automation_ru",
+        "kind": "channel",
+        "lang": "ru",
+        "members": 4210,
+        "topic": "Testing",
+        "status": "dry",
+        "at": "2026-11-05T13:40:00.000Z",
+        "joinedAt": "",
+        "error": ""
+      },
+      {
+        "key": "reddit_cccccccccccccccccccc",
+        "network": "reddit",
+        "name": "r/accessibility",
+        "id": "accessibility",
+        "url": "https://www.reddit.com/r/accessibility/",
+        "kind": "subreddit",
+        "lang": "en",
+        "members": 31020,
+        "topic": "Accessibility",
+        "status": "member",
+        "at": "2026-11-05T12:00:00.000Z",
+        "joinedAt": "",
+        "error": ""
+      }
+    ],
+    "found": {
+      "telegram": 6,
+      "reddit": 11
+    },
+    "caps": {
+      "telegram": 1,
+      "reddit": 1
+    },
+    "used": {
+      "telegram": 0,
+      "reddit": 1
+    },
+    "warmup": {
+      "telegram": "",
+      "reddit": "2026-11-05T14:00:00.000Z"
+    }
   }
- ],
- "reports": [],
- "caps": {
-  "like": 60,
-  "repost": 15,
-  "follow": 15,
-  "reply": 15
- },
- "used": {
-  "mastodon": {
-   "like": 2,
-   "repost": 2,
-   "follow": 2,
-   "reply": 2
-  }
- },
- "daily": [
-  {
-   "day": "2026-10-26",
-   "read": 0,
-   "candidates": 0,
-   "like": 0,
-   "repost": 0,
-   "follow": 0,
-   "drafted": 0,
-   "approved": 0,
-   "posted": 0,
-   "done": 0,
-   "dry": 0
-  },
-  {
-   "day": "2026-10-27",
-   "read": 0,
-   "candidates": 0,
-   "like": 0,
-   "repost": 0,
-   "follow": 0,
-   "drafted": 0,
-   "approved": 0,
-   "posted": 0,
-   "done": 0,
-   "dry": 0
-  },
-  {
-   "day": "2026-10-28",
-   "read": 0,
-   "candidates": 0,
-   "like": 0,
-   "repost": 0,
-   "follow": 0,
-   "drafted": 0,
-   "approved": 0,
-   "posted": 0,
-   "done": 0,
-   "dry": 0
-  },
-  {
-   "day": "2026-10-29",
-   "read": 0,
-   "candidates": 0,
-   "like": 0,
-   "repost": 0,
-   "follow": 0,
-   "drafted": 0,
-   "approved": 0,
-   "posted": 0,
-   "done": 0,
-   "dry": 0
-  },
-  {
-   "day": "2026-10-30",
-   "read": 0,
-   "candidates": 0,
-   "like": 0,
-   "repost": 0,
-   "follow": 0,
-   "drafted": 0,
-   "approved": 0,
-   "posted": 0,
-   "done": 0,
-   "dry": 0
-  },
-  {
-   "day": "2026-10-31",
-   "read": 0,
-   "candidates": 0,
-   "like": 0,
-   "repost": 0,
-   "follow": 0,
-   "drafted": 0,
-   "approved": 0,
-   "posted": 0,
-   "done": 0,
-   "dry": 0
-  },
-  {
-   "day": "2026-11-01",
-   "read": 13,
-   "candidates": 3,
-   "like": 2,
-   "repost": 2,
-   "follow": 2,
-   "drafted": 2,
-   "approved": 1,
-   "posted": 1,
-   "done": 0,
-   "dry": 6
-  }
- ],
- "needs": [
-  "YouTube: YOUTUBE_KEY is not set for the engagement scout.",
-  "Engagement: Bluesky: paste an app password in Engagement > Accounts (bsky.app > Settings > Privacy and security > App passwords)."
- ]
 }

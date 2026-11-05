@@ -452,6 +452,13 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(waiting.locator('[data-eg-draft]')).toHaveValue('We run axe in the same Playwright job.');
     await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('Mac browser');
     await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('API as qalaburlreview');
+    const joins = eg.locator('[data-panel-id="engagement-joins"]');
+    await expect(joins).toContainText('r/QualityAssurance');
+    await expect(joins).toContainText('would join (dry run)');
+    await expect(joins).toContainText('ru');
+    await expect(joins).toContainText('Reddit: 1 of 1 today, 11 found to join');
+    await expect(eg.locator('[name="cap-join"]')).toHaveValue('2');
+    if (process.env.JOINS_SHOT) await joins.screenshot({ path: process.env.JOINS_SHOT });
     await expect(eg).toContainText('paste an app password');
     const accounts = eg.locator('[data-panel-id="engagement-accounts"]');
     await expect(accounts).toContainText('connected as qalaburlreview');
