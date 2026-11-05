@@ -1,6 +1,25 @@
 {
  "runs": [
   {
+   "at": "2026-11-05T16:40:22.410Z",
+   "run": {
+    "id": 42037831215,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/42037831215"
+   },
+   "status": "failed",
+   "error": "The PageSpeed check ended with failure.",
+   "pages": 0,
+   "scored": 0,
+   "failed": 0,
+   "below": 0,
+   "avg": {
+    "mobile": null,
+    "desktop": null
+   },
+   "safe": null,
+   "ai": null
+  },
+  {
    "at": "2026-11-04T16:14:28.751Z",
    "run": {
     "id": 41838037690,
