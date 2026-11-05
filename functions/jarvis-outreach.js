@@ -74,6 +74,7 @@ function pipelineRows(queue, state, reviews, published, ctx) {
     segments: listOf(segments),
     avgScore: scores.length ? Math.round(scores.reduce((s, n) => s + n, 0) / scores.length) : null,
     withLiveReport: hosts.filter((h) => live.has(bare(h.host))).length,
+    reviewedHosts: reviewedHosts.size,
     reviewedWithLiveReport: Array.from(reviewedHosts).filter((h) => live.has(h)).length,
     daily
   };
@@ -119,7 +120,8 @@ function instantlyRows(campaigns, overview, perCampaign, accounts, priorOverview
   (campaigns || []).forEach((c) => tally(status, CAMPAIGN_STATUS[String(c.status)] || "status " + c.status));
   return Object.assign({
     campaigns: (campaigns || []).length,
-    status: listOf(status)
+    status: listOf(status),
+    openTracking: (campaigns || []).some((c) => c.open_tracking === true)
   }, mailCounts(overview), {
     prior: priorOverview ? mailCounts(priorOverview) : null,
     byCampaign: (perCampaign || []).filter((c) => (c.emails_sent_count || 0) > 0).map((c) => ({

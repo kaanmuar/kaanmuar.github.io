@@ -402,15 +402,16 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
 
     Panel("Weekly funnel against the plan") {
         fun ratio(a: Double?, b: Double?) = if (a == null || b == null || b == 0.0) null else Math.round(a / b * 100).toDouble()
+        val openOff = contacted > 0 && mail?.bool("openTracking") == false
         listOf(
             Triple("Prospects reviewed this week", pipe.num("thisWeek"), weekly.num("prospects") to ""),
-            Triple("Reviewed prospects with a Live Report", if (pipe != null) ratio(pipe.num("reviewedWithLiveReport"), maxOf(1.0, pipe.num("swept") ?: 0.0)) else null, weekly.num("liveReportPct") to "%"),
-            Triple("Open rate", if (contacted > 0) rates.num("open") else null, weekly.num("openPct") to "%"),
+            Triple("Reviewed prospects with a Live Report", if (pipe != null) ratio(pipe.num("reviewedWithLiveReport"), maxOf(1.0, pipe.num("reviewedHosts") ?: pipe.num("swept") ?: 0.0)) else null, weekly.num("liveReportPct") to "%"),
+            Triple("Open rate", if (contacted > 0 && !openOff) rates.num("open") else null, weekly.num("openPct") to "%"),
             Triple("Reply rate", if (contacted > 0) rates.num("reply") else null, weekly.num("replyPct") to "%"),
             Triple("Positive replies", if (contacted > 0) rates.num("positive") else null, weekly.num("positivePct") to "%")
         ).forEach { (metric, now, target) ->
             val (goal, unit) = target
-            KeyRow(metric, (now?.let { fmt(it) + unit } ?: "—") + " / " + (goal?.let { fmt(it) + unit } ?: "—"),
+            KeyRow(metric, (if (metric == "Open rate" && openOff) "Not tracked" else now?.let { fmt(it) + unit } ?: "—") + " / " + (goal?.let { fmt(it) + unit } ?: "—"),
                 if (now == null) J.muted else if (goal == null || now >= goal) J.green else J.pink)
         }
     }

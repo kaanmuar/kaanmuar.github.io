@@ -275,6 +275,20 @@ test("outreach: only the failing domain's active mailboxes pause; resuming goes 
   assert.deepEqual(calls.paused, ["a@qalabreview.com"]);
 });
 
+test("outreach: a low warm-up score does not pause a mailbox, and one paused for it heads to the resume countdown (#2641)", async () => {
+  const db = fakeDb();
+  const boxes = [{ email: "new@getqalabreview.com", status: "active", warmup: "on", score: 0 }, { email: "old@tryqalabreview.com", status: "paused", warmup: "on", score: 0 }];
+  const pauses = { "old@tryqalabreview.com": { email: "old@tryqalabreview.com", reason: "warm-up score 0 under 80", passes: 0 } };
+  const { ops, calls } = autoOps({ outreach: async () => ({ domain: "qalabreview.com", failing: [], warmupMin: 80, mailboxes: boxes, pauses: Object.values(Object.assign(pauses, calls.pauses)) }) });
+  await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
+  const second = await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings: {}, ops });
+  assert.deepEqual(calls.paused, []);
+  assert.equal(calls.pauses["old@tryqalabreview.com"].passes, 2);
+  assert.deepEqual(second.queued.map((r) => [r.action, r.payload.emails]), [["resume-outreach", ["old@tryqalabreview.com"]]]);
+  assert.equal(actions.pauseProblem(boxes[0], { warmupMin: 80 }), "");
+  assert.match(actions.mailboxProblem(boxes[0], { warmupMin: 80 }), /score 0 under 80/);
+});
+
 test("failed social posts go on the countdown as a public post", async () => {
   const { ops } = autoOps({ socialFailed: async () => 2 });
   const out = await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: {}, ops });

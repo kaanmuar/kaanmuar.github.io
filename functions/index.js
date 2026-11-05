@@ -5901,7 +5901,7 @@ function jarvisAutoOps(settings, now, th) {
       const resumed = [];
       const left = [];
       for (const email of emails) {
-        const why = o.pauses.some((p) => p.email === email) ? jarvisActions.mailboxProblem((o.mailboxes || []).find((m) => m.email === email), o) : "no longer paused by Jarvis";
+        const why = o.pauses.some((p) => p.email === email) ? jarvisActions.pauseProblem((o.mailboxes || []).find((m) => m.email === email), o) : "no longer paused by Jarvis";
         if (why) { left.push(email + ": " + why); continue; }
         await jarvisMarketing.mailboxAct(ctx, email, "resume");
         await out.setPause(email, null);
