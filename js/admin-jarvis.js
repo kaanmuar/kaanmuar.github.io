@@ -979,13 +979,23 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             { label: 'Paid runs', value: okMoney ? mo.revenue.paidRuns : '—' },
             { label: 'Emails delivered', value: okMail && em.rates.delivered !== null ? em.rates.delivered + '%' : '—', alert: okMail && em.rates.bad >= th.emailBadPct },
             { label: 'Social posts', value: okSocial ? so.sent : '—', alert: okSocial && so.failed > 0 },
+            { label: 'Clip plays', value: okSocial && so.media ? so.media.total.plays : '—' },
             { label: 'Google clicks', value: gsc && gsc.ok ? gsc.clicks : '—' }
         ]);
         const social = socialVisits();
+        const media = okSocial ? so.media : null;
+        const num = (n, on) => (on ? fmt(n) : '—');
+        const mediaNets = media ? table([['Network', (n) => `<strong>${esc(n.name)}</strong>`], ['Posts', (n) => fmt(n.posts)], ['Plays', (n) => num(n.plays, n.measured)], ['Reach', (n) => num(n.reach, n.measured)],
+            ['Likes', (n) => num(n.likes, n.measured)], ['Shares', (n) => num(n.shares, n.measured)], ['Comments', (n) => num(n.comments, n.measured)], ['', (n) => (n.state ? `<span class="jv-note">${esc(n.state)}</span>` : '')]], media.networks)
+            + bars(media.networks.filter((n) => n.plays).map((n) => ({ label: n.name, value: n.plays })), { color: COLORS.pink, empty: '' }) : waiting('social', 'Reading the social ledgers…');
+        const mediaClips = media ? table([['Clip', (c) => `<strong>${esc(c.title)}</strong><br><span class="jv-note">${esc(when(c.at))}</span>`], ['Plays', (c) => fmt(c.total.plays)], ['Likes', (c) => fmt(c.total.likes)], ['Shares', (c) => fmt(c.total.shares)], ['Comments', (c) => fmt(c.total.comments)],
+            ['On', (c) => c.networks.map((n) => `<a class="jv-chip" href="${esc(n.url)}" target="_blank" rel="noopener" title="${esc(n.network)}: ${n.plays} plays, ${n.likes} likes, ${n.shares} shares, ${n.comments} comments">${esc(n.network)}${n.plays ? ' ' + fmt(n.plays) : ''}</a>`).join(' ')]], media.clips, 'No clip has gone out yet.') : waiting('social', '');
         const pp = okMoney ? mo.paypal || {} : {};
         const W = S.wide;
         const steps = W.funnel ? W.funnel.map((x) => ({ label: x.value === null ? x.label + ' (source down)' : x.label, value: x.value || 0 })) : null;
         return head + `<div class="jv-grid">${briefPanel('business')}
+            ${panel('business-media', `Media per network${media ? ' · ' + fmt(media.total.plays) + ' plays' : ''}`, mediaNets, { wide: true, data: media && media.networks, note: `Every clip we posted, all time. YouTube plays come from the YouTube Data API; LinkedIn, TikTok, X and YouTube numbers from Buffer, Facebook from the Graph API, Bluesky and Mastodon from their public APIs, read once a day${media && media.updatedAt ? ' (last ' + esc(when(media.updatedAt)) + ')' : ''}. Instagram and Threads have no stats reader yet.` })}
+            ${panel('business-clips', `Plays per clip${media ? ' · ' + fmt(media.total.clips) : ''}`, mediaClips, { wide: true, data: media && media.clips.map((c) => Object.assign({ key: c.key, title: c.title, at: c.at }, c.total, Object.fromEntries(c.networks.map((n) => [n.network, n.plays])))) })}
             ${callsPanel()}
             ${panel('business-mix', 'Revenue by product', okMoney ? pie(W.revenue, { unit: 'USD', empty: 'No sales in this range.' }) : waiting('money', 'Reading payments…'), { data: W.revenue })}
             ${panel('business-funnel', 'Outreach funnel', steps ? funnel(steps) : waiting('outreach', 'Reading the outreach pipeline…'), { data: W.funnel, note: steps ? 'Reviewed by the nightly sweep in range, emailed through Instantly, replied, and paid through a qalabreview.com link. Instantly counts every contact it emailed, so Notified can pass Reviewed.' : '' })}

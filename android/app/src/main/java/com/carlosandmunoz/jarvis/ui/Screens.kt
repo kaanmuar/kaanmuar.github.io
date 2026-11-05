@@ -491,6 +491,7 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
 @Composable
 fun BusinessScreen(s: UiState, vm: JarvisViewModel) {
     val snap = s.snapshot
+    MediaPanels(snap.ext("social").obj("media")?.takeIf { snap.ext("social").isOk() })
     CallsPanel(s, vm)
     val money = snap.ext("money")
     Panel("Revenue") {
@@ -583,6 +584,30 @@ fun BusinessScreen(s: UiState, vm: JarvisViewModel) {
         if (videos.isNotEmpty()) Panel("YouTube") { videos.take(10).forEach { v -> KeyRow(v.str("title") ?: "", "${fmt(v.num("views"))} views", url = v.str("id")?.let { "https://youtu.be/$it" }) } }
     }
     NoDataRow(empties.items)
+}
+
+// Plays, likes, shares and comments of every clip we posted, per network and per clip (#2018).
+@Composable
+private fun MediaPanels(media: JsonObject?) {
+    Panel("Media per network" + (media?.obj("total")?.num("plays")?.let { " · ${fmt(it)} plays" } ?: "")) {
+        if (media == null) { Muted("Pull down to read the social ledgers."); return@Panel }
+        media.objs("networks").forEach { n ->
+            val measured = (n.num("measured") ?: 0.0) > 0
+            val line = if (measured) listOf("plays" to "plays", "likes" to "likes", "shares" to "shares", "comments" to "comments").joinToString(" · ") { (k, label) -> "${fmt(n.num(k))} $label" }
+                else n.str("state").orEmpty()
+            KeyRow("${n.str("name")} · ${fmt(n.num("posts"))} posts", line, if (measured) J.cyan else J.muted)
+        }
+        Muted("All clips, all time, read once a day: YouTube from its Data API; LinkedIn, TikTok, X and YouTube from Buffer; Facebook from the Graph API; Bluesky and Mastodon from their public APIs. Instagram and Threads have no stats reader yet.")
+    }
+    val clips = media?.objs("clips").orEmpty()
+    if (clips.isNotEmpty()) Panel("Plays per clip · ${fmt(media?.obj("total")?.num("clips"))}") {
+        clips.take(25).forEach { c ->
+            val t = c.obj("total")
+            val first = c.objs("networks").firstOrNull { !it.str("url").isNullOrEmpty() }
+            KeyRow(c.str("title").orEmpty(), "${fmt(t.num("plays"))} plays · ${fmt(t.num("likes"))} likes · ${fmt(t.num("shares"))} shares", J.pink, first?.str("url"))
+            Muted(c.objs("networks").joinToString(" · ") { n -> n.str("network").orEmpty() + ((n.num("plays") ?: 0.0).takeIf { it > 0 }?.let { " " + fmt(it) } ?: "") } + " · " + (ago(c.str("at")) ?: ""))
+        }
+    }
 }
 
 // ---------------------------------------------------------------- Traffic

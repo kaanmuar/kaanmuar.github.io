@@ -35,6 +35,7 @@ const jarvisEngagement = require("./jarvis-engagement");
 const jarvisPeople = require("./jarvis-people");
 const jarvisLocal = require("./jarvis-local");
 const jarvisSocial = require("./jarvis-social");
+const jarvisMedia = require("./jarvis-media");
 const jarvisPageSpeed = require("./jarvis-pagespeed");
 const mailHealth = require("./mail-health");
 const jarvisAddresses = require("./jarvis-addresses");
@@ -466,6 +467,7 @@ async function social(ctx) {
     latest: latest.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 15),
     scheduled,
     queue: jarvisSocial.byChannel([buffer, facebook, open, telegram, reddit], ctx.now, since),
+    media: jarvisMedia.mediaStats([buffer, facebook, open], metrics, videos),
     telegram: tgMembers,
     reddit: rdMembers,
     youtube: { videos: videos.sort((a, b) => (b.views || 0) - (a.views || 0) || Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 10), views },

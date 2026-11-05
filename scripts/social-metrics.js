@@ -4,14 +4,16 @@
      node scripts/social-metrics.js   # writes assets/social/metrics.json
 
    LinkedIn, TikTok, X and YouTube come from Buffer (Post.metrics, BUFFER_API_KEY), Facebook from the Graph API
-   (FACEBOOK_PAGE_TOKEN, and FACEBOOK_PAGE_TOKEN_ES for @qaurlreview's Page, #2327). Only ledger entries marked sent are asked about (assets/social/buffer.json, facebook.json).
+   (FACEBOOK_PAGE_TOKEN, and FACEBOOK_PAGE_TOKEN_ES for @qaurlreview's Page, #2327), Bluesky and Mastodon from their
+   public APIs (no key). Only ledger entries marked sent are asked about (assets/social/buffer.json, facebook.json,
+   open-social.json). Jarvis > Business shows them per network and per clip (#2018).
    A network without its key, or one that fails, keeps the numbers of the last run, so a bad morning blanks nothing.
    scripts/build-social-hub.js writes them into the feed; auto-live-reports.yml runs this before it every day.
 
    Telegram's channel members come from the Bot API (getChatMemberCount, TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL, #2570),
    one point a day, so Jarvis shows the count and its change over the selected range.
 
-   { version: 1, updatedAt: "<ISO>", posts: { "<batch>/<slug>": { "<network>": { impressions, views, likes, comments } } },
+   { version: 1, updatedAt: "<ISO>", posts: { "<batch>/<slug>": { "<network>": { impressions, views, likes, shares, comments } } },
      pages: { "<Facebook Page profile>": { asked, answered, insights, error } or { skipped: "no FACEBOOK_PAGE_TOKEN..." } },
      channels: { telegram: { chat: "@qalab_live", members, at: "<ISO>", history: [{ date: "YYYY-MM-DD", members }], skipped?, error? } } }
    pages is this run's word from each Facebook Page; Jarvis reads it to say why a Page has no numbers (#2460).
@@ -26,7 +28,8 @@ const { FACES } = require("./brand-kit/faces");
 const ROOT = path.resolve(__dirname, "..");
 const OUT = "assets/social/metrics.json";
 const GRAPH = "https://graph.facebook.com/" + (process.env.FACEBOOK_GRAPH_VERSION || "v23.0");
-const METRICS = ["impressions", "views", "likes", "comments"];
+const METRICS = ["impressions", "views", "likes", "shares", "comments"];
+const BSKY = "https://public.api.bsky.app/xrpc/app.bsky.feed.getPosts";
 const CHUNK = 20;
 
 function empty() {
@@ -53,18 +56,21 @@ function counts(values) {
 }
 
 // Buffer names cross-network metrics alike; reach stands in where a network has no impressions, and likes and
-// reactions are the same count under two names, so the larger one is kept.
+// reactions are the same count under two names, so the larger one is kept. Reposts, retweets and reshares are shares.
 function fromBuffer(metrics) {
   const by = {};
   (metrics || []).forEach((m) => { if (m && m.type) by[m.type] = Number(m.value) || 0; });
-  return counts({ impressions: by.impressions || by.reach, views: by.views, likes: Math.max(by.likes || 0, by.reactions || 0), comments: by.comments });
+  return counts({ impressions: by.impressions || by.reach, views: by.views, likes: Math.max(by.likes || 0, by.reactions || 0),
+    shares: Math.max(by.shares || 0, by.reposts || 0, by.retweets || 0, by.reshares || 0), comments: by.comments });
 }
 
-// Sent entries per network: [{ post, channel, id }].
+// Sent entries per network: [{ post, channel, id, url, profile? }]. url is what Mastodon needs to find its server.
 function sentEntries(book, channels) {
   const list = [];
   Object.entries(book.posts || {}).forEach(([post, entries]) => (entries || []).forEach((entry) => {
-    if (entry.result === "sent" && entry.id && (!channels || channels.includes(entry.channel))) list.push(Object.assign({ post, channel: entry.channel, id: entry.id }, entry.profile ? { profile: entry.profile } : {}));
+    if (entry.result === "sent" && entry.id && (!channels || channels.includes(entry.channel))) {
+      list.push(Object.assign({ post, channel: entry.channel, id: entry.id, url: entry.url || "" }, entry.profile ? { profile: entry.profile } : {}));
+    }
   }));
   return list;
 }
@@ -100,7 +106,7 @@ async function graphJson(request, url) {
 
 // Meta retired post_impressions; post_media_view over the post's lifetime is its views. Insights come back empty, not
 // refused, when the token lacks read_insights, and reactions and comments need pages_read_user_content (#2464), so a
-// refused post still asks for insights and takes its reactions from them.
+// refused post still asks for insights and takes its reactions from them. Shares stay on the post object.
 // report gets how many posts were asked, answered and had insights, and the first refusal, so a Page that answers
 // nothing says why.
 const INSIGHTS = "post_media_view,post_video_views,post_reactions_by_type_total";
@@ -122,7 +128,7 @@ async function facebookNumbers(entries, token, request, report = {}) {
     const qs = (params) => new URLSearchParams(Object.assign({ access_token: token }, params)).toString();
     let base = null;
     try {
-      base = await graphJson(request, GRAPH + "/" + entry.id + "?" + qs({ fields: "comments.summary(true).limit(0),reactions.summary(true).limit(0)" }));
+      base = await graphJson(request, GRAPH + "/" + entry.id + "?" + qs({ fields: "comments.summary(true).limit(0),reactions.summary(true).limit(0),shares" }));
     } catch (error) {
       refused(error);
     }
@@ -138,7 +144,43 @@ async function facebookNumbers(entries, token, request, report = {}) {
     report.answered += 1;
     const total = (edge) => (base && base[edge] && base[edge].summary && base[edge].summary.total_count) || 0;
     const likes = base && base.reactions ? total("reactions") : insights.post_reactions_by_type_total;
-    found.push(Object.assign({}, entry, { numbers: counts({ impressions: insights.post_media_view, views: insights.post_video_views, likes, comments: total("comments") }) }));
+    const shares = base && base.shares ? base.shares.count : 0;
+    found.push(Object.assign({}, entry, { numbers: counts({ impressions: insights.post_media_view, views: insights.post_video_views, likes, shares, comments: total("comments") }) }));
+  }
+  return found;
+}
+
+// Bluesky answers 25 posts a call; reposts and quotes are both shares. It counts no views.
+async function blueskyNumbers(entries, request) {
+  const found = [];
+  for (let i = 0; i < entries.length; i += 25) {
+    const chunk = entries.slice(i, i + 25);
+    try {
+      const res = await request(BSKY + "?" + chunk.map((e) => "uris=" + encodeURIComponent(e.id)).join("&"));
+      const json = await res.json();
+      const by = {};
+      (json.posts || []).forEach((p) => { by[p.uri] = p; });
+      chunk.forEach((e) => {
+        const p = by[e.id];
+        if (p) found.push(Object.assign({}, e, { numbers: counts({ likes: p.likeCount, shares: (p.repostCount || 0) + (p.quoteCount || 0), comments: p.replyCount }) }));
+      });
+    } catch (error) { /* a failed chunk keeps its last numbers */ }
+  }
+  return found;
+}
+
+// A public status answers on its own server without a token; the server comes from the post's URL.
+async function mastodonNumbers(entries, request) {
+  const found = [];
+  for (const e of entries) {
+    let origin;
+    try { origin = new URL(e.url).origin; } catch (error) { continue; }
+    try {
+      const res = await request(origin + "/api/v1/statuses/" + encodeURIComponent(e.id));
+      if (!res.ok) continue;
+      const s = await res.json();
+      found.push(Object.assign({}, e, { numbers: counts({ likes: s.favourites_count, shares: s.reblogs_count, comments: s.replies_count }) }));
+    } catch (error) { /* kept from the last run */ }
   }
   return found;
 }
@@ -221,6 +263,11 @@ async function main() {
     found.push(...await facebookNumbers(entries, token, fetch, pages[profile]));
     notes.push(profile + ": " + pages[profile].answered + " of " + entries.length + " sent posts answered, " + pages[profile].insights + " with insights" + (pages[profile].error ? "; first refusal: " + pages[profile].error : ""));
   }
+  const open = queues.read(queues.OPEN_SOCIAL);
+  const sky = sentEntries(open, ["bluesky"]);
+  const toots = sentEntries(open, ["mastodon"]);
+  found.push(...await blueskyNumbers(sky, fetch), ...await mastodonNumbers(toots, fetch));
+  notes.push("Bluesky: " + sky.length + " and Mastodon: " + toots.length + " sent posts asked");
   const previous = read();
   const at = new Date().toISOString();
   const chat = process.env.TELEGRAM_CHANNEL || "";
@@ -239,4 +286,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { METRICS, OUT, read, counts, fromBuffer, sentEntries, pageEntries, bufferNumbers, facebookNumbers, telegramMembers, telegramEntry, merge };
+module.exports = { METRICS, OUT, read, counts, fromBuffer, sentEntries, pageEntries, bufferNumbers, facebookNumbers, blueskyNumbers, mastodonNumbers, telegramMembers, telegramEntry, merge };

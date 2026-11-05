@@ -2,19 +2,19 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const metrics = require("../../scripts/social-metrics");
 
-test("Buffer's metrics become the hub's four counts, with reach for missing impressions and one count for likes and reactions", () => {
+test("Buffer's metrics become the hub's counts, with reach for missing impressions and one count for likes and reactions", () => {
   assert.deepEqual(metrics.fromBuffer([
     { type: "reach", value: 120 }, { type: "views", value: 88.4 }, { type: "likes", value: 3 }, { type: "reactions", value: 5 },
     { type: "comments", value: 0 }, { type: "shares", value: 9 }
-  ]), { impressions: 120, views: 88, likes: 5 });
+  ]), { impressions: 120, views: 88, likes: 5, shares: 9 });
   assert.deepEqual(metrics.fromBuffer([{ type: "impressions", value: 40 }, { type: "reach", value: 70 }]), { impressions: 40 });
   assert.deepEqual(metrics.fromBuffer(null), {});
 });
 
 test("only sent ledger entries are asked about", () => {
   const book = { posts: { "a/1": [{ channel: "x", id: "b1", result: "sent" }, { channel: "tiktok", id: "b2", result: "queued" }], "a/2": [{ channel: "facebook", id: "f1", result: "sent" }] } };
-  assert.deepEqual(metrics.sentEntries(book), [{ post: "a/1", channel: "x", id: "b1" }, { post: "a/2", channel: "facebook", id: "f1" }]);
-  assert.deepEqual(metrics.sentEntries(book, ["facebook"]), [{ post: "a/2", channel: "facebook", id: "f1" }]);
+  assert.deepEqual(metrics.sentEntries(book), [{ post: "a/1", channel: "x", id: "b1", url: "" }, { post: "a/2", channel: "facebook", id: "f1", url: "" }]);
+  assert.deepEqual(metrics.sentEntries(book, ["facebook"]), [{ post: "a/2", channel: "facebook", id: "f1", url: "" }]);
 });
 
 test("Buffer is asked in aliased chunks, and a chunk with a deleted post is asked again one post at a time", async () => {
@@ -107,4 +107,19 @@ test("fresh numbers replace a network's old ones and leave networks not asked th
   const next = metrics.merge(previous, [{ post: "a/1", channel: "x", numbers: { views: 5 } }, { post: "a/2", channel: "x", numbers: {} }, { post: "a/0", channel: "tiktok", numbers: { likes: 2 } }], "2026-10-26T00:00:00.000Z");
   assert.deepEqual(next, { version: 1, updatedAt: "2026-10-26T00:00:00.000Z", posts: { "a/0": { tiktok: { likes: 2 } }, "a/1": { x: { views: 5 }, facebook: { likes: 4 } } } });
   assert.deepEqual(previous.posts["a/1"].x, { views: 1 });
+});
+
+test("Bluesky and Mastodon numbers come from their public APIs; reposts and quotes are shares (#2018)", async () => {
+  const urls = [];
+  const request = async (url) => {
+    urls.push(url);
+    if (url.startsWith("https://public.api.bsky.app/")) return { ok: true, json: async () => ({ posts: [{ uri: "at://a/1", likeCount: 4, repostCount: 2, quoteCount: 1, replyCount: 0 }] }) };
+    if (url === "https://mastodon.social/api/v1/statuses/77") return { ok: true, json: async () => ({ favourites_count: 3, reblogs_count: 1, replies_count: 2 }) };
+    return { ok: false, json: async () => ({}) };
+  };
+  const sky = await metrics.blueskyNumbers([{ post: "a/1", channel: "bluesky", id: "at://a/1" }, { post: "a/2", channel: "bluesky", id: "at://a/2" }], request);
+  assert.deepEqual(sky.map((e) => [e.post, e.numbers]), [["a/1", { likes: 4, shares: 3 }]]);
+  assert.match(urls[0], /uris=at%3A%2F%2Fa%2F1&uris=at%3A%2F%2Fa%2F2/);
+  const toots = await metrics.mastodonNumbers([{ post: "a/1", channel: "mastodon", id: "77", url: "https://mastodon.social/@q/77" }, { post: "a/2", channel: "mastodon", id: "78", url: "https://mastodon.social/@q/78" }, { post: "a/3", channel: "mastodon", id: "79", url: "" }], request);
+  assert.deepEqual(toots.map((e) => [e.post, e.numbers]), [["a/1", { likes: 3, shares: 1, comments: 2 }]]);
 });
