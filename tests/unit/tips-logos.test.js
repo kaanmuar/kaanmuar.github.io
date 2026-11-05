@@ -14,8 +14,13 @@ test("a tip shows the most specific mark it names, never Google twice", () => {
 
 test("every network on the end card has its mark in designs/brand-logos", () => {
   const nets = networks();
-  assert.deepStrictEqual(nets.map((n) => n.slug), ["youtube", "tiktok", "instagram", "threads", "linkedin", "x", "facebook", "bluesky", "mastodon"]);
-  nets.forEach((n) => assert.ok(fs.existsSync(path.join(__dirname, "../../designs/brand-logos", n.slug + ".svg")), n.slug));
+  assert.deepStrictEqual(nets.map((n) => n.slug), ["youtube", "tiktok", "instagram", "threads", "linkedin", "x", "facebook", "bluesky", "mastodon", "telegram", "reddit"]);
+  nets.forEach((n) => {
+    const svg = fs.readFileSync(path.join(__dirname, "../../designs/brand-logos", n.slug + ".svg"), "utf8");
+    assert.match(svg, /viewBox="0 0 24 24"/, n.slug);
+    assert.strictEqual((svg.match(/<path /g) || []).length, 1, n.slug);
+  });
+  assert.deepStrictEqual(nets.filter((n) => n.channel).map((n) => [n.slug, n.channel]), [["telegram", "@qalab_live"], ["reddit", "r/QALabLiveReports"]]);
 });
 
 test("the site's sharpest icon is tried first, then the conventional paths", () => {

@@ -10,9 +10,14 @@
    A network without its key, or one that fails, keeps the numbers of the last run, so a bad morning blanks nothing.
    scripts/build-social-hub.js writes them into the feed; auto-live-reports.yml runs this before it every day.
 
+   Telegram's channel members come from the Bot API (getChatMemberCount, TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL, #2570),
+   one point a day, so Jarvis shows the count and its change over the selected range.
+
    { version: 1, updatedAt: "<ISO>", posts: { "<batch>/<slug>": { "<network>": { impressions, views, likes, shares, comments } } },
-     pages: { "<Facebook Page profile>": { asked, answered, insights, error } or { skipped: "no FACEBOOK_PAGE_TOKEN..." } } }
-   pages is this run's word from each Facebook Page; Jarvis reads it to say why a Page has no numbers (#2460). */
+     pages: { "<Facebook Page profile>": { asked, answered, insights, error } or { skipped: "no FACEBOOK_PAGE_TOKEN..." } },
+     channels: { telegram: { chat: "@qalab_live", members, at: "<ISO>", history: [{ date: "YYYY-MM-DD", members }], skipped?, error? } } }
+   pages is this run's word from each Facebook Page; Jarvis reads it to say why a Page has no numbers (#2460).
+   A skipped or failed Telegram run keeps the last count and history and says why in skipped or error. */
 
 const fs = require("fs");
 const path = require("path");
@@ -35,7 +40,9 @@ function read(file = OUT) {
   const full = path.join(ROOT, file);
   if (!fs.existsSync(full)) return empty();
   const data = JSON.parse(fs.readFileSync(full, "utf8"));
-  return { version: 1, updatedAt: String(data.updatedAt || ""), posts: data.posts && typeof data.posts === "object" ? data.posts : {} };
+  const out = { version: 1, updatedAt: String(data.updatedAt || ""), posts: data.posts && typeof data.posts === "object" ? data.posts : {} };
+  if (data.channels && typeof data.channels === "object") out.channels = data.channels;
+  return out;
 }
 
 // Counts above zero only; a network that reports nothing for a post leaves it out.
@@ -178,8 +185,38 @@ async function mastodonNumbers(entries, request) {
   return found;
 }
 
-// Fresh numbers replace a network's old ones; networks not asked this run keep theirs.
-function merge(previous, found, updatedAt, pages) {
+const TELEGRAM_API = "https://api.telegram.org/bot";
+const HISTORY_DAYS = 400;
+
+async function telegramMembers(token, chat, request) {
+  const res = await request(TELEGRAM_API + token + "/getChatMemberCount?chat_id=" + encodeURIComponent(chat));
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.ok) throw new Error("Telegram " + res.status + ": " + String(json.description || "no answer").slice(0, 200));
+  const members = Math.round(Number(json.result));
+  if (!Number.isFinite(members) || members < 0) throw new Error("Telegram answered no member count");
+  return members;
+}
+
+// One point per UTC day: a second run the same day replaces that day's count. Without a fresh count (read.members
+// missing) the last count and history stay and read.skipped or read.error says why.
+function telegramEntry(previous, read, at) {
+  const old = previous && typeof previous === "object" ? previous : {};
+  const history = (Array.isArray(old.history) ? old.history : []).filter((p) => p && /^\d{4}-\d{2}-\d{2}$/.test(p.date) && Number.isFinite(Number(p.members)));
+  const entry = { chat: read.chat || old.chat || "" };
+  if (Number.isFinite(read.members)) {
+    const date = at.slice(0, 10);
+    const kept = history.filter((p) => p.date !== date).concat({ date, members: read.members }).sort((a, b) => a.date.localeCompare(b.date));
+    return Object.assign(entry, { members: read.members, at, history: kept.slice(-HISTORY_DAYS) });
+  }
+  if (Number.isFinite(Number(old.members))) Object.assign(entry, { members: Number(old.members), at: old.at || "" });
+  entry.history = history.slice(-HISTORY_DAYS);
+  if (read.skipped) entry.skipped = read.skipped;
+  if (read.error) entry.error = read.error;
+  return entry;
+}
+
+// Fresh numbers replace a network's old ones; networks not asked this run keep theirs, and so do channels.
+function merge(previous, found, updatedAt, pages, channels) {
   const posts = JSON.parse(JSON.stringify(previous.posts || {}));
   found.forEach(({ post, channel, numbers }) => {
     posts[post] = posts[post] || {};
@@ -188,7 +225,8 @@ function merge(previous, found, updatedAt, pages) {
     if (!Object.keys(posts[post]).length) delete posts[post];
   });
   const sorted = Object.fromEntries(Object.keys(posts).sort().map((key) => [key, posts[key]]));
-  return Object.assign({ version: 1, updatedAt, posts: sorted }, pages ? { pages } : {});
+  const keep = channels || previous.channels;
+  return Object.assign({ version: 1, updatedAt, posts: sorted }, pages ? { pages } : {}, keep ? { channels: keep } : {});
 }
 
 // A face's Facebook entries, read with its own Page token (#2327); entries from before the faces have no profile of
@@ -230,7 +268,17 @@ async function main() {
   const toots = sentEntries(open, ["mastodon"]);
   found.push(...await blueskyNumbers(sky, fetch), ...await mastodonNumbers(toots, fetch));
   notes.push("Bluesky: " + sky.length + " and Mastodon: " + toots.length + " sent posts asked");
-  const next = merge(read(), found, new Date().toISOString(), pages);
+  const previous = read();
+  const at = new Date().toISOString();
+  const chat = process.env.TELEGRAM_CHANNEL || "";
+  const tg = { chat };
+  if (!process.env.TELEGRAM_BOT_TOKEN || !chat) tg.skipped = "no " + [!process.env.TELEGRAM_BOT_TOKEN && "TELEGRAM_BOT_TOKEN secret", !chat && "TELEGRAM_CHANNEL variable"].filter(Boolean).join(" or ");
+  else {
+    try { tg.members = await telegramMembers(process.env.TELEGRAM_BOT_TOKEN, chat, fetch); } catch (error) { tg.error = error.message; }
+  }
+  const telegram = telegramEntry((previous.channels || {}).telegram, tg, at);
+  notes.push("Telegram " + (chat || "channel") + ": " + (tg.skipped ? "skipped, " + tg.skipped : tg.error ? "kept the last count, " + tg.error : tg.members + " members"));
+  const next = merge(previous, found, at, pages, Object.assign({}, previous.channels, { telegram }));
   fs.mkdirSync(path.dirname(path.join(ROOT, OUT)), { recursive: true });
   fs.writeFileSync(path.join(ROOT, OUT), JSON.stringify(next, null, 1) + "\n");
   console.log(notes.join("\n") + "\n" + Object.keys(next.posts).length + " posts with numbers in " + OUT);
@@ -238,4 +286,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { METRICS, OUT, read, counts, fromBuffer, sentEntries, pageEntries, bufferNumbers, facebookNumbers, blueskyNumbers, mastodonNumbers, merge };
+module.exports = { METRICS, OUT, read, counts, fromBuffer, sentEntries, pageEntries, bufferNumbers, facebookNumbers, blueskyNumbers, mastodonNumbers, telegramMembers, telegramEntry, merge };

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live reports · QA-lab URL Review</title>
+  <link rel="stylesheet" href="css/fonts.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body { font-family: Inter, system-ui, sans-serif; color: #e8f3f4; -webkit-font-smoothing: antialiased; overflow: hidden;
+      background: radial-gradient(700px 360px at 10% 0%, rgba(77, 179, 187, .26), transparent 62%), radial-gradient(600px 320px at 95% 10%, rgba(226, 196, 138, .16), transparent 58%), #071116; }
+    main { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 18px 20px; max-width: 560px; margin: 0 auto; }
+    .eyebrow { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #e2c48a; }
+    h1 { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: clamp(1.7rem, 7vw, 2.4rem); line-height: .98; letter-spacing: -.03em; color: #f4fafb; }
+    h1 em { display: block; color: #7ef6fb; }
+    .stat { margin: 0; color: #9fb3b8; font-size: 14px; }
+    .stat b { color: #e8f3f4; }
+    ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    li { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid rgba(159, 214, 220, .16); border-radius: 14px; background: rgba(13, 30, 36, .62); }
+    li svg { display: block; }
+    .name { min-width: 0; }
+    .name b { display: block; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .name small { color: #9fb3b8; font-size: 12px; }
+    .grade { font-size: 12px; font-weight: 700; color: #9fb3b8; }
+    button { appearance: none; border: 0; border-radius: 999px; padding: 13px 18px; font: 700 15px Inter, system-ui, sans-serif; color: #062027; background: #7ef6fb; cursor: pointer; box-shadow: 0 8px 30px rgba(126, 246, 251, .25); }
+    button:focus-visible { outline: 2px solid #e2c48a; outline-offset: 3px; }
+    .fine { margin: 0; text-align: center; font-size: 11.5px; color: #9fb3b8; }
+    @media (max-height: 430px) { ol li:nth-child(n+3) { display: none; } .fine { display: none; } }
+    @media (max-height: 340px) { ol { display: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow" data-t="eyebrow">Live reports · QA-lab</p>
+    <h1 data-t="title">Real sites. Real reviews. <em>Open any of them.</em></h1>
+    <p class="stat" data-stat></p>
+    <ol data-top></ol>
+    <button type="button" data-open data-t="open">Turn the ring →</button>
+    <p class="fine" data-t="fine">One automated analysis of public pages each. A starting point, not a verdict.</p>
+  </main>
+  <script type="module" src="splash.js"></script>
+</body>
+</html>

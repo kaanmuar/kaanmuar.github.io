@@ -26,6 +26,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
 ## YouTube: existing account, https://www.youtube.com/@qalaburlreview
 
 - [ ] Log in and check the account email is `qalaburlreview@carlosandmunoz.com`; change it in the account settings if not.
+- [ ] New for the live account (#2568): add Live Reports on Telegram (https://t.me/qalab_live) and r/QALabLiveReports (https://www.reddit.com/r/QALabLiveReports/) to Links (14), after the links it already has.
 - [ ] Verify the channel by phone (youtube.com/verify) so custom thumbnails and videos over 15 minutes work.
 - [ ] Name:
   ```text
@@ -43,10 +44,12 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   
   En español y português: @qaurlreview
   ```
-- [ ] Links:
+- [ ] Links (14):
   - Website: https://carlosandmunoz.com/qalaburlreview.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   - Social hub: https://carlosandmunoz.com/qa-review-social.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   - ES · PT: https://www.youtube.com/@qaurlreview
+  - Live Reports on Telegram: https://t.me/qalab_live (new: add it to the live account)
+  - r/QALabLiveReports: https://www.reddit.com/r/QALabLiveReports/ (new: add it to the live account)
 - [ ] Contact email:
   ```text
   qalaburlreview@carlosandmunoz.com
@@ -78,6 +81,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
 ## Reddit: existing account, https://www.reddit.com/user/qalaburlreview/
 
 - [ ] Log in and check the account email is `qalaburlreview@carlosandmunoz.com`; change it in the account settings if not.
+- [ ] New for the live account (#2568): add Live Reports on Telegram (https://t.me/qalab_live) and r/QALabLiveReports (https://www.reddit.com/r/QALabLiveReports/) to Social links (5), after the links it already has.
 - [ ] Display name:
   ```text
   QA-lab URL Review
@@ -90,6 +94,8 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   - Website: https://carlosandmunoz.com/qalaburlreview.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   - Social hub: https://carlosandmunoz.com/qa-review-social.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   - ES · PT: https://www.reddit.com/user/qaurlreview/
+  - Live Reports on Telegram: https://t.me/qalab_live (new: add it to the live account)
+  - r/QALabLiveReports: https://www.reddit.com/r/QALabLiveReports/ (new: add it to the live account)
 - [ ] Upload Avatar: `media/faces-2026-11/en/reddit/avatar-256.png`
 - [ ] Upload Banner; the copy stays in the middle third: `media/faces-2026-11/en/reddit/banner-1920x384.jpg`
 - [ ] Access: None: Reddit posts stay manual.
@@ -208,6 +214,8 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   - Website: https://carlosandmunoz.com/qalaburlreview.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   - Social hub: https://carlosandmunoz.com/qa-review-social.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   - ES · PT: https://www.instagram.com/qaurlreview/
+  - Live Reports on Telegram: https://t.me/qalab_live
+  - r/QALabLiveReports: https://www.reddit.com/r/QALabLiveReports/
 - [ ] Highlight names:
   ```text
   Live Reports, Tips, Skits, Live runs, How it works

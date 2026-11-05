@@ -1,6 +1,7 @@
 "use strict";
 /*
- * Jarvis social hub (#1420): the queue per channel from the Buffer, Facebook and open-social (Bluesky, Mastodon, Threads, Instagram) ledgers, the field-sweep
+ * Jarvis social hub (#1420): the queue per channel from the Buffer, Facebook, open-social (Bluesky, Mastodon, Threads, Instagram)
+ * and Telegram ledgers (the @qalab_live channel post of each Live Reports batch, #2549), the field-sweep
  * proposals still waiting for a decision, approving or dismissing one in socialHub/live the way the hub
  * editor does, and starting the posting workflows now instead of at their nightly slot.
  */
@@ -9,13 +10,20 @@ const Admin = require("./social-hub-admin");
 const WORKFLOWS = [
   { file: "buffer-batch.yml", name: "Buffer", inputs: { mode: "retry" } },
   { file: "facebook-page.yml", name: "Facebook Page" },
-  { file: "open-social.yml", name: "Bluesky, Mastodon, Threads and Instagram" }
+  { file: "open-social.yml", name: "Bluesky, Mastodon, Threads and Instagram" },
+  // The Reddit app's upload after each batch (#2549); the app posts in r/QALabLiveReports on its own daily task, and
+  // the same workflow's ledger job reads the app's logs into assets/social/reddit.json (#2571). Post now leaves it
+  // alone: watch only.
+  { file: "reddit-live.yml", name: "Reddit app (r/QALabLiveReports)", watch: true }
 ];
+
+// Channels that post once per Live Reports batch rather than per post, after the calendar channels.
+const LIVE_CHANNELS = [["telegram", "Telegram"], ["reddit", "Reddit"]];
 
 /** Every channel in calendar order, with what is scheduled next, what went out last and what failed in the window. */
 function byChannel(books, now, since) {
   const rows = {};
-  Admin.CHANNELS.forEach(([key, name]) => { rows[key] = { channel: key, name, scheduled: 0, sent: 0, failed: 0, next: [], last: null }; });
+  Admin.CHANNELS.concat(LIVE_CHANNELS).forEach(([key, name]) => { rows[key] = { channel: key, name, scheduled: 0, sent: 0, failed: 0, next: [], last: null }; });
   books.forEach((book) => {
     Object.keys((book && book.posts) || {}).forEach((post) => {
       (book.posts[post] || []).forEach((r) => {
@@ -62,4 +70,52 @@ function decide(live, proposal, decision, today) {
   return Admin.clean(next);
 }
 
-module.exports = { WORKFLOWS, byChannel, state, pending, decide };
+const TELEGRAM_SETUP = "Add the TELEGRAM_BOT_TOKEN repo secret and the TELEGRAM_CHANNEL repo variable (@qalab_live); scripts/social-metrics.js reads the count each morning in auto-live-reports.yml.";
+
+/**
+ * The Telegram channel's members from the metrics ledger (#2570): the count now, its change since the range began
+ * (against the last daily point on or before the range start, else the oldest point), the points in the range, and a
+ * need line when there is no count or the last run skipped or failed.
+ */
+function telegramMembers(metrics, since) {
+  const t = metrics && metrics.channels && metrics.channels.telegram;
+  if (!t || !Number.isFinite(Number(t.members))) {
+    const why = t && t.error ? "the Bot API refused it (" + String(t.error).slice(0, 200) + "). The bot must be an admin of the channel." : t && t.skipped ? "the daily social numbers skipped it (" + t.skipped + "). " + TELEGRAM_SETUP : "the daily social numbers have no member count for the channel yet. " + TELEGRAM_SETUP;
+    return { members: null, change: null, need: "Telegram members: " + why };
+  }
+  const stale = t.error ? "the last run failed (" + String(t.error).slice(0, 200) + "). The bot must be an admin of the channel." : t.skipped ? "the last run skipped it (" + t.skipped + "). " + TELEGRAM_SETUP : "";
+  return Object.assign(inRange(t, since), { need: stale ? "Telegram members: showing the count from " + String(t.at || "").slice(0, 10) + " because " + stale : "" });
+}
+
+// A { chat, members, at, history } count: the change since the range began, against the last daily point on or before
+// the range start, else the oldest point.
+function inRange(t, since) {
+  const history = (Array.isArray(t.history) ? t.history : []).filter((p) => p && typeof p.date === "string" && Number.isFinite(Number(p.members)))
+    .map((p) => ({ date: p.date, members: Number(p.members) })).sort((a, b) => a.date.localeCompare(b.date));
+  const start = new Date(since).toISOString().slice(0, 10);
+  const before = history.filter((p) => p.date <= start);
+  const from = before.length ? before[before.length - 1] : history[0];
+  const latest = history[history.length - 1];
+  const members = Number(t.members);
+  return {
+    channel: t.chat || "",
+    members,
+    at: t.at || "",
+    change: from && latest && from.date < latest.date ? members - from.members : null,
+    from: from && latest && from.date < latest.date ? from : null,
+    history: history.filter((p) => p.date >= start)
+  };
+}
+
+const REDDIT_SETUP = "The Reddit app (reddit/live-reports) logs the count on its 16:20 UTC daily task, and the ledger job in reddit-live.yml reads it with the DEVVIT_TOKEN secret into assets/social/reddit.json.";
+const REDDIT_STALE_MS = 2 * 24 * 3600000;
+
+/** The subreddit's members from the Reddit ledger's members (#2571), in the same shape as telegramMembers. */
+function redditMembers(book, since, now) {
+  const r = book && book.members;
+  if (!r || !Number.isFinite(Number(r.members))) return { members: null, change: null, need: "Reddit members: the Reddit ledger has no member count yet. " + REDDIT_SETUP };
+  const old = Number.isFinite(now) && Date.parse(r.at || "") < now - REDDIT_STALE_MS;
+  return Object.assign(inRange(r, since), { need: old ? "Reddit members: showing the count from " + String(r.at || "").slice(0, 10) + ", more than two days old. " + REDDIT_SETUP : "" });
+}
+
+module.exports = { WORKFLOWS, LIVE_CHANNELS, byChannel, state, pending, decide, telegramMembers, redditMembers };

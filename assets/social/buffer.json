@@ -878,9 +878,10 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6adc6dcc8b3d437ddcab9d69",
-    "at": "2026-11-04T15:49:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.765Z"
+    "at": "2026-11-04T15:49:25.708Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7523773407528755200",
+    "checked": "2026-11-04T20:11:37.270Z"
    },
    {
     "channel": "tiktok",
@@ -2050,9 +2051,10 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6ae820fb64604db3144128bd",
-    "at": "2026-11-04T15:49:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.760Z"
+    "at": "2026-11-04T15:49:25.543Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7523773406283137025",
+    "checked": "2026-11-04T20:11:37.270Z"
    },
    {
     "channel": "tiktok",
@@ -2657,6 +2659,584 @@
     "checked": "2026-11-04T13:35:00.207Z"
    }
   ],
+  "auto-2026-11-04/01-u-selia-co": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb917d8aec178794a4a591",
+    "at": "2026-11-05T14:44:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:41.380Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb917bb1d4b989c0cb58a9",
+    "at": "2026-11-06T01:30:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:38.229Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb917dd0337bbdcd47d3d4",
+    "at": "2026-11-05T21:27:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:40.715Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb917cd0337bbdcd47d377",
+    "at": "2026-11-06T00:31:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:39.718Z"
+   }
+  ],
+  "auto-2026-11-04/02-u-treinta-co": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb918001a821141727e46b",
+    "at": "2026-11-05T12:37:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:44.533Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb917ea101dc5e7731b194",
+    "at": "2026-11-05T22:29:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:41.824Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb9180d0337bbdcd47d457",
+    "at": "2026-11-05T13:40:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:43.737Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb917fb1d4b989c0cb59e2",
+    "at": "2026-11-05T21:30:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:42.974Z"
+   }
+  ],
+  "auto-2026-11-04/03-u-tributi-com": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb9183b1d4b989c0cb5a95",
+    "at": "2027-03-13T15:50:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:47.212Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb918101a821141727e503",
+    "at": "2027-03-14T02:43:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:44.984Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb91838aec178794a4a74f",
+    "at": "2027-03-14T01:28:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:46.468Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb918201a821141727e58f",
+    "at": "2027-03-14T01:46:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:45.791Z"
+   }
+  ],
+  "auto-2026-11-04/04-u-movinglake-com": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb918501a821141727e65a",
+    "at": "2027-03-14T15:39:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:49.661Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb9184d0337bbdcd47d630",
+    "at": "2027-03-15T02:34:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:47.639Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb9185a101dc5e7731b355",
+    "at": "2027-03-14T23:54:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:49.094Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb918401a821141727e630",
+    "at": "2027-03-15T01:24:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:48.424Z"
+   }
+  ],
+  "auto-2026-11-04/05-u-todoscomemos-com": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb9188d0337bbdcd47d769",
+    "at": "2027-03-15T13:23:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:52.309Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb918660e67ef1d1ccd1d6",
+    "at": "2027-03-15T23:25:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:50.095Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb9188d0337bbdcd47d73f",
+    "at": "2027-03-15T17:09:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:51.474Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb918760e67ef1d1ccd203",
+    "at": "2027-03-15T22:18:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:50.849Z"
+   }
+  ],
+  "auto-2026-11-04/06-u-agendapro-com": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb918ad0337bbdcd47d802",
+    "at": "2027-03-16T13:45:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:54.720Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb9189a101dc5e7731b58e",
+    "at": "2027-03-16T23:17:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:52.823Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb918ad0337bbdcd47d7d9",
+    "at": "2027-03-16T16:32:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:54.278Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb918a60e67ef1d1ccd30d",
+    "at": "2027-03-16T22:32:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:53.727Z"
+   }
+  ],
+  "auto-2026-11-04/07-u-vobi-com-br": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb918d01a821141727e93b",
+    "at": "2027-03-16T14:27:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:57.253Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb918b60e67ef1d1ccd38b",
+    "at": "2027-03-17T00:17:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:55.158Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb918d01a821141727e8dd",
+    "at": "2027-03-16T19:10:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:56.747Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb918cd0337bbdcd47d899",
+    "at": "2027-03-16T23:31:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:55.809Z"
+   }
+  ],
+  "auto-2026-11-04/08-u-itsrever-com": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb9190a101dc5e7731bc53",
+    "at": "2026-11-05T13:19:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:00.078Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb918eb1d4b989c0cb5e9c",
+    "at": "2026-11-05T23:29:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:57.837Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb918f60e67ef1d1ccd5a6",
+    "at": "2026-11-05T16:16:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:59.508Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb918fa101dc5e7731b9c5",
+    "at": "2026-11-05T22:31:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:11:58.701Z"
+   }
+  ],
+  "auto-2026-11-04/09-u-airhelp-com": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb9193a101dc5e7731bd5b",
+    "at": "2027-03-17T14:27:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:03.435Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb919101a821141727ec96",
+    "at": "2027-03-18T00:22:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:00.583Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb919360e67ef1d1ccd657",
+    "at": "2027-03-17T19:44:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:02.243Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb9192d0337bbdcd47db1c",
+    "at": "2027-03-17T23:38:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:01.344Z"
+   }
+  ],
+  "auto-2026-11-04/10-u-ucentral-edu-co": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb9196d0337bbdcd47dc13",
+    "at": "2027-03-17T15:10:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:06.670Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb9194a101dc5e7731bd95",
+    "at": "2027-03-18T01:22:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:04.160Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb919660e67ef1d1ccd72e",
+    "at": "2027-03-17T22:23:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:05.773Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb9195a101dc5e7731be58",
+    "at": "2027-03-18T00:38:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:04.942Z"
+   }
+  ],
+  "auto-2026-11-04/11-u-setec-mk": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb919901a821141727f00a",
+    "at": "2027-03-18T15:00:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:09.128Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb919701a821141727ee6f",
+    "at": "2027-03-19T01:35:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:07.073Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb919801a821141727efe1",
+    "at": "2027-03-18T21:17:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:08.624Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb91988aec178794a4b4f6",
+    "at": "2027-03-19T00:41:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:07.864Z"
+   }
+  ],
+  "auto-2026-11-04/12-u-y-jesus-org": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb919b01a821141727f04d",
+    "at": "2027-03-18T15:42:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:11.430Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb919a8aec178794a4b555",
+    "at": "2027-03-19T02:35:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:09.559Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb919bd0337bbdcd47dd62",
+    "at": "2027-03-18T23:50:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:10.995Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb919ad0337bbdcd47dd37",
+    "at": "2027-03-19T01:41:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:10.361Z"
+   }
+  ],
+  "auto-2026-11-04/13-u-unillanos-edu-co": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb91a2d0337bbdcd47de3e",
+    "at": "2027-03-19T15:47:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:18.131Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb919ca101dc5e7731bf41",
+    "at": "2027-03-20T02:09:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:12.024Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb91a28aec178794a4b5fc",
+    "at": "2027-03-20T00:55:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:13.616Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb919d01a821141727f081",
+    "at": "2027-03-20T01:17:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:12.802Z"
+   }
+  ],
+  "auto-2026-11-04/14-u-ciqa-edu-mx": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb91a560e67ef1d1ccd97c",
+    "at": "2026-11-07T15:12:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:20.855Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb91a3a101dc5e7731c25c",
+    "at": "2026-11-08T01:47:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:18.588Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb91a4b1d4b989c0cb61ce",
+    "at": "2026-11-07T21:56:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:20.195Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb91a4a101dc5e7731c299",
+    "at": "2026-11-08T00:32:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:19.638Z"
+   }
+  ],
+  "auto-2026-11-04/15-u-ebc-mx": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb91a78aec178794a4bb4a",
+    "at": "2027-03-19T12:58:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:23.540Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb91a560e67ef1d1ccd9be",
+    "at": "2027-03-19T22:10:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:21.279Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb91a701a821141727f425",
+    "at": "2027-03-19T14:29:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:22.748Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb91a660e67ef1d1ccda11",
+    "at": "2027-03-19T21:17:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:22.031Z"
+   }
+  ],
+  "auto-2026-11-04/16-u-ispgaya-pt": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb91aad0337bbdcd47dfbf",
+    "at": "2027-03-20T13:02:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:26.518Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb91a8a101dc5e7731c32b",
+    "at": "2027-03-20T22:46:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:24.044Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb91aab1d4b989c0cb6365",
+    "at": "2027-03-20T14:52:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:25.869Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb91a960e67ef1d1ccdb4d",
+    "at": "2027-03-20T21:14:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:25.015Z"
+   }
+  ],
+  "auto-2026-11-04/17-u-enae-es": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aeb91adb1d4b989c0cb63e8",
+    "at": "2027-03-20T13:44:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:29.143Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aeb91ab01a821141727f48b",
+    "at": "2027-03-20T23:47:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:27.007Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aeb91ad8aec178794a4bbfe",
+    "at": "2027-03-20T17:26:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:28.641Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aeb91acb1d4b989c0cb63aa",
+    "at": "2027-03-20T22:15:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-04T20:12:27.876Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "linkedin",
@@ -3021,9 +3601,10 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6adf39f5551b0b514a6501fa",
-    "at": "2026-11-04T13:48:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.763Z"
+    "at": "2026-11-04T13:48:02.708Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2117977170966368574",
+    "checked": "2026-11-04T20:11:37.270Z"
    },
    {
     "channel": "youtube",
@@ -3905,9 +4486,10 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6add0ca20b5343d0709d6805",
-    "at": "2026-11-04T13:43:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.765Z"
+    "at": "2026-11-04T13:43:22.676Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7523741685344882688",
+    "checked": "2026-11-04T20:11:37.270Z"
    },
    {
     "channel": "tiktok",
@@ -3921,9 +4503,10 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6add0ca18b3d437ddcd6931b",
-    "at": "2026-11-04T16:24:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.765Z"
+    "at": "2026-11-04T16:24:05.395Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2118016441123319928",
+    "checked": "2026-11-04T20:11:37.270Z"
    },
    {
     "channel": "youtube",
@@ -8602,9 +9185,10 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6ad8c75d9935511603015100",
-    "at": "2026-11-04T15:07:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.767Z"
+    "at": "2026-11-04T15:07:43.940Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7523762913493446657",
+    "checked": "2026-11-04T20:11:37.270Z"
    },
    {
     "channel": "x",
@@ -9213,5 +9797,11 @@
     "checked": "2026-11-02T06:21:14.764Z"
    }
   ]
+ },
+ "retry": {
+  "auto-2026-11-04": {
+   "since": "2026-11-04T16:17:30.452Z",
+   "error": "The site did not serve https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg within 60 minutes."
+  }
  }
 }

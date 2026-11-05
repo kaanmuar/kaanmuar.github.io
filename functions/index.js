@@ -5926,7 +5926,7 @@ async function jarvisSocialPostNow() {
   const token = await githubApp.token();
   if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager), so Jarvis cannot start the workflows.");
   const started = [];
-  for (const w of jarvisSocial.WORKFLOWS) {
+  for (const w of jarvisSocial.WORKFLOWS.filter((w) => !w.watch)) {
     const path = "/repos/" + BUG_REPO + "/actions/workflows/" + w.file;
     const busy = ((await githubGet(path + "/runs?per_page=5", token)).workflow_runs || []).find((run) => run.status !== "completed");
     if (busy) { started.push({ name: w.name, state: "already running", url: busy.html_url }); continue; }
