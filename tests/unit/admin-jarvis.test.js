@@ -1266,6 +1266,27 @@ test("social: each channel shows what is next, what went out last and what faile
   assert.deepEqual([rows[1].sent, rows[1].failed, rows[1].last.url], [1, 1, "https://x.com/1"]);
   assert.deepEqual([rows[2].sent, rows[2].last.url, rows[3].failed], [1, "https://bsky.app/profile/q/post/1", 1]);
   assert.deepEqual([rows[10].name, rows[10].sent, rows[10].last.post], ["Telegram", 1, "live/2026-10-24"]);
+  assert.deepEqual(rows[10].numbers, {});
+});
+
+test("social: each channel adds up the numbers of the posts it sent in the range", () => {
+  const now = Date.parse("2026-11-05T15:00:00Z");
+  const telegram = { posts: {
+    "live/2026-11-04": [{ channel: "telegram", at: "2026-11-04T18:38:14Z", result: "sent" }],
+    "live/2026-11-03": [{ channel: "telegram", at: "2026-11-03T18:38:14Z", result: "sent" }],
+    "live/2026-10-01": [{ channel: "telegram", at: "2026-10-01T18:38:14Z", result: "sent" }]
+  } };
+  const reddit = { posts: { "live/2026-11-04": [{ channel: "reddit", at: "2026-11-04T16:20:05Z", result: "sent" }] } };
+  const metricsBook = { posts: {
+    "live/2026-11-04": { telegram: { views: 12, likes: 2 }, reddit: { likes: 7, comments: 3 } },
+    "live/2026-11-03": { telegram: { views: 30 } },
+    "live/2026-10-01": { telegram: { views: 500 } }
+  } };
+  const rows = social.byChannel([telegram, reddit], now, now - 7 * 86400000, metricsBook);
+  const by = Object.fromEntries(rows.map((r) => [r.channel, r.numbers]));
+  assert.deepEqual(by.telegram, { views: 42, likes: 2 }, "the post before the range is left out");
+  assert.deepEqual(by.reddit, { likes: 7, comments: 3 });
+  assert.deepEqual(by.linkedin, {});
 });
 
 test("social: Telegram members show the count now and the change since the range began, or a need line", () => {

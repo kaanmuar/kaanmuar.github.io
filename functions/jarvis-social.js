@@ -20,10 +20,14 @@ const WORKFLOWS = [
 // Channels that post once per Live Reports batch rather than per post, after the calendar channels.
 const LIVE_CHANNELS = [["telegram", "Telegram"], ["reddit", "Reddit"]];
 
-/** Every channel in calendar order, with what is scheduled next, what went out last and what failed in the window. */
-function byChannel(books, now, since) {
+const NUMBERS = ["impressions", "views", "likes", "comments"];
+
+/** Every channel in calendar order, with what is scheduled next, what went out last and what failed in the window, and
+ * the summed numbers (metrics.json posts, #2602) of the posts it sent in the window. */
+function byChannel(books, now, since, metrics) {
   const rows = {};
-  Admin.CHANNELS.concat(LIVE_CHANNELS).forEach(([key, name]) => { rows[key] = { channel: key, name, scheduled: 0, sent: 0, failed: 0, next: [], last: null }; });
+  const posts = (metrics && metrics.posts) || {};
+  Admin.CHANNELS.concat(LIVE_CHANNELS).forEach(([key, name]) => { rows[key] = { channel: key, name, scheduled: 0, sent: 0, failed: 0, next: [], last: null, numbers: {} }; });
   books.forEach((book) => {
     Object.keys((book && book.posts) || {}).forEach((post) => {
       (book.posts[post] || []).forEach((r) => {
@@ -35,6 +39,8 @@ function byChannel(books, now, since) {
           row.next.push({ at: r.at, post });
         } else if (at >= since && r.result === "sent") {
           row.sent += 1;
+          const got = (posts[post] || {})[r.channel] || {};
+          NUMBERS.forEach((k) => { if (Number(got[k]) > 0) row.numbers[k] = (row.numbers[k] || 0) + Number(got[k]); });
           if (!row.last || at > Date.parse(row.last.at)) row.last = { at: r.at, post, url: r.url || "" };
         } else if (at >= since && r.result === "failed") row.failed += 1;
       });

@@ -10,6 +10,9 @@ const POSTED = "posted-batch";
 // assets/social/reddit.json (scripts/reddit-ledger.js, #2571). Reddit does not approve fetch to a personal domain,
 // so the app reports nothing over the network. Keep the prefix and fields in step with scripts/reddit-ledger.js.
 const LEDGER = "qalab-ledger ";
+// Batch posts by id (field) and posted time (value), so the daily run logs each one's score and comments (#2602).
+const BATCHES = "batch-posts";
+const NUMBERS_DAYS = 30;
 
 async function members() {
   try {
@@ -25,6 +28,24 @@ async function ledger(post) {
   const line = Object.assign({ kind: post ? "post" : "members", at: new Date().toISOString() }, await members());
   if (post) Object.assign(line, { key: "live/" + summary.newest, id: post.id, url: "https://www.reddit.com" + post.permalink, posted: post.createdAt.toISOString() });
   console.log(LEDGER + JSON.stringify(line));
+  if (post) await redis.hSet(BATCHES, { [post.id]: post.createdAt.toISOString() });
+}
+
+async function numbers() {
+  const known = await redis.hGetAll(BATCHES);
+  const since = Date.now() - NUMBERS_DAYS * 24 * 3600000;
+  const old = Object.keys(known).filter((id) => !(Date.parse(known[id]) >= since));
+  if (old.length) await redis.hDel(BATCHES, old);
+  const posts = [];
+  for (const id of Object.keys(known).filter((k) => !old.includes(k))) {
+    try {
+      const post = await reddit.getPostById(id);
+      posts.push({ id, score: post.score, comments: post.numberOfComments });
+    } catch (error) {
+      console.error("post " + id + " numbers failed; " + error.message);
+    }
+  }
+  if (posts.length) console.log(LEDGER + JSON.stringify({ kind: "numbers", at: new Date().toISOString(), posts }));
 }
 
 function fallback() {
@@ -67,12 +88,14 @@ async function routes(url) {
       // A day without a new upload keeps the same batch: no second post for it, only the member count.
       if (!summary.newest || (await redis.get(POSTED)) === summary.newest) {
         await ledger(null);
+        await numbers();
         return {};
       }
       const post = await submit(batchTitle());
       await pin(post);
       await redis.set(POSTED, summary.newest);
       await ledger(post);
+      await numbers();
       return {};
     }
     default:

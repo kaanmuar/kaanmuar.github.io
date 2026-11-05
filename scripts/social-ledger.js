@@ -14,8 +14,10 @@
        slot: "<the calendar time a queued post waits to be moved to (social-calendar.js --sync)>",
        hash: "<a short hash of the text Telegram has, so telegram-live.js scrub edits only changed posts>" }] },
      retry: { "<batch>": { since: "<ISO>", error } },
-     members: { chat: "r/QALabLiveReports", members, at: "<ISO>", history: [{ date: "YYYY-MM-DD", members }] } }
-   members is only in a channel's own ledger (reddit.json): the count now and one point per UTC day.
+     members: { chat: "r/QALabLiveReports", members, at: "<ISO>", history: [{ date: "YYYY-MM-DD", members }] },
+     numbers: { "<post id>": { likes, comments, at: "<ISO>" } } }
+   members is only in a channel's own ledger (reddit.json): the count now and one point per UTC day. numbers is each
+   post's latest score and comments as the Reddit app logged them (#2602), read by scripts/social-metrics.js.
 
    One entry per calendar channel and profile. Every later run looks up the queued entries whose time has passed
    and moves them to sent or failed. retry lists the batches a spent Buffer limit stopped (#1188); the nightly
@@ -60,6 +62,8 @@ function write(file, ledger) {
   const retry = Object.keys(ledger.retry || {}).sort();
   if (retry.length) out.retry = Object.fromEntries(retry.map((batch) => [batch, ledger.retry[batch]]));
   if (ledger.members) out.members = ledger.members;
+  const numbered = Object.keys(ledger.numbers || {}).sort();
+  if (numbered.length) out.numbers = Object.fromEntries(numbered.map((id) => [id, ledger.numbers[id]]));
   fs.writeFileSync(path.resolve(ROOT, file), JSON.stringify(out, null, 1) + "\n");
 }
 
@@ -115,6 +119,16 @@ function count(ledger, chat, members, at) {
   return ledger;
 }
 
+// A post's numbers as of at; an older reading never replaces a newer one.
+function numbers(ledger, id, values, at) {
+  if (!id || !Number.isFinite(Date.parse(at || ""))) return ledger;
+  const old = (ledger.numbers || {})[id];
+  if (old && (old.at || "") > at) return ledger;
+  const n = (v) => Math.max(0, Math.round(Number(v) || 0));
+  ledger.numbers = Object.assign({}, ledger.numbers, { [id]: { likes: n(values.likes), comments: n(values.comments), at } });
+  return ledger;
+}
+
 // A batch one side took off retry comes back if the other still lists it; re-queueing it again only skips posts.
 function merge(into, from) {
   Object.entries(from.posts || {}).forEach(([post, list]) => list.forEach((entry) => record(into, post, entry)));
@@ -123,6 +137,7 @@ function merge(into, from) {
     (from.members.history || []).forEach((p) => count(into, from.members.chat, p.members, p.at || p.date + "T00:00:00.000Z"));
     count(into, from.members.chat, from.members.members, from.members.at);
   }
+  Object.entries(from.numbers || {}).forEach(([id, v]) => numbers(into, id, v, v.at));
   return into;
 }
 
@@ -174,4 +189,4 @@ if (require.main === module) {
   write(into, merge(read(into), read(from)));
 }
 
-module.exports = { BUFFER, FACEBOOK, OPEN_SOCIAL, DEVTO, empty, read, write, record, count, merge, find, due, upgrade, fromBuffer, fromGraph, markRetry, clearRetry, retries };
+module.exports = { BUFFER, FACEBOOK, OPEN_SOCIAL, DEVTO, empty, read, write, record, count, numbers, merge, find, due, upgrade, fromBuffer, fromGraph, markRetry, clearRetry, retries };
