@@ -1,7 +1,7 @@
 "use strict";
 /*
- * Jarvis social hub (#1420): the queue per channel from the Buffer, Facebook, open-social (Bluesky, Mastodon, Threads, Instagram)
- * and Telegram ledgers (the @qalab_live channel post of each Live Reports batch, #2549), the field-sweep
+ * Jarvis social hub (#1420): the queue per channel from the Buffer, Facebook, open-social (Bluesky, Mastodon, Threads, Instagram),
+ * Telegram and Reddit ledgers (each Live Reports batch, #2549, and the campaign posts, #2606), the field-sweep
  * proposals still waiting for a decision, approving or dismissing one in socialHub/live the way the hub
  * editor does, and starting the posting workflows now instead of at their nightly slot.
  */
