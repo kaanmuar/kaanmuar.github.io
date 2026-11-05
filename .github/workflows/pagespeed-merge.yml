@@ -48,8 +48,16 @@ jobs:
           [[ "$PR" =~ ^[0-9]+$ ]] || { echo "::error::Not a PR number."; exit 1; }
           gh api "repos/$REPO/pulls/$PR" > "$RUNNER_TEMP/pr.json"
           state=$(jq -r .state "$RUNNER_TEMP/pr.json"); ref=$(jq -r .head.ref "$RUNNER_TEMP/pr.json"); sha=$(jq -r .head.sha "$RUNNER_TEMP/pr.json")
+          mergeable=$(jq -r .mergeable "$RUNNER_TEMP/pr.json")
           [ "$state" = open ] || { echo "::error::#$PR is $state."; exit 1; }
           [[ "$ref" =~ ^pagespeed/(safe|ai)-[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "::error::$ref is not a PageSpeed branch."; exit 1; }
+          if [ "$mergeable" = "null" ]; then
+            sleep 3
+            gh api "repos/$REPO/pulls/$PR" > "$RUNNER_TEMP/pr.json"
+            mergeable=$(jq -r .mergeable "$RUNNER_TEMP/pr.json")
+          fi
+          # A conflicting PR never gets pull_request CI, so the required checks stay missing (#2242).
+          [ "$mergeable" != "false" ] || { echo "::error::#$PR conflicts with main, so GitHub did not run its checks. The branch must not commit generated social hub files."; exit 1; }
           gh api "repos/$REPO/commits/$sha/check-runs?per_page=100" > "$RUNNER_TEMP/checks.json"
           bad=$(jq -r '[.check_runs[] | select(.status == "completed" and (.conclusion | IN("failure","timed_out","cancelled","action_required","startup_failure","stale"))) | .name] | unique | join(", ")' "$RUNNER_TEMP/checks.json")
           [ -z "$bad" ] || { echo "::error::CI failed on $sha: $bad."; exit 1; }

@@ -17,6 +17,7 @@ const pagesLib = require("./pagespeed/pages");
 const psi = require("./pagespeed/psi");
 const fixes = require("./pagespeed/fixes");
 const routine = require("./pagespeed/routine");
+const hub = require("./social-hub-outputs");
 const ai = require("./pagespeed/ai");
 
 const ROOT = process.cwd();
@@ -143,12 +144,15 @@ async function measure(o) {
   const data = readJson(o.check, { pages: [] });
   const report = readJson(o.report, { fixes: [] });
   const files = changedFiles();
-  const kept = report.fixes.filter((f) => files.includes(f.file || f.page));
+  // Generated hub files stay out of the branch. Committing them conflicts with main, and GitHub does not run
+  // pull_request CI on a conflicting PR, so url-review-unit never passes (#2242).
+  const ship = hub.keep(files);
+  const kept = report.fixes.filter((f) => ship.includes(f.file || f.page));
   const dropped = report.fixes.length - kept.length;
   report.fixes = kept;
-  report.files = files;
+  report.files = ship;
   if (dropped) report.note = dropped + " fix" + (dropped === 1 ? " was" : "es were") + " dropped: the pages are generated, and their builder (scripts/regen-generated.sh) wrote them again. Those fixes belong in the builder.";
-  const code = files.filter((f) => !f.startsWith(DATA + "/"));
+  const code = ship.filter((f) => !f.startsWith(DATA + "/"));
   if (!code.length) {
     report.verdict = { up: false, reason: "Nothing to change.", drops: 0, rises: 0, missing: 0 };
     report.measured = [];
