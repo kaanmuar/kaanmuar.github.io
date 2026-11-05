@@ -20,6 +20,7 @@ const ACTS = {
   notice: ["send", "skip"],
   social: ["approved", "dismissed"],
   engagement: ["approve", "edit", "dismiss"],
+  "owner-tags": ["approve", "edit", "dismiss"],
   countdown: ["now", "cancel"],
   pagespeed: ["merge", "close"]
 };

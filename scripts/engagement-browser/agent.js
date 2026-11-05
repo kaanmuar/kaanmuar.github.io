@@ -185,12 +185,13 @@ function cardFile(task) {
 
 // A comment task (#2452) runs the network's likeComment or replyComment; where a comment is a post (X, Threads) the
 // post's own action and already-replied check serve. A comment's answered state came with it from the notifications.
+// An owner-tags comment (more, #2633) skips that check: it goes under our own post, beside our earlier comment.
 async function act(page, task) {
   const net = NETWORKS[task.network];
   const fn = task.chain && net && net[task.action + "Comment"] ? task.action + "Comment" : task.action;
   if (!net || !net[fn]) return { ok: false, error: NETWORKS[task.network] ? net.name + " takes no " + task.action + " here." : "Unknown network." };
   try {
-    if (fn === "reply" && net.replied) {
+    if (fn === "reply" && net.replied && !task.more) {
       const had = await net.replied(page, task);
       if (had) return { ok: false, already: true, url: had.url || "" };
     }

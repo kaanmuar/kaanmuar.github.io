@@ -20,6 +20,7 @@ const R = require("./engagement-reports");
 const P = require("./engagement-profiles");
 const Joins = require("./engagement-joins");
 const Offer = require("./url-review-domain-offer");
+const OwnerTags = require("./owner-tags");
 
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const STALE = 75 * 60 * 1000;
@@ -787,6 +788,7 @@ async function source(ctx) {
     db.collection("engagement_private").doc("reddit").get()
   ]);
   const mac = macSnap.exists && macSnap.data().at ? macSnap.data() : null;
+  const ownerTags = await OwnerTags.status(db).catch(() => null);
   const reddit = redditSnap.exists && redditSnap.data().at ? redditSnap.data() : null;
   const redditLate = !reddit || now - Date.parse(reddit.at) > REDDIT_STALE;
   const signed = (k) => !!(mac && (mac.signedIn || {})[k]);
@@ -844,7 +846,7 @@ async function source(ctx) {
   const used = usedToday(cur.find((d) => d.day === E.bogotaDay(now)));
   const joins = await Joins.summary(db, conf, mac, used, now);
   return {
-    ok: true, settings: conf, paused: conf.paused, live: conf.live, stale, lastRun: last, runs, accounts,
+    ok: true, settings: conf, paused: conf.paused, live: conf.live, stale, lastRun: last, runs, accounts, ownerTags,
     waiting: waitingSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data()))).sort(byScore),
     approved: approvedSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data()))).sort((a, b) => String(b.actions.reply.decidedAt).localeCompare(String(a.actions.reply.decidedAt))).slice(0, 30),
     posts: top.map(brief), report, networks,

@@ -767,7 +767,8 @@ function engagementAsk(g) {
     paused: g.paused, live: g.live, accounts: (g.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })),
     totals: g.report.totals, approvalRate: g.report.approvalRate, topics: g.report.topics, tags: (g.report.tags || []).slice(0, 10), networks: g.report.networks,
     waiting: (g.waiting || []).length, topPosts: (g.posts || []).slice(0, 5).map((d) => d.network + ": " + (d.title || String(d.text || "").slice(0, 100)) + " (score " + d.score + ")"),
-    reportReplies: Object.assign({ waiting: (g.waiting || []).filter((d) => d.campaign === "report-reply").length }, g.report.invites)
+    reportReplies: Object.assign({ waiting: (g.waiting || []).filter((d) => d.campaign === "report-reply").length }, g.report.invites),
+    ownerTags: g.ownerTags ? { settings: g.ownerTags.settings, last: g.ownerTags.last && Object.assign({}, g.ownerTags.last, { sample: undefined }), accounts: g.ownerTags.accounts, waiting: (g.ownerTags.waiting || []).length } : null
   };
 }
 

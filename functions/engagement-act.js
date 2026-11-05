@@ -92,6 +92,18 @@ function linkFacets(text) {
   return out.length ? out : undefined;
 }
 
+/** Bluesky notifies a handle only through a mention facet with its DID; dids maps each handle (lower case) to one. */
+function mentionFacets(text, dids) {
+  const out = [];
+  for (const m of String(text).matchAll(/(^|[\s(])(@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)+))/gi)) {
+    const did = (dids || {})[m[3].toLowerCase()];
+    if (!did) continue;
+    const start = Buffer.byteLength(text.slice(0, m.index + m[1].length));
+    out.push({ index: { byteStart: start, byteEnd: start + Buffer.byteLength(m[2]) }, features: [{ $type: "app.bsky.richtext.facet#mention", did }] });
+  }
+  return out;
+}
+
 // --- The clients: like, repost, follow and reply on one post document -------------------------------------------
 // reply(d, text, lang, card) attaches card ({ png, type, alt, width, height }, report-card.js) when the network takes
 // it; an upload that fails leaves the reply as text and says why in cardError.
@@ -158,7 +170,14 @@ async function blueskyClient(cred, f, now) {
           embed = { $type: "app.bsky.embed.images", images: [{ alt: card.alt, image: up.blob, aspectRatio: { width: card.width, height: card.height } }] };
         } catch (error) { cardError = error.message; }
       }
-      const out = await create("app.bsky.feed.post", { text, facets: linkFacets(text), langs: lang ? [lang] : undefined, reply: { root, parent }, embed });
+      const dids = {};
+      for (const m of String(text).matchAll(/(?:^|[\s(])@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)+)/gi)) {
+        const h = m[1].toLowerCase();
+        if (h in dids) continue;
+        dids[h] = ((await call(f, service + "/xrpc/com.atproto.identity.resolveHandle?handle=" + encodeURIComponent(h), { headers: auth }).catch(() => ({}))).did) || "";
+      }
+      const facets = (linkFacets(text) || []).concat(mentionFacets(text, dids));
+      const out = await create("app.bsky.feed.post", { text, facets: facets.length ? facets : undefined, langs: lang ? [lang] : undefined, reply: { root, parent }, embed });
       return { id: out.uri, uri: out.uri, url: link(out.uri), card: embed ? "attached" : "", cardError };
     }
   };
@@ -590,7 +609,7 @@ async function sendReply(deps, c, task) {
   const at = new Date(deps.now).toISOString();
   const d = Object.assign({ key: task.key }, task.doc);
   try {
-    const had = await c.replied(d);
+    const had = (task.doc.ownerTags || {}).kind === "tags" ? null : await c.replied(d);
     if (had) {
       await task.ref.update({ "actions.reply.status": "replied", "actions.reply.at": at, "actions.reply.url": had.url || "", "actions.reply.uri": had.uri || "", "actions.reply.error": "We had already replied there, so this one was not sent.", updatedAt: at });
       await count(deps, task.doc.network, "already");
@@ -780,5 +799,5 @@ async function pendingInbox(deps, handled) {
 module.exports = {
   ACT_WINDOW, PER_RUN, MAX_TRIES, MASTODON_SCOPES, YT_SCOPE, API, ActError, CHAIN_DAYS, CHAIN_PER_RUN,
   carryOut, replyNow, pendingChains, pendingInbox, connections, saveBluesky, saveTelegram, connectTelegramCi, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call,
-  linkFacets, drawCard, cardFields, telegramComment
+  linkFacets, mentionFacets, drawCard, cardFields, telegramComment
 };

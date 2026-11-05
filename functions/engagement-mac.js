@@ -26,7 +26,9 @@
  *                                                                        joins within the warmed-up cap; a
  *                                                                        LinkedIn like names its reaction; a report
  *                                                                        reply on X brings its card (#2466) as
- *                                                                        { png: base64, type, alt }
+ *                                                                        { png: base64, type, alt }; an owner-tags
+ *                                                                        comment (#2633) brings more: true, as our
+ *                                                                        own post may already have our first one
  *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already, card, cardError }  what came
  *                                                                        of one task; already: the post had our
  *                                                                        earlier reply (url), so none was sent;
@@ -180,7 +182,7 @@ async function queue(deps, body) {
       draft: t.action === "reply" ? r.draft || "" : "", lang: t.action === "reply" ? r.lang || t.doc.lang || "" : "",
       reaction: t.action === "like" && t.doc.network === "linkedin" && !t.doc.chain ? reaction(t.doc) : "",
       chain: !!t.doc.chain, text: t.doc.chain ? clip(t.doc.text, 300) : "", title: t.action === "repost" ? clip(t.doc.title, 300) : ""
-    }, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {}));
+    }, (t.doc.ownerTags || {}).kind === "tags" ? { more: true } : {}, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {}));
   };
   for (const t of replies) await take(t);
   let dry = 0;
