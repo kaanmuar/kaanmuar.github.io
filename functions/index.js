@@ -5312,6 +5312,7 @@ const jarvisMarketing = require("./jarvis-marketing");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisAddresses = require("./jarvis-addresses");
 const jarvisEngagement = require("./jarvis-engagement");
+const ownerTags = require("./owner-tags");
 const engagementMac = require("./engagement-mac");
 const engagementReddit = require("./engagement-reddit");
 const jarvisPageSpeed = require("./jarvis-pagespeed");
@@ -5426,6 +5427,7 @@ async function jarvisNotifyAct(body, by) {
     if (out.error) throw new Error(out.error);
     return { message: out.status === "sent" ? "Sent to " + out.email + "." : "Skipped." };
   }
+  if (type === "owner-tags") return ownerTags.decide(Object.assign(engagementDeps(), { now }), id, act, body.text, by);
   if (type === "engagement") {
     const out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), { key: id, decision: act, text: body.text }, by);
     return { message: out.message };
@@ -6352,7 +6354,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-connect": (b) => (b.disconnect ? "disconnect " : "connect ") + String(b.network || "").slice(0, 20), "engagement-report": (b) => String(b.period || "daily") + " engagement report", "github-diagnose": (b) => "run " + String(b.run || "").slice(0, 20), "github-agent": (b) => (b.pr ? "PR #" + b.pr + " " : "") + String(b.key || b.run || b.prompt || "").slice(0, 100) };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-connect": (b) => (b.disconnect ? "disconnect " : "connect ") + String(b.network || "").slice(0, 20), "engagement-report": (b) => String(b.period || "daily") + " engagement report", "owner-tags-run": () => "owner tags run", "owner-tags-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op").join(", ").slice(0, 100), "owner-tags-decide": (b) => String(b.decision || "") + " " + String(b.report || "").slice(0, 60), "owner-tags-account": (b) => String(b.status || "approved") + " " + String(b.url || (b.network || "") + ":" + (b.handle || "")).slice(0, 100), "github-diagnose": (b) => "run " + String(b.run || "").slice(0, 20), "github-agent": (b) => (b.pr ? "PR #" + b.pr + " " : "") + String(b.key || b.run || b.prompt || "").slice(0, 100) };
 
 async function jarvisWatchRun() {
   const db = getFirestore();
@@ -6506,6 +6508,11 @@ exports.engagementWeeklyReport = scheduled(functions.runWith({ timeoutSeconds: 1
   return subject + "; results ticket: " + ticket.note;
 });
 exports.engagementMonthlyReport = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB", secrets: SECRETS.engagement }), "engagementMonthlyReport", engagementReport("monthly"));
+
+// Daily at 10:15 (#2633): tag report owners and the accounts around them under our report posts, and reply under owners' posts.
+const ownerTagsDeps = () => Object.assign(engagementDeps(), { site: customerMail.SITE, gemini: (prompt) => jarvisEngagement.geminiJson(fetch, process.env, prompt) });
+exports.ownerTags = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.engagement }), "ownerTags",
+  async () => ownerTags.runNote(await ownerTags.run(ownerTagsDeps())));
 
 const tiktokWatch = require("./tiktok-business-watch");
 
@@ -6842,6 +6849,11 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "engagement-decide") out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), body, operator);
     else if (op === "engagement-settings") out = await jarvisEngagement.saveSettings(getFirestore(), body.settings || body, operator, now);
     else if (op === "engagement-connect") out = await jarvisEngagement.connect(Object.assign(engagementDeps(), { now }), body, BOOKING_REDIRECT);
+    else if (op === "owner-tags-run") out = await ownerTags.run(Object.assign(ownerTagsDeps(), { now }));
+    else if (op === "owner-tags-settings") out = await ownerTags.saveSettings(getFirestore(), body.settings || body, operator, now);
+    else if (op === "owner-tags-decide") out = await ownerTags.decide(Object.assign(engagementDeps(), { now }), body.report, body.decision, body.text, operator);
+    else if (op === "owner-tags-account") out = await ownerTags.account(Object.assign(engagementDeps(), { now }), body, operator);
+    else if (op === "owner-tags-status") out = await ownerTags.status(getFirestore());
     else if (op === "engagement-report") out = await jarvisEngagement.sendReport(Object.assign(engagementDeps(), { now }), ["daily", "weekly", "monthly"].includes(body.period) ? body.period : "daily");
     else if (op === "github-diagnose") {
       const res = await jarvisGithubFix.diagnose(jarvisGithubCtx(now), { run: body.run, repo: body.repo });
