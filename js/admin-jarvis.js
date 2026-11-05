@@ -138,6 +138,27 @@ function timeline(plan, now) {
     return `<div class="jv-timeline" role="img" aria-label="90-day plan from ${esc(plan.start)} to ${esc(plan.end)}"><div class="jv-tl-track">${bands}${ticks}<span class="jv-tl-today" style="left:${x(now)}%"><b>today</b></span></div><div class="jv-tl-pins">${pins}</div><div class="jv-tl-ends"><span>${esc(plan.start)}</span><span>${esc(plan.end)}</span></div></div>`;
 }
 
+// 90-day targets (#2649): Jarvis's count since the plan start, its verdict and pace, the rows behind it, and the buttons.
+const TARGET_CHIP = { done: ['c-fast', 'Done'], 'on-pace': ['c-average', 'On pace'], behind: ['c-slow', 'Behind'], missed: ['c-slow', 'Missed'], waiting: ['', 'Not started'] };
+function targetsBody(tg, waiting) {
+    if (!tg || !tg.ok || !Array.isArray(tg.targets)) return `<p class="jv-empty">${esc((tg && tg.error) || waiting || 'Not loaded.')}</p>`;
+    const mark = tg.day > 0 ? Math.min(100, Math.round((Math.min(tg.day, tg.length) / tg.length) * 100)) : 0;
+    const btn = (label, data) => `<button type="button" class="jv-btn small" ${Object.entries(data).map(([k, v]) => `data-${k}="${esc(v)}"`).join(' ')}>${esc(label)}</button>`;
+    return `<ul class="jv-goals jv-targets">${tg.targets.map((t) => {
+        const [cls, word] = TARGET_CHIP[t.status] || ['', t.status];
+        const pace = t.status === 'on-pace' || t.status === 'behind' ? ` · ${fmt(t.perWeek)} a week to go` : '';
+        const items = (t.items || []).length ? `<ul class="jv-target-items">${t.items.map((i) => `<li${i.source === 'failing' ? ' class="is-bad"' : ''}><span>${esc(i.at.slice(0, 10))}</span> ${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.text)}</a>` : esc(i.text)}${i.n > 1 ? ` ×${fmt(i.n)}` : ''}${i.id ? ' ' + btn('Remove', { 'tg-act': 'remove', id: i.id, key: t.key }) : ''}</li>`).join('')}</ul>` : '<p class="jv-empty">Nothing counted yet.</p>';
+        const next = (t.next || []).map((n) => (n.copy ? `<button type="button" class="jv-btn small" data-copy-link="${esc(n.copy)}">${esc(n.label)}</button>` : `<a class="jv-btn small" href="${esc(n.open)}" target="_blank" rel="noopener">${esc(n.label)}</a>`)).join('');
+        const said = (t.fix ? ` Set to ${fmt(t.fix.value)} on ${esc(t.fix.at.slice(0, 10))}.` : '') + (t.done ? ` Marked done ${esc(t.done.at.slice(0, 10))}${t.done.proof ? ': ' + esc(t.done.proof) : ''}.` : '');
+        return `<li class="jv-goal ${t.status === 'done' ? 'is-done' : t.status === 'behind' || t.status === 'missed' ? 'is-far' : 'is-on'}">
+            <div class="jv-goal-head"><span>${esc(t.label)} <span class="jv-chip ${cls}">${esc(word)}</span>${t.stale ? ' <span class="jv-chip c-average">Nothing logged in 14 days</span>' : ''}</span><b>${fmt(t.actual)} / ${fmt(t.target)}</b></div>
+            <div class="jv-goal-bar"><i style="width:${Math.min(100, Math.round((t.actual / Math.max(1, t.target)) * 100))}%"></i><s style="left:${mark}%"></s></div>
+            <div class="jv-inline">${btn(t.key === 'links' ? 'Log a link' : 'Log +1', { 'tg-act': 'log', key: t.key })}${btn('Correct', { 'tg-act': 'correct', key: t.key, current: t.actual })}${btn(t.done ? 'Undo done' : 'Mark done', { 'tg-act': t.done ? 'undone' : 'done', key: t.key })}${t.key === 'links' ? btn('Recheck', { 'tg-act': 'recheck', key: t.key }) : ''}${next}</div>
+            <details class="jv-target-more"><summary>Details${esc(pace)}</summary><p class="jv-note">${esc(t.how)}${said}</p>${items}</details>
+        </li>`;
+    }).join('')}</ul>`;
+}
+
 function stats(list) {
     return `<div class="jv-stats">${list.map((k) => `<div${k.alert ? ' class="is-alert"' : ''}><b>${fmt(k.value)}</b><span>${esc(k.label)}</span></div>`).join('')}</div>`;
 }
@@ -455,7 +476,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'github-work', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'calls'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'github-work', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'targets', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'calls'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -531,6 +552,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                     visits: C.outreachVisits(S.rows.events).total,
                     links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10), reportReplies: e.outreach.links.social ? { visits: e.outreach.links.social.visits, reviews: e.outreach.links.social.reviews, paid: e.outreach.links.social.paid, usd: e.outreach.links.social.usd, networks: e.outreach.links.social.networks, topPosts: e.outreach.links.social.posts.slice(0, 10) } : null } : null
                 } : null,
+                targets: e.targets && e.targets.ok ? { day: e.targets.day, length: e.targets.length, targets: (e.targets.targets || []).map((t) => ({ label: t.label, actual: t.actual, target: t.target, status: t.status, perWeek: t.perWeek, how: t.how })) } : null,
                 engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`), reportReplies: Object.assign({ waiting: e.engagement.waiting.filter((d) => d.campaign === 'report-reply').length }, e.engagement.report.invites) } : null,
                 signedInPeople: e.people && e.people.ok ? e.people.totals : null,
                 googleMapsLocal: e.local && e.local.ok && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
@@ -1292,7 +1314,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             { metric: 'Positive replies', actual: mail && mail.contacted ? mail.rates.positive : null, target: weekly.positivePct, unit: '%' }
         ];
         const funnelBody = table([['Metric', (r) => esc(r.metric)], ['Now', (r) => (r.off ? '<span class="jv-note">Not tracked</span>' : r.actual === null ? '—' : chip(r.target === undefined || r.actual >= r.target, fmt(r.actual) + r.unit))], ['Target', (r) => (r.target === undefined ? '—' : fmt(r.target) + r.unit)]], funnel);
-        const targets = plan ? table([['90-day target', (r) => esc(r.label)], ['So far', (r) => (r.actual === null || r.actual === undefined ? '—' : fmt(r.actual))], ['Target', (r) => fmt(r.target)], ['', (r) => (r.actual === null || r.actual === undefined ? '' : `<span class="jv-meter"><i style="width:${Math.min(100, Math.round((r.actual / Math.max(1, r.target)) * 100))}%"></i></span>`)]], plan.targets) + '<p class="jv-note">Counts come from the weekly KPI tracker; upload it with scripts/jarvis-outreach-plan.js.</p>' : '';
+        const targets = targetsBody(S.external.targets, 'Counting the 90-day targets…');
         const pipeBody = pipe ? kpis([{ label: 'Swept', value: pipe.swept }, { label: 'Left in queue', value: pipe.left, alert: pipe.left === 0 && pipe.queued > 0 }, { label: 'Avg score', value: pipe.avgScore === null ? '—' : pipe.avgScore }]) + bars(pipe.bySegment, { color: COLORS.cyan, empty: 'No prospects queued. Add a list with scripts/sweep-outreach.js.' }) + (pipe.results.length ? bars(pipe.results, { color: COLORS.green }) : '') : waiting('outreach', '');
         const campBody = mail ? bars(mail.status, { color: COLORS.violet, empty: 'No campaigns yet.' }) + kpis([{ label: 'Contacted', value: mail.contacted }, { label: 'Opened', value: mail.opened }, { label: 'Replies', value: mail.replies }, { label: 'Meetings', value: mail.meetings }, { label: 'Bounced', value: mail.bounced, alert: mail.sent >= 20 && mail.rates.bounce >= th.outreachBouncePct }, { label: 'Unsubscribed', value: mail.unsubscribed }])
             + (camps ? table([['Campaign', (c) => esc(c.name)], ['Status', (c) => campStatusChip(c.status)], ['Starts', (c) => esc(c.start || '—')], ['Leads', (c) => fmt(c.leads)], ['Sent', (c) => fmt(c.sent)], ['Opened', (c) => fmt(c.opened)], ['Replies', (c) => fmt(c.replies)], ['Bounced', (c) => fmt(c.bounced)], ['', campaignButton]], camps.rows, 'No campaigns in Instantly yet.')
@@ -1322,7 +1344,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${panel('outreach-report-replies', 'Report replies: clicks, runs and payments', socialBody, { wide: true, data: soc, note: 'Replies under posts that name a site we reviewed link to its report through a qalabreview.com/r/ link tagged with the network (utm_campaign social-reply-bluesky, for example) and the post (utm_term). A payment counts for the reply whose link started the run it unlocked. The drafts and their approval are on the Engagement tab.' })}
             ${panel('outreach-plan', '90-day plan', planBody)}
             ${panel('outreach-funnel', 'Weekly funnel against the plan', funnelBody, { data: funnel })}
-            ${plan ? panel('outreach-targets', '90-day targets', targets, { data: plan.targets }) : ''}
+            ${panel('outreach-targets', '90-day targets', targets, { wide: true, data: S.external.targets && S.external.targets.targets, note: 'Jarvis counts from the plan start and judges the pace; the marker shows how much of the 90 days has gone. Log what he cannot see.' })}
             ${panel('outreach-pipeline', 'Prospect pipeline (nightly sweep)', pipeBody, { data: pipe ? pipe.bySegment : [] })}
             ${panel('outreach-campaigns', 'Campaigns (Instantly)', campBody, { data: camps ? camps.rows : mail ? mail.byCampaign : [], note: camps ? 'Activate starts a campaign on its start date and sending window; nothing goes out to a campaign with no leads. Pause stops it at once.' : '' })}
             ${mail ? panel('outreach-mailboxes', 'Mailboxes and warm-up', boxBody, { data: mail.accounts }) : ''}
@@ -1455,7 +1477,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
         const boxes = mail && mail.accounts.length ? `<div class="jv-rings">${mail.accounts.map((a) => ring(a.score, a.email.split('@')[0], a.score !== null && a.score >= th.outreachWarmup ? COLORS.green : null, 92)).join('')}</div>` + table([['Mailbox', mailboxCell], ['Status', (a) => statusChip(a.status)], ['Warm-up', (a) => `<span class="jv-chip ${a.warmup === 'on' ? 'c-fast' : 'c-slow'}">${esc(a.warmup)}</span>`], ['Daily limit', (a) => (a.dailyLimit ? fmt(a.dailyLimit) : '—')]], mail.accounts) : ou.instantly && ou.instantly.ok === false ? `<p class="jv-empty">${esc(ou.instantly.error)}</p>` : wait('outreach', 'Reading the mailboxes…');
         const dns = checks ? `<ul class="jv-facts">${checks.map((c) => `<li><span class="jv-chip ${c.ok ? 'c-fast' : 'c-slow'}">${esc(c.name)}</span> ${esc(c.detail)}</li>`).join('')}</ul>` : wait('outreach', 'Checking the sending domain…');
-        const targets = plan && plan.targets.length ? `<ul class="jv-goals">${plan.targets.map((t) => { const p = t.actual === null || t.actual === undefined ? null : Math.min(100, pct(t.actual, Math.max(1, t.target))); return `<li class="jv-goal ${p === null ? 'is-far' : p >= 100 ? 'is-done' : 'is-on'}"><div class="jv-goal-head"><span>${esc(t.label)}</span><b>${t.actual === null || t.actual === undefined ? '—' : fmt(t.actual)} / ${fmt(t.target)}</b></div><div class="jv-goal-bar"><i style="width:${p || 0}%"></i><s style="left:${plan.day > 0 ? Math.min(100, pct(plan.day, plan.length)) : 0}%"></s></div></li>`; }).join('')}</ul>` : '<p class="jv-empty">No 90-day targets uploaded.</p>';
+        const targets = targetsBody(e.targets, 'Counting the 90-day targets…');
         const weeklyRows = [
             { metric: 'Prospects reviewed this week', now: pipe ? pipe.thisWeek : null, target: weekly.prospects, unit: '' },
             { metric: 'Open rate', now: mail && mail.contacted && mail.openTracking !== false ? mail.rates.open : null, target: weekly.openPct, unit: '%', off: !!(mail && mail.contacted && mail.openTracking === false) },
@@ -1602,7 +1624,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${panel('marketing-camp-status', 'Campaigns by status', camps ? pie(camps.byStatus, { unit: 'campaigns' }) : wait('marketing', ''), { data: camps && camps.byStatus })}
             ${panel('marketing-mailboxes', 'Mailboxes and warm-up', boxes, { data: mail && mail.accounts })}
             ${panel('marketing-domain', `Sending domain${ou.mail && ou.mail.domain ? ' · ' + esc(ou.mail.domain) : ''}`, dns, { data: checks })}
-            ${panel('marketing-targets', '90-day targets', targets, { data: plan && plan.targets, note: plan ? 'The marker shows how much of the 90 days has gone.' : '' })}
+            ${panel('marketing-targets', '90-day targets', targets, { data: e.targets && e.targets.targets, note: 'Jarvis counts from the plan start and judges the pace; the marker shows how much of the 90 days has gone. Log what he cannot see.' })}
             ${panel('marketing-segments', 'Prospects by segment', pros ? pie(pros.bySegment, { unit: 'prospects', empty: 'No prospects queued.' }) : wait('marketing', ''), { data: pros && pros.bySegment })}
             ${panel('marketing-countries', 'Prospects by country', pros ? pie(pros.byCountry, { unit: 'prospects', empty: 'No prospects queued.' }) : wait('marketing', ''), { data: pros && pros.byCountry })}
             ${panel('marketing-results', 'Sweep results for prospects', pipe ? stats([{ label: 'Avg score', value: dash(pipe.avgScore) }, { label: 'Left in queue', value: pipe.left, alert: pipe.left === 0 && pipe.queued > 0 }]) + bars(pipe.results, { color: COLORS.green, empty: 'No prospect reviewed in this range.' }) : wait('outreach', ''), { data: pipe && pipe.results })}
@@ -2176,6 +2198,38 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         toast(out.ok ? `${how} ${name} is marked sent.` : `${how} Not marked sent: ${out.error}`, 10000);
         if (!out.ok) t.disabled = false;
         loadExternal(['marketing-sync']);
+    }
+
+    async function targetAct(t) {
+        const d = t.dataset;
+        const row = ((S.external.targets && S.external.targets.targets) || []).find((x) => x.key === d.key) || { label: d.key };
+        const body = { action: d.tgAct, key: d.key };
+        if (d.tgAct === 'log' && d.key === 'links') {
+            body.url = (window.prompt(`Address of the page that links to carlosandmunoz.com or qalabreview.com (${row.label})`, '') || '').trim();
+            if (!body.url) return;
+            body.note = (window.prompt('Who is it? (optional)', '') || '').trim();
+        } else if (d.tgAct === 'log') {
+            const note = window.prompt(`Log one for "${row.label}". Who or what was it? (optional)`, '');
+            if (note === null) return;
+            body.note = note.trim();
+        } else if (d.tgAct === 'correct') {
+            const value = window.prompt(`The real count for "${row.label}" today; new ones add to it.`, d.current);
+            if (value === null || !value.trim()) return;
+            body.value = Number(value);
+        } else if (d.tgAct === 'done') {
+            const proof = window.prompt(`Mark "${row.label}" done whatever the count. Proof (a link or a note):`, '');
+            if (proof === null) return;
+            body.proof = proof.trim();
+        } else if (d.tgAct === 'remove') {
+            if (!confirmRun('remove this entry from the count')) return;
+            body.id = d.id;
+        } else if (d.tgAct === 'undone' && !confirmRun(`stop holding "${row.label}" done`)) return;
+        t.disabled = true;
+        const out = await call('outreach-target', body).catch((error) => ({ ok: false, error: error.message }));
+        const check = out.check ? (out.check.ok ? ` ${out.check.detail}` : ` Not counted yet: ${out.check.detail}`) : '';
+        toast(out.ok ? `${out.label}.${check}` : 'Not done: ' + out.error, 8000);
+        t.disabled = false;
+        loadExternal(['targets']);
     }
 
     async function leadReview(t) {
@@ -3290,6 +3344,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.mkResend) { resendAct(t); return; }
         if (t.dataset.liSend) { liSend(t); return; }
         if (t.dataset.mkCmd) { mkCmdClick(t); return; }
+        if (t.dataset.tgAct) { targetAct(t); return; }
         if (t.dataset.ghRerun) { ghRerun(t); return; }
         if (t.dataset.ghAct) { ghAct(t); return; }
         if (t.dataset.ghDiagnose !== undefined) { ghDiagnose(t.dataset.ghDiagnose); return; }
@@ -3339,7 +3394,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             'copy-link': () => copy(link(), 'Link copied.'), 'web-share': webShare, 'copy-brief': () => copy(markdown(), 'Briefing copied.'), email: emailBriefing,
             'export-json': exportAll, 'export-csv': () => run({ type: 'export', format: 'csv' }), 'export-png': () => run({ type: 'export', format: 'png' }),
             'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief,
-            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'social', 'notices']), 'gh-reload': ghReload, 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop, 'calendar-connect': calendarConnect
+            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'targets', 'social', 'notices']), 'gh-reload': ghReload, 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop, 'calendar-connect': calendarConnect
         };
         if (acts[act]) acts[act]();
     });

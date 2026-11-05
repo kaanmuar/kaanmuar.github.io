@@ -416,15 +416,7 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
         }
     }
 
-    if (plan != null && plan.objs("targets").isNotEmpty()) Panel("90-day targets") {
-        plan.objs("targets").forEach { t ->
-            val actual = t.num("actual")
-            val target = t.num("target") ?: 0.0
-            Row { Text(t.str("label") ?: "", fontSize = 13.sp, modifier = Modifier.weight(1f)); Text("${fmt(actual)} / ${fmt(target)}", fontFamily = Mono, fontSize = 12.sp) }
-            if (actual != null) GlowBar((actual / maxOf(1.0, target)).toFloat())
-        }
-        Muted("Counts come from the weekly KPI tracker; upload it with scripts/jarvis-outreach-plan.js.")
-    }
+    TargetsPanel(s, vm)
 
     Panel("Prospect pipeline (nightly sweep)") {
         if (pipe == null) { Muted(ou.obj("pipeline").str("error") ?: "Not loaded."); return@Panel }
