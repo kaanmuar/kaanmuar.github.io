@@ -371,6 +371,11 @@ const x = {
     const art = await this.post(page, task);
     await click(art.locator('[data-testid="reply"]').first());
     await type(page, await need(page.locator('[data-testid="tweetTextarea_0"]'), "The reply box"), task.draft);
+    // A draft ending in an @handle leaves X's suggestions open over the Reply button; a space closes them.
+    if (/@\w+$/.test(String(task.draft).trim())) {
+      await page.keyboard.type(" ");
+      await page.locator('[role="listbox"]').first().waitFor({ state: "hidden", timeout: 5000 }).catch(() => null);
+    }
     const card = task.cardFile ? await this.attach(page, task) : null;
     await click(await need(page.locator('[data-testid="tweetButton"]'), "Reply"));
     await page.locator('[data-testid="tweetTextarea_0"]').first().waitFor({ state: "hidden", timeout: 15000 }).catch(() => { throw new Error("The reply did not send."); });
