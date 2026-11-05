@@ -729,6 +729,7 @@ function askSnapshot(snap, days) {
       safety: ok(e.safety) && e.safety.checks ? e.safety.checks.map((c) => c.level + ": " + c.name + " " + c.detail) : null,
       platform: ok(e.platform) ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
       outreach: outreachAsk(e.outreach, s.outreachVisits),
+      targets: targetsAsk(e.targets),
       engagement: engagementAsk(e.engagement),
       signedInPeople: ok(e.people) ? e.people.totals : null,
       googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
@@ -770,6 +771,12 @@ function engagementAsk(g) {
     reportReplies: Object.assign({ waiting: (g.waiting || []).filter((d) => d.campaign === "report-reply").length }, g.report.invites),
     ownerTags: g.ownerTags ? { settings: g.ownerTags.settings, last: g.ownerTags.last && Object.assign({}, g.ownerTags.last, { sample: undefined }), accounts: g.ownerTags.accounts, waiting: (g.ownerTags.waiting || []).length } : null
   };
+}
+
+// Same shape as the page's snapshot().external.targets: the 90-day targets as Jarvis judged them.
+function targetsAsk(tg) {
+  if (!tg || !tg.ok) return null;
+  return { day: tg.day, length: tg.length, targets: (tg.targets || []).map((t) => ({ label: t.label, actual: t.actual, target: t.target, status: t.status, perWeek: t.perWeek, how: t.how })) };
 }
 
 // Same shape as the page's snapshot().external.outreach.
