@@ -66,7 +66,7 @@
             "value": "Entra una URL pública, sale una revisión QA en lenguaje claro: SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, calificadas página por página, con casos de prueba para 20 frameworks y exportación a Jira, TestRail, Xray y Zephyr. Entra con tu email o una cuenta que ya tengas; la primera revisión va incluida.\n\nUma URL pública entra, uma revisão de QA sai: SEO, busca com IA, analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks. A primeira revisão está incluída.\n\nInformes en vivo, consejos, sketches y revisiones en directo, en español y português.\n\nEnglish, Deutsch, Français, Italiano: @qalaburlreview"
           },
           {
-            "label": "Links",
+            "label": "Links (14)",
             "value": [
               [
                 "Website",
@@ -83,6 +83,14 @@
               [
                 "EN · DE · FR · IT",
                 "https://www.youtube.com/@qalaburlreview"
+              ],
+              [
+                "Informes en vivo en Telegram",
+                "https://t.me/qalab_live"
+              ],
+              [
+                "r/QALabLiveReports",
+                "https://www.reddit.com/r/QALabLiveReports/"
               ]
             ]
           },
@@ -176,6 +184,10 @@
               [
                 "EN · DE · FR · IT",
                 "https://www.reddit.com/user/qalaburlreview/"
+              ],
+              [
+                "r/QALabLiveReports",
+                "https://www.reddit.com/r/QALabLiveReports/"
               ]
             ]
           }
@@ -399,6 +411,10 @@
               [
                 "EN · DE · FR · IT",
                 "https://www.instagram.com/qalaburlreview/"
+              ],
+              [
+                "Informes en vivo en Telegram",
+                "https://t.me/qalab_live"
               ]
             ]
           },
