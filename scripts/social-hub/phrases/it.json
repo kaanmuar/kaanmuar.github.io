@@ -35,6 +35,10 @@
   "text": "⟦1⟧ lead in SEO, GEO, Analytics; ⟦2⟧ leader in Sicurezza, Prestazioni; ⟦3⟧ porta in Accessibilità.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, GEO, Security, Accessibility; ⟦2⟧ leads in Analytics; ⟦3⟧ leads in Performance.": {
+  "text": "⟦1⟧ lead in SEO, GEO, sicurezza, accessibilità; ⟦2⟧ lead in Analytics; ⟦3⟧ è leader in termini di prestazioni.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security, Accessibility, Performance.": "⟦1⟧ è in testa in SEO e GEO; ⟦2⟧ in Analytics, Sicurezza, Accessibilità e Prestazioni.",
  "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO, Analytics, Accessibility, Performance.": {
   "text": "⟦1⟧ lead in SEO, sicurezza; ⟦2⟧ lead in GEO, analisi, accessibilità, prestazioni.",
@@ -347,6 +351,10 @@
   "text": "Confrontati con i siti con cui i tuoi visitatori ti confrontano, non con un sito perfetto...",
   "machine": true
  },
+ "Benchmark against the sites your visitors compare you with, not against a…": {
+  "text": "Confrontati con i siti con cui i tuoi visitatori ti confrontano, non con un...",
+  "machine": true
+ },
  "Benchmark against the sites your visitors compare you with, not…": "Confrontati con i siti a cui i tuoi visitatori ti paragonano, non…",
  "Berlin ⟦1⟧, Vienna ⟦2⟧.": "Berlino ⟦1⟧, Vienna ⟦2⟧.",
  "Berlin answers in security, ⟦1⟧ to ⟦2⟧, and accessibility, ⟦3⟧ to ⟦4⟧.": "Berlino risponde nella sicurezza, ⟦1⟧ a ⟦2⟧, e nell'accessibilità, ⟦3⟧ a ⟦4⟧.",
@@ -433,6 +441,10 @@
   "machine": true
  },
  "But ⟦1⟧ pages have no title.": "Ma ⟦1⟧ pagine non hanno un titolo.",
+ "But ⟦1⟧ pages name another URL as canonical.": {
+  "text": "Ma ⟦1⟧ pagine nominano un altro URL come canonico.",
+  "machine": true
+ },
  "But ⟦1⟧ points crawlers to ⟦2⟧ and that address returns ⟦3⟧.": "Ma ⟦1⟧ indirizza i crawler a ⟦2⟧ e quell’indirizzo restituisce ⟦3⟧.",
  "But ⟦1⟧ points crawlers to ⟦2⟧ which timed out, and plain http answers ⟦3⟧.": "Ma ⟦1⟧ indirizza i crawler a ⟦2⟧, che è andato in timeout, e l’http semplice risponde ⟦3⟧.",
  "But ⟦1⟧ redirects to ⟦2⟧ which then bounces back to https.": "Ma ⟦1⟧ reindirizza a ⟦2⟧, che poi rimbalza di nuovo su https.",
@@ -547,6 +559,10 @@
  "But real Chrome visitors wait ⟦1⟧ s at the ⟦2⟧th percentile for the largest content to appear.": "Ma i visitatori reali su Chrome aspettano ⟦1⟧ s al ⟦2⟧° percentile perché compaia il contenuto più grande.",
  "But real Chrome visitors wait ⟦1⟧ s at the ⟦2⟧th percentile for the largest content, and the HTML alone took ⟦3⟧ s.": "Ma i visitatori reali su Chrome aspettano ⟦1⟧ s al ⟦2⟧° percentile per il contenuto più grande, e il solo HTML ha impiegato ⟦3⟧ s.",
  "But real Chrome visitors wait ⟦1⟧ s for the largest content.": "Ma i visitatori reali su Chrome aspettano ⟦1⟧ s per il contenuto più grande.",
+ "But redirects strip campaign parameters.": {
+  "text": "Ma i reindirizzamenti eliminano i parametri della campagna.",
+  "machine": true
+ },
  "But Referrer-Policy: unsafe-url sends the full URL, query included, to every site linked.": "Ma Referrer-Policy: unsafe-url invia l’URL completo, query inclusa, a ogni sito linkato.",
  "But several links on the home page return ⟦1⟧, among them the giro directo page, the national contact point, and emergencies.": "Ma diversi link della home page restituiscono ⟦1⟧, tra cui la pagina giro directo, il punto di contatto nazionale e le emergenze.",
  "But Strict-Transport-Security sets max-age to ⟦1⟧ days, and http:// reaches https through a temporary ⟦2⟧.": "Ma Strict-Transport-Security imposta max-age a ⟦1⟧ giorni, e http:// arriva a https con un ⟦2⟧ temporaneo.",
@@ -793,6 +809,10 @@
   "machine": true
  },
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by, and block…": "Decidi bot per bot in ⟦1⟧: ammetti i motori di risposta da cui vuoi essere citato, e blocca…",
+ "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by…": {
+  "text": "Decidi per bot in ⟦1⟧: consenti ai motori di risposta da cui vuoi essere citato...",
+  "machine": true
+ },
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be…": "Decidi bot per bot in ⟦1⟧: ammetti i motori di risposta da cui vuoi essere…",
  "Default both to denied where consent is required, and grant them on acceptance.": "Imposta entrambi su denied di default dove serve il consenso, e concedili all’accettazione.",
  "Default to camera=(), microphone=(), geolocation=().": "Di default usa camera=(), microphone=(), geolocation=().",
@@ -1224,6 +1244,10 @@
   "machine": true
  },
  "Keep port ⟦1⟧ alive just to send a ⟦2⟧ to https.": "Tieni attiva la porta ⟦1⟧ solo per inviare un ⟦2⟧ verso https.",
+ "Keep the query string on every redirect, so campaign tags reach the landing page.": {
+  "text": "Mantieni la stringa di query su ogni reindirizzamento, in modo che i tag della campagna raggiungano la pagina di destinazione.",
+  "machine": true
+ },
  "Keep titles near ⟦1⟧ characters and move the mission into the description.": "Tieni i titoli intorno ai ⟦1⟧ caratteri e sposta la missione nella description.",
  "Keep titles near ⟦1⟧ characters: key words first, site name last, and trim long names in the CMS.": "Tieni i titoli intorno ai ⟦1⟧ caratteri: parole chiave prima, nome del sito in fondo, e accorcia i nomi lunghi nel CMS.",
  "Kevin Korenhof": "Kevin Korenhof",
@@ -1507,6 +1531,10 @@
  "Playwright request fixture.": "Fixture request di Playwright.",
  "Playwright v1.⟦1⟧": "Playwright v1.⟦1⟧",
  "Point each canonical at the exact https URL you serve, with the www if you use it.": "Punta ogni canonical all’URL https esatto che servi, con il www se lo usi.",
+ "Point each page's canonical at itself, unless it really is a copy of another page.": {
+  "text": "Punta il canonico di ogni pagina verso se stesso, a meno che non sia realmente una copia di un'altra pagina.",
+  "machine": true
+ },
  "Point every canonical at the final https URL, the same one you list in the sitemap.": "Punta ogni canonical all’URL https finale, lo stesso che elenchi nella sitemap.",
  "Pointing it home asks search to drop the page from results.": "Puntarlo alla home chiede alla ricerca di togliere la pagina dai risultati.",
  "Policía Nacional's search has no label.": "La ricerca della Policía Nacional non ha label.",
@@ -1884,6 +1912,14 @@
  "The gap: alt text.": "La lacuna: il testo alt.",
  "The gap: broken links.": "La lacuna: link rotti.",
  "The gap: button names.": "La lacuna: i nomi dei pulsanti.",
+ "The gap: campaign tags.": {
+  "text": "Il divario: i tag della campagna.",
+  "machine": true
+ },
+ "The gap: canonicals.": {
+  "text": "Il divario: i canonici.",
+  "machine": true
+ },
  "The gap: cookie flags.": {
   "text": "Il divario: le bandiere dei cookie.",
   "machine": true

@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updatedAt": "2026-11-04T15:07:20.393Z",
+ "updatedAt": "2026-11-05T11:38:32.448Z",
  "posts": {
   "auto-2026-10-21/01-u-teaminternational-com": {
    "linkedin": {
@@ -16,7 +16,7 @@
     "impressions": 2
    },
    "youtube": {
-    "views": 5,
+    "views": 6,
     "likes": 2
    },
    "facebook": {
@@ -37,7 +37,7 @@
     "impressions": 2
    },
    "youtube": {
-    "views": 11,
+    "views": 12,
     "likes": 2
    },
    "facebook": {
@@ -59,7 +59,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 10,
+    "views": 11,
     "likes": 2
    },
    "facebook": {
@@ -82,7 +82,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 5,
+    "views": 6,
     "likes": 2
    },
    "facebook": {
@@ -105,7 +105,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 2,
+    "views": 3,
     "likes": 2
    },
    "facebook": {
@@ -127,7 +127,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 95,
+    "views": 96,
     "likes": 2
    },
    "facebook": {
@@ -162,7 +162,8 @@
     "likes": 1
    },
    "tiktok": {
-    "views": 9
+    "views": 64,
+    "likes": 1
    },
    "facebook": {
     "likes": 1
@@ -206,7 +207,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 7,
+    "views": 8,
     "likes": 1
    },
    "facebook": {
@@ -229,7 +230,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 2,
+    "views": 3,
     "likes": 2
    },
    "facebook": {
@@ -251,7 +252,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 2,
+    "views": 3,
     "likes": 2
    },
    "facebook": {
@@ -273,7 +274,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 3,
+    "views": 4,
     "likes": 2
    },
    "facebook": {
@@ -295,7 +296,7 @@
     "likes": 1
    },
    "youtube": {
-    "views": 5,
+    "views": 6,
     "likes": 2
    },
    "facebook": {
@@ -329,6 +330,9 @@
   "auto-2026-10-24/04-u-kreuzwort-raetsel-net": {
    "facebook": {
     "likes": 1
+   },
+   "linkedin": {
+    "impressions": 8
    }
   },
   "auto-2026-10-24/05-u-roottcostore-com": {
@@ -355,7 +359,7 @@
     "likes": 3
    },
    "facebook": {
-    "impressions": 2,
+    "impressions": 3,
     "likes": 1
    }
   },
@@ -374,11 +378,11 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 13,
+    "views": 15,
     "likes": 3
    },
    "facebook": {
-    "impressions": 1,
+    "impressions": 2,
     "likes": 1
    }
   },
@@ -397,7 +401,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 8,
+    "views": 9,
     "likes": 3
    },
    "facebook": {
@@ -411,15 +415,27 @@
     "likes": 1
    },
    "tiktok": {
-    "views": 52,
-    "likes": 1
-   },
-   "youtube": {
-    "views": 1
+    "views": 94,
+    "likes": 2
    },
    "facebook": {
     "impressions": 1,
     "likes": 1
+   }
+  },
+  "auto-2026-11-02/02-u-eep-com-co": {
+   "linkedin": {
+    "impressions": 4
+   }
+  },
+  "auto-2026-11-03/01-u-portal-upb-edu-co": {
+   "facebook": {
+    "impressions": 1
+   }
+  },
+  "auto-2026-11-03/09-u-udg-mx": {
+   "facebook": {
+    "impressions": 1
    }
   },
   "compare-2026-11/01-quiz-berlin-vienna": {
@@ -437,8 +453,11 @@
     "likes": 1
    },
    "youtube": {
-    "views": 7,
+    "views": 8,
     "likes": 2
+   },
+   "facebook": {
+    "impressions": 2
    }
   },
   "compare-2026-11/02-berlin-vienna": {
@@ -458,6 +477,9 @@
    "youtube": {
     "views": 4,
     "likes": 2
+   },
+   "facebook": {
+    "impressions": 1
    }
   },
   "compare-2026-11/03-three-universities": {
@@ -475,7 +497,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 5,
+    "views": 6,
     "likes": 3
    }
   },
@@ -515,7 +537,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 12,
+    "views": 13,
     "likes": 2
    },
    "facebook": {
@@ -530,7 +552,7 @@
    },
    "tiktok": {
     "impressions": 95,
-    "views": 101,
+    "views": 107,
     "likes": 3
    },
    "x": {
@@ -552,11 +574,11 @@
    },
    "tiktok": {
     "impressions": 86,
-    "views": 89,
+    "views": 90,
     "likes": 2
    },
    "youtube": {
-    "views": 5,
+    "views": 6,
     "likes": 1
    },
    "facebook": {
@@ -570,16 +592,16 @@
     "likes": 1
    },
    "tiktok": {
-    "views": 89,
+    "views": 91,
     "likes": 2,
     "comments": 1
    },
    "youtube": {
-    "views": 22,
+    "views": 27,
     "likes": 2
    },
    "facebook": {
-    "impressions": 1,
+    "impressions": 2,
     "likes": 1
    }
   },
@@ -590,7 +612,25 @@
     "comments": 1
    },
    "tiktok": {
-    "views": 5
+    "views": 85,
+    "likes": 1
+   },
+   "x": {
+    "impressions": 4
+   },
+   "youtube": {
+    "views": 2
+   },
+   "facebook": {
+    "impressions": 2
+   }
+  },
+  "compare-2026-11/10-quiz-cities": {
+   "linkedin": {
+    "impressions": 31
+   },
+   "x": {
+    "impressions": 1
    }
   },
   "digest-2026-10-30/01-this-week": {
@@ -607,7 +647,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 10,
+    "views": 12,
     "likes": 2
    },
    "facebook": {
@@ -616,18 +656,19 @@
   },
   "launch-2026-10/en/a11y": {
    "youtube": {
-    "views": 3,
+    "views": 4,
     "likes": 2
    }
   },
   "launch-2026-10/en/exports": {
    "youtube": {
-    "views": 11,
+    "views": 12,
     "likes": 2
    }
   },
   "launch-2026-10/en/first-read": {
    "youtube": {
+    "views": 1,
     "likes": 2
    },
    "tiktok": {
@@ -643,7 +684,7 @@
     "likes": 6
    },
    "youtube": {
-    "views": 2,
+    "views": 3,
     "likes": 2
    }
   },
@@ -656,13 +697,13 @@
   },
   "launch-2026-10/en/layers": {
    "youtube": {
-    "views": 1,
+    "views": 2,
     "likes": 2
    }
   },
   "launch-2026-10/en/release": {
    "youtube": {
-    "views": 28,
+    "views": 29,
     "likes": 2
    },
    "tiktok": {
@@ -673,13 +714,13 @@
   },
   "launch-2026-10/en/security": {
    "youtube": {
-    "views": 2,
+    "views": 3,
     "likes": 2
    }
   },
   "launch-2026-10/en/talking": {
    "youtube": {
-    "views": 11,
+    "views": 12,
     "likes": 2
    },
    "linkedin": {
@@ -708,7 +749,7 @@
     "likes": 1
    },
    "youtube": {
-    "views": 5,
+    "views": 6,
     "likes": 2
    },
    "facebook": {
@@ -719,6 +760,17 @@
   "promo-social-hub-2026-10/06-copy-caption-es": {
    "facebook": {
     "likes": 1
+   },
+   "linkedin": {
+    "impressions": 9
+   },
+   "x": {
+    "impressions": 1
+   }
+  },
+  "runs-3/01-ilo": {
+   "facebook": {
+    "impressions": 1
    }
   },
   "series-dia-de-muertos-2026-11/01-ofrenda": {
@@ -728,16 +780,16 @@
    },
    "tiktok": {
     "impressions": 92,
-    "views": 113,
+    "views": 114,
     "likes": 3,
     "comments": 2
    },
    "youtube": {
-    "views": 4,
+    "views": 5,
     "likes": 2
    },
    "facebook": {
-    "impressions": 1,
+    "impressions": 2,
     "likes": 1
    }
   },
@@ -747,7 +799,7 @@
     "likes": 1
    },
    "tiktok": {
-    "views": 112,
+    "views": 118,
     "likes": 2,
     "comments": 1
    },
@@ -765,6 +817,11 @@
     "likes": 1
    }
   },
+  "skits-friday-release/02-friday-release-es": {
+   "facebook": {
+    "impressions": 1
+   }
+  },
   "tips-2026-10/01-img-size": {
    "linkedin": {
     "impressions": 3,
@@ -780,7 +837,7 @@
     "likes": 7
    },
    "youtube": {
-    "views": 13,
+    "views": 14,
     "likes": 2
    },
    "facebook": {
@@ -828,7 +885,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 16,
+    "views": 15,
     "likes": 3
    },
    "facebook": {
@@ -844,7 +901,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 13,
+    "views": 14,
     "likes": 2
    }
   },
@@ -855,11 +912,11 @@
    },
    "tiktok": {
     "impressions": 89,
-    "views": 97,
+    "views": 98,
     "likes": 2
    },
    "youtube": {
-    "views": 33,
+    "views": 34,
     "likes": 1
    }
   },
@@ -869,11 +926,11 @@
     "likes": 1
    },
    "tiktok": {
-    "views": 99,
+    "views": 107,
     "likes": 5
    },
    "youtube": {
-    "views": 5,
+    "views": 7,
     "likes": 1
    },
    "facebook": {
@@ -887,16 +944,23 @@
     "likes": 1
    },
    "tiktok": {
-    "views": 34
+    "views": 84,
+    "likes": 2
    },
    "facebook": {
     "impressions": 1,
     "likes": 1
+   },
+   "youtube": {
+    "views": 2
    }
   },
   "tips-2026-10/09-llms-txt": {
    "facebook": {
     "likes": 1
+   },
+   "linkedin": {
+    "impressions": 2
    }
   },
   "tips-2026-10/11-hsts": {
@@ -923,6 +987,16 @@
     "likes": 1
    }
   },
+  "tips-2026-10/18-broken-links": {
+   "facebook": {
+    "impressions": 1
+   }
+  },
+  "tips-2026-10/19-measure-action": {
+   "facebook": {
+    "impressions": 1
+   }
+  },
   "tips-horror-headers-2026-10/01-missing-csp": {
    "linkedin": {
     "impressions": 14,
@@ -930,14 +1004,14 @@
    },
    "tiktok": {
     "impressions": 166,
-    "views": 173,
+    "views": 175,
     "likes": 5
    },
    "x": {
     "impressions": 1
    },
    "youtube": {
-    "views": 24,
+    "views": 31,
     "likes": 3
    },
    "facebook": {
@@ -946,7 +1020,7 @@
   },
   "tips-horror-headers-2026-10/02-zombie-redirects": {
    "linkedin": {
-    "impressions": 14,
+    "impressions": 15,
     "likes": 4
    },
    "tiktok": {
@@ -959,7 +1033,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 3,
+    "views": 4,
     "likes": 2
    },
    "facebook": {
@@ -1001,7 +1075,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 18,
+    "views": 19,
     "likes": 2
    },
    "facebook": {
@@ -1015,7 +1089,7 @@
    },
    "tiktok": {
     "impressions": 144,
-    "views": 152,
+    "views": 153,
     "likes": 5,
     "comments": 1
    },
@@ -1034,9 +1108,22 @@
  },
  "pages": {
   "Facebook Page": {
-   "asked": 51,
-   "answered": 51,
-   "insights": 51
+   "asked": 62,
+   "answered": 62,
+   "insights": 62
+  }
+ },
+ "channels": {
+  "telegram": {
+   "chat": "@qalab_live",
+   "members": 2,
+   "at": "2026-11-05T11:38:32.448Z",
+   "history": [
+    {
+     "date": "2026-11-05",
+     "members": 2
+    }
+   ]
   }
  }
 }

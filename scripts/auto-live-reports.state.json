@@ -1,5 +1,5 @@
 {
- "since": "2026-11-04T14:15:43.912Z",
+ "since": "2026-11-05T11:01:35.292Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -94,13 +94,28 @@
   "ciqa.edu.mx": "2026-11-04",
   "ebc.mx": "2026-11-04",
   "ispgaya.pt": "2026-11-04",
-  "enae.es": "2026-11-04"
+  "enae.es": "2026-11-04",
+  "houm.com": "2026-11-05",
+  "skydropx.com": "2026-11-05",
+  "beau.to": "2026-11-05",
+  "lexter.ai": "2026-11-05",
+  "okteto.com": "2026-11-05",
+  "usbmed.edu.co": "2026-11-05",
+  "uacm.edu.mx": "2026-11-05",
+  "cetys.mx": "2026-11-05",
+  "ufrj.br": "2026-11-05",
+  "usal.es": "2026-11-05",
+  "uah.edu": "2026-11-05",
+  "newsandstar.co.uk": "2026-11-05",
+  "get-moment.com": "2026-11-05",
+  "ugto.mx": "2026-11-05",
+  "vs:myarubaguide.com": "2026-11-05"
  },
  "recent": [
   "a11y-labels",
-  "sec-cookies",
-  "ax-link-name",
-  "sec-http",
-  "a11y-alt"
+  "seo-canonical-away",
+  "geo-crawlers",
+  "sec-hsts",
+  "sec-hsts"
  ]
 }

@@ -35,6 +35,10 @@
   "text": "⟦1⟧ führt in SEO, GEO, Analytics; ⟦2⟧ führend in Sicherheit, Leistung; ⟦3⟧ führt in der Barrierefreiheit.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, GEO, Security, Accessibility; ⟦2⟧ leads in Analytics; ⟦3⟧ leads in Performance.": {
+  "text": "⟦1⟧ führt in den Bereichen SEO, GEO, Sicherheit, Barrierefreiheit; ⟦2⟧ führt in Analytics; ⟦3⟧ führt in der Leistung.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security, Accessibility, Performance.": "⟦1⟧ führt bei SEO und GEO; ⟦2⟧ führt bei Analytics, Sicherheit, Barrierefreiheit und Performance.",
  "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO, Analytics, Accessibility, Performance.": {
   "text": "⟦1⟧ führt in SEO, Sicherheit; ⟦2⟧ führend in den Bereichen GEO, Analytics, Barrierefreiheit, Leistung.",
@@ -347,6 +351,10 @@
   "text": "Benchmarken Sie mit den Websites, mit denen Ihre Besucher Sie vergleichen, nicht mit einem perfekten…",
   "machine": true
  },
+ "Benchmark against the sites your visitors compare you with, not against a…": {
+  "text": "Benchmarken Sie mit den Websites, mit denen Ihre Besucher Sie vergleichen, nicht mit einer…",
+  "machine": true
+ },
  "Benchmark against the sites your visitors compare you with, not…": "Messen Sie sich an den Websites, mit denen Ihre Besucher Sie vergleichen, nicht…",
  "Berlin ⟦1⟧, Vienna ⟦2⟧.": "Berlin ⟦1⟧, Wien ⟦2⟧.",
  "Berlin answers in security, ⟦1⟧ to ⟦2⟧, and accessibility, ⟦3⟧ to ⟦4⟧.": "Berlin kontert bei Sicherheit, ⟦1⟧ zu ⟦2⟧, und Barrierefreiheit, ⟦3⟧ zu ⟦4⟧.",
@@ -433,6 +441,10 @@
   "machine": true
  },
  "But ⟦1⟧ pages have no title.": "Doch ⟦1⟧ Seiten haben keinen Titel.",
+ "But ⟦1⟧ pages name another URL as canonical.": {
+  "text": "Aber ⟦1⟧ Seiten nennen eine andere URL als kanonisch.",
+  "machine": true
+ },
  "But ⟦1⟧ points crawlers to ⟦2⟧ and that address returns ⟦3⟧.": "Doch ⟦1⟧ verweist Crawler auf ⟦2⟧, und diese Adresse liefert ⟦3⟧.",
  "But ⟦1⟧ points crawlers to ⟦2⟧ which timed out, and plain http answers ⟦3⟧.": "Doch ⟦1⟧ verweist Crawler auf ⟦2⟧, das in einen Timeout lief, und einfaches http antwortet mit ⟦3⟧.",
  "But ⟦1⟧ redirects to ⟦2⟧ which then bounces back to https.": "Doch ⟦1⟧ leitet auf ⟦2⟧ um, das wieder auf https zurückspringt.",
@@ -547,6 +559,10 @@
  "But real Chrome visitors wait ⟦1⟧ s at the ⟦2⟧th percentile for the largest content to appear.": "Doch echte Chrome-Besucher warten im ⟦2⟧. Perzentil ⟦1⟧ s, bis der größte Inhalt erscheint.",
  "But real Chrome visitors wait ⟦1⟧ s at the ⟦2⟧th percentile for the largest content, and the HTML alone took ⟦3⟧ s.": "Doch echte Chrome-Besucher warten im ⟦2⟧. Perzentil ⟦1⟧ s auf den größten Inhalt, und allein das HTML brauchte ⟦3⟧ s.",
  "But real Chrome visitors wait ⟦1⟧ s for the largest content.": "Doch echte Chrome-Besucher warten ⟦1⟧ s auf den größten Inhalt.",
+ "But redirects strip campaign parameters.": {
+  "text": "Aber Weiterleitungen entfernen Kampagnenparameter.",
+  "machine": true
+ },
  "But Referrer-Policy: unsafe-url sends the full URL, query included, to every site linked.": "Doch Referrer-Policy: unsafe-url sendet die volle URL samt Query an jede verlinkte Website.",
  "But several links on the home page return ⟦1⟧, among them the giro directo page, the national contact point, and emergencies.": "Doch mehrere Links auf der Startseite liefern ⟦1⟧, darunter die Seite giro directo, die nationale Kontaktstelle und Notfälle.",
  "But Strict-Transport-Security sets max-age to ⟦1⟧ days, and http:// reaches https through a temporary ⟦2⟧.": "Doch Strict-Transport-Security setzt max-age auf ⟦1⟧ Tage, und http:// erreicht https über eine temporäre ⟦2⟧.",
@@ -793,6 +809,10 @@
   "machine": true
  },
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by, and block…": "Entscheiden Sie pro Bot in ⟦1⟧: Lassen Sie die Answer Engines zu, von denen Sie zitiert werden wollen, und sperren Sie…",
+ "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by…": {
+  "text": "Entscheiden Sie pro Bot in ⟦1⟧: Erlauben Sie den Antwortmaschinen, von denen Sie zitiert werden möchten ...",
+  "machine": true
+ },
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be…": "Entscheiden Sie pro Bot in ⟦1⟧: Lassen Sie die Answer Engines zu, von denen Sie…",
  "Default both to denied where consent is required, and grant them on acceptance.": "Setzen Sie beide standardmäßig auf denied, wo Einwilligung nötig ist, und gewähren Sie sie bei Zustimmung.",
  "Default to camera=(), microphone=(), geolocation=().": "Standard: camera=(), microphone=(), geolocation=().",
@@ -1224,6 +1244,10 @@
   "machine": true
  },
  "Keep port ⟦1⟧ alive just to send a ⟦2⟧ to https.": "Lassen Sie Port ⟦1⟧ nur offen, um ein ⟦2⟧ auf https zu senden.",
+ "Keep the query string on every redirect, so campaign tags reach the landing page.": {
+  "text": "Behalten Sie die Abfragezeichenfolge bei jeder Weiterleitung bei, damit Kampagnen-Tags die Zielseite erreichen.",
+  "machine": true
+ },
  "Keep titles near ⟦1⟧ characters and move the mission into the description.": "Halten Sie Titel bei etwa ⟦1⟧ Zeichen und verschieben Sie das Leitbild in die Beschreibung.",
  "Keep titles near ⟦1⟧ characters: key words first, site name last, and trim long names in the CMS.": "Halten Sie Titel bei etwa ⟦1⟧ Zeichen: Schlüsselwörter zuerst, Website-Name zuletzt, und kürzen Sie lange Namen im CMS.",
  "Kevin Korenhof": "Kevin Korenhof",
@@ -1507,6 +1531,10 @@
  "Playwright request fixture.": "Playwright-Request-Fixture.",
  "Playwright v1.⟦1⟧": "Playwright v1.⟦1⟧",
  "Point each canonical at the exact https URL you serve, with the www if you use it.": "Richten Sie jedes Canonical auf die exakte https-URL, die Sie ausliefern, mit www, falls Sie es nutzen.",
+ "Point each page's canonical at itself, unless it really is a copy of another page.": {
+  "text": "Richten Sie die Kanonik jeder Seite auf sich selbst, es sei denn, es handelt sich tatsächlich um eine Kopie einer anderen Seite.",
+  "machine": true
+ },
  "Point every canonical at the final https URL, the same one you list in the sitemap.": "Richten Sie jedes Canonical auf die finale https-URL, dieselbe wie in der Sitemap.",
  "Pointing it home asks search to drop the page from results.": "Zeigt es auf die Startseite, bittet es die Suche, die Seite aus den Ergebnissen zu nehmen.",
  "Policía Nacional's search has no label.": "Die Suche der Policía Nacional hat kein Label.",
@@ -1884,6 +1912,14 @@
  "The gap: alt text.": "Die Lücke: alt-Text.",
  "The gap: broken links.": "Die Lücke: defekte Links.",
  "The gap: button names.": "Die Lücke: Button-Namen.",
+ "The gap: campaign tags.": {
+  "text": "Die Lücke: Kampagnen-Tags.",
+  "machine": true
+ },
+ "The gap: canonicals.": {
+  "text": "Die Lücke: Kanonika.",
+  "machine": true
+ },
  "The gap: cookie flags.": {
   "text": "Die Lücke: Cookie-Flags.",
   "machine": true
