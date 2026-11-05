@@ -28,11 +28,20 @@
  *                                                                        reply on X brings its card (#2466) as
  *                                                                        { png: base64, type, alt }; an owner-tags
  *                                                                        comment (#2633) brings more: true, as our
- *                                                                        own post may already have our first one
- *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already, card, cardError }  what came
- *                                                                        of one task; already: the post had our
- *                                                                        earlier reply (url), so none was sent;
- *                                                                        card: "attached" or "text"
+ *                                                                        own post may already have our first one;
+ *                                                                        on Facebook, LinkedIn and TikTok it brings
+ *                                                                        mentions [{ token, handle, name }] to pick
+ *                                                                        from the comment box's menu (#2637); an
+ *                                                                        owner reply there brings latest: true, the
+ *                                                                        owner's profile as url and since, for the
+ *                                                                        newest own post to answer (#2638)
+ *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already, card, cardError, target, none,
+ *                          mentions }                                    what came of one task; already: the post had
+ *                                                                        our earlier reply (url), so none was sent;
+ *                                                                        card: "attached" or "text"; target: the
+ *                                                                        { id, url } a latest task answered; none: it
+ *                                                                        found no post to answer; mentions: each
+ *                                                                        { token, handle, name, linked }
  *
  *   engagement_private/mac  { tokenHash, pairedAt, at, read, errors, signedIn, accounts, agent, blocked }
  *
@@ -47,7 +56,9 @@ const J = require("./jarvis-engagement");
 const R = require("./engagement-reports");
 const Act = require("./engagement-act");
 const Joins = require("./engagement-joins");
+const OwnerTags = require("./owner-tags");
 
+const DAY = 24 * 3600000;
 const BROWSER = Object.keys(E.NETWORKS).filter((k) => E.NETWORKS[k].browser);
 const CARRIED = ["like", "repost", "follow"];
 const LEASE = 20 * 60 * 1000;
@@ -177,12 +188,14 @@ async function queue(deps, body) {
     await t.ref.update({ ["actions." + t.action + ".leasedAt"]: at, updatedAt: at });
     const r = t.doc.actions.reply || {};
     const card = t.action === "reply" ? await Act.drawCard(deps, t.doc) : {};
+    const own = t.action === "reply" ? t.doc.ownerTags || {} : {};
     tasks.push(Object.assign({
       key: t.key, network: t.doc.network, action: t.action, id: t.doc.id, url: t.doc.url, author: { handle: (t.doc.author || {}).handle || "", id: (t.doc.author || {}).id || "" },
       draft: t.action === "reply" ? r.draft || "" : "", lang: t.action === "reply" ? r.lang || t.doc.lang || "" : "",
       reaction: t.action === "like" && t.doc.network === "linkedin" && !t.doc.chain ? reaction(t.doc) : "",
       chain: !!t.doc.chain, text: t.doc.chain ? clip(t.doc.text, 300) : "", title: t.action === "repost" ? clip(t.doc.title, 300) : ""
-    }, (t.doc.ownerTags || {}).kind === "tags" ? { more: true } : {}, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {}));
+    }, own.kind === "tags" ? { more: true } : {}, (own.menu || []).length ? { mentions: own.menu } : {},
+    own.latest ? { latest: true, since: new Date(now - OwnerTags.REPLY_DAYS * DAY).toISOString() } : {}, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {}));
   };
   for (const t of replies) await take(t);
   let dry = 0;
@@ -231,16 +244,26 @@ async function result(deps, body) {
   if (action === "reply") {
     if (cur.status !== "approved") return { ok: true, status: cur.status || "", note: "Already " + (cur.status || "gone") + "." };
     const tries = (cur.tries || 0) + (b.retry ? 0 : 1);
+    const own = doc.ownerTags || {};
+    const t = b.target || {};
+    const found = own.latest && /^https:\/\//.test(String(t.url || "")) ? { id: clip(t.id || t.url, 300), thread: clip(t.id || t.url, 300), url: clip(t.url, 500), "ownerTags.profile": doc.url || "" } : {};
+    const picked = doc.campaign === OwnerTags.CAMPAIGN && Array.isArray(b.mentions)
+      ? b.mentions.slice(0, 20).map((m) => ({ token: clip((m || {}).token, 120), handle: clip((m || {}).handle, 120), name: clip((m || {}).name, 120), linked: (m || {}).linked === true })).filter((m) => m.token) : [];
+    const tagged = picked.length ? { "ownerTags.linked": picked.filter((m) => m.linked).map((m) => m.token), "ownerTags.plain": picked.filter((m) => !m.linked).map((m) => m.token) } : {};
     if (b.already) {
       status = "replied";
-      await ref.update({ [k + "status"]: status, [k + "at"]: at, [k + "url"]: clip(b.url, 500), [k + "error"]: "We had already replied there, so this one was not sent.", [k + "leasedAt"]: "", [k + "by"]: "mac", updatedAt: at });
+      await ref.update(Object.assign({ [k + "status"]: status, [k + "at"]: at, [k + "url"]: clip(b.url, 500), [k + "error"]: "We had already replied there, so this one was not sent.", [k + "leasedAt"]: "", [k + "by"]: "mac", updatedAt: at }, found));
       await count("already");
     } else if (b.ok) {
       status = "posted";
       await ref.update(Object.assign({ [k + "status"]: status, [k + "postedAt"]: at, [k + "url"]: clip(b.url, 500), [k + "tries"]: tries, [k + "error"]: "", [k + "leasedAt"]: "", [k + "by"]: "mac", updatedAt: at },
-        Act.cardFields(doc, b.card === "attached", b.cardError)));
+        Act.cardFields(doc, b.card === "attached", b.cardError), found, tagged));
       await count("posted");
       if (doc.campaign === "report-reply") await db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ report: { posted: inc(1) } }, { merge: true });
+      if (picked.length) await OwnerTags.learnNames(db, doc.network, picked.filter((m) => m.linked), now);
+    } else if (b.none && own.latest) {
+      status = "failed";
+      await ref.update({ [k + "status"]: status, [k + "at"]: at, [k + "error"]: error || "No post of theirs to answer on their profile.", [k + "tries"]: tries, [k + "leasedAt"]: "", "ownerTags.none": at, updatedAt: at });
     } else {
       status = !b.retry && tries >= Act.MAX_TRIES ? "failed" : "approved";
       await ref.update(Object.assign({ [k + "error"]: error, [k + "tries"]: tries, [k + "leasedAt"]: "", updatedAt: at }, status === "failed" ? { [k + "status"]: status } : {}));

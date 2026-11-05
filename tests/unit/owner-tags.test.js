@@ -82,7 +82,12 @@ test("profile links become handles per network; share links and paths that are n
   assert.deepEqual(T.handleOf("https://medium.com/@someone"), null);
   assert.deepEqual(T.handleOf("https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv"), { network: "youtube", handle: "channel/UCabcdefghijklmnopqrstuv" });
   assert.equal(T.mentionOf({ network: "youtube", handle: "channel/UCabcdefghijklmnopqrstuv" }), "");
-  assert.equal(T.mentionOf({ network: "tiktok", handle: "metro" }), "", "TikTok makes a mention only from its menu");
+  assert.equal(T.mentionOf({ network: "tiktok", handle: "metro" }), "@metro", "the token the Mac's agent picks from TikTok's menu");
+  assert.equal(T.mentionOf({ network: "linkedin", handle: "company/universidad-de-los-andes" }), "@universidad-de-los-andes");
+  assert.equal(T.mentionOf({ network: "facebook", handle: "UPBColombia" }), "@UPBColombia");
+  assert.equal(T.profileOf({ network: "linkedin", handle: "company/cognizant" }), "https://www.linkedin.com/company/cognizant/");
+  assert.equal(T.profileOf({ network: "threads", handle: "metro" }), "https://www.threads.com/@metro");
+  assert.equal(T.profileOf({ network: "bluesky", handle: "metro.bsky.social" }), "", "the API networks find the latest post themselves");
   assert.deepEqual(T.socialLinksOf(HOME).map((h) => h.network + ":" + h.handle),
     ["x:metrodebogota", "instagram:metrodebogota", "bluesky:metrodebogota.bsky.social", "youtube:MetrodeBogota", "tiktok:metrodebogota"]);
 });
@@ -117,6 +122,20 @@ test("comments put owners first, then related accounts, within the network's cap
   const x = T.comments("x", "en", [], Array.from({ length: 40 }, (_, i) => ({ network: "x", handle: "account_number_" + i })), "", 2, false);
   assert.ok(x.every((c) => c.text.length <= 280 && c.mentions.length <= 10));
   assert.equal(x.reduce((n, c) => n + c.mentions.length, 0), T.RELATED_MAX);
+  assert.equal(out[0].tags, undefined, "a typed handle is the mention on Instagram");
+});
+
+test("on Facebook, LinkedIn and TikTok each comment names the accounts the agent picks from the menu, within TikTok's 150 characters", () => {
+  const li = T.comments("linkedin", "es", [{ network: "linkedin", handle: "company/cognizant", name: "Cognizant", kind: "owner" }], [{ network: "linkedin", handle: "in/ana-perez" }], "https://l.ink/x", 2, false);
+  assert.equal(li[0].text, "@cognizant ya salió la revisión QA pública de tu sitio: https://l.ink/x cc @ana-perez");
+  assert.deepEqual(li[0].tags, [{ token: "@cognizant", handle: "company/cognizant", name: "Cognizant" }, { token: "@ana-perez", handle: "in/ana-perez", name: "" }]);
+  const link = "https://qalabreview.com/es/r/tt/metrodebogota.gov.co/ot-012";
+  const owners = ["metrodebogota", "transmilenio_oficial", "movilidadbogota", "idubogota"].map((handle) => ({ network: "tiktok", handle, kind: "owner" }));
+  const tt = T.comments("tiktok", "es", owners, [], link, 2, true);
+  assert.ok(tt.every((c) => c.text.length <= 150), tt.map((c) => c.text.length).join());
+  assert.deepEqual(tt.flatMap((c) => c.tags.map((t) => t.handle)), ["metrodebogota", "transmilenio_oficial", "movilidadbogota", "idubogota"].slice(0, tt.flatMap((c) => c.tags).length));
+  assert.ok(tt[0].tags.length < owners.length, "owners that do not fit wait for the next comment");
+  assert.equal(T.replyText("es", { network: "x", handle: "metro" }, "metro.gov.co", "https://l.ink"), "Publicamos una revisión QA pública de metro.gov.co, gratis: https://l.ink", "the owner of a post hears of a comment on it");
 });
 
 test("a dry run reads owners and suggestions, pushes them, and only counts what it would post", async () => {
@@ -152,11 +171,14 @@ test("live: approved accounts are tagged once, new approvals go in the comment l
   assert.match(onX[0].actions.reply.draft, /^@metrodebogota ya salió .* https:\/\/qalabreview\.com\/es\/r\/x\/metrodebogota\.gov\.co\/ot-/);
   assert.equal(onX[0].actions.reply.status, "approved");
   assert.equal(onX[0].campaign, "owner-tags");
-  assert.ok(!tags.some((x) => x.network === "tiktok"), "no tag comments where a typed handle is no mention");
+  const tt = tags.find((x) => x.network === "tiktok");
+  assert.match(tt.actions.reply.draft, /^@metrodebogota ya salió /);
+  assert.deepEqual(tt.ownerTags.menu, [{ token: "@metrodebogota", handle: "metrodebogota", name: "" }], "TikTok's mention is picked from its menu by the agent");
+  assert.equal(onX[0].ownerTags.menu, undefined);
   const viva = tags.find((x) => x.network === "mastodon");
   assert.match(viva.actions.reply.draft, /^@vivastreet@mastodon\.social @donedeal@mastodon\.social your sites are compared/);
   const replies = docs.filter((x) => x.ownerTags.kind === "reply");
-  assert.deepEqual(replies.map((x) => x.network + " " + x.id).sort(), [
+  assert.deepEqual(replies.filter((x) => !x.ownerTags.latest).map((x) => x.network + " " + x.id).sort(), [
     "bluesky at://did:plc:metro/app.bsky.feed.post/9zz", "mastodon https://mastodon.social/@vivastreet/55", "mastodon https://mastodon.social/@vivastreet/55", "youtube vid12345678"
   ], "one per owner account: both comparison owners on Mastodon (the fake server gives both the same post)");
   assert.match(replies.find((x) => x.network === "bluesky").actions.reply.draft, /^@metrodebogota\.bsky\.social publicamos una revisión QA pública de metrodebogota\.gov\.co/);
@@ -176,7 +198,34 @@ test("live: approved accounts are tagged once, new approvals go in the comment l
   assert.equal(docs.filter((x) => x.ownerTags.kind === "reply").length, replies.length, "one reply per owner and report");
 
   await T.run(Object.assign({}, d, { now: NOW + 2 * 86400000 }));
-  assert.equal((await db.collection("engagement_posts").get()).docs.filter((s) => s.data().network === "x").length, 2, "two comments a post at most");
+  assert.equal((await db.collection("engagement_posts").get()).docs.filter((s) => s.data().network === "x" && s.data().ownerTags.kind === "tags").length, 2, "two comments a post at most");
+});
+
+test("owners on the Mac's networks get one reply aimed at their profile; one with no post to answer is tried again after a week", async () => {
+  const E = require("../../functions/engagement.js");
+  const db = fakeDb();
+  const { d } = deps(db, { suggestions: [] });
+  await T.saveSettings(db, { live: true }, "test", NOW);
+  await T.run(d);
+  const latest = async () => (await db.collection("engagement_posts").get()).docs.map((s) => Object.assign({ key: s.id }, s.data())).filter((x) => x.ownerTags.latest);
+  const first = await latest();
+  assert.deepEqual(first.map((x) => x.network + " " + x.url + " [" + x.id + "]").sort(), [
+    "instagram https://www.instagram.com/metrodebogota/ []", "tiktok https://www.tiktok.com/@metrodebogota []", "x https://x.com/metrodebogota []"
+  ]);
+  const x = first.find((r) => r.network === "x");
+  assert.equal(E.carrier(x), "mac");
+  assert.equal(x.author.handle, "metrodebogota");
+  assert.match(x.actions.reply.draft, /^Publicamos una revisión QA pública de metrodebogota\.gov\.co, gratis: https:\/\/qalabreview\.com\/es\/r\/x\/metrodebogota\.gov\.co/);
+  assert.deepEqual(x.ownerTags, { kind: "reply", report: "metrobogota", account: "x:metrodebogota", latest: true });
+
+  await db.collection("engagement_posts").doc(x.key).update({ "actions.reply.status": "failed", "ownerTags.none": new Date(NOW).toISOString() });
+  await T.run(Object.assign({}, d, { now: NOW + 3 * 86400000 }));
+  assert.equal((await latest()).find((r) => r.key === x.key).actions.reply.status, "failed", "not again within the week");
+  await T.run(Object.assign({}, d, { now: NOW + 8 * 86400000 }));
+  const again = (await latest()).find((r) => r.key === x.key);
+  assert.equal(again.actions.reply.status, "approved");
+  assert.equal(again.ownerTags.none, undefined);
+  assert.equal((await latest()).length, 3, "still one per owner account and report");
 });
 
 test("a paused run posts nothing; a blocked account is never tagged", async () => {
