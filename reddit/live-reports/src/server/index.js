@@ -4,6 +4,7 @@ import { once } from "node:events";
 import { createServer, getServerPort, context, reddit, redis } from "@devvit/web/server";
 import summary from "../../dist/summary.json";
 import campaign from "../../dist/campaign.json";
+import approved from "../../dist/engagement.json";
 
 const SITE = "https://carlosandmunoz.com/qa-review.html?utm_source=reddit&utm_medium=social&utm_campaign=live-reports#live-reports";
 const POSTED = "posted-batch";
@@ -91,6 +92,94 @@ async function postCampaign() {
   }
 }
 
+// Comments under our posts (#2614), for the engagement routine: reddit-engagement.yml reads these log lines every hour
+// and sends them to Jarvis, and ships the replies Carlos approved back in dist/engagement.json with a new version.
+// A comment is logged on every run while it is under COMMENT_HOURS old, so a sync that reads two hours of logs never
+// misses one. Keep the kinds and fields in step with functions/engagement-reddit.js.
+const HOUR = 3600000;
+const COMMENT_DAYS = 7;
+const COMMENT_HOURS = 6;
+const COMMENT_POSTS = 15;
+const PER_LINE = 5;
+const REPLIED = "replied:";
+const TRIED = "reply-tries:";
+const MAX_TRIES = 3;
+
+const log = (rec) => console.log(LEDGER + JSON.stringify(Object.assign({ at: new Date().toISOString() }, rec)));
+
+async function appUser() {
+  try {
+    const user = await reddit.getAppUser();
+    if (user) return user.username.toLowerCase();
+  } catch (error) {
+    console.error("app user failed; " + error.message);
+  }
+  return String(context.appName || "").toLowerCase();
+}
+
+const mine = (c, me) => String(c.authorName || "").toLowerCase() === me;
+
+function commentLine(c, parent, ours, answered) {
+  return {
+    id: c.id, post: c.postId, parent, author: c.authorName, body: String(c.body || "").slice(0, 1200), created: c.createdAt.toISOString(),
+    permalink: c.permalink, score: c.score, answered, ours: String(ours || "").slice(0, 500)
+  };
+}
+
+async function comments() {
+  const known = await redis.hGetAll(BATCHES);
+  const since = Date.now() - COMMENT_DAYS * 24 * HOUR;
+  const fresh = Date.now() - COMMENT_HOURS * HOUR;
+  const me = await appUser();
+  const ids = Object.keys(known).filter((id) => Date.parse(known[id]) >= since).sort((a, b) => known[b].localeCompare(known[a])).slice(0, COMMENT_POSTS);
+  const items = [];
+  for (const id of ids) {
+    try {
+      const post = await reddit.getPostById(id);
+      if (!post.numberOfComments) continue;
+      for (const c of await reddit.getComments({ postId: id, limit: 100, depth: 3 }).all()) {
+        const ours = mine(c, me);
+        if (!ours && c.createdAt.getTime() < fresh) continue;
+        const replies = await c.replies.all();
+        if (!ours) items.push(commentLine(c, id, post.title, replies.some((r) => mine(r, me))));
+        else {
+          for (const r of replies.filter((x) => !mine(x, me) && x.createdAt.getTime() >= fresh)) {
+            items.push(commentLine(r, c.id, c.body, (await r.replies.all()).some((x) => mine(x, me))));
+          }
+        }
+      }
+    } catch (error) {
+      console.error("comments on " + id + " failed; " + error.message);
+    }
+  }
+  for (let i = 0; i < items.length; i += PER_LINE) log({ kind: "comments", items: items.slice(i, i + PER_LINE) });
+}
+
+// Each approved reply goes out once, unless the app already answered that comment; it is logged as replied on every
+// run while this version carries it, and a failing one is tried on MAX_TRIES runs.
+async function sendReplies() {
+  if (!approved.length) return;
+  const me = await appUser();
+  for (const item of approved) {
+    if (!item || !/^t1_\w+$/.test(item.id || "") || !item.text) continue;
+    const done = await redis.get(REPLIED + item.key);
+    if (done) { log(Object.assign({ kind: "replied", key: item.key }, JSON.parse(done))); continue; }
+    const tries = Number(await redis.get(TRIED + item.key)) || 0;
+    if (tries >= MAX_TRIES) continue;
+    try {
+      const target = await reddit.getCommentById(item.id);
+      const had = (await target.replies.all()).find((r) => mine(r, me));
+      const out = had ? { id: had.id, url: "https://www.reddit.com" + had.permalink, already: true }
+        : await reddit.submitComment({ id: item.id, text: item.text, runAs: "APP" }).then((c) => ({ id: c.id, url: "https://www.reddit.com" + c.permalink }));
+      await redis.set(REPLIED + item.key, JSON.stringify(out), { expiration: new Date(Date.now() + 30 * 24 * HOUR) });
+      log(Object.assign({ kind: "replied", key: item.key }, out));
+    } catch (error) {
+      await redis.set(TRIED + item.key, String(tries + 1), { expiration: new Date(Date.now() + 7 * 24 * HOUR) });
+      log({ kind: "reply-failed", key: item.key, error: String((error && error.message) || error).slice(0, 200) });
+    }
+  }
+}
+
 async function pin(post) {
   try { await post.sticky(1); } catch (error) { console.error("sticky failed; " + error.message); }
 }
@@ -123,7 +212,9 @@ async function routes(url) {
       return {};
     }
     case "/internal/scheduler/campaign": {
-      await postCampaign();
+      for (const task of [postCampaign, sendReplies, comments]) {
+        try { await task(); } catch (error) { console.error(task.name + " failed; " + error.message); }
+      }
       return {};
     }
     default:

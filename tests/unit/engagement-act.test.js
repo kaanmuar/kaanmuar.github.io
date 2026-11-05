@@ -212,7 +212,7 @@ test("Connect Mastodon registers the app, signs in, marks the account a bot; Con
   assert.match(ok.message, /QA-lab URL Review/);
   assert.equal(db.data.get("engagement_private/youtube").refresh, "1//r");
   const all = await A.connections(db);
-  assert.deepEqual(all.map((c) => c.connected), [false, true, true]);
+  assert.deepEqual(all.map((c) => c.connected), [false, true, true, false]);
   assert.equal(all.find((c) => c.network === "mastodon").bot, true);
   await A.disconnect(db, "youtube");
   assert.equal((await A.connections(db)).find((c) => c.network === "youtube").connected, false);

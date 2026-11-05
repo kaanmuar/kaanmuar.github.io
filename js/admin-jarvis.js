@@ -1941,7 +1941,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     // --- Engagement (#1988): the scout's posts in our field, what it plans on them, and the replies waiting for you.
-    const EG_NETWORK_LIMIT = { bluesky: 300, mastodon: 500, youtube: 500, x: 280, linkedin: 1200, facebook: 1000, instagram: 1000, threads: 500, tiktok: 150 };
+    const EG_NETWORK_LIMIT = { bluesky: 300, mastodon: 500, youtube: 500, x: 280, linkedin: 1200, facebook: 1000, instagram: 1000, threads: 500, tiktok: 150, telegram: 1000, reddit: 1500 };
     const EG_SHOWN = 5;
     const egHeadline = (d, max = 160) => {
         const text = (d.title || String(d.text || '')).replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim();
@@ -1998,9 +1998,10 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const accounts = g.accounts || [];
         const accountRow = (a) => `<li><strong>${esc(a.name)}</strong> ${a.connected ? `<span class="jv-chip c-fast">connected as ${esc(a.account)}</span>${a.bot ? ' <span class="jv-chip">bot flag on</span>' : ''}` : '<span class="jv-chip c-slow">not connected</span>'}${a.error ? ` <span class="jv-chip c-slow">${esc(a.error)}</span>` : ''}
             ${a.network === 'bluesky' ? `<form class="jv-eg-bluesky" data-eg-bluesky><label>Handle<input name="handle" autocomplete="off" value="${esc(a.account || 'qalaburlreview.bsky.social')}"></label><label>App password<input name="password" type="password" autocomplete="off" placeholder="xxxx-xxxx-xxxx-xxxx"></label><button type="submit" class="jv-btn">${a.connected ? 'Replace' : 'Connect Bluesky'}</button></form><span class="jv-note">bsky.app &gt; Settings &gt; Privacy and security &gt; App passwords. Never the account password.</span>`
+                : a.network === 'telegram' ? `<form class="jv-eg-bluesky" data-eg-telegram><label>Bot token<input name="token" type="password" autocomplete="off" placeholder="123456789:AAE…"></label><button type="submit" class="jv-btn${a.connected ? '' : ' is-primary'}">${a.connected ? 'Replace' : 'Connect Telegram'}</button></form><span class="jv-note">BotFather &gt; /mybots &gt; the bot &gt; API Token. The bot answers in @qalab_live's discussion group, as its admin.</span>`
                 : `<button type="button" class="jv-btn${a.connected ? '' : ' is-primary'}" data-eg-connect="${esc(a.network)}">${a.connected ? 'Reconnect' : 'Connect ' + esc(a.name)}</button>`}
             ${a.connected ? ` <button type="button" class="jv-link" data-eg-disconnect="${esc(a.network)}">Disconnect</button>` : ''}</li>`;
-        const accountsBody = `<ul class="jv-facts jv-eg-accounts">${accounts.map(accountRow).join('')}</ul><p class="jv-note">X, LinkedIn, Facebook, Instagram, Threads and TikTok act through the Mac's browser agent (#1991), signed in once in its own Chrome profile.</p>`;
+        const accountsBody = `<ul class="jv-facts jv-eg-accounts">${accounts.map(accountRow).join('')}</ul><p class="jv-note">X, LinkedIn, Facebook, Instagram, Threads and TikTok act through the Mac's browser agent (#1991), signed in once in its own Chrome profile. Reddit answers under our r/QALabLiveReports posts through the Reddit app, synced every hour (#2614).</p>`;
         const used = (k, a) => ((g.used || {})[k] || {})[a] || 0;
         const netBody = table([['Network', (n) => `<strong>${esc(n.name)}</strong>`], ['Reads', (n) => `<span class="jv-chip ${n.reads === 'API' ? 'c-fast' : n.reads.startsWith('needs') ? 'c-slow' : ''}">${esc(n.reads)}</span>${n.error ? `<br><span class="jv-note">${esc(n.error)}</span>` : ''}`],
             ['Last run', (n) => fmt(n.lastRead)], ['In field', (n) => fmt(n.row ? n.row.candidates : 0)],
@@ -3399,6 +3400,11 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             if (!handle || !password) { toast('Write the handle and an app password.', 5000); return; }
             form.elements.password.value = '';
             egConnect({ network: 'bluesky', handle, password });
+        } else if (form.dataset.egTelegram !== undefined) {
+            const token = form.elements.token.value.trim();
+            if (!/^\d{5,}:[\w-]{30,}$/.test(token)) { toast('Paste the bot token from BotFather, like 123456789:AAE….', 5000); return; }
+            form.elements.token.value = '';
+            egConnect({ network: 'telegram', token });
         } else if (form.dataset.egSettings !== undefined) {
             const n = (name) => Number(form.elements[name].value);
             const acts = ['like', 'repost', 'follow', 'reply'];

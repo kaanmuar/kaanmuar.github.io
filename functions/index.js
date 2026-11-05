@@ -5313,6 +5313,7 @@ const jarvisOutreach = require("./jarvis-outreach");
 const jarvisAddresses = require("./jarvis-addresses");
 const jarvisEngagement = require("./jarvis-engagement");
 const engagementMac = require("./engagement-mac");
+const engagementReddit = require("./engagement-reddit");
 const jarvisPageSpeed = require("./jarvis-pagespeed");
 
 // The daily PageSpeed routine's PRs (#1978): pushes go to the alerts kind, outcomes to the actions log.
@@ -6698,6 +6699,12 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
   // The Mac's browser agent (#1991) signs with the token it paired, not the owner sign-in.
   if (String((req.body || {}).op || "").startsWith("engagement-mac-")) {
     try { res.json(await engagementMac.handle(Object.assign(engagementDeps(), { now: Date.now() }), req.body, String(req.get("x-mac-token") || ""))); }
+    catch (error) { res.status(error.status || 400).json({ ok: false, error: String(error.message || error).slice(0, 300) }); }
+    return;
+  }
+  // The Reddit sync (reddit-engagement.yml, #2614) signs with REDDIT_ENGAGEMENT_TOKEN.
+  if ((req.body || {}).op === "engagement-reddit-sync") {
+    try { res.json(await engagementReddit.handle(Object.assign(engagementDeps(), { now: Date.now() }), req.body, String(req.get("x-reddit-token") || ""))); }
     catch (error) { res.status(error.status || 400).json({ ok: false, error: String(error.message || error).slice(0, 300) }); }
     return;
   }

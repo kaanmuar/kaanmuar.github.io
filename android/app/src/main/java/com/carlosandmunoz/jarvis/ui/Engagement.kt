@@ -47,7 +47,7 @@ import kotlinx.serialization.json.JsonPrimitive
 
 /** Jarvis > Engagement (#1988): the scout's posts in our field, its plan, and the replies waiting for Carlos. */
 object Engagement {
-    val LIMIT = mapOf("bluesky" to 300, "mastodon" to 500, "youtube" to 500, "x" to 280, "linkedin" to 1200, "facebook" to 1000, "instagram" to 1000, "threads" to 500, "tiktok" to 150)
+    val LIMIT = mapOf("bluesky" to 300, "mastodon" to 500, "youtube" to 500, "x" to 280, "linkedin" to 1200, "facebook" to 1000, "instagram" to 1000, "threads" to 500, "tiktok" to 150, "telegram" to 1000, "reddit" to 1500)
     val ACTIONS = listOf("like", "repost", "follow", "reply")
 
     fun limit(network: String?) = LIMIT[network] ?: 300
@@ -93,6 +93,8 @@ object Engagement {
     ).joinToString(" · ")
 
     val APP_PASSWORD = Regex("^[a-z0-9]{4}(-[a-z0-9]{4}){3}$", RegexOption.IGNORE_CASE)
+    /** A Telegram bot token from BotFather (#2614). */
+    val BOT_TOKEN = Regex("^\\d{5,}:[A-Za-z0-9_-]{30,}$")
     const val SHOWN = 5
 
     /** Report replies (#2465, #2471): invites under posts that name a site we reviewed. */
@@ -395,6 +397,16 @@ private fun Accounts(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Strin
                     vm.market("eg:connect:bluesky", "engagement-connect", mapOf("network" to json("bluesky"), "handle" to json(handle), "password" to json(sent))) { out -> out.str("message") ?: "Bluesky is connected." }
                 }
                 Muted("bsky.app > Settings > Privacy and security > App passwords. Never the account password.")
+            } else if (net == "telegram") {
+                var token by remember { mutableStateOf("") }
+                OutlinedTextField(token, { token = it.trim() }, label = { Text("Bot token (123456789:AAE…)") }, singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+                ActionButton(if (connected) "Replace" else "Connect Telegram", "eg:connect:telegram" in s.running || !Engagement.BOT_TOKEN.matches(token)) {
+                    val sent = token
+                    token = ""
+                    vm.market("eg:connect:telegram", "engagement-connect", mapOf("network" to json("telegram"), "token" to json(sent))) { out -> out.str("message") ?: "Telegram is connected." }
+                }
+                Muted("BotFather > /mybots > the bot > API Token. The bot answers in @qalab_live's discussion group, as its admin.")
             } else {
                 ActionButton(if (connected) "Reconnect $name" else "Connect $name", "eg:connect:$net" in s.running) {
                     vm.connectEngagement(net) { url -> runCatching { uri.openUri(url) } }
@@ -404,7 +416,7 @@ private fun Accounts(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Strin
                 Text("Disconnect", color = J.muted, fontSize = 13.sp)
             }
         }
-        Muted("X, LinkedIn, Facebook, Instagram, Threads and TikTok act through the Mac's browser agent (#1991). Mastodon is marked as a bot when it connects.")
+        Muted("X, LinkedIn, Facebook, Instagram, Threads and TikTok act through the Mac's browser agent (#1991). Mastodon is marked as a bot when it connects. Reddit answers under our r/QALabLiveReports posts through the Reddit app, synced every hour (#2614).")
     }
 }
 
