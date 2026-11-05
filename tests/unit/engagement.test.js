@@ -16,7 +16,7 @@ const scored = (o) => { const p = post(o); return Object.assign({ key: E.keyOf(p
 test("settings fill defaults, clamp numbers and merge a patch", () => {
   const s = E.settings(null);
   assert.equal(s.paused, false);
-  assert.deepEqual(s.caps, { like: 60, repost: 15, follow: 15, reply: 15 });
+  assert.deepEqual(s.caps, { like: 60, repost: 15, follow: 15, reply: 15, join: 2 });
   assert.ok(s.competitors.includes("semrush"));
   assert.equal(E.settings({ caps: { like: -4, reply: 9999 } }).caps.like, 0);
   assert.equal(E.settings({ caps: { reply: 9999 } }).caps.reply, 500);
@@ -271,7 +271,7 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.ok(src.needs.some((n) => /Reddit sync has not run yet/.test(n)));
   assert.match(src.networks.find((n) => n.network === "reddit").acts, /^Reddit app: replies under our subreddit's posts; waiting for the first sync/);
   assert.equal(src.networks.find((n) => n.network === "linkedin").reads, "Mac browser, not set up");
-  assert.ok(src.needs.some((n) => /X, LinkedIn, Facebook, Instagram, Threads and TikTok wait for the Mac's browser agent/.test(n)));
+  assert.ok(src.needs.some((n) => /X, LinkedIn, Facebook, Instagram, Threads, TikTok, Telegram and Reddit wait for the Mac's browser agent/.test(n)));
 });
 
 test("our X, TikTok and Bluesky account @qalaburlreview counts as our own (#1991)", () => {

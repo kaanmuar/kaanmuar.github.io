@@ -18,6 +18,7 @@ const Sources = require("./engagement-sources");
 const Act = require("./engagement-act");
 const R = require("./engagement-reports");
 const P = require("./engagement-profiles");
+const Joins = require("./engagement-joins");
 const Offer = require("./url-review-domain-offer");
 
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
@@ -81,7 +82,7 @@ async function repliedThreads(db) {
 /** Today's planned actions per network, for the caps. */
 function usedToday(daily) {
   const used = {};
-  Object.entries((daily && daily.n) || {}).forEach(([net, n]) => { used[net] = { like: n.like || 0, repost: n.repost || 0, follow: n.follow || 0, reply: n.drafted || 0 }; });
+  Object.entries((daily && daily.n) || {}).forEach(([net, n]) => { used[net] = { like: n.like || 0, repost: n.repost || 0, follow: n.follow || 0, reply: n.drafted || 0, join: (n.join_done || 0) + (n.join_dry || 0) }; });
   return used;
 }
 
@@ -700,7 +701,7 @@ async function decide(deps, body, by) {
     const copy = !!(doc.report && doc.report.manual) && d.reply.status === "approved";
     if (copy) d.reply.status = "copy";
     tx.update(ref, { "actions.reply": d.reply, updatedAt: new Date(now).toISOString() });
-    return { network: doc.network, invite: doc.campaign === R.CAMPAIGN, d, copy, profile: (doc.report || {}).profile || doc.url || "" };
+    return { network: doc.network, via: doc.via || "", invite: doc.campaign === R.CAMPAIGN, d, copy, profile: (doc.report || {}).profile || doc.url || "" };
   });
   await db.collection("engagement_daily").doc(E.bogotaDay(now)).set(increments(Object.assign({ n: { [out.network]: { [out.d.counter]: 1 } }, decided: 1, decideMs: out.d.waited }, out.invite ? { report: { [out.d.counter]: 1 } } : {}), inc), { merge: true });
   const net = E.NETWORKS[out.network] || {};
@@ -708,8 +709,9 @@ async function decide(deps, body, by) {
   if (out.d.counter === "dismissed") { await clearCache(db); return { key, status: "dismissed", message: "Dismissed." }; }
   const said = out.d.counter === "edited" ? "Your version is approved" : "Approved";
   if (out.copy) { await clearCache(db); return { key, status: "copy", url: out.profile, text: out.d.reply.draft, message: said + "; paste it on " + name + " at " + out.profile + "." }; }
-  if (net.devvit) { await clearCache(db); return { key, status: "approved", message: said + "; the Reddit app posts it with its next hourly upload, usually within two hours." }; }
-  if (!net.api) { await clearCache(db); return { key, status: "approved", message: said + "; the Mac's browser agent posts it on " + name + " on its next run (every 30 minutes, 7:00 to 22:00)." }; }
+  const carrier = E.carrier(Object.assign({ network: out.network }, out.via ? { via: out.via } : {}));
+  if (carrier === "devvit") { await clearCache(db); return { key, status: "approved", message: said + "; the Reddit app posts it with its next hourly upload, usually within two hours." }; }
+  if (carrier === "mac") { await clearCache(db); return { key, status: "approved", message: said + "; the Mac's browser agent posts it on " + name + " on its next run (every 30 minutes, 7:00 to 22:00)." }; }
   if ((await readSettings(db)).paused) { await clearCache(db); return { key, status: "approved", message: said + "; engagement is paused, so it goes out on " + name + " when you resume." }; }
   const sent = await Act.replyNow(deps, key).catch((error) => ({ status: "approved", error: error.message }));
   await clearCache(db);
@@ -743,6 +745,8 @@ async function saveSettings(db, body, by, now) {
 }
 
 const WORDS = { like: "likes", repost: "reposts", follow: "follows", reply: "replies" };
+// Telegram and Reddit act in two places (#2614): our own posts through the bot and the Reddit app, the field through the Mac.
+const FIELD = { telegram: "reactions, forwards to @qalab_live, replies and joins in the field", reddit: "upvotes, crossposts, follows, comments and joins in the field" };
 const joinAnd = (list) => list.length > 1 ? list.slice(0, -1).join(", ") + " and " + list[list.length - 1] : list.join("");
 const STAGE = Object.assign(
   Object.fromEntries(Object.entries(E.NETWORKS).filter(([, n]) => n.browser).map(([k, n]) => [k, joinAnd((n.only || Object.keys(WORDS)).map((a) => WORDS[a]))])),
@@ -793,21 +797,28 @@ async function source(ctx) {
   const report = E.report("range", cur, prev, top, now);
   const env = withAccounts(ctx.env || {}, creds);
   const readers = Object.fromEntries(Sources.readable(env).map((r) => [r.network, r]));
-  const acting = (k) => {
+  const viaMac = (k) => {
+    const what = FIELD[k] || STAGE[k];
+    if (!signed(k)) return what + " through the Mac's browser once it is signed in there";
+    const until = (mac.blocked || {})[k];
+    return "Mac browser: " + what + (conf.live ? "" : " (dry run: replies post, the rest is only logged)") + (until ? "; held until " + until + " after a check" : "");
+  };
+  const ownPosts = (k) => {
     if ((E.NETWORKS[k] || {}).devvit) return "Reddit app: " + STAGE[k] + (reddit ? "; last sync " + Math.round((now - Date.parse(reddit.at)) / 60000) + " minutes ago" + (reddit.error ? " (" + reddit.error + ")" : "") : "; waiting for the first sync");
-    if ((E.NETWORKS[k] || {}).browser) {
-      if (!signed(k)) return STAGE[k] + " through the Mac's browser once it is signed in there";
-      const until = (mac.blocked || {})[k];
-      return "Mac browser: " + STAGE[k] + (conf.live ? "" : " (dry run: replies post, the rest is only logged)") + (until ? "; held until " + until + " after a check" : "");
-    }
     const a = accounts.find((x) => x.network === k);
     if (!a) return STAGE[k] || "";
     if (!a.connected) return "API, not connected: connect it under Accounts";
     return "API as " + a.account + ": " + STAGE[k] + (conf.live ? "" : " (dry run: replies post, the rest is only logged)") + (a.error ? "; last error: " + a.error : "");
   };
+  const acting = (k) => {
+    const n = E.NETWORKS[k] || {};
+    if (n.browser && (n.api || n.devvit)) return ownPosts(k) + "; " + viaMac(k);
+    return n.browser ? viaMac(k) : ownPosts(k);
+  };
+  const ownReads = (n) => (n.devvit ? "Reddit app, our posts' comments" : n.api ? "bot, our posts' comments" : "");
   const networks = Object.entries(E.NETWORKS).map(([k, n]) => ({
-    network: k, name: n.name, reads: readers[k] ? (readers[k].ok ? "API" : k === "bluesky" ? "needs the account" : "needs a key") : n.browser ? macReads(k) : n.devvit ? "Reddit app, our posts' comments" : n.api ? "bot, our posts' comments" : "",
-    lastRead: n.browser ? (mac && mac.read ? mac.read[k] || 0 : 0) : n.devvit ? (reddit && reddit.read) || 0 : last && last.read ? last.read[k] || 0 : 0,
+    network: k, name: n.name, reads: readers[k] ? (readers[k].ok ? "API" : k === "bluesky" ? "needs the account" : "needs a key") : n.browser ? [macReads(k), ownReads(n)].filter(Boolean).join("; ") : ownReads(n),
+    lastRead: n.browser ? (mac && mac.read ? mac.read[k] || 0 : 0) + (n.devvit ? (reddit && reddit.read) || 0 : 0) : n.devvit ? (reddit && reddit.read) || 0 : last && last.read ? last.read[k] || 0 : 0,
     error: n.browser ? (mac && mac.errors ? mac.errors[k] || "" : "") : last && last.errors ? last.errors[k] || "" : "", acts: acting(k),
     row: report.networks.find((r) => r.network === k) || null
   }));
@@ -830,13 +841,15 @@ async function source(ctx) {
   if (last && last.aiError) needs.push("Engagement: Gemini failed on the last run (" + last.aiError + "), so no reply was drafted.");
   if (conf.paused) needs.push("Engagement is paused: nothing is planned or pushed until you resume it.");
   const byScore = (a, b) => b.score - a.score;
+  const used = usedToday(cur.find((d) => d.day === E.bogotaDay(now)));
+  const joins = await Joins.summary(db, conf, mac, used, now);
   return {
     ok: true, settings: conf, paused: conf.paused, live: conf.live, stale, lastRun: last, runs, accounts,
     waiting: waitingSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data()))).sort(byScore),
     approved: approvedSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data()))).sort((a, b) => String(b.actions.reply.decidedAt).localeCompare(String(a.actions.reply.decidedAt))).slice(0, 30),
     posts: top.map(brief), report, networks,
     reports: reportsSnap.docs.map((d) => { const x = d.data(); let r = {}; try { r = JSON.parse(x.json); } catch (error) { r = {}; } return { id: d.id, period: x.period, from: x.from, to: x.to, at: x.at, totals: r.totals || {}, approvalRate: r.approvalRate === undefined ? null : r.approvalRate }; }),
-    caps: conf.caps, used: usedToday(cur.find((d) => d.day === E.bogotaDay(now))),
+    caps: conf.caps, used, joins,
     daily: range.map((day) => {
       const t = E.report("day", cur.filter((d) => d.day === day), [], [], now).totals;
       return { day, read: t.read, candidates: t.candidates, like: t.like, repost: t.repost, follow: t.follow, drafted: t.drafted, approved: t.approved + t.edited, posted: t.posted, done: t.like_done + t.repost_done + t.follow_done, dry: t.like_dry + t.repost_dry + t.follow_dry };

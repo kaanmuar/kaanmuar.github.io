@@ -8,7 +8,8 @@
    "like": 60,
    "repost": 15,
    "follow": 15,
-   "reply": 15
+   "reply": 15,
+   "join": 2
   },
   "thresholds": {
    "like": 1.5,
@@ -796,6 +797,24 @@
    "error": "lobste.rs/hottest.json answered 503",
    "acts": "trends only",
    "row": null
+  },
+  {
+   "network": "telegram",
+   "name": "Telegram",
+   "reads": "Mac browser as user 1; bot, our posts' comments",
+   "lastRead": 14,
+   "error": "",
+   "acts": "API as @qalab_live_bot: reactions and replies under our channel's posts (dry run: replies post, the rest is only logged); Mac browser: reactions, forwards to @qalab_live, replies and joins in the field (dry run: replies post, the rest is only logged)",
+   "row": null
+  },
+  {
+   "network": "reddit",
+   "name": "Reddit",
+   "reads": "Mac browser as u/carlosandmunoz; Reddit app, our posts' comments",
+   "lastRead": 52,
+   "error": "",
+   "acts": "Reddit app: replies under our subreddit's posts; last sync 12 minutes ago; Mac browser: upvotes, crossposts, follows, comments and joins in the field (dry run: replies post, the rest is only logged)",
+   "row": null
   }
  ],
  "reports": [],
@@ -811,6 +830,9 @@
    "repost": 2,
    "follow": 2,
    "reply": 2
+  },
+  "reddit": {
+   "join": 1
   }
  },
  "daily": [
@@ -909,5 +931,70 @@
  "needs": [
   "YouTube: YOUTUBE_KEY is not set for the engagement scout.",
   "Engagement: Bluesky: paste an app password in Engagement > Accounts (bsky.app > Settings > Privacy and security > App passwords)."
- ]
+ ],
+ "joins": {
+  "log": [
+   {
+    "key": "reddit_aaaaaaaaaaaaaaaaaaaa",
+    "network": "reddit",
+    "name": "r/QualityAssurance",
+    "id": "qualityassurance",
+    "url": "https://www.reddit.com/r/QualityAssurance/",
+    "kind": "subreddit",
+    "lang": "en",
+    "members": 90412,
+    "topic": "Testing",
+    "status": "joined",
+    "at": "2026-11-05T14:10:00.000Z",
+    "joinedAt": "2026-11-05T14:10:00.000Z",
+    "error": ""
+   },
+   {
+    "key": "telegram_bbbbbbbbbbbbbbbbbbbb",
+    "network": "telegram",
+    "name": "Автотесты и QA",
+    "id": "qa_automation_ru",
+    "url": "https://t.me/qa_automation_ru",
+    "kind": "channel",
+    "lang": "ru",
+    "members": 4210,
+    "topic": "Testing",
+    "status": "dry",
+    "at": "2026-11-05T13:40:00.000Z",
+    "joinedAt": "",
+    "error": ""
+   },
+   {
+    "key": "reddit_cccccccccccccccccccc",
+    "network": "reddit",
+    "name": "r/accessibility",
+    "id": "accessibility",
+    "url": "https://www.reddit.com/r/accessibility/",
+    "kind": "subreddit",
+    "lang": "en",
+    "members": 31020,
+    "topic": "Accessibility",
+    "status": "member",
+    "at": "2026-11-05T12:00:00.000Z",
+    "joinedAt": "",
+    "error": ""
+   }
+  ],
+  "found": {
+   "telegram": 6,
+   "reddit": 11
+  },
+  "caps": {
+   "telegram": 1,
+   "reddit": 1
+  },
+  "used": {
+   "telegram": 0,
+   "reddit": 1
+  },
+  "warmup": {
+   "telegram": "",
+   "reddit": "2026-11-05T14:00:00.000Z"
+  }
+ }
 }

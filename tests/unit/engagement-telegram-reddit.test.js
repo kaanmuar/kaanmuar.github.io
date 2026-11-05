@@ -64,11 +64,16 @@ const deps = (db, net, extra) => Object.assign({ db, fetch: net.fetch, now: NOW,
 const connect = (db) => db.collection("engagement_private").doc("telegram").set({ token: TOKEN, handle: "@qalab_live_bot", channel: "@qalab_live", channelId: CHANNEL, group: GROUP, groupTitle: "QA-lab Live chat", groupUser: "", admin: true });
 const doc = (db, network, id) => db.data.get("engagement_posts/" + E.keyOf(network, id));
 
-test("Telegram and Reddit act under our own posts only: reactions and replies on Telegram, replies on Reddit", () => {
-  assert.deepEqual(E.NETWORKS.telegram.only, ["like", "reply"]);
+test("Telegram and Reddit act under our own posts through the bot and the app, and in the field through the Mac (#2614 part 2)", () => {
+  assert.deepEqual(E.NETWORKS.telegram.only, ["like", "repost", "reply"]);
   assert.equal(E.NETWORKS.telegram.api, true);
-  assert.deepEqual(E.NETWORKS.reddit.only, ["reply"]);
+  assert.equal(E.NETWORKS.reddit.only, undefined);
   assert.equal(E.NETWORKS.reddit.devvit, true);
+  assert.ok(E.NETWORKS.telegram.browser && E.NETWORKS.reddit.browser);
+  assert.equal(E.carrier({ network: "telegram" }), "api", "comments under our posts stay with the bot");
+  assert.equal(E.carrier({ network: "reddit" }), "devvit");
+  assert.equal(E.carrier({ network: "telegram", via: "mac" }), "mac");
+  assert.equal(E.carrier({ network: "reddit", via: "mac" }), "mac");
   assert.ok(E.CHAIN_LIKES.includes("telegram"));
   assert.ok(!E.CHAIN_LIKES.includes("reddit"), "the Reddit app cannot vote");
   assert.ok(A.API.includes("telegram") && !A.API.includes("reddit"));

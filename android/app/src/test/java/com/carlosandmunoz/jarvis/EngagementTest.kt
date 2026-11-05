@@ -29,6 +29,14 @@ class EngagementTest {
         assertEquals("like 3/60 · repost 0/15 · follow 0/15 · reply 1/15", Engagement.usage(g, "mastodon"))
     }
 
+    @Test fun joinsShowTheirWarmedUpCapAndEachJoinItsGroup() {
+        val g = json("""{"caps":{"like":60,"repost":15,"follow":15,"reply":15,"join":2},"used":{"reddit":{"like":2,"join":1}},"joins":{"caps":{"reddit":1,"telegram":1}}}""")
+        assertEquals("like 2/60 · repost 0/15 · follow 0/15 · reply 0/15 · join 1/1", Engagement.usage(g, "reddit"))
+        assertEquals("like 0/60 · repost 0/15 · follow 0/15 · reply 0/15", Engagement.usage(g, "x"))
+        assertEquals("joined · subreddit · en · 900 members · Testing", Engagement.joinLine(json("""{"status":"joined","kind":"subreddit","lang":"en","members":900,"topic":"Testing","error":""}""")))
+        assertEquals("would join (dry run) · channel · ru · 420 members", Engagement.joinLine(json("""{"status":"dry","kind":"channel","lang":"ru","members":420}""")))
+    }
+
     @Test fun eachNetworkKeepsItsReplyLimit() {
         assertEquals(300, Engagement.limit("bluesky"))
         assertEquals(280, Engagement.limit("x"))

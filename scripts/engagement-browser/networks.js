@@ -9,6 +9,9 @@
  * inbox(page) => comments on our posts and replies to ours, as posts with liked, answered, on (our post's id) and ours
  * (its text); inbox-map.js reads each network's notifications JSON (#2452). A comment task (task.chain) runs
  * likeComment or replyComment where the network has them; on X and Threads a comment is a post, so like and reply serve.
+ * Telegram and Reddit (#2614) also have groups(page, query) => groups a topic search finds ({ network, id, name, url,
+ * members, lang, about, kind, member }), join(page, task) => { members, already }, and places: where the field is read
+ * besides the topic searches (placesOnly: Telegram has no post search, only channels and groups).
  *
  * The selectors are the networks' own accessibility labels and test ids where they have them; when a network
  * changes its page, `agent.js check --read` shows which reader came back empty and saves a screenshot.
@@ -850,4 +853,261 @@ const facebook = {
   }
 };
 
-module.exports = { NETWORKS: { x, linkedin, facebook, instagram, threads, tiktok }, Refused, checked, pause, rand, sleep, xTexts };
+// --- Reddit (#2614) ------------------------------------------------------------------------------------------------
+// old.reddit.com as Carlos's account: its markup has stayed the same for years. Reads are its JSON listings, fetched in
+// the signed-in page after a page view; upvotes, comments and joins are clicks; follows and crossposts are the calls
+// Reddit's own buttons make, with the session's modhash.
+const RD = "https://old.reddit.com";
+const RD_OWN = "qalablivereports";
+const RD_SUBS = ["QualityAssurance", "softwaretesting", "Playwright", "Cypress", "selenium", "TechSEO", "SEO", "bigseo", "accessibility", "webdev", "webperf", "GoogleAnalytics", "GoogleTagManager", "netsec"];
+
+async function rdJson(page, path) {
+  if (!page.url().startsWith(RD)) await go(page, reddit, RD + "/");
+  const out = await page.evaluate(async (p) => {
+    const r = await fetch(p, { credentials: "include", headers: { accept: "application/json" } });
+    return { status: r.status, body: r.ok ? await r.json().catch(() => null) : null };
+  }, path);
+  if (out.status === 429 || out.status === 403) throw new Refused("Reddit answered " + out.status + " to " + path.split("?")[0] + ".");
+  if (!out.body) throw new Error("Reddit answered " + out.status + " to " + path.split("?")[0] + ".");
+  return out.body;
+}
+
+async function rdCall(page, path, form) {
+  const out = await page.evaluate(async ({ path, form }) => {
+    const me = await (await fetch("/api/me.json", { credentials: "include" })).json().catch(() => ({}));
+    const uh = (me.data || {}).modhash;
+    if (!uh) return { signedOut: true };
+    const r = await fetch(path, { method: "POST", credentials: "include", headers: { "X-Modhash": uh, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(Object.assign({ api_type: "json", uh }, form)) });
+    const j = await r.json().catch(() => ({}));
+    return { status: r.status, errors: ((j.json || {}).errors || []).map((e) => e.join(": ")), data: (j.json || {}).data || null };
+  }, { path, form });
+  if (out.signedOut) throw new Refused("Reddit is signed out in the agent's Chrome.");
+  if (out.status === 429 || out.errors.some((e) => /RATELIMIT/.test(e))) throw new Refused("Reddit rate-limited us: " + (out.errors[0] || out.status) + ".");
+  if (out.status !== 200 || out.errors.length) throw new Error("Reddit refused " + path + ": " + (out.errors[0] || out.status) + ".");
+  return out.data || {};
+}
+
+const rdPosts = (listing) => (((listing || {}).data || {}).children || []).map((c) => c.data)
+  .filter((d) => d && d.name && !d.over_18 && !d.stickied && !d.locked && !d.archived && d.author !== "[deleted]" && String(d.subreddit).toLowerCase() !== RD_OWN)
+  .map((d) => ({
+    network: "reddit", id: d.name, url: "https://www.reddit.com" + d.permalink, author: { handle: d.author, name: d.author }, title: d.title || "", text: d.selftext || "", lang: "",
+    createdAt: new Date(d.created_utc * 1000).toISOString(), isReply: false, metrics: { likes: d.score || 0, replies: d.num_comments || 0, reposts: d.num_crossposts || 0, views: 0 },
+    tags: d.link_flair_text ? [d.link_flair_text] : []
+  }));
+
+const reddit = {
+  name: "Reddit", home: RD + "/", queries: GENERAL, places: RD_SUBS.map((s) => "r/" + s), sample: "test automation",
+  async signedIn(page) {
+    const me = await rdJson(page, "/api/me.json");
+    this.me = String((me.data || {}).name || "");
+    return this.me ? "u/" + this.me : "";
+  },
+  // A topic search (top of the week), or "r/<name>": that subreddit's hot posts.
+  async read(page, q) {
+    const sub = /^r\//.test(q);
+    await go(page, this, RD + (sub ? "/" + q + "/" : "/search?sort=top&t=week&q=" + enc(q)));
+    await scroll(page, 1);
+    return rdPosts(await rdJson(page, sub ? "/" + q + "/hot.json?limit=40&raw_json=1" : "/search.json?q=" + enc(q) + "&sort=top&t=week&type=link&limit=40&raw_json=1"));
+  },
+  // Subreddits a topic search finds, for joins (functions/engagement-joins.js).
+  async groups(page, q) {
+    const j = await rdJson(page, "/subreddits/search.json?q=" + enc(q) + "&limit=25&raw_json=1");
+    return ((j.data || {}).children || []).map((c) => c.data).filter((d) => d && d.display_name).map((d) => ({
+      network: "reddit", id: d.display_name, name: "r/" + d.display_name, url: "https://www.reddit.com/r/" + d.display_name + "/", members: d.subscribers || 0, lang: d.lang || "",
+      about: d.public_description || d.title || "", kind: "subreddit", member: d.user_is_subscriber === true, nsfw: d.over18 === true, open: d.subreddit_type === "public"
+    }));
+  },
+  async post(page, task) {
+    await go(page, this, RD + new URL(task.url).pathname);
+    return need(page.locator('#siteTable .thing[data-fullname="' + task.id + '"]'), "The post");
+  },
+  async like(page, task) {
+    const art = await this.post(page, task);
+    if (await has(art.locator(".arrow.upmod"))) return {};
+    await click(art.locator(".midcol .arrow.up").first());
+    if (!(await visible(art.locator(".arrow.upmod"), 8000))) throw new Error("The upvote did not stick.");
+    return {};
+  },
+  async follow(page, task) {
+    await go(page, this, RD + "/user/" + enc(task.author.handle) + "/");
+    await rdCall(page, "/api/subscribe", { action: "sub", sr_name: "u_" + task.author.handle, skip_initial_defaults: "true" });
+    return {};
+  },
+  // A crosspost to our r/QALabLiveReports, under the post's own title.
+  async repost(page, task) {
+    await this.post(page, task);
+    const d = await rdCall(page, "/api/submit", { kind: "crosspost", sr: "QALabLiveReports", crosspost_fullname: task.id, title: String(task.title || "").slice(0, 300) || "Crosspost", resubmit: "true", sendreplies: "false" });
+    return { url: d.url || "" };
+  },
+  async replied(page, task) {
+    await this.post(page, task);
+    const url = await page.locator('.commentarea .comment[data-author="' + this.me + '"]').first().getAttribute("data-permalink", { timeout: 3000 }).catch(() => "");
+    return this.me && url ? { url: "https://www.reddit.com" + url } : null;
+  },
+  async reply(page, task) {
+    await this.post(page, task);
+    const form = page.locator(".commentarea > form.usertext").first();
+    await type(page, await need(form.locator('textarea[name="text"]'), "The comment box"), task.draft);
+    await click(form.locator('button[type="submit"]').first());
+    const mine = page.locator('.commentarea .comment[data-author="' + this.me + '"]');
+    if (!(await visible(mine, 15000))) throw new Error("The comment did not post.");
+    return { url: "https://www.reddit.com" + (await mine.first().getAttribute("data-permalink").catch(() => "") || new URL(task.url).pathname) };
+  },
+  async join(page, task) {
+    await go(page, this, RD + "/r/" + enc(task.id) + "/");
+    const before = (await rdJson(page, "/r/" + enc(task.id) + "/about.json")).data || {};
+    if (before.user_is_subscriber) return { already: true, members: before.subscribers || 0 };
+    await click(await need(page.locator(".side .fancy-toggle-button .option.add").filter({ visible: true }), "Join"));
+    await pause(2000, 3500);
+    const after = (await rdJson(page, "/r/" + enc(task.id) + "/about.json")).data || {};
+    if (!after.user_is_subscriber) throw new Error("The join did not stick.");
+    return { members: after.subscribers || before.subscribers || 0 };
+  }
+};
+
+// --- Telegram (#2614) ----------------------------------------------------------------------------------------------
+// Public channels read from their t.me preview, which needs no account; Telegram's web client (WebK), signed in as
+// Carlos, reads the groups he joined, reacts, forwards to @qalab_live, comments, searches for groups and joins them.
+// A message is "<username>/<id>" as in its t.me link; WebK opens it through a tg:// address.
+const TG = "https://web.telegram.org/k/";
+const TG_OWN = "qalab_live";
+const tgOpen = (name, post) => TG + "#?tgaddr=" + enc("tg://resolve?domain=" + name + (post ? "&post=" + post : ""));
+const TG_MENU = (names) => new RegExp("^\\s*(" + names.join("|") + ")\\s*$", "i");
+const TG_CHOSEN = ".reaction.is-chosen, reaction-element.is-chosen";
+const TG_INPUT = '.input-message-input[contenteditable="true"]';
+
+const telegram = {
+  name: "Telegram", home: TG, queries: GENERAL, placesOnly: true, places: [], sample: "@telegram",
+  async signedIn(page) {
+    if (!(await visible(page.locator("#column-left .chatlist"), 25000))) return "";
+    const id = await page.evaluate(() => { try { return String(JSON.parse(localStorage.getItem("user_auth") || "{}").id || ""); } catch (e) { return ""; } });
+    return id ? "user " + id : "signed in";
+  },
+  // "@name": a channel's latest posts from its t.me preview, or a group we joined, read in WebK.
+  async read(page, q) {
+    const name = String(q).replace(/^@/, "");
+    if (name.toLowerCase() === TG_OWN) return [];
+    await go(page, this, "https://t.me/s/" + name);
+    if (!/\/s\//.test(page.url()) || !(await visible(page.locator(".tgme_widget_message[data-post]"), 8000))) return this.readChat(page, name);
+    return evaluate(page, `
+      const title = ((document.querySelector('.tgme_channel_info_header_title') || {}).textContent || arg).trim();
+      const counter = Array.from(document.querySelectorAll('.tgme_channel_info_counter')).find((c) => /subscriber|member|suscriptor|miembro/i.test(c.textContent));
+      const followers = counter ? num(counter.querySelector('.counter_value').textContent) : 0;
+      return Array.from(document.querySelectorAll('.tgme_widget_message[data-post]')).map((m) => {
+        const post = m.getAttribute('data-post');
+        const text = m.querySelector('.tgme_widget_message_text');
+        const time = m.querySelector('.tgme_widget_message_date time');
+        const views = m.querySelector('.tgme_widget_message_views');
+        const reacts = Array.from(m.querySelectorAll('.tgme_reaction')).reduce((s, r) => s + num(r.textContent.replace(/[^\\d.,KkMm]/g, '')), 0);
+        return { network: 'telegram', id: post, url: 'https://t.me/' + post, author: { handle: post.split('/')[0], name: title, followers }, text: text ? text.innerText : '', lang: '',
+          createdAt: time ? time.getAttribute('datetime') : '', isReply: !!m.querySelector('.tgme_widget_message_reply'), metrics: { likes: reacts, replies: 0, reposts: 0, views: views ? num(views.textContent) : 0 } };
+      }).filter((p) => p.text && /^[\\w]+\\/\\d+$/.test(p.id));`, name);
+  },
+  async readChat(page, name) {
+    await go(page, this, tgOpen(name));
+    if (!(await visible(page.locator(".bubbles-inner .bubble[data-mid]"), 20000))) return [];
+    await pause(1500, 3000);
+    return evaluate(page, `
+      return Array.from(document.querySelectorAll('.bubbles-inner .bubble[data-mid]:not(.is-out):not(.service)')).slice(-30).map((b) => {
+        const mid = b.getAttribute('data-mid');
+        const ts = Number(b.getAttribute('data-timestamp')) || 0;
+        const body = b.querySelector('.translatable-message') || b.querySelector('.message');
+        const who = b.querySelector('.name .peer-title, .peer-title');
+        const text = body ? body.innerText.trim() : '';
+        if (!text || !/^\\d+$/.test(mid)) return null;
+        return { network: 'telegram', id: arg + '/' + mid, url: 'https://t.me/' + arg + '/' + mid, author: { handle: arg, name: who ? who.textContent.trim() : arg }, text, lang: '',
+          createdAt: ts ? new Date(ts * 1000).toISOString() : '', isReply: !!b.querySelector('.reply'), metrics: { likes: b.querySelectorAll('.reaction').length, replies: 0, reposts: 0, views: 0 } };
+      }).filter(Boolean);`, name);
+  },
+  // Channels and groups WebK's global search finds for a topic, with their member counts, for joins.
+  async groups(page, q) {
+    await go(page, this, TG);
+    const input = await need(page.locator("#column-left .input-search input").filter({ visible: true }), "The search box");
+    await type(page, input, q);
+    await pause(3000, 5000);
+    const found = await evaluate(page, `
+      return Array.from(document.querySelectorAll('#search-container [data-peer-id]')).map((r) => {
+        if (!(Number(r.getAttribute('data-peer-id')) < 0)) return null;
+        const title = ((r.querySelector('.peer-title') || {}).textContent || '').trim();
+        const sub = ((r.querySelector('.row-subtitle, .dialog-subtitle') || {}).textContent || '');
+        const user = (sub.match(/@([A-Za-z]\\w{3,31})/) || [])[1];
+        const m = sub.match(/(\\d[\\d\\s.,]*\\s?[KkMm]?)\\s*(subscribers?|members?|suscriptores|miembros)/i);
+        if (!user || !m) return null;
+        return { network: 'telegram', id: user, name: title, url: 'https://t.me/' + user, members: num(m[1].replace(/\\s/g, '')), kind: /subscri|suscrip/i.test(m[2]) ? 'channel' : 'group', about: '' };
+      }).filter(Boolean);`);
+    await page.keyboard.press("Escape").catch(() => null);
+    return found.filter((g, i) => found.findIndex((h) => h.id === g.id) === i);
+  },
+  async bubble(page, task) {
+    const [name, mid] = String(task.id).split("/");
+    await go(page, this, tgOpen(name, mid));
+    return need(page.locator('.bubble[data-mid="' + mid + '"]'), "The message");
+  },
+  async menu(page, b, names, what) {
+    await b.locator(".bubble-content").first().click({ button: "right", timeout: 10000 });
+    await pause(600, 1400);
+    await click(await need(page.locator(".btn-menu-item").filter({ visible: true, hasText: TG_MENU(names) }), what + " in the menu"));
+  },
+  async like(page, task) {
+    const b = await this.bubble(page, task);
+    if (await has(b.locator(TG_CHOSEN))) return {};
+    await b.locator(".bubble-content").first().dblclick({ delay: rand(40, 90), timeout: 10000 });
+    if (!(await visible(b.locator(TG_CHOSEN), 8000))) throw new Error("The reaction did not stick; the chat may have reactions off.");
+    return {};
+  },
+  // A forward to our channel: the picker must show @qalab_live and nothing else before it is chosen.
+  async repost(page, task) {
+    const b = await this.bubble(page, task);
+    await this.menu(page, b, ["Forward", "Reenviar"], "Forward");
+    const pop = await need(page.locator(".popup-forward"), "The forward picker");
+    await type(page, await need(pop.locator("input").filter({ visible: true }), "The picker's search"), TG_OWN);
+    await pause(2000, 3500);
+    const rows = pop.locator("[data-peer-id]").filter({ visible: true, hasText: /QA-?lab/i });
+    if ((await rows.count()) !== 1) throw new Error("The forward picker did not show @" + TG_OWN + " alone, so nothing was forwarded.");
+    await click(rows.first());
+    await click(await need(page.locator(".btn-send").filter({ visible: true }), "Send"));
+    return { url: "https://t.me/" + TG_OWN };
+  },
+  // Our earlier comment under a channel post: a message of ours in its comment thread.
+  async replied(page, task) {
+    const b = await this.bubble(page, task);
+    const thread = b.locator(".replies-footer");
+    if (!(await has(thread))) return null;
+    await click(thread.first());
+    await pause(2500, 4000);
+    return (await has(page.locator(".bubbles-inner .bubble.is-out"))) ? { url: task.url } : null;
+  },
+  // Under a channel post, in its comments; in a group, as a reply to the message. Both need the account to be let in.
+  async reply(page, task) {
+    const b = await this.bubble(page, task);
+    const thread = b.locator(".replies-footer");
+    if (await has(thread)) { await click(thread.first()); await pause(2500, 4000); }
+    else await this.menu(page, b, ["Reply", "Responder"], "Reply");
+    const input = await need(page.locator(TG_INPUT).filter({ visible: true }), "The message box (the group may need a join first)");
+    await type(page, input, task.draft);
+    await page.keyboard.press("Enter");
+    await pause(2000, 3500);
+    if ((await input.innerText().catch(() => "")).includes(String(task.draft).slice(0, 20))) throw new Error("The reply did not send.");
+    return { url: task.url };
+  },
+  async members(page) {
+    const info = await page.locator(".chat-info .info, .top .info").first().innerText({ timeout: 4000 }).catch(() => "");
+    const m = info.match(/(\d[\d\s.,]*)\s*(subscribers?|members?|suscriptores|miembros)/i);
+    return m ? Number(m[1].replace(/[\s.,]/g, "")) || 0 : 0;
+  },
+  async join(page, task) {
+    await go(page, this, tgOpen(task.id));
+    await pause(2000, 4000);
+    const members = await this.members(page);
+    const join = page.locator(".chat-join, .chat-input button").filter({ visible: true, hasText: TG_MENU(["Join", "Join Channel", "Join Group", "Subscribe", "Unirse", "Unirse al grupo", "Unirse al canal", "Suscribirse"]) });
+    if (!(await visible(join, 8000))) {
+      if (await visible(page.locator(TG_INPUT + ", .chat-input .btn-unmute, .chat-input .btn-mute").filter({ visible: true }), 3000)) return { already: true, members };
+      throw new Error("Telegram showed no Join button for @" + task.id + ".");
+    }
+    await click(join.first());
+    await join.first().waitFor({ state: "hidden", timeout: 12000 }).catch(() => { throw new Error("The join did not stick."); });
+    return { members };
+  }
+};
+
+module.exports = { NETWORKS: { x, linkedin, facebook, instagram, threads, tiktok, telegram, reddit }, Refused, checked, pause, rand, sleep, xTexts, rdPosts };
