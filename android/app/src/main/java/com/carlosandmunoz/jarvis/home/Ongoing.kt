@@ -21,7 +21,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.carlosandmunoz.jarvis.JarvisApp
 import com.carlosandmunoz.jarvis.R
+import com.carlosandmunoz.jarvis.data.fmt
 import com.carlosandmunoz.jarvis.data.objs
+import com.carlosandmunoz.jarvis.data.str
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,21 +41,23 @@ object Ongoing {
     data class Content(
         val readiness: Int?, val title: String, val text: String, val lines: List<String>, val urgent: Boolean, val at: Long, val chip: String?,
         val waiting: Boolean = false, val ring: Boolean = true, val bar: Boolean = true, val live: Boolean = true,
+        val counts: String = "", val card: StatusCard.Card? = null,
     )
 
-    /** What the notification shows, picked in Settings; nothing saved means everything. */
+    /** What the notification shows, picked in Settings; nothing saved means everything but the Live Update. */
     enum class Part(val key: String, val label: String, val hint: String) {
-        READINESS("readiness", "Readiness", "In the title, and as the ring icon in the status bar"),
-        ALERTS("alerts", "Alerts and warnings", "How many, in the title"),
+        READINESS("readiness", "Readiness", "The ring in the card, and the ring icon in the status bar"),
+        ALERTS("alerts", "Alerts and warnings", "How many, next to the app name"),
         APPROVALS("approvals", "Approvals waiting", "Notices waiting for Send or Drop"),
         TOP("top", "Top briefing line", "The most urgent line from the briefing"),
         MONEY("money", "Today's money", "Revenue and sales today"),
-        BAR("bar", "Readiness bar", "Readiness as a progress bar"),
-        CHIP("chip", "Live Update", "Android 16: a chip by the clock, pinned at the top of the shade");
+        BAR("bar", "Bars", "Connections online and the top goals as bars"),
+        CHIP("live", "Live Update instead of the card", "Android 16: a chip by the clock, pinned at the top of the shade. Android can't pin the card, so this swaps it for text and one readiness bar");
 
         companion object {
             val ALL = entries.toSet()
-            fun of(saved: String?): Set<Part> = saved?.split(",")?.let { k -> entries.filter { it.key in k }.toSet() } ?: ALL
+            val DEFAULT = ALL - CHIP
+            fun of(saved: String?): Set<Part> = saved?.split(",")?.let { k -> entries.filter { it.key in k }.toSet() } ?: DEFAULT
         }
     }
 
@@ -71,7 +75,7 @@ object Ongoing {
             })
     }
 
-    fun content(snap: JsonObject, today: JsonObject?, at: Long, approvals: Int?, show: Set<Part> = Part.ALL): Content {
+    fun content(snap: JsonObject, today: JsonObject?, at: Long, approvals: Int?, show: Set<Part> = Part.DEFAULT): Content {
         val w = Watch.summary(snap, today, at)
         val ready = w.readiness?.roundToInt()
         val alerts = Part.ALERTS in show
@@ -94,9 +98,31 @@ object Ongoing {
             Part.READINESS in show && ready != null -> "$ready%"
             else -> null
         }
-        return Content(ready, title, lines.firstOrNull().orEmpty(), lines, alerts && w.alerts > 0, at, chip,
-            waiting = waiting, ring = Part.READINESS in show, bar = Part.BAR in show, live = Part.CHIP in show)
+        val urgent = alerts && w.alerts > 0
+        val color = when { urgent -> PINK; waiting -> AMBER; else -> CYAN }
+        val card = StatusCard.Card(ready?.takeIf { Part.READINESS in show }, "Readiness", color, if (Part.BAR in show) bars(snap) else emptyList(), lines)
+        return Content(ready, title, lines.firstOrNull().orEmpty(), lines, urgent, at, chip,
+            waiting = waiting, ring = Part.READINESS in show, bar = Part.BAR in show, live = Part.CHIP in show, counts = counts, card = card)
     }
+
+    /** Connections online, then the two top goals, coloured by how they are doing. */
+    fun bars(snap: JsonObject): List<StatusCard.Bar> {
+        val states = snap.objs("connections").map { it.str("state") }
+        val on = states.count { it != "down" && it != "partial" }
+        val systems = states.takeIf { it.isNotEmpty() }?.let {
+            StatusCard.Bar("Connections", "$on of ${it.size} online", on * 100 / it.size, if (on < it.size) AMBER else CYAN)
+        }
+        val goals = Home.goals(snap).take(2).map { g ->
+            val color = when (g.status) { "done" -> GREEN; "behind" -> AMBER; "far-behind" -> PINK; else -> CYAN }
+            StatusCard.Bar(g.label, "${fmt(g.value, 0)} of ${fmt(g.target, 0)}", (g.pct * 100).roundToInt(), color)
+        }
+        return listOfNotNull(systems) + goals
+    }
+
+    private const val CYAN = 0xFF38E1FF.toInt()
+    private const val PINK = 0xFFFF4F9A.toInt()
+    private const val AMBER = 0xFFFFB020.toInt()
+    private const val GREEN = 0xFF34C759.toInt()
 
     /** Shows, updates or removes the notification to match the saved snapshot and the Settings switch. */
     suspend fun show(context: Context, today: suspend () -> JsonObject?) {
@@ -113,7 +139,7 @@ object Ongoing {
             else IconCompat.createWithResource(app, R.drawable.ic_stat_jarvis)
         fun base() = NotificationCompat.Builder(app, CHANNEL)
             .setSmallIcon(icon)
-            .setColor(when { c.urgent -> 0xFFFF4F9A.toInt(); c.waiting -> 0xFFFFB020.toInt(); else -> 0xFF38E1FF.toInt() })
+            .setColor(when { c.urgent -> PINK; c.waiting -> AMBER; else -> CYAN })
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
@@ -122,15 +148,26 @@ object Ongoing {
             .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setContentIntent(open)
             .setDeleteIntent(again)
-            .apply { if (c.bar && c.readiness != null) setProgress(100, c.readiness.coerceIn(0, 100), false) }
         val public = base().setContentTitle(if (c.readiness == null || !c.ring) "Jarvis" else "Readiness ${c.readiness}%").build()
+        val live = c.live && Build.VERSION.SDK_INT >= 36
         val n = base()
             .setContentTitle(c.title)
-            .apply { if (c.lines.isNotEmpty()) setContentText(c.text).setStyle(NotificationCompat.BigTextStyle().bigText(c.lines.joinToString("\n"))) }
+            .apply {
+                if (live || c.card == null) {
+                    if (c.bar && c.readiness != null) setProgress(100, c.readiness.coerceIn(0, 100), false)
+                    if (c.lines.isNotEmpty()) setContentText(c.text).setStyle(NotificationCompat.BigTextStyle().bigText(c.lines.joinToString("\n")))
+                } else {
+                    setContentText(c.text)
+                    setSubText(c.counts.ifEmpty { null })
+                    setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                    setCustomContentView(StatusCard.views(app, c.card, big = false))
+                    setCustomBigContentView(StatusCard.views(app, c.card, big = true))
+                }
+            }
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(public)
             .build()
-        runCatching { nm.notify(ID, if (c.live) promote(app, n, c.chip) else n) }
+        runCatching { nm.notify(ID, if (live) promote(app, n, c.chip) else n) }
     }
 
     /**
