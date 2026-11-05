@@ -12,6 +12,17 @@
     "checked": "2026-11-05T14:15:24.171Z"
    }
   ],
+  "auto-2026-11-04/01-u-selia-co": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "12",
+    "at": "2026-11-05T21:58:28.590Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/12",
+    "checked": "2026-11-05T21:58:29.648Z"
+   }
+  ],
   "auto-2026-11-04/02-u-treinta-co": [
    {
     "channel": "telegram",
@@ -67,6 +78,17 @@
     "url": "https://t.me/qalab_live/5",
     "checked": "2026-11-05T11:50:17.306Z",
     "hash": "b2f3e94ee06d"
+   }
+  ],
+  "promo-social-hub-2026-10/11-clips-pt": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "11",
+    "at": "2026-11-05T21:58:27.202Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/11",
+    "checked": "2026-11-05T21:58:28.590Z"
    }
   ]
  }

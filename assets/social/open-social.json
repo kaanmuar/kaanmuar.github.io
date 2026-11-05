@@ -283,6 +283,17 @@
     "checked": "2026-11-04T18:52:39.006Z"
    }
   ],
+  "auto-2026-11-04/01-u-selia-co": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzlufuuqxv26",
+    "at": "2026-11-05T21:58:13.831Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzlufuuqxv26",
+    "checked": "2026-11-05T21:58:15.709Z"
+   }
+  ],
   "auto-2026-11-04/02-u-treinta-co": [
    {
     "channel": "bluesky",
@@ -664,6 +675,26 @@
     "result": "sent",
     "url": "https://www.threads.com/@qaurlreview/post/DfVJPbBj0KN",
     "checked": "2026-11-04T18:52:56.538Z"
+   }
+  ],
+  "promo-social-hub-2026-10/11-clips-pt": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzluft5g7f2z",
+    "at": "2026-11-05T21:58:11.791Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzluft5g7f2z",
+    "checked": "2026-11-05T21:58:13.831Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18116472128174691",
+    "at": "2026-11-05T21:58:16.345Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DfYDRboFG9T",
+    "checked": "2026-11-05T21:58:25.638Z"
    }
   ],
   "series-dia-de-muertos-2026-11/01-ofrenda": [
