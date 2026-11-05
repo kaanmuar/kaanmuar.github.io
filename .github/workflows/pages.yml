@@ -4,7 +4,8 @@
 # The deploy job runs only when Settings > Pages > Source is GitHub Actions (build_type workflow), or when the
 # repo variable PAGES_FROM_ACTIONS is 'true'; while the source is the legacy branch build it is skipped.
 # Pull requests leave the generated social hub files to the bots (#2242), so the build rebuilds the hub from its
-# sources first: a merge publishes its hub without waiting for the regen commit.
+# sources first. The artifact includes hub files that rebuild writes and has not committed yet (#2534), so a merge
+# publishes those pages without waiting for the regen commit.
 
 name: Pages
 
