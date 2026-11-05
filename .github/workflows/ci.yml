@@ -102,12 +102,12 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test --workers=4 --shard=${{ matrix.shard }}/2
       - name: Upload Playwright report
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
-          retention-days: 30
+          retention-days: 7
 
   # The main ruleset requires a check named playwright, so this job stands for both shards.
   playwright:
@@ -167,6 +167,7 @@ jobs:
             cypress/reports/html
             cypress/screenshots
           if-no-files-found: ignore
+          retention-days: 7
 
   robot:
     runs-on: ubuntu-latest
@@ -196,6 +197,7 @@ jobs:
           name: robot-results
           path: robot-results
           if-no-files-found: ignore
+          retention-days: 7
 
   load:
     runs-on: ubuntu-latest
@@ -279,6 +281,7 @@ jobs:
           path: |
             wdio-results
             runner-results
+          retention-days: 7
 
   catalog-android:
     if: github.event_name == 'workflow_dispatch'
