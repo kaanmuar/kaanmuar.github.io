@@ -312,7 +312,8 @@ async function saveAccount(db, a, now) {
   const ref = db.collection("owner_tag_accounts").doc(id);
   const was = (await ref.get()).data();
   const scopes = [...new Set(((was && was.scopes) || []).concat(a.scopes || []))];
-  const status = a.status && (!was || a.force || !["blocked", "rejected"].includes(was.status) || a.status === "blocked") ? a.status : (was && was.status) || "suggested";
+  const keep = was && !a.force && (["blocked", "rejected"].includes(was.status) || (was.status === "approved" && a.status === "suggested")) && a.status !== "blocked";
+  const status = a.status && !keep ? a.status : (was && was.status) || "suggested";
   await ref.set(Object.assign({}, was || {}, {
     network: a.network, handle: a.handle, name: a.name || (was && was.name) || "", kind: (was && was.kind === "owner") || a.kind === "owner" ? "owner" : "related",
     status, scopes, batch: a.batch || (was && was.batch) || "", source: (was && was.source) || a.source || "", why: a.why || (was && was.why) || "",
