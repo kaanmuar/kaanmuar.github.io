@@ -95,6 +95,7 @@ test("a comparison card's sites are all its owners; posts about no report are le
   assert.deepEqual(posts[0].reports.map((r) => r.host), ["vivastreet.ie", "donedeal.ie"]);
   assert.equal(posts[0].id, "https://mastodon.social/@qalaburlreview/1175", "Mastodon finds our post by its URL");
   assert.equal(posts[3].id, "at://did:plc:us/app.bsky.feed.post/3abc");
+  assert.equal(posts[1].id, "1", "the Mac's agent finds an X post by its status id");
   assert.equal(T.langOf(METRO), "es");
   assert.equal(T.langOf({ host: "example.de" }), "de");
   assert.equal(T.langOf(VIVA), "en");
