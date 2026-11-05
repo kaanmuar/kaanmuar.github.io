@@ -2,11 +2,12 @@
    js/social-hub.js). Spanish is Latin American (tú), Portuguese Brazilian, German formal (Sie). A review
    analyzes pages; it never "reads" them. */
 
-const { FACES, accounts } = require("../brand-kit/faces");
+const { FACES, CHANNELS, accounts } = require("../brand-kit/faces");
 
-// Both brand faces with the accounts each has (scripts/brand-kit/faces.js); PROFILES is every one of them.
+// Both brand faces with the accounts each has (scripts/brand-kit/faces.js); PROFILES is every one of them, then the
+// brand's Live Reports channels.
 const FACE_PROFILES = Object.values(FACES).map((face) => ({ id: face.id, handle: face.handle, page: face.site, langs: face.langs, profiles: accounts(face) }));
-const PROFILES = FACE_PROFILES.flatMap((face) => face.profiles);
+const PROFILES = FACE_PROFILES.flatMap((face) => face.profiles).concat(CHANNELS.map(({ net, name, url }) => ({ net, name, url })));
 
 // Caption fields of media/social-posts/<batch>/captions.json, in the order the copy menu lists them.
 const CAPTIONS = [
@@ -397,4 +398,4 @@ const COPY = {
   }
 };
 
-module.exports = { FACE_PROFILES, PROFILES, CAPTIONS, LANGS, COPY };
+module.exports = { FACE_PROFILES, PROFILES, CHANNELS, CAPTIONS, LANGS, COPY };

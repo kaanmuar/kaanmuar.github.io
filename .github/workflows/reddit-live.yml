@@ -1,0 +1,120 @@
+# Uploads the Reddit app (reddit/live-reports, #2549) with the day's Live Reports data after each batch, and installs
+# that version on the subreddit. Reddit does not let the app fetch carlosandmunoz.com, so every version carries its
+# own copy of assets/live-reports; the app's daily task then posts the new batch and pins it.
+# Needs the DEVVIT_TOKEN secret (the contents of ~/.devvit/token after `npx devvit login`) and the REDDIT_SUBREDDIT
+# variable. Uploads without review work while the subreddit has fewer than 200 members; past that, use devvit publish.
+# The ledger job (#2571) reads the app's log lines for its posts and the subreddit's members (`devvit logs`, same
+# DEVVIT_TOKEN) into assets/social/reddit.json (scripts/reddit-ledger.js), and pushes it to main with the
+# LIVE_REPORTS_DEPLOY_KEY write deploy key, like the other social ledgers.
+name: Reddit live reports app
+
+on:
+  workflow_run:
+    workflows: ['Live reports from user reviews']
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: '50 15 * * *' # backup, before the app's 16:20 UTC post
+    - cron: '50 16 * * *' # the ledger, after the app's post
+  workflow_dispatch:
+    inputs:
+      ledger_only:
+        description: 'Only read the app logs into the Reddit ledger: no upload'
+        type: boolean
+        default: false
+
+concurrency:
+  group: reddit-live
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: ${{ (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') && github.event.schedule != '50 16 * * *' && !inputs.ledger_only }}
+    env:
+      DEVVIT_TOKEN: ${{ secrets.DEVVIT_TOKEN }}
+      REDDIT_SUBREDDIT: ${{ vars.REDDIT_SUBREDDIT }}
+    steps:
+      - name: Check the Reddit settings
+        id: ready
+        run: |
+          if [ -z "$DEVVIT_TOKEN" ] || [ -z "$REDDIT_SUBREDDIT" ]; then
+            echo "::warning::Add the DEVVIT_TOKEN secret and the REDDIT_SUBREDDIT variable; the Reddit app keeps its last data."
+            echo "go=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.ready.outputs.go == '1'
+        with:
+          ref: main
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.ready.outputs.go == '1'
+        with:
+          node-version: '24'
+
+      - name: Build and upload
+        if: steps.ready.outputs.go == '1'
+        working-directory: reddit/live-reports
+        run: |
+          mkdir -p ~/.devvit && printf '%s' "$DEVVIT_TOKEN" > ~/.devvit/token && chmod 600 ~/.devvit/token
+          npm ci --no-audit --no-fund
+          node scripts/build.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+          # A dated version, so a manual upload in between never collides with the daily one.
+          npx devvit upload --version "1.$(date -u +%Y%m%d).$(date -u +%H%M)"
+          npx devvit install "$REDDIT_SUBREDDIT" qalab-live-reports@latest
+
+  ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: ${{ github.event.schedule == '50 16 * * *' || github.event_name == 'workflow_dispatch' }}
+    env:
+      DEVVIT_TOKEN: ${{ secrets.DEVVIT_TOKEN }}
+      REDDIT_SUBREDDIT: ${{ vars.REDDIT_SUBREDDIT }}
+    steps:
+      - name: Check the Reddit settings
+        id: ready
+        run: |
+          if [ -z "$DEVVIT_TOKEN" ] || [ -z "$REDDIT_SUBREDDIT" ]; then
+            echo "::warning::Add the DEVVIT_TOKEN secret and the REDDIT_SUBREDDIT variable; the Reddit ledger keeps its last entries."
+            echo "go=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.ready.outputs.go == '1'
+        with:
+          ref: main
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.ready.outputs.go == '1'
+        with:
+          node-version: '24'
+
+      - name: Read the app's ledger lines
+        if: steps.ready.outputs.go == '1'
+        run: |
+          set -o pipefail
+          mkdir -p ~/.devvit && printf '%s' "$DEVVIT_TOKEN" > ~/.devvit/token && chmod 600 ~/.devvit/token
+          cd reddit/live-reports
+          npm ci --no-audit --no-fund
+          # devvit refuses to run until the files devvit.json names exist.
+          node scripts/build.mjs > /dev/null
+          # devvit logs streams until stopped: three days of lines come first, then it waits.
+          status=0
+          timeout 90 npx devvit logs "$REDDIT_SUBREDDIT" qalab-live-reports --since 3d --json > "$RUNNER_TEMP/reddit-logs.txt" || status=$?
+          [ "$status" = 0 ] || [ "$status" = 124 ] || { echo "::error::devvit logs failed ($status)"; exit 1; }
+          cd ../..
+          node scripts/reddit-ledger.js "$RUNNER_TEMP/reddit-logs.txt" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit the Reddit ledger
+        if: steps.ready.outputs.go == '1'
+        run: scripts/commit-social-ledgers.sh "Reddit ledger"

@@ -29,7 +29,7 @@ const critical = require("./build-critical-css");
 const cspHashes = require("./build-csp-hashes");
 const queues = require("./social-ledger");
 const metrics = require("./social-metrics");
-const { FACE_PROFILES, PROFILES, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
+const { FACE_PROFILES, PROFILES, CHANNELS, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
 const { ORDER } = require("./brand-kit/faces");
 const i18n = require("./social-hub/i18n");
 
@@ -525,7 +525,9 @@ function page(lang, posts, asOf) {
     + "<img src=\"https://hatscripts.github.io/circle-flags/flags/" + info.flag + ".svg\" alt=\"\" width=\"18\" height=\"18\">" + esc(info.native) + "</a>").join("");
   const follow = FACE_PROFILES.slice().sort((a, b) => b.langs.includes(lang) - a.langs.includes(lang)).map((face) =>
     "<p class=\"hub-face\"><a class=\"hub-face-page\" href=\"" + face.page + "\" translate=\"no\">@" + face.handle + " <small>" + face.langs.map((code) => code.toUpperCase()).join(" · ") + "</small></a>"
-    + face.profiles.map((profile) => "<a class=\"hub-follow-" + profile.net + "\" href=\"" + profile.url + "\" rel=\"me noopener\" data-net=\"" + profile.net + "\">" + esc(profile.name) + "</a>").join("") + "</p>").join("");
+    + face.profiles.map((profile) => "<a class=\"hub-follow-" + profile.net + "\" href=\"" + profile.url + "\" rel=\"me noopener\" data-net=\"" + profile.net + "\">" + esc(profile.name) + "</a>").join("") + "</p>").join("")
+    + "<p class=\"hub-face\"><a class=\"hub-face-page\" href=\"qa-review" + sfx + ".html#live-reports\">" + esc(copy.nav.live) + "</a>"
+    + CHANNELS.map((c) => "<a class=\"hub-follow-" + c.net + "\" href=\"" + c.url + "\" rel=\"me noopener\" data-net=\"" + c.net + "\">" + esc(c.name) + "</a>").join("") + "</p>";
   const kinds = ["all"].concat(visible.some((post) => post.trend) ? ["trending"] : [], KINDS.filter((kind) => visible.some((post) => post.kind === kind))).map((kind) =>
     "<button type=\"button\" class=\"hub-chip\" data-kind=\"" + kind + "\" aria-pressed=\"" + (kind === "all") + "\">" + esc(copy.kinds[kind]) + "</button>").join("");
   const option = (value, label) => "<option value=\"" + esc(value) + "\">" + esc(label) + "</option>";

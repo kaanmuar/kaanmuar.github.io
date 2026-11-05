@@ -1,6 +1,167 @@
 {
  "runs": [
   {
+   "at": "2026-11-04T16:14:28.751Z",
+   "run": {
+    "id": 41838037690,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/41838037690"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 1125,
+   "scored": 1124,
+   "failed": 1,
+   "below": 740,
+   "avg": {
+    "mobile": 86,
+    "desktop": 97
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-04",
+    "files": [
+     "qa-review-de.html",
+     "qa-review-es.html",
+     "qa-review-fr.html",
+     "qa-review-it.html",
+     "qa-review-pt.html",
+     "qa-review.html",
+     "simulador.html"
+    ],
+    "fixes": [
+     {
+      "page": "qa-review-es.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-fr.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "simulador.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     }
+    ],
+    "pages": [
+     {
+      "file": "qa-review-es.html",
+      "mobile": {
+       "before": 63,
+       "after": 62,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 84,
+       "after": 83,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-es.html"
+     },
+     {
+      "file": "qa-review-fr.html",
+      "mobile": {
+       "before": 63,
+       "after": 62,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 83,
+       "after": 83,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-fr.html"
+     },
+     {
+      "file": "simulador.html",
+      "mobile": {
+       "before": 66,
+       "after": 66,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 86,
+       "after": 86,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/simulador.html"
+     },
+     {
+      "file": "qa-review.html",
+      "mobile": {
+       "before": 52,
+       "after": 52,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 84,
+       "after": 84,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review.html"
+     },
+     {
+      "file": "qa-review-pt.html",
+      "mobile": {
+       "before": 64,
+       "after": 64,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 67,
+       "after": 67,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-pt.html"
+     },
+     {
+      "file": "qa-review-de.html",
+      "mobile": {
+       "before": 48,
+       "after": 48,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 84,
+       "after": 84,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-de.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "2 fixes were dropped: the pages are generated, and their builder (scripts/regen-generated.sh) wrote them again. Those fixes belong in the builder.",
+    "error": ""
+   },
+   "ai": {
+    "branch": null,
+    "files": [],
+    "fixes": [],
+    "pages": [],
+    "verdict": {
+     "up": false,
+     "reason": "Nothing to change.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-03T16:05:36.203Z",
    "run": {
     "id": 41642261982,
