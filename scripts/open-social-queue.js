@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-/* Posts each rendered social batch to Bluesky, Mastodon, Threads and Instagram through their own APIs (#1621, #526).
-   Buffer's free plan has no room for them, and none needs it.
+/* Posts each rendered social batch to Bluesky, Mastodon, Threads, Instagram and the Telegram channel through their own
+   APIs (#1621, #526, #2606). Buffer's free plan has no room for them, and none needs it.
 
      BLUESKY_HANDLE=... BLUESKY_APP_PASSWORD=... MASTODON_URL=https://mastodon.social MASTODON_TOKEN=... \
-     THREADS_TOKEN=... INSTAGRAM_USER_ID=... FACEBOOK_PAGE_TOKEN=... \
+     THREADS_TOKEN=... INSTAGRAM_USER_ID=... FACEBOOK_PAGE_TOKEN=... TELEGRAM_BOT_TOKEN=... TELEGRAM_CHANNEL=@qalab_live \
        node scripts/open-social-queue.js [--network <one of NETWORKS>] [--batch <name>] [--dry-run]
 
    Bluesky, Threads and Instagram cannot schedule a post, so no network is scheduled ahead: open-social.yml runs this
@@ -12,6 +12,10 @@
    instagram caption at the instagram slot, and the story image at the instagram-story slot (ROUTES). A slot more
    than MISSED_MS old is left alone, so connecting a network does not flood it with the backlog. A network whose
    secrets are missing is skipped.
+
+   Telegram is one channel for every language (BRAND): it posts the feed image with the x caption at the x slot, each
+   post in its own language, and records it in assets/social/telegram.json beside the Live Reports posts. The launch
+   set (one <lang>/<topic>-captions.json per post) goes to every network but Mastodon (NO_LAUNCH).
 
    Each post goes to the face of its language (scripts/face-route.js, #2310): en/de/fr/it to @qalaburlreview with
    the secrets above, es/pt to @qaurlreview with the same names ending in _ES (BLUESKY_HANDLE_ES, ...). Each run
@@ -52,8 +56,15 @@ const ROUTES = {
   mastodon: { slot: "x", caption: "x" },
   threads: { slot: "x", caption: "x" },
   instagram: { slot: "instagram", caption: "instagram" },
-  "instagram-story": { slot: "instagram-story", caption: null }
+  "instagram-story": { slot: "instagram-story", caption: null },
+  telegram: { slot: "x", caption: "x" }
 };
+// Networks with one account for every language: each post goes out in its own language (#2606).
+const BRAND = new Set(["telegram"]);
+// Networks whose ledger is their own file, shared with the Live Reports posts.
+const LEDGERS = { telegram: "assets/social/telegram.json" };
+// Networks that skip the launch set (#2606).
+const NO_LAUNCH = new Set(["mastodon"]);
 
 function args() {
   const out = {};
@@ -81,17 +92,30 @@ function slots(dir, channel) {
 
 const xSlots = (dir) => Object.fromEntries(Object.entries(slots(dir, "x")).map(([slug, s]) => [slug, s.at]));
 
+// The launch set has no captions.json: each post keeps <lang>/<topic>-captions.json, written in its own language.
+const isLaunch = (dir) => !fs.existsSync(path.join(dir, "captions.json")) && fs.readdirSync(dir).some((d) => /^[a-z]{2}$/.test(d)
+  && fs.statSync(path.join(dir, d)).isDirectory() && fs.readdirSync(path.join(dir, d)).some((f) => f.endsWith("-captions.json")));
+
 function allBatches(root = ROOT) {
   const dir = path.join(root, "media/social-posts");
-  return fs.readdirSync(dir).filter((name) => /^[\w-]+$/.test(name)
-    && fs.existsSync(path.join(dir, name, "captions.json")) && fs.existsSync(path.join(dir, name, "calendar.csv"))).sort();
+  return fs.readdirSync(dir).filter((name) => /^[\w-]+$/.test(name) && fs.existsSync(path.join(dir, name, "calendar.csv"))
+    && (fs.existsSync(path.join(dir, name, "captions.json")) || isLaunch(path.join(dir, name)))).sort();
+}
+
+function captionsOf(dir, when) {
+  if (fs.existsSync(path.join(dir, "captions.json"))) return JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
+  return Object.fromEntries(Object.keys(when).filter((slug) => fs.existsSync(path.join(dir, slug + "-captions.json"))).map((slug) => {
+    const own = JSON.parse(fs.readFileSync(path.join(dir, slug + "-captions.json"), "utf8"));
+    return [slug, Object.assign({ kind: "launch", textLang: slug.split("/")[0], title: String(own.x || "").split("\n")[0] }, own)];
+  }));
 }
 
 function posts(batch, root = ROOT, network = "bluesky") {
   const route = ROUTES[network];
   const dir = path.join(root, "media/social-posts", batch);
-  const captions = JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
   const when = slots(dir, route.slot);
+  if (NO_LAUNCH.has(network) && isLaunch(dir)) return [];
+  const captions = captionsOf(dir, when);
   return Object.keys(captions).filter((slug) => captions[slug].x && !captions[slug].hold && when[slug] && (!route.caption || captions[slug][route.caption]))
     .map((slug) => {
       const asset = when[slug].asset || "feed/" + slug + ".jpg";
@@ -306,17 +330,73 @@ function instagram(env = process.env, story = false) {
   };
 }
 
-const NETWORKS = { bluesky, mastodon, threads, instagram: (env) => instagram(env, false), "instagram-story": (env) => instagram(env, true) };
+// The @qalab_live channel (TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL), where scripts/telegram-live.js posts the Live Reports.
+// A bot cannot read a channel's history, so the ledger alone keeps a post from going out twice.
+function telegram(env = process.env) {
+  const chat = env.TELEGRAM_CHANNEL || "";
+  let user = "";
+  async function call(method, body) {
+    const res = await fetch("https://api.telegram.org/bot" + env.TELEGRAM_BOT_TOKEN + "/" + method, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.ok) throw new Error("Telegram " + method + " " + res.status + ": " + String(json.description || "no answer").slice(0, 200));
+    return json.result;
+  }
+  return {
+    ready: Boolean(env.TELEGRAM_BOT_TOKEN && chat),
+    async login() {
+      const me = await call("getChat", { chat_id: chat });
+      user = me.username || "";
+      return "Telegram @" + (user || String(chat).replace(/^@/, ""));
+    },
+    async recent() { return []; },
+    async post({ text, url }) {
+      await served(url);
+      const m = await call("sendPhoto", { chat_id: chat, photo: url, caption: text });
+      return { id: String(m.message_id), url: user ? "https://t.me/" + user + "/" + m.message_id : "" };
+    }
+  };
+}
+
+const NETWORKS = { bluesky, mastodon, threads, instagram: (env) => instagram(env, false), "instagram-story": (env) => instagram(env, true), telegram };
+
+// The face whose language a post speaks, for a brand network that posts every language.
+const ownFace = (post) => faceRoute.postFace(post.batch, post.slug, post.cap, "x", new Set(Object.keys(FACES)));
+
+/* What the Reddit app posts in r/QALabLiveReports (#2606): every post on its x slot, each in its own language, as a
+   link to its hub page. Reddit lets the app fetch nothing from the site, so reddit/live-reports/scripts/build.mjs
+   bundles the slots from MISSED_MS ago to ahead with each daily upload; hub first means only posts whose hub page is
+   already in the site. The title is the caption's first line, without links or hashtags, cut to Reddit's 300. */
+function redditTitle(text) {
+  const line = String(text || "").split("\n").map((l) => l.replace(/https?:\/\/\S+|#[\p{L}\p{N}_]+/gu, "").replace(/\s+/g, " ").trim()).find(Boolean) || "";
+  if ([...line].length <= 300) return line;
+  return [...line].slice(0, 299).join("").replace(/\s+\S*$/u, "") + "…";
+}
+
+function redditPosts(now, ahead, root = ROOT) {
+  return allBatches(root).flatMap((batch) => posts(batch, root, "telegram"))
+    .filter((p) => p.at > now - MISSED_MS && p.at <= now + ahead && fs.existsSync(path.join(root, "social", p.batch, p.slug + ".html")))
+    .sort((a, b) => a.at - b.at)
+    .map((p) => {
+      const face = ownFace(p);
+      return {
+        key: p.batch + "/" + p.slug, at: p.at, lang: faceRoute.captionLang(p.cap, "x", face),
+        title: redditTitle(faceRoute.captionFor(p.cap, "x", face)) || p.cap.title || p.slug,
+        url: SITE + "/social/" + p.batch + "/" + p.slug + ".html?utm_source=reddit&utm_medium=social&utm_campaign=" + p.batch
+      };
+    }).filter((p) => p.title);
+}
 
 async function run(network, client, list, book, { live, now, gate, face = faceRoute.DEFAULT }) {
+  const faceFor = typeof face === "function" ? face : () => face;
   const key = (ROUTES[network] || ROUTES.bluesky).caption || "x";
   const todo = due(list, now).filter((post) => !(book.posts[post.batch + "/" + post.slug] || []).some((e) => e.channel === network && e.result === "sent"));
   const counts = { posted: 0, already: 0, held: 0, failed: 0, waiting: Math.max(0, todo.length - PER_RUN) };
   if (!live) {
     for (const post of todo.slice(0, PER_RUN)) {
       const hub = await gate(post.batch, post.slug, post.cap, new Date(now).toISOString());
-      const text = caption(post, network, face);
-      console.log("dry-run", "@" + FACES[face].handle, faceRoute.captionLang(post.cap, key, face), network, post.batch + "/" + post.slug, new Date(post.at).toISOString(), hub.why ? "HELD: " + hub.why : "hub ok", [...text].length + " chars", text.split("\n").pop());
+      const f = faceFor(post);
+      const text = caption(post, network, f);
+      console.log("dry-run", "@" + FACES[f].handle, faceRoute.captionLang(post.cap, key, f), network, post.batch + "/" + post.slug, new Date(post.at).toISOString(), hub.why ? "HELD: " + hub.why : "hub ok", [...text].length + " chars", text.split("\n").pop());
     }
     return counts;
   }
@@ -343,7 +423,8 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
       continue;
     }
     try {
-      const r = await client.post({ text: caption(post, network, face), image: post.image, url: post.url, alt: post.cap.alt || post.cap.title || "", lang: faceRoute.captionLang(post.cap, key, face), key: name });
+      const f = faceFor(post);
+      const r = await client.post({ text: caption(post, network, f), image: post.image, url: post.url, alt: post.cap.alt || post.cap.title || "", lang: faceRoute.captionLang(post.cap, key, f), key: name });
       counts.posted += 1;
       console.log("posted", network, name, r.url);
       record(post, { id: r.id, url: r.url, at, result: "sent" });
@@ -364,12 +445,31 @@ async function main() {
   const batch = opts.batch ? String(opts.batch) : "";
   if (batch && !/^[\w-]+$/.test(batch)) throw new Error("--batch takes a batch name");
   const batches = batch ? [batch] : allBatches();
-  const book = ledger.read(ledger.OPEN_SOCIAL);
-  const before = JSON.stringify(book);
+  const books = {};
+  const bookOf = (network) => {
+    const file = LEDGERS[network] || ledger.OPEN_SOCIAL;
+    if (!books[file]) { const book = ledger.read(file); books[file] = { book, before: JSON.stringify(book) }; }
+    return books[file].book;
+  };
   const gate = createGate();
   const now = Date.now();
   let broken = false;
   for (const network of only ? [only] : Object.keys(NETWORKS)) {
+    const book = bookOf(network);
+    if (BRAND.has(network)) {
+      const client = NETWORKS[network](faceRoute.faceEnv(faceRoute.DEFAULT));
+      if (live && !client.ready) { console.log(network + ": no account connected, skipped"); continue; }
+      try {
+        if (live) client.profile = await client.login();
+        const c = await run(network, client, batches.flatMap((name) => posts(name, ROOT, network)), book, { live, now, gate, face: ownFace });
+        console.log(network + ": " + c.posted + " posted, " + c.held + " held, " + c.failed + " failed, " + c.waiting + " due for a later run");
+        if (c.failed) broken = true;
+      } catch (error) {
+        broken = true;
+        console.log(network + ": " + error.message);
+      }
+      continue;
+    }
     const clients = [];
     for (const set of Object.keys(FACES)) {
       const client = NETWORKS[network](faceRoute.faceEnv(set));
@@ -407,10 +507,10 @@ async function main() {
       }
     }
   }
-  if (live && JSON.stringify(book) !== before) ledger.write(ledger.OPEN_SOCIAL, book);
+  if (live) Object.entries(books).forEach(([file, b]) => { if (JSON.stringify(b.book) !== b.before) ledger.write(file, b.book); });
   if (broken) process.exit(1);
 }
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { PER_RUN, MISSED_MS, ROUTES, NETWORKS, xSlots, posts, due, caption, facets, run, bluesky, mastodon };
+module.exports = { PER_RUN, MISSED_MS, ROUTES, NETWORKS, BRAND, LEDGERS, NO_LAUNCH, xSlots, allBatches, posts, due, caption, ownFace, redditTitle, redditPosts, facets, run, bluesky, mastodon, telegram };

@@ -1,7 +1,7 @@
 "use strict";
 /*
- * Jarvis social hub (#1420): the queue per channel from the Buffer, Facebook, open-social (Bluesky, Mastodon, Threads, Instagram)
- * and Telegram ledgers (the @qalab_live channel post of each Live Reports batch, #2549), the field-sweep
+ * Jarvis social hub (#1420): the queue per channel from the Buffer, Facebook, open-social (Bluesky, Mastodon, Threads, Instagram),
+ * Telegram and Reddit ledgers (each Live Reports batch, #2549, and the campaign posts, #2606), the field-sweep
  * proposals still waiting for a decision, approving or dismissing one in socialHub/live the way the hub
  * editor does, and starting the posting workflows now instead of at their nightly slot.
  */
@@ -10,14 +10,15 @@ const Admin = require("./social-hub-admin");
 const WORKFLOWS = [
   { file: "buffer-batch.yml", name: "Buffer", inputs: { mode: "retry" } },
   { file: "facebook-page.yml", name: "Facebook Page" },
-  { file: "open-social.yml", name: "Bluesky, Mastodon, Threads and Instagram" },
+  { file: "open-social.yml", name: "Bluesky, Mastodon, Threads, Instagram and Telegram" },
   // The Reddit app's upload after each batch (#2549); the app posts in r/QALabLiveReports on its own daily task, and
-  // the same workflow's ledger job reads the app's logs into assets/social/reddit.json (#2571). Post now leaves it
-  // alone: watch only.
+  // the campaign posts bundled with the upload on its 30-minute task (#2606). The same workflow's ledger job reads the
+  // app's logs into assets/social/reddit.json (#2571). Post now leaves it alone: watch only.
   { file: "reddit-live.yml", name: "Reddit app (r/QALabLiveReports)", watch: true }
 ];
 
-// Channels that post once per Live Reports batch rather than per post, after the calendar channels.
+// Channels that also post once per Live Reports batch; the hub's CHANNELS lists them too since they take the campaign
+// posts (#2606), so a key here only keeps its row.
 const LIVE_CHANNELS = [["telegram", "Telegram"], ["reddit", "Reddit"]];
 
 const NUMBERS = ["impressions", "views", "likes", "comments"];

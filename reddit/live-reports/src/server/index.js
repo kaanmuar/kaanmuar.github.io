@@ -3,6 +3,7 @@
 import { once } from "node:events";
 import { createServer, getServerPort, context, reddit, redis } from "@devvit/web/server";
 import summary from "../../dist/summary.json";
+import campaign from "../../dist/campaign.json";
 
 const SITE = "https://carlosandmunoz.com/qa-review.html?utm_source=reddit&utm_medium=social&utm_campaign=live-reports#live-reports";
 const POSTED = "posted-batch";
@@ -24,9 +25,9 @@ async function members() {
   }
 }
 
-async function ledger(post) {
+async function ledger(post, key = "live/" + summary.newest) {
   const line = Object.assign({ kind: post ? "post" : "members", at: new Date().toISOString() }, await members());
-  if (post) Object.assign(line, { key: "live/" + summary.newest, id: post.id, url: "https://www.reddit.com" + post.permalink, posted: post.createdAt.toISOString() });
+  if (post) Object.assign(line, { key, id: post.id, url: "https://www.reddit.com" + post.permalink, posted: post.createdAt.toISOString() });
   console.log(LEDGER + JSON.stringify(line));
   if (post) await redis.hSet(BATCHES, { [post.id]: post.createdAt.toISOString() });
 }
@@ -67,6 +68,29 @@ function batchTitle() {
   return `${summary.fresh} new live reports (${summary.newest}).${lead} ${summary.count} sites in the ring.`;
 }
 
+// The campaign posts bundled by scripts/build.mjs (#2606): each goes out once, as a link to its hub page, when its
+// slot comes; a slot more than MISSED_MS old is left alone, and a run posts at most PER_RUN.
+const CAMPAIGN = "campaign:";
+const MISSED_MS = 12 * 3600000;
+const PER_RUN = 4;
+
+async function postCampaign() {
+  const now = Date.now();
+  let posted = 0;
+  for (const item of campaign.filter((p) => p.at <= now && now - p.at <= MISSED_MS)) {
+    if (posted >= PER_RUN) break;
+    if (await redis.get(CAMPAIGN + item.key)) continue;
+    try {
+      const post = await reddit.submitPost({ title: item.title, url: item.url });
+      await redis.set(CAMPAIGN + item.key, post.id, { expiration: new Date(now + 30 * 24 * 3600000) });
+      await ledger(post, item.key);
+      posted += 1;
+    } catch (error) {
+      console.error("campaign post " + item.key + " failed; " + error.message);
+    }
+  }
+}
+
 async function pin(post) {
   try { await post.sticky(1); } catch (error) { console.error("sticky failed; " + error.message); }
 }
@@ -96,6 +120,10 @@ async function routes(url) {
       await redis.set(POSTED, summary.newest);
       await ledger(post);
       await numbers();
+      return {};
+    }
+    case "/internal/scheduler/campaign": {
+      await postCampaign();
       return {};
     }
     default:

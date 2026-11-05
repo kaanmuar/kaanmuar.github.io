@@ -15,7 +15,7 @@ function hubUrl(batch, slug) {
 }
 
 // Caption limits; X and Mastodon count any link, with or without https://, as 23 characters.
-const LIMITS = { x: [280, 23], mastodon: [500, 23], threads: [500], bluesky: [300], linkedin: [3000], instagram: [2200], tiktok: [2200], youtube: [5000], facebook: [63206] };
+const LIMITS = { x: [280, 23], mastodon: [500, 23], threads: [500], bluesky: [300], linkedin: [3000], instagram: [2200], tiktok: [2200], youtube: [5000], facebook: [63206], telegram: [1024] };
 const LINK = /(?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/\S*)?/gi;
 
 // Every caption ends with its hub post, tagged for the network it goes to (#539). A caption that would run past
