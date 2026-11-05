@@ -29,6 +29,7 @@ const esc = (value) => String(value === null || value === undefined ? '' : value
 const fmt = (n) => (typeof n === 'number' ? n.toLocaleString('en-US') : esc(n));
 const ago = (ms) => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? s + 's' : s < 3600 ? Math.round(s / 60) + 'm' : Math.round(s / 3600) + 'h'; };
 const spent = (ms) => { const n = Number(ms) || 0, m = Math.round(n / 60000); return n < 60000 ? Math.round(n / 1000) + ' s' : m < 60 ? m + ' min' : Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : ''); };
+const plural = (n, one, many) => `${fmt(n)} ${n === 1 ? one : many}`;
 const when = (value) => { const d = window.JarvisCore.toDate(value); return d ? d.toLocaleString('en-US', { timeZone: 'America/Bogota', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''; };
 
 // --- charts (SVG and HTML, HUD colors) -------------------------------------------------------------------------
@@ -101,7 +102,7 @@ function kpis(list) {
 
 function table(cols, rows, empty) {
     if (!rows || !rows.length) return `<p class="jv-empty">${esc(empty || 'Nothing yet.')}</p>`;
-    return `<div class="jv-table-wrap"><table class="jv-table"><thead><tr>${cols.map((c) => `<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${cols.map((c) => `<td>${c[1](row)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    return `<div class="jv-table-wrap"><table class="jv-table"><thead><tr>${cols.map((c) => `<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${cols.map((c) => `<td data-label="${esc(c[0])}">${c[1](row)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 
 const SLICES = [COLORS.cyan, COLORS.violet, COLORS.amber, COLORS.green, COLORS.pink, '#7aa2ff', '#ff8f5a', COLORS.dim];
@@ -174,6 +175,58 @@ function noData(list) {
     return `<div class="jv-nodata" role="group" aria-label="No data yet"><span class="jv-eyebrow">No data yet</span>${list.map((x) => `<button type="button" class="jv-chip" data-nodata="${esc(x.why)}" title="${esc(x.why)}">${esc(x.title)}</button>`).join('')}</div>`;
 }
 
+const GRADE_COLORS = { A: COLORS.green, B: COLORS.cyan, C: COLORS.amber, D: '#ff8f5a', F: COLORS.pink };
+
+// #2526: a 0-100 score as a ring with its letter; its why is the tooltip.
+function gradeRing(x, label, size) {
+    const v = x && typeof x.value === 'number' ? Math.max(0, Math.min(100, Math.round(x.value))) : null;
+    const g = x && x.grade ? String(x.grade) : '—';
+    const tone = GRADE_COLORS[g] || COLORS.dim;
+    const r = 40, c = 2 * Math.PI * r;
+    const tip = `${label}: ${v === null ? 'no data' : v + ' of 100, grade ' + g}${x && x.why ? '. ' + x.why : ''}`;
+    return `<span class="jv-grade" data-grade="${esc(g)}" title="${esc(tip)}"><svg viewBox="0 0 100 100" width="${size || 84}" height="${size || 84}" role="img" aria-label="${esc(tip)}"><circle cx="50" cy="50" r="${r}" class="jv-ring-track"></circle><circle cx="50" cy="50" r="${r}" fill="none" stroke="${tone}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${((c * (v || 0)) / 100).toFixed(2)} ${c.toFixed(2)}" transform="rotate(-90 50 50)" class="jv-glow"></circle><text x="50" y="56" text-anchor="middle" class="jv-grade-letter" fill="${tone}">${esc(g)}</text><text x="50" y="74" text-anchor="middle" class="jv-ring-label">${v === null ? '—' : v}</text></svg><small>${esc(label)}</small></span>`;
+}
+
+const BOARD_COLS = ['Backlog', 'Next', 'Design', 'Dev', 'QA', 'Stg', 'Prod', 'Done'];
+const WIP_COLS = ['Dev', 'QA', 'Stg'];
+
+// #2526: the Scrum board as a flow. One node per column (cards, median age); arrows weighted by the moves in range,
+// skips arc above, moves backwards arc below in amber; the WIP columns light up when WIP is over its limit.
+function processMap(board, flow) {
+    const cols = BOARD_COLS.map((name) => Object.assign({ name, count: 0, ageMedD: null }, (board.columns || []).find((c) => c.name === name) || {}));
+    const over = !!(board.wipLimit && board.wip > board.wipLimit);
+    const w = 960, h = 292, nw = 92, nh = 78, y0 = 106, gap = (w - nw * BOARD_COLS.length) / (BOARD_COLS.length - 1);
+    const x = (i) => i * (nw + gap);
+    const at = (name) => BOARD_COLS.indexOf(name);
+    const mid = y0 + nh / 2;
+    const moves = (flow || []).filter((f) => at(f.from) >= 0 && at(f.to) >= 0 && f.from !== f.to && f.count > 0);
+    const peak = Math.max(1, ...moves.map((f) => f.count));
+    const idle = BOARD_COLS.slice(1).map((name, i) => (moves.some((f) => at(f.from) === i && at(f.to) === i + 1) ? '' : `<line x1="${x(i) + nw}" y1="${mid}" x2="${x(i + 1) - 3}" y2="${mid}" class="jv-pm-idle" marker-end="url(#jvpm-idle)"></line>`)).join('');
+    const arrows = moves.map((f) => {
+        const a = at(f.from), b = at(f.to), back = b < a;
+        let d, lx, ly;
+        if (b === a + 1) { d = `M${x(a) + nw},${mid} L${x(b) - 3},${mid}`; lx = (x(a) + nw + x(b)) / 2; ly = mid - 8; }
+        else {
+            const span = Math.abs(b - a), sx = x(a) + nw / 2, ex = x(b) + nw / 2;
+            const sy = back ? y0 + nh : y0, ey = back ? y0 + nh + 3 : y0 - 3;
+            const cy = back ? y0 + nh + 14 + span * 13 : y0 - 14 - span * 13;
+            d = `M${sx},${sy} Q${(sx + ex) / 2},${cy} ${ex},${ey}`; lx = (sx + ex) / 2; ly = (sy + 2 * cy + ey) / 4 + (back ? 12 : -4);
+        }
+        return `<path d="${d}" class="jv-pm-flow${back ? ' is-back' : ''}" stroke-width="${(1.5 + (f.count / peak) * 7).toFixed(1)}" marker-end="url(#jvpm-${back ? 'back' : 'fwd'})"><title>${esc(f.from)} → ${esc(f.to)}: ${fmt(f.count)}</title></path><text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" class="jv-pm-count">${fmt(f.count)}</text>`;
+    }).join('');
+    const marker = (id, color) => `<marker id="jvpm-${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${color}"></path></marker>`;
+    const nodes = cols.map((c, i) => {
+        const age = c.ageMedD === null || c.ageMedD === undefined ? null : c.ageMedD;
+        return `<g class="jv-pm-node${over && WIP_COLS.includes(c.name) ? ' is-over' : ''}${c.count ? '' : ' is-empty'}" data-col="${esc(c.name)}"><title>${esc(c.name)}: ${fmt(c.count)}${age === null ? '' : ', median age ' + fmt(age) + ' d'}</title><rect x="${x(i).toFixed(1)}" y="${y0}" width="${nw}" height="${nh}" rx="12"></rect>
+            <text x="${(x(i) + nw / 2).toFixed(1)}" y="${y0 + 20}" text-anchor="middle" class="jv-pm-name">${esc(c.name)}</text><text x="${(x(i) + nw / 2).toFixed(1)}" y="${y0 + 49}" text-anchor="middle" class="jv-pm-n">${fmt(c.count)}</text><text x="${(x(i) + nw / 2).toFixed(1)}" y="${y0 + 67}" text-anchor="middle" class="jv-pm-age">${age === null ? '—' : 'med ' + fmt(age) + ' d'}</text></g>`;
+    }).join('');
+    const label = cols.map((c) => `${c.name} ${c.count}`).join(', ');
+    // The same flow stacked top to bottom, shown instead of the map when its panel is phone-narrow.
+    const outs = (i) => moves.filter((f) => at(f.from) === i).sort((p, q) => at(p.to) - at(q.to)).map((f) => `<span${at(f.to) < i ? ' class="is-back"' : ''}>${at(f.to) < i ? '↩' : '→'} ${esc(f.to)} ${fmt(f.count)}</span>`).join('');
+    const steps = cols.map((c, i) => `<li class="jv-pm-step${over && WIP_COLS.includes(c.name) ? ' is-over' : ''}${c.count ? '' : ' is-empty'}" data-col="${esc(c.name)}"><b>${esc(c.name)}</b><small>${c.ageMedD === null || c.ageMedD === undefined ? '—' : 'med ' + fmt(c.ageMedD) + ' d'}</small><strong>${fmt(c.count)}</strong>${outs(i) ? `<span class="jv-pm-moves">${outs(i)}</span>` : ''}</li>`).join('');
+    return `<div class="jv-pm"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Board flow: ${esc(label)}${over ? `. WIP ${fmt(board.wip)} is over its limit of ${fmt(board.wipLimit)}` : ''}"><defs>${marker('fwd', COLORS.cyan)}${marker('back', COLORS.amber)}${marker('idle', COLORS.dim)}</defs>${idle}${arrows}${nodes}</svg><ol class="jv-pm-list" aria-label="Board flow">${steps}</ol></div>`;
+}
+
 // --- the tool ------------------------------------------------------------------------------------------------
 
 export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, upload = () => Promise.reject(new Error("Uploads need the admin page.")) }) {
@@ -181,7 +234,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const api = endpoint || ENDPOINT;
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
-        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, alerts: [], reports: [],
+        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, egOnly: 'all', alerts: [], reports: [],
         external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0,
         panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review'
     };
@@ -402,7 +455,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'calls'];
+        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'github-work', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'calls'];
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -458,6 +511,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                 readiness: C.readiness(e),
                 jobs: e.jobs && e.jobs.jobs ? e.jobs.jobs.map((j) => ({ name: j.name, ok: j.ok, last: j.lastAttempt })) : null,
                 ci: e.github && e.github.ci, openBugs: e.github && e.github.openBugs, merged: e.github && e.github.merged && e.github.merged.total,
+                github: githubBrief(e['github-work']),
                 failures: e.health && e.health.failures && { total: e.health.failures.total, causes: e.health.failures.causes },
                 speed: e.speed && e.speed.pages && e.speed.pages.map((x) => ({ page: x.name, score: x.score })),
                 uptime: e.uptime && e.uptime.pages && e.uptime.pages.map((x) => ({ page: x.name, status: x.status, ms: x.ms })),
@@ -475,9 +529,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                     instantly: e.outreach.instantly && e.outreach.instantly.ok ? { campaigns: e.outreach.instantly.status, sent: e.outreach.instantly.sent, rates: e.outreach.instantly.rates, replies: e.outreach.instantly.replies, interested: e.outreach.instantly.interested, meetings: e.outreach.instantly.meetings, warmup: (e.outreach.instantly.accounts || []).map((a) => a.score) } : null,
                     plan: e.outreach.plan && e.outreach.plan.ok !== false ? { day: e.outreach.plan.day, length: e.outreach.plan.length, phase: e.outreach.plan.phase, next: e.outreach.plan.next, weekly: e.outreach.plan.weekly, targets: e.outreach.plan.targets } : null,
                     visits: C.outreachVisits(S.rows.events).total,
-                    links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10) } : null
+                    links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10), reportReplies: e.outreach.links.social ? { visits: e.outreach.links.social.visits, reviews: e.outreach.links.social.reviews, paid: e.outreach.links.social.paid, usd: e.outreach.links.social.usd, networks: e.outreach.links.social.networks, topPosts: e.outreach.links.social.posts.slice(0, 10) } : null } : null
                 } : null,
-                engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`) } : null,
+                engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`), reportReplies: Object.assign({ waiting: e.engagement.waiting.filter((d) => d.campaign === 'report-reply').length }, e.engagement.report.invites) } : null,
                 signedInPeople: e.people && e.people.ok ? e.people.totals : null,
                 googleMapsLocal: e.local && e.local.ok && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
                 waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
@@ -527,7 +581,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}"><header>${foldHead(id, title)}${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
     }
 
-    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines' };
+    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines',
+        'gh-board-sync': 'sync the board', 'gh-orphan-ticket': 'file a ticket for the PR', 'gh-update-pr': 'update the PR with main', 'gh-merge-pr': 'merge the green PR', 'gh-revert': 'open a revert PR',
+        'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a Cursor fix agent' };
     // Owner emails that also arrive as Jarvis pushes (#1672): off, they wait for the evening digest.
     const MOVED_MAIL = {
         messages: "New CV messages", ratings: "New CV feedback", siteDaily: "Daily CV site report (07:15)", siteQuarter: "Quarter-hour CV site report",
@@ -535,7 +591,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         comparisons: "Comparison saved", reviewEvents: "URL review events (runs, payments, captures; refunds, disputes and unmatched payments always email)",
         ops: "Ops: jobs missed or failed", ownerReplies: "Owner replies", ownerRemind: "Owner replies still waiting (09:00)"
     };
-    const ACTION_CAPS = { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2, 'launch-campaign': 10 };
+    const ACTION_CAPS = { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2, 'launch-campaign': 10,
+        'gh-board-sync': 10, 'gh-orphan-ticket': 5, 'gh-update-pr': 5, 'gh-merge-pr': 3, 'gh-revert': 1, 'gh-delete-branch': 2, 'gh-close-issue': 5, 'gh-remove-worktree': 5 };
     const COUNTDOWN_HOURS = 2;
     const hoursText = (h) => (h >= 1 ? `${h} h` : `${Math.round(h * 60)} min`);
 
@@ -558,16 +615,18 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         return `<button type="button" data-proposal="${esc(b.act)}" data-key="${esc(p.key)}">${esc(b.label)}</button>`;
     }
 
-    function proposalsPanel() {
+    function proposalsPanel(product) {
         const P = S.proposals || {};
-        const list = P.proposals || (P.rules || []).slice(0, 5);
+        const seen = new Set();
+        const list = product ? (P.proposals || []).concat(P.rules || []).filter((p) => p.tab === product && !seen.has(p.key) && seen.add(p.key)) : P.proposals || (P.rules || []).slice(0, 5);
+        if (product && !list.length) return '';
         const state = P.loading ? 'Gemini is ranking…' : P.gemini ? `Ranked by Gemini · ${when(P.at)}` : P.error ? 'Rules only. Gemini: ' + P.error : P.at ? 'Rules only' : '';
         const items = list.length ? list.map((p, i) => `<li class="jv-prop lv-${esc(p.level)}"><span class="jv-prop-rank">${i + 1}</span><div class="jv-prop-body">
             <p class="jv-prop-title"><strong>${esc(p.title)}</strong> <span class="jv-chip">impact ${esc(p.impact)}/5</span>${p.effort ? ` <span class="jv-chip">${esc(p.effort)}</span>` : ''}${p.source === 'gemini' ? ' <span class="jv-chip c-average">from Gemini</span>' : ''}</p>
             ${p.why ? `<p class="jv-prop-why">${esc(p.why)}</p>` : ''}<ul class="jv-prop-ev">${(p.evidence || []).map((e) => `<li>${esc(e)}</li>`).join('')}</ul>
             <div class="jv-prop-acts">${p.action ? `<span class="jv-prop-safe" data-action="${esc(p.action)}">${autoOn() ? 'Jarvis runs this on its own' : 'Safe action'}</span>` : ''}${C.proposalButtons(p).map((b) => propButton(p, b)).join('')}</div></div></li>`).join('')
             : `<li class="jv-prop lv-good"><span class="jv-prop-rank">✓</span><div class="jv-prop-body"><p>${P.loading || !S.externalAt ? 'Jarvis is reading the sources…' : 'Nothing to propose right now.'}</p></div></li>`;
-        return panel('overview-proposals', 'Proposals', `<p class="jv-note">${esc(state)}${P.hidden ? ` · ${P.hidden} hidden as done or dismissed` : ''}${P.loading ? '' : ' <button type="button" class="jv-link" data-act="proposals">Rank again</button>'}</p><ol class="jv-props">${items}</ol>`,
+        return panel((product || 'overview') + '-proposals', 'Proposals', `<p class="jv-note">${esc(state)}${P.hidden ? ` · ${P.hidden} hidden as done or dismissed` : ''}${P.loading ? '' : ' <button type="button" class="jv-link" data-act="proposals">Rank again</button>'}</p><ol class="jv-props">${items}</ol>`,
             { wide: true, data: list.map((p, i) => ({ rank: i + 1, title: p.title, impact: p.impact, effort: p.effort || '', evidence: (p.evidence || []).join(' | '), source: p.source, action: p.action || '' })) });
     }
 
@@ -577,7 +636,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const a = S.external.actions;
         if (!a || !a.ok) return panel('systems-actions', 'Jarvis actions', `<p class="jv-empty">${S.pending.actions ? 'Reading the actions log…' : esc((a && a.error) || 'Not loaded.')}</p>`, { wide: true });
         const caps = (a.settings && a.settings.caps) || ACTION_CAPS;
-        const usage = Object.keys(ACTION_CAPS).map((k) => `<span class="jv-chip${a.used[k] >= caps[k] ? ' c-average' : ''}">${esc(ACTION_LABELS[k])}: ${fmt(a.used[k] || 0)} of ${fmt(caps[k])} today</span>`).join('') + `<span class="jv-chip">AI acts alone at confidence ${esc(String((a.settings && a.settings.confidence) || 0.8))} or more</span>`;
+        const usage = Object.keys(ACTION_CAPS).map((k) => `<span class="jv-chip${a.used[k] >= (caps[k] || ACTION_CAPS[k]) ? ' c-average' : ''}">${esc(ACTION_LABELS[k])}: ${fmt(a.used[k] || 0)} of ${fmt(caps[k] || ACTION_CAPS[k])} today</span>`).join('') + `<span class="jv-chip">AI acts alone at confidence ${esc(String((a.settings && a.settings.confidence) || 0.8))} or more</span>`;
         const p = a.pending || {};
         const hours = (a.settings && a.settings.countdownHours) || COUNTDOWN_HOURS;
         const waiting = `<ul class="jv-facts"><li>Held re-runs: <b>${fmt(p.held || 0)}</b> (${fmt(p.clean || 0)} clean, Jarvis sends those after the countdown)</li><li>Failed owner notices: <b>${fmt(p.notices || 0)}</b>${a.noticesLive ? (a.noticeHours ? '' : ' · outside Monday-Saturday 08:00-19:00 Bogotá') : ' · owner notices are off (OWNER_NOTICES_LIVE)'}</li></ul>`;
@@ -726,7 +785,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     const STATE_CHIP = { live: 'c-fast', partial: 'c-average', down: 'c-slow', loading: '', off: '' };
     const LEVEL_CHIP = { good: 'c-fast', info: '', warn: 'c-average', alert: 'c-slow' };
-    const SOCIAL = /linkedin|facebook|youtube|tiktok|instagram|threads|twitter|\bx\b|t\.co|buffer|reddit/i;
+    const SOCIAL = /linkedin|facebook|youtube|tiktok|instagram|threads|twitter|\bx\b|t\.co|buffer|reddit|telegram|\bt\.me\b/i;
 
     function waiting(key, text) {
         const x = S.external[key];
@@ -970,16 +1029,23 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         else toast(out.error || 'Could not start the Google sign-in.', 7000);
     }
 
-    // Social hub (#1420): the Buffer and Facebook queue per channel, the posting runs, and field-sweep proposals.
+    // Social hub (#1420): the queue per channel from the social ledgers, the posting runs, and field-sweep proposals.
     function socialQueuePanel() {
         const so = S.external.social;
-        if (!so || !so.queue) return panel('hub-queue', 'Queue by channel', so && so.ok === false ? `<p class="jv-empty">${esc(so.error || 'Not loaded.')}</p>` : waiting('social', 'Reading the Buffer and Facebook ledgers…'), { wide: true });
+        if (!so || !so.queue) return panel('hub-queue', 'Queue by channel', so && so.ok === false ? `<p class="jv-empty">${esc(so.error || 'Not loaded.')}</p>` : waiting('social', 'Reading the social ledgers…'), { wide: true });
         const next = (c) => (c.next.length ? c.next.map((n) => `<span class="jv-chip">${esc(when(n.at))}</span> ${esc(n.post.split('/').pop())}`).join('<br>') : '<span class="jv-note">nothing scheduled</span>');
+        const counts = { telegram: so.telegram || {}, reddit: so.reddit || {} };
+        const members = (c) => {
+            const m = counts[c.channel];
+            return m && typeof m.members === 'number' ? `<br><span class="jv-note">${fmt(m.members)} members${typeof m.change === 'number' ? ` · <span class="jv-chip ${m.change > 0 ? 'c-fast' : m.change < 0 ? 'c-slow' : ''}">${m.change > 0 ? '+' : ''}${fmt(m.change)}</span> since ${esc(m.from.date)}` : ''}</span>` : '';
+        };
+        const needs = Object.values(counts).filter((m) => m.need).map((m) => `<li>${esc(m.need)}</li>`).join('');
+        const memberNeeds = needs ? `<ul class="jv-needs">${needs}</ul>` : '';
         return panel('hub-queue', 'Queue by channel', table([
-            ['Channel', (c) => `<strong>${esc(c.name)}</strong>`], ['Scheduled', (c) => fmt(c.scheduled)], ['Next', next],
+            ['Channel', (c) => `<strong>${esc(c.name)}</strong>${members(c)}`], ['Scheduled', (c) => fmt(c.scheduled)], ['Next', next],
             ['Sent', (c) => fmt(c.sent)], ['Failed', (c) => (c.failed ? `<span class="jv-chip c-slow">${fmt(c.failed)}</span>` : '0')],
             ['Last out', (c) => (c.last ? (c.last.url ? `<a href="${esc(c.last.url)}" target="_blank" rel="noopener">${esc(when(c.last.at))}</a>` : esc(when(c.last.at))) : '—')]
-        ], so.queue), { wide: true, data: so.queue.map((c) => ({ channel: c.name, scheduled: c.scheduled, next: c.next.map((n) => n.at + ' ' + n.post).join(' | '), sent: c.sent, failed: c.failed, last: c.last ? c.last.at : '' })), note: 'Sent and failed count the selected range. Instagram stays empty while that channel is paused in Buffer.' });
+        ], so.queue) + memberNeeds, { wide: true, data: so.queue.map((c) => Object.assign({ channel: c.name, scheduled: c.scheduled, next: c.next.map((n) => n.at + ' ' + n.post).join(' | '), sent: c.sent, failed: c.failed, last: c.last ? c.last.at : '' }, counts[c.channel] ? { members: counts[c.channel].members, change: counts[c.channel].change } : {})), note: 'Sent and failed count the selected range. Instagram stays empty while that channel is paused in Buffer. Telegram is the @qalab_live post of each Live Reports batch; its members are read each morning. Reddit is the app\'s daily batch post in r/QALabLiveReports; its members are read after the 16:20 UTC post. The change counts from the last daily count on or before the range start.' });
     }
 
     function socialRunsPanel() {
@@ -988,7 +1054,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const state = (r) => (r.status && r.status !== 'completed' ? `<span class="jv-chip c-average">${esc(r.status)}</span>` : r.conclusion ? `<span class="jv-chip ${r.conclusion === 'success' ? 'c-fast' : 'c-slow'}">${esc(r.conclusion)}</span>` : '—');
         const body = runs.length ? table([['Workflow', (r) => esc(r.name)], ['Last run', (r) => (r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(when(r.at))}</a>` : '—')], ['How', (r) => esc(r.event || '')], ['Result', state]], runs) : `<p class="jv-empty">${esc((R && R.error) || (R ? 'Set GITHUB_BUGS_TOKEN in Secret Manager to see the runs.' : 'Reading the workflow runs…'))}</p>`;
         return panel('hub-runs', 'Posting', body + `<div class="jv-actions"><button type="button" class="jv-btn" data-act="social-post-now"${S.pending['social-post-now'] ? ' disabled' : ''}>Post now</button></div>`,
-            { note: 'Post now runs the Buffer queue (the batches a spent daily limit held back) and the Facebook Page queue instead of waiting for their nightly slots.' });
+            { note: 'Post now runs the Buffer queue (the batches a spent daily limit held back) and the Facebook Page queue instead of waiting for their nightly slots. The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task.' });
     }
 
     function socialProposalsPanel() {
@@ -1241,8 +1307,16 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             + table([['Channel', (c) => esc(c.label)], ['Link', (c) => `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url.replace(/^https:\/\//, ''))}</a>`], ['', (c) => copyBtn(c.url)]], links.channels)
             + `<p class="jv-note">Funnel work: ${links.funnel.map((f) => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.label)}</a>`).join(' · ')}</p>`
             : `<p class="jv-empty">${esc((ou.links && ou.links.error) || 'Not loaded.')}</p>`;
+        const soc = links && links.social ? links.social : null;
+        const counts = [['Clicks', (x) => fmt(x.visits)], ['Runs', (x) => fmt(x.reviews)], ['Paid', (x) => fmt(x.paid)], ['USD', (x) => fmt(x.usd)]];
+        const socialBody = soc ? stats([{ label: 'Clicks', value: soc.visits }, { label: 'Free runs', value: soc.reviews }, { label: 'Paid unlocks', value: soc.paid }, { label: 'Revenue (USD)', value: soc.usd }])
+            + table([['Campaign', (n) => `<strong>Report replies on ${esc(n.name)}</strong><br><span class="jv-note">${esc(n.campaign)}</span>`]].concat(counts), soc.networks, 'No click on a report reply in this range yet.')
+            + table([['Post', (p) => (p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}: ${esc((p.title || p.author || p.ref).slice(0, 90))}</a>` : `${esc(p.name)} · ${esc(p.ref)}`) + `<br><span class="jv-note">${esc(p.host || '')}${p.lang ? ' · ' + esc(p.lang) : ''}</span>`]].concat(counts,
+                [['Our reply', (p) => (p.replyUrl ? `<a href="${esc(p.replyUrl)}" target="_blank" rel="noopener">${esc(p.status || 'posted')} ↗</a>` : esc(p.status || '—'))]]), soc.posts, 'No click carries a post ref yet.')
+            : `<p class="jv-empty">${esc((ou.links && ou.links.error) || 'Not loaded.')}</p>`;
         return head + `<div class="jv-grid">${approvalsPanel()}${briefPanel('outreach')}
             ${panel('outreach-links', 'qalabreview.com links: visits, reviews and revenue', linksBody, { wide: true, data: links ? links.prospects : [] })}
+            ${panel('outreach-report-replies', 'Report replies: clicks, runs and payments', socialBody, { wide: true, data: soc, note: 'Replies under posts that name a site we reviewed link to its report through a qalabreview.com/r/ link tagged with the network (utm_campaign social-reply-bluesky, for example) and the post (utm_term). A payment counts for the reply whose link started the run it unlocked. The drafts and their approval are on the Engagement tab.' })}
             ${panel('outreach-plan', '90-day plan', planBody)}
             ${panel('outreach-funnel', 'Weekly funnel against the plan', funnelBody, { data: funnel })}
             ${plan ? panel('outreach-targets', '90-day targets', targets, { data: plan.targets }) : ''}
@@ -1546,6 +1620,323 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         </div>${needList(e.marketing)}${needList(e['marketing-sync'])}${needList(e.outreach)}`;
     }
 
+    // --- GitHub (#2526): CI, PRs, the board, issues, branches, deploys, security, API budget and agent work from the
+    // github-work source, graded, with the fixes Jarvis can run. Every action asks first; risky ones wait on the countdown.
+    const GH_REPO = 'https://github.com/kaanmuar/kaanmuar.github.io';
+    const GH_AREAS = [['ci', 'CI'], ['prs', 'PRs'], ['board', 'Board'], ['issues', 'Issues'], ['branches', 'Branches'], ['deploys', 'Deploys'], ['security', 'Security'], ['budget', 'API budget'], ['agents', 'Agents']];
+    const GH_STATE = { clean: 'c-fast', dirty: 'c-slow', behind: 'c-average', blocked: 'c-average', unstable: 'c-slow', draft: 'c-draft' };
+    const GH_CHECKS = { pass: 'c-fast', fail: 'c-slow', pending: 'c-average' };
+    const GH_ASKS = ['Why is CI red?', 'What is blocking the board?', 'Which PRs can merge?'];
+    const ghConclusion = (c) => (c === 'success' ? 'c-fast' : !c || c === 'skipped' || c === 'neutral' ? '' : c === 'cancelled' ? 'c-average' : 'c-slow');
+    const ghAgo = (iso) => { const t = Date.parse(iso || ''); return Number.isFinite(t) ? ago(Date.now() - t) + ' ago' : '—'; };
+    const ghHours = (h) => (h === null || h === undefined ? '—' : h < 48 ? Math.round(h * 10) / 10 + ' h' : Math.round(h / 24) + ' d');
+    const ghSecs = (s) => (s === null || s === undefined ? '—' : s < 90 ? Math.round(s) + ' s' : Math.round(s / 60) + ' min');
+    const ghPct = (n) => (n === null || n === undefined ? '—' : n + '%');
+    const ghConf = (c) => (c === null || c === undefined ? '' : Math.round(c <= 1 ? c * 100 : c) + '%');
+    const ghIssue = (n, text) => (n ? `<a href="${GH_REPO}/issues/${encodeURIComponent(n)}" target="_blank" rel="noopener">${esc(text || '#' + n)}</a>` : '—');
+    const ghLink = (url, text) => (url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text));
+    const ghRef = (name) => `<code class="jv-gh-ref" title="${esc(name)}">${esc(name)}</code>`;
+    const ghCountdown = () => hoursText((((S.external.actions || {}).settings) || {}).countdownHours || COUNTDOWN_HOURS);
+    const ghBtn = (label, action, target, args, opts) => `<button type="button" class="jv-btn small${(opts && opts.cls) || ''}" data-gh-act="${esc(action)}" data-target="${esc(target)}" data-gh-args="${esc(JSON.stringify(args || {}))}"${opts && opts.disabled ? ' disabled' : ''}>${esc(label)}</button>`;
+    const ghWork = () => S.external['github-work'] || {};
+    const ghRun = (id) => ((ghWork().ci || {}).failing || []).find((r) => String(r.id) === String(id));
+    const ghPr = (n) => ((ghWork().prs || {}).items || []).find((p) => String(p.number) === String(n));
+
+    function githubView() {
+        const g = S.external['github-work'];
+        if (!g || g.ok === false) return `<div class="jv-grid">${briefPanel('github')}${panel('github-wait', 'GitHub', waiting('github-work', 'Reading GitHub: CI, PRs, the board, branches and agent work…'), { wide: true, keep: true })}</div>${needList(g)}`;
+        const live = (x) => (x && x.ok !== false ? x : null);
+        const off = (x, text) => `<p class="jv-empty">${esc(x && x.ok === false ? [x.error || 'Not available.', x.need ? 'Needs ' + x.need + '.' : ''].filter(Boolean).join(' ') : text || 'Nothing in this range.')}</p>`;
+        const ci = live(g.ci), prs = live(g.prs), board = live(g.board), iss = live(g.issues), br = live(g.branches), dep = live(g.deploys), an = live(g.android);
+        const sec = g.security || {}, bud = g.budget || null, ag = g.agents || null, st = g.streaks || null, dora = g.dora || null;
+        const sc = g.score || {}, areas = sc.areas || {};
+        const hist = g.history || [];
+        const failing = ci ? ci.failing || [] : [];
+        const needs = g.needs || [];
+        const missing = (g.access && g.access.missing) || [];
+        const overWip = !!(board && board.wipLimit && board.wip > board.wipLimit);
+
+        const head = `<div class="jv-gh-head">${gradeRing(sc.overall, 'overall', 128)}<div class="jv-grades">${GH_AREAS.map(([k, label]) => gradeRing(areas[k], label, 84)).join('')}</div></div>` + kpis([
+            { label: 'CI pass rate', value: ci ? ghPct(ci.passRate) : '—', alert: !!ci && ci.passRate < 90 },
+            { label: 'Open PRs', value: prs ? prs.open : '—', delta: prs && prs.mergeReady ? prs.mergeReady + ' ready to merge' : '', dir: 1 },
+            { label: 'Conflicts', value: prs ? prs.conflicts : '—', alert: !!prs && prs.conflicts > 0 },
+            { label: 'WIP', value: board ? `${fmt(board.wip)} / ${fmt(board.wipLimit)}` : '—', alert: overWip },
+            { label: 'Open bugs', value: iss ? iss.openBugs : '—', alert: !!iss && iss.openBugs > 0 },
+            { label: 'Merged in range', value: prs ? prs.merged : '—' },
+            { label: 'DORA level', value: dora && dora.level ? dora.level : '—', alert: !!dora && dora.level === 'low' },
+            { label: 'XP level', value: st ? 'Lv ' + st.level : '—', delta: st ? fmt(st.xp) + ' XP' : '' }
+        ]);
+
+        const needsPanel = needs.length || missing.length ? panel('github-needs', `Needs you · ${needs.length}`, (needs.length ? `<ul class="jv-needs jv-gh-needs">${needs.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '')
+            + (missing.length ? `<p class="jv-note">Repos the qa-lab-agents app cannot read: ${missing.map((m) => esc(m.repo) + (m.why ? ' (' + esc(m.why) + ')' : '')).join(', ')}.</p>` : ''),
+        { wide: true, keep: true, data: needs.map((n) => ({ need: n })), note: 'Steps only you can take. The parts they block show under No data yet at the bottom.' }) : '';
+
+        const flowBody = board ? processMap(board, g.flow) + stats([{ label: 'WIP', value: board.wip, alert: overWip }, { label: 'WIP limit', value: board.wipLimit }, { label: 'Cycle time (median)', value: board.cycleMedD === null || board.cycleMedD === undefined ? '—' : board.cycleMedD + ' d' }, { label: 'Moves in range', value: (g.flow || []).reduce((n, f) => n + (f.count || 0), 0) }, { label: 'Drifted cards', value: (board.drift || []).length, alert: (board.drift || []).length > 0 }]) : off(g.board);
+
+        const doraChip = (lv) => (lv ? `<span class="jv-chip lv-${esc(lv)}">${esc(lv)}</span>` : '<span class="jv-chip">—</span>');
+        const doraRows = dora ? [
+            ['Deploy frequency', dora.deployFreq, (x) => (x.perDay === null || x.perDay === undefined ? '—' : x.perDay + ' / day')],
+            ['Lead time for changes', dora.leadTimeH, (x) => ghHours(x.median)],
+            ['Change failure rate', dora.changeFail, (x) => ghPct(x.pct)],
+            ['Time to restore', dora.mttrH, (x) => ghHours(x.median)]
+        ] : [];
+        const doraBody = dora ? `<div class="jv-dora"><div class="jv-dora-level lv-${esc(dora.level || 'none')}"><small>DORA level</small><strong>${esc(dora.level || '—')}</strong></div><ul>${doraRows.map(([label, x, shown]) => `<li><span>${esc(label)}</span><b>${x ? esc(shown(x)) : '—'}</b>${doraChip(x && x.level)}</li>`).join('')}</ul></div>` : off(null, 'No DORA numbers yet.');
+
+        const lvStart = st ? 50 * Math.pow(Math.max(0, st.level - 1), 2) : 0;
+        const lvPct = st && st.nextAt > lvStart ? Math.max(0, Math.min(100, Math.round(((st.xp - lvStart) / (st.nextAt - lvStart)) * 100))) : 0;
+        const xpBody = st ? stats([{ label: 'Green main (days)', value: st.greenMainDays }, { label: 'Merge streak (days)', value: st.mergeDays }, { label: 'XP', value: st.xp }])
+            + `<div class="jv-gh-level"><span>Level <b>${fmt(st.level)}</b></span><span class="jv-gh-xp" title="${lvPct}% of the way to level ${st.level + 1}"><i style="width:${lvPct}%"></i></span><small>${fmt(Math.max(0, st.nextAt - st.xp))} XP to level ${fmt(st.level + 1)}</small></div>`
+            + ((st.badges || []).length ? `<p class="jv-chips">${st.badges.map((b) => `<span class="jv-chip c-report">${esc(b)}</span>`).join(' ')}</p>` : '') : off(null, 'No streaks yet.');
+
+        const ciDays = {};
+        hist.forEach((r) => { ciDays[r.day] = { date: r.day, runs: r.runs || 0, failed: r.failed || 0 }; });
+        (ci ? ci.daily || [] : []).forEach((r) => { ciDays[r.day] = { date: r.day, runs: r.runs || 0, failed: r.failed || 0 }; });
+        const ciRows = Object.values(ciDays);
+        const ciTrend = align([{ name: 'Runs', color: COLORS.cyan, rows: ciRows, key: 'runs' }, { name: 'Failed', color: COLORS.pink, rows: ciRows, key: 'failed' }]);
+        const sparkRow = (label, key, shown, color) => { const v = hist.map((r) => Number(r[key]) || 0); const last = hist.length ? hist[hist.length - 1][key] : null; return `<div><span>${esc(label)}</span><b>${last === null || last === undefined ? '—' : esc(shown ? shown(last) : fmt(last))}</b>${spark(v, color)}</div>`; };
+        const trendBody = hist.length ? `<div class="jv-gh-sparks">${sparkRow('CI pass rate', 'passRate', ghPct, COLORS.green)}${sparkRow('Health score', 'score', null, COLORS.cyan)}${sparkRow('Open PRs', 'openPrs', null, COLORS.violet)}${sparkRow('Open bugs', 'openBugs', null, COLORS.pink)}${sparkRow('WIP', 'wip', null, COLORS.amber)}${sparkRow('Merged', 'merged', null, COLORS.green)}</div>` : off(null, 'No daily history yet: the hourly job backfills 90 days, ten a run.');
+
+        const ciBody = ci ? stats([{ label: 'Runs', value: ci.runs }, { label: 'Failed', value: ci.failed, alert: ci.failed > 0 }, { label: 'Pass rate', value: ghPct(ci.passRate), alert: ci.passRate < 90 }, { label: 'Minutes', value: ci.minutes }, { label: 'Median queue', value: ghSecs(ci.queueMedS) }, { label: 'Median run', value: ghSecs(ci.durMedS) }, { label: 'Flaky', value: ghPct((ci.flaky || {}).pct), alert: ((ci.flaky || {}).pct || 0) > 5 }])
+            + table([['Workflow', (w) => `<strong>${esc(w.name)}</strong>${w.path ? `<br><span class="jv-note">${esc(w.path)}</span>` : ''}`], ['Runs', (w) => fmt(w.runs)],
+                ['Pass rate', (w) => `<span class="jv-meter${w.passRate < 90 ? ' is-low' : ''}"><i style="width:${Math.max(0, Math.min(100, w.passRate || 0))}%"></i></span> ${esc(ghPct(w.passRate))}`], ['Median run', (w) => esc(ghSecs(w.durMedS))],
+                ['Main', (w) => `<span class="jv-chip ${w.mainRed ? 'c-slow' : 'c-fast'}">${w.mainRed ? 'red' : 'green'}</span>`],
+                ['Last', (w) => (w.last ? `<a class="jv-chip ${ghConclusion(w.last.conclusion)}" href="${esc(w.last.url)}" target="_blank" rel="noopener">${esc(w.last.conclusion || 'running')}</a> <span class="jv-note">${esc(ghAgo(w.last.at))}</span>` : '—')]], ci.workflows || [], 'No workflow runs in range.') : off(g.ci);
+        const flaky = ci && ci.flaky ? ci.flaky.workflows || [] : [];
+        const flakyBody = ci ? table([['Workflow', (w) => esc(w.name)], ['Flaky', (w) => `<span class="jv-chip ${w.pct >= 10 ? 'c-slow' : 'c-average'}">${esc(ghPct(w.pct))}</span>`], ['Runs', (w) => fmt(w.runs)]], flaky, 'No flaky workflows: every failure stayed failed on a re-run.') : off(g.ci);
+        const diagCell = (r) => (r.diag ? `<strong>${esc(r.diag.cause)}</strong><br>${r.diag.category ? `<span class="jv-chip c-average">${esc(r.diag.category)}</span>` : ''}${r.diag.confidence !== null && r.diag.confidence !== undefined ? `<span class="jv-chip">confidence ${esc(ghConf(r.diag.confidence))}</span>` : ''}${r.diag.fix ? `<br><span class="jv-note">Fix: ${esc(r.diag.fix)}</span>` : ''}` : '<span class="jv-note">Not diagnosed yet.</span>');
+        const failBody = ci ? table([
+            ['Run', (r) => `${ghLink(r.url, r.name)}<br><span class="jv-note">#${esc(r.id)}${r.event ? ' · ' + esc(r.event) : ''}${r.sha ? ' · ' + esc(String(r.sha).slice(0, 7)) : ''}</span>`],
+            ['Branch', (r) => `${ghRef(r.branch)}${r.pr ? `<br>PR ${ghLink(GH_REPO + '/pull/' + r.pr, '#' + r.pr)}` : ''}`],
+            ['Attempt', (r) => fmt(r.attempt || 1)], ['Age', (r) => esc(ghAgo(r.at))], ['Diagnosis', diagCell],
+            ['', (r) => `<div class="jv-actions"><button type="button" class="jv-btn small" data-gh-rerun="${esc(r.id)}">Re-run</button><button type="button" class="jv-btn small" data-gh-diagnose="${esc(r.id)}"${S.pending['gh-diag:' + r.id] ? ' disabled' : ''}>${S.pending['gh-diag:' + r.id] ? 'Diagnosing…' : r.diag ? 'Diagnose again' : 'Diagnose'}</button><button type="button" class="jv-btn small is-primary" data-gh-agent="${esc(r.id)}">Launch a Cursor fix agent</button></div>`]
+        ], failing, 'No failing runs. CI is green.') : off(g.ci);
+
+        const prBtns = (p) => [
+            ['behind', 'blocked', 'unstable'].includes(p.state) ? ghBtn('Update with main', 'gh-update-pr', '#' + p.number, { pr: p.number }) : '',
+            p.state === 'clean' && p.checks === 'pass' ? ghBtn('Merge', 'gh-merge-pr', '#' + p.number, { pr: p.number }, { cls: ' is-primary' }) : '',
+            p.state === 'dirty' ? `<button type="button" class="jv-btn small" data-gh-agent-pr="${esc(p.number)}">Resolve with a Cursor agent</button>` : '',
+            !p.ticket && p.state !== 'draft' ? ghBtn('File a ticket', 'gh-orphan-ticket', '#' + p.number, { pr: p.number }) : ''
+        ].filter(Boolean).join('');
+        const prBody = prs ? stats([{ label: 'Open', value: prs.open }, { label: 'Draft', value: prs.draft }, { label: 'Ready to merge', value: prs.mergeReady }, { label: 'Conflicts', value: prs.conflicts, alert: prs.conflicts > 0 }, { label: 'Behind main', value: prs.behind }, { label: 'Red checks', value: prs.red, alert: prs.red > 0 }, { label: 'Stale', value: prs.stale, alert: prs.stale > 0 }, { label: 'No ticket', value: prs.orphan, alert: prs.orphan > 0 }, { label: 'Lead time (median)', value: ghHours(prs.leadMedH) }, { label: 'Lead time (p90)', value: ghHours(prs.leadP90H) }])
+            + table([
+                ['PR', (p) => `${ghLink(p.url, '#' + p.number)} <strong>${esc(p.title)}</strong><br><span class="jv-note">${esc(p.author || '')}${p.branch ? ' · ' + ghRef(p.branch) : ''}${(p.labels || []).length ? ' · ' + p.labels.map(esc).join(', ') : ''}</span>`],
+                ['State', (p) => `<span class="jv-chip ${GH_STATE[p.state] || ''}">${esc(p.state)}</span>`], ['Checks', (p) => `<span class="jv-chip ${GH_CHECKS[p.checks] || ''}">${esc(p.checks || '—')}</span>`],
+                ['Age', (p) => `${esc(ghHours(p.ageH))}${p.updatedH > 72 ? `<br><span class="jv-note">quiet ${esc(ghHours(p.updatedH))}</span>` : ''}`], ['Ticket', (p) => ghIssue(p.ticket)],
+                ['Size', (p) => `<span class="jv-gh-add">+${fmt(p.additions || 0)}</span> <span class="jv-gh-del">−${fmt(p.deletions || 0)}</span>`], ['', (p) => `<div class="jv-actions">${prBtns(p)}</div>`]
+            ], prs.items || [], 'No open PRs.') : off(g.prs);
+        const prDaily = prs ? align([{ name: 'Opened', color: COLORS.violet, rows: (prs.daily || []).map((r) => ({ date: r.day, n: r.opened })), key: 'n' }, { name: 'Merged', color: COLORS.green, rows: (prs.daily || []).map((r) => ({ date: r.day, n: r.merged })), key: 'n' }]) : null;
+
+        const columns = board ? (board.columns || []).map((c) => ({ label: c.name, value: c.count || 0 })) : [];
+        const boardBody = board ? bars(columns, { color: COLORS.cyan, limit: 8, empty: 'The board is empty.' }) + table([['Column', (c) => esc(c.name)], ['Median age', (c) => (c.ageMedD === null || c.ageMedD === undefined ? '—' : fmt(c.ageMedD) + ' d')], ['Oldest', (c) => (c.oldest || []).slice(0, 3).map((o) => `${ghLink(o.url, '#' + o.number)} <span class="jv-note">${fmt(o.days)} d</span>`).join(' · ') || '—']], (board.columns || []).filter((c) => c.count)) : off(g.board);
+        const drift = board ? board.drift || [] : [];
+        const driftBody = board ? table([['Card', (d) => `${ghLink(d.url, '#' + d.number)} ${esc(d.title)}`], ['On the board', (d) => `<span class="jv-chip">${esc(d.column)}</span>`], ['Should be', (d) => `<span class="jv-chip c-average">${esc(d.should)}</span>`], ['Why', (d) => `<span class="jv-note">${esc(d.why)}</span>`]], drift, 'Every card sits where its PR and issue say.')
+            + (drift.length ? `<div class="jv-actions">${ghBtn('Sync the board', 'gh-board-sync', plural(drift.length, 'drifted card', 'drifted cards'), { items: drift.map((d) => ({ number: d.number, should: d.should })) }, { cls: ' is-primary' })}</div>` : '') : off(g.board);
+        const agingBody = board ? table([['Card', (a) => `${ghLink(a.url, '#' + a.number)} ${esc(a.title)}`], ['Column', (a) => `<span class="jv-chip">${esc(a.column)}</span>`], ['Days', (a) => `<span class="jv-chip ${a.days > 14 ? 'c-slow' : a.days > 7 ? 'c-average' : ''}">${fmt(a.days)}</span>`]], board.aging || [], 'Nothing has sat in Dev, QA or Stg for more than a week.') : off(g.board);
+
+        const issDaily = iss ? align([{ name: 'Opened', color: COLORS.pink, rows: (iss.daily || []).map((r) => ({ date: r.day, n: r.opened })), key: 'n' }, { name: 'Closed', color: COLORS.green, rows: (iss.daily || []).map((r) => ({ date: r.day, n: r.closed })), key: 'n' }]) : null;
+        const sub = iss && iss.subIssues ? iss.subIssues : null;
+
+        const merged = br ? br.merged || [] : [];
+        const trees = br ? br.worktrees || [] : [];
+        const branchBody = br ? stats([{ label: 'Branches', value: br.total }, { label: 'Stale', value: br.stale, alert: br.stale > 0 }, { label: 'Merged, not deleted', value: merged.length, alert: merged.length > 0 }, { label: 'Worktrees', value: trees.length }])
+            + table([['Branch', (b) => ghRef(b.name)], ['PR', (b) => (b.pr ? ghLink(GH_REPO + '/pull/' + b.pr, '#' + b.pr) : '—')], ['Merged', (b) => fmt(b.days) + ' d ago']], merged.slice(0, 20), 'No merged branches left behind.')
+            + (merged.length > 20 ? `<p class="jv-more">+${merged.length - 20} more in the export</p>` : '')
+            + (merged.length ? `<div class="jv-actions">${ghBtn('Delete merged branches', 'gh-delete-branch', plural(merged.length, 'merged branch', 'merged branches'), { branches: merged.map((b) => b.name) }, { cls: ' danger' })}</div>` : '') : off(g.branches);
+        const aheadBody = br ? table([['Branch', (b) => ghRef(b.name)], ['Ahead', (b) => fmt(b.ahead)], ['Behind', (b) => `<span class="jv-chip ${b.behind > 50 ? 'c-slow' : b.behind > 10 ? 'c-average' : ''}">${fmt(b.behind)}</span>`], ['Last commit', (b) => fmt(b.days) + ' d'], ['PR', (b) => (b.pr ? ghLink(GH_REPO + '/pull/' + b.pr, '#' + b.pr) : '<span class="jv-note">none</span>')]], br.ahead || [], 'No open branches ahead of main.') : off(g.branches);
+        const treeBody = br ? table([
+            ['Worktree', (w) => `${ghRef(w.branch)}<br><span class="jv-note">${esc(String(w.path || '').split('/').slice(-2).join('/'))}</span>`], ['Ticket', (w) => ghIssue(w.ticket)],
+            ['Chat', (w) => `<span class="jv-chip ${w.alive ? 'c-fast' : ''}">${w.alive ? 'alive' : 'dead'}</span>`], ['PR', (w) => (w.pr ? `${ghLink(GH_REPO + '/pull/' + w.pr, '#' + w.pr)} <span class="jv-chip ${w.prState === 'merged' ? 'c-fast' : w.prState === 'closed' ? '' : 'c-average'}">${esc(w.prState || 'open')}</span>` : '—')],
+            ['Files', (w) => (w.dirty ? '<span class="jv-chip c-average">uncommitted</span>' : '<span class="jv-note">clean</span>')],
+            ['', (w) => (w.prState === 'merged' && !w.alive ? (w.dirty ? '<span class="jv-note">Has uncommitted files: remove it by hand.</span>' : ghBtn('Remove', 'gh-remove-worktree', String(w.path || w.branch).split('/').pop(), { path: w.path, branch: w.branch })) : '')]
+        ], trees, g.local ? 'No worktrees.' : 'The Mac uploader has not sent the worktrees yet.') + (g.local ? `<p class="jv-note">From the Mac uploader ${esc(ghAgo(g.local.at))}.</p>` : '') : off(g.branches);
+
+        const depDaily = dep ? align([{ name: 'Deploys', color: COLORS.green, rows: (dep.daily || []).map((r) => ({ date: r.day, n: r.ok })), key: 'n' }, { name: 'Failed', color: COLORS.pink, rows: (dep.daily || []).map((r) => ({ date: r.day, n: r.failed })), key: 'n' }]) : null;
+        const depBody = dep ? `<ul class="jv-feed jv-gh-deploys">${(dep.last || []).map((d) => `<li><time>${esc(when(d.at))}</time><span><span class="jv-chip ${ghConclusion(d.conclusion)}">${esc(d.conclusion || 'running')}</span> ${ghLink(d.url, d.name)}${d.sha ? ` <code>${esc(String(d.sha).slice(0, 7))}</code>` : ''}</span></li>`).join('')}</ul>` : off(g.deploys);
+        const envBody = dep ? table([['Environment', (x) => esc(x.name)], ['State', (x) => `<span class="jv-chip ${x.state === 'success' || x.state === 'active' ? 'c-fast' : x.state === 'failure' || x.state === 'error' ? 'c-slow' : ''}">${esc(x.state || '—')}</span>`], ['Last', (x) => esc(ghAgo(x.at))]], dep.environments || [], 'No environments.') : off(g.deploys);
+
+        const secItems = (x) => table([['Repo', (i) => esc(i.repo || '')], ['Alert', (i) => ghLink(i.url, (i.package || i.rule || i.secret || i.title || 'alert') + (i.number ? ' #' + i.number : ''))], ['Severity', (i) => `<span class="jv-chip ${/critical|high/i.test(i.severity || '') ? 'c-slow' : i.severity ? 'c-average' : ''}">${esc(i.severity || '—')}</span>`]], x.items || [], 'No open alerts.');
+        const dbot = live(sec.dependabot), cscan = live(sec.codeScanning), secrets = live(sec.secrets);
+
+        const gql = bud && bud.kaanmuar ? bud.kaanmuar.graphql : null;
+        const core = bud && bud.kaanmuar ? bud.kaanmuar.core : null;
+        const appCore = bud && bud.app ? bud.app.core : null;
+        const left = (x) => (x && x.limit ? Math.round(((x.limit - x.used) / x.limit) * 100) : null);
+        const budgetBody = bud ? `<div class="jv-rings">${ring(left(gql), 'GraphQL left', null, 104)}${ring(left(core), 'REST left', null, 92)}${ring(left(appCore), 'app REST left', null, 92)}</div>`
+            + stats([{ label: 'GraphQL used', value: gql ? `${fmt(gql.used)} / ${fmt(gql.limit)}` : '—', alert: left(gql) !== null && left(gql) < 20 }, { label: 'Resets', value: gql && gql.resetAt ? when(gql.resetAt) : '—' }, { label: 'App REST used', value: appCore ? `${fmt(appCore.used)} / ${fmt(appCore.limit)}` : '—' }])
+            + bars((bud.hourly || []).map((r) => ({ label: String(r.hour).slice(11, 16) || String(r.hour), value: r.graphql || 0 })), { color: COLORS.violet, limit: 24, empty: 'No hourly GraphQL readings yet.' })
+            + (bud.kaanmuar ? '' : '<p class="jv-note">The Mac uploader has not sent kaanmuar\'s rate limit yet.</p>') : off(null, 'No API budget readings yet.');
+
+        const agTickets = ag ? (ag.tickets || []).map((t) => ({ label: `#${t.ticket} ${t.title || ''}`.trim(), value: Math.round((t.hours || 0) * 10) / 10 })) : [];
+        const cost = ag && ag.cost ? ag.cost : null;
+        const costPct = cost && cost.limitUsd ? Math.round((cost.onDemandUsd / cost.limitUsd) * 100) : null;
+        const agBody = ag ? stats([{ label: 'Open chats', value: (ag.open || []).length }, { label: 'Hours in range', value: Math.round((ag.daily || []).reduce((n, d) => n + (d.hours || 0), 0) * 10) / 10 }, { label: 'Tickets worked', value: (ag.tickets || []).length }, { label: 'On-demand USD', value: cost ? `${fmt(cost.onDemandUsd)} / ${fmt(cost.limitUsd)}` : '—', alert: costPct !== null && costPct >= 80 }])
+            + (cost ? `<div class="jv-vs"><span>On-demand spend since ${esc(cost.cycleStart || '—')}</span><span class="jv-meter${costPct >= 80 ? ' is-low' : ''}"><i style="width:${Math.min(100, costPct || 0)}%"></i></span><b>${esc(ghPct(costPct))}</b><small>of ${fmt(cost.limitUsd)} USD</small></div>` : '')
+            + bars(agTickets, { color: COLORS.amber, limit: 10, empty: 'No agent hours logged in range.' }) : off(null, 'No agent work logged yet.');
+        const agDaily = ag ? align([{ name: 'Agent hours', color: COLORS.amber, rows: (ag.daily || []).map((r) => ({ date: r.day, n: Math.round((r.hours || 0) * 10) / 10 })), key: 'n' }, { name: 'Tickets', color: COLORS.cyan, rows: (ag.daily || []).map((r) => ({ date: r.day, n: r.tickets || 0 })), key: 'n' }]) : null;
+        const openBody = ag ? table([['Ticket', (o) => ghIssue(o.ticket)], ['Title', (o) => esc(o.title)], ['Since', (o) => esc(ghAgo(o.since))]], ag.open || [], 'No chat is working right now.') : off(null, 'No agent work logged yet.');
+
+        const anBody = an ? stats([{ label: 'Builds', value: an.builds }, { label: 'Failed', value: an.failed, alert: an.failed > 0 }, { label: 'Last build', value: an.last ? an.last.conclusion || 'running' : '—', alert: !!an.last && ghConclusion(an.last.conclusion) === 'c-slow' }])
+            + (an.last ? `<p class="jv-note">Last build ${ghLink(an.last.url, ghAgo(an.last.at))}.</p>` : '') + table([['Release', (r) => ghLink(r.url, r.tag)], ['When', (r) => esc(when(r.at))]], an.releases || [], 'No releases yet.') : off(g.android);
+
+        const repos = g.repos || [];
+        const repoBody = repos.length ? `<div class="jv-gh-repos">${repos.map((r) => `<div class="jv-gh-repo"><strong>${ghLink('https://github.com/' + r.name, r.name)}</strong>
+            <span>${r.private ? '<span class="jv-chip">private</span>' : '<span class="jv-chip">public</span>'}${r.language ? `<span class="jv-chip">${esc(r.language)}</span>` : ''}${r.ci ? `<a class="jv-chip ${ghConclusion(r.ci.conclusion)}" href="${esc(r.ci.url)}" target="_blank" rel="noopener">CI ${esc(r.ci.conclusion || 'running')}</a>` : '<span class="jv-chip">no CI</span>'}${r.security && r.security.open ? `<span class="jv-chip c-slow">${fmt(r.security.open)} security</span>` : ''}</span>
+            <small>pushed ${esc(ghAgo(r.pushedAt))} · ${fmt(r.openIssues || 0)} issues · ${fmt(r.openPrs || 0)} PRs · ${esc(r.defaultBranch || 'main')}</small></div>`).join('')}</div>` : off(null, 'No repos read yet.');
+
+        const ai = g.ai || {};
+        const aiBody = `<div class="jv-chips">${GH_ASKS.map((q) => `<button type="button" class="jv-btn small" data-gh-ask="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+            <form class="jv-inline" data-ask><input type="text" name="q" data-keep="gh-ask" placeholder="Ask Jarvis about GitHub: which workflow fails most? who is blocking QA?" aria-label="Ask Jarvis about GitHub"><button type="submit" class="jv-btn">Ask</button></form>
+            ${S.ai ? `<div class="jv-ai"><span class="jv-eyebrow">Gemini · ${S.aiAt ? esc(when(S.aiAt)) : ''}</span><div class="jv-ai-text">${esc(S.ai).replace(/\n/g, '<br>')}</div></div>` : ''}
+            <h4 class="jv-sub">Latest diagnoses</h4>${table([['Run', (d) => `${esc(d.workflow || '')} <span class="jv-note">#${esc(d.run)}</span>`], ['Cause', (d) => `${esc(d.cause)}${d.fix ? `<br><span class="jv-note">Fix: ${esc(d.fix)}</span>` : ''}`], ['Kind', (d) => `${d.category ? `<span class="jv-chip c-average">${esc(d.category)}</span>` : ''}${d.confidence !== null && d.confidence !== undefined ? `<span class="jv-chip">${esc(ghConf(d.confidence))}</span>` : ''}`], ['When', (d) => esc(when(d.at))]], (ai.diagnoses || []).slice(0, 10), 'No diagnoses yet: Jarvis diagnoses new failed runs every hour.')}
+            ${ai.retro ? `<h4 class="jv-sub">Weekly retro · ${esc(ai.retro.week)}</h4><div class="jv-ai-text">${esc(ai.retro.text).replace(/\n/g, '<br>')}</div>` : ''}`;
+
+        const newest = failing.slice().sort((a, b) => Date.parse(b.at || 0) - Date.parse(a.at || 0))[0];
+        const deck = `<div class="jv-deck">
+            <div><h4>Board</h4><div class="jv-actions">${ghBtn('Sync the board', 'gh-board-sync', plural(drift.length, 'drifted card', 'drifted cards'), { items: drift.map((d) => ({ number: d.number, should: d.should })) }, { disabled: !drift.length })}<a class="jv-btn" href="https://github.com/orgs/carlosandmunoz-hq/projects/1" target="_blank" rel="noopener">Open the board</a></div></div>
+            <div><h4>CI</h4><div class="jv-actions"><button type="button" class="jv-btn" data-gh-rerun="main"${failing.some((r) => r.branch === 'main') ? '' : ' disabled'}>Re-run failed CI</button><button type="button" class="jv-btn" data-gh-diagnose="${esc(newest ? newest.id : '')}"${newest ? '' : ' disabled'}>Diagnose newest failure</button><a class="jv-btn" href="${GH_REPO}/actions" target="_blank" rel="noopener">Open Actions</a></div></div>
+            <div><h4>Branches and data</h4><div class="jv-actions">${ghBtn('Delete merged branches', 'gh-delete-branch', plural(merged.length, 'merged branch', 'merged branches'), { branches: merged.map((b) => b.name) }, { cls: ' danger', disabled: !merged.length })}<button type="button" class="jv-btn" data-act="gh-reload">Reload GitHub numbers</button><button type="button" class="jv-btn" data-act="export-csv">Export this tab (CSV)</button></div></div>
+          </div>`;
+        const daily = (x) => (x ? x.labels.map((d, i) => Object.assign({ day: d }, ...x.series.map((s) => ({ [s.name]: s.values[i] })))) : null);
+
+        return head + `<div class="jv-grid">${needsPanel}${briefPanel('github')}${proposalsPanel('github')}
+            ${panel('github-flow', `Process map${board ? ` · WIP ${fmt(board.wip)} of ${fmt(board.wipLimit)}` : ''}`, flowBody, { wide: true, keep: !!board, data: board && (board.columns || []).map((c) => ({ column: c.name, count: c.count, ageMedD: c.ageMedD })), note: 'Arrows are board moves in range, thicker for more; amber ones went backwards. Dev, QA and Stg glow amber when WIP is over its limit.' })}
+            ${panel('github-dora', 'DORA', doraBody, { data: doraRows.map(([label, x]) => Object.assign({ metric: label }, x || {})), note: 'Elite: a deploy a day or more, changes live within a day, 5% or fewer fail, restored within an hour.' })}
+            ${panel('github-xp', 'Streaks and level', xpBody, { data: st ? [st] : null, note: 'XP: merged PRs × 10, closed bugs × 5, green-main days × 3.' })}
+            ${panel('github-trend', 'Daily trend', trendBody, { data: hist })}
+            ${panel('github-ci-trend', 'CI runs and failures per day', area(ciTrend.labels, ciTrend.series), { wide: true, data: daily(ciTrend) })}
+            ${panel('github-failing', `Failing runs${failing.length ? ' · ' + failing.length : ''}`, failBody, { wide: true, keep: !!ci, data: failing.map((r) => ({ id: r.id, workflow: r.name, branch: r.branch, attempt: r.attempt, at: r.at, pr: r.pr, cause: r.diag && r.diag.cause, category: r.diag && r.diag.category, confidence: r.diag && r.diag.confidence })), note: 'Re-run and Diagnose act at once; a fix agent always asks first and opens a PR when it is done.' })}
+            ${panel('github-ci', 'CI workflows', ciBody, { wide: true, data: ci && ci.workflows })}
+            ${panel('github-flaky', 'Flaky workflows', flakyBody, { data: flaky, note: 'Flaky: failed, then passed on a re-run of the same commit.' })}
+            ${panel('github-prs', `Open PRs${prs ? ' · ' + fmt(prs.open) : ''}`, prBody, { wide: true, keep: !!prs, data: prs && prs.items, note: `Update with main and Merge run as soon as you confirm. Jarvis's own updates wait ${ghCountdown()} on the countdown (Systems > Jarvis actions).` })}
+            ${prDaily ? panel('github-pr-daily', 'PRs opened and merged per day', area(prDaily.labels, prDaily.series), { wide: true, data: daily(prDaily) }) : ''}
+            ${listPanel('github', 'pr-sizes', 'PR sizes', prs ? prs.sizes || [] : [], { color: COLORS.violet, empty: 'No PRs in range.' })}
+            ${panel('github-board', 'Board columns', boardBody, { data: board && board.columns })}
+            ${panel('github-drift', `Board drift${drift.length ? ' · ' + drift.length : ''}`, driftBody, { wide: true, data: drift, note: 'Cards whose Status disagrees with their PR or issue. Jarvis syncs them on its own every hour.' })}
+            ${panel('github-aging', 'Aging cards', agingBody, { data: board && board.aging })}
+            ${listPanel('github', 'throughput', `Throughput per week${board && board.cycleMedD !== null && board.cycleMedD !== undefined ? ' · cycle ' + board.cycleMedD + ' d' : ''}`, board ? (board.throughput || []).map((t) => ({ label: t.week, value: t.done })) : [], { color: COLORS.green, empty: 'Nothing reached Done in range.' })}
+            ${panel('github-issues', 'Issues opened and closed per day', iss ? stats([{ label: 'Open', value: iss.open }, { label: 'Open bugs', value: iss.openBugs, alert: iss.openBugs > 0 }, { label: 'Opened', value: iss.opened }, { label: 'Closed', value: iss.closed }]) + area(issDaily.labels, issDaily.series) : off(g.issues), { wide: true, data: daily(issDaily) })}
+            ${panel('github-bug-areas', 'Open bugs by area', iss ? pie(iss.bugsByArea, { unit: 'bugs', empty: 'No open bugs.' }) : off(g.issues), { data: iss && iss.bugsByArea })}
+            ${listPanel('github', 'kinds', 'Issues by kind', iss ? iss.byKind || [] : [], { color: COLORS.violet, empty: 'No issues in range.' })}
+            ${panel('github-subissues', 'Sub-issues done', sub && sub.total ? `<div class="jv-rings">${ring(Math.round((sub.done / sub.total) * 100), `${sub.done} of ${sub.total}`, null, 110)}</div><p class="jv-note">Across ${fmt(sub.parents)} parent tickets.</p>` : off(g.issues, 'No sub-issues yet.'), { data: sub ? [sub] : null })}
+            ${panel('github-oldest', 'Oldest open issues', iss ? table([['Issue', (o) => `${ghLink(o.url, '#' + o.number)} ${esc(o.title)}`], ['Days', (o) => fmt(o.days)]], iss.oldest || [], 'No open issues.') : off(g.issues), { data: iss && iss.oldest })}
+            ${panel('github-branches', 'Branches', branchBody, { data: merged })}
+            ${panel('github-ahead', 'Ahead of and behind main', aheadBody, { data: br && br.ahead })}
+            ${panel('github-worktrees', `Worktrees${trees.length ? ' · ' + trees.length : ''}`, treeBody, { wide: true, data: trees, note: 'Remove queues git worktree remove for the Mac uploader, which runs it within 5 minutes; it never forces, so uncommitted files stay.' })}
+            ${depDaily ? panel('github-deploys', 'Deploys per day', area(depDaily.labels, depDaily.series), { wide: true, data: daily(depDaily) }) : ''}
+            ${panel('github-deploy-last', 'Latest deploys', depBody, { data: dep && dep.last })}
+            ${panel('github-envs', 'Environments', envBody, { data: dep && dep.environments })}
+            ${panel('github-dependabot', `Dependabot${dbot ? ' · ' + fmt(dbot.open) : ''}`, dbot ? stats([{ label: 'Open', value: dbot.open, alert: dbot.open > 0 }, { label: 'Critical', value: dbot.critical, alert: dbot.critical > 0 }, { label: 'High', value: dbot.high, alert: dbot.high > 0 }]) + secItems(dbot) : off(sec.dependabot, 'Not read yet.'), { data: dbot && dbot.items })}
+            ${panel('github-code-scanning', `Code scanning${cscan ? ' · ' + fmt(cscan.open) : ''}`, cscan ? stats([{ label: 'Open', value: cscan.open, alert: cscan.open > 0 }]) + secItems(cscan) : off(sec.codeScanning, 'Not read yet.'), { data: cscan && cscan.items })}
+            ${panel('github-secrets', `Secret scanning${secrets ? ' · ' + fmt(secrets.open) : ''}`, secrets ? stats([{ label: 'Open', value: secrets.open, alert: secrets.open > 0 }]) + secItems(secrets) : off(sec.secrets, 'Not read yet.'), { data: secrets && secrets.items })}
+            ${panel('github-budget', 'GitHub API budget', budgetBody, { data: bud && bud.hourly, note: "All chats share kaanmuar's 5,000 GraphQL points an hour; the app's REST budget is its own." })}
+            ${panel('github-agents', 'Agent work', agBody, { data: ag && ag.tickets })}
+            ${agDaily ? panel('github-agents-daily', 'Agent hours per day', area(agDaily.labels, agDaily.series), { wide: true, data: daily(agDaily) }) : ''}
+            ${panel('github-agents-open', 'Open chats', openBody, { data: ag && ag.open })}
+            ${panel('github-android', 'Android builds and releases', anBody, { data: an && an.releases })}
+            ${panel('github-repos', `Repos${repos.length ? ' · ' + repos.length : ''}`, repoBody, { wide: true, data: repos.map((r) => ({ name: r.name, private: r.private, ci: r.ci && r.ci.conclusion, pushedAt: r.pushedAt, openIssues: r.openIssues, openPrs: r.openPrs, security: r.security && r.security.open, language: r.language })) })}
+            ${panel('github-ai', 'Jarvis on GitHub', aiBody, { wide: true, keep: true, data: ai.diagnoses })}
+            ${panel('github-deck', 'Command deck', deck, { wide: true, note: `Every button asks first, then runs. When Jarvis fixes on its own, merges, reverts, branch deletes and worktree removals wait ${ghCountdown()} on the countdown.` })}
+        </div>`;
+    }
+
+    // A github-act action from the GitHub tab, after Carlos confirms.
+    const GH_ASK = {
+        'rerun-ci': (a) => `re-run the failed jobs of ${a.workflow || 'the run'} #${a.run} on ${a.branch || 'its branch'}`,
+        'gh-board-sync': (a) => `sync the board: move ${plural((a.items || []).length, 'card', 'cards')} to the column its PR or issue says (${(a.items || []).slice(0, 4).map((d) => '#' + d.number + ' to ' + d.should).join(', ')})`,
+        'gh-update-pr': (a) => `update PR #${a.pr} with main now`,
+        'gh-merge-pr': (a) => `merge PR #${a.pr} into main now (it then goes to production)`,
+        'gh-delete-branch': (a) => `delete ${plural((a.branches || []).length, 'merged branch', 'merged branches')} now`,
+        'gh-remove-worktree': (a) => `remove the merged worktree ${a.branch || a.path} on the Mac (the uploader runs it within 5 minutes, never with --force)`,
+        'gh-orphan-ticket': (a) => `file a ticket for PR #${a.pr} and link it in a comment on the PR`
+    };
+
+    async function ghAct(b, action = b.dataset.ghAct, target = b.dataset.target, given = null) {
+        let args = given || {};
+        if (!given) try { args = JSON.parse(b.dataset.ghArgs || '{}'); } catch (error) { args = {}; }
+        if (!confirmRun((GH_ASK[action] || (() => ACTION_LABELS[action] || action))(args))) return;
+        b.disabled = true;
+        toast('Asking Jarvis…', 30000);
+        const out = await call('github-act', Object.assign({}, args, { action, target })).catch((error) => ({ ok: false, error: error.message }));
+        b.disabled = false;
+        toast(out.ok ? out.message || `${(ACTION_LABELS[action] || action).replace(/^./, (c) => c.toUpperCase())}: done.` : 'Not done: ' + out.error, 7000);
+        loadExternal(['github-work', 'actions']);
+    }
+
+    // Main's failed runs go through the action-run re-run (it re-runs a workflow's newest failed run on main); other branches through github-act.
+    async function ghRerun(b) {
+        const failing = ((ghWork().ci || {}).failing || []);
+        const run = b.dataset.ghRerun === 'main' ? null : ghRun(b.dataset.ghRerun);
+        if (run && run.branch !== 'main') return ghAct(b, 'rerun-ci', `${run.name} #${run.id}`, { run: run.id, workflow: run.name, branch: run.branch });
+        const workflows = Array.from(new Set((run ? [run] : failing.filter((r) => r.branch === 'main')).map((r) => r.name)));
+        if (!workflows.length || !confirmRun(`re-run the failed jobs of ${workflows.join(', ')} on main`)) return;
+        b.disabled = true;
+        toast('Running…', 30000);
+        const out = await call('action-run', { action: 'rerun-ci', workflows, proposal: 'gh:rerun' }).catch((error) => ({ ok: false, error: error.message }));
+        b.disabled = false;
+        toast(out.ok ? `${ACTION_LABELS['rerun-ci']}: ${out.ran ? out.ran + ' started' : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}.` : 'Not run: ' + out.error, 6000);
+        loadExternal(['github-work', 'actions']);
+    }
+
+    async function ghDiagnose(id) {
+        if (!id) return;
+        S.pending['gh-diag:' + id] = true;
+        render();
+        toast('Gemini is reading the run log…', 30000);
+        const out = await call('github-diagnose', { run: Number(id) || id }).catch((error) => ({ ok: false, error: error.message }));
+        S.pending['gh-diag:' + id] = false;
+        const run = ghRun(id);
+        if (out.ok && out.diag && run) run.diag = out.diag;
+        toast(out.ok ? 'Diagnosis: ' + ((out.diag && out.diag.cause) || 'done.') : 'Not diagnosed: ' + out.error, 7000);
+        render();
+    }
+
+    function ghPrompt(run) {
+        const d = run.diag || {};
+        return d.prompt || [`The GitHub Actions run "${run.name}" #${run.id} failed on branch ${run.branch} (${run.url}).`, d.cause ? `Diagnosis: ${d.cause}` : '', d.fix ? `Suggested fix: ${d.fix}` : '',
+            `Read the run log, find the root cause, fix it on ${run.branch}${run.pr ? ` (PR #${run.pr})` : ''}, run the affected tests and push.`].filter(Boolean).join('\n');
+    }
+
+    // A Cursor cloud agent costs money and writes code: it asks every time, showing the drafted prompt.
+    async function ghAgent(b) {
+        let body = null;
+        if (b.dataset.ghAgent) { const run = ghRun(b.dataset.ghAgent); if (run) body = { prompt: ghPrompt(run), branch: run.branch, pr: run.pr || undefined, run: run.id }; }
+        else { const p = ghPr(b.dataset.ghAgentPr); if (p) body = { prompt: `PR #${p.number} "${p.title}" (${p.url}) has merge conflicts with main. Merge main into ${p.branch}, resolve the conflicts keeping the intent of both sides, run the tests and push.`, branch: p.branch, pr: p.number }; }
+        if (!body) return;
+        const shown = body.prompt.length > 600 ? body.prompt.slice(0, 600) + '…' : body.prompt;
+        if (!window.confirm(`Jarvis: launch a Cursor cloud agent on ${body.branch || 'main'}? It opens a PR when it is done.\n\n${shown}`)) return;
+        b.disabled = true;
+        toast('Launching the agent…', 30000);
+        const out = await call('github-agent', body).catch((error) => ({ ok: false, error: error.message }));
+        b.disabled = false;
+        toast(out.ok ? `Agent launched${out.url ? ': ' + out.url : ''}.` : 'Not launched: ' + out.error, 9000);
+        if (out.ok) loadExternal(['github-work']);
+    }
+
+    async function ghReload() {
+        S.pending['github-work'] = true;
+        toast('Reading GitHub again…');
+        const out = await call('github-work', { fresh: true }).catch((error) => ({ ok: false, error: error.message }));
+        S.pending['github-work'] = false;
+        S.external['github-work'] = out;
+        compute();
+        render();
+        loadExternal(['github', 'actions']);
+    }
+
+    // The GitHub numbers Gemini sees when Carlos asks (#2526), trimmed to what answers "why is CI red" and the like.
+    function githubBrief(g) {
+        if (!g || g.ok === false) return null;
+        const ok = (x) => (x && x.ok !== false ? x : null);
+        const ci = ok(g.ci), prs = ok(g.prs), board = ok(g.board), iss = ok(g.issues);
+        return {
+            score: g.score, dora: g.dora, needs: g.needs,
+            ci: ci && { passRate: ci.passRate, runs: ci.runs, failed: ci.failed, flaky: ci.flaky, mainRed: (ci.workflows || []).filter((w) => w.mainRed).map((w) => w.name), failing: (ci.failing || []).slice(0, 8).map((r) => ({ name: r.name, branch: r.branch, attempt: r.attempt, pr: r.pr, cause: r.diag && r.diag.cause, category: r.diag && r.diag.category })) },
+            prs: prs && { open: prs.open, draft: prs.draft, mergeReady: prs.mergeReady, conflicts: prs.conflicts, behind: prs.behind, red: prs.red, stale: prs.stale, orphan: prs.orphan, leadMedH: prs.leadMedH, items: (prs.items || []).slice(0, 15).map((p) => ({ number: p.number, title: p.title, state: p.state, checks: p.checks, ageH: p.ageH, ticket: p.ticket })) },
+            board: board && { columns: (board.columns || []).map((c) => ({ name: c.name, count: c.count, ageMedD: c.ageMedD })), wip: board.wip, wipLimit: board.wipLimit, cycleMedD: board.cycleMedD, drift: (board.drift || []).slice(0, 10).map((d) => ({ number: d.number, column: d.column, should: d.should, why: d.why })), aging: (board.aging || []).slice(0, 10).map((a) => ({ number: a.number, title: a.title, column: a.column, days: a.days })) },
+            issues: iss && { open: iss.open, openBugs: iss.openBugs, bugsByArea: iss.bugsByArea, opened: iss.opened, closed: iss.closed }
+        };
+    }
+
     // --- Engagement (#1988): the scout's posts in our field, what it plans on them, and the replies waiting for you.
     const EG_NETWORK_LIMIT = { bluesky: 300, mastodon: 500, youtube: 500, x: 280, linkedin: 1200, facebook: 1000, instagram: 1000, threads: 500, tiktok: 150 };
     const EG_SHOWN = 5;
@@ -1556,6 +1947,17 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const EG_STATUS_CHIP = { planned: 'c-average', waiting: 'c-average', approved: 'c-average', done: 'c-fast', posted: 'c-fast', dry: '', capped: 'c-slow', paused: '', dismissed: '', expired: 'c-slow', missed: 'c-slow', failed: 'c-slow', replied: '' };
     const egChips = (d) => Object.entries(d.actions || {}).map(([a, x]) => `<span class="jv-chip ${EG_STATUS_CHIP[x.status] || ''}">${esc(a)}: ${esc(x.status)}</span>`).join(' ')
         + (d.skip ? ` <span class="jv-chip c-slow">left alone: ${esc(d.skip)}</span>` : d.verdict === 'trend' ? ' <span class="jv-chip">trend only</span>' : '');
+    // Report replies (#2465, #2471): invites under posts that name a site we reviewed.
+    const egIsReport = (d) => d.campaign === 'report-reply';
+    const EG_ONLY = [['all', 'All'], ['report', 'Report replies'], ['field', 'Other replies']];
+    const egKeep = (d) => S.egOnly === 'all' || (S.egOnly === 'report') === egIsReport(d);
+    const egReportChip = (d) => (egIsReport(d) ? ` <span class="jv-chip c-report" title="An invite to the free report we ran on ${esc((d.report || {}).host || 'the site')}">Report reply</span>` : '');
+    const egReportLine = (d) => {
+        const x = d.report;
+        if (!egIsReport(d) || !x) return '';
+        return `<p class="jv-prop-why">Invites to the <strong>${esc(x.name || x.host)}</strong> report (${esc(x.host)}) · scores ${fmt(x.score)}${x.shown ? '' : ' (not named in the reply)'} · found by ${esc(x.match || '?')} · ${esc(x.format || 'link')}${x.link ? ` · <a href="${esc(x.link)}" target="_blank" rel="noopener">report link ↗</a>` : ''}</p>`;
+    };
+    const egFilter = (list) => `<div class="jv-actions"><div class="jv-seg" role="group" aria-label="Which replies">${EG_ONLY.map(([k, label]) => `<button type="button" data-eg-only="${k}" class="${S.egOnly === k ? 'on' : ''}" aria-pressed="${S.egOnly === k}">${label} · ${fmt(list.filter((d) => k === 'all' || (k === 'report') === egIsReport(d)).length)}</button>`).join('')}</div></div>`;
 
     function engagementView() {
         const g = S.external.engagement;
@@ -1565,18 +1967,19 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const net = (k) => (g.networks.find((n) => n.network === k) || {}).name || k;
         const who = (d) => (d.author || {}).name || (d.author || {}).handle || '';
         const meta = (d) => [who(d), `♥ ${fmt((d.metrics || {}).likes || 0)}`, `↩ ${fmt((d.metrics || {}).replies || 0)}`, `⟳ ${fmt((d.metrics || {}).reposts || 0)}`, (d.metrics || {}).views ? `▶ ${fmt(d.metrics.views)}` : '', `score ${d.score}`, when(d.createdAt)].filter(Boolean).join(' · ');
-        const head = (d) => `<p class="jv-prop-title"><strong>${esc(egHeadline(d))}</strong> <span class="jv-chip">${esc(net(d.network))}</span>${d.topic ? ` <span class="jv-chip">${esc(d.topic)}</span>` : ''} <span class="jv-chip">${esc(d.lang || '?')}</span></p>
-            <p class="jv-prop-why">${esc(meta(d))}</p>${d.about ? `<p class="jv-prop-why">${esc(d.about)}${d.why ? ' · ' + esc(d.why) : ''}</p>` : ''}`;
+        const head = (d) => `<p class="jv-prop-title"><strong>${esc(egHeadline(d))}</strong>${egReportChip(d)} <span class="jv-chip">${esc(net(d.network))}</span>${d.topic ? ` <span class="jv-chip">${esc(d.topic)}</span>` : ''} <span class="jv-chip">${esc(d.lang || '?')}</span></p>
+            <p class="jv-prop-why">${esc(meta(d))}</p>${d.about ? `<p class="jv-prop-why">${esc(d.about)}${d.why ? ' · ' + esc(d.why) : ''}</p>` : ''}${egReportLine(d)}`;
         const draftOf = (d) => (S.egDrafts[d.key] !== undefined ? S.egDrafts[d.key] : d.actions.reply.draft);
-        const shown = S.egAll ? g.waiting : g.waiting.slice(0, EG_SHOWN);
-        const more = g.waiting.length > EG_SHOWN ? `<div class="jv-actions"><button type="button" class="jv-btn" data-eg-all="${S.egAll ? 'off' : 'on'}">${S.egAll ? 'Show fewer' : `Show all ${g.waiting.length}`}</button></div>` : '';
-        const waitingBody = g.waiting.length ? `<ol class="jv-props">${shown.map((d) => `<li class="jv-prop lv-info"><span class="jv-prop-rank">${esc(String(Math.round(d.score)))}</span><div class="jv-prop-body">${head(d)}
+        const waitingList = g.waiting.filter(egKeep);
+        const shown = S.egAll ? waitingList : waitingList.slice(0, EG_SHOWN);
+        const more = waitingList.length > EG_SHOWN ? `<div class="jv-actions"><button type="button" class="jv-btn" data-eg-all="${S.egAll ? 'off' : 'on'}">${S.egAll ? 'Show fewer' : `Show all ${waitingList.length}`}</button></div>` : '';
+        const waitingBody = egFilter(g.waiting) + (waitingList.length ? `<ol class="jv-props">${shown.map((d) => `<li class="jv-prop lv-info"><span class="jv-prop-rank">${esc(String(Math.round(d.score)))}</span><div class="jv-prop-body">${head(d)}
             ${d.chain ? `<p class="jv-prop-why">${esc(who(d))} commented on our ${d.chain.on === 'post' ? 'post' : 'reply'}${d.chain.ours ? `: “${esc(d.chain.ours)}”` : ''}</p>` : ''}
             <details><summary>${d.chain ? 'Show the comment' : 'Show the post'}</summary><pre class="jv-pre">${esc(d.text)}</pre></details>
             <textarea rows="3" class="jv-eg-draft" data-keep="eg-${esc(d.key)}" data-eg-draft="${esc(d.key)}" maxlength="${EG_NETWORK_LIMIT[d.network] || 300}" aria-label="Reply to ${esc(who(d))}">${esc(draftOf(d))}</textarea>
             <div class="jv-prop-acts"><button type="button" data-eg-decide="approve" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Approve</button><button type="button" data-eg-decide="dismiss" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Dismiss</button>${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">Open the post ↗</a>` : ''}
             <span class="jv-note">${fmt(draftOf(d).length)} / ${fmt(EG_NETWORK_LIMIT[d.network] || 300)} · expires ${esc(when(d.actions.reply.expiresAt))}</span></div></div></li>`).join('')}</ol>${more}`
-            : `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : 'No reply is waiting. Drafts arrive here and on your phone as the scout finds posts worth answering.'}</p>`;
+            : `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : g.waiting.length ? 'None of the waiting replies is of this kind.' : 'No reply is waiting. Drafts arrive here and on your phone as the scout finds posts worth answering.'}</p>`);
         const last = g.lastRun;
         const readTotal = (run) => Object.values((run && run.read) || {}).reduce((a, b) => a + b, 0);
         const statusBody = stats([
@@ -1600,11 +2003,19 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ['Last run', (n) => fmt(n.lastRead)], ['In field', (n) => fmt(n.row ? n.row.candidates : 0)],
             ['Today', (n) => (EG_NETWORK_LIMIT[n.network] ? ['like', 'repost', 'follow', 'reply'].map((a) => `${a} ${used(n.network, a)}/${(g.caps || {})[a]}`).join(' · ') : '—')],
             ['Acting', (n) => `<span class="jv-note">${esc(n.acts)}</span>`]], g.networks);
-        const postsBody = table([['Post', (d) => `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 110))}</a><br><span class="jv-note">${esc(net(d.network))} · ${esc(meta(d))}</span>${d.about ? `<br><span class="jv-note">${esc(d.about)}</span>` : ''}`],
-            ['Topic', (d) => esc(d.topic)], ['Trend', (d) => fmt(d.trend)], ['Plan', egChips]], g.posts, 'No posts from our field in this range yet.');
+        const posts = g.posts.filter(egKeep);
+        const postsBody = egFilter(g.posts) + table([['Post', (d) => `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 110))}</a>${egReportChip(d)}<br><span class="jv-note">${esc(net(d.network))} · ${esc(meta(d))}</span>${d.about ? `<br><span class="jv-note">${esc(d.about)}</span>` : ''}${d.report ? `<br><span class="jv-note">Names ${esc(d.report.host)}, scores ${fmt(d.report.score)}</span>` : ''}`],
+            ['Topic', (d) => esc(d.topic)], ['Trend', (d) => fmt(d.trend)], ['Plan', egChips]], posts, S.egOnly === 'all' ? 'No posts from our field in this range yet.' : 'No post of this kind in this range.');
         const replyChip = (r) => `<span class="jv-chip ${EG_STATUS_CHIP[r.status] || ''}">${esc(r.status)}${r.edited ? ', edited' : ''}</span>`;
-        const approvedBody = g.approved.length ? `<ul class="jv-facts">${g.approved.map((d) => `<li>${replyChip(d.actions.reply)} <strong>${esc(net(d.network))}</strong> · <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 80))}</a>${d.actions.reply.url ? ` · <a href="${esc(d.actions.reply.url)}" target="_blank" rel="noopener">Our reply ↗</a>` : ''}<br><span class="jv-note">${esc(d.actions.reply.draft)}</span>${d.actions.reply.error ? `<br><span class="jv-note">${esc(d.actions.reply.error)}</span>` : ''}</li>`).join('')}</ul>`
-            : '<p class="jv-empty">Nothing approved yet.</p>';
+        const approved = g.approved.filter(egKeep);
+        const approvedBody = egFilter(g.approved) + (approved.length ? `<ul class="jv-facts">${approved.map((d) => `<li>${replyChip(d.actions.reply)}${egReportChip(d)} <strong>${esc(net(d.network))}</strong> · <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(egHeadline(d, 80))}</a>${d.actions.reply.url ? ` · <a href="${esc(d.actions.reply.url)}" target="_blank" rel="noopener">Our reply ↗</a>` : ''}<br><span class="jv-note">${esc(d.actions.reply.draft)}</span>${d.actions.reply.error ? `<br><span class="jv-note">${esc(d.actions.reply.error)}</span>` : ''}</li>`).join('')}</ul>`
+            : `<p class="jv-empty">${g.approved.length ? 'No approved reply of this kind.' : 'Nothing approved yet.'}</p>`);
+        const iv = r.invites || { searched: 0, matched: 0, drafted: 0, approved: 0, edited: 0, dismissed: 0, posted: 0, skips: [], networks: [] };
+        const ivSteps = [{ label: 'Posts naming a reviewed site', value: iv.matched }, { label: 'Invites drafted', value: iv.drafted }, { label: 'Approved', value: iv.approved + iv.edited }, { label: 'Posted', value: iv.posted }];
+        const invitesBody = funnel(ivSteps) + stats([{ label: 'Sites looked for', value: iv.searched }, { label: 'Waiting now', value: g.waiting.filter(egIsReport).length }, { label: 'Dismissed', value: iv.dismissed }, { label: 'Edited', value: iv.edited }])
+            + bars(iv.networks.map((x) => ({ label: net(x.label), value: x.value })), { color: COLORS.amber, empty: 'No post named a reviewed site in this range.' })
+            + (iv.skips.length ? `<p class="jv-note">Left alone: ${iv.skips.map((x) => esc(x.label.replace(/_/g, ' ')) + ' ' + fmt(x.value)).join(' · ')}</p>` : '')
+            + `<div class="jv-actions"><button type="button" class="jv-btn" data-eg-only="${S.egOnly === 'report' ? 'all' : 'report'}">${S.egOnly === 'report' ? 'Show every reply' : 'Show only report replies'}</button><a class="jv-btn" href="#stats/outreach/${esc(S.range)}">Clicks, runs and payments →</a></div>`;
         const done = (t.like_done || 0) + (t.repost_done || 0) + (t.follow_done || 0);
         const dry = (t.like_dry || 0) + (t.repost_dry || 0) + (t.follow_dry || 0);
         const daily = g.daily || [];
@@ -1631,6 +2042,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${panel('engagement-networks', 'Networks', netBody, { wide: true, data: g.networks.map((n) => ({ network: n.name, reads: n.reads, lastRead: n.lastRead, error: n.error, acting: n.acts })) })}
             ${panel('engagement-daily', 'Per day', area(daily.map((d) => d.day), [{ name: 'In field', values: daily.map((d) => d.candidates), color: COLORS.cyan }, { name: 'Likes', values: daily.map((d) => d.like), color: COLORS.green }, { name: g.live ? 'Done' : 'Done (dry run)', values: daily.map((d) => (g.live ? d.done : d.dry) || 0), color: COLORS.pink }, { name: 'Replies drafted', values: daily.map((d) => d.drafted), color: COLORS.amber }, { name: 'Approved', values: daily.map((d) => d.approved), color: COLORS.violet }]), { wide: true, data: daily })}
             ${panel('engagement-posts', `Top posts in our field · ${fmt(g.posts.length)}`, postsBody, { wide: true, data: g.posts.map((d) => ({ network: d.network, url: d.url, author: who(d), title: d.title || d.text, about: d.about, topic: d.topic, lang: d.lang, score: d.score, trend: d.trend, likes: d.metrics.likes, replies: d.metrics.replies, reposts: d.metrics.reposts, verdict: d.verdict, skip: d.skip })) })}
+            ${panel('engagement-invites', 'Report replies', invitesBody, { data: Object.assign({}, iv, { steps: ivSteps }), note: 'Each scout run looks for posts that name a site from the public Live Reports and drafts an invite to its free report in the post\'s language, at most one per site every 30 days and none where the owner had our mail. They wait above with a Report reply badge; the Outreach tab shows the clicks, runs and payments per network and per post, and every Sunday a results ticket goes on the board.' })}
             ${panel('engagement-funnel', 'Reply funnel', funnel(funnelSteps) + stats([{ label: 'Dismissed', value: t.dismissed }, { label: 'Expired', value: t.expired, alert: t.drafted > 4 && t.expired / t.drafted > 0.5 }, { label: 'Edited', value: t.edited }, { label: 'Avg time to decide', value: r.avgDecideMin === null ? '—' : r.avgDecideMin + ' min' }]), { data: funnelSteps })}
             ${panel('engagement-topics', 'Topics', pie(r.topics, { unit: 'posts', empty: 'No posts in this range.' }), { data: r.topics })}
             ${panel('engagement-langs', 'Languages', pie(r.langs, { unit: 'posts', empty: 'No posts in this range.' }), { data: r.langs })}
@@ -1889,6 +2301,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             if (p.key === 'systems') { const r = C.readiness(e); main = { label: 'Readiness', value: r === null ? '—' : r + '%' }; }
             if (p.key === 'outreach' && e.outreach && e.outreach.pipeline && e.outreach.pipeline.ok) { main = vsBefore('Prospects reviewed', e.outreach.pipeline.reviews, e.outreach.pipeline.priorReviews); series = e.outreach.pipeline.daily.map((x) => x.reviews); }
             if (p.key === 'marketing') { main = { label: 'Marketing visits', value: socialVisits().reduce((n, r) => n + r.value, 0) + C.outreachVisits(S.rows.events).total }; series = e.social && e.social.ok ? e.social.daily.map((x) => x.posts) : []; }
+            if (p.key === 'github' && e['github-work'] && e['github-work'].ok !== false) { const g = e['github-work']; const pass = g.ci && g.ci.ok !== false ? g.ci.passRate : null; main = { label: 'Grade · CI pass rate', value: `${(g.score && g.score.overall && g.score.overall.grade) || '—'} · ${pass === null || pass === undefined ? '—' : pass + '%'}` }; series = (g.history || []).map((x) => x.passRate || 0); }
             if (p.key === 'business' && e.money && e.money.ok) { const d = C.delta(e.money.revenue.usd, e.money.prior.usd); main = { label: 'Revenue (USD)', value: e.money.revenue.usd, delta: d.text, dir: d.dir }; series = e.money.daily.map((x) => x.usd); }
             const alerts = S.brief.filter((b) => inTab(b, p.key) && (b.level === 'alert' || b.level === 'warn')).length;
             return `<button type="button" class="jv-tile${alerts ? ' has-alert' : ''}" data-go="${p.key}"><span class="jv-tile-name">${esc(p.name)}</span><strong>${main ? fmt(main.value) : '—'}</strong><small>${main ? esc(main.label) : ''} ${main && main.delta ? `<em class="${main.dir > 0 ? 'up' : main.dir < 0 ? 'down' : ''}">${esc(main.delta)}</em>` : ''}</small>${spark(series, alerts ? COLORS.amber : COLORS.cyan)}${tileGoal(p.key)}${alerts ? `<b class="jv-badge">${alerts}</b>` : ''}</button>`;
@@ -1956,6 +2369,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         out.business = businessView() + take();
         out.outreach = outreachView() + take();
         out.marketing = marketingView() + take();
+        out.github = githubView() + take();
         out.engagement = engagementView() + take();
 
         const ga = e.ga4;
@@ -2043,7 +2457,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             const n = S.brief.filter((b) => inTab(b, p.key) && p.key !== 'overview' && (b.level === 'alert' || b.level === 'warn')).length + waitingNotices;
             if (badge) { badge.hidden = !n; badge.textContent = n; }
             const k = $(`[data-tab-kpi="${p.key}"]`);
-            if (k) k.textContent = sum && sum.kpis ? fmt(sum.kpis[0].value) : p.key === 'systems' ? (C.readiness(S.external) === null ? '' : C.readiness(S.external) + '%') : '';
+            const gw = S.external['github-work'];
+            if (k) k.textContent = sum && sum.kpis ? fmt(sum.kpis[0].value) : p.key === 'systems' ? (C.readiness(S.external) === null ? '' : C.readiness(S.external) + '%') : p.key === 'github' ? ((gw && gw.score && gw.score.overall && gw.score.overall.grade) || '') : '';
         });
         const ready = C.readiness(S.external);
         $('#jv-ready').textContent = ready === null ? '—' : ready + '%';
@@ -2865,6 +3280,11 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.mkResend) { resendAct(t); return; }
         if (t.dataset.liSend) { liSend(t); return; }
         if (t.dataset.mkCmd) { mkCmdClick(t); return; }
+        if (t.dataset.ghRerun) { ghRerun(t); return; }
+        if (t.dataset.ghAct) { ghAct(t); return; }
+        if (t.dataset.ghDiagnose !== undefined) { ghDiagnose(t.dataset.ghDiagnose); return; }
+        if (t.dataset.ghAgent || t.dataset.ghAgentPr) { ghAgent(t); return; }
+        if (t.dataset.ghAsk) { ask(t.dataset.ghAsk); return; }
         if (t.dataset.mkRereview) { leadReview(t); return; }
         if (t.dataset.mkReply) { mkReply(t); return; }
         if (t.dataset.mkWeek) { S.mkWeek = t.dataset.mkWeek; render(); return; }
@@ -2873,6 +3293,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.egPause) { egSettings({ paused: t.dataset.egPause === 'on' }, t.dataset.egPause === 'on' ? 'pause every engagement action, draft and push' : 'resume engagement'); return; }
         if (t.dataset.egReport) { egReport(t.dataset.egReport); return; }
         if (t.dataset.egAll) { S.egAll = t.dataset.egAll === 'on'; render(); return; }
+        if (t.dataset.egOnly) { S.egOnly = t.dataset.egOnly; render(); return; }
         if (t.dataset.egLive) { egSettings({ live: t.dataset.egLive === 'on' }, t.dataset.egLive === 'on' ? 'go live: planned likes, reposts and follows go out on the connected networks, within the daily caps' : 'go back to a dry run, where planned actions are only logged'); return; }
         if (t.dataset.egConnect) { egConnect({ network: t.dataset.egConnect }); return; }
         if (t.dataset.egDisconnect) { egConnect({ network: t.dataset.egDisconnect, disconnect: true }, `disconnect ${t.dataset.egDisconnect}, so nothing goes out there`); return; }
@@ -2908,7 +3329,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             'copy-link': () => copy(link(), 'Link copied.'), 'web-share': webShare, 'copy-brief': () => copy(markdown(), 'Briefing copied.'), email: emailBriefing,
             'export-json': exportAll, 'export-csv': () => run({ type: 'export', format: 'csv' }), 'export-png': () => run({ type: 'export', format: 'png' }),
             'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief,
-            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'social', 'notices']), 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop, 'calendar-connect': calendarConnect
+            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'social', 'notices']), 'gh-reload': ghReload, 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop, 'calendar-connect': calendarConnect
         };
         if (acts[act]) acts[act]();
     });
@@ -3028,7 +3449,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     S.timers.push(setInterval(() => {
         if (!S.live || document.hidden || !visible() || !S.mounted) return;
         loadNewer();
-        if (Date.now() - S.externalAt > EXTERNAL_MS) loadExternal(['goals', 'health', 'jobs', 'github', 'uptime']);
+        if (Date.now() - S.externalAt > EXTERNAL_MS) loadExternal(['goals', 'health', 'jobs', 'github', 'github-work', 'uptime']);
     }, LIVE_MS));
 
     return {

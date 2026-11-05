@@ -1,5 +1,5 @@
 {
- "since": "2026-11-03T11:00:47.066Z",
+ "since": "2026-11-04T14:15:43.912Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -77,13 +77,30 @@
   "daniladigital.com.ar": "2026-11-03",
   "udg.mx": "2026-11-03",
   "vs:kabinedasnovinhas.com": "2026-11-03",
-  "vs:vivastreet.ie": "2026-11-03"
+  "vs:vivastreet.ie": "2026-11-03",
+  "selia.co": "2026-11-04",
+  "treinta.co": "2026-11-04",
+  "tributi.com": "2026-11-04",
+  "movinglake.com": "2026-11-04",
+  "todoscomemos.com": "2026-11-04",
+  "agendapro.com": "2026-11-04",
+  "vobi.com.br": "2026-11-04",
+  "itsrever.com": "2026-11-04",
+  "airhelp.com": "2026-11-04",
+  "ucentral.edu.co": "2026-11-04",
+  "setec.mk": "2026-11-04",
+  "y-jesus.org": "2026-11-04",
+  "unillanos.edu.co": "2026-11-04",
+  "ciqa.edu.mx": "2026-11-04",
+  "ebc.mx": "2026-11-04",
+  "ispgaya.pt": "2026-11-04",
+  "enae.es": "2026-11-04"
  },
  "recent": [
-  "seo-description-missing",
-  "sec-hsts",
-  "ax-color-contrast",
-  "a11y-alt",
-  "a11y-labels"
+  "a11y-labels",
+  "sec-cookies",
+  "ax-link-name",
+  "sec-http",
+  "a11y-alt"
  ]
 }

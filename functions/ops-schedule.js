@@ -28,6 +28,7 @@ const JOBS = [
   { job: "jarvisDailyBriefing", cron: "40 7 * * *", gap: 26, what: "Jarvis daily briefing: the last 24 hours, goals and alerts, pushed; by email only with its switch on (Admin > Statistics > Settings)" },
   { job: "jarvisWeeklyStrategy", cron: "0 19 * * 0", gap: 7 * 24 + 2, what: "Jarvis weekly strategy to the owner: four weeks side by side, the proposals and Gemini's plan for next week (Admin > Statistics > Settings)" },
   { job: "jarvisWatch", cron: "5 * * * *", gap: 2, what: "Jarvis safe actions within daily caps (clean held re-runs, failed owner notices in Ley 2300 hours, a stale hub), then the watch: mail an alert-level threshold crossing (uptime, TLS, jobs, failed runs, mail bounced or refused, a lost mail canary), once a day per issue, and one push for new outreach notices" },
+  { job: "jarvisGithub", cron: "20 * * * *", gap: 2, what: "Jarvis GitHub (#2526): today's and yesterday's GitHub day docs, 10 more days of the 90-day backfill, Gemini diagnoses of new failed main and PR runs (12 a day), and on Sunday evening the weekly GitHub retro, mailed with the weekly switch on" },
   { job: "jarvisCountdowns", cron: "*/10 * * * *", gap: 1, what: "Jarvis countdown (#1977): the risky actions Jarvis queued 2 hours ago (third-party email, posts off schedule, merges and deploys, resuming outreach) run unless cancelled; email and posts that come due at night wait for 08:00-21:00 Bogotá" },
   { job: "mailCanary", cron: "10 9 * * *", gap: 26, what: "Mail round trip: SendGrid mails canary@carlosandmunoz.com, ImprovMX forwards it to the mailInbound webhook, and Jarvis alerts when it has not come back in 30 minutes (#1900)" },
   { job: "tiktokBusinessWatch", cron: "25 * * * *", gap: 2, what: "Until TikTok answers the Business application (#1889): read the qa@ mail for TikTok's decision and tell Carlos once, by push, mail and a comment on #1888" },
@@ -35,7 +36,7 @@ const JOBS = [
   { job: "jarvisEveningDigest", cron: "0 20 * * *", gap: 26, what: "Jarvis evening digest: what Jarvis pushed in the last 24 hours, what still waits for a decision and what ran, in place of the emails that moved to pushes (skipped on an empty day)" },
   { job: "engagementScout", cron: "*/30 * * * *", gap: 2, what: "Social engagement scout (#1988): read our field's posts on Mastodon, Bluesky, YouTube, Hacker News, DEV and Lobsters, score them, plan likes, reposts and follows within the daily caps, and push reply drafts for approval (Jarvis > Engagement)" },
   { job: "engagementDailyReport", cron: "30 20 * * *", gap: 26, what: "Social engagement daily report: posts read, actions planned, the reply funnel, topics and top posts, by mail and push" },
-  { job: "engagementWeeklyReport", cron: "40 20 * * 0", gap: 7 * 24 + 2, what: "Social engagement weekly report, against the week before" },
+  { job: "engagementWeeklyReport", cron: "40 20 * * 0", gap: 7 * 24 + 2, what: "Social engagement weekly report, against the week before, and the report replies' results ticket on the board (#2471)" },
   { job: "engagementMonthlyReport", cron: "10 8 1 * *", gap: 31 * 24 + 2, what: "Social engagement monthly report for the month before, against the one before it" },
   { job: "emailMonthlySiteReport", cron: "45 7 1 * *", gap: 31 * 24 + 2, what: "Monthly site report" },
   { job: "emailMonthlyReviewReport", cron: "50 7 1 * *", gap: 31 * 24 + 2, what: "Monthly URL review report" },
@@ -49,9 +50,10 @@ const JOBS = [
   { job: "dispatchFacebookQueue", cron: "7 11 * * *", gap: 26, what: "Start the Facebook queue workflow (GitHub fires its own slot hours late)" },
   // GitHub Actions crons are UTC, as written in .github/workflows (06:41, 11:07, 08:23, 04:00, 05:00 and 01:00 Bogotá). GitHub
   // starts them hours late, so nothing that must happen at a set time hangs on them.
-  { job: "auto-live-reports.yml", host: "github", cron: "41 11 * * *", gap: 26, what: "Publish yesterday's reviews as Live Reports and social posts (backup slots)" },
+  { job: "auto-live-reports.yml", host: "github", cron: "41 11 * * *", gap: 26, what: "Publish yesterday's reviews as Live Reports and social posts, and post the batch to the Telegram channel @qalab_live (backup slots)" },
   { job: "pagespeed-daily.yml", host: "github", cron: "0 6 * * *", gap: 30, what: "PageSpeed on every sitemap page, mobile and desktop; safe fixes and Gemini's fixes for pages under 90 go to PRs (Jarvis merges the safe ones that score up on a 2 h countdown, the rest wait in Proposals) (#1978)" },
   { job: "open-social.yml", host: "github", cron: "13,43 * * * *", gap: 6, what: "Post the slots that have come to Bluesky and Mastodon" },
+  { job: "reddit-live.yml", host: "github", cron: "50 15 * * *", gap: 26, what: "Upload the Reddit app with the day's Live Reports (after each batch; this slot is the backup); the app posts and pins the batch in r/QALabLiveReports at 16:20 UTC" },
   { job: "facebook-page.yml", host: "github", cron: "7 16 * * *", gap: 24, what: "Schedule the Facebook queue (started by dispatchFacebookQueue; this slot is the backup)" },
   { job: "field-sweep.yml", host: "github", cron: "23 13 * * *", gap: 50, what: "Propose standout items from the field for the social hub (the owner approves them in admin)" },
   { job: "sweep-roundup.yml", host: "github", cron: "29 14 * * 1", gap: 8 * 24, what: "Draft the weekly neutral sweep round-up post (the owner approves it in Jarvis or admin)" },

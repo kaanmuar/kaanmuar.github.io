@@ -148,6 +148,28 @@ test("marketing sync (#1730): the Mac applies approvals, LinkedIn, do-not-contac
   assert.equal(run("replied", { id: REPLY, at: "x" }).status, "done");
 });
 
+test("marketing sync (#2470): an upload holds back sites answered with a report reply in the last 30 days, then lets them go", () => {
+  const { dir, state } = folder();
+  const file = path.join(dir, "prospects", "week1-leads.csv");
+  const text = "campaign,email,org,host,cc,missing,approved,uploaded\r\nW1 B-es Americas,a@x.edu,A,www.a.edu,co,,yes,\r\nW1 B-es Americas,d@x.edu,D,d.edu,co,,yes,\r\nW1 B-es Americas,b@x.edu,B,b.edu,co,report,yes,\r\n";
+  fs.writeFileSync(file, text);
+  const seen = [];
+  const tool = (d, args) => {
+    seen.push([args, sync.parseCsv(fs.readFileSync(file, "utf8")).rows.map((r) => r.missing)]);
+    return "uploaded d@x.edu to W1 B-es Americas 1\n";
+  };
+  const run = (ctx) => sync.runCommand({ action: "upload", args: { week: "W1" } }, dir, state, NOW, Object.assign({ tool }, ctx));
+  const answered = new Map([["a.edu", "2026-10-20T10:00:00Z"], ["b.edu", "2026-10-21T10:00:00Z"]]);
+  assert.equal(run({ answered }).result, "1 uploaded to Instantly, 1 held for a report reply in the last 30 days");
+  assert.deepEqual(seen, [[["leads", "--upload", "--week", "W1"], ["held: report reply in the last 30 days", "", "report"]]]);
+  assert.equal(fs.readFileSync(file, "utf8"), text);
+  assert.equal(run({ answered: new Map() }).result, "1 uploaded to Instantly");
+  assert.deepEqual(run({ answered: null }), { status: "failed", result: "The report replies could not be read, so nothing was uploaded.", doneAt: new Date(NOW).toISOString() });
+  assert.equal(seen.length, 2);
+  assert.equal(run({ answered, tool: () => { throw new Error("Instantly is down"); } }).result, "Instantly is down");
+  assert.equal(fs.readFileSync(file, "utf8"), text);
+});
+
 test("the sync writes each working day's LinkedIn list once, from 07:00, never at weekends", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mk-li-"));
   fs.mkdirSync(path.join(dir, "linkedin"));
@@ -227,4 +249,21 @@ test("marketing sync (#2479): the LinkedIn note survives a Check first line abov
   const [p] = sync.linkedin(dir).items;
   assert.equal(p.lines.length, 6);
   assert.equal(p.lines[4], "Note: Hi Miles, we reviewed theo.site. Happy to send it.");
+});
+
+test("marketing sync (#2519): when the Action's commit fails, the folder edits it applied are queued again", async () => {
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "applied-")), "applied.txt");
+  const cmd = (id, action) => ({ action, ref: { id } });
+  sync.noteApplied(file, cmd("a", "lead-set"), { status: "done" });
+  sync.noteApplied(file, cmd("b", "replied"), { status: "done" });
+  sync.noteApplied(file, cmd("c", "lead-drop"), { status: "failed" });
+  sync.noteApplied(file, cmd("d", "run"), { status: "done" });
+  sync.noteApplied("", cmd("e", "approve"), { status: "done" });
+  sync.noteApplied(file, cmd("a", "lead-set"), { status: "done" });
+  assert.equal(fs.readFileSync(file, "utf8"), "a\nb\na\n");
+  const updates = [];
+  const db = { collection: (name) => ({ doc: (id) => ({ update: async (u) => { updates.push([name, id, u.status, u.doneAt]); } }) }) };
+  assert.equal(await sync.requeue(db, file), 2);
+  assert.deepEqual(updates, [["jarvis_commands", "a", "pending", ""], ["jarvis_commands", "b", "pending", ""]]);
+  assert.equal(await sync.requeue(db, file + ".missing"), 0);
 });

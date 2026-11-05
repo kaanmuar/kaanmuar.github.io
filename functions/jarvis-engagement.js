@@ -6,11 +6,12 @@
  *   engagement_daily/<YYYY-MM-DD>      counters per Bogotá day (read, candidates, actions, the reply funnel, topics)
  *   engagement_runs/<ISO>              one per scout run
  *   engagement_reports/<period>-<day>  the daily, weekly and monthly reports as sent
+ *   engagement_issues/<day>            the weekly report-reply results ticket opened for the week ending that day (#2471)
  *   jarvis_settings/engagement         pause, live (or a dry run), caps, thresholds, competitors, own handles
  *   engagement_private/*               the accounts the poster acts as (functions/engagement-act.js)
  *
  * deps: { db, fetch, env, now, inc (n => FieldValue.increment(n)), push (msg => Promise), mail (msg => Promise),
- *         keys ({ clientId, secret }: the Google OAuth client YouTube refreshes through) }
+ *         keys ({ clientId, secret }: the Google OAuth client YouTube refreshes through), openIssue (resultsTicket only) }
  */
 const E = require("./engagement");
 const Sources = require("./engagement-sources");
@@ -223,15 +224,9 @@ async function liveTargets(deps) {
   return liveCache.list;
 }
 
-/** Hosts answered with a report reply in the gap (waiting, approved or out), checked 30 at a time. */
+/** Hosts answered with a report reply in the gap (waiting, approved or out), or already replied to in that conversation. */
 async function repliedSites(db, hosts, now) {
-  const since = new Date(now - R.SITE_GAP).toISOString();
-  const out = new Set();
-  for (let i = 0; i < hosts.length; i += 30) {
-    const snap = await db.collection("engagement_posts").where("report.host", "in", hosts.slice(i, i + 30)).limit(300).get();
-    snap.docs.map((d) => d.data()).filter((d) => d.seenAt >= since && ["waiting", "approved", "posted", "replied"].includes(((d.actions || {}).reply || {}).status)).forEach((d) => out.add(d.report.host));
-  }
-  return out;
+  return new Set((await R.answeredHosts(db, hosts, now, R.ANSWERED.concat("replied"))).keys());
 }
 
 /** Hosts whose owner had our mail in the gap: owner notices, and leads uploaded to the cold-email campaigns. */
@@ -260,32 +255,67 @@ async function shortLink(fetchImpl, link) {
 }
 
 /**
- * Report replies (#2465): this slot's Live Reports are looked for on the networks, and each post that names one is
- * read by Gemini, decided (functions/engagement-reports.js), stored with campaign "report-reply", counted under
- * engagement_daily report, and its invite pushed to Carlos.
+ * This slot's sites to look for, skipping those answered or emailed in the gap: { sites, recent, contacted }. again:
+ * sites whose score a re-run moved (rerunPass), looked for first and past the gap, unless their owner had our mail.
  */
-async function reportPass(deps, conf, creds) {
-  const { db, now, env, inc } = deps;
+async function reportSites(deps, again) {
+  const { db, now } = deps;
+  const all = await liveTargets(deps);
+  const first = again || [];
+  const ahead = R.pick(all, Math.floor(now / Sources.SLOT), null, R.PER_RUN * 3).filter((t) => !first.some((a) => a.host === t.host));
+  const hosts = first.concat(ahead).map((t) => t.host);
+  const [recent, contacted] = await Promise.all([repliedSites(db, hosts, now), contactedSites(db, hosts, now)]);
+  first.forEach((t) => recent.delete(t.host));
+  return { sites: first.filter((t) => !contacted.has(t.host)).concat(R.pick(ahead, 0, new Set([...recent, ...contacted.keys()]), R.PER_RUN)), recent, contacted };
+}
+
+/**
+ * Report replies (#2465): this slot's Live Reports are looked for on the networks, and each post that names one, or
+ * fits its niche or a problem its report found (#2468), is read by Gemini, decided (functions/engagement-reports.js), stored with campaign "report-reply", counted under
+ * engagement_daily report, and its invite pushed to Carlos. again: as reportSites.
+ */
+async function reportPass(deps, conf, creds, again) {
+  const { now, env } = deps;
   const out = { searched: 0, read: 0, matched: 0, drafted: 0, pushed: 0, aiError: "", errors: {} };
   if (conf.paused) return out;
-  const all = await liveTargets(deps);
-  const slot = Math.floor(now / Sources.SLOT);
-  const ahead = R.pick(all, slot, null, R.PER_RUN * 3);
-  const hosts = ahead.map((t) => t.host);
-  const [recent, contacted] = await Promise.all([repliedSites(db, hosts, now), contactedSites(db, hosts, now)]);
-  const sites = R.pick(ahead, 0, new Set([...recent, ...contacted.keys()]), R.PER_RUN);
-  out.searched = sites.length;
-  if (!sites.length) return out;
+  const look = await reportSites(deps, again);
+  out.searched = look.sites.length;
+  if (!look.sites.length) return out;
   const m = creds && creds.mastodon;
-  const found = await Sources.search({ fetch: deps.fetch, now, env: Object.assign({}, withAccounts(env, creds), m && m.token ? { MASTODON_SEARCH_URL: m.base, MASTODON_SEARCH_TOKEN: m.token } : {}) }, sites.flatMap(R.queries));
+  const loose = R.looseQueries(look.sites);
+  const found = await Sources.search({ fetch: deps.fetch, now, env: Object.assign({}, withAccounts(env, creds), m && m.token ? { MASTODON_SEARCH_URL: m.base, MASTODON_SEARCH_TOKEN: m.token } : {}) }, look.sites.flatMap(R.queries).concat(loose.map((l) => l.q)));
   out.errors = found.errors;
   out.read = Object.values(found.read).reduce((a, b) => a + b, 0);
+  return Object.assign(out, await takeReports(deps, conf, Object.assign({ searched: look.sites.length, loose }, look), found));
+}
 
+/**
+ * The Mac's posts for site queries (#2467, functions/engagement-mac.js): the Live Reports those queries name, with the
+ * sites answered or emailed in the gap held back by R.decide, then the report pass's read, decide and store.
+ * read: posts read per network. searched stays 0, since the cloud's pass counts this slot's sites.
+ */
+async function macReports(deps, conf, posts, read) {
+  const out = { matched: 0, drafted: 0, pushed: 0, aiError: "" };
+  if (conf.paused || !posts.length) return out;
+  const want = new Set(posts.map((p) => String(p.query || "").toLowerCase()).filter(Boolean));
+  const sites = (await liveTargets(deps)).filter((t) => R.queries(t).some((q) => want.has(q.toLowerCase()))).slice(0, R.PER_RUN * 3);
+  if (!sites.length) return out;
+  const hosts = sites.map((t) => t.host);
+  const [recent, contacted] = await Promise.all([repliedSites(deps.db, hosts, deps.now), contactedSites(deps.db, hosts, deps.now)]);
+  return Object.assign(out, await takeReports(deps, conf, { sites, recent, contacted, searched: 0 }, { posts, read: read || {}, errors: {} }));
+}
+
+/** Posts found for sites (found: { posts, read, errors }), the sites' look ({ sites, loose, recent, contacted, searched }) into report-reply posts. */
+async function takeReports(deps, conf, look, found) {
+  const { db, now, env, inc } = deps;
+  const { sites, recent, contacted } = look;
+  const loose = look.loose || [];
+  const out = { matched: 0, drafted: 0, pushed: 0, aiError: "" };
   const byKey = new Map();
   found.posts.forEach((p) => {
-    const hit = R.siteOf(p, sites);
+    const hit = R.siteOf(p, sites) || R.looseOf(p, loose);
     const key = E.keyOf(p.network, p.id);
-    if (hit && !byKey.has(key)) byKey.set(key, Object.assign({ key, target: hit.target, match: hit.match }, p, E.score(p, now)));
+    if (hit && !byKey.has(key)) byKey.set(key, Object.assign({ key, target: hit.target, match: hit.match, problem: hit.problem || "" }, p, E.score(p, now)));
   });
   const posts = Array.from(byKey.values());
   const known = posts.length ? await db.getAll(...posts.map((p) => db.collection("engagement_posts").doc(p.key))) : [];
@@ -318,10 +348,67 @@ async function reportPass(deps, conf, creds) {
   const counters = E.rollup(found.read, docs, { errors: Object.keys(found.errors).length });
   delete counters.runs;
   delete counters.runErrors;
-  await dailyRef.set(Object.assign({ day }, increments(Object.assign(counters, { report: R.rollup(sites.length, docs) }), inc)), { merge: true });
+  await dailyRef.set(Object.assign({ day }, increments(Object.assign(counters, { report: R.rollup(look.searched, docs) }), inc)), { merge: true });
   const waiting = docs.filter((d) => (d.actions.reply || {}).status === "waiting");
   Object.assign(out, { matched: docs.length, drafted: waiting.length });
   if (deps.push) for (const d of waiting.slice(0, PUSH_PER_RUN)) { await deps.push(E.replyPush(d)).catch(() => null); out.pushed += 1; }
+  return out;
+}
+
+/**
+ * Re-runs (#2469): posted report replies whose site's Live Report score moved since get a follow-up with the new card
+ * under our reply, waiting for Carlos, within the daily reply caps and R.RERUN_PER_RUN. Sites with no reply to go back
+ * under come back as again, for reportPass to look for new posts once. Sites whose owner had our mail wait.
+ */
+async function rerunPass(deps, conf) {
+  const { db, now, inc } = deps;
+  const out = { changed: 0, drafted: 0, pushed: 0, again: [] };
+  if (conf.paused) return out;
+  const all = await liveTargets(deps);
+  const snap = await db.collection("engagement_posts").where("actions.reply.status", "==", "posted").limit(2000).get();
+  const moved = R.reruns(snap.docs.map((d) => ({ key: d.id, doc: d.data() })), all, now);
+  out.changed = moved.length;
+  if (!moved.length) return out;
+  const contacted = await contactedSites(db, [...new Set(moved.map((x) => x.target.host))], now);
+  const day = E.bogotaDay(now);
+  const dailyRef = db.collection("engagement_daily").doc(day);
+  const dailySnap = await dailyRef.get();
+  const used = usedToday(dailySnap.exists ? dailySnap.data() : null);
+  const at = new Date(now).toISOString();
+  const open = moved.filter((m) => !contacted.has(m.target.host));
+  const docs = [];
+  const marks = [];
+  const drafted = new Set();
+  for (const x of open.filter((m) => m.back)) {
+    const net = E.NETWORKS[x.doc.network] || {};
+    const n = ((used[x.doc.network] || {}).reply) || 0;
+    const own = (net.caps || {}).reply;
+    if (docs.length >= R.RERUN_PER_RUN || n >= Math.min(conf.caps.reply, own === undefined ? Infinity : own)) continue;
+    used[x.doc.network] = Object.assign({}, used[x.doc.network], { reply: n + 1 });
+    const r = x.doc.actions.reply;
+    const lang = E.LANGS.includes(r.lang || x.doc.lang) ? r.lang || x.doc.lang : "en";
+    const key = E.keyOf(x.doc.network, "rerun:" + x.key + ":" + x.target.score);
+    const link = await shortLink(deps.fetch, R.linkFor(x.target, x.doc.network, lang, key));
+    docs.push(Object.assign({ key }, R.rerunDoc(x, x.target, x.was, R.rerunText(x.target, x.was, lang, link, x.doc.network), lang, link, now)));
+    marks.push({ key: x.key, rerun: { score: x.target.score, key, at } });
+    drafted.add(x.target.host);
+  }
+  const backHosts = new Set(open.filter((m) => m.back).map((m) => m.target.host));
+  const seen = new Set();
+  out.again = open.filter((x) => !backHosts.has(x.target.host) && !seen.has(x.target.host) && seen.add(x.target.host)).map((x) => x.target).slice(0, R.RERUN_PER_RUN);
+  const searched = new Set(out.again.map((t) => t.host));
+  open.filter((x) => !x.back && (drafted.has(x.target.host) || searched.has(x.target.host))).forEach((x) => marks.push({ key: x.key, rerun: { score: x.target.score, key: "", at } }));
+  if (!docs.length && !marks.length) return out;
+  const batch = db.batch();
+  docs.forEach((d) => batch.set(db.collection("engagement_posts").doc(d.key), d));
+  marks.forEach((m) => batch.update(db.collection("engagement_posts").doc(m.key), { "report.rerun": m.rerun, updatedAt: at }));
+  await batch.commit();
+  out.drafted = docs.length;
+  if (docs.length) {
+    const { n } = E.rollup({}, [], {}, docs);
+    await dailyRef.set(Object.assign({ day }, increments({ n, report: { drafted: docs.length, reruns: docs.length } }, inc)), { merge: true });
+  }
+  if (deps.push) for (const d of docs.slice(0, PUSH_PER_RUN)) { await deps.push(E.replyPush(d)).catch(() => null); out.pushed += 1; }
   return out;
 }
 
@@ -334,8 +421,10 @@ async function scout(deps) {
   const creds = await Act.readCreds(db).catch(() => ({}));
   const read = await Sources.readAll({ fetch: deps.fetch, env: withAccounts(env, creds), now });
   const took = await takeIn(deps, conf, read.posts, read.read, read.errors);
+  let reruns;
+  try { reruns = await rerunPass(deps, conf); } catch (error) { reruns = { changed: 0, drafted: 0, pushed: 0, again: [], error: String(error.message || error).slice(0, 200) }; }
   let reports;
-  try { reports = await reportPass(deps, conf, creds); } catch (error) { reports = { searched: 0, matched: 0, drafted: 0, pushed: 0, aiError: "", errors: {}, error: String(error.message || error).slice(0, 200) }; }
+  try { reports = await reportPass(deps, conf, creds, reruns.again); } catch (error) { reports = { searched: 0, matched: 0, drafted: 0, pushed: 0, aiError: "", errors: {}, error: String(error.message || error).slice(0, 200) }; }
 
   let acted = {};
   let actError = "";
@@ -350,6 +439,7 @@ async function scout(deps) {
     engaged: took.engaged, drafted: took.drafted, pushed: took.pushed, expired,
     done: sum("done"), dry: sum("dry"), missed: sum("missed"), posted: sum("posted"), already: sum("already"), actFailed: sum("failed"), acted, actError,
     reports: { searched: reports.searched, read: reports.read || 0, matched: reports.matched, drafted: reports.drafted, pushed: reports.pushed, aiError: reports.aiError, errors: reports.errors, error: reports.error || "" },
+    reruns: { changed: reruns.changed, drafted: reruns.drafted, pushed: reruns.pushed, again: reruns.again.map((t) => t.host), error: reruns.error || "" },
     chains: { checked: chains.checked || 0, chained: chains.chained, liked: chains.liked, drafted: chains.drafted, pushed: chains.pushed, aiError: chains.aiError, errors: chains.errors }
   };
   await db.collection("engagement_runs").doc(run.at).set(run);
@@ -361,12 +451,17 @@ const actNote = (r) => {
   const errs = Object.entries(r.acted || {}).filter(([, x]) => x.error).map(([k, x]) => k + ": " + x.error);
   return (r.done || r.posted ? "; done " + (r.done || 0) + ", replies posted " + (r.posted || 0) : "") + (r.dry ? "; dry run " + r.dry : "")
     + (r.actFailed ? "; " + r.actFailed + " actions failed" : "") + (errs.length ? "; poster: " + errs.join("; ") : "") + (r.actError ? "; poster: " + r.actError : "")
-    + (r.already ? "; " + r.already + " replies not sent, we had already answered" : "") + reportNote(r.reports) + chainNote(r.chains);
+    + (r.already ? "; " + r.already + " replies not sent, we had already answered" : "") + reportNote(r.reports) + rerunNote(r.reruns, r.reports) + chainNote(r.chains);
+};
+const rerunNote = (x, reports) => {
+  if (!x) return "";
+  return (x.drafted ? "; " + x.drafted + " follow-ups with a re-run's new score drafted" : "") + ((x.again || []).length ? "; looked again for posts on " + x.again.join(", ") : "")
+    + (x.error && x.error !== (reports || {}).error ? "; re-runs: " + x.error : "");
 };
 const reportNote = (x) => {
   if (!x) return "";
   const errs = Object.entries(x.errors || {}).map(([k, v]) => k + ": " + v).concat(x.error ? [x.error] : []).concat(x.aiError ? ["Gemini: " + x.aiError] : []);
-  return (x.searched ? "; report replies: " + x.searched + " sites looked for, " + x.matched + " posts name them, " + x.drafted + " invites drafted" : "") + (errs.length ? "; report replies: " + errs.join("; ") : "");
+  return (x.searched ? "; report replies: " + x.searched + " sites looked for, " + x.matched + " posts about them or their niche, " + x.drafted + " invites drafted" : "") + (errs.length ? "; report replies: " + errs.join("; ") : "");
 };
 const chainNote = (c) => {
   if (!c) return "";
@@ -435,6 +530,33 @@ async function sendReport(deps, period) {
   const sent = deps.mail ? await deps.mail(mail) : false;
   if (deps.push) await deps.push(E.reportPush(r)).catch(() => null);
   return { period, from: r.from, to: r.to, sent: sent !== false, subject: mail.subject };
+}
+
+/**
+ * The weekly results ticket for the report replies (#2471), once per week: deps.openIssue({ title, body, labels, parent })
+ * files it on the board and answers { number, html_url }; deps.social reads the link results (jarvis-outreach socialResults).
+ */
+async function resultsTicket(deps) {
+  const { db, now } = deps;
+  const r = await buildReport(db, "weekly", now);
+  const social = await (deps.social || require("./jarvis-outreach").socialResults)({ db, now, days: 7 });
+  const issue = R.resultsIssue(r, social);
+  if (!issue) return { opened: false, note: "no report reply and no click on one from " + r.from + " to " + r.to };
+  const ref = db.collection("engagement_issues").doc(r.to);
+  try {
+    await ref.create({ at: new Date(now).toISOString(), from: r.from, to: r.to, title: issue.title, issue: null });
+  } catch (error) {
+    if (error.code === 6) return { opened: false, note: "the ticket for the week to " + r.to + " is already open" };
+    throw error;
+  }
+  try {
+    const out = await deps.openIssue(issue);
+    await ref.update({ issue: out.number, url: out.html_url });
+    return { opened: true, number: out.number, url: out.html_url, note: "opened #" + out.number };
+  } catch (error) {
+    await ref.delete().catch(() => null);
+    throw error;
+  }
 }
 
 /** Approve, edit or dismiss a waiting reply. */
@@ -580,4 +702,4 @@ async function source(ctx) {
   };
 }
 
-module.exports = { scout, takeIn, reportPass, shortLink, followChains, takeChains, runNote, sendReport, buildReport, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
+module.exports = { scout, takeIn, reportSites, reportPass, rerunPass, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, resultsTicket, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };

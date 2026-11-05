@@ -15,12 +15,15 @@
  * retried on the next runs, MAX_TRIES in all. A pause stops all of it.
  *
  * Before a reply goes out, the network is asked whether our account already answered that post (#2421); if it did,
- * the reply turns "replied" with a link to ours and is not sent. pendingChains reads the comments under the replies
+ * the reply turns "replied" with a link to ours and is not sent. A report reply (#2465) carries its mini report card
+ * (report-card.js, #2466); when the card cannot be drawn or uploaded, the reply goes as text with its link and
+ * actions.reply.card says "text", with cardError saying why. pendingChains reads the comments under the replies
  * we posted in the last CHAIN_DAYS, each reply at most once per CHAIN_EVERY, for jarvis-engagement to like and answer.
  */
 const crypto = require("crypto");
 const E = require("./engagement");
 const Sources = require("./engagement-sources");
+const Card = require("./report-card");
 
 const HOUR = 3600000;
 const CHAIN_DAYS = 7;
@@ -30,6 +33,8 @@ const ACT_WINDOW = 6 * HOUR;
 const PER_RUN = 20;
 const GAP = 1500;
 const MAX_TRIES = 3;
+const MEDIA_POLLS = 5;
+const MEDIA_POLL_MS = 1000;
 const STATE_MS = 10 * 60 * 1000;
 const TIMEOUT = 20000;
 const CARRIED = ["like", "repost", "follow"];
@@ -55,6 +60,8 @@ async function call(fetchImpl, url, opts) {
   let body;
   if (o.json) { headers["Content-Type"] = "application/json"; body = JSON.stringify(o.json); }
   else if (o.form) { headers["Content-Type"] = "application/x-www-form-urlencoded"; body = new URLSearchParams(o.form).toString(); }
+  else if (o.raw) { headers["Content-Type"] = o.type; body = o.raw; }
+  else if (o.multipart) body = o.multipart;
   const res = await fetchImpl(url, { method: o.method || (body ? "POST" : "GET"), headers, body, signal: AbortSignal.timeout(TIMEOUT) });
   const text = res.text ? await res.text().catch(() => "") : JSON.stringify(await res.json().catch(() => ({})));
   let data = {};
@@ -68,7 +75,20 @@ async function call(fetchImpl, url, opts) {
   return data;
 }
 
+/** Bluesky shows a link as plain text unless a facet marks its bytes. */
+function linkFacets(text) {
+  const out = [];
+  for (const m of String(text).matchAll(/https?:\/\/[^\s]+/g)) {
+    const uri = m[0].replace(/[.,;:!?)\]"'»”]+$/, "");
+    const start = Buffer.byteLength(text.slice(0, m.index));
+    out.push({ index: { byteStart: start, byteEnd: start + Buffer.byteLength(uri) }, features: [{ $type: "app.bsky.richtext.facet#link", uri }] });
+  }
+  return out.length ? out : undefined;
+}
+
 // --- The three clients: like, repost, follow and reply on one post document ------------------------------------
+// reply(d, text, lang, card) attaches card ({ png, type, alt, width, height }, report-card.js) when the network takes
+// it; an upload that fails leaves the reply as text and says why in cardError.
 
 async function blueskyClient(cred, f, now) {
   const service = String(cred.service || "https://bsky.social").replace(/\/+$/, "");
@@ -119,12 +139,21 @@ async function blueskyClient(cred, f, now) {
       if (!(d.author || {}).id) throw new ActError("The post has no author DID.");
       return { uri: (await create("app.bsky.graph.follow", { subject: d.author.id })).uri };
     },
-    reply: async (d, text, lang) => {
+    reply: async (d, text, lang, card) => {
       const p = await post(d);
       const parent = { uri: p.uri, cid: p.cid };
       const root = ((p.record || {}).reply || {}).root || parent;
-      const out = await create("app.bsky.feed.post", { text, langs: lang ? [lang] : undefined, reply: { root, parent } });
-      return { id: out.uri, uri: out.uri, url: link(out.uri) };
+      let embed;
+      let cardError = "";
+      if (card) {
+        try {
+          const up = await call(f, service + "/xrpc/com.atproto.repo.uploadBlob", { headers: auth, raw: card.png, type: card.type });
+          if (!up.blob) throw new Error("Bluesky kept no image.");
+          embed = { $type: "app.bsky.embed.images", images: [{ alt: card.alt, image: up.blob, aspectRatio: { width: card.width, height: card.height } }] };
+        } catch (error) { cardError = error.message; }
+      }
+      const out = await create("app.bsky.feed.post", { text, facets: linkFacets(text), langs: lang ? [lang] : undefined, reply: { root, parent }, embed });
+      return { id: out.uri, uri: out.uri, url: link(out.uri), card: embed ? "attached" : "", cardError };
     }
   };
 }
@@ -174,12 +203,31 @@ async function mastodonClient(cred, f) {
     like: on("/favourite"),
     repost: on("/reblog"),
     follow: async (d) => { const st = await status(d); await call(f, base + "/api/v1/accounts/" + st.account.id + "/follow", { method: "POST", headers: auth }); return {}; },
-    reply: async (d, text, lang) => {
+    reply: async (d, text, lang, card) => {
       const st = await status(d);
-      const mention = "@" + st.account.acct;
-      const body = text.toLowerCase().includes(mention.toLowerCase()) ? text : mention + " " + text;
-      const out = await call(f, base + "/api/v1/statuses", { headers: Object.assign({ "Idempotency-Key": "engage-" + d.key }, auth), json: { status: body, in_reply_to_id: st.id, language: lang || undefined, visibility: "public" } });
-      return { id: String(out.id || ""), uri: out.uri || "", url: out.url || "" };
+      // Under our own reply (a re-run's follow-up, #2469) the person to name is the one we answered.
+      const to = ours(st) ? String((d.author || {}).handle || "").replace(/^@/, "") : st.account.acct;
+      const mention = to ? "@" + to : "";
+      const body = !mention || text.toLowerCase().includes(mention.toLowerCase()) ? text : mention + " " + text;
+      let media;
+      let cardError = "";
+      if (card) {
+        try {
+          const form = new FormData();
+          form.append("file", new Blob([card.png], { type: card.type }), "report-card.png");
+          form.append("description", card.alt);
+          let m = await call(f, base + "/api/v2/media", { headers: auth, multipart: form });
+          // A status naming media still being processed is refused, so wait for its url.
+          for (let i = 0; m.id && !m.url && i < MEDIA_POLLS; i += 1) {
+            if (i) await new Promise((r) => setTimeout(r, MEDIA_POLL_MS));
+            m = await call(f, base + "/api/v1/media/" + m.id, { headers: auth });
+          }
+          if (!m.id || !m.url) throw new Error(base.replace(/^https:\/\//, "") + " did not finish the image.");
+          media = [String(m.id)];
+        } catch (error) { cardError = error.message; }
+      }
+      const out = await call(f, base + "/api/v1/statuses", { headers: Object.assign({ "Idempotency-Key": "engage-" + d.key }, auth), json: { status: body, in_reply_to_id: st.id, language: lang || undefined, visibility: "public", media_ids: media } });
+      return { id: String(out.id || ""), uri: out.uri || "", url: out.url || "", card: media ? "attached" : "", cardError };
     }
   };
 }
@@ -388,6 +436,19 @@ async function noteError(db, network, message, now) {
   await privateRef(db, network).set({ error: clip(message, 200), errorAt: new Date(now).toISOString() }, { merge: true }).catch(() => null);
 }
 
+/** The mini report card for a report reply on a network that takes one: { card } or { error }; {} for other replies. */
+async function drawCard(deps, doc) {
+  if (!Card.wants(doc)) return {};
+  try { return { card: await (deps.card || Card.render)(doc) }; }
+  catch (error) { return { error: "The card was not drawn: " + error.message }; }
+}
+
+/** What a posted report reply records of its card: attached, or text with why. */
+function cardFields(doc, attached, error) {
+  if (!Card.wants(doc)) return {};
+  return { "actions.reply.card": attached ? "attached" : "text", "actions.reply.cardError": attached ? "" : clip(error || "The card did not go with it.", 200) };
+}
+
 /** One approved reply out, unless our account already answered there. Returns { status, url, error }. */
 async function sendReply(deps, c, task) {
   const r = task.doc.actions.reply;
@@ -401,8 +462,10 @@ async function sendReply(deps, c, task) {
       await count(deps, task.doc.network, "already");
       return { status: "replied", url: had.url || "" };
     }
-    const out = await c.reply(d, r.draft, r.lang || task.doc.lang);
-    await task.ref.update({ "actions.reply.status": "posted", "actions.reply.postedAt": at, "actions.reply.url": out.url || "", "actions.reply.uri": out.uri || "", "actions.reply.id": out.id || "", "actions.reply.tries": tries, "actions.reply.error": "", updatedAt: at });
+    const card = await drawCard(deps, task.doc);
+    const out = await c.reply(d, r.draft, r.lang || task.doc.lang, card.card);
+    await task.ref.update(Object.assign({ "actions.reply.status": "posted", "actions.reply.postedAt": at, "actions.reply.url": out.url || "", "actions.reply.uri": out.uri || "", "actions.reply.id": out.id || "", "actions.reply.tries": tries, "actions.reply.error": "", updatedAt: at },
+      cardFields(task.doc, out.card === "attached", card.error || out.cardError)));
     await count(deps, task.doc.network, "posted");
     if (task.doc.campaign === "report-reply") await deps.db.collection("engagement_daily").doc(E.bogotaDay(deps.now)).set({ report: { posted: deps.inc(1) } }, { merge: true });
     return { status: "posted", url: out.url || "" };
@@ -579,5 +642,6 @@ async function pendingInbox(deps, handled) {
 
 module.exports = {
   ACT_WINDOW, PER_RUN, MAX_TRIES, MASTODON_SCOPES, YT_SCOPE, API, ActError, CHAIN_DAYS, CHAIN_PER_RUN,
-  carryOut, replyNow, pendingChains, pendingInbox, connections, saveBluesky, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call
+  carryOut, replyNow, pendingChains, pendingInbox, connections, saveBluesky, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call,
+  linkFacets, drawCard, cardFields
 };

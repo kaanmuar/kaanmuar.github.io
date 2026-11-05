@@ -26,7 +26,7 @@ const REPLY_TTL = 6 * HOUR;
 // Someone answering us waits longer than a stranger's post: a day for Carlos to approve the answer.
 const CHAIN_TTL = DAY;
 // Comments we can like: through the API, or the Mac's browser for X (#2424); YouTube has no comment likes.
-const CHAIN_LIKES = ["bluesky", "mastodon", "x"];
+const CHAIN_LIKES = ["bluesky", "mastodon", "x", "threads", "instagram", "tiktok", "linkedin", "facebook"];
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const ACTIONS = ["like", "repost", "follow", "reply"];
 
@@ -476,7 +476,7 @@ function report(period, days, priorDays, top, now) {
 /** Report replies (#2465, functions/engagement-reports.js) summed over the window. */
 function invitesOf(r) {
   const x = r || {};
-  return { searched: x.searched || 0, matched: x.matched || 0, drafted: x.drafted || 0, approved: x.approved || 0, edited: x.edited || 0, dismissed: x.dismissed || 0, posted: x.posted || 0, skips: pairs(x.skip, 6), networks: pairs(x.net, 9) };
+  return { searched: x.searched || 0, matched: x.matched || 0, drafted: x.drafted || 0, reruns: x.reruns || 0, approved: x.approved || 0, edited: x.edited || 0, dismissed: x.dismissed || 0, posted: x.posted || 0, skips: pairs(x.skip, 6), networks: pairs(x.net, 9), by: pairs(x.by, 4) };
 }
 
 const PERIOD_NAME = { daily: "Daily", weekly: "Weekly", monthly: "Monthly" };
@@ -510,10 +510,11 @@ function reportMail(r) {
     { label: "Average time to decide", value: r.avgDecideMin === null ? "—" : r.avgDecideMin + " min" }
   ];
   const iv = r.invites || {};
-  if (iv.searched || iv.matched) {
+  if (iv.searched || iv.matched || iv.reruns) {
     rows.push({ heading: "Report replies" }, { label: "Sites looked for", value: String(iv.searched) },
-      { label: "Posts naming a reviewed site", value: iv.matched + (iv.skips.length ? " (left alone: " + iv.skips.map((x) => x.label.replace(/_/g, " ") + " " + x.value).join(", ") + ")" : "") },
-      { label: "Invites drafted", value: String(iv.drafted) }, { label: "Approved", value: (iv.approved + iv.edited) + " (" + iv.edited + " edited), " + iv.dismissed + " dismissed" },
+      { label: "Posts about a reviewed site or its niche", value: iv.matched + (iv.skips.length ? " (left alone: " + iv.skips.map((x) => x.label.replace(/_/g, " ") + " " + x.value).join(", ") + ")" : "") },
+      ...(iv.by.length ? [{ label: "Tied by", value: iv.by.map((x) => x.label + " " + x.value).join(", ") }] : []),
+      { label: "Invites drafted", value: String(iv.drafted) + (iv.reruns ? " (" + iv.reruns + " follow-ups with a re-run's new score)" : "") }, { label: "Approved", value: (iv.approved + iv.edited) + " (" + iv.edited + " edited), " + iv.dismissed + " dismissed" },
       { label: "Posted", value: String(iv.posted) });
   }
   const list = (title, items, fmt) => (items.length ? [title + ":", ...items.map(fmt), ""] : []);
@@ -548,6 +549,12 @@ function reportPush(r) {
   };
 }
 
+/** How a report reply's post was tied to its site (functions/engagement-reports.js). */
+const matchLine = (rep) => rep.match === "rerun" ? "re-run, was " + rep.was
+  : rep.match === "problem" ? "a complaint about " + (rep.problem || "it")
+  : rep.match === "niche" ? "about its niche (" + (rep.niche || "?") + (rep.problem ? ", " + rep.problem : "") + ")"
+    : "names it by " + rep.match;
+
 /** A reply draft waiting for Carlos: Approve, Edit (typed inline) or Dismiss. */
 function replyPush(doc) {
   const r = (doc.actions || {}).reply || {};
@@ -557,11 +564,12 @@ function replyPush(doc) {
   return {
     kind: "engagement",
     title: doc.chain ? "Answer " + who + " on " + name + "? " + clip(doc.text, 90)
+      : rep && rep.match === "rerun" ? "New score for " + (rep.name || rep.host) + ": go back to " + who + " on " + name + "?"
       : rep ? "Invite to the " + (rep.name || rep.host) + " report on " + name + "? " + clip(doc.about || doc.title || doc.text, 70)
         : "Reply on " + name + "? " + clip(doc.about || doc.title || doc.text, 90),
     body: clip(r.draft, 220),
-    lines: (doc.chain && doc.chain.ours ? ["We said: " + clip(doc.chain.ours, 140)] : []).concat([who + ": " + clip(doc.title || doc.text, 140)],
-      rep ? ["Report: " + rep.host + " scores " + rep.score + (rep.shown ? "" : " (not named)") + " · names it by " + rep.match + " · " + (r.lang || doc.lang || "")] : ["Score " + doc.score + " · " + (doc.topic || "") + " · " + (r.lang || doc.lang || "")]),
+    lines: (doc.chain && doc.chain.ours ? ["We said: " + clip(doc.chain.ours, 140)] : []).concat([rep && rep.match === "rerun" ? "We said: " + clip(doc.text, 140) : who + ": " + clip(doc.title || doc.text, 140)],
+      rep ? ["Report: " + rep.host + " scores " + rep.score + (rep.shown ? "" : " (not named)") + " · " + matchLine(rep) + " · " + (r.lang || doc.lang || "")] : ["Score " + doc.score + " · " + (doc.topic || "") + " · " + (r.lang || doc.lang || "")]),
     tab: "products:engagement",
     tag: "jarvis-engage-" + doc.key,
     url: /^https:\/\//.test(doc.url || "") ? doc.url : "",

@@ -383,6 +383,10 @@
  "Build the sitemap from canonical URLs: https, the www host you serve.": "Genera la sitemap dagli URL canonical: https, l’host www che servi.",
  "Build the sitemap from the live domain; spot-check it after a move or rebrand.": "Genera la sitemap dal dominio live; ricontrollala a campione dopo un trasloco o un rebrand.",
  "Build, Green (pass); Smoke tests, Passed (pass); Title and description, Still there (pass); Share card, Image changed? (warning); Consent banner, Nothing fires before a choice? (warning).": "Build, verde (pass); Smoke test, superati (pass); Titolo e descrizione, ancora presenti (pass); Card di condivisione, immagine cambiata? (warning); Banner del consenso, nulla si attiva prima di una scelta? (warning).",
+ "But ⟦1⟧ ⟦2⟧ has known flaws.": {
+  "text": "Ma ⟦1⟧ ⟦2⟧ ha dei difetti conosciuti.",
+  "machine": true
+ },
  "But ⟦1⟧ AI answer or search crawler is blocked.": {
   "text": "Ma ⟦1⟧ La risposta AI o il crawler di ricerca sono bloccati.",
   "machine": true
@@ -391,6 +395,10 @@
  "But ⟦1⟧ and ⟦2⟧ both serve the site, each names itself canonical, and the sitemap lists only the bare host.": "Ma ⟦1⟧ e ⟦2⟧ servono entrambi il sito, ognuno si dichiara canonical e la sitemap elenca solo l’host senza prefisso.",
  "But ⟦1⟧ and ⟦2⟧ must only directly contain ⟦3⟧, ⟦4⟧ or ⟦5⟧ elements.": {
   "text": "Ma ⟦1⟧ e ⟦2⟧ devono contenere direttamente solo ⟦3⟧, ⟦4⟧ o ⟦5⟧ elementi.",
+  "machine": true
+ },
+ "But ⟦1⟧ cookies are sent without Secure, and ⟦2⟧ session cookie is readable by scripts.": {
+  "text": "Ma ⟦1⟧ cookie vengono inviati senza Secure e ⟦2⟧ cookie di sessione è leggibile dagli script.",
   "machine": true
  },
  "But ⟦1⟧ disallows bingbot from the whole site, and Bing's index also feeds Copilot.": "Ma ⟦1⟧ blocca bingbot su tutto il sito, e l’indice di Bing alimenta anche Copilot.",
@@ -433,6 +441,10 @@
  "But ⟦1⟧ sends crawlers to /⟦2⟧, and that address answers ⟦3⟧.": "Ma ⟦1⟧ manda i crawler a /⟦2⟧, e quell’indirizzo risponde ⟦3⟧.",
  "But ⟦1⟧ serves the page itself with a ⟦2⟧ instead of redirecting, so a first http visit stays unencrypted.": "Ma ⟦1⟧ serve la pagina stessa con un ⟦2⟧ invece di reindirizzare, quindi una prima visita in http resta non cifrata.",
  "But ⟦1⟧ serves the page with a ⟦2⟧ instead of redirecting, and browsers ignore HSTS sent over http.": "Ma ⟦1⟧ serve la pagina con un ⟦2⟧ invece di reindirizzare, e i browser ignorano l’HSTS inviato via http.",
+ "But ⟦1⟧ sitemap URLs point at another host or scheme.": {
+  "text": "Ma ⟦1⟧ URL della mappa del sito puntano a un altro host o schema.",
+  "machine": true
+ },
  "But ⟦1⟧ sitemap URLs use ⟦2⟧ not the ⟦3⟧ address the site serves, so every entry redirects.": "Ma ⟦1⟧ URL della sitemap usano ⟦2⟧ e non l’indirizzo ⟦3⟧ servito dal sito, quindi ogni voce fa un redirect.",
  "But ⟦1⟧ still loads for UA-⟦2⟧-⟦3⟧, and Universal Analytics stopped collecting data in ⟦4⟧.": "Ma ⟦1⟧ si carica ancora per UA-⟦2⟧-⟦3⟧, e Universal Analytics ha smesso di raccogliere dati nel ⟦4⟧.",
  "But ⟦1⟧ structured data items miss a property Google expects.": "Ma a ⟦1⟧ elementi di dati strutturati manca una proprietà che Google si aspetta.",
@@ -794,6 +806,10 @@
  "Describe the ones that inform, and give decorative ones an empty alt.": "Descrivi quelle che informano e dai un alt vuoto a quelle decorative.",
  "Describe the ones that inform, and give decorative ones an…": "Descrivi quelle che informano e dai un alt vuoto a…",
  "Describe what each image shows in its alt attribute, and use ⟦1⟧ on purely decorative ones.": "Descrivi nell’attributo alt cosa mostra ogni immagine e usa ⟦1⟧ su quelle solo decorative.",
+ "Describe what each image shows in its alt attribute, and use ⟦1⟧ on purely decorative…": {
+  "text": "Descrivi cosa mostra ciascuna immagine nel suo attributo alt e usa ⟦1⟧ su elementi puramente decorativi...",
+  "machine": true
+ },
  "Describe what each image shows in its alt attribute, and use ⟦1⟧ on purely…": {
   "text": "Descrivi cosa mostra ciascuna immagine nel suo attributo alt e usa ⟦1⟧ solo su...",
   "machine": true
@@ -1715,6 +1731,10 @@
  "Send Strict-Transport-Security with a max-age of a year or more: one header.": "Invia Strict-Transport-Security con un max-age di un anno o più: un solo header.",
  "Send Strict-Transport-Security with a max-age of at least a year, and point / straight at the final page.": "Invia Strict-Transport-Security con un max-age di almeno un anno e punta / direttamente alla pagina finale.",
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.": "Invia Strict-Transport-Security con un max-age di almeno un anno, così i browser non tornano mai su http in chiaro.",
+ "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain…": {
+  "text": "Invia Strict-Transport-Security con un'età massima di almeno un anno, in modo che i browser non provino mai a semplice...",
+  "machine": true
+ },
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try…": "Invia Strict-Transport-Security con un max-age di almeno un anno, così i browser non tornano…",
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers never…": "Invia Strict-Transport-Security con un max-age di almeno un anno, così i browser non…",
  "Send Strict-Transport-Security with a max-age of at least a year, so browsers…": {
@@ -1740,6 +1760,10 @@
  "SEO Week Becomes Relevance, the Premier AI Search Conference, Returning April ⟦1⟧–⟦2⟧, ⟦3⟧, in New York City": "SEO Week diventa Relevance, la principale conferenza sulla ricerca AI, di ritorno dal ⟦1⟧ al ⟦2⟧ aprile ⟦3⟧ a New York",
  "SEO Week Becomes…": "SEO Week diventa…",
  "SEO Works found that organic delivered ⟦1⟧ times the traffic of AI assistants and roughly ⟦2⟧ […] The post AI Search Is Not a Distraction, It’s a Branding Channel appeared first on…": "SEO Works ha rilevato che l'organico ha generato ⟦1⟧ volte il traffico degli assistenti IA e circa ⟦2⟧ […] L'articolo La ricerca con IA non è una distrazione, è un canale di branding è apparso per la prima volta su…",
+ "Serve ⟦1⟧ from the same host as the pages it lists, and name it in ⟦2⟧.": {
+  "text": "Servi ⟦1⟧ dallo stesso host delle pagine che elenca e nominalo in ⟦2⟧.",
+  "machine": true
+ },
  "Serve a ⟦1⟧ with a Sitemap: line.": "Servi un ⟦1⟧ con una riga Sitemap:.",
  "Serve the full chain: leaf plus intermediates.": "Servi la catena completa: certificato finale più intermedi.",
  "Served as /⟦1⟧.": "Servito come /⟦1⟧.",
@@ -1748,6 +1772,10 @@
  "Set canonicals to the exact public URL: https, your real host, no port.": "Imposta i canonical sull’URL pubblico esatto: https, il tuo host reale, nessuna porta.",
  "Set consent defaults to denied before Tag Manager loads; OneTrust then updates them.": "Imposta i default del consenso su denied prima che carichi Tag Manager; poi OneTrust li aggiorna.",
  "Set HSTS max-age to at least one year (⟦1⟧) once https works everywhere.": "Imposta il max-age di HSTS ad almeno un anno (⟦1⟧) quando https funziona ovunque.",
+ "Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to read.": {
+  "text": "Imposta Secure, HttpOnly e SameSite su ogni cookie che gli script non devono leggere.",
+  "machine": true
+ },
  "Set security headers at the edge, not per app, so every path on the host gets the same HSTS policy.": "Imposta gli header di sicurezza sull’edge, non per singola app, così ogni percorso dell’host riceve la stessa policy HSTS.",
  "Set security headers once at the edge or server, not per page template.": "Imposta gli header di sicurezza una volta sola sull’edge o sul server, non per ogni template di pagina.",
  "Set the CMS base URL to your public https address, then regenerate the sitemap.": "Imposta l’URL base del CMS sul tuo indirizzo https pubblico, poi rigenera la sitemap.",
@@ -1856,6 +1884,10 @@
  "The gap: alt text.": "La lacuna: il testo alt.",
  "The gap: broken links.": "La lacuna: link rotti.",
  "The gap: button names.": "La lacuna: i nomi dei pulsanti.",
+ "The gap: cookie flags.": {
+  "text": "Il divario: le bandiere dei cookie.",
+  "machine": true
+ },
  "The gap: form labels.": "La lacuna: le label dei form.",
  "The gap: framing.": "La lacuna: i frame.",
  "The gap: hreflang.": "La lacuna: hreflang.",
@@ -1883,6 +1915,10 @@
   "machine": true
  },
  "The gap: the https redirect.": "La lacuna: il redirect a https.",
+ "The gap: the sitemap host.": {
+  "text": "Il divario: l'host della mappa del sito.",
+  "machine": true
+ },
  "The Global Fund sets no cache rules.": "Il Global Fund non imposta regole di cache.",
  "The Guardian front page has no h1.": "La prima pagina del Guardian non ha h1.",
  "The harder part is getting that information in front of the right people at the right time.": "La parte più difficile è far arrivare quelle informazioni alle persone giuste al momento giusto.",

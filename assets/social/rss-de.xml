@@ -5,9 +5,425 @@
     <link>https://carlosandmunoz.com/qa-review-social-de.html</link>
     <description>Jeder Beitrag von QA-lab URL Review: Tipps, echte Website-Prüfungen und kurze Clips.</description>
     <language>de</language>
-    <lastBuildDate>Tue, 03 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 05 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-de.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-de.html</link></image>
+    <item>
+      <title>zizonline.com: 70. Die Lücke: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-26/10-u-zizonline-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-26/10-u-zizonline-com-de</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>National</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch HSTS wird nicht gesendet.
+
+Die Lektion für jedes Team: Senden Sie Strict-Transport-Security mit einem max-age von mindestens einem Jahr, damit Browser nie wieder einfaches http versuchen.
+
+Eine automatisierte Analyse öffentlicher Seiten am 26. Okt. 2026, eine der meistbesuchten Websites ihres Landes, aus dem Länder-Scan von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-zizonline-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-zizonline-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #SoftwareTesting #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/10-u-zizonline-com.jpg" length="228802" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/10-u-zizonline-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>sony.com.co: 51. Die Lücke: die https-Weiterleitung.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-27/09-u-sony-com-co-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-27/09-u-sony-com-co-de</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch einfaches http liefert die Website ohne Weiterleitung aus.
+
+Die Lektion für jedes Team: Leiten Sie jede http-Anfrage mit einem dauerhaften 301 auf https um und ergänzen Sie dann HSTS.
+
+Eine automatisierte Analyse öffentlicher Seiten am 24. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-sony-com-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-sony-com-co
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #Passkeys #QA #HTTPS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/09-u-sony-com-co.jpg" length="232847" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/09-u-sony-com-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>efigas.com.co: 54. Die Lücke: Textkontrast.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-02/03-u-efigas-com-co-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-02/03-u-efigas-com-co-de</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Elemente müssen Mindestwerte beim Farbkontrast erfüllen.
+
+Die Lektion für jedes Team: Halten Sie Fließtext bei einem Kontrastverhältnis von 4.5:1 oder mehr zum Hintergrund.
+
+Eine automatisierte Analyse öffentlicher Seiten am 27. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-efigas-com-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-efigas-com-co
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #AI #OpenSource #QA #Contrast #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/03-u-efigas-com-co.jpg" length="233577" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/03-u-efigas-com-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>iteso.mx: 47. Die Lücke: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-03/02-u-iteso-mx-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-03/02-u-iteso-mx-de</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch HSTS wird nicht gesendet.
+
+Die Lektion für jedes Team: Senden Sie Strict-Transport-Security mit einem max-age von mindestens einem Jahr, damit Browser nie wieder einfaches http versuchen.
+
+Eine automatisierte Analyse öffentlicher Seiten am 2 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-iteso-mx&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-iteso-mx
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #SoftwareTesting #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/02-u-iteso-mx.jpg" length="220368" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/02-u-iteso-mx.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>selia.co: 73. Die Lücke: Linknamen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-04/01-u-selia-co-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-04/01-u-selia-co-de</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Links brauchen erkennbaren Text.
+
+Die Lektion für jedes Team: Geben Sie jedem Link einen Text, der sagt, wohin er führt. Ein Icon allein braucht ein aria-label.
+
+Eine automatisierte Analyse öffentlicher Seiten am 3 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-selia-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-selia-co
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #WebDev #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg" length="226670" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>treinta.co: 75. Die Lücke: Einbettung.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-04/02-u-treinta-co-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-04/02-u-treinta-co-de</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch andere Websites können die Seite einbetten.
+
+Die Lektion für jedes Team: Senden Sie frame-ancestors 'self' in der CSP oder X-Frame-Options: SAMEORIGIN, damit andere Websites Ihre Seiten nicht einbetten können.
+
+Eine automatisierte Analyse öffentlicher Seiten am 3 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-treinta-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-treinta-co
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/02-u-treinta-co.jpg" length="229298" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/02-u-treinta-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>itsrever.com: 50. Die Lücke: ARIA-Rollen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-04/08-u-itsrever-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-04/08-u-itsrever-com-de</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Bestimmte ARIA-Rollen müssen jedoch bestimmte untergeordnete Elemente enthalten.
+
+Die Lektion für jedes Team: Verwenden Sie zunächst native HTML-Elemente. Wenn Sie ARIA-Rollen verwenden, verschachteln Sie diese so, wie es die Rolle erfordert.
+
+Eine automatisierte Analyse öffentlicher Seiten am 3 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-itsrever-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-itsrever-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Automation #QA #ARIA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/08-u-itsrever-com.jpg" length="232974" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/08-u-itsrever-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Bogotá 80, Medellín 74. Die Sicherheit machte den Unterschied.</title>
+      <link>https://carlosandmunoz.com/social/compare-2026-11/11-cities-de.html</link>
+      <guid isPermaLink="false">compare-2026-11/11-cities-de</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Vergleich</category>
+      <category>Local</category>
+      <description>Bogotá führt bei Sicherheit, 77 zu 54, und bei SEO, 97 zu 89. Medellín hat die schnelleren Seiten, 80 zu 73, und liegt bei GEO knapp vorn, 91 zu 89.
+
+Lektion: Das Portal von Medellín sendet keinen HSTS-, CSP-, Referrer-Policy- oder Permissions-Policy-Header. Die meisten Hoster und CDNs setzen Header per Konfiguration, nicht per Code.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=cities
+
+#WebQuality #Vulnerability #Phishing #QA #GovTech #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg" length="252004" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Echte Websites. Echte Werte.</title>
+      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/29-real-reviews-de.html</link>
+      <guid isPermaLink="false">promo-social-hub-2026-10/29-real-reviews-de</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Produkt</category>
+      <category>Social</category>
+      <description>Jeden Tag werden öffentliche Prüfungen echter Websites zu Beiträgen, mit ihren Werten und der wichtigsten Korrektur. Auch unsere eigene Website haben wir geprüft.
+
+Probieren Sie es aus: Öffnen Sie im Hub eine Website-Prüfung und lesen Sie den vollständigen Bericht.
+
+Alle Beiträge an einem Ort: https://carlosandmunoz.com/qa-review-social-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=real-reviews-de
+
+#QA #DevOps #CyberSecurity #SEO #WebSecurity #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/29-real-reviews-de.jpg" length="206179" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/29-real-reviews-de.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Wir haben GOV.UK analysiert. Sie erzielt 92.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/01-govuk-de.html</link>
+      <guid isPermaLink="false">runs-2026-10/01-govuk-de</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Worldwide</category>
+      <description>Barrierefreiheit 100, eine strikte Content Security Policy, und echte Besucher sehen den Hauptinhalt in 0.7 s. Die einzige Lücke: 19 der 20 analysierten Seiten haben keinen Canonical-Link.
+
+Die Lektion für jedes Team: Geben Sie jeder Seite einen Canonical-Link, auch wenn nur eine Adresse sie ausliefert. Eine Zeile entscheidet, welche URL rankt.
+
+Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
+So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=govuk
+
+#SEO #WebPerformance #Accessibility #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/01-govuk.jpg" length="239240" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/01-govuk.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Valle del Cauca sperrt den Pinch-Zoom.</title>
+      <link>https://carlosandmunoz.com/social/runs-3/03-valle-de.html</link>
+      <guid isPermaLink="false">runs-3/03-valle-de</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Regional</category>
+      <description>HSTS gilt ein volles Jahr, Framing ist begrenzt und Cookies sind Secure. Doch das Viewport-Tag sagt user-scalable=no, also können Menschen, die größeren Text brauchen, am Smartphone nicht per Pinch zoomen.
+
+Die Lektion für jedes Team: Entfernen Sie user-scalable=no und maximum-scale aus dem Viewport-Tag, damit man auf mindestens 200% zoomen kann.
+
+Eine automatisierte Analyse öffentlicher Seiten am 21. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
+So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-3-2027-01&amp;utm_content=valle
+
+#Accessibility #Zoom #GovTech #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" length="242376" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Eine Seite, ein Canonical.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/21-canonical-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/21-canonical-de</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>SEO</category>
+      <description>Antwortet derselbe Inhalt unter mehreren Adressen, verteilen sich die Ranking-Signale auf sie. Sagen Sie Suchmaschinen, welche Adresse die echte ist.
+
+Probieren Sie es heute: Öffnen Sie Ihre Top-Seite mit und ohne abschließenden Slash und ?utm_-Tags. Beide sollten auf ein Canonical zeigen.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=canonical
+
+#SEO #TechnicalSEO #WebDev #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/21-canonical.jpg" length="208372" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/21-canonical.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Erzielte 31 von 100. Die Lücke: Formular-Labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-26/09-u-hotelestequendama-com-co-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-26/09-u-hotelestequendama-com-co-de</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 1987 Formularfelder haben kein Label.
+
+Die Lektion für jedes Team: Geben Sie jedem Eingabefeld ein sichtbares Label, verknüpft über for und id. Screenreader sagen es an, und die Tippfläche wächst.
+
+Eine automatisierte Analyse öffentlicher Seiten am 26. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-hotelestequendama-com-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-hotelestequendama-com-co
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #DevOps #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/09-u-hotelestequendama-com-co.jpg" length="233269" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/09-u-hotelestequendama-com-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>indrive.com: 64. Die Lücke: TLS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-27/08-u-indrive-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-27/08-u-indrive-com-de</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch das TLS-Zertifikat läuft in 13 Tagen ab.
+
+Die Lektion für jedes Team: Erneuern Sie das TLS-Zertifikat automatisch und alarmieren Sie lange vor dem Ablauf.
+
+Eine automatisierte Analyse öffentlicher Seiten am 21. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-indrive-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-indrive-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Automation #CyberSecurity #QA #TLS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/08-u-indrive-com.jpg" length="218608" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/08-u-indrive-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>eep.com.co: 33. Die Lücke: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-02/02-u-eep-com-co-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-02/02-u-eep-com-co-de</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>12 Seiten werden absichtlich von der Suche ausgeschlossen und KI-Antwort- und Suchcrawler können die Startseite lesen. Doch HSTS wird nicht gesendet.
+
+Die Lektion für jedes Team: Senden Sie Strict-Transport-Security mit einem max-age von mindestens einem Jahr, damit Browser nie wieder einfaches http versuchen.
+
+Eine automatisierte Analyse öffentlicher Seiten am 27. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-eep-com-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-eep-com-co
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #DevOps #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/02-u-eep-com-co.jpg" length="222022" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/02-u-eep-com-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>portal.upb.edu.co: 72. Die Lücke: Formular-Labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-03/01-u-portal-upb-edu-co-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-03/01-u-portal-upb-edu-co-de</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Formularelemente müssen jedoch Beschriftungen haben.
+
+Die Lektion für jedes Team: Geben Sie jedem Eingabefeld ein sichtbares Label, verknüpft über for und id.
+
+Eine automatisierte Analyse öffentlicher Seiten am 2 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-portal-upb-edu-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-portal-upb-edu-co
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #AI #DevOps #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/01-u-portal-upb-edu-co.jpg" length="233804" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/01-u-portal-upb-edu-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>sp.senai.br: 60. Die Lücke: Linknamen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-03/03-u-sp-senai-br-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-03/03-u-sp-senai-br-de</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Links brauchen erkennbaren Text.
+
+Die Lektion für jedes Team: Geben Sie jedem Link einen Text, der sagt, wohin er führt. Ein Icon allein braucht ein aria-label.
+
+Eine automatisierte Analyse öffentlicher Seiten am 2 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-sp-senai-br&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-sp-senai-br
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #OpenSource #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/03-u-sp-senai-br.jpg" length="228763" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/03-u-sp-senai-br.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>udg.mx: 75. Die Lücke: Meta-Beschreibungen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-03/09-u-udg-mx-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-03/09-u-udg-mx-de</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Aber 20 Seiten haben keine Meta-Beschreibung.
+
+Die Lektion für jedes Team: Schreiben Sie für jede wichtige Seite eine Beschreibung von etwa 150 Zeichen, damit Sie das Snippet wählen, nicht der Crawler.
+
+Eine automatisierte Analyse öffentlicher Seiten am 2 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-udg-mx&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-udg-mx
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#SEO #SoftwareTesting #QA #MetaDescription #SERP #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/09-u-udg-mx.jpg" length="235672" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/09-u-udg-mx.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Bogotá oder Medellín: Welches Rathausportal schnitt besser ab?</title>
+      <link>https://carlosandmunoz.com/social/compare-2026-11/10-quiz-cities-de.html</link>
+      <guid isPermaLink="false">compare-2026-11/10-quiz-cities-de</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Quiz</category>
+      <category>Local</category>
+      <description>Die zwei größten Städte Kolumbiens und ihre offiziellen Portale, im Oktober 2026 mit derselben Prüfung öffentlicher Seiten analysiert.
+
+Ihr Tipp: Geben Sie Ihren Tipp ab. Die Antwort mit allen sechs Bereichswerten kommt morgen.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=quiz-cities
+
+#WebQuality #DevOps #Playwright #QA #Quiz #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/10-quiz-cities.jpg" length="236665" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/10-quiz-cities.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Die Suche der Policía Nacional hat kein Label.</title>
+      <link>https://carlosandmunoz.com/social/runs-3/02-policiaco-de.html</link>
+      <guid isPermaLink="false">runs-3/02-policiaco-de</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>National</category>
+      <description>HSTS mit preload, Framing nur vom eigenen Origin, eine deklarierte Sprache, und jeder geöffnete interne Link antwortete. Doch Suchfeld und Lautstärkeregler der Startseite haben kein Label, also sagen Screenreader leere Felder an.
+
+Die Lektion für jedes Team: Verknüpfen Sie jedes Feld mit einem &lt;label for&gt; oder geben Sie ihm ein aria-label. Ein Screenreader kann nur einen Namen ansagen, den es gibt.
+
+Eine automatisierte Analyse öffentlicher Seiten am 21. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
+So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-3-2027-01&amp;utm_content=policiaco
+
+#Accessibility #FormLabels #GovTech #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/02-policiaco.jpg" length="248322" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/02-policiaco.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Messen Sie die Aktion, nicht nur den Besuch.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/19-measure-action-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/19-measure-action-de</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>Analytics</category>
+      <description>Seitenaufrufe sagen Ihnen, dass jemand angekommen ist. Ein Event am Formular, am Download oder an der Anmeldung zeigt Ihnen, ob die Seite funktioniert hat.
+
+Probieren Sie es heute: Bestimmen Sie die eine Aktion, für die jede Schlüsselseite existiert. Stellen Sie sicher, dass ein Event nur bei Erfolg feuert.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=measure-action
+
+#Analytics #GA4 #CRO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" length="210202" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>KI-Suche liest Ihr HTML, nicht Ihre App.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first-de</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>GEO</category>
+      <description>Viele Answer Engines führen kein JavaScript aus. Erscheinen Ihre wichtigsten Fakten erst nach dem Laden der Skripte, werden sie womöglich nie gelesen oder zitiert.
+
+Probieren Sie es heute: Sehen Sie sich den Quelltext Ihrer Startseite an. Findet man ohne Skripte, was Sie verkaufen und für wen?
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>movichhotels.com: 68. Die Lücke: Messung.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-26/08-u-movichhotels-com-de.html</link>
@@ -64,7 +480,9 @@ Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-edeq
 
 Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
 
-#Accessibility #JavaScript #Programming #QA #A11y #QAlab</description>
+#Accessibility #JavaScript #Programming #QA #A11y #QAlab
+
+https://www.youtube.com/shorts/JMrC4MB1OBc</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/01-u-edeq-com-co.jpg" length="231489" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/01-u-edeq-com-co.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -81,7 +499,9 @@ Lektion: Eine schnellere Website kann insgesamt trotzdem verlieren. Beheben Sie 
 
 So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=metros
 
-#WebQuality #Phishing #CyberSecurity #QA #PublicTransport #QAlab</description>
+#WebQuality #Phishing #CyberSecurity #QA #PublicTransport #QAlab
+
+https://www.youtube.com/shorts/qCLqRoX8JQM</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/09-metros.jpg" length="245170" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/09-metros.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -502,328 +922,6 @@ Via WebAIM, von Christopher Phillips, 2026-10-29.
 https://webaim.org/blog/captioned-doesnt-always-mean-accessible/</description>
       <enclosure url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" length="96606" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Cypress Ambassador Spotlight: Kevin Korenhof</title>
-      <link>https://carlosandmunoz.com/social/pick/cypress-ambassador-spotlight-kevin-korenhof-de.html</link>
-      <guid isPermaLink="false">pick/cypress-ambassador-spotlight-kevin-korenhof-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Testing</category>
-      <description>Willkommen zurück zu einem neuen Ambassador Spotlight. Jeder Beitrag dieser Reihe stellt Ihnen eine der Personen vor, die die Cypress-Community im Stillen tragen: wo sie angefangen haben, was sie über das Testen denken und was sie unterwegs herausgefunden haben. Neugierig auf das Programm selbst? Mehr dazu hier. Diese Woche stellen wir Kevin Korenhof vor, der zur Testautomatisierung kam – aus dem…
-
-Via Cypress, von Jessica Capuano Mora, 2026-10-29.
-
-https://www.cypress.io/blog/cypress-ambassador-spotlight-kevin-korenhof/</description>
-      <media:content url="https://storage.ghost.io/c/12/89/12899ca1-4786-4eea-b7e1-9c5268baa48a/content/images/2026/10/Blog_Ambassador-Spotlight_Kevin-Korenhof--1-.png" medium="image"/>
-    </item>
-    <item>
-      <title>Followertustuff/anomalith-steam-deck-small-text-accessibility: ANOMALITH-Leitfaden zur Barrierefreiheit kleiner Texte auf dem Steam Deck: winzige UI, Lesbarkeit im Handheld-Modus, Auflösungsskalierung und angenehm lesbarer Bildschirmtext.</title>
-      <link>https://carlosandmunoz.com/social/pick/followertustuff-anomalith-steam-deck-small-text-accessibilit-de.html</link>
-      <guid isPermaLink="false">pick/followertustuff-anomalith-steam-deck-small-text-accessibilit-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Accessibility</category>
-      <description>ANOMALITH-Leitfaden zur Barrierefreiheit kleiner Texte auf dem Steam Deck: winzige UI, Lesbarkeit im Handheld-Modus, Auflösungsskalierung und angenehm lesbarer Bildschirmtext.
-
-Via GitHub, von Followertustuff, 2026-10-29.
-
-https://github.com/Followertustuff/anomalith-steam-deck-small-text-accessibility</description>
-      <media:content url="https://opengraph.githubassets.com/1/Followertustuff/anomalith-steam-deck-small-text-accessibility" medium="image"/>
-    </item>
-    <item>
-      <title>Google AI Mode: Alles, was Sie wissen müssen</title>
-      <link>https://carlosandmunoz.com/social/pick/google-ai-mode-all-you-need-to-know-de.html</link>
-      <guid isPermaLink="false">pick/google-ai-mode-all-you-need-to-know-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>GEO</category>
-      <description>Auf der Google I/O im Mai 2026 bezeichnete Sundar Pichai AI Mode dann als „unser bisher größtes Upgrade der Suche“ und sagte, es habe die Marke von 1 Milliarden monatlich aktiven Nutzern überschritten. Es ist kein bloßes Experiment mehr. AI Mode hat jetzt einen eigenen … Weiterlesen ›
-
-Via Ahrefs, von Si Quan Ong, 2026-10-28.
-
-https://ahrefs.com/blog/google-ai-mode/</description>
-      <media:content url="https://ahrefs.com/blog/wp-content/uploads/2026/10/google-ai-mode-all-you-need-by-si-quan-ong-general-seo-.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Woran erkenne ich, ob meine Bilder für die multimodale Suche optimiert sind? – Ask an SEO via @sejournal, @HelenPollitt1</title>
-      <link>https://carlosandmunoz.com/social/pick/how-can-i-tell-if-my-images-are-optimized-for-multimodal-sea-de.html</link>
-      <guid isPermaLink="false">pick/how-can-i-tell-if-my-images-are-optimized-for-multimodal-sea-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>Prüfen Sie, ob Suchmaschinen Ihre Bilder finden und verstehen können, und erkennen Sie technische Probleme, die ihre Sichtbarkeit in der multimodalen Suche einschränken. Der Beitrag Woran erkenne ich, ob meine Bilder für die multimodale Suche optimiert sind? – Ask an SEO erschien zuerst auf Search Engine Journal .
-
-Via Search Engine Journal, von Helen Pollitt, 2026-10-29.
-
-https://www.searchenginejournal.com/ask-an-seo-how-can-i-tell-if-my-images-are-optimised-for-multimodal-search/593861/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2024/06/ask-an-seo-helen-904.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Wie Screenreader komplexe ARIA-Rollen in dynamischen Web-Apps interpretieren und ausgeben</title>
-      <link>https://carlosandmunoz.com/social/pick/how-screen-readers-interpret-and-expose-complex-aria-roles-i-2-de.html</link>
-      <guid isPermaLink="false">pick/how-screen-readers-interpret-and-expose-complex-aria-roles-i-2-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Accessibility</category>
-      <description>Untersuchen Sie Aktualisierungen des Accessibility Tree und das Verhalten von Screenreadern, wenn sich ARIA-Rollen dynamisch ändern, einschließlich der Frage, wie Browser und assistive Technologien semantische Aktualisierungen mit UI-Änderungen synchronisieren.
-
-Via DEV, von Srikar Phani Kumar Marti, 2026-10-29.
-
-https://blog.mspk.me/posts/how-screen-readers-interpret-and-expose-complex-aria-roles-in-dynamic-web-apps</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fw6xscjav7f3jfycq.public.blob.vercel-storage.com%2Fcover-images%2Fhow-screen-readers-interpret-and-expose-complex-aria-roles-in-dynamic-web-apps-1793267208005.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Wie Screenreader komplexe ARIA-Rollen in dynamischen Web-Apps interpretieren und ausgeben</title>
-      <link>https://carlosandmunoz.com/social/pick/how-screen-readers-interpret-and-expose-complex-aria-roles-i-de.html</link>
-      <guid isPermaLink="false">pick/how-screen-readers-interpret-and-expose-complex-aria-roles-i-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Accessibility</category>
-      <description>Untersuchen Sie Aktualisierungen des Accessibility Tree und das Verhalten von Screenreadern, wenn sich ARIA-Rollen dynamisch ändern, einschließlich der Frage, wie Browser und assistive Technologien semantische Aktualisierungen mit UI-Änderungen synchronisieren.
-
-Via DEV, von Srikar Phani Kumar Marti, 2026-10-29.
-
-https://blog.mspk.me/posts/how-screen-readers-interpret-and-expose-complex-aria-roles-in-dynamic-web-apps</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fw6xscjav7f3jfycq.public.blob.vercel-storage.com%2Fcover-images%2Fhow-screen-readers-interpret-and-expose-complex-aria-roles-in-dynamic-web-apps-1793267208005.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Wie sich dieselben 16,000 Nutzer in der KI-Suche verhalten vs. Google</title>
-      <link>https://carlosandmunoz.com/social/pick/how-the-same-16-000-users-behave-in-ai-search-vs-google-de.html</link>
-      <guid isPermaLink="false">pick/how-the-same-16-000-users-behave-in-ai-search-vs-google-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>GEO</category>
-      <description>Ein Vergleich von KI- und Google-Suchen derselben Nutzergruppe über einen Monat, um zu untersuchen, wie sich ihr Verhalten zwischen den Plattformen unterscheidet. TL;DR: Ich habe 16,310 Nutzer über zwei Datos-Panels hinweg abgeglichen, um zu vergleichen, wie jeder einzelne mit Google und LLMs gesucht hat, und zu verstehen, inwiefern wir Prompts anders tracken müssen als Keywords. Bei Google 87% […] Der Beitrag Wie sich dieselben 16,000 Nutzer in der KI-Suche verhalten vs. Google…
-
-Via iPullRank, von Cate Dombrowski, 2026-10-29.
-
-https://ipullrank.com/ai-search-user-behavior</description>
-      <media:content url="https://ipullrank.com/wp-content/uploads/2026/10/findings_summary_table_1-1024x495.png" medium="image"/>
-    </item>
-    <item>
-      <title>So analysieren Sie Server-Logs für die KI-Suche</title>
-      <link>https://carlosandmunoz.com/social/pick/how-to-analyze-server-logs-for-ai-search-2-de.html</link>
-      <guid isPermaLink="false">pick/how-to-analyze-server-logs-for-ai-search-2-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>GEO</category>
-      <description>Erfahren Sie, wie Sie Anfragen von KI-Crawlern in Server-Logs finden und Seiten reparieren, die Crawler nicht lesen können
-
-Via Moz, von Zach Chahalis, 2026-10-29.
-
-https://moz.com/blog/analyze-log-files-ai-search</description>
-      <media:content url="https://moz.com/images/blog/Blog-OG-images/How-To-Analyze-Server-Logs-for-AI-Search-OG-Image.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1793109722&amp;s=b0071b9a0030b67cb45cf2abb3dc1952" medium="image"/>
-    </item>
-    <item>
-      <title>So analysieren Sie Server-Logs für die KI-Suche</title>
-      <link>https://carlosandmunoz.com/social/pick/how-to-analyze-server-logs-for-ai-search-de.html</link>
-      <guid isPermaLink="false">pick/how-to-analyze-server-logs-for-ai-search-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>GEO</category>
-      <description>Erfahren Sie, wie Sie Anfragen von KI-Crawlern in Server-Logs finden und Seiten reparieren, die Crawler nicht lesen können
-
-Via Moz, von Zach Chahalis, 2026-10-29.
-
-https://moz.com/blog/analyze-log-files-ai-search</description>
-      <media:content url="https://moz.com/images/blog/Blog-OG-images/How-To-Analyze-Server-Logs-for-AI-Search-OG-Image.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1793109722&amp;s=b0071b9a0030b67cb45cf2abb3dc1952" medium="image"/>
-    </item>
-    <item>
-      <title>Bild-SEO in Next.js: next/image, Alt-Text und das LCP-Hero-Bild, das es nicht für Sie reparieren kann</title>
-      <link>https://carlosandmunoz.com/social/pick/image-seo-in-next-js-next-image-alt-text-and-the-lcp-hero-it-de.html</link>
-      <guid isPermaLink="false">pick/image-seo-in-next-js-next-image-alt-text-and-the-lcp-hero-it-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>next/image übernimmt standardmäßig einen Großteil der Arbeit für Bild-SEO und Performance. Es erzeugt ein srcset,...
-
-Via DEV, von Matthias Ramahi, 2026-10-29.
-
-https://dev.to/liaxim/image-seo-in-nextjs-nextimage-alt-text-and-the-lcp-hero-it-cant-fix-for-you-3je7</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fz0alr9k04dgfj4tzt9q3.png" medium="image"/>
-    </item>
-    <item>
-      <title>nautnhanahp-design/payback-coupon-bot: Payback Coupon Activator 2026: Community-getriebene Playwright-Automatisierung unter Windows für Coupons</title>
-      <link>https://carlosandmunoz.com/social/pick/nautnhanahp-design-payback-coupon-bot-payback-coupon-activat-de.html</link>
-      <guid isPermaLink="false">pick/nautnhanahp-design-payback-coupon-bot-payback-coupon-activat-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Testing</category>
-      <description>Payback Coupon Activator 2026: Community-getriebene Playwright-Automatisierung unter Windows für Coupons
-
-Via GitHub, von nautnhanahp-design, 2026-10-29.
-
-https://github.com/nautnhanahp-design/payback-coupon-bot</description>
-      <media:content url="https://opengraph.githubassets.com/1/nautnhanahp-design/payback-coupon-bot" medium="image"/>
-    </item>
-    <item>
-      <title>Noblereachdata/resocket-pixeljury: Visual-QA-CLI für KI-gebaute Frontends, die Seiten rendert, Design- und Barrierefreiheitsprobleme findet und agententaugliche Fix-Prompts schreibt.</title>
-      <link>https://carlosandmunoz.com/social/pick/noblereachdata-resocket-pixeljury-visual-qa-cli-for-ai-built-2-de.html</link>
-      <guid isPermaLink="false">pick/noblereachdata-resocket-pixeljury-visual-qa-cli-for-ai-built-2-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Testing</category>
-      <description>Visual-QA-CLI für KI-gebaute Frontends, die Seiten rendert, Design- und Barrierefreiheitsprobleme findet und agententaugliche Fix-Prompts schreibt.
-
-Via GitHub, von Noblereachdata, 2026-10-28.
-
-https://github.com/Noblereachdata/resocket-pixeljury</description>
-      <media:content url="https://opengraph.githubassets.com/1/Noblereachdata/resocket-pixeljury" medium="image"/>
-    </item>
-    <item>
-      <title>Noblereachdata/resocket-pixeljury: Visual-QA-CLI für KI-gebaute Frontends, die Seiten rendert, Design- und Barrierefreiheitsprobleme findet und agententaugliche Fix-Prompts schreibt.</title>
-      <link>https://carlosandmunoz.com/social/pick/noblereachdata-resocket-pixeljury-visual-qa-cli-for-ai-built-de.html</link>
-      <guid isPermaLink="false">pick/noblereachdata-resocket-pixeljury-visual-qa-cli-for-ai-built-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Testing</category>
-      <description>Visual-QA-CLI für KI-gebaute Frontends, die Seiten rendert, Design- und Barrierefreiheitsprobleme findet und agententaugliche Fix-Prompts schreibt.
-
-Via GitHub, von Noblereachdata, 2026-10-28.
-
-https://github.com/Noblereachdata/resocket-pixeljury</description>
-      <media:content url="https://opengraph.githubassets.com/1/Noblereachdata/resocket-pixeljury" medium="image"/>
-    </item>
-    <item>
-      <title>Spam-Leitfaden-Update, Restaurant-Optionen &amp; AI-Mode-Umsatz – SEO Pulse via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/spam-guide-update-restaurant-controls-ai-mode-revenue-seo-pu-de.html</link>
-      <guid isPermaLink="false">pick/spam-guide-update-restaurant-controls-ai-mode-revenue-seo-pu-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>Googles Spam-Leitfaden ergänzt Indexierungshinweise für Seiten, die zum Teilen gedacht sind. Weitere Updates betreffen Bestelloptionen für Restaurants, Berichtsdaten und Umsätze über AI Mode. Der Beitrag Spam-Leitfaden-Update, Restaurant-Optionen &amp; AI-Mode-Umsatz – SEO Pulse erschien zuerst auf Search Engine Journal .
-
-Via Search Engine Journal, von Matt G. Southern, 2026-10-31.
-
-https://www.searchenginejournal.com/seo-pulse-spam-guide-restaurant-controls-ai-mode-revenue/595031/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/seo-pulse-spam-guide-restaurant-controls-featured.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Unterstützung einer gemeinsamen KI-Trainingssteuerung für Websites</title>
-      <link>https://carlosandmunoz.com/social/pick/supporting-a-shared-ai-training-control-for-websites-2-de.html</link>
-      <guid isPermaLink="false">pick/supporting-a-shared-ai-training-control-for-websites-2-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>Heute kündigen wir an, dass wir eine gemeinsame KI-Trainingssteuerung in robots.txt unterstützen werden. Damit können Websites ihre KI-Trainingspräferenzen in einem einzigen Schritt gegenüber mehreren KI-Anbietern festlegen; die Grundlage bildet die Arbeit der AIPREF-Arbeitsgruppe der Internet Engineering Task Force (IETF). Das knüpft an unsere lange Tradition an, Websitebetreibern klare Kontrollmöglichkeiten zu bieten, unter anderem durch…
-
-Via Google Search Central, 2026-10-30.
-
-https://developers.google.com/search/blog/2026/10/ai-training-control</description>
-      <media:content url="https://developers.google.com/static/search/blog/images/social-share-blog.png" medium="image"/>
-    </item>
-    <item>
-      <title>Unterstützung einer gemeinsamen KI-Trainingssteuerung für Websites</title>
-      <link>https://carlosandmunoz.com/social/pick/supporting-a-shared-ai-training-control-for-websites-de.html</link>
-      <guid isPermaLink="false">pick/supporting-a-shared-ai-training-control-for-websites-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>Heute kündigen wir an, dass wir eine gemeinsame KI-Trainingssteuerung in robots.txt unterstützen werden. Damit können Websites ihre KI-Trainingspräferenzen in einem einzigen Schritt gegenüber mehreren KI-Anbietern festlegen; die Grundlage bildet die Arbeit der AIPREF-Arbeitsgruppe der Internet Engineering Task Force (IETF). Das knüpft an unsere lange Tradition an, Websitebetreibern klare Kontrollmöglichkeiten zu bieten, unter anderem durch…
-
-Via Google Search Central, 2026-10-30.
-
-https://developers.google.com/search/blog/2026/10/ai-training-control</description>
-      <media:content url="https://developers.google.com/static/search/blog/images/social-share-blog.png" medium="image"/>
-    </item>
-    <item>
-      <title>Was Ihnen die Search Console noch verrät, wenn Indexierungsdaten hinterherhinken via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/what-search-console-can-still-tell-you-when-indexing-data-la-de.html</link>
-      <guid isPermaLink="false">pick/what-search-console-can-still-tell-you-when-indexing-data-la-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>Der Bericht zur Seitenindexierung in der Search Console ist schon früher in Verzug geraten. Hier erfahren Sie, was Google gesagt hat und was jede verbleibende Prüfung zeigen kann, solange die Daten hinterherhinken. Der Beitrag Was Ihnen die Search Console noch verrät, wenn Indexierungsdaten hinterherhinken erschien zuerst auf Search Engine Journal .
-
-Via Search Engine Journal, von Matt G. Southern, 2026-10-30.
-
-https://www.searchenginejournal.com/what-search-console-can-still-tell-you-when-indexing-data-lags/595016/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/search-console-indexing-report-delay.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>zhtyyx/codex-seo: Kostenlose Open-Source-SEO-Audits direkt in der OpenAI Codex CLI. Portierung von claude-seo: 26 Skills, 19 Spezialistenrollen, technisches SEO / Schema / GEO / Local / E-Commerce.</title>
-      <link>https://carlosandmunoz.com/social/pick/zhtyyx-codex-seo-free-open-source-seo-audits-inside-openai-c-de.html</link>
-      <guid isPermaLink="false">pick/zhtyyx-codex-seo-free-open-source-seo-audits-inside-openai-c-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>SEO</category>
-      <description>Kostenlose Open-Source-SEO-Audits direkt in der OpenAI Codex CLI. Portierung von claude-seo: 26 Skills, 19 Spezialistenrollen, technisches SEO / Schema / GEO / Local / E-Commerce.
-
-Via GitHub, von zhtyyx, 2026-10-27.
-
-https://github.com/zhtyyx/codex-seo</description>
-      <media:content url="https://opengraph.githubassets.com/1/zhtyyx/codex-seo" medium="image"/>
-    </item>
-    <item>
-      <title>Sechs Sprachen. Wählen Sie Ihre.</title>
-      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/16-six-languages-de.html</link>
-      <guid isPermaLink="false">promo-social-hub-2026-10/16-six-languages-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Produkt</category>
-      <category>Social</category>
-      <description>Der Hub hat eine Seite auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch. Filtern Sie den Feed nach der Sprache eines Beitrags.
-
-Probieren Sie es aus: Wechseln Sie die Sprache der Seite mit den Flaggen oben.
-
-Alle Beiträge an einem Ort: https://carlosandmunoz.com/qa-review-social-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=six-languages-de
-
-#Localization #SoftwareTesting #OpenSource #QA #SEO #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/16-six-languages-de.jpg" length="213236" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/16-six-languages-de.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Eine Ofrenda für die Links, die gestorben sind.</title>
-      <link>https://carlosandmunoz.com/social/series-dia-de-muertos-2026-11/01-ofrenda-de.html</link>
-      <guid isPermaLink="false">series-dia-de-muertos-2026-11/01-ofrenda-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Serie</category>
-      <category>SEO</category>
-      <description>Im Oktober sind unsere Live Reports den internen Links von 263 öffentlichen Websites gefolgt. Die meisten antworteten. Auf 30 Websites führte mindestens einer zu einer Seite, die es nicht mehr gibt.
-
-Prüfen Sie es heute: Öffnen Sie jeden Link auf Ihrer Startseite. Korrigieren oder entfernen Sie jeden, der mit 404 antwortet, oder leiten Sie ihn mit einem 301 auf die nächstgelegene aktive Seite um.
-
-Alle Live Reports aus dem Oktober: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=series-dia-de-muertos-2026-11&amp;utm_content=ofrenda#live-reports
-
-#DiaDeMuertos #AI #SoftwareTesting #QA #BrokenLinks #QAlab
-
-https://www.youtube.com/shorts/kemr6NimxJU</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/series-dia-de-muertos-2026-11/feed/01-ofrenda.jpg" length="251982" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/series-dia-de-muertos-2026-11/feed/01-ofrenda.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Einwilligung heißt auch: vorher.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/13-consent-before-de.html</link>
-      <guid isPermaLink="false">tips-2026-10/13-consent-before-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tipp</category>
-      <category>Analytics</category>
-      <description>Der häufigste Analytics-Befund ist ein Tag, der feuert, bevor der Besucher wählt. Prüfen Sie, was beim ersten Rendern lädt, nicht erst nach „Akzeptieren“.
-
-Probieren Sie es heute: Öffnen Sie Ihre Website in einem privaten Fenster, DevTools auf dem Network-Tab. Filtern Sie nach collect oder gtag, bevor Sie etwas anklicken.
-
-So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=consent-before
-
-#Analytics #Privacy #ConsentMode #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg" length="218528" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Ihre Share-Karte ist ein erster Eindruck.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-de.html</link>
-      <guid isPermaLink="false">tips-2026-10/14-share-card-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tipp</category>
-      <category>SEO</category>
-      <description>Ohne og:image und og:title erscheint jeder Link zu Ihrer Website in Chats und Feeds als graue Box.
-
-Probieren Sie es heute: Fügen Sie Ihren Link in einen privaten Chat mit sich selbst ein. Was Menschen dort sehen, ist Ihr eigentlicher erster Eindruck.
-
-So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=share-card
-
-#SEO #OpenGraph #Marketing #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" length="222020" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

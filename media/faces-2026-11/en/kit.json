@@ -66,7 +66,7 @@
             "value": "One public URL in, a plain-language QA review out: SEO, AI search (GEO), analytics, security, accessibility and speed, scored page by page, with proposed test cases for 20 frameworks and exports to Jira, TestRail, Xray and Zephyr. Sign in with email or an account you have; the first review is included.\n\nLive Reports, tips, skits and live runs, posted in English, Deutsch, Français and Italiano.\n\nEn español y português: @qaurlreview"
           },
           {
-            "label": "Links",
+            "label": "Links (14)",
             "value": [
               [
                 "Website",
@@ -79,6 +79,14 @@
               [
                 "ES · PT",
                 "https://www.youtube.com/@qaurlreview"
+              ],
+              [
+                "Live Reports on Telegram",
+                "https://t.me/qalab_live"
+              ],
+              [
+                "r/QALabLiveReports",
+                "https://www.reddit.com/r/QALabLiveReports/"
               ]
             ]
           },
@@ -166,6 +174,14 @@
               [
                 "ES · PT",
                 "https://www.reddit.com/user/qaurlreview/"
+              ],
+              [
+                "Live Reports on Telegram",
+                "https://t.me/qalab_live"
+              ],
+              [
+                "r/QALabLiveReports",
+                "https://www.reddit.com/r/QALabLiveReports/"
               ]
             ]
           }
@@ -377,6 +393,14 @@
               [
                 "ES · PT",
                 "https://www.instagram.com/qaurlreview/"
+              ],
+              [
+                "Live Reports on Telegram",
+                "https://t.me/qalab_live"
+              ],
+              [
+                "r/QALabLiveReports",
+                "https://www.reddit.com/r/QALabLiveReports/"
               ]
             ]
           },

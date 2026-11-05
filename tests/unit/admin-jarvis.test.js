@@ -943,12 +943,40 @@ test("qalabreview.com links: visits, reviews and payments per prospect, paid cre
   ];
   const x = outreachSrc.linkRows(opens, reviews, ctx);
   assert.deepEqual([x.visits, x.reviews, x.paid, x.usd], [3, 1, 1, 12]);
-  assert.deepEqual(x.byCampaign, [{ label: "outreach", value: 2 }, { label: "qr", value: 1 }]);
+  assert.deepEqual(x.byCampaign, [{ label: "Outreach email", value: 2, campaign: "outreach" }, { label: "QR code", value: 1, campaign: "qr" }]);
   assert.deepEqual(x.prospects, [{ host: "upb.edu.co", visits: 2, reviews: 1, paid: 1, usd: 12, last: at(2) }]);
   assert.equal(x.reviewRate, 33.3);
   assert.deepEqual(outreachSrc.linkPrior(opens, reviews, ctx), { visits: 1, reviews: 0, paid: 0, usd: 0, reviewRate: 0, payRate: 0 });
   assert.equal(outreachSrc.linkPrior(Array.from({ length: 10000 }, () => opens[0]), reviews, ctx), null);
   assert.equal(outreachSrc.linkTags("?utm_source=youtube"), null);
+  assert.deepEqual(x.social, { visits: 0, reviews: 0, paid: 0, usd: 0, networks: [], posts: [] });
+});
+
+test("report replies (#2471): named campaigns, and clicks, runs and payments per network and per post", () => {
+  const ctx = { now: NOW.getTime(), days: 7 };
+  const at = (h) => new Date(NOW.getTime() - h * 3600 * 1000).toISOString();
+  const q = (net, term, host) => "?utm_source=qalabreview&utm_campaign=social-reply-" + net + (term ? "&utm_term=" + term : "") + "&utm_content=" + host + "&utm_medium=social";
+  const opens = [
+    { query: q("bluesky", "a1b2c3", "upb.edu.co"), createdAt: at(2) }, { query: q("bluesky", "a1b2c3", "upb.edu.co"), createdAt: at(3) },
+    { query: q("mastodon", "", "acme.io"), createdAt: at(4) }, { query: q("bluesky", "no!", "upb.edu.co"), createdAt: at(5) }
+  ];
+  const reviews = [
+    { id: "r1", query: q("bluesky", "a1b2c3", "upb.edu.co"), email: "a@upb.edu.co", status: "complete", createdAt: at(2) },
+    { id: "p1", status: "paid-report", paid: true, reportId: "r1", email: "a@upb.edu.co", priceUsd: 19, createdAt: at(1) }
+  ];
+  const x = outreachSrc.linkRows(opens, reviews, ctx);
+  assert.deepEqual(x.byCampaign.map((c) => c.label), ["Report replies on Bluesky", "Report replies on Mastodon"]);
+  assert.deepEqual([x.social.visits, x.social.reviews, x.social.paid, x.social.usd], [4, 1, 1, 19]);
+  assert.deepEqual(x.social.networks.map((n) => [n.name, n.campaign, n.visits, n.reviews, n.paid, n.usd]), [["Bluesky", "social-reply-bluesky", 3, 1, 1, 19], ["Mastodon", "social-reply-mastodon", 1, 0, 0, 0]]);
+  assert.deepEqual(x.social.posts, [{ network: "bluesky", name: "Bluesky", ref: "a1b2c3", host: "upb.edu.co", visits: 2, reviews: 1, paid: 1, usd: 19 }]);
+  const joined = outreachSrc.socialPosts(x.social.posts, [
+    { key: "bluesky_a1b2c3d4e5f60718293a", network: "bluesky", url: "https://bsky.app/profile/ana/post/1", author: { handle: "ana" }, text: "UPB's new site https://upb.edu.co", report: { host: "upb.edu.co" }, actions: { reply: { status: "posted", url: "https://bsky.app/profile/us/post/2", lang: "es" } } },
+    { key: "mastodon_a1b2c3000000000000", network: "mastodon", url: "https://m.s/1" }
+  ]);
+  assert.deepEqual([joined[0].url, joined[0].title, joined[0].status, joined[0].replyUrl, joined[0].lang], ["https://bsky.app/profile/ana/post/1", "UPB's new site", "posted", "https://bsky.app/profile/us/post/2", "es"]);
+  assert.equal(outreachSrc.postRef("bluesky_a1b2c3d4e5f60718293a"), "a1b2c3");
+  assert.equal(outreachSrc.campaignName("social-reply-x"), "Report replies on X");
+  assert.equal(outreachSrc.campaignName("brand-new"), "brand-new");
 });
 
 test("qalabreview.com briefing: a dead Worker alerts once campaigns send, and link revenue is reported", () => {
@@ -1228,16 +1256,52 @@ test("social: each channel shows what is next, what went out last and what faile
     "b/two": [{ channel: "linkedin", at: "2026-10-25T18:00:00Z", result: "queued" }, { channel: "x", at: "2026-10-23T15:00:00Z", result: "failed" }, { channel: "nope", at: "2026-10-26T15:00:00Z" }]
   } };
   const open = { posts: { "b/one": [{ channel: "bluesky", at: "2026-10-24T15:01:00Z", result: "sent", url: "https://bsky.app/profile/q/post/1" }, { channel: "mastodon", at: "2026-10-24T15:02:00Z", result: "failed" }] } };
-  const rows = social.byChannel([buffer, null, open], now, now - 7 * 86400000);
-  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "bluesky", "mastodon", "threads", "instagram", "instagram-story", "facebook", "youtube", "tiktok"]);
+  const telegram = { posts: { "live/2026-10-24": [{ channel: "telegram", at: "2026-10-24T18:38:14Z", result: "sent", url: "https://t.me/qalab_live/3" }] } };
+  const reddit = { posts: { "live/2026-10-24": [{ channel: "reddit", at: "2026-10-24T16:20:05Z", result: "sent", url: "https://www.reddit.com/r/QALabLiveReports/comments/abc/x/" }], "live/2026-10-23": [{ channel: "reddit", at: "2026-10-23T16:20:05Z", result: "failed", error: "Removed on Reddit (moderator)" }] } };
+  const rows = social.byChannel([buffer, null, open, telegram, reddit], now, now - 7 * 86400000);
+  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "bluesky", "mastodon", "threads", "instagram", "instagram-story", "facebook", "youtube", "tiktok", "telegram", "reddit"]);
+  assert.deepEqual([rows[11].name, rows[11].sent, rows[11].failed, rows[11].last.url], ["Reddit", 1, 1, "https://www.reddit.com/r/QALabLiveReports/comments/abc/x/"]);
   assert.deepEqual(rows[0].next.map((n) => n.post), ["b/two", "b/one"]);
   assert.equal(rows[0].scheduled, 2);
   assert.deepEqual([rows[1].sent, rows[1].failed, rows[1].last.url], [1, 1, "https://x.com/1"]);
   assert.deepEqual([rows[2].sent, rows[2].last.url, rows[3].failed], [1, "https://bsky.app/profile/q/post/1", 1]);
+  assert.deepEqual([rows[10].name, rows[10].sent, rows[10].last.post], ["Telegram", 1, "live/2026-10-24"]);
 });
 
-test("social: Jarvis can start the Bluesky and Mastodon poster with the Buffer and Page ones", () => {
-  assert.deepEqual(social.WORKFLOWS.map((w) => w.file), ["buffer-batch.yml", "facebook-page.yml", "open-social.yml"]);
+test("social: Telegram members show the count now and the change since the range began, or a need line", () => {
+  const since = Date.parse("2026-10-28T12:00:00Z");
+  const history = [{ date: "2026-10-20", members: 10 }, { date: "2026-10-27", members: 14 }, { date: "2026-10-30", members: 18 }, { date: "2026-11-04", members: 25 }];
+  const tg = social.telegramMembers({ channels: { telegram: { chat: "@qalab_live", members: 25, at: "2026-11-04T15:00:00Z", history } } }, since);
+  assert.deepEqual([tg.members, tg.change, tg.from, tg.need], [25, 11, { date: "2026-10-27", members: 14 }, ""]);
+  assert.deepEqual(tg.history.map((p) => p.date), ["2026-10-30", "2026-11-04"]);
+  const young = social.telegramMembers({ channels: { telegram: { members: 25, history: history.slice(2) } } }, since);
+  assert.deepEqual([young.change, young.from.date], [7, "2026-10-30"]);
+  const first = social.telegramMembers({ channels: { telegram: { members: 25, history: history.slice(3) } } }, since);
+  assert.deepEqual([first.change, first.from], [null, null]);
+  assert.match(social.telegramMembers({ posts: {} }, since).need, /^Telegram members: .*no member count.*TELEGRAM_BOT_TOKEN repo secret and the TELEGRAM_CHANNEL repo variable/);
+  assert.match(social.telegramMembers(null, since).need, /no member count/);
+  assert.match(social.telegramMembers({ channels: { telegram: { skipped: "no TELEGRAM_BOT_TOKEN secret", history: [] } } }, since).need, /skipped it \(no TELEGRAM_BOT_TOKEN secret\)/);
+  const failed = social.telegramMembers({ channels: { telegram: { members: 25, at: "2026-11-03T15:00:00Z", error: "Telegram 403: bot is not a member", history } } }, since);
+  assert.equal(failed.members, 25);
+  assert.match(failed.need, /showing the count from 2026-11-03 because the last run failed \(Telegram 403: bot is not a member\)/);
+});
+
+test("social: subreddit members come from the Reddit ledger like Telegram's, with a need line when missing or old", () => {
+  const since = Date.parse("2026-10-28T12:00:00Z");
+  const now = Date.parse("2026-11-04T18:00:00Z");
+  const history = [{ date: "2026-10-27", members: 9 }, { date: "2026-11-04", members: 12 }];
+  const rd = social.redditMembers({ posts: {}, members: { chat: "r/QALabLiveReports", members: 12, at: "2026-11-04T16:20:04.000Z", history } }, since, now);
+  assert.deepEqual([rd.channel, rd.members, rd.change, rd.from, rd.need], ["r/QALabLiveReports", 12, 3, { date: "2026-10-27", members: 9 }, ""]);
+  assert.match(social.redditMembers({ posts: {} }, since, now).need, /^Reddit members: the Reddit ledger has no member count yet\. .*reddit-live\.yml/);
+  assert.equal(social.redditMembers(null, since, now).members, null);
+  const old = social.redditMembers({ posts: {}, members: { members: 12, at: "2026-11-01T16:20:04.000Z", history } }, since, now);
+  assert.equal(old.members, 12);
+  assert.match(old.need, /showing the count from 2026-11-01, more than two days old/);
+});
+
+test("social: Jarvis can start the Bluesky and Mastodon poster with the Buffer and Page ones, and watches the Reddit app", () => {
+  assert.deepEqual(social.WORKFLOWS.map((w) => w.file), ["buffer-batch.yml", "facebook-page.yml", "open-social.yml", "reddit-live.yml"]);
+  assert.deepEqual(social.WORKFLOWS.filter((w) => !w.watch).map((w) => w.file), ["buffer-batch.yml", "facebook-page.yml", "open-social.yml"]);
   social.WORKFLOWS.forEach((w) => assert.ok(fs.existsSync(path.join(__dirname, "../../.github/workflows", w.file)), w.file));
 });
 

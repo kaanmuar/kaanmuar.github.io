@@ -21,6 +21,8 @@ const SERVICES = [
   { key: "linkedin", label: "LinkedIn", domains: ["linkedin.com"] },
   { key: "bluesky", label: "Bluesky", domains: ["bsky.app", "bsky.social", "blueskyweb.xyz"] },
   { key: "mastodon", label: "Mastodon", domains: ["mastodon.social", "joinmastodon.org"] },
+  { key: "reddit", label: "Reddit", domains: ["reddit.com", "redditmail.com"] },
+  { key: "telegram", label: "Telegram", domains: ["telegram.org"] },
   { key: "buffer", label: "Buffer", domains: ["buffer.com"] },
   { key: "github", label: "GitHub", domains: ["github.com"] },
   { key: "cloudflare", label: "Cloudflare", domains: ["cloudflare.com"] },

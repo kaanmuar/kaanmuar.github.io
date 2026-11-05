@@ -73,6 +73,8 @@ Sign in, give a public https address, and the review analyzes up to 20 pages of 
 * **Live Reports:** `.github/workflows/auto-live-reports.yml` publishes new requested reviews daily to `assets/live-reports/`, unless the asker ticked "Don't publish this review", then regenerates the site count in `llms.txt`, the review pages, and `llms-full.txt` with `scripts/build-llms-full.py` (`--check` fails when they are stale).
 * **Facebook:** `.github/workflows/facebook-page.yml` posts the Facebook Page queue daily.
 * **Bluesky and Mastodon:** `.github/workflows/open-social.yml` posts each batch's x slots as they come, every 30 minutes, once their secrets are set (`scripts/open-social-queue.js`).
+* **Telegram:** after each batch, `auto-live-reports.yml` posts it to the [@qalab_live](https://t.me/qalab_live) channel (`scripts/telegram-live.js`, ledger `assets/social/telegram.json`). Its links open `live.html` as the [@qalab_live_bot](https://t.me/qalab_live_bot) Mini App (`js/live-host.js`). Needs the `TELEGRAM_BOT_TOKEN` secret and the `TELEGRAM_CHANNEL` and `TELEGRAM_APP` variables.
+* **Reddit:** `.github/workflows/reddit-live.yml` uploads the Devvit app in `reddit/live-reports` with the day's Live Reports after each batch. The app posts and pins the batch in [r/QALabLiveReports](https://www.reddit.com/r/QALabLiveReports/). Needs the `DEVVIT_TOKEN` secret and the `REDDIT_SUBREDDIT` variable.
 
 ### Admin panel (`admin.html`)
 

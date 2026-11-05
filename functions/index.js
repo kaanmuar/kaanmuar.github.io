@@ -1410,18 +1410,23 @@ async function github(path, body, token) {
   return data;
 }
 
-async function openFailureBug(bug, token) {
-  const issue = await github("/repos/" + BUG_REPO + "/issues", { title: bug.title, body: bug.body, labels: ["bug", "area:be"] }, token);
+// Opens an issue in Backlog on the board, as a sub-issue of parent.
+async function openBoardIssue({ title, body, labels, parent }, token) {
+  const issue = await github("/repos/" + BUG_REPO + "/issues", { title, body, labels }, token);
   const boardToken = await githubApp.token("board");
   const board = github("/graphql", { query: "mutation($p:ID!,$c:ID!){addProjectV2ItemById(input:{projectId:$p,contentId:$c}){item{id}}}", variables: { p: BOARD.project, c: issue.node_id } }, boardToken)
     .then((added) => github("/graphql", {
       query: "mutation($p:ID!,$i:ID!,$f:ID!,$o:String!){updateProjectV2ItemFieldValue(input:{projectId:$p,itemId:$i,fieldId:$f,value:{singleSelectOptionId:$o}}){projectV2Item{id}}}",
       variables: { p: BOARD.project, i: added.data.addProjectV2ItemById.item.id, f: BOARD.status, o: BOARD.backlog }
     }, boardToken));
-  const parent = github("/repos/" + BUG_REPO + "/issues/" + BUG_TICKET + "/sub_issues", { sub_issue_id: issue.id }, token);
-  (await Promise.allSettled([board, parent])).filter((step) => step.status === "rejected")
-    .forEach((step) => console.error("Failure bug #" + issue.number + " was opened, but not filed on the board or under #" + BUG_TICKET + ":", step.reason));
+  const under = github("/repos/" + BUG_REPO + "/issues/" + parent + "/sub_issues", { sub_issue_id: issue.id }, token);
+  (await Promise.allSettled([board, under])).filter((step) => step.status === "rejected")
+    .forEach((step) => console.error("#" + issue.number + " was opened, but not filed on the board or under #" + parent + ":", step.reason));
   return issue;
+}
+
+function openFailureBug(bug, token) {
+  return openBoardIssue({ title: bug.title, body: bug.body, labels: ["bug", "area:be"], parent: BUG_TICKET }, token);
 }
 
 async function fileReviewFailureBugs() {
@@ -1680,6 +1685,7 @@ const reviewMulti = require("./url-review-multi");
 const reviewPeers = require("./url-review-peers");
 const reviewMarket = require("./url-review-market");
 const ownerNotice = require("./url-review-owner-notice");
+const engagementReports = require("./engagement-reports");
 const ownerMail = require("./url-review-owner-mail");
 const mailFace = require("./mail-face");
 const accountData = require("./url-review-account-data");
@@ -1978,14 +1984,15 @@ async function sendOwnerNotice(queued, email, shared) {
   if (!notice) return { error: "That address is not one of the contacts found for this site." };
   const memo = shared || {};
   const once = (key, load) => memo[key] || (memo[key] = load());
-  const [unlisted, stopped, index, reviewSnap] = await Promise.all([
+  const [unlisted, stopped, index, reviewSnap, answered] = await Promise.all([
     once("unlisted", unlistedHosts),
     ownerStops([notice.email], notice.domain),
     once("index", liveReportIndex),
-    once("review", () => getFirestore().collection("url_reviews").doc(notice.reviewId || "-").get())
+    once("review", () => getFirestore().collection("url_reviews").doc(notice.reviewId || "-").get()),
+    once("answered", () => engagementReports.answeredHosts(getFirestore(), [notice.host, notice.domain], Date.now()))
   ]);
   const card = ownerNotice.liveCard(index, notice.host);
-  const blocked = ownerNotice.sendBlock(notice, { stopped, unlisted, card });
+  const blocked = ownerNotice.sendBlock(notice, { stopped, unlisted, card, answered });
   if (blocked) return { error: blocked };
   const review = reviewSnap.exists ? reviewSnap.data() : null;
   const score = review && review.report && review.report.insights ? review.report.insights.score : null;
@@ -5504,6 +5511,8 @@ const jarvisProposals = require("./jarvis-proposals");
 const jarvisActions = require("./jarvis-actions");
 const jarvisCountdown = require("./jarvis-countdown");
 const jarvisDigest = require("./jarvis-digest");
+const jarvisGithub = require("./jarvis-github");
+const jarvisGithubFix = require("./jarvis-github-fix");
 
 // A URL shared to the Jarvis app: the owner's own review, run like a sweep review and pushed to the phone that asked.
 exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB", secrets: SECRETS.jarvisReviewRun }).firestore.document("jarvis_reviews/{id}").onCreate(async (snap) => {
@@ -5597,7 +5606,7 @@ async function jarvisSource(name, days) {
   } catch (error) { paypal = null; }
   return jarvisCached(name, JARVIS_DAYLESS.has(name) ? 0 : days, () => jarvisSources.run(name, {
     fetch, env: process.env, db: getFirestore(), now: Date.now(), days, settings, thresholds: jarvisCore.thresholds(settings.thresholds),
-    paypal, tls: jarvis.tlsDaysLeft, listUsers: jarvisUsers, github: () => githubApp.token()
+    paypal, tls: jarvis.tlsDaysLeft, listUsers: jarvisUsers, github: (scope) => githubApp.token(scope || "repo")
   }));
 }
 const JARVIS_REPORTS = { site: (period) => sendPeriodReport(period), review: (period) => sendReviewPeriodReport(period) };
@@ -5644,7 +5653,7 @@ async function jarvisDaily({ force }) {
   const now = Date.now();
   const [{ products }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "ga4", "money", "email", "social", "safety", "platform", "search", "outreach"], 1),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "ga4", "money", "email", "social", "safety", "platform", "search", "outreach", "github-work"], 1),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const items = jarvisCore.briefing({ products, external, thresholds: settings.thresholds, goals: goalRows });
@@ -5720,7 +5729,7 @@ async function jarvisSnapshot(days) {
   const now = Date.now();
   const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now, days }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "addresses", "marketing", "marketing-sync", "calls", "engagement", "people"], days),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "addresses", "marketing", "marketing-sync", "calls", "engagement", "people", "github-work"], days),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
@@ -5838,10 +5847,23 @@ function jarvisAutoOps(settings, now, th) {
       return social.ok ? Number(social.failed) || 0 : 0;
     },
     alerts: async () => {
-      const external = await jarvisExternal(["health", "jobs", "uptime", "money", "safety", "platform", "mailbox"], 1);
+      const external = await jarvisExternal(["health", "jobs", "uptime", "money", "safety", "platform", "mailbox", "github-work"], 1);
       return jarvisCore.openBrief(jarvis.watchItems(external, settings.thresholds), await jarvisProposals.savedBrief(db), new Date(now)).open;
     },
-    catalog: async () => ({ jobs: Array.from(scheduler), workflows: (await out.failedCi().catch(() => [])).filter((r) => r.branch === "main").map((r) => r.name) }),
+    catalog: async () => {
+      const t = jarvisCore.githubTargets(await out.githubWork().catch(() => null));
+      return {
+        jobs: Array.from(scheduler), workflows: (await out.failedCi().catch(() => [])).filter((r) => r.branch === "main").map((r) => r.name),
+        github: { drift: t.drift.map((d) => d.number), orphans: t.orphans.map((p) => p.number), behind: t.behind.map((p) => p.number), green: t.green.map((p) => p.number),
+          mainBroken: t.mainBroken.map((m) => m.sha), merged: t.merged.map((b) => b.name).slice(0, 30), worktrees: t.worktrees.map((w) => w.path) }
+      };
+    },
+    githubWork: async () => (await jarvisExternal(["github-work"], 1))["github-work"] || null,
+    githubAct: async (action, args) => {
+      const res = await jarvisGithubDo(action, args, now);
+      if (res.ok === false) throw new Error(res.message || "Nothing done.");
+      return { detail: res.message, count: res.count };
+    },
     saveProposals: (picks) => Promise.all(picks.map((p) => db.collection("jarvis_ai_proposals").doc(jarvisProposals.docId("fix:" + p.key)).set({
       key: "fix:" + p.key, alert: p.key, title: p.title || jarvisActions.LABELS[p.action] || p.action, why: p.why, action: p.action, args: p.args, confidence: p.confidence,
       reason: p.reason, at: new Date(now).toISOString(), until: new Date(now + 2 * 864e5).toISOString()
@@ -5932,7 +5954,7 @@ async function jarvisSocialPostNow() {
   const token = await githubApp.token();
   if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID in functions/.env with GITHUB_APP_PRIVATE_KEY in Secret Manager), so Jarvis cannot start the workflows.");
   const started = [];
-  for (const w of jarvisSocial.WORKFLOWS) {
+  for (const w of jarvisSocial.WORKFLOWS.filter((w) => !w.watch)) {
     const path = "/repos/" + BUG_REPO + "/actions/workflows/" + w.file;
     const busy = ((await githubGet(path + "/runs?per_page=5", token)).workflow_runs || []).find((run) => run.status !== "completed");
     if (busy) { started.push({ name: w.name, state: "already running", url: busy.html_url }); continue; }
@@ -5995,6 +6017,10 @@ async function jarvisClickAction(body, by) {
     return { ran, failed };
   };
   const list = (many, one) => (Array.isArray(many) ? many : [one]).map((v) => String(v || "").slice(0, 120)).filter(Boolean).slice(0, 6);
+  if (/^gh-/.test(action)) {
+    const out = await jarvisGithubAct(body, by);
+    return Object.assign({ action, done: out.ok === false ? 0 : out.count || 1, note: out.message }, out);
+  }
   if (action === "run-job" || action === "publish-hub") {
     const jobs = action === "publish-hub" ? ["refreshSocialHubStats"] : list(body.jobs, body.job);
     if (!jobs.length) throw new Error("Which job?");
@@ -6017,6 +6043,15 @@ async function jarvisClickAction(body, by) {
       await note({ action, status: "failed", target, detail: error.message || String(error) });
       throw error;
     }
+  }
+  if (action === "rerun-ci" && ghNumber(body.run)) {
+    const run = ghNumber(body.run);
+    try { await jarvis.rerunRun(fetch, await githubApp.token(), run); } catch (error) {
+      await note({ action, status: "failed", target: "run " + run, detail: error.message || String(error) });
+      throw error;
+    }
+    await note({ action, status: "done", target: "run " + run, detail: "Re-running its failed jobs." });
+    return { action, done: 1, failed: 0, ran: "run " + run, message: "Re-running the failed jobs of run " + run + ".", url: "https://github.com/" + jarvisGithubFix.REPO + "/actions/runs/" + run };
   }
   if (action === "rerun-ci") {
     const workflows = list(body.workflows, body.workflow);
@@ -6110,6 +6145,180 @@ async function jarvisClickAction(body, by) {
   throw new Error("Unknown action.");
 }
 
+// #2526: what jarvis-github-fix.js needs.
+function jarvisGithubCtx(now) {
+  return {
+    fetch, env: process.env, db: getFirestore(), now, github: (scope) => githubApp.token(scope || "repo"),
+    gemini: process.env.GEMINI_API_KEY ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null
+  };
+}
+
+const JARVIS_GH_FIX = { "gh-merge-pr": "mergePr", "gh-close-issue": "closeIssue" };
+const jarvisGithubTargets = async () => jarvisCore.githubTargets((await jarvisExternal(["github-work"], 1))["github-work"] || {});
+const ghNumber = (v) => Number(String(v || "").replace(/^#/, "")) || 0;
+
+/* Runs one gh-* action for a click, the hourly pass or the countdown -> { ok, message, url?, count? }. Without a target
+   it takes every item the github-work source lists for it (all drifted items, merged branches, PRs behind main). */
+async function jarvisGithubDo(action, args, now) {
+  const ctx = jarvisGithubCtx(now);
+  if (action === "gh-agent") return jarvisGithubAgent(ctx, Object.assign({}, args || {}));
+  const a = jarvisGithubFix.actArgs(action, args);
+  if (action === "gh-board-sync") {
+    if (!a.items) {
+      const drift = (await jarvisGithubTargets()).drift;
+      a.items = a.number ? drift.filter((d) => d.number === a.number) : drift;
+      if (!a.items.length) return { ok: false, message: a.number ? "#" + a.number + " is in the right column now." : "Nothing on the board is in the wrong column." };
+    }
+    return jarvisGithubFix.boardSync(ctx, a);
+  }
+  if (action === "gh-update-pr" || action === "gh-orphan-ticket") {
+    let numbers = a.numbers;
+    if (!numbers) { const t = await jarvisGithubTargets(); numbers = (action === "gh-update-pr" ? t.behind : t.orphans).map((p) => p.number); }
+    if (!numbers.length) return { ok: false, message: action === "gh-update-pr" ? "No PR is behind main." : "Every PR names a ticket." };
+    const said = [];
+    let count = 0, url = null;
+    for (const n of numbers.slice(0, 10)) {
+      try {
+        const res = await jarvisGithubFix[action === "gh-update-pr" ? "updatePr" : "orphanTicket"](ctx, { pr: n, repo: a.repo });
+        if (res.ok !== false) { count += 1; url = url || res.url; }
+        said.push(res.message);
+      } catch (error) { said.push("#" + n + ": " + String(error.message || error).slice(0, 160)); }
+    }
+    return { ok: count > 0, count, message: said.join(" ").slice(0, 600), url };
+  }
+  if (action === "gh-delete-branch") {
+    if (!a.branches) a.branches = (await jarvisGithubTargets()).merged.map((b) => b.name);
+    if (!a.branches.length) return { ok: false, message: "No merged branch is left." };
+    return jarvisGithubFix.deleteBranch(ctx, a);
+  }
+  if (action === "gh-revert") {
+    if (!a.sha) {
+      const m = (await jarvisGithubTargets()).mainBroken[0];
+      if (!m) return { ok: false, message: "Main is not red after a commit Jarvis can name." };
+      Object.assign(a, { sha: m.sha, why: m.why });
+    }
+    return jarvisGithubFix.revert(ctx, a);
+  }
+  if (action === "gh-remove-worktree") {
+    let paths = a.path ? [a.path] : null;
+    if (!paths) {
+      const wt = (await jarvisGithubTargets()).worktrees;
+      paths = (a.dir ? wt.filter((w) => w.dir === a.dir) : wt).map((w) => w.path);
+    }
+    if (!paths.length) return { ok: false, message: "No merged, clean worktree is free to remove." };
+    const said = [];
+    let count = 0;
+    for (const p of paths.slice(0, 10)) {
+      const res = await jarvisGithubFix.queueLocal(ctx.db, "remove-worktree", p, now);
+      if (res.ok) count += 1;
+      said.push(res.message);
+    }
+    return { ok: count > 0, count, message: said.join(" ").slice(0, 600) };
+  }
+  if (JARVIS_GH_FIX[action]) return jarvisGithubFix[JARVIS_GH_FIX[action]](ctx, a);
+  throw new Error("Unknown GitHub action.");
+}
+
+// A Cursor agent from a written prompt, a diagnosis's drafted one (gh:diag:<run>) or a PR's conflicts (gh:pr-conflict:<n>).
+async function jarvisGithubAgent(ctx, a) {
+  const key = String(a.key || "");
+  let prompt = String(a.prompt || "").trim();
+  let pr = ghNumber(a.pr);
+  let branch = a.branch ? String(a.branch) : "";
+  let repo = a.repo || undefined;
+  const run = ghNumber(a.run) || (key.startsWith("gh:diag:") ? ghNumber(key.slice(8)) : 0);
+  if (!prompt && run) {
+    const snap = await ctx.db.collection("jarvis_github_diag").doc(String(run)).get();
+    const d = snap.exists ? snap.data() : null;
+    if (!d || !d.prompt) throw new Error("Run " + run + " has no drafted prompt yet; diagnose it first.");
+    prompt = d.prompt;
+    branch = branch || d.branch || "main";
+    repo = repo || d.repo;
+  }
+  if (!prompt && key.startsWith("gh:pr-conflict:")) {
+    pr = ghNumber(key.split(":")[2]);
+    prompt = "PR #" + pr + " in " + (repo || jarvisGithubFix.REPO) + " has merge conflicts with main. Merge main into the PR branch, resolve every conflict keeping the intent of both sides, "
+      + "run npm run test:review and node scripts/build-jarvis-core.js --check, and push the result to the PR branch. Say in a PR comment what each conflict was and how you resolved it.";
+  }
+  return jarvisGithubFix.launchAgent(ctx, { prompt, pr: pr || undefined, branch, repo, name: a.name || (run ? "Jarvis fix: run " + run : pr ? "Jarvis fix: PR #" + pr : "") });
+}
+
+// An owner click (github-act, action-run, a push's Run): runs at once, logged in jarvis_actions.
+async function jarvisGithubAct(body, by) {
+  const action = String(body.action || "");
+  // A run id re-runs that run's failed jobs on any branch; workflow names re-run their newest failed run on main.
+  if (action === "rerun-ci") return Object.assign({ ok: true }, await jarvisClickAction(Object.assign({}, body, { action }), by));
+  if (!jarvisActions.GH_ACTIONS.includes(action)) throw new Error("Unknown GitHub action.");
+  const now = Date.now();
+  const target = String(body.target || body.pr || body.number || body.sha || body.branch || body.path || body.run || body.key || "all").slice(0, 200);
+  const note = (status, detail) => jarvisActions.log(getFirestore(), { action, mode: "click", status, target, detail, by, proposal: String(body.proposal || "").slice(0, 140) }, Date.now()).catch(() => null);
+  try {
+    const out = await jarvisGithubDo(action, body, now);
+    await note(out.ok === false ? "failed" : "done", out.message);
+    return Object.assign({ action }, out);
+  } catch (error) {
+    await note("failed", String(error.message || error));
+    throw error;
+  }
+}
+
+/* Hourly at :20 (#2526): the day docs and the backfill (jarvis-github.js), Gemini diagnoses of new failed main and PR
+   runs (12 a Bogotá day, 3 a tick; one that fails is not tried again), and on Sunday from 18:00 the weekly retro. The
+   safe and countdown fixes run in jarvisWatch's hourly pass, which reads the same source. */
+async function jarvisGithubJob() {
+  const db = getFirestore();
+  const now = Date.now();
+  const ctx = jarvisGithubCtx(now);
+  const notes = [];
+  const said = (out) => (typeof out === "string" ? out : out && typeof out === "object"
+    ? Object.keys(out).filter((k) => typeof out[k] === "number" || Array.isArray(out[k])).map((k) => k + " " + (Array.isArray(out[k]) ? out[k].length : out[k])).join(", ") || "done" : "done");
+  const step = async (label, run) => {
+    try { const out = await run(); if (out !== null) notes.push(label + ": " + said(out)); } catch (error) { notes.push(label + " failed: " + String(error.message || error).slice(0, 120)); }
+  };
+  const snapshot = (await jarvisExternal(["github-work"], 1))["github-work"];
+  await step("days", () => jarvisGithub.daily(Object.assign({}, ctx, snapshot && snapshot.ok !== false ? { snapshot } : {})));
+  await step("backfill", () => jarvisGithub.backfill(Object.assign({}, ctx, { limit: 10 })));
+  await step("diagnosed", async () => {
+    if (!ctx.gemini) return "none (no GEMINI_API_KEY)";
+    const start = jarvisCore.zoneParts(new Date(now)).day + "T05:00:00.000Z";
+    const today = (await db.collection("jarvis_github_diag").where("at", ">=", start).limit(50).get()).size;
+    const room = Math.min(3, 12 - today);
+    if (room <= 0) return "none (12 today)";
+    const failedRef = db.collection("jarvis_watch").doc("github_diag_failed");
+    const failedSnap = await failedRef.get().catch(() => null);
+    const failed = (failedSnap && failedSnap.exists && failedSnap.data().ids) || [];
+    const gw = snapshot || {};
+    const fresh = ((gw.ci || {}).failing || []).filter((r) => r.id && !r.diag && (r.branch === "main" || r.pr) && !failed.includes(String(r.id)));
+    let done = 0;
+    for (const r of fresh) {
+      if (done >= room) break;
+      if ((await db.collection("jarvis_github_diag").doc(String(r.id)).get()).exists) continue;
+      try {
+        const res = await jarvisGithubFix.diagnose(ctx, { run: r.id, repo: r.repo });
+        if (res.ok !== false) done += 1;
+      } catch (error) {
+        console.error("Jarvis GitHub diagnosis of run " + r.id + " failed:", error.message);
+        failed.push(String(r.id));
+        await failedRef.set({ ids: failed.slice(-200), at: new Date(now).toISOString() }).catch(() => null);
+      }
+    }
+    if (done) await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("github-work-" + d).delete().catch(() => null)));
+    return done + " of " + fresh.length + " new failed runs";
+  });
+  const p = jarvisCore.zoneParts(new Date(now));
+  if (p.weekday === 6 && p.hour >= 18) await step("retro", async () => {
+    if ((await db.collection("jarvis_github_weekly").doc(jarvisGithubFix.isoWeek(now)).get()).exists) return null;
+    const gw = (await jarvisExternal(["github-work"], 7))["github-work"];
+    const out = await jarvisGithubFix.retro(ctx, { summary: jarvis.githubAsk(gw) });
+    const mailed = (await mailOn("weekly")) && await sendOwnerEmail({
+      subject: "Jarvis GitHub retro, " + out.week, intro: "Gemini's look back at the GitHub week: CI, PRs, the board and what to change next.", rows: [],
+      body: out.text, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL.replace("/overview/", "/github/"), buttonLabel: "Open GitHub"
+    });
+    return out.week + (mailed ? ", mailed" : "");
+  });
+  return notes.join("; ").slice(0, 280);
+}
+
 async function jarvisActionsView(now) {
   const db = getFirestore();
   const settings = await jarvis.readSettings(db);
@@ -6126,7 +6335,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-connect": (b) => (b.disconnect ? "disconnect " : "connect ") + String(b.network || "").slice(0, 20), "engagement-report": (b) => String(b.period || "daily") + " engagement report" };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-connect": (b) => (b.disconnect ? "disconnect " : "connect ") + String(b.network || "").slice(0, 20), "engagement-report": (b) => String(b.period || "daily") + " engagement report", "github-diagnose": (b) => "run " + String(b.run || "").slice(0, 20), "github-agent": (b) => (b.pr ? "PR #" + b.pr + " " : "") + String(b.key || b.run || b.prompt || "").slice(0, 100) };
 
 async function jarvisWatchRun() {
   const db = getFirestore();
@@ -6134,7 +6343,8 @@ async function jarvisWatchRun() {
   const phones = await jarvisPush.targets(db, "alerts");
   if (!settings.mail.watch && !(await jarvisPush.anyTargets(db, "alerts"))) return "off in settings";
   const now = Date.now();
-  const external = await jarvisExternal(["health", "jobs", "uptime", "money", "safety", "platform", "mailbox"], 1);
+  const [base, github] = await Promise.all([jarvisExternal(["health", "jobs", "uptime", "money", "safety", "platform", "mailbox"], 1), jarvisExternal(["github-work"], 1)]);
+  const external = Object.assign(base, github);
   const items = jarvisCore.openBrief(jarvis.watchItems(external, settings.thresholds), await jarvisProposals.savedBrief(db), new Date(now)).open;
   const { day, ref, sent, fresh } = await jarvis.unsentToday(db, items, { now });
   if (!fresh.length) return "nothing new";
@@ -6258,6 +6468,9 @@ async function jarvisUptimeRun() {
 // Every ten minutes (#1977): the countdowns that came due run.
 exports.jarvisCountdowns = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.jarvisCountdowns }), "jarvisCountdowns", jarvisCountdownRun);
 
+// Hourly at :20 (#2526): GitHub day docs, backfill, diagnoses and the Sunday retro.
+exports.jarvisGithub = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.jarvisGithub }), "jarvisGithub", jarvisGithubJob);
+
 // Every 30 minutes (#1988): read our field's posts, plan likes, reposts and follows, and push reply drafts for approval.
 exports.engagementScout = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.engagement }), "engagementScout",
   async () => jarvisEngagement.runNote(await jarvisEngagement.scout(engagementDeps())));
@@ -6267,7 +6480,14 @@ const engagementReport = (period) => async () => {
   return out.subject;
 };
 exports.engagementDailyReport = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB", secrets: SECRETS.engagement }), "engagementDailyReport", engagementReport("daily"));
-exports.engagementWeeklyReport = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB", secrets: SECRETS.engagement }), "engagementWeeklyReport", engagementReport("weekly"));
+// Sunday's weekly report also files the report replies' results ticket on the board (#2471).
+exports.engagementWeeklyReport = scheduled(functions.runWith({ timeoutSeconds: 180, memory: "512MB", secrets: SECRETS.engagementWeekly }), "engagementWeeklyReport", async () => {
+  const subject = await engagementReport("weekly")();
+  const token = await githubApp.token();
+  if (!token) return subject + "; no GitHub token is set, so no results ticket";
+  const ticket = await jarvisEngagement.resultsTicket(Object.assign(engagementDeps(), { openIssue: (issue) => openBoardIssue(issue, token) }));
+  return subject + "; results ticket: " + ticket.note;
+});
 exports.engagementMonthlyReport = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "512MB", secrets: SECRETS.engagement }), "engagementMonthlyReport", engagementReport("monthly"));
 
 const tiktokWatch = require("./tiktok-business-watch");
@@ -6465,6 +6685,15 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     catch (error) { res.status(error.status || 400).json({ ok: false, error: String(error.message || error).slice(0, 300) }); }
     return;
   }
+  // The Mac's GitHub uploader (#2526) signs with the same paired token as the browser agent.
+  if ((req.body || {}).op === "github-local") {
+    try {
+      const db = getFirestore();
+      await engagementMac.verify(db, String(req.get("x-mac-token") || ""));
+      res.json(Object.assign({ op: "github-local" }, await jarvisGithubFix.localIngest(db, req.body, Date.now())));
+    } catch (error) { res.status(error.status || 400).json({ ok: false, op: "github-local", error: String(error.message || error).slice(0, 300) }); }
+    return;
+  }
   const presented = String(req.get("authorization") || "");
   const bearer = presented.toLowerCase().startsWith("bearer ") ? presented.slice(7).trim() : "";
   let operator = null;
@@ -6581,7 +6810,17 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "engagement-settings") out = await jarvisEngagement.saveSettings(getFirestore(), body.settings || body, operator, now);
     else if (op === "engagement-connect") out = await jarvisEngagement.connect(Object.assign(engagementDeps(), { now }), body, BOOKING_REDIRECT);
     else if (op === "engagement-report") out = await jarvisEngagement.sendReport(Object.assign(engagementDeps(), { now }), ["daily", "weekly", "monthly"].includes(body.period) ? body.period : "daily");
-    else if (jarvisSources.SOURCES[op]) out = await jarvisSource(op, days);
+    else if (op === "github-diagnose") {
+      const res = await jarvisGithubFix.diagnose(jarvisGithubCtx(now), { run: body.run, repo: body.repo });
+      await Promise.all([1, 7, 30, 90, 365].map((d) => getFirestore().collection("jarvis_cache").doc("github-work-" + d).delete().catch(() => null)));
+      out = res;
+    }
+    else if (op === "github-agent") out = await jarvisGithubAgent(jarvisGithubCtx(now), body);
+    else if (op === "github-act") out = await jarvisGithubAct(body, operator);
+    else if (jarvisSources.SOURCES[op]) {
+      if (op === "github-work" && body.fresh === true) await getFirestore().collection("jarvis_cache").doc(op + "-" + (JARVIS_DAYLESS.has(op) ? 0 : days)).delete().catch(() => null);
+      out = await jarvisSource(op, days);
+    }
     else if (op === "send-report") {
       const kind = body.kind === "site" ? "site" : "review";
       const period = ["daily", "weekly", "monthly", "quarter"].includes(body.period) ? body.period : "daily";
