@@ -708,6 +708,7 @@ async function decide(deps, body, by) {
   if (out.d.counter === "dismissed") { await clearCache(db); return { key, status: "dismissed", message: "Dismissed." }; }
   const said = out.d.counter === "edited" ? "Your version is approved" : "Approved";
   if (out.copy) { await clearCache(db); return { key, status: "copy", url: out.profile, text: out.d.reply.draft, message: said + "; paste it on " + name + " at " + out.profile + "." }; }
+  if (net.devvit) { await clearCache(db); return { key, status: "approved", message: said + "; the Reddit app posts it with its next hourly upload, usually within two hours." }; }
   if (!net.api) { await clearCache(db); return { key, status: "approved", message: said + "; the Mac's browser agent posts it on " + name + " on its next run (every 30 minutes, 7:00 to 22:00)." }; }
   if ((await readSettings(db)).paused) { await clearCache(db); return { key, status: "approved", message: said + "; engagement is paused, so it goes out on " + name + " when you resume." }; }
   const sent = await Act.replyNow(deps, key).catch((error) => ({ status: "approved", error: error.message }));
@@ -718,12 +719,13 @@ async function decide(deps, body, by) {
   return { key, status: "approved", message: said + "; " + name + " did not take it yet (" + (sent.error || "not sent") + "), so the next scout run tries again." };
 }
 
-/** Jarvis > Engagement > Accounts: save Bluesky's app password, start Connect YouTube or Mastodon, or disconnect. */
+/** Jarvis > Engagement > Accounts: save Bluesky's app password or Telegram's bot token, start Connect YouTube or Mastodon, or disconnect. */
 async function connect(deps, body, redirect) {
   const network = String((body && body.network) || "");
   let out;
   if (body && body.disconnect) out = await Act.disconnect(deps.db, network);
   else if (network === "bluesky") out = await Act.saveBluesky(deps, body);
+  else if (network === "telegram") out = await Act.saveTelegram(deps, body);
   else out = Object.assign({ network }, await Act.connectUrl(deps, network, redirect, deps.keys || {}));
   await clearCache(deps.db);
   return out;
@@ -744,9 +746,14 @@ const WORDS = { like: "likes", repost: "reposts", follow: "follows", reply: "rep
 const joinAnd = (list) => list.length > 1 ? list.slice(0, -1).join(", ") + " and " + list[list.length - 1] : list.join("");
 const STAGE = Object.assign(
   Object.fromEntries(Object.entries(E.NETWORKS).filter(([, n]) => n.browser).map(([k, n]) => [k, joinAnd((n.only || Object.keys(WORDS)).map((a) => WORDS[a]))])),
-  { bluesky: "likes, reposts, follows and replies", mastodon: "likes, boosts, follows and replies", youtube: "likes, subscribes and comments", hn: "trends only", devto: "trends only", lobsters: "trends only" }
+  {
+    bluesky: "likes, reposts, follows and replies", mastodon: "likes, boosts, follows and replies", youtube: "likes, subscribes and comments",
+    telegram: "reactions and replies under our channel's posts", reddit: "replies under our subreddit's posts", hn: "trends only", devto: "trends only", lobsters: "trends only"
+  }
 );
 const MAC_STALE = 2 * 3600000;
+// reddit-engagement.yml syncs every hour (functions/engagement-reddit.js).
+const REDDIT_STALE = 3 * 3600000;
 const AGENT = "node scripts/engagement-browser/agent.js";
 
 const brief = (d) => ({
@@ -761,7 +768,7 @@ async function source(ctx) {
   const now = ctx.now;
   const days = Math.max(1, Math.min(365, Number(ctx.days) || 7));
   const range = dayList(E.bogotaDay(now), Math.min(days, 92));
-  const [conf, runsSnap, waitingSnap, approvedSnap, cur, prev, top, reportsSnap, accounts, creds, macSnap] = await Promise.all([
+  const [conf, runsSnap, waitingSnap, approvedSnap, cur, prev, top, reportsSnap, accounts, creds, macSnap, redditSnap] = await Promise.all([
     readSettings(db),
     db.collection("engagement_runs").orderBy("at", "desc").limit(12).get(),
     db.collection("engagement_posts").where("actions.reply.status", "==", "waiting").limit(60).get(),
@@ -772,9 +779,12 @@ async function source(ctx) {
     db.collection("engagement_reports").orderBy("at", "desc").limit(9).get(),
     Act.connections(db),
     Act.readCreds(db),
-    db.collection("engagement_private").doc("mac").get()
+    db.collection("engagement_private").doc("mac").get(),
+    db.collection("engagement_private").doc("reddit").get()
   ]);
   const mac = macSnap.exists && macSnap.data().at ? macSnap.data() : null;
+  const reddit = redditSnap.exists && redditSnap.data().at ? redditSnap.data() : null;
+  const redditLate = !reddit || now - Date.parse(reddit.at) > REDDIT_STALE;
   const signed = (k) => !!(mac && (mac.signedIn || {})[k]);
   const macReads = (k) => (!mac ? "Mac browser, not set up" : !signed(k) ? "Mac browser, not signed in" : "Mac browser" + ((mac.accounts || {})[k] ? " as " + mac.accounts[k] : ""));
   const runs = runsSnap.docs.map((d) => d.data());
@@ -784,6 +794,7 @@ async function source(ctx) {
   const env = withAccounts(ctx.env || {}, creds);
   const readers = Object.fromEntries(Sources.readable(env).map((r) => [r.network, r]));
   const acting = (k) => {
+    if ((E.NETWORKS[k] || {}).devvit) return "Reddit app: " + STAGE[k] + (reddit ? "; last sync " + Math.round((now - Date.parse(reddit.at)) / 60000) + " minutes ago" + (reddit.error ? " (" + reddit.error + ")" : "") : "; waiting for the first sync");
     if ((E.NETWORKS[k] || {}).browser) {
       if (!signed(k)) return STAGE[k] + " through the Mac's browser once it is signed in there";
       const until = (mac.blocked || {})[k];
@@ -795,8 +806,8 @@ async function source(ctx) {
     return "API as " + a.account + ": " + STAGE[k] + (conf.live ? "" : " (dry run: replies post, the rest is only logged)") + (a.error ? "; last error: " + a.error : "");
   };
   const networks = Object.entries(E.NETWORKS).map(([k, n]) => ({
-    network: k, name: n.name, reads: readers[k] ? (readers[k].ok ? "API" : k === "bluesky" ? "needs the account" : "needs a key") : n.browser ? macReads(k) : "",
-    lastRead: n.browser ? (mac && mac.read ? mac.read[k] || 0 : 0) : last && last.read ? last.read[k] || 0 : 0,
+    network: k, name: n.name, reads: readers[k] ? (readers[k].ok ? "API" : k === "bluesky" ? "needs the account" : "needs a key") : n.browser ? macReads(k) : n.devvit ? "Reddit app, our posts' comments" : n.api ? "bot, our posts' comments" : "",
+    lastRead: n.browser ? (mac && mac.read ? mac.read[k] || 0 : 0) : n.devvit ? (reddit && reddit.read) || 0 : last && last.read ? last.read[k] || 0 : 0,
     error: n.browser ? (mac && mac.errors ? mac.errors[k] || "" : "") : last && last.errors ? last.errors[k] || "" : "", acts: acting(k),
     row: report.networks.find((r) => r.network === k) || null
   }));
@@ -814,6 +825,8 @@ async function source(ctx) {
     browser.filter((k) => !signed(k)).forEach((k) => needs.push("Engagement: sign in to " + E.NETWORKS[k].name + " in the agent's Chrome: " + AGENT + " login " + k + "."));
     browser.filter((k) => (mac.blocked || {})[k]).forEach((k) => needs.push("Engagement: " + E.NETWORKS[k].name + " asked for a check (a captcha or unusual activity), so the agent leaves it alone until " + mac.blocked[k] + ". Clear it with " + AGENT + " login " + k + "."));
   }
+  if (redditLate) needs.push("Engagement: " + (reddit ? "the Reddit sync last ran " + Math.round((now - Date.parse(reddit.at)) / 3600000) + " hours ago" : "the Reddit sync has not run yet") + ", so comments under r/QALabLiveReports posts wait; check reddit-engagement.yml (DEVVIT_TOKEN and REDDIT_ENGAGEMENT_TOKEN).");
+  else if (reddit.error) needs.push("Engagement: the Reddit sync failed (" + reddit.error + ").");
   if (last && last.aiError) needs.push("Engagement: Gemini failed on the last run (" + last.aiError + "), so no reply was drafted.");
   if (conf.paused) needs.push("Engagement is paused: nothing is planned or pushed until you resume it.");
   const byScore = (a, b) => b.score - a.score;

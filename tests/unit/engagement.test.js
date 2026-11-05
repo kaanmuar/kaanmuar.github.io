@@ -266,7 +266,10 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.equal(src.stale, false);
   assert.ok(src.needs.some((n) => /Bluesky: paste an app password/.test(n)));
   assert.equal(src.live, false, "a dry run until Carlos turns it live");
-  assert.equal(src.accounts.length, 3);
+  assert.equal(src.accounts.length, 4);
+  assert.ok(src.needs.some((n) => /Telegram: paste the bot's token/.test(n)));
+  assert.ok(src.needs.some((n) => /Reddit sync has not run yet/.test(n)));
+  assert.match(src.networks.find((n) => n.network === "reddit").acts, /^Reddit app: replies under our subreddit's posts; waiting for the first sync/);
   assert.equal(src.networks.find((n) => n.network === "linkedin").reads, "Mac browser, not set up");
   assert.ok(src.needs.some((n) => /X, LinkedIn, Facebook, Instagram, Threads and TikTok wait for the Mac's browser agent/.test(n)));
 });

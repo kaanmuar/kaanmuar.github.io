@@ -25,8 +25,9 @@ const DAY = 24 * HOUR;
 const REPLY_TTL = 6 * HOUR;
 // Someone answering us waits longer than a stranger's post: a day for Carlos to approve the answer.
 const CHAIN_TTL = DAY;
-// Comments we can like: through the API, or the Mac's browser for X (#2424); YouTube has no comment likes.
-const CHAIN_LIKES = ["bluesky", "mastodon", "x", "threads", "instagram", "tiktok", "linkedin", "facebook"];
+// Comments we can like: through the API, or the Mac's browser for X (#2424); YouTube has no comment likes. A like on
+// Telegram is a reaction from the bot (#2614); the Reddit app cannot vote.
+const CHAIN_LIKES = ["bluesky", "mastodon", "x", "threads", "instagram", "tiktok", "linkedin", "facebook", "telegram"];
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const ACTIONS = ["like", "repost", "follow", "reply"];
 
@@ -36,6 +37,8 @@ const ACTIONS = ["like", "repost", "follow", "reply"];
 // caps: a browser network's own daily ceiling under the settings' caps, the most an account takes from a real
 // browser without the network flagging it as automated (#1991); LinkedIn and Facebook flag soonest. There the agent
 // acts as our company page, which follows no one and does not repost, so they take likes and replies only.
+// Telegram and Reddit (#2614) act under our own posts only: the bot reacts and answers in @qalab_live's discussion
+// group, and the Reddit app (devvit, reddit/live-reports) answers under its r/QALabLiveReports posts as the app account.
 const NETWORKS = {
   bluesky: { name: "Bluesky", acts: true, api: true, limit: 300, scale: 20, weight: 1 },
   mastodon: { name: "Mastodon", acts: true, api: true, limit: 500, scale: 10, weight: 1 },
@@ -46,6 +49,8 @@ const NETWORKS = {
   instagram: { name: "Instagram", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 1000, scale: 60, weight: 0.8, caps: { like: 50, follow: 15, reply: 8 } },
   threads: { name: "Threads", acts: true, browser: true, limit: 500, scale: 30, weight: 0.9, caps: { like: 50, repost: 10, follow: 15, reply: 10 } },
   tiktok: { name: "TikTok", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 150, scale: 300, weight: 0.8, caps: { like: 50, follow: 15, reply: 8 } },
+  telegram: { name: "Telegram", acts: true, api: true, only: ["like", "reply"], limit: 1000, scale: 10, weight: 0.8 },
+  reddit: { name: "Reddit", acts: true, devvit: true, only: ["reply"], limit: 1500, scale: 20, weight: 1 },
   hn: { name: "Hacker News", acts: false, scale: 30, weight: 1 },
   devto: { name: "DEV", acts: false, scale: 20, weight: 0.8 },
   lobsters: { name: "Lobsters", acts: false, scale: 10, weight: 0.9 }

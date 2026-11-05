@@ -32,7 +32,14 @@ class EngagementTest {
     @Test fun eachNetworkKeepsItsReplyLimit() {
         assertEquals(300, Engagement.limit("bluesky"))
         assertEquals(280, Engagement.limit("x"))
+        assertEquals(1000, Engagement.limit("telegram"))
+        assertEquals(1500, Engagement.limit("reddit"))
         assertEquals(300, Engagement.limit(null))
+    }
+
+    @Test fun onlyABotTokenEnablesConnectTelegram() {
+        assertTrue(Engagement.BOT_TOKEN.matches("123456789:AAEabcdefghijklmnopqrstuvwxyz012345"))
+        assertTrue(!Engagement.BOT_TOKEN.matches("@qalab_live_bot"))
     }
 
     @Test fun metricsAndAuthorReadTheSnapshot() {
