@@ -22,6 +22,7 @@ class OngoingTest {
         assertEquals(listOf("Checkout is down", "Today $38 · 2 sales"), c.lines)
         assertTrue(c.urgent)
         assertEquals(5L, c.at)
+        assertEquals("1 alert", c.chip)
     }
 
     @Test fun allClearShowsTheMoneyLine() {
@@ -30,5 +31,27 @@ class OngoingTest {
         assertEquals("Readiness — · All clear", c.title)
         assertEquals("Today — · 0 sales", c.text)
         assertFalse(c.urgent)
+        assertNull(c.chip)
+    }
+
+    @Test fun leavesOutThePartsTurnedOff() {
+        val week = json("""{"readiness":71.6,"briefing":[{"level":"alert","text":"Checkout is down"}],
+            "external":{"money":{"ok":true,"revenue":{"usd":38,"count":2}}}}""")
+        val c = Ongoing.content(week, null, 0L, 3, setOf(Ongoing.Part.APPROVALS, Ongoing.Part.MONEY))
+        assertEquals("3 approvals waiting", c.title)
+        assertEquals(listOf("Today $38 · 2 sales"), c.lines)
+        assertNull(c.chip)
+        assertFalse(c.urgent)
+        assertTrue(c.waiting)
+        assertFalse(c.ring || c.bar || c.live)
+        assertEquals("Jarvis", Ongoing.content(week, null, 0L, 0, emptySet()).title)
+        assertEquals(Ongoing.Part.ALL, Ongoing.Part.of(null))
+        assertEquals(setOf(Ongoing.Part.BAR), Ongoing.Part.of("bar,gone"))
+    }
+
+    @Test fun chipShowsApprovalsThenReadiness() {
+        val snap = json("""{"readiness":88,"briefing":[{"level":"warn","text":"TLS expires in 9 days"}]}""")
+        assertEquals("2 waiting", Ongoing.content(snap, null, 0L, 2).chip)
+        assertEquals("88%", Ongoing.content(snap, null, 0L, 0).chip)
     }
 }

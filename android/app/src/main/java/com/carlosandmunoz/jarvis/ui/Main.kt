@@ -18,6 +18,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.compose.ui.platform.LocalContext
 import android.os.Build
 import com.carlosandmunoz.jarvis.home.GoalsWidgetReceiver
+import com.carlosandmunoz.jarvis.home.Ongoing
 import com.carlosandmunoz.jarvis.home.AlertsWidgetReceiver
 import com.carlosandmunoz.jarvis.home.AskWidgetReceiver
 import com.carlosandmunoz.jarvis.home.MoneyWidgetReceiver
@@ -522,8 +523,18 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 val allowed = NotificationManagerCompat.from(context).areNotificationsEnabled()
                 if (!allowed) Text("Notifications are off for Jarvis on this phone.", color = J.amber, fontSize = 13.sp)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) { Text("Live status"); Muted("Readiness as a ring in the status bar, what needs you and today's money. Updates silently on each refresh.") }
+                    Column(Modifier.weight(1f)) { Text("Live status"); Muted("Readiness as a ring in the status bar, what needs you and today's money. Updates silently on each refresh and comes back if swiped away; on Android 16 it is a Live Update with a status-bar chip. Turn it off here.") }
                     Switch(s.ongoing, vm::setOngoing)
+                }
+                if (s.ongoing) {
+                    Muted("Show in the notification")
+                    Ongoing.Part.entries.forEach { part ->
+                        Row(Modifier.padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) { Text(part.label, fontSize = 14.sp); Muted(part.hint) }
+                            Switch(part in s.ongoingParts, { vm.setOngoingPart(part, it) })
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
                 }
                 mapOf(
                     Push.ALERTS to ("Alerts" to "A threshold crossing from the hourly watch, at any hour."),
