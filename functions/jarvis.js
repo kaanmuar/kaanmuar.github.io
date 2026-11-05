@@ -768,7 +768,19 @@ function engagementAsk(g) {
     totals: g.report.totals, approvalRate: g.report.approvalRate, topics: g.report.topics, tags: (g.report.tags || []).slice(0, 10), networks: g.report.networks,
     waiting: (g.waiting || []).length, topPosts: (g.posts || []).slice(0, 5).map((d) => d.network + ": " + (d.title || String(d.text || "").slice(0, 100)) + " (score " + d.score + ")"),
     reportReplies: Object.assign({ waiting: (g.waiting || []).filter((d) => d.campaign === "report-reply").length }, g.report.invites),
-    ownerTags: g.ownerTags ? { settings: g.ownerTags.settings, last: g.ownerTags.last && Object.assign({}, g.ownerTags.last, { sample: undefined }), accounts: g.ownerTags.accounts, waiting: (g.ownerTags.waiting || []).length } : null
+    ownerTags: ownerTagsAsk(g.ownerTags)
+  };
+}
+
+// Owner tags (#2633, #2660) for Ask: the state, the last run, accounts by status, suggestions waiting for Carlos, and posts per network in the last 7 days.
+function ownerTagsAsk(o) {
+  if (!o) return null;
+  const comments = o.comments || [];
+  const failed = comments.filter((c) => c.status === "failed");
+  return {
+    state: o.settings ? (o.settings.paused ? "paused" : o.settings.live ? "live" : "dry run") : null, last: o.last && Object.assign({}, o.last, { sample: undefined }), accounts: o.accounts,
+    waiting: (o.accounts || {}).suggested || 0, postedLast7Days: o.week || {}, queued: comments.filter((c) => c.status === "approved").length,
+    failed: failed.length, lastError: failed.length ? failed[0].network + ": " + String(failed[0].error || "").slice(0, 160) : null
   };
 }
 
@@ -828,5 +840,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };

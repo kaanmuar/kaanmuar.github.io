@@ -531,7 +531,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                     visits: C.outreachVisits(S.rows.events).total,
                     links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10), reportReplies: e.outreach.links.social ? { visits: e.outreach.links.social.visits, reviews: e.outreach.links.social.reviews, paid: e.outreach.links.social.paid, usd: e.outreach.links.social.usd, networks: e.outreach.links.social.networks, topPosts: e.outreach.links.social.posts.slice(0, 10) } : null } : null
                 } : null,
-                engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`), reportReplies: Object.assign({ waiting: e.engagement.waiting.filter((d) => d.campaign === 'report-reply').length }, e.engagement.report.invites) } : null,
+                engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`), reportReplies: Object.assign({ waiting: e.engagement.waiting.filter((d) => d.campaign === 'report-reply').length }, e.engagement.report.invites), ownerTags: otAsk(e.engagement.ownerTags) } : null,
                 signedInPeople: e.people && e.people.ok ? e.people.totals : null,
                 googleMapsLocal: e.local && e.local.ok && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
                 waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
@@ -583,7 +583,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines',
         'gh-board-sync': 'sync the board', 'gh-orphan-ticket': 'file a ticket for the PR', 'gh-update-pr': 'update the PR with main', 'gh-merge-pr': 'merge the green PR', 'gh-revert': 'open a revert PR',
-        'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a Cursor fix agent' };
+        'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a Cursor fix agent',
+        'owner-tags-approve-verified': 'approve verified owner-tag accounts', 'owner-tags-block': 'block accounts that asked us to stop tagging' };
     // Owner emails that also arrive as Jarvis pushes (#1672): off, they wait for the evening digest.
     const MOVED_MAIL = {
         messages: "New CV messages", ratings: "New CV feedback", siteDaily: "Daily CV site report (07:15)", siteQuarter: "Quarter-hour CV site report",
@@ -592,7 +593,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         ops: "Ops: jobs missed or failed", ownerReplies: "Owner replies", ownerRemind: "Owner replies still waiting (09:00)"
     };
     const ACTION_CAPS = { 'rerun-held': 10, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2, 'launch-campaign': 10,
-        'gh-board-sync': 10, 'gh-orphan-ticket': 5, 'gh-update-pr': 5, 'gh-merge-pr': 3, 'gh-revert': 1, 'gh-delete-branch': 2, 'gh-close-issue': 5, 'gh-remove-worktree': 5 };
+        'gh-board-sync': 10, 'gh-orphan-ticket': 5, 'gh-update-pr': 5, 'gh-merge-pr': 3, 'gh-revert': 1, 'gh-delete-branch': 2, 'gh-close-issue': 5, 'gh-remove-worktree': 5, 'owner-tags-approve-verified': 20, 'owner-tags-block': 10 };
     const COUNTDOWN_HOURS = 2;
     const hoursText = (h) => (h >= 1 ? `${h} h` : `${Math.round(h * 60)} min`);
 
@@ -1962,6 +1963,62 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     };
     const egFilter = (list) => `<div class="jv-actions"><div class="jv-seg" role="group" aria-label="Which replies">${EG_ONLY.map(([k, label]) => `<button type="button" data-eg-only="${k}" class="${S.egOnly === k ? 'on' : ''}" aria-pressed="${S.egOnly === k}">${label} · ${fmt(list.filter((d) => k === 'all' || (k === 'report') === egIsReport(d)).length)}</button>`).join('')}</div></div>`;
 
+    // Owner tags (#2633, #2660): comments that tag a report's owners and the accounts around them under our posts.
+    // otAsk is the same shape as functions/jarvis.js ownerTagsAsk, so Ask answers alike on the page and in the app.
+    function otAsk(o) {
+        if (!o) return null;
+        const comments = o.comments || [];
+        const failed = comments.filter((x) => x.status === 'failed');
+        return { state: o.settings ? (o.settings.paused ? 'paused' : o.settings.live ? 'live' : 'dry run') : null, last: o.last && Object.assign({}, o.last, { sample: undefined }), accounts: o.accounts,
+            waiting: (o.accounts || {}).suggested || 0, postedLast7Days: o.week || {}, queued: comments.filter((x) => x.status === 'approved').length,
+            failed: failed.length, lastError: failed.length ? failed[0].network + ': ' + String(failed[0].error || '').slice(0, 160) : null };
+    }
+    const OT_ORDER = ['suggested', 'approved', 'rejected', 'blocked'];
+    const OT_STATUS_CHIP = { suggested: 'c-average', approved: 'c-fast', rejected: '', blocked: 'c-slow' };
+    const otState = (o) => (o.settings.paused ? 'paused' : o.settings.live ? 'live' : 'dry run');
+    const otProfile = (a) => {
+        const h = String(a.handle || '');
+        if (a.network === 'mastodon') { const [user, host] = h.split('@'); return host ? `https://${host}/@${user}` : ''; }
+        return { x: `https://x.com/${h}`, instagram: `https://www.instagram.com/${h}/`, threads: `https://www.threads.net/@${h}`, tiktok: `https://www.tiktok.com/@${h}`, bluesky: `https://bsky.app/profile/${h}`,
+            youtube: h.startsWith('channel/') ? `https://www.youtube.com/${h}` : `https://www.youtube.com/@${h}`, facebook: `https://www.facebook.com/${h}`, linkedin: `https://www.linkedin.com/${h}` }[a.network] || '';
+    };
+    function ownerTagsBody(o, net) {
+        if (!o) return '<p class="jv-empty">Owner tags did not answer; refresh in a minute.</p>';
+        const last = o.last;
+        const c = o.accounts || {};
+        const week = o.week || {};
+        const weekTotal = Object.values(week).reduce((a, b) => a + b, 0);
+        const head = stats([
+            { label: 'State', value: otState(o), alert: o.settings.paused },
+            { label: 'Last run', value: last ? when(last.at) : 'never' },
+            { label: last && !last.live ? 'Would post last run' : 'Comments last run', value: last ? (last.live ? last.comments : last.dry) : '—' },
+            { label: 'Owner replies last run', value: last ? last.replies : '—' },
+            { label: 'Suggestions waiting', value: c.suggested || 0, alert: (c.suggested || 0) > 0 },
+            { label: 'Approved accounts', value: c.approved || 0 },
+            { label: 'Posted, last 7 days', value: weekTotal }
+        ]) + `<div class="jv-actions"><button type="button" class="jv-btn${o.settings.paused ? ' is-primary' : ' danger'}" data-ot-pause="${o.settings.paused ? 'off' : 'on'}">${o.settings.paused ? 'Resume owner tags' : 'Pause owner tags'}</button><button type="button" class="jv-btn${o.settings.live ? '' : ' is-primary'}" data-ot-live="${o.settings.live ? 'off' : 'on'}">${o.settings.live ? 'Back to a dry run' : 'Go live'}</button><button type="button" class="jv-btn" data-ot-run${S.pending['ot:run'] ? ' disabled' : ''}>${S.pending['ot:run'] ? 'Running…' : 'Run now'}</button></div>`
+            + (S.otNote || o.note ? `<p class="jv-note">${S.otNote ? 'This run: ' : 'Last run: '}${esc(S.otNote || o.note)}</p>` : '')
+            + (weekTotal ? `<p class="jv-note">Posted in the last 7 days: ${Object.keys(week).map((k) => `${esc(net(k))} ${fmt(week[k])}`).join(' · ')}</p>` : '');
+        const acts = (a) => ['approved', 'rejected', 'blocked'].filter((s) => s !== a.status).map((s) => `<button type="button" data-ot-acct="${s}" data-network="${esc(a.network)}" data-handle="${esc(a.handle)}"${S.pending['ot:' + a.id] ? ' disabled' : ''}>${{ approved: 'Approve', rejected: 'Reject', blocked: 'Block' }[s]}</button>`).join('');
+        const row = (a) => { const url = otProfile(a); return `<li class="jv-prop lv-info"><div class="jv-prop-body"><p class="jv-prop-title"><strong>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">@${esc(a.handle)}</a>` : '@' + esc(a.handle)}</strong>${a.name ? ' ' + esc(a.name) : ''} <span class="jv-chip">${esc(net(a.network))}</span> <span class="jv-chip ${OT_STATUS_CHIP[a.status] || ''}">${esc(a.status)}</span> <span class="jv-chip">${esc(a.kind)}</span>${a.verified ? ' <span class="jv-chip c-fast">verified</span>' : ''}</p>
+            <p class="jv-prop-why">${[a.why, (a.scopes || []).join(', '), a.batch ? 'batch ' + a.batch : '', a.source ? 'from ' + a.source : ''].filter(Boolean).map(esc).join(' · ')}</p>
+            <div class="jv-prop-acts">${acts(a)}</div></div></li>`; };
+        const list = o.list || [];
+        const groups = OT_ORDER.map((s) => [s, list.filter((a) => a.status === s)]).filter(([, l]) => l.length)
+            .map(([s, l]) => `<details${s === 'suggested' ? ' open' : ''}><summary>${esc(s.replace(/^./, (x) => x.toUpperCase()))} · ${fmt(c[s] || l.length)}</summary><ol class="jv-props">${l.map(row).join('')}</ol></details>`).join('')
+            || '<p class="jv-empty">No accounts yet. The daily run reads each reviewed site\'s profile links and asks Gemini for the accounts around it.</p>';
+        const add = `<form class="jv-eg-bluesky" data-ot-add><label>Profile link or handle<input name="who" autocomplete="off" placeholder="https://x.com/metrodebogota or @metrodebogota"></label>
+            <label>Network<select name="network"><option value="">from the link</option>${['x', 'instagram', 'threads', 'bluesky', 'mastodon', 'youtube'].map((k) => `<option value="${k}">${esc(net(k))}</option>`).join('')}</select></label>
+            <label>Scope<select name="scopeKind">${['report', 'city', 'sector', 'country'].map((k) => `<option value="${k}">${k}</option>`).join('')}</select></label>
+            <label>Scope value<input name="scopeValue" autocomplete="off" placeholder="metrobogota, bogota, transit or co"></label>
+            <label>Kind<select name="kind"><option value="related">related</option><option value="owner">owner</option></select></label>
+            <button type="submit" class="jv-btn">Add account</button></form>`;
+        const comments = table([['When', (x) => `<span class="jv-nowrap">${esc(when(x.at))}</span>`], ['Network', (x) => esc(net(x.network))], ['Kind', (x) => (x.kind === 'reply' ? 'owner reply' : `tags (${fmt(x.mentions)})`)],
+            ['Status', (x) => `<span class="jv-chip ${EG_STATUS_CHIP[x.status] || ''}">${esc(x.status)}</span>${x.error ? `<br><span class="jv-note">${esc(x.error)}</span>` : ''}`],
+            ['Comment', (x) => `<span class="jv-note">${esc(x.draft)}</span>${x.url ? `<br><a href="${esc(x.url)}" target="_blank" rel="noopener">Our comment ↗</a>` : ''}${x.post ? ` <a href="${esc(x.post)}" target="_blank" rel="noopener">Post ↗</a>` : ''}`]], o.comments || [], 'No owner-tags comment yet. In a dry run nothing is queued; Go live queues them on the next run.');
+        return head + `<h4>Accounts</h4>${groups}${add}<h4>Recent comments and owner replies</h4>${comments}`;
+    }
+
     function engagementView() {
         const g = S.external.engagement;
         if (!g || !g.ok || !g.report) return `<div class="jv-grid">${briefPanel('engagement')}${panel('engagement-wait', 'Engagement', waiting('engagement', 'Reading the engagement scout…'), { wide: true })}</div>`;
@@ -2052,6 +2109,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${panel('engagement-daily', 'Per day', area(daily.map((d) => d.day), [{ name: 'In field', values: daily.map((d) => d.candidates), color: COLORS.cyan }, { name: 'Likes', values: daily.map((d) => d.like), color: COLORS.green }, { name: g.live ? 'Done' : 'Done (dry run)', values: daily.map((d) => (g.live ? d.done : d.dry) || 0), color: COLORS.pink }, { name: 'Replies drafted', values: daily.map((d) => d.drafted), color: COLORS.amber }, { name: 'Approved', values: daily.map((d) => d.approved), color: COLORS.violet }]), { wide: true, data: daily })}
             ${panel('engagement-posts', `Top posts in our field · ${fmt(g.posts.length)}`, postsBody, { wide: true, data: g.posts.map((d) => ({ network: d.network, url: d.url, author: who(d), title: d.title || d.text, about: d.about, topic: d.topic, lang: d.lang, score: d.score, trend: d.trend, likes: d.metrics.likes, replies: d.metrics.replies, reposts: d.metrics.reposts, verdict: d.verdict, skip: d.skip })) })}
             ${panel('engagement-invites', 'Report replies', invitesBody, { data: Object.assign({}, iv, { steps: ivSteps }), note: 'Each scout run looks for posts that name a site from the public Live Reports and drafts an invite to its free report in the post\'s language, at most one per site every 30 days and none where the owner had our mail. They wait above with a Report reply badge; the Outreach tab shows the clicks, runs and payments per network and per post, and every Sunday a results ticket goes on the board.' })}
+            ${panel('engagement-owner-tags', `Owner tags${g.ownerTags ? ' · ' + otState(g.ownerTags) : ''}`, ownerTagsBody(g.ownerTags, net), { wide: true, data: g.ownerTags ? (g.ownerTags.list || []) : [], note: 'Daily at 10:15 (Bogotá). Under every post about a reviewed site, a comment tags the site\'s owners (their profile links on the site, approved as found) and the approved accounts around them, at most two comments a post; owners also get one reply under their latest Bluesky, Mastodon or YouTube post. Gemini\'s suggestions wait here and as a push. Jarvis approves on its own the ones whose handle resolves or matches an owner\'s, and blocks anyone who answers asking us to stop. A blocked account is never tagged.' })}
             ${panel('engagement-funnel', 'Reply funnel', funnel(funnelSteps) + stats([{ label: 'Dismissed', value: t.dismissed }, { label: 'Expired', value: t.expired, alert: t.drafted > 4 && t.expired / t.drafted > 0.5 }, { label: 'Edited', value: t.edited }, { label: 'Avg time to decide', value: r.avgDecideMin === null ? '—' : r.avgDecideMin + ' min' }]), { data: funnelSteps })}
             ${panel('engagement-topics', 'Topics', pie(r.topics, { unit: 'posts', empty: 'No posts in this range.' }), { data: r.topics })}
             ${panel('engagement-langs', 'Languages', pie(r.langs, { unit: 'posts', empty: 'No posts in this range.' }), { data: r.langs })}
@@ -2105,6 +2163,36 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const out = await call('engagement-report', { period }).catch((error) => ({ ok: false, error: error.message }));
         toast(out.ok ? (out.sent ? 'Sent: ' + out.subject : 'Built, but the mail did not go out.') : 'Not sent: ' + out.error, 7000);
         loadExternal(['engagement']);
+    }
+
+    async function otSettings(patch, ask) {
+        if (!confirmRun(ask)) return;
+        const out = await call('owner-tags-settings', { settings: patch }).catch((error) => ({ ok: false, error: error.message }));
+        toast(out.ok ? out.message : 'Not saved: ' + out.error, 6000);
+        loadExternal(['engagement']);
+    }
+
+    async function otRun() {
+        if (!confirmRun('run owner tags now (a dry run only counts; live queues the comments)')) return;
+        S.pending['ot:run'] = true;
+        render();
+        const out = await call('owner-tags-run').catch((error) => ({ ok: false, error: error.message }));
+        S.pending['ot:run'] = false;
+        S.otNote = out.ok ? out.note : '';
+        toast(out.ok ? 'Owner tags ran: ' + out.note : 'Not run: ' + out.error, 9000);
+        loadExternal(['engagement']);
+    }
+
+    async function otAccount(body, ask) {
+        if (ask && !confirmRun(ask)) return;
+        const id = body.network + ':' + String(body.handle || '').toLowerCase().replace(/\//g, '|');
+        S.pending['ot:' + id] = true;
+        render();
+        const out = await call('owner-tags-account', body).catch((error) => ({ ok: false, error: error.message }));
+        S.pending['ot:' + id] = false;
+        toast(out.ok ? out.message : 'Not saved: ' + out.error, 6000);
+        loadExternal(['engagement']);
+        return out;
     }
 
     async function campaignAct(t) {
@@ -3307,6 +3395,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.egLive) { egSettings({ live: t.dataset.egLive === 'on' }, t.dataset.egLive === 'on' ? 'go live: planned likes, reposts and follows go out on the connected networks, within the daily caps' : 'go back to a dry run, where planned actions are only logged'); return; }
         if (t.dataset.egConnect) { egConnect({ network: t.dataset.egConnect }); return; }
         if (t.dataset.egDisconnect) { egConnect({ network: t.dataset.egDisconnect, disconnect: true }, `disconnect ${t.dataset.egDisconnect}, so nothing goes out there`); return; }
+        if (t.dataset.otPause) { otSettings({ paused: t.dataset.otPause === 'on' }, t.dataset.otPause === 'on' ? 'pause owner tags: no comment, reply or suggestion until you resume' : 'resume owner tags'); return; }
+        if (t.dataset.otLive) { otSettings({ live: t.dataset.otLive === 'on' }, t.dataset.otLive === 'on' ? 'go live: the next run queues the tag comments and owner replies, within the daily caps' : 'go back to a dry run, where owner tags only count what they would post'); return; }
+        if (t.dataset.otRun !== undefined) { otRun(); return; }
+        if (t.dataset.otAcct) {
+            const s = t.dataset.otAcct;
+            otAccount({ network: t.dataset.network, handle: t.dataset.handle, status: s }, s === 'approved' ? '' : `${s === 'blocked' ? 'block' : 'reject'} @${t.dataset.handle}${s === 'blocked' ? ': never tagged again, and its queued comments are dismissed' : ''}`);
+            return;
+        }
         if (t.dataset.copyLink) { copy(t.dataset.copyLink, 'Link copied.'); return; }
         if (t.dataset.copyCode) { copy(t.dataset.copyCode, 'Code copied.'); return; }
         if (t.dataset.qlBuild !== undefined) {
@@ -3410,6 +3506,15 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             if (!/^\d{5,}:[\w-]{30,}$/.test(token)) { toast('Paste the bot token from BotFather, like 123456789:AAE….', 5000); return; }
             form.elements.token.value = '';
             egConnect({ network: 'telegram', token });
+        } else if (form.dataset.otAdd !== undefined) {
+            const who = form.elements.who.value.trim();
+            const value = form.elements.scopeValue.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9._-]+/g, '-').replace(/^-|-$/g, '');
+            if (!who || !value) { toast('Write a profile link or handle, and where it belongs (the scope value).', 5000); return; }
+            const network = form.elements.network.value;
+            if (!/^https?:\/\//i.test(who) && !network) { toast('Pick the network for a handle, or paste the profile link.', 5000); return; }
+            const body = Object.assign(/^https?:\/\//i.test(who) ? { url: who } : { network, handle: who.replace(/^@/, '') }, { scope: form.elements.scopeKind.value + ':' + value, kind: form.elements.kind.value, status: 'approved' });
+            const out = await otAccount(body);
+            if (out && out.ok) form.reset();
         } else if (form.dataset.egSettings !== undefined) {
             const n = (name) => Number(form.elements[name].value);
             const acts = ['like', 'repost', 'follow', 'reply'];

@@ -788,7 +788,7 @@ async function source(ctx) {
     db.collection("engagement_private").doc("reddit").get()
   ]);
   const mac = macSnap.exists && macSnap.data().at ? macSnap.data() : null;
-  const ownerTags = await OwnerTags.status(db).catch(() => null);
+  const ownerTags = await OwnerTags.status(db, now).catch(() => null);
   const reddit = redditSnap.exists && redditSnap.data().at ? redditSnap.data() : null;
   const redditLate = !reddit || now - Date.parse(reddit.at) > REDDIT_STALE;
   const signed = (k) => !!(mac && (mac.signedIn || {})[k]);

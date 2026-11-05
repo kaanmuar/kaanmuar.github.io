@@ -197,3 +197,96 @@ test("Bluesky mentions carry their DID facet; an e-mail address is no mention", 
   const f = A.mentionFacets(text, { "metro.bsky.social": "did:plc:m", "otro.bsky.social": "did:plc:o" });
   assert.deepEqual(f.map((x) => [text.slice(x.index.byteStart, x.index.byteEnd), x.features[0].did]), [["@metro.bsky.social", "did:plc:m"], ["@otro.bsky.social", "did:plc:o"]]);
 });
+
+// --- Jarvis panel and autonomy (#2660) ---------------------------------------------------------------------------
+
+async function seedPanel(db) {
+  const acct = (network, handle, o) => db.collection("owner_tag_accounts").doc(T.accountId(network, handle)).set(Object.assign({ network, handle, name: "", kind: "related", status: "approved", scopes: ["report:metrobogota"], batch: "", source: "gemini", why: "", verified: false, at: "2026-11-01T00:00:00Z" }, o));
+  await acct("bluesky", "metrodebogota.bsky.social", { kind: "owner", source: "site", verified: true, updatedAt: "2026-11-02T00:00:00Z" });
+  await acct("x", "metrodebogota", { status: "suggested", batch: "metrobogota", why: "the organisation itself" });
+  await acct("bluesky", "movilidad.bsky.social", { status: "suggested", verified: true, batch: "metrobogota", why: "city transit agency", scopes: ["city:bogota"] });
+  await acct("x", "randomnews", { status: "suggested", batch: "metrobogota", why: "local news" });
+  await acct("mastodon", "ana@mastodon.social", { status: "approved" });
+  await acct("x", "gone", { status: "blocked", why: "asked us to stop" });
+  const post = (key, network, reply, o) => db.collection("engagement_posts").doc(key).set(Object.assign({ key, network, url: "https://example.com/" + key, campaign: "owner-tags", seenAt: "2026-11-01T00:00:00Z",
+    ownerTags: { kind: "tags", post: "p1", part: 0, mentions: ["x:metrodebogota", "bluesky:movilidad.bsky.social"], reports: ["metrobogota"] }, actions: { reply: Object.assign({ draft: "@a your review is out", decidedAt: "2026-11-01T00:00:00Z" }, reply) } }, o));
+  await post("ot-1", "bluesky", { status: "posted", postedAt: "2026-11-04T10:00:00Z", url: "https://bsky.app/profile/us/post/1" });
+  await post("ot-2", "x", { status: "posted", postedAt: "2026-11-03T10:00:00Z" });
+  await post("ot-3", "x", { status: "posted", postedAt: "2026-10-20T10:00:00Z" }, { seenAt: "2026-10-20T00:00:00Z" });
+  await post("ot-4", "mastodon", { status: "failed", error: "422 rate limited", decidedAt: "2026-11-05T09:00:00Z" }, { ownerTags: { kind: "reply", report: "metrobogota", account: "mastodon:ana@mastodon.social" } });
+  await post("ot-5", "x", { status: "approved", decidedAt: "2026-11-05T10:00:00Z" });
+  await db.collection("engagement_posts").doc("other").set({ network: "x", campaign: "report-reply", actions: { reply: { status: "posted", postedAt: "2026-11-04T00:00:00Z" } } });
+  await T.saveSettings(db, { live: true }, "test", NOW);
+  await db.collection("owner_tags").doc("last").set({ at: "2026-11-05T15:15:00Z", live: true, paused: false, posts: 4, comments: 2, replies: 1, dry: 0, discovered: 1, owners: 3, suggested: 1, pushed: 1, capped: 0, errors: [], sample: [{ network: "x", text: "hi" }] });
+}
+
+test("status lists accounts suggested first, the newest comments, and posts per network in the last 7 days", async () => {
+  const db = fakeDb();
+  await seedPanel(db);
+  const s = await T.status(db, NOW);
+  assert.deepEqual(s.accounts, { approved: 2, suggested: 3, blocked: 1 });
+  assert.deepEqual(s.list.map((a) => a.status), ["suggested", "suggested", "suggested", "approved", "approved", "blocked"]);
+  assert.deepEqual(Object.keys(s.list[0]).sort(), ["at", "batch", "handle", "id", "kind", "name", "network", "scopes", "source", "status", "verified", "why"]);
+  assert.deepEqual(s.comments.map((c) => c.key), ["ot-5", "ot-4", "ot-1", "ot-2", "ot-3"], "newest first, the report-reply campaign left out");
+  assert.deepEqual(s.comments[1], { key: "ot-4", network: "mastodon", kind: "reply", status: "failed", draft: "@a your review is out", url: "", post: "https://example.com/ot-4", error: "422 rate limited", at: "2026-11-05T09:00:00Z", mentions: 0, report: "metrobogota" });
+  assert.equal(s.comments[2].url, "https://bsky.app/profile/us/post/1");
+  assert.deepEqual(s.week, { bluesky: 1, x: 1 }, "the post from October 20 is older than 7 days");
+  assert.match(s.note, /^owner tags: 4 posts, 2 comments, 1 owner replies/);
+
+  const ask = require("../../functions/jarvis.js").ownerTagsAsk(s);
+  assert.deepEqual([ask.state, ask.waiting, ask.queued, ask.failed, ask.lastError], ["live", 3, 1, 1, "mastodon: 422 rate limited"]);
+  assert.deepEqual(ask.postedLast7Days, { bluesky: 1, x: 1 });
+  assert.equal(ask.last.sample, undefined);
+  assert.equal(require("../../functions/jarvis.js").ownerTagsAsk(null), null);
+});
+
+test("Jarvis approves alone the suggestions whose handle resolves or is an owner's handle on another network", async () => {
+  const db = fakeDb();
+  await seedPanel(db);
+  const list = await T.autoApprovable(db);
+  assert.deepEqual(list.map((a) => [a.id, a.why]), [["bluesky:movilidad.bsky.social", "its handle resolves"], ["x:metrodebogota", "the owner is @metrodebogota.bsky.social on Bluesky"]]);
+  const res = await T.approveMany({ db, now: NOW }, list.map((a) => a.id).concat("x:gone"), "jarvis");
+  assert.equal(res.count, 2);
+  assert.match(res.message, /2 accounts approved: @metrodebogota, @movilidad\.bsky\.social/);
+  const s = await T.status(db, NOW);
+  assert.deepEqual(s.accounts, { approved: 4, suggested: 1, blocked: 1 }, "a blocked account named by mistake stays blocked");
+  assert.deepEqual(await T.autoApprovable(db), []);
+});
+
+test("a stop request is told from a comment that only uses the word", () => {
+  ["please stop tagging me", "STOP", "Stop.", "this is spam", "no me etiqueten más", "Ya basta", "dejen de etiquetarme", "don't tag us", "leave me alone", "Parem de me marcar", "arrêtez de me taguer", "Hör auf damit", "unfollow"]
+    .forEach((t) => assert.ok(T.isStop(t), t));
+  ["The new bus stop opens Monday", "basta con entrar a la web", "Gracias por la revisión", "great review!", "Para mí está bien", "nonstop work"].forEach((t) => assert.ok(!T.isStop(t), t));
+});
+
+test("comments under our tags that ask us to stop name their author once; a blocked author and other threads are left out", async () => {
+  const db = fakeDb();
+  await seedPanel(db);
+  const chain = (key, network, handle, text, parent) => db.collection("engagement_posts").doc(key).set({ key, network, url: "https://example.com/" + key, author: { handle }, text, chain: { parent: parent || "ot-1", root: parent || "ot-1", depth: 1 } });
+  await chain("c1", "mastodon", "ana", "Please stop tagging me", "ot-4");
+  await chain("c2", "bluesky", "pepe.bsky.social", "No me etiqueten, gracias");
+  await chain("c3", "bluesky", "pepe.bsky.social", "spam");
+  await chain("c4", "x", "gone", "stop");
+  await chain("c5", "x", "fan", "Great review, thanks");
+  await chain("c6", "x", "elsewhere", "stop tagging me", "eng-123");
+  const stops = await T.stopRequests(db);
+  assert.deepEqual(stops.map((s) => [s.id, s.handle, s.key]), [["mastodon:ana@mastodon.social", "ana@mastodon.social", "c1"], ["bluesky:pepe.bsky.social", "pepe.bsky.social", "c2"]]);
+});
+
+test("blocking an account dismisses its queued tags and replies; Block in the panel does the same", async () => {
+  const db = fakeDb();
+  await seedPanel(db);
+  const res = await T.block({ db, now: NOW }, { id: "x:metrodebogota" }, "asked us to stop: stop", "jarvis");
+  assert.equal(res.dismissed, 1);
+  assert.match(res.message, /@metrodebogota on X is blocked; 1 queued comment dismissed/);
+  const doc = (k) => db.data.get("engagement_posts/" + k);
+  assert.equal(doc("ot-5").actions.reply.status, "dismissed");
+  assert.equal(doc("ot-2").actions.reply.status, "posted", "a posted comment is left as it is");
+  const a = db.data.get("owner_tag_accounts/x:metrodebogota");
+  assert.deepEqual([a.status, a.why, a.kind], ["blocked", "asked us to stop: stop", "related"]);
+
+  const viaPanel = await T.account({ db, now: NOW }, { network: "mastodon", handle: "ana@mastodon.social", status: "blocked" }, "carlos@example.com");
+  assert.match(viaPanel.message, /@ana@mastodon\.social on Mastodon is blocked/);
+  assert.equal(db.data.get("owner_tag_accounts/mastodon:ana@mastodon.social").status, "blocked");
+  await assert.rejects(T.block({ db, now: NOW }, { id: "" }, "x", "jarvis"), /which account/);
+});

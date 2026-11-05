@@ -260,6 +260,8 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
 
     ReportReplies(r, names, waiting.count { Engagement.isReport(it) }, only) { only = it }
 
+    OwnerTagsPanel(g, s, vm, names, ::ask)
+
     Panel("Top posts in our field") {
         val allPosts = g.objs("posts")
         if (allPosts.isEmpty()) { Muted("No posts from our field in this range yet."); return@Panel }
