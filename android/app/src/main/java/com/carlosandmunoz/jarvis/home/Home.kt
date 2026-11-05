@@ -374,7 +374,7 @@ object Home {
     }
 
     /** The one-day snapshot behind "today" figures, fetched at most once per redraw and only when asked for. */
-    private fun today(app: JarvisApp): suspend () -> JsonObject? {
+    fun today(app: JarvisApp): suspend () -> JsonObject? {
         var loaded = false
         var day: JsonObject? = null
         return {
