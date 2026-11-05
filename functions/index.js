@@ -6708,6 +6708,16 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     catch (error) { res.status(error.status || 400).json({ ok: false, error: String(error.message || error).slice(0, 300) }); }
     return;
   }
+  // telegram-connect.yml sends the repo's bot token; the token itself is the proof (engagement-act.js connectTelegramCi).
+  if ((req.body || {}).op === "engagement-telegram-connect") {
+    try {
+      const deps = Object.assign(engagementDeps(), { now: Date.now() });
+      const out = await require("./engagement-act").connectTelegramCi(deps, req.body);
+      await jarvisEngagement.clearCache(deps.db);
+      res.json(Object.assign({ ok: true }, out));
+    } catch (error) { res.status(400).json({ ok: false, error: String(error.message || error).slice(0, 300) }); }
+    return;
+  }
   // The Mac's GitHub uploader (#2526) signs with the same paired token as the browser agent.
   if ((req.body || {}).op === "github-local") {
     try {

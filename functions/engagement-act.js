@@ -347,10 +347,13 @@ function telegramComment(m, cred, botId) {
   };
 }
 
-async function telegramClient(cred, f) {
+async function telegramClient(saved, f) {
+  const cred = Object.assign({}, saved);
   const tg = async (method, params) => (await call(f, TG + cred.token + "/" + method, { json: params || {} })).result;
   const me = await tg("getMe");
   let last = 0;
+  // A group linked after the token was saved is found here and kept, with the error that it was missing cleared.
+  let linked = null;
   return {
     account: "@" + me.username,
     // The bot reads no history, so it cannot look for an earlier answer; the stored posts keep one per comment.
@@ -358,7 +361,13 @@ async function telegramClient(cred, f) {
     // Replies to the bot's answers reach it as updates, so the inbox brings them.
     under: async () => [],
     inbox: async (since) => {
-      if (!cred.group) throw new ActError((cred.channel || TG_CHANNEL) + " has no discussion group, so there are no comments to read: link one in the channel's settings (Discussion), make @" + me.username + " an admin there and save the token again.");
+      if (!cred.group) {
+        const chat = await tg("getChat", { chat_id: cred.channel || TG_CHANNEL });
+        if (!chat.linked_chat_id) throw new ActError((cred.channel || TG_CHANNEL) + " has no discussion group, so there are no comments to read: link one in the channel's settings (Discussion) and make @" + me.username + " an admin there.");
+        const group = await tg("getChat", { chat_id: chat.linked_chat_id }).catch(() => ({ id: chat.linked_chat_id }));
+        linked = { group: group.id, groupTitle: clip(group.title, 120), groupUser: clip(group.username, 64), channelId: chat.id, error: "" };
+        Object.assign(cred, linked);
+      }
       const updates = await tg("getUpdates", { offset: cred.offset || undefined, limit: 100, timeout: 0, allowed_updates: ["message"] });
       last = updates.reduce((n, u) => Math.max(n, u.update_id), 0);
       return updates.map((u) => {
@@ -366,7 +375,7 @@ async function telegramClient(cred, f) {
         return c && Object.assign(c, { update: u.update_id });
       }).filter((c) => c && c.createdAt >= since);
     },
-    seen: (open) => (open.length ? { offset: Math.min(...open.map((c) => c.update)) } : last ? { offset: last + 1 } : {}),
+    seen: (open) => Object.assign({}, linked, open.length ? { offset: Math.min(...open.map((c) => c.update)) } : last ? { offset: last + 1 } : {}),
     detail: async (c) => ({ answered: false, ours: c.ours || "", ourId: c.on || "" }),
     like: async (d) => {
       await tg("setMessageReaction", Object.assign(tgIds(d), { reaction: [{ type: "emoji", emoji: TG_THANKS.test(d.text || "") ? "🙏" : "👍" }] }));
@@ -446,7 +455,7 @@ async function saveTelegram(deps, body) {
   const inGroup = admin || ["member", "restricted"].includes(status);
   const where = group && group.title ? "“" + group.title + "”" : "the discussion group";
   const missing = hook.url ? "The bot has a webhook (" + clip(hook.url, 80) + "), so it cannot read updates; remove it with deleteWebhook."
-    : !group ? channel + " has no discussion group: in the channel, Edit > Discussion > add a group, make @" + me.username + " an admin of it, then save the token again."
+    : !group ? channel + " has no discussion group: in the channel, Edit > Discussion > add a group and make @" + me.username + " an admin of it; the bot finds it on its next run."
       : !inGroup ? "Add @" + me.username + " to " + where + " as an admin, then save the token again."
         : !admin && !me.can_read_all_group_messages ? "Make @" + me.username + " an admin of " + where + " so it sees every comment; until then it sees only replies to its own messages." : "";
   await privateRef(deps.db, "telegram").set({
@@ -457,6 +466,20 @@ async function saveTelegram(deps, body) {
     network: "telegram", account: "@" + me.username,
     message: "Telegram is connected as @" + me.username + ". " + (missing || "It reacts to and answers comments under " + channel + "'s posts in " + where + ".")
   };
+}
+
+/**
+ * The same save from telegram-connect.yml, which holds the repo's TELEGRAM_BOT_TOKEN, without the owner's sign-in. A
+ * bot token is its own proof: only one Telegram says belongs to our bot (TELEGRAM_BOT, default qalab_live_bot) is
+ * kept, and the channel is never the caller's to choose.
+ */
+async function connectTelegramCi(deps, body) {
+  const want = String((deps.env || {}).TELEGRAM_BOT || "qalab_live_bot").replace(/^@/, "").toLowerCase();
+  const token = String((body || {}).token || "").trim();
+  if (!TG_TOKEN.test(token)) throw new Error("That is not a bot token.");
+  const me = (await call(deps.fetch, TG + token + "/getMe", { json: {} }).catch(() => { throw new Error("Telegram refused the token."); })).result || {};
+  if (String(me.username || "").toLowerCase() !== want) throw new Error("That token is not @" + want + "'s.");
+  return saveTelegram(deps, { token });
 }
 
 async function mastodonApp(deps, base, redirect) {
@@ -756,6 +779,6 @@ async function pendingInbox(deps, handled) {
 
 module.exports = {
   ACT_WINDOW, PER_RUN, MAX_TRIES, MASTODON_SCOPES, YT_SCOPE, API, ActError, CHAIN_DAYS, CHAIN_PER_RUN,
-  carryOut, replyNow, pendingChains, pendingInbox, connections, saveBluesky, saveTelegram, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call,
+  carryOut, replyNow, pendingChains, pendingInbox, connections, saveBluesky, saveTelegram, connectTelegramCi, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call,
   linkFacets, drawCard, cardFields, telegramComment
 };
