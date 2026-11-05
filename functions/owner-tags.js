@@ -19,6 +19,8 @@
  *             others; ownerTags.kind "tags" skips the already-replied check, since our second comment is expected
  *   replies   one reply per report, network and owner account under the owner's latest post of the last REPLY_DAYS
  *
+ * Switzerland, Belgium and Luxembourg speak several languages, so their sites are addressed in English unless the host's
+ * own country code says otherwise.
  * Tag comments go only where an @handle typed in the text notifies its account (MENTIONS): Facebook, LinkedIn and
  * TikTok make a mention only when it is picked from a menu. At most PER_DAY comments and replies a network a day; a
  * blocked account is never tagged. settings.paused stops it; until settings.live it only counts what it would post.
@@ -54,14 +56,14 @@ const SCOPES = ["report", "city", "sector", "country"];
 const NET_CODES = { x: "x", twitter: "x", ig: "instagram", instagram: "instagram", bsky: "bluesky", bluesky: "bluesky", mast: "mastodon", mastodon: "mastodon",
   yt: "youtube", youtube: "youtube", th: "threads", threads: "threads", tt: "tiktok", tiktok: "tiktok", fb: "facebook", facebook: "facebook", li: "linkedin", linkedin: "linkedin" };
 const LANG_OF = { co: "es", mx: "es", es: "es", ar: "es", cl: "es", pe: "es", ec: "es", uy: "es", py: "es", bo: "es", ve: "es", cr: "es", pa: "es", gt: "es", hn: "es", sv: "es", ni: "es", do: "es", cu: "es",
-  br: "pt", pt: "pt", de: "de", at: "de", ch: "de", li: "de", fr: "fr", be: "fr", lu: "fr", mc: "fr", it: "it", sm: "it" };
+  br: "pt", pt: "pt", de: "de", at: "de", li: "de", fr: "fr", mc: "fr", it: "it", sm: "it" };
 const COPY = {
-  en: { one: "{owners} your site's public QA review is out: {link}", many: "{owners} your sites are compared in a public QA review: {link}", cc: "cc", reply: "{mention} we published a public QA review of {host}, free to read: {link}" },
-  es: { one: "{owners} ya salió la revisión QA pública de tu sitio: {link}", many: "{owners} sus sitios aparecen comparados en una revisión QA pública: {link}", cc: "cc", reply: "{mention} publicamos una revisión QA pública de {host}, gratis: {link}" },
-  pt: { one: "{owners} a revisão de QA pública do seu site saiu: {link}", many: "{owners} seus sites foram comparados numa revisão de QA pública: {link}", cc: "cc", reply: "{mention} publicamos uma revisão de QA pública de {host}, grátis: {link}" },
-  de: { one: "{owners} die öffentliche QA-Prüfung Ihrer Website ist online: {link}", many: "{owners} Ihre Websites werden in einer öffentlichen QA-Prüfung verglichen: {link}", cc: "cc", reply: "{mention} wir haben eine öffentliche QA-Prüfung von {host} veröffentlicht, kostenlos: {link}" },
-  fr: { one: "{owners} l'analyse QA publique de votre site est en ligne : {link}", many: "{owners} vos sites sont comparés dans une analyse QA publique : {link}", cc: "cc", reply: "{mention} nous avons publié une analyse QA publique de {host}, gratuite : {link}" },
-  it: { one: "{owners} la revisione QA pubblica del tuo sito è online: {link}", many: "{owners} i vostri siti sono confrontati in una revisione QA pubblica: {link}", cc: "cc", reply: "{mention} abbiamo pubblicato una revisione QA pubblica di {host}, gratuita: {link}" }
+  en: { site: "The public QA review of {host} is out: {link}", one: "{owners} your site's public QA review is out: {link}", many: "{owners} your sites are compared in a public QA review: {link}", cc: "cc", reply: "{mention} we published a public QA review of {host}, free to read: {link}" },
+  es: { site: "Ya salió la revisión QA pública de {host}: {link}", one: "{owners} ya salió la revisión QA pública de tu sitio: {link}", many: "{owners} sus sitios aparecen comparados en una revisión QA pública: {link}", cc: "cc", reply: "{mention} publicamos una revisión QA pública de {host}, gratis: {link}" },
+  pt: { site: "A revisão de QA pública de {host} saiu: {link}", one: "{owners} a revisão de QA pública do seu site saiu: {link}", many: "{owners} seus sites foram comparados numa revisão de QA pública: {link}", cc: "cc", reply: "{mention} publicamos uma revisão de QA pública de {host}, grátis: {link}" },
+  de: { site: "Die öffentliche QA-Prüfung von {host} ist online: {link}", one: "{owners} die öffentliche QA-Prüfung Ihrer Website ist online: {link}", many: "{owners} Ihre Websites werden in einer öffentlichen QA-Prüfung verglichen: {link}", cc: "cc", reply: "{mention} wir haben eine öffentliche QA-Prüfung von {host} veröffentlicht, kostenlos: {link}" },
+  fr: { site: "L'analyse QA publique de {host} est en ligne : {link}", one: "{owners} l'analyse QA publique de votre site est en ligne : {link}", many: "{owners} vos sites sont comparés dans une analyse QA publique : {link}", cc: "cc", reply: "{mention} nous avons publié une analyse QA publique de {host}, gratuite : {link}" },
+  it: { site: "La revisione QA pubblica di {host} è online: {link}", one: "{owners} la revisione QA pubblica del tuo sito è online: {link}", many: "{owners} i vostri siti sono confrontati in una revisione QA pubblica: {link}", cc: "cc", reply: "{mention} abbiamo pubblicato una revisione QA pubblica di {host}, gratuita: {link}" }
 };
 
 const clip = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
@@ -193,9 +195,10 @@ function pick(accounts, reports, network, tagged) {
 
 /**
  * The comments for one post: [{ text, mentions }] in at most room comments. The first that names owners carries the
- * owner line and link; the rest of the mentions follow as cc, never past the network's cap or character limit.
+ * owner line and link; the rest of the mentions follow as cc, never past the network's cap or character limit. The
+ * post's first comment (first) always carries the link: with no owner on the network it names the site (host).
  */
-function comments(network, lang, owners, related, link, room, many) {
+function comments(network, lang, owners, related, link, room, many, host, first) {
   const copy = COPY[lang] || COPY.en;
   const cap = MENTIONS[network] || 0;
   const limit = (E.NETWORKS[network] || {}).limit || 300;
@@ -205,7 +208,8 @@ function comments(network, lang, owners, related, link, room, many) {
   while ((ownersLeft.length || queue.length) && out.length < (room === undefined ? COMMENTS_MAX : room)) {
     const mentions = ownersLeft.slice(0, cap);
     ownersLeft = ownersLeft.slice(mentions.length);
-    let text = mentions.length ? (many ? copy.many : copy.one).replace("{owners}", mentions.map(mentionOf).join(" ")).replace("{link}", link) : "";
+    let text = mentions.length ? (many ? copy.many : copy.one).replace("{owners}", mentions.map(mentionOf).join(" ")).replace("{link}", link)
+      : first && !out.length && host ? copy.site.replace("{host}", host).replace("{link}", link) : "";
     let cc = false;
     while (queue.length && mentions.length < cap) {
       const m = mentionOf(queue[0]);
@@ -475,7 +479,7 @@ async function run(deps) {
     const lead = p.reports[0];
     const lang = langOf(lead);
     const link = R.linkFor({ host: bare(lead.host) }, p.network, lang, docKey("link", p.key, p.network));
-    const list = comments(p.network, lang, owners, related.slice(0, relatedLeft), link, left, p.reports.length > 1);
+    const list = comments(p.network, lang, owners, related.slice(0, relatedLeft), link, left, p.reports.length > 1, bare(lead.host), had.count === 0);
     for (let i = 0; i < list.length; i += 1) {
       const part = had.count + i;
       const key = docKey("tags", p.key, p.network, part);
