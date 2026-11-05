@@ -829,6 +829,7 @@ test("outreach: the week starts Monday in Bogota and the pipeline counts only ou
   assert.deepEqual(p.results, [{ label: "failed", value: 1 }, { label: "reviewed", value: 1 }]);
   assert.equal(p.avgScore, 70);
   assert.equal(p.withLiveReport, 1);
+  assert.equal(p.reviewedHosts, 3);
   assert.equal(p.reviewedWithLiveReport, 1);
   assert.deepEqual(p.daily, [{ date: "2026-10-24", reviews: 1 }]);
   assert.equal(p.priorReviews, 1);
@@ -866,6 +867,8 @@ test("outreach: Instantly numbers become rates, campaign states and mailbox warm
   assert.equal(x.prior, null);
   const y = outreachSrc.instantlyRows([], { emails_sent_count: 200 }, [], [], { emails_sent_count: 100, contacted_count: 50, reply_count_unique: 2 });
   assert.deepEqual([y.sent, y.prior.sent, y.prior.rates.reply], [200, 100, 4]);
+  assert.equal(x.openTracking, false);
+  assert.equal(outreachSrc.instantlyRows([{ status: 1, open_tracking: false }, { status: 1, open_tracking: true }], {}, [], []).openTracking, true);
 });
 
 test("outreach: the plan knows the day, phase, next milestone and sorted deadlines", () => {
