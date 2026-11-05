@@ -9,7 +9,18 @@
     "at": "2026-11-05T14:30:29.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1xok2wl/zipdevcom_77_the_gap_form_labels/",
-    "checked": "2026-11-05T14:36:09.112Z"
+    "checked": "2026-11-05T22:25:48.275Z"
+   }
+  ],
+  "auto-2026-11-04/01-u-selia-co": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1xouwfb",
+    "at": "2026-11-05T21:30:29.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1xouwfb/seliaco_73_the_gap_link_names/",
+    "checked": "2026-11-05T22:25:48.275Z"
    }
   ],
   "auto-2026-11-04/02-u-treinta-co": [
@@ -20,20 +31,81 @@
     "at": "2026-11-05T14:30:29.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1xok2ws/treintaco_75_a_lacuna_frames/",
-    "checked": "2026-11-05T14:36:09.112Z"
+    "checked": "2026-11-05T22:25:48.275Z"
+   }
+  ],
+  "auto-2026-11-04/08-u-itsrever-com": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1xon4tj",
+    "at": "2026-11-05T16:30:28.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1xon4tj/itsrevercom_50_a_lacuna_funções_aria/",
+    "checked": "2026-11-05T22:25:48.275Z"
+   }
+  ],
+  "compare-2026-11/11-cities": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1xon4tr",
+    "at": "2026-11-05T16:30:29.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1xon4tr/bogotá_80_medellín_74_la_sécurité_a_fait_la/",
+    "checked": "2026-11-05T22:25:48.275Z"
+   }
+  ],
+  "live/2026-11-05": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1xomveq",
+    "at": "2026-11-05T16:20:28.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1xomveq/145_new_live_reports_20261105_dentalaestheticsat/",
+    "checked": "2026-11-05T22:25:48.275Z"
+   }
+  ],
+  "promo-social-hub-2026-10/11-clips-pt": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1xor43a",
+    "at": "2026-11-05T19:00:29.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1xor43a/clipes_curtos_no_seu_idioma/",
+    "checked": "2026-11-05T22:25:48.275Z"
    }
   ]
  },
  "members": {
   "chat": "r/QALabLiveReports",
   "members": 1,
-  "at": "2026-11-05T14:30:29.749Z",
+  "at": "2026-11-05T21:30:29.360Z",
   "history": [
    {
     "date": "2026-11-05",
     "members": 1,
-    "at": "2026-11-05T14:30:29.749Z"
+    "at": "2026-11-05T21:30:29.360Z"
    }
   ]
+ },
+ "numbers": {
+  "t3_1xok2wl": {
+   "likes": 1,
+   "comments": 0,
+   "at": "2026-11-05T16:20:30.937Z"
+  },
+  "t3_1xok2ws": {
+   "likes": 1,
+   "comments": 0,
+   "at": "2026-11-05T16:20:30.937Z"
+  },
+  "t3_1xomveq": {
+   "likes": 1,
+   "comments": 0,
+   "at": "2026-11-05T16:20:30.937Z"
+  }
  }
 }
