@@ -21,7 +21,8 @@ const ledgers = require("./social-ledger");
 
 const LEDGER = "assets/social/reddit.json";
 const PREFIX = "qalab-ledger ";
-const KEY = /^live\/\d{4}-\d{2}-\d{2}$/;
+// live/<date> for the batch posts, <batch>/<slug> (the launch set: <batch>/<lang>/<topic>) for the campaign posts (#2606).
+const KEY = /^(?:live\/\d{4}-\d{2}-\d{2}|[\w-]+\/[\w-]+(?:\/[\w-]+)?)$/;
 
 // `devvit logs --json` wraps each line in an object; plain output and stray CLI lines pass through as text.
 function textOf(line) {

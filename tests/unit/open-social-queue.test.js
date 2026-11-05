@@ -97,6 +97,71 @@ test("run skips what the ledger or the account already has, holds what the hub l
   assert.equal(get("sent"), null);
 });
 
+test("Telegram is one brand channel with its own ledger, ready once the bot token and the channel are set", () => {
+  assert.equal(q.NETWORKS.telegram({ TELEGRAM_BOT_TOKEN: "t" }).ready, false);
+  assert.equal(q.NETWORKS.telegram({ TELEGRAM_BOT_TOKEN: "t", TELEGRAM_CHANNEL: "@qalab_live" }).ready, true);
+  assert.ok(q.BRAND.has("telegram"));
+  assert.equal(q.LEDGERS.telegram, "assets/social/telegram.json");
+  assert.deepEqual(q.ROUTES.telegram, { slot: "x", caption: "x" });
+});
+
+test("a brand channel posts each post in its own language", async () => {
+  const es = post("es1", NOW - 60e3, { lang: "es", i18n: { es: { x: "Hola desde example.com\n\ncarlosandmunoz.com/qa-review?utm_source=x" } } });
+  const en = post("en1", NOW - 30e3, { lang: "en" });
+  const client = fakeClient();
+  const book = ledger.empty();
+  await q.run("telegram", client, [es, en], book, { live: true, now: NOW, gate: gate([]), face: q.ownFace });
+  assert.deepEqual(client.sent.map((p) => p.lang), ["es", "en"]);
+  assert.match(client.sent[0].text, /^Hola desde example\.com\n\ncarlosandmunoz\.com\/qa-review\?utm_source=telegram\n\nhttps:\/\/carlosandmunoz\.com\/social\/auto-2026-10-25\/es1\.html\?utm_source=telegram&/);
+  assert.equal(ledger.find(book, "auto-2026-10-25/es1", "telegram", "qalab.bsky.social").result, "sent");
+});
+
+test("the Telegram client sends the feed image from the site with the caption, and links the channel post", async () => {
+  const calls = [];
+  const real = global.fetch;
+  global.fetch = async (url, opts = {}) => {
+    calls.push([String(url).replace(/bot[^/]+/, "bot*"), opts.method || "GET", opts.body ? JSON.parse(opts.body) : null]);
+    if (String(url).includes("/getChat")) return { ok: true, json: async () => ({ ok: true, result: { username: "qalab_live" } }) };
+    if (String(url).includes("/sendPhoto")) return { ok: true, json: async () => ({ ok: true, result: { message_id: 7 } }) };
+    return { ok: true, status: 200, headers: { get: () => "image/jpeg" } };
+  };
+  try {
+    const client = q.NETWORKS.telegram({ TELEGRAM_BOT_TOKEN: "t", TELEGRAM_CHANNEL: "@qalab_live" });
+    assert.equal(await client.login(), "Telegram @qalab_live");
+    assert.deepEqual(await client.recent(), []);
+    const r = await client.post({ text: "Caption", url: "https://carlosandmunoz.com/media/social-posts/b/feed/a.jpg" });
+    assert.deepEqual(r, { id: "7", url: "https://t.me/qalab_live/7" });
+    const send = calls.find((c) => c[0].endsWith("/sendPhoto"));
+    assert.deepEqual(send[2], { chat_id: "@qalab_live", photo: "https://carlosandmunoz.com/media/social-posts/b/feed/a.jpg", caption: "Caption" });
+  } finally {
+    global.fetch = real;
+  }
+});
+
+test("the launch set (one captions file per post) goes to every direct network but Mastodon, each post in its own language", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "launch-"));
+  const dir = path.join(root, "media/social-posts/launch-x");
+  ["en", "es"].forEach((l) => fs.mkdirSync(path.join(dir, l), { recursive: true }));
+  fs.writeFileSync(path.join(dir, "en/a11y-captions.json"), JSON.stringify({ x: "Keyboard first.\n\nTry it", instagram: "IG" }));
+  fs.writeFileSync(path.join(dir, "es/a11y-captions.json"), JSON.stringify({ x: "Primero el teclado.\n\nPruébalo", instagram: "IG es" }));
+  fs.writeFileSync(path.join(dir, "calendar.csv"), "Date,Time,Channel,Post,Asset\n2026-11-05,09:00,x,en/a11y,en/a11y-landscape.jpg\n2026-11-05,10:00,x,es/a11y,es/a11y-landscape.jpg\n");
+  fs.mkdirSync(path.join(root, "social/launch-x/es"), { recursive: true });
+  fs.writeFileSync(path.join(root, "social/launch-x/es/a11y.html"), "");
+  assert.deepEqual(q.allBatches(root), ["launch-x"]);
+  assert.deepEqual(q.posts("launch-x", root, "mastodon"), []);
+  const list = q.posts("launch-x", root, "telegram");
+  assert.deepEqual(list.map((p) => [p.slug, q.ownFace(p), q.caption(p, "telegram", q.ownFace(p)).split("\n")[0]]), [["en/a11y", "en", "Keyboard first."], ["es/a11y", "es", "Primero el teclado."]]);
+  assert.equal(q.posts("launch-x", root, "bluesky").length, 2);
+  const reddit = q.redditPosts(Date.parse("2026-11-05T16:00:00Z"), 48 * HOUR, root);
+  assert.deepEqual(reddit, [{ key: "launch-x/es/a11y", at: Date.parse("2026-11-05T15:00:00Z"), lang: "es", title: "Primero el teclado.", url: "https://carlosandmunoz.com/social/launch-x/es/a11y.html?utm_source=reddit&utm_medium=social&utm_campaign=launch-x" }], "only the post whose hub page is in the site");
+});
+
+test("a Reddit title is the caption's first line without links or hashtags, cut to 300", () => {
+  assert.equal(q.redditTitle("\nexample.com: 77. #QA https://x.y/z\n\nmore"), "example.com: 77.");
+  const long = q.redditTitle("word ".repeat(100));
+  assert.ok([...long].length <= 300 && long.endsWith("…"));
+});
+
 test("a dry run never logs in", async () => {
   const client = { login: async () => { throw new Error("logged in"); } };
   const counts = await q.run("mastodon", client, [post("p1", NOW - 60e3)], ledger.empty(), { live: false, now: NOW, gate: gate([]) });
