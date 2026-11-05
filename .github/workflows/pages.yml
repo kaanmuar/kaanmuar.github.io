@@ -63,13 +63,24 @@ jobs:
     needs: build
     if: github.event_name != 'pull_request' && (needs.build.outputs.build_type == 'workflow' || vars.PAGES_FROM_ACTIONS == 'true')
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # deploy-pages itself stops at 10 minutes and cancels. A publish that sticks on updating_pages
+    # then comes back with a blank status (actions/deploy-pages#166, run 41923995425). One more try
+    # needs a second 10 minutes, so this job is longer than a single attempt.
+    timeout-minutes: 30
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.redeploy.outputs.page_url }}
     steps:
       - name: Configure Pages
         uses: actions/configure-pages@v6
       - name: Deploy to GitHub Pages
         id: deployment
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+      - name: Let the cancelled deployment clear
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 30
+      - name: Deploy to GitHub Pages again
+        id: redeploy
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v5
