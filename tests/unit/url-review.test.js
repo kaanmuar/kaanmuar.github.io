@@ -2037,6 +2037,31 @@ test("a finished report is stored without the shapes Firestore refuses, and the 
   assert.deepEqual(core.storable(record.report, []), record.report);
 });
 
+test("a finished report over one Firestore document is shortened and saved (#1969)", () => {
+  // www.efarma.com was refused at 1,190,959 bytes. uexternado.edu.co was refused at 1,066,856 bytes.
+  // The limit is 1,048,576. Neither page was one field past 1,048,487 bytes, which is a different error.
+  const html = "<html>" + "x".repeat(600000) + "</html>";
+  assert.ok(Buffer.byteLength(html) < 1048487);
+  assert.ok(Buffer.byteLength(html) * 2 >= 1190959);
+  const report = {
+    id: "r-efarma",
+    host: "www.efarma.com",
+    pages: [
+      { url: "https://www.efarma.com/", html: html },
+      { url: "https://www.efarma.com/cart", html: html }
+    ],
+    fine: { title: "eFarma" }
+  };
+  const value = core.validateIntake({ termsAccepted: true, termsVersion: core.TERMS_VERSION, name: "Ana Ruiz", email: "ana@example.org", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://www.efarma.com/" }).value;
+  const record = core.intakeRecord(value, report, {});
+  assert.ok(Buffer.byteLength(JSON.stringify(record)) <= 1048576);
+  assert.ok(JSON.stringify(record).length <= 850000);
+  assert.equal(record.report.fine.title, "eFarma");
+  assert.equal(record.name, "Ana Ruiz");
+  assert.equal(report.pages[0].html.length, html.length);
+  assert.ok(record.report.pages.some((page) => page.htmlCut === true && page.html.length < html.length));
+});
+
 const failures = require("../../functions/url-review-failures");
 // The failure tests are written against the fixes up to #365; a later fix to a cause they use would re-run their example failures.
 failures.FIXES.splice(failures.FIXES.findIndex((fix) => fix.ref === "#365") + 1);
@@ -2061,6 +2086,8 @@ test("failure causes are classed from the review's own messages", () => {
     ["Value for argument \"data\" is not a valid Firestore document. Cannot use \"undefined\" as a Firestore value (found in field \"report.cases.`28`.path\").", "save"],
     ["3 INVALID_ARGUMENT: Property report contains an invalid nested entity.", "save"],
     ["3 INVALID_ARGUMENT: field name '__NEXT_DATA__' is reserved.", "save"],
+    ["3 INVALID_ARGUMENT: Document 'projects/carlosm-interactive-cv/databases/(default)/documents/url_reviews/697230cf8f59ea08b1' cannot be written because its size (1,190,959 bytes) exceeds the maximum allowed size of 1,048,576 bytes.", "unknown"],
+    ["Parse Error: Missing expected CR after header value", "unknown"],
     ["Cannot read properties of undefined (reading 'x')", "unknown"]
   ];
   cases.forEach(([message, id]) => assert.equal(failures.causeOf(message).id, id, message));
@@ -2192,6 +2219,34 @@ test("response headers up to 64 KB are read, and past that the read names the li
     assert.equal(error.message, "The site's response headers are past the 64 KB the plain request reads.");
     assert.equal(failures.causeOf(error.message).id, "headers");
     assert.equal(failures.causeOf("Parse Error: Header overflow").id, "headers");
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test("a page whose header line is folded with a line feed is read, as Chrome reads it (#1969)", async () => {
+  // alkompis.se sends Content-Security-Policy-Report-Only folded with LF and tabs, not CRLF.
+  // The plain read was: Parse Error: Missing expected CR after header value.
+  const net = require("node:net");
+  const body = "<html>alkompis</html>";
+  const server = net.createServer((socket) => {
+    socket.once("data", () => socket.end(
+      "HTTP/1.1 200 OK\r\n" +
+      "content-type: text/html\r\n" +
+      "Content-Security-Policy-Report-Only: default-src 'self' *.alkompis.se;\n" +
+      "\t\t\t\t\t\t\t\tscript-src 'self' 'unsafe-inline';\r\n" +
+      "content-length: " + Buffer.byteLength(body) + "\r\n" +
+      "connection: close\r\n\r\n" +
+      body
+    ));
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const target = new URL("http://127.0.0.1:" + server.address().port + "/");
+  try {
+    const read = await core.requestDirect(target, "127.0.0.1");
+    assert.equal(read.status, 200);
+    assert.equal(read.body, body);
+    assert.match(String(read.headers["content-security-policy-report-only"] || ""), /alkompis\.se/);
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
