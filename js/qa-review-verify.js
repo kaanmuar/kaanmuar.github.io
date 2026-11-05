@@ -233,11 +233,13 @@
     if (data) list(data.proofs);
     if (location.hash === "#verify") section.scrollIntoView();
   });
-  paint();
-  if (window.SiteI18n) SiteI18n.resolve().then((resolved) => {
+  function use(resolved) {
     const code = String(resolved || "en").slice(0, 2);
     lang = COPY[code] ? code : "en";
     copy = COPY[lang];
     paint();
-  });
+  }
+  paint();
+  if (window.SiteI18n) SiteI18n.resolve().then(use);
+  window.addEventListener("site-lang-applied", (event) => use(event.detail && event.detail.lang));
 })();

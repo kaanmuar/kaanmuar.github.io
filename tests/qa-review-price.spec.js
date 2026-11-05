@@ -232,5 +232,7 @@ test.describe('The static price list is gone', () => {
     await expect(box.locator('.total-off')).toHaveText('Descuento por volver 10 %−$2.40');
     await expect(page.locator('#run-total-pay')).toHaveText('Pagar y revisar');
     await expect(page.locator('#run-total-cancel')).toHaveText('Cancelar');
+    await page.locator('#run-total-cancel').click();
+    await expect(page.locator('#form-status')).toHaveText('No se inició ni se cobró nada.');
   });
 });

@@ -9,6 +9,67 @@
   const FIREBASE = { apiKey: "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w", authDomain: "carlosm-interactive-cv.firebaseapp.com", projectId: "carlosm-interactive-cv", appId: "1:976558418058:web:1dc19bcd40915ea233e573" };
   const GOOGLE_SCOPES = ["email", "profile"].concat(["emails", "organization", "birthday", "phonenumbers", "addresses", "gender"].map((name) => "https://www.googleapis.com/auth/user." + name + ".read"));
   const LABELS = { "google.com": "Google", "microsoft.com": "Microsoft", "apple.com": "Apple", "github.com": "GitHub", "yahoo.com": "Yahoo", "facebook.com": "Facebook", "twitter.com": "X", linkedin: "LinkedIn", gitlab: "GitLab", discord: "Discord", twitch: "Twitch", slack: "Slack" };
+  // Read at each message, since the account page switches language without a reload.
+  const COPY = {
+    en: {
+      failed: "Sign-in failed. Try again in a moment.", appCode: "Code from your authenticator app", sentTo: "Code sent to {to}", enterEmail: "Enter your email.", sending: "Sending a code to {email}…",
+      appDigits: "Type the 6 digits from your authenticator app.", mailDigits: "Type the 6 digits from the email.", appMismatch: "That authenticator code did not match. Try the current one.",
+      finish: "Finish the {name} sign-in in the window that opened.", noSecondStep: "This account asks for a second step this page cannot take. Use email instead.",
+      twoStep: "This account has two-step sign-in. Type the code from your authenticator app.", closed: "The {name} window closed before sign-in finished.",
+      blocked: "This browser blocked the {name} window. Allow pop-ups for this site, or use email.", otherWay: "This email already signs in another way. Use that option, or email.",
+      providerFailed: "{name} sign-in failed ({code}). Try again, or use email.", unconfirmed: "{name} did not confirm this address, so we emailed it a code.",
+      unconfirmedAny: "That account did not confirm this address, so we emailed it a code.", opening: "Opening {name}…", checking: "Checking the sign-in…", checkingLink: "Checking the sign-in link…", continueWith: "Continue with {name}"
+    },
+    es: {
+      failed: "El inicio de sesión falló. Inténtalo de nuevo en un momento.", appCode: "Código de tu app de autenticación", sentTo: "Código enviado a {to}", enterEmail: "Escribe tu correo.", sending: "Enviando un código a {email}…",
+      appDigits: "Escribe los 6 dígitos de tu app de autenticación.", mailDigits: "Escribe los 6 dígitos del correo.", appMismatch: "Ese código de autenticación no coincide. Prueba con el actual.",
+      finish: "Termina el inicio de sesión con {name} en la ventana que se abrió.", noSecondStep: "Esta cuenta pide un segundo paso que esta página no puede hacer. Usa el correo.",
+      twoStep: "Esta cuenta tiene inicio de sesión en dos pasos. Escribe el código de tu app de autenticación.", closed: "La ventana de {name} se cerró antes de terminar el inicio de sesión.",
+      blocked: "Este navegador bloqueó la ventana de {name}. Permite las ventanas emergentes para este sitio o usa el correo.", otherWay: "Este correo ya inicia sesión de otra forma. Usa esa opción o el correo.",
+      providerFailed: "El inicio de sesión con {name} falló ({code}). Inténtalo de nuevo o usa el correo.", unconfirmed: "{name} no confirmó esta dirección, así que le enviamos un código por correo.",
+      unconfirmedAny: "Esa cuenta no confirmó esta dirección, así que le enviamos un código por correo.", opening: "Abriendo {name}…", checking: "Comprobando el inicio de sesión…", checkingLink: "Comprobando el enlace de inicio de sesión…", continueWith: "Continuar con {name}"
+    },
+    pt: {
+      failed: "A entrada falhou. Tente de novo em instantes.", appCode: "Código do seu app autenticador", sentTo: "Código enviado para {to}", enterEmail: "Escreva o seu e-mail.", sending: "Enviando um código para {email}…",
+      appDigits: "Digite os 6 dígitos do seu app autenticador.", mailDigits: "Digite os 6 dígitos do e-mail.", appMismatch: "Esse código do autenticador não confere. Tente o atual.",
+      finish: "Conclua a entrada com {name} na janela que abriu.", noSecondStep: "Esta conta pede uma segunda etapa que esta página não consegue fazer. Use o e-mail.",
+      twoStep: "Esta conta tem entrada em duas etapas. Digite o código do seu app autenticador.", closed: "A janela de {name} fechou antes de a entrada terminar.",
+      blocked: "Este navegador bloqueou a janela de {name}. Permita pop-ups para este site ou use o e-mail.", otherWay: "Este e-mail já entra de outra forma. Use essa opção ou o e-mail.",
+      providerFailed: "A entrada com {name} falhou ({code}). Tente de novo ou use o e-mail.", unconfirmed: "{name} não confirmou este endereço, então enviamos um código para ele.",
+      unconfirmedAny: "Essa conta não confirmou este endereço, então enviamos um código para ele.", opening: "Abrindo {name}…", checking: "Verificando a entrada…", checkingLink: "Verificando o link de entrada…", continueWith: "Continuar com {name}"
+    },
+    de: {
+      failed: "Die Anmeldung ist fehlgeschlagen. Versuchen Sie es gleich noch einmal.", appCode: "Code aus Ihrer Authenticator-App", sentTo: "Code gesendet an {to}", enterEmail: "Geben Sie Ihre E-Mail-Adresse ein.", sending: "Ein Code wird an {email} gesendet …",
+      appDigits: "Geben Sie die 6 Ziffern aus Ihrer Authenticator-App ein.", mailDigits: "Geben Sie die 6 Ziffern aus der E-Mail ein.", appMismatch: "Dieser Authenticator-Code passt nicht. Versuchen Sie den aktuellen.",
+      finish: "Schließen Sie die Anmeldung mit {name} im geöffneten Fenster ab.", noSecondStep: "Dieses Konto verlangt einen zweiten Schritt, den diese Seite nicht ausführen kann. Nutzen Sie stattdessen die E-Mail.",
+      twoStep: "Dieses Konto hat eine Anmeldung in zwei Schritten. Geben Sie den Code aus Ihrer Authenticator-App ein.", closed: "Das Fenster von {name} wurde geschlossen, bevor die Anmeldung fertig war.",
+      blocked: "Dieser Browser hat das Fenster von {name} blockiert. Erlauben Sie Pop-ups für diese Website oder nutzen Sie die E-Mail.", otherWay: "Diese E-Mail-Adresse meldet sich bereits anders an. Nutzen Sie diese Option oder die E-Mail.",
+      providerFailed: "Die Anmeldung mit {name} ist fehlgeschlagen ({code}). Versuchen Sie es noch einmal oder nutzen Sie die E-Mail.", unconfirmed: "{name} hat diese Adresse nicht bestätigt, daher haben wir ihr einen Code gemailt.",
+      unconfirmedAny: "Dieses Konto hat diese Adresse nicht bestätigt, daher haben wir ihr einen Code gemailt.", opening: "{name} wird geöffnet …", checking: "Die Anmeldung wird geprüft …", checkingLink: "Der Anmeldelink wird geprüft …", continueWith: "Weiter mit {name}"
+    },
+    fr: {
+      failed: "La connexion a échoué. Réessayez dans un instant.", appCode: "Code de votre application d’authentification", sentTo: "Code envoyé à {to}", enterEmail: "Saisissez votre adresse e-mail.", sending: "Envoi d’un code à {email}…",
+      appDigits: "Saisissez les 6 chiffres de votre application d’authentification.", mailDigits: "Saisissez les 6 chiffres de l’e-mail.", appMismatch: "Ce code d’authentification ne correspond pas. Essayez le code actuel.",
+      finish: "Terminez la connexion {name} dans la fenêtre qui s’est ouverte.", noSecondStep: "Ce compte demande une deuxième étape que cette page ne peut pas faire. Utilisez plutôt l’e-mail.",
+      twoStep: "Ce compte a une connexion en deux étapes. Saisissez le code de votre application d’authentification.", closed: "La fenêtre {name} s’est fermée avant la fin de la connexion.",
+      blocked: "Ce navigateur a bloqué la fenêtre {name}. Autorisez les fenêtres pop-up pour ce site, ou utilisez l’e-mail.", otherWay: "Cette adresse se connecte déjà d’une autre façon. Utilisez cette option, ou l’e-mail.",
+      providerFailed: "La connexion {name} a échoué ({code}). Réessayez, ou utilisez l’e-mail.", unconfirmed: "{name} n’a pas confirmé cette adresse, nous lui avons donc envoyé un code par e-mail.",
+      unconfirmedAny: "Ce compte n’a pas confirmé cette adresse, nous lui avons donc envoyé un code par e-mail.", opening: "Ouverture de {name}…", checking: "Vérification de la connexion…", checkingLink: "Vérification du lien de connexion…", continueWith: "Continuer avec {name}"
+    },
+    it: {
+      failed: "L’accesso non è riuscito. Riprova tra un momento.", appCode: "Codice dalla tua app di autenticazione", sentTo: "Codice inviato a {to}", enterEmail: "Scrivi la tua email.", sending: "Invio di un codice a {email}…",
+      appDigits: "Scrivi le 6 cifre della tua app di autenticazione.", mailDigits: "Scrivi le 6 cifre dell’email.", appMismatch: "Quel codice di autenticazione non corrisponde. Prova quello attuale.",
+      finish: "Completa l’accesso con {name} nella finestra che si è aperta.", noSecondStep: "Questo account chiede un secondo passaggio che questa pagina non può fare. Usa l’email.",
+      twoStep: "Questo account ha l’accesso in due passaggi. Scrivi il codice della tua app di autenticazione.", closed: "La finestra di {name} si è chiusa prima della fine dell’accesso.",
+      blocked: "Questo browser ha bloccato la finestra di {name}. Consenti i pop-up per questo sito o usa l’email.", otherWay: "Questa email accede già in un altro modo. Usa quell’opzione o l’email.",
+      providerFailed: "L’accesso con {name} non è riuscito ({code}). Riprova o usa l’email.", unconfirmed: "{name} non ha confermato questo indirizzo, quindi gli abbiamo inviato un codice per email.",
+      unconfirmedAny: "Quell’account non ha confermato questo indirizzo, quindi gli abbiamo inviato un codice per email.", opening: "Apertura di {name}…", checking: "Controllo dell’accesso…", checkingLink: "Controllo del link di accesso…", continueWith: "Continua con {name}"
+    }
+  };
+  function t(key, vars) {
+    const book = COPY[String(document.documentElement.lang || "en").slice(0, 2).toLowerCase()] || COPY.en;
+    return String(book[key] || COPY.en[key]).replace(/\{(\w+)\}/g, (match, name) => (vars && vars[name] != null ? String(vars[name]) : match));
+  }
   const box = document.getElementById("sign-in");
   if (!box) return;
   const el = (id) => document.getElementById(id);
@@ -53,7 +114,7 @@
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const error = new Error(data.error || "Sign-in failed. Try again in a moment.");
+      const error = new Error(data.error || t("failed"));
       error.code = data.code || "";
       throw error;
     }
@@ -74,7 +135,7 @@
     el("sign-in-code-step").hidden = !waiting;
     el("sign-in-done").hidden = !signed;
     el("sign-in-code-note").hidden = !!factor;
-    if (waiting) el("sign-in-code-label").textContent = factor ? "Code from your authenticator app" : "Code sent to " + pending.sentTo;
+    if (waiting) el("sign-in-code-label").textContent = factor ? t("appCode") : t("sentTo", { to: pending.sentTo });
     const mail = el("sign-in-mail");
     if (signed && mail) {
       el("sign-in-who").textContent = signed.name || signed.email;
@@ -125,10 +186,10 @@
     return run(async () => {
       const email = el("sign-in-email").value.trim();
       if (!email) {
-        say("Enter your email.", true);
+        say(t("enterEmail"), true);
         return;
       }
-      say("Sending a code to " + email + "…");
+      say(t("sending", { email }));
       const openedAt = Number(box.getAttribute("data-opened")) || Date.now();
       waitForCode(await post("/auth/email", { email, openedAt, company: (el("hp-note") || { value: "" }).value }));
     });
@@ -139,7 +200,7 @@
       const pending = read(PENDING_KEY);
       const code = el("sign-in-code").value.replace(/\D/g, "");
       if (code.length !== 6) {
-        say(factor ? "Type the 6 digits from your authenticator app." : "Type the 6 digits from the email.", true);
+        say(factor ? t("appDigits") : t("mailDigits"), true);
         return;
       }
       if (factor) {
@@ -148,7 +209,7 @@
         try {
           result = await factor.resolver.resolveSignIn(auth.TotpMultiFactorGenerator.assertionForSignIn(factor.hint.uid, code));
         } catch (error) {
-          throw new Error("That authenticator code did not match. Try the current one.");
+          throw new Error(t("appMismatch"));
         }
         const id = factor.id;
         factor = null;
@@ -193,7 +254,7 @@
   function withProvider(id) {
     return run(async () => {
       const { auth, instance } = await loadFirebase();
-      say("Finish the " + LABELS[id] + " sign-in in the window that opened.");
+      say(t("finish", { name: LABELS[id] }));
       let result;
       try {
         result = await auth.signInWithPopup(instance, providerFor(auth, id));
@@ -202,18 +263,18 @@
         if (code === "multi-factor-auth-required") {
           const resolver = auth.getMultiFactorResolver(instance, error);
           const hint = resolver.hints.find((item) => item.factorId === auth.TotpMultiFactorGenerator.FACTOR_ID);
-          if (!hint) throw new Error("This account asks for a second step this page cannot take. Use email instead.");
+          if (!hint) throw new Error(t("noSecondStep"));
           factor = { resolver, hint, id };
           paint();
-          say("This account has two-step sign-in. Type the code from your authenticator app.");
+          say(t("twoStep"));
           el("sign-in-code").focus();
           return;
         }
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_failed", "URL Review", id + " " + code);
-        if (/popup-closed|cancelled-popup/.test(code)) throw new Error("The " + LABELS[id] + " window closed before sign-in finished.");
-        if (code === "popup-blocked") throw new Error("This browser blocked the " + LABELS[id] + " window. Allow pop-ups for this site, or use email.");
-        if (code === "account-exists-with-different-credential") throw new Error("This email already signs in another way. Use that option, or email.");
-        throw new Error(LABELS[id] + " sign-in failed (" + code + "). Try again, or use email.");
+        if (/popup-closed|cancelled-popup/.test(code)) throw new Error(t("closed", { name: LABELS[id] }));
+        if (code === "popup-blocked") throw new Error(t("blocked", { name: LABELS[id] }));
+        if (code === "account-exists-with-different-credential") throw new Error(t("otherWay"));
+        throw new Error(t("providerFailed", { name: LABELS[id], code }));
       }
       await finishProvider(result, id);
     });
@@ -235,13 +296,13 @@
     if (data.session) signedIn(data);
     else {
       waitForCode(data);
-      say(LABELS[id] + " did not confirm this address, so we emailed it a code.");
+      say(t("unconfirmed", { name: LABELS[id] }));
     }
   }
 
   function withOAuth(id) {
     return run(async () => {
-      say("Opening " + LABELS[id] + "…");
+      say(t("opening", { name: LABELS[id] }));
       const data = await post("/auth/oauth/" + id + "/start", {});
       write(RETURN_KEY, location.pathname);
       location.assign(data.url);
@@ -251,7 +312,7 @@
   function paintProviders(list) {
     const others = list.filter((item) => item.id !== "email" && LABELS[item.id]);
     el("sign-in-providers").innerHTML = others.map((item) =>
-      '<button type="button" class="btn sign-in-provider" data-provider="' + item.id + '"' + (item.oauth ? " data-oauth" : "") + '><span class="sign-in-mark sign-in-' + item.id.split(".")[0] + '" aria-hidden="true"></span>Continue with ' + LABELS[item.id] + "</button>"
+      '<button type="button" class="btn sign-in-provider" data-provider="' + item.id + '"' + (item.oauth ? " data-oauth" : "") + '><span class="sign-in-mark sign-in-' + item.id.split(".")[0] + '" aria-hidden="true"></span>' + t("continueWith", { name: LABELS[item.id] }) + "</button>"
     ).join("");
     el("sign-in-or").hidden = !others.length;
     el("sign-in-google-note").hidden = !others.some((item) => item.id === "google.com");
@@ -265,7 +326,7 @@
     const page = read(RETURN_KEY);
     write(RETURN_KEY, null);
     await run(async () => {
-      say("Checking the sign-in…");
+      say(t("checking"));
       let data;
       try {
         data = await post("/auth/oauth/finish", sent);
@@ -275,7 +336,7 @@
       }
       if (!data.session) {
         waitForCode(data);
-        say("That account did not confirm this address, so we emailed it a code.");
+        say(t("unconfirmedAny"));
         return;
       }
       signedIn(data);
@@ -290,7 +351,7 @@
     params.delete("key");
     history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : "") + location.hash);
     await run(async () => {
-      say("Checking the sign-in link…");
+      say(t("checkingLink"));
       try {
         signedIn(await post("/auth/email/finish", { id, token }));
       } catch (error) {

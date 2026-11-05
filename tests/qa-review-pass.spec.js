@@ -220,11 +220,11 @@ test.describe('Pass checkout', () => {
 });
 
 test.describe('The pass card on the account page', () => {
-  async function openAccount(page, records) {
+  async function openAccount(page, records, file = '/qa-review-account.html') {
     const store = await signIn(page);
     const at = Date.parse('2026-10-24T12:00:00Z');
     await mock(page, store, (where) => (where === '/account/runs' ? [200, offers.accountFile(records, 'ana@example.com', at)] : null));
-    await page.goto('/qa-review-account.html');
+    await page.goto(file);
     return page.locator('#pass-card');
   }
 
@@ -250,5 +250,29 @@ test.describe('The pass card on the account page', () => {
     await expect(card).toBeVisible({ timeout: 20000 });
     await expect(card.locator('h3')).toHaveText('30-day passes');
     await expect(card.getByRole('link', { name: /^Buy / })).toHaveText(['Buy Freelancer', 'Buy Team', 'Buy Pro']);
+  });
+
+  test('in Spanish the page, the pass card, the runs and a language switch are written by hand, away from machine translation (#1305)', async ({ page }) => {
+    const card = await openAccount(page, [
+      { id: 'pass-abc', email: 'ana@example.com', status: 'monthly-pass', plan: 'freelancer', paid: true, runs: 10, runsUsed: 3, paidUntil: '2026-11-20T00:00:00Z' },
+      { id: 'ab12', email: 'ana@example.com', status: 'complete', passId: 'pass-abc', passPlan: 'freelancer', createdAt: '2026-10-23T10:00:00Z', report: Object.assign({}, sample.report, { id: 'ab12', host: 'onpass.example.org' }) },
+      { id: 'cd34', email: 'ana@example.com', status: 'complete', createdAt: '2026-10-01T10:00:00Z', report: Object.assign({}, sample.report, { id: 'cd34', host: 'older.example.org' }) }
+    ], '/qa-review-account.html?lang=es');
+    await expect(card).toBeVisible({ timeout: 20000 });
+    await expect(page).toHaveTitle('Tus revisiones · QA-lab URL Review');
+    await expect(page.locator('h1')).toHaveText('Tus revisiones');
+    await expect(page.locator('main')).toHaveAttribute('translate', 'no');
+    await expect(page.locator('#file-status')).toHaveText(/^Esta cuenta tiene un pase de 30 días abierto hasta el .+\. Los informes hechos con este pase están abiertos\./);
+    await expect(card.locator('h3')).toHaveText('Tu pase Freelancer');
+    await expect(card).toContainText('Quedan 7 de 10 revisiones, hasta el');
+    await expect(card.getByRole('link', { name: 'Renovar el pase Freelancer' })).toHaveAttribute('href', 'qa-review-pay.html?purpose=pass&plan=freelancer');
+    await expect(page.locator('#list > *').filter({ hasText: 'older.example.org' }).locator('.pill')).toHaveText('Comienzo visible');
+    await expect(page.locator('#result-count')).toHaveText('2 revisiones');
+    await page.locator('#langToggle').click();
+    await page.locator('.lang-search').fill('Deutsch');
+    await page.locator('.lang-option').first().click();
+    await expect(card.locator('h3')).toHaveText('Ihr Pass Freelancer');
+    await expect(page.locator('#result-count')).toHaveText('2 Prüfungen');
+    await expect(page.locator('main')).toHaveAttribute('lang', 'de');
   });
 });
