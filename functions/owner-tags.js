@@ -1,8 +1,8 @@
 "use strict";
 /*
  * Owner tags (#2633): once a day, every social post we published about a URL review report gets comments that tag the
- * report's owner (every owner on a comparison card) and the accounts around them, and the owners' own latest posts on
- * Bluesky, Mastodon and YouTube get a reply with their report's link.
+ * report's owner (every owner on a comparison card) and the accounts around them, and the owners' own latest posts get a
+ * reply with their report's link.
  *
  *   posts     assets/social/feed.json posts with a report, or with the sites their card names (comparisons), joined
  *             with their sent entries in the ledgers (buffer.json, facebook.json, open-social.json), newest first
@@ -17,13 +17,18 @@
  *             tags accounts approved since in the comments left. Stored as approved engagement_posts replies with
  *             campaign "owner-tags", so engagement-act carries them on the API networks and the Mac's agent on the
  *             others; ownerTags.kind "tags" skips the already-replied check, since our second comment is expected
- *   replies   one reply per report, network and owner account under the owner's latest post of the last REPLY_DAYS
+ *   replies   one reply per report, network and owner account under the owner's latest post of the last REPLY_DAYS:
+ *             found here on Bluesky, Mastodon and YouTube; on the Mac's networks (LATEST_NETS, #2638) the reply targets
+ *             the owner's profile (ownerTags.latest) and the agent finds the newest own post there. One the agent finds
+ *             none for (ownerTags.none) is queued again after LATEST_RETRY_DAYS
  *
  * Switzerland, Belgium and Luxembourg speak several languages, so their sites are addressed in English unless the host's
  * own country code says otherwise.
- * Tag comments go only where an @handle typed in the text notifies its account (MENTIONS): Facebook, LinkedIn and
- * TikTok make a mention only when it is picked from a menu. At most PER_DAY comments and replies a network a day; a
- * blocked account is never tagged. settings.paused stops it; until settings.live it only counts what it would post.
+ * Facebook, LinkedIn and TikTok make a mention only when it is picked from the comment box's menu (PICKED, #2637): their
+ * comments carry ownerTags.menu [{ token, handle, name }], the agent picks each token's account from the menu, and its
+ * result keeps which were linked and which stayed plain text, and the names the menu showed for accounts without one.
+ * At most PER_DAY comments and replies a network a day; a blocked account is never tagged. settings.paused stops it;
+ * until settings.live it only counts what it would post.
  *
  *   owner_tags/settings            { paused, live, updatedAt, by }
  *   owner_tags/last                the last run's note and counts, for Jarvis
@@ -47,10 +52,15 @@ const SUGGEST_MAX = 15;
 const REPLY_PER_RUN = 12;
 const TIMEOUT = 10000;
 const HTML_MAX = 1500000;
-// Mentions a comment may carry where a typed @handle notifies its account; Instagram and Threads hide comments with more.
-const MENTIONS = { bluesky: 10, mastodon: 10, youtube: 10, x: 10, instagram: 5, threads: 5 };
+// Mentions a comment may carry; Instagram and Threads hide comments with more.
+const MENTIONS = { bluesky: 10, mastodon: 10, youtube: 10, x: 10, instagram: 5, threads: 5, facebook: 5, linkedin: 5, tiktok: 5 };
+const PICKED = ["facebook", "linkedin", "tiktok"];
+const SUGGESTED = ["x", "instagram", "threads", "bluesky", "mastodon", "youtube"];
 const REPLY_NETS = ["bluesky", "mastodon", "youtube"];
-const PER_DAY = { bluesky: 20, mastodon: 20, youtube: 20, x: 6, instagram: 6, threads: 6 };
+const LATEST_NETS = ["x", "instagram", "threads", "facebook", "linkedin", "tiktok"];
+const LATEST_PER_RUN = 6;
+const LATEST_RETRY_DAYS = 7;
+const PER_DAY = { bluesky: 20, mastodon: 20, youtube: 20, x: 6, instagram: 6, threads: 6, facebook: 6, linkedin: 6, tiktok: 6 };
 const STATUSES = ["approved", "suggested", "rejected", "blocked"];
 const SCOPES = ["report", "city", "sector", "country"];
 const NET_CODES = { x: "x", twitter: "x", ig: "instagram", instagram: "instagram", bsky: "bluesky", bluesky: "bluesky", mast: "mastodon", mastodon: "mastodon",
@@ -102,10 +112,27 @@ function handleOf(link) {
   return null;
 }
 
-/** The text that tags an account on its network, or "" where a typed handle makes no mention (Facebook, LinkedIn, TikTok, YouTube channel ids). */
+/**
+ * The text that tags an account on its network, or "" where it cannot be tagged (a YouTube channel id). On Facebook,
+ * LinkedIn (its slug) and TikTok it is the token the Mac's agent swaps for the account picked from the menu.
+ */
 function mentionOf(a) {
-  if (!a || !MENTIONS[a.network] || String(a.handle).includes("/")) return "";
-  return "@" + String(a.handle).replace(/^@/, "");
+  if (!a || !MENTIONS[a.network]) return "";
+  const h = String(a.handle).replace(/^@/, "");
+  if (a.network === "linkedin") return /^(company|in|school)\/[^/\s]+$/.test(h) ? "@" + h.split("/")[1] : "";
+  return h.includes("/") ? "" : "@" + h;
+}
+
+/** A mention the Mac's agent picks from a network's menu: { token, handle, name }. */
+const tagOf = (a) => ({ token: mentionOf(a), handle: a.handle, name: a.name || "" });
+
+/** Where the Mac's agent finds an owner's latest post on a browser network: the profile. */
+function profileOf(a) {
+  const h = String(a.handle).replace(/^@/, "");
+  return {
+    x: "https://x.com/" + h, instagram: "https://www.instagram.com/" + h + "/", threads: "https://www.threads.com/@" + h, tiktok: "https://www.tiktok.com/@" + h,
+    facebook: "https://www.facebook.com/" + h, linkedin: "https://www.linkedin.com/" + h + "/"
+  }[a.network] || "";
 }
 
 const SOCIAL = /https?:\/\/(?:www\.|m\.)?(?:x\.com|twitter\.com|instagram\.com|threads\.(?:net|com)|tiktok\.com|bsky\.app|youtube\.com|facebook\.com|linkedin\.com|[a-z0-9-]*(?:mastodon|mstdn)[a-z0-9.-]*|social\.[a-z0-9.-]+|toot\.[a-z0-9.-]+)\/[^\s"'<>\\)]+/gi;
@@ -204,21 +231,24 @@ function pick(accounts, reports, network, tagged) {
 }
 
 /**
- * The comments for one post: [{ text, mentions }] in at most room comments. The first that names owners carries the
- * owner line and link; the rest of the mentions follow as cc, never past the network's cap or character limit. The
- * post's first comment (first) always carries the link: with no owner on the network it names the site (host).
+ * The comments for one post: [{ text, mentions, tags }] in at most room comments. The first that names owners carries
+ * the owner line and link; the rest of the mentions follow as cc, never past the network's cap or character limit. The
+ * post's first comment (first) always carries the link: with no owner on the network it names the site (host). tags,
+ * on the networks whose mentions are picked from a menu (PICKED), are the mentions as tagOf gives them.
  */
 function comments(network, lang, owners, related, link, room, many, host, first) {
   const copy = COPY[lang] || COPY.en;
   const cap = MENTIONS[network] || 0;
   const limit = (E.NETWORKS[network] || {}).limit || 300;
+  const line = (list) => (many ? copy.many : copy.one).replace("{owners}", list.map(mentionOf).join(" ")).replace("{link}", link);
   const out = [];
   let ownersLeft = owners.slice();
   const queue = related.slice(0, RELATED_MAX);
   while ((ownersLeft.length || queue.length) && out.length < (room === undefined ? COMMENTS_MAX : room)) {
     const mentions = ownersLeft.slice(0, cap);
+    while (mentions.length > 1 && line(mentions).length > limit) mentions.pop();
     ownersLeft = ownersLeft.slice(mentions.length);
-    let text = mentions.length ? (many ? copy.many : copy.one).replace("{owners}", mentions.map(mentionOf).join(" ")).replace("{link}", link)
+    let text = mentions.length ? line(mentions)
       : first && !out.length && host ? copy.site.replace("{host}", host).replace("{link}", link) : "";
     let cc = false;
     while (queue.length && mentions.length < cap) {
@@ -230,16 +260,17 @@ function comments(network, lang, owners, related, link, room, many, host, first)
       mentions.push(queue.shift());
     }
     if (!mentions.length) break;
-    out.push({ text, mentions: mentions.map((a) => accountId(a.network, a.handle)) });
+    out.push(Object.assign({ text, mentions: mentions.map((a) => accountId(a.network, a.handle)) }, PICKED.includes(network) ? { tags: mentions.map(tagOf) } : {}));
   }
   return out;
 }
 
-/** The reply under an owner's own post; Mastodon names the person answered on its own. */
+/** The reply under an owner's own post; Mastodon and the Mac's networks tell the owner of a comment on their own. */
 function replyText(lang, account, host, link) {
   const copy = COPY[lang] || COPY.en;
-  const mention = account.network === "mastodon" ? "" : mentionOf(account);
-  return copy.reply.replace("{mention}", mention).replace("{host}", host).replace("{link}", link).trim();
+  const mention = account.network === "mastodon" || LATEST_NETS.includes(account.network) ? "" : mentionOf(account);
+  const text = copy.reply.replace("{mention}", mention).replace("{host}", host).replace("{link}", link).trim();
+  return mention ? text : text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /** An approved engagement_posts reply carrying one comment or owner reply. */
@@ -271,7 +302,7 @@ function parseSuggestions(text) {
   return (Array.isArray(list) ? list : []).map((s) => {
     const network = NET_CODES[String((s || {}).network || "").toLowerCase()];
     const handle = clip((s || {}).handle, 120).replace(/^@/, "");
-    if (!network || !MENTIONS[network] || !handle || /\s/.test(handle)) return null;
+    if (!network || !SUGGESTED.includes(network) || !handle || /\s/.test(handle)) return null;
     return { network, handle, name: clip(s.name, 80), why: clip(s.why, 120), scope: SCOPES.includes(s.scope) ? s.scope : "report" };
   }).filter(Boolean).slice(0, SUGGEST_MAX);
 }
@@ -460,7 +491,8 @@ async function run(deps) {
   const dayRef = db.collection("owner_tag_daily").doc(E.bogotaDay(now));
   const used = Object.assign({}, ((await dayRef.get()).data() || {}).n || {});
   const mine = (await db.collection("engagement_posts").where("campaign", "==", CAMPAIGN).limit(10000).get()).docs.map((d) => Object.assign({ key: d.id }, d.data()));
-  const keys = new Set(mine.map((d) => d.key));
+  const retry = (d) => (d.ownerTags || {}).latest && Date.parse((d.ownerTags || {}).none || "") < now - LATEST_RETRY_DAYS * DAY;
+  const keys = new Set(mine.filter((d) => !retry(d)).map((d) => d.key));
   const byPost = new Map();
   mine.filter((d) => (d.ownerTags || {}).kind === "tags").forEach((d) => {
     const k = d.ownerTags.post + "|" + d.network;
@@ -494,24 +526,33 @@ async function run(deps) {
       const part = had.count + i;
       const key = docKey("tags", p.key, p.network, part);
       if (keys.has(key)) continue;
-      await add(key, engagementDoc(p, list[i].text, lang, { kind: "tags", post: p.key, part, mentions: list[i].mentions, reports: p.reports.map((r) => r.id) }, now));
+      const tags = { kind: "tags", post: p.key, part, mentions: list[i].mentions, reports: p.reports.map((r) => r.id) };
+      await add(key, engagementDoc(p, list[i].text, lang, Object.assign(tags, list[i].tags ? { menu: list[i].tags } : {}), now));
       out.comments += 1;
     }
   }
 
   let fetched = 0;
-  for (const a of usable.filter((x) => x.kind === "owner" && x.status === "approved" && REPLY_NETS.includes(x.network))) {
+  let latest = 0;
+  for (const a of usable.filter((x) => x.kind === "owner" && (REPLY_NETS.includes(x.network) || LATEST_NETS.includes(x.network)))) {
     const report = (a.scopes || []).map((s) => reports.get(s.replace(/^report:/, ""))).find(Boolean);
-    if (!report || room(a.network) <= 0 || fetched >= REPLY_PER_RUN) continue;
+    const onMac = LATEST_NETS.includes(a.network);
+    if (!report || room(a.network) <= 0 || (onMac ? latest >= LATEST_PER_RUN : fetched >= REPLY_PER_RUN)) continue;
     const key = docKey("reply", report.id, a.network, a.handle.toLowerCase());
     if (keys.has(key)) continue;
-    fetched += 1;
     let target;
-    try { target = await latestPost(deps, a); } catch (error) { out.errors.push(a.network + " @" + a.handle + ": " + clip(error.message, 120)); continue; }
-    if (!target) continue;
+    if (onMac) {
+      latest += 1;
+      target = { id: "", url: profileOf(a), author: { handle: a.handle, name: a.name || "" } };
+    } else {
+      fetched += 1;
+      try { target = await latestPost(deps, a); } catch (error) { out.errors.push(a.network + " @" + a.handle + ": " + clip(error.message, 120)); continue; }
+      if (!target) continue;
+    }
     const lang = langOf(report);
     const link = R.linkFor({ host: bare(report.host) }, a.network, lang, key);
-    await add(key, engagementDoc(Object.assign({ network: a.network }, target), replyText(lang, a, bare(report.host), link), lang, { kind: "reply", report: report.id, account: accountId(a.network, a.handle) }, now));
+    const tags = Object.assign({ kind: "reply", report: report.id, account: accountId(a.network, a.handle) }, onMac ? { latest: true } : {});
+    await add(key, engagementDoc(Object.assign({ network: a.network }, target), replyText(lang, a, bare(report.host), link), lang, tags, now));
     out.replies += 1;
   }
   return finish(db, out);
@@ -567,6 +608,17 @@ async function account(deps, body, by) {
   return { id, message: "@" + h.handle + " on " + ((E.NETWORKS[h.network] || {}).name || h.network) + " is " + status + "." };
 }
 
+/** The names the Mac's agent read for menu mentions ([{ handle, name }]), kept on the accounts that had none. */
+async function learnNames(db, network, list, now) {
+  for (const m of list || []) {
+    const name = clip(m && m.name, 80);
+    if (!name || !m.handle) continue;
+    const ref = db.collection("owner_tag_accounts").doc(accountId(network, m.handle));
+    const was = (await ref.get()).data();
+    if (was && !was.name) await ref.set({ name, updatedAt: new Date(now).toISOString() }, { merge: true });
+  }
+}
+
 /** What Jarvis tells about owner tags: the settings, the last run and the accounts by status. */
 async function status(db) {
   const [s, last, accounts] = await Promise.all([readSettings(db), db.collection("owner_tags").doc("last").get().then((d) => d.data() || null), readAccounts(db)]);
@@ -576,7 +628,7 @@ async function status(db) {
 }
 
 module.exports = {
-  CAMPAIGN, RELATED_MAX, COMMENTS_MAX, MENTIONS, PER_DAY, REPLY_NETS, REPLY_DAYS,
-  handleOf, mentionOf, socialLinksOf, scopesOf, langOf, reportsOf, ourPosts, pick, comments, replyText, engagementDoc, suggestPrompt, parseSuggestions, parseHandles, accountId, docKey,
+  CAMPAIGN, RELATED_MAX, COMMENTS_MAX, MENTIONS, PICKED, PER_DAY, REPLY_NETS, LATEST_NETS, REPLY_DAYS, LATEST_RETRY_DAYS,
+  handleOf, mentionOf, profileOf, learnNames, socialLinksOf, scopesOf, langOf, reportsOf, ourPosts, pick, comments, replyText, engagementDoc, suggestPrompt, parseSuggestions, parseHandles, accountId, docKey,
   run, runNote, decide, account, status, readSettings, saveSettings, latestPost
 };
