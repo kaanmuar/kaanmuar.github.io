@@ -541,8 +541,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122101128675532027",
     "at": "2026-11-04T23:38:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-04T21:49:11.882Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122101128675532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-05T11:50:08.389Z"
    }
   ],
   "auto-2026-11-03/01-u-portal-upb-edu-co": [
@@ -572,8 +573,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122102644749532027",
     "at": "2026-11-04T23:38:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-04T21:49:11.882Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122102644749532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-05T11:50:08.389Z"
    }
   ],
   "auto-2026-11-03/04-u-platzi-com": [
@@ -695,6 +697,36 @@
     "at": "2026-11-07T21:30:00.000Z",
     "result": "queued",
     "checked": "2026-11-04T21:49:11.883Z"
+   }
+  ],
+  "auto-2026-11-05/01-u-houm-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122104487385532027",
+    "at": "2026-11-08T19:31:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-05T11:50:11.715Z"
+   }
+  ],
+  "auto-2026-11-05/07-u-uacm-edu-mx": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122104487439532027",
+    "at": "2026-11-08T22:19:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-05T11:50:14.474Z"
+   }
+  ],
+  "auto-2026-11-05/13-u-get-moment-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122104487505532027",
+    "at": "2026-11-08T23:44:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-05T11:50:16.584Z"
    }
   ],
   "compare-2026-11/01-quiz-berlin-vienna": [
