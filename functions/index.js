@@ -1690,6 +1690,7 @@ const ownerMail = require("./url-review-owner-mail");
 const mailFace = require("./mail-face");
 const accountData = require("./url-review-account-data");
 const ownerProofs = require("./url-review-owner-proof");
+const domainOffer = require("./url-review-domain-offer");
 
 async function ownerProofRows(email) {
   if (!ownerProofs.emailOf(email)) return [];
@@ -2876,13 +2877,32 @@ async function reviewRowsFor(deviceId, ip) {
   }));
 }
 
+// The signed-in account a checkout body carries, with what a domain offer asks of it, or null when signed out.
+async function offerHolder(input) {
+  const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(getFirestore()), Object.assign({}, input || {}, { touch: false })).catch(() => null);
+  return signedIn && signedIn.ok ? { email: signedIn.email } : null;
+}
+
+// A domain offer (#2615) opens only for an address on its host's domain or one that proved the host, on its first payment.
+async function domainLock(coupon, email) {
+  const address = ownerProofs.emailOf(email);
+  const [rows, paid] = address
+    ? await Promise.all([ownerProofRows(address), getFirestore().collection("url_reviews").where("email", "==", address).where("paid", "==", true).limit(1).get().then((s) => !s.empty).catch(() => true)])
+    : [[], false];
+  return domainOffer.lockOpen(coupon, { email: address, proofs: rows, paidBefore: paid }, Date.now(), urlReview.mailboxMatchesHost);
+}
+
 // A code with perEmail is counted against the redemptions of the payer's address; without an address it stays closed.
 async function couponFor(code, purpose, reportId, email) {
   const key = reviewOffers.cleanCode(code);
   if (!key) return null;
   try {
     const snap = await getFirestore().collection("url_review_coupons").doc(key).get();
-    const coupon = snap.exists ? Object.assign({ code: key }, snap.data()) : null;
+    let coupon = snap.exists ? Object.assign({ code: key }, snap.data()) : null;
+    if (coupon && coupon.host) {
+      if (!(await domainLock(coupon, email)).ok) return null;
+      coupon = Object.assign(coupon, { validUntil: new Date(domainOffer.endsAt(coupon)).toISOString() });
+    }
     const address = String(email || "").trim().toLowerCase();
     let used = null;
     if (coupon && Number(coupon.perEmail) > 0 && address) {
@@ -2902,11 +2922,28 @@ async function runsForEmail(email) {
   return snap.docs.map((doc) => doc.data());
 }
 
+// A domain offer as the splash and the pay page show it ({ offer }), or {} when the code is not one. seen starts its window.
+async function offerNote(code, seen) {
+  const key = reviewOffers.cleanCode(code);
+  if (!key) return {};
+  const ref = getFirestore().collection("url_review_coupons").doc(key);
+  const snap = await ref.get().catch(() => null);
+  const coupon = snap && snap.exists ? snap.data() : null;
+  const start = seen ? domainOffer.opening(coupon, Date.now()) : null;
+  if (start && domainOffer.publicView(key, coupon, Date.now())) {
+    await ref.set(start, { merge: true }).catch((error) => console.error("Offer window start failed:", error));
+    Object.assign(coupon, start);
+  }
+  const view = domainOffer.publicView(key, coupon, Date.now());
+  return view ? { offer: view } : {};
+}
+
 // A first run's wider read and a comparison keep their list price: no return step and no code.
 async function returnPrice(priced, opts) {
   const cents = Math.round(Number(priced.usd) * 100);
   if (priced.billing === "scope" || priced.billing === "compare") return reviewOffers.discountFor(cents, priced.count, {});
-  const coupon = await couponFor(opts.coupon, opts.purpose, opts.reportId, opts.email);
+  const holder = !opts.email && opts.input && opts.coupon ? await offerHolder(opts.input) : null;
+  const coupon = await couponFor(opts.coupon, opts.purpose, opts.reportId, opts.email || (holder && holder.email));
   const rows = opts.rows || (opts.purpose === "report" ? await runsForEmail(opts.email) : await reviewRowsFor(opts.deviceId, opts.ip));
   return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon });
 }
@@ -4342,6 +4379,12 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     }
     return;
   }
+  // The splash's domain offer (#2615): what it is and until when; seen=1 starts its window. Nothing about who holds it.
+  if (req.method === "GET" && /\/offer$/.test(pathName)) {
+    const note = await offerNote(req.query.code, req.query.seen === "1").catch(() => ({}));
+    res.status(note.offer ? 200 : 404).json(note.offer ? note : { error: "That offer was not found." });
+    return;
+  }
   if (req.method === "GET" && pathName.indexOf("/checkout/quote") !== -1) {
     try {
       const passQuote = await quotePass(req.query);
@@ -4409,7 +4452,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         eachUsd: priced.eachUsd,
         perFramework: priced.each,
         creditUsd: priced.creditUsd || 0
-      }, dealFields(deal)));
+      }, dealFields(deal), quotePurpose && !(deal && deal.source === "coupon") ? await offerNote(req.query.coupon) : {}));
     } catch (error) {
       res.status(error.status || 502).json({ error: error.message || "The peso price could not be loaded." });
     }
@@ -4519,6 +4562,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
           email: reportData.email,
           before: reportData.createdAt,
           coupon: req.body && req.body.coupon,
+          input: req.body || {},
           deviceId,
           ip: req.ip || ""
         });

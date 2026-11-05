@@ -71,3 +71,13 @@ test("a report reply's link opens the site's Live Report, tagged by network, sit
   assert.equal(params((await route(at("/r/myspace/upb.edu.co/a1b2c3"), { findReport })).location).get("utm_campaign"), "unknown-path");
   assert.equal(params((await route(at("/r/bsky/upb.edu.co/no!"), { findReport })).location).get("utm_campaign"), "unknown-path");
 });
+
+test("a profile campaign link carries the site's domain offer to the landing page as its coupon (#2615)", async () => {
+  const { route } = await load();
+  const findReport = async (host) => (host === "upb.edu.co" ? { id: "upb" } : null);
+  const out = await route(at("/de/r/li/upb.edu.co/a1b2c3/HI-ABCD2345"), { findReport });
+  assert.equal(params(out.location).get("utm_campaign"), "social-profile-linkedin");
+  assert.equal(params(out.location).get("live"), "upb");
+  assert.equal(params(out.location).get("coupon"), "HI-ABCD2345");
+  assert.equal(params((await route(at("/r/li/upb.edu.co/a1b2c3/free-money"), { findReport })).location).get("utm_campaign"), "unknown-path");
+});
