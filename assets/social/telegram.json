@@ -1,6 +1,28 @@
 {
  "version": 1,
  "posts": {
+  "auto-2026-10-22/07-u-zipdev-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "6",
+    "at": "2026-11-05T14:15:22.776Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/6",
+    "checked": "2026-11-05T14:15:24.171Z"
+   }
+  ],
+  "auto-2026-11-04/02-u-treinta-co": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "7",
+    "at": "2026-11-05T14:15:24.171Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/7",
+    "checked": "2026-11-05T14:15:25.377Z"
+   }
+  ],
   "live/2026-11-04": [
    {
     "channel": "telegram",
