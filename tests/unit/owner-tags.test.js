@@ -98,6 +98,7 @@ test("a comparison card's sites are all its owners; posts about no report are le
   assert.equal(T.langOf(METRO), "es");
   assert.equal(T.langOf({ host: "example.de" }), "de");
   assert.equal(T.langOf(VIVA), "en");
+  assert.equal(T.langOf({ host: "ilo.org", country: "CH" }), "en", "a multilingual country says nothing of the language");
 });
 
 test("comments put owners first, then related accounts, within the network's cap, character limit and two comments", () => {
@@ -109,6 +110,9 @@ test("comments put owners first, then related accounts, within the network's cap
   assert.match(out[0].text, /^@metrodebogota ya salió la revisión QA pública de tu sitio: https:\/\/qalabreview\.com\/\S+ cc @rel0 @rel1 @rel2 @rel3$/);
   assert.equal(out[0].mentions.length, 5, "Instagram takes five mentions a comment");
   assert.equal(out[1].text, "cc @rel4 @rel5 @rel6 @rel7 @rel8");
+  const alone = T.comments("youtube", "pt", [], [{ network: "youtube", handle: "senaisaopaulo" }], "https://l.ink", 2, false, "sp.senai.br", true);
+  assert.deepEqual(alone.map((c) => c.text), ["A revisão de QA pública de sp.senai.br saiu: https://l.ink cc @senaisaopaulo"], "a first comment with no owner still says what it is");
+  assert.equal(T.comments("youtube", "pt", [], [{ network: "youtube", handle: "a1" }], "https://l.ink", 1, false, "sp.senai.br", false)[0].text, "cc @a1");
   const x = T.comments("x", "en", [], Array.from({ length: 40 }, (_, i) => ({ network: "x", handle: "account_number_" + i })), "", 2, false);
   assert.ok(x.every((c) => c.text.length <= 280 && c.mentions.length <= 10));
   assert.equal(x.reduce((n, c) => n + c.mentions.length, 0), T.RELATED_MAX);
