@@ -1,6 +1,8 @@
 package com.carlosandmunoz.jarvis.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.OutlinedTextField
@@ -96,6 +98,7 @@ private fun body(vararg pairs: Pair<String, Any>): Map<String, JsonElement> =
     pairs.associate { (k, v) -> k to (if (v is Boolean) JsonPrimitive(v) else JsonPrimitive(v.toString())) }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun OwnerTagsPanel(g: JsonObject, s: UiState, vm: JarvisViewModel, names: Map<String, String>, ask: (String, () -> Unit) -> Unit) {
     val o = g.obj("ownerTags")
     if (o == null) { Panel("Owner tags") { Muted("Owner tags did not answer; pull down in a minute.") }; return }
@@ -172,12 +175,12 @@ fun OwnerTagsPanel(g: JsonObject, s: UiState, vm: JarvisViewModel, names: Map<St
         var owner by rememberSaveable { mutableStateOf(false) }
         Text("Add account", fontWeight = FontWeight.Medium, fontSize = 14.sp)
         OutlinedTextField(who, { who = it }, label = { Text("Profile link or handle") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             (listOf("") + OwnerTags.NETWORKS).forEach { k ->
-                TextButton({ network = k }) { Text(if (k.isEmpty()) "link" else net(k).take(5), color = if (network == k) J.cyan else J.muted, fontSize = 11.sp) }
+                TextButton({ network = k }) { Text(if (k.isEmpty()) "link" else net(k), color = if (network == k) J.cyan else J.muted, fontSize = 12.sp) }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             OwnerTags.SCOPES.forEach { k -> TextButton({ scopeKind = k }) { Text(k, color = if (scopeKind == k) J.cyan else J.muted, fontSize = 12.sp) } }
             TextButton({ owner = !owner }) { Text(if (owner) "owner" else "related", color = J.cyan, fontSize = 12.sp) }
         }
