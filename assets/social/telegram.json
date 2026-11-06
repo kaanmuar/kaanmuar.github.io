@@ -23,6 +23,17 @@
     "checked": "2026-11-06T17:11:23.806Z"
    }
   ],
+  "auto-2026-11-03/02-u-iteso-mx": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "17",
+    "at": "2026-11-06T22:14:18.211Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/17",
+    "checked": "2026-11-06T22:14:21.008Z"
+   }
+  ],
   "auto-2026-11-04/01-u-selia-co": [
    {
     "channel": "telegram",
@@ -65,6 +76,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/10",
     "checked": "2026-11-05T18:11:33.124Z"
+   }
+  ],
+  "evergreen-2026-11/02-myth-lighthouse": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "18",
+    "at": "2026-11-06T22:14:21.008Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/18",
+    "checked": "2026-11-06T22:14:23.541Z"
    }
   ],
   "live/2026-11-04": [
@@ -112,6 +134,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/11",
     "checked": "2026-11-05T21:58:28.590Z"
+   }
+  ],
+  "promo-social-hub-2026-10/16-six-languages-de": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "19",
+    "at": "2026-11-06T22:14:23.541Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/19",
+    "checked": "2026-11-06T22:14:25.892Z"
    }
   ],
   "tips-2026-10/10-keyboard": [
