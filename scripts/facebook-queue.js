@@ -14,6 +14,10 @@
    them. The token is a Page access token with pages_manage_posts. A post whose image the site does not serve
    yet is left for the next run. Exits 1 when any post failed, after trying all of them.
 
+   Composer (scripts/facebook-compose.js, #2703): a post whose clip speaks its caption's language goes out as a
+   Page Reel and the weekly digest as a link post to its hub page; a Reel or link the Page refuses falls back to
+   the card photo. A scheduled Reel is its video id in the ledger, so a rerun skips it without the Page listing it.
+
    Every post it schedules or finds on the Page goes into the ledger assets/social/facebook.json
    (scripts/social-ledger.js), and each run first asks the Page whether the queued ones whose time has passed went out.
    Hub first (scripts/hub-gate.js): a post whose hub page does not answer 200, or whose slot is before its day on
@@ -28,7 +32,8 @@
 
    The Page token never expires, but changing the Facebook password or removing the "QA-lab Page Publisher"
    app (1097031042944706) revokes it. To renew it, generate a user token in Graph API Explorer on that app
-   with pages_manage_posts, pages_read_engagement, read_insights and pages_read_user_content, copy the app secret from App settings > Basic, then:
+   with pages_manage_posts, pages_read_engagement, pages_show_list (Reels), publish_video, read_insights and
+   pages_read_user_content, copy the app secret from App settings > Basic, then:
 
      FACEBOOK_USER_TOKEN=... FACEBOOK_APP_SECRET=... FACEBOOK_PAGE_ID=... node scripts/facebook-queue.js --renew
 
@@ -38,8 +43,9 @@
 const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
-const { createGate, withHubLink } = require("./hub-gate");
+const { createGate, withHubLink, hubUrl } = require("./hub-gate");
 const faceRoute = require("./face-route");
+const facebookCompose = require("./facebook-compose");
 const { FACES } = require("./brand-kit/faces");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -48,6 +54,9 @@ let TOKEN = process.env.FACEBOOK_PAGE_TOKEN;
 const profileOf = faceRoute.pageProfile;
 const SITE = process.env.SITE || "https://carlosandmunoz.com";
 const GRAPH = "https://graph.facebook.com/" + (process.env.FACEBOOK_GRAPH_VERSION || "v23.0");
+const RUPLOAD = GRAPH.replace("graph.facebook.com", "rupload.facebook.com/video-upload");
+const CLIPS = "https://github.com/" + (process.env.GITHUB_REPOSITORY || "kaanmuar/kaanmuar.github.io") + "/releases/download/";
+const UPLOAD_WAIT_MS = Number(process.env.FACEBOOK_UPLOAD_WAIT_MS || 5000);
 // The Graph API only schedules between 10 minutes and 30 days ahead.
 const MIN_LEAD_MS = 20 * 60e3;
 const MAX_LEAD_MS = 29 * 24 * 3600e3;
@@ -95,7 +104,7 @@ function graphError(status, json) {
   const message = "Graph " + status + ": " + (error.message || JSON.stringify(json)).slice(0, 300);
   const revoked = error.code === 190 || /on behalf of user|session has been invalidated/i.test(error.message || "");
   return Object.assign(new Error(revoked ? message + "\nFACEBOOK_PAGE_TOKEN was revoked. Renew it with node scripts/facebook-queue.js --renew (steps at the top of that file)." : message),
-    { revoked, subcode: error.error_subcode });
+    { revoked, subcode: error.error_subcode, graph: true });
 }
 
 async function graph(edge, params) {
@@ -146,11 +155,23 @@ async function onPage(page) {
   return { scheduled, published, keys };
 }
 
+// Page posts are <page>_<post>; a Reel is its video id.
+const isReel = (entry) => Boolean(entry && entry.id && !String(entry.id).includes("_"));
+
+// A Reel's video is sent once its publishing phase completes, and failed when Meta could not process it.
+function fromReel(video) {
+  const status = (video && video.status) || {};
+  if ((status.publishing_phase || {}).status === "complete") return { result: "sent", url: "https://www.facebook.com/reel/" + video.id };
+  if (status.video_status === "error" || status.video_status === "expired") return { result: "failed", error: "Meta could not publish the Reel: " + JSON.stringify(status).slice(0, 200) };
+  return null;
+}
+
 // Code 100 with subcode 33 is a post the Page no longer has. Any other error leaves the entry queued for the next run.
 async function lookup(entry, published) {
   const seen = published.find((p) => p.id === entry.id);
   if (seen) return ledger.fromGraph({ is_published: true, permalink_url: seen.permalink_url });
   try {
+    if (isReel(entry)) return fromReel(Object.assign({ id: entry.id }, await graphGet(entry.id, { fields: "status" })));
     return ledger.fromGraph(await graphGet(entry.id, { fields: "is_published,permalink_url" }));
   } catch (error) {
     if (error.revoked) throw error;
@@ -197,17 +218,83 @@ function posts(batch) {
   const dir = path.join(ROOT, "media/social-posts", batch);
   const captions = JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
   const when = facebookSlots(dir);
+  const clips = faceRoute.voiced(batch, ROOT);
   return Object.keys(captions).filter((slug) => captions[slug].facebook && !captions[slug].hold)
-    .map((slug) => ({ batch, slug, cap: captions[slug], at: when[slug] || 0 }));
+    .map((slug) => ({
+      batch, slug, cap: captions[slug], at: when[slug] || 0,
+      clip: { url: CLIPS + batch + "/" + slug + ".mp4", lang: (clips[slug] && clips[slug].lang) || captions[slug].lang || "en" }
+    }));
 }
 
-const photo = (post, caption, due) => ({
-  url: SITE + "/media/social-posts/" + post.batch + "/feed/" + post.slug + ".jpg",
-  caption,
-  alt_text_custom: post.cap.alt || "",
-  published: "false",
-  scheduled_publish_time: String(Math.floor(due / 1000)),
-});
+const imageOf = (post) => SITE + "/media/social-posts/" + post.batch + "/feed/" + post.slug + ".jpg";
+
+/* GitHub's robots.txt disallows release downloads and Meta refuses a file_url its robots.txt blocks, so a Reel
+   uploads from the signed release-assets address the download redirects to, which lasts some minutes. "" when the
+   batch has no such clip. */
+async function released(url) {
+  const res = await fetch(url, { method: "HEAD", redirect: "manual" }).catch(() => null);
+  if (!res) return "";
+  if (res.status >= 300 && res.status < 400) return res.headers.get("location") || "";
+  return res.ok ? url : "";
+}
+
+// The scripts/facebook-compose.js plans of one post, richest first.
+async function compose(post, caption, due, face) {
+  const lang = faceRoute.captionLang(post.cap, "facebook", face);
+  const clip = post.clip && post.clip.lang === lang ? await released(post.clip.url) : "";
+  return facebookCompose.plans({
+    caption, image: imageOf(post), alt: post.cap.alt, due, cap: post.cap, lang,
+    clip: clip ? { url: clip, lang } : null,
+    hub: hubUrl(post.batch, post.slug) + "?utm_source=facebook&utm_medium=social&utm_campaign=" + post.batch
+  });
+}
+
+// Meta fetches the clip itself; the Reel is finished once it has the whole file.
+async function upload(video, file) {
+  const res = await fetch(RUPLOAD + "/" + video, { method: "POST", headers: { Authorization: "OAuth " + TOKEN, file_url: file } });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json.error || json.success === false) throw graphError(res.status, json);
+  for (let i = 0; i < 24; i += 1) {
+    const { status = {} } = await graphGet(video, { fields: "status" });
+    const phase = (status.uploading_phase || {}).status;
+    if (status.video_status === "error" || phase === "error") throw new Error("Meta could not take the clip: " + JSON.stringify(status).slice(0, 300));
+    if (phase === "complete") return;
+    await new Promise((r) => setTimeout(r, UPLOAD_WAIT_MS));
+  }
+  throw new Error("Meta did not finish fetching the clip " + file.split("?")[0]);
+}
+
+/* Schedules the first plan the Page accepts and returns { id, uses }. A Reel whose start, upload or fetch fails
+   falls back to the card, its video deleted. A refused finish is not retried as a plainer post: the Reel may be
+   scheduled, so its video is deleted and the post fails for the next run. */
+async function publish(page, list) {
+  let refused = null;
+  for (const plan of list) {
+    let video = "";
+    try {
+      if (plan.edge !== "video_reels") {
+        const r = await graph(page + "/" + plan.edge, plan.params);
+        return { id: r.post_id || r.id, uses: plan.uses };
+      }
+      video = (await graph(page + "/video_reels", { upload_phase: "start" })).video_id;
+      await upload(video, plan.file);
+    } catch (error) {
+      if (error.revoked || (plan.edge !== "video_reels" && !error.graph)) throw error;
+      refused = error;
+      console.log("  the Page refused " + plan.uses.join(", ") + " - " + error.message.split("\n")[0]);
+      if (video) await graphDelete(video).catch(() => {});
+      continue;
+    }
+    try {
+      await graph(page + "/video_reels", Object.assign({ video_id: video, upload_phase: "finish" }, plan.params));
+    } catch (error) {
+      await graphDelete(video).catch(() => {});
+      throw error;
+    }
+    return { id: video, uses: plan.uses };
+  }
+  throw refused;
+}
 
 /* --reslot (#1140): the Page app cannot edit a scheduled post, so each queued Page post whose calendar.csv facebook
    row is now later than its Page time (scripts/facebook-reslot.js --write) is deleted and scheduled again at the row.
@@ -229,9 +316,9 @@ async function reslot({ face, page, profile }, live) {
   let failed = 0;
   for (const { post, name, entry } of moves) {
     const at = new Date(post.at).toISOString();
-    const params = photo(post, withHubLink(faceRoute.captionFor(post.cap, "facebook", face), { batch: post.batch, slug: post.slug, network: "facebook" }), post.at);
+    const caption = withHubLink(faceRoute.captionFor(post.cap, "facebook", face), { batch: post.batch, slug: post.slug, network: "facebook" });
     const hub = await gate(post.batch, post.slug, post.cap, at);
-    const why = hub.why ? "Hub first: " + hub.why : !(await served(params.url)) ? "image not served: " + params.url : null;
+    const why = hub.why ? "Hub first: " + hub.why : !(await served(imageOf(post))) ? "image not served: " + imageOf(post) : null;
     if (!live) { console.log("  " + name + " " + entry.at + " -> " + at + (why ? " HELD: " + why : "")); continue; }
     if (why) { failed += 1; console.log("  held " + name + " - " + why); continue; }
     try {
@@ -243,10 +330,10 @@ async function reslot({ face, page, profile }, live) {
     }
     const record = (fields) => ledger.record(book, name, Object.assign({ channel: "facebook", profile, checked: new Date().toISOString(), at }, fields));
     try {
-      const r = await graph(page + "/photos", params);
+      const r = await publish(page, await compose(post, caption, post.at, face));
       moved += 1;
-      console.log("  moved " + name + " " + entry.at + " -> " + at + " " + (r.post_id || r.id));
-      record({ id: r.post_id || r.id, result: "queued" });
+      console.log("  moved " + name + " " + entry.at + " -> " + at + " " + r.id + " (" + r.uses.join("+") + ")");
+      record({ id: r.id, result: "queued" });
     } catch (error) {
       failed += 1;
       console.log("  deleted " + entry.id + " but could not schedule " + name + " again, the next --all run does: " + error.message.split("\n")[0]);
@@ -349,9 +436,11 @@ async function queue(p, { batch, all, live, connected }) {
       continue;
     }
     if (elsewhere(name)) { already += 1; continue; }
+    const mine = ledger.find(book, name, "facebook", profile);
+    if (isReel(mine) && (mine.result === "queued" || mine.result === "sent")) { already += 1; continue; }
     if (post.at > horizon) { later += 1; continue; }
     // The Graph API fetches the image from the site, so a batch merged minutes ago waits for its Pages deploy.
-    const image = SITE + "/media/social-posts/" + post.batch + "/feed/" + post.slug + ".jpg";
+    const image = imageOf(post);
     if (!(await served(image))) {
       unserved += 1;
       console.log("not on the site yet", name, image);
@@ -359,10 +448,9 @@ async function queue(p, { batch, all, live, connected }) {
     }
     // A missed slot goes out 20 minutes from now, the next one 30 minutes after that, and so on.
     const due = post.at < Date.now() + MIN_LEAD_MS ? Date.now() + MIN_LEAD_MS + 30 * 60e3 * late++ : post.at;
-    const params = photo(post, caption, due);
     const at = new Date(due).toISOString();
     const hub = await gate(post.batch, post.slug, post.cap, at);
-    if (!live) { console.log("dry-run", name, at, hub.why ? "HELD: " + hub.why : "hub ok", params.url, caption.split("\n").pop()); continue; }
+    if (!live) { console.log("dry-run", name, at, hub.why ? "HELD: " + hub.why : "hub ok", (await compose(post, caption, due, face))[0].uses.join("+"), image, caption.split("\n").pop()); continue; }
     if (hub.why) {
       failed += 1;
       console.log("held", name, "-", hub.why, hub.url);
@@ -370,10 +458,10 @@ async function queue(p, { batch, all, live, connected }) {
       continue;
     }
     try {
-      const r = await graph(page + "/photos", params);
+      const r = await publish(page, await compose(post, caption, due, face));
       queued += 1;
-      console.log("scheduled", name, at, r.id);
-      record(name, { id: r.post_id || r.id, at, result: "queued" });
+      console.log("scheduled", name, at, r.id, r.uses.join("+"));
+      record(name, { id: r.id, at, result: "queued" });
     } catch (error) {
       failed += 1;
       console.log("failed", name, "-", error.message);
@@ -385,4 +473,6 @@ async function queue(p, { batch, all, live, connected }) {
   return failed;
 }
 
-main().catch((error) => { console.error(error); process.exit(1); });
+if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
+
+module.exports = { posts, compose, publish, lookup, isReel, fromReel };
