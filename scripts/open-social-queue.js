@@ -229,6 +229,16 @@ async function served(url) {
   if (!res || !res.ok) throw new Error("the site does not serve " + url + " yet");
 }
 
+/* GitHub's robots.txt disallows release downloads and Meta refuses a video_url its robots.txt blocks (#2728), so
+   Threads and Instagram fetch the clip from the signed release-assets address the download redirects to, which
+   lasts some minutes. null when the batch's release has no such clip. */
+async function released(clip) {
+  const res = await fetch(clip.url, { method: "HEAD", redirect: "manual" }).catch(() => null);
+  if (!res) return null;
+  if (res.status >= 300 && res.status < 400) return res.headers.get("location") ? Object.assign({}, clip, { url: res.headers.get("location") }) : null;
+  return res.ok ? clip : null;
+}
+
 // A media container is ready once the network has fetched and processed the image or the clip.
 async function ready(status, id, tries = 20, wait = 3000) {
   for (let i = 0; ; i += 1) {
@@ -444,7 +454,7 @@ function threads(env = process.env) {
        publish is not retried as a plainer post: it may have gone out, and the next run finds it in recent(). */
     async post(args) {
       await served(args.url);
-      const clip = args.clip && args.clip.lang === args.lang ? await served(args.clip.url).then(() => args.clip, () => null) : null;
+      const clip = args.clip && args.clip.lang === args.lang ? await released(args.clip) : null;
       const container = async (params) => {
         const box = await call("POST", "me/threads", params);
         const video = params.media_type === "VIDEO" || params.media_type === "CAROUSEL";
@@ -529,7 +539,7 @@ function instagram(env = process.env, story = false) {
       let uses = [];
       if (story) creation = await container({ image_url: url, media_type: "STORIES" });
       else {
-        const clip = args.clip && args.clip.lang === args.lang ? await served(args.clip.url).then(() => args.clip, () => null) : null;
+        const clip = args.clip && args.clip.lang === args.lang ? await released(args.clip) : null;
         let refused = null;
         for (const plan of compose.instagram(Object.assign({}, args, { clip }))) {
           try {

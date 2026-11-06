@@ -143,6 +143,28 @@ test("a Threads quiz goes out as its card with the place's location, then our po
   }
 });
 
+test("Threads fetches a clip from the signed address the release download redirects to, which robots.txt allows (#2728)", async () => {
+  const made = [];
+  const real = global.fetch;
+  global.fetch = async (url, opts = {}) => {
+    const u = String(url);
+    const body = opts.body ? Object.fromEntries(new URLSearchParams(String(opts.body))) : null;
+    if (opts.method === "HEAD" && u.endsWith(".mp4")) return { ok: false, status: 302, headers: { get: (h) => (h === "location" ? "https://release-assets.githubusercontent.com/signed/a.mp4?sig=1" : null) } };
+    if (opts.method === "HEAD") return { ok: true, status: 200 };
+    if (u.endsWith("/me/threads") && body) { made.push(body); return { ok: true, json: async () => ({ id: "c" + made.length }) }; }
+    if (u.endsWith("/me/threads_publish")) return { ok: true, json: async () => ({ id: "p1" }) };
+    if (u.includes("fields=status")) return { ok: true, json: async () => ({ status: "FINISHED" }) };
+    return { ok: true, json: async () => ({ permalink: "" }) };
+  };
+  try {
+    const r = await q.NETWORKS.threads({ THREADS_TOKEN: "t" }).post({ text: "Clip", url: "https://carlosandmunoz.com/a.jpg", alt: "Card", lang: "es", clip: { url: "https://github.com/o/r/releases/download/b/a.mp4", lang: "es" } });
+    assert.deepEqual(r.uses, ["carousel", "video"]);
+    assert.equal(made.find((b) => b.media_type === "VIDEO").video_url, "https://release-assets.githubusercontent.com/signed/a.mp4?sig=1");
+  } finally {
+    global.fetch = real;
+  }
+});
+
 test("Threads and Instagram are skipped until their secrets are set", () => {
   assert.equal(q.NETWORKS.threads({}).ready, false);
   assert.equal(q.NETWORKS.instagram({ FACEBOOK_PAGE_TOKEN: "t" }).ready, false);
