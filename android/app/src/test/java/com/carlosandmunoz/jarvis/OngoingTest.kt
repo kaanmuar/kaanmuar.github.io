@@ -63,8 +63,8 @@ class OngoingTest {
             "external":{"money":{"ok":true,"revenue":{"usd":38,"count":2}}}}""")
         val c = Ongoing.content(snap, null, 0L, 1)
         val card = c.card!!
-        assertEquals(88, card.ring)
-        assertEquals("Readiness", card.ringLabel)
+        assertEquals(listOf(88), card.rings.map { it.pct })
+        assertEquals("Readiness", card.rings[0].label)
         assertEquals(listOf("Connections", "Reviews sold", "Signups"), card.bars.map { it.label })
         assertEquals(listOf("3 of 4 online", "12 of 40", "90 of 100"), card.bars.map { it.value })
         assertEquals(listOf(75, 30, 90), card.bars.map { it.pct })
@@ -72,7 +72,19 @@ class OngoingTest {
         assertEquals("1 alert · 1 approval waiting", c.counts)
         assertFalse(c.live)
         val bare = Ongoing.content(snap, null, 0L, 0, setOf(Ongoing.Part.MONEY)).card!!
-        assertNull(bare.ring)
+        assertTrue(bare.rings.isEmpty())
         assertTrue(bare.bars.isEmpty())
+    }
+
+    @Test fun cardAddsUptimeRingAndNinetyDayTargets() {
+        val snap = json("""{"readiness":94,"connections":[{"state":"ok"},{"state":"ok"}],
+            "external":{"uptime":{"pages":[{"ok":true},{"ok":true},{"ok":false},{"ok":true}]},
+            "targets":{"ok":true,"targets":[{"key":"a","label":"Agencies signed","actual":3,"target":3,"status":"done"},
+            {"key":"b","label":"Calls booked","actual":2,"target":10,"status":"behind"},{"key":"c","label":"Clips posted","actual":6,"target":12,"status":"on-pace"}]}}}""")
+        val card = Ongoing.content(snap, null, 0L, 0).card!!
+        assertEquals(listOf("Readiness" to 94, "Uptime" to 75), card.rings.map { it.label to it.pct })
+        assertEquals(listOf("Connections", "Calls booked", "Clips posted"), card.bars.map { it.label })
+        assertEquals(listOf("2 of 2 online", "2 of 10", "6 of 12"), card.bars.map { it.value })
+        assertEquals(listOf(100, 20, 50), card.bars.map { it.pct })
     }
 }
