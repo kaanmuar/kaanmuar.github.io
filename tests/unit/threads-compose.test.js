@@ -60,6 +60,8 @@ test("the location is the result named after the place's city, in its country, o
   assert.equal(c.pickLocation("Armenia, Colombia", results), "3");
   assert.equal(c.pickLocation("Bogotá, Colombia", [{ id: "9", name: "Bogota", country: "Colombia" }]), "9");
   assert.equal(c.pickLocation("Neiva, Colombia", results), "");
+  assert.equal(c.pickLocation("Vienna, Austria", [{ id: "5", name: "Vienna", city: "Vienna", country: "US" }, { id: "6", name: "Vienna, Austria", country: "AT" }]), "6");
+  assert.equal(c.pickLocation("Bogotá, Colombia", [{ id: "1", name: "Menlo Park, California", city: "Menlo Park", country: "US" }]), "");
 });
 
 test("an answer quotes its quiz with the scores line behind a spoiler", () => {

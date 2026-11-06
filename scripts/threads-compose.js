@@ -106,12 +106,15 @@ function plans({ text, url, alt, lang, topic, location, cap = {}, quote, clip, l
   return out.filter((plan, i) => !out.slice(0, i).some((p) => same(p.params, plan.params) && same(p.items, plan.items) && same(p.reply, plan.reply)));
 }
 
+// Location search names the country by its ISO code.
+const COUNTRY_CODES = { colombia: "co", spain: "es", argentina: "ar", chile: "cl", ecuador: "ec", france: "fr", "united states": "us", "united kingdom": "gb", uruguay: "uy", germany: "de", austria: "at", mexico: "mx", peru: "pe", brazil: "br" };
+
 /* The location search result for a caption's place ("Armenia, Colombia"): the first named after the place's city,
    in its country when the place names one. None rather than a shop or street that only shares the name. */
 function pickLocation(place, results) {
   const fold = (s) => String(s || "").normalize("NFD").replace(/\p{M}/gu, "").trim().toLowerCase();
   const [city, country] = String(place || "").split(",").map(fold);
-  const inCountry = (r) => !country || fold(r.country).includes(country) || fold(r.address).includes(country);
+  const inCountry = (r) => !country || [country, COUNTRY_CODES[country]].includes(fold(r.country)) || fold(r.address).includes(country);
   return ((results || []).find((r) => r && r.id && fold(r.name).split(",")[0] === city && inCountry(r)) || {}).id || "";
 }
 
