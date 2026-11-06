@@ -12,6 +12,17 @@
     "checked": "2026-11-05T14:15:24.171Z"
    }
   ],
+  "auto-2026-10-24/05-u-roottcostore-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "16",
+    "at": "2026-11-06T17:11:20.932Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/16",
+    "checked": "2026-11-06T17:11:23.806Z"
+   }
+  ],
   "auto-2026-11-04/01-u-selia-co": [
    {
     "channel": "telegram",
@@ -112,6 +123,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/13",
     "checked": "2026-11-06T02:24:03.656Z"
+   }
+  ],
+  "tips-2026-10/11-hsts": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "15",
+    "at": "2026-11-06T17:11:19.869Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/15",
+    "checked": "2026-11-06T17:11:20.932Z"
    }
   ]
  }

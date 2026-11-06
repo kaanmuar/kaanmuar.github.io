@@ -114,6 +114,17 @@
     "checked": "2026-11-05T00:21:05.298Z"
    }
   ],
+  "auto-2026-10-24/05-u-roottcostore-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mznuthd2gs2o",
+    "at": "2026-11-06T17:10:49.952Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mznuthd2gs2o",
+    "checked": "2026-11-06T17:11:11.348Z"
+   }
+  ],
   "auto-2026-10-25/01-u-kemik-gt": [
    {
     "channel": "bluesky",
@@ -628,6 +639,17 @@
     "checked": "2026-10-31T02:24:06.151Z"
    }
   ],
+  "evergreen-2026-11/02-myth-lighthouse": [
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18032149886885694",
+    "at": "2026-11-06T17:11:12.888Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4024560963202338202",
+    "checked": "2026-11-06T17:11:19.263Z"
+   }
+  ],
   "promo-social-hub-2026-10/01-one-page-en": [
    {
     "channel": "bluesky",
@@ -935,6 +957,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzmd7gec6l22",
     "checked": "2026-11-06T02:23:05.182Z"
+   }
+  ],
+  "tips-2026-10/11-hsts": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mznustatm22o",
+    "at": "2026-11-06T17:10:47.794Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mznustatm22o",
+    "checked": "2026-11-06T17:10:49.952Z"
    }
   ],
   "tips-horror-headers-2026-10/01-missing-csp": [
