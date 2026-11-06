@@ -4561,9 +4561,10 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6adf3daabed8e022f16c4ad0",
-    "at": "2026-11-06T18:43:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.763Z"
+    "at": "2026-11-06T18:43:02.586Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2118776185605812385",
+    "checked": "2026-11-06T22:10:54.988Z"
    },
    {
     "channel": "youtube",
@@ -5398,9 +5399,10 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6add0ca5e4be8a4d86760aa2",
-    "at": "2026-11-06T21:19:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.765Z"
+    "at": "2026-11-06T21:19:02.407Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2118815443532075493",
+    "checked": "2026-11-06T22:10:54.988Z"
    },
    {
     "channel": "youtube",
@@ -10104,9 +10106,10 @@
     "channel": "youtube",
     "profile": "youtube (QA-lab URL Review)",
     "id": "6ad85d69f7c471336a3aa58f",
-    "at": "2026-11-06T21:31:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-02T06:21:14.769Z"
+    "at": "2026-11-06T21:31:03.387Z",
+    "result": "sent",
+    "url": "https://www.youtube.com/shorts/XqTjiGmRtkk",
+    "checked": "2026-11-06T22:10:54.988Z"
    }
   ],
   "tips-2026-10/12-one-h1": [
