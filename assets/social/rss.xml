@@ -5,9 +5,181 @@
     <link>https://carlosandmunoz.com/qa-review-social.html</link>
     <description>Every QA-lab URL Review post: tips, real site reviews and short clips.</description>
     <language>en</language>
-    <lastBuildDate>Thu, 05 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 06 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social.html</link></image>
+    <item>
+      <title>nice.com: 56. The gap: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-22/15-u-nice-com.html</link>
+      <guid isPermaLink="false">auto-2026-10-22/15-u-nice-com</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every page has a title, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-nice-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-nice-com
+
+#WebSecurity #HSTS #HTTPS #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/15-u-nice-com.jpg" length="218855" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/15-u-nice-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>tamiltvserial.com: 81. The gap: button names.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-26/11-u-tamiltvserial-com.html</link>
+      <guid isPermaLink="false">auto-2026-10-26/11-u-tamiltvserial-com</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>National</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.
+
+The lesson for every team: Give every button text or an aria-label, so a screen reader can announce it.
+
+One automated analysis of public pages on 26 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-tamiltvserial-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-tamiltvserial-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebAssembly #OpenSource #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/11-u-tamiltvserial-com.jpg" length="240326" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/11-u-tamiltvserial-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Scored 57 of 100. The gap: ARIA roles.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-27/10-u-diamondsinternational-mt.html</link>
+      <guid isPermaLink="false">auto-2026-10-27/10-u-diamondsinternational-mt</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>National</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But certain ARIA roles must contain particular children.
+
+The lesson for every team: Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.
+
+One automated analysis of public pages on 27 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-diamondsinternational-mt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-diamondsinternational-mt
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #CSS #DevOps #QA #ARIA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/10-u-diamondsinternational-mt.jpg" length="233523" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/10-u-diamondsinternational-mt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>epa.gov.co: 74. The gap: AI crawler access.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-02/04-u-epa-gov-co.html</link>
+      <guid isPermaLink="false">auto-2026-11-02/04-u-epa-gov-co</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 1 AI answer or search crawler is blocked.
+
+The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
+
+One automated analysis of public pages on 27 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-epa-gov-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-epa-gov-co
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#GEO #DevOps #AI #QA #AISearch #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/04-u-epa-gov-co.jpg" length="239825" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/04-u-epa-gov-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>houm.com: 68. The gap: button names.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-05/01-u-houm-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-05/01-u-houm-com</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.
+
+The lesson for every team: Give every button text or an aria-label, so a screen reader can announce it.
+
+One automated analysis of public pages on 4 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-houm-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-houm-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #CSS #Programming #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/01-u-houm-com.jpg" length="231661" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/01-u-houm-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Time your server in one line.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/01-ttfb-curl.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/01-ttfb-curl</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Trick</category>
+      <category>Perf</category>
+      <description>30-second trick: Time your server in one line.
+
+curl can report when the first byte of the page arrived. web.dev suggests a Time to First Byte of 0.8 seconds or less for most sites.
+
+Try it now: Run it a few times on your home page and your slowest template. Over 0.8 seconds? Look at the server before the front end.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=ttfb-curl
+
+#WebPerformance #Playwright #QA #TTFB #DevTools #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/01-ttfb-curl.jpg" length="217951" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/01-ttfb-curl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Myth: a Lighthouse 100 means accessible.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/02-myth-lighthouse.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/02-myth-lighthouse</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Myth vs fact</category>
+      <category>A11y</category>
+      <description>Myth vs fact: Myth: a Lighthouse 100 means accessible.
+
+Lighthouse checks what software can detect, such as names, contrast and ARIA. It cannot tell whether alt text makes sense or whether a screen reader user can finish the task.
+
+Check it: After the score, try one real task with a screen reader: VoiceOver on a Mac, NVDA on Windows.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-lighthouse
+
+#Accessibility #Playwright #SoftwareTesting #QA #Lighthouse #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/02-myth-lighthouse.jpg" length="246846" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/02-myth-lighthouse.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Bogotá city hall: SEO 97.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/02-bogota.html</link>
+      <guid isPermaLink="false">runs-2026-10/02-bogota</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Local</category>
+      <description>Every page has a title and a description, the sitemap answers, structured data parses, and share cards are complete. The catch: every page reports to two GA4 properties.
+
+The lesson for every team: One site, one GA4 property, one gtag.js. If two teams need the data, share access instead of adding a tag.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=bogota
+
+#Analytics #GA4 #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" length="229468" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>WHO's fact sheets end in a stray semicolon.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>WHO welcomes AI answer crawlers and its pages read well without JavaScript: GEO 91. But the JSON-LD on its fact sheets ends in &quot;};&quot;, and a strict parser drops the whole block.
+
+The lesson for every team: Run every JSON-LD block through a JSON validator before release. One character can void the entire block.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>zizonline.com: 70. The gap: HSTS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-26/10-u-zizonline-com.html</link>
@@ -724,139 +896,6 @@ Via Search Engine Journal, by Roger Montti, 2026-11-03.
 
 https://www.searchenginejournal.com/google-says-its-okay-to-block-some-javascript-resources-with-robots-txt/595736/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/block-googlebot-611.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Paste the Broken UI Into Claude Code, Then Make Playwright Prove the Fix</title>
-      <link>https://carlosandmunoz.com/social/pick/paste-the-broken-ui-into-claude-code-then-make-playwright-pr.html</link>
-      <guid isPermaLink="false">pick/paste-the-broken-ui-into-claude-code-then-make-playwright-pr</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>Show the agent the misaligned button instead of describing it, then make a Playwright test and a pixel diff decide whether it's fixed.
-
-Via DEV, by Gabriel Anhaia, 2026-11-03.
-
-https://dev.to/gabrielanhaia/paste-the-broken-ui-into-claude-code-then-make-playwright-prove-the-fix-3oa9</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fd64605cxih2v12hgkijt.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Paste the Broken UI Into Claude Code, Then Make Playwright Prove the Fix</title>
-      <link>https://carlosandmunoz.com/social/pick/paste-the-broken-ui-into-claude-code-then-make-playwright-pr-2.html</link>
-      <guid isPermaLink="false">pick/paste-the-broken-ui-into-claude-code-then-make-playwright-pr-2</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>Show the agent the misaligned button instead of describing it, then make a Playwright test and a pixel diff decide whether it's fixed.
-
-Via DEV, by Gabriel Anhaia, 2026-11-03.
-
-https://dev.to/gabrielanhaia/paste-the-broken-ui-into-claude-code-then-make-playwright-prove-the-fix-3oa9</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fd64605cxih2v12hgkijt.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Rank Trackers Find Google Results About One Word Of A Query via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/rank-trackers-find-google-results-about-one-word-of-a-query-.html</link>
-      <guid isPermaLink="false">pick/rank-trackers-find-google-results-about-one-word-of-a-query-</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Rank tracker data shows unrelated Google results that follow one word of the query, mostly below the top spots. Here's how to check a drop. The post Rank Trackers Find Google Results About One Word Of A Query appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Matt G. Southern, 2026-11-03.
-
-https://www.searchenginejournal.com/rank-trackers-find-google-results-about-one-word-of-a-query/595798/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/rank-trackers-query-puzzle-1600x840-1.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>The 25 Best AEO/GEO Experts to Follow in 2026</title>
-      <link>https://carlosandmunoz.com/social/pick/the-25-best-aeo-geo-experts-to-follow-in-2026.html</link>
-      <guid isPermaLink="false">pick/the-25-best-aeo-geo-experts-to-follow-in-2026</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>GEO</category>
-      <description>Research is how you answer these questions, and how you keep up with what’s changing in AI search. These are the 25 people publishing the most original research on AI search, and the ones worth following. I started with a … Read more ›
-
-Via Ahrefs, by Ryan Law, 2026-11-03.
-
-https://ahrefs.com/blog/aeo-geo-experts/</description>
-      <media:content url="https://ahrefs.com/blog/wp-content/uploads/2026/11/the-25-best-aeogeo-experts-to-by-ryan-law-ai-search.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>View source vs Inspect element: the SEO bug hiding between raw and rendered HTML</title>
-      <link>https://carlosandmunoz.com/social/pick/view-source-vs-inspect-element-the-seo-bug-hiding-between-ra.html</link>
-      <guid isPermaLink="false">pick/view-source-vs-inspect-element-the-seo-bug-hiding-between-ra</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Your title, canonical and links look fine in DevTools but are missing or different in the raw HTML. A script that diffs raw vs rendered HTML for the tags that matter.
-
-Via DEV, by seotto.com, 2026-11-02.
-
-https://dev.to/seotto/view-source-vs-inspect-element-the-seo-bug-hiding-between-raw-and-rendered-html-4d71</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F7bjbn4t33aqh7xxeliz3.png" medium="image"/>
-    </item>
-    <item>
-      <title>What a killed Playwright script leaves behind on Linux: processes, profile dirs and a SIGTERM that does not exit</title>
-      <link>https://carlosandmunoz.com/social/pick/what-a-killed-playwright-script-leaves-behind-on-linux-proce.html</link>
-      <guid isPermaLink="false">pick/what-a-killed-playwright-script-leaves-behind-on-linux-proce</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>Eight ways a Node script can end, measured on Linux: which Chromium processes and profile dirs survive, and why launch() cleans up but connectOverCDP does not.
-
-Via DEV, by CurlShot, 2026-11-03.
-
-https://dev.to/curlshot/what-a-killed-playwright-script-leaves-behind-on-linux-processes-profile-dirs-and-a-sigterm-that-5989</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fdahdt5zcl15qhw9bhayl.png" medium="image"/>
-    </item>
-    <item>
-      <title>What a killed Playwright script leaves behind on Linux: processes, profile dirs and a SIGTERM that does not exit</title>
-      <link>https://carlosandmunoz.com/social/pick/what-a-killed-playwright-script-leaves-behind-on-linux-proce-2.html</link>
-      <guid isPermaLink="false">pick/what-a-killed-playwright-script-leaves-behind-on-linux-proce-2</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>Eight ways a Node script can end, measured on Linux: which Chromium processes and profile dirs survive, and why launch() cleans up but connectOverCDP does not.
-
-Via DEV, by CurlShot, 2026-11-03.
-
-https://dev.to/curlshot/what-a-killed-playwright-script-leaves-behind-on-linux-processes-profile-dirs-and-a-sigterm-that-5989</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fdahdt5zcl15qhw9bhayl.png" medium="image"/>
-    </item>
-    <item>
-      <title>Follow it your way.</title>
-      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/22-follow-en.html</link>
-      <guid isPermaLink="false">promo-social-hub-2026-10/22-follow-en</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Product</category>
-      <category>Social</category>
-      <description>Read the hub in any RSS reader, one feed per language, or follow us on YouTube, TikTok, LinkedIn, X and Facebook.
-
-Try this: Add the hub's RSS feed to your reader.
-
-Every post, in one place: https://carlosandmunoz.com/qa-review-social.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=follow-en
-
-#RSS #SoftwareTesting #DevOps #QA #SocialMedia #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/22-follow-en.jpg" length="152561" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/22-follow-en.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>ILO: secure and fast, but no entity markup.</title>
-      <link>https://carlosandmunoz.com/social/runs-3/01-ilo.html</link>
-      <guid isPermaLink="false">runs-3/01-ilo</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>security.txt is published, HSTS covers subdomains, and DMARC rejects spoofed mail. But no page analyzed carries JSON-LD, so the Facebook, LinkedIn and YouTube profiles it links are never tied to the ILO.
-
-The lesson for every team: Add Organization markup with url, logo and sameAs so AI answers name you right.
-
-One automated analysis of public pages on 21 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-3-2027-01&amp;utm_content=ilo
-
-#GEO #StructuredData #UnitedNations #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/01-ilo.jpg" length="252116" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/01-ilo.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

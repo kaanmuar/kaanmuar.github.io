@@ -5,9 +5,196 @@
     <link>https://carlosandmunoz.com/qa-review-social-pt.html</link>
     <description>Cada publicação do QA-lab URL Review: dicas, análises reais de sites e clipes curtos.</description>
     <language>pt</language>
-    <lastBuildDate>Thu, 05 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 06 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-pt.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-pt.html</link></image>
+    <item>
+      <title>nice.com: 56. A lacuna: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-22/15-u-nice-com-pt.html</link>
+      <guid isPermaLink="false">auto-2026-10-22/15-u-nice-com-pt</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas o HSTS não é enviado.
+
+A lição para toda equipe: Envie Strict-Transport-Security com max-age de pelo menos um ano, para que os navegadores nunca mais tentem http simples.
+
+Uma análise automatizada de páginas públicas em 22 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-nice-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-nice-com
+
+#WebSecurity #HSTS #HTTPS #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/15-u-nice-com.jpg" length="218855" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/15-u-nice-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>tamiltvserial.com: 81. A lacuna: nomes de botões.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-26/11-u-tamiltvserial-com-pt.html</link>
+      <guid isPermaLink="false">auto-2026-10-26/11-u-tamiltvserial-com-pt</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>National</category>
+      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os botões precisam ter texto discernível.
+
+A lição para toda equipe: Dê a todo botão um texto ou aria-label, para que o leitor de tela possa anunciá-lo.
+
+Uma análise automatizada de páginas públicas em 26 out. 2026, um dos sites mais visitados do seu país, da varredura por país do QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-tamiltvserial-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-tamiltvserial-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebAssembly #OpenSource #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/11-u-tamiltvserial-com.jpg" length="240326" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/11-u-tamiltvserial-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Marcou 57 de 100. A lacuna: Funções ARIA.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-27/10-u-diamondsinternational-mt-pt.html</link>
+      <guid isPermaLink="false">auto-2026-10-27/10-u-diamondsinternational-mt-pt</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>National</category>
+      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas certas funções ARIA devem conter filhos específicos.
+
+A lição para toda equipe: Use elementos HTML nativos primeiro. Ao usar funções ARIA, aninhe-as da maneira exigida pela função.
+
+Uma análise automatizada de páginas públicas em 27 out. 2026, um dos sites mais visitados do seu país, da varredura por país do QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-diamondsinternational-mt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-diamondsinternational-mt
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #CSS #DevOps #QA #ARIA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/10-u-diamondsinternational-mt.jpg" length="233523" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/10-u-diamondsinternational-mt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>epa.gov.co: 74. A lacuna: Acesso de crawlers de IA.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-02/04-u-epa-gov-co-pt.html</link>
+      <guid isPermaLink="false">auto-2026-11-02/04-u-epa-gov-co-pt</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Todo link interno aberto respondeu, e os crawlers de treinamento de modelos estão bloqueados por escolha. Mas 1 A resposta da IA ​​ou o rastreador de pesquisa estão bloqueados.
+
+A lição para toda equipe: Decida bot a bot no robots.txt: libere os motores de resposta pelos quais você quer ser citado e bloqueie só os crawlers de treinamento.
+
+Uma análise automatizada de páginas públicas em 27 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-epa-gov-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-epa-gov-co
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#GEO #DevOps #AI #QA #AISearch #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/04-u-epa-gov-co.jpg" length="239825" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/04-u-epa-gov-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>houm.com: 68. A lacuna: nomes de botões.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-05/01-u-houm-com-pt.html</link>
+      <guid isPermaLink="false">auto-2026-11-05/01-u-houm-com-pt</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os botões precisam ter texto discernível.
+
+A lição para toda equipe: Dê a todo botão um texto ou aria-label, para que o leitor de tela possa anunciá-lo.
+
+Uma análise automatizada de páginas públicas em 4 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-houm-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-houm-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #CSS #Programming #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/01-u-houm-com.jpg" length="231661" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/01-u-houm-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Meça seu servidor em uma linha.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/01-ttfb-curl-pt.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/01-ttfb-curl-pt</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Truque</category>
+      <category>Perf</category>
+      <description>Truque de 30 segundos: Meça seu servidor em uma linha.
+
+O curl pode informar quando chegou o primeiro byte da página. O web.dev sugere um Time to First Byte de 0.8 segundos ou menos para a maioria dos sites.
+
+Teste agora: Rode algumas vezes na sua página inicial e no seu template mais lento. Mais de 0.8 segundos? Olhe o servidor antes do front-end.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=ttfb-curl
+
+#WebPerformance #Playwright #QA #TTFB #DevTools #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/01-ttfb-curl.jpg" length="217951" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/01-ttfb-curl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Mito: um 100 no Lighthouse significa acessível.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/02-myth-lighthouse-pt.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/02-myth-lighthouse-pt</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Mito ou verdade</category>
+      <category>A11y</category>
+      <description>Mito ou verdade: Mito: um 100 no Lighthouse significa acessível.
+
+O Lighthouse verifica o que um software consegue detectar, como nomes, contraste e ARIA. Ele não sabe se o texto alternativo faz sentido nem se quem usa leitor de tela consegue concluir a tarefa.
+
+Confira: Depois da nota, faça uma tarefa real com um leitor de tela: VoiceOver no Mac, NVDA no Windows.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-lighthouse
+
+#Accessibility #Playwright #SoftwareTesting #QA #Lighthouse #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/02-myth-lighthouse.jpg" length="246846" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/02-myth-lighthouse.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Prefeitura de Bogotá: SEO 97.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/02-bogota-pt.html</link>
+      <guid isPermaLink="false">runs-2026-10/02-bogota-pt</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Local</category>
+      <description>Toda página tem título e descrição, o sitemap responde, os dados estruturados fazem parse e os cards de compartilhamento estão completos. O porém: toda página reporta para duas propriedades GA4.
+
+A lição para toda equipe: Um site, uma propriedade GA4, um gtag.js. Se duas equipes precisam dos dados, compartilhe o acesso em vez de adicionar uma tag.
+
+Uma análise automatizada de páginas públicas em 19 out. 2026. Um ponto de partida, não um veredito.
+Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=bogota
+
+#Analytics #GA4 #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" length="229468" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>As fichas da OMS terminam com um ponto e vírgula perdido.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-pt.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who-pt</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Worldwide</category>
+      <description>A OMS acolhe crawlers de resposta de IA e suas páginas se leem bem sem JavaScript: GEO 91. Mas o JSON-LD das fichas informativas termina em &quot;};&quot;, e um parser rígido descarta o bloco inteiro.
+
+A lição para toda equipe: Passe cada bloco JSON-LD por um validador de JSON antes do release. Um caractere pode anular o bloco inteiro.
+
+Uma análise automatizada de páginas públicas em 19 out. 2026. Um ponto de partida, não um veredito.
+Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Sexta, 17h: a gente sobe em uma hora. Alguém conferiu o site?</title>
+      <link>https://carlosandmunoz.com/social/skits-friday-release/03-friday-release-pt.html</link>
+      <guid isPermaLink="false">skits-friday-release/03-friday-release-pt</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Esquete</category>
+      <category>QA</category>
+      <description>Dois links quebrados, achados e corrigidos antes do lançamento. Cole uma URL e receba uma revisão das páginas públicas do site: QA, SEO, acessibilidade, segurança, desempenho e privacidade.
+
+Revise seu site antes de publicar: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=skits&amp;utm_content=03-friday-release-pt
+
+#QA #Release #BrokenLinks #TesteDeSoftware #DesenvolvimentoWeb #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/skits-friday-release/feed/03-friday-release-pt.jpg" length="149144" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/skits-friday-release/feed/03-friday-release-pt.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>zizonline.com: 70. A lacuna: HSTS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-26/10-u-zizonline-com-pt.html</link>
@@ -770,165 +957,6 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
 #SEO #SoftwareTesting #DevOps #QA #WebPerf #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/07-vs-kemik-gt.jpg" length="224227" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/07-vs-kemik-gt.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>montessori.edu.co: 67. A lacuna: texto alt.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-26/06-u-montessori-edu-co-pt.html</link>
-      <guid isPermaLink="false">auto-2026-10-26/06-u-montessori-edu-co-pt</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Requested</category>
-      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 177 imagens não têm atributo alt.
-
-A lição para toda equipe: Descreva o que cada imagem mostra no atributo alt e use alt=&quot;&quot; nas puramente decorativas.
-
-Uma análise automatizada de páginas públicas em 25 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-montessori-edu-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-montessori-edu-co
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #WebAssembly #OpenSource #QA #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/06-u-montessori-edu-co.jpg" length="236398" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/06-u-montessori-edu-co.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>ag.org: 60. A lacuna: nomes de links.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-27/05-u-ag-org-pt.html</link>
-      <guid isPermaLink="false">auto-2026-10-27/05-u-ag-org-pt</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Requested</category>
-      <description>Cada link externo verificado foi respondido e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas os links precisam ter texto discernível.
-
-A lição para toda equipe: Dê a todo link um texto que diga para onde ele leva. Um ícone sozinho precisa de um aria-label.
-
-Uma análise automatizada de páginas públicas em 26 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-ag-org&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ag-org
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #TypeScript #CSS #QA #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/05-u-ag-org.jpg" length="228741" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/05-u-ag-org.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>GOV.UK 92, USA.gov 88. Os dois têm 100 em acessibilidade.</title>
-      <link>https://carlosandmunoz.com/social/compare-2026-11/07-govuk-usagov-pt.html</link>
-      <guid isPermaLink="false">compare-2026-11/07-govuk-usagov-pt</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Comparativo</category>
-      <category>National</category>
-      <description>GOV.UK lidera em segurança, 94 a 77, e em analytics, 97 a 85. USA.gov responde com velocidade, 94 a 89, e GEO, 91 a 86.
-
-Lição: Os dois montam suas páginas com um design system público. Reutilize componentes testados em vez de refazê-los em cada página.
-
-Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=govuk-usagov
-
-#WebQuality #SoftwareTesting #DevOps #QA #GovTech #QAlab
-
-https://www.youtube.com/shorts/Plp1Uxk_P1w</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/07-govuk-usagov.jpg" length="247979" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/07-govuk-usagov.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Uma pontuação 91 no PageSpeed foi reprovada nos Core Web Vitals. Um 51 passou. Notas de testes em 14 sites de escritórios de advocacia</title>
-      <link>https://carlosandmunoz.com/social/pick/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-note-2-pt.html</link>
-      <guid isPermaLink="false">pick/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-note-2-pt</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Performance</category>
-      <description>Eu crio sites para escritórios de advocacia, então em setembro passei 14 homepages de escritórios conhecidos dos EUA por...
-
-Via DEV, por Legal Web Agency, 2026-10-30.
-
-https://dev.to/tech_andusama_d03fc626b1/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-notes-from-testing-14-law-firm-websites-3fd2</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fsbumuvfnhi8mig9tjxfw.png" medium="image"/>
-    </item>
-    <item>
-      <title>Uma pontuação 91 no PageSpeed foi reprovada nos Core Web Vitals. Um 51 passou. Notas de testes em 14 sites de escritórios de advocacia</title>
-      <link>https://carlosandmunoz.com/social/pick/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-note-pt.html</link>
-      <guid isPermaLink="false">pick/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-note-pt</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Performance</category>
-      <description>Eu crio sites para escritórios de advocacia, então em setembro passei 14 homepages de escritórios conhecidos dos EUA por...
-
-Via DEV, por Legal Web Agency, 2026-10-30.
-
-https://dev.to/tech_andusama_d03fc626b1/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-notes-from-testing-14-law-firm-websites-3fd2</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fsbumuvfnhi8mig9tjxfw.png" medium="image"/>
-    </item>
-    <item>
-      <title>aria-selected em abas: a aba selecionada que mente (WCAG 4.1.2)</title>
-      <link>https://carlosandmunoz.com/social/pick/aria-selected-on-tabs-the-selected-tab-that-lies-wcag-4-1-2-pt.html</link>
-      <guid isPermaLink="false">pick/aria-selected-on-tabs-the-selected-tab-that-lies-wcag-4-1-2-pt</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Accessibility</category>
-      <description>A aba Notificações está aberta. O painel dele está na tela: &quot;Escolha quais alertas por e-mail e push você...
-
-Via DEV, por A11Y Practice, 2026-10-28.
-
-https://www.wasexamprep.com/blog/aria-selected-tab-that-lies</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=500,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fi.ytimg.com%2Fvi%2F939KZzpMFuk%2Fmaxresdefault.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Grandes marcas dominam a busca com IA, mas deixam brechas para sites menores via @sejournal, @martinibuster</title>
-      <link>https://carlosandmunoz.com/social/pick/big-brands-dominate-ai-search-but-leave-openings-for-smaller-pt.html</link>
-      <guid isPermaLink="false">pick/big-brands-dominate-ai-search-but-leave-openings-for-smaller-pt</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>GEO</category>
-      <description>Uma nova pesquisa identifica uma possível fraqueza na visibilidade das grandes marcas que publishers menores podem conseguir explorar. O post Grandes marcas dominam a busca com IA, mas deixam brechas para sites menores apareceu primeiro em Search Engine Journal .
-
-Via Search Engine Journal, por Roger Montti, 2026-10-31.
-
-https://www.searchenginejournal.com/big-brands-dominate-ai-search-but-leave-openings-for-smaller-sites/595397/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/travel-ai-seo-407.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Legendado nem sempre significa acessível</title>
-      <link>https://carlosandmunoz.com/social/pick/captioned-doesn-t-always-mean-accessible-2-pt.html</link>
-      <guid isPermaLink="false">pick/captioned-doesn-t-always-mean-accessible-2-pt</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Accessibility</category>
-      <description>Diálogos precisos são só uma parte das legendas acessíveis em vídeo. Legendas de qualidade também identificam quem fala, transmitem sons relevantes e oferecem texto legível e sincronizado. Seja com legendas de uma ferramenta automática ou de um serviço profissional, este artigo explica por que avaliar a experiência final de visualização é essencial para quem depende de legendas.
-
-Via WebAIM, por Christopher Phillips, 2026-10-29.
-
-https://webaim.org/blog/captioned-doesnt-always-mean-accessible/</description>
-      <enclosure url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" length="96606" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Legendado nem sempre significa acessível</title>
-      <link>https://carlosandmunoz.com/social/pick/captioned-doesn-t-always-mean-accessible-pt.html</link>
-      <guid isPermaLink="false">pick/captioned-doesn-t-always-mean-accessible-pt</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Accessibility</category>
-      <description>Diálogos precisos são só uma parte das legendas acessíveis em vídeo. Legendas de qualidade também identificam quem fala, transmitem sons relevantes e oferecem texto legível e sincronizado. Seja com legendas de uma ferramenta automática ou de um serviço profissional, este artigo explica por que avaliar a experiência final de visualização é essencial para quem depende de legendas.
-
-Via WebAIM, por Christopher Phillips, 2026-10-29.
-
-https://webaim.org/blog/captioned-doesnt-always-mean-accessible/</description>
-      <enclosure url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" length="96606" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Destaque de Embaixador Cypress: Kevin Korenhof</title>
-      <link>https://carlosandmunoz.com/social/pick/cypress-ambassador-spotlight-kevin-korenhof-pt.html</link>
-      <guid isPermaLink="false">pick/cypress-ambassador-spotlight-kevin-korenhof-pt</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Testing</category>
-      <description>Bem-vindo de volta a mais um Destaque de Embaixador. Cada post desta série apresenta a você uma das pessoas que sustentam discretamente a comunidade Cypress, incluindo onde começaram, o que acreditam sobre testes e o que descobriram pelo caminho. Curioso sobre o programa em si? Saiba mais aqui. Esta semana, destacamos Kevin Korenhof, que chegou à automação de testes vindo do…
-
-Via Cypress, por Jessica Capuano Mora, 2026-10-29.
-
-https://www.cypress.io/blog/cypress-ambassador-spotlight-kevin-korenhof/</description>
-      <media:content url="https://storage.ghost.io/c/12/89/12899ca1-4786-4eea-b7e1-9c5268baa48a/content/images/2026/10/Blog_Ambassador-Spotlight_Kevin-Korenhof--1-.png" medium="image"/>
     </item>
   </channel>
 </rss>

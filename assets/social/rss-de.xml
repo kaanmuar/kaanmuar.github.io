@@ -5,9 +5,181 @@
     <link>https://carlosandmunoz.com/qa-review-social-de.html</link>
     <description>Jeder Beitrag von QA-lab URL Review: Tipps, echte Website-Prüfungen und kurze Clips.</description>
     <language>de</language>
-    <lastBuildDate>Thu, 05 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 06 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-de.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-de.html</link></image>
+    <item>
+      <title>nice.com: 56. Die Lücke: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-22/15-u-nice-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-22/15-u-nice-com-de</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch HSTS wird nicht gesendet.
+
+Die Lektion für jedes Team: Senden Sie Strict-Transport-Security mit einem max-age von mindestens einem Jahr, damit Browser nie wieder einfaches http versuchen.
+
+Eine automatisierte Analyse öffentlicher Seiten am 22. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-nice-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-nice-com
+
+#WebSecurity #HSTS #HTTPS #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/15-u-nice-com.jpg" length="218855" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/15-u-nice-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>tamiltvserial.com: 81. Die Lücke: Button-Namen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-26/11-u-tamiltvserial-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-26/11-u-tamiltvserial-com-de</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>National</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Buttons brauchen erkennbaren Text.
+
+Die Lektion für jedes Team: Geben Sie jedem Button Text oder ein aria-label, damit ein Screenreader ihn ansagen kann.
+
+Eine automatisierte Analyse öffentlicher Seiten am 26. Okt. 2026, eine der meistbesuchten Websites ihres Landes, aus dem Länder-Scan von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-tamiltvserial-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-tamiltvserial-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebAssembly #OpenSource #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/11-u-tamiltvserial-com.jpg" length="240326" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/11-u-tamiltvserial-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Erzielte 57 von 100. Die Lücke: ARIA-Rollen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-10-27/10-u-diamondsinternational-mt-de.html</link>
+      <guid isPermaLink="false">auto-2026-10-27/10-u-diamondsinternational-mt-de</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>National</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Bestimmte ARIA-Rollen müssen jedoch bestimmte untergeordnete Elemente enthalten.
+
+Die Lektion für jedes Team: Verwenden Sie zunächst native HTML-Elemente. Wenn Sie ARIA-Rollen verwenden, verschachteln Sie diese so, wie es die Rolle erfordert.
+
+Eine automatisierte Analyse öffentlicher Seiten am 27. Okt. 2026, eine der meistbesuchten Websites ihres Landes, aus dem Länder-Scan von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-diamondsinternational-mt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-diamondsinternational-mt
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #CSS #DevOps #QA #ARIA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/10-u-diamondsinternational-mt.jpg" length="233523" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/10-u-diamondsinternational-mt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>epa.gov.co: 74. Die Lücke: Zugriff für KI-Crawler.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-02/04-u-epa-gov-co-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-02/04-u-epa-gov-co-de</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und Crawler für Modelltraining sind bewusst blockiert. Aber 1 KI-Antwort oder Such-Crawler ist blockiert.
+
+Die Lektion für jedes Team: Entscheiden Sie in robots.txt pro Bot: Lassen Sie die Antwortmaschinen zu, von denen Sie zitiert werden wollen, und blockieren Sie nur Trainings-Crawler.
+
+Eine automatisierte Analyse öffentlicher Seiten am 27. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-epa-gov-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-epa-gov-co
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#GEO #DevOps #AI #QA #AISearch #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/04-u-epa-gov-co.jpg" length="239825" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/04-u-epa-gov-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>houm.com: 68. Die Lücke: Button-Namen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-05/01-u-houm-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-05/01-u-houm-com-de</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Buttons brauchen erkennbaren Text.
+
+Die Lektion für jedes Team: Geben Sie jedem Button Text oder ein aria-label, damit ein Screenreader ihn ansagen kann.
+
+Eine automatisierte Analyse öffentlicher Seiten am 4 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-houm-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-houm-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #CSS #Programming #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/01-u-houm-com.jpg" length="231661" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/01-u-houm-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Messen Sie Ihren Server mit einer Zeile.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/01-ttfb-curl-de.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/01-ttfb-curl-de</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Trick</category>
+      <category>Perf</category>
+      <description>30-Sekunden-Trick: Messen Sie Ihren Server mit einer Zeile.
+
+curl kann melden, wann das erste Byte der Seite ankam. web.dev empfiehlt für die meisten Websites eine Time to First Byte von 0.8 Sekunden oder weniger.
+
+Jetzt testen: Führen Sie es einige Male auf Ihrer Startseite und Ihrer langsamsten Vorlage aus. Über 0.8 Sekunden? Prüfen Sie den Server vor dem Frontend.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=ttfb-curl
+
+#WebPerformance #Playwright #QA #TTFB #DevTools #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/01-ttfb-curl.jpg" length="217951" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/01-ttfb-curl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Mythos: Eine 100 in Lighthouse heißt barrierefrei.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/02-myth-lighthouse-de.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/02-myth-lighthouse-de</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Mythos oder Fakt</category>
+      <category>A11y</category>
+      <description>Mythos oder Fakt: Mythos: Eine 100 in Lighthouse heißt barrierefrei.
+
+Lighthouse prüft, was Software erkennen kann, etwa Namen, Kontrast und ARIA. Es kann nicht beurteilen, ob Alternativtexte Sinn ergeben oder ob jemand mit Screenreader die Aufgabe abschließen kann.
+
+Prüfen Sie es: Erledigen Sie nach der Punktzahl eine echte Aufgabe mit einem Screenreader: VoiceOver auf dem Mac, NVDA unter Windows.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-lighthouse
+
+#Accessibility #Playwright #SoftwareTesting #QA #Lighthouse #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/02-myth-lighthouse.jpg" length="246846" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/02-myth-lighthouse.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Rathaus Bogotá: SEO 97.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/02-bogota-de.html</link>
+      <guid isPermaLink="false">runs-2026-10/02-bogota-de</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Local</category>
+      <description>Jede Seite hat Titel und Beschreibung, die Sitemap antwortet, die strukturierten Daten sind parsbar und die Share-Cards vollständig. Der Haken: Jede Seite meldet an zwei GA4-Properties.
+
+Die Lektion für jedes Team: Eine Website, eine GA4-Property, ein gtag.js. Brauchen zwei Teams die Daten, teilen Sie den Zugang, statt ein Tag hinzuzufügen.
+
+Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
+So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=bogota
+
+#Analytics #GA4 #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" length="229468" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Die Faktenblätter der WHO enden mit einem verirrten Semikolon.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-de.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who-de</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Worldwide</category>
+      <description>Die WHO heißt KI-Antwort-Crawler willkommen, und ihre Seiten lesen sich ohne JavaScript gut: GEO 91. Doch das JSON-LD auf den Faktenblättern endet mit „};“, und ein strikter Parser verwirft den ganzen Block.
+
+Die Lektion für jedes Team: Prüfen Sie jeden JSON-LD-Block vor dem Release mit einem JSON-Validator. Ein Zeichen kann den ganzen Block ungültig machen.
+
+Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
+So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>zizonline.com: 70. Die Lücke: HSTS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-26/10-u-zizonline-com-de.html</link>
@@ -787,151 +959,6 @@ Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
 #SEO #SoftwareTesting #DevOps #QA #WebPerf #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/07-vs-kemik-gt.jpg" length="224227" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/07-vs-kemik-gt.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>montessori.edu.co: 67. Die Lücke: alt-Text.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-26/06-u-montessori-edu-co-de.html</link>
-      <guid isPermaLink="false">auto-2026-10-26/06-u-montessori-edu-co-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 177 Bilder haben kein alt-Attribut.
-
-Die Lektion für jedes Team: Beschreiben Sie im alt-Attribut, was jedes Bild zeigt, und nutzen Sie alt=&quot;&quot; bei rein dekorativen.
-
-Eine automatisierte Analyse öffentlicher Seiten am 25. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-montessori-edu-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-montessori-edu-co
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #WebAssembly #OpenSource #QA #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/06-u-montessori-edu-co.jpg" length="236398" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/06-u-montessori-edu-co.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>ag.org: 60. Die Lücke: Linknamen.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-27/05-u-ag-org-de.html</link>
-      <guid isPermaLink="false">auto-2026-10-27/05-u-ag-org-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jeder überprüfte externe Link wurde beantwortet, und KI-Antwort- und Suchcrawler können die Startseite lesen. Doch Links brauchen erkennbaren Text.
-
-Die Lektion für jedes Team: Geben Sie jedem Link einen Text, der sagt, wohin er führt. Ein Icon allein braucht ein aria-label.
-
-Eine automatisierte Analyse öffentlicher Seiten am 26. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-ag-org&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ag-org
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #TypeScript #CSS #QA #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/05-u-ag-org.jpg" length="228741" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/05-u-ag-org.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>GOV.UK 92, USA.gov 88. Beide erreichen 100 bei der Barrierefreiheit.</title>
-      <link>https://carlosandmunoz.com/social/compare-2026-11/07-govuk-usagov-de.html</link>
-      <guid isPermaLink="false">compare-2026-11/07-govuk-usagov-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Vergleich</category>
-      <category>National</category>
-      <description>GOV.UK führt bei Sicherheit, 94 zu 77, und bei Analytics, 97 zu 85. USA.gov kontert beim Tempo, 94 zu 89, und bei GEO, 91 zu 86.
-
-Lektion: Beide bauen ihre Seiten aus einem öffentlichen Designsystem. Nutzen Sie getestete Komponenten wieder, statt sie auf jeder Seite neu zu bauen.
-
-So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=govuk-usagov
-
-#WebQuality #SoftwareTesting #DevOps #QA #GovTech #QAlab
-
-https://www.youtube.com/shorts/Plp1Uxk_P1w</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/07-govuk-usagov.jpg" length="247979" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/07-govuk-usagov.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Ein PageSpeed-Score von 91 fiel bei den Core Web Vitals durch. Ein Score von 51 bestand. Notizen aus dem Test von 14 Kanzlei-Websites</title>
-      <link>https://carlosandmunoz.com/social/pick/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-note-2-de.html</link>
-      <guid isPermaLink="false">pick/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-note-2-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Performance</category>
-      <description>Ich baue Websites für Kanzleien, also jagte ich im September 14 Startseiten bekannter US-Kanzleien durch...
-
-Via DEV, von Legal Web Agency, 2026-10-30.
-
-https://dev.to/tech_andusama_d03fc626b1/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-notes-from-testing-14-law-firm-websites-3fd2</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fsbumuvfnhi8mig9tjxfw.png" medium="image"/>
-    </item>
-    <item>
-      <title>Ein PageSpeed-Score von 91 fiel bei den Core Web Vitals durch. Ein Score von 51 bestand. Notizen aus dem Test von 14 Kanzlei-Websites</title>
-      <link>https://carlosandmunoz.com/social/pick/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-note-de.html</link>
-      <guid isPermaLink="false">pick/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-note-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Performance</category>
-      <description>Ich baue Websites für Kanzleien, also jagte ich im September 14 Startseiten bekannter US-Kanzleien durch...
-
-Via DEV, von Legal Web Agency, 2026-10-30.
-
-https://dev.to/tech_andusama_d03fc626b1/a-91-pagespeed-score-failed-core-web-vitals-a-51-passed-notes-from-testing-14-law-firm-websites-3fd2</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fsbumuvfnhi8mig9tjxfw.png" medium="image"/>
-    </item>
-    <item>
-      <title>aria-selected bei Tabs: der ausgewählte Tab, der lügt (WCAG 4.1.2)</title>
-      <link>https://carlosandmunoz.com/social/pick/aria-selected-on-tabs-the-selected-tab-that-lies-wcag-4-1-2-de.html</link>
-      <guid isPermaLink="false">pick/aria-selected-on-tabs-the-selected-tab-that-lies-wcag-4-1-2-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Accessibility</category>
-      <description>Der Tab „Benachrichtigungen“ ist geöffnet. Sein Panel ist auf dem Bildschirm zu sehen: &quot;Wählen Sie, welche E-Mail- und Push-Benachrichtigungen Sie...
-
-Via DEV, von A11Y Practice, 2026-10-28.
-
-https://www.wasexamprep.com/blog/aria-selected-tab-that-lies</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=500,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fi.ytimg.com%2Fvi%2F939KZzpMFuk%2Fmaxresdefault.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Große Marken dominieren die KI-Suche, lassen kleineren Websites aber Lücken via @sejournal, @martinibuster</title>
-      <link>https://carlosandmunoz.com/social/pick/big-brands-dominate-ai-search-but-leave-openings-for-smaller-de.html</link>
-      <guid isPermaLink="false">pick/big-brands-dominate-ai-search-but-leave-openings-for-smaller-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>GEO</category>
-      <description>Neue Forschung zeigt eine mögliche Schwachstelle in der Sichtbarkeit großer Marken auf, die kleinere Publisher ausnutzen könnten. Der Beitrag Große Marken dominieren die KI-Suche, lassen kleineren Websites aber Lücken erschien zuerst auf Search Engine Journal .
-
-Via Search Engine Journal, von Roger Montti, 2026-10-31.
-
-https://www.searchenginejournal.com/big-brands-dominate-ai-search-but-leave-openings-for-smaller-sites/595397/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/travel-ai-seo-407.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Untertitelt heißt nicht immer barrierefrei</title>
-      <link>https://carlosandmunoz.com/social/pick/captioned-doesn-t-always-mean-accessible-2-de.html</link>
-      <guid isPermaLink="false">pick/captioned-doesn-t-always-mean-accessible-2-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Accessibility</category>
-      <description>Korrekte Dialoge sind nur ein Teil barrierefreier Videountertitel. Gute Untertitel benennen außerdem die Sprechenden, geben bedeutsame Geräusche wieder und bieten lesbaren, synchronen Text. Ob Untertitel von einem automatischen Tool oder einem professionellen Dienst stammen, dieser Artikel erklärt, warum die Bewertung des fertigen Seherlebnisses für Menschen, die auf Untertitel angewiesen sind, unerlässlich ist.
-
-Via WebAIM, von Christopher Phillips, 2026-10-29.
-
-https://webaim.org/blog/captioned-doesnt-always-mean-accessible/</description>
-      <enclosure url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" length="96606" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Untertitelt heißt nicht immer barrierefrei</title>
-      <link>https://carlosandmunoz.com/social/pick/captioned-doesn-t-always-mean-accessible-de.html</link>
-      <guid isPermaLink="false">pick/captioned-doesn-t-always-mean-accessible-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Empfehlung</category>
-      <category>Accessibility</category>
-      <description>Korrekte Dialoge sind nur ein Teil barrierefreier Videountertitel. Gute Untertitel benennen außerdem die Sprechenden, geben bedeutsame Geräusche wieder und bieten lesbaren, synchronen Text. Ob Untertitel von einem automatischen Tool oder einem professionellen Dienst stammen, dieser Artikel erklärt, warum die Bewertung des fertigen Seherlebnisses für Menschen, die auf Untertitel angewiesen sind, unerlässlich ist.
-
-Via WebAIM, von Christopher Phillips, 2026-10-29.
-
-https://webaim.org/blog/captioned-doesnt-always-mean-accessible/</description>
-      <enclosure url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" length="96606" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
