@@ -12,7 +12,8 @@
    instagram caption at the instagram slot, and the story image at the instagram-story slot (ROUTES). A slot more
    than MISSED_MS old is left alone, so connecting a network does not flood it with the backlog. A network whose
    secrets are missing is skipped. Threads also uses its composer (scripts/threads-compose.js, #2701): a topic, the
-   clip from the batch's release when it speaks the caption's language, polls, quotes, spoilers and long-form text.
+   clip from the batch's release when it speaks the caption's language, polls in our reply under a quiz, GIFs,
+   quotes, spoilers, location tags and long-form text.
    Bluesky, Mastodon, Telegram and Instagram use theirs (scripts/open-social-compose.js): videos and reels, polls,
    quotes and replies, content warnings and link cards, each falling back to the plain card.
 
@@ -36,7 +37,8 @@
    Bluesky: an app password (Settings > Privacy and security > App passwords); BLUESKY_SERVICE when the account is
    not on bsky.social. Mastodon: the instance address and an application token with write:statuses, write:media and
    read:accounts, read:statuses (Preferences > Development > New application). Threads: a long-lived user token with
-   threads_basic and threads_content_publish; it lasts 60 days, and scripts/meta-token.js renews it. Instagram: the
+   threads_basic and threads_content_publish, plus threads_manage_replies for our replies and threads_location_tagging
+   for places; it lasts 60 days, and scripts/meta-token.js renews it. Instagram: the
    professional account's id and the Facebook Page token with instagram_basic and instagram_content_publish
    (scripts/meta-token.js sets both). Threads and Instagram fetch the image from the site, so it must be live. */
 
@@ -158,7 +160,7 @@ function threadsExtras(post, face, book) {
   const quiz = post.quiz && (book.posts[post.batch + "/" + post.quiz] || []).find((e) => e.channel === "threads" && e.result === "sent" && e.id);
   const long = post.cap.linkedin ? String(faceRoute.captionFor(post.cap, "linkedin", face)).replace(/utm_source=linkedin\b/g, "utm_source=threads") : "";
   return {
-    cap: post.cap, clip: post.clip, long, quote: quiz ? quiz.id : "",
+    cap: post.cap, clip: post.clip, long, quote: quiz ? quiz.id : "", place: post.cap.place || "",
     topic: threadsCompose.topicOf(faceRoute.captionFor(post.cap, "x", face), post.cap.cat || ""),
     hub: hubUrl(post.batch, post.slug) + "?utm_source=threads&utm_medium=social&utm_campaign=" + post.batch
   };
@@ -418,6 +420,16 @@ function mastodon(env = process.env) {
 
 function threads(env = process.env) {
   const call = graph(THREADS, env.THREADS_TOKEN, "Threads");
+  // A token without threads_location_tagging finds no place, so the post goes without one.
+  const places = new Map();
+  const place = (name) => {
+    if (!places.has(name)) {
+      places.set(name, call("GET", "location_search", { q: name.split(",")[0].trim(), fields: "id,name,address,city,country" })
+        .then(({ data }) => threadsCompose.pickLocation(name, data))
+        .catch((error) => { console.log("Threads location search for " + name + " - " + error.message); return ""; }));
+    }
+    return places.get(name);
+  };
   return {
     ready: Boolean(env.THREADS_TOKEN),
     async login() {
@@ -439,10 +451,12 @@ function threads(env = process.env) {
         await ready(async (id) => (await call("GET", id, { fields: "status" })).status, box.id, video ? 18 : 20, video ? 10000 : 3000);
         return box.id;
       };
+      const location = args.place ? await place(args.place) : "";
       let creation = "";
       let uses = [];
+      let reply = null;
       let refused = null;
-      for (const plan of threadsCompose.plans(Object.assign({}, args, { clip }))) {
+      for (const plan of threadsCompose.plans(Object.assign({}, args, { clip, location }))) {
         try {
           const params = Object.assign({}, plan.params);
           if (plan.items) {
@@ -452,6 +466,7 @@ function threads(env = process.env) {
           }
           creation = await container(params);
           uses = plan.uses;
+          reply = plan.reply || null;
           break;
         } catch (error) {
           refused = error;
@@ -461,6 +476,23 @@ function threads(env = process.env) {
       if (!creation) throw refused;
       const { id } = await call("POST", "me/threads_publish", { creation_id: creation });
       const { permalink } = await call("GET", id, { fields: "permalink" }).catch(() => ({}));
+      // The post is out: a reply that fails costs only the reply.
+      for (const answer of reply || []) {
+        let box = "";
+        try {
+          box = await container(Object.assign({ reply_to_id: id }, answer.params));
+        } catch (error) {
+          console.log("Threads refused the reply " + answer.uses.join(", ") + " - " + error.message);
+          continue;
+        }
+        try {
+          await call("POST", "me/threads_publish", { creation_id: box });
+          uses = uses.concat(answer.uses.map((u) => "reply " + u));
+        } catch (error) {
+          console.log("Threads reply not published - " + error.message);
+        }
+        break;
+      }
       return { id, url: permalink || "", uses };
     }
   };
