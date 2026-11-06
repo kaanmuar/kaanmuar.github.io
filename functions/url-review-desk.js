@@ -232,6 +232,42 @@ function summary(row, index, unlisted) {
   };
 }
 
+// A stored review runs to hundreds of KB and /desk/data reads 400 of them, more than the function's memory.
+// Each row keeps only what summary(), alertsFromHistory(), offers.queue() and publish.heldReason() read.
+function deskRecord(row) {
+  const report = row && row.report;
+  if (!report || typeof report !== "object") return row;
+  const list = (value) => (Array.isArray(value) ? value : []);
+  const insights = report.insights || {};
+  const slim = {
+    host: report.host,
+    status: report.status,
+    preview: report.preview,
+    finalUrl: report.finalUrl,
+    fetchedAt: report.fetchedAt,
+    counts: report.counts,
+    limits: report.limits,
+    statement: report.statement,
+    signature: report.signature ? { mark: report.signature.mark } : undefined,
+    observed: report.observed ? {
+      title: report.observed.title,
+      description: report.observed.description,
+      forms: report.observed.forms,
+      images: report.observed.images,
+      missingAlt: report.observed.missingAlt
+    } : undefined,
+    insights: { score: insights.score, findings: list(insights.findings).map((item) => ({ key: item && item.key, verdict: item && item.verdict })) },
+    alerts: Array.isArray(report.alerts) ? report.alerts.map((item) => ({ id: item && item.id, level: item && item.level, title: item && item.title })) : undefined,
+    tools: list(report.tools).map((item) => (item && typeof item === "object" ? { name: item.name } : item)),
+    technologies: list(report.technologies).slice(0, 8).map((item) => ({ name: item && item.name })),
+    mentions: list(report.mentions).slice(0, 4),
+    pages: list(report.pages).map((page) => ({ path: page && page.path, url: page && page.url, status: page && page.status, ms: page && page.ms, challenge: page && page.challenge, error: page && page.error })),
+    cases: list(report.cases).slice(0, report.counts && report.counts.cases != null ? 40 : undefined).map((item) => ({ id: item && item.id, layer: item && item.layer, title: item && item.title })),
+    log: list(report.log).slice(-20)
+  };
+  return Object.assign({}, row, { report: slim, log: Array.isArray(row.log) ? row.log.slice(-20) : row.log });
+}
+
 function snapshot(records, alerts, active, noteRows, unlisted) {
   const list = Array.isArray(records) ? records : [];
   const index = new Map();
@@ -405,7 +441,11 @@ const SIGN_IN = `
         }
         return null;
       }
-      if (!response.ok) return null;
+      if (!response.ok) {
+        const note = document.getElementById("desk-gate-note");
+        if (note && document.body.classList.contains("desk-locked")) note.textContent = "Signed in, but the desk did not load (" + response.status + "). It tries again in a few seconds.";
+        return null;
+      }
       unlockDesk();
       return response.json();
     }
@@ -1419,6 +1459,7 @@ module.exports = {
   alertsFromHistory,
   snapshot,
   rerunRows,
+  deskRecord,
   verifyOperator,
   PAGE,
   FAILURES_PAGE
