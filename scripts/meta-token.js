@@ -29,9 +29,9 @@ const PAGE_ID = process.env.FACEBOOK_PAGE_ID || "1384763784723160";
 const GRAPH = "https://graph.facebook.com/" + (process.env.FACEBOOK_GRAPH_VERSION || "v23.0");
 const THREADS = "https://graph.threads.net";
 const THREADS_FILE = path.join(os.homedir(), ".config/qa-lab/threads" + SFX.toLowerCase().replace("_", "-") + ".json");
-// facebook-queue.js posts to the Page; open-social-queue.js publishes on Instagram; social-metrics.js reads each post's
-// views (read_insights) and reactions and comments (pages_read_user_content).
-const PAGE_SCOPES = ["pages_show_list", "pages_read_engagement", "pages_manage_posts", "instagram_basic", "instagram_content_publish", "read_insights", "pages_read_user_content"];
+// facebook-queue.js posts to the Page and its Reels (publish_video, #2729); open-social-queue.js publishes on Instagram;
+// social-metrics.js reads each post's views (read_insights) and reactions and comments (pages_read_user_content).
+const PAGE_SCOPES = ["pages_show_list", "pages_read_engagement", "pages_manage_posts", "publish_video", "instagram_basic", "instagram_content_publish", "read_insights", "pages_read_user_content"];
 
 async function get(url, params) {
   const res = await fetch(url + "?" + new URLSearchParams(params));
