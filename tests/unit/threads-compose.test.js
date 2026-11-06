@@ -32,14 +32,34 @@ test("every compare quiz title gives a two-option poll in Spanish and Portuguese
   assert.equal(c.pollOf("No question here"), null);
 });
 
-test("a quiz posts as a text poll with its topic, then falls back to the card", () => {
+test("a quiz keeps its card and asks in our reply with a poll and a GIF; a text poll when that is refused (#2718, #2717)", () => {
   const cap = compare["01-quiz-berlin-vienna"];
-  const plans = c.plans(Object.assign({}, base, { cap, topic: "Web Quality" }));
-  assert.deepEqual(uses(plans), ["poll+topic", "image+topic", "image"]);
-  assert.equal(plans[0].params.media_type, "TEXT");
-  assert.deepEqual(JSON.parse(plans[0].params.poll_attachment), { option_a: "Berlín", option_b: "Viena" });
-  assert.equal(plans[0].params.topic_tag, "Web Quality");
+  const plans = c.plans(Object.assign({}, base, { cap, topic: "Web Quality", key: "compare-2026-11/01-quiz-berlin-vienna" }));
+  assert.deepEqual(uses(plans), ["image+topic+reply-poll", "poll+topic", "image+topic", "image"]);
+  assert.equal(plans[0].params.media_type, "IMAGE");
+  const [withGif, pollOnly] = plans[0].reply;
+  assert.equal(withGif.params.text, "¿Tu apuesta?");
+  assert.deepEqual(JSON.parse(withGif.params.poll_attachment), { option_a: "Berlín", option_b: "Viena" });
+  const gif = JSON.parse(withGif.params.gif_attachment);
+  assert.equal(gif.provider, "GIPHY");
+  assert.ok(c.THINKING_GIFS.includes(gif.gif_id));
+  assert.equal(pollOnly.params.gif_attachment, undefined);
+  assert.equal(plans[1].params.media_type, "TEXT");
+  assert.equal(plans[1].params.topic_tag, "Web Quality");
   assert.equal(plans.at(-1).params.media_type, "IMAGE");
+});
+
+test("a place adds its location, with a topic-only and a plain card to fall back on (#2716)", () => {
+  const plans = c.plans(Object.assign({}, base, { topic: "Accessibility", location: "123" }));
+  assert.deepEqual(uses(plans), ["image+topic+location", "image+topic", "image"]);
+  assert.equal(plans[0].params.location_id, "123");
+});
+
+test("the location is the result named after the place's city, in its country, or none", () => {
+  const results = [{ id: "1", name: "Armenia Café", country: "Colombia" }, { id: "2", name: "Armenia", country: "Armenia" }, { id: "3", name: "Armenia", city: "Armenia", country: "Colombia" }];
+  assert.equal(c.pickLocation("Armenia, Colombia", results), "3");
+  assert.equal(c.pickLocation("Bogotá, Colombia", [{ id: "9", name: "Bogota", country: "Colombia" }]), "9");
+  assert.equal(c.pickLocation("Neiva, Colombia", results), "");
 });
 
 test("an answer quotes its quiz with the scores line behind a spoiler", () => {

@@ -111,6 +111,38 @@ test("the Threads client falls back to the plain card when a richer container is
   }
 });
 
+test("a Threads quiz goes out as its card with the place's location, then our poll reply; a refused GIF reply falls back to the poll (#2716-#2718)", async () => {
+  const made = [];
+  let published = 0;
+  const real = global.fetch;
+  global.fetch = async (url, opts = {}) => {
+    const u = String(url);
+    const body = opts.body ? Object.fromEntries(new URLSearchParams(String(opts.body))) : null;
+    if (opts.method === "HEAD") return { ok: true };
+    if (u.includes("/location_search?")) return { ok: true, json: async () => ({ data: [{ id: "77", name: "Bogotá", country: "Colombia" }] }) };
+    if (u.endsWith("/me/threads") && body) {
+      made.push(body);
+      if (body.gif_attachment) return { ok: false, status: 400, json: async () => ({ error: { message: "gif refused" } }) };
+      return { ok: true, json: async () => ({ id: "c" + made.length }) };
+    }
+    if (u.endsWith("/me/threads_publish")) { published += 1; return { ok: true, json: async () => ({ id: "p" + published }) }; }
+    if (u.includes("fields=status")) return { ok: true, json: async () => ({ status: "FINISHED" }) };
+    return { ok: true, json: async () => ({ permalink: "https://www.threads.com/@qaurlreview/post/p1" }) };
+  };
+  try {
+    const client = q.NETWORKS.threads({ THREADS_TOKEN: "t" });
+    const cap = { kind: "quiz", title: "Bogotá o Medellín: ¿qué sitio?" };
+    const r = await client.post({ text: "Quiz", url: "https://carlosandmunoz.com/a.jpg", alt: "Card", lang: "es", cap, place: "Bogotá, Colombia", key: "b/01-quiz" });
+    assert.equal(r.id, "p1");
+    assert.deepEqual(r.uses, ["image", "location", "reply-poll", "reply poll"]);
+    assert.equal(made[0].location_id, "77");
+    assert.deepEqual(made.slice(1).map((b) => [b.reply_to_id, Boolean(b.gif_attachment), JSON.parse(b.poll_attachment).option_b]), [["p1", true, "Medellín"], ["p1", false, "Medellín"]]);
+    assert.equal(published, 2);
+  } finally {
+    global.fetch = real;
+  }
+});
+
 test("Threads and Instagram are skipped until their secrets are set", () => {
   assert.equal(q.NETWORKS.threads({}).ready, false);
   assert.equal(q.NETWORKS.instagram({ FACEBOOK_PAGE_TOKEN: "t" }).ready, false);
