@@ -1,6 +1,376 @@
 {
  "runs": [
   {
+   "at": "2026-11-06T16:31:41.642Z",
+   "run": {
+    "id": 42225290033,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/42225290033"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 1274,
+   "scored": 1274,
+   "failed": 0,
+   "below": 816,
+   "avg": {
+    "mobile": 87,
+    "desktop": 97
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-06",
+    "files": [
+     "assets/social/captions-de.json",
+     "assets/social/captions-es.json",
+     "assets/social/captions-fr.json",
+     "assets/social/captions-it.json",
+     "assets/social/captions-pt.json",
+     "assets/social/captions.json",
+     "assets/social/feed-de.json",
+     "assets/social/feed-es.json",
+     "assets/social/feed-fr.json",
+     "assets/social/feed-it.json",
+     "assets/social/feed-pt.json",
+     "assets/social/feed.json",
+     "assets/social/rss-de.xml",
+     "assets/social/rss-es.xml",
+     "assets/social/rss-fr.xml",
+     "assets/social/rss-it.xml",
+     "assets/social/rss-pt.xml",
+     "assets/social/rss.xml",
+     "qa-review-de.html",
+     "qa-review-es.html",
+     "qa-review-fr.html",
+     "qa-review-it.html",
+     "qa-review-pt.html",
+     "qa-review-social-de.html",
+     "qa-review-social-es.html",
+     "qa-review-social-fr.html",
+     "qa-review-social-it.html",
+     "qa-review-social-pt.html",
+     "qa-review-social.html",
+     "qa-review.html",
+     "simulador.html",
+     "sitemap-social.xml",
+     "social/auto-2026-10-22/15-u-nice-com-de.html",
+     "social/auto-2026-10-22/15-u-nice-com-es.html",
+     "social/auto-2026-10-22/15-u-nice-com-fr.html",
+     "social/auto-2026-10-22/15-u-nice-com-it.html",
+     "social/auto-2026-10-22/15-u-nice-com-pt.html",
+     "social/auto-2026-10-22/15-u-nice-com.html",
+     "social/auto-2026-10-26/11-u-tamiltvserial-com-de.html",
+     "social/auto-2026-10-26/11-u-tamiltvserial-com-es.html",
+     "social/auto-2026-10-26/11-u-tamiltvserial-com-fr.html",
+     "social/auto-2026-10-26/11-u-tamiltvserial-com-it.html",
+     "social/auto-2026-10-26/11-u-tamiltvserial-com-pt.html",
+     "social/auto-2026-10-26/11-u-tamiltvserial-com.html",
+     "social/auto-2026-10-27/10-u-diamondsinternational-mt-de.html",
+     "social/auto-2026-10-27/10-u-diamondsinternational-mt-es.html",
+     "social/auto-2026-10-27/10-u-diamondsinternational-mt-fr.html",
+     "social/auto-2026-10-27/10-u-diamondsinternational-mt-it.html",
+     "social/auto-2026-10-27/10-u-diamondsinternational-mt-pt.html",
+     "social/auto-2026-10-27/10-u-diamondsinternational-mt.html",
+     "social/auto-2026-11-02/04-u-epa-gov-co-de.html",
+     "social/auto-2026-11-02/04-u-epa-gov-co-es.html",
+     "social/auto-2026-11-02/04-u-epa-gov-co-fr.html",
+     "social/auto-2026-11-02/04-u-epa-gov-co-it.html",
+     "social/auto-2026-11-02/04-u-epa-gov-co-pt.html",
+     "social/auto-2026-11-02/04-u-epa-gov-co.html",
+     "social/auto-2026-11-05/01-u-houm-com-de.html",
+     "social/auto-2026-11-05/01-u-houm-com-es.html",
+     "social/auto-2026-11-05/01-u-houm-com-fr.html",
+     "social/auto-2026-11-05/01-u-houm-com-it.html"
+    ],
+    "fixes": [
+     {
+      "page": "qa-review-es.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-fr.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-de.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-it.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "simulador.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     }
+    ],
+    "pages": [
+     {
+      "file": "qa-review-es.html",
+      "mobile": {
+       "before": 62,
+       "after": 62,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 81,
+       "after": 81,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-es.html"
+     },
+     {
+      "file": "qa-review-fr.html",
+      "mobile": {
+       "before": 62,
+       "after": 62,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 81,
+       "after": 81,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-fr.html"
+     },
+     {
+      "file": "qa-review-de.html",
+      "mobile": {
+       "before": 47,
+       "after": 46,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 81,
+       "after": 81,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-de.html"
+     },
+     {
+      "file": "qa-review.html",
+      "mobile": {
+       "before": 51,
+       "after": 50,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 81,
+       "after": 81,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review.html"
+     },
+     {
+      "file": "qa-review-it.html",
+      "mobile": {
+       "before": 61,
+       "after": 63,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 73,
+       "after": 73,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-it.html"
+     },
+     {
+      "file": "simulador.html",
+      "mobile": {
+       "before": 66,
+       "after": 65,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 87,
+       "after": 87,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/simulador.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   },
+   "ai": {
+    "branch": "pagespeed/ai-2026-11-06",
+    "files": [
+     "assets/social/captions-de.json",
+     "assets/social/captions-es.json",
+     "assets/social/captions-fr.json",
+     "assets/social/captions-it.json",
+     "assets/social/captions-pt.json",
+     "assets/social/captions.json",
+     "assets/social/feed-de.json",
+     "assets/social/feed-es.json",
+     "assets/social/feed-fr.json",
+     "assets/social/feed-it.json",
+     "assets/social/feed-pt.json",
+     "assets/social/feed.json",
+     "assets/social/rss-de.xml",
+     "assets/social/rss-es.xml",
+     "assets/social/rss-fr.xml",
+     "assets/social/rss-it.xml",
+     "assets/social/rss-pt.xml",
+     "assets/social/rss.xml",
+     "qa-review-social-de.html",
+     "qa-review-social-es.html",
+     "qa-review-social-fr.html",
+     "qa-review-social-it.html",
+     "qa-review-social-pt.html",
+     "qa-review-social.html",
+     "sitemap-social.xml",
+     "social/auto-2026-10-22/15-u-nice-com-de.html",
+     "social/auto-2026-10-22/15-u-nice-com-es.html",
+     "social/auto-2026-10-22/15-u-nice-com-fr.html",
+     "social/auto-2026-10-22/15-u-nice-com-it.html",
+     "social/auto-2026-10-22/15-u-nice-com-pt.html",
+     "social/auto-2026-10-22/15-u-nice-com.html",
+     "social/auto-2026-10-26/11-u-tamiltvserial-com-de.html",
+     "social/auto-2026-10-26/11-u-tamiltvserial-com-es.html",
+     "social/auto-2026-10-26/11-u-tamiltvserial-com-fr.html",
+     "social/auto-2026-10-26/11-u-tamiltvserial-com-it.html",
+     "social/auto-2026-10-26/11-u-tamiltvserial-com-pt.html",
+     "social/auto-2026-10-26/11-u-tamiltvserial-com.html",
+     "social/auto-2026-10-27/10-u-diamondsinternational-mt-de.html",
+     "social/auto-2026-10-27/10-u-diamondsinternational-mt-es.html",
+     "social/auto-2026-10-27/10-u-diamondsinternational-mt-fr.html",
+     "social/auto-2026-10-27/10-u-diamondsinternational-mt-it.html",
+     "social/auto-2026-10-27/10-u-diamondsinternational-mt-pt.html",
+     "social/auto-2026-10-27/10-u-diamondsinternational-mt.html",
+     "social/auto-2026-11-02/04-u-epa-gov-co-de.html",
+     "social/auto-2026-11-02/04-u-epa-gov-co-es.html",
+     "social/auto-2026-11-02/04-u-epa-gov-co-fr.html",
+     "social/auto-2026-11-02/04-u-epa-gov-co-it.html",
+     "social/auto-2026-11-02/04-u-epa-gov-co-pt.html",
+     "social/auto-2026-11-02/04-u-epa-gov-co.html",
+     "social/auto-2026-11-05/01-u-houm-com-de.html",
+     "social/auto-2026-11-05/01-u-houm-com-es.html",
+     "social/auto-2026-11-05/01-u-houm-com-fr.html",
+     "social/auto-2026-11-05/01-u-houm-com-it.html",
+     "social/auto-2026-11-05/01-u-houm-com-pt.html",
+     "social/auto-2026-11-05/01-u-houm-com.html",
+     "social/launch-2026-10/de/a11y.html",
+     "social/launch-2026-10/de/exports.html",
+     "social/launch-2026-10/de/first-read.html",
+     "social/launch-2026-10/de/frameworks.html",
+     "social/launch-2026-10/de/inherited.html"
+    ],
+    "fixes": [],
+    "pages": [
+     {
+      "file": "social/auto-2026-10-25/04-u-supresencia-com-pt.html",
+      "mobile": {
+       "before": 92,
+       "after": 92,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 98,
+       "after": 98,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-10-25/04-u-supresencia-com-pt.html"
+     },
+     {
+      "file": "social/auto-2026-10-24/03-u-nibo-com-br-de.html",
+      "mobile": {
+       "before": 84,
+       "after": 84,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-10-24/03-u-nibo-com-br-de.html"
+     },
+     {
+      "file": "social/pick/what-a-killed-playwright-script-leaves-behind-on-linux-proce-es.html",
+      "mobile": {
+       "before": 94,
+       "after": 93,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 99,
+       "after": 89,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/what-a-killed-playwright-script-leaves-behind-on-linux-proce-es.html"
+     },
+     {
+      "file": "social/pick/noblereachdata-resocket-pixeljury-visual-qa-cli-for-ai-built-2-de.html",
+      "mobile": {
+       "before": 92,
+       "after": 92,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/noblereachdata-resocket-pixeljury-visual-qa-cli-for-ai-built-2-de.html"
+     },
+     {
+      "file": "social/compare-2026-11/01-quiz-berlin-vienna-fr.html",
+      "mobile": {
+       "before": 93,
+       "after": 93,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/compare-2026-11/01-quiz-berlin-vienna-fr.html"
+     },
+     {
+      "file": "social/pick/cypress-ambassador-spotlight-darpan-shah-fr.html",
+      "mobile": {
+       "before": 78,
+       "after": 78,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 97,
+       "after": 97,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/cypress-ambassador-spotlight-darpan-shah-fr.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "Score fell on social/pick/what-a-killed-playwright-script-leaves-behind-on-linux-proce-es.html (desktop 99 → 89).",
+     "drops": 1,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "3 fixes were dropped: the pages are generated, and their builder (scripts/regen-generated.sh) wrote them again. Those fixes belong in the builder.",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-05T16:40:22.410Z",
    "run": {
     "id": 42037831215,
