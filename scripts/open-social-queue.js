@@ -11,7 +11,8 @@
    post each feed image with its x caption at the post's calendar.csv x slot; Instagram posts the feed image with its
    instagram caption at the instagram slot, and the story image at the instagram-story slot (ROUTES). A slot more
    than MISSED_MS old is left alone, so connecting a network does not flood it with the backlog. A network whose
-   secrets are missing is skipped.
+   secrets are missing is skipped. Threads also uses its composer (scripts/threads-compose.js, #2701): a topic, the
+   clip from the batch's release when it speaks the caption's language, polls, quotes, spoilers and long-form text.
 
    Telegram is one channel for every language (BRAND): it posts the feed image with the x caption at the x slot, each
    post in its own language, and records it in assets/social/telegram.json beside the Live Reports posts. The launch
@@ -40,14 +41,16 @@
 const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
-const { createGate, withHubLink } = require("./hub-gate");
+const { createGate, withHubLink, hubUrl } = require("./hub-gate");
 const faceRoute = require("./face-route");
+const threadsCompose = require("./threads-compose");
 const { FACES } = require("./brand-kit/faces");
 
 const ROOT = path.resolve(__dirname, "..");
 const SITE = process.env.SITE || "https://carlosandmunoz.com";
 const GRAPH = "https://graph.facebook.com/" + (process.env.FACEBOOK_GRAPH_VERSION || "v23.0");
 const THREADS = "https://graph.threads.net/v1.0";
+const CLIPS = "https://github.com/" + (process.env.GITHUB_REPOSITORY || "kaanmuar/kaanmuar.github.io") + "/releases/download/";
 const PER_RUN = 4;
 const MISSED_MS = 12 * 3600e3;
 // The calendar.csv slot and the captions.json caption each network posts; a story carries no caption.
@@ -116,10 +119,13 @@ function posts(batch, root = ROOT, network = "bluesky") {
   const when = slots(dir, route.slot);
   if (NO_LAUNCH.has(network) && isLaunch(dir)) return [];
   const captions = captionsOf(dir, when);
+  const clips = faceRoute.voiced(batch, root);
   return Object.keys(captions).filter((slug) => captions[slug].x && !captions[slug].hold && when[slug] && (!route.caption || captions[slug][route.caption]))
     .map((slug) => {
       const asset = when[slug].asset || "feed/" + slug + ".jpg";
-      return { batch, slug, cap: captions[slug], at: when[slug].at, image: path.join(dir, asset), url: SITE + "/media/social-posts/" + batch + "/" + asset };
+      const quiz = Object.keys(captions).find((other) => captions[other].answer === slug);
+      const clip = { url: CLIPS + batch + "/" + slug + ".mp4", lang: (clips[slug] && clips[slug].lang) || captions[slug].lang || "en" };
+      return Object.assign({ batch, slug, cap: captions[slug], at: when[slug].at, image: path.join(dir, asset), url: SITE + "/media/social-posts/" + batch + "/" + asset, clip }, quiz ? { quiz } : {});
     });
 }
 
@@ -131,13 +137,25 @@ function due(list, now) {
 const marker = (post) => "/social/" + post.batch + "/" + post.slug + ".html";
 
 // The x caption's own links are tagged utm_source=x. A face posts the caption in its own language when the hub
-// has translated it (scripts/face-route.js captionFor, #2346).
+// has translated it (scripts/face-route.js captionFor, #2346). Threads carries a topic instead of the hashtags.
 function caption(post, network, face = faceRoute.DEFAULT) {
   const key = (ROUTES[network] || ROUTES.bluesky).caption;
   if (!key) return "";
   const own = String(faceRoute.captionFor(post.cap, key, face));
-  const text = key === "x" ? own.replace(/utm_source=x\b/g, "utm_source=" + network) : own;
+  const tagged = key === "x" ? own.replace(/utm_source=x\b/g, "utm_source=" + network) : own;
+  const text = network === "threads" ? threadsCompose.withoutHashtags(tagged) : tagged;
   return withHubLink(text, { batch: post.batch, slug: post.slug, network });
+}
+
+// What a Threads post adds to its card (scripts/threads-compose.js): topic, clip, the quiz it answers, the long caption.
+function threadsExtras(post, face, book) {
+  const quiz = post.quiz && (book.posts[post.batch + "/" + post.quiz] || []).find((e) => e.channel === "threads" && e.result === "sent" && e.id);
+  const long = post.cap.linkedin ? String(faceRoute.captionFor(post.cap, "linkedin", face)).replace(/utm_source=linkedin\b/g, "utm_source=threads") : "";
+  return {
+    cap: post.cap, clip: post.clip, long, quote: quiz ? quiz.id : "",
+    topic: threadsCompose.topicOf(faceRoute.captionFor(post.cap, "x", face), post.cap.cat || ""),
+    hub: hubUrl(post.batch, post.slug) + "?utm_source=threads&utm_medium=social&utm_campaign=" + post.batch
+  };
 }
 
 /* Bluesky links only what a post's facets mark, by UTF-8 byte range. Only addresses with a scheme or a path are
@@ -181,13 +199,13 @@ async function served(url) {
   if (!res || !res.ok) throw new Error("the site does not serve " + url + " yet");
 }
 
-// A media container is ready once the network has fetched and processed the image.
-async function ready(status, id) {
+// A media container is ready once the network has fetched and processed the image or the clip.
+async function ready(status, id, tries = 20, wait = 3000) {
   for (let i = 0; ; i += 1) {
     const s = await status(id);
     if (s === "FINISHED") return;
-    if (s === "ERROR" || s === "EXPIRED" || i === 20) throw new Error("media container " + id + " is " + s);
-    await sleep(3000);
+    if (s === "ERROR" || s === "EXPIRED" || i === tries) throw new Error("media container " + id + " is " + s);
+    await sleep(wait);
   }
 }
 
@@ -292,13 +310,40 @@ function threads(env = process.env) {
       const { data } = await call("GET", "me/threads", { fields: "id,text,permalink", limit: "100" });
       return (data || []).map((t) => ({ id: t.id, text: t.text || "", url: t.permalink || "" }));
     },
-    async post({ text, url, alt }) {
-      await served(url);
-      const box = await call("POST", "me/threads", { media_type: "IMAGE", image_url: url, text, alt_text: alt });
-      await ready(async (id) => (await call("GET", id, { fields: "status" })).status, box.id);
-      const { id } = await call("POST", "me/threads_publish", { creation_id: box.id });
+    /* Tries each plan of scripts/threads-compose.js, richest first, until Threads accepts a container. A refused
+       publish is not retried as a plainer post: it may have gone out, and the next run finds it in recent(). */
+    async post(args) {
+      await served(args.url);
+      const clip = args.clip && args.clip.lang === args.lang ? await served(args.clip.url).then(() => args.clip, () => null) : null;
+      const container = async (params) => {
+        const box = await call("POST", "me/threads", params);
+        const video = params.media_type === "VIDEO" || params.media_type === "CAROUSEL";
+        await ready(async (id) => (await call("GET", id, { fields: "status" })).status, box.id, video ? 18 : 20, video ? 10000 : 3000);
+        return box.id;
+      };
+      let creation = "";
+      let uses = [];
+      let refused = null;
+      for (const plan of threadsCompose.plans(Object.assign({}, args, { clip }))) {
+        try {
+          const params = Object.assign({}, plan.params);
+          if (plan.items) {
+            const children = [];
+            for (const item of plan.items) children.push(await container(item));
+            params.children = children.join(",");
+          }
+          creation = await container(params);
+          uses = plan.uses;
+          break;
+        } catch (error) {
+          refused = error;
+          console.log("Threads refused " + plan.uses.join(", ") + " - " + error.message);
+        }
+      }
+      if (!creation) throw refused;
+      const { id } = await call("POST", "me/threads_publish", { creation_id: creation });
       const { permalink } = await call("GET", id, { fields: "permalink" }).catch(() => ({}));
-      return { id, url: permalink || "" };
+      return { id, url: permalink || "", uses };
     }
   };
 }
@@ -396,7 +441,9 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
       const hub = await gate(post.batch, post.slug, post.cap, new Date(now).toISOString());
       const f = faceFor(post);
       const text = caption(post, network, f);
-      console.log("dry-run", "@" + FACES[f].handle, faceRoute.captionLang(post.cap, key, f), network, post.batch + "/" + post.slug, new Date(post.at).toISOString(), hub.why ? "HELD: " + hub.why : "hub ok", [...text].length + " chars", text.split("\n").pop());
+      const lang = faceRoute.captionLang(post.cap, key, f);
+      const uses = network === "threads" ? threadsCompose.plans(Object.assign({ text, url: post.url, alt: "", lang }, threadsExtras(post, f, book)))[0].uses.join("+") : "";
+      console.log("dry-run", "@" + FACES[f].handle, lang, network, post.batch + "/" + post.slug, new Date(post.at).toISOString(), hub.why ? "HELD: " + hub.why : "hub ok", [...text].length + " chars", uses, text.split("\n").pop());
     }
     return counts;
   }
@@ -424,9 +471,10 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
     }
     try {
       const f = faceFor(post);
-      const r = await client.post({ text: caption(post, network, f), image: post.image, url: post.url, alt: post.cap.alt || post.cap.title || "", lang: faceRoute.captionLang(post.cap, key, f), key: name });
+      const more = network === "threads" ? threadsExtras(post, f, book) : {};
+      const r = await client.post(Object.assign({ text: caption(post, network, f), image: post.image, url: post.url, alt: post.cap.alt || post.cap.title || "", lang: faceRoute.captionLang(post.cap, key, f), key: name }, more));
       counts.posted += 1;
-      console.log("posted", network, name, r.url);
+      console.log("posted", network, name, r.url, r.uses ? "(" + r.uses.join(", ") + ")" : "");
       record(post, { id: r.id, url: r.url, at, result: "sent" });
     } catch (error) {
       counts.failed += 1;
