@@ -13,6 +13,8 @@
    than MISSED_MS old is left alone, so connecting a network does not flood it with the backlog. A network whose
    secrets are missing is skipped. Threads also uses its composer (scripts/threads-compose.js, #2701): a topic, the
    clip from the batch's release when it speaks the caption's language, polls, quotes, spoilers and long-form text.
+   Bluesky, Mastodon, Telegram and Instagram use theirs (scripts/open-social-compose.js): videos and reels, polls,
+   quotes and replies, content warnings and link cards, each falling back to the plain card.
 
    Telegram is one channel for every language (BRAND): it posts the feed image with the x caption at the x slot, each
    post in its own language, and records it in assets/social/telegram.json beside the Live Reports posts. The launch
@@ -44,12 +46,14 @@ const ledger = require("./social-ledger");
 const { createGate, withHubLink, hubUrl } = require("./hub-gate");
 const faceRoute = require("./face-route");
 const threadsCompose = require("./threads-compose");
+const compose = require("./open-social-compose");
 const { FACES } = require("./brand-kit/faces");
 
 const ROOT = path.resolve(__dirname, "..");
 const SITE = process.env.SITE || "https://carlosandmunoz.com";
 const GRAPH = "https://graph.facebook.com/" + (process.env.FACEBOOK_GRAPH_VERSION || "v23.0");
 const THREADS = "https://graph.threads.net/v1.0";
+const BSKY_VIDEO = "https://video.bsky.app";
 const CLIPS = "https://github.com/" + (process.env.GITHUB_REPOSITORY || "kaanmuar/kaanmuar.github.io") + "/releases/download/";
 const PER_RUN = 4;
 const MISSED_MS = 12 * 3600e3;
@@ -124,8 +128,10 @@ function posts(batch, root = ROOT, network = "bluesky") {
     .map((slug) => {
       const asset = when[slug].asset || "feed/" + slug + ".jpg";
       const quiz = Object.keys(captions).find((other) => captions[other].answer === slug);
+      const answer = captions[slug].answer && captions[captions[slug].answer];
       const clip = { url: CLIPS + batch + "/" + slug + ".mp4", lang: (clips[slug] && clips[slug].lang) || captions[slug].lang || "en" };
-      return Object.assign({ batch, slug, cap: captions[slug], at: when[slug].at, image: path.join(dir, asset), url: SITE + "/media/social-posts/" + batch + "/" + asset, clip }, quiz ? { quiz } : {});
+      return Object.assign({ batch, slug, cap: captions[slug], at: when[slug].at, image: path.join(dir, asset), url: SITE + "/media/social-posts/" + batch + "/" + asset, clip },
+        quiz ? { quiz, quizCap: captions[quiz] } : {}, answer ? { answerCap: answer } : {});
     });
 }
 
@@ -158,6 +164,19 @@ function threadsExtras(post, face, book) {
   };
 }
 
+const PLANS = { threads: threadsCompose.plans, bluesky: compose.bluesky, mastodon: compose.mastodon, telegram: compose.telegram, instagram: compose.instagram };
+
+// What a post adds to its card on a network with a composer: the clip, both halves of a quiz, the quiz's own post there.
+function extras(network, post, face, book) {
+  if (network === "threads") return threadsExtras(post, face, book);
+  if (!PLANS[network]) return {};
+  const quiz = post.quiz && (book.posts[post.batch + "/" + post.quiz] || []).find((e) => e.channel === network && e.result === "sent" && e.id);
+  return {
+    cap: post.cap, clip: post.clip, quizCap: post.quizCap, answerCap: post.answerCap, quote: quiz ? quiz.id : "",
+    hub: hubUrl(post.batch, post.slug) + "?utm_source=" + network + "&utm_medium=social&utm_campaign=" + post.batch
+  };
+}
+
 /* Bluesky links only what a post's facets mark, by UTF-8 byte range. Only addresses with a scheme or a path are
    links: "robots.txt" and "llms.txt" look like hosts. */
 const LINK = /(?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?/gi;
@@ -178,11 +197,20 @@ function facets(text) {
 async function reply(res, label) {
   const json = await res.json().catch(() => ({}));
   const why = json.error && json.error.message ? json.error.message : json.message || json.error;
-  if (!res.ok || (json.error && json.error.message)) throw new Error(label + " " + res.status + ": " + String(why || JSON.stringify(json)).slice(0, 300));
+  if (!res.ok || (json.error && json.error.message)) {
+    throw Object.assign(new Error(label + " " + res.status + ": " + String(why || JSON.stringify(json)).slice(0, 300)), { status: res.status });
+  }
   return json;
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Bluesky and Mastodon take the clip's bytes; the release download redirects to GitHub's storage.
+async function download(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("no clip at " + url + " (" + res.status + ")");
+  return Buffer.from(await res.arrayBuffer());
+}
 
 // The Graph APIs of Instagram and Threads, with the token as a parameter.
 function graph(base, token, label) {
@@ -230,13 +258,73 @@ function bluesky(env = process.env) {
       const { feed } = await xrpc("app.bsky.feed.getAuthorFeed", { query: { actor: session.did, limit: "100", filter: "posts_no_replies" } });
       return (feed || []).map(({ post }) => ({ id: post.uri, text: JSON.stringify(post.record || {}), url: "https://bsky.app/profile/" + session.handle + "/post/" + post.uri.split("/").pop() }));
     },
-    async post({ text, image, alt, lang }) {
-      const { blob } = await xrpc("com.atproto.repo.uploadBlob", { body: fs.readFileSync(image), type: "image/jpeg" });
-      const record = { $type: "app.bsky.feed.post", text, createdAt: new Date().toISOString(), langs: [lang], embed: { $type: "app.bsky.embed.images", images: [{ alt, image: blob }] } };
+    /* Tries each plan of scripts/open-social-compose.js, richest first. A media upload that fails, or a record
+       Bluesky refuses as invalid (400), moves to the next plan; any other failure may have created the post, so it
+       is not retried as a plainer one. */
+    async post(args) {
+      const { text, image, alt, lang } = args;
+      const once = {};
+      const get = (name, make) => once[name] || (once[name] = make());
+      const imageBlob = async () => (await xrpc("com.atproto.repo.uploadBlob", { body: fs.readFileSync(image), type: "image/jpeg" })).blob;
+      // The video service processes the clip before the post goes out, and stores it on our PDS with a service token.
+      const video = async () => {
+        const bytes = await download(args.clip.url);
+        const pds = ((session.didDoc && session.didDoc.service) || []).find((s) => String(s.id).endsWith("#atproto_pds"));
+        const { token } = await xrpc("com.atproto.server.getServiceAuth", {
+          query: { aud: "did:web:" + new URL(pds ? pds.serviceEndpoint : service).host, lxm: "com.atproto.repo.uploadBlob", exp: String(Math.floor(Date.now() / 1000) + 1800) }
+        });
+        const res = await fetch(BSKY_VIDEO + "/xrpc/app.bsky.video.uploadVideo?" + new URLSearchParams({ did: session.did, name: args.key.replace(/\W+/g, "-") + ".mp4" }), {
+          method: "POST", headers: { Authorization: "Bearer " + token, "Content-Type": "video/mp4" }, body: bytes
+        });
+        const first = await res.json().catch(() => ({}));
+        let job = first.jobStatus || first;
+        for (let i = 0; !job.blob; i += 1) {
+          if (!job.jobId || job.state === "JOB_STATE_FAILED" || i === 90) throw new Error("Bluesky video " + (job.error || job.message || job.state || res.status));
+          await sleep(2000);
+          const status = await fetch(BSKY_VIDEO + "/xrpc/app.bsky.video.getJobStatus?jobId=" + encodeURIComponent(job.jobId)).then((r) => r.json()).catch(() => ({}));
+          job = Object.assign({ jobId: job.jobId }, status.jobStatus || { error: status.message || status.error });
+        }
+        const aspectRatio = compose.aspectOf(bytes);
+        return Object.assign({ video: job.blob }, aspectRatio ? { aspectRatio } : {});
+      };
+      const quoted = async () => {
+        const { posts } = await xrpc("app.bsky.feed.getPosts", { query: { uris: args.quote } });
+        const p = (posts || [])[0];
+        if (!p || !p.cid) throw new Error("Bluesky has no quiz post " + args.quote);
+        return { uri: p.uri, cid: p.cid };
+      };
+      const embeds = {
+        image: async () => ({ $type: "app.bsky.embed.images", images: [{ alt, image: await get("image", imageBlob) }] }),
+        video: async () => Object.assign({ $type: "app.bsky.embed.video", alt }, await get("video", video)),
+        card: async () => {
+          const lead = text.split("\n")[0];
+          const title = compose.titleIn(args.cap, lang) || lead;
+          return { $type: "app.bsky.embed.external", external: { uri: args.hub, title, description: lead === title ? "" : lead, thumb: await get("image", imageBlob) } };
+        }
+      };
       const links = facets(text);
-      if (links.length) record.facets = links;
-      const { uri } = await xrpc("com.atproto.repo.createRecord", { body: { repo: session.did, collection: "app.bsky.feed.post", record } });
-      return { id: uri, url: "https://bsky.app/profile/" + session.handle + "/post/" + uri.split("/").pop() };
+      let refused = null;
+      for (const plan of compose.bluesky(args)) {
+        const record = { $type: "app.bsky.feed.post", text, createdAt: new Date().toISOString(), langs: [lang] };
+        if (links.length) record.facets = links;
+        try {
+          const media = await embeds[plan.media]();
+          record.embed = plan.quote ? { $type: "app.bsky.embed.recordWithMedia", record: { $type: "app.bsky.embed.record", record: await get("quote", quoted) }, media } : media;
+        } catch (error) {
+          refused = error;
+          console.log("Bluesky could not add " + plan.uses.join(", ") + " - " + error.message);
+          continue;
+        }
+        try {
+          const { uri } = await xrpc("com.atproto.repo.createRecord", { body: { repo: session.did, collection: "app.bsky.feed.post", record } });
+          return { id: uri, url: "https://bsky.app/profile/" + session.handle + "/post/" + uri.split("/").pop(), uses: plan.uses };
+        } catch (error) {
+          if (error.status !== 400) throw error;
+          refused = error;
+          console.log("Bluesky refused " + plan.uses.join(", ") + " - " + error.message);
+        }
+      }
+      throw refused;
     },
     // putRecord replaces the whole profile record, so the name, bio and other fields are carried over from the current one.
     async profile({ avatar, banner }) {
@@ -275,18 +363,48 @@ function mastodon(env = process.env) {
       const list = await call("GET", "/api/v1/accounts/" + me.id + "/statuses?limit=40&exclude_replies=true&exclude_reblogs=true");
       return list.map((status) => ({ id: status.id, text: status.content || "", url: status.url }));
     },
-    // A large image is still processing when /api/v2/media answers; the status needs its url.
-    async post({ text, image, alt, lang, key }) {
-      const form = new FormData();
-      form.append("file", new Blob([fs.readFileSync(image)], { type: "image/jpeg" }), path.basename(image));
-      form.append("description", alt);
-      let media = await call("POST", "/api/v2/media", form);
-      for (let i = 0; !media.url && i < 15; i += 1) {
-        await new Promise((r) => setTimeout(r, 2000));
-        media = await call("GET", "/api/v1/media/" + media.id);
+    /* Tries each plan of scripts/open-social-compose.js, richest first. A failed upload, or a status Mastodon refuses
+       as invalid (422), moves to the next plan; any other failure is not retried as a plainer post. A large image or
+       a video is still processing when /api/v2/media answers; the status needs its url. */
+    async post(args) {
+      const { text, image, alt, lang, key } = args;
+      const uploads = {};
+      const card = () => new Blob([fs.readFileSync(image)], { type: "image/jpeg" });
+      const upload = (kind) => uploads[kind] || (uploads[kind] = (async () => {
+        const form = new FormData();
+        if (kind === "video") {
+          form.append("file", new Blob([await download(args.clip.url)], { type: "video/mp4" }), path.basename(new URL(args.clip.url).pathname));
+          form.append("thumbnail", card(), path.basename(image));
+        } else form.append("file", card(), path.basename(image));
+        form.append("description", alt);
+        let media = await call("POST", "/api/v2/media", form);
+        for (let i = 0; !media.url && i < (kind === "video" ? 60 : 15); i += 1) {
+          await sleep(kind === "video" ? 3000 : 2000);
+          media = await call("GET", "/api/v1/media/" + media.id);
+        }
+        if (kind === "video" && !media.url) throw new Error("Mastodon is still processing video " + media.id);
+        return media.id;
+      })());
+      let refused = null;
+      for (const plan of compose.mastodon(args)) {
+        let body;
+        try {
+          body = Object.assign({ visibility: "public", language: lang }, plan.status, plan.media ? { media_ids: [await upload(plan.media)] } : {});
+        } catch (error) {
+          refused = error;
+          console.log("Mastodon could not add " + plan.uses.join(", ") + " - " + error.message);
+          continue;
+        }
+        try {
+          const status = await call("POST", "/api/v1/statuses", body, { "Idempotency-Key": key });
+          return { id: status.id, url: status.url, uses: plan.uses };
+        } catch (error) {
+          if (error.status !== 422) throw error;
+          refused = error;
+          console.log("Mastodon refused " + plan.uses.join(", ") + " - " + error.message);
+        }
       }
-      const status = await call("POST", "/api/v1/statuses", { status: text, media_ids: [media.id], visibility: "public", language: lang }, { "Idempotency-Key": key });
-      return { id: status.id, url: status.url };
+      throw refused;
     },
     async profile({ avatar, banner }) {
       const form = new FormData();
@@ -364,13 +482,44 @@ function instagram(env = process.env, story = false) {
       const { data } = await call("GET", ig + "/media", { fields: "id,caption,permalink", limit: "100" });
       return (data || []).map((m) => ({ id: m.id, text: m.caption || "", url: m.permalink || "" }));
     },
-    async post({ text, url, alt }) {
+    /* The feed tries each plan of scripts/open-social-compose.js, richest first, until Instagram accepts a container;
+       as for Threads, a refused publish is not retried as a plainer post. */
+    async post(args) {
+      const { url } = args;
       await served(url);
-      const box = await call("POST", ig + "/media", story ? { image_url: url, media_type: "STORIES" } : { image_url: url, caption: text, alt_text: alt });
-      await ready(async (id) => (await call("GET", id, { fields: "status_code" })).status_code, box.id);
-      const { id } = await call("POST", ig + "/media_publish", { creation_id: box.id });
+      const container = async (params) => {
+        const box = await call("POST", ig + "/media", params);
+        const video = ["REELS", "VIDEO", "CAROUSEL"].includes(params.media_type);
+        await ready(async (id) => (await call("GET", id, { fields: "status_code" })).status_code, box.id, video ? 30 : 20, video ? 10000 : 3000);
+        return box.id;
+      };
+      let creation = "";
+      let uses = [];
+      if (story) creation = await container({ image_url: url, media_type: "STORIES" });
+      else {
+        const clip = args.clip && args.clip.lang === args.lang ? await served(args.clip.url).then(() => args.clip, () => null) : null;
+        let refused = null;
+        for (const plan of compose.instagram(Object.assign({}, args, { clip }))) {
+          try {
+            const params = Object.assign({}, plan.params);
+            if (plan.items) {
+              const children = [];
+              for (const item of plan.items) children.push(await container(item));
+              params.children = children.join(",");
+            }
+            creation = await container(params);
+            uses = plan.uses;
+            break;
+          } catch (error) {
+            refused = error;
+            console.log("Instagram refused " + plan.uses.join(", ") + " - " + error.message);
+          }
+        }
+        if (!creation) throw refused;
+      }
+      const { id } = await call("POST", ig + "/media_publish", { creation_id: creation });
       const { permalink } = await call("GET", id, { fields: "permalink" }).catch(() => ({}));
-      return { id, url: permalink || "" };
+      return Object.assign({ id, url: permalink || "" }, story ? {} : { uses });
     }
   };
 }
@@ -383,7 +532,9 @@ function telegram(env = process.env) {
   async function call(method, body) {
     const res = await fetch("https://api.telegram.org/bot" + env.TELEGRAM_BOT_TOKEN + "/" + method, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const json = await res.json().catch(() => ({}));
-    if (!res.ok || !json.ok) throw new Error("Telegram " + method + " " + res.status + ": " + String(json.description || "no answer").slice(0, 200));
+    if (!res.ok || !json.ok) {
+      throw Object.assign(new Error("Telegram " + method + " " + res.status + ": " + String(json.description || "no answer").slice(0, 200)), { status: json.error_code || res.status });
+    }
     return json.result;
   }
   return {
@@ -394,10 +545,22 @@ function telegram(env = process.env) {
       return "Telegram @" + (user || String(chat).replace(/^@/, ""));
     },
     async recent() { return []; },
-    async post({ text, url }) {
-      await served(url);
-      const m = await call("sendPhoto", { chat_id: chat, photo: url, caption: text });
-      return { id: String(m.message_id), url: user ? "https://t.me/" + user + "/" + m.message_id : "" };
+    /* Tries each plan of scripts/open-social-compose.js, richest first. A request Telegram refuses as bad (400: a
+       parameter, or a clip it cannot fetch) moves to the next plan; any other failure is not retried as a plainer post. */
+    async post(args) {
+      await served(args.url);
+      let refused = null;
+      for (const plan of compose.telegram(args)) {
+        try {
+          const m = await call(plan.method, Object.assign({ chat_id: chat }, plan.body));
+          return { id: String(m.message_id), url: user ? "https://t.me/" + user + "/" + m.message_id : "", uses: plan.uses };
+        } catch (error) {
+          if (error.status !== 400) throw error;
+          refused = error;
+          console.log("Telegram refused " + plan.uses.join(", ") + " - " + error.message);
+        }
+      }
+      throw refused;
     }
   };
 }
@@ -442,7 +605,7 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
       const f = faceFor(post);
       const text = caption(post, network, f);
       const lang = faceRoute.captionLang(post.cap, key, f);
-      const uses = network === "threads" ? threadsCompose.plans(Object.assign({ text, url: post.url, alt: "", lang }, threadsExtras(post, f, book)))[0].uses.join("+") : "";
+      const uses = PLANS[network] ? PLANS[network](Object.assign({ text, url: post.url, alt: "", lang }, extras(network, post, f, book)))[0].uses.join("+") : "";
       console.log("dry-run", "@" + FACES[f].handle, lang, network, post.batch + "/" + post.slug, new Date(post.at).toISOString(), hub.why ? "HELD: " + hub.why : "hub ok", [...text].length + " chars", uses, text.split("\n").pop());
     }
     return counts;
@@ -471,7 +634,7 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
     }
     try {
       const f = faceFor(post);
-      const more = network === "threads" ? threadsExtras(post, f, book) : {};
+      const more = extras(network, post, f, book);
       const r = await client.post(Object.assign({ text: caption(post, network, f), image: post.image, url: post.url, alt: post.cap.alt || post.cap.title || "", lang: faceRoute.captionLang(post.cap, key, f), key: name }, more));
       counts.posted += 1;
       console.log("posted", network, name, r.url, r.uses ? "(" + r.uses.join(", ") + ")" : "");
