@@ -163,6 +163,24 @@ Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Le schede informative dell’OMS finiscono con un punto e virgola di troppo.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-it.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who-it</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Worldwide</category>
+      <description>L’OMS accoglie i crawler di risposta AI e le sue pagine si leggono bene senza JavaScript: GEO 91. Ma il JSON-LD delle sue schede informative finisce con &quot;};&quot;, e un parser rigoroso scarta l’intero blocco.
+
+La lezione per ogni team: Passa ogni blocco JSON-LD in un validatore JSON prima della release. Un solo carattere può invalidare l’intero blocco.
+
+Un’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.
+Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>zizonline.com: 70. La lacuna: HSTS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-26/10-u-zizonline-com-it.html</link>
       <guid isPermaLink="false">auto-2026-10-26/10-u-zizonline-com-it</guid>
@@ -328,6 +346,23 @@ https://www.youtube.com/shorts/v2IyjNhD8q8</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Siti reali. Punteggi reali.</title>
+      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/26-real-reviews-it.html</link>
+      <guid isPermaLink="false">promo-social-hub-2026-10/26-real-reviews-it</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Prodotto</category>
+      <category>Social</category>
+      <description>Ogni giorno, revisioni pubbliche di siti reali diventano post con i loro punteggi e la correzione che conta di più. Abbiamo revisionato anche il nostro sito.
+
+Prova: Apri una revisione di un sito nell'hub e leggi il report completo.
+
+Tutti i post, in un unico posto: https://carlosandmunoz.com/qa-review-social-it.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=real-reviews-it
+
+#QA #Vulnerability #SoftwareTesting #SEO #WebSecurity #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/26-real-reviews-it.jpg" length="218125" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/26-real-reviews-it.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Abbiamo analizzato GOV.UK. Il punteggio è 92.</title>
       <link>https://carlosandmunoz.com/social/runs-2026-10/01-govuk-it.html</link>
       <guid isPermaLink="false">runs-2026-10/01-govuk-it</guid>
@@ -362,23 +397,6 @@ Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-
 #Accessibility #Zoom #GovTech #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" length="242376" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Metti via il mouse. Riesci a raggiungere tutto?</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-it.html</link>
-      <guid isPermaLink="false">tips-2026-10/10-keyboard-it</guid>
-      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consiglio</category>
-      <category>A11y</category>
-      <description>Menu, dialog e banner dei cookie sono i punti in cui chi usa la tastiera resta bloccato. Tab, Shift+Tab, Invio ed Esc dovrebbero bastare.
-
-Provalo oggi: Fai l’azione principale sul tuo sito usando solo la tastiera. Annota ogni punto in cui ti sei bloccato.
-
-Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=keyboard
-
-#Accessibility #a11y #UX #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" length="236132" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>Una pagina, un canonical.</title>
@@ -578,6 +596,23 @@ Come funziona la review di una pagina pubblica, passo dopo passo: https://carlos
 #Analytics #GA4 #CRO #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" length="210202" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>La ricerca AI legge il tuo HTML, non la tua app.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-it.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first-it</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Consiglio</category>
+      <category>GEO</category>
+      <description>Molti motori di risposta non eseguono JavaScript. Se le tue informazioni chiave compaiono solo dopo il caricamento degli script, potrebbero non essere mai lette né citate.
+
+Provalo oggi: Guarda il sorgente della tua home. Si capisce cosa vendi e per chi, senza eseguire script?
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>movichhotels.com: 68. Il divario: misurazione.</title>
@@ -861,6 +896,23 @@ Come funziona la review di una pagina pubblica, passo dopo passo: https://carlos
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Scrivi l’elenco dei test prima del codice dei test.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-it.html</link>
+      <guid isPermaLink="false">tips-2026-10/16-list-first-it</guid>
+      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Consiglio</category>
+      <category>QA</category>
+      <description>Scegliere un framework è la seconda domanda. La prima è cosa fa questa pagina e cosa ci proverebbe una persona reale.
+
+Provalo oggi: Prima del prossimo sprint di automazione, scrivi dieci casi in linguaggio semplice. Poi scegli lo strumento.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
+
+#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>davibank.com: 58. La lacuna: TLS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/11-u-davibank-com-it.html</link>
       <guid isPermaLink="false">auto-2026-10-22/11-u-davibank-com-it</guid>
@@ -915,65 +967,6 @@ Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
 #SEO #SoftwareTesting #DevOps #QA #WebPerf #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/07-vs-kemik-gt.jpg" length="224227" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/07-vs-kemik-gt.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>montessori.edu.co: 67. La lacuna: il testo alt.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-26/06-u-montessori-edu-co-it.html</link>
-      <guid isPermaLink="false">auto-2026-10-26/06-u-montessori-edu-co-it</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Requested</category>
-      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma 177 immagini non hanno l’attributo alt.
-
-La lezione per ogni team: Descrivi nell’attributo alt cosa mostra ogni immagine e usa alt=&quot;&quot; su quelle solo decorative.
-
-Un’analisi automatica di pagine pubbliche: 25 ott. 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
-Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-montessori-edu-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-montessori-edu-co
-
-Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #WebAssembly #OpenSource #QA #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/06-u-montessori-edu-co.jpg" length="236398" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/06-u-montessori-edu-co.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>ag.org: 60. La lacuna: i nomi dei link.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-27/05-u-ag-org-it.html</link>
-      <guid isPermaLink="false">auto-2026-10-27/05-u-ag-org-it</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Requested</category>
-      <description>Ogni collegamento esterno che è stato controllato ha risposto e la risposta dell'IA e i crawler di ricerca possono leggere la pagina iniziale. Ma i link devono avere un testo riconoscibile.
-
-La lezione per ogni team: Dai a ogni link un testo che dica dove porta. Un’icona da sola ha bisogno di un aria-label.
-
-Un’analisi automatica di pagine pubbliche: 26 ott. 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
-Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-ag-org&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ag-org
-
-Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #TypeScript #CSS #QA #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/05-u-ag-org.jpg" length="228741" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/05-u-ag-org.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>GOV.UK 92, USA.gov 88. Entrambi ottengono 100 nell'accessibilità.</title>
-      <link>https://carlosandmunoz.com/social/compare-2026-11/07-govuk-usagov-it.html</link>
-      <guid isPermaLink="false">compare-2026-11/07-govuk-usagov-it</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Confronto</category>
-      <category>National</category>
-      <description>GOV.UK è avanti nella sicurezza, 94 a 77, e negli analytics, 97 a 85. USA.gov risponde con la velocità, 94 a 89, e il GEO, 91 a 86.
-
-Lezione: Entrambi costruiscono le pagine con un design system pubblico. Riutilizza componenti testati invece di rifarli su ogni pagina.
-
-Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=govuk-usagov
-
-#WebQuality #SoftwareTesting #DevOps #QA #GovTech #QAlab
-
-https://www.youtube.com/shorts/Plp1Uxk_P1w</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/07-govuk-usagov.jpg" length="247979" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/07-govuk-usagov.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

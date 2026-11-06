@@ -145,23 +145,6 @@ So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https:/
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/02-myth-lighthouse.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Sechs Sprachen. Wählen Sie Ihre.</title>
-      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/16-six-languages-de.html</link>
-      <guid isPermaLink="false">promo-social-hub-2026-10/16-six-languages-de</guid>
-      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Produkt</category>
-      <category>Social</category>
-      <description>Der Hub hat eine Seite auf Englisch, Spanisch, Portugiesisch, Deutsch, Französisch und Italienisch. Filtern Sie den Feed nach der Sprache eines Beitrags.
-
-Probieren Sie es aus: Wechseln Sie die Sprache der Seite mit den Flaggen oben.
-
-Alle Beiträge an einem Ort: https://carlosandmunoz.com/qa-review-social-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=six-languages-de
-
-#Localization #SoftwareTesting #OpenSource #QA #SEO #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/16-six-languages-de.jpg" length="213236" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/16-six-languages-de.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>Rathaus Bogotá: SEO 97.</title>
       <link>https://carlosandmunoz.com/social/runs-2026-10/02-bogota-de.html</link>
       <guid isPermaLink="false">runs-2026-10/02-bogota-de</guid>
@@ -178,6 +161,24 @@ So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/q
 #Analytics #GA4 #SEO #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" length="229468" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Die Faktenblätter der WHO enden mit einem verirrten Semikolon.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-de.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who-de</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Worldwide</category>
+      <description>Die WHO heißt KI-Antwort-Crawler willkommen, und ihre Seiten lesen sich ohne JavaScript gut: GEO 91. Doch das JSON-LD auf den Faktenblättern endet mit „};“, und ein strikter Parser verwirft den ganzen Block.
+
+Die Lektion für jedes Team: Prüfen Sie jeden JSON-LD-Block vor dem Release mit einem JSON-Validator. Ein Zeichen kann den ganzen Block ungültig machen.
+
+Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
+So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>zizonline.com: 70. Die Lücke: HSTS.</title>
@@ -398,23 +399,6 @@ So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/q
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Legen Sie die Maus weg. Erreichen Sie alles?</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-de.html</link>
-      <guid isPermaLink="false">tips-2026-10/10-keyboard-de</guid>
-      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tipp</category>
-      <category>A11y</category>
-      <description>In Menüs, Dialogen und Cookie-Bannern bleiben Tastaturnutzer hängen. Tab, Shift+Tab, Enter und Escape sollten genügen.
-
-Probieren Sie es heute: Erledigen Sie Ihre Hauptaufgabe auf der eigenen Website nur mit der Tastatur. Notieren Sie jede Stelle, an der Sie hängen geblieben sind.
-
-So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=keyboard
-
-#Accessibility #a11y #UX #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" length="236132" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>Eine Seite, ein Canonical.</title>
       <link>https://carlosandmunoz.com/social/tips-2026-10/21-canonical-de.html</link>
       <guid isPermaLink="false">tips-2026-10/21-canonical-de</guid>
@@ -612,6 +596,23 @@ So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https:/
 #Analytics #GA4 #CRO #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" length="210202" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>KI-Suche liest Ihr HTML, nicht Ihre App.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first-de</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>GEO</category>
+      <description>Viele Answer Engines führen kein JavaScript aus. Erscheinen Ihre wichtigsten Fakten erst nach dem Laden der Skripte, werden sie womöglich nie gelesen oder zitiert.
+
+Probieren Sie es heute: Sehen Sie sich den Quelltext Ihrer Startseite an. Findet man ohne Skripte, was Sie verkaufen und für wen?
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>movichhotels.com: 68. Die Lücke: Messung.</title>
@@ -895,6 +896,23 @@ So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https:/
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Schreiben Sie die Testliste vor dem Testcode.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/16-list-first-de</guid>
+      <pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>QA</category>
+      <description>Die Wahl eines Frameworks ist die zweite Frage. Die erste ist, was diese Seite tut und was ein echter Mensch darauf ausprobieren würde.
+
+Probieren Sie es heute: Schreiben Sie vor Ihrem nächsten Automatisierungssprint zehn Fälle in Klartext. Dann wählen Sie das Tool.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
+
+#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>davibank.com: 58. Die Lücke: TLS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/11-u-davibank-com-de.html</link>
       <guid isPermaLink="false">auto-2026-10-22/11-u-davibank-com-de</guid>
@@ -949,26 +967,6 @@ Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
 #SEO #SoftwareTesting #DevOps #QA #WebPerf #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/07-vs-kemik-gt.jpg" length="224227" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-25/feed/07-vs-kemik-gt.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>montessori.edu.co: 67. Die Lücke: alt-Text.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-26/06-u-montessori-edu-co-de.html</link>
-      <guid isPermaLink="false">auto-2026-10-26/06-u-montessori-edu-co-de</guid>
-      <pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 177 Bilder haben kein alt-Attribut.
-
-Die Lektion für jedes Team: Beschreiben Sie im alt-Attribut, was jedes Bild zeigt, und nutzen Sie alt=&quot;&quot; bei rein dekorativen.
-
-Eine automatisierte Analyse öffentlicher Seiten am 25. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-montessori-edu-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-montessori-edu-co
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #WebAssembly #OpenSource #QA #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/06-u-montessori-edu-co.jpg" length="236398" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/06-u-montessori-edu-co.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
