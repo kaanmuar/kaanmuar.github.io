@@ -163,6 +163,24 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Las notas descriptivas de la OMS acaban en un punto y coma suelto.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-es.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who-es</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Worldwide</category>
+      <description>La OMS da la bienvenida a los rastreadores de respuestas de IA y sus páginas se leen bien sin JavaScript: GEO 91. Pero el JSON-LD de sus fichas termina en &quot;};&quot;, y un parser estricto descarta el bloque entero.
+
+La lección para cualquier equipo: Pasa cada bloque JSON-LD por un validador JSON antes del lanzamiento. Un carácter puede invalidar el bloque entero.
+
+Un análisis automatizado de páginas públicas el 19 oct. 2026. Un punto de partida, no un veredicto.
+Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>zizonline.com: 70. El punto débil: HSTS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-26/10-u-zizonline-com-es.html</link>
       <guid isPermaLink="false">auto-2026-10-26/10-u-zizonline-com-es</guid>
@@ -533,23 +551,6 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
 #Accessibility #Zoom #GovTech #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" length="242376" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Aparta el ratón. ¿Puedes llegar a todo?</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-es.html</link>
-      <guid isPermaLink="false">tips-2026-10/10-keyboard-es</guid>
-      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consejo</category>
-      <category>A11y</category>
-      <description>Menús, diálogos y banners de cookies son donde se atasca quien navega con teclado. Tab, Shift+Tab, Enter y Escape deberían bastar.
-
-Prueba esto hoy: Haz la tarea principal de tu sitio solo con el teclado. Apunta cada punto donde te atascaste.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=keyboard
-
-#Accessibility #a11y #UX #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" length="236132" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>Una página, un canonical.</title>

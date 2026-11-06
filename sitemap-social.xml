@@ -235,11 +235,6 @@
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/02-myth-lighthouse.jpg</image:loc></image:image>
   </url>
   <url>
-    <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/16-six-languages-de.html</loc>
-    <lastmod>2026-11-06</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/16-six-languages-de.jpg</image:loc></image:image>
-  </url>
-  <url>
     <loc>https://carlosandmunoz.com/social/runs-2026-10/02-bogota.html</loc>
     <lastmod>2026-11-06</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg</image:loc></image:image>
@@ -268,6 +263,36 @@
     <loc>https://carlosandmunoz.com/social/runs-2026-10/02-bogota-pt.html</loc>
     <lastmod>2026-11-06</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/runs-2026-10/03-who.html</loc>
+    <lastmod>2026-11-06</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/runs-2026-10/03-who-de.html</loc>
+    <lastmod>2026-11-06</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/runs-2026-10/03-who-es.html</loc>
+    <lastmod>2026-11-06</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/runs-2026-10/03-who-fr.html</loc>
+    <lastmod>2026-11-06</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/runs-2026-10/03-who-it.html</loc>
+    <lastmod>2026-11-06</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/runs-2026-10/03-who-pt.html</loc>
+    <lastmod>2026-11-06</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/skits-friday-release/03-friday-release-pt.html</loc>
@@ -991,22 +1016,9 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F10%2Fvideo-faqs-ai-search-geo-seo-framework.webp</image:loc></image:image>
   </url>
   <url>
-    <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/11-clips-pt.html</loc>
+    <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/26-real-reviews-it.html</loc>
     <lastmod>2026-11-05</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/11-clips-pt.jpg</image:loc></image:image>
-    <video:video>
-      <video:thumbnail_loc>https://i.ytimg.com/vi/IPSo4-Us2zQ/hqdefault.jpg</video:thumbnail_loc>
-      <video:title>Clipes curtos, no seu idioma.</video:title>
-      <video:description>Os clipes narrados tocam na própria página, sem aplicativo. Cada um fala em inglês, espanhol, português, alemão, francês ou italiano.
-
-Experimente: Toque em reproduzir em qualquer cartão com vídeo.
-
-Todas as publicações, em um só lugar: https://carlosandmunoz.com/qa-review-social-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=clips-pt
-
-#ShortVideo #SoftwareTesting #OpenSource #QA #WebDev #QAlab</video:description>
-      <video:player_loc>https://www.youtube.com/embed/IPSo4-Us2zQ</video:player_loc>
-      <video:publication_date>2026-11-05</video:publication_date>
-    </video:video>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/26-real-reviews-it.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/27-real-reviews-en.html</loc>
@@ -1087,36 +1099,6 @@ Todas as publicações, em um só lugar: https://carlosandmunoz.com/qa-review-so
     <loc>https://carlosandmunoz.com/social/runs-3/03-valle-pt.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard.html</loc>
-    <lastmod>2026-11-05</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-de.html</loc>
-    <lastmod>2026-11-05</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-es.html</loc>
-    <lastmod>2026-11-05</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-fr.html</loc>
-    <lastmod>2026-11-05</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-it.html</loc>
-    <lastmod>2026-11-05</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-pt.html</loc>
-    <lastmod>2026-11-05</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/tips-2026-10/21-canonical.html</loc>
@@ -1996,6 +1978,36 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/20-html-first.html</loc>
+    <lastmod>2026-11-04</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-de.html</loc>
+    <lastmod>2026-11-04</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-es.html</loc>
+    <lastmod>2026-11-04</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-fr.html</loc>
+    <lastmod>2026-11-04</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-it.html</loc>
+    <lastmod>2026-11-04</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-pt.html</loc>
+    <lastmod>2026-11-04</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-26/08-u-movichhotels-com.html</loc>
     <lastmod>2026-11-03</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/08-u-movichhotels-com.jpg</image:loc></image:image>
@@ -2398,6 +2410,11 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <loc>https://carlosandmunoz.com/social/pick/what-a-killed-playwright-script-leaves-behind-on-linux-proce-es.html</loc>
     <lastmod>2026-11-03</lastmod>
     <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fdahdt5zcl15qhw9bhayl.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/21-follow-fr.html</loc>
+    <lastmod>2026-11-03</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/21-follow-fr.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/22-follow-en.html</loc>
@@ -3029,6 +3046,36 @@ Todos os Live Reports de outubro: https://carlosandmunoz.com/qa-review.html?utm_
     <loc>https://carlosandmunoz.com/social/tips-2026-10/15-csp-report-only-pt.html</loc>
     <lastmod>2026-11-02</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/16-list-first.html</loc>
+    <lastmod>2026-11-02</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-de.html</loc>
+    <lastmod>2026-11-02</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-es.html</loc>
+    <lastmod>2026-11-02</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-fr.html</loc>
+    <lastmod>2026-11-02</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-it.html</loc>
+    <lastmod>2026-11-02</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-pt.html</loc>
+    <lastmod>2026-11-02</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/11-u-davibank-com.html</loc>
@@ -4009,6 +4056,11 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <image:image><image:loc>https://opengraph.githubassets.com/1/zhtyyx/codex-seo</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/16-six-languages-de.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/16-six-languages-de.jpg</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/17-six-languages-es.html</loc>
     <lastmod>2026-11-01</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/17-six-languages-es.jpg</image:loc></image:image>
@@ -4137,36 +4189,6 @@ Todos os Live Reports de outubro: https://carlosandmunoz.com/qa-review.html?utm_
     </video:video>
   </url>
   <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-de.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-es.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-fr.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-it.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-pt.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
-  </url>
-  <url>
     <loc>https://carlosandmunoz.com/social/tips-2026-10/13-consent-before.html</loc>
     <lastmod>2026-11-01</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg</image:loc></image:image>
@@ -4195,6 +4217,36 @@ Todos os Live Reports de outubro: https://carlosandmunoz.com/qa-review.html?utm_
     <loc>https://carlosandmunoz.com/social/tips-2026-10/13-consent-before-pt.html</loc>
     <lastmod>2026-11-01</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/14-share-card.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-de.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-es.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-fr.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-it.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-pt.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/09-u-lenovo-com.html</loc>
@@ -4455,36 +4507,6 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     </video:video>
   </url>
   <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast.html</loc>
-    <lastmod>2026-10-31</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-de.html</loc>
-    <lastmod>2026-10-31</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-es.html</loc>
-    <lastmod>2026-10-31</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-fr.html</loc>
-    <lastmod>2026-10-31</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-it.html</loc>
-    <lastmod>2026-10-31</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-pt.html</loc>
-    <lastmod>2026-10-31</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
-  </url>
-  <url>
     <loc>https://carlosandmunoz.com/social/tips-2026-10/11-hsts.html</loc>
     <lastmod>2026-10-31</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg</image:loc></image:image>
@@ -4513,6 +4535,36 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <loc>https://carlosandmunoz.com/social/tips-2026-10/11-hsts-pt.html</loc>
     <lastmod>2026-10-31</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1.html</loc>
+    <lastmod>2026-10-31</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-de.html</loc>
+    <lastmod>2026-10-31</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-es.html</loc>
+    <lastmod>2026-10-31</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-fr.html</loc>
+    <lastmod>2026-10-31</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-it.html</loc>
+    <lastmod>2026-10-31</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-pt.html</loc>
+    <lastmod>2026-10-31</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/tips-horror-headers-2026-10/05-poltergeist-cls.html</loc>
@@ -5055,6 +5107,24 @@ Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=lin
     </video:video>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/11-clips-pt.html</loc>
+    <lastmod>2026-10-30</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/11-clips-pt.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/IPSo4-Us2zQ/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Clipes curtos, no seu idioma.</video:title>
+      <video:description>Os clipes narrados tocam na própria página, sem aplicativo. Cada um fala em inglês, espanhol, português, alemão, francês ou italiano.
+
+Experimente: Toque em reproduzir em qualquer cartão com vídeo.
+
+Todas as publicações, em um só lugar: https://carlosandmunoz.com/qa-review-social-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=clips-pt
+
+#ShortVideo #SoftwareTesting #OpenSource #QA #WebDev #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/IPSo4-Us2zQ</video:player_loc>
+      <video:publication_date>2026-10-30</video:publication_date>
+    </video:video>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/12-clips-en.html</loc>
     <lastmod>2026-10-30</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/12-clips-en.jpg</image:loc></image:image>
@@ -5103,6 +5173,36 @@ Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=lin
     <loc>https://carlosandmunoz.com/social/tips-2026-10/09-llms-txt-pt.html</loc>
     <lastmod>2026-10-30</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/09-llms-txt.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard.html</loc>
+    <lastmod>2026-10-30</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-de.html</loc>
+    <lastmod>2026-10-30</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-es.html</loc>
+    <lastmod>2026-10-30</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-fr.html</loc>
+    <lastmod>2026-10-30</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-it.html</loc>
+    <lastmod>2026-10-30</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-pt.html</loc>
+    <lastmod>2026-10-30</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/tips-horror-headers-2026-10/04-cursed-alt.html</loc>
@@ -6417,6 +6517,66 @@ Todas las publicaciones, en un solo lugar: https://carlosandmunoz.com/qa-review-
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/10-copy-caption-it.html</loc>
     <lastmod>2026-10-28</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/10-copy-caption-it.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-de.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-es.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-fr.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-it.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-pt.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-de.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-es.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-fr.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-it.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-pt.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/tips-horror-headers-2026-10/02-zombie-redirects.html</loc>
