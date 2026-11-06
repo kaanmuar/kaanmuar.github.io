@@ -39,7 +39,7 @@
 const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
-const { createGate, withHubLink } = require("./hub-gate");
+const { createGate, withHubLink, LIMITS, LINK } = require("./hub-gate");
 const faceRoute = require("./face-route");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -372,7 +372,7 @@ async function requeue(posts, channel, dry) {
     const input = Object.assign(made.input, { mode: "customScheduled", dueAt: t.entry.at });
     const hub = await gate(t.batch, t.slug, cap, input.dueAt);
     if (hub.why) { fail("Hub first: " + hub.why); continue; }
-    const asset = input.assets[0] && (input.assets[0].video || input.assets[0].image);
+    const asset = input.assets[0] && (input.assets[0].video || input.assets[0].image || input.assets[0].document);
     const live = asset && (await fetch(asset.url, { method: "HEAD" }).catch(() => null));
     if (!live || !live.ok) { fail("asset not served: " + (asset ? asset.url : "none")); continue; }
     if (dry) { console.log("would requeue", t.post, t.entry.id, "at", input.dueAt, "…", String(input.text || "").split("\n")[0].slice(0, 100)); continue; }
@@ -509,9 +509,46 @@ function readCalendar(dir) {
   return when;
 }
 
+const [X_MAX, X_LINK] = LIMITS.x;
+const xSize = (text) => [...String(text).replace(LINK, "x".repeat(X_LINK))].length;
+const xFit = (text, tail = "") => {
+  if (xSize(text + tail) <= X_MAX) return text + tail;
+  const parts = text.split(/(\s+)/);
+  let kept = "";
+  for (let i = 0; i < parts.length; i += 2) {
+    const next = kept + (i ? parts[i - 1] : "") + parts[i];
+    if (xSize(next + "…" + tail) > X_MAX) break;
+    kept = next;
+  }
+  return kept + "…" + tail;
+};
+
+// A digest pick in its LinkedIn caption (scripts/tips-studio/weekly-digest.js): number and title, summary, credit: link.
+const PICK = /^(\d+)\. (.+)\n(.+)\n[^\n]*?: (https?:\/\/\S+)$/gm;
+
+/* The replies under an X post (#2708): one per digest pick with its source, or the evergreen steps the post's own
+   text leaves out, packed into as few replies as fit. Steps are English only, so a translated post has none.
+   Buffer has no X polls, so a compare quiz stays a single post. */
+function xReplies(cap, text, english, linkedin) {
+  if (cap.kind === "news") return [...String(linkedin || "").matchAll(PICK)].map(([, n, title, summary, url]) => xFit(n + ". " + title + "\n\n" + summary, "\n\n" + url));
+  const steps = Array.isArray(cap.steps) && english ? cap.steps : [];
+  const out = [];
+  steps.forEach((step, i) => {
+    if (text.includes(step)) return;
+    const line = xFit(steps.length > 1 ? i + 1 + ". " + step : step);
+    if (out.length && xSize(out[out.length - 1] + "\n" + line) <= X_MAX) out[out.length - 1] += "\n" + line;
+    else out.push(line);
+  });
+  return out;
+}
+
+// YouTube has no playlists through Buffer, so a track shows in its category: evergreen lessons, skits, the rest.
+const YOUTUBE_CATEGORY = { trick: "27", myth: "27", term: "27", advice: "27", skit: "23" };
+
 // One channel, one slug: the post inputs, each with its calendar slot (none when this network takes nothing
 // from the batch). Each post keeps its calendar slot; the queues already hold months of imported posts, so
-// addToQueue would land it behind them. A slot already past goes out in 20 minutes.
+// addToQueue would land it behind them. A slot already past goes out in 20 minutes. Threads is posted by
+// scripts/open-social-queue.js, so a Buffer Threads channel takes nothing (#2720).
 function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
   const image = (dir) => ({ image: { url: base + "/" + dir + "/" + slug + ".jpg", metadata: { altText: cap.alt } } });
   const video = () => ({ video: { url: clipBase + "/" + slug + ".mp4", metadata: { thumbnailOffset: 0 } } });
@@ -523,16 +560,24 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
     return { slot, input: Object.assign({ channelId: channel.id, schedulingType: "automatic", text, assets },
       at ? { mode: "customScheduled", dueAt: at > soon ? at : soon } : { mode: "addToQueue" }, metadata ? { metadata } : {}) };
   };
+  // A LinkedIn document (PDF carousel) once the batch renders one; the feed card is its thumbnail.
+  const document = () => batch && fs.existsSync(path.join(ROOT, "media/social-posts", batch, "document", slug + ".pdf"))
+    && { document: { url: base + "/document/" + slug + ".pdf", title: own("title"), thumbnailUrl: base + "/feed/" + slug + ".jpg" } };
   switch (channel.service) {
-    case "linkedin": return [post("linkedin", linked(own("linkedin")), [image("feed")])];
+    case "linkedin": return [post("linkedin", linked(own("linkedin")), [document() || image("feed")])];
     case "facebook": return [post("facebook", linked(own("facebook")), [image("feed")], { facebook: { type: "post" } })];
     case "instagram": return [
       post("instagram", linked(own("instagram")), [image("feed")], { instagram: { type: "post", shouldShareToFeed: true } }),
       post("instagram-story", own("title"), [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
     ];
-    case "twitter": case "threads": return [post("x", linked(own("x")), [image("feed")])];
+    case "twitter": {
+      const text = linked(own("x"));
+      const replies = xReplies(cap, text, own("x") === cap.x, own("linkedin"));
+      const thread = [{ text, assets: [image("feed")] }].concat(replies.map((reply) => ({ text: reply, assets: [] })));
+      return [post("x", text, [image("feed")], replies.length ? { twitter: { thread } } : null)];
+    }
     case "tiktok": return clipBase ? [post("tiktok", linked(cap.tiktok), [video()])] : [];
-    case "youtube": return clipBase ? [post("youtube", linked(cap.youtube), [video()], { youtube: { title: cap.youtubeTitle, categoryId: "28" } })] : [];
+    case "youtube": return clipBase ? [post("youtube", linked(cap.youtube), [video()], { youtube: { title: cap.youtubeTitle, categoryId: YOUTUBE_CATEGORY[cap.kind] || "28" } })] : [];
     default: return [];
   }
 }
@@ -609,7 +654,8 @@ async function main() {
     }
   }
   all.filter((c) => !c.face).forEach((c) => console.log("::warning::Buffer channel " + c.service + " (" + c.name + ") names no face in scripts/brand-kit/faces.js, so it takes nothing"));
-  const list = all.filter((c) => c.face && !c.isQueuePaused);
+  all.filter((c) => c.service === "threads").forEach((c) => console.log("skip Buffer channel threads (" + c.name + "): scripts/open-social-queue.js posts Threads"));
+  const list = all.filter((c) => c.face && !c.isQueuePaused && c.service !== "threads");
   const gate = createGate();
   let failed = 0;
   let queued = 0;
@@ -623,7 +669,8 @@ async function main() {
         const label = slug + " → " + profile;
         if (onNetwork(book, batch + "/" + slug, slot)) { already += 1; continue; }
         const hub = await gate(batch, slug, captions[slug], input.dueAt || new Date().toISOString());
-        if (opts["dry-run"]) { console.log("dry-run", label, hub.why ? "HELD: " + hub.why : "hub ok", JSON.stringify(input).slice(0, 160), "…", String(input.text || "").split("\n").pop()); continue; }
+        const thread = input.metadata && input.metadata.twitter ? " (thread of " + input.metadata.twitter.thread.length + ")" : "";
+        if (opts["dry-run"]) { console.log("dry-run", label + thread, hub.why ? "HELD: " + hub.why : "hub ok", JSON.stringify(input).slice(0, 160), "…", String(input.text || "").split("\n").pop()); continue; }
         const entry = { channel: slot, profile, at: input.dueAt, checked: new Date().toISOString() };
         if (hub.why) {
           failed += 1;
