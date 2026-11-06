@@ -163,24 +163,6 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>WHO's fact sheets end in a stray semicolon.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who.html</link>
-      <guid isPermaLink="false">runs-2026-10/03-who</guid>
-      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>WHO welcomes AI answer crawlers and its pages read well without JavaScript: GEO 91. But the JSON-LD on its fact sheets ends in &quot;};&quot;, and a strict parser drops the whole block.
-
-The lesson for every team: Run every JSON-LD block through a JSON validator before release. One character can void the entire block.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
-
-#StructuredData #SEO #GEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>zizonline.com: 70. The gap: HSTS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-26/10-u-zizonline-com.html</link>
       <guid isPermaLink="false">auto-2026-10-26/10-u-zizonline-com</guid>
@@ -276,7 +258,9 @@ The full report: https://carlosandmunoz.com/qa-review.html?live=u-selia-co&amp;u
 
 Review your own site: https://carlosandmunoz.com/qa-review.html
 
-#Accessibility #DevOps #WebDev #QA #A11y #QAlab</description>
+#Accessibility #DevOps #WebDev #QA #A11y #QAlab
+
+https://www.youtube.com/shorts/pLoZQ6bgTEo</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg" length="226670" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -296,7 +280,9 @@ The full report: https://carlosandmunoz.com/qa-review.html?live=u-treinta-co&amp
 
 Review your own site: https://carlosandmunoz.com/qa-review.html
 
-#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab</description>
+#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab
+
+https://www.youtube.com/shorts/jqdrXTUKLwc</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/02-u-treinta-co.jpg" length="229298" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/02-u-treinta-co.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -316,7 +302,9 @@ The full report: https://carlosandmunoz.com/qa-review.html?live=u-itsrever-com&a
 
 Review your own site: https://carlosandmunoz.com/qa-review.html
 
-#Accessibility #SoftwareTesting #Automation #QA #ARIA #QAlab</description>
+#Accessibility #SoftwareTesting #Automation #QA #ARIA #QAlab
+
+https://www.youtube.com/shorts/9-WQCp_Mf-0</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/08-u-itsrever-com.jpg" length="232974" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/08-u-itsrever-com.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -333,9 +321,165 @@ Lesson: Medellín's portal sends no HSTS, CSP, Referrer-Policy or Permissions-Po
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=cities
 
-#WebQuality #Vulnerability #Phishing #QA #GovTech #QAlab</description>
+#WebQuality #Vulnerability #Phishing #QA #GovTech #QAlab
+
+https://www.youtube.com/shorts/v2IyjNhD8q8</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg" length="252004" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>AI Visibility vs. Search Rankings: Is Your Agency Measuring the Wrong Thing For 2027?</title>
+      <link>https://carlosandmunoz.com/social/pick/ai-visibility-vs-search-rankings-is-your-agency-measuring-th.html</link>
+      <guid isPermaLink="false">pick/ai-visibility-vs-search-rankings-is-your-agency-measuring-th</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Measure AI visibility beyond rankings and citations. Use inclusion, framing, and endorsement to show clients what changed and what to do next. The post AI Visibility vs. Search Rankings: Is Your Agency Measuring the Wrong Thing For 2027? appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Bartek Jazwinski, 2026-11-05.
+
+https://www.searchenginejournal.com/ai-visibility-vs-search-rankings-is-your-agency-measuring-the-wrong-thing-for-2027-spa/594163/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/webpros-partner-stories-featured-1600x832-443.png" medium="image"/>
+    </item>
+    <item>
+      <title>GEO Is Emerging as a Memory Layer for AI Search Visibility</title>
+      <link>https://carlosandmunoz.com/social/pick/geo-is-emerging-as-a-memory-layer-for-ai-search-visibility.html</link>
+      <guid isPermaLink="false">pick/geo-is-emerging-as-a-memory-layer-for-ai-search-visibility</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>GEO</category>
+      <description>Generative Engine Optimization is often discussed as a way to improve the odds of appearing in...
+
+Via DEV, by Ali Farhat, 2026-10-31.
+
+https://blog.geosearchleads.com/geo-memory-signals-ai-search-visibility/</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F10%2Fgeo-memory-signals-ai-search-visibility.webp" medium="image"/>
+    </item>
+    <item>
+      <title>Google AI Mode Adds Booking and Quote Links for Home Services</title>
+      <link>https://carlosandmunoz.com/social/pick/google-ai-mode-adds-booking-and-quote-links-for-home-service.html</link>
+      <guid isPermaLink="false">pick/google-ai-mode-adds-booking-and-quote-links-for-home-service</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>GEO</category>
+      <description>Google has expanded AI Mode in Search to surface direct booking and quote links for home services in...
+
+Via DEV, by Ali Farhat, 2026-11-04.
+
+https://blog.geosearchleads.com/google-ai-mode-home-services-booking-quote-links/</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F11%2Fgoogle-ai-mode-home-services-booking-quote-links.webp" medium="image"/>
+    </item>
+    <item>
+      <title>Google Explains How Redirects Affect Ranking Signals via @sejournal, @martinibuster</title>
+      <link>https://carlosandmunoz.com/social/pick/google-explains-how-redirects-affect-ranking-signals-via-sej.html</link>
+      <guid isPermaLink="false">pick/google-explains-how-redirects-affect-ranking-signals-via-sej</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Google clarifies how server-side redirects influence ranking signals and canonicalization. The post Google Explains How Redirects Affect Ranking Signals appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Roger Montti, 2026-11-05.
+
+https://www.searchenginejournal.com/google-explains-how-redirects-affect-ranking-signals/595967/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-redirects-seo-30.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Google Search Queries Hit A 5-Year High, And Search Revenue Didn’t Follow via @sejournal, @DuaneForrester</title>
+      <link>https://carlosandmunoz.com/social/pick/google-search-queries-hit-a-5-year-high-and-search-revenue-d.html</link>
+      <guid isPermaLink="false">pick/google-search-queries-hit-a-5-year-high-and-search-revenue-d</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>GEO</category>
+      <description>Search revenue grew 12% while queries hit a five-year high. The gap is AI Mode, and Google’s fix is more ads inside the answer. The post Google Search Queries Hit A 5-Year High, And Search Revenue Didn’t Follow appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Duane Forrester, 2026-11-05.
+
+https://www.searchenginejournal.com/google-search-queries-hit-a-5-year-high-and-search-revenue-didnt-follow/595485/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/duane-forrester-decodes-google-search-752.png" medium="image"/>
+    </item>
+    <item>
+      <title>How to choose the right VPAT approach for your organization (and whether you should use AI to complete your ACR!)</title>
+      <link>https://carlosandmunoz.com/social/pick/how-to-choose-the-right-vpat-approach-for-your-organization-.html</link>
+      <guid isPermaLink="false">pick/how-to-choose-the-right-vpat-approach-for-your-organization-</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Accessibility</category>
+      <description>In this post, I’m going to discuss why accuracy matters for digital accessibility in an era of evolving global standards and increased regulatory scrutiny. I’ll explain where and how VPATs and ACRs fit into your accessibility strategies, and what you need to know before making any decisions about AI use. The post How to choose the right VPAT approach for your organization (and whether you should…
+
+Via Deque, by Will Creedle, 2026-11-04.
+
+https://www.deque.com/blog/how-to-choose-the-right-vpat-approach-for-your-organization/</description>
+      <media:content url="https://www.deque.com/wp-content/uploads/2026/11/11.02.26-VPAT_Blog-images-opt2-scaled.png" medium="image"/>
+    </item>
+    <item>
+      <title>How To Report SEO Performance When Analytics Data Is Incomplete</title>
+      <link>https://carlosandmunoz.com/social/pick/how-to-report-seo-performance-when-analytics-data-is-incompl.html</link>
+      <guid isPermaLink="false">pick/how-to-report-seo-performance-when-analytics-data-is-incompl</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Analytics</category>
+      <description>Struggling to track SEO results through privacy and consent blind spots? Learn how to use GSC, GA4, and CRM data to explain SEO impact when the full customer journey isn’t visible.
+
+Via Moz, by Dii Pooler, 2026-11-04.
+
+https://moz.com/blog/measure-seo-performance-incomplete-data</description>
+      <media:content url="https://moz.com/images/blog/Blog-OG-images/How-to-Report-SEO-Performance-When-Analytics-Data-is-Incomplete-OG-Image.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1793690217&amp;s=0bd1781acc14c561e8f4fce915127f66" medium="image"/>
+    </item>
+    <item>
+      <title>November Click Spikes In Google Search Console Are Bot Traffic – How To Filter Your Reports via @sejournal, @marie_haynes</title>
+      <link>https://carlosandmunoz.com/social/pick/november-click-spikes-in-google-search-console-are-bot-traff.html</link>
+      <guid isPermaLink="false">pick/november-click-spikes-in-google-search-console-are-bot-traff</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Seeing a vertical jump in Search Console clicks? Bots, not humans, are behind it. Here’s how to spot it and filter your reports. The post November Click Spikes In Google Search Console Are Bot Traffic – How To Filter Your Reports appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Marie Haynes, 2026-11-05.
+
+https://www.searchenginejournal.com/november-click-spikes-in-google-search-console-are-bot-traffic-how-to-filter-your-reports/595834/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/clicks-spike-845.png" medium="image"/>
+    </item>
+    <item>
+      <title>Playwright v1.65.0</title>
+      <link>https://carlosandmunoz.com/social/pick/playwright-v1-65-0.html</link>
+      <guid isPermaLink="false">pick/playwright-v1-65-0</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>🥟 Run tests with Bun The test runner now runs under Bun . Bun transpiles your TypeScript test files itself, so Playwright does not use Babel or its compilation cache. Pass the --bun flag, because without it bunx playwright test runs on Node.js: bunx --bun playwright test Our CI runs the test runner tests under Bun 1.4.3 on Linux. Some features work differently under Bun: There is no watch mode…
+
+Via Playwright releases, by dgozman, 2026-11-05.
+
+https://github.com/microsoft/playwright/releases/tag/v1.65.0</description>
+      <media:content url="https://avatars.githubusercontent.com/u/9881434?s=60&amp;v=4" medium="image"/>
+    </item>
+    <item>
+      <title>The 11 CMS SEO Features That Should Be Standard</title>
+      <link>https://carlosandmunoz.com/social/pick/the-11-cms-seo-features-that-should-be-standard.html</link>
+      <guid isPermaLink="false">pick/the-11-cms-seo-features-that-should-be-standard</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>A content management system can make routine SEO work either manageable or unnecessarily dependent on...
+
+Via DEV, by Ali Farhat, 2026-11-04.
+
+https://blog.geosearchleads.com/essential-cms-seo-features-checklist/</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F11%2Fessential-cms-seo-features-checklist.webp" medium="image"/>
+    </item>
+    <item>
+      <title>Video FAQs for AI Search: A Practical GEO and SEO Framework</title>
+      <link>https://carlosandmunoz.com/social/pick/video-faqs-for-ai-search-a-practical-geo-and-seo-framework.html</link>
+      <guid isPermaLink="false">pick/video-faqs-for-ai-search-a-practical-geo-and-seo-framework</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>GEO</category>
+      <description>Short video answers to questions customers already ask can be a practical way to expand useful search...
+
+Via DEV, by Ali Farhat, 2026-10-29.
+
+https://blog.geosearchleads.com/video-faqs-ai-search-geo-seo-framework/</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F10%2Fvideo-faqs-ai-search-geo-seo-framework.webp" medium="image"/>
     </item>
     <item>
       <title>Real sites. Real scores.</title>
@@ -389,6 +533,23 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
 #Accessibility #Zoom #GovTech #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" length="242376" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Put the mouse away. Can you reach everything?</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard.html</link>
+      <guid isPermaLink="false">tips-2026-10/10-keyboard</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tip</category>
+      <category>A11y</category>
+      <description>Menus, dialogs, and cookie banners are where keyboard users get stuck. Tab, Shift+Tab, Enter, and Escape should be enough.
+
+Try this today: Do your main task on your own site with the keyboard only. Write down every place you got stuck.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=keyboard
+
+#Accessibility #a11y #UX #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" length="236132" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>One page, one canonical.</title>
@@ -707,195 +868,6 @@ Via DEV, by Arun KT, 2026-11-04.
 
 https://dev.to/arun_kt_bb670b3a571f5efd8/your-playwright-test-is-green-your-checkout-is-broken-5hef</description>
       <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fg9t8q7hxih750zhzl190.png" medium="image"/>
-    </item>
-    <item>
-      <title>Policía Nacional's search has no label.</title>
-      <link>https://carlosandmunoz.com/social/runs-3/02-policiaco.html</link>
-      <guid isPermaLink="false">runs-3/02-policiaco</guid>
-      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>HSTS with preload, framing limited to its own origin, a declared language, and every internal link opened answered. But the home page search box and volume slider have no label, so screen readers announce blank fields.
-
-The lesson for every team: Tie each field to a &lt;label for&gt;, or give it an aria-label. A screen reader can only announce a name that exists.
-
-One automated analysis of public pages on 21 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-3-2027-01&amp;utm_content=policiaco
-
-#Accessibility #FormLabels #GovTech #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/02-policiaco.jpg" length="248322" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/02-policiaco.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Measure the action, not just the visit.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/19-measure-action.html</link>
-      <guid isPermaLink="false">tips-2026-10/19-measure-action</guid>
-      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tip</category>
-      <category>Analytics</category>
-      <description>Page views tell you someone arrived. An event on the form, the download, or the signup tells you whether the page worked.
-
-Try this today: Pick the one action each key page exists for. Make sure an event fires only when it succeeds.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=measure-action
-
-#Analytics #GA4 #CRO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" length="210202" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>AI search reads your HTML, not your app.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first.html</link>
-      <guid isPermaLink="false">tips-2026-10/20-html-first</guid>
-      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tip</category>
-      <category>GEO</category>
-      <description>Many answer engines do not run JavaScript. If your key facts appear only after scripts load, they may never be read or cited.
-
-Try this today: View source on your home page. Can you find what you sell and who it is for, without running scripts?
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
-
-#GEO #AISearch #SEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>movichhotels.com: 68. The gap: measurement.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-26/08-u-movichhotels-com.html</link>
-      <guid isPermaLink="false">auto-2026-10-26/08-u-movichhotels-com</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every page has a title, and AI answer and search crawlers may read the start page. But tracking starts before the visitor chooses.
-
-The lesson for every team: Hold every tag until consent, or set Google Consent Mode v2 defaults to denied before any tag loads. Block third-party embeds until the visitor agrees.
-
-One automated analysis of public pages on 26 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-movichhotels-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-movichhotels-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Analytics #CSS #Programming #QA #WebDev #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/08-u-movichhotels-com.jpg" length="249378" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/08-u-movichhotels-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>bbva.com.co: 68. The gap: the https redirect.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-27/07-u-bbva-com-co.html</link>
-      <guid isPermaLink="false">auto-2026-10-27/07-u-bbva-com-co</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.
-
-The lesson for every team: Redirect every http request to https with one permanent 301, then add HSTS.
-
-One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-bbva-com-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-bbva-com-co
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #SEO #QA #HTTPS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/07-u-bbva-com-co.jpg" length="237129" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/07-u-bbva-com-co.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>edeq.com.co: 62. The gap: link names.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-02/01-u-edeq-com-co.html</link>
-      <guid isPermaLink="false">auto-2026-11-02/01-u-edeq-com-co</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But links must have discernible text.
-
-The lesson for every team: Give every link text that says where it goes. An icon alone needs an aria-label.
-
-One automated analysis of public pages on 27 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-edeq-com-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-edeq-com-co
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #JavaScript #Programming #QA #A11y #QAlab
-
-https://www.youtube.com/shorts/JMrC4MB1OBc</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/01-u-edeq-com-co.jpg" length="231489" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/01-u-edeq-com-co.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Medellín 85, Bogotá 79. Bogotá's site is faster.</title>
-      <link>https://carlosandmunoz.com/social/compare-2026-11/09-metros.html</link>
-      <guid isPermaLink="false">compare-2026-11/09-metros</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Comparison</category>
-      <category>Local</category>
-      <description>Metro de Medellín leads SEO, 83 to 65, and security, 77 to 61. Metro de Bogotá wins speed, 97 to 94, and accessibility, 86 to 79. GEO is tied at 86.
-
-Lesson: A faster site can still lose overall. Fix the weakest area first: for Metro de Bogotá that is security, at 61.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=metros
-
-#WebQuality #Phishing #CyberSecurity #QA #PublicTransport #QAlab
-
-https://www.youtube.com/shorts/qCLqRoX8JQM</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/09-metros.jpg" length="245170" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/09-metros.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>AI Search Measurement Needs to Move Beyond Brand Mentions</title>
-      <link>https://carlosandmunoz.com/social/pick/ai-search-measurement-needs-to-move-beyond-brand-mentions.html</link>
-      <guid isPermaLink="false">pick/ai-search-measurement-needs-to-move-beyond-brand-mentions</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>GEO</category>
-      <description>AI systems may recognize a brand, its founder, or its past achievements without recommending that...
-
-Via DEV, by Ali Farhat, 2026-11-02.
-
-https://blog.geosearchleads.com/ai-search-measurement-shortlist-visibility/</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F11%2Fai-search-measurement-shortlist-visibility.webp" medium="image"/>
-    </item>
-    <item>
-      <title>Building A Global Content Factory With AI (Without Losing The Human Touch) via @sejournal, @motokohunt</title>
-      <link>https://carlosandmunoz.com/social/pick/building-a-global-content-factory-with-ai-without-losing-the.html</link>
-      <guid isPermaLink="false">pick/building-a-global-content-factory-with-ai-without-losing-the</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Scale an AI content factory without erasing local relevance by grounding each market's pages in approved facts, local evidence, and human judgment. The post Building A Global Content Factory With AI (Without Losing The Human Touch) appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Motoko Hunt, 2026-11-03.
-
-https://www.searchenginejournal.com/building-a-global-content-factory-with-ai-without-losing-the-human-touch/593904/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/global-content-661.png" medium="image"/>
-    </item>
-    <item>
-      <title>Google’s Q3 2026 Earnings Call: Search &amp; AI Are Merging Into One Unified Product via @sejournal, @marie_haynes</title>
-      <link>https://carlosandmunoz.com/social/pick/google-s-q3-2026-earnings-call-search-ai-are-merging-into-on.html</link>
-      <guid isPermaLink="false">pick/google-s-q3-2026-earnings-call-search-ai-are-merging-into-on</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>SEOs, buckle up. Google says expect rapid improvement from recursive self-improvement, and Search is becoming an agent manager. The post Google’s Q3 2026 Earnings Call: Search &amp; AI Are Merging Into One Unified Product appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Marie Haynes, 2026-11-03.
-
-https://www.searchenginejournal.com/googles-q3-2026-earnings-call-search-ai-are-merging-into-one-unified-product/595484/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/googles-earnings-call-227.png" medium="image"/>
-    </item>
-    <item>
-      <title>Google Says It’s Okay To Block Some JavaScript Resources With Robots.txt via @sejournal, @martinibuster</title>
-      <link>https://carlosandmunoz.com/social/pick/google-says-it-s-okay-to-block-some-javascript-resources-wit.html</link>
-      <guid isPermaLink="false">pick/google-says-it-s-okay-to-block-some-javascript-resources-wit</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Google's John Mueller said it's okay, within a specific use case, to use robots.txt to hide resources from Googlebot. The post Google Says It’s Okay To Block Some JavaScript Resources With Robots.txt appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Roger Montti, 2026-11-03.
-
-https://www.searchenginejournal.com/google-says-its-okay-to-block-some-javascript-resources-with-robots-txt/595736/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/block-googlebot-611.jpg" medium="image"/>
     </item>
   </channel>
 </rss>

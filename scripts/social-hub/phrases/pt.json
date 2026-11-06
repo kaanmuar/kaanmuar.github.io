@@ -23,8 +23,16 @@
  "⟦1⟧ keeps HSTS for only a week.": "⟦1⟧ mantém o HSTS por apenas uma semana.",
  "⟦1⟧ Kubernetes pages share one title.": "⟦1⟧ páginas do Kubernetes compartilham um só título.",
  "⟦1⟧ languages, no sitemap.": "⟦1⟧ idiomas, nenhum sitemap.",
+ "⟦1⟧ leads in SEO, Analytics, Accessibility; ⟦2⟧ leads in GEO, Security, Performance.": {
+  "text": "⟦1⟧ lidera em SEO, Analytics, Acessibilidade; ⟦2⟧ lidera em GEO, Segurança, Desempenho.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Analytics, Performance; ⟦2⟧ leads in GEO, Security, Accessibility.": {
   "text": "⟦1⟧ lidera em SEO, Analytics, Performance; ⟦2⟧ lidera em GEO, Segurança, Acessibilidade.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO, Analytics; ⟦2⟧ leads in GEO, Security, Accessibility, Performance.": {
+  "text": "⟦1⟧ leads em SEO, Analytics; ⟦2⟧ lidera em GEO, Segurança, Acessibilidade, Desempenho.",
   "machine": true
  },
  "⟦1⟧ leads in SEO, GEO, Analytics, Security; ⟦2⟧ leads in Accessibility, Performance.": {
@@ -343,6 +351,10 @@
  "Bello's JSON-LD names the page, not the city.": "O JSON-LD de Bello nomeia a página, não a cidade.",
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.": "Compare-se com os sites com que seus visitantes comparam você, não com uma nota perfeita: a diferença que custa caro é a que um concorrente já fechou.",
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap…": "Compare-se com os sites com que seus visitantes comparam você, não com uma nota perfeita: a diferença…",
+ "Benchmark against the sites your visitors compare you with, not against a perfect score: the…": {
+  "text": "Compare os sites com os quais seus visitantes o comparam, não com uma pontuação perfeita: o…",
+  "machine": true
+ },
  "Benchmark against the sites your visitors compare you with, not against a perfect score…": {
   "text": "Compare com os sites com os quais seus visitantes o comparam, não com uma pontuação perfeita…",
   "machine": true
@@ -1382,6 +1394,10 @@
  "Nariño's home page is ⟦1⟧ KB of HTML.": "A página inicial de Nariño tem ⟦1⟧ KB de HTML.",
  "NASA is wide open to AI search.": "A NASA está totalmente aberta à busca com IA.",
  "NatGeo sets cookies without Secure.": "A NatGeo define cookies sem Secure.",
+ "Natural competitors found…": {
+  "text": "Concorrentes naturais encontrados…",
+  "machine": true
+ },
  "Natural competitors…": {
   "text": "Concorrentes naturais…",
   "machine": true

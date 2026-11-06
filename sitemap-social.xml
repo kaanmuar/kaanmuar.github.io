@@ -235,6 +235,11 @@
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/02-myth-lighthouse.jpg</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/16-six-languages-de.html</loc>
+    <lastmod>2026-11-06</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/16-six-languages-de.jpg</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/runs-2026-10/02-bogota.html</loc>
     <lastmod>2026-11-06</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg</image:loc></image:image>
@@ -263,36 +268,6 @@
     <loc>https://carlosandmunoz.com/social/runs-2026-10/02-bogota-pt.html</loc>
     <lastmod>2026-11-06</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/runs-2026-10/03-who.html</loc>
-    <lastmod>2026-11-06</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/runs-2026-10/03-who-de.html</loc>
-    <lastmod>2026-11-06</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/runs-2026-10/03-who-es.html</loc>
-    <lastmod>2026-11-06</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/runs-2026-10/03-who-fr.html</loc>
-    <lastmod>2026-11-06</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/runs-2026-10/03-who-it.html</loc>
-    <lastmod>2026-11-06</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/runs-2026-10/03-who-pt.html</loc>
-    <lastmod>2026-11-06</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/skits-friday-release/03-friday-release-pt.html</loc>
@@ -423,126 +398,560 @@
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/01-u-selia-co.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/pLoZQ6bgTEo/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>selia.co: 73. The gap: link names.</video:title>
+      <video:description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But links must have discernible text.
+
+The lesson for every team: Give every link text that says where it goes. An icon alone needs an aria-label.
+
+One automated analysis of public pages on 3 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-selia-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-selia-co
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #WebDev #QA #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/pLoZQ6bgTEo</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/01-u-selia-co-de.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/pLoZQ6bgTEo/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>selia.co: 73. Die Lücke: Linknamen.</video:title>
+      <video:description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Links brauchen erkennbaren Text.
+
+Die Lektion für jedes Team: Geben Sie jedem Link einen Text, der sagt, wohin er führt. Ein Icon allein braucht ein aria-label.
+
+Eine automatisierte Analyse öffentlicher Seiten am 3 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-selia-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-selia-co
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #WebDev #QA #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/pLoZQ6bgTEo</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/01-u-selia-co-es.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/pLoZQ6bgTEo/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>selia.co: 73. El punto débil: nombres de enlaces.</video:title>
+      <video:description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero los enlaces deben tener texto discernible.
+
+La lección para cualquier equipo: Dale a cada enlace un texto que diga adónde lleva. Un icono solo necesita un aria-label.
+
+Un análisis automatizado de páginas públicas el 3 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-selia-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-selia-co
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #WebDev #QA #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/pLoZQ6bgTEo</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/01-u-selia-co-fr.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/pLoZQ6bgTEo/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>selia.co: 73. Le point faible : les noms de liens.</video:title>
+      <video:description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais les liens doivent avoir un texte discernable.
+
+La leçon pour chaque équipe : Donnez à chaque lien un texte qui dit où il mène. Une icône seule a besoin d’un aria-label.
+
+Une analyse automatisée des pages publiques le 3 novembre 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-selia-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-selia-co
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #WebDev #QA #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/pLoZQ6bgTEo</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/01-u-selia-co-it.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/pLoZQ6bgTEo/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>selia.co: 73. La lacuna: i nomi dei link.</video:title>
+      <video:description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma i link devono avere un testo riconoscibile.
+
+La lezione per ogni team: Dai a ogni link un testo che dica dove porta. Un’icona da sola ha bisogno di un aria-label.
+
+Un'analisi automatizzata delle pagine pubbliche il 3 novembre 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-selia-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-selia-co
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #WebDev #QA #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/pLoZQ6bgTEo</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/01-u-selia-co-pt.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/01-u-selia-co.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/pLoZQ6bgTEo/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>selia.co: 73. A lacuna: nomes de links.</video:title>
+      <video:description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os links precisam ter texto discernível.
+
+A lição para toda equipe: Dê a todo link um texto que diga para onde ele leva. Um ícone sozinho precisa de um aria-label.
+
+Uma análise automatizada de páginas públicas em 3 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-selia-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-selia-co
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #WebDev #QA #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/pLoZQ6bgTEo</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/02-u-treinta-co.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/02-u-treinta-co.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/jqdrXTUKLwc/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>treinta.co: 75. The gap: framing.</video:title>
+      <video:description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+The lesson for every team: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 3 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-treinta-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-treinta-co
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/jqdrXTUKLwc</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/02-u-treinta-co-de.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/02-u-treinta-co.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/jqdrXTUKLwc/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>treinta.co: 75. Die Lücke: Einbettung.</video:title>
+      <video:description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch andere Websites können die Seite einbetten.
+
+Die Lektion für jedes Team: Senden Sie frame-ancestors 'self' in der CSP oder X-Frame-Options: SAMEORIGIN, damit andere Websites Ihre Seiten nicht einbetten können.
+
+Eine automatisierte Analyse öffentlicher Seiten am 3 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-treinta-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-treinta-co
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/jqdrXTUKLwc</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/02-u-treinta-co-es.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/02-u-treinta-co.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/jqdrXTUKLwc/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>treinta.co: 75. El punto débil: enmarcado.</video:title>
+      <video:description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero otros sitios pueden enmarcar la página.
+
+La lección para cualquier equipo: Envía frame-ancestors 'self' en la CSP, o X-Frame-Options: SAMEORIGIN, así que otros sitios no pueden enmarcar tus páginas.
+
+Un análisis automatizado de páginas públicas el 3 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-treinta-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-treinta-co
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/jqdrXTUKLwc</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/02-u-treinta-co-fr.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/02-u-treinta-co.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/jqdrXTUKLwc/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>treinta.co: 75. Le point faible : l’intégration en iframe.</video:title>
+      <video:description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais d’autres sites peuvent intégrer la page en iframe.
+
+La leçon pour chaque équipe : Envoyez frame-ancestors 'self' dans la CSP, ou X-Frame-Options: SAMEORIGIN, pour que d’autres sites ne puissent pas intégrer vos pages en iframe.
+
+Une analyse automatisée des pages publiques le 3 novembre 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-treinta-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-treinta-co
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/jqdrXTUKLwc</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/02-u-treinta-co-it.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/02-u-treinta-co.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/jqdrXTUKLwc/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>treinta.co: 75. La lacuna: i frame.</video:title>
+      <video:description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma altri siti possono mettere la pagina in un frame.
+
+La lezione per ogni team: Invia frame-ancestors 'self' nella CSP, o X-Frame-Options: SAMEORIGIN, così altri siti non possono mettere le tue pagine in un frame.
+
+Un'analisi automatizzata delle pagine pubbliche il 3 novembre 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-treinta-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-treinta-co
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/jqdrXTUKLwc</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/02-u-treinta-co-pt.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/02-u-treinta-co.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/jqdrXTUKLwc/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>treinta.co: 75. A lacuna: frames.</video:title>
+      <video:description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas outros sites podem colocar a página em frame.
+
+A lição para toda equipe: Envie frame-ancestors 'self' no CSP, ou X-Frame-Options: SAMEORIGIN, para que outros sites não possam colocar suas páginas em frame.
+
+Uma análise automatizada de páginas públicas em 3 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-treinta-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-treinta-co
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/jqdrXTUKLwc</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/08-u-itsrever-com.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/08-u-itsrever-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/9-WQCp_Mf-0/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>itsrever.com: 50. The gap: ARIA roles.</video:title>
+      <video:description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But certain ARIA roles must contain particular children.
+
+The lesson for every team: Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.
+
+One automated analysis of public pages on 3 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-itsrever-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-itsrever-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Automation #QA #ARIA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/9-WQCp_Mf-0</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/08-u-itsrever-com-de.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/08-u-itsrever-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/9-WQCp_Mf-0/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>itsrever.com: 50. Die Lücke: ARIA-Rollen.</video:title>
+      <video:description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Bestimmte ARIA-Rollen müssen jedoch bestimmte untergeordnete Elemente enthalten.
+
+Die Lektion für jedes Team: Verwenden Sie zunächst native HTML-Elemente. Wenn Sie ARIA-Rollen verwenden, verschachteln Sie diese so, wie es die Rolle erfordert.
+
+Eine automatisierte Analyse öffentlicher Seiten am 3 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-itsrever-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-itsrever-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Automation #QA #ARIA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/9-WQCp_Mf-0</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/08-u-itsrever-com-es.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/08-u-itsrever-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/9-WQCp_Mf-0/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>itsrever.com: 50. El punto débil: Roles ARIA.</video:title>
+      <video:description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero ciertos roles ARIA deben contener hijos específicos.
+
+La lección para cualquier equipo: Utilice primero elementos HTML nativos. Cuando utilice roles ARIA, anídelos de la manera que lo requiera el rol.
+
+Un análisis automatizado de páginas públicas el 3 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-itsrever-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-itsrever-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Automation #QA #ARIA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/9-WQCp_Mf-0</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/08-u-itsrever-com-fr.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/08-u-itsrever-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/9-WQCp_Mf-0/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>itsrever.com: 50. Le point faible : Rôles ARIA.</video:title>
+      <video:description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais certains rôles ARIA doivent contenir des enfants particuliers.
+
+La leçon pour chaque équipe : Utilisez d'abord les éléments HTML natifs. Lorsque vous utilisez des rôles ARIA, imbriquez-les comme le rôle l'exige.
+
+Une analyse automatisée des pages publiques le 3 novembre 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-itsrever-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-itsrever-com
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Automation #QA #ARIA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/9-WQCp_Mf-0</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/08-u-itsrever-com-it.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/08-u-itsrever-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/9-WQCp_Mf-0/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>itsrever.com: 50. La lacuna: Ruoli dell'ARIA.</video:title>
+      <video:description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma alcuni ruoli ARIA devono contenere bambini particolari.
+
+La lezione per ogni team: Utilizza prima gli elementi HTML nativi. Quando utilizzi i ruoli ARIA, nidificali nel modo richiesto dal ruolo.
+
+Un'analisi automatizzata delle pagine pubbliche il 3 novembre 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-itsrever-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-itsrever-com
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Automation #QA #ARIA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/9-WQCp_Mf-0</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-04/08-u-itsrever-com-pt.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/08-u-itsrever-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/9-WQCp_Mf-0/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>itsrever.com: 50. A lacuna: Funções ARIA.</video:title>
+      <video:description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas certas funções ARIA devem conter filhos específicos.
+
+A lição para toda equipe: Use elementos HTML nativos primeiro. Ao usar funções ARIA, aninhe-as da maneira exigida pela função.
+
+Uma análise automatizada de páginas públicas em 3 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-itsrever-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-itsrever-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Automation #QA #ARIA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/9-WQCp_Mf-0</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/compare-2026-11/11-cities.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/v2IyjNhD8q8/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Bogotá 80, Medellín 74. Security made the difference.</video:title>
+      <video:description>Bogotá leads security, 77 to 54, and SEO, 97 to 89. Medellín has the faster pages, 80 to 73, and edges GEO, 91 to 89.
+
+Lesson: Medellín's portal sends no HSTS, CSP, Referrer-Policy or Permissions-Policy header. Most hosts and CDNs set headers as configuration, not code.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=cities
+
+#WebQuality #Vulnerability #Phishing #QA #GovTech #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/v2IyjNhD8q8</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/compare-2026-11/11-cities-de.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/v2IyjNhD8q8/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Bogotá 80, Medellín 74. Die Sicherheit machte den Unterschied.</video:title>
+      <video:description>Bogotá führt bei Sicherheit, 77 zu 54, und bei SEO, 97 zu 89. Medellín hat die schnelleren Seiten, 80 zu 73, und liegt bei GEO knapp vorn, 91 zu 89.
+
+Lektion: Das Portal von Medellín sendet keinen HSTS-, CSP-, Referrer-Policy- oder Permissions-Policy-Header. Die meisten Hoster und CDNs setzen Header per Konfiguration, nicht per Code.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=cities
+
+#WebQuality #Vulnerability #Phishing #QA #GovTech #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/v2IyjNhD8q8</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/compare-2026-11/11-cities-es.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/v2IyjNhD8q8/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Bogotá 80, Medellín 74. La seguridad marcó la diferencia.</video:title>
+      <video:description>Bogotá lidera en seguridad, 77 a 54, y en SEO, 97 a 89. Medellín tiene las páginas más rápidas, 80 a 73, y gana por poco en GEO, 91 a 89.
+
+Lección: El portal de Medellín no envía ningún encabezado HSTS, CSP, Referrer-Policy ni Permissions-Policy. La mayoría de hostings y CDN configuran los encabezados sin tocar el código.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=cities
+
+#WebQuality #Vulnerability #Phishing #QA #GovTech #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/v2IyjNhD8q8</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/compare-2026-11/11-cities-fr.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/v2IyjNhD8q8/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Bogotá 80, Medellín 74. La sécurité a fait la différence.</video:title>
+      <video:description>Bogotá mène en sécurité, 77 contre 54, et en SEO, 97 contre 89. Medellín a les pages les plus rapides, 80 contre 73, et devance de peu en GEO, 91 contre 89.
+
+La leçon : Le portail de Medellín n'envoie aucun en-tête HSTS, CSP, Referrer-Policy ni Permissions-Policy. La plupart des hébergeurs et des CDN règlent les en-têtes par configuration, sans code.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=cities
+
+#WebQuality #Vulnerability #Phishing #QA #GovTech #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/v2IyjNhD8q8</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/compare-2026-11/11-cities-it.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/v2IyjNhD8q8/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Bogotá 80, Medellín 74. La sicurezza ha fatto la differenza.</video:title>
+      <video:description>Bogotá è avanti nella sicurezza, 77 a 54, e nella SEO, 97 a 89. Medellín ha le pagine più veloci, 80 a 73, e supera di poco nel GEO, 91 a 89.
+
+Lezione: Il portale di Medellín non invia alcun header HSTS, CSP, Referrer-Policy o Permissions-Policy. La maggior parte di hosting e CDN imposta gli header via configurazione, non via codice.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=cities
+
+#WebQuality #Vulnerability #Phishing #QA #GovTech #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/v2IyjNhD8q8</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/compare-2026-11/11-cities-pt.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/v2IyjNhD8q8/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Bogotá 80, Medellín 74. A segurança fez a diferença.</video:title>
+      <video:description>Bogotá lidera em segurança, 77 a 54, e em SEO, 97 a 89. Medellín tem as páginas mais rápidas, 80 a 73, e vence por pouco em GEO, 91 a 89.
+
+Lição: O portal de Medellín não envia nenhum cabeçalho HSTS, CSP, Referrer-Policy ou Permissions-Policy. A maioria das hospedagens e CDNs define cabeçalhos por configuração, sem código.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11&amp;utm_content=cities
+
+#WebQuality #Vulnerability #Phishing #QA #GovTech #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/v2IyjNhD8q8</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
-    <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/26-real-reviews-it.html</loc>
+    <loc>https://carlosandmunoz.com/social/pick/ai-visibility-vs-search-rankings-is-your-agency-measuring-th.html</loc>
     <lastmod>2026-11-05</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/26-real-reviews-it.jpg</image:loc></image:image>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/webpros-partner-stories-featured-1600x832-443.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/geo-is-emerging-as-a-memory-layer-for-ai-search-visibility.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F10%2Fgeo-memory-signals-ai-search-visibility.webp</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/google-ai-mode-adds-booking-and-quote-links-for-home-service.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F11%2Fgoogle-ai-mode-home-services-booking-quote-links.webp</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/google-explains-how-redirects-affect-ranking-signals-via-sej.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-redirects-seo-30.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/google-search-queries-hit-a-5-year-high-and-search-revenue-d.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/duane-forrester-decodes-google-search-752.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/how-to-choose-the-right-vpat-approach-for-your-organization-.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://www.deque.com/wp-content/uploads/2026/11/11.02.26-VPAT_Blog-images-opt2-scaled.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/how-to-report-seo-performance-when-analytics-data-is-incompl.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://moz.com/images/blog/Blog-OG-images/How-to-Report-SEO-Performance-When-Analytics-Data-is-Incomplete-OG-Image.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1793690217&amp;s=0bd1781acc14c561e8f4fce915127f66</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/november-click-spikes-in-google-search-console-are-bot-traff.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/clicks-spike-845.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/playwright-v1-65-0.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://avatars.githubusercontent.com/u/9881434?s=60&amp;v=4</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/the-11-cms-seo-features-that-should-be-standard.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F11%2Fessential-cms-seo-features-checklist.webp</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/video-faqs-for-ai-search-a-practical-geo-and-seo-framework.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F10%2Fvideo-faqs-ai-search-geo-seo-framework.webp</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/11-clips-pt.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/11-clips-pt.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/IPSo4-Us2zQ/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Clipes curtos, no seu idioma.</video:title>
+      <video:description>Os clipes narrados tocam na própria página, sem aplicativo. Cada um fala em inglês, espanhol, português, alemão, francês ou italiano.
+
+Experimente: Toque em reproduzir em qualquer cartão com vídeo.
+
+Todas as publicações, em um só lugar: https://carlosandmunoz.com/qa-review-social-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=clips-pt
+
+#ShortVideo #SoftwareTesting #OpenSource #QA #WebDev #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/IPSo4-Us2zQ</video:player_loc>
+      <video:publication_date>2026-11-05</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/27-real-reviews-en.html</loc>
@@ -623,6 +1032,36 @@
     <loc>https://carlosandmunoz.com/social/runs-3/03-valle-pt.html</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-de.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-es.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-fr.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-it.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-pt.html</loc>
+    <lastmod>2026-11-05</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/tips-2026-10/21-canonical.html</loc>
@@ -1502,36 +1941,6 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg</image:loc></image:image>
   </url>
   <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/20-html-first.html</loc>
-    <lastmod>2026-11-04</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-de.html</loc>
-    <lastmod>2026-11-04</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-es.html</loc>
-    <lastmod>2026-11-04</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-fr.html</loc>
-    <lastmod>2026-11-04</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-it.html</loc>
-    <lastmod>2026-11-04</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-pt.html</loc>
-    <lastmod>2026-11-04</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg</image:loc></image:image>
-  </url>
-  <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-26/08-u-movichhotels-com.html</loc>
     <lastmod>2026-11-03</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/08-u-movichhotels-com.jpg</image:loc></image:image>
@@ -1934,11 +2343,6 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <loc>https://carlosandmunoz.com/social/pick/what-a-killed-playwright-script-leaves-behind-on-linux-proce-es.html</loc>
     <lastmod>2026-11-03</lastmod>
     <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fdahdt5zcl15qhw9bhayl.png</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/21-follow-fr.html</loc>
-    <lastmod>2026-11-03</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/21-follow-fr.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/22-follow-en.html</loc>
@@ -2570,36 +2974,6 @@ Todos os Live Reports de outubro: https://carlosandmunoz.com/qa-review.html?utm_
     <loc>https://carlosandmunoz.com/social/tips-2026-10/15-csp-report-only-pt.html</loc>
     <lastmod>2026-11-02</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/15-csp-report-only.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/16-list-first.html</loc>
-    <lastmod>2026-11-02</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-de.html</loc>
-    <lastmod>2026-11-02</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-es.html</loc>
-    <lastmod>2026-11-02</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-fr.html</loc>
-    <lastmod>2026-11-02</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-it.html</loc>
-    <lastmod>2026-11-02</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-pt.html</loc>
-    <lastmod>2026-11-02</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/11-u-davibank-com.html</loc>
@@ -3580,11 +3954,6 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <image:image><image:loc>https://opengraph.githubassets.com/1/zhtyyx/codex-seo</image:loc></image:image>
   </url>
   <url>
-    <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/16-six-languages-de.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/16-six-languages-de.jpg</image:loc></image:image>
-  </url>
-  <url>
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/17-six-languages-es.html</loc>
     <lastmod>2026-11-01</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/17-six-languages-es.jpg</image:loc></image:image>
@@ -3713,6 +4082,36 @@ Todos os Live Reports de outubro: https://carlosandmunoz.com/qa-review.html?utm_
     </video:video>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-de.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-es.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-fr.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-it.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-pt.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/tips-2026-10/13-consent-before.html</loc>
     <lastmod>2026-11-01</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg</image:loc></image:image>
@@ -3741,36 +4140,6 @@ Todos os Live Reports de outubro: https://carlosandmunoz.com/qa-review.html?utm_
     <loc>https://carlosandmunoz.com/social/tips-2026-10/13-consent-before-pt.html</loc>
     <lastmod>2026-11-01</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/13-consent-before.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/14-share-card.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-de.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-es.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-fr.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-it.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-pt.html</loc>
-    <lastmod>2026-11-01</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/09-u-lenovo-com.html</loc>
@@ -4031,6 +4400,36 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     </video:video>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast.html</loc>
+    <lastmod>2026-10-31</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-de.html</loc>
+    <lastmod>2026-10-31</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-es.html</loc>
+    <lastmod>2026-10-31</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-fr.html</loc>
+    <lastmod>2026-10-31</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-it.html</loc>
+    <lastmod>2026-10-31</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-pt.html</loc>
+    <lastmod>2026-10-31</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/tips-2026-10/11-hsts.html</loc>
     <lastmod>2026-10-31</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg</image:loc></image:image>
@@ -4059,36 +4458,6 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <loc>https://carlosandmunoz.com/social/tips-2026-10/11-hsts-pt.html</loc>
     <lastmod>2026-10-31</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/11-hsts.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1.html</loc>
-    <lastmod>2026-10-31</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-de.html</loc>
-    <lastmod>2026-10-31</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-es.html</loc>
-    <lastmod>2026-10-31</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-fr.html</loc>
-    <lastmod>2026-10-31</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-it.html</loc>
-    <lastmod>2026-10-31</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-pt.html</loc>
-    <lastmod>2026-10-31</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/tips-horror-headers-2026-10/05-poltergeist-cls.html</loc>
@@ -4631,11 +5000,6 @@ Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=lin
     </video:video>
   </url>
   <url>
-    <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/11-clips-pt.html</loc>
-    <lastmod>2026-10-30</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/11-clips-pt.jpg</image:loc></image:image>
-  </url>
-  <url>
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/12-clips-en.html</loc>
     <lastmod>2026-10-30</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/12-clips-en.jpg</image:loc></image:image>
@@ -4684,36 +5048,6 @@ Try it on a public URL: https://carlosandmunoz.com/qa-review.html?utm_source=lin
     <loc>https://carlosandmunoz.com/social/tips-2026-10/09-llms-txt-pt.html</loc>
     <lastmod>2026-10-30</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/09-llms-txt.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard.html</loc>
-    <lastmod>2026-10-30</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-de.html</loc>
-    <lastmod>2026-10-30</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-es.html</loc>
-    <lastmod>2026-10-30</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-fr.html</loc>
-    <lastmod>2026-10-30</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-it.html</loc>
-    <lastmod>2026-10-30</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-pt.html</loc>
-    <lastmod>2026-10-30</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/tips-horror-headers-2026-10/04-cursed-alt.html</loc>
@@ -4827,31 +5161,115 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/07-u-zipdev-com.html</loc>
     <lastmod>2026-10-29</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/07-u-zipdev-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/qooqEXE1y-4/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>zipdev.com: 77. The gap: form labels.</video:title>
+      <video:description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 41 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 21 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-zipdev-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-zipdev-com
+
+#Accessibility #Forms #A11y #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/qooqEXE1y-4</video:player_loc>
+      <video:publication_date>2026-10-29</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/07-u-zipdev-com-de.html</loc>
     <lastmod>2026-10-29</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/07-u-zipdev-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/qooqEXE1y-4/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>zipdev.com: 77. Die Lücke: Formular-Labels.</video:title>
+      <video:description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 41 Formularfelder haben kein Label.
+
+Die Lektion für jedes Team: Geben Sie jedem Eingabefeld ein sichtbares Label, verknüpft über for und id. Screenreader sagen es an, und die Tippfläche wächst.
+
+Eine automatisierte Analyse öffentlicher Seiten am 21. Okt. 2026, angefordert über QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-zipdev-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-zipdev-com
+
+#Accessibility #Forms #A11y #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/qooqEXE1y-4</video:player_loc>
+      <video:publication_date>2026-10-29</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/07-u-zipdev-com-es.html</loc>
     <lastmod>2026-10-29</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/07-u-zipdev-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/qooqEXE1y-4/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>zipdev.com: 77. El punto débil: etiquetas de formulario.</video:title>
+      <video:description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 41 controles de formulario no tienen etiqueta.
+
+La lección para cualquier equipo: Dale a cada campo una etiqueta visible vinculada con for e id. Los lectores de pantalla la anuncian y el área táctil crece.
+
+Un análisis automatizado de páginas públicas el 21 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-zipdev-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-zipdev-com
+
+#Accessibility #Forms #A11y #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/qooqEXE1y-4</video:player_loc>
+      <video:publication_date>2026-10-29</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/07-u-zipdev-com-fr.html</loc>
     <lastmod>2026-10-29</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/07-u-zipdev-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/qooqEXE1y-4/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>zipdev.com: 77. Le point faible : les libellés de formulaire.</video:title>
+      <video:description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais 41 champs de formulaire n’ont pas de libellé.
+
+La leçon pour chaque équipe : Donnez à chaque champ un libellé visible, relié par for et id. Les lecteurs d’écran l’annoncent, et la zone tactile s’agrandit.
+
+Une analyse automatisée des pages publiques, le 21 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-zipdev-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-zipdev-com
+
+#Accessibility #Forms #A11y #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/qooqEXE1y-4</video:player_loc>
+      <video:publication_date>2026-10-29</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/07-u-zipdev-com-it.html</loc>
     <lastmod>2026-10-29</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/07-u-zipdev-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/qooqEXE1y-4/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>zipdev.com: 77. La lacuna: le label dei form.</video:title>
+      <video:description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma 41 controlli dei form non hanno label.
+
+La lezione per ogni team: Dai a ogni input una label visibile, collegata con for e id. Gli screen reader la annunciano e l’area di tocco cresce.
+
+Un’analisi automatica di pagine pubbliche: 21 ott. 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-zipdev-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-zipdev-com
+
+#Accessibility #Forms #A11y #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/qooqEXE1y-4</video:player_loc>
+      <video:publication_date>2026-10-29</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-22/07-u-zipdev-com-pt.html</loc>
     <lastmod>2026-10-29</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/07-u-zipdev-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/qooqEXE1y-4/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>zipdev.com: 77. A lacuna: rótulos de formulário.</video:title>
+      <video:description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 41 controles de formulário não têm rótulo.
+
+A lição para toda equipe: Dê a cada campo um rótulo visível ligado a ele com for e id. Leitores de tela o anunciam, e a área de toque cresce.
+
+Uma análise automatizada de páginas públicas em 21 out. 2026, solicitada pelo QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-zipdev-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-zipdev-com
+
+#Accessibility #Forms #A11y #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/qooqEXE1y-4</video:player_loc>
+      <video:publication_date>2026-10-29</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-10-24/05-u-roottcostore-com.html</loc>
@@ -5944,66 +6362,6 @@ Todas las publicaciones, en un solo lugar: https://carlosandmunoz.com/qa-review-
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/10-copy-caption-it.html</loc>
     <lastmod>2026-10-28</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/10-copy-caption-it.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast.html</loc>
-    <lastmod>2026-10-28</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-de.html</loc>
-    <lastmod>2026-10-28</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-es.html</loc>
-    <lastmod>2026-10-28</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-fr.html</loc>
-    <lastmod>2026-10-28</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-it.html</loc>
-    <lastmod>2026-10-28</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/05-contrast-pt.html</loc>
-    <lastmod>2026-10-28</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/05-contrast.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm.html</loc>
-    <lastmod>2026-10-28</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-de.html</loc>
-    <lastmod>2026-10-28</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-es.html</loc>
-    <lastmod>2026-10-28</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-fr.html</loc>
-    <lastmod>2026-10-28</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-it.html</loc>
-    <lastmod>2026-10-28</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/social/tips-2026-10/06-utm-pt.html</loc>
-    <lastmod>2026-10-28</lastmod>
-    <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/06-utm.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/tips-horror-headers-2026-10/02-zombie-redirects.html</loc>
