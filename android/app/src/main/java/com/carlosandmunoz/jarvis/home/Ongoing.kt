@@ -21,7 +21,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.carlosandmunoz.jarvis.JarvisApp
 import com.carlosandmunoz.jarvis.R
+import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.fmt
+import com.carlosandmunoz.jarvis.data.num
+import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
 import kotlin.math.roundToInt
@@ -46,12 +49,12 @@ object Ongoing {
 
     /** What the notification shows, picked in Settings; nothing saved means everything but the Live Update. */
     enum class Part(val key: String, val label: String, val hint: String) {
-        READINESS("readiness", "Readiness", "The ring in the card, and the ring icon in the status bar"),
+        READINESS("readiness", "Readiness and uptime", "Readiness and pages up as rings in the card; readiness is also the status-bar icon"),
         ALERTS("alerts", "Alerts and warnings", "How many, next to the app name"),
         APPROVALS("approvals", "Approvals waiting", "Notices waiting for Send or Drop"),
         TOP("top", "Top briefing line", "The most urgent line from the briefing"),
         MONEY("money", "Today's money", "Revenue and sales today"),
-        BAR("bar", "Bars", "Connections online and the top goals as bars"),
+        BAR("bar", "Bars", "Connections online, the 90-day targets and goals as bars"),
         CHIP("live", "Live Update instead of the card", "Android 16: a chip by the clock, pinned at the top of the shade. Android can't pin the card, so this swaps it for text and one readiness bar");
 
         companion object {
@@ -100,12 +103,20 @@ object Ongoing {
         }
         val urgent = alerts && w.alerts > 0
         val color = when { urgent -> PINK; waiting -> AMBER; else -> CYAN }
-        val card = StatusCard.Card(ready?.takeIf { Part.READINESS in show }, "Readiness", color, if (Part.BAR in show) bars(snap) else emptyList(), lines)
+        val rings = if (Part.READINESS in show) listOfNotNull(ready?.let { StatusCard.Ring(it, "Readiness", color) }, uptime(snap)) else emptyList()
+        val card = StatusCard.Card(rings, if (Part.BAR in show) bars(snap) else emptyList(), lines)
         return Content(ready, title, lines.firstOrNull().orEmpty(), lines, urgent, at, chip,
             waiting = waiting, ring = Part.READINESS in show, bar = Part.BAR in show, live = Part.CHIP in show, counts = counts, card = card)
     }
 
-    /** Connections online, then the two top goals, coloured by how they are doing. */
+    /** Pages answering right now, as the second ring. */
+    fun uptime(snap: JsonObject): StatusCard.Ring? {
+        val pages = snap.obj("external").obj("uptime").objs("pages").takeIf { it.isNotEmpty() } ?: return null
+        val up = pages.count { it.bool("ok") == true }
+        return StatusCard.Ring(up * 100 / pages.size, "Uptime", if (up == pages.size) GREEN else if (up * 2 >= pages.size) AMBER else PINK)
+    }
+
+    /** Connections online, then the 90-day targets most in need of a push, then the goals; coloured by how each is doing. */
     fun bars(snap: JsonObject): List<StatusCard.Bar> {
         val states = snap.objs("connections").map { it.str("state") }
         val on = states.count { it != "down" && it != "partial" }
@@ -116,7 +127,14 @@ object Ongoing {
             val color = when (g.status) { "done" -> GREEN; "behind" -> AMBER; "far-behind" -> PINK; else -> CYAN }
             StatusCard.Bar(g.label, "${fmt(g.value, 0)} of ${fmt(g.target, 0)}", (g.pct * 100).roundToInt(), color)
         }
-        return listOfNotNull(systems) + goals
+        val rank = listOf("missed", "behind", "on-pace", "waiting", "done")
+        val targets = snap.obj("external").obj("targets").objs("targets").sortedBy { rank.indexOf(it.str("status")).let { i -> if (i < 0) rank.size else i } }.take(2).map { t ->
+            val target = maxOf(1.0, t.num("target") ?: 1.0)
+            val actual = t.num("actual") ?: 0.0
+            val color = when (t.str("status")) { "done" -> GREEN; "behind" -> AMBER; "missed" -> PINK; else -> CYAN }
+            StatusCard.Bar(t.str("label").orEmpty(), "${fmt(actual, 0)} of ${fmt(target, 0)}", (actual * 100 / target).roundToInt(), color)
+        }
+        return listOfNotNull(systems) + targets + goals
     }
 
     private const val CYAN = 0xFF38E1FF.toInt()
