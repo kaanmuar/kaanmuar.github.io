@@ -34,14 +34,17 @@
  *                                                                        from the comment box's menu (#2637); an
  *                                                                        owner reply there brings latest: true, the
  *                                                                        owner's profile as url and since, for the
- *                                                                        newest own post to answer (#2638)
+ *                                                                        newest own post to answer (#2638); a Threads
+ *                                                                        reply brings extras { topic, image, gif }
+ *                                                                        for its composer (#2710)
  *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already, card, cardError, target, none,
- *                          mentions }                                    what came of one task; already: the post had
+ *                          mentions, extras }                            what came of one task; already: the post had
  *                                                                        our earlier reply (url), so none was sent;
  *                                                                        card: "attached" or "text"; target: the
  *                                                                        { id, url } a latest task answered; none: it
  *                                                                        found no post to answer; mentions: each
- *                                                                        { token, handle, name, linked }
+ *                                                                        { token, handle, name, linked }; extras:
+ *                                                                        "added" or why not, each
  *
  *   engagement_private/mac  { tokenHash, pairedAt, at, read, errors, signedIn, accounts, agent, blocked }
  *
@@ -168,6 +171,26 @@ function reaction(doc) {
   return String(d.text || "").length >= 600 && (d.relevance || 0) >= 2 ? "insightful" : "like";
 }
 
+// Composer extras on a Threads reply (#2710): a thread in our field gets its topic, in the words a scheduled post's
+// topic uses (scripts/threads-compose.js); an owner-tags comment or reply its report's card; a GIF only when Carlos's
+// edit asked for one, at most GIF_PER_DAY a day.
+const EXTRA_NETS = ["threads"];
+const TOPIC_LABELS = { Accessibility: "Accessibility", Performance: "Web Performance", SEO: "SEO" };
+const GIF_PER_DAY = { threads: 2 };
+const CARD_IMAGE = /^https:\/\/carlosandmunoz\.com\/media\/social-posts\/[\w-]+(\/[\w-]+)*\.(jpe?g|png|webp)$/i;
+
+/** A reply's extras { topic, image, gif } for the agent, or null; gifs: GIFs left today on its network. */
+function extrasFor(doc, gifs) {
+  const d = doc || {};
+  if (!EXTRA_NETS.includes(d.network)) return null;
+  const r = (d.actions || {}).reply || {};
+  const image = String((d.ownerTags || {}).image || "");
+  const card = CARD_IMAGE.test(image);
+  const out = Object.assign({}, TOPIC_LABELS[d.topic] ? { topic: TOPIC_LABELS[d.topic] } : {}, card ? { image } : {},
+    r.gif && !card && gifs > 0 ? { gif: clip(r.gif, 40) } : {});
+  return Object.keys(out).length ? out : null;
+}
+
 /** The Mac's work for this run: approved replies first, then planned likes, reposts and follows, best first. */
 async function queue(deps, body) {
   const { db, now, inc } = deps;
@@ -182,6 +205,14 @@ async function queue(deps, body) {
   const day = db.collection("engagement_daily").doc(E.bogotaDay(now));
   const tasks = [];
   const per = {};
+  let gifs = null;
+  const gifsLeft = async (k) => {
+    if (!gifs) {
+      const n = ((await day.get()).data() || {}).n || {};
+      gifs = Object.fromEntries(Object.entries(GIF_PER_DAY).map(([net, cap]) => [net, cap - ((n[net] || {}).gif || 0)]));
+    }
+    return gifs[k] || 0;
+  };
   const take = async (t) => {
     if (!want.includes(t.doc.network) || leased(t.doc.actions[t.action], now) || (per[t.doc.network] || 0) >= PER_NETWORK) return;
     per[t.doc.network] = (per[t.doc.network] || 0) + 1;
@@ -189,13 +220,16 @@ async function queue(deps, body) {
     const r = t.doc.actions.reply || {};
     const card = t.action === "reply" ? await Act.drawCard(deps, t.doc) : {};
     const own = t.action === "reply" ? t.doc.ownerTags || {} : {};
+    const extras = t.action === "reply" ? extrasFor(t.doc, r.gif ? await gifsLeft(t.doc.network) : 0) : null;
+    if (extras && extras.gif) gifs[t.doc.network] -= 1;
     tasks.push(Object.assign({
       key: t.key, network: t.doc.network, action: t.action, id: t.doc.id, url: t.doc.url, author: { handle: (t.doc.author || {}).handle || "", id: (t.doc.author || {}).id || "" },
       draft: t.action === "reply" ? r.draft || "" : "", lang: t.action === "reply" ? r.lang || t.doc.lang || "" : "",
       reaction: t.action === "like" && t.doc.network === "linkedin" && !t.doc.chain ? reaction(t.doc) : "",
       chain: !!t.doc.chain, text: t.doc.chain ? clip(t.doc.text, 300) : "", title: t.action === "repost" ? clip(t.doc.title, 300) : ""
     }, own.kind === "tags" ? { more: true } : {}, (own.menu || []).length ? { mentions: own.menu } : {},
-    own.latest ? { latest: true, since: new Date(now - OwnerTags.REPLY_DAYS * DAY).toISOString() } : {}, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {}));
+    own.latest ? { latest: true, since: new Date(now - OwnerTags.REPLY_DAYS * DAY).toISOString() } : {}, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {},
+    extras ? { extras } : {}));
   };
   for (const t of replies) await take(t);
   let dry = 0;
@@ -256,9 +290,11 @@ async function result(deps, body) {
       await count("already");
     } else if (b.ok) {
       status = "posted";
+      const extras = Object.fromEntries(["topic", "image", "gif"].filter((x) => (b.extras || {})[x]).map((x) => [x, clip(b.extras[x], 120)]));
       await ref.update(Object.assign({ [k + "status"]: status, [k + "postedAt"]: at, [k + "url"]: clip(b.url, 500), [k + "tries"]: tries, [k + "error"]: "", [k + "leasedAt"]: "", [k + "by"]: "mac", updatedAt: at },
-        Act.cardFields(doc, b.card === "attached", b.cardError), found, tagged));
+        Act.cardFields(doc, b.card === "attached", b.cardError), found, tagged, Object.keys(extras).length ? { [k + "extras"]: extras } : {}));
       await count("posted");
+      if (extras.gif === "added") await count("gif");
       if (doc.campaign === "report-reply") await db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ report: { posted: inc(1) } }, { merge: true });
       if (picked.length) await OwnerTags.learnNames(db, doc.network, picked.filter((m) => m.linked), now);
     } else if (b.none && own.latest) {
@@ -299,4 +335,4 @@ async function handle(deps, body, token) {
   return op(deps, body);
 }
 
-module.exports = { BROWSER, LEASE, PER_NETWORK, REACTIONS, MacError, hash, verify, cleanPost, reaction, sites, ingest, queue, result, handle };
+module.exports = { BROWSER, LEASE, PER_NETWORK, REACTIONS, TOPIC_LABELS, GIF_PER_DAY, MacError, hash, verify, cleanPost, reaction, extrasFor, sites, ingest, queue, result, handle };

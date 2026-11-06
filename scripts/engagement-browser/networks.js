@@ -11,7 +11,8 @@
  * likeComment or replyComment where the network has them; on X and Threads a comment is a post, so like and reply serve.
  * X, Threads, Instagram, TikTok, LinkedIn and Facebook have latest(page, task, since) => { id, url } of the newest own
  * post on the profile task.url, or null (an owner reply, #2638); on Facebook, LinkedIn and TikTok reply types
- * task.mentions as accounts picked from the comment box's menu and returns them with linked (#2637).
+ * task.mentions as accounts picked from the comment box's menu and returns them with linked (#2637). A Threads reply
+ * adds task.extras (a GIF, a topic, a card image) where the composer has them and returns what came of each (#2710).
  * Telegram and Reddit (#2614) also have groups(page, query) => groups a topic search finds ({ network, id, name, url,
  * members, lang, about, kind, member }), join(page, task) => { members, already }, and places: where the field is read
  * besides the topic searches (placesOnly: Telegram has no post search, only channels and groups).
@@ -20,6 +21,9 @@
  * changes its page, `agent.js check --read` shows which reader came back empty and saves a screenshot.
  */
 
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
 const Inbox = require("./inbox-map");
 
 class Refused extends Error {}
@@ -411,6 +415,127 @@ const x = {
   }
 };
 
+// --- Threads composer extras (#2710) ------------------------------------------------------------------------------------
+// A reply may bring extras { gif, topic, image }: a GIF picked from a search, the "Community or topic" field beside our
+// name, and one of our cards (agent.js downloads extras.image to task.imageFile) through the composer's file input.
+// Each is best-effort: a control not there within EXTRA_MS is skipped with why, and the text reply goes either way.
+// They run before the text, so a step that closes the dialog costs the extras, never the reply: it opens again bare.
+
+const EXTRA_MS = 5000;
+const TH = {
+  gif: ["Add a GIF", "Add GIF", "GIF", "Añadir un GIF", "Agregar un GIF", "Agregar GIF"],
+  search: ["Search", "Search GIFs", "Search GIPHY", "Buscar", "Buscar GIF", "Buscar GIFs", "Buscar en GIPHY"],
+  topic: ["Add a topic", "Community or topic", "Topic", "Añadir un tema", "Agregar un tema", "Comunidad o tema", "Tema"],
+  media: ["Attach media", "Add media", "Adjuntar contenido multimedia", "Adjuntar archivo multimedia", "Agregar contenido multimedia"]
+};
+const GIPHY = 'img[src*="giphy" i]';
+const control = (scope, names) => scope.getByRole("button", { name: words(names) }).or(button(scope, names));
+const grows = async (loc, n, ms) => {
+  for (let t = 0; t < ms; t += 500) {
+    if ((await loc.count().catch(() => 0)) > n) return true;
+    await sleep(500);
+  }
+  return false;
+};
+
+async function thGif(page, dialog, term) {
+  const open = control(dialog, TH.gif);
+  if (!(await visible(open, EXTRA_MS))) return "no GIF button";
+  await page.evaluate((sel) => document.querySelectorAll(sel).forEach((i) => i.setAttribute("data-qalab-seen", "")), GIPHY).catch(() => null);
+  await click(open.first());
+  const search = page.getByRole("searchbox").or(page.getByPlaceholder(words(TH.search))).or(page.getByRole("textbox", { name: words(TH.search) }));
+  if (!(await visible(search, EXTRA_MS))) { await page.keyboard.press("Escape"); return "no GIF search"; }
+  await click(search.last());
+  await keys(page, term);
+  const found = page.locator(GIPHY + ":not([data-qalab-seen])");
+  if (!(await visible(found, EXTRA_MS * 2))) { await page.keyboard.press("Escape"); return "no GIF for \"" + term + "\""; }
+  await click(found.first());
+  return (await visible(dialog.locator(GIPHY + ":not([data-qalab-seen])"), EXTRA_MS)) ? "added" : "Threads did not attach the GIF";
+}
+
+async function thTopic(page, dialog, topic) {
+  const field = dialog.getByPlaceholder(words(TH.topic)).or(dialog.getByRole("textbox", { name: words(TH.topic) }));
+  if (!(await visible(field, EXTRA_MS))) {
+    const open = control(dialog, TH.topic);
+    if (!(await visible(open, 1000))) return "no topic field";
+    await click(open.first());
+    if (!(await visible(field, EXTRA_MS))) return "no topic field";
+  }
+  await click(field.first());
+  await keys(page, topic);
+  const options = page.getByRole("option");
+  if (await visible(options, 3000)) {
+    const texts = await options.allInnerTexts().catch(() => []);
+    const at = texts.findIndex((t) => fold(t.split("\n")[0]) === fold(topic));
+    await click(options.nth(Math.max(0, at)));
+  }
+  const box = dialog.locator('[contenteditable="true"]').first();
+  if (fold(await box.innerText().catch(() => "")).includes(fold(topic))) {
+    await click(box);
+    await page.keyboard.press("Meta+A");
+    await page.keyboard.press("Backspace");
+    return "the topic went into the reply box, so it was cleared";
+  }
+  return "added";
+}
+
+async function thImage(page, dialog, file) {
+  const shown = dialog.locator("img, video");
+  const before = await shown.count().catch(() => 0);
+  const input = dialog.locator('input[type="file"]');
+  if (await has(input)) await input.first().setInputFiles(file, { timeout: EXTRA_MS });
+  else {
+    const attach = control(dialog, TH.media);
+    if (!(await visible(attach, EXTRA_MS))) return "no attach button";
+    const [chooser] = await Promise.all([page.waitForEvent("filechooser", { timeout: EXTRA_MS }), click(attach.first())]);
+    await chooser.setFiles(file);
+  }
+  return (await grows(shown, before, 20000)) ? "added" : "Threads showed no preview of the image";
+}
+
+/** Adds task.extras to the open reply dialog; { dialog, extras: { gif|topic|image: "added" or why not } }. Never throws but for reopening. */
+async function thExtras(page, dialog, task, reopen) {
+  const x = task.extras || {};
+  const out = {};
+  const steps = [];
+  if (x.gif && task.imageFile) out.gif = "the image went instead";
+  else if (x.gif) steps.push(["gif", (d) => thGif(page, d, String(x.gif).slice(0, 40))]);
+  if (x.topic) steps.push(["topic", (d) => thTopic(page, d, String(x.topic).slice(0, 50))]);
+  if (task.imageFile) steps.push(["image", (d) => thImage(page, d, task.imageFile)]);
+  else if (x.image) out.image = task.imageError || "the image did not download";
+  for (const [k, step] of steps) {
+    try { out[k] = await step(dialog); } catch (error) {
+      out[k] = String(error.message || error).split("\n")[0].slice(0, 120);
+      if (k === "gif") await page.keyboard.press("Escape").catch(() => null);
+    }
+    if (await visible(dialog.locator('[contenteditable="true"]'), 3000)) continue;
+    Object.keys(out).forEach((j) => { if (out[j] === "added") out[j] = "lost when the reply box closed"; });
+    await page.keyboard.press("Escape").catch(() => null);
+    dialog = await reopen();
+  }
+  return { dialog, extras: out };
+}
+
+// Only our own cards, so a draft can never make the agent fetch anything else.
+const CARD_IMAGE = /^https:\/\/carlosandmunoz\.com\/media\/social-posts\/[\w-]+(\/[\w-]+)*\.(jpe?g|png|webp)$/i;
+
+/** extras.image as a temp file for the composer: { file }, { error }, or {} without one. */
+async function downloadImage(task, fetchFn, dir) {
+  const url = String((task.extras || {}).image || "");
+  if (!url) return {};
+  if (!CARD_IMAGE.test(url)) return { error: "not one of our card images" };
+  try {
+    const res = await (fetchFn || fetch)(url, { signal: AbortSignal.timeout(20000) });
+    const kind = String((res.headers && res.headers.get("content-type")) || "");
+    if (!res.ok || !kind.startsWith("image/")) throw new Error("it answered " + res.status + (kind ? " " + kind : ""));
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (!buf.length || buf.length > 8e6) throw new Error("it is " + buf.length + " bytes");
+    const file = path.join(dir || os.tmpdir(), "qalab-reply-image-" + String(task.key || Date.now()).replace(/[^\w-]/g, "") + path.extname(new URL(url).pathname));
+    fs.writeFileSync(file, buf);
+    return { file };
+  } catch (error) { return { error: "the image did not download: " + String(error.message || error).slice(0, 120) }; }
+}
+
 const threads = {
   name: "Threads", account: "qaurlreview", home: "https://www.threads.com/", queries: GENERAL,
   async signedIn(page) {
@@ -487,12 +612,14 @@ const threads = {
   },
   async reply(page, task) {
     const main = await this.post(page, task);
-    await click(button(main, SAYS.reply).first());
-    const dialog = page.locator('[role="dialog"]');
+    const open = async () => { await click(button(main, SAYS.reply).first()); return page.locator('[role="dialog"]'); };
+    let dialog = await open();
+    let extras = null;
+    if (task.extras || task.imageFile) ({ dialog, extras } = await thExtras(page, dialog, task, open));
     await type(page, await need(dialog.locator('[contenteditable="true"]'), "The reply box"), task.draft);
     await click(await need(dialog.getByRole("button", { name: /^(Post|Publicar)$/ }), "Post"));
     await dialog.first().waitFor({ state: "hidden", timeout: 15000 }).catch(() => { throw new Error("The reply did not send."); });
-    return { url: task.url };
+    return Object.assign({ url: task.url }, extras && Object.keys(extras).length ? { extras } : {});
   },
   // The Replies tab of the activity page: its first rows come in the page's own JSON, the next ones from its GraphQL.
   async inbox(page) {
@@ -1365,4 +1492,4 @@ const telegram = {
   }
 };
 
-module.exports = { NETWORKS: { x, linkedin, facebook, instagram, threads, tiktok, telegram, reddit }, Refused, checked, pause, rand, sleep, xTexts, rdPosts, splitDraft, pickOption, newest, liAt, fbStories, igMedia };
+module.exports = { NETWORKS: { x, linkedin, facebook, instagram, threads, tiktok, telegram, reddit }, Refused, checked, pause, rand, sleep, xTexts, rdPosts, splitDraft, pickOption, newest, liAt, fbStories, igMedia, thExtras, downloadImage };

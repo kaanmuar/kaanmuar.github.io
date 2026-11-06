@@ -28,7 +28,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
-const VERSION = "1.5.1";
+const VERSION = "1.6.0";
 const PROJECT = "carlosm-interactive-cv";
 const ENDPOINT = "https://us-central1-" + PROJECT + ".cloudfunctions.net/jarvis";
 const LABEL = "com.kaanmuar.engagementbrowser";
@@ -46,7 +46,7 @@ const RUN_MS = 25 * 60 * 1000;
 const HOLD_MS = 12 * 3600000;
 const INBOX_MS = 3600000;
 
-const { NETWORKS, Refused, pause } = require("./networks");
+const { NETWORKS, Refused, pause, downloadImage } = require("./networks");
 
 fs.mkdirSync(LOGS, { recursive: true });
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -314,13 +314,16 @@ async function run(opts) {
     for (const t of tasks) {
       if (c.blocked[t.network]) { await api("engagement-mac-result", { key: t.key, action: t.action, ok: false, retry: true, error: "Held after a check." }); continue; }
       const card = cardFile(t);
-      const r = await act(page, card ? Object.assign({}, t, { cardFile: card, alt: t.card.alt }) : t);
+      const img = await downloadImage(t);
+      const r = await act(page, Object.assign({}, t, card ? { cardFile: card, alt: t.card.alt } : {}, img.file ? { imageFile: img.file } : {}, img.error ? { imageError: img.error } : {}));
       if (card) fs.rmSync(card, { force: true });
+      if (img.file) fs.rmSync(img.file, { force: true });
       if (t.card || t.cardError) Object.assign(r, { card: r.card || "text", cardError: r.cardError || t.cardError || "" });
       if (r.retry) c.blocked[t.network] = new Date(Date.now() + HOLD_MS).toISOString();
       await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, members: r.members || 0, error: r.error || "", card: r.card || "", cardError: r.cardError || "",
-        target: r.target || null, none: !!r.none, mentions: r.mentions || [] }).catch((error) => log(error.message));
-      const linked = (r.mentions || []).length ? ", mentions " + r.mentions.filter((m) => m.linked).length + " linked of " + r.mentions.length : "";
+        target: r.target || null, none: !!r.none, mentions: r.mentions || [], extras: r.extras || null }).catch((error) => log(error.message));
+      const linked = ((r.mentions || []).length ? ", mentions " + r.mentions.filter((m) => m.linked).length + " linked of " + r.mentions.length : "")
+        + (r.extras ? ", " + Object.entries(r.extras).map(([k, v]) => k + " " + v).join(", ") : "");
       log(NETWORKS[t.network].name + " " + t.action + " " + ((r.target || {}).url || t.url) + ": " + (r.ok && t.action === "join" ? (r.already ? "already in it" : "joined") + (r.members ? " (" + r.members + " members)" : "") : r.ok ? "done" + (r.reaction ? " (" + r.reaction + ")" : "") + linked + (r.card ? ", card " + r.card + (r.cardError ? " (" + r.cardError + ")" : "") : "") : r.already ? "we had already replied (" + r.url + "), not sent" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
       await pause(25000, 70000);
     }
