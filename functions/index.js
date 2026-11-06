@@ -3928,8 +3928,17 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       return;
     }
     if (deskName === "data" && req.method === "GET") {
-      const [reviewSnap, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap, proofSnap] = await Promise.all([
-        getFirestore().collection("url_reviews").limit(400).get(),
+      const stamp = (value) => value && value.toDate ? value.toDate().toISOString() : value;
+      const readRecords = async () => {
+        const rows = [];
+        for await (const doc of getFirestore().collection("url_reviews").limit(400).stream()) {
+          const data = doc.data() || {};
+          rows.push(reviewDesk.deskRecord(Object.assign({ id: doc.id }, data, { createdAt: stamp(data.createdAt) })));
+        }
+        return rows;
+      };
+      const [records, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap, proofSnap] = await Promise.all([
+        readRecords(),
         getFirestore().collection("url_review_alerts").limit(80).get(),
         getFirestore().collection("url_review_free_runs").limit(200).get(),
         getFirestore().collection("url_review_notes").limit(1000).get(),
@@ -3942,11 +3951,6 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         .sort((a, b) => String(b.at).localeCompare(String(a.at)));
       const ownerNotices = noticeSnap.docs.map((doc) => Object.assign({ domain: doc.id }, doc.data()))
         .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-      const stamp = (value) => value && value.toDate ? value.toDate().toISOString() : value;
-      const records = reviewSnap.docs.map((doc) => {
-        const data = doc.data() || {};
-        return Object.assign({ id: doc.id }, data, { createdAt: stamp(data.createdAt) });
-      });
       const alerts = alertSnap.docs.map((doc) => {
         const data = doc.data() || {};
         return Object.assign({ id: doc.id }, data, { at: stamp(data.at) });
