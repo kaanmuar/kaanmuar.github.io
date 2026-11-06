@@ -447,8 +447,11 @@ async function thGif(page, dialog, term) {
   if (!(await visible(search, EXTRA_MS))) { await page.keyboard.press("Escape"); return "no GIF search"; }
   await click(search.last());
   await keys(page, term);
-  const found = page.locator(GIPHY + ":not([data-qalab-seen])");
-  if (!(await visible(found, EXTRA_MS * 2))) { await page.keyboard.press("Escape"); return "no GIF for \"" + term + "\""; }
+  // Each result is a button named "Select GIF" in every UI language (#2736); the picker shows trending ones until the search answers.
+  await sleep(1500);
+  const named = page.getByRole("button", { name: "Select GIF" });
+  const found = (await visible(named, EXTRA_MS)) ? named : page.locator(GIPHY + ":not([data-qalab-seen])");
+  if (!(await visible(found, EXTRA_MS))) { await page.keyboard.press("Escape"); return "no GIF for \"" + term + "\""; }
   await click(found.first());
   return (await visible(dialog.locator(GIPHY + ":not([data-qalab-seen])"), EXTRA_MS)) ? "added" : "Threads did not attach the GIF";
 }
