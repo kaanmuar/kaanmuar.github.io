@@ -66,6 +66,50 @@ test("Threads posts at the x slot; Instagram at its own feed and story slots, wi
   assert.deepEqual(Object.keys(q.NETWORKS), Object.keys(q.ROUTES));
 });
 
+test("Threads drops the hashtag line, and each post knows its clip and the quiz it answers (#2701)", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "open-social-"));
+  const dir = path.join(root, "media/social-posts/b3");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "captions.json"), JSON.stringify({ "01-quiz": { x: "A or B?\n#GEO #QAlab", kind: "quiz", answer: "02-a", lang: "es" }, "02-a": { x: "A 86, B 85.\n#GEO #QAlab", kind: "compare" } }));
+  fs.writeFileSync(path.join(dir, "voiced.json"), JSON.stringify({ "02-a": { lang: "pt" } }));
+  fs.writeFileSync(path.join(dir, "calendar.csv"), "Date,Time,Channel,Post,Asset\n2026-10-27,10:00,x,01-quiz,feed/01-quiz.jpg\n2026-10-28,10:00,x,02-a,feed/02-a.jpg\n");
+  const [quiz, answer] = q.posts("b3", root, "threads");
+  assert.equal(quiz.quiz, undefined);
+  assert.equal(answer.quiz, "01-quiz");
+  assert.match(quiz.clip.url, /\/releases\/download\/b3\/01-quiz\.mp4$/);
+  assert.deepEqual([quiz.clip.lang, answer.clip.lang], ["es", "pt"]);
+  assert.doesNotMatch(q.caption(answer, "threads"), /#GEO/);
+  assert.match(q.caption(answer, "bluesky"), /#GEO #QAlab/);
+});
+
+test("the Threads client falls back to the plain card when a richer container is refused, and publishes once (#2701)", async () => {
+  const made = [];
+  let published = 0;
+  const real = global.fetch;
+  global.fetch = async (url, opts = {}) => {
+    const u = String(url);
+    const body = opts.body ? Object.fromEntries(new URLSearchParams(String(opts.body))) : null;
+    if (opts.method === "HEAD") return { ok: !u.endsWith(".mp4") };
+    if (u.endsWith("/me/threads") && body) {
+      made.push(body);
+      if (body.topic_tag) return { ok: false, status: 400, json: async () => ({ error: { message: "topic refused" } }) };
+      return { ok: true, json: async () => ({ id: "c" + made.length }) };
+    }
+    if (u.endsWith("/me/threads_publish")) { published += 1; return { ok: true, json: async () => ({ id: "p1" }) }; }
+    if (u.includes("fields=status")) return { ok: true, json: async () => ({ status: "FINISHED" }) };
+    return { ok: true, json: async () => ({ permalink: "https://www.threads.com/@qaurlreview/post/p1" }) };
+  };
+  try {
+    const client = q.NETWORKS.threads({ THREADS_TOKEN: "t" });
+    const r = await client.post({ text: "Caption", url: "https://carlosandmunoz.com/a.jpg", alt: "Card", lang: "es", topic: "GEO", clip: { url: "https://github.com/o/r/releases/download/b/a.mp4", lang: "es" } });
+    assert.deepEqual(r, { id: "p1", url: "https://www.threads.com/@qaurlreview/post/p1", uses: ["image"] });
+    assert.deepEqual(made.map((b) => b.media_type + (b.topic_tag ? "+topic" : "")), ["IMAGE+topic", "IMAGE"]);
+    assert.equal(published, 1);
+  } finally {
+    global.fetch = real;
+  }
+});
+
 test("Threads and Instagram are skipped until their secrets are set", () => {
   assert.equal(q.NETWORKS.threads({}).ready, false);
   assert.equal(q.NETWORKS.instagram({ FACEBOOK_PAGE_TOKEN: "t" }).ready, false);
