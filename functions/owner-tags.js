@@ -21,6 +21,8 @@
  *             found here on Bluesky, Mastodon and YouTube; on the Mac's networks (LATEST_NETS, #2638) the reply targets
  *             the owner's profile (ownerTags.latest) and the agent finds the newest own post there. One the agent finds
  *             none for (ownerTags.none) is queued again after LATEST_RETRY_DAYS
+ *   cards     a post's first comment and each owner reply keep the report's card as ownerTags.image (the feed post's
+ *             image, a single report's for replies), which the Mac's agent attaches on Threads (#2710)
  *
  * Switzerland, Belgium and Luxembourg speak several languages, so their sites are addressed in English unless the host's
  * own country code says otherwise.
@@ -193,7 +195,7 @@ function postIdOf(network, entry) {
   return url;
 }
 
-/** Our sent posts about reports, one per post and network, newest first: { key, network, id, url, at, reports }. */
+/** Our sent posts about reports, one per post and network, newest first: { key, network, id, url, at, reports, image }. */
 function ourPosts(feed, ledgers, live) {
   const entries = {};
   (ledgers || []).forEach((l) => Object.entries((l && l.posts) || {}).forEach(([k, list]) => { (entries[k] = entries[k] || []).push(...(Array.isArray(list) ? list : [])); }));
@@ -208,9 +210,9 @@ function ourPosts(feed, ledgers, live) {
       const id = postIdOf(network, e);
       if (!id) continue;
       seen.add(network);
-      out.push({ key: post.id, network, id, url: e.url, at: e.at || post.date || "", reports });
+      out.push({ key: post.id, network, id, url: e.url, at: e.at || post.date || "", reports, image: post.image || "" });
     }
-    if (post.youtube && !seen.has("youtube")) out.push({ key: post.id, network: "youtube", id: post.youtube, url: "https://www.youtube.com/watch?v=" + post.youtube, at: post.date || "", reports });
+    if (post.youtube && !seen.has("youtube")) out.push({ key: post.id, network: "youtube", id: post.youtube, url: "https://www.youtube.com/watch?v=" + post.youtube, at: post.date || "", reports, image: post.image || "" });
   }
   return out.sort((a, b) => String(b.at).localeCompare(String(a.at)));
 }
@@ -479,6 +481,9 @@ async function run(deps) {
     ...["buffer.json", "facebook.json", "open-social.json"].map((f) => asset("social/" + f).catch((error) => { out.errors.push(error.message); return null; }))]);
   const posts = ourPosts(feed, ledgers, (live && live.reports) || []);
   out.posts = posts.length;
+  const cardUrl = (rel) => (rel ? deps.site + "/" + String(rel).replace(/^\//, "") : "");
+  const cards = new Map();
+  posts.filter((p) => p.image && p.reports.length === 1).forEach((p) => { if (!cards.has(p.reports[0].id)) cards.set(p.reports[0].id, cardUrl(p.image)); });
 
   const reports = new Map();
   posts.forEach((p) => p.reports.forEach((r) => reports.set(r.id, r)));
@@ -528,7 +533,7 @@ async function run(deps) {
       const part = had.count + i;
       const key = docKey("tags", p.key, p.network, part);
       if (keys.has(key)) continue;
-      const tags = { kind: "tags", post: p.key, part, mentions: list[i].mentions, reports: p.reports.map((r) => r.id) };
+      const tags = Object.assign({ kind: "tags", post: p.key, part, mentions: list[i].mentions, reports: p.reports.map((r) => r.id) }, part === 0 && p.image ? { image: cardUrl(p.image) } : {});
       await add(key, engagementDoc(p, list[i].text, lang, Object.assign(tags, list[i].tags ? { menu: list[i].tags } : {}), now));
       out.comments += 1;
     }
@@ -553,7 +558,7 @@ async function run(deps) {
     }
     const lang = langOf(report);
     const link = R.linkFor({ host: bare(report.host) }, a.network, lang, key);
-    const tags = Object.assign({ kind: "reply", report: report.id, account: accountId(a.network, a.handle) }, onMac ? { latest: true } : {});
+    const tags = Object.assign({ kind: "reply", report: report.id, account: accountId(a.network, a.handle) }, onMac ? { latest: true } : {}, cards.has(report.id) ? { image: cards.get(report.id) } : {});
     await add(key, engagementDoc(Object.assign({ network: a.network }, target), replyText(lang, a, bare(report.host), link), lang, tags, now));
     out.replies += 1;
   }

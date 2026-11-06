@@ -675,6 +675,16 @@ function replyPush(doc) {
   };
 }
 
+// A GIF goes with a reply only when Carlos's edit asks for one: "[gif: applause]" anywhere in it (#2710). The marker
+// never goes out; only GIF_NETS keep the ask.
+const GIF_NETS = ["threads"];
+const GIF_ASK = /\s*\[gif:\s*([^\]\n]{1,40}?)\s*\]\s*/i;
+function gifAsk(text) {
+  const t = String(text || "");
+  const m = GIF_ASK.exec(t);
+  return { text: (m ? t.replace(GIF_ASK, " ") : t).trim(), gif: m ? m[1] : "" };
+}
+
 /** A decision on a waiting reply: the reply's next state and the daily counters it moves. Throws when it cannot. */
 function decideReply(doc, decision, text, by, now) {
   const r = ((doc || {}).actions || {}).reply;
@@ -686,17 +696,19 @@ function decideReply(doc, decision, text, by, now) {
   const waited = Math.max(0, now - Date.parse((doc || {}).seenAt || at));
   if (decision === "dismiss") return { reply: Object.assign({}, r, { status: "dismissed", decidedAt: at, by }), counter: "dismissed", waited };
   let draft = r.draft;
+  let gif = "";
   if (decision === "edit") {
-    draft = String(text || "").trim();
+    ({ text: draft, gif } = gifAsk(text));
     const limit = (NETWORKS[doc.network] || {}).limit || 300;
     if (draft.length < 5) throw new Error("Write the reply first.");
     if (draft.length > limit) throw new Error((NETWORKS[doc.network] || {}).name + " takes at most " + limit + " characters; this is " + draft.length + ".");
   }
-  return { reply: Object.assign({}, r, { status: "approved", draft, edited: decision === "edit", original: decision === "edit" ? r.draft : r.original || "", decidedAt: at, by }), counter: decision === "edit" ? "edited" : "approved", waited };
+  return { reply: Object.assign({}, r, { status: "approved", draft, edited: decision === "edit", original: decision === "edit" ? r.draft : r.original || "", decidedAt: at, by },
+    gif && GIF_NETS.includes(doc.network) ? { gif } : {}), counter: decision === "edit" ? "edited" : "approved", waited };
 }
 
 module.exports = {
   NETWORKS, TOPICS, INTL, DISCOVERY, LANGS, ACTIONS, CAPS, JOIN_WARMUP, carrier, joinCap, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
   settings, settingsPatch, keyOf, threadKey, relevance, trend, score, guard, aiPrompt, chainPrompt, parseAi, decide, chainDecide, reopens, rises, storedAi, askAgain, forAi,
-  postDoc, chainDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay
+  postDoc, chainDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay, GIF_NETS, gifAsk
 };
