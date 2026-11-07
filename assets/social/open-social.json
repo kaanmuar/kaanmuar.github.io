@@ -45,6 +45,15 @@
   ],
   "auto-2026-10-22/08-u-avvillas-com-co": [
    {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzqpgnsiop2c",
+    "at": "2026-11-07T20:12:29.987Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzqpgnsiop2c",
+    "checked": "2026-11-07T20:12:31.812Z"
+   },
+   {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
     "id": "18119370995092352",
@@ -61,6 +70,15 @@
     "result": "sent",
     "url": "https://www.instagram.com/reel/Dfcy388jvZw/",
     "checked": "2026-11-07T18:12:08.217Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "17974634523161387",
+    "at": "2026-11-07T20:12:32.674Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DfdA14Jklr5",
+    "checked": "2026-11-07T20:13:28.256Z"
    }
   ],
   "auto-2026-10-23/03-u-monsterenergy-com": [

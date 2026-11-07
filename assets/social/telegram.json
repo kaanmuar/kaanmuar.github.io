@@ -12,6 +12,17 @@
     "checked": "2026-11-05T14:15:24.171Z"
    }
   ],
+  "auto-2026-10-22/08-u-avvillas-com-co": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "22",
+    "at": "2026-11-07T20:13:30.063Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/22",
+    "checked": "2026-11-07T20:13:32.973Z"
+   }
+  ],
   "auto-2026-10-24/05-u-roottcostore-com": [
    {
     "channel": "telegram",
