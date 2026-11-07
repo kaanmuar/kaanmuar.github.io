@@ -79,5 +79,9 @@ export async function route(url, { acceptLanguage = "", findReport = async () =>
     if (card && card.id) return { status: 302, location: landing(lang, tags, { live: card.id }) };
     return { status: 302, location: landing(lang, Object.assign(tags, { utm_campaign: "outreach-new" }), { url: host }) };
   }
+  // Sequence F, the competitors of URL Review askers (#2158): the sample report, with their own site typed in.
+  if (HOST.test(host) && rest.length === 1 && rest[0] === "sample") {
+    return { status: 302, location: landing(lang, { utm_campaign: "outreach-rivals", utm_content: host, utm_medium: "email" }, { sample: "1", url: host }) };
+  }
   return { status: 302, location: landing(lang, { utm_campaign: "unknown-path", utm_medium: "web" }) };
 }
