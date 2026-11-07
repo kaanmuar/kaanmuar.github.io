@@ -169,9 +169,13 @@ const MAX_HEADER_BYTES = 65536;
 const HEADERS_TOO_LARGE = "The site's response headers are past the " + MAX_HEADER_BYTES / 1024 + " KB the plain request reads";
 // Chrome follows up to 20 redirects. Sign-in portals chain six (sharepoint.com → office.com → … → microsoft.com).
 const MAX_REDIRECTS = 10;
-// A server that sends its certificate without the intermediate opens in browsers, which fetch the intermediate
-// from the certificate's AIA address. Node does not, so the review fetches it once per host and verifies again.
+// A server that sends its certificate without the next issuer opens in browsers, which follow each AIA
+// address until a trusted root. Node does not. OpenSSL 3 reports that gap as "unable to verify the first
+// certificate", "unable to get local issuer certificate" or "unable to get issuer certificate".
+// The review fetches those issuers once per host and verifies again.
 const INTERMEDIATES = new Map();
+const CHAIN_GAP = new Set(["UNABLE_TO_VERIFY_LEAF_SIGNATURE", "UNABLE_TO_GET_ISSUER_CERT", "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"]);
+const CHAIN_HOPS = 3;
 const ISSUER_MAX_BYTES = 20000;
 const ISSUER_TIMEOUT_MS = 5000;
 const TOTAL_MS = 170000;
@@ -1053,20 +1057,52 @@ async function issuerBytes(raw) {
 
 const commonName = (subject) => (String(subject || "").match(/^CN=(.+)$/m) || [])[1] || String(subject || "").split("\n")[0];
 
+function issuedBy(child, parent) {
+  try {
+    return !!parent && parent.ca && child.checkIssued(parent) && child.verify(parent.publicKey);
+  } catch (error) {
+    return false;
+  }
+}
+
+// Parsed once. A fetched issuer is done when a root already in the trust store signed it.
+let trustAnchors = null;
+function anchored(cert) {
+  if (!trustAnchors) {
+    trustAnchors = tls.rootCertificates.map((pem) => {
+      try { return new crypto.X509Certificate(pem); } catch (error) { return null; }
+    }).filter(Boolean);
+  }
+  return trustAnchors.some((root) => issuedBy(cert, root));
+}
+
 async function missingIntermediate(hostname, pinned) {
   const leaf = await serverLeaf(hostname, pinned);
-  const from = (String(leaf.infoAccess || "").match(/^CA Issuers - URI:(https?:\/\/\S+)$/m) || [])[1];
-  if (!from) return null;
-  const issuer = new crypto.X509Certificate(await issuerBytes(from));
-  if (!issuer.ca || !leaf.checkIssued(issuer) || !leaf.verify(issuer.publicKey)) return null;
-  return { pem: issuer.toString(), issuer: clean(commonName(issuer.subject), 120), from: clean(from, 200) };
+  const extras = [];
+  let current = leaf;
+  for (let hop = 0; hop < CHAIN_HOPS; hop += 1) {
+    const from = (String(current.infoAccess || "").match(/^CA Issuers - URI:(https?:\/\/\S+)$/m) || [])[1];
+    if (!from) break;
+    let issuer = null;
+    try { issuer = new crypto.X509Certificate(await issuerBytes(from)); } catch (error) { issuer = null; }
+    if (!issuedBy(current, issuer)) break;
+    extras.push({ pem: issuer.toString(), name: clean(commonName(issuer.subject), 120), from: clean(from, 200) });
+    if (anchored(issuer)) break;
+    current = issuer;
+  }
+  if (!extras.length) return null;
+  return {
+    pem: extras.map((row) => row.pem),
+    issuer: extras.map((row) => row.name).filter(Boolean).join(", "),
+    from: extras.map((row) => row.from).join(", ")
+  };
 }
 
 async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage) {
   try {
     return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage);
   } catch (error) {
-    if (!error || error.code !== "UNABLE_TO_VERIFY_LEAF_SIGNATURE" || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
+    if (!error || !CHAIN_GAP.has(error.code) || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
     const chain = await missingIntermediate(target.hostname, pinned).catch(() => null);
     if (!chain) throw error;
     if (INTERMEDIATES.size >= 500) INTERMEDIATES.clear();
