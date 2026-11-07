@@ -4053,6 +4053,108 @@
     "checked": "2026-11-06T17:11:15.777Z"
    }
   ],
+  "auto-2026-11-07/01-u-servicesaustralia-gov-au": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aef0ac8d6bbae6fa181f1d3",
+    "at": "2026-11-14T14:05:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-07T11:26:00.048Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aef0ac79214322f68e9d4be",
+    "at": "2026-11-15T00:34:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-07T11:25:58.544Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aef0ac7d6bbae6fa181f1ae",
+    "at": "2026-11-14T19:08:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-07T11:25:59.738Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aef0ac7004e4879a75036cf",
+    "at": "2026-11-14T23:22:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-07T11:25:59.225Z"
+   }
+  ],
+  "auto-2026-11-07/02-u-erikafashion-sk": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aef0acad6bbae6fa181f22d",
+    "at": "2027-03-30T12:57:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-07T11:26:02.047Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aef0ac8af7e526d431a20bb",
+    "at": "2027-03-30T22:31:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-07T11:26:00.321Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aef0ac99214322f68e9d571",
+    "at": "2027-03-30T13:27:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-07T11:26:01.701Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aef0ac9229bf05daf46f40a",
+    "at": "2027-03-30T21:37:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-07T11:26:01.055Z"
+   }
+  ],
+  "auto-2026-11-07/03-vs-saatvesaat-com-tr": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6aef0acca7751de7c9e33ac6",
+    "at": "2027-03-30T13:39:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-07T11:26:03.902Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6aef0acaa7751de7c9e33877",
+    "at": "2027-03-30T23:31:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-07T11:26:02.304Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6aef0acb9214322f68e9d6c8",
+    "at": "2027-03-30T16:05:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-07T11:26:03.474Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6aef0acbaf7e526d431a2163",
+    "at": "2027-03-30T22:36:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-07T11:26:02.897Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "linkedin",

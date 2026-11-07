@@ -121,8 +121,20 @@
     "at": "2026-11-06T13:38:54.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/14",
-    "checked": "2026-11-06T13:38:54.223Z",
-    "hash": "fb6533a1ac6b"
+    "checked": "2026-11-07T11:26:12.744Z",
+    "hash": "7598d163baf0"
+   }
+  ],
+  "live/2026-11-07": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "20",
+    "at": "2026-11-07T11:26:12.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/20",
+    "checked": "2026-11-07T11:26:12.676Z",
+    "hash": "a0bb4e9cd476"
    }
   ],
   "promo-social-hub-2026-10/11-clips-pt": [
