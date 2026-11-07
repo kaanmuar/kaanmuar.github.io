@@ -26,7 +26,8 @@ const FIXES = [
   { cause: "timeout", at: "2026-10-25T12:39:27Z", ref: "#1182", label: "A host that cuts Chrome off for the review tag is read as plain Chrome" },
   { cause: "http-redirect", at: "2026-10-25T12:50:11Z", ref: "#1194", label: "An http:// redirect is read over https first, as Chrome does" },
   { cause: "http-redirect", at: "2026-10-26T13:46:16Z", ref: "#1554", label: "An https copy of an http:// redirect that refuses the review or is slow is opened in headless Chrome" },
-  { cause: "unknown", at: "2026-10-27T12:43:07Z", ref: "#1841", label: "A finished report whose page data Firestore refuses (an empty key, an array in an array, nesting past 20 levels) is saved" }
+  { cause: "unknown", at: "2026-10-27T12:43:07Z", ref: "#1841", label: "A finished report whose page data Firestore refuses (an empty key, an array in an array, nesting past 20 levels) is saved" },
+  { cause: "redirect-loop", at: "2026-11-07T07:44:41Z", ref: "#2750", label: "A redirect that sets a cookie and points at itself is read with that cookie" }
 ];
 const fixKey = (fix) => fix.cause + " " + fix.ref;
 const runningFixes = () => FIXES.map(fixKey);

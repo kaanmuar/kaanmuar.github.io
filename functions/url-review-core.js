@@ -1062,20 +1062,20 @@ async function missingIntermediate(hostname, pinned) {
   return { pem: issuer.toString(), issuer: clean(commonName(issuer.subject), 120), from: clean(from, 200) };
 }
 
-async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage) {
+async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage, cookie) {
   try {
-    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage);
+    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, cookie);
   } catch (error) {
     if (!error || error.code !== "UNABLE_TO_VERIFY_LEAF_SIGNATURE" || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
     const chain = await missingIntermediate(target.hostname, pinned).catch(() => null);
     if (!chain) throw error;
     if (INTERMEDIATES.size >= 500) INTERMEDIATES.clear();
     INTERMEDIATES.set(target.hostname, chain);
-    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage);
+    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, cookie);
   }
 }
 
-function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
+function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, cookie) {
   const chain = target.protocol === "https:" ? INTERMEDIATES.get(target.hostname) : null;
   return new Promise((resolve, reject) => {
     const lib = target.protocol === "https:" ? https : http;
@@ -1112,7 +1112,7 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
         "user-agent": USER_AGENT,
         accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
         connection: "close"
-      }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
+      }, acceptLanguage ? { "accept-language": acceptLanguage } : {}, cookie ? { cookie } : {}),
       ca: chain ? tls.rootCertificates.concat(chain.pem) : undefined,
       lookup: pinnedLookup(pinned)
     }, (res) => {
@@ -1177,6 +1177,64 @@ function headerOverflow(error) {
   return blocked;
 }
 
+// A redirect that sets a cookie and points at itself is the page on the next hop, as Chrome reads it. The cookies belong
+// to this one read. They go back only to the host that set them, never to the next site a redirect lands on.
+function rememberCookies(jar, url, raw) {
+  const lines = Array.isArray(raw) ? raw : raw ? [String(raw)] : [];
+  const host = url.hostname.toLowerCase();
+  lines.forEach((line) => {
+    const parts = String(line).split(";").map((part) => part.trim()).filter(Boolean);
+    const pair = parts[0] || "";
+    const eq = pair.indexOf("=");
+    if (eq <= 0) return;
+    const name = pair.slice(0, eq).trim();
+    const value = pair.slice(eq + 1).trim();
+    if (!name || /[\s,;]/.test(name)) return;
+    let domain = host;
+    let hostOnly = true;
+    let path = "/";
+    let secure = false;
+    let drop = false;
+    parts.slice(1).forEach((part) => {
+      const split = part.indexOf("=");
+      const key = (split === -1 ? part : part.slice(0, split)).trim().toLowerCase();
+      const setting = split === -1 ? "" : part.slice(split + 1).trim();
+      if (key === "domain" && setting) {
+        domain = setting.replace(/^\./, "").toLowerCase();
+        hostOnly = false;
+      } else if (key === "path" && setting.startsWith("/")) path = setting;
+      else if (key === "secure") secure = true;
+      else if (key === "max-age" && !(Number(setting) > 0)) drop = true;
+    });
+    if (hostOnly) domain = host;
+    else if (!domain.includes(".") || (domain !== host && !host.endsWith("." + domain))) return;
+    const at = jar.findIndex((row) => row.name === name && row.domain === domain && row.path === path);
+    if (drop) {
+      if (at >= 0) jar.splice(at, 1);
+      return;
+    }
+    const row = { name, value, domain, hostOnly, path, secure };
+    if (at >= 0) jar[at] = row;
+    else if (jar.length < 32) jar.push(row);
+  });
+}
+
+function cookieHeader(jar, url) {
+  const host = url.hostname.toLowerCase();
+  const path = url.pathname || "/";
+  let value = "";
+  jar.forEach((row) => {
+    if (row.secure && url.protocol !== "https:") return;
+    const domainOk = row.hostOnly ? row.domain === host : host === row.domain || host.endsWith("." + row.domain);
+    if (!domainOk) return;
+    const prefix = row.path.endsWith("/") ? row.path : row.path + "/";
+    if (path !== row.path && !path.startsWith(prefix)) return;
+    const next = value ? value + "; " + row.name + "=" + row.value : row.name + "=" + row.value;
+    if (next.length <= 4096) value = next;
+  });
+  return value;
+}
+
 // Chrome reads an http:// address over https first (HTTPS-Upgrades) and falls back to http only when https fails. The review
 // has no http fallback: it reads each http:// redirect over https once, and fails as an http:// redirect when that gets no page.
 function httpsUpgrade(next, upgrades) {
@@ -1197,6 +1255,7 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage)
   let current = normalizeUrl(raw);
   const started = Date.now();
   const upgrades = [];
+  const jar = [];
   let upgraded = "";
   let pulses = 0;
   const timer = setInterval(() => {
@@ -1216,7 +1275,7 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage)
       if (onPulse) onPulse("The name " + current.hostname + " resolved. Requesting the page.");
       let res;
       try {
-        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage);
+        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage, cookieHeader(jar, current));
       } catch (error) {
         if (upgraded && !(error && error.code === "STOPPED") && !upgradeSlow(error)) throw httpOnly(upgraded, true);
         if (error && typeof error === "object" && !error.url) error.url = current.toString();
@@ -1225,6 +1284,7 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage)
       if (upgraded && res.status >= 400 && !upgradeRefused(res, current.toString())) throw httpOnly(upgraded, true);
       const location = res.headers.location;
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
+        rememberCookies(jar, current, res.headers["set-cookie"]);
         if (onPulse) onPulse("The page redirected. Following the next public https address.");
         const next = new URL(location, current);
         upgraded = "";
@@ -2880,6 +2940,7 @@ async function probeRead(raw) {
   const hops = [];
   const took = () => Date.now() - started;
   const upgrades = [];
+  const jar = [];
   let upgraded = "";
   let current;
   try {
@@ -2888,7 +2949,7 @@ async function probeRead(raw) {
       const pinned = await assertPublic(current.hostname);
       let res;
       try {
-        res = await requestOnce(current, pinned, null, true);
+        res = await requestOnce(current, pinned, null, true, "", cookieHeader(jar, current));
       } catch (error) {
         if (upgraded && !upgradeSlow(error)) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
         throw error;
@@ -2897,6 +2958,7 @@ async function probeRead(raw) {
       hops.push({ url: clean(current.toString(), 300), status: res.status, location: clean(location, 300) });
       if (upgraded && res.status >= 400 && !upgradeRefused(res, current.toString())) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
+        rememberCookies(jar, current, res.headers["set-cookie"]);
         const next = new URL(location, current);
         upgraded = next.protocol === "http:" ? httpsUpgrade(next, upgrades) : "";
         if (next.protocol === "http:" && !upgraded) return { hops, httpRedirect: clean(next.href, 300), ms: took() };
