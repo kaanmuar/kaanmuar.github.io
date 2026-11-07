@@ -180,6 +180,17 @@
     "url": "https://t.me/qalab_live/15",
     "checked": "2026-11-06T17:11:20.932Z"
    }
+  ],
+  "tips-2026-10/12-one-h1": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "21",
+    "at": "2026-11-07T18:12:09.035Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/21",
+    "checked": "2026-11-07T18:12:10.004Z"
+   }
   ]
  }
 }
