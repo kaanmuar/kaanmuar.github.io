@@ -78,6 +78,17 @@
     "checked": "2026-11-05T18:11:31.459Z"
    }
   ],
+  "auto-2026-11-04/14-u-ciqa-edu-mx": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "23",
+    "at": "2026-11-07T23:40:56.114Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/23",
+    "checked": "2026-11-07T23:40:59.375Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",
@@ -98,6 +109,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/18",
     "checked": "2026-11-06T22:14:23.541Z"
+   }
+  ],
+  "evergreen-2026-11/05-myth-https": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "24",
+    "at": "2026-11-07T23:40:59.375Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/24",
+    "checked": "2026-11-07T23:41:02.257Z"
    }
   ],
   "live/2026-11-04": [

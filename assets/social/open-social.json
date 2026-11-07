@@ -430,6 +430,44 @@
     "checked": "2026-11-05T18:11:03.865Z"
    }
   ],
+  "auto-2026-11-04/14-u-ciqa-edu-mx": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzr2wz2dhv2d",
+    "at": "2026-11-07T23:38:29.409Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzr2wz2dhv2d",
+    "checked": "2026-11-07T23:38:31.687Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18130787101854969",
+    "at": "2026-11-07T23:40:44.085Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4025481787371402039",
+    "checked": "2026-11-07T23:40:55.334Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18155786506483798",
+    "at": "2026-11-07T23:39:59.777Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/DfdYgrTEoKx/",
+    "checked": "2026-11-07T23:40:43.855Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18358508695170427",
+    "at": "2026-11-07T23:38:50.550Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DfdYdNWggDN",
+    "checked": "2026-11-07T23:39:58.996Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "bluesky",
@@ -724,6 +762,17 @@
     "result": "sent",
     "url": "https://www.threads.com/@qaurlreview/post/DfaprZsETav",
     "checked": "2026-11-06T22:12:33.358Z"
+   }
+  ],
+  "evergreen-2026-11/05-myth-https": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzr2xjqzwl2c",
+    "at": "2026-11-07T23:38:31.688Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzr2xjqzwl2c",
+    "checked": "2026-11-07T23:38:49.636Z"
    }
   ],
   "promo-social-hub-2026-10/01-one-page-en": [
