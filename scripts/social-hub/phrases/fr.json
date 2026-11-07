@@ -52,6 +52,10 @@
   "text": "⟦1⟧ leads en SEO, Sécurité ; ⟦2⟧ leads en GEO, Analytics, Accessibilité, Performance.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO, Analytics, Performance; ⟦3⟧ leads in Accessibility.": {
+  "text": "⟦1⟧ leads en SEO, Sécurité ; ⟦2⟧ leads en GEO, Analytics, Performance ; ⟦3⟧ mène en Accessibilité.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO; ⟦3⟧ leads in Analytics, Accessibility, Performance.": {
   "text": "⟦1⟧ leads en SEO, Sécurité ; ⟦2⟧ leads en GEO ; ⟦3⟧ leads en Analytics, Accessibilité, Performance.",
   "machine": true
@@ -365,6 +369,10 @@
  },
  "Benchmark against the sites your visitors compare you with, not against a…": {
   "text": "Comparez-vous aux sites avec lesquels vos visiteurs vous comparent, et non à un…",
+  "machine": true
+ },
+ "Benchmark against the sites your visitors compare you with, not against…": {
+  "text": "Comparez-vous aux sites avec lesquels vos visiteurs vous comparent, et non à…",
   "machine": true
  },
  "Benchmark against the sites your visitors compare you with, not…": "Comparez-vous aux sites auxquels vos visiteurs vous comparent, pas…",
@@ -1638,6 +1646,10 @@
  "Redirect every http request to https with a ⟦1⟧, then add Strict-Transport-Security.": "Redirigez chaque requête http vers https avec un ⟦1⟧, puis ajoutez Strict-Transport-Security.",
  "Redirect every http request to https with a ⟦1⟧.": "Redirigez chaque requête http vers https avec un ⟦1⟧.",
  "Redirect every http request to https with one permanent ⟦1⟧, then add HSTS.": "Redirigez chaque requête http vers https avec un ⟦1⟧ permanent, puis ajoutez HSTS.",
+ "Redirect every http request to https with one permanent ⟦1⟧, then add…": {
+  "text": "Redirigez chaque requête http vers https avec un ⟦1⟧ permanent, puis ajoutez…",
+  "machine": true
+ },
  "Redirecting entries waste crawl.": "Les entrées qui redirigent gaspillent du crawl.",
  "Release day: is the page still right?": "Jour de mise en prod : la page est-elle toujours juste ?",
  "Relevance ⟦1⟧ (formerly SEO Week), the premier AI Search conference, takes place April ⟦2⟧–⟦3⟧, ⟦4⟧, at Halo […] The post Press Release:": "Relevance ⟦1⟧ (anciennement SEO Week), la grande conférence sur la recherche IA, aura lieu du ⟦2⟧ au ⟦3⟧ avril ⟦4⟧, au Halo […] L’article Communiqué de presse :",

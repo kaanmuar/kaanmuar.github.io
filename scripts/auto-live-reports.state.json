@@ -1,5 +1,5 @@
 {
- "since": "2026-11-06T11:00:47.302Z",
+ "since": "2026-11-07T11:01:00.168Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -117,13 +117,16 @@
   "footlocker.com": "2026-11-06",
   "kra.co.kr": "2026-11-06",
   "vs:td.com": "2026-11-06",
-  "vs:okta.com": "2026-11-06"
+  "vs:okta.com": "2026-11-06",
+  "servicesaustralia.gov.au": "2026-11-07",
+  "erikafashion.sk": "2026-11-07",
+  "vs:saatvesaat.com.tr": "2026-11-07"
  },
  "recent": [
+  "ax-button-name",
+  "sec-http",
   "seo-title-missing",
   "seo-schema-props",
-  "sec-hsts",
-  "sec-frame",
-  "sec-csp"
+  "sec-hsts"
  ]
 }

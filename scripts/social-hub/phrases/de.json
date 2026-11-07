@@ -52,6 +52,10 @@
   "text": "⟦1⟧ führt in SEO, Sicherheit; ⟦2⟧ führend in den Bereichen GEO, Analytics, Barrierefreiheit, Leistung.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO, Analytics, Performance; ⟦3⟧ leads in Accessibility.": {
+  "text": "⟦1⟧ führt in SEO, Sicherheit; ⟦2⟧ führt in den Bereichen GEO, Analytics, Performance; ⟦3⟧ führt in der Barrierefreiheit.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO; ⟦3⟧ leads in Analytics, Accessibility, Performance.": {
   "text": "⟦1⟧ führt in den Bereichen SEO, Sicherheit; ⟦2⟧ führt in GEO; ⟦3⟧ führend in den Bereichen Analytics, Barrierefreiheit, Leistung.",
   "machine": true
@@ -365,6 +369,10 @@
  },
  "Benchmark against the sites your visitors compare you with, not against a…": {
   "text": "Benchmarken Sie mit den Websites, mit denen Ihre Besucher Sie vergleichen, nicht mit einer…",
+  "machine": true
+ },
+ "Benchmark against the sites your visitors compare you with, not against…": {
+  "text": "Benchmarken Sie mit den Websites, mit denen Ihre Besucher Sie vergleichen, nicht mit …",
   "machine": true
  },
  "Benchmark against the sites your visitors compare you with, not…": "Messen Sie sich an den Websites, mit denen Ihre Besucher Sie vergleichen, nicht…",
@@ -1638,6 +1646,10 @@
  "Redirect every http request to https with a ⟦1⟧, then add Strict-Transport-Security.": "Leiten Sie jede http-Anfrage per ⟦1⟧ auf https um und ergänzen Sie dann Strict-Transport-Security.",
  "Redirect every http request to https with a ⟦1⟧.": "Leiten Sie jede http-Anfrage per ⟦1⟧ auf https um.",
  "Redirect every http request to https with one permanent ⟦1⟧, then add HSTS.": "Leiten Sie jede http-Anfrage mit einem dauerhaften ⟦1⟧ auf https um und ergänzen Sie dann HSTS.",
+ "Redirect every http request to https with one permanent ⟦1⟧, then add…": {
+  "text": "Leiten Sie jede HTTP-Anfrage mit einer permanenten ⟦1⟧ auf https um und fügen Sie dann hinzu…",
+  "machine": true
+ },
  "Redirecting entries waste crawl.": "Weiterleitende Einträge verschwenden Crawl-Budget.",
  "Release day: is the page still right?": "Release-Tag: Stimmt die Seite noch?",
  "Relevance ⟦1⟧ (formerly SEO Week), the premier AI Search conference, takes place April ⟦2⟧–⟦3⟧, ⟦4⟧, at Halo […] The post Press Release:": "Relevance ⟦1⟧ (ehemals SEO Week), die führende Konferenz zur KI-Suche, findet vom ⟦2⟧. bis ⟦3⟧. April ⟦4⟧ im Halo […] Der Beitrag Pressemitteilung:",
