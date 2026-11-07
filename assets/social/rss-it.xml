@@ -261,23 +261,6 @@ Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/05-bbc.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Un h1 per pagina, che dica cos’è la pagina.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-it.html</link>
-      <guid isPermaLink="false">tips-2026-10/12-one-h1-it</guid>
-      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consiglio</category>
-      <category>SEO</category>
-      <description>Loghi e slogan spesso si prendono l’h1. Motori di ricerca e screen reader lo usano entrambi per capire la pagina.
-
-Provalo oggi: Leggi solo l’h1 delle tue dieci pagine principali. Uno sconosciuto capirebbe cos’è ogni pagina?
-
-Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=one-h1
-
-#SEO #Accessibility #Content #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg" length="218575" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>nice.com: 56. La lacuna: HSTS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/15-u-nice-com-it.html</link>
       <guid isPermaLink="false">auto-2026-10-22/15-u-nice-com-it</guid>
@@ -432,6 +415,24 @@ Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-
 #Analytics #GA4 #SEO #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" length="229468" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Le schede informative dell’OMS finiscono con un punto e virgola di troppo.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-it.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who-it</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Worldwide</category>
+      <description>L’OMS accoglie i crawler di risposta AI e le sue pagine si leggono bene senza JavaScript: GEO 91. Ma il JSON-LD delle sue schede informative finisce con &quot;};&quot;, e un parser rigoroso scarta l’intero blocco.
+
+La lezione per ogni team: Passa ogni blocco JSON-LD in un validatore JSON prima della release. Un solo carattere può invalidare l’intero blocco.
+
+Un’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.
+Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>zizonline.com: 70. La lacuna: HSTS.</title>
@@ -601,6 +602,23 @@ https://www.youtube.com/shorts/v2IyjNhD8q8</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Siti reali. Punteggi reali.</title>
+      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/26-real-reviews-it.html</link>
+      <guid isPermaLink="false">promo-social-hub-2026-10/26-real-reviews-it</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Prodotto</category>
+      <category>Social</category>
+      <description>Ogni giorno, revisioni pubbliche di siti reali diventano post con i loro punteggi e la correzione che conta di più. Abbiamo revisionato anche il nostro sito.
+
+Prova: Apri una revisione di un sito nell'hub e leggi il report completo.
+
+Tutti i post, in un unico posto: https://carlosandmunoz.com/qa-review-social-it.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=real-reviews-it
+
+#QA #Vulnerability #SoftwareTesting #SEO #WebSecurity #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/26-real-reviews-it.jpg" length="218125" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/26-real-reviews-it.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Abbiamo analizzato GOV.UK. Il punteggio è 92.</title>
       <link>https://carlosandmunoz.com/social/runs-2026-10/01-govuk-it.html</link>
       <guid isPermaLink="false">runs-2026-10/01-govuk-it</guid>
@@ -635,23 +653,6 @@ Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-
 #Accessibility #Zoom #GovTech #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" length="242376" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Metti via il mouse. Riesci a raggiungere tutto?</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-it.html</link>
-      <guid isPermaLink="false">tips-2026-10/10-keyboard-it</guid>
-      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consiglio</category>
-      <category>A11y</category>
-      <description>Menu, dialog e banner dei cookie sono i punti in cui chi usa la tastiera resta bloccato. Tab, Shift+Tab, Invio ed Esc dovrebbero bastare.
-
-Provalo oggi: Fai l’azione principale sul tuo sito usando solo la tastiera. Annota ogni punto in cui ti sei bloccato.
-
-Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=keyboard
-
-#Accessibility #a11y #UX #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" length="236132" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>Una pagina, un canonical.</title>
@@ -853,6 +854,23 @@ Come funziona la review di una pagina pubblica, passo dopo passo: https://carlos
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>La ricerca AI legge il tuo HTML, non la tua app.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-it.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first-it</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Consiglio</category>
+      <category>GEO</category>
+      <description>Molti motori di risposta non eseguono JavaScript. Se le tue informazioni chiave compaiono solo dopo il caricamento degli script, potrebbero non essere mai lette né citate.
+
+Provalo oggi: Guarda il sorgente della tua home. Si capisce cosa vendi e per chi, senza eseguire script?
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>movichhotels.com: 68. Il divario: misurazione.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-26/08-u-movichhotels-com-it.html</link>
       <guid isPermaLink="false">auto-2026-10-26/08-u-movichhotels-com-it</guid>
@@ -967,23 +985,6 @@ Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-
 #GEO #StructuredData #UnitedNations #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/01-ilo.jpg" length="252116" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/01-ilo.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>robots.txt decide chi può leggerti.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/17-robots-ai-it.html</link>
-      <guid isPermaLink="false">tips-2026-10/17-robots-ai-it</guid>
-      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consiglio</category>
-      <category>GEO</category>
-      <description>Ogni crawler AI ha il suo user agent. Bloccarli per sbaglio e ammetterli apposta costa una riga in entrambi i casi.
-
-Provalo oggi: Apri yoursite.com/robots.txt oggi. Controlla che dica quello che intendi per i crawler di ricerca e AI.
-
-Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=robots-ai
-
-#GEO #AISearch #robotsTxt #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/17-robots-ai.jpg" length="218461" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/17-robots-ai.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
