@@ -2053,6 +2053,30 @@ test("a finished report is stored without the shapes Firestore refuses, and the 
   assert.deepEqual(core.storable(record.report, []), record.report);
 });
 
+test("a finished report whose saved page is past Firestore's field limit is still saved (#1965)", () => {
+  // www.publico.pt's browser read kept 1,431,417 bytes of HTML. A nested string past 1,048,487 bytes is
+  // "Property report contains an invalid nested entity." The whole document also has to stay under 1 MiB.
+  const html = "<html>" + "x".repeat(1431417 - 13) + "</html>";
+  assert.equal(Buffer.byteLength(html), 1431417);
+  const report = {
+    id: "r-publico",
+    host: "www.publico.pt",
+    browser: { ok: true, start: { finalUrl: "https://www.publico.pt/", html, htmlCut: false } },
+    fine: { title: "PÚBLICO" }
+  };
+  const fixed = [];
+  const kept = core.storable(report, fixed);
+  assert.ok(Buffer.byteLength(kept.browser.start.html) <= 1048487);
+  assert.ok(JSON.stringify(kept).length <= 850000);
+  assert.equal(kept.browser.start.htmlCut, true);
+  assert.equal(kept.fine.title, "PÚBLICO");
+  assert.equal(report.browser.start.html.length, html.length);
+  assert.ok(fixed.some((line) => line.indexOf("report.browser.start.html") === 0));
+  const record = core.intakeRecord(core.validateIntake({ termsAccepted: true, termsVersion: core.TERMS_VERSION, name: "Ana Ruiz", email: "ana@example.org", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://www.publico.pt/" }).value, report, {});
+  assert.ok(JSON.stringify(record).length <= 1048576);
+  assert.equal(record.report.fine.title, "PÚBLICO");
+});
+
 const failures = require("../../functions/url-review-failures");
 // The failure tests are written against the fixes up to #365; a later fix to a cause they use would re-run their example failures.
 failures.FIXES.splice(failures.FIXES.findIndex((fix) => fix.ref === "#365") + 1);
