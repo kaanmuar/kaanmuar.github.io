@@ -379,6 +379,15 @@ async function askAccess(store, input, row, free) {
   return { ok: true, email: signedIn.email };
 }
 
+// The Run tab (#1945): the free sample and the run's log belong to the account that ran the report, paid or not.
+async function runAccess(store, input, row) {
+  const signedIn = await checkSession(store, Object.assign({}, input, { touch: false }));
+  if (!signedIn.ok) return fail(401, "Sign in with the account that ran this report to run its cases.", { signIn: true, code: "sign-in" });
+  if (!row || !row.report || row.report.preview) return fail(404, "That report was not found.", { code: "not-found" });
+  if (!row.email || row.email !== signedIn.email) return fail(403, "Only the account that ran this report can run its cases.", { code: "not-owner" });
+  return { ok: true, email: signedIn.email };
+}
+
 async function closeSession(store, session) {
   const clean = String(session || "").replace(/[^a-f0-9]/g, "");
   if (clean.length === 64) await store.remove("url_review_sessions", hashOf(clean));
@@ -448,6 +457,7 @@ module.exports = {
   claimRun,
   stopRun,
   askAccess,
+  runAccess,
   closeSession,
   dropAuthUsers,
   lookupIdToken

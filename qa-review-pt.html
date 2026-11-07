@@ -372,6 +372,8 @@
     <link rel="preload" href="css/qa-review-folds.css?v=20261027a" as="style">
     <link rel="stylesheet" href="css/qa-review-folds.css?v=20261027a" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-folds.css?v=20261027a"></noscript>
+    <link rel="stylesheet" href="css/qa-review-run.css?v=20261103a" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="css/qa-review-run.css?v=20261103a"></noscript>
     <style data-critical="css/qa-review-live.css?v=20261104b">.live{--lv-bg:#071116;--lv-text:#e8f3f4;--lv-muted:#9fb3b8;--lv-line:rgba(159, 214, 220, .16);--lv-cyan:#7ef6fb;--lv-teal:#4db3bb;--lv-gold:#e2c48a;--lv-green:#6fe3b1;--lv-coral:#f39a8b;--lv-violet:#b9a8ff;--cw:300px;--ch:440px;position:relative;color:var(--lv-text);overflow-x:clip;scroll-margin-top:56px;padding:64px 0 56px;border-top:1px solid var(--lv-line);background:radial-gradient(1100px 520px at 12% 0%, rgba(77, 179, 187, .22), transparent 62%), radial-gradient(900px 480px at 92% 8%, rgba(226, 196, 138, .14), transparent 58%), radial-gradient(1200px 420px at 50% 100%, rgba(77, 179, 187, .12), transparent 70%), var(--lv-bg);isolation:isolate}.live > .fx{position:absolute;inset:0;z-index:-2;display:block;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 1.2s ease}.live::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg, rgba(7, 17, 22, .72) 0%, rgba(7, 17, 22, .38) 40%, rgba(7, 17, 22, .12) 100%)}.live-inner{max-width:1480px;margin:0 auto;padding:0 20px}.live-main{min-width:0}.live-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.live .eyebrow{color:var(--lv-gold)}.live-title{font-family:"Instrument Serif", "Source Serif 4", Georgia, serif;font-weight:400;font-size:clamp(2.2rem, 4.6vw, 3.9rem);line-height:.95;letter-spacing:-0.035em;margin:0 0 14px;color:#f4fafb}.live-title em{display:block;color:var(--lv-cyan)}.live-lede{color:var(--lv-muted);max-width:70ch;margin:0 0 22px;line-height:1.55;font-size:15.5px}.live-lede + .live-follow{margin-top:-12px}.live-follow{color:var(--lv-muted);margin:0 0 22px;font-size:14px;line-height:1.5}.live-follow a{color:var(--lv-cyan);font-weight:600;text-underline-offset:3px}.live :focus-visible{outline:2px solid var(--lv-gold, #e2c48a);outline-offset:2px}.live-jump{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-size:13px;font-weight:700;color:var(--cyan);text-decoration:none}.live-jump:hover{text-decoration:underline}body.live-viewing{overflow:hidden}@media (max-width: 760px){.live{padding:44px 0 40px;--cw:268px;--ch:430px}.live-inner{padding:0 14px}}@media (max-width: 380px){.live{--cw:250px;--ch:430px}}@media (min-width: 1100px){.live{padding:44px 0 36px}.live-inner{display:grid;grid-template-columns:minmax(340px, 430px) minmax(0, 1fr);gap:36px;align-items:center}.live-title{font-size:clamp(2.2rem, 3.3vw, 3.2rem)}.live-lede{font-size:14.5px;margin-bottom:18px}.live-follow{font-size:13.5px;margin-bottom:18px}}</style>
     <link rel="preload" href="css/qa-review-live.css?v=20261104b" as="style">
     <link rel="stylesheet" href="css/qa-review-live.css?v=20261104b" media="print" data-async-css>
@@ -1621,6 +1623,8 @@
         <p id="share-link" class="muted"></p>
         <p id="share-note" class="muted" data-report-copy="shareNote" lang="pt" translate="no">Este link abre por completo só para você, com login feito. Qualquer outra pessoa vê uma prévia desfocada.</p>
         <p id="sample-note" class="sample-note" hidden></p>
+        <div class="report-tabs no-print" id="report-tabs" role="tablist" hidden></div>
+        <section class="cube-panel card" id="cube-panel" role="tabpanel" aria-labelledby="tab-run" hidden></section>
         <section id="report">
         <header class="report-cover" id="report-cover"></header>
         <p class="lede" id="report-statement"></p>
@@ -1864,7 +1868,8 @@
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
 <script src="js/qa-review-report-copy.js?v=20261128e" defer></script>
 <script src="js/qa-review-findings-copy.pt.js?v=20261110b" defer></script>
-<script src="js/qa-review.js?v=20261128f" defer></script>
+<script src="js/qa-review-run.js?v=20261103a" defer></script>
+<script src="js/qa-review.js?v=20261128g" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109a" defer></script>
